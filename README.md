@@ -6,13 +6,13 @@ Nuxt Crouton is a collection of Nuxt Layers that provide instant CRUD functional
 
 ## 📦 Packages
 
-### [@fyit/nuxt-crouton](./packages/nuxt-crouton)
+### [@friendlyinternet/nuxt-crouton](./packages/nuxt-crouton)
 Base CRUD layer with essential components and composables for data management.
 
-### [@fyit/nuxt-crouton-translations](./packages/nuxt-crouton-translations)
+### [@friendlyinternet/nuxt-crouton-translations](./packages/nuxt-crouton-translations)
 Multi-language support extending the base layer with i18n capabilities.
 
-### [@fyit/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
+### [@friendlyinternet/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
 Rich text editor integration extending the base layer with Tiptap.
 
 ## 🚀 Quick Start
@@ -21,13 +21,13 @@ Rich text editor integration extending the base layer with Tiptap.
 
 ```bash
 # For CRUD + Translations (most common)
-npm install @fyit/nuxt-crouton-translations
+npm install @friendlyinternet/nuxt-crouton-translations
 
 # For just CRUD
-npm install @fyit/nuxt-crouton
+npm install @friendlyinternet/nuxt-crouton
 
 # For CRUD + Editor
-npm install @fyit/nuxt-crouton-editor
+npm install @friendlyinternet/nuxt-crouton-editor
 ```
 
 ### Configuration
