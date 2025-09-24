@@ -1,0 +1,51 @@
+{
+  "name": "@friendlyinternet/nuxt-crouton-collection-generator",
+  "version": "1.0.0",
+  "description": "Collection generator CLI for Nuxt Crouton - Generate complete CRUD collections with API, components, and database schema",
+  "type": "module",
+  "bin": {
+    "crouton-generate": "./bin/crouton-generate.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "schemas",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node bin/crouton-generate.js --help"
+  },
+  "keywords": [
+    "nuxt",
+    "crud",
+    "generator",
+    "scaffolding",
+    "cli",
+    "nuxt-crouton",
+    "collection"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton-collection-generator"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.12",
+    "ora": "^8.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

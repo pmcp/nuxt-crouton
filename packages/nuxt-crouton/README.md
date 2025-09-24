@@ -1,4 +1,4 @@
-# @fyit/nuxt-crouton
+# @friendlyinternet/nuxt-crouton
 
 Base CRUD layer for FYIT scaffolded collections. Built as a Nuxt Layer for simplicity and reusability.
 
@@ -18,11 +18,7 @@ Nuxt Layers are a powerful way to share and reuse partial Nuxt applications. The
 ## Installation
 
 ```bash
-# npm
-npm install @fyit/nuxt-crouton
-
-# pnpm
-pnpm add @fyit/nuxt-crouton
+pnpm add @friendlyinternet/nuxt-crouton
 ```
 
 ## Configuration
@@ -32,7 +28,7 @@ Add to your `nuxt.config.ts`:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@fyit/nuxt-crouton'
+    '@friendlyinternet/nuxt-crouton'
   ]
 })
 ```
@@ -110,7 +106,7 @@ Other layers can build upon nuxt-crouton:
 ```typescript
 // nuxt-crouton-translations/nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@fyit/nuxt-crouton'],
+  extends: ['@friendlyinternet/nuxt-crouton'],
   // Add translation-specific features...
 })
 ```
@@ -118,10 +114,10 @@ export default defineNuxtConfig({
 ## Architecture
 
 ```
-@fyit/nuxt-crouton (this layer)
+@friendlyinternet/nuxt-crouton (this layer)
     ↑
-    ├── @fyit/nuxt-crouton-translations
-    └── @fyit/nuxt-crouton-editor
+    ├── @friendlyinternet/nuxt-crouton-translations
+    └── @friendlyinternet/nuxt-crouton-editor
 ```
 
 ## Publishing
@@ -129,7 +125,7 @@ export default defineNuxtConfig({
 This layer can be published directly to npm:
 
 ```bash
-npm publish --access public
+pnpm publish --access public
 ```
 
 No build step required - it's just a regular Nuxt app structure!

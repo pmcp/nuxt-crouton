@@ -1,0 +1,23 @@
+{
+  "id": {
+    "type": "string",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true
+    }
+  },
+  "price": {
+    "type": "decimal",
+    "meta": {
+      "required": true
+    }
+  },
+  "inStock": {
+    "type": "boolean"
+  }
+}

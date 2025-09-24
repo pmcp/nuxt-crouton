@@ -21,13 +21,13 @@ Rich text editor integration extending the base layer with Tiptap.
 
 ```bash
 # For CRUD + Translations (most common)
-npm install @friendlyinternet/nuxt-crouton-translations
+pnpm add @friendlyinternet/nuxt-crouton-translations
 
 # For just CRUD
-npm install @friendlyinternet/nuxt-crouton
+pnpm add @friendlyinternet/nuxt-crouton
 
 # For CRUD + Editor
-npm install @friendlyinternet/nuxt-crouton-editor
+pnpm add @friendlyinternet/nuxt-crouton-editor
 ```
 
 ### Configuration
@@ -74,17 +74,17 @@ const { t } = useT()
 ## 🏗️ Architecture
 
 ```
-@fyit/nuxt-crouton (base layer)
+@friendlyinternet/nuxt-crouton (base layer)
     ↑
-    ├── @fyit/nuxt-crouton-translations (extends base + adds i18n)
-    └── @fyit/nuxt-crouton-editor (extends base + adds editor)
+    ├── @friendlyinternet/nuxt-crouton-translations (extends base + adds i18n)
+    └── @friendlyinternet/nuxt-crouton-editor (extends base + adds editor)
 ```
 
 When you extend a higher-level layer, you automatically get all features from the layers it extends.
 
 ## 🎯 Features
 
-### Base Layer (`@fyit/nuxt-crouton`)
+### Base Layer (`@friendlyinternet/nuxt-crouton`)
 - ✅ **CrudButton** - Generic action buttons
 - ✅ **CrudEntitySelect** - Entity selection dropdowns
 - ✅ **ExpandableSlideover** - Expandable panels
@@ -92,14 +92,14 @@ When you extend a higher-level layer, you automatically get all features from th
 - ✅ **useCrud()** - Complete CRUD operations
 - ✅ **useCollections()** - Collection management
 
-### Translations Layer (`@fyit/nuxt-crouton-translations`)
+### Translations Layer (`@friendlyinternet/nuxt-crouton-translations`)
 - ✅ Everything from base layer
 - ✅ **TranslationsInput** - Multi-language input fields
 - ✅ **LanguageSwitcher** - Language selection
 - ✅ **useT()** - Translation composable
 - ✅ **i18n** - Pre-configured with EN, NL, FR
 
-### Editor Layer (`@fyit/nuxt-crouton-editor`)
+### Editor Layer (`@friendlyinternet/nuxt-crouton-editor`)
 - ✅ Everything from base layer
 - ✅ **Rich Text Editor** - Tiptap integration
 - ✅ **Toolbar** - Formatting options
@@ -134,13 +134,13 @@ cd packages/nuxt-crouton
 
 ```bash
 # Publish all packages
-npm run publish:all
+pnpm publish:all
 
 # Publish dry run (test)
-npm run publish:dry
+pnpm publish:dry
 
 # Bump versions
-npm run version:patch
+pnpm version:patch
 ```
 
 ## 📚 Examples

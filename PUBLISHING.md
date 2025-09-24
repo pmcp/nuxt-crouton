@@ -1,6 +1,6 @@
-# Publishing Nuxt Crouton to NPM
+# Publishing Guide for Nuxt Crouton
 
-This guide will help you publish the Nuxt Crouton packages to NPM for the first time.
+This guide covers how to publish the Nuxt Crouton packages to npm.
 
 ## Prerequisites
 
@@ -8,6 +8,14 @@ This guide will help you publish the Nuxt Crouton packages to NPM for the first 
 2. **Login**: Login to npm from your terminal:
    ```bash
    npm login
+   npm whoami  # Should show your username
+   ```
+
+3. **Organization Access**: Make sure you have access to the `@friendlyinternet` organization on npm
+
+4. **pnpm Installed**: This project uses pnpm for package management
+   ```bash
+   npm install -g pnpm
    ```
 
 ## First-Time Publishing
@@ -29,7 +37,7 @@ pnpm install
 You can publish all packages at once:
 
 ```bash
-npm run publish:all
+pnpm publish:all
 ```
 
 Or publish them individually:
@@ -37,23 +45,23 @@ Or publish them individually:
 ```bash
 # Base layer first
 cd packages/nuxt-crouton
-npm publish --access public
+pnpm publish --access public
 
 # Then translations
 cd ../nuxt-crouton-translations
-npm publish --access public
+pnpm publish --access public
 
 # Then editor
 cd ../nuxt-crouton-editor
-npm publish --access public
+pnpm publish --access public
 ```
 
 ### Step 4: Verify Publication
 
 Check that your packages are live:
-- https://www.npmjs.com/package/@fyit/nuxt-crouton
-- https://www.npmjs.com/package/@fyit/nuxt-crouton-translations
-- https://www.npmjs.com/package/@fyit/nuxt-crouton-editor
+- https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton
+- https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-translations
+- https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-editor
 
 ## Updating Packages
 
@@ -63,19 +71,21 @@ When you make changes and want to publish updates:
 
 ```bash
 # Patch version (1.0.0 → 1.0.1)
-npm run version:patch
+pnpm version:patch
 
 # Minor version (1.0.0 → 1.1.0)
-npm run version:minor
+pnpm version:minor
 
 # Major version (1.0.0 → 2.0.0)
-npm run version:major
+pnpm version:major
 ```
+
+Note: If the version commands don't work, manually update the version in each `package.json`.
 
 ### 2. Publish Updates
 
 ```bash
-npm run publish:all
+pnpm publish:all
 ```
 
 ## Testing Before Publishing
@@ -84,7 +94,7 @@ Always test your packages before publishing:
 
 ```bash
 # Dry run (doesn't actually publish)
-npm run publish:dry
+pnpm publish:dry
 ```
 
 ## Using Published Packages
@@ -92,24 +102,23 @@ npm run publish:dry
 Once published, anyone can install your packages:
 
 ```bash
-# In any Nuxt project
-npm install @fyit/nuxt-crouton-translations
+# In any Nuxt project (use pnpm for better dependency resolution)
+pnpm add @friendlyinternet/nuxt-crouton-translations
+
+# Or if npm hangs, clear cache first:
+npm cache clean --force
+npm install @friendlyinternet/nuxt-crouton-translations
 ```
 
 And use in `nuxt.config.ts`:
 
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@fyit/nuxt-crouton-translations']
+  extends: ['@friendlyinternet/nuxt-crouton-translations']
 })
 ```
 
 ## Troubleshooting
-
-### "Package name already exists"
-- The names `@fyit/nuxt-crouton*` might be taken
-- You can change the scope to your npm username: `@yourname/nuxt-crouton`
-- Update all package.json files with the new scope
 
 ### "Not logged in"
 ```bash
@@ -119,7 +128,15 @@ npm login   # Login if needed
 
 ### "Permission denied"
 - Make sure you're using `--access public` for scoped packages
-- Check that you own the npm scope (@fyit or @yourname)
+- Check that you own the npm scope (@friendlyinternet)
+- Verify organization access: `npm org ls <your-username>`
+
+### "npm install hanging"
+If users report that `npm install` hangs when installing your packages, recommend using `pnpm` instead:
+```bash
+pnpm add @friendlyinternet/nuxt-crouton
+```
+This is due to npm's complex dependency resolution with peer dependencies.
 
 ## Version Management
 
