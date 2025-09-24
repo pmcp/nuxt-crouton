@@ -36,7 +36,7 @@
     "@nuxtjs/i18n": "^9.0.0"
   },
   "peerDependencies": {
-    "nuxt": "^3.0.0",
+    "nuxt": "^4.0.0",
     "@friendlyinternet/nuxt-crouton": "^1.0.0"
   }
 }

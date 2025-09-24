@@ -35,7 +35,7 @@
     "@tiptap/starter-kit": "^2.0.0"
   },
   "peerDependencies": {
-    "nuxt": "^3.0.0",
+    "nuxt": "^4.0.0",
     "@friendlyinternet/nuxt-crouton": "^1.0.0"
   }
 }
