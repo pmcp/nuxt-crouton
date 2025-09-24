@@ -33,6 +33,9 @@ program
   .option('-d, --dialect <type>', 'Database dialect (pg or sqlite)', 'pg')
   .option('--auto-relations', 'Add relation stubs in comments')
   .option('--dry-run', 'Preview what will be generated')
+  .option('--no-translations', 'Skip translation fields')
+  .option('--force', 'Force generation despite missing dependencies')
+  .option('--no-db', 'Skip database table creation')
   .option('-c, --config <path>', 'Use config file instead of CLI args')
   .action(async (layer, collection, options) => {
     const spinner = ora('Generating collection...').start();
@@ -52,6 +55,16 @@ program
       }
       if (options.dryRun) {
         args.push('--dry-run');
+      }
+      // Commander.js sets --no-* flags to false when used
+      if (options.translations === false) {
+        args.push('--no-translations');
+      }
+      if (options.force) {
+        args.push('--force');
+      }
+      if (options.db === false) {
+        args.push('--no-db');
       }
       if (options.config) {
         args.push(`--config=${options.config}`);
