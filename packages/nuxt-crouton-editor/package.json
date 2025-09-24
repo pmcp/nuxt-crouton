@@ -1,5 +1,5 @@
 {
-  "name": "@fyit/nuxt-crouton-editor",
+  "name": "@friendlyinternet/nuxt-crouton-editor",
   "version": "1.0.0",
   "description": "Rich text editor layer extending nuxt-crouton",
   "type": "module",
@@ -36,6 +36,6 @@
   },
   "peerDependencies": {
     "nuxt": "^3.0.0",
-    "@fyit/nuxt-crouton": "^1.0.0"
+    "@friendlyinternet/nuxt-crouton": "^1.0.0"
   }
 }

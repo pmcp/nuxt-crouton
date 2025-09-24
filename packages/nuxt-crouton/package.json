@@ -1,5 +1,5 @@
 {
-  "name": "@fyit/nuxt-crouton",
+  "name": "@friendlyinternet/nuxt-crouton",
   "version": "1.0.0",
   "description": "Base CRUD layer for FYIT scaffolded collections",
   "type": "module",
