@@ -1,21 +1,5 @@
-import { collectionRegistry, type CollectionName } from '#layers/crud/app/registry/collections'
-
-// Import only the configs that actually exist
-import {
-  translationsUiConfig,
-  posSystemLogsConfig,
-  posProductsConfig,
-  posPrintQueuesConfig,
-  posPrintersConfig,
-  posPrinterLocationsConfig,
-  posOrdersConfig,
-  posOrderProductsConfig,
-  posLocationsConfig,
-  posEventsConfig,
-  posClientsConfig,
-  posCategoriesConfig,
-  // fignoAgentsConfig // Will be added when properly exported
-} from '#imports'
+// Define a type for collection names (will be extended by user's registry)
+type CollectionName = string
 
 // Type for config map
 interface CollectionConfig {
@@ -35,44 +19,25 @@ type ConfigsMap = {
 }
 
 /**
- * Simplified collection management using explicit registry with #imports
+ * Dynamic collection management using user's registry
+ * Collections are registered via the generator in app/crouton-collections.ts
  */
 export default function useCollections() {
-  // Pre-loaded configs map - only include collections that have configs
-  const configsMap: ConfigsMap = {
-    translationsUi: translationsUiConfig,
-    // teamTranslations doesn't have a config export - it's a special case
-    posSystemLogs: posSystemLogsConfig,
-    posProducts: posProductsConfig,
-    posPrintQueues: posPrintQueuesConfig,
-    posPrinters: posPrintersConfig,
-    posPrinterLocations: posPrinterLocationsConfig,
-    posOrders: posOrdersConfig,
-    posOrderProducts: posOrderProductsConfig,
-    posLocations: posLocationsConfig,
-    posEvents: posEventsConfig,
-    posClients: posClientsConfig,
-    posCategories: posCategoriesConfig,
-    // Manual config for fignoAgents until properly exported
-    fignoAgents: {
-      componentName: 'FignoAgentsForm',
-      apiPath: 'agents',
-      defaultPagination: {
-        currentPage: 1,
-        pageSize: 20,
-        sortBy: 'createdAt',
-        sortDirection: 'desc' as const
-      }
-    }
-  }
+  // Configs will be loaded dynamically from user's collections
+  // Each generated collection includes its own config
+  const configsMap: ConfigsMap = {}
 
-  // Build component map from configs
+  // Build component map from configs (will be populated by user's collections)
   const componentMap = reactive<Record<string, string>>({})
   Object.entries(configsMap).forEach(([name, config]) => {
     if (config?.componentName) {
       componentMap[name] = config.componentName
     }
   })
+
+  // Get the registry from the plugin
+  const { $croutonRegistry } = useNuxtApp()
+  const collectionRegistry = $croutonRegistry || {}
 
   // Create reactive state for each collection
   const collections = Object.keys(collectionRegistry).reduce((acc, name) => {

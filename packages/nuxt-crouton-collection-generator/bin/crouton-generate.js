@@ -57,14 +57,11 @@ program
         args.push(`--config=${options.config}`);
       }
 
-      // Import and run the generator
-      const { generate } = await import(generatorPath);
-
       spinner.stop();
 
-      // Call the generator with parsed arguments
+      // Import and execute the generator script directly
       process.argv = ['node', 'generate-collection.mjs', ...args];
-      await generate();
+      await import(generatorPath);
 
     } catch (error) {
       spinner.fail('Generation failed');
