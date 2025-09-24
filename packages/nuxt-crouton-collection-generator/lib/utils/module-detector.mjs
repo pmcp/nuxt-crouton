@@ -65,14 +65,36 @@ export async function detectRequiredDependencies(config) {
     missing: []
   }
 
+  // Always check for base CRUD layer first
+  const baseLayerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton')
+  const baseLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton')
+
+  if (!baseLayerInstalled || !baseLayerExtended) {
+    // Fallback to check for local crud layer
+    const crudLayerExists = await layerExists('crud')
+    if (!crudLayerExists) {
+      required.missing.push({
+        type: 'layer',
+        name: '@friendlyinternet/nuxt-crouton',
+        reason: 'Required for CRUD components',
+        installCmd: 'pnpm add @friendlyinternet/nuxt-crouton',
+        configCmd: `Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts`
+      })
+    } else {
+      required.layers.push('crud')
+    }
+  } else {
+    required.layers.push('@friendlyinternet/nuxt-crouton')
+  }
+
   // Check if translations are needed
   const hasTranslations = config?.translations?.collections &&
     Object.keys(config.translations.collections).length > 0
 
   if (hasTranslations && !config.noTranslations) {
     // Check for nuxt-crouton-translations layer
-    const layerInstalled = await isPackageInstalled('@fyit/nuxt-crouton-translations')
-    const layerExtended = await isLayerExtended('@fyit/nuxt-crouton-translations')
+    const layerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-translations')
+    const layerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-translations')
 
     if (layerInstalled && layerExtended) {
       required.layers.push('@fyit/nuxt-crouton-translations')
@@ -84,32 +106,10 @@ export async function detectRequiredDependencies(config) {
       } else {
         required.missing.push({
           type: 'layer',
-          name: '@fyit/nuxt-crouton-translations',
+          name: '@friendlyinternet/nuxt-crouton-translations',
           reason: 'Required for translation fields',
-          installCmd: 'pnpm add @fyit/nuxt-crouton-translations',
-          configCmd: `Add '@fyit/nuxt-crouton-translations' to extends array in nuxt.config.ts`
-        })
-      }
-    }
-  } else {
-    // Just need base CRUD layer
-    const baseLayerInstalled = await isPackageInstalled('@fyit/nuxt-crouton')
-    const baseLayerExtended = await isLayerExtended('@fyit/nuxt-crouton')
-
-    if (baseLayerInstalled && baseLayerExtended) {
-      required.layers.push('@fyit/nuxt-crouton')
-    } else {
-      // Fallback to check for local crud layer
-      const crudLayerExists = await layerExists('crud')
-      if (crudLayerExists) {
-        required.layers.push('crud')
-      } else {
-        required.missing.push({
-          type: 'layer',
-          name: '@fyit/nuxt-crouton',
-          reason: 'Required for CRUD components',
-          installCmd: 'pnpm add @fyit/nuxt-crouton',
-          configCmd: `Add '@fyit/nuxt-crouton' to extends array in nuxt.config.ts`
+          installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-translations',
+          configCmd: `Add '@friendlyinternet/nuxt-crouton-translations' to extends array in nuxt.config.ts`
         })
       }
     }
