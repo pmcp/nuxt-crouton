@@ -1,0 +1,35 @@
+{
+  "name": "nuxt-crouton-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nuxt Crouton - Reusable CRUD layers for Nuxt 3",
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crud",
+    "scaffolding",
+    "translations",
+    "i18n"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "homepage": "https://github.com/pmcp/nuxt-crouton",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "scripts": {
+    "publish:all": "pnpm -r publish --access public",
+    "publish:dry": "pnpm -r publish --dry-run",
+    "version:patch": "pnpm -r version patch",
+    "version:minor": "pnpm -r version minor",
+    "version:major": "pnpm -r version major",
+    "clean": "rm -rf node_modules packages/*/node_modules"
+  },
+  "devDependencies": {
+    "nuxt": "^3.15.0"
+  }
+}

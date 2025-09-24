@@ -1,0 +1,42 @@
+{
+  "name": "@fyit/nuxt-crouton-translations",
+  "version": "1.0.0",
+  "description": "Translations layer extending nuxt-crouton for multi-language support",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "server",
+    "locales",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "translations",
+    "i18n",
+    "multi-language"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton-translations"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@nuxtjs/i18n": "^9.0.0"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.0.0",
+    "@fyit/nuxt-crouton": "^1.0.0"
+  }
+}

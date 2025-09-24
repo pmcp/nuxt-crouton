@@ -1,0 +1,856 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "change": "Change",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "reset": "Reset",
+    "refresh": "Refresh",
+    "add": "Add",
+    "remove": "Remove",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "select": "Select",
+    "selectAll": "Select All",
+    "unselectAll": "Unselect All",
+    "actions": "Actions",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "yes": "Yes",
+    "no": "No",
+    "hideExample": "Hide Example",
+    "showExample": "Show Example",
+    "saveChanges": "Save Changes",
+    "docs": "Docs",
+    "google": "Google",
+    "github": "Github",
+    "discord": "Discord",
+    "proceed": "Proceed"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "signUp": "Sign Up",
+    "signIn": "Sign In",
+    "signOut": "Sign out",
+    "password": "Password",
+    "email": "Email",
+    "username": "Username",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset password",
+    "register": "Register",
+    "rememberMe": "Remember me",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "verifyEmail": "Verify your email",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "getStarted": "Get Started",
+    "submit": "Submit",
+    "phoneNumber": "Phone Number",
+    "loginWithMagicLink": "Login with Magic Link",
+    "loginWithPasskey": "Login with Passkey",
+    "socialLogin": "Social Login",
+    "phoneNumberLogin": "Phone Number Login",
+    "socialLogin": {
+      "google": "Google",
+      "github": "Github",
+      "discord": "Discord"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "customers": "Customers",
+    "settings": "Settings",
+    "profile": "Profile",
+    "reports": "Reports",
+    "categories": "Categories",
+    "events": "Events",
+    "locations": "Locations",
+    "printers": "Printers",
+    "clients": "Clients",
+    "team": "Team",
+    "billing": "Billing",
+    "notifications": "Notifications",
+    "help": "Help",
+    "home": "Home",
+    "backToDashboard": "Back to Dashboard",
+    "accountSettings": "Account Settings",
+    "posts": "Posts",
+    "superAdmin": "Super Admin",
+    "teamTranslations": "Team Translations",
+    "workspaceMembers": "Workspace Members",
+    "workspaceSettings": "Workspace Settings",
+    "users": "Users",
+    "teams": "Teams",
+    "translations": "Translations",
+    "stripePlans": "Stripe Plans",
+    "feedbackSubmissions": "Feedback Submissions",
+    "newsletterSubscribers": "Newsletter Subscribers"
+  },
+  "messages": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "confirmDelete": "Are you sure you want to delete this?",
+    "confirmDeletePost": "Are you sure you want to delete this post? This action cannot be undone.",
+    "confirmAction": "Are you sure you want to proceed?",
+    "saved": "Changes saved successfully",
+    "deleted": "Successfully deleted",
+    "created": "Successfully created",
+    "updated": "Successfully updated",
+    "required": "This field is required",
+    "invalid": "Invalid value",
+    "minLength": "Minimum length is {min}",
+    "maxLength": "Maximum length is {max}",
+    "emailInvalid": "Please enter a valid email address",
+    "passwordMismatch": "Passwords do not match",
+    "networkError": "Network error. Please try again.",
+    "unauthorized": "You are not authorized to perform this action",
+    "sessionExpired": "Your session has expired. Please login again.",
+    "somethingWentWrong": "Something went wrong. Please try again.",
+    "copiedToClipboard": "Copied to clipboard",
+    "failedToCopy": "Failed to copy text",
+    "failedToDelete": "Failed to delete",
+    "failedToSave": "Failed to save",
+    "noTextToCopy": "No text to copy",
+    "operationSuccessful": "Operation successful",
+    "autoVerifyUser": "Auto verify user",
+    "createNewPost": "Create a new post to share with your team",
+    "deleteAccountConfirm": "Please type 'delete' to confirm",
+    "needHelp": "Need help?",
+    "updatePost": "Update your post",
+    "feedbackSubmitted": "Your feedback has been submitted.",
+    "feedbackSubmittedDesc": "We will get back to you as soon as possible."
+  },
+  "email": {
+    "orderConfirmation": "Order Confirmation",
+    "invoice": "Invoice",
+    "passwordReset": "Password Reset",
+    "welcome": "Welcome",
+    "orderShipped": "Order Shipped",
+    "paymentReceived": "Payment Received",
+    "accountActivation": "Account Activation",
+    "newsletter": "Newsletter",
+    "reminder": "Reminder"
+  },
+  "forms": {
+    "name": "Name",
+    "description": "Description",
+    "price": "Price",
+    "quantity": "Quantity",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "date": "Date",
+    "time": "Time",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "notes": "Notes",
+    "address": "Address",
+    "phone": "Phone",
+    "mobile": "Mobile",
+    "fax": "Fax",
+    "website": "Website",
+    "company": "Company",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "fullName": "Full Name",
+    "country": "Country",
+    "city": "City",
+    "state": "State",
+    "zipCode": "Zip Code",
+    "postalCode": "Postal Code",
+    "language": "Language",
+    "timezone": "Timezone",
+    "currency": "Currency",
+    "sortOrder": "Sort Order",
+    "isTemplate": "Is Template",
+    "requiresRemark": "Requires Remark",
+    "remarkPrompt": "Remark Prompt"
+  },
+  "table": {
+    "id": "ID",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "actions": "Actions",
+    "rowsPerPage": "Rows per page",
+    "rowsPerPageColon": "Rows per page:",
+    "page": "Page",
+    "of": "of",
+    "items": "items",
+    "results": "results",
+    "selected": "selected",
+    "total": "Total",
+    "showing": "Showing",
+    "to": "to",
+    "from": "from",
+    "first": "First",
+    "last": "Last",
+    "noResults": "No results found",
+    "sortAscending": "Sort ascending",
+    "sortDescending": "Sort descending",
+    "display": "Display",
+    "noTranslation": "No translation",
+    "noTranslationAvailable": "No translation available",
+    "overrideable": "Overrideable",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "expiresAt": "Expires At",
+    "acceptedAt": "Accepted At",
+    "acceptedBy": "Accepted By",
+    "invoice": "Invoice",
+    "planName": "Plan Name",
+    "amount": "Amount",
+    "date": "Date"
+  },
+  "pos": {
+    "pointOfSale": "Point of Sale",
+    "newOrder": "New Order",
+    "currentOrder": "Current Order",
+    "checkout": "Checkout",
+    "payment": "Payment",
+    "cash": "Cash",
+    "card": "Card",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "discount": "Discount",
+    "change": "Change",
+    "received": "Received",
+    "orderNumber": "Order Number",
+    "printReceipt": "Print Receipt",
+    "emailReceipt": "Email Receipt",
+    "voidOrder": "Void Order",
+    "holdOrder": "Hold Order",
+    "recallOrder": "Recall Order",
+    "splitBill": "Split Bill",
+    "addCustomer": "Add Customer",
+    "selectEvent": "Select Event",
+    "selectLocation": "Select Location",
+    "selectCategory": "Select Category",
+    "categories": {
+      "fields": {
+        "color": "Color",
+        "event": "Event",
+        "icon": "Icon",
+        "isActive": "Is Active",
+        "sortOrder": "Sort Order",
+        "translations": "Translations"
+      },
+      "title": "Categories"
+    },
+    "clients": {
+      "fields": {
+        "address": "Address",
+        "clientType": "Client Type",
+        "email": "Email",
+        "notes": "Notes",
+        "phone": "Phone",
+        "translations": "Translations"
+      },
+      "title": "Clients"
+    },
+    "events": {
+      "fields": {
+        "endDate": "End Date",
+        "isActive": "Is Active",
+        "settings": "Settings",
+        "startDate": "Start Date",
+        "translations": "Translations"
+      },
+      "title": "Events"
+    },
+    "locations": {
+      "fields": {
+        "address": "Address",
+        "capacity": "Capacity",
+        "isActive": "Is Active",
+        "translations": "Translations"
+      },
+      "title": "Locations"
+    },
+    "orders": {
+      "fields": {
+        "completedAt": "Completed At",
+        "discountAmount": "Discount Amount",
+        "orderNumber": "Order Number",
+        "paymentMethod": "Payment Method",
+        "paymentStatus": "Payment Status",
+        "subtotal": "Subtotal",
+        "taxAmount": "Tax Amount",
+        "totalAmount": "Total Amount"
+      },
+      "title": "Orders"
+    },
+    "printers": {
+      "fields": {
+        "ipAddress": "IP Address",
+        "isActive": "Is Active",
+        "isDefault": "Is Default",
+        "location": "Location",
+        "port": "Port",
+        "translations": "Translations"
+      },
+      "title": "Printers"
+    },
+    "products": {
+      "fields": {
+        "category": "Category",
+        "event": "Event",
+        "isActive": "Is Active",
+        "isTemplate": "Is Template",
+        "location": "Location",
+        "price": "Price",
+        "requiresRemark": "Requires Remark",
+        "sortOrder": "Sort Order",
+        "translations": "Translations"
+      },
+      "title": "Products"
+    }
+  },
+  "settings": {
+    "general": "General",
+    "appearance": "Appearance",
+    "notifications": "Notifications",
+    "security": "Security",
+    "privacy": "Privacy",
+    "billing": "Billing",
+    "integrations": "Integrations",
+    "advanced": "Advanced",
+    "teamSettings": "Team Settings",
+    "userSettings": "User Settings",
+    "systemSettings": "System Settings",
+    "translations": "Translations",
+    "emailTemplates": "Email Templates",
+    "preferences": "Preferences",
+    "theme": "Theme",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "autoMode": "Auto"
+  },
+  "testkeypath": "english",
+  "a test": "asdf",
+  "asdf": "asdf",
+  "billing": {
+    "description": "Manage your billing information and subscription plans",
+    "freePlan": "Free",
+    "plan": "plan",
+    "title": "Billing",
+    "upgradeToPaid": "Upgrade to a paid plan to unlock more features and higher usage limits",
+    "youAreOn": "You are on",
+    "youAreOnThe": "You are on the",
+    "cancelsOn": "Cancels on"
+  },
+  "team": {
+    "createNewTeam": "Create a new team",
+    "systemTranslations": "System Translations",
+    "teamTranslations": "Team Translations",
+    "teamUrlAlreadyInUse": "Team URL already in use",
+    "teamCreatedSuccessfully": "Team created successfully",
+    "failedToCreateTeam": "Failed to create team",
+    "teamDeletedSuccessfully": "Team deleted successfully",
+    "failedToDeleteTeam": "Failed to delete team",
+    "failedToUpdateTeam": "Failed to update team",
+    "generalSettings": "General Settings",
+    "teamLogo": "Team logo",
+    "teamLogoHelp": "Recommended size: 1 MB, 1:1 aspect ratio",
+    "teamName": "Team name",
+    "teamUrl": "Team URL",
+    "teamId": "Team ID",
+    "invites": {
+      "pendingInvitations": "Pending Invitations",
+      "noPendingInvitations": "No pending invitations found",
+      "acceptedInvitations": "Accepted Invitations",
+      "copyEmail": "Copy Email",
+      "emailCopied": "Email copied to clipboard!",
+      "copyUserId": "Copy User ID",
+      "userIdCopied": "User ID copied to clipboard!",
+      "resendInvite": "Resend Invite",
+      "inviteResentSuccessfully": "Invite resent successfully!",
+      "failedToResendInvite": "Failed to resend invite",
+      "cancelInvite": "Cancel Invite",
+      "inviteCancelledSuccessfully": "Invite cancelled successfully",
+      "failedToCancelInvite": "Failed to cancel invite"
+    },
+    "members": {
+      "removeFromTeam": "Remove from team",
+      "failedToRemoveMember": "Failed to remove member"
+    }
+  },
+  "sidebar": {
+    "home": "Home"
+  },
+  "translations": {
+    "form": {
+      "selectSystemTranslationModal": "Select a System Translation"
+    },
+    "ui": {
+      "baseFromSystemTranslation": "Base from System Translation",
+      "bulkImportTranslations": "Bulk Import Translations",
+      "canBeOverriddenByTeams": "Can be overridden by teams",
+      "clear": "Clear",
+      "exampleJsonFormat": "Example JSON format:",
+      "failedToLoadOverrides": "Failed to load team overrides",
+      "failedToSyncTranslations": "Failed to sync translations",
+      "import": "Import",
+      "importComplete": "Import Complete",
+      "importError": "Import Error",
+      "importFailed": "Import Failed",
+      "importTranslations": "Import Translations",
+      "invalidJsonFormat": "Invalid JSON format",
+      "keyPath": "Key Path",
+      "loadingTeamOverrides": "Loading team overrides...",
+      "noTeamOverridesFound": "No team overrides found for this translation.",
+      "none": "None",
+      "pasteJsonHere": "Paste your JSON here...",
+      "searchSystemTranslations": "Search system translations to override...",
+      "searchSystemTranslationsBase": "Search system translations...",
+      "selectSystemTranslation": "Select System Translation to Override",
+      "syncToLocaleFiles": "Sync to Locale Files",
+      "importOptions": "Import from Locale Files",
+      "syncedTranslations": "Synced {count} translations to locale files",
+      "systemTranslation": "System Translation",
+      "systemTranslations": "System Translations",
+      "teamCustomizations": "Team Customizations:",
+      "teamOverrides": "Team Overrides",
+      "teamTranslations": "Team Translations",
+      "teamsCount": "{count} team | {count} teams",
+      "unknownTeam": "Unknown Team",
+      "updated": "Updated"
+    }
+  },
+  "workspace": {
+    "settings": {
+      "billing": "Billing",
+      "members": "Workspace Members",
+      "title": "Workspace Settings"
+    }
+  },
+  "buttons": {
+    "backToLogin": "Back to Login",
+    "banUser": "Ban User",
+    "blog": "Blog",
+    "changePhoneNumber": "Change Phone Number",
+    "createPasskey": "Create Passkey",
+    "deleteAccount": "Delete Account",
+    "deleteUser": "Delete User",
+    "discord": "Discord",
+    "docs": "Docs",
+    "features": "Features",
+    "getStarted": "Get Started",
+    "github": "Github",
+    "goToApp": "Go to App",
+    "google": "Google",
+    "inviteMember": "Invite Member",
+    "inviteUser": "Invite User",
+    "liftBan": "Lift Ban",
+    "linkAccount": "Link Account",
+    "managePlan": "Manage plan",
+    "manageSubscription": "Manage Subscription",
+    "newPost": "New Post",
+    "pricing": "Pricing",
+    "proceed": "Proceed",
+    "remove": "Remove",
+    "sendInvitation": "Send invitation",
+    "signOut": "Sign out",
+    "stopSession": "Stop session",
+    "subscribe": "Subscribe",
+    "switchPlan": "Switch plan",
+    "updatePassword": "Update Password",
+    "verify": "Verify",
+    "verifyPhoneNumber": "Verify Phone Number"
+  },
+  "dashboard": {
+    "followers": "Followers",
+    "impressions": "Impressions",
+    "impressionsOverview": "Impressions Overview",
+    "likes": "Likes",
+    "profileVisits": "Profile Visits"
+  },
+  "errors": {
+    "failedToCreatePost": "An error occurred while creating the post",
+    "failedToCreateUser": "Failed to create user",
+    "failedToDeletePost": "An error occurred while deleting the post",
+    "failedToSendVerificationCode": "Failed to send verification code",
+    "failedToUpdatePost": "An error occurred while updating the post",
+    "failedToUploadAvatar": "Failed to upload avatar",
+    "failedToUploadImage": "An error occurred while uploading the image",
+    "failedToVerifyCode": "Failed to verify code",
+    "unexpectedError": "An unexpected error occurred"
+  },
+  "fields": {
+    "accountId": "Account ID",
+    "avatar": "Avatar",
+    "bannedUntil": "Banned Until",
+    "content": "Content",
+    "image": "Image",
+    "memberEmail": "Member email",
+    "message": "Message",
+    "newPassword": "New Password",
+    "phoneNumber": "Phone Number",
+    "reason": "Reason",
+    "role": "Role",
+    "teamId": "Team ID",
+    "teamName": "Team name",
+    "teamUrl": "Team URL",
+    "title": "Title",
+    "verificationCode": "Verification Code"
+  },
+  "modals": {
+    "banUser": {
+      "description": "Ban a user from the platform",
+      "title": "Ban User"
+    },
+    "createTeam": {
+      "title": "Create a new team"
+    },
+    "createUser": {
+      "description": "Invite a new user to the platform",
+      "title": "Create a new user"
+    },
+    "deleteAccount": {
+      "title": "Delete Account"
+    },
+    "deleteFeedback": {
+      "title": "Delete Feedback"
+    },
+    "deletePost": {
+      "title": "Delete Post"
+    },
+    "deleteUser": {
+      "description": "This action is irreversible",
+      "title": "Delete User"
+    },
+    "editPost": {
+      "title": "Edit Post"
+    },
+    "linkAccount": {
+      "title": "Link Account"
+    },
+    "newPost": {
+      "title": "New Post"
+    },
+    "registerPasskey": {
+      "title": "Register a new passkey"
+    },
+    "replyFeedback": {
+      "title": "Reply to Feedback"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "accountSecurity": "Account Security",
+      "accountSettings": "Account Settings",
+      "aiImageGen": "AI Image Generation",
+      "imageGallery": "Image Gallery",
+      "linkShortner": "Link Shortener",
+      "posts": "Posts",
+      "tasksDemo": "Tasks Demo",
+      "teamSettings": "Team Settings",
+      "workspaceMembers": "Workspace Members"
+    },
+    "superAdmin": {
+      "allTeams": "All Teams",
+      "feedback": "Feedback",
+      "stripePlans": "Stripe Plans",
+      "users": "Users"
+    }
+  },
+  "toast": {
+    "loggedInSuccessfully": {
+      "title": "Logged in successfully"
+    },
+    "passwordCopied": {
+      "title": "Password copied"
+    },
+    "passwordUpdated": {
+      "title": "Password updated successfully"
+    },
+    "passwordResetEmailSent": {
+      "title": "Password reset email sent"
+    },
+    "postCreated": {
+      "description": "Your post has been created successfully",
+      "title": "Post created"
+    },
+    "postDeleted": {
+      "description": "Your post has been deleted successfully",
+      "title": "Post deleted"
+    },
+    "postUpdated": {
+      "description": "Your post has been updated successfully",
+      "title": "Post updated"
+    },
+    "translationSaveFailed": {
+      "description": "Could not save the translation. Please try again.",
+      "title": "Translation Save Failed"
+    },
+    "translationSaved": {
+      "title": "Translation Saved"
+    },
+    "userCreated": {
+      "title": "User Created Successfully"
+    },
+    "userDeleted": {
+      "title": "User deleted successfully"
+    },
+    "userBanned": {
+      "title": "User Banned Successfully"
+    },
+    "userUnbanned": {
+      "title": "User unbanned successfully"
+    },
+    "teamCreated": {
+      "title": "Team created successfully"
+    },
+    "teamDeleted": {
+      "title": "Team deleted successfully"
+    },
+    "teamFailedToCreate": {
+      "title": "Failed to create team"
+    },
+    "teamFailedToDelete": {
+      "title": "Failed to delete team"
+    },
+    "teamUrlAlreadyInUse": {
+      "title": "Team URL already in use"
+    },
+    "accountUnlinked": {
+      "title": "Account unlinked"
+    },
+    "accountDeleted": {
+      "title": "Account Deleted"
+    },
+    "phoneNumberVerified": {
+      "title": "Phone number verified"
+    },
+    "phoneNumberRemoved": {
+      "title": "Phone number removed"
+    },
+    "verificationCodeSent": {
+      "title": "Verification code sent"
+    },
+    "failedToSendVerificationCode": {
+      "title": "Failed to send verification code"
+    },
+    "failedToVerifyCode": {
+      "title": "Failed to verify code"
+    },
+    "failedToRemovePhoneNumber": {
+      "title": "Failed to remove phone number"
+    },
+    "invalidPhoneNumber": {
+      "title": "Invalid phone number"
+    },
+    "emailCopied": {
+      "title": "Email copied to clipboard!"
+    },
+    "userIdCopied": {
+      "title": "User ID copied to clipboard!"
+    },
+    "memberInvited": {
+      "title": "Member invited successfully"
+    },
+    "failedToInviteMember": {
+      "title": "Failed to invite member"
+    },
+    "failedToRemoveMember": {
+      "title": "Failed to remove member"
+    },
+    "stripeSyncSuccess": {
+      "title": "Stripe data synced successfully"
+    },
+    "stripeSyncFailed": {
+      "title": "Failed to sync Stripe data"
+    },
+    "stripeDeleteFailed": {
+      "title": "Failed to delete product"
+    },
+    "billingCheckoutFailed": {
+      "title": "Failed to create checkout session"
+    },
+    "billingPortalFailed": {
+      "title": "Failed to access billing portal"
+    },
+    "error": {
+      "title": "Error"
+    }
+  },
+  "translationUi": {
+    "baseFromSystemTranslation": "Base from System Translation",
+    "category": "Category",
+    "createTranslation": "Create Translation",
+    "description": "Description",
+    "edit": "Edit",
+    "keyPath": "Key Path",
+    "no": "No",
+    "noTranslation": "No translation",
+    "noTranslationAvailable": "No translation available",
+    "override": "Override",
+    "systemValues": "System Values",
+    "teamOverrideDescription": "Team Override Description",
+    "teamTranslationOverrides": "Team Translation Overrides",
+    "translations": "Translations",
+    "updateTranslation": "Update Translation",
+    "yes": "Yes",
+    "yourOverride": "Your Override"
+  },
+  "validation": {
+    "categoryRequired": "Category is required",
+    "contentRequired": "Content is required",
+    "invalidEmail": "Invalid email",
+    "keyPathRequired": "Key path is required",
+    "nameRequired": "Name is required",
+    "titleRequired": "Title is required",
+    "translationRequired": "At least one translation is required",
+    "titleMaxLength": "Title must be less than 100 characters",
+    "contentMaxLength": "Content must be less than 1000 characters"
+  },
+  "superAdmin": {
+    "allTeams": "All Teams",
+    "feedback": {
+      "replyToFeedback": "Reply to Feedback",
+      "sendResponse": "Send a response to the user's feedback",
+      "deleteFeedback": "Delete Feedback",
+      "irreversibleAction": "This action is irreversible",
+      "detailsAndReply": "Details & Reply",
+      "markAsClosed": "Mark as Closed",
+      "sendReply": "Send Reply",
+      "feedbackMarkedClosed": "Feedback marked as closed",
+      "feedbackDeleted": "Feedback deleted",
+      "feedbackDeletedDescription": "The feedback has been deleted",
+      "replySent": "Reply sent",
+      "replySentDescription": "Your response has been sent to the user",
+      "failedToSendReply": "Failed to send reply",
+      "failedToMarkClosed": "Failed to mark feedback as closed",
+      "failedToDeleteFeedback": "Failed to delete feedback",
+      "userSays": "says"
+    },
+    "columns": {
+      "name": "Name",
+      "owner": "Owner",
+      "members": "Members",
+      "subscription": "Subscription",
+      "createdAt": "Created At",
+      "user": "User",
+      "email": "Email",
+      "status": "Status",
+      "message": "Message",
+      "date": "Date",
+      "referrer": "Referrer"
+    },
+    "meta": {
+      "pageUrl": "Page URL:",
+      "browser": "Browser:",
+      "platform": "Platform:",
+      "screen": "Screen:",
+      "language": "Language:",
+      "timezone": "Timezone:",
+      "colorScheme": "Color Scheme:"
+    }
+  },
+  "placeholders": {
+    "enterNewPassword": "Enter new password",
+    "enterTeamName": "Enter team name",
+    "exampleMacBook": "Example: My MacBook",
+    "myAwesomeTeam": "my-awesome-team",
+    "optionalDescription": "Optional description for this translation",
+    "personalOrCompanyName": "Personal or Company Name",
+    "enterYourResponse": "Enter your response...",
+    "phoneNumber": "+1234567890",
+    "verificationCode": "○",
+    "enterNewTranslation": "Enter new translation...",
+    "editTranslation": "Edit translation..."
+  },
+  "editor": {
+    "savedSuccessfully": "Saved Successfully",
+    "saveFailed": "Save Failed",
+    "allTranslationsSaved": "All translations saved",
+    "editorsInitialized": "Editors Initialized",
+    "editorsReady": "Left and right editors are ready",
+    "syncEnabled": "Sync Enabled",
+    "syncDisabled": "Sync Disabled",
+    "editorsSyncContent": "Editors will sync content",
+    "independentEditingMode": "Independent editing mode"
+  },
+  "accountSettings": {
+    "general": {
+      "personalInformation": "Personal Information",
+      "privacyNotice": "Your personal information is not shared with anyone.",
+      "avatar": "Avatar",
+      "name": "Name",
+      "email": "Email",
+      "accountId": "Account ID"
+    },
+    "passkey": {
+      "manager": "Passkey Manager",
+      "addPasskey": "Add Passkey",
+      "description": "Add and manage your passkeys here",
+      "registerNew": "Register a new passkey",
+      "noPasskeys": "No fingerprints or face IDs linked to your account.",
+      "name": "Name",
+      "delete": "Delete"
+    },
+    "phoneNumber": {
+      "title": "Phone Number",
+      "phoneNumber": "Phone Number",
+      "verify": "Verify Phone Number",
+      "remove": "Remove",
+      "verificationCode": "Verification Code",
+      "verifyButton": "Verify",
+      "cancel": "Cancel",
+      "changeNumber": "Change Phone Number"
+    },
+    "password": {
+      "newPassword": "New Password",
+      "updatePassword": "Update Password"
+    },
+    "linkedAccounts": {
+      "linkAccount": "Link Account",
+      "description": "Link an account to your account."
+    },
+    "dangerZone": {
+      "deleteAccount": "Delete Account",
+      "description": "Please confirm your intent to delete your account.",
+      "confirmationLabel": "Please type 'delete' to confirm",
+      "cancel": "Cancel",
+      "proceed": "Proceed",
+      "confirmationMessage": "Please type 'delete' to confirm",
+      "irreversible": "This action is irreversible and will remove all data associated with it"
+    }
+  },
+  "branding": {
+    "appName": "Supersaas V3"
+  },
+  "newsletter": {
+    "alreadySubscribed": "You are already subscribed to our newsletter.",
+    "submitSuccess": "The form has been submitted."
+  },
+  "feedback": {
+    "messageRequired": "Message is required",
+    "helpDescription": "Have a question or need assistance? We're here to help!"
+  }
+}

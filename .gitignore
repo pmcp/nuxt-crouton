@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+.pnpm-store
+.pnpm-debug.log
+
+# Nuxt
+.nuxt
+.output
+dist
+.cache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+coverage
+.nyc_output
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build
+*.tsbuildinfo

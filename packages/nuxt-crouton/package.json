@@ -1,0 +1,37 @@
+{
+  "name": "@fyit/nuxt-crouton",
+  "version": "1.0.0",
+  "description": "Base CRUD layer for FYIT scaffolded collections",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "registry",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crud",
+    "scaffolding"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.0.0",
+    "@nuxt/ui": "^3.0.0"
+  }
+}
