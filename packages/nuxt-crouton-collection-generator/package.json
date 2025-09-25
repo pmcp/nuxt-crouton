@@ -1,6 +1,6 @@
 {
   "name": "@friendlyinternet/nuxt-crouton-collection-generator",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Collection generator CLI for Nuxt Crouton - Generate complete CRUD collections with API, components, and database schema",
   "type": "module",
   "bin": {
