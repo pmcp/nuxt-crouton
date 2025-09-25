@@ -125,8 +125,9 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
       return true
     }
     
-    // Add named export for the new collection schema using layer alias
-    const exportLine = `export { ${exportName} } from '#layers/${layer}-${cases.plural}/server/database/schema'`
+show    // Add named export for the new collection schema
+    // Use relative path for Drizzle compatibility (drizzle-kit doesn't understand Nuxt aliases)
+    const exportLine = `export { ${exportName} } from '../../../layers/${layer}/collections/${cases.plural}/server/database/schema'`
     
     // Add the new export at the end of the file
     content = content.trim() + '\n' + exportLine + '\n'
@@ -307,9 +308,9 @@ async function updateRootNuxtConfig(layer) {
       if (!currentExtends.includes(layerPath)) {
         // Parse existing entries
         const lines = currentExtends.split('\n')
-          .filter(line => line.trim())
-          .map(line => line.trim().replace(/,?\s*$/, '')) // Remove trailing commas
-        
+          .map(line => line.trim().replace(/,?\s*$/, '')) // Remove trailing commas first
+          .filter(line => line && line !== ',' && !line.startsWith('//')) // Filter empty lines, standalone commas, and comments
+
         lines.push(layerPath)
         
         // Add proper indentation and commas
@@ -383,8 +384,8 @@ export default defineNuxtConfig({
 
       // Parse existing entries
       let lines = currentExtends.split('\n')
-        .filter(line => line.trim())
         .map(line => line.trim().replace(/,$/, ''))
+        .filter(line => line && line !== ',' && !line.startsWith('//'))
 
       let needsUpdate = false
 
