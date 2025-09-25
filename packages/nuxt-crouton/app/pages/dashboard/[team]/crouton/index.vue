@@ -19,12 +19,12 @@
 
 <script setup lang="ts">
 const route = useRoute()
-const { $croutonRegistry } = useNuxtApp()
+const appConfig = useAppConfig()
 
 // Get collection names from registry
 const collectionNames = computed(() => {
-  if (!$croutonRegistry) return []
-  return Object.keys($croutonRegistry)
+  const croutonCollections = appConfig.croutonCollections || {}
+  return Object.keys(croutonCollections)
 })
 
 // Format collection name for display (e.g., translationsUi -> Translations UI)

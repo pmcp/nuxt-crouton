@@ -30,10 +30,11 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 // Verify collection exists in registry
-const { $croutonRegistry } = useNuxtApp()
+const appConfig = useAppConfig()
+const croutonCollections = appConfig.croutonCollections || {}
 
 onMounted(() => {
-  if (!$croutonRegistry || !$croutonRegistry[collectionName.value]) {
+  if (!croutonCollections || !croutonCollections[collectionName.value]) {
     error.value = `Collection not found: ${collectionName.value}`
     loading.value = false
   } else {

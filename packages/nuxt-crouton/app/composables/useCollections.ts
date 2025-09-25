@@ -20,7 +20,7 @@ type ConfigsMap = {
 
 /**
  * Dynamic collection management using user's registry
- * Collections are registered via the generator in app/crouton-collections.ts
+ * Collections are registered via the generator in app.config.ts
  */
 export default function useCollections() {
   // Configs will be loaded dynamically from user's collections
@@ -35,9 +35,9 @@ export default function useCollections() {
     }
   })
 
-  // Get the registry from the plugin
-  const { $croutonRegistry } = useNuxtApp()
-  const collectionRegistry = $croutonRegistry || {}
+  // Get the registry from app.config
+  const appConfig = useAppConfig()
+  const collectionRegistry = appConfig.croutonCollections || {}
 
   // Create reactive state for each collection
   const collections = Object.keys(collectionRegistry).reduce((acc, name) => {
