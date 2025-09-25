@@ -1,0 +1,90 @@
+{
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Product Name",
+      "placeholder": "Enter product name",
+      "helpText": "The name of the product as displayed to customers"
+    }
+  },
+  "description": {
+    "type": "text",
+    "meta": {
+      "required": false,
+      "label": "Description",
+      "placeholder": "Describe the product",
+      "helpText": "Detailed product description"
+    }
+  },
+  "price": {
+    "type": "number",
+    "meta": {
+      "required": true,
+      "label": "Price",
+      "placeholder": "0.00",
+      "helpText": "Product price in USD"
+    }
+  },
+  "stock": {
+    "type": "integer",
+    "meta": {
+      "required": true,
+      "label": "Stock Quantity",
+      "placeholder": "0",
+      "helpText": "Number of items in stock"
+    }
+  },
+  "isActive": {
+    "type": "boolean",
+    "meta": {
+      "required": false,
+      "label": "Active",
+      "helpText": "Is this product currently available?"
+    }
+  },
+  "category": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Category",
+      "placeholder": "Select a category",
+      "helpText": "Product category for organization"
+    }
+  },
+  "sku": {
+    "type": "string",
+    "meta": {
+      "required": false,
+      "label": "SKU",
+      "placeholder": "ABC-123",
+      "helpText": "Stock Keeping Unit for inventory"
+    }
+  },
+  "releaseDate": {
+    "type": "date",
+    "meta": {
+      "required": false,
+      "label": "Release Date",
+      "helpText": "When the product becomes available"
+    }
+  },
+  "tags": {
+    "type": "string",
+    "meta": {
+      "required": false,
+      "label": "Tags",
+      "placeholder": "tag1, tag2, tag3",
+      "helpText": "Comma-separated tags for search"
+    }
+  },
+  "vendorId": {
+    "type": "uuid",
+    "refTarget": "vendors",
+    "meta": {
+      "required": false,
+      "label": "Vendor",
+      "helpText": "The vendor supplying this product"
+    }
+  }
+}
