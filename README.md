@@ -37,11 +37,11 @@ Add to your `nuxt.config.ts`:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@fyit/nuxt-crouton-translations' // Includes base CRUD + i18n
+    '@friendlyinternet/nuxt-crouton-translations' // Includes base CRUD + i18n
     // OR
-    '@fyit/nuxt-crouton' // Just base CRUD
+    '@friendlyinternet/nuxt-crouton' // Just base CRUD
     // OR
-    '@fyit/nuxt-crouton-editor' // CRUD + Editor
+    '@friendlyinternet/nuxt-crouton-editor' // CRUD + Editor
   ]
 })
 ```
