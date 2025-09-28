@@ -249,8 +249,8 @@ async function updateRegistry(layer, collection, collectionKey, componentName) {
 
     // Add new entry to croutonCollections
     const composableName = `use${componentName}`
-    // Use direct reference since Nuxt auto-imports composables
-    const newEntry = `    ${collectionKey}: ${composableName},`
+    // Use string value - the actual composable is accessed via auto-imports
+    const newEntry = `    ${collectionKey}: '${composableName}',`
 
     // Check if croutonCollections exists
     if (!content.includes('croutonCollections')) {
@@ -617,7 +617,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   }
 
   // Update collection registry
-  const collectionKey = `${layer}${cases.pascalCase}`
+  const collectionKey = `${layer}${cases.pascalCasePlural}`
   const componentName = `${layerPascalCase}${cases.pascalCasePlural}`
   await updateRegistry(layer, cases.plural, collectionKey, componentName)
 
