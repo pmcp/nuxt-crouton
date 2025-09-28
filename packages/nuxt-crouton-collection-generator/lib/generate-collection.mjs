@@ -216,7 +216,11 @@ async function createDatabaseTable(config) {
 
 // Update collection registry with new collection
 async function updateRegistry(layer, collection, collectionKey, componentName) {
-  const registryPath = path.resolve('app.config.ts')
+  // Check if app/ directory exists (Nuxt 4 default structure)
+  const appDirExists = await fsp.stat(path.resolve('app')).then(() => true).catch(() => false)
+  const registryPath = appDirExists
+    ? path.resolve('app/app.config.ts')
+    : path.resolve('app.config.ts')
 
   try {
     let content
@@ -245,7 +249,8 @@ async function updateRegistry(layer, collection, collectionKey, componentName) {
 
     // Add new entry to croutonCollections
     const composableName = `use${componentName}`
-    const newEntry = `    ${collectionKey}: () => import('#imports').then(m => m.${composableName}),`
+    // Use direct reference since Nuxt auto-imports composables
+    const newEntry = `    ${collectionKey}: ${composableName},`
 
     // Check if croutonCollections exists
     if (!content.includes('croutonCollections')) {
