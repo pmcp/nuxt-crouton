@@ -35,6 +35,7 @@
 
 <script lang="ts" setup>
 import type { TablePaginationProps } from '../types/table'
+import { useT } from '../composables/useT'
 
 const { t, tString } = useT()
 

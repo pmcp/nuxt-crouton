@@ -15,5 +15,5 @@
   </div>
 </template>
 <script setup>
-const { loading } = useCrud()
+const { loading } = useCrouton()
 </script>

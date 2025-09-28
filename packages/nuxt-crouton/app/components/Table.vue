@@ -7,13 +7,13 @@
     <template #body>
       <!-- Filters -->
       <div class="flex items-center justify-between gap-3 px-4 py-3">
-        <CrudTableSearch
+        <CroutonTableSearch
           v-model="search"
           :placeholder="tString('table.search')"
           :debounce-ms="300"
         />
 
-        <CrudTableActions
+        <CroutonTableActions
           :selected-rows="selectedRows"
           :collection="collection"
           :columns="tableColumns"
@@ -58,7 +58,7 @@
           </template>
 
           <template #actions-cell="{ row }">
-            <CrudMiniButtons
+            <CroutonMiniButtons
               delete
               @delete="openCrud('delete', collection, [row.original.id])"
               :delete-loading="row.optimisticAction === 'delete'"
@@ -71,7 +71,7 @@
       </div>
 
       <!-- Pagination -->
-      <CrudTablePagination
+      <CroutonTablePagination
         :page="page"
         :page-count="pageCount"
         :total-items="pageTotalToShow"
@@ -88,6 +88,7 @@ import { useDateFormat } from '@vueuse/core'
 import type { TableProps, TableSort, PaginationData } from '../types/table'
 import { useTableData } from '../composables/useTableData'
 import { useTableColumns } from '../composables/useTableColumns'
+import { useT } from '../composables/useT'
 
 // Props
 const props = withDefaults(defineProps<TableProps>(), {
@@ -106,7 +107,7 @@ const props = withDefaults(defineProps<TableProps>(), {
 
 // Composables
 const { t, tString } = useT()
-const { open: openCrud, getCollection, setPagination, getPagination } = useCrud()
+const { open: openCrud, getCollection, setPagination, getPagination } = useCrouton()
 
 // Refs
 const tableRef = useTemplateRef<any>('table')

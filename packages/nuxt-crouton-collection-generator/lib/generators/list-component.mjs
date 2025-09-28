@@ -11,7 +11,7 @@ export function generateListComponent(data, config = {}) {
   const hasTranslations = translatableFields.length > 0
 
   return `<template>
-  <CroutonTable
+  <CroutonList
     collection="${prefixedCamelCasePlural}"
     :columns="columns"
     :rows="collection${prefixedPascalCasePlural}"
@@ -26,7 +26,7 @@ export function generateListComponent(data, config = {}) {
     <template #${field}-data="{ row }">
       {{ t(row, '${field}') }}
     </template>`).join('')}
-  </CroutonTable>
+  </CroutonList>
 </template>
 
 <script setup lang="ts">${hasTranslations ? `

@@ -4,7 +4,7 @@
  * No SSR complexity - perfect for admin panels
  */
 export function useCollection(collectionName: string) {
-  const { getCollection, pagination, setPagination, getDefaultPagination } = useCrud()
+  const { getCollection, pagination, setPagination, getDefaultPagination } = useCrouton()
   const collections = useCollections()
   const pending = ref(false)
   const error = ref<any>(null)

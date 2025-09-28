@@ -20,7 +20,7 @@
 
 </template>
 <script setup>
-const { open } = useCrud()
+const { open } = useCrouton()
 
 const props = defineProps({
   title: {

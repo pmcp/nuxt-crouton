@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-const { open } = useCrud()
+const { open } = useCrouton()
 const toast = useToast()
 
 interface Entity {

@@ -101,7 +101,7 @@ ${formFields}${translationField}
 <script setup lang="ts">
 import type { ${prefixedPascalCase}FormProps, ${prefixedPascalCase}FormData } from '${typesPath}'
 
-const { send } = useCrud()
+const { send } = useCrouton()
 const props = defineProps<${prefixedPascalCase}FormProps>()
 const { defaultValue, schema, collection } = use${prefixedPascalCasePlural}()
 

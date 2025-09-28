@@ -23,11 +23,11 @@ const LAYERS = {
     description: 'Base CRUD layer with essential components',
     required: [],
     features: [
-      '✨ CrudButton component',
-      '✨ CrudEntitySelect component',
+      '✨ CroutonButton component',
+      '✨ CroutonEntitySelect component',
       '✨ ExpandableSlideover component',
       '✨ Table components with search',
-      '✨ CRUD composables (useCrud, useCollections)'
+      '✨ CRUD composables (useCrouton, useCollections)'
     ]
   },
   '@fyit/nuxt-crouton-translations': {

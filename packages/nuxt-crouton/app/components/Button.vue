@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-const { send } = useCrud()
+const { send } = useCrouton()
 const { collectionWithCapitalSingular } = useFormatCollections()
 
 const props = defineProps({

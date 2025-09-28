@@ -34,11 +34,11 @@ const MODULES = {
     description: 'CRUD components and utilities for collections',
     required: [],
     features: [
-      '✨ CrudButton component',
-      '✨ CrudEntitySelect component',
+      '✨ CroutonButton component',
+      '✨ CroutonEntitySelect component',
       '✨ ExpandableSlideover component',
       '✨ Table components with search and pagination',
-      '✨ CRUD composables (useCrud, useCollections)'
+      '✨ CRUD composables (useCrouton, useCollections)'
     ]
   }
 }

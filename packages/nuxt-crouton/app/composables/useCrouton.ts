@@ -12,12 +12,12 @@ import {
 import useCollections from './useCollections';
 
 // Type definitions
-type CrudAction = 'create' | 'update' | 'delete' | null
+type CroutonAction = 'create' | 'update' | 'delete' | null
 type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'create_open' | 'update_open' | 'delete_open'
 
-interface CrudState {
+interface CroutonState {
   id: string
-  action: CrudAction
+  action: CroutonAction
   collection: string | null
   activeItem: any
   items: any[]
@@ -73,16 +73,16 @@ export default function () {
 
 
   // useState - now using array of states for multiple slideovers
-  const crudStates = useState<CrudState[]>('crudStates', () => [])
+  const croutonStates = useState<CroutonState[]>('croutonStates', () => [])
   const MAX_DEPTH = 5 // Maximum nesting depth
 
   // Computed values for backward compatibility
-  const showCrud = computed(() => crudStates.value.length > 0)
-  const loading = computed(() => crudStates.value[crudStates.value.length - 1]?.loading || 'notLoading')
-  const action = computed(() => crudStates.value[crudStates.value.length - 1]?.action || null)
-  const activeCollection = computed(() => crudStates.value[crudStates.value.length - 1]?.collection || null)
-  const items = computed(() => crudStates.value[crudStates.value.length - 1]?.items || [])
-  const activeItem = computed(() => crudStates.value[crudStates.value.length - 1]?.activeItem || {})
+  const showCrouton = computed(() => croutonStates.value.length > 0)
+  const loading = computed(() => croutonStates.value[croutonStates.value.length - 1]?.loading || 'notLoading')
+  const action = computed(() => croutonStates.value[croutonStates.value.length - 1]?.action || null)
+  const activeCollection = computed(() => croutonStates.value[croutonStates.value.length - 1]?.collection || null)
+  const items = computed(() => croutonStates.value[croutonStates.value.length - 1]?.items || [])
+  const activeItem = computed(() => croutonStates.value[croutonStates.value.length - 1]?.activeItem || {})
 
   // Simple vars - removed unused actions object
 
@@ -98,7 +98,7 @@ export default function () {
 
 
   async function getCollection(collection: string, query: Record<string, any> = {}, usePagination: boolean = false) {
-    if(useCrudError().foundErrors()) return;
+    if(useCroutonError().foundErrors()) return;
 
     // Get test reference before async operations
     const collections = useCollections();
@@ -236,7 +236,7 @@ export default function () {
         console.log('[optimisticUpdate] Item in store after optimistic update:', updatedItem)
 
         // Update the actual state, not the computed property
-        const currentState = crudStates.value[crudStates.value.length - 1]
+        const currentState = croutonStates.value[croutonStates.value.length - 1]
         if (currentState) {
           currentState.activeItem = optimisticItem
         }
@@ -249,10 +249,10 @@ export default function () {
   }
 
   async function send(action: string, collection: string, data: any): Promise<any> {
-    if(useCrudError().foundErrors()) return;
+    if(useCroutonError().foundErrors()) return;
 
     // Find the state that initiated this send
-    const currentState = crudStates.value[crudStates.value.length - 1]
+    const currentState = croutonStates.value[croutonStates.value.length - 1]
     if (!currentState) return;
 
     currentState.loading = `${action}_send` as LoadingState
@@ -421,11 +421,11 @@ export default function () {
     }
   }
 
-  const open = async (actionIn: CrudAction, collection: string, ids: string[], container: 'slideover' | 'modal' | 'dialog' = 'slideover', initialData?: any): Promise<void> => {
-    if(useCrudError().foundErrors()) return;
+  const open = async (actionIn: CroutonAction, collection: string, ids: string[], container: 'slideover' | 'modal' | 'dialog' = 'slideover', initialData?: any): Promise<void> => {
+    if(useCroutonError().foundErrors()) return;
 
     // Check if we've reached maximum depth
-    if (crudStates.value.length >= MAX_DEPTH) {
+    if (croutonStates.value.length >= MAX_DEPTH) {
       const toast = useToast()
       toast.add({
         title: 'Maximum depth reached',
@@ -437,8 +437,8 @@ export default function () {
     }
 
     // Create new state object
-    const newState: CrudState = {
-      id: `crud-${Date.now()}-${Math.random()}`, // Unique ID for Vue key
+    const newState: CroutonState = {
+      id: `crouton-${Date.now()}-${Math.random()}`, // Unique ID for Vue key
       action: actionIn,
       collection: collection,
       activeItem: {},
@@ -449,7 +449,7 @@ export default function () {
     }
 
     // Add new state to array
-    crudStates.value.push(newState)
+    croutonStates.value.push(newState)
 
     if (actionIn === 'update') {
       try {
@@ -461,7 +461,7 @@ export default function () {
         // Use the correct API base path based on context
         const fullApiPath = getApiBasePath(apiPath)
 
-        console.log('[CRUD Update] Fetching item for edit:', {
+        console.log('[Crouton Update] Fetching item for edit:', {
           collection,
           apiPath,
           fullApiPath,
@@ -474,7 +474,7 @@ export default function () {
           query: { ids: ids.join(',') }
         });
 
-        console.log('[CRUD Update] Response received:', {
+        console.log('[Crouton Update] Response received:', {
           response,
           isArray: Array.isArray(response),
           hasItems: response?.items !== undefined,
@@ -485,27 +485,27 @@ export default function () {
         let activeItem: any;
         if (response?.items && response?.pagination) {
           // Response is paginated, extract items
-          console.log('[CRUD Update] Paginated response detected, extracting items')
+          console.log('[Crouton Update] Paginated response detected, extracting items')
           activeItem = Array.isArray(response.items) ? response.items[0] : response.items
         } else {
           // Regular response
           activeItem = Array.isArray(response) ? response[0] : response
         }
 
-        console.log('[CRUD Update] Active item extracted:', activeItem)
+        console.log('[Crouton Update] Active item extracted:', activeItem)
 
         // Find the state index and update it reactively
-        const stateIndex = crudStates.value.findIndex((s: CrudState) => s.id === newState.id)
+        const stateIndex = croutonStates.value.findIndex((s: CroutonState) => s.id === newState.id)
         if (stateIndex !== -1) {
-          crudStates.value[stateIndex] = {
-            ...crudStates.value[stateIndex],
+          croutonStates.value[stateIndex] = {
+            ...croutonStates.value[stateIndex],
             activeItem: activeItem,
             loading: 'notLoading'
-          } as CrudState
+          } as CroutonState
         }
         return; // Exit early since we've already set loading to notLoading
       } catch (error) {
-        console.error('[CRUD Update] Error fetching item:', error)
+        console.error('[Crouton Update] Error fetching item:', error)
         toast.add({
           title: 'Uh oh! Something went wrong.',
           description: String(error),
@@ -513,7 +513,7 @@ export default function () {
           color: 'primary'
         })
         // Remove the state we just added
-        crudStates.value.pop();
+        croutonStates.value.pop();
         return;
       }
     }
@@ -538,13 +538,13 @@ export default function () {
   const close = (stateId?: string): void => {
     if (stateId) {
       // Find the state and set isOpen to false to trigger animation
-      const state = crudStates.value.find((s: CrudState) => s.id === stateId)
+      const state = croutonStates.value.find((s: CroutonState) => s.id === stateId)
       if (state) {
         state.isOpen = false
       }
     } else {
       // Close the topmost state (backward compatibility)
-      const topState = crudStates.value[crudStates.value.length - 1]
+      const topState = croutonStates.value[croutonStates.value.length - 1]
       if (topState) {
         topState.isOpen = false
       }
@@ -553,39 +553,39 @@ export default function () {
 
   // New function to actually remove the state from the array (called after animation)
   const removeState = (stateId: string): void => {
-    const index = crudStates.value.findIndex((s: CrudState) => s.id === stateId)
+    const index = croutonStates.value.findIndex((s: CroutonState) => s.id === stateId)
     if (index !== -1) {
-      crudStates.value.splice(index, 1)
+      croutonStates.value.splice(index, 1)
     }
   }
 
   // New function to close all states
   const closeAll = (): void => {
     // Set all states to closed to trigger animations
-    crudStates.value.forEach((state: CrudState) => {
+    croutonStates.value.forEach((state: CroutonState) => {
       state.isOpen = false
     })
     // After a delay, clear all states (fallback in case after:leave doesn't fire)
     setTimeout(() => {
-      crudStates.value = []
+      croutonStates.value = []
     }, 300)
   }
 
   // Reset function for navigation scenarios
   const reset = (): void => {
-    crudStates.value = []
+    croutonStates.value = []
   }
 
   // Function to update pagination for a collection
   function setPagination(collection: string, paginationData: Partial<PaginationState>) {
-    console.log('[useCrud] setPagination called:', { collection, paginationData })
+    console.log('[useCrouton] setPagination called:', { collection, paginationData })
     const oldValue = pagination.value[collection]
     pagination.value[collection] = {
       ...DEFAULT_PAGINATION,
       ...pagination.value[collection],
       ...paginationData
     }
-    console.log('[useCrud] pagination state updated from:', oldValue, 'to:', pagination.value[collection])
+    console.log('[useCrouton] pagination state updated from:', oldValue, 'to:', pagination.value[collection])
   }
 
   // Function to get pagination for a collection
@@ -613,13 +613,13 @@ export default function () {
 
   return {
     pagination, // Already exported - the reactive state
-    showCrud,
+    showCrouton,
     loading,
     action,
     items,
     activeItem,
     activeCollection,
-    crudStates,
+    croutonStates,
     send,
     open,
     close,

@@ -25,9 +25,9 @@
         </div>
 
         <div class="w-full">
-          <CrudLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
+          <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
           <div v-else>
-            <CrudDynamicFormLoader
+            <CroutonDynamicFormLoader
               :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
               :collection="state.collection"
               :loading="state.loading"
@@ -65,9 +65,9 @@
         </div>
 
         <div class="w-full">
-          <CrudLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
+          <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
           <div v-else>
-            <CrudDynamicFormLoader
+            <CroutonDynamicFormLoader
               :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
               :collection="state.collection"
               :loading="state.loading"
@@ -133,9 +133,9 @@
     <!-- Body content -->
     <template #body>
       <div v-if="state.isOpen && state.collection" class="w-full h-full">
-         <CrudLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
+         <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
         <div v-else>
-          <CrudDynamicFormLoader
+          <CroutonDynamicFormLoader
             :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
             :collection="state.collection"
             :loading="state.loading"
@@ -153,12 +153,12 @@
 import type { Ref } from 'vue'
 
 // Type definitions
-type CrudAction = 'create' | 'update' | 'delete' | null
+type CroutonAction = 'create' | 'update' | 'delete' | null
 type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'create_open' | 'update_open' | 'delete_open'
 
-interface CrudState {
+interface CroutonState {
   id: string
-  action: CrudAction
+  action: CroutonAction
   collection: string | null
   activeItem: any
   items: any[]
@@ -168,8 +168,8 @@ interface CrudState {
   isExpanded?: boolean  // Track expand state for each slideover
 }
 
-interface CrudComposableReturn {
-  crudStates: Ref<CrudState[]>
+interface CroutonComposableReturn {
+  croutonStates: Ref<CroutonState[]>
   close: (stateId?: string) => void
   closeAll: () => void
   removeState: (stateId: string) => void
@@ -180,20 +180,20 @@ interface FormatCollectionsReturn {
 }
 
 // Use the composables
-const { crudStates, close, closeAll, removeState }: CrudComposableReturn = useCrud()
+const { croutonStates, close, closeAll, removeState }: CroutonComposableReturn = useCrouton()
 const { collectionWithCapitalSingular }: FormatCollectionsReturn = useFormatCollections()
 
 // Filter states by container type
 const modalStates = computed(() =>
-  crudStates.value.filter(state => state.containerType === 'modal')
+  croutonStates.value.filter(state => state.containerType === 'modal')
 )
 
 const dialogStates = computed(() =>
-  crudStates.value.filter(state => state.containerType === 'dialog')
+  croutonStates.value.filter(state => state.containerType === 'dialog')
 )
 
 const slideoverStates = computed(() =>
-  crudStates.value.filter(state => state.containerType === 'slideover' || !state.containerType)
+  croutonStates.value.filter(state => state.containerType === 'slideover' || !state.containerType)
 )
 
 // Get formatted collection name
@@ -216,7 +216,7 @@ const getPreviousSlideover = (index: number) => {
 // Simple close handler for modals/dialogs
 const handleClose = (stateId: string, isOpen: boolean): void => {
   if (!isOpen) {
-    const state = crudStates.value.find(s => s.id === stateId)
+    const state = croutonStates.value.find(s => s.id === stateId)
     if (state) state.isOpen = false
   }
 }

@@ -15,7 +15,9 @@ export function generateQueries(data, config = null) {
 
   const typesPath = getImportPath('fromQueriesToTypes', { layerName: layer, collectionName: plural })
 
-  return `import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
+  return `import { eq, and, desc, inArray } from 'drizzle-orm'
+import * as tables from '~/server/database/schema'
+import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
 
 export async function getAll${prefixedPascalCasePlural}(teamId: string) {
   const db = useDB()
