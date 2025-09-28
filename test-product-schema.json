@@ -1,90 +1,72 @@
 {
+  "id": {
+    "type": "string",
+    "meta": {
+      "primaryKey": true
+    }
+  },
   "name": {
     "type": "string",
     "meta": {
       "required": true,
-      "label": "Product Name",
-      "placeholder": "Enter product name",
-      "helpText": "The name of the product as displayed to customers"
+      "maxLength": 255
     }
   },
-  "description": {
-    "type": "text",
-    "meta": {
-      "required": false,
-      "label": "Description",
-      "placeholder": "Describe the product",
-      "helpText": "Detailed product description"
-    }
-  },
-  "price": {
-    "type": "number",
-    "meta": {
-      "required": true,
-      "label": "Price",
-      "placeholder": "0.00",
-      "helpText": "Product price in USD"
-    }
-  },
-  "stock": {
-    "type": "integer",
-    "meta": {
-      "required": true,
-      "label": "Stock Quantity",
-      "placeholder": "0",
-      "helpText": "Number of items in stock"
-    }
-  },
-  "isActive": {
-    "type": "boolean",
-    "meta": {
-      "required": false,
-      "label": "Active",
-      "helpText": "Is this product currently available?"
-    }
-  },
-  "category": {
+  "slug": {
     "type": "string",
     "meta": {
       "required": true,
-      "label": "Category",
-      "placeholder": "Select a category",
-      "helpText": "Product category for organization"
+      "unique": true,
+      "maxLength": 255
     }
+  },
+  "description": {
+    "type": "text"
+  },
+  "price": {
+    "type": "decimal",
+    "meta": {
+      "required": true,
+      "precision": 10,
+      "scale": 2
+    }
+  },
+  "salePrice": {
+    "type": "decimal",
+    "meta": {
+      "precision": 10,
+      "scale": 2
+    }
+  },
+  "inStock": {
+    "type": "boolean"
+  },
+  "quantity": {
+    "type": "number"
   },
   "sku": {
     "type": "string",
     "meta": {
-      "required": false,
-      "label": "SKU",
-      "placeholder": "ABC-123",
-      "helpText": "Stock Keeping Unit for inventory"
+      "unique": true,
+      "maxLength": 100
     }
   },
-  "releaseDate": {
-    "type": "date",
-    "meta": {
-      "required": false,
-      "label": "Release Date",
-      "helpText": "When the product becomes available"
-    }
+  "categoryId": {
+    "type": "string"
   },
   "tags": {
-    "type": "string",
-    "meta": {
-      "required": false,
-      "label": "Tags",
-      "placeholder": "tag1, tag2, tag3",
-      "helpText": "Comma-separated tags for search"
-    }
+    "type": "json"
   },
-  "vendorId": {
-    "type": "uuid",
-    "refTarget": "vendors",
-    "meta": {
-      "required": false,
-      "label": "Vendor",
-      "helpText": "The vendor supplying this product"
-    }
+  "metadata": {
+    "type": "json"
+  },
+  "publishedAt": {
+    "type": "date"
+  },
+  "createdAt": {
+    "type": "date"
+  },
+  "updatedAt": {
+    "type": "date"
   }
 }
