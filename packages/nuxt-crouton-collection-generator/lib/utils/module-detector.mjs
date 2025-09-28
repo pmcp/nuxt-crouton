@@ -155,6 +155,14 @@ export function displayMissingDependencies(dependencies) {
 }
 
 /**
+ * Check if a layer name is an npm package (vs local layer)
+ */
+function isNpmPackage(layerName) {
+  // Package names start with @ (scoped) or don't contain ./ prefix
+  return layerName.startsWith('@') || (!layerName.startsWith('./') && !layerName.startsWith('../'))
+}
+
+/**
  * Ensure nuxt.config extends required layers
  */
 export async function ensureLayersExtended(layers) {
@@ -170,14 +178,24 @@ export async function ensureLayersExtended(layers) {
       const moduleIndex = content.indexOf('modules:')
       if (moduleIndex !== -1) {
         const insertPoint = content.lastIndexOf('}', moduleIndex)
-        const layerPaths = layers.map(l => `    './layers/${l}'`).join(',\n')
+        const layerPaths = layers.map(l => {
+          const layerPath = isNpmPackage(l) ? l : `./layers/${l}`
+          return `    '${layerPath}'`
+        }).join(',\n')
         const extendsBlock = `\n  extends: [\n${layerPaths}\n  ],\n`
         content = content.slice(0, insertPoint) + extendsBlock + content.slice(insertPoint)
       }
     } else {
       // Check each layer is extended
       for (const layer of layers) {
-        const layerPath = `'./layers/${layer}'`
+        // Determine the correct path format
+        const layerPath = isNpmPackage(layer) ? `'${layer}'` : `'./layers/${layer}'`
+
+        // For npm packages, check if already extended (in any format)
+        if (isNpmPackage(layer) && content.includes(`'${layer}'`)) {
+          continue // Already extended
+        }
+
         if (!content.includes(layerPath)) {
           // Add to extends array
           const extendsMatch = content.match(/extends:\s*\[([^\]]*)\]/)
@@ -201,7 +219,8 @@ export async function ensureLayersExtended(layers) {
     console.warn(`⚠️  Could not update nuxt.config.ts: ${e.message}`)
     console.log(`   Please manually add to extends array:`)
     layers.forEach(layer => {
-      console.log(`     './layers/${layer}'`)
+      const layerPath = isNpmPackage(layer) ? layer : `./layers/${layer}`
+      console.log(`     '${layerPath}'`)
     })
   }
 }
