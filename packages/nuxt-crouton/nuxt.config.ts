@@ -1,3 +1,8 @@
+import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
+
+const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
 export default defineNuxtConfig({
   $meta: {
     name: 'nuxt-crouton',
@@ -7,7 +12,7 @@ export default defineNuxtConfig({
   components: {
     dirs: [
       {
-        path: './app/components',
+        path: join(currentDir, 'app/components'),
         prefix: 'Crouton',
         global: true
       }
@@ -15,7 +20,7 @@ export default defineNuxtConfig({
   },
 
   imports: {
-    dirs: ['./app/composables']
+    dirs: [join(currentDir, 'app/composables')]
   },
 
   // Make registry available
