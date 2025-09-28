@@ -11,13 +11,13 @@ export function generateListComponent(data, config = {}) {
   const hasTranslations = translatableFields.length > 0
 
   return `<template>
-  <CrudTable
+  <CroutonTable
     collection="${prefixedCamelCasePlural}"
     :columns="columns"
     :rows="collection${prefixedPascalCasePlural}"
   >
     <template #header>
-      <CrudTableHeader
+      <CroutonTableHeader
         title="${prefixedPascalCasePlural}"
         :collection="'${prefixedCamelCasePlural}'"
         createButton
@@ -26,7 +26,7 @@ export function generateListComponent(data, config = {}) {
     <template #${field}-data="{ row }">
       {{ t(row, '${field}') }}
     </template>`).join('')}
-  </CrudTable>
+  </CroutonTable>
 </template>
 
 <script setup lang="ts">${hasTranslations ? `

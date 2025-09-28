@@ -8,7 +8,7 @@ export default defineNuxtConfig({
     dirs: [
       {
         path: './app/components',
-        prefix: 'Crud',
+        prefix: 'Crouton',
         global: true
       }
     ]

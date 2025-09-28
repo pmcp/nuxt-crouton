@@ -69,7 +69,7 @@ export function generateFormComponent(data, config = {}) {
   return `<template>
   <div v-if="loading === 'notLoading'">
     <!-- DELETE BUTTON-->
-    <CrudButton
+    <CroutonButton
       v-if="action === 'delete'"
       :action="action"
       :collection="collection"
@@ -88,7 +88,7 @@ export function generateFormComponent(data, config = {}) {
     >
 ${formFields}${translationField}
 
-      <CrudButton
+      <CroutonButton
         :action="action"
         :collection="collection"
         :items="items"

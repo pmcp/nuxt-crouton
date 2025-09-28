@@ -15,7 +15,7 @@
       {{ error }}
     </div>
 
-    <CollectionViewer
+    <CroutonCollectionViewer
       v-else
       :collection-name="collectionName"
     />
