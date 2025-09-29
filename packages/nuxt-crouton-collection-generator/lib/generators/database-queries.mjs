@@ -1,6 +1,4 @@
 // Generator for database queries
-import { getImportPath } from '../utils/paths.mjs'
-
 export function generateQueries(data, config = null) {
   const { singular, plural, pascalCase, pascalCasePlural, layer, layerPascalCase } = data
   // Use layer-prefixed table name to match schema export
@@ -13,10 +11,9 @@ export function generateQueries(data, config = null) {
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
 
-  const typesPath = getImportPath('fromQueriesToTypes', { layerName: layer, collectionName: plural })
-
+!
   return `import { eq, and, desc, inArray } from 'drizzle-orm'
-import * as tables from '#${layer}/server/database/schema'
+import * as tables from './schema'
 import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
 
 export async function getAll${prefixedPascalCasePlural}(teamId: string) {

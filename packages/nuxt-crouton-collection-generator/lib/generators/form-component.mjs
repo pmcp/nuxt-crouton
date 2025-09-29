@@ -1,6 +1,4 @@
 // Generator for Form.vue component
-import { getImportPath } from '../utils/paths.mjs'
-
 export function generateFormComponent(data, config = {}) {
   const { pascalCase, pascalCasePlural, layerPascalCase, fields, singular, plural, layer } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
@@ -64,7 +62,7 @@ export function generateFormComponent(data, config = {}) {
   // Add translations to state if needed
   const translationsState = hasTranslations ? ',\n  translations: {}' : ''
 
-  const typesPath = getImportPath('fromComponentToTypes', { layerName: layer, collectionName: plural })
+  const typesPath = '../../types'
 
   return `<template>
   <div v-if="loading === 'notLoading'">

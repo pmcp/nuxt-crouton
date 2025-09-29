@@ -1,7 +1,7 @@
 // Define a type for collection names (will be extended by user's registry)
 type CollectionName = string
 
-// Type for config map
+// Type for config map entries supplied via app.config.ts
 interface CollectionConfig {
   componentName?: string
   apiPath?: string
@@ -23,21 +23,17 @@ type ConfigsMap = {
  * Collections are registered via the generator in app.config.ts
  */
 export default function useCollections() {
-  // Configs will be loaded dynamically from user's collections
-  // Each generated collection includes its own config
-  const configsMap: ConfigsMap = {}
+  // Get the registry from app.config – each entry should provide config data
+  const appConfig = useAppConfig()
+  const collectionRegistry = (appConfig.croutonCollections || {}) as ConfigsMap
 
-  // Build component map from configs (will be populated by user's collections)
+  // Build component map from configs so DynamicFormLoader can resolve forms
   const componentMap = reactive<Record<string, string>>({})
-  Object.entries(configsMap).forEach(([name, config]) => {
+  Object.entries(collectionRegistry).forEach(([name, config]) => {
     if (config?.componentName) {
       componentMap[name] = config.componentName
     }
   })
-
-  // Get the registry from app.config
-  const appConfig = useAppConfig()
-  const collectionRegistry = appConfig.croutonCollections || {}
 
   // Create reactive state for each collection
   const collections = Object.keys(collectionRegistry).reduce((acc, name) => {
@@ -47,13 +43,13 @@ export default function useCollections() {
 
   // Get config synchronously - returns undefined for collections without configs
   const getConfig = (name: string): CollectionConfig | undefined => {
-    return configsMap[name as keyof ConfigsMap]
+    return collectionRegistry[name as keyof ConfigsMap]
   }
 
   return {
     ...collections,
     componentMap,
     getConfig,
-    configs: configsMap
+    configs: collectionRegistry
   }
 }

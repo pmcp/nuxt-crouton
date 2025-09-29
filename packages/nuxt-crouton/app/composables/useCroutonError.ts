@@ -29,14 +29,31 @@ export default function () {
   }
 
   const foundErrors = () => {
-    if(!useNetwork().isOnline.value) {
+    console.log('[CroutonError] Checking for errors...')
+
+    const isOnline = useNetwork().isOnline.value
+    console.log('[CroutonError] Network status:', isOnline)
+
+    if(!isOnline) {
+      console.log('[CroutonError] ERROR: Not online, blocking action')
       triggerErrorMessage('error', 'Check your connection status.', null, false)
       return true
     }
-    if(!useUserSession().loggedIn.value) {
+
+    const userSession = useUserSession()
+    console.log('[CroutonError] UserSession object:', userSession)
+
+    const loggedIn = userSession.loggedIn?.value
+    console.log('[CroutonError] Login status:', loggedIn)
+
+    if(!loggedIn) {
+      console.log('[CroutonError] ERROR: Not logged in, blocking action')
       triggerErrorMessage('error', 'You are not logged in.', null, false)
       return true
-    };
+    }
+
+    console.log('[CroutonError] No errors found, proceeding')
+    return false
   }
 
   return {

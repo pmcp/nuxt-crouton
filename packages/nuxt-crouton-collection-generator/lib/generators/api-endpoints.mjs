@@ -1,6 +1,4 @@
 // Generator for API endpoints
-import { getImportPath } from '../utils/paths.mjs'
-
 export function generateGetEndpoint(data, config = null) {
   const { pascalCase, pascalCasePlural, layerPascalCase, plural, singular, layer } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
@@ -9,7 +7,7 @@ export function generateGetEndpoint(data, config = null) {
   // Check if this collection has translations
   const hasTranslations = config?.translations?.collections?.[plural] || config?.translations?.collections?.[singular]
 
-  const queriesPath = getImportPath('fromApiToQueries', { layerName: layer, collectionName: plural })
+  const queriesPath = '../../../../database/queries'
 
   return `import { getAll${prefixedPascalCasePlural}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'
 import { isTeamMember } from '@@/server/database/queries/teams'
@@ -38,7 +36,7 @@ export function generatePostEndpoint(data, config = null) {
   const { singular, pascalCase, layerPascalCase, layer, plural } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
 
-  const queriesPath = getImportPath('fromApiToQueries', { layerName: layer, collectionName: plural })
+  const queriesPath = '../../../../database/queries'
 
   return `import { create${prefixedPascalCase} } from '${queriesPath}'
 import { isTeamMember } from '@@/server/database/queries/teams'
@@ -81,14 +79,14 @@ export function generatePatchEndpoint(data, config = null) {
   }
   
   // Add imports based on translation needs
-  const queriesPath = getImportPath('fromApiToQueries', { layerName: layer, collectionName: plural })
+  const queriesPath = '../../../../database/queries'
   const imports = hasTranslations
     ? `import { update${prefixedPascalCase}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'`
     : `import { update${prefixedPascalCase} } from '${queriesPath}'`
 
   return `${imports}
 import { isTeamMember } from '@@/server/database/queries/teams'
-import type { ${prefixedPascalCase} } from '${getImportPath('fromApiToTypes', { layerName: layer, collectionName: plural })}'
+import type { ${prefixedPascalCase} } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
   const { id: teamId, ${singular}Id } = getRouterParams(event)
@@ -124,7 +122,7 @@ export function generateDeleteEndpoint(data, config = null) {
   const { singular, pascalCase, layerPascalCase, layer, plural } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
 
-  const queriesPath = getImportPath('fromApiToQueries', { layerName: layer, collectionName: plural })
+  const queriesPath = '../../../../database/queries'
 
   return `import { delete${prefixedPascalCase} } from '${queriesPath}'
 import { isTeamMember } from '@@/server/database/queries/teams'

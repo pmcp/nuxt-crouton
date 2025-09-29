@@ -421,8 +421,27 @@ export default function () {
     }
   }
 
-  const open = async (actionIn: CroutonAction, collection: string, ids: string[], container: 'slideover' | 'modal' | 'dialog' = 'slideover', initialData?: any): Promise<void> => {
-    if(useCroutonError().foundErrors()) return;
+  const open = async (actionIn: CroutonAction, collection: string, ids: string[] = [], container: 'slideover' | 'modal' | 'dialog' = 'slideover', initialData?: any): Promise<void> => {
+    console.log('[Crouton.open] Called with:', { actionIn, collection, ids, container, initialData })
+
+    // Check for useTeam availability
+    try {
+      const { currentTeam } = useTeam()
+      console.log('[Crouton.open] currentTeam:', currentTeam?.value)
+    } catch (error) {
+      console.log('[Crouton.open] ERROR accessing useTeam:', error)
+    }
+
+    const hasErrors = useCroutonError().foundErrors()
+    console.log('[Crouton.open] foundErrors result:', hasErrors)
+
+    if(hasErrors) {
+      console.log('[Crouton.open] BLOCKING: foundErrors returned true, exiting')
+      return;
+    }
+
+    console.log('[Crouton.open] No errors found, continuing...')
+    console.log('[Crouton.open] Current croutonStates length:', croutonStates.value.length)
 
     // Check if we've reached maximum depth
     if (croutonStates.value.length >= MAX_DEPTH) {
@@ -450,6 +469,8 @@ export default function () {
 
     // Add new state to array
     croutonStates.value.push(newState)
+    console.log('[Crouton.open] New state added, total states:', croutonStates.value.length)
+    console.log('[Crouton.open] New state details:', newState)
 
     if (actionIn === 'update') {
       try {
@@ -530,6 +551,8 @@ export default function () {
 
     // Set loading to notLoading (update actions have already returned)
     newState.loading = 'notLoading'
+    console.log('[Crouton.open] Function completed successfully, state loading set to:', newState.loading)
+    console.log('[Crouton.open] Final croutonStates:', croutonStates.value)
   }
 
 

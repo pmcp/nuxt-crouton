@@ -215,12 +215,28 @@ async function createDatabaseTable(config) {
 }
 
 // Update collection registry with new collection
-async function updateRegistry(layer, collection, collectionKey, componentName) {
+async function updateRegistry({ layer, collection, collectionKey, configExportName, layerPascalCase, pascalCasePlural }) {
   // Check if app/ directory exists (Nuxt 4 default structure)
   const appDirExists = await fsp.stat(path.resolve('app')).then(() => true).catch(() => false)
   const registryPath = appDirExists
     ? path.resolve('app/app.config.ts')
     : path.resolve('app.config.ts')
+
+  // Determine the path to the generated composable config
+  const composablePath = path.resolve(
+    'layers',
+    layer,
+    'collections',
+    collection,
+    'app',
+    'composables',
+    `use${layerPascalCase}${pascalCasePlural}.ts`
+  )
+
+  const relativeImport = path.relative(path.dirname(registryPath), composablePath).replace(/\\/g, '/')
+  const importPath = relativeImport.startsWith('.') ? relativeImport : `./${relativeImport}`
+  const importPathWithoutExtension = importPath.replace(/(\.ts|\.mts|\.cts|\.js|\.mjs|\.cjs)$/, '')
+  const importStatement = `import { ${configExportName} } from '${importPathWithoutExtension}'`
 
   try {
     let content
@@ -233,60 +249,43 @@ async function updateRegistry(layer, collection, collectionKey, componentName) {
     } catch (readError) {
       // File doesn't exist, create it with initial content
       console.log(`↻ Creating app.config.ts with crouton collections`)
-      content = `export default defineAppConfig({
-  croutonCollections: {
-    // Collections will be added here by the generator
-  }
-})
-`
+      content = `${importStatement}\n\nexport default defineAppConfig({\n  croutonCollections: {\n    ${collectionKey}: ${configExportName},\n  }\n})\n`
     }
 
-    // Check if already exists
+    // Ensure import is present
+    if (!content.includes(importStatement)) {
+      const importBlockMatch = content.match(/^(?:import[^\n]*\n)*/)
+      if (importBlockMatch && importBlockMatch[0]) {
+        const existingImports = importBlockMatch[0]
+        content = content.replace(existingImports, `${existingImports}${importStatement}\n`)
+      } else {
+        content = `${importStatement}\n\n${content}`
+      }
+    }
+
+    // Check if entry already exists
     if (content.includes(`${collectionKey}:`)) {
       console.log(`⚠️  Collection "${collectionKey}" already in registry`)
+      await fsp.writeFile(registryPath, content)
       return
     }
 
-    // Add new entry to croutonCollections
-    const composableName = `use${componentName}`
-    // Use string value - the actual composable is accessed via auto-imports
-    const newEntry = `    ${collectionKey}: '${composableName}',`
+    // Insert new entry into croutonCollections
+    const entryLine = `    ${collectionKey}: ${configExportName},`
+    const collectionsBlockRegex = /croutonCollections:\s*{\s*\n/
 
-    // Check if croutonCollections exists
-    if (!content.includes('croutonCollections')) {
-      // Add croutonCollections to existing app.config
+    if (!collectionsBlockRegex.test(content)) {
+      // No croutonCollections block yet, add one
       content = content.replace(
         'defineAppConfig({',
-        `defineAppConfig({
-  croutonCollections: {
-${newEntry}
-  },`
+        `defineAppConfig({\n  croutonCollections: {\n${entryLine}\n  },`
       )
     } else {
-      // Find and update existing croutonCollections
-      const croutonRegex = /croutonCollections:\s*{([^}]*)}/
-      const match = content.match(croutonRegex)
-
-      if (match) {
-        const currentCollections = match[1]
-
-        // Check if it's empty (only has comment or whitespace)
-        if (currentCollections.trim().startsWith('//') || currentCollections.trim() === '') {
-          // Replace comment with actual entry
-          content = content.replace(
-            match[0],
-            `croutonCollections: {\n${newEntry}\n  }`
-          )
-        } else {
-          // Add to existing collections
-          const updatedCollections = currentCollections.trimEnd() + '\n' + newEntry
-          content = content.replace(
-            match[0],
-            `croutonCollections: {${updatedCollections}\n  }`
-          )
-        }
-      }
+      content = content.replace(collectionsBlockRegex, match => `${match}${entryLine}\n`)
     }
+
+    // Clean up placeholder comments if present
+    content = content.replace(/\s*\/\/\s*Collections will be added here by the generator\s*/g, '')
 
     await fsp.writeFile(registryPath, content)
     console.log(`✓ ${fileExists ? 'Updated' : 'Created'} app.config.ts with "${collectionKey}" entry`)
@@ -618,8 +617,15 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
 
   // Update collection registry
   const collectionKey = `${layer}${cases.pascalCasePlural}`
-  const componentName = `${layerPascalCase}${cases.pascalCasePlural}`
-  await updateRegistry(layer, cases.plural, collectionKey, componentName)
+  const configExportName = `${layerPascalCase.toLowerCase()}${cases.pascalCasePlural}Config`
+  await updateRegistry({
+    layer,
+    collection: cases.plural,
+    collectionKey,
+    configExportName,
+    layerPascalCase,
+    pascalCasePlural: cases.pascalCasePlural
+  })
 
   console.log(`\n✅ Successfully generated collection '${cases.plural}' in layer '${layer}'`)
   console.log(`\nNext steps:`)

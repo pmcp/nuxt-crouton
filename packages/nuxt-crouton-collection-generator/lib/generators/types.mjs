@@ -1,17 +1,11 @@
 // Generator for TypeScript types
-import { getImportPath } from '../utils/paths.mjs'
-
 export function generateTypes(data) {
   const { pascalCase, pascalCasePlural, layerPascalCase, singular, layer, plural } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
   const prefixedSingular = `${layerPascalCase.toLowerCase()}${pascalCase}`
 
-  const composablePath = getImportPath('fromTypesToComposable', {
-    layerName: layer,
-    collectionName: plural,
-    composableName: `use${prefixedPascalCasePlural}`
-  })
+  const composablePath = `./app/composables/use${prefixedPascalCasePlural}`
 
   return `import type { z } from 'zod'
 import type { ${prefixedSingular}Schema } from '${composablePath}'
