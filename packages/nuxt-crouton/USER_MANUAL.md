@@ -4,6 +4,7 @@
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Critical Setup Steps](#critical-setup-steps)
+- [Collection Generator (Scaffolding)](#collection-generator-scaffolding)
 - [Core Concepts](#core-concepts)
 - [Components](#components)
 - [Composables](#composables)
@@ -26,14 +27,19 @@ Nuxt Crouton is a powerful CRUD (Create, Read, Update, Delete) layer for Nuxt ap
 
 ## Installation
 
-### 1. Install the package
+### 1. Install the packages
 
 ```bash
+# Core package
 npm install @friendlyinternet/nuxt-crouton
 # or
 pnpm add @friendlyinternet/nuxt-crouton
 # or
 yarn add @friendlyinternet/nuxt-crouton
+
+# Optional: Collection generator for scaffolding
+npm install -g @friendlyinternet/nuxt-crouton-collection-generator
+# or use with npx without installing globally
 ```
 
 ### 2. Add to your Nuxt config
@@ -103,6 +109,181 @@ The `CroutonContainer` component is responsible for rendering the modals, slideo
 - The button clicks will register (you'll see console logs if enabled)
 - The state will be updated internally
 - **But no UI will appear** because there's no container to render the forms
+
+## Collection Generator (Scaffolding)
+
+Nuxt Crouton includes a powerful generator tool that can scaffold complete CRUD collections with all necessary files, including API endpoints, database schemas, components, and composables.
+
+### Quick Start with Generator
+
+#### 1. Create a schema file
+
+```json
+// product-schema.json
+{
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Product Name"
+    }
+  },
+  "price": {
+    "type": "decimal",
+    "meta": {
+      "precision": 10,
+      "scale": 2,
+      "label": "Price"
+    }
+  },
+  "inStock": {
+    "type": "boolean",
+    "meta": {
+      "label": "In Stock"
+    }
+  }
+}
+```
+
+#### 2. Generate the collection
+
+```bash
+# Using CLI arguments
+npx crouton-generate shop products --fields-file=product-schema.json --dialect=sqlite
+
+# Or using a config file (recommended)
+npx crouton-generate config ./crouton.config.js
+```
+
+### Using Configuration Files
+
+For complex projects with multiple collections, use a configuration file:
+
+```javascript
+// crouton.config.js
+export default {
+  // Path to your JSON schema file
+  schemaPath: './schemas/product.json',
+
+  // Database dialect: 'pg' or 'sqlite'
+  dialect: 'sqlite',
+
+  // Target layers and collections to generate
+  targets: [
+    {
+      layer: 'shop',
+      collections: ['products', 'categories']
+    },
+    {
+      layer: 'blog',
+      collections: ['posts']
+    }
+  ],
+
+  // Optional flags
+  flags: {
+    noTranslations: true,    // Skip i18n fields
+    force: true,             // Overwrite existing files
+    noDb: false,            // Skip database migrations
+    dryRun: false,          // Preview without creating
+    autoRelations: false,   // Generate relation stubs
+    useMetadata: true       // Add timestamps
+  }
+}
+```
+
+Then generate all collections with:
+
+```bash
+# Using default config file (crouton.config.js)
+npx crouton-generate config
+
+# Or specify a custom config
+npx crouton-generate config ./my-config.js
+```
+
+### Multiple Schemas Configuration
+
+For different collections with unique schemas:
+
+```javascript
+// crouton.config.js
+export default {
+  // Define collections with their schema files
+  collections: [
+    { name: 'products', fieldsFile: './schemas/product.json' },
+    { name: 'categories', fieldsFile: './schemas/category.json' },
+    { name: 'posts', fieldsFile: './schemas/post.json' }
+  ],
+
+  // Specify which collections go in which layers
+  targets: [
+    {
+      layer: 'shop',
+      collections: ['products', 'categories']
+    },
+    {
+      layer: 'blog',
+      collections: ['posts']
+    }
+  ],
+
+  dialect: 'sqlite',
+  flags: {
+    noTranslations: true,
+    force: true
+  }
+}
+```
+
+### Generated Structure
+
+The generator creates:
+
+```
+layers/[layer]/collections/[collection]/
+├── app/
+│   ├── components/
+│   │   ├── Form.vue         # CRUD form with validation
+│   │   └── List.vue         # Data table with actions
+│   └── composables/
+│       └── use[Collection].ts   # Zod schemas and config
+├── server/
+│   ├── api/teams/[id]/[collection]/
+│   │   ├── index.get.ts     # GET endpoint
+│   │   ├── index.post.ts    # CREATE endpoint
+│   │   ├── [id].patch.ts    # UPDATE endpoint
+│   │   └── [id].delete.ts   # DELETE endpoint
+│   └── database/
+│       ├── queries.ts       # Database queries
+│       └── schema.ts        # Drizzle schema
+├── types.ts                 # TypeScript types
+└── nuxt.config.ts          # Layer config
+```
+
+### Supported Field Types
+
+- `string` - Text field
+- `text` - Long text/textarea
+- `number` - Integer field
+- `decimal` - Decimal/float
+- `boolean` - Checkbox/switch
+- `date` - Date picker
+- `json` - JSON data
+- `uuid` - UUID field with references
+
+### Generator Options
+
+| Option | Description |
+|--------|-------------|
+| `--fields-file <path>` | Path to JSON schema file |
+| `--config <path>` | Use configuration file |
+| `--dialect <pg\|sqlite>` | Database dialect |
+| `--no-translations` | Skip translation fields |
+| `--force` | Overwrite existing files |
+| `--no-db` | Skip database migrations |
+| `--dry-run` | Preview without creating |
+| `--auto-relations` | Add relation comments |
 
 ## Core Concepts
 
