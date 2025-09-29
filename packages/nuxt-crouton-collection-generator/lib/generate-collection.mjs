@@ -504,9 +504,35 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     layer,
     layerPascalCase,
     fields,
-    fieldsSchema: fields.filter(f => f.name !== 'id').map(f =>
-      `${f.name}: ${f.zod}${f.meta?.required ? `.min(1, '${f.name} is required')` : '.optional()'}`
-    ).join(',\n  '),
+    fieldsSchema: fields.filter(f => f.name !== 'id').map(f => {
+      const baseZod = f.zod
+
+      if (f.meta?.required) {
+        // Handle different types appropriately for required fields
+        if (f.type === 'date') {
+          // Dates use required_error parameter, not .min()
+          return `${f.name}: z.date({ required_error: '${f.name} is required' })`
+        } else if (f.type === 'string' || f.type === 'text') {
+          // Strings/text can use .min(1) to ensure non-empty
+          return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
+        } else if (f.type === 'number' || f.type === 'decimal') {
+          // Numbers are required but don't enforce a minimum value
+          return `${f.name}: ${baseZod}`
+        } else if (f.type === 'boolean') {
+          // Booleans are just required (true or false)
+          return `${f.name}: ${baseZod}`
+        } else if (f.type === 'json') {
+          // JSON objects are required
+          return `${f.name}: ${baseZod}`
+        } else {
+          // Default: just use the base zod validator
+          return `${f.name}: ${baseZod}`
+        }
+      } else {
+        // Optional fields
+        return `${f.name}: ${baseZod}.optional()`
+      }
+    }).join(',\n  '),
     fieldsDefault: fields.filter(f => f.name !== 'id').map(f => `${f.name}: ${f.default}`).join(',\n    '),
     fieldsColumns: fields.map(f => 
       `{ accessorKey: '${f.name}', header: '${f.name.charAt(0).toUpperCase() + f.name.slice(1)}' }`
