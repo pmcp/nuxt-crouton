@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { teamSettings } from '@@/server/database/schema/teams'
+import { teamSettings } from '@@/server/database/schema/teamSettings'
 import { nanoid } from 'nanoid'
 
 export default defineEventHandler(async (event) => {

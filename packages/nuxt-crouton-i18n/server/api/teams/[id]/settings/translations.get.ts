@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { teamSettings } from '@@/server/database/schema/teams'
+import { teamSettings } from '@@/server/database/schema/teamSettings'
 
 export default defineEventHandler(async (event) => {
   const { id: teamId } = getRouterParams(event)
