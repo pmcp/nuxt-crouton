@@ -1,0 +1,163 @@
+{
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Product Name",
+      "placeholder": "Enter product name",
+      "helpText": "The name of the product as displayed to customers",
+      "maxLength": 200
+    }
+  },
+  "description": {
+    "type": "text",
+    "meta": {
+      "required": false,
+      "label": "Description",
+      "placeholder": "Describe the product",
+      "helpText": "Detailed product description"
+    }
+  },
+  "price": {
+    "type": "decimal",
+    "meta": {
+      "required": true,
+      "label": "Price",
+      "placeholder": "0.00",
+      "helpText": "Product price in USD",
+      "precision": 10,
+      "scale": 2
+    }
+  },
+  "comparePrice": {
+    "type": "decimal",
+    "meta": {
+      "label": "Compare at Price",
+      "placeholder": "0.00",
+      "helpText": "Original price for showing discounts",
+      "precision": 10,
+      "scale": 2
+    }
+  },
+  "stock": {
+    "type": "integer",
+    "meta": {
+      "required": true,
+      "label": "Stock Quantity",
+      "placeholder": "0",
+      "helpText": "Number of items in stock",
+      "default": 0
+    }
+  },
+  "sku": {
+    "type": "string",
+    "meta": {
+      "required": false,
+      "unique": true,
+      "label": "SKU",
+      "placeholder": "ABC-123",
+      "helpText": "Stock Keeping Unit for inventory"
+    }
+  },
+  "categoryId": {
+    "type": "uuid",
+    "refTarget": "categories",
+    "meta": {
+      "required": true,
+      "label": "Category",
+      "helpText": "Product category for organization"
+    }
+  },
+  "isActive": {
+    "type": "boolean",
+    "meta": {
+      "required": false,
+      "label": "Active",
+      "helpText": "Is this product currently available?",
+      "default": true
+    }
+  },
+  "isFeatured": {
+    "type": "boolean",
+    "meta": {
+      "label": "Featured",
+      "helpText": "Show in featured products section",
+      "default": false
+    }
+  },
+  "images": {
+    "type": "json",
+    "meta": {
+      "label": "Product Images",
+      "helpText": "Array of image URLs"
+    }
+  },
+  "variants": {
+    "type": "json",
+    "meta": {
+      "label": "Product Variants",
+      "helpText": "Size, color, and other variants"
+    }
+  },
+  "weight": {
+    "type": "decimal",
+    "meta": {
+      "label": "Weight (kg)",
+      "precision": 8,
+      "scale": 3
+    }
+  },
+  "dimensions": {
+    "type": "json",
+    "meta": {
+      "label": "Dimensions",
+      "helpText": "Length, width, height in cm"
+    }
+  },
+  "tags": {
+    "type": "string",
+    "meta": {
+      "required": false,
+      "label": "Tags",
+      "placeholder": "tag1, tag2, tag3",
+      "helpText": "Comma-separated tags for search"
+    }
+  },
+  "vendorId": {
+    "type": "uuid",
+    "refTarget": "vendors",
+    "meta": {
+      "required": false,
+      "label": "Vendor",
+      "helpText": "The vendor supplying this product"
+    }
+  },
+  "releaseDate": {
+    "type": "date",
+    "meta": {
+      "required": false,
+      "label": "Release Date",
+      "helpText": "When the product becomes available"
+    }
+  },
+  "metaTitle": {
+    "type": "string",
+    "meta": {
+      "label": "SEO Title",
+      "maxLength": 70
+    }
+  },
+  "metaDescription": {
+    "type": "string",
+    "meta": {
+      "label": "SEO Description",
+      "maxLength": 160
+    }
+  }
+}
