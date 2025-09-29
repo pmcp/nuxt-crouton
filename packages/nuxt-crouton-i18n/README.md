@@ -13,19 +13,19 @@ Multi-language support layer extending `@friendlyinternet/nuxt-crouton` for FYIT
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-i18n
-# This automatically includes the base layer as a peer dependency
+# Install both base and addon
+pnpm add @friendlyinternet/nuxt-crouton @friendlyinternet/nuxt-crouton-i18n
 ```
 
 ## Configuration
 
-Add to your `nuxt.config.ts`:
+Add BOTH layers to your `nuxt.config.ts` (explicit pattern):
 
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-i18n'
-    // Automatically extends @friendlyinternet/nuxt-crouton
+    '@friendlyinternet/nuxt-crouton',       // Base layer (required)
+    '@friendlyinternet/nuxt-crouton-i18n'   // i18n addon
   ]
 })
 ```
@@ -111,7 +111,10 @@ Override default locales in your nuxt.config:
 
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-i18n'],
+  extends: [
+    '@friendlyinternet/nuxt-crouton',
+    '@friendlyinternet/nuxt-crouton-i18n'
+  ],
 
   i18n: {
     locales: [
@@ -126,14 +129,14 @@ export default defineNuxtConfig({
 ## Layer Architecture
 
 ```
-@friendlyinternet/nuxt-crouton (base CRUD)
-    ↑
-@friendlyinternet/nuxt-crouton-i18n (this layer)
+@friendlyinternet/nuxt-crouton (base CRUD - required)
+    +
+@friendlyinternet/nuxt-crouton-i18n (addon - this layer)
 ```
 
-When you extend this layer, you automatically get:
-1. Everything from nuxt-crouton (CRUD)
-2. Everything from nuxt-crouton-i18n (i18n)
+**Explicit configuration**: You must extend both layers:
+1. Base layer provides CRUD functionality
+2. i18n addon provides translation features
 
 ## Publishing
 

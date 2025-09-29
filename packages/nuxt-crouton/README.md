@@ -99,26 +99,31 @@ const {
 } = useCollections()
 ```
 
-## Extending This Layer
+## Using with Addons
 
-Other layers can build upon nuxt-crouton:
+This is the base layer. Use it with addon layers for additional features:
 
 ```typescript
-// nuxt-crouton-i18n/nuxt.config.ts
+// Your app's nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton'],
-  // Add translation-specific features...
+  extends: [
+    '@friendlyinternet/nuxt-crouton',       // Base (this package)
+    '@friendlyinternet/nuxt-crouton-i18n',  // Optional: Add translations
+    '@friendlyinternet/nuxt-crouton-editor' // Optional: Add rich text editor
+  ]
 })
 ```
 
 ## Architecture
 
 ```
-@friendlyinternet/nuxt-crouton (this layer)
-    ↑
-    ├── @friendlyinternet/nuxt-crouton-i18n
-    └── @friendlyinternet/nuxt-crouton-editor
+@friendlyinternet/nuxt-crouton (base - this layer)
+    +
+    ├── @friendlyinternet/nuxt-crouton-i18n (addon)
+    └── @friendlyinternet/nuxt-crouton-editor (addon)
 ```
+
+**Explicit pattern**: Always include base + any addons you need
 
 ## Publishing
 

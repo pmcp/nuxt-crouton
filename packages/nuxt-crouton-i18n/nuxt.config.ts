@@ -1,13 +1,11 @@
 export default defineNuxtConfig({
   $meta: {
     name: 'nuxt-crouton-i18n',
-    description: 'i18n layer for FYIT collections'
+    description: 'i18n addon layer for FYIT collections'
   },
 
-  // Extend the base crouton layer
-  extends: [
-    '@fyit/nuxt-crouton'
-  ],
+  // Note: This is an addon layer - users must explicitly extend both:
+  // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/nuxt-crouton-i18n']
 
   // Add i18n module
   modules: ['@nuxtjs/i18n'],

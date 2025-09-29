@@ -1,13 +1,11 @@
 export default defineNuxtConfig({
   $meta: {
     name: 'nuxt-crouton-editor',
-    description: 'Rich text editor layer for FYIT collections'
+    description: 'Rich text editor addon layer for FYIT collections'
   },
 
-  // Extend the base crouton layer
-  extends: [
-    '@fyit/nuxt-crouton'
-  ],
+  // Note: This is an addon layer - users must explicitly extend both:
+  // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/nuxt-crouton-editor']
 
   // Component configuration
   components: {

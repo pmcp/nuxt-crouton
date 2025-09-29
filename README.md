@@ -37,11 +37,12 @@ Add to your `nuxt.config.ts`:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-i18n' // Includes base CRUD + i18n
-    // OR
-    '@friendlyinternet/nuxt-crouton' // Just base CRUD
-    // OR
-    '@friendlyinternet/nuxt-crouton-editor' // CRUD + Editor
+    // Base layer (always required)
+    '@friendlyinternet/nuxt-crouton',
+
+    // Optional addon layers
+    '@friendlyinternet/nuxt-crouton-i18n',   // For translations
+    '@friendlyinternet/nuxt-crouton-editor'   // For rich text editing
   ]
 })
 ```
@@ -74,13 +75,13 @@ const { t } = useT()
 ## 🏗️ Architecture
 
 ```
-@friendlyinternet/nuxt-crouton (base layer)
-    ↑
-    ├── @friendlyinternet/nuxt-crouton-i18n (extends base + adds i18n)
-    └── @friendlyinternet/nuxt-crouton-editor (extends base + adds editor)
+@friendlyinternet/nuxt-crouton (base layer - always required)
+    +
+    ├── @friendlyinternet/nuxt-crouton-i18n (addon - adds i18n)
+    └── @friendlyinternet/nuxt-crouton-editor (addon - adds editor)
 ```
 
-When you extend a higher-level layer, you automatically get all features from the layers it extends.
+**Explicit Configuration**: Always include the base layer plus any addons you need. This makes dependencies clear and explicit.
 
 ## 🎯 Features
 

@@ -92,7 +92,7 @@ export async function detectRequiredDependencies(config) {
     Object.keys(config.translations.collections).length > 0
 
   if (hasTranslations && !config.noTranslations) {
-    // Check for nuxt-crouton-i18n layer
+    // Check for nuxt-crouton-i18n layer (addon)
     const layerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-i18n')
     const layerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-i18n')
 
@@ -107,9 +107,9 @@ export async function detectRequiredDependencies(config) {
         required.missing.push({
           type: 'layer',
           name: '@friendlyinternet/nuxt-crouton-i18n',
-          reason: 'Required for translation fields',
+          reason: 'Required addon for translation fields',
           installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-i18n',
-          configCmd: `Add '@friendlyinternet/nuxt-crouton-i18n' to extends array in nuxt.config.ts`
+          configCmd: `Add BOTH '@friendlyinternet/nuxt-crouton' and '@friendlyinternet/nuxt-crouton-i18n' to extends array`
         })
       }
     }
@@ -142,10 +142,20 @@ export function displayMissingDependencies(dependencies) {
   const installCmds = dependencies.missing.map(d => d.installCmd.replace('pnpm add ', '')).join(' ')
   console.log(`   pnpm add ${installCmds}`)
 
-  console.log('\nThen add to nuxt.config.ts:')
+  console.log('\nThen add ALL required layers to nuxt.config.ts:')
   console.log(`   extends: [`)
+
+  // Always show base layer first if it's missing
+  const hasBaseMissing = dependencies.missing.some(d => d.name === '@friendlyinternet/nuxt-crouton')
+  if (hasBaseMissing) {
+    console.log(`     '@friendlyinternet/nuxt-crouton',  // Base layer (always required)`)
+  }
+
+  // Show addon layers
   dependencies.missing.forEach(dep => {
-    console.log(`     '${dep.name}',`)
+    if (dep.name !== '@friendlyinternet/nuxt-crouton') {
+      console.log(`     '${dep.name}',  // Addon layer`)
+    }
   })
   console.log(`     // ... other layers`)
   console.log(`   ]`)
