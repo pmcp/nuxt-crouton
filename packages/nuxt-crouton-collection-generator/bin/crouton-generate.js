@@ -25,6 +25,30 @@ program
   .description('Generate CRUD collections for Nuxt Crouton')
   .version('1.0.0');
 
+// Config command
+program
+  .command('config [configPath]')
+  .description('Generate collections using a config file')
+  .action(async (configPath = './crouton.config.js') => {
+    const spinner = ora('Loading config...').start();
+
+    try {
+      // Pass config as the first argument to the generator
+      const args = ['--config', configPath];
+
+      spinner.stop();
+
+      // Import and execute the generator script directly
+      process.argv = ['node', 'generate-collection.mjs', ...args];
+      await import(generatorPath);
+
+    } catch (error) {
+      spinner.fail('Generation failed');
+      console.error(chalk.red(error.message));
+      process.exit(1);
+    }
+  });
+
 // Main generate command
 program
   .command('generate <layer> <collection>', { isDefault: true })
@@ -41,7 +65,19 @@ program
     const spinner = ora('Generating collection...').start();
 
     try {
-      // Build args for the generator script
+      // If config is provided, use config mode
+      if (options.config) {
+        const args = ['--config', options.config];
+
+        spinner.stop();
+
+        // Import and execute the generator script directly
+        process.argv = ['node', 'generate-collection.mjs', ...args];
+        await import(generatorPath);
+        return;
+      }
+
+      // Build args for the generator script (normal CLI mode)
       const args = [layer, collection];
 
       if (options.fieldsFile) {
@@ -65,9 +101,6 @@ program
       }
       if (options.db === false) {
         args.push('--no-db');
-      }
-      if (options.config) {
-        args.push(`--config=${options.config}`);
       }
 
       spinner.stop();

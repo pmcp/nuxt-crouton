@@ -92,7 +92,41 @@ After generation:
 
 ## Usage
 
-### Basic Command
+### Using a Config File (Recommended for Complex Projects)
+
+Create a `crouton.config.js` file:
+
+```javascript
+export default {
+  schemaPath: './product-schema.json',
+  dialect: 'sqlite',
+  targets: [
+    {
+      layer: 'shop',
+      collections: ['products']
+    }
+  ],
+  flags: {
+    noTranslations: true,
+    force: true
+  }
+}
+```
+
+Then generate using:
+
+```bash
+# Using default config file (crouton.config.js)
+crouton-generate config
+
+# Or specify a custom config file
+crouton-generate --config ./my-config.js
+
+# Or use the config command
+crouton-generate config ./my-config.js
+```
+
+### Basic Command (CLI Arguments)
 
 ```bash
 crouton-generate <layer> <collection> [options]
@@ -101,32 +135,45 @@ crouton-generate <layer> <collection> [options]
 ### Options
 
 - `--fields-file <path>` - Path to JSON schema file
+- `--config <path>` - Use configuration file instead of CLI arguments
 - `--dialect <pg|sqlite>` - Database dialect (default: pg)
-- `--config <path>` - Use a config file
+- `--no-translations` - Skip translation fields
+- `--force` - Force generation even if files exist
+- `--no-db` - Skip database table creation
 - `--dry-run` - Preview what will be generated
 - `--auto-relations` - Add relation stubs in comments
 
-### Using a Config File
+### Config File Documentation
 
-Create `crouton.config.js`:
+The configuration file allows you to define all generation settings in one place:
 
 ```javascript
+// crouton.config.js
 export default {
-  layer: 'shop',
-  collection: 'products',
-  fields: {
-    id: { type: "string", meta: { primaryKey: true } },
-    name: { type: "string", meta: { required: true } },
-    price: { type: "decimal", meta: { precision: 10, scale: 2 } }
-  },
-  dialect: 'pg'
+  // Path to your JSON schema file
+  schemaPath: './product-schema.json',
+
+  // Database dialect
+  dialect: 'sqlite',
+
+  // Target layers and collections
+  targets: [
+    {
+      layer: 'shop',
+      collections: ['products', 'categories']
+    }
+  ],
+
+  // Optional flags
+  flags: {
+    noTranslations: true,
+    force: true,
+    noDb: false
+  }
 }
 ```
 
-Then run:
-```bash
-crouton-generate --config=crouton.config.js
-```
+See `crouton.config.example.js` for a complete example with all available options.
 
 ## Schema Format
 

@@ -706,10 +706,11 @@ async function main() {
               fields,
               dialect: config.dialect || 'pg',
               autoRelations: config.flags?.autoRelations || false,
-              dryRun: false,
+              dryRun: config.flags?.dryRun || false,
               noDb: config.flags?.noDb || false,
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
+              useTeamUtility: config.flags?.useTeamUtility || false,
               config: config
             })
           }
@@ -717,7 +718,7 @@ async function main() {
       } else if (config.targets && config.schemaPath) {
         // Original simple config format
         const fields = await loadFields(config.schemaPath)
-        
+
         // Process each target
         for (const target of config.targets) {
           for (const collection of target.collections) {
@@ -728,10 +729,11 @@ async function main() {
               fields,
               dialect: config.dialect || 'pg',
               autoRelations: config.flags?.autoRelations || false,
-              dryRun: false,
+              dryRun: config.flags?.dryRun || false,
               noDb: config.flags?.noDb || false,
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
+              useTeamUtility: config.flags?.useTeamUtility || false,
               config: config
             })
           }
