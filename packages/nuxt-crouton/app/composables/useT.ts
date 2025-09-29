@@ -2,9 +2,9 @@
  * Stub translation composable for base nuxt-crouton layer
  *
  * This provides a simple fallback that returns keys as-is when the
- * @friendlyinternet/nuxt-crouton-translations layer is not installed.
+ * @friendlyinternet/nuxt-crouton-i18n layer is not installed.
  *
- * When the translations layer IS installed, it will override this stub
+ * When the i18n layer IS installed, it will override this stub
  * with full i18n functionality.
  */
 export function useT() {

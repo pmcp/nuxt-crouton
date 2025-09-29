@@ -92,12 +92,12 @@ export async function detectRequiredDependencies(config) {
     Object.keys(config.translations.collections).length > 0
 
   if (hasTranslations && !config.noTranslations) {
-    // Check for nuxt-crouton-translations layer
-    const layerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-translations')
-    const layerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-translations')
+    // Check for nuxt-crouton-i18n layer
+    const layerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-i18n')
+    const layerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-i18n')
 
     if (layerInstalled && layerExtended) {
-      required.layers.push('@fyit/nuxt-crouton-translations')
+      required.layers.push('@friendlyinternet/nuxt-crouton-i18n')
     } else {
       // Fallback to check for local translations layer
       const translationsLayerExists = await layerExists('translations')
@@ -106,10 +106,10 @@ export async function detectRequiredDependencies(config) {
       } else {
         required.missing.push({
           type: 'layer',
-          name: '@friendlyinternet/nuxt-crouton-translations',
+          name: '@friendlyinternet/nuxt-crouton-i18n',
           reason: 'Required for translation fields',
-          installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-translations',
-          configCmd: `Add '@friendlyinternet/nuxt-crouton-translations' to extends array in nuxt.config.ts`
+          installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-i18n',
+          configCmd: `Add '@friendlyinternet/nuxt-crouton-i18n' to extends array in nuxt.config.ts`
         })
       }
     }

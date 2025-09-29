@@ -30,8 +30,8 @@ const LAYERS = {
       '✨ CRUD composables (useCrouton, useCollections)'
     ]
   },
-  '@fyit/nuxt-crouton-translations': {
-    name: '@fyit/nuxt-crouton-translations',
+  '@fyit/nuxt-crouton-i18n': {
+    name: '@fyit/nuxt-crouton-i18n',
     description: 'Multi-language support extending base CRUD',
     extends: '@fyit/nuxt-crouton',
     required: ['@nuxtjs/i18n'],

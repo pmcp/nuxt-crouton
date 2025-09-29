@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   $meta: {
-    name: 'nuxt-crouton-translations',
-    description: 'Translations layer for FYIT collections'
+    name: 'nuxt-crouton-i18n',
+    description: 'i18n layer for FYIT collections'
   },
 
   // Extend the base crouton layer

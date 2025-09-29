@@ -1,4 +1,4 @@
-# @friendlyinternet/nuxt-crouton-translations
+# @friendlyinternet/nuxt-crouton-i18n
 
 Multi-language support layer extending `@friendlyinternet/nuxt-crouton` for FYIT scaffolded collections.
 
@@ -13,7 +13,7 @@ Multi-language support layer extending `@friendlyinternet/nuxt-crouton` for FYIT
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-translations
+pnpm add @friendlyinternet/nuxt-crouton-i18n
 # This automatically includes the base layer as a peer dependency
 ```
 
@@ -24,7 +24,7 @@ Add to your `nuxt.config.ts`:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-translations'
+    '@friendlyinternet/nuxt-crouton-i18n'
     // Automatically extends @friendlyinternet/nuxt-crouton
   ]
 })
@@ -111,7 +111,7 @@ Override default locales in your nuxt.config:
 
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-translations'],
+  extends: ['@friendlyinternet/nuxt-crouton-i18n'],
 
   i18n: {
     locales: [
@@ -128,12 +128,12 @@ export default defineNuxtConfig({
 ```
 @friendlyinternet/nuxt-crouton (base CRUD)
     ↑
-@friendlyinternet/nuxt-crouton-translations (this layer)
+@friendlyinternet/nuxt-crouton-i18n (this layer)
 ```
 
 When you extend this layer, you automatically get:
 1. Everything from nuxt-crouton (CRUD)
-2. Everything from nuxt-crouton-translations (i18n)
+2. Everything from nuxt-crouton-i18n (i18n)
 
 ## Publishing
 

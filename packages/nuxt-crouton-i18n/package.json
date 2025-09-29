@@ -1,7 +1,7 @@
 {
-  "name": "@friendlyinternet/nuxt-crouton-translations",
+  "name": "@friendlyinternet/nuxt-crouton-i18n",
   "version": "1.0.1",
-  "description": "Translations layer extending nuxt-crouton for multi-language support",
+  "description": "i18n layer extending nuxt-crouton for multi-language support",
   "type": "module",
   "main": "./nuxt.config.ts",
   "files": [
@@ -23,7 +23,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pmcp/nuxt-crouton.git",
-    "directory": "packages/nuxt-crouton-translations"
+    "directory": "packages/nuxt-crouton-i18n"
   },
   "bugs": {
     "url": "https://github.com/pmcp/nuxt-crouton/issues"
