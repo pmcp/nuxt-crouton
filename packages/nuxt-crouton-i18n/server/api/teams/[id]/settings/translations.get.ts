@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { teamSettings } from '@@/server/database/schema/teamSettings'
+import { teamSettings } from '@friendlyinternet/nuxt-crouton/server/database/schema/teamSettings'
 
 export default defineEventHandler(async (event) => {
   const { id: teamId } = getRouterParams(event)
