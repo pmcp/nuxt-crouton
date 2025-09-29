@@ -214,7 +214,7 @@ export async function ensureLayersExtended(layers) {
     }
 
     await fsp.writeFile(nuxtConfigPath, content, 'utf-8')
-    console.log(`✅ Updated nuxt.config.ts to extend required layers`)
+    console.log(`✓ Updated nuxt.config.ts to extend required layers`)
   } catch (e) {
     console.warn(`⚠️  Could not update nuxt.config.ts: ${e.message}`)
     console.log(`   Please manually add to extends array:`)

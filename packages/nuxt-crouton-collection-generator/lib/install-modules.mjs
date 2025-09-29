@@ -71,7 +71,7 @@ async function installModule(moduleName, isDev = false) {
     if (stderr && !stderr.includes('WARN')) {
       console.error(`⚠️  Warning: ${stderr}`)
     }
-    console.log(`✅ Installed ${moduleName}`)
+    console.log(`✓ Installed ${moduleName}`)
     return true
   } catch (error) {
     console.error(`❌ Failed to install ${moduleName}: ${error.message}`)
@@ -86,7 +86,7 @@ async function addToNuxtConfig(moduleName) {
 
     // Check if already configured
     if (content.includes(moduleName)) {
-      console.log(`✅ ${moduleName} already configured in nuxt.config.ts`)
+      console.log(`✓ ${moduleName} already configured in nuxt.config.ts`)
       return true
     }
 
@@ -105,7 +105,7 @@ async function addToNuxtConfig(moduleName) {
       content = content.replace(modulesMatch[0], `modules: [${newModules}\n  ]`)
 
       await fsp.writeFile(configPath, content, 'utf-8')
-      console.log(`✅ Added ${moduleName} to nuxt.config.ts`)
+      console.log(`✓ Added ${moduleName} to nuxt.config.ts`)
       return true
     } else {
       console.error(`❌ Could not find modules array in nuxt.config.ts`)
@@ -126,7 +126,7 @@ async function installDependencies(deps) {
 
   try {
     await execAsync(cmd)
-    console.log(`✅ Dependencies installed`)
+    console.log(`✓ Dependencies installed`)
     return true
   } catch (error) {
     console.error(`❌ Failed to install dependencies: ${error.message}`)
@@ -160,7 +160,7 @@ async function main() {
     const configured = await checkConfigured(moduleInfo.name)
 
     if (installed && configured) {
-      console.log(`   ✅ Already installed and configured`)
+      console.log(`   ✓ Already installed and configured`)
     } else {
       console.log(`   Features:`)
       moduleInfo.features.forEach(f => console.log(`     ${f}`))

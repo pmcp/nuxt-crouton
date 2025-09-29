@@ -17,16 +17,23 @@ import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExt
 import { generateFormComponent } from './generators/form-component.mjs'
 import { generateListComponent } from './generators/list-component.mjs'
 import { generateComposable } from './generators/composable.mjs'
-import { 
-  generateGetEndpoint, 
-  generatePostEndpoint, 
-  generatePatchEndpoint, 
-  generateDeleteEndpoint 
+import {
+  generateGetEndpoint,
+  generatePostEndpoint,
+  generatePatchEndpoint,
+  generateDeleteEndpoint
 } from './generators/api-endpoints.mjs'
+import {
+  generateGetEndpointSimplified,
+  generatePostEndpointSimplified,
+  generatePatchEndpointSimplified,
+  generateDeleteEndpointSimplified
+} from './generators/api-endpoints-simplified.mjs'
 import { generateQueries } from './generators/database-queries.mjs'
 import { generateSchema } from './generators/database-schema.mjs'
 import { generateTypes } from './generators/types.mjs'
 import { generateNuxtConfig } from './generators/nuxt-config.mjs'
+import { generateTeamAuthUtility, getTeamAuthUtilityPath } from './generators/team-auth-utility.mjs'
 
 function parseArgs() {
   const a = process.argv.slice(2)
@@ -59,13 +66,14 @@ function parseArgs() {
   const noDb = a.includes('--no-db')
   const force = a.includes('--force')
   const noTranslations = a.includes('--no-translations')
+  const useTeamUtility = a.includes('--use-team-utility')
 
   if (!layer || !collection) {
-    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations]')
+    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--use-team-utility]')
     process.exit(1)
   }
 
-  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations }
+  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, useTeamUtility }
 }
 
 async function loadFields(p) {
@@ -428,7 +436,7 @@ export default defineNuxtConfig({
   }
 }
 
-async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, config = null }) {
+async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, useTeamUtility = false, config = null }) {
   const cases = toCase(collection)
   const base = path.resolve('layers', layer, 'collections', cases.plural)
 
@@ -480,7 +488,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
       console.warn('⚠️  Continuing with --force despite missing dependencies')
     }
   } else {
-    console.log('✅ All required dependencies found')
+    console.log('✓ All required dependencies found')
     // Ensure layers are extended in nuxt.config
     await ensureLayersExtended(dependencies.layers)
   }
@@ -548,34 +556,40 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   console.log('✓ Created directory structure')
   
   // Generate all files using modules
+  // Use simplified endpoints if team utility flag is set
+  const getEndpointGen = useTeamUtility ? generateGetEndpointSimplified : generateGetEndpoint
+  const postEndpointGen = useTeamUtility ? generatePostEndpointSimplified : generatePostEndpoint
+  const patchEndpointGen = useTeamUtility ? generatePatchEndpointSimplified : generatePatchEndpoint
+  const deleteEndpointGen = useTeamUtility ? generateDeleteEndpointSimplified : generateDeleteEndpoint
+
   const files = [
-    { 
+    {
       path: path.join(base, 'app', 'components', 'Form.vue'),
       content: generateFormComponent(data, config)
     },
-    { 
+    {
       path: path.join(base, 'app', 'components', 'List.vue'),
       content: generateListComponent(data, config)
     },
-    { 
+    {
       path: path.join(base, 'app', 'composables', `use${layerPascalCase}${cases.pascalCasePlural}.ts`),
       content: generateComposable(data, config)
     },
-    { 
+    {
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, 'index.get.ts'),
-      content: generateGetEndpoint(data, config)
+      content: getEndpointGen(data, config)
     },
-    { 
+    {
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, 'index.post.ts'),
-      content: generatePostEndpoint(data, config)
+      content: postEndpointGen(data, config)
     },
-    { 
+    {
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id].patch.ts`),
-      content: generatePatchEndpoint(data, config)
+      content: patchEndpointGen(data, config)
     },
-    { 
+    {
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id].delete.ts`),
-      content: generateDeleteEndpoint(data, config)
+      content: deleteEndpointGen(data, config)
     },
     { 
       path: path.join(base, 'server', 'database', 'queries.ts'),
@@ -599,6 +613,20 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   for (const file of files) {
     await fsp.writeFile(file.path, file.content, 'utf8')
     console.log(`✓ Generated ${path.relative(base, file.path)}`)
+  }
+
+  // Check if team auth utility exists, create if it doesn't (when using simplified endpoints)
+  if (useTeamUtility) {
+    const teamAuthPath = path.resolve('layers', layer, 'server', 'utils', 'team-auth.ts')
+    const teamAuthExists = await fsp.access(teamAuthPath).then(() => true).catch(() => false)
+
+    if (!teamAuthExists) {
+      await fsp.mkdir(path.dirname(teamAuthPath), { recursive: true })
+      await fsp.writeFile(teamAuthPath, generateTeamAuthUtility(), 'utf8')
+      console.log(`✓ Generated ${path.relative(process.cwd(), teamAuthPath)}`)
+    } else {
+      console.log(`✓ Team auth utility already exists at ${path.relative(process.cwd(), teamAuthPath)}`)
+    }
   }
   
   // Check if we're using translations
@@ -627,7 +655,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     pascalCasePlural: cases.pascalCasePlural
   })
 
-  console.log(`\n✅ Successfully generated collection '${cases.plural}' in layer '${layer}'`)
+  console.log(`\n✓ Successfully generated collection '${cases.plural}' in layer '${layer}'`)
   console.log(`\nNext steps:`)
   console.log(`1. Review the generated files in ${base}`)
   if (noDb) {

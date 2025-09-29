@@ -4,6 +4,9 @@ export default function () {
 
   // Strip layer prefix from collection name
   const stripLayerPrefix = (val: string): string => {
+    // Handle null/undefined/empty values
+    if (!val) return ''
+
     // Find and remove layer prefix
     for (const prefix of layerPrefixes) {
       if (val.toLowerCase().startsWith(prefix.toLowerCase())) {
@@ -24,11 +27,17 @@ export default function () {
   }
 
   const collectionWithCapital = (val: string): string => {
+    // Handle null/undefined/empty values
+    if (!val) return ''
+
     const stripped = stripLayerPrefix(val)
     return camelToTitleCase(stripped)
   }
 
   const collectionWithCapitalSingular = (val: string): string => {
+    // Handle null/undefined/empty values
+    if (!val) return ''
+
     const stripped = stripLayerPrefix(val)
     // Remove trailing 's' for singular (simple pluralization)
     const singular = stripped.endsWith('es')

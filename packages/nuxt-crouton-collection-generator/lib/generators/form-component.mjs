@@ -115,14 +115,29 @@ const { defaultValue, schema, collection } = use${prefixedPascalCasePlural}()
 // Initialize form state with proper values (no watch needed!)
 const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
-  : { ...defaultValue }
+  : { ...defaultValue }${hasDateFields ? `
+
+// Convert date strings to Date objects for date fields during editing
+if (props.action === 'update' && props.activeItem?.id) {${regularFields
+  .filter(f => f.type === 'date')
+  .map(field => `
+  if (initialValues.${field.name}) {
+    initialValues.${field.name} = new Date(initialValues.${field.name})
+  }`).join('')}
+}` : ''}
 
 const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)${hasDateFields ? `
 
 // Date field helper functions
-const formatDateForInput = (date: Date | null | undefined): string => {
-  if (!date || !(date instanceof Date)) return ''
-  const d = new Date(date)
+const formatDateForInput = (date: Date | string | null | undefined): string => {
+  if (!date) return ''
+
+  // Convert string to Date if needed
+  const d = date instanceof Date ? date : new Date(date)
+
+  // Check for invalid date
+  if (isNaN(d.getTime())) return ''
+
   const year = d.getFullYear()
   const month = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')

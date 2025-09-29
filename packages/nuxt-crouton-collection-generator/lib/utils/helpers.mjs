@@ -72,8 +72,8 @@ export const typeMapping = {
     db: 'TIMESTAMP',
     drizzle: 'timestamp',
     zod: 'z.date()',
-    default: 'new Date()',
-    tsType: 'Date'
+    default: 'null',
+    tsType: 'Date | null'
   },
   json: {
     db: 'JSON',

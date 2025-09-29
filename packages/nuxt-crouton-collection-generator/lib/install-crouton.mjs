@@ -89,7 +89,7 @@ async function installPackage(packageName, isDev = false) {
     if (stderr && !stderr.includes('WARN')) {
       console.error(`⚠️  Warning: ${stderr}`)
     }
-    console.log(`✅ Installed ${packageName}`)
+    console.log(`✓ Installed ${packageName}`)
     return true
   } catch (error) {
     console.error(`❌ Failed to install ${packageName}: ${error.message}`)
@@ -104,7 +104,7 @@ async function addToNuxtConfig(layerName) {
 
     // Check if already extended
     if (content.includes(layerName)) {
-      console.log(`✅ ${layerName} already extended in nuxt.config.ts`)
+      console.log(`✓ ${layerName} already extended in nuxt.config.ts`)
       return true
     }
 
@@ -137,7 +137,7 @@ async function addToNuxtConfig(layerName) {
     }
 
     await fsp.writeFile(configPath, content, 'utf-8')
-    console.log(`✅ Added ${layerName} to nuxt.config.ts extends`)
+    console.log(`✓ Added ${layerName} to nuxt.config.ts extends`)
     return true
   } catch (error) {
     console.error(`❌ Failed to update nuxt.config.ts: ${error.message}`)
@@ -174,7 +174,7 @@ async function main() {
     const extended = await checkExtended(layerInfo.name)
 
     if (installed && extended) {
-      console.log(`   ✅ Already installed and configured`)
+      console.log(`   ✓ Already installed and configured`)
     } else {
       console.log(`   Features:`)
       layerInfo.features.forEach(f => console.log(`     ${f}`))

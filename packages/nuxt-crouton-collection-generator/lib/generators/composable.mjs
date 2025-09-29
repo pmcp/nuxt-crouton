@@ -43,7 +43,8 @@ export default function () {
   return {
     defaultValue: ${prefixedPlural}Config.defaultValues,
     schema: ${prefixedPlural}Config.schema,
-    columns: ${prefixedPlural}Config.columns
+    columns: ${prefixedPlural}Config.columns,
+    collection: ${prefixedPlural}Config.name
   }
 }`
 }

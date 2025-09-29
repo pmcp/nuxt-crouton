@@ -10,6 +10,7 @@ export function generateQueries(data, config = null) {
   const tableName = `${layerCamelCase}${plural.charAt(0).toUpperCase() + plural.slice(1)}`
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
+  const typesPath = './types'
 
   return `import { eq, and, desc, inArray } from 'drizzle-orm'
 import * as tables from './schema'
