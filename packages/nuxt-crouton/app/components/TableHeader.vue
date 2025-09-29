@@ -1,9 +1,9 @@
 <template>
   <UDashboardNavbar :title="collection || 'Data'">
     <template #left>
-      <TypoH2>
+      <H2>
         {{ title }}
-      </TypoH2>
+      </H2>
     </template>
     <template #right>
       <slot name="extraButtons" />

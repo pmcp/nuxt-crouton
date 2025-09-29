@@ -7,7 +7,27 @@ export interface TableColumn {
   sortable?: boolean
 }
 
-export interface TableProps {
+// Layout types
+export type LayoutType = 'table' | 'list' | 'grid' | 'cards'
+
+export interface ResponsiveLayout {
+  base: LayoutType
+  sm?: LayoutType
+  md?: LayoutType
+  lg?: LayoutType
+  xl?: LayoutType
+  '2xl'?: LayoutType
+}
+
+// Layout presets for common patterns
+export const layoutPresets: Record<string, ResponsiveLayout> = {
+  'responsive': { base: 'list', md: 'grid', lg: 'table' },
+  'mobile-friendly': { base: 'list', lg: 'table' },
+  'compact': { base: 'list', xl: 'table' }
+}
+
+export interface ListProps {
+  layout?: LayoutType | ResponsiveLayout | keyof typeof layoutPresets
   columns: TableColumn[]
   rows: any[]
   collection: string
@@ -20,6 +40,9 @@ export interface TableProps {
     actions?: boolean
   }
 }
+
+// Keep TableProps as alias for backward compatibility during migration
+export type TableProps = ListProps
 
 export interface PaginationData {
   currentPage: number

@@ -12,10 +12,10 @@
     <template #content="{ close }">
       <div class="p-6">
         <div class="flex items-center justify-between mb-4">
-          <TypoH2>
+          <H2>
             <span class="capitalize">{{ state.action }}</span>
             {{ getCollectionName(state.collection) }}
-          </TypoH2>
+          </H2>
           <UButton
             icon="i-lucide-x"
             variant="ghost"
@@ -52,10 +52,10 @@
     <template #content="{ close }">
       <div class="p-6">
         <div class="flex items-center justify-between mb-4">
-          <TypoH2>
+          <H2>
             <span class="capitalize">{{ state.action }}</span>
             {{ getCollectionName(state.collection) }}
-          </TypoH2>
+          </H2>
           <UButton
             icon="i-lucide-x"
             variant="ghost"
@@ -103,10 +103,10 @@
           <span v-if="getPreviousSlideover(index) && !state.isExpanded" class="text-md">
             {{ getPreviousSlideover(index)?.action }} {{ getPreviousSlideover(index)?.collection }} >
           </span>
-          <TypoH2>
+          <H2>
             <span class="capitalize">{{ state.action }}</span>
             {{ getCollectionName(state.collection) }}
-          </TypoH2>
+          </H2>
         </div>
         <div class="flex items-center gap-2">
           <!-- Expand/Collapse button -->
