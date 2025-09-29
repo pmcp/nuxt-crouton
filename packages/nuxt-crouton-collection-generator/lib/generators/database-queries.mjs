@@ -11,7 +11,6 @@ export function generateQueries(data, config = null) {
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
 
-!
   return `import { eq, and, desc, inArray } from 'drizzle-orm'
 import * as tables from './schema'
 import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
