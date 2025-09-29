@@ -102,21 +102,31 @@ pnpm publish:dry
 Once published, anyone can install your packages:
 
 ```bash
-# In any Nuxt project (use pnpm for better dependency resolution)
-pnpm add @friendlyinternet/nuxt-crouton-i18n
+# Install base package (always required)
+pnpm add @friendlyinternet/nuxt-crouton
+
+# Install addon packages as needed
+pnpm add @friendlyinternet/nuxt-crouton-i18n    # For translations
+pnpm add @friendlyinternet/nuxt-crouton-editor  # For rich text
 
 # Or if npm hangs, clear cache first:
 npm cache clean --force
-npm install @friendlyinternet/nuxt-crouton-i18n
+npm install @friendlyinternet/nuxt-crouton @friendlyinternet/nuxt-crouton-i18n
 ```
 
-And use in `nuxt.config.ts`:
+And use in `nuxt.config.ts` (explicit pattern):
 
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-i18n']
+  extends: [
+    '@friendlyinternet/nuxt-crouton',       // Base (always required)
+    '@friendlyinternet/nuxt-crouton-i18n',  // Addon for translations
+    '@friendlyinternet/nuxt-crouton-editor' // Addon for rich text
+  ]
 })
 ```
+
+**Important**: Always include the base layer explicitly, then add any addons you need.
 
 ## Troubleshooting
 

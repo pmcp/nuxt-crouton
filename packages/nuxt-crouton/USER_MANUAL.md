@@ -22,6 +22,7 @@ Nuxt Crouton is a powerful CRUD (Create, Read, Update, Delete) layer for Nuxt ap
 - 🎨 Customizable components with Nuxt UI 4
 - 🔄 Optimistic UI updates
 - 🎯 Type-safe with TypeScript support
+- 🧩 Modular architecture with optional addons (i18n, editor)
 
 ## Installation
 

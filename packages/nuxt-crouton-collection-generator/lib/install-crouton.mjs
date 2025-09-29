@@ -20,7 +20,7 @@ const question = (query) => new Promise(resolve => rl.question(query, resolve))
 const LAYERS = {
   '@friendlyinternet/nuxt-crouton': {
     name: '@friendlyinternet/nuxt-crouton',
-    description: 'Base CRUD layer with essential components',
+    description: 'Base CRUD layer with essential components (always required)',
     required: [],
     features: [
       '✨ CroutonButton component',
@@ -32,27 +32,27 @@ const LAYERS = {
   },
   '@friendlyinternet/nuxt-crouton-i18n': {
     name: '@friendlyinternet/nuxt-crouton-i18n',
-    description: 'Multi-language support extending base CRUD',
-    extends: '@friendlyinternet/nuxt-crouton',
+    description: 'Multi-language addon (requires base layer)',
+    requiresBase: true,
     required: ['@nuxtjs/i18n'],
     features: [
       '✨ TranslationsInput component',
       '✨ LanguageSwitcher component',
       '✨ Multi-language support (EN, NL, FR)',
       '✨ Translation composables (useT, useEntityTranslations)',
-      '✨ Inherits all CRUD features'
+      '✨ Works with base CRUD features'
     ]
   },
   '@friendlyinternet/nuxt-crouton-editor': {
     name: '@friendlyinternet/nuxt-crouton-editor',
-    description: 'Rich text editor extending base CRUD',
-    extends: '@friendlyinternet/nuxt-crouton',
+    description: 'Rich text editor addon (requires base layer)',
+    requiresBase: true,
     required: ['@tiptap/vue-3', '@tiptap/starter-kit'],
     features: [
       '✨ Rich text editor components',
       '✨ Tiptap integration',
       '✨ Toolbar and formatting options',
-      '✨ Inherits all CRUD features'
+      '✨ Works with base CRUD features'
     ]
   }
 }
