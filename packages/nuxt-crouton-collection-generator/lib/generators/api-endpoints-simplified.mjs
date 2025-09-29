@@ -11,7 +11,7 @@ export function generateGetEndpointSimplified(data, config = null) {
   const queriesPath = '../../../../database/queries'
 
   return `import { getAll${prefixedPascalCasePlural}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'
-import { resolveTeamAndCheckMembership } from '~/server/utils/team-auth'
+import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
@@ -47,7 +47,7 @@ export function generatePostEndpointSimplified(data, config = null) {
   ).join('\n') + '\n' : ''
 
   return `import { create${prefixedPascalCase} } from '${queriesPath}'
-import { resolveTeamAndCheckMembership } from '~/server/utils/team-auth'
+import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -93,7 +93,7 @@ export function generatePatchEndpointSimplified(data, config = null) {
     : `import { update${prefixedPascalCase} } from '${queriesPath}'`
 
   return `${imports}
-import { resolveTeamAndCheckMembership } from '~/server/utils/team-auth'
+import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 import type { ${prefixedPascalCase} } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
@@ -129,7 +129,7 @@ export function generateDeleteEndpointSimplified(data, config = null) {
   const queriesPath = '../../../../database/queries'
 
   return `import { delete${prefixedPascalCase} } from '${queriesPath}'
-import { resolveTeamAndCheckMembership } from '~/server/utils/team-auth'
+import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { ${singular}Id } = getRouterParams(event)

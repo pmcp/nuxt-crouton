@@ -29,7 +29,8 @@ export default defineNuxtConfig({
       dirs: [join(currentDir, 'server/utils')]
     },
     alias: {
-      '#crouton/registry': './registry'
+      '#crouton/registry': './registry',
+      '#crouton/team-auth': join(currentDir, 'server/utils/team-auth')
     }
   }
 })
