@@ -30,7 +30,7 @@ program
   .command('generate <layer> <collection>', { isDefault: true })
   .description('Generate a new CRUD collection')
   .option('-f, --fields-file <path>', 'Path to JSON schema file')
-  .option('-d, --dialect <type>', 'Database dialect (pg or sqlite)', 'pg')
+  .option('-d, --dialect <type>', 'Database dialect (pg or sqlite)', 'sqlite')
   .option('--auto-relations', 'Add relation stubs in comments')
   .option('--dry-run', 'Preview what will be generated')
   .option('--no-translations', 'Skip translation fields')
