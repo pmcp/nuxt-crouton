@@ -1,0 +1,72 @@
+{
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Campaign Name",
+      "maxLength": 200
+    }
+  },
+  "type": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Campaign Type",
+      "helpText": "e.g., email, social, ppc"
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Status",
+      "default": "draft"
+    }
+  },
+  "budget": {
+    "type": "decimal",
+    "meta": {
+      "precision": 10,
+      "scale": 2,
+      "label": "Budget"
+    }
+  },
+  "startDate": {
+    "type": "date",
+    "meta": {
+      "required": true,
+      "label": "Start Date"
+    }
+  },
+  "endDate": {
+    "type": "date",
+    "meta": {
+      "required": true,
+      "label": "End Date"
+    }
+  },
+  "targetAudience": {
+    "type": "json",
+    "meta": {
+      "label": "Target Audience"
+    }
+  },
+  "goals": {
+    "type": "json",
+    "meta": {
+      "label": "Campaign Goals"
+    }
+  },
+  "metrics": {
+    "type": "json",
+    "meta": {
+      "label": "Performance Metrics"
+    }
+  }
+}

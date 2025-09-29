@@ -1,0 +1,77 @@
+{
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "email": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "unique": true,
+      "label": "Email Address"
+    }
+  },
+  "username": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "unique": true,
+      "label": "Username",
+      "maxLength": 50
+    }
+  },
+  "firstName": {
+    "type": "string",
+    "meta": {
+      "label": "First Name",
+      "maxLength": 100
+    }
+  },
+  "lastName": {
+    "type": "string",
+    "meta": {
+      "label": "Last Name",
+      "maxLength": 100
+    }
+  },
+  "phoneNumber": {
+    "type": "string",
+    "meta": {
+      "label": "Phone Number"
+    }
+  },
+  "roleId": {
+    "type": "uuid",
+    "refTarget": "roles",
+    "meta": {
+      "label": "Role"
+    }
+  },
+  "isActive": {
+    "type": "boolean",
+    "meta": {
+      "label": "Active",
+      "default": true
+    }
+  },
+  "emailVerifiedAt": {
+    "type": "date",
+    "meta": {
+      "label": "Email Verified"
+    }
+  },
+  "lastLoginAt": {
+    "type": "date",
+    "meta": {
+      "label": "Last Login"
+    }
+  },
+  "preferences": {
+    "type": "json",
+    "meta": {
+      "label": "User Preferences"
+    }
+  }
+}

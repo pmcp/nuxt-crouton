@@ -1,0 +1,83 @@
+{
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "subject": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Subject Line",
+      "maxLength": 200
+    }
+  },
+  "preheader": {
+    "type": "string",
+    "meta": {
+      "label": "Preheader Text",
+      "maxLength": 150
+    }
+  },
+  "content": {
+    "type": "text",
+    "meta": {
+      "required": true,
+      "label": "Email Content"
+    }
+  },
+  "template": {
+    "type": "string",
+    "meta": {
+      "label": "Template ID"
+    }
+  },
+  "campaignId": {
+    "type": "uuid",
+    "refTarget": "campaigns",
+    "meta": {
+      "label": "Campaign"
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "label": "Status",
+      "default": "draft"
+    }
+  },
+  "scheduledFor": {
+    "type": "date",
+    "meta": {
+      "label": "Scheduled Send Time"
+    }
+  },
+  "sentAt": {
+    "type": "date",
+    "meta": {
+      "label": "Sent Date"
+    }
+  },
+  "recipients": {
+    "type": "integer",
+    "meta": {
+      "label": "Total Recipients",
+      "default": 0
+    }
+  },
+  "opens": {
+    "type": "integer",
+    "meta": {
+      "label": "Opens",
+      "default": 0
+    }
+  },
+  "clicks": {
+    "type": "integer",
+    "meta": {
+      "label": "Clicks",
+      "default": 0
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "unique": true,
+      "label": "Permission Name",
+      "maxLength": 100
+    }
+  },
+  "resource": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Resource",
+      "helpText": "The resource this permission applies to"
+    }
+  },
+  "action": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Action",
+      "helpText": "e.g., create, read, update, delete"
+    }
+  },
+  "description": {
+    "type": "text",
+    "meta": {
+      "label": "Description"
+    }
+  },
+  "isActive": {
+    "type": "boolean",
+    "meta": {
+      "label": "Active",
+      "default": true
+    }
+  }
+}

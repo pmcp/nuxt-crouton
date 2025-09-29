@@ -1,0 +1,77 @@
+{
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "email": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "unique": true,
+      "label": "Email Address"
+    }
+  },
+  "firstName": {
+    "type": "string",
+    "meta": {
+      "label": "First Name",
+      "maxLength": 100
+    }
+  },
+  "lastName": {
+    "type": "string",
+    "meta": {
+      "label": "Last Name",
+      "maxLength": 100
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Status",
+      "default": "subscribed"
+    }
+  },
+  "lists": {
+    "type": "json",
+    "meta": {
+      "label": "Mailing Lists",
+      "helpText": "Array of list IDs"
+    }
+  },
+  "tags": {
+    "type": "json",
+    "meta": {
+      "label": "Tags"
+    }
+  },
+  "subscribedAt": {
+    "type": "date",
+    "meta": {
+      "label": "Subscription Date"
+    }
+  },
+  "unsubscribedAt": {
+    "type": "date",
+    "meta": {
+      "label": "Unsubscribe Date"
+    }
+  },
+  "bounceCount": {
+    "type": "integer",
+    "meta": {
+      "label": "Bounce Count",
+      "default": 0
+    }
+  },
+  "source": {
+    "type": "string",
+    "meta": {
+      "label": "Source",
+      "helpText": "How they subscribed"
+    }
+  }
+}
