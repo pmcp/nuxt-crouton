@@ -23,8 +23,11 @@ export default defineNuxtConfig({
     dirs: [join(currentDir, 'app/composables')]
   },
 
-  // Make registry available
+  // Make registry available and auto-import server utils
   nitro: {
+    imports: {
+      dirs: [join(currentDir, 'server/utils')]
+    },
     alias: {
       '#crouton/registry': './registry'
     }

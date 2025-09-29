@@ -6,6 +6,7 @@
   "main": "./nuxt.config.ts",
   "files": [
     "app",
+    "server",
     "registry",
     "nuxt.config.ts",
     "README.md"

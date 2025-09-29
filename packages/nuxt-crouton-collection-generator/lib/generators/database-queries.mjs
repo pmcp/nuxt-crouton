@@ -57,9 +57,9 @@ export async function create${prefixedPascalCase}(data: New${prefixedPascalCase}
 }
 
 export async function update${prefixedPascalCase}(
-  ${singular}Id: string,
+  recordId: string,
   teamId: string,
-  userId: string,
+  ownerId: string,
   updates: Partial<${prefixedPascalCase}>
 ) {
   const db = useDB()
@@ -69,9 +69,9 @@ export async function update${prefixedPascalCase}(
     .set(updates)
     .where(
       and(
-        eq(tables.${tableName}.id, ${singular}Id),
+        eq(tables.${tableName}.id, recordId),
         eq(tables.${tableName}.teamId, teamId),
-        eq(tables.${tableName}.userId, userId)
+        eq(tables.${tableName}.userId, ownerId)
       )
     )
     .returning()
@@ -87,9 +87,9 @@ export async function update${prefixedPascalCase}(
 }
 
 export async function delete${prefixedPascalCase}(
-  ${singular}Id: string,
+  recordId: string,
   teamId: string,
-  userId: string
+  ownerId: string
 ) {
   const db = useDB()
 
@@ -97,9 +97,9 @@ export async function delete${prefixedPascalCase}(
     .delete(tables.${tableName})
     .where(
       and(
-        eq(tables.${tableName}.id, ${singular}Id),
+        eq(tables.${tableName}.id, recordId),
         eq(tables.${tableName}.teamId, teamId),
-        eq(tables.${tableName}.userId, userId)
+        eq(tables.${tableName}.userId, ownerId)
       )
     )
     .returning()

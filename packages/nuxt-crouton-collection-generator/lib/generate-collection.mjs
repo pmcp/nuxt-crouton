@@ -615,20 +615,9 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     console.log(`✓ Generated ${path.relative(base, file.path)}`)
   }
 
-  // Check if team auth utility exists, create if it doesn't (when using simplified endpoints)
-  if (useTeamUtility) {
-    const teamAuthPath = path.resolve('layers', layer, 'server', 'utils', 'team-auth.ts')
-    const teamAuthExists = await fsp.access(teamAuthPath).then(() => true).catch(() => false)
+  // Note: team-auth utility is now provided by @friendlyinternet/nuxt-crouton package
+  // No need to generate it per-layer
 
-    if (!teamAuthExists) {
-      await fsp.mkdir(path.dirname(teamAuthPath), { recursive: true })
-      await fsp.writeFile(teamAuthPath, generateTeamAuthUtility(), 'utf8')
-      console.log(`✓ Generated ${path.relative(process.cwd(), teamAuthPath)}`)
-    } else {
-      console.log(`✓ Team auth utility already exists at ${path.relative(process.cwd(), teamAuthPath)}`)
-    }
-  }
-  
   // Check if we're using translations
   const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
 
