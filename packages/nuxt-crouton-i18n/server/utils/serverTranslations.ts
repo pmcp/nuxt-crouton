@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm'
-import { teamSettings } from '@@/server/database/schema/teams'
-import en from '#layers/translations/i18n/locales/en.json'
-import nl from '#layers/translations/i18n/locales/nl.json'
-import fr from '#layers/translations/i18n/locales/fr.json'
+import { teamSettings } from '../database/schema/teamSettings'
+import en from '../../locales/en.json'
+import nl from '../../locales/nl.json'
+import fr from '../../locales/fr.json'
 
 const systemTranslations: Record<string, any> = { en, nl, fr }
 
@@ -17,15 +17,21 @@ export async function getTranslation(
 ): Promise<string> {
   // Check team overrides if teamId provided
   if (teamId) {
-    const db = useDB()
-    const settings = await db
-      .select()
-      .from(teamSettings)
-      .where(eq(teamSettings.teamId, teamId))
-      .get()
+    try {
+      const db = useDB()
+      const settings = await db
+        .select()
+        .from(teamSettings)
+        .where(eq(teamSettings.teamId, teamId))
+        .get()
 
-    const override = settings?.translations?.[locale]?.[key]
-    if (override) return override
+      const override = settings?.translations?.[locale]?.[key]
+      if (override) return override
+    } catch (error) {
+      // Team settings table might not exist or DB might not be configured
+      // Silently fall back to system translations
+      console.debug('Team translations not available:', error)
+    }
   }
 
   // Navigate nested keys (e.g., "auth.login")
@@ -62,13 +68,19 @@ export async function getTranslations(
   // If teamId provided, fetch team settings once
   let teamTranslations: Record<string, any> | undefined
   if (teamId) {
-    const db = useDB()
-    const settings = await db
-      .select()
-      .from(teamSettings)
-      .where(eq(teamSettings.teamId, teamId))
-      .get()
-    teamTranslations = settings?.translations?.[locale]
+    try {
+      const db = useDB()
+      const settings = await db
+        .select()
+        .from(teamSettings)
+        .where(eq(teamSettings.teamId, teamId))
+        .get()
+      teamTranslations = settings?.translations?.[locale]
+    } catch (error) {
+      // Team settings table might not exist or DB might not be configured
+      // Silently fall back to system translations
+      console.debug('Team translations not available:', error)
+    }
   }
 
   for (const key of keys) {
