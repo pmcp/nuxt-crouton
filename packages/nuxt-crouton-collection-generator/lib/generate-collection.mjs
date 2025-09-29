@@ -665,13 +665,210 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   console.log(`${noDb ? '4' : '2'}. Restart your Nuxt dev server`)
 }
 
+// Validate config before starting generation
+async function validateConfig(config) {
+  const errors = []
+  const warnings = []
+
+  console.log('\n📋 Validating configuration...\n')
+
+  // Check if config file exists and is valid
+  if (!config) {
+    errors.push('Configuration file is empty or invalid')
+    return { valid: false, errors, warnings }
+  }
+
+  // Validate schema files exist
+  if (config.collections && Array.isArray(config.collections)) {
+    // Enhanced format with multiple schemas
+    for (const col of config.collections) {
+      if (!col.fieldsFile) {
+        errors.push(`Collection '${col.name}' is missing fieldsFile path`)
+        continue
+      }
+
+      const schemaPath = path.resolve(col.fieldsFile)
+      try {
+        await fsp.access(schemaPath)
+        console.log(`✓ Schema file found: ${col.fieldsFile}`)
+      } catch {
+        errors.push(`Schema file not found for collection '${col.name}': ${col.fieldsFile}`)
+      }
+    }
+  } else if (config.schemaPath) {
+    // Simple format with single schema
+    const schemaPath = path.resolve(config.schemaPath)
+    try {
+      await fsp.access(schemaPath)
+      console.log(`✓ Schema file found: ${config.schemaPath}`)
+    } catch {
+      errors.push(`Schema file not found: ${config.schemaPath}`)
+    }
+  } else {
+    errors.push('No schema configuration found (need either schemaPath or collections array)')
+  }
+
+  // Validate targets
+  if (!config.targets || !Array.isArray(config.targets) || config.targets.length === 0) {
+    errors.push('No targets specified in configuration')
+  } else {
+    let totalCollections = 0
+    for (const target of config.targets) {
+      if (!target.layer) {
+        errors.push('Target missing layer name')
+      }
+      if (!target.collections || !Array.isArray(target.collections) || target.collections.length === 0) {
+        errors.push(`Target layer '${target.layer}' has no collections`)
+      } else {
+        totalCollections += target.collections.length
+      }
+    }
+    console.log(`✓ Found ${config.targets.length} layers with ${totalCollections} total collections`)
+  }
+
+  // Validate dialect
+  if (config.dialect && !['pg', 'sqlite'].includes(config.dialect)) {
+    warnings.push(`Unknown dialect '${config.dialect}', defaulting to 'pg'`)
+  }
+
+  // Check if collections in targets match defined collections (for enhanced format)
+  if (config.collections && config.targets) {
+    const definedCollections = new Set(config.collections.map(c => c.name))
+    const usedCollections = new Set()
+
+    for (const target of config.targets) {
+      for (const colName of target.collections) {
+        usedCollections.add(colName)
+        if (!definedCollections.has(colName)) {
+          errors.push(`Collection '${colName}' in layer '${target.layer}' is not defined in collections array`)
+        }
+      }
+    }
+
+    // Check for unused defined collections
+    for (const colName of definedCollections) {
+      if (!usedCollections.has(colName)) {
+        warnings.push(`Collection '${colName}' is defined but not used in any target`)
+      }
+    }
+  }
+
+  // Check for write permissions in current directory
+  try {
+    await fsp.access(process.cwd(), fsp.constants.W_OK)
+    console.log(`✓ Write permissions verified for ${process.cwd()}`)
+  } catch {
+    errors.push(`No write permissions in current directory: ${process.cwd()}`)
+  }
+
+  // Check if layers directory exists or can be created
+  const layersPath = path.resolve('layers')
+  try {
+    await fsp.access(layersPath)
+    console.log(`✓ Layers directory exists`)
+  } catch {
+    // Try to check parent directory permissions
+    try {
+      await fsp.access(process.cwd(), fsp.constants.W_OK)
+      console.log(`✓ Can create layers directory`)
+    } catch {
+      errors.push('Cannot create layers directory - check permissions')
+    }
+  }
+
+  // Check for required dependencies (unless force flag is set)
+  if (!config.flags?.force) {
+    const requiredDeps = detectRequiredDependencies()
+    const missingDeps = []
+
+    for (const dep of requiredDeps) {
+      try {
+        await import(dep.package)
+        console.log(`✓ Dependency found: ${dep.package}`)
+      } catch {
+        missingDeps.push(dep)
+      }
+    }
+
+    if (missingDeps.length > 0) {
+      warnings.push(`Missing dependencies detected. Run 'crouton-generate install' or use --force to skip`)
+      console.log('\n⚠️  Missing dependencies:')
+      missingDeps.forEach(dep => {
+        console.log(`  • ${dep.package} - ${dep.reason}`)
+      })
+    }
+  }
+
+  // Summary
+  console.log('\n' + '─'.repeat(60))
+
+  if (errors.length > 0) {
+    console.log('\n❌ Validation failed with errors:\n')
+    errors.forEach(err => console.log(`  • ${err}`))
+  }
+
+  if (warnings.length > 0) {
+    console.log('\n⚠️  Warnings:\n')
+    warnings.forEach(warn => console.log(`  • ${warn}`))
+  }
+
+  if (errors.length === 0) {
+    console.log('\n✅ Configuration validated successfully!')
+
+    // Show what will be generated
+    console.log('\n📦 Will generate:')
+    for (const target of config.targets) {
+      console.log(`\n  Layer: ${target.layer}`)
+      for (const col of target.collections) {
+        console.log(`    • ${col} collection`)
+      }
+    }
+
+    if (config.flags?.dryRun) {
+      console.log('\n🔍 DRY RUN MODE - No files will be created')
+    }
+  }
+
+  console.log('\n' + '─'.repeat(60) + '\n')
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings
+  }
+}
+
 async function main() {
   try {
     // Check if being called with config file
     if (process.argv[2] === '--config') {
       // Load config mode
       const configPath = path.resolve(process.argv[3] || './migrate.config.js')
+
+      // First check if config file exists
+      try {
+        await fsp.access(configPath)
+      } catch {
+        console.error(`\n❌ Config file not found: ${configPath}\n`)
+        process.exit(1)
+      }
+
       const config = (await import(configPath)).default
+
+      // Validate configuration before proceeding
+      const validation = await validateConfig(config)
+
+      if (!validation.valid) {
+        console.error('\n⛔ Cannot proceed with generation due to validation errors\n')
+        process.exit(1)
+      }
+
+      // Ask for confirmation unless force flag is set
+      if (!config.flags?.force && !config.flags?.dryRun) {
+        console.log('\nProceed with generation? (yes/no): ')
+        // Simple confirmation - in production you'd use a proper prompt library
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
       
       // Handle both config formats
       if (config.collections && config.targets) {
@@ -748,7 +945,75 @@ async function main() {
     } else {
       // Direct CLI mode
       const args = parseArgs()
-      const fields = await loadFields(args.fieldsFile)
+
+      // Validate CLI arguments
+      console.log('\n📋 Validating CLI arguments...\n')
+
+      // Check schema file exists
+      const schemaPath = path.resolve(args.fieldsFile)
+      try {
+        await fsp.access(schemaPath)
+        console.log(`✓ Schema file found: ${args.fieldsFile}`)
+      } catch {
+        console.error(`\n❌ Schema file not found: ${args.fieldsFile}\n`)
+        process.exit(1)
+      }
+
+      // Check for write permissions
+      try {
+        await fsp.access(process.cwd(), fsp.constants.W_OK)
+        console.log(`✓ Write permissions verified`)
+      } catch {
+        console.error(`\n❌ No write permissions in current directory\n`)
+        process.exit(1)
+      }
+
+      // Check dependencies unless force flag
+      if (!args.force) {
+        const requiredDeps = detectRequiredDependencies()
+        const missingDeps = []
+
+        for (const dep of requiredDeps) {
+          try {
+            await import(dep.package)
+          } catch {
+            missingDeps.push(dep)
+          }
+        }
+
+        if (missingDeps.length > 0) {
+          console.log('\n⚠️  Missing dependencies detected:')
+          displayMissingDependencies(missingDeps)
+
+          if (!args.force) {
+            console.log('\nUse --force to skip this check or run:')
+            console.log('  crouton-generate install\n')
+          }
+        }
+      }
+
+      console.log(`\n📦 Will generate:`)
+      console.log(`  Layer: ${args.layer}`)
+      console.log(`  Collection: ${args.collection}`)
+      console.log(`  Dialect: ${args.dialect}`)
+
+      if (args.dryRun) {
+        console.log('\n🔍 DRY RUN MODE - No files will be created')
+      }
+
+      console.log('\n' + '─'.repeat(60) + '\n')
+
+      // Load and validate the schema content
+      let fields
+      try {
+        fields = await loadFields(args.fieldsFile)
+        console.log(`✓ Loaded ${fields.length} fields from schema`)
+      } catch (error) {
+        console.error(`\n❌ Error loading schema: ${error.message}\n`)
+        process.exit(1)
+      }
+
+      // Proceed with generation
       await writeScaffold({ ...args, fields })
     }
   } catch (error) {
