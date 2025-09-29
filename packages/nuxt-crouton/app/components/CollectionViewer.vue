@@ -1,6 +1,21 @@
 <template>
   <div>
-    <h2 class="text-xl font-semibold mb-4">{{ camelToTitleCase(collectionName) }}</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold">{{ camelToTitleCase(collectionName) }}</h2>
+
+      <!-- Layout Switcher -->
+      <div class="flex items-center gap-1 p-1 bg-muted rounded-lg">
+        <UButton
+          v-for="layoutOption in layoutOptions"
+          :key="layoutOption.value"
+          :icon="layoutOption.icon"
+          :color="currentLayout === layoutOption.value ? 'primary' : 'gray'"
+          :variant="currentLayout === layoutOption.value ? 'solid' : 'ghost'"
+          size="sm"
+          @click="currentLayout = layoutOption.value"
+        />
+      </div>
+    </div>
 
     <div v-if="componentError" class="text-red-600 p-4 bg-red-50 rounded">
       Unable to load collection component: {{ componentError }}
@@ -9,6 +24,7 @@
     <component
       :is="componentName"
       v-else-if="componentName"
+      :layout="currentLayout"
     />
 
     <div v-else class="text-gray-500">
@@ -20,13 +36,26 @@
 <script setup lang="ts">
 interface Props {
   collectionName: string
+  defaultLayout?: 'table' | 'list' | 'grid' | 'cards'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  defaultLayout: 'table'
+})
+
 const componentError = ref<string | null>(null)
+const currentLayout = ref(props.defaultLayout)
 
 // Use composable for formatting
 const { camelToTitleCase, toPascalCase } = useFormatCollections()
+
+// Layout options for switcher
+const layoutOptions = [
+  { value: 'table', icon: 'i-lucide-table' },
+  { value: 'list', icon: 'i-lucide-list' },
+  { value: 'grid', icon: 'i-lucide-grid-3x3' },
+  { value: 'cards', icon: 'i-lucide-layout-grid' }
+] as const
 
 // Convert collection name to component name
 // e.g., translationsUi -> TranslationsUiList
