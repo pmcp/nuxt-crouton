@@ -9,7 +9,7 @@ Nuxt Crouton is a collection of Nuxt Layers that provide instant CRUD functional
 ### [@friendlyinternet/nuxt-crouton](./packages/nuxt-crouton)
 Base CRUD layer with essential components and composables for data management.
 
-### [@friendlyinternet/nuxt-crouton-translations](./packages/nuxt-crouton-translations)
+### [@friendlyinternet/nuxt-crouton-i18n](./packages/nuxt-crouton-i18n)
 Multi-language support extending the base layer with i18n capabilities.
 
 ### [@friendlyinternet/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
@@ -20,8 +20,8 @@ Rich text editor integration extending the base layer with Tiptap.
 ### Installation
 
 ```bash
-# For CRUD + Translations (most common)
-pnpm add @friendlyinternet/nuxt-crouton-translations
+# For CRUD + i18n (most common)
+pnpm add @friendlyinternet/nuxt-crouton-i18n
 
 # For just CRUD
 pnpm add @friendlyinternet/nuxt-crouton
@@ -37,7 +37,7 @@ Add to your `nuxt.config.ts`:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-translations' // Includes base CRUD + i18n
+    '@friendlyinternet/nuxt-crouton-i18n' // Includes base CRUD + i18n
     // OR
     '@friendlyinternet/nuxt-crouton' // Just base CRUD
     // OR
@@ -76,7 +76,7 @@ const { t } = useT()
 ```
 @friendlyinternet/nuxt-crouton (base layer)
     ↑
-    ├── @friendlyinternet/nuxt-crouton-translations (extends base + adds i18n)
+    ├── @friendlyinternet/nuxt-crouton-i18n (extends base + adds i18n)
     └── @friendlyinternet/nuxt-crouton-editor (extends base + adds editor)
 ```
 
@@ -92,7 +92,7 @@ When you extend a higher-level layer, you automatically get all features from th
 - ✅ **useCrud()** - Complete CRUD operations
 - ✅ **useCollections()** - Collection management
 
-### Translations Layer (`@friendlyinternet/nuxt-crouton-translations`)
+### i18n Layer (`@friendlyinternet/nuxt-crouton-i18n`)
 - ✅ Everything from base layer
 - ✅ **TranslationsInput** - Multi-language input fields
 - ✅ **LanguageSwitcher** - Language selection

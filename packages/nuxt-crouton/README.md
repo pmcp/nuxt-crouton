@@ -104,7 +104,7 @@ const {
 Other layers can build upon nuxt-crouton:
 
 ```typescript
-// nuxt-crouton-translations/nuxt.config.ts
+// nuxt-crouton-i18n/nuxt.config.ts
 export default defineNuxtConfig({
   extends: ['@friendlyinternet/nuxt-crouton'],
   // Add translation-specific features...
@@ -116,7 +116,7 @@ export default defineNuxtConfig({
 ```
 @friendlyinternet/nuxt-crouton (this layer)
     ↑
-    ├── @friendlyinternet/nuxt-crouton-translations
+    ├── @friendlyinternet/nuxt-crouton-i18n
     └── @friendlyinternet/nuxt-crouton-editor
 ```
 

@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 - This pnpm workspace tracks `packages/*` and `examples/*`; install once at the root before touching sub-packages.
 - `packages/nuxt-crouton` is the base layer: Nuxt components live in `app/components`, composables and utilities in `app/composables` and `app/utils`, and registry exports in `registry/`.
-- `packages/nuxt-crouton-translations` extends the base layer, bundling locales under `locales/` and additional server handlers under `server/`.
+- `packages/nuxt-crouton-i18n` extends the base layer, bundling locales under `locales/` and additional server handlers under `server/`.
 - `packages/nuxt-crouton-editor` supplies the Tiptap-powered editor with global components prefixed `Crouton`.
 - `packages/nuxt-crouton-collection-generator` is the CLI; `bin/` hosts the entry point and `schemas/` keeps canonical collection specs such as `test-product-schema.json`.
 - `examples/` is intentionally empty; scaffold Nuxt apps here when you need an integration sandbox, then register them in `pnpm-workspace.yaml` automatically.

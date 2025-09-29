@@ -47,8 +47,8 @@ Or publish them individually:
 cd packages/nuxt-crouton
 pnpm publish --access public
 
-# Then translations
-cd ../nuxt-crouton-translations
+# Then i18n
+cd ../nuxt-crouton-i18n
 pnpm publish --access public
 
 # Then editor
@@ -60,7 +60,7 @@ pnpm publish --access public
 
 Check that your packages are live:
 - https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton
-- https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-translations
+- https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-i18n
 - https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-editor
 
 ## Updating Packages
@@ -103,18 +103,18 @@ Once published, anyone can install your packages:
 
 ```bash
 # In any Nuxt project (use pnpm for better dependency resolution)
-pnpm add @friendlyinternet/nuxt-crouton-translations
+pnpm add @friendlyinternet/nuxt-crouton-i18n
 
 # Or if npm hangs, clear cache first:
 npm cache clean --force
-npm install @friendlyinternet/nuxt-crouton-translations
+npm install @friendlyinternet/nuxt-crouton-i18n
 ```
 
 And use in `nuxt.config.ts`:
 
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-translations']
+  extends: ['@friendlyinternet/nuxt-crouton-i18n']
 })
 ```
 
