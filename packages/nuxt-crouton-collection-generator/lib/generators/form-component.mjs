@@ -12,6 +12,9 @@ export function generateFormComponent(data, config = {}) {
   const translatableFields = fields.filter(f => translatableFieldNames.includes(f.name))
   const regularFields = fields.filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name))
 
+  // Check if we have any date fields
+  const hasDateFields = regularFields.some(field => field.type === 'date')
+
   // Generate form fields for regular (non-translatable) fields only
   const formFields = regularFields.map(field => {
     const fieldName = field.name.charAt(0).toUpperCase() + field.name.slice(1)
@@ -29,7 +32,13 @@ export function generateFormComponent(data, config = {}) {
       </UFormField>`
     } else if (field.type === 'date') {
       return `      <UFormField label="${fieldName}" name="${field.name}">
-        <UInput v-model="state.${field.name}" type="datetime-local" class="w-full" size="xl" />
+        <UInput
+          :value="formatDateForInput(state.${field.name})"
+          @input="handleDateChange($event, '${field.name}')"
+          type="datetime-local"
+          class="w-full"
+          size="xl"
+        />
       </UFormField>`
     } else {
       return `      <UFormField label="${fieldName}" name="${field.name}">
@@ -54,7 +63,7 @@ export function generateFormComponent(data, config = {}) {
   // Generate initial state fields with proper defaults (excluding id)
   const stateFields = fields.filter(field => field.name !== 'id').map(field => {
     const defaultVal = field.type === 'boolean' ? 'false' :
-                      field.type === 'number' || field.type === 'decimal' ? '0' : 
+                      field.type === 'number' || field.type === 'decimal' ? '0' :
                       field.type === 'date' ? 'null' : "''";
     return `  ${field.name}: ${defaultVal}`
   }).join(',\n')
@@ -108,6 +117,27 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)
+const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)${hasDateFields ? `
+
+// Date field helper functions
+const formatDateForInput = (date: Date | null | undefined): string => {
+  if (!date || !(date instanceof Date)) return ''
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  return \`\${year}-\${month}-\${day}T\${hours}:\${minutes}\`
+}
+
+const handleDateChange = (event: Event, fieldName: string) => {
+  const target = event.target as HTMLInputElement
+  if (target.value) {
+    ;(state.value as any)[fieldName] = new Date(target.value)
+  } else {
+    ;(state.value as any)[fieldName] = null
+  }
+}` : ''}
 </script>`
 }
