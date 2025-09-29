@@ -872,7 +872,10 @@ async function main() {
         for (const col of config.collections) {
           collectionFieldsMap[col.name] = col.fieldsFile
         }
-        
+
+        // Track all collections for batch db:generate
+        const allCollections = []
+
         // Process each target
         for (const target of config.targets) {
           for (const collectionName of target.collections) {
@@ -881,11 +884,13 @@ async function main() {
               console.error(`Error: No fields file found for collection '${collectionName}'`)
               continue
             }
-            
+
             console.log(`\nGenerating collection '${collectionName}' in layer '${target.layer}'...`)
             console.log(`  Using fields from: ${fieldsFile}`)
-            
+
             const fields = await loadFields(fieldsFile)
+
+            // Generate files but skip database creation (we'll do it in batch at the end)
             await writeScaffold({
               layer: target.layer,
               collection: collectionName,
@@ -893,17 +898,64 @@ async function main() {
               dialect: config.dialect || 'pg',
               autoRelations: config.flags?.autoRelations || false,
               dryRun: config.flags?.dryRun || false,
-              noDb: config.flags?.noDb || false,
+              noDb: true, // Skip individual db:generate
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
               useTeamUtility: config.flags?.useTeamUtility || false,
               config: config
             })
+
+            allCollections.push({ name: collectionName, layer: target.layer, fields })
+          }
+        }
+
+        // Update schema index for all collections and run migration once (unless disabled)
+        if (!config.flags?.noDb && !config.flags?.dryRun && allCollections.length > 0) {
+          console.log(`\n↻ Updating schema index for all ${allCollections.length} collections...`)
+
+          // Update schema index for each collection
+          for (const col of allCollections) {
+            const schemaUpdated = await updateSchemaIndex(col.name, col.layer, config.flags?.force || false)
+            if (!schemaUpdated) {
+              console.error(`✗ Failed to update schema index for ${col.name}`)
+            }
+          }
+
+          // Run database migration once for all collections
+          console.log(`\n↻ Running database migration...`)
+          console.log(`! Running: pnpm db:generate (30s timeout)`)
+
+          try {
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Command timed out after 30 seconds')), 30000)
+            })
+
+            const { stdout, stderr } = await Promise.race([
+              execAsync('pnpm db:generate'),
+              timeoutPromise
+            ])
+
+            if (stderr && !stderr.includes('Warning')) {
+              console.error(`! Drizzle warnings:`, stderr)
+            }
+            console.log(`✓ Database migration generated for all collections`)
+            console.log(`! Migration generated. Tables will be created when you restart the dev server.`)
+          } catch (execError) {
+            if (execError.message.includes('timed out')) {
+              console.error(`✗ Database migration timed out after 30 seconds`)
+              console.error(`  Check server/database/schema/index.ts for conflicts`)
+            } else {
+              console.error(`✗ Failed to run database migration:`, execError.message)
+            }
+            console.log(`! You can manually run: pnpm db:generate && pnpm db:push`)
           }
         }
       } else if (config.targets && config.schemaPath) {
         // Original simple config format
         const fields = await loadFields(config.schemaPath)
+
+        // Track all collections for batch db:generate
+        const allCollections = []
 
         // Process each target
         for (const target of config.targets) {
@@ -916,12 +968,56 @@ async function main() {
               dialect: config.dialect || 'pg',
               autoRelations: config.flags?.autoRelations || false,
               dryRun: config.flags?.dryRun || false,
-              noDb: config.flags?.noDb || false,
+              noDb: true, // Skip individual db:generate
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
               useTeamUtility: config.flags?.useTeamUtility || false,
               config: config
             })
+
+            allCollections.push({ name: collection, layer: target.layer, fields })
+          }
+        }
+
+        // Update schema index for all collections and run migration once (unless disabled)
+        if (!config.flags?.noDb && !config.flags?.dryRun && allCollections.length > 0) {
+          console.log(`\n↻ Updating schema index for all ${allCollections.length} collections...`)
+
+          // Update schema index for each collection
+          for (const col of allCollections) {
+            const schemaUpdated = await updateSchemaIndex(col.name, col.layer, config.flags?.force || false)
+            if (!schemaUpdated) {
+              console.error(`✗ Failed to update schema index for ${col.name}`)
+            }
+          }
+
+          // Run database migration once for all collections
+          console.log(`\n↻ Running database migration...`)
+          console.log(`! Running: pnpm db:generate (30s timeout)`)
+
+          try {
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Command timed out after 30 seconds')), 30000)
+            })
+
+            const { stdout, stderr } = await Promise.race([
+              execAsync('pnpm db:generate'),
+              timeoutPromise
+            ])
+
+            if (stderr && !stderr.includes('Warning')) {
+              console.error(`! Drizzle warnings:`, stderr)
+            }
+            console.log(`✓ Database migration generated for all collections`)
+            console.log(`! Migration generated. Tables will be created when you restart the dev server.`)
+          } catch (execError) {
+            if (execError.message.includes('timed out')) {
+              console.error(`✗ Database migration timed out after 30 seconds`)
+              console.error(`  Check server/database/schema/index.ts for conflicts`)
+            } else {
+              console.error(`✗ Failed to run database migration:`, execError.message)
+            }
+            console.log(`! You can manually run: pnpm db:generate && pnpm db:push`)
           }
         }
       } else {
