@@ -194,6 +194,133 @@ program
     }
   });
 
+// Rollback command - removes a single collection
+program
+  .command('rollback <layer> <collection>')
+  .description('Rollback/remove a generated collection')
+  .option('--dry-run', 'Preview what will be removed')
+  .option('--keep-files', 'Keep generated files, only clean configs')
+  .option('--force', 'Skip confirmation prompts')
+  .action(async (layer, collection, options) => {
+    try {
+      const rollbackPath = join(__dirname, '..', 'lib', 'rollback-collection.mjs');
+
+      if (!fs.existsSync(rollbackPath)) {
+        console.error(chalk.red('Error: Rollback script not found. Please ensure the package is properly installed.'));
+        process.exit(1);
+      }
+
+      // Build args for the rollback script
+      const args = [layer, collection];
+
+      if (options.dryRun) {
+        args.push('--dry-run');
+      }
+      if (options.keepFiles) {
+        args.push('--keep-files');
+      }
+      if (options.force) {
+        args.push('--force');
+      }
+
+      // Import and execute the rollback script directly
+      process.argv = ['node', 'rollback-collection.mjs', ...args];
+      await import(rollbackPath);
+
+    } catch (error) {
+      console.error(chalk.red('Rollback failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Rollback bulk command - removes multiple collections, entire layer, or from config
+program
+  .command('rollback-bulk')
+  .description('Bulk rollback operations (layer, config, or multiple collections)')
+  .option('--layer <name>', 'Rollback entire layer')
+  .option('--config <path>', 'Rollback using config file')
+  .option('--dry-run', 'Preview what will be removed')
+  .option('--keep-files', 'Keep generated files, only clean configs')
+  .option('--force', 'Skip confirmation prompts')
+  .action(async (options) => {
+    try {
+      const rollbackBulkPath = join(__dirname, '..', 'lib', 'rollback-bulk.mjs');
+
+      if (!fs.existsSync(rollbackBulkPath)) {
+        console.error(chalk.red('Error: Rollback bulk script not found. Please ensure the package is properly installed.'));
+        process.exit(1);
+      }
+
+      // Build args for the rollback bulk script
+      const args = [];
+
+      if (options.layer) {
+        args.push(`--layer=${options.layer}`);
+      } else if (options.config) {
+        args.push(`--config=${options.config}`);
+      } else {
+        console.error(chalk.red('Error: Must specify either --layer or --config'));
+        console.log(chalk.yellow('\nExamples:'));
+        console.log(chalk.cyan('  crouton-generate rollback-bulk --layer=shop'));
+        console.log(chalk.cyan('  crouton-generate rollback-bulk --config=./crouton.config.js'));
+        process.exit(1);
+      }
+
+      if (options.dryRun) {
+        args.push('--dry-run');
+      }
+      if (options.keepFiles) {
+        args.push('--keep-files');
+      }
+      if (options.force) {
+        args.push('--force');
+      }
+
+      // Import and execute the rollback bulk script directly
+      process.argv = ['node', 'rollback-bulk.mjs', ...args];
+      await import(rollbackBulkPath);
+
+    } catch (error) {
+      console.error(chalk.red('Bulk rollback failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Rollback interactive command - UI-based selection
+program
+  .command('rollback-interactive')
+  .description('Interactive rollback with selection UI')
+  .option('--dry-run', 'Preview what will be removed')
+  .option('--keep-files', 'Keep generated files, only clean configs')
+  .action(async (options) => {
+    try {
+      const rollbackInteractivePath = join(__dirname, '..', 'lib', 'rollback-interactive.mjs');
+
+      if (!fs.existsSync(rollbackInteractivePath)) {
+        console.error(chalk.red('Error: Rollback interactive script not found. Please ensure the package is properly installed.'));
+        process.exit(1);
+      }
+
+      // Build args for the rollback interactive script
+      const args = [];
+
+      if (options.dryRun) {
+        args.push('--dry-run');
+      }
+      if (options.keepFiles) {
+        args.push('--keep-files');
+      }
+
+      // Import and execute the rollback interactive script directly
+      process.argv = ['node', 'rollback-interactive.mjs', ...args];
+      await import(rollbackInteractivePath);
+
+    } catch (error) {
+      console.error(chalk.red('Interactive rollback failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
 // Parse CLI arguments
 program.parse(process.argv);
 
