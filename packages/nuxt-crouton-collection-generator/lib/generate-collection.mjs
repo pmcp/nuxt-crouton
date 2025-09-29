@@ -124,8 +124,8 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
       console.log(`✓ Schema index already contains ${exportName} export`)
       return true
     }
-    
-show    // Add named export for the new collection schema
+
+    // Add named export for the new collection schema
     // Use relative path for Drizzle compatibility (drizzle-kit doesn't understand Nuxt aliases)
     const exportLine = `export { ${exportName} } from '../../../layers/${layer}/collections/${cases.plural}/server/database/schema'`
     
