@@ -553,7 +553,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     await fsp.mkdir(dir, { recursive: true })
   }
   
-  console.log('📁 Created directory structure')
+  console.log('✓ Directory structure created')
   
   // Generate all files using modules
   // Use simplified endpoints if team utility flag is set
@@ -612,7 +612,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   // Write all files
   for (const file of files) {
     await fsp.writeFile(file.path, file.content, 'utf8')
-    console.log(`📝 Generated ${path.relative(base, file.path)}`)
+    console.log(`  ✓ ${path.relative(base, file.path)}`)
   }
 
   // Note: team-auth utility is now provided by @friendlyinternet/nuxt-crouton package
@@ -644,14 +644,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     pascalCasePlural: cases.pascalCasePlural
   })
 
-  console.log(`\n✅ Successfully generated collection '${cases.plural}' in layer '${layer}'`)
-  console.log(`\n📋 Next steps:`)
-  console.log(`1️⃣  Review the generated files in ${base}`)
-  if (noDb) {
-    console.log(`2️⃣  Update server/database/schema/index.ts to export the new schema`)
-    console.log(`3️⃣  Run database migrations: pnpm db:generate && pnpm db:push`)
-  }
-  console.log(`${noDb ? '4️⃣' : '2️⃣'}  Restart your Nuxt dev server`)
+  console.log(`\n✓ Successfully generated collection '${cases.plural}' in layer '${layer}'`)
 }
 
 // Validate config before starting generation
@@ -659,7 +652,9 @@ async function validateConfig(config) {
   const errors = []
   const warnings = []
 
-  console.log('\n🔍 Validating configuration...\n')
+  console.log('\n' + '═'.repeat(60))
+  console.log('  VALIDATION')
+  console.log('═'.repeat(60) + '\n')
 
   // Check if config file exists and is valid
   if (!config) {
@@ -679,7 +674,7 @@ async function validateConfig(config) {
       const schemaPath = path.resolve(col.fieldsFile)
       try {
         await fsp.access(schemaPath)
-        console.log(`  ✅ Schema file found: ${col.fieldsFile}`)
+        console.log(`  ✓ Schema: ${col.fieldsFile}`)
       } catch {
         errors.push(`❌ Schema file not found for collection '${col.name}': ${col.fieldsFile}`)
       }
@@ -712,7 +707,7 @@ async function validateConfig(config) {
         totalCollections += target.collections.length
       }
     }
-    console.log(`  📦 Found ${config.targets.length} layers with ${totalCollections} total collections`)
+    console.log(`  ✓ Found ${config.targets.length} layers, ${totalCollections} collections`)
   }
 
   // Validate dialect
@@ -745,7 +740,7 @@ async function validateConfig(config) {
   // Check for write permissions in current directory
   try {
     await fsp.access(process.cwd(), fsp.constants.W_OK)
-    console.log(`  ✅ Write permissions verified`)
+    console.log(`  ✓ Write permissions verified`)
   } catch {
     errors.push(`No write permissions in current directory: ${process.cwd()}`)
   }
@@ -754,12 +749,12 @@ async function validateConfig(config) {
   const layersPath = path.resolve('layers')
   try {
     await fsp.access(layersPath)
-    console.log(`  ✅ Layers directory exists`)
+    console.log(`  ✓ Layers directory exists`)
   } catch {
     // Try to check parent directory permissions
     try {
       await fsp.access(process.cwd(), fsp.constants.W_OK)
-      console.log(`  ✅ Can create layers directory`)
+      console.log(`  ✓ Can create layers directory`)
     } catch {
       errors.push('Cannot create layers directory - check permissions')
     }
@@ -802,14 +797,16 @@ async function validateConfig(config) {
   }
 
   if (errors.length === 0) {
-    console.log('\n✅ Configuration validated successfully!')
+    console.log('\n✓ Configuration validated successfully!')
 
     // Show what will be generated
-    console.log('\n🎯 Will generate:')
+    console.log('\n' + '═'.repeat(60))
+    console.log('  GENERATION PLAN')
+    console.log('═'.repeat(60))
     for (const target of config.targets) {
-      console.log(`\n  📂 Layer: ${target.layer}`)
+      console.log(`\n  ${target.layer}`)
       for (const col of target.collections) {
-        console.log(`    🗂️  ${col} collection`)
+        console.log(`    • ${col}`)
       }
     }
 
@@ -885,8 +882,10 @@ async function main() {
               continue
             }
 
-            console.log(`\n🔨 Generating collection '${collectionName}' in layer '${target.layer}'...`)
-            console.log(`  📄 Using fields from: ${fieldsFile}`)
+            console.log(`\n${'─'.repeat(60)}`)
+            console.log(`Generating ${target.layer}/${collectionName}`)
+            console.log(`${'─'.repeat(60)}`)
+            console.log(`Schema: ${fieldsFile}`)
 
             const fields = await loadFields(fieldsFile)
 
@@ -911,19 +910,22 @@ async function main() {
 
         // Update schema index for all collections and run migration once (unless disabled)
         if (!config.flags?.noDb && !config.flags?.dryRun && allCollections.length > 0) {
-          console.log(`\n🗃️  Updating schema index for all ${allCollections.length} collections...`)
+          console.log(`\n${'═'.repeat(60)}`)
+          console.log(`  DATABASE SETUP`)
+          console.log(`${'═'.repeat(60)}\n`)
+          console.log(`Updating schema index for ${allCollections.length} collections...`)
 
           // Update schema index for each collection
           for (const col of allCollections) {
             const schemaUpdated = await updateSchemaIndex(col.name, col.layer, config.flags?.force || false)
             if (!schemaUpdated) {
-              console.error(`  ❌ Failed to update schema index for ${col.name}`)
+              console.error(`  ✗ Failed to update schema index for ${col.name}`)
             }
           }
 
           // Run database migration once for all collections
-          console.log(`\n🚀 Running database migration...`)
-          console.log(`  ⏱️  Running: pnpm db:generate (30s timeout)`)
+          console.log(`\nRunning database migration...`)
+          console.log(`Command: pnpm db:generate (30s timeout)`)
 
           try {
             const timeoutPromise = new Promise((_, reject) => {
@@ -936,18 +938,21 @@ async function main() {
             ])
 
             if (stderr && !stderr.includes('Warning')) {
-              console.error(`  ⚠️  Drizzle warnings:`, stderr)
+              console.error(`⚠ Warnings:`, stderr)
             }
-            console.log(`  ✅ Database migration generated for all collections`)
-            console.log(`  💡 Migration generated. Tables will be created when you restart the dev server.`)
+            console.log(`\n✓ Database migration generated successfully`)
+            console.log(`\n${'═'.repeat(60)}`)
+            console.log(`  ALL DONE!`)
+            console.log(`${'═'.repeat(60)}\n`)
+            console.log(`Next step: Restart your Nuxt dev server\n`)
           } catch (execError) {
             if (execError.message.includes('timed out')) {
-              console.error(`  ❌ Database migration timed out after 30 seconds`)
-              console.error(`     Check server/database/schema/index.ts for conflicts`)
+              console.error(`\n✗ Database migration timed out after 30 seconds`)
+              console.error(`  Check server/database/schema/index.ts for conflicts`)
             } else {
-              console.error(`  ❌ Failed to run database migration:`, execError.message)
+              console.error(`\n✗ Failed to run database migration:`, execError.message)
             }
-            console.log(`  💡 You can manually run: pnpm db:generate && pnpm db:push`)
+            console.log(`\nManual command: pnpm db:generate && pnpm db:push\n`)
           }
         }
       } else if (config.targets && config.schemaPath) {
@@ -981,19 +986,22 @@ async function main() {
 
         // Update schema index for all collections and run migration once (unless disabled)
         if (!config.flags?.noDb && !config.flags?.dryRun && allCollections.length > 0) {
-          console.log(`\n🗃️  Updating schema index for all ${allCollections.length} collections...`)
+          console.log(`\n${'═'.repeat(60)}`)
+          console.log(`  DATABASE SETUP`)
+          console.log(`${'═'.repeat(60)}\n`)
+          console.log(`Updating schema index for ${allCollections.length} collections...`)
 
           // Update schema index for each collection
           for (const col of allCollections) {
             const schemaUpdated = await updateSchemaIndex(col.name, col.layer, config.flags?.force || false)
             if (!schemaUpdated) {
-              console.error(`  ❌ Failed to update schema index for ${col.name}`)
+              console.error(`  ✗ Failed to update schema index for ${col.name}`)
             }
           }
 
           // Run database migration once for all collections
-          console.log(`\n🚀 Running database migration...`)
-          console.log(`  ⏱️  Running: pnpm db:generate (30s timeout)`)
+          console.log(`\nRunning database migration...`)
+          console.log(`Command: pnpm db:generate (30s timeout)`)
 
           try {
             const timeoutPromise = new Promise((_, reject) => {
@@ -1006,18 +1014,21 @@ async function main() {
             ])
 
             if (stderr && !stderr.includes('Warning')) {
-              console.error(`  ⚠️  Drizzle warnings:`, stderr)
+              console.error(`⚠ Warnings:`, stderr)
             }
-            console.log(`  ✅ Database migration generated for all collections`)
-            console.log(`  💡 Migration generated. Tables will be created when you restart the dev server.`)
+            console.log(`\n✓ Database migration generated successfully`)
+            console.log(`\n${'═'.repeat(60)}`)
+            console.log(`  ALL DONE!`)
+            console.log(`${'═'.repeat(60)}\n`)
+            console.log(`Next step: Restart your Nuxt dev server\n`)
           } catch (execError) {
             if (execError.message.includes('timed out')) {
-              console.error(`  ❌ Database migration timed out after 30 seconds`)
-              console.error(`     Check server/database/schema/index.ts for conflicts`)
+              console.error(`\n✗ Database migration timed out after 30 seconds`)
+              console.error(`  Check server/database/schema/index.ts for conflicts`)
             } else {
-              console.error(`  ❌ Failed to run database migration:`, execError.message)
+              console.error(`\n✗ Failed to run database migration:`, execError.message)
             }
-            console.log(`  💡 You can manually run: pnpm db:generate && pnpm db:push`)
+            console.log(`\nManual command: pnpm db:generate && pnpm db:push\n`)
           }
         }
       } else {
