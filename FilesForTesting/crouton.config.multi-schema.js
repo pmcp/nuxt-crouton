@@ -5,7 +5,7 @@ export default {
   // Define collections with their own schema files
   collections: [
     // Shop collections
-    { name: 'products', fieldsFile: '/Users/pmcp/Projects/EchafTest/test-product-schema.json' },
+    { name: 'products', fieldsFile: './FilesForTesting/schemas/product-schema.json' },
     { name: 'categories', fieldsFile: './FilesForTesting/schemas/category-schema.json' },
     { name: 'inventory', fieldsFile: './FilesForTesting/schemas/inventory-schema.json' },
     { name: 'orders', fieldsFile: './FilesForTesting/schemas/order-schema.json' },

@@ -3,7 +3,7 @@
 
 export default {
   // Path to your JSON schema file (shared by all collections in simple mode)
-  schemaPath: '/Users/pmcp/Projects/EchafTest/test-product-schema.json',
+  schemaPath: './FilesForTesting/schemas/product-schema.json',
 
   // Database dialect: 'pg' or 'sqlite'
   dialect: 'sqlite',

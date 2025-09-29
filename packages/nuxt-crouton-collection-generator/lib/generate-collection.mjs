@@ -1022,4 +1022,6 @@ async function main() {
   }
 }
 
-main()
+tmain().then(() => {
+  process.exit(0)
+})
