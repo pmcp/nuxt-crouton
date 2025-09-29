@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="text-xl font-semibold mb-4">{{ formatCollectionName(collectionName) }}</h2>
+    <h2 class="text-xl font-semibold mb-4">{{ camelToTitleCase(collectionName) }}</h2>
 
     <div v-if="componentError" class="text-red-600 p-4 bg-red-50 rounded">
       Unable to load collection component: {{ componentError }}
@@ -25,29 +25,17 @@ interface Props {
 const props = defineProps<Props>()
 const componentError = ref<string | null>(null)
 
+// Use composable for formatting
+const { camelToTitleCase, toPascalCase } = useFormatCollections()
+
 // Convert collection name to component name
 // e.g., translationsUi -> TranslationsUiList
 // e.g., teamTranslations -> TeamTranslationsList
 // e.g., posProducts -> PosProductsList
 const componentName = computed(() => {
   if (!props.collectionName) return null
-
-  // Capitalize first letter and append 'List'
-  const pascalCase = props.collectionName
-    .charAt(0).toUpperCase() +
-    props.collectionName.slice(1) +
-    'List'
-
-  return pascalCase
+  return `${toPascalCase(props.collectionName)}List`
 })
-
-// Format collection name for display
-const formatCollectionName = (name: string) => {
-  return name
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, str => str.toUpperCase())
-    .trim()
-}
 
 // Try to resolve the component
 onMounted(async () => {

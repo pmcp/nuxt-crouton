@@ -48,10 +48,17 @@ export default function () {
     return camelToTitleCase(singular)
   }
 
+  // Convert camelCase to PascalCase
+  const toPascalCase = (val: string): string => {
+    if (!val) return ''
+    return val.charAt(0).toUpperCase() + val.slice(1)
+  }
+
   return {
     collectionWithCapital,
     collectionWithCapitalSingular,
     stripLayerPrefix,
-    camelToTitleCase
+    camelToTitleCase,
+    toPascalCase
   }
 }
