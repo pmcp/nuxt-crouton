@@ -186,4 +186,4 @@ const openCrud = (action: string, collection: string, ids: string[]) => {
   // Implementation depends on your CRUD system
   console.log(`${action} for ${collection}:`, ids)
 }
-</script>
+</script>a
