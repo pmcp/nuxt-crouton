@@ -15,7 +15,8 @@ export function generateListComponent(data, config = {}) {
     :layout="layout"
     collection="${prefixedCamelCasePlural}"
     :columns="columns"
-    :rows="collection${prefixedPascalCasePlural}"
+    :rows="${plural} || []"
+    :loading="pending"
   >
     <template #header>
       <CroutonTableHeader
@@ -38,24 +39,26 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   layout: 'table'
 })
+
+console.log('[${prefixedPascalCasePlural} List] Component mounted')
 ${hasTranslations ? `
 const { t } = useEntityTranslations()
 const { locale } = useI18n()` : ''}
 const { columns } = use${prefixedPascalCasePlural}()
-const { currentTeam } = useTeam()
-const { ${prefixedCamelCasePlural}: collection${prefixedPascalCasePlural} } = useCollections()
 
-const { data: ${plural}, refresh } = await useFetch(
-  \`/api/teams/\${currentTeam.value.id}/${apiPath}\`,
+// NEW: Use query-based data fetching
+const { items: ${plural}, pending } = await useCollectionQuery(
+  '${prefixedCamelCasePlural}',
   {${hasTranslations ? `
-    query: { locale: locale.value },` : ''}
-    watch: [currentTeam${hasTranslations ? ', locale' : ''}],
-  },
+    query: computed(() => ({ locale: locale.value }))` : ''}
+  }
 )
 
-// Directly assign the fetched ${plural} to the collection
-if (${plural}.value) {
-  collection${prefixedPascalCasePlural}.value = ${plural}.value
-}
+console.log('[${prefixedPascalCasePlural} List] Initial data:', ${plural}.value?.length, 'items')
+${hasTranslations ? `
+// Watch for locale changes
+watch(locale, (newLocale) => {
+  console.log('[${prefixedPascalCasePlural} List] Locale changed to:', newLocale)
+})` : ''}
 </script>`
 }

@@ -82,6 +82,7 @@ export function generateFormComponent(data, config = {}) {
       :collection="collection"
       :items="items"
       :loading="loading"
+      @click="handleSubmit"
     />
 
     <!-- FORM FOR EDIT OR CREATE -->
@@ -90,7 +91,7 @@ export function generateFormComponent(data, config = {}) {
       :schema="schema"
       :state="state"
       class="space-y-4 flex flex-col justify-between h-full gap-4"
-      @submit="send(action, collection, state)"
+      @submit="handleSubmit"
       size="lg"
     >
 ${formFields}${translationField}
@@ -108,9 +109,14 @@ ${formFields}${translationField}
 <script setup lang="ts">
 import type { ${prefixedPascalCase}FormProps, ${prefixedPascalCase}FormData } from '${typesPath}'
 
-const { send } = useCrouton()
 const props = defineProps<${prefixedPascalCase}FormProps>()
 const { defaultValue, schema, collection } = use${prefixedPascalCasePlural}()
+
+// Use new mutation composable for data operations
+const { create, update, deleteItems } = useCollectionMutation(collection)
+
+// useCrouton still manages modal state
+const { close } = useCrouton()
 
 // Initialize form state with proper values (no watch needed!)
 const initialValues = props.action === 'update' && props.activeItem?.id
@@ -126,7 +132,30 @@ if (props.action === 'update' && props.activeItem?.id) {${regularFields
   }`).join('')}
 }` : ''}
 
-const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)${hasDateFields ? `
+const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)
+
+// Handle form submission with new mutation composable
+const handleSubmit = async () => {
+  console.log('[${prefixedPascalCase} Form] Submit:', props.action, state.value)
+
+  try {
+    if (props.action === 'create') {
+      await create(state.value)
+    } else if (props.action === 'update' && state.value.id) {
+      await update(state.value.id, state.value)
+    } else if (props.action === 'delete') {
+      await deleteItems(props.items)
+    }
+
+    // Close the form modal/slideover
+    close()
+
+  } catch (error) {
+    console.error('[${prefixedPascalCase} Form] Error:', error)
+    // Error already handled by mutation composable (toast shown)
+    // Keep form open so user can retry
+  }
+}${hasDateFields ? `
 
 // Date field helper functions
 const formatDateForInput = (date: Date | string | null | undefined): string => {

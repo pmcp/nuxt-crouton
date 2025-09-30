@@ -21,8 +21,12 @@ type ConfigsMap = {
 }
 
 /**
- * Dynamic collection management using user's registry
+ * Collection configuration management
  * Collections are registered via the generator in app.config.ts
+ *
+ * NOTE: This composable now only manages configuration, not data state.
+ * For data fetching, use useCollectionQuery()
+ * For mutations, use useCollectionMutation()
  */
 export default function useCollections() {
   // Get the registry from app.config – each entry should provide config data
@@ -37,19 +41,12 @@ export default function useCollections() {
     }
   })
 
-  // Create reactive state for each collection
-  const collections = Object.keys(collectionRegistry).reduce((acc, name) => {
-    acc[name as CollectionName] = useState(name, () => [])
-    return acc
-  }, {} as Record<CollectionName, Ref<any[]>>)
-
   // Get config synchronously - returns undefined for collections without configs
   const getConfig = (name: string): CollectionConfig | undefined => {
     return collectionRegistry[name as keyof ConfigsMap]
   }
 
   return {
-    ...collections,
     componentMap,
     getConfig,
     configs: collectionRegistry
