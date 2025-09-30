@@ -3,10 +3,16 @@
  * Replaces the data-fetching parts of useCrouton with a focused mutation API
  *
  * Features:
- * - Automatic cache invalidation after mutations
+ * - Automatic cache invalidation after mutations (triggers refetch in all views)
  * - Toast notifications for success/error
+ * - Works with Nuxt's query-based cache system
  * - Extensive logging for debugging
- * - Room for optimistic updates (future enhancement)
+ *
+ * How it works:
+ * 1. Performs the API mutation (POST/PATCH/DELETE)
+ * 2. Invalidates all cache keys matching `collection:${name}:*`
+ * 3. Nuxt automatically refetches data in all active useCollectionQuery calls
+ * 4. UI updates with fresh data from the server
  *
  * @example
  * const { create, update, deleteItems } = useCollectionMutation('adminRoles')
@@ -42,18 +48,19 @@ export function useCollectionMutation(collection: string) {
   }
 
   /**
-   * Invalidate cache for this collection
-   * Uses a simple approach: refresh all queries that start with "collection:[name]"
-   * TODO: In production, we could track specific cache keys or use wildcard patterns
+   * Invalidate cache for this collection (triggers refetch in all views)
+   * Refreshes the base cache key (no query params) which is used by most list views
    */
   const invalidateCache = async () => {
-    console.log('[useCollectionMutation] Invalidating cache for:', collection)
+    console.log('[useCollectionMutation v2.0] Invalidating cache for:', collection)
 
-    // Refresh Nuxt data cache
-    // This will trigger refetch for any useFetch calls with matching keys
-    await refreshNuxtData(`collection:${collection}`)
+    // Refresh the base cache key (empty query params)
+    const baseCacheKey = `collection:${collection}:{}`
+    console.log('[useCollectionMutation v2.0] Refreshing cache key:', baseCacheKey)
 
-    console.log('[useCollectionMutation] Cache invalidated')
+    await refreshNuxtData(baseCacheKey)
+
+    console.log('[useCollectionMutation v2.0] ✅ Cache refreshed!')
   }
 
   /**
@@ -64,7 +71,6 @@ export function useCollectionMutation(collection: string) {
 
     console.group('[useCollectionMutation] CREATE')
     console.log('Collection:', collection)
-    console.log('API URL:', baseUrl)
     console.log('Data:', data)
 
     try {
@@ -74,13 +80,13 @@ export function useCollectionMutation(collection: string) {
         credentials: 'include'
       })
 
-      console.log('✅ Success:', result)
-      console.groupEnd()
+      console.log('✅ API Success:', result)
 
-      // Invalidate cache to trigger refetch
+      // Invalidate cache to trigger refetch in all views
       await invalidateCache()
 
-      // Show success toast
+      console.groupEnd()
+
       toast.add({
         title: 'Created successfully',
         icon: 'i-lucide-check',
@@ -90,7 +96,7 @@ export function useCollectionMutation(collection: string) {
       return result
 
     } catch (error: any) {
-      console.error('❌ Error:', error)
+      console.error('❌ API Error:', error)
       console.groupEnd()
 
       const errorMessage = error.data?.message || error.data || 'Creation failed'
@@ -116,7 +122,6 @@ export function useCollectionMutation(collection: string) {
     console.group('[useCollectionMutation] UPDATE')
     console.log('Collection:', collection)
     console.log('Item ID:', id)
-    console.log('API URL:', url)
     console.log('Updates:', updates)
 
     try {
@@ -126,13 +131,13 @@ export function useCollectionMutation(collection: string) {
         credentials: 'include'
       })
 
-      console.log('✅ Success:', result)
-      console.groupEnd()
+      console.log('✅ API Success:', result)
 
-      // Invalidate cache
+      // Invalidate cache to trigger refetch
       await invalidateCache()
 
-      // Show success toast
+      console.groupEnd()
+
       toast.add({
         title: 'Updated successfully',
         icon: 'i-lucide-check',
@@ -142,7 +147,7 @@ export function useCollectionMutation(collection: string) {
       return result
 
     } catch (error: any) {
-      console.error('❌ Error:', error)
+      console.error('❌ API Error:', error)
       console.groupEnd()
 
       const errorMessage = error.data?.message || error.data || 'Update failed'
@@ -167,11 +172,9 @@ export function useCollectionMutation(collection: string) {
     console.group('[useCollectionMutation] DELETE')
     console.log('Collection:', collection)
     console.log('Item IDs:', ids)
-    console.log('API Base URL:', baseUrl)
 
     try {
       // Delete each item individually
-      // API expects DELETE /api/teams/[teamId]/[collection]/[id]
       await Promise.all(
         ids.map(id =>
           $fetch(`${baseUrl}/${id}`, {
@@ -181,13 +184,13 @@ export function useCollectionMutation(collection: string) {
         )
       )
 
-      console.log('✅ Success: Deleted', ids.length, 'item(s)')
-      console.groupEnd()
+      console.log('✅ API Success: Deleted', ids.length, 'item(s)')
 
-      // Invalidate cache
+      // Invalidate cache to trigger refetch
       await invalidateCache()
 
-      // Show success toast
+      console.groupEnd()
+
       toast.add({
         title: `Deleted ${ids.length} item(s)`,
         icon: 'i-lucide-check',
@@ -195,7 +198,7 @@ export function useCollectionMutation(collection: string) {
       })
 
     } catch (error: any) {
-      console.error('❌ Error:', error)
+      console.error('❌ API Error:', error)
       console.groupEnd()
 
       const errorMessage = error.data?.message || error.data || 'Delete failed'

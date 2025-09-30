@@ -51,6 +51,14 @@ Create `packages/nuxt-crouton-playground/` - an interactive, "playable" theming 
    - Copy individual component examples
    - Responsive preview modes (desktop/tablet/mobile)
 
+## Important Setup Notes
+
+**When creating a Nuxt app with Nuxt UI:**
+- Always use the official Nuxt UI starter template: https://github.com/nuxt-ui-templates/starter
+- This ensures proper Nuxt UI 4 configuration from the start
+- Always read the Nuxt UI documentation using the Nuxt MCP before implementation
+- The MCP has up-to-date information about component APIs and patterns
+
 ## Technical Architecture
 
 ### Package Structure

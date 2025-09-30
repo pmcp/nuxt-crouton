@@ -37,6 +37,6 @@
   },
   "peerDependencies": {
     "nuxt": "^4.0.0",
-    "@friendlyinternet/nuxt-crouton": "^1.0.1"
+    "@friendlyinternet/nuxt-crouton": "workspace:*"
   }
 }

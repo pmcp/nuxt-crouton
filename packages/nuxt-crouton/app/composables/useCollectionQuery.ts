@@ -42,7 +42,7 @@ interface CollectionQueryReturn<T = any> {
  *   query: computed(() => ({ locale: locale.value }))
  * })
  */
-export function useCollectionQuery<T = any>(
+export async function useCollectionQuery<T = any>(
   collection: string,
   options: CollectionQueryOptions = {}
 ): Promise<CollectionQueryReturn<T>> {

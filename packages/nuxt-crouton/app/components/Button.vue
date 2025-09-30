@@ -1,30 +1,10 @@
 <template>
-
-  <UForm
-    v-if="action === 'delete'"
-    :state="items"
-    @submit="send(action, collection, items)"
-  >
-    <UButton
-      :loading="loading !== 'notLoading'"
-      :disabled="loading !== 'notLoading'"
-      size="lg"
-      block
-      color="gray"
-      type="submit"
-    >
-      <div class="flex items-center gap-1">
-        <span class="capitalize">{{ action }}</span><span class="lowercase">{{ collectionWithCapitalSingular(collection) }}</span>
-      </div>
-    </UButton>
-  </UForm>
-
   <UButton
-    v-if="action === 'create' || action === 'update'"
     :loading="loading !== 'notLoading'"
     :disabled="loading !== 'notLoading'"
     size="lg"
     block
+    :color="action === 'delete' ? 'red' : 'primary'"
     type="submit"
   >
     <div class="flex items-center gap-1">
@@ -34,7 +14,6 @@
 </template>
 
 <script setup>
-const { send } = useCrouton()
 const { collectionWithCapitalSingular } = useFormatCollections()
 
 const props = defineProps({
