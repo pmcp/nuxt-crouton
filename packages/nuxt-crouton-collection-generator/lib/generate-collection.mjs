@@ -645,10 +645,20 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
       }
     }).join(',\n  '),
     fieldsDefault: fields.filter(f => f.name !== 'id').map(f => `${f.name}: ${f.default}`).join(',\n    '),
-    fieldsColumns: fields.map(f => 
-      `{ accessorKey: '${f.name}', header: '${f.name.charAt(0).toUpperCase() + f.name.slice(1)}' }`
-    ).join(',\n  ').concat(',\n  { accessorKey: \'actions\', header: \'Actions\' }'),
-    fieldsTypes: fields.filter(f => f.name !== 'id').map(f => 
+    fieldsColumns: (() => {
+      const baseColumns = fields.map(f =>
+        `{ accessorKey: '${f.name}', header: '${f.name.charAt(0).toUpperCase() + f.name.slice(1)}' }`
+      ).join(',\n  ')
+
+      // Check if translations are enabled for this collection
+      const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
+      const translationsColumn = hasTranslations
+        ? ',\n  { accessorKey: \'translations\', header: \'Translations\' }'
+        : ''
+
+      return baseColumns + translationsColumn + ',\n  { accessorKey: \'actions\', header: \'Actions\' }'
+    })(),
+    fieldsTypes: fields.filter(f => f.name !== 'id').map(f =>
       `${f.name}${f.meta?.required ? '' : '?'}: ${f.tsType}`
     ).join('\n  ')
   }
