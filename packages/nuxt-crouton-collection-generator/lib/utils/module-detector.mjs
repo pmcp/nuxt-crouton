@@ -57,6 +57,29 @@ async function layerExists(layerName) {
 }
 
 /**
+ * Check if any field uses a specific component
+ */
+function hasFieldWithComponent(config, componentName) {
+  if (!config?.collections) return false
+
+  for (const collection of config.collections) {
+    if (collection.fieldsFile) {
+      // Will need to check the actual field file
+      // For now, return false - detection happens at generation time
+      continue
+    }
+    if (collection.fields) {
+      for (const field of Object.values(collection.fields)) {
+        if (field.meta?.component === componentName) {
+          return true
+        }
+      }
+    }
+  }
+  return false
+}
+
+/**
  * Detect required layers for a collection configuration
  */
 export async function detectRequiredDependencies(config) {
@@ -65,23 +88,23 @@ export async function detectRequiredDependencies(config) {
     missing: []
   }
 
-  // Always check for base CRUD layer first
+  // Always check for base Crouton layer first
   const baseLayerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton')
   const baseLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton')
 
   if (!baseLayerInstalled || !baseLayerExtended) {
-    // Fallback to check for local crud layer
-    const crudLayerExists = await layerExists('crud')
-    if (!crudLayerExists) {
+    // Fallback to check for local crouton layer
+    const croutonLayerExists = await layerExists('crouton')
+    if (!croutonLayerExists) {
       required.missing.push({
         type: 'layer',
         name: '@friendlyinternet/nuxt-crouton',
-        reason: 'Required for CRUD components',
+        reason: 'Required for Crouton components',
         installCmd: 'pnpm add @friendlyinternet/nuxt-crouton',
         configCmd: `Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts`
       })
     } else {
-      required.layers.push('crud')
+      required.layers.push('crouton')
     }
   } else {
     required.layers.push('@friendlyinternet/nuxt-crouton')
@@ -112,6 +135,26 @@ export async function detectRequiredDependencies(config) {
           configCmd: `Add BOTH '@friendlyinternet/nuxt-crouton' and '@friendlyinternet/nuxt-crouton-i18n' to extends array`
         })
       }
+    }
+  }
+
+  // Check if rich text editor is needed (EditorSimple component)
+  const hasEditorFields = hasFieldWithComponent(config, 'EditorSimple')
+
+  if (hasEditorFields) {
+    const editorInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-editor')
+    const editorExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-editor')
+
+    if (editorInstalled && editorExtended) {
+      required.layers.push('@friendlyinternet/nuxt-crouton-editor')
+    } else {
+      required.missing.push({
+        type: 'layer',
+        name: '@friendlyinternet/nuxt-crouton-editor',
+        reason: 'Required addon for EditorSimple rich text editor',
+        installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-editor',
+        configCmd: `Add '@friendlyinternet/nuxt-crouton-editor' to extends array`
+      })
     }
   }
 

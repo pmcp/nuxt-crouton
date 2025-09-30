@@ -4,6 +4,7 @@ import type { ColorPalette } from './useColorPalette'
 
 export const useThemeExport = () => {
   const { theme } = useThemeState()
+  const { advanced } = useAdvancedTheme()
 
   /**
    * Generate app.config.ts code
@@ -22,6 +23,34 @@ export const useThemeExport = () => {
     }
   }
 })`
+  }
+
+  /**
+   * Generate CSS for advanced settings
+   */
+  const generateAdvancedCSS = (): string => {
+    const hasAdvanced = advanced.value.typography.fontFamily !== 'system-ui, sans-serif' ||
+                       advanced.value.spacing.radius !== '0.5rem'
+
+    if (!hasAdvanced) {
+      return '// No advanced settings configured'
+    }
+
+    const css: string[] = []
+
+    css.push(':root {')
+
+    if (advanced.value.typography.fontFamily !== 'system-ui, sans-serif') {
+      css.push(`  --ui-font-family: ${advanced.value.typography.fontFamily};`)
+    }
+
+    if (advanced.value.spacing.radius !== '0.5rem') {
+      css.push(`  --ui-radius: ${advanced.value.spacing.radius};`)
+    }
+
+    css.push('}')
+
+    return css.join('\n')
   }
 
   /**
@@ -61,7 +90,11 @@ ${paletteEntries}
   const exportAsJSON = (): string => {
     const data = {
       colors: theme.value.colors,
-      customPalettes: theme.value.customPalettes
+      customPalettes: theme.value.customPalettes,
+      advanced: {
+        typography: advanced.value.typography,
+        spacing: advanced.value.spacing
+      }
     }
     return JSON.stringify(data, null, 2)
   }
@@ -79,6 +112,7 @@ ${paletteEntries}
 
   return {
     generateAppConfig,
+    generateAdvancedCSS,
     generateTailwindConfig,
     exportAsJSON,
     copyToClipboard,

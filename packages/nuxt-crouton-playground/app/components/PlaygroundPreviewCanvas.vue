@@ -17,24 +17,29 @@ const tabItems = [
 ]
 
 const dropdownItems = [
-  [{ label: 'Profile', icon: 'i-heroicons-user' }],
-  [{ label: 'Settings', icon: 'i-heroicons-cog-6-tooth' }],
-  [{ label: 'Sign out', icon: 'i-heroicons-arrow-right-on-rectangle' }]
+  [{ label: 'Profile', icon: 'i-lucide-user' }],
+  [{ label: 'Settings', icon: 'i-lucide-settings' }],
+  [{ label: 'Sign out', icon: 'i-lucide-log-out' }]
 ]
 </script>
 
 <template>
   <div class="p-8 space-y-12">
+    <!-- Theme Showcase -->
+    <PlaygroundSemanticShowcase />
+
+    <USeparator />
+
     <!-- Buttons Section -->
     <section>
-      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+      <h3 class="text-xl font-semibold text-default mb-6">
         Buttons
       </h3>
 
       <div class="space-y-6">
         <!-- Solid Variants -->
         <div>
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Solid</h4>
+          <h4 class="text-sm font-medium text-default mb-3">Solid</h4>
           <div class="flex flex-wrap gap-3">
             <UButton color="primary">Primary</UButton>
             <UButton color="secondary">Secondary</UButton>
@@ -48,7 +53,7 @@ const dropdownItems = [
 
         <!-- Outline Variants -->
         <div>
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Outline</h4>
+          <h4 class="text-sm font-medium text-default mb-3">Outline</h4>
           <div class="flex flex-wrap gap-3">
             <UButton variant="outline" color="primary">Primary</UButton>
             <UButton variant="outline" color="secondary">Secondary</UButton>
@@ -62,7 +67,7 @@ const dropdownItems = [
 
         <!-- Ghost Variants -->
         <div>
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Ghost</h4>
+          <h4 class="text-sm font-medium text-default mb-3">Ghost</h4>
           <div class="flex flex-wrap gap-3">
             <UButton variant="ghost" color="primary">Primary</UButton>
             <UButton variant="ghost" color="secondary">Secondary</UButton>
@@ -76,7 +81,7 @@ const dropdownItems = [
 
         <!-- Sizes -->
         <div>
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Sizes</h4>
+          <h4 class="text-sm font-medium text-default mb-3">Sizes</h4>
           <div class="flex flex-wrap items-center gap-3">
             <UButton size="xs" color="primary">XS</UButton>
             <UButton size="sm" color="primary">SM</UButton>
@@ -88,11 +93,11 @@ const dropdownItems = [
 
         <!-- With Icons -->
         <div>
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">With Icons</h4>
+          <h4 class="text-sm font-medium text-default mb-3">With Icons</h4>
           <div class="flex flex-wrap gap-3">
-            <UButton icon="i-heroicons-plus" color="primary">Create</UButton>
-            <UButton trailing-icon="i-heroicons-arrow-right" color="secondary">Next</UButton>
-            <UButton icon="i-heroicons-trash" variant="outline" color="error">Delete</UButton>
+            <UButton icon="i-lucide-plus" color="primary">Create</UButton>
+            <UButton trailing-icon="i-lucide-arrow-right" color="secondary">Next</UButton>
+            <UButton icon="i-lucide-trash" variant="outline" color="error">Delete</UButton>
             <UButton loading color="primary">Loading...</UButton>
           </div>
         </div>
@@ -109,28 +114,28 @@ const dropdownItems = [
 
       <div class="max-w-md space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label class="block text-sm font-medium text-default mb-2">
             Text Input
           </label>
           <UInput v-model="formState.name" placeholder="Enter your name" />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label class="block text-sm font-medium text-default mb-2">
             Email Input
           </label>
-          <UInput v-model="formState.email" type="email" placeholder="email@example.com" icon="i-heroicons-envelope" />
+          <UInput v-model="formState.email" type="email" placeholder="email@example.com" icon="i-lucide-mail" />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label class="block text-sm font-medium text-default mb-2">
             Textarea
           </label>
           <UTextarea v-model="formState.message" placeholder="Enter your message" :rows="3" />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label class="block text-sm font-medium text-default mb-2">
             Select
           </label>
           <USelect v-model="formState.plan" :options="['basic', 'pro', 'enterprise']" />
@@ -138,14 +143,14 @@ const dropdownItems = [
 
         <div class="flex items-center gap-2">
           <UCheckbox v-model="formState.subscribe" />
-          <label class="text-sm text-gray-700 dark:text-gray-300">
+          <label class="text-sm text-default">
             Subscribe to newsletter
           </label>
         </div>
 
         <div class="flex items-center gap-2">
           <USwitch v-model="formState.subscribe" />
-          <label class="text-sm text-gray-700 dark:text-gray-300">
+          <label class="text-sm text-default">
             Enable notifications
           </label>
         </div>
@@ -166,28 +171,28 @@ const dropdownItems = [
           variant="solid"
           title="Primary Alert"
           description="This is a primary alert message."
-          icon="i-heroicons-information-circle"
+          icon="i-lucide-info"
         />
         <UAlert
           color="success"
           variant="outline"
           title="Success"
           description="Your changes have been saved successfully."
-          icon="i-heroicons-check-circle"
+          icon="i-lucide-check-circle"
         />
         <UAlert
           color="warning"
           variant="soft"
           title="Warning"
           description="Please review your information before proceeding."
-          icon="i-heroicons-exclamation-triangle"
+          icon="i-lucide-alert-triangle"
         />
         <UAlert
           color="error"
           variant="outline"
           title="Error"
           description="An error occurred while processing your request."
-          icon="i-heroicons-x-circle"
+          icon="i-lucide-x-circle"
         />
 
         <div class="flex flex-wrap gap-2 pt-4">
@@ -211,14 +216,14 @@ const dropdownItems = [
 
       <div class="space-y-6">
         <div>
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Tabs</h4>
+          <h4 class="text-sm font-medium text-default mb-3">Tabs</h4>
           <UTabs :items="tabItems.map(t => ({ label: t.label }))" />
         </div>
 
         <div>
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Dropdown Menu</h4>
+          <h4 class="text-sm font-medium text-default mb-3">Dropdown Menu</h4>
           <UDropdownMenu :items="dropdownItems">
-            <UButton trailing-icon="i-heroicons-chevron-down">
+            <UButton trailing-icon="i-lucide-chevron-down">
               Dropdown
             </UButton>
           </UDropdownMenu>
@@ -244,11 +249,11 @@ const dropdownItems = [
         <template #content="{ close }">
           <div class="p-6">
             <h3 class="text-lg font-semibold mb-4">Modal Title</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">
+            <p class="text-muted mb-6">
               This is a modal dialog. It can contain any content you need.
             </p>
             <div class="flex justify-end gap-2">
-              <UButton color="gray" variant="ghost" @click="close">
+              <UButton color="neutral" variant="ghost" @click="close">
                 Cancel
               </UButton>
               <UButton color="primary" @click="close">
@@ -264,7 +269,7 @@ const dropdownItems = [
         <template #content="{ close }">
           <div class="p-6">
             <h3 class="text-lg font-semibold mb-4">Slideover Title</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">
+            <p class="text-muted mb-6">
               This is a slideover panel. Great for forms and detail views.
             </p>
             <UButton @click="close">Close</UButton>
@@ -286,7 +291,7 @@ const dropdownItems = [
           <template #header>
             <h4 class="font-semibold">Card Title</h4>
           </template>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-sm text-muted">
             This is a card component with header and footer.
           </p>
           <template #footer>
@@ -298,7 +303,7 @@ const dropdownItems = [
           <template #header>
             <h4 class="font-semibold">Another Card</h4>
           </template>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-sm text-muted">
             Cards are great for organizing content.
           </p>
         </UCard>
@@ -307,7 +312,7 @@ const dropdownItems = [
           <template #header>
             <h4 class="font-semibold">Third Card</h4>
           </template>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-sm text-muted">
             They adapt to your theme automatically.
           </p>
         </UCard>

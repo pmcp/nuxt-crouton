@@ -7,6 +7,13 @@ export default defineNuxtConfig({
   // Note: This is an addon layer - users must explicitly extend both:
   // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/nuxt-crouton-editor']
 
+  // Tiptap module configuration
+  modules: ['nuxt-tiptap'],
+
+  tiptap: {
+    prefix: 'Tiptap'
+  },
+
   // Component configuration
   components: {
     dirs: [

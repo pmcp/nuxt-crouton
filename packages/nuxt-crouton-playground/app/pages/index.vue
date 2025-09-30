@@ -30,16 +30,16 @@ onKeyStroke('z', (e) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-[var(--ui-color-neutral-100)]">
     <!-- Header -->
-    <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+    <header class="border-b border-default bg-elevated">
       <div class="px-6 py-4">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 class="text-2xl font-bold text-default">
               🎨 Nuxt Crouton Theme Playground
             </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p class="text-sm text-muted mt-1">
               Interactive Nuxt UI theming tool with real-time preview
             </p>
           </div>
@@ -48,16 +48,16 @@ onKeyStroke('z', (e) => {
             <!-- Undo/Redo -->
             <div class="flex items-center gap-1">
               <UButton
-                icon="i-heroicons-arrow-uturn-left"
-                color="gray"
+                icon="i-lucide-undo"
+                color="neutral"
                 variant="ghost"
                 :disabled="!canUndo"
                 @click="undo()"
                 title="Undo (Cmd+Z)"
               />
               <UButton
-                icon="i-heroicons-arrow-uturn-right"
-                color="gray"
+                icon="i-lucide-redo"
+                color="neutral"
                 variant="ghost"
                 :disabled="!canRedo"
                 @click="redo()"
@@ -69,8 +69,8 @@ onKeyStroke('z', (e) => {
 
             <!-- Export -->
             <UButton
-              icon="i-heroicons-code-bracket"
-              color="gray"
+              icon="i-lucide-code"
+              color="neutral"
               variant="ghost"
               @click="showExportModal = true"
             >
@@ -79,8 +79,8 @@ onKeyStroke('z', (e) => {
 
             <!-- Share -->
             <UButton
-              icon="i-heroicons-share"
-              color="gray"
+              icon="i-lucide-share"
+              color="neutral"
               variant="ghost"
               @click="handleShare"
             >
@@ -89,8 +89,8 @@ onKeyStroke('z', (e) => {
 
             <!-- Color Mode Toggle -->
             <UButton
-              :icon="colorMode.value === 'dark' ? 'i-heroicons-moon' : 'i-heroicons-sun'"
-              color="gray"
+              :icon="colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'"
+              color="neutral"
               variant="ghost"
               @click="colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'"
             />
@@ -102,7 +102,7 @@ onKeyStroke('z', (e) => {
     <!-- Main Content -->
     <div class="flex h-[calc(100vh-89px)]">
       <!-- Left Panel: Controls -->
-      <aside class="w-80 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 overflow-y-auto">
+      <aside class="w-80 border-r border-default bg-elevated overflow-y-auto">
         <PlaygroundControlPanel />
       </aside>
 

@@ -90,8 +90,8 @@
     :ui="getSlideoverUi(state, index)"
     :style="getSlideoverStyle(state, index)"
     :class="[
-      `crud-slideover-level-${index}`,
-      state.isExpanded ? 'crud-slideover-expanded' : ''
+      `crouton-slideover-level-${index}`,
+      state.isExpanded ? 'crouton-slideover-expanded' : ''
     ]"
     @update:open="(val: boolean) => handleSlideoverClose(state.id, val)"
     @after:leave="() => handleAfterLeave(state.id)"
@@ -246,7 +246,7 @@ const toggleExpand = (stateId: string): void => {
 }
 
 // Get dynamic UI configuration based on expand state
-const getSlideoverUi = (state: CrudState, index: number) => {
+const getSlideoverUi = (state: CroutonState, index: number) => {
   if (state.isExpanded) {
     // Fullscreen mode - keep right anchor but expand width
     return {
@@ -267,7 +267,7 @@ const getSlideoverUi = (state: CrudState, index: number) => {
 }
 
 // Get dynamic style based on expand state with smooth transitions
-const getSlideoverStyle = (state: CrudState, index: number) => {
+const getSlideoverStyle = (state: CroutonState, index: number) => {
   const baseZIndex = 40 + (index * 10)
 
   // For expanded state, only adjust positioning, let CSS handle width

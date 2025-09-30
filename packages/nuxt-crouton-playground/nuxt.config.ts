@@ -2,9 +2,15 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-09-30',
 
   modules: [
-    '@nuxt/ui',
-    '@friendlyinternet/nuxt-crouton'
+    '@nuxtjs/color-mode',
+    '@nuxt/ui'
   ],
+
+  css: ['~/assets/css/main.css'],
+
+  colorMode: {
+    classSuffix: ''
+  },
 
   devtools: {
     enabled: true

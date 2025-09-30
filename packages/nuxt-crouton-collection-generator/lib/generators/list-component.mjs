@@ -32,33 +32,21 @@ export function generateListComponent(data, config = {}) {
 </template>
 
 <script setup lang="ts">
-interface Props {
-  layout?: 'table' | 'list' | 'grid' | 'cards'
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<{
+  layout?: any
+}>(), {
   layout: 'table'
 })
-
-console.log('[${prefixedPascalCasePlural} List] Component mounted')
 ${hasTranslations ? `
 const { t } = useEntityTranslations()
 const { locale } = useI18n()` : ''}
 const { columns } = use${prefixedPascalCasePlural}()
 
-// NEW: Use query-based data fetching
 const { items: ${plural}, pending } = await useCollectionQuery(
   '${prefixedCamelCasePlural}',
   {${hasTranslations ? `
     query: computed(() => ({ locale: locale.value }))` : ''}
   }
 )
-
-console.log('[${prefixedPascalCasePlural} List] Initial data:', ${plural}.value?.length, 'items')
-${hasTranslations ? `
-// Watch for locale changes
-watch(locale, (newLocale) => {
-  console.log('[${prefixedPascalCasePlural} List] Locale changed to:', newLocale)
-})` : ''}
 </script>`
 }

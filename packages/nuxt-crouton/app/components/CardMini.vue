@@ -19,7 +19,7 @@
 
 </div>
 
-    <InterfaceCrudMiniButtons
+    <CroutonMiniButtons
       v-if="item"
       class="absolute -top-1 right-2 transition delay-150 duration-300 ease-in-out group-hover:-translate-y-6 group-hover:scale-110"
       update

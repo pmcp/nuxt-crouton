@@ -20,14 +20,14 @@ const question = (query) => new Promise(resolve => rl.question(query, resolve))
 const LAYERS = {
   '@friendlyinternet/nuxt-crouton': {
     name: '@friendlyinternet/nuxt-crouton',
-    description: 'Base CRUD layer with essential components (always required)',
+    description: 'Base Crouton layer with essential components (always required)',
     required: [],
     features: [
       '✨ CroutonButton component',
       '✨ CroutonEntitySelect component',
       '✨ ExpandableSlideover component',
       '✨ Table components with search',
-      '✨ CRUD composables (useCrouton, useCollections)'
+      '✨ Crouton composables (useCrouton, useCollections)'
     ]
   },
   '@friendlyinternet/nuxt-crouton-i18n': {
@@ -40,7 +40,7 @@ const LAYERS = {
       '✨ LanguageSwitcher component',
       '✨ Multi-language support (EN, NL, FR)',
       '✨ Translation composables (useT, useEntityTranslations)',
-      '✨ Works with base CRUD features'
+      '✨ Works with base Crouton features'
     ]
   },
   '@friendlyinternet/nuxt-crouton-editor': {
@@ -52,7 +52,7 @@ const LAYERS = {
       '✨ Rich text editor components',
       '✨ Tiptap integration',
       '✨ Toolbar and formatting options',
-      '✨ Works with base CRUD features'
+      '✨ Works with base Crouton features'
     ]
   }
 }

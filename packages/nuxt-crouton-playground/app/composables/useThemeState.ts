@@ -39,12 +39,12 @@ export const useThemeState = () => {
   const applyTheme = () => {
     const appConfig = useAppConfig()
     if (!appConfig.ui) {
-      appConfig.ui = {}
+      appConfig.ui = { colors: theme.value.colors } as any
+    } else if (!appConfig.ui.colors) {
+      appConfig.ui.colors = theme.value.colors as any
+    } else {
+      appConfig.ui.colors = { ...theme.value.colors } as any
     }
-    if (!appConfig.ui.colors) {
-      appConfig.ui.colors = {}
-    }
-    appConfig.ui.colors = { ...theme.value.colors }
   }
 
   // Update a single color

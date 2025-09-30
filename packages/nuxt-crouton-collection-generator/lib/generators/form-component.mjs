@@ -18,6 +18,15 @@ export function generateFormComponent(data, config = {}) {
   // Generate form fields for regular (non-translatable) fields only
   const formFields = regularFields.map(field => {
     const fieldName = field.name.charAt(0).toUpperCase() + field.name.slice(1)
+
+    // Check if a custom component is specified in meta
+    if (field.meta?.component) {
+      return `      <UFormField label="${fieldName}" name="${field.name}">
+        <${field.meta.component} v-model="state.${field.name}" />
+      </UFormField>`
+    }
+
+    // Default component selection based on field type
     if (field.type === 'text') {
       return `      <UFormField label="${fieldName}" name="${field.name}">
         <UTextarea v-model="state.${field.name}" class="w-full" size="xl" />
@@ -50,7 +59,6 @@ export function generateFormComponent(data, config = {}) {
   // Add TranslationsInput if there are translatable fields
   const translationField = hasTranslations ? `
 
-      <!-- Translation fields -->
       <TranslationsInput
         v-model="state.translations"
         :fields="[${translatableFieldNames.map(f => `'${f}'`).join(', ')}]"
@@ -75,7 +83,6 @@ export function generateFormComponent(data, config = {}) {
 
   return `<template>
   <div v-if="loading === 'notLoading'">
-    <!-- DELETE BUTTON-->
     <CroutonButton
       v-if="action === 'delete'"
       :action="action"
@@ -85,7 +92,6 @@ export function generateFormComponent(data, config = {}) {
       @click="handleSubmit"
     />
 
-    <!-- FORM FOR EDIT OR CREATE -->
     <UForm
       v-else
       :schema="schema"
@@ -134,10 +140,7 @@ if (props.action === 'update' && props.activeItem?.id) {${regularFields
 
 const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)
 
-// Handle form submission with new mutation composable
 const handleSubmit = async () => {
-  console.log('[${prefixedPascalCase} Form] Submit:', props.action, state.value)
-
   try {
     if (props.action === 'create') {
       await create(state.value)
@@ -147,13 +150,9 @@ const handleSubmit = async () => {
       await deleteItems(props.items)
     }
 
-    // Close the form modal/slideover
     close()
 
   } catch (error) {
-    console.error('[${prefixedPascalCase} Form] Error:', error)
-    // Error already handled by mutation composable (toast shown)
-    // Keep form open so user can retry
   }
 }${hasDateFields ? `
 

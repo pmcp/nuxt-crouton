@@ -29,16 +29,16 @@ const MODULES = {
       '✨ Translation composables (useT, useEntityTranslations)'
     ]
   },
-  '@fyit/nuxt-crud': {
-    name: '@fyit/nuxt-crud',
-    description: 'CRUD components and utilities for collections',
+  '@fyit/nuxt-crouton': {
+    name: '@fyit/nuxt-crouton',
+    description: 'Crouton components and utilities for collections',
     required: [],
     features: [
       '✨ CroutonButton component',
       '✨ CroutonEntitySelect component',
       '✨ ExpandableSlideover component',
       '✨ Table components with search and pagination',
-      '✨ CRUD composables (useCrouton, useCollections)'
+      '✨ Crouton composables (useCrouton, useCollections)'
     ]
   }
 }

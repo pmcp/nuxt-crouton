@@ -37,10 +37,10 @@ That's it! All components and composables are now auto-imported.
 
 ## Components
 
-### CrudButton
+### CroutonButton
 Generic CRUD action button:
 ```vue
-<CrudButton
+<CroutonButton
   :action="action"
   :collection="collection"
   :items="selectedItems"
@@ -48,10 +48,10 @@ Generic CRUD action button:
 />
 ```
 
-### CrudEntitySelect
+### CroutonEntitySelect
 Entity selection dropdown:
 ```vue
-<CrudEntitySelect
+<CroutonEntitySelect
   v-model="state.categoryId"
   label="Category"
   entity-type="category"
@@ -75,7 +75,7 @@ Expandable panel for forms and details:
 
 ## Composables
 
-### useCrud()
+### useCrouton()
 Complete CRUD operations:
 ```typescript
 const {

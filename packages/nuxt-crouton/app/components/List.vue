@@ -21,7 +21,7 @@
   </CroutonTable>
 
   <!-- List Layout -->
-  <UDashboardPanel v-else-if="activeLayout === 'list'" :id="collection || 'crud-list'">
+  <UDashboardPanel v-else-if="activeLayout === 'list'" :id="collection || 'crouton-list'">
     <template #header>
       <slot name="header" />
     </template>
@@ -60,11 +60,14 @@
             <slot name="list-item-actions" :row="row">
               <!-- Default actions -->
               <CroutonMiniButtons
-                delete
-                @delete="openCrud('delete', collection, [row.id])"
-                update
-                @update="openCrud('update', collection, [row.id])"
+                  delete
+                  @delete="openCrouton('delete', collection, [row.id])"
+                  :delete-loading="row.optimisticAction === 'delete'"
+                  update
+                  @update="openCrouton('update', collection, [row.id])"
               />
+
+
             </slot>
           </div>
         </li>
@@ -180,9 +183,6 @@ const getListItemAvatar = (row: any) => {
   return null
 }
 
-// CRUD actions (matching table functionality)
-const openCrud = (action: string, collection: string, ids: string[]) => {
-  // This should emit an event or call a composable
-  // Implementation depends on your CRUD system
-}
+// Crouton actions (matching table functionality)
+const { open: openCrouton } = useCrouton()
 </script>

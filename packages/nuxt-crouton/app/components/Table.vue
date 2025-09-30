@@ -1,5 +1,5 @@
 <template>
-  <UDashboardPanel :id="collection || 'crud-table'">
+  <UDashboardPanel :id="collection || 'crouton-table'">
     <template #header>
       <slot name="header"></slot>
     </template>
@@ -60,10 +60,10 @@
           <template #actions-cell="{ row }">
             <CroutonMiniButtons
               delete
-              @delete="openCrud('delete', collection, [row.original.id])"
+              @delete="openCrouton('delete', collection, [row.original.id])"
               :delete-loading="row.optimisticAction === 'delete'"
               update
-              @update="openCrud('update', collection, [row.original.id])"
+              @update="openCrouton('update', collection, [row.original.id])"
               :update-loading="isRowLoading(row)"
             />
           </template>
@@ -107,7 +107,7 @@ const props = withDefaults(defineProps<TableProps>(), {
 
 // Composables
 const { t, tString } = useT()
-const { open: openCrud, getCollection, setPagination, getPagination } = useCrouton()
+const { open: openCrouton, getCollection, setPagination, getPagination } = useCrouton()
 
 // Refs
 const tableRef = useTemplateRef<any>('table')

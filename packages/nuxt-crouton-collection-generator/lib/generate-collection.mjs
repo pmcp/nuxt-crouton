@@ -8,6 +8,16 @@ import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
+// Helper function to check if file exists
+async function fileExists(filePath) {
+  try {
+    await fsp.access(filePath)
+    return true
+  } catch {
+    return false
+  }
+}
+
 // Import utilities
 import { toCase, mapType, typeMapping } from './utils/helpers.mjs'
 import { DIALECTS } from './utils/dialects.mjs'
@@ -145,6 +155,107 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
     return true
   } catch (error) {
     console.error(`! Could not update schema index:`, error.message)
+    return false
+  }
+}
+
+// Export i18n schema when translations are enabled
+async function exportI18nSchema(force = false) {
+  const schemaDir = path.resolve('server', 'database', 'schema')
+  const schemaIndexPath = path.join(schemaDir, 'index.ts')
+  const translationsSchemaPath = path.join(schemaDir, 'translations-ui.ts')
+
+  try {
+    // Check if translations schema file already exists
+    const schemaExists = await fileExists(translationsSchemaPath)
+
+    if (schemaExists && !force) {
+      console.log(`✓ Translations schema already exists`)
+      return false
+    }
+
+    // Copy the schema file from the i18n package to local schema directory
+    const i18nSchemaSource = `import { nanoid } from 'nanoid'
+import { sqliteTable, text, integer, unique } from 'drizzle-orm/sqlite-core'
+
+/**
+ * UI translations table for system translations and team-specific overrides
+ *
+ * System translations: teamId = null, isOverrideable = true
+ * Team overrides: teamId = specific team ID
+ */
+export const translationsUi = sqliteTable('translations_ui', {
+  id: text('id').primaryKey().$default(() => nanoid()),
+  userId: text('user_id').notNull(),
+  teamId: text('team_id'), // null means system/default translation
+  namespace: text('namespace').notNull().default('ui'),
+  keyPath: text('key_path').notNull(),
+  category: text('category').notNull(),
+  values: text('values', { mode: 'json' }).$type<Record<string, string>>().notNull(),
+  description: text('description'),
+  isOverrideable: integer('is_overrideable', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$default(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, (table) => ({
+  // Ensures unique combination of teamId + namespace + keyPath
+  uniqueTeamNamespaceKey: unique().on(table.teamId, table.namespace, table.keyPath)
+}))
+
+export type TranslationsUi = typeof translationsUi.$inferSelect
+export type NewTranslationsUi = typeof translationsUi.$inferInsert
+`
+
+    await fsp.writeFile(translationsSchemaPath, i18nSchemaSource)
+    console.log(`✓ Created translations-ui.ts schema file`)
+
+    // Update schema index to export from local file
+    let content = await fsp.readFile(schemaIndexPath, 'utf-8')
+
+    const exportLine = `export * from './translations-ui'`
+
+    // Check if already exported
+    if (content.includes('translations-ui')) {
+      console.log(`✓ Schema index already exports translations-ui`)
+      return false
+    }
+
+    // Add the export
+    content = content.trim() + '\n' + exportLine + '\n'
+    await fsp.writeFile(schemaIndexPath, content)
+    console.log(`✓ Added translations-ui to schema index`)
+
+    // Generate migration for the new table
+    console.log(`↻ Generating migration for translations_ui table...`)
+    console.log(`! Running: pnpm db:generate (30s timeout)`)
+
+    try {
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Command timed out after 30 seconds')), 30000)
+      })
+
+      const { stdout, stderr } = await Promise.race([
+        execAsync('pnpm db:generate'),
+        timeoutPromise
+      ])
+
+      if (stderr && !stderr.includes('Warning')) {
+        console.error(`! Drizzle warnings:`, stderr)
+      }
+      console.log(`✓ Migration generated for translations_ui table`)
+      console.log(`! Migration will be applied when you restart the dev server.`)
+
+      return true
+    } catch (execError) {
+      if (execError.message.includes('timed out')) {
+        console.error(`✗ Migration generation timed out after 30 seconds`)
+      } else {
+        console.error(`✗ Failed to generate migration:`, execError.message)
+      }
+      console.log(`! You can manually run: pnpm db:generate`)
+      return true // Still return true since schema export succeeded
+    }
+  } catch (error) {
+    console.error(`! Could not export i18n schema:`, error.message)
     return false
   }
 }
@@ -392,7 +503,7 @@ export default defineNuxtConfig({
     if (extendsMatch) {
       const currentExtends = extendsMatch[1]
       const newCollection = `'./collections/${cases.plural}'`
-      const translationsLayer = `'../../translations'`
+      const translationsLayer = `'@friendlyinternet/nuxt-crouton-i18n'`
 
       // Parse existing entries
       let lines = currentExtends.split('\n')
@@ -656,6 +767,12 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   // Create database table if requested
   if (!noDb) {
     await createDatabaseTable({ name: collection, layer, fields, force })
+
+    // If translations are enabled, export the i18n schema
+    if (hasTranslations) {
+      console.log(`↻ Setting up translations support...`)
+      await exportI18nSchema(force)
+    }
   }
 
   // Update collection registry
@@ -898,6 +1015,7 @@ async function main() {
 
         // Track all collections for batch db:generate
         const allCollections = []
+        let hasAnyTranslations = false
 
         // Process each target
         for (const target of config.targets) {
@@ -914,6 +1032,12 @@ async function main() {
             console.log(`Schema: ${fieldsFile}`)
 
             const fields = await loadFields(fieldsFile)
+
+            // Check if this collection has translations
+            const hasTranslations = config?.translations?.collections?.[collectionName]?.length > 0
+            if (hasTranslations) {
+              hasAnyTranslations = true
+            }
 
             // Generate files but skip database creation (we'll do it in batch at the end)
             await writeScaffold({
@@ -947,6 +1071,12 @@ async function main() {
             if (!schemaUpdated) {
               console.error(`  ✗ Failed to update schema index for ${col.name}`)
             }
+          }
+
+          // Export i18n schema if any collection uses translations
+          if (hasAnyTranslations) {
+            console.log(`\n↻ Setting up translations support...`)
+            await exportI18nSchema(config.flags?.force || false)
           }
 
           // Run database migration once for all collections
@@ -987,10 +1117,16 @@ async function main() {
 
         // Track all collections for batch db:generate
         const allCollections = []
+        let hasAnyTranslations = false
 
         // Process each target
         for (const target of config.targets) {
           for (const collection of target.collections) {
+            // Check if this collection has translations
+            const hasTranslations = config?.translations?.collections?.[collection]?.length > 0
+            if (hasTranslations) {
+              hasAnyTranslations = true
+            }
             console.log(`\nGenerating collection '${collection}' in layer '${target.layer}'...`)
             await writeScaffold({
               layer: target.layer,
@@ -1023,6 +1159,12 @@ async function main() {
             if (!schemaUpdated) {
               console.error(`  ✗ Failed to update schema index for ${col.name}`)
             }
+          }
+
+          // Export i18n schema if any collection uses translations
+          if (hasAnyTranslations) {
+            console.log(`\n↻ Setting up translations support...`)
+            await exportI18nSchema(config.flags?.force || false)
           }
 
           // Run database migration once for all collections

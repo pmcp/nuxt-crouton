@@ -1,3 +1,8 @@
+import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
+
+const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
 export default defineNuxtConfig({
   $meta: {
     name: 'nuxt-crouton-i18n',
@@ -17,7 +22,7 @@ export default defineNuxtConfig({
       { code: 'nl', name: 'Nederlands', file: 'nl.json' },
       { code: 'fr', name: 'Français', file: 'fr.json' }
     ],
-    langDir: '../locales',
+    langDir: '../locales', // Relative to srcDir (app/)
     defaultLocale: 'en',
     strategy: 'no_prefix'
   },
@@ -26,7 +31,7 @@ export default defineNuxtConfig({
   components: {
     dirs: [
       {
-        path: './app/components',
+        path: join(currentDir, 'app/components'),
         prefix: 'Translations',
         global: true
       }
@@ -35,6 +40,6 @@ export default defineNuxtConfig({
 
   // Composables
   imports: {
-    dirs: ['./app/composables']
+    dirs: [join(currentDir, 'app/composables')]
   }
 })
