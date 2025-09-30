@@ -27,6 +27,7 @@ export const ${prefixedPlural}Columns = [
 
 export const ${prefixedPlural}Config = {
   name: '${prefixedPlural}',
+  layer: '${layer}',
   apiPath: '${apiPath}',
   componentName: '${layerPascalCase}${pascalCasePlural}Form',
   schema: ${prefixedSingular}Schema,

@@ -184,6 +184,5 @@ const getListItemAvatar = (row: any) => {
 const openCrud = (action: string, collection: string, ids: string[]) => {
   // This should emit an event or call a composable
   // Implementation depends on your CRUD system
-  console.log(`${action} for ${collection}:`, ids)
 }
-</script>a
+</script>

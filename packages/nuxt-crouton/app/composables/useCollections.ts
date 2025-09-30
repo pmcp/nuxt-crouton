@@ -3,6 +3,8 @@ type CollectionName = string
 
 // Type for config map entries supplied via app.config.ts
 interface CollectionConfig {
+  name?: string
+  layer?: string
   componentName?: string
   apiPath?: string
   defaultPagination?: {

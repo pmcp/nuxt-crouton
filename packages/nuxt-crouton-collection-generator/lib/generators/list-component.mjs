@@ -12,6 +12,7 @@ export function generateListComponent(data, config = {}) {
 
   return `<template>
   <CroutonList
+    :layout="layout"
     collection="${prefixedCamelCasePlural}"
     :columns="columns"
     :rows="collection${prefixedPascalCasePlural}"
@@ -29,7 +30,15 @@ export function generateListComponent(data, config = {}) {
   </CroutonList>
 </template>
 
-<script setup lang="ts">${hasTranslations ? `
+<script setup lang="ts">
+interface Props {
+  layout?: 'table' | 'list' | 'grid' | 'cards'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  layout: 'table'
+})
+${hasTranslations ? `
 const { t } = useEntityTranslations()
 const { locale } = useI18n()` : ''}
 const { columns } = use${prefixedPascalCasePlural}()

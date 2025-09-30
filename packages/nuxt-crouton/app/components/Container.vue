@@ -183,39 +183,18 @@ interface FormatCollectionsReturn {
 const { croutonStates, close, closeAll, removeState }: CroutonComposableReturn = useCrouton()
 const { collectionWithCapitalSingular }: FormatCollectionsReturn = useFormatCollections()
 
-// Add logging to track state changes
-watch(croutonStates, (newStates) => {
-  console.log('[Container] croutonStates changed:', newStates)
-  console.log('[Container] Total states:', newStates.length)
-  newStates.forEach((state, index) => {
-    console.log(`[Container] State ${index}:`, {
-      id: state.id,
-      containerType: state.containerType,
-      isOpen: state.isOpen,
-      action: state.action,
-      collection: state.collection
-    })
-  })
-}, { immediate: true, deep: true })
-
 // Filter states by container type
-const modalStates = computed(() => {
-  const filtered = croutonStates.value.filter(state => state.containerType === 'modal')
-  console.log('[Container] Modal states:', filtered.length)
-  return filtered
-})
+const modalStates = computed(() =>
+  croutonStates.value.filter(state => state.containerType === 'modal')
+)
 
-const dialogStates = computed(() => {
-  const filtered = croutonStates.value.filter(state => state.containerType === 'dialog')
-  console.log('[Container] Dialog states:', filtered.length)
-  return filtered
-})
+const dialogStates = computed(() =>
+  croutonStates.value.filter(state => state.containerType === 'dialog')
+)
 
-const slideoverStates = computed(() => {
-  const filtered = croutonStates.value.filter(state => state.containerType === 'slideover' || !state.containerType)
-  console.log('[Container] Slideover states:', filtered.length)
-  return filtered
-})
+const slideoverStates = computed(() =>
+  croutonStates.value.filter(state => state.containerType === 'slideover' || !state.containerType)
+)
 
 // Get formatted collection name
 const getCollectionName = (collection: string | null): string => {
@@ -268,10 +247,6 @@ const toggleExpand = (stateId: string): void => {
 
 // Get dynamic UI configuration based on expand state
 const getSlideoverUi = (state: CrudState, index: number) => {
-  // Smooth transition classes
-  console.log(state)
-  const transitionClasses = 'transition-all duration-500 ease-in-out transform-gpu'
-
   if (state.isExpanded) {
     // Fullscreen mode - keep right anchor but expand width
     return {

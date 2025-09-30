@@ -30,6 +30,8 @@
     <div v-else class="text-gray-500">
       Component not found for collection: {{ collectionName }}
     </div>
+
+
   </div>
 </template>
 
