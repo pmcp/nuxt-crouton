@@ -623,35 +623,80 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     layer,
     layerPascalCase,
     fields,
-    fieldsSchema: fields.filter(f => f.name !== 'id').map(f => {
-      const baseZod = f.zod
+    fieldsSchema: (() => {
+      // Get list of translatable field names for this collection
+      const translatableFieldNames = config?.translations?.collections?.[cases.plural] || []
 
-      if (f.meta?.required) {
-        // Handle different types appropriately for required fields
-        if (f.type === 'date') {
-          // Dates use required_error parameter, not .min()
-          return `${f.name}: z.date({ required_error: '${f.name} is required' })`
-        } else if (f.type === 'string' || f.type === 'text') {
-          // Strings/text can use .min(1) to ensure non-empty
-          return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
-        } else if (f.type === 'number' || f.type === 'decimal') {
-          // Numbers are required but don't enforce a minimum value
-          return `${f.name}: ${baseZod}`
-        } else if (f.type === 'boolean') {
-          // Booleans are just required (true or false)
-          return `${f.name}: ${baseZod}`
-        } else if (f.type === 'json') {
-          // JSON objects are required
-          return `${f.name}: ${baseZod}`
-        } else {
-          // Default: just use the base zod validator
-          return `${f.name}: ${baseZod}`
-        }
-      } else {
-        // Optional fields
-        return `${f.name}: ${baseZod}.optional()`
+      // Generate schema for non-translatable fields
+      const regularFieldsSchema = fields
+        .filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name))
+        .map(f => {
+          const baseZod = f.zod
+
+          if (f.meta?.required) {
+            // Handle different types appropriately for required fields
+            if (f.type === 'date') {
+              // Dates use required_error parameter, not .min()
+              return `${f.name}: z.date({ required_error: '${f.name} is required' })`
+            } else if (f.type === 'string' || f.type === 'text') {
+              // Strings/text can use .min(1) to ensure non-empty
+              return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
+            } else if (f.type === 'number' || f.type === 'decimal') {
+              // Numbers are required but don't enforce a minimum value
+              return `${f.name}: ${baseZod}`
+            } else if (f.type === 'boolean') {
+              // Booleans are just required (true or false)
+              return `${f.name}: ${baseZod}`
+            } else if (f.type === 'json') {
+              // JSON objects are required
+              return `${f.name}: ${baseZod}`
+            } else {
+              // Default: just use the base zod validator
+              return `${f.name}: ${baseZod}`
+            }
+          } else {
+            // Optional fields
+            return `${f.name}: ${baseZod}.optional()`
+          }
+        })
+
+      // Generate schema for translatable fields (make them optional at root)
+      const translatableFieldsSchema = fields
+        .filter(f => translatableFieldNames.includes(f.name))
+        .map(f => `${f.name}: ${f.zod}.optional()`)
+
+      // Combine all field schemas
+      const allFieldsSchema = [...regularFieldsSchema, ...translatableFieldsSchema].join(',\n  ')
+
+      // Add translations validation if there are translatable fields
+      if (translatableFieldNames.length > 0) {
+        const translatableFields = fields.filter(f => translatableFieldNames.includes(f.name))
+        const requiredTranslatableFields = translatableFields.filter(f => f.meta?.required)
+
+        const translationsFieldSchema = translatableFields.map(f => {
+          if (f.meta?.required) {
+            return `      ${f.name}: z.string().min(1, '${f.name.charAt(0).toUpperCase() + f.name.slice(1)} is required')`
+          } else {
+            return `      ${f.name}: z.string().optional()`
+          }
+        }).join(',\n')
+
+        const requiredFieldsCheck = requiredTranslatableFields.length > 0
+          ? `.refine(
+    (translations) => translations.en && ${requiredTranslatableFields.map(f => `translations.en.${f.name}`).join(' && ')},
+    { message: 'English translations for ${requiredTranslatableFields.map(f => f.name).join(', ')} are required' }
+  )`
+          : ''
+
+        return `${allFieldsSchema},\n  translations: z.record(
+    z.object({
+${translationsFieldSchema}
+    })
+  )${requiredFieldsCheck}`
       }
-    }).join(',\n  '),
+
+      return allFieldsSchema
+    })(),
     fieldsDefault: (() => {
       const fieldDefaults = fields.filter(f => f.name !== 'id').map(f => `${f.name}: ${f.default}`).join(',\n    ')
       const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0

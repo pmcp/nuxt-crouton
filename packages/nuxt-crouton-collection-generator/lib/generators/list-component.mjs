@@ -46,10 +46,7 @@ const { locale } = useI18n()` : ''}
 const { columns } = use${prefixedPascalCasePlural}()
 
 const { items: ${plural}, pending } = await useCollectionQuery(
-  '${prefixedCamelCasePlural}',
-  {${hasTranslations ? `
-    query: computed(() => ({ locale: locale.value }))` : ''}
-  }
+  '${prefixedCamelCasePlural}'
 )
 </script>`
 }

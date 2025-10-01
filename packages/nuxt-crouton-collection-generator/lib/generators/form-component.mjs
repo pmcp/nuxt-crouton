@@ -165,6 +165,9 @@ const handleSubmit = async () => {
     close()
 
   } catch (error) {
+    console.error('Form submission failed:', error)
+    // You can add toast notification here if available
+    // toast.add({ title: 'Error', description: 'Failed to submit form', color: 'red' })
   }
 }${hasDateFields ? `
 
