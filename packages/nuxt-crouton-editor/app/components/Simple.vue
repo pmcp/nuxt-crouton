@@ -14,14 +14,18 @@
 <!--        </button>-->
 <!--      </div>-->
 <!--    </floating-menu>-->
-    <TiptapEditorContent :editor="editor" class="flex-1 min-h-0 overflow-auto"/>
+    <EditorContent :editor="editor" class="flex-1 min-h-0 overflow-auto"/>
   </div>
 </template>
 
 <script setup>
+import { useEditor, EditorContent } from '@tiptap/vue-3'
 import { FloatingMenu } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import TextStyle from '@tiptap/extension-text-style'
+import Color from '@tiptap/extension-color'
 
-
+console.log('[EditorSimple] Component loaded and initialized')
 
 const props = defineProps({
   modelValue: {
@@ -32,13 +36,17 @@ const props = defineProps({
 
 const emits = defineEmits(['update:modelValue'])
 
-watchEffect(() => props.modelValue, (newValue, oldValue) => {
-  const isSame = newValue === oldValue;
-  if (isSame) {
-    return;
-  }
+watch(() => props.modelValue, (newValue) => {
+  if (!editor.value) return;
 
-  editor.value?.commands.setContent(newValue, false)
+  // Get current editor content
+  const currentContent = editor.value.getHTML();
+
+  // Only update if content is actually different
+  if (currentContent !== newValue) {
+    console.log('[EditorSimple] Updating content from', currentContent, 'to', newValue);
+    editor.value.commands.setContent(newValue || '', false);
+  }
 });
 
 
@@ -48,9 +56,9 @@ watchEffect(() => props.modelValue, (newValue, oldValue) => {
 const editor = useEditor({
   content: props.modelValue,
   extensions: [
-    TiptapStarterKit,
-    TiptapTextStyle,
-    TiptapColor
+    StarterKit,
+    TextStyle,
+    Color
   ],
   editorProps: {
     attributes: {

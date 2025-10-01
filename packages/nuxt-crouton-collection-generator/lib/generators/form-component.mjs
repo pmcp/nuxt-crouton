@@ -56,6 +56,15 @@ export function generateFormComponent(data, config = {}) {
     }
   }).join('\n\n')
   
+  // Build fieldComponents map for translatable fields with custom components
+  const fieldComponentsMap = {}
+  translatableFields.forEach(field => {
+    if (field.meta?.component) {
+      fieldComponentsMap[field.name] = field.meta.component
+    }
+  })
+  const hasFieldComponents = Object.keys(fieldComponentsMap).length > 0
+
   // Add TranslationsInput if there are translatable fields
   const translationField = hasTranslations ? `
 
@@ -64,7 +73,10 @@ export function generateFormComponent(data, config = {}) {
         :fields="[${translatableFieldNames.map(f => `'${f}'`).join(', ')}]"
         :default-values="{
           ${translatableFields.map(f => `${f.name}: state.${f.name}`).join(',\n          ')}
-        }"
+        }"${hasFieldComponents ? `
+        :field-components="{
+          ${Object.entries(fieldComponentsMap).map(([field, component]) => `${field}: '${component}'`).join(',\n          ')}
+        }"` : ''}
         label="Translations"
       />` : ''
 

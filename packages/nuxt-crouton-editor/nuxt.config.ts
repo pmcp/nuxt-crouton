@@ -1,3 +1,8 @@
+import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
+
+const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
 export default defineNuxtConfig({
   $meta: {
     name: 'nuxt-crouton-editor',
@@ -18,10 +23,18 @@ export default defineNuxtConfig({
   components: {
     dirs: [
       {
-        path: './app/components',
+        path: join(currentDir, 'app/components'),
         prefix: 'Editor',
         global: true
       }
     ]
+  },
+
+  // Add hooks for debugging component registration
+  hooks: {
+    'components:extend': (components) => {
+      const editorComponents = components.filter(c => c.pascalName?.startsWith('Editor'))
+      console.log('[nuxt-crouton-editor] Registered editor components:', editorComponents.map(c => c.pascalName))
+    }
   }
 })

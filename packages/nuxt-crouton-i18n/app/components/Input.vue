@@ -13,11 +13,34 @@ const props = defineProps<{
   label?: string
   error?: string | boolean
   defaultValues?: Record<string, string> // Default values for each field (from main form fields)
+  fieldComponents?: Record<string, string> // Custom components per field e.g., { content: 'EditorSimple' }
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: TranslationsValue]
 }>()
+
+// Get the component name to use for a specific field (returns string for template resolution)
+const getFieldComponent = (field: string) => {
+  return props.fieldComponents?.[field] || 'UInput'
+}
+
+// Create a map of field to resolved component for each field (using resolveComponent in render context)
+const fieldComponentMap = computed(() => {
+  const map: Record<string, any> = {}
+  props.fields?.forEach(field => {
+    const componentName = getFieldComponent(field)
+    console.log(`[Input] Field "${field}" -> Component "${componentName}"`)
+    map[field] = componentName
+  })
+  return map
+})
+
+// Log component mappings when fieldComponents prop changes
+watch(() => props.fieldComponents, (newVal) => {
+  console.log('[Input] fieldComponents prop:', newVal)
+  console.log('[Input] Available fields:', props.fields)
+}, { immediate: true })
 
 const { locale, locales } = useI18n()
 
@@ -141,7 +164,29 @@ const translationStatus = computed(() => {
         :name="`translations.${editingLocale}.${field}`"
         :required="editingLocale === 'en'"
       >
+        <!-- EditorSimple (rich text editor) -->
+        <EditorSimple
+          v-if="getFieldComponent(field) === 'EditorSimple'"
+          :model-value="getFieldValue(field, editingLocale)"
+          @update:model-value="updateFieldValue(field, $event)"
+          @vue:mounted="console.log(`[Input] EditorSimple mounted for field: ${field}`)"
+        />
+
+        <!-- UTextarea (for text type fields without custom component) -->
+        <UTextarea
+          v-else-if="getFieldComponent(field) === 'UTextarea'"
+          :model-value="getFieldValue(field, editingLocale)"
+          @update:model-value="updateFieldValue(field, $event)"
+          :placeholder="editingLocale !== 'en' && getFieldValue(field, 'en') ? `Fallback: ${getFieldValue(field, 'en')}` : (defaultValues?.[field] || '')"
+          :color="error && editingLocale === 'en' && !getFieldValue(field, editingLocale) ? 'error' : 'primary'"
+          :highlight="!!(error && editingLocale === 'en' && !getFieldValue(field, editingLocale))"
+          class="w-full"
+          size="lg"
+        />
+
+        <!-- UInput (default) -->
         <UInput
+          v-else
           :model-value="getFieldValue(field, editingLocale)"
           @update:model-value="updateFieldValue(field, $event)"
           :placeholder="editingLocale !== 'en' && getFieldValue(field, 'en') ? `Fallback: ${getFieldValue(field, 'en')}` : (defaultValues?.[field] || '')"

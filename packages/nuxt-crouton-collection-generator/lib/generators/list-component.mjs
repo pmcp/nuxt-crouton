@@ -25,21 +25,11 @@ export function generateListComponent(data, config = {}) {
         createButton
       />
     </template>${translatableFields.map(field => `
-    <template #${field}-data="{ row }">
-      {{ t(row, '${field}') }}
+    <template #${field}-cell="{ row }">
+      {{ t(row.original, '${field}') }}
     </template>`).join('')}${hasTranslations ? `
-    <template #translations-data="{ row }">
-      <div class="flex gap-1">
-        <UBadge
-          v-for="loc in locales"
-          :key="typeof loc === 'string' ? loc : loc.code"
-          :color="hasTranslation(row, typeof loc === 'string' ? loc : loc.code) ? 'primary' : 'neutral'"
-          variant="subtle"
-          size="xs"
-        >
-          {{ (typeof loc === 'string' ? loc : loc.code).toUpperCase() }}
-        </UBadge>
-      </div>
+    <template #translations-cell="{ row }">
+      <TranslationsListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
     </template>` : ''}
   </CroutonList>
 </template>
@@ -52,18 +42,7 @@ const props = withDefaults(defineProps<{
 })
 ${hasTranslations ? `
 const { t } = useEntityTranslations()
-const { locale, locales } = useI18n()
-
-// Check if a translation exists for a specific locale
-function hasTranslation(row: any, localeCode: string): boolean {
-  if (!row.translations) return false
-  const localeData = row.translations[localeCode]
-  if (!localeData || typeof localeData !== 'object') return false
-  // Check if any translatable field has a value
-  return ${JSON.stringify(translatableFields)}.some((field: string) => {
-    return localeData[field] && localeData[field].trim() !== ''
-  })
-}` : ''}
+const { locale } = useI18n()` : ''}
 const { columns } = use${prefixedPascalCasePlural}()
 
 const { items: ${plural}, pending } = await useCollectionQuery(

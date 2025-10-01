@@ -451,6 +451,67 @@ export default {
 - `date` - Timestamp
 - `decimal` - Precise decimal (for money)
 
+**Field Metadata (`meta` property):**
+
+Fields can include a `meta` object with additional configuration:
+
+```json
+{
+  "title": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Article Title",
+      "maxLength": 200,
+      "component": "CustomInput",
+      "area": "main"
+    }
+  }
+}
+```
+
+**Supported metadata properties:**
+- `required` - Field is required (validation)
+- `label` - Human-readable label for forms
+- `maxLength` - Maximum length for strings
+- `component` - Custom component to use instead of default input
+- `area` - Logical grouping for form layout (see below)
+
+**Form Areas:**
+
+The `area` property lets you organize fields into logical sections for future layout improvements:
+
+```json
+{
+  "title": {
+    "type": "string",
+    "meta": {
+      "area": "main"  // Primary content area
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "area": "sidebar"  // Sidebar metadata
+    }
+  },
+  "publishedAt": {
+    "type": "date",
+    "meta": {
+      "area": "meta"  // SEO/publishing info
+    }
+  }
+}
+```
+
+**Common area values:**
+- `main` - Primary content (default if not specified)
+- `sidebar` - Secondary metadata, status, categories
+- `meta` - SEO, publishing dates, technical fields
+- `advanced` - Advanced options
+
+**Note:** Currently, all fields render in a single list regardless of `area`. This property sets up the infrastructure for future layout features where fields can be organized into columns, tabs, or sections.
+
 ---
 
 ## Working with Collections

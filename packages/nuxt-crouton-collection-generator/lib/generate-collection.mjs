@@ -96,17 +96,25 @@ async function loadFields(p) {
   }
   const raw = await fsp.readFile(p, 'utf8')
   const obj = JSON.parse(raw)
-  
+
   // Convert to array for easier processing
-  return Object.entries(obj).map(([name, meta]) => ({
-    name,
-    type: mapType(meta?.type),
-    meta: meta?.meta || {},
-    refTarget: meta?.refTarget,
-    zod: typeMapping[mapType(meta?.type)]?.zod || 'z.string()',
-    default: typeMapping[mapType(meta?.type)]?.default || "''",
-    tsType: typeMapping[mapType(meta?.type)]?.tsType || 'string'
-  }))
+  return Object.entries(obj).map(([name, meta]) => {
+    const fieldMeta = meta?.meta || {}
+    // Set default area if not specified
+    if (!fieldMeta.area) {
+      fieldMeta.area = 'main'
+    }
+
+    return {
+      name,
+      type: mapType(meta?.type),
+      meta: fieldMeta,
+      refTarget: meta?.refTarget,
+      zod: typeMapping[mapType(meta?.type)]?.zod || 'z.string()',
+      default: typeMapping[mapType(meta?.type)]?.default || "''",
+      tsType: typeMapping[mapType(meta?.type)]?.tsType || 'string'
+    }
+  })
 }
 
 // Update the main schema index to export the new collection schema
@@ -644,7 +652,11 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
         return `${f.name}: ${baseZod}.optional()`
       }
     }).join(',\n  '),
-    fieldsDefault: fields.filter(f => f.name !== 'id').map(f => `${f.name}: ${f.default}`).join(',\n    '),
+    fieldsDefault: (() => {
+      const fieldDefaults = fields.filter(f => f.name !== 'id').map(f => `${f.name}: ${f.default}`).join(',\n    ')
+      const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
+      return hasTranslations ? `${fieldDefaults},\n    translations: {}` : fieldDefaults
+    })(),
     fieldsColumns: (() => {
       const baseColumns = fields.map(f =>
         `{ accessorKey: '${f.name}', header: '${f.name.charAt(0).toUpperCase() + f.name.slice(1)}' }`
