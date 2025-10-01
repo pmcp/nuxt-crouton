@@ -38,11 +38,37 @@ export function useFormatCollections() {
   const collectionWithCapitalSingular = (val: string): string => {
     if (!val) return ''
     const stripped = stripLayerPrefix(val)
-    const singular = stripped.endsWith('es')
-      ? stripped.slice(0, -2)
-      : stripped.endsWith('s')
-        ? stripped.slice(0, -1)
-        : stripped
+
+    // Proper singularization rules
+    let singular = stripped
+
+    // Handle -ies → -y (e.g., "categories" → "category")
+    if (stripped.endsWith('ies') && stripped.length > 3) {
+      singular = stripped.slice(0, -3) + 'y'
+    }
+    // Handle -es after sibilants: x, ch, sh, s, z (e.g., "boxes" → "box", "watches" → "watch")
+    else if (stripped.endsWith('xes') || stripped.endsWith('ches') ||
+             stripped.endsWith('shes') || stripped.endsWith('sses') ||
+             stripped.endsWith('zes')) {
+      singular = stripped.slice(0, -2)
+    }
+    // Handle -oes → -o (e.g., "heroes" → "hero", "tomatoes" → "tomato")
+    else if (stripped.endsWith('oes') && stripped.length > 3) {
+      const beforeOes = stripped.slice(0, -3)
+      // Check if the character before "oes" is a vowel
+      const lastChar = beforeOes[beforeOes.length - 1]
+      if (lastChar && 'aeiou'.includes(lastChar.toLowerCase())) {
+        singular = stripped.slice(0, -2)
+      } else {
+        // Consonant + oes, just remove 's' (e.g., "echoes" → "echo")
+        singular = stripped.slice(0, -1)
+      }
+    }
+    // Default: just remove trailing 's' (e.g., "articles" → "article", "users" → "user")
+    else if (stripped.endsWith('s') && stripped.length > 1) {
+      singular = stripped.slice(0, -1)
+    }
+
     return camelToTitleCase(singular)
   }
 
