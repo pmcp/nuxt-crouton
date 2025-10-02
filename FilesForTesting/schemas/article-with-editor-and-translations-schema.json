@@ -1,0 +1,75 @@
+{
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "title": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Article Title",
+      "maxLength": 200,
+      "area": "main"
+    }
+  },
+  "slug": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "unique": true,
+      "label": "URL Slug",
+      "area": "main"
+    }
+  },
+  "excerpt": {
+    "type": "text",
+    "meta": {
+      "label": "Short Excerpt",
+      "maxLength": 500,
+      "area": "main"
+    }
+  },
+  "content": {
+    "type": "text",
+    "meta": {
+      "required": true,
+      "label": "Article Content",
+      "component": "EditorSimple",
+      "area": "main"
+    }
+  },
+  "authorId": {
+    "type": "uuid",
+    "refTarget": "authors",
+    "meta": {
+      "required": true,
+      "label": "Author",
+      "area": "sidebar"
+    }
+  },
+  "featuredImage": {
+    "type": "string",
+    "meta": {
+      "label": "Featured Image URL",
+      "area": "sidebar"
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Status",
+      "default": "draft",
+      "area": "sidebar"
+    }
+  },
+  "publishedAt": {
+    "type": "date",
+    "meta": {
+      "label": "Published Date",
+      "area": "meta"
+    }
+  }
+}

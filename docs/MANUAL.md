@@ -16,14 +16,16 @@ The complete guide to building fast, maintainable CRUD applications with Nuxt Cr
 8. [Customizing Generated Code](#customizing-generated-code)
 9. [Data Operations (Mutations)](#data-operations-mutations)
 10. [Querying Data](#querying-data)
-11. [Forms & Modals](#forms--modals)
-12. [Multi-Collection Configuration](#multi-collection-configuration)
-13. [Translations & i18n](#translations--i18n)
-14. [Team-Based Authentication](#team-based-authentication)
-15. [Advanced Patterns](#advanced-patterns)
-16. [Troubleshooting](#troubleshooting)
-17. [Migration Guides](#migration-guides)
-18. [API Reference](#api-reference)
+11. [Working with Relations](#working-with-relations)
+12. [Forms & Modals](#forms--modals)
+13. [Multi-Collection Configuration](#multi-collection-configuration)
+14. [Rich Text Editor](#rich-text-editor)
+15. [Translations & i18n](#translations--i18n)
+16. [Team-Based Authentication](#team-based-authentication)
+17. [Advanced Patterns](#advanced-patterns)
+18. [Troubleshooting](#troubleshooting)
+19. [Migration Guides](#migration-guides)
+20. [API Reference](#api-reference)
 
 ---
 
@@ -33,7 +35,7 @@ The complete guide to building fast, maintainable CRUD applications with Nuxt Cr
 
 ### What It Does
 
-**Generates:**
+**Generates:**me t
 - ✅ List views (table, grid, cards)
 - ✅ Forms (create, edit, delete)
 - ✅ TypeScript types
@@ -157,6 +159,9 @@ pnpm add -D @friendlyinternet/nuxt-crouton-collection-generator
 
 # Optional: i18n support
 pnpm add @friendlyinternet/nuxt-crouton-i18n
+
+# Optional: Rich text editor
+pnpm add @friendlyinternet/nuxt-crouton-editor
 ```
 
 ### Configure Nuxt
@@ -166,7 +171,8 @@ pnpm add @friendlyinternet/nuxt-crouton-i18n
 export default defineNuxtConfig({
   extends: [
     '@friendlyinternet/nuxt-crouton',
-    // '@friendlyinternet/nuxt-crouton-i18n', // If using translations
+    // '@friendlyinternet/nuxt-crouton-i18n',     // If using translations
+    // '@friendlyinternet/nuxt-crouton-editor',   // If using rich text editor
   ],
 
   // Recommended: Enable hot reload for development
@@ -866,28 +872,66 @@ const handleImageUpload = async (file: File) => {
 </template>
 ```
 
-#### Add Rich Text Editor
+#### Add Rich Text Editor (Simplified)
 
+**Using the Editor Layer:**
+
+Nuxt Crouton provides an optional rich text editor layer powered by Tiptap.
+
+**1. Install:**
+```bash
+pnpm add @friendlyinternet/nuxt-crouton-editor @nuxt/icon
+```
+
+**2. Configure:**
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  extends: [
+    '@friendlyinternet/nuxt-crouton',
+    '@friendlyinternet/nuxt-crouton-editor'  // Add this
+  ]
+})
+```
+
+**3. Use in Forms:**
 ```vue
 <script setup lang="ts">
-import { Editor } from '@tiptap/vue-3'
-import StarterKit from '@tiptap/starter-kit'
-
-const editor = new Editor({
-  extensions: [StarterKit],
-  content: state.value.description,
-  onUpdate: ({ editor }) => {
-    state.value.description = editor.getHTML()
-  }
+const state = ref({
+  title: '',
+  content: '<p></p>'
 })
 </script>
 
 <template>
-  <UFormField label="Description" name="description">
-    <EditorContent :editor="editor" />
+  <UFormField label="Content" name="content">
+    <EditorSimple v-model="state.content" />
   </UFormField>
 </template>
 ```
+
+**Generator Integration:**
+
+Mark fields to use the editor in your schema:
+```json
+{
+  "content": {
+    "type": "text",
+    "meta": {
+      "component": "EditorSimple"
+    }
+  }
+}
+```
+
+**Features:**
+- Text formatting (bold, italic, strikethrough)
+- Headings (H1, H2, H3)
+- Lists (bullet, numbered)
+- Code blocks & blockquotes
+- Text colors
+- Floating toolbar
+- Dark mode support
 
 #### Add Multi-Step Form
 
@@ -1119,6 +1163,488 @@ await create({ name: 'New Product' })
 
 ---
 
+## Working with Relations
+
+Relations are how you connect data between collections (e.g., products → categories, posts → authors).
+
+### The Simple Approach: Foreign Keys Only
+
+**Most apps can just store IDs and query manually:**
+
+```typescript
+// Store the relationship
+const product = {
+  id: '123',
+  name: 'Widget',
+  categoryId: 'cat-456'  // ← Just store the ID
+}
+
+// Query when needed
+const category = await db.select()
+  .from(categories)
+  .where(eq(categories.id, product.categoryId))
+```
+
+**When to use this:**
+- ✅ Simple CRUD apps
+- ✅ You only need relations occasionally
+- ✅ You prefer explicit queries
+- ✅ Learning/prototyping
+
+This is the **recommended starting point** for most applications.
+
+---
+
+### Advanced: Drizzle Relations
+
+**For apps with lots of related data queries:**
+
+Drizzle relations let you fetch related data in one query, avoiding N+1 query problems:
+
+```typescript
+// Define relation (one-time setup in schema.ts)
+import { relations } from 'drizzle-orm'
+
+export const productsRelations = relations(products, ({ one }) => ({
+  category: one(categories, {
+    fields: [products.categoryId],
+    references: [categories.id]
+  })
+}))
+
+// Query with automatic join
+const product = await db.query.products.findFirst({
+  where: eq(products.id, '123'),
+  with: { category: true }  // ← Drizzle handles the join
+})
+
+// Now product.category is populated in ONE query
+console.log(product.category.name)
+```
+
+**When to use this:**
+- ✅ Fetching lists with related data (100 products + their categories = 1 query, not 101)
+- ✅ Nested data (Product → Category → ParentCategory)
+- ✅ Complex filtering ("Get products WHERE category.name = 'Electronics'")
+- ✅ Performance critical queries
+
+---
+
+### Form Pattern: Relation Dropdowns
+
+**Generated forms don't include relation fields** - you add them manually as needed.
+
+**Example: Add category dropdown to product form**
+
+```vue
+<!-- layers/shop/components/products/Form.vue -->
+<script setup lang="ts">
+// Keep generated form setup
+const props = defineProps<ShopProductsFormProps>()
+const { create, update } = useCollectionMutation('shopProducts')
+
+// Add: Fetch related collection for dropdown
+const { items: categories } = await useCollectionQuery('shopCategories')
+</script>
+
+<template>
+  <UForm :state="state" :schema="schema" @submit="handleSubmit">
+    <!-- Generated fields -->
+    <UFormField label="Name" name="name">
+      <UInput v-model="state.name" />
+    </UFormField>
+
+    <UFormField label="Price" name="price">
+      <UInput v-model.number="state.price" type="number" />
+    </UFormField>
+
+    <!-- Add: Category dropdown -->
+    <UFormField label="Category" name="categoryId">
+      <USelectMenu
+        v-model="state.categoryId"
+        :options="categories"
+        option-attribute="name"
+        value-attribute="id"
+        placeholder="Select category"
+      />
+    </UFormField>
+
+    <CroutonButton :action="action" :loading="loading" />
+  </UForm>
+</template>
+```
+
+**With search/filter:**
+
+```vue
+<script setup lang="ts">
+const { items: categories } = await useCollectionQuery('shopCategories')
+const searchQuery = ref('')
+
+const filteredCategories = computed(() =>
+  categories.value.filter(c =>
+    c.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+)
+</script>
+
+<template>
+  <UFormField label="Category" name="categoryId">
+    <UInput v-model="searchQuery" placeholder="Search categories..." class="mb-2" />
+    <USelectMenu
+      v-model="state.categoryId"
+      :options="filteredCategories"
+      option-attribute="name"
+      value-attribute="id"
+    />
+  </UFormField>
+</template>
+```
+
+---
+
+### Table Pattern: Display Related Data
+
+**Option 1: Fetch separately (simple, works for small datasets)**
+
+```vue
+<script setup lang="ts">
+const { items: products } = await useCollectionQuery('shopProducts')
+const { items: categories } = await useCollectionQuery('shopCategories')
+
+// Map categories by ID for quick lookup
+const categoryMap = computed(() =>
+  Object.fromEntries(categories.value.map(c => [c.id, c]))
+)
+
+const columns = [
+  { key: 'name', label: 'Product' },
+  { key: 'price', label: 'Price' },
+  {
+    key: 'category',
+    label: 'Category',
+    // Look up category name
+    render: (row) => categoryMap.value[row.categoryId]?.name || 'N/A'
+  }
+]
+</script>
+
+<template>
+  <CroutonList :rows="products" :columns="columns" />
+</template>
+```
+
+**Option 2: Server-side join (efficient, scales better)**
+
+```typescript
+// server/api/teams/[team]/shop-products-with-category.get.ts
+import { db } from '~/server/database'
+import { shopProducts, shopCategories } from '~/layers/shop/server/database/schema'
+
+export default defineEventHandler(async (event) => {
+  const teamId = getRouterParam(event, 'team')
+
+  // Drizzle relations query (if you set up relations)
+  const products = await db.query.shopProducts.findMany({
+    where: eq(shopProducts.teamId, teamId),
+    with: { category: true }  // Join automatically
+  })
+
+  return products
+})
+```
+
+```vue
+<script setup lang="ts">
+// Custom endpoint with joined data
+const { data: products } = await useFetch('/api/teams/current/shop-products-with-category')
+
+const columns = [
+  { key: 'name', label: 'Product' },
+  { key: 'price', label: 'Price' },
+  {
+    key: 'category.name',  // Access nested data
+    label: 'Category'
+  }
+]
+</script>
+
+<template>
+  <CroutonList :rows="products" :columns="columns" />
+</template>
+```
+
+---
+
+### Manual Drizzle Setup (Optional)
+
+If you want Drizzle relations for performance, set them up manually:
+
+**Step 1: Add foreign key to schema**
+
+```json
+// schemas/product-schema.json
+[
+  { "name": "name", "type": "string" },
+  { "name": "price", "type": "number" },
+  { "name": "categoryId", "type": "string" }
+]
+```
+
+**Step 2: Define relations in schema files**
+
+```typescript
+// layers/shop/server/database/schema.ts
+import { sqliteTable, text, real } from 'drizzle-orm/sqlite-core'
+import { relations } from 'drizzle-orm'
+
+export const shopProducts = sqliteTable('shop_products', {
+  id: text('id').primaryKey(),
+  teamId: text('teamId').notNull(),
+  categoryId: text('categoryId'),  // Foreign key
+  name: text('name').notNull(),
+  price: real('price')
+})
+
+export const shopCategories = sqliteTable('shop_categories', {
+  id: text('id').primaryKey(),
+  teamId: text('teamId').notNull(),
+  name: text('name').notNull()
+})
+
+// Define relations
+export const shopProductsRelations = relations(shopProducts, ({ one }) => ({
+  category: one(shopCategories, {
+    fields: [shopProducts.categoryId],
+    references: [shopCategories.id]
+  })
+}))
+
+export const shopCategoriesRelations = relations(shopCategories, ({ many }) => ({
+  products: many(shopProducts)
+}))
+```
+
+**Step 3: Create query helper (optional)**
+
+```typescript
+// layers/shop/server/database/queries.ts
+export async function getShopProductsWithCategories(teamId: string) {
+  const db = useDB()
+
+  return await db.query.shopProducts.findMany({
+    where: eq(shopProducts.teamId, teamId),
+    with: { category: true },
+    orderBy: desc(shopProducts.createdAt)
+  })
+}
+
+export async function getShopProductWithCategory(productId: string, teamId: string) {
+  const db = useDB()
+
+  return await db.query.shopProducts.findFirst({
+    where: and(
+      eq(shopProducts.id, productId),
+      eq(shopProducts.teamId, teamId)
+    ),
+    with: { category: true }
+  })
+}
+```
+
+**Step 4: Use in API route**
+
+```typescript
+// server/api/teams/[team]/shop-products/index.get.ts
+import { getShopProductsWithCategories } from '~/layers/shop/server/database/queries'
+
+export default defineEventHandler(async (event) => {
+  const teamId = getRouterParam(event, 'team')
+  return await getShopProductsWithCategories(teamId)
+})
+```
+
+**Step 5: Add TypeScript types**
+
+```typescript
+// layers/shop/types/products.ts
+import type { shopProducts, shopCategories } from '../server/database/schema'
+
+export type ShopProduct = typeof shopProducts.$inferSelect
+export type ShopCategory = typeof shopCategories.$inferSelect
+
+// With relations
+export interface ShopProductWithCategory extends ShopProduct {
+  category?: ShopCategory | null
+}
+```
+
+---
+
+### Best Practices
+
+**✅ DO:**
+- **Start simple** - Store foreign keys, query manually when needed
+- **Add relations later** - Only if you have performance problems or N+1 queries
+- Use `useCollectionQuery` to fetch related collections for dropdowns
+- Add database indexes on foreign key columns for performance
+- Document your relation patterns in code comments
+
+**❌ DON'T:**
+- Over-engineer with Drizzle relations unless you need them
+- Forget to handle null/missing relations (`category?.name || 'N/A'`)
+- Mix manual joins and Drizzle relations in the same query (pick one approach)
+- Skip validation on foreign keys (ensure referenced item exists)
+
+---
+
+### Common Patterns
+
+#### belongsTo (many-to-one)
+
+**Use case:** Many products belong to one category
+
+```typescript
+// Schema
+export const shopProducts = sqliteTable('shop_products', {
+  id: text('id').primaryKey(),
+  categoryId: text('categoryId')  // Foreign key
+})
+
+// Drizzle relation
+export const shopProductsRelations = relations(shopProducts, ({ one }) => ({
+  category: one(shopCategories, {
+    fields: [shopProducts.categoryId],
+    references: [shopCategories.id]
+  })
+}))
+
+// Query
+const product = await db.query.shopProducts.findFirst({
+  where: eq(shopProducts.id, '123'),
+  with: { category: true }
+})
+console.log(product.category.name)
+```
+
+#### hasMany (one-to-many)
+
+**Use case:** One category has many products
+
+```typescript
+// Drizzle relation
+export const shopCategoriesRelations = relations(shopCategories, ({ many }) => ({
+  products: many(shopProducts)
+}))
+
+// Query
+const category = await db.query.shopCategories.findFirst({
+  where: eq(shopCategories.id, 'cat-123'),
+  with: { products: true }
+})
+console.log(category.products.length)  // All products in this category
+```
+
+#### hasOne (one-to-one)
+
+**Use case:** One user has one profile
+
+```typescript
+// Schema
+export const userProfiles = sqliteTable('user_profiles', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull().unique()  // One-to-one
+})
+
+// Drizzle relation
+export const usersRelations = relations(users, ({ one }) => ({
+  profile: one(userProfiles, {
+    fields: [users.id],
+    references: [userProfiles.userId]
+  })
+}))
+```
+
+#### manyToMany (advanced)
+
+**Use case:** Products can have many tags, tags can belong to many products
+
+```typescript
+// Junction table
+export const productTags = sqliteTable('product_tags', {
+  productId: text('productId').notNull(),
+  tagId: text('tagId').notNull()
+})
+
+// Relations
+export const shopProductsRelations = relations(shopProducts, ({ many }) => ({
+  productTags: many(productTags)
+}))
+
+export const productTagsRelations = relations(productTags, ({ one }) => ({
+  product: one(shopProducts, {
+    fields: [productTags.productId],
+    references: [shopProducts.id]
+  }),
+  tag: one(tags, {
+    fields: [productTags.tagId],
+    references: [tags.id]
+  })
+}))
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  productTags: many(productTags)
+}))
+
+// Query (requires nested relations)
+const product = await db.query.shopProducts.findFirst({
+  with: {
+    productTags: {
+      with: {
+        tag: true
+      }
+    }
+  }
+})
+```
+
+---
+
+### When to Query Relations
+
+**In the component (Option 1):**
+- ✅ Simple queries
+- ✅ Data already cached
+- ✅ Quick prototypes
+
+```vue
+<script setup lang="ts">
+const { items: products } = await useCollectionQuery('shopProducts')
+const { items: categories } = await useCollectionQuery('shopCategories')
+// Map in component
+</script>
+```
+
+**In the API route (Option 2):**
+- ✅ Complex joins
+- ✅ Performance critical
+- ✅ Large datasets
+- ✅ Filtering by related fields
+
+```typescript
+// server/api/teams/[team]/products-full.get.ts
+export default defineEventHandler(async (event) => {
+  // Join on server, return combined data
+  return await db.query.products.findMany({
+    with: { category: true }
+  })
+})
+```
+
+**Rule of thumb:** Start with Option 1, move to Option 2 when you see performance issues.
+
+---
+
 ## Forms & Modals
 
 ### Opening Forms
@@ -1289,6 +1815,315 @@ Use in new projects:
 cp templates/saas-starter.config.js ./crouton.config.js
 npx crouton-generate config ./crouton.config.js
 ```
+
+---
+
+## Rich Text Editor
+
+Nuxt Crouton provides an optional rich text editor layer powered by **Tiptap**, perfect for blog posts, content management, and any text-heavy forms.
+
+### Installation
+
+```bash
+# Install the editor package
+pnpm add @friendlyinternet/nuxt-crouton-editor
+
+# Install required peer dependencies
+pnpm add @nuxt/icon
+```
+
+### Configure Nuxt
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  extends: [
+    '@friendlyinternet/nuxt-crouton',
+    '@friendlyinternet/nuxt-crouton-editor'  // Add this layer
+  ]
+})
+```
+
+### Components
+
+#### EditorSimple
+
+The main editor component with a full-featured toolbar.
+
+**Basic Usage:**
+
+```vue
+<script setup lang="ts">
+const content = ref('<p>Hello world!</p>')
+</script>
+
+<template>
+  <EditorSimple v-model="content" />
+</template>
+```
+
+**In Collection Forms:**
+
+```vue
+<!-- layers/blog/components/posts/Form.vue -->
+<script setup lang="ts">
+const state = ref({
+  title: '',
+  content: '<p></p>',
+  excerpt: ''
+})
+</script>
+
+<template>
+  <UForm :state="state" :schema="schema" @submit="handleSubmit">
+    <UFormField label="Title" name="title">
+      <UInput v-model="state.title" />
+    </UFormField>
+
+    <UFormField label="Content" name="content">
+      <EditorSimple v-model="state.content" />
+    </UFormField>
+
+    <UFormField label="Excerpt" name="excerpt">
+      <UTextarea v-model="state.excerpt" rows="3" />
+    </UFormField>
+
+    <CroutonButton :action="action" :loading="loading" />
+  </UForm>
+</template>
+```
+
+### Generator Integration
+
+Automatically use the editor for specific fields by marking them in your schema:
+
+```json
+// schemas/post-schema.json
+{
+  "title": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Post Title"
+    }
+  },
+  "content": {
+    "type": "text",
+    "meta": {
+      "component": "EditorSimple",
+      "label": "Post Content"
+    }
+  },
+  "excerpt": {
+    "type": "text",
+    "meta": {
+      "label": "Excerpt"
+    }
+  }
+}
+```
+
+When you generate this collection, the `content` field will automatically use `EditorSimple`.
+
+### Editor Features
+
+- ✅ **Text Formatting**: Bold, italic, strikethrough
+- ✅ **Headings**: H1, H2, H3
+- ✅ **Lists**: Bullet points and numbered lists
+- ✅ **Code Blocks**: Inline code and code blocks
+- ✅ **Blockquotes**: Quote formatting
+- ✅ **Text Colors**: Custom text coloring
+- ✅ **Floating Toolbar**: Appears on text selection
+- ✅ **Dark Mode**: Automatic dark mode support
+- ✅ **Keyboard Shortcuts**: Standard shortcuts (Cmd+B for bold, etc.)
+
+### Styling
+
+The editor respects your Nuxt UI theme and includes dark mode support. You can customize with CSS:
+
+```vue
+<template>
+  <EditorSimple
+    v-model="content"
+    class="my-editor"
+  />
+</template>
+
+<style>
+.my-editor :deep(.tiptap) {
+  min-height: 300px;
+  padding: 1rem;
+}
+
+.my-editor :deep(.tiptap h1) {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+</style>
+```
+
+### Advanced: Custom Tiptap Extensions
+
+If you need additional Tiptap extensions:
+
+```vue
+<script setup lang="ts">
+import { useEditor } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
+import Link from '@tiptap/extension-link'
+
+const content = ref('<p></p>')
+
+const editor = useEditor({
+  content: content.value,
+  extensions: [
+    StarterKit,
+    Image.configure({
+      inline: true,
+      allowBase64: true
+    }),
+    Link.configure({
+      openOnClick: false
+    })
+  ],
+  onUpdate: ({ editor }) => {
+    content.value = editor.getHTML()
+  }
+})
+</script>
+
+<template>
+  <div>
+    <!-- Custom toolbar -->
+    <EditorToolbar :editor="editor" />
+
+    <!-- Editor content -->
+    <TiptapEditorContent :editor="editor" class="prose" />
+  </div>
+</template>
+```
+
+### With Translations
+
+Combine the editor with i18n for multilingual content:
+
+```vue
+<script setup lang="ts">
+const state = ref({
+  title: '',
+  content: '',
+  translations: {}
+})
+
+const translatableContent = {
+  title: state.value.title,
+  content: state.value.content
+}
+</script>
+
+<template>
+  <UForm>
+    <!-- Default language -->
+    <UFormField label="Title (English)" name="title">
+      <UInput v-model="state.title" />
+    </UFormField>
+
+    <UFormField label="Content (English)" name="content">
+      <EditorSimple v-model="state.content" />
+    </UFormField>
+
+    <!-- Translations -->
+    <TranslationsInputWithEditor
+      v-model="state.translations"
+      :fields="['title', 'content']"
+      :default-values="translatableContent"
+      :editor-fields="['content']"
+    />
+  </UForm>
+</template>
+```
+
+### Database Storage
+
+The editor outputs HTML. Store it in a `TEXT` field in your database:
+
+```typescript
+// Drizzle schema
+export const blogPosts = sqliteTable('blog_posts', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),  // HTML from editor
+  excerpt: text('excerpt'),
+  createdAt: integer('createdAt', { mode: 'timestamp' })
+})
+```
+
+### Display Rendered Content
+
+On the frontend, render the HTML safely:
+
+```vue
+<script setup lang="ts">
+const { items: posts } = await useCollectionQuery('blogPosts')
+</script>
+
+<template>
+  <div v-for="post in posts" :key="post.id">
+    <h1>{{ post.title }}</h1>
+    <!-- Render HTML (ensure it's sanitized on the backend!) -->
+    <div class="prose" v-html="post.content" />
+  </div>
+</template>
+
+<style>
+/* Use Tailwind Typography for nice formatting */
+.prose {
+  @apply max-w-none;
+}
+</style>
+```
+
+**Security Note:** Always sanitize HTML on the backend before saving to prevent XSS attacks:
+
+```typescript
+// server/api/blog-posts/index.post.ts
+import sanitizeHtml from 'sanitize-html'
+
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event)
+
+  // Sanitize HTML content
+  const sanitized = sanitizeHtml(body.content, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2']),
+    allowedAttributes: {
+      ...sanitizeHtml.defaults.allowedAttributes,
+      '*': ['class']
+    }
+  })
+
+  // Save to database
+  await db.insert(blogPosts).values({
+    ...body,
+    content: sanitized
+  })
+})
+```
+
+### Best Practices
+
+**✅ DO:**
+- Sanitize HTML on the backend before storing
+- Use the `prose` class (Tailwind Typography) for consistent rendering
+- Mark editor fields in your schema for automatic generation
+- Keep editor content in a `TEXT` database field
+
+**❌ DON'T:**
+- Render unsanitized HTML (XSS risk)
+- Store editor content in a `VARCHAR` (may truncate)
+- Mix editor HTML with plain text fields
+- Forget to add `@nuxt/icon` dependency
 
 ---
 

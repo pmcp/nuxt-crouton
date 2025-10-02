@@ -1,5 +1,5 @@
 // Advanced multi-schema configuration for nuxt-crouton collection generator
-// This config demonstrates using different schemas for different collections
+// This config demonstrates using different schemas with translation support
 
 export default {
   // Define collections with their own schema files
@@ -46,6 +46,28 @@ export default {
     }
   ],
 
+  // Translation configuration - specify which fields are translatable per collection
+  translations: {
+    collections: {
+      // Shop collections
+      products: ['name', 'description', 'metaTitle', 'metaDescription'],
+      categories: ['name', 'description'],
+
+      // Blog collections
+      posts: ['title', 'content', 'excerpt', 'metaTitle', 'metaDescription'],
+      comments: ['content'],
+      authors: ['bio'],
+
+      // Admin collections (usually fewer translatable fields)
+      roles: ['name', 'description'],
+      permissions: ['name', 'description'],
+
+      // Marketing collections
+      campaigns: ['name', 'description', 'content'],
+      newsletters: ['subject', 'content', 'previewText']
+    }
+  },
+
   // Database configuration
   dialect: 'sqlite',
 
@@ -65,11 +87,12 @@ export default {
 // - Uses different schemas for each collection type
 // - Organizes collections into logical layers
 // - Enables team-based features
-// - Includes translation support for multi-lingual apps
+// - Includes full translation support with TranslationsInput component
 // - Generates relation stubs for easier relationship setup
-//
-// Note: The schema files referenced here would need to exist for this to work
-// This is just an example showing the structure
+// - Maps translatable fields per collection (name, description, content, etc.)
 //
 // Usage:
-// npx crouton-generate config ./FilesForTesting/crouton.config.multi-schema.js
+// npx crouton-generate config ./FilesForTesting/crouton.config.multi-schema-with-translations.js
+//
+// The TranslationsInput component will now appear in forms for fields marked as translatable.
+// Each translatable field will be moved into the translations UI instead of appearing as regular inputs.
