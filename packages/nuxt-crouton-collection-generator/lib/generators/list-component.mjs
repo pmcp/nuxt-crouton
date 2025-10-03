@@ -1,14 +1,17 @@
 // Generator for List.vue component
 
 export function generateListComponent(data, config = {}) {
-  const { plural, pascalCasePlural, layerPascalCase, layer } = data
+  const { plural, pascalCasePlural, layerPascalCase, layer, fields } = data
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
   const prefixedCamelCasePlural = `${layer}${pascalCasePlural}`
   const apiPath = `${layer}-${plural}`
-  
+
   // Check for translations
   const translatableFields = config?.translations?.collections?.[plural] || []
   const hasTranslations = translatableFields.length > 0
+
+  // Check for reference fields (fields with refTarget property)
+  const referenceFields = fields.filter(f => f.refTarget)
 
   return `<template>
   <CroutonList
@@ -27,6 +30,13 @@ export function generateListComponent(data, config = {}) {
     </template>${translatableFields.map(field => `
     <template #${field}-cell="{ row }">
       {{ t(row.original, '${field}') }}
+    </template>`).join('')}${referenceFields.map(field => `
+    <template #${field.name}-cell="{ row }">
+      <CardMini
+        v-if="row.original.${field.name}"
+        :id="row.original.${field.name}"
+        collection="${field.refTarget}"
+      />
     </template>`).join('')}${hasTranslations ? `
     <template #translations-cell="{ row }">
       <TranslationsListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
