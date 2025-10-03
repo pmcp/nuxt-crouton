@@ -881,7 +881,10 @@ async function validateConfig(config) {
         continue
       }
 
-      const schemaPath = path.resolve(col.fieldsFile)
+      // Resolve path relative to config file directory if _configDir is set
+      const schemaPath = config._configDir && !path.isAbsolute(col.fieldsFile)
+        ? path.resolve(config._configDir, col.fieldsFile)
+        : path.resolve(col.fieldsFile)
       try {
         await fsp.access(schemaPath)
         console.log(`  ✓ Schema: ${col.fieldsFile}`)
@@ -972,23 +975,13 @@ async function validateConfig(config) {
 
   // Check for required dependencies (unless force flag is set)
   if (!config.flags?.force) {
-    const requiredDeps = detectRequiredDependencies()
-    const missingDeps = []
+    const dependencies = await detectRequiredDependencies(config)
 
-    for (const dep of requiredDeps) {
-      try {
-        await import(dep.package)
-        console.log(`✓ Dependency found: ${dep.package}`)
-      } catch {
-        missingDeps.push(dep)
-      }
-    }
-
-    if (missingDeps.length > 0) {
+    if (dependencies.missing.length > 0) {
       warnings.push(`Missing dependencies detected. Run 'crouton-generate install' or use --force to skip`)
       console.log('\n⚠️  Missing dependencies:')
-      missingDeps.forEach(dep => {
-        console.log(`  • ${dep.package} - ${dep.reason}`)
+      dependencies.missing.forEach(dep => {
+        console.log(`  • ${dep.name} - ${dep.reason}`)
       })
     }
   }
@@ -1049,7 +1042,13 @@ async function main() {
         process.exit(1)
       }
 
-      const config = (await import(configPath)).default
+      // Convert path to file URL for proper ES module import
+      const { pathToFileURL } = await import('url')
+      const configUrl = pathToFileURL(configPath).href
+      const config = (await import(configUrl)).default
+
+      // Store the config directory for resolving relative paths
+      config._configDir = path.dirname(configPath)
 
       // Validate configuration before proceeding
       const validation = await validateConfig(config)
@@ -1098,7 +1097,11 @@ async function main() {
             console.log(`${'─'.repeat(60)}`)
             console.log(`Schema: ${fieldsFile}`)
 
-            const fields = await loadFields(fieldsFile)
+            // Resolve fieldsFile path relative to config directory if needed
+            const resolvedFieldsFile = config._configDir && !path.isAbsolute(fieldsFile)
+              ? path.resolve(config._configDir, fieldsFile)
+              : fieldsFile
+            const fields = await loadFields(resolvedFieldsFile)
 
             // Check if this collection has translations
             const hasTranslations = config?.translations?.collections?.[collectionName]?.length > 0
@@ -1301,20 +1304,11 @@ async function main() {
 
       // Check dependencies unless force flag
       if (!args.force) {
-        const requiredDeps = detectRequiredDependencies()
-        const missingDeps = []
+        const dependencies = await detectRequiredDependencies()
 
-        for (const dep of requiredDeps) {
-          try {
-            await import(dep.package)
-          } catch {
-            missingDeps.push(dep)
-          }
-        }
-
-        if (missingDeps.length > 0) {
+        if (dependencies.missing.length > 0) {
           console.log('\n⚠️  Missing dependencies detected:')
-          displayMissingDependencies(missingDeps)
+          displayMissingDependencies(dependencies)
 
           if (!args.force) {
             console.log('\nUse --force to skip this check or run:')
