@@ -15,4 +15,3 @@ const props = defineProps<{
     {{ locale.toUpperCase() }}
   </UBadge>
 </template>
-shou
