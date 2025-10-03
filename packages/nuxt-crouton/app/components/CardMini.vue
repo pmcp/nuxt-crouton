@@ -48,4 +48,3 @@ const props = defineProps({
 })
 
 const item = computed(() => useCollections()[props.collection].value.find(i => i.id === props.id))
-</script>
