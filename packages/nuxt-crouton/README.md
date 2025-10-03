@@ -73,6 +73,72 @@ Expandable panel for forms and details:
 </ExpandableSlideover>
 ```
 
+### Image Upload Components
+
+**Requires NuxtHub blob storage:**
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  extends: ['@friendlyinternet/nuxt-crouton'],
+  hub: {
+    blob: true  // Enable NuxtHub blob storage
+  }
+})
+```
+
+#### CroutonImageUpload
+Full-size image uploader with preview:
+```vue
+<template>
+  <CroutonImageUpload
+    v-model="imageUrl"
+    @file-selected="handleUpload"
+  />
+</template>
+
+<script setup>
+const imageUrl = ref('')
+
+const handleUpload = async (file) => {
+  if (!file) return
+
+  const formData = new FormData()
+  formData.append('image', file)
+
+  const pathname = await $fetch('/api/upload-image', {
+    method: 'POST',
+    body: formData
+  })
+
+  imageUrl.value = `/images/${pathname}`
+}
+</script>
+```
+
+#### CroutonAvatarUpload
+Compact avatar uploader:
+```vue
+<CroutonAvatarUpload
+  v-model="avatarUrl"
+  :avatar-size="'2xl'"
+  @file-selected="handleUpload"
+/>
+```
+
+**Using in generated forms:**
+```json
+{
+  "imageUrl": {
+    "type": "string",
+    "meta": {
+      "component": "CroutonImageUpload"
+    }
+  }
+}
+```
+
+For full asset management (centralized media library), see [@friendlyinternet/nuxt-crouton-assets](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-assets).
+
 ## Composables
 
 ### useCrouton()
@@ -107,9 +173,10 @@ This is the base layer. Use it with addon layers for additional features:
 // Your app's nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',       // Base (this package)
-    '@friendlyinternet/nuxt-crouton-i18n',  // Optional: Add translations
-    '@friendlyinternet/nuxt-crouton-editor' // Optional: Add rich text editor
+    '@friendlyinternet/nuxt-crouton',        // Base (this package)
+    '@friendlyinternet/nuxt-crouton-i18n',   // Optional: Add translations
+    '@friendlyinternet/nuxt-crouton-editor', // Optional: Add rich text editor
+    '@friendlyinternet/nuxt-crouton-assets'  // Optional: Add asset management
   ]
 })
 ```
@@ -120,7 +187,8 @@ export default defineNuxtConfig({
 @friendlyinternet/nuxt-crouton (base - this layer)
     +
     ├── @friendlyinternet/nuxt-crouton-i18n (addon)
-    └── @friendlyinternet/nuxt-crouton-editor (addon)
+    ├── @friendlyinternet/nuxt-crouton-editor (addon)
+    └── @friendlyinternet/nuxt-crouton-assets (addon)
 ```
 
 **Explicit pattern**: Always include base + any addons you need

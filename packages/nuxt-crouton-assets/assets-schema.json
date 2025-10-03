@@ -1,0 +1,78 @@
+{
+  "id": {
+    "type": "string",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "teamId": {
+    "type": "string",
+    "refTarget": "organisations",
+    "meta": {
+      "required": true,
+      "label": "Team/Organisation",
+      "area": "meta"
+    }
+  },
+  "userId": {
+    "type": "string",
+    "refTarget": "users",
+    "meta": {
+      "required": true,
+      "label": "Uploaded By",
+      "area": "meta"
+    }
+  },
+  "filename": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Filename",
+      "area": "main"
+    }
+  },
+  "pathname": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "File Path",
+      "area": "main"
+    }
+  },
+  "contentType": {
+    "type": "string",
+    "meta": {
+      "label": "MIME Type",
+      "area": "sidebar"
+    }
+  },
+  "size": {
+    "type": "number",
+    "meta": {
+      "label": "File Size (bytes)",
+      "area": "sidebar"
+    }
+  },
+  "alt": {
+    "type": "string",
+    "meta": {
+      "label": "Alt Text (for accessibility & SEO)",
+      "area": "main"
+    }
+  },
+  "uploadedAt": {
+    "type": "date",
+    "meta": {
+      "label": "Uploaded At",
+      "area": "meta"
+    }
+  },
+  "updatedBy": {
+    "type": "string",
+    "refTarget": "users",
+    "meta": {
+      "label": "Updated By",
+      "area": "meta"
+    }
+  }
+}
