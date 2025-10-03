@@ -26,6 +26,17 @@ export function generateFormComponent(data, config = {}) {
       </UFormField>`
     }
 
+    // Check if this is a reference field (has refTarget)
+    if (field.refTarget) {
+      return `      <UFormField label="${fieldName}" name="${field.name}">
+        <ReferenceSelect
+          v-model="state.${field.name}"
+          collection="${field.refTarget}"
+          label="${fieldName}"
+        />
+      </UFormField>`
+    }
+
     // Default component selection based on field type
     if (field.type === 'text') {
       return `      <UFormField label="${fieldName}" name="${field.name}">
