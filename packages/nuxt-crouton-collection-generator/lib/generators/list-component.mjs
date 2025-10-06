@@ -32,7 +32,7 @@ export function generateListComponent(data, config = {}) {
       {{ t(row.original, '${field}') }}
     </template>`).join('')}${referenceFields.map(field => `
     <template #${field.name}-cell="{ row }">
-      <CardMini
+      <CroutonCardMini
         v-if="row.original.${field.name}"
         :id="row.original.${field.name}"
         collection="${field.refTarget}"
