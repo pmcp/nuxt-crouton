@@ -29,7 +29,7 @@ export function generateFormComponent(data, config = {}) {
     // Check if this is a reference field (has refTarget)
     if (field.refTarget) {
       return `      <UFormField label="${fieldName}" name="${field.name}">
-        <ReferenceSelect
+        <CroutonReferenceSelect
           v-model="state.${field.name}"
           collection="${field.refTarget}"
           label="${fieldName}"
@@ -76,10 +76,10 @@ export function generateFormComponent(data, config = {}) {
   })
   const hasFieldComponents = Object.keys(fieldComponentsMap).length > 0
 
-  // Add TranslationsInput if there are translatable fields
+  // Add CroutonI18nInput if there are translatable fields
   const translationField = hasTranslations ? `
 
-      <TranslationsInput
+      <CroutonI18nInput
         v-model="state.translations"
         :fields="[${translatableFieldNames.map(f => `'${f}'`).join(', ')}]"
         :default-values="{
