@@ -87,12 +87,12 @@ export default {
 // - Uses different schemas for each collection type
 // - Organizes collections into logical layers
 // - Enables team-based features
-// - Includes full translation support with TranslationsInput component
+// - Includes full translation support with CroutonI18nInput component
 // - Generates relation stubs for easier relationship setup
 // - Maps translatable fields per collection (name, description, content, etc.)
 //
 // Usage:
 // npx crouton-generate config ./FilesForTesting/crouton.config.multi-schema-with-translations.js
 //
-// The TranslationsInput component will now appear in forms for fields marked as translatable.
+// The CroutonI18nInput component will now appear in forms for fields marked as translatable.
 // Each translatable field will be moved into the translations UI instead of appearing as regular inputs.

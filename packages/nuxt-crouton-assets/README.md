@@ -86,7 +86,7 @@ Use the asset picker to reference assets by ID:
     "type": "string",
     "refTarget": "assets",
     "meta": {
-      "component": "CroutonAssetPicker",
+      "component": "CroutonAssetsPicker",
       "label": "Featured Image"
     }
   }
@@ -130,7 +130,7 @@ Browse and select from existing assets:
 
 ```vue
 <template>
-  <CroutonAssetPicker v-model="selectedAssetId" />
+  <CroutonAssetsPicker v-model="selectedAssetId" />
 </template>
 
 <script setup>
@@ -149,8 +149,8 @@ Provides core upload infrastructure:
 
 ### Assets Package (this package) - Provides Tools
 The package provides reusable components and composables:
-- `CroutonAssetPicker` - Browse/select assets UI component
-- `CroutonAssetUploader` - Upload + metadata form component
+- `CroutonAssetsPicker` - Browse/select assets UI component
+- `CroutonAssetsUploader` - Upload + metadata form component
 - `useAssetUpload()` - Composable for programmatic uploads
 - `assets-schema.json` - Reference schema for generation
 
@@ -162,7 +162,7 @@ You generate the actual assets collection using crouton-generate:
   - Database schema - Assets table with all metadata
   - Composable - useCoreAssets() with validation
 
-The package tools (AssetPicker, AssetUploader) work WITH your generated collection.
+The package tools (CroutonAssetsPicker, CroutonAssetsUploader) work WITH your generated collection.
 
 ## Simple vs. Full Approach
 
@@ -181,7 +181,7 @@ The package tools (AssetPicker, AssetUploader) work WITH your generated collecti
   "imageId": {
     "type": "string",
     "refTarget": "assets",
-    "meta": { "component": "CroutonAssetPicker" }
+    "meta": { "component": "CroutonAssetsPicker" }
   }
 }
 ```

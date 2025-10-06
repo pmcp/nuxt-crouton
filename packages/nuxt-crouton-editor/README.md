@@ -42,14 +42,14 @@ pnpm add @nuxt/icon
 
 ## Components
 
-### EditorSimple
+### CroutonEditorSimple
 
 A fully-featured rich text editor with toolbar and formatting options.
 
 ```vue
 <template>
   <div>
-    <EditorSimple v-model="content" />
+    <CroutonEditorSimple v-model="content" />
   </div>
 </template>
 
@@ -67,13 +67,13 @@ const content = ref('<p>Hello world!</p>')
 - Text colors
 - Floating toolbar on text selection
 
-### EditorToolbar
+### CroutonEditorToolbar
 
-The toolbar component (used internally by EditorSimple, but can be used standalone).
+The toolbar component (used internally by CroutonEditorSimple, but can be used standalone).
 
 ```vue
 <template>
-  <EditorToolbar :editor="editor" />
+  <CroutonEditorToolbar :editor="editor" />
 </template>
 
 <script setup lang="ts">
@@ -97,7 +97,7 @@ Integrate the editor into your Crouton collection forms:
     </UFormField>
 
     <UFormField label="Content" name="content">
-      <EditorSimple v-model="formData.content" />
+      <CroutonEditorSimple v-model="formData.content" />
     </UFormField>
 
     <UButton type="submit">Save Post</UButton>
@@ -129,7 +129,7 @@ When using the Nuxt Crouton generator with rich text fields, update your schema:
     "type": "text",
     "meta": {
       "label": "Content",
-      "component": "EditorSimple"
+      "component": "CroutonEditorSimple"
     }
   }
 }
@@ -144,7 +144,7 @@ is
 The editor respects your Nuxt UI theme and includes dark mode support out of the box. You can override styles:
 
 ```vue
-<EditorSimple
+<CroutonEditorSimple
   v-model="content"
   class="my-custom-editor"
 />
@@ -181,7 +181,7 @@ const editor = useEditor({
 
 <template>
   <div>
-    <EditorToolbar :editor="editor" />
+    <CroutonEditorToolbar :editor="editor" />
     <TiptapEditorContent :editor="editor" />
   </div>
 </template>
@@ -189,19 +189,19 @@ const editor = useEditor({
 
 ## API Reference
 
-### EditorSimple Props
+### CroutonEditorSimple Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `modelValue` | `string` | `''` | HTML content (v-model) |
 
-### EditorSimple Events
+### CroutonEditorSimple Events
 
 | Event | Payload | Description |
 |-------|---------|-------------|
 | `update:modelValue` | `string` | Emitted when content changes |
 
-### EditorToolbar Props
+### CroutonEditorToolbar Props
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|

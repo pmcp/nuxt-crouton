@@ -1,4 +1,6 @@
 // Generator for Form.vue component
+import { toCase } from '../utils/helpers.mjs'
+
 export function generateFormComponent(data, config = {}) {
   const { pascalCase, pascalCasePlural, layerPascalCase, fields, singular, plural, layer } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
@@ -28,10 +30,22 @@ export function generateFormComponent(data, config = {}) {
 
     // Check if this is a reference field (has refTarget)
     if (field.refTarget) {
+      let resolvedCollection
+
+      // Check if refTarget starts with : (colon) - indicates external/global collection
+      if (field.refTarget.startsWith(':')) {
+        // Use as-is without layer prefix, removing the : prefix
+        resolvedCollection = field.refTarget.substring(1)
+      } else {
+        // Normal behavior: add layer prefix
+        const refCases = toCase(field.refTarget)
+        resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+      }
+
       return `      <UFormField label="${fieldName}" name="${field.name}">
         <CroutonReferenceSelect
           v-model="state.${field.name}"
-          collection="${field.refTarget}"
+          collection="${resolvedCollection}"
           label="${fieldName}"
         />
       </UFormField>`

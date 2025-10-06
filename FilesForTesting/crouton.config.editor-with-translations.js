@@ -62,7 +62,7 @@ export default {
 //    }
 //
 // 3. The generator creates:
-//    <TranslationsInput
+//    <CroutonI18nInput
 //      v-model="state.translations"
 //      :fields="['title', 'excerpt', 'content']"
 //      :field-components="{
@@ -70,7 +70,7 @@ export default {
 //      }"
 //    />
 //
-// 4. TranslationsInput component renders:
+// 4. CroutonI18nInput component renders:
 //    - EN tab:
 //      - Title: <UInput> (English)
 //      - Excerpt: <UTextarea> (English)

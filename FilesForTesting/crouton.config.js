@@ -18,6 +18,14 @@ export default {
 
   // Optional flags matching the command line options
   flags: {
+    // Team-based multi-tenancy: Automatically adds teamId & userId fields + simplified endpoints
+    // Do NOT manually define teamId or userId in your schema JSON when this is true!
+    useTeamUtility: false,
+
+    // Metadata timestamps: Automatically adds createdAt & updatedAt fields to schemas
+    // Do NOT manually define createdAt or updatedAt in your schema JSON when this is true!
+    useMetadata: true,
+
     // Skip translation fields (--no-translations)
     noTranslations: true,
 
@@ -32,12 +40,6 @@ export default {
 
     // Add relation stubs in comments (--auto-relations)
     autoRelations: false,
-
-    // Use team authentication utility (--use-team-utility)
-    useTeamUtility: false,
-
-    // Include metadata fields like createdAt/updatedAt
-    useMetadata: true,
 
     // Number of retries for database operations
     retries: 0

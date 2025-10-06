@@ -803,9 +803,9 @@ ${translationsFieldSchema}
       path: path.join(base, 'server', 'database', 'schema.ts'),
       content: generateSchema(data, dialect, config)
     },
-    { 
+    {
       path: path.join(base, 'types.ts'),
-      content: generateTypes(data)
+      content: generateTypes(data, config)
     },
     { 
       path: path.join(base, 'nuxt.config.ts'),

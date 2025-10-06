@@ -23,7 +23,15 @@ export default {
 
   // Optional flags
   flags: {
-    // Include metadata fields (createdAt, updatedAt)
+    // Team-based multi-tenancy: Automatically adds teamId & userId fields to schemas
+    // and generates simplified API endpoints with team-based authentication
+    // When true: teamId and userId are added to ALL collections
+    // When false: No team fields are added (for single-tenant apps)
+    useTeamUtility: false,
+
+    // Metadata timestamps: Automatically adds createdAt & updatedAt fields to schemas
+    // When true: timestamps are added to ALL collections (default)
+    // When false: No timestamp fields are added
     useMetadata: true,
 
     // Generate relation stubs in comments
@@ -40,9 +48,6 @@ export default {
 
     // Preview what will be generated without creating files
     dryRun: false,
-
-    // Use team utility for authentication (if applicable)
-    useTeamUtility: false,
 
     // Number of retries for database operations
     retries: 0

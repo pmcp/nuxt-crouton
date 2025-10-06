@@ -23,8 +23,8 @@ export function generateSchema(data, dialect, config = null) {
   if (needsTranslations && dialect === 'sqlite') {
     // Build TypeScript type for translations
     const typeFields = translatableFields.map(f => `      ${f}?: string`).join('\n')
-    translationsField = `,\n  // Note: No indexes on translations - measure performance first\n  // Add indexes only if queries exceed 50ms with real data\n  translations: text('translations', { mode: 'json' }).$type<{\n    [locale: string]: {\n${typeFields}\n    }\n  }>()`
-    
+    translationsField = `  // Note: No indexes on translations - measure performance first\n  // Add indexes only if queries exceed 50ms with real data\n  translations: text('translations', { mode: 'json' }).$type<{\n    [locale: string]: {\n${typeFields}\n    }\n  }>()`
+
     translationsComment = `\n// Note: This collection has translatable fields: ${translatableFields.join(', ')}\n// Translations are stored in a JSON field without indexes for performance baseline`
   }
   
@@ -77,22 +77,42 @@ import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'`
     : `import { pgTable, varchar, text, integer, numeric, boolean, timestamp, jsonb, uuid } from 'drizzle-orm/pg-core'`
 
   const tableFn = dialect === 'sqlite' ? 'sqliteTable' : 'pgTable'
-  
-  const idField = dialect === 'sqlite' 
+
+  const idField = dialect === 'sqlite'
     ? `  id: text('id').primaryKey().$default(() => nanoid())`
     : `  id: uuid('id').primaryKey().defaultRandom()`
 
   // Convert table name to snake_case for database
   const snakeCaseTableName = toSnakeCase(`${layer}_${plural}`)
 
+  // Conditional field generation based on config flags
+  // - useTeamUtility: controls teamId & userId field generation (default: false)
+  // - useMetadata: controls createdAt & updatedAt field generation (default: true for backwards compatibility)
+  const useTeamUtility = config?.flags?.useTeamUtility ?? false
+  const useMetadata = config?.flags?.useMetadata ?? true
+
+  // Build team fields conditionally
+  const teamFields = useTeamUtility ? `
+  teamId: text('teamId').notNull(),
+  userId: text('userId').notNull()` : ''
+
+  // Build metadata fields conditionally
+  const metadataFields = useMetadata ? `
+  createdAt: ${dialect === 'sqlite' ? "integer('createdAt', { mode: 'timestamp' })" : "timestamp('createdAt', { withTimezone: true })"}.notNull().$default(() => new Date()),
+  updatedAt: ${dialect === 'sqlite' ? "integer('updatedAt', { mode: 'timestamp' })" : "timestamp('updatedAt', { withTimezone: true })"}.notNull().$onUpdate(() => new Date())` : ''
+
+  // Build the complete field list with proper comma handling
+  const allFields = [
+    idField,
+    teamFields,
+    schemaFields,
+    translationsField,
+    metadataFields
+  ].filter(Boolean).join(',\n')
+
   return `${imports}${translationsComment}
 
 export const ${exportName} = ${tableFn}('${snakeCaseTableName}', {
-${idField},
-  teamId: text('teamId').notNull(),
-  userId: text('userId').notNull(),
-${schemaFields}${translationsField},
-  createdAt: ${dialect === 'sqlite' ? "integer('createdAt', { mode: 'timestamp' })" : "timestamp('createdAt', { withTimezone: true })"}.notNull().$default(() => new Date()),
-  updatedAt: ${dialect === 'sqlite' ? "integer('updatedAt', { mode: 'timestamp' })" : "timestamp('updatedAt', { withTimezone: true })"}.notNull().$onUpdate(() => new Date())
+${allFields}
 })`
 }

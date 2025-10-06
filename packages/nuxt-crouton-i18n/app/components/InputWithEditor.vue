@@ -86,7 +86,7 @@ const translationStatus = computed(() => {
           error && editingLocale === 'en' && !currentValue ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
         ]">
           <div class="h-64">
-            <EditorSimple
+            <CroutonEditorSimple
               :model-value="currentValue"
               @update:model-value="updateValue($event)"
             />

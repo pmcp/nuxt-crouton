@@ -138,8 +138,8 @@ export async function detectRequiredDependencies(config) {
     }
   }
 
-  // Check if rich text editor is needed (EditorSimple component)
-  const hasEditorFields = hasFieldWithComponent(config, 'EditorSimple')
+  // Check if rich text editor is needed (CroutonEditorSimple component)
+  const hasEditorFields = hasFieldWithComponent(config, 'CroutonEditorSimple')
 
   if (hasEditorFields) {
     const editorInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-editor')
@@ -151,7 +151,7 @@ export async function detectRequiredDependencies(config) {
       required.missing.push({
         type: 'layer',
         name: '@friendlyinternet/nuxt-crouton-editor',
-        reason: 'Required addon for EditorSimple rich text editor',
+        reason: 'Required addon for CroutonEditorSimple rich text editor',
         installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-editor',
         configCmd: `Add '@friendlyinternet/nuxt-crouton-editor' to extends array`
       })

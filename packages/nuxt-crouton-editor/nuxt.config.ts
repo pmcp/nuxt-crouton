@@ -24,7 +24,7 @@ export default defineNuxtConfig({
     dirs: [
       {
         path: join(currentDir, 'app/components'),
-        prefix: 'Editor',
+        prefix: 'CroutonEditor',
         global: true
       }
     ]
@@ -33,7 +33,7 @@ export default defineNuxtConfig({
   // Add hooks for debugging component registration
   hooks: {
     'components:extend': (components) => {
-      const editorComponents = components.filter(c => c.pascalName?.startsWith('Editor'))
+      const editorComponents = components.filter(c => c.pascalName?.startsWith('CroutonEditor'))
       console.log('[nuxt-crouton-editor] Registered editor components:', editorComponents.map(c => c.pascalName))
     }
   }

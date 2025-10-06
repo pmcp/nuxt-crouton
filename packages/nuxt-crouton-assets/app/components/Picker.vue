@@ -63,7 +63,7 @@
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">Upload New Asset</h3>
-          <CroutonAssetUploader @uploaded="handleUploaded(close)" />
+          <CroutonAssetsUploader @uploaded="handleUploaded(close)" />
         </div>
       </template>
     </UModal>

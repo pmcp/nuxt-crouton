@@ -38,21 +38,21 @@ export default defineNuxtConfig({
 - Table components with search and pagination
 
 ### From This Layer
-- **TranslationsInput** - Multi-language input component
-- **TranslationsDisplay** - Display translated content
-- **LanguageSwitcher** - Switch between languages
+- **CroutonI18nInput** - Multi-language input component
+- **CroutonI18nDisplay** - Display translated content
+- **CroutonI18nLanguageSwitcher** - Switch between languages
 - **useT()** - Translation composable
 - **useEntityTranslations()** - Entity-specific translations
 - i18n module pre-configured
 
 ## Components
 
-### TranslationsInput
+### CroutonI18nInput
 
 Multi-language input for forms:
 
 ```vue
-<TranslationsInput
+<CroutonI18nInput
   v-model="state.translations"
   :fields="['name', 'description']"
   :default-values="{
@@ -64,24 +64,24 @@ Multi-language input for forms:
 />
 ```
 
-### TranslationsDisplay
+### CroutonI18nDisplay
 
 Display translated content:
 
 ```vue
-<TranslationsDisplay
+<CroutonI18nDisplay
   :translations="item.translations"
   :field="'name'"
   :fallback="item.name"
 />
 ```
 
-### LanguageSwitcher
+### CroutonI18nLanguageSwitcher
 
 Switch between available languages:
 
 ```vue
-<LanguageSwitcher />
+<CroutonI18nLanguageSwitcher />
 ```
 
 ## Composables
@@ -143,6 +143,28 @@ export default defineNuxtConfig({
 ```bash
 pnpm publish --access public
 ```
+
+## Migration from Previous Versions
+
+**Breaking Change**: Component prefix changed from `Translations` to `CroutonI18n` in latest version.
+
+### Quick Migration Steps
+
+1. Update package: `pnpm update @friendlyinternet/nuxt-crouton-i18n`
+2. Find and replace in your project:
+   - `<Translations` → `<CroutonI18n`
+   - `</Translations` → `</CroutonI18n`
+3. Clear Nuxt cache: `rm -rf .nuxt`
+4. Rebuild: `pnpm dev`
+
+### Why This Change?
+
+This change ensures consistency with the base `nuxt-crouton` package where all components use the `Crouton` prefix. The `I18n` suffix clearly indicates this is an addon package. This naming pattern:
+- Matches base package naming (`Crouton*`)
+- Provides clarity that this is an i18n addon
+- Enables future addons like `CroutonAuth`, `CroutonAdmin`
+- Improves discoverability via IDE autocomplete
+- Follows Vue/Nuxt standards (e.g., `NuxtLink`, `NuxtPage`)
 
 ## License
 

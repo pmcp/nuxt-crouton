@@ -57,9 +57,9 @@ All components and composables are auto-imported:
   <CrudButton action="create" collection="products" />
   <CrudEntitySelect v-model="category" entity-type="category" />
 
-  <!-- Translation Components (from translations layer) -->
-  <TranslationsInput v-model="translations" :fields="['name', 'description']" />
-  <LanguageSwitcher />
+  <!-- Translation Components (from i18n layer) -->
+  <CroutonI18nInput v-model="translations" :fields="['name', 'description']" />
+  <CroutonI18nLanguageSwitcher />
 
   <!-- Editor Components (from editor layer) -->
   <EditorSimple v-model="content" />
@@ -95,8 +95,8 @@ const { t } = useT()
 
 ### i18n Layer (`@friendlyinternet/nuxt-crouton-i18n`)
 - ✅ Everything from base layer
-- ✅ **TranslationsInput** - Multi-language input fields
-- ✅ **LanguageSwitcher** - Language selection
+- ✅ **CroutonI18nInput** - Multi-language input fields
+- ✅ **CroutonI18nLanguageSwitcher** - Language selection
 - ✅ **useT()** - Translation composable
 - ✅ **i18n** - Pre-configured with EN, NL, FR
 

@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     dirs: [
       {
         path: join(currentDir, 'app/components'),
-        prefix: 'Crouton',
+        prefix: 'CroutonAssets',
         global: true
       }
     ]

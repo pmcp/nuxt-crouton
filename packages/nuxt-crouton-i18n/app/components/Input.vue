@@ -164,12 +164,12 @@ const translationStatus = computed(() => {
         :name="`translations.${editingLocale}.${field}`"
         :required="editingLocale === 'en'"
       >
-        <!-- EditorSimple (rich text editor) -->
-        <EditorSimple
-          v-if="getFieldComponent(field) === 'EditorSimple'"
+        <!-- CroutonEditorSimple (rich text editor) -->
+        <CroutonEditorSimple
+          v-if="getFieldComponent(field) === 'CroutonEditorSimple'"
           :model-value="getFieldValue(field, editingLocale)"
           @update:model-value="updateFieldValue(field, $event)"
-          @vue:mounted="console.log(`[Input] EditorSimple mounted for field: ${field}`)"
+          @vue:mounted="console.log(`[Input] CroutonEditorSimple mounted for field: ${field}`)"
         />
 
         <!-- UTextarea (for text type fields without custom component) -->

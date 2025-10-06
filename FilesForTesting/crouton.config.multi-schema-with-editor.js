@@ -79,7 +79,7 @@ export default {
 // - Regular UInput for title and slug
 // - UTextarea for excerpt (type: text without component specified)
 // - EditorSimple for content (type: text WITH component: "EditorSimple")
-// - TranslationsInput for translatable fields (title, excerpt)
+// - CroutonI18nInput for translatable fields (title, excerpt)
 //
 // This demonstrates the flexibility of the meta.component approach:
 // - You can mix regular fields and custom components

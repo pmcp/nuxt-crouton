@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col h-full">
-    <EditorToolbar :editor="editor" class="flex-shrink-0" />
+    <CroutonEditorToolbar :editor="editor" class="flex-shrink-0" />
 <!--    <floating-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">-->
 <!--      <div class="editor-floating-menu">-->
 <!--        <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">-->
