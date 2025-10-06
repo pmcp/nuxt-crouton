@@ -8,8 +8,7 @@
     "app",
     "server",
     "registry",
-    "nuxt.config.ts",
-    "README.md"
+    "nuxt.config.ts"
   ],
   "keywords": [
     "nuxt",

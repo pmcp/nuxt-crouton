@@ -32,7 +32,7 @@ export default defineNuxtConfig({
     dirs: [
       {
         path: join(currentDir, 'app/components'),
-        prefix: 'Translations',
+        prefix: 'CroutonI18n',
         global: true
       }
     ]

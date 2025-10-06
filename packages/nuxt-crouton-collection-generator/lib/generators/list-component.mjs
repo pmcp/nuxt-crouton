@@ -39,7 +39,7 @@ export function generateListComponent(data, config = {}) {
       />
     </template>`).join('')}${hasTranslations ? `
     <template #translations-cell="{ row }">
-      <TranslationsListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
+      <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
     </template>` : ''}
   </CroutonList>
 </template>

@@ -79,7 +79,7 @@
 
       <!-- Translations Input -->
       <UFormField label="Translations" name="values" required>
-        <TranslationsInput
+        <CroutonI18nInput
           v-model="state.values"
           :locales="['en', 'nl', 'fr']"
         />

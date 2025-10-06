@@ -56,7 +56,7 @@ export const translationsUiConfig = {
   apiPath: 'translations-ui',
   displayName: 'UI Translations',
   singularName: 'Translation',
-  componentName: 'TranslationsUiForm',
+  componentName: 'CroutonI18nUiForm',
   schema: translationsUiSchema,
   defaultValues: TRANSLATIONS_UI_DEFAULTS,
   columns: TRANSLATIONS_UI_COLUMNS,
