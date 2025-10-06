@@ -4,20 +4,18 @@
 
     <div class="bg-white dark:bg-gray-900 rounded-md relative z-10">
       <div class="
-      border border-gray-300 dark:border-gray-700 rounded-md
-      text-xs text-gray-700 dark:text-gray-200
-      p-2
-      shadow-sm
-      transition delay-150 duration-200 ease-in-out
-      bg-white
-      dark:bg-gray-800/60 dark:group-hover:bg-gray-800/50"
+        border border-gray-300 dark:border-gray-700 rounded-md
+        text-xs text-gray-700 dark:text-gray-200
+        p-2
+        shadow-sm
+        transition delay-150 duration-200 ease-in-out
+        bg-white
+        dark:bg-gray-800/60 dark:group-hover:bg-gray-800/50"
       >
-
         <USkeleton v-if="!item" class="h-4 w-full" />
         <span v-else>{{ item.title }}</span>
       </div>
-
-</div>
+    </div>
 
     <CroutonMiniButtons
       v-if="item"
@@ -29,9 +27,8 @@
       containerClasses="flex flex-row gap-[2px]"
       :class="item.optimisticAction === 'update' ? 'transition-none -translate-y-6' : ''"
     />
-
-
   </div>
+
 </template>
 
 <script setup>
@@ -48,3 +45,4 @@ const props = defineProps({
 })
 
 const item = computed(() => useCollections()[props.collection].value.find(i => i.id === props.id))
+</script>
