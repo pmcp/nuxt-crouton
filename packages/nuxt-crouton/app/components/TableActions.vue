@@ -57,21 +57,17 @@ const handleDelete = () => {
 }
 
 const columnVisibilityItems = computed(() => {
-  if (!props.columns) return []
-
-  return props.columns
-    .filter((column) => column.getCanHide?.())
-    .map((column) => ({
-      label: upperFirst(column.id),
-      type: 'checkbox' as const,
-      checked: column.getIsVisible?.() || false,
-      onUpdateChecked(checked: boolean) {
-        column.toggleVisibility?.(!!checked)
-        emit('update:columnVisibility', column.id, !!checked)
-      },
-      onSelect(e?: Event) {
-        e?.preventDefault()
-      }
-    }))
+  return props.table?.tableApi?.getAllColumns().filter(column => column.getCanHide()).map(column => ({
+    label: upperFirst(column.id),
+    type: 'checkbox' as const,
+    checked: column.getIsVisible(),
+    onUpdateChecked(checked: boolean) {
+      props.table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
+      emit('update:columnVisibility', column.id, !!checked)
+    },
+    onSelect(e?: Event) {
+      e?.preventDefault()
+    }
+  })) || []
 })
 </script>

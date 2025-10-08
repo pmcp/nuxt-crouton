@@ -16,7 +16,7 @@
         <CroutonTableActions
           :selected-rows="selectedRows"
           :collection="collection"
-          :columns="tableColumns"
+          :table="tableRef"
         />
       </div>
 
@@ -107,6 +107,7 @@ const props = withDefaults(defineProps<TableProps>(), {
   hideDefaultColumns: () => ({
     created_at: false,
     updated_at: false,
+    updatedBy: false,
     actions: false
   })
 })
@@ -116,7 +117,7 @@ const { t, tString } = useT()
 const { open: openCrouton, getCollection, setPagination, getPagination } = useCrouton()
 
 // Refs
-const tableRef = useTemplateRef<any>('table')
+const tableRef = useTemplateRef<any>('tableRef')
 
 // State
 const loadingPage = ref(false)
@@ -218,7 +219,7 @@ function formatDate(date: string | Date | null | undefined): string {
 
 // Watchers
 watch(page, (newPage, oldPage) => {
-  if (props.serverPagination && newPage !== oldPage) fetchPage(newPage)
+if (props.serverPagination && newPage !== oldPage) fetchPage(newPage)
 })
 
 watch(pageCount, (newCount, oldCount) => {

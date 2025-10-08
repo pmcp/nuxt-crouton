@@ -71,7 +71,7 @@ export interface TablePaginationProps {
 export interface TableActionsProps {
   selectedRows: any[]
   collection: string
-  columns?: any[]
+  table?: any
   onDelete?: (ids: string[]) => void
   onColumnVisibilityChange?: (column: string, visible: boolean) => void
 }

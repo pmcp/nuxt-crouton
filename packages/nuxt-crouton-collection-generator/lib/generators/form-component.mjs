@@ -1,5 +1,6 @@
 // Generator for Form.vue component
 import { toCase } from '../utils/helpers.mjs'
+import { referencesAssets, getAssetComponent } from '../utils/asset-detector.mjs'
 
 export function generateFormComponent(data, config = {}) {
   const { pascalCase, pascalCasePlural, layerPascalCase, fields, singular, plural, layer } = data
@@ -42,6 +43,11 @@ export function generateFormComponent(data, config = {}) {
         resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
       }
 
+      // Auto-detect if this references an asset collection
+      // If no custom component is specified and it references assets, use AssetsPicker
+      const isAssetReference = referencesAssets(field, field.refTarget)
+      const shouldUseAssetPicker = isAssetReference && !field.meta?.component
+
       // Check if this is a read-only reference field
       if (field.meta?.readOnly) {
         return `      <UFormField label="${fieldName}" name="${field.name}">
@@ -51,6 +57,17 @@ export function generateFormComponent(data, config = {}) {
           collection="${resolvedCollection}"
         />
         <span v-else class="text-gray-400 text-sm">Not set</span>
+      </UFormField>`
+      }
+
+      // Use asset picker if this references an asset collection
+      if (shouldUseAssetPicker) {
+        const assetComponent = getAssetComponent()
+        return `      <UFormField label="${fieldName}" name="${field.name}">
+        <${assetComponent}
+          v-model="state.${field.name}"
+          collection="${resolvedCollection}"
+        />
       </UFormField>`
       }
 

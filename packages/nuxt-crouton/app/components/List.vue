@@ -113,6 +113,7 @@ const props = withDefaults(defineProps<ListProps>(), {
   hideDefaultColumns: () => ({
     created_at: false,
     updated_at: false,
+    updatedBy: false,
     actions: false
   })
 })

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-const { open } = useCrouton()
-
 const props = defineProps<{
   id: string
   collection: string
