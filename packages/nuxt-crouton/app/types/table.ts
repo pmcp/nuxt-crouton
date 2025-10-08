@@ -37,6 +37,7 @@ export interface ListProps {
   hideDefaultColumns?: {
     created_at?: boolean
     updated_at?: boolean
+    updatedBy?: boolean
     actions?: boolean
   }
 }

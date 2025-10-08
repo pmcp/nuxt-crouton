@@ -5,6 +5,7 @@
     v-for="(state, index) in modalStates"
     :key="state.id"
     v-model:open="state.isOpen"
+    :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
     size="lg"
     @update:open="(val: boolean) => handleClose(state.id, val)"
     @after:leave="() => handleAfterLeave(state.id)"
@@ -46,6 +47,7 @@
     v-for="(state, index) in dialogStates"
     :key="state.id"
     v-model:open="state.isOpen"
+    :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
     @update:open="(val: boolean) => handleClose(state.id, val)"
     @after:leave="() => handleAfterLeave(state.id)"
   >

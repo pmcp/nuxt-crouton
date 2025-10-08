@@ -62,7 +62,6 @@
               <CroutonMiniButtons
                   delete
                   @delete="openCrouton('delete', collection, [row.id])"
-                  :delete-loading="row.optimisticAction === 'delete'"
                   update
                   @update="openCrouton('update', collection, [row.id])"
               />

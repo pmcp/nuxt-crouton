@@ -1,4 +1,5 @@
 // Generator for List.vue component
+import { toCase } from '../utils/helpers.mjs'
 
 export function generateListComponent(data, config = {}) {
   const { plural, pascalCasePlural, layerPascalCase, layer, fields } = data
@@ -30,14 +31,27 @@ export function generateListComponent(data, config = {}) {
     </template>${translatableFields.map(field => `
     <template #${field}-cell="{ row }">
       {{ t(row.original, '${field}') }}
-    </template>`).join('')}${referenceFields.map(field => `
+    </template>`).join('')}${referenceFields.map(field => {
+      // Resolve collection name (handle : prefix for external collections)
+      let resolvedCollection
+      if (field.refTarget.startsWith(':')) {
+        // External/global collection - remove : prefix
+        resolvedCollection = field.refTarget.substring(1)
+      } else {
+        // Add layer prefix
+        const refCases = toCase(field.refTarget)
+        resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+      }
+
+      return `
     <template #${field.name}-cell="{ row }">
       <CroutonCardMini
         v-if="row.original.${field.name}"
         :id="row.original.${field.name}"
-        collection="${field.refTarget}"
+        collection="${resolvedCollection}"
       />
-    </template>`).join('')}${hasTranslations ? `
+    </template>`
+    }).join('')}${hasTranslations ? `
     <template #translations-cell="{ row }">
       <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
     </template>` : ''}

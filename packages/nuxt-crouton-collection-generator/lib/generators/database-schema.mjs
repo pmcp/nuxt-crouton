@@ -27,9 +27,24 @@ export function generateSchema(data, dialect, config = null) {
 
     translationsComment = `\n// Note: This collection has translatable fields: ${translatableFields.join(', ')}\n// Translations are stored in a JSON field without indexes for performance baseline`
   }
-  
+
+  // Define reserved field names that are auto-generated
+  const METADATA_FIELDS = ['createdAt', 'updatedAt', 'updatedBy']
+  const TEAM_FIELDS = ['teamId', 'userId']
+
+  // Conditional field generation based on config flags
+  const useTeamUtility = config?.flags?.useTeamUtility ?? false
+  const useMetadata = config?.flags?.useMetadata ?? true
+
+  // Build list of reserved fields to filter out based on config
+  const reservedFields = [
+    'id',
+    ...(useMetadata ? METADATA_FIELDS : []),
+    ...(useTeamUtility ? TEAM_FIELDS : [])
+  ]
+
   const schemaFields = data.fields
-    .filter(field => field.name !== 'id') // Filter out id field to avoid duplicates
+    .filter(field => !reservedFields.includes(field.name))
     .map(field => {
     const nullable = field.meta?.required ? '.notNull()' : ''
     const unique = field.meta?.unique ? '.unique()' : ''
@@ -85,12 +100,6 @@ import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'`
   // Convert table name to snake_case for database
   const snakeCaseTableName = toSnakeCase(`${layer}_${plural}`)
 
-  // Conditional field generation based on config flags
-  // - useTeamUtility: controls teamId & userId field generation (default: false)
-  // - useMetadata: controls createdAt & updatedAt field generation (default: true for backwards compatibility)
-  const useTeamUtility = config?.flags?.useTeamUtility ?? false
-  const useMetadata = config?.flags?.useMetadata ?? true
-
   // Build team fields conditionally
   const teamFields = useTeamUtility ? `
   teamId: text('teamId').notNull(),
@@ -99,7 +108,8 @@ import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'`
   // Build metadata fields conditionally
   const metadataFields = useMetadata ? `
   createdAt: ${dialect === 'sqlite' ? "integer('createdAt', { mode: 'timestamp' })" : "timestamp('createdAt', { withTimezone: true })"}.notNull().$default(() => new Date()),
-  updatedAt: ${dialect === 'sqlite' ? "integer('updatedAt', { mode: 'timestamp' })" : "timestamp('updatedAt', { withTimezone: true })"}.notNull().$onUpdate(() => new Date())` : ''
+  updatedAt: ${dialect === 'sqlite' ? "integer('updatedAt', { mode: 'timestamp' })" : "timestamp('updatedAt', { withTimezone: true })"}.notNull().$onUpdate(() => new Date()),
+  updatedBy: text('updatedBy').notNull()` : ''
 
   // Build the complete field list with proper comma handling
   const allFields = [

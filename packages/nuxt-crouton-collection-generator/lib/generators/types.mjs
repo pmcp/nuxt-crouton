@@ -19,12 +19,13 @@ export function generateTypes(data, config = null) {
   // Build metadata fields conditionally
   const metadataFields = useMetadata ? `  createdAt: Date
   updatedAt: Date
+  updatedBy: string
 ` : ''
 
   // Build the omit list for New${prefixedPascalCase} type
   const omitFields = ['id']
   if (useMetadata) {
-    omitFields.push('createdAt', 'updatedAt')
+    omitFields.push('createdAt', 'updatedAt', 'updatedBy')
   }
   const omitList = omitFields.map(f => `'${f}'`).join(' | ')
 

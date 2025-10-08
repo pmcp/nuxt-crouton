@@ -1,0 +1,60 @@
+{
+  "name": "@friendlyinternet/nuxt-crouton-devtools",
+  "version": "0.1.0",
+  "description": "DevTools integration for Nuxt Crouton - visual inspection and management of CRUD collections",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/module.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.ts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src/runtime/pages",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "crouton",
+    "devtools",
+    "crud",
+    "developer-tools"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton-devtools"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@nuxt/devtools-kit": "^1.6.4",
+    "@nuxt/kit": "^3.15.1"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^1.6.4",
+    "@nuxt/ui": "^4.0.0",
+    "nuxt": "^4.0.0",
+    "unbuild": "^3.6.1"
+  },
+  "peerDependencies": {
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
+    "nuxt": "^4.0.0"
+  }
+}

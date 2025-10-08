@@ -1,8 +1,5 @@
 <template>
-  <div
-    class=""
-    :class="containerClasses"
-  >
+  <div :class="containerClasses">
     <!-- DELETE -->
     <div v-if="delete">
     <!-- With tooltip-->
@@ -63,7 +60,8 @@
         v-else
         :loading="updateLoading"
         icon="i-ph-pencil"
-        color="gray"
+        color="primary"
+        variant="soft"
         size="xs"
         :class="buttonClasses"
         @click="$emit('update')"

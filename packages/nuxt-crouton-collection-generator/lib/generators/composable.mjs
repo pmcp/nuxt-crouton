@@ -9,11 +9,8 @@ export function generateComposable(data, config = {}) {
   // Create kebab-case API path with layer prefix
   const apiPath = `${layer}-${plural}`
 
-  // Ensure columns includes actions column
-  const columnsWithActions = data.fieldsColumns.includes('actions') 
-    ? data.fieldsColumns 
-    : `${data.fieldsColumns},
-  { accessorKey: 'actions', header: 'Actions' }`
+  // Runtime component handles default columns (created_at, updated_at, actions)
+  const columns = data.fieldsColumns
 
   return `import { z } from 'zod'
 
@@ -22,7 +19,7 @@ export const ${prefixedSingular}Schema = z.object({
 })
 
 export const ${prefixedPlural}Columns = [
-  ${columnsWithActions}
+  ${columns}
 ]
 
 export const ${prefixedPlural}Config = {

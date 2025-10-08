@@ -1,0 +1,20 @@
+{
+  "name": "nuxt-crouton-devtools-playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-devtools": "workspace:*"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^1.6.4",
+    "@nuxt/ui": "^4.0.0",
+    "nuxt": "^4.0.0"
+  }
+}

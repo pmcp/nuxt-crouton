@@ -22,6 +22,8 @@ async function fileExists(filePath) {
 import { toCase, mapType, typeMapping } from './utils/helpers.mjs'
 import { DIALECTS } from './utils/dialects.mjs'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
+import { detectExternalReferences, getConnectorRecommendations, formatExternalReferences } from './utils/connector-detector.mjs'
+import { setupConnectorInteractive, installConnectorPackage, addConnectorToNuxtConfig, updateAppConfigWithPackageImport } from './utils/connector-installer.mjs'
 
 // Import generators
 import { generateFormComponent } from './generators/form-component.mjs'
@@ -403,9 +405,27 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
 
     if (!collectionsBlockRegex.test(content)) {
       // No croutonCollections block yet, add one
+      // Check for external connector imports (e.g., usersConfig) and preserve them
+      const externalConnectorImports = content.match(/import\s+{\s*(\w+Config)\s*}\s+from\s+['"]@friendlyinternet\/nuxt-crouton-connector\//g)
+      let additionalEntries = ''
+
+      if (externalConnectorImports) {
+        for (const importLine of externalConnectorImports) {
+          const configMatch = importLine.match(/{\s*(\w+Config)\s*}/)
+          if (configMatch) {
+            const configName = configMatch[1]
+            const collectionName = configName.replace('Config', '')
+            // Only add if not already in content
+            if (!content.includes(`${collectionName}:`)) {
+              additionalEntries += `    ${collectionName}: ${configName},\n`
+            }
+          }
+        }
+      }
+
       content = content.replace(
         'defineAppConfig({',
-        `defineAppConfig({\n  croutonCollections: {\n${entryLine}\n  },`
+        `defineAppConfig({\n  croutonCollections: {\n${additionalEntries}${entryLine}\n  },`
       )
     } else {
       content = content.replace(collectionsBlockRegex, match => `${match}${entryLine}\n`)
@@ -713,7 +733,7 @@ ${translationsFieldSchema}
         ? ',\n  { accessorKey: \'translations\', header: \'Translations\' }'
         : ''
 
-      return baseColumns + translationsColumn + ',\n  { accessorKey: \'actions\', header: \'Actions\' }'
+      return baseColumns + translationsColumn
     })(),
     fieldsTypes: fields.filter(f => f.name !== 'id').map(f =>
       `${f.name}${f.meta?.required ? '' : '?'}: ${f.tsType}`
@@ -1064,7 +1084,82 @@ async function main() {
         // Simple confirmation - in production you'd use a proper prompt library
         await new Promise(resolve => setTimeout(resolve, 100))
       }
-      
+
+      // Detect external collection references (e.g., :users, :teams)
+      console.log(`\n${'─'.repeat(60)}`)
+      console.log(`Detecting external collection references...`)
+      console.log(`${'─'.repeat(60)}\n`)
+
+      // For enhanced config format, we need to scan all schema files
+      // For simple config format, use the single schemaPath
+      let schemaPathToScan
+      if (config.collections && Array.isArray(config.collections)) {
+        // Enhanced format: Get directory from first collection's fieldsFile
+        const firstFieldsFile = config.collections[0]?.fieldsFile
+        if (firstFieldsFile) {
+          const resolvedPath = config._configDir && !path.isAbsolute(firstFieldsFile)
+            ? path.resolve(config._configDir, firstFieldsFile)
+            : path.resolve(firstFieldsFile)
+          schemaPathToScan = path.dirname(resolvedPath)
+        } else {
+          schemaPathToScan = '.'
+        }
+      } else {
+        // Simple format: use schemaPath
+        schemaPathToScan = config.schemaPath || '.'
+      }
+
+      const externalRefs = await detectExternalReferences(schemaPathToScan)
+
+      if (externalRefs.size > 0) {
+        console.log(`✓ Found ${externalRefs.size} external collection(s):`)
+        console.log(formatExternalReferences(externalRefs))
+        console.log()
+
+        // Process each external reference
+        for (const [collectionName, usingCollections] of externalRefs) {
+          const recommendations = getConnectorRecommendations(collectionName)
+
+          // Check if connector is configured
+          const connectorConfig = config.connectors?.[collectionName]
+
+          if (connectorConfig && config.flags?.autoConnectors) {
+            // Config-based mode: Auto-install without prompting
+            console.log(`\n↻ Setting up connector for '${collectionName}' (${connectorConfig.type})...`)
+
+            const projectRoot = process.cwd()
+
+            // Install package if needed
+            if (connectorConfig.autoInstall) {
+              await installConnectorPackage(projectRoot)
+            }
+
+            // Setup connector via layer (no file copying)
+            console.log(`📦 Setting up ${collectionName} connector from package...`)
+
+            // Add connector layer to nuxt.config
+            await addConnectorToNuxtConfig(projectRoot)
+
+            // Update app.config to import from package
+            await updateAppConfigWithPackageImport(projectRoot, collectionName, connectorConfig.type)
+
+            console.log(`✓ ${collectionName} connector configured via layer`)
+
+            console.log(`✓ Connector '${collectionName}' setup complete`)
+          } else if (!config.flags?.autoConnectors) {
+            // Interactive mode: Prompt user
+            await setupConnectorInteractive(process.cwd(), collectionName, recommendations)
+          } else {
+            console.log(`⊘ No connector configured for '${collectionName}' - skipping`)
+            console.log(`  ℹ  You'll need to set this up manually or configure in crouton.config.js`)
+          }
+        }
+
+        console.log(`\n${'─'.repeat(60)}\n`)
+      } else {
+        console.log(`✓ No external references detected\n`)
+      }
+
       // Handle both config formats
       if (config.collections && config.targets) {
         // Enhanced config format with collections array

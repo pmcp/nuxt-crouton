@@ -60,7 +60,8 @@ export default defineEventHandler(async (event) => {
 ${dateConversions}  return await create${prefixedPascalCase}({
     ...dataWithoutId,
     teamId: team.id,
-    userId: user.id
+    userId: user.id,
+    updatedBy: user.id
   })
 })`
 }

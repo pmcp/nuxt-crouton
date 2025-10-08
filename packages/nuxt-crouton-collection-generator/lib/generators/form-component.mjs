@@ -42,6 +42,18 @@ export function generateFormComponent(data, config = {}) {
         resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
       }
 
+      // Check if this is a read-only reference field
+      if (field.meta?.readOnly) {
+        return `      <UFormField label="${fieldName}" name="${field.name}">
+        <CroutonCardMini
+          v-if="state.${field.name}"
+          :id="state.${field.name}"
+          collection="${resolvedCollection}"
+        />
+        <span v-else class="text-gray-400 text-sm">Not set</span>
+      </UFormField>`
+      }
+
       return `      <UFormField label="${fieldName}" name="${field.name}">
         <CroutonReferenceSelect
           v-model="state.${field.name}"
@@ -135,7 +147,6 @@ export function generateFormComponent(data, config = {}) {
       :state="state"
       class="space-y-4 flex flex-col justify-between h-full gap-4"
       @submit="handleSubmit"
-      size="lg"
     >
 ${formFields}${translationField}
 

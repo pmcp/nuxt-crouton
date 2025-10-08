@@ -15,6 +15,12 @@ Multi-language support extending the base layer with i18n capabilities.
 ### [@friendlyinternet/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
 Rich text editor integration extending the base layer with Tiptap.
 
+### [@friendlyinternet/nuxt-crouton-connector](./packages/nuxt-crouton-connector)
+Pre-built connectors for external auth systems and user management integrations (SuperSaaS, Supabase, Clerk, Auth0).
+
+### [@friendlyinternet/nuxt-crouton-collection-generator](./packages/nuxt-crouton-collection-generator)
+CLI tool to generate complete CRUD collections with API endpoints, components, and database schema.
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -28,6 +34,12 @@ pnpm add @friendlyinternet/nuxt-crouton
 
 # For CRUD + Editor
 pnpm add @friendlyinternet/nuxt-crouton-editor
+
+# For external collection connectors (auth systems, users)
+pnpm add @friendlyinternet/nuxt-crouton-connector
+
+# For CLI scaffolding tool
+pnpm add -D @friendlyinternet/nuxt-crouton-collection-generator
 ```
 
 ### Configuration
@@ -41,8 +53,9 @@ export default defineNuxtConfig({
     '@friendlyinternet/nuxt-crouton',
 
     // Optional addon layers
-    '@friendlyinternet/nuxt-crouton-i18n',   // For translations
-    '@friendlyinternet/nuxt-crouton-editor'   // For rich text editing
+    '@friendlyinternet/nuxt-crouton-i18n',      // For translations
+    '@friendlyinternet/nuxt-crouton-editor',    // For rich text editing
+    '@friendlyinternet/nuxt-crouton-connector'  // For external collections
   ]
 })
 ```
@@ -55,7 +68,10 @@ All components and composables are auto-imported:
 <template>
   <!-- CRUD Components (from base) -->
   <CrudButton action="create" collection="products" />
-  <CrudEntitySelect v-model="category" entity-type="category" />
+  <CroutonReferenceSelect v-model="category" collection="categories" />
+
+  <!-- External Collections (from connector layer) -->
+  <CroutonReferenceSelect v-model="userId" collection="users" />
 
   <!-- Translation Components (from i18n layer) -->
   <CroutonI18nInput v-model="translations" :fields="['name', 'description']" />
@@ -68,6 +84,7 @@ All components and composables are auto-imported:
 <script setup>
 // Composables are auto-imported
 const { items, create, update } = useCrud('products')
+const { users } = useUsers() // From connector layer
 const { t } = useT()
 </script>
 ```
@@ -78,16 +95,20 @@ const { t } = useT()
 @friendlyinternet/nuxt-crouton (base layer - always required)
     +
     ├── @friendlyinternet/nuxt-crouton-i18n (addon - adds i18n)
-    └── @friendlyinternet/nuxt-crouton-editor (addon - adds editor)
+    ├── @friendlyinternet/nuxt-crouton-editor (addon - adds editor)
+    └── @friendlyinternet/nuxt-crouton-connector (addon - external collections)
 ```
 
 **Explicit Configuration**: Always include the base layer plus any addons you need. This makes dependencies clear and explicit.
+
+**Development Tools**:
+- `@friendlyinternet/nuxt-crouton-collection-generator` - CLI for scaffolding collections
 
 ## 🎯 Features
 
 ### Base Layer (`@friendlyinternet/nuxt-crouton`)
 - ✅ **CrudButton** - Generic action buttons
-- ✅ **CrudEntitySelect** - Entity selection dropdowns
+- ✅ **CroutonReferenceSelect** - Entity selection dropdowns
 - ✅ **ExpandableSlideover** - Expandable panels
 - ✅ **Table Components** - Search, pagination, actions
 - ✅ **useCrud()** - Complete CRUD operations
@@ -105,6 +126,21 @@ const { t } = useT()
 - ✅ **Rich Text Editor** - Tiptap integration
 - ✅ **Toolbar** - Formatting options
 - ✅ **Commands** - Keyboard shortcuts
+
+### Connector Layer (`@friendlyinternet/nuxt-crouton-connector`)
+- ✅ Everything from base layer
+- ✅ **SuperSaaS Connector** - Team-based user management
+- ✅ **useUsers()** - External user collection composable
+- ✅ **External Collection API** - Ready-to-use endpoints
+- 🚧 **Supabase, Clerk, Auth0** - Coming soon
+
+### Collection Generator (`@friendlyinternet/nuxt-crouton-collection-generator`)
+- ✅ **CLI Scaffolding** - Generate complete CRUD collections
+- ✅ **Form Generation** - Auto-generate forms from schema
+- ✅ **List Generation** - Auto-generate tables and lists
+- ✅ **API Generation** - Create endpoints and validation
+- ✅ **Connector Detection** - Auto-detect and install connectors
+- ✅ **Rollback Support** - Undo generated collections
 
 ## 💡 Why Layers?
 

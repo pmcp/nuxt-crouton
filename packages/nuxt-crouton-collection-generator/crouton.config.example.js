@@ -21,6 +21,20 @@ export default {
     // }
   ],
 
+  // External connectors for :referenced collections (e.g., :users, :teams)
+  // When you reference collections with : prefix in schemas, configure them here
+  connectors: {
+    // Example: users collection from auth system
+    // users: {
+    //   type: 'supersaas',      // Connector type: 'supersaas', 'supabase', 'clerk'
+    //   autoInstall: true,       // Install @friendlyinternet/nuxt-crouton-connector
+    //   copyFiles: true,         // Copy connector files to project
+    //   updateAppConfig: true    // Auto-register in app.config.ts
+    // },
+
+    // If not configured, generator will prompt interactively when :references are detected
+  },
+
   // Optional flags
   flags: {
     // Team-based multi-tenancy: Automatically adds teamId & userId fields to schemas
@@ -50,6 +64,9 @@ export default {
     dryRun: false,
 
     // Number of retries for database operations
-    retries: 0
+    retries: 0,
+
+    // Auto-configure connectors without prompting (uses connectors config above)
+    autoConnectors: false
   }
 }

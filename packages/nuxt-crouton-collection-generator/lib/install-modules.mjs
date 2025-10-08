@@ -35,7 +35,7 @@ const MODULES = {
     required: [],
     features: [
       '✨ CroutonButton component',
-      '✨ CroutonEntitySelect component',
+      '✨ ReferenceSelect component',
       '✨ ExpandableSlideover component',
       '✨ Table components with search and pagination',
       '✨ Crouton composables (useCrouton, useCollections)'

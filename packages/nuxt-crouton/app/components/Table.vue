@@ -57,14 +57,20 @@
             {{ formatDate(row.original.updatedAt) }}
           </template>
 
+          <template #updatedBy-cell="{ row }">
+            <CroutonUsersCardMini
+              v-if="row.original.updatedBy"
+              :id="row.original.updatedBy"
+              collection="users"
+            />
+          </template>
+
           <template #actions-cell="{ row }">
             <CroutonMiniButtons
               delete
               @delete="openCrouton('delete', collection, [row.original.id])"
-              :delete-loading="row.optimisticAction === 'delete'"
               update
               @update="openCrouton('update', collection, [row.original.id])"
-              :update-loading="isRowLoading(row)"
             />
           </template>
         </UTable>
@@ -208,10 +214,6 @@ function formatDate(date: string | Date | null | undefined): string {
   } catch {
     return ''
   }
-}
-
-function isRowLoading(row: any): boolean {
-  return row.optimisticAction === 'update' || row.optimisticAction === 'create'
 }
 
 // Watchers

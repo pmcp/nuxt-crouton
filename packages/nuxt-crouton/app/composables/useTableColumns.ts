@@ -5,6 +5,7 @@ interface UseTableColumnsOptions {
   hideDefaultColumns?: {
     created_at?: boolean
     updated_at?: boolean
+    updatedBy?: boolean
     actions?: boolean
   }
 }
@@ -50,6 +51,15 @@ export function useTableColumns(options: UseTableColumnsOptions) {
         accessorKey: 'updated_at',
         id: 'updated_at',
         header: tString('table.updatedAt'),
+        sortable: true
+      })
+    }
+
+    if (!options.hideDefaultColumns?.updatedBy) {
+      columns.push({
+        accessorKey: 'updatedBy',
+        id: 'updatedBy',
+        header: tString('table.updatedBy'),
         sortable: true
       })
     }

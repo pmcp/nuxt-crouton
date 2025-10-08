@@ -52,6 +52,7 @@ const DEFAULT_PAGINATION: PaginationState = {
 export default function () {
   const toast = useToast()
   const route = useRoute()
+  const { getTeamId } = useTeamContext()
 
   const pagination = useState<PaginationMap>('pagination', () => ({}))
 
@@ -109,18 +110,40 @@ export default function () {
         const collections = useCollections()
         const config = collections.getConfig(collection)
         const apiPath = config?.apiPath || collection
+        const fetchStrategy = config?.fetchStrategy || 'query'
 
-        // Determine API path based on context
-        const fullApiPath = route.path.includes('/super-admin/')
-          ? `/api/super-admin/${apiPath}`
-          : `/api/teams/${route.params.team}/${apiPath}`
+        // Determine base API path
+        let basePath: string
+        if (route.path.includes('/super-admin/')) {
+          basePath = `/api/super-admin/${apiPath}`
+        } else {
+          const teamId = getTeamId()
+          if (!teamId) {
+            console.error('[useCrouton] Team context required but not available')
+            throw new Error('Team context required to open form')
+          }
+          basePath = `/api/teams/${teamId}/${apiPath}`
+        }
 
-        console.log('[Crouton.open] Fetching item for edit:', fullApiPath)
+        // Build full path based on fetch strategy
+        let fullApiPath: string
+        let queryParams: Record<string, any> = {}
+
+        if (fetchStrategy === 'restful') {
+          // RESTful: /api/teams/{teamId}/{collection}/{itemId}
+          fullApiPath = `${basePath}/${ids[0]}`
+        } else {
+          // Query-based: /api/teams/{teamId}/{collection}?ids=x,y,z
+          fullApiPath = basePath
+          queryParams = { ids: ids.join(',') }
+        }
+
+        console.log('[Crouton.open] Fetching item for edit:', fullApiPath, queryParams)
 
         // Fetch the item to edit
         const response = await $fetch<any>(fullApiPath, {
           method: 'GET',
-          query: { ids: ids.join(',') },
+          query: queryParams,
           credentials: 'include'
         })
 

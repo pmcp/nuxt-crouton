@@ -49,13 +49,15 @@ export async function useCollectionQuery<T = any>(
   const route = useRoute()
   const collections = useCollections()
   const config = collections.getConfig(collection)
+  const { applyTransform, getProxiedEndpoint } = useCollectionProxy()
+  const { getTeamId } = useTeamContext()
 
   if (!config) {
     console.error(`[useCollectionQuery] Collection "${collection}" not found in registry`)
     throw new Error(`Collection "${collection}" not registered`)
   }
 
-  const apiPath = config.apiPath || collection
+  const apiPath = getProxiedEndpoint(config, config.apiPath || collection)
 
   // Generate cache key based on collection + query params
   const cacheKey = computed(() => {
@@ -77,7 +79,20 @@ export async function useCollectionQuery<T = any>(
     if (route.path.includes('/super-admin/')) {
       return `/api/super-admin/${apiPath}`
     }
-    return `/api/teams/${route.params.team}/${apiPath}`
+
+    const teamId = getTeamId()
+    if (!teamId) {
+      console.error('[useCollectionQuery] Team context required but not available', {
+        collection,
+        routePath: route.path,
+        teamParam: route.params.team
+      })
+      // Return a path that will likely 404, but at least be valid
+      // The error will be caught and exposed via the error ref
+      return `/api/teams/undefined/${apiPath}`
+    }
+
+    return `/api/teams/${teamId}/${apiPath}`
   })
 
   // Build watch array - watch query if provided
@@ -127,20 +142,25 @@ export async function useCollectionQuery<T = any>(
       return []
     }
 
+    let rawItems: any[] = []
+
     // Handle array response
     if (Array.isArray(val)) {
       console.log('[useCollectionQuery] Array response:', val.length, 'items')
-      return val as T[]
+      rawItems = val
     }
-
     // Handle paginated response
-    if (val.items && Array.isArray(val.items)) {
+    else if (val.items && Array.isArray(val.items)) {
       console.log('[useCollectionQuery] Paginated response:', val.items.length, 'items')
-      return val.items as T[]
+      rawItems = val.items
+    }
+    else {
+      console.log('[useCollectionQuery] Unexpected response format:', typeof val)
+      return []
     }
 
-    console.log('[useCollectionQuery] Unexpected response format:', typeof val)
-    return []
+    // Apply proxy transform if configured
+    return applyTransform(rawItems, config) as T[]
   })
 
   console.log('[useCollectionQuery] Returning:', {

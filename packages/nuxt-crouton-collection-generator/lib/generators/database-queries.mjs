@@ -66,7 +66,10 @@ export async function update${prefixedPascalCase}(
 
   const [${singular}] = await db
     .update(tables.${tableName})
-    .set(updates)
+    .set({
+      ...updates,
+      updatedBy: ownerId
+    })
     .where(
       and(
         eq(tables.${tableName}.id, recordId),

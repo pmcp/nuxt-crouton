@@ -24,7 +24,7 @@ const LAYERS = {
     required: [],
     features: [
       '✨ CroutonButton component',
-      '✨ CroutonEntitySelect component',
+      '✨ ReferenceSelect component',
       '✨ ExpandableSlideover component',
       '✨ Table components with search',
       '✨ Crouton composables (useCrouton, useCollections)'

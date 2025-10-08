@@ -31,6 +31,7 @@ export function useCollectionMutation(collection: string) {
   const toast = useToast()
   const collections = useCollections()
   const config = collections.getConfig(collection)
+  const { getTeamId } = useTeamContext()
 
   if (!config) {
     console.error(`[useCollectionMutation] Collection "${collection}" not found in registry`)
@@ -44,21 +45,46 @@ export function useCollectionMutation(collection: string) {
     if (route.path.includes('/super-admin/')) {
       return `/api/super-admin/${apiPath}`
     }
-    return `/api/teams/${route.params.team}/${apiPath}`
+
+    const teamId = getTeamId()
+    if (!teamId) {
+      console.error('[useCollectionMutation] Team context required but not available')
+      throw new Error('Team context required for this operation')
+    }
+
+    return `/api/teams/${teamId}/${apiPath}`
   }
 
   /**
    * Invalidate cache for this collection (triggers refetch in all views)
    * Refreshes the base cache key (no query params) which is used by most list views
+   * Optionally refreshes individual item caches when item IDs are provided
+   *
+   * @param itemIds - Optional item ID(s) to invalidate individual item caches
+   * @param refreshCollection - Whether to refresh the entire collection (default: true for create/delete, false for update)
    */
-  const invalidateCache = async () => {
+  const invalidateCache = async (itemIds?: string | string[], refreshCollection: boolean = true) => {
     console.log('[useCollectionMutation v2.0] Invalidating cache for:', collection)
+    console.log('[useCollectionMutation v2.0] DEBUG - itemIds received:', itemIds, 'type:', typeof itemIds)
+    console.log('[useCollectionMutation v2.0] DEBUG - refreshCollection:', refreshCollection)
 
-    // Refresh the base cache key (empty query params)
-    const baseCacheKey = `collection:${collection}:{}`
-    console.log('[useCollectionMutation v2.0] Refreshing cache key:', baseCacheKey)
+    // Refresh the base cache key (empty query params) - for list views
+    // Only refresh if refreshCollection is true (create/delete) to avoid unnecessary re-renders on updates
+    if (refreshCollection) {
+      const baseCacheKey = `collection:${collection}:{}`
+      console.log('[useCollectionMutation v2.0] Refreshing collection cache key:', baseCacheKey)
+      await refreshNuxtData(baseCacheKey)
+    }
 
-    await refreshNuxtData(baseCacheKey)
+    // Refresh individual item caches if IDs provided - for detail views (e.g., CroutonCardMini)
+    if (itemIds) {
+      const ids = Array.isArray(itemIds) ? itemIds : [itemIds]
+      for (const id of ids) {
+        const itemCacheKey = `collection-item:${collection}:${id}`
+        console.log('[useCollectionMutation v2.0] Refreshing item cache key:', itemCacheKey)
+        await refreshNuxtData(itemCacheKey)
+      }
+    }
 
     console.log('[useCollectionMutation v2.0] ✅ Cache refreshed!')
   }
@@ -133,8 +159,9 @@ export function useCollectionMutation(collection: string) {
 
       console.log('✅ API Success:', result)
 
-      // Invalidate cache to trigger refetch
-      await invalidateCache()
+      // Invalidate only the specific item cache, not the entire collection
+      // This prevents unnecessary re-renders of all items in tables/lists
+      await invalidateCache(id, false)
 
       console.groupEnd()
 
@@ -186,8 +213,8 @@ export function useCollectionMutation(collection: string) {
 
       console.log('✅ API Success: Deleted', ids.length, 'item(s)')
 
-      // Invalidate cache to trigger refetch
-      await invalidateCache()
+      // Invalidate cache to trigger refetch (includes individual item caches)
+      await invalidateCache(ids)
 
       console.groupEnd()
 
