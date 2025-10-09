@@ -5,6 +5,8 @@ export interface TableColumn {
   header: string | ((props: any) => any)
   cell?: (props: any) => any
   sortable?: boolean
+  enableSorting?: boolean
+  enableHiding?: boolean
 }
 
 // Layout types
@@ -35,8 +37,9 @@ export interface ListProps {
   paginationData?: PaginationData | null
   refreshFn?: () => Promise<void> | null
   hideDefaultColumns?: {
-    created_at?: boolean
-    updated_at?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    createdBy?: boolean
     updatedBy?: boolean
     actions?: boolean
   }

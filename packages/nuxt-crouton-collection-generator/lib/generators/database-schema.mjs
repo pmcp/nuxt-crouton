@@ -29,8 +29,8 @@ export function generateSchema(data, dialect, config = null) {
   }
 
   // Define reserved field names that are auto-generated
-  const METADATA_FIELDS = ['createdAt', 'updatedAt', 'updatedBy']
-  const TEAM_FIELDS = ['teamId', 'userId']
+  const METADATA_FIELDS = ['createdAt', 'updatedAt', 'createdBy', 'updatedBy']
+  const TEAM_FIELDS = ['teamId', 'owner']
 
   // Conditional field generation based on config flags
   const useTeamUtility = config?.flags?.useTeamUtility ?? false
@@ -103,12 +103,13 @@ import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'`
   // Build team fields conditionally
   const teamFields = useTeamUtility ? `
   teamId: text('teamId').notNull(),
-  userId: text('userId').notNull()` : ''
+  owner: text('owner').notNull()` : ''
 
   // Build metadata fields conditionally
   const metadataFields = useMetadata ? `
   createdAt: ${dialect === 'sqlite' ? "integer('createdAt', { mode: 'timestamp' })" : "timestamp('createdAt', { withTimezone: true })"}.notNull().$default(() => new Date()),
   updatedAt: ${dialect === 'sqlite' ? "integer('updatedAt', { mode: 'timestamp' })" : "timestamp('updatedAt', { withTimezone: true })"}.notNull().$onUpdate(() => new Date()),
+  createdBy: text('createdBy').notNull(),
   updatedBy: text('updatedBy').notNull()` : ''
 
   // Build the complete field list with proper comma handling

@@ -22,6 +22,8 @@ export function useT() {
       'table.selectRow': 'Select row',
       'table.createdAt': 'Created At',
       'table.updatedAt': 'Updated At',
+      'table.createdBy': 'Created By',
+      'table.updatedBy': 'Updated By',
       'table.actions': 'Actions',
       'table.display': 'Display',
       'table.rowsPerPage': 'Rows per page',

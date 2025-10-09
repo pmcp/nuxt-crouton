@@ -13,19 +13,20 @@ export function generateTypes(data, config = null) {
 
   // Build team fields conditionally
   const teamFields = useTeamUtility ? `  teamId: string
-  userId: string
+  owner: string
 ` : ''
 
   // Build metadata fields conditionally
   const metadataFields = useMetadata ? `  createdAt: Date
   updatedAt: Date
+  createdBy: string
   updatedBy: string
 ` : ''
 
   // Build the omit list for New${prefixedPascalCase} type
   const omitFields = ['id']
   if (useMetadata) {
-    omitFields.push('createdAt', 'updatedAt', 'updatedBy')
+    omitFields.push('createdAt', 'updatedAt', 'createdBy', 'updatedBy')
   }
   const omitList = omitFields.map(f => `'${f}'`).join(' | ')
 

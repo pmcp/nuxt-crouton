@@ -49,19 +49,31 @@
           </template>
 
           <!-- Default column templates -->
-          <template #created_at-cell="{ row }">
-            {{ formatDate(row.original.createdAt) }}
+          <template #createdBy-cell="{ row }">
+            <CroutonUsersCardMini v-if="row.original.createdByUser" :item="row.original.createdByUser" />
           </template>
 
-          <template #updated_at-cell="{ row }">
-            {{ formatDate(row.original.updatedAt) }}
+          <template #createdAt-cell="{ row }">
+            <NuxtTime
+                v-if="row.original.createdAt"
+                :datetime="row.original.createdAt"
+                relative
+                numeric="auto"
+                style="long"
+            />
           </template>
 
           <template #updatedBy-cell="{ row }">
-            <CroutonUsersCardMini
-              v-if="row.original.updatedBy"
-              :id="row.original.updatedBy"
-              collection="users"
+              <CroutonUsersCardMini v-if="row.original.updatedByUser" :item="row.original.updatedByUser" />
+          </template>
+
+          <template #updatedAt-cell="{ row }">
+            <NuxtTime
+                v-if="row.original.updatedAt"
+                :datetime="row.original.updatedAt"
+                relative
+                numeric="auto"
+                style="long"
             />
           </template>
 
@@ -90,7 +102,6 @@
 </template>
 
 <script lang="ts" setup>
-import { useDateFormat } from '@vueuse/core'
 import type { TableProps, TableSort, PaginationData } from '../types/table'
 import { useTableData } from '../composables/useTableData'
 import { useTableColumns } from '../composables/useTableColumns'
@@ -105,8 +116,9 @@ const props = withDefaults(defineProps<TableProps>(), {
   paginationData: null,
   refreshFn: undefined,
   hideDefaultColumns: () => ({
-    created_at: false,
-    updated_at: false,
+    createdAt: false,
+    updatedAt: false,
+    createdBy: false,
     updatedBy: false,
     actions: false
   })
@@ -122,7 +134,7 @@ const tableRef = useTemplateRef<any>('tableRef')
 // State
 const loadingPage = ref(false)
 const search = ref('')
-const sort = ref<TableSort>({ column: 'created_at', direction: 'desc' })
+const sort = ref<TableSort>({ column: 'createdAt', direction: 'desc' })
 const page = ref(1)
 const pageCount = ref(10)
 const rowSelection = ref({})
@@ -206,15 +218,6 @@ async function fetchPage(newPage: number) {
 function handlePageCountChange(newCount: number) {
   pageCount.value = newCount
   page.value = 1
-}
-
-function formatDate(date: string | Date | null | undefined): string {
-  if (!date) return ''
-  try {
-    return useDateFormat(date, 'DD-MM-YYYY').value
-  } catch {
-    return ''
-  }
 }
 
 // Watchers

@@ -1,10 +1,12 @@
+import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '../types/table'
 
 interface UseTableColumnsOptions {
   columns: TableColumn[]
   hideDefaultColumns?: {
-    created_at?: boolean
-    updated_at?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    createdBy?: boolean
     updatedBy?: boolean
     actions?: boolean
   }
@@ -14,43 +16,57 @@ export function useTableColumns(options: UseTableColumnsOptions) {
   const { tString } = useT()
 
   const allColumns = computed(() => {
+    // Use CroutonTableCheckbox which wraps UCheckbox
+    const CheckboxComponent = resolveComponent('CroutonTableCheckbox')
+
     const columns: TableColumn[] = [
       {
         id: 'select',
         header: ({ table }: any) =>
-          h('UCheckbox', {
+          h(CheckboxComponent, {
             'modelValue': table.getIsSomePageRowsSelected()
               ? 'indeterminate'
               : table.getIsAllPageRowsSelected(),
             'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
               table.toggleAllPageRowsSelected(!!value),
-            'ariaLabel': tString('table.selectAll')
+            'aria-label': tString('table.selectAll')
           }),
         cell: ({ row }: any) =>
-          h('UCheckbox', {
+          h(CheckboxComponent, {
             'modelValue': row.getIsSelected(),
             'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-            'ariaLabel': tString('table.selectRow')
-          })
+            'aria-label': tString('table.selectRow')
+          }),
+        enableSorting: false,
+        enableHiding: false
       },
       ...options.columns
     ]
 
     // Add default columns conditionally
-    if (!options.hideDefaultColumns?.created_at) {
+    if (!options.hideDefaultColumns?.createdAt) {
       columns.push({
-        accessorKey: 'created_at',
-        id: 'created_at',
+        accessorKey: 'createdAt',
+        id: 'createdAt',
         header: tString('table.createdAt'),
         sortable: true
       })
     }
 
-    if (!options.hideDefaultColumns?.updated_at) {
+    if (!options.hideDefaultColumns?.updatedAt) {
       columns.push({
-        accessorKey: 'updated_at',
-        id: 'updated_at',
+        accessorKey: 'updatedAt',
+        id: 'updatedAt',
         header: tString('table.updatedAt'),
+        sortable: true
+      })
+    }
+
+    if (!options.hideDefaultColumns?.createdBy) {
+      columns.push({
+        accessorKey: 'createdBy',
+        id: 'createdBy',
+        header: tString('table.createdBy'),
         sortable: true
       })
     }
