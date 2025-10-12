@@ -1,25 +1,25 @@
 <template>
-  <div class="p-6">
+  <div class="px-6 pt-6">
     <NuxtLink
       :to="`/dashboard/${route.params.team}/crouton`"
-      class="text-blue-600 hover:text-blue-800 hover:underline mb-4 inline-block"
+      class="hover:underline mb-4 inline-block"
     >
       ← Back to collections
     </NuxtLink>
-
-    <div v-if="loading" class="text-gray-500">
-      Loading collection...
-    </div>
-
-    <div v-else-if="error" class="text-red-600">
-      {{ error }}
-    </div>
-
-    <CroutonCollectionViewer
-      v-else
-      :collection-name="collectionName"
-    />
   </div>
+
+  <div v-if="loading" class="text-gray-500">
+    Loading collection...
+  </div>
+
+  <div v-else-if="error" class="text-red-600">
+    {{ error }}
+  </div>
+
+  <CroutonCollectionViewer
+    v-else
+    :collection-name="collectionName"
+  />
 </template>
 
 <script setup lang="ts">

@@ -91,17 +91,11 @@ export function generateFormComponent(data, config = {}) {
       </UFormField>`
     } else if (field.type === 'number' || field.type === 'decimal') {
       return `      <UFormField label="${fieldName}" name="${field.name}">
-        <UInput v-model.number="state.${field.name}" type="number" class="w-full" size="xl" />
+        <UInputNumber v-model="state.${field.name}" class="w-full" />
       </UFormField>`
     } else if (field.type === 'date') {
       return `      <UFormField label="${fieldName}" name="${field.name}">
-        <UInput
-          :value="formatDateForInput(state.${field.name})"
-          @input="handleDateChange($event, '${field.name}')"
-          type="datetime-local"
-          class="w-full"
-          size="xl"
-        />
+        <CroutonCalendar v-model:date="state.${field.name}" />
       </UFormField>`
     } else {
       return `      <UFormField label="${fieldName}" name="${field.name}">
@@ -206,11 +200,19 @@ if (props.action === 'update' && props.activeItem?.id) {${regularFields
 const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
-  try {
+  try {${hasDateFields ? `
+    // Serialize Date objects to ISO strings for API submission
+    const serializedData = { ...state.value }${regularFields
+  .filter(f => f.type === 'date')
+  .map(field => `
+    if (serializedData.${field.name} instanceof Date) {
+      serializedData.${field.name} = serializedData.${field.name}.toISOString()
+    }`).join('')}
+` : ''}
     if (props.action === 'create') {
-      await create(state.value)
+      await create(${hasDateFields ? 'serializedData' : 'state.value'})
     } else if (props.action === 'update' && state.value.id) {
-      await update(state.value.id, state.value)
+      await update(state.value.id, ${hasDateFields ? 'serializedData' : 'state.value'})
     } else if (props.action === 'delete') {
       await deleteItems(props.items)
     }
@@ -222,33 +224,6 @@ const handleSubmit = async () => {
     // You can add toast notification here if available
     // toast.add({ title: 'Error', description: 'Failed to submit form', color: 'red' })
   }
-}${hasDateFields ? `
-
-// Date field helper functions
-const formatDateForInput = (date: Date | string | null | undefined): string => {
-  if (!date) return ''
-
-  // Convert string to Date if needed
-  const d = date instanceof Date ? date : new Date(date)
-
-  // Check for invalid date
-  if (isNaN(d.getTime())) return ''
-
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-  return \`\${year}-\${month}-\${day}T\${hours}:\${minutes}\`
 }
-
-const handleDateChange = (event: Event, fieldName: string) => {
-  const target = event.target as HTMLInputElement
-  if (target.value) {
-    ;(state.value as any)[fieldName] = new Date(target.value)
-  } else {
-    ;(state.value as any)[fieldName] = null
-  }
-}` : ''}
 </script>`
 }

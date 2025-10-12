@@ -5,38 +5,37 @@
     v-for="(state, index) in modalStates"
     :key="state.id"
     v-model:open="state.isOpen"
+    :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
     :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
     size="lg"
     @update:open="(val: boolean) => handleClose(state.id, val)"
     @after:leave="() => handleAfterLeave(state.id)"
   >
     <template #content="{ close }">
-      <div class="p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2>
-            <span class="capitalize">{{ state.action }}</span>
-            {{ getCollectionName(state.collection) }}
-          </h2>
-          <UButton
-            icon="i-lucide-x"
-            variant="ghost"
-            size="xs"
-            @click.stop="close()"
-          />
-        </div>
+      <div class="flex items-center justify-between mb-4">
+        <h2>
+          <span class="capitalize">{{ state.action }}</span>
+          {{ getCollectionName(state.collection) }}
+        </h2>
+        <UButton
+          icon="i-lucide-x"
+          variant="ghost"
+          size="xs"
+          @click.stop="close()"
+        />
+      </div>
 
-        <div class="w-full">
-          <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
-          <div v-else>
-            <CroutonDynamicFormLoader
-              :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-              :collection="state.collection"
-              :loading="state.loading"
-              :action="state.action"
-              :items="state.items"
-              :activeItem="state.activeItem"
-            />
-          </div>
+      <div class="w-full">
+        <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
+        <div v-else>
+          <CroutonDynamicFormLoader
+            :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
+            :collection="state.collection"
+            :loading="state.loading"
+            :action="state.action"
+            :items="state.items"
+            :activeItem="state.activeItem"
+          />
         </div>
       </div>
     </template>
@@ -47,6 +46,7 @@
     v-for="(state, index) in dialogStates"
     :key="state.id"
     v-model:open="state.isOpen"
+    :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
     :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
     @update:open="(val: boolean) => handleClose(state.id, val)"
     @after:leave="() => handleAfterLeave(state.id)"
@@ -88,6 +88,8 @@
     v-for="(state, index) in slideoverStates"
     :key="state.id"
     v-model:open="state.isOpen"
+    :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
+    :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
     side="right"
     :ui="getSlideoverUi(state, index)"
     :style="getSlideoverStyle(state, index)"

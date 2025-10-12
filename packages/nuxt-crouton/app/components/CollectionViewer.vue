@@ -1,38 +1,34 @@
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-semibold">{{ camelToTitleCase(collectionName) }}</h2>
-
-      <!-- Layout Switcher -->
-      <div class="flex items-center gap-1 p-1 bg-muted rounded-lg">
-        <UButton
-          v-for="layoutOption in layoutOptions"
-          :key="layoutOption.value"
-          :icon="layoutOption.icon"
-          :color="currentLayout === layoutOption.value ? 'primary' : 'gray'"
-          :variant="currentLayout === layoutOption.value ? 'solid' : 'ghost'"
-          size="sm"
-          @click="currentLayout = layoutOption.value"
-        />
-      </div>
+  <div class="px-6 py-4 flex items-center justify-between">
+    <h2 class="text-xl font-semibold">{{ camelToTitleCase(collectionName) }}</h2>
+    <!-- Layout Switcher -->
+    <div class="flex items-center gap-1 p-1 bg-muted rounded-lg">
+      <UButton
+        v-for="layoutOption in layoutOptions"
+        :key="layoutOption.value"
+        :icon="layoutOption.icon"
+        :color="currentLayout === layoutOption.value ? 'primary' : 'gray'"
+        :variant="currentLayout === layoutOption.value ? 'solid' : 'ghost'"
+        size="sm"
+        @click="currentLayout = layoutOption.value"
+      />
     </div>
-
-    <div v-if="componentError" class="text-red-600 p-4 bg-red-50 rounded">
-      Unable to load collection component: {{ componentError }}
-    </div>
-
-    <component
-      :is="componentName"
-      v-else-if="componentName"
-      :layout="currentLayout"
-    />
-
-    <div v-else class="text-gray-500">
-      Component not found for collection: {{ collectionName }}
-    </div>
-
-
   </div>
+
+  <div v-if="componentError" class="text-red-600 p-4 bg-red-50 rounded">
+    Unable to load collection component: {{ componentError }}
+  </div>
+
+  <component
+    :is="componentName"
+    v-else-if="componentName"
+    :layout="currentLayout"
+  />
+
+  <div v-else class="text-gray-500">
+    Component not found for collection: {{ collectionName }}
+  </div>
+
 </template>
 
 <script setup lang="ts">

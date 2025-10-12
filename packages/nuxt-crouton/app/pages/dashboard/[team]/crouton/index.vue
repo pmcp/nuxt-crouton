@@ -8,7 +8,6 @@
       <li v-for="name in collectionNames" :key="name">
         <NuxtLink
           :to="`/dashboard/${route.params.team}/crouton/${name}`"
-          class="text-blue-600 hover:text-blue-800 hover:underline"
         >
           {{ formatCollectionName(name) }}
         </NuxtLink>

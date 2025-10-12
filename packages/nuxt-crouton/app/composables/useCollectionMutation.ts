@@ -159,9 +159,8 @@ export function useCollectionMutation(collection: string) {
 
       console.log('✅ API Success:', result)
 
-      // Invalidate only the specific item cache, not the entire collection
-      // This prevents unnecessary re-renders of all items in tables/lists
-      await invalidateCache(id, false)
+      // Invalidate both the item cache AND the collection to refresh list views
+      await invalidateCache(id, true)
 
       console.groupEnd()
 

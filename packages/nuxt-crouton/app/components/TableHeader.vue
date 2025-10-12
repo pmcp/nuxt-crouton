@@ -7,6 +7,7 @@
     </template>
     <template #right>
       <slot name="extraButtons" />
+
       <UButton
         v-if="createButton"
         color="primary"

@@ -6,7 +6,7 @@
 
     <template #body>
       <!-- Filters -->
-      <div class="flex items-center justify-between gap-3 px-4 py-3">
+      <div class="flex items-center justify-between gap-3">
         <CroutonTableSearch
           v-model="search"
           :placeholder="tString('table.search')"
@@ -50,31 +50,27 @@
 
           <!-- Default column templates -->
           <template #createdBy-cell="{ row }">
-            <CroutonUsersCardMini v-if="row.original.createdByUser" :item="row.original.createdByUser" />
+            <CroutonUsersCardMini
+                v-if="row.original.createdByUser"
+                :item="row.original.createdByUser"
+                :name="true"
+            />
           </template>
 
           <template #createdAt-cell="{ row }">
-            <NuxtTime
-                v-if="row.original.createdAt"
-                :datetime="row.original.createdAt"
-                relative
-                numeric="auto"
-                style="long"
-            />
+            <CroutonDate :date="row.original.createdAt"></CroutonDate>
           </template>
 
           <template #updatedBy-cell="{ row }">
-              <CroutonUsersCardMini v-if="row.original.updatedByUser" :item="row.original.updatedByUser" />
+            <CroutonUsersCardMini
+                v-if="row.original.updatedByUser"
+                :item="row.original.updatedByUser"
+                :name="true"
+            />
           </template>
 
           <template #updatedAt-cell="{ row }">
-            <NuxtTime
-                v-if="row.original.updatedAt"
-                :datetime="row.original.updatedAt"
-                relative
-                numeric="auto"
-                style="long"
-            />
+            <CroutonDate :date="row.original.updatedAt"></CroutonDate>
           </template>
 
           <template #actions-cell="{ row }">

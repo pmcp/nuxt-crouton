@@ -1,11 +1,22 @@
 <script setup lang="ts">
-const props = defineProps<{
-  item?: any
-}>()
+interface UserItem {
+  title?: string
+  name?: string
+  avatarUrl?: string
+}
+
+interface Props {
+  item?: UserItem
+  name?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  name: false
+})
 </script>
 
 <template>
-  <div v-if="item" class="w-full flex items-center justify-center">
+  <div v-if="item" class="w-full flex items-center justify-center gap-2">
     <UTooltip
       :content="{
         align: 'center',
@@ -23,5 +34,6 @@ const props = defineProps<{
         class="ring-2 ring-neutral-200 dark:ring-white/10"
       />
     </UTooltip>
+    <span v-if="name" class="">{{item.name }}</span>
   </div>
 </template>
