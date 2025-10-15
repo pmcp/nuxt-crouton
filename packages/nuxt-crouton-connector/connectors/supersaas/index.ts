@@ -74,5 +74,6 @@ export function connectSupersaas(config: SupersaasConnectorConfig) {
   })
 }
 
-// Legacy export for backward compatibility
-export { usersConfig } from './app/composables/useUsers'
+// Pre-configured resource exports
+export { usersConfig, useUsers } from './app/composables/useUsers'
+export { teamMembersConfig, useTeamMembers } from './app/composables/useTeamMembers'

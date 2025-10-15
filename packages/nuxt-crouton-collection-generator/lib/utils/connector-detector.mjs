@@ -23,8 +23,9 @@ export async function detectExternalReferences(schemaPath) {
       const schema = JSON.parse(content)
 
       for (const [fieldName, fieldDef] of Object.entries(schema)) {
-        if (fieldDef.refTarget && fieldDef.refTarget.startsWith(':')) {
-          const externalCollection = fieldDef.refTarget.substring(1) // Remove :
+        // Check for adapter-scoped references
+        if (fieldDef.refScope === 'adapter' && fieldDef.refTarget) {
+          const externalCollection = fieldDef.refTarget
 
           if (!externalRefs.has(externalCollection)) {
             externalRefs.set(externalCollection, new Set())
@@ -67,41 +68,52 @@ export async function detectExternalReferences(schemaPath) {
 export function getConnectorRecommendations(collectionName) {
   const recommendations = []
 
-  // Common patterns
-  if (collectionName === 'users' || collectionName === 'user') {
-    recommendations.push(
-      {
-        type: 'supersaas',
-        confidence: 'high',
-        description: 'SuperSaaS (team-based user management)'
-      },
-      {
-        type: 'supabase',
-        confidence: 'medium',
-        description: 'Supabase (auth.users table)'
-      },
-      {
-        type: 'clerk',
-        confidence: 'medium',
-        description: 'Clerk (hosted auth)'
+  // SuperSaaS-specific resources
+  const supersaasResources = ['users', 'user', 'teams', 'team', 'teamMembers', 'members', 'teamInvites', 'invites']
+
+  if (supersaasResources.includes(collectionName)) {
+    recommendations.push({
+      type: 'supersaas',
+      package: '@friendlyinternet/nuxt-crouton-connector',
+      confidence: 'high',
+      description: 'SuperSaaS (team-based platform resources)',
+      resources: {
+        users: 'Team users',
+        teams: 'Team management',
+        teamMembers: 'Team members',
+        teamInvites: 'Team invitations'
       }
-    )
-  } else if (collectionName === 'teams' || collectionName === 'organizations') {
-    recommendations.push(
-      {
-        type: 'supersaas',
-        confidence: 'high',
-        description: 'SuperSaaS (team management)'
-      }
-    )
-  } else {
-    recommendations.push(
-      {
-        type: 'custom',
-        confidence: 'low',
-        description: 'Custom connector (requires manual setup)'
-      }
-    )
+    })
+  }
+
+  // Supabase patterns
+  if (collectionName === 'users' || collectionName === 'profiles') {
+    recommendations.push({
+      type: 'supabase',
+      package: '@friendlyinternet/nuxt-crouton-connector',
+      confidence: 'medium',
+      description: 'Supabase (auth.users table)'
+    })
+  }
+
+  // Clerk patterns
+  if (collectionName === 'users' || collectionName === 'organizations') {
+    recommendations.push({
+      type: 'clerk',
+      package: '@friendlyinternet/nuxt-crouton-connector',
+      confidence: 'medium',
+      description: 'Clerk (hosted auth)'
+    })
+  }
+
+  // Fallback
+  if (recommendations.length === 0) {
+    recommendations.push({
+      type: 'custom',
+      package: null,
+      confidence: 'low',
+      description: 'Custom adapter (requires manual setup)'
+    })
   }
 
   return recommendations
@@ -143,7 +155,7 @@ export function formatExternalReferences(externalRefs) {
     const collectionsStr = Array.from(collections).join(', ')
     const count = collections.size
     lines.push(
-      `  • :${externalCollection} (used in ${count} collection${count > 1 ? 's' : ''}: ${collectionsStr})`
+      `  • ${externalCollection} (used in ${count} collection${count > 1 ? 's' : ''}: ${collectionsStr})`
     )
   }
 

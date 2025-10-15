@@ -1,52 +1,67 @@
 // Generator for database queries
 
-// Helper to detect reference fields that need LEFT JOINs
+// Helper to detect reference fields that need LEFT JOINs or post-query processing
 function detectReferenceFields(data, config) {
-  const references = []
+  const singleReferences = []  // For leftJoin
+  const arrayReferences = []   // For post-query processing
 
   // Check custom fields for refTarget
   if (data.fields) {
     data.fields.forEach(field => {
       if (field.refTarget) {
-        references.push({
+        const isExternal = field.refScope === 'external' || field.refScope === 'adapter'
+        const refData = {
           fieldName: field.name,
           targetCollection: field.refTarget,
-          isUserReference: field.refTarget === 'users'
-        })
+          isExternal: isExternal,
+          isUserReference: isExternal && field.refTarget === 'users'
+        }
+
+        // Separate single references from array references
+        if (field.type === 'array') {
+          arrayReferences.push(refData)
+        } else {
+          singleReferences.push(refData)
+        }
       }
     })
   }
 
   // Add standard team/metadata user references if enabled
+  // These are always single references
   const useTeamUtility = config?.flags?.useTeamUtility ?? false
   const useMetadata = config?.flags?.useMetadata ?? true
 
   if (useTeamUtility) {
     // owner is the team-based user reference
-    references.push({
+    singleReferences.push({
       fieldName: 'owner',
       targetCollection: 'users',
+      isExternal: true,
       isUserReference: true
     })
   }
 
   if (useMetadata) {
-    references.push({
+    singleReferences.push({
       fieldName: 'createdBy',
       targetCollection: 'users',
+      isExternal: true,
       isUserReference: true
     })
-    references.push({
+    singleReferences.push({
       fieldName: 'updatedBy',
       targetCollection: 'users',
+      isExternal: true,
       isUserReference: true
     })
   }
 
-  return references
+  return { singleReferences, arrayReferences }
 }
 
 export function generateQueries(data, config = null) {
+  console.log('[database-queries.mjs] Running LATEST VERSION with array reference post-processing support')
   const { singular, plural, pascalCase, pascalCasePlural, layer, layerPascalCase } = data
   // Use layer-prefixed table name to match schema export
   // Convert layer to camelCase to ensure valid JavaScript identifier
@@ -59,32 +74,35 @@ export function generateQueries(data, config = null) {
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
   const typesPath = './types'
 
-  // Detect reference fields for LEFT JOINs
-  const references = detectReferenceFields(data, config)
+  // Detect reference fields for LEFT JOINs and post-query processing
+  const { singleReferences, arrayReferences } = detectReferenceFields(data, config)
 
   // Generate imports for referenced schemas
   let schemaImports = ''
-  const uniqueCollections = [...new Set(references.map(r => r.targetCollection))]
+  const allReferences = [...singleReferences, ...arrayReferences]
+  const uniqueCollections = [...new Set(allReferences.map(r => r.targetCollection))]
 
   uniqueCollections.forEach(collection => {
-    if (collection === 'users') {
-      // Users schema is in the main project - use Nuxt root alias
-      schemaImports += `import { users } from '~~/server/database/schema'
+    // Get any reference to this collection to check if external
+    const ref = allReferences.find(r => r.targetCollection === collection)
+
+    if (ref && ref.isExternal) {
+      // External reference - import from main project schema
+      schemaImports += `import { ${collection} } from '~~/server/database/schema'
 `
     } else {
-      // Other collections are in sibling directories within the same layer
-      // Path: from collections/[current]/server/database/ up to collections/, then to [target]/server/database/
+      // Local layer collection - import from sibling directory
       schemaImports += `import * as ${collection}Schema from '../../../${collection}/server/database/schema'
 `
     }
   })
 
-  // Build SELECT clause with joins
+  // Build SELECT clause with joins (only for single references)
   let selectClause = ''
   let leftJoins = ''
   let aliasDefinitions = ''
 
-  if (references.length > 0) {
+  if (singleReferences.length > 0) {
     // Build select fields
     const selectFields = [`...tables.${tableName}`]
 
@@ -92,11 +110,17 @@ export function generateQueries(data, config = null) {
     const tableJoinCounts = {}
     const userAliases = []
 
-    references.forEach(ref => {
-      const refTableName = `${layerCamelCase}${ref.targetCollection.charAt(0).toUpperCase() + ref.targetCollection.slice(1)}`
+    singleReferences.forEach(ref => {
+      const collectionIdentifier = ref.targetCollection
+
+      // For external refs, use table name as-is (no layer prefix)
+      // For local refs, add the layer prefix
+      const refTableName = ref.isExternal
+        ? collectionIdentifier
+        : `${layerCamelCase}${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}`
 
       if (ref.isUserReference) {
-        // Create unique alias for each user reference
+        // Special user reference handling
         const aliasName = `${ref.fieldName}Users`
         userAliases.push({ fieldName: ref.fieldName, aliasName })
 
@@ -108,10 +132,16 @@ export function generateQueries(data, config = null) {
       }`)
         leftJoins += `
     .leftJoin(${aliasName}, eq(tables.${tableName}.${ref.fieldName}, ${aliasName}.id))`
-      } else {
-        selectFields.push(`${ref.fieldName}Data: ${ref.targetCollection}Schema.${refTableName}`)
+      } else if (ref.isExternal) {
+        // External non-user reference - direct table import
+        selectFields.push(`${ref.fieldName}Data: ${collectionIdentifier}`)
         leftJoins += `
-    .leftJoin(${ref.targetCollection}Schema.${refTableName}, eq(tables.${tableName}.${ref.fieldName}, ${ref.targetCollection}Schema.${refTableName}.id))`
+    .leftJoin(${collectionIdentifier}, eq(tables.${tableName}.${ref.fieldName}, ${collectionIdentifier}.id))`
+      } else {
+        // Local layer reference - namespaced import
+        selectFields.push(`${ref.fieldName}Data: ${collectionIdentifier}Schema.${refTableName}`)
+        leftJoins += `
+    .leftJoin(${collectionIdentifier}Schema.${refTableName}, eq(tables.${tableName}.${ref.fieldName}, ${collectionIdentifier}Schema.${refTableName}.id))`
       }
     })
 
@@ -128,7 +158,86 @@ export function generateQueries(data, config = null) {
     }`
   }
 
-  return `import { eq, and, desc, inArray } from 'drizzle-orm'
+  // Generate post-query processing code for array references
+  let postQueryProcessing = ''
+  if (arrayReferences.length > 0) {
+    // Group array references by target collection for efficient querying
+    const refsByCollection = {}
+    arrayReferences.forEach(ref => {
+      const collection = ref.targetCollection
+      if (!refsByCollection[collection]) {
+        refsByCollection[collection] = []
+      }
+      refsByCollection[collection].push(ref)
+    })
+
+    // Generate processing code for each target collection
+    const processingBlocks = []
+    Object.entries(refsByCollection).forEach(([collection, refs]) => {
+      const ref = refsByCollection[collection][0] // Get reference metadata
+      const collectionIdentifier = collection
+      const tableReference = ref.isExternal
+        ? collectionIdentifier
+        : `${collectionIdentifier}Schema.${layerCamelCase}${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}`
+
+      // Build the ID collection logic for all fields referencing this collection
+      const idCollectionCode = refs.map(ref => `
+    ${plural}.forEach(item => {
+        if (item.${ref.fieldName}) {
+          try {
+            const ids = typeof item.${ref.fieldName} === 'string'
+              ? JSON.parse(item.${ref.fieldName})
+              : item.${ref.fieldName}
+            if (Array.isArray(ids)) {
+              ids.forEach(id => all${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}Ids.add(id))
+            }
+          } catch (e) {
+            // Handle parsing errors gracefully
+            console.error('Error parsing ${ref.fieldName}:', e)
+          }
+        }
+      })`).join('')
+
+      // Build the mapping logic for all fields
+      const mappingCode = refs.map(ref => `
+        item.${ref.fieldName}Data = []
+        if (item.${ref.fieldName}) {
+          try {
+            const ids = typeof item.${ref.fieldName} === 'string'
+              ? JSON.parse(item.${ref.fieldName})
+              : item.${ref.fieldName}
+            if (Array.isArray(ids)) {
+              item.${ref.fieldName}Data = related${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}.filter(r => ids.includes(r.id))
+            }
+          } catch (e) {
+            console.error('Error mapping ${ref.fieldName}:', e)
+          }
+        }`).join('')
+
+      processingBlocks.push(`
+    // Post-process array references to ${collection}
+    const all${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}Ids = new Set()${idCollectionCode}
+
+    if (all${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}Ids.size > 0) {
+      const related${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)} = await db
+        .select()
+        .from(${tableReference})
+        .where(inArray(${tableReference}.id, Array.from(all${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}Ids)))
+
+      ${plural}.forEach(item => {${mappingCode}
+      })
+    }`)
+    })
+
+    postQueryProcessing = `
+  // Post-query processing for array references
+  if (${plural}.length > 0) {${processingBlocks.join('')}
+  }
+`
+  }
+
+  return `// Generated with array reference post-processing support (v2024-10-12)
+import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
@@ -141,7 +250,7 @@ ${aliasDefinitions}
     .from(tables.${tableName})${leftJoins}
     .where(eq(tables.${tableName}.teamId, teamId))
     .orderBy(desc(tables.${tableName}.createdAt))
-
+${postQueryProcessing}
   return ${plural}
 }
 
@@ -158,7 +267,7 @@ ${aliasDefinitions}
       )
     )
     .orderBy(desc(tables.${tableName}.createdAt))
-
+${postQueryProcessing}
   return ${plural}
 }
 

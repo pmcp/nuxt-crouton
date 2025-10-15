@@ -36,7 +36,7 @@ export function generateListComponent(data, config = {}) {
       let resolvedCollection
       if (field.refTarget.startsWith(':')) {
         // External/global collection - remove : prefix
-        resolvedCollection = field.refTarget.substring(1)
+        clauderesolvedCollection = field.refTarget.substring(1)
       } else {
         // Add layer prefix
         const refCases = toCase(field.refTarget)

@@ -27,16 +27,16 @@
 
       <div class="w-full">
         <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
-        <div v-else>
-          <CroutonDynamicFormLoader
-            :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-            :collection="state.collection"
-            :loading="state.loading"
-            :action="state.action"
-            :items="state.items"
-            :activeItem="state.activeItem"
-          />
-        </div>
+
+        <CroutonDynamicFormLoader
+          v-else
+          :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
+          :collection="state.collection"
+          :loading="state.loading"
+          :action="state.action"
+          :items="state.items"
+          :activeItem="state.activeItem"
+        />
       </div>
     </template>
   </UModal>
@@ -68,16 +68,15 @@
 
         <div class="w-full">
           <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
-          <div v-else>
-            <CroutonDynamicFormLoader
-              :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-              :collection="state.collection"
-              :loading="state.loading"
-              :action="state.action"
-              :items="state.items"
-              :activeItem="state.activeItem"
-            />
-          </div>
+          <CroutonDynamicFormLoader
+            v-else
+            :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
+            :collection="state.collection"
+            :loading="state.loading"
+            :action="state.action"
+            :items="state.items"
+            :activeItem="state.activeItem"
+          />
         </div>
       </div>
     </template>
@@ -138,16 +137,15 @@
     <template #body>
       <div v-if="state.isOpen && state.collection" class="w-full h-full">
          <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
-        <div v-else>
-          <CroutonDynamicFormLoader
-            :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-            :collection="state.collection"
-            :loading="state.loading"
-            :action="state.action"
-            :items="state.items"
-            :activeItem="state.activeItem"
-          />
-        </div>
+        <CroutonDynamicFormLoader
+          v-else
+          :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
+          :collection="state.collection"
+          :loading="state.loading"
+          :action="state.action"
+          :items="state.items"
+          :activeItem="state.activeItem"
+        />
       </div>
     </template>
   </USlideover>

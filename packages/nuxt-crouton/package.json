@@ -35,6 +35,12 @@
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "@vueuse/core": "^13.3.0",
+    "@vueuse/integrations": "^13.3.0",
+    "@vueuse/nuxt": "^13.3.0",
+    "sortablejs": "^1.15.6"
+  },
   "peerDependencies": {
     "nuxt": "^4.0.0",
     "@nuxt/ui": "^4.0.0"

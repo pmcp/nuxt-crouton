@@ -9,7 +9,7 @@ export default defineNuxtConfig({
     description: 'Base CRUD layer for FYIT collections'
   },
 
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@vueuse/nuxt'],
 
   components: {
     dirs: [

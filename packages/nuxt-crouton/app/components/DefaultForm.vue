@@ -1,3 +1,0 @@
-<template>
-  DEFAULT
-</template>

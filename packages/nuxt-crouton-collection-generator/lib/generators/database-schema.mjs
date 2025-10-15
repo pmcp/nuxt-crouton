@@ -23,7 +23,7 @@ export function generateSchema(data, dialect, config = null) {
   if (needsTranslations && dialect === 'sqlite') {
     // Build TypeScript type for translations
     const typeFields = translatableFields.map(f => `      ${f}?: string`).join('\n')
-    translationsField = `  // Note: No indexes on translations - measure performance first\n  // Add indexes only if queries exceed 50ms with real data\n  translations: text('translations', { mode: 'json' }).$type<{\n    [locale: string]: {\n${typeFields}\n    }\n  }>()`
+    translationsField = `  // Note: No indexes on translations - measure performance first\n  // Add indexes only if queries exceed 50ms with real data\n  translations: jsonColumn('translations').$type<{\n    [locale: string]: {\n${typeFields}\n    }\n  }>()`
 
     translationsComment = `\n// Note: This collection has translatable fields: ${translatableFields.join(', ')}\n// Translations are stored in a JSON field without indexes for performance baseline`
   }
@@ -48,7 +48,7 @@ export function generateSchema(data, dialect, config = null) {
     .map(field => {
     const nullable = field.meta?.required ? '.notNull()' : ''
     const unique = field.meta?.unique ? '.unique()' : ''
-    
+
     if (dialect === 'sqlite') {
       // SQLite specific schema
       if (field.type === 'boolean') {
@@ -57,8 +57,11 @@ export function generateSchema(data, dialect, config = null) {
         return `  ${field.name}: ${field.type === 'decimal' ? 'real' : 'integer'}('${field.name}')${nullable}${unique}`
       } else if (field.type === 'date') {
         return `  ${field.name}: integer('${field.name}', { mode: 'timestamp' })${nullable}${unique}.$default(() => new Date())`
-      } else if (field.type === 'json') {
-        return `  ${field.name}: text('${field.name}', { mode: 'json' })${nullable}${unique}`
+      } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array') {
+        // Use [] for arrays/repeaters, {} for json objects
+        const defaultValue = (field.type === 'array' || field.type === 'repeater') ? '[]' : '{}'
+        // Use customType to handle NULL values gracefully in LEFT JOINs
+        return `  ${field.name}: jsonColumn('${field.name}')${nullable}${unique}.$default(() => (${defaultValue}))`
       } else {
         return `  ${field.name}: text('${field.name}')${nullable}${unique}`
       }
@@ -72,8 +75,10 @@ export function generateSchema(data, dialect, config = null) {
         return `  ${field.name}: numeric('${field.name}')${nullable}${unique}`
       } else if (field.type === 'date') {
         return `  ${field.name}: timestamp('${field.name}', { withTimezone: true })${nullable}${unique}.$default(() => new Date())`
-      } else if (field.type === 'json') {
-        return `  ${field.name}: jsonb('${field.name}')${nullable}${unique}`
+      } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array') {
+        // Use [] for arrays/repeaters, {} for json objects
+        const defaultValue = (field.type === 'array' || field.type === 'repeater') ? '[]' : '{}'
+        return `  ${field.name}: jsonb('${field.name}')${nullable}${unique}.$default(() => (${defaultValue}))`
       } else if (field.type === 'text') {
         return `  ${field.name}: text('${field.name}')${nullable}${unique}`
       } else {
@@ -86,9 +91,25 @@ export function generateSchema(data, dialect, config = null) {
     }
   }).join(',\n')
 
-  const imports = dialect === 'sqlite' 
+  const imports = dialect === 'sqlite'
     ? `import { nanoid } from 'nanoid'
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'`
+import { sqliteTable, text, integer, real, customType } from 'drizzle-orm/sqlite-core'
+
+// Custom JSON column that handles NULL values gracefully during LEFT JOINs
+const jsonColumn = customType<any>({
+  dataType() {
+    return 'text'
+  },
+  fromDriver(value: unknown): any {
+    if (value === null || value === undefined || value === '') {
+      return null
+    }
+    return JSON.parse(value as string)
+  },
+  toDriver(value: any): string {
+    return JSON.stringify(value)
+  },
+})`
     : `import { pgTable, varchar, text, integer, numeric, boolean, timestamp, jsonb, uuid } from 'drizzle-orm/pg-core'`
 
   const tableFn = dialect === 'sqlite' ? 'sqliteTable' : 'pgTable'

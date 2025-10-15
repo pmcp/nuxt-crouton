@@ -46,6 +46,7 @@ import { generateSchema } from './generators/database-schema.mjs'
 import { generateTypes } from './generators/types.mjs'
 import { generateNuxtConfig } from './generators/nuxt-config.mjs'
 import { generateTeamAuthUtility, getTeamAuthUtilityPath } from './generators/team-auth-utility.mjs'
+import { generateRepeaterItemComponent } from './generators/repeater-item-component.mjs'
 
 function parseArgs() {
   const a = process.argv.slice(2)
@@ -112,6 +113,7 @@ async function loadFields(p) {
       type: mapType(meta?.type),
       meta: fieldMeta,
       refTarget: meta?.refTarget,
+      refScope: meta?.refScope,
       zod: typeMapping[mapType(meta?.type)]?.zod || 'z.string()',
       default: typeMapping[mapType(meta?.type)]?.default || "''",
       tsType: typeMapping[mapType(meta?.type)]?.tsType || 'string'
@@ -670,6 +672,9 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
             } else if (f.type === 'json') {
               // JSON objects are required
               return `${f.name}: ${baseZod}`
+            } else if (f.type === 'repeater') {
+              // Repeater arrays are required
+              return `${f.name}: ${baseZod}`
             } else {
               // Default: just use the base zod validator
               return `${f.name}: ${baseZod}`
@@ -745,6 +750,18 @@ ${translationsFieldSchema}
     console.log('DRY RUN - Would generate:')
     console.log(`• ${base}/app/components/Form.vue`)
     console.log(`• ${base}/app/components/List.vue`)
+
+    // Show repeater components
+    const repeaterFields = fields.filter(f => f.type === 'repeater')
+    const repeaterComponents = new Set()
+    for (const field of repeaterFields) {
+      const componentName = field.meta?.repeaterComponent
+      if (componentName && !repeaterComponents.has(componentName)) {
+        repeaterComponents.add(componentName)
+        console.log(`• ${base}/app/components/${componentName}.vue [PLACEHOLDER]`)
+      }
+    }
+
     console.log(`• ${base}/app/composables/use${layerPascalCase}${cases.pascalCasePlural}.ts`)
     console.log(`• ${base}/server/api/teams/[id]/${apiPath}/index.get.ts`)
     console.log(`• ${base}/server/api/teams/[id]/${apiPath}/index.post.ts`)
@@ -759,6 +776,13 @@ ${translationsFieldSchema}
     if (!noDb) {
       console.log(`• Would update server/database/schema/index.ts`)
       console.log(`• Would generate database migration`)
+    }
+
+    if (repeaterComponents.size > 0) {
+      console.log(`\n• Would generate ${repeaterComponents.size} placeholder repeater component(s):`)
+      repeaterComponents.forEach(name => {
+        console.log(`   - ${name}.vue`)
+      })
     }
     return
   }
@@ -832,11 +856,44 @@ ${translationsFieldSchema}
       content: generateNuxtConfig(data)
     }
   ]
-  
+
+  // Detect repeater fields and generate placeholder components
+  const repeaterFields = fields.filter(f => f.type === 'repeater')
+  const repeaterComponents = new Set()
+
+  for (const field of repeaterFields) {
+    const baseComponentName = field.meta?.repeaterComponent
+    if (baseComponentName && !repeaterComponents.has(baseComponentName)) {
+      // Use prefixed name in component content but simple name for file
+      const prefixedComponentName = `${layerPascalCase}${cases.pascalCasePlural}${baseComponentName}`
+      repeaterComponents.add(baseComponentName)
+
+      files.push({
+        path: path.join(base, 'app', 'components', `${baseComponentName}.vue`),
+        content: generateRepeaterItemComponent(prefixedComponentName)
+      })
+    }
+  }
+
   // Write all files
   for (const file of files) {
     await fsp.writeFile(file.path, file.content, 'utf8')
-    console.log(`  ✓ ${path.relative(base, file.path)}`)
+
+    // Check if this is a repeater component
+    const isRepeaterComponent = file.path.includes('/app/components/') &&
+                                !file.path.endsWith('Form.vue') &&
+                                !file.path.endsWith('List.vue')
+
+    const prefix = isRepeaterComponent ? '  ✓ [PLACEHOLDER]' : '  ✓'
+    console.log(`${prefix} ${path.relative(base, file.path)}`)
+  }
+
+  // After all files are written, show message about placeholders
+  if (repeaterComponents.size > 0) {
+    console.log(`\n📝 Generated ${repeaterComponents.size} placeholder repeater component(s):`)
+    repeaterComponents.forEach(name => {
+      console.log(`   • ${name}.vue - Customize this component with your fields`)
+    })
   }
 
   // Note: team-auth utility is now provided by @friendlyinternet/nuxt-crouton package

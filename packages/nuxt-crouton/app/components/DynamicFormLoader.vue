@@ -3,6 +3,7 @@
     :is="currentComponent"
     v-if="currentComponent"
     v-bind="componentProps"
+    class="w-full h-full"
   />
   <div v-else>
     Component not found for collection: {{ collection }}

@@ -29,7 +29,7 @@ export function toCase(str) {
 }
 
 export function mapType(t) {
-  return ['string', 'text', 'number', 'decimal', 'boolean', 'date', 'json'].includes(t) ? t : 'string'
+  return ['string', 'text', 'number', 'decimal', 'boolean', 'date', 'json', 'repeater', 'array'].includes(t) ? t : 'string'
 }
 
 export const typeMapping = {
@@ -81,5 +81,19 @@ export const typeMapping = {
     zod: 'z.object({})',
     default: '{}',
     tsType: 'Record<string, any>'
+  },
+  repeater: {
+    db: 'JSON',
+    drizzle: 'json',
+    zod: 'z.array(z.any())',
+    default: '[]',
+    tsType: 'any[]'
+  },
+  array: {
+    db: 'TEXT',
+    drizzle: 'text',
+    zod: 'z.array(z.string())',
+    default: '[]',
+    tsType: 'string[]'
   }
 }
