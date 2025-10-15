@@ -26,8 +26,8 @@
       </template>
     </CroutonTable>
 
-    <!-- Crouton Container for modals -->
-    <CroutonContainer />
+    <!-- Crouton Form for modals -->
+    <CroutonForm />
   </div>
 </template>
 

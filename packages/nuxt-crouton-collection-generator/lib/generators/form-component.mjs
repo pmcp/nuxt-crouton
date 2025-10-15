@@ -93,7 +93,7 @@ export function generateFormComponent(data, config = {}) {
       const dependentLabel = dependsOn.charAt(0).toUpperCase() + dependsOn.slice(1)
 
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonDependentButtonGroup
+          <CroutonFormDependentButtonGroup
             v-model="state.${field.name}"
             :dependent-value="state.${dependsOn}"
             dependent-collection="${resolvedCollection}"
@@ -126,7 +126,7 @@ export function generateFormComponent(data, config = {}) {
       // Check if this is a read-only reference field
       if (field.meta?.readOnly) {
         return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonCardMini
+          <CroutonItemCardMini
             v-if="state.${field.name}"
             :id="state.${field.name}"
             collection="${resolvedCollection}"
@@ -149,16 +149,17 @@ export function generateFormComponent(data, config = {}) {
       // Check if this is an array type (multi-select reference)
       if (field.type === 'array') {
         return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonReferenceSelectMultiple
+          <CroutonFormReferenceSelect
             v-model="state.${field.name}"
             collection="${resolvedCollection}"
             label="${fieldName}"
+            multiple
           />
         </UFormField>`
       }
 
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonReferenceSelect
+          <CroutonFormReferenceSelect
             v-model="state.${field.name}"
             collection="${resolvedCollection}"
             label="${fieldName}"
@@ -191,7 +192,7 @@ export function generateFormComponent(data, config = {}) {
       const sortable = field.meta?.sortable !== false // Default to true
 
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonRepeater
+          <CroutonFormRepeater
             v-model="state.${field.name}"
             component-name="${componentName}"
             add-label="${addLabel}"
@@ -320,7 +321,7 @@ const activeSection = ref('${navigationItems[0]?.value || 'general'}')`
     : 'const tabs = ref(false)'
 
   return `<template>
-  <CroutonButton
+  <CroutonFormActionButton
     v-if="action === 'delete'"
     :action="action"
     :collection="collection"
@@ -345,7 +346,7 @@ ${sidebarAreaMarkup}
       </template>
 ` : ''}
       <template #footer>
-        <CroutonButton
+        <CroutonFormActionButton
           :action="action"
           :collection="collection"
           :items="items"

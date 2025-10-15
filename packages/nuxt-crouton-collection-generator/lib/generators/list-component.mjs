@@ -15,7 +15,7 @@ export function generateListComponent(data, config = {}) {
   const referenceFields = fields.filter(f => f.refTarget)
 
   return `<template>
-  <CroutonList
+  <CroutonCollectionList
     :layout="layout"
     collection="${prefixedCamelCasePlural}"
     :columns="columns"
@@ -45,7 +45,7 @@ export function generateListComponent(data, config = {}) {
 
       return `
     <template #${field.name}-cell="{ row }">
-      <CroutonCardMini
+      <CroutonItemCardMini
         v-if="row.original.${field.name}"
         :id="row.original.${field.name}"
         collection="${resolvedCollection}"
@@ -55,7 +55,7 @@ export function generateListComponent(data, config = {}) {
     <template #translations-cell="{ row }">
       <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
     </template>` : ''}
-  </CroutonList>
+  </CroutonCollectionList>
 </template>
 
 <script setup lang="ts">

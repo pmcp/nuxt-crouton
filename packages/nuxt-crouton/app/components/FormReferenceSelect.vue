@@ -10,7 +10,7 @@
       class="mb-2"
     />
 
-    <!-- Normal select menu -->
+    <!-- Select menu (single or multiple) -->
     <USelectMenu
       v-model="selected"
       :items="items"
@@ -20,6 +20,7 @@
       :loading="pending"
       :filter-fields="filterFields"
       :disabled="!!error"
+      :multiple="multiple"
       size="xl"
       searchable
       class="w-full"
@@ -31,6 +32,7 @@
       <template #content-top>
         <div class="p-1">
           <UButton
+            v-if="!hideCreate"
             color="neutral"
             icon="i-lucide-plus"
             variant="soft"
@@ -39,7 +41,6 @@
           >
             Create new {{ label || collection }}
           </UButton>
-
         </div>
       </template>
     </USelectMenu>
@@ -48,20 +49,23 @@
 
 <script setup lang="ts">
 interface Props {
-  modelValue: string | null
+  modelValue: string | string[] | null
   collection: string
   label?: string
   labelKey?: string
   filterFields?: string[]
+  hideCreate?: boolean
+  multiple?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   labelKey: 'title',
-  filterFields: () => ['title', 'name']
+  filterFields: () => ['title', 'name'],
+  multiple: false
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | null]
+  'update:modelValue': [value: string | string[] | null]
 }>()
 
 const { open, close } = useCrouton()
@@ -91,21 +95,44 @@ const getErrorMessage = () => {
 }
 
 // Instance-specific state to prevent cross-contamination between multiple forms
-const localSelectedId = ref<string | null>(props.modelValue)
+const localValue = ref<string | string[] | null>(
+  props.multiple
+    ? (Array.isArray(props.modelValue) ? props.modelValue : [])
+    : props.modelValue
+)
 
 // Watch props.modelValue for external changes
 watch(() => props.modelValue, (newValue) => {
-  localSelectedId.value = newValue
+  if (props.multiple) {
+    localValue.value = Array.isArray(newValue) ? newValue : []
+  } else {
+    localValue.value = newValue
+  }
 })
 
 // Computed v-model for two-way binding
 const selected = computed({
-  get: () => items.value.find(item => item.id === localSelectedId.value) || null,
-  set: (value: any | null) => {
-    // USelectMenu with value-key emits the ID string directly, not the object
-    const id = typeof value === 'string' ? value : value?.id
-    localSelectedId.value = id
-    emit('update:modelValue', id || null)
+  get: () => {
+    if (props.multiple) {
+      const ids = localValue.value as string[]
+      return items.value.filter(item => ids.includes(item.id))
+    } else {
+      const id = localValue.value as string | null
+      return items.value.find(item => item.id === id) || null
+    }
+  },
+  set: (value: any | any[] | null) => {
+    if (props.multiple) {
+      // USelectMenu with multiple emits an array of objects
+      const ids = value ? value.map((v: any) => typeof v === 'string' ? v : v?.id).filter(Boolean) : []
+      localValue.value = ids
+      emit('update:modelValue', ids.length > 0 ? ids : null)
+    } else {
+      // USelectMenu with value-key emits the ID string directly, not the object
+      const id = typeof value === 'string' ? value : value?.id
+      localValue.value = id
+      emit('update:modelValue', id || null)
+    }
   }
 })
 
@@ -123,11 +150,17 @@ const handleCreate = () => {
 watch(() => items.value.length, async (newCount, oldCount) => {
   if (isCreating.value && newCount > oldCount) {
     // A new item was added - find it and select it
-    // The newest item should be the last one (or we could check by timestamp)
     const newItem = items.value[items.value.length - 1]
     if (newItem) {
-      localSelectedId.value = newItem.id
-      emit('update:modelValue', newItem.id)
+      if (props.multiple) {
+        const currentIds = localValue.value as string[]
+        const updatedIds = [...currentIds, newItem.id]
+        localValue.value = updatedIds
+        emit('update:modelValue', updatedIds)
+      } else {
+        localValue.value = newItem.id
+        emit('update:modelValue', newItem.id)
+      }
       isCreating.value = false
     }
   }

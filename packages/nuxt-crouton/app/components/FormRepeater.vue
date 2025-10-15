@@ -2,14 +2,14 @@
 import { nanoid } from 'nanoid'
 import { useSortable } from '@vueuse/integrations/useSortable'
 
-interface CroutonRepeaterProps {
+interface Props {
   modelValue: any[] | null
   componentName: string
   addLabel?: string
   sortable?: boolean
 }
 
-const props = withDefaults(defineProps<CroutonRepeaterProps>(), {
+const props = withDefaults(defineProps<Props>(), {
   addLabel: 'Add Item',
   sortable: true
 })
@@ -57,13 +57,13 @@ watch(() => props.modelValue, (newVal) => {
   if (newVal && !isEmitting.value) {
     // Only sync if this is a true external change (not from our own emit)
     items.value = [...newVal]
-    console.log('[CroutonRepeater] External modelValue synced:', items.value)
+    console.log('[CroutonFormRepeater] External modelValue synced:', items.value)
   }
 }, { deep: true })
 
 const addItem = () => {
   const newItem = { id: nanoid() }
-  console.log('[CroutonRepeater] Adding item:', {
+  console.log('[CroutonFormRepeater] Adding item:', {
     componentName: props.componentName,
     newItem,
     currentCount: items.value.length
@@ -74,7 +74,7 @@ const addItem = () => {
 
 const removeItem = (index: number) => {
   const itemToRemove = items.value[index]
-  console.log('[CroutonRepeater] Removing item:', {
+  console.log('[CroutonFormRepeater] Removing item:', {
     componentName: props.componentName,
     index,
     item: itemToRemove,
@@ -85,7 +85,7 @@ const removeItem = (index: number) => {
 }
 
 const updateItem = (index: number, val: any) => {
-  console.log('[CroutonRepeater] Updating item:', {
+  console.log('[CroutonFormRepeater] Updating item:', {
     componentName: props.componentName,
     index,
     oldValue: items.value[index],
@@ -110,7 +110,7 @@ const componentResolved = computed(() => {
 
 // Log component initialization
 onMounted(() => {
-  console.log('[CroutonRepeater] Component mounted:', {
+  console.log('[CroutonFormRepeater] Component mounted:', {
     componentName: props.componentName,
     sortable: props.sortable,
     initialItemCount: items.value.length,
@@ -119,7 +119,7 @@ onMounted(() => {
   })
 
   if (!componentResolved.value) {
-    console.warn(`[CroutonRepeater] Warning: Component "${props.componentName}" may not be resolved correctly. Check that:
+    console.warn(`[CroutonFormRepeater] Warning: Component "${props.componentName}" may not be resolved correctly. Check that:
 1. The component is registered globally
 2. The component name matches the registered name (including any prefixes)
 3. Auto-imports are configured correctly`)

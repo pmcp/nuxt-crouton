@@ -34,9 +34,9 @@ const MODULES = {
     description: 'Crouton components and utilities for collections',
     required: [],
     features: [
-      '✨ CroutonButton component',
-      '✨ ReferenceSelect component',
-      '✨ ExpandableSlideover component',
+      '✨ CroutonFormActionButton component',
+      '✨ CroutonFormReferenceSelect component',
+      '✨ FormExpandableSlideOver component',
       '✨ Table components with search and pagination',
       '✨ Crouton composables (useCrouton, useCollections)'
     ]

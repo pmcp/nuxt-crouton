@@ -33,7 +33,7 @@ export default function useCollections() {
   const appConfig = useAppConfig()
   const collectionRegistry = (appConfig.croutonCollections || {}) as ConfigsMap
 
-  // Build component map from configs so DynamicFormLoader can resolve forms
+  // Build component map from configs so FormDynamicLoader can resolve forms
   const componentMap = reactive<Record<string, string>>({})
   Object.entries(collectionRegistry).forEach(([name, config]) => {
     if (config?.componentName) {

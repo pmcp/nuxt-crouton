@@ -59,7 +59,7 @@
             <!-- Custom slot for list item actions -->
             <slot name="list-item-actions" :row="row">
               <!-- Default actions -->
-              <CroutonMiniButtons
+              <CroutonItemButtonsMini
                   delete
                   @delete="openCrouton('delete', collection, [row.id])"
                   update

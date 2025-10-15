@@ -74,7 +74,7 @@
           </template>
 
           <template #actions-cell="{ row }">
-            <CroutonMiniButtons
+            <CroutonItemButtonsMini
               delete
               @delete="openCrouton('delete', collection, [row.original.id])"
               update

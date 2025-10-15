@@ -55,7 +55,7 @@ const customComponent = computed(() => {
     </UBadge>
 
     <div class="bg-neutral absolute -top-1 right-2 transition-all delay-150 duration-300 ease-in-out group-hover:-top-6 group-hover:scale-110">
-      <CroutonMiniButtons
+      <CroutonItemButtonsMini
           v-if="item"
           update
           @update="open('update', collection, [id])"

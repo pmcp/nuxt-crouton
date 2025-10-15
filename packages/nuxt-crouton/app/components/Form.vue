@@ -1,4 +1,4 @@
-<!-- Container.vue -->
+<!-- Form.vue -->
 <template>
   <!-- Modals -->
   <UModal
@@ -28,7 +28,7 @@
       <div class="w-full">
         <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
 
-        <CroutonDynamicFormLoader
+        <CroutonFormDynamicLoader
           v-else
           :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
           :collection="state.collection"
@@ -137,7 +137,7 @@
     <template #body>
       <div v-if="state.isOpen && state.collection" class="w-full h-full">
          <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
-        <CroutonDynamicFormLoader
+        <CroutonFormDynamicLoader
           v-else
           :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
           :collection="state.collection"
@@ -249,23 +249,24 @@ const toggleExpand = (stateId: string): void => {
 
 // Get dynamic UI configuration based on expand state
 const getSlideoverUi = (state: CroutonState, index: number) => {
+  const baseTransition = 'transition-all duration-500 ease-in-out'
+
   if (state.isExpanded) {
-    // Fullscreen mode - keep right anchor but expand width
+    // Fullscreen mode - override to full width
     return {
-      ui: {
-        variants: {
-          side: {
-            right: {
-              content: 'left-0 inset-y-0 w-full w-max-full'
-            }
-          }
-        }
-      }
+      content: `fixed inset-0 w-screen ${baseTransition}`,
+      overlay: 'fixed inset-0 bg-gray-900/80 backdrop-blur-sm transition-opacity duration-500',
+      body: `flex-1 overflow-y-auto p-6 ${baseTransition}`,
+      header: 'flex items-center gap-1.5 p-4 sm:px-6 min-h-16 border-b border-gray-200 dark:border-gray-700'
     }
   }
 
-  // Default slideover UI (standard right-side panel)
-  return {}
+  // Sidebar mode - right-side panel with custom width
+  return {
+    content: `fixed right-0 inset-y-0 w-full max-w-2xl ${baseTransition}`,
+    body: `flex-1 overflow-y-auto p-4 ${baseTransition}`,
+    header: 'flex items-center gap-1.5 p-4 sm:px-6 min-h-16 border-b border-gray-200 dark:border-gray-700'
+  }
 }
 
 // Get dynamic style based on expand state with smooth transitions

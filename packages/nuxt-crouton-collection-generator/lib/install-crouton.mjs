@@ -23,9 +23,9 @@ const LAYERS = {
     description: 'Base Crouton layer with essential components (always required)',
     required: [],
     features: [
-      '✨ CroutonButton component',
-      '✨ ReferenceSelect component',
-      '✨ ExpandableSlideover component',
+      '✨ CroutonFormActionButton component',
+      '✨ CroutonFormReferenceSelect component',
+      '✨ FormExpandableSlideOver component',
       '✨ Table components with search',
       '✨ Crouton composables (useCrouton, useCollections)'
     ]
