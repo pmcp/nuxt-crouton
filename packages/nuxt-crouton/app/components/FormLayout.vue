@@ -30,15 +30,15 @@ const sidebarAccordionItems = [{
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-full max-w-7xl mx-auto">
     <!-- Header Slot -->
-    <div v-if="$slots.header" class="mb-6">
+    <div v-if="$slots.header" class="mb-6 ">
       <slot name="header" />
     </div>
     <!-- Main Container with responsive max-width -->
     <div
-      class="flex flex-col gap-6 w-full mx-auto flex-grow"
-      :class="hasSidebar ? 'lg:max-w-5xl' : 'lg:max-w-2xl'"
+      class="flex flex-col gap-6 w-full mx-auto flex-grow "
+
     >
       <!-- Grid Container (only when sidebar exists) -->
       <div :class="hasSidebar ? '@container grid grid-cols-1 @lg:grid-cols-3 gap-6' : ''">

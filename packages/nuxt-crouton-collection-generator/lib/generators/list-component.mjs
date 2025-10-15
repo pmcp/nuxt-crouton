@@ -14,6 +14,9 @@ export function generateListComponent(data, config = {}) {
   // Check for reference fields (fields with refTarget property)
   const referenceFields = fields.filter(f => f.refTarget)
 
+  // Check for date fields
+  const dateFields = fields.filter(f => f.type === 'date')
+
   return `<template>
   <CroutonCollectionList
     :layout="layout"
@@ -36,7 +39,7 @@ export function generateListComponent(data, config = {}) {
       let resolvedCollection
       if (field.refTarget.startsWith(':')) {
         // External/global collection - remove : prefix
-        clauderesolvedCollection = field.refTarget.substring(1)
+        resolvedCollection = field.refTarget.substring(1)
       } else {
         // Add layer prefix
         const refCases = toCase(field.refTarget)
@@ -51,7 +54,10 @@ export function generateListComponent(data, config = {}) {
         collection="${resolvedCollection}"
       />
     </template>`
-    }).join('')}${hasTranslations ? `
+    }).join('')}${dateFields.map(field => `
+    <template #${field.name}-cell="{ row }">
+      <CroutonDate :date="row.original.${field.name}"></CroutonDate>
+    </template>`).join('')}${hasTranslations ? `
     <template #translations-cell="{ row }">
       <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
     </template>` : ''}
