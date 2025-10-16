@@ -79,7 +79,7 @@ export function generateFormComponent(data, config = {}) {
         </UFormField>`
     }
 
-    // Check if this is a dependent button group field
+    // Check if this is a dependent field
     if (field.meta?.displayAs === 'slotButtonGroup' && field.meta?.dependsOn && field.meta?.dependsOnField && field.meta?.dependsOnCollection) {
       const dependsOn = field.meta.dependsOn
       const dependsOnField = field.meta.dependsOnField
@@ -93,7 +93,7 @@ export function generateFormComponent(data, config = {}) {
       const dependentLabel = dependsOn.charAt(0).toUpperCase() + dependsOn.slice(1)
 
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonFormDependentButtonGroup
+          <CroutonFormDependentFieldLoader
             v-model="state.${field.name}"
             :dependent-value="state.${dependsOn}"
             dependent-collection="${resolvedCollection}"
@@ -185,9 +185,9 @@ export function generateFormComponent(data, config = {}) {
           <CroutonCalendar v-model:date="state.${field.name}" />
         </UFormField>`
     } else if (field.type === 'repeater') {
-      // Prefix repeater component with layer and collection to avoid conflicts
-      const baseComponentName = field.meta?.repeaterComponent || 'RepeaterItem'
-      const componentName = `${layerPascalCase}${pascalCasePlural}${baseComponentName}`
+      // Use the field's Input component from the field components folder
+      const fieldCases = toCase(field.name)
+      const componentName = `${layerPascalCase}${pascalCasePlural}${fieldCases.pascalCase}Input`
       const addLabel = field.meta?.addLabel || 'Add Item'
       const sortable = field.meta?.sortable !== false // Default to true
 

@@ -19,7 +19,7 @@ async function fileExists(filePath) {
 }
 
 // Import utilities
-import { toCase, mapType, typeMapping } from './utils/helpers.mjs'
+import { toCase, toSnakeCase, mapType, typeMapping } from './utils/helpers.mjs'
 import { DIALECTS } from './utils/dialects.mjs'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
 import { detectExternalReferences, getConnectorRecommendations, formatExternalReferences } from './utils/connector-detector.mjs'
@@ -47,6 +47,7 @@ import { generateTypes } from './generators/types.mjs'
 import { generateNuxtConfig } from './generators/nuxt-config.mjs'
 import { generateTeamAuthUtility, getTeamAuthUtilityPath } from './generators/team-auth-utility.mjs'
 import { generateRepeaterItemComponent } from './generators/repeater-item-component.mjs'
+import { generateFieldComponents } from './generators/field-components.mjs'
 
 function parseArgs() {
   const a = process.argv.slice(2)
@@ -640,8 +641,14 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     .split(/[-_]/)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
+  // Convert layer name to camelCase for collection keys
+  const layerCamelCase = layer
+    .split(/[-_]/)
+    .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
   const data = {
     ...cases,
+    originalCollectionName: collection,  // Preserve original collection name before toCase processing
     layer,
     layerPascalCase,
     fields,
@@ -789,7 +796,15 @@ ${translationsFieldSchema}
   
   // Create directories
   // Use layer-prefixed API path
-  const apiPath = `${layer}-${cases.plural}`
+  // For system collections, use simplified naming without layer prefix
+  let apiPath
+  if (layer.startsWith('crouton-')) {
+    // System collection: use crouton-<collection_name> format
+    // e.g., crouton-events + collectionEvents -> crouton-collection-events
+    apiPath = toSnakeCase(`crouton_${collection}`).replace(/_/g, '-')
+  } else {
+    apiPath = `${layer}-${cases.plural}`
+  }
   const dirs = [
     path.join(base, 'app', 'components'),
     path.join(base, 'app', 'composables'),
@@ -857,20 +872,37 @@ ${translationsFieldSchema}
     }
   ]
 
-  // Detect repeater fields and generate placeholder components
+  // Detect repeater fields and generate field components
+  // These are the source fields that other collections will depend on
   const repeaterFields = fields.filter(f => f.type === 'repeater')
-  const repeaterComponents = new Set()
+  const generatedFieldComponents = new Set()
 
   for (const field of repeaterFields) {
-    const baseComponentName = field.meta?.repeaterComponent
-    if (baseComponentName && !repeaterComponents.has(baseComponentName)) {
-      // Use prefixed name in component content but simple name for file
-      const prefixedComponentName = `${layerPascalCase}${cases.pascalCasePlural}${baseComponentName}`
-      repeaterComponents.add(baseComponentName)
+    if (!generatedFieldComponents.has(field.name)) {
+      generatedFieldComponents.add(field.name)
+
+      // Generate folder name in PascalCase (e.g., 'slots' -> 'Slot')
+      const fieldCases = toCase(field.name)
+      const fieldFolderName = fieldCases.pascalCase
+
+      // Create Field folder directory
+      const fieldFolderPath = path.join(base, 'app', 'components', fieldFolderName)
+      await fsp.mkdir(fieldFolderPath, { recursive: true })
+
+      // Generate all three field components
+      const { input, select, cardMini } = generateFieldComponents(field.name, data)
 
       files.push({
-        path: path.join(base, 'app', 'components', `${baseComponentName}.vue`),
-        content: generateRepeaterItemComponent(prefixedComponentName)
+        path: path.join(fieldFolderPath, 'Input.vue'),
+        content: input
+      })
+      files.push({
+        path: path.join(fieldFolderPath, 'Select.vue'),
+        content: select
+      })
+      files.push({
+        path: path.join(fieldFolderPath, 'CardMini.vue'),
+        content: cardMini
       })
     }
   }
@@ -878,22 +910,7 @@ ${translationsFieldSchema}
   // Write all files
   for (const file of files) {
     await fsp.writeFile(file.path, file.content, 'utf8')
-
-    // Check if this is a repeater component
-    const isRepeaterComponent = file.path.includes('/app/components/') &&
-                                !file.path.endsWith('Form.vue') &&
-                                !file.path.endsWith('List.vue')
-
-    const prefix = isRepeaterComponent ? '  ✓ [PLACEHOLDER]' : '  ✓'
-    console.log(`${prefix} ${path.relative(base, file.path)}`)
-  }
-
-  // After all files are written, show message about placeholders
-  if (repeaterComponents.size > 0) {
-    console.log(`\n📝 Generated ${repeaterComponents.size} placeholder repeater component(s):`)
-    repeaterComponents.forEach(name => {
-      console.log(`   • ${name}.vue - Customize this component with your fields`)
-    })
+    console.log(`  ✓ ${path.relative(base, file.path)}`)
   }
 
   // Note: team-auth utility is now provided by @friendlyinternet/nuxt-crouton package
@@ -920,7 +937,7 @@ ${translationsFieldSchema}
   }
 
   // Update collection registry
-  const collectionKey = `${layer}${cases.pascalCasePlural}`
+  const collectionKey = `${layerCamelCase}${cases.pascalCasePlural}`
   const configExportName = `${layerPascalCase.toLowerCase()}${cases.pascalCasePlural}Config`
   await updateRegistry({
     layer,

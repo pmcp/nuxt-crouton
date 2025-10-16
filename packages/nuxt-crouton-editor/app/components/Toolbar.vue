@@ -8,7 +8,7 @@
   >
     <div class="flex items-center relative">
       <button
-        @click.stop="toggleContentTypeMenu"
+        @click="toggleContentTypeMenu"
         :class="{ 'bg-gray-100/80 dark:bg-gray-800/80': showContentTypeMenu }"
         class="flex items-center text-sm px-2.5 py-1.5 rounded hover:bg-gray-100/80 dark:hover:bg-gray-800/80 text-gray-900 dark:text-gray-100"
       >
@@ -22,7 +22,7 @@
         <button
           v-for="type in contentTypes"
           :key="type.name"
-          @click.stop="setContentType(type.command)"
+          @click="setContentType(type.command)"
           :class="{
             'bg-gray-100/80 dark:bg-gray-800/80 rounded': editor.isActive(type.name, type.attrs),
           }"
@@ -42,7 +42,7 @@
       <button
         v-for="action in textActions"
         :key="action.name"
-        @click.stop="action.command()"
+        @click="action.command()"
         :class="{
           'bg-gray-100/80 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100': editor.isActive(action.name),
         }"
@@ -54,7 +54,7 @@
     </div>
     <div class="flex items-center relative">
       <button
-        @click.stop="toggleColorMenu"
+        @click="toggleColorMenu"
         :class="{ 'bg-gray-100/80 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100': showColorMenu }"
         class="rounded hover:bg-gray-100/80 dark:hover:bg-gray-800/80 w-8 h-8 grid place-items-center text-gray-700 dark:text-gray-300"
         title="Text color"
@@ -68,7 +68,7 @@
         <button
           v-for="color in colors"
           :key="color.name"
-          @click.stop="setTextColor(color.value)"
+          @click="setTextColor(color.value)"
           :class="{
             'bg-gray-100/80 dark:bg-gray-800/80': editor.isActive('textStyle', {
               color: color.value,

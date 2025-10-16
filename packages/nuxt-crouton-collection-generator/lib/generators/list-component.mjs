@@ -17,8 +17,14 @@ export function generateListComponent(data, config = {}) {
   // Check for date fields
   const dateFields = fields.filter(f => f.type === 'date')
 
+  // Check for repeater fields
+  const repeaterFields = fields.filter(f => f.type === 'repeater')
+
+  // Check for dependent fields
+  const dependentFields = fields.filter(f => f.meta?.dependsOn)
+
   return `<template>
-  <CroutonCollectionList
+  <CroutonCollection
     :layout="layout"
     collection="${prefixedCamelCasePlural}"
     :columns="columns"
@@ -57,11 +63,29 @@ export function generateListComponent(data, config = {}) {
     }).join('')}${dateFields.map(field => `
     <template #${field.name}-cell="{ row }">
       <CroutonDate :date="row.original.${field.name}"></CroutonDate>
-    </template>`).join('')}${hasTranslations ? `
+    </template>`).join('')}${repeaterFields.map(field => {
+      const fieldCases = toCase(field.name)
+      const cardMiniComponent = `${layerPascalCase}${pascalCasePlural}${fieldCases.pascalCase}CardMini`
+
+      return `
+    <template #${field.name}-cell="{ row }">
+      <${cardMiniComponent} :value="row.original.${field.name}" />
+    </template>`
+    }).join('')}${dependentFields.map(field => {
+      // For dependent fields, show the value formatted
+      // TODO: Could be enhanced to fetch and display the full item label
+      return `
+    <template #${field.name}-cell="{ row }">
+      <UBadge v-if="row.original.${field.name}" color="gray" variant="subtle">
+        {{ row.original.${field.name} }}
+      </UBadge>
+      <span v-else class="text-gray-400">—</span>
+    </template>`
+    }).join('')}${hasTranslations ? `
     <template #translations-cell="{ row }">
       <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
     </template>` : ''}
-  </CroutonCollectionList>
+  </CroutonCollection>
 </template>
 
 <script setup lang="ts">

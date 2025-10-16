@@ -3,6 +3,10 @@ import { toSnakeCase } from '../utils/helpers.mjs'
 
 export function generateSchema(data, dialect, config = null) {
   const { plural, layer, layerPascalCase, singular } = data
+
+  // Get original collection name from data (before toCase processing)
+  // For system collections, we need to preserve the original camelCase
+  const originalCollectionName = data.originalCollectionName || plural
   // Use layer-prefixed name for the export to avoid conflicts
   // Convert layer to camelCase to ensure valid JavaScript identifier
   const layerCamelCase = layer
@@ -119,7 +123,18 @@ const jsonColumn = customType<any>({
     : `  id: uuid('id').primaryKey().defaultRandom()`
 
   // Convert table name to snake_case for database
-  const snakeCaseTableName = toSnakeCase(`${layer}_${plural}`)
+  // For system collections (layer starts with 'crouton-'), use simplified naming
+  let snakeCaseTableName
+  if (layer.startsWith('crouton-')) {
+    // System collection: use crouton_<collection_name> format
+    // e.g., crouton-events + collectionEvents -> crouton_collection_events
+    // Use original collection name to preserve camelCase for proper snake_case conversion
+    const collectionWithCapital = originalCollectionName.charAt(0).toUpperCase() + originalCollectionName.slice(1)
+    snakeCaseTableName = toSnakeCase(`crouton${collectionWithCapital}`)
+  } else {
+    // Regular collection: use layer_collection format
+    snakeCaseTableName = toSnakeCase(`${layer}_${plural}`)
+  }
 
   // Build team fields conditionally
   const teamFields = useTeamUtility ? `

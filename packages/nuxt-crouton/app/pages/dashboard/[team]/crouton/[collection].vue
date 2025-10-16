@@ -8,7 +8,7 @@
     </NuxtLink>
   </div>
 
-  <div v-if="loading" class="text-gray-500">
+  <div v-if="loading" class="m-4 text-gray-500">
     Loading collection...
   </div>
 
@@ -31,7 +31,7 @@ const error = ref<string | null>(null)
 
 // Verify collection exists in registry
 const appConfig = useAppConfig()
-const croutonCollections = appConfig.croutonCollections || {}
+const croutonCollections = (appConfig.croutonCollections || {}) as Record<string, any>
 
 onMounted(() => {
   if (!croutonCollections || !croutonCollections[collectionName.value]) {

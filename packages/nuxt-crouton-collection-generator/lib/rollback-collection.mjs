@@ -105,13 +105,18 @@ export async function cleanAppConfig(collectionName, layer, dryRun) {
   try {
     let content = await fsp.readFile(registryPath, 'utf-8')
 
-    // Convert layer to PascalCase for the collection key
+    // Convert layer to PascalCase for export name
     const layerPascalCase = layer
       .split(/[-_]/)
       .map(part => part.charAt(0).toUpperCase() + part.slice(1))
       .join('')
+    // Convert layer to camelCase for collection key
+    const layerCamelCase = layer
+      .split(/[-_]/)
+      .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
+      .join('')
 
-    const collectionKey = `${layer}${cases.pascalCasePlural}`
+    const collectionKey = `${layerCamelCase}${cases.pascalCasePlural}`
     const configExportName = `${layerPascalCase.toLowerCase()}${cases.pascalCasePlural}Config`
 
     // Check if the collection exists in the registry

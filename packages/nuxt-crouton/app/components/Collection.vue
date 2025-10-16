@@ -11,7 +11,13 @@
     :hide-default-columns="hideDefaultColumns"
   >
     <template #header>
-      <slot name="header" />
+      <slot name="header">
+        <CroutonTableHeader
+          v-if="create"
+          :collection="collection"
+          :create-button="create"
+        />
+      </slot>
     </template>
 
     <!-- Pass through all data slots -->
@@ -23,7 +29,17 @@
   <!-- List Layout -->
   <UDashboardPanel v-else-if="activeLayout === 'list'" :id="collection || 'crouton-list'">
     <template #header>
-      <slot name="header" />
+      <slot name="header">
+        <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+          <UButton
+            color="primary"
+            size="xs"
+            @click="openCrouton('create', collection)"
+          >
+            Create
+          </UButton>
+        </div>
+      </slot>
     </template>
 
     <template #body>
@@ -110,6 +126,7 @@ const props = withDefaults(defineProps<ListProps>(), {
   serverPagination: false,
   paginationData: null,
   refreshFn: undefined,
+  create: false,
   hideDefaultColumns: () => ({
     created_at: false,
     updated_at: false,

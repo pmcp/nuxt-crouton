@@ -62,8 +62,13 @@ export function useCollectionMutation(collection: string) {
    *
    * @param itemIds - Optional item ID(s) to invalidate individual item caches
    * @param refreshCollection - Whether to refresh the entire collection (default: true for create/delete, false for update)
+   * @param mutationData - Optional mutation data to extract referenced item IDs for cache invalidation
    */
-  const invalidateCache = async (itemIds?: string | string[], refreshCollection: boolean = true) => {
+  const invalidateCache = async (
+    itemIds?: string | string[],
+    refreshCollection: boolean = true,
+    mutationData?: any
+  ) => {
     console.log('[useCollectionMutation v2.0] Invalidating cache for:', collection)
     console.log('[useCollectionMutation v2.0] DEBUG - itemIds received:', itemIds, 'type:', typeof itemIds)
     console.log('[useCollectionMutation v2.0] DEBUG - refreshCollection:', refreshCollection)
@@ -83,6 +88,32 @@ export function useCollectionMutation(collection: string) {
         const itemCacheKey = `collection-item:${collection}:${id}`
         console.log('[useCollectionMutation v2.0] Refreshing item cache key:', itemCacheKey)
         await refreshNuxtData(itemCacheKey)
+      }
+    }
+
+    // AUTO-REFRESH REFERENCED COLLECTIONS
+    // If this collection declares references and mutation data is provided,
+    // refresh the item caches for referenced collections
+    if (config?.references && mutationData) {
+      console.log('[useCollectionMutation v2.0] Processing references:', config.references)
+
+      for (const [field, refCollection] of Object.entries(config.references)) {
+        const refId = mutationData[field]
+
+        if (refId && typeof refId === 'string') {
+          const refCacheKey = `collection-item:${refCollection}:${refId}`
+          console.log('[useCollectionMutation v2.0] Refreshing referenced item cache:', refCacheKey)
+          await refreshNuxtData(refCacheKey)
+        } else if (Array.isArray(refId)) {
+          // Handle array references (e.g., multiple IDs)
+          for (const id of refId) {
+            if (id && typeof id === 'string') {
+              const refCacheKey = `collection-item:${refCollection}:${id}`
+              console.log('[useCollectionMutation v2.0] Refreshing referenced item cache:', refCacheKey)
+              await refreshNuxtData(refCacheKey)
+            }
+          }
+        }
       }
     }
 
@@ -108,8 +139,19 @@ export function useCollectionMutation(collection: string) {
 
       console.log('✅ API Success:', result)
 
+      // Emit hook for event tracking (zero overhead if no listeners)
+      const nuxtApp = useNuxtApp()
+      await nuxtApp.hooks.callHook('crouton:mutation', {
+        operation: 'create',
+        collection,
+        itemId: result.id,
+        data,
+        result
+      })
+
       // Invalidate cache to trigger refetch in all views
-      await invalidateCache()
+      // Pass mutation data to refresh referenced item caches
+      await invalidateCache(undefined, true, data)
 
       console.groupEnd()
 
@@ -159,8 +201,19 @@ export function useCollectionMutation(collection: string) {
 
       console.log('✅ API Success:', result)
 
+      // Emit hook for event tracking (zero overhead if no listeners)
+      const nuxtApp = useNuxtApp()
+      await nuxtApp.hooks.callHook('crouton:mutation', {
+        operation: 'update',
+        collection,
+        itemId: id,
+        updates,
+        result
+      })
+
       // Invalidate both the item cache AND the collection to refresh list views
-      await invalidateCache(id, true)
+      // Pass mutation data to refresh referenced item caches
+      await invalidateCache(id, true, updates)
 
       console.groupEnd()
 
@@ -211,6 +264,14 @@ export function useCollectionMutation(collection: string) {
       )
 
       console.log('✅ API Success: Deleted', ids.length, 'item(s)')
+
+      // Emit hook for event tracking (zero overhead if no listeners)
+      const nuxtApp = useNuxtApp()
+      await nuxtApp.hooks.callHook('crouton:mutation', {
+        operation: 'delete',
+        collection,
+        itemIds: ids
+      })
 
       // Invalidate cache to trigger refetch (includes individual item caches)
       await invalidateCache(ids)

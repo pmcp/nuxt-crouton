@@ -1,0 +1,74 @@
+{
+  "timestamp": {
+    "type": "date",
+    "meta": {
+      "required": true,
+      "area": "main",
+      "label": "Timestamp",
+      "description": "When the event occurred"
+    }
+  },
+  "operation": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "area": "main",
+      "label": "Operation",
+      "description": "Type of operation: create, update, delete"
+    }
+  },
+  "collectionName": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "area": "main",
+      "label": "Collection",
+      "description": "Name of the collection that was modified"
+    }
+  },
+  "itemId": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "area": "main",
+      "label": "Item ID",
+      "description": "ID of the item that was created/updated/deleted"
+    }
+  },
+  "userId": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "area": "main",
+      "label": "User ID",
+      "description": "ID of the user who performed the action"
+    }
+  },
+  "userName": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "area": "main",
+      "label": "User Name",
+      "description": "Name of the user at time of event (snapshot)"
+    }
+  },
+  "changes": {
+    "type": "json",
+    "meta": {
+      "required": true,
+      "area": "main",
+      "label": "Changes",
+      "description": "Field-level changes (old value -> new value)"
+    }
+  },
+  "metadata": {
+    "type": "json",
+    "meta": {
+      "required": false,
+      "area": "main",
+      "label": "Metadata",
+      "description": "Additional context (IP, user agent, etc.)"
+    }
+  }
+}

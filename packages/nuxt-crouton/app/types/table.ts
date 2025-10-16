@@ -28,7 +28,7 @@ export const layoutPresets: Record<string, ResponsiveLayout> = {
   'compact': { base: 'list', xl: 'table' }
 }
 
-export interface ListProps {
+export interface CollectionProps {
   layout?: LayoutType | ResponsiveLayout | keyof typeof layoutPresets
   columns: TableColumn[]
   rows: any[]
@@ -36,6 +36,7 @@ export interface ListProps {
   serverPagination?: boolean
   paginationData?: PaginationData | null
   refreshFn?: () => Promise<void> | null
+  create?: boolean
   hideDefaultColumns?: {
     createdAt?: boolean
     updatedAt?: boolean
@@ -45,8 +46,9 @@ export interface ListProps {
   }
 }
 
-// Keep TableProps as alias for backward compatibility during migration
-export type TableProps = ListProps
+// Keep aliases for backward compatibility
+export type ListProps = CollectionProps
+export type TableProps = CollectionProps
 
 export interface PaginationData {
   currentPage: number

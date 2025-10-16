@@ -1,0 +1,42 @@
+{
+  "name": "@friendlyinternet/nuxt-crouton-events",
+  "version": "0.1.0",
+  "description": "Event tracking layer for Nuxt Crouton - Audit trail for all CRUD operations",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "server",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crouton",
+    "events",
+    "audit",
+    "tracking",
+    "changelog",
+    "history"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton-events"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "@nuxt/ui": "^4.0.0",
+    "@friendlyinternet/nuxt-crouton": "workspace:*"
+  }
+}

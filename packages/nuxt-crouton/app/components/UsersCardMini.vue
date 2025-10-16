@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <div v-if="item" class="w-full flex items-center justify-center gap-2">
+  <div v-if="item" class="w-full flex gap-2">
     <UTooltip
       :content="{
         align: 'center',

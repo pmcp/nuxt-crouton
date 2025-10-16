@@ -3,13 +3,13 @@
     <CroutonEditorToolbar :editor="editor" class="flex-shrink-0" />
     <floating-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
       <div class="editor-floating-menu">
-        <button @click.stop="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">
+        <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">
           H1
         </button>
-        <button @click.stop="editor.chain().focus().toggleHeading({ level: 2 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">
+        <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">
           H2
         </button>
-        <button @click.stop="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }">
+        <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }">
           Bullet list
         </button>
       </div>
@@ -63,10 +63,8 @@ const editor = useEditor({
     Color
   ],
   editorProps: {
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none',
-      },
+    attributes: {
+      class: '',
     },
   },
   onUpdate: ({ editor }) => {
