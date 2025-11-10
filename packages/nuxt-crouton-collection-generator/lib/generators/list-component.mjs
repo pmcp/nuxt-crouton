@@ -23,6 +23,18 @@ export function generateListComponent(data, config = {}) {
   // Check for dependent fields
   const dependentFields = fields.filter(f => f.meta?.dependsOn)
 
+  // Check for editor fields (fields using nuxt-crouton-editor components)
+  const editorFields = fields.filter(f =>
+    f.meta?.component &&
+    (f.meta.component === 'EditorSimple' || f.meta.component.startsWith('Editor'))
+  )
+
+  // Check for map/location fields (fields with group: "map" or type: "geojson")
+  const mapFields = fields.filter(f =>
+    f.meta?.group === 'map' ||
+    f.type === 'geojson'
+  )
+
   return `<template>
   <CroutonCollection
     :layout="layout"
@@ -41,17 +53,37 @@ export function generateListComponent(data, config = {}) {
     <template #${field}-cell="{ row }">
       {{ t(row.original, '${field}') }}
     </template>`).join('')}${referenceFields.map(field => {
-      // Resolve collection name (handle : prefix for external collections)
+      // Resolve collection name based on refScope
       let resolvedCollection
-      if (field.refTarget.startsWith(':')) {
-        // External/global collection - remove : prefix
-        resolvedCollection = field.refTarget.substring(1)
+
+      // Check refScope to determine how to resolve the reference
+      if (field.refScope === 'adapter') {
+        // Adapter-scoped reference: use target as-is (no layer prefix)
+        // These are managed by connector packages (e.g., @friendlyinternet/nuxt-crouton-connector-supersaas)
+        resolvedCollection = field.refTarget
       } else {
-        // Add layer prefix
+        // Local layer reference: add layer prefix
         const refCases = toCase(field.refTarget)
         resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
       }
 
+      // Check if this is an array-type reference (multi-select)
+      if (field.type === 'array') {
+        return `
+    <template #${field.name}-cell="{ row }">
+      <div v-if="row.original.${field.name} && row.original.${field.name}.length > 0" class="flex flex-wrap gap-1">
+        <CroutonItemCardMini
+          v-for="itemId in row.original.${field.name}"
+          :key="itemId"
+          :id="itemId"
+          collection="${resolvedCollection}"
+        />
+      </div>
+      <span v-else class="text-gray-400">—</span>
+    </template>`
+      }
+
+      // Single reference
       return `
     <template #${field.name}-cell="{ row }">
       <CroutonItemCardMini
@@ -72,16 +104,28 @@ export function generateListComponent(data, config = {}) {
       <${cardMiniComponent} :value="row.original.${field.name}" />
     </template>`
     }).join('')}${dependentFields.map(field => {
-      // For dependent fields, show the value formatted
-      // TODO: Could be enhanced to fetch and display the full item label
+      // Resolve the dependent collection with layer prefix
+      const dependentCollectionCases = toCase(field.meta.dependsOnCollection)
+      const resolvedDependentCollection = `${layerPascalCase.toLowerCase()}${dependentCollectionCases.pascalCasePlural}`
+
       return `
     <template #${field.name}-cell="{ row }">
-      <UBadge v-if="row.original.${field.name}" color="gray" variant="subtle">
-        {{ row.original.${field.name} }}
-      </UBadge>
+      <CroutonDependentFieldCardMini
+        v-if="row.original.${field.name} && row.original.${field.meta.dependsOn}"
+        :value="row.original.${field.name}"
+        :dependent-value="row.original.${field.meta.dependsOn}"
+        dependent-collection="${resolvedDependentCollection}"
+        dependent-field="${field.meta.dependsOnField}"
+      />
       <span v-else class="text-gray-400">—</span>
     </template>`
-    }).join('')}${hasTranslations ? `
+    }).join('')}${editorFields.map(field => `
+    <template #${field.name}-cell="{ row }">
+      <CroutonEditorPreview :content="row.original.${field.name}" />
+    </template>`).join('')}${mapFields.map(field => `
+    <template #${field.name}-cell="{ row }">
+      <CroutonMapsPreview :location="row.original.${field.name}" />
+    </template>`).join('')}${hasTranslations ? `
     <template #translations-cell="{ row }">
       <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
     </template>` : ''}

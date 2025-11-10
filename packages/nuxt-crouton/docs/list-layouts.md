@@ -99,7 +99,7 @@ Override the default actions for list items using the `list-item-actions` slot:
     />
     <UButton
       icon="i-lucide-trash"
-      color="red"
+      color="error"
       variant="ghost"
       @click="handleDelete(row.id)"
     />
@@ -153,8 +153,8 @@ interface ListProps {
   >
     <!-- Custom list item display -->
     <template #list-item-actions="{ row }">
-      <UBadge v-if="row.inStock" color="green">In Stock</UBadge>
-      <UBadge v-else color="red">Out of Stock</UBadge>
+      <UBadge v-if="row.inStock" color="success">In Stock</UBadge>
+      <UBadge v-else color="error">Out of Stock</UBadge>
       <UButton size="sm" @click="addToCart(row)">
         Add to Cart
       </UButton>

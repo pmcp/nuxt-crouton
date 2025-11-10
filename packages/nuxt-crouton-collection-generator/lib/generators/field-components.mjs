@@ -56,8 +56,14 @@ if (model.value && !model.value.id) {
 
 /**
  * Generate Select.vue - for selecting from options in dependent forms
+ * Supports both single and multiple selection with array-based values
+ * Uses CroutonFormDependentSelectOption for card-based rendering
  */
 function generateSelectComponent(fieldName, fieldPascalCase, collectionData) {
+  const { layerPascalCase, pascalCasePlural } = collectionData
+  // Build the dependent collection name for component resolution
+  const dependentCollection = `${layerPascalCase.toLowerCase()}${pascalCasePlural}`
+
   return `<template>
   <div>
     <div v-if="pending" class="flex items-center gap-2 text-sm text-gray-500">
@@ -77,17 +83,15 @@ function generateSelectComponent(fieldName, fieldPascalCase, collectionData) {
       No options available
     </div>
 
-    <UButtonGroup v-else :ui="{ wrapper: 'flex flex-wrap gap-2' }">
-      <UButton
-        v-for="option in options"
-        :key="option.id"
-        :variant="modelValue === option.id ? 'solid' : 'outline'"
-        :color="modelValue === option.id ? 'primary' : 'gray'"
-        @click="handleSelect(option.id)"
-      >
-        {{ option.label }}
-      </UButton>
-    </UButtonGroup>
+    <CroutonFormDependentSelectOption
+      v-else
+      v-model="localValue"
+      :options="options"
+      :multiple="multiple"
+      dependent-collection="${dependentCollection}"
+      dependent-field="${fieldName}"
+      :card-variant="cardVariant"
+    />
   </div>
 </template>
 
@@ -99,12 +103,14 @@ interface Option {
 }
 
 interface Props {
-  modelValue?: string | null
+  modelValue?: string[] | null     // Array for consistent handling
   options?: Option[]
   pending?: boolean
   error?: any
   dependentValue?: string | null
   dependentLabel?: string
+  multiple?: boolean               // Support multiple selection
+  cardVariant?: string             // Card size: 'Mini', 'Medium', 'Huge', etc.
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -113,38 +119,43 @@ const props = withDefaults(defineProps<Props>(), {
   pending: false,
   error: null,
   dependentValue: null,
-  dependentLabel: 'Selection'
+  dependentLabel: 'Selection',
+  multiple: false,
+  cardVariant: 'Mini'
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | null]
+  'update:modelValue': [value: string[] | null]
 }>()
 
-const handleSelect = (id: string) => {
-  emit('update:modelValue', id)
-}
+// Local model for v-model binding
+const localValue = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
 </script>
 `
 }
 
 /**
  * Generate CardMini.vue - for displaying the field in tables/lists
+ * Handles both source collection (array of objects) and target collection (resolved objects)
  */
 function generateCardMiniComponent(fieldName, fieldPascalCase, collectionData) {
   return `<template>
   <div class="text-sm">
-    <template v-if="value && Array.isArray(value) && value.length > 0">
+    <template v-if="normalizedValue.length > 0">
       <div class="flex flex-wrap gap-1">
         <UBadge
-          v-for="(item, index) in value.slice(0, 3)"
+          v-for="(item, index) in normalizedValue.slice(0, 3)"
           :key="index"
           color="gray"
           variant="subtle"
         >
-          {{ item.label || item }}
+          {{ item.label || item.value || item }}
         </UBadge>
-        <UBadge v-if="value.length > 3" color="gray" variant="subtle">
-          +{{ value.length - 3 }} more
+        <UBadge v-if="normalizedValue.length > 3" color="gray" variant="subtle">
+          +{{ normalizedValue.length - 3 }} more
         </UBadge>
       </div>
     </template>
@@ -154,10 +165,17 @@ function generateCardMiniComponent(fieldName, fieldPascalCase, collectionData) {
 
 <script setup lang="ts">
 interface Props {
-  value?: any[] | string | null
+  value?: any[] | any | null  // Can be array of objects OR single object OR null
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+// Normalize to array for consistent handling
+// Handles both source (repeater with array) and target (dependent field with resolved objects)
+const normalizedValue = computed(() => {
+  if (!props.value) return []
+  return Array.isArray(props.value) ? props.value : [props.value]
+})
 </script>
 `
 }

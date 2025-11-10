@@ -317,7 +317,7 @@ const { open } = useCrouton()
           <div class="text-xs text-gray-500">{{ item.address }}</div>
           <UBadge
             v-if="item.active"
-            color="green"
+            color="success"
             size="xs"
             class="mt-1"
           >
@@ -403,7 +403,7 @@ const userInitials = computed(() => {
       <!-- Status Badge -->
       <UBadge
         v-if="item.is_active"
-        color="green"
+        color="success"
         size="xs"
       >
         Active

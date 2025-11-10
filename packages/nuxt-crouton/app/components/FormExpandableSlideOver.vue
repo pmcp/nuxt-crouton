@@ -32,7 +32,7 @@
             <UButton
               :icon="expanded ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'"
               variant="ghost"
-              color="gray"
+              color="neutral"
               size="sm"
               @click="toggleExpand"
             />
@@ -43,7 +43,7 @@
             <UButton
               icon="i-lucide-x"
               variant="ghost"
-              color="gray"
+              color="neutral"
               size="sm"
               @click="close"
             />
@@ -68,7 +68,7 @@
         <!-- Error state -->
         <div v-else-if="error" class="space-y-4">
           <UAlert
-            color="red"
+            color="error"
             icon="i-lucide-triangle-alert"
             :title="error.title || 'An error occurred'"
             :description="error.description"
@@ -77,7 +77,7 @@
             <UButton color="primary" @click="error.retry">
               Try Again
             </UButton>
-            <UButton color="gray" variant="outline" @click="close">
+            <UButton color="neutral" variant="outline" @click="close">
               Cancel
             </UButton>
           </div>
@@ -117,7 +117,7 @@ interface Props {
   title: string
   icon?: string
   badge?: string
-  badgeColor?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'gray'
+  badgeColor?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'neutral'
   badgeVariant?: 'solid' | 'outline' | 'soft' | 'subtle'
 
   // States

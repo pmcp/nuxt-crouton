@@ -660,11 +660,18 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
       const regularFieldsSchema = fields
         .filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name))
         .map(f => {
-          const baseZod = f.zod
+          // Check if this is a dependent field (should be treated as array)
+          const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
+
+          // Override Zod schema for dependent fields to use array
+          const baseZod = isDependentField ? 'z.array(z.string())' : f.zod
 
           if (f.meta?.required) {
             // Handle different types appropriately for required fields
-            if (f.type === 'date') {
+            if (isDependentField) {
+              // Dependent fields use array and need non-empty validation
+              return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
+            } else if (f.type === 'date') {
               // Dates use required_error parameter, not .min()
               return `${f.name}: z.date({ required_error: '${f.name} is required' })`
             } else if (f.type === 'string' || f.type === 'text') {
@@ -730,7 +737,14 @@ ${translationsFieldSchema}
       return allFieldsSchema
     })(),
     fieldsDefault: (() => {
-      const fieldDefaults = fields.filter(f => f.name !== 'id').map(f => `${f.name}: ${f.default}`).join(',\n    ')
+      const fieldDefaults = fields.filter(f => f.name !== 'id').map(f => {
+        // Check if this is a dependent field (should default to null, not empty string)
+        const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
+        if (isDependentField) {
+          return `${f.name}: null`
+        }
+        return `${f.name}: ${f.default}`
+      }).join(',\n    ')
       const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
       return hasTranslations ? `${fieldDefaults},\n    translations: {}` : fieldDefaults
     })(),
@@ -747,9 +761,12 @@ ${translationsFieldSchema}
 
       return baseColumns + translationsColumn
     })(),
-    fieldsTypes: fields.filter(f => f.name !== 'id').map(f =>
-      `${f.name}${f.meta?.required ? '' : '?'}: ${f.tsType}`
-    ).join('\n  ')
+    fieldsTypes: fields.filter(f => f.name !== 'id').map(f => {
+      // Check if this is a dependent field (should be string[] | null)
+      const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
+      const tsType = isDependentField ? 'string[] | null' : f.tsType
+      return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
+    }).join('\n  ')
   }
   
   if (dryRun) {

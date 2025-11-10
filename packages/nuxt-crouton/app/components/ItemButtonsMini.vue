@@ -14,7 +14,7 @@
         <UButton
           :loading="deleteLoading"
           icon="i-ph-trash-duotone"
-          color="rose"
+          color="error"
           variant="soft"
           size="xs"
           :class="buttonClasses"
@@ -27,7 +27,7 @@
         v-else
         :loading="deleteLoading"
         icon="i-ph-trash-duotone"
-        color="rose"
+        color="error"
         variant="soft"
         size="xs"
         :class="buttonClasses"
@@ -49,7 +49,7 @@
         <UButton
           :loading="updateLoading"
           icon="i-ph-pencil"
-          color="gray"
+          color="neutral"
           size="xs"
           :class="buttonClasses"
           @click="$emit('update')"

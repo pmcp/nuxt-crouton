@@ -209,23 +209,31 @@ export function generateFormComponent(data, config = {}) {
   // Generate map/geocoding section if address fields detected (define early so it can be used in formFields)
   const mapSection = shouldGenerateMap ? `
 
-      <!-- Map Display (auto-updates with address changes) -->
-      <UFormField label="Location on Map">
+       <!-- MapBox Map Display -->
+      <UFormField label="Location Map" name="${coordinateFieldName}" class="not-last:pb-4">
         <CroutonMapsMap
           :center="mapCenter"
-          :zoom="mapCenter[0] === 0 && mapCenter[1] === 0 ? 2 : 14"
-          height="300px"
+          :zoom="14"
+          height="400px"
           class="rounded-lg border"
+          :fly-to-on-center-change="true"
+          @load="handleMapLoad"
         >
           <template #default="{ map }">
             <CroutonMapsMarker
               v-if="mapCenter[0] !== 0 || mapCenter[1] !== 0"
               :map="map"
               :position="mapCenter"
-              color="red"
+              :color="markerColor"
+              :options="{ draggable: true }"
+              :animate-transitions="true"
+              @dragEnd="handleMarkerDragEnd"
             />
           </template>
         </CroutonMapsMap>
+        <p v-if="geocoding" class="text-sm text-gray-500 mt-2">
+          Geocoding address...
+        </p>
       </UFormField>` : ''
 
   // Group fields by area and then by group
@@ -251,11 +259,14 @@ export function generateFormComponent(data, config = {}) {
     const groupValue = groupName || 'general'
     const fieldsMarkup = groupFields.map(generateFieldMarkup).join('\n')
 
+    // Inject map section if this is the "address" group and we have shouldGenerateMap
+    const mapInjection = (groupName === 'address' && shouldGenerateMap) ? mapSection : ''
+
     const conditionalWrapper = showConditionally
       ? `      <div v-show="!tabs || activeSection === '${groupValue}'" class="flex flex-col gap-4 p-1">\n`
       : `      <div class="flex flex-col gap-4 p-1">\n`
 
-    return `${conditionalWrapper}${fieldsMarkup}
+    return `${conditionalWrapper}${fieldsMarkup}${mapInjection}
       </div>`
   }
 
@@ -297,11 +308,24 @@ export function generateFormComponent(data, config = {}) {
 
   // Generate initial state fields with proper defaults (excluding id)
   const stateFields = fields.filter(field => field.name !== 'id').map(field => {
+    // Dependent fields need to default to null (CroutonFormDependentFieldLoader expects null or array)
+    if (field.meta?.dependsOn || field.meta?.displayAs === 'slotButtonGroup') {
+      return `  ${field.name}: null`
+    }
+
+    // Array fields should default to [] or null
+    if (field.type === 'array') {
+      // Check if it's a reference field that might be nullable
+      if (field.refTarget) {
+        return `  ${field.name}: []`
+      }
+      return `  ${field.name}: []`
+    }
+
     const defaultVal = field.type === 'boolean' ? 'false' :
                       field.type === 'number' || field.type === 'decimal' ? '0' :
                       field.type === 'date' ? 'null' :
-                      field.type === 'repeater' ? '[]' :
-                      field.type === 'array' ? '[]' : "''";
+                      field.type === 'repeater' ? '[]' : "''";
     return `  ${field.name}: ${defaultVal}`
   }).join(',\n')
   
@@ -320,6 +344,47 @@ const tabs = ref(true)
 const activeSection = ref('${navigationItems[0]?.value || 'general'}')`
     : 'const tabs = ref(false)'
 
+  // Generate field-to-group mapping for error tracking
+  const fieldGroupMapping = useTabs ? mainGroups : new Map()
+  const fieldToGroupCode = useTabs ? `
+// Map field names to their tab groups for error tracking
+const fieldToGroup: Record<string, string> = {
+${Array.from(fieldGroupMapping.entries())
+  .flatMap(([groupName, fields]) =>
+    fields.map(field => `  '${field.name}': '${groupName || 'general'}'`)
+  )
+  .join(',\n')}
+}` : ''
+
+  // Generate error tracking code (only if tabs are used)
+  const errorTrackingCode = useTabs ? `
+// Track validation errors for tab indicators
+const validationErrors = ref<Array<{ name: string; message: string }>>([])
+
+// Handle form validation errors
+const handleValidationError = (event: any) => {
+  if (event?.errors) {
+    validationErrors.value = event.errors
+  }
+}
+
+// Compute errors per tab
+const tabErrorCounts = computed(() => {
+  const counts: Record<string, number> = {}
+
+  validationErrors.value.forEach(error => {
+    const tabName = fieldToGroup[error.name] || 'general'
+    counts[tabName] = (counts[tabName] || 0) + 1
+  })
+
+  return counts
+})
+
+// Switch to a specific tab (for clicking error links)
+const switchToTab = (tabValue: string) => {
+  activeSection.value = tabValue
+}` : ''
+
   return `<template>
   <CroutonFormActionButton
     v-if="action === 'delete'"
@@ -334,9 +399,10 @@ const activeSection = ref('${navigationItems[0]?.value || 'general'}')`
     v-else
     :schema="schema"
     :state="state"
-    @submit="handleSubmit"
+    @submit="handleSubmit"${useTabs ? `
+    @error="handleValidationError"` : ''}
   >
-    <CroutonFormLayout${useTabs ? ' :tabs="tabs" :navigation-items="navigationItems"' : ''}>
+    <CroutonFormLayout${useTabs ? ' :tabs="tabs" :navigation-items="navigationItems" :tab-errors="tabErrorCounts" v-model="activeSection"' : ''}>
       <template #main${useTabs ? '="{ activeSection }"' : ''}>
 ${mainAreaMarkup}${translationField ? `\n\n      <div>\n${translationField}\n      </div>` : ''}
       </template>
@@ -345,12 +411,20 @@ ${hasSidebar ? `
 ${sidebarAreaMarkup}
       </template>
 ` : ''}
-      <template #footer>
+      <template #footer>${useTabs ? `
+        <CroutonValidationErrorSummary
+          v-if="validationErrors.length > 0"
+          :tab-errors="tabErrorCounts"
+          :navigation-items="navigationItems"
+          @switch-tab="switchToTab"
+        />
+` : ''}
         <CroutonFormActionButton
           :action="action"
           :collection="collection"
           :items="items"
-          :loading="loading"
+          :loading="loading"${useTabs ? `
+          :has-validation-errors="validationErrors.length > 0"` : ''}
         />
       </template>
     </CroutonFormLayout>
@@ -365,6 +439,8 @@ const { defaultValue, schema, collection } = use${prefixedPascalCasePlural}()
 
 // Form layout configuration
 ${navigationItemsCode}
+${fieldToGroupCode}
+${errorTrackingCode}
 
 // Use new mutation composable for data operations
 const { create, update, deleteItems } = useCollectionMutation(collection)
@@ -412,6 +488,14 @@ const parseCoordinates = (value: any): [number, number] | null => {
 
 const initialCoordinates = parseCoordinates(state.value.${coordinateFieldName})
 const mapCenter = ref<[number, number]>(initialCoordinates || [0, 0])
+const mapInstance = ref<any>(null)
+
+const markerColor = useMarkerColor()
+
+// Store map instance when loaded
+const handleMapLoad = (map: any) => {
+  mapInstance.value = map
+}
 
 // Auto-geocode when address fields change
 watchDebounced(
@@ -449,6 +533,13 @@ const handleGeocode = async () => {
   } catch (error) {
     console.error('Geocoding failed:', error)
   }
+}
+
+// Handle marker drag to update coordinates
+const handleMarkerDragEnd = (event: any) => {
+  const lngLat = event.target.getLngLat()
+  mapCenter.value = [lngLat.lng, lngLat.lat]
+  state.value.${coordinateFieldName} = JSON.stringify([lngLat.lng, lngLat.lat])
 }` : ''}
 
 const handleSubmit = async () => {
@@ -468,7 +559,10 @@ const handleSubmit = async () => {
     } else if (props.action === 'delete') {
       await deleteItems(props.items)
     }
-
+${useTabs ? `
+    // Clear validation errors on successful submission
+    validationErrors.value = []
+` : ''}
     close()
 
   } catch (error) {

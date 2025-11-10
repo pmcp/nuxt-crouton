@@ -8,7 +8,8 @@
     </NuxtLink>
   </div>
 
-  <div v-if="loading" class="m-4 text-gray-500">
+  <div v-if="loading" class="m-6 italic opacity-50 flex items-center text-white gap-1">
+    <UIcon name="i-lucide-loader-circle" class="animate-spin" />
     Loading collection...
   </div>
 

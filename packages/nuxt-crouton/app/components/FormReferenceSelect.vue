@@ -3,7 +3,7 @@
     <!-- Error state -->
     <UAlert
       v-if="error"
-      color="amber"
+      color="error"
       icon="i-lucide-alert-triangle"
       title="Unable to load options"
       :description="getErrorMessage()"

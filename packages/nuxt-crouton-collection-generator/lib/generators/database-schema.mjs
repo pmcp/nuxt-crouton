@@ -53,6 +53,9 @@ export function generateSchema(data, dialect, config = null) {
     const nullable = field.meta?.required ? '.notNull()' : ''
     const unique = field.meta?.unique ? '.unique()' : ''
 
+    // Check if this is a dependent field (should be stored as JSON array)
+    const isDependentField = field.meta?.dependsOn || field.meta?.displayAs === 'slotButtonGroup'
+
     if (dialect === 'sqlite') {
       // SQLite specific schema
       if (field.type === 'boolean') {
@@ -61,9 +64,9 @@ export function generateSchema(data, dialect, config = null) {
         return `  ${field.name}: ${field.type === 'decimal' ? 'real' : 'integer'}('${field.name}')${nullable}${unique}`
       } else if (field.type === 'date') {
         return `  ${field.name}: integer('${field.name}', { mode: 'timestamp' })${nullable}${unique}.$default(() => new Date())`
-      } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array') {
-        // Use [] for arrays/repeaters, {} for json objects
-        const defaultValue = (field.type === 'array' || field.type === 'repeater') ? '[]' : '{}'
+      } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array' || isDependentField) {
+        // Use [] for arrays/repeaters/dependent fields, {} for json objects
+        const defaultValue = (field.type === 'array' || field.type === 'repeater' || isDependentField) ? 'null' : '{}'
         // Use customType to handle NULL values gracefully in LEFT JOINs
         return `  ${field.name}: jsonColumn('${field.name}')${nullable}${unique}.$default(() => (${defaultValue}))`
       } else {
@@ -79,9 +82,9 @@ export function generateSchema(data, dialect, config = null) {
         return `  ${field.name}: numeric('${field.name}')${nullable}${unique}`
       } else if (field.type === 'date') {
         return `  ${field.name}: timestamp('${field.name}', { withTimezone: true })${nullable}${unique}.$default(() => new Date())`
-      } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array') {
-        // Use [] for arrays/repeaters, {} for json objects
-        const defaultValue = (field.type === 'array' || field.type === 'repeater') ? '[]' : '{}'
+      } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array' || isDependentField) {
+        // Use [] for arrays/repeaters/dependent fields, {} for json objects
+        const defaultValue = (field.type === 'array' || field.type === 'repeater' || isDependentField) ? 'null' : '{}'
         return `  ${field.name}: jsonb('${field.name}')${nullable}${unique}.$default(() => (${defaultValue}))`
       } else if (field.type === 'text') {
         return `  ${field.name}: text('${field.name}')${nullable}${unique}`

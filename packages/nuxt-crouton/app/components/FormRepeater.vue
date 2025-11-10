@@ -149,7 +149,7 @@ onMounted(() => {
           <UButton
             v-if="sortable"
             type="button"
-            color="gray"
+            color="neutral"
             variant="ghost"
             size="sm"
             icon="i-lucide-grip-vertical"
@@ -162,7 +162,7 @@ onMounted(() => {
           <!-- Remove button -->
           <UButton
             type="button"
-            color="red"
+            color="error"
             variant="ghost"
             size="sm"
             icon="i-lucide-x"

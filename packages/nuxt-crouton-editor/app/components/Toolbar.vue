@@ -1,7 +1,7 @@
 <template>
   <bubble-menu
     :editor="editor"
-    :tippy-options="{ duration: 100 }"
+    :tippy-options="tippyOptions"
     v-if="editor"
     :should-show="shouldShow"
     class="flex bg-white dark:bg-gray-900 rounded-md shadow-md p-1 mb-2.5"
@@ -116,7 +116,33 @@ interface Color {
 
 const props = defineProps<{
   editor?: Editor;
+  container?: HTMLElement | null;
 }>();
+
+console.log('[Toolbar] Component loaded - Version: 2.0 - Timestamp:', Date.now());
+
+const tippyOptions = computed(() => ({
+  duration: 100,
+  appendTo: () => {
+    console.log('[Toolbar] appendTo called - timestamp:', Date.now());
+    if (typeof document === 'undefined') {
+      console.log('[Toolbar] SSR mode, returning undefined');
+      return undefined;
+    }
+    // Find the closest HeadlessUI Dialog/Slideover container
+    if (props.container) {
+      console.log('[Toolbar] Container found:', props.container);
+      const dialog = props.container.closest('[data-headlessui-state]') || props.container.closest('[role="dialog"]');
+      console.log('[Toolbar] Dialog element:', dialog);
+      if (dialog) {
+        console.log('[Toolbar] Appending to dialog');
+        return dialog;
+      }
+    }
+    console.log('[Toolbar] Fallback to document.body');
+    return document.body;
+  }
+}));
 
 const showContentTypeMenu = ref(false);
 const showColorMenu = ref(false);

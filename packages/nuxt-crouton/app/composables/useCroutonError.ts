@@ -1,9 +1,8 @@
-
+// v1.0.1 - Fixed inject() warning by moving useToast() call inside method
 import { promiseTimeout } from '@vueuse/core'
 
 // https://github.com/xiaoluoboding/vue-sonner
 export default function () {
-  const toast = useToast()
   const activeToast = useState('activeToasts', () => false);
   const toastVibration = useState('toastVibration', () => false)
   const vibrateToast = async () => {
@@ -18,6 +17,9 @@ export default function () {
     if(activeToast.value) return vibrateToast()
     activeToast.value = true
     if(type === 'error') {
+      console.log('[useCroutonError v1.0.1] About to call useToast() inside triggerErrorMessage')
+      const toast = useToast()
+      console.log('[useCroutonError v1.0.1] useToast() called successfully')
       toast.add({
         title: message,
         description: description || undefined,

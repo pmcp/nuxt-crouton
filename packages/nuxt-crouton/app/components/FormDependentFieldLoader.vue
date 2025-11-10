@@ -8,6 +8,10 @@
     :error="error"
     :dependent-value="dependentValue"
     :dependent-label="dependentLabel"
+    :dependent-collection="dependentCollection"
+    :dependent-field="dependentField"
+    :multiple="multiple"
+    :card-variant="cardVariant"
     v-bind="$attrs"
   />
   <div v-else class="text-sm text-red-500">
@@ -17,11 +21,13 @@
 
 <script setup lang="ts">
 interface Props {
-  modelValue?: string | null
+  modelValue?: string[] | null
   dependentValue?: string | null
   dependentCollection: string
   dependentField: string
   dependentLabel?: string
+  multiple?: boolean
+  cardVariant?: string
   idKey?: string
   labelKey?: string
   valueKey?: string
@@ -31,13 +37,15 @@ const props = withDefaults(defineProps<Props>(), {
   modelValue: null,
   dependentValue: null,
   dependentLabel: 'Selection',
+  multiple: false,
+  cardVariant: 'Mini',
   idKey: 'id',
   labelKey: 'label',
   valueKey: 'value'
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | null]
+  'update:modelValue': [value: string[] | null]
 }>()
 
 // Get component maps from useCollections
@@ -57,9 +65,12 @@ const resolvedComponent = computed(() => {
 })
 
 // Reactive fetch of the dependent item when dependentValue changes
+// Use computed ref to ensure proper reactivity tracking
+const dependentId = computed(() => props.dependentValue || '')
+
 const { item, pending, error } = await useCollectionItem(
   props.dependentCollection,
-  () => props.dependentValue || ''
+  dependentId
 )
 
 // Extract options from the dependent field
@@ -72,15 +83,22 @@ const options = computed(() => {
 
   // Map the field data to a consistent format
   return fieldData.map((option: any) => ({
-    id: option[props.idKey],
-    label: option[props.labelKey],
-    value: option[props.valueKey]
+    ...option,  // Spread everything
+    id: option[props.idKey] || option.id  // Only normalize id
+    // Remove label and value - let card components use actual properties
   }))
 })
 
 // Create a local model that syncs with parent
+// Normalize empty strings to null for consistent type handling
 const modelValue = computed({
-  get: () => props.modelValue,
+  get: () => {
+    // Convert empty string to null to match expected type (string[] | null)
+    if (props.modelValue === '' || props.modelValue === undefined) {
+      return null
+    }
+    return props.modelValue
+  },
   set: (value) => emit('update:modelValue', value)
 })
 

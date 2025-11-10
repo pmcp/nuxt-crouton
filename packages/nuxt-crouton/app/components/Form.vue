@@ -6,40 +6,23 @@
       :key="state.id"
       v-model:open="state.isOpen"
       :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
-      :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
+      :description="`Form for ${state.action || 'managing'} ${getCollectionName(state.collection)}`"
       size="lg"
       @update:open="(val: boolean) => handleClose(state.id, val)"
       @after:leave="() => handleAfterLeave(state.id)"
   >
-    <template #content="{ close }">
+    <template #body>
+      <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
 
-      <div class="flex items-center justify-between mb-4">
-        <h2>
-          <span class="capitalize">{{ state.action }}</span>
-          {{ getCollectionName(state.collection) }}
-        </h2>
-        <UButton
-            icon="i-lucide-x"
-            variant="ghost"
-            size="xs"
-            @click.stop="close()"
-        />
-      </div>
-
-      <div class="w-full">
-
-        <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
-
-        <CroutonFormDynamicLoader
-            v-else
-            :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-            :collection="state.collection"
-            :loading="state.loading"
-            :action="state.action"
-            :items="state.items"
-            :activeItem="state.activeItem"
-        />
-      </div>
+      <CroutonFormDynamicLoader
+          v-else
+          :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
+          :collection="state.collection"
+          :loading="state.loading"
+          :action="state.action"
+          :items="state.items"
+          :activeItem="state.activeItem"
+      />
     </template>
   </UModal>
 
@@ -90,7 +73,7 @@
       :key="state.id"
       v-model:open="state.isOpen"
       :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
-      :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
+      :description="`Form for ${state.action || 'managing'} ${getCollectionName(state.collection)}`"
       side="right"
       :ui="getSlideoverUi(state, index)"
       :style="getSlideoverStyle(state, index)"
@@ -101,39 +84,23 @@
       @update:open="(val: boolean) => handleSlideoverClose(state.id, val)"
       @after:leave="() => handleAfterLeave(state.id)"
   >
-    <!-- Enhanced header with expand button -->
-    <template #header>
-      <div class="flex items-center justify-between w-full max-w-7xl mx-auto">
+    <!-- Enhanced actions with expand button alongside close -->
+    <template #actions>
+      <div class="flex items-center gap-2">
+        <!-- Breadcrumb for nested slideovers -->
+        <span v-if="getPreviousSlideover(index) && !state.isExpanded" class="text-sm mr-2">
+          {{ getPreviousSlideover(index)?.action }} {{ getPreviousSlideover(index)?.collection }} ›
+        </span>
 
-        <div class="flex items-center gap-2 ">
-
-          <span v-if="getPreviousSlideover(index) && !state.isExpanded" class="text-md">
-            {{ getPreviousSlideover(index)?.action }} {{ getPreviousSlideover(index)?.collection }} >
-          </span>
-          <h2>
-            <span class="capitalize">{{ state.action }}</span>
-            {{ getCollectionName(state.collection) }}
-          </h2>
-        </div>
-        <div class="flex items-center gap-2">
-          <!-- Expand/Collapse button -->
-          <UButton
-              :icon="state.isExpanded ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'"
-              variant="ghost"
-              color="gray"
-              size="xs"
-              :title="state.isExpanded ? 'Collapse to sidebar' : 'Expand to fullscreen'"
-              @click.stop="toggleExpand(state.id)"
-          />
-          <!-- Close button -->
-          <UButton
-              icon="i-lucide-x"
-              variant="ghost"
-              color="gray"
-              size="xs"
-              @click.stop="close(state.id)"
-          />
-        </div>
+        <!-- Expand/Collapse button -->
+        <UButton
+            :icon="state.isExpanded ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'"
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            :title="state.isExpanded ? 'Collapse to sidebar' : 'Expand to fullscreen'"
+            @click.stop="toggleExpand(state.id)"
+        />
       </div>
     </template>
 

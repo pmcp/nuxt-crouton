@@ -16,6 +16,12 @@ interface Props {
   width?: string
   /** Additional CSS classes */
   class?: string
+  /** Enable smooth flyTo animation when center changes (default: false) */
+  flyToOnCenterChange?: boolean
+  /** FlyTo animation duration in milliseconds (default: 800) */
+  flyToDuration?: number
+  /** FlyTo easing function (default: easeInOutCubic) */
+  flyToEasing?: (t: number) => number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -69,6 +75,37 @@ useMapbox(props.id, (map) => {
   if (map && !isLoaded.value) {
     handleMapLoad(map)
   }
+})
+
+// Default easing function for flyTo
+const defaultEasing = (t: number): number => {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+}
+
+// Watch for center changes and optionally animate with flyTo
+watch(() => props.center, (newCenter, oldCenter) => {
+  // Only animate if flyToOnCenterChange is enabled and map is loaded
+  if (!props.flyToOnCenterChange || !mapInstance.value || !isLoaded.value) return
+  if (!newCenter || !oldCenter) return
+
+  // Convert to array format for comparison
+  const getCoords = (center: LngLatLike) => {
+    return Array.isArray(center) ? center : [center.lng, center.lat]
+  }
+
+  const oldCoords = getCoords(oldCenter)
+  const newCoords = getCoords(newCenter)
+
+  // Only animate if coordinates actually changed
+  if (oldCoords[0] === newCoords[0] && oldCoords[1] === newCoords[1]) return
+
+  // Use Mapbox's native flyTo for smooth panning
+  mapInstance.value.flyTo({
+    center: newCenter,
+    duration: props.flyToDuration ?? 800,
+    essential: true,
+    easing: props.flyToEasing || defaultEasing
+  })
 })
 
 // Expose map instance and state

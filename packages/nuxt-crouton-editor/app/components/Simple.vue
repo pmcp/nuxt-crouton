@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col h-full">
-    <CroutonEditorToolbar :editor="editor" class="flex-shrink-0" />
+  <div ref="editorContainer" class="flex flex-col h-full">
+    <CroutonEditorToolbar :editor="editor" :container="editorContainer" class="flex-shrink-0" />
     <floating-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
       <div class="editor-floating-menu">
         <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">
@@ -37,6 +37,8 @@ const props = defineProps({
 });
 
 const emits = defineEmits(['update:modelValue'])
+
+const editorContainer = ref(null)
 
 watch(() => props.modelValue, (newValue) => {
   if (!editor.value) return;

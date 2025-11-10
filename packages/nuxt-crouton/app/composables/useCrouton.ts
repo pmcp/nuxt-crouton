@@ -1,3 +1,4 @@
+// v1.0.1 - Fixed inject() warning by moving useToast() calls inside methods
 /**
  * useCrouton - Modal and form state management
  *
@@ -50,7 +51,6 @@ const DEFAULT_PAGINATION: PaginationState = {
 
 
 export default function () {
-  const toast = useToast()
   const route = useRoute()
   const { getTeamId } = useTeamContext()
 
@@ -79,6 +79,9 @@ export default function () {
 
     // Check if we've reached maximum depth
     if (croutonStates.value.length >= MAX_DEPTH) {
+      console.log('[useCrouton v1.0.1] About to call useToast() for max depth warning')
+      const toast = useToast()
+      console.log('[useCrouton v1.0.1] useToast() called successfully')
       toast.add({
         title: 'Maximum depth reached',
         description: 'Cannot open more than 5 nested forms',
@@ -167,6 +170,9 @@ export default function () {
         return
       } catch (error) {
         console.error('[Crouton.open] Error fetching item:', error)
+        console.log('[useCrouton v1.0.1] About to call useToast() for error message')
+        const toast = useToast()
+        console.log('[useCrouton v1.0.1] useToast() called successfully')
         toast.add({
           title: 'Uh oh! Something went wrong.',
           description: String(error),

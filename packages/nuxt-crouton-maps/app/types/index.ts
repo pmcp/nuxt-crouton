@@ -64,6 +64,41 @@ export interface UseMarkerOptions {
   }
 }
 
+/**
+ * Easing function type for animations
+ * Takes progress (0-1) and returns eased progress (0-1)
+ */
+export type EasingFunction = (t: number) => number
+
+/**
+ * Preset easing function names
+ */
+export type EasingPreset = 'linear' | 'ease' | 'easeInOut' | 'easeInOutCubic'
+
+/**
+ * Animation options for marker transitions
+ */
+export interface MarkerAnimationOptions {
+  /** Enable smooth animation when position changes (default: true) */
+  animateTransitions?: boolean
+  /** Animation duration in milliseconds (default: 800) */
+  animationDuration?: number
+  /** Animation easing function or preset name (default: 'easeInOutCubic') */
+  animationEasing?: EasingPreset | EasingFunction
+}
+
+/**
+ * Animation options for map flyTo transitions
+ */
+export interface MapFlyToOptions {
+  /** Enable smooth flyTo animation when center changes (default: false) */
+  flyToOnCenterChange?: boolean
+  /** FlyTo animation duration in milliseconds (default: 800) */
+  flyToDuration?: number
+  /** FlyTo easing function (default: easeInOutCubic) */
+  flyToEasing?: EasingFunction
+}
+
 // Re-export Mapbox GL JS types for convenience
 export type {
   Map,

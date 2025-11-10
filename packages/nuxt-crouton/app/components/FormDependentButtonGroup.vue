@@ -1,50 +1,51 @@
 <template>
   <div>
-    <div v-if="pending" class="flex items-center gap-2 text-sm text-gray-500">
+    <div v-if="pending" class="flex items-center gap-2 text-sm">
       <UIcon name="i-heroicons-arrow-path" class="animate-spin" />
       Loading options...
     </div>
 
-    <div v-else-if="error" class="text-sm text-red-500">
+    <div v-else-if="error" class="text-sm text-warning">
       Failed to load options
     </div>
 
-    <div v-else-if="!dependentValue" class="text-sm text-gray-500">
+    <div v-else-if="!dependentValue" class="text-sm text-neutral">
       {{ dependentLabel }} required
     </div>
 
-    <div v-else-if="!options || options.length === 0" class="text-sm text-gray-500">
+    <div v-else-if="!options || options.length === 0" class="text-sm text-neutral">
       No options available
     </div>
 
-    <UFieldGroup v-else :ui="{ wrapper: 'flex flex-wrap gap-2' }">
-      <UButton
-        v-for="option in options"
-        :key="option.id"
-        :variant="modelValue === option.id ? 'solid' : 'outline'"
-        :color="modelValue === option.id ? 'primary' : 'gray'"
-        @click="handleSelect(option.id)"
-      >
-        {{ option.label }}
-      </UButton>
-    </UFieldGroup>
+    <CroutonFormDependentSelectOption
+      v-else
+      v-model="localValue"
+      :options="options"
+      :multiple="multiple"
+      :dependent-collection="dependentCollection"
+      :dependent-field="dependentField"
+      :card-variant="cardVariant"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 interface Option {
   id: string
-  label: string
-  value?: string
+  [key: string]: any
 }
 
 interface Props {
-  modelValue?: string | null
+  modelValue?: string[] | null
   options?: Option[]
   pending?: boolean
   error?: any
   dependentValue?: string | null
   dependentLabel?: string
+  multiple?: boolean
+  dependentCollection: string
+  dependentField: string
+  cardVariant?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -53,14 +54,18 @@ const props = withDefaults(defineProps<Props>(), {
   pending: false,
   error: null,
   dependentValue: null,
-  dependentLabel: 'Selection'
+  dependentLabel: 'Selection',
+  multiple: false,
+  cardVariant: 'Mini'
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | null]
+  'update:modelValue': [value: string[] | null]
 }>()
 
-const handleSelect = (id: string) => {
-  emit('update:modelValue', id)
-}
+// Local model for v-model binding
+const localValue = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
 </script>

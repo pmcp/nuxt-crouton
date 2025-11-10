@@ -8,15 +8,48 @@ interface NavigationItem {
 interface Props {
   tabs?: boolean
   navigationItems?: NavigationItem[]
+  tabErrors?: Record<string, number>
+  modelValue?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   tabs: false,
-  navigationItems: () => []
+  navigationItems: () => [],
+  tabErrors: () => ({}),
+  modelValue: ''
 })
 
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
 
-const activeSection = ref(props.navigationItems?.[0]?.value || '')
+// Two-way binding for active section
+const activeSection = computed({
+  get: () => props.modelValue || props.navigationItems?.[0]?.value || '',
+  set: (value) => emit('update:modelValue', value)
+})
+
+// Enhance navigation items with error indicators
+const enhancedNavigationItems = computed(() => {
+  return props.navigationItems.map(item => {
+    const errorCount = props.tabErrors[item.value] || 0
+
+    if (errorCount > 0) {
+      return {
+        ...item,
+        // Add red error badge
+        badge: {
+          color: 'red' as const,
+          variant: 'solid' as const,
+          // Use a dot or the error count
+          label: '●'
+        }
+      }
+    }
+
+    return item
+  })
+})
 
 // Detect if sidebar slot is being used
 const slots = useSlots()
@@ -49,7 +82,7 @@ const sidebarAccordionItems = [{
             <UTabs
                 v-if="tabs && navigationItems.length"
                 v-model="activeSection"
-                :items="navigationItems"
+                :items="enhancedNavigationItems"
                 :content="false"
                 class="w-full"
             />
