@@ -1,6 +1,6 @@
 {
   "name": "@friendlyinternet/nuxt-crouton-maps",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Map integration layer for Nuxt Crouton with Mapbox support",
   "type": "module",
   "main": "./nuxt.config.ts",

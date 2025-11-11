@@ -1,6 +1,6 @@
 {
   "name": "@friendlyinternet/nuxt-crouton-devtools",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "DevTools integration for Nuxt Crouton - visual inspection and management of CRUD collections",
   "type": "module",
   "main": "./dist/module.mjs",
