@@ -1,6 +1,6 @@
 {
   "name": "@friendlyinternet/nuxt-crouton-connector",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Pre-built connectors for external auth systems and user management integrations with Nuxt Crouton",
   "type": "module",
   "main": "./nuxt.config.ts",

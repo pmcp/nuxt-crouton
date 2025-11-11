@@ -37,7 +37,7 @@ pnpm install
 You can publish all packages at once:
 
 ```bash
-pnpm publish:all
+ pnpm run version:minor
 ```
 
 Or publish them individually:

@@ -24,9 +24,9 @@
   "scripts": {
     "publish:all": "pnpm -r publish --access public",
     "publish:dry": "pnpm -r publish --dry-run",
-    "version:patch": "pnpm -r version patch",
-    "version:minor": "pnpm -r version minor",
-    "version:major": "pnpm -r version major",
+    "version:patch": "pnpm -r exec npm version patch --no-git-tag-version",
+    "version:minor": "pnpm -r exec npm version minor --no-git-tag-version",
+    "version:major": "pnpm -r exec npm version major --no-git-tag-version",
     "clean": "rm -rf node_modules packages/*/node_modules"
   },
   "devDependencies": {
