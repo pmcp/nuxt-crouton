@@ -10,7 +10,11 @@ export function generateGetEndpointSimplified(data, config = null) {
 
   const queriesPath = '../../../../database/queries'
 
-  return `import { getAll${prefixedPascalCasePlural}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
+// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
+// Install: pnpm add @friendlyinternet/nuxt-crouton
+// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+import { getAll${prefixedPascalCasePlural}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'
 import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 
 export default defineEventHandler(async (event) => {
@@ -46,7 +50,11 @@ export function generatePostEndpointSimplified(data, config = null) {
   }`
   ).join('\n') + '\n' : ''
 
-  return `import { create${prefixedPascalCase} } from '${queriesPath}'
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
+// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
+// Install: pnpm add @friendlyinternet/nuxt-crouton
+// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+import { create${prefixedPascalCase} } from '${queriesPath}'
 import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 
 export default defineEventHandler(async (event) => {
@@ -94,7 +102,11 @@ export function generatePatchEndpointSimplified(data, config = null) {
     ? `import { update${prefixedPascalCase}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'`
     : `import { update${prefixedPascalCase} } from '${queriesPath}'`
 
-  return `${imports}
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
+// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
+// Install: pnpm add @friendlyinternet/nuxt-crouton
+// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+${imports}
 import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 import type { ${prefixedPascalCase} } from '../../../../../types'
 
@@ -130,7 +142,11 @@ export function generateDeleteEndpointSimplified(data, config = null) {
 
   const queriesPath = '../../../../database/queries'
 
-  return `import { delete${prefixedPascalCase} } from '${queriesPath}'
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
+// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
+// Install: pnpm add @friendlyinternet/nuxt-crouton
+// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+import { delete${prefixedPascalCase} } from '${queriesPath}'
 import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 
 export default defineEventHandler(async (event) => {

@@ -199,6 +199,29 @@ export function generateFormComponent(data, config = {}) {
             ${sortable ? ':sortable="true"' : ':sortable="false"'}
           />
         </UFormField>`
+    } else if (field.type === 'json') {
+      // JSON field - use textarea with JSON serialization
+      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+          <UTextarea
+            :model-value="typeof state.${field.name} === 'string' ? state.${field.name} : JSON.stringify(state.${field.name}, null, 2)"
+            @update:model-value="(val) => { try { state.${field.name} = val ? JSON.parse(val) : {} } catch (e) { console.error('Invalid JSON:', e) } }"
+            class="w-full font-mono text-sm"
+            :rows="8"
+            placeholder="Enter JSON object"
+          />
+        </UFormField>`
+    } else if (field.type === 'array' && !field.refTarget) {
+      // Array field without refTarget - use textarea with array handling
+      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+          <UTextarea
+            :model-value="Array.isArray(state.${field.name}) ? state.${field.name}.join('\\n') : ''"
+            @update:model-value="(val) => state.${field.name} = val ? val.split('\\n').filter(Boolean) : []"
+            class="w-full"
+            :rows="6"
+            placeholder="Enter one value per line"
+          />
+          <p class="text-sm text-gray-500 mt-1">Enter one value per line</p>
+        </UFormField>`
     } else {
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
           <UInput v-model="state.${field.name}" class="w-full" size="xl" />

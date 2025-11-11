@@ -72,7 +72,7 @@ export function generateQueries(data, config = null) {
   const tableName = `${layerCamelCase}${plural.charAt(0).toUpperCase() + plural.slice(1)}`
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
-  const typesPath = './types'
+  const typesPath = '../../types'
 
   // Detect reference fields for LEFT JOINs and post-query processing
   const { singleReferences, arrayReferences } = detectReferenceFields(data, config)

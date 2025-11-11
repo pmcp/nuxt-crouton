@@ -92,7 +92,19 @@ export async function detectRequiredDependencies(config) {
   const baseLayerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton')
   const baseLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton')
 
-  if (!baseLayerInstalled || !baseLayerExtended) {
+  // Special check for useTeamUtility flag - requires base package for #crouton/team-auth
+  const useTeamUtility = config?.flags?.useTeamUtility ?? false
+  if (useTeamUtility && (!baseLayerInstalled || !baseLayerExtended)) {
+    // Team utility REQUIRES the npm package (local layer doesn't have the alias)
+    required.missing.push({
+      type: 'layer',
+      name: '@friendlyinternet/nuxt-crouton',
+      reason: 'REQUIRED for team-based multi-tenancy (provides #crouton/team-auth module)',
+      installCmd: 'pnpm add @friendlyinternet/nuxt-crouton',
+      configCmd: `Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts`,
+      critical: true
+    })
+  } else if (!baseLayerInstalled || !baseLayerExtended) {
     // Fallback to check for local crouton layer
     const croutonLayerExists = await layerExists('crouton')
     if (!croutonLayerExists) {
@@ -167,12 +179,20 @@ export async function detectRequiredDependencies(config) {
 export function displayMissingDependencies(dependencies) {
   if (dependencies.missing.length === 0) return true
 
-  console.log('\n❌ Missing Required Dependencies\n')
+  const hasCritical = dependencies.missing.some(d => d.critical)
+
+  if (hasCritical) {
+    console.log('\n🚨 CRITICAL: Missing Required Dependencies\n')
+  } else {
+    console.log('\n❌ Missing Required Dependencies\n')
+  }
+
   console.log('The following layers are required for your collection:')
   console.log('═'.repeat(60))
 
   dependencies.missing.forEach(dep => {
-    console.log(`\n📦 ${dep.name}`)
+    const prefix = dep.critical ? '🚨' : '📦'
+    console.log(`\n${prefix} ${dep.name}${dep.critical ? ' [CRITICAL]' : ''}`)
     console.log(`   Reason: ${dep.reason}`)
     console.log(`\n   Installation steps:`)
     console.log(`   1. Install: ${dep.installCmd}`)
