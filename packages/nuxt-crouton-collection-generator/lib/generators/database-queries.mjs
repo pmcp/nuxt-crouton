@@ -92,7 +92,8 @@ export function generateQueries(data, config = null) {
 `
     } else {
       // Local layer collection - import from sibling directory
-      schemaImports += `import * as ${collection}Schema from '../../../${collection}/server/database/schema'
+      // Use lowercase for folder path (folders are created as lowercase plural)
+      schemaImports += `import * as ${collection}Schema from '../../../${collection.toLowerCase()}/server/database/schema'
 `
     }
   })
@@ -115,9 +116,11 @@ export function generateQueries(data, config = null) {
 
       // For external refs, use table name as-is (no layer prefix)
       // For local refs, add the layer prefix
+      // Convert collection to lowercase first to match folder/export naming
+      const lowercaseCollection = collectionIdentifier.toLowerCase()
       const refTableName = ref.isExternal
         ? collectionIdentifier
-        : `${layerCamelCase}${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}`
+        : `${layerCamelCase}${lowercaseCollection.charAt(0).toUpperCase() + lowercaseCollection.slice(1)}`
 
       if (ref.isUserReference) {
         // Special user reference handling
@@ -176,9 +179,14 @@ export function generateQueries(data, config = null) {
     Object.entries(refsByCollection).forEach(([collection, refs]) => {
       const ref = refsByCollection[collection][0] // Get reference metadata
       const collectionIdentifier = collection
+      // Convert collection to lowercase first to match folder/export naming
+      const lowercaseCollection = collectionIdentifier.toLowerCase()
       const tableReference = ref.isExternal
         ? collectionIdentifier
-        : `${collectionIdentifier}Schema.${layerCamelCase}${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}`
+        : `${collectionIdentifier}Schema.${layerCamelCase}${lowercaseCollection.charAt(0).toUpperCase() + lowercaseCollection.slice(1)}`
+
+      // Use consistent PascalCase variable naming based on lowercase collection
+      const collectionVarName = lowercaseCollection.charAt(0).toUpperCase() + lowercaseCollection.slice(1)
 
       // Build the ID collection logic for all fields referencing this collection
       const idCollectionCode = refs.map(ref => `
@@ -189,7 +197,7 @@ export function generateQueries(data, config = null) {
               ? JSON.parse(item.${ref.fieldName})
               : item.${ref.fieldName}
             if (Array.isArray(ids)) {
-              ids.forEach(id => all${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}Ids.add(id))
+              ids.forEach(id => all${collectionVarName}Ids.add(id))
             }
           } catch (e) {
             // Handle parsing errors gracefully
@@ -207,7 +215,7 @@ export function generateQueries(data, config = null) {
               ? JSON.parse(item.${ref.fieldName})
               : item.${ref.fieldName}
             if (Array.isArray(ids)) {
-              item.${ref.fieldName}Data = related${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}.filter(r => ids.includes(r.id))
+              item.${ref.fieldName}Data = related${collectionVarName}.filter(r => ids.includes(r.id))
             }
           } catch (e) {
             console.error('Error mapping ${ref.fieldName}:', e)
@@ -216,13 +224,13 @@ export function generateQueries(data, config = null) {
 
       processingBlocks.push(`
     // Post-process array references to ${collection}
-    const all${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}Ids = new Set()${idCollectionCode}
+    const all${collectionVarName}Ids = new Set()${idCollectionCode}
 
-    if (all${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}Ids.size > 0) {
-      const related${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)} = await db
+    if (all${collectionVarName}Ids.size > 0) {
+      const related${collectionVarName} = await db
         .select()
         .from(${tableReference})
-        .where(inArray(${tableReference}.id, Array.from(all${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}Ids)))
+        .where(inArray(${tableReference}.id, Array.from(all${collectionVarName}Ids)))
 
       ${plural}.forEach(item => {${mappingCode}
       })
