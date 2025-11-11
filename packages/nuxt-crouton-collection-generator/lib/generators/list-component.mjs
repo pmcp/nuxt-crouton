@@ -62,9 +62,9 @@ export function generateListComponent(data, config = {}) {
         // These are managed by connector packages (e.g., @friendlyinternet/nuxt-crouton-connector-supersaas)
         resolvedCollection = field.refTarget
       } else {
-        // Local layer reference: add layer prefix
+        // Local layer reference: add layer prefix (use lowercase plural to match folder/config naming)
         const refCases = toCase(field.refTarget)
-        resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+        resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.plural}`
       }
 
       // Check if this is an array-type reference (multi-select)
@@ -104,9 +104,9 @@ export function generateListComponent(data, config = {}) {
       <${cardMiniComponent} :value="row.original.${field.name}" />
     </template>`
     }).join('')}${dependentFields.map(field => {
-      // Resolve the dependent collection with layer prefix
+      // Resolve the dependent collection with layer prefix (use lowercase plural to match folder/config naming)
       const dependentCollectionCases = toCase(field.meta.dependsOnCollection)
-      const resolvedDependentCollection = `${layerPascalCase.toLowerCase()}${dependentCollectionCases.pascalCasePlural}`
+      const resolvedDependentCollection = `${layerPascalCase.toLowerCase()}${dependentCollectionCases.plural}`
 
       return `
     <template #${field.name}-cell="{ row }">

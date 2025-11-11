@@ -85,9 +85,9 @@ export function generateFormComponent(data, config = {}) {
       const dependsOnField = field.meta.dependsOnField
       const dependsOnCollection = field.meta.dependsOnCollection
 
-      // Resolve the collection name with layer prefix
+      // Resolve the collection name with layer prefix (use lowercase plural to match folder/config naming)
       const refCases = toCase(dependsOnCollection)
-      const resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+      const resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.plural}`
 
       // Determine dependent label (capitalize first letter)
       const dependentLabel = dependsOn.charAt(0).toUpperCase() + dependsOn.slice(1)
@@ -113,9 +113,9 @@ export function generateFormComponent(data, config = {}) {
         // These are managed by connector packages (e.g., @friendlyinternet/nuxt-crouton-connector-supersaas)
         resolvedCollection = field.refTarget
       } else {
-        // Local layer reference: add layer prefix
+        // Local layer reference: add layer prefix (use lowercase plural to match folder/config naming)
         const refCases = toCase(field.refTarget)
-        resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+        resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.plural}`
       }
 
       // Auto-detect if this references an asset collection
