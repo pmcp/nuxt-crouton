@@ -29,17 +29,33 @@ const props = defineProps({
 })
 
 // Get component mapping from test composable
-const { componentMap, componentDetailMap } = useCollections()
+const { componentMap } = useCollections()
 
 const currentComponent = computed(() => {
   if (!props.collection) return null
 
-  // If action is 'view' and a detail component exists, use it
-  if (props.action === 'view' && componentDetailMap[props.collection]) {
-    return resolveComponent(componentDetailMap[props.collection])
+  // If action is 'view', try to resolve a Detail component by convention
+  if (props.action === 'view') {
+    const formComponentName = componentMap[props.collection]
+    if (formComponentName) {
+      // Convention: Replace 'Form' with 'Detail' in component name
+      // e.g., 'DiscubotJobsForm' -> 'DiscubotJobsDetail'
+      const detailComponentName = formComponentName.replace(/Form$/, 'Detail')
+
+      try {
+        // Try to resolve the Detail component
+        const detailComponent = resolveComponent(detailComponentName)
+        // If it exists (not a string), use it
+        if (typeof detailComponent !== 'string') {
+          return detailComponent
+        }
+      } catch {
+        // Detail component doesn't exist, will fall through to Form
+      }
+    }
   }
 
-  // Otherwise use the standard form component
+  // Fall back to standard form component (for view, create, update, delete)
   if (!componentMap[props.collection]) return null
   return resolveComponent(componentMap[props.collection])
 })
