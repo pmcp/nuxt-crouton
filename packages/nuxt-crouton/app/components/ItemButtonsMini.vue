@@ -1,5 +1,40 @@
 <template>
   <div :class="containerClasses">
+    <!-- VIEW -->
+    <div v-if="view">
+      <!-- With tooltip-->
+      <UTooltip
+        v-if="viewTooltip.length > 0"
+        :popper="{placement: 'left', arrow: false  }"
+      >
+        <template #text>
+          <span class="italic">{{ viewTooltip }}</span>
+        </template>
+
+        <UButton
+          :loading="viewLoading"
+          icon="i-lucide-eye"
+          color="neutral"
+          variant="soft"
+          size="xs"
+          :class="buttonClasses"
+          @click="$emit('view')"
+        />
+      </UTooltip>
+
+      <!-- Without tooltip-->
+      <UButton
+        v-else
+        :loading="viewLoading"
+        icon="i-lucide-eye"
+        color="neutral"
+        variant="soft"
+        size="xs"
+        :class="buttonClasses"
+        @click="$emit('view')"
+      />
+    </div>
+
     <!-- DELETE -->
     <div v-if="delete">
     <!-- With tooltip-->
@@ -74,6 +109,10 @@
 </template>
 <script setup lang="ts">
 const props = defineProps({
+  view: {
+    type: Boolean,
+    default: false
+  },
   delete: {
     type: Boolean,
     default: false
@@ -90,6 +129,10 @@ const props = defineProps({
     type: String,
     default: 'flex flex-row gap-2'
     },
+  viewTooltip: {
+    type: String,
+    default: ''
+  },
   updateTooltip: {
     type: String,
     default: ''
@@ -97,6 +140,10 @@ const props = defineProps({
   deleteTooltip: {
     type: String,
     default: ''
+  },
+  viewLoading: {
+    type: Boolean,
+    default: false
   },
   updateLoading: {
     type: Boolean,

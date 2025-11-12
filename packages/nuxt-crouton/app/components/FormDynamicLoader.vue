@@ -29,10 +29,18 @@ const props = defineProps({
 })
 
 // Get component mapping from test composable
-const { componentMap } = useCollections()
+const { componentMap, componentDetailMap } = useCollections()
 
 const currentComponent = computed(() => {
-  if (!props.collection || !componentMap[props.collection]) return null
+  if (!props.collection) return null
+
+  // If action is 'view' and a detail component exists, use it
+  if (props.action === 'view' && componentDetailMap[props.collection]) {
+    return resolveComponent(componentDetailMap[props.collection])
+  }
+
+  // Otherwise use the standard form component
+  if (!componentMap[props.collection]) return null
   return resolveComponent(componentMap[props.collection])
 })
 

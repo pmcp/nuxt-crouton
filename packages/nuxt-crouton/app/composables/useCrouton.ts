@@ -9,8 +9,8 @@
  */
 
 // Type definitions
-type CroutonAction = 'create' | 'update' | 'delete' | null
-type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'create_open' | 'update_open' | 'delete_open'
+type CroutonAction = 'create' | 'update' | 'delete' | 'view' | null
+type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'view_send' | 'create_open' | 'update_open' | 'delete_open' | 'view_open'
 
 interface CroutonState {
   id: string
@@ -107,7 +107,7 @@ export default function () {
     croutonStates.value.push(newState)
     console.log('[Crouton.open] New state added, total states:', croutonStates.value.length)
 
-    if (actionIn === 'update') {
+    if (actionIn === 'update' || actionIn === 'view') {
       try {
         // Get the apiPath from config
         const collections = useCollections()

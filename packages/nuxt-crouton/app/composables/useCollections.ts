@@ -6,6 +6,7 @@ interface CollectionConfig {
   name?: string
   layer?: string
   componentName?: string
+  componentDetailName?: string
   apiPath?: string
   defaultPagination?: {
     currentPage: number
@@ -62,6 +63,14 @@ export default function useCollections() {
     }
   })
 
+  // Build detail component map for FormDynamicLoader to resolve detail views
+  const componentDetailMap = reactive<Record<string, string>>({})
+  Object.entries(collectionRegistry).forEach(([name, config]) => {
+    if (config?.componentDetailName) {
+      componentDetailMap[name] = config.componentDetailName
+    }
+  })
+
   // Build dependent field component map for FormDependentFieldLoader
   const dependentFieldComponentMap = reactive<Record<string, Record<string, string>>>({})
   Object.entries(collectionRegistry).forEach(([name, config]) => {
@@ -77,6 +86,7 @@ export default function useCollections() {
 
   return {
     componentMap,
+    componentDetailMap,
     dependentFieldComponentMap,
     getConfig,
     configs: collectionRegistry
