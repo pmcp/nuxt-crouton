@@ -43,50 +43,43 @@
     </template>
 
     <template #body>
-      <ul role="list" class="divide-y divide-default">
+      <ul v-if="customCardComponent" role="list" class="divide-y divide-default">
         <li
           v-for="(row, index) in rows"
           :key="row.id || index"
-          class="flex items-center justify-between gap-3 py-3 px-4 sm:px-6 hover:bg-muted/50 transition-colors"
+          class="py-3 px-4 sm:px-6 hover:bg-muted/50 transition-colors"
         >
-          <div class="flex items-center gap-3 min-w-0">
-            <!-- Avatar if applicable -->
-            <UAvatar
-              v-if="getListItemAvatar(row)"
-              v-bind="getListItemAvatar(row)"
-              size="md"
-            />
-
-            <div v-else class="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-              <UIcon name="i-lucide-user" class="w-5 h-5 text-muted-foreground" />
-            </div>
-
-            <div class="text-sm min-w-0">
-              <p class="text-highlighted font-medium truncate">
-                {{ getListItemTitle(row) }}
-              </p>
-              <p class="text-muted truncate">
-                {{ getListItemSubtitle(row) }}
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <!-- Custom slot for list item actions -->
-            <slot name="list-item-actions" :row="row">
-              <!-- Default actions -->
-              <CroutonItemButtonsMini
-                  delete
-                  @delete="openCrouton('delete', collection, [row.id])"
-                  update
-                  @update="openCrouton('update', collection, [row.id])"
-              />
-
-
-            </slot>
-          </div>
+          <component
+            :is="customCardComponent"
+            :item="row"
+            :layout="'list'"
+            :collection="collection"
+          />
         </li>
       </ul>
+
+      <div v-else class="text-center text-muted p-8">
+        <p class="text-lg font-medium mb-2">Create Card.vue for list layout</p>
+        <code class="text-xs bg-muted/30 px-2 py-1 rounded">
+          layers/{layer}/collections/{{ collection }}/app/components/Card.vue
+        </code>
+        <p class="text-sm mt-4">Example Card.vue structure:</p>
+        <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
+&lt;script setup lang="ts"&gt;
+interface Props {
+  item: any
+  layout: 'list' | 'grid' | 'cards'
+  collection: string
+}
+defineProps&lt;Props&gt;()
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div v-if="layout === 'list'"&gt;
+    {{ item.name }}
+  &lt;/div&gt;
+&lt;/template&gt;</pre>
+      </div>
 
       <!-- Pagination -->
       <div v-if="serverPagination && paginationData" class="p-4 border-t border-default">
@@ -99,21 +92,112 @@
     </template>
   </UDashboardPanel>
 
-  <!-- Grid Layout - Placeholder -->
+  <!-- Grid Layout -->
   <div v-else-if="activeLayout === 'grid'">
-    <!-- Grid layout to be implemented -->
-    <p class="p-4 text-muted">Grid layout coming soon</p>
+    <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+      <UButton
+        color="primary"
+        size="xs"
+        @click="openCrouton('create', collection)"
+      >
+        Create
+      </UButton>
+    </div>
+
+    <div v-if="customCardComponent" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+      <component
+        v-for="(row, index) in rows"
+        :key="row.id || index"
+        :is="customCardComponent"
+        :item="row"
+        :layout="'grid'"
+        :collection="collection"
+      />
+    </div>
+
+    <div v-else class="text-center text-muted p-8">
+      <p class="text-lg font-medium mb-2">Create Card.vue for grid layout</p>
+      <code class="text-xs bg-muted/30 px-2 py-1 rounded">
+        layers/{layer}/collections/{{ collection }}/app/components/Card.vue
+      </code>
+      <p class="text-sm mt-4">Example Card.vue with grid layout:</p>
+      <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
+&lt;template&gt;
+  &lt;UCard v-if="layout === 'grid'" class="hover:shadow-lg"&gt;
+    &lt;template #header&gt;
+      &lt;h3&gt;{{ item.title }}&lt;/h3&gt;
+    &lt;/template&gt;
+    {{ item.description }}
+  &lt;/UCard&gt;
+&lt;/template&gt;</pre>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="serverPagination && paginationData" class="p-4 border-t border-default">
+      <CroutonTablePagination
+        :page="paginationData.currentPage"
+        :page-count="paginationData.totalPages || Math.ceil(paginationData.totalItems / paginationData.pageSize)"
+        :total-items="paginationData.totalItems"
+      />
+    </div>
   </div>
 
-  <!-- Cards Layout - Placeholder -->
+  <!-- Cards Layout -->
   <div v-else-if="activeLayout === 'cards'">
-    <!-- Cards layout to be implemented -->
-    <p class="p-4 text-muted">Cards layout coming soon</p>
+    <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+      <UButton
+        color="primary"
+        size="xs"
+        @click="openCrouton('create', collection)"
+      >
+        Create
+      </UButton>
+    </div>
+
+    <div v-if="customCardComponent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+      <component
+        v-for="(row, index) in rows"
+        :key="row.id || index"
+        :is="customCardComponent"
+        :item="row"
+        :layout="'cards'"
+        :collection="collection"
+      />
+    </div>
+
+    <div v-else class="text-center text-muted p-8">
+      <p class="text-lg font-medium mb-2">Create Card.vue for cards layout</p>
+      <code class="text-xs bg-muted/30 px-2 py-1 rounded">
+        layers/{layer}/collections/{{ collection }}/app/components/Card.vue
+      </code>
+      <p class="text-sm mt-4">Example Card.vue with detailed cards layout:</p>
+      <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
+&lt;template&gt;
+  &lt;UCard v-if="layout === 'cards'" class="hover:shadow-xl"&gt;
+    &lt;template #header&gt;
+      &lt;h3 class="text-lg"&gt;{{ item.title }}&lt;/h3&gt;
+    &lt;/template&gt;
+    &lt;div class="space-y-2"&gt;
+      &lt;p&gt;{{ item.description }}&lt;/p&gt;
+      &lt;!-- More detailed content --&gt;
+    &lt;/div&gt;
+  &lt;/UCard&gt;
+&lt;/template&gt;</pre>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="serverPagination && paginationData" class="p-4 border-t border-default">
+      <CroutonTablePagination
+        :page="paginationData.currentPage"
+        :page-count="paginationData.totalPages || Math.ceil(paginationData.totalItems / paginationData.pageSize)"
+        :total-items="paginationData.totalItems"
+      />
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, resolveComponent } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
@@ -134,6 +218,22 @@ const props = withDefaults(defineProps<ListProps>(), {
     actions: false
   })
 })
+
+// Card component resolution
+const { toPascalCase } = useFormatCollections()
+
+const getCardComponent = (collectionName: string) => {
+  try {
+    const pascalName = toPascalCase(collectionName)
+    return resolveComponent(`${pascalName}Card`)
+  } catch {
+    return null
+  }
+}
+
+const customCardComponent = computed(() =>
+  props.collection ? getCardComponent(props.collection) : null
+)
 
 // Responsive breakpoint detection
 const breakpoints = useBreakpoints(breakpointsTailwind)
@@ -175,31 +275,6 @@ const activeLayout = computed<LayoutType>(() => {
   return layout.base
 })
 
-// Helper functions for list layout
-const getListItemTitle = (row: any) => {
-  // Try common fields for title
-  return row.name || row.title || row.label || row.email || row.username || row.id || 'Untitled'
-}
-
-const getListItemSubtitle = (row: any) => {
-  // Try common fields for subtitle
-  if (row.description) return row.description
-  if (row.email && row.name) return row.email
-  if (row.username && row.name) return row.username
-  if (row.role) return row.role
-  if (row.createdAt) return new Date(row.createdAt).toLocaleDateString()
-  return ''
-}
-
-const getListItemAvatar = (row: any) => {
-  // Return avatar props if applicable
-  if (row.avatar) return row.avatar
-  if (row.image) return { src: row.image }
-  if (row.avatarUrl) return { src: row.avatarUrl }
-  if (row.profileImage) return { src: row.profileImage }
-  return null
-}
-
-// Crouton actions (matching table functionality)
+// Crouton actions
 const { open: openCrouton } = useCrouton()
 </script>
