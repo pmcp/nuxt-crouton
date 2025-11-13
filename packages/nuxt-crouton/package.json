@@ -1,6 +1,6 @@
 {
   "name": "@friendlyinternet/nuxt-crouton",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Base CRUD layer for FYIT scaffolded collections",
   "type": "module",
   "main": "./nuxt.config.ts",

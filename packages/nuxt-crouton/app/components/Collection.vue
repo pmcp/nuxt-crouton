@@ -197,10 +197,14 @@ defineProps&lt;Props&gt;()
 </template>
 
 <script lang="ts" setup>
-import { computed, resolveComponent } from 'vue'
+import { computed, resolveComponent, onMounted } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
+
+// Version logging for debugging
+const CROUTON_VERSION = '1.5.3'
+const COLLECTION_FIX = 'Card fallback fix with row guards'
 
 const props = withDefaults(defineProps<ListProps>(), {
   layout: 'table',
@@ -280,4 +284,9 @@ const activeLayout = computed<LayoutType>(() => {
 
 // Crouton actions
 const { open: openCrouton } = useCrouton()
+
+// Version logging
+onMounted(() => {
+  console.log(`[nuxt-crouton v${CROUTON_VERSION}] Collection.vue loaded - ${COLLECTION_FIX}`)
+})
 </script>
