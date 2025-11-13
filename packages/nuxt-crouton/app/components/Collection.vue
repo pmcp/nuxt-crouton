@@ -225,7 +225,10 @@ const { toPascalCase } = useFormatCollections()
 const getCardComponent = (collectionName: string) => {
   try {
     const pascalName = toPascalCase(collectionName)
-    return resolveComponent(`${pascalName}Card`)
+    const component = resolveComponent(`${pascalName}Card`)
+    // resolveComponent returns a string when component is not found
+    // Only return the component if it's an actual component object
+    return typeof component === 'string' ? null : component
   } catch {
     return null
   }
