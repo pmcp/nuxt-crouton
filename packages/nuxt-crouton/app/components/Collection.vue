@@ -43,7 +43,7 @@
     </template>
 
     <template #body>
-      <ul v-if="customCardComponent" role="list" class="divide-y divide-default">
+      <ul v-if="customCardComponent && rows && rows.length > 0" role="list" class="divide-y divide-default">
         <li
           v-for="(row, index) in rows"
           :key="row.id || index"
@@ -104,7 +104,7 @@ defineProps&lt;Props&gt;()
       </UButton>
     </div>
 
-    <div v-if="customCardComponent" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+    <div v-if="customCardComponent && rows && rows.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
       <component
         v-for="(row, index) in rows"
         :key="row.id || index"
@@ -154,7 +154,7 @@ defineProps&lt;Props&gt;()
       </UButton>
     </div>
 
-    <div v-if="customCardComponent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+    <div v-if="customCardComponent && rows && rows.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
       <component
         v-for="(row, index) in rows"
         :key="row.id || index"
