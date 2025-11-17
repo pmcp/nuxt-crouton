@@ -10,13 +10,14 @@
 
 | Metric | Progress |
 |--------|----------|
-| **Total Subphases** | 11 / 25 (44%) |
+| **Total Subphases** | 13 / 25 (52%) |
 | **Phase 0 (Cleanup)** | 4 / 4 subphases (100%) ✅ |
-| **Phase 1 (Core)** | 6 / 14 subphases (43%) |
+| **Phase 1 (Core)** | 8 / 14 subphases (57%) |
 | **Phase 2 (Addons)** | 0 / 3 subphases |
 | **Phase 3 (Beta)** | 1 / 6 subphases (17%) |
 | **Sessions Completed** | 11 / 30 |
 | **Components Documented** | 30 / 30 ✅ |
+| **Composables Documented** | 8 / 19 |
 | **Code Improvements** | 0 |
 
 ---
@@ -109,9 +110,9 @@
 ## Phase 1: Core Package (@friendlyinternet/nuxt-crouton)
 
 **Package Version**: v1.5.3
-**Progress**: 6/14 subphases (43%)
+**Progress**: 8/14 subphases (57%)
 **Estimated Time**: 10-15 sessions
-**Time Used**: 6 sessions
+**Time Used**: 7 sessions
 
 ### Subphase 1.1: Display Components (4/4 complete) ✅ COMPLETE
 
@@ -200,29 +201,29 @@
 
 ---
 
-### Subphase 1.7: Data Fetching Composables (0/4 complete) ⏸️ NOT STARTED
+### Subphase 1.7: Data Fetching Composables (4/4 complete) ✅ COMPLETE
 
 **What**: Document core data fetching and mutation composables
 
-- [ ] useCollection - Simplified collection fetching (legacy)
-- [ ] useCollectionQuery - Query-based data fetching (v2.0 architecture)
-- [ ] useCollectionItem - Single item fetching
-- [ ] useCollectionMutation - Create/Update/Delete with cache invalidation
+- [x] useCollection - Simplified collection fetching (legacy) ✅
+- [x] useCollectionQuery - Query-based data fetching (v2.0 architecture) ✅
+- [x] useCollectionItem - Single item fetching ✅
+- [x] useCollectionMutation - Create/Update/Delete with cache invalidation ✅
 
-**Deliverables**: 4 composable documentation pages + data fetching patterns guide
+**Deliverables**: ✅ 4 composable documentation pages (467 lines) + data fetching patterns documented
 
 ---
 
-### Subphase 1.8: Collection Management Composables (0/4 complete) ⏸️ NOT STARTED
+### Subphase 1.8: Collection Management Composables (4/4 complete) ✅ COMPLETE
 
 **What**: Document collection registry and management utilities
 
-- [ ] useCollections - Collection registry and configuration
-- [ ] useCollectionProxy - External collection proxying
-- [ ] useCroutonMutate - Legacy mutation helper
-- [ ] useFormatCollections - Collection formatting
+- [x] useCollections - Collection registry and configuration ✅
+- [x] useCollectionProxy - External collection proxying ✅
+- [x] useCroutonMutate - Legacy mutation helper ✅
+- [x] useFormatCollections - Collection formatting ✅
 
-**Deliverables**: 4 composable documentation pages + collection management guide
+**Deliverables**: ✅ 4 composable documentation pages (1,481 lines) + collection registry architecture documented
 
 ---
 
@@ -685,6 +686,27 @@ Track code improvements made during documentation:
 - **Total Wave 1 Output**: ~4,344 lines of documentation (768 + 3,576) across all 30 components + beta section
 - **Status**: ✅ Wave 1 COMPLETE - All components documented
 - **Next**: Wave 2 - Composables documentation (Data Fetching + Collection Management)
+
+**Session 12 (continuation of 11): Wave 2 Execution - Parallel Agents (Subphases 1.7, 1.8)** ✅
+- Launched 2 parallel agents for Wave 2 execution
+- **Subphase 1.7: Data Fetching Composables** ✅ COMPLETE (4/4 composables)
+  - **useCollection** (143 lines): Legacy global state pattern, deprecated, migration guide to useCollectionQuery
+  - **useCollectionQuery** (verified existing): Query-based caching, SSR support, v2.0 architecture
+  - **useCollectionItem** (324 lines): Dual fetch strategy (RESTful vs Query-based), single item fetching, 8 usage examples
+  - **useCollectionMutation** (verified existing): Automatic cache invalidation, reference tracking, toast notifications
+  - Total documentation: 467 lines added to composables.md
+  - Key insights: v2.0 architecture uses query-based cache keys for isolation, dual fetch strategies support both patterns
+- **Subphase 1.8: Collection Management Composables** ✅ COMPLETE (4/4 composables)
+  - **useCollections** (233 lines): Collection registry pattern, component mapping, reference tracking, default pagination
+  - **useCollectionProxy** (315 lines): External API transformation, proxy config pattern, endpoint resolution, error handling
+  - **useCroutonMutate** (246 lines expanded): Quick mutation API, cross-collection operations, utility patterns, comparison with useCollectionMutation
+  - **useFormatCollections** (437 lines expanded): Pluralization rules, layer prefix stripping, Title/PascalCase conversion, 15 integration examples
+  - Total documentation: 1,481 lines added to composables.md
+  - Key insights: Registry-first design, proxy pattern enables external integration, automatic cache invalidation via references field
+- **Total Wave 2 Output**: ~1,948 lines of documentation (467 + 1,481) across 8 composables
+- **Composables.md Growth**: 762 lines → 2,243 lines (+194% increase)
+- **Status**: ✅ Wave 2 COMPLETE - Data fetching and collection management composables documented
+- **Next**: Wave 3 - Table and Context/State composables (Subphases 1.9, 1.11)
 
 ---
 
