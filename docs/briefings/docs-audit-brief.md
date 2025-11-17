@@ -20,15 +20,30 @@ Systematically audit and update the Nuxt Crouton documentation to ensure:
 ## Strategy
 
 ### Documentation Style
-**Emulating**: Vue.js and Nuxt UI documentation patterns
+**Emulating**: Vue.js and Nuxt UI documentation patterns (but more concise)
 
-**Key Patterns**:
+**Key Principles**:
+- **Concise but complete** - No fluff, just what developers need
+- **Show, don't tell** - Code examples over verbose explanations
 - Progressive disclosure (simple → complex)
 - TypeScript-first with full interface definitions
-- Complete, runnable code examples
-- Semantic callouts (`::tip`, `::note`, `::warning`)
-- Aggressive cross-referencing
-- "Use the X prop to..." imperative style
+- Semantic callouts only when truly helpful (`::tip`, `::note`, `::warning`)
+- Cross-reference related features
+- Direct imperative style: "Use the X prop to..."
+
+**What to Avoid**:
+- ❌ Long introductory paragraphs
+- ❌ Over-explaining obvious things
+- ❌ Multiple examples showing the same thing
+- ❌ Excessive callouts and notes
+- ❌ Repeating information already in code
+
+**What to Include**:
+- ✅ One clear basic example
+- ✅ One advanced example (if needed)
+- ✅ Complete TypeScript types
+- ✅ "When to use" if not obvious
+- ✅ Edge cases and gotchas
 
 ### Dual Improvement Approach
 **Critical**: While updating docs, we also improve the codebase when issues are found.
@@ -103,16 +118,13 @@ Create dedicated "Beta Features" section:
 
 ## Documentation Template (Per Component/Composable)
 
-### File Structure
+### File Structure (Simplified)
 ```markdown
 ---
 title: ComponentName / composableName
 description: One-sentence description
 category: components | composables | types | guides
 package: "@friendlyinternet/nuxt-crouton"
-related:
-  - /api-reference/composables/use-collection-mutation
-  - /api-reference/components/crouton-form
 ---
 
 # ComponentName
@@ -121,95 +133,105 @@ related:
 
 ## Usage
 
-Basic example - simplest possible usage
+\`\`\`vue
+<!-- Basic example - no explanation needed if code is clear -->
+<template>
+  <CroutonCollection :rows="items" :columns="columns" />
+</template>
 
-### Feature 1
+<script setup lang="ts">
+const { items } = await useCollectionQuery('products')
+const columns = [{ accessorKey: 'name', header: 'Name' }]
+</script>
+\`\`\`
 
-One H3 per feature with focused example
+### Props (inline, only if clarification needed)
 
-### Feature 2
+Use `layout` prop to change display format:
+\`\`\`vue
+<CroutonCollection layout="list" :rows="items" />
+\`\`\`
 
-Progressive complexity
-
-## Examples
-
-Real-world, complete scenarios
-
-### Specific Use Case
-
-Complex patterns, integrations
+Use responsive layouts for different screen sizes:
+\`\`\`vue
+<CroutonCollection :layout="{ base: 'list', lg: 'table' }" :rows="items" />
+\`\`\`
 
 ## API
 
-### Props / Parameters
+\`\`\`ts
+interface CroutonCollectionProps {
+  rows: any[]
+  columns: TableColumn[]
+  layout?: LayoutType | ResponsiveLayout
+  // ... other props
+}
+\`\`\`
 
-Full TypeScript interface with JSDoc comments
+See [full API reference](#) for complete prop list.
 
-### Slots (for components)
+## Related
 
-All available slots
-
-### Emits (for components)
-
-Event signatures
-
-### Returns (for composables)
-
-Return value structure
-
-### When to Use
-
-Guidance on when to use vs alternatives
-
-## Theme (for styled components)
-
-app.config.ts configuration
+- [useCollectionQuery](/api-reference/composables#usecollectionquery)
+- [TableColumn types](/api-reference/types#tablecolumn)
 ```
+
+**Notes**:
+- Only include "Examples" section if advanced patterns are truly needed
+- Only include "When to Use" if not obvious from the component name
+- Only include "Theme" section if customization is common
+- Callouts only for important warnings or non-obvious tips
+- Let code speak for itself - minimal prose
 
 ### Code Example Standards
 
 **Always include**:
-- Complete, runnable examples
+- Complete, runnable examples (no partial snippets)
 - TypeScript with proper types
 - `<script setup lang="ts">` syntax
-- File name notation for multi-file: `[ExampleName.vue]`
-- Imports shown explicitly
+- Template first, script second (easier to scan)
 
-**Example**:
+**Keep examples minimal**:
 ```vue
-<script setup lang="ts">
-const { items, pending } = await useCollectionQuery('products')
-
-const columns = [
-  { accessorKey: 'name', header: 'Product' },
-  { accessorKey: 'price', header: 'Price' }
-]
-</script>
-
+<!-- ✅ Good - shows what's needed -->
 <template>
   <CroutonCollection :rows="items" :columns="columns" />
 </template>
+
+<script setup lang="ts">
+const { items } = await useCollectionQuery('products')
+</script>
 ```
 
-### Callout Usage
+```vue
+<!-- ❌ Too verbose - unnecessary explanatory comments -->
+<template>
+  <!-- This is the main collection component that displays items -->
+  <CroutonCollection
+    :rows="items"  <!-- Pass the items array -->
+    :columns="columns"  <!-- Define columns to show -->
+  />
+</template>
 
-```markdown
-::tip
-Helpful additional information or shortcuts
-::
+<script setup lang="ts">
+// First, we fetch the collection data
+const { items } = await useCollectionQuery('products')
 
-::note
-Important context or clarifications
-::
-
-::warning
-Caution about potential issues or breaking changes
-::
-
-::callout{icon="i-heroicons-information-circle" to="/docs/related"}
-General callouts with links
-::
+// Then we define our columns
+const columns = [...]
+</script>
 ```
+
+### Callout Usage (Use Sparingly!)
+
+Only use callouts for:
+- **::warning** - Breaking changes, gotchas, potential bugs
+- **::tip** - Non-obvious shortcuts or optimization opportunities
+
+Skip callouts for:
+- Basic usage instructions (put in prose)
+- Things that should be obvious
+- Repeating what code already shows
 
 ---
 
@@ -316,13 +338,13 @@ When auditing each feature, look for:
 
 ### Per Feature
 - [ ] Accurate API documentation matching code
-- [ ] At least one basic example
-- [ ] At least one advanced/real-world example
-- [ ] All parameters/props have types and descriptions
-- [ ] Related features cross-referenced
+- [ ] One basic example (clear and minimal)
+- [ ] Advanced example only if pattern is complex
+- [ ] All parameters/props have types (JSDoc optional)
+- [ ] Related features cross-referenced (2-3 max)
 - [ ] Code examples are complete and runnable
-- [ ] TypeScript types shown, not just JavaScript
-- [ ] "When to use" guidance included
+- [ ] No unnecessary prose or explanations
+- [ ] "When to use" only if not obvious
 
 ### Per Package
 - [ ] Installation instructions accurate
@@ -402,14 +424,79 @@ Progress tracked in `/Users/pmcp/Projects/nuxt-crouton/docs/DOCS_PROGRESS_TRACKE
 
 ---
 
-## Next Steps
+o## Phase 0: Documentation Cleanup (Before Main Work)
 
-1. Review and approve this briefing
-2. Begin Phase 1 with first component (CroutonCollection)
-3. Establish quality baseline with first complete example
-4. Iterate through remaining features systematically
-5. Update progress tracker after each completion
+### Strategy: Clean Slate Approach
+
+**Goal**: Remove outdated/duplicate documentation from the repo, migrate valuable content to main docs.
+
+### Actions
+
+#### 1. Catalog Existing Documentation
+- [x] Found ~30 markdown files in repo
+- [x] Identified categories: guides, briefings, reports, package docs, fix docs
+
+#### 2. Valuable Content to Migrate
+**Good guides** (integrate then remove):
+- `docs/guides/dependent-fields-guide.md` → Integrate into dependent fields documentation
+- `packages/nuxt-crouton/docs/list-layouts.md` → Integrate into CroutonCollection/List docs
+
+**Package-specific technical docs** (review case-by-case):
+- `packages/nuxt-crouton-collection-generator/AUTHORIZATION_FIX.md` - Review
+- `packages/nuxt-crouton-collection-generator/CONNECTOR_INTEGRATION.md` - Review
+- `packages/nuxt-crouton-collection-generator/DATE_HANDLING_FIX.md` - Review
+- Other package-specific docs - Review for relevant content
+
+#### 3. Delete Entirely
+**Historical context** (no longer needed):
+- `docs/briefings/audit-trail-fields-brief.md`
+- `docs/briefings/crouton-devtools-integration-brief.md`
+- `docs/briefings/dependent-field-cardmini-brief.md`
+- `docs/briefings/leftjoin-agent-handoff.md`
+- `docs/briefings/nuxt-crouton-teams-storage-layers-brief.md`
+- `docs/reports/dependent-field-cardmini-implementation-report.md`
+- `docs/reports/devtools-phase1-completion-report.md`
+- `docs/reports/devtools-phase1-implementation-20251007.md`
+- `packages/nuxt-crouton/docs/briefings/cardmini-custom-components-brief.md`
+- `packages/nuxt-crouton/docs/reports/code-quality-audit-20251007.md`
+- `packages/nuxt-crouton/docs/reports/code-smells-report.md`
+
+#### 4. Keep As-Is
+**Current/needed**:
+- `README.md` (root) - Main repo overview
+- `CLAUDE.md` - Agent instructions
+- `PUBLISHING.md` - Publishing workflow
+- `docs/briefings/docs-audit-brief.md` - This file
+- `docs/DOCS_PROGRESS_TRACKER.md` - Progress tracking
+- Package `README.md` files - npm documentation
+
+### Execution Steps
+
+1. **Before starting Phase 1**, perform cleanup:
+   - Read valuable guides to extract content
+   - Note key points to integrate into main docs
+   - Delete old briefings and reports
+   - Review package-specific docs, extract relevant content
+   - Delete package-specific docs after extraction
+
+2. **During Phase 1-3**, integrate extracted content:
+   - When documenting dependent fields, incorporate guide content
+   - When documenting CroutonCollection, incorporate list-layouts content
+   - When documenting generator, incorporate relevant technical details
+
+3. **Result**: Clean repo with only current, relevant documentation
 
 ---
 
-**Ready to begin systematic documentation improvement!** 🚀
+## Next Steps
+
+1. ✅ Documentation cleanup briefing added
+2. Perform Phase 0: Documentation cleanup
+3. Begin Phase 1 with first component (CroutonCollection)
+4. Establish quality baseline with first complete example
+5. Iterate through remaining features systematically
+6. Update progress tracker after each completion
+
+---
+
+**Ready to begin with cleanup, then systematic documentation improvement!** 🚀
