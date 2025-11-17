@@ -10,12 +10,12 @@
 
 | Metric | Progress |
 |--------|----------|
-| **Total Subphases** | 8 / 25 (32%) |
+| **Total Subphases** | 9 / 25 (36%) |
 | **Phase 0 (Cleanup)** | 4 / 4 subphases (100%) ✅ |
 | **Phase 1 (Core)** | 4 / 14 subphases (29%) |
 | **Phase 2 (Addons)** | 0 / 3 subphases |
-| **Phase 3 (Beta)** | 0 / 6 subphases |
-| **Sessions Completed** | 9 / 30 |
+| **Phase 3 (Beta)** | 1 / 6 subphases (17%) |
+| **Sessions Completed** | 10 / 30 |
 | **Components Documented** | 16 / 29 |
 | **Code Improvements** | 0 |
 
@@ -165,24 +165,24 @@
 
 ---
 
-### Subphase 1.5: UI Components (0/2 complete) ⏸️ NOT STARTED
+### Subphase 1.5: UI Components (0/2 complete) 🔄 IN PROGRESS
 
 **What**: Document utility UI components
 
-- [ ] Loading - Loading states
-- [ ] ValidationErrorSummary - Form validation display
+- 🔄 Loading - Loading states
+- 🔄 ValidationErrorSummary - Form validation display
 
 **Deliverables**: 2 component documentation pages
 
 ---
 
-### Subphase 1.6: Other Components Audit (0/12 complete) ⏸️ NOT STARTED
+### Subphase 1.6: Other Components Audit (0/12 complete) 🔄 IN PROGRESS
 
 **What**: Catalog and document remaining components (29 total - 17 documented above = 12 remaining)
 
-- [ ] Audit source code for additional components
-- [ ] Create component inventory list
-- [ ] Document all remaining components
+- 🔄 Audit source code for additional components
+- 🔄 Create component inventory list
+- 🔄 Document all remaining components
 - [ ] Verify total component count matches package exports
 
 **Deliverables**: Complete component inventory + documentation for all remaining components
@@ -361,18 +361,19 @@
 
 ## Phase 3: Beta Features Section
 
-**Progress**: 0/6 subphases (0%)
+**Progress**: 1/6 subphases (17%)
 **Estimated Time**: 5-7 sessions
+**Time Used**: 1 session
 
-### Subphase 3.1: Beta Documentation Setup (0/3 complete) ⏸️ NOT STARTED
+### Subphase 3.1: Beta Documentation Setup (3/3 complete) ✅ COMPLETE
 
 **What**: Create new documentation section for beta packages
 
-- [ ] Create 9.beta-features/ directory structure
-- [ ] Write overview page - Beta program expectations
-- [ ] Add beta badges to navigation
+- [x] Create 9.beta-features/ directory structure ✅
+- [x] Write overview page - Beta program expectations ✅
+- [x] Add beta badges to navigation ✅
 
-**Deliverables**: Beta section structure + overview page explaining stability expectations
+**Deliverables**: Beta section structure + overview page explaining stability expectations ✅
 
 ---
 
@@ -627,6 +628,32 @@ Track code improvements made during documentation:
 - **Code Quality Notes**: TableHeader missing TypeScript, TableActions uses `any` types, console.log statements in production
 - **Status**: Subphase 1.4 COMPLETE ✅ (4/4 components documented + composition guide)
 - **Next**: Subphase 1.5 - UI Components
+
+**Session 10: Beta Features Documentation Setup (Subphase 3.1)** ✅
+- Created new documentation section structure
+- **Directory**: Created `/Users/pmcp/Projects/crouton-docs/content/9.beta-features/`
+- **Overview Page** (~500 lines documentation):
+  - Created comprehensive overview at `9.beta-features/1.index.md`
+  - Beta vs Stable comparison (v1.x vs v0.x packages)
+  - Stability expectations and what to expect
+  - Beta package overview with 5 packages:
+    - @friendlyinternet/nuxt-crouton-assets (v0.3.0)
+    - @friendlyinternet/nuxt-crouton-events (v0.3.0)
+    - @friendlyinternet/nuxt-crouton-maps (v0.3.0)
+    - @friendlyinternet/nuxt-crouton-connector (v0.3.0)
+    - @friendlyinternet/nuxt-crouton-devtools (v0.3.0)
+  - Installation instructions with version pinning
+  - Feedback mechanisms (GitHub issues, feature requests, discussions)
+  - Migration to stable expectations (graduation criteria)
+  - Risk assessment (low/medium/higher risk packages)
+  - Best practices (pin versions, test upgrades, follow changelogs, isolate usage, fallback plans)
+  - Comprehensive FAQ (9 questions)
+  - Version history and planned releases
+  - Cross-references to existing guides
+- **Frontmatter**: Added proper navigation icon (i-lucide-flask for experimental)
+- **Callouts**: Used Nuxt UI callout component for warnings and tips
+- **Status**: Subphase 3.1 COMPLETE ✅ (3/3 tasks complete)
+- **Next**: Subphase 3.2 - @friendlyinternet/nuxt-crouton-assets documentation
 
 ---
 
