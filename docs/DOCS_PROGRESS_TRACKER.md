@@ -10,13 +10,13 @@
 
 | Metric | Progress |
 |--------|----------|
-| **Total Subphases** | 6 / 25 (24%) |
+| **Total Subphases** | 7 / 25 (28%) |
 | **Phase 0 (Cleanup)** | 4 / 4 subphases (100%) ✅ |
-| **Phase 1 (Core)** | 2 / 14 subphases (14%) |
+| **Phase 1 (Core)** | 3 / 14 subphases (21%) |
 | **Phase 2 (Addons)** | 0 / 3 subphases |
 | **Phase 3 (Beta)** | 0 / 6 subphases |
-| **Sessions Completed** | 7 / 30 |
-| **Components Documented** | 9 / 29 |
+| **Sessions Completed** | 8 / 30 |
+| **Components Documented** | 12 / 29 |
 | **Code Improvements** | 0 |
 
 ---
@@ -109,9 +109,9 @@
 ## Phase 1: Core Package (@friendlyinternet/nuxt-crouton)
 
 **Package Version**: v1.5.3
-**Progress**: 1/14 subphases (7%)
+**Progress**: 3/14 subphases (21%)
 **Estimated Time**: 10-15 sessions
-**Time Used**: 2 sessions
+**Time Used**: 3 sessions
 
 ### Subphase 1.1: Display Components (4/4 complete) ✅ COMPLETE
 
@@ -140,15 +140,15 @@
 
 ---
 
-### Subphase 1.3: Field Components (0/3 complete) ⏸️ NOT STARTED
+### Subphase 1.3: Field Components (3/3 complete) ✅ COMPLETE
 
 **What**: Document specialized input field components
 
-- [ ] Calendar - Date/time selection
-- [ ] Date - Date display and input
-- [ ] ImageUpload - Image upload component
+- [x] Calendar - Date/time selection ✅
+- [x] Date - Date display and input ✅
+- [x] ImageUpload - Image upload component ✅
 
-**Deliverables**: 3 component documentation pages with usage examples
+**Deliverables**: 3 component documentation pages with usage examples ✅
 
 ---
 
@@ -558,6 +558,32 @@ Track code improvements made during documentation:
 - **Code Quality Notes**: Documented no-confirmation delete in FormRepeater, loading states in FormReferenceSelect, performance concerns for large arrays
 - **Status**: Subphase 1.2 COMPLETE ✅ (5/5 components documented + architecture guide)
 - **Next**: Subphase 1.3 - Field Components
+
+**Session 8: Field Components Complete (Subphase 1.3)** ✅
+- Analyzed Calendar and Date component source code
+- **Calendar Component** (~340 lines documentation):
+  - Interactive date picker for single dates and date ranges
+  - Props: 13 configuration props (date, range, startDate, endDate, minDate, maxDate, color, variant, size, controls)
+  - Events: 3 update events (update:date, update:startDate, update:endDate)
+  - Features: Dual mode support, timezone-aware (@internationalized/date), auto month detection
+  - Examples: Single picker, range picker, constraints, timestamps, forms
+  - Troubleshooting: v-model binding, range mode, constraints, TypeScript types
+- **CroutonDate Component** (~265 lines documentation):
+  - Read-only display component for formatted timestamps
+  - Dual display: Absolute date + relative time ("2 hours ago")
+  - Props: 1 prop (date: string | Date)
+  - No events (display only, not an input)
+  - Examples: Table cells, cards, detail layouts, ISO strings, Date objects
+  - Comparison table: Calendar vs CroutonDate (purpose, interaction, use cases)
+  - Troubleshooting: Missing dates, timezone issues, format customization, auto-updates
+- **CroutonImageUpload**: Reviewed existing documentation (already complete)
+- **Total Documentation**: ~605 lines added to components.md
+- **Key Insights**:
+  - Calendar wraps Nuxt UI's UCalendar with timezone handling
+  - Date uses NuxtTime for i18n support and auto-updating relative times
+  - Clear distinction: Calendar for input, Date for display
+- **Status**: Subphase 1.3 COMPLETE ✅ (3/3 components documented)
+- **Next**: Subphase 1.4 - Table Components
 
 ---
 
