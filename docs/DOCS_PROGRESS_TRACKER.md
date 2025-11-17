@@ -15,7 +15,8 @@
 | **Phase 1 (Core)** | 0 / 14 subphases |
 | **Phase 2 (Addons)** | 0 / 3 subphases |
 | **Phase 3 (Beta)** | 0 / 6 subphases |
-| **Sessions Completed** | 1 / 30 |
+| **Sessions Completed** | 2 / 30 |
+| **Components Documented** | 1 / 29 |
 | **Code Improvements** | 0 |
 
 ---
@@ -111,11 +112,11 @@
 **Progress**: 0/12 subphases (0%)
 **Estimated Time**: 10-15 sessions
 
-### Subphase 1.1: Display Components (0/4 complete) ⏸️ NOT STARTED
+### Subphase 1.1: Display Components (1/4 complete) 🔄 IN PROGRESS
 
 **What**: Document main collection display components
 
-- [ ] CroutonCollection - Unified collection display (table/list/grid/cards)
+- [x] CroutonCollection - Unified collection display (table/list/grid/cards) ✅
 - [ ] CroutonTable - Data table with sorting, filtering, pagination
 - [ ] ItemCardMini - Compact card display for items
 - [ ] DetailLayout - View-only detail pages (NEW v1.5.3)
@@ -513,6 +514,15 @@ Track code improvements made during documentation:
 - Followed 5-step workflow with TodoWrite tracking
 - **Status**: Phase 0 COMPLETE (4/4 subphases, 100%)
 - **Ready for**: Phase 1 - Core Package Documentation
+
+**Session 5: CroutonCollection Component Documentation** ✅
+- Started Subphase 1.1: Display Components
+- Used Explore agent to analyze CroutonCollection component source
+- Explored crouton-docs structure to understand documentation patterns
+- Added comprehensive CroutonCollection documentation to `/Users/pmcp/Projects/crouton-docs/content/7.api-reference/2.components.md`
+- Documented: Props (CollectionProps interface), Slots (header + dynamic), Layout modes (table/list/grid/cards), Responsive layouts, Custom card components, Server pagination, Complete examples, Troubleshooting
+- **Status**: CroutonCollection COMPLETE (1/4 components in Subphase 1.1)
+- **Next**: CroutonTable component documentation
 
 ---
 
