@@ -10,15 +10,16 @@
 
 | Metric | Progress |
 |--------|----------|
-| **Total Subphases** | 18 / 25 (72%) |
+| **Total Subphases** | 19 / 25 (76%) |
 | **Phase 0 (Cleanup)** | 4 / 4 subphases (100%) ✅ |
-| **Phase 1 (Core)** | 13 / 14 subphases (93%) |
+| **Phase 1 (Core)** | 14 / 14 subphases (100%) ✅ |
 | **Phase 2 (Addons)** | 0 / 3 subphases |
 | **Phase 3 (Beta)** | 1 / 6 subphases (17%) |
 | **Sessions Completed** | 12 / 30 |
 | **Components Documented** | 30 / 30 ✅ |
 | **Composables Documented** | 19 / 19 ✅ |
 | **Types Documented** | 15 / 15 ✅ |
+| **Server Utilities Documented** | 3 / 3 ✅ |
 | **Code Improvements** | 0 |
 
 ---
@@ -111,9 +112,9 @@
 ## Phase 1: Core Package (@friendlyinternet/nuxt-crouton)
 
 **Package Version**: v1.5.3
-**Progress**: 12/14 subphases (86%)
+**Progress**: 14/14 subphases (100%) ✅ COMPLETE
 **Estimated Time**: 10-15 sessions
-**Time Used**: 9 sessions
+**Time Used**: 10 sessions
 
 ### Subphase 1.1: Display Components (4/4 complete) ✅ COMPLETE
 
@@ -301,14 +302,15 @@
 
 ---
 
-### Subphase 1.14: Server Utilities (0/2 complete) 🔄 IN PROGRESS
+### Subphase 1.14: Server Utilities (3/3 complete) ✅ COMPLETE
 
 **What**: Document server-side helpers and utilities
 
-- 🔄 createExternalCollectionHandler - External collection API helper
-- 🔄 Team auth utilities - Authorization helpers
+- [x] createExternalCollectionHandler - External collection API helper ✅
+- [x] resolveTeamAndCheckMembership - Team resolution and authorization ✅
+- [x] isTeamMember - Membership verification helper ✅
 
-**Deliverables**: 2 server utility documentation pages + server setup guide
+**Deliverables**: ✅ Complete server utilities documentation (1,009 lines) + server setup guide with 13 examples
 
 ---
 
@@ -759,7 +761,7 @@ Track code improvements made during documentation:
 - **Status**: ✅ Wave 4 COMPLETE - All 19/19 composables documented with 100% coverage
 - **Next**: Wave 5 - Configuration & Types synthesis (Subphases 1.13, 1.14)
 
-**Session 15: Subphase 1.13 - Configuration & Types Complete** ✅
+**Session 15 (continuation of 14): Wave 5 Part 1 - Configuration & Types (Subphase 1.13)** ✅
 - Created comprehensive TypeScript reference documentation (1,342 lines)
 - **Core Configuration Types**:
   - CollectionConfig interface (master config with 7 properties + extensibility)
@@ -816,6 +818,45 @@ Track code improvements made during documentation:
 - **Types.md Growth**: 386 lines → 1,342 lines (+248% increase)
 - **Status**: ✅ Subphase 1.13 COMPLETE (15/15 types documented)
 - **Next**: Subphase 1.14 - Server Utilities
+
+**Session 16 (continuation of 15): Wave 5 Part 2 - Server Utilities (Subphase 1.14)** ✅
+- Documented all server-side utilities (1,009 lines)
+- **createExternalCollectionHandler** (5 examples):
+  - Helper for creating external collection API endpoints
+  - Transforms external data to Crouton's collection format
+  - Auto-imported, type-safe, with built-in error handling
+  - Supports `?ids=` query parameter filtering
+  - Examples: basic external collection, authorization, query filtering, subscriptions, error handling
+- **resolveTeamAndCheckMembership** (4 examples):
+  - Resolves team by slug or ID + verifies user membership in one call
+  - Returns `{ team, user, membership }`
+  - Handles 404/403 errors automatically
+  - Examples: basic team routes, data fetching, RBAC, team settings
+- **isTeamMember** (4 examples):
+  - Boolean check for team membership
+  - Useful for conditional authorization
+  - Examples: conditional logic, batch checks, webhook validation, background jobs
+- **Server-Side Architecture Patterns**:
+  - Multi-tenancy integration with team isolation
+  - Authorization patterns (membership verification, RBAC)
+  - External data integration
+  - Comprehensive error handling
+  - Full TypeScript support
+- **Integration Points**:
+  - useCollectionProxy composable
+  - CroutonReferenceSelect component
+  - H3Event server API
+  - Team context and multi-tenancy
+- **Security Best Practices**:
+  - Team isolation enforcement
+  - Role-based access control patterns
+  - Input validation with Zod
+  - Rate limiting strategies
+  - Proper error messages
+- **Total Documentation**: 1,009 lines added to `/Users/pmcp/Projects/crouton-docs/content/7.api-reference/4.server.md`
+- **Status**: ✅ Subphase 1.14 COMPLETE (3/3 server utilities documented)
+- **Status**: ✅✅ **PHASE 1 COMPLETE** (14/14 subphases, 100%)
+- **Next**: Phase 2 - Stable Addon Packages (i18n, editor, collection-generator)
 
 ---
 
