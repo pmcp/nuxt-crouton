@@ -16,13 +16,17 @@ export function toCase(str) {
   const singular = str.endsWith('s') && str.length > 1 ? str.slice(0, -1) : str
   const plural = str.endsWith('s') ? str : str + 's'
 
+  // Use the pascal() helper to properly convert hyphenated names
+  const singularPascal = pascal(singular)
+  const pluralPascal = pascal(plural)
+
   return {
     singular: singular.toLowerCase(),
     plural: plural.toLowerCase(),
-    pascalCase: singular.charAt(0).toUpperCase() + singular.slice(1),
-    pascalCasePlural: plural.charAt(0).toUpperCase() + plural.slice(1),
-    camelCase: singular.charAt(0).toLowerCase() + singular.slice(1),
-    camelCasePlural: plural.charAt(0).toLowerCase() + plural.slice(1),
+    pascalCase: singularPascal,
+    pascalCasePlural: pluralPascal,
+    camelCase: singularPascal.charAt(0).toLowerCase() + singularPascal.slice(1),
+    camelCasePlural: pluralPascal.charAt(0).toLowerCase() + pluralPascal.slice(1),
     upperCase: singular.toUpperCase(),
     kebabCase: singular.toLowerCase().replace(/[A-Z]/g, '-$&').toLowerCase()
   }
