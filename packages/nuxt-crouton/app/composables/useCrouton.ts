@@ -1,4 +1,4 @@
-// v1.0.1 - Fixed inject() warning by moving useToast() calls inside methods
+// v1.0.2 - Removed debug console.log statements for production
 /**
  * useCrouton - Modal and form state management
  *
@@ -69,19 +69,14 @@ export default function () {
   const activeItem = computed(() => croutonStates.value[croutonStates.value.length - 1]?.activeItem || {})
 
   const open = async (actionIn: CroutonAction, collection: string, ids: string[] = [], container: 'slideover' | 'modal' | 'dialog' = 'slideover', initialData?: any): Promise<void> => {
-    console.log('[Crouton.open] Called with:', { actionIn, collection, ids, container, initialData })
-
     const hasErrors = useCroutonError().foundErrors()
-    if(hasErrors) {
-      console.log('[Crouton.open] BLOCKING: foundErrors returned true, exiting')
+    if (hasErrors) {
       return
     }
 
     // Check if we've reached maximum depth
     if (croutonStates.value.length >= MAX_DEPTH) {
-      console.log('[useCrouton v1.0.1] About to call useToast() for max depth warning')
       const toast = useToast()
-      console.log('[useCrouton v1.0.1] useToast() called successfully')
       toast.add({
         title: 'Maximum depth reached',
         description: 'Cannot open more than 5 nested forms',
@@ -105,7 +100,6 @@ export default function () {
 
     // Add new state to array
     croutonStates.value.push(newState)
-    console.log('[Crouton.open] New state added, total states:', croutonStates.value.length)
 
     if (actionIn === 'update' || actionIn === 'view') {
       try {
@@ -141,8 +135,6 @@ export default function () {
           queryParams = { ids: ids.join(',') }
         }
 
-        console.log('[Crouton.open] Fetching item for edit:', fullApiPath, queryParams)
-
         // Fetch the item to edit
         const response = await $fetch<any>(fullApiPath, {
           method: 'GET',
@@ -169,10 +161,7 @@ export default function () {
         }
         return
       } catch (error) {
-        console.error('[Crouton.open] Error fetching item:', error)
-        console.log('[useCrouton v1.0.1] About to call useToast() for error message')
         const toast = useToast()
-        console.log('[useCrouton v1.0.1] useToast() called successfully')
         toast.add({
           title: 'Uh oh! Something went wrong.',
           description: String(error),
@@ -194,7 +183,6 @@ export default function () {
 
     // Set loading to notLoading
     newState.loading = 'notLoading'
-    console.log('[Crouton.open] Completed')
   }
 
 
@@ -243,14 +231,11 @@ export default function () {
 
   // Function to update pagination for a collection
   function setPagination(collection: string, paginationData: Partial<PaginationState>) {
-    console.log('[useCrouton] setPagination called:', { collection, paginationData })
-    const oldValue = pagination.value[collection]
     pagination.value[collection] = {
       ...DEFAULT_PAGINATION,
       ...pagination.value[collection],
       ...paginationData
     }
-    console.log('[useCrouton] pagination state updated from:', oldValue, 'to:', pagination.value[collection])
   }
 
   // Function to get pagination for a collection
