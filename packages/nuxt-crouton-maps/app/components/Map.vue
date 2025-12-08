@@ -118,70 +118,103 @@ defineExpose({
 
 <template>
   <div class="crouton-map-wrapper" :class="props.class">
-    <!-- Nuxt-Mapbox map component -->
-    <MapboxMap
-      :map-id="props.id"
-      :options="mapOptions"
-      :style="{ height: props.height, width: props.width }"
-      @mb-created="handleMapLoad"
-      @mb-error="handleMapError"
-    >
-      <!-- Pass through default slot for markers, popups, etc. -->
-      <slot v-if="isLoaded && mapInstance" :map="mapInstance" />
-    </MapboxMap>
+    <ClientOnly>
+      <!-- Nuxt-Mapbox map component -->
+      <MapboxMap
+        :map-id="props.id"
+        :options="mapOptions"
+        :style="{ height: props.height, width: props.width }"
+        @mb-created="handleMapLoad"
+        @mb-error="handleMapError"
+      >
+        <!-- Pass through default slot for markers, popups, etc. -->
+        <slot v-if="isLoaded && mapInstance" :map="mapInstance" />
+      </MapboxMap>
 
-    <!-- Loading state -->
-    <div
-      v-if="!isLoaded && !error"
-      class="crouton-map-loading"
-    >
-      <div class="crouton-map-spinner">
-        <svg
-          class="animate-spin h-8 w-8 text-primary"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            class="opacity-75"
+      <!-- Loading state (client-side while map loads) -->
+      <div
+        v-if="!isLoaded && !error"
+        class="crouton-map-loading"
+      >
+        <div class="crouton-map-spinner">
+          <svg
+            class="animate-spin h-8 w-8 text-primary"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Error state -->
+      <div
+        v-if="error"
+        class="crouton-map-error"
+      >
+        <div class="crouton-map-error-content">
+          <svg
+            class="h-8 w-8 text-error"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
             fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          />
-        </svg>
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <p class="mt-2 text-sm text-gray-600">
+            {{ error }}
+          </p>
+        </div>
       </div>
-    </div>
 
-    <!-- Error state -->
-    <div
-      v-if="error"
-      class="crouton-map-error"
-    >
-      <div class="crouton-map-error-content">
-        <svg
-          class="h-8 w-8 text-error"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
+      <!-- SSR fallback: loading spinner (not absolute positioned) -->
+      <template #fallback>
+        <div
+          class="crouton-map-fallback"
+          :style="{ height: props.height, width: props.width }"
         >
-          <path
-            fill-rule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-            clip-rule="evenodd"
-          />
-        </svg>
-        <p class="mt-2 text-sm text-gray-600">
-          {{ error }}
-        </p>
-      </div>
-    </div>
+          <div class="crouton-map-spinner">
+            <svg
+              class="animate-spin h-8 w-8 text-primary"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+        </div>
+      </template>
+    </ClientOnly>
   </div>
 </template>
 
@@ -209,5 +242,13 @@ defineExpose({
 .crouton-map-error-content {
   text-align: center;
   padding: 1rem;
+}
+
+/* SSR fallback - not absolute positioned so it takes up space */
+.crouton-map-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
 }
 </style>
