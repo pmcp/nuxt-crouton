@@ -81,13 +81,14 @@ function parseArgs() {
   const force = a.includes('--force')
   const noTranslations = a.includes('--no-translations')
   const useTeamUtility = a.includes('--use-team-utility')
+  const hierarchy = a.includes('--hierarchy')
 
   if (!layer || !collection) {
-    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--use-team-utility]')
+    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--use-team-utility] [--hierarchy]')
     process.exit(1)
   }
 
-  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, useTeamUtility }
+  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, useTeamUtility, hierarchy }
 }
 
 async function loadFields(p) {
@@ -587,9 +588,24 @@ export default defineNuxtConfig({
   }
 }
 
-async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, useTeamUtility = false, config = null }) {
+async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, useTeamUtility = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false }) {
   const cases = toCase(collection)
   const base = path.resolve('layers', layer, 'collections', cases.plural)
+
+  // Detect hierarchy configuration from collection config or CLI flag
+  const hierarchy = collectionConfig?.hierarchy === true || hierarchyFlag === true ? {
+    enabled: true,
+    parentField: 'parentId',
+    orderField: 'order',
+    pathField: 'path',
+    depthField: 'depth'
+  } : (typeof collectionConfig?.hierarchy === 'object' ? {
+    enabled: true,
+    parentField: collectionConfig.hierarchy.parentField || 'parentId',
+    orderField: collectionConfig.hierarchy.orderField || 'order',
+    pathField: collectionConfig.hierarchy.pathField || 'path',
+    depthField: collectionConfig.hierarchy.depthField || 'depth'
+  } : { enabled: false })
 
   // Handle translation configuration
   if (!config && !noTranslations) {
@@ -775,12 +791,20 @@ ${translationsFieldSchema}
       const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
       const tsType = isDependentField ? 'string[] | null' : f.tsType
       return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
-    }).join('\n  ')
+    }).join('\n  '),
+    hierarchy // Pass hierarchy config to generators
   }
   
   if (dryRun) {
     const apiPath = `${layer}-${cases.plural}`
     console.log('DRY RUN - Would generate:')
+    if (hierarchy.enabled) {
+      console.log(`\n🌳 HIERARCHY ENABLED - Additional files will be generated:`)
+      console.log(`   • Database fields: parentId, path, depth, order`)
+      console.log(`   • Tree queries: getTreeData(), updatePosition(), reorderSiblings()`)
+      console.log(`   • API endpoints: [id]/move.patch.ts, reorder.patch.ts`)
+      console.log(`   • Form: Parent picker component\n`)
+    }
     console.log(`• ${base}/app/components/Form.vue`)
     console.log(`• ${base}/app/components/List.vue`)
 
@@ -800,6 +824,10 @@ ${translationsFieldSchema}
     console.log(`• ${base}/server/api/teams/[id]/${apiPath}/index.post.ts`)
     console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.singular}Id].patch.ts`)
     console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.singular}Id].delete.ts`)
+    if (hierarchy.enabled) {
+      console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.singular}Id]/move.patch.ts`)
+      console.log(`• ${base}/server/api/teams/[id]/${apiPath}/reorder.patch.ts`)
+    }
     console.log(`• ${base}/server/database/queries.ts`)
     console.log(`• ${base}/server/database/schema.ts`)
     console.log(`• ${base}/types.ts`)
@@ -1274,10 +1302,10 @@ async function main() {
           process.exit(1)
         }
         
-        // Create a map of collection names to their field files
-        const collectionFieldsMap = {}
+        // Create a map of collection names to their full config (including fieldsFile, hierarchy, etc.)
+        const collectionConfigMap = {}
         for (const col of config.collections) {
-          collectionFieldsMap[col.name] = col.fieldsFile
+          collectionConfigMap[col.name] = col
         }
 
         // Track all collections for batch db:generate
@@ -1287,8 +1315,8 @@ async function main() {
         // Process each target
         for (const target of config.targets) {
           for (const collectionName of target.collections) {
-            const fieldsFile = collectionFieldsMap[collectionName]
-            if (!fieldsFile) {
+            const collectionConfig = collectionConfigMap[collectionName]
+            if (!collectionConfig?.fieldsFile) {
               console.error(`Error: No fields file found for collection '${collectionName}'`)
               continue
             }
@@ -1296,12 +1324,15 @@ async function main() {
             console.log(`\n${'─'.repeat(60)}`)
             console.log(`Generating ${target.layer}/${collectionName}`)
             console.log(`${'─'.repeat(60)}`)
-            console.log(`Schema: ${fieldsFile}`)
+            console.log(`Schema: ${collectionConfig.fieldsFile}`)
+            if (collectionConfig.hierarchy) {
+              console.log(`Hierarchy: enabled`)
+            }
 
             // Resolve fieldsFile path relative to config directory if needed
-            const resolvedFieldsFile = config._configDir && !path.isAbsolute(fieldsFile)
-              ? path.resolve(config._configDir, fieldsFile)
-              : fieldsFile
+            const resolvedFieldsFile = config._configDir && !path.isAbsolute(collectionConfig.fieldsFile)
+              ? path.resolve(config._configDir, collectionConfig.fieldsFile)
+              : collectionConfig.fieldsFile
             const fields = await loadFields(resolvedFieldsFile)
 
             // Check if this collection has translations
@@ -1322,7 +1353,8 @@ async function main() {
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
               useTeamUtility: config.flags?.useTeamUtility || false,
-              config: config
+              config: config,
+              collectionConfig: collectionConfig // Pass individual collection config for hierarchy detection
             })
 
             allCollections.push({ name: collectionName, layer: target.layer, fields })

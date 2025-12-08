@@ -2,24 +2,47 @@
 // Copy this file to crouton.config.js and customize for your needs
 
 export default {
-  // Path to your JSON schema file
-  schemaPath: './crouton-schema.json',
-
   // Database dialect: 'pg' or 'sqlite'
   dialect: 'sqlite',
+
+  // ============================================================
+  // ENHANCED FORMAT (recommended): Define collections with individual schemas
+  // ============================================================
+  collections: [
+    {
+      name: 'products',
+      fieldsFile: './schemas/products.json'
+    },
+    {
+      name: 'categories',
+      fieldsFile: './schemas/categories.json'
+    },
+    {
+      name: 'pages',
+      fieldsFile: './schemas/pages.json',
+      hierarchy: true  // Enable tree hierarchy (adds parentId, path, depth, order fields)
+    }
+  ],
 
   // Target layers and collections to generate
   targets: [
     {
       layer: 'shop',           // Layer name (will create layers/shop/collections/...)
-      collections: ['products'] // Collection names to generate
+      collections: ['products', 'categories'] // Collection names from 'collections' array above
     },
-    // Add more targets as needed
-    // {
-    //   layer: 'blog',
-    //   collections: ['posts', 'categories']
-    // }
+    {
+      layer: 'content',
+      collections: ['pages']   // Pages with hierarchy enabled
+    }
   ],
+
+  // ============================================================
+  // SIMPLE FORMAT (legacy): Single schema for all collections
+  // ============================================================
+  // schemaPath: './crouton-schema.json',
+  // targets: [
+  //   { layer: 'shop', collections: ['products'] }
+  // ],
 
   // External connectors for :referenced collections (e.g., :users, :teams)
   // When you reference collections with : prefix in schemas, configure them here
