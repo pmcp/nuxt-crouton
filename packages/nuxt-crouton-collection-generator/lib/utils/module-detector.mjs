@@ -104,7 +104,17 @@ export async function detectRequiredDependencies(config) {
       configCmd: `Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts`,
       critical: true
     })
-  } else if (!baseLayerInstalled || !baseLayerExtended) {
+  } else if (baseLayerInstalled && !baseLayerExtended) {
+    // Package installed but not added to nuxt.config.ts extends[]
+    required.missing.push({
+      type: 'layer',
+      name: '@friendlyinternet/nuxt-crouton',
+      reason: 'Package is installed but NOT added to nuxt.config.ts extends[]',
+      installCmd: '(already installed)',
+      configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton']`,
+      critical: true
+    })
+  } else if (!baseLayerInstalled) {
     // Fallback to check for local crouton layer
     const croutonLayerExists = await layerExists('crouton')
     if (!croutonLayerExists) {

@@ -1016,8 +1016,21 @@ async function validateConfig(config) {
     // Simple format with single schema
     const schemaPath = path.resolve(config.schemaPath)
     try {
-      await fsp.access(schemaPath)
-      console.log(`✓ Schema file found: ${config.schemaPath}`)
+      const stats = await fsp.stat(schemaPath)
+      if (stats.isDirectory()) {
+        errors.push(
+          `schemaPath '${config.schemaPath}' is a directory, not a file.\n` +
+          `   When using targets[], use the enhanced format with a collections[] array\n` +
+          `   where each collection specifies its own fieldsFile:\n\n` +
+          `   collections: [\n` +
+          `     { name: 'products', fieldsFile: '${config.schemaPath}/products.json' },\n` +
+          `     { name: 'categories', fieldsFile: '${config.schemaPath}/categories.json' },\n` +
+          `   ],\n` +
+          `   targets: [...]\n`
+        )
+      } else {
+        console.log(`✓ Schema file found: ${config.schemaPath}`)
+      }
     } catch {
       errors.push(`Schema file not found: ${config.schemaPath}`)
     }
@@ -1176,13 +1189,6 @@ async function main() {
       if (!validation.valid) {
         console.error('\n⛔ Cannot proceed with generation due to validation errors\n')
         process.exit(1)
-      }
-
-      // Ask for confirmation unless force flag is set
-      if (!config.flags?.force && !config.flags?.dryRun) {
-        console.log('\nProceed with generation? (yes/no): ')
-        // Simple confirmation - in production you'd use a proper prompt library
-        await new Promise(resolve => setTimeout(resolve, 100))
       }
 
       // Detect external collection references (e.g., :users, :teams)
