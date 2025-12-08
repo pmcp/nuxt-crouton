@@ -103,6 +103,28 @@ export function generateFormComponent(data, config = {}) {
         </UFormField>`
     }
 
+    // Check if this is an options select field (admin-configurable dropdown)
+    if (field.meta?.displayAs === 'optionsSelect' && field.meta?.optionsCollection && field.meta?.optionsField) {
+      const optionsCollection = field.meta.optionsCollection
+      const optionsField = field.meta.optionsField
+      const label = field.meta.label || fieldName
+      const creatable = field.meta.creatable !== false // Default to true
+
+      // Resolve the collection name with layer prefix
+      const refCases = toCase(optionsCollection)
+      const resolvedOptionsCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+
+      return `        <UFormField label="${label}" name="${field.name}" class="not-last:pb-4">
+          <CroutonFormOptionsSelect
+            v-model="state.${field.name}"
+            options-collection="${resolvedOptionsCollection}"
+            options-field="${optionsField}"
+            label="${label}"${!creatable ? `
+            :creatable="false"` : ''}
+          />
+        </UFormField>`
+    }
+
     // Check if this is a reference field (has refTarget)
     if (field.refTarget) {
       let resolvedCollection
@@ -456,6 +478,7 @@ ${sidebarAreaMarkup}
 
 <script setup lang="ts">
 import type { ${prefixedPascalCase}FormProps, ${prefixedPascalCase}FormData } from '${typesPath}'
+import { use${prefixedPascalCasePlural} } from '../composables/use${prefixedPascalCasePlural}'
 
 const props = defineProps<${prefixedPascalCase}FormProps>()
 const { defaultValue, schema, collection } = use${prefixedPascalCasePlural}()
@@ -559,10 +582,9 @@ const handleGeocode = async () => {
 }
 
 // Handle marker drag to update coordinates
-const handleMarkerDragEnd = (event: any) => {
-  const lngLat = event.target.getLngLat()
-  mapCenter.value = [lngLat.lng, lngLat.lat]
-  state.value.${coordinateFieldName} = JSON.stringify([lngLat.lng, lngLat.lat])
+const handleMarkerDragEnd = (position: { lng: number; lat: number }) => {
+  mapCenter.value = [position.lng, position.lat]
+  state.value.${coordinateFieldName} = JSON.stringify([position.lng, position.lat])
 }` : ''}
 
 const handleSubmit = async () => {

@@ -23,9 +23,30 @@ if (!fs.existsSync(generatorPath)) {
 program
   .name('crouton-generate')
   .description('Generate CRUD collections for Nuxt Crouton')
-  .version('1.0.0');
+  .version('1.0.0')
+  .option('-c, --config <path>', 'Use config file (works without other args)');
 
-// Config command
+// Handle global --config flag before any subcommand
+// This allows: crouton-generate --config ./my-config.js
+program.hook('preAction', async (thisCommand, actionCommand) => {
+  const globalOpts = thisCommand.opts();
+  if (globalOpts.config && actionCommand.name() !== 'config') {
+    const spinner = ora('Loading config...').start();
+    try {
+      const args = ['--config', globalOpts.config];
+      spinner.stop();
+      process.argv = ['node', 'generate-collection.mjs', ...args];
+      await import(generatorPath);
+      process.exit(0);
+    } catch (error) {
+      spinner.fail('Generation failed');
+      console.error(chalk.red(error.message));
+      process.exit(1);
+    }
+  }
+});
+
+// Config command (still available for explicit use)
 program
   .command('config [configPath]')
   .description('Generate collections using a config file')
@@ -324,7 +345,24 @@ program
 // Parse CLI arguments
 program.parse(process.argv);
 
-// Show help if no arguments
-if (!process.argv.slice(2).length) {
+// Handle --config flag without any subcommand
+// e.g.: crouton-generate --config ./my-config.js
+const opts = program.opts();
+if (opts.config && !program.args.length) {
+  (async () => {
+    const spinner = ora('Loading config...').start();
+    try {
+      const args = ['--config', opts.config];
+      spinner.stop();
+      process.argv = ['node', 'generate-collection.mjs', ...args];
+      await import(generatorPath);
+    } catch (error) {
+      spinner.fail('Generation failed');
+      console.error(chalk.red(error.message));
+      process.exit(1);
+    }
+  })();
+} else if (!process.argv.slice(2).length) {
+  // Show help if no arguments
   program.outputHelp();
 }
