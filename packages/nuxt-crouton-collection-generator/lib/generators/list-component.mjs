@@ -133,6 +133,8 @@ export function generateListComponent(data, config = {}) {
 </template>
 
 <script setup lang="ts">
+import { use${prefixedPascalCasePlural} } from '../composables/use${prefixedPascalCasePlural}'
+
 const props = withDefaults(defineProps<{
   layout?: any
 }>(), {

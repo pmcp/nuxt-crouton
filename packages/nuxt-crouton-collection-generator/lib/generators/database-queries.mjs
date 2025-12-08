@@ -253,6 +253,7 @@ ${schemaImports}
 export async function getAll${prefixedPascalCasePlural}(teamId: string) {
   const db = useDB()
 ${aliasDefinitions}
+  // @ts-expect-error Complex select with joins requires type assertion
   const ${plural} = await db
     .select(${selectClause || '()'})
     .from(tables.${tableName})${leftJoins}
@@ -265,6 +266,7 @@ ${postQueryProcessing}
 export async function get${prefixedPascalCasePlural}ByIds(teamId: string, ${singular}Ids: string[]) {
   const db = useDB()
 ${aliasDefinitions}
+  // @ts-expect-error Complex select with joins requires type assertion
   const ${plural} = await db
     .select(${selectClause || '()'})
     .from(tables.${tableName})${leftJoins}

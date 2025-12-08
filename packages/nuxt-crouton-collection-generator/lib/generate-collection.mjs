@@ -465,13 +465,19 @@ async function updateRootNuxtConfig(layer) {
           .map(line => line.trim().replace(/,?\s*$/, '')) // Remove trailing commas first
           .filter(line => line && line !== ',' && !line.startsWith('//')) // Filter empty lines, standalone commas, and comments
 
-        lines.push(layerPath)
-        
+        // Deduplicate entries (normalize quotes and check for duplicates)
+        const normalizedLines = [...new Set(lines.map(l => l.replace(/['"]/g, "'")))]
+
+        // Only add if not already present (normalized check)
+        if (!normalizedLines.some(l => l === layerPath)) {
+          normalizedLines.push(layerPath)
+        }
+
         // Add proper indentation and commas
-        const formattedLines = lines.map((line, index) => {
+        const formattedLines = normalizedLines.map((line, index) => {
           const trimmedLine = line.trim()
           const indentedLine = `    ${trimmedLine}`
-          return index < lines.length - 1 ? indentedLine + ',' : indentedLine
+          return index < normalizedLines.length - 1 ? indentedLine + ',' : indentedLine
         })
         
         const updatedExtends = formattedLines.join('\n')
@@ -541,16 +547,19 @@ export default defineNuxtConfig({
         .map(line => line.trim().replace(/,$/, ''))
         .filter(line => line && line !== ',' && !line.startsWith('//'))
 
+      // Deduplicate entries (normalize quotes for comparison)
+      lines = [...new Set(lines.map(l => l.replace(/['"]/g, "'")))]
+
       let needsUpdate = false
 
-      // Check if collection needs to be added
-      if (!currentExtends.includes(newCollection)) {
+      // Check if collection needs to be added (with normalized check)
+      if (!lines.some(l => l === newCollection)) {
         lines.push(newCollection)
         needsUpdate = true
       }
 
       // Check if translations layer needs to be added (when using translations)
-      if (hasTranslations && !currentExtends.includes(translationsLayer) && !currentExtends.includes('translations')) {
+      if (hasTranslations && !lines.some(l => l === translationsLayer) && !lines.some(l => l.includes('translations'))) {
         // Add translations layer at the beginning for proper component resolution
         lines.unshift(translationsLayer)
         needsUpdate = true

@@ -170,6 +170,26 @@ export async function detectRequiredDependencies(config) {
     }
   }
 
+  // Check if maps package is needed (useMaps flag enabled)
+  const useMaps = config?.flags?.useMaps === true
+
+  if (useMaps) {
+    const mapsInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-maps')
+    const mapsExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-maps')
+
+    if (mapsInstalled && mapsExtended) {
+      required.layers.push('@friendlyinternet/nuxt-crouton-maps')
+    } else {
+      required.missing.push({
+        type: 'layer',
+        name: '@friendlyinternet/nuxt-crouton-maps',
+        reason: 'Required addon for map display and geocoding features (useMaps: true)',
+        installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-maps',
+        configCmd: `Add '@friendlyinternet/nuxt-crouton-maps' to extends array`
+      })
+    }
+  }
+
   return required
 }
 

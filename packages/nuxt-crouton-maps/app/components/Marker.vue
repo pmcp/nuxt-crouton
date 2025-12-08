@@ -25,8 +25,8 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   click: []
   dragStart: []
-  drag: []
-  dragEnd: []
+  drag: [position: { lng: number; lat: number }]
+  dragEnd: [position: { lng: number; lat: number }]
 }>()
 
 // Create marker using Nuxt-Mapbox helper
@@ -81,8 +81,14 @@ onMounted(() => {
 
       if (markerOptions.draggable) {
         marker.value.on('dragstart', () => emit('dragStart'))
-        marker.value.on('drag', () => emit('drag'))
-        marker.value.on('dragend', () => emit('dragEnd'))
+        marker.value.on('drag', () => {
+          const lngLat = marker.value.getLngLat()
+          emit('drag', { lng: lngLat.lng, lat: lngLat.lat })
+        })
+        marker.value.on('dragend', () => {
+          const lngLat = marker.value.getLngLat()
+          emit('dragEnd', { lng: lngLat.lng, lat: lngLat.lat })
+        })
       }
     }
   })
