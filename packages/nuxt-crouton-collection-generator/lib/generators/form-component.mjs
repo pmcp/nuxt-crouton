@@ -478,7 +478,7 @@ ${sidebarAreaMarkup}
 
 <script setup lang="ts">
 import type { ${prefixedPascalCase}FormProps, ${prefixedPascalCase}FormData } from '${typesPath}'
-import { use${prefixedPascalCasePlural} } from '../composables/use${prefixedPascalCasePlural}'
+import use${prefixedPascalCasePlural} from '../composables/use${prefixedPascalCasePlural}'
 
 const props = defineProps<${prefixedPascalCase}FormProps>()
 const { defaultValue, schema, collection } = use${prefixedPascalCasePlural}()
