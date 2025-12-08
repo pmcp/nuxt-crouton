@@ -26,7 +26,7 @@
       class="w-full"
     >
       <template #option="{ option }">
-        <span>{{ option[labelKey] || option.title || option.name || option.id }}</span>
+        <span>{{ option[labelKey] || option.id }}</span>
       </template>
 
       <template #content-top>
@@ -60,7 +60,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   labelKey: 'title',
-  filterFields: () => ['title', 'name'],
+  filterFields: () => ['title'],
   multiple: false
 })
 
