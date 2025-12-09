@@ -1,96 +1,8 @@
-<template>
-  <div ref="treeContainer" class="crouton-tree-view">
-    <UTree
-      ref="tree"
-      :items="treeItems"
-      :nested="false"
-      :get-key="(item: TreeNode) => item.id"
-      :unmount-on-hide="false"
-      color="neutral"
-      @toggle="handleToggle"
-      @select="handleSelect"
-    >
-      <template #item-leading="{ item, expanded }">
-        <div class="flex items-center gap-2">
-          <!-- Drag handle -->
-          <div
-            class="drag-handle cursor-grab opacity-50 hover:opacity-100 transition-opacity"
-            @mousedown.stop
-          >
-            <UIcon name="i-lucide-grip-vertical" class="size-4" />
-          </div>
-
-          <!-- Expand/collapse icon for items with children -->
-          <UIcon
-            v-if="item.children?.length"
-            :name="expanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-            class="size-4 text-muted"
-          />
-          <div v-else class="w-4" />
-        </div>
-      </template>
-
-      <template #item-label="{ item }">
-        <div class="flex items-center gap-2 min-w-0">
-          <!-- Item icon if provided -->
-          <UIcon
-            v-if="item.icon"
-            :name="item.icon"
-            class="size-4 shrink-0"
-          />
-
-          <!-- Item label (use labelKey or fallback to name/title/label) -->
-          <span class="truncate">
-            {{ getItemLabel(item) }}
-          </span>
-
-          <!-- Status badge if item has status -->
-          <UBadge
-            v-if="item.status"
-            :color="getStatusColor(item.status)"
-            size="xs"
-            variant="subtle"
-          >
-            {{ item.status }}
-          </UBadge>
-
-          <!-- Children count badge -->
-          <UBadge
-            v-if="item.children?.length"
-            color="neutral"
-            size="xs"
-            variant="subtle"
-          >
-            {{ item.children.length }}
-          </UBadge>
-        </div>
-      </template>
-
-      <template #item-trailing="{ item }">
-        <div class="tree-item-trailing flex items-center gap-1 opacity-0 transition-opacity">
-          <!-- Quick actions dropdown -->
-          <UDropdownMenu
-            :items="getItemActions(item)"
-            :content="{ align: 'end' }"
-          >
-            <UButton
-              icon="i-lucide-more-horizontal"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              @click.stop
-            />
-          </UDropdownMenu>
-        </div>
-      </template>
-    </UTree>
-  </div>
-</template>
-
 <script lang="ts" setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import type { HierarchyConfig } from '../types/table'
 import type { TreeNode } from './Tree.vue'
+import type SortableType from 'sortablejs'
 
 interface Props {
   items: TreeNode[]
@@ -110,182 +22,132 @@ const emit = defineEmits<{
   select: [item: TreeNode]
 }>()
 
-// Template refs
-const tree = ref<HTMLElement | null>(null)
-const treeContainer = ref<HTMLElement | null>(null)
+// Root container ref
+const rootRef = ref<HTMLElement | null>(null)
 
-// Convert tree items to format expected by UTree
-const treeItems = computed(() => {
-  return addTreeMetadata(props.items)
+// Track sortable instance (non-reactive, no need for shallowRef)
+let sortableInstance: SortableType | null = null
+
+// Initialize sortable for root level
+async function initRootSortable() {
+  if (!import.meta.client || !rootRef.value) return
+
+  // Already initialized - skip
+  if (sortableInstance) return
+
+  try {
+    const { default: Sortable } = await import('sortablejs')
+
+    sortableInstance = new Sortable(rootRef.value, {
+      group: 'tree',
+      animation: 150,
+      fallbackOnBody: true,
+      swapThreshold: 0.5,
+      invertSwap: true,
+      emptyInsertThreshold: 10,
+      dragoverBubble: false,
+      handle: '.drag-handle',
+      ghostClass: 'tree-ghost',
+      chosenClass: 'tree-chosen',
+      dragClass: 'tree-drag',
+      onEnd: (evt) => {
+        // Only emit from the destination container to prevent duplicate events
+        if (evt.to !== rootRef.value) return
+
+        const draggedEl = evt.item as HTMLElement
+        const itemId = draggedEl.dataset.id
+        if (!itemId) return
+
+        const toParentId = (evt.to as HTMLElement).dataset.parentId || null
+        const newIndex = evt.newIndex ?? 0
+
+        // Let SortableJS keep the DOM as-is, just emit the move
+        emit('move', itemId, toParentId === '' ? null : toParentId, newIndex)
+      }
+    })
+  } catch (error) {
+    console.warn('Sortable not available:', error)
+  }
+}
+
+// Handle move events from child TreeNode components
+function handleMove(id: string, newParentId: string | null, newOrder: number) {
+  emit('move', id, newParentId, newOrder)
+}
+
+// Handle select events from child TreeNode components
+function handleSelect(item: TreeNode) {
+  emit('select', item)
+}
+
+// Cleanup on unmount
+onBeforeUnmount(() => {
+  sortableInstance?.destroy()
+  sortableInstance = null
 })
 
-// Add metadata needed by UTree (defaultExpanded, etc.)
-function addTreeMetadata(nodes: TreeNode[], depth = 0): TreeNode[] {
-  return nodes.map(node => ({
-    ...node,
-    defaultExpanded: depth < 1, // Expand first level by default
-    children: node.children?.length ? addTreeMetadata(node.children, depth + 1) : []
-  }))
-}
-
-// Flatten tree for drag-drop operations
-function flattenTree(items: TreeNode[], parent: TreeNode[] = items): { item: TreeNode; parent: TreeNode[]; index: number }[] {
-  return items.flatMap((item, index) => [
-    { item, parent, index },
-    ...(item.children?.length && item.defaultExpanded ? flattenTree(item.children, item.children) : [])
-  ])
-}
-
-// Get label from item based on labelKey prop
-function getItemLabel(item: TreeNode): string {
-  // Try labelKey first, then fallback to common keys
-  return item[props.labelKey] || item.name || item.title || item.label || item.id
-}
-
-// Get status color based on status value
-function getStatusColor(status: string): 'success' | 'warning' | 'error' | 'info' | 'neutral' {
-  const statusColors: Record<string, 'success' | 'warning' | 'error' | 'info' | 'neutral'> = {
-    published: 'success',
-    active: 'success',
-    draft: 'warning',
-    pending: 'warning',
-    archived: 'neutral',
-    deleted: 'error',
-    error: 'error'
-  }
-  return statusColors[status.toLowerCase()] || 'neutral'
-}
-
-// Get dropdown actions for an item
-function getItemActions(item: TreeNode) {
-  return [
-    [
-      {
-        label: 'Edit',
-        icon: 'i-lucide-pencil',
-        onSelect: () => emit('select', item)
-      },
-      {
-        label: 'Add child',
-        icon: 'i-lucide-plus',
-        onSelect: () => {
-          // This would trigger a create action with parentId set
-          console.log('Add child to:', item.id)
-        }
-      }
-    ],
-    [
-      {
-        label: 'Move up',
-        icon: 'i-lucide-arrow-up',
-        disabled: item.order === 0,
-        onSelect: () => {
-          if (item.order > 0) {
-            emit('move', item.id, item.parentId, item.order - 1)
-          }
-        }
-      },
-      {
-        label: 'Move down',
-        icon: 'i-lucide-arrow-down',
-        onSelect: () => {
-          emit('move', item.id, item.parentId, item.order + 1)
-        }
-      }
-    ],
-    [
-      {
-        label: 'Move to root',
-        icon: 'i-lucide-corner-left-up',
-        disabled: !item.parentId,
-        onSelect: () => {
-          if (item.parentId) {
-            emit('move', item.id, null, 0)
-          }
-        }
-      }
-    ]
-  ]
-}
-
-// Handle toggle (expand/collapse)
-function handleToggle(e: any, item: TreeNode) {
-  // Allow toggle to work naturally
-}
-
-// Handle item selection
-function handleSelect(e: any, item: TreeNode) {
-  // Prevent default selection behavior on click
-  // We want to edit on click, not select
-  if (e.detail?.originalEvent?.type === 'click') {
-    e.preventDefault()
-    emit('select', item)
-  }
-}
-
-// Initialize sortable for drag-and-drop
+// Initialize on mount only
 onMounted(async () => {
-  // Dynamically import useSortable to avoid SSR issues
-  if (import.meta.client) {
-    try {
-      const { useSortable } = await import('@vueuse/integrations/useSortable')
-
-      // Target the UTree component ref, not the wrapper div
-      // UTree renders as a list element that useSortable can work with
-      if (tree.value) {
-        useSortable(tree.value, treeItems, {
-          animation: 150,
-          handle: '.drag-handle',
-          ghostClass: 'opacity-50',
-          onUpdate: (evt: any) => {
-            if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
-              handleDragEnd(evt.oldIndex, evt.newIndex)
-            }
-          }
-        })
-      }
-    } catch {
-      // useSortable not available, drag-drop will be disabled
-      console.warn('useSortable not available - install @vueuse/integrations and sortablejs for drag-drop support')
-    }
-  }
+  await nextTick()
+  initRootSortable()
 })
-
-// Handle drag-and-drop end
-function handleDragEnd(oldIndex: number, newIndex: number) {
-  if (oldIndex === newIndex) return
-
-  const flat = flattenTree(props.items)
-  const source = flat[oldIndex]
-  const target = flat[newIndex]
-
-  if (!source || !target) return
-
-  // Calculate new parent and order
-  const newParentId = target.item.parentId
-  const newOrder = newIndex
-
-  emit('move', source.item.id, newParentId, newOrder)
-}
-
-// Watch for changes in items and reinitialize if needed
-watch(() => props.items, () => {
-  // Items have changed, tree will re-render automatically
-}, { deep: true })
 </script>
+
+<template>
+  <div class="crouton-tree-view">
+    <!-- Root container -->
+    <div
+      v-if="items.length > 0"
+      ref="rootRef"
+      class="tree-root"
+      data-parent-id=""
+    >
+      <CroutonTreeNode
+        v-for="item in items"
+        :key="item.id"
+        :item="item"
+        :depth="0"
+        :label-key="labelKey"
+        :collection="collection"
+        @move="handleMove"
+        @select="handleSelect"
+      />
+    </div>
+
+    <!-- Empty state -->
+    <div v-else class="text-center text-muted p-8">
+      <UIcon name="i-lucide-git-branch" class="w-12 h-12 mx-auto mb-4 opacity-50" />
+      <p class="text-lg font-medium mb-2">No items yet</p>
+      <p class="text-sm">Create your first item to see the tree structure.</p>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .crouton-tree-view {
   width: 100%;
 }
 
-/* Drag handle styles */
-.drag-handle {
-  touch-action: none;
+.tree-root {
+  min-height: 50px;
+  padding-bottom: 40px; /* Drop zone at bottom for dragging items to end of list */
 }
 
-/* Show trailing actions on hover using CSS instead of Tailwind group */
-.crouton-tree-view :deep([data-tree-item]:hover .tree-item-trailing) {
-  opacity: 1;
+/* Ghost = the placeholder showing where item will drop */
+:deep(.tree-ghost) {
+  background: transparent !important;
+  border: 2px dashed #3b82f6 !important;
+  border-radius: 0.375rem;
+}
+
+:deep(.tree-ghost > *) {
+  visibility: hidden;
+}
+
+/* Drag = the item being dragged */
+:deep(.tree-drag) {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 0.375rem;
 }
 </style>

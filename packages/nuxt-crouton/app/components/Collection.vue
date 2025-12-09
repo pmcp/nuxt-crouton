@@ -330,11 +330,23 @@ const hierarchyConfig = computed<HierarchyConfig>(() => {
   }
 })
 
+// Tree mutation for drag-drop reordering
+const treeMutation = props.collection ? useTreeMutation(props.collection) : null
+
 // Handle tree move events (drag-drop reordering)
-function handleTreeMove(id: string, newParentId: string | null, newOrder: number) {
-  // This will be handled by useTreeMutation composable
-  // For now, emit an event that parent components can handle
+async function handleTreeMove(id: string, newParentId: string | null, newOrder: number) {
+  if (!treeMutation) {
+    console.warn('[Collection] No collection specified for tree mutation')
+    return
+  }
+
   console.log(`[Collection] Tree move: ${id} -> parent: ${newParentId}, order: ${newOrder}`)
+
+  try {
+    await treeMutation.moveNode(id, newParentId, newOrder)
+  } catch (error) {
+    console.error('[Collection] Tree move failed:', error)
+  }
 }
 
 // Crouton actions

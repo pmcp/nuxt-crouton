@@ -54,7 +54,6 @@ interface Props {
   collection: string
   hierarchy: HierarchyConfig
   loading?: boolean
-  onMove?: (id: string, newParentId: string | null, newOrder: number) => void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -120,10 +119,8 @@ function buildTree(items: any[]): TreeNode[] {
 const tree = computed(() => buildTree(props.rows))
 
 // Handle move events from TreeView
+// Only emit once - prefer the emit pattern over callback prop
 function handleMove(id: string, newParentId: string | null, newOrder: number) {
-  if (props.onMove) {
-    props.onMove(id, newParentId, newOrder)
-  }
   emit('move', id, newParentId, newOrder)
 }
 </script>
