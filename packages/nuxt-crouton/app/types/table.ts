@@ -12,6 +12,15 @@ export interface TableColumn {
 // Layout types
 export type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree'
 
+// Hierarchy configuration for tree layouts
+export interface HierarchyConfig {
+  enabled: boolean
+  parentField?: string  // default: 'parentId'
+  orderField?: string   // default: 'order'
+  pathField?: string    // default: 'path' (materialized path)
+  depthField?: string   // default: 'depth'
+}
+
 export interface ResponsiveLayout {
   base: LayoutType
   sm?: LayoutType
@@ -38,6 +47,7 @@ export interface CollectionProps {
   paginationData?: PaginationData | null
   refreshFn?: () => Promise<void> | null
   create?: boolean
+  hierarchy?: HierarchyConfig
   hideDefaultColumns?: {
     createdAt?: boolean
     updatedAt?: boolean
