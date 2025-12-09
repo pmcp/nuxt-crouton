@@ -2,7 +2,7 @@
 import { toSnakeCase } from '../utils/helpers.mjs'
 
 export function generateSchema(data, dialect, config = null) {
-  const { plural, layer, layerPascalCase, singular } = data
+  const { plural, layer, layerPascalCase, singular, hierarchy } = data
 
   // Get original collection name from data (before toCase processing)
   // For system collections, we need to preserve the original camelCase
@@ -36,6 +36,14 @@ export function generateSchema(data, dialect, config = null) {
   const METADATA_FIELDS = ['createdAt', 'updatedAt', 'createdBy', 'updatedBy']
   const TEAM_FIELDS = ['teamId', 'owner']
 
+  // Hierarchy fields (use custom names from config or defaults)
+  const HIERARCHY_FIELDS = hierarchy?.enabled ? [
+    hierarchy.parentField || 'parentId',
+    hierarchy.pathField || 'path',
+    hierarchy.depthField || 'depth',
+    hierarchy.orderField || 'order'
+  ] : []
+
   // Conditional field generation based on config flags
   const useTeamUtility = config?.flags?.useTeamUtility ?? false
   const useMetadata = config?.flags?.useMetadata ?? true
@@ -44,7 +52,8 @@ export function generateSchema(data, dialect, config = null) {
   const reservedFields = [
     'id',
     ...(useMetadata ? METADATA_FIELDS : []),
-    ...(useTeamUtility ? TEAM_FIELDS : [])
+    ...(useTeamUtility ? TEAM_FIELDS : []),
+    ...HIERARCHY_FIELDS
   ]
 
   const schemaFields = data.fields
@@ -144,6 +153,32 @@ const jsonColumn = customType<any>({
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull()` : ''
 
+  // Build hierarchy fields conditionally (parentId, path, depth, order)
+  let hierarchyFields = ''
+  if (hierarchy?.enabled) {
+    const parentField = hierarchy.parentField || 'parentId'
+    const pathField = hierarchy.pathField || 'path'
+    const depthField = hierarchy.depthField || 'depth'
+    const orderField = hierarchy.orderField || 'order'
+
+    if (dialect === 'sqlite') {
+      hierarchyFields = `
+  // Hierarchy fields for tree structure
+  ${parentField}: text('${parentField}'),
+  ${pathField}: text('${pathField}').notNull().$default(() => '/'),
+  ${depthField}: integer('${depthField}').notNull().$default(() => 0),
+  ${orderField}: integer('${orderField}').notNull().$default(() => 0)`
+    } else {
+      // PostgreSQL
+      hierarchyFields = `
+  // Hierarchy fields for tree structure
+  ${parentField}: text('${parentField}'),
+  ${pathField}: text('${pathField}').notNull().default('/'),
+  ${depthField}: integer('${depthField}').notNull().default(0),
+  ${orderField}: integer('${orderField}').notNull().default(0)`
+    }
+  }
+
   // Build metadata fields conditionally
   const metadataFields = useMetadata ? `
   createdAt: ${dialect === 'sqlite' ? "integer('createdAt', { mode: 'timestamp' })" : "timestamp('createdAt', { withTimezone: true })"}.notNull().$default(() => new Date()),
@@ -155,6 +190,7 @@ const jsonColumn = customType<any>({
   const allFields = [
     idField,
     teamFields,
+    hierarchyFields,
     schemaFields,
     translationsField,
     metadataFields
