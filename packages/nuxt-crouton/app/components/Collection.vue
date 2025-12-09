@@ -220,14 +220,14 @@ defineProps&lt;Props&gt;()
 </template>
 
 <script lang="ts" setup>
-import { computed, resolveComponent, onMounted } from 'vue'
+import { computed, resolveComponent, onMounted, getCurrentInstance } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
 
 // Version logging for debugging
-const CROUTON_VERSION = '1.5.3'
-const COLLECTION_FIX = 'Card fallback fix with row guards'
+const CROUTON_VERSION = '1.6.1'
+const COLLECTION_FIX = 'Silent card component detection (no Vue warnings)'
 
 const props = withDefaults(defineProps<ListProps>(), {
   layout: 'table',
@@ -250,15 +250,26 @@ const props = withDefaults(defineProps<ListProps>(), {
 const { toPascalCase } = useFormatCollections()
 
 const getCardComponent = (collectionName: string) => {
-  try {
-    const pascalName = toPascalCase(collectionName)
-    const component = resolveComponent(`${pascalName}Card`)
-    // resolveComponent returns a string when component is not found
-    // Only return the component if it's an actual component object
-    return typeof component === 'string' ? null : component
-  } catch {
-    return null
+  const pascalName = toPascalCase(collectionName)
+  const componentName = `${pascalName}Card`
+
+  // Check if component exists without triggering Vue warning
+  const instance = getCurrentInstance()
+  if (!instance) return null
+
+  // Check global components (Nuxt auto-imports register here)
+  const appComponents = instance.appContext.components
+  if (appComponents[componentName]) {
+    return resolveComponent(componentName)
   }
+
+  // Also check lazy variants (LazyBookingsPagesCard)
+  const lazyName = `Lazy${componentName}`
+  if (appComponents[lazyName]) {
+    return resolveComponent(lazyName)
+  }
+
+  return null // No warning emitted
 }
 
 const customCardComponent = computed(() =>
