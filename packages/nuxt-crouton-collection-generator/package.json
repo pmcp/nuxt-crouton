@@ -4,6 +4,7 @@
   "description": "Collection generator CLI for Nuxt Crouton - Generate complete CRUD collections with API, components, and database schema",
   "type": "module",
   "bin": {
+    "crouton": "./bin/crouton-generate.js",
     "crouton-generate": "./bin/crouton-generate.js",
     "crouton-rollback": "./lib/rollback-collection.mjs",
     "crouton-rollback-bulk": "./lib/rollback-bulk.mjs",

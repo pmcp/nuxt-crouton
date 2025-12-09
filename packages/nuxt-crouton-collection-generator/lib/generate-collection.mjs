@@ -732,7 +732,13 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
         .map(f => `${f.name}: ${f.zod}.optional()`)
 
       // Combine all field schemas
-      const allFieldsSchema = [...regularFieldsSchema, ...translatableFieldsSchema].join(',\n  ')
+      let allFieldsSchema = [...regularFieldsSchema, ...translatableFieldsSchema].join(',\n  ')
+
+      // Add hierarchy field to schema if enabled
+      if (hierarchy?.enabled) {
+        const hierarchySchemaField = `parentId: z.string().nullable().optional()`
+        allFieldsSchema = allFieldsSchema ? `${allFieldsSchema},\n  ${hierarchySchemaField}` : hierarchySchemaField
+      }
 
       // Add translations validation if there are translatable fields
       if (translatableFieldNames.length > 0) {
@@ -764,7 +770,7 @@ ${translationsFieldSchema}
       return allFieldsSchema
     })(),
     fieldsDefault: (() => {
-      const fieldDefaults = fields.filter(f => f.name !== 'id').map(f => {
+      let fieldDefaults = fields.filter(f => f.name !== 'id').map(f => {
         // Check if this is a dependent field (should default to null, not empty string)
         const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
         if (isDependentField) {
@@ -772,6 +778,12 @@ ${translationsFieldSchema}
         }
         return `${f.name}: ${f.default}`
       }).join(',\n    ')
+
+      // Add hierarchy field default if enabled
+      if (hierarchy?.enabled) {
+        fieldDefaults = fieldDefaults ? `${fieldDefaults},\n    parentId: null` : 'parentId: null'
+      }
+
       const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
       return hasTranslations ? `${fieldDefaults},\n    translations: {}` : fieldDefaults
     })(),
@@ -1232,6 +1244,14 @@ async function main() {
       // Store the config directory for resolving relative paths
       config._configDir = path.dirname(configPath)
 
+      // Parse --only flag for single-collection generation
+      const onlyArg = process.argv.find(arg => arg.startsWith('--only='))
+      const onlyCollection = onlyArg ? onlyArg.split('=')[1] : null
+      if (onlyCollection) {
+        console.log(`\n📌 Generating only: ${onlyCollection}\n`)
+      }
+      config._onlyCollection = onlyCollection
+
       // Validate configuration before proceeding
       const validation = await validateConfig(config)
 
@@ -1336,6 +1356,11 @@ async function main() {
         // Process each target
         for (const target of config.targets) {
           for (const collectionName of target.collections) {
+            // Skip if --only flag is set and this isn't the target collection
+            if (config._onlyCollection && collectionName !== config._onlyCollection) {
+              continue
+            }
+
             const collectionConfig = collectionConfigMap[collectionName]
             if (!collectionConfig?.fieldsFile) {
               console.error(`Error: No fields file found for collection '${collectionName}'`)

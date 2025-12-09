@@ -50,12 +50,35 @@ program.hook('preAction', async (thisCommand, actionCommand) => {
 program
   .command('config [configPath]')
   .description('Generate collections using a config file')
-  .action(async (configPath = './crouton.config.js') => {
+  .option('--only <name>', 'Generate only a specific collection')
+  .action(async (configPath, options) => {
     const spinner = ora('Loading config...').start();
 
     try {
+      // Auto-detect config file if not specified
+      if (!configPath) {
+        const extensions = ['.js', '.mjs', '.cjs', '.ts'];
+        const baseName = './crouton.config';
+        for (const ext of extensions) {
+          const testPath = `${baseName}${ext}`;
+          if (fs.existsSync(testPath)) {
+            configPath = testPath;
+            break;
+          }
+        }
+        // Fallback to default if no config file found
+        if (!configPath) {
+          configPath = './crouton.config.js';
+        }
+      }
+
       // Pass config as the first argument to the generator
       const args = ['--config', configPath];
+
+      // Add --only flag if specified
+      if (options.only) {
+        args.push(`--only=${options.only}`);
+      }
 
       spinner.stop();
 
@@ -81,6 +104,7 @@ program
   .option('--no-translations', 'Skip translation fields')
   .option('--force', 'Force generation despite missing dependencies')
   .option('--no-db', 'Skip database table creation')
+  .option('--hierarchy', 'Enable hierarchy support (parentId, path, depth, order)')
   .option('-c, --config <path>', 'Use config file instead of CLI args')
   .action(async (layer, collection, options) => {
     const spinner = ora('Generating collection...').start();
@@ -122,6 +146,9 @@ program
       }
       if (options.db === false) {
         args.push('--no-db');
+      }
+      if (options.hierarchy) {
+        args.push('--hierarchy');
       }
 
       spinner.stop();
