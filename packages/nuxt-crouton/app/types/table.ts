@@ -10,7 +10,7 @@ export interface TableColumn {
 }
 
 // Layout types
-export type LayoutType = 'table' | 'list' | 'grid' | 'cards'
+export type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree'
 
 export interface ResponsiveLayout {
   base: LayoutType
@@ -25,7 +25,8 @@ export interface ResponsiveLayout {
 export const layoutPresets: Record<string, ResponsiveLayout> = {
   'responsive': { base: 'list', md: 'grid', lg: 'table' },
   'mobile-friendly': { base: 'list', lg: 'table' },
-  'compact': { base: 'list', xl: 'table' }
+  'compact': { base: 'list', xl: 'table' },
+  'tree-default': { base: 'tree' }
 }
 
 export interface CollectionProps {
