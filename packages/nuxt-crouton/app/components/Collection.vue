@@ -194,12 +194,35 @@ defineProps&lt;Props&gt;()
       />
     </div>
   </div>
+
+  <!-- Tree Layout -->
+  <CroutonTree
+    v-else-if="activeLayout === 'tree'"
+    :rows="rows"
+    :collection="collection"
+    :hierarchy="hierarchyConfig"
+    @move="handleTreeMove"
+  >
+    <template #header>
+      <slot name="header">
+        <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+          <UButton
+            color="primary"
+            size="xs"
+            @click="openCrouton('create', collection)"
+          >
+            Create
+          </UButton>
+        </div>
+      </slot>
+    </template>
+  </CroutonTree>
 </template>
 
 <script lang="ts" setup>
 import { computed, resolveComponent, onMounted } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
-import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets } from '../types/table'
+import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
 
 // Version logging for debugging
@@ -281,6 +304,27 @@ const activeLayout = computed<LayoutType>(() => {
 
   return layout.base
 })
+
+// Hierarchy config for tree layout
+// This can be passed in via props or retrieved from collection config
+const hierarchyConfig = computed<HierarchyConfig>(() => {
+  // Default hierarchy config - collections with hierarchy enabled
+  // will have this configured in their composable
+  return {
+    enabled: true,
+    parentField: 'parentId',
+    orderField: 'order',
+    pathField: 'path',
+    depthField: 'depth'
+  }
+})
+
+// Handle tree move events (drag-drop reordering)
+function handleTreeMove(id: string, newParentId: string | null, newOrder: number) {
+  // This will be handled by useTreeMutation composable
+  // For now, emit an event that parent components can handle
+  console.log(`[Collection] Tree move: ${id} -> parent: ${newParentId}, order: ${newOrder}`)
+}
 
 // Crouton actions
 const { open: openCrouton } = useCrouton()
