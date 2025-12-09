@@ -2,7 +2,7 @@
 import { toCase } from '../utils/helpers.mjs'
 
 export function generateComposable(data, config = {}) {
-  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layer, fields } = data
+  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layer, fields, hierarchy } = data
   const prefixedSingular = `${layerPascalCase.toLowerCase()}${pascalCase}`
   const prefixedPlural = `${layerPascalCase.toLowerCase()}${pascalCasePlural}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
@@ -31,6 +31,17 @@ export function generateComposable(data, config = {}) {
     ? `,\n  dependentFieldComponents: {\n${Object.entries(dependentFieldComponents).map(([field, component]) => `    ${field}: '${component}'`).join(',\n')}\n  }`
     : ''
 
+  // Generate hierarchy config if enabled
+  const hierarchyConfigCode = hierarchy?.enabled
+    ? `,\n  hierarchy: {
+    enabled: true,
+    parentField: '${hierarchy.parentField || 'parentId'}',
+    pathField: '${hierarchy.pathField || 'path'}',
+    depthField: '${hierarchy.depthField || 'depth'}',
+    orderField: '${hierarchy.orderField || 'order'}'
+  }`
+    : ''
+
   return `import { z } from 'zod'
 
 export const ${prefixedSingular}Schema = z.object({
@@ -50,7 +61,7 @@ export const ${prefixedPlural}Config = {
   defaultValues: {
     ${data.fieldsDefault}
   },
-  columns: ${prefixedPlural}Columns${dependentFieldComponentsCode},
+  columns: ${prefixedPlural}Columns${dependentFieldComponentsCode}${hierarchyConfigCode},
 }
 
 export const use${prefixedPascalCasePlural} = () => ${prefixedPlural}Config
