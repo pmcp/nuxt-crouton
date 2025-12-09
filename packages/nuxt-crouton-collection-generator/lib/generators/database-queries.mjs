@@ -1,5 +1,176 @@
 // Generator for database queries
 
+// Helper to generate tree-specific queries when hierarchy is enabled
+function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, plural) {
+  const hierarchy = data.hierarchy
+  if (!hierarchy || !hierarchy.enabled) {
+    return ''
+  }
+
+  // Get field names with defaults
+  const parentField = hierarchy.parentField || 'parentId'
+  const pathField = hierarchy.pathField || 'path'
+  const depthField = hierarchy.depthField || 'depth'
+  const orderField = hierarchy.orderField || 'order'
+
+  return `
+
+// Tree hierarchy queries (auto-generated when hierarchy: true)
+
+export async function getTreeData${prefixedPascalCasePlural}(teamId: string) {
+  const db = useDB()
+
+  const ${plural} = await db
+    .select()
+    .from(tables.${tableName})
+    .where(eq(tables.${tableName}.teamId, teamId))
+    .orderBy(tables.${tableName}.${pathField}, tables.${tableName}.${orderField})
+
+  return ${plural}
+}
+
+export async function updatePosition${prefixedPascalCase}(
+  teamId: string,
+  id: string,
+  newParentId: string | null,
+  newOrder: number
+) {
+  const db = useDB()
+
+  // Get the current item to find its path
+  const [current] = await db
+    .select()
+    .from(tables.${tableName})
+    .where(
+      and(
+        eq(tables.${tableName}.id, id),
+        eq(tables.${tableName}.teamId, teamId)
+      )
+    )
+
+  if (!current) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: '${prefixedPascalCase} not found'
+    })
+  }
+
+  // Calculate new path and depth
+  let newPath: string
+  let newDepth: number
+
+  if (newParentId) {
+    const [parent] = await db
+      .select()
+      .from(tables.${tableName})
+      .where(
+        and(
+          eq(tables.${tableName}.id, newParentId),
+          eq(tables.${tableName}.teamId, teamId)
+        )
+      )
+
+    if (!parent) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Parent ${prefixedPascalCase} not found'
+      })
+    }
+
+    // Prevent moving item to its own descendant
+    if (parent.${pathField}.startsWith(current.${pathField})) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Cannot move item to its own descendant'
+      })
+    }
+
+    newPath = \`\${parent.${pathField}}\${id}/\`
+    newDepth = parent.${depthField} + 1
+  } else {
+    newPath = \`/\${id}/\`
+    newDepth = 0
+  }
+
+  const oldPath = current.${pathField}
+
+  // Update the item itself
+  const [updated] = await db
+    .update(tables.${tableName})
+    .set({
+      ${parentField}: newParentId,
+      ${pathField}: newPath,
+      ${depthField}: newDepth,
+      ${orderField}: newOrder
+    })
+    .where(
+      and(
+        eq(tables.${tableName}.id, id),
+        eq(tables.${tableName}.teamId, teamId)
+      )
+    )
+    .returning()
+
+  // Update all descendants' paths if the path changed
+  if (oldPath !== newPath) {
+    // Get all descendants
+    const descendants = await db
+      .select()
+      .from(tables.${tableName})
+      .where(
+        and(
+          eq(tables.${tableName}.teamId, teamId),
+          sql\`\${tables.${tableName}.${pathField}} LIKE \${oldPath + '%'} AND \${tables.${tableName}.id} != \${id}\`
+        )
+      )
+
+    // Update each descendant's path and depth
+    for (const descendant of descendants) {
+      const descendantNewPath = descendant.${pathField}.replace(oldPath, newPath)
+      const depthDiff = newDepth - current.${depthField}
+
+      await db
+        .update(tables.${tableName})
+        .set({
+          ${pathField}: descendantNewPath,
+          ${depthField}: descendant.${depthField} + depthDiff
+        })
+        .where(eq(tables.${tableName}.id, descendant.id))
+    }
+  }
+
+  return updated
+}
+
+export async function reorderSiblings${prefixedPascalCasePlural}(
+  teamId: string,
+  updates: { id: string; ${orderField}: number }[]
+) {
+  const db = useDB()
+
+  const results = []
+
+  for (const update of updates) {
+    const [updated] = await db
+      .update(tables.${tableName})
+      .set({ ${orderField}: update.${orderField} })
+      .where(
+        and(
+          eq(tables.${tableName}.id, update.id),
+          eq(tables.${tableName}.teamId, teamId)
+        )
+      )
+      .returning()
+
+    if (updated) {
+      results.push(updated)
+    }
+  }
+
+  return results
+}`
+}
+
 // Helper to detect reference fields that need LEFT JOINs or post-query processing
 function detectReferenceFields(data, config) {
   const singleReferences = []  // For leftJoin
@@ -244,8 +415,15 @@ export function generateQueries(data, config = null) {
 `
   }
 
+  // Check if hierarchy is enabled to add sql import
+  const hasHierarchy = data.hierarchy && data.hierarchy.enabled
+  const sqlImport = hasHierarchy ? ', sql' : ''
+
+  // Generate tree queries if hierarchy is enabled
+  const treeQueries = generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, plural)
+
   return `// Generated with array reference post-processing support (v2024-10-12)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray${sqlImport} } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
@@ -351,5 +529,5 @@ export async function delete${prefixedPascalCase}(
   }
 
   return { success: true }
-}`
+}${treeQueries}`
 }
