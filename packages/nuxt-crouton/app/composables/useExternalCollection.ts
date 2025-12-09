@@ -1,37 +1,3 @@
-import { z } from 'zod'
-
-/**
- * Configuration for an external collection
- * Used when you want Crouton forms to reference collections
- * managed by another system (e.g., auth system users, external APIs)
- */
-export interface ExternalCollectionConfig {
-  /** Collection name (must match app.config.ts key) */
-  name: string
-  /** Zod schema for validation and types */
-  schema: z.ZodSchema
-  /** API path (defaults to collection name) */
-  apiPath?: string
-  /** Fetch strategy for single items - 'query' uses ?ids=, 'restful' uses /{id} (defaults to 'query') */
-  fetchStrategy?: 'query' | 'restful'
-  /** Read-only collection - hides edit/delete buttons in CardMini (defaults to true) */
-  readonly?: boolean
-  /** Optional metadata for display */
-  meta?: {
-    label?: string
-    description?: string
-  }
-  /** Proxy configuration for connecting to existing endpoints */
-  proxy?: {
-    /** Enable proxy mode */
-    enabled: boolean
-    /** Source endpoint to proxy to (e.g., 'members' → /api/teams/[id]/members) */
-    sourceEndpoint: string
-    /** Transform function to convert source data to Crouton format */
-    transform: (item: any) => { id: string; title: string; [key: string]: any }
-  }
-}
-
 /**
  * Create a minimal collection config for external resources
  *
@@ -65,20 +31,42 @@ export interface ExternalCollectionConfig {
  * ```
  *
  * @param config - External collection configuration
+ * @param config.name - Collection name (must match app.config.ts key)
+ * @param config.schema - Zod schema for validation and types
+ * @param config.apiPath - API path (defaults to collection name)
+ * @param config.fetchStrategy - Fetch strategy: 'query' uses ?ids=, 'restful' uses /{id} (defaults to 'query')
+ * @param config.readonly - Read-only collection - hides edit/delete buttons in CardMini (defaults to true)
+ * @param config.meta - Optional metadata for display (label, description)
+ * @param config.proxy - Proxy configuration for connecting to existing endpoints
  * @returns Collection config compatible with Crouton registry
  */
-export function defineExternalCollection(config: ExternalCollectionConfig) {
+export function defineExternalCollection(config: {
+  name: string
+  schema: any
+  apiPath?: string
+  fetchStrategy?: 'query' | 'restful'
+  readonly?: boolean
+  meta?: {
+    label?: string
+    description?: string
+  }
+  proxy?: {
+    enabled: boolean
+    sourceEndpoint: string
+    transform: (item: any) => { id: string, title: string, [key: string]: any }
+  }
+}) {
   return {
     name: config.name,
     layer: 'external',
     apiPath: config.apiPath || config.name,
-    fetchStrategy: config.fetchStrategy || 'query', // Default to query-based for backward compatibility
-    readonly: config.readonly !== false, // Default to true (read-only) unless explicitly set to false
-    componentName: null, // No form component - external collections are read-only
+    fetchStrategy: config.fetchStrategy || 'query',
+    readonly: config.readonly !== false,
+    componentName: null,
     schema: config.schema,
     defaultValues: {},
     columns: [],
     meta: config.meta || {},
-    proxy: config.proxy // Pass through proxy config
+    proxy: config.proxy
   }
 }
