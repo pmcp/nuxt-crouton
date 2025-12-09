@@ -1,174 +1,61 @@
-<template>
-  <div ref="editorContainer" class="flex flex-col h-full">
-    <CroutonEditorToolbar :editor="editor" :container="editorContainer" class="flex-shrink-0" />
-    <floating-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
-      <div class="editor-floating-menu">
-        <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">
-          H1
-        </button>
-        <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">
-          H2
-        </button>
-        <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }">
-          Bullet list
-        </button>
-      </div>
-    </floating-menu>
-    <UCard>
-      <EditorContent :editor="editor" class="flex-1 min-h-0 overflow-auto"/>
-    </UCard>
-  </div>
-</template>
+<script setup lang="ts">
+import { computed } from 'vue'
 
-<script setup>
-import { useEditor, EditorContent } from '@tiptap/vue-3'
-import { FloatingMenu } from '@tiptap/vue-3'
-import StarterKit from '@tiptap/starter-kit'
-import TextStyle from '@tiptap/extension-text-style'
-import Color from '@tiptap/extension-color'
+const props = defineProps<{
+  modelValue?: string
+  placeholder?: string
+  contentType?: 'html' | 'markdown' | 'json'
+}>()
 
-console.log('[EditorSimple] Component loaded and initialized')
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
 
-const props = defineProps({
-  modelValue: {
-    type: String,
-    default: ''
-  }
-});
+const content = computed({
+  get: () => props.modelValue ?? '',
+  set: (value: string) => emit('update:modelValue', value)
+})
 
-const emits = defineEmits(['update:modelValue'])
-
-const editorContainer = ref(null)
-
-watch(() => props.modelValue, (newValue) => {
-  if (!editor.value) return;
-
-  // Get current editor content
-  const currentContent = editor.value.getHTML();
-
-  // Only update if content is actually different
-  if (currentContent !== newValue) {
-    console.log('[EditorSimple] Updating content from', currentContent, 'to', newValue);
-    editor.value.commands.setContent(newValue || '', false);
-  }
-});
-
-
-
-
-
-const editor = useEditor({
-  content: props.modelValue,
-  extensions: [
-    StarterKit,
-    TextStyle,
-    Color
+const toolbarItems = [
+  [
+    {
+      icon: 'i-lucide-heading',
+      tooltip: { text: 'Headings' },
+      content: { align: 'start' },
+      items: [
+        { kind: 'heading', level: 1, icon: 'i-lucide-heading-1', label: 'Heading 1' },
+        { kind: 'heading', level: 2, icon: 'i-lucide-heading-2', label: 'Heading 2' },
+        { kind: 'heading', level: 3, icon: 'i-lucide-heading-3', label: 'Heading 3' }
+      ]
+    }
   ],
-  editorProps: {
-    attributes: {
-      class: '',
-    },
-  },
-  onUpdate: ({ editor }) => {
-    let content = editor.getHTML()
-    emits('update:modelValue', content)
-  }
-});
-
-
-
-
-onBeforeUnmount(() => {
-  unref(editor).destroy();
-});
-
-
+  [
+    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
+    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
+    { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough', tooltip: { text: 'Strikethrough' } },
+    { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } }
+  ],
+  [
+    { kind: 'bulletList', icon: 'i-lucide-list', tooltip: { text: 'Bullet List' } },
+    { kind: 'orderedList', icon: 'i-lucide-list-ordered', tooltip: { text: 'Numbered List' } },
+    { kind: 'blockquote', icon: 'i-lucide-text-quote', tooltip: { text: 'Quote' } },
+    { kind: 'codeBlock', icon: 'i-lucide-square-code', tooltip: { text: 'Code Block' } }
+  ]
+]
 </script>
 
-<style scoped>
-:deep(.tiptap) {
-  height: 100%;
-  padding: 1rem;
-  outline: none;
-}
-
-:deep(.dark .tiptap) {
-  color: #f3f4f6; /* text-gray-100 */
-}
-
-:deep(.tiptap p.is-empty::before) {
-  color: #9ca3af; /* text-gray-400 */
-  content: attr(data-placeholder);
-  float: left;
-  height: 0;
-  pointer-events: none;
-}
-
-:deep(.dark .tiptap p.is-empty::before) {
-  color: #6b7280; /* text-gray-500 */
-}
-
-:deep(.ProseMirror) {
-  height: 100%;
-  outline: none;
-  color: #111827;
-}
-
-:deep(.dark .ProseMirror) {
-  color: #f3f4f6; /* text-gray-100 */
-}
-
-:deep(.ProseMirror-focused) {
-  outline: none;
-}
-
-/* Floating menu - scoped to editor component */
-:deep(.editor-floating-menu) {
-  display: flex;
-  padding: 0.1rem;
-  border-radius: 0.5rem;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-}
-
-:deep(.dark .editor-floating-menu) {
-  background-color: #111827; /* bg-gray-900 */
-  border-color: #374151; /* border-gray-700 */
-}
-
-:deep(.editor-floating-menu button) {
-  background-color: unset;
-  padding: 0.275rem 0.425rem;
-  border-radius: 0.3rem;
-  color: #374151; /* text-gray-700 */
-}
-
-:deep(.dark .editor-floating-menu button) {
-  color: #d1d5db; /* text-gray-300 */
-}
-
-:deep(.editor-floating-menu button:hover) {
-  background-color: #f3f4f6; /* bg-gray-100 */
-}
-
-:deep(.dark .editor-floating-menu button:hover) {
-  background-color: #1f2937; /* bg-gray-800 */
-}
-
-:deep(.editor-floating-menu button.is-active) {
-  background-color: #3b82f6; /* bg-primary-500 */
-  color: white;
-}
-
-:deep(.dark .editor-floating-menu button.is-active) {
-  background-color: #2563eb; /* bg-primary-600 */
-}
-
-:deep(.editor-floating-menu button.is-active:hover) {
-  background-color: #2563eb; /* bg-primary-600 */
-}
-
-:deep(.dark .editor-floating-menu button.is-active:hover) {
-  background-color: #1d4ed8; /* bg-primary-700 */
-}
-</style>
+<template>
+  <UEditor
+    v-slot="{ editor }"
+    v-model="content"
+    :content-type="contentType ?? 'html'"
+    :placeholder="placeholder ?? 'Start writing...'"
+    class="w-full min-h-48"
+  >
+    <UEditorToolbar
+      :editor="editor"
+      :items="toolbarItems"
+      layout="bubble"
+    />
+  </UEditor>
+</template>

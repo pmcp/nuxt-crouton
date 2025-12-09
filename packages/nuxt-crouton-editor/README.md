@@ -1,14 +1,16 @@
 # Nuxt Crouton Editor
 
-Rich text editor addon layer for Nuxt Crouton, powered by Tiptap.
+Rich text editor addon layer for Nuxt Crouton, now powered by **Nuxt UI Editor**.
+
+> **v2.0 Breaking Change**: This package now wraps Nuxt UI's `UEditor` component instead of bundling TipTap directly. This provides a more feature-rich, maintained editor with better Nuxt UI integration.
 
 ## Features
 
-- 🎨 **WYSIWYG Editor** - Beautiful, accessible rich text editing
-- ⚡ **Auto-configured** - Tiptap extensions pre-configured and ready to use
-- 🧩 **Modular** - Optional addon layer for Nuxt Crouton
-- 🎯 **Type-safe** - Full TypeScript support
-- 🌙 **Dark Mode** - Automatic dark mode support
+- **Nuxt UI Editor** - Full-featured rich text editing via Nuxt UI
+- **Backwards Compatible** - `CroutonEditorSimple` still works as before
+- **New Capabilities** - Access to slash commands, mentions, emoji picker, drag & drop
+- **Type-safe** - Full TypeScript support
+- **Dark Mode** - Automatic dark mode support via Nuxt UI theming
 
 ## Installation
 
@@ -16,41 +18,32 @@ Rich text editor addon layer for Nuxt Crouton, powered by Tiptap.
 
 ```bash
 pnpm add @friendlyinternet/nuxt-crouton-editor
-# or
-npm install @friendlyinternet/nuxt-crouton-editor
-# or
-yarn add @friendlyinternet/nuxt-crouton-editor
 ```
 
-### 2. Add to your Nuxt config
+### 2. Ensure Nuxt UI is configured
+
+This package requires `@nuxt/ui` v3+ to be installed and configured in your project:
 
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
+  modules: ['@nuxt/ui'],
   extends: [
     '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-editor'  // Add this
+    '@friendlyinternet/nuxt-crouton-editor'
   ]
 })
 ```
 
-### 3. Install peer dependencies
+## Usage
 
-```bash
-pnpm add @nuxt/icon
-```
+### CroutonEditorSimple (Backwards Compatible)
 
-## Components
-
-### CroutonEditorSimple
-
-A fully-featured rich text editor with toolbar and formatting options.
+The simplest way to add a rich text editor:
 
 ```vue
 <template>
-  <div>
-    <CroutonEditorSimple v-model="content" />
-  </div>
+  <CroutonEditorSimple v-model="content" />
 </template>
 
 <script setup lang="ts">
@@ -58,179 +51,127 @@ const content = ref('<p>Hello world!</p>')
 </script>
 ```
 
-**Features:**
-- Text formatting (bold, italic, strikethrough)
-- Headings (H1, H2, H3)
-- Lists (bullet, numbered)
-- Code blocks
-- Blockquotes
-- Text colors
-- Floating toolbar on text selection
-
-### CroutonEditorToolbar
-
-The toolbar component (used internally by CroutonEditorSimple, but can be used standalone).
-
-```vue
-<template>
-  <CroutonEditorToolbar :editor="editor" />
-</template>
-
-<script setup lang="ts">
-const editor = useEditor({
-  content: '<p>Content</p>',
-  extensions: [TiptapStarterKit]
-})
-</script>
-```
-
-## Usage with Nuxt Crouton Forms
-
-Integrate the editor into your Crouton collection forms:
-
-```vue
-<!-- components/PostsForm.vue -->
-<template>
-  <UForm :state="formData" @submit="handleSubmit">
-    <UFormField label="Title" name="title">
-      <UInput v-model="formData.title" />
-    </UFormField>
-
-    <UFormField label="Content" name="content">
-      <CroutonEditorSimple v-model="formData.content" />
-    </UFormField>
-
-    <UButton type="submit">Save Post</UButton>
-  </UForm>
-</template>
-
-<script setup lang="ts">
-const props = defineProps(['action', 'activeItem'])
-const { send } = useCrouton()
-
-const formData = ref({
-  title: props.activeItem?.title || '',
-  content: props.activeItem?.content || '<p></p>'
-})
-
-const handleSubmit = () => {
-  send(props.action, 'posts', formData.value)
-}
-</script>
-```
-
-## Generated Collection Integration
-
-When using the Nuxt Crouton generator with rich text fields, update your schema:
-
-```json
-{
-  "content": {
-    "type": "text",
-    "meta": {
-      "label": "Content",
-      "component": "CroutonEditorSimple"
-    }
-  }
-}
-```
-
-Then the generated form will automatically use the rich text editor for that field.
-is 
-## Customization
-
-### Custom Styling
-
-The editor respects your Nuxt UI theme and includes dark mode support out of the box. You can override styles:
-
-```vue
-<CroutonEditorSimple
-  v-model="content"
-  class="my-custom-editor"
-/>
-
-<style>
-.my-custom-editor :deep(.tiptap) {
-  min-height: 300px;
-  padding: 2rem;
-}
-</style>
-```
-
-### Custom Extensions
-
-If you need additional Tiptap extensions, you can create a custom editor:
-
-```vue
-<script setup lang="ts">
-import { Image } from '@tiptap/extension-image'
-
-const editor = useEditor({
-  content: props.modelValue,
-  extensions: [
-    TiptapStarterKit,
-    TiptapTextStyle,
-    TiptapColor,
-    Image  // Add custom extension
-  ],
-  onUpdate: ({ editor }) => {
-    emit('update:modelValue', editor.getHTML())
-  }
-})
-</script>
-
-<template>
-  <div>
-    <CroutonEditorToolbar :editor="editor" />
-    <TiptapEditorContent :editor="editor" />
-  </div>
-</template>
-```
-
-## API Reference
-
-### CroutonEditorSimple Props
-
+**Props:**
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `modelValue` | `string` | `''` | HTML content (v-model) |
+| `modelValue` | `string` | `''` | HTML/Markdown content (v-model) |
+| `placeholder` | `string` | `'Start writing...'` | Placeholder text |
+| `contentType` | `'html' \| 'markdown' \| 'json'` | `'html'` | Content format |
 
-### CroutonEditorSimple Events
+### Using Nuxt UI Editor Directly (Recommended)
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `update:modelValue` | `string` | Emitted when content changes |
+For full control, use Nuxt UI's editor components directly:
 
-### CroutonEditorToolbar Props
+```vue
+<template>
+  <UEditor
+    v-slot="{ editor }"
+    v-model="content"
+    content-type="html"
+    placeholder="Write something..."
+  >
+    <!-- Bubble toolbar on text selection -->
+    <UEditorToolbar :editor="editor" :items="toolbarItems" layout="bubble" />
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `editor` | `Editor` | Yes | Tiptap editor instance |
+    <!-- Slash commands (type /) -->
+    <UEditorSuggestionMenu :editor="editor" :items="slashItems" />
 
-## Included Tiptap Extensions
+    <!-- Drag handle for block reordering -->
+    <UEditorDragHandle :editor="editor" />
+  </UEditor>
+</template>
 
-- **StarterKit** - Essential editing functionality
-- **TextStyle** - Text styling support
-- **Color** - Text color customization
+<script setup lang="ts">
+import type { EditorToolbarItem, EditorSuggestionMenuItem } from '@nuxt/ui'
 
-## Browser Support
+const content = ref('<p>Hello world!</p>')
 
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
+const toolbarItems: EditorToolbarItem[][] = [
+  [
+    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold' },
+    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic' },
+    { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough' }
+  ],
+  [
+    { kind: 'bulletList', icon: 'i-lucide-list' },
+    { kind: 'orderedList', icon: 'i-lucide-list-ordered' }
+  ]
+]
 
-## Development
-
-```bash
-# Install dependencies
-pnpm install
-
-# Link for local development
-pnpm link --global
-
-# In your project
-pnpm link --global @friendlyinternet/nuxt-crouton-editor
+const slashItems: EditorSuggestionMenuItem[][] = [
+  [
+    { kind: 'heading', level: 1, label: 'Heading 1', icon: 'i-lucide-heading-1' },
+    { kind: 'heading', level: 2, label: 'Heading 2', icon: 'i-lucide-heading-2' },
+    { kind: 'bulletList', label: 'Bullet List', icon: 'i-lucide-list' }
+  ]
+]
+</script>
 ```
+
+## Migration from v1.x
+
+### Breaking Changes
+
+1. **Peer dependency**: Requires `@nuxt/ui` v3+ instead of `nuxt-tiptap`
+2. **Removed**: `CroutonEditorToolbar` - use `UEditorToolbar` directly
+3. **Removed**: Direct TipTap dependencies - handled by Nuxt UI
+
+### Migration Steps
+
+1. **Update dependencies**:
+   ```bash
+   pnpm remove nuxt-tiptap @tiptap/vue-3 @tiptap/starter-kit
+   pnpm add @nuxt/ui@^3.0.0
+   ```
+
+2. **Update nuxt.config.ts**:
+   ```typescript
+   export default defineNuxtConfig({
+     modules: ['@nuxt/ui'], // Required
+     extends: [
+       '@friendlyinternet/nuxt-crouton',
+       '@friendlyinternet/nuxt-crouton-editor'
+     ]
+   })
+   ```
+
+3. **Component changes**:
+   ```vue
+   <!-- Before (still works) -->
+   <CroutonEditorSimple v-model="content" />
+
+   <!-- After (recommended for full features) -->
+   <UEditor v-model="content" content-type="html" />
+   ```
+
+4. **Custom toolbar** (if you were using `CroutonEditorToolbar`):
+   ```vue
+   <!-- Before -->
+   <CroutonEditorToolbar :editor="editor" />
+
+   <!-- After -->
+   <UEditorToolbar :editor="editor" :items="toolbarItems" layout="bubble" />
+   ```
+
+## New Features in v2.0
+
+With Nuxt UI Editor, you now have access to:
+
+- **Slash Commands** - Type `/` for quick formatting
+- **Mentions** - Type `@` to mention users
+- **Emoji Picker** - Type `:` for emojis
+- **Drag & Drop** - Reorder blocks with drag handle
+- **Multiple Toolbars** - Fixed, bubble, or floating layouts
+- **Markdown Support** - Native markdown content type
+- **Custom Extensions** - Easy TipTap extension integration
+
+## Nuxt UI Editor Documentation
+
+For full documentation on all editor features, see:
+- [Nuxt UI Editor](https://ui.nuxt.com/docs/components/editor)
+- [Editor Toolbar](https://ui.nuxt.com/docs/components/editor-toolbar)
+- [Editor Suggestion Menu](https://ui.nuxt.com/docs/components/editor-suggestion-menu)
+- [Editor Mention Menu](https://ui.nuxt.com/docs/components/editor-mention-menu)
 
 ## Support
 
