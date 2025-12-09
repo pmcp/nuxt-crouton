@@ -34,7 +34,7 @@
 <script setup lang="ts">
 interface Props {
   collectionName: string
-  defaultLayout?: 'table' | 'list' | 'grid' | 'cards'
+  defaultLayout?: 'table' | 'list' | 'grid' | 'cards' | 'tree'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -52,7 +52,8 @@ const layoutOptions = [
   { value: 'table', icon: 'i-lucide-table' },
   { value: 'list', icon: 'i-lucide-list' },
   { value: 'grid', icon: 'i-lucide-grid-3x3' },
-  { value: 'cards', icon: 'i-lucide-layout-grid' }
+  { value: 'cards', icon: 'i-lucide-layout-grid' },
+  { value: 'tree', icon: 'i-lucide-git-branch' }
 ] as const
 
 // Convert collection name to component name
