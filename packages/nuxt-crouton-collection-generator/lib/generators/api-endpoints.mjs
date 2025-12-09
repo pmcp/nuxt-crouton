@@ -293,3 +293,145 @@ export default defineEventHandler(async (event) => {
   return await delete${prefixedPascalCase}(${singular}Id, team.id, user.id)
 })`
 }
+
+// Generate move endpoint for hierarchy-enabled collections
+// Creates [id]/move.patch.ts - moves an item to a new parent and position
+export function generateMoveEndpoint(data, config = null) {
+  const { singular, pascalCase, layerPascalCase } = data
+  const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
+
+  const queriesPath = '../../../../../database/queries'
+
+  return `import { updatePosition${prefixedPascalCase} } from '${queriesPath}'
+import { eq, and } from 'drizzle-orm'
+import * as tables from '@@/server/database/schema'
+
+export default defineEventHandler(async (event) => {
+  const { id: teamSlugOrId, ${singular}Id } = getRouterParams(event)
+  const { user } = await requireUserSession(event)
+
+  // Resolve team by slug or ID
+  let team = await useDB()
+    .select()
+    .from(tables.teams)
+    .where(eq(tables.teams.slug, teamSlugOrId))
+    .get()
+
+  // If not found by slug, try by ID
+  if (!team) {
+    team = await useDB()
+      .select()
+      .from(tables.teams)
+      .where(eq(tables.teams.id, teamSlugOrId))
+      .get()
+  }
+
+  if (!team) {
+    throw createError({ statusCode: 404, statusMessage: 'Team not found' })
+  }
+
+  // Check if user is member of team
+  const membership = await useDB()
+    .select()
+    .from(tables.teamMembers)
+    .where(
+      and(
+        eq(tables.teamMembers.teamId, team.id),
+        eq(tables.teamMembers.userId, user.id)
+      )
+    )
+    .get()
+
+  if (!membership) {
+    throw createError({ statusCode: 403, statusMessage: 'Unauthorized' })
+  }
+
+  const body = await readBody(event)
+
+  // Validate input
+  if (body.order === undefined || typeof body.order !== 'number') {
+    throw createError({ statusCode: 400, statusMessage: 'order is required and must be a number' })
+  }
+
+  // parentId can be null (move to root) or a valid ID
+  const parentId = body.parentId ?? null
+
+  return await updatePosition${prefixedPascalCase}(team.id, ${singular}Id, parentId, body.order)
+})`
+}
+
+// Generate reorder endpoint for hierarchy-enabled collections
+// Creates reorder.patch.ts - bulk updates order for siblings within same parent
+export function generateReorderEndpoint(data, config = null) {
+  const { pascalCase, pascalCasePlural, layerPascalCase } = data
+  const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
+
+  // Get the order field name from hierarchy config, default to 'order'
+  const hierarchy = data.hierarchy || {}
+  const orderField = hierarchy.orderField || 'order'
+
+  const queriesPath = '../../../../database/queries'
+
+  return `import { reorderSiblings${prefixedPascalCasePlural} } from '${queriesPath}'
+import { eq, and } from 'drizzle-orm'
+import * as tables from '@@/server/database/schema'
+
+export default defineEventHandler(async (event) => {
+  const { id: teamSlugOrId } = getRouterParams(event)
+  const { user } = await requireUserSession(event)
+
+  // Resolve team by slug or ID
+  let team = await useDB()
+    .select()
+    .from(tables.teams)
+    .where(eq(tables.teams.slug, teamSlugOrId))
+    .get()
+
+  // If not found by slug, try by ID
+  if (!team) {
+    team = await useDB()
+      .select()
+      .from(tables.teams)
+      .where(eq(tables.teams.id, teamSlugOrId))
+      .get()
+  }
+
+  if (!team) {
+    throw createError({ statusCode: 404, statusMessage: 'Team not found' })
+  }
+
+  // Check if user is member of team
+  const membership = await useDB()
+    .select()
+    .from(tables.teamMembers)
+    .where(
+      and(
+        eq(tables.teamMembers.teamId, team.id),
+        eq(tables.teamMembers.userId, user.id)
+      )
+    )
+    .get()
+
+  if (!membership) {
+    throw createError({ statusCode: 403, statusMessage: 'Unauthorized' })
+  }
+
+  const body = await readBody(event)
+
+  // Validate input - expect array of { id, ${orderField} }
+  if (!Array.isArray(body.updates)) {
+    throw createError({ statusCode: 400, statusMessage: 'updates must be an array' })
+  }
+
+  for (const update of body.updates) {
+    if (!update.id || typeof update.${orderField} !== 'number') {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Each update must have id and ${orderField} (number)'
+      })
+    }
+  }
+
+  return await reorderSiblings${prefixedPascalCasePlural}(team.id, body.updates)
+})`
+}

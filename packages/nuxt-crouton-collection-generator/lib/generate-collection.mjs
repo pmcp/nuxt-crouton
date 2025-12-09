@@ -33,7 +33,9 @@ import {
   generateGetEndpoint,
   generatePostEndpoint,
   generatePatchEndpoint,
-  generateDeleteEndpoint
+  generateDeleteEndpoint,
+  generateMoveEndpoint,
+  generateReorderEndpoint
 } from './generators/api-endpoints.mjs'
 import {
   generateGetEndpointSimplified,
@@ -865,6 +867,11 @@ ${translationsFieldSchema}
     path.join(base, 'server', 'api', 'teams', '[id]', apiPath),
     path.join(base, 'server', 'database')
   ]
+
+  // Add subdirectory for move endpoint when hierarchy is enabled
+  if (hierarchy.enabled) {
+    dirs.push(path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id]`))
+  }
   
   for (const dir of dirs) {
     await fsp.mkdir(dir, { recursive: true })
@@ -908,7 +915,7 @@ ${translationsFieldSchema}
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id].delete.ts`),
       content: deleteEndpointGen(data, config)
     },
-    { 
+    {
       path: path.join(base, 'server', 'database', 'queries.ts'),
       content: generateQueries(data, config)
     },
@@ -920,11 +927,25 @@ ${translationsFieldSchema}
       path: path.join(base, 'types.ts'),
       content: generateTypes(data, config)
     },
-    { 
+    {
       path: path.join(base, 'nuxt.config.ts'),
       content: generateNuxtConfig(data)
     }
   ]
+
+  // Add hierarchy endpoint files when hierarchy is enabled
+  if (hierarchy.enabled) {
+    files.push(
+      {
+        path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id]`, 'move.patch.ts'),
+        content: generateMoveEndpoint(data, config)
+      },
+      {
+        path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, 'reorder.patch.ts'),
+        content: generateReorderEndpoint(data, config)
+      }
+    )
+  }
 
   // Detect repeater fields and generate field components
   // These are the source fields that other collections will depend on
