@@ -67,7 +67,7 @@
       </template>
 
       <template #item-trailing="{ item }">
-        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div class="tree-item-trailing flex items-center gap-1 opacity-0 transition-opacity">
           <!-- Quick actions dropdown -->
           <UDropdownMenu
             :items="getItemActions(item)"
@@ -274,29 +274,17 @@ watch(() => props.items, () => {
 </script>
 
 <style scoped>
-@reference "tailwindcss";
-
 .crouton-tree-view {
-  @apply w-full;
-}
-
-/* Style the tree items with hover effects */
-.crouton-tree-view :deep([data-tree-item]) {
-  @apply group;
+  width: 100%;
 }
 
 /* Drag handle styles */
 .drag-handle {
-  @apply touch-none;
+  touch-action: none;
 }
 
-/* Ghost class for drag preview */
-:global(.sortable-ghost) {
-  @apply opacity-50 bg-elevated rounded-md;
-}
-
-/* Drag class for element being dragged */
-:global(.sortable-drag) {
-  @apply shadow-lg;
+/* Show trailing actions on hover using CSS instead of Tailwind group */
+.crouton-tree-view :deep([data-tree-item]:hover .tree-item-trailing) {
+  opacity: 1;
 }
 </style>
