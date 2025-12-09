@@ -230,13 +230,14 @@ onMounted(async () => {
     try {
       const { useSortable } = await import('@vueuse/integrations/useSortable')
 
-      if (treeContainer.value) {
-        useSortable(treeContainer.value, props.items, {
+      // Target the UTree component ref, not the wrapper div
+      // UTree renders as a list element that useSortable can work with
+      if (tree.value) {
+        useSortable(tree.value, treeItems, {
           animation: 150,
           handle: '.drag-handle',
           ghostClass: 'opacity-50',
-          group: 'tree',
-          onEnd: (evt: any) => {
+          onUpdate: (evt: any) => {
             if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
               handleDragEnd(evt.oldIndex, evt.newIndex)
             }
