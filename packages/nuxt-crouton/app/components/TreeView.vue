@@ -274,6 +274,8 @@ watch(() => props.items, () => {
 </script>
 
 <style scoped>
+@reference "tailwindcss";
+
 .crouton-tree-view {
   @apply w-full;
 }
