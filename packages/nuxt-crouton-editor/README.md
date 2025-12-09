@@ -22,7 +22,7 @@ pnpm add @friendlyinternet/nuxt-crouton-editor
 
 ### 2. Ensure Nuxt UI is configured
 
-This package requires `@nuxt/ui` v3+ to be installed and configured in your project:
+This package requires `@nuxt/ui` v4+ to be installed and configured in your project:
 
 ```typescript
 // nuxt.config.ts
@@ -112,7 +112,7 @@ const slashItems: EditorSuggestionMenuItem[][] = [
 
 ### Breaking Changes
 
-1. **Peer dependency**: Requires `@nuxt/ui` v3+ instead of `nuxt-tiptap`
+1. **Peer dependency**: Requires `@nuxt/ui` v4+ instead of `nuxt-tiptap`
 2. **Removed**: `CroutonEditorToolbar` - use `UEditorToolbar` directly
 3. **Removed**: Direct TipTap dependencies - handled by Nuxt UI
 
@@ -121,7 +121,7 @@ const slashItems: EditorSuggestionMenuItem[][] = [
 1. **Update dependencies**:
    ```bash
    pnpm remove nuxt-tiptap @tiptap/vue-3 @tiptap/starter-kit
-   pnpm add @nuxt/ui@^3.0.0
+   pnpm add @nuxt/ui@^4.0.0
    ```
 
 2. **Update nuxt.config.ts**:
