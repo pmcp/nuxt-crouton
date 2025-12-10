@@ -166,27 +166,23 @@ onMounted(async () => {
 /* Ghost = placeholder showing where item will drop */
 .tree-ghost {
   opacity: 0.5;
-  border-left: 4px solid var(--ui-primary);
   border-radius: 0.375rem;
-  background-color: color-mix(in oklch, var(--ui-primary) 20%, transparent);
-  margin: 0 !important;
-  padding: 0 !important;
-  max-height: 2.5rem !important;
-  overflow: hidden !important;
+  background-color: color-mix(in oklch, var(--ui-primary) 10%, transparent);
+  margin: 0;
+  padding: 0;
+  max-height: 2.5rem;
+  overflow: hidden;
 }
 
 /* Drag = the element being dragged (follows cursor) */
 .tree-drag {
   background-color: var(--ui-bg);
-  box-shadow: var(--shadow-xl);
-  border-radius: 0.375rem;
-  border: 2px solid var(--ui-primary);
-  transform: rotate(1deg) scale(1.02);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.25);
+  opacity: 0.85;
 }
 
 /* Chosen = the original element that was picked up */
 .tree-chosen {
-  background-color: color-mix(in oklch, var(--ui-primary) 15%, transparent);
-  outline: 2px dashed color-mix(in oklch, var(--ui-primary) 50%, transparent);
+  opacity: 0.4;
 }
 </style>

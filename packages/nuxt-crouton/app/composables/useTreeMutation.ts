@@ -31,7 +31,7 @@ export function useTreeMutation(collection: string) {
   const collections = useCollections()
   const config = collections.getConfig(collection)
   const { getTeamId } = useTeamContext()
-  const { markSaving, markSaved, markError } = useTreeItemState()
+  const { markSaving, markSaved, markError, triggerCountFlash } = useTreeItemState()
 
   if (!config) {
     console.error(`[useTreeMutation] Collection "${collection}" not found in registry`)
@@ -110,6 +110,11 @@ export function useTreeMutation(collection: string) {
       // Visual feedback via row flash animation - call BEFORE cache invalidation
       // so the state is set before the tree re-renders
       markSaved(id)
+
+      // Flash the child count badge on the new parent (if not root)
+      if (newParentId) {
+        triggerCountFlash(newParentId)
+      }
 
       // Emit hook for event tracking
       const nuxtApp = useNuxtApp()

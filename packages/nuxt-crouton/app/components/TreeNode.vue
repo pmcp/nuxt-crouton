@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import type { TreeNode as TreeNodeType } from './Tree.vue'
 import type SortableType from 'sortablejs'
+const { open } = useCrouton()
 
 const treeDrag = useTreeDrag()
 const { wasSaved } = useTreeItemState()
@@ -15,8 +16,10 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   depth: 0,
-  labelKey: 'name'
+  labelKey: 'name',
+  collection: ''
 })
+
 
 const emit = defineEmits<{
   move: [id: string, newParentId: string | null, newOrder: number]
@@ -37,10 +40,6 @@ const isDropTarget = computed(() => treeDrag.isDropTarget(props.item.id))
 const hasChildren = computed(() => (props.item.children?.length ?? 0) > 0)
 const childCount = computed(() => props.item.children?.length ?? 0)
 
-// Track child count changes for flash animation
-const countFlash = ref(false)
-let previousCount = childCount.value
-
 // Collapse when children become empty
 watch(hasChildren, (has) => {
   if (!has && isExpanded.value) {
@@ -48,16 +47,9 @@ watch(hasChildren, (has) => {
   }
 })
 
-// Flash the count badge when children are added/removed
-watch(childCount, (newCount) => {
-  if (newCount !== previousCount) {
-    countFlash.value = true
-    setTimeout(() => {
-      countFlash.value = false
-    }, 600)
-    previousCount = newCount
-  }
-})
+// Flash animation state from global composable (triggered by useTreeMutation)
+const { flashingCounts } = useTreeItemState()
+const isCountFlashing = computed(() => !!flashingCounts.value[props.item.id])
 
 // ============ UI Helpers ============
 
@@ -65,10 +57,10 @@ function getItemLabel(item: TreeNodeType): string {
   return item[props.labelKey] || item.name || item.title || item.label || item.id
 }
 
-function getStatusColor(status: string): 'success' | 'warning' | 'error' | 'info' | 'neutral' {
-  const statusColors: Record<string, 'success' | 'warning' | 'error' | 'info' | 'neutral'> = {
-    published: 'success',
-    active: 'success',
+function getStatusColor(status: string): 'primary' | 'warning' | 'error' | 'info' | 'neutral' {
+  const statusColors: Record<string, 'primary' | 'warning' | 'error' | 'info' | 'neutral'> = {
+    published: 'primary',
+    active: 'primary',
     draft: 'warning',
     pending: 'warning',
     archived: 'neutral',
@@ -84,15 +76,15 @@ function getItemActions(item: TreeNodeType) {
       {
         label: 'Edit',
         icon: 'i-lucide-pencil',
-        onSelect: () => emit('select', item)
+        onSelect: () => open('update', props.collection, [item.id])
       },
-      {
-        label: 'Add child',
-        icon: 'i-lucide-plus',
-        onSelect: () => {
-          console.log('Add child to:', item.id)
-        }
-      }
+      // {
+      //   label: 'Add child',
+      //   icon: 'i-lucide-plus',
+      //   onSelect: () => {
+      //     console.log('Add child to:', item.id)
+      //   }
+      // }
     ],
     [
       {
@@ -262,10 +254,10 @@ onBeforeUnmount(() => {
       <!-- Child count / expand toggle -->
       <button
         v-if="hasChildren"
-        class="shrink-0 flex items-center justify-center size-6 text-xs font-semibold tabular-nums rounded-full transition-all duration-200"
+        class="shrink-0 flex items-center justify-center size-6 text-xs font-semibold tabular-nums rounded-full transition-colors duration-200"
         :class="[
-          countFlash
-            ? 'bg-primary text-primary-foreground scale-110'
+          isCountFlashing
+            ? 'count-pulse bg-primary text-primary-foreground'
             : 'bg-elevated text-muted hover:bg-accented hover:text-default'
         ]"
         @click.stop="treeDrag.toggle(item.id)"
@@ -316,9 +308,10 @@ onBeforeUnmount(() => {
     <div
       v-if="showChildren"
       ref="childrenRef"
-      class="tree-children flex flex-col"
+      class="tree-children mt-1 pl-3 gap-1 min-h-6 border-l-2 border-white/10 transition-colors duration-200 flex flex-col"
+      style="margin-left: 1.7em"
       :class="[
-        isDropTarget ? 'is-drop-target' : '',
+        isDropTarget ? 'border-l-[var(--ui-primary)]' : '',
         !hasChildren ? 'min-h-2 !border-transparent' : ''
       ]"
       :data-parent-id="item.id"
@@ -338,21 +331,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Children container - explicit values to avoid Tailwind purge issues */
-.tree-children {
-  margin-left: 1.5rem;   /* 24px - indentation */
-  margin-top: 0.25rem;   /* 4px */
-  padding-left: 0.75rem; /* 12px */
-  gap: 0.25rem;          /* 4px between items */
-  min-height: 1.5rem;    /* 24px - minimum for drop detection */
-  border-left: 2px solid rgba(255, 255, 255, 0.1);
-  transition: border-color 0.2s ease;
-}
-
-.tree-children.is-drop-target {
-  border-left-color: rgb(var(--ui-primary));
-}
-
 /* Save animation - sweep effect when item is saved */
 .tree-node-saved::before {
   content: '';
@@ -361,7 +339,7 @@ onBeforeUnmount(() => {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgb(var(--color-success-500) / 0.25) 50%,
+    color-mix(in oklch, var(--ui-success) 25%, transparent) 50%,
     transparent 100%
   );
   animation: sweep 0.8s ease-out forwards;
@@ -370,5 +348,18 @@ onBeforeUnmount(() => {
 @keyframes sweep {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* Child count pulse animation */
+.count-pulse {
+  animation: count-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@keyframes count-pop {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 var(--ui-primary); }
+  30% { transform: scale(1.4); }
+  50% { transform: scale(0.9); box-shadow: 0 0 0 8px transparent; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
 }
 </style>

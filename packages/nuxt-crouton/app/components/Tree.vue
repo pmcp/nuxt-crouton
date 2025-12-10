@@ -126,4 +126,6 @@ const tree = computed(() => buildTree(props.rows))
 function handleMove(id: string, newParentId: string | null, newOrder: number) {
   emit('move', id, newParentId, newOrder)
 }
+
+
 </script>

@@ -9,6 +9,8 @@ export function useTreeItemState() {
   const saving = useState<Record<string, boolean>>('tree-item-saving', () => ({}))
   // Store timestamp when item was saved - allows animation to trigger on re-render
   const savedAt = useState<Record<string, number>>('tree-item-saved-at', () => ({}))
+  // Track items whose child count is currently flashing
+  const flashingCounts = useState<Record<string, boolean>>('tree-item-flashing-counts', () => ({}))
 
   /**
    * Mark an item as currently being saved (API call in progress)
@@ -59,11 +61,23 @@ export function useTreeItemState() {
     return Date.now() - timestamp < 1000
   }
 
+  /**
+   * Trigger a flash animation on an item's child count badge
+   */
+  function triggerCountFlash(id: string) {
+    flashingCounts.value[id] = true
+    setTimeout(() => {
+      delete flashingCounts.value[id]
+    }, 600)
+  }
+
   return {
     markSaving,
     markSaved,
     markError,
     isSaving,
     wasSaved,
+    flashingCounts,
+    triggerCountFlash,
   }
 }
