@@ -43,7 +43,7 @@
     "sortablejs": "^1.15.6"
   },
   "peerDependencies": {
-    "nuxt": "^4.0.0",
-    "@nuxt/ui": "^4.0.0"
+    "@nuxt/ui": "^4.0.0",
+    "nuxt": "^4.0.0"
   }
 }
