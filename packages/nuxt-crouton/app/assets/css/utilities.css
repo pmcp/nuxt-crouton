@@ -1,0 +1,55 @@
+/*
+ * Utility classes used by nuxt-crouton components.
+ * Explicitly defined to ensure they're included when the package
+ * is consumed as an npm dependency (Tailwind won't scan node_modules).
+ */
+
+/* Negative top positioning */
+.-top-1 {
+  top: -0.25rem;
+}
+
+.-top-2 {
+  top: -0.5rem;
+}
+
+.-top-4 {
+  top: -1rem;
+}
+
+.-top-6 {
+  top: -1.5rem;
+}
+
+/* Group hover variants for top */
+.group:hover .group-hover\:-top-1 {
+  top: -0.25rem;
+}
+
+.group:hover .group-hover\:-top-6 {
+  top: -1.5rem;
+}
+
+/* Negative translate */
+.-translate-y-1 {
+  --tw-translate-y: -0.25rem;
+  transform: translate(var(--tw-translate-x, 0), var(--tw-translate-y, 0)) rotate(var(--tw-rotate, 0)) skewX(var(--tw-skew-x, 0)) skewY(var(--tw-skew-y, 0)) scaleX(var(--tw-scale-x, 1)) scaleY(var(--tw-scale-y, 1));
+}
+
+.-translate-y-6 {
+  --tw-translate-y: -1.5rem;
+  transform: translate(var(--tw-translate-x, 0), var(--tw-translate-y, 0)) rotate(var(--tw-rotate, 0)) skewX(var(--tw-skew-x, 0)) skewY(var(--tw-skew-y, 0)) scaleX(var(--tw-scale-x, 1)) scaleY(var(--tw-scale-y, 1));
+}
+
+/* Group hover variants for translate */
+.group:hover .group-hover\:-translate-y-6 {
+  --tw-translate-y: -1.5rem;
+  transform: translate(var(--tw-translate-x, 0), var(--tw-translate-y, 0)) rotate(var(--tw-rotate, 0)) skewX(var(--tw-skew-x, 0)) skewY(var(--tw-skew-y, 0)) scaleX(var(--tw-scale-x, 1)) scaleY(var(--tw-scale-y, 1));
+}
+
+/* Scale on group hover */
+.group:hover .group-hover\:scale-110 {
+  --tw-scale-x: 1.1;
+  --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x, 0), var(--tw-translate-y, 0)) rotate(var(--tw-rotate, 0)) skewX(var(--tw-skew-x, 0)) skewY(var(--tw-skew-y, 0)) scaleX(var(--tw-scale-x, 1)) scaleY(var(--tw-scale-y, 1));
+}

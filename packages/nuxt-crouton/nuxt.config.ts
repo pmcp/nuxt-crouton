@@ -11,6 +11,8 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/ui', '@vueuse/nuxt'],
 
+  css: [join(currentDir, 'app/assets/css/utilities.css')],
+
   plugins: [
     { src: join(currentDir, 'app/plugins/tree-styles.client.ts'), mode: 'client' }
   ],

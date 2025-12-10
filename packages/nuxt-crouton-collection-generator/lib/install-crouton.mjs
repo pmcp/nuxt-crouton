@@ -6,6 +6,7 @@ import { promisify } from 'util'
 import fsp from 'fs/promises'
 import path from 'path'
 import readline from 'readline'
+import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
 
 const execAsync = promisify(exec)
 
@@ -214,13 +215,25 @@ async function main() {
     }
   }
 
+  // Setup CSS @source directive for Tailwind
+  console.log('\n═══════════════════════════════════════════════════')
+  console.log('Setting up Tailwind CSS @source directive...')
+  console.log('═══════════════════════════════════════════════════')
+
+  const cssResult = await setupCroutonCssSource(process.cwd())
+
+  if (!cssResult.success) {
+    console.log('\n⚠️  Could not automatically setup CSS @source directive')
+    displayManualCssSetupInstructions()
+  }
+
   console.log('\n═══════════════════════════════════════════════════')
   console.log('✨ Installation complete!')
   console.log('═══════════════════════════════════════════════════')
   console.log('\nNext steps:')
   console.log('1. Restart your Nuxt dev server')
   console.log('2. Run your scaffolder to generate collections:')
-  console.log('   node Scaffolder/scripts/generate-collection.mjs <layer> <collection> --fields-file <path>')
+  console.log('   npx crouton-generate <layer> <collection> --fields-file <path>')
   console.log('\nNote: Components from layers are auto-imported and ready to use!')
 
   rl.close()

@@ -24,6 +24,7 @@ import { DIALECTS } from './utils/dialects.mjs'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
 import { detectExternalReferences, getConnectorRecommendations, formatExternalReferences } from './utils/connector-detector.mjs'
 import { setupConnectorInteractive, installConnectorPackage, addConnectorToNuxtConfig, updateAppConfigWithPackageImport } from './utils/connector-installer.mjs'
+import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
 
 // Import generators
 import { generateFormComponent } from './generators/form-component.mjs'
@@ -1446,10 +1447,6 @@ async function main() {
               console.error(`⚠ Warnings:`, stderr)
             }
             console.log(`\n✓ Database migration generated successfully`)
-            console.log(`\n${'═'.repeat(60)}`)
-            console.log(`  ALL DONE!`)
-            console.log(`${'═'.repeat(60)}\n`)
-            console.log(`Next step: Restart your Nuxt dev server\n`)
           } catch (execError) {
             if (execError.message.includes('timed out')) {
               console.error(`\n✗ Database migration timed out after 30 seconds`)
@@ -1460,6 +1457,31 @@ async function main() {
             console.log(`\nManual command: pnpm db:generate && pnpm db:push\n`)
           }
         }
+
+        // Setup CSS @source directive for Tailwind
+        console.log(`\n${'═'.repeat(60)}`)
+        console.log(`  TAILWIND CSS SETUP`)
+        console.log(`${'═'.repeat(60)}\n`)
+
+        const cssResult = await setupCroutonCssSource(process.cwd())
+
+        if (cssResult.success) {
+          if (cssResult.action === 'created') {
+            console.log(`✓ Created CSS file with @source directive`)
+          } else if (cssResult.action === 'updated') {
+            console.log(`✓ Added @source directive to existing CSS`)
+          } else {
+            console.log(`✓ CSS @source directive already configured`)
+          }
+        } else {
+          console.log(`\n⚠️  Could not automatically setup CSS @source directive`)
+          displayManualCssSetupInstructions()
+        }
+
+        console.log(`\n${'═'.repeat(60)}`)
+        console.log(`  ALL DONE!`)
+        console.log(`${'═'.repeat(60)}\n`)
+        console.log(`Next step: Restart your Nuxt dev server\n`)
       } else if (config.targets && config.schemaPath) {
         // Original simple config format
         const fields = await loadFields(config.schemaPath)
@@ -1534,10 +1556,6 @@ async function main() {
               console.error(`⚠ Warnings:`, stderr)
             }
             console.log(`\n✓ Database migration generated successfully`)
-            console.log(`\n${'═'.repeat(60)}`)
-            console.log(`  ALL DONE!`)
-            console.log(`${'═'.repeat(60)}\n`)
-            console.log(`Next step: Restart your Nuxt dev server\n`)
           } catch (execError) {
             if (execError.message.includes('timed out')) {
               console.error(`\n✗ Database migration timed out after 30 seconds`)
@@ -1548,6 +1566,31 @@ async function main() {
             console.log(`\nManual command: pnpm db:generate && pnpm db:push\n`)
           }
         }
+
+        // Setup CSS @source directive for Tailwind
+        console.log(`\n${'═'.repeat(60)}`)
+        console.log(`  TAILWIND CSS SETUP`)
+        console.log(`${'═'.repeat(60)}\n`)
+
+        const cssResult2 = await setupCroutonCssSource(process.cwd())
+
+        if (cssResult2.success) {
+          if (cssResult2.action === 'created') {
+            console.log(`✓ Created CSS file with @source directive`)
+          } else if (cssResult2.action === 'updated') {
+            console.log(`✓ Added @source directive to existing CSS`)
+          } else {
+            console.log(`✓ CSS @source directive already configured`)
+          }
+        } else {
+          console.log(`\n⚠️  Could not automatically setup CSS @source directive`)
+          displayManualCssSetupInstructions()
+        }
+
+        console.log(`\n${'═'.repeat(60)}`)
+        console.log(`  ALL DONE!`)
+        console.log(`${'═'.repeat(60)}\n`)
+        console.log(`Next step: Restart your Nuxt dev server\n`)
       } else {
         console.error('Error: Invalid config file')
         console.error('Config must have either:')
