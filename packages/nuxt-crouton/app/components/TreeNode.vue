@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import type { TreeNode as TreeNodeType } from './Tree.vue'
 import type SortableType from 'sortablejs'
 
@@ -34,6 +34,30 @@ let sortableInstance: SortableType | null = null
 const isExpanded = computed(() => treeDrag.isExpanded(props.item.id))
 const isBeingDragged = computed(() => treeDrag.isDragging(props.item.id))
 const isDropTarget = computed(() => treeDrag.isDropTarget(props.item.id))
+const hasChildren = computed(() => (props.item.children?.length ?? 0) > 0)
+const childCount = computed(() => props.item.children?.length ?? 0)
+
+// Track child count changes for flash animation
+const countFlash = ref(false)
+let previousCount = childCount.value
+
+// Collapse when children become empty
+watch(hasChildren, (has) => {
+  if (!has && isExpanded.value) {
+    treeDrag.setExpanded(props.item.id, false)
+  }
+})
+
+// Flash the count badge when children are added/removed
+watch(childCount, (newCount) => {
+  if (newCount !== previousCount) {
+    countFlash.value = true
+    setTimeout(() => {
+      countFlash.value = false
+    }, 600)
+    previousCount = newCount
+  }
+})
 
 // ============ UI Helpers ============
 
@@ -165,12 +189,18 @@ async function initSortable() {
         console.log('[sortable:node] onUnchoose', { item: evt.item.dataset.id, parent: props.item.id })
       },
 
-      // Track drop target for line highlighting
+      // Track drop target for line highlighting + auto-expand
       onMove: (evt) => {
         const toContainer = evt.to as HTMLElement
         const parentId = toContainer.dataset.parentId
         treeDrag.setDropTarget(parentId || null)
-        // Auto-expand disabled - causes Vue re-render which breaks SortableJS
+
+        // Schedule auto-expand for collapsed nodes (500ms delay in composable)
+        const related = evt.related as HTMLElement
+        const relatedNode = related.closest('[data-id]') as HTMLElement | null
+        if (relatedNode?.dataset.id) {
+          treeDrag.scheduleAutoExpand(relatedNode.dataset.id)
+        }
         return true
       }
     })
@@ -181,8 +211,11 @@ async function initSortable() {
 
 // ============ Lifecycle ============
 
-watch(isExpanded, async (expanded) => {
-  if (expanded) {
+// Show children container when expanded OR when dragging (for empty items)
+const showChildren = computed(() => hasChildren.value ? isExpanded.value : treeDrag.isDragging())
+
+watch(showChildren, async (show) => {
+  if (show) {
     await nextTick()
     initSortable()
   } else {
@@ -192,7 +225,7 @@ watch(isExpanded, async (expanded) => {
 })
 
 onMounted(async () => {
-  if (isExpanded.value) {
+  if (showChildren.value) {
     await nextTick()
     initSortable()
   }
@@ -228,11 +261,16 @@ onBeforeUnmount(() => {
 
       <!-- Child count / expand toggle -->
       <button
-        v-if="item.children?.length"
-        class="shrink-0 flex items-center justify-center size-5 text-xs font-medium text-muted tabular-nums rounded-full bg-muted/30 hover:bg-muted/50 transition-colors"
+        v-if="hasChildren"
+        class="shrink-0 flex items-center justify-center size-6 text-xs font-semibold tabular-nums rounded-full transition-all duration-200"
+        :class="[
+          countFlash
+            ? 'bg-primary text-primary-foreground scale-110'
+            : 'bg-elevated text-muted hover:bg-accented hover:text-default'
+        ]"
         @click.stop="treeDrag.toggle(item.id)"
       >
-        {{ item.children.length }}
+        {{ childCount }}
       </button>
 
       <!-- Item icon -->
@@ -276,10 +314,13 @@ onBeforeUnmount(() => {
 
     <!-- Children container (SortableJS target) -->
     <div
-      v-if="isExpanded"
+      v-if="showChildren"
       ref="childrenRef"
       class="tree-children flex flex-col"
-      :class="isDropTarget ? 'is-drop-target' : ''"
+      :class="[
+        isDropTarget ? 'is-drop-target' : '',
+        !hasChildren ? 'min-h-2 !border-transparent' : ''
+      ]"
       :data-parent-id="item.id"
     >
       <CroutonTreeNode

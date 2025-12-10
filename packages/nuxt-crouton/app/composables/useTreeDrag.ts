@@ -91,22 +91,17 @@ export function useTreeDrag() {
 
   /**
    * Schedule auto-expand when dragging over a collapsed node
-   * Collapses previously auto-expanded nodes when hovering a new item
+   * Uses a delay to avoid breaking SortableJS with Vue re-renders
    */
-  function scheduleAutoExpand(id: string, delay = 0) {
+  function scheduleAutoExpand(id: string, delay = 500) {
     // Not currently dragging - ignore
     if (!draggingId.value) return
 
     // Can't expand self
     if (draggingId.value === id) return
 
-    // Collapse previously auto-expanded items (except ancestors of current target)
-    for (const prevId of autoExpandedIds) {
-      if (prevId !== id) {
-        expandedItems.value[prevId] = false
-        autoExpandedIds.delete(prevId)
-      }
-    }
+    // Already expanded or already scheduled
+    if (isExpanded(id) || expandTimeouts[id]) return
 
     // Cancel any pending timeouts for other items
     Object.keys(expandTimeouts).forEach((key) => {
@@ -116,10 +111,12 @@ export function useTreeDrag() {
       }
     })
 
-    // Already expanded or already scheduled
-    if (isExpanded(id) || expandTimeouts[id]) return
-
     expandTimeouts[id] = setTimeout(() => {
+      // Double-check we're still dragging
+      if (!draggingId.value) {
+        delete expandTimeouts[id]
+        return
+      }
       setExpanded(id, true)
       autoExpandedIds.add(id)
       delete expandTimeouts[id]

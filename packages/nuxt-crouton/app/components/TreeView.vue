@@ -79,12 +79,18 @@ async function initRootSortable() {
         console.log('[sortable:root] onSort', { item: evt.item.dataset.id, newIndex: evt.newIndex })
       },
 
-      // Track drop target for line highlighting
+      // Track drop target for line highlighting + auto-expand
       onMove: (evt) => {
         const toContainer = evt.to as HTMLElement
         const parentId = toContainer.dataset.parentId
         treeDrag.setDropTarget(parentId || null)
-        // Auto-expand disabled - causes Vue re-render which breaks SortableJS
+
+        // Schedule auto-expand for collapsed nodes (500ms delay in composable)
+        const related = evt.related as HTMLElement
+        const relatedNode = related.closest('[data-id]') as HTMLElement | null
+        if (relatedNode?.dataset.id) {
+          treeDrag.scheduleAutoExpand(relatedNode.dataset.id)
+        }
         return true
       }
     })
@@ -154,4 +160,33 @@ onMounted(async () => {
   </ClientOnly>
 </template>
 
-<!-- Styles injected via plugins/tree-styles.client.ts (Vue <style> blocks in layers don't bundle correctly) -->
+<style>
+/* SortableJS dynamic classes - must be global (not scoped) */
+
+/* Ghost = placeholder showing where item will drop */
+.tree-ghost {
+  opacity: 0.5;
+  border-left: 4px solid var(--ui-primary);
+  border-radius: 0.375rem;
+  background-color: color-mix(in oklch, var(--ui-primary) 20%, transparent);
+  margin: 0 !important;
+  padding: 0 !important;
+  max-height: 2.5rem !important;
+  overflow: hidden !important;
+}
+
+/* Drag = the element being dragged (follows cursor) */
+.tree-drag {
+  background-color: var(--ui-bg);
+  box-shadow: var(--shadow-xl);
+  border-radius: 0.375rem;
+  border: 2px solid var(--ui-primary);
+  transform: rotate(1deg) scale(1.02);
+}
+
+/* Chosen = the original element that was picked up */
+.tree-chosen {
+  background-color: color-mix(in oklch, var(--ui-primary) 15%, transparent);
+  outline: 2px dashed color-mix(in oklch, var(--ui-primary) 50%, transparent);
+}
+</style>
