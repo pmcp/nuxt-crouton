@@ -23,6 +23,8 @@ interface TrackEventOptions {
 export function useCroutonEventTracker() {
   const { user } = useUserSession()
   const config = useRuntimeConfig()
+  // Get team context at setup time to avoid calling composables in async callbacks
+  const { getTeamId } = useTeamContext()
 
   /**
    * Build smart diff - only include changed fields
@@ -159,7 +161,6 @@ export function useCroutonEventTracker() {
 
     // Track the event via API (fire and forget)
     try {
-      const { getTeamId } = useTeamContext()
       const teamId = getTeamId()
 
       if (!teamId) {
