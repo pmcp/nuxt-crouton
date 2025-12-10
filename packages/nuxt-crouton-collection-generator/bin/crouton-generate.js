@@ -242,6 +242,39 @@ program
     }
   });
 
+// Add command - adds features to existing projects
+program
+  .command('add <feature>')
+  .description('Add features to existing projects (e.g., events)')
+  .option('--dry-run', 'Preview what will be generated')
+  .option('--force', 'Overwrite existing files')
+  .action(async (feature, options) => {
+    try {
+      if (feature === 'events') {
+        const addEventsPath = join(__dirname, '..', 'lib', 'add-events.mjs');
+
+        if (!fs.existsSync(addEventsPath)) {
+          console.error(chalk.red('Error: add-events script not found. Please ensure the package is properly installed.'));
+          process.exit(1);
+        }
+
+        const { addEvents } = await import(addEventsPath);
+        await addEvents({
+          dryRun: options.dryRun,
+          force: options.force,
+        });
+      } else {
+        console.error(chalk.red(`Unknown feature: ${feature}`));
+        console.log(chalk.yellow('\nAvailable features:'));
+        console.log(chalk.cyan('  events  - Add crouton-events layer for audit trails'));
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error(chalk.red('Add feature failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
 // Rollback command - removes a single collection
 program
   .command('rollback <layer> <collection>')
