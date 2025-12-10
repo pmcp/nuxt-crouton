@@ -80,8 +80,16 @@ async function initRootSortable() {
       },
 
       // Track drop target for line highlighting + auto-expand
+      // Return false to prevent invalid drops (circular references)
       onMove: (evt) => {
         const toContainer = evt.to as HTMLElement
+
+        // Prevent dropping an item into its own descendants
+        if (treeDrag.isDescendantDrop(toContainer)) {
+          console.log('[sortable:root] onMove BLOCKED - would create circular reference')
+          return false
+        }
+
         const parentId = toContainer.dataset.parentId
         treeDrag.setDropTarget(parentId || null)
 

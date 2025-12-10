@@ -130,6 +130,31 @@ export function useTreeDrag() {
     }
   }
 
+  // ============ Descendant Check ============
+
+  /**
+   * Check if dropping to the target container would create a circular reference
+   * (i.e., trying to drop an item into its own descendant)
+   *
+   * Uses DOM traversal: if the target container is inside the dragged item's element,
+   * it's a descendant and the move should be prevented.
+   *
+   * @param targetContainer - The container element we're trying to drop into
+   * @returns true if the move is invalid (would create circular reference)
+   */
+  function isDescendantDrop(targetContainer: HTMLElement): boolean {
+    const dragId = draggingId.value
+    if (!dragId) return false
+
+    // Find the dragged item's DOM element
+    const draggedElement = document.querySelector(`[data-id="${dragId}"]`)
+    if (!draggedElement) return false
+
+    // Check if the target container is inside the dragged element
+    // This means we're trying to drop an item into its own subtree
+    return draggedElement.contains(targetContainer)
+  }
+
   return {
     // State (reactive, for template bindings)
     draggingId: readonly(draggingId),
@@ -154,5 +179,8 @@ export function useTreeDrag() {
     // Auto-expand
     scheduleAutoExpand,
     cancelAutoExpand,
+
+    // Validation
+    isDescendantDrop,
   }
 }
