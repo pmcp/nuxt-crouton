@@ -2,12 +2,13 @@
  * Shared state composable for tracking tree item save states
  * Used to show visual feedback (flash animation) when items are moved/saved
  *
- * Uses useState for consistency with useTreeDragState and proper Nuxt SSR handling
+ * Uses useState for consistency with useTreeDrag and proper Nuxt SSR handling
  */
 
 export function useTreeItemState() {
   const saving = useState<Record<string, boolean>>('tree-item-saving', () => ({}))
-  const saved = useState<Record<string, boolean>>('tree-item-saved', () => ({}))
+  // Store timestamp when item was saved - allows animation to trigger on re-render
+  const savedAt = useState<Record<string, number>>('tree-item-saved-at', () => ({}))
 
   /**
    * Mark an item as currently being saved (API call in progress)
@@ -24,13 +25,13 @@ export function useTreeItemState() {
     // Remove from saving
     delete saving.value[id]
 
-    // Add to saved (triggers flash)
-    saved.value[id] = true
+    // Store timestamp when saved (triggers flash)
+    savedAt.value[id] = Date.now()
 
     // Clear after animation completes (~800ms for visibility)
     setTimeout(() => {
-      delete saved.value[id]
-    }, 800)
+      delete savedAt.value[id]
+    }, 1000)
   }
 
   /**
@@ -49,9 +50,13 @@ export function useTreeItemState() {
 
   /**
    * Check if an item was just saved (for flash animation)
+   * Returns true if saved within the last 1000ms
    */
   function wasSaved(id: string) {
-    return !!saved.value[id]
+    const timestamp = savedAt.value[id]
+    if (!timestamp) return false
+    // Consider "saved" if within 1 second
+    return Date.now() - timestamp < 1000
   }
 
   return {

@@ -16,6 +16,9 @@ export function useTreeDrag() {
   // Currently dragging item ID
   const draggingId = useState<string | null>('tree-drag-id', () => null)
 
+  // Current drop target parent ID (for highlighting the target line)
+  const dropTargetId = useState<string | null>('tree-drop-target', () => null)
+
   // Expanded state per item - persists across drag operations
   const expandedItems = useState<Record<string, boolean>>('tree-expanded', () => ({}))
 
@@ -27,6 +30,7 @@ export function useTreeDrag() {
 
   function endDrag() {
     draggingId.value = null
+    dropTargetId.value = null
     // Clear any pending expand timeouts
     Object.values(expandTimeouts).forEach((timeout) => clearTimeout(timeout))
     Object.keys(expandTimeouts).forEach((key) => delete expandTimeouts[key])
@@ -39,6 +43,16 @@ export function useTreeDrag() {
 
   function getDraggingId() {
     return draggingId.value
+  }
+
+  // ============ Drop Target ============
+
+  function setDropTarget(id: string | null) {
+    dropTargetId.value = id
+  }
+
+  function isDropTarget(id: string) {
+    return dropTargetId.value === id
   }
 
   // ============ Expanded State ============
@@ -97,12 +111,17 @@ export function useTreeDrag() {
   return {
     // State (reactive, for template bindings)
     draggingId: readonly(draggingId),
+    dropTargetId: readonly(dropTargetId),
 
     // Drag operations
     startDrag,
     endDrag,
     isDragging,
     getDraggingId,
+
+    // Drop target
+    setDropTarget,
+    isDropTarget,
 
     // Expanded state
     isExpanded,

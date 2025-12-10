@@ -33,6 +33,7 @@ let sortableInstance: SortableType | null = null
 // Computed
 const isExpanded = computed(() => treeDrag.isExpanded(props.item.id))
 const isBeingDragged = computed(() => treeDrag.isDragging(props.item.id))
+const isDropTarget = computed(() => treeDrag.isDropTarget(props.item.id))
 
 // ============ UI Helpers ============
 
@@ -148,8 +149,14 @@ async function initSortable() {
         emit('move', itemId, toParentId || null, newIndex)
       },
 
-      // Auto-expand collapsed nodes when dragging over them
+      // Track drop target for line highlighting + auto-expand
       onMove: (evt) => {
+        const toContainer = evt.to as HTMLElement
+        const parentId = toContainer.dataset.parentId
+        // Set drop target (empty string = root, so use null for that)
+        treeDrag.setDropTarget(parentId || null)
+
+        // Auto-expand collapsed nodes
         const related = evt.related as HTMLElement
         const relatedNode = related.closest('[data-id]') as HTMLElement | null
         if (relatedNode?.dataset.id) {
@@ -262,7 +269,8 @@ onBeforeUnmount(() => {
     <div
       v-if="isExpanded"
       ref="childrenRef"
-      class="tree-children"
+      class="tree-children flex flex-col"
+      :class="isDropTarget ? 'is-drop-target' : ''"
       :data-parent-id="item.id"
     >
       <CroutonTreeNode
@@ -280,18 +288,22 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* Children container - explicit values to avoid Tailwind purge issues */
 .tree-children {
-  margin-left: 1.5rem;
-  margin-top: 0.25rem;
-  padding-left: 0.75rem;
+  margin-left: 1.5rem;   /* 24px - indentation */
+  margin-top: 0.25rem;   /* 4px */
+  padding-left: 0.75rem; /* 12px */
+  gap: 0.25rem;          /* 4px between items */
+  min-height: 1.5rem;    /* 24px - minimum for drop detection */
   border-left: 2px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-height: 1.5rem;
+  transition: border-color 0.2s ease;
 }
 
-/* Save animation */
+.tree-children.is-drop-target {
+  border-left-color: rgb(var(--ui-primary));
+}
+
+/* Save animation - sweep effect when item is saved */
 .tree-node-saved::before {
   content: '';
   position: absolute;

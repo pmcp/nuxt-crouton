@@ -61,8 +61,14 @@ async function initRootSortable() {
         emit('move', itemId, toParentId || null, newIndex)
       },
 
-      // Auto-expand collapsed nodes when dragging over them
+      // Track drop target for line highlighting + auto-expand
       onMove: (evt) => {
+        const toContainer = evt.to as HTMLElement
+        const parentId = toContainer.dataset.parentId
+        // Set drop target (empty string = root, so use null for that)
+        treeDrag.setDropTarget(parentId || null)
+
+        // Auto-expand collapsed nodes
         const related = evt.related as HTMLElement
         const relatedNode = related.closest('[data-id]') as HTMLElement | null
         if (relatedNode?.dataset.id) {
