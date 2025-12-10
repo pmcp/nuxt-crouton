@@ -18,6 +18,7 @@
       <!-- Tree content -->
       <div v-if="tree.length > 0" class="p-4">
         <CroutonTreeView
+          :key="treeKey"
           :items="tree"
           :collection="collection"
           :hierarchy="hierarchy"
@@ -116,6 +117,8 @@ function buildTree(items: any[]): TreeNode[] {
 }
 
 // Computed tree structure from flat rows
+// Use a key based on row data to force reactivity
+const treeKey = computed(() => props.rows.map(r => `${r.id}:${r.parentId}:${r.order}`).join(','))
 const tree = computed(() => buildTree(props.rows))
 
 // Handle move events from TreeView

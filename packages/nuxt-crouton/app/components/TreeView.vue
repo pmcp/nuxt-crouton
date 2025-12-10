@@ -4,6 +4,8 @@ import type { HierarchyConfig } from '../types/table'
 import type { TreeNode } from './Tree.vue'
 import type SortableType from 'sortablejs'
 
+const { setDragging, wasDropHandledByRow } = useTreeDragState()
+
 interface Props {
   items: TreeNode[]
   collection: string
@@ -50,9 +52,18 @@ async function initRootSortable() {
       ghostClass: 'tree-ghost',
       chosenClass: 'tree-chosen',
       dragClass: 'tree-drag',
+      onStart: (evt) => {
+        const draggedEl = evt.item as HTMLElement
+        setDragging(draggedEl.dataset.id || null)
+      },
       onEnd: (evt) => {
-        // Only emit from the destination container to prevent duplicate events
-        if (evt.to !== rootRef.value) return
+        // Skip if drop was already handled by row drop handler
+        if (wasDropHandledByRow()) {
+          setDragging(null)
+          return
+        }
+
+        setDragging(null)
 
         const draggedEl = evt.item as HTMLElement
         const itemId = draggedEl.dataset.id
@@ -61,7 +72,7 @@ async function initRootSortable() {
         const toParentId = (evt.to as HTMLElement).dataset.parentId || null
         const newIndex = evt.newIndex ?? 0
 
-        // Let SortableJS keep the DOM as-is, just emit the move
+        console.log('[TreeView] Move:', { itemId, toParentId: toParentId || null, newIndex })
         emit('move', itemId, toParentId === '' ? null : toParentId, newIndex)
       }
     })
@@ -80,14 +91,27 @@ function handleSelect(item: TreeNode) {
   emit('select', item)
 }
 
+// Global dragend handler to ensure state is always cleared
+function handleGlobalDragEnd() {
+  setDragging(null)
+}
+
 // Cleanup on unmount
 onBeforeUnmount(() => {
   sortableInstance?.destroy()
   sortableInstance = null
+  if (import.meta.client) {
+    document.removeEventListener('dragend', handleGlobalDragEnd)
+  }
 })
 
 // Initialize on mount only
 onMounted(async () => {
+  // Add global dragend listener to ensure state cleanup
+  if (import.meta.client) {
+    document.addEventListener('dragend', handleGlobalDragEnd)
+  }
+
   await nextTick()
   initRootSortable()
 })
@@ -104,7 +128,7 @@ onMounted(async () => {
     >
       <CroutonTreeNode
         v-for="item in items"
-        :key="item.id"
+        :key="`${item.id}-${item.parentId}-${item.children?.length || 0}`"
         :item="item"
         :depth="0"
         :label-key="labelKey"
@@ -129,25 +153,30 @@ onMounted(async () => {
 }
 
 .tree-root {
-  min-height: 50px;
-  padding-bottom: 40px; /* Drop zone at bottom for dragging items to end of list */
+  min-height: 3rem;
+  padding-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 /* Ghost = the placeholder showing where item will drop */
 :deep(.tree-ghost) {
-  background: transparent !important;
-  border: 2px dashed #3b82f6 !important;
+  opacity: 0.4;
+  background: rgb(var(--ui-primary) / 0.1);
+  border-left: 3px solid rgb(var(--ui-primary));
   border-radius: 0.375rem;
-}
-
-:deep(.tree-ghost > *) {
-  visibility: hidden;
 }
 
 /* Drag = the item being dragged */
 :deep(.tree-drag) {
-  background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgb(var(--ui-bg));
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   border-radius: 0.375rem;
+  opacity: 0.95;
+}
+
+:deep(.tree-chosen) {
+  background: rgb(var(--ui-primary) / 0.05);
 }
 </style>

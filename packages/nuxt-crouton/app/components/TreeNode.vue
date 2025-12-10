@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
 import type { TreeNode as TreeNodeType } from './Tree.vue'
 import type SortableType from 'sortablejs'
+
+const { setDragging, getDraggingId, draggingId, hoveringOverId, setHoveringOver, setDropHandledByRow, wasDropHandledByRow, isItemExpanded, initItemExpanded, markCollapsed, markExpanded } = useTreeDragState()
 
 interface Props {
   item: TreeNodeType
@@ -20,13 +22,110 @@ const emit = defineEmits<{
   select: [item: TreeNodeType]
 }>()
 
-// Local state
-const isExpanded = ref(props.depth < 2)
+// Initialize expanded state on first render (only if not already tracked)
+initItemExpanded(props.item.id, (props.item.children?.length ?? 0) > 0)
+
+// Use external expanded state - persists across moves
+const isExpanded = computed(() => isItemExpanded(props.item.id))
 const childrenRef = ref<HTMLElement | null>(null)
+const nodeRef = ref<HTMLElement | null>(null)
 let sortableInstance: SortableType | null = null
+let expandTimeout: ReturnType<typeof setTimeout> | null = null
+let wasExpandedByDrag = false
+
+// Computed: is this item being hovered over during drag?
+const isDragOver = computed(() => hoveringOverId.value === props.item.id)
 
 function toggle() {
-  isExpanded.value = !isExpanded.value
+  if (isExpanded.value) {
+    markCollapsed(props.item.id)
+  } else {
+    markExpanded(props.item.id)
+  }
+  wasExpandedByDrag = false // Manual toggle resets the flag
+}
+
+// Handle drag over on the content row - stop propagation to prevent parent from triggering
+function handleDragOver(e: DragEvent) {
+  e.preventDefault() // Required to allow drop
+  e.stopPropagation() // Prevent parent nodes from receiving this event
+
+  // Only update if not already hovering this item
+  if (hoveringOverId.value !== props.item.id) {
+    setHoveringOver(props.item.id)
+
+    // Clear any existing expand timeout from other items
+    if (expandTimeout) {
+      clearTimeout(expandTimeout)
+      expandTimeout = null
+    }
+
+    // Start auto-expand timer if not already expanded
+    if (!isExpanded.value) {
+      expandTimeout = setTimeout(() => {
+        wasExpandedByDrag = true
+        markExpanded(props.item.id)
+      }, 500)
+    }
+  }
+}
+
+function handleDragLeave(e: DragEvent) {
+  // Only handle if actually leaving this node (not entering a child)
+  if (nodeRef.value?.contains(e.relatedTarget as Node)) return
+  resetDragState()
+}
+
+function handleDrop() {
+  // Clear drag state
+  setDragging(null)
+
+  // Don't auto-close on drop - user intentionally dropped here
+  wasExpandedByDrag = false
+  if (expandTimeout) {
+    clearTimeout(expandTimeout)
+    expandTimeout = null
+  }
+}
+
+function handleDropOnRow(e: DragEvent) {
+  e.preventDefault()
+  e.stopPropagation()
+
+  const draggedId = getDraggingId()
+
+  // Can't drop on self - just clear state and return
+  if (!draggedId || draggedId === props.item.id) {
+    setDropHandledByRow(true) // Prevent SortableJS from handling
+    setDragging(null)
+    return
+  }
+
+  // Mark that we handled this drop (so SortableJS onEnd skips)
+  setDropHandledByRow(true)
+
+  // Add as last child of this item
+  const newOrder = props.item.children?.length ?? 0
+  emit('move', draggedId, props.item.id, newOrder)
+
+  // Clear drag state
+  setDragging(null)
+
+  // Expand to show the dropped item
+  markExpanded(props.item.id)
+  wasExpandedByDrag = false
+}
+
+function resetDragState() {
+  if (expandTimeout) {
+    clearTimeout(expandTimeout)
+    expandTimeout = null
+  }
+  // Auto-close if it was expanded by drag (only on leave, not drop)
+  if (wasExpandedByDrag) {
+    wasExpandedByDrag = false
+    markCollapsed(props.item.id)
+  }
 }
 
 function getItemLabel(item: TreeNodeType): string {
@@ -99,8 +198,11 @@ function getItemActions(item: TreeNodeType) {
 async function initSortable() {
   if (!import.meta.client || !childrenRef.value) return
 
-  // Already initialized - skip
-  if (sortableInstance) return
+  // Destroy existing instance before creating new one (in case DOM changed)
+  if (sortableInstance) {
+    sortableInstance.destroy()
+    sortableInstance = null
+  }
 
   try {
     const { default: Sortable } = await import('sortablejs')
@@ -117,9 +219,22 @@ async function initSortable() {
       ghostClass: 'tree-ghost',
       chosenClass: 'tree-chosen',
       dragClass: 'tree-drag',
+      onStart: (evt) => {
+        const draggedEl = evt.item as HTMLElement
+        setDragging(draggedEl.dataset.id || null)
+      },
       onEnd: (evt) => {
-        // Only emit from the destination container to prevent duplicate events
-        if (evt.to !== childrenRef.value) return
+        // Skip if drop was already handled by row drop handler
+        if (wasDropHandledByRow()) {
+          setDragging(null)
+          return
+        }
+
+        setDragging(null)
+
+        // TreeNode sortables only handle moves that START from this container
+        // (dragging a child OUT of this node)
+        if (evt.from !== childrenRef.value) return
 
         const draggedEl = evt.item as HTMLElement
         const itemId = draggedEl.dataset.id
@@ -128,8 +243,8 @@ async function initSortable() {
         const toParentId = (evt.to as HTMLElement).dataset.parentId || null
         const newIndex = evt.newIndex ?? 0
 
-        // Let SortableJS keep the DOM as-is, just emit the move
-        emit('move', itemId, toParentId, newIndex)
+        console.log('[TreeNode] Move from children:', { itemId, toParentId: toParentId || null, newIndex })
+        emit('move', itemId, toParentId === '' ? null : toParentId, newIndex)
       }
     })
   } catch (error) {
@@ -141,11 +256,15 @@ function handleItemClick() {
   emit('select', props.item)
 }
 
-// Initialize sortable when expanded
+// Initialize/destroy sortable when expanded/collapsed
 watch(isExpanded, async (expanded) => {
-  if (expanded && !sortableInstance) {
+  if (expanded) {
     await nextTick()
     initSortable()
+  } else {
+    // Destroy sortable when collapsing so it can be re-created on expand
+    sortableInstance?.destroy()
+    sortableInstance = null
   }
 })
 
@@ -166,15 +285,20 @@ onMounted(async () => {
 
 <template>
   <div
+    ref="nodeRef"
     class="tree-node"
     :data-id="item.id"
     :data-depth="depth"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
   >
     <!-- Node content row -->
     <div
-      class="tree-node-content group flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-      :style="{ paddingLeft: `${depth * 20 + 8}px` }"
+      class="tree-node-content group flex items-center gap-2 py-1.5 px-2 rounded-md bg-elevated hover:bg-accented cursor-pointer transition-colors"
+      :class="{ 'ring-2 ring-primary/50': isDragOver }"
       @click="handleItemClick"
+      @drop="handleDropOnRow"
+      @dragover="handleDragOver"
     >
       <!-- Drag handle -->
       <div
@@ -185,18 +309,27 @@ onMounted(async () => {
         <UIcon name="i-lucide-grip-vertical" class="size-4" />
       </div>
 
-      <!-- Expand/collapse toggle -->
+      <!-- Expand/collapse toggle - always show to allow nesting -->
       <button
-        v-if="item.children?.length"
         class="shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
         @click.stop="toggle"
       >
         <UIcon
           :name="isExpanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-          class="size-4 text-muted"
+          class="size-4"
+          :class="item.children?.length ? 'text-muted' : 'text-muted/30'"
         />
       </button>
-      <div v-else class="w-5" />
+
+      <!-- Children count -->
+      <UBadge
+        v-if="item.children?.length"
+        color="neutral"
+        size="sm"
+        variant="subtle"
+      >
+        {{ item.children.length }}
+      </UBadge>
 
       <!-- Item icon if provided -->
       <UIcon
@@ -214,20 +347,10 @@ onMounted(async () => {
       <UBadge
         v-if="item.status"
         :color="getStatusColor(item.status)"
-        size="xs"
+        size="sm"
         variant="subtle"
       >
         {{ item.status }}
-      </UBadge>
-
-      <!-- Children count -->
-      <UBadge
-        v-if="item.children?.length"
-        color="neutral"
-        size="xs"
-        variant="subtle"
-      >
-        {{ item.children.length }}
       </UBadge>
 
       <!-- Actions dropdown -->
@@ -247,17 +370,16 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Children container -->
+    <!-- Children container - only render if there are children -->
     <div
-      v-if="isExpanded"
+      v-if="isExpanded && item.children?.length"
       ref="childrenRef"
       class="tree-children"
-      :class="{ 'tree-children-empty': !item.children?.length }"
       :data-parent-id="item.id"
     >
       <CroutonTreeNode
         v-for="child in item.children || []"
-        :key="child.id"
+        :key="`${child.id}-${child.parentId}-${child.children?.length || 0}`"
         :item="child"
         :depth="depth + 1"
         :label-key="labelKey"
@@ -271,22 +393,14 @@ onMounted(async () => {
 
 <style scoped>
 .tree-children {
-  min-height: 8px;
+  margin-left: 2rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+  border-left: 2px solid rgba(128, 128, 128, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-/* Empty children container - show drop zone */
-.tree-children-empty {
-  min-height: 28px;
-  margin-left: 28px;
-  border: 2px dashed rgb(var(--color-neutral-200));
-  border-radius: 0.375rem;
-  transition: all 0.15s ease;
-}
-
-.tree-children-empty:hover {
-  border-color: rgb(var(--color-primary-400));
-  background: rgb(var(--color-primary-50));
-}
-
-/* Drag states are defined in TreeView.vue and apply via :deep() */
 </style>
