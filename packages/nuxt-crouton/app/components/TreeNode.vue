@@ -4,6 +4,7 @@ import type { TreeNode as TreeNodeType } from './Tree.vue'
 import type SortableType from 'sortablejs'
 
 const { setDragging, getDraggingId, draggingId, hoveringOverId, setHoveringOver, setDropHandledByRow, wasDropHandledByRow, isItemExpanded, initItemExpanded, markCollapsed, markExpanded } = useTreeDragState()
+const { wasSaved } = useTreeItemState()
 
 interface Props {
   item: TreeNodeType
@@ -292,44 +293,37 @@ onMounted(async () => {
     @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
-    <!-- Node content row -->
+    <!-- Node content row - redesigned with cleaner layout -->
     <div
-      class="tree-node-content group flex items-center gap-2 py-1.5 px-2 rounded-md bg-elevated hover:bg-accented cursor-pointer transition-colors"
-      :class="{ 'ring-2 ring-primary/50': isDragOver }"
+      class="tree-node-content group relative flex items-center gap-2 min-h-9 py-1.5 px-2 rounded-lg cursor-pointer overflow-hidden transition-colors"
+      :class="[
+        isDragOver ? 'ring-2 ring-primary/50' : '',
+        wasSaved(item.id) ? 'tree-node-saved' : ''
+      ]"
+      :style="{ backgroundColor: 'rgba(255,255,255,0.03)' }"
       @click="handleItemClick"
       @drop="handleDropOnRow"
       @dragover="handleDragOver"
+      @mouseenter="$event.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'"
+      @mouseleave="$event.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'"
     >
-      <!-- Drag handle -->
+      <!-- Drag handle (on left) -->
       <div
-        class="drag-handle cursor-grab opacity-40 hover:opacity-100 transition-opacity"
+        class="drag-handle cursor-grab opacity-40 group-hover:opacity-100 transition-opacity"
         @mousedown.stop
         @click.stop
       >
-        <UIcon name="i-lucide-grip-vertical" class="size-4" />
+        <UIcon name="i-lucide-grip-vertical" class="size-4 text-muted" />
       </div>
 
-      <!-- Expand/collapse toggle - always show to allow nesting -->
+      <!-- Child count badge - only show when has children -->
       <button
-        class="shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
+        v-if="item.children?.length"
+        class="shrink-0 flex items-center justify-center size-5 text-xs font-medium text-muted tabular-nums rounded-full bg-muted/30 hover:bg-muted/50 transition-colors"
         @click.stop="toggle"
       >
-        <UIcon
-          :name="isExpanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-          class="size-4"
-          :class="item.children?.length ? 'text-muted' : 'text-muted/30'"
-        />
-      </button>
-
-      <!-- Children count -->
-      <UBadge
-        v-if="item.children?.length"
-        color="neutral"
-        size="sm"
-        variant="subtle"
-      >
         {{ item.children.length }}
-      </UBadge>
+      </button>
 
       <!-- Item icon if provided -->
       <UIcon
@@ -339,7 +333,7 @@ onMounted(async () => {
       />
 
       <!-- Item label -->
-      <span class="truncate flex-1 text-sm">
+      <span class="truncate flex-1 text-sm font-medium">
         {{ getItemLabel(item) }}
       </span>
 
@@ -353,8 +347,8 @@ onMounted(async () => {
         {{ item.status }}
       </UBadge>
 
-      <!-- Actions dropdown -->
-      <div class="tree-item-actions opacity-0 group-hover:opacity-100 transition-opacity">
+      <!-- Actions dropdown (hover reveal) -->
+      <div class="opacity-0 group-hover:opacity-100 transition-opacity">
         <UDropdownMenu
           :items="getItemActions(item)"
           :content="{ align: 'end' }"
@@ -370,11 +364,12 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Children container - only render if there are children -->
+    <!-- Children container - always render when expanded to allow drops -->
     <div
-      v-if="isExpanded && item.children?.length"
+      v-if="isExpanded"
       ref="childrenRef"
       class="tree-children"
+      :class="{ 'tree-children-empty': !item.children?.length }"
       :data-parent-id="item.id"
     >
       <CroutonTreeNode
@@ -384,7 +379,7 @@ onMounted(async () => {
         :depth="depth + 1"
         :label-key="labelKey"
         :collection="collection"
-        @move="(id, parentId, order) => emit('move', id, parentId, order)"
+        @move="(id: string, parentId: string | null, order: number) => emit('move', id, parentId, order)"
         @select="emit('select', $event)"
       />
     </div>
@@ -392,15 +387,51 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Children container with indentation */
 .tree-children {
-  margin-left: 2rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  padding-left: 1rem;
-  border-left: 2px solid rgba(128, 128, 128, 0.2);
+  margin-left: 1.5rem;
+  margin-top: 0.25rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
+/* Empty children container - drop zone */
+.tree-children-empty {
+  min-height: 0.5rem;
+  border-radius: 0.125rem;
+  transition: all 150ms ease;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tree-children-empty:hover {
+  min-height: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Slick left-to-right sweep animation for saved items */
+.tree-node-saved::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--color-success-500) / 0.25) 50%,
+    transparent 100%
+  );
+  animation: sweep 0.8s ease-out forwards;
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
 </style>

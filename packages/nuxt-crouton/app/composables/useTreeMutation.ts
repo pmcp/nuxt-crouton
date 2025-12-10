@@ -6,7 +6,8 @@
  * - Move nodes to new parents (or root)
  * - Reorder siblings within the same parent
  * - Automatic cache invalidation after mutations
- * - Toast notifications for success/error
+ * - Visual feedback via row flash animation (useTreeItemState)
+ * - Toast notifications for errors only
  *
  * @example
  * const { moveNode, reorderSiblings, moving } = useTreeMutation('pages')
@@ -30,6 +31,7 @@ export function useTreeMutation(collection: string) {
   const collections = useCollections()
   const config = collections.getConfig(collection)
   const { getTeamId } = useTeamContext()
+  const { markSaving, markSaved, markError } = useTreeItemState()
 
   if (!config) {
     console.error(`[useTreeMutation] Collection "${collection}" not found in registry`)
@@ -91,6 +93,7 @@ export function useTreeMutation(collection: string) {
     console.log('New Order:', newOrder)
 
     moving.value = true
+    markSaving(id)
 
     try {
       await $fetch(url, {
@@ -103,6 +106,10 @@ export function useTreeMutation(collection: string) {
       })
 
       console.log('✅ Move successful')
+
+      // Visual feedback via row flash animation - call BEFORE cache invalidation
+      // so the state is set before the tree re-renders
+      markSaved(id)
 
       // Emit hook for event tracking
       const nuxtApp = useNuxtApp()
@@ -117,15 +124,11 @@ export function useTreeMutation(collection: string) {
       await invalidateCache()
 
       console.groupEnd()
-
-      toast.add({
-        title: 'Item moved successfully',
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
     } catch (error: any) {
       console.error('❌ Move failed:', error)
       console.groupEnd()
+
+      markError(id)
 
       const errorMessage = error.data?.message || error.data || 'Move failed'
 
@@ -181,11 +184,8 @@ export function useTreeMutation(collection: string) {
 
       console.groupEnd()
 
-      toast.add({
-        title: 'Items reordered successfully',
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
+      // Visual feedback via row flash animation for all reordered items
+      updates.forEach(update => markSaved(update.id))
     } catch (error: any) {
       console.error('❌ Reorder failed:', error)
       console.groupEnd()
