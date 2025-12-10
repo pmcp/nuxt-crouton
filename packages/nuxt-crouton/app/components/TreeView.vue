@@ -43,13 +43,23 @@ async function initRootSortable() {
       ghostClass: 'tree-ghost',
       chosenClass: 'tree-chosen',
       dragClass: 'tree-drag',
+      forceFallback: true,
+      removeCloneOnHide: true,
 
       onStart: (evt) => {
+        console.log('[sortable:root] onStart', { item: evt.item.dataset.id })
         const id = (evt.item as HTMLElement).dataset.id
         if (id) treeDrag.startDrag(id)
       },
 
       onEnd: (evt) => {
+        console.log('[sortable:root] onEnd', {
+          item: evt.item.dataset.id,
+          from: evt.from.dataset.parentId,
+          to: evt.to?.dataset.parentId,
+          oldIndex: evt.oldIndex,
+          newIndex: evt.newIndex
+        })
         treeDrag.endDrag()
 
         const itemId = (evt.item as HTMLElement).dataset.id
@@ -61,19 +71,20 @@ async function initRootSortable() {
         emit('move', itemId, toParentId || null, newIndex)
       },
 
-      // Track drop target for line highlighting + auto-expand
+      onUnchoose: (evt) => {
+        console.log('[sortable:root] onUnchoose', { item: evt.item.dataset.id })
+      },
+
+      onSort: (evt) => {
+        console.log('[sortable:root] onSort', { item: evt.item.dataset.id, newIndex: evt.newIndex })
+      },
+
+      // Track drop target for line highlighting
       onMove: (evt) => {
         const toContainer = evt.to as HTMLElement
         const parentId = toContainer.dataset.parentId
-        // Set drop target (empty string = root, so use null for that)
         treeDrag.setDropTarget(parentId || null)
-
-        // Auto-expand collapsed nodes
-        const related = evt.related as HTMLElement
-        const relatedNode = related.closest('[data-id]') as HTMLElement | null
-        if (relatedNode?.dataset.id) {
-          treeDrag.scheduleAutoExpand(relatedNode.dataset.id)
-        }
+        // Auto-expand disabled - causes Vue re-render which breaks SortableJS
         return true
       }
     })
@@ -105,63 +116,42 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="crouton-tree-view">
-    <div
-      v-if="items.length > 0"
-      ref="rootRef"
-      class="tree-root"
-      data-parent-id=""
-    >
-      <CroutonTreeNode
-        v-for="item in items"
-        :key="item.id"
-        :item="item"
-        :depth="0"
-        :label-key="labelKey"
-        :collection="collection"
-        @move="(id, parentId, order) => emit('move', id, parentId, order)"
-        @select="emit('select', $event)"
-      />
+  <ClientOnly>
+    <div class="w-full">
+      <div
+        v-if="items.length > 0"
+        ref="rootRef"
+        class="min-h-12 pt-2 pb-16 flex flex-col gap-1"
+        data-parent-id=""
+      >
+        <CroutonTreeNode
+          v-for="item in items"
+          :key="item.id"
+          :item="item"
+          :depth="0"
+          :label-key="labelKey"
+          :collection="collection"
+          @move="(id, parentId, order) => emit('move', id, parentId, order)"
+          @select="emit('select', $event)"
+        />
+      </div>
+
+      <!-- Empty state -->
+      <div v-else class="text-center text-muted p-8">
+        <UIcon name="i-lucide-git-branch" class="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p class="text-lg font-medium mb-2">No items yet</p>
+        <p class="text-sm">Create your first item to see the tree structure.</p>
+      </div>
     </div>
 
-    <!-- Empty state -->
-    <div v-else class="text-center text-muted p-8">
-      <UIcon name="i-lucide-git-branch" class="w-12 h-12 mx-auto mb-4 opacity-50" />
-      <p class="text-lg font-medium mb-2">No items yet</p>
-      <p class="text-sm">Create your first item to see the tree structure.</p>
-    </div>
-  </div>
+    <template #fallback>
+      <div class="w-full min-h-12 pt-2 pb-10">
+        <USkeleton class="h-10 w-full mb-1" />
+        <USkeleton class="h-10 w-full mb-1" />
+        <USkeleton class="h-10 w-full" />
+      </div>
+    </template>
+  </ClientOnly>
 </template>
 
-<style scoped>
-.crouton-tree-view {
-  width: 100%;
-}
-
-.tree-root {
-  min-height: 3rem;
-  padding-top: 0.5rem;
-  padding-bottom: 2.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-:deep(.tree-ghost) {
-  opacity: 0.4;
-  background: rgb(var(--ui-primary) / 0.1);
-  border-left: 3px solid rgb(var(--ui-primary));
-  border-radius: 0.375rem;
-}
-
-:deep(.tree-drag) {
-  background: rgb(var(--ui-bg));
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  border-radius: 0.375rem;
-  opacity: 0.95;
-}
-
-:deep(.tree-chosen) {
-  background: rgb(var(--ui-primary) / 0.05);
-}
-</style>
+<!-- Styles injected via plugins/tree-styles.client.ts (Vue <style> blocks in layers don't bundle correctly) -->

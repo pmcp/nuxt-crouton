@@ -11,6 +11,10 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/ui', '@vueuse/nuxt'],
 
+  plugins: [
+    { src: join(currentDir, 'app/plugins/tree-styles.client.ts'), mode: 'client' }
+  ],
+
   components: {
     dirs: [
       {

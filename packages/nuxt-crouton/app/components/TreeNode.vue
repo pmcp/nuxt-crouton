@@ -127,13 +127,25 @@ async function initSortable() {
       ghostClass: 'tree-ghost',
       chosenClass: 'tree-chosen',
       dragClass: 'tree-drag',
+      forceFallback: true,
+      removeCloneOnHide: true,
 
       onStart: (evt) => {
+        console.log('[sortable:node] onStart', { item: evt.item.dataset.id, parent: props.item.id })
         const id = (evt.item as HTMLElement).dataset.id
         if (id) treeDrag.startDrag(id)
       },
 
       onEnd: (evt) => {
+        console.log('[sortable:node] onEnd', {
+          item: evt.item.dataset.id,
+          parent: props.item.id,
+          from: evt.from.dataset.parentId,
+          to: evt.to?.dataset.parentId,
+          oldIndex: evt.oldIndex,
+          newIndex: evt.newIndex,
+          isFromThis: evt.from === childrenRef.value
+        })
         treeDrag.endDrag()
 
         // Only handle if this container is the source
@@ -149,19 +161,16 @@ async function initSortable() {
         emit('move', itemId, toParentId || null, newIndex)
       },
 
-      // Track drop target for line highlighting + auto-expand
+      onUnchoose: (evt) => {
+        console.log('[sortable:node] onUnchoose', { item: evt.item.dataset.id, parent: props.item.id })
+      },
+
+      // Track drop target for line highlighting
       onMove: (evt) => {
         const toContainer = evt.to as HTMLElement
         const parentId = toContainer.dataset.parentId
-        // Set drop target (empty string = root, so use null for that)
         treeDrag.setDropTarget(parentId || null)
-
-        // Auto-expand collapsed nodes
-        const related = evt.related as HTMLElement
-        const relatedNode = related.closest('[data-id]') as HTMLElement | null
-        if (relatedNode?.dataset.id) {
-          treeDrag.scheduleAutoExpand(relatedNode.dataset.id)
-        }
+        // Auto-expand disabled - causes Vue re-render which breaks SortableJS
         return true
       }
     })

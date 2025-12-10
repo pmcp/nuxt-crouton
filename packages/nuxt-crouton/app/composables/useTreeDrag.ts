@@ -12,6 +12,9 @@ import { readonly } from 'vue'
 // Module-level timeout tracker (shared across all useTreeDrag() calls)
 const expandTimeouts: Record<string, ReturnType<typeof setTimeout>> = {}
 
+// Track which items were auto-expanded during this drag (to collapse them later)
+let autoExpandedIds: Set<string> = new Set()
+
 export function useTreeDrag() {
   // Currently dragging item ID
   const draggingId = useState<string | null>('tree-drag-id', () => null)
@@ -34,6 +37,11 @@ export function useTreeDrag() {
     // Clear any pending expand timeouts
     Object.values(expandTimeouts).forEach((timeout) => clearTimeout(timeout))
     Object.keys(expandTimeouts).forEach((key) => delete expandTimeouts[key])
+    // Collapse all auto-expanded items
+    for (const id of autoExpandedIds) {
+      expandedItems.value[id] = false
+    }
+    autoExpandedIds.clear()
   }
 
   function isDragging(id?: string) {
@@ -83,20 +91,37 @@ export function useTreeDrag() {
 
   /**
    * Schedule auto-expand when dragging over a collapsed node
-   * Cancels if drag leaves before timeout
+   * Collapses previously auto-expanded nodes when hovering a new item
    */
-  function scheduleAutoExpand(id: string, delay = 400) {
-    // Already expanded or already scheduled
-    if (isExpanded(id) || expandTimeouts[id]) return
-
+  function scheduleAutoExpand(id: string, delay = 0) {
     // Not currently dragging - ignore
     if (!draggingId.value) return
 
     // Can't expand self
     if (draggingId.value === id) return
 
+    // Collapse previously auto-expanded items (except ancestors of current target)
+    for (const prevId of autoExpandedIds) {
+      if (prevId !== id) {
+        expandedItems.value[prevId] = false
+        autoExpandedIds.delete(prevId)
+      }
+    }
+
+    // Cancel any pending timeouts for other items
+    Object.keys(expandTimeouts).forEach((key) => {
+      if (key !== id) {
+        clearTimeout(expandTimeouts[key])
+        delete expandTimeouts[key]
+      }
+    })
+
+    // Already expanded or already scheduled
+    if (isExpanded(id) || expandTimeouts[id]) return
+
     expandTimeouts[id] = setTimeout(() => {
       setExpanded(id, true)
+      autoExpandedIds.add(id)
       delete expandTimeouts[id]
     }, delay)
   }
