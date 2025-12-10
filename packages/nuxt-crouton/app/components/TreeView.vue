@@ -4,7 +4,7 @@ import type { HierarchyConfig } from '../types/table'
 import type { TreeNode } from './Tree.vue'
 import type SortableType from 'sortablejs'
 
-const { setDragging, wasDropHandledByRow } = useTreeDragState()
+const treeDrag = useTreeDrag()
 
 interface Props {
   items: TreeNode[]
@@ -24,17 +24,11 @@ const emit = defineEmits<{
   select: [item: TreeNode]
 }>()
 
-// Root container ref
 const rootRef = ref<HTMLElement | null>(null)
-
-// Track sortable instance (non-reactive, no need for shallowRef)
 let sortableInstance: SortableType | null = null
 
-// Initialize sortable for root level
 async function initRootSortable() {
   if (!import.meta.client || !rootRef.value) return
-
-  // Already initialized - skip
   if (sortableInstance) return
 
   try {
@@ -44,36 +38,37 @@ async function initRootSortable() {
       group: 'tree',
       animation: 150,
       fallbackOnBody: true,
-      swapThreshold: 0.5,
-      invertSwap: true,
-      emptyInsertThreshold: 10,
-      dragoverBubble: false,
+      swapThreshold: 0.65,
       handle: '.drag-handle',
       ghostClass: 'tree-ghost',
       chosenClass: 'tree-chosen',
       dragClass: 'tree-drag',
+
       onStart: (evt) => {
-        const draggedEl = evt.item as HTMLElement
-        setDragging(draggedEl.dataset.id || null)
+        const id = (evt.item as HTMLElement).dataset.id
+        if (id) treeDrag.startDrag(id)
       },
+
       onEnd: (evt) => {
-        // Skip if drop was already handled by row drop handler
-        if (wasDropHandledByRow()) {
-          setDragging(null)
-          return
-        }
+        treeDrag.endDrag()
 
-        setDragging(null)
-
-        const draggedEl = evt.item as HTMLElement
-        const itemId = draggedEl.dataset.id
+        const itemId = (evt.item as HTMLElement).dataset.id
         if (!itemId) return
 
-        const toParentId = (evt.to as HTMLElement).dataset.parentId || null
+        const toParentId = (evt.to as HTMLElement).dataset.parentId
         const newIndex = evt.newIndex ?? 0
 
-        console.log('[TreeView] Move:', { itemId, toParentId: toParentId || null, newIndex })
-        emit('move', itemId, toParentId === '' ? null : toParentId, newIndex)
+        emit('move', itemId, toParentId || null, newIndex)
+      },
+
+      // Auto-expand collapsed nodes when dragging over them
+      onMove: (evt) => {
+        const related = evt.related as HTMLElement
+        const relatedNode = related.closest('[data-id]') as HTMLElement | null
+        if (relatedNode?.dataset.id) {
+          treeDrag.scheduleAutoExpand(relatedNode.dataset.id)
+        }
+        return true
       }
     })
   } catch (error) {
@@ -81,22 +76,11 @@ async function initRootSortable() {
   }
 }
 
-// Handle move events from child TreeNode components
-function handleMove(id: string, newParentId: string | null, newOrder: number) {
-  emit('move', id, newParentId, newOrder)
-}
-
-// Handle select events from child TreeNode components
-function handleSelect(item: TreeNode) {
-  emit('select', item)
-}
-
-// Global dragend handler to ensure state is always cleared
+// Global dragend to ensure cleanup
 function handleGlobalDragEnd() {
-  setDragging(null)
+  treeDrag.endDrag()
 }
 
-// Cleanup on unmount
 onBeforeUnmount(() => {
   sortableInstance?.destroy()
   sortableInstance = null
@@ -105,13 +89,10 @@ onBeforeUnmount(() => {
   }
 })
 
-// Initialize on mount only
 onMounted(async () => {
-  // Add global dragend listener to ensure state cleanup
   if (import.meta.client) {
     document.addEventListener('dragend', handleGlobalDragEnd)
   }
-
   await nextTick()
   initRootSortable()
 })
@@ -119,7 +100,6 @@ onMounted(async () => {
 
 <template>
   <div class="crouton-tree-view">
-    <!-- Root container -->
     <div
       v-if="items.length > 0"
       ref="rootRef"
@@ -128,13 +108,13 @@ onMounted(async () => {
     >
       <CroutonTreeNode
         v-for="item in items"
-        :key="`${item.id}-${item.parentId}-${item.children?.length || 0}`"
+        :key="item.id"
         :item="item"
         :depth="0"
         :label-key="labelKey"
         :collection="collection"
-        @move="handleMove"
-        @select="handleSelect"
+        @move="(id, parentId, order) => emit('move', id, parentId, order)"
+        @select="emit('select', $event)"
       />
     </div>
 
@@ -154,13 +134,13 @@ onMounted(async () => {
 
 .tree-root {
   min-height: 3rem;
+  padding-top: 0.5rem;
   padding-bottom: 2.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-/* Ghost = the placeholder showing where item will drop */
 :deep(.tree-ghost) {
   opacity: 0.4;
   background: rgb(var(--ui-primary) / 0.1);
@@ -168,7 +148,6 @@ onMounted(async () => {
   border-radius: 0.375rem;
 }
 
-/* Drag = the item being dragged */
 :deep(.tree-drag) {
   background: rgb(var(--ui-bg));
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
