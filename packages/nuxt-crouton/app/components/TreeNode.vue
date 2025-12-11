@@ -147,22 +147,20 @@ async function initSortable() {
       removeCloneOnHide: true,
 
       onStart: (evt) => {
-        console.log('[sortable:node] onStart', { item: evt.item.dataset.id, parent: props.item.id })
         const id = (evt.item as HTMLElement).dataset.id
         if (id) treeDrag.startDrag(id)
       },
 
       onEnd: (evt) => {
-        console.log('[sortable:node] onEnd', {
-          item: evt.item.dataset.id,
-          parent: props.item.id,
-          from: evt.from.dataset.parentId,
-          to: evt.to?.dataset.parentId,
-          oldIndex: evt.oldIndex,
-          newIndex: evt.newIndex,
-          isFromThis: evt.from === childrenRef.value
-        })
+        // Check if the move was blocked by onMove
+        const wasBlocked = treeDrag.isMoveBlocked()
+
         treeDrag.endDrag()
+
+        // If the move was blocked, don't emit
+        if (wasBlocked) {
+          return
+        }
 
         // Only handle if this container is the source
         if (evt.from !== childrenRef.value) return
@@ -177,18 +175,18 @@ async function initSortable() {
         emit('move', itemId, toParentId || null, newIndex)
       },
 
-      onUnchoose: (evt) => {
-        console.log('[sortable:node] onUnchoose', { item: evt.item.dataset.id, parent: props.item.id })
-      },
-
       // Track drop target for line highlighting + auto-expand
       // Return false to prevent invalid drops (circular references)
       onMove: (evt) => {
         const toContainer = evt.to as HTMLElement
 
         // Prevent dropping an item into its own descendants
-        if (treeDrag.isDescendantDrop(toContainer)) {
-          console.log('[sortable:node] onMove BLOCKED - would create circular reference')
+        const shouldBlock = treeDrag.isDescendantDrop(toContainer)
+
+        // Track the block state for onEnd to check
+        treeDrag.setMoveBlocked(shouldBlock)
+
+        if (shouldBlock) {
           return false
         }
 
@@ -242,6 +240,7 @@ onBeforeUnmount(() => {
   <div
     class="tree-node"
     :data-id="item.id"
+    :data-path="item.path"
     :data-depth="depth"
     :class="{ 'opacity-50': isBeingDragged }"
   >

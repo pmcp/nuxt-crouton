@@ -15,6 +15,9 @@ const expandTimeouts: Record<string, ReturnType<typeof setTimeout>> = {}
 // Track which items were auto-expanded during this drag (to collapse them later)
 let autoExpandedIds: Set<string> = new Set()
 
+// Track whether the move is blocked (set by onMove, read by onEnd)
+let moveBlocked = false
+
 export function useTreeDrag() {
   // Currently dragging item ID
   const draggingId = useState<string | null>('tree-drag-id', () => null)
@@ -34,6 +37,7 @@ export function useTreeDrag() {
   function endDrag() {
     draggingId.value = null
     dropTargetId.value = null
+    moveBlocked = false
     // Clear any pending expand timeouts
     Object.values(expandTimeouts).forEach((timeout) => clearTimeout(timeout))
     Object.keys(expandTimeouts).forEach((key) => delete expandTimeouts[key])
@@ -130,29 +134,69 @@ export function useTreeDrag() {
     }
   }
 
+  // ============ Move Blocking ============
+
+  function setMoveBlocked(blocked: boolean) {
+    moveBlocked = blocked
+  }
+
+  function isMoveBlocked() {
+    return moveBlocked
+  }
+
   // ============ Descendant Check ============
 
   /**
    * Check if dropping to the target container would create a circular reference
    * (i.e., trying to drop an item into its own descendant)
    *
-   * Uses DOM traversal: if the target container is inside the dragged item's element,
-   * it's a descendant and the move should be prevented.
+   * Simple approach: read the target's data-path attribute directly from DOM
+   * and check if it contains the dragged item's ID.
    *
    * @param targetContainer - The container element we're trying to drop into
    * @returns true if the move is invalid (would create circular reference)
    */
   function isDescendantDrop(targetContainer: HTMLElement): boolean {
     const dragId = draggingId.value
-    if (!dragId) return false
 
-    // Find the dragged item's DOM element
-    const draggedElement = document.querySelector(`[data-id="${dragId}"]`)
-    if (!draggedElement) return false
+    if (!dragId) {
+      return false
+    }
 
-    // Check if the target container is inside the dragged element
-    // This means we're trying to drop an item into its own subtree
-    return draggedElement.contains(targetContainer)
+    // The target container has data-parent-id attribute
+    const targetParentId = targetContainer.dataset.parentId
+
+    // If dropping into root (empty parentId), always allowed
+    if (!targetParentId) {
+      return false
+    }
+
+    // If dropping directly into the dragged item's children container
+    if (targetParentId === dragId) {
+      console.log('[isDescendantDrop] BLOCKED: dropping into own children')
+      return true
+    }
+
+    // Find the target parent's element and check its path
+    const targetParentEl = document.querySelector(`[data-id="${targetParentId}"]`)
+    if (!targetParentEl) {
+      return false
+    }
+
+    // Get the path from the data attribute
+    const targetPath = (targetParentEl as HTMLElement).dataset.path
+    if (!targetPath) {
+      return false
+    }
+
+    // If target's path contains the dragged item's ID, it's a descendant
+    // Path format is like: /grandparentId/parentId/itemId/
+    if (targetPath.includes(`/${dragId}/`)) {
+      console.log('[isDescendantDrop] BLOCKED: target is a descendant. targetPath:', targetPath, 'dragId:', dragId)
+      return true
+    }
+
+    return false
   }
 
   return {
@@ -179,6 +223,10 @@ export function useTreeDrag() {
     // Auto-expand
     scheduleAutoExpand,
     cancelAutoExpand,
+
+    // Move blocking
+    setMoveBlocked,
+    isMoveBlocked,
 
     // Validation
     isDescendantDrop,

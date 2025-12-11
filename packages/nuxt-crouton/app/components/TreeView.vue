@@ -47,20 +47,23 @@ async function initRootSortable() {
       removeCloneOnHide: true,
 
       onStart: (evt) => {
-        console.log('[sortable:root] onStart', { item: evt.item.dataset.id })
         const id = (evt.item as HTMLElement).dataset.id
         if (id) treeDrag.startDrag(id)
       },
 
       onEnd: (evt) => {
-        console.log('[sortable:root] onEnd', {
-          item: evt.item.dataset.id,
-          from: evt.from.dataset.parentId,
-          to: evt.to?.dataset.parentId,
-          oldIndex: evt.oldIndex,
-          newIndex: evt.newIndex
-        })
+        // Check if the move was blocked by onMove
+        const wasBlocked = treeDrag.isMoveBlocked()
+
         treeDrag.endDrag()
+
+        // If the move was blocked, don't emit
+        if (wasBlocked) {
+          return
+        }
+
+        // Only handle if this container is the source
+        if (evt.from !== rootRef.value) return
 
         const itemId = (evt.item as HTMLElement).dataset.id
         if (!itemId) return
@@ -71,22 +74,18 @@ async function initRootSortable() {
         emit('move', itemId, toParentId || null, newIndex)
       },
 
-      onUnchoose: (evt) => {
-        console.log('[sortable:root] onUnchoose', { item: evt.item.dataset.id })
-      },
-
-      onSort: (evt) => {
-        console.log('[sortable:root] onSort', { item: evt.item.dataset.id, newIndex: evt.newIndex })
-      },
-
       // Track drop target for line highlighting + auto-expand
       // Return false to prevent invalid drops (circular references)
       onMove: (evt) => {
         const toContainer = evt.to as HTMLElement
 
         // Prevent dropping an item into its own descendants
-        if (treeDrag.isDescendantDrop(toContainer)) {
-          console.log('[sortable:root] onMove BLOCKED - would create circular reference')
+        const shouldBlock = treeDrag.isDescendantDrop(toContainer)
+
+        // Track the block state for onEnd to check
+        treeDrag.setMoveBlocked(shouldBlock)
+
+        if (shouldBlock) {
           return false
         }
 
