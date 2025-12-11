@@ -48,6 +48,7 @@ export interface CollectionProps {
   refreshFn?: () => Promise<void> | null
   create?: boolean
   hierarchy?: HierarchyConfig
+  card?: 'Card' | 'CardMini' | 'CardSmall' | 'CardTree' | string
   hideDefaultColumns?: {
     createdAt?: boolean
     updatedAt?: boolean

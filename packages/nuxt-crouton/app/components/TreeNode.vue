@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import type { Component } from 'vue'
 import type { TreeNode as TreeNodeType } from './Tree.vue'
 import type SortableType from 'sortablejs'
 const { open } = useCrouton()
@@ -12,12 +13,14 @@ interface Props {
   depth?: number
   labelKey?: string
   collection: string
+  cardComponent?: Component | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   depth: 0,
   labelKey: 'name',
-  collection: ''
+  collection: '',
+  cardComponent: null
 })
 
 
@@ -272,27 +275,39 @@ onBeforeUnmount(() => {
         {{ childCount }}
       </button>
 
-      <!-- Item icon -->
-      <UIcon
-        v-if="item.icon"
-        :name="item.icon"
-        class="size-4 shrink-0 text-muted"
-      />
+      <!-- Custom card content OR default -->
+      <template v-if="cardComponent">
+        <component
+          :is="cardComponent"
+          :item="item"
+          layout="tree"
+          :collection="collection"
+          class="flex-1 min-w-0"
+        />
+      </template>
+      <template v-else>
+        <!-- Item icon -->
+        <UIcon
+          v-if="item.icon"
+          :name="item.icon"
+          class="size-4 shrink-0 text-muted"
+        />
 
-      <!-- Item label -->
-      <span class="truncate flex-1 text-sm font-medium">
-        {{ getItemLabel(item) }}
-      </span>
+        <!-- Item label -->
+        <span class="truncate flex-1 text-sm font-medium">
+          {{ getItemLabel(item) }}
+        </span>
 
-      <!-- Status badge -->
-      <UBadge
-        v-if="item.status"
-        :color="getStatusColor(item.status)"
-        size="sm"
-        variant="subtle"
-      >
-        {{ item.status }}
-      </UBadge>
+        <!-- Status badge -->
+        <UBadge
+          v-if="item.status"
+          :color="getStatusColor(item.status)"
+          size="sm"
+          variant="subtle"
+        >
+          {{ item.status }}
+        </UBadge>
+      </template>
 
       <!-- Actions dropdown -->
       <div class="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -330,6 +345,7 @@ onBeforeUnmount(() => {
         :depth="depth + 1"
         :label-key="labelKey"
         :collection="collection"
+        :card-component="cardComponent"
         @move="(id, parentId, order) => emit('move', id, parentId, order)"
         @select="emit('select', $event)"
       />

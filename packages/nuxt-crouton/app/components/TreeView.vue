@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import type { Component } from 'vue'
 import type { HierarchyConfig } from '../types/table'
 import type { TreeNode } from './Tree.vue'
 import type SortableType from 'sortablejs'
@@ -11,12 +12,14 @@ interface Props {
   collection: string
   hierarchy: HierarchyConfig
   labelKey?: string
+  cardComponent?: Component | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   items: () => [],
   hierarchy: () => ({ enabled: true }),
-  labelKey: 'name'
+  labelKey: 'name',
+  cardComponent: null
 })
 
 const emit = defineEmits<{
@@ -144,6 +147,7 @@ onMounted(async () => {
           :depth="0"
           :label-key="labelKey"
           :collection="collection"
+          :card-component="cardComponent"
           @move="(id, parentId, order) => emit('move', id, parentId, order)"
           @select="emit('select', $event)"
         />

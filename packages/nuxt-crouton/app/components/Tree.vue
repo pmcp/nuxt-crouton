@@ -22,6 +22,7 @@
           :items="tree"
           :collection="collection"
           :hierarchy="hierarchy"
+          :card-component="cardComponent"
           @move="handleMove"
         />
       </div>
@@ -38,6 +39,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue'
+import type { Component } from 'vue'
 import type { HierarchyConfig } from '../types/table'
 
 export interface TreeNode {
@@ -55,12 +57,14 @@ interface Props {
   collection: string
   hierarchy: HierarchyConfig
   loading?: boolean
+  cardComponent?: Component | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   rows: () => [],
   hierarchy: () => ({ enabled: true }),
-  loading: false
+  loading: false,
+  cardComponent: null
 })
 
 const emit = defineEmits<{

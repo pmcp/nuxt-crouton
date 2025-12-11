@@ -201,6 +201,7 @@ defineProps&lt;Props&gt;()
     :rows="rows"
     :collection="collection"
     :hierarchy="hierarchyConfig"
+    :card-component="customCardComponent"
     @move="handleTreeMove"
   >
     <template #header>
@@ -238,6 +239,7 @@ const props = withDefaults(defineProps<ListProps>(), {
   paginationData: null,
   refreshFn: undefined,
   create: false,
+  card: undefined,
   hideDefaultColumns: () => ({
     created_at: false,
     updated_at: false,
@@ -249,9 +251,11 @@ const props = withDefaults(defineProps<ListProps>(), {
 // Card component resolution
 const { toPascalCase } = useFormatCollections()
 
-const getCardComponent = (collectionName: string) => {
+const getCardComponent = (collectionName: string, variant?: string) => {
   const pascalName = toPascalCase(collectionName)
-  const componentName = `${pascalName}Card`
+  const componentName = variant
+    ? `${pascalName}${variant}`
+    : `${pascalName}Card`
 
   // Check if component exists without triggering Vue warning
   const instance = getCurrentInstance()
@@ -273,7 +277,7 @@ const getCardComponent = (collectionName: string) => {
 }
 
 const customCardComponent = computed(() =>
-  props.collection ? getCardComponent(props.collection) : null
+  props.collection ? getCardComponent(props.collection, props.card) : null
 )
 
 // Responsive breakpoint detection
