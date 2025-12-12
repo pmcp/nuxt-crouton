@@ -21,6 +21,8 @@ interface Props {
   monthControls?: boolean           // Show month controls
   yearControls?: boolean            // Show year controls
   numberOfMonths?: number           // Number of months to display
+  isDateDisabled?: (date: Date) => boolean  // Function to disable specific dates (uses JS Date)
+  ui?: Record<string, unknown>      // Passthrough UI customization to UCalendar
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -102,9 +104,22 @@ const displayMonths = computed(() => {
   if (props.numberOfMonths) return props.numberOfMonths
   return props.range ? 2 : 1
 })
+
+// Wrapper for isDateDisabled that converts DateValue to Date
+function internalIsDateDisabled(dateValue: DateValue): boolean {
+  if (!props.isDateDisabled) return false
+  const date = calendarDateToDate(dateValue)
+  if (!date) return false
+  return props.isDateDisabled(date)
+}
+
+// Check if we have a day slot
+const slots = useSlots()
+const hasDaySlot = computed(() => !!slots.day)
 </script>
 
 <template>
+  <!-- Single date mode -->
   <UCalendar
     v-if="!range"
     v-model="internalDate"
@@ -117,8 +132,15 @@ const displayMonths = computed(() => {
     :month-controls="monthControls"
     :year-controls="yearControls"
     :number-of-months="displayMonths"
-  />
+    :is-date-disabled="isDateDisabled ? internalIsDateDisabled : undefined"
+    :ui="ui"
+  >
+    <template v-if="hasDaySlot" #day="{ day }">
+      <slot name="day" :day="day" :date="calendarDateToDate(day)" />
+    </template>
+  </UCalendar>
 
+  <!-- Range mode -->
   <UCalendar
     v-else
     v-model="internalRange"
@@ -132,5 +154,11 @@ const displayMonths = computed(() => {
     :month-controls="monthControls"
     :year-controls="yearControls"
     :number-of-months="displayMonths"
-  />
+    :is-date-disabled="isDateDisabled ? internalIsDateDisabled : undefined"
+    :ui="ui"
+  >
+    <template v-if="hasDaySlot" #day="{ day }">
+      <slot name="day" :day="day" :date="calendarDateToDate(day)" />
+    </template>
+  </UCalendar>
 </template>
