@@ -78,8 +78,13 @@ const hasDaySlot = computed(() => !!slots.day)
         :size="size"
         :color="color"
         :fixed-weeks="false"
+        :is-date-disabled="isDateDisabled ? internalIsDateDisabled : undefined"
         class="hide-outside-days"
-      />
+      >
+        <template v-if="hasDaySlot" #day="{ day }">
+          <slot name="day" :day="day" :date="calendarDateToDate(day)" />
+        </template>
+      </UCalendar>
     </div>
   </div>
 </template>
