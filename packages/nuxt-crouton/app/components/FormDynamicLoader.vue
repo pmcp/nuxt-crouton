@@ -1,14 +1,21 @@
 <template>
+  <!-- For delete action, show delete confirmation -->
+  <CroutonFormDeleteConfirm
+    v-if="action === 'delete'"
+    :collection="collection"
+    :items="items"
+    class="w-full h-full"
+  />
+  <!-- For other actions, load the form component -->
   <component
     :is="currentComponent"
-    v-if="currentComponent"
+    v-else-if="currentComponent"
     v-bind="componentProps"
     class="w-full h-full"
   />
   <div v-else>
     Component not found for collection: {{ collection }}
   </div>
-
 </template>
 
 <script setup>

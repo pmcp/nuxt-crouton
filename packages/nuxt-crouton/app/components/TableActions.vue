@@ -50,7 +50,7 @@ const handleDelete = () => {
     if (props.onDelete) {
       props.onDelete(ids)
     } else {
-      open('delete', props.collection, ids)
+      open('delete', props.collection, ids, 'dialog')
     }
     emit('delete', ids)
   }
