@@ -519,6 +519,18 @@ async function updateLayerRootConfig(layer, collectionName, hasTranslations = fa
     } catch (readError) {
       // Create new config
       console.log(`↻ Creating ${layer} layer root nuxt.config.ts`)
+
+      // Include i18n config if translations are enabled
+      const i18nBlock = hasTranslations ? `,
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json' },
+      { code: 'nl', file: 'nl.json' },
+      { code: 'fr', file: 'fr.json' }
+    ],
+    langDir: './locales'
+  }` : ''
+
       config = `import { basename } from 'path'
 
 const layerName = basename(__dirname)
@@ -534,7 +546,7 @@ export default defineNuxtConfig({
     ]
   },
   extends: [
-  ]
+  ]${i18nBlock}
 })
 `
     }
@@ -578,7 +590,16 @@ export default defineNuxtConfig({
 
         const updatedExtends = formattedLines.join('\n')
         config = config.replace(extendsMatch[0], `extends: [\n${updatedExtends}\n  ]`)
+      }
 
+      // Add i18n config to existing configs if translations are enabled and not present
+      if (hasTranslations && configExists && !config.includes('i18n:')) {
+        config = await addI18nConfigToLayer(configPath, config)
+        needsUpdate = true
+        console.log(`↻ Adding i18n config to ${layer} layer nuxt.config.ts`)
+      }
+
+      if (needsUpdate) {
         await fsp.writeFile(configPath, config)
         console.log(`✓ ${configExists ? 'Updated' : 'Created'} ${layer} layer root nuxt.config.ts`)
       } else {
@@ -589,6 +610,96 @@ export default defineNuxtConfig({
     console.error(`! Could not update ${layer} layer root nuxt.config.ts:`, error.message)
     console.log(`  Please manually add './collections/${cases.plural}' to the extends array`)
   }
+}
+
+// Setup i18n folder structure and locale files for a layer
+async function setupLayerI18n(layer, collectionName) {
+  const layerPath = path.resolve('layers', layer)
+  const i18nPath = path.join(layerPath, 'i18n', 'locales')
+  const cases = toCase(collectionName)
+
+  try {
+    // Create i18n/locales directory
+    await fsp.mkdir(i18nPath, { recursive: true })
+
+    // Generate locale files with collection translations template
+    const locales = ['en', 'nl', 'fr']
+
+    for (const locale of locales) {
+      const localePath = path.join(i18nPath, `${locale}.json`)
+
+      // Check if file exists
+      let content
+      try {
+        await fsp.access(localePath)
+        // File exists, merge in new collection keys
+        const existing = JSON.parse(await fsp.readFile(localePath, 'utf-8'))
+        if (!existing[layer]) existing[layer] = { collections: {} }
+        if (!existing[layer].collections) existing[layer].collections = {}
+        if (!existing[layer].collections[cases.plural]) {
+          existing[layer].collections[cases.plural] = { title: cases.pascalCasePlural }
+        }
+        content = existing
+        await fsp.writeFile(localePath, JSON.stringify(content, null, 2))
+        console.log(`  ✓ Updated ${locale}.json with ${cases.plural} translations`)
+      } catch {
+        // Create new file with initial structure
+        content = {
+          [layer]: {
+            collections: {
+              [cases.plural]: { title: cases.pascalCasePlural }
+            }
+          }
+        }
+        await fsp.writeFile(localePath, JSON.stringify(content, null, 2))
+        console.log(`  ✓ Created ${locale}.json with ${cases.plural} translations`)
+      }
+    }
+
+    console.log(`✓ Created i18n locale files in layers/${layer}/i18n/locales/`)
+    return true
+  } catch (error) {
+    console.error(`! Could not setup i18n for layer ${layer}:`, error.message)
+    return false
+  }
+}
+
+// Add i18n config block to an existing nuxt.config.ts
+async function addI18nConfigToLayer(configPath, config) {
+  // Check if i18n config already exists
+  if (config.includes('i18n:')) {
+    return config // Already has i18n config
+  }
+
+  // Find the closing of defineNuxtConfig and add i18n before it
+  const i18nConfig = `
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json' },
+      { code: 'nl', file: 'nl.json' },
+      { code: 'fr', file: 'fr.json' }
+    ],
+    langDir: './locales'
+  }`
+
+  // Find the last closing brace before the final })
+  // Strategy: Add after extends array
+  const extendsMatch = config.match(/extends:\s*\[[\s\S]*?\]/m)
+  if (extendsMatch) {
+    const insertPos = config.indexOf(extendsMatch[0]) + extendsMatch[0].length
+    // Check if there's a comma after extends
+    const afterExtends = config.slice(insertPos)
+    if (afterExtends.trim().startsWith(',')) {
+      // Already has comma, insert i18n after the comma
+      const commaPos = insertPos + afterExtends.indexOf(',') + 1
+      config = config.slice(0, commaPos) + i18nConfig + ',' + config.slice(commaPos)
+    } else {
+      // No comma, add one
+      config = config.slice(0, insertPos) + ',' + i18nConfig + config.slice(insertPos)
+    }
+  }
+
+  return config
 }
 
 async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, useTeamUtility = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false }) {
@@ -1009,6 +1120,11 @@ ${translationsFieldSchema}
 
   // Update layer root nuxt.config.ts to extend the new collection (and translations layer if needed)
   await updateLayerRootConfig(layer, collection, hasTranslations)
+
+  // Setup i18n folder structure and locale files if translations are enabled
+  if (hasTranslations) {
+    await setupLayerI18n(layer, collection)
+  }
 
   // Update root nuxt.config.ts to extend the layer
   await updateRootNuxtConfig(layer)
