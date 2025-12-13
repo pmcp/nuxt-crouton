@@ -1,10 +1,10 @@
 <template>
   <ULocaleSelect
-    v-model="locale"
+    :model-value="locale"
     :locales="availableLocales"
     class="w-full"
     variant="ghost"
-    @update:model-value="setLocale($event)"
+    @update:model-value="handleLocaleChange($event)"
   >
     <template #leading="{ locale }">
       <span>{{ flags[locale.code] || '🌐' }}</span>
@@ -39,6 +39,7 @@ const flags: Record<string, string> = {
   fr: '🐔'
 }
 
-// define props
-
+const handleLocaleChange = async (newLocale: string) => {
+  await setLocale(newLocale)
+}
 </script>

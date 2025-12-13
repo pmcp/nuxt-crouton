@@ -18,7 +18,10 @@ interface TranslationOptions {
  * 4. In dev mode, wraps translations with DevTranslationWrapper for inline editing
  */
 export function useT() {
-  const { t, locale } = useI18n()
+  const i18n = useI18n()
+  // Don't destructure t - call i18n.t() directly to ensure it always uses current translations
+  // Use computed to ensure locale stays reactive
+  const locale = computed(() => i18n.locale.value)
   const { currentTeam } = useTeam()
   const route = useRoute()
   const isDev = process.dev
@@ -94,7 +97,7 @@ export function useT() {
       translatedValue = teamOverride
     } else {
       // Fall back to system translation
-      const systemValue = params ? t(key, params as any) : t(key)
+      const systemValue = params ? i18n.t(key, params as any) : i18n.t(key)
 
       // Check if translation is missing (i18n returns the key when not found)
       if (systemValue === key) {
@@ -124,7 +127,7 @@ export function useT() {
     const { category = 'ui' } = options
     const teamSlug = route.params.team as string | undefined
     const teamOverride = teamTranslations.value?.[key]
-    const systemValue = t(key)
+    const systemValue = i18n.t(key)
     const isTranslationMissing = systemValue === key
 
     return {
@@ -155,7 +158,7 @@ export function useT() {
     if (teamOverride) {
       value = teamOverride
     } else {
-      const systemValue = params ? t(key, params as any) : t(key)
+      const systemValue = params ? i18n.t(key, params as any) : i18n.t(key)
 
       // Check if translation is missing
       if (systemValue === key) {
@@ -213,7 +216,7 @@ export function useT() {
 
     if (teamOverride) return true
 
-    const systemValue = t(key)
+    const systemValue = i18n.t(key)
     return systemValue !== key
   }
 
@@ -244,7 +247,7 @@ export function useT() {
    */
   const getTranslationMeta = (key: string) => {
     const teamOverride = teamTranslations.value?.[key]
-    const systemValue = t(key)
+    const systemValue = i18n.t(key)
     const isSystemMissing = systemValue === key
 
     return {
