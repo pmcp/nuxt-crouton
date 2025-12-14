@@ -38,6 +38,7 @@
   "peerDependencies": {
     "nuxt": "^4.0.0",
     "@friendlyinternet/nuxt-crouton": "workspace:*",
-    "drizzle-orm": ">=0.30.0"
+    "drizzle-orm": ">=0.30.0",
+    "zod": "^3.20.0"
   }
 }
