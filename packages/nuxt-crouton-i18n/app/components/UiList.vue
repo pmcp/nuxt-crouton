@@ -15,7 +15,7 @@
 
       <!-- Custom cell for translations values -->
       <template #values-data="{ row }">
-        <TranslationsDisplay :translations="row.values" />
+        <CroutonI18nDisplay :translations="row.values" />
       </template>
 
       <!-- Custom cell for description -->
@@ -32,17 +32,13 @@
 </template>
 
 <script setup lang="ts">
-import { TRANSLATIONS_UI_COLUMNS } from '../composables/useTranslationsUi'
-
-const columns = TRANSLATIONS_UI_COLUMNS
+const columns = [
+  { accessorKey: 'keyPath', header: 'Key Path' },
+  { accessorKey: 'category', header: 'Category' },
+  { accessorKey: 'values', header: 'Translations' },
+  { accessorKey: 'description', header: 'Description' }
+]
 
 // Fetch translations using Crouton's collection query
 const { items, pending, error, refresh } = await useCollectionQuery('translationsUi')
-
-// Log for debugging
-console.log('[TranslationsUiList] Loaded:', {
-  itemCount: items.value.length,
-  pending: pending.value,
-  error: error.value
-})
 </script>
