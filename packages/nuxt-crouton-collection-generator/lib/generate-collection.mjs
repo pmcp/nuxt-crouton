@@ -176,6 +176,78 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
   }
 }
 
+// Register translationsUi collection in app.config.ts
+async function registerTranslationsUiCollection() {
+  // Check if app/ directory exists (Nuxt 4 default structure)
+  const appDirExists = await fsp.stat(path.resolve('app')).then(() => true).catch(() => false)
+  const registryPath = appDirExists
+    ? path.resolve('app/app.config.ts')
+    : path.resolve('app.config.ts')
+
+  const importStatement = `import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'`
+  const collectionKey = 'translationsUi'
+  const configName = 'translationsUiConfig'
+
+  try {
+    let content
+    let fileExists = false
+
+    // Try to read existing file
+    try {
+      content = await fsp.readFile(registryPath, 'utf8')
+      fileExists = true
+    } catch (readError) {
+      // File doesn't exist, create it with initial content
+      console.log(`↻ Creating app.config.ts with translationsUi collection`)
+      content = `${importStatement}\n\nexport default defineAppConfig({\n  croutonCollections: {\n    ${collectionKey}: ${configName},\n  }\n})\n`
+      await fsp.writeFile(registryPath, content)
+      console.log(`✓ Created app.config.ts with translationsUi collection`)
+      return true
+    }
+
+    // Check if already registered
+    if (content.includes('translationsUi:') || content.includes('translationsUiConfig')) {
+      console.log(`✓ translationsUi collection already registered in app.config.ts`)
+      return false
+    }
+
+    // Ensure import is present
+    if (!content.includes(importStatement)) {
+      const importBlockMatch = content.match(/^(?:import[^\n]*\n)*/)
+      if (importBlockMatch && importBlockMatch[0]) {
+        const existingImports = importBlockMatch[0]
+        content = content.replace(existingImports, `${existingImports}${importStatement}\n`)
+      } else {
+        content = `${importStatement}\n\n${content}`
+      }
+    }
+
+    // Insert entry into croutonCollections
+    const entryLine = `    ${collectionKey}: ${configName},`
+    const collectionsBlockRegex = /croutonCollections:\s*{\s*\n/
+
+    if (!collectionsBlockRegex.test(content)) {
+      // No croutonCollections block yet, add one
+      content = content.replace(
+        'defineAppConfig({',
+        `defineAppConfig({\n  croutonCollections: {\n${entryLine}\n  },`
+      )
+    } else {
+      content = content.replace(collectionsBlockRegex, match => `${match}${entryLine}\n`)
+    }
+
+    await fsp.writeFile(registryPath, content)
+    console.log(`✓ Registered translationsUi collection in app.config.ts`)
+    return true
+  } catch (error) {
+    console.error(`! Could not register translationsUi collection:`, error.message)
+    console.log(`  Please manually add to app.config.ts:`)
+    console.log(`    import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'`)
+    console.log(`    croutonCollections: { translationsUi: translationsUiConfig }`)
+    return false
+  }
+}
+
 // Export i18n schema when translations are enabled
 async function exportI18nSchema(force = false) {
   const schemaDir = path.resolve('server', 'database', 'schema')
@@ -188,6 +260,8 @@ async function exportI18nSchema(force = false) {
 
     if (schemaExists && !force) {
       console.log(`✓ Translations schema already exists`)
+      // Still register the collection in app.config.ts
+      await registerTranslationsUiCollection()
       return false
     }
 
@@ -261,6 +335,9 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
       console.log(`✓ Migration generated for translations_ui table`)
       console.log(`! Migration will be applied when you restart the dev server.`)
 
+      // Register the translationsUi collection in app.config.ts
+      await registerTranslationsUiCollection()
+
       return true
     } catch (execError) {
       if (execError.message.includes('timed out')) {
@@ -269,6 +346,10 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
         console.error(`✗ Failed to generate migration:`, execError.message)
       }
       console.log(`! You can manually run: pnpm db:generate`)
+
+      // Still register the collection even if migration failed
+      await registerTranslationsUiCollection()
+
       return true // Still return true since schema export succeeded
     }
   } catch (error) {

@@ -402,6 +402,58 @@ program
     }
   });
 
+// Seed translations command - import JSON locale files to database
+program
+  .command('seed-translations')
+  .description('Seed translations from JSON locale files to database')
+  .option('--layer <name>', 'Seed from specific layer only')
+  .option('--team <id>', 'Team ID/slug to seed to (default: system)')
+  .option('--dry-run', 'Preview translations without seeding')
+  .option('--force', 'Overwrite existing translations')
+  .option('--api-url <url>', 'API base URL (default: http://localhost:3000)')
+  .option('--sql', 'Output SQL statements instead of using API')
+  .action(async (options) => {
+    try {
+      const seedPath = join(__dirname, '..', 'lib', 'seed-translations.mjs');
+
+      if (!fs.existsSync(seedPath)) {
+        console.error(chalk.red('Error: Seed translations script not found. Please ensure the package is properly installed.'));
+        process.exit(1);
+      }
+
+      // Build args for the seed script
+      const args = [];
+
+      if (options.layer) {
+        args.push(`--layer=${options.layer}`);
+      }
+      if (options.team) {
+        args.push(`--team=${options.team}`);
+      }
+      if (options.dryRun) {
+        args.push('--dry-run');
+      }
+      if (options.force) {
+        args.push('--force');
+      }
+      if (options.apiUrl) {
+        args.push(`--api-url=${options.apiUrl}`);
+      }
+      if (options.sql) {
+        args.push('--sql');
+      }
+
+      // Import and execute the seed script
+      process.argv = ['node', 'seed-translations.mjs', ...args];
+      const { seedTranslationsFromJson } = await import(seedPath);
+      await seedTranslationsFromJson();
+
+    } catch (error) {
+      console.error(chalk.red('Seed translations failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
 // Parse CLI arguments
 program.parse(process.argv);
 

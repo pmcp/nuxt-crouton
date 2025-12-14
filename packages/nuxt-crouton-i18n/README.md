@@ -6,9 +6,10 @@ Multi-language support layer extending `@friendlyinternet/nuxt-crouton` for FYIT
 
 - 🌍 Multi-language input components
 - 🔄 Auto-sync with English as primary language
-- 📝 Team-specific translations
+- 📝 Team-specific translation overrides
 - 🎯 Built-in support for EN, NL, FR
 - ⚡ Inherits all CRUD features from base layer
+- 🗄️ Database-backed translations with JSON fallback
 
 ## Installation
 
@@ -17,9 +18,69 @@ Multi-language support layer extending `@friendlyinternet/nuxt-crouton` for FYIT
 pnpm add @friendlyinternet/nuxt-crouton @friendlyinternet/nuxt-crouton-i18n
 ```
 
-## Configuration
+## Quick Start (Using Generator)
 
-Add BOTH layers to your `nuxt.config.ts` (explicit pattern):
+The easiest way to set up i18n is via the collection generator. When you generate a collection with translations enabled, **everything is configured automatically**.
+
+### 1. Create a config file with translations
+
+```javascript
+// crouton.config.js
+export default {
+  collections: [
+    { name: 'products', fieldsFile: './schemas/products.json' }
+  ],
+  targets: [
+    { layer: 'shop', collections: ['products'] }
+  ],
+  translations: {
+    collections: {
+      products: ['name', 'description']  // Fields to translate
+    }
+  },
+  dialect: 'sqlite'
+}
+```
+
+### 2. Run the generator
+
+```bash
+crouton-generate --config ./crouton.config.js
+```
+
+### What the generator does automatically:
+
+1. ✅ Creates `translations-ui.ts` schema in `server/database/schema/`
+2. ✅ Exports the schema in `schema/index.ts`
+3. ✅ Generates database migration
+4. ✅ Adds `nuxt-crouton-i18n` to layer extends
+5. ✅ Creates `i18n/locales/*.json` files with starter content
+6. ✅ Configures i18n in the layer's `nuxt.config.ts`
+7. ✅ Registers `translationsUi` collection in `app.config.ts`
+
+### 3. Seed translations (optional)
+
+Import your JSON locale files into the database:
+
+```bash
+# Preview what will be seeded
+crouton-generate seed-translations --dry-run
+
+# Seed all translations
+crouton-generate seed-translations
+
+# Seed from specific layer
+crouton-generate seed-translations --layer bookings
+
+# Generate SQL for manual insertion
+crouton-generate seed-translations --sql > seed.sql
+```
+
+## Manual Configuration
+
+If you're not using the generator, follow these steps:
+
+### 1. Add layers to nuxt.config.ts
 
 ```typescript
 export default defineNuxtConfig({
@@ -30,20 +91,88 @@ export default defineNuxtConfig({
 })
 ```
 
-## What You Get
+### 2. Copy the schema file
 
-### From Base Layer (inherited)
-- All CRUD components (CrudButton, CrudEntitySelect, etc.)
-- All CRUD composables (useCrud, useCollections, etc.)
-- Table components with search and pagination
+Create `server/database/schema/translations-ui.ts`:
 
-### From This Layer
-- **CroutonI18nInput** - Multi-language input component
-- **CroutonI18nDisplay** - Display translated content
-- **CroutonI18nLanguageSwitcher** - Switch between languages
-- **useT()** - Translation composable
-- **useEntityTranslations()** - Entity-specific translations
-- i18n module pre-configured
+```typescript
+import { nanoid } from 'nanoid'
+import { sqliteTable, text, integer, unique } from 'drizzle-orm/sqlite-core'
+
+export const translationsUi = sqliteTable('translations_ui', {
+  id: text('id').primaryKey().$default(() => nanoid()),
+  userId: text('user_id').notNull(),
+  teamId: text('team_id'),
+  namespace: text('namespace').notNull().default('ui'),
+  keyPath: text('key_path').notNull(),
+  category: text('category').notNull(),
+  values: text('values', { mode: 'json' }).$type<Record<string, string>>().notNull(),
+  description: text('description'),
+  isOverrideable: integer('is_overrideable', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$default(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, (table) => ({
+  uniqueTeamNamespaceKey: unique().on(table.teamId, table.namespace, table.keyPath)
+}))
+```
+
+Export it in `server/database/schema/index.ts`:
+
+```typescript
+export * from './translations-ui'
+```
+
+### 3. Run migration
+
+```bash
+pnpm db:generate
+```
+
+### 4. Register the collection
+
+In `app/app.config.ts`:
+
+```typescript
+import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'
+
+export default defineAppConfig({
+  croutonCollections: {
+    translationsUi: translationsUiConfig,
+    // ... other collections
+  }
+})
+```
+
+### 5. Create locale files
+
+Create `layers/[your-layer]/i18n/locales/en.json`:
+
+```json
+{
+  "yourLayer": {
+    "collections": {
+      "products": { "title": "Products" }
+    }
+  }
+}
+```
+
+Configure in your layer's `nuxt.config.ts`:
+
+```typescript
+export default defineNuxtConfig({
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json' },
+      { code: 'nl', file: 'nl.json' },
+      { code: 'fr', file: 'fr.json' }
+    ],
+    langDir: './locales'  // NOT './i18n/locales'!
+  }
+})
+```
+
+> ⚠️ **Important**: Use `langDir: './locales'` not `'./i18n/locales'`. The `@nuxtjs/i18n` module uses `restructureDir: 'i18n'` by default, so langDir is relative to the `i18n/` directory.
 
 ## Components
 
@@ -88,12 +217,23 @@ Switch between available languages:
 
 ### useT()
 
-Get translated values:
+Translation function with team override support:
 
 ```typescript
-const { t } = useT()
+const { t, tContent, locale } = useT()
+
+// UI translations (from database with JSON fallback)
 const label = t('products.name')
+
+// Entity content translations
+const productName = tContent(product, 'name')
 ```
+
+The `useT()` composable:
+1. First checks team-specific overrides in the database
+2. Falls back to system translations in the database
+3. Falls back to JSON locale files
+4. Returns `[key]` if no translation found
 
 ### useEntityTranslations()
 
@@ -103,6 +243,60 @@ Manage entity-specific translations:
 const { getTranslation, setTranslation } = useEntityTranslations()
 
 const translated = getTranslation(entity.translations, 'name', 'nl')
+```
+
+### useTranslationsUi()
+
+Access the translations collection config:
+
+```typescript
+const { schema, columns, config } = useTranslationsUi()
+```
+
+## Translation Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                   useT()                        │
+├─────────────────────────────────────────────────┤
+│  1. Team Override (DB)                          │
+│     └─ translations_ui WHERE teamId = :team     │
+│                                                 │
+│  2. System Translation (DB)                     │
+│     └─ translations_ui WHERE teamId IS NULL     │
+│                                                 │
+│  3. JSON Locale Files (fallback)                │
+│     └─ layers/*/i18n/locales/*.json            │
+│                                                 │
+│  4. Key as fallback                             │
+│     └─ Returns [keyPath] if nothing found       │
+└─────────────────────────────────────────────────┘
+```
+
+## Seeding Translations
+
+The `seed-translations` command imports JSON locale files into the database:
+
+```bash
+# Basic usage
+crouton-generate seed-translations
+
+# Options
+--layer <name>     # Seed from specific layer only
+--team <id>        # Team ID to seed to (default: system)
+--dry-run          # Preview without seeding
+--force            # Overwrite existing translations
+--api-url <url>    # API URL (default: http://localhost:3000)
+--sql              # Output SQL instead of using API
+```
+
+### SQL Output
+
+For direct database insertion:
+
+```bash
+crouton-generate seed-translations --sql > seed.sql
+sqlite3 .data/hub/d1/your-db.sqlite < seed.sql
 ```
 
 ## Customizing Locales
@@ -134,37 +328,56 @@ export default defineNuxtConfig({
 @friendlyinternet/nuxt-crouton-i18n (addon - this layer)
 ```
 
-**Explicit configuration**: You must extend both layers:
-1. Base layer provides CRUD functionality
-2. i18n addon provides translation features
+## Troubleshooting
 
-## Publishing
+### "Cannot find module" for locale files
+
+Check that `langDir` is relative to `i18n/` directory:
+
+```typescript
+// ❌ Wrong
+langDir: './i18n/locales'
+
+// ✅ Correct
+langDir: './locales'
+```
+
+### Translations not appearing in dashboard
+
+Ensure the collection is registered in `app.config.ts`:
+
+```typescript
+import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'
+
+croutonCollections: {
+  translationsUi: translationsUiConfig
+}
+```
+
+### Database table not created
+
+Run migrations:
 
 ```bash
-pnpm publish --access public
+pnpm db:generate
+# Restart dev server to apply
 ```
+
+### useT() returns key instead of translation
+
+1. Check that the translation exists in the database or JSON files
+2. Verify the key path matches exactly (case-sensitive)
+3. Check browser console for API errors
 
 ## Migration from Previous Versions
 
-**Breaking Change**: Component prefix changed from `Translations` to `CroutonI18n` in latest version.
+**Component prefix changed**: `Translations*` → `CroutonI18n*`
 
-### Quick Migration Steps
-
-1. Update package: `pnpm update @friendlyinternet/nuxt-crouton-i18n`
-2. Find and replace in your project:
-   - `<Translations` → `<CroutonI18n`
-   - `</Translations` → `</CroutonI18n`
-3. Clear Nuxt cache: `rm -rf .nuxt`
-4. Rebuild: `pnpm dev`
-
-### Why This Change?
-
-This change ensures consistency with the base `nuxt-crouton` package where all components use the `Crouton` prefix. The `I18n` suffix clearly indicates this is an addon package. This naming pattern:
-- Matches base package naming (`Crouton*`)
-- Provides clarity that this is an i18n addon
-- Enables future addons like `CroutonAuth`, `CroutonAdmin`
-- Improves discoverability via IDE autocomplete
-- Follows Vue/Nuxt standards (e.g., `NuxtLink`, `NuxtPage`)
+```bash
+# Find and replace in your project
+sed -i '' 's/<Translations/<CroutonI18n/g' **/*.vue
+sed -i '' 's/<\/Translations/<\/CroutonI18n/g' **/*.vue
+```
 
 ## License
 
