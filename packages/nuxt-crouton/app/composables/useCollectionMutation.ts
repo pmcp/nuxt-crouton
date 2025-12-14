@@ -4,14 +4,15 @@
  *
  * Features:
  * - Automatic cache invalidation after mutations (triggers refetch in all views)
+ * - Supports queries with parameters (e.g., { eventId: '123' }) - v3.0
  * - Toast notifications for success/error
  * - Works with Nuxt's query-based cache system
  * - Extensive logging for debugging
  *
  * How it works:
  * 1. Performs the API mutation (POST/PATCH/DELETE)
- * 2. Invalidates all cache keys matching `collection:${name}:*`
- * 3. Nuxt automatically refetches data in all active useCollectionQuery calls
+ * 2. Queries nuxtApp.payload.data to find ALL cache keys for the collection
+ * 3. Refreshes all matching keys (including those with query parameters)
  * 4. UI updates with fresh data from the server
  *
  * @example
@@ -57,7 +58,7 @@ export function useCollectionMutation(collection: string) {
 
   /**
    * Invalidate cache for this collection (triggers refetch in all views)
-   * Refreshes the base cache key (no query params) which is used by most list views
+   * Finds ALL cache keys for this collection (including those with query params) and refreshes them
    * Optionally refreshes individual item caches when item IDs are provided
    *
    * @param itemIds - Optional item ID(s) to invalidate individual item caches
@@ -69,16 +70,24 @@ export function useCollectionMutation(collection: string) {
     refreshCollection: boolean = true,
     mutationData?: any
   ) => {
-    console.log('[useCollectionMutation v2.0] Invalidating cache for:', collection)
-    console.log('[useCollectionMutation v2.0] DEBUG - itemIds received:', itemIds, 'type:', typeof itemIds)
-    console.log('[useCollectionMutation v2.0] DEBUG - refreshCollection:', refreshCollection)
+    console.log('[useCollectionMutation v3.0] Invalidating cache for:', collection)
+    console.log('[useCollectionMutation v3.0] DEBUG - itemIds received:', itemIds, 'type:', typeof itemIds)
+    console.log('[useCollectionMutation v3.0] DEBUG - refreshCollection:', refreshCollection)
 
-    // Refresh the base cache key (empty query params) - for list views
-    // Only refresh if refreshCollection is true (create/delete) to avoid unnecessary re-renders on updates
+    // Refresh ALL cache keys for this collection (supports queries with parameters)
+    // Queries Nuxt's payload.data to find all matching keys
     if (refreshCollection) {
-      const baseCacheKey = `collection:${collection}:{}`
-      console.log('[useCollectionMutation v2.0] Refreshing collection cache key:', baseCacheKey)
-      await refreshNuxtData(baseCacheKey)
+      const nuxtApp = useNuxtApp()
+      const prefix = `collection:${collection}:`
+
+      // Get all matching keys from Nuxt's async data
+      const allKeys = Object.keys(nuxtApp.payload.data)
+      const matchingKeys = allKeys.filter(key => key.startsWith(prefix))
+
+      console.log('[useCollectionMutation v3.0] Refreshing collection cache keys:', matchingKeys)
+
+      // Refresh all queries for this collection
+      await Promise.all(matchingKeys.map(key => refreshNuxtData(key)))
     }
 
     // Refresh individual item caches if IDs provided - for detail views (e.g., CroutonCardMini)
@@ -86,7 +95,7 @@ export function useCollectionMutation(collection: string) {
       const ids = Array.isArray(itemIds) ? itemIds : [itemIds]
       for (const id of ids) {
         const itemCacheKey = `collection-item:${collection}:${id}`
-        console.log('[useCollectionMutation v2.0] Refreshing item cache key:', itemCacheKey)
+        console.log('[useCollectionMutation v3.0] Refreshing item cache key:', itemCacheKey)
         await refreshNuxtData(itemCacheKey)
       }
     }
@@ -95,21 +104,21 @@ export function useCollectionMutation(collection: string) {
     // If this collection declares references and mutation data is provided,
     // refresh the item caches for referenced collections
     if (config?.references && mutationData) {
-      console.log('[useCollectionMutation v2.0] Processing references:', config.references)
+      console.log('[useCollectionMutation v3.0] Processing references:', config.references)
 
       for (const [field, refCollection] of Object.entries(config.references)) {
         const refId = mutationData[field]
 
         if (refId && typeof refId === 'string') {
           const refCacheKey = `collection-item:${refCollection}:${refId}`
-          console.log('[useCollectionMutation v2.0] Refreshing referenced item cache:', refCacheKey)
+          console.log('[useCollectionMutation v3.0] Refreshing referenced item cache:', refCacheKey)
           await refreshNuxtData(refCacheKey)
         } else if (Array.isArray(refId)) {
           // Handle array references (e.g., multiple IDs)
           for (const id of refId) {
             if (id && typeof id === 'string') {
               const refCacheKey = `collection-item:${refCollection}:${id}`
-              console.log('[useCollectionMutation v2.0] Refreshing referenced item cache:', refCacheKey)
+              console.log('[useCollectionMutation v3.0] Refreshing referenced item cache:', refCacheKey)
               await refreshNuxtData(refCacheKey)
             }
           }
@@ -117,7 +126,7 @@ export function useCollectionMutation(collection: string) {
       }
     }
 
-    console.log('[useCollectionMutation v2.0] ✅ Cache refreshed!')
+    console.log('[useCollectionMutation v3.0] ✅ Cache refreshed!')
   }
 
   /**
