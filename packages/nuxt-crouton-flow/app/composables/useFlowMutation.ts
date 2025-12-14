@@ -5,7 +5,8 @@ import type { FlowPosition } from '../types/flow'
 /**
  * Provides mutation utilities for flow node positions
  *
- * Wraps the crouton mutation system to persist node positions
+ * Uses direct $fetch to persist positions WITHOUT triggering cache invalidation.
+ * This prevents the viewport from jumping when positions are saved.
  *
  * @param collection - Collection name
  * @param positionField - Field name where position is stored (default: 'position')
@@ -22,20 +23,43 @@ export function useFlowMutation(collection: string, positionField: string = 'pos
   const pending = ref(false)
   const error = ref<Error | null>(null)
 
-  // Use the existing crouton mutation system
-  // This will be resolved at runtime from the parent nuxt-crouton layer
-  const mutation = useCollectionMutation(collection)
+  // Get collection config for API path
+  const collections = useCollections()
+  const config = collections.getConfig(collection)
+  const { getTeamId } = useTeamContext()
+
+  if (!config) {
+    console.error(`[useFlowMutation] Collection "${collection}" not found in registry`)
+    throw new Error(`Collection "${collection}" not registered`)
+  }
+
+  const apiPath = config.apiPath || collection
+
+  // Helper to get the correct API base path
+  const getApiBasePath = () => {
+    const route = useRoute()
+    if (route.path.includes('/super-admin/')) {
+      return `/api/super-admin/${apiPath}`
+    }
+
+    const teamId = getTeamId()
+    if (!teamId) {
+      console.error('[useFlowMutation] Team context required but not available')
+      throw new Error('Team context required for this operation')
+    }
+
+    return `/api/teams/${teamId}/${apiPath}`
+  }
 
   /**
    * Update a node's position
-   * Debounced to avoid too many API calls during drag
+   * Uses $fetch directly to avoid cache invalidation (prevents viewport jumping)
    */
   const updatePosition = async (id: string, position: XYPosition): Promise<void> => {
     pending.value = true
     error.value = null
 
     try {
-      // Build the update payload with just the position field
       const updateData: Record<string, FlowPosition> = {
         [positionField]: {
           x: Math.round(position.x),
@@ -43,7 +67,14 @@ export function useFlowMutation(collection: string, positionField: string = 'pos
         }
       }
 
-      await mutation.update(id, updateData)
+      const baseUrl = getApiBasePath()
+
+      // Use $fetch directly - no cache invalidation, no refetch, no viewport jump
+      await $fetch(`${baseUrl}/${id}`, {
+        method: 'PATCH',
+        body: updateData,
+        credentials: 'include'
+      })
     } catch (e) {
       error.value = e instanceof Error ? e : new Error('Failed to update position')
       throw error.value
@@ -54,6 +85,7 @@ export function useFlowMutation(collection: string, positionField: string = 'pos
 
   /**
    * Update multiple node positions in batch
+   * Uses $fetch directly to avoid cache invalidation
    */
   const updatePositions = async (
     updates: Array<{ id: string; position: XYPosition }>
@@ -62,14 +94,20 @@ export function useFlowMutation(collection: string, positionField: string = 'pos
     error.value = null
 
     try {
-      // Update all positions in parallel
+      const baseUrl = getApiBasePath()
+
+      // Update all positions in parallel using $fetch directly
       await Promise.all(
         updates.map(({ id, position }) =>
-          mutation.update(id, {
-            [positionField]: {
-              x: Math.round(position.x),
-              y: Math.round(position.y)
-            }
+          $fetch(`${baseUrl}/${id}`, {
+            method: 'PATCH',
+            body: {
+              [positionField]: {
+                x: Math.round(position.x),
+                y: Math.round(position.y)
+              }
+            },
+            credentials: 'include'
           })
         )
       )

@@ -154,7 +154,7 @@ onNodeDragStop((event: NodeDragEvent) => {
     y: Math.round(node.position.y)
   }
 
-  // Persist via debounced mutation
+  // Persist via debounced mutation (uses $fetch directly, no cache invalidation)
   debouncedUpdate(node.id, position)
 
   // Emit event
