@@ -46,8 +46,8 @@ export async function useCollectionItem<T = any>(
 
   const apiPath = getProxiedEndpoint(config, config.apiPath || collection)
 
-  // Capture team ID during setup to avoid inject() issues in computed/watch
-  const teamId = getTeamId()
+  // Track if we need to retry fetch on client (when team context wasn't available during SSR)
+  const skippedDueToNoTeam = ref(false)
 
   // Handle all three types: string, Ref<string>, () => string
   const itemId = computed(() => {
@@ -62,19 +62,14 @@ export async function useCollectionItem<T = any>(
   // Build API path based on collection's fetch strategy
   // - 'restful': Uses /{id} pattern (e.g., /api/teams/123/members/456)
   // - 'query': Uses ?ids= pattern (e.g., /api/teams/123/bookings?ids=456)
-  const fullApiPath = computed(() => {
+  const buildApiPath = (teamId: string | undefined) => {
     const strategy = config.fetchStrategy || 'query'
 
     let basePath: string
     if (route.path.includes('/super-admin/')) {
       basePath = `/api/super-admin/${apiPath}`
     } else {
-      if (!teamId) {
-        console.error('[useCollectionItem] Team context required but not available')
-        basePath = `/api/teams/undefined/${apiPath}`
-      } else {
-        basePath = `/api/teams/${teamId}/${apiPath}`
-      }
+      basePath = `/api/teams/${teamId}/${apiPath}`
     }
 
     if (strategy === 'restful') {
@@ -82,7 +77,7 @@ export async function useCollectionItem<T = any>(
     } else {
       return `${basePath}?ids=${itemId.value}`
     }
-  })
+  }
 
   // Use manual reactive state with $fetch for dynamic dependent data
   // This approach is more suitable for data that changes based on user input
@@ -90,18 +85,30 @@ export async function useCollectionItem<T = any>(
   const pending = ref(false)
   const error = ref(null)
 
-  // Fetch function
+  // Fetch function - gets fresh teamId each call to handle SSR → client transitions
   const fetchItem = async () => {
     if (!itemId.value) {
       data.value = null
       return
     }
 
+    // Get fresh team ID (may have become available since setup)
+    const currentTeamId = getTeamId()
+
+    // Skip fetch if team context is not available (e.g., during SSR before teams are loaded)
+    // This prevents hydration mismatches by showing loading state instead of error
+    if (!currentTeamId && !route.path.includes('/super-admin/')) {
+      pending.value = true
+      skippedDueToNoTeam.value = true
+      return
+    }
+
+    skippedDueToNoTeam.value = false
     pending.value = true
     error.value = null
 
     try {
-      const response = await $fetch(fullApiPath.value)
+      const response = await $fetch(buildApiPath(currentTeamId))
       data.value = response
     } catch (e: any) {
       error.value = e
@@ -112,6 +119,14 @@ export async function useCollectionItem<T = any>(
 
   // Initial fetch
   await fetchItem()
+
+  // On client mount, retry fetch if it was skipped during SSR due to missing team context
+  // This ensures data loads correctly after hydration when team state becomes available
+  onMounted(async () => {
+    if (skippedDueToNoTeam.value) {
+      await fetchItem()
+    }
+  })
 
   // Watch for itemId changes and refetch
   watch(itemId, async () => {
