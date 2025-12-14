@@ -43,17 +43,26 @@ export function useFlowData<T extends Record<string, unknown>>(
   const nodes = computed<Node<T>[]>(() => {
     return rows.value.map((row) => {
       const id = row.id as string
-      const position = row[positionField] as FlowPosition | undefined
+      const rawPosition = row[positionField] as FlowPosition | undefined
       const label = row[labelField] as string | undefined
+
+      // Validate position has actual x/y values (not empty object)
+      const hasValidPosition = rawPosition &&
+        typeof rawPosition.x === 'number' &&
+        typeof rawPosition.y === 'number' &&
+        !isNaN(rawPosition.x) &&
+        !isNaN(rawPosition.y)
+
+      const position = hasValidPosition ? rawPosition : { x: 0, y: 0 }
 
       return {
         id,
         type: 'default',
-        position: position ?? { x: 0, y: 0 },
+        position,
         data: row,
         label: label ?? id,
         // Mark nodes that need layout (no stored position)
-        ...(position ? {} : { _needsLayout: true })
+        ...(!hasValidPosition ? { _needsLayout: true } : {})
       }
     })
   })

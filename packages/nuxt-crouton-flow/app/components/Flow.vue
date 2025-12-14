@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, getCurrentInstance, resolveComponent } from 'vue'
+import { computed, getCurrentInstance, resolveComponent, ref } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -9,6 +9,7 @@ import type { CroutonFlowProps, FlowConfig, FlowPosition } from '../types/flow'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
+import CroutonFlowNode from './Node.vue'
 
 // Import default styles
 import '@vue-flow/core/dist/style.css'
@@ -88,6 +89,9 @@ const emit = defineEmits<{
   selectionChange: [selectedNodeIds: string[]]
 }>()
 
+// Container ref for potential future use
+const containerRef = ref<HTMLElement | null>(null)
+
 // Convert rows to reactive ref
 const rowsRef = computed(() => props.rows)
 
@@ -122,25 +126,23 @@ const layoutedNodes = computed(() => {
   const nodes = dataNodes.value
   const edges = dataEdges.value
 
+  let result
   if (needsLayout(nodes)) {
-    return applyLayout(nodes, edges)
+    result = applyLayout(nodes, edges)
+  } else {
+    result = nodes
   }
 
-  return nodes
+  return result
 })
 
 // Use VueFlow instance
-const { onNodeDragStop, onNodeClick, onNodeDoubleClick, onEdgeClick, fitView } = useVueFlow()
-
-// Fit view on mount
-onMounted(() => {
-  if (props.fitViewOnMount) {
-    // Small delay to ensure nodes are rendered
-    setTimeout(() => {
-      fitView({ padding: 0.2, duration: 200 })
-    }, 100)
-  }
-})
+const {
+  onNodeDragStop,
+  onNodeClick,
+  onNodeDoubleClick,
+  onEdgeClick
+} = useVueFlow()
 
 // Handle node drag end - persist position
 onNodeDragStop((event: NodeDragEvent) => {
@@ -212,16 +214,13 @@ const customNodeComponent = computed(() => {
 </script>
 
 <template>
-  <div class="crouton-flow-container">
+  <div ref="containerRef" class="crouton-flow-container">
+    <!-- Using layoutedNodes - check console for node structure -->
     <VueFlow
       :nodes="layoutedNodes"
       :edges="dataEdges"
-      :default-viewport="{ x: 0, y: 0, zoom: 1 }"
       :min-zoom="0.1"
       :max-zoom="4"
-      :nodes-draggable="draggable"
-      :snap-to-grid="true"
-      :snap-grid="[10, 10]"
       fit-view-on-init
       class="crouton-vue-flow"
     >
@@ -245,26 +244,13 @@ const customNodeComponent = computed(() => {
       </template>
 
       <!-- Background -->
-      <Background
-        v-if="background"
-        :pattern-color="'#aaa'"
-        :gap="16"
-        :variant="backgroundPattern"
-      />
+      <Background v-if="background" :pattern-color="'#aaa'" :gap="16" :variant="backgroundPattern" />
 
       <!-- Controls -->
-      <Controls
-        v-if="controls"
-        position="bottom-left"
-      />
+      <Controls v-if="controls" position="bottom-left" />
 
       <!-- Minimap -->
-      <MiniMap
-        v-if="minimap"
-        position="bottom-right"
-        :pannable="true"
-        :zoomable="true"
-      />
+      <MiniMap v-if="minimap" position="bottom-right" :pannable="true" :zoomable="true" />
 
       <!-- Slot for additional content -->
       <slot />
@@ -273,46 +259,112 @@ const customNodeComponent = computed(() => {
 </template>
 
 <style scoped>
-@reference "tailwindcss";
-
 .crouton-flow-container {
-  @apply w-full h-full min-h-[400px];
-  @apply bg-neutral-50 dark:bg-neutral-950;
-  @apply rounded-lg overflow-hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  background-color: #fafafa;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.dark .crouton-flow-container {
+  background-color: #0a0a0a;
 }
 
 .crouton-vue-flow {
-  @apply w-full h-full;
+  width: 100%;
+  height: 100%;
 }
 
-/* Vue Flow overrides for dark mode */
+.crouton-flow-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fafafa;
+}
+
+.dark .crouton-flow-loading {
+  background-color: #0a0a0a;
+}
+
+.crouton-flow-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #d4d4d4;
+  border-top-color: #3b82f6;
+  border-radius: 9999px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Vue Flow overrides */
 :deep(.vue-flow__background) {
-  @apply dark:bg-neutral-950;
+  background-color: #fafafa;
+}
+
+.dark :deep(.vue-flow__background) {
+  background-color: #0a0a0a;
 }
 
 :deep(.vue-flow__edge-path) {
-  @apply stroke-neutral-400 dark:stroke-neutral-600;
+  stroke: #a3a3a3;
+}
+
+.dark :deep(.vue-flow__edge-path) {
+  stroke: #525252;
 }
 
 :deep(.vue-flow__edge.selected .vue-flow__edge-path) {
-  stroke: var(--color-primary-500);
+  stroke: var(--color-primary-500, #3b82f6);
 }
 
 :deep(.vue-flow__controls) {
-  @apply bg-white dark:bg-neutral-800;
-  @apply border border-neutral-200 dark:border-neutral-700;
-  @apply rounded-lg shadow-sm;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dark :deep(.vue-flow__controls) {
+  background: #262626;
+  border-color: #404040;
 }
 
 :deep(.vue-flow__controls-button) {
-  @apply bg-transparent;
-  @apply text-neutral-600 dark:text-neutral-300;
-  @apply hover:bg-neutral-100 dark:hover:bg-neutral-700;
+  background: transparent;
+  color: #525252;
+}
+
+.dark :deep(.vue-flow__controls-button) {
+  color: #d4d4d4;
+}
+
+:deep(.vue-flow__controls-button:hover) {
+  background: #f5f5f5;
+}
+
+.dark :deep(.vue-flow__controls-button:hover) {
+  background: #404040;
 }
 
 :deep(.vue-flow__minimap) {
-  @apply bg-white dark:bg-neutral-800;
-  @apply border border-neutral-200 dark:border-neutral-700;
-  @apply rounded-lg shadow-sm;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dark :deep(.vue-flow__minimap) {
+  background: #262626;
+  border-color: #404040;
 }
 </style>
