@@ -48,6 +48,8 @@
 </template>
 
 <script setup lang="ts">
+import type { ComputedRef, Ref } from 'vue'
+
 interface Props {
   modelValue: string | string[] | null
   collection: string
@@ -56,6 +58,7 @@ interface Props {
   filterFields?: string[]
   hideCreate?: boolean
   multiple?: boolean
+  query?: ComputedRef<Record<string, any>> | Ref<Record<string, any>>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -70,8 +73,10 @@ const emit = defineEmits<{
 
 const { open, close } = useCrouton()
 
-// Fetch items from the referenced collection
-const { items, pending, refresh, error } = await useCollectionQuery(props.collection)
+// Fetch items from the referenced collection (with optional query filter)
+const { items, pending, refresh, error } = await useCollectionQuery(props.collection, {
+  query: props.query
+})
 
 // Helper to get user-friendly error message
 const getErrorMessage = () => {
