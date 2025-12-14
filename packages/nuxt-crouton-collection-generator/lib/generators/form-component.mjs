@@ -532,7 +532,7 @@ ${errorTrackingCode}
 const { create, update, deleteItems } = useCollectionMutation(collection)
 
 // useCrouton still manages modal state
-const { close } = useCrouton()
+const { close, loading } = useCrouton()
 
 // Initialize form state with proper values (no watch needed!)${hasHierarchy ? `
 // Hierarchy defaults for new items (parentId, path, depth, order)
