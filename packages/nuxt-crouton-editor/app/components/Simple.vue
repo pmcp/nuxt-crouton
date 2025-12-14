@@ -1,61 +1,93 @@
+<template>
+  <div class="flex flex-col h-full">
+    <CroutonEditorToolbar :editor="editor" class="flex-shrink-0" />
+    <EditorContent :editor="editor" class="flex-1 min-h-0 overflow-auto" />
+  </div>
+</template>
+
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
+import { useEditor, EditorContent } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import TextStyle from '@tiptap/extension-text-style'
+import Color from '@tiptap/extension-color'
 
 const props = defineProps<{
   modelValue?: string
   placeholder?: string
-  contentType?: 'html' | 'markdown' | 'json'
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const content = computed({
-  get: () => props.modelValue ?? '',
-  set: (value: string) => emit('update:modelValue', value)
+watch(() => props.modelValue, (newValue) => {
+  if (!editor.value) return
+
+  const currentContent = editor.value.getHTML()
+  if (currentContent !== newValue) {
+    editor.value.commands.setContent(newValue || '', false)
+  }
 })
 
-const toolbarItems = [
-  [
-    {
-      icon: 'i-lucide-heading',
-      tooltip: { text: 'Headings' },
-      content: { align: 'start' },
-      items: [
-        { kind: 'heading', level: 1, icon: 'i-lucide-heading-1', label: 'Heading 1' },
-        { kind: 'heading', level: 2, icon: 'i-lucide-heading-2', label: 'Heading 2' },
-        { kind: 'heading', level: 3, icon: 'i-lucide-heading-3', label: 'Heading 3' }
-      ]
-    }
+const editor = useEditor({
+  content: props.modelValue || '',
+  extensions: [
+    StarterKit,
+    TextStyle,
+    Color
   ],
-  [
-    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
-    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
-    { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough', tooltip: { text: 'Strikethrough' } },
-    { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } }
-  ],
-  [
-    { kind: 'bulletList', icon: 'i-lucide-list', tooltip: { text: 'Bullet List' } },
-    { kind: 'orderedList', icon: 'i-lucide-list-ordered', tooltip: { text: 'Numbered List' } },
-    { kind: 'blockquote', icon: 'i-lucide-text-quote', tooltip: { text: 'Quote' } },
-    { kind: 'codeBlock', icon: 'i-lucide-square-code', tooltip: { text: 'Code Block' } }
-  ]
-]
+  editorProps: {
+    attributes: {
+      class: '',
+    },
+  },
+  onUpdate: ({ editor }) => {
+    const content = editor.getHTML()
+    emit('update:modelValue', content)
+  }
+})
+
+onBeforeUnmount(() => {
+  editor.value?.destroy()
+})
 </script>
 
-<template>
-  <UEditor
-    v-slot="{ editor }"
-    v-model="content"
-    :content-type="contentType ?? 'html'"
-    :placeholder="placeholder ?? 'Start writing...'"
-    class="w-full min-h-48"
-  >
-    <UEditorToolbar
-      :editor="editor"
-      :items="toolbarItems"
-      layout="bubble"
-    />
-  </UEditor>
-</template>
+<style scoped>
+:deep(.tiptap) {
+  height: 100%;
+  padding: 1rem;
+  outline: none;
+  color: #111827;
+}
+
+:deep(.dark .tiptap) {
+  color: #f3f4f6;
+}
+
+:deep(.tiptap p.is-empty::before) {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+:deep(.dark .tiptap p.is-empty::before) {
+  color: #6b7280;
+}
+
+:deep(.ProseMirror) {
+  height: 100%;
+  outline: none;
+  color: #111827;
+}
+
+:deep(.dark .ProseMirror) {
+  color: #f3f4f6;
+}
+
+:deep(.ProseMirror-focused) {
+  outline: none;
+}
+</style>
