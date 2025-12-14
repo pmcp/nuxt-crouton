@@ -1,10 +1,5 @@
 <script setup lang="ts">
-interface TocLink {
-  id: string
-  text: string
-  depth: number
-  children?: TocLink[]
-}
+import type { TocLink } from '../types/content'
 
 interface Props {
   content?: string
@@ -22,28 +17,18 @@ const props = withDefaults(defineProps<Props>(), {
 
 const slots = useSlots()
 
-// Auto-generate TOC from content if toc is true
+// Use shared composable for TOC extraction
+const { tocLinks: extractedTocLinks } = useContentToc(() => props.content)
+
+// Auto-generate TOC from content if toc is true, or use provided array
 const tocLinks = computed<TocLink[]>(() => {
   if (Array.isArray(props.toc)) {
     return props.toc
   }
-  if (!props.toc || !props.content) {
+  if (!props.toc) {
     return []
   }
-  // Extract headings from HTML content
-  const headingRegex = /<h([2-3])[^>]*id="([^"]*)"[^>]*>([^<]*)<\/h[2-3]>/gi
-  const links: TocLink[] = []
-  let match
-
-  while ((match = headingRegex.exec(props.content)) !== null) {
-    links.push({
-      id: match[2],
-      text: match[3].trim(),
-      depth: parseInt(match[1])
-    })
-  }
-
-  return links
+  return extractedTocLinks.value
 })
 
 const hasSidebar = computed(() => !!slots.sidebar || tocLinks.value.length > 0)
