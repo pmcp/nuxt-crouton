@@ -94,15 +94,17 @@ defineProps&lt;Props&gt;()
 
   <!-- Grid Layout -->
   <div v-else-if="activeLayout === 'grid'">
-    <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
-      <UButton
-        color="primary"
-        size="xs"
-        @click="openCrouton('create', collection)"
-      >
-        Create
-      </UButton>
-    </div>
+    <slot name="header">
+      <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+        <UButton
+          color="primary"
+          size="xs"
+          @click="openCrouton('create', collection)"
+        >
+          Create
+        </UButton>
+      </div>
+    </slot>
 
     <div v-if="customCardComponent && rows && rows.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
       <component
@@ -144,15 +146,17 @@ defineProps&lt;Props&gt;()
 
   <!-- Cards Layout -->
   <div v-else-if="activeLayout === 'cards'">
-    <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
-      <UButton
-        color="primary"
-        size="xs"
-        @click="openCrouton('create', collection)"
-      >
-        Create
-      </UButton>
-    </div>
+    <slot name="header">
+      <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+        <UButton
+          color="primary"
+          size="xs"
+          @click="openCrouton('create', collection)"
+        >
+          Create
+        </UButton>
+      </div>
+    </slot>
 
     <div v-if="customCardComponent && rows && rows.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
       <component
