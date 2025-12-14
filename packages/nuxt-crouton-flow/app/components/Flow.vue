@@ -273,6 +273,8 @@ const customNodeComponent = computed(() => {
 </template>
 
 <style scoped>
+@reference "tailwindcss";
+
 .crouton-flow-container {
   @apply w-full h-full min-h-[400px];
   @apply bg-neutral-50 dark:bg-neutral-950;
@@ -293,7 +295,7 @@ const customNodeComponent = computed(() => {
 }
 
 :deep(.vue-flow__edge.selected .vue-flow__edge-path) {
-  @apply stroke-primary-500;
+  stroke: var(--color-primary-500);
 }
 
 :deep(.vue-flow__controls) {

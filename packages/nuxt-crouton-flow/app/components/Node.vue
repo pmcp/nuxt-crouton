@@ -84,6 +84,8 @@ const subtitle = computed(() => {
 </template>
 
 <style scoped>
+@reference "tailwindcss";
+
 .crouton-flow-node {
   @apply px-4 py-2 rounded-lg border bg-white dark:bg-neutral-900;
   @apply border-neutral-200 dark:border-neutral-700;
@@ -92,7 +94,9 @@ const subtitle = computed(() => {
 }
 
 .crouton-flow-node--selected {
-  @apply border-primary-500 ring-2 ring-primary-500/20;
+  @apply ring-2;
+  border-color: var(--color-primary-500);
+  --tw-ring-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
 }
 
 .crouton-flow-node--dragging {
@@ -121,6 +125,6 @@ const subtitle = computed(() => {
 }
 
 .crouton-flow-handle:hover {
-  @apply bg-primary-500;
+  background-color: var(--color-primary-500);
 }
 </style>
