@@ -802,6 +802,15 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     depthField: collectionConfig.hierarchy.depthField || 'depth'
   } : { enabled: false })
 
+  // Detect sortable configuration (simpler than hierarchy, just needs order field for drag-and-drop)
+  const sortable = collectionConfig?.sortable === true ? {
+    enabled: true,
+    orderField: collectionConfig.orderField || 'order'
+  } : (typeof collectionConfig?.sortable === 'object' ? {
+    enabled: true,
+    orderField: collectionConfig.sortable.orderField || 'order'
+  } : { enabled: false })
+
   // Handle translation configuration
   if (!config && !noTranslations) {
     // CLI mode without config: Create default translation config
@@ -999,7 +1008,8 @@ ${translationsFieldSchema}
       const tsType = isDependentField ? 'string[] | null' : f.tsType
       return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
     }).join('\n  '),
-    hierarchy // Pass hierarchy config to generators
+    hierarchy, // Pass hierarchy config to generators
+    sortable   // Pass sortable config to generators
   }
   
   if (dryRun) {
@@ -1150,6 +1160,12 @@ ${translationsFieldSchema}
         content: generateReorderEndpoint(data, config)
       }
     )
+  } else if (sortable.enabled) {
+    // Add reorder endpoint only for sortable collections (no move endpoint needed for simple sorting)
+    files.push({
+      path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, 'reorder.patch.ts'),
+      content: generateReorderEndpoint(data, config)
+    })
   }
 
   // Detect repeater fields and generate field components

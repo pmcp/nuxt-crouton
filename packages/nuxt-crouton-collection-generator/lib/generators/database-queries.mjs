@@ -171,6 +171,44 @@ export async function reorderSiblings${prefixedPascalCasePlural}(
 }`
 }
 
+// Helper to generate reorder-only queries when sortable is enabled (without full hierarchy)
+function generateSortableQueries(data, tableName, prefixedPascalCasePlural) {
+  const sortable = data.sortable
+  if (!sortable || !sortable.enabled) {
+    return ''
+  }
+
+  const orderField = sortable.orderField || 'order'
+
+  return `
+
+// Sortable reorder queries (auto-generated when sortable: true)
+
+export async function reorderSiblings${prefixedPascalCasePlural}(
+  teamId: string,
+  updates: { id: string; ${orderField}: number }[]
+) {
+  const db = useDB()
+
+  const results = await Promise.all(
+    updates.map(({ id, ${orderField} }) =>
+      db
+        .update(tables.${tableName})
+        .set({ ${orderField} })
+        .where(
+          and(
+            eq(tables.${tableName}.id, id),
+            eq(tables.${tableName}.teamId, teamId)
+          )
+        )
+        .returning()
+    )
+  )
+
+  return { success: true, updated: results.flat().length }
+}`
+}
+
 // Helper to detect reference fields that need LEFT JOINs or post-query processing
 function detectReferenceFields(data, config) {
   const singleReferences = []  // For leftJoin
@@ -422,6 +460,9 @@ export function generateQueries(data, config = null) {
   // Generate tree queries if hierarchy is enabled
   const treeQueries = generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, plural)
 
+  // Generate sortable queries if sortable is enabled (but hierarchy is not)
+  const sortableQueries = generateSortableQueries(data, tableName, prefixedPascalCasePlural)
+
   return `// Generated with array reference post-processing support (v2024-10-12)
 import { eq, and, desc, inArray${sqlImport} } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
@@ -529,5 +570,5 @@ export async function delete${prefixedPascalCase}(
   }
 
   return { success: true }
-}${treeQueries}`
+}${treeQueries}${sortableQueries}`
 }
