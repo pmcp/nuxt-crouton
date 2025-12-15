@@ -22,10 +22,16 @@ export function useT() {
   // Don't destructure t - call i18n.t() directly to ensure it always uses current translations
   // Use computed to ensure locale stays reactive
   const locale = computed(() => i18n.locale.value)
-  const { currentTeam } = useTeam()
   const route = useRoute()
   const isDev = process.dev
   const devModeEnabled = useState('devMode.enabled', () => false)
+
+  // Get team slug from route params directly (works even if useTeam().teams isn't populated)
+  // This is more reliable than useTeam().currentTeam.slug which depends on auth middleware
+  const teamSlugFromRoute = computed(() => {
+    const team = route.params.team
+    return typeof team === 'string' ? team : undefined
+  })
 
 
   // Cache for team translations to avoid repeated API calls
@@ -34,10 +40,10 @@ export function useT() {
 
   // Load team translations if not already loaded
   const loadTeamTranslations = async () => {
-    if (!currentTeam.value?.slug || teamTranslationsLoaded.value) return
+    if (!teamSlugFromRoute.value || teamTranslationsLoaded.value) return
 
     try {
-      const data = await $fetch(`/api/teams/${currentTeam.value.slug}/translations-ui/with-system`, {
+      const data = await $fetch(`/api/teams/${teamSlugFromRoute.value}/translations-ui/with-system`, {
         query: { locale: locale.value }
       })
 
@@ -63,7 +69,7 @@ export function useT() {
   }
 
   // Watch for team changes and reload translations
-  watch(() => currentTeam.value?.slug, () => {
+  watch(teamSlugFromRoute, () => {
     teamTranslationsLoaded.value = false
     teamTranslations.value = {}
     loadTeamTranslations()
