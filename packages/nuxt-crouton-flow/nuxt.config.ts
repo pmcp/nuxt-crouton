@@ -43,7 +43,7 @@ export default defineNuxtConfig({
   // Vite optimization for Vue Flow
   vite: {
     optimizeDeps: {
-      include: ['@vue-flow/core', '@vue-flow/background', '@vue-flow/controls', '@vue-flow/minimap', '@dagrejs/dagre', 'yjs']
+      include: ['@vue-flow/core', '@vue-flow/background', '@vue-flow/controls', '@vue-flow/minimap', '@dagrejs/dagre']
     }
   }
 })
