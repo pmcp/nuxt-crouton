@@ -149,8 +149,11 @@ async function seedTranslations(translations, options) {
   let errors = 0
 
   // Determine the API endpoint
-  const teamSlug = team === 'system' ? 'system' : team
-  const endpoint = `${apiUrl}/api/teams/${teamSlug}/translations-ui`
+  // For system translations, use the dev-only seed endpoint (no auth required)
+  // For team-specific translations, use the authenticated team endpoint
+  const endpoint = team === 'system'
+    ? `${apiUrl}/api/seed/translations-ui`
+    : `${apiUrl}/api/teams/${team}/translations-ui`
 
   for (const translation of translations) {
     try {
