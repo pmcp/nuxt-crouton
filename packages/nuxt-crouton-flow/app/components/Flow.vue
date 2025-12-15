@@ -446,13 +446,36 @@ const finalEdges = computed(() => {
 
 // Use VueFlow instance
 const {
+  onNodeDrag,
   onNodeDragStop,
   onNodeClick,
   onNodeDoubleClick,
   onEdgeClick,
 } = useVueFlow()
 
-// Handle node drag end - persist position
+// Throttle for real-time drag sync (sync every 50ms during drag)
+let lastDragSync = 0
+const DRAG_SYNC_THROTTLE = 50
+
+// Handle node drag - sync position in real-time
+onNodeDrag((event: NodeDragEvent) => {
+  if (!props.draggable || !props.sync || !syncState) return
+
+  const now = Date.now()
+  if (now - lastDragSync < DRAG_SYNC_THROTTLE) return
+  lastDragSync = now
+
+  const { node } = event
+  const position: FlowPosition = {
+    x: Math.round(node.position.x),
+    y: Math.round(node.position.y),
+  }
+
+  // Sync to Yjs in real-time
+  syncState.updatePosition(node.id, position)
+})
+
+// Handle node drag end - final position sync
 onNodeDragStop((event: NodeDragEvent) => {
   if (!props.draggable) return
 
@@ -463,7 +486,7 @@ onNodeDragStop((event: NodeDragEvent) => {
   }
 
   if (props.sync && syncState) {
-    // Use Yjs for sync mode
+    // Final sync to Yjs
     syncState.updatePosition(node.id, position)
   }
   else {
