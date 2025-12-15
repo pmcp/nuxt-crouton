@@ -28,6 +28,9 @@
     "@dagrejs/dagre": "^1.1.4",
     "yjs": "^13.6.0"
   },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0"
+  },
   "keywords": [
     "nuxt",
     "nuxt-layer",

@@ -153,6 +153,10 @@ importers:
       yjs:
         specifier: ^13.6.0
         version: 13.6.27
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20241127.0
+        version: 4.20251004.0
 
   packages/nuxt-crouton-i18n:
     dependencies:

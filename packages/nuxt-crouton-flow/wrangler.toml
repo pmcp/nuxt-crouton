@@ -1,0 +1,10 @@
+name = "nuxt-crouton-flow"
+compatibility_date = "2024-01-01"
+
+[[durable_objects.bindings]]
+name = "FLOW_ROOMS"
+class_name = "FlowRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["FlowRoom"]

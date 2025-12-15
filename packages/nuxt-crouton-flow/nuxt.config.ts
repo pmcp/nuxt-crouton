@@ -33,10 +33,17 @@ export default defineNuxtConfig({
     transpile: ['@vue-flow/core', '@vue-flow/background', '@vue-flow/controls', '@vue-flow/minimap']
   },
 
+  // Nitro server configuration for Yjs sync
+  nitro: {
+    experimental: {
+      websocket: true
+    }
+  },
+
   // Vite optimization for Vue Flow
   vite: {
     optimizeDeps: {
-      include: ['@vue-flow/core', '@vue-flow/background', '@vue-flow/controls', '@vue-flow/minimap', '@dagrejs/dagre']
+      include: ['@vue-flow/core', '@vue-flow/background', '@vue-flow/controls', '@vue-flow/minimap', '@dagrejs/dagre', 'yjs']
     }
   }
 })
