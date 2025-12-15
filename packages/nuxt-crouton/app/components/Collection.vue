@@ -9,6 +9,7 @@
     :pagination-data="paginationData"
     :refresh-fn="refreshFn"
     :hide-default-columns="hideDefaultColumns"
+    :sortable="sortable"
   >
     <template #header>
       <slot name="header">
@@ -227,7 +228,7 @@ defineProps&lt;Props&gt;()
 <script lang="ts" setup>
 import { computed, resolveComponent, onMounted, getCurrentInstance } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
-import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig } from '../types/table'
+import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
 
 // Version logging for debugging

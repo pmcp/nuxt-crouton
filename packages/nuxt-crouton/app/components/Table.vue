@@ -98,10 +98,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableProps, TableSort, PaginationData } from '../types/table'
+import type { TableProps, TableSort, PaginationData, SortableOptions } from '../types/table'
 import { useTableData } from '../composables/useTableData'
 import { useTableColumns } from '../composables/useTableColumns'
 import { useT } from '../composables/useT'
+import { useSortable } from '@vueuse/integrations/useSortable'
+import type { UseSortableReturn } from '@vueuse/integrations/useSortable'
 
 // Props
 const props = withDefaults(defineProps<TableProps>(), {
@@ -111,6 +113,7 @@ const props = withDefaults(defineProps<TableProps>(), {
   serverPagination: false,
   paginationData: null,
   refreshFn: undefined,
+  sortable: false,
   hideDefaultColumns: () => ({
     createdAt: false,
     updatedAt: false,
@@ -160,7 +163,8 @@ if (serverPaginationData.value) {
 // Composable data
 const { allColumns } = useTableColumns({
   columns: props.columns,
-  hideDefaultColumns: props.hideDefaultColumns
+  hideDefaultColumns: props.hideDefaultColumns,
+  sortable: props.sortable
 })
 
 const { slicedRows, pageTotalToShow } = useTableData({
@@ -182,13 +186,23 @@ const selectedRows = computed(() =>
   tableRef.value?.tableApi?.getFilteredSelectedRowModel().rows.map((row: any) => row.original) || []
 )
 
-const tableStyles = {
+// Sortable configuration
+const sortableEnabled = computed(() => !!props.sortable)
+const sortableConfig = computed<SortableOptions>(() => {
+  if (typeof props.sortable === 'object') return props.sortable
+  return {}
+})
+
+// Generate stable unique ID for tbody targeting
+const tableId = `crouton-sortable-${props.collection || 'table'}-${Math.random().toString(36).slice(2, 9)}`
+
+const tableStyles = computed(() => ({
   base: 'table-fixed border-separate border-spacing-0',
   thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-  tbody: '[&>tr]:last:[&>td]:border-b-0',
+  tbody: `[&>tr]:last:[&>td]:border-b-0 ${sortableEnabled.value ? tableId : ''}`,
   th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
   td: 'border-b border-default'
-}
+}))
 
 // Methods
 async function fetchPage(newPage: number) {
@@ -232,4 +246,75 @@ watch(sort, (newSort, oldSort) => {
     fetchPage(1)
   }
 }, { deep: true })
+
+// Sortable drag-and-drop functionality
+const reordering = ref(false)
+let sortableInstance: UseSortableReturn | null = null
+
+// Initialize useTreeMutation for reordering if collection is provided
+const treeMutation = props.collection && sortableEnabled.value
+  ? useTreeMutation(props.collection)
+  : null
+
+async function handleReorder(oldIndex: number, newIndex: number) {
+  if (!treeMutation || reordering.value || oldIndex === newIndex) return
+
+  reordering.value = true
+
+  try {
+    // Build updates array with new order values
+    const currentRows = [...slicedRows.value]
+    const [movedItem] = currentRows.splice(oldIndex, 1)
+    currentRows.splice(newIndex, 0, movedItem)
+
+    const updates = currentRows.map((row: any, index: number) => ({
+      id: row.id,
+      order: index
+    }))
+
+    await treeMutation.reorderSiblings(updates)
+  } catch (error) {
+    console.error('[Table] Reorder failed:', error)
+    // Cache will be invalidated by useTreeMutation, triggering refresh
+  } finally {
+    reordering.value = false
+  }
+}
+
+// Initialize sortable on mount
+onMounted(() => {
+  if (!sortableEnabled.value || !import.meta.client) return
+
+  // Wait for DOM to be ready
+  nextTick(() => {
+    const tbody = document.querySelector(`.${tableId}`)
+    if (!tbody) {
+      console.warn('[Table] Could not find tbody element for sortable')
+      return
+    }
+
+    const showHandle = sortableConfig.value.handle !== false
+
+    sortableInstance = useSortable(tbody as HTMLElement, slicedRows, {
+      animation: sortableConfig.value.animation ?? 150,
+      handle: showHandle ? '.drag-handle' : undefined,
+      disabled: sortableConfig.value.disabled ?? false,
+      ghostClass: 'opacity-50',
+      chosenClass: 'bg-elevated',
+      onEnd: (evt) => {
+        if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
+          handleReorder(evt.oldIndex, evt.newIndex)
+        }
+      }
+    })
+  })
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (sortableInstance) {
+    sortableInstance.stop()
+    sortableInstance = null
+  }
+})
 </script>

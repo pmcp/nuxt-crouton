@@ -9,6 +9,16 @@ export interface TableColumn {
   enableHiding?: boolean
 }
 
+// Sortable (drag-and-drop) options for table rows
+export interface SortableOptions {
+  /** Show drag handle column (default: true) */
+  handle?: boolean
+  /** SortableJS animation duration in ms (default: 150) */
+  animation?: number
+  /** Temporarily disable drag-and-drop */
+  disabled?: boolean
+}
+
 // Layout types
 export type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree'
 
@@ -49,6 +59,8 @@ export interface CollectionProps {
   create?: boolean
   hierarchy?: HierarchyConfig
   card?: 'Card' | 'CardMini' | 'CardSmall' | 'CardTree' | string
+  /** Enable drag-and-drop row reordering (table layout only) */
+  sortable?: boolean | SortableOptions
   hideDefaultColumns?: {
     createdAt?: boolean
     updatedAt?: boolean
