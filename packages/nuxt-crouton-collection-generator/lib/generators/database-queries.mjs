@@ -453,9 +453,15 @@ export function generateQueries(data, config = null) {
 `
   }
 
-  // Check if hierarchy is enabled to add sql import
+  // Check if hierarchy or sortable is enabled for import modifications
   const hasHierarchy = data.hierarchy && data.hierarchy.enabled
+  const hasSortable = data.sortable && data.sortable.enabled
   const sqlImport = hasHierarchy ? ', sql' : ''
+  const ascImport = (hasHierarchy || hasSortable) ? ', asc' : ''
+  const orderField = hasSortable ? (data.sortable.orderField || 'order') : 'order'
+  const orderByClause = hasSortable
+    ? `asc(tables.${tableName}.${orderField}), desc(tables.${tableName}.createdAt)`
+    : `desc(tables.${tableName}.createdAt)`
 
   // Generate tree queries if hierarchy is enabled
   const treeQueries = generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, plural)
@@ -464,7 +470,7 @@ export function generateQueries(data, config = null) {
   const sortableQueries = generateSortableQueries(data, tableName, prefixedPascalCasePlural)
 
   return `// Generated with array reference post-processing support (v2024-10-12)
-import { eq, and, desc, inArray${sqlImport} } from 'drizzle-orm'
+import { eq, and, desc${ascImport}, inArray${sqlImport} } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
@@ -477,7 +483,7 @@ ${aliasDefinitions}
     .select(${selectClause || '()'})
     .from(tables.${tableName})${leftJoins}
     .where(eq(tables.${tableName}.teamId, teamId))
-    .orderBy(desc(tables.${tableName}.createdAt))
+    .orderBy(${orderByClause})
 ${postQueryProcessing}
   return ${plural}
 }
@@ -495,7 +501,7 @@ ${aliasDefinitions}
         inArray(tables.${tableName}.id, ${singular}Ids)
       )
     )
-    .orderBy(desc(tables.${tableName}.createdAt))
+    .orderBy(${orderByClause})
 ${postQueryProcessing}
   return ${plural}
 }
