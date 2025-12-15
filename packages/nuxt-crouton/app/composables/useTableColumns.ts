@@ -14,6 +14,28 @@ interface UseTableColumnsOptions {
   sortable?: boolean | SortableOptions
 }
 
+// Grip vertical icon SVG for drag handle (lucide-grip-vertical)
+const GripIcon = () =>
+  h('svg', {
+    xmlns: 'http://www.w3.org/2000/svg',
+    width: '16',
+    height: '16',
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '2',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    class: 'size-4'
+  }, [
+    h('circle', { cx: '9', cy: '12', r: '1' }),
+    h('circle', { cx: '9', cy: '5', r: '1' }),
+    h('circle', { cx: '9', cy: '19', r: '1' }),
+    h('circle', { cx: '15', cy: '12', r: '1' }),
+    h('circle', { cx: '15', cy: '5', r: '1' }),
+    h('circle', { cx: '15', cy: '19', r: '1' })
+  ])
+
 export function useTableColumns(options: UseTableColumnsOptions) {
   const { tString } = useT()
 
@@ -27,7 +49,6 @@ export function useTableColumns(options: UseTableColumnsOptions) {
   const allColumns = computed(() => {
     // Use CroutonTableCheckbox which wraps UCheckbox
     const CheckboxComponent = resolveComponent('CroutonTableCheckbox')
-    const IconComponent = resolveComponent('UIcon')
 
     const columns: TableColumn[] = []
 
@@ -40,7 +61,7 @@ export function useTableColumns(options: UseTableColumnsOptions) {
           h('div', {
             class: 'drag-handle cursor-grab opacity-40 hover:opacity-100 flex items-center justify-center'
           }, [
-            h(IconComponent, { name: 'i-lucide-grip-vertical', class: 'size-4' })
+            h(GripIcon)
           ]),
         enableSorting: false,
         enableHiding: false
