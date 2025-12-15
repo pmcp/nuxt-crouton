@@ -47,15 +47,13 @@ function broadcastToPeers(
 }
 
 /**
- * Validate that data looks like a valid Yjs update
- * Yjs updates start with a version byte (currently 0)
+ * Check if data looks like JSON (starts with '{' or '[')
+ * Used to filter out JSON messages that weren't caught by string check
  */
-function isValidYjsUpdate(data: Uint8Array): boolean {
-  // Must have at least 2 bytes (version + some content)
-  if (data.length < 2) return false
-  // Yjs uses version 0 for its encoding
-  if (data[0] !== 0) return false
-  return true
+function looksLikeJson(data: Uint8Array): boolean {
+  if (data.length === 0) return false
+  // '{' = 123, '[' = 91
+  return data[0] === 123 || data[0] === 91
 }
 
 /**
@@ -190,18 +188,16 @@ export default defineWebSocketHandler({
         return
       }
 
-      // Validate it looks like a Yjs update
-      if (!isValidYjsUpdate(data)) {
-        console.warn('[Flow WS] Invalid Yjs update format:', {
-          length: data.length,
-          firstBytes: Array.from(data.slice(0, 10)),
-        })
+      // Skip if it looks like JSON that wasn't caught by string check
+      if (looksLikeJson(data)) {
+        console.log('[Flow WS] Skipping JSON-like binary message')
         return
       }
 
       // Apply Yjs update with inner try-catch for better error context
       try {
         applyUpdate(room.doc, data)
+        console.log('[Flow WS] Applied Yjs update, data length:', data.length)
       }
       catch (yjsError) {
         console.error('[Flow WS] Failed to apply Yjs update:', {
@@ -213,6 +209,8 @@ export default defineWebSocketHandler({
       }
 
       // Broadcast to other peers
+      const otherPeers = room.peers.size - 1
+      console.log('[Flow WS] Broadcasting to', otherPeers, 'other peers')
       broadcastToPeers(room, peer, data)
     }
     catch (error) {

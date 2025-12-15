@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 
 /**
@@ -21,13 +21,36 @@ interface Props {
   dragging?: boolean
   /** Label to display (fallback to title/name/id) */
   label?: string
+  /** Collection name for CRUD operations */
+  collection?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   selected: false,
   dragging: false,
-  label: ''
+  label: '',
+  collection: '',
 })
+
+// Crouton integration for edit/delete
+const { open } = useCrouton()
+const isHovered = ref(false)
+
+const nodeId = computed(() => String(props.data?.id || ''))
+
+function handleEdit(event: Event) {
+  event.stopPropagation()
+  if (props.collection && nodeId.value) {
+    open('update', props.collection, [nodeId.value])
+  }
+}
+
+function handleDelete(event: Event) {
+  event.stopPropagation()
+  if (props.collection && nodeId.value) {
+    open('delete', props.collection, [nodeId.value])
+  }
+}
 
 // Determine the display label
 const displayLabel = computed(() => {
@@ -58,6 +81,8 @@ const subtitle = computed(() => {
       'crouton-flow-node--selected': selected,
       'crouton-flow-node--dragging': dragging
     }"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
     <!-- Input handle (top) -->
     <Handle
@@ -65,6 +90,36 @@ const subtitle = computed(() => {
       :position="Position.Top"
       class="crouton-flow-handle"
     />
+
+    <!-- Action buttons (show on hover) -->
+    <div
+      v-if="collection && isHovered"
+      class="crouton-flow-node__actions"
+    >
+      <button
+        class="crouton-flow-node__action crouton-flow-node__action--edit"
+        title="Edit"
+        @click="handleEdit"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+          <path d="m15 5 4 4" />
+        </svg>
+      </button>
+      <button
+        class="crouton-flow-node__action crouton-flow-node__action--delete"
+        title="Delete"
+        @click="handleDelete"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18" />
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+          <line x1="10" x2="10" y1="11" y2="17" />
+          <line x1="14" x2="14" y1="11" y2="17" />
+        </svg>
+      </button>
+    </div>
 
     <!-- Node content -->
     <div class="crouton-flow-node__content">
@@ -91,6 +146,7 @@ const subtitle = computed(() => {
   @apply border-neutral-200 dark:border-neutral-700;
   @apply shadow-sm transition-all duration-150;
   @apply min-w-[120px] max-w-[200px];
+  @apply relative;
 }
 
 .crouton-flow-node--selected {
@@ -101,6 +157,28 @@ const subtitle = computed(() => {
 
 .crouton-flow-node--dragging {
   @apply shadow-lg scale-105 cursor-grabbing;
+}
+
+.crouton-flow-node__actions {
+  @apply absolute -top-2 -right-2 flex gap-1;
+  @apply z-10;
+}
+
+.crouton-flow-node__action {
+  @apply w-6 h-6 rounded-full flex items-center justify-center;
+  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600;
+  @apply shadow-sm cursor-pointer transition-all duration-150;
+  @apply hover:scale-110;
+}
+
+.crouton-flow-node__action--edit {
+  @apply text-blue-600 dark:text-blue-400;
+  @apply hover:bg-blue-50 dark:hover:bg-blue-900/30;
+}
+
+.crouton-flow-node__action--delete {
+  @apply text-red-600 dark:text-red-400;
+  @apply hover:bg-red-50 dark:hover:bg-red-900/30;
 }
 
 .crouton-flow-node__content {

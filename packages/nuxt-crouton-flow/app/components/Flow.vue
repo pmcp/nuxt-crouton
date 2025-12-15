@@ -128,62 +128,173 @@ const seeded = ref(false)
 watch(
   () => syncState?.synced.value,
   (synced) => {
-    if (
-      synced
-      && syncState
-      && !seeded.value
-      && props.rows
-      && props.rows.length > 0
-      && syncState.nodes.value.length === 0
-    ) {
+    if (synced && syncState && !seeded.value) {
+      // Check if Yjs already has nodes (from previous session)
+      if (syncState.nodes.value.length > 0) {
+        console.log('[CroutonFlow] Yjs already has', syncState.nodes.value.length, 'nodes from server, marking as seeded')
+        seeded.value = true
+        return
+      }
+
       // Yjs doc is empty but we have rows - seed it
-      console.log('[CroutonFlow] Seeding Yjs doc from rows:', props.rows.length, 'items')
-      console.log('[CroutonFlow] First row sample:', JSON.stringify(props.rows[0], null, 2))
-      console.log('[CroutonFlow] positionField:', props.positionField)
+      if (props.rows && props.rows.length > 0) {
+        console.log('[CroutonFlow] Seeding Yjs doc from rows:', props.rows.length, 'items')
+        console.log('[CroutonFlow] First row sample:', JSON.stringify(props.rows[0], null, 2))
+        console.log('[CroutonFlow] positionField:', props.positionField)
 
-      for (const row of props.rows) {
-        const id = String(row.id || crypto.randomUUID())
-        const title = String(row[props.labelField] || 'Untitled')
-        const parentId = row[props.parentField] as string | null | undefined
-        const rawPosition = row[props.positionField]
+        for (const row of props.rows) {
+          const id = String(row.id || crypto.randomUUID())
+          const title = String(row[props.labelField] || 'Untitled')
+          const parentId = row[props.parentField] as string | null | undefined
+          const rawPosition = row[props.positionField]
 
-        console.log('[CroutonFlow] Row position data:', {
-          id,
-          rawPosition,
-          typeofRawPosition: typeof rawPosition,
-        })
+          console.log('[CroutonFlow] Row position data:', {
+            id,
+            rawPosition,
+            typeofRawPosition: typeof rawPosition,
+          })
 
-        // Handle position - could be string JSON, object, or undefined
-        let position: FlowPosition | null = null
-        if (rawPosition) {
-          if (typeof rawPosition === 'string') {
-            try {
-              position = JSON.parse(rawPosition)
+          // Handle position - could be string JSON, object, or undefined
+          let position: FlowPosition | null = null
+          if (rawPosition) {
+            if (typeof rawPosition === 'string') {
+              try {
+                position = JSON.parse(rawPosition)
+              }
+              catch {
+                console.warn('[CroutonFlow] Failed to parse position string:', rawPosition)
+              }
             }
-            catch {
-              console.warn('[CroutonFlow] Failed to parse position string:', rawPosition)
+            else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
+              position = rawPosition as FlowPosition
             }
           }
-          else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
-            position = rawPosition as FlowPosition
-          }
+
+          const finalPosition = position || { x: 0, y: 0 }
+          console.log('[CroutonFlow] Final position:', finalPosition)
+
+          syncState.createNode({
+            id,
+            title,
+            parentId: parentId || null,
+            position: finalPosition,
+            data: { ...row },
+          })
         }
+        seeded.value = true
+      }
+    }
+  },
+  { immediate: true },
+)
 
-        const finalPosition = position || { x: 0, y: 0 }
-        console.log('[CroutonFlow] Final position:', finalPosition)
+// Watch for new/updated items in rows and sync them to Yjs
+// Watch both seeded state AND rows to trigger when either changes
+watch(
+  () => ({
+    rows: props.rows,
+    length: props.rows?.length ?? 0,
+    seeded: seeded.value,
+  }),
+  ({ rows: newRows, seeded: isSeeded }) => {
+    console.log('[CroutonFlow] rows watcher triggered:', {
+      newRowsLength: newRows?.length,
+      seeded: isSeeded,
+      hasSyncState: !!syncState,
+    })
 
+    if (!syncState || !isSeeded || !newRows) {
+      console.log('[CroutonFlow] rows watcher early return:', {
+        noSyncState: !syncState,
+        notSeeded: !isSeeded,
+        noNewRows: !newRows,
+      })
+      return
+    }
+
+    // Get existing nodes from Yjs as a map for quick lookup
+    const existingNodes = new Map(syncState.nodes.value.map(n => [n.id, n]))
+    console.log('[CroutonFlow] Comparing rows to Yjs:', {
+      rowsCount: newRows.length,
+      yjsNodesCount: existingNodes.size,
+    })
+
+    // Sync rows to Yjs (add new, update existing)
+    let addedCount = 0
+    let updatedCount = 0
+    for (const row of newRows) {
+      const id = String(row.id)
+      const title = String(row[props.labelField] || 'Untitled')
+      const parentId = row[props.parentField] as string | null | undefined
+      const rawPosition = row[props.positionField]
+
+      // Handle position
+      let position: FlowPosition | null = null
+      if (rawPosition) {
+        if (typeof rawPosition === 'string') {
+          try {
+            position = JSON.parse(rawPosition)
+          }
+          catch { /* ignore */ }
+        }
+        else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
+          position = rawPosition as FlowPosition
+        }
+      }
+
+      const existingNode = existingNodes.get(id)
+      if (!existingNode) {
+        // New item - add to Yjs
+        console.log('[CroutonFlow] New item detected, adding to Yjs:', id)
         syncState.createNode({
           id,
           title,
           parentId: parentId || null,
-          position: finalPosition,
+          position: position || { x: 0, y: 0 },
           data: { ...row },
         })
+        addedCount++
       }
-      seeded.value = true
+      else {
+        // Existing item - check if data changed (compare title, parentId, and data)
+        const titleChanged = existingNode.title !== title
+        const parentChanged = existingNode.parentId !== (parentId || null)
+        // Compare data by checking key fields (exclude position which is managed by Yjs)
+        const dataChanged = JSON.stringify({ ...existingNode.data, [props.positionField]: undefined })
+          !== JSON.stringify({ ...row, [props.positionField]: undefined })
+
+        if (titleChanged || parentChanged || dataChanged) {
+          console.log('[CroutonFlow] Item updated, syncing to Yjs:', id, {
+            titleChanged,
+            parentChanged,
+            dataChanged,
+          })
+          syncState.updateNode(id, {
+            title,
+            parentId: parentId || null,
+            data: { ...row },
+          })
+          updatedCount++
+        }
+      }
+    }
+
+    // Handle deletions - remove nodes from Yjs that are no longer in rows
+    const rowIds = new Set(newRows.map(r => String(r.id)))
+    let deletedCount = 0
+    for (const [nodeId] of existingNodes) {
+      if (!rowIds.has(nodeId)) {
+        console.log('[CroutonFlow] Item deleted, removing from Yjs:', nodeId)
+        syncState.deleteNode(nodeId)
+        deletedCount++
+      }
+    }
+
+    if (addedCount > 0 || updatedCount > 0 || deletedCount > 0) {
+      console.log('[CroutonFlow] Synced to Yjs:', { added: addedCount, updated: updatedCount, deleted: deletedCount })
     }
   },
-  { immediate: true },
+  { deep: true, immediate: true },
 )
 
 // Convert sync nodes to Vue Flow format
@@ -472,6 +583,7 @@ defineExpose({
           :selected="nodeProps.selected"
           :dragging="nodeProps.dragging"
           :label="typeof nodeProps.label === 'string' ? nodeProps.label : undefined"
+          :collection="collection"
         />
         <CroutonFlowNode
           v-else
@@ -479,6 +591,7 @@ defineExpose({
           :selected="nodeProps.selected"
           :dragging="nodeProps.dragging"
           :label="typeof nodeProps.label === 'string' ? nodeProps.label : undefined"
+          :collection="collection"
         />
       </template>
 
