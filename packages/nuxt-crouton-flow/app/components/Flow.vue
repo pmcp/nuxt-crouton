@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, getCurrentInstance, resolveComponent, ref, watch } from 'vue'
+import { computed, getCurrentInstance, nextTick, ref, resolveComponent, watch } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -138,17 +138,45 @@ watch(
     ) {
       // Yjs doc is empty but we have rows - seed it
       console.log('[CroutonFlow] Seeding Yjs doc from rows:', props.rows.length, 'items')
+      console.log('[CroutonFlow] First row sample:', JSON.stringify(props.rows[0], null, 2))
+      console.log('[CroutonFlow] positionField:', props.positionField)
+
       for (const row of props.rows) {
         const id = String(row.id || crypto.randomUUID())
         const title = String(row[props.labelField] || 'Untitled')
         const parentId = row[props.parentField] as string | null | undefined
-        const position = (row[props.positionField] as FlowPosition) || null
+        const rawPosition = row[props.positionField]
+
+        console.log('[CroutonFlow] Row position data:', {
+          id,
+          rawPosition,
+          typeofRawPosition: typeof rawPosition,
+        })
+
+        // Handle position - could be string JSON, object, or undefined
+        let position: FlowPosition | null = null
+        if (rawPosition) {
+          if (typeof rawPosition === 'string') {
+            try {
+              position = JSON.parse(rawPosition)
+            }
+            catch {
+              console.warn('[CroutonFlow] Failed to parse position string:', rawPosition)
+            }
+          }
+          else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
+            position = rawPosition as FlowPosition
+          }
+        }
+
+        const finalPosition = position || { x: 0, y: 0 }
+        console.log('[CroutonFlow] Final position:', finalPosition)
 
         syncState.createNode({
           id,
           title,
           parentId: parentId || null,
-          position: position || { x: 0, y: 0 },
+          position: finalPosition,
           data: { ...row },
         })
       }
@@ -162,7 +190,7 @@ watch(
 const syncNodes = computed<Node[]>(() => {
   if (!syncState) return []
 
-  return syncState.nodes.value.map((node: YjsFlowNode) => ({
+  const nodes = syncState.nodes.value.map((node: YjsFlowNode) => ({
     id: node.id,
     type: 'default',
     position: node.position,
@@ -174,6 +202,13 @@ const syncNodes = computed<Node[]>(() => {
     },
     label: node.title,
   }))
+
+  console.log('[CroutonFlow] syncNodes computed:', nodes.length, 'nodes')
+  if (nodes.length > 0) {
+    console.log('[CroutonFlow] First syncNode:', JSON.stringify(nodes[0], null, 2))
+  }
+
+  return nodes
 })
 
 // Generate edges from sync nodes
@@ -250,6 +285,9 @@ const layoutedNodes = computed(() => {
 // FINAL COMPUTED VALUES
 // ============================================
 
+// Track if we've applied initial layout to Yjs
+const layoutAppliedToYjs = ref(false)
+
 // Use sync nodes or legacy nodes based on mode
 const finalNodes = computed(() => {
   if (props.sync && syncState) {
@@ -257,8 +295,27 @@ const finalNodes = computed(() => {
     const nodes = syncNodes.value
     const edges = syncEdges.value
 
-    if (needsLayout(nodes)) {
-      return applyLayout(nodes, edges)
+    console.log('[CroutonFlow] finalNodes: checking layout for', nodes.length, 'nodes')
+    const needsLayoutResult = needsLayout(nodes)
+    console.log('[CroutonFlow] needsLayout:', needsLayoutResult, 'layoutAppliedToYjs:', layoutAppliedToYjs.value)
+
+    if (needsLayoutResult && !layoutAppliedToYjs.value) {
+      const layoutedNodes = applyLayout(nodes, edges)
+      console.log('[CroutonFlow] After layout, first node:', layoutedNodes[0] ? JSON.stringify(layoutedNodes[0].position) : 'none')
+
+      // Write layout positions back to Yjs so they persist
+      // Use nextTick to avoid updating during render
+      nextTick(() => {
+        console.log('[CroutonFlow] Writing layout positions back to Yjs')
+        for (const node of layoutedNodes) {
+          if (node.position && typeof node.position.x === 'number' && typeof node.position.y === 'number') {
+            syncState.updatePosition(node.id, node.position)
+          }
+        }
+        layoutAppliedToYjs.value = true
+      })
+
+      return layoutedNodes
     }
     return nodes
   }
