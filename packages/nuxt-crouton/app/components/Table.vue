@@ -103,7 +103,6 @@ import { useTableData } from '../composables/useTableData'
 import { useTableColumns } from '../composables/useTableColumns'
 import { useT } from '../composables/useT'
 import { useSortable } from '@vueuse/integrations/useSortable'
-import type { UseSortableReturn } from '@vueuse/integrations/useSortable'
 
 // Props
 const props = withDefaults(defineProps<TableProps>(), {
@@ -193,13 +192,13 @@ const sortableConfig = computed<SortableOptions>(() => {
   return {}
 })
 
-// Generate stable unique ID for tbody targeting
-const tableId = `crouton-sortable-${props.collection || 'table'}-${Math.random().toString(36).slice(2, 9)}`
+// Stable class name for tbody targeting (used by useSortable)
+const sortableClass = `crouton-sortable-${props.collection || 'table'}`
 
 const tableStyles = computed(() => ({
   base: 'table-fixed border-separate border-spacing-0',
   thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-  tbody: `[&>tr]:last:[&>td]:border-b-0 ${sortableEnabled.value ? tableId : ''}`,
+  tbody: `[&>tr]:last:[&>td]:border-b-0 ${sortableEnabled.value ? sortableClass : ''}`,
   th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
   td: 'border-b border-default'
 }))
@@ -249,7 +248,6 @@ watch(sort, (newSort, oldSort) => {
 
 // Sortable drag-and-drop functionality
 const reordering = ref(false)
-let sortableInstance: UseSortableReturn | null = null
 
 // Initialize useTreeMutation for reordering if collection is provided
 const treeMutation = props.collection && sortableEnabled.value
@@ -281,40 +279,21 @@ async function handleReorder(oldIndex: number, newIndex: number) {
   }
 }
 
-// Initialize sortable on mount
-onMounted(() => {
-  if (!sortableEnabled.value || !import.meta.client) return
+// Initialize sortable - useSortable handles DOM timing internally
+if (sortableEnabled.value && import.meta.client) {
+  const showHandle = sortableConfig.value.handle !== false
 
-  // Wait for DOM to be ready
-  nextTick(() => {
-    const tbody = document.querySelector(`.${tableId}`)
-    if (!tbody) {
-      console.warn('[Table] Could not find tbody element for sortable')
-      return
-    }
-
-    const showHandle = sortableConfig.value.handle !== false
-
-    sortableInstance = useSortable(tbody as HTMLElement, slicedRows, {
-      animation: sortableConfig.value.animation ?? 150,
-      handle: showHandle ? '.drag-handle' : undefined,
-      disabled: sortableConfig.value.disabled ?? false,
-      ghostClass: 'opacity-50',
-      chosenClass: 'bg-elevated',
-      onEnd: (evt) => {
-        if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
-          handleReorder(evt.oldIndex, evt.newIndex)
-        }
+  useSortable(`.${sortableClass}`, slicedRows, {
+    animation: sortableConfig.value.animation ?? 150,
+    handle: showHandle ? '.drag-handle' : undefined,
+    disabled: sortableConfig.value.disabled ?? false,
+    ghostClass: 'opacity-50',
+    chosenClass: 'bg-elevated',
+    onEnd: (evt) => {
+      if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
+        handleReorder(evt.oldIndex, evt.newIndex)
       }
-    })
+    }
   })
-})
-
-// Cleanup on unmount
-onUnmounted(() => {
-  if (sortableInstance) {
-    sortableInstance.stop()
-    sortableInstance = null
-  }
-})
+}
 </script>
