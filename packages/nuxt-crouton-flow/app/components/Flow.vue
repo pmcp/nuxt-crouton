@@ -149,28 +149,17 @@ watch(
     if (synced && syncState && !seeded.value) {
       // Check if Yjs already has nodes (from previous session)
       if (syncState.nodes.value.length > 0) {
-        console.log('[CroutonFlow] Yjs already has', syncState.nodes.value.length, 'nodes from server, marking as seeded')
         seeded.value = true
         return
       }
 
       // Yjs doc is empty but we have rows - seed it
       if (props.rows && props.rows.length > 0) {
-        console.log('[CroutonFlow] Seeding Yjs doc from rows:', props.rows.length, 'items')
-        console.log('[CroutonFlow] First row sample:', JSON.stringify(props.rows[0], null, 2))
-        console.log('[CroutonFlow] positionField:', props.positionField)
-
         for (const row of props.rows) {
           const id = String(row.id || crypto.randomUUID())
           const title = String(row[props.labelField] || 'Untitled')
           const parentId = row[props.parentField] as string | null | undefined
           const rawPosition = row[props.positionField]
-
-          console.log('[CroutonFlow] Row position data:', {
-            id,
-            rawPosition,
-            typeofRawPosition: typeof rawPosition,
-          })
 
           // Handle position - could be string JSON, object, or undefined
           let position: FlowPosition | null = null
@@ -189,7 +178,6 @@ watch(
           }
 
           const finalPosition = position || { x: 0, y: 0 }
-          console.log('[CroutonFlow] Final position:', finalPosition)
 
           syncState.createNode({
             id,
@@ -215,31 +203,14 @@ watch(
     seeded: seeded.value,
   }),
   ({ rows: newRows, seeded: isSeeded }) => {
-    console.log('[CroutonFlow] rows watcher triggered:', {
-      newRowsLength: newRows?.length,
-      seeded: isSeeded,
-      hasSyncState: !!syncState,
-    })
-
     if (!syncState || !isSeeded || !newRows) {
-      console.log('[CroutonFlow] rows watcher early return:', {
-        noSyncState: !syncState,
-        notSeeded: !isSeeded,
-        noNewRows: !newRows,
-      })
       return
     }
 
     // Get existing nodes from Yjs as a map for quick lookup
     const existingNodes = new Map(syncState.nodes.value.map(n => [n.id, n]))
-    console.log('[CroutonFlow] Comparing rows to Yjs:', {
-      rowsCount: newRows.length,
-      yjsNodesCount: existingNodes.size,
-    })
 
     // Sync rows to Yjs (add new, update existing)
-    let addedCount = 0
-    let updatedCount = 0
     for (const row of newRows) {
       const id = String(row.id)
       const title = String(row[props.labelField] || 'Untitled')
@@ -263,7 +234,6 @@ watch(
       const existingNode = existingNodes.get(id)
       if (!existingNode) {
         // New item - add to Yjs
-        console.log('[CroutonFlow] New item detected, adding to Yjs:', id)
         syncState.createNode({
           id,
           title,
@@ -271,7 +241,6 @@ watch(
           position: position || { x: 0, y: 0 },
           data: { ...row },
         })
-        addedCount++
       }
       else {
         // Existing item - check if data changed (compare title, parentId, and data)
@@ -282,34 +251,21 @@ watch(
           !== JSON.stringify({ ...row, [props.positionField]: undefined })
 
         if (titleChanged || parentChanged || dataChanged) {
-          console.log('[CroutonFlow] Item updated, syncing to Yjs:', id, {
-            titleChanged,
-            parentChanged,
-            dataChanged,
-          })
           syncState.updateNode(id, {
             title,
             parentId: parentId || null,
             data: { ...row },
           })
-          updatedCount++
         }
       }
     }
 
     // Handle deletions - remove nodes from Yjs that are no longer in rows
     const rowIds = new Set(newRows.map(r => String(r.id)))
-    let deletedCount = 0
     for (const [nodeId] of existingNodes) {
       if (!rowIds.has(nodeId)) {
-        console.log('[CroutonFlow] Item deleted, removing from Yjs:', nodeId)
         syncState.deleteNode(nodeId)
-        deletedCount++
       }
-    }
-
-    if (addedCount > 0 || updatedCount > 0 || deletedCount > 0) {
-      console.log('[CroutonFlow] Synced to Yjs:', { added: addedCount, updated: updatedCount, deleted: deletedCount })
     }
   },
   { deep: true, immediate: true },
@@ -319,7 +275,7 @@ watch(
 const syncNodes = computed<Node[]>(() => {
   if (!syncState) return []
 
-  const nodes = syncState.nodes.value.map((node: YjsFlowNode) => ({
+  return syncState.nodes.value.map((node: YjsFlowNode) => ({
     id: node.id,
     type: 'default',
     position: node.position,
@@ -331,14 +287,38 @@ const syncNodes = computed<Node[]>(() => {
     },
     label: node.title,
   }))
-
-  console.log('[CroutonFlow] syncNodes computed:', nodes.length, 'nodes')
-  if (nodes.length > 0) {
-    console.log('[CroutonFlow] First syncNode:', JSON.stringify(nodes[0], null, 2))
-  }
-
-  return nodes
 })
+
+// Watch for new nodes and clear ghost if a real node appears near ghost position
+// This provides smooth visual transition from ghost to real node
+watch(
+  () => syncNodes.value.length,
+  (newLength, oldLength) => {
+    // Only check if a node was added and we have a pending ghost
+    if (newLength > oldLength && localGhostNode.value) {
+      const ghostPos = localGhostNode.value.position
+      // Check if any new node is near the ghost position (within 50px)
+      const hasNodeNearGhost = syncNodes.value.some(node => {
+        const dx = Math.abs(node.position.x - ghostPos.x)
+        const dy = Math.abs(node.position.y - ghostPos.y)
+        return dx < 50 && dy < 50
+      })
+
+      if (hasNodeNearGhost) {
+        // Real node appeared - clear ghost immediately
+        localGhostNode.value = null
+        if (props.sync && syncState) {
+          syncState.clearGhostNode()
+        }
+        // Clear the timeout if it's still pending
+        if (ghostCleanupTimeout) {
+          clearTimeout(ghostCleanupTimeout)
+          ghostCleanupTimeout = null
+        }
+      }
+    }
+  },
+)
 
 // Generate edges from sync nodes
 const syncEdges = computed(() => {
@@ -366,10 +346,6 @@ const remoteGhostNodes = computed<Node[]>(() => {
   if (!props.sync || !syncState) return []
 
   const currentUserId = syncState.user.value?.id
-  const usersWithGhosts = syncState.users.value.filter(u => u.ghostNode)
-  if (usersWithGhosts.length > 0) {
-    console.log('[CroutonFlow] Users with ghosts:', usersWithGhosts)
-  }
   return syncState.users.value
     .filter(u => u.user.id !== currentUserId && u.ghostNode)
     .map(u => ({
@@ -617,6 +593,9 @@ const isDragOver = ref(false)
 // Local ghost node state (what this user is dragging)
 const localGhostNode = ref<Node | null>(null)
 
+// Timeout ID for delayed ghost cleanup (used when autoCreateOnDrop is false)
+let ghostCleanupTimeout: ReturnType<typeof setTimeout> | null = null
+
 // Throttle for ghost node awareness sync
 let lastGhostSync = 0
 const GHOST_SYNC_THROTTLE = 50
@@ -729,16 +708,30 @@ function handleDrop(event: DragEvent) {
   event.preventDefault()
   isDragOver.value = false
 
-  // Clear ghost node immediately
-  localGhostNode.value = null
-  if (props.sync && syncState) {
-    syncState.clearGhostNode()
+  // Clear any pending ghost cleanup
+  if (ghostCleanupTimeout) {
+    clearTimeout(ghostCleanupTimeout)
+    ghostCleanupTimeout = null
   }
 
-  if (!props.allowDrop) return
+  if (!props.allowDrop) {
+    // Not allowed - clear ghost immediately
+    localGhostNode.value = null
+    if (props.sync && syncState) {
+      syncState.clearGhostNode()
+    }
+    return
+  }
 
   const dragData = parseDragData(event)
-  if (!dragData || !isDropAllowed(dragData)) return
+  if (!dragData || !isDropAllowed(dragData)) {
+    // Invalid drop - clear ghost immediately
+    localGhostNode.value = null
+    if (props.sync && syncState) {
+      syncState.clearGhostNode()
+    }
+    return
+  }
 
   // Convert screen coordinates to flow coordinates
   const position = screenToFlowCoordinate({
@@ -764,6 +757,36 @@ function handleDrop(event: DragEvent) {
       position: flowPosition,
       data: { ...item },
     })
+
+    // Clear ghost immediately since we created the node
+    localGhostNode.value = null
+    if (props.sync && syncState) {
+      syncState.clearGhostNode()
+    }
+  } else {
+    // When autoCreateOnDrop is false, keep ghost visible as a placeholder
+    // while the parent handles the drop asynchronously
+    // Update ghost position to exact drop position
+    if (localGhostNode.value) {
+      localGhostNode.value = {
+        ...localGhostNode.value,
+        position: flowPosition,
+        data: {
+          ...localGhostNode.value.data,
+          isPending: true, // Mark as pending
+        },
+      }
+    }
+
+    // Clear ghost after a delay to allow real node to appear
+    // This prevents visual "jump" when ghost disappears before real node appears
+    ghostCleanupTimeout = setTimeout(() => {
+      localGhostNode.value = null
+      if (props.sync && syncState) {
+        syncState.clearGhostNode()
+      }
+      ghostCleanupTimeout = null
+    }, 1000) // 1 second should be enough for most async operations
   }
 
   // Always emit the event for custom handling
