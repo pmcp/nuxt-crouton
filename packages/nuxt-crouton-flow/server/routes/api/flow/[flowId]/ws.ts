@@ -124,8 +124,6 @@ export default defineWebSocketHandler({
     // Send current state to new peer
     const stateUpdate = encodeStateAsUpdate(room.doc)
     peer.send(stateUpdate)
-
-    console.log(`[Flow WS] Peer connected to ${collection}:${flowId}, ${room.peers.size} peers total`)
   },
 
   message(peer, message) {
@@ -188,16 +186,41 @@ export default defineWebSocketHandler({
         return
       }
 
-      // Skip if it looks like JSON that wasn't caught by string check
+      // Handle JSON that came in as binary (awareness messages, etc.)
       if (looksLikeJson(data)) {
-        console.log('[Flow WS] Skipping JSON-like binary message')
+        try {
+          const jsonStr = new TextDecoder().decode(data)
+          const parsed = JSON.parse(jsonStr)
+          if (parsed.type === 'awareness') {
+            // Store awareness state
+            const clientId = parsed.userId || parsed.clientId
+            if (clientId) {
+              room.awareness.set(clientId, parsed.state)
+            }
+            // Broadcast awareness to all peers (including sender gets echo)
+            const awarenessMessage = JSON.stringify({
+              type: 'awareness',
+              users: Array.from(room.awareness.values()),
+            })
+            for (const p of room.peers) {
+              try {
+                p.send(awarenessMessage)
+              }
+              catch {
+                // Peer disconnected
+              }
+            }
+          }
+        }
+        catch (e) {
+          console.warn('[Flow WS] Failed to parse JSON-like binary:', e)
+        }
         return
       }
 
       // Apply Yjs update with inner try-catch for better error context
       try {
         applyUpdate(room.doc, data)
-        console.log('[Flow WS] Applied Yjs update, data length:', data.length)
       }
       catch (yjsError) {
         console.error('[Flow WS] Failed to apply Yjs update:', {
@@ -209,8 +232,6 @@ export default defineWebSocketHandler({
       }
 
       // Broadcast to other peers
-      const otherPeers = room.peers.size - 1
-      console.log('[Flow WS] Broadcasting to', otherPeers, 'other peers')
       broadcastToPeers(room, peer, data)
     }
     catch (error) {
@@ -227,7 +248,6 @@ export default defineWebSocketHandler({
     const room = peerData._flowRoom
     if (room) {
       room.peers.delete(peer as unknown as { send: (data: unknown) => void })
-      console.log(`[Flow WS] Peer disconnected, ${room.peers.size} peers remaining`)
     }
   },
 

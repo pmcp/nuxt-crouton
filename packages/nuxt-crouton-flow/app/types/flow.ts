@@ -145,4 +145,28 @@ export interface CroutonFlowEmits {
   (e: 'edgeClick', edgeId: string): void
   /** Emitted when selection changes */
   (e: 'selectionChange', selectedNodeIds: string[]): void
+  /** Emitted when an item is dropped onto the flow */
+  (e: 'nodeDrop', item: Record<string, unknown>, position: FlowPosition, collection: string): void
+}
+
+/**
+ * Data transferred during drag-and-drop from collection items
+ */
+export interface CroutonDragData {
+  /** Discriminator for drag type */
+  type: 'crouton-item'
+  /** Source collection name */
+  collection: string
+  /** The item being dragged */
+  item: Record<string, unknown>
+}
+
+/**
+ * Options for drop zone validation
+ */
+export interface DropZoneOptions {
+  /** Collections allowed to be dropped (empty = all allowed) */
+  allowedCollections?: string[]
+  /** Custom validation function */
+  validate?: (item: Record<string, unknown>, collection: string) => boolean
 }

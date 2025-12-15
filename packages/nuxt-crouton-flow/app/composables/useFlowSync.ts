@@ -105,7 +105,6 @@ export function useFlowSync(options: UseFlowSyncOptions) {
       if (event.data instanceof ArrayBuffer) {
         // Yjs update
         const update = new Uint8Array(event.data)
-        console.log('[useFlowSync] Received Yjs update from server, length:', update.length)
         Y.applyUpdate(ydoc, update, 'remote')
         state.synced = true
       }
@@ -134,7 +133,6 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     // Send local Yjs updates to server
     ydoc.on('update', (update: Uint8Array, origin: unknown) => {
       if (origin !== 'remote' && ws?.readyState === WebSocket.OPEN) {
-        console.log('[useFlowSync] Sending Yjs update to server, length:', update.length, 'origin:', origin)
         ws.send(update)
       }
     })
