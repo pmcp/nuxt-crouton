@@ -31,7 +31,7 @@ export interface SupersaasConnectorConfig {
  * @example
  * ```typescript
  * // app.config.ts
- * import { connectSupersaas } from '@friendlyinternet/nuxt-crouton-connector/supersaas'
+ * import { connectSupersaas } from '@friendlyinternet/nuxt-crouton-supersaas/supersaas'
  *
  * const userSchema = z.object({
  *   id: z.string(),

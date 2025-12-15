@@ -5,12 +5,12 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineNuxtConfig({
   $meta: {
-    name: 'nuxt-crouton-connector',
-    description: 'Pre-built connectors for external auth systems and user management'
+    name: 'nuxt-crouton-supersaas',
+    description: 'SuperSaaS integration layer for Nuxt Crouton - connectors, translations, and utilities'
   },
 
   // Note: This is an addon layer - users must explicitly extend:
-  // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/nuxt-crouton-connector']
+  // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/nuxt-crouton-supersaas']
   // Or copy connector files directly to their project for customization
 
   // Component configuration (if we add shared components later)
@@ -27,5 +27,11 @@ export default defineNuxtConfig({
   // Composables (if we add shared utilities later)
   imports: {
     dirs: [join(currentDir, 'app/composables')]
+  },
+
+  // i18n configuration - expose locale files to consuming apps
+  // Apps can import these via: @friendlyinternet/nuxt-crouton-supersaas/i18n/locales/en.json
+  alias: {
+    '@crouton-supersaas-locales': join(currentDir, 'i18n/locales')
   }
 })

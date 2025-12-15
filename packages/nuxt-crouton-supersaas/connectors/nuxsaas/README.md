@@ -27,10 +27,10 @@ Your NuxSaaS project must have:
 
 ```bash
 # Install the connector package
-pnpm add @friendlyinternet/nuxt-crouton-connector
+pnpm add @friendlyinternet/nuxt-crouton-supersaas
 
 # Or if also installing the base package
-pnpm add @friendlyinternet/nuxt-crouton @friendlyinternet/nuxt-crouton-connector
+pnpm add @friendlyinternet/nuxt-crouton @friendlyinternet/nuxt-crouton-supersaas
 ```
 
 ## Setup
@@ -44,8 +44,8 @@ This mode uses your existing NuxSaaS endpoints without duplicating code.
 #### 1. Configure in `app.config.ts`:
 
 ```typescript
-import { connectNuxsaas } from '@friendlyinternet/nuxt-crouton-connector/nuxsaas'
-import { nuxsaasUserSchema } from '@friendlyinternet/nuxt-crouton-connector/nuxsaas'
+import { connectNuxsaas } from '@friendlyinternet/nuxt-crouton-supersaas/nuxsaas'
+import { nuxsaasUserSchema } from '@friendlyinternet/nuxt-crouton-supersaas/nuxsaas'
 
 export default defineAppConfig({
   croutonCollections: {
@@ -91,7 +91,7 @@ server/api/admin/users/
 
 ```bash
 # From your NuxSaaS project root
-cp -r node_modules/@friendlyinternet/nuxt-crouton-connector/connectors/nuxsaas/server/api/admin/users \
+cp -r node_modules/@friendlyinternet/nuxt-crouton-supersaas/connectors/nuxsaas/server/api/admin/users \
   server/api/admin/
 ```
 
@@ -103,11 +103,11 @@ Manually copy all files to your project for full customization.
 
 ```bash
 # Copy composables
-cp node_modules/@friendlyinternet/nuxt-crouton-connector/connectors/nuxsaas/app/composables/useUsers.ts \
+cp node_modules/@friendlyinternet/nuxt-crouton-supersaas/connectors/nuxsaas/app/composables/useUsers.ts \
   app/composables/
 
 # Copy API endpoints
-cp -r node_modules/@friendlyinternet/nuxt-crouton-connector/connectors/nuxsaas/server/api/admin/users \
+cp -r node_modules/@friendlyinternet/nuxt-crouton-supersaas/connectors/nuxsaas/server/api/admin/users \
   server/api/admin/
 ```
 

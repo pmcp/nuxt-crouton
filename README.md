@@ -15,8 +15,8 @@ Multi-language support extending the base layer with i18n capabilities.
 ### [@friendlyinternet/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
 Rich text editor integration extending the base layer with Tiptap.
 
-### [@friendlyinternet/nuxt-crouton-connector](./packages/nuxt-crouton-connector)
-Pre-built connectors for external auth systems and user management integrations (SuperSaaS, Supabase, Clerk, Auth0).
+### [@friendlyinternet/nuxt-crouton-supersaas](./packages/nuxt-crouton-supersaas)
+SuperSaaS integration layer - connectors, translations, and utilities for SuperSaaS applications.
 
 ### [@friendlyinternet/nuxt-crouton-collection-generator](./packages/nuxt-crouton-collection-generator)
 CLI tool to generate complete CRUD collections with API endpoints, components, and database schema.
@@ -35,8 +35,8 @@ pnpm add @friendlyinternet/nuxt-crouton
 # For CRUD + Editor
 pnpm add @friendlyinternet/nuxt-crouton-editor
 
-# For external collection connectors (auth systems, users)
-pnpm add @friendlyinternet/nuxt-crouton-connector
+# For SuperSaaS integration (connectors, translations)
+pnpm add @friendlyinternet/nuxt-crouton-supersaas
 
 # For CLI scaffolding tool
 pnpm add -D @friendlyinternet/nuxt-crouton-collection-generator
@@ -55,7 +55,7 @@ export default defineNuxtConfig({
     // Optional addon layers
     '@friendlyinternet/nuxt-crouton-i18n',      // For translations
     '@friendlyinternet/nuxt-crouton-editor',    // For rich text editing
-    '@friendlyinternet/nuxt-crouton-connector'  // For external collections
+    '@friendlyinternet/nuxt-crouton-supersaas'  // For SuperSaaS integration
   ]
 })
 ```
@@ -70,7 +70,7 @@ All components and composables are auto-imported:
   <CrudButton action="create" collection="products" />
   <CroutonReferenceSelect v-model="category" collection="categories" />
 
-  <!-- External Collections (from connector layer) -->
+  <!-- External Collections (from supersaas layer) -->
   <CroutonReferenceSelect v-model="userId" collection="users" />
 
   <!-- Translation Components (from i18n layer) -->
@@ -84,7 +84,7 @@ All components and composables are auto-imported:
 <script setup>
 // Composables are auto-imported
 const { items, create, update } = useCrud('products')
-const { users } = useUsers() // From connector layer
+const { users } = useUsers() // From supersaas layer
 const { t } = useT()
 </script>
 ```
@@ -96,7 +96,7 @@ const { t } = useT()
     +
     ├── @friendlyinternet/nuxt-crouton-i18n (addon - adds i18n)
     ├── @friendlyinternet/nuxt-crouton-editor (addon - adds editor)
-    └── @friendlyinternet/nuxt-crouton-connector (addon - external collections)
+    └── @friendlyinternet/nuxt-crouton-supersaas (addon - SuperSaaS integration)
 ```
 
 **Explicit Configuration**: Always include the base layer plus any addons you need. This makes dependencies clear and explicit.
@@ -127,12 +127,13 @@ const { t } = useT()
 - ✅ **Toolbar** - Formatting options
 - ✅ **Commands** - Keyboard shortcuts
 
-### Connector Layer (`@friendlyinternet/nuxt-crouton-connector`)
+### SuperSaaS Layer (`@friendlyinternet/nuxt-crouton-supersaas`)
 - ✅ Everything from base layer
 - ✅ **SuperSaaS Connector** - Team-based user management
+- ✅ **NuxSaaS Connector** - Admin-level user management
 - ✅ **useUsers()** - External user collection composable
 - ✅ **External Collection API** - Ready-to-use endpoints
-- 🚧 **Supabase, Clerk, Auth0** - Coming soon
+- ✅ **App-level i18n** - Common translation strings
 
 ### Collection Generator (`@friendlyinternet/nuxt-crouton-collection-generator`)
 - ✅ **CLI Scaffolding** - Generate complete CRUD collections

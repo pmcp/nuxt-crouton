@@ -74,7 +74,7 @@ export function getConnectorRecommendations(collectionName) {
   if (supersaasResources.includes(collectionName)) {
     recommendations.push({
       type: 'supersaas',
-      package: '@friendlyinternet/nuxt-crouton-connector',
+      package: '@friendlyinternet/nuxt-crouton-supersaas',
       confidence: 'high',
       description: 'SuperSaaS (team-based platform resources)',
       resources: {
@@ -90,7 +90,7 @@ export function getConnectorRecommendations(collectionName) {
   if (collectionName === 'users' || collectionName === 'profiles') {
     recommendations.push({
       type: 'supabase',
-      package: '@friendlyinternet/nuxt-crouton-connector',
+      package: '@friendlyinternet/nuxt-crouton-supersaas',
       confidence: 'medium',
       description: 'Supabase (auth.users table)'
     })
@@ -100,7 +100,7 @@ export function getConnectorRecommendations(collectionName) {
   if (collectionName === 'users' || collectionName === 'organizations') {
     recommendations.push({
       type: 'clerk',
-      package: '@friendlyinternet/nuxt-crouton-connector',
+      package: '@friendlyinternet/nuxt-crouton-supersaas',
       confidence: 'medium',
       description: 'Clerk (hosted auth)'
     })
@@ -136,7 +136,7 @@ export async function isConnectorPackageInstalled(projectRoot) {
       ...packageJson.devDependencies
     }
 
-    return '@friendlyinternet/nuxt-crouton-connector' in deps
+    return '@friendlyinternet/nuxt-crouton-supersaas' in deps
   } catch {
     return false
   }

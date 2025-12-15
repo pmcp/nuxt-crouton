@@ -47,10 +47,10 @@ function prompt(question) {
  */
 export async function installConnectorPackage(projectRoot) {
   try {
-    console.log('📦 Installing @friendlyinternet/nuxt-crouton-connector...')
+    console.log('📦 Installing @friendlyinternet/nuxt-crouton-supersaas...')
 
     const { stdout, stderr } = await execAsync(
-      'pnpm add @friendlyinternet/nuxt-crouton-connector',
+      'pnpm add @friendlyinternet/nuxt-crouton-supersaas',
       { cwd: projectRoot }
     )
 
@@ -84,8 +84,8 @@ export async function addConnectorToNuxtConfig(projectRoot) {
     let content = await fsp.readFile(nuxtConfigPath, 'utf-8')
 
     // Check if already in extends
-    if (content.includes('@friendlyinternet/nuxt-crouton-connector')) {
-      console.log('✓ nuxt-crouton-connector already in extends')
+    if (content.includes('@friendlyinternet/nuxt-crouton-supersaas')) {
+      console.log('✓ nuxt-crouton-supersaas already in extends')
       return true
     }
 
@@ -94,8 +94,8 @@ export async function addConnectorToNuxtConfig(projectRoot) {
     if (extendsRegex.test(content)) {
       // Add after nuxt-crouton (if present) or at beginning
       const replacement = content.includes('@friendlyinternet/nuxt-crouton\'')
-        ? `$1\n    '@friendlyinternet/nuxt-crouton',\n    '@friendlyinternet/nuxt-crouton-connector',`
-        : `$1\n    '@friendlyinternet/nuxt-crouton-connector',`
+        ? `$1\n    '@friendlyinternet/nuxt-crouton',\n    '@friendlyinternet/nuxt-crouton-supersaas',`
+        : `$1\n    '@friendlyinternet/nuxt-crouton-supersaas',`
 
       content = content.replace(
         /(extends:\s*\[\s*\n\s*'@friendlyinternet\/nuxt-crouton',)/,
@@ -103,13 +103,13 @@ export async function addConnectorToNuxtConfig(projectRoot) {
       )
 
       // If nuxt-crouton not found, add at start of extends
-      if (!content.includes('@friendlyinternet/nuxt-crouton-connector')) {
-        content = content.replace(extendsRegex, `$1\n    '@friendlyinternet/nuxt-crouton-connector',`)
+      if (!content.includes('@friendlyinternet/nuxt-crouton-supersaas')) {
+        content = content.replace(extendsRegex, `$1\n    '@friendlyinternet/nuxt-crouton-supersaas',`)
       }
     }
 
     await fsp.writeFile(nuxtConfigPath, content)
-    console.log('✓ Added nuxt-crouton-connector to extends')
+    console.log('✓ Added nuxt-crouton-supersaas to extends')
     return true
   } catch (error) {
     console.error('✗ Failed to update nuxt.config.ts:', error.message)
@@ -139,7 +139,7 @@ export async function updateAppConfigWithPackageImport(projectRoot, collectionNa
     let modified = false
 
     // Add import from package (not local file)
-    const importStatement = `import { ${collectionName}Config } from '@friendlyinternet/nuxt-crouton-connector/${connectorType}'`
+    const importStatement = `import { ${collectionName}Config } from '@friendlyinternet/nuxt-crouton-supersaas/${connectorType}'`
 
     // Check if import already exists
     if (!content.includes(importStatement)) {
@@ -253,7 +253,7 @@ export async function setupConnectorInteractive(projectRoot, collectionName, rec
 
   // Install package if needed
   const isInstalled = await fileExists(
-    path.join(projectRoot, 'node_modules/@friendlyinternet/nuxt-crouton-connector')
+    path.join(projectRoot, 'node_modules/@friendlyinternet/nuxt-crouton-supersaas')
   )
 
   if (!isInstalled) {
@@ -270,7 +270,7 @@ export async function setupConnectorInteractive(projectRoot, collectionName, rec
   await updateAppConfigWithPackageImport(projectRoot, collectionName, selectedConnector.type)
 
   console.log(`\n✓ ${collectionName} connector setup complete!`)
-  console.log(`  ✓ Package: @friendlyinternet/nuxt-crouton-connector`)
+  console.log(`  ✓ Package: @friendlyinternet/nuxt-crouton-supersaas`)
   console.log(`  ✓ Layer: Added to nuxt.config.ts extends`)
   console.log(`  ✓ Config: Imported in app.config.ts`)
   console.log(`\n  Everything is configured via the layer - no files copied!`)

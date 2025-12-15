@@ -76,7 +76,7 @@ export const nuxsaasUserSchema = z.object({
  * @example Copy-Paste Mode
  * ```typescript
  * // app/app.config.ts
- * import { usersConfig } from '@friendlyinternet/nuxt-crouton-connector/nuxsaas'
+ * import { usersConfig } from '@friendlyinternet/nuxt-crouton-supersaas/nuxsaas'
  *
  * export default defineAppConfig({
  *   croutonCollections: {
@@ -88,8 +88,8 @@ export const nuxsaasUserSchema = z.object({
  * @example Proxy Mode (Recommended)
  * ```typescript
  * // app/app.config.ts
- * import { connectNuxsaas } from '@friendlyinternet/nuxt-crouton-connector/nuxsaas'
- * import { nuxsaasUserSchema } from '@friendlyinternet/nuxt-crouton-connector/nuxsaas'
+ * import { connectNuxsaas } from '@friendlyinternet/nuxt-crouton-supersaas/nuxsaas'
+ * import { nuxsaasUserSchema } from '@friendlyinternet/nuxt-crouton-supersaas/nuxsaas'
  *
  * export default defineAppConfig({
  *   croutonCollections: {

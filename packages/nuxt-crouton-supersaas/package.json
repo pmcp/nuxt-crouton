@@ -1,13 +1,14 @@
 {
-  "name": "@friendlyinternet/nuxt-crouton-connector",
-  "version": "0.3.0",
-  "description": "Pre-built connectors for external auth systems and user management integrations with Nuxt Crouton",
+  "name": "@friendlyinternet/nuxt-crouton-supersaas",
+  "version": "1.0.0",
+  "description": "SuperSaaS integration layer for Nuxt Crouton - connectors, translations, and utilities",
   "type": "module",
   "main": "./nuxt.config.ts",
   "files": [
     "app",
     "server",
     "connectors",
+    "i18n",
     "dist",
     "nuxt.config.ts",
     "README.md"
@@ -28,18 +29,16 @@
     "nuxt",
     "nuxt-layer",
     "crouton",
-    "connector",
-    "auth",
-    "users",
     "supersaas",
-    "external-collections"
+    "i18n",
+    "translations"
   ],
   "author": "FYIT",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pmcp/nuxt-crouton.git",
-    "directory": "packages/nuxt-crouton-connector"
+    "directory": "packages/nuxt-crouton-supersaas"
   },
   "bugs": {
     "url": "https://github.com/pmcp/nuxt-crouton/issues"

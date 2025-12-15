@@ -149,7 +149,7 @@ export function generateFormComponent(data, config = {}) {
       // Check refScope to determine how to resolve the reference
       if (field.refScope === 'adapter') {
         // Adapter-scoped reference: use target as-is (no layer prefix)
-        // These are managed by connector packages (e.g., @friendlyinternet/nuxt-crouton-connector-supersaas)
+        // These are managed by connector packages (e.g., @friendlyinternet/nuxt-crouton-supersaas)
         resolvedCollection = field.refTarget
       } else {
         // Local layer reference: add layer prefix

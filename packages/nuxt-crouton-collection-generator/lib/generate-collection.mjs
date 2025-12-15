@@ -494,7 +494,7 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
     if (!collectionsBlockRegex.test(content)) {
       // No croutonCollections block yet, add one
       // Check for external connector imports (e.g., usersConfig) and preserve them
-      const externalConnectorImports = content.match(/import\s+{\s*(\w+Config)\s*}\s+from\s+['"]@friendlyinternet\/nuxt-crouton-connector\//g)
+      const externalConnectorImports = content.match(/import\s+{\s*(\w+Config)\s*}\s+from\s+['"]@friendlyinternet\/nuxt-crouton-supersaas\//g)
       let additionalEntries = ''
 
       if (externalConnectorImports) {

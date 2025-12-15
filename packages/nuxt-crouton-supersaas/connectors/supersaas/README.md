@@ -54,13 +54,13 @@ Your SuperSaaS project must have:
 ### 1. Install Package
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-connector
+pnpm add @friendlyinternet/nuxt-crouton-supersaas
 ```
 
 ### 2. Configure in app.config.ts
 
 ```typescript
-import { connectSupersaas } from '@friendlyinternet/nuxt-crouton-connector/supersaas'
+import { connectSupersaas } from '@friendlyinternet/nuxt-crouton-supersaas/supersaas'
 import { z } from 'zod'
 
 const userSchema = z.object({
@@ -107,17 +107,17 @@ If you need full control over the endpoint logic:
 ### 1. Install Package
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-connector
+pnpm add @friendlyinternet/nuxt-crouton-supersaas
 ```
 
 ### 2. Copy Connector Files
 
 ```bash
 # Copy composable
-cp node_modules/@friendlyinternet/nuxt-crouton-connector/connectors/supersaas/app/composables/useUsers.ts ./app/composables/
+cp node_modules/@friendlyinternet/nuxt-crouton-supersaas/connectors/supersaas/app/composables/useUsers.ts ./app/composables/
 
 # Copy API endpoint (creates directory structure)
-cp -r node_modules/@friendlyinternet/nuxt-crouton-connector/connectors/supersaas/server/api/teams ./server/api/
+cp -r node_modules/@friendlyinternet/nuxt-crouton-supersaas/connectors/supersaas/server/api/teams ./server/api/
 ```
 
 ### 3. Register in app.config.ts

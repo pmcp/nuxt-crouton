@@ -1,6 +1,6 @@
-# @friendlyinternet/nuxt-crouton-connector
+# @friendlyinternet/nuxt-crouton-supersaas
 
-Pre-built connectors for integrating external auth systems and user management with Nuxt Crouton.
+SuperSaaS integration layer for Nuxt Crouton - connectors, translations, and utilities.
 
 ## Why This Package?
 
@@ -14,14 +14,12 @@ This package provides **ready-to-use implementations** for common auth systems, 
 ## Available Connectors
 
 - ✅ **SuperSaaS** - Team-based user management
-- 🚧 **Supabase** - Coming soon
-- 🚧 **Clerk** - Coming soon
-- 🚧 **Auth0** - Coming soon
+- ✅ **NuxSaaS** - Admin-level user management with better-auth
 
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-connector
+pnpm add @friendlyinternet/nuxt-crouton-supersaas
 ```
 
 ## Usage Patterns
@@ -32,7 +30,7 @@ Best for most use cases. Connects to your existing endpoints without creating du
 
 ```typescript
 // app.config.ts
-import { connectSupersaas } from '@friendlyinternet/nuxt-crouton-connector/supersaas'
+import { connectSupersaas } from '@friendlyinternet/nuxt-crouton-supersaas/supersaas'
 import { z } from 'zod'
 
 const userSchema = z.object({
@@ -70,11 +68,11 @@ Best when you need full control over the endpoint logic.
 
 ```bash
 # Install package
-pnpm add @friendlyinternet/nuxt-crouton-connector
+pnpm add @friendlyinternet/nuxt-crouton-supersaas
 
 # Copy connector files to your project
-cp -r node_modules/@friendlyinternet/nuxt-crouton-connector/connectors/supersaas/app/composables/useUsers.ts ./app/composables/
-cp -r node_modules/@friendlyinternet/nuxt-crouton-connector/connectors/supersaas/server/* ./server/
+cp -r node_modules/@friendlyinternet/nuxt-crouton-supersaas/connectors/supersaas/app/composables/useUsers.ts ./app/composables/
+cp -r node_modules/@friendlyinternet/nuxt-crouton-supersaas/connectors/supersaas/server/* ./server/
 ```
 
 Then register in `app.config.ts`:
@@ -162,7 +160,7 @@ This package follows the same addon pattern as `nuxt-crouton-assets` and `nuxt-c
 @friendlyinternet/nuxt-crouton          ← Core (provides utilities)
 @friendlyinternet/nuxt-crouton-assets   ← Asset management addon
 @friendlyinternet/nuxt-crouton-i18n     ← i18n addon
-@friendlyinternet/nuxt-crouton-connector ← External collections addon (this package)
+@friendlyinternet/nuxt-crouton-supersaas ← SuperSaaS integration (this package)
 ```
 
 ## Contributing

@@ -50,7 +50,7 @@ export default {
     // Example: users collection from auth system
     // users: {
     //   type: 'supersaas',      // Connector type: 'supersaas', 'supabase', 'clerk'
-    //   autoInstall: true,       // Install @friendlyinternet/nuxt-crouton-connector
+    //   autoInstall: true,       // Install @friendlyinternet/nuxt-crouton-supersaas
     //   copyFiles: true,         // Copy connector files to project
     //   updateAppConfig: true    // Auto-register in app.config.ts
     // },

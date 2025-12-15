@@ -49,7 +49,7 @@ export interface NuxsaasConnectorConfig {
  *
  * @example
  * ```typescript
- * import { connectNuxsaas } from '@friendlyinternet/nuxt-crouton-connector/nuxsaas'
+ * import { connectNuxsaas } from '@friendlyinternet/nuxt-crouton-supersaas/nuxsaas'
  * import { z } from 'zod'
  *
  * const userSchema = z.object({

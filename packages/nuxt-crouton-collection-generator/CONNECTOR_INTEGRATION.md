@@ -93,7 +93,7 @@ Which auth system?
   4. Skip (configure manually)
 > 1
 
-✓ Installing @friendlyinternet/nuxt-crouton-connector
+✓ Installing @friendlyinternet/nuxt-crouton-supersaas
 ✓ Copied app/composables/useUsers.ts
 ✓ Copied server/api/teams/[id]/users/index.get.ts
 ✓ Updated app.config.ts
@@ -106,7 +106,7 @@ After connector setup, you'll have:
 ```
 your-project/
 ├── node_modules/
-│   └── @friendlyinternet/nuxt-crouton-connector/  # Installed package
+│   └── @friendlyinternet/nuxt-crouton-supersaas/  # Installed package
 ├── app/
 │   ├── composables/
 │   │   └── useUsers.ts                             # ✓ Created
@@ -269,7 +269,7 @@ Which auth system?
   4. Skip (configure manually)
 > 1
 
-✓ Installing @friendlyinternet/nuxt-crouton-connector
+✓ Installing @friendlyinternet/nuxt-crouton-supersaas
 ...
 ```
 
@@ -311,10 +311,10 @@ Edit `server/api/teams/[id]/users/index.get.ts`:
 
 ### "Connector package not found"
 
-Make sure `@friendlyinternet/nuxt-crouton-connector` is installed:
+Make sure `@friendlyinternet/nuxt-crouton-supersaas` is installed:
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-connector
+pnpm add @friendlyinternet/nuxt-crouton-supersaas
 ```
 
 ### "getActiveTeamMembers is not defined"

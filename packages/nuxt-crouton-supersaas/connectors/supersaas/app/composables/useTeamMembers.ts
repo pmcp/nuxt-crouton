@@ -17,7 +17,7 @@ import { defineExternalCollection } from '@friendlyinternet/nuxt-crouton/app/com
  *
  * ```typescript
  * // app.config.ts
- * import { teamMembersConfig } from '@friendlyinternet/nuxt-crouton-connector/supersaas'
+ * import { teamMembersConfig } from '@friendlyinternet/nuxt-crouton-supersaas/supersaas'
  *
  * export default defineAppConfig({
  *   croutonCollections: {
