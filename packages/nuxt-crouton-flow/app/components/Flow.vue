@@ -366,13 +366,18 @@ const remoteGhostNodes = computed<Node[]>(() => {
   if (!props.sync || !syncState) return []
 
   const currentUserId = syncState.user.value?.id
+  const usersWithGhosts = syncState.users.value.filter(u => u.ghostNode)
+  if (usersWithGhosts.length > 0) {
+    console.log('[CroutonFlow] Users with ghosts:', usersWithGhosts)
+  }
   return syncState.users.value
     .filter(u => u.user.id !== currentUserId && u.ghostNode)
     .map(u => ({
       id: `ghost-${u.user.id}`,
-      type: 'ghost',
+      type: 'default',
       position: u.ghostNode!.position,
       data: {
+        isGhost: true,
         title: u.ghostNode!.title,
         userName: u.user.name,
         userColor: u.user.color,
@@ -406,7 +411,7 @@ const layoutOptions = computed(() => ({
   rankSpacing: props.flowConfig?.rankSpacing ?? 100,
 }))
 
-const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
+const { applyLayout, applyLayoutToNew, needsLayout } = useFlowLayout(layoutOptions.value)
 
 // Position mutation (debounced) - only for legacy mode
 const { debouncedUpdate } = useDebouncedPositionUpdate(
@@ -415,20 +420,29 @@ const { debouncedUpdate } = useDebouncedPositionUpdate(
   500,
 )
 
+// Track if initial layout has been applied (legacy mode)
+const initialLayoutApplied = ref(false)
+
 // Apply layout to nodes that need it (legacy mode only)
+// Only applies layout ONCE on initial load, then preserves all positions
 const layoutedNodes = computed(() => {
   const nodes = dataNodes.value
   const edges = dataEdges.value
 
-  let result
-  if (needsLayout(nodes)) {
-    result = applyLayout(nodes, edges)
-  }
-  else {
-    result = nodes
+  // Only apply layout on initial load (when all nodes are at 0,0)
+  // After that, preserve all positions - no dagre at all
+  if (!initialLayoutApplied.value && needsLayout(nodes)) {
+    const result = applyLayout(nodes, edges)
+    // Mark layout as applied (in nextTick to avoid mutation during render)
+    nextTick(() => {
+      initialLayoutApplied.value = true
+    })
+    return result
   }
 
-  return result
+  // After initial layout, just return nodes as-is
+  // New nodes will appear at their drop position (or 0,0 if no position set)
+  return nodes
 })
 
 // ============================================
@@ -439,26 +453,27 @@ const layoutedNodes = computed(() => {
 const layoutAppliedToYjs = ref(false)
 
 // Use sync nodes or legacy nodes based on mode
+// In sync mode: Only apply layout ONCE on initial load (when all nodes are at 0,0)
+// After that, positions are managed by Yjs and preserved across sessions
+// New nodes dropped on canvas get their position from the drop handler
 const finalNodes = computed(() => {
   let baseNodes: Node[]
 
   if (props.sync && syncState) {
-    // Apply layout if needed for sync nodes too
     const nodes = syncNodes.value
     const edges = syncEdges.value
 
-    console.log('[CroutonFlow] finalNodes: checking layout for', nodes.length, 'nodes')
+    // needsLayout only returns true when ALL nodes are at (0,0) - i.e., initial load
+    // It does NOT return true just because a single new node was added
     const needsLayoutResult = needsLayout(nodes)
-    console.log('[CroutonFlow] needsLayout:', needsLayoutResult, 'layoutAppliedToYjs:', layoutAppliedToYjs.value)
 
+    // Only apply initial layout ONCE, then respect Yjs positions forever
     if (needsLayoutResult && !layoutAppliedToYjs.value) {
       const layoutedNodesResult = applyLayout(nodes, edges)
-      console.log('[CroutonFlow] After layout, first node:', layoutedNodesResult[0] ? JSON.stringify(layoutedNodesResult[0].position) : 'none')
 
       // Write layout positions back to Yjs so they persist
       // Use nextTick to avoid updating during render
       nextTick(() => {
-        console.log('[CroutonFlow] Writing layout positions back to Yjs')
         for (const node of layoutedNodesResult) {
           if (node.position && typeof node.position.x === 'number' && typeof node.position.y === 'number') {
             syncState.updatePosition(node.id, node.position)
@@ -470,6 +485,8 @@ const finalNodes = computed(() => {
       baseNodes = layoutedNodesResult
     }
     else {
+      // Use Yjs positions as-is - this preserves manually positioned nodes
+      // and new nodes with drop positions
       baseNodes = nodes
     }
   }
