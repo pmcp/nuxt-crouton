@@ -41,7 +41,8 @@ export function useFlowPresence(options: UseFlowPresenceOptions) {
       if (selecting.length === 0) return {}
 
       // Use first user's color for border
-      const color = selecting[0].user.color
+      const firstUser = selecting[0]
+      const color = firstUser?.user?.color || '#888'
       return {
         boxShadow: `0 0 0 2px ${color}`,
         borderColor: color,

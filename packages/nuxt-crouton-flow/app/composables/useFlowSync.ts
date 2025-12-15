@@ -38,10 +38,14 @@ export function useFlowSync(options: UseFlowSyncOptions) {
   const { user: sessionUser } = useUserSession()
   const user = computed(() => {
     if (!sessionUser.value) return null
+    // User type varies by auth provider - access properties safely
+    const userRecord = sessionUser.value as Record<string, unknown>
+    const userId = String(userRecord.id || userRecord.sub || 'anonymous')
+    const userName = String(userRecord.name || userRecord.email || 'Anonymous')
     return {
-      id: String(sessionUser.value.id),
-      name: sessionUser.value.name || sessionUser.value.email || 'Anonymous',
-      color: generateUserColor(String(sessionUser.value.id)),
+      id: userId,
+      name: userName,
+      color: generateUserColor(userId),
     }
   })
 
