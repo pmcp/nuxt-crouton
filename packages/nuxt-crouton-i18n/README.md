@@ -275,28 +275,87 @@ const { schema, columns, config } = useTranslationsUi()
 
 ## Seeding Translations
 
-The `seed-translations` command imports JSON locale files into the database:
+The seed CLI imports JSON locale files into the database as system-level translations.
+
+### Quick Start
 
 ```bash
-# Basic usage
-crouton-generate seed-translations
-
-# Options
---layer <name>     # Seed from specific layer only
---team <id>        # Team ID to seed to (default: system)
---dry-run          # Preview without seeding
---force            # Overwrite existing translations
---api-url <url>    # API URL (default: http://localhost:3000)
---sql              # Output SQL instead of using API
+# From your project root
+pnpm crouton:i18n:seed --dry-run  # Preview what will be seeded
+pnpm crouton:i18n:seed --sql > seed.sql  # Generate SQL
+pnpm crouton:i18n:seed  # Seed via API
 ```
+
+### Locale Sources
+
+The seed CLI discovers and reads from multiple locale sources (in order, later sources can override):
+
+1. **nuxt-crouton-i18n/locales/** - i18n admin UI strings
+2. **nuxt-crouton-supersaas/i18n/locales/** - App-level common strings
+3. **[app]/layers/\*/i18n/locales/** - Domain layer strings
+4. **[app]/i18n/locales/** - App-level overrides
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Preview translations without seeding |
+| `--sql` | Output SQL statements for direct database use |
+| `--api-url <url>` | API endpoint URL (default: http://localhost:3000) |
+| `--team-id <id>` | Seed to specific team (default: null = system) |
+| `--force` | Overwrite existing translations |
+| `--source <dir>` | Seed from specific directory only |
+| `-h, --help` | Show help message |
 
 ### SQL Output
 
-For direct database insertion:
+For direct database insertion without running the Nuxt server:
 
 ```bash
-crouton-generate seed-translations --sql > seed.sql
+# Generate SQL
+pnpm crouton:i18n:seed --sql > seed.sql
+
+# Apply to SQLite database
 sqlite3 .data/hub/d1/your-db.sqlite < seed.sql
+```
+
+### Seeding via API
+
+For dynamic environments or when the server is running:
+
+```bash
+# Default (localhost:3000)
+pnpm crouton:i18n:seed
+
+# Custom API URL
+pnpm crouton:i18n:seed --api-url https://your-app.com
+```
+
+### What Gets Seeded
+
+Each translation is seeded with:
+- `teamId: null` - System-level translation
+- `userId: 'system'` - Indicates seeded by CLI
+- `isOverrideable: true` - Teams can override
+- `namespace: 'ui'` - Standard UI namespace
+- `category` - First segment of key path (e.g., "common" from "common.save")
+- `values` - JSON object with all locale values
+
+### Example Workflow
+
+```bash
+# 1. Preview what will be seeded
+pnpm crouton:i18n:seed --dry-run
+
+# 2. Generate and review SQL
+pnpm crouton:i18n:seed --sql > seed.sql
+cat seed.sql | head -50
+
+# 3. Apply to database
+sqlite3 .data/hub/d1/your-db.sqlite < seed.sql
+
+# 4. Verify in app
+# Navigate to /admin/translations to see seeded translations
 ```
 
 ## Customizing Locales

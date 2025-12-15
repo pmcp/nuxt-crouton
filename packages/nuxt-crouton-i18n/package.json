@@ -4,13 +4,20 @@
   "description": "i18n layer extending nuxt-crouton for multi-language support",
   "type": "module",
   "main": "./nuxt.config.ts",
+  "bin": {
+    "crouton-i18n-seed": "./cli/seed.ts"
+  },
   "files": [
     "app",
     "server",
     "locales",
+    "cli",
     "nuxt.config.ts",
     "README.md"
   ],
+  "scripts": {
+    "crouton:i18n:seed": "npx tsx ./cli/seed.ts"
+  },
   "keywords": [
     "nuxt",
     "nuxt-layer",
