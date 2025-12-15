@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, getCurrentInstance, resolveComponent, ref } from 'vue'
+import { computed, getCurrentInstance, resolveComponent, ref, watch } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
-import type { Node, Edge, NodeDragEvent, Connection } from '@vue-flow/core'
+import type { Node, NodeDragEvent } from '@vue-flow/core'
 import type { CroutonFlowProps, FlowConfig, FlowPosition } from '../types/flow'
+import type { YjsFlowNode } from '../types/yjs'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
+import { useFlowSync } from '../composables/useFlowSync'
 import CroutonFlowNode from './Node.vue'
 
 // Import default styles
@@ -25,21 +27,30 @@ import '@vue-flow/minimap/dist/style.css'
  * - Drag-and-drop node positioning with persistence
  * - Custom node component resolution
  * - Parent-based edge generation
+ * - Real-time multiplayer sync (when sync mode enabled)
  *
  * @example
  * ```vue
+ * <!-- Without sync (existing behavior) -->
  * <CroutonFlow
  *   :rows="decisions"
  *   collection="decisions"
  *   parent-field="parentId"
  *   position-field="position"
  * />
+ *
+ * <!-- With sync (multiplayer mode) -->
+ * <CroutonFlow
+ *   collection="decisions"
+ *   sync
+ *   :flow-id="projectId"
+ * />
  * ```
  */
 
 interface Props {
-  /** Collection rows to display as nodes */
-  rows: Record<string, unknown>[]
+  /** Collection rows to display as nodes (not needed when sync=true) */
+  rows?: Record<string, unknown>[]
   /** Collection name for component resolution and mutations */
   collection: string
   /** Field containing parent ID (default: 'parentId') */
@@ -62,6 +73,10 @@ interface Props {
   draggable?: boolean
   /** Whether to fit view on mount (default: true) */
   fitViewOnMount?: boolean
+  /** Enable real-time sync mode */
+  sync?: boolean
+  /** Flow ID for sync mode (required if sync=true) */
+  flowId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -73,7 +88,8 @@ const props = withDefaults(defineProps<Props>(), {
   background: true,
   backgroundPattern: 'dots',
   draggable: true,
-  fitViewOnMount: true
+  fitViewOnMount: true,
+  sync: false,
 })
 
 const emit = defineEmits<{
@@ -89,11 +105,69 @@ const emit = defineEmits<{
   selectionChange: [selectedNodeIds: string[]]
 }>()
 
+// Validate props
+if (props.sync && !props.flowId) {
+  console.warn('[CroutonFlow] flowId is required when sync mode is enabled')
+}
+
 // Container ref for potential future use
 const containerRef = ref<HTMLElement | null>(null)
 
+// ============================================
+// SYNC MODE: Use Yjs for real-time sync
+// ============================================
+const syncState = props.sync && props.flowId
+  ? useFlowSync({
+      flowId: props.flowId,
+      collection: props.collection,
+    })
+  : null
+
+// Convert sync nodes to Vue Flow format
+const syncNodes = computed<Node[]>(() => {
+  if (!syncState) return []
+
+  return syncState.nodes.value.map((node: YjsFlowNode) => ({
+    id: node.id,
+    type: 'default',
+    position: node.position,
+    data: {
+      ...node.data,
+      id: node.id,
+      title: node.title,
+      parentId: node.parentId,
+    },
+    label: node.title,
+  }))
+})
+
+// Generate edges from sync nodes
+const syncEdges = computed(() => {
+  if (!syncState) return []
+
+  const result: { id: string; source: string; target: string; type: string }[] = []
+  const nodeIds = new Set(syncState.nodes.value.map((n: YjsFlowNode) => n.id))
+
+  for (const node of syncState.nodes.value) {
+    if (node.parentId && nodeIds.has(node.parentId)) {
+      result.push({
+        id: `e-${node.parentId}-${node.id}`,
+        source: node.parentId,
+        target: node.id,
+        type: 'default',
+      })
+    }
+  }
+
+  return result
+})
+
+// ============================================
+// LEGACY MODE: Use props-based data
+// ============================================
+
 // Convert rows to reactive ref
-const rowsRef = computed(() => props.rows)
+const rowsRef = computed(() => props.rows || [])
 
 // Convert rows to nodes and edges
 const { nodes: dataNodes, edges: dataEdges, getItem } = useFlowData(
@@ -101,27 +175,27 @@ const { nodes: dataNodes, edges: dataEdges, getItem } = useFlowData(
   {
     parentField: props.parentField,
     positionField: props.positionField,
-    labelField: props.labelField
-  }
+    labelField: props.labelField,
+  },
 )
 
 // Layout utilities
 const layoutOptions = computed(() => ({
   direction: props.flowConfig?.direction ?? 'TB',
   nodeSpacing: props.flowConfig?.nodeSpacing ?? 50,
-  rankSpacing: props.flowConfig?.rankSpacing ?? 100
+  rankSpacing: props.flowConfig?.rankSpacing ?? 100,
 }))
 
 const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
 
-// Position mutation (debounced)
+// Position mutation (debounced) - only for legacy mode
 const { debouncedUpdate } = useDebouncedPositionUpdate(
   props.collection,
   props.positionField,
-  500
+  500,
 )
 
-// Apply layout to nodes that need it
+// Apply layout to nodes that need it (legacy mode only)
 const layoutedNodes = computed(() => {
   const nodes = dataNodes.value
   const edges = dataEdges.value
@@ -129,19 +203,50 @@ const layoutedNodes = computed(() => {
   let result
   if (needsLayout(nodes)) {
     result = applyLayout(nodes, edges)
-  } else {
+  }
+  else {
     result = nodes
   }
 
   return result
 })
 
+// ============================================
+// FINAL COMPUTED VALUES
+// ============================================
+
+// Use sync nodes or legacy nodes based on mode
+const finalNodes = computed(() => {
+  if (props.sync && syncState) {
+    // Apply layout if needed for sync nodes too
+    const nodes = syncNodes.value
+    const edges = syncEdges.value
+
+    if (needsLayout(nodes)) {
+      return applyLayout(nodes, edges)
+    }
+    return nodes
+  }
+  return layoutedNodes.value
+})
+
+const finalEdges = computed(() => {
+  if (props.sync && syncState) {
+    return syncEdges.value
+  }
+  return dataEdges.value
+})
+
+// ============================================
+// EVENT HANDLERS
+// ============================================
+
 // Use VueFlow instance
 const {
   onNodeDragStop,
   onNodeClick,
   onNodeDoubleClick,
-  onEdgeClick
+  onEdgeClick,
 } = useVueFlow()
 
 // Handle node drag end - persist position
@@ -151,11 +256,17 @@ onNodeDragStop((event: NodeDragEvent) => {
   const { node } = event
   const position: FlowPosition = {
     x: Math.round(node.position.x),
-    y: Math.round(node.position.y)
+    y: Math.round(node.position.y),
   }
 
-  // Persist via debounced mutation (uses $fetch directly, no cache invalidation)
-  debouncedUpdate(node.id, position)
+  if (props.sync && syncState) {
+    // Use Yjs for sync mode
+    syncState.updatePosition(node.id, position)
+  }
+  else {
+    // Persist via debounced mutation (legacy mode)
+    debouncedUpdate(node.id, position)
+  }
 
   // Emit event
   emit('nodeMove', node.id, position)
@@ -163,17 +274,34 @@ onNodeDragStop((event: NodeDragEvent) => {
 
 // Handle node click
 onNodeClick(({ node }) => {
-  const item = getItem(node.id)
-  if (item) {
-    emit('nodeClick', node.id, item)
+  if (props.sync && syncState) {
+    const syncNode = syncState.getNode(node.id)
+    if (syncNode) {
+      syncState.selectNode(node.id)
+      emit('nodeClick', node.id, { ...syncNode.data, id: syncNode.id, title: syncNode.title })
+    }
+  }
+  else {
+    const item = getItem(node.id)
+    if (item) {
+      emit('nodeClick', node.id, item)
+    }
   }
 })
 
 // Handle node double-click
 onNodeDoubleClick(({ node }) => {
-  const item = getItem(node.id)
-  if (item) {
-    emit('nodeDblClick', node.id, item)
+  if (props.sync && syncState) {
+    const syncNode = syncState.getNode(node.id)
+    if (syncNode) {
+      emit('nodeDblClick', node.id, { ...syncNode.data, id: syncNode.id, title: syncNode.title })
+    }
+  }
+  else {
+    const item = getItem(node.id)
+    if (item) {
+      emit('nodeDblClick', node.id, item)
+    }
   }
 })
 
@@ -211,14 +339,33 @@ const customNodeComponent = computed(() => {
   // Use default CroutonFlowNode
   return null
 })
+
+// Expose sync state for external access
+defineExpose({
+  syncState,
+})
 </script>
 
 <template>
   <div ref="containerRef" class="crouton-flow-container">
-    <!-- Using layoutedNodes - check console for node structure -->
+    <!-- Sync mode overlays -->
+    <template v-if="sync && syncState">
+      <!-- Connection status indicator -->
+      <CroutonFlowConnectionStatus
+        :connected="syncState.connected.value"
+        :synced="syncState.synced.value"
+        :error="syncState.error.value"
+      />
+
+      <!-- Presence overlay -->
+      <CroutonFlowPresence
+        :users="syncState.users.value"
+      />
+    </template>
+
     <VueFlow
-      :nodes="layoutedNodes"
-      :edges="dataEdges"
+      :nodes="finalNodes"
+      :edges="finalEdges"
       :min-zoom="0.1"
       :max-zoom="4"
       fit-view-on-init
@@ -232,14 +379,14 @@ const customNodeComponent = computed(() => {
           :data="nodeProps.data"
           :selected="nodeProps.selected"
           :dragging="nodeProps.dragging"
-          :label="nodeProps.label"
+          :label="typeof nodeProps.label === 'string' ? nodeProps.label : undefined"
         />
         <CroutonFlowNode
           v-else
           :data="nodeProps.data"
           :selected="nodeProps.selected"
           :dragging="nodeProps.dragging"
-          :label="nodeProps.label"
+          :label="typeof nodeProps.label === 'string' ? nodeProps.label : undefined"
         />
       </template>
 
