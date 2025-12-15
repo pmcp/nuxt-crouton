@@ -40,12 +40,23 @@ export function useT() {
 
   // Load team translations if not already loaded
   const loadTeamTranslations = async () => {
-    if (!teamSlugFromRoute.value || teamTranslationsLoaded.value) return
+    console.log('[useT] loadTeamTranslations called', {
+      teamSlug: teamSlugFromRoute.value,
+      alreadyLoaded: teamTranslationsLoaded.value
+    })
+
+    if (!teamSlugFromRoute.value || teamTranslationsLoaded.value) {
+      console.log('[useT] Skipping load:', !teamSlugFromRoute.value ? 'no team slug' : 'already loaded')
+      return
+    }
 
     try {
+      console.log('[useT] Fetching from API...')
       const data = await $fetch(`/api/teams/${teamSlugFromRoute.value}/translations-ui/with-system`, {
         query: { locale: locale.value }
       })
+
+      console.log('[useT] API response:', { itemCount: Array.isArray(data) ? data.length : 'not array', data })
 
       if (data && Array.isArray(data)) {
         // Build a map of keyPath to values for quick lookup
@@ -59,12 +70,12 @@ export function useT() {
           }
         }
 
+        console.log('[useT] Translation map built:', { keyCount: Object.keys(translationMap).length, keys: Object.keys(translationMap).slice(0, 5) })
         teamTranslations.value = translationMap
         teamTranslationsLoaded.value = true
       }
     } catch (error) {
-      // Silently fail - team translations are optional
-      console.debug('Failed to load team translations:', error)
+      console.error('[useT] Failed to load team translations:', error)
     }
   }
 
@@ -99,11 +110,26 @@ export function useT() {
     const teamSlug = route.params.team as string | undefined
     const teamOverride = teamTranslations.value?.[key]
 
+    // Debug logging for bookings.status keys
+    if (key.startsWith('bookings.status')) {
+      console.log('[useT] translate called', {
+        key,
+        teamSlug,
+        teamOverride,
+        teamTranslationsLoaded: teamTranslationsLoaded.value,
+        teamTranslationsKeys: Object.keys(teamTranslations.value || {}).slice(0, 5)
+      })
+    }
+
     if (teamOverride) {
       translatedValue = teamOverride
     } else {
       // Fall back to system translation
       const systemValue = params ? i18n.t(key, params as any) : i18n.t(key)
+
+      if (key.startsWith('bookings.status')) {
+        console.log('[useT] i18n.t() fallback result', { key, systemValue, isMissing: systemValue === key })
+      }
 
       // Check if translation is missing (i18n returns the key when not found)
       if (systemValue === key) {
