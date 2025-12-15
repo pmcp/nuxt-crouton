@@ -9,8 +9,7 @@
 import { ref, watch, onBeforeUnmount } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
-import TextStyle from '@tiptap/extension-text-style'
-import Color from '@tiptap/extension-color'
+import { TextStyle, Color } from '@tiptap/extension-text-style'
 
 const props = defineProps<{
   modelValue?: string
