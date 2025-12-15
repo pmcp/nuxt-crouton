@@ -1,59 +1,69 @@
 <template>
-  <div class="flex  gap-1.5">
-    <template v-for="lang in languages" :key="lang">
-      <UPopover
-        v-if="getTranslationLength(lang) > 0 && getTranslationLength(lang) <= 200"
-      >
+  <div class="flex gap-1.5">
+    <ClientOnly>
+      <template v-for="lang in languages" :key="lang">
+        <UPopover
+          v-if="getTranslationLength(lang) > 0 && getTranslationLength(lang) <= 200"
+        >
+          <template #default>
+            <UBadge
+              :label="getBadgeLabel(lang)"
+              :color="(getTranslationForLang(lang).length > 0) ? 'primary' : 'error'"
+              variant="subtle"
+              class="cursor-pointer"
+            />
+          </template>
 
-        <template #default="{ open }">
+          <template #content>
+            <div class="p-3 max-w-sm">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {{ lang.toUpperCase() }}
+                  <span v-if="isUsingFallback(lang)" class="text-orange-500 ml-1">({{ tString('common.fallbackToEN') }})</span>
+                </span>
+                <UButton
+                  icon="i-lucide-copy"
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  @click="copyToClipboard(getTranslationForLang(lang))"
+                />
+              </div>
+              <p class="text-sm break-words">{{ getTranslationForLang(lang) || tString('common.noTranslation') }}</p>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {{ getCharCount(lang) }} characters
+              </div>
+            </div>
+          </template>
+        </UPopover>
 
+        <UBadge
+          v-else-if="getTranslationLength(lang) === 0"
+          :label="getBadgeLabel(lang)"
+          color="neutral"
+          variant="subtle"
+        />
+
+        <UBadge
+          v-else
+          :label="getBadgeLabel(lang)"
+          :color="getTranslationForLang(lang) ? 'primary' : 'neutral'"
+          variant="subtle"
+          class="cursor-pointer"
+          @click="openModal(lang)"
+        />
+      </template>
+
+      <template #fallback>
+        <template v-for="lang in languages" :key="lang">
           <UBadge
             :label="getBadgeLabel(lang)"
-            :color="(getTranslationForLang(lang).length > 0) ? 'primary' : 'error'"
+            :color="(getTranslationForLang(lang).length > 0) ? 'primary' : 'neutral'"
             variant="subtle"
-            class="cursor-pointer"
           />
         </template>
-
-        <template #content>
-          <div class="p-3 max-w-sm">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                {{ lang.toUpperCase() }}
-                <span v-if="isUsingFallback(lang)" class="text-orange-500 ml-1">({{ tString('common.fallbackToEN') }})</span>
-              </span>
-              <UButton
-                icon="i-lucide-copy"
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                @click="copyToClipboard(getTranslationForLang(lang))"
-              />
-            </div>
-            <p class="text-sm break-words">{{ getTranslationForLang(lang) || tString('common.noTranslation') }}</p>
-            <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              {{ getCharCount(lang) }} characters
-            </div>
-          </div>
-        </template>
-      </UPopover>
-
-      <UBadge
-        v-else-if="getTranslationLength(lang) === 0"
-        :label="getBadgeLabel(lang)"
-        color="neutral"
-        variant="subtle"
-      />
-
-      <UBadge
-        v-else
-        :label="getBadgeLabel(lang)"
-        :color="getTranslationForLang(lang) ? 'primary' : 'neutral'"
-        variant="subtle"
-        class="cursor-pointer"
-        @click="openModal(lang)"
-      />
-    </template>
+      </template>
+    </ClientOnly>
 
     <UModal
       v-model:open="modalOpen"
