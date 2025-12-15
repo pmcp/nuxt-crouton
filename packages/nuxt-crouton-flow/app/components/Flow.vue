@@ -123,6 +123,41 @@ const syncState = props.sync && props.flowId
     })
   : null
 
+// Seed Yjs doc from rows if needed (when sync mode with rows but empty Yjs doc)
+const seeded = ref(false)
+watch(
+  () => syncState?.synced.value,
+  (synced) => {
+    if (
+      synced
+      && syncState
+      && !seeded.value
+      && props.rows
+      && props.rows.length > 0
+      && syncState.nodes.value.length === 0
+    ) {
+      // Yjs doc is empty but we have rows - seed it
+      console.log('[CroutonFlow] Seeding Yjs doc from rows:', props.rows.length, 'items')
+      for (const row of props.rows) {
+        const id = String(row.id || crypto.randomUUID())
+        const title = String(row[props.labelField] || 'Untitled')
+        const parentId = row[props.parentField] as string | null | undefined
+        const position = (row[props.positionField] as FlowPosition) || null
+
+        syncState.createNode({
+          id,
+          title,
+          parentId: parentId || null,
+          position: position || { x: 0, y: 0 },
+          data: { ...row },
+        })
+      }
+      seeded.value = true
+    }
+  },
+  { immediate: true },
+)
+
 // Convert sync nodes to Vue Flow format
 const syncNodes = computed<Node[]>(() => {
   if (!syncState) return []
