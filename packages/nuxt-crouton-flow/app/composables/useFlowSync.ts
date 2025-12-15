@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
 import { ref, reactive, computed, readonly, onMounted, onUnmounted } from 'vue'
-import type { YjsFlowNode, YjsAwarenessState, FlowSyncState } from '../types/yjs'
+import type { YjsFlowNode, YjsAwarenessState, YjsGhostNode, FlowSyncState } from '../types/yjs'
 
 interface UseFlowSyncOptions {
   flowId: string
@@ -244,6 +244,22 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     }
   }
 
+  // Ghost node for drag-and-drop preview
+  const updateGhostNode = (ghostNode: YjsGhostNode | null) => {
+    if (user.value) {
+      sendAwareness({
+        user: user.value,
+        cursor: null,
+        selectedNodeId: null,
+        ghostNode,
+      })
+    }
+  }
+
+  const clearGhostNode = () => {
+    updateGhostNode(null)
+  }
+
   // Lifecycle
   onMounted(() => {
     connect()
@@ -264,6 +280,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     synced: computed(() => state.synced),
     error: computed(() => state.error),
     users: computed(() => state.users),
+    user,
 
     // Node operations
     createNode,
@@ -275,6 +292,10 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     // Presence
     updateCursor,
     selectNode,
+
+    // Ghost node (drag preview)
+    updateGhostNode,
+    clearGhostNode,
 
     // Advanced
     ydoc,

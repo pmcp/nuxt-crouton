@@ -12,6 +12,16 @@ export interface YjsFlowNode {
 }
 
 /**
+ * Ghost node state for drag preview
+ */
+export interface YjsGhostNode {
+  id: string
+  title: string
+  collection: string
+  position: { x: number; y: number }
+}
+
+/**
  * Awareness state for presence
  */
 export interface YjsAwarenessState {
@@ -22,6 +32,7 @@ export interface YjsAwarenessState {
   }
   cursor: { x: number; y: number } | null
   selectedNodeId: string | null
+  ghostNode?: YjsGhostNode | null
 }
 
 /**

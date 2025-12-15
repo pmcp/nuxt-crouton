@@ -5,13 +5,20 @@ import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import type { Node, NodeDragEvent } from '@vue-flow/core'
-import type { CroutonFlowProps, FlowConfig, FlowPosition } from '../types/flow'
+import type { CroutonFlowProps, FlowConfig, FlowPosition, CroutonDragData } from '../types/flow'
 import type { YjsFlowNode } from '../types/yjs'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
 import { useFlowSync } from '../composables/useFlowSync'
 import CroutonFlowNode from './Node.vue'
+import CroutonFlowGhostNode from './GhostNode.vue'
+import { markRaw } from 'vue'
+
+// Register custom node types for VueFlow
+const nodeTypes = {
+  ghost: markRaw(CroutonFlowGhostNode),
+}
 
 // Import default styles
 import '@vue-flow/core/dist/style.css'
@@ -77,6 +84,12 @@ interface Props {
   sync?: boolean
   /** Flow ID for sync mode (required if sync=true) */
   flowId?: string
+  /** Allow items to be dropped onto the flow (default: false) */
+  allowDrop?: boolean
+  /** Collections allowed to be dropped (empty = all allowed) */
+  allowedCollections?: string[]
+  /** Whether to auto-create nodes when items are dropped (default: true in sync mode) */
+  autoCreateOnDrop?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -90,6 +103,9 @@ const props = withDefaults(defineProps<Props>(), {
   draggable: true,
   fitViewOnMount: true,
   sync: false,
+  allowDrop: false,
+  allowedCollections: () => [],
+  autoCreateOnDrop: true,
 })
 
 const emit = defineEmits<{
@@ -103,6 +119,8 @@ const emit = defineEmits<{
   edgeClick: [edgeId: string]
   /** Emitted when selection changes */
   selectionChange: [selectedNodeIds: string[]]
+  /** Emitted when an item is dropped onto the flow */
+  nodeDrop: [item: Record<string, unknown>, position: FlowPosition, collection: string]
 }>()
 
 // Validate props
@@ -343,6 +361,27 @@ const syncEdges = computed(() => {
   return result
 })
 
+// Ghost nodes from other users' awareness (for multiplayer drag preview)
+const remoteGhostNodes = computed<Node[]>(() => {
+  if (!props.sync || !syncState) return []
+
+  const currentUserId = syncState.user.value?.id
+  return syncState.users.value
+    .filter(u => u.user.id !== currentUserId && u.ghostNode)
+    .map(u => ({
+      id: `ghost-${u.user.id}`,
+      type: 'ghost',
+      position: u.ghostNode!.position,
+      data: {
+        title: u.ghostNode!.title,
+        userName: u.user.name,
+        userColor: u.user.color,
+      },
+      draggable: false,
+      selectable: false,
+    }))
+})
+
 // ============================================
 // LEGACY MODE: Use props-based data
 // ============================================
@@ -401,6 +440,8 @@ const layoutAppliedToYjs = ref(false)
 
 // Use sync nodes or legacy nodes based on mode
 const finalNodes = computed(() => {
+  let baseNodes: Node[]
+
   if (props.sync && syncState) {
     // Apply layout if needed for sync nodes too
     const nodes = syncNodes.value
@@ -411,14 +452,14 @@ const finalNodes = computed(() => {
     console.log('[CroutonFlow] needsLayout:', needsLayoutResult, 'layoutAppliedToYjs:', layoutAppliedToYjs.value)
 
     if (needsLayoutResult && !layoutAppliedToYjs.value) {
-      const layoutedNodes = applyLayout(nodes, edges)
-      console.log('[CroutonFlow] After layout, first node:', layoutedNodes[0] ? JSON.stringify(layoutedNodes[0].position) : 'none')
+      const layoutedNodesResult = applyLayout(nodes, edges)
+      console.log('[CroutonFlow] After layout, first node:', layoutedNodesResult[0] ? JSON.stringify(layoutedNodesResult[0].position) : 'none')
 
       // Write layout positions back to Yjs so they persist
       // Use nextTick to avoid updating during render
       nextTick(() => {
         console.log('[CroutonFlow] Writing layout positions back to Yjs')
-        for (const node of layoutedNodes) {
+        for (const node of layoutedNodesResult) {
           if (node.position && typeof node.position.x === 'number' && typeof node.position.y === 'number') {
             syncState.updatePosition(node.id, node.position)
           }
@@ -426,11 +467,23 @@ const finalNodes = computed(() => {
         layoutAppliedToYjs.value = true
       })
 
-      return layoutedNodes
+      baseNodes = layoutedNodesResult
     }
-    return nodes
+    else {
+      baseNodes = nodes
+    }
   }
-  return layoutedNodes.value
+  else {
+    baseNodes = layoutedNodes.value
+  }
+
+  // Include ghost nodes (local + remote)
+  const ghosts: Node[] = [
+    ...(localGhostNode.value ? [localGhostNode.value] : []),
+    ...remoteGhostNodes.value,
+  ]
+
+  return [...baseNodes, ...ghosts]
 })
 
 const finalEdges = computed(() => {
@@ -451,6 +504,7 @@ const {
   onNodeClick,
   onNodeDoubleClick,
   onEdgeClick,
+  screenToFlowCoordinate,
 } = useVueFlow()
 
 // Throttle for real-time drag sync (sync every 50ms during drag)
@@ -536,6 +590,169 @@ onEdgeClick(({ edge }) => {
   emit('edgeClick', edge.id)
 })
 
+// ============================================
+// DRAG & DROP FROM EXTERNAL SOURCES
+// ============================================
+
+// Visual feedback for drag over (legacy - will be replaced by ghost nodes)
+const isDragOver = ref(false)
+
+// Local ghost node state (what this user is dragging)
+const localGhostNode = ref<Node | null>(null)
+
+// Throttle for ghost node awareness sync
+let lastGhostSync = 0
+const GHOST_SYNC_THROTTLE = 50
+
+/**
+ * Parse drag data from dataTransfer
+ */
+function parseDragData(event: DragEvent): CroutonDragData | null {
+  try {
+    const data = event.dataTransfer?.getData('application/json')
+    if (!data) return null
+
+    const parsed = JSON.parse(data)
+    if (parsed.type !== 'crouton-item') return null
+
+    return parsed as CroutonDragData
+  }
+  catch {
+    return null
+  }
+}
+
+/**
+ * Check if a drag item is allowed to be dropped
+ */
+function isDropAllowed(dragData: CroutonDragData): boolean {
+  if (!props.allowDrop) return false
+
+  // Check allowed collections
+  if (props.allowedCollections && props.allowedCollections.length > 0) {
+    return props.allowedCollections.includes(dragData.collection)
+  }
+
+  return true
+}
+
+/**
+ * Handle dragover - show ghost node at cursor position
+ */
+function handleDragOver(event: DragEvent) {
+  if (!props.allowDrop) return
+
+  // Check if this is a valid crouton drag (can only check types during dragover, not data)
+  const types = event.dataTransfer?.types || []
+  if (!types.includes('application/json')) return
+
+  event.preventDefault()
+  event.dataTransfer!.dropEffect = 'move'
+  isDragOver.value = true
+
+  // Convert screen coordinates to flow coordinates
+  const position = screenToFlowCoordinate({
+    x: event.clientX,
+    y: event.clientY,
+  })
+
+  const userName = props.sync && syncState?.user.value?.name || 'You'
+  const userColor = props.sync && syncState?.user.value?.color || '#3b82f6'
+
+  // Update local ghost node with generic title (browser security blocks reading data during dragover)
+  localGhostNode.value = {
+    id: 'local-ghost',
+    type: 'default',
+    position: { x: position.x, y: position.y },
+    data: {
+      isGhost: true,
+      title: 'New Node',
+      userName,
+      userColor,
+    },
+    draggable: false,
+    selectable: false,
+  }
+  // Broadcast to other users (throttled) in sync mode
+  const now = Date.now()
+  if (props.sync && syncState && now - lastGhostSync >= GHOST_SYNC_THROTTLE) {
+    lastGhostSync = now
+    syncState.updateGhostNode({
+      id: `ghost-${syncState.user.value?.id}`,
+      title: 'New Node',
+      collection: props.collection,
+      position: { x: Math.round(position.x), y: Math.round(position.y) },
+    })
+  }
+}
+
+/**
+ * Handle dragleave - clear ghost node
+ */
+function handleDragLeave(event: DragEvent) {
+  // Only handle if leaving the container (not entering a child)
+  const relatedTarget = event.relatedTarget as HTMLElement | null
+  if (relatedTarget && containerRef.value?.contains(relatedTarget)) return
+
+  isDragOver.value = false
+
+  // Clear local ghost node
+  localGhostNode.value = null
+
+  // Clear broadcast in sync mode
+  if (props.sync && syncState) {
+    syncState.clearGhostNode()
+  }
+}
+
+/**
+ * Handle drop - create node from dropped item
+ */
+function handleDrop(event: DragEvent) {
+  event.preventDefault()
+  isDragOver.value = false
+
+  // Clear ghost node immediately
+  localGhostNode.value = null
+  if (props.sync && syncState) {
+    syncState.clearGhostNode()
+  }
+
+  if (!props.allowDrop) return
+
+  const dragData = parseDragData(event)
+  if (!dragData || !isDropAllowed(dragData)) return
+
+  // Convert screen coordinates to flow coordinates
+  const position = screenToFlowCoordinate({
+    x: event.clientX,
+    y: event.clientY,
+  })
+
+  const flowPosition: FlowPosition = {
+    x: Math.round(position.x),
+    y: Math.round(position.y),
+  }
+
+  // Auto-create node in sync mode if enabled
+  if (props.autoCreateOnDrop && props.sync && syncState) {
+    const item = dragData.item
+    const id = String(item.id || crypto.randomUUID())
+    const title = String(item[props.labelField] || 'Untitled')
+
+    syncState.createNode({
+      id,
+      title,
+      parentId: null,
+      position: flowPosition,
+      data: { ...item },
+    })
+  }
+
+  // Always emit the event for custom handling
+  emit('nodeDrop', dragData.item, flowPosition, dragData.collection)
+}
+
 // Try to resolve custom node component for this collection
 const customNodeComponent = computed(() => {
   const instance = getCurrentInstance()
@@ -573,7 +790,14 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="containerRef" class="crouton-flow-container">
+  <div
+    ref="containerRef"
+    class="crouton-flow-container"
+    :class="{ 'crouton-flow-drop-target': isDragOver }"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
+  >
     <!-- Sync mode overlays -->
     <template v-if="sync && syncState">
       <!-- Connection status indicator -->
@@ -592,15 +816,22 @@ defineExpose({
     <VueFlow
       :nodes="finalNodes"
       :edges="finalEdges"
+      :node-types="nodeTypes"
       :min-zoom="0.1"
       :max-zoom="4"
-      fit-view-on-init
+      :fit-view-on-init="fitViewOnMount"
       class="crouton-vue-flow"
     >
       <!-- Custom or default node template -->
       <template #node-default="nodeProps">
+        <!-- Ghost node (drag preview) -->
+        <CroutonFlowGhostNode
+          v-if="nodeProps.data?.isGhost"
+          :data="nodeProps.data"
+        />
+        <!-- Custom node component -->
         <component
-          v-if="customNodeComponent"
+          v-else-if="customNodeComponent"
           :is="customNodeComponent"
           :data="nodeProps.data"
           :selected="nodeProps.selected"
@@ -608,6 +839,7 @@ defineExpose({
           :label="typeof nodeProps.label === 'string' ? nodeProps.label : undefined"
           :collection="collection"
         />
+        <!-- Default node -->
         <CroutonFlowNode
           v-else
           :data="nodeProps.data"
@@ -741,5 +973,11 @@ defineExpose({
 .dark :deep(.vue-flow__minimap) {
   background: #262626;
   border-color: #404040;
+}
+
+/* Drop zone styles - subtle border when dragging over */
+.crouton-flow-drop-target {
+  outline: 2px dashed var(--color-primary-500, #3b82f6);
+  outline-offset: -2px;
 }
 </style>
