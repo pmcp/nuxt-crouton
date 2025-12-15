@@ -97,7 +97,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { Editor } from '@tiptap/vue-3'
-import { BubbleMenu } from '@tiptap/vue-3'
+import { BubbleMenu } from '@tiptap/vue-3/menus'
 
 interface ContentType {
   name: string

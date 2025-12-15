@@ -44,6 +44,10 @@ export function generateSchema(data, dialect, config = null) {
     hierarchy.orderField || 'order'
   ] : []
 
+  // Sortable field (only when not using hierarchy, since hierarchy already includes order)
+  const sortable = data.sortable ?? false
+  const SORTABLE_FIELDS = (sortable && !hierarchy?.enabled) ? ['order'] : []
+
   // Conditional field generation based on config flags
   const useTeamUtility = config?.flags?.useTeamUtility ?? false
   const useMetadata = config?.flags?.useMetadata ?? true
@@ -53,7 +57,8 @@ export function generateSchema(data, dialect, config = null) {
     'id',
     ...(useMetadata ? METADATA_FIELDS : []),
     ...(useTeamUtility ? TEAM_FIELDS : []),
-    ...HIERARCHY_FIELDS
+    ...HIERARCHY_FIELDS,
+    ...SORTABLE_FIELDS
   ]
 
   const schemaFields = data.fields
@@ -179,6 +184,19 @@ const jsonColumn = customType<any>({
     }
   }
 
+  // Build sortable field conditionally (only when sortable is true and hierarchy is not enabled)
+  let sortableFields = ''
+  if (sortable && !hierarchy?.enabled) {
+    if (dialect === 'sqlite') {
+      sortableFields = `
+  order: integer('order').notNull().$default(() => 0)`
+    } else {
+      // PostgreSQL
+      sortableFields = `
+  order: integer('order').notNull().default(0)`
+    }
+  }
+
   // Build metadata fields conditionally
   const metadataFields = useMetadata ? `
   createdAt: ${dialect === 'sqlite' ? "integer('createdAt', { mode: 'timestamp' })" : "timestamp('createdAt', { withTimezone: true })"}.notNull().$default(() => new Date()),
@@ -191,6 +209,7 @@ const jsonColumn = customType<any>({
     idField,
     teamFields,
     hierarchyFields,
+    sortableFields,
     schemaFields,
     translationsField,
     metadataFields

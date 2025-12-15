@@ -31,10 +31,10 @@
     "access": "public"
   },
   "dependencies": {
-    "@tiptap/vue-3": "^2.0.0",
-    "@tiptap/starter-kit": "^2.0.0",
-    "@tiptap/extension-text-style": "^2.0.0",
-    "@tiptap/extension-color": "^2.0.0"
+    "@tiptap/vue-3": "^3.13.0",
+    "@tiptap/starter-kit": "^3.13.0",
+    "@tiptap/extension-text-style": "^3.13.0",
+    "@tiptap/extension-color": "^3.13.0"
   },
   "peerDependencies": {
     "nuxt": "^4.0.0",
