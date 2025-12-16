@@ -721,34 +721,62 @@
       "registerNew": "Register a new passkey",
       "noPasskeys": "No fingerprints or face IDs linked to your account.",
       "name": "Name",
-      "delete": "Delete"
+      "delete": "Delete",
+      "createPasskey": "Create Passkey"
     },
     "phoneNumber": {
       "title": "Phone Number",
+      "privacyNotice": "Your phone number is not shared with anyone.",
       "phoneNumber": "Phone Number",
+      "help": "Enter your phone number in E.164 format (e.g. +12125551234)",
       "verify": "Verify Phone Number",
       "remove": "Remove",
       "verificationCode": "Verification Code",
       "verifyButton": "Verify",
       "cancel": "Cancel",
-      "changeNumber": "Change Phone Number"
+      "changeNumber": "Change Phone Number",
+      "sentCodeTo": "We've sent a verification code to",
+      "resend": "Resend Code",
+      "resendCountdown": "Resend ({seconds}s)",
+      "invalidPhoneNumber": "Invalid phone number",
+      "invalidPhoneNumberDescription": "Please enter a valid phone number in E.164 format (e.g. +12125551234)",
+      "verificationCodeSent": "Verification code sent",
+      "verificationCodeSentDescription": "Please check your phone for the verification code",
+      "phoneNumberVerified": "Phone number verified",
+      "phoneNumberVerifiedDescription": "Your phone number has been successfully verified",
+      "phoneNumberRemoved": "Phone number removed",
+      "phoneNumberRemovedDescription": "Your phone number has been successfully removed"
     },
     "password": {
+      "title": "Security",
+      "description": "Your credentials are encrypted and stored securely.",
       "newPassword": "New Password",
       "updatePassword": "Update Password"
     },
     "linkedAccounts": {
+      "title": "Linked Accounts",
       "linkAccount": "Link Account",
-      "description": "Link an account to your account."
+      "description": "Link an account to your account.",
+      "linkNewProvider": "Link a new OAuth provider to your account.",
+      "connectedOn": "Connected on",
+      "unknownDate": "Unknown date",
+      "accountUnlinked": "Account unlinked",
+      "accountUnlinkedDescription": "Your {provider} account has been successfully unlinked",
+      "failedToUnlink": "Failed to unlink account"
     },
     "dangerZone": {
+      "title": "Danger Zone",
       "deleteAccount": "Delete Account",
       "description": "Please confirm your intent to delete your account.",
+      "fullDescription": "Delete your account. This action is irreversible and cannot be undone. All data associated including images will be deleted.",
       "confirmationLabel": "Please type 'delete' to confirm",
       "cancel": "Cancel",
       "proceed": "Proceed",
       "confirmationMessage": "Please type 'delete' to confirm",
-      "irreversible": "This action is irreversible and will remove all data associated with it"
+      "irreversible": "This action is irreversible and will remove all data associated with it",
+      "accountDeleted": "Account Deleted",
+      "accountDeletedDescription": "Your account has been successfully deleted.",
+      "failedToDelete": "Failed to delete account. Please try again."
     }
   },
   "branding": {

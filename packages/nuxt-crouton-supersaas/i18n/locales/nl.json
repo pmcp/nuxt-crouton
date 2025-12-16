@@ -721,34 +721,62 @@
       "registerNew": "Registreer een nieuwe passkey",
       "noPasskeys": "Geen vingerafdrukken of Face ID's gekoppeld aan uw account.",
       "name": "Naam",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "createPasskey": "Passkey aanmaken"
     },
     "phoneNumber": {
       "title": "Telefoonnummer",
+      "privacyNotice": "Uw telefoonnummer wordt met niemand gedeeld.",
       "phoneNumber": "Telefoonnummer",
+      "help": "Voer uw telefoonnummer in E.164-formaat in (bijv. +31612345678)",
       "verify": "Telefoonnummer verifiëren",
       "remove": "Verwijderen",
       "verificationCode": "Verificatiecode",
       "verifyButton": "Verifiëren",
       "cancel": "Annuleren",
-      "changeNumber": "Telefoonnummer wijzigen"
+      "changeNumber": "Telefoonnummer wijzigen",
+      "sentCodeTo": "We hebben een verificatiecode gestuurd naar",
+      "resend": "Code opnieuw versturen",
+      "resendCountdown": "Opnieuw versturen ({seconds}s)",
+      "invalidPhoneNumber": "Ongeldig telefoonnummer",
+      "invalidPhoneNumberDescription": "Voer een geldig telefoonnummer in E.164-formaat in (bijv. +31612345678)",
+      "verificationCodeSent": "Verificatiecode verzonden",
+      "verificationCodeSentDescription": "Controleer uw telefoon voor de verificatiecode",
+      "phoneNumberVerified": "Telefoonnummer geverifieerd",
+      "phoneNumberVerifiedDescription": "Uw telefoonnummer is succesvol geverifieerd",
+      "phoneNumberRemoved": "Telefoonnummer verwijderd",
+      "phoneNumberRemovedDescription": "Uw telefoonnummer is succesvol verwijderd"
     },
     "password": {
+      "title": "Beveiliging",
+      "description": "Uw inloggegevens worden versleuteld en veilig opgeslagen.",
       "newPassword": "Nieuw wachtwoord",
       "updatePassword": "Wachtwoord bijwerken"
     },
     "linkedAccounts": {
+      "title": "Gekoppelde accounts",
       "linkAccount": "Account koppelen",
-      "description": "Koppel een account aan uw account."
+      "description": "Koppel een account aan uw account.",
+      "linkNewProvider": "Koppel een nieuwe OAuth-provider aan uw account.",
+      "connectedOn": "Verbonden op",
+      "unknownDate": "Onbekende datum",
+      "accountUnlinked": "Account ontkoppeld",
+      "accountUnlinkedDescription": "Uw {provider}-account is succesvol ontkoppeld",
+      "failedToUnlink": "Account ontkoppelen mislukt"
     },
     "dangerZone": {
+      "title": "Gevarenzone",
       "deleteAccount": "Account verwijderen",
       "description": "Bevestig uw intentie om uw account te verwijderen.",
+      "fullDescription": "Verwijder uw account. Deze actie is onomkeerbaar en kan niet ongedaan worden gemaakt. Alle bijbehorende gegevens inclusief afbeeldingen worden verwijderd.",
       "confirmationLabel": "Typ 'delete' om te bevestigen",
       "cancel": "Annuleren",
       "proceed": "Doorgaan",
       "confirmationMessage": "Typ 'delete' om te bevestigen",
-      "irreversible": "Deze actie is onomkeerbaar en verwijdert alle bijbehorende gegevens"
+      "irreversible": "Deze actie is onomkeerbaar en verwijdert alle bijbehorende gegevens",
+      "accountDeleted": "Account verwijderd",
+      "accountDeletedDescription": "Uw account is succesvol verwijderd.",
+      "failedToDelete": "Account verwijderen mislukt. Probeer het opnieuw."
     }
   },
   "branding": {

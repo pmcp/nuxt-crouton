@@ -721,34 +721,62 @@
       "registerNew": "Enregistrer une nouvelle clé d'accès",
       "noPasskeys": "Aucune empreinte digitale ou Face ID liée à votre compte.",
       "name": "Nom",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "createPasskey": "Créer une clé d'accès"
     },
     "phoneNumber": {
       "title": "Numéro de téléphone",
+      "privacyNotice": "Votre numéro de téléphone n'est partagé avec personne.",
       "phoneNumber": "Numéro de téléphone",
+      "help": "Entrez votre numéro de téléphone au format E.164 (ex. +33123456789)",
       "verify": "Vérifier le numéro de téléphone",
       "remove": "Supprimer",
       "verificationCode": "Code de vérification",
       "verifyButton": "Vérifier",
       "cancel": "Annuler",
-      "changeNumber": "Changer de numéro de téléphone"
+      "changeNumber": "Changer de numéro de téléphone",
+      "sentCodeTo": "Nous avons envoyé un code de vérification à",
+      "resend": "Renvoyer le code",
+      "resendCountdown": "Renvoyer ({seconds}s)",
+      "invalidPhoneNumber": "Numéro de téléphone invalide",
+      "invalidPhoneNumberDescription": "Veuillez entrer un numéro de téléphone valide au format E.164 (ex. +33123456789)",
+      "verificationCodeSent": "Code de vérification envoyé",
+      "verificationCodeSentDescription": "Veuillez vérifier votre téléphone pour le code de vérification",
+      "phoneNumberVerified": "Numéro de téléphone vérifié",
+      "phoneNumberVerifiedDescription": "Votre numéro de téléphone a été vérifié avec succès",
+      "phoneNumberRemoved": "Numéro de téléphone supprimé",
+      "phoneNumberRemovedDescription": "Votre numéro de téléphone a été supprimé avec succès"
     },
     "password": {
+      "title": "Sécurité",
+      "description": "Vos identifiants sont chiffrés et stockés de manière sécurisée.",
       "newPassword": "Nouveau mot de passe",
       "updatePassword": "Mettre à jour le mot de passe"
     },
     "linkedAccounts": {
+      "title": "Comptes liés",
       "linkAccount": "Lier le compte",
-      "description": "Liez un compte à votre compte."
+      "description": "Liez un compte à votre compte.",
+      "linkNewProvider": "Liez un nouveau fournisseur OAuth à votre compte.",
+      "connectedOn": "Connecté le",
+      "unknownDate": "Date inconnue",
+      "accountUnlinked": "Compte dissocié",
+      "accountUnlinkedDescription": "Votre compte {provider} a été dissocié avec succès",
+      "failedToUnlink": "Échec de la dissociation du compte"
     },
     "dangerZone": {
+      "title": "Zone de danger",
       "deleteAccount": "Supprimer le compte",
       "description": "Veuillez confirmer votre intention de supprimer votre compte.",
+      "fullDescription": "Supprimez votre compte. Cette action est irréversible et ne peut pas être annulée. Toutes les données associées, y compris les images, seront supprimées.",
       "confirmationLabel": "Veuillez taper 'delete' pour confirmer",
       "cancel": "Annuler",
       "proceed": "Continuer",
       "confirmationMessage": "Veuillez taper 'delete' pour confirmer",
-      "irreversible": "Cette action est irréversible et supprimera toutes les données associées"
+      "irreversible": "Cette action est irréversible et supprimera toutes les données associées",
+      "accountDeleted": "Compte supprimé",
+      "accountDeletedDescription": "Votre compte a été supprimé avec succès.",
+      "failedToDelete": "Échec de la suppression du compte. Veuillez réessayer."
     }
   },
   "branding": {
