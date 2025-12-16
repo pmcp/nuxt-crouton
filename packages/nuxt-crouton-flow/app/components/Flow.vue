@@ -131,6 +131,10 @@ if (props.sync && !props.flowId) {
 // Container ref for potential future use
 const containerRef = ref<HTMLElement | null>(null)
 
+// Dark mode detection - useColorMode is auto-imported by Nuxt
+const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
+
 // ============================================
 // SYNC MODE: Use Yjs for real-time sync
 // ============================================
@@ -833,7 +837,7 @@ defineExpose({
   <div
     ref="containerRef"
     class="crouton-flow-container"
-    :class="{ 'crouton-flow-drop-target': isDragOver }"
+    :class="{ 'crouton-flow-drop-target': isDragOver, 'crouton-flow-dark': isDark }"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
     @drop="handleDrop"
@@ -916,7 +920,7 @@ defineExpose({
   position: relative;
 }
 
-.dark .crouton-flow-container {
+.crouton-flow-container.crouton-flow-dark {
   background-color: #0a0a0a;
 }
 
@@ -934,7 +938,7 @@ defineExpose({
   background-color: #fafafa;
 }
 
-.dark .crouton-flow-loading {
+.crouton-flow-dark .crouton-flow-loading {
   background-color: #0a0a0a;
 }
 
@@ -958,7 +962,7 @@ defineExpose({
   background-color: #fafafa;
 }
 
-.dark :deep(.vue-flow__background) {
+.crouton-flow-dark :deep(.vue-flow__background) {
   background-color: #0a0a0a;
 }
 
@@ -966,7 +970,7 @@ defineExpose({
   stroke: #a3a3a3;
 }
 
-.dark :deep(.vue-flow__edge-path) {
+.crouton-flow-dark :deep(.vue-flow__edge-path) {
   stroke: #525252;
 }
 
@@ -981,7 +985,7 @@ defineExpose({
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.dark :deep(.vue-flow__controls) {
+.crouton-flow-dark :deep(.vue-flow__controls) {
   background: #262626;
   border-color: #404040;
 }
@@ -991,7 +995,7 @@ defineExpose({
   color: #525252;
 }
 
-.dark :deep(.vue-flow__controls-button) {
+.crouton-flow-dark :deep(.vue-flow__controls-button) {
   color: #d4d4d4;
 }
 
@@ -999,7 +1003,7 @@ defineExpose({
   background: #f5f5f5;
 }
 
-.dark :deep(.vue-flow__controls-button:hover) {
+.crouton-flow-dark :deep(.vue-flow__controls-button:hover) {
   background: #404040;
 }
 
@@ -1010,7 +1014,7 @@ defineExpose({
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.dark :deep(.vue-flow__minimap) {
+.crouton-flow-dark :deep(.vue-flow__minimap) {
   background: #262626;
   border-color: #404040;
 }
