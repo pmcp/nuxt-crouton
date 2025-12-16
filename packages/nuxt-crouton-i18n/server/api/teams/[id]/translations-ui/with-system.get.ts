@@ -35,19 +35,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { user } = await requireUserSession(event)
-
   // Get the team by slug
+  // No auth required - translations are public read-only UI strings
   const team = await getTeamBySlug(teamSlug)
-
-  // Check if user has access to this team
-  const hasAccess = await isTeamMember(team.id, user.id)
-  if (!hasAccess) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'Unauthorized - you are not a member of this team'
-    })
-  }
 
   const query = getQuery(event)
   const locale = query.locale as string | undefined
