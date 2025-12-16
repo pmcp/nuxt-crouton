@@ -125,7 +125,23 @@
     "translations": "Traductions",
     "stripePlans": "Plans Stripe",
     "feedbackSubmissions": "Soumissions de feedback",
-    "newsletterSubscribers": "Abonnés à la newsletter"
+    "newsletterSubscribers": "Abonnés à la newsletter",
+    "security": "Sécurité",
+    "allBookings": "Toutes les Réservations",
+    "newBooking": "Nouvelle Réservation",
+    "bookNow": "Réserver Maintenant",
+    "myBookings": "Mes Réservations",
+    "pages": "Pages",
+    "assets": "Fichiers",
+    "bookingOptions": "Options de Réservation",
+    "emailLogs": "Journaux d'E-mails",
+    "emailTemplates": "Modèles d'E-mails",
+    "domains": "Domaines",
+    "sections": {
+      "bookings": "Réservations",
+      "content": "Contenu",
+      "settings": "Paramètres"
+    }
   },
   "teams": {
     "team": "Équipe",
@@ -797,7 +813,8 @@
   },
   "feedback": {
     "messageRequired": "Le message est requis",
-    "helpDescription": "Vous avez une question ou besoin d'aide ? Nous sommes là pour vous aider !"
+    "helpDescription": "Vous avez une question ou besoin d'aide ? Nous sommes là pour vous aider !",
+    "needHelp": "Besoin d'aide ?"
   },
   "table": {
     "email": "E-mail",

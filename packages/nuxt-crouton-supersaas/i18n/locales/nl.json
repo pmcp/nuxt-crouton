@@ -125,7 +125,23 @@
     "translations": "Vertalingen",
     "stripePlans": "Stripe Plannen",
     "feedbackSubmissions": "Feedback Inzendingen",
-    "newsletterSubscribers": "Nieuwsbrief Abonnees"
+    "newsletterSubscribers": "Nieuwsbrief Abonnees",
+    "security": "Beveiliging",
+    "allBookings": "Alle Boekingen",
+    "newBooking": "Nieuwe Boeking",
+    "bookNow": "Nu Boeken",
+    "myBookings": "Mijn Boekingen",
+    "pages": "Pagina's",
+    "assets": "Bestanden",
+    "bookingOptions": "Boekingsopties",
+    "emailLogs": "E-mail Logs",
+    "emailTemplates": "E-mail Sjablonen",
+    "domains": "Domeinen",
+    "sections": {
+      "bookings": "Boekingen",
+      "content": "Inhoud",
+      "settings": "Instellingen"
+    }
   },
   "teams": {
     "team": "Team",
@@ -797,7 +813,8 @@
   },
   "feedback": {
     "messageRequired": "Bericht is verplicht",
-    "helpDescription": "Heeft u een vraag of hulp nodig? Wij zijn er om te helpen!"
+    "helpDescription": "Heeft u een vraag of hulp nodig? Wij zijn er om te helpen!",
+    "needHelp": "Hulp nodig?"
   },
   "table": {
     "email": "E-mail",

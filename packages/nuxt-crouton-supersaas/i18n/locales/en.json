@@ -125,7 +125,23 @@
     "translations": "Translations",
     "stripePlans": "Stripe Plans",
     "feedbackSubmissions": "Feedback Submissions",
-    "newsletterSubscribers": "Newsletter Subscribers"
+    "newsletterSubscribers": "Newsletter Subscribers",
+    "security": "Security",
+    "allBookings": "All Bookings",
+    "newBooking": "New Booking",
+    "bookNow": "Book Now",
+    "myBookings": "My Bookings",
+    "pages": "Pages",
+    "assets": "Assets",
+    "bookingOptions": "Booking Options",
+    "emailLogs": "Email Logs",
+    "emailTemplates": "Email Templates",
+    "domains": "Domains",
+    "sections": {
+      "bookings": "Bookings",
+      "content": "Content",
+      "settings": "Settings"
+    }
   },
   "teams": {
     "team": "Team",
@@ -797,7 +813,8 @@
   },
   "feedback": {
     "messageRequired": "Message is required",
-    "helpDescription": "Have a question or need assistance? We're here to help!"
+    "helpDescription": "Have a question or need assistance? We're here to help!",
+    "needHelp": "Need help?"
   },
   "table": {
     "email": "Email",
