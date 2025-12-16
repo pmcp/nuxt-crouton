@@ -11,6 +11,9 @@
  * This is the LOW-LEVEL composable for team ID resolution.
  * For team management (switching, creating, members), use useTeam().
  *
+ * The team context is populated by the global middleware (team-context.global.ts)
+ * and stored in useState for SSR-safe access.
+ *
  * @example
  * ```vue
  * <script setup>
@@ -40,10 +43,23 @@ export function useTeamContext() {
   const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
   const route = useRoute()
 
+  // Get shared team state (populated by global middleware)
+  const teamState = useTeamState()
+
   /**
    * Get the current team ID based on auth mode
+   *
+   * Priority:
+   * 1. Resolved state from middleware (useState)
+   * 2. Fallback to direct resolution (for edge cases)
    */
   const teamId = computed<string | null>(() => {
+    // If middleware has resolved the team, use that
+    if (teamState.isResolved.value && teamState.teamId.value) {
+      return teamState.teamId.value
+    }
+
+    // Fallback to direct resolution
     switch (config?.mode) {
       case 'single-tenant':
         // Always return the default team ID
@@ -74,6 +90,12 @@ export function useTeamContext() {
    * Get the current team slug (for URL construction)
    */
   const teamSlug = computed<string | null>(() => {
+    // If middleware has resolved the team, use that
+    if (teamState.isResolved.value && teamState.teamSlug.value) {
+      return teamState.teamSlug.value
+    }
+
+    // Fallback to direct resolution
     switch (config?.mode) {
       case 'single-tenant':
         return 'default'
@@ -287,6 +309,7 @@ export function useTeamContext() {
     // Core values
     teamId,
     teamSlug,
+    team: teamState.team,
 
     // State
     hasTeamContext,
@@ -294,6 +317,9 @@ export function useTeamContext() {
     isTeamRoute,
     routeTeamParam,
     isTeamSynced,
+    isResolved: teamState.isResolved,
+    hasError: teamState.hasError,
+    error: teamState.error,
 
     // URL builders
     buildDashboardUrl,
@@ -302,5 +328,9 @@ export function useTeamContext() {
     // Actions
     resolveTeamFromRoute,
     navigateToTeamRoute,
+
+    // State management (for advanced use)
+    setTeamContext: teamState.setTeamContext,
+    clearTeamContext: teamState.clearTeamContext,
   }
 }
