@@ -5,6 +5,8 @@
  * Includes mode-aware team resolution that works across all three modes.
  */
 import type { H3Event } from 'h3'
+import { drizzle } from 'drizzle-orm/d1'
+import { sql } from 'drizzle-orm'
 import type { Team, Member, User } from '../../types'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
@@ -242,9 +244,13 @@ export async function getUserTeams(event: H3Event): Promise<Team[]> {
  * Get or create default organization
  *
  * Used in single-tenant mode to ensure a default org exists.
- * This is called by the single-tenant-init plugin on startup.
+ * Can be called during request handling to lazily create the default org.
  *
- * @param event - H3 event (needed for auth instance)
+ * Note: In single-tenant mode, the default org is typically created
+ * automatically via databaseHooks on first user signup. This function
+ * can be used to manually trigger creation or fetch the default org.
+ *
+ * @param event - H3 event (needed for database access)
  * @returns The default organization
  */
 export async function getOrCreateDefaultOrganization(event: H3Event): Promise<Team> {
@@ -258,15 +264,37 @@ export async function getOrCreateDefaultOrganization(event: H3Event): Promise<Te
     return existingTeam
   }
 
-  // Team doesn't exist, need to create it
-  // Note: This requires a system/admin user context
-  // In production, this should be handled during initial setup
-  console.log(`[crouton/auth] Default organization "${appName}" needs to be created during initial setup`)
+  // Team doesn't exist - create it using direct DB access
+  // (We're in request context, so database is available)
+  const d1 = hubDatabase()
+  const db = drizzle(d1)
 
-  throw new Error(
-    `[crouton/auth] Default organization not found. ` +
-    `Please create an organization with ID "${defaultTeamId}" during initial admin setup.`
-  )
+  const now = new Date().toISOString()
+  const metadata = JSON.stringify({ isDefault: true })
+
+  try {
+    await db.run(sql`
+      INSERT INTO organization (id, name, slug, metadata, createdAt)
+      VALUES (${defaultTeamId}, ${appName}, 'default', ${metadata}, ${now})
+    `)
+    console.log(`[crouton/auth] Created default organization "${appName}" (ID: ${defaultTeamId})`)
+  } catch (error: unknown) {
+    // Handle race condition - if another request created it, fetch it
+    const existingAfterRace = await getTeamById(event, defaultTeamId)
+    if (existingAfterRace) {
+      return existingAfterRace
+    }
+    // Re-throw if it's a different error
+    throw error
+  }
+
+  // Fetch and return the created team
+  const newTeam = await getTeamById(event, defaultTeamId)
+  if (!newTeam) {
+    throw new Error('[crouton/auth] Failed to create default organization')
+  }
+
+  return newTeam
 }
 
 /**

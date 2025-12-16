@@ -18,6 +18,7 @@ import { organization, twoFactor } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
 import { stripe as stripePlugin } from '@better-auth/stripe'
 import Stripe from 'stripe'
+import { sql } from 'drizzle-orm'
 import type { BetterAuthOptions } from 'better-auth'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
 import type {
@@ -121,6 +122,9 @@ export function createAuth(options: CreateAuthOptions) {
 
     // Plugins - Organization (Teams), Passkey, 2FA, and Stripe support
     plugins: buildPlugins(config, baseURL, stripeSecretKey, stripeWebhookSecret),
+
+    // Database hooks for single-tenant mode (auto-add users to default org)
+    databaseHooks: buildDatabaseHooks(config, db),
   }
 
   // Create and return the Better Auth instance
@@ -186,6 +190,146 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
     updateAge: sessionConfig.updateAge ?? defaults.updateAge,
     cookieCache: defaults.cookieCache,
   }
+}
+
+// ============================================================================
+// Single-Tenant Mode: Database Hooks
+// ============================================================================
+
+/**
+ * Build database hooks for single-tenant mode
+ *
+ * These hooks automatically:
+ * 1. Create the default organization on first user signup (lazy creation)
+ * 2. Add new users to the default organization
+ * 3. Set the default organization as active for new sessions
+ *
+ * @param config - @crouton/auth configuration
+ * @param db - Drizzle database instance
+ * @returns Database hooks configuration or undefined if not single-tenant
+ */
+function buildDatabaseHooks(
+  config: CroutonAuthConfig,
+  db: DrizzleD1Database<Record<string, unknown>>
+): BetterAuthOptions['databaseHooks'] {
+  // Only add hooks for single-tenant mode
+  if (config.mode !== 'single-tenant') {
+    return undefined
+  }
+
+  const defaultTeamId = config.defaultTeamId ?? 'default'
+  const appName = config.appName ?? 'Default Workspace'
+
+  return {
+    user: {
+      create: {
+        after: async (user) => {
+          // 1. Ensure default org exists (lazy creation)
+          await ensureDefaultOrgExists(db, defaultTeamId, appName)
+
+          // 2. Add user to default org as member
+          await addUserToDefaultOrg(db, user.id, defaultTeamId)
+
+          if (config.debug) {
+            console.log(`[crouton/auth] User ${user.email} added to default org (single-tenant)`)
+          }
+        },
+      },
+    },
+    session: {
+      create: {
+        after: async (session) => {
+          // Set active organization to default for new sessions in single-tenant mode
+          await setSessionActiveOrg(db, session.id, defaultTeamId)
+
+          if (config.debug) {
+            console.log(`[crouton/auth] Session ${session.id} set to default org (single-tenant)`)
+          }
+        },
+      },
+    },
+  }
+}
+
+/**
+ * Ensure the default organization exists (lazy creation)
+ *
+ * Creates the default organization if it doesn't exist.
+ * This is called on first user signup in single-tenant mode.
+ *
+ * @param db - Drizzle database instance
+ * @param defaultTeamId - Default team ID from config
+ * @param appName - Application name for the default org
+ */
+async function ensureDefaultOrgExists(
+  db: DrizzleD1Database<Record<string, unknown>>,
+  defaultTeamId: string,
+  appName: string
+): Promise<void> {
+  // Check if org exists
+  const result = await db.all(sql`
+    SELECT id FROM organization WHERE id = ${defaultTeamId}
+  `)
+
+  if (result.length === 0) {
+    // Create default organization
+    const now = new Date().toISOString()
+    const metadata = JSON.stringify({ isDefault: true })
+    await db.run(sql`
+      INSERT INTO organization (id, name, slug, metadata, createdAt)
+      VALUES (${defaultTeamId}, ${appName}, 'default', ${metadata}, ${now})
+    `)
+    console.log('[crouton/auth] Created default organization for single-tenant mode')
+  }
+}
+
+/**
+ * Add a user to the default organization
+ *
+ * Creates a member record for the user in the default organization.
+ * Idempotent - checks if membership already exists before inserting.
+ *
+ * @param db - Drizzle database instance
+ * @param userId - User ID to add
+ * @param defaultTeamId - Default team ID from config
+ */
+async function addUserToDefaultOrg(
+  db: DrizzleD1Database<Record<string, unknown>>,
+  userId: string,
+  defaultTeamId: string
+): Promise<void> {
+  // Check if already a member (idempotent)
+  const existing = await db.all(sql`
+    SELECT id FROM member WHERE organizationId = ${defaultTeamId} AND userId = ${userId}
+  `)
+
+  if (existing.length === 0) {
+    const memberId = crypto.randomUUID()
+    const now = new Date().toISOString()
+    await db.run(sql`
+      INSERT INTO member (id, organizationId, userId, role, createdAt)
+      VALUES (${memberId}, ${defaultTeamId}, ${userId}, 'member', ${now})
+    `)
+  }
+}
+
+/**
+ * Set the active organization for a session
+ *
+ * Updates the session record to set the active organization.
+ *
+ * @param db - Drizzle database instance
+ * @param sessionId - Session ID to update
+ * @param defaultTeamId - Default team ID from config
+ */
+async function setSessionActiveOrg(
+  db: DrizzleD1Database<Record<string, unknown>>,
+  sessionId: string,
+  defaultTeamId: string
+): Promise<void> {
+  await db.run(sql`
+    UPDATE session SET activeOrganizationId = ${defaultTeamId} WHERE id = ${sessionId}
+  `)
 }
 
 // ============================================================================
