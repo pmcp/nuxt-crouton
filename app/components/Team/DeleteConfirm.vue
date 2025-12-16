@@ -1,0 +1,177 @@
+<script setup lang="ts">
+/**
+ * Team Delete Confirmation Component
+ *
+ * Modal/dialog to confirm team deletion.
+ * Requires typing the team name to confirm.
+ *
+ * @example
+ * ```vue
+ * <TeamDeleteConfirm v-model:open="showDeleteModal" @deleted="onDeleted" />
+ * ```
+ */
+interface Props {
+  /** Whether the modal is open */
+  open?: boolean
+  /** External loading state */
+  loading?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  open: false,
+  loading: false,
+})
+
+const emit = defineEmits<{
+  /** Emitted to update open state */
+  'update:open': [value: boolean]
+  /** Emitted when team is deleted */
+  deleted: []
+  /** Emitted when deletion is cancelled */
+  cancel: []
+}>()
+
+const { currentTeam, deleteTeam, isOwner, teams } = useTeam()
+const toast = useToast()
+
+// Confirmation input
+const confirmText = ref('')
+
+// Internal loading state
+const internalLoading = ref(false)
+const isLoading = computed(() => props.loading || internalLoading.value)
+
+// Check if confirmation matches team name
+const isConfirmed = computed(() => {
+  if (!currentTeam.value) return false
+  return confirmText.value === currentTeam.value.name
+})
+
+// Handle close
+function handleClose() {
+  confirmText.value = ''
+  emit('update:open', false)
+  emit('cancel')
+}
+
+// Handle delete
+async function handleDelete() {
+  if (!isConfirmed.value || !isOwner.value) return
+
+  internalLoading.value = true
+  try {
+    await deleteTeam()
+
+    toast.add({
+      title: 'Team deleted',
+      description: 'The team has been permanently deleted.',
+      color: 'success',
+    })
+
+    confirmText.value = ''
+    emit('update:open', false)
+    emit('deleted')
+
+    // Navigate to another team or home
+    if (teams.value.length > 0) {
+      const nextTeam = teams.value[0]
+      await navigateTo(`/dashboard/${nextTeam.slug}`)
+    } else {
+      await navigateTo('/')
+    }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Failed to delete team'
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  } finally {
+    internalLoading.value = false
+  }
+}
+
+// Reset on open
+watch(
+  () => props.open,
+  (open) => {
+    if (open) {
+      confirmText.value = ''
+    }
+  },
+)
+</script>
+
+<template>
+  <UModal
+    :open="open"
+    @update:open="emit('update:open', $event)"
+  >
+    <template #content>
+      <div class="p-6 space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center size-10 rounded-full bg-error/10">
+            <UIcon
+              name="i-lucide-alert-triangle"
+              class="size-5 text-error"
+            />
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Delete Team</h3>
+            <p class="text-sm text-muted">
+              This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        <UAlert
+          color="error"
+          variant="soft"
+          icon="i-lucide-alert-circle"
+        >
+          <template #title>Warning</template>
+          <template #description>
+            <p>Deleting this team will:</p>
+            <ul class="list-disc list-inside mt-2 space-y-1">
+              <li>Remove all team members</li>
+              <li>Cancel all pending invitations</li>
+              <li>Delete all team data and settings</li>
+              <li>This action is permanent and cannot be reversed</li>
+            </ul>
+          </template>
+        </UAlert>
+
+        <div>
+          <label class="block text-sm font-medium mb-2">
+            Type <strong class="font-mono">{{ currentTeam?.name }}</strong> to confirm:
+          </label>
+          <UInput
+            v-model="confirmText"
+            :placeholder="currentTeam?.name"
+            :disabled="isLoading"
+            class="font-mono"
+          />
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <UButton
+            variant="ghost"
+            :disabled="isLoading"
+            @click="handleClose"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            color="error"
+            :loading="isLoading"
+            :disabled="!isConfirmed"
+            icon="i-lucide-trash-2"
+            @click="handleDelete"
+          >
+            Delete team
+          </UButton>
+        </div>
+      </div>
+    </template>
+  </UModal>
+</template>
