@@ -32,6 +32,8 @@
   "dependencies": {
     "better-auth": "^1.2.0",
     "@better-auth/passkey": "^1.2.0",
+    "@better-auth/stripe": "^1.2.0",
+    "stripe": "^17.0.0",
     "defu": "^6.1.4"
   },
   "devDependencies": {

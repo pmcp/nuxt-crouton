@@ -2,11 +2,12 @@
  * Auth Client Plugin
  *
  * Initializes the Better Auth client on the client-side.
- * Configures organization, passkey, and 2FA client plugins based on @crouton/auth config.
+ * Configures organization, passkey, 2FA, and Stripe client plugins based on @crouton/auth config.
  */
 import { createAuthClient } from 'better-auth/client'
 import { organizationClient, twoFactorClient } from 'better-auth/client/plugins'
 import { passkeyClient } from '@better-auth/passkey/client'
+import { stripeClient } from '@better-auth/stripe/client'
 import type { CroutonAuthConfig } from '../../types/config'
 
 export default defineNuxtPlugin(() => {
@@ -26,6 +27,7 @@ export default defineNuxtPlugin(() => {
     console.log('[@crouton/auth] Client plugin initialized', {
       hasPasskeys: isPasskeyEnabled(config),
       hasTwoFactor: isTwoFactorEnabled(config),
+      hasBilling: isBillingEnabled(config),
       hasOrganization: true,
     })
   }
@@ -41,7 +43,8 @@ export default defineNuxtPlugin(() => {
  * Build array of Better Auth client plugins based on configuration
  */
 function buildClientPlugins(config?: CroutonAuthConfig) {
-  const plugins: ReturnType<typeof organizationClient | typeof passkeyClient | typeof twoFactorClient>[] = [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const plugins: any[] = [
     // Organization client is always enabled
     organizationClient(),
   ]
@@ -54,6 +57,14 @@ function buildClientPlugins(config?: CroutonAuthConfig) {
   // Conditionally add 2FA client
   if (isTwoFactorEnabled(config)) {
     plugins.push(twoFactorClient())
+  }
+
+  // Conditionally add Stripe client for billing
+  if (isBillingEnabled(config)) {
+    plugins.push(stripeClient({
+      // Enable subscription management
+      subscription: true,
+    }))
   }
 
   return plugins
@@ -89,4 +100,18 @@ function isTwoFactorEnabled(config?: CroutonAuthConfig): boolean {
     return true
   }
   return twoFactorConfig.enabled !== false
+}
+
+/**
+ * Check if billing is enabled in the configuration
+ */
+function isBillingEnabled(config?: CroutonAuthConfig): boolean {
+  if (!config) return false
+
+  const billingConfig = config.billing
+  if (!billingConfig?.enabled) {
+    return false
+  }
+  // Also need Stripe configuration (at least publishable key for client-side)
+  return !!billingConfig.stripe?.publishableKey
 }

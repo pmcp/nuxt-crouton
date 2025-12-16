@@ -16,6 +16,8 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { organization, twoFactor } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
+import { stripe as stripePlugin } from '@better-auth/stripe'
+import Stripe from 'stripe'
 import type { BetterAuthOptions } from 'better-auth'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
 import type {
@@ -29,6 +31,9 @@ import type {
   GoogleOAuthConfig,
   DiscordOAuthConfig,
   OAuthProviderConfig,
+  BillingConfig,
+  StripeConfig,
+  StripePlan,
 } from '../../types/config'
 
 // Re-export type helpers for use in this module
@@ -55,6 +60,10 @@ export interface CreateAuthOptions {
   baseURL: string
   /** Optional Drizzle schema for custom table names */
   schema?: Record<string, unknown>
+  /** Stripe secret key (required if billing is enabled) */
+  stripeSecretKey?: string
+  /** Stripe webhook secret (required if billing is enabled) */
+  stripeWebhookSecret?: string
 }
 
 /**
@@ -77,6 +86,8 @@ export function createAuth(options: CreateAuthOptions) {
     secret,
     baseURL,
     schema,
+    stripeSecretKey,
+    stripeWebhookSecret,
   } = options
 
   // Build Better Auth configuration
@@ -108,8 +119,8 @@ export function createAuth(options: CreateAuthOptions) {
       generateId: () => crypto.randomUUID(),
     },
 
-    // Plugins - Organization (Teams) and Passkey support
-    plugins: buildPlugins(config, baseURL),
+    // Plugins - Organization (Teams), Passkey, 2FA, and Stripe support
+    plugins: buildPlugins(config, baseURL, stripeSecretKey, stripeWebhookSecret),
   }
 
   // Create and return the Better Auth instance
@@ -185,14 +196,22 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
  * Build plugins array based on @crouton/auth configuration
  *
  * Always includes: organization (teams)
- * Conditionally includes: passkey (if enabled), twoFactor (if enabled)
+ * Conditionally includes: passkey (if enabled), twoFactor (if enabled), stripe (if billing enabled)
  *
  * @param config - @crouton/auth configuration
  * @param baseURL - Application base URL
+ * @param stripeSecretKey - Stripe secret key (required if billing enabled)
+ * @param stripeWebhookSecret - Stripe webhook secret (required if billing enabled)
  * @returns Array of Better Auth plugins
  */
-function buildPlugins(config: CroutonAuthConfig, baseURL: string) {
-  const plugins: ReturnType<typeof organization | typeof passkey | typeof twoFactor>[] = [
+function buildPlugins(
+  config: CroutonAuthConfig,
+  baseURL: string,
+  stripeSecretKey?: string,
+  stripeWebhookSecret?: string
+) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const plugins: any[] = [
     // Organization plugin is always enabled (teams support)
     organization(buildOrganizationConfig(config)),
   ]
@@ -207,6 +226,18 @@ function buildPlugins(config: CroutonAuthConfig, baseURL: string) {
   const twoFactorPluginConfig = buildTwoFactorConfig(config.methods?.twoFactor, config.appName)
   if (twoFactorPluginConfig) {
     plugins.push(twoFactor(twoFactorPluginConfig))
+  }
+
+  // Conditionally add Stripe billing plugin
+  const stripePluginConfig = buildStripePluginConfig(
+    config.billing,
+    config.mode,
+    stripeSecretKey,
+    stripeWebhookSecret,
+    config.debug
+  )
+  if (stripePluginConfig) {
+    plugins.push(stripePluginConfig)
   }
 
   return plugins
@@ -471,6 +502,406 @@ export interface TwoFactorInfo {
   issuer: string
   /** How many days a trusted device stays trusted */
   trustedDeviceExpiryDays: number
+}
+
+// ============================================================================
+// Stripe Billing Plugin Configuration
+// ============================================================================
+
+/**
+ * Build Stripe billing plugin configuration
+ *
+ * The Stripe plugin handles:
+ * - Subscription management (create, cancel, restore)
+ * - Checkout sessions for subscription upgrades
+ * - Billing portal for customer self-service
+ * - Webhook handling for subscription lifecycle events
+ *
+ * Supports two billing models:
+ * - User-based billing (personal mode): Each user has their own subscription
+ * - Organization-based billing (multi-tenant/single-tenant): Subscriptions tied to teams
+ *
+ * @param billingConfig - Billing configuration from @crouton/auth
+ * @param mode - Auth mode (affects billing reference type)
+ * @param stripeSecretKey - Stripe secret key
+ * @param stripeWebhookSecret - Stripe webhook secret
+ * @param debug - Enable debug logging
+ * @returns Stripe plugin instance or null if billing not enabled
+ */
+function buildStripePluginConfig(
+  billingConfig: BillingConfig | undefined,
+  mode: CroutonAuthConfig['mode'],
+  stripeSecretKey?: string,
+  stripeWebhookSecret?: string,
+  debug?: boolean
+): ReturnType<typeof stripePlugin> | null {
+  // Check if billing is enabled
+  if (!billingConfig?.enabled) {
+    return null
+  }
+
+  // Validate required secrets
+  if (!stripeSecretKey) {
+    console.warn('[crouton/auth] Billing enabled but STRIPE_SECRET_KEY not provided. Billing will be disabled.')
+    return null
+  }
+
+  if (!stripeWebhookSecret) {
+    console.warn('[crouton/auth] Billing enabled but STRIPE_WEBHOOK_SECRET not provided. Webhooks will not be verified.')
+  }
+
+  // Get Stripe configuration
+  const stripeConfig = billingConfig.stripe
+  if (!stripeConfig) {
+    console.warn('[crouton/auth] Billing enabled but stripe config not provided. Billing will be disabled.')
+    return null
+  }
+
+  // Create Stripe client instance
+  const stripeClient = new Stripe(stripeSecretKey, {
+    apiVersion: '2025-04-30.basil', // Use latest API version
+    typescript: true,
+  })
+
+  // Build plans configuration
+  const plans = buildStripePlansConfig(stripeConfig.plans, stripeConfig.trialDays)
+
+  // Build and return the Stripe plugin
+  return stripePlugin({
+    // Stripe client instance (required)
+    stripeClient,
+
+    // Webhook signing secret (required for webhook verification)
+    stripeWebhookSecret: stripeWebhookSecret || '',
+
+    // Auto-create Stripe customer when user signs up
+    createCustomerOnSignUp: true,
+
+    // Customize customer creation
+    getCustomerCreateParams: async ({ user }) => ({
+      params: {
+        email: user.email,
+        name: user.name ?? undefined,
+        metadata: {
+          userId: user.id,
+          // In personal mode, user is the billing entity
+          // In multi-tenant/single-tenant, organization is the billing entity
+          billingMode: mode === 'personal' ? 'user' : 'organization',
+        },
+      },
+    }),
+
+    // Subscription configuration
+    subscription: {
+      enabled: true,
+      plans,
+
+      // Authorization for reference-based subscriptions (organization billing)
+      // This is called to verify a user can manage billing for an organization
+      authorizeReference: mode === 'personal' ? undefined : async ({ referenceId, action, user }) => {
+        // For organization-based billing, we need to verify the user is an owner/admin
+        // This will be implemented by the actual auth instance
+        // For now, we log the attempt and return true (will be secured in Task 2.7/2.8)
+        if (debug) {
+          console.log(`[crouton/auth] Authorizing ${action} for reference ${referenceId} by user ${user.id}`)
+        }
+        // TODO: Implement proper authorization check via organization membership
+        // This should check if user is owner/admin of the organization
+        return true
+      },
+
+      // Lifecycle hooks for subscription events
+      onSubscriptionComplete: async ({ event, subscription, plan }) => {
+        if (debug) {
+          console.log(`[crouton/auth] Subscription created:`, {
+            subscriptionId: subscription.id,
+            plan: plan?.name,
+            referenceId: subscription.referenceId,
+            stripeSubscriptionId: event.data.object.id,
+          })
+        }
+      },
+
+      onSubscriptionUpdate: async ({ event, subscription }) => {
+        if (debug) {
+          console.log(`[crouton/auth] Subscription updated:`, {
+            subscriptionId: subscription.id,
+            status: subscription.status,
+            stripeSubscriptionId: event.data.object.id,
+          })
+        }
+      },
+
+      onSubscriptionCancel: async ({ event, subscription, cancellationDetails }) => {
+        if (debug) {
+          console.log(`[crouton/auth] Subscription canceled:`, {
+            subscriptionId: subscription.id,
+            reason: cancellationDetails?.reason,
+            feedback: cancellationDetails?.feedback,
+            stripeSubscriptionId: event.data.object.id,
+          })
+        }
+      },
+
+      onSubscriptionDeleted: async ({ event, subscription }) => {
+        if (debug) {
+          console.log(`[crouton/auth] Subscription deleted:`, {
+            subscriptionId: subscription.id,
+            stripeSubscriptionId: event.data.object.id,
+          })
+        }
+      },
+    },
+
+    // Handle any Stripe webhook event
+    onEvent: async (event) => {
+      if (debug) {
+        console.log(`[crouton/auth] Stripe webhook received: ${event.type}`)
+      }
+
+      // Handle specific events that aren't covered by subscription hooks
+      switch (event.type) {
+        case 'invoice.paid':
+          if (debug) {
+            console.log(`[crouton/auth] Invoice paid:`, event.data.object.id)
+          }
+          break
+        case 'invoice.payment_failed':
+          if (debug) {
+            console.log(`[crouton/auth] Invoice payment failed:`, event.data.object.id)
+          }
+          break
+        // Add more event handlers as needed
+      }
+    },
+  })
+}
+
+/**
+ * Build Stripe plans configuration from @crouton/auth config
+ *
+ * Converts our StripePlan format to Better Auth's expected format
+ *
+ * @param plans - Array of plan configurations
+ * @param defaultTrialDays - Default trial period for all plans
+ * @returns Plans configuration for Better Auth Stripe plugin
+ */
+function buildStripePlansConfig(
+  plans: StripePlan[] | undefined,
+  defaultTrialDays?: number
+): StripePluginPlan[] {
+  if (!plans || plans.length === 0) {
+    return []
+  }
+
+  return plans.map((plan) => {
+    const basePlan: StripePluginPlan = {
+      name: plan.id,
+      priceId: plan.stripePriceId,
+      // Add limits as custom metadata for the plan
+      limits: {
+        displayName: plan.name,
+        description: plan.description,
+        price: plan.price,
+        currency: plan.currency ?? 'usd',
+        interval: plan.interval,
+        features: plan.features ?? [],
+      },
+    }
+
+    // Add trial configuration if specified
+    if (defaultTrialDays && defaultTrialDays > 0) {
+      basePlan.freeTrial = {
+        days: defaultTrialDays,
+      }
+    }
+
+    return basePlan
+  })
+}
+
+/**
+ * Better Auth Stripe plugin plan type
+ */
+interface StripePluginPlan {
+  /** Plan identifier (used in API calls) */
+  name: string
+  /** Stripe Price ID */
+  priceId?: string
+  /** Stripe Price lookup key (alternative to priceId) */
+  lookupKey?: string
+  /** Annual discount price ID */
+  annualDiscountPriceId?: string
+  /** Plan limits/metadata */
+  limits?: Record<string, unknown>
+  /** Plan group for categorization */
+  group?: string
+  /** Free trial configuration */
+  freeTrial?: {
+    days: number
+    onTrialStart?: (subscription: SubscriptionData) => Promise<void>
+    onTrialEnd?: (data: { subscription: SubscriptionData }, ctx: unknown) => Promise<void>
+    onTrialExpired?: (subscription: SubscriptionData, ctx: unknown) => Promise<void>
+  }
+}
+
+/**
+ * Subscription data type for hooks
+ */
+interface SubscriptionData {
+  id: string
+  plan: string
+  referenceId: string
+  stripeCustomerId: string
+  stripeSubscriptionId: string
+  status: string
+  periodStart: Date
+  periodEnd: Date
+  cancelAtPeriodEnd: boolean
+  seats?: number
+  trialStart?: Date
+  trialEnd?: Date
+}
+
+// ============================================================================
+// Stripe Billing Utility Functions
+// ============================================================================
+
+/**
+ * Check if billing is enabled in the configuration
+ *
+ * @param config - @crouton/auth configuration
+ * @returns True if billing is enabled and properly configured
+ */
+export function isBillingEnabled(config: CroutonAuthConfig): boolean {
+  const billingConfig = config.billing
+  if (!billingConfig?.enabled) {
+    return false
+  }
+  // Also need Stripe configuration
+  return !!billingConfig.stripe?.secretKey || !!billingConfig.stripe?.publishableKey
+}
+
+/**
+ * Get billing configuration details for UI display
+ *
+ * @param config - @crouton/auth configuration
+ * @returns Billing info for UI or null if disabled
+ */
+export function getBillingInfo(config: CroutonAuthConfig): BillingInfo | null {
+  if (!isBillingEnabled(config)) {
+    return null
+  }
+
+  const billingConfig = config.billing!
+  const stripeConfig = billingConfig.stripe!
+
+  return {
+    enabled: true,
+    provider: 'stripe',
+    hasPlans: (stripeConfig.plans?.length ?? 0) > 0,
+    plans: stripeConfig.plans?.map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+      price: plan.price,
+      currency: plan.currency ?? 'usd',
+      interval: plan.interval,
+      features: plan.features ?? [],
+    })) ?? [],
+    hasTrialPeriod: (stripeConfig.trialDays ?? 0) > 0,
+    trialDays: stripeConfig.trialDays ?? 0,
+    customerPortalEnabled: stripeConfig.customerPortal !== false,
+    // Billing mode depends on auth mode
+    billingMode: config.mode === 'personal' ? 'user' : 'organization',
+  }
+}
+
+/**
+ * Billing info for UI display
+ */
+export interface BillingInfo {
+  /** Whether billing is enabled */
+  enabled: boolean
+  /** Billing provider (currently only 'stripe') */
+  provider: 'stripe'
+  /** Whether plans are configured */
+  hasPlans: boolean
+  /** Available subscription plans */
+  plans: BillingPlanInfo[]
+  /** Whether trial period is available */
+  hasTrialPeriod: boolean
+  /** Trial period in days */
+  trialDays: number
+  /** Whether customer portal is enabled */
+  customerPortalEnabled: boolean
+  /** Billing mode - user-based or organization-based */
+  billingMode: 'user' | 'organization'
+}
+
+/**
+ * Plan info for UI display
+ */
+export interface BillingPlanInfo {
+  /** Plan identifier */
+  id: string
+  /** Display name */
+  name: string
+  /** Plan description */
+  description?: string
+  /** Price amount */
+  price: number
+  /** Currency code */
+  currency: string
+  /** Billing interval */
+  interval: 'month' | 'year'
+  /** Plan features list */
+  features: string[]
+}
+
+/**
+ * Get the Stripe publishable key from config
+ *
+ * This is safe to expose to the client as it's used for Stripe.js
+ *
+ * @param config - @crouton/auth configuration
+ * @returns Stripe publishable key or null if not configured
+ */
+export function getStripePublishableKey(config: CroutonAuthConfig): string | null {
+  return config.billing?.stripe?.publishableKey ?? null
+}
+
+/**
+ * Subscription status values
+ */
+export type SubscriptionStatus =
+  | 'active'
+  | 'trialing'
+  | 'canceled'
+  | 'incomplete'
+  | 'incomplete_expired'
+  | 'past_due'
+  | 'unpaid'
+  | 'paused'
+
+/**
+ * Check if a subscription status is considered "active" (has access)
+ *
+ * @param status - Subscription status
+ * @returns True if the subscription grants access
+ */
+export function isSubscriptionActive(status: SubscriptionStatus): boolean {
+  return status === 'active' || status === 'trialing'
+}
+
+/**
+ * Check if a subscription is in a grace period (past_due but not yet canceled)
+ *
+ * @param status - Subscription status
+ * @returns True if in grace period
+ */
+export function isSubscriptionInGracePeriod(status: SubscriptionStatus): boolean {
+  return status === 'past_due'
 }
 
 // ============================================================================
