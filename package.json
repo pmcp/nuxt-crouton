@@ -17,8 +17,13 @@
     "app",
     "server",
     "types",
+    "docs",
+    "scripts",
     "nuxt.config.ts"
   ],
+  "bin": {
+    "crouton-auth": "./scripts/migrate.ts"
+  },
   "scripts": {
     "build": "unbuild",
     "dev": "nuxi dev playground",
@@ -27,7 +32,12 @@
     "typecheck": "nuxt typecheck",
     "test": "vitest",
     "test:unit": "vitest run --dir tests/unit",
-    "test:integration": "vitest run --dir tests/integration"
+    "test:integration": "vitest run --dir tests/integration",
+    "migrate:status": "tsx scripts/migrate.ts status",
+    "migrate:generate": "tsx scripts/migrate.ts generate",
+    "migrate:push": "tsx scripts/migrate.ts push",
+    "migrate:check": "tsx scripts/migrate.ts check",
+    "migrate:reset": "tsx scripts/migrate.ts reset"
   },
   "dependencies": {
     "better-auth": "^1.2.0",
@@ -40,7 +50,9 @@
     "@better-auth/cli": "^1.2.0",
     "@nuxt/kit": "^3.14.0",
     "@nuxt/schema": "^3.14.0",
+    "drizzle-kit": "^0.20.0",
     "nuxt": "^3.14.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.7.0",
     "unbuild": "^2.0.0",
     "vitest": "^2.1.0"

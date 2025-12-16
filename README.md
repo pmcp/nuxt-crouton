@@ -119,16 +119,55 @@ export default defineEventHandler(async (event) => {
 })
 ```
 
+## Database Migrations
+
+@crouton/auth uses Drizzle ORM for database operations. For NuxtHub (Cloudflare D1) projects, migrations are handled automatically.
+
+### Quick Setup
+
+1. Export the auth schema in your project:
+
+```typescript
+// server/database/schema/index.ts
+export * from '@crouton/auth/server/database/schema/auth'
+```
+
+2. Generate migrations:
+
+```bash
+npx drizzle-kit generate
+```
+
+3. Apply migrations (automatic with NuxtHub):
+
+```bash
+# Local development
+npx nuxt dev
+
+# Production
+npx nuxthub deploy
+```
+
+### Migration Helper Commands
+
+```bash
+# Check migration status
+pnpm --filter @crouton/auth migrate:status
+
+# Generate new migrations
+pnpm --filter @crouton/auth migrate:generate
+
+# Push schema directly (local only)
+pnpm --filter @crouton/auth migrate:push
+```
+
+For detailed migration documentation, see [docs/MIGRATION.md](./docs/MIGRATION.md).
+
 ## Development Status
 
-**Phase 1 Complete** - Package structure and configuration schema
+**Phases 1-6 Complete** - Core functionality implemented
 
 Remaining phases:
-- Phase 2: Better Auth integration
-- Phase 3: Mode implementation
-- Phase 4: Composables & utilities
-- Phase 5: UI components
-- Phase 6: Database & migrations
 - Phase 7: Testing & documentation
 - Phase 8: Integration & polish
 - Phase 9: Release preparation
