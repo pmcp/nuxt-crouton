@@ -14,6 +14,7 @@
  */
 import type { H3Event } from 'h3'
 import type { User, Team, Member, MemberRole } from '../../types'
+import { useServerAuth, getServerSession } from './useServerAuth'
 
 export interface AuthContext {
   user: User
@@ -34,19 +35,25 @@ export interface TeamContext extends AuthContext {
  * @throws 401 Unauthorized if not authenticated
  */
 export async function requireAuth(event: H3Event): Promise<User> {
-  // TODO: Phase 4 - Implement with Better Auth
-  // const auth = useServerAuth()
-  // const session = await auth.api.getSession({ headers: event.headers })
-  // if (!session?.user) {
-  //   throw createError({ statusCode: 401, message: 'Unauthorized' })
-  // }
-  // return session.user
+  const session = await getServerSession(event)
 
-  // Placeholder
-  throw createError({
-    statusCode: 501,
-    message: '@crouton/auth: requireAuth not yet implemented. Complete Phase 4.',
-  })
+  if (!session?.user) {
+    throw createError({
+      statusCode: 401,
+      message: 'Unauthorized',
+    })
+  }
+
+  // Map Better Auth user to our User type
+  return {
+    id: session.user.id,
+    email: session.user.email,
+    emailVerified: session.user.emailVerified ?? false,
+    name: session.user.name ?? null,
+    image: session.user.image ?? null,
+    createdAt: new Date(session.user.createdAt),
+    updatedAt: new Date(session.user.updatedAt),
+  } as User
 }
 
 /**
@@ -88,17 +95,18 @@ export async function requireTeamMember(event: H3Event): Promise<TeamContext> {
     })
   }
 
-  // TODO: Phase 4 - Get membership from Better Auth
-  // const auth = useServerAuth()
+  // TODO: Task 2.2 - Get membership from Better Auth Organization plugin
+  // This requires the organization plugin to be configured in the auth instance.
+  // For now, throw a clear error about the missing implementation.
+  // const auth = useServerAuth(event)
   // const member = await auth.api.organization.getMember({
   //   organizationId: team.id,
   //   userId: user.id
   // })
 
-  // Placeholder
   throw createError({
     statusCode: 501,
-    message: '@crouton/auth: requireTeamMember not yet implemented. Complete Phase 4.',
+    message: '@crouton/auth: Team membership requires Organization plugin (Task 2.2)',
   })
 }
 
