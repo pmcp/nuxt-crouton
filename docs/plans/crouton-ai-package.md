@@ -6,8 +6,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 12 / 18 |
-| **Current Phase** | Phase 4: UI Components ✅ |
+| **Tasks Completed** | 16 / 18 |
+| **Current Phase** | Phase 6: Documentation & Testing (partial) |
 | **Estimated Total** | ~12-16 hours |
 
 ---
@@ -685,9 +685,9 @@ watch(messages, () => {
 **Estimated: 1-2 hours**
 
 ### Task 5.1: Create Chat Conversations Schema
-- [ ] Define schema compatible with crouton generator
-- [ ] Include all necessary fields for chat persistence
-- [ ] Document usage with generator
+- [x] ✅ Define schema compatible with crouton generator
+- [x] ✅ Include all necessary fields for chat persistence
+- [x] ✅ Document usage with generator
 
 ```typescript
 // schemas/chat-conversations.ts
@@ -732,9 +732,9 @@ export default chatConversationsSchema
 ```
 
 ### Task 5.2: Document Generator Integration
-- [ ] Add README section on generating collections
-- [ ] Example commands
-- [ ] Example usage after generation
+- [x] ✅ Add README section on generating collections
+- [x] ✅ Example commands
+- [x] ✅ Example usage after generation
 
 ---
 
@@ -923,13 +923,13 @@ These components can be added later based on demand from consuming apps:
 - [x] Task 4.2: Create AIInput Component
 - [x] Task 4.3: Create AIChatbox Component
 
-### Phase 5: Schema for Generator (1-2h)
-- [ ] Task 5.1: Create Chat Conversations Schema
-- [ ] Task 5.2: Document Generator Integration
+### Phase 5: Schema for Generator (1-2h) ✅
+- [x] Task 5.1: Create Chat Conversations Schema
+- [x] Task 5.2: Document Generator Integration
 
 ### Phase 6: Documentation & Testing (2-3h)
-- [ ] Task 6.1: Create README
-- [ ] Task 6.2: Add Usage Examples
+- [x] Task 6.1: Create README (completed as part of Phase 5)
+- [x] Task 6.2: Add Usage Examples (completed as part of Phase 5)
 - [ ] Task 6.3: Type Checking
 
 ---

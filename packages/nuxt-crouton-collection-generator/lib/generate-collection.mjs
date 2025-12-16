@@ -30,6 +30,7 @@ import { setupCroutonCssSource, displayManualCssSetupInstructions } from './util
 import { generateFormComponent } from './generators/form-component.mjs'
 import { generateListComponent } from './generators/list-component.mjs'
 import { generateComposable } from './generators/composable.mjs'
+import { generateCollectionReadme } from './generators/collection-readme.mjs'
 import {
   generateGetEndpoint,
   generatePostEndpoint,
@@ -1145,6 +1146,10 @@ ${translationsFieldSchema}
     {
       path: path.join(base, 'nuxt.config.ts'),
       content: generateNuxtConfig(data)
+    },
+    {
+      path: path.join(base, 'README.md'),
+      content: generateCollectionReadme(data, config)
     }
   ]
 
