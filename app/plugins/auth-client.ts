@@ -2,10 +2,10 @@
  * Auth Client Plugin
  *
  * Initializes the Better Auth client on the client-side.
- * Configures organization and passkey client plugins based on @crouton/auth config.
+ * Configures organization, passkey, and 2FA client plugins based on @crouton/auth config.
  */
 import { createAuthClient } from 'better-auth/client'
-import { organizationClient } from 'better-auth/client/plugins'
+import { organizationClient, twoFactorClient } from 'better-auth/client/plugins'
 import { passkeyClient } from '@better-auth/passkey/client'
 import type { CroutonAuthConfig } from '../../types/config'
 
@@ -25,6 +25,7 @@ export default defineNuxtPlugin(() => {
   if (config?.debug) {
     console.log('[@crouton/auth] Client plugin initialized', {
       hasPasskeys: isPasskeyEnabled(config),
+      hasTwoFactor: isTwoFactorEnabled(config),
       hasOrganization: true,
     })
   }
@@ -40,7 +41,7 @@ export default defineNuxtPlugin(() => {
  * Build array of Better Auth client plugins based on configuration
  */
 function buildClientPlugins(config?: CroutonAuthConfig) {
-  const plugins: ReturnType<typeof organizationClient | typeof passkeyClient>[] = [
+  const plugins: ReturnType<typeof organizationClient | typeof passkeyClient | typeof twoFactorClient>[] = [
     // Organization client is always enabled
     organizationClient(),
   ]
@@ -48,6 +49,11 @@ function buildClientPlugins(config?: CroutonAuthConfig) {
   // Conditionally add passkey client
   if (isPasskeyEnabled(config)) {
     plugins.push(passkeyClient())
+  }
+
+  // Conditionally add 2FA client
+  if (isTwoFactorEnabled(config)) {
+    plugins.push(twoFactorClient())
   }
 
   return plugins
@@ -67,4 +73,20 @@ function isPasskeyEnabled(config?: CroutonAuthConfig): boolean {
     return true
   }
   return passkeyConfig.enabled !== false
+}
+
+/**
+ * Check if 2FA is enabled in the configuration
+ */
+function isTwoFactorEnabled(config?: CroutonAuthConfig): boolean {
+  if (!config) return false
+
+  const twoFactorConfig = config.methods?.twoFactor
+  if (twoFactorConfig === undefined || twoFactorConfig === false) {
+    return false
+  }
+  if (twoFactorConfig === true) {
+    return true
+  }
+  return twoFactorConfig.enabled !== false
 }

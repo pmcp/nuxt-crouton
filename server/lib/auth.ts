@@ -14,7 +14,7 @@
  */
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { organization } from 'better-auth/plugins'
+import { organization, twoFactor } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
 import type { BetterAuthOptions } from 'better-auth'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
@@ -23,6 +23,7 @@ import type {
   SessionConfig,
   PasswordConfig,
   PasskeyConfig,
+  TwoFactorConfig,
   OAuthConfig,
   GitHubOAuthConfig,
   GoogleOAuthConfig,
@@ -184,14 +185,14 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
  * Build plugins array based on @crouton/auth configuration
  *
  * Always includes: organization (teams)
- * Conditionally includes: passkey (if enabled)
+ * Conditionally includes: passkey (if enabled), twoFactor (if enabled)
  *
  * @param config - @crouton/auth configuration
  * @param baseURL - Application base URL
  * @returns Array of Better Auth plugins
  */
 function buildPlugins(config: CroutonAuthConfig, baseURL: string) {
-  const plugins: ReturnType<typeof organization | typeof passkey>[] = [
+  const plugins: ReturnType<typeof organization | typeof passkey | typeof twoFactor>[] = [
     // Organization plugin is always enabled (teams support)
     organization(buildOrganizationConfig(config)),
   ]
@@ -200,6 +201,12 @@ function buildPlugins(config: CroutonAuthConfig, baseURL: string) {
   const passkeyPluginConfig = buildPasskeyConfig(config.methods?.passkeys, baseURL)
   if (passkeyPluginConfig) {
     plugins.push(passkey(passkeyPluginConfig))
+  }
+
+  // Conditionally add 2FA plugin
+  const twoFactorPluginConfig = buildTwoFactorConfig(config.methods?.twoFactor, config.appName)
+  if (twoFactorPluginConfig) {
+    plugins.push(twoFactor(twoFactorPluginConfig))
   }
 
   return plugins
@@ -286,6 +293,184 @@ interface PasskeyPluginOptions {
     residentKey?: 'required' | 'preferred' | 'discouraged'
     userVerification?: 'required' | 'preferred' | 'discouraged'
   }
+}
+
+// ============================================================================
+// Two-Factor Authentication (2FA) Configuration
+// ============================================================================
+
+/**
+ * Build 2FA plugin configuration from @crouton/auth config
+ *
+ * Two-factor authentication adds an extra layer of security by requiring
+ * a second verification step during login.
+ *
+ * Supports:
+ * - TOTP (Time-based One-Time Password) via authenticator apps
+ * - Backup codes for account recovery
+ * - Trusted device management (skip 2FA on trusted devices)
+ *
+ * @param twoFactorConfigInput - 2FA configuration from @crouton/auth
+ * @param appName - Application name for TOTP issuer
+ * @returns 2FA plugin configuration or null if disabled
+ */
+function buildTwoFactorConfig(
+  twoFactorConfigInput: boolean | TwoFactorConfig | undefined,
+  appName?: string
+): TwoFactorPluginOptions | null {
+  // Check if 2FA is enabled
+  if (twoFactorConfigInput === false || twoFactorConfigInput === undefined) {
+    return null
+  }
+
+  // Use defaults if just `true`
+  if (twoFactorConfigInput === true) {
+    return {
+      issuer: appName ?? 'Application',
+      // TOTP defaults
+      totpOptions: {
+        digits: 6,
+        period: 30,
+      },
+      // Backup codes defaults
+      backupCodeOptions: {
+        amount: 10,
+        length: 10,
+      },
+    }
+  }
+
+  // Custom 2FA configuration
+  const customConfig = twoFactorConfigInput as TwoFactorConfig
+
+  // If explicitly disabled via config object
+  if (customConfig.enabled === false) {
+    return null
+  }
+
+  // Build TOTP options if enabled (default: true)
+  const totpEnabled = customConfig.totp !== false
+  const totpOptions = totpEnabled
+    ? {
+        digits: 6,
+        period: 30,
+      }
+    : undefined
+
+  // Build backup code options
+  const backupCodeOptions = {
+    amount: customConfig.backupCodesCount ?? 10,
+    length: 10,
+  }
+
+  return {
+    issuer: customConfig.issuer ?? appName ?? 'Application',
+    // Only include TOTP options if enabled
+    ...(totpOptions && { totpOptions }),
+    // Always include backup codes
+    backupCodeOptions,
+    // Skip verification on enable is false by default for security
+    skipVerificationOnEnable: false,
+  }
+}
+
+/**
+ * 2FA plugin options type
+ */
+interface TwoFactorPluginOptions {
+  /** Issuer name shown in authenticator apps (e.g., "My App") */
+  issuer: string
+  /**
+   * TOTP (Time-based One-Time Password) configuration
+   * If undefined, TOTP is disabled
+   */
+  totpOptions?: {
+    /** Number of digits in the code (default: 6) */
+    digits: number
+    /** Time period in seconds for code validity (default: 30) */
+    period: number
+  }
+  /**
+   * Backup codes configuration for account recovery
+   */
+  backupCodeOptions?: {
+    /** Number of backup codes to generate (default: 10) */
+    amount: number
+    /** Length of each backup code (default: 10) */
+    length: number
+  }
+  /**
+   * Skip verification when enabling 2FA
+   * Should be false for security (default: false)
+   */
+  skipVerificationOnEnable?: boolean
+  /**
+   * Custom table name for 2FA data (default: "twoFactor")
+   */
+  twoFactorTable?: string
+}
+
+// ============================================================================
+// 2FA Utility Functions
+// ============================================================================
+
+/**
+ * Check if 2FA is enabled in the configuration
+ *
+ * @param config - @crouton/auth configuration
+ * @returns True if 2FA is enabled
+ */
+export function isTwoFactorEnabled(config: CroutonAuthConfig): boolean {
+  const twoFactorConfig = config.methods?.twoFactor
+  if (twoFactorConfig === undefined || twoFactorConfig === false) {
+    return false
+  }
+  if (twoFactorConfig === true) {
+    return true
+  }
+  return twoFactorConfig.enabled !== false
+}
+
+/**
+ * Get 2FA configuration details for UI display
+ *
+ * @param config - @crouton/auth configuration
+ * @returns 2FA info for UI or null if disabled
+ */
+export function getTwoFactorInfo(config: CroutonAuthConfig): TwoFactorInfo | null {
+  if (!isTwoFactorEnabled(config)) {
+    return null
+  }
+
+  const twoFactorConfig = config.methods?.twoFactor
+  const customConfig = typeof twoFactorConfig === 'object' ? twoFactorConfig : {}
+
+  return {
+    enabled: true,
+    hasTotp: customConfig.totp !== false,
+    hasTrustedDevices: customConfig.trustedDevices !== false,
+    backupCodesCount: customConfig.backupCodesCount ?? 10,
+    issuer: customConfig.issuer ?? config.appName ?? 'Application',
+    trustedDeviceExpiryDays: customConfig.trustedDeviceExpiry ?? 30,
+  }
+}
+
+/**
+ * 2FA info for UI display
+ */
+export interface TwoFactorInfo {
+  /** Whether 2FA is enabled */
+  enabled: boolean
+  /** Whether TOTP (authenticator app) is available */
+  hasTotp: boolean
+  /** Whether trusted device management is available */
+  hasTrustedDevices: boolean
+  /** Number of backup codes generated */
+  backupCodesCount: number
+  /** Issuer name for authenticator apps */
+  issuer: string
+  /** How many days a trusted device stays trusted */
+  trustedDeviceExpiryDays: number
 }
 
 // ============================================================================

@@ -47,6 +47,40 @@ export interface AddPasskeyOptions {
   authenticatorAttachment?: 'platform' | 'cross-platform'
 }
 
+// ============================================================================
+// Two-Factor Authentication Types
+// ============================================================================
+
+export interface TwoFactorStatus {
+  /** Whether 2FA is enabled for the current user */
+  enabled: boolean
+  /** Whether TOTP is set up */
+  hasTotp: boolean
+  /** Whether backup codes have been generated */
+  hasBackupCodes: boolean
+}
+
+export interface TotpSetupData {
+  /** TOTP URI for QR code generation */
+  totpURI: string
+  /** Secret key for manual entry */
+  secret: string
+}
+
+export interface VerifyTotpOptions {
+  /** TOTP code from authenticator app */
+  code: string
+  /** Trust this device (skip 2FA for 30 days) */
+  trustDevice?: boolean
+}
+
+export interface BackupCodeInfo {
+  /** The backup code */
+  code: string
+  /** Whether this code has been used */
+  used: boolean
+}
+
 export function useAuth() {
   const config = useRuntimeConfig().public.crouton?.auth
 
@@ -361,6 +395,214 @@ export function useAuth() {
     }
   }
 
+  // ============================================================================
+  // Two-Factor Authentication Methods
+  // ============================================================================
+
+  /**
+   * Enable two-factor authentication for the current user
+   *
+   * This initiates the 2FA setup process. The user must:
+   * 1. Call enable2FA() to start
+   * 2. Use the returned TOTP URI to configure their authenticator app
+   * 3. Call verifyTotp() with a code to complete setup
+   *
+   * @param password - Current password for verification
+   * @returns TOTP setup data including QR code URI
+   */
+  async function enable2FA(_password: string): Promise<TotpSetupData> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // const result = await client.twoFactor.enable({ password })
+      // return { totpURI: result.totpURI, secret: result.secret }
+      throw new Error('@crouton/auth: Enable 2FA not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Enable 2FA failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Disable two-factor authentication
+   *
+   * @param password - Current password for verification
+   */
+  async function disable2FA(_password: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // await client.twoFactor.disable({ password })
+      throw new Error('@crouton/auth: Disable 2FA not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Disable 2FA failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Get the TOTP URI for QR code generation
+   *
+   * Use this to display a QR code for users to scan with their authenticator app.
+   */
+  async function getTotpUri(): Promise<string> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // const result = await client.twoFactor.getTOTPURI()
+      // return result.totpURI
+      throw new Error('@crouton/auth: Get TOTP URI not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Get TOTP URI failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Verify a TOTP code during login or 2FA setup
+   *
+   * @param options - Verification options including the code
+   * @returns True if verification succeeded
+   */
+  async function verifyTotp(_options: VerifyTotpOptions): Promise<boolean> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // const result = await client.twoFactor.verifyTotp({
+      //   code: _options.code,
+      //   trustDevice: _options.trustDevice
+      // })
+      // return result.success
+      throw new Error('@crouton/auth: Verify TOTP not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Verify TOTP failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Generate new backup codes for account recovery
+   *
+   * This replaces any existing backup codes.
+   *
+   * @param password - Current password for verification
+   * @returns Array of new backup codes
+   */
+  async function generateBackupCodes(_password: string): Promise<string[]> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // const result = await client.twoFactor.generateBackupCodes({ password })
+      // return result.backupCodes
+      throw new Error('@crouton/auth: Generate backup codes not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Generate backup codes failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * View current backup codes
+   *
+   * Shows which codes have been used.
+   *
+   * @param password - Current password for verification
+   * @returns Array of backup codes with usage status
+   */
+  async function viewBackupCodes(_password: string): Promise<BackupCodeInfo[]> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // const result = await client.twoFactor.viewBackupCodes({ password })
+      // return result.backupCodes
+      throw new Error('@crouton/auth: View backup codes not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'View backup codes failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Verify a backup code for account recovery
+   *
+   * Used when user doesn't have access to their authenticator app.
+   * Each backup code can only be used once.
+   *
+   * @param code - Backup code
+   * @returns True if verification succeeded
+   */
+  async function verifyBackupCode(_code: string): Promise<boolean> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // const result = await client.twoFactor.verifyBackupCode({ code })
+      // return result.success
+      throw new Error('@crouton/auth: Verify backup code not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Verify backup code failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Get the current user's 2FA status
+   */
+  async function get2FAStatus(): Promise<TwoFactorStatus> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth (check user metadata)
+      // For now, return default state
+      return {
+        enabled: false,
+        hasTotp: false,
+        hasBackupCodes: false,
+      }
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Get 2FA status failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   return {
     // State
     user: readonly(user),
@@ -398,5 +640,15 @@ export function useAuth() {
     // WebAuthn support helpers
     isWebAuthnSupported,
     isConditionalUIAvailable,
+
+    // Two-Factor Authentication (2FA)
+    enable2FA,
+    disable2FA,
+    getTotpUri,
+    verifyTotp,
+    generateBackupCodes,
+    viewBackupCodes,
+    verifyBackupCode,
+    get2FAStatus,
   }
 }
