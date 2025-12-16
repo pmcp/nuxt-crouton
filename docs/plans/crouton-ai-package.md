@@ -6,8 +6,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 3 / 18 |
-| **Current Phase** | Phase 1: Project Setup |
+| **Tasks Completed** | 6 / 18 |
+| **Current Phase** | Phase 2: Server Utilities ✅ |
 | **Estimated Total** | ~12-16 hours |
 
 ---
@@ -277,11 +277,11 @@ export interface AIProviderConfig {
 **Estimated: 2-3 hours**
 
 ### Task 2.1: Create Provider Factory
-- [ ] Create `server/utils/ai.ts` with `createAIProvider` function
-- [ ] Support OpenAI provider
-- [ ] Support Anthropic provider
-- [ ] Auto-detect provider from runtime config
-- [ ] Handle missing API keys gracefully
+- [x] ✅ Create `server/utils/ai.ts` with `createAIProvider` function
+- [x] ✅ Support OpenAI provider
+- [x] ✅ Support Anthropic provider
+- [x] ✅ Auto-detect provider from runtime config
+- [x] ✅ Handle missing API keys gracefully
 
 **Implementation:**
 ```typescript
@@ -327,10 +327,10 @@ export { streamText, generateText } from 'ai'
 ```
 
 ### Task 2.2: Create Provider Helpers
-- [ ] Create `server/utils/providers/openai.ts`
-- [ ] Create `server/utils/providers/anthropic.ts`
-- [ ] Create `server/utils/providers/index.ts` registry
-- [ ] Add helper for listing available models
+- [x] ✅ Create `server/utils/providers/openai.ts`
+- [x] ✅ Create `server/utils/providers/anthropic.ts`
+- [x] ✅ Create `server/utils/providers/index.ts` registry
+- [x] ✅ Add helper for listing available models
 
 **Provider info for UI:**
 ```typescript
@@ -364,9 +364,9 @@ export function getAvailableProviders(config: RuntimeConfig) {
 ```
 
 ### Task 2.3: Export Server Utils
-- [ ] Create build config for server utils export
-- [ ] Ensure types are generated
-- [ ] Test import from `@crouton/ai/server`
+- [x] ✅ Create build config for server utils export
+- [x] ✅ Ensure types are generated
+- [x] ✅ Test import from `@crouton/ai/server`
 
 ---
 
@@ -903,15 +903,15 @@ These components can be added later based on demand from consuming apps:
 
 ## Task Checklist Summary
 
-### Phase 1: Project Setup (1-2h)
-- [ ] Task 1.1: Initialize Package Structure
-- [ ] Task 1.2: Create Nuxt Config
-- [ ] Task 1.3: Create Type Definitions
+### Phase 1: Project Setup (1-2h) ✅
+- [x] Task 1.1: Initialize Package Structure
+- [x] Task 1.2: Create Nuxt Config
+- [x] Task 1.3: Create Type Definitions
 
-### Phase 2: Server Utilities (2-3h)
-- [ ] Task 2.1: Create Provider Factory
-- [ ] Task 2.2: Create Provider Helpers
-- [ ] Task 2.3: Export Server Utils
+### Phase 2: Server Utilities (2-3h) ✅
+- [x] Task 2.1: Create Provider Factory
+- [x] Task 2.2: Create Provider Helpers
+- [x] Task 2.3: Export Server Utils
 
 ### Phase 3: Composables (2-3h)
 - [ ] Task 3.1: Create useChat Composable

@@ -2,13 +2,22 @@ import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
   entries: [
+    // Server utilities - main entry
     {
-      input: 'server/utils',
+      input: 'server/utils/index',
       outDir: 'dist/server/utils',
+      builder: 'rollup',
+      declaration: true,
+    },
+    // Server utilities - providers
+    {
+      input: 'server/utils/providers',
+      outDir: 'dist/server/utils/providers',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
       loaders: ['js'],
     },
+    // App composables
     {
       input: 'app/composables',
       outDir: 'dist/app/composables',
@@ -16,6 +25,7 @@ export default defineBuildConfig({
       pattern: ['**/*.ts'],
       loaders: ['js'],
     },
+    // App types
     {
       input: 'app/types',
       outDir: 'dist/app/types',
@@ -37,5 +47,6 @@ export default defineBuildConfig({
     '@ai-sdk/vue',
     '@ai-sdk/openai',
     '@ai-sdk/anthropic',
+    '#imports',
   ],
 })
