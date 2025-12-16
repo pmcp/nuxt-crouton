@@ -642,6 +642,15 @@
     },
     "error": {
       "title": "Error"
+    },
+    "stripeProductDeleted": {
+      "title": "Product deleted successfully"
+    },
+    "passwordResetEmailFailed": {
+      "description": "Failed to send password reset email"
+    },
+    "liftBanFailed": {
+      "description": "Failed to lift ban"
     }
   },
   "translationUi": {

@@ -642,6 +642,15 @@
     },
     "error": {
       "title": "Fout"
+    },
+    "stripeProductDeleted": {
+      "title": "Product succesvol verwijderd"
+    },
+    "passwordResetEmailFailed": {
+      "description": "Wachtwoord reset e-mail verzenden mislukt"
+    },
+    "liftBanFailed": {
+      "description": "Verbanning opheffen mislukt"
     }
   },
   "translationUi": {

@@ -642,6 +642,15 @@
     },
     "error": {
       "title": "Erreur"
+    },
+    "stripeProductDeleted": {
+      "title": "Produit supprimé avec succès"
+    },
+    "passwordResetEmailFailed": {
+      "description": "Échec de l'envoi de l'e-mail de réinitialisation"
+    },
+    "liftBanFailed": {
+      "description": "Échec de la levée du bannissement"
     }
   },
   "translationUi": {
