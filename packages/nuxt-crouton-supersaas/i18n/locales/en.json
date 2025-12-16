@@ -343,7 +343,10 @@
     "upgradeToPaid": "Upgrade to a paid plan to unlock more features and higher usage limits",
     "youAreOn": "You are on",
     "youAreOnThe": "You are on the",
-    "cancelsOn": "Cancels on"
+    "cancelsOn": "Cancels on",
+    "trialEndsOn": "Trial ends on",
+    "renewsOn": "Renews on",
+    "every": "every {interval}"
   },
   "sidebar": {
     "home": "Home"

@@ -343,7 +343,10 @@
     "upgradeToPaid": "Passez à un plan payant",
     "youAreOn": "Vous êtes sur",
     "youAreOnThe": "Vous êtes sur le",
-    "cancelsOn": "Annulation le"
+    "cancelsOn": "Annulation le",
+    "trialEndsOn": "Période d'essai se termine le",
+    "renewsOn": "Renouvellement le",
+    "every": "chaque {interval}"
   },
   "sidebar": {
     "home": "Accueil"

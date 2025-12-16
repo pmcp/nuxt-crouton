@@ -343,7 +343,10 @@
     "upgradeToPaid": "Upgrade naar een betaald abonnement",
     "youAreOn": "U bent op",
     "youAreOnThe": "U bent op het",
-    "cancelsOn": "Annulering op"
+    "cancelsOn": "Annulering op",
+    "trialEndsOn": "Proefperiode eindigt op",
+    "renewsOn": "Verlengd op",
+    "every": "elke {interval}"
   },
   "sidebar": {
     "home": "Home"
