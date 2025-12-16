@@ -2,6 +2,7 @@
  * useAuth Composable
  *
  * Main authentication composable providing reactive user state and auth methods.
+ * Wraps Better Auth client functionality with type-safe methods.
  *
  * @example
  * ```vue
@@ -15,6 +16,7 @@
  * ```
  */
 import type { User } from '../../types'
+import type { CroutonAuthConfig } from '../../types/config'
 
 export interface LoginCredentials {
   email: string
@@ -81,20 +83,28 @@ export interface BackupCodeInfo {
   used: boolean
 }
 
+/**
+ * Get the Better Auth client from the plugin
+ */
+function useAuthClient() {
+  const nuxtApp = useNuxtApp()
+  return nuxtApp.$authClient as ReturnType<typeof import('better-auth/client').createAuthClient>
+}
+
 export function useAuth() {
-  const config = useRuntimeConfig().public.crouton?.auth
+  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const authClient = useAuthClient()
 
-  // TODO: Phase 4 - Connect to Better Auth client
-  // const client = useBetterAuthClient()
-  // const session = useSession()
+  // Get reactive session from useSession composable
+  const { user: sessionUser, isAuthenticated, isPending, error: sessionError, refresh, clear } = useSession()
 
-  // Reactive state (placeholders)
-  const user = ref<User | null>(null)
+  // Local state for loading/error during operations
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  // Computed properties
-  const loggedIn = computed(() => !!user.value)
+  // Reactive state from session
+  const user = computed<User | null>(() => sessionUser.value)
+  const loggedIn = computed(() => isAuthenticated.value)
 
   // Capability flags based on config
   const hasPassword = computed(() => {
@@ -126,14 +136,29 @@ export function useAuth() {
     return Object.keys(config.methods.oauth)
   })
 
-  // Auth methods (placeholders - to be implemented in Phase 4)
-  async function login(_credentials: LoginCredentials): Promise<void> {
+  // ============================================================================
+  // Auth Methods
+  // ============================================================================
+
+  /**
+   * Sign in with email and password
+   */
+  async function login(credentials: LoginCredentials): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.signIn.email(credentials)
-      throw new Error('@crouton/auth: Login not yet implemented. Complete Phase 4.')
+      const result = await authClient.signIn.email({
+        email: credentials.email,
+        password: credentials.password,
+        rememberMe: credentials.rememberMe,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Login failed')
+      }
+
+      // Refresh session to update reactive state
+      await refresh()
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Login failed'
@@ -144,13 +169,23 @@ export function useAuth() {
     }
   }
 
-  async function loginWithOAuth(_provider: string): Promise<void> {
+  /**
+   * Sign in with OAuth provider
+   */
+  async function loginWithOAuth(provider: string): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.signIn.social({ provider })
-      throw new Error('@crouton/auth: OAuth login not yet implemented. Complete Phase 4.')
+      const result = await authClient.signIn.social({
+        provider: provider as 'github' | 'google' | 'discord',
+        callbackURL: window.location.origin + '/auth/callback',
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'OAuth login failed')
+      }
+
+      // OAuth redirects, so we don't need to refresh session here
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'OAuth login failed'
@@ -161,13 +196,25 @@ export function useAuth() {
     }
   }
 
+  /**
+   * Sign in with passkey
+   */
   async function loginWithPasskey(): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.signIn.passkey()
-      throw new Error('@crouton/auth: Passkey login not yet implemented. Complete Phase 4.')
+      if (!hasPasskeys.value) {
+        throw new Error('Passkeys are not enabled')
+      }
+
+      const result = await authClient.signIn.passkey()
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Passkey login failed')
+      }
+
+      // Refresh session to update reactive state
+      await refresh()
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Passkey login failed'
@@ -189,9 +236,20 @@ export function useAuth() {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.signIn.passkey({ autoFill: true })
-      throw new Error('@crouton/auth: Passkey autofill not yet implemented. Complete Phase 4.')
+      if (!hasPasskeys.value) {
+        throw new Error('Passkeys are not enabled')
+      }
+
+      const result = await authClient.signIn.passkey({
+        autoFill: true,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Passkey autofill failed')
+      }
+
+      // Refresh session to update reactive state
+      await refresh()
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Passkey autofill failed'
@@ -203,20 +261,159 @@ export function useAuth() {
   }
 
   /**
+   * Login with magic link
+   */
+  async function loginWithMagicLink(email: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      if (!hasMagicLink.value) {
+        throw new Error('Magic link is not enabled')
+      }
+
+      const result = await authClient.signIn.magicLink({
+        email,
+        callbackURL: window.location.origin + '/auth/callback',
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Magic link failed')
+      }
+
+      // Magic link sends email, user clicks link to complete login
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Magic link failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Register a new user with email and password
+   */
+  async function register(data: RegisterData): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      const result = await authClient.signUp.email({
+        email: data.email,
+        password: data.password,
+        name: data.name ?? data.email.split('@')[0],
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Registration failed')
+      }
+
+      // Refresh session to update reactive state
+      await refresh()
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Registration failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Sign out the current user
+   */
+  async function logout(): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      await authClient.signOut()
+      // Clear session state
+      await clear()
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Logout failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Request password reset email
+   */
+  async function forgotPassword(email: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      const result = await authClient.forgetPassword({
+        email,
+        redirectTo: window.location.origin + '/auth/reset-password',
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Request failed')
+      }
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Request failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Reset password with token from email
+   */
+  async function resetPassword(token: string, password: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      const result = await authClient.resetPassword({
+        token,
+        newPassword: password,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Reset failed')
+      }
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Reset failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  // ============================================================================
+  // Passkey Management Methods
+  // ============================================================================
+
+  /**
    * Register a new passkey for the current user
    *
    * Requires user to be logged in.
    */
-  async function addPasskey(_options?: AddPasskeyOptions): Promise<void> {
+  async function addPasskey(options?: AddPasskeyOptions): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.passkey.addPasskey({
-      //   name: options?.name,
-      //   authenticatorAttachment: options?.authenticatorAttachment
-      // })
-      throw new Error('@crouton/auth: Add passkey not yet implemented. Complete Phase 4.')
+      if (!hasPasskeys.value) {
+        throw new Error('Passkeys are not enabled')
+      }
+
+      const result = await authClient.passkey.addPasskey({
+        name: options?.name,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Add passkey failed')
+      }
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Add passkey failed'
@@ -234,9 +431,22 @@ export function useAuth() {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // return await client.passkey.listUserPasskeys({})
-      throw new Error('@crouton/auth: List passkeys not yet implemented. Complete Phase 4.')
+      if (!hasPasskeys.value) {
+        return []
+      }
+
+      const result = await authClient.passkey.listUserPasskeys()
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'List passkeys failed')
+      }
+
+      return (result.data ?? []).map((p: { id: string, name?: string, createdAt: string | Date, credentialID: string }) => ({
+        id: p.id,
+        name: p.name ?? 'Passkey',
+        createdAt: new Date(p.createdAt),
+        credentialId: p.credentialID,
+      }))
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'List passkeys failed'
@@ -250,13 +460,21 @@ export function useAuth() {
   /**
    * Delete a passkey by ID
    */
-  async function deletePasskey(_id: string): Promise<void> {
+  async function deletePasskey(id: string): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.passkey.deletePasskey({ id })
-      throw new Error('@crouton/auth: Delete passkey not yet implemented. Complete Phase 4.')
+      if (!hasPasskeys.value) {
+        throw new Error('Passkeys are not enabled')
+      }
+
+      const result = await authClient.passkey.deletePasskey({
+        id,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Delete passkey failed')
+      }
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Delete passkey failed'
@@ -270,13 +488,19 @@ export function useAuth() {
   /**
    * Update passkey name
    */
-  async function updatePasskey(_id: string, _name: string): Promise<void> {
+  async function updatePasskey(id: string, name: string): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.passkey.updatePasskey({ id, name })
-      throw new Error('@crouton/auth: Update passkey not yet implemented. Complete Phase 4.')
+      if (!hasPasskeys.value) {
+        throw new Error('Passkeys are not enabled')
+      }
+
+      // Better Auth doesn't have a direct update method, so we may need to delete and re-add
+      // For now, we'll throw an error indicating this is not supported
+      // TODO: Check if Better Auth supports passkey updates
+      console.warn('[@crouton/auth] Passkey update not yet supported by Better Auth')
+      throw new Error('Passkey update is not currently supported. Delete and re-add instead.')
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Update passkey failed'
@@ -291,10 +515,10 @@ export function useAuth() {
    * Check if WebAuthn is supported in the current browser
    */
   function isWebAuthnSupported(): boolean {
-    if (typeof window === 'undefined') return false
+    if (import.meta.server) return false
     return (
-      typeof PublicKeyCredential !== 'undefined' &&
-      typeof navigator.credentials !== 'undefined'
+      typeof PublicKeyCredential !== 'undefined'
+      && typeof navigator.credentials !== 'undefined'
     )
   }
 
@@ -314,87 +538,6 @@ export function useAuth() {
     }
   }
 
-  async function loginWithMagicLink(_email: string): Promise<void> {
-    loading.value = true
-    error.value = null
-    try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Magic link login not yet implemented. Complete Phase 4.')
-    }
-    catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Magic link failed'
-      throw e
-    }
-    finally {
-      loading.value = false
-    }
-  }
-
-  async function register(_data: RegisterData): Promise<void> {
-    loading.value = true
-    error.value = null
-    try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Registration not yet implemented. Complete Phase 4.')
-    }
-    catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Registration failed'
-      throw e
-    }
-    finally {
-      loading.value = false
-    }
-  }
-
-  async function logout(): Promise<void> {
-    loading.value = true
-    error.value = null
-    try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.signOut()
-      user.value = null
-    }
-    catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Logout failed'
-      throw e
-    }
-    finally {
-      loading.value = false
-    }
-  }
-
-  async function forgotPassword(_email: string): Promise<void> {
-    loading.value = true
-    error.value = null
-    try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Forgot password not yet implemented. Complete Phase 4.')
-    }
-    catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Request failed'
-      throw e
-    }
-    finally {
-      loading.value = false
-    }
-  }
-
-  async function resetPassword(_token: string, _password: string): Promise<void> {
-    loading.value = true
-    error.value = null
-    try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Reset password not yet implemented. Complete Phase 4.')
-    }
-    catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Reset failed'
-      throw e
-    }
-    finally {
-      loading.value = false
-    }
-  }
-
   // ============================================================================
   // Two-Factor Authentication Methods
   // ============================================================================
@@ -410,14 +553,30 @@ export function useAuth() {
    * @param password - Current password for verification
    * @returns TOTP setup data including QR code URI
    */
-  async function enable2FA(_password: string): Promise<TotpSetupData> {
+  async function enable2FA(password: string): Promise<TotpSetupData> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // const result = await client.twoFactor.enable({ password })
-      // return { totpURI: result.totpURI, secret: result.secret }
-      throw new Error('@crouton/auth: Enable 2FA not yet implemented. Complete Phase 4.')
+      if (!has2FA.value) {
+        throw new Error('Two-factor authentication is not enabled')
+      }
+
+      const result = await authClient.twoFactor.enable({
+        password,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Enable 2FA failed')
+      }
+
+      if (!result.data) {
+        throw new Error('No data returned from enable 2FA')
+      }
+
+      return {
+        totpURI: result.data.totpURI,
+        secret: result.data.secret,
+      }
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Enable 2FA failed'
@@ -433,13 +592,21 @@ export function useAuth() {
    *
    * @param password - Current password for verification
    */
-  async function disable2FA(_password: string): Promise<void> {
+  async function disable2FA(password: string): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // await client.twoFactor.disable({ password })
-      throw new Error('@crouton/auth: Disable 2FA not yet implemented. Complete Phase 4.')
+      if (!has2FA.value) {
+        throw new Error('Two-factor authentication is not enabled')
+      }
+
+      const result = await authClient.twoFactor.disable({
+        password,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Disable 2FA failed')
+      }
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Disable 2FA failed'
@@ -459,10 +626,17 @@ export function useAuth() {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // const result = await client.twoFactor.getTOTPURI()
-      // return result.totpURI
-      throw new Error('@crouton/auth: Get TOTP URI not yet implemented. Complete Phase 4.')
+      if (!has2FA.value) {
+        throw new Error('Two-factor authentication is not enabled')
+      }
+
+      const result = await authClient.twoFactor.getTOTPURI({})
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Get TOTP URI failed')
+      }
+
+      return result.data?.totpURI ?? ''
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Get TOTP URI failed'
@@ -479,17 +653,27 @@ export function useAuth() {
    * @param options - Verification options including the code
    * @returns True if verification succeeded
    */
-  async function verifyTotp(_options: VerifyTotpOptions): Promise<boolean> {
+  async function verifyTotp(options: VerifyTotpOptions): Promise<boolean> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // const result = await client.twoFactor.verifyTotp({
-      //   code: _options.code,
-      //   trustDevice: _options.trustDevice
-      // })
-      // return result.success
-      throw new Error('@crouton/auth: Verify TOTP not yet implemented. Complete Phase 4.')
+      if (!has2FA.value) {
+        throw new Error('Two-factor authentication is not enabled')
+      }
+
+      const result = await authClient.twoFactor.verifyTotp({
+        code: options.code,
+        trustDevice: options.trustDevice,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Verify TOTP failed')
+      }
+
+      // Refresh session after successful verification
+      await refresh()
+
+      return true
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Verify TOTP failed'
@@ -508,14 +692,23 @@ export function useAuth() {
    * @param password - Current password for verification
    * @returns Array of new backup codes
    */
-  async function generateBackupCodes(_password: string): Promise<string[]> {
+  async function generateBackupCodes(password: string): Promise<string[]> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // const result = await client.twoFactor.generateBackupCodes({ password })
-      // return result.backupCodes
-      throw new Error('@crouton/auth: Generate backup codes not yet implemented. Complete Phase 4.')
+      if (!has2FA.value) {
+        throw new Error('Two-factor authentication is not enabled')
+      }
+
+      const result = await authClient.twoFactor.generateBackupCodes({
+        password,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Generate backup codes failed')
+      }
+
+      return result.data?.backupCodes ?? []
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Generate backup codes failed'
@@ -534,14 +727,26 @@ export function useAuth() {
    * @param password - Current password for verification
    * @returns Array of backup codes with usage status
    */
-  async function viewBackupCodes(_password: string): Promise<BackupCodeInfo[]> {
+  async function viewBackupCodes(password: string): Promise<BackupCodeInfo[]> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // const result = await client.twoFactor.viewBackupCodes({ password })
-      // return result.backupCodes
-      throw new Error('@crouton/auth: View backup codes not yet implemented. Complete Phase 4.')
+      if (!has2FA.value) {
+        throw new Error('Two-factor authentication is not enabled')
+      }
+
+      const result = await authClient.twoFactor.viewBackupCodes({
+        password,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'View backup codes failed')
+      }
+
+      return (result.data?.backupCodes ?? []).map((c: { code: string, isUsed: boolean }) => ({
+        code: c.code,
+        used: c.isUsed,
+      }))
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'View backup codes failed'
@@ -561,14 +766,26 @@ export function useAuth() {
    * @param code - Backup code
    * @returns True if verification succeeded
    */
-  async function verifyBackupCode(_code: string): Promise<boolean> {
+  async function verifyBackupCode(code: string): Promise<boolean> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      // const result = await client.twoFactor.verifyBackupCode({ code })
-      // return result.success
-      throw new Error('@crouton/auth: Verify backup code not yet implemented. Complete Phase 4.')
+      if (!has2FA.value) {
+        throw new Error('Two-factor authentication is not enabled')
+      }
+
+      const result = await authClient.twoFactor.verifyBackupCode({
+        code,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Verify backup code failed')
+      }
+
+      // Refresh session after successful verification
+      await refresh()
+
+      return true
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Verify backup code failed'
@@ -586,17 +803,46 @@ export function useAuth() {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth (check user metadata)
-      // For now, return default state
+      if (!has2FA.value) {
+        return {
+          enabled: false,
+          hasTotp: false,
+          hasBackupCodes: false,
+        }
+      }
+
+      // Better Auth stores 2FA status in user metadata
+      // The user's twoFactorEnabled flag indicates status
+      const userData = sessionUser.value
+      if (!userData) {
+        return {
+          enabled: false,
+          hasTotp: false,
+          hasBackupCodes: false,
+        }
+      }
+
+      // Check session data for 2FA status
+      // This may need to be fetched from the API depending on Better Auth version
+      const result = await authClient.getSession()
+
+      const session = result.data
+      const twoFactorEnabled = (session?.user as { twoFactorEnabled?: boolean })?.twoFactorEnabled ?? false
+
+      return {
+        enabled: twoFactorEnabled,
+        hasTotp: twoFactorEnabled,
+        hasBackupCodes: twoFactorEnabled, // Backup codes are generated when 2FA is enabled
+      }
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Get 2FA status failed'
+      // Return default state on error
       return {
         enabled: false,
         hasTotp: false,
         hasBackupCodes: false,
       }
-    }
-    catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Get 2FA status failed'
-      throw e
     }
     finally {
       loading.value = false
@@ -608,6 +854,10 @@ export function useAuth() {
     user: readonly(user),
     loading: readonly(loading),
     error: readonly(error),
+
+    // From session
+    isPending,
+    sessionError,
 
     // Computed
     loggedIn,
@@ -630,6 +880,9 @@ export function useAuth() {
     logout,
     forgotPassword,
     resetPassword,
+
+    // Session methods
+    refreshSession: refresh,
 
     // Passkey management
     addPasskey,
