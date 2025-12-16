@@ -193,45 +193,83 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
 }
 
 // ============================================================================
-// Single-Tenant Mode: Database Hooks
+// Mode-Specific Database Hooks (Single-Tenant & Personal)
 // ============================================================================
 
 /**
- * Build database hooks for single-tenant mode
+ * Build database hooks for single-tenant and personal modes
  *
  * These hooks automatically:
+ *
+ * **Single-Tenant Mode:**
  * 1. Create the default organization on first user signup (lazy creation)
  * 2. Add new users to the default organization
  * 3. Set the default organization as active for new sessions
  *
+ * **Personal Mode:**
+ * 1. Create a personal organization for each new user on signup
+ * 2. Make the user the owner of their personal organization
+ * 3. Set the personal organization as active for new sessions
+ *
  * @param config - @crouton/auth configuration
  * @param db - Drizzle database instance
- * @returns Database hooks configuration or undefined if not single-tenant
+ * @returns Database hooks configuration or undefined if not single-tenant/personal
  */
 function buildDatabaseHooks(
   config: CroutonAuthConfig,
   db: DrizzleD1Database<Record<string, unknown>>
 ): BetterAuthOptions['databaseHooks'] {
-  // Only add hooks for single-tenant mode
-  if (config.mode !== 'single-tenant') {
+  // Only add hooks for single-tenant or personal mode
+  if (config.mode !== 'single-tenant' && config.mode !== 'personal') {
     return undefined
   }
 
-  const defaultTeamId = config.defaultTeamId ?? 'default'
-  const appName = config.appName ?? 'Default Workspace'
+  // Single-tenant mode hooks
+  if (config.mode === 'single-tenant') {
+    const defaultTeamId = config.defaultTeamId ?? 'default'
+    const appName = config.appName ?? 'Default Workspace'
 
+    return {
+      user: {
+        create: {
+          after: async (user) => {
+            // 1. Ensure default org exists (lazy creation)
+            await ensureDefaultOrgExists(db, defaultTeamId, appName)
+
+            // 2. Add user to default org as member
+            await addUserToDefaultOrg(db, user.id, defaultTeamId)
+
+            if (config.debug) {
+              console.log(`[crouton/auth] User ${user.email} added to default org (single-tenant)`)
+            }
+          },
+        },
+      },
+      session: {
+        create: {
+          after: async (session) => {
+            // Set active organization to default for new sessions in single-tenant mode
+            await setSessionActiveOrg(db, session.id, defaultTeamId)
+
+            if (config.debug) {
+              console.log(`[crouton/auth] Session ${session.id} set to default org (single-tenant)`)
+            }
+          },
+        },
+      },
+    }
+  }
+
+  // Personal mode hooks
   return {
     user: {
       create: {
         after: async (user) => {
-          // 1. Ensure default org exists (lazy creation)
-          await ensureDefaultOrgExists(db, defaultTeamId, appName)
-
-          // 2. Add user to default org as member
-          await addUserToDefaultOrg(db, user.id, defaultTeamId)
+          // Create a personal organization for the user
+          const orgId = await createPersonalOrg(db, user.id, user.name, user.email, config.appName)
 
           if (config.debug) {
-            console.log(`[crouton/auth] User ${user.email} added to default org (single-tenant)`)
+            console.log(`[crouton/auth] Personal org ${orgId} created for user ${user.email} (personal mode)`)
           }
         },
       },
@@ -239,11 +277,15 @@ function buildDatabaseHooks(
     session: {
       create: {
         after: async (session) => {
-          // Set active organization to default for new sessions in single-tenant mode
-          await setSessionActiveOrg(db, session.id, defaultTeamId)
+          // Get user's personal organization and set it as active
+          const personalOrgId = await getUserPersonalOrgId(db, session.userId)
 
-          if (config.debug) {
-            console.log(`[crouton/auth] Session ${session.id} set to default org (single-tenant)`)
+          if (personalOrgId) {
+            await setSessionActiveOrg(db, session.id, personalOrgId)
+
+            if (config.debug) {
+              console.log(`[crouton/auth] Session ${session.id} set to personal org ${personalOrgId} (personal mode)`)
+            }
           }
         },
       },
@@ -320,16 +362,107 @@ async function addUserToDefaultOrg(
  *
  * @param db - Drizzle database instance
  * @param sessionId - Session ID to update
- * @param defaultTeamId - Default team ID from config
+ * @param orgId - Organization ID to set as active
  */
 async function setSessionActiveOrg(
   db: DrizzleD1Database<Record<string, unknown>>,
   sessionId: string,
-  defaultTeamId: string
+  orgId: string
 ): Promise<void> {
   await db.run(sql`
-    UPDATE session SET activeOrganizationId = ${defaultTeamId} WHERE id = ${sessionId}
+    UPDATE session SET activeOrganizationId = ${orgId} WHERE id = ${sessionId}
   `)
+}
+
+// ============================================================================
+// Personal Mode: Helper Functions
+// ============================================================================
+
+/**
+ * Create a personal organization for a user
+ *
+ * Creates an organization specifically for personal mode where:
+ * - Each user has exactly one organization
+ * - The user is automatically the owner
+ * - The organization is marked as "personal" in metadata
+ *
+ * @param db - Drizzle database instance
+ * @param userId - User ID (owner)
+ * @param userName - User's name for workspace naming
+ * @param userEmail - User's email (fallback for naming)
+ * @param appName - Application name (fallback for naming)
+ * @returns The created organization ID
+ */
+async function createPersonalOrg(
+  db: DrizzleD1Database<Record<string, unknown>>,
+  userId: string,
+  userName: string | null,
+  userEmail: string,
+  appName?: string
+): Promise<string> {
+  const orgId = crypto.randomUUID()
+  const now = new Date().toISOString()
+
+  // Create organization name: "John's Workspace" or "john@email.com's Workspace"
+  const displayName = userName || userEmail.split('@')[0]
+  const orgName = `${displayName}'s Workspace`
+
+  // Use user ID as slug for uniqueness (slugified)
+  const slug = `personal-${userId.substring(0, 8)}`
+
+  // Metadata marks this as a personal organization
+  const metadata = JSON.stringify({
+    personal: true,
+    ownerId: userId,
+    appName: appName ?? 'Application',
+  })
+
+  // Create the organization
+  await db.run(sql`
+    INSERT INTO organization (id, name, slug, metadata, createdAt)
+    VALUES (${orgId}, ${orgName}, ${slug}, ${metadata}, ${now})
+  `)
+
+  // Add user as owner (member with 'owner' role)
+  const memberId = crypto.randomUUID()
+  await db.run(sql`
+    INSERT INTO member (id, organizationId, userId, role, createdAt)
+    VALUES (${memberId}, ${orgId}, ${userId}, 'owner', ${now})
+  `)
+
+  console.log(`[crouton/auth] Created personal organization "${orgName}" for user (personal mode)`)
+
+  return orgId
+}
+
+/**
+ * Get the user's personal organization ID
+ *
+ * In personal mode, each user has exactly one organization where they are the owner.
+ * This function finds that organization.
+ *
+ * @param db - Drizzle database instance
+ * @param userId - User ID to find personal org for
+ * @returns Organization ID or null if not found
+ */
+async function getUserPersonalOrgId(
+  db: DrizzleD1Database<Record<string, unknown>>,
+  userId: string
+): Promise<string | null> {
+  // Find organization where user is the owner
+  const result = await db.all(sql`
+    SELECT o.id
+    FROM organization o
+    INNER JOIN member m ON m.organizationId = o.id
+    WHERE m.userId = ${userId} AND m.role = 'owner'
+    LIMIT 1
+  `)
+
+  if (result.length === 0) {
+    return null
+  }
+
+  return (result[0] as { id: string }).id
 }
 
 // ============================================================================
