@@ -2,25 +2,25 @@
   "common": {
     "save": "Enregistrer",
     "cancel": "Annuler",
-    "change": "Changer",
     "delete": "Supprimer",
     "edit": "Modifier",
     "create": "Créer",
     "update": "Mettre à jour",
-    "search": "Rechercher",
-    "filter": "Filtrer",
-    "export": "Exporter",
-    "import": "Importer",
+    "add": "Ajouter",
+    "remove": "Supprimer",
     "close": "Fermer",
     "confirm": "Confirmer",
     "back": "Retour",
     "next": "Suivant",
     "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "export": "Exporter",
+    "import": "Importer",
     "submit": "Soumettre",
     "reset": "Réinitialiser",
     "refresh": "Actualiser",
-    "add": "Ajouter",
-    "remove": "Supprimer",
     "view": "Voir",
     "download": "Télécharger",
     "upload": "Téléverser",
@@ -29,135 +29,55 @@
     "unselectAll": "Tout désélectionner",
     "actions": "Actions",
     "loading": "Chargement...",
+    "saving": "Enregistrement...",
+    "deleting": "Suppression...",
+    "noResults": "Aucun résultat trouvé",
     "noData": "Aucune donnée disponible",
+    "required": "Requis",
+    "optional": "Optionnel",
     "yes": "Oui",
     "no": "Non",
-    "hideExample": "Masquer l'exemple",
-    "showExample": "Afficher l'exemple",
+    "all": "Tout",
+    "none": "Aucun",
+    "selected": "Sélectionné",
+    "more": "Plus",
+    "less": "Moins",
+    "showMore": "Afficher plus",
+    "showLess": "Afficher moins",
+    "viewAll": "Tout voir",
     "saveChanges": "Enregistrer les modifications",
-    "docs": "Docs",
-    "google": "Google",
-    "github": "Github",
-    "discord": "Discord",
-    "proceed": "Continuer"
+    "proceed": "Continuer",
+    "change": "Changer"
   },
-  "auth": {
-    "login": "Connexion",
-    "logout": "Déconnexion",
-    "signUp": "S'inscrire",
-    "signIn": "Se connecter",
-    "signOut": "Se déconnecter",
-    "password": "Mot de passe",
-    "email": "E-mail",
-    "username": "Nom d'utilisateur",
-    "forgotPassword": "Mot de passe oublié?",
-    "resetPassword": "Réinitialiser le mot de passe",
-    "register": "S'enregistrer",
-    "rememberMe": "Se souvenir de moi",
-    "dontHaveAccount": "Vous n'avez pas de compte?",
-    "alreadyHaveAccount": "Vous avez déjà un compte?",
-    "verifyEmail": "Vérifier votre e-mail",
-    "changePassword": "Changer le mot de passe",
-    "currentPassword": "Mot de passe actuel",
-    "newPassword": "Nouveau mot de passe",
-    "confirmPassword": "Confirmer le mot de passe",
-    "getStarted": "Commencer",
-    "submit": "Soumettre",
-    "phoneNumber": "Numéro de téléphone",
-    "loginWithMagicLink": "Connexion avec Magic Link",
-    "loginWithPasskey": "Connexion avec Passkey",
-    "socialLogin": "Connexion sociale",
-    "phoneNumberLogin": "Connexion par numéro de téléphone",
-    "socialLogin": {
-      "google": "Google",
-      "github": "Github",
-      "discord": "Discord"
-    }
-  },
-  "navigation": {
-    "dashboard": "Tableau de bord",
-    "products": "Produits",
-    "orders": "Commandes",
-    "customers": "Clients",
-    "settings": "Paramètres",
-    "profile": "Profil",
-    "reports": "Rapports",
-    "categories": "Catégories",
-    "events": "Événements",
-    "locations": "Emplacements",
-    "printers": "Imprimantes",
-    "clients": "Clients",
-    "team": "Équipe",
-    "billing": "Facturation",
-    "notifications": "Notifications",
-    "help": "Aide",
-    "home": "Accueil",
-    "backToDashboard": "Retour au tableau de bord",
-    "accountSettings": "Paramètres du compte",
-    "posts": "Articles",
-    "superAdmin": "Super Admin",
-    "teamTranslations": "Traductions d'équipe",
-    "workspaceMembers": "Membres de l'espace de travail",
-    "workspaceSettings": "Paramètres de l'espace de travail",
-    "users": "Utilisateurs",
-    "teams": "Équipes",
-    "translations": "Traductions",
-    "stripePlans": "Plans Stripe",
-    "feedbackSubmissions": "Soumissions de feedback",
-    "newsletterSubscribers": "Abonnés à la newsletter"
-  },
-  "messages": {
-    "success": "Succès",
-    "error": "Erreur",
-    "warning": "Avertissement",
-    "info": "Information",
-    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ceci?",
-    "confirmDeletePost": "Êtes-vous sûr de vouloir supprimer ce post? Cette action ne peut pas être annulée.",
-    "confirmAction": "Êtes-vous sûr de vouloir continuer?",
-    "saved": "Modifications enregistrées avec succès",
-    "deleted": "Supprimé avec succès",
-    "created": "Créé avec succès",
-    "updated": "Mis à jour avec succès",
-    "required": "Ce champ est requis",
-    "invalid": "Valeur invalide",
-    "feedbackSubmitted": "Votre feedback a été soumis.",
-    "feedbackSubmittedDesc": "Nous vous répondrons dès que possible.",
-    "minLength": "La longueur minimale est {min}",
-    "maxLength": "La longueur maximale est {max}",
-    "emailInvalid": "Veuillez entrer une adresse e-mail valide",
-    "passwordMismatch": "Les mots de passe ne correspondent pas",
-    "networkError": "Erreur réseau. Veuillez réessayer.",
-    "unauthorized": "Vous n'êtes pas autorisé à effectuer cette action",
-    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
-    "somethingWentWrong": "Quelque chose s'est mal passé. Veuillez réessayer.",
-    "copiedToClipboard": "Copié dans le presse-papiers",
-    "failedToCopy": "Échec de la copie",
-    "failedToDelete": "Échec de la suppression",
-    "failedToSave": "Échec de la sauvegarde",
-    "noTextToCopy": "Pas de texte à copier",
-    "operationSuccessful": "Opération réussie",
-    "autoVerifyUser": "Vérifier automatiquement l'utilisateur",
-    "createNewPost": "Créez un nouveau poste à partager avec votre équipe",
-    "deleteAccountConfirm": "Veuillez taper 'delete' pour confirmer",
-    "updatePost": "Mettez à jour votre poste",
-    "needHelp": "Besoin d'aide?"
-  },
-  "email": {
-    "orderConfirmation": "Confirmation de commande",
-    "invoice": "Facture",
-    "passwordReset": "Réinitialisation du mot de passe",
-    "welcome": "Bienvenue",
-    "orderShipped": "Commande expédiée",
-    "paymentReceived": "Paiement reçu",
-    "accountActivation": "Activation du compte",
-    "newsletter": "Newsletter",
-    "reminder": "Rappel"
+  "table": {
+    "id": "ID",
+    "createdAt": "Créé le",
+    "updatedAt": "Mis à jour le",
+    "actions": "Actions",
+    "rowsPerPage": "Lignes par page",
+    "rowsPerPageColon": "Lignes par page:",
+    "page": "Page",
+    "of": "de",
+    "items": "éléments",
+    "results": "résultats",
+    "selected": "sélectionné",
+    "total": "Total",
+    "showing": "Affichage",
+    "to": "à",
+    "from": "de",
+    "first": "Premier",
+    "last": "Dernier",
+    "noResults": "Aucun résultat trouvé",
+    "sortAscending": "Tri croissant",
+    "sortDescending": "Tri décroissant",
+    "display": "Affichage",
+    "selectAll": "Tout sélectionner",
+    "selectRow": "Sélectionner la ligne",
+    "search": "Rechercher"
   },
   "forms": {
     "name": "Nom",
     "description": "Description",
-    "price": "Prix",
-    "quantity": "Quantité",
     "status": "Statut",
     "active": "Actif",
     "inactive": "Inactif",
@@ -183,582 +103,52 @@
     "language": "Langue",
     "timezone": "Fuseau horaire",
     "currency": "Devise",
-    "sortOrder": "Ordre de tri",
-    "isTemplate": "Est un modèle",
-    "requiresRemark": "Nécessite une remarque",
-    "remarkPrompt": "Invite de remarque",
     "category": "Catégorie",
     "translations": "Traductions"
   },
-  "table": {
-    "id": "ID",
-    "createdAt": "Créé le",
-    "updatedAt": "Mis à jour le",
-    "actions": "Actions",
-    "rowsPerPage": "Lignes par page",
-    "rowsPerPageColon": "Lignes par page:",
-    "search": "Rechercher",
-    "results": "résultats",
-    "page": "Page",
-    "of": "de",
-    "items": "éléments",
-    "selected": "sélectionné",
-    "total": "Total",
-    "showing": "Affichage",
-    "to": "à",
-    "from": "de",
-    "first": "Premier",
-    "last": "Dernier",
-    "noResults": "Aucun résultat trouvé",
-    "sortAscending": "Tri croissant",
-    "sortDescending": "Tri décroissant",
-    "email": "E-mail",
-    "role": "Rôle",
-    "status": "Statut",
-    "expiresAt": "Expire le",
-    "acceptedAt": "Accepté le",
-    "acceptedBy": "Accepté par",
-    "invoice": "Facture",
-    "planName": "Nom du plan",
-    "amount": "Montant",
-    "date": "Date",
-    "display": "Affichage",
-    "noTranslation": "Pas de traduction",
-    "noTranslationAvailable": "Aucune traduction disponible",
-    "overrideable": "Remplaçable",
-    "selectAll": "Tout sélectionner",
-    "selectRow": "Sélectionner la ligne"
-  },
-  "pos": {
-    "pointOfSale": "Point de vente",
-    "newOrder": "Nouvelle commande",
-    "currentOrder": "Commande actuelle",
-    "checkout": "Paiement",
-    "payment": "Paiement",
-    "cash": "Espèces",
-    "card": "Carte",
-    "total": "Total",
-    "subtotal": "Sous-total",
-    "tax": "Taxe",
-    "discount": "Remise",
-    "change": "Monnaie",
-    "received": "Reçu",
-    "orderNumber": "Numéro de commande",
-    "printReceipt": "Imprimer le reçu",
-    "emailReceipt": "Envoyer le reçu par e-mail",
-    "voidOrder": "Annuler la commande",
-    "holdOrder": "Mettre en attente",
-    "recallOrder": "Rappeler la commande",
-    "splitBill": "Diviser l'addition",
-    "addCustomer": "Ajouter un client",
-    "selectEvent": "Sélectionner un événement",
-    "selectLocation": "Sélectionner un emplacement",
-    "selectCategory": "Sélectionner une catégorie",
-    "categories": {
-      "fields": {
-        "color": "Couleur",
-        "event": "Événement",
-        "icon": "Icône",
-        "isActive": "Est Actif",
-        "sortOrder": "Ordre de Tri",
-        "translations": "Traductions"
-      },
-      "title": "Catégories"
-    },
-    "clients": {
-      "fields": {
-        "address": "Adresse",
-        "clientType": "Type de Client",
-        "email": "E-mail",
-        "notes": "Notes",
-        "phone": "Téléphone",
-        "translations": "Traductions"
-      },
-      "title": "Clients"
-    },
-    "events": {
-      "fields": {
-        "endDate": "Date de Fin",
-        "isActive": "Est Actif",
-        "settings": "Paramètres",
-        "startDate": "Date de Début",
-        "translations": "Traductions"
-      },
-      "title": "Événements"
-    },
-    "locations": {
-      "fields": {
-        "address": "Adresse",
-        "capacity": "Capacité",
-        "isActive": "Est Actif",
-        "translations": "Traductions"
-      },
-      "title": "Emplacements"
-    },
-    "orders": {
-      "fields": {
-        "completedAt": "Complété Le",
-        "discountAmount": "Montant de la Réduction",
-        "orderNumber": "Numéro de Commande",
-        "paymentMethod": "Méthode de Paiement",
-        "paymentStatus": "Statut du Paiement",
-        "subtotal": "Sous-total",
-        "taxAmount": "Montant de la Taxe",
-        "totalAmount": "Montant Total"
-      },
-      "title": "Commandes"
-    },
-    "printers": {
-      "fields": {
-        "ipAddress": "Adresse IP",
-        "isActive": "Est Actif",
-        "isDefault": "Est Par Défaut",
-        "location": "Emplacement",
-        "port": "Port",
-        "translations": "Traductions"
-      },
-      "title": "Imprimantes"
-    },
-    "products": {
-      "fields": {
-        "category": "Catégorie",
-        "event": "Événement",
-        "isActive": "Est Actif",
-        "isTemplate": "Est Modèle",
-        "location": "Emplacement",
-        "price": "Prix",
-        "requiresRemark": "Remarque Requise",
-        "sortOrder": "Ordre de Tri",
-        "translations": "Traductions"
-      },
-      "title": "Produits"
-    }
-  },
-  "settings": {
-    "general": "Général",
-    "appearance": "Apparence",
-    "notifications": "Notifications",
-    "security": "Sécurité",
-    "privacy": "Confidentialité",
-    "billing": "Facturation",
-    "integrations": "Intégrations",
-    "advanced": "Avancé",
-    "teamSettings": "Paramètres d'équipe",
-    "userSettings": "Paramètres utilisateur",
-    "systemSettings": "Paramètres système",
-    "translations": "Traductions",
-    "emailTemplates": "Modèles d'e-mail",
-    "preferences": "Préférences",
-    "theme": "Thème",
-    "darkMode": "Mode sombre",
-    "lightMode": "Mode clair",
-    "autoMode": "Automatique"
-  },
-  "testkeypath": "french",
-  "a test": "asfd",
-  "asdf": "asdf",
-  "billing": {
-    "description": "Gérez vos informations de facturation",
-    "freePlan": "Gratuit",
-    "plan": "plan",
-    "title": "Facturation",
-    "upgradeToPaid": "Passez à un plan payant",
-    "youAreOn": "Vous êtes sur",
-    "youAreOnThe": "Vous êtes sur le",
-    "cancelsOn": "Annulation le"
-  },
-  "team": {
-    "createNewTeam": "Créer une nouvelle équipe",
-    "systemTranslations": "Traductions système",
-    "teamTranslations": "Traductions d'équipe",
-    "teamUrlAlreadyInUse": "URL d'équipe déjà utilisée",
-    "teamCreatedSuccessfully": "Équipe créée avec succès",
-    "failedToCreateTeam": "Échec de la création de l'équipe",
-    "teamDeletedSuccessfully": "Équipe supprimée avec succès",
-    "failedToDeleteTeam": "Échec de la suppression de l'équipe",
-    "failedToUpdateTeam": "Échec de la mise à jour de l'équipe",
-    "generalSettings": "Paramètres généraux",
-    "teamLogo": "Logo de l'équipe",
-    "teamLogoHelp": "Taille recommandée : 1 Mo, format 1:1",
-    "teamName": "Nom de l'équipe",
-    "teamUrl": "URL de l'équipe",
-    "teamId": "ID de l'équipe",
-    "invites": {
-      "pendingInvitations": "Invitations en attente",
-      "noPendingInvitations": "Aucune invitation en attente trouvée",
-      "acceptedInvitations": "Invitations acceptées",
-      "copyEmail": "Copier l'e-mail",
-      "emailCopied": "E-mail copié dans le presse-papiers !",
-      "copyUserId": "Copier l'ID utilisateur",
-      "userIdCopied": "ID utilisateur copié dans le presse-papiers !",
-      "resendInvite": "Renvoyer l'invitation",
-      "inviteResentSuccessfully": "Invitation renvoyée avec succès !",
-      "failedToResendInvite": "Échec du renvoi de l'invitation",
-      "cancelInvite": "Annuler l'invitation",
-      "inviteCancelledSuccessfully": "Invitation annulée avec succès",
-      "failedToCancelInvite": "Échec de l'annulation de l'invitation"
-    },
-    "members": {
-      "removeFromTeam": "Retirer de l'équipe",
-      "failedToRemoveMember": "Échec de la suppression du membre"
-    }
-  },
-  "sidebar": {
-    "home": "Accueil"
-  },
-  "translations": {
-    "form": {
-      "selectSystemTranslationModal": "Sélectionner une Traduction Système"
-    },
-    "ui": {
-      "baseFromSystemTranslation": "Base de la Traduction Système",
-      "bulkImportTranslations": "Importation en Masse des Traductions",
-      "canBeOverriddenByTeams": "Peut être remplacé par les équipes",
-      "clear": "Effacer",
-      "exampleJsonFormat": "Format JSON d'exemple :",
-      "failedToLoadOverrides": "Échec du chargement des remplacements d'équipe",
-      "failedToSyncTranslations": "Échec de la synchronisation des traductions",
-      "import": "Importer",
-      "importComplete": "Importation Terminée",
-      "importError": "Erreur d'Importation",
-      "importFailed": "Échec de l'Importation",
-      "importTranslations": "Importer les Traductions",
-      "invalidJsonFormat": "Format JSON invalide",
-      "keyPath": "Chemin de Clé",
-      "loadingTeamOverrides": "Chargement des remplacements d'équipe...",
-      "noTeamOverridesFound": "Aucun remplacement d'équipe trouvé pour cette traduction.",
-      "none": "Aucun",
-      "pasteJsonHere": "Collez votre JSON ici...",
-      "searchSystemTranslations": "Rechercher les traductions système à remplacer...",
-      "searchSystemTranslationsBase": "Rechercher les traductions système...",
-      "selectSystemTranslation": "Sélectionner la Traduction Système à Remplacer",
-      "syncToLocaleFiles": "Synchroniser vers les Fichiers Locaux",
-      "importFromLocaleFiles": "Importer depuis les Fichiers Locaux",
-      "syncedTranslations": "Synchronisation de {count} traductions vers les fichiers locaux",
-      "systemTranslation": "Traduction Système",
-      "systemTranslations": "Traductions Système",
-      "teamCustomizations": "Personnalisations d'Équipe :",
-      "teamOverrides": "Remplacements d'Équipe",
-      "teamTranslations": "Traductions d'Équipe",
-      "teamsCount": "{count} équipe | {count} équipes",
-      "unknownTeam": "Équipe Inconnue",
-      "updated": "Mis à jour",
-      "useRichTextEditor": "Utiliser l'éditeur de texte enrichi"
-    }
-  },
-  "workspace": {
-    "settings": {
-      "billing": "Facturation",
-      "members": "Membres de l'Espace de Travail",
-      "title": "Paramètres de l'Espace de Travail"
-    }
-  },
-  "buttons": {
-    "backToLogin": "Retour à la connexion",
-    "banUser": "Bannir l'utilisateur",
-    "blog": "Blog",
-    "changePhoneNumber": "Changer le numéro de téléphone",
-    "createPasskey": "Créer une clé d'accès",
-    "deleteUser": "Supprimer l'utilisateur",
-    "discord": "Discord",
-    "docs": "Documents",
-    "features": "Fonctionnalités",
-    "getStarted": "Commencer",
-    "github": "Github",
-    "goToApp": "Aller à l'application",
-    "google": "Google",
-    "inviteMember": "Inviter un membre",
-    "inviteUser": "Inviter un utilisateur",
-    "liftBan": "Lever l'interdiction",
-    "linkAccount": "Lier le compte",
-    "manageSubscription": "Gérer l'abonnement",
-    "newPost": "Nouveau poste",
-    "pricing": "Tarification",
-    "proceed": "Continuer",
-    "remove": "Supprimer",
-    "sendInvitation": "Envoyer une invitation",
-    "signOut": "Se déconnecter",
-    "stopSession": "Arrêter la session",
-    "updatePassword": "Mettre à jour le mot de passe",
-    "verify": "Vérifier",
-    "verifyPhoneNumber": "Vérifier le numéro de téléphone"
-  },
-  "dashboard": {
-    "followers": "Abonnés",
-    "impressions": "Impressions",
-    "impressionsOverview": "Aperçu des impressions",
-    "likes": "J'aime",
-    "profileVisits": "Visites de profil"
-  },
   "errors": {
-    "failedToCreatePost": "Une erreur s'est produite lors de la création du poste",
-    "failedToCreateUser": "Échec de la création de l'utilisateur",
-    "failedToDeletePost": "Une erreur s'est produite lors de la suppression du poste",
-    "failedToSendVerificationCode": "Échec de l'envoi du code de vérification",
-    "failedToUpdatePost": "Une erreur s'est produite lors de la mise à jour du poste",
-    "failedToUploadAvatar": "Échec du téléchargement de l'avatar",
-    "failedToUploadImage": "Une erreur s'est produite lors du téléchargement de l'image",
-    "failedToVerifyCode": "Échec de la vérification du code",
-    "unexpectedError": "Une erreur inattendue s'est produite"
+    "generic": "Quelque chose s'est mal passé",
+    "notFound": "Non trouvé",
+    "unauthorized": "Non autorisé",
+    "forbidden": "Accès refusé",
+    "serverError": "Erreur serveur",
+    "networkError": "Erreur réseau",
+    "validationError": "Erreur de validation",
+    "requiredField": "Ce champ est requis",
+    "invalidEmail": "Adresse e-mail invalide",
+    "invalidPassword": "Mot de passe invalide",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "minLength": "Doit contenir au moins {min} caractères",
+    "maxLength": "Doit contenir au plus {max} caractères",
+    "tryAgain": "Veuillez réessayer",
+    "contactSupport": "Veuillez contacter le support si le problème persiste"
   },
-  "fields": {
-    "accountId": "ID du compte",
-    "avatar": "Avatar",
-    "bannedUntil": "Banni jusqu'à",
-    "content": "Contenu",
-    "image": "Image",
-    "memberEmail": "E-mail du membre",
-    "message": "Message",
-    "newPassword": "Nouveau mot de passe",
-    "phoneNumber": "Numéro de téléphone",
-    "reason": "Raison",
-    "role": "Rôle",
-    "teamId": "ID de l'équipe",
-    "teamName": "Nom de l'équipe",
-    "teamUrl": "URL de l'équipe",
-    "title": "Titre",
-    "verificationCode": "Code de vérification"
+  "success": {
+    "saved": "Enregistré avec succès",
+    "created": "Créé avec succès",
+    "updated": "Mis à jour avec succès",
+    "deleted": "Supprimé avec succès",
+    "sent": "Envoyé avec succès",
+    "copied": "Copié dans le presse-papiers"
   },
-  "modals": {
-    "banUser": {
-      "description": "Bannir un utilisateur de la plateforme",
-      "title": "Bannir l'utilisateur"
-    },
-    "createTeam": {
-      "title": "Créer une nouvelle équipe"
-    },
-    "createUser": {
-      "description": "Inviter un nouvel utilisateur sur la plateforme",
-      "title": "Créer un nouvel utilisateur"
-    },
-    "deleteAccount": {
-      "title": "Supprimer le compte"
-    },
-    "deleteFeedback": {
-      "title": "Supprimer les commentaires"
-    },
-    "deletePost": {
-      "title": "Supprimer le poste"
-    },
-    "deleteUser": {
-      "description": "Cette action est irréversible",
-      "title": "Supprimer l'utilisateur"
-    },
-    "editPost": {
-      "title": "Modifier le poste"
-    },
-    "linkAccount": {
-      "title": "Lier le compte"
-    },
-    "newPost": {
-      "title": "Nouveau poste"
-    },
-    "registerPasskey": {
-      "title": "Enregistrer une nouvelle clé d'accès"
-    },
-    "replyFeedback": {
-      "title": "Répondre aux commentaires"
-    }
+  "confirmation": {
+    "areYouSure": "Êtes-vous sûr ?",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ceci ?",
+    "leaveConfirm": "Êtes-vous sûr de vouloir partir ?",
+    "unsavedChanges": "Vous avez des modifications non enregistrées",
+    "discardChanges": "Annuler les modifications ?",
+    "cannotUndo": "Cette action ne peut pas être annulée"
   },
-  "pages": {
-    "dashboard": {
-      "accountSecurity": "Sécurité du compte",
-      "accountSettings": "Paramètres du compte",
-      "aiImageGen": "Génération d'images IA",
-      "imageGallery": "Galerie d'images",
-      "linkShortner": "Raccourcisseur de liens",
-      "posts": "Articles",
-      "tasksDemo": "Démo des tâches",
-      "teamSettings": "Paramètres de l'équipe",
-      "workspaceMembers": "Membres de l'espace de travail"
-    },
-    "superAdmin": {
-      "allTeams": "Toutes les équipes",
-      "feedback": "Commentaires",
-      "stripePlans": "Plans Stripe",
-      "users": "Utilisateurs"
-    }
-  },
-  "placeholders": {
-    "enterNewPassword": "Entrez un nouveau mot de passe",
-    "enterTeamName": "Entrez le nom de l'équipe",
-    "optionalDescription": "Description optionnelle pour cette traduction",
-    "personalOrCompanyName": "Nom personnel ou de l'entreprise",
-    "enterYourResponse": "Entrez votre réponse...",
-    "phoneNumber": "+33123456789",
-    "verificationCode": "○",
-    "enterNewTranslation": "Entrer une nouvelle traduction...",
-    "editTranslation": "Modifier la traduction..."
-  },
-  "toast": {
-    "loggedInSuccessfully": {
-      "title": "Connecté avec succès"
-    },
-    "passwordCopied": {
-      "title": "Mot de passe copié"
-    },
-    "postCreated": {
-      "description": "Votre poste a été créé avec succès",
-      "title": "Poste créé"
-    },
-    "postDeleted": {
-      "description": "Votre poste a été supprimé avec succès",
-      "title": "Poste supprimé"
-    },
-    "postUpdated": {
-      "description": "Votre poste a été mis à jour avec succès",
-      "title": "Poste mis à jour"
-    },
-    "translationSaveFailed": {
-      "description": "Impossible de sauvegarder la traduction. Veuillez réessayer.",
-      "title": "Échec de la sauvegarde de la traduction"
-    },
-    "translationSaved": {
-      "title": "Traduction sauvegardée"
-    },
-    "userCreated": {
-      "title": "Utilisateur créé avec succès"
-    }
-  },
-  "translationUi": {
-    "baseFromSystemTranslation": "Basé sur la traduction système",
-    "category": "Catégorie",
-    "createTranslation": "Créer une traduction",
-    "description": "Description",
-    "edit": "Modifier",
-    "keyPath": "Chemin de clé",
-    "no": "Non",
-    "noTranslation": "Aucune traduction",
-    "noTranslationAvailable": "Aucune traduction disponible",
-    "override": "Substituer",
-    "systemValues": "Valeurs système",
-    "teamOverrideDescription": "Description de substitution d'équipe",
-    "teamTranslationOverrides": "Substitutions de traduction d'équipe",
-    "translations": "Traductions",
-    "updateTranslation": "Mettre à jour la traduction",
-    "yes": "Oui",
-    "yourOverride": "Votre substitution"
-  },
-  "validation": {
-    "categoryRequired": "La catégorie est requise",
-    "contentRequired": "Le contenu est requis",
-    "invalidEmail": "E-mail invalide",
-    "keyPathRequired": "Le chemin de clé est requis",
-    "nameRequired": "Le nom est requis",
-    "titleRequired": "Le titre est requis",
-    "translationRequired": "Au moins une traduction est requise",
-    "titleMaxLength": "Le titre doit contenir moins de 100 caractères",
-    "contentMaxLength": "Le contenu doit contenir moins de 1000 caractères"
-  },
-  "superAdmin": {
-    "allTeams": "Toutes les équipes",
-    "feedback": {
-      "replyToFeedback": "Répondre au commentaire",
-      "sendResponse": "Envoyer une réponse au commentaire de l'utilisateur",
-      "deleteFeedback": "Supprimer le commentaire",
-      "irreversibleAction": "Cette action est irréversible",
-      "detailsAndReply": "Détails et répondre",
-      "markAsClosed": "Marquer comme fermé",
-      "sendReply": "Envoyer la réponse",
-      "feedbackMarkedClosed": "Commentaire marqué comme fermé",
-      "feedbackDeleted": "Commentaire supprimé",
-      "feedbackDeletedDescription": "Le commentaire a été supprimé",
-      "replySent": "Réponse envoyée",
-      "replySentDescription": "Votre réponse a été envoyée à l'utilisateur",
-      "failedToSendReply": "Échec de l'envoi de la réponse",
-      "failedToMarkClosed": "Échec du marquage du commentaire comme fermé",
-      "failedToDeleteFeedback": "Échec de la suppression du commentaire",
-      "userSays": "dit"
-    },
-    "columns": {
-      "name": "Nom",
-      "owner": "Propriétaire",
-      "members": "Membres",
-      "subscription": "Abonnement",
-      "createdAt": "Créé le",
-      "user": "Utilisateur",
-      "email": "E-mail",
-      "status": "Statut",
-      "message": "Message",
-      "date": "Date",
-      "referrer": "Référent"
-    },
-    "meta": {
-      "pageUrl": "URL de la page :",
-      "browser": "Navigateur :",
-      "platform": "Plateforme :",
-      "screen": "Écran :",
-      "language": "Langue :",
-      "timezone": "Fuseau horaire :",
-      "colorScheme": "Schéma de couleurs :"
-    }
-  },
-  "editor": {
-    "savedSuccessfully": "Enregistré avec succès",
-    "saveFailed": "Échec de l'enregistrement",
-    "allTranslationsSaved": "Toutes les traductions enregistrées",
-    "editorsInitialized": "Éditeurs initialisés",
-    "editorsReady": "Les éditeurs de gauche et de droite sont prêts",
-    "syncEnabled": "Synchronisation activée",
-    "syncDisabled": "Synchronisation désactivée",
-    "editorsSyncContent": "Les éditeurs synchroniseront le contenu",
-    "independentEditingMode": "Mode d'édition indépendant"
-  },
-  "accountSettings": {
-    "general": {
-      "personalInformation": "Informations personnelles",
-      "privacyNotice": "Vos informations personnelles ne sont partagées avec personne.",
-      "avatar": "Avatar",
-      "name": "Nom",
-      "email": "E-mail",
-      "accountId": "ID de compte"
-    },
-    "passkey": {
-      "manager": "Gestionnaire de clés d'accès",
-      "addPasskey": "Ajouter une clé d'accès",
-      "description": "Ajoutez et gérez vos clés d'accès ici",
-      "registerNew": "Enregistrer une nouvelle clé d'accès",
-      "noPasskeys": "Aucune empreinte digitale ou Face ID liée à votre compte.",
-      "name": "Nom",
-      "delete": "Supprimer"
-    },
-    "phoneNumber": {
-      "title": "Numéro de téléphone",
-      "phoneNumber": "Numéro de téléphone",
-      "verify": "Vérifier le numéro de téléphone",
-      "remove": "Supprimer",
-      "verificationCode": "Code de vérification",
-      "verifyButton": "Vérifier",
-      "cancel": "Annuler",
-      "changeNumber": "Changer de numéro de téléphone"
-    },
-    "password": {
-      "newPassword": "Nouveau mot de passe",
-      "updatePassword": "Mettre à jour le mot de passe"
-    },
-    "linkedAccounts": {
-      "linkAccount": "Lier le compte",
-      "description": "Liez un compte à votre compte."
-    },
-    "dangerZone": {
-      "deleteAccount": "Supprimer le compte",
-      "description": "Veuillez confirmer votre intention de supprimer votre compte.",
-      "confirmationLabel": "Veuillez taper 'delete' pour confirmer",
-      "cancel": "Annuler",
-      "proceed": "Continuer",
-      "confirmationMessage": "Veuillez taper 'delete' pour confirmer",
-      "irreversible": "Cette action est irréversible et supprimera toutes les données associées"
-    }
-  },
-  "branding": {
-    "appName": "Supersaas V3"
-  },
-  "newsletter": {
-    "alreadySubscribed": "Vous êtes déjà abonné à notre newsletter.",
-    "submitSuccess": "Le formulaire a été soumis."
-  },
-  "feedback": {
-    "messageRequired": "Le message est requis",
-    "helpDescription": "Vous avez une question ou besoin d'aide ? Nous sommes là pour vous aider !"
+  "time": {
+    "now": "Maintenant",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "tomorrow": "Demain",
+    "thisWeek": "Cette semaine",
+    "lastWeek": "La semaine dernière",
+    "thisMonth": "Ce mois-ci",
+    "lastMonth": "Le mois dernier",
+    "ago": "il y a {time}",
+    "in": "dans {time}"
   }
 }

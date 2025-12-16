@@ -2,25 +2,25 @@
   "common": {
     "save": "Opslaan",
     "cancel": "Annuleren",
-    "change": "Wijzigen",
     "delete": "Verwijderen",
     "edit": "Bewerken",
     "create": "Aanmaken",
     "update": "Bijwerken",
-    "search": "Zoeken",
-    "filter": "Filteren",
-    "export": "Exporteren",
-    "import": "Importeren",
+    "add": "Toevoegen",
+    "remove": "Verwijderen",
     "close": "Sluiten",
     "confirm": "Bevestigen",
     "back": "Terug",
     "next": "Volgende",
     "previous": "Vorige",
+    "search": "Zoeken",
+    "filter": "Filteren",
+    "sort": "Sorteren",
+    "export": "Exporteren",
+    "import": "Importeren",
     "submit": "Verzenden",
     "reset": "Resetten",
     "refresh": "Vernieuwen",
-    "add": "Toevoegen",
-    "remove": "Verwijderen",
     "view": "Bekijken",
     "download": "Downloaden",
     "upload": "Uploaden",
@@ -29,135 +29,55 @@
     "unselectAll": "Alles deselecteren",
     "actions": "Acties",
     "loading": "Laden...",
+    "saving": "Opslaan...",
+    "deleting": "Verwijderen...",
+    "noResults": "Geen resultaten gevonden",
     "noData": "Geen gegevens beschikbaar",
+    "required": "Verplicht",
+    "optional": "Optioneel",
     "yes": "Ja",
     "no": "Nee",
-    "hideExample": "Voorbeeld verbergen",
-    "showExample": "Voorbeeld tonen",
+    "all": "Alles",
+    "none": "Geen",
+    "selected": "Geselecteerd",
+    "more": "Meer",
+    "less": "Minder",
+    "showMore": "Meer tonen",
+    "showLess": "Minder tonen",
+    "viewAll": "Alles bekijken",
     "saveChanges": "Wijzigingen opslaan",
-    "docs": "Docs",
-    "google": "Google",
-    "github": "Github",
-    "discord": "Discord",
-    "proceed": "Doorgaan"
+    "proceed": "Doorgaan",
+    "change": "Wijzigen"
   },
-  "auth": {
-    "login": "Inloggen",
-    "logout": "Uitloggen",
-    "signUp": "Aanmelden",
-    "signIn": "Inloggen",
-    "signOut": "Uitloggen",
-    "password": "Wachtwoord",
-    "email": "E-mail",
-    "username": "Gebruikersnaam",
-    "forgotPassword": "Wachtwoord vergeten?",
-    "resetPassword": "Wachtwoord resetten",
-    "register": "Registreren",
-    "rememberMe": "Onthoud mij",
-    "dontHaveAccount": "Heeft u geen account?",
-    "alreadyHaveAccount": "Heeft u al een account?",
-    "verifyEmail": "Verifieer je e-mail",
-    "changePassword": "Wachtwoord wijzigen",
-    "currentPassword": "Huidig wachtwoord",
-    "newPassword": "Nieuw wachtwoord",
-    "confirmPassword": "Bevestig wachtwoord",
-    "getStarted": "Aan de slag",
-    "submit": "Verzenden",
-    "phoneNumber": "Telefoonnummer",
-    "loginWithMagicLink": "Inloggen met Magic Link",
-    "loginWithPasskey": "Inloggen met Passkey",
-    "socialLogin": "Inloggen met sociale media",
-    "phoneNumberLogin": "Inloggen met telefoonnummer",
-    "socialLogin": {
-      "google": "Google",
-      "github": "Github",
-      "discord": "Discord"
-    }
-  },
-  "navigation": {
-    "dashboard": "Dashboard",
-    "products": "Producten",
-    "orders": "Bestellingen",
-    "customers": "Klanten",
-    "settings": "Instellingen",
-    "profile": "Profiel",
-    "reports": "Rapporten",
-    "categories": "Categorieën",
-    "events": "Evenementen",
-    "locations": "Locaties",
-    "printers": "Printers",
-    "clients": "Cliënten",
-    "team": "Team",
-    "billing": "Facturatie",
-    "notifications": "Meldingen",
-    "help": "Help",
-    "home": "Home",
-    "backToDashboard": "Terug naar Dashboard",
-    "accountSettings": "Account Instellingen",
-    "posts": "Berichten",
-    "superAdmin": "Super Admin",
-    "teamTranslations": "Team Vertalingen",
-    "workspaceMembers": "Werkruimte Leden",
-    "workspaceSettings": "Werkruimte Instellingen",
-    "users": "Gebruikers",
-    "teams": "Teams",
-    "translations": "Vertalingen",
-    "stripePlans": "Stripe Plannen",
-    "feedbackSubmissions": "Feedback Inzendingen",
-    "newsletterSubscribers": "Nieuwsbrief Abonnees"
-  },
-  "messages": {
-    "success": "Succes",
-    "error": "Fout",
-    "warning": "Waarschuwing",
-    "info": "Informatie",
-    "confirmDelete": "Weet je zeker dat je dit wilt verwijderen?",
-    "confirmDeletePost": "Weet je zeker dat je dit bericht wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
-    "confirmAction": "Weet je zeker dat je door wilt gaan?",
-    "saved": "Wijzigingen succesvol opgeslagen",
-    "deleted": "Succesvol verwijderd",
-    "created": "Succesvol aangemaakt",
-    "updated": "Succesvol bijgewerkt",
-    "required": "Dit veld is verplicht",
-    "invalid": "Ongeldige waarde",
-    "feedbackSubmitted": "Uw feedback is verzonden.",
-    "feedbackSubmittedDesc": "We nemen zo snel mogelijk contact met u op.",
-    "minLength": "Minimale lengte is {min}",
-    "maxLength": "Maximale lengte is {max}",
-    "emailInvalid": "Voer een geldig e-mailadres in",
-    "passwordMismatch": "Wachtwoorden komen niet overeen",
-    "networkError": "Netwerkfout. Probeer het opnieuw.",
-    "unauthorized": "Je bent niet gemachtigd om deze actie uit te voeren",
-    "sessionExpired": "Je sessie is verlopen. Log opnieuw in.",
-    "somethingWentWrong": "Er is iets misgegaan. Probeer het opnieuw.",
-    "copiedToClipboard": "Gekopieerd naar klembord",
-    "failedToCopy": "Kopiëren mislukt",
-    "failedToDelete": "Verwijderen mislukt",
-    "failedToSave": "Opslaan mislukt",
-    "noTextToCopy": "Geen tekst om te kopiëren",
-    "operationSuccessful": "Operatie succesvol",
-    "autoVerifyUser": "Gebruiker automatisch verifiëren",
-    "createNewPost": "Maak een nieuw bericht om te delen met je team",
-    "deleteAccountConfirm": "Typ 'delete' om te bevestigen",
-    "updatePost": "Werk je bericht bij",
-    "needHelp": "Hulp nodig?"
-  },
-  "email": {
-    "orderConfirmation": "Orderbevestiging",
-    "invoice": "Factuur",
-    "passwordReset": "Wachtwoord resetten",
-    "welcome": "Welkom",
-    "orderShipped": "Bestelling verzonden",
-    "paymentReceived": "Betaling ontvangen",
-    "accountActivation": "Account activeren",
-    "newsletter": "Nieuwsbrief",
-    "reminder": "Herinnering"
+  "table": {
+    "id": "ID",
+    "createdAt": "Aangemaakt op",
+    "updatedAt": "Bijgewerkt op",
+    "actions": "Acties",
+    "rowsPerPage": "Rijen per pagina",
+    "rowsPerPageColon": "Rijen per pagina:",
+    "page": "Pagina",
+    "of": "van",
+    "items": "items",
+    "results": "resultaten",
+    "selected": "geselecteerd",
+    "total": "Totaal",
+    "showing": "Toont",
+    "to": "tot",
+    "from": "van",
+    "first": "Eerste",
+    "last": "Laatste",
+    "noResults": "Geen resultaten gevonden",
+    "sortAscending": "Oplopend sorteren",
+    "sortDescending": "Aflopend sorteren",
+    "display": "Weergave",
+    "selectAll": "Alles selecteren",
+    "selectRow": "Rij selecteren",
+    "search": "Zoeken"
   },
   "forms": {
     "name": "Naam",
     "description": "Beschrijving",
-    "price": "Prijs",
-    "quantity": "Aantal",
     "status": "Status",
     "active": "Actief",
     "inactive": "Inactief",
@@ -183,582 +103,52 @@
     "language": "Taal",
     "timezone": "Tijdzone",
     "currency": "Valuta",
-    "sortOrder": "Sorteervolgorde",
-    "isTemplate": "Is sjabloon",
-    "requiresRemark": "Vereist opmerking",
-    "remarkPrompt": "Opmerking prompt",
     "category": "Categorie",
     "translations": "Vertalingen"
   },
-  "table": {
-    "id": "ID",
-    "createdAt": "Aangemaakt op",
-    "updatedAt": "Bijgewerkt op",
-    "actions": "Acties",
-    "rowsPerPage": "Rijen per pagina",
-    "rowsPerPageColon": "Rijen per pagina:",
-    "search": "Zoeken",
-    "results": "resultaten",
-    "email": "E-mail",
-    "role": "Rol",
-    "status": "Status",
-    "expiresAt": "Verloopt op",
-    "acceptedAt": "Geaccepteerd op",
-    "acceptedBy": "Geaccepteerd door",
-    "invoice": "Factuur",
-    "planName": "Plan naam",
-    "amount": "Bedrag",
-    "date": "Datum",
-    "page": "Pagina",
-    "of": "van",
-    "items": "items",
-    "selected": "geselecteerd",
-    "total": "Totaal",
-    "showing": "Toont",
-    "to": "tot",
-    "from": "van",
-    "first": "Eerste",
-    "last": "Laatste",
-    "noResults": "Geen resultaten gevonden",
-    "sortAscending": "Oplopend sorteren",
-    "sortDescending": "Aflopend sorteren",
-    "display": "Weergave",
-    "noTranslation": "Geen vertaling",
-    "noTranslationAvailable": "Geen vertaling beschikbaar",
-    "overrideable": "Overschrijfbaar",
-    "selectAll": "Alles selecteren",
-    "selectRow": "Rij selecteren"
-  },
-  "pos": {
-    "pointOfSale": "Kassa",
-    "newOrder": "Nieuwe bestelling",
-    "currentOrder": "Huidige bestelling",
-    "checkout": "Afrekenen",
-    "payment": "Betaling",
-    "cash": "Contant",
-    "card": "Kaart",
-    "total": "Totaal",
-    "subtotal": "Subtotaal",
-    "tax": "BTW",
-    "discount": "Korting",
-    "change": "Wisselgeld",
-    "received": "Ontvangen",
-    "orderNumber": "Bestelnummer",
-    "printReceipt": "Bon printen",
-    "emailReceipt": "Bon e-mailen",
-    "voidOrder": "Bestelling annuleren",
-    "holdOrder": "Bestelling parkeren",
-    "recallOrder": "Bestelling ophalen",
-    "splitBill": "Rekening splitsen",
-    "addCustomer": "Klant toevoegen",
-    "selectEvent": "Selecteer evenement",
-    "selectLocation": "Selecteer locatie",
-    "selectCategory": "Selecteer categorie",
-    "categories": {
-      "fields": {
-        "color": "Kleur",
-        "event": "Evenement",
-        "icon": "Icoon",
-        "isActive": "Is Actief",
-        "sortOrder": "Sorteervolgorde",
-        "translations": "Vertalingen"
-      },
-      "title": "Categorieën"
-    },
-    "clients": {
-      "fields": {
-        "address": "Adres",
-        "clientType": "Klanttype",
-        "email": "E-mail",
-        "notes": "Notities",
-        "phone": "Telefoon",
-        "translations": "Vertalingen"
-      },
-      "title": "Klanten"
-    },
-    "events": {
-      "fields": {
-        "endDate": "Einddatum",
-        "isActive": "Is Actief",
-        "settings": "Instellingen",
-        "startDate": "Startdatum",
-        "translations": "Vertalingen"
-      },
-      "title": "Evenementen"
-    },
-    "locations": {
-      "fields": {
-        "address": "Adres",
-        "capacity": "Capaciteit",
-        "isActive": "Is Actief",
-        "translations": "Vertalingen"
-      },
-      "title": "Locaties"
-    },
-    "orders": {
-      "fields": {
-        "completedAt": "Voltooid Op",
-        "discountAmount": "Kortingsbedrag",
-        "orderNumber": "Bestelnummer",
-        "paymentMethod": "Betaalmethode",
-        "paymentStatus": "Betaalstatus",
-        "subtotal": "Subtotaal",
-        "taxAmount": "BTW Bedrag",
-        "totalAmount": "Totaalbedrag"
-      },
-      "title": "Bestellingen"
-    },
-    "printers": {
-      "fields": {
-        "ipAddress": "IP-adres",
-        "isActive": "Is Actief",
-        "isDefault": "Is Standaard",
-        "location": "Locatie",
-        "port": "Poort",
-        "translations": "Vertalingen"
-      },
-      "title": "Printers"
-    },
-    "products": {
-      "fields": {
-        "category": "Categorie",
-        "event": "Evenement",
-        "isActive": "Is Actief",
-        "isTemplate": "Is Sjabloon",
-        "location": "Locatie",
-        "price": "Prijs",
-        "requiresRemark": "Opmerking Vereist",
-        "sortOrder": "Sorteervolgorde",
-        "translations": "Vertalingen"
-      },
-      "title": "Producten"
-    }
-  },
-  "settings": {
-    "general": "Algemeen",
-    "appearance": "Uiterlijk",
-    "notifications": "Meldingen",
-    "security": "Beveiliging",
-    "privacy": "Privacy",
-    "billing": "Facturatie",
-    "integrations": "Integraties",
-    "advanced": "Geavanceerd",
-    "teamSettings": "Teaminstellingen",
-    "userSettings": "Gebruikersinstellingen",
-    "systemSettings": "Systeeminstellingen",
-    "translations": "Vertalingen",
-    "emailTemplates": "E-mailsjablonen",
-    "preferences": "Voorkeuren",
-    "theme": "Thema",
-    "darkMode": "Donkere modus",
-    "lightMode": "Lichte modus",
-    "autoMode": "Automatisch"
-  },
-  "testkeypath": "dutch",
-  "a test": "asdf",
-  "asdf": "asdf",
-  "billing": {
-    "description": "Beheer uw facturatiegegevens en abonnementen",
-    "freePlan": "Gratis",
-    "plan": "abonnement",
-    "title": "Facturering",
-    "upgradeToPaid": "Upgrade naar een betaald abonnement",
-    "youAreOn": "U bent op",
-    "youAreOnThe": "U bent op het",
-    "cancelsOn": "Annulering op"
-  },
-  "team": {
-    "createNewTeam": "Maak een nieuw team",
-    "systemTranslations": "Systeem Vertalingen",
-    "teamTranslations": "Team Vertalingen",
-    "teamUrlAlreadyInUse": "Team URL is al in gebruik",
-    "teamCreatedSuccessfully": "Team succesvol aangemaakt",
-    "failedToCreateTeam": "Team aanmaken mislukt",
-    "teamDeletedSuccessfully": "Team succesvol verwijderd",
-    "failedToDeleteTeam": "Team verwijderen mislukt",
-    "failedToUpdateTeam": "Team bijwerken mislukt",
-    "generalSettings": "Algemene instellingen",
-    "teamLogo": "Team logo",
-    "teamLogoHelp": "Aanbevolen grootte: 1 MB, 1:1 verhouding",
-    "teamName": "Team naam",
-    "teamUrl": "Team URL",
-    "teamId": "Team ID",
-    "invites": {
-      "pendingInvitations": "Openstaande uitnodigingen",
-      "noPendingInvitations": "Geen openstaande uitnodigingen gevonden",
-      "acceptedInvitations": "Geaccepteerde uitnodigingen",
-      "copyEmail": "E-mail kopiëren",
-      "emailCopied": "E-mail gekopieerd naar klembord!",
-      "copyUserId": "Gebruikers-ID kopiëren",
-      "userIdCopied": "Gebruikers-ID gekopieerd naar klembord!",
-      "resendInvite": "Uitnodiging opnieuw verzenden",
-      "inviteResentSuccessfully": "Uitnodiging succesvol opnieuw verzonden!",
-      "failedToResendInvite": "Uitnodiging opnieuw verzenden mislukt",
-      "cancelInvite": "Uitnodiging annuleren",
-      "inviteCancelledSuccessfully": "Uitnodiging succesvol geannuleerd",
-      "failedToCancelInvite": "Uitnodiging annuleren mislukt"
-    },
-    "members": {
-      "removeFromTeam": "Verwijderen uit team",
-      "failedToRemoveMember": "Lid verwijderen mislukt"
-    }
-  },
-  "sidebar": {
-    "home": "Home"
-  },
-  "translations": {
-    "form": {
-      "selectSystemTranslationModal": "Selecteer een Systeemvertaling"
-    },
-    "ui": {
-      "baseFromSystemTranslation": "Basis van Systeemvertaling",
-      "bulkImportTranslations": "Bulk Import Vertalingen",
-      "canBeOverriddenByTeams": "Kan worden overschreven door teams",
-      "clear": "Wissen",
-      "exampleJsonFormat": "Voorbeeld JSON formaat:",
-      "failedToLoadOverrides": "Kan team overschrijvingen niet laden",
-      "failedToSyncTranslations": "Kan vertalingen niet synchroniseren",
-      "import": "Importeren",
-      "importComplete": "Import Voltooid",
-      "importError": "Import Fout",
-      "importFailed": "Import Mislukt",
-      "importTranslations": "Vertalingen Importeren",
-      "invalidJsonFormat": "Ongeldig JSON formaat",
-      "keyPath": "Sleutelpad",
-      "loadingTeamOverrides": "Team overschrijvingen laden...",
-      "noTeamOverridesFound": "Geen team overschrijvingen gevonden voor deze vertaling.",
-      "none": "Geen",
-      "pasteJsonHere": "Plak je JSON hier...",
-      "searchSystemTranslations": "Zoek systeemvertalingen om te overschrijven...",
-      "searchSystemTranslationsBase": "Zoek systeemvertalingen...",
-      "selectSystemTranslation": "Selecteer Systeemvertaling om te Overschrijven",
-      "syncToLocaleFiles": "Synchroniseren naar Lokale Bestanden",
-      "importFromLocaleFiles": "Importeren van Lokale Bestanden",
-      "syncedTranslations": "Synchroniseerde {count} vertalingen naar lokale bestanden",
-      "systemTranslation": "Systeemvertaling",
-      "systemTranslations": "Systeemvertalingen",
-      "teamCustomizations": "Team Aanpassingen:",
-      "teamOverrides": "Team Overschrijvingen",
-      "teamTranslations": "Teamvertalingen",
-      "teamsCount": "{count} team | {count} teams",
-      "unknownTeam": "Onbekend Team",
-      "updated": "Bijgewerkt",
-      "useRichTextEditor": "Gebruik RTF-editor"
-    }
-  },
-  "workspace": {
-    "settings": {
-      "billing": "Facturering",
-      "members": "Werkruimte Leden",
-      "title": "Werkruimte Instellingen"
-    }
-  },
-  "buttons": {
-    "backToLogin": "Terug naar Inloggen",
-    "banUser": "Gebruiker Verbannen",
-    "blog": "Blog",
-    "changePhoneNumber": "Telefoonnummer Wijzigen",
-    "createPasskey": "Toegangssleutel Maken",
-    "deleteUser": "Gebruiker Verwijderen",
-    "discord": "Discord",
-    "docs": "Documentatie",
-    "features": "Functies",
-    "getStarted": "Begin",
-    "github": "Github",
-    "goToApp": "Ga naar App",
-    "google": "Google",
-    "inviteMember": "Lid Uitnodigen",
-    "inviteUser": "Gebruiker Uitnodigen",
-    "liftBan": "Verbanning Opheffen",
-    "linkAccount": "Account Koppelen",
-    "manageSubscription": "Abonnement Beheren",
-    "newPost": "Nieuw Bericht",
-    "pricing": "Prijzen",
-    "proceed": "Doorgaan",
-    "remove": "Verwijderen",
-    "sendInvitation": "Uitnodiging versturen",
-    "signOut": "Uitloggen",
-    "stopSession": "Sessie stoppen",
-    "updatePassword": "Wachtwoord Bijwerken",
-    "verify": "Verifiëren",
-    "verifyPhoneNumber": "Telefoonnummer Verifiëren"
-  },
-  "dashboard": {
-    "followers": "Volgers",
-    "impressions": "Impressies",
-    "impressionsOverview": "Impressies Overzicht",
-    "likes": "Likes",
-    "profileVisits": "Profielbezoeken"
-  },
   "errors": {
-    "failedToCreatePost": "Er is een fout opgetreden bij het aanmaken van het bericht",
-    "failedToCreateUser": "Gebruiker aanmaken mislukt",
-    "failedToDeletePost": "Er is een fout opgetreden bij het verwijderen van het bericht",
-    "failedToSendVerificationCode": "Verificatiecode verzenden mislukt",
-    "failedToUpdatePost": "Er is een fout opgetreden bij het bijwerken van het bericht",
-    "failedToUploadAvatar": "Avatar uploaden mislukt",
-    "failedToUploadImage": "Er is een fout opgetreden bij het uploaden van de afbeelding",
-    "failedToVerifyCode": "Code verifiëren mislukt",
-    "unexpectedError": "Er is een onverwachte fout opgetreden"
-  },
-  "fields": {
-    "accountId": "Account ID",
-    "avatar": "Avatar",
-    "bannedUntil": "Verbannen Tot",
-    "content": "Inhoud",
-    "image": "Afbeelding",
-    "memberEmail": "Lid e-mail",
-    "message": "Bericht",
-    "newPassword": "Nieuw Wachtwoord",
-    "phoneNumber": "Telefoonnummer",
-    "reason": "Reden",
-    "role": "Rol",
-    "teamId": "Team ID",
-    "teamName": "Teamnaam",
-    "teamUrl": "Team URL",
-    "title": "Titel",
-    "verificationCode": "Verificatiecode"
-  },
-  "modals": {
-    "banUser": {
-      "description": "Een gebruiker van het platform verbannen",
-      "title": "Gebruiker Verbannen"
-    },
-    "createTeam": {
-      "title": "Een nieuw team maken"
-    },
-    "createUser": {
-      "description": "Een nieuwe gebruiker uitnodigen voor het platform",
-      "title": "Een nieuwe gebruiker maken"
-    },
-    "deleteAccount": {
-      "title": "Account Verwijderen"
-    },
-    "deleteFeedback": {
-      "title": "Feedback Verwijderen"
-    },
-    "deletePost": {
-      "title": "Bericht Verwijderen"
-    },
-    "deleteUser": {
-      "description": "Deze actie is onomkeerbaar",
-      "title": "Gebruiker Verwijderen"
-    },
-    "editPost": {
-      "title": "Bericht Bewerken"
-    },
-    "linkAccount": {
-      "title": "Account Koppelen"
-    },
-    "newPost": {
-      "title": "Nieuw Bericht"
-    },
-    "registerPasskey": {
-      "title": "Een nieuwe toegangssleutel registreren"
-    },
-    "replyFeedback": {
-      "title": "Reageren op Feedback"
-    }
-  },
-  "pages": {
-    "dashboard": {
-      "accountSecurity": "Account Beveiliging",
-      "accountSettings": "Account Instellingen",
-      "aiImageGen": "AI Afbeelding Generatie",
-      "imageGallery": "Afbeeldingengalerij",
-      "linkShortner": "Link Verkorten",
-      "posts": "Berichten",
-      "tasksDemo": "Taken Demo",
-      "teamSettings": "Team Instellingen",
-      "workspaceMembers": "Werkruimte Leden"
-    },
-    "superAdmin": {
-      "allTeams": "Alle Teams",
-      "feedback": "Feedback",
-      "stripePlans": "Stripe Plannen",
-      "users": "Gebruikers"
-    }
-  },
-  "placeholders": {
-    "enterNewPassword": "Voer nieuw wachtwoord in",
-    "enterTeamName": "Voer teamnaam in",
-    "optionalDescription": "Optionele beschrijving voor deze vertaling",
-    "personalOrCompanyName": "Persoonlijke of Bedrijfsnaam",
-    "enterYourResponse": "Voer uw antwoord in...",
-    "phoneNumber": "+31612345678",
-    "verificationCode": "○",
-    "enterNewTranslation": "Voer nieuwe vertaling in...",
-    "editTranslation": "Vertaling bewerken..."
-  },
-  "toast": {
-    "loggedInSuccessfully": {
-      "title": "Succesvol ingelogd"
-    },
-    "passwordCopied": {
-      "title": "Wachtwoord gekopieerd"
-    },
-    "postCreated": {
-      "description": "Je bericht is succesvol aangemaakt",
-      "title": "Bericht aangemaakt"
-    },
-    "postDeleted": {
-      "description": "Je bericht is succesvol verwijderd",
-      "title": "Bericht verwijderd"
-    },
-    "postUpdated": {
-      "description": "Je bericht is succesvol bijgewerkt",
-      "title": "Bericht bijgewerkt"
-    },
-    "translationSaveFailed": {
-      "description": "Kon de vertaling niet opslaan. Probeer het opnieuw.",
-      "title": "Vertaling Opslaan Mislukt"
-    },
-    "translationSaved": {
-      "title": "Vertaling Opgeslagen"
-    },
-    "userCreated": {
-      "title": "Gebruiker Succesvol Aangemaakt"
-    }
-  },
-  "translationUi": {
-    "baseFromSystemTranslation": "Gebaseerd op Systeemvertaling",
-    "category": "Categorie",
-    "createTranslation": "Vertaling Maken",
-    "description": "Beschrijving",
-    "edit": "Bewerken",
-    "keyPath": "Sleutelpad",
-    "no": "Nee",
-    "noTranslation": "Geen vertaling",
-    "noTranslationAvailable": "Geen vertaling beschikbaar",
-    "override": "Overschrijven",
-    "systemValues": "Systeemwaarden",
-    "teamOverrideDescription": "Team Override Beschrijving",
-    "teamTranslationOverrides": "Team Vertaling Overschrijvingen",
-    "translations": "Vertalingen",
-    "updateTranslation": "Vertaling Bijwerken",
-    "yes": "Ja",
-    "yourOverride": "Jouw Overschrijving"
-  },
-  "validation": {
-    "categoryRequired": "Categorie is vereist",
-    "contentRequired": "Inhoud is vereist",
+    "generic": "Er is iets misgegaan",
+    "notFound": "Niet gevonden",
+    "unauthorized": "Niet geautoriseerd",
+    "forbidden": "Toegang geweigerd",
+    "serverError": "Serverfout",
+    "networkError": "Netwerkfout",
+    "validationError": "Validatiefout",
+    "requiredField": "Dit veld is verplicht",
     "invalidEmail": "Ongeldig e-mailadres",
-    "keyPathRequired": "Sleutelpad is vereist",
-    "nameRequired": "Naam is vereist",
-    "titleRequired": "Titel is vereist",
-    "translationRequired": "Minimaal één vertaling is vereist",
-    "titleMaxLength": "Titel moet minder dan 100 karakters bevatten",
-    "contentMaxLength": "Inhoud moet minder dan 1000 karakters bevatten"
+    "invalidPassword": "Ongeldig wachtwoord",
+    "passwordMismatch": "Wachtwoorden komen niet overeen",
+    "minLength": "Moet minimaal {min} tekens bevatten",
+    "maxLength": "Mag maximaal {max} tekens bevatten",
+    "tryAgain": "Probeer het opnieuw",
+    "contactSupport": "Neem contact op met support als het probleem aanhoudt"
   },
-  "superAdmin": {
-    "allTeams": "Alle teams",
-    "feedback": {
-      "replyToFeedback": "Antwoorden op feedback",
-      "sendResponse": "Stuur een antwoord naar de feedback van de gebruiker",
-      "deleteFeedback": "Feedback verwijderen",
-      "irreversibleAction": "Deze actie is onomkeerbaar",
-      "detailsAndReply": "Details en antwoorden",
-      "markAsClosed": "Markeren als gesloten",
-      "sendReply": "Antwoord verzenden",
-      "feedbackMarkedClosed": "Feedback gemarkeerd als gesloten",
-      "feedbackDeleted": "Feedback verwijderd",
-      "feedbackDeletedDescription": "De feedback is verwijderd",
-      "replySent": "Antwoord verzonden",
-      "replySentDescription": "Uw antwoord is verzonden naar de gebruiker",
-      "failedToSendReply": "Verzenden van antwoord mislukt",
-      "failedToMarkClosed": "Markeren als gesloten mislukt",
-      "failedToDeleteFeedback": "Verwijderen van feedback mislukt",
-      "userSays": "zegt"
-    },
-    "columns": {
-      "name": "Naam",
-      "owner": "Eigenaar",
-      "members": "Leden",
-      "subscription": "Abonnement",
-      "createdAt": "Aangemaakt op",
-      "user": "Gebruiker",
-      "email": "E-mail",
-      "status": "Status",
-      "message": "Bericht",
-      "date": "Datum",
-      "referrer": "Verwijzer"
-    },
-    "meta": {
-      "pageUrl": "Pagina URL:",
-      "browser": "Browser:",
-      "platform": "Platform:",
-      "screen": "Scherm:",
-      "language": "Taal:",
-      "timezone": "Tijdzone:",
-      "colorScheme": "Kleurschema:"
-    }
+  "success": {
+    "saved": "Succesvol opgeslagen",
+    "created": "Succesvol aangemaakt",
+    "updated": "Succesvol bijgewerkt",
+    "deleted": "Succesvol verwijderd",
+    "sent": "Succesvol verzonden",
+    "copied": "Gekopieerd naar klembord"
   },
-  "editor": {
-    "savedSuccessfully": "Succesvol opgeslagen",
-    "saveFailed": "Opslaan mislukt",
-    "allTranslationsSaved": "Alle vertalingen opgeslagen",
-    "editorsInitialized": "Editors geïnitialiseerd",
-    "editorsReady": "Linker- en rechter-editors zijn klaar",
-    "syncEnabled": "Synchronisatie ingeschakeld",
-    "syncDisabled": "Synchronisatie uitgeschakeld",
-    "editorsSyncContent": "Editors zullen inhoud synchroniseren",
-    "independentEditingMode": "Onafhankelijke bewerkingsmodus"
+  "confirmation": {
+    "areYouSure": "Weet je het zeker?",
+    "deleteConfirm": "Weet je zeker dat je dit wilt verwijderen?",
+    "leaveConfirm": "Weet je zeker dat je wilt vertrekken?",
+    "unsavedChanges": "Je hebt niet-opgeslagen wijzigingen",
+    "discardChanges": "Wijzigingen negeren?",
+    "cannotUndo": "Deze actie kan niet ongedaan worden gemaakt"
   },
-  "accountSettings": {
-    "general": {
-      "personalInformation": "Persoonlijke informatie",
-      "privacyNotice": "Uw persoonlijke informatie wordt met niemand gedeeld.",
-      "avatar": "Avatar",
-      "name": "Naam",
-      "email": "E-mail",
-      "accountId": "Account-ID"
-    },
-    "passkey": {
-      "manager": "Passkey Manager",
-      "addPasskey": "Passkey toevoegen",
-      "description": "Voeg hier uw passkeys toe en beheer ze",
-      "registerNew": "Registreer een nieuwe passkey",
-      "noPasskeys": "Geen vingerafdrukken of Face ID's gekoppeld aan uw account.",
-      "name": "Naam",
-      "delete": "Verwijderen"
-    },
-    "phoneNumber": {
-      "title": "Telefoonnummer",
-      "phoneNumber": "Telefoonnummer",
-      "verify": "Telefoonnummer verifiëren",
-      "remove": "Verwijderen",
-      "verificationCode": "Verificatiecode",
-      "verifyButton": "Verifiëren",
-      "cancel": "Annuleren",
-      "changeNumber": "Telefoonnummer wijzigen"
-    },
-    "password": {
-      "newPassword": "Nieuw wachtwoord",
-      "updatePassword": "Wachtwoord bijwerken"
-    },
-    "linkedAccounts": {
-      "linkAccount": "Account koppelen",
-      "description": "Koppel een account aan uw account."
-    },
-    "dangerZone": {
-      "deleteAccount": "Account verwijderen",
-      "description": "Bevestig uw intentie om uw account te verwijderen.",
-      "confirmationLabel": "Typ 'delete' om te bevestigen",
-      "cancel": "Annuleren",
-      "proceed": "Doorgaan",
-      "confirmationMessage": "Typ 'delete' om te bevestigen",
-      "irreversible": "Deze actie is onomkeerbaar en verwijdert alle bijbehorende gegevens"
-    }
-  },
-  "branding": {
-    "appName": "Supersaas V3"
-  },
-  "newsletter": {
-    "alreadySubscribed": "U bent al geabonneerd op onze nieuwsbrief.",
-    "submitSuccess": "Het formulier is ingediend."
-  },
-  "feedback": {
-    "messageRequired": "Bericht is verplicht",
-    "helpDescription": "Heeft u een vraag of hulp nodig? Wij zijn er om te helpen!"
+  "time": {
+    "now": "Nu",
+    "today": "Vandaag",
+    "yesterday": "Gisteren",
+    "tomorrow": "Morgen",
+    "thisWeek": "Deze week",
+    "lastWeek": "Vorige week",
+    "thisMonth": "Deze maand",
+    "lastMonth": "Vorige maand",
+    "ago": "{time} geleden",
+    "in": "over {time}"
   }
 }
