@@ -11,8 +11,14 @@ AI integration layer for Nuxt applications using Vercel AI SDK. Provides composa
 | `app/composables/useChat.ts` | Streaming chat with team context |
 | `app/composables/useCompletion.ts` | Text completion composable |
 | `app/composables/useAIProvider.ts` | Provider selection |
+| `app/components/Chatbox.vue` | Full chat interface component |
+| `app/components/Message.vue` | Single message bubble |
+| `app/components/Input.vue` | Message input with send |
 | `server/utils/ai.ts` | Server-side provider factory |
+| `server/utils/providers/index.ts` | Provider registry and helpers |
 | `app/types/index.ts` | All TypeScript types |
+| `schemas/chat-conversations.json` | JSON schema for crouton generator |
+| `schemas/chat-conversations.ts` | TypeScript schema with Zod validation |
 
 ## Architecture
 
@@ -141,6 +147,12 @@ All components auto-import with `AI` prefix:
 1. Create `server/api/ai/{endpoint}.post.ts`
 2. Use `createAIProvider(event)` for provider access
 3. Use `streamText` or `generateText` from `ai` package
+
+### Generate chat conversations collection
+1. Run: `pnpm crouton ai chatConversations --fields-file=node_modules/@crouton/ai/schemas/chat-conversations.json`
+2. Or use config file with `fieldsFile: 'node_modules/@crouton/ai/schemas/chat-conversations.json'`
+3. Generated collection includes: title, messages, provider, model, systemPrompt, metadata
+4. Use `importMessages()` / `exportMessages()` from `useChat()` for persistence
 
 ## Dependencies
 
