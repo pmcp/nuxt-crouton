@@ -8,7 +8,6 @@
  * - Passkey button
  * - Magic link option
  */
-import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 
 definePageMeta({
   layout: 'auth',
@@ -34,13 +33,6 @@ const {
   isWebAuthnSupported,
 } = useAuth()
 
-// Form state
-const state = reactive({
-  email: '',
-  password: '',
-  rememberMe: false,
-})
-
 // Magic link mode toggle
 const showMagicLink = ref(false)
 const magicLinkSent = ref(false)
@@ -51,39 +43,15 @@ const redirectTo = computed(() => {
   return redirect || '/dashboard'
 })
 
-// Custom validation
-function validate(formState: Partial<typeof state>): FormError[] {
-  const errors: FormError[] = []
-  if (!formState.email) {
-    errors.push({ name: 'email', message: 'Email is required' })
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
-    errors.push({ name: 'email', message: 'Invalid email address' })
-  }
-  if (!showMagicLink.value && !formState.password) {
-    errors.push({ name: 'password', message: 'Password is required' })
-  }
-  return errors
-}
-
-// Handle form submission
-async function onSubmit(event: FormSubmitEvent<typeof state>) {
+// Handle login form submission
+async function handleLogin(credentials: { email: string, password: string, rememberMe: boolean }) {
   try {
-    if (showMagicLink.value) {
-      await loginWithMagicLink(event.data.email)
-      magicLinkSent.value = true
-      toast.add({
-        title: 'Check your email',
-        description: 'We sent you a magic link to sign in.',
-        color: 'success',
-      })
-    } else {
-      await login({
-        email: event.data.email,
-        password: event.data.password,
-        rememberMe: event.data.rememberMe,
-      })
-      await router.push(redirectTo.value)
-    }
+    await login({
+      email: credentials.email,
+      password: credentials.password,
+      rememberMe: credentials.rememberMe,
+    })
+    await router.push(redirectTo.value)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Login failed'
     toast.add({
@@ -124,11 +92,30 @@ async function handlePasskey() {
   }
 }
 
-// OAuth provider icons
-const providerIcons: Record<string, string> = {
-  github: 'i-simple-icons-github',
-  google: 'i-simple-icons-google',
-  discord: 'i-simple-icons-discord',
+// Handle magic link submission
+async function handleMagicLink(email: string) {
+  try {
+    await loginWithMagicLink(email)
+    magicLinkSent.value = true
+    toast.add({
+      title: 'Check your email',
+      description: 'We sent you a magic link to sign in.',
+      color: 'success',
+    })
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Magic link failed'
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  }
+}
+
+// Reset magic link state
+function resetMagicLink() {
+  magicLinkSent.value = false
+  showMagicLink.value = false
 }
 
 // Check if passkey is available
@@ -164,7 +151,7 @@ const passkeyAvailable = computed(() => {
         class="mt-4"
         variant="ghost"
         block
-        @click="magicLinkSent = false; showMagicLink = false"
+        @click="resetMagicLink"
       >
         Back to login
       </UButton>
@@ -172,32 +159,13 @@ const passkeyAvailable = computed(() => {
 
     <template v-else>
       <!-- OAuth Buttons -->
-      <div v-if="hasOAuth && oauthProviders.length > 0" class="mt-8 space-y-3">
-        <UButton
-          v-for="provider in oauthProviders"
-          :key="provider"
-          color="neutral"
-          variant="outline"
-          block
-          :icon="providerIcons[provider] || 'i-lucide-user'"
-          :loading="loading"
-          @click="handleOAuth(provider)"
-        >
-          Continue with {{ provider.charAt(0).toUpperCase() + provider.slice(1) }}
-        </UButton>
+      <div v-if="hasOAuth && oauthProviders.length > 0" class="mt-8">
+        <AuthOAuthButtons :loading="loading" @click="handleOAuth" />
 
-        <!-- Passkey Button -->
-        <UButton
-          v-if="passkeyAvailable"
-          color="neutral"
-          variant="outline"
-          block
-          icon="i-lucide-fingerprint"
-          :loading="loading"
-          @click="handlePasskey"
-        >
-          Sign in with Passkey
-        </UButton>
+        <!-- Passkey Button (shown with OAuth) -->
+        <div v-if="passkeyAvailable" class="mt-3">
+          <AuthPasskeyButton :loading="loading" @click="handlePasskey" />
+        </div>
       </div>
 
       <!-- Separator -->
@@ -212,82 +180,53 @@ const passkeyAvailable = computed(() => {
         </div>
       </div>
 
-      <!-- Email/Password Form -->
-      <UForm
-        v-if="hasPassword || hasMagicLink"
-        :validate="validate"
-        :state="state"
-        class="mt-8 space-y-6"
-        @submit="onSubmit"
-      >
-        <UFormField label="Email address" name="email">
-          <UInput
-            v-model="state.email"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            icon="i-lucide-mail"
-          />
-        </UFormField>
-
-        <UFormField v-if="!showMagicLink && hasPassword" label="Password" name="password">
-          <UInput
-            v-model="state.password"
-            type="password"
-            placeholder="Enter your password"
-            autocomplete="current-password"
-            icon="i-lucide-lock"
-          />
-        </UFormField>
-
-        <div v-if="!showMagicLink && hasPassword" class="flex items-center justify-between">
-          <UCheckbox v-model="state.rememberMe" label="Remember me" />
-          <NuxtLink
-            to="/auth/forgot-password"
-            class="text-sm font-medium text-primary hover:text-primary/80"
-          >
-            Forgot password?
-          </NuxtLink>
-        </div>
-
-        <!-- Error Alert -->
-        <UAlert
-          v-if="error"
-          color="error"
-          icon="i-lucide-alert-circle"
-          :title="error"
-        />
-
-        <UButton
-          type="submit"
-          block
+      <!-- Magic Link Form -->
+      <div v-if="showMagicLink && hasMagicLink" class="mt-8">
+        <AuthMagicLinkForm
           :loading="loading"
-        >
-          {{ showMagicLink ? 'Send magic link' : 'Sign in' }}
-        </UButton>
-
-        <!-- Magic Link Toggle -->
-        <div v-if="hasMagicLink && hasPassword" class="text-center">
+          :error="error"
+          @submit="handleMagicLink"
+          @reset="showMagicLink = false"
+        />
+        <div v-if="hasPassword" class="mt-4 text-center">
           <button
             type="button"
             class="text-sm font-medium text-primary hover:text-primary/80"
-            @click="showMagicLink = !showMagicLink"
+            @click="showMagicLink = false"
           >
-            {{ showMagicLink ? 'Sign in with password' : 'Sign in with magic link' }}
+            Sign in with password
           </button>
         </div>
-      </UForm>
+      </div>
+
+      <!-- Email/Password Form -->
+      <div v-else-if="hasPassword || hasMagicLink" class="mt-8">
+        <AuthLoginForm
+          :loading="loading"
+          :error="error"
+          @submit="handleLogin"
+        />
+
+        <!-- Magic Link Toggle -->
+        <div v-if="hasMagicLink && hasPassword" class="mt-4 text-center">
+          <button
+            type="button"
+            class="text-sm font-medium text-primary hover:text-primary/80"
+            @click="showMagicLink = true"
+          >
+            Sign in with magic link
+          </button>
+        </div>
+      </div>
 
       <!-- Passkey-only (no password, no OAuth) -->
       <div v-else-if="passkeyAvailable" class="mt-8">
-        <UButton
-          block
-          icon="i-lucide-fingerprint"
+        <AuthPasskeyButton
           :loading="loading"
+          variant="solid"
+          color="primary"
           @click="handlePasskey"
-        >
-          Sign in with Passkey
-        </UButton>
+        />
       </div>
     </template>
   </div>
