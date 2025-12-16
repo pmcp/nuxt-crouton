@@ -21,6 +21,11 @@ import type {
   CroutonAuthConfig,
   SessionConfig,
   PasswordConfig,
+  OAuthConfig,
+  GitHubOAuthConfig,
+  GoogleOAuthConfig,
+  DiscordOAuthConfig,
+  OAuthProviderConfig,
 } from '../../types/config'
 
 // Re-export type helpers for use in this module
@@ -88,6 +93,9 @@ export function createAuth(options: CreateAuthOptions) {
     // Email and password configuration
     emailAndPassword: buildEmailPasswordConfig(config),
 
+    // OAuth/Social providers configuration
+    socialProviders: buildSocialProvidersConfig(config.methods?.oauth, baseURL),
+
     // Session configuration
     session: buildSessionConfig(config.session),
 
@@ -136,7 +144,7 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
     minPasswordLength: customConfig.minLength ?? 8,
     // Password reset
     sendResetPassword: customConfig.resetEnabled !== false
-      ? async ({ user, url }) => {
+      ? async ({ user, url }: { user: { email: string }; url: string }) => {
           // TODO: Phase 2.x - Implement email sending
           console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
         }
@@ -165,6 +173,145 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
     expiresIn: sessionConfig.expiresIn ?? defaults.expiresIn,
     updateAge: sessionConfig.updateAge ?? defaults.updateAge,
     cookieCache: defaults.cookieCache,
+  }
+}
+
+// ============================================================================
+// OAuth/Social Providers Configuration
+// ============================================================================
+
+/**
+ * Better Auth social provider configuration type
+ */
+type SocialProviderConfig = {
+  clientId: string
+  clientSecret: string
+  scope?: string[]
+  redirectURI?: string
+  disableSignUp?: boolean
+  [key: string]: unknown
+}
+
+/**
+ * Build social providers configuration from @crouton/auth OAuth config
+ *
+ * Supports GitHub, Google, Discord as built-in providers,
+ * plus additional custom providers.
+ *
+ * @param oauthConfig - OAuth configuration from @crouton/auth config
+ * @param baseURL - Application base URL for callback URLs
+ * @returns Better Auth socialProviders configuration
+ */
+function buildSocialProvidersConfig(
+  oauthConfig: OAuthConfig | undefined,
+  _baseURL: string // Reserved for future use (custom callback URLs)
+): BetterAuthOptions['socialProviders'] {
+  if (!oauthConfig) {
+    return undefined
+  }
+
+  const providers: Record<string, SocialProviderConfig> = {}
+
+  // Configure GitHub OAuth
+  if (oauthConfig.github) {
+    providers.github = buildGitHubConfig(oauthConfig.github)
+  }
+
+  // Configure Google OAuth
+  if (oauthConfig.google) {
+    providers.google = buildGoogleConfig(oauthConfig.google)
+  }
+
+  // Configure Discord OAuth
+  if (oauthConfig.discord) {
+    providers.discord = buildDiscordConfig(oauthConfig.discord)
+  }
+
+  // Configure additional custom providers
+  for (const [providerName, providerConfig] of Object.entries(oauthConfig)) {
+    // Skip built-in providers (already handled above)
+    if (['github', 'google', 'discord'].includes(providerName)) {
+      continue
+    }
+
+    if (providerConfig) {
+      providers[providerName] = buildGenericProviderConfig(providerConfig)
+    }
+  }
+
+  // Return undefined if no providers configured
+  if (Object.keys(providers).length === 0) {
+    return undefined
+  }
+
+  return providers
+}
+
+/**
+ * Build GitHub OAuth provider configuration
+ *
+ * GitHub requires `user:email` scope to access email addresses.
+ * By default, this scope is included.
+ */
+function buildGitHubConfig(config: GitHubOAuthConfig): SocialProviderConfig {
+  // GitHub MUST include user:email scope
+  const defaultScopes = ['user:email']
+  const scopes = config.scopes?.length
+    ? [...new Set([...defaultScopes, ...config.scopes])]
+    : defaultScopes
+
+  return {
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    scope: scopes,
+    disableSignUp: config.allowSignUp === false,
+  }
+}
+
+/**
+ * Build Google OAuth provider configuration
+ *
+ * Google provides email and profile by default.
+ * Set accessType to 'offline' to get refresh tokens.
+ */
+function buildGoogleConfig(config: GoogleOAuthConfig): SocialProviderConfig {
+  return {
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    scope: config.scopes,
+    disableSignUp: config.allowSignUp === false,
+    // Ensure we can get refresh tokens (Google only issues on first consent)
+    accessType: 'offline' as const,
+    // Always show account selector for better UX
+    prompt: 'select_account' as const,
+  }
+}
+
+/**
+ * Build Discord OAuth provider configuration
+ *
+ * Discord provides identify and email scopes by default.
+ */
+function buildDiscordConfig(config: DiscordOAuthConfig): SocialProviderConfig {
+  return {
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    scope: config.scopes,
+    disableSignUp: config.allowSignUp === false,
+  }
+}
+
+/**
+ * Build generic OAuth provider configuration
+ *
+ * Used for additional providers beyond GitHub, Google, and Discord.
+ * Follows the base OAuthProviderConfig interface.
+ */
+function buildGenericProviderConfig(config: OAuthProviderConfig): SocialProviderConfig {
+  return {
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    scope: config.scopes,
   }
 }
 
@@ -314,6 +461,122 @@ function buildOrganizationHooks(config: CroutonAuthConfig) {
     },
   }
 }
+
+// ============================================================================
+// OAuth Provider Utilities
+// ============================================================================
+
+/**
+ * Supported OAuth provider names
+ */
+export type SupportedOAuthProvider = 'github' | 'google' | 'discord' | string
+
+/**
+ * OAuth provider info for UI display
+ */
+export interface OAuthProviderInfo {
+  /** Provider identifier */
+  id: SupportedOAuthProvider
+  /** Display name */
+  name: string
+  /** Icon name (for Nuxt UI icons) */
+  icon: string
+  /** Brand color (hex) */
+  color: string
+}
+
+/**
+ * Built-in OAuth provider metadata
+ */
+const BUILTIN_PROVIDERS: Record<string, Omit<OAuthProviderInfo, 'id'>> = {
+  github: {
+    name: 'GitHub',
+    icon: 'i-simple-icons-github',
+    color: '#24292e',
+  },
+  google: {
+    name: 'Google',
+    icon: 'i-simple-icons-google',
+    color: '#4285f4',
+  },
+  discord: {
+    name: 'Discord',
+    icon: 'i-simple-icons-discord',
+    color: '#5865f2',
+  },
+}
+
+/**
+ * Get list of configured OAuth providers from config
+ *
+ * @param oauthConfig - OAuth configuration
+ * @returns Array of configured provider info for UI display
+ */
+export function getConfiguredOAuthProviders(
+  oauthConfig: OAuthConfig | undefined
+): OAuthProviderInfo[] {
+  if (!oauthConfig) {
+    return []
+  }
+
+  const providers: OAuthProviderInfo[] = []
+
+  for (const [providerId, providerConfig] of Object.entries(oauthConfig)) {
+    if (!providerConfig) continue
+
+    const builtin = BUILTIN_PROVIDERS[providerId]
+    if (builtin) {
+      providers.push({
+        id: providerId,
+        ...builtin,
+      })
+    } else {
+      // Custom provider - use ID as name, generic icon
+      providers.push({
+        id: providerId,
+        name: providerId.charAt(0).toUpperCase() + providerId.slice(1),
+        icon: 'i-heroicons-key',
+        color: '#6b7280',
+      })
+    }
+  }
+
+  return providers
+}
+
+/**
+ * Check if a specific OAuth provider is configured
+ *
+ * @param oauthConfig - OAuth configuration
+ * @param provider - Provider name to check
+ * @returns True if the provider is configured
+ */
+export function isOAuthProviderConfigured(
+  oauthConfig: OAuthConfig | undefined,
+  provider: string
+): boolean {
+  if (!oauthConfig) return false
+  const config = oauthConfig[provider]
+  return !!config && !!config.clientId && !!config.clientSecret
+}
+
+/**
+ * Get the OAuth callback URL for a provider
+ *
+ * Better Auth uses the pattern: /api/auth/callback/{provider}
+ *
+ * @param baseURL - Application base URL
+ * @param provider - Provider name
+ * @returns Full callback URL
+ */
+export function getOAuthCallbackURL(baseURL: string, provider: string): string {
+  const base = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL
+  return `${base}/api/auth/callback/${provider}`
+}
+
+// ============================================================================
+// Auth Instance Management
+// ============================================================================
 
 /**
  * Type for the created auth instance
