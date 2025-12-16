@@ -1,0 +1,30 @@
+{
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true,
+    "paths": {
+      "#crouton-auth/*": ["./*"],
+      "#crouton-auth": ["."]
+    }
+  },
+  "include": [
+    "app/**/*",
+    "server/**/*",
+    "types/**/*",
+    "module.ts",
+    "nuxt.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

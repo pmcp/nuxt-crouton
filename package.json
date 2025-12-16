@@ -1,0 +1,73 @@
+{
+  "name": "@crouton/auth",
+  "version": "0.1.0",
+  "description": "Authentication layer for Nuxt applications using Better Auth with teams, billing, passkeys, and 2FA support",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs"
+    }
+  },
+  "main": "./dist/module.cjs",
+  "module": "./dist/module.mjs",
+  "types": "./dist/types.d.ts",
+  "files": [
+    "dist",
+    "app",
+    "server",
+    "types",
+    "nuxt.config.ts"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "nuxi dev playground",
+    "dev:prepare": "nuxi prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest",
+    "test:unit": "vitest run --dir tests/unit",
+    "test:integration": "vitest run --dir tests/integration"
+  },
+  "dependencies": {
+    "better-auth": "^1.2.0",
+    "defu": "^6.1.4"
+  },
+  "devDependencies": {
+    "@better-auth/cli": "^1.2.0",
+    "@nuxt/kit": "^3.14.0",
+    "@nuxt/schema": "^3.14.0",
+    "nuxt": "^3.14.0",
+    "typescript": "^5.7.0",
+    "unbuild": "^2.0.0",
+    "vitest": "^2.1.0"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.14.0 || ^4.0.0",
+    "@nuxt/ui": "^3.0.0-alpha.0"
+  },
+  "peerDependenciesMeta": {
+    "@nuxt/ui": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crouton-digital/crouton-auth"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "nuxt-layer",
+    "authentication",
+    "better-auth",
+    "oauth",
+    "passkeys",
+    "2fa",
+    "teams",
+    "billing",
+    "stripe"
+  ],
+  "author": "Crouton Digital",
+  "license": "MIT"
+}
