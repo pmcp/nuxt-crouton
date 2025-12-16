@@ -187,7 +187,16 @@
     "memberActions": {
       "removeFromTeam": "Verwijderen uit team",
       "failedToRemoveMember": "Lid verwijderen mislukt"
-    }
+    },
+    "activeMembers": "Actieve leden",
+    "neverLoggedIn": "Nooit",
+    "lastLoginColumn": "Laatste login",
+    "deleteTeamDescription": "Het verwijderen van een team is onomkeerbaar en verwijdert alle bijbehorende gegevens.",
+    "deletePermanently": "Permanent verwijderen",
+    "confirmDeleteHelp": "Typ '{teamName}' om het verwijderen te bevestigen",
+    "slugAutoAdjusted": "\"{slug}\" is al in gebruik, dus we hebben het uniek gemaakt. Je kunt de Team URL aanpassen naar een beschikbare naam.",
+    "urlAlreadyInUseDescription": "Je bent al lid van team \"{teamName}\" met URL /{teamSlug}. Kies een andere URL.",
+    "teamWorkspaceDescription": "Een team is een werkruimte voor je organisatie."
   },
   "errors": {
     "generic": "Er is iets misgegaan",

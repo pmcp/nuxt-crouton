@@ -187,7 +187,16 @@
     "memberActions": {
       "removeFromTeam": "Retirer de l'équipe",
       "failedToRemoveMember": "Échec de la suppression du membre"
-    }
+    },
+    "activeMembers": "Membres actifs",
+    "neverLoggedIn": "Jamais",
+    "lastLoginColumn": "Dernière connexion",
+    "deleteTeamDescription": "La suppression d'une équipe est irréversible et supprimera toutes les données associées.",
+    "deletePermanently": "Supprimer définitivement",
+    "confirmDeleteHelp": "Veuillez taper '{teamName}' pour confirmer la suppression",
+    "slugAutoAdjusted": "\"{slug}\" est déjà pris, nous l'avons donc rendu unique. Vous pouvez ajuster l'URL de l'équipe selon votre choix.",
+    "urlAlreadyInUseDescription": "Vous êtes déjà membre de l'équipe \"{teamName}\" avec l'URL /{teamSlug}. Veuillez choisir une autre URL.",
+    "teamWorkspaceDescription": "Une équipe est un espace de travail pour votre organisation."
   },
   "errors": {
     "generic": "Une erreur s'est produite",

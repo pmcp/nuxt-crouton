@@ -187,7 +187,16 @@
     "memberActions": {
       "removeFromTeam": "Remove from team",
       "failedToRemoveMember": "Failed to remove member"
-    }
+    },
+    "activeMembers": "Active Members",
+    "neverLoggedIn": "Never",
+    "lastLoginColumn": "Last Login",
+    "deleteTeamDescription": "Deleting a team is irreversible and will remove all data associated with it.",
+    "deletePermanently": "Delete Permanently",
+    "confirmDeleteHelp": "Please type '{teamName}' to confirm deletion",
+    "slugAutoAdjusted": "\"{slug}\" is taken so we have just made it unique, you can adjust the Team URL however you want to an available name.",
+    "urlAlreadyInUseDescription": "You are already a member of team \"{teamName}\" with URL /{teamSlug}. Please choose a different URL.",
+    "teamWorkspaceDescription": "A team is a workspace for your organization."
   },
   "errors": {
     "generic": "Something went wrong",
