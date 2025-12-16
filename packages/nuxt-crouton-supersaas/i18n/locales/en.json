@@ -440,10 +440,13 @@
     "avatar": "Avatar",
     "bannedUntil": "Banned Until",
     "content": "Content",
+    "email": "Email",
     "image": "Image",
     "memberEmail": "Member email",
     "message": "Message",
+    "name": "Name",
     "newPassword": "New Password",
+    "password": "Password",
     "phoneNumber": "Phone Number",
     "reason": "Reason",
     "role": "Role",
@@ -518,7 +521,8 @@
       "title": "Logged in successfully"
     },
     "passwordCopied": {
-      "title": "Password copied"
+      "title": "Password copied",
+      "description": "The password has been copied to your clipboard: {password}"
     },
     "passwordUpdated": {
       "title": "Password updated successfully"
@@ -546,13 +550,17 @@
       "title": "Translation Saved"
     },
     "userCreated": {
-      "title": "User Created Successfully"
+      "title": "User Created Successfully",
+      "description": "{name} has been added to the platform.",
+      "descriptionWithVerification": "{name} has been added to the platform and will receive a verification email."
     },
     "userDeleted": {
-      "title": "User deleted successfully"
+      "title": "User deleted successfully",
+      "description": "The user has been deleted"
     },
     "userBanned": {
-      "title": "User Banned Successfully"
+      "title": "User Banned Successfully",
+      "description": "{name} has been banned until {date}."
     },
     "userUnbanned": {
       "title": "User unbanned successfully"
@@ -704,6 +712,24 @@
       "language": "Language:",
       "timezone": "Timezone:",
       "colorScheme": "Color Scheme:"
+    },
+    "users": {
+      "form": {
+        "generatePassword": "Generate Password",
+        "autoVerifyDescription": "If checked, the user will be automatically verified after registration."
+      },
+      "delete": {
+        "warning": "This action will delete the user from the platform and all associated data.",
+        "partOfTeams": "{name} is a part of the following teams:"
+      },
+      "ban": {
+        "bannedUntilDescription": "{name} has been banned until {date}."
+      },
+      "ownedBy": "Owned by"
+    },
+    "impersonation": {
+      "banner": "You are currently impersonating",
+      "asSuperAdmin": "as a super admin. Please proceed with caution."
     }
   },
   "placeholders": {

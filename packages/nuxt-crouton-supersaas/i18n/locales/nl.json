@@ -440,10 +440,13 @@
     "avatar": "Avatar",
     "bannedUntil": "Verbannen Tot",
     "content": "Inhoud",
+    "email": "E-mail",
     "image": "Afbeelding",
     "memberEmail": "Lid e-mail",
     "message": "Bericht",
+    "name": "Naam",
     "newPassword": "Nieuw Wachtwoord",
+    "password": "Wachtwoord",
     "phoneNumber": "Telefoonnummer",
     "reason": "Reden",
     "role": "Rol",
@@ -518,7 +521,8 @@
       "title": "Succesvol ingelogd"
     },
     "passwordCopied": {
-      "title": "Wachtwoord gekopieerd"
+      "title": "Wachtwoord gekopieerd",
+      "description": "Het wachtwoord is naar uw klembord gekopieerd: {password}"
     },
     "passwordUpdated": {
       "title": "Wachtwoord succesvol bijgewerkt"
@@ -546,13 +550,17 @@
       "title": "Vertaling Opgeslagen"
     },
     "userCreated": {
-      "title": "Gebruiker Succesvol Aangemaakt"
+      "title": "Gebruiker Succesvol Aangemaakt",
+      "description": "{name} is toegevoegd aan het platform.",
+      "descriptionWithVerification": "{name} is toegevoegd aan het platform en ontvangt een verificatie-e-mail."
     },
     "userDeleted": {
-      "title": "Gebruiker succesvol verwijderd"
+      "title": "Gebruiker succesvol verwijderd",
+      "description": "De gebruiker is verwijderd"
     },
     "userBanned": {
-      "title": "Gebruiker Succesvol Verbannen"
+      "title": "Gebruiker Succesvol Verbannen",
+      "description": "{name} is verbannen tot {date}."
     },
     "userUnbanned": {
       "title": "Gebruiker verbanning opgeheven"
@@ -704,6 +712,24 @@
       "language": "Taal:",
       "timezone": "Tijdzone:",
       "colorScheme": "Kleurschema:"
+    },
+    "users": {
+      "form": {
+        "generatePassword": "Wachtwoord Genereren",
+        "autoVerifyDescription": "Indien aangevinkt, wordt de gebruiker automatisch geverifieerd na registratie."
+      },
+      "delete": {
+        "warning": "Deze actie verwijdert de gebruiker van het platform en alle bijbehorende gegevens.",
+        "partOfTeams": "{name} is lid van de volgende teams:"
+      },
+      "ban": {
+        "bannedUntilDescription": "{name} is verbannen tot {date}."
+      },
+      "ownedBy": "Eigendom van"
+    },
+    "impersonation": {
+      "banner": "U doet zich momenteel voor als",
+      "asSuperAdmin": "als super admin. Wees voorzichtig."
     }
   },
   "placeholders": {

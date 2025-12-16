@@ -440,10 +440,13 @@
     "avatar": "Avatar",
     "bannedUntil": "Banni jusqu'à",
     "content": "Contenu",
+    "email": "E-mail",
     "image": "Image",
     "memberEmail": "E-mail du membre",
     "message": "Message",
+    "name": "Nom",
     "newPassword": "Nouveau mot de passe",
+    "password": "Mot de passe",
     "phoneNumber": "Numéro de téléphone",
     "reason": "Raison",
     "role": "Rôle",
@@ -518,7 +521,8 @@
       "title": "Connecté avec succès"
     },
     "passwordCopied": {
-      "title": "Mot de passe copié"
+      "title": "Mot de passe copié",
+      "description": "Le mot de passe a été copié dans votre presse-papiers : {password}"
     },
     "passwordUpdated": {
       "title": "Mot de passe mis à jour avec succès"
@@ -546,13 +550,17 @@
       "title": "Traduction sauvegardée"
     },
     "userCreated": {
-      "title": "Utilisateur créé avec succès"
+      "title": "Utilisateur créé avec succès",
+      "description": "{name} a été ajouté à la plateforme.",
+      "descriptionWithVerification": "{name} a été ajouté à la plateforme et recevra un e-mail de vérification."
     },
     "userDeleted": {
-      "title": "Utilisateur supprimé avec succès"
+      "title": "Utilisateur supprimé avec succès",
+      "description": "L'utilisateur a été supprimé"
     },
     "userBanned": {
-      "title": "Utilisateur banni avec succès"
+      "title": "Utilisateur banni avec succès",
+      "description": "{name} a été banni jusqu'au {date}."
     },
     "userUnbanned": {
       "title": "Utilisateur réintégré avec succès"
@@ -704,6 +712,24 @@
       "language": "Langue :",
       "timezone": "Fuseau horaire :",
       "colorScheme": "Schéma de couleurs :"
+    },
+    "users": {
+      "form": {
+        "generatePassword": "Générer un mot de passe",
+        "autoVerifyDescription": "Si coché, l'utilisateur sera automatiquement vérifié après l'inscription."
+      },
+      "delete": {
+        "warning": "Cette action supprimera l'utilisateur de la plateforme ainsi que toutes les données associées.",
+        "partOfTeams": "{name} fait partie des équipes suivantes :"
+      },
+      "ban": {
+        "bannedUntilDescription": "{name} a été banni jusqu'au {date}."
+      },
+      "ownedBy": "Propriétaire"
+    },
+    "impersonation": {
+      "banner": "Vous vous faites passer pour",
+      "asSuperAdmin": "en tant que super admin. Veuillez procéder avec prudence."
     }
   },
   "placeholders": {
