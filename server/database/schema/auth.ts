@@ -112,8 +112,8 @@ export const verification = sqliteTable('verification', {
  *
  * Stores organization (team) data. In @crouton/auth:
  * - Multi-tenant: Users create/join multiple organizations
- * - Single-tenant: One default organization for all users
- * - Personal: One organization per user (auto-created)
+ * - Single-tenant: One default organization for all users (isDefault = true)
+ * - Personal: One organization per user (personal = true, auto-created)
  */
 export const organization = sqliteTable('organization', {
   id: text('id').primaryKey(),
@@ -121,9 +121,24 @@ export const organization = sqliteTable('organization', {
   slug: text('slug').notNull().unique(),
   logo: text('logo'),
   metadata: text('metadata'), // JSON string for additional data
+
+  // Mode-specific flags (Task 6.2)
+  /** True if this is a personal workspace (personal mode) */
+  personal: integer('personal', { mode: 'boolean' }).notNull().default(false),
+  /** True if this is the default organization (single-tenant mode) */
+  isDefault: integer('isDefault', { mode: 'boolean' }).notNull().default(false),
+  /** Owner user ID for personal workspaces */
+  ownerId: text('ownerId'),
+
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
 }, (table) => [
   index('organization_slug_idx').on(table.slug),
+  // Index for finding personal workspaces by owner
+  index('organization_owner_idx').on(table.ownerId),
+  // Index for finding the default organization (single-tenant mode)
+  index('organization_default_idx').on(table.isDefault),
+  // Index for filtering personal workspaces
+  index('organization_personal_idx').on(table.personal),
 ])
 
 /**

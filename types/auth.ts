@@ -102,6 +102,8 @@ export interface Team {
   personal?: boolean
   /** Whether this is the default team (single-tenant mode) */
   isDefault?: boolean
+  /** Owner user ID for personal workspaces (Task 6.2) */
+  ownerId?: string
   /** Team creation timestamp */
   createdAt: Date
   /** Last update timestamp */

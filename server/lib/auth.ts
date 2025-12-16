@@ -314,12 +314,11 @@ async function ensureDefaultOrgExists(
   `)
 
   if (result.length === 0) {
-    // Create default organization
+    // Create default organization with isDefault flag (Task 6.2)
     const now = new Date().toISOString()
-    const metadata = JSON.stringify({ isDefault: true })
     await db.run(sql`
-      INSERT INTO organization (id, name, slug, metadata, createdAt)
-      VALUES (${defaultTeamId}, ${appName}, 'default', ${metadata}, ${now})
+      INSERT INTO organization (id, name, slug, isDefault, personal, createdAt)
+      VALUES (${defaultTeamId}, ${appName}, 'default', 1, 0, ${now})
     `)
     console.log('[crouton/auth] Created default organization for single-tenant mode')
   }
@@ -384,13 +383,13 @@ async function setSessionActiveOrg(
  * Creates an organization specifically for personal mode where:
  * - Each user has exactly one organization
  * - The user is automatically the owner
- * - The organization is marked as "personal" in metadata
+ * - The organization is marked with personal=true and ownerId (Task 6.2)
  *
  * @param db - Drizzle database instance
  * @param userId - User ID (owner)
  * @param userName - User's name for workspace naming
  * @param userEmail - User's email (fallback for naming)
- * @param appName - Application name (fallback for naming)
+ * @param _appName - Application name (reserved for metadata)
  * @returns The created organization ID
  */
 async function createPersonalOrg(
@@ -398,7 +397,7 @@ async function createPersonalOrg(
   userId: string,
   userName: string | null,
   userEmail: string,
-  appName?: string
+  _appName?: string
 ): Promise<string> {
   const orgId = crypto.randomUUID()
   const now = new Date().toISOString()
@@ -410,17 +409,10 @@ async function createPersonalOrg(
   // Use user ID as slug for uniqueness (slugified)
   const slug = `personal-${userId.substring(0, 8)}`
 
-  // Metadata marks this as a personal organization
-  const metadata = JSON.stringify({
-    personal: true,
-    ownerId: userId,
-    appName: appName ?? 'Application',
-  })
-
-  // Create the organization
+  // Create the organization with personal and ownerId columns (Task 6.2)
   await db.run(sql`
-    INSERT INTO organization (id, name, slug, metadata, createdAt)
-    VALUES (${orgId}, ${orgName}, ${slug}, ${metadata}, ${now})
+    INSERT INTO organization (id, name, slug, personal, isDefault, ownerId, createdAt)
+    VALUES (${orgId}, ${orgName}, ${slug}, 1, 0, ${userId}, ${now})
   `)
 
   // Add user as owner (member with 'owner' role)
@@ -439,7 +431,7 @@ async function createPersonalOrg(
  * Get the user's personal organization ID
  *
  * In personal mode, each user has exactly one organization where they are the owner.
- * This function finds that organization.
+ * Uses the ownerId column for efficient lookup (Task 6.2).
  *
  * @param db - Drizzle database instance
  * @param userId - User ID to find personal org for
@@ -449,12 +441,10 @@ async function getUserPersonalOrgId(
   db: DrizzleD1Database<Record<string, unknown>>,
   userId: string
 ): Promise<string | null> {
-  // Find organization where user is the owner
+  // Find personal organization by ownerId (Task 6.2 - indexed column)
   const result = await db.all(sql`
-    SELECT o.id
-    FROM organization o
-    INNER JOIN member m ON m.organizationId = o.id
-    WHERE m.userId = ${userId} AND m.role = 'owner'
+    SELECT id FROM organization
+    WHERE personal = 1 AND ownerId = ${userId}
     LIMIT 1
   `)
 

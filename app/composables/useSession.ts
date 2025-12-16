@@ -72,8 +72,19 @@ export function useSession() {
 
   const activeOrganization = computed<Team | null>(() => {
     if (!activeOrgData.value) return null
-    const org = activeOrgData.value
-    // Parse metadata if it's a string
+    const org = activeOrgData.value as {
+      id: string
+      name: string
+      slug: string
+      logo?: string | null
+      metadata?: string | Record<string, unknown> | null
+      // New columns from Task 6.2
+      personal?: boolean | number | null
+      isDefault?: boolean | number | null
+      ownerId?: string | null
+      createdAt: string | Date
+    }
+    // Parse metadata if it's a string (for legacy data)
     let metadata: Record<string, unknown> = {}
     if (org.metadata) {
       try {
@@ -83,14 +94,19 @@ export function useSession() {
         metadata = {}
       }
     }
+    // Prefer new columns (Task 6.2), fall back to metadata for backward compatibility
+    // SQLite returns 0/1 for booleans, so check for truthy value
+    const isPersonal = org.personal === true || org.personal === 1 || metadata.personal === true
+    const isDefaultOrg = org.isDefault === true || org.isDefault === 1 || metadata.isDefault === true
     return {
       id: org.id,
       name: org.name,
       slug: org.slug,
       logo: org.logo ?? null,
       metadata,
-      personal: metadata.personal === true,
-      isDefault: metadata.isDefault === true,
+      personal: isPersonal,
+      isDefault: isDefaultOrg,
+      ownerId: org.ownerId ?? (metadata.ownerId as string | undefined),
       createdAt: new Date(org.createdAt),
       updatedAt: new Date(org.createdAt), // Better Auth doesn't have updatedAt
     }
