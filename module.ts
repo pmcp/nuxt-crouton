@@ -14,6 +14,7 @@ import {
   addRouteMiddleware,
   addPlugin,
 } from '@nuxt/kit'
+import type { NuxtPage } from '@nuxt/schema'
 import { defu } from 'defu'
 import type { CroutonAuthConfig } from './types/config'
 
@@ -242,6 +243,19 @@ export default defineNuxtModule<CroutonAuthConfig>({
     // Transpile the module
     nuxt.options.build.transpile.push(resolver.resolve('./'))
 
+    // Route transformation based on mode
+    // Multi-tenant: keep /dashboard/[team]/... routes
+    // Single-tenant/Personal: transform to /dashboard/... (remove [team] param)
+    if (config.mode !== 'multi-tenant') {
+      nuxt.hook('pages:extend', (pages) => {
+        transformTeamRoutes(pages, config.debug)
+      })
+
+      if (config.debug) {
+        console.log(`[${name}] Route transformation enabled for ${config.mode} mode`)
+      }
+    }
+
     // Log setup complete
     if (config.debug) {
       console.log(`[${name}] Module setup complete`)
@@ -253,6 +267,48 @@ export default defineNuxtModule<CroutonAuthConfig>({
     }
   },
 })
+
+/**
+ * Transform team routes for single-tenant and personal modes
+ * Removes [team] dynamic segment from dashboard routes
+ *
+ * Examples:
+ * - /dashboard/:team → /dashboard
+ * - /dashboard/:team/settings → /dashboard/settings
+ * - /dashboard/:team/locations → /dashboard/locations
+ */
+function transformTeamRoutes(pages: NuxtPage[], debug?: boolean): void {
+  for (const page of pages) {
+    // Transform paths containing :team dynamic segment
+    if (page.path && page.path.includes(':team')) {
+      const originalPath = page.path
+
+      // Remove :team segment from path
+      // Handles: /:team, /:team/, :team/ patterns
+      page.path = page.path
+        .replace(/\/:team(?=\/|$)/, '') // Remove /:team when followed by / or end
+        .replace(/^:team(?=\/|$)/, '') // Remove :team at start
+        || '/' // Ensure we have at least a slash
+
+      // Clean up double slashes
+      page.path = page.path.replace(/\/+/g, '/').replace(/\/$/, '') || '/'
+
+      // Update route name to remove team param
+      if (page.name) {
+        page.name = page.name.replace(/-team-/g, '-').replace(/-team$/, '')
+      }
+
+      if (debug) {
+        console.log(`[${name}] Route transformed: ${originalPath} → ${page.path}`)
+      }
+    }
+
+    // Recursively transform child routes
+    if (page.children?.length) {
+      transformTeamRoutes(page.children, debug)
+    }
+  }
+}
 
 // Re-export types
 export type { CroutonAuthConfig } from './types/config'

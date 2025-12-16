@@ -128,9 +128,21 @@ export function useTeamContext() {
 
   /**
    * Check if current route is a team-scoped dashboard route
+   *
+   * In multi-tenant mode: checks for team param in URL
+   * In single/personal modes: all dashboard routes are team-scoped (team auto-resolved)
    */
   const isTeamRoute = computed(() => {
-    return route.path.startsWith('/dashboard') && !!route.params.team
+    if (!route.path.startsWith('/dashboard')) return false
+
+    if (config?.mode === 'multi-tenant') {
+      // Multi-tenant: team must be in URL
+      return !!route.params.team
+    }
+
+    // Single/Personal: all dashboard routes are team-scoped
+    // (team is auto-resolved from session)
+    return true
   })
 
   /**
