@@ -76,3 +76,20 @@ export type {
   AuthEventType,
   AuthEvent,
 } from './auth'
+
+// Connector types (for nuxt-crouton integration)
+export type {
+  Team as ConnectorTeam,
+  User as ConnectorUser,
+  TeamMembership,
+  TeamAuthResult,
+  BetterAuthConnector,
+  BetterAuthConnectorConfig,
+  BetterAuthSession,
+} from './connector'
+
+export {
+  defaultBetterAuthConnectorConfig,
+  isBetterAuthSession,
+  isBetterAuthConnector,
+} from './connector'

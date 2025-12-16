@@ -1,3 +1,8 @@
+import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
+
+const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
 export default defineNuxtConfig({
   // Layer metadata
   $meta: {
@@ -60,6 +65,10 @@ export default defineNuxtConfig({
   nitro: {
     imports: {
       dirs: ['server/utils'],
+    },
+    // Override #crouton/team-auth to use Better Auth instead of direct DB queries
+    alias: {
+      '#crouton/team-auth': join(currentDir, 'server/utils/team-auth'),
     },
   },
 
