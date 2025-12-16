@@ -2,6 +2,7 @@
  * Server Auth Utilities
  *
  * Server-side authentication helpers for API routes.
+ * These are the main exports for @crouton/auth server utilities.
  *
  * @example
  * ```typescript
@@ -13,8 +14,25 @@
  * ```
  */
 import type { H3Event } from 'h3'
-import type { User, Team, Member, MemberRole } from '../../types'
-import { useServerAuth, getServerSession } from './useServerAuth'
+import type { User, Team, Member } from '../../types'
+import { getServerSession } from './useServerAuth'
+import {
+  resolveTeamAndCheckMembership,
+  requireTeamAdmin as _requireTeamAdmin,
+  requireTeamOwner as _requireTeamOwner,
+} from './team'
+
+// Re-export team utilities for convenience
+export {
+  resolveTeamAndCheckMembership,
+  getTeamById,
+  getTeamBySlug,
+  getUserTeams,
+  getMembership,
+  canUserCreateTeam,
+  createPersonalWorkspace,
+  getOrCreateDefaultOrganization,
+} from './team'
 
 export interface AuthContext {
   user: User
@@ -77,7 +95,10 @@ export async function getAuthUser(event: H3Event): Promise<User | null> {
 /**
  * Require team membership
  *
- * Throws 401 if not authenticated, 403 if not a team member.
+ * Uses mode-aware team resolution:
+ * - Multi-tenant: Resolves from URL param or session
+ * - Single-tenant: Always uses default team
+ * - Personal: Uses user's personal team from session
  *
  * @param event - H3 event
  * @returns Team context with user, team, and member info
@@ -85,29 +106,13 @@ export async function getAuthUser(event: H3Event): Promise<User | null> {
  * @throws 403 Forbidden if not a team member
  */
 export async function requireTeamMember(event: H3Event): Promise<TeamContext> {
-  const user = await requireAuth(event)
-  const team = getTeamFromContext(event)
+  const context = await resolveTeamAndCheckMembership(event)
 
-  if (!team) {
-    throw createError({
-      statusCode: 400,
-      message: 'No team context available',
-    })
+  return {
+    user: context.user,
+    team: context.team,
+    member: context.membership,
   }
-
-  // TODO: Task 2.2 - Get membership from Better Auth Organization plugin
-  // This requires the organization plugin to be configured in the auth instance.
-  // For now, throw a clear error about the missing implementation.
-  // const auth = useServerAuth(event)
-  // const member = await auth.api.organization.getMember({
-  //   organizationId: team.id,
-  //   userId: user.id
-  // })
-
-  throw createError({
-    statusCode: 501,
-    message: '@crouton/auth: Team membership requires Organization plugin (Task 2.2)',
-  })
 }
 
 /**
@@ -121,17 +126,13 @@ export async function requireTeamMember(event: H3Event): Promise<TeamContext> {
  * @throws 403 Forbidden if not admin or owner
  */
 export async function requireTeamAdmin(event: H3Event): Promise<TeamContext> {
-  const context = await requireTeamMember(event)
+  const context = await _requireTeamAdmin(event)
 
-  const allowedRoles: MemberRole[] = ['owner', 'admin']
-  if (!allowedRoles.includes(context.member.role)) {
-    throw createError({
-      statusCode: 403,
-      message: 'Admin access required',
-    })
+  return {
+    user: context.user,
+    team: context.team,
+    member: context.membership,
   }
-
-  return context
 }
 
 /**
@@ -145,22 +146,21 @@ export async function requireTeamAdmin(event: H3Event): Promise<TeamContext> {
  * @throws 403 Forbidden if not owner
  */
 export async function requireTeamOwner(event: H3Event): Promise<TeamContext> {
-  const context = await requireTeamMember(event)
+  const context = await _requireTeamOwner(event)
 
-  if (context.member.role !== 'owner') {
-    throw createError({
-      statusCode: 403,
-      message: 'Owner access required',
-    })
+  return {
+    user: context.user,
+    team: context.team,
+    member: context.membership,
   }
-
-  return context
 }
 
 /**
  * Get team from request context
  *
  * Resolves team from URL params, headers, or session.
+ * This is a sync function for checking context - use getTeamById/getTeamBySlug
+ * for async lookups.
  *
  * @param event - H3 event
  * @returns Team or null
@@ -169,20 +169,6 @@ export function getTeamFromContext(event: H3Event): Team | null {
   // Check event context (set by middleware)
   const team = event.context.team as Team | undefined
   if (team) return team
-
-  // Check URL params (multi-tenant mode)
-  const teamSlug = getRouterParam(event, 'team')
-  if (teamSlug) {
-    // TODO: Phase 4 - Look up team by slug
-    // return await getTeamBySlug(teamSlug)
-  }
-
-  // Check header (API clients)
-  const teamId = getHeader(event, 'x-team-id')
-  if (teamId) {
-    // TODO: Phase 4 - Look up team by ID
-    // return await getTeamById(teamId)
-  }
 
   return null
 }

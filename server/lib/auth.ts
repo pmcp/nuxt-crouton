@@ -14,14 +14,13 @@
  */
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { organization } from 'better-auth/plugins'
 import type { BetterAuthOptions } from 'better-auth'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
 import type {
   CroutonAuthConfig,
   SessionConfig,
   PasswordConfig,
-  isMethodEnabled,
-  getMethodConfig,
 } from '../../types/config'
 
 // Re-export type helpers for use in this module
@@ -97,6 +96,11 @@ export function createAuth(options: CreateAuthOptions) {
       // Generate secure IDs
       generateId: () => crypto.randomUUID(),
     },
+
+    // Plugins - Organization (Teams) support
+    plugins: [
+      organization(buildOrganizationConfig(config)),
+    ],
   }
 
   // Create and return the Better Auth instance
@@ -161,6 +165,153 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
     expiresIn: sessionConfig.expiresIn ?? defaults.expiresIn,
     updateAge: sessionConfig.updateAge ?? defaults.updateAge,
     cookieCache: defaults.cookieCache,
+  }
+}
+
+/**
+ * Organization (Teams) Plugin Configuration
+ *
+ * Maps @crouton/auth config to Better Auth's organization plugin.
+ * Supports three modes with different behaviors:
+ *
+ * - Multi-tenant: Users can create/join multiple organizations
+ * - Single-tenant: One default organization, users auto-join
+ * - Personal: Each user gets their own organization (auto-created)
+ */
+function buildOrganizationConfig(config: CroutonAuthConfig) {
+  const teamsConfig = config.teams ?? {}
+  const mode = config.mode
+
+  // Determine if users can create organizations based on mode
+  const getAllowUserToCreateOrganization = () => {
+    // In multi-tenant mode, use config setting (default: true)
+    if (mode === 'multi-tenant') {
+      return teamsConfig.allowCreate !== false
+    }
+    // In single-tenant and personal modes, users don't create orgs manually
+    // (single-tenant has one default org, personal auto-creates on signup)
+    return false
+  }
+
+  // Determine organization limit based on mode
+  const getOrganizationLimit = () => {
+    switch (mode) {
+      case 'personal':
+        // Personal mode: one org per user
+        return 1
+      case 'single-tenant':
+        // Single-tenant: users belong to one org (the default)
+        return 1
+      case 'multi-tenant':
+      default:
+        // Multi-tenant: use config limit (default: 5)
+        return teamsConfig.limit ?? 5
+    }
+  }
+
+  return {
+    // Organization creation control
+    allowUserToCreateOrganization: getAllowUserToCreateOrganization(),
+
+    // Organization limit per user
+    organizationLimit: getOrganizationLimit(),
+
+    // Member limit per organization
+    membershipLimit: teamsConfig.memberLimit ?? 100,
+
+    // Creator gets "owner" role
+    creatorRole: 'owner' as const,
+
+    // Invitation configuration
+    invitationExpiresIn: teamsConfig.invitationExpiry ?? 172800, // 48 hours default
+    cancelPendingInvitationsOnReInvite: true,
+    requireEmailVerificationOnInvitation: teamsConfig.requireEmailVerification ?? false,
+
+    // Send invitation email (placeholder - will be configured by user)
+    sendInvitationEmail: async (data: {
+      id: string
+      email: string
+      organization: { name: string; id: string }
+      inviter: { user: { name: string; email: string } }
+      role: string
+      expiresAt: Date
+    }) => {
+      // Log invitation for development - production should override this
+      console.log(`[crouton/auth] Invitation sent:`, {
+        to: data.email,
+        organization: data.organization.name,
+        invitedBy: data.inviter.user.name,
+        role: data.role,
+        expiresAt: data.expiresAt,
+        // The app should use this ID to create an accept link:
+        // e.g., `${baseUrl}/auth/accept-invitation/${data.id}`
+        invitationId: data.id,
+      })
+    },
+
+    // Organization lifecycle hooks
+    organizationHooks: buildOrganizationHooks(config),
+  }
+}
+
+/**
+ * Build organization lifecycle hooks based on mode
+ */
+function buildOrganizationHooks(config: CroutonAuthConfig) {
+  const mode = config.mode
+
+  return {
+    // After organization is created - set up any mode-specific defaults
+    afterCreateOrganization: async (ctx: {
+      organization: { id: string; name: string; slug: string }
+      user: { id: string; name: string }
+    }) => {
+      if (config.debug) {
+        console.log(`[crouton/auth] Organization created:`, {
+          id: ctx.organization.id,
+          name: ctx.organization.name,
+          mode,
+        })
+      }
+    },
+
+    // After member is added - handle mode-specific member setup
+    afterAddMember: async (ctx: {
+      member: { id: string; role: string }
+      user: { id: string; name: string; email: string }
+      organization: { id: string; name: string }
+    }) => {
+      if (config.debug) {
+        console.log(`[crouton/auth] Member added:`, {
+          userId: ctx.user.id,
+          organizationId: ctx.organization.id,
+          role: ctx.member.role,
+        })
+      }
+    },
+
+    // Before creating invitation - validate based on config
+    beforeCreateInvitation: async (ctx: {
+      invitation: { email: string; role: string; expiresAt: Date }
+      organization: { id: string }
+    }) => {
+      // In single-tenant mode, all invitations should use the default team
+      if (mode === 'single-tenant') {
+        const defaultTeamId = config.defaultTeamId ?? 'default'
+        if (ctx.organization.id !== defaultTeamId) {
+          throw new Error('Invitations can only be sent for the default organization')
+        }
+      }
+
+      // Apply default role if configured
+      const defaultRole = config.teams?.defaultRole ?? 'member'
+      return {
+        data: {
+          ...ctx.invitation,
+          role: ctx.invitation.role || defaultRole,
+        },
+      }
+    },
   }
 }
 
