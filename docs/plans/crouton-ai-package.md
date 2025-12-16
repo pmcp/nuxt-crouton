@@ -6,8 +6,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 6 / 18 |
-| **Current Phase** | Phase 2: Server Utilities ✅ |
+| **Tasks Completed** | 9 / 18 |
+| **Current Phase** | Phase 3: Composables ✅ |
 | **Estimated Total** | ~12-16 hours |
 
 ---
@@ -374,10 +374,10 @@ export function getAvailableProviders(config: RuntimeConfig) {
 **Estimated: 2-3 hours**
 
 ### Task 3.1: Create useChat Composable
-- [ ] Wrap AI SDK's `useChat` from `@ai-sdk/vue`
-- [ ] Add crouton-specific defaults
-- [ ] Integrate with team context (if @crouton/auth available)
-- [ ] Add persistence helpers
+- [x] ✅ Wrap AI SDK's `useChat` from `@ai-sdk/vue`
+- [x] ✅ Add crouton-specific defaults
+- [x] ✅ Integrate with team context (if @crouton/auth available)
+- [x] ✅ Add persistence helpers
 
 **Implementation:**
 ```typescript
@@ -435,10 +435,10 @@ export function useChat(options: AIChatOptions = {}) {
 }
 ```
 
-### Task 3.2: Create useCompletion Composable (Optional)
-- [ ] Wrap AI SDK's `useCompletion`
-- [ ] For single-turn text generation
-- [ ] Simpler than chat for quick AI calls
+### Task 3.2: Create useCompletion Composable
+- [x] ✅ Wrap AI SDK's `useCompletion`
+- [x] ✅ For single-turn text generation
+- [x] ✅ Simpler than chat for quick AI calls
 
 ```typescript
 // app/composables/useCompletion.ts
@@ -456,9 +456,9 @@ export function useCompletion(options: {
 ```
 
 ### Task 3.3: Create useAIProvider Composable
-- [ ] Expose provider config to components
-- [ ] List available providers/models
-- [ ] For building provider selector UI
+- [x] ✅ Expose provider config to components
+- [x] ✅ List available providers/models
+- [x] ✅ For building provider selector UI
 
 ```typescript
 // app/composables/useAIProvider.ts
@@ -913,10 +913,10 @@ These components can be added later based on demand from consuming apps:
 - [x] Task 2.2: Create Provider Helpers
 - [x] Task 2.3: Export Server Utils
 
-### Phase 3: Composables (2-3h)
-- [ ] Task 3.1: Create useChat Composable
-- [ ] Task 3.2: Create useCompletion Composable
-- [ ] Task 3.3: Create useAIProvider Composable
+### Phase 3: Composables (2-3h) ✅
+- [x] Task 3.1: Create useChat Composable
+- [x] Task 3.2: Create useCompletion Composable
+- [x] Task 3.3: Create useAIProvider Composable
 
 ### Phase 4: UI Components (3-4h)
 - [ ] Task 4.1: Create AIMessage Component

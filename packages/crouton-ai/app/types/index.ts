@@ -46,16 +46,30 @@ export interface AIModel {
 export interface AIChatOptions {
   /** API endpoint for chat (default: '/api/ai/chat') */
   api?: string
+  /** Unique identifier for the chat session */
+  id?: string
   /** Provider to use (e.g., 'openai', 'anthropic') */
   provider?: string
   /** Model to use (e.g., 'gpt-4o', 'claude-sonnet-4-20250514') */
   model?: string
   /** System prompt to set context */
   systemPrompt?: string
+  /** Initial messages to populate the chat */
+  initialMessages?: AIMessage[]
+  /** Initial input value */
+  initialInput?: string
+  /** Additional body parameters to send with each request */
+  body?: Record<string, unknown>
+  /** Additional headers to send with each request */
+  headers?: Record<string, string> | Headers
+  /** Credentials mode for fetch requests */
+  credentials?: 'omit' | 'same-origin' | 'include'
   /** Callback when a message is complete */
   onFinish?: (message: AIMessage) => void
   /** Callback when an error occurs */
   onError?: (error: Error) => void
+  /** Callback when a response is received */
+  onResponse?: (response: Response) => void | Promise<void>
 }
 
 /**
@@ -64,10 +78,24 @@ export interface AIChatOptions {
 export interface AICompletionOptions {
   /** API endpoint for completion (default: '/api/ai/completion') */
   api?: string
+  /** Unique identifier for the completion session */
+  id?: string
+  /** Provider to use (e.g., 'openai', 'anthropic') */
+  provider?: string
+  /** Model to use (e.g., 'gpt-4o', 'claude-sonnet-4-20250514') */
+  model?: string
+  /** Additional body parameters to send with each request */
+  body?: Record<string, unknown>
+  /** Additional headers to send with each request */
+  headers?: Record<string, string> | Headers
+  /** Credentials mode for fetch requests */
+  credentials?: 'omit' | 'same-origin' | 'include'
   /** Callback when completion is finished */
   onFinish?: (completion: string) => void
   /** Callback when an error occurs */
   onError?: (error: Error) => void
+  /** Callback when a response is received */
+  onResponse?: (response: Response) => void | Promise<void>
 }
 
 /**
