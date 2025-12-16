@@ -1,0 +1,64 @@
+{
+  "name": "@crouton/ai",
+  "version": "0.1.0",
+  "description": "AI integration layer for Nuxt Crouton",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./server": {
+      "types": "./dist/server/utils/index.d.ts",
+      "import": "./dist/server/utils/index.mjs"
+    },
+    "./schemas/*": "./schemas/*"
+  },
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub",
+    "prepack": "pnpm build"
+  },
+  "files": [
+    "app",
+    "server",
+    "schemas",
+    "dist",
+    "nuxt.config.ts"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crouton",
+    "ai",
+    "chat",
+    "openai",
+    "anthropic"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-ai"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "ai": "^4.0.0",
+    "@ai-sdk/vue": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "@ai-sdk/anthropic": "^1.0.0"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "@nuxt/ui": "^3.0.0"
+  },
+  "devDependencies": {
+    "unbuild": "^3.6.1",
+    "typescript": "^5.0.0"
+  }
+}
