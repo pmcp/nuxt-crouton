@@ -399,6 +399,23 @@ export interface CroutonAuthConfig {
   mode: AuthMode
 
   /**
+   * Default team ID for single-tenant mode
+   *
+   * In single-tenant mode, this is the ID of the default organization
+   * that all users belong to. Auto-created on first boot if not exists.
+   *
+   * @default 'default'
+   */
+  defaultTeamId?: string
+
+  /**
+   * Application name (used for default team name in single-tenant mode)
+   *
+   * @example 'My Company App'
+   */
+  appName?: string
+
+  /**
    * Authentication methods configuration
    */
   methods?: AuthMethodsConfig
