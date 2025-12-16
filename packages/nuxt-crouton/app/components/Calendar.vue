@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { fromDate, toCalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date'
+import { CalendarDate, fromDate, toCalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date'
 
 // DateRange interface - defined in Nuxt UI but not exported from @internationalized/date
 interface DateRange {
@@ -20,7 +20,8 @@ interface Props {
   maxDate?: Date | number | null    // Max selectable date or timestamp
   monthControls?: boolean           // Show month controls
   yearControls?: boolean            // Show year controls
-  numberOfMonths?: number           // Number of months to display
+  numberOfMonths?: number           // Number of months to display (in a row)
+  year?: boolean | number           // Enable year grid mode (12 months). Pass number for specific year.
   isDateDisabled?: (date: Date) => boolean  // Function to disable specific dates (uses JS Date)
   ui?: Record<string, unknown>      // Passthrough UI customization to UCalendar
 }
@@ -38,7 +39,8 @@ const props = withDefaults(defineProps<Props>(), {
   maxDate: null,
   monthControls: true,
   yearControls: true,
-  numberOfMonths: undefined
+  numberOfMonths: undefined,
+  year: undefined,
 })
 
 const emit = defineEmits<{
@@ -67,7 +69,7 @@ const internalDate = computed({
   get: () => toCalendarDateValue(props.date),
   set: (value: DateValue | null | undefined) => {
     emit('update:date', calendarDateToDate(value))
-  }
+  },
 })
 
 // Range mode
@@ -80,7 +82,7 @@ const internalRange = computed({
 
     return {
       start: start || undefined,
-      end: end || undefined
+      end: end || undefined,
     }
   },
   set: (value: DateRange | null | undefined) => {
@@ -92,12 +94,29 @@ const internalRange = computed({
 
     emit('update:startDate', calendarDateToDate(value.start))
     emit('update:endDate', calendarDateToDate(value.end))
-  }
+  },
 })
 
 // Min/Max constraints
 const minCalendarDate = computed(() => toCalendarDateValue(props.minDate))
 const maxCalendarDate = computed(() => toCalendarDateValue(props.maxDate))
+
+// Determine if we're in year grid mode
+const isYearMode = computed(() => props.year !== undefined && props.year !== false)
+
+// Get the year to display (from prop or current year)
+const displayYear = computed(() => {
+  if (typeof props.year === 'number') return props.year
+  return new Date().getFullYear()
+})
+
+// Create placeholder dates for each month (year grid mode)
+const months = computed(() =>
+  Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    placeholder: new CalendarDate(displayYear.value, i + 1, 1),
+  })),
+)
 
 // Computed number of months (default to 2 for ranges, 1 for single)
 const displayMonths = computed(() => {
@@ -119,9 +138,39 @@ const hasDaySlot = computed(() => !!slots.day)
 </script>
 
 <template>
-  <!-- Single date mode -->
+  <!-- Year grid mode (12 months) -->
+  <div v-if="isYearMode" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div
+      v-for="{ month, placeholder } in months"
+      :key="month"
+      class="bg-elevated rounded-lg p-3 ring ring-default"
+    >
+      <UCalendar
+        v-model="internalDate"
+        :placeholder="placeholder"
+        :month-controls="false"
+        :year-controls="false"
+        :size="size"
+        :color="color"
+        :variant="variant"
+        :disabled="disabled"
+        :fixed-weeks="false"
+        :min-value="minCalendarDate"
+        :max-value="maxCalendarDate"
+        :is-date-disabled="isDateDisabled ? internalIsDateDisabled : undefined"
+        :ui="ui"
+        class="hide-outside-days"
+      >
+        <template v-if="hasDaySlot" #day="{ day }">
+          <slot name="day" :day="day" :date="calendarDateToDate(day)" />
+        </template>
+      </UCalendar>
+    </div>
+  </div>
+
+  <!-- Single date mode (with optional numberOfMonths) -->
   <UCalendar
-    v-if="!range"
+    v-else-if="!range"
     v-model="internalDate"
     :color="color"
     :variant="variant"
@@ -162,3 +211,12 @@ const hasDaySlot = computed(() => !!slots.day)
     </template>
   </UCalendar>
 </template>
+
+<style scoped>
+/* Hide days from other months in year grid mode */
+.hide-outside-days :deep([data-outside-view]),
+.hide-outside-days :deep([data-outside-month]),
+.hide-outside-days :deep([data-outside-visible-months]) {
+  visibility: hidden;
+}
+</style>
