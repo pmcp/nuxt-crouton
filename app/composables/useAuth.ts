@@ -28,6 +28,25 @@ export interface RegisterData {
   name?: string
 }
 
+export interface PasskeyInfo {
+  id: string
+  name: string
+  createdAt: Date
+  lastUsedAt?: Date
+  credentialId: string
+}
+
+export interface AddPasskeyOptions {
+  /** Name for the passkey (e.g., "My Laptop", "Work Phone") */
+  name?: string
+  /**
+   * Authenticator attachment preference
+   * - 'platform': Built-in authenticators (fingerprint, Face ID)
+   * - 'cross-platform': External devices (security keys)
+   */
+  authenticatorAttachment?: 'platform' | 'cross-platform'
+}
+
 export function useAuth() {
   const config = useRuntimeConfig().public.crouton?.auth
 
@@ -113,6 +132,7 @@ export function useAuth() {
     error.value = null
     try {
       // TODO: Phase 4 - Implement with Better Auth
+      // await client.signIn.passkey()
       throw new Error('@crouton/auth: Passkey login not yet implemented. Complete Phase 4.')
     }
     catch (e: unknown) {
@@ -121,6 +141,142 @@ export function useAuth() {
     }
     finally {
       loading.value = false
+    }
+  }
+
+  /**
+   * Login with passkey using browser autofill (conditional UI)
+   *
+   * Call this on component mount to enable passkey autofill.
+   * The browser will show passkey options when the user focuses
+   * on an input with `autocomplete="username webauthn"`.
+   */
+  async function loginWithPasskeyAutofill(): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // await client.signIn.passkey({ autoFill: true })
+      throw new Error('@crouton/auth: Passkey autofill not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Passkey autofill failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Register a new passkey for the current user
+   *
+   * Requires user to be logged in.
+   */
+  async function addPasskey(_options?: AddPasskeyOptions): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // await client.passkey.addPasskey({
+      //   name: options?.name,
+      //   authenticatorAttachment: options?.authenticatorAttachment
+      // })
+      throw new Error('@crouton/auth: Add passkey not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Add passkey failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * List all passkeys for the current user
+   */
+  async function listPasskeys(): Promise<PasskeyInfo[]> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // return await client.passkey.listUserPasskeys({})
+      throw new Error('@crouton/auth: List passkeys not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'List passkeys failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Delete a passkey by ID
+   */
+  async function deletePasskey(_id: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // await client.passkey.deletePasskey({ id })
+      throw new Error('@crouton/auth: Delete passkey not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Delete passkey failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Update passkey name
+   */
+  async function updatePasskey(_id: string, _name: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      // TODO: Phase 4 - Implement with Better Auth
+      // await client.passkey.updatePasskey({ id, name })
+      throw new Error('@crouton/auth: Update passkey not yet implemented. Complete Phase 4.')
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Update passkey failed'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Check if WebAuthn is supported in the current browser
+   */
+  function isWebAuthnSupported(): boolean {
+    if (typeof window === 'undefined') return false
+    return (
+      typeof PublicKeyCredential !== 'undefined' &&
+      typeof navigator.credentials !== 'undefined'
+    )
+  }
+
+  /**
+   * Check if conditional UI (autofill) is available
+   */
+  async function isConditionalUIAvailable(): Promise<boolean> {
+    if (!isWebAuthnSupported()) return false
+    if (typeof PublicKeyCredential.isConditionalMediationAvailable !== 'function') {
+      return false
+    }
+    try {
+      return await PublicKeyCredential.isConditionalMediationAvailable()
+    }
+    catch {
+      return false
     }
   }
 
@@ -222,14 +378,25 @@ export function useAuth() {
     hasMagicLink,
     oauthProviders,
 
-    // Methods
+    // Auth methods
     login,
     loginWithOAuth,
     loginWithPasskey,
+    loginWithPasskeyAutofill,
     loginWithMagicLink,
     register,
     logout,
     forgotPassword,
     resetPassword,
+
+    // Passkey management
+    addPasskey,
+    listPasskeys,
+    deletePasskey,
+    updatePasskey,
+
+    // WebAuthn support helpers
+    isWebAuthnSupported,
+    isConditionalUIAvailable,
   }
 }

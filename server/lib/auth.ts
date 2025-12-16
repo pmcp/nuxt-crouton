@@ -15,12 +15,14 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { organization } from 'better-auth/plugins'
+import { passkey } from '@better-auth/passkey'
 import type { BetterAuthOptions } from 'better-auth'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
 import type {
   CroutonAuthConfig,
   SessionConfig,
   PasswordConfig,
+  PasskeyConfig,
   OAuthConfig,
   GitHubOAuthConfig,
   GoogleOAuthConfig,
@@ -105,10 +107,8 @@ export function createAuth(options: CreateAuthOptions) {
       generateId: () => crypto.randomUUID(),
     },
 
-    // Plugins - Organization (Teams) support
-    plugins: [
-      organization(buildOrganizationConfig(config)),
-    ],
+    // Plugins - Organization (Teams) and Passkey support
+    plugins: buildPlugins(config, baseURL),
   }
 
   // Create and return the Better Auth instance
@@ -173,6 +173,118 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
     expiresIn: sessionConfig.expiresIn ?? defaults.expiresIn,
     updateAge: sessionConfig.updateAge ?? defaults.updateAge,
     cookieCache: defaults.cookieCache,
+  }
+}
+
+// ============================================================================
+// Plugin Configuration
+// ============================================================================
+
+/**
+ * Build plugins array based on @crouton/auth configuration
+ *
+ * Always includes: organization (teams)
+ * Conditionally includes: passkey (if enabled)
+ *
+ * @param config - @crouton/auth configuration
+ * @param baseURL - Application base URL
+ * @returns Array of Better Auth plugins
+ */
+function buildPlugins(config: CroutonAuthConfig, baseURL: string) {
+  const plugins: ReturnType<typeof organization | typeof passkey>[] = [
+    // Organization plugin is always enabled (teams support)
+    organization(buildOrganizationConfig(config)),
+  ]
+
+  // Conditionally add passkey plugin
+  const passkeyPluginConfig = buildPasskeyConfig(config.methods?.passkeys, baseURL)
+  if (passkeyPluginConfig) {
+    plugins.push(passkey(passkeyPluginConfig))
+  }
+
+  return plugins
+}
+
+// ============================================================================
+// Passkey (WebAuthn) Configuration
+// ============================================================================
+
+/**
+ * Build passkey plugin configuration from @crouton/auth config
+ *
+ * Passkeys provide passwordless authentication using WebAuthn.
+ * Supports:
+ * - Platform authenticators (fingerprint, Face ID, Windows Hello)
+ * - Cross-platform authenticators (hardware security keys)
+ * - Conditional UI (autofill support)
+ *
+ * @param passkeyConfig - Passkey configuration from @crouton/auth
+ * @param baseURL - Application base URL for origin
+ * @returns Passkey plugin configuration or null if disabled
+ */
+function buildPasskeyConfig(
+  passkeyConfig: boolean | PasskeyConfig | undefined,
+  baseURL: string
+): PasskeyPluginOptions | null {
+  // Check if passkeys are enabled
+  if (passkeyConfig === false || passkeyConfig === undefined) {
+    return null
+  }
+
+  // Parse base URL to get origin and default rpID
+  const url = new URL(baseURL)
+  const origin = url.origin
+  const defaultRpId = url.hostname
+
+  // Use defaults if just `true`
+  if (passkeyConfig === true) {
+    return {
+      rpID: defaultRpId,
+      rpName: 'Application',
+      origin,
+    }
+  }
+
+  // Custom passkey configuration
+  const customConfig = passkeyConfig as PasskeyConfig
+
+  // If explicitly disabled via config object
+  if (customConfig.enabled === false) {
+    return null
+  }
+
+  return {
+    rpID: customConfig.rpId ?? defaultRpId,
+    rpName: customConfig.rpName ?? 'Application',
+    origin,
+    // Additional WebAuthn options for credential creation
+    authenticatorSelection: {
+      // Default to platform authenticators for better UX (fingerprint, Face ID)
+      // Users can specify 'cross-platform' for hardware keys
+      authenticatorAttachment: undefined, // Allow both platform and cross-platform
+      // Require resident key for usernameless authentication
+      residentKey: 'preferred',
+      // Require user verification (biometric or PIN)
+      userVerification: 'preferred',
+    },
+  }
+}
+
+/**
+ * Passkey plugin options type
+ */
+interface PasskeyPluginOptions {
+  /** Relying Party ID - typically the domain (e.g., 'example.com') */
+  rpID: string
+  /** Relying Party Name - human-readable app name */
+  rpName: string
+  /** Origin URL - server URL without trailing slash */
+  origin: string
+  /** Authenticator selection criteria */
+  authenticatorSelection?: {
+    authenticatorAttachment?: 'platform' | 'cross-platform'
+    residentKey?: 'required' | 'preferred' | 'discouraged'
+    userVerification?: 'required' | 'preferred' | 'discouraged'
   }
 }
 
@@ -572,6 +684,109 @@ export function isOAuthProviderConfigured(
 export function getOAuthCallbackURL(baseURL: string, provider: string): string {
   const base = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL
   return `${base}/api/auth/callback/${provider}`
+}
+
+// ============================================================================
+// Passkey Utilities
+// ============================================================================
+
+/**
+ * Check if passkeys are enabled in the configuration
+ *
+ * @param config - @crouton/auth configuration
+ * @returns True if passkeys are enabled
+ */
+export function isPasskeyEnabled(config: CroutonAuthConfig): boolean {
+  const passkeyConfig = config.methods?.passkeys
+  if (passkeyConfig === undefined || passkeyConfig === false) {
+    return false
+  }
+  if (passkeyConfig === true) {
+    return true
+  }
+  return passkeyConfig.enabled !== false
+}
+
+/**
+ * Get passkey configuration details for UI display
+ *
+ * @param config - @crouton/auth configuration
+ * @returns Passkey info for UI or null if disabled
+ */
+export function getPasskeyInfo(config: CroutonAuthConfig): PasskeyInfo | null {
+  if (!isPasskeyEnabled(config)) {
+    return null
+  }
+
+  const passkeyConfig = config.methods?.passkeys
+  const customConfig = typeof passkeyConfig === 'object' ? passkeyConfig : {}
+
+  return {
+    enabled: true,
+    rpName: customConfig.rpName ?? 'Application',
+    conditionalUI: customConfig.conditionalUI !== false,
+    supportsAutofill: customConfig.conditionalUI !== false,
+  }
+}
+
+/**
+ * Passkey info for UI display
+ */
+export interface PasskeyInfo {
+  /** Whether passkeys are enabled */
+  enabled: boolean
+  /** Relying Party Name (app name shown in browser dialogs) */
+  rpName: string
+  /** Whether conditional UI (autofill) is supported */
+  conditionalUI: boolean
+  /** Alias for conditionalUI */
+  supportsAutofill: boolean
+}
+
+/**
+ * Check if WebAuthn is supported in the current environment
+ *
+ * This is a helper for client-side code to check browser support.
+ * Use this before showing passkey UI elements.
+ *
+ * @returns True if WebAuthn is available
+ */
+export function isWebAuthnSupported(): boolean {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  // Check for WebAuthn support
+  return (
+    typeof PublicKeyCredential !== 'undefined' &&
+    typeof navigator.credentials !== 'undefined'
+  )
+}
+
+/**
+ * Check if conditional UI (autofill) is available
+ *
+ * Conditional UI allows passkey authentication through browser autofill.
+ * Not all browsers support this feature.
+ *
+ * @returns Promise resolving to true if conditional UI is available
+ */
+export async function isConditionalUIAvailable(): Promise<boolean> {
+  if (!isWebAuthnSupported()) {
+    return false
+  }
+
+  // Check for conditional mediation support
+  if (typeof PublicKeyCredential.isConditionalMediationAvailable !== 'function') {
+    return false
+  }
+
+  try {
+    return await PublicKeyCredential.isConditionalMediationAvailable()
+  } catch {
+    return false
+  }
 }
 
 // ============================================================================
