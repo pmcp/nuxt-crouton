@@ -14,17 +14,31 @@
  * @example
  * ```vue
  * <script setup>
- * const { teamId, teamSlug } = useTeamContext()
+ * const { teamId, teamSlug, buildDashboardUrl } = useTeamContext()
  *
  * // Use in API calls
  * const { data } = await useFetch(`/api/teams/${teamId.value}/bookings`)
+ *
+ * // Build dashboard URLs
+ * const settingsUrl = buildDashboardUrl('/settings')
  * </script>
  * ```
  */
+import type { CroutonAuthConfig } from '../../types/config'
+
+/**
+ * Team context resolution result
+ */
+export interface TeamContextResolution {
+  teamId: string | null
+  teamSlug: string | null
+  needsRedirect: boolean
+  redirectTo?: string
+}
+
 export function useTeamContext() {
-  const config = useRuntimeConfig().public.crouton?.auth
+  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
   const route = useRoute()
-  const { data: session } = useSession()
 
   /**
    * Get the current team ID based on auth mode
@@ -33,16 +47,16 @@ export function useTeamContext() {
     switch (config?.mode) {
       case 'single-tenant':
         // Always return the default team ID
-        // This is set during app initialization
-        return (config as { defaultTeamId?: string }).defaultTeamId ?? 'default'
+        return config?.defaultTeamId ?? 'default'
 
-      case 'personal':
+      case 'personal': {
         // Return user's personal team from session
-        // Personal team is auto-created on signup
-        return session.value?.activeOrganization?.id ?? null
+        const { activeOrganization } = useSession()
+        return activeOrganization.value?.id ?? null
+      }
 
       case 'multi-tenant':
-      default:
+      default: {
         // From URL param first, then fall back to session's active org
         const urlTeam = route.params.team as string | undefined
         if (urlTeam) {
@@ -50,7 +64,9 @@ export function useTeamContext() {
           // The server will resolve it
           return urlTeam
         }
-        return session.value?.activeOrganization?.id ?? null
+        const { activeOrganization } = useSession()
+        return activeOrganization.value?.id ?? null
+      }
     }
   })
 
@@ -62,14 +78,18 @@ export function useTeamContext() {
       case 'single-tenant':
         return 'default'
 
-      case 'personal':
-        return session.value?.activeOrganization?.slug ?? null
+      case 'personal': {
+        const { activeOrganization } = useSession()
+        return activeOrganization.value?.slug ?? null
+      }
 
       case 'multi-tenant':
-      default:
+      default: {
         const urlTeam = route.params.team as string | undefined
         if (urlTeam) return urlTeam
-        return session.value?.activeOrganization?.slug ?? null
+        const { activeOrganization } = useSession()
+        return activeOrganization.value?.slug ?? null
+      }
     }
   })
 
@@ -85,17 +105,52 @@ export function useTeamContext() {
   const useTeamInUrl = computed(() => config?.mode === 'multi-tenant')
 
   /**
+   * Check if current route is a team-scoped dashboard route
+   */
+  const isTeamRoute = computed(() => {
+    return route.path.startsWith('/dashboard') && !!route.params.team
+  })
+
+  /**
+   * Get team param from current route (multi-tenant only)
+   */
+  const routeTeamParam = computed(() => {
+    return route.params.team as string | undefined
+  })
+
+  /**
+   * Check if URL team matches session's active team
+   */
+  const isTeamSynced = computed(() => {
+    if (config?.mode !== 'multi-tenant') return true
+
+    const routeTeam = routeTeamParam.value
+    if (!routeTeam) return true // No team in URL is valid for some routes
+
+    const { activeOrganization } = useSession()
+    const activeSlug = activeOrganization.value?.slug
+    const activeId = activeOrganization.value?.id
+
+    return routeTeam === activeSlug || routeTeam === activeId
+  })
+
+  /**
    * Build a dashboard URL with proper team context
    *
    * @example
    * buildDashboardUrl('/bookings') // multi-tenant: '/dashboard/acme/bookings'
    * buildDashboardUrl('/bookings') // single-tenant: '/dashboard/bookings'
    */
-  function buildDashboardUrl(path: string): string {
+  function buildDashboardUrl(path: string, teamSlugOverride?: string): string {
     const cleanPath = path.startsWith('/') ? path : `/${path}`
 
-    if (useTeamInUrl.value && teamSlug.value) {
-      return `/dashboard/${teamSlug.value}${cleanPath}`
+    if (useTeamInUrl.value) {
+      const slug = teamSlugOverride ?? teamSlug.value
+      if (slug) {
+        return `/dashboard/${slug}${cleanPath}`
+      }
+      // No slug available - log warning but proceed
+      console.warn('[@crouton/auth] buildDashboardUrl: No team slug available in multi-tenant mode')
     }
 
     return `/dashboard${cleanPath}`
@@ -107,9 +162,9 @@ export function useTeamContext() {
    * @example
    * buildApiUrl('/bookings') // '/api/teams/team-123/bookings'
    */
-  function buildApiUrl(path: string): string {
+  function buildApiUrl(path: string, teamIdOverride?: string): string {
     const cleanPath = path.startsWith('/') ? path : `/${path}`
-    const id = teamId.value
+    const id = teamIdOverride ?? teamId.value
 
     if (!id) {
       console.warn('[@crouton/auth] buildApiUrl called without team context')
@@ -117,6 +172,115 @@ export function useTeamContext() {
     }
 
     return `/api/teams/${id}${cleanPath}`
+  }
+
+  /**
+   * Resolve team from current route and sync with session
+   *
+   * This is called by the team-context middleware.
+   * Returns resolution info including whether a redirect is needed.
+   */
+  async function resolveTeamFromRoute(): Promise<TeamContextResolution> {
+    const mode = config?.mode ?? 'multi-tenant'
+    const { isAuthenticated, activeOrganization } = useSession()
+
+    // Not authenticated - no team context needed
+    if (!isAuthenticated.value) {
+      return {
+        teamId: null,
+        teamSlug: null,
+        needsRedirect: false,
+      }
+    }
+
+    // Handle based on mode
+    if (mode === 'multi-tenant') {
+      const urlTeamParam = route.params.team as string | undefined
+
+      if (urlTeamParam) {
+        // Team in URL - validate user has access
+        const { teams, switchTeamBySlug } = useTeam()
+        const targetTeam = teams.value.find(
+          t => t.slug === urlTeamParam || t.id === urlTeamParam
+        )
+
+        if (!targetTeam) {
+          // Team not found or no access - redirect to first available team
+          const firstTeam = teams.value[0]
+          if (firstTeam) {
+            const newPath = route.path.replace(`/${urlTeamParam}`, `/${firstTeam.slug}`)
+            return {
+              teamId: firstTeam.id,
+              teamSlug: firstTeam.slug,
+              needsRedirect: true,
+              redirectTo: newPath,
+            }
+          }
+          // No teams at all
+          return {
+            teamId: null,
+            teamSlug: null,
+            needsRedirect: false,
+          }
+        }
+
+        // Valid team - switch session if needed
+        if (activeOrganization.value?.id !== targetTeam.id) {
+          try {
+            await switchTeamBySlug(urlTeamParam)
+          }
+          catch (e) {
+            console.error('[@crouton/auth] Failed to switch team:', e)
+          }
+        }
+
+        return {
+          teamId: targetTeam.id,
+          teamSlug: targetTeam.slug,
+          needsRedirect: false,
+        }
+      }
+      else {
+        // No team in URL - check if we should add one
+        const isDashboardRoute = route.path.startsWith('/dashboard')
+
+        if (isDashboardRoute && activeOrganization.value) {
+          // Dashboard route should have team in URL in multi-tenant mode
+          const pathWithoutDashboard = route.path.replace(/^\/dashboard\/?/, '')
+          return {
+            teamId: activeOrganization.value.id,
+            teamSlug: activeOrganization.value.slug,
+            needsRedirect: true,
+            redirectTo: `/dashboard/${activeOrganization.value.slug}${pathWithoutDashboard ? `/${pathWithoutDashboard}` : ''}`,
+          }
+        }
+
+        // Non-dashboard route or no active org
+        return {
+          teamId: activeOrganization.value?.id ?? null,
+          teamSlug: activeOrganization.value?.slug ?? null,
+          needsRedirect: false,
+        }
+      }
+    }
+    else {
+      // Single-tenant or personal mode - just use session's active org
+      return {
+        teamId: activeOrganization.value?.id ?? null,
+        teamSlug: activeOrganization.value?.slug ?? null,
+        needsRedirect: false,
+      }
+    }
+  }
+
+  /**
+   * Navigate to a team-scoped route
+   *
+   * Convenience method that builds the URL and navigates
+   */
+  async function navigateToTeamRoute(path: string, teamSlugOverride?: string): Promise<void> {
+    const url = buildDashboardUrl(path, teamSlugOverride)
+    await navigateTo(url)
   }
 
   return {
@@ -127,9 +291,16 @@ export function useTeamContext() {
     // State
     hasTeamContext,
     useTeamInUrl,
+    isTeamRoute,
+    routeTeamParam,
+    isTeamSynced,
 
-    // Helpers
+    // URL builders
     buildDashboardUrl,
     buildApiUrl,
+
+    // Actions
+    resolveTeamFromRoute,
+    navigateToTeamRoute,
   }
 }

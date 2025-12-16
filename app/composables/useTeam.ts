@@ -2,26 +2,38 @@
  * useTeam Composable
  *
  * Team (organization) management composable with mode-aware behavior.
+ * Uses Better Auth's organization client for all operations.
  *
  * @example
  * ```vue
  * <script setup>
- * const { currentTeam, teams, switchTeam, createTeam } = useTeam()
+ * const { currentTeam, teams, switchTeam, createTeam, canCreateTeam } = useTeam()
+ *
+ * // Create a new team (multi-tenant mode)
+ * if (canCreateTeam.value) {
+ *   await createTeam({ name: 'New Team', slug: 'new-team' })
+ * }
+ *
+ * // Switch active team
+ * await switchTeam(teamId)
  * </script>
  * ```
  */
 import type { Team, MemberRole, Member } from '../../types'
+import type { CroutonAuthConfig } from '../../types/config'
 
 export interface CreateTeamData {
   name: string
   slug?: string
   logo?: string
+  metadata?: Record<string, unknown>
 }
 
 export interface UpdateTeamData {
   name?: string
   slug?: string
   logo?: string
+  metadata?: Record<string, unknown>
 }
 
 export interface InviteMemberData {
@@ -29,19 +41,116 @@ export interface InviteMemberData {
   role?: MemberRole
 }
 
+/**
+ * Get the Better Auth client from the plugin
+ */
+function useAuthClient() {
+  const nuxtApp = useNuxtApp()
+  return nuxtApp.$authClient as ReturnType<typeof import('better-auth/client').createAuthClient>
+}
+
+/**
+ * Map Better Auth organization to our Team type
+ */
+function mapOrganizationToTeam(org: {
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  metadata?: string | Record<string, unknown> | null
+  createdAt: string | Date
+}): Team {
+  // Parse metadata if it's a string
+  let metadata: Record<string, unknown> = {}
+  if (org.metadata) {
+    try {
+      metadata = typeof org.metadata === 'string' ? JSON.parse(org.metadata) : org.metadata
+    }
+    catch {
+      metadata = {}
+    }
+  }
+
+  return {
+    id: org.id,
+    name: org.name,
+    slug: org.slug,
+    logo: org.logo ?? null,
+    metadata,
+    personal: metadata.personal === true,
+    isDefault: metadata.isDefault === true,
+    createdAt: new Date(org.createdAt),
+    updatedAt: new Date(org.createdAt),
+  }
+}
+
+/**
+ * Map Better Auth member to our Member type
+ */
+function mapMember(m: {
+  id: string
+  organizationId: string
+  userId: string
+  role: string
+  createdAt: string | Date
+  user?: {
+    id: string
+    name?: string | null
+    email: string
+    image?: string | null
+  }
+}): Member {
+  return {
+    id: m.id,
+    organizationId: m.organizationId,
+    userId: m.userId,
+    role: m.role as MemberRole,
+    createdAt: new Date(m.createdAt),
+  }
+}
+
 export function useTeam() {
-  const config = useRuntimeConfig().public.crouton?.auth
+  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const authClient = useAuthClient()
 
-  // TODO: Phase 4 - Connect to Better Auth organization client
-  // const client = useBetterAuthClient()
-  // const session = useSession()
+  // Use Better Auth's reactive hooks
+  const { data: organizationsData } = authClient.useListOrganizations()
+  const { data: activeOrgData } = authClient.useActiveOrganization()
 
-  // Reactive state (placeholders)
-  const currentTeam = ref<Team | null>(null)
-  const teams = ref<Team[]>([])
-  const members = ref<Member[]>([])
+  // Local state
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const membersData = ref<Member[]>([])
+
+  // Computed: current team (active organization)
+  const currentTeam = computed<Team | null>(() => {
+    if (!activeOrgData.value) return null
+    return mapOrganizationToTeam(activeOrgData.value)
+  })
+
+  // Computed: all user's teams
+  const teams = computed<Team[]>(() => {
+    if (!organizationsData.value) return []
+    return organizationsData.value.map(mapOrganizationToTeam)
+  })
+
+  // Computed: team members (loaded separately)
+  const members = computed(() => membersData.value)
+
+  // Get current user's role in active team
+  const currentRole = computed<MemberRole | null>(() => {
+    // Check if we have active org data with members
+    const activeOrg = activeOrgData.value as { members?: Array<{ userId: string, role: string }> } | null
+    if (!activeOrg?.members) return null
+
+    // Get current user from session
+    const { user } = useSession()
+    if (!user.value) return null
+
+    // Find member entry
+    const member = activeOrg.members.find(m => m.userId === user.value?.id)
+    return member?.role as MemberRole ?? null
+  })
 
   // Mode-aware computed properties
   const showTeamSwitcher = computed(() => {
@@ -60,39 +169,39 @@ export function useTeam() {
   })
 
   const canInviteMembers = computed(() => {
-    // Owner and admin can invite
-    const role = currentTeam.value ? getCurrentRole() : null
+    const role = currentRole.value
     return role === 'owner' || role === 'admin'
   })
 
   const canManageMembers = computed(() => {
-    // Only owner and admin can manage
-    const role = currentTeam.value ? getCurrentRole() : null
+    const role = currentRole.value
     return role === 'owner' || role === 'admin'
   })
 
-  const isOwner = computed(() => {
-    return getCurrentRole() === 'owner'
-  })
-
+  const isOwner = computed(() => currentRole.value === 'owner')
   const isAdmin = computed(() => {
-    const role = getCurrentRole()
+    const role = currentRole.value
     return role === 'owner' || role === 'admin'
   })
 
-  // Helper function
-  function getCurrentRole(): MemberRole | null {
-    // TODO: Phase 4 - Get from session
-    return null
-  }
+  // ============================================================================
+  // Team Methods
+  // ============================================================================
 
-  // Team methods (placeholders - to be implemented in Phase 4)
-  async function switchTeam(_teamId: string): Promise<void> {
+  /**
+   * Switch to a different team (set as active organization)
+   */
+  async function switchTeam(teamId: string): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Switch team not yet implemented. Complete Phase 4.')
+      const result = await authClient.organization.setActive({
+        organizationId: teamId,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to switch team')
+      }
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to switch team'
@@ -103,12 +212,57 @@ export function useTeam() {
     }
   }
 
-  async function createTeam(_data: CreateTeamData): Promise<Team> {
+  /**
+   * Switch to team by slug
+   */
+  async function switchTeamBySlug(slug: string): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Create team not yet implemented. Complete Phase 4.')
+      const result = await authClient.organization.setActive({
+        organizationSlug: slug,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to switch team')
+      }
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Failed to switch team'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Create a new team (multi-tenant mode only)
+   */
+  async function createTeam(data: CreateTeamData): Promise<Team> {
+    loading.value = true
+    error.value = null
+    try {
+      if (!canCreateTeam.value) {
+        throw new Error('Cannot create more teams. Limit reached or not in multi-tenant mode.')
+      }
+
+      const result = await authClient.organization.create({
+        name: data.name,
+        slug: data.slug,
+        logo: data.logo,
+        metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to create team')
+      }
+
+      if (!result.data) {
+        throw new Error('No data returned from create team')
+      }
+
+      return mapOrganizationToTeam(result.data)
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create team'
@@ -119,12 +273,36 @@ export function useTeam() {
     }
   }
 
-  async function updateTeam(_data: UpdateTeamData): Promise<Team> {
+  /**
+   * Update the current team
+   */
+  async function updateTeam(data: UpdateTeamData): Promise<Team> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Update team not yet implemented. Complete Phase 4.')
+      if (!currentTeam.value) {
+        throw new Error('No active team to update')
+      }
+
+      const result = await authClient.organization.update({
+        organizationId: currentTeam.value.id,
+        data: {
+          name: data.name,
+          slug: data.slug,
+          logo: data.logo,
+          metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
+        },
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to update team')
+      }
+
+      if (!result.data) {
+        throw new Error('No data returned from update team')
+      }
+
+      return mapOrganizationToTeam(result.data)
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update team'
@@ -135,12 +313,28 @@ export function useTeam() {
     }
   }
 
+  /**
+   * Delete the current team (owner only)
+   */
   async function deleteTeam(): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Delete team not yet implemented. Complete Phase 4.')
+      if (!currentTeam.value) {
+        throw new Error('No active team to delete')
+      }
+
+      if (!isOwner.value) {
+        throw new Error('Only the team owner can delete the team')
+      }
+
+      const result = await authClient.organization.delete({
+        organizationId: currentTeam.value.id,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to delete team')
+      }
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete team'
@@ -151,12 +345,62 @@ export function useTeam() {
     }
   }
 
-  async function inviteMember(_data: InviteMemberData): Promise<void> {
+  // ============================================================================
+  // Member Methods
+  // ============================================================================
+
+  /**
+   * Load members for the current team
+   */
+  async function loadMembers(): Promise<void> {
+    if (!currentTeam.value) {
+      membersData.value = []
+      return
+    }
+
+    try {
+      const result = await authClient.organization.listMembers({
+        organizationId: currentTeam.value.id,
+      })
+
+      if (result.error) {
+        console.error('Failed to load members:', result.error)
+        membersData.value = []
+        return
+      }
+
+      membersData.value = (result.data?.members ?? []).map(mapMember)
+    }
+    catch (e) {
+      console.error('Failed to load members:', e)
+      membersData.value = []
+    }
+  }
+
+  /**
+   * Invite a new member to the current team
+   */
+  async function inviteMember(data: InviteMemberData): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Invite member not yet implemented. Complete Phase 4.')
+      if (!currentTeam.value) {
+        throw new Error('No active team')
+      }
+
+      if (!canInviteMembers.value) {
+        throw new Error('You do not have permission to invite members')
+      }
+
+      const result = await authClient.organization.inviteMember({
+        organizationId: currentTeam.value.id,
+        email: data.email,
+        role: data.role ?? 'member',
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to invite member')
+      }
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to invite member'
@@ -167,12 +411,32 @@ export function useTeam() {
     }
   }
 
-  async function removeMember(_userId: string): Promise<void> {
+  /**
+   * Remove a member from the current team
+   */
+  async function removeMember(userId: string): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Remove member not yet implemented. Complete Phase 4.')
+      if (!currentTeam.value) {
+        throw new Error('No active team')
+      }
+
+      if (!canManageMembers.value) {
+        throw new Error('You do not have permission to remove members')
+      }
+
+      const result = await authClient.organization.removeMember({
+        organizationId: currentTeam.value.id,
+        memberIdOrEmail: userId,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to remove member')
+      }
+
+      // Refresh members list
+      await loadMembers()
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to remove member'
@@ -183,12 +447,33 @@ export function useTeam() {
     }
   }
 
-  async function updateMemberRole(_userId: string, _role: MemberRole): Promise<void> {
+  /**
+   * Update a member's role
+   */
+  async function updateMemberRole(userId: string, role: MemberRole): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Update member role not yet implemented. Complete Phase 4.')
+      if (!currentTeam.value) {
+        throw new Error('No active team')
+      }
+
+      if (!canManageMembers.value) {
+        throw new Error('You do not have permission to manage members')
+      }
+
+      const result = await authClient.organization.updateMemberRole({
+        organizationId: currentTeam.value.id,
+        memberId: userId,
+        role,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to update role')
+      }
+
+      // Refresh members list
+      await loadMembers()
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update role'
@@ -199,12 +484,35 @@ export function useTeam() {
     }
   }
 
+  /**
+   * Leave the current team
+   */
   async function leaveTeam(): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      // TODO: Phase 4 - Implement with Better Auth
-      throw new Error('@crouton/auth: Leave team not yet implemented. Complete Phase 4.')
+      if (!currentTeam.value) {
+        throw new Error('No active team')
+      }
+
+      if (isOwner.value) {
+        throw new Error('Team owner cannot leave. Transfer ownership or delete the team.')
+      }
+
+      // Get current user
+      const { user } = useSession()
+      if (!user.value) {
+        throw new Error('Not authenticated')
+      }
+
+      const result = await authClient.organization.removeMember({
+        organizationId: currentTeam.value.id,
+        memberIdOrEmail: user.value.id,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to leave team')
+      }
     }
     catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to leave team'
@@ -215,11 +523,112 @@ export function useTeam() {
     }
   }
 
+  // ============================================================================
+  // Invitation Methods
+  // ============================================================================
+
+  /**
+   * Get pending invitations for the current team
+   */
+  async function getPendingInvitations() {
+    if (!currentTeam.value) return []
+
+    try {
+      const result = await authClient.organization.listInvitations({
+        organizationId: currentTeam.value.id,
+      })
+
+      if (result.error) {
+        console.error('Failed to get invitations:', result.error)
+        return []
+      }
+
+      return result.data?.invitations ?? []
+    }
+    catch (e) {
+      console.error('Failed to get invitations:', e)
+      return []
+    }
+  }
+
+  /**
+   * Cancel a pending invitation
+   */
+  async function cancelInvitation(invitationId: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      const result = await authClient.organization.cancelInvitation({
+        invitationId,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to cancel invitation')
+      }
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Failed to cancel invitation'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Accept an invitation (for the current user)
+   */
+  async function acceptInvitation(invitationId: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      const result = await authClient.organization.acceptInvitation({
+        invitationId,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to accept invitation')
+      }
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Failed to accept invitation'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Reject an invitation (for the current user)
+   */
+  async function rejectInvitation(invitationId: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      const result = await authClient.organization.rejectInvitation({
+        invitationId,
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Failed to reject invitation')
+      }
+    }
+    catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Failed to reject invitation'
+      throw e
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   return {
     // State
-    currentTeam: readonly(currentTeam),
-    teams: readonly(teams),
-    members: readonly(members),
+    currentTeam,
+    teams,
+    members,
+    currentRole,
     loading: readonly(loading),
     error: readonly(error),
 
@@ -232,14 +641,24 @@ export function useTeam() {
     isOwner,
     isAdmin,
 
-    // Methods
+    // Team methods
     switchTeam,
+    switchTeamBySlug,
     createTeam,
     updateTeam,
     deleteTeam,
+
+    // Member methods
+    loadMembers,
     inviteMember,
     removeMember,
     updateMemberRole,
     leaveTeam,
+
+    // Invitation methods
+    getPendingInvitations,
+    cancelInvitation,
+    acceptInvitation,
+    rejectInvitation,
   }
 }
