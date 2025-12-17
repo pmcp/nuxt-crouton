@@ -5,6 +5,9 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "create": "Créer",
+    "label": "Libellé",
+    "value": "Valeur",
+    "color": "Couleur",
     "update": "Mettre à jour",
     "add": "Ajouter",
     "remove": "Supprimer",
@@ -755,7 +758,12 @@
     "phoneNumber": "+33123456789",
     "verificationCode": "○",
     "enterNewTranslation": "Entrer une nouvelle traduction...",
-    "editTranslation": "Modifier la traduction..."
+    "editTranslation": "Modifier la traduction...",
+    "enterLabel": "Entrez le libellé",
+    "color": "Couleur",
+    "selectColor": "Sélectionner la couleur",
+    "exampleConfirmed": "ex., Confirmé",
+    "exampleValueConfirmed": "ex., confirmé"
   },
   "editor": {
     "savedSuccessfully": "Enregistré avec succès",

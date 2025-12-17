@@ -5,6 +5,9 @@
     "delete": "Verwijderen",
     "edit": "Bewerken",
     "create": "Aanmaken",
+    "label": "Label",
+    "value": "Waarde",
+    "color": "Kleur",
     "update": "Bijwerken",
     "add": "Toevoegen",
     "remove": "Verwijderen",
@@ -755,7 +758,12 @@
     "phoneNumber": "+31612345678",
     "verificationCode": "○",
     "enterNewTranslation": "Voer nieuwe vertaling in...",
-    "editTranslation": "Vertaling bewerken..."
+    "editTranslation": "Vertaling bewerken...",
+    "enterLabel": "Voer label in",
+    "color": "Kleur",
+    "selectColor": "Selecteer kleur",
+    "exampleConfirmed": "bijv., Bevestigd",
+    "exampleValueConfirmed": "bijv., bevestigd"
   },
   "editor": {
     "savedSuccessfully": "Succesvol opgeslagen",

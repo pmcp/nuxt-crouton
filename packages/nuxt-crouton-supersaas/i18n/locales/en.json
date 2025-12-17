@@ -5,6 +5,9 @@
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
+    "label": "Label",
+    "value": "Value",
+    "color": "Color",
     "update": "Update",
     "add": "Add",
     "remove": "Remove",
@@ -755,7 +758,12 @@
     "phoneNumber": "+1234567890",
     "verificationCode": "○",
     "enterNewTranslation": "Enter new translation...",
-    "editTranslation": "Edit translation..."
+    "editTranslation": "Edit translation...",
+    "enterLabel": "Enter label",
+    "color": "Color",
+    "selectColor": "Select color",
+    "exampleConfirmed": "e.g., Confirmed",
+    "exampleValueConfirmed": "e.g., confirmed"
   },
   "editor": {
     "savedSuccessfully": "Saved Successfully",
