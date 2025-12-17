@@ -22,16 +22,12 @@ export function useT() {
   // Don't destructure t - call i18n.t() directly to ensure it always uses current translations
   // Use computed to ensure locale stays reactive
   const locale = computed(() => i18n.locale.value)
-  const route = useRoute()
+  const { teamSlug } = useTeamContext()
   const isDev = process.dev
   const devModeEnabled = useState('devMode.enabled', () => false)
 
-  // Get team slug from route params directly (works even if useTeam().teams isn't populated)
-  // This is more reliable than useTeam().currentTeam.slug which depends on auth middleware
-  const teamSlugFromRoute = computed(() => {
-    const team = route.params.team
-    return typeof team === 'string' ? team : undefined
-  })
+  // Get team slug from useTeamContext() - handles both useTeam() and route.params.team fallback
+  const teamSlugFromRoute = computed(() => teamSlug.value ?? undefined)
 
 
   // Cache for team translations to avoid repeated API calls
@@ -107,14 +103,14 @@ export function useT() {
     let isTranslationMissing = false
 
     // Check team overrides first
-    const teamSlug = route.params.team as string | undefined
+    const currentTeamSlug = teamSlugFromRoute.value
     const teamOverride = teamTranslations.value?.[key]
 
     // Debug logging for bookings.status keys
     if (key.startsWith('bookings.status')) {
       console.log('[useT] translate called', {
         key,
-        teamSlug,
+        teamSlug: currentTeamSlug,
         teamOverride,
         teamTranslationsLoaded: teamTranslationsLoaded.value,
         teamTranslationsKeys: Object.keys(teamTranslations.value || {}).slice(0, 5)
@@ -157,7 +153,7 @@ export function useT() {
    */
   const getTranslationInfo = (key: string, options: TranslationOptions = {}) => {
     const { category = 'ui' } = options
-    const teamSlug = route.params.team as string | undefined
+    const currentTeamSlug = teamSlugFromRoute.value
     const teamOverride = teamTranslations.value?.[key]
     const systemValue = i18n.t(key)
     const isTranslationMissing = systemValue === key
@@ -165,7 +161,7 @@ export function useT() {
     return {
       key,
       value: translate(key, options),
-      mode: teamSlug ? 'team' : 'system',
+      mode: currentTeamSlug ? 'team' : 'system',
       category,
       isMissing: isTranslationMissing,
       hasTeamOverride: !!teamOverride

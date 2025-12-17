@@ -43,6 +43,8 @@ const emit = defineEmits<{
   uploaded: [assetId: string]
 }>()
 
+const { getTeamId } = useTeamContext()
+
 const selectedFile = ref<File | null>(null)
 const previewUrl = ref<string>()
 const uploading = ref(false)
@@ -82,7 +84,10 @@ const handleUpload = async () => {
     })
 
     // Step 2: Create asset record in database
-    const teamId = useRoute().params.team as string
+    const teamId = getTeamId()
+    if (!teamId) {
+      throw new Error('Team context not available')
+    }
     const asset = await $fetch(`/api/teams/${teamId}/${collectionName}`, {
       method: 'POST',
       body: {

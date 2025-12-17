@@ -13,7 +13,7 @@ export interface UploadAssetResult {
 }
 
 export const useAssetUpload = () => {
-  const route = useRoute()
+  const { getTeamId } = useTeamContext()
   const uploading = ref(false)
   const error = ref<Error | null>(null)
 
@@ -43,9 +43,9 @@ export const useAssetUpload = () => {
       })
 
       // Step 2: Create asset record in database
-      const teamId = route.params.team as string
+      const teamId = getTeamId()
       if (!teamId) {
-        throw new Error('Team ID not found in route')
+        throw new Error('Team context not available')
       }
 
       const asset = await $fetch<UploadAssetResult>(`/api/teams/${teamId}/${collection}`, {

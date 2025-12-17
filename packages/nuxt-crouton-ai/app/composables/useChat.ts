@@ -27,15 +27,15 @@ export function useChat(options: AIChatOptions = {}) {
   const config = useRuntimeConfig()
   const defaults = config.public.croutonAI as { defaultProvider: string; defaultModel: string }
 
-  // Try to get team context if @crouton/auth is available
+  // Try to get team context if nuxt-crouton is installed (provides useTeamContext)
   let teamId: string | undefined
   try {
-    // @ts-expect-error - useTeam may not be available
-    const { currentTeam } = useTeam()
-    teamId = currentTeam?.value?.id
+    // @ts-expect-error - useTeamContext may not be available if nuxt-crouton isn't installed
+    const { getTeamId } = useTeamContext()
+    teamId = getTeamId()
   }
   catch {
-    // @crouton/auth not installed, continue without team context
+    // nuxt-crouton not installed, continue without team context
   }
 
   // Initialize AI SDK chat
