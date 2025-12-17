@@ -214,7 +214,7 @@ npx nuxt typecheck
 | Claude Skill | `.claude/skills/crouton.md` | Field types, workflow, commands change |
 | MCP Server | `packages/crouton-mcp-server/` | CLI commands, field types change |
 | Auth Package | `packages/crouton-auth/CLAUDE.md` | If `#crouton/team-auth` connector interface changes |
-| External Docs | `/Users/pmcp/Projects/crouton-docs/content/` | Any user-facing change |
+| External Docs | `apps/docs/content/` | Any user-facing change |
 
 ### Step 1: Classify Your Change
 
@@ -273,9 +273,8 @@ If CLI commands, flags, or field types changed:
 For ANY user-facing change:
 
 ```bash
-# Search for references in external docs
-cd /Users/pmcp/Projects/crouton-docs/content
-grep -r "crouton" . --include="*.md" | head -20
+# Search for references in external docs (from monorepo root)
+grep -r "crouton" apps/docs/content --include="*.md" | head -20
 ```
 
 - [ ] Update affected documentation pages

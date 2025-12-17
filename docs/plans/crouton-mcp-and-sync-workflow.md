@@ -43,7 +43,7 @@ When the generator changes, multiple artifacts may need updates:
 | Generator README.md | `packages/nuxt-crouton-collection-generator/README.md` | User-facing features change |
 | Claude Skill | `.claude/skills/crouton.md` | Field types, workflow, examples change |
 | MCP Server | `packages/crouton-mcp-server/` (new) | Tools, schemas, field types change |
-| External Docs | `/Users/pmcp/Projects/crouton-docs/content/` | Any user-facing change |
+| External Docs | `apps/docs/content/` | Any user-facing change |
 | Root CLAUDE.md | `CLAUDE.md` | Rarely - major workflow changes |
 
 ### The Sync Matrix
@@ -121,7 +121,7 @@ If CLI commands, flags, or field types changed:
 
 ### Step 5: Update External Documentation
 For ANY user-facing change:
-- [ ] Search `/Users/pmcp/Projects/crouton-docs/content/` for affected references
+- [ ] Search `apps/docs/content/` for affected references
 - [ ] Update relevant documentation pages
 - [ ] Update code examples if affected
 

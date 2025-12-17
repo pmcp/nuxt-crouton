@@ -1,62 +1,90 @@
-# Nuxt Docs Template
+# Nuxt Crouton Documentation
 
 [![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
 
-Use this template to build your own documentation with [Nuxt UI](https://ui.nuxt.com) quickly.
+Documentation site for [Nuxt Crouton](https://github.com/pmcp/nuxt-crouton) - a code generator and composable library for building CRUD applications in Nuxt 4.
 
-- [Live demo](https://docs-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation)
+**Live Site**: https://nuxt-crouton.dev/
 
-<a href="https://docs-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/docs-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/docs-light.png">
-    <img alt="Nuxt Docs Template" src="https://ui.nuxt.com/assets/templates/nuxt/docs-light.png">
-  </picture>
-</a>
+## About Nuxt Crouton
 
-## Quick Start
+Nuxt Crouton generates working CRUD interfaces (forms, lists, tables, types, composables) in 30 seconds. It follows the philosophy: **Generate → Customize → Own**.
 
-```bash [Terminal]
-npm create nuxt@latest -- -t github:nuxt-ui-templates/docs
-```
+Key features:
+- Generate 80% of CRUD code in 30 seconds
+- Full TypeScript support with Zod validation
+- Smart caching built on useFetch
+- Optional i18n and team-based auth
+- Domain-driven architecture with Nuxt Layers
 
-## Deploy your own
+## Monorepo Location
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=docs&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fdocs&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fdocs-dark.png&demo-url=https%3A%2F%2Fdocs-template.nuxt.dev%2F&demo-title=Nuxt%20Docs%20Template&demo-description=A%20documentation%20template%20powered%20by%20Nuxt%20Content.)
+This documentation app is located at `apps/docs/` within the nuxt-crouton monorepo.
 
-## Setup
+Related packages:
+- `packages/nuxt-crouton` - Core composables and components
+- `packages/nuxt-crouton-collection-generator` - CLI code generator
+- `packages/nuxt-crouton-i18n` - Internationalization support
+- `packages/nuxt-crouton-editor` - Rich text editor
+- `packages/crouton-mcp-server` - MCP server for AI-assisted generation
 
-Make sure to install the dependencies:
+## Development
 
 ```bash
+# Install dependencies (from monorepo root)
 pnpm install
-```
 
-## Development Server
+# Start development server
+pnpm --filter @crouton/docs dev
 
-Start the development server on `http://localhost:3000`:
-
-```bash
+# Or from this directory
 pnpm dev
 ```
 
+Development server runs on `http://localhost:3000`.
+
 ## Production
 
-Build the application for production:
-
 ```bash
+# Build for production
 pnpm build
-```
 
-Locally preview production build:
-
-```bash
+# Preview production build
 pnpm preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Content Structure
 
-## Renovate integration
+Documentation content lives in `content/`:
 
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+```
+content/
+├── 1.getting-started/    # Installation & basic usage
+├── 2.fundamentals/       # Core concepts
+├── 3.generation/         # CLI commands & schema format
+├── 4.patterns/           # Relations, forms, tables
+├── 5.customization/      # Custom fields, components
+├── 6.features/           # i18n, assets, maps, etc.
+├── 7.advanced/           # Performance, auth, bulk ops
+├── 8.api-reference/      # Composables, components, types
+├── 9.reference/          # Conventions, FAQ, glossary
+└── 10.guides/            # Troubleshooting, migration
+```
+
+## AI Features
+
+This documentation site includes AI-friendly features:
+
+- **nuxt-llms module** - Generates `/llms.txt` and `/llms-full.txt` endpoints
+- **public/llms.txt** - Static LLM-friendly documentation index
+- **.claude/README.md** - Project briefing for AI assistants
+
+## Deployment
+
+Deployed to Cloudflare Pages. See `wrangler.toml` for configuration.
+
+## Related Links
+
+- [Nuxt Crouton GitHub](https://github.com/pmcp/nuxt-crouton)
+- [SuperSaaS](https://supersaas.dev/) - Starter template Crouton is designed for
+- [Nuxt UI](https://ui.nuxt.com) - Component library used

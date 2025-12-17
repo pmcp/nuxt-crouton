@@ -2,7 +2,7 @@
 
 > Generate working CRUD applications in 30 seconds. Built for Nuxt 4 developers who want to ship fast, maintain clean code, and own what they build.
 
-Documentation site: https://crouton-docs.vercel.app/
+Documentation site: https://nuxt-crouton.dev/
 
 Nuxt Crouton is a code generator and composable library that generates working CRUD interfaces including list views, forms, TypeScript types, and composables with validation. It follows the philosophy: Generate → Customize → Own.
 
