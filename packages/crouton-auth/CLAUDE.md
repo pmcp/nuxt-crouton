@@ -231,11 +231,63 @@ Collections automatically use `#crouton/team-auth` when generated. Ensure:
    export * from '@crouton/auth/server/database/schema/auth'
    ```
 
+## Rate Limiting (Recommended)
+
+Authentication endpoints are prime targets for abuse. We recommend using `nuxthub-ratelimit` for rate limiting.
+
+### Installation
+
+```bash
+pnpm add nuxthub-ratelimit
+```
+
+### Configuration
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['@crouton/auth', 'nuxthub-ratelimit'],
+
+  rateLimit: {
+    routes: {
+      // Strict limits for auth endpoints
+      '/api/auth/*': {
+        maxRequests: 15,
+        intervalSeconds: 60
+      },
+      // More lenient for general API
+      '/api/*': {
+        maxRequests: 150,
+        intervalSeconds: 60
+      }
+    }
+  }
+})
+```
+
+### Recommended Limits by Endpoint
+
+| Endpoint Pattern | Max Requests | Interval | Reason |
+|-----------------|--------------|----------|--------|
+| `/api/auth/sign-in/*` | 10 | 60s | Prevent brute force |
+| `/api/auth/sign-up/*` | 5 | 60s | Prevent account spam |
+| `/api/auth/forgot-password` | 3 | 60s | Prevent email abuse |
+| `/api/auth/verify-email` | 5 | 60s | Prevent verification spam |
+| `/api/auth/*` | 15 | 60s | General auth fallback |
+| `/api/*` | 150 | 60s | General API |
+
+### Requirements
+
+- Requires NuxtHub with KV enabled
+- Minimum TTL is 60 seconds (NuxtHub KV limitation)
+- See [nuxthub-ratelimit docs](https://github.com/fayazara/nuxthub-ratelimit)
+
 ## Dependencies
 
 - **Extends**: None (standalone module/layer)
 - **Works with**: `@friendlyinternet/nuxt-crouton` (via connector)
 - **Core deps**: better-auth, @better-auth/stripe, @better-auth/passkey, stripe
+- **Recommended**: nuxthub-ratelimit (optional peer dependency for rate limiting)
 
 ## Testing
 

@@ -81,10 +81,14 @@
   },
   "peerDependencies": {
     "@nuxt/ui": "^3.0.0-alpha.0",
-    "nuxt": "^3.14.0 || ^4.0.0"
+    "nuxt": "^3.14.0 || ^4.0.0",
+    "nuxthub-ratelimit": "^0.1.0"
   },
   "peerDependenciesMeta": {
     "@nuxt/ui": {
+      "optional": true
+    },
+    "nuxthub-ratelimit": {
       "optional": true
     }
   },

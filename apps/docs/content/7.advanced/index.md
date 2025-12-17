@@ -26,4 +26,8 @@ This section covers advanced patterns and techniques for more complex use cases 
   ::card{title="Optimistic Updates" to="/advanced/optimistic-updates" icon="i-heroicons-bolt"}
   Update the UI immediately while mutations are in progress for a snappier experience.
   ::
+
+  ::card{title="Rate Limiting" to="/advanced/rate-limiting" icon="i-heroicons-shield-check"}
+  Protect authentication endpoints from abuse with configurable rate limits.
+  ::
 ::
