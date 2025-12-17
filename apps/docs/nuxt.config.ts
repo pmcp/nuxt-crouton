@@ -22,20 +22,21 @@ export default defineNuxtConfig({
           searchDepth: 1
         }
       }
+    },
+    database: {
+      type: 'sqlite'
     }
   },
 
   compatibilityDate: '2024-07-11',
 
   nitro: {
-    preset: 'cloudflare_pages',
-    prerender: {
-      routes: [
-        '/'
-      ],
-      crawlLinks: true,
-      autoSubfolderIndex: false
-    }
+    preset: 'cloudflare_pages'
+  },
+
+  routeRules: {
+    '/llms.txt': { prerender: false },
+    '/llms-full.txt': { prerender: false }
   },
 
   eslint: {
