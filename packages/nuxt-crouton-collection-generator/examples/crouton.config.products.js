@@ -33,7 +33,8 @@ export default {
     noDb: false,
     useMetadata: true,
     autoRelations: false,
-    dryRun: false,
-    useTeamUtility: false
+    dryRun: false
+    // NOTE: Team fields (teamId, owner) are always included
+    // All generated endpoints use @crouton/auth for team-based authentication
   }
 }

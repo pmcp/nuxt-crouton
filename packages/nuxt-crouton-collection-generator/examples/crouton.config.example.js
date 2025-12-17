@@ -159,21 +159,9 @@ export default {
     // AUTO-GENERATED FIELDS
     // --------------------------------------------------------
 
-    /**
-     * useTeamUtility: Enable team-based multi-tenancy
-     *
-     * When true, automatically adds to ALL collections:
-     * - teamId (required, text) - Team/organization reference
-     * - userId (required, text) - User who created the record
-     *
-     * Also generates simplified API endpoints with team-based auth.
-     *
-     * WARNING: Do NOT define teamId or userId in your schema JSON
-     * when this is true - they're auto-generated.
-     *
-     * @default false
-     */
-    useTeamUtility: false,
+    // NOTE: Team fields (teamId, owner) are now ALWAYS included.
+    // All generated endpoints use @crouton/auth for team-based authentication.
+    // Do NOT define teamId or owner in your schema JSON - they're auto-generated.
 
     /**
      * useMetadata: Add timestamp and audit fields

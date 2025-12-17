@@ -1,0 +1,35 @@
+{
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Product Name",
+      "maxLength": 200,
+      "area": "main"
+    }
+  },
+  "description": {
+    "type": "text",
+    "meta": {
+      "label": "Description",
+      "area": "main"
+    }
+  },
+  "price": {
+    "type": "decimal",
+    "meta": {
+      "required": true,
+      "label": "Price",
+      "default": 0,
+      "area": "sidebar"
+    }
+  },
+  "inStock": {
+    "type": "boolean",
+    "meta": {
+      "default": true,
+      "label": "In Stock",
+      "area": "sidebar"
+    }
+  }
+}

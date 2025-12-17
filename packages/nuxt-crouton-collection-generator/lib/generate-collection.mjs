@@ -39,17 +39,10 @@ import {
   generateMoveEndpoint,
   generateReorderEndpoint
 } from './generators/api-endpoints.mjs'
-import {
-  generateGetEndpointSimplified,
-  generatePostEndpointSimplified,
-  generatePatchEndpointSimplified,
-  generateDeleteEndpointSimplified
-} from './generators/api-endpoints-simplified.mjs'
 import { generateQueries } from './generators/database-queries.mjs'
 import { generateSchema } from './generators/database-schema.mjs'
 import { generateTypes } from './generators/types.mjs'
 import { generateNuxtConfig } from './generators/nuxt-config.mjs'
-import { generateTeamAuthUtility, getTeamAuthUtilityPath } from './generators/team-auth-utility.mjs'
 import { generateRepeaterItemComponent } from './generators/repeater-item-component.mjs'
 import { generateFieldComponents } from './generators/field-components.mjs'
 
@@ -84,15 +77,14 @@ function parseArgs() {
   const noDb = a.includes('--no-db')
   const force = a.includes('--force')
   const noTranslations = a.includes('--no-translations')
-  const useTeamUtility = a.includes('--use-team-utility')
   const hierarchy = a.includes('--hierarchy')
 
   if (!layer || !collection) {
-    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--use-team-utility] [--hierarchy]')
+    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--hierarchy]')
     process.exit(1)
   }
 
-  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, useTeamUtility, hierarchy }
+  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, hierarchy }
 }
 
 async function loadFields(p) {
@@ -784,7 +776,7 @@ async function addI18nConfigToLayer(configPath, config) {
   return config
 }
 
-async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, useTeamUtility = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false }) {
+async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false }) {
   const cases = toCase(collection)
   const base = path.resolve('layers', layer, 'collections', cases.plural)
 
@@ -1096,12 +1088,7 @@ ${translationsFieldSchema}
   console.log('✓ Directory structure created')
   
   // Generate all files using modules
-  // Use simplified endpoints if team utility flag is set
-  const getEndpointGen = useTeamUtility ? generateGetEndpointSimplified : generateGetEndpoint
-  const postEndpointGen = useTeamUtility ? generatePostEndpointSimplified : generatePostEndpoint
-  const patchEndpointGen = useTeamUtility ? generatePatchEndpointSimplified : generatePatchEndpoint
-  const deleteEndpointGen = useTeamUtility ? generateDeleteEndpointSimplified : generateDeleteEndpoint
-
+  // All endpoints now use @crouton/auth for team-based authentication
   const files = [
     {
       path: path.join(base, 'app', 'components', 'Form.vue'),
@@ -1117,19 +1104,19 @@ ${translationsFieldSchema}
     },
     {
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, 'index.get.ts'),
-      content: getEndpointGen(data, config)
+      content: generateGetEndpoint(data, config)
     },
     {
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, 'index.post.ts'),
-      content: postEndpointGen(data, config)
+      content: generatePostEndpoint(data, config)
     },
     {
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id].patch.ts`),
-      content: patchEndpointGen(data, config)
+      content: generatePatchEndpoint(data, config)
     },
     {
       path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id].delete.ts`),
-      content: deleteEndpointGen(data, config)
+      content: generateDeleteEndpoint(data, config)
     },
     {
       path: path.join(base, 'server', 'database', 'queries.ts'),
@@ -1617,7 +1604,6 @@ async function main() {
               noDb: true, // Skip individual db:generate
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
-              useTeamUtility: config.flags?.useTeamUtility || false,
               config: config,
               collectionConfig: collectionConfig // Pass individual collection config for hierarchy detection
             })
@@ -1727,7 +1713,6 @@ async function main() {
               noDb: true, // Skip individual db:generate
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
-              useTeamUtility: config.flags?.useTeamUtility || false,
               config: config
             })
 

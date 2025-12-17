@@ -42,13 +42,13 @@ export function generateTypes(data, config = null) {
   const composablePath = `./app/composables/use${prefixedPascalCasePlural}`
 
   // Conditional field generation based on config flags
-  const useTeamUtility = config?.flags?.useTeamUtility ?? false
+  // Team fields are always required (all generated endpoints use @crouton/auth)
   const useMetadata = config?.flags?.useMetadata ?? true
 
-  // Build team fields conditionally
-  const teamFields = useTeamUtility ? `  teamId: string
+  // Team fields are always included (required for @crouton/auth)
+  const teamFields = `  teamId: string
   owner: string
-` : ''
+`
 
   // Build metadata fields conditionally
   const metadataFields = useMetadata ? `  createdAt: Date

@@ -236,20 +236,18 @@ function detectReferenceFields(data, config) {
     })
   }
 
-  // Add standard team/metadata user references if enabled
+  // Add standard team/metadata user references
   // These are always single references
-  const useTeamUtility = config?.flags?.useTeamUtility ?? false
+  // Team fields are always required (all generated endpoints use @crouton/auth)
   const useMetadata = config?.flags?.useMetadata ?? true
 
-  if (useTeamUtility) {
-    // owner is the team-based user reference
-    singleReferences.push({
-      fieldName: 'owner',
-      targetCollection: 'users',
-      isExternal: true,
-      isUserReference: true
-    })
-  }
+  // owner is always included (required for @crouton/auth)
+  singleReferences.push({
+    fieldName: 'owner',
+    targetCollection: 'users',
+    isExternal: true,
+    isUserReference: true
+  })
 
   if (useMetadata) {
     singleReferences.push({

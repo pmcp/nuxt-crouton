@@ -92,19 +92,22 @@ export async function detectRequiredDependencies(config) {
   const baseLayerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton')
   const baseLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton')
 
-  // Special check for useTeamUtility flag - requires base package for #crouton/team-auth
-  const useTeamUtility = config?.flags?.useTeamUtility ?? false
-  if (useTeamUtility && (!baseLayerInstalled || !baseLayerExtended)) {
-    // Team utility REQUIRES the npm package (local layer doesn't have the alias)
+  // Check for @crouton/auth package (required for team-based authentication)
+  const authPackageInstalled = await isPackageInstalled('@crouton/auth')
+
+  if (!authPackageInstalled) {
+    // @crouton/auth is required for all generated endpoints
     required.missing.push({
-      type: 'layer',
-      name: '@friendlyinternet/nuxt-crouton',
-      reason: 'REQUIRED for team-based multi-tenancy (provides #crouton/team-auth module)',
-      installCmd: 'pnpm add @friendlyinternet/nuxt-crouton',
-      configCmd: `Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts`,
+      type: 'package',
+      name: '@crouton/auth',
+      reason: 'Required for team-based authentication in generated endpoints',
+      installCmd: 'pnpm add @crouton/auth',
+      configCmd: `No nuxt.config.ts changes needed - package is auto-imported`,
       critical: true
     })
-  } else if (baseLayerInstalled && !baseLayerExtended) {
+  }
+
+  if (baseLayerInstalled && !baseLayerExtended) {
     // Package installed but not added to nuxt.config.ts extends[]
     required.missing.push({
       type: 'layer',

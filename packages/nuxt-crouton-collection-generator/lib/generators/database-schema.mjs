@@ -49,14 +49,14 @@ export function generateSchema(data, dialect, config = null) {
   const SORTABLE_FIELDS = (sortable && !hierarchy?.enabled) ? ['order'] : []
 
   // Conditional field generation based on config flags
-  const useTeamUtility = config?.flags?.useTeamUtility ?? false
+  // Team fields are always required (all generated endpoints use @crouton/auth)
   const useMetadata = config?.flags?.useMetadata ?? true
 
   // Build list of reserved fields to filter out based on config
   const reservedFields = [
     'id',
     ...(useMetadata ? METADATA_FIELDS : []),
-    ...(useTeamUtility ? TEAM_FIELDS : []),
+    ...TEAM_FIELDS, // Always included - required for @crouton/auth
     ...HIERARCHY_FIELDS,
     ...SORTABLE_FIELDS
   ]
@@ -153,10 +153,10 @@ const jsonColumn = customType<any>({
     snakeCaseTableName = toSnakeCase(`${layer}_${plural}`)
   }
 
-  // Build team fields conditionally
-  const teamFields = useTeamUtility ? `
+  // Team fields are always included (required for @crouton/auth)
+  const teamFields = `
   teamId: text('teamId').notNull(),
-  owner: text('owner').notNull()` : ''
+  owner: text('owner').notNull()`
 
   // Build hierarchy fields conditionally (parentId, path, depth, order)
   let hierarchyFields = ''

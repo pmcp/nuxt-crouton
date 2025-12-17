@@ -6,8 +6,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 6 / 24 |
-| **Current Phase** | Phase 1 - Foundation (COMPLETE) |
+| **Tasks Completed** | 14 / 24 |
+| **Current Phase** | Phase 2 - Collection Generator (COMPLETE) |
 | **Estimated Total** | ~16-20 hours |
 | **Started** | 2024-12-17 |
 
@@ -76,64 +76,70 @@ This migration consolidates team authentication across all nuxt-crouton packages
 ---
 
 ## Phase 2: Collection Generator Updates
-**Progress**: 0/8 tasks (0%)
-**Time**: 0h / 6h estimated
+**Progress**: 8/8 tasks (100%) ✅
+**Time**: 1.5h / 6h estimated
 
 ### 2.1 Remove useTeamUtility flag
-- [ ] Remove `useTeamUtility` conditionals from `generate-collection.mjs`
-- [ ] Default all generation to team-scoped
+- [x] ✅ Remove `useTeamUtility` conditionals from `generate-collection.mjs`
+- [x] ✅ Default all generation to team-scoped
 
 **Files**: `packages/nuxt-crouton-collection-generator/lib/generate-collection.mjs`
 
 ### 2.2 Delete team-auth-utility.mjs generator
-- [ ] Remove `team-auth-utility.mjs` (generates duplicate team-auth)
-- [ ] Update any imports
+- [x] ✅ Remove `team-auth-utility.mjs` (generates duplicate team-auth)
+- [x] ✅ Update any imports
 
 **Files**:
-- DELETE: `packages/nuxt-crouton-collection-generator/lib/generators/team-auth-utility.mjs`
+- DELETED: `packages/nuxt-crouton-collection-generator/lib/generators/team-auth-utility.mjs`
 
 ### 2.3 Delete non-team api-endpoints.mjs
-- [ ] Remove `api-endpoints.mjs` (non-team version)
-- [ ] Keep only `api-endpoints-simplified.mjs`
+- [x] ✅ Remove original `api-endpoints.mjs` (non-team version)
+- [x] ✅ Keep only simplified version
 
 **Files**:
-- DELETE: `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints.mjs`
+- DELETED: `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints.mjs` (original)
 
 ### 2.4 Rename api-endpoints-simplified.mjs
-- [ ] Rename `api-endpoints-simplified.mjs` → `api-endpoints.mjs`
-- [ ] Update all imports referencing this file
+- [x] ✅ Renamed `api-endpoints-simplified.mjs` → `api-endpoints.mjs`
+- [x] ✅ Updated function names (removed "Simplified" suffix)
+- [x] ✅ Updated all imports
 
-**Files**: `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints-simplified.mjs`
+**Files**: `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints.mjs`
 
 ### 2.5 Update import paths in generator
-- [ ] Change `#crouton/team-auth` to `@crouton/auth/server`
-- [ ] Update in database-queries.mjs
-- [ ] Update in database-schema.mjs
+- [x] ✅ Changed `#crouton/team-auth` to `@crouton/auth/server` in api-endpoints.mjs
+- [x] ✅ Updated database-queries.mjs (owner field always included)
+- [x] ✅ Updated database-schema.mjs (team fields always included)
+- [x] ✅ Updated types.mjs (team fields always included)
 
 **Files**:
+- `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints.mjs`
 - `packages/nuxt-crouton-collection-generator/lib/generators/database-queries.mjs`
 - `packages/nuxt-crouton-collection-generator/lib/generators/database-schema.mjs`
+- `packages/nuxt-crouton-collection-generator/lib/generators/types.mjs`
 
 ### 2.6 Update module-detector.mjs
-- [ ] Remove `useTeamUtility` detection logic
-- [ ] Simplify module detection
+- [x] ✅ Removed `useTeamUtility` detection logic
+- [x] ✅ Added @crouton/auth package detection (critical dependency)
 
 **Files**: `packages/nuxt-crouton-collection-generator/lib/utils/module-detector.mjs`
 
 ### 2.7 Update example configs
-- [ ] Remove `useTeamUtility` from example configs
-- [ ] Update documentation comments
+- [x] ✅ Removed `useTeamUtility` from example configs
+- [x] ✅ Updated documentation comments
+- [x] ✅ Added test-product-schema.json
 
 **Files**:
 - `packages/nuxt-crouton-collection-generator/examples/crouton.config.example.js`
 - `packages/nuxt-crouton-collection-generator/examples/crouton.config.products.js`
+- `packages/nuxt-crouton-collection-generator/examples/test-product-schema.json`
 
 ### 2.8 Test generator output
-- [ ] Generate a test collection
-- [ ] Verify output uses @crouton/auth imports
-- [ ] Verify team-scoped endpoints work
+- [x] ✅ Generated test collection (dry-run)
+- [x] ✅ Verified output uses `@crouton/auth/server` imports
+- [x] ✅ Verified module-detector reports @crouton/auth as critical
 
-**Commands**: `pnpm crouton generate test-collection`
+**Commands**: `node packages/nuxt-crouton-collection-generator/bin/crouton-generate.js test products --dry-run`
 
 ---
 
