@@ -1,0 +1,41 @@
+{
+  "name": "@friendlyinternet/crouton-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for AI-powered Crouton collection generation",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "crouton-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "crouton",
+    "nuxt",
+    "ai",
+    "code-generation"
+  ],
+  "author": "friendlyinternet",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@friendlyinternet/nuxt-crouton-collection-generator": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
