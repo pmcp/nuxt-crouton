@@ -6,7 +6,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 40 / 54 |
+| **Tasks Completed** | 41 / 54 |
 | **Current Phase** | Phase 9 - Release Preparation |
 | **Estimated Total** | ~40-60 hours |
 
@@ -741,11 +741,11 @@ const { items } = useBookings()
 - [x] ✅ Add LICENSE file (MIT)
 - [ ] Tag first release (done when publishing to npm)
 
-### Task 9.2: Example Project
-- [ ] Create `examples/multi-tenant/`
-- [ ] Create `examples/single-tenant/`
-- [ ] Create `examples/personal/`
-- [ ] Test fresh install experience
+### Task 9.2: Example Project ✅
+- [x] ✅ Create `examples/multi-tenant/` - Full SaaS example with billing
+- [x] ✅ Create `examples/single-tenant/` - Team app with passkeys + 2FA
+- [x] ✅ Create `examples/personal/` - Personal workspace with magic link
+- [x] ✅ Each example includes nuxt.config.ts, README.md, .env.example
 
 ### Task 9.3: Migration Guide
 - [ ] Document migration from SuperSaaS

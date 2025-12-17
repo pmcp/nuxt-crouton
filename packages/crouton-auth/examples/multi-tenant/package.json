@@ -1,0 +1,16 @@
+{
+  "name": "crouton-auth-example-multi-tenant",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "preview": "nuxi preview"
+  },
+  "dependencies": {
+    "@crouton/auth": "workspace:*"
+  },
+  "devDependencies": {
+    "nuxt": "^3.14.0"
+  }
+}
