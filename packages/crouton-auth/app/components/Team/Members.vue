@@ -26,6 +26,7 @@ const emit = defineEmits<{
   invite: []
 }>()
 
+const { t } = useT()
 const {
   currentTeam,
   members,
@@ -121,9 +122,9 @@ const sortedMembers = computed(() => {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold">Team Members</h3>
+        <h3 class="text-lg font-semibold">{{ t('teams.teamMembers') }}</h3>
         <p class="text-sm text-muted mt-1">
-          {{ members.length }} member{{ members.length === 1 ? '' : 's' }}
+          {{ t('teams.memberCount', { count: members.length }) }}
         </p>
       </div>
       <UButton
@@ -131,7 +132,7 @@ const sortedMembers = computed(() => {
         icon="i-lucide-user-plus"
         @click="emit('invite')"
       >
-        Invite
+        {{ t('teams.invite') }}
       </UButton>
     </div>
 
@@ -141,7 +142,7 @@ const sortedMembers = computed(() => {
       class="py-8 text-center text-muted"
     >
       <UIcon name="i-lucide-loader-2" class="size-6 animate-spin mx-auto mb-2" />
-      <p>Loading members...</p>
+      <p>{{ t('teams.loadingMembers') }}</p>
     </div>
 
     <!-- Empty State -->
@@ -150,7 +151,7 @@ const sortedMembers = computed(() => {
       class="py-8 text-center text-muted"
     >
       <UIcon name="i-lucide-users" class="size-8 mx-auto mb-2" />
-      <p>No members found</p>
+      <p>{{ t('teams.noMembersFound') }}</p>
     </div>
 
     <!-- Members List -->

@@ -39,6 +39,7 @@ const emit = defineEmits<{
   navigate: [item: NavigationMenuItem]
 }>()
 
+const { t } = useT()
 const { buildDashboardUrl } = useTeamContext()
 const { showTeamManagement } = useTeam()
 
@@ -49,7 +50,7 @@ const defaultNavItems = computed<NavigationMenuItem[][]>(() => {
 
   const mainItems: NavigationMenuItem[] = [
     {
-      label: 'Dashboard',
+      label: t('navigation.dashboard'),
       icon: 'i-lucide-layout-dashboard',
       to: baseUrl || '/dashboard',
       active: route.path === baseUrl || route.path === '/dashboard',
@@ -58,29 +59,29 @@ const defaultNavItems = computed<NavigationMenuItem[][]>(() => {
 
   const settingsItems: NavigationMenuItem[] = [
     {
-      label: 'Settings',
+      label: t('navigation.settings'),
       icon: 'i-lucide-settings',
       defaultOpen: route.path.includes('/settings'),
       children: [
         {
-          label: 'Account',
+          label: t('navigation.account'),
           icon: 'i-lucide-user',
           to: `${baseUrl}/settings`,
         },
         {
-          label: 'Security',
+          label: t('account.security'),
           icon: 'i-lucide-shield',
           to: `${baseUrl}/settings/security`,
         },
         ...(showTeamManagement.value
           ? [
               {
-                label: 'Team',
+                label: t('teams.team'),
                 icon: 'i-lucide-building-2',
                 to: `${baseUrl}/settings/team`,
               },
               {
-                label: 'Members',
+                label: t('teams.members'),
                 icon: 'i-lucide-users',
                 to: `${baseUrl}/settings/members`,
               },

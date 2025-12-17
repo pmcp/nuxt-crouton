@@ -24,6 +24,7 @@ const emit = defineEmits<{
   deleted: []
 }>()
 
+const { t } = useT()
 const { user, logout } = useAuth()
 const toast = useToast()
 
@@ -99,9 +100,9 @@ watch(showModal, (open) => {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold text-error">Delete Account</h3>
+      <h3 class="text-lg font-semibold text-error">{{ t('account.deleteAccount') }}</h3>
       <p class="text-sm text-muted mt-1">
-        Permanently delete your account and all associated data.
+        {{ t('account.deleteAccountDescription') }}
       </p>
     </div>
 
@@ -110,14 +111,14 @@ watch(showModal, (open) => {
       variant="soft"
       icon="i-lucide-alert-triangle"
     >
-      <template #title>This action cannot be undone</template>
+      <template #title>{{ t('confirmation.cannotUndo') }}</template>
       <template #description>
-        <p>Deleting your account will:</p>
+        <p>{{ t('account.deleteAccountWillPrefix') }}</p>
         <ul class="list-disc list-inside mt-2 space-y-1">
-          <li>Permanently remove all your personal data</li>
-          <li>Cancel any active subscriptions</li>
-          <li>Remove you from all teams</li>
-          <li>Delete any content you've created</li>
+          <li>{{ t('account.deleteWillRemoveData') }}</li>
+          <li>{{ t('account.deleteWillCancelSubscriptions') }}</li>
+          <li>{{ t('account.deleteWillRemoveFromTeams') }}</li>
+          <li>{{ t('account.deleteWillDeleteContent') }}</li>
         </ul>
       </template>
     </UAlert>
@@ -128,7 +129,7 @@ watch(showModal, (open) => {
       icon="i-lucide-trash-2"
       @click="showModal = true"
     >
-      Delete my account
+      {{ t('account.deleteMyAccount') }}
     </UButton>
 
     <!-- Delete Confirmation Modal -->
@@ -143,9 +144,9 @@ watch(showModal, (open) => {
               />
             </div>
             <div>
-              <h3 class="text-lg font-semibold">Delete Account</h3>
+              <h3 class="text-lg font-semibold">{{ t('account.deleteAccount') }}</h3>
               <p class="text-sm text-muted">
-                This action is permanent and cannot be undone.
+                {{ t('account.deleteAccountPermanent') }}
               </p>
             </div>
           </div>
@@ -156,7 +157,7 @@ watch(showModal, (open) => {
             icon="i-lucide-alert-circle"
           >
             <template #description>
-              <p>You are about to permanently delete your account:</p>
+              <p>{{ t('account.aboutToDeleteAccount') }}</p>
               <p class="font-semibold mt-1">{{ user?.email }}</p>
             </template>
           </UAlert>
@@ -164,12 +165,12 @@ watch(showModal, (open) => {
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium mb-2">
-                Enter your password:
+                {{ t('account.enterYourPasswordLabel') }}
               </label>
               <UInput
                 v-model="password"
                 type="password"
-                placeholder="Your password"
+                :placeholder="t('auth.password')"
                 icon="i-lucide-lock"
                 :disabled="isLoading"
               />
@@ -177,7 +178,7 @@ watch(showModal, (open) => {
 
             <div>
               <label class="block text-sm font-medium mb-2">
-                Type <strong class="font-mono text-error">{{ confirmationRequired }}</strong> to confirm:
+                {{ t('account.typeToConfirmPrefix') }} <strong class="font-mono text-error">{{ confirmationRequired }}</strong> {{ t('account.typeToConfirmSuffix') }}
               </label>
               <UInput
                 v-model="confirmText"
@@ -194,7 +195,7 @@ watch(showModal, (open) => {
               :disabled="isLoading"
               @click="showModal = false"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton
               color="error"
@@ -203,7 +204,7 @@ watch(showModal, (open) => {
               icon="i-lucide-trash-2"
               @click="handleDelete"
             >
-              Delete account
+              {{ t('account.deleteAccount') }}
             </UButton>
           </div>
         </div>

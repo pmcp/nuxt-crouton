@@ -19,6 +19,7 @@ interface Props {
 
 defineProps<Props>()
 
+const { t } = useT()
 const {
   currentTeam,
   teams,
@@ -60,7 +61,7 @@ const dropdownItems = computed(() => {
   if (canCreateTeam.value) {
     items.push([
       {
-        label: 'Create team',
+        label: t('teams.createTeam'),
         icon: 'i-lucide-plus',
         click: () => { showCreateModal.value = true },
       },
@@ -124,7 +125,7 @@ const dropdownItems = computed(() => {
             class="size-4"
           />
         </template>
-        <span class="truncate">{{ currentTeam?.name || 'Select team' }}</span>
+        <span class="truncate">{{ currentTeam?.name || t('teams.selectTeam') }}</span>
       </UButton>
     </UDropdownMenu>
 
@@ -134,7 +135,7 @@ const dropdownItems = computed(() => {
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold">Create Team</h3>
+              <h3 class="text-lg font-semibold">{{ t('teams.createTeam') }}</h3>
               <UButton
                 icon="i-lucide-x"
                 variant="ghost"

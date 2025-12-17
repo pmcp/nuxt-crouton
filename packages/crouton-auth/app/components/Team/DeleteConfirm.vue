@@ -31,6 +31,7 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
+const { t } = useT()
 const { currentTeam, deleteTeam, isOwner, teams } = useTeam()
 const toast = useToast()
 
@@ -117,9 +118,9 @@ watch(
             />
           </div>
           <div>
-            <h3 class="text-lg font-semibold">Delete Team</h3>
+            <h3 class="text-lg font-semibold">{{ t('teams.deleteTeam') }}</h3>
             <p class="text-sm text-muted">
-              This action cannot be undone.
+              {{ t('confirmation.cannotUndo') }}
             </p>
           </div>
         </div>
@@ -129,21 +130,21 @@ watch(
           variant="soft"
           icon="i-lucide-alert-circle"
         >
-          <template #title>Warning</template>
+          <template #title>{{ t('teams.warning') }}</template>
           <template #description>
-            <p>Deleting this team will:</p>
+            <p>{{ t('teams.deleteTeamWillPrefix') }}</p>
             <ul class="list-disc list-inside mt-2 space-y-1">
-              <li>Remove all team members</li>
-              <li>Cancel all pending invitations</li>
-              <li>Delete all team data and settings</li>
-              <li>This action is permanent and cannot be reversed</li>
+              <li>{{ t('teams.deleteWillRemoveMembers') }}</li>
+              <li>{{ t('teams.deleteWillCancelInvitations') }}</li>
+              <li>{{ t('teams.deleteWillDeleteData') }}</li>
+              <li>{{ t('teams.deleteIsPermanent') }}</li>
             </ul>
           </template>
         </UAlert>
 
         <div>
           <label class="block text-sm font-medium mb-2">
-            Type <strong class="font-mono">{{ currentTeam?.name }}</strong> to confirm:
+            {{ t('teams.typeToConfirmPrefix') }} <strong class="font-mono">{{ currentTeam?.name }}</strong> {{ t('teams.typeToConfirmSuffix') }}
           </label>
           <UInput
             v-model="confirmText"
@@ -159,7 +160,7 @@ watch(
             :disabled="isLoading"
             @click="handleClose"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton
             color="error"
@@ -168,7 +169,7 @@ watch(
             icon="i-lucide-trash-2"
             @click="handleDelete"
           >
-            Delete team
+            {{ t('teams.deleteTeam') }}
           </UButton>
         </div>
       </div>

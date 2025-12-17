@@ -21,6 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
 })
 
+const { t } = useT()
 const {
   hasPasskeys,
   addPasskey,
@@ -133,9 +134,9 @@ function formatDate(date: Date): string {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold">Passkeys</h3>
+        <h3 class="text-lg font-semibold">{{ t('account.passkeys') }}</h3>
         <p class="text-sm text-muted mt-1">
-          Use passkeys for passwordless authentication.
+          {{ t('account.passkeysDescription') }}
         </p>
       </div>
 
@@ -146,7 +147,7 @@ function formatDate(date: Date): string {
         :disabled="isLoading"
         @click="handleAddPasskey"
       >
-        Add passkey
+        {{ t('account.addPasskey') }}
       </UButton>
     </div>
 
@@ -155,8 +156,8 @@ function formatDate(date: Date): string {
       v-if="!browserSupported"
       color="warning"
       icon="i-lucide-alert-triangle"
-      title="Browser not supported"
-      description="Your browser doesn't support passkeys (WebAuthn). Try using a modern browser like Chrome, Firefox, or Safari."
+      :title="t('account.browserNotSupported')"
+      :description="t('account.browserNotSupportedDesc')"
     />
 
     <!-- Passkeys disabled -->
@@ -164,8 +165,8 @@ function formatDate(date: Date): string {
       v-else-if="!hasPasskeys"
       color="info"
       icon="i-lucide-info"
-      title="Passkeys not enabled"
-      description="Passkey authentication is not enabled for this application."
+      :title="t('account.passkeysNotEnabled')"
+      :description="t('account.passkeysNotEnabledDesc')"
     />
 
     <!-- Loading skeleton -->
@@ -193,9 +194,9 @@ function formatDate(date: Date): string {
         name="i-lucide-fingerprint"
         class="size-12 text-muted-foreground mx-auto mb-4"
       />
-      <p class="font-medium">No passkeys registered</p>
+      <p class="font-medium">{{ t('account.noPasskeysRegistered') }}</p>
       <p class="text-sm text-muted mt-1">
-        Add a passkey to sign in without a password.
+        {{ t('account.noPasskeysRegisteredDesc') }}
       </p>
       <UButton
         class="mt-4"
@@ -203,7 +204,7 @@ function formatDate(date: Date): string {
         :loading="addLoading"
         @click="handleAddPasskey"
       >
-        Add your first passkey
+        {{ t('account.addFirstPasskey') }}
       </UButton>
     </div>
 
@@ -224,7 +225,7 @@ function formatDate(date: Date): string {
         <div class="flex-1 min-w-0">
           <p class="font-medium truncate">{{ passkey.name }}</p>
           <p class="text-sm text-muted">
-            Added {{ formatDate(passkey.createdAt) }}
+            {{ t('account.addedOn', { date: formatDate(passkey.createdAt) }) }}
           </p>
         </div>
 
@@ -237,7 +238,7 @@ function formatDate(date: Date): string {
           :disabled="isLoading || deleteLoading !== null"
           @click="handleDeletePasskey(passkey.id)"
         >
-          Remove
+          {{ t('common.remove') }}
         </UButton>
       </div>
     </div>
@@ -249,10 +250,9 @@ function formatDate(date: Date): string {
       variant="soft"
       icon="i-lucide-shield"
     >
-      <template #title>About Passkeys</template>
+      <template #title>{{ t('account.aboutPasskeys') }}</template>
       <template #description>
-        Passkeys use your device's biometrics (fingerprint, face) or PIN for secure,
-        passwordless authentication. They're phishing-resistant and more secure than passwords.
+        {{ t('account.aboutPasskeysDesc') }}
       </template>
     </UAlert>
   </div>

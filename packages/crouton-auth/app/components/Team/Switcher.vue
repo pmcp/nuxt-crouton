@@ -33,6 +33,7 @@ const emit = defineEmits<{
   create: []
 }>()
 
+const { t } = useT()
 const {
   currentTeam,
   teams,
@@ -80,7 +81,7 @@ const menuItems = computed(() => {
   if (props.showCreate && canCreateTeam.value) {
     items.push([
       {
-        label: 'Create team',
+        label: t('teams.createTeam'),
         icon: 'i-lucide-plus',
         click: handleCreate,
       },
@@ -115,7 +116,7 @@ const menuItems = computed(() => {
           class="size-4"
         />
       </template>
-      {{ label || currentTeam?.name || 'Select team' }}
+      {{ label || currentTeam?.name || t('teams.selectTeam') }}
     </UButton>
   </UDropdownMenu>
 

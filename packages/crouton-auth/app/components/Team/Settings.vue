@@ -32,6 +32,7 @@ const emit = defineEmits<{
   delete: []
 }>()
 
+const { t } = useT()
 const { currentTeam, updateTeam, isOwner, isAdmin } = useTeam()
 const toast = useToast()
 
@@ -145,9 +146,9 @@ function resetForm() {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">Team Settings</h3>
+      <h3 class="text-lg font-semibold">{{ t('teams.teamSettings') }}</h3>
       <p class="text-sm text-muted mt-1">
-        Manage your team's profile and settings.
+        {{ t('teams.teamSettingsDescription') }}
       </p>
     </div>
 
@@ -175,26 +176,26 @@ function resetForm() {
           />
         </div>
         <div class="flex-1">
-          <p class="font-medium">{{ state.name || 'Team Name' }}</p>
+          <p class="font-medium">{{ state.name || t('teams.teamName') }}</p>
           <p class="text-sm text-muted">/dashboard/{{ state.slug || 'your-slug' }}</p>
         </div>
       </div>
 
       <USeparator />
 
-      <UFormField label="Team name" name="name" required>
+      <UFormField :label="t('teams.teamName')" name="name" required>
         <UInput
           v-model="state.name"
-          placeholder="My Team"
+          :placeholder="t('teams.teamNamePlaceholder')"
           icon="i-lucide-building-2"
           :disabled="isLoading || !isAdmin"
         />
       </UFormField>
 
-      <UFormField label="URL slug" name="slug" required>
+      <UFormField :label="t('teams.urlSlug')" name="slug" required>
         <template #hint>
           <span class="text-xs text-muted">
-            Changing the slug will update all team URLs.
+            {{ t('teams.urlSlugHint') }}
           </span>
         </template>
         <UInput
@@ -205,9 +206,9 @@ function resetForm() {
         />
       </UFormField>
 
-      <UFormField label="Logo URL" name="logo">
+      <UFormField :label="t('teams.logoUrl')" name="logo">
         <template #hint>
-          <span class="text-xs text-muted">Optional. Enter a URL to your team's logo.</span>
+          <span class="text-xs text-muted">{{ t('teams.logoUrlHint') }}</span>
         </template>
         <UInput
           v-model="state.logo"
@@ -234,7 +235,7 @@ function resetForm() {
           :disabled="isLoading"
           @click="emit('delete')"
         >
-          Delete team
+          {{ t('teams.deleteTeam') }}
         </UButton>
         <div v-else />
 
@@ -244,14 +245,14 @@ function resetForm() {
             :disabled="isLoading || !hasChanges"
             @click="resetForm"
           >
-            Reset
+            {{ t('common.reset') }}
           </UButton>
           <UButton
             type="submit"
             :loading="isLoading"
             :disabled="!hasChanges || !isAdmin"
           >
-            Save changes
+            {{ t('common.saveChanges') }}
           </UButton>
         </div>
       </div>

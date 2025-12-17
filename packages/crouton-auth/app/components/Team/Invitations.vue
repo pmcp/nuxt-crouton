@@ -38,6 +38,7 @@ const props = withDefaults(defineProps<Props>(), {
   showUserInvitations: false,
 })
 
+const { t } = useT()
 const {
   currentTeam,
   getPendingInvitations,
@@ -178,13 +179,13 @@ function roleBadgeColor(role: MemberRole): string {
   <div class="space-y-6">
     <div>
       <h3 class="text-lg font-semibold">
-        {{ showUserInvitations ? 'Your Invitations' : 'Pending Invitations' }}
+        {{ showUserInvitations ? t('teams.yourInvitations') : t('teams.pendingInvitations') }}
       </h3>
       <p class="text-sm text-muted mt-1">
         {{
           showUserInvitations
-            ? 'Invitations you have received to join teams.'
-            : 'Invitations waiting to be accepted.'
+            ? t('teams.yourInvitationsDescription')
+            : t('teams.pendingInvitationsDescription')
         }}
       </p>
     </div>
@@ -195,7 +196,7 @@ function roleBadgeColor(role: MemberRole): string {
       class="py-8 text-center text-muted"
     >
       <UIcon name="i-lucide-loader-2" class="size-6 animate-spin mx-auto mb-2" />
-      <p>Loading invitations...</p>
+      <p>{{ t('teams.loadingInvitations') }}</p>
     </div>
 
     <!-- Empty State -->
@@ -204,7 +205,7 @@ function roleBadgeColor(role: MemberRole): string {
       class="py-8 text-center text-muted"
     >
       <UIcon name="i-lucide-mail-open" class="size-8 mx-auto mb-2" />
-      <p>No pending invitations</p>
+      <p>{{ t('teams.noPendingInvitations') }}</p>
     </div>
 
     <!-- Invitations List -->
@@ -247,10 +248,10 @@ function roleBadgeColor(role: MemberRole): string {
             color="error"
             size="sm"
             :loading="loadingInvitationId === invitation.id"
-            title="Cancel invitation"
+            :title="t('teams.cancelInvitation')"
             @click="handleCancel(invitation.id)"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
         </div>
 
@@ -263,7 +264,7 @@ function roleBadgeColor(role: MemberRole): string {
             :loading="loadingInvitationId === invitation.id"
             @click="handleReject(invitation.id)"
           >
-            Decline
+            {{ t('teams.decline') }}
           </UButton>
           <UButton
             icon="i-lucide-check"
@@ -271,7 +272,7 @@ function roleBadgeColor(role: MemberRole): string {
             :loading="loadingInvitationId === invitation.id"
             @click="handleAccept(invitation.id)"
           >
-            Accept
+            {{ t('teams.accept') }}
           </UButton>
         </div>
       </div>
@@ -286,7 +287,7 @@ function roleBadgeColor(role: MemberRole): string {
         :loading="isLoading"
         @click="loadInvitations"
       >
-        Refresh
+        {{ t('common.refresh') }}
       </UButton>
     </div>
   </div>

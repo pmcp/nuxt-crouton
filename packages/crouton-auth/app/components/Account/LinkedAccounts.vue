@@ -21,6 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
 })
 
+const { t } = useT()
 const { hasOAuth, oauthProviders, loginWithOAuth } = useAuth()
 const toast = useToast()
 
@@ -177,9 +178,9 @@ function formatDate(date: Date): string {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">Linked Accounts</h3>
+      <h3 class="text-lg font-semibold">{{ t('account.linkedAccounts') }}</h3>
       <p class="text-sm text-muted mt-1">
-        Connect external accounts for easy sign-in.
+        {{ t('account.linkedAccountsDescription') }}
       </p>
     </div>
 
@@ -188,8 +189,8 @@ function formatDate(date: Date): string {
       v-if="!hasOAuth"
       color="info"
       icon="i-lucide-info"
-      title="Social login not enabled"
-      description="Social login providers are not configured for this application."
+      :title="t('account.socialLoginNotEnabled')"
+      :description="t('account.socialLoginNotEnabledDesc')"
     />
 
     <!-- Loading skeleton -->
@@ -229,10 +230,10 @@ function formatDate(date: Date): string {
         <div class="flex-1 min-w-0">
           <p class="font-medium">{{ getProviderInfo(provider).name }}</p>
           <p v-if="isLinked(provider)" class="text-sm text-muted">
-            Connected {{ formatDate(getLinkedAccount(provider)!.createdAt) }}
+            {{ t('account.connectedOn', { date: formatDate(getLinkedAccount(provider)!.createdAt) }) }}
           </p>
           <p v-else class="text-sm text-muted">
-            Not connected
+            {{ t('account.notConnected') }}
           </p>
         </div>
 
@@ -246,7 +247,7 @@ function formatDate(date: Date): string {
           :disabled="isLoading || unlinkLoading !== null || accounts.length <= 1"
           @click="handleUnlink(provider)"
         >
-          Disconnect
+          {{ t('account.disconnect') }}
         </UButton>
         <UButton
           v-else
@@ -257,7 +258,7 @@ function formatDate(date: Date): string {
           :disabled="isLoading || linkLoading !== null"
           @click="handleLink(provider)"
         >
-          Connect
+          {{ t('account.connect') }}
         </UButton>
       </div>
     </div>
@@ -269,10 +270,9 @@ function formatDate(date: Date): string {
       variant="soft"
       icon="i-lucide-alert-triangle"
     >
-      <template #title>Keep at least one login method</template>
+      <template #title>{{ t('account.keepOneLoginMethod') }}</template>
       <template #description>
-        You need at least one way to sign in to your account. Connect another account
-        or set a password before disconnecting this one.
+        {{ t('account.keepOneLoginMethodDesc') }}
       </template>
     </UAlert>
 
@@ -283,10 +283,9 @@ function formatDate(date: Date): string {
       variant="soft"
       icon="i-lucide-link-2"
     >
-      <template #title>About Linked Accounts</template>
+      <template #title>{{ t('account.aboutLinkedAccounts') }}</template>
       <template #description>
-        Linking accounts lets you sign in using different services. Your data
-        stays the same regardless of which method you use to sign in.
+        {{ t('account.aboutLinkedAccountsDesc') }}
       </template>
     </UAlert>
   </div>

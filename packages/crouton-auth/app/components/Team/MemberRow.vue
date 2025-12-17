@@ -55,6 +55,8 @@ const emit = defineEmits<{
   remove: [memberId: string]
 }>()
 
+const { t } = useT()
+
 // Check if this is the current user
 const isSelf = computed(() => props.member.userId === props.currentUserId)
 
@@ -75,13 +77,13 @@ const initials = computed(() => {
 // Role options for dropdown
 const roleOptions = computed(() => {
   const roles: Array<{ label: string, value: MemberRole }> = [
-    { label: 'Member', value: 'member' },
-    { label: 'Admin', value: 'admin' },
+    { label: t('teams.member'), value: 'member' },
+    { label: t('teams.admin'), value: 'admin' },
   ]
 
   // Only owners can transfer ownership
   if (props.isOwner && !isSelf.value) {
-    roles.push({ label: 'Owner', value: 'owner' })
+    roles.push({ label: t('teams.owner'), value: 'owner' })
   }
 
   return roles
@@ -161,7 +163,7 @@ const roleBadgeColor = computed(() => {
           >
             {{ member.role }}
           </UBadge>
-          <span v-if="isSelf" class="text-xs text-muted">(you)</span>
+          <span v-if="isSelf" class="text-xs text-muted">{{ t('teams.you') }}</span>
         </div>
         <p class="text-sm text-muted">{{ member.user?.email }}</p>
       </div>

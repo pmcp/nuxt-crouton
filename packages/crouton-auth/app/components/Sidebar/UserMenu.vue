@@ -18,6 +18,7 @@ interface Props {
 
 defineProps<Props>()
 
+const { t } = useT()
 const { user, logout, loading } = useAuth()
 const { buildDashboardUrl } = useTeamContext()
 
@@ -31,19 +32,19 @@ const dropdownItems = computed(() => {
   return [
     [
       {
-        label: 'Account Settings',
+        label: t('navigation.accountSettings'),
         icon: 'i-lucide-user',
         to: `${baseUrl}/settings`,
       },
       {
-        label: 'Security',
+        label: t('account.security'),
         icon: 'i-lucide-shield',
         to: `${baseUrl}/settings/security`,
       },
     ],
     [
       {
-        label: 'Sign out',
+        label: t('auth.signOut'),
         icon: 'i-lucide-log-out',
         click: handleLogout,
       },

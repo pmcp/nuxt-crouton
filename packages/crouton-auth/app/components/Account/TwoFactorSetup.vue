@@ -21,6 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
 })
 
+const { t } = useT()
 const {
   has2FA,
   enable2FA,
@@ -225,9 +226,9 @@ async function copyBackupCodes(codes: string[]) {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold">Two-Factor Authentication</h3>
+        <h3 class="text-lg font-semibold">{{ t('account.twoFactorAuth') }}</h3>
         <p class="text-sm text-muted mt-1">
-          Add an extra layer of security to your account.
+          {{ t('account.twoFactorDescription') }}
         </p>
       </div>
     </div>
@@ -237,8 +238,8 @@ async function copyBackupCodes(codes: string[]) {
       v-if="!has2FA"
       color="info"
       icon="i-lucide-info"
-      title="2FA not enabled"
-      description="Two-factor authentication is not enabled for this application."
+      :title="t('account.twoFactorNotEnabled')"
+      :description="t('account.twoFactorNotEnabledDesc')"
     />
 
     <!-- Loading -->
@@ -261,9 +262,9 @@ async function copyBackupCodes(codes: string[]) {
             />
           </div>
           <div class="flex-1">
-            <p class="font-medium text-success">2FA is enabled</p>
+            <p class="font-medium text-success">{{ t('account.twoFactorEnabled') }}</p>
             <p class="text-sm text-muted">
-              Your account is protected with an authenticator app.
+              {{ t('account.twoFactorEnabledDesc') }}
             </p>
           </div>
         </div>
@@ -274,7 +275,7 @@ async function copyBackupCodes(codes: string[]) {
             icon="i-lucide-key"
             @click="showBackupModal = true; backupPassword = ''; viewedBackupCodes = []"
           >
-            View backup codes
+            {{ t('account.viewBackupCodes') }}
           </UButton>
           <UButton
             variant="ghost"
@@ -282,7 +283,7 @@ async function copyBackupCodes(codes: string[]) {
             icon="i-lucide-shield-off"
             @click="showDisableModal = true; disablePassword = ''"
           >
-            Disable 2FA
+            {{ t('account.disable2FA') }}
           </UButton>
         </div>
       </div>
@@ -300,9 +301,9 @@ async function copyBackupCodes(codes: string[]) {
             />
           </div>
           <div class="flex-1">
-            <p class="font-medium text-warning">2FA is not enabled</p>
+            <p class="font-medium text-warning">{{ t('account.twoFactorDisabled') }}</p>
             <p class="text-sm text-muted">
-              Protect your account with an authenticator app.
+              {{ t('account.twoFactorDisabledDesc') }}
             </p>
           </div>
         </div>
@@ -312,7 +313,7 @@ async function copyBackupCodes(codes: string[]) {
           icon="i-lucide-shield-plus"
           @click="startSetup"
         >
-          Enable 2FA
+          {{ t('account.enable2FA') }}
         </UButton>
       </div>
     </div>
@@ -324,10 +325,9 @@ async function copyBackupCodes(codes: string[]) {
       variant="soft"
       icon="i-lucide-smartphone"
     >
-      <template #title>About Two-Factor Authentication</template>
+      <template #title>{{ t('account.aboutTwoFactor') }}</template>
       <template #description>
-        2FA adds an extra layer of security by requiring a code from your authenticator
-        app (like Google Authenticator, Authy, or 1Password) when signing in.
+        {{ t('account.aboutTwoFactorDesc') }}
       </template>
     </UAlert>
 
@@ -340,16 +340,16 @@ async function copyBackupCodes(codes: string[]) {
         <div class="p-6 space-y-6">
           <!-- Step: Password -->
           <div v-if="setupStep === 'password'">
-            <h3 class="text-lg font-semibold">Enable Two-Factor Authentication</h3>
+            <h3 class="text-lg font-semibold">{{ t('account.enableTwoFactor') }}</h3>
             <p class="text-sm text-muted mt-1">
-              Enter your password to continue.
+              {{ t('account.enterPasswordToContinue') }}
             </p>
 
             <div class="mt-4">
               <UInput
                 v-model="passwordInput"
                 type="password"
-                placeholder="Enter your password"
+                :placeholder="t('account.enterYourPassword')"
                 icon="i-lucide-lock"
                 :disabled="setupLoading"
                 @keyup.enter="handlePasswordSubmit"
@@ -362,23 +362,23 @@ async function copyBackupCodes(codes: string[]) {
                 :disabled="setupLoading"
                 @click="showSetupModal = false"
               >
-                Cancel
+                {{ t('common.cancel') }}
               </UButton>
               <UButton
                 :loading="setupLoading"
                 :disabled="!passwordInput"
                 @click="handlePasswordSubmit"
               >
-                Continue
+                {{ t('common.next') }}
               </UButton>
             </div>
           </div>
 
           <!-- Step: QR Code -->
           <div v-else-if="setupStep === 'qr'">
-            <h3 class="text-lg font-semibold">Scan QR Code</h3>
+            <h3 class="text-lg font-semibold">{{ t('account.scanQrCode') }}</h3>
             <p class="text-sm text-muted mt-1">
-              Scan this QR code with your authenticator app.
+              {{ t('account.scanQrCodeDesc') }}
             </p>
 
             <div class="flex flex-col items-center gap-4 mt-4">
@@ -393,7 +393,7 @@ async function copyBackupCodes(codes: string[]) {
               </div>
 
               <div class="text-center">
-                <p class="text-sm text-muted">Or enter this code manually:</p>
+                <p class="text-sm text-muted">{{ t('account.orEnterManually') }}</p>
                 <code class="text-sm font-mono bg-muted px-2 py-1 rounded mt-1 inline-block">
                   {{ totpSecret }}
                 </code>
@@ -405,19 +405,19 @@ async function copyBackupCodes(codes: string[]) {
                 variant="ghost"
                 @click="setupStep = 'password'"
               >
-                Back
+                {{ t('common.back') }}
               </UButton>
               <UButton @click="setupStep = 'verify'">
-                Continue
+                {{ t('common.next') }}
               </UButton>
             </div>
           </div>
 
           <!-- Step: Verify -->
           <div v-else-if="setupStep === 'verify'">
-            <h3 class="text-lg font-semibold">Verify Code</h3>
+            <h3 class="text-lg font-semibold">{{ t('account.verifyCode') }}</h3>
             <p class="text-sm text-muted mt-1">
-              Enter the 6-digit code from your authenticator app.
+              {{ t('account.verifyCodeDesc') }}
             </p>
 
             <div class="mt-4">
@@ -438,23 +438,23 @@ async function copyBackupCodes(codes: string[]) {
                 :disabled="setupLoading"
                 @click="setupStep = 'qr'"
               >
-                Back
+                {{ t('common.back') }}
               </UButton>
               <UButton
                 :loading="setupLoading"
                 :disabled="verifyCode.length !== 6"
                 @click="handleVerifySubmit"
               >
-                Verify
+                {{ t('auth.verify') }}
               </UButton>
             </div>
           </div>
 
           <!-- Step: Backup Codes -->
           <div v-else-if="setupStep === 'backup'">
-            <h3 class="text-lg font-semibold">Save Backup Codes</h3>
+            <h3 class="text-lg font-semibold">{{ t('account.saveBackupCodes') }}</h3>
             <p class="text-sm text-muted mt-1">
-              Save these backup codes in a secure place. Each can only be used once.
+              {{ t('account.saveBackupCodesDesc') }}
             </p>
 
             <UAlert
@@ -464,7 +464,7 @@ async function copyBackupCodes(codes: string[]) {
               class="mt-4"
             >
               <template #description>
-                If you lose access to your authenticator app, you'll need these codes to sign in.
+                {{ t('account.backupCodesWarning') }}
               </template>
             </UAlert>
 
@@ -484,10 +484,10 @@ async function copyBackupCodes(codes: string[]) {
                 icon="i-lucide-copy"
                 @click="copyBackupCodes(backupCodes)"
               >
-                Copy codes
+                {{ t('account.copyCodes') }}
               </UButton>
               <UButton @click="completeSetup">
-                Done
+                {{ t('common.close') }}
               </UButton>
             </div>
           </div>
@@ -507,9 +507,9 @@ async function copyBackupCodes(codes: string[]) {
               />
             </div>
             <div>
-              <h3 class="text-lg font-semibold">Disable 2FA</h3>
+              <h3 class="text-lg font-semibold">{{ t('account.disable2FA') }}</h3>
               <p class="text-sm text-muted">
-                This will reduce your account security.
+                {{ t('account.disableTwoFactorWarning') }}
               </p>
             </div>
           </div>
@@ -520,14 +520,14 @@ async function copyBackupCodes(codes: string[]) {
             icon="i-lucide-alert-triangle"
           >
             <template #description>
-              Without 2FA, anyone with your password can access your account.
+              {{ t('account.disableTwoFactorDesc') }}
             </template>
           </UAlert>
 
           <UInput
             v-model="disablePassword"
             type="password"
-            placeholder="Enter your password to confirm"
+            :placeholder="t('account.enterPasswordToConfirm')"
             icon="i-lucide-lock"
             :disabled="disableLoading"
           />
@@ -538,7 +538,7 @@ async function copyBackupCodes(codes: string[]) {
               :disabled="disableLoading"
               @click="showDisableModal = false"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton
               color="error"
@@ -546,7 +546,7 @@ async function copyBackupCodes(codes: string[]) {
               :disabled="!disablePassword"
               @click="handleDisable"
             >
-              Disable 2FA
+              {{ t('account.disable2FA') }}
             </UButton>
           </div>
         </div>
@@ -557,18 +557,18 @@ async function copyBackupCodes(codes: string[]) {
     <UModal v-model:open="showBackupModal">
       <template #content>
         <div class="p-6 space-y-6">
-          <h3 class="text-lg font-semibold">Backup Codes</h3>
+          <h3 class="text-lg font-semibold">{{ t('account.backupCodes') }}</h3>
 
           <!-- Password entry -->
           <div v-if="viewedBackupCodes.length === 0">
             <p class="text-sm text-muted">
-              Enter your password to view your backup codes.
+              {{ t('account.enterPasswordToViewCodes') }}
             </p>
 
             <UInput
               v-model="backupPassword"
               type="password"
-              placeholder="Enter your password"
+              :placeholder="t('account.enterYourPassword')"
               icon="i-lucide-lock"
               class="mt-4"
               :disabled="viewCodesLoading"
@@ -581,14 +581,14 @@ async function copyBackupCodes(codes: string[]) {
                 :disabled="viewCodesLoading"
                 @click="showBackupModal = false"
               >
-                Cancel
+                {{ t('common.cancel') }}
               </UButton>
               <UButton
                 :loading="viewCodesLoading"
                 :disabled="!backupPassword"
                 @click="handleViewBackupCodes"
               >
-                View codes
+                {{ t('account.viewCodes') }}
               </UButton>
             </div>
           </div>
@@ -616,7 +616,7 @@ async function copyBackupCodes(codes: string[]) {
             </div>
 
             <p class="text-sm text-muted mt-4">
-              {{ viewedBackupCodes.filter((c) => !c.used).length }} codes remaining.
+              {{ t('account.codesRemaining', { count: viewedBackupCodes.filter((c) => !c.used).length }) }}
             </p>
 
             <div class="flex justify-between mt-6">
@@ -625,10 +625,10 @@ async function copyBackupCodes(codes: string[]) {
                 icon="i-lucide-copy"
                 @click="copyBackupCodes(viewedBackupCodes.filter((c) => !c.used).map((c) => c.code))"
               >
-                Copy unused codes
+                {{ t('account.copyUnusedCodes') }}
               </UButton>
               <UButton @click="showBackupModal = false">
-                Close
+                {{ t('common.close') }}
               </UButton>
             </div>
           </div>

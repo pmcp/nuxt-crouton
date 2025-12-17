@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
   defaultTab: 'profile',
 })
 
+const { t } = useT()
 const { hasPassword, hasOAuth, hasPasskeys, has2FA } = useAuth()
 
 // Tab state
@@ -29,7 +30,7 @@ const tabs = computed(() => {
   const items = [
     {
       value: 'profile',
-      label: 'Profile',
+      label: t('account.profile'),
       icon: 'i-lucide-user',
     },
   ]
@@ -38,7 +39,7 @@ const tabs = computed(() => {
   if (hasPassword.value) {
     items.push({
       value: 'password',
-      label: 'Password',
+      label: t('auth.password'),
       icon: 'i-lucide-lock',
     })
   }
@@ -47,7 +48,7 @@ const tabs = computed(() => {
   if (hasPasskeys.value || has2FA.value) {
     items.push({
       value: 'security',
-      label: 'Security',
+      label: t('account.security'),
       icon: 'i-lucide-shield',
     })
   }
@@ -56,7 +57,7 @@ const tabs = computed(() => {
   if (hasOAuth.value) {
     items.push({
       value: 'linked',
-      label: 'Linked Accounts',
+      label: t('account.linkedAccounts'),
       icon: 'i-lucide-link',
     })
   }
@@ -64,7 +65,7 @@ const tabs = computed(() => {
   // Danger zone is always available
   items.push({
     value: 'danger',
-    label: 'Danger Zone',
+    label: t('account.dangerZone'),
     icon: 'i-lucide-alert-triangle',
   })
 
@@ -75,9 +76,9 @@ const tabs = computed(() => {
 <template>
   <div class="space-y-6">
     <div>
-      <h2 class="text-2xl font-bold">Account Settings</h2>
+      <h2 class="text-2xl font-bold">{{ t('account.settings') }}</h2>
       <p class="text-muted mt-1">
-        Manage your account settings and preferences.
+        {{ t('account.settingsDescription') }}
       </p>
     </div>
 
