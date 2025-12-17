@@ -6,24 +6,39 @@
   "exports": {
     ".": {
       "import": "./dist/module.mjs",
-      "require": "./dist/module.cjs"
+      "require": "./dist/module.cjs",
+      "types": "./dist/module.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.mjs",
+      "require": "./dist/types/index.cjs",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./types/*": {
+      "import": "./dist/types/*.mjs",
+      "types": "./dist/types/*.d.ts"
+    },
+    "./server/utils/team-auth": {
+      "import": "./server/utils/team-auth.ts",
+      "types": "./server/utils/team-auth.ts"
+    },
+    "./server/database/schema/auth": {
+      "import": "./server/database/schema/auth.ts",
+      "types": "./server/database/schema/auth.ts"
     }
   },
   "main": "./dist/module.cjs",
   "module": "./dist/module.mjs",
-  "types": "./dist/types.d.ts",
+  "types": "./dist/module.d.ts",
   "files": [
     "dist",
     "app",
     "server",
     "types",
-    "docs",
-    "scripts",
-    "nuxt.config.ts"
+    "nuxt.config.ts",
+    "CHANGELOG.md",
+    "LICENSE"
   ],
-  "bin": {
-    "crouton-auth": "./scripts/migrate.ts"
-  },
   "scripts": {
     "build": "unbuild",
     "dev": "nuxi dev playground",
@@ -33,6 +48,8 @@
     "test": "vitest",
     "test:unit": "vitest run --dir tests/unit",
     "test:integration": "vitest run --dir tests/integration",
+    "prepublishOnly": "pnpm run build",
+    "release": "pnpm run build && npm publish --access public",
     "migrate:status": "tsx scripts/migrate.ts status",
     "migrate:generate": "tsx scripts/migrate.ts generate",
     "migrate:push": "tsx scripts/migrate.ts push",
@@ -76,9 +93,20 @@
       "optional": true
     }
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/crouton-digital/crouton-auth"
+    "url": "git+https://github.com/crouton-digital/crouton-auth.git"
+  },
+  "homepage": "https://github.com/crouton-digital/crouton-auth#readme",
+  "bugs": {
+    "url": "https://github.com/crouton-digital/crouton-auth/issues"
   },
   "keywords": [
     "nuxt",
@@ -88,10 +116,16 @@
     "better-auth",
     "oauth",
     "passkeys",
+    "webauthn",
     "2fa",
+    "totp",
     "teams",
+    "organizations",
     "billing",
-    "stripe"
+    "stripe",
+    "subscription",
+    "multi-tenant",
+    "saas"
   ],
   "author": "Crouton Digital",
   "license": "MIT"
