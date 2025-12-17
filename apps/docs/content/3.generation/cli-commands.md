@@ -66,7 +66,6 @@ export default {
   ],
   dialect: 'sqlite',
   flags: {
-    useTeamUtility: false,   // Enable team-based multi-tenancy
     useMetadata: true,       // Add createdAt/updatedAt timestamps
     force: false,
     noTranslations: false,
@@ -77,32 +76,12 @@ export default {
 
 ### Configuration Flags
 
-#### `useTeamUtility` (boolean, default: `false`)
-
-Enables team-based multi-tenancy features. When set to `true`:
-
-**Database schema changes:**
-- Automatically adds `teamId` field (required, text) to all collections
-- Automatically adds `userId` field (required, text) to all collections
-
-**API endpoint changes:**
-- Generates simplified endpoints with automatic team-based authentication
-- Automatically injects `teamId` and `userId` from the authenticated user's session
-- All database queries are automatically scoped to the current user's team
-- Adds `resolveTeamAndCheckMembership` middleware to all endpoints
-
-**When to use:**
-- Multi-tenant SaaS applications
-- Apps where data must be isolated by organization/team
-- Apps using Nuxt Crouton's built-in team authentication
-
-**When NOT to use:**
-- Single-tenant applications
-- Apps with custom authentication strategies
-- Apps where you need manual control over user/team associations
+::callout{icon="i-heroicons-information-circle" color="blue"}
+**Team-Scoped by Default:** All generated collections include team-based authentication. The generator automatically adds `teamId` and `userId` fields and uses `@crouton/auth/server` for authentication.
+::
 
 ::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
-**Important:** Do NOT define `teamId` or `userId` in your schema JSON files when this flag is enabled. The generator adds them automatically, and manual definitions will cause duplicate key errors.
+**Important:** Do NOT define `teamId` or `userId` in your schema JSON files. The generator adds them automatically, and manual definitions will cause duplicate key errors.
 ::
 
 See [Team-Based Authentication](/advanced/team-based-auth) for usage examples.
@@ -375,7 +354,6 @@ When using `--config` or `config` command, flags are set in the config file:
 export default {
   dialect: 'sqlite',
   flags: {
-    useTeamUtility: false,    // Team-based multi-tenancy
     useMetadata: true,        // Timestamp fields (createdAt/updatedAt)
     force: false,
     noTranslations: false,
@@ -400,18 +378,10 @@ crouton-generate shop products --fields-file=schema.json --dry-run
 # Review output, then run without --dry-run
 ```
 
-**Multi-Tenant SaaS Application**:
+**Standard SaaS Application**:
 ```bash
-# Config with team utility enabled
+# All collections are team-scoped by default
 crouton-generate config ./crouton.config.js
-# With useTeamUtility: true in config
-```
-
-**Single-Tenant Application**:
-```bash
-# Config without team features
-crouton-generate config ./crouton.config.js
-# With useTeamUtility: false in config
 ```
 
 **Quick Testing (No DB)**:
