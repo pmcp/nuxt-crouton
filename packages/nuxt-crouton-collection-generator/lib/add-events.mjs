@@ -266,12 +266,9 @@ export async function deleteCroutonCollectionEvent(
 }
 `,
 
-  apiGet: `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
-// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
-// Install: pnpm add @friendlyinternet/nuxt-crouton
-// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+  apiGet: `// Team-based endpoint - requires @crouton/auth package
 import { getAllCroutonCollectionEvents, getCroutonCollectionEventsByIds } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
+import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
 
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
@@ -286,12 +283,9 @@ export default defineEventHandler(async (event) => {
 })
 `,
 
-  apiPost: `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
-// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
-// Install: pnpm add @friendlyinternet/nuxt-crouton
-// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+  apiPost: `// Team-based endpoint - requires @crouton/auth package
 import { createCroutonCollectionEvent } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
+import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -316,12 +310,9 @@ export default defineEventHandler(async (event) => {
 })
 `,
 
-  apiPatch: `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
-// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
-// Install: pnpm add @friendlyinternet/nuxt-crouton
-// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+  apiPatch: `// Team-based endpoint - requires @crouton/auth package
 import { updateCroutonCollectionEvent } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
+import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -340,12 +331,9 @@ export default defineEventHandler(async (event) => {
 })
 `,
 
-  apiDelete: `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
-// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
-// Install: pnpm add @friendlyinternet/nuxt-crouton
-// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+  apiDelete: `// Team-based endpoint - requires @crouton/auth package
 import { deleteCroutonCollectionEvent } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
+import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
