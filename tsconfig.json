@@ -1,20 +1,24 @@
 {
-  "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "moduleResolution": "bundler",
-    "module": "ESNext",
-    "target": "ESNext",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
     "paths": {
       "#crouton-auth/*": ["./*"],
       "#crouton-auth": ["."]
-    }
+    },
+    "baseUrl": "."
   },
   "include": [
     "app/**/*",
@@ -25,6 +29,7 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "tests"
   ]
 }

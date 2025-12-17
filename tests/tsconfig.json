@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "types": ["vitest/globals", "node"],
+    "paths": {
+      "#app": ["./mocks/nuxt-app"],
+      "#imports": ["./mocks/imports"]
+    },
+    "baseUrl": "."
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules"]
+}

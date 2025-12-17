@@ -37,29 +37,39 @@
     "migrate:generate": "tsx scripts/migrate.ts generate",
     "migrate:push": "tsx scripts/migrate.ts push",
     "migrate:check": "tsx scripts/migrate.ts check",
-    "migrate:reset": "tsx scripts/migrate.ts reset"
+    "migrate:reset": "tsx scripts/migrate.ts reset",
+    "seed": "tsx scripts/seed.ts",
+    "seed:users": "tsx scripts/seed.ts users",
+    "seed:orgs": "tsx scripts/seed.ts orgs",
+    "seed:billing": "tsx scripts/seed.ts billing",
+    "seed:clear": "tsx scripts/seed.ts clear"
   },
   "dependencies": {
-    "better-auth": "^1.2.0",
     "@better-auth/passkey": "^1.2.0",
     "@better-auth/stripe": "^1.2.0",
-    "stripe": "^17.0.0",
-    "defu": "^6.1.4"
+    "better-auth": "^1.2.0",
+    "defu": "^6.1.4",
+    "stripe": "^17.0.0"
   },
   "devDependencies": {
     "@better-auth/cli": "^1.2.0",
     "@nuxt/kit": "^3.14.0",
     "@nuxt/schema": "^3.14.0",
+    "@types/better-sqlite3": "^7.6.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "better-sqlite3": "^11.0.0",
     "drizzle-kit": "^0.20.0",
+    "jsdom": "^25.0.1",
     "nuxt": "^3.14.0",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0",
     "unbuild": "^2.0.0",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.9",
+    "vue": "^3.5.25"
   },
   "peerDependencies": {
-    "nuxt": "^3.14.0 || ^4.0.0",
-    "@nuxt/ui": "^3.0.0-alpha.0"
+    "@nuxt/ui": "^3.0.0-alpha.0",
+    "nuxt": "^3.14.0 || ^4.0.0"
   },
   "peerDependenciesMeta": {
     "@nuxt/ui": {
