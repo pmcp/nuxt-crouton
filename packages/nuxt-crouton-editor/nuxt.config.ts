@@ -6,10 +6,10 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 export default defineNuxtConfig({
   $meta: {
     name: 'nuxt-crouton-editor',
-    description: 'Rich text editor addon layer for FYIT collections (standalone TipTap)'
+    description: 'Rich text editor addon layer for Crouton collections (wraps Nuxt UI Editor)'
   },
 
-  // Component configuration - provides CroutonEditorSimple as backwards-compatible wrapper
+  // Component configuration - provides CroutonEditorSimple wrapper for UEditor
   components: {
     dirs: [
       {

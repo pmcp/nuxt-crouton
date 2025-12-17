@@ -22,7 +22,7 @@ pnpm add @friendlyinternet/nuxt-crouton-editor
 
 ### 2. Ensure Nuxt UI is configured
 
-This package requires `@nuxt/ui` v4+ to be installed and configured in your project:
+This package requires `@nuxt/ui` v3.4+ to be installed and configured in your project:
 
 ```typescript
 // nuxt.config.ts
@@ -55,8 +55,21 @@ const content = ref('<p>Hello world!</p>')
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `modelValue` | `string` | `''` | HTML/Markdown content (v-model) |
-| `placeholder` | `string` | `'Start writing...'` | Placeholder text |
+| `placeholder` | `string` | - | Placeholder text |
 | `contentType` | `'html' \| 'markdown' \| 'json'` | `'html'` | Content format |
+| `starterKit` | `object` | - | TipTap StarterKit options |
+| `extensions` | `array` | - | Additional TipTap extensions |
+| `editable` | `boolean` | `true` | Enable/disable editing |
+| `autofocus` | `boolean \| 'start' \| 'end' \| 'all'` | - | Focus behavior |
+| `markdown` | `object` | - | Markdown extension options |
+| `image` | `object` | - | Image extension options |
+| `mention` | `object` | - | Mention extension options |
+| `handlers` | `object` | - | Custom handlers for toolbar/suggestions |
+| `ui` | `object` | `{ root: 'h-full', content: 'h-full' }` | Style customization |
+
+**Events:** `@create`, `@update`, `@focus`, `@blur`
+
+**Slot:** `default` with `{ editor, handlers }` for custom toolbars
 
 ### Using Nuxt UI Editor Directly (Recommended)
 
@@ -112,7 +125,7 @@ const slashItems: EditorSuggestionMenuItem[][] = [
 
 ### Breaking Changes
 
-1. **Peer dependency**: Requires `@nuxt/ui` v4+ instead of `nuxt-tiptap`
+1. **Peer dependency**: Requires `@nuxt/ui` v3.4+ instead of `nuxt-tiptap`
 2. **Removed**: `CroutonEditorToolbar` - use `UEditorToolbar` directly
 3. **Removed**: Direct TipTap dependencies - handled by Nuxt UI
 
@@ -121,7 +134,7 @@ const slashItems: EditorSuggestionMenuItem[][] = [
 1. **Update dependencies**:
    ```bash
    pnpm remove nuxt-tiptap @tiptap/vue-3 @tiptap/starter-kit
-   pnpm add @nuxt/ui@^4.0.0
+   pnpm add @nuxt/ui@^3.4.0
    ```
 
 2. **Update nuxt.config.ts**:
