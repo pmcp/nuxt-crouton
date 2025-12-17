@@ -3316,6 +3316,298 @@ const myDate = new Date('2024-03-15') // or Date.now()
 
 ---
 
+## CroutonWeekCalendar
+
+A swipeable week calendar component with infinite scroll, ideal for booking interfaces and appointment scheduling. Part of the base `@friendlyinternet/nuxt-crouton` package.
+
+::callout{icon="i-heroicons-information-circle" color="blue"}
+**Week-focused Navigation**: Unlike `CroutonCalendar` which shows full months, `CroutonWeekCalendar` displays one week at a time with horizontal swiping/navigation. Perfect for mobile booking experiences.
+::
+
+### Props
+
+```typescript
+interface WeekCalendarProps {
+  // Core functionality
+  modelValue?: Date | null           // Selected date (v-model)
+  weekStartsOn?: 0 | 1               // Week start: 0=Sunday, 1=Monday (default: 1)
+  initialWeeks?: number              // Initial weeks to generate (default: 12)
+
+  // Expansion behavior
+  expandThreshold?: number           // Weeks from edge to trigger expansion (default: 3)
+  expandCount?: number               // Weeks to add when expanding (default: 4)
+
+  // Display options
+  showArrows?: boolean               // Show navigation arrows (default: true)
+  showWeekNumber?: boolean           // Show week number badge (default: true)
+  showMonthLabel?: boolean           // Show month header (default: true)
+  weekdayFormat?: 'narrow' | 'short' | 'long'  // Weekday format (default: 'long')
+
+  // Internationalization
+  locale?: string                    // BCP 47 locale code (e.g., 'nl-NL')
+
+  // Nuxt UI theming
+  color?: string                     // Accent color (default: 'primary')
+  size?: 'sm' | 'md' | 'lg'          // Component size (default: 'md')
+  ui?: WeekCalendarUI                // Custom styling overrides
+}
+
+interface WeekCalendarUI {
+  root?: string
+  header?: string
+  monthLabel?: string
+  weekBadge?: string
+  carousel?: string
+  carouselItem?: string
+  grid?: string
+  day?: string
+  dayLabel?: string
+  dayNumber?: string
+  daySlot?: string
+  arrows?: { prev?: string, next?: string }
+}
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `modelValue` | `Date \| null` | `null` | Selected date (v-model) |
+| `weekStartsOn` | `0 \| 1` | `1` | Week start day (0=Sunday, 1=Monday) |
+| `initialWeeks` | `number` | `12` | Initial weeks to generate |
+| `expandThreshold` | `number` | `3` | Weeks from edge to trigger expansion |
+| `expandCount` | `number` | `4` | Weeks to add when expanding |
+| `showArrows` | `boolean` | `true` | Show navigation arrows |
+| `showWeekNumber` | `boolean` | `true` | Show week number badge |
+| `showMonthLabel` | `boolean` | `true` | Show month header |
+| `weekdayFormat` | `string` | `'long'` | Weekday format (narrow/short/long) |
+| `locale` | `string` | Browser default | BCP 47 locale code |
+| `color` | `string` | `'primary'` | Accent color |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Component size |
+| `ui` | `WeekCalendarUI` | `{}` | Custom styling overrides |
+
+### Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `update:modelValue` | `Date \| null` | Emitted when date selection changes |
+| `weekChange` | `[weekStart: Date, weekEnd: Date]` | Emitted when visible week changes |
+| `dayHover` | `Date \| null` | Emitted when hovering over a day |
+| `dayClick` | `Date` | Emitted when clicking a day |
+
+### Slots
+
+| Slot | Props | Description |
+|------|-------|-------------|
+| `day` | `{ date, jsDate, isToday, isSelected }` | Custom day cell content |
+| `header` | `{ monthLabel, weekNumber, goToToday }` | Custom header content |
+| `week-badge` | `{ weekNumber }` | Custom week number badge |
+
+### Exposed Methods
+
+```typescript
+interface ExposedMethods {
+  scrollToDate(date: Date): void    // Scroll to a specific date's week
+  goToToday(): void                 // Scroll to current week
+}
+```
+
+### Features
+
+- **Infinite Scroll**: Dynamically expands as user navigates
+- **Swipe Navigation**: Touch-friendly horizontal swiping
+- **Locale Support**: Full internationalization with Intl.DateTimeFormat
+- **Size Variants**: Small, medium, and large sizes
+- **Custom Theming**: Full `ui` prop support with twMerge
+- **Exposed Methods**: Programmatic navigation via refs
+- **Indicator Slots**: Add booking indicators per day
+
+### Usage
+
+#### Basic Usage
+
+```vue
+<template>
+  <CroutonWeekCalendar v-model="selectedDate" />
+</template>
+
+<script setup lang="ts">
+const selectedDate = ref<Date | null>(null)
+</script>
+```
+
+#### With Booking Indicators
+
+```vue
+<template>
+  <CroutonWeekCalendar
+    v-model="selectedDate"
+    :initial-weeks="52"
+    @week-change="onWeekChange"
+  >
+    <template #day="{ date, isToday }">
+      <div v-if="hasBooking(date)" class="flex gap-1">
+        <span
+          v-for="booking in getBookings(date)"
+          :key="booking.id"
+          class="w-2 h-2 rounded-full"
+          :class="booking.color"
+        />
+      </div>
+    </template>
+  </CroutonWeekCalendar>
+</template>
+
+<script setup lang="ts">
+const selectedDate = ref<Date | null>(null)
+
+const hasBooking = (date: DateValue) => {
+  // Check if date has bookings
+  return bookings.value.some(b => isSameDay(b.date, date))
+}
+
+const getBookings = (date: DateValue) => {
+  return bookings.value.filter(b => isSameDay(b.date, date))
+}
+
+const onWeekChange = (weekStart: Date, weekEnd: Date) => {
+  // Load bookings for visible week range
+  loadBookings(weekStart, weekEnd)
+}
+</script>
+```
+
+#### With Locale Support
+
+```vue
+<template>
+  <CroutonWeekCalendar
+    v-model="selectedDate"
+    locale="nl-NL"
+    :week-starts-on="1"
+    weekday-format="short"
+  />
+</template>
+```
+
+#### With Custom Styling
+
+```vue
+<template>
+  <CroutonWeekCalendar
+    v-model="selectedDate"
+    size="lg"
+    color="secondary"
+    :ui="{
+      root: 'bg-gray-50 rounded-lg p-4',
+      dayNumber: 'font-bold',
+      dayLabel: 'text-gray-500'
+    }"
+  />
+</template>
+```
+
+#### Programmatic Navigation
+
+```vue
+<template>
+  <div>
+    <UButton @click="goToDate">Go to Event</UButton>
+    <CroutonWeekCalendar ref="calendar" v-model="selectedDate" />
+  </div>
+</template>
+
+<script setup lang="ts">
+const calendar = useTemplateRef('calendar')
+const selectedDate = ref<Date | null>(null)
+
+const goToDate = () => {
+  const eventDate = new Date('2025-03-15')
+  calendar.value?.scrollToDate(eventDate)
+}
+</script>
+```
+
+#### Custom Header
+
+```vue
+<template>
+  <CroutonWeekCalendar v-model="selectedDate">
+    <template #header="{ monthLabel, weekNumber, goToToday }">
+      <div class="flex items-center justify-between w-full px-4">
+        <h3 class="text-lg font-semibold">{{ monthLabel }}</h3>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-muted">Week {{ weekNumber }}</span>
+          <UButton size="xs" variant="ghost" @click="goToToday">
+            Today
+          </UButton>
+        </div>
+      </div>
+    </template>
+  </CroutonWeekCalendar>
+</template>
+```
+
+### Size Variants
+
+| Size | Day Label | Day Number | Padding | Badge Size |
+|------|-----------|------------|---------|------------|
+| `sm` | 10px | 16px (base) | py-1 | xs |
+| `md` | 12px (xs) | 20px (xl) | py-2 | sm |
+| `lg` | 14px (sm) | 24px (2xl) | py-3 | md |
+
+### Comparison: CroutonCalendar vs CroutonWeekCalendar
+
+| Feature | CroutonCalendar | CroutonWeekCalendar |
+|---------|-----------------|---------------------|
+| **View** | Month grid | Week carousel |
+| **Navigation** | Month/year arrows | Swipe/arrows |
+| **Best for** | Date pickers | Booking UIs |
+| **Range Selection** | ✅ Yes | ❌ No |
+| **Infinite Scroll** | ❌ No | ✅ Yes |
+| **Mobile UX** | Good | Excellent |
+| **Day Indicators** | Via slot | Via slot |
+
+### Troubleshooting
+
+#### Issue: Week not expanding
+
+**Problem**: Reaching the edge doesn't load more weeks
+
+**Solution**: Check `expandThreshold` and `expandCount` props:
+```vue
+<!-- ✅ Ensure threshold triggers before reaching edge -->
+<CroutonWeekCalendar
+  :expand-threshold="3"
+  :expand-count="4"
+/>
+```
+
+#### Issue: Wrong week start day
+
+**Problem**: Week starts on Sunday instead of Monday (or vice versa)
+
+**Solution**: Set `weekStartsOn` prop:
+```vue
+<!-- Monday start (default) -->
+<CroutonWeekCalendar :week-starts-on="1" />
+
+<!-- Sunday start -->
+<CroutonWeekCalendar :week-starts-on="0" />
+```
+
+#### Issue: Date formatting wrong locale
+
+**Problem**: Weekday names in wrong language
+
+**Solution**: Set `locale` prop explicitly:
+```vue
+<CroutonWeekCalendar locale="nl-NL" />
+```
+
+---
+
+
+---
+
 ## CroutonFormDynamicLoader
 
 Dynamically loads collection-specific form/detail components based on collection name and action.
