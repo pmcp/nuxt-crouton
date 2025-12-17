@@ -1021,6 +1021,54 @@ After making significant changes, verify:
    ```
 3. Add to Common Tasks if it's a key workflow
 
+## Claude Code Configuration
+
+This project uses Claude Code skills, agents, and custom configurations.
+
+### Available Artifacts
+
+| Type | File | Purpose | Update When |
+|------|------|---------|-------------|
+| Skill | `.claude/skills/crouton.md` | Collection generation workflow | Field types, commands, workflow change |
+| Agent | `.claude/agents/sync-checker.md` | Verifies doc sync across artifacts | Sync rules change |
+| Settings | `.claude/settings.local.json` | Project-specific permissions | New tools needed |
+
+### Skills
+
+**crouton.md** - Triggers when user mentions:
+- "create a collection", "generate crud", "scaffold"
+- Guides Claude through schema creation and generation
+- Contains field type reference and examples
+
+### Agents
+
+**sync-checker** - Invoke after modifying generator:
+- Extracts field types and CLI commands from source
+- Compares with all documentation artifacts
+- Reports mismatches and suggests fixes
+
+Usage:
+```
+Use the sync-checker agent to verify all generator documentation is in sync.
+```
+
+### When to Update These Files
+
+| Change | Update Required |
+|--------|-----------------|
+| Add field type | `crouton.md` (Field Types table) |
+| Add CLI command | `crouton.md` (commands reference) |
+| Change sync rules | `sync-checker.md` |
+| Add new agent | This section + agent file |
+| Add new skill | This section + skill file |
+
+### Future: MCP Server
+
+When `packages/crouton-mcp-server/` is implemented:
+- Add to this table
+- Update sync-checker to include MCP validation
+- See `docs/plans/crouton-mcp-and-sync-workflow.md` for implementation plan
+
 ## Key Reminders
 
 1. **Check Nuxt MCP first** - Always, no exceptions
