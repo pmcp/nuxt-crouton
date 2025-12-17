@@ -6,7 +6,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 36 / 54 |
+| **Tasks Completed** | 37 / 54 |
 | **Current Phase** | Phase 8 - Integration & Polish |
 | **Estimated Total** | ~40-60 hours |
 
@@ -709,12 +709,12 @@ const { items } = useBookings()
 - [x] ✅ Add loading states to all forms (`useAuthLoading` composable)
 - [x] ✅ Ensure no flash of unauthenticated content (`components/Loading/AuthGuard.vue`)
 
-### Task 8.4: Security Review
-- [ ] Review CSRF protection
-- [ ] Review session security
-- [ ] Review rate limiting
-- [ ] Review input validation
-- [ ] Test for common vulnerabilities
+### Task 8.4: Security Review ✅
+- [x] ✅ Review CSRF protection (sameSite cookies, state params in OAuth)
+- [x] ✅ Review session security (httpOnly, secure cookies, token hashing)
+- [x] ✅ Review rate limiting (documented Better Auth defaults)
+- [x] ✅ Review input validation (`app/utils/security.ts` with validators)
+- [x] ✅ Test for common vulnerabilities (`docs/SECURITY.md` with checklist)
 
 ### Task 8.5: Performance
 - [ ] Minimize client bundle size
