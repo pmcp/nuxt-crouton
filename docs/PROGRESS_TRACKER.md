@@ -6,7 +6,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 21 / 24 |
+| **Tasks Completed** | 22 / 24 |
 | **Current Phase** | Phase 4 - Documentation & Cleanup |
 | **Estimated Total** | ~16-20 hours |
 | **Started** | 2024-12-17 |
@@ -193,8 +193,8 @@ This migration consolidates team authentication across all nuxt-crouton packages
 ---
 
 ## Phase 4: Documentation & Cleanup
-**Progress**: 1/4 tasks (25%)
-**Time**: 0.5h / 4h estimated
+**Progress**: 2/4 tasks (50%)
+**Time**: 1h / 4h estimated
 
 ### 4.1 Update package CLAUDE.md files
 - [x] ✅ Update `packages/nuxt-crouton/CLAUDE.md`
@@ -202,11 +202,11 @@ This migration consolidates team authentication across all nuxt-crouton packages
 - [x] ✅ Update `packages/crouton-auth/CLAUDE.md`
 
 ### 4.2 Create migration guide
-- [ ] Document breaking changes
-- [ ] Step-by-step upgrade instructions
-- [ ] Common issues and solutions
+- [x] ✅ Document breaking changes
+- [x] ✅ Step-by-step upgrade instructions
+- [x] ✅ Common issues and solutions
 
-**Files**: `apps/docs/content/guides/migration-from-supersaas.md`
+**Files**: `apps/docs/content/10.guides/2.migration.md` (added @crouton/auth section)
 
 ### 4.3 Update external documentation
 - [ ] Check `apps/docs/content` for outdated references
@@ -227,6 +227,7 @@ This migration consolidates team authentication across all nuxt-crouton packages
 - Updated nuxt-crouton CLAUDE.md (removed team-auth.ts ref, added @crouton/auth) (Task 4.1)
 - Updated generator CLAUDE.md (added Team Authentication section, updated sync refs) (Task 4.1)
 - Updated crouton-auth CLAUDE.md (marked as canonical source, updated import paths) (Task 4.1)
+- Added @crouton/auth migration section to existing migration guide (Task 4.2)
 
 ### 2024-12-17 (Phase 3)
 - ✅ **Phase 3 Complete**
