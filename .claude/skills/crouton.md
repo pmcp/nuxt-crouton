@@ -2,6 +2,26 @@
 
 This skill helps generate complete CRUD collections for Nuxt Crouton applications.
 
+## MCP Tools Available
+
+If the Crouton MCP server is configured, you can use these tools for AI-assisted generation:
+
+| Tool | Purpose |
+|------|---------|
+| `design_schema` | Get field types and schema guidelines |
+| `validate_schema` | Validate schema before generation |
+| `generate_collection` | Execute CLI generation |
+| `list_collections` | List existing collections |
+| `list_layers` | List available layers |
+
+**MCP Workflow:**
+1. Call `design_schema` with collection description
+2. Build schema using returned field types
+3. Call `validate_schema` to check schema
+4. Call `generate_collection` to create files
+
+If MCP tools are not available, follow the manual process below.
+
 ## Trigger Phrases
 
 Use this skill when the user mentions:
@@ -226,5 +246,6 @@ export default {
 ## Reference Documentation
 
 - Collection Generator: `packages/nuxt-crouton-collection-generator/CLAUDE.md`
+- MCP Server: `packages/crouton-mcp-server/CLAUDE.md`
 - Core Package: `packages/nuxt-crouton/CLAUDE.md`
 - i18n Support: `packages/nuxt-crouton-i18n/CLAUDE.md`

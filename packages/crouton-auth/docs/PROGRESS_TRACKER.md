@@ -648,12 +648,14 @@ const handleSubmit = async () => {
 ## Phase 7: Testing & Documentation
 **Estimated: 6-8 hours**
 
-### Task 7.1: Unit Tests
+### Task 7.1: Unit Tests ✅
 - [x] ✅ Test `useAuth` composable (46 tests passing)
 - [x] ✅ Test `useTeam` composable (39 tests passing)
 - [x] ✅ Test `useBilling` composable (28 tests passing)
-- [ ] Test server utilities
-- [ ] Test mode-specific behavior
+- [x] ✅ Test server utilities (`server/utils/auth.ts`: 14 tests, `server/utils/team.ts`: 42 tests)
+- [x] ✅ Test mode-specific behavior and utility functions (`server/lib/auth.ts`: 53 tests)
+
+**Total: 226 tests passing, 4 skipped**
 
 ### Task 7.2: Integration Tests
 - [ ] Test login flow

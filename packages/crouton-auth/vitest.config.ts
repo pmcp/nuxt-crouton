@@ -25,7 +25,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['app/composables/**/*.ts'],
+      include: ['app/composables/**/*.ts', 'server/utils/**/*.ts', 'server/lib/**/*.ts'],
       exclude: ['**/node_modules/**', '**/dist/**'],
     },
     setupFiles: ['./tests/setup.ts'],

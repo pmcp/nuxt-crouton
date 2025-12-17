@@ -313,6 +313,24 @@ After generation, you can:
 
 The generated code is yours to modify!
 
+## AI-Powered Generation (MCP Server)
+
+For AI-assisted collection generation, use the companion MCP server:
+
+```bash
+npm install -g @friendlyinternet/crouton-mcp-server
+```
+
+The MCP server enables AI assistants like Claude to:
+- Design schemas using natural language descriptions
+- Validate schemas before generation
+- Execute collection generation with proper options
+- List existing collections and layers
+
+Configure in Claude Code or Claude Desktop to enable AI-powered collection creation.
+
+See [@friendlyinternet/crouton-mcp-server](https://www.npmjs.com/package/@friendlyinternet/crouton-mcp-server) for setup instructions.
+
 ## License
 
 MIT © FYIT

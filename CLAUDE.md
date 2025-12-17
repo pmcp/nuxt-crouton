@@ -873,7 +873,7 @@ docs/
 ### External Documentation Updates
 **MANDATORY: After making changes to the codebase, ALWAYS check and update the external documentation.**
 
-Documentation location: `/Users/pmcp/Projects/crouton-docs/content`
+Documentation location: `apps/docs/content`
 
 **Workflow:**
 1. **Check for references** - Search the docs for mentions of what you changed
@@ -889,11 +889,10 @@ When you make changes to:
 
 **How to check:**
 ```bash
-# Search for references in the docs
-cd /Users/pmcp/Projects/crouton-docs/content
-grep -r "functionName" .
-grep -r "ComponentName" .
-grep -r "api/endpoint" .
+# Search for references in the docs (from project root)
+grep -r "functionName" apps/docs/content
+grep -r "ComponentName" apps/docs/content
+grep -r "api/endpoint" apps/docs/content
 ```
 
 This ensures the public-facing documentation stays in sync with the codebase.
@@ -976,6 +975,7 @@ This codebase has AI-friendly documentation that MUST be kept in sync with code 
 | Add generator feature | `packages/nuxt-crouton-collection-generator/CLAUDE.md` |
 | Change CLI command | Generator's `CLAUDE.md` + `.claude/skills/crouton.md` |
 | Add new field type | `.claude/skills/crouton.md` (Field Types table) |
+| Change auth connector | `packages/crouton-auth/CLAUDE.md` + Generator's CLAUDE.md |
 | Add new package | Create `packages/{name}/CLAUDE.md` using existing as template |
 
 ### AI Documentation Files
@@ -1032,6 +1032,7 @@ This project uses Claude Code skills, agents, and custom configurations.
 | Skill | `.claude/skills/crouton.md` | Collection generation workflow | Field types, commands, workflow change |
 | Agent | `.claude/agents/sync-checker.md` | Verifies doc sync across artifacts | Sync rules change |
 | Settings | `.claude/settings.local.json` | Project-specific permissions | New tools needed |
+| MCP Server | `packages/crouton-mcp-server/` | AI-powered collection generation | CLI commands, field types change |
 
 ### Skills
 
@@ -1056,18 +1057,57 @@ Use the sync-checker agent to verify all generator documentation is in sync.
 
 | Change | Update Required |
 |--------|-----------------|
-| Add field type | `crouton.md` (Field Types table) |
-| Add CLI command | `crouton.md` (commands reference) |
+| Add field type | `crouton.md` (Field Types table), MCP Server field types |
+| Add CLI command | `crouton.md` (commands reference), MCP Server tools |
 | Change sync rules | `sync-checker.md` |
 | Add new agent | This section + agent file |
 | Add new skill | This section + skill file |
+| Add MCP tool | MCP Server package + this section |
 
-### Future: MCP Server
+### MCP Server
 
-When `packages/crouton-mcp-server/` is implemented:
-- Add to this table
-- Update sync-checker to include MCP validation
-- See `docs/plans/crouton-mcp-and-sync-workflow.md` for implementation plan
+The Crouton MCP Server (`packages/crouton-mcp-server/`) enables AI assistants to generate collections through a structured interface.
+
+**Tools Available:**
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `design_schema` | Get field types and schema guidelines | First - before creating schema |
+| `validate_schema` | Validate schema structure | After designing, before generating |
+| `generate_collection` | Execute collection generation | After validation passes |
+| `list_collections` | List existing collections | To understand project structure |
+| `list_layers` | List available layers | To choose target layer |
+
+**Resources Available:**
+
+| URI | Description |
+|-----|-------------|
+| `crouton://field-types` | Markdown field type reference |
+| `crouton://field-types/json` | JSON field type definitions |
+| `crouton://schema-template` | Example schema template |
+
+**Configuration:**
+
+The MCP server is registered in `.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "crouton": {
+      "command": "node",
+      "args": ["./packages/crouton-mcp-server/dist/index.js"]
+    }
+  }
+}
+```
+
+**Usage Flow:**
+1. AI calls `design_schema` with collection description
+2. AI creates schema based on field type reference
+3. AI calls `validate_schema` to check schema structure
+4. AI calls `generate_collection` to execute generation
+
+See `packages/crouton-mcp-server/CLAUDE.md` for detailed documentation
 
 ## Key Reminders
 
