@@ -18,7 +18,9 @@
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub",
-    "prepack": "pnpm build"
+    "prepack": "pnpm build",
+    "sync-stub": "tsx scripts/sync-stub.ts",
+    "sync-stub:fix": "tsx scripts/sync-stub.ts --fix"
   },
   "files": [
     "app",
@@ -59,6 +61,7 @@
     "nuxt": "^4.0.0"
   },
   "devDependencies": {
+    "tsx": "^4.19.2",
     "unbuild": "^3.6.1"
   }
 }
