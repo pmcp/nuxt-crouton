@@ -6,8 +6,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 32 / 54 |
-| **Current Phase** | Phase 6 - Complete |
+| **Tasks Completed** | 34 / 54 |
+| **Current Phase** | Phase 8 - Integration & Polish |
 | **Estimated Total** | ~40-60 hours |
 
 ---
@@ -673,24 +673,24 @@ const handleSubmit = async () => {
 - [ ] Test billing flow
 - [ ] Test mode switching
 
-### Task 7.4: Documentation
-- [ ] Write README.md with quick start
-- [ ] Document all configuration options
-- [ ] Document composables API
-- [ ] Document components API
-- [ ] Document server utilities
-- [ ] Create examples for each mode
-- [ ] Document migration from SuperSaaS
+### Task 7.4: Documentation ✅
+- [x] ✅ Write README.md with quick start
+- [x] ✅ Document all configuration options
+- [x] ✅ Document composables API
+- [x] ✅ Document components API
+- [x] ✅ Document server utilities
+- [x] ✅ Create examples for each mode
+- [x] ✅ Document migration from SuperSaaS
 
 ---
 
 ## Phase 8: Integration & Polish
 **Estimated: 4-6 hours**
 
-### Task 8.1: Crouton Collection Integration
-- [ ] Create hook for injecting team context into collections
-- [ ] Auto-scope queries to current team
-- [ ] Document pattern for collection authors
+### Task 8.1: Crouton Collection Integration ✅
+- [x] ✅ Create hook for injecting team context into collections (`app/plugins/team-context.ts`)
+- [x] ✅ Auto-scope queries to current team (via `useTeam()` → `useTeamContext()` → `useCollectionQuery()`)
+- [x] ✅ Document pattern for collection authors (`docs/COLLECTION_INTEGRATION.md`)
 
 ```typescript
 // How collections will use it

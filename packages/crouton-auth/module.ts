@@ -240,6 +240,12 @@ export default defineNuxtModule<CroutonAuthConfig>({
       mode: 'client',
     })
 
+    // Add team context plugin (for collection integration)
+    addPlugin({
+      src: resolver.resolve('./app/plugins/team-context'),
+      mode: 'all',
+    })
+
     // Transpile the module
     nuxt.options.build.transpile.push(resolver.resolve('./'))
 

@@ -1,0 +1,255 @@
+# CLAUDE.md - @crouton/auth
+
+## Package Purpose
+
+Authentication layer for Nuxt applications using Better Auth. Provides teams/organizations, billing (Stripe), passkeys (WebAuthn), 2FA, and OAuth support. Integrates with nuxt-crouton collections via the `#crouton/team-auth` connector.
+
+## Operational Modes
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `multi-tenant` | Users can create/join multiple organizations | SaaS platforms |
+| `single-tenant` | One organization, multiple users | Company apps |
+| `personal` | One organization per user | Personal workspaces |
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `module.ts` | Nuxt module entry point |
+| `nuxt.config.ts` | Layer configuration |
+| `server/lib/auth.ts` | Better Auth factory (`createAuth`) |
+| `server/utils/team-auth.ts` | nuxt-crouton connector (`#crouton/team-auth`) |
+| `server/utils/team.ts` | Core team resolution logic |
+| `types/config.ts` | `CroutonAuthConfig` configuration type |
+| `types/connector.ts` | `BetterAuthConnector` interface |
+
+## Composables
+
+| Composable | Purpose |
+|------------|---------|
+| `useAuth()` | Authentication methods (login, register, logout, OAuth, passkeys, 2FA) |
+| `useSession()` | Reactive session state |
+| `useTeam()` | Team/organization management |
+| `useTeamContext()` | Current team context |
+| `useTeamState()` | Team state management |
+| `useBilling()` | Subscription and billing management |
+
+## Components
+
+### Auth Components
+- `LoginForm`, `RegisterForm`, `ForgotPasswordForm`
+- `OAuthButtons`, `PasskeyButton`, `MagicLinkForm`
+- `TwoFactorForm`
+
+### Account Components
+- `ProfileForm`, `PasswordForm`, `Settings`
+- `TwoFactorSetup`, `PasskeyManager`
+- `LinkedAccounts`, `DeleteAccount`
+
+### Team Components
+- `CreateForm`, `Switcher`, `Settings`
+- `Members`, `MemberRow`, `MemberInviteForm`
+- `Invitations`, `DeleteConfirm`
+
+### Billing Components
+- `CurrentPlan`, `PlanCard`, `PricingTable`
+- `UpgradeButton`, `PortalButton`, `UsageDisplay`
+
+### Sidebar Components
+- `AuthSidebar`, `TeamSection`, `UserMenu`
+
+## Server Utilities
+
+### Team Auth Connector (`#crouton/team-auth`)
+
+```typescript
+import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
+
+// In API handlers
+export default defineEventHandler(async (event) => {
+  const { team, member, user } = await resolveTeamAndCheckMembership(event)
+  // team is the resolved organization
+  // member is the user's membership
+  // user is the authenticated user
+})
+```
+
+### Authorization Helpers
+
+```typescript
+import { requireTeamMember, requireTeamAdmin, requireTeamOwner } from '#crouton/team-auth'
+
+// Require specific roles
+await requireTeamMember(event)  // Any team member
+await requireTeamAdmin(event)   // Admin or owner
+await requireTeamOwner(event)   // Owner only
+```
+
+### Query Functions
+
+```typescript
+import {
+  getTeamById,
+  getTeamBySlug,
+  getUserTeams,
+  isTeamMember,
+  canUserCreateTeam
+} from '#crouton/team-auth'
+```
+
+## Middleware
+
+| Middleware | Purpose |
+|------------|---------|
+| `auth` | Requires authentication (redirect to login) |
+| `guest` | Requires NO authentication (redirect to dashboard) |
+| `team-context.global` | Sets team context from route params |
+
+## Configuration
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['@crouton/auth'],
+
+  croutonAuth: {
+    mode: 'multi-tenant', // 'multi-tenant' | 'single-tenant' | 'personal'
+
+    // Enable/disable features
+    emailPassword: true,
+    magicLink: false,
+    passkeys: true,
+    twoFactor: true,
+
+    // OAuth providers
+    oauth: {
+      google: true,
+      github: true
+    },
+
+    // Billing (Stripe)
+    billing: {
+      enabled: true,
+      plans: [
+        { id: 'free', name: 'Free', price: 0 },
+        { id: 'pro', name: 'Pro', price: 29 }
+      ]
+    }
+  }
+})
+```
+
+## Environment Variables
+
+```bash
+# Required
+BETTER_AUTH_SECRET=your-secret-key
+BETTER_AUTH_URL=http://localhost:3000
+
+# OAuth (optional)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+
+# Stripe (optional)
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+```
+
+## Database Schema
+
+Located in `server/database/schema/auth.ts`:
+
+- `user` - User accounts
+- `session` - Active sessions
+- `account` - OAuth linked accounts
+- `verification` - Email verification tokens
+- `organization` - Teams/organizations
+- `member` - Organization memberships
+- `invitation` - Pending invitations
+- `passkey` - WebAuthn credentials
+- `twoFactor` - 2FA settings
+- `subscription` - Stripe subscriptions
+
+## CLI Commands
+
+```bash
+# Database migrations
+pnpm migrate:status    # Check migration status
+pnpm migrate:generate  # Generate migrations
+pnpm migrate:push      # Apply migrations
+pnpm migrate:check     # Validate schema
+pnpm migrate:reset     # Reset database
+
+# Seeding
+pnpm seed              # Seed all
+pnpm seed:users        # Seed test users
+pnpm seed:orgs         # Seed organizations
+pnpm seed:billing      # Seed billing data
+pnpm seed:clear        # Clear all data
+```
+
+## Common Tasks
+
+### Add a new OAuth provider
+
+1. Add provider config in `server/lib/auth.ts`
+2. Add environment variables
+3. Update `types/config.ts` if needed
+4. Add button in `OAuthButtons.vue` component
+
+### Add a new billing plan
+
+1. Create plan in Stripe dashboard
+2. Add to `croutonAuth.billing.plans` config
+3. Update `PricingTable.vue` if custom display needed
+
+### Customize auth pages
+
+1. Pages are in `app/pages/auth/`
+2. Override by creating same path in your app
+3. Use components from `app/components/Auth/`
+
+### Integrate with nuxt-crouton collections
+
+Collections automatically use `#crouton/team-auth` when generated. Ensure:
+
+1. Configure alias in `nuxt.config.ts`:
+   ```typescript
+   nitro: {
+     alias: {
+       '#crouton/team-auth': '@crouton/auth/server/utils/team-auth'
+     }
+   }
+   ```
+
+2. Export schema from main schema index:
+   ```typescript
+   // server/database/schema/index.ts
+   export * from '@crouton/auth/server/database/schema/auth'
+   ```
+
+## Dependencies
+
+- **Extends**: None (standalone module/layer)
+- **Works with**: `@friendlyinternet/nuxt-crouton` (via connector)
+- **Core deps**: better-auth, @better-auth/stripe, @better-auth/passkey, stripe
+
+## Testing
+
+```bash
+pnpm test              # Run all tests
+pnpm test:unit         # Unit tests only
+pnpm test:integration  # Integration tests only
+```
+
+## Naming Conventions
+
+```
+Component: AuthLoginForm, TeamSwitcher, BillingCurrentPlan
+Composable: useAuth, useTeam, useBilling
+API: /api/auth/[...all] (Better Auth handles routing)
+Middleware: auth, guest, team-context
+```
