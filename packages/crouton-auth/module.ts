@@ -293,6 +293,9 @@ export default defineNuxtModule<CroutonAuthConfig>({
       mode: 'all',
     })
 
+    // Add CSS assets
+    nuxt.options.css.push(resolver.resolve('./app/assets/css/auth.css'))
+
     // Transpile the module
     nuxt.options.build.transpile.push(resolver.resolve('./'))
 

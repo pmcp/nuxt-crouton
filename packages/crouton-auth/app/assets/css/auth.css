@@ -1,0 +1,302 @@
+/**
+ * @crouton/auth Styles
+ *
+ * Base styles and CSS variables for consistent theming.
+ * Designed to work with Nuxt UI and Tailwind CSS.
+ */
+
+/* ============================================================================
+   CSS Variables for Theming
+   ============================================================================ */
+
+:root {
+  /* Auth-specific colors (can be customized per-project) */
+  --auth-primary: var(--color-primary-500);
+  --auth-primary-hover: var(--color-primary-600);
+  --auth-error: var(--color-red-500);
+  --auth-success: var(--color-green-500);
+  --auth-warning: var(--color-yellow-500);
+
+  /* Card styling */
+  --auth-card-bg: white;
+  --auth-card-border: var(--color-gray-200);
+  --auth-card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+
+  /* Form styling */
+  --auth-input-bg: white;
+  --auth-input-border: var(--color-gray-300);
+  --auth-input-focus-ring: var(--color-primary-500);
+
+  /* Text colors */
+  --auth-text-primary: var(--color-gray-900);
+  --auth-text-secondary: var(--color-gray-600);
+  --auth-text-muted: var(--color-gray-400);
+
+  /* Spacing */
+  --auth-spacing-xs: 0.25rem;
+  --auth-spacing-sm: 0.5rem;
+  --auth-spacing-md: 1rem;
+  --auth-spacing-lg: 1.5rem;
+  --auth-spacing-xl: 2rem;
+}
+
+/* Dark mode */
+.dark {
+  --auth-card-bg: var(--color-gray-800);
+  --auth-card-border: var(--color-gray-700);
+
+  --auth-input-bg: var(--color-gray-900);
+  --auth-input-border: var(--color-gray-700);
+
+  --auth-text-primary: var(--color-gray-100);
+  --auth-text-secondary: var(--color-gray-400);
+  --auth-text-muted: var(--color-gray-500);
+}
+
+/* ============================================================================
+   Transitions
+   ============================================================================ */
+
+/* Fade transition */
+.auth-fade-enter-active,
+.auth-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.auth-fade-enter-from,
+.auth-fade-leave-to {
+  opacity: 0;
+}
+
+/* Slide transition */
+.auth-slide-enter-active,
+.auth-slide-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.auth-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.auth-slide-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Scale transition */
+.auth-scale-enter-active,
+.auth-scale-leave-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.auth-scale-enter-from,
+.auth-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* List transition */
+.auth-list-enter-active,
+.auth-list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.auth-list-enter-from,
+.auth-list-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.auth-list-move {
+  transition: transform 0.3s ease;
+}
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+/* Auth card styling */
+.auth-card {
+  background-color: var(--auth-card-bg);
+  border: 1px solid var(--auth-card-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--auth-card-shadow);
+  padding: var(--auth-spacing-lg);
+}
+
+/* Auth form layout */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--auth-spacing-md);
+}
+
+/* Auth divider with text */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--auth-spacing-md);
+  color: var(--auth-text-muted);
+  font-size: 0.875rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--auth-card-border);
+}
+
+/* Link styling */
+.auth-link {
+  color: var(--auth-primary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.auth-link:hover {
+  color: var(--auth-primary-hover);
+  text-decoration: underline;
+}
+
+/* Error text */
+.auth-error-text {
+  color: var(--auth-error);
+  font-size: 0.875rem;
+}
+
+/* Success text */
+.auth-success-text {
+  color: var(--auth-success);
+  font-size: 0.875rem;
+}
+
+/* ============================================================================
+   Responsive Breakpoints
+   ============================================================================ */
+
+/* Auth page container */
+.auth-page-container {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: var(--auth-spacing-md);
+}
+
+@media (min-width: 640px) {
+  .auth-page-container {
+    padding: var(--auth-spacing-xl);
+  }
+}
+
+/* Auth modal/form wrapper */
+.auth-form-wrapper {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .auth-form-wrapper {
+    width: 400px;
+  }
+}
+
+/* Team sidebar responsive */
+.auth-sidebar-collapsed {
+  width: 4rem;
+}
+
+.auth-sidebar-expanded {
+  width: 16rem;
+}
+
+@media (max-width: 768px) {
+  .auth-sidebar-expanded {
+    position: fixed;
+    z-index: 40;
+    left: 0;
+    top: 0;
+    bottom: 0;
+  }
+}
+
+/* ============================================================================
+   Animation Keyframes
+   ============================================================================ */
+
+@keyframes auth-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes auth-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes auth-bounce {
+  0%, 100% {
+    transform: translateY(-5%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* Animation utilities */
+.auth-animate-spin {
+  animation: auth-spin 1s linear infinite;
+}
+
+.auth-animate-pulse {
+  animation: auth-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.auth-animate-bounce {
+  animation: auth-bounce 1s infinite;
+}
+
+/* ============================================================================
+   Focus States (Accessibility)
+   ============================================================================ */
+
+.auth-focus-ring:focus {
+  outline: 2px solid var(--auth-input-focus-ring);
+  outline-offset: 2px;
+}
+
+.auth-focus-ring:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.auth-focus-ring:focus-visible {
+  outline: 2px solid var(--auth-input-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   Print Styles
+   ============================================================================ */
+
+@media print {
+  .auth-card {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+
+  .auth-sidebar,
+  .auth-nav {
+    display: none;
+  }
+}
