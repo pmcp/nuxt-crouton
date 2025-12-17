@@ -34,9 +34,20 @@ export const user = sqliteTable('user', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
   // Stripe extension
   stripeCustomerId: text('stripeCustomerId'),
+  // Admin extension (crouton-admin package)
+  /** Whether this user has super admin privileges */
+  superAdmin: integer('superAdmin', { mode: 'boolean' }).notNull().default(false),
+  /** Whether this user is banned from the platform */
+  banned: integer('banned', { mode: 'boolean' }).notNull().default(false),
+  /** Reason for the ban (shown to user and admin) */
+  bannedReason: text('bannedReason'),
+  /** When the ban expires (null = permanent) */
+  bannedUntil: integer('bannedUntil', { mode: 'timestamp' }),
 }, (table) => [
   index('user_email_idx').on(table.email),
   index('user_stripe_customer_idx').on(table.stripeCustomerId),
+  index('user_super_admin_idx').on(table.superAdmin),
+  index('user_banned_idx').on(table.banned),
 ])
 
 /**
@@ -56,10 +67,14 @@ export const session = sqliteTable('session', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
   // Organization extension - tracks active team context
   activeOrganizationId: text('activeOrganizationId'),
+  // Impersonation extension (crouton-admin package)
+  /** The original admin user ID when impersonating */
+  impersonatingFrom: text('impersonatingFrom'),
 }, (table) => [
   index('session_user_idx').on(table.userId),
   index('session_token_idx').on(table.token),
   index('session_active_org_idx').on(table.activeOrganizationId),
+  index('session_impersonating_idx').on(table.impersonatingFrom),
 ])
 
 /**
