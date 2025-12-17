@@ -1,0 +1,143 @@
+import { describe, it, expect } from 'vitest'
+import {
+  FIELD_TYPES,
+  VALID_FIELD_TYPES,
+  isValidFieldType,
+  getFieldTypeReference
+} from '../src/utils/field-types.js'
+
+describe('FIELD_TYPES', () => {
+  it('should contain all required field types', () => {
+    const expectedTypes = [
+      'string',
+      'text',
+      'number',
+      'decimal',
+      'boolean',
+      'date',
+      'json',
+      'repeater',
+      'array'
+    ]
+
+    for (const type of expectedTypes) {
+      expect(FIELD_TYPES).toHaveProperty(type)
+    }
+  })
+
+  it('should have required properties for each type', () => {
+    const requiredProps = ['db', 'drizzle', 'zod', 'default', 'tsType']
+
+    for (const [typeName, mapping] of Object.entries(FIELD_TYPES)) {
+      for (const prop of requiredProps) {
+        expect(mapping).toHaveProperty(prop, expect.any(String))
+      }
+    }
+  })
+
+  describe('string type', () => {
+    it('should have correct mapping', () => {
+      expect(FIELD_TYPES.string).toEqual({
+        db: 'VARCHAR(255)',
+        drizzle: 'text',
+        zod: 'z.string()',
+        default: "''",
+        tsType: 'string'
+      })
+    })
+  })
+
+  describe('decimal type', () => {
+    it('should have correct mapping', () => {
+      expect(FIELD_TYPES.decimal).toEqual({
+        db: 'DECIMAL(10,2)',
+        drizzle: 'decimal',
+        zod: 'z.number()',
+        default: '0',
+        tsType: 'number'
+      })
+    })
+  })
+
+  describe('json type', () => {
+    it('should have correct mapping', () => {
+      expect(FIELD_TYPES.json).toEqual({
+        db: 'JSON',
+        drizzle: 'json',
+        zod: 'z.record(z.any())',
+        default: '{}',
+        tsType: 'Record<string, any>'
+      })
+    })
+  })
+
+  describe('repeater type', () => {
+    it('should have correct mapping', () => {
+      expect(FIELD_TYPES.repeater).toEqual({
+        db: 'JSON',
+        drizzle: 'json',
+        zod: 'z.array(z.any())',
+        default: '[]',
+        tsType: 'any[]'
+      })
+    })
+  })
+})
+
+describe('VALID_FIELD_TYPES', () => {
+  it('should be an array of type names', () => {
+    expect(Array.isArray(VALID_FIELD_TYPES)).toBe(true)
+    expect(VALID_FIELD_TYPES).toContain('string')
+    expect(VALID_FIELD_TYPES).toContain('number')
+    expect(VALID_FIELD_TYPES).toContain('boolean')
+  })
+
+  it('should match FIELD_TYPES keys', () => {
+    expect(VALID_FIELD_TYPES.sort()).toEqual(Object.keys(FIELD_TYPES).sort())
+  })
+})
+
+describe('isValidFieldType', () => {
+  it('should return true for valid types', () => {
+    expect(isValidFieldType('string')).toBe(true)
+    expect(isValidFieldType('text')).toBe(true)
+    expect(isValidFieldType('number')).toBe(true)
+    expect(isValidFieldType('decimal')).toBe(true)
+    expect(isValidFieldType('boolean')).toBe(true)
+    expect(isValidFieldType('date')).toBe(true)
+    expect(isValidFieldType('json')).toBe(true)
+    expect(isValidFieldType('repeater')).toBe(true)
+    expect(isValidFieldType('array')).toBe(true)
+  })
+
+  it('should return false for invalid types', () => {
+    expect(isValidFieldType('invalid')).toBe(false)
+    expect(isValidFieldType('varchar')).toBe(false)
+    expect(isValidFieldType('int')).toBe(false)
+    expect(isValidFieldType('')).toBe(false)
+  })
+})
+
+describe('getFieldTypeReference', () => {
+  it('should return a markdown formatted string', () => {
+    const reference = getFieldTypeReference()
+
+    expect(reference).toContain('# Field Types Reference')
+    expect(reference).toContain('| Type | Zod Validation | TypeScript | Default |')
+  })
+
+  it('should include all field types', () => {
+    const reference = getFieldTypeReference()
+
+    for (const type of VALID_FIELD_TYPES) {
+      expect(reference).toContain(`| ${type} |`)
+    }
+  })
+
+  it('should include usage example', () => {
+    const reference = getFieldTypeReference()
+
+    expect(reference).toContain('## Usage in Schema')
+    expect(reference).toContain('"type": "string"')
+  })
+})

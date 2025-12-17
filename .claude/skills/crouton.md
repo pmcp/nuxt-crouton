@@ -45,7 +45,8 @@ Use this skill when the user mentions:
 | boolean, yes/no, active | `boolean` | `"active": { "type": "boolean" }` |
 | date, timestamp, when | `date` | `"startDate": { "type": "date" }` |
 | json, object, settings | `json` | `"settings": { "type": "json" }` |
-| list of items, array | `repeater` | `"items": { "type": "repeater" }` |
+| list of items, repeater | `repeater` | `"items": { "type": "repeater" }` |
+| tags, string list | `array` | `"tags": { "type": "array" }` |
 
 ### Common Field Meta Options
 
