@@ -118,7 +118,21 @@ export default {
 }
 ```
 
+## Examples
+
+Example configuration files are in `examples/`:
+- `crouton.config.example.js` - Exhaustive config with all options documented
+- `crouton.config.products.js` - Minimal single-collection example
+
 ## Common Tasks
+
+### Keep examples in sync (IMPORTANT)
+
+When modifying the generator, **always check if examples need updating**:
+1. Adding/removing a flag → Update `examples/crouton.config.example.js`
+2. Changing schema format → Update example schemas in comments
+3. Changing CLI options → Update CLI reference in example comments
+4. Changing defaults → Update documented defaults
 
 ### Add a new generator template
 1. Create `lib/generators/{name}.mjs`
@@ -181,4 +195,122 @@ crouton config ./crouton.config.js --dry-run
 
 # Verify generated code
 npx nuxt typecheck
+```
+
+---
+
+## Documentation Sync Workflow (MANDATORY)
+
+**CRITICAL**: After ANY change to this package, Claude MUST follow this workflow to keep all artifacts in sync.
+
+### Artifacts That Must Stay in Sync
+
+| Artifact | Location | Update When |
+|----------|----------|-------------|
+| This CLAUDE.md | `packages/nuxt-crouton-collection-generator/CLAUDE.md` | CLI, options, field types, key files change |
+| README.md | `packages/nuxt-crouton-collection-generator/README.md` | User-facing features change |
+| Example configs | `examples/crouton.config.*.js` | Flags, schema format, defaults change |
+| Claude Skill | `.claude/skills/crouton.md` | Field types, workflow, commands change |
+| MCP Server | `packages/crouton-mcp-server/` | CLI commands, field types change |
+| External Docs | `/Users/pmcp/Projects/crouton-docs/content/` | Any user-facing change |
+
+### Step 1: Classify Your Change
+
+Before finishing, identify what type of change you made:
+
+| Change Type | Sync Required |
+|-------------|---------------|
+| Internal refactor | None |
+| Bug fix | Maybe external docs (if behavior changed) |
+| New field type | **All artifacts** |
+| New CLI flag/option | CLAUDE.md, README, Skill, MCP, External docs |
+| New command | CLAUDE.md, README, Skill, MCP, External docs |
+| Config format change | CLAUDE.md, README, Examples, Skill, External docs |
+| Generator template change | CLAUDE.md (Key Files), maybe External docs |
+
+### Step 2: Update Package Documentation
+
+For non-internal changes:
+
+- [ ] **This CLAUDE.md**
+  - [ ] CLI Commands section (if commands changed)
+  - [ ] Key Options table (if options changed)
+  - [ ] Field Types table (if types changed)
+  - [ ] Key Files table (if files added/removed)
+  - [ ] Common Tasks (if workflows changed)
+
+- [ ] **README.md**
+  - [ ] Usage examples
+  - [ ] Options documentation
+  - [ ] Feature descriptions
+
+- [ ] **Example configs** (`examples/`)
+  - [ ] Add new flags/options with comments
+  - [ ] Update defaults if changed
+
+### Step 3: Update Claude Skill
+
+If field types, commands, or workflow changed:
+
+- [ ] Update `.claude/skills/crouton.md`
+  - [ ] Field Types table
+  - [ ] Quick Reference section
+  - [ ] Examples (if affected)
+
+### Step 4: Update MCP Server
+
+If CLI commands, flags, or field types changed:
+
+- [ ] Update `packages/crouton-mcp-server/` (when implemented)
+  - [ ] Field type definitions
+  - [ ] Tool input schemas
+  - [ ] Tool handlers
+
+### Step 5: Update External Documentation
+
+For ANY user-facing change:
+
+```bash
+# Search for references in external docs
+cd /Users/pmcp/Projects/crouton-docs/content
+grep -r "crouton" . --include="*.md" | head -20
+```
+
+- [ ] Update affected documentation pages
+- [ ] Update code examples if syntax changed
+
+### Step 6: Invoke Sync Checker
+
+After completing updates, invoke the sync-checker agent:
+
+```
+Use the sync-checker agent to verify all artifacts are in sync.
+```
+
+The agent will:
+1. Extract field types from `lib/utils/helpers.mjs`
+2. Compare with all documentation
+3. Check CLI commands match documentation
+4. Report any mismatches
+
+### Quick Sync Checklist (Copy-Paste)
+
+```markdown
+## Sync Checklist for [describe change]
+
+**Change Type**: [ ] Internal [ ] Bug Fix [ ] Field Type [ ] CLI [ ] Config
+
+### Package Docs
+- [ ] CLAUDE.md updated
+- [ ] README.md updated
+- [ ] Examples updated
+
+### External Artifacts
+- [ ] `.claude/skills/crouton.md` updated
+- [ ] MCP Server updated (if exists)
+- [ ] External docs checked
+
+### Verification
+- [ ] Sync-checker agent invoked
+- [ ] `npx nuxt typecheck` passed
 ```

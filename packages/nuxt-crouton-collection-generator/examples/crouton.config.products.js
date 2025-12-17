@@ -1,0 +1,39 @@
+/**
+ * Simple Products Configuration Example
+ * =====================================
+ *
+ * Minimal config for generating a single products collection.
+ * For a comprehensive example with all options, see crouton.config.example.js
+ *
+ * Usage:
+ *   npx crouton-generate config ./crouton.config.products.js
+ */
+
+export default {
+  dialect: 'sqlite',
+
+  // Enhanced format: each collection has its own schema
+  collections: [
+    {
+      name: 'products',
+      fieldsFile: './test-product-schema.json'
+    }
+  ],
+
+  targets: [
+    {
+      layer: 'shop',
+      collections: ['products']
+    }
+  ],
+
+  flags: {
+    noTranslations: true,
+    force: true,
+    noDb: false,
+    useMetadata: true,
+    autoRelations: false,
+    dryRun: false,
+    useTeamUtility: false
+  }
+}

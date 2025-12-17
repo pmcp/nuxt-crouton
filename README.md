@@ -6,40 +6,64 @@ Nuxt Crouton is a collection of Nuxt Layers that provide instant CRUD functional
 
 ## 📦 Packages
 
-### [@friendlyinternet/nuxt-crouton](./packages/nuxt-crouton)
+### Core
+
+#### [@friendlyinternet/nuxt-crouton](./packages/nuxt-crouton)
 Base CRUD layer with essential components and composables for data management.
 
-### [@friendlyinternet/nuxt-crouton-i18n](./packages/nuxt-crouton-i18n)
+#### [@friendlyinternet/nuxt-crouton-collection-generator](./packages/nuxt-crouton-collection-generator)
+CLI tool to generate complete CRUD collections with API endpoints, components, and database schema.
+
+### Addon Layers
+
+#### [@friendlyinternet/nuxt-crouton-i18n](./packages/nuxt-crouton-i18n)
 Multi-language support extending the base layer with i18n capabilities.
 
-### [@friendlyinternet/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
+#### [@friendlyinternet/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
 Rich text editor integration extending the base layer with Tiptap.
 
-### [@friendlyinternet/nuxt-crouton-supersaas](./packages/nuxt-crouton-supersaas)
+#### [@friendlyinternet/nuxt-crouton-supersaas](./packages/nuxt-crouton-supersaas)
 SuperSaaS integration layer - connectors, translations, and utilities for SuperSaaS applications.
 
-### [@friendlyinternet/nuxt-crouton-collection-generator](./packages/nuxt-crouton-collection-generator)
-CLI tool to generate complete CRUD collections with API endpoints, components, and database schema.
+#### [@friendlyinternet/nuxt-crouton-ai](./packages/nuxt-crouton-ai)
+AI integration layer with chat, completion, and multi-provider support (OpenAI, Anthropic).
+
+#### [@friendlyinternet/nuxt-crouton-assets](./packages/nuxt-crouton-assets)
+Centralized asset management with NuxtHub blob storage integration.
+
+#### [@friendlyinternet/nuxt-crouton-events](./packages/nuxt-crouton-events)
+Event management with calendar integration and scheduling capabilities.
+
+#### [@friendlyinternet/nuxt-crouton-maps](./packages/nuxt-crouton-maps)
+Map integration with location fields and geocoding support.
+
+#### [@friendlyinternet/nuxt-crouton-flow](./packages/nuxt-crouton-flow)
+Visual flow builder with drag-and-drop workflow creation.
+
+#### [@friendlyinternet/nuxt-crouton-devtools](./packages/nuxt-crouton-devtools)
+Development tools and debugging utilities for Crouton applications.
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-# For CRUD + i18n (most common)
-pnpm add @friendlyinternet/nuxt-crouton-i18n
-
-# For just CRUD
+# Core (always required)
 pnpm add @friendlyinternet/nuxt-crouton
 
-# For CRUD + Editor
-pnpm add @friendlyinternet/nuxt-crouton-editor
-
-# For SuperSaaS integration (connectors, translations)
-pnpm add @friendlyinternet/nuxt-crouton-supersaas
-
-# For CLI scaffolding tool
+# CLI scaffolding tool (dev dependency)
 pnpm add -D @friendlyinternet/nuxt-crouton-collection-generator
+
+# Addon layers (install as needed)
+pnpm add @friendlyinternet/nuxt-crouton-i18n       # Multi-language support
+pnpm add @friendlyinternet/nuxt-crouton-editor    # Rich text editing
+pnpm add @friendlyinternet/nuxt-crouton-supersaas # SuperSaaS integration
+pnpm add @friendlyinternet/nuxt-crouton-ai        # AI chat/completion
+pnpm add @friendlyinternet/nuxt-crouton-assets    # Asset management
+pnpm add @friendlyinternet/nuxt-crouton-events    # Event/calendar features
+pnpm add @friendlyinternet/nuxt-crouton-maps      # Map integration
+pnpm add @friendlyinternet/nuxt-crouton-flow      # Visual flow builder
+pnpm add @friendlyinternet/nuxt-crouton-devtools  # Dev tools
 ```
 
 ### Configuration
@@ -52,10 +76,16 @@ export default defineNuxtConfig({
     // Base layer (always required)
     '@friendlyinternet/nuxt-crouton',
 
-    // Optional addon layers
-    '@friendlyinternet/nuxt-crouton-i18n',      // For translations
-    '@friendlyinternet/nuxt-crouton-editor',    // For rich text editing
-    '@friendlyinternet/nuxt-crouton-supersaas'  // For SuperSaaS integration
+    // Optional addon layers (add only what you need)
+    '@friendlyinternet/nuxt-crouton-i18n',      // Multi-language support
+    '@friendlyinternet/nuxt-crouton-editor',    // Rich text editing
+    '@friendlyinternet/nuxt-crouton-supersaas', // SuperSaaS integration
+    '@friendlyinternet/nuxt-crouton-ai',        // AI chat/completion
+    '@friendlyinternet/nuxt-crouton-assets',    // Asset management
+    '@friendlyinternet/nuxt-crouton-events',    // Event/calendar features
+    '@friendlyinternet/nuxt-crouton-maps',      // Map integration
+    '@friendlyinternet/nuxt-crouton-flow',      // Visual flow builder
+    '@friendlyinternet/nuxt-crouton-devtools',  // Dev tools
   ]
 })
 ```
@@ -93,10 +123,16 @@ const { t } = useT()
 
 ```
 @friendlyinternet/nuxt-crouton (base layer - always required)
-    +
-    ├── @friendlyinternet/nuxt-crouton-i18n (addon - adds i18n)
-    ├── @friendlyinternet/nuxt-crouton-editor (addon - adds editor)
-    └── @friendlyinternet/nuxt-crouton-supersaas (addon - SuperSaaS integration)
+    │
+    ├── @friendlyinternet/nuxt-crouton-i18n        (addon - multi-language)
+    ├── @friendlyinternet/nuxt-crouton-editor      (addon - rich text)
+    ├── @friendlyinternet/nuxt-crouton-supersaas   (addon - SuperSaaS)
+    ├── @friendlyinternet/nuxt-crouton-ai          (addon - AI chat)
+    ├── @friendlyinternet/nuxt-crouton-assets      (addon - asset management)
+    ├── @friendlyinternet/nuxt-crouton-events      (addon - events/calendar)
+    ├── @friendlyinternet/nuxt-crouton-maps        (addon - maps/location)
+    ├── @friendlyinternet/nuxt-crouton-flow        (addon - visual flows)
+    └── @friendlyinternet/nuxt-crouton-devtools    (addon - dev tools)
 ```
 
 **Explicit Configuration**: Always include the base layer plus any addons you need. This makes dependencies clear and explicit.
@@ -143,6 +179,39 @@ const { t } = useT()
 - ✅ **Connector Detection** - Auto-detect and install connectors
 - ✅ **Rollback Support** - Undo generated collections
 
+### AI Layer (`@friendlyinternet/nuxt-crouton-ai`)
+- ✅ **useChat()** - Streaming chat with conversation history
+- ✅ **useCompletion()** - Text completion for single-turn AI
+- ✅ **AIChatbox** - Complete chat interface component
+- ✅ **Multi-Provider** - OpenAI and Anthropic support
+- ✅ **Server Utilities** - Provider factory and streaming
+
+### Assets Layer (`@friendlyinternet/nuxt-crouton-assets`)
+- ✅ **CroutonAssetsPicker** - Visual asset browser
+- ✅ **CroutonAssetsUploader** - File upload with metadata
+- ✅ **useAssetUpload()** - Programmatic upload handling
+- ✅ **NuxtHub Integration** - Cloudflare blob storage
+
+### Events Layer (`@friendlyinternet/nuxt-crouton-events`)
+- ✅ **Calendar Components** - Event scheduling UI
+- ✅ **Date/Time Fields** - Calendar-aware form inputs
+- ✅ **Recurring Events** - Schedule patterns support
+
+### Maps Layer (`@friendlyinternet/nuxt-crouton-maps`)
+- ✅ **Map Components** - Interactive map display
+- ✅ **Location Fields** - Address input with geocoding
+- ✅ **Marker Support** - Pin locations on maps
+
+### Flow Layer (`@friendlyinternet/nuxt-crouton-flow`)
+- ✅ **Visual Editor** - Drag-and-drop flow builder
+- ✅ **Node Types** - Configurable workflow nodes
+- ✅ **Flow Execution** - Runtime workflow engine
+
+### DevTools Layer (`@friendlyinternet/nuxt-crouton-devtools`)
+- ✅ **Debug Panel** - Inspect collections and state
+- ✅ **API Explorer** - Test generated endpoints
+- ✅ **Schema Viewer** - View collection schemas
+
 ## 💡 Why Layers?
 
 Unlike Nuxt Modules that require complex build steps and configurations, Nuxt Layers are just regular Nuxt applications that can be extended. This means:
@@ -180,18 +249,6 @@ pnpm publish:dry
 # Bump versions
 pnpm version:patch
 ```
-
-## 📚 Examples
-
-Check out the [examples](./examples) directory for complete implementations:
-
-- **basic-crud** - Simple CRUD operations
-- **with-translations** - Multi-language application
-- **full-stack** - Complete application with all features
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](./CONTRIBUTING.md) for details.
 
 ## 📄 License
 
