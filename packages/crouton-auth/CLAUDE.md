@@ -2,7 +2,7 @@
 
 ## Package Purpose
 
-Authentication layer for Nuxt applications using Better Auth. Provides teams/organizations, billing (Stripe), passkeys (WebAuthn), 2FA, and OAuth support. Integrates with nuxt-crouton collections via the `#crouton/team-auth` connector.
+Authentication layer for Nuxt applications using Better Auth. Provides teams/organizations, billing (Stripe), passkeys (WebAuthn), 2FA, and OAuth support. This is the **canonical source** for team authentication in the nuxt-crouton ecosystem.
 
 ## Operational Modes
 
@@ -19,7 +19,7 @@ Authentication layer for Nuxt applications using Better Auth. Provides teams/org
 | `module.ts` | Nuxt module entry point |
 | `nuxt.config.ts` | Layer configuration |
 | `server/lib/auth.ts` | Better Auth factory (`createAuth`) |
-| `server/utils/team-auth.ts` | nuxt-crouton connector (`#crouton/team-auth`) |
+| `server/utils/team-auth.ts` | Team auth utilities (exported via `@crouton/auth/server`) |
 | `server/utils/team.ts` | Core team resolution logic |
 | `types/config.ts` | `CroutonAuthConfig` configuration type |
 | `types/connector.ts` | `BetterAuthConnector` interface |
@@ -61,10 +61,11 @@ Authentication layer for Nuxt applications using Better Auth. Provides teams/org
 
 ## Server Utilities
 
-### Team Auth Connector (`#crouton/team-auth`)
+### Team Auth Functions (from `@crouton/auth/server`)
 
 ```typescript
-import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
+// Preferred: Direct import from @crouton/auth/server
+import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
 
 // In API handlers
 export default defineEventHandler(async (event) => {
@@ -78,7 +79,7 @@ export default defineEventHandler(async (event) => {
 ### Authorization Helpers
 
 ```typescript
-import { requireTeamMember, requireTeamAdmin, requireTeamOwner } from '#crouton/team-auth'
+import { requireTeamMember, requireTeamAdmin, requireTeamOwner } from '@crouton/auth/server'
 
 // Require specific roles
 await requireTeamMember(event)  // Any team member
@@ -95,7 +96,7 @@ import {
   getUserTeams,
   isTeamMember,
   canUserCreateTeam
-} from '#crouton/team-auth'
+} from '@crouton/auth/server'
 ```
 
 ## Middleware
@@ -214,22 +215,16 @@ pnpm seed:clear        # Clear all data
 
 ### Integrate with nuxt-crouton collections
 
-Collections automatically use `#crouton/team-auth` when generated. Ensure:
+Generated collections automatically import from `@crouton/auth/server`. Ensure:
 
-1. Configure alias in `nuxt.config.ts`:
-   ```typescript
-   nitro: {
-     alias: {
-       '#crouton/team-auth': '@crouton/auth/server/utils/team-auth'
-     }
-   }
-   ```
-
+1. `@crouton/auth` is installed as a dependency in your project
 2. Export schema from main schema index:
    ```typescript
    // server/database/schema/index.ts
    export * from '@crouton/auth/server/database/schema/auth'
    ```
+
+**Note**: The collection generator uses `@crouton/auth/server` directly (not the `#crouton/team-auth` alias).
 
 ## Rate Limiting (Recommended)
 
@@ -285,7 +280,7 @@ export default defineNuxtConfig({
 ## Dependencies
 
 - **Extends**: None (standalone module/layer)
-- **Works with**: `@friendlyinternet/nuxt-crouton` (via connector)
+- **Used by**: `@friendlyinternet/nuxt-crouton` and all crouton packages (canonical team auth)
 - **Core deps**: better-auth, @better-auth/stripe, @better-auth/passkey, stripe
 - **Recommended**: nuxthub-ratelimit (optional peer dependency for rate limiting)
 

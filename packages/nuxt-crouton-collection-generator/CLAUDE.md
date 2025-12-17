@@ -172,12 +172,21 @@ Layer: shop
 
 Always added to schema:
 - `id` - Primary key (uuid/nanoid)
-- `teamId` - Team association
+- `teamId` - Team association (always team-scoped)
 - `createdAt`, `updatedAt` - Timestamps
 - `createdBy`, `updatedBy` - User tracking
 
 With `--hierarchy`:
 - `parentId`, `path`, `depth`, `order`
+
+## Team Authentication
+
+All generated collections are team-scoped. The generator:
+- Imports team auth from `@crouton/auth/server` (NOT `#crouton/team-auth`)
+- Uses `resolveTeamAndCheckMembership()` for membership validation
+- Requires `@crouton/auth` package to be installed in the consuming project
+
+**Note**: The `useTeamUtility` flag has been removed. All collections are now team-scoped by default.
 
 ## Dependencies
 
@@ -213,7 +222,7 @@ npx nuxt typecheck
 | Example configs | `examples/crouton.config.*.js` | Flags, schema format, defaults change |
 | Claude Skill | `.claude/skills/crouton.md` | Field types, workflow, commands change |
 | MCP Server | `packages/crouton-mcp-server/` | CLI commands, field types change |
-| Auth Package | `packages/crouton-auth/CLAUDE.md` | If `#crouton/team-auth` connector interface changes |
+| Auth Package | `packages/crouton-auth/CLAUDE.md` | If `@crouton/auth/server` exports change |
 | External Docs | `apps/docs/content/` | Any user-facing change |
 
 ### Step 1: Classify Your Change
