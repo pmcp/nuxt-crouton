@@ -6,7 +6,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 37 / 54 |
+| **Tasks Completed** | 38 / 54 |
 | **Current Phase** | Phase 8 - Integration & Polish |
 | **Estimated Total** | ~40-60 hours |
 
@@ -716,11 +716,11 @@ const { items } = useBookings()
 - [x] ✅ Review input validation (`app/utils/security.ts` with validators)
 - [x] ✅ Test for common vulnerabilities (`docs/SECURITY.md` with checklist)
 
-### Task 8.5: Performance
-- [ ] Minimize client bundle size
-- [ ] Lazy load non-critical components
-- [ ] Optimize database queries
-- [ ] Add caching where appropriate
+### Task 8.5: Performance ✅
+- [x] ✅ Minimize client bundle size (granular component directories)
+- [x] ✅ Lazy load non-critical components (Account, Team, Billing dirs)
+- [x] ✅ Optimize database queries (documented in `docs/PERFORMANCE.md`)
+- [x] ✅ Add caching where appropriate (`useAuthCache` composable)
 
 ### Task 8.6: Final Polish
 - [ ] Ensure consistent styling

@@ -192,11 +192,55 @@ export default defineNuxtModule<CroutonAuthConfig>({
     // Add utils (error handling, etc.)
     addImportsDir(resolver.resolve('./app/utils'))
 
-    // Add components
+    // Add components with performance optimizations
+    // Core components (loaded eagerly)
     addComponentsDir({
-      path: resolver.resolve('./app/components'),
+      path: resolver.resolve('./app/components/Auth'),
+      pathPrefix: false,
+      prefix: 'Auth',
+      global: false,
+    })
+
+    addComponentsDir({
+      path: resolver.resolve('./app/components/Sidebar'),
       pathPrefix: false,
       prefix: '',
+      global: false,
+    })
+
+    addComponentsDir({
+      path: resolver.resolve('./app/components/Loading'),
+      pathPrefix: false,
+      prefix: '',
+      global: false,
+    })
+
+    addComponentsDir({
+      path: resolver.resolve('./app/components/Error'),
+      pathPrefix: false,
+      prefix: '',
+      global: false,
+    })
+
+    // Non-critical components (can be lazy loaded by user)
+    addComponentsDir({
+      path: resolver.resolve('./app/components/Account'),
+      pathPrefix: false,
+      prefix: 'Account',
+      global: false,
+    })
+
+    addComponentsDir({
+      path: resolver.resolve('./app/components/Team'),
+      pathPrefix: false,
+      prefix: 'Team',
+      global: false,
+    })
+
+    addComponentsDir({
+      path: resolver.resolve('./app/components/Billing'),
+      pathPrefix: false,
+      prefix: 'Billing',
       global: false,
     })
 
