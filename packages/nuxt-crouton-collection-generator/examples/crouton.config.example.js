@@ -51,6 +51,15 @@ export default {
       hierarchy: true
     },
 
+    // Collection with sortable support (drag-and-drop reordering)
+    // Adds: order field
+    // Generates: reorder API endpoint
+    {
+      name: 'slides',
+      fieldsFile: './schemas/slides.json',
+      sortable: true                            // Enable drag-to-reorder (without hierarchy)
+    },
+
     // Simple collections
     {
       name: 'authors',
@@ -71,6 +80,34 @@ export default {
   ],
 
   // ============================================================
+  // TRANSLATIONS CONFIGURATION (i18n)
+  // ============================================================
+  // Define which fields are translatable per collection.
+  // Translatable fields are moved to a translations JSON object
+  // and rendered with CroutonI18nInput for per-language editing.
+  //
+  // When translations are configured:
+  // 1. Fields listed here get CroutonI18nInput in forms
+  // 2. Data is stored as: { translations: { en: {...}, nl: {...} } }
+  // 3. The i18n layer is auto-added to nuxt.config.ts
+  // 4. Locale files are created in layers/[layer]/i18n/locales/
+  translations: {
+    collections: {
+      // Products: translate name and description per language
+      products: ['name', 'description'],
+
+      // Categories: translate name only
+      categories: ['name', 'description'],
+
+      // Posts: translate title, content, and excerpt
+      posts: ['title', 'content', 'excerpt'],
+
+      // Pages: full content translation
+      pages: ['title', 'content', 'metaTitle', 'metaDescription']
+    }
+  },
+
+  // ============================================================
   // TARGETS (Layer Organization)
   // ============================================================
   // Organize collections into domain-driven layers.
@@ -82,7 +119,7 @@ export default {
     },
     {
       layer: 'content',
-      collections: ['pages', 'posts', 'authors', 'tags']
+      collections: ['pages', 'posts', 'authors', 'tags', 'slides']
     }
   ],
 
@@ -383,6 +420,7 @@ export default {
 // | date     | z.date()        | Date | null       | null     | CroutonCalendar   |
 // | json     | z.record()      | Record<string,any>| {}       | UTextarea[JSON]   |
 // | repeater | z.array()       | any[]             | []       | CroutonRepeater   |
+// | array    | z.array(z.string()) | string[]      | []       | (custom)          |
 //
 // ============================================================
 // META PROPERTIES REFERENCE
