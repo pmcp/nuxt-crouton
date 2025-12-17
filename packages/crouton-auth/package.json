@@ -10,13 +10,8 @@
       "types": "./dist/module.d.ts"
     },
     "./types": {
-      "import": "./dist/types/index.mjs",
-      "require": "./dist/types/index.cjs",
-      "types": "./dist/types/index.d.ts"
-    },
-    "./types/*": {
-      "import": "./dist/types/*.mjs",
-      "types": "./dist/types/*.d.ts"
+      "import": "./types/index.ts",
+      "types": "./types/index.ts"
     },
     "./server/utils/team-auth": {
       "import": "./server/utils/team-auth.ts",
