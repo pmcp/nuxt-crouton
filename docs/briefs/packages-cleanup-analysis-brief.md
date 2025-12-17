@@ -248,5 +248,45 @@ After analysis, produce:
 _Add notes during analysis here_
 
 ```
-[Date] - [Note]
+[2024-12-17] - Analysis Complete
+
+COMPREHENSIVE ANALYSIS COMPLETED - See full report at:
+  /docs/reports/team-architecture-analysis.md
+
+KEY FINDINGS:
+
+1. DUPLICATE CODE IDENTIFIED:
+   - resolveTeamAndCheckMembership() exists in THREE places:
+     * @crouton/auth (canonical, Better Auth, mode-aware)
+     * nuxt-crouton/server/utils/team-auth.ts (simple Drizzle version)
+     * Generated per-layer by team-auth-utility.mjs
+
+2. useTeamUtility FLAG DECISION: RECOMMEND REMOVAL (Option A)
+   - @crouton/auth mandates teams (even single-tenant uses default)
+   - Maintaining two endpoint templates doubles maintenance
+   - Clean break aligns with architecture consolidation
+
+3. PACKAGES NEEDING UPDATES:
+   - nuxt-crouton: Delete team-auth.ts, re-export from @crouton/auth
+   - nuxt-crouton-collection-generator: Major refactor
+   - nuxt-crouton-i18n: Minor - use useTeamContext()
+   - nuxt-crouton-assets: Minor - use useTeamContext()
+   - nuxt-crouton-ai: Minor - use useTeamContext()
+
+4. PACKAGES OK AS-IS:
+   - nuxt-crouton-events: Already uses useTeamContext()
+   - nuxt-crouton-flow: Already uses useTeamContext()
+   - nuxt-crouton-supersaas: Complements @crouton/auth (keep separate)
+   - nuxt-crouton-devtools/editor/maps: No team code
+
+5. BREAKING CHANGES FOR USERS:
+   - useTeamUtility flag removal
+   - #crouton/team-auth import path changes
+   - Teams always required (auto-default for single-tenant)
+
+MIGRATION ORDER:
+  Phase 1: Move @crouton/auth, update nuxt-crouton core
+  Phase 2: Update collection generator
+  Phase 3: Update dependent packages (parallel)
+  Phase 4: Documentation updates
 ```
