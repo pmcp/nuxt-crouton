@@ -5,7 +5,38 @@
  * for user management, impersonation, and statistics.
  */
 
-import type { User, Organization, Member, Session } from '@friendlyinternet/crouton-auth/server/database/schema/auth'
+// ============================================================================
+// Base Types (from crouton-auth schema)
+// ============================================================================
+
+/**
+ * Base user type - matches crouton-auth user schema
+ */
+export interface BaseUser {
+  id: string
+  name: string
+  email: string
+  emailVerified: boolean
+  image: string | null
+  createdAt: Date
+  updatedAt: Date
+  stripeCustomerId: string | null
+}
+
+/**
+ * Base organization type
+ */
+export interface BaseOrganization {
+  id: string
+  name: string
+  slug: string
+  logo: string | null
+  metadata: string | null
+  personal: boolean
+  isDefault: boolean
+  ownerId: string | null
+  createdAt: Date
+}
 
 // ============================================================================
 // User Management Types
@@ -14,7 +45,7 @@ import type { User, Organization, Member, Session } from '@friendlyinternet/crou
 /**
  * Extended user type with admin-specific fields
  */
-export interface AdminUser extends User {
+export interface AdminUser extends BaseUser {
   superAdmin: boolean
   banned: boolean
   bannedReason: string | null
@@ -156,7 +187,7 @@ export interface AdminTeamListItem {
 /**
  * Detailed team view
  */
-export interface AdminTeamDetail extends Organization {
+export interface AdminTeamDetail extends BaseOrganization {
   members: Array<{
     id: string
     userId: string
