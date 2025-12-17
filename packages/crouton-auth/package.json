@@ -1,5 +1,5 @@
 {
-  "name": "@crouton/auth",
+  "name": "@friendlyinternet/crouton-auth",
   "version": "0.1.0",
   "description": "Authentication layer for Nuxt applications using Better Auth with teams, billing, passkeys, and 2FA support",
   "type": "module",
