@@ -33,7 +33,7 @@
   },
   "peerDependencies": {
     "nuxt": "^4.0.0",
-    "@nuxt/ui": "^3.4.0",
+    "@nuxt/ui": "^4.3.0",
     "@friendlyinternet/nuxt-crouton": "^1.0.1",
     "@nuxt/icon": "^1.0.0"
   }
