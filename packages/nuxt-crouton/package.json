@@ -58,7 +58,7 @@
   },
   "peerDependencies": {
     "@friendlyinternet/crouton-auth": "workspace:*",
-    "@nuxt/ui": "^4.0.0",
+    "@nuxt/ui": "^4.3.0",
     "nuxt": "^4.0.0"
   },
   "peerDependenciesMeta": {
