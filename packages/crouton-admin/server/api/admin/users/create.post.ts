@@ -13,6 +13,8 @@
  * - emailVerified: Whether email is verified (default: false)
  * - superAdmin: Whether user is super admin (default: false)
  */
+import type { H3Event } from 'h3'
+import { defineEventHandler, readBody, createError } from 'h3'
 import { eq } from 'drizzle-orm'
 import { user, account, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
@@ -63,7 +65,7 @@ async function hashPassword(password: string): Promise<string> {
   return `$pbkdf2$100000$${saltHex}$${hashHex}`
 }
 
-export default defineEventHandler(async (event): Promise<AdminUser> => {
+export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => {
   // Verify super admin access
   await requireSuperAdmin(event)
 

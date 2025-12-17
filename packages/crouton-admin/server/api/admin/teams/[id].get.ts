@@ -9,12 +9,14 @@
  *
  * Requires super admin privileges.
  */
+import type { H3Event } from 'h3'
+import { defineEventHandler, getRouterParam, createError } from 'h3'
 import { eq } from 'drizzle-orm'
 import { organization, member, user, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
 import type { AdminTeamDetail } from '../../../../types/admin'
 
-export default defineEventHandler(async (event): Promise<AdminTeamDetail> => {
+export default defineEventHandler(async (event: H3Event): Promise<AdminTeamDetail> => {
   // Verify super admin access
   await requireSuperAdmin(event)
 

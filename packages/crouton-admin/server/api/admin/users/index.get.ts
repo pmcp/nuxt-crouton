@@ -15,12 +15,14 @@
  * - sortBy: Sort field ('name', 'email', 'createdAt')
  * - sortOrder: Sort order ('asc', 'desc')
  */
+import type { H3Event } from 'h3'
+import { defineEventHandler, getQuery } from 'h3'
 import { eq, like, or, and, desc, asc, count, sql } from 'drizzle-orm'
 import { user, member, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
 import type { AdminUserListItem, PaginatedResponse, UserListFilters } from '../../../../types/admin'
 
-export default defineEventHandler(async (event): Promise<PaginatedResponse<AdminUserListItem>> => {
+export default defineEventHandler(async (event: H3Event): Promise<PaginatedResponse<AdminUserListItem>> => {
   // Verify super admin access
   await requireSuperAdmin(event)
 

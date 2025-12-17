@@ -12,12 +12,14 @@
  * - reason: Reason for the ban (required)
  * - duration: Ban duration in hours, null for permanent (default: null)
  */
+import type { H3Event } from 'h3'
+import { defineEventHandler, readBody, createError } from 'h3'
 import { eq } from 'drizzle-orm'
 import { user, session, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
 import type { BanPayload, AdminUser } from '../../../../types/admin'
 
-export default defineEventHandler(async (event): Promise<AdminUser> => {
+export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => {
   // Verify super admin access
   const { user: adminUser } = await requireSuperAdmin(event)
 

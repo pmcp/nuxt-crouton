@@ -9,6 +9,8 @@
  * Request body:
  * - userId: User ID to unban (required)
  */
+import type { H3Event } from 'h3'
+import { defineEventHandler, readBody, createError } from 'h3'
 import { eq } from 'drizzle-orm'
 import { user, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
@@ -18,7 +20,7 @@ interface UnbanPayload {
   userId: string
 }
 
-export default defineEventHandler(async (event): Promise<AdminUser> => {
+export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => {
   // Verify super admin access
   await requireSuperAdmin(event)
 
