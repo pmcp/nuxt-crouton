@@ -189,6 +189,9 @@ export default defineNuxtModule<CroutonAuthConfig>({
     // Add composables
     addImportsDir(resolver.resolve('./app/composables'))
 
+    // Add utils (error handling, etc.)
+    addImportsDir(resolver.resolve('./app/utils'))
+
     // Add components
     addComponentsDir({
       path: resolver.resolve('./app/components'),

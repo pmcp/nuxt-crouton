@@ -6,7 +6,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tasks Completed** | 34 / 54 |
+| **Tasks Completed** | 35 / 54 |
 | **Current Phase** | Phase 8 - Integration & Polish |
 | **Estimated Total** | ~40-60 hours |
 
@@ -698,11 +698,11 @@ const { items } = useBookings()
 // Internally: WHERE teamId = currentTeam.id
 ```
 
-### Task 8.2: Error Handling
-- [ ] Standardize error messages
-- [ ] Add i18n support for errors
-- [ ] Create error boundary components
-- [ ] Handle network errors gracefully
+### Task 8.2: Error Handling ✅
+- [x] ✅ Standardize error messages (`app/utils/errors.ts` with error codes and messages)
+- [x] ✅ Add i18n support for errors (message keys like `auth.invalid_credentials`)
+- [x] ✅ Create error boundary components (`components/Error/AuthErrorAlert.vue`)
+- [x] ✅ Handle network errors gracefully (`useAuthError` composable with retry support)
 
 ### Task 8.3: Loading States
 - [ ] Add loading skeletons to all pages
