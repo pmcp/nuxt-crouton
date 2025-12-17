@@ -13,6 +13,8 @@
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 import type { Team } from '../../../types'
 
+const { t } = useT()
+
 interface Props {
   /** Show loading state */
   loading?: boolean
@@ -67,21 +69,21 @@ function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
 
   if (!formState.name?.trim()) {
-    errors.push({ name: 'name', message: 'Team name is required' })
+    errors.push({ name: 'name', message: t('errors.requiredField') })
   } else if (formState.name.length < 2) {
-    errors.push({ name: 'name', message: 'Team name must be at least 2 characters' })
+    errors.push({ name: 'name', message: t('errors.minLength', { min: 2 }) })
   } else if (formState.name.length > 50) {
-    errors.push({ name: 'name', message: 'Team name must be less than 50 characters' })
+    errors.push({ name: 'name', message: t('errors.maxLength', { max: 50 }) })
   }
 
   if (!formState.slug?.trim()) {
-    errors.push({ name: 'slug', message: 'URL slug is required' })
+    errors.push({ name: 'slug', message: t('errors.requiredField') })
   } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(formState.slug)) {
     errors.push({ name: 'slug', message: 'Slug must contain only lowercase letters, numbers, and hyphens' })
   } else if (formState.slug.length < 2) {
-    errors.push({ name: 'slug', message: 'Slug must be at least 2 characters' })
+    errors.push({ name: 'slug', message: t('errors.minLength', { min: 2 }) })
   } else if (formState.slug.length > 30) {
-    errors.push({ name: 'slug', message: 'Slug must be less than 30 characters' })
+    errors.push({ name: 'slug', message: t('errors.maxLength', { max: 30 }) })
   }
 
   return errors
@@ -143,7 +145,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     class="space-y-6"
     @submit="onSubmit"
   >
-    <UFormField label="Team name" name="name" required>
+    <UFormField :label="t('teams.teamName')" name="name" required>
       <UInput
         v-model="state.name"
         placeholder="My Team"
@@ -181,13 +183,13 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
         :disabled="isLoading"
         @click="emit('cancel')"
       >
-        Cancel
+        {{ t('common.cancel') }}
       </UButton>
       <UButton
         type="submit"
         :loading="isLoading"
       >
-        Create team
+        {{ t('teams.createTeam') }}
       </UButton>
     </div>
   </UForm>

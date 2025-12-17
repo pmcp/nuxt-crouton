@@ -11,6 +11,8 @@
  */
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 
+const { t } = useT()
+
 interface Props {
   /** External loading state */
   loading?: boolean
@@ -70,11 +72,11 @@ function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
 
   if (!formState.name?.trim()) {
-    errors.push({ name: 'name', message: 'Name is required' })
+    errors.push({ name: 'name', message: t('errors.requiredField') })
   } else if (formState.name.length < 2) {
-    errors.push({ name: 'name', message: 'Name must be at least 2 characters' })
+    errors.push({ name: 'name', message: t('errors.minLength', { min: 2 }) })
   } else if (formState.name.length > 100) {
-    errors.push({ name: 'name', message: 'Name must be less than 100 characters' })
+    errors.push({ name: 'name', message: t('errors.maxLength', { max: 100 }) })
   }
 
   if (formState.image && !/^https?:\/\//.test(formState.image)) {
@@ -104,7 +106,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     await refreshSession()
 
     toast.add({
-      title: 'Profile updated',
+      title: t('account.profileUpdated'),
       description: 'Your profile has been saved.',
       color: 'success',
     })
@@ -134,7 +136,7 @@ function resetForm() {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">Profile</h3>
+      <h3 class="text-lg font-semibold">{{ t('account.profile') }}</h3>
       <p class="text-sm text-muted mt-1">
         Update your personal information.
       </p>
@@ -206,14 +208,14 @@ function resetForm() {
           :disabled="isLoading || !hasChanges"
           @click="resetForm"
         >
-          Reset
+          {{ t('common.reset') }}
         </UButton>
         <UButton
           type="submit"
           :loading="isLoading"
           :disabled="!hasChanges"
         >
-          Save changes
+          {{ t('common.saveChanges') }}
         </UButton>
       </div>
     </UForm>

@@ -12,6 +12,8 @@
  */
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 
+const { t } = useT()
+
 interface Props {
   /** Show loading state */
   loading?: boolean
@@ -50,7 +52,7 @@ const state = reactive({
 function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
   if (!formState.code) {
-    errors.push({ name: 'code', message: 'Code is required' })
+    errors.push({ name: 'code', message: t('errors.requiredField') })
   } else if (mode.value === 'totp' && !/^\d{6}$/.test(formState.code)) {
     errors.push({ name: 'code', message: 'Enter a 6-digit code' })
   } else if (mode.value === 'backup' && formState.code.length < 8) {
@@ -142,7 +144,7 @@ function toggleMode() {
         block
         :loading="loading"
       >
-        Verify
+        {{ t('auth.verify') }}
       </UButton>
 
       <!-- Toggle Mode -->

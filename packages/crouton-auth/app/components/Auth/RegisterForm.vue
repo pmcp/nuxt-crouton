@@ -12,6 +12,8 @@
  */
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 
+const { t } = useT()
+
 interface Props {
   /** Show loading state */
   loading?: boolean
@@ -48,23 +50,23 @@ function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
 
   if (!formState.name) {
-    errors.push({ name: 'name', message: 'Name is required' })
+    errors.push({ name: 'name', message: t('errors.requiredField') })
   }
 
   if (!formState.email) {
-    errors.push({ name: 'email', message: 'Email is required' })
+    errors.push({ name: 'email', message: t('errors.requiredField') })
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
-    errors.push({ name: 'email', message: 'Invalid email address' })
+    errors.push({ name: 'email', message: t('errors.invalidEmail') })
   }
 
   if (!formState.password) {
-    errors.push({ name: 'password', message: 'Password is required' })
+    errors.push({ name: 'password', message: t('errors.requiredField') })
   } else if (formState.password.length < props.minPasswordLength) {
-    errors.push({ name: 'password', message: `Password must be at least ${props.minPasswordLength} characters` })
+    errors.push({ name: 'password', message: t('errors.minLength', { min: props.minPasswordLength }) })
   }
 
   if (formState.password !== formState.confirmPassword) {
-    errors.push({ name: 'confirmPassword', message: 'Passwords do not match' })
+    errors.push({ name: 'confirmPassword', message: t('errors.passwordMismatch') })
   }
 
   return errors
@@ -87,7 +89,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
     class="space-y-6"
     @submit="onSubmit"
   >
-    <UFormField label="Full name" name="name">
+    <UFormField :label="t('forms.fullName')" name="name">
       <UInput
         v-model="state.name"
         type="text"
@@ -97,7 +99,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField label="Email address" name="email">
+    <UFormField :label="t('auth.email')" name="email">
       <UInput
         v-model="state.email"
         type="email"
@@ -107,7 +109,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField label="Password" name="password">
+    <UFormField :label="t('auth.password')" name="password">
       <UInput
         v-model="state.password"
         type="password"
@@ -117,7 +119,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField label="Confirm password" name="confirmPassword">
+    <UFormField :label="t('auth.confirmPassword')" name="confirmPassword">
       <UInput
         v-model="state.confirmPassword"
         type="password"
@@ -140,7 +142,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       block
       :loading="loading"
     >
-      Create account
+      {{ t('auth.createAccount') }}
     </UButton>
 
     <p v-if="showTerms" class="text-center text-xs text-muted">

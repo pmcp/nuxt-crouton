@@ -12,6 +12,8 @@
  */
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 
+const { t } = useT()
+
 interface Props {
   /** Show loading state */
   loading?: boolean
@@ -47,9 +49,9 @@ const state = reactive({
 function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
   if (!formState.email) {
-    errors.push({ name: 'email', message: 'Email is required' })
+    errors.push({ name: 'email', message: t('errors.requiredField') })
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
-    errors.push({ name: 'email', message: 'Invalid email address' })
+    errors.push({ name: 'email', message: t('errors.invalidEmail') })
   }
   return errors
 }
@@ -74,7 +76,7 @@ function handleReset() {
       <UAlert
         color="success"
         icon="i-lucide-mail-check"
-        title="Check your inbox"
+        :title="t('auth.checkYourInbox')"
         description="We sent a magic link to your email. Click the link to sign in."
       />
       <UButton
@@ -95,7 +97,7 @@ function handleReset() {
       class="space-y-6"
       @submit="onSubmit"
     >
-      <UFormField label="Email address" name="email">
+      <UFormField :label="t('auth.email')" name="email">
         <UInput
           v-model="state.email"
           type="email"
@@ -119,7 +121,7 @@ function handleReset() {
         :loading="loading"
         icon="i-lucide-wand-2"
       >
-        Send magic link
+        {{ t('auth.sendMagicLink') }}
       </UButton>
     </UForm>
   </div>

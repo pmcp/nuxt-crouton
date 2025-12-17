@@ -12,6 +12,8 @@
  */
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 
+const { t } = useT()
+
 interface Props {
   /** Show loading state */
   loading?: boolean
@@ -46,12 +48,12 @@ const state = reactive({
 function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
   if (!formState.email) {
-    errors.push({ name: 'email', message: 'Email is required' })
+    errors.push({ name: 'email', message: t('errors.requiredField') })
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
-    errors.push({ name: 'email', message: 'Invalid email address' })
+    errors.push({ name: 'email', message: t('errors.invalidEmail') })
   }
   if (!formState.password) {
-    errors.push({ name: 'password', message: 'Password is required' })
+    errors.push({ name: 'password', message: t('errors.requiredField') })
   }
   return errors
 }
@@ -73,7 +75,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
     class="space-y-6"
     @submit="onSubmit"
   >
-    <UFormField label="Email address" name="email">
+    <UFormField :label="t('auth.email')" name="email">
       <UInput
         v-model="state.email"
         type="email"
@@ -83,7 +85,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField label="Password" name="password">
+    <UFormField :label="t('auth.password')" name="password">
       <UInput
         v-model="state.password"
         type="password"
@@ -97,7 +99,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       <UCheckbox
         v-if="showRememberMe"
         v-model="state.rememberMe"
-        label="Remember me"
+        :label="t('auth.rememberMe')"
       />
       <div v-else />
       <NuxtLink
@@ -105,7 +107,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
         to="/auth/forgot-password"
         class="text-sm font-medium text-primary hover:text-primary/80"
       >
-        Forgot password?
+        {{ t('auth.forgotPassword') }}
       </NuxtLink>
     </div>
 
@@ -122,7 +124,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       block
       :loading="loading"
     >
-      Sign in
+      {{ t('auth.signIn') }}
     </UButton>
   </UForm>
 </template>

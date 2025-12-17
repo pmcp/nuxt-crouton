@@ -13,6 +13,8 @@
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 import type { MemberRole } from '../../../types'
 
+const { t } = useT()
+
 interface Props {
   /** External loading state */
   loading?: boolean
@@ -47,12 +49,12 @@ const state = reactive({
 const roleOptions = computed(() => {
   const roles: Array<{ label: string, value: MemberRole, description: string }> = [
     {
-      label: 'Member',
+      label: t('teams.member'),
       value: 'member',
       description: 'Can view and use team resources',
     },
     {
-      label: 'Admin',
+      label: t('teams.admin'),
       value: 'admin',
       description: 'Can manage members and settings',
     },
@@ -61,7 +63,7 @@ const roleOptions = computed(() => {
   // Only owner can invite other owners
   if (isOwner.value) {
     roles.push({
-      label: 'Owner',
+      label: t('teams.owner'),
       value: 'owner',
       description: 'Full control over the team',
     })
@@ -75,9 +77,9 @@ function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
 
   if (!formState.email?.trim()) {
-    errors.push({ name: 'email', message: 'Email is required' })
+    errors.push({ name: 'email', message: t('errors.requiredField') })
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
-    errors.push({ name: 'email', message: 'Invalid email address' })
+    errors.push({ name: 'email', message: t('errors.invalidEmail') })
   }
 
   return errors
@@ -139,13 +141,13 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     @submit="onSubmit"
   >
     <div>
-      <h3 class="text-lg font-semibold">Invite Team Member</h3>
+      <h3 class="text-lg font-semibold">{{ t('teams.inviteMember') }}</h3>
       <p class="text-sm text-muted mt-1">
         Send an invitation to join your team.
       </p>
     </div>
 
-    <UFormField label="Email address" name="email" required>
+    <UFormField :label="t('auth.email')" name="email" required>
       <UInput
         v-model="state.email"
         type="email"
@@ -155,7 +157,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField label="Role" name="role">
+    <UFormField :label="t('teams.role')" name="role">
       <template #hint>
         <span class="text-xs text-muted">
           The role determines what the member can do.
@@ -189,14 +191,14 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
         :disabled="isLoading"
         @click="emit('cancel')"
       >
-        Cancel
+        {{ t('common.cancel') }}
       </UButton>
       <UButton
         type="submit"
         :loading="isLoading"
         icon="i-lucide-send"
       >
-        Send invitation
+        {{ t('teams.invite') }}
       </UButton>
     </div>
   </UForm>

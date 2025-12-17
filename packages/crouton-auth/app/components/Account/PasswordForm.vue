@@ -12,6 +12,8 @@
  */
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 
+const { t } = useT()
+
 interface Props {
   /** External loading state */
   loading?: boolean
@@ -50,19 +52,19 @@ function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
 
   if (!formState.currentPassword?.trim()) {
-    errors.push({ name: 'currentPassword', message: 'Current password is required' })
+    errors.push({ name: 'currentPassword', message: t('errors.requiredField') })
   }
 
   if (!formState.newPassword?.trim()) {
-    errors.push({ name: 'newPassword', message: 'New password is required' })
+    errors.push({ name: 'newPassword', message: t('errors.requiredField') })
   } else if (formState.newPassword.length < 8) {
-    errors.push({ name: 'newPassword', message: 'Password must be at least 8 characters' })
+    errors.push({ name: 'newPassword', message: t('errors.minLength', { min: 8 }) })
   }
 
   if (!formState.confirmPassword?.trim()) {
-    errors.push({ name: 'confirmPassword', message: 'Please confirm your new password' })
+    errors.push({ name: 'confirmPassword', message: t('errors.requiredField') })
   } else if (formState.newPassword !== formState.confirmPassword) {
-    errors.push({ name: 'confirmPassword', message: 'Passwords do not match' })
+    errors.push({ name: 'confirmPassword', message: t('errors.passwordMismatch') })
   }
 
   return errors
@@ -86,7 +88,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     }
 
     toast.add({
-      title: 'Password updated',
+      title: t('account.passwordUpdated'),
       description: 'Your password has been changed successfully.',
       color: 'success',
     })
@@ -120,7 +122,7 @@ function resetForm() {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">Change Password</h3>
+      <h3 class="text-lg font-semibold">{{ t('auth.changePassword') }}</h3>
       <p class="text-sm text-muted mt-1">
         Update your password to keep your account secure.
       </p>
@@ -132,7 +134,7 @@ function resetForm() {
       class="space-y-6"
       @submit="onSubmit"
     >
-      <UFormField label="Current password" name="currentPassword" required>
+      <UFormField :label="t('auth.currentPassword')" name="currentPassword" required>
         <UInput
           v-model="state.currentPassword"
           type="password"
@@ -144,7 +146,7 @@ function resetForm() {
 
       <USeparator />
 
-      <UFormField label="New password" name="newPassword" required>
+      <UFormField :label="t('auth.newPassword')" name="newPassword" required>
         <template #hint>
           <span class="text-xs text-muted">Minimum 8 characters</span>
         </template>
@@ -157,7 +159,7 @@ function resetForm() {
         />
       </UFormField>
 
-      <UFormField label="Confirm new password" name="confirmPassword" required>
+      <UFormField :label="t('auth.confirmPassword')" name="confirmPassword" required>
         <UInput
           v-model="state.confirmPassword"
           type="password"
@@ -181,13 +183,13 @@ function resetForm() {
           :disabled="isLoading"
           @click="resetForm"
         >
-          Clear
+          {{ t('common.reset') }}
         </UButton>
         <UButton
           type="submit"
           :loading="isLoading"
         >
-          Update password
+          {{ t('account.updatePassword') }}
         </UButton>
       </div>
     </UForm>
