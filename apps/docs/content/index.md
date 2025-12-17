@@ -53,17 +53,6 @@ Generate working forms, tables, and TypeScript types in 30 seconds. **Nuxt Crout
     # ✅ types.ts - Full TypeScript support
   filename: terminal
   ---
-
-  ```bash [terminal]
-  # Generate a complete CRUD collection
-  npx crouton-generate shop products --fields-file product-schema.json
-
-  # Generated files:
-  # ✅ List.vue - Table and list views
-  # ✅ Form.vue - Create/edit/delete forms
-  # ✅ useProducts.ts - Validation & config
-  # ✅ types.ts - Full TypeScript support
-  ```
   :::
 ::
 
