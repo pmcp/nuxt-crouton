@@ -657,13 +657,15 @@ const handleSubmit = async () => {
 
 **Total: 226 tests passing, 4 skipped**
 
-### Task 7.2: Integration Tests
-- [ ] Test login flow
-- [ ] Test registration flow
-- [ ] Test OAuth flow
-- [ ] Test team creation
-- [ ] Test team invitation
-- [ ] Test billing checkout
+### Task 7.2: Integration Tests ✅
+- [x] ✅ Test login flow (24 tests)
+- [x] ✅ Test registration flow (21 tests)
+- [x] ✅ Test OAuth flow (included in login tests)
+- [x] ✅ Test team creation (11 tests)
+- [x] ✅ Test team invitation (included in team tests)
+- [x] ✅ Test billing checkout (5 tests)
+
+**Total: 61 integration tests passing**
 
 ### Task 7.3: E2E Tests (Playwright)
 - [ ] Test complete auth flow
