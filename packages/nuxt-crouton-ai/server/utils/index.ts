@@ -1,9 +1,9 @@
 /**
- * Server utilities for @crouton/ai
+ * Server utilities for @friendlyinternet/nuxt-crouton-ai
  *
- * Import from '@crouton/ai/server':
+ * Import from '@friendlyinternet/nuxt-crouton-ai/server':
  * ```ts
- * import { createAIProvider, streamText, AI_PROVIDERS } from '@crouton/ai/server'
+ * import { createAIProvider, streamText, AI_PROVIDERS } from '@friendlyinternet/nuxt-crouton-ai/server'
  * ```
  */
 

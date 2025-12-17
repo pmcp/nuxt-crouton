@@ -5,7 +5,7 @@
  *
  * @example
  * ```ts
- * import { AI_PROVIDERS, getAvailableProviders } from '@crouton/ai/server'
+ * import { AI_PROVIDERS, getAvailableProviders } from '@friendlyinternet/nuxt-crouton-ai/server'
  *
  * // Get all provider info
  * const openai = AI_PROVIDERS.openai

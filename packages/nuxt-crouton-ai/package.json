@@ -1,5 +1,5 @@
 {
-  "name": "@crouton/ai",
+  "name": "@friendlyinternet/nuxt-crouton-ai",
   "version": "0.1.0",
   "description": "AI integration layer for Nuxt Crouton",
   "type": "module",
@@ -10,7 +10,8 @@
       "types": "./dist/server/utils/index.d.ts",
       "import": "./dist/server/utils/index.mjs"
     },
-    "./schemas/*": "./schemas/*"
+    "./schemas/*": "./schemas/*",
+    "./types": "./app/types/index.ts"
   },
   "scripts": {
     "build": "unbuild",
@@ -38,7 +39,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pmcp/nuxt-crouton.git",
-    "directory": "packages/crouton-ai"
+    "directory": "packages/nuxt-crouton-ai"
   },
   "bugs": {
     "url": "https://github.com/pmcp/nuxt-crouton/issues"

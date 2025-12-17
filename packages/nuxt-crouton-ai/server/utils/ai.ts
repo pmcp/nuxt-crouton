@@ -6,7 +6,7 @@
  * @example
  * ```ts
  * // In your server endpoint
- * import { createAIProvider, streamText } from '@crouton/ai/server'
+ * import { createAIProvider, streamText } from '@friendlyinternet/nuxt-crouton-ai/server'
  *
  * export default defineEventHandler(async (event) => {
  *   const ai = createAIProvider(event)
@@ -77,7 +77,7 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
     openai: () => {
       if (!config.openaiApiKey) {
         throw new Error(
-          '@crouton/ai: OpenAI API key not configured. ' +
+          '@friendlyinternet/nuxt-crouton-ai: OpenAI API key not configured. ' +
           'Set NUXT_OPENAI_API_KEY environment variable or configure runtimeConfig.openaiApiKey'
         )
       }
@@ -94,7 +94,7 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
     anthropic: () => {
       if (!config.anthropicApiKey) {
         throw new Error(
-          '@crouton/ai: Anthropic API key not configured. ' +
+          '@friendlyinternet/nuxt-crouton-ai: Anthropic API key not configured. ' +
           'Set NUXT_ANTHROPIC_API_KEY environment variable or configure runtimeConfig.anthropicApiKey'
         )
       }

@@ -22,7 +22,7 @@ export type ChatMessage = z.infer<typeof chatMessageSchema>
  *
  * ### Option 1: Using the JSON schema directly
  * ```bash
- * pnpm crouton ai chatConversations --fields-file=node_modules/@crouton/ai/schemas/chat-conversations.json
+ * pnpm crouton ai chatConversations --fields-file=node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json
  * ```
  *
  * ### Option 2: Using a config file
@@ -32,7 +32,7 @@ export type ChatMessage = z.infer<typeof chatMessageSchema>
  *   collections: [
  *     {
  *       name: 'chatConversations',
- *       fieldsFile: 'node_modules/@crouton/ai/schemas/chat-conversations.json'
+ *       fieldsFile: 'node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json'
  *     }
  *   ],
  *   targets: [

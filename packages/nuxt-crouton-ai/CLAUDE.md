@@ -1,4 +1,4 @@
-# CLAUDE.md - @crouton/ai
+# CLAUDE.md - @friendlyinternet/nuxt-crouton-ai
 
 ## Package Purpose
 
@@ -45,7 +45,7 @@ NUXT_ANTHROPIC_API_KEY=sk-ant-...
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@crouton/ai'],
+  extends: ['@friendlyinternet/nuxt-crouton-ai'],
   runtimeConfig: {
     public: {
       croutonAI: {
@@ -74,7 +74,7 @@ const { messages, input, handleSubmit, isLoading } = useChat({
 
 ```typescript
 // server/api/ai/chat.post.ts
-import { createAIProvider } from '@crouton/ai/server'
+import { createAIProvider } from '@friendlyinternet/nuxt-crouton-ai/server'
 import { streamText } from 'ai'
 
 export default defineEventHandler(async (event) => {
@@ -149,8 +149,8 @@ All components auto-import with `AI` prefix:
 3. Use `streamText` or `generateText` from `ai` package
 
 ### Generate chat conversations collection
-1. Run: `pnpm crouton ai chatConversations --fields-file=node_modules/@crouton/ai/schemas/chat-conversations.json`
-2. Or use config file with `fieldsFile: 'node_modules/@crouton/ai/schemas/chat-conversations.json'`
+1. Run: `pnpm crouton ai chatConversations --fields-file=node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json`
+2. Or use config file with `fieldsFile: 'node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json'`
 3. Generated collection includes: title, messages, provider, model, systemPrompt, metadata
 4. Use `importMessages()` / `exportMessages()` from `useChat()` for persistence
 

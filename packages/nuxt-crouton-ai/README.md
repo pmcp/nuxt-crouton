@@ -1,4 +1,4 @@
-# @crouton/ai
+# @friendlyinternet/nuxt-crouton-ai
 
 AI integration layer for Nuxt Crouton applications. Provides multi-provider AI chat with streaming support, built on [Vercel AI SDK](https://ai-sdk.dev/).
 
@@ -13,14 +13,14 @@ AI integration layer for Nuxt Crouton applications. Provides multi-provider AI c
 ## Installation
 
 ```bash
-pnpm add @crouton/ai
+pnpm add @friendlyinternet/nuxt-crouton-ai
 ```
 
 Add to your `nuxt.config.ts`:
 
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@crouton/ai']
+  extends: ['@friendlyinternet/nuxt-crouton-ai']
 })
 ```
 
@@ -63,7 +63,7 @@ NUXT_PUBLIC_CROUTON_AI_DEFAULT_MODEL=gpt-4o
 
 ```typescript
 // server/api/ai/chat.post.ts
-import { createAIProvider, streamText } from '@crouton/ai/server'
+import { createAIProvider, streamText } from '@friendlyinternet/nuxt-crouton-ai/server'
 
 export default defineEventHandler(async (event) => {
   const { messages, model } = await readBody(event)
@@ -201,7 +201,7 @@ const {
 Factory function for creating AI provider instances.
 
 ```typescript
-import { createAIProvider, streamText, generateText } from '@crouton/ai/server'
+import { createAIProvider, streamText, generateText } from '@friendlyinternet/nuxt-crouton-ai/server'
 
 export default defineEventHandler(async (event) => {
   const ai = createAIProvider(event)
@@ -221,7 +221,7 @@ export default defineEventHandler(async (event) => {
 ### Available Providers
 
 ```typescript
-import { AI_PROVIDERS, getAvailableProviders } from '@crouton/ai/server'
+import { AI_PROVIDERS, getAvailableProviders } from '@friendlyinternet/nuxt-crouton-ai/server'
 
 // Get all providers
 console.log(AI_PROVIDERS.openai.models)
@@ -238,7 +238,7 @@ The package includes a schema for generating a chat conversations collection usi
 
 ```bash
 # Generate in a new 'ai' layer
-pnpm crouton ai chatConversations --fields-file=node_modules/@crouton/ai/schemas/chat-conversations.json
+pnpm crouton ai chatConversations --fields-file=node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json
 ```
 
 ### Option 2: Config File
@@ -249,7 +249,7 @@ export default {
   collections: [
     {
       name: 'chatConversations',
-      fieldsFile: 'node_modules/@crouton/ai/schemas/chat-conversations.json'
+      fieldsFile: 'node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json'
     }
   ],
   targets: [
@@ -330,7 +330,7 @@ import type {
   ChatConversation,
   NewChatConversation,
   ChatMessage
-} from '@crouton/ai/schemas/chat-conversations'
+} from '@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations'
 ```
 
 ## Examples

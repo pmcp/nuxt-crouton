@@ -1,5 +1,5 @@
 /**
- * @crouton/ai composables
+ * @friendlyinternet/nuxt-crouton-ai composables
  *
  * Re-exports all composables for convenient importing.
  */

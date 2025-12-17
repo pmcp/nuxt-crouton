@@ -1,5 +1,5 @@
 /**
- * Core types for @crouton/ai
+ * Core types for @friendlyinternet/nuxt-crouton-ai
  */
 
 /**
