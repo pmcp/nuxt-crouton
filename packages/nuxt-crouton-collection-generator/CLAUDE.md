@@ -75,6 +75,7 @@ lib/generators/
 | date | `z.date()` | `Date \| null` | `null` |
 | json | `z.record(z.any())` | `Record<string, any>` | `{}` |
 | repeater | `z.array(z.any())` | `any[]` | `[]` |
+| array | `z.array(z.string())` | `string[]` | `[]` |
 
 ## Generated Output
 
@@ -212,6 +213,7 @@ npx nuxt typecheck
 | Example configs | `examples/crouton.config.*.js` | Flags, schema format, defaults change |
 | Claude Skill | `.claude/skills/crouton.md` | Field types, workflow, commands change |
 | MCP Server | `packages/crouton-mcp-server/` | CLI commands, field types change |
+| Auth Package | `packages/crouton-auth/CLAUDE.md` | If `#crouton/team-auth` connector interface changes |
 | External Docs | `/Users/pmcp/Projects/crouton-docs/content/` | Any user-facing change |
 
 ### Step 1: Classify Your Change
@@ -279,19 +281,36 @@ grep -r "crouton" . --include="*.md" | head -20
 - [ ] Update affected documentation pages
 - [ ] Update code examples if syntax changed
 
-### Step 6: Invoke Sync Checker
+### Step 6: Verify Sync
 
-After completing updates, invoke the sync-checker agent:
+After completing updates, verify everything is in sync:
 
+**Option 1: Use the `/sync-check` slash command in Claude Code**
 ```
-Use the sync-checker agent to verify all artifacts are in sync.
+/sync-check
 ```
 
-The agent will:
+**Option 2: Run the CI validation script**
+```bash
+node scripts/validate-field-types-sync.mjs
+```
+
+These tools will:
 1. Extract field types from `lib/utils/helpers.mjs`
-2. Compare with all documentation
-3. Check CLI commands match documentation
-4. Report any mismatches
+2. Compare with MCP server field types
+3. Compare with Claude skill field types
+4. Report any mismatches with fix instructions
+
+### Pre-Commit Hook (Optional)
+
+Install the pre-commit hook to get sync reminders when committing generator changes:
+
+```bash
+cp .claude/hooks/pre-commit-sync-reminder .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+See `.claude/hooks/README.md` for more options.
 
 ### Quick Sync Checklist (Copy-Paste)
 
@@ -311,6 +330,6 @@ The agent will:
 - [ ] External docs checked
 
 ### Verification
-- [ ] Sync-checker agent invoked
+- [ ] `/sync-check` command passed (or `node scripts/validate-field-types-sync.mjs`)
 - [ ] `npx nuxt typecheck` passed
 ```

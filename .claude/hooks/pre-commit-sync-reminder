@@ -1,0 +1,63 @@
+#!/bin/bash
+# Pre-commit hook that reminds about documentation sync
+# when generator files are modified
+#
+# Installation:
+#   cp .claude/hooks/pre-commit-sync-reminder .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+
+# Check if any generator files are staged
+GENERATOR_FILES=$(git diff --cached --name-only | grep -E "^packages/nuxt-crouton-collection-generator/(lib|bin)/")
+
+if [ -n "$GENERATOR_FILES" ]; then
+    echo ""
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                    SYNC REMINDER                              ║"
+    echo "╠═══════════════════════════════════════════════════════════════╣"
+    echo "║ You're committing changes to the collection generator.        ║"
+    echo "║                                                               ║"
+    echo "║ Did you update:                                               ║"
+    echo "║   □ CLAUDE.md (if CLI/types changed)                          ║"
+    echo "║   □ README.md (if user-facing features changed)               ║"
+    echo "║   □ .claude/skills/crouton.md (if field types changed)        ║"
+    echo "║   □ MCP Server (if CLI/types changed)                         ║"
+    echo "║   □ External docs (crouton-docs)                              ║"
+    echo "║                                                               ║"
+    echo "║ Run '/sync-check' in Claude Code to verify sync.              ║"
+    echo "║ Run 'node scripts/validate-field-types-sync.mjs' to validate. ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "Modified generator files:"
+    echo "$GENERATOR_FILES" | sed 's/^/  - /'
+    echo ""
+
+    # Ask for confirmation (only in interactive mode)
+    if [ -t 0 ]; then
+        read -p "Continue with commit? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Commit aborted. Please verify documentation sync first."
+            exit 1
+        fi
+    fi
+fi
+
+# Also check for MCP server changes
+MCP_FILES=$(git diff --cached --name-only | grep -E "^packages/crouton-mcp-server/src/")
+
+if [ -n "$MCP_FILES" ]; then
+    echo ""
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                  MCP SERVER CHANGES                           ║"
+    echo "╠═══════════════════════════════════════════════════════════════╣"
+    echo "║ You're committing changes to the MCP server.                  ║"
+    echo "║                                                               ║"
+    echo "║ Did you:                                                      ║"
+    echo "║   □ Update packages/crouton-mcp-server/CLAUDE.md              ║"
+    echo "║   □ Run tests: pnpm --filter crouton-mcp-server test          ║"
+    echo "║   □ Build: pnpm --filter crouton-mcp-server build             ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo ""
+fi
+
+exit 0
