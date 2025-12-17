@@ -3,7 +3,24 @@
 ## Overview
 This is the documentation site for **Nuxt Crouton**, a code generator and composable library for building CRUD applications in Nuxt 4. The site is built with Nuxt Content and Nuxt UI.
 
-**Live Site**: https://crouton-docs.vercel.app/
+**Live Site**: https://nuxt-crouton.dev/
+
+## Monorepo Context
+This documentation app is part of the nuxt-crouton monorepo at `apps/docs/`.
+
+**Related packages** (in `packages/`):
+- `nuxt-crouton` - Core CRUD composables and components
+- `nuxt-crouton-collection-generator` - CLI code generator
+- `nuxt-crouton-i18n` - Internationalization support
+- `nuxt-crouton-editor` - Rich text editor integration
+- `nuxt-crouton-assets` - Asset management
+- `crouton-mcp-server` - MCP server for AI-assisted generation
+- `crouton-auth` - Authentication utilities
+
+**AI tooling** (in root `.claude/`):
+- `settings.json` - MCP server configuration (crouton)
+- `skills/crouton.md` - Collection generation skill
+- `agents/sync-checker.md` - Documentation sync verification
 
 ## What is Nuxt Crouton?
 Nuxt Crouton generates working CRUD interfaces (forms, lists, tables, types, composables) in 30 seconds. It follows the philosophy: **Generate → Customize → Own**. Built on the SuperSaaS starter template for Nuxt 4.

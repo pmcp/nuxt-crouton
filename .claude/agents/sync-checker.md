@@ -50,7 +50,7 @@ Extract options from Commander.js setup:
 
 Check for potentially outdated references in external docs:
 
-**Location**: `/Users/pmcp/Projects/crouton-docs/content/`
+**Location**: `apps/docs/content/` (within monorepo)
 
 **Check for**:
 - References to changed CLI commands
