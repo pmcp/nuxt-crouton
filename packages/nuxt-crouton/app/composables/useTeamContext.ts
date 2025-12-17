@@ -1,12 +1,18 @@
 /**
- * Team Context Resolution
+ * Team Context Resolution (Compatibility Wrapper)
  *
  * Smart helper to resolve team identifiers for API paths.
  * Tries to use the app's useTeam() composable if available (returns team ID),
  * otherwise falls back to route.params.team (might be slug or ID).
  *
- * This allows nuxt-crouton to work seamlessly with SuperSaaS-style apps
- * that use team slugs in routes but need team IDs for API calls.
+ * When @crouton/auth is installed, this composable integrates with Better Auth's
+ * mode-aware team resolution (multi-tenant, single-tenant, personal).
+ *
+ * API:
+ * - getTeamId(): string | undefined - Function-based getter (original API)
+ * - getTeamSlug(): string | undefined - Function-based getter (original API)
+ * - teamId: ComputedRef<string | null> - Computed ref (@crouton/auth compatible)
+ * - teamSlug: ComputedRef<string | null> - Computed ref (@crouton/auth compatible)
  */
 
 /**
@@ -38,12 +44,10 @@ export function useTeamContext() {
     try {
       const { currentTeam } = useTeam()
       if (currentTeam?.value?.id) {
-        console.debug('[useTeamContext] Found team ID from useTeam():', currentTeam.value.id)
         return currentTeam.value.id
       }
-    } catch (error) {
+    } catch {
       // useTeam not available in this app, that's fine
-      console.debug('[useTeamContext] useTeam() not available, using route param')
     }
 
     // Fallback to route param (might be ID or slug, depending on app)
@@ -70,8 +74,16 @@ export function useTeamContext() {
     return typeof teamParam === 'string' ? teamParam : undefined
   }
 
+  // Also expose as computed refs for @crouton/auth compatibility
+  const teamId = computed<string | null>(() => getTeamId() ?? null)
+  const teamSlug = computed<string | null>(() => getTeamSlug() ?? null)
+
   return {
+    // Function-based getters (original API)
     getTeamId,
-    getTeamSlug
+    getTeamSlug,
+    // Computed refs (@crouton/auth compatible API)
+    teamId,
+    teamSlug,
   }
 }

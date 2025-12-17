@@ -1,0 +1,253 @@
+# SuperSaaS Migration Progress Tracker
+
+> **Goal**: Migrate nuxt-crouton ecosystem away from SuperSaaS template dependency, consolidating on `@crouton/auth` as the single source of truth for team-based authentication.
+
+## Quick Stats
+
+| Metric | Value |
+|--------|-------|
+| **Tasks Completed** | 6 / 24 |
+| **Current Phase** | Phase 1 - Foundation (COMPLETE) |
+| **Estimated Total** | ~16-20 hours |
+| **Started** | 2024-12-17 |
+
+---
+
+## Overview
+
+This migration consolidates team authentication across all nuxt-crouton packages:
+
+**Before**: 3 separate implementations of team-auth
+- `@crouton/auth` (Better Auth, mode-aware)
+- `nuxt-crouton/server/utils/team-auth.ts` (simple Drizzle)
+- Generated per-layer by `team-auth-utility.mjs`
+
+**After**: Single source of truth
+- `@crouton/auth` is the canonical implementation
+- All packages import from `@crouton/auth`
+- Generator uses `@crouton/auth` directly
+
+---
+
+## Phase 1: Foundation
+**Progress**: 6/6 tasks (100%)
+**Time**: 1h / 4h estimated
+
+### 1.1 Verify @crouton/auth is ready
+- [x] ✅ Confirm package builds successfully
+- [x] ✅ Verify all exports are correct
+- [x] ✅ Test Better Auth integration works
+
+**Files**: `packages/crouton-auth/`
+
+### 1.2 Update nuxt-crouton package.json
+- [x] ✅ Add `@crouton/auth` as dependency
+- [x] ✅ Update peer dependencies if needed (not needed)
+
+**Files**: `packages/nuxt-crouton/package.json`
+
+### 1.3 Delete duplicate team-auth.ts
+- [x] ✅ Remove `server/utils/team-auth.ts` from nuxt-crouton
+- [x] ✅ Update any imports that reference this file (nitro alias updated in 1.5)
+
+**Files**:
+- DELETED: `packages/nuxt-crouton/server/utils/team-auth.ts`
+
+### 1.4 Update useTeamContext composable
+- [x] ✅ Re-export `useTeamContext` from `@crouton/auth` (kept standalone with compatible API)
+- [x] ✅ Ensure backward compatibility (getTeamId/getTeamSlug + computed refs)
+
+**Files**: `packages/nuxt-crouton/app/composables/useTeamContext.ts`
+
+### 1.5 Update type definitions
+- [x] ✅ Update `crouton-team-auth.d.ts` to reference @crouton/auth types
+- [x] ✅ Ensure `#crouton/team-auth` alias still works (for backward compat)
+- [x] ✅ Update nitro alias in nuxt.config.ts
+
+**Files**: `packages/nuxt-crouton/crouton-team-auth.d.ts`, `packages/nuxt-crouton/nuxt.config.ts`
+
+### 1.6 Run typecheck and fix errors
+- [x] ✅ Run `npx nuxt typecheck` in nuxt-crouton
+- [x] ✅ Fix any type errors (pre-existing auto-import errors, normal for layers)
+
+**Commands**: `cd packages/nuxt-crouton && npx nuxt typecheck`
+**Note**: Auto-import type errors (useRoute, computed, etc.) are normal for layer packages and resolve when consumed.
+
+---
+
+## Phase 2: Collection Generator Updates
+**Progress**: 0/8 tasks (0%)
+**Time**: 0h / 6h estimated
+
+### 2.1 Remove useTeamUtility flag
+- [ ] Remove `useTeamUtility` conditionals from `generate-collection.mjs`
+- [ ] Default all generation to team-scoped
+
+**Files**: `packages/nuxt-crouton-collection-generator/lib/generate-collection.mjs`
+
+### 2.2 Delete team-auth-utility.mjs generator
+- [ ] Remove `team-auth-utility.mjs` (generates duplicate team-auth)
+- [ ] Update any imports
+
+**Files**:
+- DELETE: `packages/nuxt-crouton-collection-generator/lib/generators/team-auth-utility.mjs`
+
+### 2.3 Delete non-team api-endpoints.mjs
+- [ ] Remove `api-endpoints.mjs` (non-team version)
+- [ ] Keep only `api-endpoints-simplified.mjs`
+
+**Files**:
+- DELETE: `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints.mjs`
+
+### 2.4 Rename api-endpoints-simplified.mjs
+- [ ] Rename `api-endpoints-simplified.mjs` → `api-endpoints.mjs`
+- [ ] Update all imports referencing this file
+
+**Files**: `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints-simplified.mjs`
+
+### 2.5 Update import paths in generator
+- [ ] Change `#crouton/team-auth` to `@crouton/auth/server`
+- [ ] Update in database-queries.mjs
+- [ ] Update in database-schema.mjs
+
+**Files**:
+- `packages/nuxt-crouton-collection-generator/lib/generators/database-queries.mjs`
+- `packages/nuxt-crouton-collection-generator/lib/generators/database-schema.mjs`
+
+### 2.6 Update module-detector.mjs
+- [ ] Remove `useTeamUtility` detection logic
+- [ ] Simplify module detection
+
+**Files**: `packages/nuxt-crouton-collection-generator/lib/utils/module-detector.mjs`
+
+### 2.7 Update example configs
+- [ ] Remove `useTeamUtility` from example configs
+- [ ] Update documentation comments
+
+**Files**:
+- `packages/nuxt-crouton-collection-generator/examples/crouton.config.example.js`
+- `packages/nuxt-crouton-collection-generator/examples/crouton.config.products.js`
+
+### 2.8 Test generator output
+- [ ] Generate a test collection
+- [ ] Verify output uses @crouton/auth imports
+- [ ] Verify team-scoped endpoints work
+
+**Commands**: `pnpm crouton generate test-collection`
+
+---
+
+## Phase 3: Update Dependent Packages
+**Progress**: 0/6 tasks (0%)
+**Time**: 0h / 4h estimated
+
+### 3.1 Update nuxt-crouton-i18n
+- [ ] Replace `route.params.team` with `useTeamContext()`
+- [ ] Update `app/composables/useT.ts`
+
+**Files**: `packages/nuxt-crouton-i18n/app/composables/useT.ts`
+
+### 3.2 Update nuxt-crouton-assets
+- [ ] Replace direct route access with `useTeamContext()`
+- [ ] Update `app/composables/useAssetUpload.ts`
+- [ ] Update `app/components/Uploader.vue`
+
+**Files**:
+- `packages/nuxt-crouton-assets/app/composables/useAssetUpload.ts`
+- `packages/nuxt-crouton-assets/app/components/Uploader.vue`
+
+### 3.3 Update nuxt-crouton-ai
+- [ ] Remove try/catch around `useTeam()`
+- [ ] Use `useTeamContext()` directly
+- [ ] Update `app/composables/useChat.ts`
+- [ ] Update `app/composables/useCompletion.ts`
+
+**Files**:
+- `packages/nuxt-crouton-ai/app/composables/useChat.ts`
+- `packages/nuxt-crouton-ai/app/composables/useCompletion.ts`
+
+### 3.4 Update nuxt-crouton-supersaas
+- [ ] Add `@crouton/auth` as peer dependency
+- [ ] Verify connectors work with @crouton/auth
+
+**Files**: `packages/nuxt-crouton-supersaas/package.json`
+
+### 3.5 Verify nuxt-crouton-events (should work)
+- [ ] Confirm uses `useTeamContext()` already
+- [ ] Test after core update
+
+**Files**: `packages/nuxt-crouton-events/app/composables/useCroutonEvents.ts`
+
+### 3.6 Verify nuxt-crouton-flow (should work)
+- [ ] Confirm uses `useTeamContext()` already
+- [ ] Test after core update
+
+**Files**: `packages/nuxt-crouton-flow/app/composables/useFlowMutation.ts`
+
+---
+
+## Phase 4: Documentation & Cleanup
+**Progress**: 0/4 tasks (0%)
+**Time**: 0h / 4h estimated
+
+### 4.1 Update package CLAUDE.md files
+- [ ] Update `packages/nuxt-crouton/CLAUDE.md`
+- [ ] Update `packages/nuxt-crouton-collection-generator/CLAUDE.md`
+- [ ] Update other affected packages
+
+### 4.2 Create migration guide
+- [ ] Document breaking changes
+- [ ] Step-by-step upgrade instructions
+- [ ] Common issues and solutions
+
+**Files**: `apps/docs/content/guides/migration-from-supersaas.md`
+
+### 4.3 Update external documentation
+- [ ] Check `apps/docs/content` for outdated references
+- [ ] Update API documentation
+- [ ] Update getting started guides
+
+### 4.4 Final cleanup
+- [ ] Remove any deprecated code comments
+- [ ] Run full typecheck across monorepo
+- [ ] Test a fresh project setup
+
+---
+
+## Daily Log
+
+### 2024-12-17 (Evening)
+- ✅ **Phase 1 Complete**
+- Verified @crouton/auth package ready (Task 1.1)
+- Added @crouton/auth as optional peer dependency (Task 1.2)
+- Deleted duplicate team-auth.ts from nuxt-crouton (Task 1.3)
+- Updated useTeamContext with backward-compatible API (Task 1.4)
+- Updated nitro alias and type definitions (Task 1.5)
+- Fixed path resolution for monorepo workspace symlinks (Task 1.6)
+
+### 2024-12-17
+- Created PROGRESS_TRACKER.md
+- Identified 24 tasks across 4 phases
+- Previous analysis completed (see `/docs/reports/team-architecture-analysis.md`)
+
+---
+
+## Breaking Changes Summary
+
+| Change | Impact | Migration Path |
+|--------|--------|----------------|
+| `useTeamUtility` removed | Projects with `useTeamUtility: false` will error | Remove flag or set `true` |
+| `#crouton/team-auth` import | Generated code needs regeneration | Run `crouton generate --force` |
+| Teams always required | Single-tenant apps need default team | Auto-created on first signup |
+
+---
+
+## References
+
+- [Team Architecture Analysis](/docs/reports/team-architecture-analysis.md)
+- [Packages Cleanup Brief](/docs/briefs/packages-cleanup-analysis-brief.md)
+- [@crouton/auth Package](/packages/crouton-auth/README.md)
+
+---
+
+*Tracker created: 2024-12-17*

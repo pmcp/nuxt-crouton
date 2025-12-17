@@ -57,8 +57,14 @@
     "sortablejs": "^1.15.6"
   },
   "peerDependencies": {
+    "@friendlyinternet/crouton-auth": "workspace:*",
     "@nuxt/ui": "^4.0.0",
     "nuxt": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@friendlyinternet/crouton-auth": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "tsx": "^4.19.2",
