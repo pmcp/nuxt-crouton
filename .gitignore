@@ -38,3 +38,4 @@ coverage
 
 # Build
 *.tsbuildinfo
+apps/playground/.data
