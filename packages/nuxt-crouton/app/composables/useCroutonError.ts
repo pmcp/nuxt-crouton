@@ -33,7 +33,7 @@ export default function () {
       return true
     }
 
-    const userSession = useUserSession()
+    const userSession = useSession()
     const loggedIn = userSession.loggedIn?.value
 
     if (!loggedIn) {
