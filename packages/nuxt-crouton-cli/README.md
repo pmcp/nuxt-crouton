@@ -7,6 +7,7 @@ A powerful CLI tool for generating complete CRUD collections in Nuxt Crouton app
 - 🚀 **Complete CRUD Generation** - API endpoints, Vue components, database schemas
 - 🗄️ **Multi-Database Support** - PostgreSQL and SQLite
 - 🎯 **Type-Safe** - Full TypeScript support with Zod validation
+- 🌱 **Seed Data** - Generate realistic test data with drizzle-seed
 - 🔧 **Customizable** - Modify generated code to fit your needs
 - 📦 **Zero Config** - Works out of the box with sensible defaults
 
@@ -137,6 +138,8 @@ crouton-generate <layer> <collection> [options]
 - `--fields-file <path>` - Path to JSON schema file
 - `--config <path>` - Use configuration file instead of CLI arguments
 - `--dialect <pg|sqlite>` - Database dialect (default: pg)
+- `--seed` - Generate seed data file with realistic test data
+- `--count <number>` - Number of seed records to generate (default: 25)
 - `--no-translations` - Skip translation fields
 - `--force` - Force generation even if files exist
 - `--no-db` - Skip database table creation
@@ -267,6 +270,59 @@ EOF
 # Generate
 crouton-generate admin users --fields-file=users.json
 ```
+
+## Seed Data Generation
+
+Generate realistic test data alongside your collections using drizzle-seed + Faker.
+
+### CLI Usage
+
+```bash
+# Generate with seed data (25 records by default)
+crouton-generate shop products --fields-file=products.json --seed
+
+# Generate with custom record count
+crouton-generate shop products --fields-file=products.json --seed --count=100
+```
+
+### Config File Usage
+
+```javascript
+// crouton.config.js
+export default {
+  collections: [
+    { name: 'products', fieldsFile: './products.json', seed: true },           // 25 records
+    { name: 'categories', fieldsFile: './categories.json', seed: { count: 50 } } // custom count
+  ],
+  seed: {
+    defaultCount: 25,          // default for all collections
+    defaultTeamId: 'seed-team' // team ID for seeded data
+  },
+  // ... other config
+}
+```
+
+### Running Seeds
+
+After generation, run the seed file:
+
+```bash
+npx tsx ./layers/shop/collections/products/server/database/seed.ts
+```
+
+Or import in your code:
+
+```typescript
+import { seedShopProducts } from './layers/shop/collections/products/server/database/seed'
+
+await seedShopProducts({
+  count: 100,
+  teamId: 'my-team',
+  reset: true // optionally clear existing data first
+})
+```
+
+The seed generator auto-detects field names and generates appropriate data (emails, names, prices, descriptions, etc.).
 
 ## Requirements
 

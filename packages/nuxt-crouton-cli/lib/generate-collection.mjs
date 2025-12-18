@@ -45,6 +45,7 @@ import { generateTypes } from './generators/types.mjs'
 import { generateNuxtConfig } from './generators/nuxt-config.mjs'
 import { generateRepeaterItemComponent } from './generators/repeater-item-component.mjs'
 import { generateFieldComponents } from './generators/field-components.mjs'
+import { generateSeedFile } from './generators/seed-data.mjs'
 
 function parseArgs() {
   const a = process.argv.slice(2)
@@ -78,13 +79,15 @@ function parseArgs() {
   const force = a.includes('--force')
   const noTranslations = a.includes('--no-translations')
   const hierarchy = a.includes('--hierarchy')
+  const seed = a.includes('--seed')
+  const seedCount = parseInt((a.find(x => x.startsWith('--count=')) || '--count=25').split('=')[1], 10) || 25
 
   if (!layer || !collection) {
-    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--hierarchy]')
+    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--hierarchy] [--seed] [--count=<number>]')
     process.exit(1)
   }
 
-  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, hierarchy }
+  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, hierarchy, seed, seedCount }
 }
 
 async function loadFields(p) {
@@ -776,7 +779,7 @@ async function addI18nConfigToLayer(configPath, config) {
   return config
 }
 
-async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false }) {
+async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false, seed = false, seedCount = 25 }) {
   const cases = toCase(collection)
   const base = path.resolve('layers', layer, 'collections', cases.plural)
 
@@ -1040,6 +1043,9 @@ ${translationsFieldSchema}
     }
     console.log(`• ${base}/server/database/queries.ts`)
     console.log(`• ${base}/server/database/schema.ts`)
+    if (seed) {
+      console.log(`• ${base}/server/database/seed.ts (${seedCount} records)`)
+    }
     console.log(`• ${base}/types.ts`)
     console.log(`• ${base}/nuxt.config.ts`)
     console.log(`• layers/${layer}/nuxt.config.ts (layer root config)`)
@@ -1193,6 +1199,18 @@ ${translationsFieldSchema}
         content: cardMini
       })
     }
+  }
+
+  // Generate seed file if --seed flag is enabled
+  if (seed) {
+    files.push({
+      path: path.join(base, 'server', 'database', 'seed.ts'),
+      content: generateSeedFile(data, {
+        seedCount,
+        teamId: config?.seed?.defaultTeamId || 'seed-team'
+      })
+    })
+    console.log(`  Generating seed.ts (${seedCount} records)`)
   }
 
   // Write all files
@@ -1594,6 +1612,13 @@ async function main() {
             }
 
             // Generate files but skip database creation (we'll do it in batch at the end)
+            // Determine seed settings from collection config or global config
+            const collectionSeed = collectionConfig?.seed === true
+              ? { count: config?.seed?.defaultCount || 25 }
+              : typeof collectionConfig?.seed === 'object'
+                ? collectionConfig.seed
+                : null
+
             await writeScaffold({
               layer: target.layer,
               collection: collectionName,
@@ -1605,7 +1630,9 @@ async function main() {
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
               config: config,
-              collectionConfig: collectionConfig // Pass individual collection config for hierarchy detection
+              collectionConfig: collectionConfig, // Pass individual collection config for hierarchy detection
+              seed: !!collectionSeed,
+              seedCount: collectionSeed?.count || config?.seed?.defaultCount || 25
             })
 
             allCollections.push({ name: collectionName, layer: target.layer, fields })
@@ -1703,6 +1730,10 @@ async function main() {
               hasAnyTranslations = true
             }
             console.log(`\nGenerating collection '${collection}' in layer '${target.layer}'...`)
+
+            // Check for global seed settings (this code path doesn't have per-collection config)
+            const globalSeed = config?.seed?.enabled === true || config?.flags?.seed === true
+
             await writeScaffold({
               layer: target.layer,
               collection,
@@ -1713,7 +1744,9 @@ async function main() {
               noDb: true, // Skip individual db:generate
               force: config.flags?.force || false,
               noTranslations: config.flags?.noTranslations || false,
-              config: config
+              config: config,
+              seed: globalSeed,
+              seedCount: config?.seed?.defaultCount || 25
             })
 
             allCollections.push({ name: collection, layer: target.layer, fields })

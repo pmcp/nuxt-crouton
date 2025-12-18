@@ -23,6 +23,8 @@ crouton seed-translations                    # Seed i18n data
 | `--fields-file <path>` | Schema JSON file |
 | `--dialect <pg\|sqlite>` | Database dialect (default: pg) |
 | `--hierarchy` | Enable tree structure |
+| `--seed` | Generate seed data file (drizzle-seed) |
+| `--count <number>` | Number of seed records (default: 25) |
 | `--force` | Overwrite existing files |
 | `--no-translations` | Skip i18n fields |
 | `--dry-run` | Preview without writing |
@@ -47,6 +49,7 @@ lib/generators/
 ├── api-endpoints.mjs       → GET/POST/PATCH/DELETE
 ├── database-schema.mjs     → Drizzle schema
 ├── database-queries.mjs    → Query functions
+├── seed-data.mjs           → seed.ts (drizzle-seed data)
 ├── types.mjs               → TypeScript interfaces
 ├── nuxt-config.mjs         → Layer config
 └── field-components.mjs    → Dependent field components
@@ -95,7 +98,8 @@ layers/[layer]/collections/[collection]/
 │   │   └── [id].delete.ts
 │   └── database/
 │       ├── schema.ts
-│       └── queries.ts
+│       ├── queries.ts
+│       └── seed.ts          # Only with --seed flag
 ├── types.ts
 └── nuxt.config.ts
 ```
@@ -106,9 +110,15 @@ layers/[layer]/collections/[collection]/
 // crouton.config.js
 export default {
   collections: [
-    { name: 'products', fieldsFile: './schemas/products.json', hierarchy: true }
+    { name: 'products', fieldsFile: './schemas/products.json', hierarchy: true },
+    { name: 'authors', fieldsFile: './schemas/authors.json', seed: true },          // seed with defaults
+    { name: 'posts', fieldsFile: './schemas/posts.json', seed: { count: 50 } }      // seed with custom count
   ],
   dialect: 'sqlite',
+  seed: {
+    defaultCount: 25,           // default records per collection
+    defaultTeamId: 'seed-team'  // team ID for seeded data
+  },
   targets: [
     { layer: 'shop', collections: ['products'] }
   ],
@@ -206,6 +216,50 @@ crouton config ./crouton.config.js --dry-run
 # Verify generated code
 npx nuxt typecheck
 ```
+
+## Seed Data Generation
+
+Generate realistic test data using drizzle-seed + Faker.
+
+### CLI Usage
+
+```bash
+# Generate collection with seed file
+crouton shop products --fields-file=schema.json --seed
+
+# Generate with custom seed count
+crouton shop products --fields-file=schema.json --seed --count=100
+```
+
+### Config Usage
+
+```javascript
+collections: [
+  { name: 'products', fieldsFile: './schema.json', seed: true },           // default 25 records
+  { name: 'authors', fieldsFile: './schema.json', seed: { count: 100 } }   // custom count
+]
+```
+
+### Running Seeds
+
+```bash
+# Execute seed file directly
+npx tsx ./layers/shop/collections/products/server/database/seed.ts
+
+# Or import and call with options
+import { seedShopProducts } from './layers/shop/collections/products/server/database/seed'
+await seedShopProducts({ count: 50, teamId: 'my-team', reset: true })
+```
+
+### Field-to-Generator Mapping
+
+The generator auto-detects field types and generates appropriate data:
+- `email` fields → `f.email()`
+- `name`, `fullName` → `f.fullName()`
+- `title` → `f.loremIpsum({ sentencesCount: 1 })`
+- `description`, `content` → `f.loremIpsum({ sentencesCount: 3 })`
+- `price`, `amount` → `f.number({ minValue: 1, maxValue: 1000 })`
+- Foreign keys → placeholder values with dependency comments
 
 ---
 

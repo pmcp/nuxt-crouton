@@ -51,6 +51,17 @@ Use this skill when the user mentions:
 
 ## Quick Reference
 
+### CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `--fields-file <path>` | Schema JSON file |
+| `--dialect <pg\|sqlite>` | Database dialect (default: sqlite) |
+| `--hierarchy` | Enable tree structure |
+| `--seed` | Generate seed data file |
+| `--count <n>` | Seed record count (default: 25) |
+| `--dry-run` | Preview without writing |
+
 ### Field Types
 
 | User Says | Schema Type | Example |
@@ -118,9 +129,15 @@ Create a JSON schema file:
 // crouton.config.js
 export default {
   collections: [
-    { name: '{collection}', fieldsFile: './schemas/{collection}.json' }
+    { name: '{collection}', fieldsFile: './schemas/{collection}.json' },
+    { name: 'products', fieldsFile: './schemas/products.json', seed: true },  // with seed data
+    { name: 'categories', fieldsFile: './schemas/categories.json', seed: { count: 50 } }
   ],
   dialect: 'sqlite',  // or 'pg' for PostgreSQL
+  seed: {
+    defaultCount: 25,          // default records per collection
+    defaultTeamId: 'seed-team' // team ID for seeded data
+  },
   targets: [
     { layer: '{layer}', collections: ['{collection}'] }
   ],
@@ -178,10 +195,22 @@ layers/{layer}/collections/{collection}/
 │   │   └── [id].delete.ts    # DELETE
 │   └── database/
 │       ├── schema.ts         # Drizzle ORM schema
-│       └── queries.ts        # Database operations
+│       ├── queries.ts        # Database operations
+│       └── seed.ts           # Seed data (with --seed flag)
 ├── types.ts                  # TypeScript interfaces
 ├── nuxt.config.ts           # Layer configuration
 └── README.md                # Collection documentation
+```
+
+### Running Seed Files
+
+```bash
+# Execute seed file directly
+npx tsx ./layers/{layer}/collections/{collection}/server/database/seed.ts
+
+# Or import and call programmatically
+import { seed{Layer}{Collection}s } from '.../seed'
+await seed{Layer}{Collection}s({ count: 100, teamId: 'my-team', reset: true })
 ```
 
 ## Examples

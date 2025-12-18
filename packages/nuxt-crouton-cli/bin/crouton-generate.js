@@ -105,6 +105,8 @@ program
   .option('--force', 'Force generation despite missing dependencies')
   .option('--no-db', 'Skip database table creation')
   .option('--hierarchy', 'Enable hierarchy support (parentId, path, depth, order)')
+  .option('--seed', 'Generate seed data file using drizzle-seed')
+  .option('--count <number>', 'Number of seed records (default: 25)', '25')
   .option('-c, --config <path>', 'Use config file instead of CLI args')
   .action(async (layer, collection, options) => {
     const spinner = ora('Generating collection...').start();
@@ -149,6 +151,10 @@ program
       }
       if (options.hierarchy) {
         args.push('--hierarchy');
+      }
+      if (options.seed) {
+        args.push('--seed');
+        args.push(`--count=${options.count || '25'}`);
       }
 
       spinner.stop();

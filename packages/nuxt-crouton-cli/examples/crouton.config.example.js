@@ -60,15 +60,22 @@ export default {
       sortable: true                            // Enable drag-to-reorder (without hierarchy)
     },
 
-    // Simple collections
+    // Collection with seed data generation
+    // Generates: seed.ts file with drizzle-seed for realistic test data
     {
       name: 'authors',
-      fieldsFile: './schemas/authors.json'
+      fieldsFile: './schemas/authors.json',
+      seed: true                                // Generate seed file with default count (25)
     },
+
+    // Collection with custom seed count
     {
       name: 'posts',
-      fieldsFile: './schemas/posts.json'
+      fieldsFile: './schemas/posts.json',
+      seed: { count: 50 }                       // Generate seed file with 50 records
     },
+
+    // Simple collections (no seed)
     {
       name: 'orders',
       fieldsFile: './schemas/orders.json'
@@ -78,6 +85,32 @@ export default {
       fieldsFile: './schemas/tags.json'
     }
   ],
+
+  // ============================================================
+  // SEED DATA CONFIGURATION
+  // ============================================================
+  // Global defaults for seed data generation.
+  // Uses drizzle-seed + Faker to generate realistic test data.
+  //
+  // Per-collection seed settings override these defaults.
+  // See collection examples above for per-collection usage.
+  seed: {
+    /**
+     * defaultCount: Default number of records to seed
+     * Can be overridden per-collection with seed: { count: N }
+     *
+     * @default 25
+     */
+    defaultCount: 25,
+
+    /**
+     * defaultTeamId: Team ID used for seeded records
+     * All crouton collections are team-scoped.
+     *
+     * @default 'seed-team'
+     */
+    defaultTeamId: 'seed-team'
+  },
 
   // ============================================================
   // TRANSLATIONS CONFIGURATION (i18n)
@@ -463,6 +496,10 @@ export default {
 //   npx crouton-generate shop products --fields-file=./schemas/products.json
 //   npx crouton-generate shop products -f ./schemas/products.json --dialect=pg
 //   npx crouton-generate content pages -f ./schemas/pages.json --hierarchy
+//
+// Generate with seed data:
+//   npx crouton-generate shop products -f ./schemas/products.json --seed
+//   npx crouton-generate shop products -f ./schemas/products.json --seed --count=100
 //
 // Preview changes:
 //   npx crouton-generate config --dry-run
