@@ -28,7 +28,8 @@
     "registry",
     "dist",
     "nuxt.config.ts",
-    "crouton-team-auth.d.ts"
+    "crouton-team-auth.d.ts",
+    "crouton-hooks.d.ts"
   ],
   "keywords": [
     "nuxt",
@@ -67,6 +68,7 @@
     }
   },
   "devDependencies": {
+    "@types/sortablejs": "^1.15.8",
     "tsx": "^4.19.2",
     "unbuild": "^3.6.1"
   }
