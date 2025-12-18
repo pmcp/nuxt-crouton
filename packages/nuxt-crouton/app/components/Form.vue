@@ -126,7 +126,7 @@
 import type { Ref } from 'vue'
 
 // Type definitions
-type CroutonAction = 'create' | 'update' | 'delete' | null
+type CroutonAction = 'create' | 'update' | 'delete' | undefined
 type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'create_open' | 'update_open' | 'delete_open'
 
 interface CroutonState {

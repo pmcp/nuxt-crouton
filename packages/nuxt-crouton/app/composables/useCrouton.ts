@@ -9,7 +9,7 @@
  */
 
 // Type definitions
-type CroutonAction = 'create' | 'update' | 'delete' | 'view' | null
+type CroutonAction = 'create' | 'update' | 'delete' | 'view' | undefined
 type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'view_send' | 'create_open' | 'update_open' | 'delete_open' | 'view_open'
 
 interface CroutonState {
@@ -63,7 +63,7 @@ export default function () {
   // Computed values for backward compatibility
   const showCrouton = computed(() => croutonStates.value.length > 0)
   const loading = computed(() => croutonStates.value[croutonStates.value.length - 1]?.loading || 'notLoading')
-  const action = computed(() => croutonStates.value[croutonStates.value.length - 1]?.action || null)
+  const action = computed(() => croutonStates.value[croutonStates.value.length - 1]?.action || undefined)
   const activeCollection = computed(() => croutonStates.value[croutonStates.value.length - 1]?.collection || null)
   const items = computed(() => croutonStates.value[croutonStates.value.length - 1]?.items || [])
   const activeItem = computed(() => croutonStates.value[croutonStates.value.length - 1]?.activeItem || {})
