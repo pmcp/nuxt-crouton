@@ -4,21 +4,16 @@ import { join } from 'node:path'
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineNuxtConfig({
+  // Register the auth module
+  modules: [
+    join(currentDir, 'module.ts'),
+  ],
+
   // Layer metadata
   $meta: {
     name: '@crouton/auth',
     version: '0.1.0',
   },
-
-  // Auto-imports from the layer
-  imports: {
-    dirs: ['app/composables'],
-  },
-
-  // Components from the layer
-  components: [
-    { path: 'app/components', pathPrefix: false },
-  ],
 
   // Runtime config defaults
   runtimeConfig: {

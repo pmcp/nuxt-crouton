@@ -1,11 +1,6 @@
-import { fileURLToPath } from 'node:url'
-import { join } from 'node:path'
-
-const currentDir = fileURLToPath(new URL('.', import.meta.url))
-
 export default defineNuxtConfig({
-  // Extend crouton-auth to get auth composables and server utils
-  extends: ['../crouton-auth'],
+  // Note: crouton-auth should be extended by the consumer before crouton-admin
+  // This ensures auth composables and server utils are available
 
   // Layer metadata
   $meta: {

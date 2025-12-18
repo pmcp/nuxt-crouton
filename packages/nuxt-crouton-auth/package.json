@@ -4,7 +4,8 @@
   "description": "Authentication layer for Nuxt applications using Better Auth with teams, billing, passkeys, and 2FA support",
   "type": "module",
   "exports": {
-    ".": {
+    ".": "./nuxt.config.ts",
+    "./module": {
       "import": "./dist/module.mjs",
       "require": "./dist/module.cjs",
       "types": "./dist/module.d.ts"
@@ -22,9 +23,7 @@
       "types": "./server/database/schema/auth.ts"
     }
   },
-  "main": "./dist/module.cjs",
-  "module": "./dist/module.mjs",
-  "types": "./dist/module.d.ts",
+  "main": "./nuxt.config.ts",
   "files": [
     "dist",
     "app",
