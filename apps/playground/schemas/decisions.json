@@ -1,0 +1,8 @@
+{
+  "id": { "type": "string", "meta": { "primaryKey": true } },
+  "title": { "type": "string", "meta": { "required": true } },
+  "description": { "type": "text" },
+  "type": { "type": "string", "meta": { "maxLength": 20 } },
+  "status": { "type": "string", "meta": { "maxLength": 20 } },
+  "position": { "type": "json" }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck",
+    "generate": "node ../../packages/nuxt-crouton-cli/bin/crouton-generate.js",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.74",
+    "@iconify-json/simple-icons": "^1.2.59",
+    "@nuxt/ui": "^4.2.1",
+    "@nuxthub/core": "^0.10.3",
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-i18n": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-editor": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-flow": "workspace:*",
+    "drizzle-orm": "^0.38.4",
+    "nuxt": "^4.2.2"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.10.0",
+    "better-sqlite3": "^11.0.0",
+    "drizzle-kit": "^0.31.0",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.5"
+  },
+  "packageManager": "pnpm@10.23.0"
+}

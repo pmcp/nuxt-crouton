@@ -1,0 +1,10 @@
+{
+  "id": { "type": "string", "meta": { "primaryKey": true } },
+  "title": { "type": "string", "meta": { "required": true, "maxLength": 200 } },
+  "slug": { "type": "string", "meta": { "unique": true, "maxLength": 200, "required": true } },
+  "content": { "type": "text" },
+  "status": { "type": "string", "meta": { "maxLength": 20, "default": "draft" } },
+  "publishedAt": { "type": "date" },
+  "seoTitle": { "type": "string", "meta": { "maxLength": 60 } },
+  "seoDescription": { "type": "string", "meta": { "maxLength": 160 } }
+}

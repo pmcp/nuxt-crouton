@@ -1,0 +1,19 @@
+{
+  "id": { "type": "string", "meta": { "primaryKey": true } },
+  "title": { "type": "string", "meta": { "required": true, "maxLength": 200 } },
+  "slug": { "type": "string", "meta": { "unique": true, "maxLength": 200 } },
+  "excerpt": { "type": "text" },
+  "content": { "type": "text" },
+  "status": { "type": "string", "meta": { "maxLength": 20 } },
+  "publishedAt": { "type": "date" },
+  "featuredImage": { "type": "string" },
+  "categoryId": { "type": "string", "refTarget": "categories" },
+  "metadata": {
+    "type": "repeater",
+    "meta": {
+      "repeaterComponent": "MetadataItem",
+      "addLabel": "Add Metadata Field",
+      "sortable": true
+    }
+  }
+}

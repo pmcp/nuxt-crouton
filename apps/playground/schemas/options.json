@@ -1,0 +1,7 @@
+{
+  "id": { "type": "string", "meta": { "primaryKey": true } },
+  "title": { "type": "string", "meta": { "required": true } },
+  "description": { "type": "text" },
+  "icon": { "type": "string" },
+  "category": { "type": "string" }
+}

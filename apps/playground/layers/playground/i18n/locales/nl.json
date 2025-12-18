@@ -1,0 +1,12 @@
+{
+  "playground": {
+    "collections": {
+      "categories": {
+        "title": "Categories"
+      },
+      "posts": {
+        "title": "Posts"
+      }
+    }
+  }
+}

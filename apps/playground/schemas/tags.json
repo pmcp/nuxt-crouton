@@ -1,0 +1,7 @@
+{
+  "id": { "type": "string", "meta": { "primaryKey": true } },
+  "name": { "type": "string", "meta": { "required": true, "maxLength": 50 } },
+  "slug": { "type": "string", "meta": { "maxLength": 50 } },
+  "color": { "type": "string", "meta": { "maxLength": 7 } },
+  "order": { "type": "number" }
+}
