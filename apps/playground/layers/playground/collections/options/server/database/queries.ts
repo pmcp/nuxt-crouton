@@ -8,37 +8,36 @@ import { user } from '~~/server/database/schema'
 export async function getAllPlaygroundOptions(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const options = await db
+  const options = await (db as any)
     .select({
       ...tables.playgroundOptions,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundOptions)
-    .leftJoin(ownerUsers, eq(tables.playgroundOptions.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundOptions.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundOptions.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundOptions.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundOptions.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundOptions.updatedBy, updatedByUser.id))
     .where(eq(tables.playgroundOptions.teamId, teamId))
     .orderBy(desc(tables.playgroundOptions.createdAt))
 
@@ -48,37 +47,36 @@ export async function getAllPlaygroundOptions(teamId: string) {
 export async function getPlaygroundOptionsByIds(teamId: string, optionIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const options = await db
+  const options = await (db as any)
     .select({
       ...tables.playgroundOptions,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundOptions)
-    .leftJoin(ownerUsers, eq(tables.playgroundOptions.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundOptions.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundOptions.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundOptions.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundOptions.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundOptions.updatedBy, updatedByUser.id))
     .where(
       and(
         eq(tables.playgroundOptions.teamId, teamId),
@@ -93,7 +91,7 @@ export async function getPlaygroundOptionsByIds(teamId: string, optionIds: strin
 export async function createPlaygroundOption(data: NewPlaygroundOption) {
   const db = useDB()
 
-  const [option] = await db
+  const [option] = await (db as any)
     .insert(tables.playgroundOptions)
     .values(data)
     .returning()
@@ -109,7 +107,7 @@ export async function updatePlaygroundOption(
 ) {
   const db = useDB()
 
-  const [option] = await db
+  const [option] = await (db as any)
     .update(tables.playgroundOptions)
     .set({
       ...updates,
@@ -141,7 +139,7 @@ export async function deletePlaygroundOption(
 ) {
   const db = useDB()
 
-  const [deleted] = await db
+  const [deleted] = await (db as any)
     .delete(tables.playgroundOptions)
     .where(
       and(

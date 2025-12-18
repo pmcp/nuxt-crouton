@@ -8,37 +8,36 @@ import { user } from '~~/server/database/schema'
 export async function getAllPlaygroundCategories(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const categories = await db
+  const categories = await (db as any)
     .select({
       ...tables.playgroundCategories,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundCategories)
-    .leftJoin(ownerUsers, eq(tables.playgroundCategories.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundCategories.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundCategories.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundCategories.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundCategories.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundCategories.updatedBy, updatedByUser.id))
     .where(eq(tables.playgroundCategories.teamId, teamId))
     .orderBy(desc(tables.playgroundCategories.createdAt))
 
@@ -48,37 +47,36 @@ export async function getAllPlaygroundCategories(teamId: string) {
 export async function getPlaygroundCategoriesByIds(teamId: string, categorieIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const categories = await db
+  const categories = await (db as any)
     .select({
       ...tables.playgroundCategories,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundCategories)
-    .leftJoin(ownerUsers, eq(tables.playgroundCategories.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundCategories.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundCategories.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundCategories.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundCategories.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundCategories.updatedBy, updatedByUser.id))
     .where(
       and(
         eq(tables.playgroundCategories.teamId, teamId),
@@ -93,7 +91,7 @@ export async function getPlaygroundCategoriesByIds(teamId: string, categorieIds:
 export async function createPlaygroundCategorie(data: NewPlaygroundCategorie) {
   const db = useDB()
 
-  const [categorie] = await db
+  const [categorie] = await (db as any)
     .insert(tables.playgroundCategories)
     .values(data)
     .returning()
@@ -109,7 +107,7 @@ export async function updatePlaygroundCategorie(
 ) {
   const db = useDB()
 
-  const [categorie] = await db
+  const [categorie] = await (db as any)
     .update(tables.playgroundCategories)
     .set({
       ...updates,
@@ -141,7 +139,7 @@ export async function deletePlaygroundCategorie(
 ) {
   const db = useDB()
 
-  const [deleted] = await db
+  const [deleted] = await (db as any)
     .delete(tables.playgroundCategories)
     .where(
       and(
@@ -163,17 +161,26 @@ export async function deletePlaygroundCategorie(
 }
 
 // Tree hierarchy queries (auto-generated when hierarchy: true)
+// Type: PlaygroundCategorie with hierarchy fields
+
+interface TreeItem {
+  id: string
+  path: string
+  depth: number
+  order: number
+  [key: string]: any
+}
 
 export async function getTreeDataPlaygroundCategories(teamId: string) {
   const db = useDB()
 
-  const categories = await db
+  const categories = await (db as any)
     .select()
     .from(tables.playgroundCategories)
     .where(eq(tables.playgroundCategories.teamId, teamId))
     .orderBy(tables.playgroundCategories.path, tables.playgroundCategories.order)
 
-  return categories
+  return categories as TreeItem[]
 }
 
 export async function updatePositionPlaygroundCategorie(
@@ -185,7 +192,7 @@ export async function updatePositionPlaygroundCategorie(
   const db = useDB()
 
   // Get the current item to find its path
-  const [current] = await db
+  const [current] = await (db as any)
     .select()
     .from(tables.playgroundCategories)
     .where(
@@ -193,7 +200,7 @@ export async function updatePositionPlaygroundCategorie(
         eq(tables.playgroundCategories.id, id),
         eq(tables.playgroundCategories.teamId, teamId)
       )
-    )
+    ) as TreeItem[]
 
   if (!current) {
     throw createError({
@@ -207,7 +214,7 @@ export async function updatePositionPlaygroundCategorie(
   let newDepth: number
 
   if (newParentId) {
-    const [parent] = await db
+    const [parent] = await (db as any)
       .select()
       .from(tables.playgroundCategories)
       .where(
@@ -215,7 +222,7 @@ export async function updatePositionPlaygroundCategorie(
           eq(tables.playgroundCategories.id, newParentId),
           eq(tables.playgroundCategories.teamId, teamId)
         )
-      )
+      ) as TreeItem[]
 
     if (!parent) {
       throw createError({
@@ -242,7 +249,7 @@ export async function updatePositionPlaygroundCategorie(
   const oldPath = current.path
 
   // Update the item itself
-  const [updated] = await db
+  const [updated] = await (db as any)
     .update(tables.playgroundCategories)
     .set({
       parentId: newParentId,
@@ -261,7 +268,7 @@ export async function updatePositionPlaygroundCategorie(
   // Update all descendants' paths if the path changed
   if (oldPath !== newPath) {
     // Get all descendants
-    const descendants = await db
+    const descendants = await (db as any)
       .select()
       .from(tables.playgroundCategories)
       .where(
@@ -269,14 +276,14 @@ export async function updatePositionPlaygroundCategorie(
           eq(tables.playgroundCategories.teamId, teamId),
           sql`${tables.playgroundCategories.path} LIKE ${oldPath + '%'} AND ${tables.playgroundCategories.id} != ${id}`
         )
-      )
+      ) as TreeItem[]
 
     // Update each descendant's path and depth
     for (const descendant of descendants) {
       const descendantNewPath = descendant.path.replace(oldPath, newPath)
       const depthDiff = newDepth - current.depth
 
-      await db
+      await (db as any)
         .update(tables.playgroundCategories)
         .set({
           path: descendantNewPath,
@@ -298,7 +305,7 @@ export async function reorderSiblingsPlaygroundCategories(
   const results = []
 
   for (const update of updates) {
-    const [updated] = await db
+    const [updated] = await (db as any)
       .update(tables.playgroundCategories)
       .set({ order: update.order })
       .where(

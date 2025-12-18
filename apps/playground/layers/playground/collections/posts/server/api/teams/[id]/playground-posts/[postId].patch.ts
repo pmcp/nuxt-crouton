@@ -6,13 +6,16 @@ import type { PlaygroundPost } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
   const { postId } = getRouterParams(event)
+  if (!postId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing post ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<PlaygroundPost>>(event)
 
   // Handle translation updates properly
   if (body.translations && body.locale) {
-    const [existing] = await getPlaygroundPostsByIds(team.id, [postId])
+    const [existing] = await getPlaygroundPostsByIds(team.id, [postId]) as any[]
     if (existing) {
       body.translations = {
         ...existing.translations,

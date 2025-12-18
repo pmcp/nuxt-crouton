@@ -5,6 +5,9 @@ import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-au
 
 export default defineEventHandler(async (event) => {
   const { categorieId } = getRouterParams(event)
+  if (!categorieId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing categorie ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   return await deletePlaygroundCategorie(categorieId, team.id, user.id)

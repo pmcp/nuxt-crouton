@@ -8,37 +8,36 @@ import { user } from '~~/server/database/schema'
 export async function getAllPlaygroundDecisions(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const decisions = await db
+  const decisions = await (db as any)
     .select({
       ...tables.playgroundDecisions,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundDecisions)
-    .leftJoin(ownerUsers, eq(tables.playgroundDecisions.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundDecisions.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundDecisions.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundDecisions.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundDecisions.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundDecisions.updatedBy, updatedByUser.id))
     .where(eq(tables.playgroundDecisions.teamId, teamId))
     .orderBy(desc(tables.playgroundDecisions.createdAt))
 
@@ -48,37 +47,36 @@ export async function getAllPlaygroundDecisions(teamId: string) {
 export async function getPlaygroundDecisionsByIds(teamId: string, decisionIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const decisions = await db
+  const decisions = await (db as any)
     .select({
       ...tables.playgroundDecisions,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundDecisions)
-    .leftJoin(ownerUsers, eq(tables.playgroundDecisions.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundDecisions.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundDecisions.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundDecisions.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundDecisions.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundDecisions.updatedBy, updatedByUser.id))
     .where(
       and(
         eq(tables.playgroundDecisions.teamId, teamId),
@@ -93,7 +91,7 @@ export async function getPlaygroundDecisionsByIds(teamId: string, decisionIds: s
 export async function createPlaygroundDecision(data: NewPlaygroundDecision) {
   const db = useDB()
 
-  const [decision] = await db
+  const [decision] = await (db as any)
     .insert(tables.playgroundDecisions)
     .values(data)
     .returning()
@@ -109,7 +107,7 @@ export async function updatePlaygroundDecision(
 ) {
   const db = useDB()
 
-  const [decision] = await db
+  const [decision] = await (db as any)
     .update(tables.playgroundDecisions)
     .set({
       ...updates,
@@ -141,7 +139,7 @@ export async function deletePlaygroundDecision(
 ) {
   const db = useDB()
 
-  const [deleted] = await db
+  const [deleted] = await (db as any)
     .delete(tables.playgroundDecisions)
     .where(
       and(
@@ -163,17 +161,26 @@ export async function deletePlaygroundDecision(
 }
 
 // Tree hierarchy queries (auto-generated when hierarchy: true)
+// Type: PlaygroundDecision with hierarchy fields
+
+interface TreeItem {
+  id: string
+  path: string
+  depth: number
+  order: number
+  [key: string]: any
+}
 
 export async function getTreeDataPlaygroundDecisions(teamId: string) {
   const db = useDB()
 
-  const decisions = await db
+  const decisions = await (db as any)
     .select()
     .from(tables.playgroundDecisions)
     .where(eq(tables.playgroundDecisions.teamId, teamId))
     .orderBy(tables.playgroundDecisions.path, tables.playgroundDecisions.order)
 
-  return decisions
+  return decisions as TreeItem[]
 }
 
 export async function updatePositionPlaygroundDecision(
@@ -185,7 +192,7 @@ export async function updatePositionPlaygroundDecision(
   const db = useDB()
 
   // Get the current item to find its path
-  const [current] = await db
+  const [current] = await (db as any)
     .select()
     .from(tables.playgroundDecisions)
     .where(
@@ -193,7 +200,7 @@ export async function updatePositionPlaygroundDecision(
         eq(tables.playgroundDecisions.id, id),
         eq(tables.playgroundDecisions.teamId, teamId)
       )
-    )
+    ) as TreeItem[]
 
   if (!current) {
     throw createError({
@@ -207,7 +214,7 @@ export async function updatePositionPlaygroundDecision(
   let newDepth: number
 
   if (newParentId) {
-    const [parent] = await db
+    const [parent] = await (db as any)
       .select()
       .from(tables.playgroundDecisions)
       .where(
@@ -215,7 +222,7 @@ export async function updatePositionPlaygroundDecision(
           eq(tables.playgroundDecisions.id, newParentId),
           eq(tables.playgroundDecisions.teamId, teamId)
         )
-      )
+      ) as TreeItem[]
 
     if (!parent) {
       throw createError({
@@ -242,7 +249,7 @@ export async function updatePositionPlaygroundDecision(
   const oldPath = current.path
 
   // Update the item itself
-  const [updated] = await db
+  const [updated] = await (db as any)
     .update(tables.playgroundDecisions)
     .set({
       parentId: newParentId,
@@ -261,7 +268,7 @@ export async function updatePositionPlaygroundDecision(
   // Update all descendants' paths if the path changed
   if (oldPath !== newPath) {
     // Get all descendants
-    const descendants = await db
+    const descendants = await (db as any)
       .select()
       .from(tables.playgroundDecisions)
       .where(
@@ -269,14 +276,14 @@ export async function updatePositionPlaygroundDecision(
           eq(tables.playgroundDecisions.teamId, teamId),
           sql`${tables.playgroundDecisions.path} LIKE ${oldPath + '%'} AND ${tables.playgroundDecisions.id} != ${id}`
         )
-      )
+      ) as TreeItem[]
 
     // Update each descendant's path and depth
     for (const descendant of descendants) {
       const descendantNewPath = descendant.path.replace(oldPath, newPath)
       const depthDiff = newDepth - current.depth
 
-      await db
+      await (db as any)
         .update(tables.playgroundDecisions)
         .set({
           path: descendantNewPath,
@@ -298,7 +305,7 @@ export async function reorderSiblingsPlaygroundDecisions(
   const results = []
 
   for (const update of updates) {
-    const [updated] = await db
+    const [updated] = await (db as any)
       .update(tables.playgroundDecisions)
       .set({ order: update.order })
       .where(

@@ -31,6 +31,8 @@ export interface PlaygroundCategorie {
   description?: string
   icon?: string
   color?: string
+  translations?: Record<string, { name?: string; description?: string }>
+  locale?: string
   createdAt: Date
   updatedAt: Date
   createdBy: string

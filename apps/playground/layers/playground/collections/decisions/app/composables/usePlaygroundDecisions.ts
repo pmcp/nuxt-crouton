@@ -29,7 +29,7 @@ export const playgroundDecisionSchema = z.object({
   description: z.string().optional(),
   type: z.string().optional(),
   status: z.string().optional(),
-  position: z.record(z.any()).optional(),
+  position: z.record(z.string(), z.any()).optional(),
   parentId: z.string().nullable().optional()
 })
 

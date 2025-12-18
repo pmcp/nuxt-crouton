@@ -6,6 +6,9 @@ import type { PlaygroundDecision } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
   const { decisionId } = getRouterParams(event)
+  if (!decisionId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing decision ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<PlaygroundDecision>>(event)

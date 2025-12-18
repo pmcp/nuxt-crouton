@@ -6,13 +6,16 @@ import type { PlaygroundCategorie } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
   const { categorieId } = getRouterParams(event)
+  if (!categorieId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing categorie ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<PlaygroundCategorie>>(event)
 
   // Handle translation updates properly
   if (body.translations && body.locale) {
-    const [existing] = await getPlaygroundCategoriesByIds(team.id, [categorieId])
+    const [existing] = await getPlaygroundCategoriesByIds(team.id, [categorieId]) as any[]
     if (existing) {
       body.translations = {
         ...existing.translations,

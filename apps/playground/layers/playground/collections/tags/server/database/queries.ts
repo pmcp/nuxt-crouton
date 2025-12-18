@@ -8,37 +8,36 @@ import { user } from '~~/server/database/schema'
 export async function getAllPlaygroundTags(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const tags = await db
+  const tags = await (db as any)
     .select({
       ...tables.playgroundTags,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundTags)
-    .leftJoin(ownerUsers, eq(tables.playgroundTags.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundTags.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundTags.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundTags.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundTags.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundTags.updatedBy, updatedByUser.id))
     .where(eq(tables.playgroundTags.teamId, teamId))
     .orderBy(asc(tables.playgroundTags.order), desc(tables.playgroundTags.createdAt))
 
@@ -48,37 +47,36 @@ export async function getAllPlaygroundTags(teamId: string) {
 export async function getPlaygroundTagsByIds(teamId: string, tagIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const tags = await db
+  const tags = await (db as any)
     .select({
       ...tables.playgroundTags,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundTags)
-    .leftJoin(ownerUsers, eq(tables.playgroundTags.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundTags.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundTags.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundTags.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundTags.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundTags.updatedBy, updatedByUser.id))
     .where(
       and(
         eq(tables.playgroundTags.teamId, teamId),
@@ -93,7 +91,7 @@ export async function getPlaygroundTagsByIds(teamId: string, tagIds: string[]) {
 export async function createPlaygroundTag(data: NewPlaygroundTag) {
   const db = useDB()
 
-  const [tag] = await db
+  const [tag] = await (db as any)
     .insert(tables.playgroundTags)
     .values(data)
     .returning()
@@ -109,7 +107,7 @@ export async function updatePlaygroundTag(
 ) {
   const db = useDB()
 
-  const [tag] = await db
+  const [tag] = await (db as any)
     .update(tables.playgroundTags)
     .set({
       ...updates,
@@ -141,7 +139,7 @@ export async function deletePlaygroundTag(
 ) {
   const db = useDB()
 
-  const [deleted] = await db
+  const [deleted] = await (db as any)
     .delete(tables.playgroundTags)
     .where(
       and(
@@ -172,7 +170,7 @@ export async function reorderSiblingsPlaygroundTags(
 
   const results = await Promise.all(
     updates.map(({ id, order }) =>
-      db
+      (db as any)
         .update(tables.playgroundTags)
         .set({ order })
         .where(

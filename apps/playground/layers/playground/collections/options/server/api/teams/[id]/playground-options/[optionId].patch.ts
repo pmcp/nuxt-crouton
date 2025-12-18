@@ -6,6 +6,9 @@ import type { PlaygroundOption } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
   const { optionId } = getRouterParams(event)
+  if (!optionId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing option ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<PlaygroundOption>>(event)

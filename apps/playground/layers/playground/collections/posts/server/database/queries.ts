@@ -9,39 +9,38 @@ import { user } from '~~/server/database/schema'
 export async function getAllPlaygroundPosts(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const posts = await db
+  const posts = await (db as any)
     .select({
       ...tables.playgroundPosts,
       categoryIdData: categoriesSchema.playgroundCategories,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundPosts)
     .leftJoin(categoriesSchema.playgroundCategories, eq(tables.playgroundPosts.categoryId, categoriesSchema.playgroundCategories.id))
-    .leftJoin(ownerUsers, eq(tables.playgroundPosts.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundPosts.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundPosts.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundPosts.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundPosts.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundPosts.updatedBy, updatedByUser.id))
     .where(eq(tables.playgroundPosts.teamId, teamId))
     .orderBy(desc(tables.playgroundPosts.createdAt))
 
@@ -51,39 +50,38 @@ export async function getAllPlaygroundPosts(teamId: string) {
 export async function getPlaygroundPostsByIds(teamId: string, postIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
-  const updatedByUsers = alias(user, 'updatedByUsers')
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
 
-  // @ts-expect-error Complex select with joins requires type assertion
-  const posts = await db
+  const posts = await (db as any)
     .select({
       ...tables.playgroundPosts,
       categoryIdData: categoriesSchema.playgroundCategories,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
-    })
+    } as any)
     .from(tables.playgroundPosts)
     .leftJoin(categoriesSchema.playgroundCategories, eq(tables.playgroundPosts.categoryId, categoriesSchema.playgroundCategories.id))
-    .leftJoin(ownerUsers, eq(tables.playgroundPosts.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.playgroundPosts.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.playgroundPosts.updatedBy, updatedByUsers.id))
+    .leftJoin(ownerUser, eq(tables.playgroundPosts.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.playgroundPosts.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.playgroundPosts.updatedBy, updatedByUser.id))
     .where(
       and(
         eq(tables.playgroundPosts.teamId, teamId),
@@ -98,7 +96,7 @@ export async function getPlaygroundPostsByIds(teamId: string, postIds: string[])
 export async function createPlaygroundPost(data: NewPlaygroundPost) {
   const db = useDB()
 
-  const [post] = await db
+  const [post] = await (db as any)
     .insert(tables.playgroundPosts)
     .values(data)
     .returning()
@@ -114,7 +112,7 @@ export async function updatePlaygroundPost(
 ) {
   const db = useDB()
 
-  const [post] = await db
+  const [post] = await (db as any)
     .update(tables.playgroundPosts)
     .set({
       ...updates,
@@ -146,7 +144,7 @@ export async function deletePlaygroundPost(
 ) {
   const db = useDB()
 
-  const [deleted] = await db
+  const [deleted] = await (db as any)
     .delete(tables.playgroundPosts)
     .where(
       and(

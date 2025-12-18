@@ -55,8 +55,8 @@
         v-model="state.translations"
         :fields="['name', 'description']"
         :default-values="{
-          name: state.name,
-          description: state.description
+          name: state.name || '',
+          description: state.description || ''
         }"
         label="Translations"
       />

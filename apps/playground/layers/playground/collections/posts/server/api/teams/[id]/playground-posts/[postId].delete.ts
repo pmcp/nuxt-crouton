@@ -5,6 +5,9 @@ import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-au
 
 export default defineEventHandler(async (event) => {
   const { postId } = getRouterParams(event)
+  if (!postId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing post ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   return await deletePlaygroundPost(postId, team.id, user.id)

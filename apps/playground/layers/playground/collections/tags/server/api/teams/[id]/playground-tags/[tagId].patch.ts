@@ -6,6 +6,9 @@ import type { PlaygroundTag } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
   const { tagId } = getRouterParams(event)
+  if (!tagId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing tag ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<PlaygroundTag>>(event)

@@ -76,9 +76,9 @@
         v-model="state.translations"
         :fields="['title', 'excerpt', 'content']"
         :default-values="{
-          title: state.title,
-          excerpt: state.excerpt,
-          content: state.content
+          title: state.title || '',
+          excerpt: state.excerpt || '',
+          content: state.content || ''
         }"
         label="Translations"
       />

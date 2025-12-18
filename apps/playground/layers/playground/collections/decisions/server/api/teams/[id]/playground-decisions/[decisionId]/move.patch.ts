@@ -5,6 +5,9 @@ import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-au
 
 export default defineEventHandler(async (event) => {
   const { decisionId } = getRouterParams(event)
+  if (!decisionId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing decision ID' })
+  }
   const { team } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody(event)

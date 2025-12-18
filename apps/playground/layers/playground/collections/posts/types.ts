@@ -36,6 +36,8 @@ export interface PlaygroundPost {
   featuredImage?: string
   categoryId?: string
   metadata?: any[]
+  translations?: Record<string, { title?: string; excerpt?: string; content?: string }>
+  locale?: string
   createdAt: Date
   updatedAt: Date
   createdBy: string
