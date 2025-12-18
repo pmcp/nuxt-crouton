@@ -37,14 +37,14 @@
             <template #header>
               <!-- No table header to save space -->
             </template>
-            <template #location-cell="{ row }">
+            <template #location-cell="{ row }: { row: { original: CroutonBaseRow } }">
               <CroutonItemCardMini
                 v-if="row.original.location"
                 :id="row.original.location"
                 collection="bookingsLocations"
               />
             </template>
-            <template #date-cell="{ row }">
+            <template #date-cell="{ row }: { row: { original: CroutonBaseRow } }">
               <CroutonDate :date="row.original.date" />
             </template>
           </CroutonCollection>
@@ -162,14 +162,14 @@
             :columns="bookingsColumns"
             :rows="bookings"
           >
-            <template #location-cell="{ row }">
+            <template #location-cell="{ row }: { row: { original: CroutonBaseRow } }">
               <CroutonItemCardMini
                 v-if="row.original.location"
                 :id="row.original.location"
                 collection="bookingsLocations"
               />
             </template>
-            <template #date-cell="{ row }">
+            <template #date-cell="{ row }: { row: { original: CroutonBaseRow } }">
               <CroutonDate :date="row.original.date" />
             </template>
           </CroutonCollection>
@@ -197,6 +197,14 @@
 </template>
 
 <script setup lang="ts">
+// Base row type for table data
+interface CroutonBaseRow {
+  id: string
+  location?: string
+  date?: string
+  [key: string]: unknown
+}
+
 const route = useRoute()
 
 // Fetch real collection data
