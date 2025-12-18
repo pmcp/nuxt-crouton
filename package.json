@@ -34,7 +34,8 @@
   },
   "pnpm": {
     "overrides": {
-      "unimport": "4.1.1"
+      "unimport": "4.1.1",
+      "zod": "3.25.76"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3"

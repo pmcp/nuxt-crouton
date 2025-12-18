@@ -3,16 +3,19 @@ import { translationsUi } from '../database/schema'
 import * as tables from '@@/server/database/schema'
 
 /**
- * Get team by slug
- * Uses the teams table from the main nuxt-crouton package schema
+ * Get team/organization by slug for translations
+ * Uses the organization table from the auth schema (teams/organizations are stored in the organization table)
+ *
+ * NOTE: Named with 'ForTranslations' suffix to avoid conflict with the
+ * getTeamBySlug function exported from @crouton/auth
  */
-export async function getTeamBySlug(slug: string) {
+export async function getTeamBySlugForTranslations(slug: string) {
   const db = useDB()
 
   const team = await db
     .select()
-    .from(tables.teams)
-    .where(eq(tables.teams.slug, slug))
+    .from(tables.organization)
+    .where(eq(tables.organization.slug, slug))
     .get()
 
   if (!team) {

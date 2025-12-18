@@ -4,6 +4,10 @@
  * Server-side authentication helpers for API routes.
  * These are the main exports for @crouton/auth server utilities.
  *
+ * NOTE: Team utilities (resolveTeamAndCheckMembership, getTeamById, etc.)
+ * should be imported directly from './team' or '#crouton/team-auth' to avoid
+ * duplicated import warnings. This file only exports auth-specific functions.
+ *
  * @example
  * ```typescript
  * // In an API route
@@ -22,23 +26,15 @@ import {
   requireTeamOwner as _requireTeamOwner,
 } from './team'
 
-// Re-export team utilities for convenience
-export {
-  resolveTeamAndCheckMembership,
-  getTeamById,
-  getTeamBySlug,
-  getUserTeams,
-  getMembership,
-  canUserCreateTeam,
-  createPersonalWorkspace,
-  getOrCreateDefaultOrganization,
-} from './team'
+// NOTE: Team utilities are NOT re-exported here to avoid duplicated imports.
+// Import team utilities directly from './team' or '#crouton/team-auth':
+//   import { getTeamById, getTeamBySlug, getUserTeams, getMembership, canUserCreateTeam } from './team'
 
 export interface AuthContext {
   user: User
 }
 
-export interface TeamContext extends AuthContext {
+export interface AuthTeamContext extends AuthContext {
   team: Team
   member: Member
 }
@@ -105,7 +101,7 @@ export async function getAuthUser(event: H3Event): Promise<User | null> {
  * @throws 401 Unauthorized if not authenticated
  * @throws 403 Forbidden if not a team member
  */
-export async function requireTeamMember(event: H3Event): Promise<TeamContext> {
+export async function requireTeamMember(event: H3Event): Promise<AuthTeamContext> {
   const context = await resolveTeamAndCheckMembership(event)
 
   return {
@@ -116,16 +112,20 @@ export async function requireTeamMember(event: H3Event): Promise<TeamContext> {
 }
 
 /**
- * Require team admin role
+ * Require team admin role (with member field)
  *
- * Throws if not authenticated, not a member, or not admin/owner.
+ * Same as requireTeamAdmin from './team' but returns AuthTeamContext
+ * with `member` instead of `membership` for compatibility.
+ *
+ * NOTE: Prefer using requireTeamAdmin from './team' directly unless
+ * you specifically need the `member` field name.
  *
  * @param event - H3 event
- * @returns Team context
+ * @returns Team context with `member` field
  * @throws 401 Unauthorized if not authenticated
  * @throws 403 Forbidden if not admin or owner
  */
-export async function requireTeamAdmin(event: H3Event): Promise<TeamContext> {
+export async function requireTeamAdminAuth(event: H3Event): Promise<AuthTeamContext> {
   const context = await _requireTeamAdmin(event)
 
   return {
@@ -136,16 +136,20 @@ export async function requireTeamAdmin(event: H3Event): Promise<TeamContext> {
 }
 
 /**
- * Require team owner role
+ * Require team owner role (with member field)
  *
- * Throws if not authenticated, not a member, or not owner.
+ * Same as requireTeamOwner from './team' but returns AuthTeamContext
+ * with `member` instead of `membership` for compatibility.
+ *
+ * NOTE: Prefer using requireTeamOwner from './team' directly unless
+ * you specifically need the `member` field name.
  *
  * @param event - H3 event
- * @returns Team context
+ * @returns Team context with `member` field
  * @throws 401 Unauthorized if not authenticated
  * @throws 403 Forbidden if not owner
  */
-export async function requireTeamOwner(event: H3Event): Promise<TeamContext> {
+export async function requireTeamOwnerAuth(event: H3Event): Promise<AuthTeamContext> {
   const context = await _requireTeamOwner(event)
 
   return {

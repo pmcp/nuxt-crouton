@@ -1,51 +1,16 @@
 /**
- * Team Auth Utilities for nuxt-crouton compatibility
+ * Team Auth Utilities - Additional Functions
  *
- * This module provides the same interface as @friendlyinternet/nuxt-crouton's
- * team-auth but uses Better Auth under the hood.
+ * This module provides additional utility functions for team authentication
+ * that are not part of the main team.ts file.
  *
- * When the main project configures the #crouton/team-auth alias to point here,
- * all collection API handlers will use Better Auth for authentication.
+ * NOTE: All main team utilities (resolveTeamAndCheckMembership, getTeamById, etc.)
+ * should be imported from './team' - this file only contains supplementary functions.
  *
- * @example
- * // In nuxt.config.ts of the main project:
- * nitro: {
- *   alias: {
- *     '#crouton/team-auth': './packages/crouton-auth/server/utils/team-auth'
- *   }
- * }
+ * Types should also be imported from './team' or '../../types/connector' directly.
  */
 
 import type { H3Event } from 'h3'
-import type { TeamAuthResult } from '../../types/connector'
-
-// Re-export the main function from team.ts
-export {
-  resolveTeamAndCheckMembership,
-  getMembership,
-  getTeamById,
-  getTeamBySlug,
-  getUserTeams,
-  requireTeamRole,
-  requireTeamAdmin,
-  requireTeamOwner,
-  canUserCreateTeam,
-} from './team'
-
-// Re-export types
-export type {
-  TeamContext,
-} from './team'
-
-export type {
-  Team,
-  User,
-  TeamMembership,
-  TeamAuthResult,
-  BetterAuthConnector,
-  BetterAuthConnectorConfig,
-  BetterAuthSession,
-} from '../../types/connector'
 
 /**
  * Check if a user is a member of a team

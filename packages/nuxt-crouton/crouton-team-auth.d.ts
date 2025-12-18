@@ -5,6 +5,6 @@
  * The actual implementation uses Better Auth under the hood.
  */
 declare module '#crouton/team-auth' {
-  // Re-export all types and functions from @crouton/auth
-  export * from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
+  // Re-export all types and functions from @crouton/auth team utilities
+  export * from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 }

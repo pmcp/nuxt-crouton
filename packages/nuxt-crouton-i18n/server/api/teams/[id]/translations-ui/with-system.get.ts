@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
 
   // Get the team by slug
   // No auth required - translations are public read-only UI strings
-  const team = await getTeamBySlug(teamSlug)
+  const team = await getTeamBySlugForTranslations(teamSlug)
 
   const query = getQuery(event)
   const locale = query.locale as string | undefined
