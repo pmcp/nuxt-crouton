@@ -126,7 +126,7 @@ async function loadFields(p) {
 async function updateSchemaIndex(collectionName, layer, force = false) {
   const cases = toCase(collectionName)
   const schemaIndexPath = path.resolve('server', 'database', 'schema', 'index.ts')
-  
+
   // Generate the export name (layer-prefixed)
   // Convert layer to camelCase to ensure valid JavaScript identifier
   const layerCamelCase = layer
@@ -134,9 +134,31 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
     .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
   const exportName = `${layerCamelCase}${cases.plural.charAt(0).toUpperCase() + cases.plural.slice(1)}`
-  
+
   try {
-    let content = await fsp.readFile(schemaIndexPath, 'utf-8')
+    // Ensure directory exists
+    await fsp.mkdir(path.dirname(schemaIndexPath), { recursive: true })
+
+    // Check if file exists, if not create initial file with auth schema
+    let content
+    try {
+      content = await fsp.readFile(schemaIndexPath, 'utf-8')
+    } catch (readError) {
+      if (readError.code === 'ENOENT') {
+        // File doesn't exist, create initial file with auth schema export
+        console.log('↻ Creating initial schema index file...')
+        content = `// Database schema exports
+// This file is auto-managed by crouton-generate
+
+// Export auth schema from crouton-auth package
+export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+`
+        await fsp.writeFile(schemaIndexPath, content)
+        console.log('✓ Created server/database/schema/index.ts with auth schema')
+      } else {
+        throw readError
+      }
+    }
     
     // Check for existing conflicts
     const baseTableRegex = new RegExp(`export.*\\b${cases.plural}\\b.*from`, 'g')
@@ -959,6 +981,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
           : ''
 
         return `${allFieldsSchema},\n  translations: z.record(
+    z.string(),
     z.object({
 ${translationsFieldSchema}
     })

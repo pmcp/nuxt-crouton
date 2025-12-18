@@ -10,11 +10,10 @@ export function generateGetEndpoint(data, config = null) {
 
   const queriesPath = '../../../../database/queries'
 
-  return `// Team-based endpoint - requires @crouton/auth package
-// Install: pnpm add @crouton/auth
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 import { getAll${prefixedPascalCasePlural}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
@@ -49,11 +48,10 @@ export function generatePostEndpoint(data, config = null) {
   }`
   ).join('\n') + '\n' : ''
 
-  return `// Team-based endpoint - requires @crouton/auth package
-// Install: pnpm add @crouton/auth
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 import { create${prefixedPascalCase} } from '${queriesPath}'
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -100,11 +98,10 @@ export function generatePatchEndpoint(data, config = null) {
     ? `import { update${prefixedPascalCase}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'`
     : `import { update${prefixedPascalCase} } from '${queriesPath}'`
 
-  return `// Team-based endpoint - requires @crouton/auth package
-// Install: pnpm add @crouton/auth
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 ${imports}
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
 import type { ${prefixedPascalCase} } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
@@ -139,11 +136,10 @@ export function generateDeleteEndpoint(data, config = null) {
 
   const queriesPath = '../../../../database/queries'
 
-  return `// Team-based endpoint - requires @crouton/auth package
-// Install: pnpm add @crouton/auth
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 import { delete${prefixedPascalCase} } from '${queriesPath}'
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { ${singular}Id } = getRouterParams(event)
@@ -161,11 +157,10 @@ export function generateMoveEndpoint(data, config = null) {
 
   const queriesPath = '../../../../../database/queries'
 
-  return `// Team-based endpoint - requires @crouton/auth package
-// Install: pnpm add @crouton/auth
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 import { updatePosition${prefixedPascalCase} } from '${queriesPath}'
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { ${singular}Id } = getRouterParams(event)
@@ -197,11 +192,10 @@ export function generateReorderEndpoint(data, config = null) {
 
   const queriesPath = '../../../../database/queries'
 
-  return `// Team-based endpoint - requires @crouton/auth package
-// Install: pnpm add @crouton/auth
+  return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 import { reorderSiblings${prefixedPascalCasePlural} } from '${queriesPath}'
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)

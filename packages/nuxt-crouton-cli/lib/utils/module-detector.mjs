@@ -92,17 +92,27 @@ export async function detectRequiredDependencies(config) {
   const baseLayerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton')
   const baseLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton')
 
-  // Check for @crouton/auth package (required for team-based authentication)
-  const authPackageInstalled = await isPackageInstalled('@crouton/auth')
+  // Check for @friendlyinternet/nuxt-crouton-auth package (required for team-based authentication)
+  const authPackageInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-auth')
+  const authLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-auth')
 
   if (!authPackageInstalled) {
-    // @crouton/auth is required for all generated endpoints
+    // @friendlyinternet/nuxt-crouton-auth is required for all generated endpoints
     required.missing.push({
       type: 'package',
-      name: '@crouton/auth',
+      name: '@friendlyinternet/nuxt-crouton-auth',
       reason: 'Required for team-based authentication in generated endpoints',
-      installCmd: 'pnpm add @crouton/auth',
-      configCmd: `No nuxt.config.ts changes needed - package is auto-imported`,
+      installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-auth',
+      configCmd: `Add '@friendlyinternet/nuxt-crouton-auth' to extends array in nuxt.config.ts`,
+      critical: true
+    })
+  } else if (!authLayerExtended) {
+    required.missing.push({
+      type: 'layer',
+      name: '@friendlyinternet/nuxt-crouton-auth',
+      reason: 'Package is installed but NOT added to nuxt.config.ts extends[]',
+      installCmd: '(already installed)',
+      configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton-auth']`,
       critical: true
     })
   }

@@ -295,7 +295,9 @@ export function generateQueries(data, config = null) {
 
     if (ref && ref.isExternal) {
       // External reference - import from main project schema
-      schemaImports += `import { ${collection} } from '~~/server/database/schema'
+      // Note: Better Auth exports 'user' (singular), so map 'users' -> 'user'
+      const schemaExportName = collection === 'users' ? 'user' : collection
+      schemaImports += `import { ${schemaExportName} } from '~~/server/database/schema'
 `
     } else {
       // Local layer collection - import from sibling directory
@@ -356,9 +358,10 @@ export function generateQueries(data, config = null) {
     })
 
     // Generate alias definitions for user references
+    // Note: Better Auth exports 'user' (singular), not 'users'
     if (userAliases.length > 0) {
       const aliasDefs = userAliases.map(({ aliasName }) =>
-        `  const ${aliasName} = alias(users, '${aliasName}')`
+        `  const ${aliasName} = alias(user, '${aliasName}')`
       ).join('\n')
       aliasDefinitions = `\n${aliasDefs}\n`
     }
