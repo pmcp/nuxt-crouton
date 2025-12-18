@@ -661,29 +661,35 @@ const showCode = ref(false)
 ```javascript
 export default {
   dialect: 'sqlite',
-  
+
   collections: [
-    { name: 'tags', fieldsFile: './schemas/tags.json', sortable: true },
-    { name: 'categories', fieldsFile: './schemas/categories.json', hierarchy: true },
-    { name: 'posts', fieldsFile: './schemas/posts.json' },
-    { name: 'decisions', fieldsFile: './schemas/decisions.json', hierarchy: true },
-    { name: 'options', fieldsFile: './schemas/options.json' },
+    { name: 'tags', fieldsFile: './schemas/tags.json', sortable: true, seed: { count: 10 } },
+    { name: 'categories', fieldsFile: './schemas/categories.json', hierarchy: true, seed: { count: 8 } },
+    { name: 'posts', fieldsFile: './schemas/posts.json', seed: { count: 15 } },
+    { name: 'decisions', fieldsFile: './schemas/decisions.json', hierarchy: true, seed: { count: 6 } },
+    { name: 'options', fieldsFile: './schemas/options.json', seed: { count: 5 } },
   ],
-  
+
+  // Global seed settings
+  seed: {
+    defaultCount: 10,           // Default records per collection
+    defaultTeamId: 'playground-team'  // Team ID for seeded data
+  },
+
   targets: [
     {
       layer: 'playground',
       collections: ['tags', 'categories', 'posts', 'decisions', 'options']
     }
   ],
-  
+
   translations: {
     collections: {
       categories: ['name', 'description'],
       posts: ['title', 'excerpt', 'content']
     }
   },
-  
+
   flags: {
     useMetadata: true,
     force: false
