@@ -28,7 +28,7 @@
       class="w-full"
     >
       <template #item-label="{ item }">
-        <span>{{ item.label || item.value }}</span>
+        <span>{{ (item as OptionItem)?.label || (item as OptionItem)?.value }}</span>
       </template>
 
       <template v-if="creatable" #content-top>

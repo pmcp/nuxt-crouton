@@ -26,7 +26,7 @@
       class="w-full"
     >
       <template #item-label="{ item }">
-        <span>{{ item[labelKey] || item.id }}</span>
+        <span>{{ (item as Record<string, any>)?.[labelKey] || (item as Record<string, any>)?.id }}</span>
       </template>
 
       <template #content-top>

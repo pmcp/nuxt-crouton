@@ -141,20 +141,9 @@ interface CroutonState {
   isExpanded?: boolean  // Track expand state for each slideover
 }
 
-interface CroutonComposableReturn {
-  croutonStates: Ref<CroutonState[]>
-  close: (stateId?: string) => void
-  closeAll: () => void
-  removeState: (stateId: string) => void
-}
-
-interface FormatCollectionsReturn {
-  collectionWithCapitalSingular: (collection: string) => string
-}
-
-// Use the composables
-const { croutonStates, close, closeAll, removeState }: CroutonComposableReturn = useCrouton()
-const { collectionWithCapitalSingular }: FormatCollectionsReturn = useFormatCollections()
+// Use the composables - destructure only needed properties
+const { croutonStates, close, closeAll, removeState } = useCrouton()
+const { collectionWithCapitalSingular } = useFormatCollections()
 
 // Filter states by container type
 const modalStates = computed(() =>
