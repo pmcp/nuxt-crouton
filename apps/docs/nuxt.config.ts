@@ -6,8 +6,14 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxt/content',
     'nuxt-og-image',
-    'nuxt-llms'
+    'nuxt-llms',
+    '@nuxtjs/mcp-toolkit'
   ],
+
+  mcp: {
+    name: 'Nuxt Crouton MCP Server',
+    route: '/mcp'
+  },
 
   devtools: {
     enabled: true
@@ -40,7 +46,9 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/llms.txt': { prerender: false },
-    '/llms-full.txt': { prerender: false }
+    '/llms-full.txt': { prerender: false },
+    '/mcp': { prerender: false },
+    '/mcp/**': { prerender: false }
   },
 
   eslint: {
