@@ -36,7 +36,7 @@
     "vitest": "^2.1.0"
   },
   "peerDependencies": {
-    "@friendlyinternet/nuxt-crouton-collection-generator": "workspace:*"
+    "@friendlyinternet/nuxt-crouton-cli": "workspace:*"
   },
   "engines": {
     "node": ">=18.0.0"

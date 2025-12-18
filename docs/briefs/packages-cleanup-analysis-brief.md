@@ -17,7 +17,7 @@ This affects the entire nuxt-crouton ecosystem and requires a thorough analysis 
 | Package | Priority | Key Concerns |
 |---------|----------|--------------|
 | `nuxt-crouton` (core) | High | Team auth utilities, API patterns |
-| `nuxt-crouton-collection-generator` | High | `useTeamUtility` flag deprecation |
+| `nuxt-crouton-cli` | High | `useTeamUtility` flag deprecation |
 | `nuxt-crouton-supersaas` | High | External user/team connectors |
 | `nuxt-crouton-i18n` | Medium | Team-scoped translations |
 | `nuxt-crouton-events` | Medium | Team-scoped audit events |
@@ -52,7 +52,7 @@ This affects the entire nuxt-crouton ecosystem and requires a thorough analysis 
 
 ---
 
-### 2. `nuxt-crouton-collection-generator`
+### 2. `nuxt-crouton-cli`
 
 **Current State:**
 - `useTeamUtility` flag toggles between:
@@ -268,7 +268,7 @@ KEY FINDINGS:
 
 3. PACKAGES NEEDING UPDATES:
    - nuxt-crouton: Delete team-auth.ts, re-export from @crouton/auth
-   - nuxt-crouton-collection-generator: Major refactor
+   - nuxt-crouton-cli: Major refactor
    - nuxt-crouton-i18n: Minor - use useTeamContext()
    - nuxt-crouton-assets: Minor - use useTeamContext()
    - nuxt-crouton-ai: Minor - use useTeamContext()

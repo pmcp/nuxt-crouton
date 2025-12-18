@@ -6,6 +6,8 @@ This skill helps generate complete CRUD collections for Nuxt Crouton application
 
 If the Crouton MCP server is configured, you can use these tools for AI-assisted generation:
 
+### Schema & Generation Tools
+
 | Tool | Purpose |
 |------|---------|
 | `design_schema` | Get field types and schema guidelines |
@@ -14,11 +16,26 @@ If the Crouton MCP server is configured, you can use these tools for AI-assisted
 | `list_collections` | List existing collections |
 | `list_layers` | List available layers |
 
+### CLI Integration Tools
+
+| Tool | Purpose |
+|------|---------|
+| `cli_help` | Get CLI command help and usage |
+| `dry_run` | Preview generation without writing files |
+| `rollback` | Remove a generated collection |
+| `init_schema` | Generate starter schema templates |
+
 **MCP Workflow:**
-1. Call `design_schema` with collection description
+1. Call `design_schema` with collection description (or use `init_schema` for templates)
 2. Build schema using returned field types
 3. Call `validate_schema` to check schema
-4. Call `generate_collection` to create files
+4. Call `dry_run` to preview what will be generated
+5. Call `generate_collection` to create files
+
+**Quick Commands:**
+- Need CLI help? Call `cli_help({ command: "generate" })`
+- Want to start with a template? Call `init_schema({ template: "ecommerce" })`
+- Made a mistake? Call `rollback({ layer, collection, dryRun: true })` to preview
 
 If MCP tools are not available, follow the manual process below.
 
@@ -246,7 +263,7 @@ export default {
 
 ## Reference Documentation
 
-- Collection Generator: `packages/nuxt-crouton-collection-generator/CLAUDE.md`
+- Collection Generator: `packages/nuxt-crouton-cli/CLAUDE.md`
 - MCP Server: `packages/crouton-mcp-server/CLAUDE.md`
 - Core Package: `packages/nuxt-crouton/CLAUDE.md`
 - i18n Support: `packages/nuxt-crouton-i18n/CLAUDE.md`

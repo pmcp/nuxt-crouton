@@ -11,7 +11,7 @@ Nuxt Crouton is a collection of Nuxt Layers that provide instant CRUD functional
 #### [@friendlyinternet/nuxt-crouton](./packages/nuxt-crouton)
 Base CRUD layer with essential components and composables for data management.
 
-#### [@friendlyinternet/nuxt-crouton-collection-generator](./packages/nuxt-crouton-collection-generator)
+#### [@friendlyinternet/nuxt-crouton-cli](./packages/nuxt-crouton-cli)
 CLI tool to generate complete CRUD collections with API endpoints, components, and database schema.
 
 ### Addon Layers
@@ -52,7 +52,7 @@ Development tools and debugging utilities for Crouton applications.
 pnpm add @friendlyinternet/nuxt-crouton
 
 # CLI scaffolding tool (dev dependency)
-pnpm add -D @friendlyinternet/nuxt-crouton-collection-generator
+pnpm add -D @friendlyinternet/nuxt-crouton-cli
 
 # Addon layers (install as needed)
 pnpm add @friendlyinternet/nuxt-crouton-i18n       # Multi-language support
@@ -138,7 +138,7 @@ const { t } = useT()
 **Explicit Configuration**: Always include the base layer plus any addons you need. This makes dependencies clear and explicit.
 
 **Development Tools**:
-- `@friendlyinternet/nuxt-crouton-collection-generator` - CLI for scaffolding collections
+- `@friendlyinternet/nuxt-crouton-cli` - CLI for scaffolding collections
 
 ## 🎯 Features
 
@@ -171,7 +171,7 @@ const { t } = useT()
 - ✅ **External Collection API** - Ready-to-use endpoints
 - ✅ **App-level i18n** - Common translation strings
 
-### Collection Generator (`@friendlyinternet/nuxt-crouton-collection-generator`)
+### Collection Generator (`@friendlyinternet/nuxt-crouton-cli`)
 - ✅ **CLI Scaffolding** - Generate complete CRUD collections
 - ✅ **Form Generation** - Auto-generate forms from schema
 - ✅ **List Generation** - Auto-generate tables and lists

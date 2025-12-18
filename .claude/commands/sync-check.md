@@ -12,11 +12,11 @@ Run this command after making changes to the collection generator to verify all 
 
 Extract field types from the source of truth and compare with all artifacts:
 
-**Source of Truth**: `packages/nuxt-crouton-collection-generator/lib/utils/helpers.mjs`
+**Source of Truth**: `packages/nuxt-crouton-cli/lib/utils/helpers.mjs`
 - Look for `typeMapping` object or `mapType` function
 
 **Compare with**:
-- `packages/nuxt-crouton-collection-generator/CLAUDE.md` - Field Types table
+- `packages/nuxt-crouton-cli/CLAUDE.md` - Field Types table
 - `.claude/skills/crouton.md` - Field Types table
 - `packages/crouton-mcp-server/src/utils/field-types.ts` - FIELD_TYPES object
 
@@ -24,13 +24,13 @@ Extract field types from the source of truth and compare with all artifacts:
 
 Extract CLI commands from the generator and compare with documentation:
 
-**Source of Truth**: `packages/nuxt-crouton-collection-generator/bin/crouton-generate.js`
+**Source of Truth**: `packages/nuxt-crouton-cli/bin/crouton-generate.js`
 - Extract all Commander.js commands and options
 
 **Compare with**:
-- `packages/nuxt-crouton-collection-generator/CLAUDE.md` - CLI Commands section
+- `packages/nuxt-crouton-cli/CLAUDE.md` - CLI Commands section
 - `.claude/skills/crouton.md` - Commands and workflow
-- `packages/nuxt-crouton-collection-generator/README.md` - Usage section
+- `packages/nuxt-crouton-cli/README.md` - Usage section
 
 ### 3. Run CI Validation Script
 
@@ -83,7 +83,7 @@ Or if issues found:
 ✅ MCP Server: 9 types (matches)
 
 ### Action Required
-1. Update `packages/nuxt-crouton-collection-generator/CLAUDE.md`
+1. Update `packages/nuxt-crouton-cli/CLAUDE.md`
    - Add `array` to Field Types table
 ```
 
@@ -99,6 +99,6 @@ Or if issues found:
 
 ## Related Files
 
-- Generator CLAUDE.md sync workflow: `packages/nuxt-crouton-collection-generator/CLAUDE.md` (see "Documentation Sync Workflow" section)
+- Generator CLAUDE.md sync workflow: `packages/nuxt-crouton-cli/CLAUDE.md` (see "Documentation Sync Workflow" section)
 - CI validation script: `scripts/validate-field-types-sync.mjs`
 - MCP server field types: `packages/crouton-mcp-server/src/utils/field-types.ts`

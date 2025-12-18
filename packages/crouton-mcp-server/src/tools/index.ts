@@ -38,3 +38,28 @@ export {
   type ListCollectionsResult,
   type ListLayersResult
 } from './list-collections.js'
+
+// New CLI integration tools
+export {
+  handleCliHelp,
+  cliHelpToolDefinition,
+  cliHelpInputSchema
+} from './cli-help.js'
+
+export {
+  handleDryRun,
+  dryRunToolDefinition,
+  dryRunInputSchema
+} from './dry-run.js'
+
+export {
+  handleRollback,
+  rollbackToolDefinition,
+  rollbackInputSchema
+} from './rollback.js'
+
+export {
+  handleInitSchema,
+  initSchemaToolDefinition,
+  initSchemaInputSchema
+} from './init-schema.js'

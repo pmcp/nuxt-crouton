@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-collection-generator
+# CLAUDE.md - @friendlyinternet/nuxt-crouton-cli
 
 ## Package Purpose
 
@@ -217,8 +217,8 @@ npx nuxt typecheck
 
 | Artifact | Location | Update When |
 |----------|----------|-------------|
-| This CLAUDE.md | `packages/nuxt-crouton-collection-generator/CLAUDE.md` | CLI, options, field types, key files change |
-| README.md | `packages/nuxt-crouton-collection-generator/README.md` | User-facing features change |
+| This CLAUDE.md | `packages/nuxt-crouton-cli/CLAUDE.md` | CLI, options, field types, key files change |
+| README.md | `packages/nuxt-crouton-cli/README.md` | User-facing features change |
 | Example configs | `examples/crouton.config.*.js` | Flags, schema format, defaults change |
 | Claude Skill | `.claude/skills/crouton.md` | Field types, workflow, commands change |
 | MCP Server | `packages/crouton-mcp-server/` | CLI commands, field types change |

@@ -122,3 +122,19 @@ export function buildGenerateArgs(
 
   return args
 }
+
+/**
+ * Simple CLI runner for tools - returns success/output/error format
+ */
+export async function runCli(
+  args: string[],
+  options: { timeout?: number; cwd?: string } = {}
+): Promise<{ success: boolean; output: string; error?: string }> {
+  const result = await execCrouton(args, options)
+
+  return {
+    success: result.exitCode === 0,
+    output: result.stdout || result.stderr,
+    error: result.exitCode !== 0 ? result.stderr : undefined
+  }
+}

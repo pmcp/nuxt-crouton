@@ -24,7 +24,20 @@ import {
   listCollectionsInputSchema,
   handleListLayers,
   listLayersToolDefinition,
-  listLayersInputSchema
+  listLayersInputSchema,
+  // New CLI integration tools
+  handleCliHelp,
+  cliHelpToolDefinition,
+  cliHelpInputSchema,
+  handleDryRun,
+  dryRunToolDefinition,
+  dryRunInputSchema,
+  handleRollback,
+  rollbackToolDefinition,
+  rollbackInputSchema,
+  handleInitSchema,
+  initSchemaToolDefinition,
+  initSchemaInputSchema
 } from './tools/index.js'
 
 import { FIELD_TYPES, getFieldTypeReference } from './utils/field-types.js'
@@ -110,6 +123,75 @@ server.tool(
   listLayersInputSchema,
   async () => {
     const result = await handleListLayers()
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    }
+  }
+)
+
+// CLI integration tools
+server.tool(
+  cliHelpToolDefinition.name,
+  cliHelpToolDefinition.description,
+  cliHelpInputSchema,
+  async (args) => {
+    const result = await handleCliHelp(args)
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    }
+  }
+)
+
+server.tool(
+  dryRunToolDefinition.name,
+  dryRunToolDefinition.description,
+  dryRunInputSchema,
+  async (args) => {
+    const result = await handleDryRun(args)
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    }
+  }
+)
+
+server.tool(
+  rollbackToolDefinition.name,
+  rollbackToolDefinition.description,
+  rollbackInputSchema,
+  async (args) => {
+    const result = await handleRollback(args)
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    }
+  }
+)
+
+server.tool(
+  initSchemaToolDefinition.name,
+  initSchemaToolDefinition.description,
+  initSchemaInputSchema,
+  async (args) => {
+    const result = handleInitSchema(args)
     return {
       content: [
         {

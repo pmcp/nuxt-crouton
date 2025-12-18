@@ -1,6 +1,6 @@
 /**
  * Field types imported from the generator to stay in sync
- * Source: packages/nuxt-crouton-collection-generator/lib/utils/helpers.mjs
+ * Source: packages/nuxt-crouton-cli/lib/utils/helpers.mjs
  */
 
 export interface FieldTypeMapping {

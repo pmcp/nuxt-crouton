@@ -10,7 +10,7 @@ This documentation app is part of the nuxt-crouton monorepo at `apps/docs/`.
 
 **Related packages** (in `packages/`):
 - `nuxt-crouton` - Core CRUD composables and components
-- `nuxt-crouton-collection-generator` - CLI code generator
+- `nuxt-crouton-cli` - CLI code generator
 - `nuxt-crouton-i18n` - Internationalization support
 - `nuxt-crouton-editor` - Rich text editor integration
 - `nuxt-crouton-assets` - Asset management

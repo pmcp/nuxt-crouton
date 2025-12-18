@@ -20,6 +20,8 @@ Hybrid Approach:
 
 ## Tools
 
+### Schema & Generation Tools
+
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
 | `design_schema` | Get field types and schema guidelines | First - before creating schema |
@@ -27,6 +29,15 @@ Hybrid Approach:
 | `generate_collection` | Execute collection generation | After validation passes |
 | `list_collections` | List existing collections | To understand project structure |
 | `list_layers` | List available layers | To choose target layer |
+
+### CLI Integration Tools
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `cli_help` | Get CLI command help and usage | User needs command reference |
+| `dry_run` | Preview generation without writing files | Before generate to verify output |
+| `rollback` | Remove a generated collection | Undo or cleanup collections |
+| `init_schema` | Generate starter schema templates | Getting started with new schema |
 
 ## Resources
 
@@ -45,13 +56,17 @@ Hybrid Approach:
 | `src/tools/validate-schema.ts` | Schema validation tool |
 | `src/tools/generate.ts` | CLI wrapper for generation |
 | `src/tools/list-collections.ts` | Collection/layer scanning |
+| `src/tools/cli-help.ts` | CLI command help reference |
+| `src/tools/dry-run.ts` | Preview generation tool |
+| `src/tools/rollback.ts` | Collection removal tool |
+| `src/tools/init-schema.ts` | Starter schema templates |
 | `src/utils/field-types.ts` | Field type definitions (sync with generator) |
 | `src/utils/cli.ts` | CLI execution utilities |
 | `src/utils/fs.ts` | Filesystem scanning utilities |
 
 ## Field Types
 
-These MUST match `packages/nuxt-crouton-collection-generator/lib/utils/helpers.mjs`:
+These MUST match `packages/nuxt-crouton-cli/lib/utils/helpers.mjs`:
 
 | Type | Zod | TypeScript | Default |
 |------|-----|------------|---------|
@@ -67,6 +82,7 @@ These MUST match `packages/nuxt-crouton-collection-generator/lib/utils/helpers.m
 
 ## Usage Flow
 
+### Standard Collection Generation
 ```
 1. AI receives: "Create a products collection with name, price, description"
 
@@ -81,13 +97,53 @@ These MUST match `packages/nuxt-crouton-collection-generator/lib/utils/helpers.m
    })
    → Returns validation result
 
-4. AI calls: generate_collection({
+4. AI calls: dry_run({
+     layer: "shop",
+     collection: "product",
+     schema: "{ ... }"
+   })
+   → Preview what files would be created
+
+5. AI calls: generate_collection({
      layer: "shop",
      collection: "product",
      schema: { ... },
      options: { dialect: "sqlite" }
    })
    → Executes CLI, returns generated file paths
+```
+
+### Quick Start with Templates
+```
+1. AI calls: init_schema({ template: "ecommerce" })
+   → Returns starter schema for products
+
+2. AI modifies schema as needed
+
+3. AI follows steps 3-5 from standard flow
+```
+
+### Getting CLI Help
+```
+AI calls: cli_help({ command: "generate" })
+   → Returns detailed usage for generate command
+```
+
+### Removing a Collection
+```
+AI calls: rollback({
+  layer: "shop",
+  collection: "product",
+  dryRun: true  // Preview first (default)
+})
+   → Shows what would be removed
+
+AI calls: rollback({
+  layer: "shop",
+  collection: "product",
+  dryRun: false  // Actually remove
+})
+   → Removes collection files
 ```
 
 ## Configuration
@@ -147,7 +203,7 @@ If field types change in generator:
 ## Dependencies
 
 - **Extends**: `@modelcontextprotocol/sdk` (MCP protocol)
-- **Wraps**: `@friendlyinternet/nuxt-crouton-collection-generator` (CLI)
+- **Wraps**: `@friendlyinternet/nuxt-crouton-cli` (CLI)
 - **Runtime**: Node.js >= 18
 
 ## Testing

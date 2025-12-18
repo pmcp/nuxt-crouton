@@ -211,12 +211,12 @@ npx @modelcontextprotocol/inspector node dist/index.js
 ## Requirements
 
 - Node.js >= 18
-- `@friendlyinternet/nuxt-crouton-collection-generator` (peer dependency)
+- `@friendlyinternet/nuxt-crouton-cli` (peer dependency)
 
 ## Related
 
 - [@friendlyinternet/nuxt-crouton](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton) - Core Crouton package
-- [@friendlyinternet/nuxt-crouton-collection-generator](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-collection-generator) - CLI generator
+- [@friendlyinternet/nuxt-crouton-cli](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-cli) - CLI generator
 
 ## License
 

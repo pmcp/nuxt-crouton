@@ -83,28 +83,28 @@ This migration consolidates team authentication across all nuxt-crouton packages
 - [x] ✅ Remove `useTeamUtility` conditionals from `generate-collection.mjs`
 - [x] ✅ Default all generation to team-scoped
 
-**Files**: `packages/nuxt-crouton-collection-generator/lib/generate-collection.mjs`
+**Files**: `packages/nuxt-crouton-cli/lib/generate-collection.mjs`
 
 ### 2.2 Delete team-auth-utility.mjs generator
 - [x] ✅ Remove `team-auth-utility.mjs` (generates duplicate team-auth)
 - [x] ✅ Update any imports
 
 **Files**:
-- DELETED: `packages/nuxt-crouton-collection-generator/lib/generators/team-auth-utility.mjs`
+- DELETED: `packages/nuxt-crouton-cli/lib/generators/team-auth-utility.mjs`
 
 ### 2.3 Delete non-team api-endpoints.mjs
 - [x] ✅ Remove original `api-endpoints.mjs` (non-team version)
 - [x] ✅ Keep only simplified version
 
 **Files**:
-- DELETED: `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints.mjs` (original)
+- DELETED: `packages/nuxt-crouton-cli/lib/generators/api-endpoints.mjs` (original)
 
 ### 2.4 Rename api-endpoints-simplified.mjs
 - [x] ✅ Renamed `api-endpoints-simplified.mjs` → `api-endpoints.mjs`
 - [x] ✅ Updated function names (removed "Simplified" suffix)
 - [x] ✅ Updated all imports
 
-**Files**: `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints.mjs`
+**Files**: `packages/nuxt-crouton-cli/lib/generators/api-endpoints.mjs`
 
 ### 2.5 Update import paths in generator
 - [x] ✅ Changed `#crouton/team-auth` to `@crouton/auth/server` in api-endpoints.mjs
@@ -113,16 +113,16 @@ This migration consolidates team authentication across all nuxt-crouton packages
 - [x] ✅ Updated types.mjs (team fields always included)
 
 **Files**:
-- `packages/nuxt-crouton-collection-generator/lib/generators/api-endpoints.mjs`
-- `packages/nuxt-crouton-collection-generator/lib/generators/database-queries.mjs`
-- `packages/nuxt-crouton-collection-generator/lib/generators/database-schema.mjs`
-- `packages/nuxt-crouton-collection-generator/lib/generators/types.mjs`
+- `packages/nuxt-crouton-cli/lib/generators/api-endpoints.mjs`
+- `packages/nuxt-crouton-cli/lib/generators/database-queries.mjs`
+- `packages/nuxt-crouton-cli/lib/generators/database-schema.mjs`
+- `packages/nuxt-crouton-cli/lib/generators/types.mjs`
 
 ### 2.6 Update module-detector.mjs
 - [x] ✅ Removed `useTeamUtility` detection logic
 - [x] ✅ Added @crouton/auth package detection (critical dependency)
 
-**Files**: `packages/nuxt-crouton-collection-generator/lib/utils/module-detector.mjs`
+**Files**: `packages/nuxt-crouton-cli/lib/utils/module-detector.mjs`
 
 ### 2.7 Update example configs
 - [x] ✅ Removed `useTeamUtility` from example configs
@@ -130,16 +130,16 @@ This migration consolidates team authentication across all nuxt-crouton packages
 - [x] ✅ Added test-product-schema.json
 
 **Files**:
-- `packages/nuxt-crouton-collection-generator/examples/crouton.config.example.js`
-- `packages/nuxt-crouton-collection-generator/examples/crouton.config.products.js`
-- `packages/nuxt-crouton-collection-generator/examples/test-product-schema.json`
+- `packages/nuxt-crouton-cli/examples/crouton.config.example.js`
+- `packages/nuxt-crouton-cli/examples/crouton.config.products.js`
+- `packages/nuxt-crouton-cli/examples/test-product-schema.json`
 
 ### 2.8 Test generator output
 - [x] ✅ Generated test collection (dry-run)
 - [x] ✅ Verified output uses `@crouton/auth/server` imports
 - [x] ✅ Verified module-detector reports @crouton/auth as critical
 
-**Commands**: `node packages/nuxt-crouton-collection-generator/bin/crouton-generate.js test products --dry-run`
+**Commands**: `node packages/nuxt-crouton-cli/bin/crouton-generate.js test products --dry-run`
 
 ---
 
@@ -198,7 +198,7 @@ This migration consolidates team authentication across all nuxt-crouton packages
 
 ### 4.1 Update package CLAUDE.md files
 - [x] ✅ Update `packages/nuxt-crouton/CLAUDE.md`
-- [x] ✅ Update `packages/nuxt-crouton-collection-generator/CLAUDE.md`
+- [x] ✅ Update `packages/nuxt-crouton-cli/CLAUDE.md`
 - [x] ✅ Update `packages/crouton-auth/CLAUDE.md`
 
 ### 4.2 Create migration guide

@@ -972,7 +972,7 @@ This codebase has AI-friendly documentation that MUST be kept in sync with code 
 | Add/modify composable | Package's `CLAUDE.md` (Key Files, Common Tasks) |
 | Add/modify component | Package's `CLAUDE.md` (Key Files, Component Naming) |
 | Add/change API endpoint | Package's `CLAUDE.md` (API Patterns) |
-| Add generator feature | `packages/nuxt-crouton-collection-generator/CLAUDE.md` |
+| Add generator feature | `packages/nuxt-crouton-cli/CLAUDE.md` |
 | Change CLI command | Generator's `CLAUDE.md` + `.claude/skills/crouton.md` |
 | Add new field type | `.claude/skills/crouton.md` (Field Types table) |
 | Change auth connector | `packages/crouton-auth/CLAUDE.md` + Generator's CLAUDE.md |
@@ -1108,6 +1108,26 @@ The MCP server is registered in `.claude/settings.json`:
 4. AI calls `generate_collection` to execute generation
 
 See `packages/crouton-mcp-server/CLAUDE.md` for detailed documentation
+
+## MCP Improvement Capture
+
+**When working on any task, consider if it reveals an MCP improvement opportunity:**
+
+- Is there repetitive work an MCP **tool** could automate?
+- Is there documentation an MCP **resource** could expose?
+- Is there a workflow an MCP **prompt** could guide?
+
+**If yes, capture the idea:**
+1. Use `/mcp-idea <description>` slash command, OR
+2. Add manually to `.claude/mcp-ideas.md`
+
+**MCP Servers in this project:**
+| Server | Location | Purpose |
+|--------|----------|---------|
+| CLI MCP | `packages/crouton-mcp-server/` | AI assistants interact with CLI |
+| Docs MCP | `apps/docs/server/mcp/` | AI assistants read documentation |
+
+Ideas feed into both servers. High-priority ideas should be implemented in the next development cycle.
 
 ## Key Reminders
 

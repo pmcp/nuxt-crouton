@@ -16,7 +16,7 @@ const projectRoot = join(__dirname, '..')
 // Source of truth: Generator field types
 const generatorHelpersPath = join(
   projectRoot,
-  'packages/nuxt-crouton-collection-generator/lib/utils/helpers.mjs'
+  'packages/nuxt-crouton-cli/lib/utils/helpers.mjs'
 )
 
 // MCP server field types

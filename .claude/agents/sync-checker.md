@@ -8,7 +8,7 @@ This agent checks consistency between the generator source code and its document
 
 ## When to Use
 
-- After modifying `packages/nuxt-crouton-collection-generator/`
+- After modifying `packages/nuxt-crouton-cli/`
 - Before committing generator changes
 - When you want to verify documentation is up to date
 
@@ -18,10 +18,10 @@ This agent checks consistency between the generator source code and its document
 
 Extract field types from source and compare with documentation:
 
-**Source of truth**: `packages/nuxt-crouton-collection-generator/lib/utils/helpers.mjs`
+**Source of truth**: `packages/nuxt-crouton-cli/lib/utils/helpers.mjs`
 
 **Must match**:
-- `packages/nuxt-crouton-collection-generator/CLAUDE.md` (Field Types table)
+- `packages/nuxt-crouton-cli/CLAUDE.md` (Field Types table)
 - `.claude/skills/crouton.md` (Field Types table)
 - `packages/crouton-mcp-server/src/sync/field-types.ts` (if exists)
 
@@ -29,21 +29,21 @@ Extract field types from source and compare with documentation:
 
 Extract commands from CLI entry point and compare:
 
-**Source of truth**: `packages/nuxt-crouton-collection-generator/bin/crouton-generate.js`
+**Source of truth**: `packages/nuxt-crouton-cli/bin/crouton-generate.js`
 
 **Must match**:
-- `packages/nuxt-crouton-collection-generator/CLAUDE.md` (CLI Commands section)
+- `packages/nuxt-crouton-cli/CLAUDE.md` (CLI Commands section)
 - `.claude/skills/crouton.md` (commands reference)
 
 ### 3. CLI Options Consistency
 
 Extract options from Commander.js setup:
 
-**Source of truth**: `packages/nuxt-crouton-collection-generator/bin/crouton-generate.js`
+**Source of truth**: `packages/nuxt-crouton-cli/bin/crouton-generate.js`
 
 **Must match**:
-- `packages/nuxt-crouton-collection-generator/CLAUDE.md` (Key Options table)
-- `packages/nuxt-crouton-collection-generator/README.md`
+- `packages/nuxt-crouton-cli/CLAUDE.md` (Key Options table)
+- `packages/nuxt-crouton-cli/README.md`
 - `examples/crouton.config.example.js` (documented options)
 
 ### 4. External Documentation References

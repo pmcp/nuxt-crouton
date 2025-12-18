@@ -3,7 +3,7 @@
  * =========================================
  *
  * This file demonstrates ALL available configuration options for the
- * nuxt-crouton-collection-generator. Copy this file to `crouton.config.js`
+ * nuxt-crouton-cli. Copy this file to `crouton.config.js`
  * and customize for your project.
  *
  * Usage:

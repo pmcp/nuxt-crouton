@@ -15,13 +15,13 @@ A powerful CLI tool for generating complete CRUD collections in Nuxt Crouton app
 ### Global Installation (Recommended)
 
 ```bash
-npm install -g @friendlyinternet/nuxt-crouton-collection-generator
+npm install -g @friendlyinternet/nuxt-crouton-cli
 ```
 
 ### Or use with npx
 
 ```bash
-npx @friendlyinternet/nuxt-crouton-collection-generator <command>
+npx @friendlyinternet/nuxt-crouton-cli <command>
 ```
 
 ## Quick Start

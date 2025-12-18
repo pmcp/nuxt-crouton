@@ -79,9 +79,9 @@ This report analyzes the team-based authentication architecture across all nuxt-
 
 ---
 
-### 3. nuxt-crouton-collection-generator
+### 3. nuxt-crouton-cli
 
-**Location**: `/Users/pmcp/Projects/nuxt-crouton/packages/nuxt-crouton-collection-generator`
+**Location**: `/Users/pmcp/Projects/nuxt-crouton/packages/nuxt-crouton-cli`
 
 **Status**: NEEDS SIGNIFICANT UPDATES
 
@@ -299,7 +299,7 @@ const { teamId } = useTeamContext()
 | Package | Breaking Changes |
 |---------|------------------|
 | nuxt-crouton | `#crouton/team-auth` removed, use @crouton/auth |
-| nuxt-crouton-collection-generator | `useTeamUtility` flag deprecated |
+| nuxt-crouton-cli | `useTeamUtility` flag deprecated |
 | nuxt-crouton-supersaas | None |
 | Others | None (internal changes only) |
 
@@ -384,8 +384,8 @@ const { teamId } = useTeamContext()
 | Package | File |
 |---------|------|
 | nuxt-crouton | `server/utils/team-auth.ts` |
-| nuxt-crouton-collection-generator | `lib/generators/team-auth-utility.mjs` |
-| nuxt-crouton-collection-generator | `lib/generators/api-endpoints.mjs` (non-team version) |
+| nuxt-crouton-cli | `lib/generators/team-auth-utility.mjs` |
+| nuxt-crouton-cli | `lib/generators/api-endpoints.mjs` (non-team version) |
 
 ### Files to UPDATE
 
@@ -393,9 +393,9 @@ const { teamId } = useTeamContext()
 |---------|------|--------|
 | nuxt-crouton | `app/composables/useTeamContext.ts` | Re-export from @crouton/auth |
 | nuxt-crouton | `crouton-team-auth.d.ts` | Update types |
-| nuxt-crouton-collection-generator | `lib/generators/api-endpoints-simplified.mjs` | Rename, update import |
-| nuxt-crouton-collection-generator | `lib/generate-collection.mjs` | Remove useTeamUtility conditionals |
-| nuxt-crouton-collection-generator | `lib/utils/module-detector.mjs` | Remove useTeamUtility check |
+| nuxt-crouton-cli | `lib/generators/api-endpoints-simplified.mjs` | Rename, update import |
+| nuxt-crouton-cli | `lib/generate-collection.mjs` | Remove useTeamUtility conditionals |
+| nuxt-crouton-cli | `lib/utils/module-detector.mjs` | Remove useTeamUtility check |
 | nuxt-crouton-i18n | `app/composables/useT.ts` | Use useTeamContext() |
 | nuxt-crouton-assets | `app/composables/useAssetUpload.ts` | Use useTeamContext() |
 | nuxt-crouton-assets | `app/components/Uploader.vue` | Use useTeamContext() |
