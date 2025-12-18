@@ -2,7 +2,7 @@
   "mcpServers": {
     "crouton": {
       "command": "node",
-      "args": ["./packages/crouton-mcp-server/dist/index.js"]
+      "args": ["./packages/nuxt-crouton-mcp-server/dist/index.js"]
     }
   }
 }

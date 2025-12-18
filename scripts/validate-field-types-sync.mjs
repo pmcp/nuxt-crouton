@@ -22,7 +22,7 @@ const generatorHelpersPath = join(
 // MCP server field types
 const mcpFieldTypesPath = join(
   projectRoot,
-  'packages/crouton-mcp-server/src/utils/field-types.ts'
+  'packages/nuxt-crouton-mcp-server/src/utils/field-types.ts'
 )
 
 // Claude skill field types

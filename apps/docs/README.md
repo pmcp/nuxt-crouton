@@ -26,7 +26,7 @@ Related packages:
 - `packages/nuxt-crouton-cli` - CLI code generator
 - `packages/nuxt-crouton-i18n` - Internationalization support
 - `packages/nuxt-crouton-editor` - Rich text editor
-- `packages/crouton-mcp-server` - MCP server for AI-assisted generation
+- `packages/nuxt-crouton-mcp-server` - MCP server for AI-assisted generation
 
 ## Development
 

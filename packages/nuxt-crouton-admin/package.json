@@ -1,5 +1,5 @@
 {
-  "name": "@friendlyinternet/crouton-admin",
+  "name": "@friendlyinternet/nuxt-crouton-admin",
   "version": "0.1.0",
   "description": "Admin dashboard and user management for Nuxt applications using crouton-auth",
   "type": "module",
@@ -34,7 +34,7 @@
     "vue": "^3.5.25"
   },
   "peerDependencies": {
-    "@friendlyinternet/crouton-auth": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
     "@nuxt/ui": "^4.3.0",
     "nuxt": "^3.14.0 || ^4.0.0"
   },

@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/crouton-mcp-server
+# CLAUDE.md - @friendlyinternet/nuxt-crouton-mcp-server
 
 ## Package Purpose
 
@@ -155,7 +155,7 @@ Add to Claude Code MCP settings:
   "mcpServers": {
     "crouton": {
       "command": "node",
-      "args": ["./packages/crouton-mcp-server/dist/index.js"],
+      "args": ["./packages/nuxt-crouton-mcp-server/dist/index.js"],
       "cwd": "/path/to/nuxt-crouton"
     }
   }
@@ -166,7 +166,7 @@ Add to Claude Code MCP settings:
 
 ```bash
 # Install dependencies
-cd packages/crouton-mcp-server
+cd packages/nuxt-crouton-mcp-server
 pnpm install
 
 # Build

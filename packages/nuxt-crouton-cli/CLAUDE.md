@@ -221,8 +221,8 @@ npx nuxt typecheck
 | README.md | `packages/nuxt-crouton-cli/README.md` | User-facing features change |
 | Example configs | `examples/crouton.config.*.js` | Flags, schema format, defaults change |
 | Claude Skill | `.claude/skills/crouton.md` | Field types, workflow, commands change |
-| MCP Server | `packages/crouton-mcp-server/` | CLI commands, field types change |
-| Auth Package | `packages/crouton-auth/CLAUDE.md` | If `@crouton/auth/server` exports change |
+| MCP Server | `packages/nuxt-crouton-mcp-server/` | CLI commands, field types change |
+| Auth Package | `packages/nuxt-crouton-auth/CLAUDE.md` | If `@crouton/auth/server` exports change |
 | External Docs | `apps/docs/content/` | Any user-facing change |
 
 ### Step 1: Classify Your Change
@@ -272,7 +272,7 @@ If field types, commands, or workflow changed:
 
 If CLI commands, flags, or field types changed:
 
-- [ ] Update `packages/crouton-mcp-server/` (when implemented)
+- [ ] Update `packages/nuxt-crouton-mcp-server/` (when implemented)
   - [ ] Field type definitions
   - [ ] Tool input schemas
   - [ ] Tool handlers

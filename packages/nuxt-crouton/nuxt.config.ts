@@ -10,7 +10,7 @@ let croutonAuthPath: string | undefined
 try {
   const require = createRequire(import.meta.url)
   // Resolve the main export, then derive the team-auth path
-  const mainPath = require.resolve('@friendlyinternet/crouton-auth')
+  const mainPath = require.resolve('@friendlyinternet/nuxt-crouton-auth')
   // mainPath is typically dist/module.cjs or dist/module.mjs - go up to package root
   const pkgRoot = dirname(dirname(mainPath))
   const teamAuthPath = join(pkgRoot, 'server/utils/team-auth.ts')

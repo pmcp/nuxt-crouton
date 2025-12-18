@@ -60,6 +60,6 @@ Use the `/mcp-idea` command or add manually:
 
 ## Notes
 
-- Ideas from this file feed into the CLI MCP (`packages/crouton-mcp-server/`) and Docs MCP (`apps/docs/server/mcp/`)
+- Ideas from this file feed into the CLI MCP (`packages/nuxt-crouton-mcp-server/`) and Docs MCP (`apps/docs/server/mcp/`)
 - High priority ideas should be implemented in the next development cycle
 - Consider both AI assistant usability and human developer experience

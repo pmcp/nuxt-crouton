@@ -975,7 +975,7 @@ This codebase has AI-friendly documentation that MUST be kept in sync with code 
 | Add generator feature | `packages/nuxt-crouton-cli/CLAUDE.md` |
 | Change CLI command | Generator's `CLAUDE.md` + `.claude/skills/crouton.md` |
 | Add new field type | `.claude/skills/crouton.md` (Field Types table) |
-| Change auth connector | `packages/crouton-auth/CLAUDE.md` + Generator's CLAUDE.md |
+| Change auth connector | `packages/nuxt-crouton-auth/CLAUDE.md` + Generator's CLAUDE.md |
 | Add new package | Create `packages/{name}/CLAUDE.md` using existing as template |
 
 ### AI Documentation Files
@@ -1032,7 +1032,7 @@ This project uses Claude Code skills, agents, and custom configurations.
 | Skill | `.claude/skills/crouton.md` | Collection generation workflow | Field types, commands, workflow change |
 | Agent | `.claude/agents/sync-checker.md` | Verifies doc sync across artifacts | Sync rules change |
 | Settings | `.claude/settings.local.json` | Project-specific permissions | New tools needed |
-| MCP Server | `packages/crouton-mcp-server/` | AI-powered collection generation | CLI commands, field types change |
+| MCP Server | `packages/nuxt-crouton-mcp-server/` | AI-powered collection generation | CLI commands, field types change |
 
 ### Skills
 
@@ -1066,7 +1066,7 @@ Use the sync-checker agent to verify all generator documentation is in sync.
 
 ### MCP Server
 
-The Crouton MCP Server (`packages/crouton-mcp-server/`) enables AI assistants to generate collections through a structured interface.
+The Crouton MCP Server (`packages/nuxt-crouton-mcp-server/`) enables AI assistants to generate collections through a structured interface.
 
 **Tools Available:**
 
@@ -1095,7 +1095,7 @@ The MCP server is registered in `.claude/settings.json`:
   "mcpServers": {
     "crouton": {
       "command": "node",
-      "args": ["./packages/crouton-mcp-server/dist/index.js"]
+      "args": ["./packages/nuxt-crouton-mcp-server/dist/index.js"]
     }
   }
 }
@@ -1107,7 +1107,7 @@ The MCP server is registered in `.claude/settings.json`:
 3. AI calls `validate_schema` to check schema structure
 4. AI calls `generate_collection` to execute generation
 
-See `packages/crouton-mcp-server/CLAUDE.md` for detailed documentation
+See `packages/nuxt-crouton-mcp-server/CLAUDE.md` for detailed documentation
 
 ## MCP Improvement Capture
 
@@ -1124,7 +1124,7 @@ See `packages/crouton-mcp-server/CLAUDE.md` for detailed documentation
 **MCP Servers in this project:**
 | Server | Location | Purpose |
 |--------|----------|---------|
-| CLI MCP | `packages/crouton-mcp-server/` | AI assistants interact with CLI |
+| CLI MCP | `packages/nuxt-crouton-mcp-server/` | AI assistants interact with CLI |
 | Docs MCP | `apps/docs/server/mcp/` | AI assistants read documentation |
 
 Ideas feed into both servers. High-priority ideas should be implemented in the next development cycle.

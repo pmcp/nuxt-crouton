@@ -228,7 +228,7 @@ interface AdminStats {
 
 ## Dependencies
 
-- **Requires**: `@friendlyinternet/crouton-auth` (peer dependency)
+- **Requires**: `@friendlyinternet/nuxt-crouton-auth` (peer dependency)
 - **Works with**: Any Nuxt UI 4 app
 
 ## Testing

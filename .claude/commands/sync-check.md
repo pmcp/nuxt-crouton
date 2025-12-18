@@ -18,7 +18,7 @@ Extract field types from the source of truth and compare with all artifacts:
 **Compare with**:
 - `packages/nuxt-crouton-cli/CLAUDE.md` - Field Types table
 - `.claude/skills/crouton.md` - Field Types table
-- `packages/crouton-mcp-server/src/utils/field-types.ts` - FIELD_TYPES object
+- `packages/nuxt-crouton-mcp-server/src/utils/field-types.ts` - FIELD_TYPES object
 
 ### 2. CLI Command Consistency
 
@@ -101,4 +101,4 @@ Or if issues found:
 
 - Generator CLAUDE.md sync workflow: `packages/nuxt-crouton-cli/CLAUDE.md` (see "Documentation Sync Workflow" section)
 - CI validation script: `scripts/validate-field-types-sync.mjs`
-- MCP server field types: `packages/crouton-mcp-server/src/utils/field-types.ts`
+- MCP server field types: `packages/nuxt-crouton-mcp-server/src/utils/field-types.ts`

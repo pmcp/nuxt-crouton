@@ -1,4 +1,4 @@
-# @friendlyinternet/crouton-mcp-server
+# @friendlyinternet/nuxt-crouton-mcp-server
 
 MCP (Model Context Protocol) server for AI-powered collection generation in Nuxt Crouton applications.
 
@@ -20,7 +20,7 @@ This MCP server enables AI assistants like Claude to generate complete CRUD coll
 The MCP server is included in the monorepo. Build it with:
 
 ```bash
-cd packages/crouton-mcp-server
+cd packages/nuxt-crouton-mcp-server
 pnpm install
 pnpm build
 ```
@@ -28,7 +28,7 @@ pnpm build
 ### Global Installation
 
 ```bash
-npm install -g @friendlyinternet/crouton-mcp-server
+npm install -g @friendlyinternet/nuxt-crouton-mcp-server
 ```
 
 ## Configuration
@@ -42,7 +42,7 @@ Add to your Claude Code MCP settings (`.claude/settings.json` or `~/.claude/sett
   "mcpServers": {
     "crouton": {
       "command": "node",
-      "args": ["./packages/crouton-mcp-server/dist/index.js"],
+      "args": ["./packages/nuxt-crouton-mcp-server/dist/index.js"],
       "cwd": "/path/to/your/crouton-project"
     }
   }

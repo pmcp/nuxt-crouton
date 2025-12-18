@@ -1,5 +1,5 @@
 {
-  "name": "@friendlyinternet/crouton-email",
+  "name": "@friendlyinternet/nuxt-crouton-email",
   "version": "0.1.0",
   "description": "Email infrastructure for Nuxt applications using Vue Email templates and Resend delivery",
   "type": "module",
@@ -67,9 +67,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/friendlyinternet/nuxt-crouton.git",
-    "directory": "packages/crouton-email"
+    "directory": "packages/nuxt-crouton-email"
   },
-  "homepage": "https://github.com/friendlyinternet/nuxt-crouton/tree/main/packages/crouton-email#readme",
+  "homepage": "https://github.com/friendlyinternet/nuxt-crouton/tree/main/packages/nuxt-crouton-email#readme",
   "bugs": {
     "url": "https://github.com/friendlyinternet/nuxt-crouton/issues"
   },

@@ -1,10 +1,10 @@
 # Sync Checker Agent
 
-Verifies that all crouton generator documentation artifacts are in sync.
+Verifies that all crouton cli generator documentation artifacts are in sync.
 
 ## Purpose
 
-This agent checks consistency between the generator source code and its documentation across multiple locations. Invoke this agent after making changes to the generator package.
+This agent checks consistency between the cli generator source code and its documentation across multiple locations. Invoke this agent after making changes to the generator package.
 
 ## When to Use
 
@@ -23,7 +23,7 @@ Extract field types from source and compare with documentation:
 **Must match**:
 - `packages/nuxt-crouton-cli/CLAUDE.md` (Field Types table)
 - `.claude/skills/crouton.md` (Field Types table)
-- `packages/crouton-mcp-server/src/sync/field-types.ts` (if exists)
+- `packages/nuxt-crouton-mcp-server/src/sync/field-types.ts` (if exists)
 
 ### 2. CLI Command Consistency
 

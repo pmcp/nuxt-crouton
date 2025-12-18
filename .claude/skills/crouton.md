@@ -263,7 +263,7 @@ export default {
 
 ## Reference Documentation
 
-- Collection Generator: `packages/nuxt-crouton-cli/CLAUDE.md`
-- MCP Server: `packages/crouton-mcp-server/CLAUDE.md`
+- CLI: `packages/nuxt-crouton-cli/CLAUDE.md`
+- MCP Server: `packages/nuxt-crouton-mcp-server/CLAUDE.md`
 - Core Package: `packages/nuxt-crouton/CLAUDE.md`
 - i18n Support: `packages/nuxt-crouton-i18n/CLAUDE.md`

@@ -318,7 +318,7 @@ The generated code is yours to modify!
 For AI-assisted collection generation, use the companion MCP server:
 
 ```bash
-npm install -g @friendlyinternet/crouton-mcp-server
+npm install -g @friendlyinternet/nuxt-crouton-mcp-server
 ```
 
 The MCP server enables AI assistants like Claude to:
@@ -329,7 +329,7 @@ The MCP server enables AI assistants like Claude to:
 
 Configure in Claude Code or Claude Desktop to enable AI-powered collection creation.
 
-See [@friendlyinternet/crouton-mcp-server](https://www.npmjs.com/package/@friendlyinternet/crouton-mcp-server) for setup instructions.
+See [@friendlyinternet/nuxt-crouton-mcp-server](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-mcp-server) for setup instructions.
 
 ## License
 

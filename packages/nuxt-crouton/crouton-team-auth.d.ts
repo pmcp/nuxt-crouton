@@ -6,5 +6,5 @@
  */
 declare module '#crouton/team-auth' {
   // Re-export all types and functions from @crouton/auth
-  export * from '@friendlyinternet/crouton-auth/server/utils/team-auth'
+  export * from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
 }

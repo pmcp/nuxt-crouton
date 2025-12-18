@@ -8,7 +8,7 @@ This directory contains git hooks for the nuxt-crouton project.
 
 A git pre-commit hook that displays a reminder when committing changes to:
 - Collection generator (`packages/nuxt-crouton-cli/lib/` or `bin/`)
-- MCP server (`packages/crouton-mcp-server/src/`)
+- MCP server (`packages/nuxt-crouton-mcp-server/src/`)
 
 The hook reminds developers to check if documentation artifacts need to be updated.
 
@@ -62,6 +62,6 @@ git commit --no-verify -m "your message"
 
 The hook checks for files matching these patterns:
 - `packages/nuxt-crouton-cli/(lib|bin)/`
-- `packages/crouton-mcp-server/src/`
+- `packages/nuxt-crouton-mcp-server/src/`
 
 Modify the grep patterns in the hook script to adjust what triggers the reminder.

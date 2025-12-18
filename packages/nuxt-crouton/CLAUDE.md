@@ -97,7 +97,7 @@ useNuxtApp().hook('crouton:mutation', ({ operation, collection, itemId, data }) 
 1. Team auth is now in `@crouton/auth` package
 2. Client-side: `useTeamContext()` in this package (gets teamId/teamSlug from route)
 3. Server-side: Import from `@crouton/auth/server` (e.g., `resolveTeamAndCheckMembership`)
-4. See `packages/crouton-auth/CLAUDE.md` for server utilities
+4. See `packages/nuxt-crouton-auth/CLAUDE.md` for server utilities
 
 ### Add collection config option
 1. Edit types in `app/composables/useCollections.ts`

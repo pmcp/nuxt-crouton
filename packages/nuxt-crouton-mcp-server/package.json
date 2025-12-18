@@ -1,5 +1,5 @@
 {
-  "name": "@friendlyinternet/crouton-mcp-server",
+  "name": "@friendlyinternet/nuxt-crouton-mcp-server",
   "version": "1.0.0",
   "description": "MCP server for AI-powered Crouton collection generation",
   "type": "module",
