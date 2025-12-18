@@ -106,13 +106,16 @@ import type { ${prefixedPascalCase} } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
   const { ${singular}Id } = getRouterParams(event)
+  if (!${singular}Id) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<${prefixedPascalCase}>>(event)${hasTranslations ? `
 
   // Handle translation updates properly
   if (body.translations && body.locale) {
-    const [existing] = await get${prefixedPascalCasePlural}ByIds(team.id, [${singular}Id])
+    const [existing] = await get${prefixedPascalCasePlural}ByIds(team.id, [${singular}Id]) as any[]
     if (existing) {
       body.translations = {
         ...existing.translations,
@@ -143,6 +146,9 @@ import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-au
 
 export default defineEventHandler(async (event) => {
   const { ${singular}Id } = getRouterParams(event)
+  if (!${singular}Id) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
+  }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   return await delete${prefixedPascalCase}(${singular}Id, team.id, user.id)
@@ -164,6 +170,9 @@ import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-au
 
 export default defineEventHandler(async (event) => {
   const { ${singular}Id } = getRouterParams(event)
+  if (!${singular}Id) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
+  }
   const { team } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody(event)

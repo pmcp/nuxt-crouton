@@ -400,13 +400,14 @@ export function generateFormComponent(data, config = {}) {
   const hasFieldComponents = Object.keys(fieldComponentsMap).length > 0
 
   // Add CroutonI18nInput if there are translatable fields
+  // Use fallback to empty string to ensure string type compatibility
   const translationField = hasTranslations ? `
 
       <CroutonI18nInput
         v-model="state.translations"
         :fields="[${translatableFieldNames.map(f => `'${f}'`).join(', ')}]"
         :default-values="{
-          ${translatableFields.map(f => `${f.name}: state.${f.name}`).join(',\n          ')}
+          ${translatableFields.map(f => `${f.name}: state.${f.name} || ''`).join(',\n          ')}
         }"${hasFieldComponents ? `
         :field-components="{
           ${Object.entries(fieldComponentsMap).map(([field, component]) => `${field}: '${component}'`).join(',\n          ')}

@@ -127,7 +127,7 @@ export const typeMapping = {
   json: {
     db: 'JSON',
     drizzle: 'json',
-    zod: 'z.record(z.any())',
+    zod: 'z.record(z.string(), z.any())',
     default: '{}',
     tsType: 'Record<string, any>'
   },

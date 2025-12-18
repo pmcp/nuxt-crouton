@@ -1,7 +1,7 @@
 // Generator for database queries
 
 // Helper to generate tree-specific queries when hierarchy is enabled
-function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, plural) {
+function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, plural, singular) {
   const hierarchy = data.hierarchy
   if (!hierarchy || !hierarchy.enabled) {
     return ''
@@ -13,20 +13,33 @@ function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascal
   const depthField = hierarchy.depthField || 'depth'
   const orderField = hierarchy.orderField || 'order'
 
+  // Note: Type assertions (as any) are used throughout to handle drizzle-orm version mismatches
+  // that can occur in monorepo setups. This is a pragmatic solution that allows the generated
+  // code to work across different drizzle-orm versions.
+
   return `
 
 // Tree hierarchy queries (auto-generated when hierarchy: true)
+// Type: ${prefixedPascalCase} with hierarchy fields
+
+interface TreeItem {
+  id: string
+  ${pathField}: string
+  ${depthField}: number
+  ${orderField}: number
+  [key: string]: any
+}
 
 export async function getTreeData${prefixedPascalCasePlural}(teamId: string) {
   const db = useDB()
 
-  const ${plural} = await db
+  const ${plural} = await (db as any)
     .select()
     .from(tables.${tableName})
     .where(eq(tables.${tableName}.teamId, teamId))
     .orderBy(tables.${tableName}.${pathField}, tables.${tableName}.${orderField})
 
-  return ${plural}
+  return ${plural} as TreeItem[]
 }
 
 export async function updatePosition${prefixedPascalCase}(
@@ -38,7 +51,7 @@ export async function updatePosition${prefixedPascalCase}(
   const db = useDB()
 
   // Get the current item to find its path
-  const [current] = await db
+  const [current] = await (db as any)
     .select()
     .from(tables.${tableName})
     .where(
@@ -46,7 +59,7 @@ export async function updatePosition${prefixedPascalCase}(
         eq(tables.${tableName}.id, id),
         eq(tables.${tableName}.teamId, teamId)
       )
-    )
+    ) as TreeItem[]
 
   if (!current) {
     throw createError({
@@ -60,7 +73,7 @@ export async function updatePosition${prefixedPascalCase}(
   let newDepth: number
 
   if (newParentId) {
-    const [parent] = await db
+    const [parent] = await (db as any)
       .select()
       .from(tables.${tableName})
       .where(
@@ -68,7 +81,7 @@ export async function updatePosition${prefixedPascalCase}(
           eq(tables.${tableName}.id, newParentId),
           eq(tables.${tableName}.teamId, teamId)
         )
-      )
+      ) as TreeItem[]
 
     if (!parent) {
       throw createError({
@@ -95,7 +108,7 @@ export async function updatePosition${prefixedPascalCase}(
   const oldPath = current.${pathField}
 
   // Update the item itself
-  const [updated] = await db
+  const [updated] = await (db as any)
     .update(tables.${tableName})
     .set({
       ${parentField}: newParentId,
@@ -114,7 +127,7 @@ export async function updatePosition${prefixedPascalCase}(
   // Update all descendants' paths if the path changed
   if (oldPath !== newPath) {
     // Get all descendants
-    const descendants = await db
+    const descendants = await (db as any)
       .select()
       .from(tables.${tableName})
       .where(
@@ -122,14 +135,14 @@ export async function updatePosition${prefixedPascalCase}(
           eq(tables.${tableName}.teamId, teamId),
           sql\`\${tables.${tableName}.${pathField}} LIKE \${oldPath + '%'} AND \${tables.${tableName}.id} != \${id}\`
         )
-      )
+      ) as TreeItem[]
 
     // Update each descendant's path and depth
     for (const descendant of descendants) {
       const descendantNewPath = descendant.${pathField}.replace(oldPath, newPath)
       const depthDiff = newDepth - current.${depthField}
 
-      await db
+      await (db as any)
         .update(tables.${tableName})
         .set({
           ${pathField}: descendantNewPath,
@@ -151,7 +164,7 @@ export async function reorderSiblings${prefixedPascalCasePlural}(
   const results = []
 
   for (const update of updates) {
-    const [updated] = await db
+    const [updated] = await (db as any)
       .update(tables.${tableName})
       .set({ ${orderField}: update.${orderField} })
       .where(
@@ -192,7 +205,7 @@ export async function reorderSiblings${prefixedPascalCasePlural}(
 
   const results = await Promise.all(
     updates.map(({ id, ${orderField} }) =>
-      db
+      (db as any)
         .update(tables.${tableName})
         .set({ ${orderField} })
         .where(
@@ -333,14 +346,15 @@ export function generateQueries(data, config = null) {
 
       if (ref.isUserReference) {
         // Special user reference handling
-        const aliasName = `${ref.fieldName}Users`
+        const aliasName = `${ref.fieldName}User`
         userAliases.push({ fieldName: ref.fieldName, aliasName })
 
+        // Note: Better Auth user table uses 'image' not 'avatarUrl'
         selectFields.push(`${ref.fieldName}User: {
         id: ${aliasName}.id,
         name: ${aliasName}.name,
         email: ${aliasName}.email,
-        avatarUrl: ${aliasName}.avatarUrl
+        image: ${aliasName}.image
       }`)
         leftJoins += `
     .leftJoin(${aliasName}, eq(tables.${tableName}.${ref.fieldName}, ${aliasName}.id))`
@@ -359,9 +373,10 @@ export function generateQueries(data, config = null) {
 
     // Generate alias definitions for user references
     // Note: Better Auth exports 'user' (singular), not 'users'
+    // Type assertion needed due to drizzle-orm type strictness with re-exported tables
     if (userAliases.length > 0) {
       const aliasDefs = userAliases.map(({ aliasName }) =>
-        `  const ${aliasName} = alias(user, '${aliasName}')`
+        `  const ${aliasName} = alias(user as any, '${aliasName}')`
       ).join('\n')
       aliasDefinitions = `\n${aliasDefs}\n`
     }
@@ -479,9 +494,8 @@ ${schemaImports}
 export async function getAll${prefixedPascalCasePlural}(teamId: string) {
   const db = useDB()
 ${aliasDefinitions}
-  // @ts-expect-error Complex select with joins requires type assertion
-  const ${plural} = await db
-    .select(${selectClause || '()'})
+  const ${plural} = await (db as any)
+    .select(${selectClause ? `${selectClause} as any` : '()'})
     .from(tables.${tableName})${leftJoins}
     .where(eq(tables.${tableName}.teamId, teamId))
     .orderBy(${orderByClause})
@@ -492,9 +506,8 @@ ${postQueryProcessing}
 export async function get${prefixedPascalCasePlural}ByIds(teamId: string, ${singular}Ids: string[]) {
   const db = useDB()
 ${aliasDefinitions}
-  // @ts-expect-error Complex select with joins requires type assertion
-  const ${plural} = await db
-    .select(${selectClause || '()'})
+  const ${plural} = await (db as any)
+    .select(${selectClause ? `${selectClause} as any` : '()'})
     .from(tables.${tableName})${leftJoins}
     .where(
       and(
@@ -510,7 +523,7 @@ ${postQueryProcessing}
 export async function create${prefixedPascalCase}(data: New${prefixedPascalCase}) {
   const db = useDB()
 
-  const [${singular}] = await db
+  const [${singular}] = await (db as any)
     .insert(tables.${tableName})
     .values(data)
     .returning()
@@ -526,7 +539,7 @@ export async function update${prefixedPascalCase}(
 ) {
   const db = useDB()
 
-  const [${singular}] = await db
+  const [${singular}] = await (db as any)
     .update(tables.${tableName})
     .set({
       ...updates,
@@ -558,7 +571,7 @@ export async function delete${prefixedPascalCase}(
 ) {
   const db = useDB()
 
-  const [deleted] = await db
+  const [deleted] = await (db as any)
     .delete(tables.${tableName})
     .where(
       and(

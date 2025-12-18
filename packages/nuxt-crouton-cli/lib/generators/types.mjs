@@ -45,6 +45,10 @@ export function generateTypes(data, config = null) {
   // Team fields are always required (all generated endpoints use @crouton/auth)
   const useMetadata = config?.flags?.useMetadata ?? true
 
+  // Check if this collection has translations
+  const hasTranslations = config?.translations?.collections?.[plural] || config?.translations?.collections?.[singular]
+  const translationFields = hasTranslations ? Array.isArray(hasTranslations) ? hasTranslations : [] : []
+
   // Team fields are always included (required for @crouton/auth)
   const teamFields = `  teamId: string
   owner: string
@@ -56,6 +60,13 @@ export function generateTypes(data, config = null) {
   createdBy: string
   updatedBy: string
 ` : ''
+
+  // Build translations type if needed
+  const translationsType = translationFields.length > 0
+    ? `  translations?: Record<string, { ${translationFields.map(f => `${f}?: string`).join('; ')} }>
+  locale?: string
+`
+    : ''
 
   // Build the omit list for New${prefixedPascalCase} type
   const omitFields = ['id']
@@ -73,7 +84,7 @@ import type { ${prefixedSingular}Schema } from '${composablePath}'
 export interface ${prefixedPascalCase} {
   id: string
 ${teamFields}  ${data.fieldsTypes}
-${metadataFields}  optimisticId?: string
+${translationsType}${metadataFields}  optimisticId?: string
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
