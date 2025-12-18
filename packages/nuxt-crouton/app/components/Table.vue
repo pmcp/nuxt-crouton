@@ -49,7 +49,7 @@
           </template>
 
           <!-- Default column templates -->
-          <template #createdBy-cell="{ row }">
+          <template #createdBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
             <CroutonUsersCardMini
                 v-if="row.original.createdByUser"
                 :item="row.original.createdByUser"
@@ -57,11 +57,11 @@
             />
           </template>
 
-          <template #createdAt-cell="{ row }">
+          <template #createdAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
             <CroutonDate :date="row.original.createdAt"></CroutonDate>
           </template>
 
-          <template #updatedBy-cell="{ row }">
+          <template #updatedBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
             <CroutonUsersCardMini
                 v-if="row.original.updatedByUser"
                 :item="row.original.updatedByUser"
@@ -69,11 +69,11 @@
             />
           </template>
 
-          <template #updatedAt-cell="{ row }">
+          <template #updatedAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
             <CroutonDate :date="row.original.updatedAt"></CroutonDate>
           </template>
 
-          <template #actions-cell="{ row }">
+          <template #actions-cell="{ row }: { row: { original: CroutonBaseRow } }">
             <CroutonItemButtonsMini
               delete
               @delete="openCrouton('delete', collection, [row.original.id])"
@@ -104,6 +104,18 @@ import { useTableColumns } from '../composables/useTableColumns'
 import { useT } from '../composables/useT'
 import { useSortable } from '@vueuse/integrations/useSortable'
 
+// Base row type for table data
+interface CroutonBaseRow {
+  id: string
+  createdAt?: string
+  updatedAt?: string
+  createdBy?: string
+  updatedBy?: string
+  createdByUser?: { id: string; name?: string; image?: string }
+  updatedByUser?: { id: string; name?: string; image?: string }
+  [key: string]: unknown
+}
+
 // Props
 const props = withDefaults(defineProps<TableProps>(), {
   columns: () => [],
@@ -124,7 +136,7 @@ const props = withDefaults(defineProps<TableProps>(), {
 
 // Composables
 const { t, tString } = useT()
-const { open: openCrouton, getCollection, setPagination, getPagination } = useCrouton()
+const { open: openCrouton, setPagination, getPagination } = useCrouton()
 
 // Refs
 const tableRef = useTemplateRef<any>('tableRef')
@@ -216,7 +228,15 @@ async function fetchPage(newPage: number) {
       sortDirection: sort.value.direction
     })
 
-    await (props.refreshFn?.() || getCollection(props.collection, {}, true))
+    if (props.refreshFn) {
+      await props.refreshFn()
+    } else {
+      // Fallback: refresh all cache keys for this collection
+      const prefix = `collection:${props.collection}:`
+      const nuxtApp = useNuxtApp()
+      const matchingKeys = Object.keys(nuxtApp.payload.data).filter(key => key.startsWith(prefix))
+      await Promise.all(matchingKeys.map(key => refreshNuxtData(key)))
+    }
   } catch (error) {
     console.error('Error fetching page:', error)
   } finally {
