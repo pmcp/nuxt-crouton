@@ -273,6 +273,32 @@ export const subscription = sqliteTable('subscription', {
 ])
 
 // ============================================================================
+// Custom Domains Table
+// ============================================================================
+
+/**
+ * Domain table - Custom domains for organizations
+ *
+ * Allows organizations to configure custom domains with DNS verification.
+ * Supports multiple domains per organization with one primary domain.
+ */
+export const domain = sqliteTable('domain', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  domain: text('domain').notNull().unique(),
+  status: text('status').notNull().default('pending'), // 'pending', 'verified', 'failed'
+  verificationToken: text('verificationToken').notNull(),
+  verifiedAt: integer('verifiedAt', { mode: 'timestamp' }),
+  isPrimary: integer('isPrimary', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index('domain_org_idx').on(table.organizationId),
+  index('domain_domain_idx').on(table.domain),
+  index('domain_status_idx').on(table.status),
+])
+
+// ============================================================================
 // Relations
 // ============================================================================
 
@@ -307,6 +333,7 @@ export const organizationRelations = relations(organization, ({ many }) => ({
   members: many(member),
   invitations: many(invitation),
   sessions: many(session),
+  domains: many(domain),
 }))
 
 export const memberRelations = relations(member, ({ one }) => ({
@@ -345,6 +372,13 @@ export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
   }),
 }))
 
+export const domainRelations = relations(domain, ({ one }) => ({
+  organization: one(organization, {
+    fields: [domain.organizationId],
+    references: [organization.id],
+  }),
+}))
+
 // ============================================================================
 // Type Exports
 // ============================================================================
@@ -378,3 +412,6 @@ export type NewTwoFactor = typeof twoFactor.$inferInsert
 
 export type Subscription = typeof subscription.$inferSelect
 export type NewSubscription = typeof subscription.$inferInsert
+
+export type Domain = typeof domain.$inferSelect
+export type NewDomain = typeof domain.$inferInsert
