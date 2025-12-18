@@ -483,7 +483,7 @@ defineExpose({
         <!-- Days Grid -->
         <div :class="uiClasses.grid">
           <div
-            v-for="day in week.days"
+            v-for="day in (week as WeekData)?.days || []"
             :key="day.date.toString()"
             :class="uiClasses.day"
             @click="selectDay(asDay(day))"
