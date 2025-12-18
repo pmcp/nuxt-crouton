@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import type { Component } from 'vue'
 import type { TreeNode as TreeNodeType } from './Tree.vue'
 import type SortableType from 'sortablejs'
+import type { SortableEvent, MoveEvent } from 'sortablejs'
 const { open } = useCrouton()
 
 const treeDrag = useTreeDrag()
@@ -149,12 +150,12 @@ async function initSortable() {
       forceFallback: true,
       removeCloneOnHide: true,
 
-      onStart: (evt) => {
+      onStart: (evt: SortableEvent) => {
         const id = (evt.item as HTMLElement).dataset.id
         if (id) treeDrag.startDrag(id)
       },
 
-      onEnd: (evt) => {
+      onEnd: (evt: SortableEvent) => {
         // Check if the move was blocked by onMove
         const wasBlocked = treeDrag.isMoveBlocked()
 
@@ -180,7 +181,7 @@ async function initSortable() {
 
       // Track drop target for line highlighting + auto-expand
       // Return false to prevent invalid drops (circular references)
-      onMove: (evt) => {
+      onMove: (evt: MoveEvent) => {
         const toContainer = evt.to as HTMLElement
 
         // Prevent dropping an item into its own descendants

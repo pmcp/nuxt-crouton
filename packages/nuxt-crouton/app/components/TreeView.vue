@@ -4,6 +4,7 @@ import type { Component } from 'vue'
 import type { HierarchyConfig } from '../types/table'
 import type { TreeNode } from './Tree.vue'
 import type SortableType from 'sortablejs'
+import type { SortableEvent, MoveEvent } from 'sortablejs'
 
 const treeDrag = useTreeDrag()
 
@@ -49,12 +50,12 @@ async function initRootSortable() {
       forceFallback: true,
       removeCloneOnHide: true,
 
-      onStart: (evt) => {
+      onStart: (evt: SortableEvent) => {
         const id = (evt.item as HTMLElement).dataset.id
         if (id) treeDrag.startDrag(id)
       },
 
-      onEnd: (evt) => {
+      onEnd: (evt: SortableEvent) => {
         // Check if the move was blocked by onMove
         const wasBlocked = treeDrag.isMoveBlocked()
 
@@ -79,7 +80,7 @@ async function initRootSortable() {
 
       // Track drop target for line highlighting + auto-expand
       // Return false to prevent invalid drops (circular references)
-      onMove: (evt) => {
+      onMove: (evt: MoveEvent) => {
         const toContainer = evt.to as HTMLElement
 
         // Prevent dropping an item into its own descendants

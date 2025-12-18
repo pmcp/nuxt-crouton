@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nanoid } from 'nanoid'
 import { useSortable } from '@vueuse/integrations/useSortable'
+import type { SortableEvent } from 'sortablejs'
 
 interface Props {
   modelValue: any[] | null
@@ -32,13 +33,13 @@ useSortable(containerRef, items, {
   handle: '.drag-handle',
   ghostClass: 'opacity-50',
   disabled: !props.sortable,
-  onUpdate: (event) => {
+  onUpdate: (event: SortableEvent) => {
     isEmitting.value = true
 
     // Get the reordered array from the event
     const reordered = [...items.value]
-    const movedItem = reordered.splice(event.oldIndex, 1)[0]
-    reordered.splice(event.newIndex, 0, movedItem)
+    const movedItem = reordered.splice(event.oldIndex!, 1)[0]
+    reordered.splice(event.newIndex!, 0, movedItem)
 
     items.value = reordered
     emit('update:modelValue', reordered)
@@ -176,7 +177,7 @@ onMounted(() => {
           <component
               :is="componentName"
               :model-value="item"
-              @update:model-value="(val) => updateItem(index, val)"
+              @update:model-value="(val: unknown) => updateItem(index, val)"
           />
         </div>
       </UCard>
