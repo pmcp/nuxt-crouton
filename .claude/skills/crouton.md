@@ -2,6 +2,35 @@
 
 This skill helps generate complete CRUD collections for Nuxt Crouton applications.
 
+## CRITICAL: Documentation First
+
+**ALWAYS check the documentation before generating collections.** The docs are comprehensive (54+ pages) and contain the most up-to-date information.
+
+### Documentation Tools (Use These First!)
+
+| Tool | Purpose | Example |
+|------|---------|---------|
+| `crouton_list_docs` | List all doc pages | Filter by section: `crouton_list_docs({ section: "generation" })` |
+| `crouton_search_docs` | Search for topics | `crouton_search_docs({ query: "config file" })` |
+| `crouton_get_doc` | Read full doc page | `crouton_get_doc({ path: "generation/multi-collection" })` |
+
+**Key Documentation Sections:**
+- `getting-started/` - Installation and first collection
+- `generation/` - Schema format, CLI commands, config files
+- `patterns/` - Common collection patterns
+- `api-reference/` - Composables, components, server utils
+
+**Documentation Location:**
+- Local: `apps/docs/content/`
+- Live: https://nuxt-crouton-docs.pages.dev/
+
+### When to Use Docs
+
+1. **Before creating any config file** - Check `generation/multi-collection` for proper format
+2. **When unsure about field types** - Check `generation/schema-format`
+3. **For advanced features** - Check `features/` section
+4. **For CLI options** - Check `generation/cli-reference`
+
 ## MCP Tools Available
 
 If the Crouton MCP server is configured, you can use these tools for AI-assisted generation:
