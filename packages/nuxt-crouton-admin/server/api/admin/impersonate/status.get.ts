@@ -11,7 +11,7 @@ import { defineEventHandler } from 'h3'
 import { eq } from 'drizzle-orm'
 import { user, session, useAdminDb } from '../../../utils/db'
 import type { ImpersonationState } from '../../../../types/admin'
-import { useServerAuth } from '../../../../../crouton-auth/server/utils/useServerAuth'
+// useServerAuth is auto-imported from nuxt-crouton-auth layer
 
 export default defineEventHandler(async (event: H3Event): Promise<ImpersonationState> => {
   const db = useAdminDb()

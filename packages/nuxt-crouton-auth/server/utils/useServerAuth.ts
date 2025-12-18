@@ -18,6 +18,7 @@ import type { H3Event } from 'h3'
 import { drizzle } from 'drizzle-orm/d1'
 import { createAuth, type AuthInstance, setAuthInstance, getAuthInstance, isAuthInitialized } from '../lib/auth'
 import type { CroutonAuthConfig } from '../../types/config'
+import * as authSchema from '../database/schema/auth'
 
 /**
  * Get or create the Better Auth instance
@@ -70,6 +71,7 @@ export function useServerAuth(event?: H3Event): AuthInstance {
     provider: 'sqlite',
     secret,
     baseURL,
+    schema: authSchema,
   })
 
   // Cache the instance

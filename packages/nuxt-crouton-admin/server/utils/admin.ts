@@ -16,8 +16,7 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import type { AdminUser } from '../../types/admin'
-// Import useServerAuth from the parent layer (crouton-auth)
-import { useServerAuth } from '../../../crouton-auth/server/utils/useServerAuth'
+// useServerAuth is auto-imported from nuxt-crouton-auth layer
 
 /**
  * Extended user type from Better Auth session that includes admin fields
