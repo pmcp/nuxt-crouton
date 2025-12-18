@@ -56,8 +56,15 @@ const handleDelete = () => {
   }
 }
 
+// Type for table column from TanStack Table
+interface TableColumn {
+  id: string
+  getCanHide: () => boolean
+  getIsVisible: () => boolean
+}
+
 const columnVisibilityItems = computed(() => {
-  return props.table?.tableApi?.getAllColumns().filter(column => column.getCanHide()).map(column => ({
+  return props.table?.tableApi?.getAllColumns().filter((column: TableColumn) => column.getCanHide()).map((column: TableColumn) => ({
     label: upperFirst(column.id),
     type: 'checkbox' as const,
     checked: column.getIsVisible(),

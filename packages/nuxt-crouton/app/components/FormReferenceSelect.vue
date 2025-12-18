@@ -25,8 +25,8 @@
       searchable
       class="w-full"
     >
-      <template #option="{ option }">
-        <span>{{ option[labelKey] || option.id }}</span>
+      <template #item-label="{ item }">
+        <span>{{ item[labelKey] || item.id }}</span>
       </template>
 
       <template #content-top>

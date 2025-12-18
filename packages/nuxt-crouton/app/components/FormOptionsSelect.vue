@@ -27,8 +27,8 @@
       searchable
       class="w-full"
     >
-      <template #option="{ option }">
-        <span>{{ option.label || option.value }}</span>
+      <template #item-label="{ item }">
+        <span>{{ item.label || item.value }}</span>
       </template>
 
       <template v-if="creatable" #content-top>
