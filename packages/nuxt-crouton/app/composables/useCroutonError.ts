@@ -34,7 +34,7 @@ export default function () {
     }
 
     const userSession = useSession()
-    const loggedIn = userSession.loggedIn?.value
+    const loggedIn = !!userSession.user?.value
 
     if (!loggedIn) {
       triggerErrorMessage('error', 'You are not logged in.', null, false)
