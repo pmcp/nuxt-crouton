@@ -283,7 +283,7 @@ export default defineNuxtModule<CroutonAuthConfig>({
 
     // Add client-side plugin
     addPlugin({
-      src: resolver.resolve('./app/plugins/auth-client'),
+      src: resolver.resolve('./app/plugins/auth-client.client'),
       mode: 'client',
     })
 

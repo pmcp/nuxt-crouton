@@ -20,14 +20,34 @@ export interface SessionData {
 
 /**
  * Get the Better Auth client from the plugin
+ * Returns null on server-side since authClient is client-only
  */
 function useAuthClient() {
   const nuxtApp = useNuxtApp()
-  return nuxtApp.$authClient as ReturnType<typeof import('better-auth/client').createAuthClient>
+  return (nuxtApp.$authClient ?? null) as ReturnType<typeof import('better-auth/client').createAuthClient> | null
+}
+
+// Default SSR-safe return value
+const defaultSessionState = {
+  data: ref(null),
+  session: computed(() => null),
+  user: computed(() => null),
+  activeOrganization: computed(() => null),
+  isPending: ref(true),
+  error: computed(() => null),
+  isAuthenticated: computed(() => false),
+  refresh: async () => {},
+  clear: async () => {},
 }
 
 export function useSession() {
   const authClient = useAuthClient()
+
+  // On server-side or if authClient is not available, return empty reactive state
+  // The client will hydrate with real data
+  if (!authClient || typeof authClient.useSession !== 'function') {
+    return defaultSessionState
+  }
 
   // Use Better Auth's reactive session hook
   const {
