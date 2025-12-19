@@ -81,29 +81,38 @@ export function generateComposable(data, config = {}) {
   const aiHeader = generateAIHeader(data, apiPath)
 
   return `${aiHeader}import { z } from 'zod'
-import { markRaw } from 'vue'
 
-// markRaw prevents Vue from making the Zod schema reactive,
-// which avoids SSR serialization issues with Zod 4's internal structure
-export const ${prefixedSingular}Schema = markRaw(z.object({
+// Schema exported separately - Zod 4 schemas cannot survive deep cloning
+// Keep schema outside of objects that might be serialized/cloned during SSR
+export const ${prefixedSingular}Schema = z.object({
   ${data.fieldsSchema}
-}))
+})
 
 export const ${prefixedPlural}Columns = [
   ${columns}
 ]
 
-export const ${prefixedPlural}Config = {
+// Config object WITHOUT schema - safe for SSR serialization
+const _${prefixedPlural}Config = {
   name: '${prefixedPlural}',
   layer: '${layer}',
   apiPath: '${apiPath}',
   componentName: '${layerPascalCase}${pascalCasePlural}Form',
-  schema: ${prefixedSingular}Schema,
   defaultValues: {
     ${data.fieldsDefault}
   },
   columns: ${prefixedPlural}Columns${dependentFieldComponentsCode}${hierarchyConfigCode},
 }
+
+// Add schema as non-enumerable property so klona skips it during cloning
+Object.defineProperty(_${prefixedPlural}Config, 'schema', {
+  value: ${prefixedSingular}Schema,
+  enumerable: false,
+  configurable: false,
+  writable: false
+})
+
+export const ${prefixedPlural}Config = _${prefixedPlural}Config as typeof _${prefixedPlural}Config & { schema: typeof ${prefixedSingular}Schema }
 
 export const use${prefixedPascalCasePlural} = () => ${prefixedPlural}Config
 
@@ -111,7 +120,7 @@ export const use${prefixedPascalCasePlural} = () => ${prefixedPlural}Config
 export default function () {
   return {
     defaultValue: ${prefixedPlural}Config.defaultValues,
-    schema: ${prefixedPlural}Config.schema,
+    schema: ${prefixedSingular}Schema,
     columns: ${prefixedPlural}Config.columns,
     collection: ${prefixedPlural}Config.name
   }

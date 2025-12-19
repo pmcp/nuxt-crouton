@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection posts
  * @layer blog
- * @generated 2025-12-18
+ * @generated 2025-12-19
  *
  * ## AI Context
  * - Composable: useBlogPosts
@@ -23,18 +23,17 @@
  */
 
 import { z } from 'zod'
-import { markRaw } from 'vue'
 
-// markRaw prevents Vue from making the Zod schema reactive,
-// which avoids SSR serialization issues with Zod 4's internal structure
-export const blogPostSchema = markRaw(z.object({
+// Schema exported separately - Zod 4 schemas cannot survive deep cloning
+// Keep schema outside of objects that might be serialized/cloned during SSR
+export const blogPostSchema = z.object({
   title: z.string().min(1, 'title is required'),
   slug: z.string().min(1, 'slug is required'),
   content: z.string().optional(),
   published: z.boolean().optional(),
   publishedAt: z.string().optional(),
   authorName: z.string().optional()
-}))
+})
 
 export const blogPostsColumns = [
   { accessorKey: 'id', header: 'Id' },
@@ -46,12 +45,12 @@ export const blogPostsColumns = [
   { accessorKey: 'authorName', header: 'AuthorName' }
 ]
 
-export const blogPostsConfig = {
+// Config object WITHOUT schema - safe for SSR serialization
+const _blogPostsConfig = {
   name: 'blogPosts',
   layer: 'blog',
   apiPath: 'blog-posts',
   componentName: 'BlogPostsForm',
-  schema: blogPostSchema,
   defaultValues: {
     title: '',
     slug: '',
@@ -63,13 +62,23 @@ export const blogPostsConfig = {
   columns: blogPostsColumns,
 }
 
+// Add schema as non-enumerable property so klona skips it during cloning
+Object.defineProperty(_blogPostsConfig, 'schema', {
+  value: blogPostSchema,
+  enumerable: false,
+  configurable: false,
+  writable: false
+})
+
+export const blogPostsConfig = _blogPostsConfig as typeof _blogPostsConfig & { schema: typeof blogPostSchema }
+
 export const useBlogPosts = () => blogPostsConfig
 
 // Default export for auto-import compatibility
 export default function () {
   return {
     defaultValue: blogPostsConfig.defaultValues,
-    schema: blogPostsConfig.schema,
+    schema: blogPostSchema,
     columns: blogPostsConfig.columns,
     collection: blogPostsConfig.name
   }
