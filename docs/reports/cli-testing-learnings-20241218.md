@@ -299,3 +299,66 @@ and ".../nuxt-crouton-auth/server/utils/database.ts" is used
 - [ ] Document `nuxthub dev` requirement for local D1 database
 - [ ] Investigate drizzle-seed compatibility issues
 - [ ] Consider local SQLite fallback for dev without NuxtHub
+
+---
+
+### 12. Generated CroutonCollection Requires Full Auth Stack
+
+**Problem**: The generated `BlogPostsList` component (and all CroutonCollection components) fail without:
+1. NuxtHub running (`hubDatabase()` needed)
+2. Authenticated session (logged in user)
+3. Team context (organization/workspace)
+
+**Error**:
+```
+[useCollectionQuery] Team context required but not available
+GET /api/teams/undefined/blog-posts → 500 hubDatabase is not defined
+```
+
+**Root Cause**: Generated APIs are team-scoped by default:
+- API path: `/api/teams/[id]/collection-name`
+- Uses `resolveTeamAndCheckMembership()` which requires auth
+- Auth uses `hubDatabase()` which needs NuxtHub bindings
+
+**Workaround Applied**: Created parallel simple API for testing:
+```typescript
+// server/api/posts/index.get.ts - bypasses auth
+export default defineEventHandler(async () => {
+  const db = useLocalDB()
+  return await db.select().from(blogPosts).all()
+})
+```
+
+And a simple test page at `/posts` that uses `useFetch('/api/posts')` instead of `useCollectionQuery`.
+
+**To use generated components properly**:
+1. Run `npx nuxthub dev` (not `nuxt dev`)
+2. Run migrations: `npx drizzle-kit push`
+3. Register at `/register`
+4. Login at `/login`
+5. Visit `/dashboard/posts` (uses generated CroutonCollection)
+
+**Recommendation**:
+- Document that CroutonCollection requires NuxtHub + Auth
+- Consider a "simple mode" generator flag that creates non-team-scoped APIs
+- Add auth pages to getting-started or provide example pages
+- Document the dev workflow: `nuxthub dev` → register → use collections
+
+---
+
+## Updated Action Items
+
+- [ ] Add Crouton MCP to project `.claude/settings.json`
+- [ ] Document drizzle version requirements in getting-started
+- [ ] Fix generator to use direct path for auth schema export
+- [ ] Add workspace install note to docs
+- [ ] Consider version mismatch warning in CLI
+- [ ] Document NuxtLayout requirement when using crouton-auth layouts
+- [ ] Add `.env.example` with BETTER_AUTH_SECRET placeholder
+- [ ] Fix seed.ts generator to not use explicit useDB import
+- [ ] Document `nuxthub dev` requirement for local D1 database
+- [ ] Investigate drizzle-seed compatibility issues
+- [ ] Consider local SQLite fallback for dev without NuxtHub
+- [ ] Document CroutonCollection requirements (NuxtHub + Auth + Team)
+- [ ] Consider "simple mode" generator for non-team-scoped APIs
+- [ ] Add example auth pages to docs or generator
