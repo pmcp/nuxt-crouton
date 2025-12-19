@@ -362,3 +362,41 @@ And a simple test page at `/posts` that uses `useFetch('/api/posts')` instead of
 - [ ] Document CroutonCollection requirements (NuxtHub + Auth + Team)
 - [ ] Consider "simple mode" generator for non-team-scoped APIs
 - [ ] Add example auth pages to docs or generator
+
+---
+
+### 13. Local NuxtHub Preview Has Cloudflare Worker Compatibility Issues
+
+**Problem**: Running `npx wrangler pages dev dist` fails with:
+```
+Uncaught Error: tsyringe requires a reflect polyfill.
+Please add 'import "reflect-metadata"' to the top of your entry point.
+```
+
+**Root Cause**: Better Auth or its dependencies use `tsyringe` for dependency injection, which requires `reflect-metadata`. This works in Node.js but fails in Cloudflare Workers runtime.
+
+**Impact**: Cannot run full local preview with D1 database bindings without deploying to Cloudflare.
+
+**Recommendation for CLI Testing**:
+1. Use `pnpm dev` (regular Nuxt dev) for testing generated code structure
+2. Create simple bypass APIs for local data testing (like `/api/posts`)
+3. Full CroutonCollection testing requires deployed NuxtHub project or `nuxthub link`
+4. Consider this an "integration" concern, not CLI testing concern
+
+**For full auth testing**: Deploy to Cloudflare or use `nuxthub link` to connect to a remote D1.
+
+---
+
+## Summary: Recommended CLI Testing Workflow
+
+For testing the crouton-cli generator without full NuxtHub/Auth:
+
+1. **Generate collection**: `pnpm crouton generate`
+2. **Run dev server**: `pnpm dev` (regular Nuxt)
+3. **Create simple test API**: Bypass auth for local testing
+4. **View generated code**: Check structure in `layers/[name]/collections/[collection]/`
+5. **Run typecheck**: `npx nuxt typecheck`
+
+Full CroutonCollection/Auth testing requires:
+- NuxtHub account + `nuxthub link`, OR
+- Deployed Cloudflare Pages project

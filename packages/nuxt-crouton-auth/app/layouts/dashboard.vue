@@ -5,17 +5,7 @@
  * Main dashboard layout with sidebar and content area.
  * Uses Nuxt UI's DashboardGroup for responsive sidebar management.
  *
- * @example
- * In a page:
- * ```vue
- * <template>
- *   <div>Page content</div>
- * </template>
- *
- * <script setup>
- * definePageMeta({ layout: 'dashboard' })
- * </script>
- * ```
+ * Usage: Set definePageMeta({ layout: 'dashboard' }) in your page.
  */
 import type { NavigationMenuItem } from '@nuxt/ui'
 
