@@ -22,6 +22,10 @@
     "url": "https://github.com/pmcp/nuxt-crouton/issues"
   },
   "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:apps": "pnpm -r --filter './apps/*' lint",
+    "lint:packages": "eslint packages/",
     "publish:all": "pnpm -r publish --access public",
     "publish:dry": "pnpm -r publish --dry-run",
     "version:patch": "pnpm -r exec npm version patch --no-git-tag-version",
@@ -30,12 +34,15 @@
     "clean": "rm -rf node_modules packages/*/node_modules"
   },
   "devDependencies": {
-    "nuxt": "^4.0.0"
+    "@nuxt/eslint-config": "^1.2.0",
+    "eslint": "^9.17.0",
+    "nuxt": "^4.0.0",
+    "typescript": "^5.7.2"
   },
   "pnpm": {
     "overrides": {
       "unimport": "4.1.1",
-      "zod": "3.25.76"
+      "zod": "4.2.1"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3"
