@@ -1,0 +1,9 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "title": { "type": "string", "meta": { "required": true, "maxLength": 200 } },
+  "slug": { "type": "string", "meta": { "required": true, "maxLength": 200 } },
+  "content": { "type": "text" },
+  "published": { "type": "boolean", "meta": { "default": false } },
+  "publishedAt": { "type": "datetime" },
+  "authorName": { "type": "string", "meta": { "maxLength": 100 } }
+}
