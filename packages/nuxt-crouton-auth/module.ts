@@ -277,7 +277,7 @@ export default defineNuxtModule<CroutonAuthConfig>({
 
     addRouteMiddleware({
       name: 'team-context',
-      path: resolver.resolve('./app/middleware/team-context'),
+      path: resolver.resolve('./app/middleware/team-context.global'),
       global: true,
     })
 
