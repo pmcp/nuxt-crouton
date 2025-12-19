@@ -685,14 +685,40 @@ test.use({
 
 ## Git Workflow (Solo Dev)
 
-### Commit Messages (Conventional Commits)
+### Commit Messages (Conventional Commits - Monorepo)
+
+```bash
+<type>(<scope>): <description>
 ```
-feat: add user authentication
-fix: resolve navigation bug
-docs: update API documentation
-refactor: simplify auth flow
-test: add login e2e tests
-chore: update dependencies
+
+**Scopes (use package short name):**
+- `crouton` - Main module
+- `crouton-core` - Core layer
+- `crouton-cli` - CLI/generator
+- `crouton-i18n` - i18n layer
+- `crouton-editor` - Rich text layer
+- `crouton-flow` - Flow layer
+- `crouton-assets` - Assets layer
+- `crouton-devtools` - Devtools
+- `crouton-auth` - Auth layer
+- `docs` - Documentation app
+- `playground` - Playground app
+- `test` - Test app
+- `root` - Root config, workspace-level
+
+**Examples:**
+```bash
+feat(crouton-cli): add image field type
+fix(crouton-auth): resolve duplicate imports
+docs(docs): update field types reference
+refactor(crouton-core): simplify auth flow
+test(crouton-core): add login e2e tests
+chore(root): update dependencies
+```
+
+**Multi-package:**
+```bash
+feat(crouton-cli,crouton-core): sync field validation
 ```
 
 ### Branch Strategy
