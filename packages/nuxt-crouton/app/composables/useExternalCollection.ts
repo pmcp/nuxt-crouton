@@ -40,7 +40,7 @@
  * @param config.proxy - Proxy configuration for connecting to existing endpoints
  * @returns Collection config compatible with Crouton registry
  */
-export function defineExternalCollection(config: {
+export function defineExternalCollection<T extends { name: string; schema: any }>(config: {
   name: string
   schema: any
   apiPath?: string
@@ -56,17 +56,27 @@ export function defineExternalCollection(config: {
     transform: (item: any) => { id: string, title: string, [key: string]: any }
   }
 }) {
-  return {
+  // Config object WITHOUT schema - safe for SSR serialization
+  const _config = {
     name: config.name,
     layer: 'external',
     apiPath: config.apiPath || config.name,
     fetchStrategy: config.fetchStrategy || 'query',
     readonly: config.readonly !== false,
     componentName: null,
-    schema: config.schema,
     defaultValues: {},
     columns: [],
     meta: config.meta || {},
     proxy: config.proxy
   }
+
+  // Add schema as non-enumerable property so klona skips it during cloning
+  Object.defineProperty(_config, 'schema', {
+    value: config.schema,
+    enumerable: false,
+    configurable: false,
+    writable: false
+  })
+
+  return _config as typeof _config & { schema: typeof config.schema }
 }

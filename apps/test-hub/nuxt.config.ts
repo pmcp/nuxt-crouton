@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  css: ['~/app/assets/css/main.css'],
+  css: ['~/assets/css/main.css'],
   // Extend crouton layers
   extends: [
     '@friendlyinternet/nuxt-crouton',

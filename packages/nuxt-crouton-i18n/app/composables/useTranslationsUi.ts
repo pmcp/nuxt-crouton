@@ -51,17 +51,27 @@ export const TRANSLATIONS_UI_PAGINATION = {
 /**
  * Collection configuration for Crouton CRUD system
  */
-export const translationsUiConfig = {
+// Config object WITHOUT schema - safe for SSR serialization
+const _translationsUiConfig = {
   name: 'translationsUi',
   apiPath: 'translations-ui',
   displayName: 'UI Translations',
   singularName: 'Translation',
   componentName: 'CroutonI18nUiForm',
-  schema: translationsUiSchema,
   defaultValues: TRANSLATIONS_UI_DEFAULTS,
   columns: TRANSLATIONS_UI_COLUMNS,
   defaultPagination: TRANSLATIONS_UI_PAGINATION
 }
+
+// Add schema as non-enumerable property so klona skips it during cloning
+Object.defineProperty(_translationsUiConfig, 'schema', {
+  value: translationsUiSchema,
+  enumerable: false,
+  configurable: false,
+  writable: false
+})
+
+export const translationsUiConfig = _translationsUiConfig as typeof _translationsUiConfig & { schema: typeof translationsUiSchema }
 
 /**
  * Main composable for translations UI collection
