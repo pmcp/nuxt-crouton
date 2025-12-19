@@ -110,6 +110,31 @@ is present in the workspace
 
 ---
 
+### 6. NuxtLayout Required When Using Layouts
+
+**Problem**: Warning during dev server startup:
+```
+[nuxt] Your project has layouts but the <NuxtLayout /> component has not been used.
+```
+
+**Root Cause**: The `@crouton/auth` package provides layouts (e.g., for auth pages), but the test app's `app.vue` doesn't wrap content in `<NuxtLayout>`.
+
+**Fix Required**: Update `app.vue` to use layouts:
+```vue
+<template>
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
+</template>
+```
+
+**Recommendation**:
+- Add this to getting-started docs
+- Consider having generator check/create proper `app.vue` structure
+- Document which layouts are provided by each crouton package
+
+---
+
 ## What Worked Well
 
 1. **Config-based generation** - `crouton.config.js` format is clean and documented
@@ -139,3 +164,5 @@ is present in the workspace
 - [ ] Fix generator to use direct path for auth schema export
 - [ ] Add workspace install note to docs
 - [ ] Consider version mismatch warning in CLI
+- [ ] Document NuxtLayout requirement when using crouton-auth layouts
+- [ ] Consider generator creating/updating app.vue with proper layout structure
