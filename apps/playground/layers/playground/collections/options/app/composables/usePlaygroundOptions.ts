@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection options
  * @layer playground
- * @generated 2025-12-18
+ * @generated 2025-12-19
  *
  * ## AI Context
  * - Composable: usePlaygroundOptions
@@ -24,6 +24,8 @@
 
 import { z } from 'zod'
 
+// Schema exported separately - Zod 4 schemas cannot survive deep cloning
+// Keep schema outside of objects that might be serialized/cloned during SSR
 export const playgroundOptionSchema = z.object({
   title: z.string().min(1, 'title is required'),
   description: z.string().optional(),
@@ -39,12 +41,12 @@ export const playgroundOptionsColumns = [
   { accessorKey: 'category', header: 'Category' }
 ]
 
-export const playgroundOptionsConfig = {
+// Config object WITHOUT schema - safe for SSR serialization
+const _playgroundOptionsConfig = {
   name: 'playgroundOptions',
   layer: 'playground',
   apiPath: 'playground-options',
   componentName: 'PlaygroundOptionsForm',
-  schema: playgroundOptionSchema,
   defaultValues: {
     title: '',
     description: '',
@@ -54,13 +56,23 @@ export const playgroundOptionsConfig = {
   columns: playgroundOptionsColumns,
 }
 
+// Add schema as non-enumerable property so klona skips it during cloning
+Object.defineProperty(_playgroundOptionsConfig, 'schema', {
+  value: playgroundOptionSchema,
+  enumerable: false,
+  configurable: false,
+  writable: false
+})
+
+export const playgroundOptionsConfig = _playgroundOptionsConfig as typeof _playgroundOptionsConfig & { schema: typeof playgroundOptionSchema }
+
 export const usePlaygroundOptions = () => playgroundOptionsConfig
 
 // Default export for auto-import compatibility
 export default function () {
   return {
     defaultValue: playgroundOptionsConfig.defaultValues,
-    schema: playgroundOptionsConfig.schema,
+    schema: playgroundOptionSchema,
     columns: playgroundOptionsConfig.columns,
     collection: playgroundOptionsConfig.name
   }

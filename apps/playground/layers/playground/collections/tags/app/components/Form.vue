@@ -2,7 +2,7 @@
   @crouton-generated
   @collection tags
   @layer playground
-  @generated 2025-12-18
+  @generated 2025-12-19
 
   ## AI Context
   - Form component for tags collection

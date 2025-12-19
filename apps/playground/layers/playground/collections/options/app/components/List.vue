@@ -2,7 +2,7 @@
   @crouton-generated
   @collection options
   @layer playground
-  @generated 2025-12-18
+  @generated 2025-12-19
 
   ## AI Context
   - List component for options collection

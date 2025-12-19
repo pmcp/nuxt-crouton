@@ -2,7 +2,7 @@
   @crouton-generated
   @collection posts
   @layer blog
-  @generated 2025-12-18
+  @generated 2025-12-19
 
   ## AI Context
   - List component for posts collection

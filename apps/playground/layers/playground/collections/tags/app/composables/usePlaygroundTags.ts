@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection tags
  * @layer playground
- * @generated 2025-12-18
+ * @generated 2025-12-19
  *
  * ## AI Context
  * - Composable: usePlaygroundTags
@@ -24,6 +24,8 @@
 
 import { z } from 'zod'
 
+// Schema exported separately - Zod 4 schemas cannot survive deep cloning
+// Keep schema outside of objects that might be serialized/cloned during SSR
 export const playgroundTagSchema = z.object({
   name: z.string().min(1, 'name is required'),
   slug: z.string().optional(),
@@ -39,12 +41,12 @@ export const playgroundTagsColumns = [
   { accessorKey: 'order', header: 'Order' }
 ]
 
-export const playgroundTagsConfig = {
+// Config object WITHOUT schema - safe for SSR serialization
+const _playgroundTagsConfig = {
   name: 'playgroundTags',
   layer: 'playground',
   apiPath: 'playground-tags',
   componentName: 'PlaygroundTagsForm',
-  schema: playgroundTagSchema,
   defaultValues: {
     name: '',
     slug: '',
@@ -54,13 +56,23 @@ export const playgroundTagsConfig = {
   columns: playgroundTagsColumns,
 }
 
+// Add schema as non-enumerable property so klona skips it during cloning
+Object.defineProperty(_playgroundTagsConfig, 'schema', {
+  value: playgroundTagSchema,
+  enumerable: false,
+  configurable: false,
+  writable: false
+})
+
+export const playgroundTagsConfig = _playgroundTagsConfig as typeof _playgroundTagsConfig & { schema: typeof playgroundTagSchema }
+
 export const usePlaygroundTags = () => playgroundTagsConfig
 
 // Default export for auto-import compatibility
 export default function () {
   return {
     defaultValue: playgroundTagsConfig.defaultValues,
-    schema: playgroundTagsConfig.schema,
+    schema: playgroundTagSchema,
     columns: playgroundTagsConfig.columns,
     collection: playgroundTagsConfig.name
   }

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection posts
  * @layer playground
- * @generated 2025-12-18
+ * @generated 2025-12-19
  *
  * ## AI Context
  * - Main interface: PlaygroundPost
