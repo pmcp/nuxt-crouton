@@ -15,18 +15,21 @@ interface Props {
   labelKey?: string
   collection: string
   cardComponent?: Component | null
+  /** Column identifier for cross-column drag detection */
+  columnId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   depth: 0,
   labelKey: 'name',
   collection: '',
-  cardComponent: null
+  cardComponent: null,
+  columnId: ''
 })
 
 
 const emit = defineEmits<{
-  move: [id: string, newParentId: string | null, newOrder: number]
+  move: [id: string, newParentId: string | null, newOrder: number, targetColumnId: string | null]
   select: [item: TreeNodeType]
 }>()
 
@@ -97,7 +100,8 @@ function getItemActions(item: TreeNodeType) {
         disabled: item.order === 0,
         onSelect: () => {
           if (item.order > 0) {
-            emit('move', item.id, item.parentId, item.order - 1)
+            // Menu actions stay in same column, so targetColumnId = current columnId or null
+            emit('move', item.id, item.parentId, item.order - 1, props.columnId || null)
           }
         }
       },
@@ -105,7 +109,7 @@ function getItemActions(item: TreeNodeType) {
         label: 'Move down',
         icon: 'i-lucide-arrow-down',
         onSelect: () => {
-          emit('move', item.id, item.parentId, item.order + 1)
+          emit('move', item.id, item.parentId, item.order + 1, props.columnId || null)
         }
       }
     ],
@@ -116,7 +120,7 @@ function getItemActions(item: TreeNodeType) {
         disabled: !item.parentId,
         onSelect: () => {
           if (item.parentId) {
-            emit('move', item.id, null, 0)
+            emit('move', item.id, null, 0, props.columnId || null)
           }
         }
       }
@@ -172,11 +176,15 @@ async function initSortable() {
         const itemId = (evt.item as HTMLElement).dataset.id
         if (!itemId) return
 
-        const toParentId = (evt.to as HTMLElement).dataset.parentId
+        const toContainer = evt.to as HTMLElement
+        const toParentId = toContainer.dataset.parentId
         const newIndex = evt.newIndex ?? 0
 
-        // Emit move: item, new parent (null for root), new index
-        emit('move', itemId, toParentId || null, newIndex)
+        // Find the target column ID by traversing up to find [data-column-id]
+        const targetColumnEl = toContainer.closest('[data-column-id]') as HTMLElement | null
+        const targetColumnId = targetColumnEl?.dataset.columnId || null
+
+        emit('move', itemId, toParentId || null, newIndex, targetColumnId)
       },
 
       // Track drop target for line highlighting + auto-expand
@@ -347,7 +355,8 @@ onBeforeUnmount(() => {
         :label-key="labelKey"
         :collection="collection"
         :card-component="cardComponent"
-        @move="(id, parentId, order) => emit('move', id, parentId, order)"
+        :column-id="columnId"
+        @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
         @select="emit('select', $event)"
       />
     </div>

@@ -14,17 +14,20 @@ interface Props {
   hierarchy: HierarchyConfig
   labelKey?: string
   cardComponent?: Component | null
+  /** Unique identifier for this tree column (used for cross-column drag detection) */
+  columnId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   items: () => [],
   hierarchy: () => ({ enabled: true }),
   labelKey: 'name',
-  cardComponent: null
+  cardComponent: null,
+  columnId: ''
 })
 
 const emit = defineEmits<{
-  move: [id: string, newParentId: string | null, newOrder: number]
+  move: [id: string, newParentId: string | null, newOrder: number, targetColumnId: string | null]
   select: [item: TreeNode]
 }>()
 
@@ -72,10 +75,15 @@ async function initRootSortable() {
         const itemId = (evt.item as HTMLElement).dataset.id
         if (!itemId) return
 
-        const toParentId = (evt.to as HTMLElement).dataset.parentId
+        const toContainer = evt.to as HTMLElement
+        const toParentId = toContainer.dataset.parentId
         const newIndex = evt.newIndex ?? 0
 
-        emit('move', itemId, toParentId || null, newIndex)
+        // Find the target column ID by traversing up to find [data-column-id]
+        const targetColumnEl = toContainer.closest('[data-column-id]') as HTMLElement | null
+        const targetColumnId = targetColumnEl?.dataset.columnId || null
+
+        emit('move', itemId, toParentId || null, newIndex, targetColumnId)
       },
 
       // Track drop target for line highlighting + auto-expand
@@ -134,7 +142,7 @@ onMounted(async () => {
 
 <template>
   <ClientOnly>
-    <div class="w-full">
+    <div class="w-full" :data-column-id="columnId || undefined">
       <div
         v-if="items.length > 0"
         ref="rootRef"
@@ -149,7 +157,8 @@ onMounted(async () => {
           :label-key="labelKey"
           :collection="collection"
           :card-component="cardComponent"
-          @move="(id, parentId, order) => emit('move', id, parentId, order)"
+          :column-id="columnId"
+          @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
           @select="emit('select', $event)"
         />
       </div>
