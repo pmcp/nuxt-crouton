@@ -39,3 +39,4 @@ coverage
 # Build
 *.tsbuildinfo
 apps/playground/.data
+apps/test/.data
