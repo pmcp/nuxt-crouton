@@ -81,10 +81,13 @@ export function generateComposable(data, config = {}) {
   const aiHeader = generateAIHeader(data, apiPath)
 
   return `${aiHeader}import { z } from 'zod'
+import { markRaw } from 'vue'
 
-export const ${prefixedSingular}Schema = z.object({
+// markRaw prevents Vue from making the Zod schema reactive,
+// which avoids SSR serialization issues with Zod 4's internal structure
+export const ${prefixedSingular}Schema = markRaw(z.object({
   ${data.fieldsSchema}
-})
+}))
 
 export const ${prefixedPlural}Columns = [
   ${columns}

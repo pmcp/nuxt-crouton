@@ -23,15 +23,18 @@
  */
 
 import { z } from 'zod'
+import { markRaw } from 'vue'
 
-export const blogPostSchema = z.object({
+// markRaw prevents Vue from making the Zod schema reactive,
+// which avoids SSR serialization issues with Zod 4's internal structure
+export const blogPostSchema = markRaw(z.object({
   title: z.string().min(1, 'title is required'),
   slug: z.string().min(1, 'slug is required'),
   content: z.string().optional(),
   published: z.boolean().optional(),
   publishedAt: z.string().optional(),
   authorName: z.string().optional()
-})
+}))
 
 export const blogPostsColumns = [
   { accessorKey: 'id', header: 'Id' },
