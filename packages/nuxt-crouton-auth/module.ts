@@ -11,8 +11,7 @@ import {
   createResolver,
   addComponentsDir,
   addServerPlugin,
-  addRouteMiddleware,
-  addPlugin,
+   addPlugin,
 } from '@nuxt/kit'
 import type { NuxtPage } from '@nuxt/schema'
 import { defu } from 'defu'
@@ -264,22 +263,11 @@ export default defineNuxtModule<CroutonAuthConfig>({
       addServerPlugin(resolver.resolve('./server/plugins/single-tenant-init'))
     }
 
-    // Add route middleware
-    addRouteMiddleware({
-      name: 'auth',
-      path: resolver.resolve('./app/middleware/auth'),
-    })
-
-    addRouteMiddleware({
-      name: 'guest',
-      path: resolver.resolve('./app/middleware/guest'),
-    })
-
-    addRouteMiddleware({
-      name: 'team-context',
-      path: resolver.resolve('./app/middleware/team-context.global'),
-      global: true,
-    })
+    // Note: Route middleware is auto-discovered from app/middleware/ when used as a layer
+    // No need to call addRouteMiddleware() since files exist:
+    // - app/middleware/auth.ts
+    // - app/middleware/guest.ts
+    // - app/middleware/team-context.global.ts (global middleware via .global suffix)
 
     // Add client-side plugin
     addPlugin({

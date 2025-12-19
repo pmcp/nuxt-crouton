@@ -11,20 +11,18 @@ try {
   const require = createRequire(import.meta.url)
   // Resolve the main export, then derive the team-auth path
   const mainPath = require.resolve('@friendlyinternet/nuxt-crouton-auth')
-  // mainPath is typically dist/module.cjs or dist/module.mjs - go up to package root
-  const pkgRoot = dirname(dirname(mainPath))
+  // mainPath is nuxt.config.ts in package root, so only need one dirname
+  const pkgRoot = dirname(mainPath)
   const teamAuthPath = join(pkgRoot, 'server/utils/team-auth.ts')
 
   // Verify the file exists
   if (existsSync(teamAuthPath)) {
     croutonAuthPath = teamAuthPath
-    console.log('[nuxt-crouton] Found @crouton/auth team-auth at:', croutonAuthPath)
   } else {
     console.warn('[nuxt-crouton] @crouton/auth found but team-auth.ts missing at:', teamAuthPath)
   }
-} catch (e) {
+} catch {
   // @crouton/auth not installed - will use fallback or error at runtime
-  console.warn('[nuxt-crouton] @crouton/auth not found - #crouton/team-auth alias will not work')
 }
 
 export default defineNuxtConfig({
