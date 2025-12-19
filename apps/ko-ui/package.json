@@ -1,0 +1,24 @@
+{
+  "name": "ko-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --port 3333",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.74",
+    "@nuxt/ui": "^4.2.1",
+    "nuxt": "^4.2.2"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.10.0",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.5"
+  }
+}
