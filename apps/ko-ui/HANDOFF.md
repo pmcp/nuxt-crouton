@@ -4,6 +4,10 @@
 
 Create a hardware-inspired UI styling system based on the Teenage Engineering KO II sampler. The goal is to see how much of this tactile aesthetic can be achieved using Nuxt UI components with custom theming vs pure custom components.
 
+## Status: SOLVED
+
+**The `variant="ko"` approach with `compoundVariants` in `app.config.ts` works perfectly.**
+
 ## What Exists
 
 ### Location
@@ -28,107 +32,117 @@ These custom components work perfectly and match the KO II aesthetic.
 - LED animation keyframes
 - Font-face for the technical font (`ko-tech`)
 
-### Nuxt UI Theming Attempt (Partially Working)
-We created `.ko-tactile` CSS classes to theme `<UButton>` components:
+### Nuxt UI Theming (WORKING!)
+
+**Solution: Use `variant="ko"` with `compoundVariants` in `app.config.ts`**
 
 ```vue
-<UButton :ui="{ base: 'ko-tactile' }">Default</UButton>
-<UButton :ui="{ base: 'ko-tactile ko-tactile--orange' }">Orange</UButton>
+<!-- Usage -->
+<UButton variant="ko">Default Gray</UButton>
+<UButton variant="ko" color="primary">Orange</UButton>
+<UButton variant="ko" color="neutral">Dark</UButton>
+<UButton variant="ko" color="secondary">Pink</UButton>
+<UButton variant="ko" color="info">Blue</UButton>
+<UButton variant="ko" color="error">Red</UButton>
 ```
 
-## Current Issue
+## The Solution
 
-**The bezel (dark wrapper) works, but color variants don't.**
+### Key Insight
 
-When comparing custom `<KoButton>` to themed `<UButton>`:
-- Custom buttons: All colors display correctly (gray, orange, dark, pink, blue, red)
-- UButton with ko-tactile: Bezel shows, but all buttons appear dark gray regardless of variant class
+Nuxt UI 4 uses Tailwind Variants under the hood. To add a custom variant:
 
-### What We Tried
-1. Added `::before` pseudo-element for the dark bezel - **Works**
-2. Added `overflow: visible` and `isolation: isolate` - **Works** (bezel now visible)
-3. Increased CSS specificity with `.ko-tactile.ko-tactile--orange` - **Doesn't help**
+1. **Register the variant** in `variants.variant` object
+2. **Define color combinations** using `compoundVariants` array
+3. **Include ALL styling** in the class array (including pseudo-elements via Tailwind)
 
-### Root Cause (FOUND)
-Inspecting a UButton shows the rendered classes:
-```
-bg-primary hover:bg-primary/75 active:bg-primary/75 ... ko-tactile ko-tactile--orange ko-tactile--square
-```
+### Implementation (`app.config.ts`)
 
-**The problem**: Nuxt UI's `:ui="{ base: '...' }"` prop **ADDS** classes, it doesn't replace defaults. So `bg-primary` (Tailwind utility) is still being applied alongside our `ko-tactile--orange`.
-
-Our `!important` CSS should win over Tailwind utilities, but something in the cascade is preventing it. Possible causes:
-1. CSS load order (Tailwind after our styles)
-2. Tailwind's `@layer` system affecting cascade
-3. Our CSS file being processed/purged incorrectly
-
-## Files to Look At
-
-```
-apps/ko-ui/
-├── app/
-│   ├── assets/css/main.css      # Design tokens + ko-tactile classes (THE ISSUE IS HERE)
-│   ├── components/ko/           # Custom components (working)
-│   ├── pages/index.vue          # Showcase with side-by-side comparison
-│   └── app.config.ts            # Nuxt UI theme config (mostly unused currently)
-└── HANDOFF.md                   # This file
-```
-
-## Key CSS Section (main.css lines ~79-230)
-
-The `.ko-tactile` base class and variants. The bezel pseudo-element:
-
-```css
-.ko-tactile::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  background-color: var(--ko-surface-panel);
-  border-radius: var(--ko-wrapper-radius);
-  z-index: -1;
-}
-```
-
-## Next Steps
-
-### Option 1: Override with Tailwind arbitrary values in template
-Skip our CSS variants entirely, use Tailwind's `!` prefix for important:
-```vue
-<UButton :ui="{ base: 'ko-tactile !bg-[#FA5F28] !shadow-[...]' }">X</UButton>
-```
-Downside: Verbose, hard to maintain.
-
-### Option 2: Use app.config.ts to create a proper variant
-Define a `hardware` variant in Nuxt UI's theme system:
 ```ts
-// app.config.ts
 export default defineAppConfig({
   ui: {
+    colors: {
+      primary: 'orange',
+      neutral: 'stone'
+    },
+
     button: {
+      // Extend the base slot
+      slots: {
+        base: [
+          'rounded-md font-medium inline-flex items-center...',
+          'transition-colors'
+        ]
+      },
+
+      // Register the 'ko' variant
       variants: {
         variant: {
-          hardware: 'bg-[#c7c3c0] shadow-[...] ...'
+          ko: ''  // Placeholder - actual styling via compoundVariants
         }
-      }
+      },
+
+      // Define KO styling for each color
+      compoundVariants: [
+        // KO + Primary (orange)
+        {
+          color: 'primary',
+          variant: 'ko',
+          class: [
+            'relative overflow-visible isolate',
+            'font-[ko-tech] tracking-wider uppercase text-xs',
+            'bg-[#FA5F28] text-[#F2F2F2]',
+            'shadow-[rgba(0,0,0,0.377)_10px_10px_8px,_#FDC7B4_1.5px_1.5px_1px_0px_inset,_#FA5F28_-3.2px_-3.2px_8px_0px_inset]',
+            'hover:bg-[#e85520]',
+            'active:shadow-[...]',
+            'active:translate-y-[0.5px]',
+            // Dark bezel via pseudo-element
+            'before:content-[\\'\\'] before:absolute before:inset-[-4px] before:bg-[#171717] before:rounded-[5px] before:-z-10'
+          ].join(' ')
+        },
+        // ... similar entries for neutral, error, secondary, info
+        // Plus a default (no color) fallback
+      ]
     }
   }
 })
 ```
-Then use `<UButton variant="hardware">`. This works WITH Nuxt UI instead of fighting it.
 
-### Option 3: Move our CSS to a higher-priority layer
-```css
-@layer components {
-  .ko-tactile { ... }
-}
+### Why This Works
+
+1. **`variants.variant.ko: ''`** - Registers 'ko' as a valid variant value
+2. **`compoundVariants`** - Applies classes when BOTH conditions match (variant + color)
+3. **Tailwind arbitrary values** - `bg-[#FA5F28]` bypasses JIT limitations
+4. **Pseudo-element via Tailwind** - `before:content-['']` creates the dark bezel
+
+### Color Mapping
+
+| KO Color | Nuxt UI Color | Hex Value |
+|----------|---------------|-----------|
+| default  | (none)        | #c7c3c0   |
+| orange   | primary       | #FA5F28   |
+| dark     | neutral       | #545251   |
+| pink     | secondary     | #E62C5E   |
+| blue     | info          | #429CCE   |
+| red      | error         | #F12618   |
+
+## Files
+
 ```
-Or put styles AFTER `@import "@nuxt/ui"` in main.css.
+apps/ko-ui/
+├── app/
+│   ├── app.config.ts           # Nuxt UI theme config (THE SOLUTION)
+│   ├── assets/css/main.css     # Design tokens + ko-tactile CSS classes
+│   ├── components/ko/          # Custom components (working)
+│   └── pages/index.vue         # Showcase comparing both approaches
+└── HANDOFF.md                  # This file
+```
 
-### Option 4: Accept custom components are the answer
-The custom `<KoButton>` works perfectly. Maybe the lesson is: for highly custom aesthetics that fight the design system, custom components are cleaner than trying to override everything.
+## Previous Attempts (What Didn't Work)
 
-### Recommended: Try Option 2 first
-Creating a proper Nuxt UI variant is the "right" way to do this.
+1. **CSS classes with `:ui="{ base: 'ko-tactile' }"`** - Nuxt UI's bg-primary overrides custom CSS
+2. **Custom variant names like `variant="hardware"`** - Type system only accepts predefined variants
+3. **Wrapper component `<KoUiButton>`** - Works but user rejected this as "not using variants"
 
 ## To Run
 
@@ -138,10 +152,17 @@ pnpm dev
 # Opens on http://localhost:3333
 ```
 
-## Reference Image
+## Conclusion
 
-The original KO II that inspired this: tactile physical buttons with beveled edges, dark recessed bezels, LED indicators, industrial gray color palette with orange/red/blue accents.
+**The experiment was successful.** Nuxt UI can be themed to match the KO II hardware aesthetic using the proper `compoundVariants` pattern. The key is:
 
-## The Big Question
+1. Register custom variants in `variants.variant`
+2. Use `compoundVariants` for variant + color combinations
+3. Include ALL styling in Tailwind classes (including pseudo-elements)
+4. Use arbitrary values `[#hex]` for precise colors
 
-Is it worth fighting Nuxt UI's styling system for this aesthetic, or should we just use the custom `<KoButton>` components? The custom components work perfectly - the Nuxt UI theming is an experiment to see if we can get the same look with less custom code.
+Both approaches are valid:
+- **Custom `<KoButton>`**: More control, LED slots, cleaner API
+- **`<UButton variant="ko">`**: Leverages Nuxt UI ecosystem, consistent with other components
+
+Choose based on your needs. For a full hardware aesthetic with LEDs and special features, custom components are cleaner. For basic tactile buttons that integrate with Nuxt UI forms/tables, the variant approach works great.

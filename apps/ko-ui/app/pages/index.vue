@@ -97,47 +97,47 @@ const togglePlay = () => {
             </div>
           </div>
 
-          <!-- Nuxt UI UButton with variant="hardware-*" -->
-          <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UButton variant="hardware-*"&gt; (Nuxt UI)</p>
+          <!-- Nuxt UI via variant="ko" (config-based) -->
+          <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UButton variant="ko"&gt; (config variant)</p>
           <div class="flex flex-wrap gap-4">
             <div class="flex flex-col items-center gap-2">
               <KoLabel>Keys</KoLabel>
-              <UButton variant="hardware" class="aspect-square p-4">
+              <UButton variant="ko" class="aspect-square p-4">
                 Keys
               </UButton>
             </div>
 
             <div class="flex flex-col items-center gap-2">
               <KoLabel variant="orange">Sample</KoLabel>
-              <UButton variant="hardware-orange" class="aspect-square p-4">
+              <UButton variant="ko" color="primary" class="aspect-square p-4">
                 X
               </UButton>
             </div>
 
             <div class="flex flex-col items-center gap-2">
               <KoLabel>Dark</KoLabel>
-              <UButton variant="hardware-dark" class="aspect-square p-4">
+              <UButton variant="ko" color="neutral" class="aspect-square p-4">
                 7
               </UButton>
             </div>
 
             <div class="flex flex-col items-center gap-2">
               <KoLabel>Pink</KoLabel>
-              <UButton variant="hardware-pink" class="aspect-square p-4">
+              <UButton variant="ko" color="secondary" class="aspect-square p-4">
                 FX
               </UButton>
             </div>
 
             <div class="flex flex-col items-center gap-2">
               <KoLabel>Blue</KoLabel>
-              <UButton variant="hardware-blue" class="aspect-square p-4">
+              <UButton variant="ko" color="info" class="aspect-square p-4">
                 Y
               </UButton>
             </div>
 
             <div class="flex flex-col items-center gap-2">
               <KoLabel>Red</KoLabel>
-              <UButton variant="hardware-red" class="aspect-square p-4">
+              <UButton variant="ko" color="error" class="aspect-square p-4">
                 Rec
               </UButton>
             </div>
@@ -173,26 +173,26 @@ const togglePlay = () => {
             </div>
           </div>
 
-          <!-- Nuxt UI UButton with variant="hardware-*" -->
-          <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UButton variant="hardware-*"&gt; (Nuxt UI)</p>
+          <!-- Nuxt UI via variant="ko" -->
+          <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UButton variant="ko"&gt;</p>
           <div class="flex flex-wrap gap-4">
             <div class="flex flex-col items-center gap-2">
               <KoLabel>Sound</KoLabel>
-              <UButton variant="hardware">
+              <UButton variant="ko" class="px-4 py-2">
                 Edit
               </UButton>
             </div>
 
             <div class="flex flex-col items-center gap-2">
               <KoLabel variant="orange">Main</KoLabel>
-              <UButton variant="hardware-orange">
+              <UButton variant="ko" color="primary" class="px-4 py-2">
                 Commit
               </UButton>
             </div>
 
             <div class="flex flex-col items-center gap-2">
               <KoLabel>Tempo</KoLabel>
-              <UButton variant="hardware-dark">
+              <UButton variant="ko" color="neutral" class="px-4 py-2">
                 Loop
               </UButton>
             </div>
@@ -221,17 +221,17 @@ const togglePlay = () => {
 
             <!-- Nuxt UI -->
             <div>
-              <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UButton variant="hardware-dark"&gt;</p>
-              <div class="grid grid-cols-3 gap-1 w-fit">
-                <UButton variant="hardware-dark" class="aspect-square p-4">7</UButton>
-                <UButton variant="hardware-dark" class="aspect-square p-4">8</UButton>
-                <UButton variant="hardware-dark" class="aspect-square p-4">9</UButton>
-                <UButton variant="hardware-dark" class="aspect-square p-4">4</UButton>
-                <UButton variant="hardware-dark" class="aspect-square p-4">5</UButton>
-                <UButton variant="hardware-dark" class="aspect-square p-4">6</UButton>
-                <UButton variant="hardware-dark" class="aspect-square p-4">1</UButton>
-                <UButton variant="hardware-dark" class="aspect-square p-4">2</UButton>
-                <UButton variant="hardware-dark" class="aspect-square p-4">3</UButton>
+              <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UButton variant="ko" color="neutral"&gt;</p>
+              <div class="grid grid-cols-3 gap-2 w-fit">
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">7</UButton>
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">8</UButton>
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">9</UButton>
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">4</UButton>
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">5</UButton>
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">6</UButton>
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">1</UButton>
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">2</UButton>
+                <UButton variant="ko" color="neutral" class="aspect-square p-4">3</UButton>
               </div>
             </div>
           </div>

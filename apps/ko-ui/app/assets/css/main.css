@@ -305,3 +305,183 @@ body {
     box-shadow: inset #863C22 0 -1px 9px;
   }
 }
+
+/* ============================================
+   KO-BEZEL CLASSES
+   For use with Nuxt UI components
+   Uses box-shadow spread for bezel effect (avoids z-index stacking issues)
+   ============================================ */
+
+/* Base bezel button - default gray
+   Uses ::before for dark bezel (sharp corners) and ::after for button face (round corners)
+   This creates the signature KO look with different corner radii */
+.ko-bezel {
+  position: relative !important;
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.075em !important;
+  text-transform: uppercase !important;
+  font-size: 0.7em !important;
+  border: none !important;
+  border-radius: var(--ko-button-radius) !important;
+  transition: all 0.1s ease-in-out !important;
+  /* Transparent bg - actual color comes from ::after */
+  background-color: transparent !important;
+  color: var(--ko-text-dark) !important;
+  z-index: 0 !important;
+  /* Center content */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Dark bezel - sharp corners */
+.ko-bezel::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background-color: var(--ko-surface-panel);
+  border-radius: var(--ko-wrapper-radius);
+  z-index: -2;
+  box-shadow: var(--ko-shadow-drop);
+}
+
+/* Button face - round corners */
+.ko-bezel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--ko-surface-light);
+  border-radius: var(--ko-button-radius);
+  z-index: -1;
+  box-shadow:
+    var(--ko-highlight-light) 1.5px 1.5px 2px 0px inset,
+    var(--ko-surface-light) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel:hover::after {
+  background-color: #bfbbb8;
+}
+
+.ko-bezel:active::before {
+  box-shadow: var(--ko-shadow-pressed);
+}
+
+.ko-bezel:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-surface-light) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel:active {
+  transform: translateY(0.5px);
+}
+
+/* Orange variant */
+.ko-bezel.ko-bezel--orange {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--orange::after {
+  background-color: var(--ko-accent-orange);
+  box-shadow:
+    var(--ko-highlight-orange) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-orange) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--orange:hover::after {
+  background-color: #e85520;
+}
+
+.ko-bezel.ko-bezel--orange:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-orange-dark) -3.2px -3.2px 8px 0px inset;
+}
+
+/* Dark variant */
+.ko-bezel.ko-bezel--dark {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--dark::after {
+  background-color: var(--ko-surface-dark);
+  box-shadow:
+    var(--ko-highlight-dark) 1.5px 1.5px 1px 0px inset,
+    var(--ko-surface-dark) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--dark:hover::after {
+  background-color: #4a4948;
+}
+
+.ko-bezel.ko-bezel--dark:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-surface-dark) -3.2px -3.2px 8px 0px inset;
+}
+
+/* Red variant */
+.ko-bezel.ko-bezel--red {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--red::after {
+  background-color: var(--ko-accent-red);
+  box-shadow:
+    var(--ko-highlight-red) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-red) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--red:hover::after {
+  background-color: #d92015;
+}
+
+.ko-bezel.ko-bezel--red:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-red) -3.2px -3.2px 8px 0px inset;
+}
+
+/* Pink variant */
+.ko-bezel.ko-bezel--pink {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--pink::after {
+  background-color: var(--ko-accent-pink);
+  box-shadow:
+    var(--ko-highlight-pink) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-pink) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--pink:hover::after {
+  background-color: #cc2550;
+}
+
+.ko-bezel.ko-bezel--pink:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-pink) -3.2px -3.2px 8px 0px inset;
+}
+
+/* Blue variant */
+.ko-bezel.ko-bezel--blue {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--blue::after {
+  background-color: var(--ko-accent-blue);
+  box-shadow:
+    var(--ko-highlight-blue) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-blue) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--blue:hover::after {
+  background-color: #3a8ab8;
+}
+
+.ko-bezel.ko-bezel--blue:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-blue) -3.2px -3.2px 8px 0px inset;
+}
