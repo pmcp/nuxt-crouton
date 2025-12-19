@@ -1,7 +1,7 @@
 // Blog test configuration
 export default {
   collections: [
-    { name: 'posts', fieldsFile: './schemas/posts.json' }
+    { name: 'posts', fieldsFile: './schemas/posts.json', seed: { count: 10 } }
   ],
 
   targets: [

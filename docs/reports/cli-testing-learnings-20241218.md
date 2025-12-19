@@ -166,3 +166,136 @@ is present in the workspace
 - [ ] Consider version mismatch warning in CLI
 - [ ] Document NuxtLayout requirement when using crouton-auth layouts
 - [ ] Consider generator creating/updating app.vue with proper layout structure
+
+---
+
+## Session 2: Seeding & Database Issues (December 19, 2024)
+
+### 7. BETTER_AUTH_SECRET Not Set
+
+**Problem**: Warning on startup:
+```
+[@crouton/auth] BETTER_AUTH_SECRET is not set. Authentication will not work properly in production.
+```
+
+**Fix Applied**: Created `.env` file with generated secret:
+```bash
+BETTER_AUTH_SECRET=<random-base64-string>
+```
+
+**Recommendation**:
+- Add `.env.example` to test app with placeholder
+- Document in getting-started that auth secret is required
+
+---
+
+### 8. Seed File Uses Non-Existent `useDB` Import
+
+**Problem**: Generated `seed.ts` imports from path that doesn't exist:
+```typescript
+import { useDB } from '~~/server/utils/db'
+```
+
+**Error**:
+```
+ENOENT: no such file or directory, open '.../server/utils/db'
+```
+
+**Root Cause**: Generator assumes `server/utils/db.ts` exists, but it's provided by the auth layer as an auto-import.
+
+**Fix Applied**: Removed explicit import, rely on auto-import.
+
+**Recommendation**:
+- Generator should not add explicit import for `useDB`
+- Or generator should create the `server/utils/db.ts` file
+
+---
+
+### 9. hubDatabase Not Available Without NuxtHub Link
+
+**Problem**: `hubDatabase()` function is undefined at runtime:
+```
+hubDatabase is not defined
+```
+
+**Root Cause**: NuxtHub requires either:
+1. `npx nuxthub link` to connect to remote
+2. `npx nuxthub dev` to run with local D1 bindings
+
+Regular `nuxt dev` doesn't provide D1 database bindings.
+
+**Workaround Applied**: Created `server/utils/db.ts` with local SQLite fallback:
+```typescript
+import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
+import Database from 'better-sqlite3'
+
+export function useLocalDB() {
+  const sqlite = new Database('.data/db.sqlite')
+  return drizzleSqlite(sqlite)
+}
+```
+
+**Recommendation**:
+- Document that `nuxthub dev` or `nuxthub link` is required for D1
+- Consider providing a local SQLite fallback in the auth package for dev
+- Add this to getting-started docs
+
+---
+
+### 10. drizzle-seed Incompatibility with Schema
+
+**Problem**: `drizzle-seed` throws error:
+```
+Cannot create property 'isUnique' on boolean 'true'
+```
+
+**Root Cause**: drizzle-seed library has compatibility issues with certain schema column definitions.
+
+**Workaround Applied**: Use direct inserts instead of drizzle-seed:
+```typescript
+const posts = Array.from({ length: 10 }, (_, i) => ({
+  id: crypto.randomUUID(),
+  title: `Sample Post ${i + 1}`,
+  // ...
+}))
+await db.insert(blogPosts).values(posts)
+```
+
+**Recommendation**:
+- Investigate drizzle-seed compatibility with our schema
+- Consider generating simpler seed files that use direct inserts
+- Or fix the schema to be compatible with drizzle-seed
+
+---
+
+### 11. Duplicate `useDB` Auto-Import Conflict
+
+**Problem**: When creating local `server/utils/db.ts`, Nuxt warns:
+```
+Duplicated imports "useDB", the one from ".../test/server/utils/db.ts" has been ignored
+and ".../nuxt-crouton-auth/server/utils/database.ts" is used
+```
+
+**Root Cause**: The auth layer exports `useDB`, so local `useDB` is ignored.
+
+**Fix Applied**: Renamed local function to `useLocalDB()`.
+
+**Recommendation**:
+- Document that `useDB` is reserved by auth layer
+- Consider using different naming for local db utilities
+
+---
+
+## Updated Action Items
+
+- [ ] Add Crouton MCP to project `.claude/settings.json`
+- [ ] Document drizzle version requirements in getting-started
+- [ ] Fix generator to use direct path for auth schema export
+- [ ] Add workspace install note to docs
+- [ ] Consider version mismatch warning in CLI
+- [ ] Document NuxtLayout requirement when using crouton-auth layouts
+- [ ] Add `.env.example` with BETTER_AUTH_SECRET placeholder
+- [ ] Fix seed.ts generator to not use explicit useDB import
+- [ ] Document `nuxthub dev` requirement for local D1 database
+- [ ] Investigate drizzle-seed compatibility issues
+- [ ] Consider local SQLite fallback for dev without NuxtHub
