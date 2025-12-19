@@ -67,27 +67,29 @@ export default defineAppConfig({
 
     // INPUT OVERRIDES
     input: {
-      slots: {
-        root: 'font-[ko-tech]',
-        base: [
-          'bg-[#171717] text-[#FA5F28] border-[#323232]',
-          'font-[ko-tech] tracking-wider',
-          'shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5)]',
-          'focus:ring-[#FA5F28] focus:border-[#FA5F28]'
-        ]
+      // Add 'ko' to the variant options
+      variants: {
+        variant: {
+          ko: {
+            root: 'ko-input',
+            base: 'ko-input-base'
+          }
+        }
       }
     },
 
     // CARD OVERRIDES
     card: {
-      slots: {
-        root: [
-          'bg-[#c7c3c0]',
-          'shadow-[rgba(0,0,0,0.377)_10px_10px_8px]',
-          'font-[ko-tech]'
-        ],
-        header: 'border-b border-[#908E8D]',
-        body: 'text-[#403E3D]'
+      // Add 'ko' to the variant options
+      variants: {
+        variant: {
+          ko: {
+            root: 'ko-card',
+            header: 'ko-card-header',
+            body: 'ko-card-body',
+            footer: 'ko-card-footer'
+          }
+        }
       }
     }
   }

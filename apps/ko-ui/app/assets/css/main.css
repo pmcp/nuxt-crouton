@@ -57,8 +57,8 @@
   --ko-wrapper-radius: 5px;
 
   /* === Shadows === */
-  --ko-shadow-drop: rgba(0, 0, 0, 0.377) 10px 10px 8px;
-  --ko-shadow-pressed: rgba(0, 0, 0, 0.377) 0px 0px 0px;
+  --ko-shadow-drop: rgba(0, 0, 0, 0.15) 4px 4px 6px;
+  --ko-shadow-pressed: rgba(0, 0, 0, 0.15) 0px 0px 0px;
 }
 
 /* ============================================
@@ -484,4 +484,99 @@ body {
   box-shadow:
     inset 0.5px 0.5px 4px #000000,
     var(--ko-accent-blue) -3.2px -3.2px 8px 0px inset;
+}
+
+/* ============================================
+   KO-INPUT CLASSES
+   LCD-style input with orange-on-dark aesthetic
+   ============================================ */
+
+.ko-input {
+  position: relative !important;
+  z-index: 0 !important;
+}
+
+/* Dark bezel wrapper - sharp corners */
+.ko-input::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background-color: var(--ko-surface-panel);
+  border-radius: var(--ko-wrapper-radius);
+  z-index: -1;
+  box-shadow: var(--ko-shadow-drop);
+}
+
+/* The actual input styling - applied via slot class */
+.ko-input-base {
+  font-family: 'ko-tech', monospace !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  background-color: var(--ko-surface-panel) !important;
+  color: var(--ko-accent-orange) !important;
+  border: 1px solid var(--ko-surface-recess) !important;
+  border-radius: var(--ko-button-radius) !important;
+  box-shadow: inset 1px 1px 4px rgba(0, 0, 0, 0.3) !important;
+  caret-color: var(--ko-accent-orange) !important;
+}
+
+.ko-input-base::placeholder {
+  color: var(--ko-surface-dark) !important;
+  opacity: 0.7 !important;
+}
+
+.ko-input-base:focus {
+  outline: none !important;
+  border-color: var(--ko-accent-orange) !important;
+  box-shadow:
+    inset 1px 1px 4px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--ko-accent-orange) !important;
+}
+
+/* ============================================
+   KO-CARD CLASSES
+   Hardware panel with beveled edges
+   ============================================ */
+
+.ko-card {
+  position: relative !important;
+  font-family: 'ko-tech', sans-serif !important;
+  background-color: var(--ko-surface-light) !important;
+  border: none !important;
+  border-radius: var(--ko-button-radius) !important;
+  box-shadow:
+    var(--ko-shadow-drop),
+    var(--ko-highlight-light) 1.5px 1.5px 2px 0px inset,
+    var(--ko-surface-mid) -2px -2px 4px 0px inset !important;
+  z-index: 0 !important;
+}
+
+/* Dark bezel wrapper - sharp corners */
+.ko-card::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  background-color: var(--ko-surface-panel);
+  border-radius: var(--ko-wrapper-radius);
+  z-index: -1;
+  box-shadow: var(--ko-shadow-drop);
+}
+
+/* Slot-based styling */
+.ko-card-header {
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+  color: var(--ko-text-label) !important;
+  border-bottom: 1px solid var(--ko-surface-mid) !important;
+}
+
+.ko-card-body {
+  color: var(--ko-text-dark) !important;
+}
+
+.ko-card-footer {
+  border-top: 1px solid var(--ko-surface-mid) !important;
 }

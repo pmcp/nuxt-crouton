@@ -365,6 +365,119 @@ const togglePlay = () => {
       </section>
 
       <!-- ============================================
+           SECTION: Inputs (Nuxt UI Variant)
+           ============================================ -->
+      <section>
+        <h2 class="ko-font text-lg text-[var(--ko-text-dark)] mb-6 border-b border-[var(--ko-surface-mid)] pb-2">
+          Inputs
+        </h2>
+
+        <div class="space-y-6 max-w-md">
+          <!-- Default Nuxt UI Input -->
+          <div>
+            <p class="text-xs text-[var(--ko-text-label)] mb-2 font-mono">&lt;UInput&gt; (default)</p>
+            <UInput placeholder="Default input..." />
+          </div>
+
+          <!-- KO Variant Input -->
+          <div>
+            <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UInput variant="ko"&gt;</p>
+            <UInput variant="ko" placeholder="LCD style input..." />
+          </div>
+
+          <!-- KO Input with icon -->
+          <div>
+            <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UInput variant="ko"&gt; with icon</p>
+            <UInput variant="ko" placeholder="Search samples..." icon="i-lucide-search" />
+          </div>
+
+          <!-- Multiple inputs in a row -->
+          <div>
+            <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">BPM / Bar inputs</p>
+            <div class="flex gap-4">
+              <UInput variant="ko" placeholder="120" class="w-24" />
+              <UInput variant="ko" placeholder="4/4" class="w-24" />
+              <UInput variant="ko" placeholder="C" class="w-16" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================
+           SECTION: Cards (Nuxt UI Variant)
+           ============================================ -->
+      <section>
+        <h2 class="ko-font text-lg text-[var(--ko-text-dark)] mb-6 border-b border-[var(--ko-surface-mid)] pb-2">
+          Cards
+        </h2>
+
+        <div class="grid gap-6 max-w-2xl">
+          <!-- Default Nuxt UI Card -->
+          <div>
+            <p class="text-xs text-[var(--ko-text-label)] mb-2 font-mono">&lt;UCard&gt; (default)</p>
+            <UCard>
+              <template #header>
+                Default Card Header
+              </template>
+              <p>This is the default Nuxt UI card styling.</p>
+              <template #footer>
+                <UButton size="sm">Action</UButton>
+              </template>
+            </UCard>
+          </div>
+
+          <!-- KO Variant Card (Light) -->
+          <div>
+            <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">&lt;UCard variant="ko"&gt;</p>
+            <UCard variant="ko">
+              <template #header>
+                Sample Bank
+              </template>
+              <div class="space-y-2">
+                <p>Hardware-styled card with beveled edges and drop shadow.</p>
+                <div class="flex gap-2">
+                  <UButton variant="ko" size="sm">Load</UButton>
+                  <UButton variant="ko" color="primary" size="sm">Save</UButton>
+                </div>
+              </div>
+            </UCard>
+          </div>
+
+          <!-- KO Card with inputs inside -->
+          <div>
+            <p class="text-xs text-[var(--ko-accent-orange)] mb-2 font-mono">KO Card with form</p>
+            <UCard variant="ko">
+              <template #header>
+                Project Settings
+              </template>
+              <div class="space-y-4">
+                <div>
+                  <label class="ko-font text-xs text-[var(--ko-text-label)] block mb-1">Project Name</label>
+                  <UInput variant="ko" placeholder="My project..." />
+                </div>
+                <div class="flex gap-4">
+                  <div class="flex-1">
+                    <label class="ko-font text-xs text-[var(--ko-text-label)] block mb-1">BPM</label>
+                    <UInput variant="ko" placeholder="120" />
+                  </div>
+                  <div class="flex-1">
+                    <label class="ko-font text-xs text-[var(--ko-text-label)] block mb-1">Time Sig</label>
+                    <UInput variant="ko" placeholder="4/4" />
+                  </div>
+                </div>
+              </div>
+              <template #footer>
+                <div class="flex justify-end gap-2">
+                  <UButton variant="ko" size="sm">Cancel</UButton>
+                  <UButton variant="ko" color="primary" size="sm">Save</UButton>
+                </div>
+              </template>
+            </UCard>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================
            SECTION: Panels
            ============================================ -->
       <section>
