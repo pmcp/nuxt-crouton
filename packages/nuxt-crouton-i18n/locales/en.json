@@ -123,6 +123,32 @@
     "tryAgain": "Please try again",
     "contactSupport": "Please contact support if the problem persists"
   },
+  "errorPage": {
+    "error": "Error",
+    "backToHome": "Back to home",
+    "tryAgain": "Try again",
+    "helpfulLinks": "Here are some helpful links:",
+    "404": {
+      "title": "Page not found",
+      "description": "The page you're looking for doesn't exist or has been moved."
+    },
+    "401": {
+      "title": "Unauthorized",
+      "description": "Please sign in to access this page."
+    },
+    "403": {
+      "title": "Access denied",
+      "description": "You don't have permission to access this page."
+    },
+    "500": {
+      "title": "Server error",
+      "description": "Something went wrong on our end. Please try again later."
+    },
+    "default": {
+      "title": "Error",
+      "description": "An unexpected error occurred."
+    }
+  },
   "success": {
     "saved": "Saved successfully",
     "created": "Created successfully",
