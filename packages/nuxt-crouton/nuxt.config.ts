@@ -27,7 +27,7 @@ try {
 
 export default defineNuxtConfig({
 
-  modules: ['@nuxt/ui', '@vueuse/nuxt'],
+  modules: ['@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo'],
 
   plugins: [
     { src: join(currentDir, 'app/plugins/tree-styles.client.ts'), mode: 'client' }
