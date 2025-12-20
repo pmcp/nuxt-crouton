@@ -26,12 +26,17 @@
     "lint:fix": "eslint . --fix",
     "lint:apps": "pnpm -r --filter './apps/*' lint",
     "lint:packages": "eslint packages/",
+    "build": "pnpm -r build",
+    "build:packages": "pnpm -r --filter './packages/*' build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r --filter './apps/*' typecheck",
+    "typecheck:mcp": "pnpm --filter nuxt-crouton-mcp-server typecheck",
     "publish:all": "pnpm -r publish --access public",
     "publish:dry": "pnpm -r publish --dry-run",
     "version:patch": "pnpm -r exec npm version patch --no-git-tag-version",
     "version:minor": "pnpm -r exec npm version minor --no-git-tag-version",
     "version:major": "pnpm -r exec npm version major --no-git-tag-version",
-    "clean": "rm -rf node_modules packages/*/node_modules"
+    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules"
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^1.2.0",
@@ -41,6 +46,8 @@
   },
   "pnpm": {
     "overrides": {
+      "vue": "^3.5.13",
+      "nuxt": "^4.0.0",
       "unimport": "4.1.1",
       "zod": "4.2.1"
     },
