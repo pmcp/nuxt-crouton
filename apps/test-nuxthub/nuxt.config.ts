@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   extends: [
+    '@friendlyinternet/nuxt-crouton-themes/ko',
     '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-auth',
     './layers/blog'
@@ -20,19 +21,14 @@ export default defineNuxtConfig({
     db: 'sqlite'
   },
 
-  runtimeConfig: {
-    public: {
-      crouton: {
-        auth: {
-          mode: 'personal',
-          ui: {
-            redirects: {
-              afterLogin: '/home',
-              afterRegister: '/home',
-              afterLogout: '/auth/login'
-            }
-          }
-        }
+  // Auth configuration using module's config key
+  croutonAuth: {
+    mode: 'personal',
+    ui: {
+      redirects: {
+        afterLogin: '/home',
+        afterRegister: '/home',
+        afterLogout: '/auth/login'
       }
     }
   }

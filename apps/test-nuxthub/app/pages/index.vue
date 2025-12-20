@@ -22,6 +22,11 @@ const { user, loggedIn } = useSession()
           <UButton variant="outline">Register</UButton>
         </NuxtLink>
       </div>
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <NuxtLink to="/ko-demo" class="text-sm text-muted hover:underline">
+          View KO Theme Demo →
+        </NuxtLink>
+      </div>
     </div>
   </div>
 </template>
