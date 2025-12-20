@@ -150,12 +150,14 @@ async function ensureCssInNuxtConfig(projectRoot, cssRelativePath) {
     // Check if css array exists and includes our file
     const cssArrayMatch = config.match(/css:\s*\[([\s\S]*?)\]/)
 
-    // Normalize the path (use ~/ prefix for Nuxt)
-    const nuxtCssPath = `'~/${cssRelativePath}'`
+    // Normalize the path for Nuxt 4 (remove 'app/' prefix since ~/ points to project root)
+    // In Nuxt 4, ~/assets/css/main.css resolves to app/assets/css/main.css
+    const normalizedPath = cssRelativePath.replace(/^app\//, '')
+    const nuxtCssPath = `'~/${normalizedPath}'`
 
     if (cssArrayMatch) {
-      // Check if already included
-      if (cssArrayMatch[1].includes(cssRelativePath)) {
+      // Check if already included (check both original and normalized paths)
+      if (cssArrayMatch[1].includes(cssRelativePath) || cssArrayMatch[1].includes(normalizedPath)) {
         return true // Already configured
       }
 

@@ -56,13 +56,18 @@ export function generateSeedFile(data, config = {}) {
 // Collection: ${plural}
 // Generated with drizzle-seed
 //
-// Run: npx tsx ./layers/${layer}/collections/${plural}/server/database/seed.ts
-// Or import and call: ${functionName}({ count: 50, teamId: 'your-team-id' })
+// Usage (from Nuxt server context):
+//   import { ${functionName} } from '~/layers/${layer}/collections/${plural}/server/database/seed'
+//   await ${functionName}({ count: 50, teamId: 'your-team-id' })
+//
+// Or run standalone (requires DATABASE_URL env var):
+//   DATABASE_URL=file:./data/hub/d1/miniflare-D1DatabaseObject/... npx tsx seed.ts
 ${hierarchyNote}
 
 import { seed, reset } from 'drizzle-seed'
+import { drizzle } from 'drizzle-orm/libsql'
+import { createClient } from '@libsql/client'
 import { ${tableName} } from './schema'
-import { useDB } from '~~/server/utils/db'
 
 export interface SeedOptions {
   /** Number of records to seed (default: ${seedCount}) */
@@ -71,13 +76,27 @@ export interface SeedOptions {
   teamId?: string
   /** Reset (delete all) before seeding */
   reset?: boolean
+  /** Optional: pass existing db instance (for use within Nuxt server context) */
+  db?: ReturnType<typeof drizzle>
+}
+
+/**
+ * Create a database connection for standalone execution
+ */
+function createDb() {
+  const url = process.env.DATABASE_URL
+  if (!url) {
+    throw new Error('DATABASE_URL environment variable is required for standalone seed execution')
+  }
+  const client = createClient({ url })
+  return drizzle(client)
 }
 
 /**
  * Seed ${plural} with realistic test data
  */
 export async function ${functionName}(options: SeedOptions = {}) {
-  const db = useDB()
+  const db = options.db ?? createDb()
   const count = options.count ?? ${seedCount}
   const teamId = options.teamId ?? '${teamId}'
 

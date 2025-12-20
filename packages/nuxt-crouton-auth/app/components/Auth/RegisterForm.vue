@@ -19,8 +19,12 @@ interface Props {
   loading?: boolean
   /** External error message to display */
   error?: string | null
-  /** Show terms/privacy links */
+  /** Show terms/privacy links (set to false to hide, or provide custom URLs) */
   showTerms?: boolean
+  /** Custom Terms of Service URL (defaults to /terms) */
+  termsUrl?: string
+  /** Custom Privacy Policy URL (defaults to /privacy) */
+  privacyUrl?: string
   /** Minimum password length */
   minPasswordLength?: number
 }
@@ -29,6 +33,8 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   error: null,
   showTerms: true,
+  termsUrl: '/terms',
+  privacyUrl: '/privacy',
   minPasswordLength: 8
 })
 
@@ -163,14 +169,14 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
     >
       By creating an account, you agree to our
       <NuxtLink
-        to="/terms"
+        :to="termsUrl"
         class="text-primary hover:text-primary/80"
       >
         Terms of Service
       </NuxtLink>
       and
       <NuxtLink
-        to="/privacy"
+        :to="privacyUrl"
         class="text-primary hover:text-primary/80"
       >
         Privacy Policy

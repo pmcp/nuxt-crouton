@@ -215,8 +215,8 @@ pnpm dev
 
 | # | Issue | Status | Fix Required |
 |---|-------|--------|--------------|
-| 4 | `BETTER_AUTH_SECRET` not documented | OPEN | Need `.env.example` with placeholder |
-| 5 | Seed file uses non-existent import | OPEN | Generator uses `~~/server/utils/db` which doesn't exist |
+| 4 | `BETTER_AUTH_SECRET` not documented | ✅ FIXED | Created `.env.example` in nuxt-crouton-auth package |
+| 5 | Seed file uses non-existent import | ✅ FIXED | Generator now creates standalone db connection for seeds |
 | 6 | NuxtLayout warning with auth package | ✅ DOCUMENTED | app.vue must use `<NuxtLayout><NuxtPage /></NuxtLayout>` instead of `<NuxtWelcome />` |
 | 7 | `useDB` auto-import conflicts | OPEN | Auth layer's `useDB` overrides local ones, use different name |
 
@@ -237,12 +237,12 @@ pnpm dev
 |---|------|-------|
 | 12 | `crouton init` should do full Nuxt app setup | Currently just creates example schema - could scaffold entire NuxtHub + Crouton project |
 | 13 | CSS setup should be part of `crouton init` | Creating main.css with @source directive, proper nuxt.config css path |
-| 14 | Generator writes wrong CSS path for Nuxt 4 | Writes `~/app/assets/css/main.css` but should be `~/assets/css/main.css` |
+| 14 | Generator writes wrong CSS path for Nuxt 4 | ✅ FIXED | Now correctly writes `~/assets/css/main.css` |
 | 15 | ~~Generator tries `pnpm db:generate`~~ | ✅ FIXED | Generator now uses `npx nuxt db generate` for NuxtHub v0.10+ |
 | 17 | Queries import path wrong | ✅ FIXED | Generator now imports from `~~/server/db/schema` instead of `~~/server/database/schema` |
 | 18 | No default index page | OPEN | Fresh Nuxt project has no `/` route - need either: (1) `crouton init` creates `pages/index.vue`, or (2) nuxt-crouton provides a `<CroutonWelcome />` component users can use |
 | 19 | Auth uses `hubDatabase()` not `useDB()` | ✅ FIXED | nuxt-crouton-auth now uses `db` from `hub:db` (NuxtHub v0.10+ multi-vendor mode) |
-| 20 | Auth pages link to /terms and /privacy | OPEN | Login/register pages link to terms and privacy pages that users must create - should either: (1) make links optional via config, or (2) document requirement |
+| 20 | Auth pages link to /terms and /privacy | ✅ FIXED | AuthRegisterForm now has `showTerms`, `termsUrl`, `privacyUrl` props |
 | 21 | Better Auth origin mismatch on dynamic ports | ✅ FIXED | useServerAuth now uses `getRequestURL(event)` to get actual origin when no `BETTER_AUTH_URL` is set |
 | 22 | Multi-tenant: no redirect for users with no teams | ✅ FIXED | Added `/onboarding/create-team` page and middleware redirect. Configurable via `crouton.auth.ui.redirects.noTeams` |
 
