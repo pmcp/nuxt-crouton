@@ -94,13 +94,20 @@ The default `app.vue` uses `<NuxtWelcome />` which won't render pages from layer
 **After** (working):
 ```vue
 <template>
-  <NuxtLayout>
-    <NuxtPage />
-  </NuxtLayout>
+  <UApp>
+    <NuxtLayout>
+      <NuxtPage />
+      <CroutonForm />
+    </NuxtLayout>
+  </UApp>
 </template>
 ```
 
-**Result**: Pages from crouton layers now render correctly
+**Important**:
+- The `<UApp>` wrapper is required for Nuxt UI v4 - it provides context for tooltips, toasts, and other components
+- The `<CroutonForm />` component is required for the crouton modal forms (create/update/delete) to work. This component renders the global modal that displays forms when triggered via `useCrouton().open()`.
+
+**Result**: Pages from crouton layers now render correctly, and modal forms work
 
 ---
 
@@ -221,6 +228,8 @@ pnpm dev
 | 9 | Workspace install location confusing | OPEN | Document: run `pnpm install` from monorepo root |
 | 10 | drizzle-seed incompatibility | OPEN | Use direct inserts instead |
 | 11 | CroutonCollection requires full auth | DOCUMENTED | Needs NuxtHub + logged in user + team context |
+| 23 | CroutonForm must be in app.vue | ✅ DOCUMENTED | Add `<CroutonForm />` to app.vue template for modal forms to work |
+| 24 | UApp wrapper required for Nuxt UI v4 | ✅ DOCUMENTED | Wrap app.vue template with `<UApp>` for tooltips/toasts to work |
 
 ### IMPROVEMENT IDEAS
 
