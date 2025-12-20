@@ -5,17 +5,27 @@
   "type": "module",
   "exports": {
     "./ko": "./ko/nuxt.config.ts",
-    "./ko/*": "./ko/*"
+    "./ko/*": "./ko/*",
+    "./minimal": "./minimal/nuxt.config.ts",
+    "./minimal/*": "./minimal/*",
+    "./kr11": "./kr11/nuxt.config.ts",
+    "./kr11/*": "./kr11/*"
   },
   "files": [
-    "ko"
+    "ko",
+    "minimal",
+    "kr11"
   ],
   "keywords": [
     "nuxt",
     "nuxt-layer",
     "themes",
     "nuxt-ui",
-    "teenage-engineering"
+    "teenage-engineering",
+    "minimal",
+    "minimalist",
+    "korg",
+    "drum-machine"
   ],
   "author": "FYIT",
   "license": "MIT",

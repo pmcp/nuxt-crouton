@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   extends: [
-    '@friendlyinternet/nuxt-crouton-themes/ko',
+    '@friendlyinternet/nuxt-crouton-themes/kr11',
     '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-auth',
     './layers/blog'

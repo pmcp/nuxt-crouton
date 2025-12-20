@@ -1,0 +1,441 @@
+/* KR-11 Theme */
+/* Inspired by Korg KR-11 Compact Rhythm Box */
+
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* ============================================
+   DESIGN TOKENS
+   ============================================ */
+
+:root {
+  /* === Chassis Colors === */
+  --kr-chassis: #e5e2dd;          /* Main light gray body */
+  --kr-chassis-light: #f0eeea;    /* Lighter areas */
+  --kr-chassis-shadow: #d1cec9;   /* Shadow/depth areas */
+  --kr-chassis-dark: #c8c5c0;     /* Recessed areas */
+
+  /* === Display Colors === */
+  --kr-display-bg: #1a1a1a;       /* Black display background */
+  --kr-display-red: #ff2b2b;      /* LED red (active) */
+  --kr-display-red-dim: #4a1515;  /* LED red (dimmed/off) */
+  --kr-display-red-glow: rgba(255, 43, 43, 0.4);
+
+  /* === Pad Colors === */
+  --kr-pad-cream: #f5f3ef;        /* Standard cream pads */
+  --kr-pad-cream-pressed: #e8e6e2;
+  --kr-pad-coral: #ff9a8b;        /* Coral pink accent (pad 1) */
+  --kr-pad-coral-pressed: #e88a7c;
+  --kr-pad-gold: #d4a853;         /* Golden yellow (fill buttons) */
+  --kr-pad-gold-pressed: #c09545;
+  --kr-pad-mint: #7ee8c7;         /* Mint green (play button) */
+  --kr-pad-mint-pressed: #6ad4b5;
+
+  /* === LED Indicator Colors === */
+  --kr-led-yellow: #e8d84c;       /* Yellow indicator */
+  --kr-led-green: #4cd964;        /* Green indicator */
+  --kr-led-off: #5a5a5a;          /* LED off state */
+
+  /* === Text Colors === */
+  --kr-text-dark: #3d3d3d;        /* Main label text */
+  --kr-text-medium: #666666;      /* Secondary text */
+  --kr-text-light: #999999;       /* Tertiary text */
+
+  /* === Speaker Grill === */
+  --kr-grill-slot: #5a5856;       /* Dark slot color */
+  --kr-grill-bg: #c8c5c0;         /* Grill surround */
+
+  /* === Knob === */
+  --kr-knob-bg: #f5f3ef;          /* Knob face */
+  --kr-knob-indicator: #e8b84c;   /* Yellow indicator line */
+  --kr-knob-shadow: rgba(0, 0, 0, 0.15);
+
+  /* === Spacing & Sizing === */
+  --kr-pad-radius: 8px;
+  --kr-button-radius: 6px;
+  --kr-display-radius: 4px;
+  --kr-card-radius: 12px;
+
+  /* === Typography === */
+  --kr-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --kr-font-display: 'DSEG7-Classic', 'Courier New', monospace;
+
+  /* === Transitions === */
+  --kr-transition-fast: 100ms ease;
+  --kr-transition: 150ms ease;
+}
+
+/* ============================================
+   7-SEGMENT DISPLAY FONT (fallback)
+   ============================================ */
+
+/* Simulated 7-segment style using CSS */
+.kr-segment {
+  font-family: var(--kr-font-display);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+body {
+  font-family: var(--kr-font);
+  background-color: var(--kr-chassis);
+  color: var(--kr-text-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================
+   PAD BUTTON STYLES
+   Main drum pad buttons
+   ============================================ */
+
+.kr-pad {
+  font-family: var(--kr-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  background-color: var(--kr-pad-cream) !important;
+  color: var(--kr-text-dark) !important;
+  border: none !important;
+  border-radius: var(--kr-pad-radius) !important;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transition: all var(--kr-transition-fast) !important;
+}
+
+.kr-pad:hover {
+  background-color: var(--kr-pad-cream-pressed) !important;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.kr-pad:active {
+  transform: translateY(1px) !important;
+  box-shadow:
+    0 0 1px rgba(0, 0, 0, 0.1),
+    inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Coral Pink Pad (Pad 1 style) */
+.kr-pad.kr-pad--coral {
+  background-color: var(--kr-pad-coral) !important;
+  color: var(--kr-text-dark) !important;
+}
+
+.kr-pad.kr-pad--coral:hover {
+  background-color: var(--kr-pad-coral-pressed) !important;
+}
+
+/* Golden Yellow Pad (Fill buttons) */
+.kr-pad.kr-pad--gold {
+  background-color: var(--kr-pad-gold) !important;
+  color: var(--kr-text-dark) !important;
+}
+
+.kr-pad.kr-pad--gold:hover {
+  background-color: var(--kr-pad-gold-pressed) !important;
+}
+
+/* Mint Green Pad (Play button) */
+.kr-pad.kr-pad--mint {
+  background-color: var(--kr-pad-mint) !important;
+  color: var(--kr-text-dark) !important;
+}
+
+.kr-pad.kr-pad--mint:hover {
+  background-color: var(--kr-pad-mint-pressed) !important;
+}
+
+/* ============================================
+   MODE BUTTON STYLES
+   Small white mode/function buttons
+   ============================================ */
+
+.kr-mode-btn {
+  font-family: var(--kr-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
+  background-color: var(--kr-pad-cream) !important;
+  color: var(--kr-text-dark) !important;
+  border: none !important;
+  border-radius: var(--kr-button-radius) !important;
+  padding: 0.5rem 1rem !important;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transition: all var(--kr-transition-fast) !important;
+}
+
+.kr-mode-btn:hover {
+  background-color: var(--kr-pad-cream-pressed) !important;
+}
+
+.kr-mode-btn:active {
+  transform: translateY(1px) !important;
+  box-shadow:
+    0 0 1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ============================================
+   INPUT STYLES
+   ============================================ */
+
+.kr-input {
+  position: relative;
+}
+
+.kr-input-base {
+  font-family: var(--kr-font) !important;
+  font-size: 0.875rem !important;
+  background-color: var(--kr-pad-cream) !important;
+  color: var(--kr-text-dark) !important;
+  border: 1px solid var(--kr-chassis-dark) !important;
+  border-radius: var(--kr-button-radius) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: all var(--kr-transition) !important;
+}
+
+.kr-input-base::placeholder {
+  color: var(--kr-text-light) !important;
+}
+
+.kr-input-base:focus {
+  outline: none !important;
+  border-color: var(--kr-pad-mint) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.05),
+    0 0 0 2px rgba(126, 232, 199, 0.3) !important;
+}
+
+/* ============================================
+   CARD STYLES
+   Hardware panel cards
+   ============================================ */
+
+.kr-card {
+  font-family: var(--kr-font) !important;
+  background-color: var(--kr-chassis-light) !important;
+  border: none !important;
+  border-radius: var(--kr-card-radius) !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+.kr-card-header {
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  color: var(--kr-text-medium) !important;
+  border-bottom: 1px solid var(--kr-chassis-dark) !important;
+}
+
+.kr-card-body {
+  color: var(--kr-text-dark) !important;
+}
+
+.kr-card-footer {
+  border-top: 1px solid var(--kr-chassis-dark) !important;
+}
+
+/* ============================================
+   BADGE STYLES
+   ============================================ */
+
+.kr-badge {
+  font-family: var(--kr-font) !important;
+  font-size: 0.625rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  background-color: var(--kr-display-bg) !important;
+  color: var(--kr-display-red) !important;
+  border-radius: 2px !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+/* ============================================
+   DISPLAY PANEL STYLES
+   LED-style display areas
+   ============================================ */
+
+.kr-display {
+  background-color: var(--kr-display-bg);
+  border-radius: var(--kr-display-radius);
+  padding: 0.75rem 1rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.kr-display-text {
+  font-family: var(--kr-font-display), monospace;
+  color: var(--kr-display-red);
+  text-shadow: 0 0 8px var(--kr-display-red-glow);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.kr-display-text--dim {
+  color: var(--kr-display-red-dim);
+  text-shadow: none;
+}
+
+/* ============================================
+   SPEAKER GRILL STYLES
+   ============================================ */
+
+.kr-grill {
+  background-color: var(--kr-grill-bg);
+  border-radius: 4px;
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+.kr-grill-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.kr-grill-slot {
+  height: 4px;
+  background-color: var(--kr-grill-slot);
+  border-radius: 1px;
+}
+
+/* ============================================
+   LED INDICATOR STYLES
+   ============================================ */
+
+.kr-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--kr-led-off);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.kr-led--yellow {
+  background-color: var(--kr-led-yellow);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    0 0 6px var(--kr-led-yellow);
+}
+
+.kr-led--green {
+  background-color: var(--kr-led-green);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    0 0 6px var(--kr-led-green);
+}
+
+/* ============================================
+   KNOB STYLES
+   ============================================ */
+
+.kr-knob {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--kr-knob-bg);
+  box-shadow:
+    0 2px 4px var(--kr-knob-shadow),
+    0 4px 8px var(--kr-knob-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+}
+
+.kr-knob::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 10px;
+  background-color: var(--kr-knob-indicator);
+  border-radius: 1px;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.kr-surface {
+  background-color: var(--kr-chassis);
+}
+
+.kr-surface-light {
+  background-color: var(--kr-chassis-light);
+}
+
+.kr-surface-dark {
+  background-color: var(--kr-chassis-dark);
+}
+
+.kr-text-label {
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--kr-text-medium);
+}
+
+/* Horizontal rule styled as panel seam */
+.kr-seam {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--kr-chassis-shadow) 10%,
+    var(--kr-chassis-shadow) 90%,
+    transparent
+  );
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes kr-led-blink {
+  0%, 100% {
+    background-color: var(--kr-led-off);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    background-color: var(--kr-led-yellow);
+    box-shadow:
+      inset 0 1px 2px rgba(255, 255, 255, 0.3),
+      0 0 6px var(--kr-led-yellow);
+  }
+}
+
+@keyframes kr-display-blink {
+  0%, 100% {
+    color: var(--kr-display-red);
+    text-shadow: 0 0 8px var(--kr-display-red-glow);
+  }
+  50% {
+    color: var(--kr-display-red-dim);
+    text-shadow: none;
+  }
+}
+
+.kr-led--blink {
+  animation: kr-led-blink 1s ease-in-out infinite;
+}
+
+.kr-display-text--blink {
+  animation: kr-display-blink 1s ease-in-out infinite;
+}

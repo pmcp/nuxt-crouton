@@ -26,11 +26,114 @@ packages/nuxt-crouton-themes/
 │   │   ├── css/main.css      # Design tokens, ko-bezel classes
 │   │   └── fonts/tt34.otf    # Tech font
 │   └── components/           # KoLed, KoKnob, KoPanel, etc.
-├── brutalist/                # Future theme
-└── minimal/                  # Future theme
+├── minimal/                  # Minimal theme (black lines, white bg)
+│   ├── nuxt.config.ts        # Layer config
+│   ├── app.config.ts         # Nuxt UI variants
+│   └── assets/css/main.css   # Design tokens, minimal classes
+├── kr11/                     # KR-11 theme (Korg rhythm box inspired)
+│   ├── nuxt.config.ts        # Layer config
+│   ├── app.config.ts         # Nuxt UI variants
+│   ├── assets/css/main.css   # Design tokens, kr classes
+│   └── components/           # KrDisplay, KrPad, KrLed, etc.
+└── brutalist/                # Future theme
 ```
 
 ## Available Themes
+
+### Minimal Theme (`./minimal`)
+
+Super clean, minimalist design with black lines on white background.
+
+**Design Language:**
+- Black 2px borders, no rounded corners
+- Pure white background, black text
+- System font stack for modern, clean typography
+- No shadows, no gradients - pure geometry
+- Subtle hover states with color inversion
+
+**Nuxt UI Variants:**
+- `variant="minimal"` for UButton, UInput, UCard, USeparator
+- Color mappings: primary→filled black, neutral→gray outline, error→red on hover
+
+**CSS Utilities:**
+- `.minimal-border` - 1px black border
+- `.minimal-border-thick` - 2px black border
+- `.minimal-grid` - Subtle grid pattern background
+- `.minimal-hover-lift` - Hover lift animation
+- `.minimal-font` / `.minimal-font-mono` - Typography
+
+**Design Tokens:**
+- `--minimal-white` / `--minimal-black`
+- `--minimal-gray-50` through `--minimal-gray-900`
+- `--minimal-border-width` / `--minimal-border-width-thick`
+- `--minimal-radius` (0 for sharp corners)
+- `--minimal-transition` (150ms ease)
+
+---
+
+### KR-11 Theme (`./kr11`)
+
+Friendly, tactile styling inspired by the Korg KR-11 Compact Rhythm Box.
+
+**Design Language:**
+- Light gray chassis with soft shadows
+- Cream-colored tactile pads with subtle depth
+- Red LED 7-segment display on black background
+- Colorful accent buttons (coral, gold, mint)
+- Horizontal speaker grill pattern
+- Rounded corners (8px pads, 12px cards)
+
+**Nuxt UI Variants:**
+- `variant="kr11"` for UButton, UInput, UCard, UBadge
+- Color mappings: primary→mint, neutral→cream, warning→gold, error→coral
+
+**Custom Components:**
+- `<KrDisplay>` - 7-segment LED tempo display with blink animation
+- `<KrPad>` - Tactile drum pad buttons (cream, coral, gold, mint)
+- `<KrLed>` - Status LED indicators (yellow, green, with blink)
+- `<KrKnob>` - Rotary control with drag interaction
+- `<KrSpeakerGrill>` - Horizontal slot speaker pattern
+
+**CSS Utilities:**
+- `.kr-surface` / `.kr-surface-light` / `.kr-surface-dark`
+- `.kr-display` / `.kr-display-text` - LED display styling
+- `.kr-grill` / `.kr-grill-slots` - Speaker grill pattern
+- `.kr-led` / `.kr-led--yellow` / `.kr-led--green` - LED indicators
+- `.kr-knob` - Rotary knob styling
+- `.kr-text-label` - Small uppercase labels
+- `.kr-seam` - Panel seam divider
+
+**Design Tokens:**
+- Chassis: `--kr-chassis`, `--kr-chassis-light`, `--kr-chassis-dark`
+- Display: `--kr-display-bg`, `--kr-display-red`, `--kr-display-red-glow`
+- Pads: `--kr-pad-cream`, `--kr-pad-coral`, `--kr-pad-gold`, `--kr-pad-mint`
+- LEDs: `--kr-led-yellow`, `--kr-led-green`, `--kr-led-off`
+
+**Usage:**
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  extends: ['@friendlyinternet/nuxt-crouton-themes/kr11']
+})
+```
+
+```vue
+<template>
+  <!-- Nuxt UI with KR11 variants -->
+  <UButton variant="kr11" color="primary">Play</UButton>
+  <UButton variant="kr11" color="warning">Fill 1</UButton>
+  <UButton variant="kr11" color="error">1</UButton>
+
+  <!-- Custom KR components (auto-imported as Kr*) -->
+  <KrDisplay value="120" :blink="isPlaying" />
+  <KrPad color="mint" label="▶" @click="play" />
+  <KrLed state="on" color="green" />
+  <KrKnob v-model="tempo" :min="40" :max="240" />
+  <KrSpeakerGrill :slots="8" />
+</template>
+```
+
+---
 
 ### KO Theme (`./ko`)
 
@@ -161,6 +264,8 @@ Each theme should namespace its classes:
 | Theme | Prefix | Example |
 |-------|--------|---------|
 | KO | `ko-` | `ko-bezel`, `ko-tactile`, `ko-input` |
+| Minimal | `minimal-` | `minimal-btn`, `minimal-card`, `minimal-border` |
+| KR-11 | `kr-` | `kr-pad`, `kr-display`, `kr-led` |
 | Brutalist | `brutalist-` | `brutalist-button`, `brutalist-card` |
 
 ## Design Token Naming
@@ -172,6 +277,14 @@ Use theme-prefixed CSS custom properties:
   /* KO theme */
   --ko-surface-light: #c7c3c0;
   --ko-accent-orange: #FA5F28;
+
+  /* Minimal theme */
+  --minimal-white: #ffffff;
+  --minimal-black: #000000;
+
+  /* KR-11 theme */
+  --kr-chassis: #e5e2dd;
+  --kr-pad-mint: #7ee8c7;
 
   /* Brutalist theme */
   --brutalist-bg: #000;
