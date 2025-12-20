@@ -14,8 +14,13 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<Partial<BlogPost>>(event)
 
   return await updateBlogPost(postId, team.id, user.id, {
+    id: body.id,
     title: body.title,
+    slug: body.slug,
     content: body.content,
-    published: body.published
+    excerpt: body.excerpt,
+    published: body.published,
+    publishedAt: body.publishedAt,
+    sortOrder: body.sortOrder
   })
 })

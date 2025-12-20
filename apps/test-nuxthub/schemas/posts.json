@@ -1,13 +1,50 @@
 {
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
   "title": {
     "type": "string",
-    "meta": { "required": true, "maxLength": 200 }
+    "meta": {
+      "required": true,
+      "maxLength": 200,
+      "translatable": true
+    }
+  },
+  "slug": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "maxLength": 200
+    }
   },
   "content": {
-    "type": "text"
+    "type": "text",
+    "meta": {
+      "translatable": true
+    }
+  },
+  "excerpt": {
+    "type": "text",
+    "meta": {
+      "translatable": true
+    }
   },
   "published": {
     "type": "boolean",
-    "meta": { "default": false }
+    "meta": {
+      "default": false
+    }
+  },
+  "publishedAt": {
+    "type": "datetime"
+  },
+  "sortOrder": {
+    "type": "integer",
+    "meta": {
+      "default": 0
+    }
   }
 }

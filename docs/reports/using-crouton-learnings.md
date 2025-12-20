@@ -248,6 +248,7 @@ pnpm dev
 | 22 | Multi-tenant: no redirect for users with no teams | ✅ FIXED | Added `/onboarding/create-team` page and middleware redirect. Configurable via `crouton.auth.ui.redirects.noTeams` |
 | 26 | Login/register ignore redirect config | ✅ FIXED | login.vue and register.vue now use `useAuthRedirects()` instead of hardcoded `/dashboard` |
 | 27 | Auth config location confusing | ✅ DOCUMENTED | Use `croutonAuth: {}` in nuxt.config.ts, NOT `runtimeConfig.public.crouton.auth`. Module writes to runtimeConfig internally. |
+| 28 | Redirect options not obvious | ✅ DOCUMENTED | Five redirect options: `afterLogin` (post-login), `afterRegister` (post-signup), `afterLogout` (post-logout), `authenticated` (logged-in users visiting /auth/* pages), `unauthenticated` (non-logged-in users visiting protected pages). All default to `/dashboard`. |
 
 ---
 

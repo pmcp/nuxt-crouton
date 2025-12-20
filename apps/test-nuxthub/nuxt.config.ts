@@ -24,11 +24,13 @@ export default defineNuxtConfig({
   // Auth configuration using module's config key
   croutonAuth: {
     mode: 'personal',
+    debug: true,
     ui: {
       redirects: {
         afterLogin: '/home',
         afterRegister: '/home',
-        afterLogout: '/auth/login'
+        afterLogout: '/auth/login',
+        authenticated: '/home'  // Where to redirect logged-in users visiting /auth/* pages
       }
     }
   }

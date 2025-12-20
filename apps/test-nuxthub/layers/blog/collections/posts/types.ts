@@ -9,7 +9,7 @@
  * - Form data type: BlogPostFormData
  * - New item type: NewBlogPost
  * - Form props: BlogPostFormProps
- * - Fields: title, content, published
+ * - Fields: id, title, slug, content, excerpt, published, publishedAt, sortOrder
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -28,8 +28,12 @@ export interface BlogPost {
   teamId: string
   owner: string
   title: string
+  slug: string
   content?: string
+  excerpt?: string
   published?: boolean
+  publishedAt?: string
+  sortOrder?: string
   createdAt: Date
   updatedAt: Date
   createdBy: string

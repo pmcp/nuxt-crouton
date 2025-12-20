@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/blog-posts
  * - Form component: BlogPostsForm
  * - List component: BlogPostsList
- * - Fields: title, content, published
+ * - Fields: id, title, slug, content, excerpt, published, publishedAt, sortOrder
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -28,14 +28,23 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const blogPostSchema = z.object({
   title: z.string().min(1, 'title is required'),
+  slug: z.string().min(1, 'slug is required'),
   content: z.string().optional(),
-  published: z.boolean().optional()
+  excerpt: z.string().optional(),
+  published: z.boolean().optional(),
+  publishedAt: z.string().optional(),
+  sortOrder: z.string().optional()
 })
 
 export const blogPostsColumns = [
+  { accessorKey: 'id', header: 'Id' },
   { accessorKey: 'title', header: 'Title' },
+  { accessorKey: 'slug', header: 'Slug' },
   { accessorKey: 'content', header: 'Content' },
-  { accessorKey: 'published', header: 'Published' }
+  { accessorKey: 'excerpt', header: 'Excerpt' },
+  { accessorKey: 'published', header: 'Published' },
+  { accessorKey: 'publishedAt', header: 'PublishedAt' },
+  { accessorKey: 'sortOrder', header: 'SortOrder' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -46,10 +55,18 @@ const _blogPostsConfig = {
   componentName: 'BlogPostsForm',
   defaultValues: {
     title: '',
+    slug: '',
     content: '',
-    published: false
+    excerpt: '',
+    published: false,
+    publishedAt: '',
+    sortOrder: ''
   },
   columns: blogPostsColumns,
+  sortable: {
+    enabled: true,
+    orderField: 'order'
+  },
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

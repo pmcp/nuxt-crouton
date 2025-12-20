@@ -9,7 +9,7 @@
   - Collection name: blogPosts
   - API endpoint: /api/teams/[id]/blog-posts
   - Columns composable: useBlogPosts()
-  - Column fields: title, content, published
+  - Column fields: title, slug, content, excerpt, published, publishedAt, sortOrder
 
   ## Common Modifications
   - Add column: Update columns array in composable

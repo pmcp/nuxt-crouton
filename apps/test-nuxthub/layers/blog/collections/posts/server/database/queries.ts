@@ -1,5 +1,5 @@
 // Generated with array reference post-processing support (v2024-10-12)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, asc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { BlogPost, NewBlogPost } from '../../types'
@@ -39,7 +39,7 @@ export async function getAllBlogPosts(teamId: string) {
     .leftJoin(createdByUser, eq(tables.blogPosts.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.blogPosts.updatedBy, updatedByUser.id))
     .where(eq(tables.blogPosts.teamId, teamId))
-    .orderBy(desc(tables.blogPosts.createdAt))
+    .orderBy(asc(tables.blogPosts.order), desc(tables.blogPosts.createdAt))
 
   return posts
 }
@@ -83,7 +83,7 @@ export async function getBlogPostsByIds(teamId: string, postIds: string[]) {
         inArray(tables.blogPosts.id, postIds)
       )
     )
-    .orderBy(desc(tables.blogPosts.createdAt))
+    .orderBy(asc(tables.blogPosts.order), desc(tables.blogPosts.createdAt))
 
   return posts
 }
@@ -158,4 +158,30 @@ export async function deleteBlogPost(
   }
 
   return { success: true }
+}
+
+// Sortable reorder queries (auto-generated when sortable: true)
+
+export async function reorderSiblingsBlogPosts(
+  teamId: string,
+  updates: { id: string; order: number }[]
+) {
+  const db = useDB()
+
+  const results = await Promise.all(
+    updates.map(({ id, order }) =>
+      (db as any)
+        .update(tables.blogPosts)
+        .set({ order })
+        .where(
+          and(
+            eq(tables.blogPosts.id, id),
+            eq(tables.blogPosts.teamId, teamId)
+          )
+        )
+        .returning()
+    )
+  )
+
+  return { success: true, updated: results.flat().length }
 }
