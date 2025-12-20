@@ -55,14 +55,9 @@ export function useAuthClientSafe(): CroutonAuthClient | null {
   return (nuxtApp.$authClient ?? null) as CroutonAuthClient | null
 }
 
-/**
- * Module augmentation for NuxtApp
- */
-declare module '#app' {
-  interface NuxtApp {
-    $authClient: CroutonAuthClient
-  }
-}
+// Module augmentation for NuxtApp is defined in the generated .nuxt/types/*.d.ts files
+// when the module is properly installed. We don't define it here to avoid
+// "Cannot find module '#app'" errors during standalone package typechecking.
 
 declare module 'vue' {
   interface ComponentCustomProperties {

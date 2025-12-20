@@ -30,7 +30,7 @@ interface UsageMetric {
 
 interface Props {
   /** Usage metrics to display */
-  metrics: UsageMetric[]
+  metrics?: UsageMetric[]
   /** Show as compact inline display */
   compact?: boolean
   /** Warning threshold percentage (0-100) */
@@ -40,6 +40,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  metrics: () => [],
   compact: false,
   warningThreshold: 75,
   dangerThreshold: 90

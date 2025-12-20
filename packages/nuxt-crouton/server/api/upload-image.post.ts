@@ -1,3 +1,7 @@
+// NuxtHub blob utilities - auto-imported when using @nuxthub/core
+declare function ensureBlob(blob: Blob, options: { maxSize: string, types: string[] }): void
+declare function hubBlob(): { put: (name: string, blob: Blob, options?: { addRandomSuffix?: boolean }) => Promise<{ pathname: string }> }
+
 export default defineEventHandler(async (event) => {
   const form = await readFormData(event)
   const image = form.get('image')

@@ -51,7 +51,8 @@ export async function seedBlogPosts(options: SeedOptions = {}) {
         title: f.loremIpsum({ sentencesCount: 1 }),
         slug: f.loremIpsum({ sentencesCount: 1 }),
         content: f.loremIpsum({ sentencesCount: 3 }),
-        published: f.weightedRandom([{ value: true, weight: 0.5 }, { value: false, weight: 0.5 }]),
+        // Note: weightedRandom expects generators, not raw values. Using valuesFromArray for simplicity.
+        published: f.valuesFromArray({ values: [true, false] }),
         publishedAt: f.loremIpsum({ sentencesCount: 1 }),
         authorName: f.loremIpsum({ sentencesCount: 1 })
       }
@@ -62,9 +63,10 @@ export async function seedBlogPosts(options: SeedOptions = {}) {
 }
 
 // Allow direct execution: npx tsx seed.ts
-// Note: Bun uses Bun.main, Node uses require.main === module
+// Note: We use import.meta.url check which works in both Node and Bun
+declare const Bun: { main: string } | undefined
 const isMainModule = typeof Bun !== 'undefined'
-  ? Bun.main === import.meta.path
+  ? Bun.main === (import.meta as { path?: string }).path
   : import.meta.url === `file://${process.argv[1]}`
 
 if (isMainModule) {

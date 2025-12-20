@@ -77,7 +77,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
         description: authError.toUserMessage(),
         color: 'error',
         icon: 'i-heroicons-exclamation-circle',
-        timeout: toastOptions?.duration ?? toastDuration
+        duration: toastOptions?.duration ?? toastDuration
       })
     }
 

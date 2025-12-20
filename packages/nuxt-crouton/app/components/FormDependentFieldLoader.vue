@@ -96,8 +96,8 @@ const options = computed(() => {
 // Normalize empty strings to null for consistent type handling
 const modelValue = computed({
   get: () => {
-    // Convert empty string to null to match expected type (string[] | null)
-    if (props.modelValue === '' || props.modelValue === undefined) {
+    // Normalize undefined/empty values to null for consistent type handling
+    if (!props.modelValue || (Array.isArray(props.modelValue) && props.modelValue.length === 0)) {
       return null
     }
     return props.modelValue

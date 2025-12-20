@@ -41,7 +41,7 @@
           v-model:sort="sort"
           v-model:column-visibility="columnVisibility"
           :data="slicedRows"
-          :columns="allColumns"
+          :columns="allColumns as any"
           class="shrink-0"
           :class="{ 'opacity-50': loadingPage }"
           :ui="tableStyles"

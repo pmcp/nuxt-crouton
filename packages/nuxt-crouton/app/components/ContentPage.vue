@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
 const slots = useSlots()
 
 // Use shared composable for TOC extraction
-const { tocLinks: extractedTocLinks } = useContentToc(() => props.content)
+const { tocLinks: extractedTocLinks } = useContentToc(computed(() => props.content))
 
 // Auto-generate TOC from content if toc is true, or use provided array
 const tocLinks = computed<TocLink[]>(() => {

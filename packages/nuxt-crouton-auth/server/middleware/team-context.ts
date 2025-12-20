@@ -70,7 +70,8 @@ export default defineEventHandler(async (event) => {
 
       case 'personal':
         // Use session's active org (personal workspace)
-        teamId = session.session.activeOrganizationId ?? null
+        // Note: activeOrganizationId is added by organization plugin but not in base session type
+        teamId = (session.session as Record<string, unknown>).activeOrganizationId as string | null ?? null
         // Slug will be resolved from team data below
         break
 
@@ -85,7 +86,8 @@ export default defineEventHandler(async (event) => {
           teamSlug = urlTeamParam
         } else {
           // Fall back to session's active org
-          teamId = session.session.activeOrganizationId ?? null
+          // Note: activeOrganizationId is added by organization plugin but not in base session type
+          teamId = (session.session as Record<string, unknown>).activeOrganizationId as string | null ?? null
         }
         break
       }

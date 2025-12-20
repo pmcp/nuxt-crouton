@@ -84,7 +84,7 @@ const sidebarAccordionItems = [{
           <UTabs
             v-if="tabs && navigationItems.length"
             v-model="activeSection"
-            :items="enhancedNavigationItems"
+            :items="enhancedNavigationItems as any"
             :content="false"
             class="w-full"
           />

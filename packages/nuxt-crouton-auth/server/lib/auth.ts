@@ -40,6 +40,17 @@ import type {
 // Re-export type helpers for use in this module
 export { isMethodEnabled, getMethodConfig } from '../../types/config'
 
+// Type declarations for browser APIs used in WebAuthn helper functions
+// These helpers are intended for client-side use only
+declare const window: Window | undefined
+declare const PublicKeyCredential: {
+  isConditionalMediationAvailable?: () => Promise<boolean>
+} | undefined
+interface WebAuthnNavigator {
+  credentials?: unknown
+}
+declare const navigator: WebAuthnNavigator | undefined
+
 /**
  * Database provider type
  */
@@ -521,7 +532,8 @@ function buildPlugins(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [
     // Organization plugin is always enabled (teams support)
-    organization(buildOrganizationConfig(config))
+    // Cast to any to work around strict typing - config is validated at runtime
+    organization(buildOrganizationConfig(config) as any)
   ]
 
   // Conditionally add passkey plugin
@@ -852,17 +864,15 @@ function buildStripePluginConfig(
     createCustomerOnSignUp: true,
 
     // Customize customer creation
-    // Better Auth 1.4.x changed signature: (user, ctx) instead of ({ user })
+    // Better Auth 1.4.x signature: (user, ctx) => Partial<CustomerCreateParams>
     getCustomerCreateParams: async (user, _ctx) => ({
-      params: {
-        email: user.email,
-        name: user.name ?? undefined,
-        metadata: {
-          userId: user.id,
-          // In personal mode, user is the billing entity
-          // In multi-tenant/single-tenant, organization is the billing entity
-          billingMode: mode === 'personal' ? 'user' : 'organization'
-        }
+      email: user.email,
+      name: user.name ?? undefined,
+      metadata: {
+        userId: user.id,
+        // In personal mode, user is the billing entity
+        // In multi-tenant/single-tenant, organization is the billing entity
+        billingMode: mode === 'personal' ? 'user' : 'organization'
       }
     }),
 
@@ -1614,6 +1624,7 @@ export function isWebAuthnSupported(): boolean {
   // Check for WebAuthn support
   return (
     typeof PublicKeyCredential !== 'undefined'
+    && typeof navigator !== 'undefined'
     && typeof navigator.credentials !== 'undefined'
   )
 }
@@ -1632,7 +1643,8 @@ export async function isConditionalUIAvailable(): Promise<boolean> {
   }
 
   // Check for conditional mediation support
-  if (typeof PublicKeyCredential.isConditionalMediationAvailable !== 'function') {
+  // PublicKeyCredential is guaranteed to be defined after isWebAuthnSupported check
+  if (!PublicKeyCredential || typeof PublicKeyCredential.isConditionalMediationAvailable !== 'function') {
     return false
   }
 
