@@ -13,10 +13,8 @@
  * - useState('crouton-auth-team') - for reactive access in components
  * - Server: event.context.team (via server middleware)
  */
-import type { CroutonAuthConfig } from '../../types/config'
-
 export default defineNuxtRouteMiddleware(async (to) => {
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const config = useAuthConfig()
   const mode = config?.mode ?? 'multi-tenant'
 
   // Get team state (shared via useState)
@@ -126,7 +124,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
  */
 async function resolveMultiTenantTeam(
   to: ReturnType<typeof useRoute>,
-  config: CroutonAuthConfig | undefined
+  config: ReturnType<typeof useAuthConfig>
 ): Promise<{
   teamId: string | null
   teamSlug: string | null

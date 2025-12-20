@@ -20,7 +20,7 @@
  * ```
  */
 import type { Team } from '../../types'
-import type { CroutonAuthConfig } from '../../types/config'
+import type { CroutonAuthConfig, AuthMode } from '../../types/config'
 
 export interface CroutonAuthContext {
   /**
@@ -69,9 +69,19 @@ declare module 'vue' {
   }
 }
 
+// Helper to get auth config with proper typing (used in plugins where composables may not be available)
+function getPluginAuthConfig(): CroutonAuthConfig | undefined {
+  const runtimeConfig = useRuntimeConfig()
+  return runtimeConfig.public.crouton?.auth as unknown as CroutonAuthConfig | undefined
+}
+
 export default defineNuxtPlugin((nuxtApp) => {
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
-  const mode = config?.mode ?? 'personal'
+  const config = getPluginAuthConfig()
+  const configMode = config?.mode
+  // Validate mode is one of the expected values
+  const mode: AuthMode = (configMode === 'multi-tenant' || configMode === 'single-tenant' || configMode === 'personal')
+    ? configMode
+    : 'personal'
 
   // Create the context object
   const croutonAuth: CroutonAuthContext = {

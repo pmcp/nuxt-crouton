@@ -10,8 +10,14 @@ import { passkeyClient } from '@better-auth/passkey/client'
 import { stripeClient } from '@better-auth/stripe/client'
 import type { CroutonAuthConfig } from '../../types/config'
 
+// Helper to get auth config with proper typing (used in plugins where composables may not be available)
+function getPluginAuthConfig(): CroutonAuthConfig | undefined {
+  const runtimeConfig = useRuntimeConfig()
+  return runtimeConfig.public.crouton?.auth as unknown as CroutonAuthConfig | undefined
+}
+
 export default defineNuxtPlugin(() => {
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const config = getPluginAuthConfig()
 
   // Build client plugins based on configuration
   const plugins = buildClientPlugins(config)

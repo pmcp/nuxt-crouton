@@ -28,7 +28,7 @@
  * </script>
  * ```
  */
-import type { CroutonAuthConfig, StripePlan } from '../../types/config'
+import type { StripePlan } from '../../types/config'
 
 /**
  * Subscription status values from Stripe
@@ -104,7 +104,7 @@ export interface PortalOptions {
 
 export function useBilling() {
   const nuxtApp = useNuxtApp()
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const config = useAuthConfig()
   const route = useRoute()
 
   // Get the auth client from the plugin

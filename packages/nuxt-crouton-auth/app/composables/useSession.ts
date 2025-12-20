@@ -12,19 +12,11 @@
  * ```
  */
 import type { Session, User, Team } from '../../types'
+import { useAuthClientSafe } from '../../types/auth-client'
 
 export interface SessionData {
   session: Session
   user: User
-}
-
-/**
- * Get the Better Auth client from the plugin
- * Returns null on server-side since authClient is client-only
- */
-function useAuthClient() {
-  const nuxtApp = useNuxtApp()
-  return (nuxtApp.$authClient ?? null) as ReturnType<typeof import('better-auth/client').createAuthClient> | null
 }
 
 // Default SSR-safe return value
@@ -41,25 +33,25 @@ const defaultSessionState = {
 }
 
 export function useSession() {
-  const authClient = useAuthClient()
+  const authClient = useAuthClientSafe()
 
   // On server-side or if authClient is not available, return empty reactive state
   // The client will hydrate with real data
-  if (!authClient || typeof authClient.useSession !== 'function') {
+  if (!authClient || !authClient.useSession) {
     return defaultSessionState
   }
 
-  // Use Better Auth's reactive session hook
-  const {
-    data: sessionData,
-    isPending,
-    error: sessionError
-  } = authClient.useSession()
+  // Better Auth 1.4.x uses nanostores - these are Atoms, not functions
+  // Access the atom directly and create computed refs from its value
+  const sessionAtom = authClient.useSession
+  const activeOrgAtom = authClient.useActiveOrganization
 
-  // Use Better Auth's reactive active organization hook
-  const {
-    data: activeOrgData
-  } = authClient.useActiveOrganization()
+  // Create computed refs that access the atom's value
+  // Use optional chaining since atom value might be undefined during SSR
+  const sessionData = computed(() => sessionAtom.value?.data ?? null)
+  const isPending = computed(() => sessionAtom.value?.isPending ?? true)
+  const sessionError = computed(() => sessionAtom.value?.error ?? null)
+  const activeOrgData = computed(() => activeOrgAtom.value?.data ?? null)
 
   // Computed accessors for cleaner API
   const session = computed<Session | null>(() => {
@@ -133,7 +125,9 @@ export function useSession() {
 
   // Error state
   const error = computed<Error | null>(() => {
-    return sessionError.value ?? null
+    const err = sessionError.value
+    if (!err) return null
+    return new Error(err.message ?? 'Session error')
   })
 
   // Authentication check
@@ -145,12 +139,16 @@ export function useSession() {
   async function refresh(): Promise<void> {
     // Better Auth's useSession handles this automatically via SWR-like behavior
     // But we can force a refresh by calling getSession
-    await authClient.getSession()
+    if (authClient) {
+      await authClient.getSession()
+    }
   }
 
   async function clear(): Promise<void> {
     // Sign out clears the session
-    await authClient.signOut()
+    if (authClient) {
+      await authClient.signOut()
+    }
   }
 
   return {

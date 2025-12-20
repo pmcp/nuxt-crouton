@@ -27,7 +27,7 @@
  * </script>
  * ```
  */
-import type { CroutonAuthConfig } from '../../types/config'
+// CroutonAuthConfig import removed - using useAuthConfig() composable
 
 /**
  * Team context resolution result
@@ -40,7 +40,7 @@ export interface TeamContextResolution {
 }
 
 export function useTeamContext() {
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const config = useAuthConfig()
   const route = useRoute()
 
   // Get shared team state (populated by global middleware)

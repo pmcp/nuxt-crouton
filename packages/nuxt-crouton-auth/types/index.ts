@@ -4,6 +4,13 @@
  * Re-exports all types from the package.
  */
 
+// Nuxt type augmentation (side-effect import to ensure types are loaded)
+import './nuxt.d'
+
+// Auth client types
+export type { CroutonAuthClient } from './auth-client'
+export { useAuthClient, useAuthClientSafe } from './auth-client'
+
 // Configuration types
 export type {
   // OAuth

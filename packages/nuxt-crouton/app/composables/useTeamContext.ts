@@ -13,6 +13,8 @@
  * - getTeamSlug(): string | undefined - Function-based getter (original API)
  * - teamId: ComputedRef<string | null> - Computed ref (@crouton/auth compatible)
  * - teamSlug: ComputedRef<string | null> - Computed ref (@crouton/auth compatible)
+ * - buildDashboardUrl(path): string - Build team-scoped dashboard URLs
+ * - buildApiUrl(path): string - Build team-scoped API URLs
  */
 
 /**
@@ -26,13 +28,15 @@
  *
  * @example
  * ```typescript
- * const { getTeamId } = useTeamContext()
+ * const { getTeamId, buildDashboardUrl } = useTeamContext()
  * const teamId = getTeamId()
  * const apiPath = `/api/teams/${teamId}/members`
+ * const settingsUrl = buildDashboardUrl('/settings')
  * ```
  */
 export function useTeamContext() {
   const route = useRoute()
+  const config = useRuntimeConfig().public.crouton?.auth as { mode?: string } | undefined
 
   /**
    * Get team identifier for API calls
@@ -78,12 +82,66 @@ export function useTeamContext() {
   const teamId = computed<string | null>(() => getTeamId() ?? null)
   const teamSlug = computed<string | null>(() => getTeamSlug() ?? null)
 
+  /**
+   * Whether URLs should include team param
+   * Only true for multi-tenant mode
+   */
+  const useTeamInUrl = computed(() => config?.mode === 'multi-tenant')
+
+  /**
+   * Whether team context is available
+   */
+  const hasTeamContext = computed(() => !!teamId.value)
+
+  /**
+   * Build a dashboard URL with proper team context
+   *
+   * @example
+   * buildDashboardUrl('/bookings') // multi-tenant: '/dashboard/acme/bookings'
+   * buildDashboardUrl('/bookings') // single-tenant: '/dashboard/bookings'
+   */
+  function buildDashboardUrl(path: string, teamSlugOverride?: string): string {
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
+
+    if (useTeamInUrl.value) {
+      const slug = teamSlugOverride ?? teamSlug.value
+      if (slug) {
+        return `/dashboard/${slug}${cleanPath}`
+      }
+    }
+
+    return `/dashboard${cleanPath}`
+  }
+
+  /**
+   * Build an API URL with team context
+   *
+   * @example
+   * buildApiUrl('/bookings') // '/api/teams/team-123/bookings'
+   */
+  function buildApiUrl(path: string, teamIdOverride?: string): string {
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
+    const id = teamIdOverride ?? teamId.value
+
+    if (!id) {
+      return `/api${cleanPath}`
+    }
+
+    return `/api/teams/${id}${cleanPath}`
+  }
+
   return {
     // Function-based getters (original API)
     getTeamId,
     getTeamSlug,
     // Computed refs (@crouton/auth compatible API)
     teamId,
-    teamSlug
+    teamSlug,
+    // State
+    hasTeamContext,
+    useTeamInUrl,
+    // URL builders
+    buildDashboardUrl,
+    buildApiUrl
   }
 }

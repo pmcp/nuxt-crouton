@@ -13,10 +13,8 @@
  * </script>
  * ```
  */
-import type { CroutonAuthConfig } from '../../types/config'
-
 export default defineNuxtRouteMiddleware(async (to) => {
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const config = useAuthConfig()
   const redirects = config?.ui?.redirects
 
   // Skip on server - let server-side auth middleware handle it

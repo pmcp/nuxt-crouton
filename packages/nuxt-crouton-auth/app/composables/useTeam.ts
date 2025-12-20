@@ -20,7 +20,7 @@
  * ```
  */
 import type { Team, MemberRole, Member } from '../../types'
-import type { CroutonAuthConfig } from '../../types/config'
+import { useAuthClient } from '../../types/auth-client'
 
 export interface CreateTeamData {
   name: string
@@ -39,14 +39,6 @@ export interface UpdateTeamData {
 export interface InviteMemberData {
   email: string
   role?: MemberRole
-}
-
-/**
- * Get the Better Auth client from the plugin
- */
-function useAuthClient() {
-  const nuxtApp = useNuxtApp()
-  return nuxtApp.$authClient as ReturnType<typeof import('better-auth/client').createAuthClient>
 }
 
 /**
@@ -121,12 +113,18 @@ function mapMember(m: {
 }
 
 export function useTeam() {
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const config = useAuthConfig()
   const authClient = useAuthClient()
 
-  // Use Better Auth's reactive hooks
-  const { data: organizationsData } = authClient.useListOrganizations()
-  const { data: activeOrgData } = authClient.useActiveOrganization()
+  // Better Auth 1.4.x uses nanostores - these are Atoms, not functions
+  // Access the atom directly and create computed refs from its value
+  const organizationsAtom = authClient.useListOrganizations
+  const activeOrgAtom = authClient.useActiveOrganization
+
+  // Create computed refs that access the atom's value
+  // Use optional chaining since atom value might be undefined during SSR
+  const organizationsData = computed(() => organizationsAtom.value?.data ?? null)
+  const activeOrgData = computed(() => activeOrgAtom.value?.data ?? null)
 
   // Local state
   const loading = ref(false)

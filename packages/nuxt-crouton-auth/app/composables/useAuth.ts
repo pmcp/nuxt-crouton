@@ -16,7 +16,7 @@
  * ```
  */
 import type { User } from '../../types'
-import type { CroutonAuthConfig } from '../../types/config'
+import { useAuthClient } from '../../types/auth-client'
 
 export interface LoginCredentials {
   email: string
@@ -83,16 +83,8 @@ export interface BackupCodeInfo {
   used: boolean
 }
 
-/**
- * Get the Better Auth client from the plugin
- */
-function useAuthClient() {
-  const nuxtApp = useNuxtApp()
-  return nuxtApp.$authClient as ReturnType<typeof import('better-auth/client').createAuthClient>
-}
-
 export function useAuth() {
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
+  const config = useAuthConfig()
   const authClient = useAuthClient()
 
   // Get reactive session from useSession composable
