@@ -41,3 +41,4 @@ coverage
 *.tsbuildinfo
 apps/playground/.data
 apps/test/.data
+apps/test-nuxthub/.data
