@@ -1,48 +1,76 @@
-<script setup lang="ts">
-const runtimeConfig = useRuntimeConfig()
-const colors = ['#f87171', '#fb923c', '#fbbf24', '#facc15', '#a3e635', '#4ade80', '#34d399', '#2dd4bf', '#22d3ee', '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc', '#e879f9', '#f472b6', '#fb7185']
-const color = useState('color', () => colors[Math.floor(Math.random() * colors.length)])
-</script>
-
 <template>
-  <div class="centered">
-    <h1 :style="{ color }">
-      {{ runtimeConfig.public.helloText }}
-    </h1>
-    <NuxtLink
-      to="/"
-      external
-    >
-      refresh
-    </NuxtLink>
+  <div>
+    <UPageHero
+      title="Nuxt Starter Template"
+      description="A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours."
+      :links="[{
+        label: 'Get started',
+        to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
+        target: '_blank',
+        trailingIcon: 'i-lucide-arrow-right',
+        size: 'xl'
+      }, {
+        label: 'Use this template',
+        to: 'https://github.com/nuxt-ui-templates/starter',
+        target: '_blank',
+        icon: 'i-simple-icons-github',
+        size: 'xl',
+        color: 'neutral',
+        variant: 'subtle'
+      }]"
+    />
+
+    <UPageSection
+      id="features"
+      title="Everything you need to build modern Nuxt apps"
+      description="Start with a solid foundation. This template includes all the essentials for building production-ready applications with Nuxt UI's powerful component system."
+      :features="[{
+        icon: 'i-lucide-rocket',
+        title: 'Production-ready from day one',
+        description: 'Pre-configured with TypeScript, ESLint, Tailwind CSS, and all the best practices. Focus on building features, not setting up tooling.'
+      }, {
+        icon: 'i-lucide-palette',
+        title: 'Beautiful by default',
+        description: 'Leveraging Nuxt UI\'s design system with automatic dark mode, consistent spacing, and polished components that look great out of the box.'
+      }, {
+        icon: 'i-lucide-zap',
+        title: 'Lightning fast',
+        description: 'Optimized for performance with SSR/SSG support, automatic code splitting, and edge-ready deployment. Your users will love the speed.'
+      }, {
+        icon: 'i-lucide-blocks',
+        title: '100+ components included',
+        description: 'Access Nuxt UI\'s comprehensive component library. From forms to navigation, everything is accessible, responsive, and customizable.'
+      }, {
+        icon: 'i-lucide-code-2',
+        title: 'Developer experience first',
+        description: 'Auto-imports, hot module replacement, and TypeScript support. Write less boilerplate and ship more features.'
+      }, {
+        icon: 'i-lucide-shield-check',
+        title: 'Built for scale',
+        description: 'Enterprise-ready architecture with proper error handling, SEO optimization, and security best practices built-in.'
+      }]"
+    />
+
+    <UPageSection>
+      <UPageCTA
+        title="Ready to build your next Nuxt app?"
+        description="Join thousands of developers building with Nuxt and Nuxt UI. Get this template and start shipping today."
+        variant="subtle"
+        :links="[{
+          label: 'Start building',
+          to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
+          target: '_blank',
+          trailingIcon: 'i-lucide-arrow-right',
+          color: 'neutral'
+        }, {
+          label: 'View on GitHub',
+          to: 'https://github.com/nuxt-ui-templates/starter',
+          target: '_blank',
+          icon: 'i-simple-icons-github',
+          color: 'neutral',
+          variant: 'outline'
+        }]"
+      />
+    </UPageSection>
   </div>
 </template>
-
-<style scoped>
-.centered {
-  position: absolute;
-  width: 100%;
-  text-align: center;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-}
-h1 {
-  font-size: 32px;
-}
-@media (min-width: 768px) {
-  h1 {
-    font-size: 64px;
-  }
-}
-a {
-  color: #888;
-  text-decoration: none;
-  font-size: 18px;
-}
-a:hover {
-  text-decoration: underline;
-}
-</style>
