@@ -1,4 +1,4 @@
-goo#!/usr/bin/env node
+#!/usr/bin/env node
 // generate-collection.next.mjs — Complete collection generator with modular architecture
 
 import fsp from 'node:fs/promises'
@@ -154,7 +154,7 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
 export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
 `
         await fsp.writeFile(schemaIndexPath, content)
-        console.log('✓ Created server/database/schema/index.ts with auth schema')
+        console.log('✓ Created server/db/schema.ts with auth schema')
       } else {
         throw readError
       }
@@ -179,8 +179,8 @@ export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
     }
 
     // Add named export for the new collection schema
-    // Use relative path for Drizzle compatibility (drizzle-kit doesn't understand Nuxt aliases)
-    const exportLine = `export { ${exportName} } from '../../../layers/${layer}/collections/${cases.plural}/server/database/schema'`
+    // Use relative path from server/db/schema.ts to the collection's schema
+    const exportLine = `export { ${exportName} } from '../../layers/${layer}/collections/${cases.plural}/server/database/schema'`
 
     // Add the new export at the end of the file
     content = content.trim() + '\n' + exportLine + '\n'
@@ -268,8 +268,8 @@ async function registerTranslationsUiCollection() {
 
 // Export i18n schema when translations are enabled
 async function exportI18nSchema(force = false) {
-  const schemaDir = path.resolve('server', 'database', 'schema')
-  const schemaIndexPath = path.join(schemaDir, 'index.ts')
+  const schemaDir = path.resolve('server', 'db')
+  const schemaIndexPath = path.join(schemaDir, 'schema.ts')
   const translationsSchemaPath = path.join(schemaDir, 'translations-ui.ts')
 
   try {
@@ -335,7 +335,7 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
 
     // Generate migration for the new table
     console.log(`↻ Generating migration for translations_ui table...`)
-    console.log(`! Running: pnpm db:generate (30s timeout)`)
+    console.log(`! Running: npx nuxt db generate (30s timeout)`)
 
     try {
       const timeoutPromise = new Promise((_, reject) => {
@@ -343,7 +343,7 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
       })
 
       const { stdout, stderr } = await Promise.race([
-        execAsync('pnpm db:generate'),
+        execAsync('npx nuxt db generate'),
         timeoutPromise
       ])
 
@@ -363,7 +363,7 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
       } else {
         console.error(`✗ Failed to generate migration:`, execError.message)
       }
-      console.log(`! You can manually run: pnpm db:generate`)
+      console.log(`! You can manually run: npx nuxt db generate`)
 
       // Still register the collection even if migration failed
       await registerTranslationsUiCollection()
@@ -401,14 +401,14 @@ async function createDatabaseTable(config) {
       console.error(`  Skipping database migration to avoid errors`)
       console.error(`  You can:`)
       console.error(`  1. Use --force to override the conflict`)
-      console.error(`  2. Manually resolve the conflict in server/database/schema/index.ts`)
+      console.error(`  2. Manually resolve the conflict in server/db/schema.ts`)
       console.error(`  3. Choose a different collection name`)
       return false
     }
 
     // Run db:generate to sync with database (with timeout)
     console.log(`↻ Creating database migration...`)
-    console.log(`! Running: pnpm db:generate (30s timeout)`)
+    console.log(`! Running: npx nuxt db generate (30s timeout)`)
 
     try {
       // Create a promise that rejects after timeout
@@ -418,7 +418,7 @@ async function createDatabaseTable(config) {
 
       // Race between the command and timeout
       const { stdout, stderr } = await Promise.race([
-        execAsync('pnpm db:generate'),
+        execAsync('npx nuxt db generate'),
         timeoutPromise
       ])
 
@@ -435,16 +435,16 @@ async function createDatabaseTable(config) {
       if (execError.message.includes('timed out')) {
         console.error(`✗ Database migration timed out after 30 seconds`)
         console.error(`  This usually means there's a conflict or error in the schema`)
-        console.error(`  Check server/database/schema/index.ts for duplicate exports`)
+        console.error(`  Check server/db/schema.ts for duplicate exports`)
       } else {
         console.error(`✗ Failed to run database migration:`, execError.message)
       }
-      console.log(`! You can manually run: pnpm db:generate && pnpm db:push`)
+      console.log(`! You can manually run: npx nuxt db generate`)
       return false
     }
   } catch (error) {
     console.error(`✗ Failed to create database table:`, error.message)
-    console.log(`! You may need to create the table manually with: pnpm db:generate && pnpm db:push`)
+    console.log(`! You may need to create the table manually with: npx nuxt db generate`)
     return false
   }
 }
@@ -1084,7 +1084,7 @@ ${translationsFieldSchema}
     console.log(`• layers/${layer}/nuxt.config.ts (layer root config)`)
     console.log(`• nuxt.config.ts (root config - add layer to extends)`)
     if (!noDb) {
-      console.log(`• Would update server/database/schema/index.ts`)
+      console.log(`• Would update server/db/schema.ts`)
       console.log(`• Would generate database migration`)
     }
 
@@ -1695,7 +1695,7 @@ async function main() {
 
           // Run database migration once for all collections
           console.log(`\nRunning database migration...`)
-          console.log(`Command: pnpm db:generate (30s timeout)`)
+          console.log(`Command: npx nuxt db generate (30s timeout)`)
 
           try {
             const timeoutPromise = new Promise((_, reject) => {
@@ -1703,7 +1703,7 @@ async function main() {
             })
 
             const { stdout, stderr } = await Promise.race([
-              execAsync('pnpm db:generate'),
+              execAsync('npx nuxt db generate'),
               timeoutPromise
             ])
 
@@ -1714,11 +1714,11 @@ async function main() {
           } catch (execError) {
             if (execError.message.includes('timed out')) {
               console.error(`\n✗ Database migration timed out after 30 seconds`)
-              console.error(`  Check server/database/schema/index.ts for conflicts`)
+              console.error(`  Check server/db/schema.ts for conflicts`)
             } else {
               console.error(`\n✗ Failed to run database migration:`, execError.message)
             }
-            console.log(`\nManual command: pnpm db:generate && pnpm db:push\n`)
+            console.log(`\nManual command: npx nuxt db generate\n`)
           }
         }
 
@@ -1809,7 +1809,7 @@ async function main() {
 
           // Run database migration once for all collections
           console.log(`\nRunning database migration...`)
-          console.log(`Command: pnpm db:generate (30s timeout)`)
+          console.log(`Command: npx nuxt db generate (30s timeout)`)
 
           try {
             const timeoutPromise = new Promise((_, reject) => {
@@ -1817,7 +1817,7 @@ async function main() {
             })
 
             const { stdout, stderr } = await Promise.race([
-              execAsync('pnpm db:generate'),
+              execAsync('npx nuxt db generate'),
               timeoutPromise
             ])
 
@@ -1828,11 +1828,11 @@ async function main() {
           } catch (execError) {
             if (execError.message.includes('timed out')) {
               console.error(`\n✗ Database migration timed out after 30 seconds`)
-              console.error(`  Check server/database/schema/index.ts for conflicts`)
+              console.error(`  Check server/db/schema.ts for conflicts`)
             } else {
               console.error(`\n✗ Failed to run database migration:`, execError.message)
             }
-            console.log(`\nManual command: pnpm db:generate && pnpm db:push\n`)
+            console.log(`\nManual command: npx nuxt db generate\n`)
           }
         }
 

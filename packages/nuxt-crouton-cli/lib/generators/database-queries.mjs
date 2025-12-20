@@ -309,8 +309,9 @@ export function generateQueries(data, config = null) {
     if (ref && ref.isExternal) {
       // External reference - import from main project schema
       // Note: Better Auth exports 'user' (singular), so map 'users' -> 'user'
+      // NuxtHub v0.10+ expects schema at server/db/schema.ts
       const schemaExportName = collection === 'users' ? 'user' : collection
-      schemaImports += `import { ${schemaExportName} } from '~~/server/database/schema'
+      schemaImports += `import { ${schemaExportName} } from '~~/server/db/schema'
 `
     } else {
       // Local layer collection - import from sibling directory
