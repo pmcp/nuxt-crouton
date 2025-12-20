@@ -15,7 +15,10 @@ const sizeClasses = {
 </script>
 
 <template>
-  <div class="ko-punch-hole" :class="sizeClasses[size]">
+  <div
+    class="ko-punch-hole"
+    :class="sizeClasses[size]"
+  >
     <slot />
   </div>
 </template>

@@ -18,7 +18,10 @@ withDefaults(defineProps<Props>(), {
     <div class="ko-panel__content">
       <slot />
     </div>
-    <div v-if="glass" class="ko-panel__glass" />
+    <div
+      v-if="glass"
+      class="ko-panel__glass"
+    />
   </div>
 </template>
 

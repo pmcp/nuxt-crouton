@@ -29,7 +29,10 @@ const shapeClasses = {
 </script>
 
 <template>
-  <div class="ko-btn-wrapper" :class="shapeClasses[props.shape]">
+  <div
+    class="ko-btn-wrapper"
+    :class="shapeClasses[props.shape]"
+  >
     <button
       class="ko-btn"
       :class="[
@@ -43,7 +46,10 @@ const shapeClasses = {
       <span class="ko-btn__text">
         <slot />
       </span>
-      <div v-if="$slots.led" class="ko-btn__led">
+      <div
+        v-if="$slots.led"
+        class="ko-btn__led"
+      >
         <slot name="led" />
       </div>
     </button>

@@ -14,7 +14,10 @@ withDefaults(defineProps<Props>(), {
 
 <template>
   <div class="ko-display">
-    <div v-if="label" class="ko-display__label">
+    <div
+      v-if="label"
+      class="ko-display__label"
+    >
       {{ label }}
     </div>
     <div class="ko-display__screen">

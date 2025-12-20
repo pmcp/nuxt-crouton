@@ -5,11 +5,9 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineNuxtConfig({
   $meta: {
-    name: 'nuxt-crouton-themes/ko',
-    description: 'KO II hardware-inspired theme for Nuxt UI'
+    description: 'KO II hardware-inspired theme for Nuxt UI',
+    name: 'nuxt-crouton-themes/ko'
   },
-
-  css: [join(currentDir, 'assets/css/main.css')],
 
   // Optional: Include custom KO components (Led, Knob, Panel, etc.)
   components: {
@@ -20,5 +18,7 @@ export default defineNuxtConfig({
         global: true
       }
     ]
-  }
+  },
+
+  css: [join(currentDir, 'assets/css/main.css')]
 })
