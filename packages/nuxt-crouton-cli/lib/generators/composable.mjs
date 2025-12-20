@@ -37,7 +37,7 @@ function generateAIHeader(data, apiPath) {
 }
 
 export function generateComposable(data, config = {}) {
-  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layer, fields, hierarchy } = data
+  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layer, fields, hierarchy, sortable } = data
   const prefixedSingular = `${layerPascalCase.toLowerCase()}${pascalCase}`
   const prefixedPlural = `${layerPascalCase.toLowerCase()}${pascalCasePlural}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
@@ -77,6 +77,15 @@ export function generateComposable(data, config = {}) {
   }`
     : ''
 
+  // Generate sortable config if enabled (flat ordering without hierarchy)
+  // Only output if sortable is enabled AND hierarchy is NOT enabled
+  const sortableConfigCode = sortable?.enabled && !hierarchy?.enabled
+    ? `,\n  sortable: {
+    enabled: true,
+    orderField: '${sortable.orderField || 'order'}'
+  }`
+    : ''
+
   // Generate AI context header
   const aiHeader = generateAIHeader(data, apiPath)
 
@@ -101,7 +110,7 @@ const _${prefixedPlural}Config = {
   defaultValues: {
     ${data.fieldsDefault}
   },
-  columns: ${prefixedPlural}Columns${dependentFieldComponentsCode}${hierarchyConfigCode},
+  columns: ${prefixedPlural}Columns${dependentFieldComponentsCode}${hierarchyConfigCode}${sortableConfigCode},
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

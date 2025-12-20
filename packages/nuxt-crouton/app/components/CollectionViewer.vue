@@ -67,9 +67,12 @@ const allLayoutOptions = [
   { value: 'tree' as const, icon: 'i-lucide-git-branch' }
 ]
 
-// Filter layout options - only show tree if hierarchy is enabled
+// Filter layout options - show tree if hierarchy OR sortable is enabled
 const layoutOptions = computed(() => {
-  if (collectionConfig.value?.hierarchy?.enabled) {
+  const config = collectionConfig.value
+  const supportsTree = config?.hierarchy?.enabled || config?.sortable?.enabled
+
+  if (supportsTree) {
     return allLayoutOptions
   }
   return allLayoutOptions.filter(o => o.value !== 'tree')

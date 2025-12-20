@@ -25,6 +25,8 @@ export type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree'
 // Hierarchy configuration for tree layouts
 export interface HierarchyConfig {
   enabled: boolean
+  /** Allow nesting (parent-child). False for sortable-only (flat reorder) */
+  allowNesting?: boolean // default: true for hierarchy, false for sortable
   parentField?: string // default: 'parentId'
   orderField?: string // default: 'order'
   pathField?: string // default: 'path' (materialized path)

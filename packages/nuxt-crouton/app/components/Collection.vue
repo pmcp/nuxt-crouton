@@ -394,18 +394,33 @@ const activeLayout = computed<LayoutType>(() => {
 })
 
 // Hierarchy config for tree layout - read from collection config
+// Supports both hierarchy (with nesting) and sortable (flat reorder only)
 const hierarchyConfig = computed<HierarchyConfig>(() => {
-  const config = collectionConfig.value?.hierarchy
-  if (config?.enabled) {
+  const hierConfig = collectionConfig.value?.hierarchy
+  const sortConfig = collectionConfig.value?.sortable
+
+  // Full hierarchy mode - allows nesting and reordering
+  if (hierConfig?.enabled) {
     return {
       enabled: true,
-      parentField: config.parentField || 'parentId',
-      orderField: config.orderField || 'order',
-      pathField: config.pathField || 'path',
-      depthField: config.depthField || 'depth'
+      allowNesting: true,
+      parentField: hierConfig.parentField || 'parentId',
+      orderField: hierConfig.orderField || 'order',
+      pathField: hierConfig.pathField || 'path',
+      depthField: hierConfig.depthField || 'depth'
     }
   }
-  // Default to disabled for collections without hierarchy config
+
+  // Sortable mode - flat list, reorder only (no nesting)
+  if (sortConfig?.enabled) {
+    return {
+      enabled: true,
+      allowNesting: false,
+      orderField: sortConfig.orderField || 'order'
+    }
+  }
+
+  // Default to disabled for collections without hierarchy/sortable config
   return { enabled: false }
 })
 

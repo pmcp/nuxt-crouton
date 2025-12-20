@@ -40,6 +40,9 @@ export function useTreeMutation(collection: string) {
 
   const apiPath = config.apiPath || collection
 
+  // Determine if this is a sortable-only collection (no parent nesting allowed)
+  const isSortableOnly = config.sortable?.enabled && !config.hierarchy?.enabled
+
   // Track loading state
   const moving = ref(false)
   const reordering = ref(false)
@@ -74,8 +77,11 @@ export function useTreeMutation(collection: string) {
   /**
    * Move a node to a new parent and/or position
    *
+   * For sortable-only collections (no hierarchy), this uses the /reorder endpoint
+   * and ignores the parentId parameter since nesting is not allowed.
+   *
    * @param id - The ID of the item to move
-   * @param newParentId - The new parent ID (null for root level)
+   * @param newParentId - The new parent ID (null for root level) - ignored for sortable-only
    * @param newOrder - The new order position within the parent
    */
   const moveNode = async (
@@ -84,6 +90,24 @@ export function useTreeMutation(collection: string) {
     newOrder: number
   ): Promise<void> => {
     const baseUrl = getApiBasePath()
+
+    // For sortable-only collections, use reorder endpoint instead of move
+    if (isSortableOnly) {
+      console.group('[useTreeMutation] REORDER (sortable-only mode)')
+      console.log('Collection:', collection)
+      console.log('Item ID:', id)
+      console.log('New Order:', newOrder)
+      console.log('Note: parentId ignored for sortable-only collections')
+
+      // Use reorderSiblings with just this item's new order
+      // The tree component should handle calculating the correct order for all siblings
+      await reorderSiblings([{ id, order: newOrder }])
+
+      console.groupEnd()
+      return
+    }
+
+    // Full hierarchy mode - use the /move endpoint
     const url = `${baseUrl}/${id}/move`
 
     console.group('[useTreeMutation] MOVE NODE')
