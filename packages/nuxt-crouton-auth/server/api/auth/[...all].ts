@@ -17,7 +17,17 @@ import { useServerAuth } from '../../utils/useServerAuth'
 
 export default defineEventHandler(async (event) => {
   const url = getRequestURL(event)
-  console.log(`[@crouton/auth] API request: ${event.method} ${url.pathname}`)
+  const config = useRuntimeConfig()
+  const debug = (config.public?.crouton?.auth as { debug?: boolean } | undefined)?.debug ?? false
+
+  if (debug) {
+    console.log(`[@crouton/auth] API request: ${event.method} ${url.pathname}`)
+    // Log cookies for session debugging (redacted for security)
+    const cookieHeader = getHeader(event, 'cookie')
+    const hasCookies = !!cookieHeader
+    const cookieNames = cookieHeader?.split(';').map(c => c.trim().split('=')[0]) ?? []
+    console.log(`[@crouton/auth] Request cookies present: ${hasCookies}, names: ${cookieNames.join(', ')}`)
+  }
 
   try {
     // Get the auth instance (lazily initialized)
@@ -26,7 +36,15 @@ export default defineEventHandler(async (event) => {
     // Convert H3 event to Web Request and handle with Better Auth
     const response = await auth.handler(toWebRequest(event))
 
-    console.log(`[@crouton/auth] API response: ${response.status} for ${url.pathname}`)
+    if (debug) {
+      console.log(`[@crouton/auth] API response: ${response.status} for ${url.pathname}`)
+      // Log set-cookie headers for debugging
+      const setCookies = response.headers.getSetCookie?.() ?? []
+      if (setCookies.length > 0) {
+        console.log(`[@crouton/auth] Response setting cookies:`, setCookies.map(c => c.split('=')[0]))
+      }
+    }
+
     return response
   } catch (error) {
     console.error(`[@crouton/auth] API error for ${url.pathname}:`, error)

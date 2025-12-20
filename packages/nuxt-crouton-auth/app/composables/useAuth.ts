@@ -86,9 +86,18 @@ export interface BackupCodeInfo {
 export function useAuth() {
   const config = useAuthConfig()
   const authClient = useAuthClient()
+  const debug = config?.debug ?? false
 
   // Get reactive session from useSession composable
   const { user: sessionUser, isAuthenticated, isPending, error: sessionError, refresh, clear } = useSession()
+
+  if (debug) {
+    console.log('[@crouton/auth] useAuth: initialized', {
+      hasConfig: !!config,
+      mode: config?.mode,
+      hasAuthClient: !!authClient
+    })
+  }
 
   // Local state for loading/error during operations
   const loading = ref(false)
@@ -138,6 +147,11 @@ export function useAuth() {
   async function login(credentials: LoginCredentials): Promise<void> {
     loading.value = true
     error.value = null
+
+    if (debug) {
+      console.log('[@crouton/auth] login: starting login for', credentials.email)
+    }
+
     try {
       const result = await authClient.signIn.email({
         email: credentials.email,
@@ -145,13 +159,36 @@ export function useAuth() {
         rememberMe: credentials.rememberMe
       })
 
+      if (debug) {
+        console.log('[@crouton/auth] login: signIn.email result', {
+          hasData: !!result.data,
+          hasError: !!result.error,
+          error: result.error?.message ?? null,
+          user: result.data?.user?.email ?? null
+        })
+      }
+
       if (result.error) {
         throw new Error(result.error.message ?? 'Login failed')
       }
 
+      if (debug) {
+        console.log('[@crouton/auth] login: calling refresh to update session state')
+      }
+
       // Refresh session to update reactive state
       await refresh()
+
+      if (debug) {
+        console.log('[@crouton/auth] login: after refresh', {
+          isAuthenticated: isAuthenticated.value,
+          user: sessionUser.value?.email ?? null
+        })
+      }
     } catch (e: unknown) {
+      if (debug) {
+        console.error('[@crouton/auth] login: error', e)
+      }
       error.value = e instanceof Error ? e.message : 'Login failed'
       throw e
     } finally {
@@ -279,6 +316,11 @@ export function useAuth() {
   async function register(data: RegisterData): Promise<void> {
     loading.value = true
     error.value = null
+
+    if (debug) {
+      console.log('[@crouton/auth] register: starting registration for', data.email)
+    }
+
     try {
       // Ensure name is always a string (Better Auth requires it)
       const displayName = (data.name ?? data.email.split('@')[0]) as string
@@ -288,13 +330,36 @@ export function useAuth() {
         name: displayName
       })
 
+      if (debug) {
+        console.log('[@crouton/auth] register: signUp.email result', {
+          hasData: !!result.data,
+          hasError: !!result.error,
+          error: result.error?.message ?? null,
+          user: result.data?.user?.email ?? null
+        })
+      }
+
       if (result.error) {
         throw new Error(result.error.message ?? 'Registration failed')
       }
 
+      if (debug) {
+        console.log('[@crouton/auth] register: calling refresh to update session state')
+      }
+
       // Refresh session to update reactive state
       await refresh()
+
+      if (debug) {
+        console.log('[@crouton/auth] register: after refresh', {
+          isAuthenticated: isAuthenticated.value,
+          user: sessionUser.value?.email ?? null
+        })
+      }
     } catch (e: unknown) {
+      if (debug) {
+        console.error('[@crouton/auth] register: error', e)
+      }
       error.value = e instanceof Error ? e.message : 'Registration failed'
       throw e
     } finally {

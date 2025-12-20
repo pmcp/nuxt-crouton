@@ -34,52 +34,130 @@ const defaultSessionState = {
 
 export function useSession() {
   const authClient = useAuthClientSafe()
+  const config = useRuntimeConfig()
+  const debug = (config.public?.crouton?.auth as { debug?: boolean } | undefined)?.debug ?? false
 
   // On server-side or if authClient is not available, return empty reactive state
   // The client will hydrate with real data
   if (!authClient || !authClient.useSession) {
+    if (debug) {
+      console.log('[@crouton/auth] useSession: no authClient available (SSR or not initialized)')
+    }
     return defaultSessionState
   }
 
-  // Better Auth 1.4.x uses nanostores - these are Atoms, not functions
-  // Access the atom directly and create computed refs from its value
+  // Better Auth 1.4.x uses nanostores - these are Atoms
+  // We need to subscribe to them and update Vue refs when they change
   const sessionAtom = authClient.useSession
   const activeOrgAtom = authClient.useActiveOrganization
 
-  // Create computed refs that access the atom's value
-  // Use optional chaining since atom value might be undefined during SSR
-  const sessionData = computed(() => sessionAtom.value?.data ?? null)
-  const isPending = computed(() => sessionAtom.value?.isPending ?? true)
-  const sessionError = computed(() => sessionAtom.value?.error ?? null)
-  const activeOrgData = computed(() => activeOrgAtom.value?.data ?? null)
+  // Create Vue refs to hold the nanostore values
+  // These will be updated when the nanostores change
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sessionAtomValue = ref<any>(sessionAtom.value)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const activeOrgAtomValue = ref<any>(activeOrgAtom.value)
 
-  // Computed accessors for cleaner API
-  const session = computed<Session | null>(() => {
-    if (!sessionData.value?.session) return null
-    const s = sessionData.value.session
-    return {
-      id: s.id,
-      token: s.token,
-      userId: s.userId,
-      expiresAt: new Date(s.expiresAt),
-      ipAddress: s.ipAddress ?? null,
-      userAgent: s.userAgent ?? null,
-      activeOrganizationId: (s as Record<string, unknown>).activeOrganizationId as string | null ?? null
+  // Subscribe to nanostore changes and update Vue refs
+  // This bridges nanostore reactivity with Vue's reactivity system
+  if (import.meta.client) {
+    // Subscribe to session atom changes
+    const unsubSession = sessionAtom.subscribe((value: unknown) => {
+      if (debug) {
+        console.log('[@crouton/auth] useSession: sessionAtom updated', {
+          hasData: !!(value as { data?: unknown })?.data,
+          isPending: (value as { isPending?: boolean })?.isPending,
+          user: ((value as { data?: { user?: { email?: string } } })?.data?.user?.email) ?? null
+        })
+      }
+      sessionAtomValue.value = value as any
+    })
+
+    // Subscribe to active org atom changes
+    const unsubOrg = activeOrgAtom.subscribe((value: unknown) => {
+      if (debug) {
+        console.log('[@crouton/auth] useSession: activeOrgAtom updated', {
+          hasData: !!value,
+          org: ((value as { data?: { slug?: string } })?.data?.slug) ?? null
+        })
+      }
+      activeOrgAtomValue.value = value as any
+    })
+
+    // Clean up subscriptions when component unmounts
+    onUnmounted(() => {
+      unsubSession()
+      unsubOrg()
+    })
+  }
+
+  // Debug: Log initial atom state
+  if (debug) {
+    console.log('[@crouton/auth] useSession: initial atom state', {
+      sessionAtomValue: sessionAtomValue.value,
+      activeOrgAtomValue: activeOrgAtomValue.value
+    })
+  }
+
+  // Create computed refs that access the Vue ref values (now reactive!)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sessionData = computed<{ user?: any, session?: any } | null>(() => {
+    const atomVal = sessionAtomValue.value as { data?: { user?: any, session?: any } } | null
+    const data = atomVal?.data ?? null
+    if (debug) {
+      console.log('[@crouton/auth] useSession: sessionData computed', {
+        hasData: !!data,
+        user: data?.user?.email ?? null,
+        session: data?.session?.id ?? null
+      })
     }
+    return data
   })
 
-  const user = computed<User | null>(() => {
-    if (!sessionData.value?.user) return null
-    const u = sessionData.value.user
+  const isPending = computed(() => {
+    const atomVal = sessionAtomValue.value as { isPending?: boolean } | null
+    return atomVal?.isPending ?? true
+  })
+
+  const sessionError = computed(() => {
+    const atomVal = sessionAtomValue.value as { error?: { message?: string } } | null
+    return atomVal?.error ?? null
+  })
+
+  const activeOrgData = computed(() => {
+    const atomVal = activeOrgAtomValue.value as { data?: unknown } | null
+    return atomVal?.data ?? null
+  })
+
+  // Computed accessors for cleaner API
+  const session = computed(() => {
+    if (!sessionData.value?.session) return null as Session | null
+    const s = sessionData.value.session as Record<string, unknown>
     return {
-      id: u.id,
-      email: u.email,
-      name: u.name ?? null,
-      image: u.image ?? null,
-      emailVerified: u.emailVerified ?? false,
-      createdAt: new Date(u.createdAt),
-      updatedAt: new Date(u.updatedAt)
-    }
+      id: s.id as string,
+      token: s.token as string,
+      userId: s.userId as string,
+      expiresAt: new Date(s.expiresAt as string | Date),
+      ipAddress: s.ipAddress as string | undefined,
+      userAgent: s.userAgent as string | undefined,
+      activeOrganizationId: s.activeOrganizationId as string | undefined,
+      createdAt: new Date(s.createdAt as string | Date ?? Date.now()),
+      updatedAt: new Date(s.updatedAt as string | Date ?? Date.now())
+    } satisfies Session
+  })
+
+  const user = computed(() => {
+    if (!sessionData.value?.user) return null as User | null
+    const u = sessionData.value.user as Record<string, unknown>
+    return {
+      id: u.id as string,
+      email: u.email as string,
+      name: (u.name as string | null) ?? null,
+      image: (u.image as string | null) ?? null,
+      emailVerified: (u.emailVerified as boolean) ?? false,
+      createdAt: new Date(u.createdAt as string | Date),
+      updatedAt: new Date(u.updatedAt as string | Date)
+    } satisfies User
   })
 
   const activeOrganization = computed<Team | null>(() => {
@@ -139,8 +217,28 @@ export function useSession() {
   async function refresh(): Promise<void> {
     // Better Auth's useSession handles this automatically via SWR-like behavior
     // But we can force a refresh by calling getSession
+    // The nanostore subscription will automatically update our Vue refs
     if (authClient) {
-      await authClient.getSession()
+      if (debug) {
+        console.log('[@crouton/auth] useSession: refresh called, fetching session...')
+      }
+      const result = await authClient.getSession({
+        fetchOptions: {
+          // Force refetch to update the nanostore
+          onSuccess: () => {
+            if (debug) {
+              console.log('[@crouton/auth] useSession: getSession onSuccess, nanostore should update')
+            }
+          }
+        }
+      })
+      if (debug) {
+        console.log('[@crouton/auth] useSession: refresh result', {
+          hasData: !!result.data,
+          user: result.data?.user?.email ?? null,
+          error: result.error ?? null
+        })
+      }
     }
   }
 
