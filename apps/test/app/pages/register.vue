@@ -4,7 +4,7 @@ definePageMeta({
   layout: false
 })
 
-const { signUp } = useAuth()
+const { register } = useAuth()
 const router = useRouter()
 
 const loading = ref(false)
@@ -15,15 +15,15 @@ async function handleRegister(data: { name: string; email: string; password: str
   error.value = null
 
   try {
-    await signUp.email({
+    await register({
       name: data.name,
       email: data.email,
       password: data.password
     })
     // Redirect to dashboard on success
     router.push('/dashboard/posts')
-  } catch (e: any) {
-    error.value = e.message || 'Registration failed'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Registration failed'
   } finally {
     loading.value = false
   }

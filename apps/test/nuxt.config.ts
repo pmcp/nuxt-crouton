@@ -21,6 +21,7 @@ export default defineNuxtConfig({
 
   // NuxtHub for SQLite database
   hub: {
+    // @ts-ignore - NuxtHub types not fully generated until prepare
     database: true
   },
 

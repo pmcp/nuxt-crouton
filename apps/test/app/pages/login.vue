@@ -4,7 +4,7 @@ definePageMeta({
   layout: false
 })
 
-const { signIn } = useAuth()
+const { login } = useAuth()
 const router = useRouter()
 
 const loading = ref(false)
@@ -15,14 +15,14 @@ async function handleLogin(data: { email: string; password: string }) {
   error.value = null
 
   try {
-    await signIn.email({
+    await login({
       email: data.email,
       password: data.password
     })
     // Redirect to dashboard on success
     router.push('/dashboard/posts')
-  } catch (e: any) {
-    error.value = e.message || 'Login failed'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Login failed'
   } finally {
     loading.value = false
   }
