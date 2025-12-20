@@ -188,8 +188,33 @@ async function resolveMultiTenantTeam(
       needsRedirect: true,
       redirectTo: `/dashboard/${activeOrganization.value.slug}${pathWithoutDashboard ? `/${pathWithoutDashboard}` : ''}`
     }
+  } else if (isDashboardRoute && !activeOrganization.value) {
+    // Dashboard route but NO active org - check if user has any teams
+    if (teams.value.length === 0) {
+      // No teams at all - redirect to create team page
+      const noTeamsRedirect = config?.ui?.redirects?.noTeams ?? '/onboarding/create-team'
+      return {
+        teamId: null,
+        teamSlug: null,
+        needsRedirect: true,
+        redirectTo: noTeamsRedirect
+      }
+    }
+    // Has teams but no active - switch to first team and redirect
+    const firstTeam = teams.value[0]
+    try {
+      await switchTeamBySlug(firstTeam.slug)
+    } catch (e) {
+      console.error('[@crouton/auth] Failed to switch to first team:', e)
+    }
+    return {
+      teamId: firstTeam.id,
+      teamSlug: firstTeam.slug,
+      needsRedirect: true,
+      redirectTo: `/dashboard/${firstTeam.slug}`
+    }
   } else {
-    // Non-dashboard route or no active org
+    // Non-dashboard route
     return {
       teamId: activeOrganization.value?.id ?? null,
       teamSlug: activeOrganization.value?.slug ?? null,

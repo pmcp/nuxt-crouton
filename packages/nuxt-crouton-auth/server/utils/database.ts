@@ -2,9 +2,8 @@
  * Database utilities for nuxt-crouton-auth
  *
  * Provides useDB() and table exports for API handlers.
- * Uses Drizzle ORM with D1 database.
+ * Uses NuxtHub v0.10+ db from 'hub:db' (Drizzle ORM instance)
  */
-import { drizzle } from 'drizzle-orm/d1'
 import * as schema from '../database/schema'
 
 // Export commonly used query builder functions
@@ -13,19 +12,22 @@ export { eq, and, or, ne, not, lt, gt, asc, desc, count } from 'drizzle-orm'
 // Export schema as tables for easy access
 export const tables = schema
 
+// NuxtHub v0.10+ provides 'db' from 'hub:db' as an auto-import
+declare const db: any
+
 /**
  * Get a Drizzle database instance
  *
- * Uses NuxtHub's hubDatabase() to get the D1 binding.
+ * Uses NuxtHub v0.10+ db from 'hub:db'
  *
  * @example
  * ```typescript
- * const db = useDB()
- * const domains = await db.select().from(tables.domain).where(eq(tables.domain.organizationId, orgId))
+ * const database = useDB()
+ * const domains = await database.select().from(tables.domain).where(eq(tables.domain.organizationId, orgId))
  * ```
  */
 export function useDB() {
-  return drizzle(hubDatabase(), { schema })
+  return db
 }
 
 /**

@@ -2,8 +2,12 @@
  * Server Auth Utility
  *
  * Provides lazy initialization and access to the Better Auth instance.
- * The auth instance is created on first access since NuxtHub's D1 database
+ * The auth instance is created on first access since NuxtHub's database
  * binding is only available during request handling.
+ *
+ * Supports both:
+ * - NuxtHub D1 mode: hubDatabase() + drizzle-orm/d1
+ * - NuxtHub v0.10+ multi-vendor mode: useDB() (already drizzle instance)
  *
  * @example
  * ```typescript
@@ -15,15 +19,14 @@
  * ```
  */
 import type { H3Event } from 'h3'
-import { createError } from 'h3'
+import { createError, getRequestURL } from 'h3'
 import { useRuntimeConfig } from '#imports'
-import { drizzle } from 'drizzle-orm/d1'
 import { createAuth, type AuthInstance, setAuthInstance, getAuthInstance, isAuthInitialized } from '../lib/auth'
 import type { CroutonAuthConfig } from '../../types/config'
 import * as authSchema from '../database/schema/auth'
 
-// hubDatabase is a NuxtHub auto-import, declare it for TypeScript
-declare function hubDatabase(): D1Database
+// NuxtHub v0.10+ provides 'db' from 'hub:db' as an auto-import
+declare const db: any
 
 /**
  * Get or create the Better Auth instance
@@ -58,16 +61,23 @@ export function useServerAuth(event?: H3Event): AuthInstance {
     )
   }
 
-  // Get base URL
-  const baseURL = (config.auth as { baseUrl?: string })?.baseUrl
+  // Get base URL - use request URL if event available, otherwise fall back to config
+  let baseURL = (config.auth as { baseUrl?: string })?.baseUrl
     || process.env.BETTER_AUTH_URL
     || config.public?.baseUrl
-    || 'http://localhost:3000'
 
-  // Get database instance from NuxtHub
-  // hubDatabase() is a global utility provided by NuxtHub
-  const d1 = hubDatabase()
-  const db = drizzle(d1)
+  // If we have an event, use the actual request origin (handles dynamic ports)
+  if (!baseURL && event) {
+    const url = getRequestURL(event)
+    baseURL = `${url.protocol}//${url.host}`
+  }
+
+  baseURL = baseURL || 'http://localhost:3000'
+
+  // Get database instance from NuxtHub v0.10+ (db from hub:db)
+  if (typeof db === 'undefined' || db === null) {
+    throw new Error('[crouton/auth] No database available. Ensure NuxtHub is configured with hub.db')
+  }
 
   // Create the auth instance
   const auth = createAuth({

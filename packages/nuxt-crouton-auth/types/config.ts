@@ -304,6 +304,8 @@ export interface RedirectConfig {
   unauthenticated?: string
   /** Redirect for already authenticated users on auth pages (default: '/dashboard') */
   authenticated?: string
+  /** Redirect when user has no teams in multi-tenant mode (default: '/onboarding/create-team') */
+  noTeams?: string
 }
 
 /**

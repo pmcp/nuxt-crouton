@@ -1,0 +1,46 @@
+<script setup lang="ts">
+/**
+ * Create Team Onboarding Page
+ *
+ * Shown to new users in multi-tenant mode who don't have any teams yet.
+ * Uses the TeamCreateForm component to handle team creation.
+ */
+import type { Team } from '../../../types'
+
+definePageMeta({
+  middleware: 'auth',
+  layout: 'auth'
+})
+
+const { t } = useT()
+const router = useRouter()
+
+function onTeamCreated(team: Team) {
+  // Navigate to the new team's dashboard
+  router.push(`/dashboard/${team.slug}`)
+}
+</script>
+
+<template>
+  <div class="min-h-screen flex items-center justify-center p-6 bg-default">
+    <UCard class="w-full max-w-md">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+            <UIcon name="i-lucide-building-2" class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 class="text-lg font-semibold">
+              {{ t('onboarding.createTeamTitle', 'Create Your First Team') }}
+            </h1>
+            <p class="text-sm text-muted">
+              {{ t('onboarding.createTeamDescription', 'Get started by creating a workspace for your projects.') }}
+            </p>
+          </div>
+        </div>
+      </template>
+
+      <TeamCreateForm @success="onTeamCreated" />
+    </UCard>
+  </div>
+</template>
