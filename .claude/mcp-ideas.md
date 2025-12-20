@@ -52,6 +52,20 @@ Use the `/mcp-idea` command or add manually:
 
 ---
 
+### 2024-12-20: Schema-Level Access Control
+- **Type**: Tool enhancement
+- **Target**: CLI MCP
+- **Priority**: High
+- **Context**: When generating collections that need public access or role-based permissions
+- **Description**: Add `access` field to collection meta for role-based endpoint generation. Built-in roles: `public` (no auth), `member` (any team member), `owner` (record creator), `admin` (team admin). Generator creates appropriate middleware checks per endpoint.
+- **Suggested Implementation**:
+  - Schema meta: `{ "access": { "read": "public", "create": "member", "update": "owner", "delete": "admin" } }`
+  - Generator creates public endpoints at `/api/public/[collection]` for public read
+  - Adds role check middleware to team-scoped endpoints based on access config
+  - Default: all operations require `member` (current behavior)
+
+---
+
 ## Completed Ideas
 
 <!-- Move ideas here when implemented -->
