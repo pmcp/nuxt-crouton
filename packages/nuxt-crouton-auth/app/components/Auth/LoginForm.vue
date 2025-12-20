@@ -25,7 +25,7 @@ interface Props {
   showForgotPassword?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false,
   error: null,
   showRememberMe: true,

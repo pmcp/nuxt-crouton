@@ -1,7 +1,7 @@
 import { defineEventHandler } from 'h3'
 import { useAppConfig } from '#imports'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (_event) => {
   // Get collections from app config
   const appConfig = useAppConfig()
   const collections = appConfig.croutonCollections || {}

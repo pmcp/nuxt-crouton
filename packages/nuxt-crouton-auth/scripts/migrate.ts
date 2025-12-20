@@ -117,7 +117,7 @@ function getMigrationFiles(projectRoot: string): string[] {
 /**
  * Run a command and return the output
  */
-function runCommand(command: string, cwd: string): string {
+function _runCommand(command: string, cwd: string): string {
   try {
     return execSync(command, {
       cwd,

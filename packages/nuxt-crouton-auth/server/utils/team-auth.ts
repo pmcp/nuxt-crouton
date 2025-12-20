@@ -22,7 +22,7 @@ import type { H3Event } from 'h3'
  * @param userId - The user ID
  * @returns Promise<boolean> - true if user is a member
  */
-export async function isTeamMember(teamId: string, userId: string): Promise<boolean> {
+export async function isTeamMember(_teamId: string, _userId: string): Promise<boolean> {
   // Import getMembership dynamically to avoid circular deps
   const { getMembership: getMembershipFn } = await import('./team')
 

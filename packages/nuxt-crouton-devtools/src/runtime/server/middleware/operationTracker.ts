@@ -100,7 +100,6 @@ export default defineEventHandler(async (event) => {
     // or track optimistically
 
     // For now, we'll set up a response interceptor
-    const originalSetResponseStatus = event.node.res.statusCode
 
     // Track the operation after response
     event.node.res.on('finish', () => {

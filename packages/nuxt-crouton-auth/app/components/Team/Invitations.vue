@@ -163,7 +163,7 @@ function formatExpiry(date: string | Date): string {
 }
 
 // Role badge color
-function roleBadgeColor(role: MemberRole): string {
+function roleBadgeColor(role: MemberRole): 'primary' | 'info' | 'neutral' {
   switch (role) {
     case 'owner':
       return 'primary'

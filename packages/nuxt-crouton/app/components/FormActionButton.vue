@@ -23,7 +23,7 @@
 <script setup>
 const { collectionWithCapitalSingular } = useFormatCollections()
 
-const props = defineProps({
+defineProps({
   action: {
     type: String,
     required: true

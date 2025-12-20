@@ -50,8 +50,8 @@ export function useFlowData<T extends Record<string, unknown>>(
       const hasValidPosition = rawPosition
         && typeof rawPosition.x === 'number'
         && typeof rawPosition.y === 'number'
-        && !isNaN(rawPosition.x)
-        && !isNaN(rawPosition.y)
+        && !Number.isNaN(rawPosition.x)
+        && !Number.isNaN(rawPosition.y)
 
       const position = hasValidPosition ? rawPosition : { x: 0, y: 0 }
 

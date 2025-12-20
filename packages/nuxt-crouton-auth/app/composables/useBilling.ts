@@ -71,7 +71,7 @@ export interface Plan {
   price: number
   currency: string
   interval: 'month' | 'year'
-  features?: string[]
+  features?: readonly string[] | string[]
 }
 
 /**

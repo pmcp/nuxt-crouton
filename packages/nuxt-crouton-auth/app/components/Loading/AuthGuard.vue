@@ -41,7 +41,7 @@ const props = withDefaults(defineProps<Props>(), {
   minLoadingTime: 100
 })
 
-const slots = defineSlots<{
+const _slots = defineSlots<{
   default: () => any
   loading: () => any
   unauthenticated: () => any

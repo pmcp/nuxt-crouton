@@ -163,7 +163,7 @@ describe('server/utils/team', () => {
 
       it('should resolve team from URL param', async () => {
         const event = createMockEvent()
-        const context = await resolveTeamAndCheckMembership(event)
+        const _context = await resolveTeamAndCheckMembership(event)
 
         expect(context.team).toBeDefined()
         expect(context.team.id).toBe('team-1')
@@ -185,7 +185,7 @@ describe('server/utils/team', () => {
         })
 
         const event = createMockEvent()
-        const context = await resolveTeamAndCheckMembership(event)
+        const _context = await resolveTeamAndCheckMembership(event)
 
         expect(context.team.id).toBe('session-team')
       })
@@ -217,7 +217,7 @@ describe('server/utils/team', () => {
 
       it('should always use default team', async () => {
         const event = createMockEvent()
-        const context = await resolveTeamAndCheckMembership(event)
+        const _context = await resolveTeamAndCheckMembership(event)
 
         expect(context.team.id).toBe('default-team')
       })
@@ -227,7 +227,7 @@ describe('server/utils/team', () => {
         vi.mocked(getRouterParam).mockReturnValue('other-team')
 
         const event = createMockEvent()
-        const context = await resolveTeamAndCheckMembership(event)
+        const _context = await resolveTeamAndCheckMembership(event)
 
         // Should still be default team
         expect(mockAuthApi.getFullOrganization).toHaveBeenCalledWith(
@@ -256,7 +256,7 @@ describe('server/utils/team', () => {
         mockRequireServerSession.mockResolvedValue(createMockSessionResponse('personal-user1'))
 
         const event = createMockEvent()
-        const context = await resolveTeamAndCheckMembership(event)
+        const _context = await resolveTeamAndCheckMembership(event)
 
         expect(context.team.id).toBe('personal-user1')
         expect(context.team.personal).toBe(true)
@@ -630,7 +630,7 @@ describe('server/utils/team', () => {
       })
 
       const event = createMockEvent()
-      const context = await requireTeamAdmin(event)
+      const _context = await requireTeamAdmin(event)
 
       expect(context.membership.role).toBe('admin')
     })
@@ -641,7 +641,7 @@ describe('server/utils/team', () => {
       })
 
       const event = createMockEvent()
-      const context = await requireTeamAdmin(event)
+      const _context = await requireTeamAdmin(event)
 
       expect(context.membership.role).toBe('owner')
     })
@@ -672,7 +672,7 @@ describe('server/utils/team', () => {
       })
 
       const event = createMockEvent()
-      const context = await requireTeamOwner(event)
+      const _context = await requireTeamOwner(event)
 
       expect(context.membership.role).toBe('owner')
     })

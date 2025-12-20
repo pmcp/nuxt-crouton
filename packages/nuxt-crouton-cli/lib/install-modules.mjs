@@ -4,7 +4,6 @@
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 import fsp from 'node:fs/promises'
-import path from 'node:path'
 import readline from 'node:readline'
 
 const execAsync = promisify(exec)
@@ -67,7 +66,7 @@ async function installModule(moduleName, isDev = false) {
   const cmd = `pnpm add ${isDev ? '-D' : ''} ${moduleName}`
 
   try {
-    const { stdout, stderr } = await execAsync(cmd)
+    const { stderr } = await execAsync(cmd)
     if (stderr && !stderr.includes('WARN')) {
       console.error(`⚠️  Warning: ${stderr}`)
     }

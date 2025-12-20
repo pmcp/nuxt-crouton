@@ -23,7 +23,7 @@ const createMockEvent = (overrides = {}): H3Event => ({
 }) as unknown as H3Event
 
 // Mock user data
-const mockUser: User = {
+const _mockUser: User = {
   id: 'user-1',
   email: 'test@example.com',
   name: 'Test User',
@@ -48,7 +48,7 @@ const mockTeam: Team = {
 }
 
 // Mock member data
-const mockMember: Member = {
+const _mockMember: Member = {
   id: 'member-1',
   organizationId: 'team-1',
   userId: 'user-1',

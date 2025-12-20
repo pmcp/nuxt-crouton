@@ -34,11 +34,6 @@ const props = withDefaults(defineProps<Props>(), {
   collapsedIcon: 'i-lucide-layout-dashboard'
 })
 
-const emit = defineEmits<{
-  /** Emitted when navigation item is selected */
-  navigate: [item: NavigationMenuItem]
-}>()
-
 const { t } = useT()
 const { buildDashboardUrl } = useTeamContext()
 const { showTeamManagement } = useTeam()

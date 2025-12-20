@@ -15,10 +15,15 @@
  * ```
  */
 import type { H3Event } from 'h3'
+import { createError } from 'h3'
+import { useRuntimeConfig } from '#imports'
 import { drizzle } from 'drizzle-orm/d1'
 import { createAuth, type AuthInstance, setAuthInstance, getAuthInstance, isAuthInitialized } from '../lib/auth'
 import type { CroutonAuthConfig } from '../../types/config'
 import * as authSchema from '../database/schema/auth'
+
+// hubDatabase is a NuxtHub auto-import, declare it for TypeScript
+declare function hubDatabase(): D1Database
 
 /**
  * Get or create the Better Auth instance
@@ -90,7 +95,7 @@ export function useServerAuth(event?: H3Event): AuthInstance {
  * @param event - H3 event
  * @returns Session with user data, or null if not authenticated
  */
-export async function getServerSession(event: H3Event) {
+export async function getServerSession(_event: H3Event) {
   const auth = useServerAuth(event)
   return auth.api.getSession({
     headers: event.headers
@@ -104,7 +109,7 @@ export async function getServerSession(event: H3Event) {
  * @returns Session with user data
  * @throws 401 error if not authenticated
  */
-export async function requireServerSession(event: H3Event) {
+export async function requireServerSession(_event: H3Event) {
   const session = await getServerSession(event)
 
   if (!session?.user) {

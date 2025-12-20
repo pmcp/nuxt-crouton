@@ -57,7 +57,7 @@ const setupLoading = ref(false)
 const disableLoading = ref(false)
 const viewCodesLoading = ref(false)
 
-const isLoading = computed(() => props.loading || statusLoading.value)
+const _isLoading = computed(() => props.loading || statusLoading.value)
 
 // Load 2FA status
 async function loadStatus() {

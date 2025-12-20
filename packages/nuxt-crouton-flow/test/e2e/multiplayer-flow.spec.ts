@@ -14,7 +14,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Multiplayer Flow E2E', () => {
   test.describe('Real-time Collaboration', () => {
-    test.skip('Drag node in window A, see update in window B', async ({ browser }) => {
+    test.skip('Drag node in window A, see update in window B', async ({ browser: _browser }) => {
       // Create two browser contexts
       const contextA = await browser.newContext()
       const contextB = await browser.newContext()
@@ -44,25 +44,25 @@ test.describe('Multiplayer Flow E2E', () => {
       await contextB.close()
     })
 
-    test.skip('Create node in window A, appears in window B', async ({ browser }) => {
+    test.skip('Create node in window A, appears in window B', async ({ browser: _browser }) => {
       // Implementation
     })
 
-    test.skip('Delete node, removed from both windows', async ({ browser }) => {
+    test.skip('Delete node, removed from both windows', async ({ browser: _browser }) => {
       // Implementation
     })
   })
 
   test.describe('Presence Indicators', () => {
-    test.skip('Presence avatars show other users', async ({ browser }) => {
+    test.skip('Presence avatars show other users', async ({ browser: _browser }) => {
       // Implementation
     })
 
-    test.skip('Selection indicator shows on node', async ({ browser }) => {
+    test.skip('Selection indicator shows on node', async ({ browser: _browser }) => {
       // Implementation
     })
 
-    test.skip('Cursor position shows on canvas', async ({ browser }) => {
+    test.skip('Cursor position shows on canvas', async ({ browser: _browser }) => {
       // Implementation
     })
   })

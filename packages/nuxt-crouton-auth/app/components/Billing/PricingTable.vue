@@ -38,7 +38,6 @@ const toast = useToast()
 const {
   enabled,
   plans,
-  subscription,
   loading,
   checkout,
   isCurrentPlan

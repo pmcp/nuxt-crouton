@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Mini card component for displaying a single locale's translation status
-const props = defineProps<{
+defineProps<{
   locale: string // Locale code (en, nl, fr)
   hasTranslation: boolean // Whether translation exists
 }>()

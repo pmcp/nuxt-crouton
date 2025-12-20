@@ -1,4 +1,4 @@
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (_event) => {
   // Simulate a list operation with occasional error
   const shouldError = Math.random() > 0.8
 

@@ -4,7 +4,6 @@
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 import fsp from 'node:fs/promises'
-import path from 'node:path'
 import readline from 'node:readline'
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
 
@@ -86,7 +85,7 @@ async function installPackage(packageName, isDev = false) {
   const cmd = `pnpm add ${isDev ? '-D' : ''} ${packageName}`
 
   try {
-    const { stdout, stderr } = await execAsync(cmd)
+    const { stderr } = await execAsync(cmd)
     if (stderr && !stderr.includes('WARN')) {
       console.error(`⚠️  Warning: ${stderr}`)
     }

@@ -49,7 +49,7 @@ export async function installConnectorPackage(projectRoot) {
   try {
     console.log('📦 Installing @friendlyinternet/nuxt-crouton-supersaas...')
 
-    const { stdout, stderr } = await execAsync(
+    const { stderr } = await execAsync(
       'pnpm add @friendlyinternet/nuxt-crouton-supersaas',
       { cwd: projectRoot }
     )
@@ -239,7 +239,7 @@ export async function setupConnectorInteractive(projectRoot, collectionName, rec
   const choice = await prompt(`\nSelect connector (1-${recommendations.length + 1}): `)
   const choiceNum = Number.parseInt(choice, 10)
 
-  if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > recommendations.length + 1) {
+  if (Number.isNaN(choiceNum) || choiceNum < 1 || choiceNum > recommendations.length + 1) {
     console.log('✗ Invalid choice')
     return false
   }

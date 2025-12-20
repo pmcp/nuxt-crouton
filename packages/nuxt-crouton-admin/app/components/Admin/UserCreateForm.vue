@@ -16,7 +16,7 @@ interface Props {
   showSuperAdminToggle?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false,
   showSuperAdminToggle: true
 })

@@ -10,7 +10,7 @@
  * are handled in unit tests. Integration tests focus on composable flows.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { ref, computed } from 'vue'
+import { } from 'vue'
 import {
   setupIntegrationMocks,
   createTestUser,

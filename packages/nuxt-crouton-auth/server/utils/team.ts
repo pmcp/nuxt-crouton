@@ -5,11 +5,36 @@
  * Includes mode-aware team resolution that works across all three modes.
  */
 import type { H3Event } from 'h3'
+import { createError, getRouterParam } from 'h3'
+import { useRuntimeConfig } from '#imports'
 import { drizzle } from 'drizzle-orm/d1'
 import { sql } from 'drizzle-orm'
 import type { Team, Member, User } from '../../types'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
+
+// hubDatabase is a NuxtHub auto-import, declare it for TypeScript
+declare function hubDatabase(): D1Database
+
+// Extended session type with organization plugin properties
+interface OrganizationSession {
+  session: {
+    id: string
+    userId: string
+    expiresAt: Date
+    activeOrganizationId?: string | null
+  }
+  user: User
+}
+
+// Organization API methods from Better Auth organization plugin
+interface OrganizationApi {
+  listMembers: (options: { query: { organizationId: string }, headers: Headers }) => Promise<{ members?: Array<{ id: string, userId: string, role: string, createdAt: string }> }>
+  getFullOrganization: (options: { query: { organizationId?: string, organizationSlug?: string }, headers: Headers }) => Promise<{ id: string, name: string, slug: string, logo?: string | null, metadata?: string | null, personal?: boolean | number | null, isDefault?: boolean | number | null, ownerId?: string | null, createdAt: string | Date } | null>
+  listOrganizations: (options: { headers: Headers }) => Promise<Array<{ id: string, name: string, slug: string, logo?: string | null, metadata?: string | null, personal?: boolean | number | null, isDefault?: boolean | number | null, ownerId?: string | null, createdAt: string | Date }>>
+  createOrganization: (options: { body: { name: string, slug: string, metadata?: string }, headers: Headers }) => Promise<{ id: string, name: string, slug: string, logo?: string | null, metadata?: string | null, personal?: boolean | number | null, isDefault?: boolean | number | null, ownerId?: string | null, createdAt: string | Date }>
+  setActiveOrganization: (options: { body: { organizationId: string }, headers: Headers }) => Promise<void>
+}
 
 // ============================================================================
 // Core Team Resolution (Mode-Aware)
@@ -50,8 +75,8 @@ export interface TeamContext {
 export async function resolveTeamAndCheckMembership(event: H3Event): Promise<TeamContext> {
   const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
 
-  // Get authenticated session from Better Auth
-  const session = await requireServerSession(event)
+  // Get authenticated session from Better Auth (cast to extended type with org properties)
+  const session = await requireServerSession(event) as OrganizationSession
 
   let teamId: string | undefined
 
@@ -116,12 +141,13 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
  * @param userId - User ID
  * @returns Member or null
  */
-export async function getMembership(event: H3Event, teamId: string, userId: string): Promise<Member | null> {
+export async function getMembership(event: H3Event, teamId: string, userId: string, _userId?: string): Promise<Member | null> {
   try {
     const auth = useServerAuth(event)
+    const api = auth.api as unknown as OrganizationApi
 
     // Use Better Auth's organization API to get member
-    const response = await auth.api.listMembers({
+    const response = await api.listMembers({
       query: { organizationId: teamId },
       headers: event.headers
     })
@@ -163,9 +189,10 @@ export async function getMembership(event: H3Event, teamId: string, userId: stri
 export async function getTeamById(event: H3Event, teamId: string): Promise<Team | null> {
   try {
     const auth = useServerAuth(event)
+    const api = auth.api as unknown as OrganizationApi
 
     // Use Better Auth's organization API to get organization
-    const response = await auth.api.getFullOrganization({
+    const response = await api.getFullOrganization({
       query: { organizationId: teamId },
       headers: event.headers
     })
@@ -194,9 +221,10 @@ export async function getTeamById(event: H3Event, teamId: string): Promise<Team 
 export async function getTeamBySlug(event: H3Event, slug: string): Promise<Team | null> {
   try {
     const auth = useServerAuth(event)
+    const api = auth.api as unknown as OrganizationApi
 
     // Use Better Auth's organization API to get by slug
-    const response = await auth.api.getFullOrganization({
+    const response = await api.getFullOrganization({
       query: { organizationSlug: slug },
       headers: event.headers
     })
@@ -222,9 +250,10 @@ export async function getTeamBySlug(event: H3Event, slug: string): Promise<Team 
 export async function getUserTeams(event: H3Event): Promise<Team[]> {
   try {
     const auth = useServerAuth(event)
+    const api = auth.api as unknown as OrganizationApi
 
     // Use Better Auth's organization API to list user's organizations
-    const response = await auth.api.listOrganizations({
+    const response = await api.listOrganizations({
       headers: event.headers
     })
 
@@ -311,9 +340,10 @@ export async function getOrCreateDefaultOrganization(event: H3Event): Promise<Te
 export async function createPersonalWorkspace(event: H3Event, userId: string, userName: string): Promise<Team> {
   try {
     const auth = useServerAuth(event)
+    const api = auth.api as unknown as OrganizationApi
 
     // Create organization with personal flag
-    const response = await auth.api.createOrganization({
+    const response = await api.createOrganization({
       body: {
         name: `${userName}'s Workspace`,
         slug: userId, // Use userId as slug for personal workspaces
@@ -330,7 +360,7 @@ export async function createPersonalWorkspace(event: H3Event, userId: string, us
     }
 
     // Set as active organization for the user
-    await auth.api.setActiveOrganization({
+    await api.setActiveOrganization({
       body: { organizationId: response.id },
       headers: event.headers
     })
@@ -349,7 +379,7 @@ export async function createPersonalWorkspace(event: H3Event, userId: string, us
  * @param userId - User ID
  * @returns Whether user can create another team
  */
-export async function canUserCreateTeam(event: H3Event, userId: string): Promise<boolean> {
+export async function canUserCreateTeam(event: H3Event, userId: string, _userId?: string): Promise<boolean> {
   const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
 
   // Check mode - only multi-tenant allows team creation

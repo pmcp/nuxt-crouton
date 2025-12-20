@@ -27,7 +27,7 @@ interface Props {
   error?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   resendCooldown: 60,
   loading: false,
   error: ''

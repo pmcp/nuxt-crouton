@@ -79,11 +79,6 @@ async function verifyMagicLink() {
     verifying.value = false
   }
 }
-
-// Navigate to login
-function goToLogin() {
-  router.push('/auth/login')
-}
 </script>
 
 <template>

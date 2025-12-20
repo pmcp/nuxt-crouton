@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+goo#!/usr/bin/env node
 // generate-collection.next.mjs — Complete collection generator with modular architecture
 
 import fsp from 'node:fs/promises'
@@ -8,7 +8,6 @@ import { promisify } from 'node:util'
 
 // Import utilities
 import { toCase, toSnakeCase, mapType, typeMapping } from './utils/helpers.mjs'
-import { DIALECTS } from './utils/dialects.mjs'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
 import { detectExternalReferences, getConnectorRecommendations, formatExternalReferences } from './utils/connector-detector.mjs'
 import { setupConnectorInteractive, installConnectorPackage, addConnectorToNuxtConfig, updateAppConfigWithPackageImport } from './utils/connector-installer.mjs'
@@ -123,9 +122,10 @@ async function loadFields(p) {
 }
 
 // Update the main schema index to export the new collection schema
+// NuxtHub v0.10+ expects schema at server/db/schema.ts
 async function updateSchemaIndex(collectionName, layer, force = false) {
   const cases = toCase(collectionName)
-  const schemaIndexPath = path.resolve('server', 'database', 'schema', 'index.ts')
+  const schemaIndexPath = path.resolve('server', 'db', 'schema.ts')
 
   // Generate the export name (layer-prefixed)
   // Convert layer to camelCase to ensure valid JavaScript identifier
@@ -214,7 +214,7 @@ async function registerTranslationsUiCollection() {
     try {
       content = await fsp.readFile(registryPath, 'utf8')
       fileExists = true
-    } catch (readError) {
+    } catch {
       // File doesn't exist, create it with initial content
       console.log(`↻ Creating app.config.ts with translationsUi collection`)
       content = `${importStatement}\n\nexport default defineAppConfig({\n  croutonCollections: {\n    ${collectionKey}: ${configName},\n  }\n})\n`
@@ -481,7 +481,7 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
     try {
       content = await fsp.readFile(registryPath, 'utf8')
       fileExists = true
-    } catch (readError) {
+    } catch {
       // File doesn't exist, create it with initial content
       console.log(`↻ Creating app.config.ts with crouton collections`)
       content = `${importStatement}\n\nexport default defineAppConfig({\n  croutonCollections: {\n    ${collectionKey}: ${configExportName},\n  }\n})\n`
@@ -615,7 +615,7 @@ async function updateLayerRootConfig(layer, collectionName, hasTranslations = fa
     try {
       config = await fsp.readFile(configPath, 'utf-8')
       configExists = true
-    } catch (readError) {
+    } catch {
       // Create new config
       console.log(`↻ Creating ${layer} layer root nuxt.config.ts`)
 

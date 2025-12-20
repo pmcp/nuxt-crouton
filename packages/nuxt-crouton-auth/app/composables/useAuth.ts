@@ -464,7 +464,7 @@ export function useAuth() {
   /**
    * Update passkey name
    */
-  async function updatePasskey(id: string, name: string): Promise<void> {
+  async function updatePasskey(_id: string, _name: string): Promise<void> {
     loading.value = true
     error.value = null
     try {

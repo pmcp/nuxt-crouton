@@ -103,7 +103,7 @@ export default defineEventHandler(async (event) => {
     if (config?.debug) {
       console.log(`[@crouton/auth] Server team context: mode=${mode}, teamId=${teamId}, teamSlug=${teamSlug}`)
     }
-  } catch (error) {
+  } catch {
     // Don't throw - just log and continue without team context
     // This allows public API routes to work
     if (config?.debug) {

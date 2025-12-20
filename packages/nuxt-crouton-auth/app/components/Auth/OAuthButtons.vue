@@ -19,7 +19,7 @@ interface Props {
   direction?: 'vertical' | 'horizontal'
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false,
   textPrefix: 'Continue with',
   direction: 'vertical'

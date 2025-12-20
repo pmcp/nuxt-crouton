@@ -111,7 +111,7 @@ interface Props {
   canEdit?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   item: null,
   pending: false,
   error: null,

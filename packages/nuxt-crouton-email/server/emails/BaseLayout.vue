@@ -19,7 +19,7 @@ interface Props {
   appUrl?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   preview: '',
   brandName: 'My App',
   logoUrl: '',

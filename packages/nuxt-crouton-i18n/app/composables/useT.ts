@@ -1,4 +1,4 @@
-import { h } from 'vue'
+import { } from 'vue'
 
 interface TranslationOptions {
   params?: Record<string, any>

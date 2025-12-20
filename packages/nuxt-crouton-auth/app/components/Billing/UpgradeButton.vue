@@ -50,12 +50,12 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
-const { enabled, checkout, isCurrentPlan, loading, getPlan } = useBilling()
+const { enabled, checkout, isCurrentPlan, getPlan } = useBilling()
 
 const isCheckingOut = ref(false)
 
 // Get plan details
-const plan = computed(() => getPlan(props.planId))
+const _plan = computed(() => getPlan(props.planId))
 
 // Button disabled state
 const buttonDisabled = computed(() => {

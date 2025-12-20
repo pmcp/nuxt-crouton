@@ -18,7 +18,7 @@ interface Props {
   showActions?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   showActions: true
 })
 
@@ -39,8 +39,7 @@ const {
   isPastDue,
   trialEndsAt,
   currentPeriodEnd,
-  cancelAtPeriodEnd,
-  loading
+  cancelAtPeriodEnd
 } = useBilling()
 
 // Format dates

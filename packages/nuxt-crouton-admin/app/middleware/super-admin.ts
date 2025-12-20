@@ -13,8 +13,7 @@
  * </script>
  * ```
  */
-import { defineNuxtRouteMiddleware, navigateTo, createError } from '#imports'
-import { useSession } from '#imports'
+import { defineNuxtRouteMiddleware, navigateTo, createError, useSession } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   // Skip on server - let server-side middleware handle it

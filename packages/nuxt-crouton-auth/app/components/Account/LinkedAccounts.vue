@@ -71,17 +71,18 @@ async function loadAccounts() {
     accounts.value = (result.data ?? []).map((a: {
       id: string
       userId: string
-      provider: string
+      providerId: string
       accountId: string
       accessToken?: string
       refreshToken?: string
-      accessTokenExpiresAt?: string
-      createdAt: string
-      updatedAt: string
+      accessTokenExpiresAt?: Date
+      createdAt: Date
+      updatedAt: Date
+      scopes?: string[]
     }) => ({
       id: a.id,
       userId: a.userId,
-      provider: a.provider,
+      provider: a.providerId,
       providerAccountId: a.accountId,
       accessToken: a.accessToken,
       refreshToken: a.refreshToken,

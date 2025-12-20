@@ -14,7 +14,7 @@ const addDomainSchema = z.object({
     .min(1, 'Domain is required')
     .transform(d => d.toLowerCase().trim())
     .refine(
-      d => /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(d),
+      d => /^(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(d),
       'Invalid domain format'
     )
 })

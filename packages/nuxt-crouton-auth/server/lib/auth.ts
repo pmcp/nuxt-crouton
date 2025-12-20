@@ -880,41 +880,45 @@ function buildStripePluginConfig(
       // Lifecycle hooks for subscription events
       onSubscriptionComplete: async ({ event, subscription, plan }) => {
         if (debug) {
+          const stripeObject = event?.data?.object as { id?: string } | undefined
           console.log(`[crouton/auth] Subscription created:`, {
             subscriptionId: subscription.id,
             plan: plan?.name,
             referenceId: subscription.referenceId,
-            stripeSubscriptionId: event.data.object.id
+            stripeSubscriptionId: stripeObject?.id
           })
         }
       },
 
       onSubscriptionUpdate: async ({ event, subscription }) => {
         if (debug) {
+          const stripeObject = event?.data?.object as { id?: string } | undefined
           console.log(`[crouton/auth] Subscription updated:`, {
             subscriptionId: subscription.id,
             status: subscription.status,
-            stripeSubscriptionId: event.data.object.id
+            stripeSubscriptionId: stripeObject?.id
           })
         }
       },
 
       onSubscriptionCancel: async ({ event, subscription, cancellationDetails }) => {
         if (debug) {
+          const stripeObject = event?.data?.object as { id?: string } | undefined
           console.log(`[crouton/auth] Subscription canceled:`, {
             subscriptionId: subscription.id,
             reason: cancellationDetails?.reason,
             feedback: cancellationDetails?.feedback,
-            stripeSubscriptionId: event.data.object.id
+            stripeSubscriptionId: stripeObject?.id
           })
         }
       },
 
       onSubscriptionDeleted: async ({ event, subscription }) => {
         if (debug) {
+          const stripeObject = event?.data?.object as { id?: string } | undefined
           console.log(`[crouton/auth] Subscription deleted:`, {
             subscriptionId: subscription.id,
-            stripeSubscriptionId: event.data.object.id
+            stripeSubscriptionId: stripeObject?.id
           })
         }
       }
@@ -927,15 +931,17 @@ function buildStripePluginConfig(
       }
 
       // Handle specific events that aren't covered by subscription hooks
+      // Type guard for objects with id property
+      const objectId = (event.data.object as { id?: string })?.id
       switch (event.type) {
         case 'invoice.paid':
           if (debug) {
-            console.log(`[crouton/auth] Invoice paid:`, event.data.object.id)
+            console.log(`[crouton/auth] Invoice paid:`, objectId)
           }
           break
         case 'invoice.payment_failed':
           if (debug) {
-            console.log(`[crouton/auth] Invoice payment failed:`, event.data.object.id)
+            console.log(`[crouton/auth] Invoice payment failed:`, objectId)
           }
           break
         // Add more event handlers as needed

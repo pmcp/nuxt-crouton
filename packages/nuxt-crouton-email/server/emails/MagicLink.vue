@@ -13,7 +13,7 @@ interface Props {
   appUrl?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   name: '',
   expiryMinutes: 10,
   preview: 'Click to sign in to your account',

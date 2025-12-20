@@ -36,7 +36,7 @@ function extractGeneratorFieldTypes(content) {
   const match = content.match(/\['([a-z]+)'(?:,\s*'([a-z]+)')*\]\.includes/)
   if (!match) {
     // Try matching typeMapping object keys
-    const typeMapMatch = content.match(/export const typeMapping\s*=\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/)
+    const typeMapMatch = content.match(/export const typeMapping\s*=\s*\{([\s\S]+?)\n\}/)
     if (typeMapMatch) {
       const keys = typeMapMatch[1].match(/^\s*(\w+):/gm)
       if (keys) {

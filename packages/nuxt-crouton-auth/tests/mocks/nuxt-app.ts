@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+// unused: import { vi } from 'vitest'
 
 // Mock nuxt app instance
 export const mockNuxtApp = {

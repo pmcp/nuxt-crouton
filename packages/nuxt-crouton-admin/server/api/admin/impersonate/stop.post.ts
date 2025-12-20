@@ -78,8 +78,6 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
     })
   }
 
-  const adminUser = adminUsers[0]!
-
   // Restore the session to the original admin
   await db
     .update(session)

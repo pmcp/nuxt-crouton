@@ -41,9 +41,9 @@ const errorMessage = computed(() => getErrorMessage(props.error))
 const errorCode = computed(() => getErrorCode(props.error))
 
 const colorMap = {
-  error: 'red' as const,
-  warning: 'yellow' as const,
-  info: 'blue' as const
+  error: 'error' as const,
+  warning: 'warning' as const,
+  info: 'info' as const
 }
 
 const iconMap = {

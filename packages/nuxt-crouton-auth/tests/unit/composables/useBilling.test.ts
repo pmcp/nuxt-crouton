@@ -216,7 +216,7 @@ describe('useBilling', () => {
       })
 
       // Mock window.location
-      const originalLocation = globalThis.window?.location
+      const _originalLocation = globalThis.window?.location
       Object.defineProperty(globalThis, 'window', {
         value: {
           location: {

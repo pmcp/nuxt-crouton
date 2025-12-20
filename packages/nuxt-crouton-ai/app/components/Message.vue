@@ -34,9 +34,6 @@ const formattedContent = computed(() => {
 })
 
 // Check if content contains code blocks
-const hasCodeBlocks = computed(() => {
-  return props.message.content.includes('```')
-})
 </script>
 
 <template>

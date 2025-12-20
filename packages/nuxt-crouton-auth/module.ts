@@ -174,10 +174,11 @@ export default defineNuxtModule<CroutonAuthConfig>({
     }
 
     // Set runtime config
+    // Type assertion needed because defu creates union types that don't match CroutonAuthConfig
     nuxt.options.runtimeConfig.public.crouton = defu(
       nuxt.options.runtimeConfig.public.crouton,
       { auth: config }
-    )
+    ) as typeof nuxt.options.runtimeConfig.public.crouton
 
     // Register server-side auth secret
     nuxt.options.runtimeConfig.auth = defu(nuxt.options.runtimeConfig.auth, {

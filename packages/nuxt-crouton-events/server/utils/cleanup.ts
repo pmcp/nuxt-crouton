@@ -4,7 +4,7 @@
  * Can be called via API endpoint or scheduled task (NuxtHub)
  */
 
-import { eq, lt, sql } from 'drizzle-orm'
+import { lt, sql } from 'drizzle-orm'
 
 interface CleanupOptions {
   retentionDays?: number
@@ -63,7 +63,7 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
     // Delete old events (by date)
     let deletedByDate = 0
     if (!dryRun && toDeleteByDate > 0) {
-      const result = await db
+      const _result = await db
         .delete(croutonEventsCroutonEvents)
         .where(lt(croutonEventsCroutonEvents.timestamp, cutoffDate))
 
