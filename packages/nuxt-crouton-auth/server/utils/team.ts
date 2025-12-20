@@ -12,6 +12,7 @@ import { sql } from 'drizzle-orm'
 import type { Team, Member, User } from '../../types'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
+import type { D1Database } from '@nuxthub/core'
 
 // hubDatabase is a NuxtHub auto-import, declare it for TypeScript
 declare function hubDatabase(): D1Database

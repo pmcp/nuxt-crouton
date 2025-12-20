@@ -62,9 +62,9 @@ export function useServerAuth(event?: H3Event): AuthInstance {
   }
 
   // Get base URL - use request URL if event available, otherwise fall back to config
-  let baseURL = (config.auth as { baseUrl?: string })?.baseUrl
+  let baseURL: string | undefined = (config.auth as { baseUrl?: string })?.baseUrl
     || process.env.BETTER_AUTH_URL
-    || config.public?.baseUrl
+    || (config.public?.baseUrl as string | undefined)
 
   // If we have an event, use the actual request origin (handles dynamic ports)
   if (!baseURL && event) {
@@ -105,7 +105,7 @@ export function useServerAuth(event?: H3Event): AuthInstance {
  * @param event - H3 event
  * @returns Session with user data, or null if not authenticated
  */
-export async function getServerSession(_event: H3Event) {
+export async function getServerSession(event: H3Event) {
   const auth = useServerAuth(event)
   return auth.api.getSession({
     headers: event.headers
@@ -119,7 +119,7 @@ export async function getServerSession(_event: H3Event) {
  * @returns Session with user data
  * @throws 401 error if not authenticated
  */
-export async function requireServerSession(_event: H3Event) {
+export async function requireServerSession(event: H3Event) {
   const session = await getServerSession(event)
 
   if (!session?.user) {

@@ -42,7 +42,8 @@ export function generateVerificationToken(length = 32): string {
   const randomValues = new Uint8Array(length)
   crypto.getRandomValues(randomValues)
   for (let i = 0; i < length; i++) {
-    result += chars[randomValues[i] % chars.length]
+    // randomValues[i] is guaranteed to exist since we created the array with exact length
+    result += chars[(randomValues[i] as number) % chars.length]
   }
   return result
 }

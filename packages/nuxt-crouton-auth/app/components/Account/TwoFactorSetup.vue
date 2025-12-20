@@ -10,7 +10,7 @@
  * <AccountTwoFactorSetup />
  * ```
  */
-import type { TwoFactorStatus, BackupCodeInfo } from '../../composables/useAuth'
+import type { TwoFactorStatus } from '../../composables/useAuth'
 
 interface Props {
   /** External loading state */
@@ -28,9 +28,18 @@ const {
   disable2FA,
   verifyTotp,
   generateBackupCodes,
-  viewBackupCodes,
   get2FAStatus
 } = useAuth()
+
+// Helper to extract secret from TOTP URI
+function extractSecretFromUri(uri: string): string {
+  try {
+    const url = new URL(uri)
+    return url.searchParams.get('secret') || ''
+  } catch {
+    return ''
+  }
+}
 const toast = useToast()
 
 // States
@@ -98,7 +107,8 @@ async function handlePasswordSubmit() {
   try {
     const data = await enable2FA(passwordInput.value)
     totpUri.value = data.totpURI
-    totpSecret.value = data.secret
+    totpSecret.value = extractSecretFromUri(data.totpURI)
+    backupCodes.value = data.backupCodes
     setupStep.value = 'qr'
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to enable 2FA'
@@ -187,19 +197,21 @@ async function handleDisable() {
   }
 }
 
-// View backup codes
+// View/regenerate backup codes
 const showBackupModal = ref(false)
 const backupPassword = ref('')
-const viewedBackupCodes = ref<BackupCodeInfo[]>([])
+const viewedBackupCodes = ref<string[]>([])
 
 async function handleViewBackupCodes() {
   if (!backupPassword.value) return
 
   viewCodesLoading.value = true
   try {
-    viewedBackupCodes.value = await viewBackupCodes(backupPassword.value)
+    // Better Auth 1.4.x: Uses generateBackupCodes which regenerates codes
+    // Previous codes are invalidated when generating new ones
+    viewedBackupCodes.value = await generateBackupCodes(backupPassword.value)
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to view backup codes'
+    const message = e instanceof Error ? e.message : 'Failed to generate backup codes'
     toast.add({
       title: 'Error',
       description: message,
@@ -622,35 +634,27 @@ async function copyBackupCodes(codes: string[]) {
           <div v-else>
             <div class="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg">
               <div
-                v-for="codeInfo in viewedBackupCodes"
-                :key="codeInfo.code"
+                v-for="code in viewedBackupCodes"
+                :key="code"
                 class="flex items-center gap-2"
               >
-                <code
-                  class="font-mono text-sm"
-                  :class="{ 'line-through text-muted': codeInfo.used }"
-                >
-                  {{ codeInfo.code }}
+                <code class="font-mono text-sm">
+                  {{ code }}
                 </code>
-                <UIcon
-                  v-if="codeInfo.used"
-                  name="i-lucide-check"
-                  class="size-4 text-muted"
-                />
               </div>
             </div>
 
             <p class="text-sm text-muted mt-4">
-              {{ t('account.codesRemaining', { count: viewedBackupCodes.filter((c) => !c.used).length }) }}
+              {{ t('account.codesRemaining', { count: viewedBackupCodes.length }) }}
             </p>
 
             <div class="flex justify-between mt-6">
               <UButton
                 variant="soft"
                 icon="i-lucide-copy"
-                @click="copyBackupCodes(viewedBackupCodes.filter((c) => !c.used).map((c) => c.code))"
+                @click="copyBackupCodes(viewedBackupCodes)"
               >
-                {{ t('account.copyUnusedCodes') }}
+                {{ t('account.copyCodes') }}
               </UButton>
               <UButton @click="showBackupModal = false">
                 {{ t('common.close') }}
