@@ -2,13 +2,13 @@ import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
   entries: [
-    { input: 'module', name: 'module' },
+    { input: 'module', name: 'module' }
   ],
   declaration: true,
   clean: true,
   failOnWarn: false,
   rollup: {
-    emitCJS: true,
+    emitCJS: true
   },
   externals: [
     'nuxt',
@@ -17,6 +17,6 @@ export default defineBuildConfig({
     'better-auth',
     'vue',
     'h3',
-    '#imports',
-  ],
+    '#imports'
+  ]
 })

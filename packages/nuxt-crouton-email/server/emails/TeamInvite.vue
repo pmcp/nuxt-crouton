@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
   brandName: 'My App',
   logoUrl: '',
   primaryColor: '#0F766E',
-  appUrl: '',
+  appUrl: ''
 })
 
 const previewText = props.preview || `${props.inviterName} invited you to join ${props.teamName}`
@@ -39,7 +39,7 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
         fontSize: '16px',
         lineHeight: '24px',
         color: '#525f7f',
-        margin: '0 0 16px',
+        margin: '0 0 16px'
       }"
     >
       Hello,
@@ -50,7 +50,7 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
         fontSize: '16px',
         lineHeight: '24px',
         color: '#525f7f',
-        margin: '0 0 24px',
+        margin: '0 0 24px'
       }"
     >
       <strong>{{ inviterName }}</strong> has invited you to join
@@ -73,7 +73,7 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
           textDecoration: 'none',
           textAlign: 'center',
           display: 'inline-block',
-          padding: '12px 24px',
+          padding: '12px 24px'
         }"
       >
         Accept Invitation
@@ -85,7 +85,7 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
         fontSize: '14px',
         lineHeight: '20px',
         color: '#8898aa',
-        margin: '0 0 16px',
+        margin: '0 0 16px'
       }"
     >
       If the button doesn't work, copy and paste this link into your browser:
@@ -97,7 +97,7 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
         lineHeight: '16px',
         color: '#8898aa',
         wordBreak: 'break-all',
-        margin: '0 0 24px',
+        margin: '0 0 24px'
       }"
     >
       {{ link }}
@@ -108,7 +108,7 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
         fontSize: '14px',
         lineHeight: '20px',
         color: '#8898aa',
-        margin: '0',
+        margin: '0'
       }"
     >
       If this invitation wasn't intended for you, you can safely ignore this email.

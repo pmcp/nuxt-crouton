@@ -18,7 +18,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false,
+  loading: false
 })
 
 const { t } = useT()
@@ -48,7 +48,7 @@ const providerInfo: Record<string, { name: string, icon: string, color: string }
   apple: { name: 'Apple', icon: 'i-simple-icons-apple', color: 'gray' },
   microsoft: { name: 'Microsoft', icon: 'i-simple-icons-microsoft', color: 'blue' },
   twitter: { name: 'X (Twitter)', icon: 'i-simple-icons-x', color: 'gray' },
-  facebook: { name: 'Facebook', icon: 'i-simple-icons-facebook', color: 'blue' },
+  facebook: { name: 'Facebook', icon: 'i-simple-icons-facebook', color: 'blue' }
 }
 
 // Get provider display info
@@ -56,7 +56,7 @@ function getProviderInfo(provider: string) {
   return providerInfo[provider] ?? {
     name: provider.charAt(0).toUpperCase() + provider.slice(1),
     icon: 'i-lucide-link',
-    color: 'gray',
+    color: 'gray'
   }
 }
 
@@ -87,14 +87,14 @@ async function loadAccounts() {
       refreshToken: a.refreshToken,
       expiresAt: a.accessTokenExpiresAt ? new Date(a.accessTokenExpiresAt) : undefined,
       createdAt: new Date(a.createdAt),
-      updatedAt: new Date(a.updatedAt),
+      updatedAt: new Date(a.updatedAt)
     }))
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to load accounts'
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     listLoading.value = false
@@ -119,7 +119,7 @@ async function handleLink(provider: string) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
     linkLoading.value = null
   }
@@ -130,7 +130,7 @@ async function handleUnlink(provider: string) {
   unlinkLoading.value = provider
   try {
     const result = await authClient.unlinkAccount({
-      providerId: provider,
+      providerId: provider
     })
 
     if (result.error) {
@@ -140,17 +140,17 @@ async function handleUnlink(provider: string) {
     toast.add({
       title: 'Account unlinked',
       description: `Your ${getProviderInfo(provider).name} account has been disconnected.`,
-      color: 'success',
+      color: 'success'
     })
 
     // Remove from local list
-    accounts.value = accounts.value.filter((a) => a.provider !== provider)
+    accounts.value = accounts.value.filter(a => a.provider !== provider)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to unlink account'
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     unlinkLoading.value = null
@@ -159,18 +159,18 @@ async function handleUnlink(provider: string) {
 
 // Check if provider is linked
 function isLinked(provider: string): boolean {
-  return accounts.value.some((a) => a.provider === provider)
+  return accounts.value.some(a => a.provider === provider)
 }
 
 // Get linked account for provider
 function getLinkedAccount(provider: string): LinkedAccount | undefined {
-  return accounts.value.find((a) => a.provider === provider)
+  return accounts.value.find(a => a.provider === provider)
 }
 
 // Format date
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
+    dateStyle: 'medium'
   }).format(date)
 }
 </script>
@@ -178,7 +178,9 @@ function formatDate(date: Date): string {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">{{ t('account.linkedAccounts') }}</h3>
+      <h3 class="text-lg font-semibold">
+        {{ t('account.linkedAccounts') }}
+      </h3>
       <p class="text-sm text-muted mt-1">
         {{ t('account.linkedAccountsDescription') }}
       </p>
@@ -194,7 +196,10 @@ function formatDate(date: Date): string {
     />
 
     <!-- Loading skeleton -->
-    <div v-else-if="listLoading" class="space-y-3">
+    <div
+      v-else-if="listLoading"
+      class="space-y-3"
+    >
       <div
         v-for="i in 3"
         :key="i"
@@ -210,7 +215,10 @@ function formatDate(date: Date): string {
     </div>
 
     <!-- Provider list -->
-    <div v-else class="space-y-3">
+    <div
+      v-else
+      class="space-y-3"
+    >
       <div
         v-for="provider in oauthProviders"
         :key="provider"
@@ -228,11 +236,19 @@ function formatDate(date: Date): string {
         </div>
 
         <div class="flex-1 min-w-0">
-          <p class="font-medium">{{ getProviderInfo(provider).name }}</p>
-          <p v-if="isLinked(provider)" class="text-sm text-muted">
+          <p class="font-medium">
+            {{ getProviderInfo(provider).name }}
+          </p>
+          <p
+            v-if="isLinked(provider)"
+            class="text-sm text-muted"
+          >
             {{ t('account.connectedOn', { date: formatDate(getLinkedAccount(provider)!.createdAt) }) }}
           </p>
-          <p v-else class="text-sm text-muted">
+          <p
+            v-else
+            class="text-sm text-muted"
+          >
             {{ t('account.notConnected') }}
           </p>
         </div>
@@ -270,7 +286,9 @@ function formatDate(date: Date): string {
       variant="soft"
       icon="i-lucide-alert-triangle"
     >
-      <template #title>{{ t('account.keepOneLoginMethod') }}</template>
+      <template #title>
+        {{ t('account.keepOneLoginMethod') }}
+      </template>
       <template #description>
         {{ t('account.keepOneLoginMethodDesc') }}
       </template>
@@ -283,7 +301,9 @@ function formatDate(date: Date): string {
       variant="soft"
       icon="i-lucide-link-2"
     >
-      <template #title>{{ t('account.aboutLinkedAccounts') }}</template>
+      <template #title>
+        {{ t('account.aboutLinkedAccounts') }}
+      </template>
       <template #description>
         {{ t('account.aboutLinkedAccountsDesc') }}
       </template>

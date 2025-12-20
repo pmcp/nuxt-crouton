@@ -29,7 +29,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  disabled: false,
+  disabled: false
 })
 
 const emit = defineEmits<{
@@ -54,7 +54,7 @@ function handleDragStart(event: DragEvent) {
   const dragData = {
     type: 'crouton-item',
     collection: props.collection,
-    item: props.item,
+    item: props.item
   }
 
   event.dataTransfer.setData('application/json', JSON.stringify(dragData))
@@ -86,7 +86,7 @@ function handleDragEnd(event: DragEvent) {
     class="crouton-draggable-item"
     :class="{
       'crouton-draggable-item--dragging': isDragging,
-      'crouton-draggable-item--disabled': disabled,
+      'crouton-draggable-item--disabled': disabled
     }"
     @dragstart="handleDragStart"
     @dragend="handleDragEnd"

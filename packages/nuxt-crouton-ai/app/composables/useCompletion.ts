@@ -28,7 +28,7 @@ import type { AICompletionOptions } from '../types'
  */
 export function useCompletion(options: AICompletionOptions = {}) {
   const config = useRuntimeConfig()
-  const defaults = config.public.croutonAI as { defaultProvider: string; defaultModel: string }
+  const defaults = config.public.croutonAI as { defaultProvider: string, defaultModel: string }
 
   // Try to get team context if nuxt-crouton is installed (provides useTeamContext)
   let teamId: string | undefined
@@ -36,8 +36,7 @@ export function useCompletion(options: AICompletionOptions = {}) {
     // @ts-expect-error - useTeamContext may not be available if nuxt-crouton isn't installed
     const { getTeamId } = useTeamContext()
     teamId = getTeamId()
-  }
-  catch {
+  } catch {
     // nuxt-crouton not installed, continue without team context
   }
 
@@ -48,7 +47,7 @@ export function useCompletion(options: AICompletionOptions = {}) {
       teamId,
       provider: options.provider || defaults.defaultProvider,
       model: options.model || defaults.defaultModel,
-      ...(options.body || {}),
+      ...(options.body || {})
     },
     headers: options.headers,
     credentials: options.credentials,
@@ -58,7 +57,7 @@ export function useCompletion(options: AICompletionOptions = {}) {
     onError: (error) => {
       options.onError?.(error)
     },
-    onResponse: options.onResponse,
+    onResponse: options.onResponse
   })
 
   return {
@@ -74,7 +73,7 @@ export function useCompletion(options: AICompletionOptions = {}) {
     data: completionHelper.data,
 
     // Crouton helpers
-    clearCompletion: () => completionHelper.setCompletion(''),
+    clearCompletion: () => completionHelper.setCompletion('')
   }
 }
 

@@ -13,25 +13,25 @@
  */
 
 const props = defineProps<{
-  value: string | string[] | null           // ID(s) of selected option(s)
-  dependentValue: string                    // Parent item ID (e.g., locationId)
-  dependentCollection: string               // Parent collection (e.g., 'bookingsLocations')
-  dependentField: string                    // Field in parent (e.g., 'slots')
+  value: string | string[] | null // ID(s) of selected option(s)
+  dependentValue: string // Parent item ID (e.g., locationId)
+  dependentCollection: string // Parent collection (e.g., 'bookingsLocations')
+  dependentField: string // Field in parent (e.g., 'slots')
 }>()
 
 // Fetch parent item using useCollectionItem (cached automatically!)
 const { item: parentItem, pending, error } = await useCollectionItem(
-    props.dependentCollection,
-    computed(() => props.dependentValue)
+  props.dependentCollection,
+  computed(() => props.dependentValue)
 )
 
 // Singularize function for component name resolution
 const singularize = (word: string): string => {
   if (word.endsWith('ies')) {
-    return word.slice(0, -3) + 'y'  // entries → entry
+    return word.slice(0, -3) + 'y' // entries → entry
   }
   if (word.endsWith('s')) {
-    return word.slice(0, -1)  // slots → slot
+    return word.slice(0, -1) // slots → slot
   }
   return word
 }
@@ -39,16 +39,16 @@ const singularize = (word: string): string => {
 // Resolve the Card component dynamically
 const customComponent = computed(() => {
   const collectionPascal = props.dependentCollection
-      .split(/[-_]/)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('')
+    .split(/[-_]/)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
 
   const fieldSingular = singularize(props.dependentField)
 
   const fieldPascal = fieldSingular
-      .split(/[-_]/)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('')
+    .split(/[-_]/)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
 
   const componentName = `${collectionPascal}${fieldPascal}CardMini`
 
@@ -87,8 +87,8 @@ const resolvedItems = computed(() => {
   console.log('🎯 Looking for IDs:', ids)
 
   const result = ids
-      .map(id => fieldData.find((opt: any) => opt.id === id))
-      .filter(Boolean)
+    .map(id => fieldData.find((opt: any) => opt.id === id))
+    .filter(Boolean)
 
   console.log('✨ Resolved items:', result)
 
@@ -102,28 +102,43 @@ const hasItems = computed(() => resolvedItems.value.length > 0)
 <template>
   <!-- Use custom component if it exists -->
   <component
-    v-if="customComponent && hasItems"
     :is="customComponent"
+    v-if="customComponent && hasItems"
     :value="resolvedItems"
   />
 
   <!-- Fallback: default badges -->
-  <div v-else class="text-sm">
+  <div
+    v-else
+    class="text-sm"
+  >
     <!-- Loading state -->
-    <USkeleton v-if="pending" class="h-5 w-20" />
+    <USkeleton
+      v-if="pending"
+      class="h-5 w-20"
+    />
 
     <!-- Error state -->
-    <span v-else-if="error" class="text-red-500 text-xs">
+    <span
+      v-else-if="error"
+      class="text-red-500 text-xs"
+    >
       Error loading
     </span>
 
     <!-- Empty state -->
-    <span v-else-if="!hasItems" class="text-gray-400">
+    <span
+      v-else-if="!hasItems"
+      class="text-gray-400"
+    >
       —
     </span>
 
     <!-- Default rendering: badges with labels -->
-    <div v-else class="flex flex-wrap gap-1">
+    <div
+      v-else
+      class="flex flex-wrap gap-1"
+    >
       <UBadge
         v-for="(item, index) in resolvedItems.slice(0, 3)"
         :key="index"
@@ -132,7 +147,11 @@ const hasItems = computed(() => resolvedItems.value.length > 0)
       >
         {{ item.label || item.value || item.id }}
       </UBadge>
-      <UBadge v-if="resolvedItems.length > 3" color="neutral" variant="subtle">
+      <UBadge
+        v-if="resolvedItems.length > 3"
+        color="neutral"
+        variant="subtle"
+      >
         +{{ resolvedItems.length - 3 }} more
       </UBadge>
     </div>

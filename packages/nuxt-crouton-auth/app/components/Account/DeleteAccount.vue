@@ -16,7 +16,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false,
+  loading: false
 })
 
 const emit = defineEmits<{
@@ -59,7 +59,7 @@ async function handleDelete() {
   deleteLoading.value = true
   try {
     const result = await authClient.deleteUser({
-      password: password.value,
+      password: password.value
     })
 
     if (result.error) {
@@ -69,7 +69,7 @@ async function handleDelete() {
     toast.add({
       title: 'Account deleted',
       description: 'Your account has been permanently deleted.',
-      color: 'success',
+      color: 'success'
     })
 
     // Sign out and redirect
@@ -81,7 +81,7 @@ async function handleDelete() {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     deleteLoading.value = false
@@ -100,7 +100,9 @@ watch(showModal, (open) => {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold text-error">{{ t('account.deleteAccount') }}</h3>
+      <h3 class="text-lg font-semibold text-error">
+        {{ t('account.deleteAccount') }}
+      </h3>
       <p class="text-sm text-muted mt-1">
         {{ t('account.deleteAccountDescription') }}
       </p>
@@ -111,7 +113,9 @@ watch(showModal, (open) => {
       variant="soft"
       icon="i-lucide-alert-triangle"
     >
-      <template #title>{{ t('confirmation.cannotUndo') }}</template>
+      <template #title>
+        {{ t('confirmation.cannotUndo') }}
+      </template>
       <template #description>
         <p>{{ t('account.deleteAccountWillPrefix') }}</p>
         <ul class="list-disc list-inside mt-2 space-y-1">
@@ -144,7 +148,9 @@ watch(showModal, (open) => {
               />
             </div>
             <div>
-              <h3 class="text-lg font-semibold">{{ t('account.deleteAccount') }}</h3>
+              <h3 class="text-lg font-semibold">
+                {{ t('account.deleteAccount') }}
+              </h3>
               <p class="text-sm text-muted">
                 {{ t('account.deleteAccountPermanent') }}
               </p>
@@ -158,7 +164,9 @@ watch(showModal, (open) => {
           >
             <template #description>
               <p>{{ t('account.aboutToDeleteAccount') }}</p>
-              <p class="font-semibold mt-1">{{ user?.email }}</p>
+              <p class="font-semibold mt-1">
+                {{ user?.email }}
+              </p>
             </template>
           </UAlert>
 

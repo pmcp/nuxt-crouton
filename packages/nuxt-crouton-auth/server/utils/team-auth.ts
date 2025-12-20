@@ -37,8 +37,8 @@ export async function isTeamMember(teamId: string, userId: string): Promise<bool
     // This function should only be called from API handlers
     // where the event is available
     console.warn(
-      '[crouton/auth] isTeamMember called without event context. ' +
-      'Use resolveTeamAndCheckMembership(event) in API handlers instead.'
+      '[crouton/auth] isTeamMember called without event context. '
+      + 'Use resolveTeamAndCheckMembership(event) in API handlers instead.'
     )
     return false
   } catch {

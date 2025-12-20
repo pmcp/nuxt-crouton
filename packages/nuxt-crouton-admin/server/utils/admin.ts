@@ -57,14 +57,14 @@ export async function requireSuperAdmin(event: H3Event): Promise<AdminContext> {
   // This function is auto-imported from @crouton/auth/server/utils
   const auth = useServerAuth(event)
   const session = await auth.api.getSession({
-    headers: event.headers,
+    headers: event.headers
   })
 
   if (!session?.user) {
     throw createError({
       statusCode: 401,
       statusMessage: 'Unauthorized',
-      message: 'Authentication required',
+      message: 'Authentication required'
     })
   }
 
@@ -80,7 +80,7 @@ export async function requireSuperAdmin(event: H3Event): Promise<AdminContext> {
       throw createError({
         statusCode: 403,
         statusMessage: 'Forbidden',
-        message: user.bannedReason || 'Your account has been banned',
+        message: user.bannedReason || 'Your account has been banned'
       })
     }
   }
@@ -90,7 +90,7 @@ export async function requireSuperAdmin(event: H3Event): Promise<AdminContext> {
     throw createError({
       statusCode: 403,
       statusMessage: 'Forbidden',
-      message: 'Super admin access required',
+      message: 'Super admin access required'
     })
   }
 
@@ -107,7 +107,7 @@ export async function requireSuperAdmin(event: H3Event): Promise<AdminContext> {
     banned: user.banned ?? false,
     bannedReason: user.bannedReason ?? null,
     bannedUntil: user.bannedUntil ? new Date(user.bannedUntil) : null,
-    stripeCustomerId: null,
+    stripeCustomerId: null
   }
 
   return { user: adminUser }
@@ -126,8 +126,7 @@ export async function getSuperAdmin(event: H3Event): Promise<AdminUser | null> {
   try {
     const { user } = await requireSuperAdmin(event)
     return user
-  }
-  catch {
+  } catch {
     return null
   }
 }

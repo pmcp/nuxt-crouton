@@ -6,8 +6,8 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineNuxtConfig({
   $meta: {
-    name: 'crouton-ai',
-    description: 'AI integration layer for Nuxt Crouton'
+    description: 'AI integration layer for Nuxt Crouton',
+    name: 'crouton-ai'
   },
 
   components: {
@@ -24,12 +24,6 @@ export default defineNuxtConfig({
     dirs: [join(currentDir, 'app/composables')]
   },
 
-  nitro: {
-    imports: {
-      dirs: [join(currentDir, 'server/utils')]
-    }
-  },
-
   runtimeConfig: {
     // Server-only (API keys)
     openaiApiKey: '',
@@ -40,6 +34,12 @@ export default defineNuxtConfig({
         defaultProvider: 'openai',
         defaultModel: 'gpt-4o'
       }
+    }
+  },
+
+  nitro: {
+    imports: {
+      dirs: [join(currentDir, 'server/utils')]
     }
   }
 })

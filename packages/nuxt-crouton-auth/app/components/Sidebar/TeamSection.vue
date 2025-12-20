@@ -25,7 +25,7 @@ const {
   teams,
   switchTeam,
   canCreateTeam,
-  loading,
+  loading
 } = useTeam()
 
 const { buildDashboardUrl } = useTeamContext()
@@ -47,10 +47,10 @@ const dropdownItems = computed(() => {
   const items: Array<{ label: string, icon: string, click?: () => void }[]> = []
 
   // Team list
-  const teamItems = teams.value.map((team) => ({
+  const teamItems = teams.value.map(team => ({
     label: team.name,
     icon: team.id === currentTeam.value?.id ? 'i-lucide-check' : 'i-lucide-building-2',
-    click: () => handleSwitch(team),
+    click: () => handleSwitch(team)
   }))
 
   if (teamItems.length > 0) {
@@ -63,8 +63,8 @@ const dropdownItems = computed(() => {
       {
         label: t('teams.createTeam'),
         icon: 'i-lucide-plus',
-        click: () => { showCreateModal.value = true },
-      },
+        click: () => { showCreateModal.value = true }
+      }
     ])
   }
 
@@ -135,7 +135,9 @@ const dropdownItems = computed(() => {
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold">{{ t('teams.createTeam') }}</h3>
+              <h3 class="text-lg font-semibold">
+                {{ t('teams.createTeam') }}
+              </h3>
               <UButton
                 icon="i-lucide-x"
                 variant="ghost"

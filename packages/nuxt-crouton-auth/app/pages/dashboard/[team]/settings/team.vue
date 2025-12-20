@@ -9,7 +9,7 @@
  */
 definePageMeta({
   middleware: ['auth'],
-  layout: 'dashboard',
+  layout: 'dashboard'
 })
 
 const { showTeamManagement, currentTeam, isAdmin, deleteTeam } = useTeam()
@@ -27,17 +27,16 @@ async function handleDelete() {
     toast.add({
       title: 'Team deleted',
       description: 'The team has been permanently deleted.',
-      color: 'success',
+      color: 'success'
     })
     // Redirect to dashboard root (will need to select new team)
     await navigateTo('/dashboard')
-  }
-  catch (e: unknown) {
+  } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to delete team'
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -56,45 +55,68 @@ function handleSaved() {
         :to="buildDashboardUrl('/settings')"
         class="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground mb-4"
       >
-        <UIcon name="i-lucide-arrow-left" class="size-4" />
+        <UIcon
+          name="i-lucide-arrow-left"
+          class="size-4"
+        />
         Back to Account Settings
       </NuxtLink>
 
-      <h1 class="text-2xl font-bold">Team Settings</h1>
+      <h1 class="text-2xl font-bold">
+        Team Settings
+      </h1>
       <p class="text-muted mt-1">
         Manage your team's profile and configuration.
       </p>
     </div>
 
     <!-- Team management not available -->
-    <UCard v-if="!showTeamManagement" class="text-center py-8">
+    <UCard
+      v-if="!showTeamManagement"
+      class="text-center py-8"
+    >
       <UIcon
         name="i-lucide-building-2"
         class="size-12 mx-auto mb-4 text-muted opacity-50"
       />
-      <h3 class="text-lg font-medium">Team Management Not Available</h3>
+      <h3 class="text-lg font-medium">
+        Team Management Not Available
+      </h3>
       <p class="text-muted mt-2 max-w-md mx-auto">
         Team management is only available in multi-tenant mode.
         Your app is configured for single-tenant or personal mode.
       </p>
       <NuxtLink :to="buildDashboardUrl('/settings')">
-        <UButton label="Go to Account Settings" variant="outline" class="mt-4" />
+        <UButton
+          label="Go to Account Settings"
+          variant="outline"
+          class="mt-4"
+        />
       </NuxtLink>
     </UCard>
 
     <!-- Not a team admin -->
-    <UCard v-else-if="!isAdmin" class="text-center py-8">
+    <UCard
+      v-else-if="!isAdmin"
+      class="text-center py-8"
+    >
       <UIcon
         name="i-lucide-shield-alert"
         class="size-12 mx-auto mb-4 text-muted opacity-50"
       />
-      <h3 class="text-lg font-medium">Access Restricted</h3>
+      <h3 class="text-lg font-medium">
+        Access Restricted
+      </h3>
       <p class="text-muted mt-2 max-w-md mx-auto">
         Only team owners and admins can modify team settings.
         Contact your team owner for access.
       </p>
       <NuxtLink :to="buildDashboardUrl('/settings')">
-        <UButton label="Go to Account Settings" variant="outline" class="mt-4" />
+        <UButton
+          label="Go to Account Settings"
+          variant="outline"
+          class="mt-4"
+        />
       </NuxtLink>
     </UCard>
 

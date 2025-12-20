@@ -3,8 +3,8 @@ import { getSeedGenerator, pascal } from '../utils/helpers.mjs'
 
 /**
  * Generate a seed file for a collection using drizzle-seed
- * @param {Object} data - Collection data with fields, names, etc.
- * @param {Object} config - Configuration options
+ * @param {object} data - Collection data with fields, names, etc.
+ * @param {object} config - Configuration options
  * @returns {string} - Generated seed file content
  */
 export function generateSeedFile(data, config = {}) {
@@ -35,7 +35,7 @@ export function generateSeedFile(data, config = {}) {
   const seedableFields = fields.filter(f => !AUTO_FIELDS.includes(f.name))
 
   // Build field mappings for drizzle-seed
-  const fieldMappings = seedableFields.map(f => {
+  const fieldMappings = seedableFields.map((f) => {
     const generator = getSeedGenerator(f)
 
     // Add comment for foreign key fields

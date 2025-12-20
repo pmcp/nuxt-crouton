@@ -1,52 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { CroutonAuthConfig } from '../../../types/config'
 
-// Mock Better Auth and plugins
-const mockBetterAuth = vi.fn(() => ({
-  api: {},
-  handler: () => {},
-}))
-
-vi.mock('better-auth', () => ({
-  betterAuth: (config: unknown) => mockBetterAuth(config),
-}))
-
-vi.mock('better-auth/plugins', () => ({
-  organization: vi.fn((config: unknown) => ({ type: 'organization', config })),
-  twoFactor: vi.fn((config: unknown) => ({ type: 'twoFactor', config })),
-}))
-
-vi.mock('@better-auth/passkey', () => ({
-  passkey: vi.fn((config: unknown) => ({ type: 'passkey', config })),
-}))
-
-vi.mock('@better-auth/stripe', () => ({
-  stripe: vi.fn((config: unknown) => ({ type: 'stripe', config })),
-}))
-
-vi.mock('better-auth/adapters/drizzle', () => ({
-  drizzleAdapter: vi.fn(() => ({ type: 'drizzle' })),
-}))
-
-// Mock Stripe client
-vi.mock('stripe', () => ({
-  default: vi.fn(() => ({})),
-}))
-
-// Mock drizzle-orm
-const mockDbRun = vi.fn()
-const mockDbAll = vi.fn()
-vi.mock('drizzle-orm/d1', () => ({
-  drizzle: () => ({
-    run: mockDbRun,
-    all: mockDbAll,
-  }),
-}))
-
-vi.mock('drizzle-orm', () => ({
-  sql: vi.fn((...args: unknown[]) => ({ query: 'mock-sql', args })),
-}))
-
 // Import after mocks
 import {
   createAuth,
@@ -62,8 +16,54 @@ import {
   isWebAuthnSupported,
   getConfiguredOAuthProviders,
   isOAuthProviderConfigured,
-  getOAuthCallbackURL,
+  getOAuthCallbackURL
 } from '../../../server/lib/auth'
+
+// Mock Better Auth and plugins
+const mockBetterAuth = vi.fn(() => ({
+  api: {},
+  handler: () => {}
+}))
+
+vi.mock('better-auth', () => ({
+  betterAuth: (config: unknown) => mockBetterAuth(config)
+}))
+
+vi.mock('better-auth/plugins', () => ({
+  organization: vi.fn((config: unknown) => ({ type: 'organization', config })),
+  twoFactor: vi.fn((config: unknown) => ({ type: 'twoFactor', config }))
+}))
+
+vi.mock('@better-auth/passkey', () => ({
+  passkey: vi.fn((config: unknown) => ({ type: 'passkey', config }))
+}))
+
+vi.mock('@better-auth/stripe', () => ({
+  stripe: vi.fn((config: unknown) => ({ type: 'stripe', config }))
+}))
+
+vi.mock('better-auth/adapters/drizzle', () => ({
+  drizzleAdapter: vi.fn(() => ({ type: 'drizzle' }))
+}))
+
+// Mock Stripe client
+vi.mock('stripe', () => ({
+  default: vi.fn(() => ({}))
+}))
+
+// Mock drizzle-orm
+const mockDbRun = vi.fn()
+const mockDbAll = vi.fn()
+vi.mock('drizzle-orm/d1', () => ({
+  drizzle: () => ({
+    run: mockDbRun,
+    all: mockDbAll
+  })
+}))
+
+vi.mock('drizzle-orm', () => ({
+  sql: vi.fn((...args: unknown[]) => ({ query: 'mock-sql', args }))
+}))
 
 describe('server/lib/auth', () => {
   beforeEach(() => {
@@ -102,7 +102,7 @@ describe('server/lib/auth', () => {
     it('should return false when twoFactor is false', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { twoFactor: false },
+        methods: { twoFactor: false }
       }
       expect(isTwoFactorEnabled(config)).toBe(false)
     })
@@ -110,7 +110,7 @@ describe('server/lib/auth', () => {
     it('should return true when twoFactor is true', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { twoFactor: true },
+        methods: { twoFactor: true }
       }
       expect(isTwoFactorEnabled(config)).toBe(true)
     })
@@ -118,7 +118,7 @@ describe('server/lib/auth', () => {
     it('should return true when twoFactor is object with enabled: true', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { twoFactor: { enabled: true } },
+        methods: { twoFactor: { enabled: true } }
       }
       expect(isTwoFactorEnabled(config)).toBe(true)
     })
@@ -126,7 +126,7 @@ describe('server/lib/auth', () => {
     it('should return false when twoFactor is object with enabled: false', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { twoFactor: { enabled: false } },
+        methods: { twoFactor: { enabled: false } }
       }
       expect(isTwoFactorEnabled(config)).toBe(false)
     })
@@ -134,7 +134,7 @@ describe('server/lib/auth', () => {
     it('should return true when twoFactor is object without enabled property', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { twoFactor: { issuer: 'Custom App' } },
+        methods: { twoFactor: { issuer: 'Custom App' } }
       }
       expect(isTwoFactorEnabled(config)).toBe(true)
     })
@@ -144,7 +144,7 @@ describe('server/lib/auth', () => {
     it('should return null when 2FA is disabled', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { twoFactor: false },
+        methods: { twoFactor: false }
       }
       expect(getTwoFactorInfo(config)).toBeNull()
     })
@@ -153,7 +153,7 @@ describe('server/lib/auth', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
         appName: 'Test App',
-        methods: { twoFactor: true },
+        methods: { twoFactor: true }
       }
       const info = getTwoFactorInfo(config)
 
@@ -174,9 +174,9 @@ describe('server/lib/auth', () => {
             backupCodesCount: 5,
             totp: true,
             trustedDevices: false,
-            trustedDeviceExpiry: 14,
-          },
-        },
+            trustedDeviceExpiry: 14
+          }
+        }
       }
       const info = getTwoFactorInfo(config)
 
@@ -196,7 +196,7 @@ describe('server/lib/auth', () => {
     it('should return false when billing.enabled is false', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        billing: { enabled: false },
+        billing: { enabled: false }
       }
       expect(isBillingEnabled(config)).toBe(false)
     })
@@ -204,7 +204,7 @@ describe('server/lib/auth', () => {
     it('should return false when billing enabled but no stripe config', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        billing: { enabled: true },
+        billing: { enabled: true }
       }
       expect(isBillingEnabled(config)).toBe(false)
     })
@@ -216,9 +216,9 @@ describe('server/lib/auth', () => {
           enabled: true,
           stripe: {
             publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123',
-          },
-        },
+            secretKey: 'sk_test_123'
+          }
+        }
       }
       expect(isBillingEnabled(config)).toBe(true)
     })
@@ -240,10 +240,10 @@ describe('server/lib/auth', () => {
             secretKey: 'sk_test_123',
             trialDays: 14,
             plans: [
-              { id: 'pro', name: 'Pro Plan', price: 29, interval: 'month', stripePriceId: 'price_123' },
-            ],
-          },
-        },
+              { id: 'pro', name: 'Pro Plan', price: 29, interval: 'month', stripePriceId: 'price_123' }
+            ]
+          }
+        }
       }
       const info = getBillingInfo(config)
 
@@ -265,9 +265,9 @@ describe('server/lib/auth', () => {
           enabled: true,
           stripe: {
             publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123',
-          },
-        },
+            secretKey: 'sk_test_123'
+          }
+        }
       }
       const info = getBillingInfo(config)
 
@@ -288,9 +288,9 @@ describe('server/lib/auth', () => {
           enabled: true,
           stripe: {
             publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123',
-          },
-        },
+            secretKey: 'sk_test_123'
+          }
+        }
       }
       expect(getStripePublishableKey(config)).toBe('pk_test_123')
     })
@@ -341,7 +341,7 @@ describe('server/lib/auth', () => {
     it('should return false when passkeys is false', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { passkeys: false },
+        methods: { passkeys: false }
       }
       expect(isPasskeyEnabled(config)).toBe(false)
     })
@@ -349,7 +349,7 @@ describe('server/lib/auth', () => {
     it('should return true when passkeys is true', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { passkeys: true },
+        methods: { passkeys: true }
       }
       expect(isPasskeyEnabled(config)).toBe(true)
     })
@@ -357,7 +357,7 @@ describe('server/lib/auth', () => {
     it('should return true when passkeys has enabled: true', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { passkeys: { enabled: true } },
+        methods: { passkeys: { enabled: true } }
       }
       expect(isPasskeyEnabled(config)).toBe(true)
     })
@@ -365,7 +365,7 @@ describe('server/lib/auth', () => {
     it('should return false when passkeys has enabled: false', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { passkeys: { enabled: false } },
+        methods: { passkeys: { enabled: false } }
       }
       expect(isPasskeyEnabled(config)).toBe(false)
     })
@@ -375,7 +375,7 @@ describe('server/lib/auth', () => {
     it('should return null when passkeys disabled', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { passkeys: false },
+        methods: { passkeys: false }
       }
       expect(getPasskeyInfo(config)).toBeNull()
     })
@@ -383,7 +383,7 @@ describe('server/lib/auth', () => {
     it('should return default info when passkeys is true', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        methods: { passkeys: true },
+        methods: { passkeys: true }
       }
       const info = getPasskeyInfo(config)
 
@@ -399,9 +399,9 @@ describe('server/lib/auth', () => {
         methods: {
           passkeys: {
             rpName: 'My App',
-            conditionalUI: false,
-          },
-        },
+            conditionalUI: false
+          }
+        }
       }
       const info = getPasskeyInfo(config)
 
@@ -428,18 +428,18 @@ describe('server/lib/auth', () => {
     it('should return provider info for configured providers', () => {
       const oauthConfig = {
         github: { clientId: 'gh-client', clientSecret: 'gh-secret' },
-        google: { clientId: 'g-client', clientSecret: 'g-secret' },
+        google: { clientId: 'g-client', clientSecret: 'g-secret' }
       }
       const providers = getConfiguredOAuthProviders(oauthConfig)
 
       expect(providers).toHaveLength(2)
-      expect(providers.find((p) => p.id === 'github')).toBeDefined()
-      expect(providers.find((p) => p.id === 'google')).toBeDefined()
+      expect(providers.find(p => p.id === 'github')).toBeDefined()
+      expect(providers.find(p => p.id === 'google')).toBeDefined()
     })
 
     it('should include icon and color for known providers', () => {
       const oauthConfig = {
-        github: { clientId: 'gh-client', clientSecret: 'gh-secret' },
+        github: { clientId: 'gh-client', clientSecret: 'gh-secret' }
       }
       const providers = getConfiguredOAuthProviders(oauthConfig)
 
@@ -450,7 +450,7 @@ describe('server/lib/auth', () => {
 
     it('should use generic icon for unknown providers', () => {
       const oauthConfig = {
-        custom: { clientId: 'custom-client', clientSecret: 'custom-secret' },
+        custom: { clientId: 'custom-client', clientSecret: 'custom-secret' }
       }
       const providers = getConfiguredOAuthProviders(oauthConfig)
 
@@ -467,21 +467,21 @@ describe('server/lib/auth', () => {
 
     it('should return false when provider not configured', () => {
       const oauthConfig = {
-        google: { clientId: 'g-client', clientSecret: 'g-secret' },
+        google: { clientId: 'g-client', clientSecret: 'g-secret' }
       }
       expect(isOAuthProviderConfigured(oauthConfig, 'github')).toBe(false)
     })
 
     it('should return true when provider is configured', () => {
       const oauthConfig = {
-        github: { clientId: 'gh-client', clientSecret: 'gh-secret' },
+        github: { clientId: 'gh-client', clientSecret: 'gh-secret' }
       }
       expect(isOAuthProviderConfigured(oauthConfig, 'github')).toBe(true)
     })
 
     it('should return false when provider config is incomplete', () => {
       const oauthConfig = {
-        github: { clientId: 'gh-client', clientSecret: '' },
+        github: { clientId: 'gh-client', clientSecret: '' }
       }
       expect(isOAuthProviderConfigured(oauthConfig, 'github')).toBe(false)
     })
@@ -510,7 +510,7 @@ describe('Mode-specific behavior', () => {
     it('should allow organization creation by users', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        teams: { allowCreate: true },
+        teams: { allowCreate: true }
       }
       // In multi-tenant mode, users can create organizations
       expect(config.mode).toBe('multi-tenant')
@@ -520,7 +520,7 @@ describe('Mode-specific behavior', () => {
     it('should use configurable organization limit', () => {
       const config: CroutonAuthConfig = {
         mode: 'multi-tenant',
-        teams: { limit: 10 },
+        teams: { limit: 10 }
       }
       expect(config.teams?.limit).toBe(10)
     })
@@ -531,7 +531,7 @@ describe('Mode-specific behavior', () => {
       const config: CroutonAuthConfig = {
         mode: 'single-tenant',
         defaultTeamId: 'my-default-team',
-        appName: 'My App',
+        appName: 'My App'
       }
       expect(config.defaultTeamId).toBe('my-default-team')
     })
@@ -539,7 +539,7 @@ describe('Mode-specific behavior', () => {
     it('should fall back to "default" when defaultTeamId not set', () => {
       const config: CroutonAuthConfig = {
         mode: 'single-tenant',
-        appName: 'My App',
+        appName: 'My App'
       }
       expect(config.defaultTeamId ?? 'default').toBe('default')
     })
@@ -548,7 +548,7 @@ describe('Mode-specific behavior', () => {
   describe('personal mode', () => {
     it('should limit organizations to 1', () => {
       const config: CroutonAuthConfig = {
-        mode: 'personal',
+        mode: 'personal'
       }
       // Personal mode automatically limits to 1 org per user
       expect(config.mode).toBe('personal')
@@ -561,9 +561,9 @@ describe('Mode-specific behavior', () => {
           enabled: true,
           stripe: {
             publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123',
-          },
-        },
+            secretKey: 'sk_test_123'
+          }
+        }
       }
       const info = getBillingInfo(config)
       expect(info?.billingMode).toBe('user')

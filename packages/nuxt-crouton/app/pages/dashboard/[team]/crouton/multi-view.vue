@@ -8,7 +8,9 @@
       >
         ← Back to collections
       </NuxtLink>
-      <h1 class="text-2xl font-bold">Multi-Collection View Example</h1>
+      <h1 class="text-2xl font-bold">
+        Multi-Collection View Example
+      </h1>
       <p class="text-muted-foreground">
         Three collections displayed side by side with different layouts
       </p>
@@ -19,11 +21,18 @@
       <!-- Collection 1: Bookings -->
       <div class="border border-default rounded-lg overflow-hidden bg-card">
         <div class="p-4 border-b border-default bg-muted/30">
-          <h2 class="font-semibold">Recent Bookings</h2>
-          <p class="text-xs text-muted-foreground">Latest booking entries</p>
+          <h2 class="font-semibold">
+            Recent Bookings
+          </h2>
+          <p class="text-xs text-muted-foreground">
+            Latest booking entries
+          </p>
         </div>
         <div class="max-h-[600px] overflow-auto">
-          <div v-if="bookingsPending" class="p-6 text-center text-muted-foreground">
+          <div
+            v-if="bookingsPending"
+            class="p-6 text-center text-muted-foreground"
+          >
             <p>Loading bookings...</p>
           </div>
           <CroutonCollection
@@ -48,9 +57,14 @@
               <CroutonDate :date="row.original.date" />
             </template>
           </CroutonCollection>
-          <div v-else class="p-6 text-center text-muted-foreground">
+          <div
+            v-else
+            class="p-6 text-center text-muted-foreground"
+          >
             <p>No bookings found</p>
-            <p class="text-xs mt-2">Create your first booking</p>
+            <p class="text-xs mt-2">
+              Create your first booking
+            </p>
           </div>
         </div>
       </div>
@@ -58,11 +72,18 @@
       <!-- Collection 2: Locations -->
       <div class="border border-default rounded-lg overflow-hidden bg-card">
         <div class="p-4 border-b border-default bg-muted/30">
-          <h2 class="font-semibold">Locations</h2>
-          <p class="text-xs text-muted-foreground">Available locations</p>
+          <h2 class="font-semibold">
+            Locations
+          </h2>
+          <p class="text-xs text-muted-foreground">
+            Available locations
+          </p>
         </div>
         <div class="max-h-[600px] overflow-auto">
-          <div v-if="locationsPending" class="p-6 text-center text-muted-foreground">
+          <div
+            v-if="locationsPending"
+            class="p-6 text-center text-muted-foreground"
+          >
             <p>Loading locations...</p>
           </div>
           <CroutonCollection
@@ -76,9 +97,14 @@
               <!-- No header -->
             </template>
           </CroutonCollection>
-          <div v-else class="p-6 text-center text-muted-foreground">
+          <div
+            v-else
+            class="p-6 text-center text-muted-foreground"
+          >
             <p>No locations found</p>
-            <p class="text-xs mt-2">Add your first location</p>
+            <p class="text-xs mt-2">
+              Add your first location
+            </p>
           </div>
         </div>
       </div>
@@ -86,8 +112,12 @@
       <!-- Collection 3: Activities (Mock) -->
       <div class="border border-default rounded-lg overflow-hidden bg-card">
         <div class="p-4 border-b border-default bg-muted/30">
-          <h2 class="font-semibold">Recent Activity</h2>
-          <p class="text-xs text-muted-foreground">Latest system events</p>
+          <h2 class="font-semibold">
+            Recent Activity
+          </h2>
+          <p class="text-xs text-muted-foreground">
+            Latest system events
+          </p>
         </div>
         <div class="max-h-[600px] overflow-auto">
           <CroutonCollection
@@ -107,13 +137,18 @@
 
     <!-- Responsive Layout Example -->
     <div class="mt-12">
-      <h2 class="text-xl font-bold mb-4">Responsive Layout Example</h2>
+      <h2 class="text-xl font-bold mb-4">
+        Responsive Layout Example
+      </h2>
       <p class="text-muted-foreground mb-6">
         Single collection that adapts: list on mobile, table on desktop
       </p>
 
       <div class="border border-default rounded-lg overflow-hidden bg-card">
-        <div v-if="bookingsPending" class="p-6 text-center text-muted-foreground">
+        <div
+          v-if="bookingsPending"
+          class="p-6 text-center text-muted-foreground"
+        >
           <p>Loading bookings...</p>
         </div>
         <CroutonCollection
@@ -125,8 +160,12 @@
         >
           <template #header>
             <div class="p-4 border-b border-default">
-              <h3 class="font-semibold">Responsive Bookings Table</h3>
-              <p class="text-xs text-muted-foreground">Resize your browser to see layout changes</p>
+              <h3 class="font-semibold">
+                Responsive Bookings Table
+              </h3>
+              <p class="text-xs text-muted-foreground">
+                Resize your browser to see layout changes
+              </p>
             </div>
           </template>
           <template #location-cell="{ row }">
@@ -145,14 +184,21 @@
 
     <!-- Two Column Layout Example -->
     <div class="mt-12">
-      <h2 class="text-xl font-bold mb-4">Two Column Layout</h2>
+      <h2 class="text-xl font-bold mb-4">
+        Two Column Layout
+      </h2>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Wide view 1: Bookings -->
         <div class="border border-default rounded-lg overflow-hidden bg-card">
           <div class="p-4 border-b border-default bg-muted/30">
-            <h3 class="font-semibold">All Bookings</h3>
+            <h3 class="font-semibold">
+              All Bookings
+            </h3>
           </div>
-          <div v-if="bookingsPending" class="p-6 text-center text-muted-foreground">
+          <div
+            v-if="bookingsPending"
+            class="p-6 text-center text-muted-foreground"
+          >
             <p>Loading...</p>
           </div>
           <CroutonCollection
@@ -178,9 +224,14 @@
         <!-- Wide view 2: Locations -->
         <div class="border border-default rounded-lg overflow-hidden bg-card">
           <div class="p-4 border-b border-default bg-muted/30">
-            <h3 class="font-semibold">All Locations</h3>
+            <h3 class="font-semibold">
+              All Locations
+            </h3>
           </div>
-          <div v-if="locationsPending" class="p-6 text-center text-muted-foreground">
+          <div
+            v-if="locationsPending"
+            class="p-6 text-center text-muted-foreground"
+          >
             <p>Loading...</p>
           </div>
           <CroutonCollection

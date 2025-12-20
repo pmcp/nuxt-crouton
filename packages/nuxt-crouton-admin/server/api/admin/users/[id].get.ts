@@ -28,7 +28,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
   if (!userId) {
     throw createError({
       statusCode: 400,
-      message: 'User ID is required',
+      message: 'User ID is required'
     })
   }
 
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
   if (users.length === 0) {
     throw createError({
       statusCode: 404,
-      message: 'User not found',
+      message: 'User not found'
     })
   }
 
@@ -57,8 +57,8 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
       organization: {
         id: organization.id,
         name: organization.name,
-        slug: organization.slug,
-      },
+        slug: organization.slug
+      }
     })
     .from(member)
     .innerJoin(organization, eq(member.organizationId, organization.id))
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
     .select({
       id: account.id,
       providerId: account.providerId,
-      createdAt: account.createdAt,
+      createdAt: account.createdAt
     })
     .from(account)
     .where(eq(account.userId, userId))
@@ -82,7 +82,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
       userAgent: session.userAgent,
       createdAt: session.createdAt,
       expiresAt: session.expiresAt,
-      impersonatingFrom: session.impersonatingFrom,
+      impersonatingFrom: session.impersonatingFrom
     })
     .from(session)
     .where(eq(session.userId, userId))
@@ -105,7 +105,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
       id: m.id,
       role: m.role,
       createdAt: m.createdAt,
-      organization: m.organization,
+      organization: m.organization
     })),
     sessions: sessions.map(s => ({
       id: s.id,
@@ -113,13 +113,13 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
       userAgent: s.userAgent,
       createdAt: s.createdAt,
       expiresAt: s.expiresAt,
-      impersonatingFrom: s.impersonatingFrom,
+      impersonatingFrom: s.impersonatingFrom
     })),
     accounts: accounts.map(a => ({
       id: a.id,
       providerId: a.providerId,
-      createdAt: a.createdAt,
-    })),
+      createdAt: a.createdAt
+    }))
   }
 
   return response

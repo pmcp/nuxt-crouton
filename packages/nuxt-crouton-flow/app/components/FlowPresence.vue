@@ -8,7 +8,7 @@ const props = defineProps<{
 }>()
 
 const otherUsers = computed(() =>
-  props.users.filter(u => u.user.id !== props.currentUserId),
+  props.users.filter(u => u.user.id !== props.currentUserId)
 )
 </script>
 
@@ -28,7 +28,10 @@ const otherUsers = computed(() =>
     </div>
 
     <!-- Cursors on canvas (if cursor tracking enabled) -->
-    <template v-for="user in otherUsers" :key="`cursor-${user.user.id}`">
+    <template
+      v-for="user in otherUsers"
+      :key="`cursor-${user.user.id}`"
+    >
       <div
         v-if="user.cursor"
         class="flow-presence-cursor"

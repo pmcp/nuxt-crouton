@@ -31,7 +31,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!isAuthenticated.value) {
     return navigateTo({
       path: '/auth/login',
-      query: { redirect: to.fullPath },
+      query: { redirect: to.fullPath }
     })
   }
 
@@ -44,7 +44,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     throw createError({
       statusCode: 403,
       statusMessage: 'Forbidden',
-      message: 'Super admin access required',
+      message: 'Super admin access required'
     })
   }
 })

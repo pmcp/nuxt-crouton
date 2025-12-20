@@ -41,7 +41,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   block: false,
   checkoutOptions: undefined,
-  disabled: false,
+  disabled: false
 })
 
 const emit = defineEmits<{
@@ -76,17 +76,15 @@ const handleCheckout = async () => {
   try {
     await checkout(props.planId, props.checkoutOptions)
     emit('checkout')
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error('Checkout failed')
     emit('error', err)
     toast.add({
       title: 'Checkout Error',
       description: err.message,
-      color: 'error',
+      color: 'error'
     })
-  }
-  finally {
+  } finally {
     isCheckingOut.value = false
   }
 }

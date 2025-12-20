@@ -17,7 +17,7 @@ const ADDRESS_FIELD_PATTERNS = [
   'country',
   'state',
   'province',
-  'region',
+  'region'
 ]
 
 // Coordinate field patterns
@@ -32,7 +32,7 @@ const COORDINATE_FIELD_PATTERNS = [
   'coords',
   'geocoordinates',
   'latlng',
-  'lnglat',
+  'lnglat'
 ]
 
 /**
@@ -58,7 +58,7 @@ export function isCoordinateField(fieldName) {
 /**
  * Detect if a collection has address fields that should trigger map/geocoding
  * @param {Array} fields - Collection fields array
- * @returns {Object} - { hasAddress: boolean, addressFields: Array, coordinateFields: Array }
+ * @returns {object} - { hasAddress: boolean, addressFields: Array, coordinateFields: Array }
  */
 export function detectAddressFields(fields) {
   const addressFields = fields.filter(f => isAddressField(f.name))
@@ -68,7 +68,7 @@ export function detectAddressFields(fields) {
     hasAddress: addressFields.length > 0,
     addressFields,
     coordinateFields,
-    hasCoordinates: coordinateFields.length > 0,
+    hasCoordinates: coordinateFields.length > 0
   }
 }
 
@@ -85,9 +85,9 @@ export function getCoordinateFieldName(coordinateFields) {
 
   // Prefer 'location' or 'coordinates' if they exist
   const preferred = coordinateFields.find(f =>
-    f.name === 'location' ||
-    f.name === 'coordinates' ||
-    f.name === 'coords'
+    f.name === 'location'
+    || f.name === 'coordinates'
+    || f.name === 'coords'
   )
 
   if (preferred) {
@@ -101,7 +101,7 @@ export function getCoordinateFieldName(coordinateFields) {
 /**
  * Build a geocoding query from address field values
  * Used in generated form components
- * @param {Object} addressValues - Object with address field values
+ * @param {object} addressValues - Object with address field values
  * @returns {string} - Concatenated address string
  */
 export function buildAddressQuery(addressValues) {

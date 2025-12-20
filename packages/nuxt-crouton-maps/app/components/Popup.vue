@@ -96,7 +96,10 @@ defineExpose({
 
 <template>
   <!-- Hidden container for popup content -->
-  <div ref="contentRef" class="crouton-map-popup-content">
+  <div
+    ref="contentRef"
+    class="crouton-map-popup-content"
+  >
     <slot />
   </div>
 </template>

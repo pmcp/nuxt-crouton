@@ -26,20 +26,20 @@
  * ```
  */
 
-import { execSync, spawn } from 'child_process'
-import { existsSync, readdirSync } from 'fs'
-import { join, resolve } from 'path'
+import { execSync, spawn } from 'node:child_process'
+import { existsSync, readdirSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 
 // ANSI color codes for terminal output
 const colors = {
-  reset: '\x1b[0m',
-  bold: '\x1b[1m',
-  dim: '\x1b[2m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m',
+  reset: '\x1B[0m',
+  bold: '\x1B[1m',
+  dim: '\x1B[2m',
+  red: '\x1B[31m',
+  green: '\x1B[32m',
+  yellow: '\x1B[33m',
+  blue: '\x1B[34m',
+  cyan: '\x1B[36m'
 }
 
 function log(message: string, color: keyof typeof colors = 'reset'): void {
@@ -122,7 +122,7 @@ function runCommand(command: string, cwd: string): string {
     return execSync(command, {
       cwd,
       encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'pipe']
     }).trim()
   } catch (error: any) {
     throw new Error(error.stderr || error.message)
@@ -137,7 +137,7 @@ function runInteractive(command: string, args: string[], cwd: string): Promise<n
     const child = spawn(command, args, {
       cwd,
       stdio: 'inherit',
-      shell: true,
+      shell: true
     })
 
     child.on('close', (code) => {
@@ -190,7 +190,7 @@ async function commandStatus(): Promise<void> {
   // Check if schema is exported from main schema
   const mainSchemaPath = join(projectRoot, 'server', 'database', 'schema', 'index.ts')
   if (existsSync(mainSchemaPath)) {
-    const schemaContent = require('fs').readFileSync(mainSchemaPath, 'utf-8')
+    const schemaContent = require('node:fs').readFileSync(mainSchemaPath, 'utf-8')
     if (schemaContent.includes('@crouton/auth') || schemaContent.includes('crouton-auth')) {
       logSuccess('Auth schema is exported from main schema')
     } else {
@@ -289,7 +289,7 @@ async function commandReset(): Promise<void> {
   const d1Path = join(projectRoot, '.wrangler', 'd1')
   if (existsSync(d1Path)) {
     try {
-      require('fs').rmSync(d1Path, { recursive: true, force: true })
+      require('node:fs').rmSync(d1Path, { recursive: true, force: true })
       logSuccess('Removed local D1 database')
     } catch (error: any) {
       logError(`Failed to remove D1 database: ${error.message}`)
@@ -302,7 +302,7 @@ async function commandReset(): Promise<void> {
   const nuxtPath = join(projectRoot, '.nuxt')
   if (existsSync(nuxtPath)) {
     try {
-      require('fs').rmSync(nuxtPath, { recursive: true, force: true })
+      require('node:fs').rmSync(nuxtPath, { recursive: true, force: true })
       logSuccess('Removed .nuxt cache')
     } catch (error: any) {
       logWarning(`Failed to remove .nuxt cache: ${error.message}`)

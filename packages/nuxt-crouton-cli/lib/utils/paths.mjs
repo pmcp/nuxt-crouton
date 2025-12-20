@@ -36,7 +36,7 @@ export const PATH_CONFIG = {
 
   // Function to resolve paths with variables
   resolve(pattern, variables = {}) {
-    return pattern.replace(/{(\w+)}/g, (match, key) => {
+    return pattern.replace(/\{(\w+)\}/g, (match, key) => {
       const value = variables[key]
       if (value === undefined) {
         console.warn(`Warning: Variable ${key} not provided for path pattern`)

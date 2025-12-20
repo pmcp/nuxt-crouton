@@ -26,10 +26,10 @@ const displayValue = computed(() => {
 
   // Otherwise use sensible defaults: label > value > id
   return (
-    resolvedValue.value.label ||
-    resolvedValue.value.value ||
-    resolvedValue.value.id ||
-    JSON.stringify(resolvedValue.value)
+    resolvedValue.value.label
+    || resolvedValue.value.value
+    || resolvedValue.value.id
+    || JSON.stringify(resolvedValue.value)
   )
 })
 </script>
@@ -37,15 +37,24 @@ const displayValue = computed(() => {
 <template>
   <div class="inline-block">
     <!-- Loading state -->
-    <USkeleton v-if="pending" class="h-4 w-24" />
+    <USkeleton
+      v-if="pending"
+      class="h-4 w-24"
+    />
 
     <!-- Error state -->
-    <span v-else-if="error" class="text-red-500 text-sm">
+    <span
+      v-else-if="error"
+      class="text-red-500 text-sm"
+    >
       Error loading
     </span>
 
     <!-- No value found -->
-    <span v-else-if="!resolvedValue" class="text-gray-400 text-sm italic">
+    <span
+      v-else-if="!resolvedValue"
+      class="text-gray-400 text-sm italic"
+    >
       Not found
     </span>
 

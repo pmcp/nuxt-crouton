@@ -74,9 +74,9 @@ export default createExternalCollectionHandler(
   },
 
   // Transform: SuperSaaS format → Crouton format
-  (member) => ({
+  member => ({
     id: member.userId,
-    title: member.name,        // Required for CroutonReferenceSelect
+    title: member.name, // Required for CroutonReferenceSelect
     email: member.email,
     avatarUrl: member.avatarUrl,
     role: member.role

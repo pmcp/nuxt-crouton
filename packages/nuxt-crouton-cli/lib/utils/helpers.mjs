@@ -38,7 +38,7 @@ export function mapType(t) {
 
 /**
  * Get the drizzle-seed generator for a field based on name and type
- * @param {Object} field - Field object with name and type properties
+ * @param {object} field - Field object with name and type properties
  * @returns {string} - drizzle-seed generator expression
  */
 export function getSeedGenerator(field) {
@@ -86,14 +86,14 @@ export const typeMapping = {
     db: 'VARCHAR(255)',
     drizzle: 'text',
     zod: 'z.string()',
-    default: "''",
+    default: '\'\'',
     tsType: 'string'
   },
   text: {
     db: 'TEXT',
     drizzle: 'text',
     zod: 'z.string()',
-    default: "''",
+    default: '\'\'',
     tsType: 'string'
   },
   number: {

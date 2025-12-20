@@ -50,7 +50,7 @@ export function generateComposable(data, config = {}) {
 
   // Detect dependent fields and build dependentFieldComponents map
   const dependentFieldComponents = {}
-  fields.forEach(field => {
+  fields.forEach((field) => {
     // Register Select components for: repeater fields, slotButtonGroup, or dependent fields
     if (field.type === 'repeater' || field.meta?.displayAs === 'slotButtonGroup' || field.meta?.dependsOn) {
       // Generate component name with full prefix: LayerCollectionFieldSelect

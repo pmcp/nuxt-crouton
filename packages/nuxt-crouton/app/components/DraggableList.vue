@@ -43,7 +43,7 @@ const props = withDefaults(defineProps<Props>(), {
   searchable: true,
   searchPlaceholder: 'Search items...',
   loading: false,
-  emptyMessage: 'No items available',
+  emptyMessage: 'No items available'
 })
 
 const emit = defineEmits<{
@@ -109,7 +109,10 @@ function handleItemClick(item: Record<string, unknown>) {
 <template>
   <div class="crouton-draggable-list">
     <!-- Search -->
-    <div v-if="searchable" class="crouton-draggable-list-search">
+    <div
+      v-if="searchable"
+      class="crouton-draggable-list-search"
+    >
       <UInput
         v-model="search"
         :placeholder="searchPlaceholder"
@@ -119,19 +122,34 @@ function handleItemClick(item: Record<string, unknown>) {
     </div>
 
     <!-- Loading state -->
-    <div v-if="loading" class="crouton-draggable-list-loading">
-      <UIcon name="i-lucide-loader-2" class="animate-spin" />
+    <div
+      v-if="loading"
+      class="crouton-draggable-list-loading"
+    >
+      <UIcon
+        name="i-lucide-loader-2"
+        class="animate-spin"
+      />
       <span>Loading...</span>
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="filteredItems.length === 0" class="crouton-draggable-list-empty">
-      <UIcon name="i-lucide-inbox" class="w-8 h-8 opacity-50" />
+    <div
+      v-else-if="filteredItems.length === 0"
+      class="crouton-draggable-list-empty"
+    >
+      <UIcon
+        name="i-lucide-inbox"
+        class="w-8 h-8 opacity-50"
+      />
       <span>{{ emptyMessage }}</span>
     </div>
 
     <!-- Items list -->
-    <div v-else class="crouton-draggable-list-items">
+    <div
+      v-else
+      class="crouton-draggable-list-items"
+    >
       <CroutonDraggableItem
         v-for="item in filteredItems"
         :key="String(item.id)"
@@ -143,19 +161,28 @@ function handleItemClick(item: Record<string, unknown>) {
           class="crouton-draggable-list-item"
           @click="handleItemClick(item)"
         >
-          <div v-if="getIcon(item)" class="crouton-draggable-list-item-icon">
+          <div
+            v-if="getIcon(item)"
+            class="crouton-draggable-list-item-icon"
+          >
             <UIcon :name="getIcon(item)!" />
           </div>
           <div class="crouton-draggable-list-item-content">
             <span class="crouton-draggable-list-item-label">
               {{ getLabel(item) }}
             </span>
-            <span v-if="getDescription(item)" class="crouton-draggable-list-item-description">
+            <span
+              v-if="getDescription(item)"
+              class="crouton-draggable-list-item-description"
+            >
               {{ getDescription(item) }}
             </span>
           </div>
           <div class="crouton-draggable-list-item-handle">
-            <UIcon name="i-lucide-grip-vertical" class="opacity-40" />
+            <UIcon
+              name="i-lucide-grip-vertical"
+              class="opacity-40"
+            />
           </div>
         </div>
       </CroutonDraggableItem>

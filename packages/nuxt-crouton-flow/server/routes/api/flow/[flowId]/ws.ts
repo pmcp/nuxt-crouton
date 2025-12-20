@@ -23,7 +23,7 @@ function getOrCreateRoom(flowId: string, collection: string) {
     rooms.set(roomKey, {
       doc,
       peers: new Set(),
-      awareness: new Map(),
+      awareness: new Map()
     })
   }
   return rooms.get(roomKey)!
@@ -32,14 +32,13 @@ function getOrCreateRoom(flowId: string, collection: string) {
 function broadcastToPeers(
   room: ReturnType<typeof getOrCreateRoom>,
   sender: unknown,
-  message: Uint8Array | string,
+  message: Uint8Array | string
 ) {
   for (const peer of room.peers) {
     if (peer !== sender) {
       try {
         peer.send(message)
-      }
-      catch {
+      } catch {
         // Peer disconnected, will be cleaned up on close
       }
     }
@@ -90,7 +89,7 @@ function messageToUint8Array(message: unknown): Uint8Array | null {
     && 'byteOffset' in message
     && 'byteLength' in message
   ) {
-    const bufferLike = message as { buffer: ArrayBuffer; byteOffset: number; byteLength: number }
+    const bufferLike = message as { buffer: ArrayBuffer, byteOffset: number, byteLength: number }
     return new Uint8Array(bufferLike.buffer, bufferLike.byteOffset, bufferLike.byteLength)
   }
 
@@ -135,15 +134,14 @@ export default defineWebSocketHandler({
     let textContent: string | null = null
     if (typeof message === 'string') {
       textContent = message
-    }
-    else if (
+    } else if (
       message
       && typeof message === 'object'
       && 'text' in message
       && typeof (message as { text: unknown }).text === 'function'
     ) {
       // crossws Message wrapper - check if it's a text message
-      const wsMessage = message as { text: () => string; rawData: unknown }
+      const wsMessage = message as { text: () => string, rawData: unknown }
       if (typeof wsMessage.rawData === 'string') {
         textContent = wsMessage.text()
       }
@@ -157,14 +155,12 @@ export default defineWebSocketHandler({
           room.awareness.set(parsed.clientId, parsed.state)
           // Broadcast awareness to others
           broadcastToPeers(room, peer, textContent)
-        }
-        else if (parsed.type === 'sync-request') {
+        } else if (parsed.type === 'sync-request') {
           // Send full state
           const stateUpdate = encodeStateAsUpdate(room.doc)
           peer.send(stateUpdate)
         }
-      }
-      catch {
+      } catch {
         // Not valid JSON, ignore
       }
       return
@@ -200,19 +196,17 @@ export default defineWebSocketHandler({
             // Broadcast awareness to all peers (including sender gets echo)
             const awarenessMessage = JSON.stringify({
               type: 'awareness',
-              users: Array.from(room.awareness.values()),
+              users: Array.from(room.awareness.values())
             })
             for (const p of room.peers) {
               try {
                 p.send(awarenessMessage)
-              }
-              catch {
+              } catch {
                 // Peer disconnected
               }
             }
           }
-        }
-        catch (e) {
+        } catch (e) {
           console.warn('[Flow WS] Failed to parse JSON-like binary:', e)
         }
         return
@@ -221,20 +215,18 @@ export default defineWebSocketHandler({
       // Apply Yjs update with inner try-catch for better error context
       try {
         applyUpdate(room.doc, data)
-      }
-      catch (yjsError) {
+      } catch (yjsError) {
         console.error('[Flow WS] Failed to apply Yjs update:', {
           error: yjsError,
           dataLength: data.length,
-          firstBytes: Array.from(data.slice(0, 20)),
+          firstBytes: Array.from(data.slice(0, 20))
         })
         return // Don't broadcast invalid updates
       }
 
       // Broadcast to other peers
       broadcastToPeers(room, peer, data)
-    }
-    catch (error) {
+    } catch (error) {
       console.error('[Flow WS] Error processing message:', error)
     }
   },
@@ -253,5 +245,5 @@ export default defineWebSocketHandler({
 
   error(peer, error) {
     console.error('[Flow WS] WebSocket error:', error)
-  },
+  }
 })

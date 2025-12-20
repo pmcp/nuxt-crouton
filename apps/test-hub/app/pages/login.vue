@@ -40,7 +40,7 @@ async function handleLogin(data: { email: string; password: string }) {
       />
       <p class="mt-4 text-center text-sm text-muted">
         Don't have an account?
-        <NuxtLink to="/register" class="text-primary">Register</NuxtLink>
+        <NuxtLink to="/apps/test-hub/app/pages/register" class="text-primary">Register</NuxtLink>
       </p>
     </div>
   </div>

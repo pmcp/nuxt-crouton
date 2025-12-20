@@ -26,13 +26,13 @@ export const AI_PROVIDERS: AIProvider[] = [
   {
     id: 'openai',
     name: 'OpenAI',
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1', 'o1-mini'],
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1', 'o1-mini']
   },
   {
     id: 'anthropic',
     name: 'Anthropic',
-    models: ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-5-sonnet-20241022'],
-  },
+    models: ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-5-sonnet-20241022']
+  }
 ]
 
 /**
@@ -43,44 +43,44 @@ export const AI_MODELS: Record<string, AIModel> = {
   'gpt-4o': {
     id: 'gpt-4o',
     name: 'GPT-4o',
-    description: 'Most capable OpenAI model, great for complex tasks',
+    description: 'Most capable OpenAI model, great for complex tasks'
   },
   'gpt-4o-mini': {
     id: 'gpt-4o-mini',
     name: 'GPT-4o Mini',
-    description: 'Fast and cost-effective for simpler tasks',
+    description: 'Fast and cost-effective for simpler tasks'
   },
   'gpt-4-turbo': {
     id: 'gpt-4-turbo',
     name: 'GPT-4 Turbo',
-    description: 'High capability with larger context window',
+    description: 'High capability with larger context window'
   },
   'o1': {
     id: 'o1',
     name: 'o1',
-    description: 'Advanced reasoning model for complex problems',
+    description: 'Advanced reasoning model for complex problems'
   },
   'o1-mini': {
     id: 'o1-mini',
     name: 'o1 Mini',
-    description: 'Fast reasoning model',
+    description: 'Fast reasoning model'
   },
   // Anthropic models
   'claude-sonnet-4-20250514': {
     id: 'claude-sonnet-4-20250514',
     name: 'Claude Sonnet 4',
-    description: 'Balanced performance and speed',
+    description: 'Balanced performance and speed'
   },
   'claude-opus-4-20250514': {
     id: 'claude-opus-4-20250514',
     name: 'Claude Opus 4',
-    description: 'Most capable Anthropic model',
+    description: 'Most capable Anthropic model'
   },
   'claude-3-5-sonnet-20241022': {
     id: 'claude-3-5-sonnet-20241022',
     name: 'Claude 3.5 Sonnet',
-    description: 'Previous generation, reliable performance',
-  },
+    description: 'Previous generation, reliable performance'
+  }
 }
 
 /**
@@ -91,7 +91,7 @@ export const AI_MODELS: Record<string, AIModel> = {
  */
 export function useAIProvider() {
   const config = useRuntimeConfig()
-  const defaults = config.public.croutonAI as { defaultProvider: string; defaultModel: string }
+  const defaults = config.public.croutonAI as { defaultProvider: string, defaultModel: string }
 
   return {
     /** The default provider from runtime config */
@@ -150,7 +150,7 @@ export function useAIProvider() {
         return 'anthropic'
       }
       return undefined
-    },
+    }
   }
 }
 

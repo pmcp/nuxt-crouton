@@ -6,7 +6,7 @@ import type {
   PasswordResetEmailOptions,
   TeamInviteEmailOptions,
   WelcomeEmailOptions,
-  SendEmailResult,
+  SendEmailResult
 } from '../../types'
 
 // Import email templates
@@ -20,7 +20,7 @@ import WelcomeEmail from '../emails/Welcome.vue'
  * Send a verification code email
  */
 export async function sendVerificationEmail(
-  options: VerificationEmailOptions,
+  options: VerificationEmailOptions
 ): Promise<SendEmailResult> {
   const config = useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
@@ -34,14 +34,14 @@ export async function sendVerificationEmail(
     name: options.name,
     expiryMinutes,
     preview: `Your verification code is ${options.code}`,
-    ...brandConfig,
+    ...brandConfig
   })
 
   return useEmailService().send({
     to: options.to,
     subject: `Your verification code is ${options.code}`,
     html,
-    text,
+    text
   })
 }
 
@@ -49,7 +49,7 @@ export async function sendVerificationEmail(
  * Send a magic link login email
  */
 export async function sendMagicLink(
-  options: MagicLinkEmailOptions,
+  options: MagicLinkEmailOptions
 ): Promise<SendEmailResult> {
   const config = useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
@@ -63,14 +63,14 @@ export async function sendMagicLink(
     name: options.name,
     expiryMinutes,
     preview: 'Click to sign in to your account',
-    ...brandConfig,
+    ...brandConfig
   })
 
   return useEmailService().send({
     to: options.to,
     subject: `Sign in to ${brandConfig.brandName}`,
     html,
-    text,
+    text
   })
 }
 
@@ -78,7 +78,7 @@ export async function sendMagicLink(
  * Send a password reset email
  */
 export async function sendPasswordReset(
-  options: PasswordResetEmailOptions,
+  options: PasswordResetEmailOptions
 ): Promise<SendEmailResult> {
   const config = useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
@@ -92,14 +92,14 @@ export async function sendPasswordReset(
     name: options.name,
     expiryMinutes,
     preview: 'Reset your password',
-    ...brandConfig,
+    ...brandConfig
   })
 
   return useEmailService().send({
     to: options.to,
     subject: `Reset your ${brandConfig.brandName} password`,
     html,
-    text,
+    text
   })
 }
 
@@ -107,7 +107,7 @@ export async function sendPasswordReset(
  * Send a team invitation email
  */
 export async function sendTeamInvite(
-  options: TeamInviteEmailOptions,
+  options: TeamInviteEmailOptions
 ): Promise<SendEmailResult> {
   const brandConfig = getEmailBrandConfig()
 
@@ -117,14 +117,14 @@ export async function sendTeamInvite(
     teamName: options.teamName,
     role: options.role,
     preview: `${options.inviterName} invited you to join ${options.teamName}`,
-    ...brandConfig,
+    ...brandConfig
   })
 
   return useEmailService().send({
     to: options.to,
     subject: `Join ${options.teamName} on ${brandConfig.brandName}`,
     html,
-    text,
+    text
   })
 }
 
@@ -132,7 +132,7 @@ export async function sendTeamInvite(
  * Send a welcome email
  */
 export async function sendWelcome(
-  options: WelcomeEmailOptions,
+  options: WelcomeEmailOptions
 ): Promise<SendEmailResult> {
   const brandConfig = getEmailBrandConfig()
 
@@ -140,13 +140,13 @@ export async function sendWelcome(
     name: options.name,
     getStartedLink: options.getStartedLink,
     preview: `Welcome to ${brandConfig.brandName}!`,
-    ...brandConfig,
+    ...brandConfig
   })
 
   return useEmailService().send({
     to: options.to,
     subject: `Welcome to ${brandConfig.brandName}!`,
     html,
-    text,
+    text
   })
 }

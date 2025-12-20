@@ -32,7 +32,7 @@ interface DriftReport {
 function extractStubKeys(content: string): Set<string> {
   const keys = new Set<string>()
   // Match lines like: 'some.key': 'Value',
-  const regex = /'([a-zA-Z0-9_.]+)':\s*['"`]/g
+  const regex = /'([\w.]+)':\s*['"`]/g
   let match
   while ((match = regex.exec(content)) !== null) {
     keys.add(match[1])
@@ -98,10 +98,10 @@ function generateStubEntries(keys: string[], localeData: Record<string, any>): s
     return typeof value === 'string' ? value : key
   }
 
-  return keys.map(key => {
+  return keys.map((key) => {
     const value = getValue(key)
     // Escape single quotes in value
-    const escapedValue = value.replace(/'/g, "\\'")
+    const escapedValue = value.replace(/'/g, '\\\'')
     return `    '${key}': '${escapedValue}',`
   }).join('\n')
 }
@@ -178,7 +178,7 @@ async function main() {
   process.exit(0)
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Error:', err)
   process.exit(1)
 })

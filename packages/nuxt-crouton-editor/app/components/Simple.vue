@@ -18,7 +18,10 @@
     @blur="$emit('blur', $event)"
   >
     <template #default="{ editor, handlers: editorHandlers }">
-      <slot :editor="editor" :handlers="editorHandlers" />
+      <slot
+        :editor="editor"
+        :handlers="editorHandlers"
+      />
     </template>
   </UEditor>
 </template>
@@ -63,7 +66,7 @@ const emit = defineEmits<{
 
 const model = computed({
   get: () => props.modelValue || '',
-  set: (value) => emit('update:modelValue', value)
+  set: value => emit('update:modelValue', value)
 })
 
 const mergedUi = computed(() => ({

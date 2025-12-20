@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
   codeLength: 6,
   resendCooldown: 60,
   loading: false,
-  error: '',
+  error: ''
 })
 
 const emit = defineEmits<{
@@ -129,9 +129,14 @@ defineExpose({ reset, focus })
     <!-- Header with email icon -->
     <div class="text-center">
       <div class="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-        <UIcon name="i-lucide-mail-check" class="w-8 h-8 text-primary" />
+        <UIcon
+          name="i-lucide-mail-check"
+          class="w-8 h-8 text-primary"
+        />
       </div>
-      <h2 class="text-xl font-semibold text-default">Check your email</h2>
+      <h2 class="text-xl font-semibold text-default">
+        Check your email
+      </h2>
       <p class="text-sm text-muted mt-2">
         We sent a verification code to
         <span class="font-medium text-default">{{ email }}</span>

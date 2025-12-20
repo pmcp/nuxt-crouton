@@ -9,7 +9,7 @@
  */
 
 definePageMeta({
-  layout: 'auth',
+  layout: 'auth'
 })
 
 const route = useRoute()
@@ -49,7 +49,7 @@ async function verifyMagicLink() {
   try {
     const authClient = useAuthClient()
     const result = await authClient.magicLink.verify({
-      token: token.value,
+      token: token.value
     })
 
     if (result.error) {
@@ -60,7 +60,7 @@ async function verifyMagicLink() {
     toast.add({
       title: 'Signed in',
       description: 'You have been signed in successfully.',
-      color: 'success',
+      color: 'success'
     })
 
     // Redirect to dashboard after short delay
@@ -73,7 +73,7 @@ async function verifyMagicLink() {
     toast.add({
       title: 'Sign in failed',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     verifying.value = false
@@ -96,14 +96,20 @@ function goToLogin() {
     </div>
 
     <!-- Magic link not enabled -->
-    <div v-if="!hasMagicLink" class="mt-8">
+    <div
+      v-if="!hasMagicLink"
+      class="mt-8"
+    >
       <UAlert
         color="warning"
         icon="i-lucide-alert-triangle"
         title="Magic link not enabled"
         description="Magic link authentication is not enabled for this application."
       />
-      <NuxtLink to="/auth/login" class="block mt-6">
+      <NuxtLink
+        to="/auth/login"
+        class="block mt-6"
+      >
         <UButton block>
           Sign in with another method
         </UButton>
@@ -111,14 +117,20 @@ function goToLogin() {
     </div>
 
     <!-- No token -->
-    <div v-else-if="!token" class="mt-8">
+    <div
+      v-else-if="!token"
+      class="mt-8"
+    >
       <UAlert
         color="error"
         icon="i-lucide-alert-triangle"
         title="Invalid link"
         description="The magic link is invalid or has expired. Please request a new one."
       />
-      <NuxtLink to="/auth/login" class="block mt-6">
+      <NuxtLink
+        to="/auth/login"
+        class="block mt-6"
+      >
         <UButton block>
           Request new magic link
         </UButton>
@@ -126,15 +138,24 @@ function goToLogin() {
     </div>
 
     <!-- Verifying state -->
-    <div v-else-if="verifying" class="mt-8 text-center">
-      <UIcon name="i-lucide-loader-circle" class="size-12 animate-spin text-primary" />
+    <div
+      v-else-if="verifying"
+      class="mt-8 text-center"
+    >
+      <UIcon
+        name="i-lucide-loader-circle"
+        class="size-12 animate-spin text-primary"
+      />
       <p class="mt-4 text-muted">
         Signing you in...
       </p>
     </div>
 
     <!-- Verified successfully -->
-    <div v-else-if="verified" class="mt-8">
+    <div
+      v-else-if="verified"
+      class="mt-8"
+    >
       <UAlert
         color="success"
         icon="i-lucide-check-circle"
@@ -142,12 +163,18 @@ function goToLogin() {
         description="You have been signed in successfully. Redirecting to dashboard..."
       />
       <div class="mt-4 text-center">
-        <UIcon name="i-lucide-loader-circle" class="size-6 animate-spin text-primary" />
+        <UIcon
+          name="i-lucide-loader-circle"
+          class="size-6 animate-spin text-primary"
+        />
       </div>
     </div>
 
     <!-- Verification error -->
-    <div v-else-if="verifyError" class="mt-8">
+    <div
+      v-else-if="verifyError"
+      class="mt-8"
+    >
       <UAlert
         color="error"
         icon="i-lucide-alert-triangle"

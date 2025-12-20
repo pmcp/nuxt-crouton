@@ -15,10 +15,10 @@ vi.mock('yjs', () => ({
   Doc: vi.fn(() => ({
     getMap: vi.fn(() => new Map()),
     on: vi.fn(),
-    destroy: vi.fn(),
+    destroy: vi.fn()
   })),
   applyUpdate: vi.fn(),
-  encodeStateAsUpdate: vi.fn(() => new Uint8Array()),
+  encodeStateAsUpdate: vi.fn(() => new Uint8Array())
 }))
 
 describe('useFlowSync', () => {

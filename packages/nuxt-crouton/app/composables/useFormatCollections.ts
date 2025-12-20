@@ -47,9 +47,9 @@ export function useFormatCollections() {
       singular = stripped.slice(0, -3) + 'y'
     }
     // Handle -es after sibilants: x, ch, sh, s, z (e.g., "boxes" → "box", "watches" → "watch")
-    else if (stripped.endsWith('xes') || stripped.endsWith('ches') ||
-             stripped.endsWith('shes') || stripped.endsWith('sses') ||
-             stripped.endsWith('zes')) {
+    else if (stripped.endsWith('xes') || stripped.endsWith('ches')
+      || stripped.endsWith('shes') || stripped.endsWith('sses')
+      || stripped.endsWith('zes')) {
       singular = stripped.slice(0, -2)
     }
     // Handle -oes → -o (e.g., "heroes" → "hero", "tomatoes" → "tomato")

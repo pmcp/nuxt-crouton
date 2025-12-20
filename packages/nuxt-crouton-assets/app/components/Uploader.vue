@@ -7,8 +7,14 @@
     />
 
     <!-- Metadata Form -->
-    <div v-if="selectedFile" class="space-y-3">
-      <UFormField label="Alt Text" name="alt">
+    <div
+      v-if="selectedFile"
+      class="space-y-3"
+    >
+      <UFormField
+        label="Alt Text"
+        name="alt"
+      >
         <UInput
           v-model="metadata.alt"
           placeholder="Describe the image for accessibility"

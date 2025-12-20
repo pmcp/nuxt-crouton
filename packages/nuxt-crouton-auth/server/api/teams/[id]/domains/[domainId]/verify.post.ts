@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   if (!domainId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Domain ID is required',
+      statusMessage: 'Domain ID is required'
     })
   }
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   if (!domain) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Domain not found',
+      statusMessage: 'Domain not found'
     })
   }
 
@@ -45,8 +45,8 @@ export default defineEventHandler(async (event) => {
       Answer?: Array<{ data: string }>
     }>(`https://cloudflare-dns.com/dns-query?name=${txtRecordName}&type=TXT`, {
       headers: {
-        Accept: 'application/dns-json',
-      },
+        Accept: 'application/dns-json'
+      }
     })
 
     if (dnsResponse.Status !== 0 || !dnsResponse.Answer) {
@@ -62,8 +62,8 @@ export default defineEventHandler(async (event) => {
         expectedRecord: {
           type: 'TXT',
           name: txtRecordName,
-          value: domain.verificationToken,
-        },
+          value: domain.verificationToken
+        }
       }
     }
 
@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
 
       return {
         verified: true,
-        message: 'Domain verified successfully!',
+        message: 'Domain verified successfully!'
       }
     }
 
@@ -98,8 +98,8 @@ export default defineEventHandler(async (event) => {
       expectedRecord: {
         type: 'TXT',
         name: txtRecordName,
-        value: domain.verificationToken,
-      },
+        value: domain.verificationToken
+      }
     }
   } catch (error) {
     console.error('DNS verification error:', error)
@@ -110,8 +110,8 @@ export default defineEventHandler(async (event) => {
       expectedRecord: {
         type: 'TXT',
         name: txtRecordName,
-        value: domain.verificationToken,
-      },
+        value: domain.verificationToken
+      }
     }
   }
 })

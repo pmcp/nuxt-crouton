@@ -67,7 +67,7 @@ export interface SendEmailOptions {
   /** Custom headers */
   headers?: Record<string, string>
   /** Tags for tracking */
-  tags?: Array<{ name: string; value: string }>
+  tags?: Array<{ name: string, value: string }>
 }
 
 /**
@@ -216,5 +216,5 @@ export interface WelcomeEmailProps extends EmailTemplateBaseProps {
 // Re-export everything
 export type {
   EmailConfig as CroutonEmailConfig,
-  EmailPublicConfig as CroutonEmailPublicConfig,
+  EmailPublicConfig as CroutonEmailPublicConfig
 }

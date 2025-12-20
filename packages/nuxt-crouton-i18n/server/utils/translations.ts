@@ -21,7 +21,7 @@ export function getTranslatedField(
       )
     `.as(field)
   }
-  
+
   return sql<string>`
     json_extract(${table.translations}, '$.' || ${locale} || '.' || ${field})
   `.as(field)

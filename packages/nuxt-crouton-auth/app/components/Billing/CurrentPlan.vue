@@ -19,7 +19,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showActions: true,
+  showActions: true
 })
 
 const emit = defineEmits<{
@@ -40,14 +40,14 @@ const {
   trialEndsAt,
   currentPeriodEnd,
   cancelAtPeriodEnd,
-  loading,
+  loading
 } = useBilling()
 
 // Format dates
 const formatDate = (date: Date | null) => {
   if (!date) return ''
   return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
+    dateStyle: 'medium'
   }).format(new Date(date))
 }
 
@@ -118,7 +118,10 @@ const statusLabel = computed(() => {
     </template>
 
     <!-- Has Subscription -->
-    <div v-if="subscription && plan" class="space-y-4">
+    <div
+      v-if="subscription && plan"
+      class="space-y-4"
+    >
       <!-- Plan Name & Price -->
       <div>
         <h4 class="text-xl font-bold">
@@ -185,13 +188,19 @@ const statusLabel = computed(() => {
         v-if="isPro && !cancelAtPeriodEnd"
         class="text-sm text-muted"
       >
-        <UIcon name="i-lucide-calendar" class="inline size-4 mr-1" />
+        <UIcon
+          name="i-lucide-calendar"
+          class="inline size-4 mr-1"
+        />
         Next billing date: {{ formatDate(currentPeriodEnd) }}
       </div>
     </div>
 
     <!-- No Subscription -->
-    <div v-else class="text-center py-6">
+    <div
+      v-else
+      class="text-center py-6"
+    >
       <UIcon
         name="i-lucide-credit-card"
         class="size-12 mx-auto mb-4 text-muted opacity-50"
@@ -205,7 +214,10 @@ const statusLabel = computed(() => {
     </div>
 
     <!-- Actions -->
-    <template v-if="showActions && subscription" #footer>
+    <template
+      v-if="showActions && subscription"
+      #footer
+    >
       <div class="flex flex-wrap gap-2">
         <BillingPortalButton
           size="sm"

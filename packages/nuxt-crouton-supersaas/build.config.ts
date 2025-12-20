@@ -8,8 +8,8 @@ export default defineBuildConfig({
       outDir: 'dist/connectors',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
-      loaders: ['js'],
-    },
+      loaders: ['js']
+    }
   ],
   declaration: true,
   clean: true,
@@ -21,6 +21,6 @@ export default defineBuildConfig({
     'vue',
     'nuxt',
     'zod',
-    '@friendlyinternet/nuxt-crouton',
-  ],
+    '@friendlyinternet/nuxt-crouton'
+  ]
 })

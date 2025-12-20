@@ -16,14 +16,14 @@ export const FIELD_TYPES: Record<string, FieldTypeMapping> = {
     db: 'VARCHAR(255)',
     drizzle: 'text',
     zod: 'z.string()',
-    default: "''",
+    default: '\'\'',
     tsType: 'string'
   },
   text: {
     db: 'TEXT',
     drizzle: 'text',
     zod: 'z.string()',
-    default: "''",
+    default: '\'\'',
     tsType: 'string'
   },
   number: {

@@ -38,7 +38,7 @@ const props = withDefaults(defineProps<Props>(), {
   redirect: '',
   showSsrLoader: true,
   requireAuth: true,
-  minLoadingTime: 100,
+  minLoadingTime: 100
 })
 
 const slots = defineSlots<{
@@ -59,8 +59,7 @@ onMounted(() => {
     setTimeout(() => {
       minTimeElapsed.value = true
     }, props.minLoadingTime)
-  }
-  else {
+  } else {
     minTimeElapsed.value = true
   }
 })

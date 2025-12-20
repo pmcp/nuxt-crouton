@@ -30,12 +30,12 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   resendCooldown: 60,
   loading: false,
-  error: '',
+  error: ''
 })
 
 const emit = defineEmits<{
   /** Emitted when resend is requested */
-  resend: []
+  'resend': []
   /** Emitted when user wants to change email */
   'change-email': []
 }>()
@@ -64,9 +64,14 @@ function handleChangeEmail() {
     <!-- Header with email icon -->
     <div class="text-center">
       <div class="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-        <UIcon name="i-lucide-wand-2" class="w-8 h-8 text-primary" />
+        <UIcon
+          name="i-lucide-wand-2"
+          class="w-8 h-8 text-primary"
+        />
       </div>
-      <h2 class="text-xl font-semibold text-default">Check your email</h2>
+      <h2 class="text-xl font-semibold text-default">
+        Check your email
+      </h2>
       <p class="text-sm text-muted mt-2">
         We sent a magic link to
       </p>
@@ -77,7 +82,10 @@ function handleChangeEmail() {
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-            <UIcon name="i-lucide-mail" class="w-5 h-5 text-primary" />
+            <UIcon
+              name="i-lucide-mail"
+              class="w-5 h-5 text-primary"
+            />
           </div>
           <span class="font-medium text-default">{{ email }}</span>
         </div>
@@ -120,7 +128,9 @@ function handleChangeEmail() {
 
     <!-- Help tips -->
     <div class="bg-muted/30 rounded-lg p-4 space-y-2">
-      <p class="text-xs font-medium text-default">Tips:</p>
+      <p class="text-xs font-medium text-default">
+        Tips:
+      </p>
       <ul class="text-xs text-muted space-y-1 list-disc list-inside">
         <li>Check your spam or junk folder</li>
         <li>Make sure the email address is correct</li>

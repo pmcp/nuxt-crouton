@@ -19,7 +19,7 @@ export default defineNuxtPlugin(() => {
   // Create the Better Auth client
   const authClient = createAuthClient({
     baseURL: window.location.origin,
-    plugins,
+    plugins
   })
 
   // Log initialization in debug mode
@@ -28,14 +28,14 @@ export default defineNuxtPlugin(() => {
       hasPasskeys: isPasskeyEnabled(config),
       hasTwoFactor: isTwoFactorEnabled(config),
       hasBilling: isBillingEnabled(config),
-      hasOrganization: true,
+      hasOrganization: true
     })
   }
 
   return {
     provide: {
-      authClient,
-    },
+      authClient
+    }
   }
 })
 
@@ -46,7 +46,7 @@ function buildClientPlugins(config?: CroutonAuthConfig) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [
     // Organization client is always enabled
-    organizationClient(),
+    organizationClient()
   ]
 
   // Conditionally add passkey client
@@ -63,7 +63,7 @@ function buildClientPlugins(config?: CroutonAuthConfig) {
   if (isBillingEnabled(config)) {
     plugins.push(stripeClient({
       // Enable subscription management
-      subscription: true,
+      subscription: true
     }))
   }
 

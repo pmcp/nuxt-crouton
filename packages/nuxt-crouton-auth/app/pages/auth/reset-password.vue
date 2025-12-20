@@ -9,7 +9,7 @@ import type { FormSubmitEvent, FormError } from '@nuxt/ui'
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'guest',
+  middleware: 'guest'
 })
 
 const route = useRoute()
@@ -24,7 +24,7 @@ const token = computed(() => route.query.token as string | undefined)
 // Form state
 const state = reactive({
   password: '',
-  confirmPassword: '',
+  confirmPassword: ''
 })
 
 // Track if reset was successful
@@ -53,7 +53,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Invalid link',
       description: 'The reset link is invalid or has expired.',
-      color: 'error',
+      color: 'error'
     })
     return
   }
@@ -64,14 +64,14 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Password reset',
       description: 'Your password has been reset successfully.',
-      color: 'success',
+      color: 'success'
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Password reset failed'
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -95,14 +95,20 @@ function goToLogin() {
     </div>
 
     <!-- Invalid/missing token -->
-    <div v-if="!token" class="mt-8">
+    <div
+      v-if="!token"
+      class="mt-8"
+    >
       <UAlert
         color="error"
         icon="i-lucide-alert-triangle"
         title="Invalid reset link"
         description="The password reset link is invalid or has expired. Please request a new one."
       />
-      <NuxtLink to="/auth/forgot-password" class="block mt-6">
+      <NuxtLink
+        to="/auth/forgot-password"
+        class="block mt-6"
+      >
         <UButton block>
           Request new link
         </UButton>
@@ -110,7 +116,10 @@ function goToLogin() {
     </div>
 
     <!-- Reset successful -->
-    <div v-else-if="resetSuccess" class="mt-8">
+    <div
+      v-else-if="resetSuccess"
+      class="mt-8"
+    >
       <UAlert
         color="success"
         icon="i-lucide-check-circle"
@@ -134,7 +143,10 @@ function goToLogin() {
       class="mt-8 space-y-6"
       @submit="onSubmit"
     >
-      <UFormField label="New password" name="password">
+      <UFormField
+        label="New password"
+        name="password"
+      >
         <UInput
           v-model="state.password"
           type="password"
@@ -144,7 +156,10 @@ function goToLogin() {
         />
       </UFormField>
 
-      <UFormField label="Confirm new password" name="confirmPassword">
+      <UFormField
+        label="Confirm new password"
+        name="confirmPassword"
+      >
         <UInput
           v-model="state.confirmPassword"
           type="password"

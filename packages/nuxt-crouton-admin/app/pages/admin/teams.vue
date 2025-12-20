@@ -6,11 +6,11 @@
  * Protected by super-admin middleware.
  */
 definePageMeta({
-  middleware: 'super-admin',
+  middleware: 'super-admin'
 })
 
 useSeoMeta({
-  title: 'View Teams - Admin',
+  title: 'View Teams - Admin'
 })
 </script>
 
@@ -24,11 +24,17 @@ useSeoMeta({
             to="/admin"
             class="flex size-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
           >
-            <UIcon name="i-heroicons-arrow-left" class="size-5" />
+            <UIcon
+              name="i-heroicons-arrow-left"
+              class="size-5"
+            />
           </NuxtLink>
           <div class="flex items-center gap-3">
             <div class="flex size-10 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900">
-              <UIcon name="i-heroicons-building-office-2" class="size-5 text-violet-600 dark:text-violet-400" />
+              <UIcon
+                name="i-heroicons-building-office-2"
+                class="size-5 text-violet-600 dark:text-violet-400"
+              />
             </div>
             <div>
               <h1 class="text-2xl font-bold text-gray-900 dark:text-white">

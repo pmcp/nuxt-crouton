@@ -2,16 +2,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, computed, readonly } from 'vue'
 import type { User } from '../../../types'
 
+// Import the composable after mocks are set up
+import { useAuth } from '../../../app/composables/useAuth'
+
 // Mock auth client
 const mockAuthClient = {
   signIn: {
     email: vi.fn(),
     social: vi.fn(),
     passkey: vi.fn(),
-    magicLink: vi.fn(),
+    magicLink: vi.fn()
   },
   signUp: {
-    email: vi.fn(),
+    email: vi.fn()
   },
   signOut: vi.fn(),
   forgetPassword: vi.fn(),
@@ -20,7 +23,7 @@ const mockAuthClient = {
   passkey: {
     addPasskey: vi.fn(),
     listUserPasskeys: vi.fn(),
-    deletePasskey: vi.fn(),
+    deletePasskey: vi.fn()
   },
   twoFactor: {
     enable: vi.fn(),
@@ -29,8 +32,8 @@ const mockAuthClient = {
     verifyTotp: vi.fn(),
     generateBackupCodes: vi.fn(),
     viewBackupCodes: vi.fn(),
-    verifyBackupCode: vi.fn(),
-  },
+    verifyBackupCode: vi.fn()
+  }
 }
 
 // Mock session state
@@ -44,7 +47,7 @@ const mockClear = vi.fn()
 
 // Setup global mocks before importing the module
 vi.stubGlobal('useNuxtApp', () => ({
-  $authClient: mockAuthClient,
+  $authClient: mockAuthClient
 }))
 
 vi.stubGlobal('useRuntimeConfig', () => ({
@@ -56,15 +59,15 @@ vi.stubGlobal('useRuntimeConfig', () => ({
           password: true,
           oauth: {
             github: { clientId: 'test-github', clientSecret: 'test' },
-            google: { clientId: 'test-google', clientSecret: 'test' },
+            google: { clientId: 'test-google', clientSecret: 'test' }
           },
           passkeys: { enabled: true },
           twoFactor: { enabled: true },
-          magicLink: { enabled: true },
-        },
-      },
-    },
-  },
+          magicLink: { enabled: true }
+        }
+      }
+    }
+  }
 }))
 
 vi.stubGlobal('ref', ref)
@@ -78,11 +81,8 @@ vi.stubGlobal('useSession', () => ({
   isPending: mockIsPending,
   error: mockSessionError,
   refresh: mockRefresh,
-  clear: mockClear,
+  clear: mockClear
 }))
-
-// Import the composable after mocks are set up
-import { useAuth } from '../../../app/composables/useAuth'
 
 describe('useAuth', () => {
   beforeEach(() => {
@@ -111,7 +111,7 @@ describe('useAuth', () => {
         image: null,
         emailVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       }
       mockSessionUser.value = testUser
       mockIsAuthenticated.value = true
@@ -176,7 +176,7 @@ describe('useAuth', () => {
       expect(mockAuthClient.signIn.email).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password123',
-        rememberMe: undefined,
+        rememberMe: undefined
       })
       expect(mockRefresh).toHaveBeenCalled()
     })
@@ -190,14 +190,14 @@ describe('useAuth', () => {
       expect(mockAuthClient.signIn.email).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password123',
-        rememberMe: true,
+        rememberMe: true
       })
     })
 
     it('should throw on login error', async () => {
       mockAuthClient.signIn.email.mockResolvedValue({
         data: null,
-        error: { message: 'Invalid credentials' },
+        error: { message: 'Invalid credentials' }
       })
 
       const { login, error } = useAuth()
@@ -235,14 +235,14 @@ describe('useAuth', () => {
 
       expect(mockAuthClient.signIn.social).toHaveBeenCalledWith({
         provider: 'github',
-        callbackURL: 'http://localhost:3000/auth/callback',
+        callbackURL: 'http://localhost:3000/auth/callback'
       })
     })
 
     it('should throw on OAuth error', async () => {
       mockAuthClient.signIn.social.mockResolvedValue({
         data: null,
-        error: { message: 'OAuth failed' },
+        error: { message: 'OAuth failed' }
       })
 
       const { loginWithOAuth, error } = useAuth()
@@ -266,7 +266,7 @@ describe('useAuth', () => {
     it('should throw on passkey error', async () => {
       mockAuthClient.signIn.passkey.mockResolvedValue({
         data: null,
-        error: { message: 'Passkey failed' },
+        error: { message: 'Passkey failed' }
       })
 
       const { loginWithPasskey, error } = useAuth()
@@ -297,14 +297,14 @@ describe('useAuth', () => {
 
       expect(mockAuthClient.signIn.magicLink).toHaveBeenCalledWith({
         email: 'test@example.com',
-        callbackURL: 'http://localhost:3000/auth/callback',
+        callbackURL: 'http://localhost:3000/auth/callback'
       })
     })
 
     it('should throw on magic link error', async () => {
       mockAuthClient.signIn.magicLink.mockResolvedValue({
         data: null,
-        error: { message: 'Magic link failed' },
+        error: { message: 'Magic link failed' }
       })
 
       const { loginWithMagicLink, error } = useAuth()
@@ -324,7 +324,7 @@ describe('useAuth', () => {
       expect(mockAuthClient.signUp.email).toHaveBeenCalledWith({
         email: 'new@example.com',
         password: 'password123',
-        name: 'New User',
+        name: 'New User'
       })
       expect(mockRefresh).toHaveBeenCalled()
     })
@@ -338,14 +338,14 @@ describe('useAuth', () => {
       expect(mockAuthClient.signUp.email).toHaveBeenCalledWith({
         email: 'testuser@example.com',
         password: 'password123',
-        name: 'testuser',
+        name: 'testuser'
       })
     })
 
     it('should throw on registration error', async () => {
       mockAuthClient.signUp.email.mockResolvedValue({
         data: null,
-        error: { message: 'Email already exists' },
+        error: { message: 'Email already exists' }
       })
 
       const { register, error } = useAuth()
@@ -386,14 +386,14 @@ describe('useAuth', () => {
 
       expect(mockAuthClient.forgetPassword).toHaveBeenCalledWith({
         email: 'test@example.com',
-        redirectTo: 'http://localhost:3000/auth/reset-password',
+        redirectTo: 'http://localhost:3000/auth/reset-password'
       })
     })
 
     it('should throw on forgot password error', async () => {
       mockAuthClient.forgetPassword.mockResolvedValue({
         data: null,
-        error: { message: 'User not found' },
+        error: { message: 'User not found' }
       })
 
       const { forgotPassword, error } = useAuth()
@@ -412,14 +412,14 @@ describe('useAuth', () => {
 
       expect(mockAuthClient.resetPassword).toHaveBeenCalledWith({
         token: 'reset-token-123',
-        newPassword: 'newpassword123',
+        newPassword: 'newpassword123'
       })
     })
 
     it('should throw on reset password error', async () => {
       mockAuthClient.resetPassword.mockResolvedValue({
         data: null,
-        error: { message: 'Invalid token' },
+        error: { message: 'Invalid token' }
       })
 
       const { resetPassword, error } = useAuth()
@@ -439,14 +439,14 @@ describe('useAuth', () => {
         await addPasskey({ name: 'My Laptop' })
 
         expect(mockAuthClient.passkey.addPasskey).toHaveBeenCalledWith({
-          name: 'My Laptop',
+          name: 'My Laptop'
         })
       })
 
       it('should throw on add passkey error', async () => {
         mockAuthClient.passkey.addPasskey.mockResolvedValue({
           data: null,
-          error: { message: 'Failed to add passkey' },
+          error: { message: 'Failed to add passkey' }
         })
 
         const { addPasskey, error } = useAuth()
@@ -463,17 +463,17 @@ describe('useAuth', () => {
             id: 'pk-1',
             name: 'My Laptop',
             createdAt: '2024-01-01T00:00:00Z',
-            credentialID: 'cred-123',
+            credentialID: 'cred-123'
           },
           {
             id: 'pk-2',
             createdAt: '2024-01-02T00:00:00Z',
-            credentialID: 'cred-456',
-          },
+            credentialID: 'cred-456'
+          }
         ]
         mockAuthClient.passkey.listUserPasskeys.mockResolvedValue({
           data: mockPasskeys,
-          error: null,
+          error: null
         })
 
         const { listPasskeys } = useAuth()
@@ -483,7 +483,7 @@ describe('useAuth', () => {
         expect(passkeys[0]).toMatchObject({
           id: 'pk-1',
           name: 'My Laptop',
-          credentialId: 'cred-123',
+          credentialId: 'cred-123'
         })
         expect(passkeys[0].createdAt).toBeInstanceOf(Date)
         expect(passkeys[1].name).toBe('Passkey') // Default name
@@ -508,9 +508,9 @@ describe('useAuth', () => {
         mockAuthClient.twoFactor.enable.mockResolvedValue({
           data: {
             totpURI: 'otpauth://totp/App:user@example.com?secret=ABC123',
-            secret: 'ABC123',
+            secret: 'ABC123'
           },
-          error: null,
+          error: null
         })
 
         const { enable2FA } = useAuth()
@@ -519,14 +519,14 @@ describe('useAuth', () => {
         expect(mockAuthClient.twoFactor.enable).toHaveBeenCalledWith({ password: 'password123' })
         expect(result).toMatchObject({
           totpURI: 'otpauth://totp/App:user@example.com?secret=ABC123',
-          secret: 'ABC123',
+          secret: 'ABC123'
         })
       })
 
       it('should throw on enable 2FA error', async () => {
         mockAuthClient.twoFactor.enable.mockResolvedValue({
           data: null,
-          error: { message: 'Invalid password' },
+          error: { message: 'Invalid password' }
         })
 
         const { enable2FA, error } = useAuth()
@@ -556,7 +556,7 @@ describe('useAuth', () => {
 
         expect(mockAuthClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
           code: '123456',
-          trustDevice: undefined,
+          trustDevice: undefined
         })
         expect(result).toBe(true)
         expect(mockRefresh).toHaveBeenCalled()
@@ -570,7 +570,7 @@ describe('useAuth', () => {
 
         expect(mockAuthClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
           code: '123456',
-          trustDevice: true,
+          trustDevice: true
         })
       })
     })
@@ -580,14 +580,14 @@ describe('useAuth', () => {
         const mockCodes = ['ABC123', 'DEF456', 'GHI789']
         mockAuthClient.twoFactor.generateBackupCodes.mockResolvedValue({
           data: { backupCodes: mockCodes },
-          error: null,
+          error: null
         })
 
         const { generateBackupCodes } = useAuth()
         const codes = await generateBackupCodes('password123')
 
         expect(mockAuthClient.twoFactor.generateBackupCodes).toHaveBeenCalledWith({
-          password: 'password123',
+          password: 'password123'
         })
         expect(codes).toEqual(mockCodes)
       })
@@ -597,11 +597,11 @@ describe('useAuth', () => {
       it('should return backup codes with usage status', async () => {
         const mockCodes = [
           { code: 'ABC123', isUsed: false },
-          { code: 'DEF456', isUsed: true },
+          { code: 'DEF456', isUsed: true }
         ]
         mockAuthClient.twoFactor.viewBackupCodes.mockResolvedValue({
           data: { backupCodes: mockCodes },
-          error: null,
+          error: null
         })
 
         const { viewBackupCodes } = useAuth()
@@ -609,7 +609,7 @@ describe('useAuth', () => {
 
         expect(codes).toEqual([
           { code: 'ABC123', used: false },
-          { code: 'DEF456', used: true },
+          { code: 'DEF456', used: true }
         ])
       })
     })
@@ -636,12 +636,12 @@ describe('useAuth', () => {
           image: null,
           emailVerified: true,
           createdAt: new Date(),
-          updatedAt: new Date(),
+          updatedAt: new Date()
         }
         mockAuthClient.getSession.mockResolvedValue({
           data: {
-            user: { twoFactorEnabled: true },
-          },
+            user: { twoFactorEnabled: true }
+          }
         })
 
         const { get2FAStatus } = useAuth()

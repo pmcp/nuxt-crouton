@@ -8,12 +8,21 @@
     </NuxtLink>
   </div>
 
-  <div v-if="loading" class="m-6 italic opacity-50 flex items-center text-white gap-1">
-    <UIcon name="i-lucide-loader-circle" class="animate-spin" />
+  <div
+    v-if="loading"
+    class="m-6 italic opacity-50 flex items-center text-white gap-1"
+  >
+    <UIcon
+      name="i-lucide-loader-circle"
+      class="animate-spin"
+    />
     Loading collection...
   </div>
 
-  <div v-else-if="error" class="text-red-600">
+  <div
+    v-else-if="error"
+    class="text-red-600"
+  >
     {{ error }}
   </div>
 
@@ -44,6 +53,6 @@ onMounted(() => {
 })
 
 definePageMeta({
-  middleware: 'auth',
+  middleware: 'auth'
 })
 </script>

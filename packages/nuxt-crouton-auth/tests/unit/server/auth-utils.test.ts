@@ -2,12 +2,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { H3Event } from 'h3'
 import type { User, Team, Member } from '../../../types'
 
+// Import after mocks are set up
+import {
+  requireAuth,
+  getAuthUser,
+  requireTeamMember,
+  requireTeamAdmin,
+  requireTeamOwner,
+  getTeamFromContext,
+  setTeamContext
+} from '../../../server/utils/auth'
+import { getServerSession, requireServerSession, useServerAuth } from '../../../server/utils/useServerAuth'
+
 // Mock H3Event
 const createMockEvent = (overrides = {}): H3Event => ({
   node: { req: {}, res: {} },
-  headers: new Headers({ 'cookie': 'session-token=test' }),
+  headers: new Headers({ cookie: 'session-token=test' }),
   context: {},
-  ...overrides,
+  ...overrides
 }) as unknown as H3Event
 
 // Mock user data
@@ -18,7 +30,7 @@ const mockUser: User = {
   image: null,
   emailVerified: true,
   createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01')
 }
 
 // Mock team data
@@ -32,7 +44,7 @@ const mockTeam: Team = {
   isDefault: false,
   ownerId: undefined,
   createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01')
 }
 
 // Mock member data
@@ -41,7 +53,7 @@ const mockMember: Member = {
   organizationId: 'team-1',
   userId: 'user-1',
   role: 'member',
-  createdAt: new Date('2024-01-01'),
+  createdAt: new Date('2024-01-01')
 }
 
 // Mock session response
@@ -53,14 +65,14 @@ const mockSessionResponse = {
     image: null,
     emailVerified: true,
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z'
   },
   session: {
     id: 'session-1',
     userId: 'user-1',
     activeOrganizationId: 'team-1',
-    expiresAt: '2025-01-01T00:00:00.000Z',
-  },
+    expiresAt: '2025-01-01T00:00:00.000Z'
+  }
 }
 
 // Mock Better Auth API
@@ -70,12 +82,12 @@ const mockAuthApi = {
   getFullOrganization: vi.fn(),
   listOrganizations: vi.fn(),
   createOrganization: vi.fn(),
-  setActiveOrganization: vi.fn(),
+  setActiveOrganization: vi.fn()
 }
 
 // Mock auth instance
 const mockAuthInstance = {
-  api: mockAuthApi,
+  api: mockAuthApi
 }
 
 // Setup global mocks
@@ -88,18 +100,18 @@ vi.stubGlobal('useRuntimeConfig', () => ({
         appName: 'Test App',
         teams: {
           allowCreate: true,
-          limit: 5,
-        },
-      },
-    },
+          limit: 5
+        }
+      }
+    }
   },
   auth: {
     secret: 'test-secret',
-    baseUrl: 'http://localhost:3000',
-  },
+    baseUrl: 'http://localhost:3000'
+  }
 }))
 
-vi.stubGlobal('createError', (options: { statusCode: number; message: string }) => {
+vi.stubGlobal('createError', (options: { statusCode: number, message: string }) => {
   const error = new Error(options.message) as Error & { statusCode: number }
   error.statusCode = options.statusCode
   return error
@@ -119,23 +131,11 @@ vi.mock('../../../server/utils/useServerAuth', () => ({
       throw createError({ statusCode: 401, message: 'Unauthorized' })
     }
     return mockSessionResponse
-  }),
+  })
 }))
 
 // Mock hubDatabase for D1
 vi.stubGlobal('hubDatabase', vi.fn())
-
-// Import after mocks are set up
-import {
-  requireAuth,
-  getAuthUser,
-  requireTeamMember,
-  requireTeamAdmin,
-  requireTeamOwner,
-  getTeamFromContext,
-  setTeamContext,
-} from '../../../server/utils/auth'
-import { getServerSession, requireServerSession, useServerAuth } from '../../../server/utils/useServerAuth'
 
 describe('server/utils/auth', () => {
   beforeEach(() => {
@@ -171,7 +171,7 @@ describe('server/utils/auth', () => {
     it('should throw 401 when user is null in session', async () => {
       vi.mocked(getServerSession).mockResolvedValue({
         user: null,
-        session: { id: 'session-1' },
+        session: { id: 'session-1' }
       })
 
       const event = createMockEvent()
@@ -255,15 +255,15 @@ describe('server/utils/auth', () => {
         id: 'team-1',
         name: 'Test Team',
         slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z',
+        createdAt: '2024-01-01T00:00:00.000Z'
       })
       mockAuthApi.listMembers.mockResolvedValue({
         members: [{
           id: 'member-1',
           userId: 'user-1',
           role: 'member',
-          createdAt: '2024-01-01T00:00:00.000Z',
-        }],
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }]
       })
     })
 
@@ -306,7 +306,7 @@ describe('server/utils/auth', () => {
         id: 'team-1',
         name: 'Test Team',
         slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z',
+        createdAt: '2024-01-01T00:00:00.000Z'
       })
     })
 
@@ -316,8 +316,8 @@ describe('server/utils/auth', () => {
           id: 'member-1',
           userId: 'user-1',
           role: 'admin',
-          createdAt: '2024-01-01T00:00:00.000Z',
-        }],
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }]
       })
 
       const event = createMockEvent()
@@ -332,8 +332,8 @@ describe('server/utils/auth', () => {
           id: 'member-1',
           userId: 'user-1',
           role: 'owner',
-          createdAt: '2024-01-01T00:00:00.000Z',
-        }],
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }]
       })
 
       const event = createMockEvent()
@@ -348,8 +348,8 @@ describe('server/utils/auth', () => {
           id: 'member-1',
           userId: 'user-1',
           role: 'member',
-          createdAt: '2024-01-01T00:00:00.000Z',
-        }],
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }]
       })
 
       const event = createMockEvent()
@@ -363,7 +363,7 @@ describe('server/utils/auth', () => {
         id: 'team-1',
         name: 'Test Team',
         slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z',
+        createdAt: '2024-01-01T00:00:00.000Z'
       })
     })
 
@@ -373,8 +373,8 @@ describe('server/utils/auth', () => {
           id: 'member-1',
           userId: 'user-1',
           role: 'owner',
-          createdAt: '2024-01-01T00:00:00.000Z',
-        }],
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }]
       })
 
       const event = createMockEvent()
@@ -389,8 +389,8 @@ describe('server/utils/auth', () => {
           id: 'member-1',
           userId: 'user-1',
           role: 'admin',
-          createdAt: '2024-01-01T00:00:00.000Z',
-        }],
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }]
       })
 
       const event = createMockEvent()
@@ -403,8 +403,8 @@ describe('server/utils/auth', () => {
           id: 'member-1',
           userId: 'user-1',
           role: 'member',
-          createdAt: '2024-01-01T00:00:00.000Z',
-        }],
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }]
       })
 
       const event = createMockEvent()

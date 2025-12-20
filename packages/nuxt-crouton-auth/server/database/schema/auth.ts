@@ -42,12 +42,12 @@ export const user = sqliteTable('user', {
   /** Reason for the ban (shown to user and admin) */
   bannedReason: text('bannedReason'),
   /** When the ban expires (null = permanent) */
-  bannedUntil: integer('bannedUntil', { mode: 'timestamp' }),
-}, (table) => [
+  bannedUntil: integer('bannedUntil', { mode: 'timestamp' })
+}, table => [
   index('user_email_idx').on(table.email),
   index('user_stripe_customer_idx').on(table.stripeCustomerId),
   index('user_super_admin_idx').on(table.superAdmin),
-  index('user_banned_idx').on(table.banned),
+  index('user_banned_idx').on(table.banned)
 ])
 
 /**
@@ -69,12 +69,12 @@ export const session = sqliteTable('session', {
   activeOrganizationId: text('activeOrganizationId'),
   // Impersonation extension (crouton-admin package)
   /** The original admin user ID when impersonating */
-  impersonatingFrom: text('impersonatingFrom'),
-}, (table) => [
+  impersonatingFrom: text('impersonatingFrom')
+}, table => [
   index('session_user_idx').on(table.userId),
   index('session_token_idx').on(table.token),
   index('session_active_org_idx').on(table.activeOrganizationId),
-  index('session_impersonating_idx').on(table.impersonatingFrom),
+  index('session_impersonating_idx').on(table.impersonatingFrom)
 ])
 
 /**
@@ -96,10 +96,10 @@ export const account = sqliteTable('account', {
   idToken: text('idToken'),
   password: text('password'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
-}, (table) => [
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, table => [
   index('account_user_idx').on(table.userId),
-  index('account_provider_idx').on(table.providerId, table.accountId),
+  index('account_provider_idx').on(table.providerId, table.accountId)
 ])
 
 /**
@@ -113,9 +113,9 @@ export const verification = sqliteTable('verification', {
   value: text('value').notNull(),
   expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
-}, (table) => [
-  index('verification_identifier_idx').on(table.identifier),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, table => [
+  index('verification_identifier_idx').on(table.identifier)
 ])
 
 // ============================================================================
@@ -145,15 +145,15 @@ export const organization = sqliteTable('organization', {
   /** Owner user ID for personal workspaces */
   ownerId: text('ownerId'),
 
-  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-}, (table) => [
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date())
+}, table => [
   index('organization_slug_idx').on(table.slug),
   // Index for finding personal workspaces by owner
   index('organization_owner_idx').on(table.ownerId),
   // Index for finding the default organization (single-tenant mode)
   index('organization_default_idx').on(table.isDefault),
   // Index for filtering personal workspaces
-  index('organization_personal_idx').on(table.personal),
+  index('organization_personal_idx').on(table.personal)
 ])
 
 /**
@@ -166,11 +166,11 @@ export const member = sqliteTable('member', {
   userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
   organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
   role: text('role').notNull().default('member'),
-  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-}, (table) => [
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date())
+}, table => [
   index('member_user_idx').on(table.userId),
   index('member_org_idx').on(table.organizationId),
-  index('member_user_org_idx').on(table.userId, table.organizationId),
+  index('member_user_org_idx').on(table.userId, table.organizationId)
 ])
 
 /**
@@ -187,11 +187,11 @@ export const invitation = sqliteTable('invitation', {
   status: text('status').notNull().default('pending'), // pending, accepted, rejected, expired
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
-  teamId: text('teamId'), // Optional sub-team reference
-}, (table) => [
+  teamId: text('teamId') // Optional sub-team reference
+}, table => [
   index('invitation_email_idx').on(table.email),
   index('invitation_org_idx').on(table.organizationId),
-  index('invitation_status_idx').on(table.status),
+  index('invitation_status_idx').on(table.status)
 ])
 
 // ============================================================================
@@ -214,10 +214,10 @@ export const passkey = sqliteTable('passkey', {
   backedUp: integer('backedUp', { mode: 'boolean' }).notNull().default(false),
   transports: text('transports'), // JSON array of transport types
   createdAt: integer('createdAt', { mode: 'timestamp' }).$default(() => new Date()),
-  aaguid: text('aaguid'), // Authenticator GUID
-}, (table) => [
+  aaguid: text('aaguid') // Authenticator GUID
+}, table => [
   index('passkey_user_idx').on(table.userId),
-  index('passkey_credential_idx').on(table.credentialID),
+  index('passkey_credential_idx').on(table.credentialID)
 ])
 
 // ============================================================================
@@ -236,9 +236,9 @@ export const twoFactor = sqliteTable('twoFactor', {
   backupCodes: text('backupCodes'), // JSON array of { code, used } objects
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
-}, (table) => [
-  index('two_factor_user_idx').on(table.userId),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, table => [
+  index('two_factor_user_idx').on(table.userId)
 ])
 
 // ============================================================================
@@ -265,11 +265,11 @@ export const subscription = sqliteTable('subscription', {
   trialStart: integer('trialStart', { mode: 'timestamp' }),
   trialEnd: integer('trialEnd', { mode: 'timestamp' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
-}, (table) => [
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, table => [
   index('subscription_reference_idx').on(table.referenceId),
   index('subscription_stripe_idx').on(table.stripeSubscriptionId),
-  index('subscription_status_idx').on(table.status),
+  index('subscription_status_idx').on(table.status)
 ])
 
 // ============================================================================
@@ -291,11 +291,11 @@ export const domain = sqliteTable('domain', {
   verifiedAt: integer('verifiedAt', { mode: 'timestamp' }),
   isPrimary: integer('isPrimary', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
-}, (table) => [
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, table => [
   index('domain_org_idx').on(table.organizationId),
   index('domain_domain_idx').on(table.domain),
-  index('domain_status_idx').on(table.status),
+  index('domain_status_idx').on(table.status)
 ])
 
 // ============================================================================
@@ -308,75 +308,75 @@ export const userRelations = relations(user, ({ many }) => ({
   memberships: many(member),
   passkeys: many(passkey),
   twoFactors: many(twoFactor),
-  invitationsSent: many(invitation),
+  invitationsSent: many(invitation)
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
-    references: [user.id],
+    references: [user.id]
   }),
   activeOrganization: one(organization, {
     fields: [session.activeOrganizationId],
-    references: [organization.id],
-  }),
+    references: [organization.id]
+  })
 }))
 
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
-    references: [user.id],
-  }),
+    references: [user.id]
+  })
 }))
 
 export const organizationRelations = relations(organization, ({ many }) => ({
   members: many(member),
   invitations: many(invitation),
   sessions: many(session),
-  domains: many(domain),
+  domains: many(domain)
 }))
 
 export const memberRelations = relations(member, ({ one }) => ({
   user: one(user, {
     fields: [member.userId],
-    references: [user.id],
+    references: [user.id]
   }),
   organization: one(organization, {
     fields: [member.organizationId],
-    references: [organization.id],
-  }),
+    references: [organization.id]
+  })
 }))
 
 export const invitationRelations = relations(invitation, ({ one }) => ({
   inviter: one(user, {
     fields: [invitation.inviterId],
-    references: [user.id],
+    references: [user.id]
   }),
   organization: one(organization, {
     fields: [invitation.organizationId],
-    references: [organization.id],
-  }),
+    references: [organization.id]
+  })
 }))
 
 export const passkeyRelations = relations(passkey, ({ one }) => ({
   user: one(user, {
     fields: [passkey.userId],
-    references: [user.id],
-  }),
+    references: [user.id]
+  })
 }))
 
 export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
   user: one(user, {
     fields: [twoFactor.userId],
-    references: [user.id],
-  }),
+    references: [user.id]
+  })
 }))
 
 export const domainRelations = relations(domain, ({ one }) => ({
   organization: one(organization, {
     fields: [domain.organizationId],
-    references: [organization.id],
-  }),
+    references: [organization.id]
+  })
 }))
 
 // ============================================================================

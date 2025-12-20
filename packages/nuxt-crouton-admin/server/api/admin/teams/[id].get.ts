@@ -26,7 +26,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminTeamDetai
   if (!teamId) {
     throw createError({
       statusCode: 400,
-      message: 'Team ID is required',
+      message: 'Team ID is required'
     })
   }
 
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminTeamDetai
   if (orgs.length === 0) {
     throw createError({
       statusCode: 404,
-      message: 'Team not found',
+      message: 'Team not found'
     })
   }
 
@@ -57,8 +57,8 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminTeamDetai
         id: user.id,
         name: user.name,
         email: user.email,
-        image: user.image,
-      },
+        image: user.image
+      }
     })
     .from(member)
     .innerJoin(user, eq(member.userId, user.id))
@@ -80,8 +80,8 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminTeamDetai
       userId: m.userId,
       role: m.role,
       createdAt: m.createdAt,
-      user: m.user,
-    })),
+      user: m.user
+    }))
   }
 
   return response

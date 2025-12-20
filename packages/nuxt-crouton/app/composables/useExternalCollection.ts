@@ -40,7 +40,7 @@
  * @param config.proxy - Proxy configuration for connecting to existing endpoints
  * @returns Collection config compatible with Crouton registry
  */
-export function defineExternalCollection<T extends { name: string; schema: any }>(config: {
+export function defineExternalCollection<T extends { name: string, schema: any }>(config: {
   name: string
   schema: any
   apiPath?: string

@@ -18,9 +18,11 @@ import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-au
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
 
-  const query = getQuery(event)${hasTranslations ? `
+  const query = getQuery(event)${hasTranslations
+    ? `
   // Accept locale for future translation handling
-  const locale = String(query.locale || 'en')` : ''}
+  const locale = String(query.locale || 'en')`
+    : ''}
   if (query.ids) {
     const ids = String(query.ids).split(',')
     return await get${prefixedPascalCasePlural}ByIds(team.id, ids)
@@ -41,12 +43,14 @@ export function generatePostEndpoint(data, config = null) {
   const hasDateFields = dateFields.length > 0
 
   // Generate date conversion code if needed
-  const dateConversions = hasDateFields ? dateFields.map(field =>
-    `  // Convert date string to Date object
+  const dateConversions = hasDateFields
+    ? dateFields.map(field =>
+      `  // Convert date string to Date object
   if (dataWithoutId.${field.name}) {
     dataWithoutId.${field.name} = new Date(dataWithoutId.${field.name})
   }`
-  ).join('\n') + '\n' : ''
+    ).join('\n') + '\n'
+    : ''
 
   return `// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
@@ -80,7 +84,7 @@ export function generatePatchEndpoint(data, config = null) {
   const hasTranslations = config?.translations?.collections?.[plural] || config?.translations?.collections?.[singular]
 
   // Generate field selection for update with date conversion
-  let fieldSelection = fields.map(field => {
+  let fieldSelection = fields.map((field) => {
     if (field.type === 'date') {
       return `    ${field.name}: body.${field.name} ? new Date(body.${field.name}) : body.${field.name}`
     }
@@ -111,7 +115,8 @@ export default defineEventHandler(async (event) => {
   }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
-  const body = await readBody<Partial<${prefixedPascalCase}>>(event)${hasTranslations ? `
+  const body = await readBody<Partial<${prefixedPascalCase}>>(event)${hasTranslations
+    ? `
 
   // Handle translation updates properly
   if (body.translations && body.locale) {
@@ -125,7 +130,8 @@ export default defineEventHandler(async (event) => {
         }
       }
     }
-  }` : ''}
+  }`
+    : ''}
 
   return await update${prefixedPascalCase}(${singular}Id, team.id, user.id, {
 ${fieldSelection}

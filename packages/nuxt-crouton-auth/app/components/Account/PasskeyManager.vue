@@ -18,7 +18,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false,
+  loading: false
 })
 
 const { t } = useT()
@@ -27,7 +27,7 @@ const {
   addPasskey,
   listPasskeys,
   deletePasskey,
-  isWebAuthnSupported,
+  isWebAuthnSupported
 } = useAuth()
 const toast = useToast()
 
@@ -60,7 +60,7 @@ async function loadPasskeys() {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     listLoading.value = false
@@ -72,13 +72,13 @@ async function handleAddPasskey() {
   addLoading.value = true
   try {
     await addPasskey({
-      name: `Passkey ${passkeys.value.length + 1}`,
+      name: `Passkey ${passkeys.value.length + 1}`
     })
 
     toast.add({
       title: 'Passkey added',
       description: 'Your new passkey has been registered.',
-      color: 'success',
+      color: 'success'
     })
 
     // Reload list
@@ -88,7 +88,7 @@ async function handleAddPasskey() {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     addLoading.value = false
@@ -104,17 +104,17 @@ async function handleDeletePasskey(id: string) {
     toast.add({
       title: 'Passkey removed',
       description: 'The passkey has been deleted.',
-      color: 'success',
+      color: 'success'
     })
 
     // Remove from local list
-    passkeys.value = passkeys.value.filter((p) => p.id !== id)
+    passkeys.value = passkeys.value.filter(p => p.id !== id)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to delete passkey'
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     deleteLoading.value = null
@@ -125,7 +125,7 @@ async function handleDeletePasskey(id: string) {
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
-    timeStyle: 'short',
+    timeStyle: 'short'
   }).format(date)
 }
 </script>
@@ -134,7 +134,9 @@ function formatDate(date: Date): string {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold">{{ t('account.passkeys') }}</h3>
+        <h3 class="text-lg font-semibold">
+          {{ t('account.passkeys') }}
+        </h3>
         <p class="text-sm text-muted mt-1">
           {{ t('account.passkeysDescription') }}
         </p>
@@ -170,7 +172,10 @@ function formatDate(date: Date): string {
     />
 
     <!-- Loading skeleton -->
-    <div v-else-if="listLoading" class="space-y-3">
+    <div
+      v-else-if="listLoading"
+      class="space-y-3"
+    >
       <div
         v-for="i in 2"
         :key="i"
@@ -194,7 +199,9 @@ function formatDate(date: Date): string {
         name="i-lucide-fingerprint"
         class="size-12 text-muted-foreground mx-auto mb-4"
       />
-      <p class="font-medium">{{ t('account.noPasskeysRegistered') }}</p>
+      <p class="font-medium">
+        {{ t('account.noPasskeysRegistered') }}
+      </p>
       <p class="text-sm text-muted mt-1">
         {{ t('account.noPasskeysRegisteredDesc') }}
       </p>
@@ -209,7 +216,10 @@ function formatDate(date: Date): string {
     </div>
 
     <!-- Passkeys list -->
-    <div v-else class="space-y-3">
+    <div
+      v-else
+      class="space-y-3"
+    >
       <div
         v-for="passkey in passkeys"
         :key="passkey.id"
@@ -223,7 +233,9 @@ function formatDate(date: Date): string {
         </div>
 
         <div class="flex-1 min-w-0">
-          <p class="font-medium truncate">{{ passkey.name }}</p>
+          <p class="font-medium truncate">
+            {{ passkey.name }}
+          </p>
           <p class="text-sm text-muted">
             {{ t('account.addedOn', { date: formatDate(passkey.createdAt) }) }}
           </p>
@@ -250,7 +262,9 @@ function formatDate(date: Date): string {
       variant="soft"
       icon="i-lucide-shield"
     >
-      <template #title>{{ t('account.aboutPasskeys') }}</template>
+      <template #title>
+        {{ t('account.aboutPasskeys') }}
+      </template>
       <template #description>
         {{ t('account.aboutPasskeysDesc') }}
       </template>

@@ -29,7 +29,7 @@ function detectOperation(method: string, path: string): Operation['operation'] {
   }
 
   // Get single item - GET with ID
-  if (normalizedMethod === 'GET' && /\/[a-zA-Z0-9-]+$/.test(path)) {
+  if (normalizedMethod === 'GET' && /\/[a-z0-9-]+$/i.test(path)) {
     return 'get'
   }
 
@@ -117,7 +117,7 @@ export default defineEventHandler(async (event) => {
         status,
         duration,
         teamContext,
-        error: status >= 400 ? `HTTP ${status}` : undefined,
+        error: status >= 400 ? `HTTP ${status}` : undefined
       })
     })
 
@@ -137,7 +137,7 @@ export default defineEventHandler(async (event) => {
       status: error.statusCode || 500,
       duration,
       teamContext,
-      error: error.message || 'Unknown error',
+      error: error.message || 'Unknown error'
     })
 
     // Re-throw to let error handling continue

@@ -171,7 +171,6 @@ export function useCollectionMutation(collection: string) {
       })
 
       return result
-
     } catch (error: any) {
       console.error('❌ API Error:', error)
       console.groupEnd()
@@ -233,7 +232,6 @@ export function useCollectionMutation(collection: string) {
       })
 
       return result
-
     } catch (error: any) {
       console.error('❌ API Error:', error)
       console.groupEnd()
@@ -292,7 +290,6 @@ export function useCollectionMutation(collection: string) {
         icon: 'i-lucide-check',
         color: 'primary'
       })
-
     } catch (error: any) {
       console.error('❌ API Error:', error)
       console.groupEnd()

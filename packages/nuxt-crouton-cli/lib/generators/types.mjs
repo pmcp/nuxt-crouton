@@ -55,11 +55,13 @@ export function generateTypes(data, config = null) {
 `
 
   // Build metadata fields conditionally
-  const metadataFields = useMetadata ? `  createdAt: Date
+  const metadataFields = useMetadata
+    ? `  createdAt: Date
   updatedAt: Date
   createdBy: string
   updatedBy: string
-` : ''
+`
+    : ''
 
   // Build translations type if needed
   const translationsType = translationFields.length > 0

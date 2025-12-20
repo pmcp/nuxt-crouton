@@ -22,7 +22,7 @@ export function generateCollectionReadme(data, config = {}) {
   // Build field table
   const fieldRows = fields
     .filter(f => f.name !== 'id')
-    .map(field => {
+    .map((field) => {
       const required = field.meta?.required ? 'Yes' : 'No'
       const refInfo = field.refTarget ? ` (→ ${field.refTarget})` : ''
       return `| ${field.name} | ${field.type}${refInfo} | ${required} |`
@@ -77,9 +77,11 @@ collections/${plural}/
 │   │   ├── index.get.ts          # GET all / by IDs
 │   │   ├── index.post.ts         # CREATE
 │   │   ├── [${singular}Id].patch.ts    # UPDATE
-│   │   └── [${singular}Id].delete.ts   # DELETE${hasHierarchy ? `
+│   │   └── [${singular}Id].delete.ts   # DELETE${hasHierarchy
+  ? `
 │   │   ├── [${singular}Id]/move.patch.ts  # Move in tree
-│   │   └── reorder.patch.ts      # Reorder siblings` : ''}
+│   │   └── reorder.patch.ts      # Reorder siblings`
+  : ''}
 │   └── database/
 │       ├── schema.ts             # Drizzle ORM schema
 │       └── queries.ts            # Database query functions

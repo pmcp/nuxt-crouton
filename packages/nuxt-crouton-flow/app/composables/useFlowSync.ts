@@ -45,7 +45,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     return {
       id: userId,
       name: userName,
-      color: generateUserColor(userId),
+      color: generateUserColor(userId)
     }
   })
 
@@ -58,7 +58,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     connected: false,
     synced: false,
     error: null,
-    users: [],
+    users: []
   })
 
   // Reactive nodes array (derived from Y.Map)
@@ -96,7 +96,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
         sendAwareness({
           user: user.value,
           cursor: null,
-          selectedNodeId: null,
+          selectedNodeId: null
         })
       }
     }
@@ -107,14 +107,12 @@ export function useFlowSync(options: UseFlowSyncOptions) {
         const update = new Uint8Array(event.data)
         Y.applyUpdate(ydoc, update, 'remote')
         state.synced = true
-      }
-      else if (typeof event.data === 'string') {
+      } else if (typeof event.data === 'string') {
         // JSON message
         try {
           const message = JSON.parse(event.data)
           handleMessage(message)
-        }
-        catch (e) {
+        } catch (e) {
           console.error('[useFlowSync] Invalid message:', e)
         }
       }
@@ -166,7 +164,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
       ws.send(JSON.stringify({
         type: 'awareness',
         userId: user.value.id,
-        state: awarenessState,
+        state: awarenessState
       }))
     }
   }
@@ -183,7 +181,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
       parentId: data.parentId || null,
       data: data.data || {},
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     }
 
     nodesMap.set(id, node)
@@ -200,16 +198,16 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     nodesMap.set(id, {
       ...existing,
       ...updates,
-      updatedAt: Date.now(),
+      updatedAt: Date.now()
     })
   }
 
-  const updatePosition = (id: string, position: { x: number; y: number }): void => {
+  const updatePosition = (id: string, position: { x: number, y: number }): void => {
     updateNode(id, {
       position: {
         x: Math.round(position.x),
-        y: Math.round(position.y),
-      },
+        y: Math.round(position.y)
+      }
     })
   }
 
@@ -222,12 +220,12 @@ export function useFlowSync(options: UseFlowSyncOptions) {
   }
 
   // Cursor tracking for presence
-  const updateCursor = (cursor: { x: number; y: number } | null) => {
+  const updateCursor = (cursor: { x: number, y: number } | null) => {
     if (user.value) {
       sendAwareness({
         user: user.value,
         cursor,
-        selectedNodeId: null,
+        selectedNodeId: null
       })
     }
   }
@@ -237,7 +235,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
       sendAwareness({
         user: user.value,
         cursor: null,
-        selectedNodeId: nodeId,
+        selectedNodeId: nodeId
       })
     }
   }
@@ -249,7 +247,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
         user: user.value,
         cursor: null,
         selectedNodeId: null,
-        ghostNode,
+        ghostNode
       })
     }
   }
@@ -297,7 +295,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
 
     // Advanced
     ydoc,
-    nodesMap,
+    nodesMap
   }
 }
 

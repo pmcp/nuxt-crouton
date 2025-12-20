@@ -59,14 +59,14 @@ export function generateListComponent(data, config = {}) {
 
   // Check for editor fields (fields using nuxt-crouton-editor components)
   const editorFields = fields.filter(f =>
-    f.meta?.component &&
-    (f.meta.component === 'EditorSimple' || f.meta.component.startsWith('Editor'))
+    f.meta?.component
+    && (f.meta.component === 'EditorSimple' || f.meta.component.startsWith('Editor'))
   )
 
   // Check for map/location fields (fields with group: "map" or type: "geojson")
   const mapFields = fields.filter(f =>
-    f.meta?.group === 'map' ||
-    f.type === 'geojson'
+    f.meta?.group === 'map'
+    || f.type === 'geojson'
   )
 
   // Generate AI context header
@@ -89,7 +89,7 @@ export function generateListComponent(data, config = {}) {
     </template>${translatableFields.map(field => `
     <template #${field}-cell="{ row }">
       {{ t(row.original, '${field}') }}
-    </template>`).join('')}${referenceFields.map(field => {
+    </template>`).join('')}${referenceFields.map((field) => {
       // Resolve collection name based on refScope
       let resolvedCollection
 
@@ -132,7 +132,7 @@ export function generateListComponent(data, config = {}) {
     }).join('')}${dateFields.map(field => `
     <template #${field.name}-cell="{ row }">
       <CroutonDate :date="row.original.${field.name}"></CroutonDate>
-    </template>`).join('')}${repeaterFields.map(field => {
+    </template>`).join('')}${repeaterFields.map((field) => {
       const fieldCases = toCase(field.name)
       const cardMiniComponent = `${layerPascalCase}${pascalCasePlural}${fieldCases.pascalCase}CardMini`
 
@@ -140,7 +140,7 @@ export function generateListComponent(data, config = {}) {
     <template #${field.name}-cell="{ row }">
       <${cardMiniComponent} :value="row.original.${field.name}" />
     </template>`
-    }).join('')}${dependentFields.map(field => {
+    }).join('')}${dependentFields.map((field) => {
       // Resolve the dependent collection with layer prefix
       const dependentCollectionCases = toCase(field.meta.dependsOnCollection)
       const resolvedDependentCollection = `${layerPascalCase.toLowerCase()}${dependentCollectionCases.pascalCasePlural}`
@@ -162,10 +162,12 @@ export function generateListComponent(data, config = {}) {
     </template>`).join('')}${mapFields.map(field => `
     <template #${field.name}-cell="{ row }">
       <CroutonMapsPreview :location="row.original.${field.name}" />
-    </template>`).join('')}${hasTranslations ? `
+    </template>`).join('')}${hasTranslations
+      ? `
     <template #translations-cell="{ row }">
-      <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join("', '")}']" />
-    </template>` : ''}
+      <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join('\', \'')}']" />
+    </template>`
+      : ''}
   </CroutonCollection>
 </template>
 
@@ -177,9 +179,11 @@ const props = withDefaults(defineProps<{
 }>(), {
   layout: 'table'
 })
-${hasTranslations ? `
+${hasTranslations
+  ? `
 const { t } = useEntityTranslations()
-const { locale } = useI18n()` : ''}
+const { locale } = useI18n()`
+  : ''}
 const { columns } = use${prefixedPascalCasePlural}()
 
 const { items: ${plural}, pending } = await useCollectionQuery(

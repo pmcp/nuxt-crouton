@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   if (!translationId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Translation ID is required',
+      statusMessage: 'Translation ID is required'
     })
   }
 
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
   // Update translation - for teams, only allow updating values and description
   const updateData = {
     ...(body.values && { values: body.values }),
-    ...(body.description !== undefined && { description: body.description }),
+    ...(body.description !== undefined && { description: body.description })
     // Don't allow teams to update category, keyPath, or isOverrideable
   }
 

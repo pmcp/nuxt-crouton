@@ -31,8 +31,8 @@ export default {
   collections: [
     // Basic collection
     {
-      name: 'products',                           // Collection name (plural, kebab-case recommended)
-      fieldsFile: './schemas/products.json'       // Path to JSON schema file
+      name: 'products', // Collection name (plural, kebab-case recommended)
+      fieldsFile: './schemas/products.json' // Path to JSON schema file
     },
 
     // Collection with hierarchy support (tree structure)
@@ -41,7 +41,7 @@ export default {
     {
       name: 'categories',
       fieldsFile: './schemas/categories.json',
-      hierarchy: true                             // Enable tree/nested structure
+      hierarchy: true // Enable tree/nested structure
     },
 
     // Collection for pages with hierarchy
@@ -57,7 +57,7 @@ export default {
     {
       name: 'slides',
       fieldsFile: './schemas/slides.json',
-      sortable: true                            // Enable drag-to-reorder (without hierarchy)
+      sortable: true // Enable drag-to-reorder (without hierarchy)
     },
 
     // Collection with seed data generation
@@ -65,14 +65,14 @@ export default {
     {
       name: 'authors',
       fieldsFile: './schemas/authors.json',
-      seed: true                                // Generate seed file with default count (25)
+      seed: true // Generate seed file with default count (25)
     },
 
     // Collection with custom seed count
     {
       name: 'posts',
       fieldsFile: './schemas/posts.json',
-      seed: { count: 50 }                       // Generate seed file with 50 records
+      seed: { count: 50 } // Generate seed file with 50 records
     },
 
     // Simple collections (no seed)
@@ -147,8 +147,8 @@ export default {
   // Each layer becomes a Nuxt layer in layers/[layer]/
   targets: [
     {
-      layer: 'shop',                              // Layer name (creates layers/shop/)
-      collections: ['products', 'categories', 'orders']  // Collections from above
+      layer: 'shop', // Layer name (creates layers/shop/)
+      collections: ['products', 'categories', 'orders'] // Collections from above
     },
     {
       layer: 'content',
@@ -169,11 +169,11 @@ export default {
   connectors: {
     // SuperSaaS users connector
     users: {
-      type: 'supersaas',                          // Connector type: 'supersaas' | 'supabase' | 'clerk'
-      autoInstall: true,                          // Install @friendlyinternet/nuxt-crouton-supersaas
-      copyFiles: true,                            // Copy connector files to project
-      updateAppConfig: true                       // Auto-register in app.config.ts
-    },
+      type: 'supersaas', // Connector type: 'supersaas' | 'supabase' | 'clerk'
+      autoInstall: true, // Install @friendlyinternet/nuxt-crouton-supersaas
+      copyFiles: true, // Copy connector files to project
+      updateAppConfig: true // Auto-register in app.config.ts
+    }
 
     // Example: Teams connector (if needed)
     // teams: {
@@ -278,7 +278,7 @@ export default {
      * @default false
      */
     autoConnectors: false
-  },
+  }
 
   // ============================================================
   // LEGACY FORMAT (Simple/Single Schema)

@@ -31,7 +31,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   collapsible: true,
   resizable: true,
-  collapsedIcon: 'i-lucide-layout-dashboard',
+  collapsedIcon: 'i-lucide-layout-dashboard'
 })
 
 const emit = defineEmits<{
@@ -53,8 +53,8 @@ const defaultNavItems = computed<NavigationMenuItem[][]>(() => {
       label: t('navigation.dashboard'),
       icon: 'i-lucide-layout-dashboard',
       to: baseUrl || '/dashboard',
-      active: route.path === baseUrl || route.path === '/dashboard',
-    },
+      active: route.path === baseUrl || route.path === '/dashboard'
+    }
   ]
 
   const settingsItems: NavigationMenuItem[] = [
@@ -66,29 +66,29 @@ const defaultNavItems = computed<NavigationMenuItem[][]>(() => {
         {
           label: t('navigation.account'),
           icon: 'i-lucide-user',
-          to: `${baseUrl}/settings`,
+          to: `${baseUrl}/settings`
         },
         {
           label: t('account.security'),
           icon: 'i-lucide-shield',
-          to: `${baseUrl}/settings/security`,
+          to: `${baseUrl}/settings/security`
         },
         ...(showTeamManagement.value
           ? [
               {
                 label: t('teams.team'),
                 icon: 'i-lucide-building-2',
-                to: `${baseUrl}/settings/team`,
+                to: `${baseUrl}/settings/team`
               },
               {
                 label: t('teams.members'),
                 icon: 'i-lucide-users',
-                to: `${baseUrl}/settings/members`,
-              },
+                to: `${baseUrl}/settings/members`
+              }
             ]
-          : []),
-      ],
-    },
+          : [])
+      ]
+    }
   ]
 
   return [mainItems, settingsItems]

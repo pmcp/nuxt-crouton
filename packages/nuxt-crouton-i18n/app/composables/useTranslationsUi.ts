@@ -7,7 +7,7 @@ export const translationsUiSchema = z.object({
   keyPath: z.string().min(1, 'Key path is required'),
   category: z.string().min(1, 'Category is required'),
   values: z.record(z.string()).refine(
-    (values) => values.en && values.en.trim() !== '',
+    values => values.en && values.en.trim() !== '',
     { message: 'English translation is required' }
   ),
   description: z.string().nullable().optional().default(''),

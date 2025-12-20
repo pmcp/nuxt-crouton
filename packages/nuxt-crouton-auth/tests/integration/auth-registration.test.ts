@@ -13,7 +13,7 @@ import {
   setupIntegrationMocks,
   createTestUser,
   createTestSession,
-  createTestTeam,
+  createTestTeam
 } from './setup'
 
 describe('Integration: Registration Flow', () => {
@@ -37,13 +37,13 @@ describe('Integration: Registration Flow', () => {
       await auth.register({
         email: 'newuser@example.com',
         password: 'securepassword123',
-        name: 'New User',
+        name: 'New User'
       })
 
       expect(mockClient.signUp.email).toHaveBeenCalledWith({
         email: 'newuser@example.com',
         password: 'securepassword123',
-        name: 'New User',
+        name: 'New User'
       })
     })
 
@@ -55,13 +55,13 @@ describe('Integration: Registration Flow', () => {
 
       await auth.register({
         email: 'johndoe@example.com',
-        password: 'securepassword123',
+        password: 'securepassword123'
       })
 
       expect(mockClient.signUp.email).toHaveBeenCalledWith({
         email: 'johndoe@example.com',
         password: 'securepassword123',
-        name: 'johndoe',
+        name: 'johndoe'
       })
     })
 
@@ -73,7 +73,7 @@ describe('Integration: Registration Flow', () => {
 
       await expect(auth.register({
         email: 'existing@example.com',
-        password: 'password123',
+        password: 'password123'
       })).rejects.toThrow('Email already exists')
 
       expect(auth.error.value).toBe('Email already exists')
@@ -87,7 +87,7 @@ describe('Integration: Registration Flow', () => {
 
       const registerPromise = auth.register({
         email: 'newuser@example.com',
-        password: 'password123',
+        password: 'password123'
       })
 
       expect(auth.loading.value).toBe(true)
@@ -123,7 +123,7 @@ describe('Integration: Registration Flow', () => {
 
       expect(mockClient.forgetPassword).toHaveBeenCalledWith({
         email: 'test@example.com',
-        redirectTo: expect.stringContaining('/auth/reset-password'),
+        redirectTo: expect.stringContaining('/auth/reset-password')
       })
     })
 
@@ -137,7 +137,7 @@ describe('Integration: Registration Flow', () => {
 
       expect(mockClient.resetPassword).toHaveBeenCalledWith({
         token: 'valid-token-123',
-        newPassword: 'newpassword123',
+        newPassword: 'newpassword123'
       })
     })
 
@@ -179,7 +179,7 @@ describe('Integration: Registration Flow', () => {
       expect(mockClient.twoFactor.enable).toHaveBeenCalledWith({ password: 'password123' })
       expect(result).toMatchObject({
         totpURI: expect.stringContaining('otpauth://totp/'),
-        secret: 'ABC123',
+        secret: 'ABC123'
       })
     })
 
@@ -238,9 +238,9 @@ describe('Integration: Registration Flow', () => {
       mockClient = setupIntegrationMocks()
       mockClient.passkey.listUserPasskeys.mockResolvedValueOnce({
         data: [
-          { id: 'pk-1', name: 'My Laptop', createdAt: '2024-01-01T00:00:00Z', credentialID: 'cred-1' },
+          { id: 'pk-1', name: 'My Laptop', createdAt: '2024-01-01T00:00:00Z', credentialID: 'cred-1' }
         ],
-        error: null,
+        error: null
       })
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -253,7 +253,7 @@ describe('Integration: Registration Flow', () => {
       expect(passkeys[0]).toMatchObject({
         id: 'pk-1',
         name: 'My Laptop',
-        credentialId: 'cred-1',
+        credentialId: 'cred-1'
       })
     })
 
@@ -283,7 +283,7 @@ describe('Integration: Registration Flow', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -303,22 +303,22 @@ describe('Integration: Registration Flow', () => {
           crouton: {
             auth: {
               mode: 'personal',
-              methods: { password: true },
-            },
-          },
+              methods: { password: true }
+            }
+          }
         },
-        auth: { secret: 'test', baseUrl: 'http://localhost:3000' },
+        auth: { secret: 'test', baseUrl: 'http://localhost:3000' }
       }))
 
       const personalTeam = createTestTeam({
         id: 'personal-team',
-        name: "New User's Workspace",
+        name: 'New User\'s Workspace',
         personal: true,
-        ownerId: 'new-user-id',
+        ownerId: 'new-user-id'
       })
 
       mockClient = setupIntegrationMocks({
-        teams: [personalTeam],
+        teams: [personalTeam]
       })
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -341,21 +341,21 @@ describe('Integration: Registration Flow', () => {
             auth: {
               mode: 'single-tenant',
               defaultTeamId: 'default',
-              methods: { password: true },
-            },
-          },
+              methods: { password: true }
+            }
+          }
         },
-        auth: { secret: 'test', baseUrl: 'http://localhost:3000' },
+        auth: { secret: 'test', baseUrl: 'http://localhost:3000' }
       }))
 
       const defaultTeam = createTestTeam({
         id: 'default',
         name: 'Default Workspace',
-        isDefault: true,
+        isDefault: true
       })
 
       mockClient = setupIntegrationMocks({
-        teams: [defaultTeam],
+        teams: [defaultTeam]
       })
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -388,11 +388,11 @@ describe('Integration: Registration Flow', () => {
           crouton: {
             auth: {
               mode: 'multi-tenant',
-              methods: { password: false, oauth: { github: {} } },
-            },
-          },
+              methods: { password: false, oauth: { github: {} } }
+            }
+          }
         },
-        auth: { secret: 'test', baseUrl: 'http://localhost:3000' },
+        auth: { secret: 'test', baseUrl: 'http://localhost:3000' }
       }))
 
       const { useAuth } = await import('../../app/composables/useAuth')

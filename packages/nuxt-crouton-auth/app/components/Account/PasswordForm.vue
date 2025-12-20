@@ -23,7 +23,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  error: null,
+  error: null
 })
 
 const emit = defineEmits<{
@@ -44,7 +44,7 @@ const authClient = useAuthClient()
 const state = reactive({
   currentPassword: '',
   newPassword: '',
-  confirmPassword: '',
+  confirmPassword: ''
 })
 
 // Validation
@@ -80,7 +80,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
   try {
     const result = await authClient.changePassword({
       currentPassword: event.data.currentPassword,
-      newPassword: event.data.newPassword,
+      newPassword: event.data.newPassword
     })
 
     if (result.error) {
@@ -90,7 +90,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: t('account.passwordUpdated'),
       description: 'Your password has been changed successfully.',
-      color: 'success',
+      color: 'success'
     })
 
     // Clear form
@@ -104,7 +104,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     internalLoading.value = false
@@ -122,7 +122,9 @@ function resetForm() {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">{{ t('auth.changePassword') }}</h3>
+      <h3 class="text-lg font-semibold">
+        {{ t('auth.changePassword') }}
+      </h3>
       <p class="text-sm text-muted mt-1">
         Update your password to keep your account secure.
       </p>
@@ -134,7 +136,11 @@ function resetForm() {
       class="space-y-6"
       @submit="onSubmit"
     >
-      <UFormField :label="t('auth.currentPassword')" name="currentPassword" required>
+      <UFormField
+        :label="t('auth.currentPassword')"
+        name="currentPassword"
+        required
+      >
         <UInput
           v-model="state.currentPassword"
           type="password"
@@ -146,7 +152,11 @@ function resetForm() {
 
       <USeparator />
 
-      <UFormField :label="t('auth.newPassword')" name="newPassword" required>
+      <UFormField
+        :label="t('auth.newPassword')"
+        name="newPassword"
+        required
+      >
         <template #hint>
           <span class="text-xs text-muted">Minimum 8 characters</span>
         </template>
@@ -159,7 +169,11 @@ function resetForm() {
         />
       </UFormField>
 
-      <UFormField :label="t('auth.confirmPassword')" name="confirmPassword" required>
+      <UFormField
+        :label="t('auth.confirmPassword')"
+        name="confirmPassword"
+        required
+      >
         <UInput
           v-model="state.confirmPassword"
           type="password"

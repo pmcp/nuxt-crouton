@@ -6,11 +6,11 @@
  * Protected by super-admin middleware.
  */
 definePageMeta({
-  middleware: 'super-admin',
+  middleware: 'super-admin'
 })
 
 useSeoMeta({
-  title: 'Admin Dashboard',
+  title: 'Admin Dashboard'
 })
 </script>
 
@@ -20,7 +20,10 @@ useSeoMeta({
     <div class="mb-8">
       <div class="flex items-center gap-3">
         <div class="flex size-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900">
-          <UIcon name="i-heroicons-shield-check" class="size-5 text-primary-600 dark:text-primary-400" />
+          <UIcon
+            name="i-heroicons-shield-check"
+            class="size-5 text-primary-600 dark:text-primary-400"
+          />
         </div>
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">

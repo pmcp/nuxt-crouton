@@ -61,7 +61,7 @@ export class FlowRoom implements DurableObject {
     }
 
     // Also load metadata
-    const meta = await this.storage.get<{ flowId: string; collectionName: string }>('meta')
+    const meta = await this.storage.get<{ flowId: string, collectionName: string }>('meta')
     if (meta) {
       this.flowId = meta.flowId
       this.collectionName = meta.collectionName
@@ -105,8 +105,7 @@ export class FlowRoom implements DurableObject {
 
       // Sync individual nodes to collection table
       await this.syncNodesToCollection()
-    }
-    catch (error) {
+    } catch (error) {
       console.error('[FlowRoom] D1 persistence error:', error)
     }
   }
@@ -138,8 +137,8 @@ export class FlowRoom implements DurableObject {
           node.title || '',
           JSON.stringify(node.position || { x: 0, y: 0 }),
           node.parentId || null,
-          JSON.stringify(node.data || {}),
-        ),
+          JSON.stringify(node.data || {})
+        )
       )
     }
 
@@ -182,7 +181,7 @@ export class FlowRoom implements DurableObject {
 
       return new Response(null, {
         status: 101,
-        webSocket: client,
+        webSocket: client
       })
     }
 
@@ -190,7 +189,7 @@ export class FlowRoom implements DurableObject {
       // HTTP endpoint to get current state (for SSR/initial load)
       const state = Y.encodeStateAsUpdate(this.ydoc)
       return new Response(state.buffer as ArrayBuffer, {
-        headers: { 'Content-Type': 'application/octet-stream' },
+        headers: { 'Content-Type': 'application/octet-stream' }
       })
     }
 
@@ -215,14 +214,12 @@ export class FlowRoom implements DurableObject {
           // Yjs update
           const update = new Uint8Array(data)
           Y.applyUpdate(this.ydoc, update, ws)
-        }
-        else if (typeof data === 'string') {
+        } else if (typeof data === 'string') {
           // JSON message (awareness, etc.)
           const message = JSON.parse(data)
           await this.handleMessage(ws, session, message)
         }
-      }
-      catch (error) {
+      } catch (error) {
         console.error('[FlowRoom] Message handling error:', error)
       }
     })
@@ -245,7 +242,7 @@ export class FlowRoom implements DurableObject {
   private async handleMessage(
     ws: WebSocket,
     session: Session,
-    message: Record<string, unknown>,
+    message: Record<string, unknown>
   ): Promise<void> {
     switch (message.type) {
       case 'awareness':

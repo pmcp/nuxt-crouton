@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 
 // Mock nuxt app instance
 export const mockNuxtApp = {
-  $authClient: null as unknown,
+  $authClient: null as unknown
 }
 
 export function useNuxtApp() {
@@ -19,15 +19,15 @@ export function useRuntimeConfig() {
             password: true,
             oauth: {
               github: { clientId: 'test-github', clientSecret: 'test' },
-              google: { clientId: 'test-google', clientSecret: 'test' },
+              google: { clientId: 'test-google', clientSecret: 'test' }
             },
             passkeys: { enabled: true },
             twoFactor: { enabled: true },
-            magicLink: { enabled: true },
-          },
-        },
-      },
-    },
+            magicLink: { enabled: true }
+          }
+        }
+      }
+    }
   }
 }
 

@@ -4,7 +4,7 @@
       class="bg-neutral h-10 overflow-x-hidden prose prose-sm w-40 text-[4px]"
       v-html="content"
     />
-    <UModal :title="title || 'Content preview'" >
+    <UModal :title="title || 'Content preview'">
       <UButton
         icon="i-lucide-eye"
         size="xs"
@@ -12,7 +12,10 @@
         variant="ghost"
       />
       <template #body>
-        <div class=" prose max-w-none" v-html="content" />
+        <div
+          class=" prose max-w-none"
+          v-html="content"
+        />
       </template>
     </UModal>
   </div>
@@ -20,7 +23,7 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  content?: string,
+  content?: string
   title?: string
 }>()
 </script>

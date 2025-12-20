@@ -47,7 +47,7 @@ export async function getSystemTranslationsWithTeamOverrides(teamId: string, loc
       namespace: translationsUi.namespace,
       systemValues: translationsUi.values,
       systemId: translationsUi.id,
-      isOverrideable: translationsUi.isOverrideable,
+      isOverrideable: translationsUi.isOverrideable
     })
     .from(translationsUi)
     .where(
@@ -66,7 +66,7 @@ export async function getSystemTranslationsWithTeamOverrides(teamId: string, loc
       teamValues: translationsUi.values,
       overrideId: translationsUi.id,
       overrideDescription: translationsUi.description,
-      overrideUpdatedAt: translationsUi.updatedAt,
+      overrideUpdatedAt: translationsUi.updatedAt
     })
     .from(translationsUi)
     .where(eq(translationsUi.teamId, teamId))
@@ -79,7 +79,7 @@ export async function getSystemTranslationsWithTeamOverrides(teamId: string, loc
   }
 
   // Combine system translations with team overrides
-  const enhancedTranslations = systemTranslations.map(systemTranslation => {
+  const enhancedTranslations = systemTranslations.map((systemTranslation) => {
     const key = `${systemTranslation.keyPath}:${systemTranslation.namespace}`
     const override = overrideMap.get(key)
 
@@ -94,7 +94,7 @@ export async function getSystemTranslationsWithTeamOverrides(teamId: string, loc
       hasOverride: override !== undefined,
       overrideId: override?.overrideId || null,
       overrideDescription: override?.overrideDescription || null,
-      overrideUpdatedAt: override?.overrideUpdatedAt || null,
+      overrideUpdatedAt: override?.overrideUpdatedAt || null
     }
   })
 
@@ -159,7 +159,7 @@ export async function createTranslation(data: {
       category: data.category,
       values: data.values,
       description: data.description,
-      isOverrideable: data.isOverrideable ?? true,
+      isOverrideable: data.isOverrideable ?? true
     })
     .returning()
     .get()
@@ -217,7 +217,7 @@ export async function verifyTeamTranslation(translationId: string, teamId: strin
   if (!existing) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Translation not found or does not belong to this team',
+      statusMessage: 'Translation not found or does not belong to this team'
     })
   }
 

@@ -156,7 +156,7 @@ export function useTreeMutation(collection: string) {
    * @param updates - Array of { id, order } objects
    */
   const reorderSiblings = async (
-    updates: Array<{ id: string; order: number }>
+    updates: Array<{ id: string, order: number }>
   ): Promise<void> => {
     const baseUrl = getApiBasePath()
     const url = `${baseUrl}/reorder`

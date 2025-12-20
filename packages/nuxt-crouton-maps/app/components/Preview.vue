@@ -8,7 +8,7 @@
         :zoom="13"
         height="40px"
         width="160px"
-        :flyToOnCenterChange="false"
+        :fly-to-on-center-change="false"
         class="preview-map"
       >
         <template #default="{ map }">
@@ -20,7 +20,10 @@
           />
         </template>
       </CroutonMapsMap>
-      <div v-else class="flex items-center justify-center h-full text-xs text-gray-400">
+      <div
+        v-else
+        class="flex items-center justify-center h-full text-xs text-gray-400"
+      >
         No location
       </div>
     </div>
@@ -40,7 +43,7 @@
             :zoom="15"
             height="50vh"
             width="100%"
-            :flyToOnCenterChange="true"
+            :fly-to-on-center-change="true"
           >
             <template #default="{ map }">
               <CroutonMapsMarker
@@ -53,7 +56,10 @@
             </template>
           </CroutonMapsMap>
         </div>
-        <div v-if="coordinates" class="mt-4 text-sm text-gray-600">
+        <div
+          v-if="coordinates"
+          class="mt-4 text-sm text-gray-600"
+        >
           <p><strong>Coordinates:</strong></p>
           <p>Latitude: {{ coordinates[1].toFixed(6) }}</p>
           <p>Longitude: {{ coordinates[0].toFixed(6) }}</p>

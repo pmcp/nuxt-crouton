@@ -29,8 +29,14 @@
     </div>
 
     <!-- Loading state -->
-    <div v-if="pending" class="flex justify-center py-8">
-      <UIcon name="i-lucide-loader-circle" class="w-6 h-6 animate-spin text-gray-400" />
+    <div
+      v-if="pending"
+      class="flex justify-center py-8"
+    >
+      <UIcon
+        name="i-lucide-loader-circle"
+        class="w-6 h-6 animate-spin text-gray-400"
+      />
     </div>
 
     <!-- Error state -->
@@ -58,7 +64,11 @@
 
       <!-- Category -->
       <template #category-cell="{ row }">
-        <UBadge color="neutral" variant="subtle" size="sm">
+        <UBadge
+          color="neutral"
+          variant="subtle"
+          size="sm"
+        >
           {{ row.original.category }}
         </UBadge>
       </template>
@@ -73,7 +83,10 @@
         <template v-if="row.original.hasOverride">
           <CroutonI18nDisplay :translations="row.original.teamValues" />
         </template>
-        <span v-else class="text-gray-400 text-sm italic">No override</span>
+        <span
+          v-else
+          class="text-gray-400 text-sm italic"
+        >No override</span>
       </template>
 
       <!-- Status -->
@@ -126,14 +139,21 @@
 
           <div class="space-y-1">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">System Values</label>
-            <CroutonI18nDisplay v-if="editingItem" :translations="editingItem.systemValues" />
+            <CroutonI18nDisplay
+              v-if="editingItem"
+              :translations="editingItem.systemValues"
+            />
           </div>
 
           <USeparator />
 
           <div class="space-y-3">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Team Override Values</label>
-            <div v-for="locale in locales" :key="locale" class="flex items-center gap-2">
+            <div
+              v-for="locale in locales"
+              :key="locale"
+              class="flex items-center gap-2"
+            >
               <span class="w-8 text-xs font-medium text-gray-500 uppercase">{{ locale }}</span>
               <UInput
                 v-model="overrideValues[locale]"
@@ -144,10 +164,17 @@
           </div>
 
           <div class="flex justify-end gap-2 pt-4">
-            <UButton color="neutral" variant="ghost" @click="showModal = false">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              @click="showModal = false"
+            >
               Cancel
             </UButton>
-            <UButton color="primary" @click="saveOverride">
+            <UButton
+              color="primary"
+              @click="saveOverride"
+            >
               {{ editingItem?.hasOverride ? 'Update' : 'Create' }} Override
             </UButton>
           </div>
@@ -207,9 +234,9 @@ const categories = computed(() => {
 
 const filteredItems = computed(() => {
   if (!items.value) return []
-  return items.value.filter(item => {
-    const matchesSearch = !search.value ||
-      item.keyPath.toLowerCase().includes(search.value.toLowerCase())
+  return items.value.filter((item) => {
+    const matchesSearch = !search.value
+      || item.keyPath.toLowerCase().includes(search.value.toLowerCase())
     const matchesCategory = !categoryFilter.value || item.category === categoryFilter.value
     return matchesSearch && matchesCategory
   })

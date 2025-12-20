@@ -78,6 +78,6 @@ export function useTreeItemState() {
     isSaving,
     wasSaved,
     flashingCounts,
-    triggerCountFlash,
+    triggerCountFlash
   }
 }

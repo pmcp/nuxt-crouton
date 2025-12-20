@@ -60,7 +60,7 @@ function parseArgs(args: string[]): CliOptions {
     apiUrl: 'http://localhost:3000',
     teamId: null,
     force: false,
-    source: null,
+    source: null
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -147,8 +147,7 @@ function flattenObject(
 
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       Object.assign(result, flattenObject(value as Record<string, unknown>, newKey))
-    }
-    else if (typeof value === 'string') {
+    } else if (typeof value === 'string') {
       result[newKey] = value
     }
     // Skip non-string primitives (numbers, booleans, null, arrays)
@@ -166,8 +165,7 @@ function readLocaleFile(filePath: string): Record<string, string> | null {
     const content = readFileSync(filePath, 'utf-8')
     const json = JSON.parse(content)
     return flattenObject(json)
-  }
-  catch (error) {
+  } catch (error) {
     console.warn(`Warning: Failed to read ${filePath}:`, error)
     return null
   }
@@ -235,8 +233,7 @@ function getAvailableLocales(dir: string): string[] {
     return files
       .filter(f => f.endsWith('.json'))
       .map(f => basename(f, '.json'))
-  }
-  catch {
+  } catch {
     return []
   }
 }
@@ -268,14 +265,13 @@ function collectTranslations(sources: string[]): TranslationEntry[] {
           const existing = translationsMap.get(keyPath)!
           existing.values[locale] = value
           existing.source = source // Track last source
-        }
-        else {
+        } else {
           // Create new entry
           translationsMap.set(keyPath, {
             keyPath,
             category,
             values: { [locale]: value },
-            source,
+            source
           })
         }
       }
@@ -300,20 +296,19 @@ function generateSql(translations: TranslationEntry[], options: CliOptions): str
 
   for (const t of translations) {
     const id = generateId()
-    const valuesJson = JSON.stringify(t.values).replace(/'/g, "''")
+    const valuesJson = JSON.stringify(t.values).replace(/'/g, '\'\'')
 
     if (options.force) {
       // Use INSERT OR REPLACE for force mode
       statements.push(
-        `INSERT OR REPLACE INTO translations_ui (id, user_id, team_id, namespace, key_path, category, "values", description, is_overrideable, created_at, updated_at) ` +
-        `VALUES ('${id}', 'system', ${teamIdSql}, 'ui', '${t.keyPath}', '${t.category}', '${valuesJson}', NULL, 1, ${timestamp}, ${timestamp});`
+        `INSERT OR REPLACE INTO translations_ui (id, user_id, team_id, namespace, key_path, category, "values", description, is_overrideable, created_at, updated_at) `
+        + `VALUES ('${id}', 'system', ${teamIdSql}, 'ui', '${t.keyPath}', '${t.category}', '${valuesJson}', NULL, 1, ${timestamp}, ${timestamp});`
       )
-    }
-    else {
+    } else {
       // Use INSERT OR IGNORE to skip existing
       statements.push(
-        `INSERT OR IGNORE INTO translations_ui (id, user_id, team_id, namespace, key_path, category, "values", description, is_overrideable, created_at, updated_at) ` +
-        `VALUES ('${id}', 'system', ${teamIdSql}, 'ui', '${t.keyPath}', '${t.category}', '${valuesJson}', NULL, 1, ${timestamp}, ${timestamp});`
+        `INSERT OR IGNORE INTO translations_ui (id, user_id, team_id, namespace, key_path, category, "values", description, is_overrideable, created_at, updated_at) `
+        + `VALUES ('${id}', 'system', ${teamIdSql}, 'ui', '${t.keyPath}', '${t.category}', '${valuesJson}', NULL, 1, ${timestamp}, ${timestamp});`
       )
     }
   }
@@ -327,7 +322,7 @@ function generateSql(translations: TranslationEntry[], options: CliOptions): str
 async function seedViaApi(
   translations: TranslationEntry[],
   options: CliOptions
-): Promise<{ success: number; skipped: number; failed: number }> {
+): Promise<{ success: number, skipped: number, failed: number }> {
   const results = { success: 0, skipped: 0, failed: 0 }
 
   // Build the API endpoint
@@ -345,23 +340,20 @@ async function seedViaApi(
           values: t.values,
           namespace: 'ui',
           isOverrideable: true,
-          skipIfExists: !options.force,
-        }),
+          skipIfExists: !options.force
+        })
       })
 
       if (response.ok) {
         results.success++
-      }
-      else if (response.status === 409) {
+      } else if (response.status === 409) {
         // Conflict - translation already exists
         results.skipped++
-      }
-      else {
+      } else {
         results.failed++
         console.warn(`Failed to seed ${t.keyPath}: ${response.status}`)
       }
-    }
-    catch (error) {
+    } catch (error) {
       results.failed++
       console.error(`Error seeding ${t.keyPath}:`, error)
     }
@@ -413,7 +405,7 @@ async function main(): Promise<void> {
   if (options.dryRun) {
     console.log('\n🔍 Dry run mode - no changes will be made')
     console.log('\nSample translations:')
-    translations.slice(0, 10).forEach(t => {
+    translations.slice(0, 10).forEach((t) => {
       console.log(`  ${t.keyPath}: ${JSON.stringify(t.values)}`)
     })
     if (translations.length > 10) {

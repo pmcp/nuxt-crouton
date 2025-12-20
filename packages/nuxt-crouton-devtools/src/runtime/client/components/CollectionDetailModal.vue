@@ -14,14 +14,17 @@ const emit = defineEmits<{
 
 const isOpen = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: value => emit('update:modelValue', value)
 })
 </script>
 
 <template>
   <UModal v-model="isOpen">
     <template #content="{ close }">
-      <div v-if="collection" class="p-6">
+      <div
+        v-if="collection"
+        class="p-6"
+      >
         <div class="flex items-start justify-between mb-6">
           <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
@@ -55,7 +58,10 @@ const isOpen = computed({
                 <code class="text-sm">{{ collection.apiPath || 'N/A' }}</code>
               </div>
               <USeparator v-if="collection.componentName" />
-              <div v-if="collection.componentName" class="flex justify-between items-center">
+              <div
+                v-if="collection.componentName"
+                class="flex justify-between items-center"
+              >
                 <span class="text-sm text-gray-600 dark:text-gray-400">Component:</span>
                 <code class="text-sm">{{ collection.componentName }}</code>
               </div>
@@ -72,15 +78,26 @@ const isOpen = computed({
               Metadata
             </h3>
             <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-2">
-              <div v-if="collection.meta.label" class="flex justify-between items-center">
+              <div
+                v-if="collection.meta.label"
+                class="flex justify-between items-center"
+              >
                 <span class="text-sm text-gray-600 dark:text-gray-400">Label:</span>
                 <span class="text-sm">{{ collection.meta.label }}</span>
               </div>
-              <div v-if="collection.meta.description" class="flex flex-col gap-1">
+              <div
+                v-if="collection.meta.description"
+                class="flex flex-col gap-1"
+              >
                 <span class="text-sm text-gray-600 dark:text-gray-400">Description:</span>
-                <p class="text-sm">{{ collection.meta.description }}</p>
+                <p class="text-sm">
+                  {{ collection.meta.description }}
+                </p>
               </div>
-              <div v-if="collection.meta.icon" class="flex justify-between items-center">
+              <div
+                v-if="collection.meta.icon"
+                class="flex justify-between items-center"
+              >
                 <span class="text-sm text-gray-600 dark:text-gray-400">Icon:</span>
                 <code class="text-sm">{{ collection.meta.icon }}</code>
               </div>
@@ -112,7 +129,11 @@ const isOpen = computed({
         </div>
 
         <div class="flex justify-end gap-2 mt-6">
-          <UButton color="gray" variant="ghost" @click="close">
+          <UButton
+            color="gray"
+            variant="ghost"
+            @click="close"
+          >
             Close
           </UButton>
         </div>

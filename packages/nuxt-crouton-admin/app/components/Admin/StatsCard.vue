@@ -25,7 +25,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   icon: 'i-heroicons-chart-bar',
   color: 'primary',
-  loading: false,
+  loading: false
 })
 
 const colorClasses = computed(() => {
@@ -33,7 +33,7 @@ const colorClasses = computed(() => {
     primary: 'bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400',
     success: 'bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400',
     warning: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400',
-    error: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
+    error: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400'
   }
   return colors[props.color]
 })
@@ -73,7 +73,11 @@ const trendIcon = computed(() => {
               class="inline-flex items-center gap-0.5 text-sm font-medium"
               :class="trendColorClass"
             >
-              <UIcon v-if="trendIcon" :name="trendIcon" class="size-4" />
+              <UIcon
+                v-if="trendIcon"
+                :name="trendIcon"
+                class="size-4"
+              />
               {{ trend > 0 ? `+${trend}` : trend }}
             </span>
           </template>
@@ -83,7 +87,10 @@ const trendIcon = computed(() => {
         class="flex size-12 shrink-0 items-center justify-center rounded-lg"
         :class="colorClasses"
       >
-        <UIcon :name="icon" class="size-6" />
+        <UIcon
+          :name="icon"
+          class="size-6"
+        />
       </div>
     </div>
   </div>

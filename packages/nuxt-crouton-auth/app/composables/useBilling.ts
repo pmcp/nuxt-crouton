@@ -33,15 +33,15 @@ import type { CroutonAuthConfig, StripePlan } from '../../types/config'
 /**
  * Subscription status values from Stripe
  */
-export type SubscriptionStatus =
-  | 'active'
-  | 'trialing'
-  | 'canceled'
-  | 'incomplete'
-  | 'incomplete_expired'
-  | 'past_due'
-  | 'unpaid'
-  | 'paused'
+export type SubscriptionStatus
+  = | 'active'
+    | 'trialing'
+    | 'canceled'
+    | 'incomplete'
+    | 'incomplete_expired'
+    | 'past_due'
+    | 'unpaid'
+    | 'paused'
 
 /**
  * Subscription data returned from Better Auth
@@ -138,7 +138,7 @@ export function useBilling() {
       price: plan.price,
       currency: plan.currency ?? 'usd',
       interval: plan.interval,
-      features: plan.features ?? [],
+      features: plan.features ?? []
     }))
   })
 
@@ -157,7 +157,7 @@ export function useBilling() {
 
   const plan = computed<Plan | null>(() => {
     if (!subscription.value) return null
-    return plans.value.find((p) => p.id === subscription.value?.plan) ?? null
+    return plans.value.find(p => p.id === subscription.value?.plan) ?? null
   })
 
   const isPro = computed(() => {
@@ -211,12 +211,10 @@ export function useBilling() {
           (s: Subscription) => s.status === 'active' || s.status === 'trialing'
         ) ?? result.data[0] ?? null
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch subscriptions'
       console.error('@crouton/auth: Failed to fetch subscriptions', e)
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -243,22 +241,19 @@ export function useBilling() {
         seats: options.seats,
         referenceId: options.referenceId ?? getCurrentReferenceId(),
         successUrl: options.successUrl ?? `${window.location.origin}/dashboard`,
-        cancelUrl: options.cancelUrl ?? window.location.href,
+        cancelUrl: options.cancelUrl ?? window.location.href
       })
 
       // Handle redirect to Stripe Checkout
       if (result.data?.url) {
         window.location.href = result.data.url
-      }
-      else if (result.error) {
+      } else if (result.error) {
         throw new Error(result.error.message || 'Checkout failed')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Checkout failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -282,22 +277,19 @@ export function useBilling() {
       const result = await client.subscription.billingPortal({
         referenceId: options.referenceId ?? getCurrentReferenceId(),
         returnUrl: options.returnUrl ?? window.location.href,
-        locale: options.locale,
+        locale: options.locale
       })
 
       // Handle redirect to Stripe Portal
       if (result.data?.url) {
         window.location.href = result.data.url
-      }
-      else if (result.error) {
+      } else if (result.error) {
         throw new Error(result.error.message || 'Portal redirect failed')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Portal redirect failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -325,7 +317,7 @@ export function useBilling() {
     try {
       const result = await client.subscription.cancel({
         subscriptionId: subId,
-        returnUrl: window.location.href,
+        returnUrl: window.location.href
       })
 
       if (result.error) {
@@ -334,12 +326,10 @@ export function useBilling() {
 
       // Refresh subscription data
       await fetchSubscriptions()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Cancellation failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -366,7 +356,7 @@ export function useBilling() {
     error.value = null
     try {
       const result = await client.subscription.restore({
-        subscriptionId: subId,
+        subscriptionId: subId
       })
 
       if (result.error) {
@@ -375,12 +365,10 @@ export function useBilling() {
 
       // Refresh subscription data
       await fetchSubscriptions()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Restore failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -410,7 +398,7 @@ export function useBilling() {
    * Get a plan by ID
    */
   function getPlan(planId: string): Plan | undefined {
-    return plans.value.find((p) => p.id === planId)
+    return plans.value.find(p => p.id === planId)
   }
 
   // Auto-fetch subscriptions on mount (if on client)
@@ -451,7 +439,7 @@ export function useBilling() {
 
     // Helpers
     isCurrentPlan,
-    getPlan,
+    getPlan
   }
 }
 
@@ -492,6 +480,6 @@ function createDisabledBillingStub() {
 
     // Helpers
     isCurrentPlan: (_planId: string) => false,
-    getPlan: (_planId: string) => undefined,
+    getPlan: (_planId: string) => undefined
   }
 }

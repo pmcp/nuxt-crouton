@@ -13,7 +13,9 @@
 
       <UCard>
         <template #header>
-          <h2 class="text-xl font-semibold">Getting Started</h2>
+          <h2 class="text-xl font-semibold">
+            Getting Started
+          </h2>
         </template>
 
         <div class="space-y-4">
@@ -53,25 +55,47 @@
       <div class="mt-8">
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">Mock Collections</h2>
+            <h2 class="text-xl font-semibold">
+              Mock Collections
+            </h2>
           </template>
 
           <div class="space-y-2 text-sm">
             <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
               <span class="font-mono">tasks</span>
-              <UBadge color="green" variant="subtle">internal</UBadge>
+              <UBadge
+                color="green"
+                variant="subtle"
+              >
+                internal
+              </UBadge>
             </div>
             <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
               <span class="font-mono">projects</span>
-              <UBadge color="green" variant="subtle">internal</UBadge>
+              <UBadge
+                color="green"
+                variant="subtle"
+              >
+                internal
+              </UBadge>
             </div>
             <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
               <span class="font-mono">users</span>
-              <UBadge color="blue" variant="subtle">external</UBadge>
+              <UBadge
+                color="blue"
+                variant="subtle"
+              >
+                external
+              </UBadge>
             </div>
             <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
               <span class="font-mono">notes</span>
-              <UBadge color="green" variant="subtle">internal</UBadge>
+              <UBadge
+                color="green"
+                variant="subtle"
+              >
+                internal
+              </UBadge>
             </div>
           </div>
         </UCard>
@@ -80,25 +104,43 @@
       <div class="mt-8">
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">DevTools Features</h2>
+            <h2 class="text-xl font-semibold">
+              DevTools Features
+            </h2>
           </template>
 
           <div class="space-y-3">
             <div>
-              <h4 class="font-semibold text-sm text-gray-900 dark:text-white">📋 Collections</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">View all registered collections with search and detail view</p>
+              <h4 class="font-semibold text-sm text-gray-900 dark:text-white">
+                📋 Collections
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                View all registered collections with search and detail view
+              </p>
             </div>
             <div>
-              <h4 class="font-semibold text-sm text-gray-900 dark:text-white">📊 Operations</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Monitor real-time CRUD operations with filters and statistics</p>
+              <h4 class="font-semibold text-sm text-gray-900 dark:text-white">
+                📊 Operations
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Monitor real-time CRUD operations with filters and statistics
+              </p>
             </div>
             <div>
-              <h4 class="font-semibold text-sm text-gray-900 dark:text-white">🚀 API Explorer</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Test API endpoints interactively without Postman</p>
+              <h4 class="font-semibold text-sm text-gray-900 dark:text-white">
+                🚀 API Explorer
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Test API endpoints interactively without Postman
+              </p>
             </div>
             <div>
-              <h4 class="font-semibold text-sm text-gray-900 dark:text-white">💾 Data Browser</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Browse and manage collection data with full CRUD capabilities</p>
+              <h4 class="font-semibold text-sm text-gray-900 dark:text-white">
+                💾 Data Browser
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Browse and manage collection data with full CRUD capabilities
+              </p>
             </div>
           </div>
         </UCard>

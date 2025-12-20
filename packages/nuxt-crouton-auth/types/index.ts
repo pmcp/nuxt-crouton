@@ -38,13 +38,13 @@ export type {
   AuthServerRuntimeConfig,
   AuthPublicRuntimeConfig,
   // Helpers
-  ResolveConfig,
+  ResolveConfig
 } from './config'
 
 // Config helper functions
 export {
   isMethodEnabled,
-  getMethodConfig,
+  getMethodConfig
 } from './config'
 
 // Auth types
@@ -74,7 +74,7 @@ export type {
   Passkey,
   // Events
   AuthEventType,
-  AuthEvent,
+  AuthEvent
 } from './auth'
 
 // Connector types (for nuxt-crouton integration)
@@ -85,11 +85,11 @@ export type {
   TeamAuthResult,
   BetterAuthConnector,
   BetterAuthConnectorConfig,
-  BetterAuthSession,
+  BetterAuthSession
 } from './connector'
 
 export {
   defaultBetterAuthConnectorConfig,
   isBetterAuthSession,
-  isBetterAuthConnector,
+  isBetterAuthConnector
 } from './connector'

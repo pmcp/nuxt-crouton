@@ -28,7 +28,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   cooldown: 60,
   loading: false,
-  disabled: false,
+  disabled: false
 })
 
 const emit = defineEmits<{

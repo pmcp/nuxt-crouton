@@ -5,18 +5,18 @@ export default defineNuxtConfig({
   // Layer metadata
   $meta: {
     name: '@crouton/admin',
-    version: '0.1.0',
-  },
-
-  // Auto-imports from the layer
-  imports: {
-    dirs: ['app/composables'],
+    version: '0.1.0'
   },
 
   // Components from the layer
   components: [
-    { path: 'app/components', pathPrefix: false },
+    { path: 'app/components', pathPrefix: false }
   ],
+
+  // Auto-imports from the layer
+  imports: {
+    dirs: ['app/composables']
+  },
 
   // Runtime config defaults
   runtimeConfig: {
@@ -29,19 +29,19 @@ export default defineNuxtConfig({
           // Enable impersonation feature
           impersonation: true,
           // Dashboard stats refresh interval (ms)
-          statsRefreshInterval: 30000,
-        },
-      },
-    },
-  },
-
-  // Nitro server config
-  nitro: {
-    imports: {
-      dirs: ['server/utils'],
-    },
+          statsRefreshInterval: 30000
+        }
+      }
+    }
   },
 
   // Compatibility
   compatibilityDate: '2024-11-01',
+
+  // Nitro server config
+  nitro: {
+    imports: {
+      dirs: ['server/utils']
+    }
+  }
 })

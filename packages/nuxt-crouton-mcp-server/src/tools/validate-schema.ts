@@ -79,8 +79,8 @@ export function handleValidateSchema(input: ValidateSchemaInput): ValidationResu
     // Validate field type
     if (!isValidFieldType(field.type)) {
       errors.push(
-        `Field "${fieldName}" has invalid type "${field.type}". ` +
-          `Valid types: ${VALID_FIELD_TYPES.join(', ')}`
+        `Field "${fieldName}" has invalid type "${field.type}". `
+        + `Valid types: ${VALID_FIELD_TYPES.join(', ')}`
       )
     }
 
@@ -110,8 +110,8 @@ export function handleValidateSchema(input: ValidateSchemaInput): ValidationResu
       }
       if (field.type !== 'string') {
         warnings.push(
-          `Field "${fieldName}" has refTarget but type is "${field.type}". ` +
-            `Reference fields should typically be type "string"`
+          `Field "${fieldName}" has refTarget but type is "${field.type}". `
+          + `Reference fields should typically be type "string"`
         )
       }
     }

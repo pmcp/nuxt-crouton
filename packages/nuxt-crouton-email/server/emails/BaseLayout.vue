@@ -8,7 +8,7 @@ import {
   ESection,
   EImg,
   EText,
-  EHr,
+  EHr
 } from 'vue-email'
 
 interface Props {
@@ -24,18 +24,20 @@ const props = withDefaults(defineProps<Props>(), {
   brandName: 'My App',
   logoUrl: '',
   primaryColor: '#0F766E',
-  appUrl: '',
+  appUrl: ''
 })
 </script>
 
 <template>
   <EHtml lang="en">
     <EHead />
-    <EPreview v-if="preview">{{ preview }}</EPreview>
+    <EPreview v-if="preview">
+      {{ preview }}
+    </EPreview>
     <EBody
       :style="{
         backgroundColor: '#f6f9fc',
-        fontFamily: '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif',
+        fontFamily: '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif'
       }"
     >
       <EContainer
@@ -44,7 +46,7 @@ const props = withDefaults(defineProps<Props>(), {
           margin: '40px auto',
           padding: '20px 0 48px',
           borderRadius: '8px',
-          maxWidth: '600px',
+          maxWidth: '600px'
         }"
       >
         <!-- Header -->
@@ -64,7 +66,7 @@ const props = withDefaults(defineProps<Props>(), {
               fontWeight: '600',
               color: primaryColor,
               textAlign: 'center',
-              margin: '0 0 24px',
+              margin: '0 0 24px'
             }"
           >
             {{ brandName }}
@@ -81,7 +83,7 @@ const props = withDefaults(defineProps<Props>(), {
           <EHr
             :style="{
               borderColor: '#e6ebf1',
-              margin: '32px 0',
+              margin: '32px 0'
             }"
           />
           <EText
@@ -89,7 +91,7 @@ const props = withDefaults(defineProps<Props>(), {
               fontSize: '12px',
               color: '#8898aa',
               textAlign: 'center',
-              margin: '0',
+              margin: '0'
             }"
           >
             {{ brandName }}
@@ -108,7 +110,7 @@ const props = withDefaults(defineProps<Props>(), {
               fontSize: '12px',
               color: '#8898aa',
               textAlign: 'center',
-              margin: '8px 0 0',
+              margin: '8px 0 0'
             }"
           >
             You received this email because you have an account with us.

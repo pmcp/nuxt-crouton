@@ -1,22 +1,10 @@
 #!/usr/bin/env node
 // generate-collection.next.mjs — Complete collection generator with modular architecture
 
-import fsp from 'fs/promises'
-import path from 'path'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-
-const execAsync = promisify(exec)
-
-// Helper function to check if file exists
-async function fileExists(filePath) {
-  try {
-    await fsp.access(filePath)
-    return true
-  } catch {
-    return false
-  }
-}
+import fsp from 'node:fs/promises'
+import path from 'node:path'
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
 
 // Import utilities
 import { toCase, toSnakeCase, mapType, typeMapping } from './utils/helpers.mjs'
@@ -47,20 +35,32 @@ import { generateRepeaterItemComponent } from './generators/repeater-item-compon
 import { generateFieldComponents } from './generators/field-components.mjs'
 import { generateSeedFile } from './generators/seed-data.mjs'
 
+const execAsync = promisify(exec)
+
+// Helper function to check if file exists
+async function fileExists(filePath) {
+  try {
+    await fsp.access(filePath)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function parseArgs() {
   const a = process.argv.slice(2)
   const pos = a.filter(x => !x.startsWith('--'))
   const layerFlag = a.find(x => x.startsWith('--layer='))
-  
+
   let layer, collection
-  if (pos.length >= 2 && !layerFlag) { 
+  if (pos.length >= 2 && !layerFlag) {
     layer = pos[0]
-    collection = pos[1] 
-  } else { 
+    collection = pos[1]
+  } else {
     collection = pos[0]
-    layer = layerFlag ? layerFlag.split('=')[1] : null 
+    layer = layerFlag ? layerFlag.split('=')[1] : null
   }
-  
+
   // Parse fields-file option (supports both --fields-file <path> and --fields-file=<path>)
   let fieldsFile = null
   const idxFile = a.indexOf('--fields-file')
@@ -80,7 +80,7 @@ function parseArgs() {
   const noTranslations = a.includes('--no-translations')
   const hierarchy = a.includes('--hierarchy')
   const seed = a.includes('--seed')
-  const seedCount = parseInt((a.find(x => x.startsWith('--count=')) || '--count=25').split('=')[1], 10) || 25
+  const seedCount = Number.parseInt((a.find(x => x.startsWith('--count=')) || '--count=25').split('=')[1], 10) || 25
 
   if (!layer || !collection) {
     console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--hierarchy] [--seed] [--count=<number>]')
@@ -116,7 +116,7 @@ async function loadFields(p) {
       refTarget: meta?.refTarget,
       refScope: meta?.refScope,
       zod: typeMapping[mapType(meta?.type)]?.zod || 'z.string()',
-      default: typeMapping[mapType(meta?.type)]?.default || "''",
+      default: typeMapping[mapType(meta?.type)]?.default || '\'\'',
       tsType: typeMapping[mapType(meta?.type)]?.tsType || 'string'
     }
   })
@@ -159,18 +159,18 @@ export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
         throw readError
       }
     }
-    
+
     // Check for existing conflicts
     const baseTableRegex = new RegExp(`export.*\\b${cases.plural}\\b.*from`, 'g')
     const existingExport = content.match(baseTableRegex)
-    
+
     if (existingExport && !force) {
       console.error(`⚠️  Warning: Found existing export for "${cases.plural}" in schema index`)
       console.error(`   This might cause conflicts. Use --force to override or choose a different name.`)
       console.error(`   Existing export: ${existingExport[0]}`)
       return false
     }
-    
+
     // Check if this specific export already exists
     const specificExportRegex = new RegExp(`export\\s*{[^}]*${exportName}[^}]*}\\s*from\\s*['"].*${layer}/collections/${cases.plural}`, 'g')
     if (content.match(specificExportRegex)) {
@@ -181,10 +181,10 @@ export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
     // Add named export for the new collection schema
     // Use relative path for Drizzle compatibility (drizzle-kit doesn't understand Nuxt aliases)
     const exportLine = `export { ${exportName} } from '../../../layers/${layer}/collections/${cases.plural}/server/database/schema'`
-    
+
     // Add the new export at the end of the file
     content = content.trim() + '\n' + exportLine + '\n'
-    
+
     await fsp.writeFile(schemaIndexPath, content)
     console.log(`✓ Updated schema index with ${exportName} export`)
     return true
@@ -242,7 +242,7 @@ async function registerTranslationsUiCollection() {
 
     // Insert entry into croutonCollections
     const entryLine = `    ${collectionKey}: ${configName},`
-    const collectionsBlockRegex = /croutonCollections:\s*{\s*\n/
+    const collectionsBlockRegex = /croutonCollections:\s*\{\s*\n/
 
     if (!collectionsBlockRegex.test(content)) {
       // No croutonCollections block yet, add one
@@ -380,22 +380,22 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
 async function createDatabaseTable(config) {
   const { name, layer, force = false } = config
   const cases = toCase(name)
-  
+
   try {
     // Verify the schema file exists
     const schemaPath = path.resolve('layers', layer, 'collections', cases.plural, 'server', 'database', 'schema.ts')
-    
+
     try {
       await fsp.access(schemaPath)
     } catch {
       console.error(`✗ Schema file not found at ${schemaPath}`)
       return false
     }
-    
+
     // First, update the schema index to include the new collection
     console.log(`↻ Updating schema index...`)
     const schemaUpdated = await updateSchemaIndex(name, layer, force)
-    
+
     if (!schemaUpdated) {
       console.error(`✗ Schema index update failed due to conflicts`)
       console.error(`  Skipping database migration to avoid errors`)
@@ -405,31 +405,31 @@ async function createDatabaseTable(config) {
       console.error(`  3. Choose a different collection name`)
       return false
     }
-    
+
     // Run db:generate to sync with database (with timeout)
     console.log(`↻ Creating database migration...`)
     console.log(`! Running: pnpm db:generate (30s timeout)`)
-    
+
     try {
       // Create a promise that rejects after timeout
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Command timed out after 30 seconds')), 30000)
       })
-      
+
       // Race between the command and timeout
       const { stdout, stderr } = await Promise.race([
         execAsync('pnpm db:generate'),
         timeoutPromise
       ])
-      
+
       if (stderr && !stderr.includes('Warning')) {
         console.error(`! Drizzle warnings:`, stderr)
       }
       console.log(`✓ Database migration generated`)
-      
+
       // Note: The migration has been generated but needs to be applied
       console.log(`! Migration generated. The table will be created when you restart the dev server.`)
-      
+
       return true
     } catch (execError) {
       if (execError.message.includes('timed out')) {
@@ -507,17 +507,17 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
 
     // Insert new entry into croutonCollections
     const entryLine = `    ${collectionKey}: ${configExportName},`
-    const collectionsBlockRegex = /croutonCollections:\s*{\s*\n/
+    const collectionsBlockRegex = /croutonCollections:\s*\{\s*\n/
 
     if (!collectionsBlockRegex.test(content)) {
       // No croutonCollections block yet, add one
       // Check for external connector imports (e.g., usersConfig) and preserve them
-      const externalConnectorImports = content.match(/import\s+{\s*(\w+Config)\s*}\s+from\s+['"]@friendlyinternet\/nuxt-crouton-supersaas\//g)
+      const externalConnectorImports = content.match(/import\s+\{\s*(\w+Config)\s*\}\s+from\s+['"]@friendlyinternet\/nuxt-crouton-supersaas\//g)
       let additionalEntries = ''
 
       if (externalConnectorImports) {
         for (const importLine of externalConnectorImports) {
-          const configMatch = importLine.match(/{\s*(\w+Config)\s*}/)
+          const configMatch = importLine.match(/\{\s*(\w+Config)\s*\}/)
           if (configMatch) {
             const configName = configMatch[1]
             const collectionName = configName.replace('Config', '')
@@ -551,16 +551,16 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
 // Update root nuxt.config.ts to extend the layer
 async function updateRootNuxtConfig(layer) {
   const rootConfigPath = path.resolve('nuxt.config.ts')
-  
+
   try {
     let config = await fsp.readFile(rootConfigPath, 'utf-8')
-    
+
     // Find the extends array
-    const extendsMatch = config.match(/extends:\s*\[([\s\S]*?)\]/m)
+    const extendsMatch = config.match(/extends:\s*\[([\s\S]*?)\]/)
     if (extendsMatch) {
       const currentExtends = extendsMatch[1]
       const layerPath = `'./layers/${layer}'`
-      
+
       // Check if layer is already in extends
       if (!currentExtends.includes(layerPath)) {
         // Parse existing entries
@@ -569,10 +569,10 @@ async function updateRootNuxtConfig(layer) {
           .filter(line => line && line !== ',' && !line.startsWith('//')) // Filter empty lines, standalone commas, and comments
 
         // Deduplicate entries (normalize quotes and check for duplicates)
-        const normalizedLines = [...new Set(lines.map(l => l.replace(/['"]/g, "'")))]
+        const normalizedLines = [...new Set(lines.map(l => l.replace(/['"]/g, '\'')))]
 
         // Only add if not already present (normalized check)
-        if (!normalizedLines.some(l => l === layerPath)) {
+        if (!normalizedLines.includes(layerPath)) {
           normalizedLines.push(layerPath)
         }
 
@@ -582,10 +582,10 @@ async function updateRootNuxtConfig(layer) {
           const indentedLine = `    ${trimmedLine}`
           return index < normalizedLines.length - 1 ? indentedLine + ',' : indentedLine
         })
-        
+
         const updatedExtends = formattedLines.join('\n')
         config = config.replace(extendsMatch[0], `extends: [\n${updatedExtends}\n  ]`)
-        
+
         await fsp.writeFile(rootConfigPath, config)
         console.log(`✓ Updated root nuxt.config.ts to extend layer '${layer}'`)
       } else {
@@ -620,7 +620,8 @@ async function updateLayerRootConfig(layer, collectionName, hasTranslations = fa
       console.log(`↻ Creating ${layer} layer root nuxt.config.ts`)
 
       // Include i18n config if translations are enabled
-      const i18nBlock = hasTranslations ? `,
+      const i18nBlock = hasTranslations
+        ? `,
   i18n: {
     locales: [
       { code: 'en', file: 'en.json' },
@@ -628,7 +629,8 @@ async function updateLayerRootConfig(layer, collectionName, hasTranslations = fa
       { code: 'fr', file: 'fr.json' }
     ],
     langDir: './locales'
-  }` : ''
+  }`
+        : ''
 
       config = `import { basename } from 'path'
 
@@ -649,9 +651,9 @@ export default defineNuxtConfig({
 })
 `
     }
-    
+
     // Find the extends array
-    const extendsMatch = config.match(/extends:\s*\[([\s\S]*?)\]/m)
+    const extendsMatch = config.match(/extends:\s*\[([\s\S]*?)\]/)
     if (extendsMatch) {
       const currentExtends = extendsMatch[1]
       const newCollection = `'./collections/${cases.plural}'`
@@ -663,18 +665,18 @@ export default defineNuxtConfig({
         .filter(line => line && line !== ',' && !line.startsWith('//'))
 
       // Deduplicate entries (normalize quotes for comparison)
-      lines = [...new Set(lines.map(l => l.replace(/['"]/g, "'")))]
+      lines = [...new Set(lines.map(l => l.replace(/['"]/g, '\'')))]
 
       let needsUpdate = false
 
       // Check if collection needs to be added (with normalized check)
-      if (!lines.some(l => l === newCollection)) {
+      if (!lines.includes(newCollection)) {
         lines.push(newCollection)
         needsUpdate = true
       }
 
       // Check if translations layer needs to be added (when using translations)
-      if (hasTranslations && !lines.some(l => l === translationsLayer) && !lines.some(l => l.includes('translations'))) {
+      if (hasTranslations && !lines.includes(translationsLayer) && !lines.some(l => l.includes('translations'))) {
         // Add translations layer at the beginning for proper component resolution
         lines.unshift(translationsLayer)
         needsUpdate = true
@@ -783,7 +785,7 @@ async function addI18nConfigToLayer(configPath, config) {
 
   // Find the last closing brace before the final })
   // Strategy: Add after extends array
-  const extendsMatch = config.match(/extends:\s*\[[\s\S]*?\]/m)
+  const extendsMatch = config.match(/extends:\s*\[[\s\S]*?\]/)
   if (extendsMatch) {
     const insertPos = config.indexOf(extendsMatch[0]) + extendsMatch[0].length
     // Check if there's a comma after extends
@@ -806,39 +808,47 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   const base = path.resolve('layers', layer, 'collections', cases.plural)
 
   // Detect hierarchy configuration from collection config or CLI flag
-  const hierarchy = collectionConfig?.hierarchy === true || hierarchyFlag === true ? {
-    enabled: true,
-    parentField: 'parentId',
-    orderField: 'order',
-    pathField: 'path',
-    depthField: 'depth'
-  } : (typeof collectionConfig?.hierarchy === 'object' ? {
-    enabled: true,
-    parentField: collectionConfig.hierarchy.parentField || 'parentId',
-    orderField: collectionConfig.hierarchy.orderField || 'order',
-    pathField: collectionConfig.hierarchy.pathField || 'path',
-    depthField: collectionConfig.hierarchy.depthField || 'depth'
-  } : { enabled: false })
+  const hierarchy = collectionConfig?.hierarchy === true || hierarchyFlag === true
+    ? {
+        enabled: true,
+        parentField: 'parentId',
+        orderField: 'order',
+        pathField: 'path',
+        depthField: 'depth'
+      }
+    : (typeof collectionConfig?.hierarchy === 'object'
+        ? {
+            enabled: true,
+            parentField: collectionConfig.hierarchy.parentField || 'parentId',
+            orderField: collectionConfig.hierarchy.orderField || 'order',
+            pathField: collectionConfig.hierarchy.pathField || 'path',
+            depthField: collectionConfig.hierarchy.depthField || 'depth'
+          }
+        : { enabled: false })
 
   // Detect sortable configuration (simpler than hierarchy, just needs order field for drag-and-drop)
-  const sortable = collectionConfig?.sortable === true ? {
-    enabled: true,
-    orderField: collectionConfig.orderField || 'order'
-  } : (typeof collectionConfig?.sortable === 'object' ? {
-    enabled: true,
-    orderField: collectionConfig.sortable.orderField || 'order'
-  } : { enabled: false })
+  const sortable = collectionConfig?.sortable === true
+    ? {
+        enabled: true,
+        orderField: collectionConfig.orderField || 'order'
+      }
+    : (typeof collectionConfig?.sortable === 'object'
+        ? {
+            enabled: true,
+            orderField: collectionConfig.sortable.orderField || 'order'
+          }
+        : { enabled: false })
 
   // Handle translation configuration
   if (!config && !noTranslations) {
     // CLI mode without config: Create default translation config
     // Auto-detect translatable fields based on common patterns
     const translatableFieldNames = ['name', 'title', 'description', 'label',
-                                    'placeholder', 'helpText', 'content', 'message',
-                                    'remarkPrompt', 'terms', 'conditions', 'notes']
+      'placeholder', 'helpText', 'content', 'message',
+      'remarkPrompt', 'terms', 'conditions', 'notes']
     const translatableFields = fields
-      .filter(f => translatableFieldNames.includes(f.name) &&
-                   (f.type === 'string' || f.type === 'text'))
+      .filter(f => translatableFieldNames.includes(f.name)
+        && (f.type === 'string' || f.type === 'text'))
       .map(f => f.name)
 
     if (translatableFields.length > 0) {
@@ -855,7 +865,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     // Override config to disable translations if flag is set
     config = {
       ...config,
-      translations: { collections: {} }  // Clear all translation configurations
+      translations: { collections: {} } // Clear all translation configurations
     }
   }
 
@@ -895,7 +905,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     .join('')
   const data = {
     ...cases,
-    originalCollectionName: collection,  // Preserve original collection name before toCase processing
+    originalCollectionName: collection, // Preserve original collection name before toCase processing
     layer,
     layerPascalCase,
     fields,
@@ -906,7 +916,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
       // Generate schema for non-translatable fields
       const regularFieldsSchema = fields
         .filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name))
-        .map(f => {
+        .map((f) => {
           // Check if this is a dependent field (should be treated as array)
           const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
 
@@ -965,7 +975,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
         const translatableFields = fields.filter(f => translatableFieldNames.includes(f.name))
         const requiredTranslatableFields = translatableFields.filter(f => f.meta?.required)
 
-        const translationsFieldSchema = translatableFields.map(f => {
+        const translationsFieldSchema = translatableFields.map((f) => {
           if (f.meta?.required) {
             return `      ${f.name}: z.string().min(1, '${f.name.charAt(0).toUpperCase() + f.name.slice(1)} is required')`
           } else {
@@ -991,7 +1001,7 @@ ${translationsFieldSchema}
       return allFieldsSchema
     })(),
     fieldsDefault: (() => {
-      let fieldDefaults = fields.filter(f => f.name !== 'id').map(f => {
+      let fieldDefaults = fields.filter(f => f.name !== 'id').map((f) => {
         // Check if this is a dependent field (should default to null, not empty string)
         const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
         if (isDependentField) {
@@ -1021,16 +1031,16 @@ ${translationsFieldSchema}
 
       return baseColumns + translationsColumn
     })(),
-    fieldsTypes: fields.filter(f => f.name !== 'id').map(f => {
+    fieldsTypes: fields.filter(f => f.name !== 'id').map((f) => {
       // Check if this is a dependent field (should be string[] | null)
       const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
       const tsType = isDependentField ? 'string[] | null' : f.tsType
       return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
     }).join('\n  '),
     hierarchy, // Pass hierarchy config to generators
-    sortable   // Pass sortable config to generators
+    sortable // Pass sortable config to generators
   }
-  
+
   if (dryRun) {
     const apiPath = `${layer}-${cases.plural}`
     console.log('DRY RUN - Would generate:')
@@ -1080,13 +1090,13 @@ ${translationsFieldSchema}
 
     if (repeaterComponents.size > 0) {
       console.log(`\n• Would generate ${repeaterComponents.size} placeholder repeater component(s):`)
-      repeaterComponents.forEach(name => {
+      repeaterComponents.forEach((name) => {
         console.log(`   - ${name}.vue`)
       })
     }
     return
   }
-  
+
   // Create directories
   // Use layer-prefixed API path
   // For system collections, use simplified naming without layer prefix
@@ -1109,13 +1119,13 @@ ${translationsFieldSchema}
   if (hierarchy.enabled) {
     dirs.push(path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id]`))
   }
-  
+
   for (const dir of dirs) {
     await fsp.mkdir(dir, { recursive: true })
   }
-  
+
   console.log('✓ Directory structure created')
-  
+
   // Generate all files using modules
   // All endpoints now use @crouton/auth for team-based authentication
   const files = [
@@ -1151,7 +1161,7 @@ ${translationsFieldSchema}
       path: path.join(base, 'server', 'database', 'queries.ts'),
       content: generateQueries(data, config)
     },
-    { 
+    {
       path: path.join(base, 'server', 'database', 'schema.ts'),
       content: generateSchema(data, dialect, config)
     },
@@ -1258,7 +1268,7 @@ ${translationsFieldSchema}
 
   // Update root nuxt.config.ts to extend the layer
   await updateRootNuxtConfig(layer)
-  
+
   // Create database table if requested
   if (!noDb) {
     await createDatabaseTable({ name: collection, layer, fields, force })
@@ -1327,14 +1337,14 @@ async function validateConfig(config) {
       const stats = await fsp.stat(schemaPath)
       if (stats.isDirectory()) {
         errors.push(
-          `schemaPath '${config.schemaPath}' is a directory, not a file.\n` +
-          `   When using targets[], use the enhanced format with a collections[] array\n` +
-          `   where each collection specifies its own fieldsFile:\n\n` +
-          `   collections: [\n` +
-          `     { name: 'products', fieldsFile: '${config.schemaPath}/products.json' },\n` +
-          `     { name: 'categories', fieldsFile: '${config.schemaPath}/categories.json' },\n` +
-          `   ],\n` +
-          `   targets: [...]\n`
+          `schemaPath '${config.schemaPath}' is a directory, not a file.\n`
+          + `   When using targets[], use the enhanced format with a collections[] array\n`
+          + `   where each collection specifies its own fieldsFile:\n\n`
+          + `   collections: [\n`
+          + `     { name: 'products', fieldsFile: '${config.schemaPath}/products.json' },\n`
+          + `     { name: 'categories', fieldsFile: '${config.schemaPath}/categories.json' },\n`
+          + `   ],\n`
+          + `   targets: [...]\n`
         )
       } else {
         console.log(`✓ Schema file found: ${config.schemaPath}`)
@@ -1421,7 +1431,7 @@ async function validateConfig(config) {
     if (dependencies.missing.length > 0) {
       warnings.push(`Missing dependencies detected. Run 'crouton-generate install' or use --force to skip`)
       console.log('\n⚠️  Missing dependencies:')
-      dependencies.missing.forEach(dep => {
+      dependencies.missing.forEach((dep) => {
         console.log(`  • ${dep.name} - ${dep.reason}`)
       })
     }
@@ -1484,7 +1494,7 @@ async function main() {
       }
 
       // Convert path to file URL for proper ES module import
-      const { pathToFileURL } = await import('url')
+      const { pathToFileURL } = await import('node:url')
       const configUrl = pathToFileURL(configPath).href
       const config = (await import(configUrl)).default
 
@@ -1589,7 +1599,7 @@ async function main() {
           console.error('Error: Invalid config file - missing targets or collections')
           process.exit(1)
         }
-        
+
         // Create a map of collection names to their full config (including fieldsFile, hierarchy, etc.)
         const collectionConfigMap = {}
         for (const col of config.collections) {

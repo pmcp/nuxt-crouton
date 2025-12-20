@@ -150,7 +150,7 @@ export function useAuth() {
       const result = await authClient.signIn.email({
         email: credentials.email,
         password: credentials.password,
-        rememberMe: credentials.rememberMe,
+        rememberMe: credentials.rememberMe
       })
 
       if (result.error) {
@@ -159,12 +159,10 @@ export function useAuth() {
 
       // Refresh session to update reactive state
       await refresh()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Login failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -178,7 +176,7 @@ export function useAuth() {
     try {
       const result = await authClient.signIn.social({
         provider: provider as 'github' | 'google' | 'discord',
-        callbackURL: window.location.origin + '/auth/callback',
+        callbackURL: window.location.origin + '/auth/callback'
       })
 
       if (result.error) {
@@ -186,12 +184,10 @@ export function useAuth() {
       }
 
       // OAuth redirects, so we don't need to refresh session here
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'OAuth login failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -215,12 +211,10 @@ export function useAuth() {
 
       // Refresh session to update reactive state
       await refresh()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Passkey login failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -241,7 +235,7 @@ export function useAuth() {
       }
 
       const result = await authClient.signIn.passkey({
-        autoFill: true,
+        autoFill: true
       })
 
       if (result.error) {
@@ -250,12 +244,10 @@ export function useAuth() {
 
       // Refresh session to update reactive state
       await refresh()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Passkey autofill failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -273,7 +265,7 @@ export function useAuth() {
 
       const result = await authClient.signIn.magicLink({
         email,
-        callbackURL: window.location.origin + '/auth/callback',
+        callbackURL: window.location.origin + '/auth/callback'
       })
 
       if (result.error) {
@@ -281,12 +273,10 @@ export function useAuth() {
       }
 
       // Magic link sends email, user clicks link to complete login
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Magic link failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -301,7 +291,7 @@ export function useAuth() {
       const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,
-        name: data.name ?? data.email.split('@')[0],
+        name: data.name ?? data.email.split('@')[0]
       })
 
       if (result.error) {
@@ -310,12 +300,10 @@ export function useAuth() {
 
       // Refresh session to update reactive state
       await refresh()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Registration failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -330,12 +318,10 @@ export function useAuth() {
       await authClient.signOut()
       // Clear session state
       await clear()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Logout failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -349,18 +335,16 @@ export function useAuth() {
     try {
       const result = await authClient.forgetPassword({
         email,
-        redirectTo: window.location.origin + '/auth/reset-password',
+        redirectTo: window.location.origin + '/auth/reset-password'
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Request failed')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Request failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -374,18 +358,16 @@ export function useAuth() {
     try {
       const result = await authClient.resetPassword({
         token,
-        newPassword: password,
+        newPassword: password
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Reset failed')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Reset failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -408,18 +390,16 @@ export function useAuth() {
       }
 
       const result = await authClient.passkey.addPasskey({
-        name: options?.name,
+        name: options?.name
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Add passkey failed')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Add passkey failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -445,14 +425,12 @@ export function useAuth() {
         id: p.id,
         name: p.name ?? 'Passkey',
         createdAt: new Date(p.createdAt),
-        credentialId: p.credentialID,
+        credentialId: p.credentialID
       }))
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'List passkeys failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -469,18 +447,16 @@ export function useAuth() {
       }
 
       const result = await authClient.passkey.deletePasskey({
-        id,
+        id
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Delete passkey failed')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Delete passkey failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -501,12 +477,10 @@ export function useAuth() {
       // TODO: Check if Better Auth supports passkey updates
       console.warn('[@crouton/auth] Passkey update not yet supported by Better Auth')
       throw new Error('Passkey update is not currently supported. Delete and re-add instead.')
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Update passkey failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -532,8 +506,7 @@ export function useAuth() {
     }
     try {
       return await PublicKeyCredential.isConditionalMediationAvailable()
-    }
-    catch {
+    } catch {
       return false
     }
   }
@@ -562,7 +535,7 @@ export function useAuth() {
       }
 
       const result = await authClient.twoFactor.enable({
-        password,
+        password
       })
 
       if (result.error) {
@@ -575,14 +548,12 @@ export function useAuth() {
 
       return {
         totpURI: result.data.totpURI,
-        secret: result.data.secret,
+        secret: result.data.secret
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Enable 2FA failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -601,18 +572,16 @@ export function useAuth() {
       }
 
       const result = await authClient.twoFactor.disable({
-        password,
+        password
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Disable 2FA failed')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Disable 2FA failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -637,12 +606,10 @@ export function useAuth() {
       }
 
       return result.data?.totpURI ?? ''
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Get TOTP URI failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -663,7 +630,7 @@ export function useAuth() {
 
       const result = await authClient.twoFactor.verifyTotp({
         code: options.code,
-        trustDevice: options.trustDevice,
+        trustDevice: options.trustDevice
       })
 
       if (result.error) {
@@ -674,12 +641,10 @@ export function useAuth() {
       await refresh()
 
       return true
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Verify TOTP failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -701,7 +666,7 @@ export function useAuth() {
       }
 
       const result = await authClient.twoFactor.generateBackupCodes({
-        password,
+        password
       })
 
       if (result.error) {
@@ -709,12 +674,10 @@ export function useAuth() {
       }
 
       return result.data?.backupCodes ?? []
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Generate backup codes failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -736,7 +699,7 @@ export function useAuth() {
       }
 
       const result = await authClient.twoFactor.viewBackupCodes({
-        password,
+        password
       })
 
       if (result.error) {
@@ -745,14 +708,12 @@ export function useAuth() {
 
       return (result.data?.backupCodes ?? []).map((c: { code: string, isUsed: boolean }) => ({
         code: c.code,
-        used: c.isUsed,
+        used: c.isUsed
       }))
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'View backup codes failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -775,7 +736,7 @@ export function useAuth() {
       }
 
       const result = await authClient.twoFactor.verifyBackupCode({
-        code,
+        code
       })
 
       if (result.error) {
@@ -786,12 +747,10 @@ export function useAuth() {
       await refresh()
 
       return true
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Verify backup code failed'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -807,7 +766,7 @@ export function useAuth() {
         return {
           enabled: false,
           hasTotp: false,
-          hasBackupCodes: false,
+          hasBackupCodes: false
         }
       }
 
@@ -818,7 +777,7 @@ export function useAuth() {
         return {
           enabled: false,
           hasTotp: false,
-          hasBackupCodes: false,
+          hasBackupCodes: false
         }
       }
 
@@ -832,19 +791,17 @@ export function useAuth() {
       return {
         enabled: twoFactorEnabled,
         hasTotp: twoFactorEnabled,
-        hasBackupCodes: twoFactorEnabled, // Backup codes are generated when 2FA is enabled
+        hasBackupCodes: twoFactorEnabled // Backup codes are generated when 2FA is enabled
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Get 2FA status failed'
       // Return default state on error
       return {
         enabled: false,
         hasTotp: false,
-        hasBackupCodes: false,
+        hasBackupCodes: false
       }
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -902,6 +859,6 @@ export function useAuth() {
     generateBackupCodes,
     viewBackupCodes,
     verifyBackupCode,
-    get2FAStatus,
+    get2FAStatus
   }
 }

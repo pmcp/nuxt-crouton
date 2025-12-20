@@ -11,7 +11,7 @@ import {
   createResolver,
   addComponentsDir,
   addServerPlugin,
-   addPlugin,
+  addPlugin
 } from '@nuxt/kit'
 import type { NuxtPage } from '@nuxt/schema'
 import { defu } from 'defu'
@@ -30,7 +30,7 @@ const defaults: CroutonAuthConfig = {
     passkeys: false,
     twoFactor: false,
     magicLink: false,
-    phone: false,
+    phone: false
   },
   teams: {
     allowCreate: true,
@@ -39,11 +39,11 @@ const defaults: CroutonAuthConfig = {
     requireInvite: true,
     invitationExpiry: 172800, // 48 hours
     requireEmailVerification: false,
-    defaultRole: 'member',
+    defaultRole: 'member'
   },
   billing: {
     enabled: false,
-    provider: 'stripe',
+    provider: 'stripe'
   },
   ui: {
     theme: 'default',
@@ -52,18 +52,18 @@ const defaults: CroutonAuthConfig = {
       afterLogout: '/',
       afterRegister: '/dashboard',
       unauthenticated: '/auth/login',
-      authenticated: '/dashboard',
+      authenticated: '/dashboard'
     },
     showRememberMe: true,
     showSocialLogin: true,
-    darkMode: true,
+    darkMode: true
   },
   session: {
     expiresIn: 604800, // 7 days
     cookieName: 'better-auth.session_token',
-    sameSite: 'lax',
+    sameSite: 'lax'
   },
-  debug: false,
+  debug: false
 }
 
 /**
@@ -120,24 +120,24 @@ function applyModeDefaults(config: CroutonAuthConfig): CroutonAuthConfig {
       return defu(config, {
         teams: {
           allowCreate: true,
-          limit: 5,
-        },
+          limit: 5
+        }
       })
 
     case 'single-tenant':
       return defu(config, {
         teams: {
           allowCreate: false,
-          limit: 1,
-        },
+          limit: 1
+        }
       })
 
     case 'personal':
       return defu(config, {
         teams: {
           allowCreate: false,
-          limit: 1,
-        },
+          limit: 1
+        }
       })
 
     default:
@@ -151,8 +151,8 @@ export default defineNuxtModule<CroutonAuthConfig>({
     version,
     configKey: 'croutonAuth',
     compatibility: {
-      nuxt: '^3.14.0 || ^4.0.0',
-    },
+      nuxt: '^3.14.0 || ^4.0.0'
+    }
   },
 
   defaults,
@@ -182,7 +182,7 @@ export default defineNuxtModule<CroutonAuthConfig>({
     // Register server-side auth secret
     nuxt.options.runtimeConfig.auth = defu(nuxt.options.runtimeConfig.auth, {
       secret: process.env.BETTER_AUTH_SECRET || '',
-      baseUrl: process.env.BETTER_AUTH_URL || '',
+      baseUrl: process.env.BETTER_AUTH_URL || ''
     })
 
     // Add composables
@@ -197,28 +197,28 @@ export default defineNuxtModule<CroutonAuthConfig>({
       path: resolver.resolve('./app/components/Auth'),
       pathPrefix: false,
       prefix: 'Auth',
-      global: false,
+      global: false
     })
 
     addComponentsDir({
       path: resolver.resolve('./app/components/Sidebar'),
       pathPrefix: false,
       prefix: '',
-      global: false,
+      global: false
     })
 
     addComponentsDir({
       path: resolver.resolve('./app/components/Loading'),
       pathPrefix: false,
       prefix: '',
-      global: false,
+      global: false
     })
 
     addComponentsDir({
       path: resolver.resolve('./app/components/Error'),
       pathPrefix: false,
       prefix: '',
-      global: false,
+      global: false
     })
 
     // Non-critical components (can be lazy loaded by user)
@@ -226,34 +226,34 @@ export default defineNuxtModule<CroutonAuthConfig>({
       path: resolver.resolve('./app/components/Account'),
       pathPrefix: false,
       prefix: 'Account',
-      global: false,
+      global: false
     })
 
     addComponentsDir({
       path: resolver.resolve('./app/components/Team'),
       pathPrefix: false,
       prefix: 'Team',
-      global: false,
+      global: false
     })
 
     addComponentsDir({
       path: resolver.resolve('./app/components/Billing'),
       pathPrefix: false,
       prefix: 'Billing',
-      global: false,
+      global: false
     })
 
     // Add server utilities
     nuxt.options.nitro = defu(nuxt.options.nitro, {
       imports: {
-        dirs: [resolver.resolve('./server/utils')],
-      },
+        dirs: [resolver.resolve('./server/utils')]
+      }
     })
 
     // Add auth API handler
     addServerHandler({
       route: '/api/auth/**',
-      handler: resolver.resolve('./server/api/auth/[...all]'),
+      handler: resolver.resolve('./server/api/auth/[...all]')
     })
 
     // Add server plugins based on mode
@@ -272,13 +272,13 @@ export default defineNuxtModule<CroutonAuthConfig>({
     // Add client-side plugin
     addPlugin({
       src: resolver.resolve('./app/plugins/auth-client.client'),
-      mode: 'client',
+      mode: 'client'
     })
 
     // Add team context plugin (for collection integration)
     addPlugin({
       src: resolver.resolve('./app/plugins/team-context'),
-      mode: 'all',
+      mode: 'all'
     })
 
     // Add CSS assets
@@ -309,7 +309,7 @@ export default defineNuxtModule<CroutonAuthConfig>({
         console.log(`[${name}] Billing: enabled (${config.billing.provider})`)
       }
     }
-  },
+  }
 })
 
 /**

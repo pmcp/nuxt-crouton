@@ -71,8 +71,7 @@ function mapOrganizationToTeam(org: {
   if (org.metadata) {
     try {
       metadata = typeof org.metadata === 'string' ? JSON.parse(org.metadata) : org.metadata
-    }
-    catch {
+    } catch {
       metadata = {}
     }
   }
@@ -92,7 +91,7 @@ function mapOrganizationToTeam(org: {
     isDefault: isDefaultOrg,
     ownerId: org.ownerId ?? (metadata.ownerId as string | undefined),
     createdAt: new Date(org.createdAt),
-    updatedAt: new Date(org.createdAt),
+    updatedAt: new Date(org.createdAt)
   }
 }
 
@@ -117,7 +116,7 @@ function mapMember(m: {
     organizationId: m.organizationId,
     userId: m.userId,
     role: m.role as MemberRole,
-    createdAt: new Date(m.createdAt),
+    createdAt: new Date(m.createdAt)
   }
 }
 
@@ -208,18 +207,16 @@ export function useTeam() {
     error.value = null
     try {
       const result = await authClient.organization.setActive({
-        organizationId: teamId,
+        organizationId: teamId
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Failed to switch team')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to switch team'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -232,18 +229,16 @@ export function useTeam() {
     error.value = null
     try {
       const result = await authClient.organization.setActive({
-        organizationSlug: slug,
+        organizationSlug: slug
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Failed to switch team')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to switch team'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -263,7 +258,7 @@ export function useTeam() {
         name: data.name,
         slug: data.slug,
         logo: data.logo,
-        metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
+        metadata: data.metadata ? JSON.stringify(data.metadata) : undefined
       })
 
       if (result.error) {
@@ -275,12 +270,10 @@ export function useTeam() {
       }
 
       return mapOrganizationToTeam(result.data)
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create team'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -302,8 +295,8 @@ export function useTeam() {
           name: data.name,
           slug: data.slug,
           logo: data.logo,
-          metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
-        },
+          metadata: data.metadata ? JSON.stringify(data.metadata) : undefined
+        }
       })
 
       if (result.error) {
@@ -315,12 +308,10 @@ export function useTeam() {
       }
 
       return mapOrganizationToTeam(result.data)
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update team'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -341,18 +332,16 @@ export function useTeam() {
       }
 
       const result = await authClient.organization.delete({
-        organizationId: currentTeam.value.id,
+        organizationId: currentTeam.value.id
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Failed to delete team')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete team'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -372,7 +361,7 @@ export function useTeam() {
 
     try {
       const result = await authClient.organization.listMembers({
-        organizationId: currentTeam.value.id,
+        organizationId: currentTeam.value.id
       })
 
       if (result.error) {
@@ -382,8 +371,7 @@ export function useTeam() {
       }
 
       membersData.value = (result.data?.members ?? []).map(mapMember)
-    }
-    catch (e) {
+    } catch (e) {
       console.error('Failed to load members:', e)
       membersData.value = []
     }
@@ -407,18 +395,16 @@ export function useTeam() {
       const result = await authClient.organization.inviteMember({
         organizationId: currentTeam.value.id,
         email: data.email,
-        role: data.role ?? 'member',
+        role: data.role ?? 'member'
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Failed to invite member')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to invite member'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -440,7 +426,7 @@ export function useTeam() {
 
       const result = await authClient.organization.removeMember({
         organizationId: currentTeam.value.id,
-        memberIdOrEmail: userId,
+        memberIdOrEmail: userId
       })
 
       if (result.error) {
@@ -449,12 +435,10 @@ export function useTeam() {
 
       // Refresh members list
       await loadMembers()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to remove member'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -477,7 +461,7 @@ export function useTeam() {
       const result = await authClient.organization.updateMemberRole({
         organizationId: currentTeam.value.id,
         memberId: userId,
-        role,
+        role
       })
 
       if (result.error) {
@@ -486,12 +470,10 @@ export function useTeam() {
 
       // Refresh members list
       await loadMembers()
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update role'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -519,18 +501,16 @@ export function useTeam() {
 
       const result = await authClient.organization.removeMember({
         organizationId: currentTeam.value.id,
-        memberIdOrEmail: user.value.id,
+        memberIdOrEmail: user.value.id
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Failed to leave team')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to leave team'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -547,7 +527,7 @@ export function useTeam() {
 
     try {
       const result = await authClient.organization.listInvitations({
-        organizationId: currentTeam.value.id,
+        organizationId: currentTeam.value.id
       })
 
       if (result.error) {
@@ -556,8 +536,7 @@ export function useTeam() {
       }
 
       return result.data?.invitations ?? []
-    }
-    catch (e) {
+    } catch (e) {
       console.error('Failed to get invitations:', e)
       return []
     }
@@ -571,18 +550,16 @@ export function useTeam() {
     error.value = null
     try {
       const result = await authClient.organization.cancelInvitation({
-        invitationId,
+        invitationId
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Failed to cancel invitation')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to cancel invitation'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -595,18 +572,16 @@ export function useTeam() {
     error.value = null
     try {
       const result = await authClient.organization.acceptInvitation({
-        invitationId,
+        invitationId
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Failed to accept invitation')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to accept invitation'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -619,18 +594,16 @@ export function useTeam() {
     error.value = null
     try {
       const result = await authClient.organization.rejectInvitation({
-        invitationId,
+        invitationId
       })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Failed to reject invitation')
       }
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to reject invitation'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -671,6 +644,6 @@ export function useTeam() {
     getPendingInvitations,
     cancelInvitation,
     acceptInvitation,
-    rejectInvitation,
+    rejectInvitation
   }
 }

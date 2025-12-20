@@ -24,7 +24,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  error: null,
+  error: null
 })
 
 const emit = defineEmits<{
@@ -42,7 +42,7 @@ const toast = useToast()
 // Form state
 const state = reactive({
   email: '',
-  role: 'member' as MemberRole,
+  role: 'member' as MemberRole
 })
 
 // Role options
@@ -51,13 +51,13 @@ const roleOptions = computed(() => {
     {
       label: t('teams.member'),
       value: 'member',
-      description: 'Can view and use team resources',
+      description: 'Can view and use team resources'
     },
     {
       label: t('teams.admin'),
       value: 'admin',
-      description: 'Can manage members and settings',
-    },
+      description: 'Can manage members and settings'
+    }
   ]
 
   // Only owner can invite other owners
@@ -65,7 +65,7 @@ const roleOptions = computed(() => {
     roles.push({
       label: t('teams.owner'),
       value: 'owner',
-      description: 'Full control over the team',
+      description: 'Full control over the team'
     })
   }
 
@@ -78,7 +78,7 @@ function validate(formState: Partial<typeof state>): FormError[] {
 
   if (!formState.email?.trim()) {
     errors.push({ name: 'email', message: t('errors.requiredField') })
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+  } else if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(formState.email)) {
     errors.push({ name: 'email', message: t('errors.invalidEmail') })
   }
 
@@ -97,7 +97,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Permission denied',
       description: 'You do not have permission to invite members.',
-      color: 'error',
+      color: 'error'
     })
     return
   }
@@ -106,13 +106,13 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
   try {
     await inviteMember({
       email: event.data.email,
-      role: event.data.role,
+      role: event.data.role
     })
 
     toast.add({
       title: 'Invitation sent',
       description: `Invitation has been sent to ${event.data.email}.`,
-      color: 'success',
+      color: 'success'
     })
 
     emit('success', event.data.email, event.data.role)
@@ -125,7 +125,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     internalLoading.value = false
@@ -141,13 +141,19 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     @submit="onSubmit"
   >
     <div>
-      <h3 class="text-lg font-semibold">{{ t('teams.inviteMember') }}</h3>
+      <h3 class="text-lg font-semibold">
+        {{ t('teams.inviteMember') }}
+      </h3>
       <p class="text-sm text-muted mt-1">
         Send an invitation to join your team.
       </p>
     </div>
 
-    <UFormField :label="t('auth.email')" name="email" required>
+    <UFormField
+      :label="t('auth.email')"
+      name="email"
+      required
+    >
       <UInput
         v-model="state.email"
         type="email"
@@ -157,7 +163,10 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField :label="t('teams.role')" name="role">
+    <UFormField
+      :label="t('teams.role')"
+      name="role"
+    >
       <template #hint>
         <span class="text-xs text-muted">
           The role determines what the member can do.
@@ -170,8 +179,12 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
       >
         <template #label="{ item }">
           <div>
-            <p class="font-medium">{{ item.label }}</p>
-            <p class="text-xs text-muted">{{ item.description }}</p>
+            <p class="font-medium">
+              {{ item.label }}
+            </p>
+            <p class="text-xs text-muted">
+              {{ item.description }}
+            </p>
           </div>
         </template>
       </URadioGroup>

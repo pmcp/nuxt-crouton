@@ -3,6 +3,11 @@
 export default defineNuxtConfig({
   extends: ['@crouton/auth'],
 
+  // NuxtHub for D1 database
+  hub: {
+    database: true
+  },
+
   croutonAuth: {
     mode: 'personal',
 
@@ -97,10 +102,5 @@ export default defineNuxtConfig({
         afterRegister: '/dashboard'
       }
     }
-  },
-
-  // NuxtHub for D1 database
-  hub: {
-    database: true
   }
 })

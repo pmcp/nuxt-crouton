@@ -28,8 +28,15 @@ const isTruncated = computed(() => strippedContent.value.length > props.limit)
 </script>
 
 <template>
-  <UTooltip v-if="isTruncated" :text="strippedContent" :ui="{ content: 'max-w-sm' }">
+  <UTooltip
+    v-if="isTruncated"
+    :text="strippedContent"
+    :ui="{ content: 'max-w-sm' }"
+  >
     <span class="text-sm text-muted">{{ truncatedContent }}</span>
   </UTooltip>
-  <span v-else class="text-sm text-muted">{{ truncatedContent }}</span>
+  <span
+    v-else
+    class="text-sm text-muted"
+  >{{ truncatedContent }}</span>
 </template>

@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
   brandName: 'My App',
   logoUrl: '',
   primaryColor: '#0F766E',
-  appUrl: '',
+  appUrl: ''
 })
 
 const previewText = props.preview || `Welcome to ${props.brandName}!`
@@ -38,7 +38,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
         fontWeight: '600',
         color: primaryColor,
         textAlign: 'center',
-        margin: '0 0 24px',
+        margin: '0 0 24px'
       }"
     >
       Welcome to {{ brandName }}!
@@ -49,7 +49,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
         fontSize: '16px',
         lineHeight: '24px',
         color: '#525f7f',
-        margin: '0 0 16px',
+        margin: '0 0 16px'
       }"
     >
       Hi {{ name }},
@@ -60,7 +60,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
         fontSize: '16px',
         lineHeight: '24px',
         color: '#525f7f',
-        margin: '0 0 24px',
+        margin: '0 0 24px'
       }"
     >
       Thank you for creating an account. We're excited to have you on board!
@@ -81,7 +81,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
           textDecoration: 'none',
           textAlign: 'center',
           display: 'inline-block',
-          padding: '12px 24px',
+          padding: '12px 24px'
         }"
       >
         Get Started
@@ -93,7 +93,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
         backgroundColor: '#f4f4f5',
         borderRadius: '8px',
         padding: '20px',
-        margin: '0 0 24px',
+        margin: '0 0 24px'
       }"
     >
       <EText
@@ -101,7 +101,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
           fontSize: '14px',
           fontWeight: '600',
           color: '#525f7f',
-          margin: '0 0 12px',
+          margin: '0 0 12px'
         }"
       >
         Here's what you can do next:
@@ -111,7 +111,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
           fontSize: '14px',
           lineHeight: '22px',
           color: '#525f7f',
-          margin: '0',
+          margin: '0'
         }"
       >
         &bull; Complete your profile<br>
@@ -125,7 +125,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
         fontSize: '14px',
         lineHeight: '20px',
         color: '#8898aa',
-        margin: '0',
+        margin: '0'
       }"
     >
       If you have any questions, feel free to reply to this email.

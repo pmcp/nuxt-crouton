@@ -9,7 +9,7 @@
  */
 definePageMeta({
   middleware: ['auth'],
-  layout: 'dashboard',
+  layout: 'dashboard'
 })
 
 const { showTeamManagement, canInviteMembers } = useTeam()
@@ -38,29 +38,43 @@ function handleInvited() {
         :to="buildDashboardUrl('/settings')"
         class="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground mb-4"
       >
-        <UIcon name="i-lucide-arrow-left" class="size-4" />
+        <UIcon
+          name="i-lucide-arrow-left"
+          class="size-4"
+        />
         Back to Account Settings
       </NuxtLink>
 
-      <h1 class="text-2xl font-bold">Team Members</h1>
+      <h1 class="text-2xl font-bold">
+        Team Members
+      </h1>
       <p class="text-muted mt-1">
         Manage team members and send invitations.
       </p>
     </div>
 
     <!-- Team management not available -->
-    <UCard v-if="!showTeamManagement" class="text-center py-8">
+    <UCard
+      v-if="!showTeamManagement"
+      class="text-center py-8"
+    >
       <UIcon
         name="i-lucide-users"
         class="size-12 mx-auto mb-4 text-muted opacity-50"
       />
-      <h3 class="text-lg font-medium">Team Management Not Available</h3>
+      <h3 class="text-lg font-medium">
+        Team Management Not Available
+      </h3>
       <p class="text-muted mt-2 max-w-md mx-auto">
         Team management is only available in multi-tenant mode.
         Your app is configured for single-tenant or personal mode.
       </p>
       <NuxtLink :to="buildDashboardUrl('/settings')">
-        <UButton label="Go to Account Settings" variant="outline" class="mt-4" />
+        <UButton
+          label="Go to Account Settings"
+          variant="outline"
+          class="mt-4"
+        />
       </NuxtLink>
     </UCard>
 
@@ -82,7 +96,9 @@ function handleInvited() {
       <!-- Invite Modal -->
       <UModal v-model:open="showInviteModal">
         <template #header>
-          <h3 class="text-lg font-semibold">Invite Team Member</h3>
+          <h3 class="text-lg font-semibold">
+            Invite Team Member
+          </h3>
         </template>
 
         <div class="p-4">

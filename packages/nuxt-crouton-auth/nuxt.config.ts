@@ -6,13 +6,13 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 export default defineNuxtConfig({
   // Register the auth module
   modules: [
-    join(currentDir, 'module.ts'),
+    join(currentDir, 'module.ts')
   ],
 
   // Layer metadata
   $meta: {
     name: '@crouton/auth',
-    version: '0.1.0',
+    version: '0.1.0'
   },
 
   // Runtime config defaults
@@ -20,7 +20,7 @@ export default defineNuxtConfig({
     // Server-only config
     auth: {
       secret: '', // BETTER_AUTH_SECRET
-      baseUrl: '', // BETTER_AUTH_URL
+      baseUrl: '' // BETTER_AUTH_URL
     },
 
     // Public config
@@ -33,40 +33,40 @@ export default defineNuxtConfig({
             oauth: undefined,
             passkeys: false,
             twoFactor: false,
-            magicLink: false,
+            magicLink: false
           },
           teams: {
             allowCreate: true,
             limit: 5,
-            memberLimit: 100,
+            memberLimit: 100
           },
           billing: {
-            enabled: false,
+            enabled: false
           },
           ui: {
             theme: 'default' as const,
             redirects: {
               afterLogin: '/dashboard',
               afterLogout: '/',
-              afterRegister: '/dashboard',
-            },
-          },
-        },
-      },
-    },
-  },
-
-  // Nitro server config
-  nitro: {
-    imports: {
-      dirs: ['server/utils'],
-    },
-    // Override #crouton/team-auth to use Better Auth instead of direct DB queries
-    alias: {
-      '#crouton/team-auth': join(currentDir, 'server/utils/team-auth'),
-    },
+              afterRegister: '/dashboard'
+            }
+          }
+        }
+      }
+    }
   },
 
   // Compatibility
   compatibilityDate: '2024-11-01',
+
+  // Nitro server config
+  nitro: {
+    imports: {
+      dirs: ['server/utils']
+    },
+    // Override #crouton/team-auth to use Better Auth instead of direct DB queries
+    alias: {
+      '#crouton/team-auth': join(currentDir, 'server/utils/team-auth')
+    }
+  }
 })

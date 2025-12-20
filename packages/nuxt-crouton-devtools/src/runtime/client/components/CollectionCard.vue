@@ -49,11 +49,17 @@ const layerColor = computed(() => {
     </template>
 
     <div class="space-y-2">
-      <div v-if="collection.meta?.description" class="text-sm text-gray-600 dark:text-gray-400">
+      <div
+        v-if="collection.meta?.description"
+        class="text-sm text-gray-600 dark:text-gray-400"
+      >
         {{ collection.meta.description }}
       </div>
 
-      <div v-if="collection.componentName" class="text-sm">
+      <div
+        v-if="collection.componentName"
+        class="text-sm"
+      >
         <code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs">
           {{ collection.componentName }}
         </code>

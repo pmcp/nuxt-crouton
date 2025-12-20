@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import type { z } from 'zod'
 import { defineExternalCollection } from '@friendlyinternet/nuxt-crouton/app/composables/useExternalCollection'
 
 /**
@@ -14,7 +14,7 @@ export interface SupersaasConnectorConfig {
   /** Zod schema for validation */
   schema: z.ZodSchema
   /** Transform function to convert SuperSaaS data to Crouton format */
-  transform: (item: any) => { id: string; title: string; [key: string]: any }
+  transform: (item: any) => { id: string, title: string, [key: string]: any }
   /** Optional metadata */
   meta?: {
     label?: string

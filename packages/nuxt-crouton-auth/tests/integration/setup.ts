@@ -20,7 +20,7 @@ export const createTestUser = (overrides = {}) => ({
   emailVerified: true,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
-  ...overrides,
+  ...overrides
 })
 
 export const createTestTeam = (overrides = {}) => ({
@@ -34,7 +34,7 @@ export const createTestTeam = (overrides = {}) => ({
   ownerId: undefined,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
-  ...overrides,
+  ...overrides
 })
 
 export const createTestMember = (overrides = {}) => ({
@@ -43,7 +43,7 @@ export const createTestMember = (overrides = {}) => ({
   userId: 'user-1',
   role: 'member' as const,
   createdAt: new Date('2024-01-01'),
-  ...overrides,
+  ...overrides
 })
 
 export const createTestSession = (overrides = {}) => ({
@@ -51,7 +51,7 @@ export const createTestSession = (overrides = {}) => ({
   userId: 'user-1',
   activeOrganizationId: 'team-1',
   expiresAt: new Date('2025-01-01'),
-  ...overrides,
+  ...overrides
 })
 
 export const createTestSubscription = (overrides = {}) => ({
@@ -62,7 +62,7 @@ export const createTestSubscription = (overrides = {}) => ({
   currentPeriodStart: new Date('2024-01-01'),
   currentPeriodEnd: new Date('2024-02-01'),
   cancelAtPeriodEnd: false,
-  ...overrides,
+  ...overrides
 })
 
 // ============================================================================
@@ -83,7 +83,7 @@ export const createMockAuthClient = (options: MockAuthClientOptions = {}) => {
     session = null,
     teams = [],
     members = [],
-    subscription = null,
+    subscription = null
   } = options
 
   return {
@@ -96,7 +96,7 @@ export const createMockAuthClient = (options: MockAuthClientOptions = {}) => {
       }),
       social: vi.fn().mockResolvedValue({ data: { url: 'https://oauth.example.com' }, error: null }),
       passkey: vi.fn().mockResolvedValue({ data: { user: createTestUser() }, error: null }),
-      magicLink: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      magicLink: vi.fn().mockResolvedValue({ data: {}, error: null })
     },
     signUp: {
       email: vi.fn().mockImplementation(async (data) => {
@@ -104,7 +104,7 @@ export const createMockAuthClient = (options: MockAuthClientOptions = {}) => {
           return { data: null, error: { message: 'Email already exists' } }
         }
         return { data: { user: createTestUser({ ...data, id: 'new-user-id' }) }, error: null }
-      }),
+      })
     },
     signOut: vi.fn().mockResolvedValue({}),
     forgetPassword: vi.fn().mockResolvedValue({ data: {}, error: null }),
@@ -123,22 +123,22 @@ export const createMockAuthClient = (options: MockAuthClientOptions = {}) => {
     useSession: vi.fn().mockReturnValue({
       data: computed(() => user && session ? { user, session } : null),
       isPending: ref(false),
-      error: ref(null),
+      error: ref(null)
     }),
     passkey: {
       addPasskey: vi.fn().mockResolvedValue({ data: { id: 'pk-1' }, error: null }),
       listUserPasskeys: vi.fn().mockResolvedValue({ data: [], error: null }),
-      deletePasskey: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      deletePasskey: vi.fn().mockResolvedValue({ data: {}, error: null })
     },
     twoFactor: {
       enable: vi.fn().mockResolvedValue({
         data: { totpURI: 'otpauth://totp/App:test@example.com?secret=ABC123', secret: 'ABC123' },
-        error: null,
+        error: null
       }),
       disable: vi.fn().mockResolvedValue({ data: {}, error: null }),
       getTOTPURI: vi.fn().mockResolvedValue({
         data: { totpURI: 'otpauth://totp/App:test@example.com?secret=ABC123' },
-        error: null,
+        error: null
       }),
       verifyTotp: vi.fn().mockImplementation(async ({ code }) => {
         if (code === '123456') {
@@ -148,18 +148,18 @@ export const createMockAuthClient = (options: MockAuthClientOptions = {}) => {
       }),
       generateBackupCodes: vi.fn().mockResolvedValue({
         data: { backupCodes: ['ABC123', 'DEF456', 'GHI789'] },
-        error: null,
+        error: null
       }),
       viewBackupCodes: vi.fn().mockResolvedValue({
         data: { backupCodes: [{ code: 'ABC123', isUsed: false }, { code: 'DEF456', isUsed: true }] },
-        error: null,
+        error: null
       }),
       verifyBackupCode: vi.fn().mockImplementation(async ({ code }) => {
         if (code === 'ABC123') {
           return { data: {}, error: null }
         }
         return { data: null, error: { message: 'Invalid backup code' } }
-      }),
+      })
     },
     organization: {
       // Better Auth client calls directly with data object, not wrapped in body
@@ -169,7 +169,7 @@ export const createMockAuthClient = (options: MockAuthClientOptions = {}) => {
       }),
       list: vi.fn().mockResolvedValue({ data: teams, error: null }),
       getFullOrganization: vi.fn().mockImplementation(async ({ query }) => {
-        const found = teams.find((t) => t.id === query?.organizationId || t.slug === query?.organizationSlug)
+        const found = teams.find(t => t.id === query?.organizationId || t.slug === query?.organizationSlug)
         return { data: found ?? null, error: null }
       }),
       setActive: vi.fn().mockResolvedValue({ data: {}, error: null }),
@@ -185,31 +185,31 @@ export const createMockAuthClient = (options: MockAuthClientOptions = {}) => {
       rejectInvitation: vi.fn().mockResolvedValue({ data: {}, error: null }),
       cancelInvitation: vi.fn().mockResolvedValue({ data: {}, error: null }),
       getInvitation: vi.fn().mockResolvedValue({ data: null, error: null }),
-      listInvitations: vi.fn().mockResolvedValue({ data: [], error: null }),
+      listInvitations: vi.fn().mockResolvedValue({ data: [], error: null })
     },
     subscription: {
       list: vi.fn().mockResolvedValue({
         data: subscription ? [subscription] : [],
-        error: null,
+        error: null
       }),
       upgrade: vi.fn().mockResolvedValue({
         data: { url: 'https://checkout.stripe.com/test' },
-        error: null,
+        error: null
       }),
       cancel: vi.fn().mockResolvedValue({ data: {}, error: null }),
-      restore: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      restore: vi.fn().mockResolvedValue({ data: {}, error: null })
     },
     // Reactive hooks for composables
     useListOrganizations: vi.fn().mockReturnValue({
       data: computed(() => teams),
       isPending: ref(false),
-      error: ref(null),
+      error: ref(null)
     }),
     useActiveOrganization: vi.fn().mockReturnValue({
       data: computed(() => teams[0] ?? null),
       isPending: ref(false),
-      error: ref(null),
-    }),
+      error: ref(null)
+    })
   }
 }
 
@@ -218,7 +218,7 @@ export const createMockAuthClient = (options: MockAuthClientOptions = {}) => {
 // ============================================================================
 
 export interface MockServerAuthOptions {
-  session?: { user: ReturnType<typeof createTestUser>; session: ReturnType<typeof createTestSession> } | null
+  session?: { user: ReturnType<typeof createTestUser>, session: ReturnType<typeof createTestSession> } | null
   teams?: ReturnType<typeof createTestTeam>[]
   members?: ReturnType<typeof createTestMember>[]
 }
@@ -231,7 +231,7 @@ export const createMockServerAuth = (options: MockServerAuthOptions = {}) => {
       getSession: vi.fn().mockImplementation(async () => session),
       listOrganizations: vi.fn().mockResolvedValue(teams),
       getFullOrganization: vi.fn().mockImplementation(async ({ query }) => {
-        return teams.find((t) => t.id === query.organizationId || t.slug === query.organizationSlug) ?? null
+        return teams.find(t => t.id === query.organizationId || t.slug === query.organizationSlug) ?? null
       }),
       createOrganization: vi.fn().mockImplementation(async ({ body }) => {
         return createTestTeam({ ...body, id: 'new-team-id' })
@@ -240,8 +240,8 @@ export const createMockServerAuth = (options: MockServerAuthOptions = {}) => {
       listMembers: vi.fn().mockResolvedValue({ members }),
       inviteMember: vi.fn().mockResolvedValue({ id: 'inv-1' }),
       removeMember: vi.fn().mockResolvedValue({}),
-      updateMemberRole: vi.fn().mockResolvedValue({}),
-    },
+      updateMemberRole: vi.fn().mockResolvedValue({})
+    }
   }
 }
 
@@ -253,7 +253,7 @@ export const createMockEvent = (overrides = {}) => ({
   node: { req: {}, res: {} },
   headers: new Headers({ cookie: 'session-token=test' }),
   context: {},
-  ...overrides,
+  ...overrides
 })
 
 // ============================================================================
@@ -264,7 +264,7 @@ export const setupIntegrationMocks = (authClientOptions: MockAuthClientOptions =
   const mockClient = createMockAuthClient(authClientOptions)
 
   vi.stubGlobal('useNuxtApp', () => ({
-    $authClient: mockClient,
+    $authClient: mockClient
   }))
 
   vi.stubGlobal('useRuntimeConfig', () => ({
@@ -278,34 +278,34 @@ export const setupIntegrationMocks = (authClientOptions: MockAuthClientOptions =
             password: true,
             oauth: {
               github: { clientId: 'test-github', clientSecret: 'test' },
-              google: { clientId: 'test-google', clientSecret: 'test' },
+              google: { clientId: 'test-google', clientSecret: 'test' }
             },
             passkeys: { enabled: true },
             twoFactor: { enabled: true },
-            magicLink: { enabled: true },
+            magicLink: { enabled: true }
           },
           teams: {
             allowCreate: true,
-            limit: 5,
+            limit: 5
           },
           billing: {
             enabled: true,
             stripe: {
               publishableKey: 'pk_test_mock',
-              secretKey: 'sk_test_mock',
+              secretKey: 'sk_test_mock'
             },
             plans: [
               { id: 'free', name: 'Free', price: 0 },
-              { id: 'pro', name: 'Pro', price: 29 },
-            ],
-          },
-        },
-      },
+              { id: 'pro', name: 'Pro', price: 29 }
+            ]
+          }
+        }
+      }
     },
     auth: {
       secret: 'test-secret',
-      baseUrl: 'http://localhost:3000',
-    },
+      baseUrl: 'http://localhost:3000'
+    }
   }))
 
   vi.stubGlobal('ref', ref)
@@ -316,16 +316,16 @@ export const setupIntegrationMocks = (authClientOptions: MockAuthClientOptions =
   vi.stubGlobal('useRoute', () => ({
     params: {},
     path: '/dashboard',
-    query: {},
+    query: {}
   }))
   vi.stubGlobal('useRouter', () => ({
     push: vi.fn(),
-    replace: vi.fn(),
+    replace: vi.fn()
   }))
   vi.stubGlobal('useToast', () => ({
-    add: vi.fn(),
+    add: vi.fn()
   }))
-  vi.stubGlobal('createError', (options: { statusCode: number; message: string }) => {
+  vi.stubGlobal('createError', (options: { statusCode: number, message: string }) => {
     const error = new Error(options.message) as Error & { statusCode: number }
     error.statusCode = options.statusCode
     return error
@@ -342,7 +342,7 @@ export const setupIntegrationMocks = (authClientOptions: MockAuthClientOptions =
     error: ref(null),
     refresh: vi.fn(),
     clear: vi.fn(),
-    activeOrganization: computed(() => teams[0] ?? null),
+    activeOrganization: computed(() => teams[0] ?? null)
   }))
 
   return mockClient

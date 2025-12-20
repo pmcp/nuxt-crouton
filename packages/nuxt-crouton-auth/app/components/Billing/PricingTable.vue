@@ -27,7 +27,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   recommendedPlan: undefined,
   checkoutOptions: undefined,
-  showAnnualToggle: false,
+  showAnnualToggle: false
 })
 
 const emit = defineEmits<{
@@ -41,7 +41,7 @@ const {
   subscription,
   loading,
   checkout,
-  isCurrentPlan,
+  isCurrentPlan
 } = useBilling()
 
 // Selected plan for checkout
@@ -72,19 +72,17 @@ const handleSelectPlan = async (plan: Plan) => {
   try {
     await checkout(plan.id, {
       ...props.checkoutOptions,
-      annual: useAnnual.value,
+      annual: useAnnual.value
     })
     emit('checkout', plan)
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to start checkout'
     toast.add({
       title: 'Checkout Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
-  }
-  finally {
+  } finally {
     checkoutLoading.value = false
     selectedPlan.value = null
   }
@@ -92,7 +90,10 @@ const handleSelectPlan = async (plan: Plan) => {
 </script>
 
 <template>
-  <div v-if="enabled" class="space-y-6">
+  <div
+    v-if="enabled"
+    class="space-y-6"
+  >
     <!-- Annual Toggle -->
     <div
       v-if="showAnnualToggle"
@@ -104,7 +105,11 @@ const handleSelectPlan = async (plan: Plan) => {
       <USwitch v-model="useAnnual" />
       <span :class="['text-sm', useAnnual ? 'font-semibold' : 'text-muted']">
         Yearly
-        <UBadge color="success" size="xs" class="ml-1">
+        <UBadge
+          color="success"
+          size="xs"
+          class="ml-1"
+        >
           Save 20%
         </UBadge>
       </span>
@@ -116,7 +121,7 @@ const handleSelectPlan = async (plan: Plan) => {
         'grid gap-6',
         displayPlans.length === 1 ? 'max-w-md mx-auto' : '',
         displayPlans.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-2xl mx-auto' : '',
-        displayPlans.length >= 3 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : '',
+        displayPlans.length >= 3 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : ''
       ]"
     >
       <BillingPlanCard
@@ -136,7 +141,10 @@ const handleSelectPlan = async (plan: Plan) => {
       v-if="displayPlans.length === 0"
       class="text-center py-12 text-muted"
     >
-      <UIcon name="i-lucide-credit-card" class="size-12 mx-auto mb-4 opacity-50" />
+      <UIcon
+        name="i-lucide-credit-card"
+        class="size-12 mx-auto mb-4 opacity-50"
+      />
       <p>No plans available</p>
     </div>
   </div>
@@ -146,7 +154,10 @@ const handleSelectPlan = async (plan: Plan) => {
     v-else
     class="text-center py-12 text-muted"
   >
-    <UIcon name="i-lucide-credit-card-off" class="size-12 mx-auto mb-4 opacity-50" />
+    <UIcon
+      name="i-lucide-credit-card-off"
+      class="size-12 mx-auto mb-4 opacity-50"
+    />
     <p>Billing is not enabled</p>
   </div>
 </template>

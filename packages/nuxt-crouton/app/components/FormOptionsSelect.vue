@@ -11,7 +11,10 @@
     />
 
     <!-- Loading state -->
-    <USkeleton v-else-if="pending && !options.length" class="h-10 w-full" />
+    <USkeleton
+      v-else-if="pending && !options.length"
+      class="h-10 w-full"
+    />
 
     <!-- Select menu -->
     <USelectMenu
@@ -31,7 +34,10 @@
         <span>{{ (item as OptionItem)?.label || (item as OptionItem)?.value }}</span>
       </template>
 
-      <template v-if="creatable" #content-top>
+      <template
+        v-if="creatable"
+        #content-top
+      >
         <div class="p-1">
           <UButton
             color="neutral"
@@ -51,7 +57,9 @@
       <template #content>
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold">Create new {{ label }}</h3>
+            <h3 class="text-lg font-semibold">
+              Create new {{ label }}
+            </h3>
             <UButton
               icon="i-lucide-x"
               color="neutral"
@@ -62,7 +70,10 @@
           </div>
 
           <div class="flex flex-col gap-4">
-            <UFormField label="Label" required>
+            <UFormField
+              label="Label"
+              required
+            >
               <UInput
                 v-model="newOption.label"
                 placeholder="Display name"
@@ -86,7 +97,11 @@
           </div>
 
           <div class="flex justify-end gap-2 mt-6">
-            <UButton color="neutral" variant="outline" @click="createModalOpen = false">
+            <UButton
+              color="neutral"
+              variant="outline"
+              @click="createModalOpen = false"
+            >
               Cancel
             </UButton>
             <UButton
@@ -203,7 +218,7 @@ const createOption = async () => {
 
   try {
     const { create, update } = useCollectionMutation(props.optionsCollection)
-    let settingsRecord = items.value?.[0]
+    const settingsRecord = items.value?.[0]
 
     const optionToAdd: OptionItem = {
       id: nanoid(),

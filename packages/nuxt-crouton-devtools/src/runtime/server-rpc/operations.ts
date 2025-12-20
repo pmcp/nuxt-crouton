@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (query.since && typeof query.since === 'string') {
-    filters.since = parseInt(query.since, 10)
+    filters.since = Number.parseInt(query.since, 10)
   }
 
   const operations = operationStore.getAll(filters)

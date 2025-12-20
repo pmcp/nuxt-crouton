@@ -22,7 +22,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   textPrefix: 'Continue with',
-  direction: 'vertical',
+  direction: 'vertical'
 })
 
 const emit = defineEmits<{
@@ -41,14 +41,14 @@ const providerConfig: Record<string, { icon: string, color?: string, name: strin
   facebook: { icon: 'i-simple-icons-facebook', color: '#1877F2', name: 'Facebook' },
   apple: { icon: 'i-simple-icons-apple', name: 'Apple' },
   microsoft: { icon: 'i-simple-icons-microsoft', name: 'Microsoft' },
-  linkedin: { icon: 'i-simple-icons-linkedin', color: '#0A66C2', name: 'LinkedIn' },
+  linkedin: { icon: 'i-simple-icons-linkedin', color: '#0A66C2', name: 'LinkedIn' }
 }
 
 // Get config for a provider
 function getProviderConfig(provider: string) {
   return providerConfig[provider] || {
     icon: 'i-lucide-user',
-    name: provider.charAt(0).toUpperCase() + provider.slice(1),
+    name: provider.charAt(0).toUpperCase() + provider.slice(1)
   }
 }
 
@@ -62,7 +62,7 @@ function handleClick(provider: string) {
   <div
     v-if="hasOAuth && oauthProviders.length > 0"
     :class="[
-      direction === 'vertical' ? 'space-y-3' : 'flex gap-3 flex-wrap',
+      direction === 'vertical' ? 'space-y-3' : 'flex gap-3 flex-wrap'
     ]"
   >
     <UButton

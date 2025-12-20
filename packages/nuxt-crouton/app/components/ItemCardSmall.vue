@@ -35,26 +35,44 @@ const customComponent = computed(() => {
 <template>
   <!-- Use custom component if it exists -->
   <component
-    v-if="customComponent"
     :is="customComponent"
+    v-if="customComponent"
+    :id="id"
     :item="item"
     :pending="pending"
     :error="error"
-    :id="id"
     :collection="collection"
     :refresh="refresh"
   />
 
   <!-- Default fallback rendering -->
-  <div v-else class="flex items-center gap-2 min-w-0">
-    <USkeleton v-if="pending" class="h-4 w-24" />
+  <div
+    v-else
+    class="flex items-center gap-2 min-w-0"
+  >
+    <USkeleton
+      v-if="pending"
+      class="h-4 w-24"
+    />
     <template v-else-if="item">
-      <UIcon v-if="item.icon" :name="item.icon" class="size-4 shrink-0" />
+      <UIcon
+        v-if="item.icon"
+        :name="item.icon"
+        class="size-4 shrink-0"
+      />
       <span class="truncate">{{ item.title || item.name || item.label || item.id }}</span>
-      <UBadge v-if="item.status" color="neutral" size="xs" variant="subtle">
+      <UBadge
+        v-if="item.status"
+        color="neutral"
+        size="xs"
+        variant="subtle"
+      >
         {{ item.status }}
       </UBadge>
     </template>
-    <span v-else-if="error" class="text-red-500 text-sm">Error loading</span>
+    <span
+      v-else-if="error"
+      class="text-red-500 text-sm"
+    >Error loading</span>
   </div>
 </template>

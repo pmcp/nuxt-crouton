@@ -19,16 +19,16 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   open: false,
-  loading: false,
+  loading: false
 })
 
 const emit = defineEmits<{
   /** Emitted to update open state */
   'update:open': [value: boolean]
   /** Emitted when team is deleted */
-  deleted: []
+  'deleted': []
   /** Emitted when deletion is cancelled */
-  cancel: []
+  'cancel': []
 }>()
 
 const { t } = useT()
@@ -66,7 +66,7 @@ async function handleDelete() {
     toast.add({
       title: 'Team deleted',
       description: 'The team has been permanently deleted.',
-      color: 'success',
+      color: 'success'
     })
 
     confirmText.value = ''
@@ -85,7 +85,7 @@ async function handleDelete() {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     internalLoading.value = false
@@ -99,7 +99,7 @@ watch(
     if (open) {
       confirmText.value = ''
     }
-  },
+  }
 )
 </script>
 
@@ -118,7 +118,9 @@ watch(
             />
           </div>
           <div>
-            <h3 class="text-lg font-semibold">{{ t('teams.deleteTeam') }}</h3>
+            <h3 class="text-lg font-semibold">
+              {{ t('teams.deleteTeam') }}
+            </h3>
             <p class="text-sm text-muted">
               {{ t('confirmation.cannotUndo') }}
             </p>
@@ -130,7 +132,9 @@ watch(
           variant="soft"
           icon="i-lucide-alert-circle"
         >
-          <template #title>{{ t('teams.warning') }}</template>
+          <template #title>
+            {{ t('teams.warning') }}
+          </template>
           <template #description>
             <p>{{ t('teams.deleteTeamWillPrefix') }}</p>
             <ul class="list-disc list-inside mt-2 space-y-1">

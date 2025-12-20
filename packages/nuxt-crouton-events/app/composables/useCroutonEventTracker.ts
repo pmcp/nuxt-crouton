@@ -34,7 +34,7 @@ export function useCroutonEventTracker() {
 
     // For CREATE operations (no before data)
     if (!before && after) {
-      Object.keys(after).forEach(key => {
+      Object.keys(after).forEach((key) => {
         // Skip internal/metadata fields
         if (['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'teamId', 'owner'].includes(key)) {
           return
@@ -51,7 +51,7 @@ export function useCroutonEventTracker() {
 
     // For UPDATE operations (compare before and after)
     if (before && after) {
-      Object.keys(after).forEach(key => {
+      Object.keys(after).forEach((key) => {
         // Skip internal/metadata fields
         if (['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'teamId', 'owner'].includes(key)) {
           return
@@ -74,7 +74,7 @@ export function useCroutonEventTracker() {
 
     // For DELETE operations (only before data)
     if (before && !after) {
-      Object.keys(before).forEach(key => {
+      Object.keys(before).forEach((key) => {
         // Skip internal/metadata fields
         if (['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'teamId', 'owner'].includes(key)) {
           return
@@ -184,7 +184,7 @@ export function useCroutonEventTracker() {
    * Track event in background (fire and forget with error handling)
    */
   const trackInBackground = (options: TrackEventOptions): void => {
-    track(options).catch(err => {
+    track(options).catch((err) => {
       // Silently log in production, toast in development
       if (import.meta.dev) {
         console.error('[CroutonEvents] Background tracking failed:', err)

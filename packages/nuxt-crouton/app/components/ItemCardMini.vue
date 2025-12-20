@@ -29,41 +29,47 @@ const customComponent = computed(() => {
 <template>
   <!-- Use custom component if it exists -->
   <component
-    v-if="customComponent"
     :is="customComponent"
+    v-if="customComponent"
+    :id="id"
     :item="item"
     :pending="pending"
     :error="error"
-    :id="id"
     :collection="collection"
     :refresh="refresh"
   />
 
   <!-- Default fallback rendering -->
-  <div v-else class="group relative">
-
-      <UBadge
-        color="neutral"
-        variant="subtle"
-        size="lg"
-        class="relative z-10"
-        :ui="{base: 'w-full font-medium inline-flex items-center center text-center justify-center'}"
+  <div
+    v-else
+    class="group relative"
+  >
+    <UBadge
+      color="neutral"
+      variant="subtle"
+      size="lg"
+      class="relative z-10"
+      :ui="{ base: 'w-full font-medium inline-flex items-center center text-center justify-center' }"
     >
-        <USkeleton v-if="pending" class="h-4 w-full" />
-        <span v-else-if="item">{{ item.title }}</span>
-        <span v-else-if="error" class="text-red-500">Error loading</span>
+      <USkeleton
+        v-if="pending"
+        class="h-4 w-full"
+      />
+      <span v-else-if="item">{{ item.title }}</span>
+      <span
+        v-else-if="error"
+        class="text-red-500"
+      >Error loading</span>
     </UBadge>
-
 
     <div class="bg-neutral absolute -top-1 right-2 transition-all delay-150 duration-300 ease-in-out group-hover:-top-6 group-hover:scale-110">
       <CroutonItemButtonsMini
-          v-if="item"
-          update
-          @update="open('update', collection, [id])"
-          buttonClasses="hover:scale-110 hover:color-neutral-800 pb-2"
-          containerClasses="flex flex-row gap-[2px]"
+        v-if="item"
+        update
+        button-classes="hover:scale-110 hover:color-neutral-800 pb-2"
+        container-classes="flex flex-row gap-[2px]"
+        @update="open('update', collection, [id])"
       />
     </div>
-
   </div>
 </template>

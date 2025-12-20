@@ -11,12 +11,15 @@ defineProps<{
     <div
       class="flow-connection-indicator"
       :class="{
-        'connected': connected && synced,
-        'connecting': connected && !synced,
-        'disconnected': !connected
+        connected: connected && synced,
+        connecting: connected && !synced,
+        disconnected: !connected
       }"
     />
-    <span v-if="error" class="flow-connection-error">
+    <span
+      v-if="error"
+      class="flow-connection-error"
+    >
       {{ error.message }}
     </span>
   </div>

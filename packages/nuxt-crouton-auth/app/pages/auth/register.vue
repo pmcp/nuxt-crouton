@@ -10,7 +10,7 @@
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'guest',
+  middleware: 'guest'
 })
 
 const router = useRouter()
@@ -23,7 +23,7 @@ const {
   hasOAuth,
   oauthProviders,
   loading,
-  error,
+  error
 } = useAuth()
 
 // Handle registration form submission
@@ -32,12 +32,12 @@ async function handleRegister(data: { name: string, email: string, password: str
     await register({
       name: data.name,
       email: data.email,
-      password: data.password,
+      password: data.password
     })
     toast.add({
       title: 'Account created',
       description: 'Welcome! Your account has been created.',
-      color: 'success',
+      color: 'success'
     })
     await router.push('/dashboard')
   } catch (e: unknown) {
@@ -45,7 +45,7 @@ async function handleRegister(data: { name: string, email: string, password: str
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -60,7 +60,7 @@ async function handleOAuth(provider: string) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -75,19 +75,31 @@ async function handleOAuth(provider: string) {
       </h1>
       <p class="mt-2 text-sm text-muted">
         Already have an account?
-        <NuxtLink to="/auth/login" class="font-medium text-primary hover:text-primary/80">
+        <NuxtLink
+          to="/auth/login"
+          class="font-medium text-primary hover:text-primary/80"
+        >
           Sign in
         </NuxtLink>
       </p>
     </div>
 
     <!-- OAuth Buttons -->
-    <div v-if="hasOAuth && oauthProviders.length > 0" class="mt-8">
-      <AuthOAuthButtons :loading="loading" @click="handleOAuth" />
+    <div
+      v-if="hasOAuth && oauthProviders.length > 0"
+      class="mt-8"
+    >
+      <AuthOAuthButtons
+        :loading="loading"
+        @click="handleOAuth"
+      />
     </div>
 
     <!-- Separator -->
-    <div v-if="hasOAuth && oauthProviders.length > 0 && hasPassword" class="mt-6">
+    <div
+      v-if="hasOAuth && oauthProviders.length > 0 && hasPassword"
+      class="mt-6"
+    >
       <div class="relative">
         <div class="absolute inset-0 flex items-center">
           <USeparator />
@@ -99,7 +111,10 @@ async function handleOAuth(provider: string) {
     </div>
 
     <!-- Registration Form -->
-    <div v-if="hasPassword" class="mt-8">
+    <div
+      v-if="hasPassword"
+      class="mt-8"
+    >
       <AuthRegisterForm
         :loading="loading"
         :error="error"

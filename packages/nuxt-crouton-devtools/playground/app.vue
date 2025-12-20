@@ -13,7 +13,9 @@
 
       <UCard>
         <template #header>
-          <h2 class="text-xl font-semibold">Getting Started</h2>
+          <h2 class="text-xl font-semibold">
+            Getting Started
+          </h2>
         </template>
 
         <div class="space-y-4">
@@ -53,25 +55,47 @@
       <div class="mt-8">
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">Mock Collections</h2>
+            <h2 class="text-xl font-semibold">
+              Mock Collections
+            </h2>
           </template>
 
           <div class="space-y-2 text-sm">
             <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
               <span class="font-mono">tasks</span>
-              <UBadge color="green" variant="subtle">internal</UBadge>
+              <UBadge
+                color="green"
+                variant="subtle"
+              >
+                internal
+              </UBadge>
             </div>
             <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
               <span class="font-mono">projects</span>
-              <UBadge color="green" variant="subtle">internal</UBadge>
+              <UBadge
+                color="green"
+                variant="subtle"
+              >
+                internal
+              </UBadge>
             </div>
             <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
               <span class="font-mono">users</span>
-              <UBadge color="blue" variant="subtle">external</UBadge>
+              <UBadge
+                color="blue"
+                variant="subtle"
+              >
+                external
+              </UBadge>
             </div>
             <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
               <span class="font-mono">notes</span>
-              <UBadge color="green" variant="subtle">internal</UBadge>
+              <UBadge
+                color="green"
+                variant="subtle"
+              >
+                internal
+              </UBadge>
             </div>
           </div>
         </UCard>

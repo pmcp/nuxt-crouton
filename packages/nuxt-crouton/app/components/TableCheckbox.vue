@@ -14,5 +14,8 @@ const handleUpdate = (value: boolean | 'indeterminate') => {
 </script>
 
 <template>
-  <UCheckbox :model-value="modelValue" @update:model-value="handleUpdate" />
+  <UCheckbox
+    :model-value="modelValue"
+    @update:model-value="handleUpdate"
+  />
 </template>

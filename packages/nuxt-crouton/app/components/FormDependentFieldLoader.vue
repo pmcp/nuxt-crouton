@@ -14,7 +14,10 @@
     :card-variant="cardVariant"
     v-bind="$attrs"
   />
-  <div v-else class="text-sm text-red-500">
+  <div
+    v-else
+    class="text-sm text-red-500"
+  >
     Component not found for field: {{ dependentField }}
   </div>
 </template>
@@ -83,8 +86,8 @@ const options = computed(() => {
 
   // Map the field data to a consistent format
   return fieldData.map((option: any) => ({
-    ...option,  // Spread everything
-    id: option[props.idKey] || option.id  // Only normalize id
+    ...option, // Spread everything
+    id: option[props.idKey] || option.id // Only normalize id
     // Remove label and value - let card components use actual properties
   }))
 })
@@ -99,7 +102,7 @@ const modelValue = computed({
     }
     return props.modelValue
   },
-  set: (value) => emit('update:modelValue', value)
+  set: value => emit('update:modelValue', value)
 })
 
 // Watch for dependent value changes and clear selection if it changes

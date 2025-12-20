@@ -41,7 +41,7 @@ async function handleRegister(data: { name: string; email: string; password: str
       />
       <p class="mt-4 text-center text-sm text-muted">
         Already have an account?
-        <NuxtLink to="/login" class="text-primary">Login</NuxtLink>
+        <NuxtLink to="/apps/test-hub/app/pages/login" class="text-primary">Login</NuxtLink>
       </p>
     </div>
   </div>

@@ -34,27 +34,36 @@ const tocLinks = computed<TocLink[]>(() => {
 const hasSidebar = computed(() => !!slots.sidebar || tocLinks.value.length > 0)
 
 const maxWidthClasses: Record<string, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
+  'sm': 'max-w-sm',
+  'md': 'max-w-md',
+  'lg': 'max-w-lg',
+  'xl': 'max-w-xl',
   '2xl': 'max-w-2xl',
   '3xl': 'max-w-3xl',
   '4xl': 'max-w-4xl',
-  full: 'max-w-full'
+  'full': 'max-w-full'
 }
 </script>
 
 <template>
   <div class="relative">
     <!-- Header slot -->
-    <header v-if="$slots.header || title" class="mb-8">
+    <header
+      v-if="$slots.header || title"
+      class="mb-8"
+    >
       <slot name="header">
         <div :class="[maxWidthClasses[maxWidth], 'mx-auto px-4 sm:px-6 lg:px-8']">
-          <h1 v-if="title" class="text-3xl sm:text-4xl font-bold tracking-tight">
+          <h1
+            v-if="title"
+            class="text-3xl sm:text-4xl font-bold tracking-tight"
+          >
             {{ title }}
           </h1>
-          <p v-if="description" class="mt-4 text-lg text-muted">
+          <p
+            v-if="description"
+            class="mt-4 text-lg text-muted"
+          >
             {{ description }}
           </p>
         </div>
@@ -76,14 +85,25 @@ const maxWidthClasses: Record<string, string> = {
         </main>
 
         <!-- Sidebar -->
-        <aside v-if="hasSidebar" class="hidden lg:block">
+        <aside
+          v-if="hasSidebar"
+          class="hidden lg:block"
+        >
           <div class="sticky top-20">
             <slot name="sidebar">
               <!-- Default TOC -->
-              <nav v-if="tocLinks.length > 0" class="space-y-1">
-                <p class="text-sm font-semibold mb-3">On this page</p>
+              <nav
+                v-if="tocLinks.length > 0"
+                class="space-y-1"
+              >
+                <p class="text-sm font-semibold mb-3">
+                  On this page
+                </p>
                 <ul class="space-y-2 text-sm">
-                  <li v-for="link in tocLinks" :key="link.id">
+                  <li
+                    v-for="link in tocLinks"
+                    :key="link.id"
+                  >
                     <a
                       :href="`#${link.id}`"
                       :class="[
@@ -103,7 +123,10 @@ const maxWidthClasses: Record<string, string> = {
     </div>
 
     <!-- Footer slot -->
-    <footer v-if="$slots.footer" class="mt-12">
+    <footer
+      v-if="$slots.footer"
+      class="mt-12"
+    >
       <div :class="[maxWidthClasses[maxWidth], 'mx-auto px-4 sm:px-6 lg:px-8']">
         <USeparator class="mb-8" />
         <slot name="footer" />

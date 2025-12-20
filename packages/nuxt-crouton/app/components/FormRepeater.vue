@@ -50,8 +50,6 @@ useSortable(containerRef, items, {
   }
 })
 
-
-
 // Watch for external changes to props.modelValue and sync to items ref
 // BUT don't break useSortable by creating new array references during our own emissions
 watch(() => props.modelValue, (newVal) => {
@@ -129,72 +127,70 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- Empty state -->
+  <UCard v-if="items.length === 0">
+    <div class="text-center text-gray-500">
+      No items yet. Click "{{ addLabel }}" to get started.
+    </div>
+  </UCard>
 
-    <!-- Empty state -->
-    <UCard v-if="items.length === 0">
-      <div class="text-center text-gray-500">
-        No items yet. Click "{{ addLabel }}" to get started.
+  <!-- Items list -->
+  <div
+    ref="containerRef"
+    class="space-y-2 mb-3"
+  >
+    <UCard
+      v-for="(item, index) in items"
+      :key="item.id || index"
+      :ui="{ body: 'sm:p-2 p-2' }"
+    >
+      <div class="flex gap-2 justify-between">
+        <!-- Drag handle (only if sortable) -->
+        <UButton
+          v-if="sortable"
+          type="button"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          icon="i-lucide-grip-vertical"
+          class="drag-handle cursor-move"
+          aria-label="Drag to reorder"
+        />
+
+        <!-- Remove button -->
+        <UButton
+          type="button"
+          color="error"
+          variant="ghost"
+          size="sm"
+          icon="i-lucide-x"
+          aria-label="Remove item"
+          @click="removeItem(index)"
+        />
+      </div>
+
+      <!-- Item component -->
+      <div class="p-2">
+        <component
+          :is="componentName"
+          :model-value="item"
+          @update:model-value="(val: unknown) => updateItem(index, val)"
+        />
       </div>
     </UCard>
+  </div>
 
-    <!-- Items list -->
-    <div ref="containerRef" class="space-y-2 mb-3">
-      <UCard
-        v-for="(item, index) in items"
-        :key="item.id || index"
-        :ui="{ body: 'sm:p-2 p-2'}"
-      >
-        <div class="flex gap-2 justify-between">
-
-          <!-- Drag handle (only if sortable) -->
-          <UButton
-            v-if="sortable"
-            type="button"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            icon="i-lucide-grip-vertical"
-            class="drag-handle cursor-move"
-            aria-label="Drag to reorder"
-          />
-
-
-
-          <!-- Remove button -->
-          <UButton
-            type="button"
-            color="error"
-            variant="ghost"
-            size="sm"
-            icon="i-lucide-x"
-            @click="removeItem(index)"
-            aria-label="Remove item"
-          />
-        </div>
-
-        <!-- Item component -->
-        <div class="p-2">
-          <component
-              :is="componentName"
-              :model-value="item"
-              @update:model-value="(val: unknown) => updateItem(index, val)"
-          />
-        </div>
-      </UCard>
-    </div>
-
-    <!-- Add button -->
-    <UButton
-      type="button"
-      color="primary"
-      variant="outline"
-      block
-      @click="addItem"
-    >
-      <template #leading>
-        <UIcon name="i-lucide-plus" />
-      </template>
-      {{ addLabel }}
-    </UButton>
-
+  <!-- Add button -->
+  <UButton
+    type="button"
+    color="primary"
+    variant="outline"
+    block
+    @click="addItem"
+  >
+    <template #leading>
+      <UIcon name="i-lucide-plus" />
+    </template>
+    {{ addLabel }}
+  </UButton>
 </template>

@@ -18,12 +18,12 @@ export async function handleDryRun(args: {
   collection: string
   schema: string
   dialect?: 'pg' | 'sqlite'
-}): Promise<{ success: boolean; preview: string; files?: string[]; error?: string }> {
+}): Promise<{ success: boolean, preview: string, files?: string[], error?: string }> {
   try {
     // Write schema to temp file
-    const fs = await import('fs/promises')
-    const path = await import('path')
-    const os = await import('os')
+    const fs = await import('node:fs/promises')
+    const path = await import('node:path')
+    const os = await import('node:os')
 
     const tempDir = os.tmpdir()
     const schemaPath = path.join(tempDir, `crouton-schema-${Date.now()}.json`)

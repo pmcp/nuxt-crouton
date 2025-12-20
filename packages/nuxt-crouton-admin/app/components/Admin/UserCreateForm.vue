@@ -18,12 +18,12 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  showSuperAdminToggle: true,
+  showSuperAdminToggle: true
 })
 
 const emit = defineEmits<{
-  'submit': [payload: CreateUserPayload]
-  'cancel': []
+  submit: [payload: CreateUserPayload]
+  cancel: []
 }>()
 
 const schema = z.object({
@@ -31,7 +31,7 @@ const schema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   emailVerified: z.boolean(),
-  superAdmin: z.boolean(),
+  superAdmin: z.boolean()
 })
 
 const state = ref({
@@ -39,7 +39,7 @@ const state = ref({
   email: '',
   password: '',
   emailVerified: true,
-  superAdmin: false,
+  superAdmin: false
 })
 
 // Generate a secure random password
@@ -58,7 +58,7 @@ function handleSubmit() {
     email: state.value.email,
     password: state.value.password,
     emailVerified: state.value.emailVerified,
-    superAdmin: state.value.superAdmin,
+    superAdmin: state.value.superAdmin
   })
 }
 </script>
@@ -71,7 +71,11 @@ function handleSubmit() {
     @submit="handleSubmit"
   >
     <!-- Name -->
-    <UFormField label="Name" name="name" required>
+    <UFormField
+      label="Name"
+      name="name"
+      required
+    >
       <UInput
         v-model="state.name"
         placeholder="John Doe"
@@ -80,7 +84,11 @@ function handleSubmit() {
     </UFormField>
 
     <!-- Email -->
-    <UFormField label="Email" name="email" required>
+    <UFormField
+      label="Email"
+      name="email"
+      required
+    >
       <UInput
         v-model="state.email"
         type="email"
@@ -90,7 +98,11 @@ function handleSubmit() {
     </UFormField>
 
     <!-- Password -->
-    <UFormField label="Password" name="password" required>
+    <UFormField
+      label="Password"
+      name="password"
+      required
+    >
       <div class="flex gap-2">
         <UInput
           v-model="state.password"
@@ -121,14 +133,20 @@ function handleSubmit() {
     </UFormField>
 
     <!-- Super Admin Toggle -->
-    <UFormField v-if="showSuperAdminToggle" name="superAdmin">
+    <UFormField
+      v-if="showSuperAdminToggle"
+      name="superAdmin"
+    >
       <div class="flex items-center gap-2">
         <USwitch v-model="state.superAdmin" />
         <span class="text-sm text-gray-700 dark:text-gray-300">
           Grant super admin privileges
         </span>
       </div>
-      <p v-if="state.superAdmin" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+      <p
+        v-if="state.superAdmin"
+        class="mt-1 text-xs text-amber-600 dark:text-amber-400"
+      >
         Super admins have full access to the admin panel
       </p>
     </UFormField>

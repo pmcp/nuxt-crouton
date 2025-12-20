@@ -57,7 +57,7 @@ const props = withDefaults(defineProps<Props>(), {
   locale: undefined,
   color: 'primary',
   size: 'md',
-  ui: () => ({}),
+  ui: () => ({})
 })
 
 const emit = defineEmits<{
@@ -79,7 +79,7 @@ const sizeConfig = {
     gap: 'gap-0.5',
     padding: 'py-1',
     header: 'text-sm',
-    badge: 'xs' as const,
+    badge: 'xs' as const
   },
   md: {
     dayLabel: 'text-xs',
@@ -88,7 +88,7 @@ const sizeConfig = {
     gap: 'gap-1',
     padding: 'py-2',
     header: 'text-base',
-    badge: 'sm' as const,
+    badge: 'sm' as const
   },
   lg: {
     dayLabel: 'text-sm',
@@ -97,8 +97,8 @@ const sizeConfig = {
     gap: 'gap-2',
     padding: 'py-3',
     header: 'text-lg',
-    badge: 'md' as const,
-  },
+    badge: 'md' as const
+  }
 }
 
 // Computed UI classes with twMerge
@@ -134,8 +134,8 @@ const uiClasses = computed(() => {
     daySlot: twMerge(size.daySlot, props.ui?.daySlot),
     arrows: {
       prev: twMerge('sm:-start-4', props.ui?.arrows?.prev),
-      next: twMerge('sm:-end-4', props.ui?.arrows?.next),
-    },
+      next: twMerge('sm:-end-4', props.ui?.arrows?.next)
+    }
   }
 })
 
@@ -143,7 +143,7 @@ const uiClasses = computed(() => {
 const carouselUi = computed(() => ({
   item: uiClasses.value.carouselItem,
   prev: uiClasses.value.arrows.prev,
-  next: uiClasses.value.arrows.next,
+  next: uiClasses.value.arrows.next
 }))
 
 // Track the range of week offsets we've generated (relative to today)
@@ -183,7 +183,7 @@ function getWeekStart(date: CalendarDate): CalendarDate {
 // Format weekday based on props
 function formatWeekday(date: CalendarDate): string {
   return new Intl.DateTimeFormat(effectiveLocale.value, {
-    weekday: props.weekdayFormat,
+    weekday: props.weekdayFormat
   }).format(date.toDate(getLocalTimeZone()))
 }
 
@@ -196,7 +196,7 @@ function generateWeekDays(weekStart: CalendarDate): DayData[] {
       date,
       day: date.day,
       weekday: formatWeekday(date),
-      jsDate: date.toDate(getLocalTimeZone()),
+      jsDate: date.toDate(getLocalTimeZone())
     })
   }
   return days
@@ -209,7 +209,7 @@ function generateWeek(offset: number): WeekData {
   return {
     id: offset,
     weekStart,
-    days: generateWeekDays(weekStart),
+    days: generateWeekDays(weekStart)
   }
 }
 
@@ -271,7 +271,7 @@ function getMonthLabel(weekStart: CalendarDate): string {
 
   const monthYear = new Intl.DateTimeFormat(effectiveLocale.value, {
     month: 'long',
-    year: 'numeric',
+    year: 'numeric'
   })
 
   if (weekStart.month === weekStart.add({ days: 6 }).month) {
@@ -279,11 +279,11 @@ function getMonthLabel(weekStart: CalendarDate): string {
   }
 
   const startMonth = new Intl.DateTimeFormat(effectiveLocale.value, {
-    month: 'short',
+    month: 'short'
   }).format(startDate)
   const endMonthYear = new Intl.DateTimeFormat(effectiveLocale.value, {
     month: 'short',
-    year: 'numeric',
+    year: 'numeric'
   }).format(endDate)
   return `${startMonth} - ${endMonthYear}`
 }
@@ -433,7 +433,7 @@ function getDayNumberClass(day: DayData): string {
 // Expose methods for parent
 defineExpose({
   scrollToDate,
-  goToToday,
+  goToToday
 })
 </script>
 
@@ -446,7 +446,10 @@ defineExpose({
       :week-number="currentWeekNumber"
       :go-to-today="goToToday"
     >
-      <div v-if="showMonthLabel" :class="uiClasses.header">
+      <div
+        v-if="showMonthLabel"
+        :class="uiClasses.header"
+      >
         <button
           type="button"
           :class="uiClasses.monthLabel"
@@ -454,7 +457,10 @@ defineExpose({
         >
           {{ currentMonthLabel }}
         </button>
-        <slot name="week-badge" :week-number="currentWeekNumber">
+        <slot
+          name="week-badge"
+          :week-number="currentWeekNumber"
+        >
           <UBadge
             v-if="showWeekNumber"
             color="neutral"

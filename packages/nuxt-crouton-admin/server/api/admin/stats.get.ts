@@ -39,7 +39,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminStats> =>
     superAdminResult,
     totalTeamsResult,
     newTeamsWeekResult,
-    activeSessionsResult,
+    activeSessionsResult
   ] = await Promise.all([
     // Total users
     db.select({ count: count() }).from(user),
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminStats> =>
     // Active sessions (not expired)
     db.select({ count: count() })
       .from(session)
-      .where(gte(session.expiresAt, now)),
+      .where(gte(session.expiresAt, now))
   ])
 
   return {
@@ -91,6 +91,6 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminStats> =>
     superAdminCount: superAdminResult[0]?.count ?? 0,
     totalTeams: totalTeamsResult[0]?.count ?? 0,
     newTeamsWeek: newTeamsWeekResult[0]?.count ?? 0,
-    activeSessions: activeSessionsResult[0]?.count ?? 0,
+    activeSessions: activeSessionsResult[0]?.count ?? 0
   }
 })

@@ -13,7 +13,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  pageSize: 20,
+  pageSize: 20
 })
 
 const {
@@ -23,7 +23,7 @@ const {
   totalPages,
   loading,
   error,
-  getTeams,
+  getTeams
 } = useAdminTeams()
 
 // Filter state
@@ -37,7 +37,7 @@ const columns = [
   { accessorKey: 'ownerName', id: 'owner', header: 'Owner' },
   { accessorKey: 'memberCount', id: 'memberCount', header: 'Members' },
   { accessorKey: 'personal', id: 'type', header: 'Type' },
-  { accessorKey: 'createdAt', id: 'createdAt', header: 'Created' },
+  { accessorKey: 'createdAt', id: 'createdAt', header: 'Created' }
 ]
 
 // Load teams on mount and when filters change
@@ -46,7 +46,7 @@ async function loadTeams(pageNum = 1) {
     page: pageNum,
     pageSize: props.pageSize,
     search: search.value || undefined,
-    personal: personalFilter.value === 'all' ? undefined : personalFilter.value === 'personal',
+    personal: personalFilter.value === 'all' ? undefined : personalFilter.value === 'personal'
   }
   await getTeams(filters)
 }
@@ -88,7 +88,7 @@ function formatDate(date: Date) {
         :items="[
           { value: 'all', label: 'All Teams' },
           { value: 'team', label: 'Team Workspaces' },
-          { value: 'personal', label: 'Personal Workspaces' },
+          { value: 'personal', label: 'Personal Workspaces' }
         ]"
         value-key="value"
         class="w-44"
@@ -121,7 +121,10 @@ function formatDate(date: Date) {
             <p class="font-medium text-gray-900 dark:text-white">
               {{ row.original.name }}
             </p>
-            <p v-if="row.original.isDefault" class="text-xs text-gray-500">
+            <p
+              v-if="row.original.isDefault"
+              class="text-xs text-gray-500"
+            >
               Default team
             </p>
           </div>
@@ -143,12 +146,18 @@ function formatDate(date: Date) {
             {{ row.original.ownerEmail }}
           </p>
         </div>
-        <span v-else class="text-gray-400">—</span>
+        <span
+          v-else
+          class="text-gray-400"
+        >—</span>
       </template>
 
       <template #memberCount-cell="{ row }">
         <div class="flex items-center gap-1">
-          <UIcon name="i-heroicons-users" class="size-4 text-gray-400" />
+          <UIcon
+            name="i-heroicons-users"
+            class="size-4 text-gray-400"
+          />
           <span class="text-gray-600 dark:text-gray-400">
             {{ row.original.memberCount }}
           </span>
@@ -172,7 +181,10 @@ function formatDate(date: Date) {
     </UTable>
 
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex justify-center">
+    <div
+      v-if="totalPages > 1"
+      class="flex justify-center"
+    >
       <UPagination
         :model-value="page"
         :total="total"

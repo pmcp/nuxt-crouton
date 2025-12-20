@@ -79,8 +79,8 @@ export default defineNuxtModule<ModuleOptions>({
       icon: 'carbon:data-table',
       view: {
         type: 'iframe',
-        src: '/__nuxt_crouton_devtools',
-      },
+        src: '/__nuxt_crouton_devtools'
+      }
     }))
 
     // Inject Data Browser route into main app (Phase 3)

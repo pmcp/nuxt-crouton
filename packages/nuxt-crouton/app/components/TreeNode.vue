@@ -4,6 +4,7 @@ import type { Component } from 'vue'
 import type { TreeNode as TreeNodeType } from './Tree.vue'
 import type SortableType from 'sortablejs'
 import type { SortableEvent, MoveEvent } from 'sortablejs'
+
 const { open } = useCrouton()
 
 const treeDrag = useTreeDrag()
@@ -26,7 +27,6 @@ const props = withDefaults(defineProps<Props>(), {
   cardComponent: null,
   columnId: ''
 })
-
 
 const emit = defineEmits<{
   move: [id: string, newParentId: string | null, newOrder: number, targetColumnId: string | null]
@@ -84,7 +84,7 @@ function getItemActions(item: TreeNodeType) {
         label: 'Edit',
         icon: 'i-lucide-pencil',
         onSelect: () => open('update', props.collection, [item.id])
-      },
+      }
       // {
       //   label: 'Add child',
       //   icon: 'i-lucide-plus',
@@ -267,7 +267,10 @@ onBeforeUnmount(() => {
         class="drag-handle cursor-grab opacity-40 group-hover:opacity-100 transition-opacity"
         @click.stop
       >
-        <UIcon name="i-lucide-grip-vertical" class="size-4 text-muted" />
+        <UIcon
+          name="i-lucide-grip-vertical"
+          class="size-4 text-muted"
+        />
       </div>
 
       <!-- Child count / expand toggle -->

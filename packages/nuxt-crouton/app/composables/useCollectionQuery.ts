@@ -153,8 +153,7 @@ export async function useCollectionQuery<T = any>(
     else if (val.items && Array.isArray(val.items)) {
       console.log('[useCollectionQuery] Paginated response:', val.items.length, 'items')
       rawItems = val.items
-    }
-    else {
+    } else {
       console.log('[useCollectionQuery] Unexpected response format:', typeof val)
       return []
     }

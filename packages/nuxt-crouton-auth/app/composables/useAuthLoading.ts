@@ -64,8 +64,7 @@ export function useAuthLoading() {
       startLoading(operation)
       try {
         return await fn(...args)
-      }
-      finally {
+      } finally {
         stopLoading(operation)
       }
     }
@@ -90,7 +89,7 @@ export function useAuthLoading() {
     profile: getLoadingRef('profile'),
     password: getLoadingRef('password'),
     twoFactor: getLoadingRef('twoFactor'),
-    passkey: getLoadingRef('passkey'),
+    passkey: getLoadingRef('passkey')
   }
 
   return {
@@ -106,7 +105,7 @@ export function useAuthLoading() {
     getLoadingRef,
 
     // Common loading states
-    ...loadingStates,
+    ...loadingStates
   }
 }
 
@@ -141,7 +140,7 @@ export const LOADING_OPERATIONS = {
   PASSKEY_REMOVE: 'passkey-remove',
   OAUTH: 'oauth',
   MAGIC_LINK: 'magic-link',
-  PASSWORD_RESET: 'password-reset',
+  PASSWORD_RESET: 'password-reset'
 } as const
 
 export type LoadingOperation = (typeof LOADING_OPERATIONS)[keyof typeof LOADING_OPERATIONS]

@@ -22,16 +22,28 @@
     </template>
 
     <!-- Pass through all data slots -->
-    <template v-for="(_, slot) of $slots" #[slot]="scope">
-      <slot :name="slot" v-bind="scope" />
+    <template
+      v-for="(_, slot) of $slots"
+      #[slot]="scope"
+    >
+      <slot
+        :name="slot"
+        v-bind="scope"
+      />
     </template>
   </CroutonTable>
 
   <!-- List Layout -->
-  <UDashboardPanel v-else-if="activeLayout === 'list'" :id="collection || 'crouton-list'">
+  <UDashboardPanel
+    v-else-if="activeLayout === 'list'"
+    :id="collection || 'crouton-list'"
+  >
     <template #header>
       <slot name="header">
-        <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+        <div
+          v-if="create"
+          class="flex items-center justify-end px-4 py-2 border-b border-default"
+        >
           <UButton
             color="primary"
             size="xs"
@@ -44,7 +56,11 @@
     </template>
 
     <template #body>
-      <ul v-if="customCardComponent && rows && rows.length > 0" role="list" class="divide-y divide-default">
+      <ul
+        v-if="customCardComponent && rows && rows.length > 0"
+        role="list"
+        class="divide-y divide-default"
+      >
         <li
           v-for="(row, index) in rows"
           :key="row.id || index"
@@ -59,12 +75,19 @@
         </li>
       </ul>
 
-      <div v-else class="text-center text-muted p-8">
-        <p class="text-lg font-medium mb-2">Create Card.vue for list layout</p>
+      <div
+        v-else
+        class="text-center text-muted p-8"
+      >
+        <p class="text-lg font-medium mb-2">
+          Create Card.vue for list layout
+        </p>
         <code class="text-xs bg-muted/30 px-2 py-1 rounded">
           layers/{layer}/collections/{{ collection }}/app/components/Card.vue
         </code>
-        <p class="text-sm mt-4">Example Card.vue structure:</p>
+        <p class="text-sm mt-4">
+          Example Card.vue structure:
+        </p>
         <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
 &lt;script setup lang="ts"&gt;
 interface Props {
@@ -83,7 +106,10 @@ defineProps&lt;Props&gt;()
       </div>
 
       <!-- Pagination -->
-      <div v-if="serverPagination && paginationData" class="p-4 border-t border-default">
+      <div
+        v-if="serverPagination && paginationData"
+        class="p-4 border-t border-default"
+      >
         <CroutonTablePagination
           :page="paginationData.currentPage"
           :page-count="paginationData.totalPages || Math.ceil(paginationData.totalItems / paginationData.pageSize)"
@@ -96,7 +122,10 @@ defineProps&lt;Props&gt;()
   <!-- Grid Layout -->
   <div v-else-if="activeLayout === 'grid'">
     <slot name="header">
-      <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+      <div
+        v-if="create"
+        class="flex items-center justify-end px-4 py-2 border-b border-default"
+      >
         <UButton
           color="primary"
           size="xs"
@@ -107,23 +136,33 @@ defineProps&lt;Props&gt;()
       </div>
     </slot>
 
-    <div v-if="customCardComponent && rows && rows.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+    <div
+      v-if="customCardComponent && rows && rows.length > 0"
+      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
+    >
       <component
+        :is="customCardComponent"
         v-for="(row, index) in rows"
         :key="row.id || index"
-        :is="customCardComponent"
         :item="row"
         :layout="'grid'"
         :collection="collection"
       />
     </div>
 
-    <div v-else class="text-center text-muted p-8">
-      <p class="text-lg font-medium mb-2">Create Card.vue for grid layout</p>
+    <div
+      v-else
+      class="text-center text-muted p-8"
+    >
+      <p class="text-lg font-medium mb-2">
+        Create Card.vue for grid layout
+      </p>
       <code class="text-xs bg-muted/30 px-2 py-1 rounded">
         layers/{layer}/collections/{{ collection }}/app/components/Card.vue
       </code>
-      <p class="text-sm mt-4">Example Card.vue with grid layout:</p>
+      <p class="text-sm mt-4">
+        Example Card.vue with grid layout:
+      </p>
       <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
 &lt;template&gt;
   &lt;UCard v-if="layout === 'grid'" class="hover:shadow-lg"&gt;
@@ -136,7 +175,10 @@ defineProps&lt;Props&gt;()
     </div>
 
     <!-- Pagination -->
-    <div v-if="serverPagination && paginationData" class="p-4 border-t border-default">
+    <div
+      v-if="serverPagination && paginationData"
+      class="p-4 border-t border-default"
+    >
       <CroutonTablePagination
         :page="paginationData.currentPage"
         :page-count="paginationData.totalPages || Math.ceil(paginationData.totalItems / paginationData.pageSize)"
@@ -148,7 +190,10 @@ defineProps&lt;Props&gt;()
   <!-- Cards Layout -->
   <div v-else-if="activeLayout === 'cards'">
     <slot name="header">
-      <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+      <div
+        v-if="create"
+        class="flex items-center justify-end px-4 py-2 border-b border-default"
+      >
         <UButton
           color="primary"
           size="xs"
@@ -159,23 +204,33 @@ defineProps&lt;Props&gt;()
       </div>
     </slot>
 
-    <div v-if="customCardComponent && rows && rows.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+    <div
+      v-if="customCardComponent && rows && rows.length > 0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6"
+    >
       <component
+        :is="customCardComponent"
         v-for="(row, index) in rows"
         :key="row.id || index"
-        :is="customCardComponent"
         :item="row"
         :layout="'cards'"
         :collection="collection"
       />
     </div>
 
-    <div v-else class="text-center text-muted p-8">
-      <p class="text-lg font-medium mb-2">Create Card.vue for cards layout</p>
+    <div
+      v-else
+      class="text-center text-muted p-8"
+    >
+      <p class="text-lg font-medium mb-2">
+        Create Card.vue for cards layout
+      </p>
       <code class="text-xs bg-muted/30 px-2 py-1 rounded">
         layers/{layer}/collections/{{ collection }}/app/components/Card.vue
       </code>
-      <p class="text-sm mt-4">Example Card.vue with detailed cards layout:</p>
+      <p class="text-sm mt-4">
+        Example Card.vue with detailed cards layout:
+      </p>
       <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
 &lt;template&gt;
   &lt;UCard v-if="layout === 'cards'" class="hover:shadow-xl"&gt;
@@ -191,7 +246,10 @@ defineProps&lt;Props&gt;()
     </div>
 
     <!-- Pagination -->
-    <div v-if="serverPagination && paginationData" class="p-4 border-t border-default">
+    <div
+      v-if="serverPagination && paginationData"
+      class="p-4 border-t border-default"
+    >
       <CroutonTablePagination
         :page="paginationData.currentPage"
         :page-count="paginationData.totalPages || Math.ceil(paginationData.totalItems / paginationData.pageSize)"
@@ -211,7 +269,10 @@ defineProps&lt;Props&gt;()
   >
     <template #header>
       <slot name="header">
-        <div v-if="create" class="flex items-center justify-end px-4 py-2 border-b border-default">
+        <div
+          v-if="create"
+          class="flex items-center justify-end px-4 py-2 border-b border-default"
+        >
           <UButton
             color="primary"
             size="xs"

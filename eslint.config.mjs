@@ -21,13 +21,13 @@ export default createConfigForNuxt({
       quotes: 'single',
       indent: 2,
       commaDangle: 'never',
-      braceStyle: '1tbs',
-    },
+      braceStyle: '1tbs'
+    }
   },
   dirs: {
     // Only lint packages from root (apps have their own configs)
-    src: ['packages'],
-  },
+    src: ['packages']
+  }
 })
   .append({
     // Global ignores
@@ -38,8 +38,8 @@ export default createConfigForNuxt({
       '**/.output/**',
       '**/coverage/**',
       // Apps are linted by their own configs
-      'apps/**',
-    ],
+      'apps/**'
+    ]
   })
   .append({
     // Rules for all files
@@ -47,6 +47,6 @@ export default createConfigForNuxt({
       // Allow console in CLI tools
       'no-console': 'off',
       // Relax some rules for generated code patterns
-      '@typescript-eslint/no-explicit-any': 'warn',
-    },
+      '@typescript-eslint/no-explicit-any': 'warn'
+    }
   })

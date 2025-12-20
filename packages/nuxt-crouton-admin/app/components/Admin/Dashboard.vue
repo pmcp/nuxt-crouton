@@ -16,11 +16,11 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showQuickActions: true,
+  showQuickActions: true
 })
 
 const emit = defineEmits<{
-  'navigate': [path: string]
+  navigate: [path: string]
 }>()
 
 const { stats: fetchedStats, loading, error, getStats } = useAdminStats()
@@ -44,39 +44,39 @@ const statCards = computed(() => {
       value: displayStats.value.totalUsers,
       icon: 'i-heroicons-users',
       trend: displayStats.value.newUsersToday,
-      color: 'primary' as const,
+      color: 'primary' as const
     },
     {
       label: 'New This Week',
       value: displayStats.value.newUsersWeek,
       icon: 'i-heroicons-user-plus',
-      color: 'success' as const,
+      color: 'success' as const
     },
     {
       label: 'Banned Users',
       value: displayStats.value.bannedUsers,
       icon: 'i-heroicons-no-symbol',
-      color: displayStats.value.bannedUsers > 0 ? 'warning' as const : 'primary' as const,
+      color: displayStats.value.bannedUsers > 0 ? 'warning' as const : 'primary' as const
     },
     {
       label: 'Total Teams',
       value: displayStats.value.totalTeams,
       icon: 'i-heroicons-building-office-2',
       trend: displayStats.value.newTeamsWeek,
-      color: 'primary' as const,
+      color: 'primary' as const
     },
     {
       label: 'Active Sessions',
       value: displayStats.value.activeSessions,
       icon: 'i-heroicons-signal',
-      color: 'success' as const,
+      color: 'success' as const
     },
     {
       label: 'Super Admins',
       value: displayStats.value.superAdminCount,
       icon: 'i-heroicons-shield-check',
-      color: 'primary' as const,
-    },
+      color: 'primary' as const
+    }
   ]
 })
 
@@ -85,14 +85,14 @@ const quickActions = [
     label: 'Manage Users',
     description: 'View, create, and manage user accounts',
     icon: 'i-heroicons-users',
-    path: '/admin/users',
+    path: '/admin/users'
   },
   {
     label: 'View Teams',
     description: 'Browse all teams and their members',
     icon: 'i-heroicons-building-office-2',
-    path: '/admin/teams',
-  },
+    path: '/admin/teams'
+  }
 ]
 
 function handleQuickAction(path: string) {
@@ -128,7 +128,10 @@ function handleQuickAction(path: string) {
     </div>
 
     <!-- Quick Actions -->
-    <div v-if="showQuickActions" class="pt-4">
+    <div
+      v-if="showQuickActions"
+      class="pt-4"
+    >
       <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
         Quick Actions
       </h3>
@@ -141,7 +144,10 @@ function handleQuickAction(path: string) {
           @click="handleQuickAction(action.path)"
         >
           <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600 group-hover:bg-primary-100 group-hover:text-primary-600 dark:bg-gray-800 dark:text-gray-400 dark:group-hover:bg-primary-900 dark:group-hover:text-primary-400">
-            <UIcon :name="action.icon" class="size-5" />
+            <UIcon
+              :name="action.icon"
+              class="size-5"
+            />
           </div>
           <div>
             <p class="font-medium text-gray-900 dark:text-white">

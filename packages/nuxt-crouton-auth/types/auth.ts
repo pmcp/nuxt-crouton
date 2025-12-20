@@ -188,15 +188,15 @@ export interface InvitationWithInviter extends Invitation {
 /**
  * Subscription status
  */
-export type SubscriptionStatus =
-  | 'active'
-  | 'trialing'
-  | 'past_due'
-  | 'canceled'
-  | 'unpaid'
-  | 'incomplete'
-  | 'incomplete_expired'
-  | 'paused'
+export type SubscriptionStatus
+  = | 'active'
+    | 'trialing'
+    | 'past_due'
+    | 'canceled'
+    | 'unpaid'
+    | 'incomplete'
+    | 'incomplete_expired'
+    | 'paused'
 
 /**
  * Subscription
@@ -313,22 +313,22 @@ export interface Passkey {
 /**
  * Auth event types for hooks
  */
-export type AuthEventType =
-  | 'signIn'
-  | 'signUp'
-  | 'signOut'
-  | 'passwordReset'
-  | 'emailVerified'
-  | 'teamCreated'
-  | 'teamDeleted'
-  | 'memberAdded'
-  | 'memberRemoved'
-  | 'memberRoleChanged'
-  | 'invitationSent'
-  | 'invitationAccepted'
-  | 'subscriptionCreated'
-  | 'subscriptionUpdated'
-  | 'subscriptionCanceled'
+export type AuthEventType
+  = | 'signIn'
+    | 'signUp'
+    | 'signOut'
+    | 'passwordReset'
+    | 'emailVerified'
+    | 'teamCreated'
+    | 'teamDeleted'
+    | 'memberAdded'
+    | 'memberRemoved'
+    | 'memberRoleChanged'
+    | 'invitationSent'
+    | 'invitationAccepted'
+    | 'subscriptionCreated'
+    | 'subscriptionUpdated'
+    | 'subscriptionCanceled'
 
 /**
  * Auth event payload

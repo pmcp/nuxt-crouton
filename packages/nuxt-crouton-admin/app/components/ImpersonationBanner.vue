@@ -10,7 +10,7 @@ const {
   isImpersonating,
   impersonatedUser,
   loading,
-  stopImpersonation,
+  stopImpersonation
 } = useImpersonation()
 
 const toast = useToast()
@@ -18,12 +18,11 @@ const toast = useToast()
 async function handleStop() {
   try {
     await stopImpersonation()
-  }
-  catch (e) {
+  } catch (e) {
     toast.add({
       title: 'Failed to stop impersonation',
       description: e instanceof Error ? e.message : 'Unknown error',
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -42,7 +41,10 @@ async function handleStop() {
       v-if="isImpersonating"
       class="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-amber-950 shadow-md"
     >
-      <UIcon name="i-heroicons-eye" class="size-5" />
+      <UIcon
+        name="i-heroicons-eye"
+        class="size-5"
+      />
       <span class="text-sm font-medium">
         Viewing as
         <strong>{{ impersonatedUser?.name }}</strong>

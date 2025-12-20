@@ -56,28 +56,27 @@ export function useEmailService() {
         cc: options.cc ? (Array.isArray(options.cc) ? options.cc : [options.cc]) : undefined,
         bcc: options.bcc ? (Array.isArray(options.bcc) ? options.bcc : [options.bcc]) : undefined,
         headers: options.headers,
-        tags: options.tags,
+        tags: options.tags
       })
 
       if (error) {
         console.error('[crouton-email] Failed to send email:', error)
         return {
           success: false,
-          error: error.message,
+          error: error.message
         }
       }
 
       return {
         success: true,
-        id: data?.id,
+        id: data?.id
       }
-    }
-    catch (err) {
+    } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       console.error('[crouton-email] Failed to send email:', message)
       return {
         success: false,
-        error: message,
+        error: message
       }
     }
   }
@@ -91,12 +90,12 @@ export function useEmailService() {
 
   return {
     send,
-    sendBatch,
+    sendBatch
   }
 }
 
 // Export singleton for convenience
 export const emailService = {
   send: (options: SendEmailOptions) => useEmailService().send(options),
-  sendBatch: (emails: SendEmailOptions[]) => useEmailService().sendBatch(emails),
+  sendBatch: (emails: SendEmailOptions[]) => useEmailService().sendBatch(emails)
 }

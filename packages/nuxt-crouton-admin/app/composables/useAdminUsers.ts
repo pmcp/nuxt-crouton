@@ -28,7 +28,7 @@ import type {
   UserListFilters,
   PaginatedResponse,
   BanPayload,
-  CreateUserPayload,
+  CreateUserPayload
 } from '../../types/admin'
 
 export function useAdminUsers() {
@@ -74,12 +74,10 @@ export function useAdminUsers() {
       totalPages.value = response.totalPages
 
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch users'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -96,12 +94,10 @@ export function useAdminUsers() {
     try {
       const response = await $fetch<AdminUserDetail>(`/api/admin/users/${userId}`)
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch user'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -118,15 +114,13 @@ export function useAdminUsers() {
     try {
       const response = await $fetch<AdminUser>('/api/admin/users/create', {
         method: 'POST',
-        body: data,
+        body: data
       })
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create user'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -146,8 +140,8 @@ export function useAdminUsers() {
         method: 'POST',
         body: {
           userId,
-          ...payload,
-        },
+          ...payload
+        }
       })
 
       // Update user in local list if present
@@ -157,17 +151,15 @@ export function useAdminUsers() {
           ...users.value[index],
           banned: response.banned,
           bannedReason: response.bannedReason,
-          bannedUntil: response.bannedUntil,
+          bannedUntil: response.bannedUntil
         }
       }
 
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to ban user'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -184,7 +176,7 @@ export function useAdminUsers() {
     try {
       const response = await $fetch<AdminUser>('/api/admin/users/unban', {
         method: 'POST',
-        body: { userId },
+        body: { userId }
       })
 
       // Update user in local list if present
@@ -194,17 +186,15 @@ export function useAdminUsers() {
           ...users.value[index],
           banned: response.banned,
           bannedReason: response.bannedReason,
-          bannedUntil: response.bannedUntil,
+          bannedUntil: response.bannedUntil
         }
       }
 
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to unban user'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -215,13 +205,13 @@ export function useAdminUsers() {
    * @param userId - User ID to delete
    * @returns Delete response
    */
-  async function deleteUser(userId: string): Promise<{ success: boolean; message: string }> {
+  async function deleteUser(userId: string): Promise<{ success: boolean, message: string }> {
     loading.value = true
     error.value = null
     try {
-      const response = await $fetch<{ success: boolean; message: string; deletedUserId: string }>('/api/admin/users/delete', {
+      const response = await $fetch<{ success: boolean, message: string, deletedUserId: string }>('/api/admin/users/delete', {
         method: 'DELETE',
-        body: { userId },
+        body: { userId }
       })
 
       // Remove user from local list if present
@@ -232,12 +222,10 @@ export function useAdminUsers() {
       }
 
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete user'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -258,6 +246,6 @@ export function useAdminUsers() {
     createUser,
     banUser,
     unbanUser,
-    deleteUser,
+    deleteUser
   }
 }

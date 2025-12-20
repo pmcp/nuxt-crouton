@@ -42,7 +42,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   compact: false,
   warningThreshold: 75,
-  dangerThreshold: 90,
+  dangerThreshold: 90
 })
 
 // Calculate percentage for a metric
@@ -79,7 +79,10 @@ const getLimitDisplay = (metric: UsageMetric): string => {
 
 <template>
   <!-- Compact Display -->
-  <div v-if="compact" class="flex flex-wrap gap-4">
+  <div
+    v-if="compact"
+    class="flex flex-wrap gap-4"
+  >
     <div
       v-for="metric in metrics"
       :key="metric.name"
@@ -93,7 +96,10 @@ const getLimitDisplay = (metric: UsageMetric): string => {
       <span class="text-muted">{{ metric.name }}:</span>
       <span class="font-medium">
         {{ formatValue(metric.current) }}
-        <span v-if="metric.limit" class="text-muted">
+        <span
+          v-if="metric.limit"
+          class="text-muted"
+        >
           / {{ getLimitDisplay(metric) }}
         </span>
         {{ metric.unit }}
@@ -109,7 +115,10 @@ const getLimitDisplay = (metric: UsageMetric): string => {
   </div>
 
   <!-- Full Display -->
-  <div v-else class="space-y-4">
+  <div
+    v-else
+    class="space-y-4"
+  >
     <div
       v-for="metric in metrics"
       :key="metric.name"
@@ -164,8 +173,13 @@ const getLimitDisplay = (metric: UsageMetric): string => {
       v-if="metrics.length === 0"
       class="text-center py-6 text-muted"
     >
-      <UIcon name="i-lucide-bar-chart-3" class="size-8 mx-auto mb-2 opacity-50" />
-      <p class="text-sm">No usage data available</p>
+      <UIcon
+        name="i-lucide-bar-chart-3"
+        class="size-8 mx-auto mb-2 opacity-50"
+      />
+      <p class="text-sm">
+        No usage data available
+      </p>
     </div>
   </div>
 </template>

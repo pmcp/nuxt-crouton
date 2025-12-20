@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, getCurrentInstance, nextTick, ref, resolveComponent, watch } from 'vue'
+import { computed, getCurrentInstance, nextTick, ref, resolveComponent, watch, markRaw } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -13,18 +13,17 @@ import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
 import { useFlowSync } from '../composables/useFlowSync'
 import CroutonFlowNode from './Node.vue'
 import CroutonFlowGhostNode from './GhostNode.vue'
-import { markRaw } from 'vue'
-
-// Register custom node types for VueFlow
-const nodeTypes = {
-  ghost: markRaw(CroutonFlowGhostNode),
-}
 
 // Import default styles
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
+
+// Register custom node types for VueFlow
+const nodeTypes = {
+  ghost: markRaw(CroutonFlowGhostNode)
+}
 
 /**
  * CroutonFlow - Main Vue Flow wrapper component
@@ -105,7 +104,7 @@ const props = withDefaults(defineProps<Props>(), {
   sync: false,
   allowDrop: false,
   allowedCollections: () => [],
-  autoCreateOnDrop: true,
+  autoCreateOnDrop: true
 })
 
 const emit = defineEmits<{
@@ -141,7 +140,7 @@ const isDark = computed(() => colorMode.value === 'dark')
 const syncState = props.sync && props.flowId
   ? useFlowSync({
       flowId: props.flowId,
-      collection: props.collection,
+      collection: props.collection
     })
   : null
 
@@ -171,12 +170,10 @@ watch(
             if (typeof rawPosition === 'string') {
               try {
                 position = JSON.parse(rawPosition)
-              }
-              catch {
+              } catch {
                 console.warn('[CroutonFlow] Failed to parse position string:', rawPosition)
               }
-            }
-            else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
+            } else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
               position = rawPosition as FlowPosition
             }
           }
@@ -188,14 +185,14 @@ watch(
             title,
             parentId: parentId || null,
             position: finalPosition,
-            data: { ...row },
+            data: { ...row }
           })
         }
         seeded.value = true
       }
     }
   },
-  { immediate: true },
+  { immediate: true }
 )
 
 // Watch for new/updated items in rows and sync them to Yjs
@@ -204,7 +201,7 @@ watch(
   () => ({
     rows: props.rows,
     length: props.rows?.length ?? 0,
-    seeded: seeded.value,
+    seeded: seeded.value
   }),
   ({ rows: newRows, seeded: isSeeded }) => {
     if (!syncState || !isSeeded || !newRows) {
@@ -227,10 +224,8 @@ watch(
         if (typeof rawPosition === 'string') {
           try {
             position = JSON.parse(rawPosition)
-          }
-          catch { /* ignore */ }
-        }
-        else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
+          } catch { /* ignore */ }
+        } else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
           position = rawPosition as FlowPosition
         }
       }
@@ -243,10 +238,9 @@ watch(
           title,
           parentId: parentId || null,
           position: position || { x: 0, y: 0 },
-          data: { ...row },
+          data: { ...row }
         })
-      }
-      else {
+      } else {
         // Existing item - check if data changed (compare title, parentId, and data)
         const titleChanged = existingNode.title !== title
         const parentChanged = existingNode.parentId !== (parentId || null)
@@ -258,7 +252,7 @@ watch(
           syncState.updateNode(id, {
             title,
             parentId: parentId || null,
-            data: { ...row },
+            data: { ...row }
           })
         }
       }
@@ -272,7 +266,7 @@ watch(
       }
     }
   },
-  { deep: true, immediate: true },
+  { deep: true, immediate: true }
 )
 
 // Convert sync nodes to Vue Flow format
@@ -287,9 +281,9 @@ const syncNodes = computed<Node[]>(() => {
       ...node.data,
       id: node.id,
       title: node.title,
-      parentId: node.parentId,
+      parentId: node.parentId
     },
-    label: node.title,
+    label: node.title
   }))
 })
 
@@ -302,7 +296,7 @@ watch(
     if (newLength > oldLength && localGhostNode.value) {
       const ghostPos = localGhostNode.value.position
       // Check if any new node is near the ghost position (within 50px)
-      const hasNodeNearGhost = syncNodes.value.some(node => {
+      const hasNodeNearGhost = syncNodes.value.some((node) => {
         const dx = Math.abs(node.position.x - ghostPos.x)
         const dy = Math.abs(node.position.y - ghostPos.y)
         return dx < 50 && dy < 50
@@ -321,14 +315,14 @@ watch(
         }
       }
     }
-  },
+  }
 )
 
 // Generate edges from sync nodes
 const syncEdges = computed(() => {
   if (!syncState) return []
 
-  const result: { id: string; source: string; target: string; type: string }[] = []
+  const result: { id: string, source: string, target: string, type: string }[] = []
   const nodeIds = new Set(syncState.nodes.value.map((n: YjsFlowNode) => n.id))
 
   for (const node of syncState.nodes.value) {
@@ -337,7 +331,7 @@ const syncEdges = computed(() => {
         id: `e-${node.parentId}-${node.id}`,
         source: node.parentId,
         target: node.id,
-        type: 'default',
+        type: 'default'
       })
     }
   }
@@ -360,10 +354,10 @@ const remoteGhostNodes = computed<Node[]>(() => {
         isGhost: true,
         title: u.ghostNode!.title,
         userName: u.user.name,
-        userColor: u.user.color,
+        userColor: u.user.color
       },
       draggable: false,
-      selectable: false,
+      selectable: false
     }))
 })
 
@@ -380,15 +374,15 @@ const { nodes: dataNodes, edges: dataEdges, getItem } = useFlowData(
   {
     parentField: props.parentField,
     positionField: props.positionField,
-    labelField: props.labelField,
-  },
+    labelField: props.labelField
+  }
 )
 
 // Layout utilities
 const layoutOptions = computed(() => ({
   direction: props.flowConfig?.direction ?? 'TB',
   nodeSpacing: props.flowConfig?.nodeSpacing ?? 50,
-  rankSpacing: props.flowConfig?.rankSpacing ?? 100,
+  rankSpacing: props.flowConfig?.rankSpacing ?? 100
 }))
 
 const { applyLayout, applyLayoutToNew, needsLayout } = useFlowLayout(layoutOptions.value)
@@ -397,7 +391,7 @@ const { applyLayout, applyLayoutToNew, needsLayout } = useFlowLayout(layoutOptio
 const { debouncedUpdate } = useDebouncedPositionUpdate(
   props.collection,
   props.positionField,
-  500,
+  500
 )
 
 // Track if initial layout has been applied (legacy mode)
@@ -463,21 +457,19 @@ const finalNodes = computed(() => {
       })
 
       baseNodes = layoutedNodesResult
-    }
-    else {
+    } else {
       // Use Yjs positions as-is - this preserves manually positioned nodes
       // and new nodes with drop positions
       baseNodes = nodes
     }
-  }
-  else {
+  } else {
     baseNodes = layoutedNodes.value
   }
 
   // Include ghost nodes (local + remote)
   const ghosts: Node[] = [
     ...(localGhostNode.value ? [localGhostNode.value] : []),
-    ...remoteGhostNodes.value,
+    ...remoteGhostNodes.value
   ]
 
   return [...baseNodes, ...ghosts]
@@ -501,7 +493,7 @@ const {
   onNodeClick,
   onNodeDoubleClick,
   onEdgeClick,
-  screenToFlowCoordinate,
+  screenToFlowCoordinate
 } = useVueFlow()
 
 // Throttle for real-time drag sync (sync every 50ms during drag)
@@ -519,7 +511,7 @@ onNodeDrag((event: NodeDragEvent) => {
   const { node } = event
   const position: FlowPosition = {
     x: Math.round(node.position.x),
-    y: Math.round(node.position.y),
+    y: Math.round(node.position.y)
   }
 
   // Sync to Yjs in real-time
@@ -533,14 +525,13 @@ onNodeDragStop((event: NodeDragEvent) => {
   const { node } = event
   const position: FlowPosition = {
     x: Math.round(node.position.x),
-    y: Math.round(node.position.y),
+    y: Math.round(node.position.y)
   }
 
   if (props.sync && syncState) {
     // Final sync to Yjs
     syncState.updatePosition(node.id, position)
-  }
-  else {
+  } else {
     // Persist via debounced mutation (legacy mode)
     debouncedUpdate(node.id, position)
   }
@@ -557,8 +548,7 @@ onNodeClick(({ node }) => {
       syncState.selectNode(node.id)
       emit('nodeClick', node.id, { ...syncNode.data, id: syncNode.id, title: syncNode.title })
     }
-  }
-  else {
+  } else {
     const item = getItem(node.id)
     if (item) {
       emit('nodeClick', node.id, item)
@@ -573,8 +563,7 @@ onNodeDoubleClick(({ node }) => {
     if (syncNode) {
       emit('nodeDblClick', node.id, { ...syncNode.data, id: syncNode.id, title: syncNode.title })
     }
-  }
-  else {
+  } else {
     const item = getItem(node.id)
     if (item) {
       emit('nodeDblClick', node.id, item)
@@ -616,8 +605,7 @@ function parseDragData(event: DragEvent): CroutonDragData | null {
     if (parsed.type !== 'crouton-item') return null
 
     return parsed as CroutonDragData
-  }
-  catch {
+  } catch {
     return null
   }
 }
@@ -653,7 +641,7 @@ function handleDragOver(event: DragEvent) {
   // Convert screen coordinates to flow coordinates
   const position = screenToFlowCoordinate({
     x: event.clientX,
-    y: event.clientY,
+    y: event.clientY
   })
 
   const userName = props.sync && syncState?.user.value?.name || 'You'
@@ -668,10 +656,10 @@ function handleDragOver(event: DragEvent) {
       isGhost: true,
       title: 'New Node',
       userName,
-      userColor,
+      userColor
     },
     draggable: false,
-    selectable: false,
+    selectable: false
   }
   // Broadcast to other users (throttled) in sync mode
   const now = Date.now()
@@ -681,7 +669,7 @@ function handleDragOver(event: DragEvent) {
       id: `ghost-${syncState.user.value?.id}`,
       title: 'New Node',
       collection: props.collection,
-      position: { x: Math.round(position.x), y: Math.round(position.y) },
+      position: { x: Math.round(position.x), y: Math.round(position.y) }
     })
   }
 }
@@ -740,12 +728,12 @@ function handleDrop(event: DragEvent) {
   // Convert screen coordinates to flow coordinates
   const position = screenToFlowCoordinate({
     x: event.clientX,
-    y: event.clientY,
+    y: event.clientY
   })
 
   const flowPosition: FlowPosition = {
     x: Math.round(position.x),
-    y: Math.round(position.y),
+    y: Math.round(position.y)
   }
 
   // Auto-create node in sync mode if enabled
@@ -759,7 +747,7 @@ function handleDrop(event: DragEvent) {
       title,
       parentId: null,
       position: flowPosition,
-      data: { ...item },
+      data: { ...item }
     })
 
     // Clear ghost immediately since we created the node
@@ -777,8 +765,8 @@ function handleDrop(event: DragEvent) {
         position: flowPosition,
         data: {
           ...localGhostNode.value.data,
-          isPending: true, // Mark as pending
-        },
+          isPending: true // Mark as pending
+        }
       }
     }
 
@@ -829,7 +817,7 @@ const customNodeComponent = computed(() => {
 
 // Expose sync state for external access
 defineExpose({
-  syncState,
+  syncState
 })
 </script>
 
@@ -875,8 +863,8 @@ defineExpose({
         />
         <!-- Custom node component -->
         <component
-          v-else-if="customNodeComponent"
           :is="customNodeComponent"
+          v-else-if="customNodeComponent"
           :data="nodeProps.data"
           :selected="nodeProps.selected"
           :dragging="nodeProps.dragging"
@@ -895,13 +883,26 @@ defineExpose({
       </template>
 
       <!-- Background -->
-      <Background v-if="background" :pattern-color="'#aaa'" :gap="16" :variant="backgroundPattern" />
+      <Background
+        v-if="background"
+        :pattern-color="'#aaa'"
+        :gap="16"
+        :variant="backgroundPattern"
+      />
 
       <!-- Controls -->
-      <Controls v-if="controls" position="bottom-left" />
+      <Controls
+        v-if="controls"
+        position="bottom-left"
+      />
 
       <!-- Minimap -->
-      <MiniMap v-if="minimap" position="bottom-right" :pannable="true" :zoomable="true" />
+      <MiniMap
+        v-if="minimap"
+        position="bottom-right"
+        :pannable="true"
+        :zoomable="true"
+      />
 
       <!-- Slot for additional content -->
       <slot />

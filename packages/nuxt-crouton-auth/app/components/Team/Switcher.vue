@@ -23,7 +23,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   showCreate: true,
-  size: 'md',
+  size: 'md'
 })
 
 const emit = defineEmits<{
@@ -40,7 +40,7 @@ const {
   switchTeam,
   showTeamSwitcher,
   canCreateTeam,
-  loading,
+  loading
 } = useTeam()
 
 const { buildDashboardUrl } = useTeamContext()
@@ -67,10 +67,10 @@ const menuItems = computed(() => {
   const items: Array<{ label: string, icon: string, click?: () => void, slot?: string }[]> = []
 
   // Team list
-  const teamItems = teams.value.map((team) => ({
+  const teamItems = teams.value.map(team => ({
     label: team.name,
     icon: team.id === currentTeam.value?.id ? 'i-lucide-check' : 'i-lucide-building-2',
-    click: () => handleSwitch(team),
+    click: () => handleSwitch(team)
   }))
 
   if (teamItems.length > 0) {
@@ -83,8 +83,8 @@ const menuItems = computed(() => {
       {
         label: t('teams.createTeam'),
         icon: 'i-lucide-plus',
-        click: handleCreate,
-      },
+        click: handleCreate
+      }
     ])
   }
 

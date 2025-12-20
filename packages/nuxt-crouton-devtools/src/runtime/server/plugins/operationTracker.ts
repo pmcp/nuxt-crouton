@@ -27,7 +27,7 @@ function detectOperation(method: string, path: string): Operation['operation'] {
     return 'list'
   }
 
-  if (normalizedMethod === 'GET' && /\/[a-zA-Z0-9-]+$/.test(path)) {
+  if (normalizedMethod === 'GET' && /\/[a-z0-9-]+$/i.test(path)) {
     return 'get'
   }
 
@@ -64,7 +64,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
   }
 
   // Track request timing
-  const requestTimings = new Map<string, { startTime: number; id: string; path: string; method: string; collection: string; operation: Operation['operation'] }>()
+  const requestTimings = new Map<string, { startTime: number, id: string, path: string, method: string, collection: string, operation: Operation['operation'] }>()
 
   // Hook: Before request
   nitroApp.hooks.hook('request', (event) => {
@@ -112,7 +112,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
       status,
       duration,
       teamContext,
-      error: status >= 400 ? `HTTP ${status}` : undefined,
+      error: status >= 400 ? `HTTP ${status}` : undefined
     })
 
     // Clean up

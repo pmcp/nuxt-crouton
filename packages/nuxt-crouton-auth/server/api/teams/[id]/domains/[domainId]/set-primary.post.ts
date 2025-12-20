@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   if (!domainId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Domain ID is required',
+      statusMessage: 'Domain ID is required'
     })
   }
 
@@ -31,14 +31,14 @@ export default defineEventHandler(async (event) => {
   if (!domain) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Domain not found',
+      statusMessage: 'Domain not found'
     })
   }
 
   if (domain.status !== 'verified') {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Only verified domains can be set as primary',
+      statusMessage: 'Only verified domains can be set as primary'
     })
   }
 

@@ -72,8 +72,8 @@ export async function handleGenerateCollection(
 }
 
 export const generateCollectionInputSchema = {
-  layer: z.string().describe("Target layer name (e.g., 'shop', 'blog', 'core')"),
-  collection: z.string().describe("Collection name in singular form (e.g., 'product', 'post')"),
+  layer: z.string().describe('Target layer name (e.g., \'shop\', \'blog\', \'core\')'),
+  collection: z.string().describe('Collection name in singular form (e.g., \'product\', \'post\')'),
   schema: z.record(z.any()).describe('The validated schema object'),
   options: z
     .object({

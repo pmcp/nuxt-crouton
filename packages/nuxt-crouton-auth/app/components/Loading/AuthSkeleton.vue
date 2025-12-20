@@ -19,7 +19,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   type: 'form',
   count: 3,
-  animated: true,
+  animated: true
 })
 
 const animationClass = computed(() =>

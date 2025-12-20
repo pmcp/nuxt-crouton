@@ -9,7 +9,7 @@
  */
 
 definePageMeta({
-  layout: 'auth',
+  layout: 'auth'
 })
 
 const route = useRoute()
@@ -51,7 +51,7 @@ async function verifyEmail() {
   try {
     const authClient = useAuthClient()
     const result = await authClient.verifyEmail({
-      token: token.value,
+      token: token.value
     })
 
     if (result.error) {
@@ -62,7 +62,7 @@ async function verifyEmail() {
     toast.add({
       title: 'Email verified',
       description: 'Your email has been verified successfully.',
-      color: 'success',
+      color: 'success'
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Verification failed'
@@ -70,7 +70,7 @@ async function verifyEmail() {
     toast.add({
       title: 'Verification failed',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     verifying.value = false
@@ -83,7 +83,7 @@ async function resendVerification() {
     toast.add({
       title: 'Error',
       description: 'Please sign in first to resend verification.',
-      color: 'error',
+      color: 'error'
     })
     return
   }
@@ -94,7 +94,7 @@ async function resendVerification() {
     const authClient = useAuthClient()
     const result = await authClient.sendVerificationEmail({
       email: user.value.email,
-      callbackURL: window.location.origin + '/auth/verify-email',
+      callbackURL: window.location.origin + '/auth/verify-email'
     })
 
     if (result.error) {
@@ -105,14 +105,14 @@ async function resendVerification() {
     toast.add({
       title: 'Email sent',
       description: 'Verification email has been sent to your inbox.',
-      color: 'success',
+      color: 'success'
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to send verification email'
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     resending.value = false
@@ -140,15 +140,24 @@ function goToLogin() {
     </div>
 
     <!-- Verifying state -->
-    <div v-if="verifying" class="mt-8 text-center">
-      <UIcon name="i-lucide-loader-circle" class="size-12 animate-spin text-primary" />
+    <div
+      v-if="verifying"
+      class="mt-8 text-center"
+    >
+      <UIcon
+        name="i-lucide-loader-circle"
+        class="size-12 animate-spin text-primary"
+      />
       <p class="mt-4 text-muted">
         Verifying your email address...
       </p>
     </div>
 
     <!-- Verified successfully -->
-    <div v-else-if="verified" class="mt-8">
+    <div
+      v-else-if="verified"
+      class="mt-8"
+    >
       <UAlert
         color="success"
         icon="i-lucide-check-circle"
@@ -165,7 +174,10 @@ function goToLogin() {
     </div>
 
     <!-- Verification error -->
-    <div v-else-if="verifyError" class="mt-8">
+    <div
+      v-else-if="verifyError"
+      class="mt-8"
+    >
       <UAlert
         color="error"
         icon="i-lucide-alert-triangle"
@@ -194,9 +206,15 @@ function goToLogin() {
     </div>
 
     <!-- No token - show instructions -->
-    <div v-else class="mt-8">
+    <div
+      v-else
+      class="mt-8"
+    >
       <div class="text-center text-muted">
-        <UIcon name="i-lucide-mail" class="size-12 mx-auto mb-4" />
+        <UIcon
+          name="i-lucide-mail"
+          class="size-12 mx-auto mb-4"
+        />
         <p>
           Check your email inbox for a verification link.
         </p>
@@ -206,7 +224,10 @@ function goToLogin() {
       </div>
 
       <!-- Logged in: option to resend -->
-      <div v-if="loggedIn && user?.email" class="mt-8 space-y-4">
+      <div
+        v-if="loggedIn && user?.email"
+        class="mt-8 space-y-4"
+      >
         <UAlert
           v-if="resent"
           color="success"
@@ -236,7 +257,10 @@ function goToLogin() {
       </div>
 
       <!-- Not logged in -->
-      <div v-else class="mt-8">
+      <div
+        v-else
+        class="mt-8"
+      >
         <NuxtLink to="/auth/login">
           <UButton block>
             Sign in

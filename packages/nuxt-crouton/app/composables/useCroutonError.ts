@@ -19,7 +19,7 @@ export default function () {
       toast.add({
         title: message,
         description: description || undefined,
-        color: 'error',
+        color: 'error'
       })
     }
     toastVibration.value = false

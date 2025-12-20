@@ -24,7 +24,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  error: null,
+  error: null
 })
 
 const emit = defineEmits<{
@@ -42,7 +42,7 @@ const toast = useToast()
 // Form state
 const state = reactive({
   name: '',
-  slug: '',
+  slug: ''
 })
 
 // Auto-generate slug from name
@@ -56,7 +56,7 @@ watch(
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
     }
-  },
+  }
 )
 
 // When user manually edits slug, stop auto-generating
@@ -101,7 +101,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Cannot create team',
       description: 'You have reached the maximum number of teams.',
-      color: 'error',
+      color: 'error'
     })
     return
   }
@@ -110,13 +110,13 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
   try {
     const team = await createTeam({
       name: event.data.name,
-      slug: event.data.slug,
+      slug: event.data.slug
     })
 
     toast.add({
       title: 'Team created',
       description: `${team.name} has been created successfully.`,
-      color: 'success',
+      color: 'success'
     })
 
     emit('success', team)
@@ -130,7 +130,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     internalLoading.value = false
@@ -145,7 +145,11 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     class="space-y-6"
     @submit="onSubmit"
   >
-    <UFormField :label="t('teams.teamName')" name="name" required>
+    <UFormField
+      :label="t('teams.teamName')"
+      name="name"
+      required
+    >
       <UInput
         v-model="state.name"
         placeholder="My Team"
@@ -154,7 +158,11 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField label="URL slug" name="slug" required>
+    <UFormField
+      label="URL slug"
+      name="slug"
+      required
+    >
       <template #hint>
         <span class="text-xs text-muted">
           Your team URL will be: /dashboard/<strong>{{ state.slug || 'your-slug' }}</strong>

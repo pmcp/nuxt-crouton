@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
   block: false,
   portalOptions: undefined,
   showIcon: true,
-  disabled: false,
+  disabled: false
 })
 
 const emit = defineEmits<{
@@ -66,17 +66,15 @@ const handlePortal = async () => {
   try {
     await portal(props.portalOptions)
     emit('click')
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error('Failed to open billing portal')
     emit('error', err)
     toast.add({
       title: 'Error',
       description: err.message,
-      color: 'error',
+      color: 'error'
     })
-  }
-  finally {
+  } finally {
     isLoading.value = false
   }
 }

@@ -41,16 +41,16 @@ export function useMapConfig(): MapConfig {
   if (!accessToken) {
     console.error('[useMapConfig] ERROR: No access token found!')
     throw new Error(
-      '[nuxt-crouton-maps] Mapbox access token not found in public config. ' +
-      'Add it to your nuxt.config.ts:\n\n' +
-      'runtimeConfig: {\n' +
-      '  public: {\n' +
-      '    mapbox: {\n' +
-      '      accessToken: process.env.MAPBOX_TOKEN\n' +
-      '    }\n' +
-      '  }\n' +
-      '}\n\n' +
-      'And set MAPBOX_TOKEN in your .env file.'
+      '[nuxt-crouton-maps] Mapbox access token not found in public config. '
+      + 'Add it to your nuxt.config.ts:\n\n'
+      + 'runtimeConfig: {\n'
+      + '  public: {\n'
+      + '    mapbox: {\n'
+      + '      accessToken: process.env.MAPBOX_TOKEN\n'
+      + '    }\n'
+      + '  }\n'
+      + '}\n\n'
+      + 'And set MAPBOX_TOKEN in your .env file.'
     )
   }
 

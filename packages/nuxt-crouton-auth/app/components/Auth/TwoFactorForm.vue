@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   error: null,
   showTrustDevice: true,
-  initialMode: 'totp',
+  initialMode: 'totp'
 })
 
 const emit = defineEmits<{
@@ -45,7 +45,7 @@ const mode = ref<'totp' | 'backup'>(props.initialMode)
 // Form state
 const state = reactive({
   code: '',
-  trustDevice: false,
+  trustDevice: false
 })
 
 // Validation
@@ -66,7 +66,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
   if (mode.value === 'totp') {
     emit('submitTotp', {
       code: event.data.code,
-      trustDevice: event.data.trustDevice,
+      trustDevice: event.data.trustDevice
     })
   } else {
     emit('submitBackup', event.data.code)
@@ -90,7 +90,10 @@ function toggleMode() {
     >
       <!-- TOTP Mode -->
       <template v-if="mode === 'totp'">
-        <UFormField label="Authentication code" name="code">
+        <UFormField
+          label="Authentication code"
+          name="code"
+        >
           <UInput
             v-model="state.code"
             type="text"
@@ -116,7 +119,10 @@ function toggleMode() {
 
       <!-- Backup Code Mode -->
       <template v-else>
-        <UFormField label="Backup code" name="code">
+        <UFormField
+          label="Backup code"
+          name="code"
+        >
           <UInput
             v-model="state.code"
             type="text"

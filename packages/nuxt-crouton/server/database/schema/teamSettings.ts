@@ -18,9 +18,9 @@ export const teamSettings = sqliteTable('team_settings', {
     }
   }>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).$default(
-    () => new Date(),
+    () => new Date()
   ),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$onUpdate(
-    () => new Date(),
-  ),
+    () => new Date()
+  )
 })

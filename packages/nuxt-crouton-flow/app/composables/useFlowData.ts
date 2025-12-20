@@ -47,11 +47,11 @@ export function useFlowData<T extends Record<string, unknown>>(
       const label = row[labelField] as string | undefined
 
       // Validate position has actual x/y values (not empty object)
-      const hasValidPosition = rawPosition &&
-        typeof rawPosition.x === 'number' &&
-        typeof rawPosition.y === 'number' &&
-        !isNaN(rawPosition.x) &&
-        !isNaN(rawPosition.y)
+      const hasValidPosition = rawPosition
+        && typeof rawPosition.x === 'number'
+        && typeof rawPosition.y === 'number'
+        && !isNaN(rawPosition.x)
+        && !isNaN(rawPosition.y)
 
       const position = hasValidPosition ? rawPosition : { x: 0, y: 0 }
 

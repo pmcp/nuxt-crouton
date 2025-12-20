@@ -19,7 +19,7 @@ export const translationsUi = sqliteTable('translations_ui', {
   isOverrideable: integer('is_overrideable', { mode: 'boolean' }).notNull().default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
-}, (table) => ({
+}, table => ({
   // Ensures unique combination of teamId + namespace + keyPath
   uniqueTeamNamespaceKey: unique().on(table.teamId, table.namespace, table.keyPath)
 }))

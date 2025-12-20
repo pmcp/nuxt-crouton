@@ -19,13 +19,13 @@
  * - server/database/schema/index.ts (adds schema export)
  */
 
-import fs from 'fs-extra';
-import path from 'path';
-import chalk from 'chalk';
-import ora from 'ora';
+import fs from 'fs-extra'
+import path from 'node:path'
+import chalk from 'chalk'
+import ora from 'ora'
 
-const LAYER_NAME = 'crouton-events';
-const LAYER_PATH = `layers/${LAYER_NAME}`;
+const LAYER_NAME = 'crouton-events'
+const LAYER_PATH = `layers/${LAYER_NAME}`
 
 // ============================================================================
 // File Templates
@@ -348,8 +348,8 @@ export default defineEventHandler(async (event) => {
 
   return await deleteCroutonCollectionEvent(eventId, team.id, user.id)
 })
-`,
-};
+`
+}
 
 // ============================================================================
 // File Generation
@@ -364,16 +364,16 @@ async function createLayerFiles(basePath) {
     { path: 'server/api/teams/[id]/crouton-collection-events/index.get.ts', content: templates.apiGet },
     { path: 'server/api/teams/[id]/crouton-collection-events/index.post.ts', content: templates.apiPost },
     { path: 'server/api/teams/[id]/crouton-collection-events/[eventId].patch.ts', content: templates.apiPatch },
-    { path: 'server/api/teams/[id]/crouton-collection-events/[eventId].delete.ts', content: templates.apiDelete },
-  ];
+    { path: 'server/api/teams/[id]/crouton-collection-events/[eventId].delete.ts', content: templates.apiDelete }
+  ]
 
   for (const file of files) {
-    const fullPath = path.join(basePath, file.path);
-    await fs.ensureDir(path.dirname(fullPath));
-    await fs.writeFile(fullPath, file.content);
+    const fullPath = path.join(basePath, file.path)
+    await fs.ensureDir(path.dirname(fullPath))
+    await fs.writeFile(fullPath, file.content)
   }
 
-  return files.map(f => f.path);
+  return files.map(f => f.path)
 }
 
 // ============================================================================
@@ -381,68 +381,68 @@ async function createLayerFiles(basePath) {
 // ============================================================================
 
 async function updateNuxtConfig(projectRoot) {
-  const configPath = path.join(projectRoot, 'nuxt.config.ts');
+  const configPath = path.join(projectRoot, 'nuxt.config.ts')
 
   if (!await fs.pathExists(configPath)) {
-    console.log(chalk.yellow('  Warning: nuxt.config.ts not found, skipping auto-update'));
-    return false;
+    console.log(chalk.yellow('  Warning: nuxt.config.ts not found, skipping auto-update'))
+    return false
   }
 
-  let content = await fs.readFile(configPath, 'utf-8');
+  let content = await fs.readFile(configPath, 'utf-8')
 
   // Check if already added
   if (content.includes(`'./${LAYER_PATH}'`) || content.includes(`"./${LAYER_PATH}"`)) {
-    console.log(chalk.gray('  nuxt.config.ts already includes crouton-events layer'));
-    return false;
+    console.log(chalk.gray('  nuxt.config.ts already includes crouton-events layer'))
+    return false
   }
 
   // Find extends array and add the layer
-  const extendsMatch = content.match(/extends:\s*\[([^\]]*)\]/s);
+  const extendsMatch = content.match(/extends:\s*\[([^\]]*)\]/)
   if (extendsMatch) {
-    const existingExtends = extendsMatch[1];
+    const existingExtends = extendsMatch[1]
     const newExtends = existingExtends.trimEnd().endsWith(',')
       ? `${existingExtends}\n    './${LAYER_PATH}',`
       : existingExtends.trim()
         ? `${existingExtends},\n    './${LAYER_PATH}',`
-        : `\n    './${LAYER_PATH}',\n  `;
+        : `\n    './${LAYER_PATH}',\n  `
 
     content = content.replace(
-      /extends:\s*\[([^\]]*)\]/s,
+      /extends:\s*\[([^\]]*)\]/,
       `extends: [${newExtends}]`
-    );
+    )
 
-    await fs.writeFile(configPath, content);
-    return true;
+    await fs.writeFile(configPath, content)
+    return true
   }
 
-  console.log(chalk.yellow('  Warning: Could not find extends array in nuxt.config.ts'));
-  console.log(chalk.yellow(`  Please manually add './${LAYER_PATH}' to your extends array`));
-  return false;
+  console.log(chalk.yellow('  Warning: Could not find extends array in nuxt.config.ts'))
+  console.log(chalk.yellow(`  Please manually add './${LAYER_PATH}' to your extends array`))
+  return false
 }
 
 async function updateSchemaIndex(projectRoot) {
-  const schemaIndexPath = path.join(projectRoot, 'server/database/schema/index.ts');
+  const schemaIndexPath = path.join(projectRoot, 'server/database/schema/index.ts')
 
   if (!await fs.pathExists(schemaIndexPath)) {
-    console.log(chalk.yellow('  Warning: server/database/schema/index.ts not found, skipping auto-update'));
-    return false;
+    console.log(chalk.yellow('  Warning: server/database/schema/index.ts not found, skipping auto-update'))
+    return false
   }
 
-  let content = await fs.readFile(schemaIndexPath, 'utf-8');
+  let content = await fs.readFile(schemaIndexPath, 'utf-8')
 
-  const exportLine = `export { croutonCollectionEvents } from '../../../${LAYER_PATH}/server/database/schema'`;
+  const exportLine = `export { croutonCollectionEvents } from '../../../${LAYER_PATH}/server/database/schema'`
 
   // Check if already added
   if (content.includes('croutonCollectionEvents')) {
-    console.log(chalk.gray('  schema/index.ts already exports croutonCollectionEvents'));
-    return false;
+    console.log(chalk.gray('  schema/index.ts already exports croutonCollectionEvents'))
+    return false
   }
 
   // Add export at the end
-  content = content.trimEnd() + '\n' + exportLine + '\n';
+  content = content.trimEnd() + '\n' + exportLine + '\n'
 
-  await fs.writeFile(schemaIndexPath, content);
-  return true;
+  await fs.writeFile(schemaIndexPath, content)
+  return true
 }
 
 // ============================================================================
@@ -450,98 +450,98 @@ async function updateSchemaIndex(projectRoot) {
 // ============================================================================
 
 export async function addEvents(options = {}) {
-  const { dryRun = false, force = false } = options;
-  const projectRoot = process.cwd();
-  const layerFullPath = path.join(projectRoot, LAYER_PATH);
+  const { dryRun = false, force = false } = options
+  const projectRoot = process.cwd()
+  const layerFullPath = path.join(projectRoot, LAYER_PATH)
 
-  console.log(chalk.bold('\nAdding crouton-events layer...\n'));
+  console.log(chalk.bold('\nAdding crouton-events layer...\n'))
 
   // Check if layer already exists
   if (await fs.pathExists(layerFullPath)) {
     if (!force) {
-      console.log(chalk.red(`Error: ${LAYER_PATH} already exists`));
-      console.log(chalk.yellow('Use --force to overwrite'));
-      process.exit(1);
+      console.log(chalk.red(`Error: ${LAYER_PATH} already exists`))
+      console.log(chalk.yellow('Use --force to overwrite'))
+      process.exit(1)
     }
-    console.log(chalk.yellow(`Warning: Overwriting existing ${LAYER_PATH}`));
+    console.log(chalk.yellow(`Warning: Overwriting existing ${LAYER_PATH}`))
   }
 
   if (dryRun) {
-    console.log(chalk.cyan('Dry run - would create:'));
-    console.log(chalk.gray(`  ${LAYER_PATH}/nuxt.config.ts`));
-    console.log(chalk.gray(`  ${LAYER_PATH}/types.ts`));
-    console.log(chalk.gray(`  ${LAYER_PATH}/server/database/schema.ts`));
-    console.log(chalk.gray(`  ${LAYER_PATH}/server/database/queries.ts`));
-    console.log(chalk.gray(`  ${LAYER_PATH}/server/api/teams/[id]/crouton-collection-events/index.get.ts`));
-    console.log(chalk.gray(`  ${LAYER_PATH}/server/api/teams/[id]/crouton-collection-events/index.post.ts`));
-    console.log(chalk.gray(`  ${LAYER_PATH}/server/api/teams/[id]/crouton-collection-events/[eventId].patch.ts`));
-    console.log(chalk.gray(`  ${LAYER_PATH}/server/api/teams/[id]/crouton-collection-events/[eventId].delete.ts`));
-    console.log(chalk.cyan('\nWould update:'));
-    console.log(chalk.gray(`  nuxt.config.ts (add layer to extends)`));
-    console.log(chalk.gray(`  server/database/schema/index.ts (add schema export)`));
-    return;
+    console.log(chalk.cyan('Dry run - would create:'))
+    console.log(chalk.gray(`  ${LAYER_PATH}/nuxt.config.ts`))
+    console.log(chalk.gray(`  ${LAYER_PATH}/types.ts`))
+    console.log(chalk.gray(`  ${LAYER_PATH}/server/database/schema.ts`))
+    console.log(chalk.gray(`  ${LAYER_PATH}/server/database/queries.ts`))
+    console.log(chalk.gray(`  ${LAYER_PATH}/server/api/teams/[id]/crouton-collection-events/index.get.ts`))
+    console.log(chalk.gray(`  ${LAYER_PATH}/server/api/teams/[id]/crouton-collection-events/index.post.ts`))
+    console.log(chalk.gray(`  ${LAYER_PATH}/server/api/teams/[id]/crouton-collection-events/[eventId].patch.ts`))
+    console.log(chalk.gray(`  ${LAYER_PATH}/server/api/teams/[id]/crouton-collection-events/[eventId].delete.ts`))
+    console.log(chalk.cyan('\nWould update:'))
+    console.log(chalk.gray(`  nuxt.config.ts (add layer to extends)`))
+    console.log(chalk.gray(`  server/database/schema/index.ts (add schema export)`))
+    return
   }
 
   // Create layer files
-  const spinner = ora('Creating layer files...').start();
+  const spinner = ora('Creating layer files...').start()
   try {
-    const files = await createLayerFiles(layerFullPath);
-    spinner.succeed(`Created ${files.length} files in ${LAYER_PATH}`);
+    const files = await createLayerFiles(layerFullPath)
+    spinner.succeed(`Created ${files.length} files in ${LAYER_PATH}`)
   } catch (error) {
-    spinner.fail('Failed to create layer files');
-    throw error;
+    spinner.fail('Failed to create layer files')
+    throw error
   }
 
   // Update nuxt.config.ts
-  const configSpinner = ora('Updating nuxt.config.ts...').start();
+  const configSpinner = ora('Updating nuxt.config.ts...').start()
   try {
-    const updated = await updateNuxtConfig(projectRoot);
+    const updated = await updateNuxtConfig(projectRoot)
     if (updated) {
-      configSpinner.succeed('Updated nuxt.config.ts');
+      configSpinner.succeed('Updated nuxt.config.ts')
     } else {
-      configSpinner.info('nuxt.config.ts unchanged');
+      configSpinner.info('nuxt.config.ts unchanged')
     }
   } catch (error) {
-    configSpinner.fail('Failed to update nuxt.config.ts');
-    console.error(chalk.red(error.message));
+    configSpinner.fail('Failed to update nuxt.config.ts')
+    console.error(chalk.red(error.message))
   }
 
   // Update schema index
-  const schemaSpinner = ora('Updating schema index...').start();
+  const schemaSpinner = ora('Updating schema index...').start()
   try {
-    const updated = await updateSchemaIndex(projectRoot);
+    const updated = await updateSchemaIndex(projectRoot)
     if (updated) {
-      schemaSpinner.succeed('Updated server/database/schema/index.ts');
+      schemaSpinner.succeed('Updated server/database/schema/index.ts')
     } else {
-      schemaSpinner.info('schema/index.ts unchanged');
+      schemaSpinner.info('schema/index.ts unchanged')
     }
   } catch (error) {
-    schemaSpinner.fail('Failed to update schema index');
-    console.error(chalk.red(error.message));
+    schemaSpinner.fail('Failed to update schema index')
+    console.error(chalk.red(error.message))
   }
 
   // Success message
-  console.log(chalk.green('\n✓ crouton-events layer added successfully!\n'));
+  console.log(chalk.green('\n✓ crouton-events layer added successfully!\n'))
 
-  console.log(chalk.bold('Next steps:'));
-  console.log(chalk.cyan('  1. Run database migration:'));
-  console.log(chalk.gray('     pnpm drizzle-kit generate'));
-  console.log(chalk.gray('     pnpm drizzle-kit migrate'));
-  console.log(chalk.cyan('\n  2. Add nuxt-crouton-events package (for auto-tracking):'));
-  console.log(chalk.gray('     pnpm add @friendlyinternet/nuxt-crouton-events'));
-  console.log(chalk.cyan('\n  3. Add to nuxt.config.ts extends:'));
-  console.log(chalk.gray("     '@friendlyinternet/nuxt-crouton-events'"));
-  console.log();
+  console.log(chalk.bold('Next steps:'))
+  console.log(chalk.cyan('  1. Run database migration:'))
+  console.log(chalk.gray('     pnpm drizzle-kit generate'))
+  console.log(chalk.gray('     pnpm drizzle-kit migrate'))
+  console.log(chalk.cyan('\n  2. Add nuxt-crouton-events package (for auto-tracking):'))
+  console.log(chalk.gray('     pnpm add @friendlyinternet/nuxt-crouton-events'))
+  console.log(chalk.cyan('\n  3. Add to nuxt.config.ts extends:'))
+  console.log(chalk.gray('     \'@friendlyinternet/nuxt-crouton-events\''))
+  console.log()
 }
 
 // CLI execution
 if (process.argv[1].includes('add-events')) {
-  const args = process.argv.slice(2);
-  const dryRun = args.includes('--dry-run');
-  const force = args.includes('--force');
+  const args = process.argv.slice(2)
+  const dryRun = args.includes('--dry-run')
+  const force = args.includes('--force')
 
-  addEvents({ dryRun, force }).catch(error => {
-    console.error(chalk.red('Error:'), error.message);
-    process.exit(1);
-  });
+  addEvents({ dryRun, force }).catch((error) => {
+    console.error(chalk.red('Error:'), error.message)
+    process.exit(1)
+  })
 }

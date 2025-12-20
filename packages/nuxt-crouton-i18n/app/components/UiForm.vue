@@ -8,7 +8,10 @@
       <div class="text-center space-y-4">
         <!-- Warning Icon -->
         <div class="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-          <UIcon name="i-lucide-alert-triangle" class="w-6 h-6 text-red-600 dark:text-red-400" />
+          <UIcon
+            name="i-lucide-alert-triangle"
+            class="w-6 h-6 text-red-600 dark:text-red-400"
+          />
         </div>
 
         <!-- Title -->
@@ -22,7 +25,10 @@
         </div>
 
         <!-- Translation Preview -->
-        <div v-if="activeItem" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-left">
+        <div
+          v-if="activeItem"
+          class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-left"
+        >
           <div class="text-xs text-blue-700 dark:text-blue-300 font-mono mb-2">
             {{ activeItem.keyPath }}
           </div>
@@ -43,8 +49,8 @@
           color="error"
           :loading="loading !== 'notLoading'"
           :disabled="loading !== 'notLoading'"
-          @click="handleDelete"
           icon="i-lucide-trash-2"
+          @click="handleDelete"
         >
           Remove Override
         </UButton>
@@ -60,7 +66,11 @@
       @submit="handleSubmit"
     >
       <!-- Key Path -->
-      <UFormField label="Key Path" name="keyPath" required>
+      <UFormField
+        label="Key Path"
+        name="keyPath"
+        required
+      >
         <UInput
           v-model="state.keyPath"
           placeholder="e.g., table.search"
@@ -69,7 +79,11 @@
       </UFormField>
 
       <!-- Category -->
-      <UFormField label="Category" name="category" required>
+      <UFormField
+        label="Category"
+        name="category"
+        required
+      >
         <UInput
           v-model="state.category"
           placeholder="e.g., table"
@@ -78,7 +92,11 @@
       </UFormField>
 
       <!-- Translations Input -->
-      <UFormField label="Translations" name="values" required>
+      <UFormField
+        label="Translations"
+        name="values"
+        required
+      >
         <CroutonI18nInput
           v-model="state.values"
           :locales="['en', 'nl', 'fr']"
@@ -86,7 +104,10 @@
       </UFormField>
 
       <!-- Description -->
-      <UFormField label="Description" name="description">
+      <UFormField
+        label="Description"
+        name="description"
+      >
         <UTextarea
           v-model="state.description"
           placeholder="Optional description"

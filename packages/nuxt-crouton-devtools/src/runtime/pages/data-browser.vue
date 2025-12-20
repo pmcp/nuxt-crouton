@@ -18,7 +18,9 @@
       <p class="text-red-900 dark:text-red-300 font-semibold mb-2">
         Collection not found
       </p>
-      <p class="text-red-700 dark:text-red-400">{{ error }}</p>
+      <p class="text-red-700 dark:text-red-400">
+        {{ error }}
+      </p>
     </div>
 
     <!-- Collection Viewer - Uses existing Crouton components! -->

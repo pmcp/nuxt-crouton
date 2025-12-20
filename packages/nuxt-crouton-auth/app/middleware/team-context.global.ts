@@ -24,7 +24,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     setTeamContext,
     setTeamError,
     clearTeamContext,
-    markUnresolved,
+    markUnresolved
   } = useTeamState()
 
   // Skip for auth routes - no team context needed
@@ -68,7 +68,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         setTeamContext({
           teamId,
           teamSlug: 'default',
-          team: activeOrganization.value ?? null,
+          team: activeOrganization.value ?? null
         })
         break
       }
@@ -79,7 +79,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
           setTeamContext({
             teamId: activeOrganization.value.id,
             teamSlug: activeOrganization.value.slug,
-            team: activeOrganization.value,
+            team: activeOrganization.value
           })
         } else {
           setTeamError('No personal workspace found')
@@ -98,7 +98,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
           setTeamContext({
             teamId: resolution.teamId,
             teamSlug: resolution.teamSlug,
-            team: activeOrganization.value ?? null,
+            team: activeOrganization.value ?? null
           })
         } else {
           clearTeamContext()
@@ -155,7 +155,7 @@ async function resolveMultiTenantTeam(
           teamId: firstTeam.id,
           teamSlug: firstTeam.slug,
           needsRedirect: true,
-          redirectTo: newPath,
+          redirectTo: newPath
         }
       }
       // No teams at all
@@ -163,7 +163,7 @@ async function resolveMultiTenantTeam(
         teamId: null,
         teamSlug: null,
         needsRedirect: false,
-        error: 'No teams available',
+        error: 'No teams available'
       }
     }
 
@@ -179,7 +179,7 @@ async function resolveMultiTenantTeam(
     return {
       teamId: targetTeam.id,
       teamSlug: targetTeam.slug,
-      needsRedirect: false,
+      needsRedirect: false
     }
   } else if (isDashboardRoute && activeOrganization.value) {
     // Dashboard route without team in URL - add team to URL
@@ -188,14 +188,14 @@ async function resolveMultiTenantTeam(
       teamId: activeOrganization.value.id,
       teamSlug: activeOrganization.value.slug,
       needsRedirect: true,
-      redirectTo: `/dashboard/${activeOrganization.value.slug}${pathWithoutDashboard ? `/${pathWithoutDashboard}` : ''}`,
+      redirectTo: `/dashboard/${activeOrganization.value.slug}${pathWithoutDashboard ? `/${pathWithoutDashboard}` : ''}`
     }
   } else {
     // Non-dashboard route or no active org
     return {
       teamId: activeOrganization.value?.id ?? null,
       teamSlug: activeOrganization.value?.slug ?? null,
-      needsRedirect: false,
+      needsRedirect: false
     }
   }
 }

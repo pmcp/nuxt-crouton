@@ -34,21 +34,21 @@ const dropdownItems = computed(() => {
       {
         label: t('navigation.accountSettings'),
         icon: 'i-lucide-user',
-        to: `${baseUrl}/settings`,
+        to: `${baseUrl}/settings`
       },
       {
         label: t('account.security'),
         icon: 'i-lucide-shield',
-        to: `${baseUrl}/settings/security`,
-      },
+        to: `${baseUrl}/settings/security`
+      }
     ],
     [
       {
         label: t('auth.signOut'),
         icon: 'i-lucide-log-out',
-        click: handleLogout,
-      },
-    ],
+        click: handleLogout
+      }
+    ]
   ]
 })
 
@@ -58,15 +58,14 @@ async function handleLogout() {
     toast.add({
       title: 'Signed out',
       description: 'You have been signed out successfully.',
-      color: 'success',
+      color: 'success'
     })
     await router.push('/auth/login')
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     toast.add({
       title: 'Error',
       description: error instanceof Error ? error.message : 'Failed to sign out',
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -100,7 +99,10 @@ const userInitials = computed(() => {
         />
       </template>
 
-      <template v-if="!collapsed" #default>
+      <template
+        v-if="!collapsed"
+        #default
+      >
         <div class="flex flex-col items-start min-w-0">
           <span class="text-sm font-medium truncate">
             {{ user?.name || 'User' }}
@@ -111,8 +113,14 @@ const userInitials = computed(() => {
         </div>
       </template>
 
-      <template v-if="!collapsed" #trailing>
-        <UIcon name="i-lucide-chevrons-up-down" class="size-4 text-muted" />
+      <template
+        v-if="!collapsed"
+        #trailing
+      >
+        <UIcon
+          name="i-lucide-chevrons-up-down"
+          class="size-4 text-muted"
+        />
       </template>
     </UButton>
   </UDropdownMenu>

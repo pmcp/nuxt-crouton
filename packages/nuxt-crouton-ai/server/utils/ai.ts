@@ -77,14 +77,14 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
     openai: () => {
       if (!config.openaiApiKey) {
         throw new Error(
-          '@friendlyinternet/nuxt-crouton-ai: OpenAI API key not configured. ' +
-          'Set NUXT_OPENAI_API_KEY environment variable or configure runtimeConfig.openaiApiKey'
+          '@friendlyinternet/nuxt-crouton-ai: OpenAI API key not configured. '
+          + 'Set NUXT_OPENAI_API_KEY environment variable or configure runtimeConfig.openaiApiKey'
         )
       }
 
       if (!openaiInstance) {
         openaiInstance = createOpenAI({
-          apiKey: config.openaiApiKey as string,
+          apiKey: config.openaiApiKey as string
         })
       }
 
@@ -94,14 +94,14 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
     anthropic: () => {
       if (!config.anthropicApiKey) {
         throw new Error(
-          '@friendlyinternet/nuxt-crouton-ai: Anthropic API key not configured. ' +
-          'Set NUXT_ANTHROPIC_API_KEY environment variable or configure runtimeConfig.anthropicApiKey'
+          '@friendlyinternet/nuxt-crouton-ai: Anthropic API key not configured. '
+          + 'Set NUXT_ANTHROPIC_API_KEY environment variable or configure runtimeConfig.anthropicApiKey'
         )
       }
 
       if (!anthropicInstance) {
         anthropicInstance = createAnthropic({
-          apiKey: config.anthropicApiKey as string,
+          apiKey: config.anthropicApiKey as string
         })
       }
 

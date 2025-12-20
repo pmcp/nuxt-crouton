@@ -27,7 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
   title: '',
   dismissible: true,
   showRetry: false,
-  variant: 'error',
+  variant: 'error'
 })
 
 const emit = defineEmits<{
@@ -43,22 +43,22 @@ const errorCode = computed(() => getErrorCode(props.error))
 const colorMap = {
   error: 'red' as const,
   warning: 'yellow' as const,
-  info: 'blue' as const,
+  info: 'blue' as const
 }
 
 const iconMap = {
   error: 'i-heroicons-exclamation-circle',
   warning: 'i-heroicons-exclamation-triangle',
-  info: 'i-heroicons-information-circle',
+  info: 'i-heroicons-information-circle'
 }
 
 // Determine if this is a network error that could benefit from retry
 const isRetryable = computed(() => {
   const code = errorCode.value
   return (
-    code === AUTH_ERROR_CODES.NETWORK_ERROR ||
-    code === AUTH_ERROR_CODES.NETWORK_TIMEOUT ||
-    code === AUTH_ERROR_CODES.SERVER_ERROR
+    code === AUTH_ERROR_CODES.NETWORK_ERROR
+    || code === AUTH_ERROR_CODES.NETWORK_TIMEOUT
+    || code === AUTH_ERROR_CODES.SERVER_ERROR
   )
 })
 

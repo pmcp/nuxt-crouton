@@ -5,10 +5,10 @@
       <USelect
         :label="tString('table.rowsPerPage')"
         :model-value="pageCount"
-        @update:model-value="handlePageCountChange"
         :items="pageSizeItems"
         class="w-20"
         size="xs"
+        @update:model-value="handlePageCountChange"
       />
       <span class="text-sm text-muted">
         {{ t('table.showing') }}

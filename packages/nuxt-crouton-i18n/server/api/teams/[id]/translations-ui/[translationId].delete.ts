@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   if (!translationId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Translation ID is required',
+      statusMessage: 'Translation ID is required'
     })
   }
 

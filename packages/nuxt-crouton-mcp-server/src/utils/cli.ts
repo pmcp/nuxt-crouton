@@ -31,7 +31,7 @@ export interface GenerateOptions {
  */
 export async function execCrouton(
   args: string[],
-  options: { timeout?: number; cwd?: string } = {}
+  options: { timeout?: number, cwd?: string } = {}
 ): Promise<ExecResult> {
   const { timeout = 60000, cwd = process.cwd() } = options
 
@@ -50,7 +50,7 @@ export async function execCrouton(
       exitCode: 0
     }
   } catch (error: unknown) {
-    const execError = error as { stdout?: string; stderr?: string; code?: number }
+    const execError = error as { stdout?: string, stderr?: string, code?: number }
     return {
       stdout: execError.stdout?.trim() || '',
       stderr: execError.stderr?.trim() || String(error),
@@ -128,8 +128,8 @@ export function buildGenerateArgs(
  */
 export async function runCli(
   args: string[],
-  options: { timeout?: number; cwd?: string } = {}
-): Promise<{ success: boolean; output: string; error?: string }> {
+  options: { timeout?: number, cwd?: string } = {}
+): Promise<{ success: boolean, output: string, error?: string }> {
   const result = await execCrouton(args, options)
 
   return {

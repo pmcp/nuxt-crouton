@@ -111,7 +111,7 @@ export function useFlowLayout(options: UseFlowLayoutOptions = {}) {
     dagre.layout(dagreGraph)
 
     // Apply calculated positions back to nodes
-    return nodes.map(node => {
+    return nodes.map((node) => {
       const nodeWithPosition = dagreGraph.node(node.id)
 
       if (!nodeWithPosition) {
@@ -201,7 +201,7 @@ export function useFlowLayout(options: UseFlowLayoutOptions = {}) {
     // Preserve existing positions for positioned nodes
     const positionedNodeIds = new Set(positionedNodes.map(n => n.id))
 
-    return nodes.map(node => {
+    return nodes.map((node) => {
       // Keep existing position for already-positioned nodes
       if (positionedNodeIds.has(node.id)) {
         return {

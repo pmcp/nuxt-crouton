@@ -16,7 +16,7 @@ import {
   createTestUser,
   createTestSession,
   createTestTeam,
-  createTestMember,
+  createTestMember
 } from './setup'
 
 describe('Integration: Team Operations', () => {
@@ -40,7 +40,7 @@ describe('Integration: Team Operations', () => {
         user,
         session,
         teams: [existingTeam],
-        members: [createTestMember({ userId: user.id, organizationId: existingTeam.id, role: 'owner' })],
+        members: [createTestMember({ userId: user.id, organizationId: existingTeam.id, role: 'owner' })]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -50,7 +50,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -70,7 +70,7 @@ describe('Integration: Team Operations', () => {
       mockClient = setupIntegrationMocks({
         user,
         session,
-        teams: [],
+        teams: []
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -80,7 +80,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -98,7 +98,7 @@ describe('Integration: Team Operations', () => {
       mockClient = setupIntegrationMocks({
         user: createTestUser(),
         session: createTestSession(),
-        teams: [],
+        teams: []
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -108,7 +108,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -131,8 +131,8 @@ describe('Integration: Team Operations', () => {
         teams: [team1, team2],
         members: [
           createTestMember({ userId: user.id, organizationId: team1.id }),
-          createTestMember({ userId: user.id, organizationId: team2.id, id: 'member-2' }),
-        ],
+          createTestMember({ userId: user.id, organizationId: team2.id, id: 'member-2' })
+        ]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -142,7 +142,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -159,7 +159,7 @@ describe('Integration: Team Operations', () => {
       mockClient = setupIntegrationMocks({
         user: createTestUser(),
         session: createTestSession(),
-        teams: [createTestTeam(), createTestTeam({ id: 'team-2' })],
+        teams: [createTestTeam(), createTestTeam({ id: 'team-2' })]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -169,7 +169,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -183,7 +183,7 @@ describe('Integration: Team Operations', () => {
       mockClient = setupIntegrationMocks({
         user: createTestUser(),
         session: createTestSession(),
-        teams: [createTestTeam()],
+        teams: [createTestTeam()]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -193,7 +193,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -212,7 +212,7 @@ describe('Integration: Team Operations', () => {
       mockClient = setupIntegrationMocks({
         user,
         session,
-        teams: [createTestTeam()],
+        teams: [createTestTeam()]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -222,7 +222,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -242,7 +242,7 @@ describe('Integration: Team Operations', () => {
       mockClient = setupIntegrationMocks({
         user,
         session,
-        teams: [createTestTeam()],
+        teams: [createTestTeam()]
       })
 
       // Mock create to fail
@@ -255,7 +255,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -280,7 +280,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -306,7 +306,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')
@@ -325,7 +325,7 @@ describe('Integration: Team Operations', () => {
       mockClient = setupIntegrationMocks({
         user: createTestUser(),
         session: createTestSession(),
-        teams: [createTestTeam()],
+        teams: [createTestTeam()]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -335,7 +335,7 @@ describe('Integration: Team Operations', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useTeam } = await import('../../app/composables/useTeam')

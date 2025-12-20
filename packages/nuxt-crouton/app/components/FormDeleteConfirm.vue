@@ -32,7 +32,10 @@ const handleCancel = () => {
     <!-- Warning Icon -->
     <div class="flex justify-center">
       <div class="rounded-full bg-red-100 dark:bg-red-900/30 p-3">
-        <UIcon name="i-lucide-trash-2" class="size-8 text-red-600 dark:text-red-400" />
+        <UIcon
+          name="i-lucide-trash-2"
+          class="size-8 text-red-600 dark:text-red-400"
+        />
       </div>
     </div>
 

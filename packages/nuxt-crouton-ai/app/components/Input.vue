@@ -15,12 +15,12 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
-  submit: []
+  'submit': []
 }>()
 
 const inputValue = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const canSubmit = computed(() => {

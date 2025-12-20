@@ -6,9 +6,9 @@
  * This script is used in CI to catch sync issues early.
  */
 
-import { readFileSync } from 'fs'
-import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectRoot = join(__dirname, '..')
@@ -36,7 +36,7 @@ function extractGeneratorFieldTypes(content) {
   const match = content.match(/\['([a-z]+)'(?:,\s*'([a-z]+)')*\]\.includes/)
   if (!match) {
     // Try matching typeMapping object keys
-    const typeMapMatch = content.match(/export const typeMapping\s*=\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s)
+    const typeMapMatch = content.match(/export const typeMapping\s*=\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/)
     if (typeMapMatch) {
       const keys = typeMapMatch[1].match(/^\s*(\w+):/gm)
       if (keys) {

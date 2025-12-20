@@ -41,7 +41,7 @@ describe('FIELD_TYPES', () => {
         db: 'VARCHAR(255)',
         drizzle: 'text',
         zod: 'z.string()',
-        default: "''",
+        default: '\'\'',
         tsType: 'string'
       })
     })

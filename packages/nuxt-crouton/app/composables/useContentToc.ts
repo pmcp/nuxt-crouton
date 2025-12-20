@@ -16,7 +16,7 @@ export function useContentToc(content: MaybeRef<string | null | undefined>) {
     let match
 
     while ((match = headingRegex.exec(html)) !== null) {
-      const depth = parseInt(match[1] || '2')
+      const depth = Number.parseInt(match[1] || '2')
       const headingText = match[3] || ''
       // Use existing id or generate from text
       const id = match[2] || headingText.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '')

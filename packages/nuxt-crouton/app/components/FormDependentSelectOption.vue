@@ -16,7 +16,11 @@
         v-if="cardComponent"
         :value="option"
       />
-      <UBadge v-else color="neutral" variant="subtle">
+      <UBadge
+        v-else
+        color="neutral"
+        variant="subtle"
+      >
         {{ option.label || option.value || option.id }}
       </UBadge>
     </div>
@@ -56,10 +60,10 @@ const emit = defineEmits<{
 const singularize = (word: string): string => {
   // Handle common plural patterns
   if (word.endsWith('ies')) {
-    return word.slice(0, -3) + 'y'  // entries → entry
+    return word.slice(0, -3) + 'y' // entries → entry
   }
   if (word.endsWith('s')) {
-    return word.slice(0, -1)  // slots → slot
+    return word.slice(0, -1) // slots → slot
   }
   return word
 }

@@ -1,7 +1,10 @@
 <template>
   <div class="flex gap-1.5">
     <ClientOnly>
-      <template v-for="lang in languages" :key="lang">
+      <template
+        v-for="lang in languages"
+        :key="lang"
+      >
         <UPopover
           v-if="getTranslationLength(lang) > 0 && getTranslationLength(lang) <= 200"
         >
@@ -19,7 +22,10 @@
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {{ lang.toUpperCase() }}
-                  <span v-if="isUsingFallback(lang)" class="text-orange-500 ml-1">({{ tString('common.fallbackToEN') }})</span>
+                  <span
+                    v-if="isUsingFallback(lang)"
+                    class="text-orange-500 ml-1"
+                  >({{ tString('common.fallbackToEN') }})</span>
                 </span>
                 <UButton
                   icon="i-lucide-copy"
@@ -29,7 +35,9 @@
                   @click="copyToClipboard(getTranslationForLang(lang))"
                 />
               </div>
-              <p class="text-sm break-words">{{ getTranslationForLang(lang) || tString('common.noTranslation') }}</p>
+              <p class="text-sm break-words">
+                {{ getTranslationForLang(lang) || tString('common.noTranslation') }}
+              </p>
               <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {{ getCharCount(lang) }} characters
               </div>
@@ -55,7 +63,10 @@
       </template>
 
       <template #fallback>
-        <template v-for="lang in languages" :key="lang">
+        <template
+          v-for="lang in languages"
+          :key="lang"
+        >
           <UBadge
             :label="getBadgeLabel(lang)"
             :color="(getTranslationForLang(lang).length > 0) ? 'primary' : 'neutral'"
@@ -71,7 +82,10 @@
     >
       <template #body>
         <div class="space-y-4">
-          <div v-if="selectedLang && isUsingFallback(selectedLang)" class="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-md">
+          <div
+            v-if="selectedLang && isUsingFallback(selectedLang)"
+            class="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-md"
+          >
             <p class="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-2">
               <UIcon name="i-lucide-info" />
               {{ tString('messages.usingEnglishFallback') }}

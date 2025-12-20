@@ -117,7 +117,10 @@ defineExpose({
 </script>
 
 <template>
-  <div class="crouton-map-wrapper" :class="props.class">
+  <div
+    class="crouton-map-wrapper"
+    :class="props.class"
+  >
     <ClientOnly>
       <!-- Nuxt-Mapbox map component -->
       <MapboxMap
@@ -128,7 +131,10 @@ defineExpose({
         @mb-error="handleMapError"
       >
         <!-- Pass through default slot for markers, popups, etc. -->
-        <slot v-if="isLoaded && mapInstance" :map="mapInstance" />
+        <slot
+          v-if="isLoaded && mapInstance"
+          :map="mapInstance"
+        />
       </MapboxMap>
 
       <!-- Loading state (client-side while map loads) -->

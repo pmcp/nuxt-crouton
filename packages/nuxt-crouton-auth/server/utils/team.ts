@@ -77,7 +77,7 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
   if (!teamId) {
     throw createError({
       statusCode: 400,
-      message: 'No team context available',
+      message: 'No team context available'
     })
   }
 
@@ -86,7 +86,7 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
   if (!team) {
     throw createError({
       statusCode: 404,
-      message: 'Team not found',
+      message: 'Team not found'
     })
   }
 
@@ -95,14 +95,14 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
   if (!membership) {
     throw createError({
       statusCode: 403,
-      message: 'Not a team member',
+      message: 'Not a team member'
     })
   }
 
   return {
     team,
     user: session.user as User,
-    membership,
+    membership
   }
 }
 
@@ -123,7 +123,7 @@ export async function getMembership(event: H3Event, teamId: string, userId: stri
     // Use Better Auth's organization API to get member
     const response = await auth.api.listMembers({
       query: { organizationId: teamId },
-      headers: event.headers,
+      headers: event.headers
     })
 
     // Find the member with matching userId
@@ -139,7 +139,7 @@ export async function getMembership(event: H3Event, teamId: string, userId: stri
       organizationId: teamId,
       userId: member.userId,
       role: member.role as 'owner' | 'admin' | 'member',
-      createdAt: new Date(member.createdAt),
+      createdAt: new Date(member.createdAt)
     }
   } catch (error) {
     console.error('[crouton/auth] getMembership error:', error)
@@ -167,7 +167,7 @@ export async function getTeamById(event: H3Event, teamId: string): Promise<Team 
     // Use Better Auth's organization API to get organization
     const response = await auth.api.getFullOrganization({
       query: { organizationId: teamId },
-      headers: event.headers,
+      headers: event.headers
     })
 
     if (!response) {
@@ -198,7 +198,7 @@ export async function getTeamBySlug(event: H3Event, slug: string): Promise<Team 
     // Use Better Auth's organization API to get by slug
     const response = await auth.api.getFullOrganization({
       query: { organizationSlug: slug },
-      headers: event.headers,
+      headers: event.headers
     })
 
     if (!response) {
@@ -225,7 +225,7 @@ export async function getUserTeams(event: H3Event): Promise<Team[]> {
 
     // Use Better Auth's organization API to list user's organizations
     const response = await auth.api.listOrganizations({
-      headers: event.headers,
+      headers: event.headers
     })
 
     if (!response?.length) {
@@ -319,10 +319,10 @@ export async function createPersonalWorkspace(event: H3Event, userId: string, us
         slug: userId, // Use userId as slug for personal workspaces
         metadata: JSON.stringify({
           personal: true,
-          ownerId: userId,
-        }),
+          ownerId: userId
+        })
       },
-      headers: event.headers,
+      headers: event.headers
     })
 
     if (!response) {
@@ -332,7 +332,7 @@ export async function createPersonalWorkspace(event: H3Event, userId: string, us
     // Set as active organization for the user
     await auth.api.setActiveOrganization({
       body: { organizationId: response.id },
-      headers: event.headers,
+      headers: event.headers
     })
 
     return mapOrganizationToTeam(response)
@@ -394,7 +394,7 @@ export async function requireTeamRole(
   if (userRoleLevel < requiredRoleLevel) {
     throw createError({
       statusCode: 403,
-      message: `Requires ${requiredRole} role or higher`,
+      message: `Requires ${requiredRole} role or higher`
     })
   }
 
@@ -461,6 +461,6 @@ function mapOrganizationToTeam(org: {
     isDefault: isDefaultOrg,
     ownerId: org.ownerId ?? (metadata.ownerId as string | undefined),
     createdAt: new Date(org.createdAt),
-    updatedAt: new Date(org.createdAt), // Better Auth doesn't have updatedAt, use createdAt
+    updatedAt: new Date(org.createdAt) // Better Auth doesn't have updatedAt, use createdAt
   }
 }

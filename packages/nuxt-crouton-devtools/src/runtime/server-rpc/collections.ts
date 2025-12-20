@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     return {
       key,
       ...configObj,
-      name: configObj?.name || key,
+      name: configObj?.name || key
     }
   })
 

@@ -74,7 +74,7 @@ export const AUTH_ERROR_CODES = {
   NETWORK_ERROR: 'error.network',
   NETWORK_TIMEOUT: 'error.timeout',
   SERVER_ERROR: 'error.server',
-  UNKNOWN_ERROR: 'error.unknown',
+  UNKNOWN_ERROR: 'error.unknown'
 } as const
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES]
@@ -148,7 +148,7 @@ export const DEFAULT_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
   [AUTH_ERROR_CODES.NETWORK_ERROR]: 'Network error. Please check your connection.',
   [AUTH_ERROR_CODES.NETWORK_TIMEOUT]: 'Request timed out. Please try again.',
   [AUTH_ERROR_CODES.SERVER_ERROR]: 'Server error. Please try again later.',
-  [AUTH_ERROR_CODES.UNKNOWN_ERROR]: 'An unexpected error occurred',
+  [AUTH_ERROR_CODES.UNKNOWN_ERROR]: 'An unexpected error occurred'
 }
 
 // ============================================================================
@@ -193,7 +193,7 @@ export class AuthError extends Error {
       code: this.code,
       message: this.message,
       statusCode: this.statusCode,
-      details: this.details,
+      details: this.details
     }
   }
 }
@@ -286,8 +286,7 @@ export async function authErrorFromResponse(response: Response): Promise<AuthErr
     }
     message = body.message
     details = body.details
-  }
-  catch {
+  } catch {
     // Ignore parse errors
   }
 
@@ -314,7 +313,7 @@ export async function authErrorFromResponse(response: Response): Promise<AuthErr
 
   return new AuthError(code, message, {
     statusCode: response.status,
-    details,
+    details
   })
 }
 
@@ -331,8 +330,7 @@ export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
   return (async (...args: Parameters<T>) => {
     try {
       return await fn(...args)
-    }
-    catch (error) {
+    } catch (error) {
       const authError = isAuthError(error)
         ? error
         : new AuthError(

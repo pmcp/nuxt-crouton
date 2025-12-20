@@ -5,8 +5,8 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineNuxtConfig({
   $meta: {
-    name: 'nuxt-crouton-flow',
-    description: 'Vue Flow integration layer for Nuxt Crouton - graph/DAG visualization'
+    description: 'Vue Flow integration layer for Nuxt Crouton - graph/DAG visualization',
+    name: 'nuxt-crouton-flow'
   },
 
   // Note: This is an addon layer - users must explicitly extend:

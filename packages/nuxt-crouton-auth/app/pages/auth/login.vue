@@ -11,7 +11,7 @@
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'guest',
+  middleware: 'guest'
 })
 
 const route = useRoute()
@@ -30,7 +30,7 @@ const {
   oauthProviders,
   loading,
   error,
-  isWebAuthnSupported,
+  isWebAuthnSupported
 } = useAuth()
 
 // Magic link mode toggle
@@ -49,7 +49,7 @@ async function handleLogin(credentials: { email: string, password: string, remem
     await login({
       email: credentials.email,
       password: credentials.password,
-      rememberMe: credentials.rememberMe,
+      rememberMe: credentials.rememberMe
     })
     await router.push(redirectTo.value)
   } catch (e: unknown) {
@@ -57,7 +57,7 @@ async function handleLogin(credentials: { email: string, password: string, remem
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -72,7 +72,7 @@ async function handleOAuth(provider: string) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -87,7 +87,7 @@ async function handlePasskey() {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -100,14 +100,14 @@ async function handleMagicLink(email: string) {
     toast.add({
       title: 'Check your email',
       description: 'We sent you a magic link to sign in.',
-      color: 'success',
+      color: 'success'
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Magic link failed'
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   }
 }
@@ -133,14 +133,20 @@ const passkeyAvailable = computed(() => {
       </h1>
       <p class="mt-2 text-sm text-muted">
         Or
-        <NuxtLink to="/auth/register" class="font-medium text-primary hover:text-primary/80">
+        <NuxtLink
+          to="/auth/register"
+          class="font-medium text-primary hover:text-primary/80"
+        >
           create a new account
         </NuxtLink>
       </p>
     </div>
 
     <!-- Magic link sent confirmation -->
-    <div v-if="magicLinkSent" class="mt-8">
+    <div
+      v-if="magicLinkSent"
+      class="mt-8"
+    >
       <UAlert
         color="success"
         icon="i-lucide-mail-check"
@@ -159,17 +165,32 @@ const passkeyAvailable = computed(() => {
 
     <template v-else>
       <!-- OAuth Buttons -->
-      <div v-if="hasOAuth && oauthProviders.length > 0" class="mt-8">
-        <AuthOAuthButtons :loading="loading" @click="handleOAuth" />
+      <div
+        v-if="hasOAuth && oauthProviders.length > 0"
+        class="mt-8"
+      >
+        <AuthOAuthButtons
+          :loading="loading"
+          @click="handleOAuth"
+        />
 
         <!-- Passkey Button (shown with OAuth) -->
-        <div v-if="passkeyAvailable" class="mt-3">
-          <AuthPasskeyButton :loading="loading" @click="handlePasskey" />
+        <div
+          v-if="passkeyAvailable"
+          class="mt-3"
+        >
+          <AuthPasskeyButton
+            :loading="loading"
+            @click="handlePasskey"
+          />
         </div>
       </div>
 
       <!-- Separator -->
-      <div v-if="hasOAuth && oauthProviders.length > 0 && hasPassword" class="mt-6">
+      <div
+        v-if="hasOAuth && oauthProviders.length > 0 && hasPassword"
+        class="mt-6"
+      >
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
             <USeparator />
@@ -181,14 +202,20 @@ const passkeyAvailable = computed(() => {
       </div>
 
       <!-- Magic Link Form -->
-      <div v-if="showMagicLink && hasMagicLink" class="mt-8">
+      <div
+        v-if="showMagicLink && hasMagicLink"
+        class="mt-8"
+      >
         <AuthMagicLinkForm
           :loading="loading"
           :error="error"
           @submit="handleMagicLink"
           @reset="showMagicLink = false"
         />
-        <div v-if="hasPassword" class="mt-4 text-center">
+        <div
+          v-if="hasPassword"
+          class="mt-4 text-center"
+        >
           <button
             type="button"
             class="text-sm font-medium text-primary hover:text-primary/80"
@@ -200,7 +227,10 @@ const passkeyAvailable = computed(() => {
       </div>
 
       <!-- Email/Password Form -->
-      <div v-else-if="hasPassword || hasMagicLink" class="mt-8">
+      <div
+        v-else-if="hasPassword || hasMagicLink"
+        class="mt-8"
+      >
         <AuthLoginForm
           :loading="loading"
           :error="error"
@@ -208,7 +238,10 @@ const passkeyAvailable = computed(() => {
         />
 
         <!-- Magic Link Toggle -->
-        <div v-if="hasMagicLink && hasPassword" class="mt-4 text-center">
+        <div
+          v-if="hasMagicLink && hasPassword"
+          class="mt-4 text-center"
+        >
           <button
             type="button"
             class="text-sm font-medium text-primary hover:text-primary/80"
@@ -220,7 +253,10 @@ const passkeyAvailable = computed(() => {
       </div>
 
       <!-- Passkey-only (no password, no OAuth) -->
-      <div v-else-if="passkeyAvailable" class="mt-8">
+      <div
+        v-else-if="passkeyAvailable"
+        class="mt-8"
+      >
         <AuthPasskeyButton
           :loading="loading"
           variant="solid"

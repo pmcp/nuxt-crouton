@@ -25,18 +25,18 @@ export type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree'
 // Hierarchy configuration for tree layouts
 export interface HierarchyConfig {
   enabled: boolean
-  parentField?: string  // default: 'parentId'
-  orderField?: string   // default: 'order'
-  pathField?: string    // default: 'path' (materialized path)
-  depthField?: string   // default: 'depth'
+  parentField?: string // default: 'parentId'
+  orderField?: string // default: 'order'
+  pathField?: string // default: 'path' (materialized path)
+  depthField?: string // default: 'depth'
 }
 
 export interface ResponsiveLayout {
-  base: LayoutType
-  sm?: LayoutType
-  md?: LayoutType
-  lg?: LayoutType
-  xl?: LayoutType
+  'base': LayoutType
+  'sm'?: LayoutType
+  'md'?: LayoutType
+  'lg'?: LayoutType
+  'xl'?: LayoutType
   '2xl'?: LayoutType
 }
 

@@ -24,13 +24,13 @@ export function useFlowPresence(options: UseFlowPresenceOptions) {
 
   // Other users (not current user)
   const otherUsers = computed(() =>
-    users.value.filter(u => u.user.id !== currentUserId),
+    users.value.filter(u => u.user.id !== currentUserId)
   )
 
   // Users currently selecting a specific node
   const getUsersSelectingNode = (nodeId: string) => {
     return computed(() =>
-      otherUsers.value.filter(u => u.selectedNodeId === nodeId),
+      otherUsers.value.filter(u => u.selectedNodeId === nodeId)
     )
   }
 
@@ -45,7 +45,7 @@ export function useFlowPresence(options: UseFlowPresenceOptions) {
       const color = firstUser?.user?.color || '#888'
       return {
         boxShadow: `0 0 0 2px ${color}`,
-        borderColor: color,
+        borderColor: color
       }
     })
   }
@@ -53,6 +53,6 @@ export function useFlowPresence(options: UseFlowPresenceOptions) {
   return {
     otherUsers,
     getUsersSelectingNode,
-    getNodePresenceStyle,
+    getNodePresenceStyle
   }
 }

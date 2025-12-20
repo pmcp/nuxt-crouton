@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // rollback-interactive.mjs — Interactive UI for selecting collections to rollback
 
-import fsp from 'fs/promises'
-import path from 'path'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
 
@@ -81,7 +81,7 @@ export async function interactiveRollback({ dryRun = false, keepFiles = false })
   const layerStats = await Promise.all(layers.map(getLayerStats))
 
   console.log(chalk.cyan(`Found ${layers.length} layers:\n`))
-  layerStats.forEach(stat => {
+  layerStats.forEach((stat) => {
     console.log(chalk.gray(`  • ${stat.layer} (${stat.collectionsCount} collections)`))
   })
 
@@ -148,7 +148,6 @@ export async function interactiveRollback({ dryRun = false, keepFiles = false })
       keepFiles,
       force: true // Skip additional confirmation since we already confirmed
     })
-
   } else if (mode === 'collections') {
     // Collections mode: Select layer first
     const { selectedLayer } = await inquirer.prompt([

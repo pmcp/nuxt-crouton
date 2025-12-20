@@ -33,7 +33,7 @@ function updateValue(value: string, locale?: string) {
 
 // Show completion status
 const translationStatus = computed(() => {
-  return locales.value.map(loc => {
+  return locales.value.map((loc) => {
     const localeCode = typeof loc === 'string' ? loc : loc.code
     return {
       locale: localeCode,
@@ -57,13 +57,16 @@ const translationStatus = computed(() => {
           v-for="loc in locales"
           :key="typeof loc === 'string' ? loc : loc.code"
           :variant="editingLocale === (typeof loc === 'string' ? loc : loc.code) ? 'solid' : 'outline'"
-          @click="editingLocale = typeof loc === 'string' ? loc : loc.code"
           size="sm"
           class="w-full"
+          @click="editingLocale = typeof loc === 'string' ? loc : loc.code"
         >
           <span class="flex items-center gap-2">
             {{ (typeof loc === 'string' ? loc : loc.code).toUpperCase() }}
-            <span v-if="(typeof loc === 'string' ? loc : loc.code) === 'en'" class="text-red-500">*</span>
+            <span
+              v-if="(typeof loc === 'string' ? loc : loc.code) === 'en'"
+              class="text-red-500"
+            >*</span>
             <UIcon
               v-if="translationStatus.find(s => s.locale === (typeof loc === 'string' ? loc : loc.code))?.complete"
               name="i-lucide-check-circle"
@@ -75,16 +78,23 @@ const translationStatus = computed(() => {
     </div>
 
     <!-- Single language edit mode -->
-    <div v-if="!showAllLanguages" class="space-y-3">
+    <div
+      v-if="!showAllLanguages"
+      class="space-y-3"
+    >
       <UFormField
         :label="`Translation (${editingLocale.toUpperCase()})${editingLocale === 'en' ? ' *' : ''}`"
         :name="`values.${editingLocale}`"
         :required="editingLocale === 'en'"
       >
         <!-- Rich Text Editor for translation content -->
-        <div v-if="useRichText" class="border rounded-lg overflow-hidden" :class="[
-          error && editingLocale === 'en' && !currentValue ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-        ]">
+        <div
+          v-if="useRichText"
+          class="border rounded-lg overflow-hidden"
+          :class="[
+            error && editingLocale === 'en' && !currentValue ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+          ]"
+        >
           <div class="h-64">
             <CroutonEditorSimple
               :model-value="currentValue"
@@ -97,12 +107,12 @@ const translationStatus = computed(() => {
         <UInput
           v-else
           :model-value="currentValue"
-          @update:model-value="updateValue($event)"
           :placeholder="editingLocale !== 'en' && modelValue?.en ? `Fallback: ${modelValue.en}` : ''"
           :color="error && editingLocale === 'en' && !currentValue ? 'error' : 'primary'"
           :highlight="!!(error && editingLocale === 'en' && !currentValue)"
           class="w-full"
           size="lg"
+          @update:model-value="updateValue($event)"
         />
       </UFormField>
 
@@ -111,14 +121,28 @@ const translationStatus = computed(() => {
         v-if="editingLocale !== 'en' && modelValue?.en"
         class="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
       >
-        <p class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">English reference:</p>
-        <div v-if="useRichText" class="prose prose-sm dark:prose-invert max-w-none" v-html="modelValue.en"></div>
-        <p v-else class="text-sm text-gray-700 dark:text-gray-300">{{ modelValue.en }}</p>
+        <p class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+          English reference:
+        </p>
+        <div
+          v-if="useRichText"
+          class="prose prose-sm dark:prose-invert max-w-none"
+          v-html="modelValue.en"
+        />
+        <p
+          v-else
+          class="text-sm text-gray-700 dark:text-gray-300"
+        >
+          {{ modelValue.en }}
+        </p>
       </div>
     </div>
 
     <!-- All languages grid mode (simplified for rich text) -->
-    <div v-else class="space-y-4">
+    <div
+      v-else
+      class="space-y-4"
+    >
       <p class="text-sm text-amber-600 dark:text-amber-400">
         <UIcon name="i-lucide-info" /> Grid mode is not available for rich text editing. Please edit one language at a time.
       </p>

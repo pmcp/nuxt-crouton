@@ -34,14 +34,14 @@ const props = withDefaults(defineProps<Props>(), {
   error: '',
   placeholder: 'you@example.com',
   disabled: false,
-  autofocus: false,
+  autofocus: false
 })
 
 const emit = defineEmits<{
   /** Email value changed */
   'update:modelValue': [email: string]
   /** Validation state changed */
-  valid: [isValid: boolean]
+  'valid': [isValid: boolean]
 }>()
 
 // Local state
@@ -54,7 +54,7 @@ watch(() => props.modelValue, (val) => {
 })
 
 // Email validation regex
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
 
 // Validation state
 const isValid = computed(() => {

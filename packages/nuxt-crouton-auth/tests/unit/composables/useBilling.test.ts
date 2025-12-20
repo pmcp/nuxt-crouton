@@ -1,18 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, computed, readonly } from 'vue'
 
+// Import after mocks
+import { useBilling } from '../../../app/composables/useBilling'
+
 // Mock subscription client
 const mockSubscriptionClient = {
   list: vi.fn(),
   upgrade: vi.fn(),
   billingPortal: vi.fn(),
   cancel: vi.fn(),
-  restore: vi.fn(),
+  restore: vi.fn()
 }
 
 // Mock auth client
 const mockAuthClient = {
-  subscription: mockSubscriptionClient,
+  subscription: mockSubscriptionClient
 }
 
 // Mock route params
@@ -23,7 +26,7 @@ const mockOnMounted = vi.fn()
 
 // Setup global mocks before import
 vi.stubGlobal('useNuxtApp', () => ({
-  $authClient: mockAuthClient,
+  $authClient: mockAuthClient
 }))
 
 vi.stubGlobal('useRuntimeConfig', () => ({
@@ -42,7 +45,7 @@ vi.stubGlobal('useRuntimeConfig', () => ({
                 price: 0,
                 currency: 'usd',
                 interval: 'month',
-                features: ['Basic features'],
+                features: ['Basic features']
               },
               {
                 id: 'pro',
@@ -50,7 +53,7 @@ vi.stubGlobal('useRuntimeConfig', () => ({
                 price: 29,
                 currency: 'usd',
                 interval: 'month',
-                features: ['All features', 'Priority support'],
+                features: ['All features', 'Priority support']
               },
               {
                 id: 'enterprise',
@@ -58,18 +61,18 @@ vi.stubGlobal('useRuntimeConfig', () => ({
                 price: 99,
                 currency: 'usd',
                 interval: 'month',
-                features: ['Everything in Pro', 'Custom integrations'],
-              },
-            ],
-          },
-        },
-      },
-    },
-  },
+                features: ['Everything in Pro', 'Custom integrations']
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
 }))
 
 vi.stubGlobal('useRoute', () => ({
-  params: mockRouteParams.value,
+  params: mockRouteParams.value
 }))
 
 vi.stubGlobal('ref', ref)
@@ -81,11 +84,8 @@ vi.stubGlobal('onMounted', mockOnMounted)
 Object.defineProperty(import.meta, 'client', {
   value: false, // Prevent auto-fetch in tests
   writable: true,
-  configurable: true,
+  configurable: true
 })
-
-// Import after mocks
-import { useBilling } from '../../../app/composables/useBilling'
 
 describe('useBilling', () => {
   beforeEach(() => {
@@ -109,12 +109,12 @@ describe('useBilling', () => {
       expect(plans.value[0]).toMatchObject({
         id: 'free',
         name: 'Free',
-        price: 0,
+        price: 0
       })
       expect(plans.value[1]).toMatchObject({
         id: 'pro',
         name: 'Pro',
-        price: 29,
+        price: 29
       })
     })
 
@@ -160,9 +160,9 @@ describe('useBilling', () => {
             referenceId: 'org-1',
             periodStart: new Date(),
             periodEnd: new Date(),
-            cancelAtPeriodEnd: false,
-          },
-        ],
+            cancelAtPeriodEnd: false
+          }
+        ]
       })
 
       const { fetchSubscriptions, subscription, subscriptions } = useBilling()
@@ -189,8 +189,8 @@ describe('useBilling', () => {
         data: [
           { id: 'sub-1', plan: 'free', status: 'canceled' },
           { id: 'sub-2', plan: 'pro', status: 'trialing' },
-          { id: 'sub-3', plan: 'enterprise', status: 'active' },
-        ],
+          { id: 'sub-3', plan: 'enterprise', status: 'active' }
+        ]
       })
 
       const { fetchSubscriptions, subscription } = useBilling()
@@ -212,7 +212,7 @@ describe('useBilling', () => {
   describe('checkout', () => {
     it('should call subscription.upgrade with plan', async () => {
       mockSubscriptionClient.upgrade.mockResolvedValue({
-        data: { url: 'https://checkout.stripe.com/session_123' },
+        data: { url: 'https://checkout.stripe.com/session_123' }
       })
 
       // Mock window.location
@@ -221,16 +221,16 @@ describe('useBilling', () => {
         value: {
           location: {
             origin: 'http://localhost:3000',
-            href: 'http://localhost:3000/pricing',
-          },
+            href: 'http://localhost:3000/pricing'
+          }
         },
-        writable: true,
+        writable: true
       })
 
       const { checkout } = useBilling()
       await checkout('pro', {
         successUrl: '/dashboard',
-        cancelUrl: '/pricing',
+        cancelUrl: '/pricing'
       })
 
       expect(mockSubscriptionClient.upgrade).toHaveBeenCalledWith({
@@ -239,7 +239,7 @@ describe('useBilling', () => {
         seats: undefined,
         referenceId: undefined,
         successUrl: '/dashboard',
-        cancelUrl: '/pricing',
+        cancelUrl: '/pricing'
       })
     })
 
@@ -250,14 +250,14 @@ describe('useBilling', () => {
           location: {
             origin: 'http://localhost:3000',
             href: 'http://localhost:3000',
-            set href(url: string) { mockHref(url) },
-          },
+            set href(url: string) { mockHref(url) }
+          }
         },
-        writable: true,
+        writable: true
       })
 
       mockSubscriptionClient.upgrade.mockResolvedValue({
-        data: { url: 'https://checkout.stripe.com/session_123' },
+        data: { url: 'https://checkout.stripe.com/session_123' }
       })
 
       const { checkout } = useBilling()
@@ -269,7 +269,7 @@ describe('useBilling', () => {
 
     it('should throw on checkout error', async () => {
       mockSubscriptionClient.upgrade.mockResolvedValue({
-        error: { message: 'Payment failed' },
+        error: { message: 'Payment failed' }
       })
 
       const { checkout, error } = useBilling()
@@ -297,14 +297,14 @@ describe('useBilling', () => {
         value: {
           location: {
             origin: 'http://localhost:3000',
-            href: 'http://localhost:3000/settings',
-          },
+            href: 'http://localhost:3000/settings'
+          }
         },
-        writable: true,
+        writable: true
       })
 
       mockSubscriptionClient.billingPortal.mockResolvedValue({
-        data: { url: 'https://billing.stripe.com/session_123' },
+        data: { url: 'https://billing.stripe.com/session_123' }
       })
 
       const { portal } = useBilling()
@@ -313,13 +313,13 @@ describe('useBilling', () => {
       expect(mockSubscriptionClient.billingPortal).toHaveBeenCalledWith({
         referenceId: undefined,
         returnUrl: '/settings',
-        locale: undefined,
+        locale: undefined
       })
     })
 
     it('should throw on portal error', async () => {
       mockSubscriptionClient.billingPortal.mockResolvedValue({
-        error: { message: 'Portal unavailable' },
+        error: { message: 'Portal unavailable' }
       })
 
       const { portal, error } = useBilling()
@@ -333,12 +333,12 @@ describe('useBilling', () => {
     it('should call subscription.cancel', async () => {
       // Set up subscription
       mockSubscriptionClient.list.mockResolvedValue({
-        data: [{ id: 'sub-123', plan: 'pro', status: 'active' }],
+        data: [{ id: 'sub-123', plan: 'pro', status: 'active' }]
       })
 
       Object.defineProperty(globalThis, 'window', {
         value: { location: { href: 'http://localhost:3000' } },
-        writable: true,
+        writable: true
       })
 
       mockSubscriptionClient.cancel.mockResolvedValue({ data: {} })
@@ -349,7 +349,7 @@ describe('useBilling', () => {
 
       expect(mockSubscriptionClient.cancel).toHaveBeenCalledWith({
         subscriptionId: 'sub-123',
-        returnUrl: 'http://localhost:3000',
+        returnUrl: 'http://localhost:3000'
       })
     })
 
@@ -366,7 +366,7 @@ describe('useBilling', () => {
 
       Object.defineProperty(globalThis, 'window', {
         value: { location: { href: 'http://localhost:3000' } },
-        writable: true,
+        writable: true
       })
 
       const { cancel } = useBilling()
@@ -374,7 +374,7 @@ describe('useBilling', () => {
 
       expect(mockSubscriptionClient.cancel).toHaveBeenCalledWith({
         subscriptionId: 'specific-sub-id',
-        returnUrl: 'http://localhost:3000',
+        returnUrl: 'http://localhost:3000'
       })
     })
   })
@@ -382,7 +382,7 @@ describe('useBilling', () => {
   describe('restore', () => {
     it('should call subscription.restore', async () => {
       mockSubscriptionClient.list.mockResolvedValue({
-        data: [{ id: 'sub-123', plan: 'pro', status: 'canceled', cancelAtPeriodEnd: true }],
+        data: [{ id: 'sub-123', plan: 'pro', status: 'canceled', cancelAtPeriodEnd: true }]
       })
       mockSubscriptionClient.restore.mockResolvedValue({ data: {} })
 
@@ -391,7 +391,7 @@ describe('useBilling', () => {
       await restore()
 
       expect(mockSubscriptionClient.restore).toHaveBeenCalledWith({
-        subscriptionId: 'sub-123',
+        subscriptionId: 'sub-123'
       })
     })
 
@@ -406,17 +406,17 @@ describe('useBilling', () => {
   describe('changePlan', () => {
     it('should use checkout flow for plan changes', async () => {
       mockSubscriptionClient.upgrade.mockResolvedValue({
-        data: { url: 'https://checkout.stripe.com/change_123' },
+        data: { url: 'https://checkout.stripe.com/change_123' }
       })
 
       Object.defineProperty(globalThis, 'window', {
         value: {
           location: {
             origin: 'http://localhost:3000',
-            href: 'http://localhost:3000',
-          },
+            href: 'http://localhost:3000'
+          }
         },
-        writable: true,
+        writable: true
       })
 
       const { changePlan } = useBilling()
@@ -432,7 +432,7 @@ describe('useBilling', () => {
     describe('isCurrentPlan', () => {
       it('should return true for current plan', async () => {
         mockSubscriptionClient.list.mockResolvedValue({
-          data: [{ id: 'sub-1', plan: 'pro', status: 'active' }],
+          data: [{ id: 'sub-1', plan: 'pro', status: 'active' }]
         })
 
         const { fetchSubscriptions, isCurrentPlan } = useBilling()
@@ -456,7 +456,7 @@ describe('useBilling', () => {
         expect(plan).toMatchObject({
           id: 'pro',
           name: 'Pro',
-          price: 29,
+          price: 29
         })
       })
 
@@ -477,11 +477,11 @@ describe('useBilling disabled', () => {
           auth: {
             mode: 'personal',
             billing: {
-              enabled: false,
-            },
-          },
-        },
-      },
+              enabled: false
+            }
+          }
+        }
+      }
     }))
   })
 
@@ -496,12 +496,12 @@ describe('useBilling disabled', () => {
               enabled: true,
               stripe: {
                 publishableKey: 'pk_test_123',
-                plans: [],
-              },
-            },
-          },
-        },
-      },
+                plans: []
+              }
+            }
+          }
+        }
+      }
     }))
   })
 

@@ -18,7 +18,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showInviteButton: true,
+  showInviteButton: true
 })
 
 const emit = defineEmits<{
@@ -36,7 +36,7 @@ const {
   canManageMembers,
   canInviteMembers,
   isOwner,
-  loading: teamLoading,
+  loading: teamLoading
 } = useTeam()
 
 const { user } = useSession()
@@ -66,7 +66,7 @@ async function handleRoleChange(memberId: string, role: MemberRole) {
       toast.add({
         title: 'Role updated',
         description: 'Member role has been updated.',
-        color: 'success',
+        color: 'success'
       })
     }
   } catch (e: unknown) {
@@ -74,7 +74,7 @@ async function handleRoleChange(memberId: string, role: MemberRole) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     loadingMemberId.value = null
@@ -92,7 +92,7 @@ async function handleRemove(memberId: string) {
       toast.add({
         title: 'Member removed',
         description: 'Member has been removed from the team.',
-        color: 'success',
+        color: 'success'
       })
     }
   } catch (e: unknown) {
@@ -100,7 +100,7 @@ async function handleRemove(memberId: string) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     loadingMemberId.value = null
@@ -112,7 +112,7 @@ const sortedMembers = computed(() => {
   const roleOrder: Record<MemberRole, number> = {
     owner: 0,
     admin: 1,
-    member: 2,
+    member: 2
   }
   return [...members.value].sort((a, b) => roleOrder[a.role] - roleOrder[b.role])
 })
@@ -122,7 +122,9 @@ const sortedMembers = computed(() => {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold">{{ t('teams.teamMembers') }}</h3>
+        <h3 class="text-lg font-semibold">
+          {{ t('teams.teamMembers') }}
+        </h3>
         <p class="text-sm text-muted mt-1">
           {{ t('teams.memberCount', { count: members.length }) }}
         </p>
@@ -141,7 +143,10 @@ const sortedMembers = computed(() => {
       v-if="teamLoading && members.length === 0"
       class="py-8 text-center text-muted"
     >
-      <UIcon name="i-lucide-loader-2" class="size-6 animate-spin mx-auto mb-2" />
+      <UIcon
+        name="i-lucide-loader-2"
+        class="size-6 animate-spin mx-auto mb-2"
+      />
       <p>{{ t('teams.loadingMembers') }}</p>
     </div>
 
@@ -150,12 +155,18 @@ const sortedMembers = computed(() => {
       v-else-if="members.length === 0"
       class="py-8 text-center text-muted"
     >
-      <UIcon name="i-lucide-users" class="size-8 mx-auto mb-2" />
+      <UIcon
+        name="i-lucide-users"
+        class="size-8 mx-auto mb-2"
+      />
       <p>{{ t('teams.noMembersFound') }}</p>
     </div>
 
     <!-- Members List -->
-    <div v-else class="divide-y divide-border rounded-lg border border-border overflow-hidden">
+    <div
+      v-else
+      class="divide-y divide-border rounded-lg border border-border overflow-hidden"
+    >
       <TeamMemberRow
         v-for="member in sortedMembers"
         :key="member.id"

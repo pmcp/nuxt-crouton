@@ -23,12 +23,11 @@ export function useT() {
   // Use computed to ensure locale stays reactive
   const locale = computed(() => i18n.locale.value)
   const { teamSlug } = useTeamContext()
-  const isDev = process.dev
+  const isDev = import.meta.dev
   const devModeEnabled = useState('devMode.enabled', () => false)
 
   // Get team slug from useTeamContext() - handles both useTeam() and route.params.team fallback
   const teamSlugFromRoute = computed(() => teamSlug.value ?? undefined)
-
 
   // Cache for team translations to avoid repeated API calls
   const teamTranslations = useState<Record<string, any>>('teamTranslations', () => ({}))
@@ -168,7 +167,6 @@ export function useT() {
     }
   }
 
-
   /**
    * Simple string-only version for cases where VNode isn't supported
    * @param key - Translation key (e.g., 'common.save')
@@ -258,7 +256,7 @@ export function useT() {
 
     // Check system translations (simplified - you'd need to implement this)
     const systemLocales = ['en', 'nl', 'fr'] // Your supported locales
-    systemLocales.forEach(loc => {
+    systemLocales.forEach((loc) => {
       // For now, just assume it exists if not already in availableLocales
       if (!availableLocales.includes(loc)) {
         availableLocales.push(loc)

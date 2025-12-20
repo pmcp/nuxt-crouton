@@ -56,12 +56,10 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
       lastUpdated.value = new Date()
 
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch stats'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -110,6 +108,6 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
     // Methods
     getStats,
     startAutoRefresh,
-    stopAutoRefresh,
+    stopAutoRefresh
   }
 }

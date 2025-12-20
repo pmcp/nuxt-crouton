@@ -35,15 +35,15 @@ withDefaults(
     avatarSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
   }>(),
   {
-    avatarSize: '3xl',
-  },
+    avatarSize: '3xl'
+  }
 )
 
 const model = defineModel<string | undefined>()
 
 const { files, open, onChange } = useFileDialog({
   accept: 'image/*',
-  multiple: false,
+  multiple: false
 })
 
 const emit = defineEmits<{

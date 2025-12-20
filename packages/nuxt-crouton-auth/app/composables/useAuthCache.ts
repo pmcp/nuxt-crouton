@@ -40,7 +40,7 @@ export const CACHE_TTL = {
   /** User profile - medium TTL */
   PROFILE: 60_000, // 1 minute
   /** Invitations - short TTL */
-  INVITATIONS: 30_000, // 30 seconds
+  INVITATIONS: 30_000 // 30 seconds
 } as const
 
 export interface CacheOptions {
@@ -77,7 +77,7 @@ export function useAuthCache() {
     cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl,
+      ttl
     })
   }
 
@@ -109,10 +109,10 @@ export function useAuthCache() {
   /**
    * Get cache statistics
    */
-  function getStats(): { size: number; keys: string[] } {
+  function getStats(): { size: number, keys: string[] } {
     return {
       size: cache.size,
-      keys: Array.from(cache.keys()),
+      keys: Array.from(cache.keys())
     }
   }
 
@@ -153,7 +153,7 @@ export function useAuthCache() {
     members: (teamId: string) => `auth:members:${teamId}`,
     invitations: (teamId: string) => `auth:invitations:${teamId}`,
     billing: (teamId: string) => `auth:billing:${teamId}`,
-    profile: (userId: string) => `auth:profile:${userId}`,
+    profile: (userId: string) => `auth:profile:${userId}`
   }
 
   return {
@@ -170,7 +170,7 @@ export function useAuthCache() {
     cacheKeys,
 
     // TTL constants
-    CACHE_TTL,
+    CACHE_TTL
   }
 }
 

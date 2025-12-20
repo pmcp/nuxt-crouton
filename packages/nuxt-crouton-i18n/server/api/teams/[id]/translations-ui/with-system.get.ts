@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   if (!teamSlug) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Team slug is required',
+      statusMessage: 'Team slug is required'
     })
   }
 

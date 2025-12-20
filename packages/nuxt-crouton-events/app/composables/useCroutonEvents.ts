@@ -5,7 +5,7 @@
 
 interface UseCroutonEventsOptions {
   teamId?: string
-  enrichUserData?: boolean  // If true, JOINs with users table
+  enrichUserData?: boolean // If true, JOINs with users table
   filters?: {
     collectionName?: string
     operation?: 'create' | 'update' | 'delete'
@@ -27,7 +27,7 @@ interface EnrichedEvent {
   itemId: string
   teamId: string
   userId: string
-  userName: string  // Historical snapshot
+  userName: string // Historical snapshot
   changes: any[]
   metadata?: any
   // Enriched user data (if enrichUserData: true)

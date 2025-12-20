@@ -198,7 +198,7 @@ export function useT() {
     'auth.rememberMe': 'Remember me',
     'auth.orContinueWith': 'Or continue with',
     'auth.alreadyHaveAccount': 'Already have an account?',
-    'auth.dontHaveAccount': "Don't have an account?",
+    'auth.dontHaveAccount': 'Don\'t have an account?',
     'auth.createAccount': 'Create Account',
     'auth.username': 'Username',
     'auth.verifyEmail': 'Verify your email',

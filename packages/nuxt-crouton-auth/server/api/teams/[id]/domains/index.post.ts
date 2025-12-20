@@ -12,11 +12,11 @@ const addDomainSchema = z.object({
   domain: z
     .string()
     .min(1, 'Domain is required')
-    .transform((d) => d.toLowerCase().trim())
+    .transform(d => d.toLowerCase().trim())
     .refine(
-      (d) => /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(d),
-      'Invalid domain format',
-    ),
+      d => /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(d),
+      'Invalid domain format'
+    )
 })
 
 export default defineEventHandler(async (event) => {
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
   if (existingDomain) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Domain is already registered',
+      statusMessage: 'Domain is already registered'
     })
   }
 
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
       domain: body.domain,
       status: 'pending',
       verificationToken,
-      isPrimary,
+      isPrimary
     })
     .returning()
 

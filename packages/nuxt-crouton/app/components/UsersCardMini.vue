@@ -16,7 +16,10 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <div v-if="item" class="w-full flex gap-2">
+  <div
+    v-if="item"
+    class="w-full flex gap-2"
+  >
     <UTooltip
       :content="{
         align: 'center',
@@ -34,6 +37,9 @@ const props = withDefaults(defineProps<Props>(), {
         class="ring-2 ring-neutral-200 dark:ring-white/10"
       />
     </UTooltip>
-    <span v-if="name" class="">{{item.name }}</span>
+    <span
+      v-if="name"
+      class=""
+    >{{ item.name }}</span>
   </div>
 </template>

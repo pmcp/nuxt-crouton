@@ -88,7 +88,7 @@ export function useFlowMutation(collection: string, positionField: string = 'pos
    * Uses $fetch directly to avoid cache invalidation
    */
   const updatePositions = async (
-    updates: Array<{ id: string; position: XYPosition }>
+    updates: Array<{ id: string, position: XYPosition }>
   ): Promise<void> => {
     pending.value = true
     error.value = null

@@ -18,13 +18,13 @@ export {
   getAvailableModels,
   getProviderById,
   getModelById,
-  detectProviderFromModel,
+  detectProviderFromModel
 } from './providers'
 export type {
   AIProviderId,
   AIProviderInfo,
   AIModelInfo,
-  AIRuntimeConfig,
+  AIRuntimeConfig
 } from './providers'
 
 // Re-export common AI SDK utilities for convenience

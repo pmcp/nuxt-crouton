@@ -19,14 +19,14 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
   // Get the current session
   const auth = useServerAuth(event)
   const currentSession = await auth.api.getSession({
-    headers: event.headers,
+    headers: event.headers
   })
 
   if (!currentSession?.session?.id) {
     return {
       isImpersonating: false,
       originalAdminId: null,
-      impersonatedUser: null,
+      impersonatedUser: null
     }
   }
 
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
     return {
       isImpersonating: false,
       originalAdminId: null,
-      impersonatedUser: null,
+      impersonatedUser: null
     }
   }
 
@@ -60,7 +60,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
     return {
       isImpersonating: false,
       originalAdminId: null,
-      impersonatedUser: null,
+      impersonatedUser: null
     }
   }
 
@@ -72,7 +72,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
     impersonatedUser: {
       id: impersonatedUser.id,
       name: impersonatedUser.name,
-      email: impersonatedUser.email,
-    },
+      email: impersonatedUser.email
+    }
   }
 })

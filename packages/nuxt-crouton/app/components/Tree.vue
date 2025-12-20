@@ -10,13 +10,19 @@
         class="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center"
       >
         <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-loader-2" class="animate-spin" />
+          <UIcon
+            name="i-lucide-loader-2"
+            class="animate-spin"
+          />
           <span class="text-sm">Loading...</span>
         </div>
       </div>
 
       <!-- Tree content -->
-      <div v-if="tree.length > 0" class="p-4">
+      <div
+        v-if="tree.length > 0"
+        class="p-4"
+      >
         <CroutonTreeView
           :key="treeKey"
           :items="tree"
@@ -28,10 +34,20 @@
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="!loading" class="text-center text-muted p-8">
-        <UIcon name="i-lucide-git-branch" class="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p class="text-lg font-medium mb-2">No items yet</p>
-        <p class="text-sm">Create your first item to see the tree structure.</p>
+      <div
+        v-else-if="!loading"
+        class="text-center text-muted p-8"
+      >
+        <UIcon
+          name="i-lucide-git-branch"
+          class="w-12 h-12 mx-auto mb-4 opacity-50"
+        />
+        <p class="text-lg font-medium mb-2">
+          No items yet
+        </p>
+        <p class="text-sm">
+          Create your first item to see the tree structure.
+        </p>
       </div>
     </div>
   </div>
@@ -87,7 +103,7 @@ function buildTree(items: any[]): TreeNode[] {
   const roots: TreeNode[] = []
 
   // Create nodes with children arrays
-  items.forEach(item => {
+  items.forEach((item) => {
     map.set(item.id, {
       ...item,
       parentId: item[parentField] ?? null,
@@ -99,7 +115,7 @@ function buildTree(items: any[]): TreeNode[] {
   })
 
   // Build hierarchy by assigning children to parents
-  items.forEach(item => {
+  items.forEach((item) => {
     const node = map.get(item.id)!
     const parentId = item[parentField]
 
@@ -130,6 +146,4 @@ const tree = computed(() => buildTree(props.rows))
 function handleMove(id: string, newParentId: string | null, newOrder: number) {
   emit('move', id, newParentId, newOrder)
 }
-
-
 </script>

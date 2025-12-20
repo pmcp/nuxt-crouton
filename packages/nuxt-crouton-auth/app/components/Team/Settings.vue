@@ -22,7 +22,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  error: null,
+  error: null
 })
 
 const emit = defineEmits<{
@@ -40,7 +40,7 @@ const toast = useToast()
 const state = reactive({
   name: '',
   slug: '',
-  logo: '',
+  logo: ''
 })
 
 // Populate form when team changes
@@ -53,16 +53,16 @@ watch(
       state.logo = team.logo ?? ''
     }
   },
-  { immediate: true },
+  { immediate: true }
 )
 
 // Track if form has changes
 const hasChanges = computed(() => {
   if (!currentTeam.value) return false
   return (
-    state.name !== currentTeam.value.name ||
-    state.slug !== currentTeam.value.slug ||
-    state.logo !== (currentTeam.value.logo ?? '')
+    state.name !== currentTeam.value.name
+    || state.slug !== currentTeam.value.slug
+    || state.logo !== (currentTeam.value.logo ?? '')
   )
 })
 
@@ -101,7 +101,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Permission denied',
       description: 'Only team owners and admins can update settings.',
-      color: 'error',
+      color: 'error'
     })
     return
   }
@@ -111,13 +111,13 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     const team = await updateTeam({
       name: event.data.name,
       slug: event.data.slug,
-      logo: event.data.logo || undefined,
+      logo: event.data.logo || undefined
     })
 
     toast.add({
       title: 'Settings saved',
       description: 'Team settings have been updated.',
-      color: 'success',
+      color: 'success'
     })
 
     emit('saved', team)
@@ -126,7 +126,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     internalLoading.value = false
@@ -146,7 +146,9 @@ function resetForm() {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">{{ t('teams.teamSettings') }}</h3>
+      <h3 class="text-lg font-semibold">
+        {{ t('teams.teamSettings') }}
+      </h3>
       <p class="text-sm text-muted mt-1">
         {{ t('teams.teamSettingsDescription') }}
       </p>
@@ -176,14 +178,22 @@ function resetForm() {
           />
         </div>
         <div class="flex-1">
-          <p class="font-medium">{{ state.name || t('teams.teamName') }}</p>
-          <p class="text-sm text-muted">/dashboard/{{ state.slug || 'your-slug' }}</p>
+          <p class="font-medium">
+            {{ state.name || t('teams.teamName') }}
+          </p>
+          <p class="text-sm text-muted">
+            /dashboard/{{ state.slug || 'your-slug' }}
+          </p>
         </div>
       </div>
 
       <USeparator />
 
-      <UFormField :label="t('teams.teamName')" name="name" required>
+      <UFormField
+        :label="t('teams.teamName')"
+        name="name"
+        required
+      >
         <UInput
           v-model="state.name"
           :placeholder="t('teams.teamNamePlaceholder')"
@@ -192,7 +202,11 @@ function resetForm() {
         />
       </UFormField>
 
-      <UFormField :label="t('teams.urlSlug')" name="slug" required>
+      <UFormField
+        :label="t('teams.urlSlug')"
+        name="slug"
+        required
+      >
         <template #hint>
           <span class="text-xs text-muted">
             {{ t('teams.urlSlugHint') }}
@@ -206,7 +220,10 @@ function resetForm() {
         />
       </UFormField>
 
-      <UFormField :label="t('teams.logoUrl')" name="logo">
+      <UFormField
+        :label="t('teams.logoUrl')"
+        name="logo"
+      >
         <template #hint>
           <span class="text-xs text-muted">{{ t('teams.logoUrlHint') }}</span>
         </template>

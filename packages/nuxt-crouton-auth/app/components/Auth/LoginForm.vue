@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   error: null,
   showRememberMe: true,
-  showForgotPassword: true,
+  showForgotPassword: true
 })
 
 const emit = defineEmits<{
@@ -41,7 +41,7 @@ const emit = defineEmits<{
 const state = reactive({
   email: '',
   password: '',
-  rememberMe: false,
+  rememberMe: false
 })
 
 // Validation
@@ -49,7 +49,7 @@ function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
   if (!formState.email) {
     errors.push({ name: 'email', message: t('errors.requiredField') })
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+  } else if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(formState.email)) {
     errors.push({ name: 'email', message: t('errors.invalidEmail') })
   }
   if (!formState.password) {
@@ -63,7 +63,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
   emit('submit', {
     email: event.data.email,
     password: event.data.password,
-    rememberMe: event.data.rememberMe,
+    rememberMe: event.data.rememberMe
   })
 }
 </script>
@@ -75,7 +75,10 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
     class="space-y-6"
     @submit="onSubmit"
   >
-    <UFormField :label="t('auth.email')" name="email">
+    <UFormField
+      :label="t('auth.email')"
+      name="email"
+    >
       <UInput
         v-model="state.email"
         type="email"
@@ -85,7 +88,10 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField :label="t('auth.password')" name="password">
+    <UFormField
+      :label="t('auth.password')"
+      name="password"
+    >
       <UInput
         v-model="state.password"
         type="password"
@@ -95,7 +101,10 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <div v-if="showRememberMe || showForgotPassword" class="flex items-center justify-between">
+    <div
+      v-if="showRememberMe || showForgotPassword"
+      class="flex items-center justify-between"
+    >
       <UCheckbox
         v-if="showRememberMe"
         v-model="state.rememberMe"

@@ -51,7 +51,7 @@ async function hashPassword(password: string): Promise<string> {
       name: 'PBKDF2',
       salt: salt,
       iterations: 100000,
-      hash: 'SHA-256',
+      hash: 'SHA-256'
     },
     keyMaterial,
     256
@@ -77,21 +77,21 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
   if (!body.name?.trim()) {
     throw createError({
       statusCode: 400,
-      message: 'Name is required',
+      message: 'Name is required'
     })
   }
 
   if (!body.email?.trim()) {
     throw createError({
       statusCode: 400,
-      message: 'Email is required',
+      message: 'Email is required'
     })
   }
 
   if (!body.password || body.password.length < 8) {
     throw createError({
       statusCode: 400,
-      message: 'Password must be at least 8 characters',
+      message: 'Password must be at least 8 characters'
     })
   }
 
@@ -105,7 +105,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
   if (existingUser.length > 0) {
     throw createError({
       statusCode: 409,
-      message: 'A user with this email already exists',
+      message: 'A user with this email already exists'
     })
   }
 
@@ -126,7 +126,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
     superAdmin: body.superAdmin ?? false,
     banned: false,
     createdAt: now,
-    updatedAt: now,
+    updatedAt: now
   })
 
   // Create credential account for password auth
@@ -137,7 +137,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
     providerId: 'credential',
     password: hashedPassword,
     createdAt: now,
-    updatedAt: now,
+    updatedAt: now
   })
 
   // Fetch and return created user
@@ -161,6 +161,6 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
     superAdmin: createdUser.superAdmin,
     banned: createdUser.banned,
     bannedReason: createdUser.bannedReason,
-    bannedUntil: createdUser.bannedUntil,
+    bannedUntil: createdUser.bannedUntil
   }
 })

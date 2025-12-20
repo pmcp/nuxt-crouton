@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   error: null,
   showTerms: true,
-  minPasswordLength: 8,
+  minPasswordLength: 8
 })
 
 const emit = defineEmits<{
@@ -42,7 +42,7 @@ const state = reactive({
   name: '',
   email: '',
   password: '',
-  confirmPassword: '',
+  confirmPassword: ''
 })
 
 // Validation
@@ -55,7 +55,7 @@ function validate(formState: Partial<typeof state>): FormError[] {
 
   if (!formState.email) {
     errors.push({ name: 'email', message: t('errors.requiredField') })
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+  } else if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(formState.email)) {
     errors.push({ name: 'email', message: t('errors.invalidEmail') })
   }
 
@@ -77,7 +77,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
   emit('submit', {
     name: event.data.name,
     email: event.data.email,
-    password: event.data.password,
+    password: event.data.password
   })
 }
 </script>
@@ -89,7 +89,10 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
     class="space-y-6"
     @submit="onSubmit"
   >
-    <UFormField :label="t('forms.fullName')" name="name">
+    <UFormField
+      :label="t('forms.fullName')"
+      name="name"
+    >
       <UInput
         v-model="state.name"
         type="text"
@@ -99,7 +102,10 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField :label="t('auth.email')" name="email">
+    <UFormField
+      :label="t('auth.email')"
+      name="email"
+    >
       <UInput
         v-model="state.email"
         type="email"
@@ -109,7 +115,10 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField :label="t('auth.password')" name="password">
+    <UFormField
+      :label="t('auth.password')"
+      name="password"
+    >
       <UInput
         v-model="state.password"
         type="password"
@@ -119,7 +128,10 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       />
     </UFormField>
 
-    <UFormField :label="t('auth.confirmPassword')" name="confirmPassword">
+    <UFormField
+      :label="t('auth.confirmPassword')"
+      name="confirmPassword"
+    >
       <UInput
         v-model="state.confirmPassword"
         type="password"
@@ -145,13 +157,22 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       {{ t('auth.createAccount') }}
     </UButton>
 
-    <p v-if="showTerms" class="text-center text-xs text-muted">
+    <p
+      v-if="showTerms"
+      class="text-center text-xs text-muted"
+    >
       By creating an account, you agree to our
-      <NuxtLink to="/terms" class="text-primary hover:text-primary/80">
+      <NuxtLink
+        to="/terms"
+        class="text-primary hover:text-primary/80"
+      >
         Terms of Service
       </NuxtLink>
       and
-      <NuxtLink to="/privacy" class="text-primary hover:text-primary/80">
+      <NuxtLink
+        to="/privacy"
+        class="text-primary hover:text-primary/80"
+      >
         Privacy Policy
       </NuxtLink>
     </p>

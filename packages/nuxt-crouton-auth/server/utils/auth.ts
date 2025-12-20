@@ -23,7 +23,7 @@ import { getServerSession } from './useServerAuth'
 import {
   resolveTeamAndCheckMembership,
   requireTeamAdmin as _requireTeamAdmin,
-  requireTeamOwner as _requireTeamOwner,
+  requireTeamOwner as _requireTeamOwner
 } from './team'
 
 // NOTE: Team utilities are NOT re-exported here to avoid duplicated imports.
@@ -54,7 +54,7 @@ export async function requireAuth(event: H3Event): Promise<User> {
   if (!session?.user) {
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized',
+      message: 'Unauthorized'
     })
   }
 
@@ -66,7 +66,7 @@ export async function requireAuth(event: H3Event): Promise<User> {
     name: session.user.name ?? null,
     image: session.user.image ?? null,
     createdAt: new Date(session.user.createdAt),
-    updatedAt: new Date(session.user.updatedAt),
+    updatedAt: new Date(session.user.updatedAt)
   } as User
 }
 
@@ -82,8 +82,7 @@ export async function requireAuth(event: H3Event): Promise<User> {
 export async function getAuthUser(event: H3Event): Promise<User | null> {
   try {
     return await requireAuth(event)
-  }
-  catch {
+  } catch {
     return null
   }
 }
@@ -107,7 +106,7 @@ export async function requireTeamMember(event: H3Event): Promise<AuthTeamContext
   return {
     user: context.user,
     team: context.team,
-    member: context.membership,
+    member: context.membership
   }
 }
 
@@ -131,7 +130,7 @@ export async function requireTeamAdminAuth(event: H3Event): Promise<AuthTeamCont
   return {
     user: context.user,
     team: context.team,
-    member: context.membership,
+    member: context.membership
   }
 }
 
@@ -155,7 +154,7 @@ export async function requireTeamOwnerAuth(event: H3Event): Promise<AuthTeamCont
   return {
     user: context.user,
     team: context.team,
-    member: context.membership,
+    member: context.membership
   }
 }
 

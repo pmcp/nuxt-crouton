@@ -4,7 +4,7 @@
 export interface YjsFlowNode {
   id: string
   title: string
-  position: { x: number; y: number }
+  position: { x: number, y: number }
   parentId: string | null
   data: Record<string, unknown> // Additional collection fields
   createdAt: number
@@ -18,7 +18,7 @@ export interface YjsGhostNode {
   id: string
   title: string
   collection: string
-  position: { x: number; y: number }
+  position: { x: number, y: number }
 }
 
 /**
@@ -30,7 +30,7 @@ export interface YjsAwarenessState {
     name: string
     color: string
   }
-  cursor: { x: number; y: number } | null
+  cursor: { x: number, y: number } | null
   selectedNodeId: string | null
   ghostNode?: YjsGhostNode | null
 }

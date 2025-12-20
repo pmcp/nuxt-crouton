@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
   text: 'Sign in with Passkey',
   variant: 'outline',
   color: 'neutral',
-  forceShow: false,
+  forceShow: false
 })
 
 const emit = defineEmits<{

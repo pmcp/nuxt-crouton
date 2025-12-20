@@ -1,19 +1,34 @@
 <template>
   <div>
-    <div v-if="pending" class="flex items-center gap-2 text-sm">
-      <UIcon name="i-heroicons-arrow-path" class="animate-spin" />
+    <div
+      v-if="pending"
+      class="flex items-center gap-2 text-sm"
+    >
+      <UIcon
+        name="i-heroicons-arrow-path"
+        class="animate-spin"
+      />
       Loading options...
     </div>
 
-    <div v-else-if="error" class="text-sm text-warning">
+    <div
+      v-else-if="error"
+      class="text-sm text-warning"
+    >
       Failed to load options
     </div>
 
-    <div v-else-if="!dependentValue" class="text-sm text-neutral">
+    <div
+      v-else-if="!dependentValue"
+      class="text-sm text-neutral"
+    >
       {{ dependentLabel }} required
     </div>
 
-    <div v-else-if="!options || options.length === 0" class="text-sm text-neutral">
+    <div
+      v-else-if="!options || options.length === 0"
+      class="text-sm text-neutral"
+    >
       No options available
     </div>
 
@@ -66,6 +81,6 @@ const emit = defineEmits<{
 // Local model for v-model binding
 const localValue = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: value => emit('update:modelValue', value)
 })
 </script>

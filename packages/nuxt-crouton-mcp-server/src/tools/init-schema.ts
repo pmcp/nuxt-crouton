@@ -9,7 +9,7 @@ export const initSchemaToolDefinition = {
   description: 'Generate a starter schema template. Choose from minimal, full, ecommerce, blog, or tasks templates.'
 }
 
-const TEMPLATES: Record<string, { description: string; schema: Record<string, any> }> = {
+const TEMPLATES: Record<string, { description: string, schema: Record<string, any> }> = {
   minimal: {
     description: 'Minimal schema with just name and description',
     schema: {

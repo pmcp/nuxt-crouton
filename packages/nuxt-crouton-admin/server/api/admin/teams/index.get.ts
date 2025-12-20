@@ -79,7 +79,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
       personal: organization.personal,
       isDefault: organization.isDefault,
       ownerId: organization.ownerId,
-      createdAt: organization.createdAt,
+      createdAt: organization.createdAt
     })
     .from(organization)
     .where(whereClause)
@@ -93,7 +93,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
     ? await db
         .select({
           organizationId: member.organizationId,
-          count: count(),
+          count: count()
         })
         .from(member)
         .where(sql`${member.organizationId} IN (${sql.join(teamIds.map(id => sql`${id}`), sql`, `)})`)
@@ -110,7 +110,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
         .select({
           id: user.id,
           name: user.name,
-          email: user.email,
+          email: user.email
         })
         .from(user)
         .where(sql`${user.id} IN (${sql.join(ownerIds.map(id => sql`${id}`), sql`, `)})`)
@@ -120,7 +120,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
   const ownerMap = new Map(owners.map(o => [o.id, o]))
 
   // Map to response type
-  const items: AdminTeamListItem[] = teams.map(t => {
+  const items: AdminTeamListItem[] = teams.map((t) => {
     const owner = t.ownerId ? ownerMap.get(t.ownerId) : null
     return {
       id: t.id,
@@ -132,7 +132,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
       createdAt: t.createdAt,
       memberCount: countMap.get(t.id) ?? 0,
       ownerName: owner?.name ?? null,
-      ownerEmail: owner?.email ?? null,
+      ownerEmail: owner?.email ?? null
     }
   })
 
@@ -141,6 +141,6 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
     total,
     page,
     pageSize,
-    totalPages: Math.ceil(total / pageSize),
+    totalPages: Math.ceil(total / pageSize)
   }
 })

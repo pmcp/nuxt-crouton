@@ -9,5 +9,5 @@ export const useSession = () => ({
   isPending: { value: false },
   error: { value: null },
   refresh: async () => {},
-  clear: async () => {},
+  clear: async () => {}
 })

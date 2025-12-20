@@ -1,11 +1,22 @@
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-semibold mb-4">Collections</h1>
-    <div v-if="!collectionNames.length" class="text-gray-500">
+    <h1 class="text-2xl font-semibold mb-4">
+      Collections
+    </h1>
+    <div
+      v-if="!collectionNames.length"
+      class="text-gray-500"
+    >
       No collections found. Run the generator to create collections.
     </div>
-    <ul v-else class="space-y-2">
-      <li v-for="name in collectionNames" :key="name">
+    <ul
+      v-else
+      class="space-y-2"
+    >
+      <li
+        v-for="name in collectionNames"
+        :key="name"
+      >
         <NuxtLink
           :to="`/dashboard/${route.params.team}/crouton/${name}`"
         >
@@ -35,6 +46,6 @@ const formatCollectionName = (name: string) => {
 }
 
 definePageMeta({
-  middleware: 'auth',
+  middleware: 'auth'
 })
 </script>

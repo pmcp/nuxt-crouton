@@ -16,7 +16,7 @@ export async function handleRollback(args: {
   layer: string
   collection: string
   dryRun?: boolean
-}): Promise<{ success: boolean; message: string; removedFiles?: string[]; error?: string }> {
+}): Promise<{ success: boolean, message: string, removedFiles?: string[], error?: string }> {
   try {
     const cliArgs = [
       'rollback',
@@ -35,9 +35,9 @@ export async function handleRollback(args: {
       // Parse output to extract removed files
       const lines = result.output.split('\n')
       const removedFiles = lines.filter(line =>
-        line.includes('Would remove:') ||
-        line.includes('Removed:') ||
-        line.includes('→')
+        line.includes('Would remove:')
+        || line.includes('Removed:')
+        || line.includes('→')
       )
 
       const isDryRun = args.dryRun !== false

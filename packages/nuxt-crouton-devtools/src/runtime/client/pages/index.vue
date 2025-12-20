@@ -12,9 +12,9 @@ const filteredCollections = computed(() => {
 
   const query = searchQuery.value.toLowerCase()
   return collections.value.filter(c =>
-    c.name?.toLowerCase().includes(query) ||
-    c.layer?.toLowerCase().includes(query) ||
-    c.apiPath?.toLowerCase().includes(query)
+    c.name?.toLowerCase().includes(query)
+    || c.layer?.toLowerCase().includes(query)
+    || c.apiPath?.toLowerCase().includes(query)
   )
 })
 
@@ -49,10 +49,15 @@ onMounted(() => {
         />
       </div>
 
-      <div v-if="loading" class="flex items-center justify-center py-12">
+      <div
+        v-if="loading"
+        class="flex items-center justify-center py-12"
+      >
         <div class="text-center">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4" />
-          <p class="text-gray-600 dark:text-gray-400">Loading collections...</p>
+          <p class="text-gray-600 dark:text-gray-400">
+            Loading collections...
+          </p>
         </div>
       </div>
 
@@ -65,8 +70,13 @@ onMounted(() => {
         :description="error"
       />
 
-      <div v-else-if="filteredCollections.length === 0" class="text-center py-12">
-        <div class="text-6xl mb-4">📦</div>
+      <div
+        v-else-if="filteredCollections.length === 0"
+        class="text-center py-12"
+      >
+        <div class="text-6xl mb-4">
+          📦
+        </div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
           No collections found
         </h3>
@@ -75,7 +85,10 @@ onMounted(() => {
         </p>
       </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        v-else
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
         <CollectionCard
           v-for="collection in filteredCollections"
           :key="collection.key"

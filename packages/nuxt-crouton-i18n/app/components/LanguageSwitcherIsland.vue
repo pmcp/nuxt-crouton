@@ -31,7 +31,7 @@ const currentLocaleCode = computed(() => {
 })
 
 const dropdownItems = computed<DropdownMenuItem[]>(() => {
-  return locales.value.map(loc => {
+  return locales.value.map((loc) => {
     const code = typeof loc === 'string' ? loc : loc.code
     const name = typeof loc === 'string' ? code.toUpperCase() : (loc.name || code.toUpperCase())
 

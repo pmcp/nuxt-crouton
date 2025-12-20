@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   if (!teamId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Team ID is required',
+      statusMessage: 'Team ID is required'
     })
   }
   const { user } = await requireUserSession(event)

@@ -28,7 +28,7 @@ export type { AIProviderInfo, AIModelInfo, AIRuntimeConfig }
  */
 export const AI_PROVIDERS = {
   openai: OPENAI_PROVIDER,
-  anthropic: ANTHROPIC_PROVIDER,
+  anthropic: ANTHROPIC_PROVIDER
 } as const
 
 /**

@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   error: null,
   sent: false,
-  showBackLink: true,
+  showBackLink: true
 })
 
 const emit = defineEmits<{
@@ -45,7 +45,7 @@ const isSent = computed(() => props.sent || localSent.value)
 
 // Form state
 const state = reactive({
-  email: '',
+  email: ''
 })
 
 // Validation
@@ -53,7 +53,7 @@ function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
   if (!formState.email) {
     errors.push({ name: 'email', message: t('errors.requiredField') })
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+  } else if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(formState.email)) {
     errors.push({ name: 'email', message: t('errors.invalidEmail') })
   }
   return errors
@@ -91,7 +91,10 @@ function handleReset() {
         >
           Try another email
         </UButton>
-        <NuxtLink v-if="showBackLink" to="/auth/login">
+        <NuxtLink
+          v-if="showBackLink"
+          to="/auth/login"
+        >
           <UButton
             color="neutral"
             variant="outline"
@@ -111,7 +114,10 @@ function handleReset() {
       class="space-y-6"
       @submit="onSubmit"
     >
-      <UFormField :label="t('auth.email')" name="email">
+      <UFormField
+        :label="t('auth.email')"
+        name="email"
+      >
         <UInput
           v-model="state.email"
           type="email"
@@ -137,7 +143,10 @@ function handleReset() {
         {{ t('auth.sendResetLink') }}
       </UButton>
 
-      <div v-if="showBackLink" class="text-center">
+      <div
+        v-if="showBackLink"
+        class="text-center"
+      >
         <NuxtLink
           to="/auth/login"
           class="text-sm font-medium text-primary hover:text-primary/80"

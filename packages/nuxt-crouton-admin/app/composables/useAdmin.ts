@@ -97,6 +97,6 @@ export function useAdmin() {
     impersonationError: impersonation.error,
     checkImpersonationStatus: impersonation.checkStatus,
     startImpersonation: impersonation.startImpersonation,
-    stopImpersonation: impersonation.stopImpersonation,
+    stopImpersonation: impersonation.stopImpersonation
   }
 }

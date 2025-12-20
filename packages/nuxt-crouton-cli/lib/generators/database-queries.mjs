@@ -224,12 +224,12 @@ export async function reorderSiblings${prefixedPascalCasePlural}(
 
 // Helper to detect reference fields that need LEFT JOINs or post-query processing
 function detectReferenceFields(data, config) {
-  const singleReferences = []  // For leftJoin
-  const arrayReferences = []   // For post-query processing
+  const singleReferences = [] // For leftJoin
+  const arrayReferences = [] // For post-query processing
 
   // Check custom fields for refTarget
   if (data.fields) {
-    data.fields.forEach(field => {
+    data.fields.forEach((field) => {
       if (field.refTarget) {
         const isExternal = field.refScope === 'external' || field.refScope === 'adapter'
         const refData = {
@@ -302,7 +302,7 @@ export function generateQueries(data, config = null) {
   const allReferences = [...singleReferences, ...arrayReferences]
   const uniqueCollections = [...new Set(allReferences.map(r => r.targetCollection))]
 
-  uniqueCollections.forEach(collection => {
+  uniqueCollections.forEach((collection) => {
     // Get any reference to this collection to check if external
     const ref = allReferences.find(r => r.targetCollection === collection)
 
@@ -333,7 +333,7 @@ export function generateQueries(data, config = null) {
     const tableJoinCounts = {}
     const userAliases = []
 
-    singleReferences.forEach(ref => {
+    singleReferences.forEach((ref) => {
       const collectionIdentifier = ref.targetCollection
 
       // For external refs, use table name as-is (no layer prefix)
@@ -391,7 +391,7 @@ export function generateQueries(data, config = null) {
   if (arrayReferences.length > 0) {
     // Group array references by target collection for efficient querying
     const refsByCollection = {}
-    arrayReferences.forEach(ref => {
+    arrayReferences.forEach((ref) => {
       const collection = ref.targetCollection
       if (!refsByCollection[collection]) {
         refsByCollection[collection] = []

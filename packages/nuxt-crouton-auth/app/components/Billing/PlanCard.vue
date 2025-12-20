@@ -33,7 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
   current: false,
   recommended: false,
   loading: false,
-  disabled: false,
+  disabled: false
 })
 
 const emit = defineEmits<{
@@ -47,7 +47,7 @@ const formattedPrice = computed(() => {
     style: 'currency',
     currency: props.plan.currency.toUpperCase(),
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   })
   return formatter.format(price)
 })
@@ -74,7 +74,7 @@ const buttonLabel = computed(() => {
     :class="[
       'relative transition-all duration-200',
       recommended ? 'ring-2 ring-primary scale-105' : '',
-      current ? 'bg-primary/5' : '',
+      current ? 'bg-primary/5' : ''
     ]"
   >
     <!-- Recommended Badge -->
@@ -82,7 +82,10 @@ const buttonLabel = computed(() => {
       v-if="recommended"
       class="absolute -top-3 left-1/2 -translate-x-1/2"
     >
-      <UBadge color="primary" size="sm">
+      <UBadge
+        color="primary"
+        size="sm"
+      >
         Recommended
       </UBadge>
     </div>
@@ -92,7 +95,10 @@ const buttonLabel = computed(() => {
       v-if="current"
       class="absolute -top-3 left-1/2 -translate-x-1/2"
     >
-      <UBadge color="success" size="sm">
+      <UBadge
+        color="success"
+        size="sm"
+      >
         Current
       </UBadge>
     </div>

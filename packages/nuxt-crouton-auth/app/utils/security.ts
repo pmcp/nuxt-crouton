@@ -13,7 +13,7 @@
  * Validate email format
  */
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const emailRegex = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
   return emailRegex.test(email)
 }
 
@@ -49,7 +49,7 @@ const DEFAULT_PASSWORD_REQUIREMENTS: PasswordRequirements = {
   requireUppercase: false,
   requireLowercase: false,
   requireNumbers: false,
-  requireSpecial: false,
+  requireSpecial: false
 }
 
 /**
@@ -103,7 +103,7 @@ export function validatePassword(
   return {
     valid: errors.length === 0,
     errors,
-    strength,
+    strength
   }
 }
 
@@ -177,8 +177,7 @@ export function sanitizeRedirectUrl(url: string): string {
       return '/'
     }
     return parsed.pathname + parsed.search
-  }
-  catch {
+  } catch {
     // Invalid URL, return safe default
     return url.startsWith('/') ? url : '/'
   }
@@ -206,8 +205,7 @@ export function areCookiesEnabled(): boolean {
     const enabled = document.cookie.includes('crouton_cookie_test')
     document.cookie = 'crouton_cookie_test=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
     return enabled
-  }
-  catch {
+  } catch {
     return false
   }
 }

@@ -27,7 +27,7 @@ import {
   getErrorCode,
   isAuthError,
   AUTH_ERROR_CODES,
-  type AuthErrorCode,
+  type AuthErrorCode
 } from '../utils/errors'
 
 export interface UseAuthErrorOptions {
@@ -58,7 +58,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
   /**
    * Handle an error - sets error state and optionally shows toast
    */
-  function handleError(e: unknown, toastOptions?: { show?: boolean; duration?: number }) {
+  function handleError(e: unknown, toastOptions?: { show?: boolean, duration?: number }) {
     const authError = isAuthError(e)
       ? e
       : new AuthError(
@@ -77,7 +77,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
         description: authError.toUserMessage(),
         color: 'red',
         icon: 'i-heroicons-exclamation-circle',
-        timeout: toastOptions?.duration ?? toastDuration,
+        timeout: toastOptions?.duration ?? toastDuration
       })
     }
 
@@ -92,7 +92,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
    */
   function withError<T extends (...args: any[]) => Promise<any>>(
     fn: T,
-    errorOptions?: { showToast?: boolean; clearOnStart?: boolean }
+    errorOptions?: { showToast?: boolean, clearOnStart?: boolean }
   ): (...args: Parameters<T>) => Promise<Awaited<ReturnType<T>> | undefined> {
     return async (...args: Parameters<T>) => {
       if (errorOptions?.clearOnStart !== false) {
@@ -101,8 +101,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
 
       try {
         return await fn(...args)
-      }
-      catch (e) {
+      } catch (e) {
         handleError(e, { show: errorOptions?.showToast })
         return undefined
       }
@@ -127,9 +126,9 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
   const isNetworkError = computed(() => {
     const code = errorCode.value
     return (
-      code === AUTH_ERROR_CODES.NETWORK_ERROR ||
-      code === AUTH_ERROR_CODES.NETWORK_TIMEOUT ||
-      code === AUTH_ERROR_CODES.SERVER_ERROR
+      code === AUTH_ERROR_CODES.NETWORK_ERROR
+      || code === AUTH_ERROR_CODES.NETWORK_TIMEOUT
+      || code === AUTH_ERROR_CODES.SERVER_ERROR
     )
   })
 
@@ -139,9 +138,9 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
   const isAuthenticationError = computed(() => {
     const code = errorCode.value
     return (
-      code === AUTH_ERROR_CODES.AUTH_UNAUTHORIZED ||
-      code === AUTH_ERROR_CODES.AUTH_SESSION_EXPIRED ||
-      code === AUTH_ERROR_CODES.AUTH_FORBIDDEN
+      code === AUTH_ERROR_CODES.AUTH_UNAUTHORIZED
+      || code === AUTH_ERROR_CODES.AUTH_SESSION_EXPIRED
+      || code === AUTH_ERROR_CODES.AUTH_FORBIDDEN
     )
   })
 
@@ -161,7 +160,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
     isError,
 
     // Re-export for convenience
-    AUTH_ERROR_CODES,
+    AUTH_ERROR_CODES
   }
 }
 
@@ -174,7 +173,7 @@ export function createErrorLogger(prefix: string = '[@crouton/auth]') {
       code: error.code,
       message: error.message,
       statusCode: error.statusCode,
-      details: error.details,
+      details: error.details
     })
   }
 }

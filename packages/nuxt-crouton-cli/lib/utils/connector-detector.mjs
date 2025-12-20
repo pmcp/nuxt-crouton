@@ -5,8 +5,8 @@
  * and detects which connectors are needed
  */
 
-import fsp from 'fs/promises'
-import path from 'path'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
 
 /**
  * Detect external collection references in schemas

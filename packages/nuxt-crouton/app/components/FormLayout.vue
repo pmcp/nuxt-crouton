@@ -26,12 +26,12 @@ const emit = defineEmits<{
 // Two-way binding for active section
 const activeSection = computed({
   get: () => props.modelValue || props.navigationItems?.[0]?.value || '',
-  set: (value) => emit('update:modelValue', value)
+  set: value => emit('update:modelValue', value)
 })
 
 // Enhance navigation items with error indicators
 const enhancedNavigationItems = computed(() => {
-  return props.navigationItems.map(item => {
+  return props.navigationItems.map((item) => {
     const errorCount = props.tabErrors[item.value] || 0
 
     if (errorCount > 0) {
@@ -65,13 +65,15 @@ const sidebarAccordionItems = [{
 <template>
   <div class="flex flex-col h-full max-w-7xl mx-auto">
     <!-- Header Slot -->
-    <div v-if="$slots.header" class="mb-6 ">
+    <div
+      v-if="$slots.header"
+      class="mb-6 "
+    >
       <slot name="header" />
     </div>
     <!-- Main Container with responsive max-width -->
     <div
       class="flex flex-col gap-6 w-full mx-auto flex-grow "
-
     >
       <!-- Grid Container (only when sidebar exists) -->
       <div :class="hasSidebar ? '@container grid grid-cols-1 @lg:grid-cols-3 gap-6' : ''">
@@ -79,39 +81,46 @@ const sidebarAccordionItems = [{
         <div :class="hasSidebar ? '@lg:col-span-2 space-y-6' : 'space-y-6'">
           <!-- Tab Navigation (optional) -->
 
-            <UTabs
-                v-if="tabs && navigationItems.length"
-                v-model="activeSection"
-                :items="enhancedNavigationItems"
-                :content="false"
-                class="w-full"
-            />
-            <!-- Main Content Slot -->
-            <slot class="p" name="main" :active-section="activeSection" />
+          <UTabs
+            v-if="tabs && navigationItems.length"
+            v-model="activeSection"
+            :items="enhancedNavigationItems"
+            :content="false"
+            class="w-full"
+          />
+          <!-- Main Content Slot -->
+          <slot
+            class="p"
+            name="main"
+            :active-section="activeSection"
+          />
 
-            <!-- Mobile / Small area: Accordion at top -->
-            <div class="@lg:hidden mb-6" :ui="{body: 'sm:p-4 '}">
-              <UAccordion :items="sidebarAccordionItems">
-                <template #content="{ item }">
-                  <div class="">
-                    <slot name="sidebar" />
-                  </div>
-                </template>
-              </UAccordion>
-            </div>
-
+          <!-- Mobile / Small area: Accordion at top -->
+          <div
+            class="@lg:hidden mb-6"
+            :ui="{ body: 'sm:p-4 ' }"
+          >
+            <UAccordion :items="sidebarAccordionItems">
+              <template #content="{ item }">
+                <div class="">
+                  <slot name="sidebar" />
+                </div>
+              </template>
+            </UAccordion>
+          </div>
         </div>
 
         <!-- Sidebar Area (responsive: column on desktop, accordion on mobile) -->
-        <div v-if="hasSidebar" class="@lg:col-span-1">
+        <div
+          v-if="hasSidebar"
+          class="@lg:col-span-1"
+        >
           <!-- Desktop: Regular sidebar column -->
           <div class="hidden @lg:block space-y-6">
             <slot name="sidebar" />
           </div>
         </div>
       </div>
-
-
     </div>
     <!-- Footer Slot -->
     <div v-if="$slots.footer">

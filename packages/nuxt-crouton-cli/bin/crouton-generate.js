@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 
-import { program } from 'commander';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs-extra';
-import chalk from 'chalk';
-import ora from 'ora';
+import { program } from 'commander'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+import fs from 'fs-extra'
+import chalk from 'chalk'
+import ora from 'ora'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // Import the main generator script
-const generatorPath = join(__dirname, '..', 'lib', 'generate-collection.mjs');
+const generatorPath = join(__dirname, '..', 'lib', 'generate-collection.mjs')
 
 // Check if generator exists
 if (!fs.existsSync(generatorPath)) {
-  console.error(chalk.red('Error: Generator script not found. Please ensure the package is properly installed.'));
-  process.exit(1);
+  console.error(chalk.red('Error: Generator script not found. Please ensure the package is properly installed.'))
+  process.exit(1)
 }
 
 // Setup CLI
@@ -24,27 +24,27 @@ program
   .name('crouton-generate')
   .description('Generate CRUD collections for Nuxt Crouton')
   .version('1.0.0')
-  .option('-c, --config <path>', 'Use config file (works without other args)');
+  .option('-c, --config <path>', 'Use config file (works without other args)')
 
 // Handle global --config flag before any subcommand
 // This allows: crouton-generate --config ./my-config.js
 program.hook('preAction', async (thisCommand, actionCommand) => {
-  const globalOpts = thisCommand.opts();
+  const globalOpts = thisCommand.opts()
   if (globalOpts.config && actionCommand.name() !== 'config') {
-    const spinner = ora('Loading config...').start();
+    const spinner = ora('Loading config...').start()
     try {
-      const args = ['--config', globalOpts.config];
-      spinner.stop();
-      process.argv = ['node', 'generate-collection.mjs', ...args];
-      await import(generatorPath);
-      process.exit(0);
+      const args = ['--config', globalOpts.config]
+      spinner.stop()
+      process.argv = ['node', 'generate-collection.mjs', ...args]
+      await import(generatorPath)
+      process.exit(0)
     } catch (error) {
-      spinner.fail('Generation failed');
-      console.error(chalk.red(error.message));
-      process.exit(1);
+      spinner.fail('Generation failed')
+      console.error(chalk.red(error.message))
+      process.exit(1)
     }
   }
-});
+})
 
 // Config command (still available for explicit use)
 program
@@ -52,46 +52,45 @@ program
   .description('Generate collections using a config file')
   .option('--only <name>', 'Generate only a specific collection')
   .action(async (configPath, options) => {
-    const spinner = ora('Loading config...').start();
+    const spinner = ora('Loading config...').start()
 
     try {
       // Auto-detect config file if not specified
       if (!configPath) {
-        const extensions = ['.js', '.mjs', '.cjs', '.ts'];
-        const baseName = './crouton.config';
+        const extensions = ['.js', '.mjs', '.cjs', '.ts']
+        const baseName = './crouton.config'
         for (const ext of extensions) {
-          const testPath = `${baseName}${ext}`;
+          const testPath = `${baseName}${ext}`
           if (fs.existsSync(testPath)) {
-            configPath = testPath;
-            break;
+            configPath = testPath
+            break
           }
         }
         // Fallback to default if no config file found
         if (!configPath) {
-          configPath = './crouton.config.js';
+          configPath = './crouton.config.js'
         }
       }
 
       // Pass config as the first argument to the generator
-      const args = ['--config', configPath];
+      const args = ['--config', configPath]
 
       // Add --only flag if specified
       if (options.only) {
-        args.push(`--only=${options.only}`);
+        args.push(`--only=${options.only}`)
       }
 
-      spinner.stop();
+      spinner.stop()
 
       // Import and execute the generator script directly
-      process.argv = ['node', 'generate-collection.mjs', ...args];
-      await import(generatorPath);
-
+      process.argv = ['node', 'generate-collection.mjs', ...args]
+      await import(generatorPath)
     } catch (error) {
-      spinner.fail('Generation failed');
-      console.error(chalk.red(error.message));
-      process.exit(1);
+      spinner.fail('Generation failed')
+      console.error(chalk.red(error.message))
+      process.exit(1)
     }
-  });
+  })
 
 // Main generate command
 program
@@ -109,95 +108,93 @@ program
   .option('--count <number>', 'Number of seed records (default: 25)', '25')
   .option('-c, --config <path>', 'Use config file instead of CLI args')
   .action(async (layer, collection, options) => {
-    const spinner = ora('Generating collection...').start();
+    const spinner = ora('Generating collection...').start()
 
     try {
       // If config is provided, use config mode
       if (options.config) {
-        const args = ['--config', options.config];
+        const args = ['--config', options.config]
 
-        spinner.stop();
+        spinner.stop()
 
         // Import and execute the generator script directly
-        process.argv = ['node', 'generate-collection.mjs', ...args];
-        await import(generatorPath);
-        return;
+        process.argv = ['node', 'generate-collection.mjs', ...args]
+        await import(generatorPath)
+        return
       }
 
       // Build args for the generator script (normal CLI mode)
-      const args = [layer, collection];
+      const args = [layer, collection]
 
       if (options.fieldsFile) {
-        args.push(`--fields-file=${options.fieldsFile}`);
+        args.push(`--fields-file=${options.fieldsFile}`)
       }
       if (options.dialect) {
-        args.push(`--dialect=${options.dialect}`);
+        args.push(`--dialect=${options.dialect}`)
       }
       if (options.autoRelations) {
-        args.push('--auto-relations');
+        args.push('--auto-relations')
       }
       if (options.dryRun) {
-        args.push('--dry-run');
+        args.push('--dry-run')
       }
       // Commander.js sets --no-* flags to false when used
       if (options.translations === false) {
-        args.push('--no-translations');
+        args.push('--no-translations')
       }
       if (options.force) {
-        args.push('--force');
+        args.push('--force')
       }
       if (options.db === false) {
-        args.push('--no-db');
+        args.push('--no-db')
       }
       if (options.hierarchy) {
-        args.push('--hierarchy');
+        args.push('--hierarchy')
       }
       if (options.seed) {
-        args.push('--seed');
-        args.push(`--count=${options.count || '25'}`);
+        args.push('--seed')
+        args.push(`--count=${options.count || '25'}`)
       }
 
-      spinner.stop();
+      spinner.stop()
 
       // Import and execute the generator script directly
-      process.argv = ['node', 'generate-collection.mjs', ...args];
-      await import(generatorPath);
-
+      process.argv = ['node', 'generate-collection.mjs', ...args]
+      await import(generatorPath)
     } catch (error) {
-      spinner.fail('Generation failed');
-      console.error(chalk.red(error.message));
-      process.exit(1);
+      spinner.fail('Generation failed')
+      console.error(chalk.red(error.message))
+      process.exit(1)
     }
-  });
+  })
 
 // Install command
 program
   .command('install')
   .description('Install required Nuxt modules')
   .action(async () => {
-    const spinner = ora('Checking modules...').start();
+    const spinner = ora('Checking modules...').start()
 
     try {
-      const installModulesPath = join(__dirname, '..', 'lib', 'install-modules.mjs');
+      const installModulesPath = join(__dirname, '..', 'lib', 'install-modules.mjs')
 
       if (!fs.existsSync(installModulesPath)) {
-        spinner.fail('Install script not found');
-        console.log(chalk.yellow('Please install modules manually:'));
-        console.log(chalk.cyan('  pnpm add @friendlyinternet/nuxt-crouton'));
-        process.exit(1);
+        spinner.fail('Install script not found')
+        console.log(chalk.yellow('Please install modules manually:'))
+        console.log(chalk.cyan('  pnpm add @friendlyinternet/nuxt-crouton'))
+        process.exit(1)
       }
 
-      spinner.stop();
+      spinner.stop()
 
-      const { install } = await import(installModulesPath);
-      await install();
-
+      const { install } = await import(installModulesPath)
+      await install()
     } catch (error) {
-      spinner.fail('Installation failed');
-      console.error(chalk.red(error.message));
-      process.exit(1);
+      spinner.fail('Installation failed')
+      console.error(chalk.red(error.message))
+      process.exit(1)
     }
-  });
+  })
 
 // Init command - creates example schema
 program
@@ -207,46 +204,46 @@ program
   .action(async (options) => {
     const exampleSchema = {
       id: {
-        type: "string",
+        type: 'string',
         meta: {
           primaryKey: true
         }
       },
       name: {
-        type: "string",
+        type: 'string',
         meta: {
           required: true,
           maxLength: 255
         }
       },
       description: {
-        type: "text"
+        type: 'text'
       },
       price: {
-        type: "decimal",
+        type: 'decimal',
         meta: {
           precision: 10,
           scale: 2
         }
       },
       inStock: {
-        type: "boolean"
+        type: 'boolean'
       },
       createdAt: {
-        type: "date"
+        type: 'date'
       }
-    };
+    }
 
     try {
-      await fs.writeJSON(options.output, exampleSchema, { spaces: 2 });
-      console.log(chalk.green(`✓ Created example schema at ${options.output}`));
-      console.log(chalk.gray('\nNow you can generate a collection:'));
-      console.log(chalk.cyan(`  crouton-generate shop products --fields-file=${options.output}`));
+      await fs.writeJSON(options.output, exampleSchema, { spaces: 2 })
+      console.log(chalk.green(`✓ Created example schema at ${options.output}`))
+      console.log(chalk.gray('\nNow you can generate a collection:'))
+      console.log(chalk.cyan(`  crouton-generate shop products --fields-file=${options.output}`))
     } catch (error) {
-      console.error(chalk.red('Failed to create schema file:'), error.message);
-      process.exit(1);
+      console.error(chalk.red('Failed to create schema file:'), error.message)
+      process.exit(1)
     }
-  });
+  })
 
 // Add command - adds features to existing projects
 program
@@ -257,29 +254,29 @@ program
   .action(async (feature, options) => {
     try {
       if (feature === 'events') {
-        const addEventsPath = join(__dirname, '..', 'lib', 'add-events.mjs');
+        const addEventsPath = join(__dirname, '..', 'lib', 'add-events.mjs')
 
         if (!fs.existsSync(addEventsPath)) {
-          console.error(chalk.red('Error: add-events script not found. Please ensure the package is properly installed.'));
-          process.exit(1);
+          console.error(chalk.red('Error: add-events script not found. Please ensure the package is properly installed.'))
+          process.exit(1)
         }
 
-        const { addEvents } = await import(addEventsPath);
+        const { addEvents } = await import(addEventsPath)
         await addEvents({
           dryRun: options.dryRun,
-          force: options.force,
-        });
+          force: options.force
+        })
       } else {
-        console.error(chalk.red(`Unknown feature: ${feature}`));
-        console.log(chalk.yellow('\nAvailable features:'));
-        console.log(chalk.cyan('  events  - Add crouton-events layer for audit trails'));
-        process.exit(1);
+        console.error(chalk.red(`Unknown feature: ${feature}`))
+        console.log(chalk.yellow('\nAvailable features:'))
+        console.log(chalk.cyan('  events  - Add crouton-events layer for audit trails'))
+        process.exit(1)
       }
     } catch (error) {
-      console.error(chalk.red('Add feature failed:'), error.message);
-      process.exit(1);
+      console.error(chalk.red('Add feature failed:'), error.message)
+      process.exit(1)
     }
-  });
+  })
 
 // Rollback command - removes a single collection
 program
@@ -290,35 +287,34 @@ program
   .option('--force', 'Skip confirmation prompts')
   .action(async (layer, collection, options) => {
     try {
-      const rollbackPath = join(__dirname, '..', 'lib', 'rollback-collection.mjs');
+      const rollbackPath = join(__dirname, '..', 'lib', 'rollback-collection.mjs')
 
       if (!fs.existsSync(rollbackPath)) {
-        console.error(chalk.red('Error: Rollback script not found. Please ensure the package is properly installed.'));
-        process.exit(1);
+        console.error(chalk.red('Error: Rollback script not found. Please ensure the package is properly installed.'))
+        process.exit(1)
       }
 
       // Build args for the rollback script
-      const args = [layer, collection];
+      const args = [layer, collection]
 
       if (options.dryRun) {
-        args.push('--dry-run');
+        args.push('--dry-run')
       }
       if (options.keepFiles) {
-        args.push('--keep-files');
+        args.push('--keep-files')
       }
       if (options.force) {
-        args.push('--force');
+        args.push('--force')
       }
 
       // Import and execute the rollback script directly
-      process.argv = ['node', 'rollback-collection.mjs', ...args];
-      await import(rollbackPath);
-
+      process.argv = ['node', 'rollback-collection.mjs', ...args]
+      await import(rollbackPath)
     } catch (error) {
-      console.error(chalk.red('Rollback failed:'), error.message);
-      process.exit(1);
+      console.error(chalk.red('Rollback failed:'), error.message)
+      process.exit(1)
     }
-  });
+  })
 
 // Rollback bulk command - removes multiple collections, entire layer, or from config
 program
@@ -331,47 +327,46 @@ program
   .option('--force', 'Skip confirmation prompts')
   .action(async (options) => {
     try {
-      const rollbackBulkPath = join(__dirname, '..', 'lib', 'rollback-bulk.mjs');
+      const rollbackBulkPath = join(__dirname, '..', 'lib', 'rollback-bulk.mjs')
 
       if (!fs.existsSync(rollbackBulkPath)) {
-        console.error(chalk.red('Error: Rollback bulk script not found. Please ensure the package is properly installed.'));
-        process.exit(1);
+        console.error(chalk.red('Error: Rollback bulk script not found. Please ensure the package is properly installed.'))
+        process.exit(1)
       }
 
       // Build args for the rollback bulk script
-      const args = [];
+      const args = []
 
       if (options.layer) {
-        args.push(`--layer=${options.layer}`);
+        args.push(`--layer=${options.layer}`)
       } else if (options.config) {
-        args.push(`--config=${options.config}`);
+        args.push(`--config=${options.config}`)
       } else {
-        console.error(chalk.red('Error: Must specify either --layer or --config'));
-        console.log(chalk.yellow('\nExamples:'));
-        console.log(chalk.cyan('  crouton-generate rollback-bulk --layer=shop'));
-        console.log(chalk.cyan('  crouton-generate rollback-bulk --config=./crouton.config.js'));
-        process.exit(1);
+        console.error(chalk.red('Error: Must specify either --layer or --config'))
+        console.log(chalk.yellow('\nExamples:'))
+        console.log(chalk.cyan('  crouton-generate rollback-bulk --layer=shop'))
+        console.log(chalk.cyan('  crouton-generate rollback-bulk --config=./crouton.config.js'))
+        process.exit(1)
       }
 
       if (options.dryRun) {
-        args.push('--dry-run');
+        args.push('--dry-run')
       }
       if (options.keepFiles) {
-        args.push('--keep-files');
+        args.push('--keep-files')
       }
       if (options.force) {
-        args.push('--force');
+        args.push('--force')
       }
 
       // Import and execute the rollback bulk script directly
-      process.argv = ['node', 'rollback-bulk.mjs', ...args];
-      await import(rollbackBulkPath);
-
+      process.argv = ['node', 'rollback-bulk.mjs', ...args]
+      await import(rollbackBulkPath)
     } catch (error) {
-      console.error(chalk.red('Bulk rollback failed:'), error.message);
-      process.exit(1);
+      console.error(chalk.red('Bulk rollback failed:'), error.message)
+      process.exit(1)
     }
-  });
+  })
 
 // Rollback interactive command - UI-based selection
 program
@@ -381,32 +376,31 @@ program
   .option('--keep-files', 'Keep generated files, only clean configs')
   .action(async (options) => {
     try {
-      const rollbackInteractivePath = join(__dirname, '..', 'lib', 'rollback-interactive.mjs');
+      const rollbackInteractivePath = join(__dirname, '..', 'lib', 'rollback-interactive.mjs')
 
       if (!fs.existsSync(rollbackInteractivePath)) {
-        console.error(chalk.red('Error: Rollback interactive script not found. Please ensure the package is properly installed.'));
-        process.exit(1);
+        console.error(chalk.red('Error: Rollback interactive script not found. Please ensure the package is properly installed.'))
+        process.exit(1)
       }
 
       // Build args for the rollback interactive script
-      const args = [];
+      const args = []
 
       if (options.dryRun) {
-        args.push('--dry-run');
+        args.push('--dry-run')
       }
       if (options.keepFiles) {
-        args.push('--keep-files');
+        args.push('--keep-files')
       }
 
       // Import and execute the rollback interactive script directly
-      process.argv = ['node', 'rollback-interactive.mjs', ...args];
-      await import(rollbackInteractivePath);
-
+      process.argv = ['node', 'rollback-interactive.mjs', ...args]
+      await import(rollbackInteractivePath)
     } catch (error) {
-      console.error(chalk.red('Interactive rollback failed:'), error.message);
-      process.exit(1);
+      console.error(chalk.red('Interactive rollback failed:'), error.message)
+      process.exit(1)
     }
-  });
+  })
 
 // Seed translations command - import JSON locale files to database
 program
@@ -420,67 +414,66 @@ program
   .option('--sql', 'Output SQL statements instead of using API')
   .action(async (options) => {
     try {
-      const seedPath = join(__dirname, '..', 'lib', 'seed-translations.mjs');
+      const seedPath = join(__dirname, '..', 'lib', 'seed-translations.mjs')
 
       if (!fs.existsSync(seedPath)) {
-        console.error(chalk.red('Error: Seed translations script not found. Please ensure the package is properly installed.'));
-        process.exit(1);
+        console.error(chalk.red('Error: Seed translations script not found. Please ensure the package is properly installed.'))
+        process.exit(1)
       }
 
       // Build args for the seed script
-      const args = [];
+      const args = []
 
       if (options.layer) {
-        args.push(`--layer=${options.layer}`);
+        args.push(`--layer=${options.layer}`)
       }
       if (options.team) {
-        args.push(`--team=${options.team}`);
+        args.push(`--team=${options.team}`)
       }
       if (options.dryRun) {
-        args.push('--dry-run');
+        args.push('--dry-run')
       }
       if (options.force) {
-        args.push('--force');
+        args.push('--force')
       }
       if (options.apiUrl) {
-        args.push(`--api-url=${options.apiUrl}`);
+        args.push(`--api-url=${options.apiUrl}`)
       }
       if (options.sql) {
-        args.push('--sql');
+        args.push('--sql')
       }
 
       // Import and execute the seed script
-      process.argv = ['node', 'seed-translations.mjs', ...args];
-      const { seedTranslationsFromJson } = await import(seedPath);
-      await seedTranslationsFromJson();
-
+      process.argv = ['node', 'seed-translations.mjs', ...args]
+      const { seedTranslationsFromJson } = await import(seedPath)
+      await seedTranslationsFromJson()
     } catch (error) {
-      console.error(chalk.red('Seed translations failed:'), error.message);
-      process.exit(1);
+      console.error(chalk.red('Seed translations failed:'), error.message)
+      process.exit(1)
     }
-  });
+  })
 
 // Parse CLI arguments
-program.parse(process.argv);
+program.parse(process.argv)
 
 // Handle --config flag without any subcommand
 // e.g.: crouton-generate --config ./my-config.js
-const opts = program.opts();
+const opts = program.opts()
 if (opts.config && !program.args.length) {
   (async () => {
-    const spinner = ora('Loading config...').start();
+    const spinner = ora('Loading config...').start()
     try {
-      const args = ['--config', opts.config];
-      spinner.stop();
-      process.argv = ['node', 'generate-collection.mjs', ...args];
-      await import(generatorPath);
+      const args = ['--config', opts.config]
+      spinner.stop()
+      process.argv = ['node', 'generate-collection.mjs', ...args]
+      await import(generatorPath)
     } catch (error) {
-      spinner.fail('Generation failed');
-      console.error(chalk.red(error.message));
-      process.exit(1);
+      spinner.fail('Generation failed')
+      console.error(chalk.red(error.message))
+      process.exit(1)
     }
-  })();
+  })()
 } else if (!process.argv.slice(2).length) {
   // Show help if no arguments
-  program.outputHelp();
+  program.outputHelp()
 }

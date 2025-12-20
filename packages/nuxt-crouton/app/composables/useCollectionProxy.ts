@@ -9,7 +9,7 @@
 interface ProxyConfig {
   enabled: boolean
   sourceEndpoint: string
-  transform: (item: any) => { id: string; title: string; [key: string]: any }
+  transform: (item: any) => { id: string, title: string, [key: string]: any }
 }
 
 /**
@@ -30,7 +30,7 @@ export function useCollectionProxy() {
 
     // Apply transform to array of items
     if (Array.isArray(data)) {
-      return data.map(item => {
+      return data.map((item) => {
         try {
           return proxy.transform(item)
         } catch (error) {

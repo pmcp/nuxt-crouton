@@ -1,7 +1,7 @@
 <template>
   <UDashboardPanel :id="collection || 'crouton-table'">
     <template #header>
-      <slot name="header"></slot>
+      <slot name="header" />
     </template>
 
     <template #body>
@@ -27,7 +27,10 @@
           class="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center"
         >
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-loader-2" class="animate-spin" />
+            <UIcon
+              name="i-lucide-loader-2"
+              class="animate-spin"
+            />
             <span class="text-sm">{{ t('common.loading') }}</span>
           </div>
         </div>
@@ -44,40 +47,46 @@
           :ui="tableStyles"
         >
           <!-- Pass all slots from parent -->
-          <template v-for="(_, slot) of $slots" #[slot]="scope">
-            <slot :name="slot" v-bind="scope" />
+          <template
+            v-for="(_, slot) of $slots"
+            #[slot]="scope"
+          >
+            <slot
+              :name="slot"
+              v-bind="scope"
+            />
           </template>
 
           <!-- Default column templates -->
           <template #createdBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
             <CroutonUsersCardMini
-                v-if="row.original.createdByUser"
-                :item="row.original.createdByUser"
-                :name="true"
+              v-if="row.original.createdByUser"
+              :item="row.original.createdByUser"
+              :name="true"
             />
           </template>
 
           <template #createdAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
-            <CroutonDate :date="row.original.createdAt"></CroutonDate>
+            <CroutonDate :date="row.original.createdAt" />
           </template>
 
           <template #updatedBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
             <CroutonUsersCardMini
-                v-if="row.original.updatedByUser"
-                :item="row.original.updatedByUser"
-                :name="true"
+              v-if="row.original.updatedByUser"
+              :item="row.original.updatedByUser"
+              :name="true"
             />
           </template>
 
           <template #updatedAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
-            <CroutonDate :date="row.original.updatedAt"></CroutonDate>
+            <CroutonDate :date="row.original.updatedAt" />
           </template>
 
           <template #actions-cell="{ row }: { row: { original: CroutonBaseRow } }">
             <CroutonItemButtonsMini
               delete
-              @delete="openCrouton('delete', collection, [row.original.id])"
               update
+              @delete="openCrouton('delete', collection, [row.original.id])"
               @update="openCrouton('update', collection, [row.original.id])"
             />
           </template>
@@ -111,8 +120,8 @@ interface CroutonBaseRow {
   updatedAt?: string
   createdBy?: string
   updatedBy?: string
-  createdByUser?: { id: string; name?: string; image?: string }
-  updatedByUser?: { id: string; name?: string; image?: string }
+  createdByUser?: { id: string, name?: string, image?: string }
+  updatedByUser?: { id: string, name?: string, image?: string }
   [key: string]: unknown
 }
 
@@ -251,7 +260,7 @@ function handlePageCountChange(newCount: number) {
 
 // Watchers
 watch(page, (newPage, oldPage) => {
-if (props.serverPagination && newPage !== oldPage) fetchPage(newPage)
+  if (props.serverPagination && newPage !== oldPage) fetchPage(newPage)
 })
 
 watch(pageCount, (newCount, oldCount) => {
@@ -259,8 +268,8 @@ watch(pageCount, (newCount, oldCount) => {
 })
 
 watch(sort, (newSort, oldSort) => {
-  if (props.serverPagination &&
-      (newSort.column !== oldSort.column || newSort.direction !== oldSort.direction)) {
+  if (props.serverPagination
+    && (newSort.column !== oldSort.column || newSort.direction !== oldSort.direction)) {
     page.value = 1
     fetchPage(1)
   }

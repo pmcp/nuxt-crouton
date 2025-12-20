@@ -33,10 +33,10 @@ const formattedDate = computed(() => {
 })
 
 const maxWidthClasses: Record<string, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
+  'sm': 'max-w-sm',
+  'md': 'max-w-md',
+  'lg': 'max-w-lg',
+  'xl': 'max-w-xl',
   '2xl': 'max-w-2xl',
   '3xl': 'max-w-3xl',
   '4xl': 'max-w-4xl'
@@ -49,7 +49,10 @@ const maxWidthClasses: Record<string, string> = {
     <header class="mb-8 lg:mb-12">
       <slot name="header">
         <!-- Tags -->
-        <div v-if="tags?.length" class="flex flex-wrap gap-2 mb-4">
+        <div
+          v-if="tags?.length"
+          class="flex flex-wrap gap-2 mb-4"
+        >
           <UBadge
             v-for="tag in tags"
             :key="tag"
@@ -65,14 +68,20 @@ const maxWidthClasses: Record<string, string> = {
         </h1>
 
         <!-- Description / Excerpt -->
-        <p v-if="description" class="mt-4 text-lg sm:text-xl text-muted">
+        <p
+          v-if="description"
+          class="mt-4 text-lg sm:text-xl text-muted"
+        >
           {{ description }}
         </p>
 
         <!-- Meta: Author, Date, Reading Time -->
         <div class="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted">
           <!-- Author -->
-          <div v-if="author" class="flex items-center gap-3">
+          <div
+            v-if="author"
+            class="flex items-center gap-3"
+          >
             <UAvatar
               v-if="author.avatar"
               :src="author.avatar"
@@ -80,15 +89,29 @@ const maxWidthClasses: Record<string, string> = {
               size="sm"
             />
             <div>
-              <p class="font-medium text-foreground">{{ author.name }}</p>
-              <p v-if="author.description" class="text-xs">{{ author.description }}</p>
+              <p class="font-medium text-foreground">
+                {{ author.name }}
+              </p>
+              <p
+                v-if="author.description"
+                class="text-xs"
+              >
+                {{ author.description }}
+              </p>
             </div>
           </div>
 
-          <USeparator v-if="author && (formattedDate || readingTime)" orientation="vertical" class="h-6" />
+          <USeparator
+            v-if="author && (formattedDate || readingTime)"
+            orientation="vertical"
+            class="h-6"
+          />
 
           <!-- Date -->
-          <time v-if="formattedDate" :datetime="String(date)">
+          <time
+            v-if="formattedDate"
+            :datetime="String(date)"
+          >
             {{ formattedDate }}
           </time>
 
@@ -102,12 +125,15 @@ const maxWidthClasses: Record<string, string> = {
     </header>
 
     <!-- Featured Image -->
-    <figure v-if="image" class="mb-8 lg:mb-12 -mx-4 sm:mx-0">
+    <figure
+      v-if="image"
+      class="mb-8 lg:mb-12 -mx-4 sm:mx-0"
+    >
       <img
         :src="image"
         :alt="imageAlt || title"
         class="w-full rounded-none sm:rounded-lg object-cover aspect-video"
-      />
+      >
     </figure>
 
     <!-- Article Content -->
@@ -124,7 +150,10 @@ const maxWidthClasses: Record<string, string> = {
       </main>
 
       <!-- Sidebar -->
-      <aside v-if="$slots.sidebar" class="hidden lg:block">
+      <aside
+        v-if="$slots.sidebar"
+        class="hidden lg:block"
+      >
         <div class="sticky top-20">
           <slot name="sidebar" />
         </div>
@@ -132,7 +161,10 @@ const maxWidthClasses: Record<string, string> = {
     </div>
 
     <!-- Footer -->
-    <footer v-if="$slots.footer" class="mt-12 lg:mt-16">
+    <footer
+      v-if="$slots.footer"
+      class="mt-12 lg:mt-16"
+    >
       <USeparator class="mb-8" />
       <slot name="footer" />
     </footer>

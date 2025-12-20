@@ -7,7 +7,7 @@ interface TabError {
 
 interface Props {
   tabErrors: Record<string, number>
-  navigationItems: Array<{ label: string; value: string }>
+  navigationItems: Array<{ label: string, value: string }>
 }
 
 const props = defineProps<Props>()

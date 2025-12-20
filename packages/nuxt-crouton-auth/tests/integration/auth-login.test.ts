@@ -15,7 +15,7 @@ import {
   createTestUser,
   createTestSession,
   createTestTeam,
-  createTestMember,
+  createTestMember
 } from './setup'
 
 describe('Integration: Login Flow', () => {
@@ -43,7 +43,7 @@ describe('Integration: Login Flow', () => {
       expect(mockClient.signIn.email).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password123',
-        rememberMe: undefined,
+        rememberMe: undefined
       })
     })
 
@@ -58,7 +58,7 @@ describe('Integration: Login Flow', () => {
       expect(mockClient.signIn.email).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password123',
-        rememberMe: true,
+        rememberMe: true
       })
     })
 
@@ -115,7 +115,7 @@ describe('Integration: Login Flow', () => {
 
       expect(mockClient.signIn.social).toHaveBeenCalledWith({
         provider: 'github',
-        callbackURL: expect.stringContaining('/auth/callback'),
+        callbackURL: expect.stringContaining('/auth/callback')
       })
     })
 
@@ -190,7 +190,7 @@ describe('Integration: Login Flow', () => {
 
       expect(mockClient.signIn.magicLink).toHaveBeenCalledWith({
         email: 'test@example.com',
-        callbackURL: expect.stringContaining('/auth/callback'),
+        callbackURL: expect.stringContaining('/auth/callback')
       })
     })
 
@@ -216,7 +216,7 @@ describe('Integration: Login Flow', () => {
       expect(result).toBe(true)
       expect(mockClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
         code: '123456',
-        trustDevice: undefined,
+        trustDevice: undefined
       })
     })
 
@@ -240,7 +240,7 @@ describe('Integration: Login Flow', () => {
 
       expect(mockClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
         code: '123456',
-        trustDevice: true,
+        trustDevice: true
       })
     })
 
@@ -289,7 +289,7 @@ describe('Integration: Login Flow', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -309,7 +309,7 @@ describe('Integration: Login Flow', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -329,7 +329,7 @@ describe('Integration: Login Flow', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: mockRefresh,
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -349,7 +349,7 @@ describe('Integration: Login Flow', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: mockClear,
+        clear: mockClear
       }))
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -372,7 +372,7 @@ describe('Integration: Login Flow', () => {
         user,
         session,
         teams: [team],
-        members: [createTestMember({ userId: user.id, organizationId: team.id })],
+        members: [createTestMember({ userId: user.id, organizationId: team.id })]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -382,7 +382,7 @@ describe('Integration: Login Flow', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useAuth } = await import('../../app/composables/useAuth')

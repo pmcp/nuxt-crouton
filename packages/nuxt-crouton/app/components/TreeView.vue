@@ -142,7 +142,10 @@ onMounted(async () => {
 
 <template>
   <ClientOnly>
-    <div class="w-full" :data-column-id="columnId || undefined">
+    <div
+      class="w-full"
+      :data-column-id="columnId || undefined"
+    >
       <div
         v-if="items.length > 0"
         ref="rootRef"
@@ -164,10 +167,20 @@ onMounted(async () => {
       </div>
 
       <!-- Empty state -->
-      <div v-else class="text-center text-muted p-8">
-        <UIcon name="i-lucide-git-branch" class="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p class="text-lg font-medium mb-2">No items yet</p>
-        <p class="text-sm">Create your first item to see the tree structure.</p>
+      <div
+        v-else
+        class="text-center text-muted p-8"
+      >
+        <UIcon
+          name="i-lucide-git-branch"
+          class="w-12 h-12 mx-auto mb-4 opacity-50"
+        />
+        <p class="text-lg font-medium mb-2">
+          No items yet
+        </p>
+        <p class="text-sm">
+          Create your first item to see the tree structure.
+        </p>
       </div>
     </div>
 

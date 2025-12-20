@@ -107,7 +107,7 @@ Do NOT include these in your schema.`
 }
 
 export const designSchemaInputSchema = {
-  collectionName: z.string().describe("Name of the collection (singular, e.g., 'product', 'order')"),
+  collectionName: z.string().describe('Name of the collection (singular, e.g., \'product\', \'order\')'),
   description: z.string().describe('Natural language description of what the collection should contain'),
   layer: z.string().optional().describe('Target layer name (optional - will be inferred if not provided)')
 }

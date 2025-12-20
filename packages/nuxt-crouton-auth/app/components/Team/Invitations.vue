@@ -35,7 +35,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   showTeamInvitations: true,
-  showUserInvitations: false,
+  showUserInvitations: false
 })
 
 const { t } = useT()
@@ -46,7 +46,7 @@ const {
   acceptInvitation,
   rejectInvitation,
   canManageMembers,
-  loading: teamLoading,
+  loading: teamLoading
 } = useTeam()
 
 const toast = useToast()
@@ -84,7 +84,7 @@ async function handleCancel(invitationId: string) {
     toast.add({
       title: 'Invitation cancelled',
       description: 'The invitation has been cancelled.',
-      color: 'success',
+      color: 'success'
     })
     // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
@@ -93,7 +93,7 @@ async function handleCancel(invitationId: string) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     loadingInvitationId.value = null
@@ -108,7 +108,7 @@ async function handleAccept(invitationId: string) {
     toast.add({
       title: 'Invitation accepted',
       description: 'You have joined the team.',
-      color: 'success',
+      color: 'success'
     })
     // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
@@ -117,7 +117,7 @@ async function handleAccept(invitationId: string) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     loadingInvitationId.value = null
@@ -132,7 +132,7 @@ async function handleReject(invitationId: string) {
     toast.add({
       title: 'Invitation declined',
       description: 'The invitation has been declined.',
-      color: 'info',
+      color: 'info'
     })
     // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
@@ -141,7 +141,7 @@ async function handleReject(invitationId: string) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     loadingInvitationId.value = null
@@ -195,7 +195,10 @@ function roleBadgeColor(role: MemberRole): string {
       v-if="(isLoading || teamLoading) && invitations.length === 0"
       class="py-8 text-center text-muted"
     >
-      <UIcon name="i-lucide-loader-2" class="size-6 animate-spin mx-auto mb-2" />
+      <UIcon
+        name="i-lucide-loader-2"
+        class="size-6 animate-spin mx-auto mb-2"
+      />
       <p>{{ t('teams.loadingInvitations') }}</p>
     </div>
 
@@ -204,12 +207,18 @@ function roleBadgeColor(role: MemberRole): string {
       v-else-if="invitations.length === 0"
       class="py-8 text-center text-muted"
     >
-      <UIcon name="i-lucide-mail-open" class="size-8 mx-auto mb-2" />
+      <UIcon
+        name="i-lucide-mail-open"
+        class="size-8 mx-auto mb-2"
+      />
       <p>{{ t('teams.noPendingInvitations') }}</p>
     </div>
 
     <!-- Invitations List -->
-    <div v-else class="divide-y divide-border rounded-lg border border-border overflow-hidden">
+    <div
+      v-else
+      class="divide-y divide-border rounded-lg border border-border overflow-hidden"
+    >
       <div
         v-for="invitation in invitations"
         :key="invitation.id"
@@ -241,7 +250,10 @@ function roleBadgeColor(role: MemberRole): string {
         </div>
 
         <!-- Admin Actions (Cancel) -->
-        <div v-if="showTeamInvitations && canManageMembers" class="flex items-center gap-2">
+        <div
+          v-if="showTeamInvitations && canManageMembers"
+          class="flex items-center gap-2"
+        >
           <UButton
             icon="i-lucide-x"
             variant="ghost"
@@ -256,7 +268,10 @@ function roleBadgeColor(role: MemberRole): string {
         </div>
 
         <!-- User Actions (Accept/Reject) -->
-        <div v-if="showUserInvitations" class="flex items-center gap-2">
+        <div
+          v-if="showUserInvitations"
+          class="flex items-center gap-2"
+        >
           <UButton
             icon="i-lucide-x"
             variant="ghost"
@@ -279,7 +294,10 @@ function roleBadgeColor(role: MemberRole): string {
     </div>
 
     <!-- Refresh Button -->
-    <div v-if="invitations.length > 0" class="flex justify-end">
+    <div
+      v-if="invitations.length > 0"
+      class="flex justify-end"
+    >
       <UButton
         variant="ghost"
         size="sm"

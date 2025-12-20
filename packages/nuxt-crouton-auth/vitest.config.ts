@@ -14,9 +14,9 @@ export default defineConfig({
         esModuleInterop: true,
         skipLibCheck: true,
         allowSyntheticDefaultImports: true,
-        isolatedModules: true,
-      },
-    },
+        isolatedModules: true
+      }
+    }
   },
   test: {
     environment: 'jsdom',
@@ -26,17 +26,17 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['app/composables/**/*.ts', 'server/utils/**/*.ts', 'server/lib/**/*.ts'],
-      exclude: ['**/node_modules/**', '**/dist/**'],
+      exclude: ['**/node_modules/**', '**/dist/**']
     },
     setupFiles: ['./tests/setup.ts'],
     typecheck: {
-      enabled: false,
-    },
+      enabled: false
+    }
   },
   resolve: {
     alias: {
       '#app': resolve(__dirname, 'tests/mocks/nuxt-app'),
-      '#imports': resolve(__dirname, 'tests/mocks/imports'),
-    },
-  },
+      '#imports': resolve(__dirname, 'tests/mocks/imports')
+    }
+  }
 })

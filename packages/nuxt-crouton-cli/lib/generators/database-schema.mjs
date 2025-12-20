@@ -14,16 +14,16 @@ export function generateSchema(data, dialect, config = null) {
     .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
   const exportName = `${layerCamelCase}${plural.charAt(0).toUpperCase() + plural.slice(1)}`
-  
+
   // Check if this collection needs translations
   const needsTranslations = config?.translations?.collections?.[plural] || config?.translations?.collections?.[singular]
   const translatableFields = needsTranslations || []
-  
+
   // Build translations field if needed
   let translationsField = ''
   let translationsImport = ''
   let translationsComment = ''
-  
+
   if (needsTranslations && dialect === 'sqlite') {
     // Build TypeScript type for translations
     const typeFields = translatableFields.map(f => `      ${f}?: string`).join('\n')
@@ -37,12 +37,14 @@ export function generateSchema(data, dialect, config = null) {
   const TEAM_FIELDS = ['teamId', 'owner']
 
   // Hierarchy fields (use custom names from config or defaults)
-  const HIERARCHY_FIELDS = hierarchy?.enabled ? [
-    hierarchy.parentField || 'parentId',
-    hierarchy.pathField || 'path',
-    hierarchy.depthField || 'depth',
-    hierarchy.orderField || 'order'
-  ] : []
+  const HIERARCHY_FIELDS = hierarchy?.enabled
+    ? [
+        hierarchy.parentField || 'parentId',
+        hierarchy.pathField || 'path',
+        hierarchy.depthField || 'depth',
+        hierarchy.orderField || 'order'
+      ]
+    : []
 
   // Sortable field (only when not using hierarchy, since hierarchy already includes order)
   const sortable = data.sortable ?? false
@@ -63,54 +65,54 @@ export function generateSchema(data, dialect, config = null) {
 
   const schemaFields = data.fields
     .filter(field => !reservedFields.includes(field.name))
-    .map(field => {
-    const nullable = field.meta?.required ? '.notNull()' : ''
-    const unique = field.meta?.unique ? '.unique()' : ''
+    .map((field) => {
+      const nullable = field.meta?.required ? '.notNull()' : ''
+      const unique = field.meta?.unique ? '.unique()' : ''
 
-    // Check if this is a dependent field (should be stored as JSON array)
-    const isDependentField = field.meta?.dependsOn || field.meta?.displayAs === 'slotButtonGroup'
+      // Check if this is a dependent field (should be stored as JSON array)
+      const isDependentField = field.meta?.dependsOn || field.meta?.displayAs === 'slotButtonGroup'
 
-    if (dialect === 'sqlite') {
+      if (dialect === 'sqlite') {
       // SQLite specific schema
-      if (field.type === 'boolean') {
-        return `  ${field.name}: integer('${field.name}', { mode: 'boolean' })${nullable}${unique}.$default(() => false)`
-      } else if (field.type === 'number' || field.type === 'decimal') {
-        return `  ${field.name}: ${field.type === 'decimal' ? 'real' : 'integer'}('${field.name}')${nullable}${unique}`
-      } else if (field.type === 'date') {
-        return `  ${field.name}: integer('${field.name}', { mode: 'timestamp' })${nullable}${unique}.$default(() => new Date())`
-      } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array' || isDependentField) {
+        if (field.type === 'boolean') {
+          return `  ${field.name}: integer('${field.name}', { mode: 'boolean' })${nullable}${unique}.$default(() => false)`
+        } else if (field.type === 'number' || field.type === 'decimal') {
+          return `  ${field.name}: ${field.type === 'decimal' ? 'real' : 'integer'}('${field.name}')${nullable}${unique}`
+        } else if (field.type === 'date') {
+          return `  ${field.name}: integer('${field.name}', { mode: 'timestamp' })${nullable}${unique}.$default(() => new Date())`
+        } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array' || isDependentField) {
         // Use [] for arrays/repeaters/dependent fields, {} for json objects
-        const defaultValue = (field.type === 'array' || field.type === 'repeater' || isDependentField) ? 'null' : '{}'
-        // Use customType to handle NULL values gracefully in LEFT JOINs
-        return `  ${field.name}: jsonColumn('${field.name}')${nullable}${unique}.$default(() => (${defaultValue}))`
-      } else {
-        return `  ${field.name}: text('${field.name}')${nullable}${unique}`
-      }
-    } else {
-      // PostgreSQL specific schema
-      if (field.type === 'boolean') {
-        return `  ${field.name}: boolean('${field.name}')${nullable}${unique}.$default(() => false)`
-      } else if (field.type === 'number') {
-        return `  ${field.name}: integer('${field.name}')${nullable}${unique}`
-      } else if (field.type === 'decimal') {
-        return `  ${field.name}: numeric('${field.name}')${nullable}${unique}`
-      } else if (field.type === 'date') {
-        return `  ${field.name}: timestamp('${field.name}', { withTimezone: true })${nullable}${unique}.$default(() => new Date())`
-      } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array' || isDependentField) {
-        // Use [] for arrays/repeaters/dependent fields, {} for json objects
-        const defaultValue = (field.type === 'array' || field.type === 'repeater' || isDependentField) ? 'null' : '{}'
-        return `  ${field.name}: jsonb('${field.name}')${nullable}${unique}.$default(() => (${defaultValue}))`
-      } else if (field.type === 'text') {
-        return `  ${field.name}: text('${field.name}')${nullable}${unique}`
-      } else {
-        const maxLength = field.meta?.maxLength
-        if (maxLength) {
-          return `  ${field.name}: varchar('${field.name}', { length: ${maxLength} })${nullable}${unique}`
+          const defaultValue = (field.type === 'array' || field.type === 'repeater' || isDependentField) ? 'null' : '{}'
+          // Use customType to handle NULL values gracefully in LEFT JOINs
+          return `  ${field.name}: jsonColumn('${field.name}')${nullable}${unique}.$default(() => (${defaultValue}))`
+        } else {
+          return `  ${field.name}: text('${field.name}')${nullable}${unique}`
         }
-        return `  ${field.name}: text('${field.name}')${nullable}${unique}`
+      } else {
+      // PostgreSQL specific schema
+        if (field.type === 'boolean') {
+          return `  ${field.name}: boolean('${field.name}')${nullable}${unique}.$default(() => false)`
+        } else if (field.type === 'number') {
+          return `  ${field.name}: integer('${field.name}')${nullable}${unique}`
+        } else if (field.type === 'decimal') {
+          return `  ${field.name}: numeric('${field.name}')${nullable}${unique}`
+        } else if (field.type === 'date') {
+          return `  ${field.name}: timestamp('${field.name}', { withTimezone: true })${nullable}${unique}.$default(() => new Date())`
+        } else if (field.type === 'json' || field.type === 'repeater' || field.type === 'array' || isDependentField) {
+        // Use [] for arrays/repeaters/dependent fields, {} for json objects
+          const defaultValue = (field.type === 'array' || field.type === 'repeater' || isDependentField) ? 'null' : '{}'
+          return `  ${field.name}: jsonb('${field.name}')${nullable}${unique}.$default(() => (${defaultValue}))`
+        } else if (field.type === 'text') {
+          return `  ${field.name}: text('${field.name}')${nullable}${unique}`
+        } else {
+          const maxLength = field.meta?.maxLength
+          if (maxLength) {
+            return `  ${field.name}: varchar('${field.name}', { length: ${maxLength} })${nullable}${unique}`
+          }
+          return `  ${field.name}: text('${field.name}')${nullable}${unique}`
+        }
       }
-    }
-  }).join(',\n')
+    }).join(',\n')
 
   const imports = dialect === 'sqlite'
     ? `import { nanoid } from 'nanoid'
@@ -198,11 +200,13 @@ const jsonColumn = customType<any>({
   }
 
   // Build metadata fields conditionally
-  const metadataFields = useMetadata ? `
-  createdAt: ${dialect === 'sqlite' ? "integer('createdAt', { mode: 'timestamp' })" : "timestamp('createdAt', { withTimezone: true })"}.notNull().$default(() => new Date()),
-  updatedAt: ${dialect === 'sqlite' ? "integer('updatedAt', { mode: 'timestamp' })" : "timestamp('updatedAt', { withTimezone: true })"}.notNull().$onUpdate(() => new Date()),
+  const metadataFields = useMetadata
+    ? `
+  createdAt: ${dialect === 'sqlite' ? 'integer(\'createdAt\', { mode: \'timestamp\' })' : 'timestamp(\'createdAt\', { withTimezone: true })'}.notNull().$default(() => new Date()),
+  updatedAt: ${dialect === 'sqlite' ? 'integer(\'updatedAt\', { mode: \'timestamp\' })' : 'timestamp(\'updatedAt\', { withTimezone: true })'}.notNull().$onUpdate(() => new Date()),
   createdBy: text('createdBy').notNull(),
-  updatedBy: text('updatedBy').notNull()` : ''
+  updatedBy: text('updatedBy').notNull()`
+    : ''
 
   // Build the complete field list with proper comma handling
   const allFields = [

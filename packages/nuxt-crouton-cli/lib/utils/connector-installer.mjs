@@ -4,11 +4,11 @@
  * Handles installation and setup of external connectors
  */
 
-import fsp from 'fs/promises'
-import path from 'path'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import readline from 'readline'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
+import readline from 'node:readline'
 
 const execAsync = promisify(exec)
 
@@ -98,7 +98,7 @@ export async function addConnectorToNuxtConfig(projectRoot) {
         : `$1\n    '@friendlyinternet/nuxt-crouton-supersaas',`
 
       content = content.replace(
-        /(extends:\s*\[\s*\n\s*'@friendlyinternet\/nuxt-crouton',)/,
+        /(extends:\s*\[[\t\v\f\r \xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]*\n\s*'@friendlyinternet\/nuxt-crouton',)/,
         replacement
       )
 
@@ -144,7 +144,7 @@ export async function updateAppConfigWithPackageImport(projectRoot, collectionNa
     // Check if import already exists
     if (!content.includes(importStatement)) {
       // Find existing import block and add after it
-      const importBlockMatch = content.match(/^((?:import\s+.*\n)*)/m)
+      const importBlockMatch = content.match(/^((?:import\s+(?:\S.*)?\n)*)/m)
 
       if (importBlockMatch) {
         const existingImports = importBlockMatch[0]
@@ -237,7 +237,7 @@ export async function setupConnectorInteractive(projectRoot, collectionName, rec
   console.log(`  ${recommendations.length + 1}. Skip (configure manually)`)
 
   const choice = await prompt(`\nSelect connector (1-${recommendations.length + 1}): `)
-  const choiceNum = parseInt(choice, 10)
+  const choiceNum = Number.parseInt(choice, 10)
 
   if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > recommendations.length + 1) {
     console.log('✗ Invalid choice')

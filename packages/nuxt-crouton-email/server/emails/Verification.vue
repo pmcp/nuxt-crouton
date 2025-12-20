@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
   brandName: 'My App',
   logoUrl: '',
   primaryColor: '#0F766E',
-  appUrl: '',
+  appUrl: ''
 })
 </script>
 
@@ -37,7 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
         fontSize: '16px',
         lineHeight: '24px',
         color: '#525f7f',
-        margin: '0 0 16px',
+        margin: '0 0 16px'
       }"
     >
       Hi{{ name ? ` ${name}` : '' }},
@@ -48,7 +48,7 @@ const props = withDefaults(defineProps<Props>(), {
         fontSize: '16px',
         lineHeight: '24px',
         color: '#525f7f',
-        margin: '0 0 24px',
+        margin: '0 0 24px'
       }"
     >
       Please use the following verification code to complete your request:
@@ -60,7 +60,7 @@ const props = withDefaults(defineProps<Props>(), {
         borderRadius: '8px',
         padding: '24px',
         textAlign: 'center',
-        margin: '0 0 24px',
+        margin: '0 0 24px'
       }"
     >
       <EText
@@ -70,7 +70,7 @@ const props = withDefaults(defineProps<Props>(), {
           letterSpacing: '4px',
           color: primaryColor,
           margin: '0',
-          fontFamily: 'monospace',
+          fontFamily: 'monospace'
         }"
       >
         {{ code }}
@@ -82,7 +82,7 @@ const props = withDefaults(defineProps<Props>(), {
         fontSize: '14px',
         lineHeight: '20px',
         color: '#8898aa',
-        margin: '0 0 16px',
+        margin: '0 0 16px'
       }"
     >
       This code will expire in {{ expiryMinutes }} minutes.
@@ -93,7 +93,7 @@ const props = withDefaults(defineProps<Props>(), {
         fontSize: '14px',
         lineHeight: '20px',
         color: '#8898aa',
-        margin: '0',
+        margin: '0'
       }"
     >
       If you didn't request this code, you can safely ignore this email.

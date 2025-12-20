@@ -17,34 +17,34 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false,
+  loading: false
 })
 
 const emit = defineEmits<{
-  'submit': [payload: { reason: string; duration: number | null }]
-  'cancel': []
+  submit: [payload: { reason: string, duration: number | null }]
+  cancel: []
 }>()
 
 const schema = z.object({
   reason: z.string().min(1, 'Please provide a reason for the ban'),
-  duration: z.string(),
+  duration: z.string()
 })
 
 const state = ref({
   reason: '',
-  duration: '7_days' as BanDuration,
+  duration: '7_days' as BanDuration
 })
 
 const durationOptions = BAN_DURATIONS.map(d => ({
   value: d.value,
-  label: d.label,
+  label: d.label
 }))
 
 function handleSubmit() {
   const selectedDuration = BAN_DURATIONS.find(d => d.value === state.value.duration)
   emit('submit', {
     reason: state.value.reason,
-    duration: selectedDuration?.hours ?? null,
+    duration: selectedDuration?.hours ?? null
   })
 }
 </script>
@@ -67,7 +67,11 @@ function handleSubmit() {
     </div>
 
     <!-- Reason -->
-    <UFormField label="Reason" name="reason" required>
+    <UFormField
+      label="Reason"
+      name="reason"
+      required
+    >
       <UTextarea
         v-model="state.reason"
         placeholder="Enter the reason for banning this user..."
@@ -76,7 +80,10 @@ function handleSubmit() {
     </UFormField>
 
     <!-- Duration -->
-    <UFormField label="Duration" name="duration">
+    <UFormField
+      label="Duration"
+      name="duration"
+    >
       <USelect
         v-model="state.duration"
         :items="durationOptions"

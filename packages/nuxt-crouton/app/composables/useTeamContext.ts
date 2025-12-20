@@ -84,6 +84,6 @@ export function useTeamContext() {
     getTeamSlug,
     // Computed refs (@crouton/auth compatible API)
     teamId,
-    teamSlug,
+    teamSlug
   }
 }

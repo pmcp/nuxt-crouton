@@ -167,21 +167,21 @@ export const defaultBetterAuthConnectorConfig: BetterAuthConnectorConfig = {
     teams: 'organization',
     teamMembers: 'member',
     users: 'user',
-    sessions: 'session',
+    sessions: 'session'
   },
   session: {
-    getUserId: (session) => session.user.id,
-    getTeamId: (session) => session.session.activeOrganizationId,
-    getUser: (session) => ({
+    getUserId: session => session.user.id,
+    getTeamId: session => session.session.activeOrganizationId,
+    getUser: session => ({
       id: session.user.id,
       email: session.user.email,
       name: session.user.name,
       emailVerified: session.user.emailVerified,
       image: session.user.image,
       createdAt: session.user.createdAt,
-      updatedAt: session.user.updatedAt,
-    }),
-  },
+      updatedAt: session.user.updatedAt
+    })
+  }
 }
 
 // ============================================================================
@@ -193,12 +193,12 @@ export const defaultBetterAuthConnectorConfig: BetterAuthConnectorConfig = {
  */
 export function isBetterAuthSession(session: unknown): session is BetterAuthSession {
   return (
-    typeof session === 'object' &&
-    session !== null &&
-    'session' in session &&
-    'user' in session &&
-    typeof (session as BetterAuthSession).session?.activeOrganizationId !== 'undefined' ||
-    typeof (session as BetterAuthSession).session?.userId === 'string'
+    typeof session === 'object'
+    && session !== null
+    && 'session' in session
+    && 'user' in session
+    && typeof (session as BetterAuthSession).session?.activeOrganizationId !== 'undefined'
+    || typeof (session as BetterAuthSession).session?.userId === 'string'
   )
 }
 
@@ -207,8 +207,8 @@ export function isBetterAuthSession(session: unknown): session is BetterAuthSess
  */
 export function isBetterAuthConnector(connector: unknown): connector is BetterAuthConnector {
   return (
-    typeof connector === 'object' &&
-    connector !== null &&
-    (connector as BetterAuthConnector).type === 'better-auth'
+    typeof connector === 'object'
+    && connector !== null
+    && (connector as BetterAuthConnector).type === 'better-auth'
   )
 }

@@ -23,13 +23,13 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
   // Get the current session
   const auth = useServerAuth(event)
   const currentSession = await auth.api.getSession({
-    headers: event.headers,
+    headers: event.headers
   })
 
   if (!currentSession?.session?.id) {
     throw createError({
       statusCode: 401,
-      message: 'No active session found',
+      message: 'No active session found'
     })
   }
 
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
   if (sessions.length === 0) {
     throw createError({
       statusCode: 404,
-      message: 'Session not found',
+      message: 'Session not found'
     })
   }
 
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
   if (!currentDbSession.impersonatingFrom) {
     throw createError({
       statusCode: 400,
-      message: 'Not currently impersonating any user',
+      message: 'Not currently impersonating any user'
     })
   }
 
@@ -74,7 +74,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
 
     throw createError({
       statusCode: 401,
-      message: 'Original admin account no longer exists. Session invalidated.',
+      message: 'Original admin account no longer exists. Session invalidated.'
     })
   }
 
@@ -86,13 +86,13 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
     .set({
       userId: originalAdminId,
       impersonatingFrom: null,
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
     .where(eq(session.id, currentSession.session.id))
 
   return {
     isImpersonating: false,
     originalAdminId: null,
-    impersonatedUser: null,
+    impersonatedUser: null
   }
 })

@@ -8,22 +8,22 @@ interface DateRange {
 }
 
 interface Props {
-  date?: Date | number | null       // Date or timestamp for single date
-  range?: boolean                   // Enable range selection
-  startDate?: Date | number | null  // Start date or timestamp for range
-  endDate?: Date | number | null    // End date or timestamp for range
+  date?: Date | number | null // Date or timestamp for single date
+  range?: boolean // Enable range selection
+  startDate?: Date | number | null // Start date or timestamp for range
+  endDate?: Date | number | null // End date or timestamp for range
   color?: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
   variant?: 'solid' | 'outline' | 'soft' | 'subtle'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   disabled?: boolean
-  minDate?: Date | number | null    // Min selectable date or timestamp
-  maxDate?: Date | number | null    // Max selectable date or timestamp
-  monthControls?: boolean           // Show month controls
-  yearControls?: boolean            // Show year controls
-  numberOfMonths?: number           // Number of months to display (in a row)
-  year?: boolean | number           // Enable year grid mode (12 months). Pass number for specific year.
-  isDateDisabled?: (date: Date) => boolean  // Function to disable specific dates (uses JS Date)
-  ui?: Record<string, unknown>      // Passthrough UI customization to UCalendar
+  minDate?: Date | number | null // Min selectable date or timestamp
+  maxDate?: Date | number | null // Max selectable date or timestamp
+  monthControls?: boolean // Show month controls
+  yearControls?: boolean // Show year controls
+  numberOfMonths?: number // Number of months to display (in a row)
+  year?: boolean | number // Enable year grid mode (12 months). Pass number for specific year.
+  isDateDisabled?: (date: Date) => boolean // Function to disable specific dates (uses JS Date)
+  ui?: Record<string, unknown> // Passthrough UI customization to UCalendar
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -40,7 +40,7 @@ const props = withDefaults(defineProps<Props>(), {
   monthControls: true,
   yearControls: true,
   numberOfMonths: undefined,
-  year: undefined,
+  year: undefined
 })
 
 const emit = defineEmits<{
@@ -69,7 +69,7 @@ const internalDate = computed({
   get: () => toCalendarDateValue(props.date),
   set: (value: DateValue | null | undefined) => {
     emit('update:date', calendarDateToDate(value))
-  },
+  }
 })
 
 // Range mode
@@ -82,7 +82,7 @@ const internalRange = computed({
 
     return {
       start: start || undefined,
-      end: end || undefined,
+      end: end || undefined
     }
   },
   set: (value: DateRange | null | undefined) => {
@@ -94,7 +94,7 @@ const internalRange = computed({
 
     emit('update:startDate', calendarDateToDate(value.start))
     emit('update:endDate', calendarDateToDate(value.end))
-  },
+  }
 })
 
 // Min/Max constraints
@@ -114,8 +114,8 @@ const displayYear = computed(() => {
 const months = computed(() =>
   Array.from({ length: 12 }, (_, i) => ({
     month: i + 1,
-    placeholder: new CalendarDate(displayYear.value, i + 1, 1),
-  })),
+    placeholder: new CalendarDate(displayYear.value, i + 1, 1)
+  }))
 )
 
 // Computed number of months (default to 2 for ranges, 1 for single)
@@ -139,7 +139,10 @@ const hasDaySlot = computed(() => !!slots.day)
 
 <template>
   <!-- Year grid mode (12 months) -->
-  <div v-if="isYearMode" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+  <div
+    v-if="isYearMode"
+    class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+  >
     <div
       v-for="{ month, placeholder } in months"
       :key="month"
@@ -161,8 +164,15 @@ const hasDaySlot = computed(() => !!slots.day)
         :ui="ui"
         class="hide-outside-days"
       >
-        <template v-if="hasDaySlot" #day="{ day }">
-          <slot name="day" :day="day" :date="calendarDateToDate(day)" />
+        <template
+          v-if="hasDaySlot"
+          #day="{ day }"
+        >
+          <slot
+            name="day"
+            :day="day"
+            :date="calendarDateToDate(day)"
+          />
         </template>
       </UCalendar>
     </div>
@@ -184,8 +194,15 @@ const hasDaySlot = computed(() => !!slots.day)
     :is-date-disabled="isDateDisabled ? internalIsDateDisabled : undefined"
     :ui="ui"
   >
-    <template v-if="hasDaySlot" #day="{ day }">
-      <slot name="day" :day="day" :date="calendarDateToDate(day)" />
+    <template
+      v-if="hasDaySlot"
+      #day="{ day }"
+    >
+      <slot
+        name="day"
+        :day="day"
+        :date="calendarDateToDate(day)"
+      />
     </template>
   </UCalendar>
 
@@ -206,8 +223,15 @@ const hasDaySlot = computed(() => !!slots.day)
     :is-date-disabled="isDateDisabled ? internalIsDateDisabled : undefined"
     :ui="ui"
   >
-    <template v-if="hasDaySlot" #day="{ day }">
-      <slot name="day" :day="day" :date="calendarDateToDate(day)" />
+    <template
+      v-if="hasDaySlot"
+      #day="{ day }"
+    >
+      <slot
+        name="day"
+        :day="day"
+        :date="calendarDateToDate(day)"
+      />
     </template>
   </UCalendar>
 </template>

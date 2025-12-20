@@ -75,9 +75,11 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
   const total = countResult[0]?.count ?? 0
 
   // Build order by
-  const orderByColumn = sortBy === 'name' ? user.name
-    : sortBy === 'email' ? user.email
-    : user.createdAt
+  const orderByColumn = sortBy === 'name'
+    ? user.name
+    : sortBy === 'email'
+      ? user.email
+      : user.createdAt
   const orderByFn = sortOrder === 'asc' ? asc : desc
 
   // Get users with pagination
@@ -92,7 +94,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
       superAdmin: user.superAdmin,
       banned: user.banned,
       bannedReason: user.bannedReason,
-      bannedUntil: user.bannedUntil,
+      bannedUntil: user.bannedUntil
     })
     .from(user)
     .where(whereClause)
@@ -106,7 +108,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
     ? await db
         .select({
           userId: member.userId,
-          count: count(),
+          count: count()
         })
         .from(member)
         .where(sql`${member.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
@@ -128,7 +130,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
     banned: u.banned,
     bannedReason: u.bannedReason,
     bannedUntil: u.bannedUntil,
-    membershipCount: countMap.get(u.id) ?? 0,
+    membershipCount: countMap.get(u.id) ?? 0
   }))
 
   return {
@@ -136,6 +138,6 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
     total,
     page,
     pageSize,
-    totalPages: Math.ceil(total / pageSize),
+    totalPages: Math.ceil(total / pageSize)
   }
 })

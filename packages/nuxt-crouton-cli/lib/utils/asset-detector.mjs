@@ -6,7 +6,7 @@
 
 /**
  * Checks if a schema represents an asset collection
- * @param {Object} schema - The schema object to check
+ * @param {object} schema - The schema object to check
  * @returns {boolean} - True if schema is an asset collection
  */
 export function isAssetSchema(schema) {
@@ -28,7 +28,7 @@ export function isAssetSchema(schema) {
 
 /**
  * Checks if a field references an asset collection
- * @param {Object} field - The field object to check
+ * @param {object} field - The field object to check
  * @param {string} refTarget - The refTarget value
  * @returns {boolean} - True if field references assets
  */
@@ -39,17 +39,17 @@ export function referencesAssets(field, refTarget) {
 
   // Check if refTarget contains 'asset' (case insensitive)
   const refTargetLower = refTarget.toLowerCase()
-  const isAssetRef = refTargetLower.includes('asset') ||
-                     refTargetLower.includes('file') ||
-                     refTargetLower.includes('image') ||
-                     refTargetLower.includes('media')
+  const isAssetRef = refTargetLower.includes('asset')
+    || refTargetLower.includes('file')
+    || refTargetLower.includes('image')
+    || refTargetLower.includes('media')
 
   return isAssetRef
 }
 
 /**
  * Determines the asset type from schema
- * @param {Object} schema - The schema object
+ * @param {object} schema - The schema object
  * @returns {string} - Asset type: 'image', 'file', or 'general'
  */
 export function getAssetType(schema) {

@@ -40,7 +40,7 @@ const { open } = useCrouton()
 const props = defineProps<TableActionsProps>()
 
 const emit = defineEmits<{
-  delete: [ids: string[]]
+  'delete': [ids: string[]]
   'update:columnVisibility': [column: string, visible: boolean]
 }>()
 

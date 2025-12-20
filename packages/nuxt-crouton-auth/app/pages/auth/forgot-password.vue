@@ -7,7 +7,7 @@
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'guest',
+  middleware: 'guest'
 })
 
 const toast = useToast()
@@ -25,7 +25,7 @@ async function handleSubmit(email: string) {
     toast.add({
       title: 'Email sent',
       description: 'Check your inbox for a password reset link.',
-      color: 'success',
+      color: 'success'
     })
   } catch {
     // Don't reveal if email exists or not for security
@@ -34,7 +34,7 @@ async function handleSubmit(email: string) {
     toast.add({
       title: 'Email sent',
       description: 'If an account exists with this email, you will receive a reset link.',
-      color: 'success',
+      color: 'success'
     })
   }
 }

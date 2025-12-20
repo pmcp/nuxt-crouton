@@ -18,7 +18,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false,
+  loading: false
 })
 
 const { t } = useT()
@@ -29,7 +29,7 @@ const {
   verifyTotp,
   generateBackupCodes,
   viewBackupCodes,
-  get2FAStatus,
+  get2FAStatus
 } = useAuth()
 const toast = useToast()
 
@@ -37,7 +37,7 @@ const toast = useToast()
 const status = ref<TwoFactorStatus>({
   enabled: false,
   hasTotp: false,
-  hasBackupCodes: false,
+  hasBackupCodes: false
 })
 const statusLoading = ref(false)
 
@@ -105,7 +105,7 @@ async function handlePasswordSubmit() {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     setupLoading.value = false
@@ -118,7 +118,7 @@ async function handleVerifySubmit() {
     toast.add({
       title: 'Invalid code',
       description: 'Please enter a 6-digit code',
-      color: 'error',
+      color: 'error'
     })
     return
   }
@@ -137,7 +137,7 @@ async function handleVerifySubmit() {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     setupLoading.value = false
@@ -151,7 +151,7 @@ async function completeSetup() {
   toast.add({
     title: '2FA enabled',
     description: 'Two-factor authentication is now active.',
-    color: 'success',
+    color: 'success'
   })
 }
 
@@ -173,14 +173,14 @@ async function handleDisable() {
     toast.add({
       title: '2FA disabled',
       description: 'Two-factor authentication has been turned off.',
-      color: 'success',
+      color: 'success'
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to disable 2FA'
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     disableLoading.value = false
@@ -203,7 +203,7 @@ async function handleViewBackupCodes() {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     viewCodesLoading.value = false
@@ -217,7 +217,7 @@ async function copyBackupCodes(codes: string[]) {
   toast.add({
     title: 'Copied',
     description: 'Backup codes copied to clipboard',
-    color: 'success',
+    color: 'success'
   })
 }
 </script>
@@ -226,7 +226,9 @@ async function copyBackupCodes(codes: string[]) {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold">{{ t('account.twoFactorAuth') }}</h3>
+        <h3 class="text-lg font-semibold">
+          {{ t('account.twoFactorAuth') }}
+        </h3>
         <p class="text-sm text-muted mt-1">
           {{ t('account.twoFactorDescription') }}
         </p>
@@ -243,7 +245,10 @@ async function copyBackupCodes(codes: string[]) {
     />
 
     <!-- Loading -->
-    <div v-else-if="statusLoading" class="space-y-3">
+    <div
+      v-else-if="statusLoading"
+      class="space-y-3"
+    >
       <USkeleton class="h-20 w-full rounded-lg" />
     </div>
 
@@ -262,7 +267,9 @@ async function copyBackupCodes(codes: string[]) {
             />
           </div>
           <div class="flex-1">
-            <p class="font-medium text-success">{{ t('account.twoFactorEnabled') }}</p>
+            <p class="font-medium text-success">
+              {{ t('account.twoFactorEnabled') }}
+            </p>
             <p class="text-sm text-muted">
               {{ t('account.twoFactorEnabledDesc') }}
             </p>
@@ -301,7 +308,9 @@ async function copyBackupCodes(codes: string[]) {
             />
           </div>
           <div class="flex-1">
-            <p class="font-medium text-warning">{{ t('account.twoFactorDisabled') }}</p>
+            <p class="font-medium text-warning">
+              {{ t('account.twoFactorDisabled') }}
+            </p>
             <p class="text-sm text-muted">
               {{ t('account.twoFactorDisabledDesc') }}
             </p>
@@ -325,7 +334,9 @@ async function copyBackupCodes(codes: string[]) {
       variant="soft"
       icon="i-lucide-smartphone"
     >
-      <template #title>{{ t('account.aboutTwoFactor') }}</template>
+      <template #title>
+        {{ t('account.aboutTwoFactor') }}
+      </template>
       <template #description>
         {{ t('account.aboutTwoFactorDesc') }}
       </template>
@@ -340,7 +351,9 @@ async function copyBackupCodes(codes: string[]) {
         <div class="p-6 space-y-6">
           <!-- Step: Password -->
           <div v-if="setupStep === 'password'">
-            <h3 class="text-lg font-semibold">{{ t('account.enableTwoFactor') }}</h3>
+            <h3 class="text-lg font-semibold">
+              {{ t('account.enableTwoFactor') }}
+            </h3>
             <p class="text-sm text-muted mt-1">
               {{ t('account.enterPasswordToContinue') }}
             </p>
@@ -376,7 +389,9 @@ async function copyBackupCodes(codes: string[]) {
 
           <!-- Step: QR Code -->
           <div v-else-if="setupStep === 'qr'">
-            <h3 class="text-lg font-semibold">{{ t('account.scanQrCode') }}</h3>
+            <h3 class="text-lg font-semibold">
+              {{ t('account.scanQrCode') }}
+            </h3>
             <p class="text-sm text-muted mt-1">
               {{ t('account.scanQrCodeDesc') }}
             </p>
@@ -389,11 +404,13 @@ async function copyBackupCodes(codes: string[]) {
                   :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpUri)}`"
                   alt="2FA QR Code"
                   class="size-48"
-                />
+                >
               </div>
 
               <div class="text-center">
-                <p class="text-sm text-muted">{{ t('account.orEnterManually') }}</p>
+                <p class="text-sm text-muted">
+                  {{ t('account.orEnterManually') }}
+                </p>
                 <code class="text-sm font-mono bg-muted px-2 py-1 rounded mt-1 inline-block">
                   {{ totpSecret }}
                 </code>
@@ -415,7 +432,9 @@ async function copyBackupCodes(codes: string[]) {
 
           <!-- Step: Verify -->
           <div v-else-if="setupStep === 'verify'">
-            <h3 class="text-lg font-semibold">{{ t('account.verifyCode') }}</h3>
+            <h3 class="text-lg font-semibold">
+              {{ t('account.verifyCode') }}
+            </h3>
             <p class="text-sm text-muted mt-1">
               {{ t('account.verifyCodeDesc') }}
             </p>
@@ -452,7 +471,9 @@ async function copyBackupCodes(codes: string[]) {
 
           <!-- Step: Backup Codes -->
           <div v-else-if="setupStep === 'backup'">
-            <h3 class="text-lg font-semibold">{{ t('account.saveBackupCodes') }}</h3>
+            <h3 class="text-lg font-semibold">
+              {{ t('account.saveBackupCodes') }}
+            </h3>
             <p class="text-sm text-muted mt-1">
               {{ t('account.saveBackupCodesDesc') }}
             </p>
@@ -507,7 +528,9 @@ async function copyBackupCodes(codes: string[]) {
               />
             </div>
             <div>
-              <h3 class="text-lg font-semibold">{{ t('account.disable2FA') }}</h3>
+              <h3 class="text-lg font-semibold">
+                {{ t('account.disable2FA') }}
+              </h3>
               <p class="text-sm text-muted">
                 {{ t('account.disableTwoFactorWarning') }}
               </p>
@@ -557,7 +580,9 @@ async function copyBackupCodes(codes: string[]) {
     <UModal v-model:open="showBackupModal">
       <template #content>
         <div class="p-6 space-y-6">
-          <h3 class="text-lg font-semibold">{{ t('account.backupCodes') }}</h3>
+          <h3 class="text-lg font-semibold">
+            {{ t('account.backupCodes') }}
+          </h3>
 
           <!-- Password entry -->
           <div v-if="viewedBackupCodes.length === 0">

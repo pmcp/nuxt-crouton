@@ -23,7 +23,7 @@ import type {
   AdminTeamListItem,
   AdminTeamDetail,
   TeamListFilters,
-  PaginatedResponse,
+  PaginatedResponse
 } from '../../types/admin'
 
 export function useAdminTeams() {
@@ -68,12 +68,10 @@ export function useAdminTeams() {
       totalPages.value = response.totalPages
 
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch teams'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -90,12 +88,10 @@ export function useAdminTeams() {
     try {
       const response = await $fetch<AdminTeamDetail>(`/api/admin/teams/${teamId}`)
       return response
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch team'
       throw e
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -126,6 +122,6 @@ export function useAdminTeams() {
     // Methods
     getTeams,
     getTeam,
-    getTeamMembers,
+    getTeamMembers
   }
 }

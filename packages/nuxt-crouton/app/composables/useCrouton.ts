@@ -49,7 +49,6 @@ const DEFAULT_PAGINATION: PaginationState = {
   sortDirection: 'desc'
 }
 
-
 export default function () {
   const route = useRoute()
   const { getTeamId } = useTeamContext()
@@ -173,20 +172,17 @@ export default function () {
       }
     }
 
-    if(actionIn === 'create') {
+    if (actionIn === 'create') {
       newState.activeItem = initialData || {}
     }
 
-    if(actionIn === 'delete') {
+    if (actionIn === 'delete') {
       newState.items = ids
     }
 
     // Set loading to notLoading
     newState.loading = 'notLoading'
   }
-
-
-
 
   const close = (stateId?: string): void => {
     if (stateId) {
@@ -260,7 +256,6 @@ export default function () {
     return config?.defaultPagination || DEFAULT_PAGINATION
   }
 
-
   return {
     // Modal state
     showCrouton,
@@ -284,5 +279,4 @@ export default function () {
     getPagination,
     getDefaultPagination
   }
-
 }

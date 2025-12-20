@@ -13,8 +13,8 @@
  *   --api-url <url>    API base URL (default: http://localhost:3000)
  */
 
-import fsp from 'fs/promises'
-import path from 'path'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
 import chalk from 'chalk'
 
 // Parse command line arguments
@@ -208,7 +208,7 @@ function generateSqlStatements(translations, teamId = null) {
   const statements = []
 
   for (const t of translations) {
-    const valuesJson = JSON.stringify(t.values).replace(/'/g, "''")
+    const valuesJson = JSON.stringify(t.values).replace(/'/g, '\'\'')
     const teamValue = teamId ? `'${teamId}'` : 'NULL'
 
     statements.push(

@@ -9,7 +9,7 @@
  */
 definePageMeta({
   middleware: ['auth'],
-  layout: 'dashboard',
+  layout: 'dashboard'
 })
 
 const { user } = useSession()
@@ -24,8 +24,8 @@ const quickLinks = computed(() => {
       label: 'Account Settings',
       description: 'Manage your profile, password, and security',
       icon: 'i-lucide-settings',
-      to: buildDashboardUrl('/settings'),
-    },
+      to: buildDashboardUrl('/settings')
+    }
   ]
 
   if (showTeamManagement.value) {
@@ -34,14 +34,14 @@ const quickLinks = computed(() => {
         label: 'Team Settings',
         description: 'Update team name, logo, and preferences',
         icon: 'i-lucide-building-2',
-        to: buildDashboardUrl('/settings/team'),
+        to: buildDashboardUrl('/settings/team')
       },
       {
         label: 'Team Members',
         description: 'Invite and manage team members',
         icon: 'i-lucide-users',
-        to: buildDashboardUrl('/settings/members'),
-      },
+        to: buildDashboardUrl('/settings/members')
+      }
     )
   }
 
@@ -50,7 +50,7 @@ const quickLinks = computed(() => {
       label: 'Billing',
       description: 'Manage your subscription and payment method',
       icon: 'i-lucide-credit-card',
-      to: buildDashboardUrl('/settings/billing'),
+      to: buildDashboardUrl('/settings/billing')
     })
   }
 
@@ -134,7 +134,10 @@ const quickLinks = computed(() => {
           >
             <div class="flex items-start gap-4">
               <div class="p-2 rounded-lg bg-muted">
-                <UIcon :name="link.icon" class="size-5" />
+                <UIcon
+                  :name="link.icon"
+                  class="size-5"
+                />
               </div>
               <div>
                 <p class="font-medium">{{ link.label }}</p>
@@ -147,9 +150,15 @@ const quickLinks = computed(() => {
     </div>
 
     <!-- Getting Started (if no subscription) -->
-    <UCard v-if="billingEnabled && !subscription" class="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+    <UCard
+      v-if="billingEnabled && !subscription"
+      class="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20"
+    >
       <div class="text-center py-4">
-        <UIcon name="i-lucide-rocket" class="size-12 mx-auto mb-4 text-primary" />
+        <UIcon
+          name="i-lucide-rocket"
+          class="size-12 mx-auto mb-4 text-primary"
+        />
         <h3 class="text-xl font-bold mb-2">
           Get Started with Pro
         </h3>
@@ -157,7 +166,10 @@ const quickLinks = computed(() => {
           Unlock all premium features and take your productivity to the next level.
         </p>
         <NuxtLink :to="buildDashboardUrl('/settings/billing')">
-          <UButton label="View Plans" size="lg" />
+          <UButton
+            label="View Plans"
+            size="lg"
+          />
         </NuxtLink>
       </div>
     </UCard>

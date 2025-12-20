@@ -49,7 +49,7 @@ export const teamMembersConfig = defineExternalCollection({
   proxy: {
     enabled: true,
     sourceEndpoint: 'members', // Proxies to /api/teams/[id]/members
-    transform: (member) => ({
+    transform: member => ({
       id: member.id,
       title: member.name || member.email || member.userId, // Add title from existing data
       userId: member.userId,

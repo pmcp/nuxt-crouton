@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // rollback-collection.mjs — Safely rollback generated collections
 
-import fsp from 'fs/promises'
-import path from 'path'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
 import chalk from 'chalk'
 
 // Import utilities
@@ -146,7 +146,7 @@ export async function cleanAppConfig(collectionName, layer, dryRun) {
     content = content.replace(entryPattern, '\n')
 
     // Clean up empty croutonCollections object if it exists
-    content = content.replace(/croutonCollections:\s*{\s*\n?\s*}/g, '')
+    content = content.replace(/croutonCollections:\s*\{\s*\}/g, '')
 
     // Clean up extra blank lines
     content = content.replace(/\n{3,}/g, '\n\n')
@@ -184,7 +184,7 @@ export async function cleanLayerRootConfig(layer, collectionName, dryRun) {
     }
 
     // Remove the collection from extends array
-    const extendsMatch = content.match(/extends:\s*\[([\s\S]*?)\]/m)
+    const extendsMatch = content.match(/extends:\s*\[([\s\S]*?)\]/)
     if (extendsMatch) {
       const currentExtends = extendsMatch[1]
       const lines = currentExtends.split('\n')
@@ -193,7 +193,7 @@ export async function cleanLayerRootConfig(layer, collectionName, dryRun) {
 
       if (lines.length === 0) {
         // If no more collections, keep empty extends array
-        content = content.replace(/extends:\s*\[[^\]]*\]/m, 'extends: [\n  ]')
+        content = content.replace(/extends:\s*\[[^\]]*\]/, 'extends: [\n  ]')
       } else {
         // Format remaining entries
         const formattedLines = lines.map((line, index) => {
@@ -256,7 +256,7 @@ export async function cleanRootNuxtConfig(layer, dryRun, forceRemove = false) {
     }
 
     // Remove the layer from extends array
-    const extendsMatch = content.match(/extends:\s*\[([\s\S]*?)\]/m)
+    const extendsMatch = content.match(/extends:\s*\[([\s\S]*?)\]/)
     if (extendsMatch) {
       const currentExtends = extendsMatch[1]
       const lines = currentExtends.split('\n')

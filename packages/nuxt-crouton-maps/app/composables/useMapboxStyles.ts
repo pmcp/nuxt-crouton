@@ -18,7 +18,7 @@ export const MAPBOX_STYLES = {
 
   /** Navigation styles */
   navigationDay: 'mapbox://styles/mapbox/navigation-day-v1',
-  navigationNight: 'mapbox://styles/mapbox/navigation-night-v1',
+  navigationNight: 'mapbox://styles/mapbox/navigation-night-v1'
 } as const
 
 export type MapboxStylePreset = keyof typeof MAPBOX_STYLES
@@ -55,6 +55,6 @@ export function useMapboxStyles() {
     styles: MAPBOX_STYLES,
 
     /** Helper to get style URL by preset name or return custom URL */
-    getStyle,
+    getStyle
   }
 }

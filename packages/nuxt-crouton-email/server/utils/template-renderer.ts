@@ -6,14 +6,13 @@ import type { Component } from 'vue'
  */
 export async function renderEmailTemplate<T extends Record<string, unknown>>(
   component: Component,
-  props: T,
-): Promise<{ html: string; text?: string }> {
+  props: T
+): Promise<{ html: string, text?: string }> {
   try {
     const { html, text } = await useRender(component, { props })
 
     return { html, text }
-  }
-  catch (err) {
+  } catch (err) {
     console.error('[crouton-email] Failed to render template:', err)
     throw err
   }
@@ -31,6 +30,6 @@ export function getEmailBrandConfig(event?: any) {
     brandName: publicConfig?.brand?.name || 'My App',
     logoUrl: publicConfig?.brand?.logoUrl || '',
     primaryColor: publicConfig?.brand?.primaryColor || '#0F766E',
-    appUrl: publicConfig?.brand?.url || '',
+    appUrl: publicConfig?.brand?.url || ''
   }
 }

@@ -80,14 +80,12 @@ export default defineNuxtPlugin((nuxtApp) => {
       try {
         const { teamId } = useTeamContext()
         return teamId.value
-      }
-      catch {
+      } catch {
         // Fall back to useTeam
         try {
           const { currentTeam } = useTeam()
           return currentTeam.value?.id ?? null
-        }
-        catch {
+        } catch {
           return null
         }
       }
@@ -97,13 +95,11 @@ export default defineNuxtPlugin((nuxtApp) => {
       try {
         const { teamSlug } = useTeamContext()
         return teamSlug.value
-      }
-      catch {
+      } catch {
         try {
           const { currentTeam } = useTeam()
           return currentTeam.value?.slug ?? null
-        }
-        catch {
+        } catch {
           return null
         }
       }
@@ -113,8 +109,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       try {
         const { currentTeam } = useTeam()
         return currentTeam.value
-      }
-      catch {
+      } catch {
         return null
       }
     },
@@ -135,7 +130,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       }
 
       return `/api/teams/${teamId}${cleanPath}`
-    },
+    }
   }
 
   // Provide the context to the app

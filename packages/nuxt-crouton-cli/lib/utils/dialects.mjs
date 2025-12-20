@@ -7,12 +7,12 @@ export const DIALECTS = {
     imports: ['pgTable', 'varchar', 'text', 'integer', 'numeric', 'boolean', 'timestamp', 'jsonb', 'uuid'],
     makeCol(f) {
       const m = f.meta || {}
-      
+
       // Handle primary key
       if (m.primaryKey && f.type === 'string') {
         return `uuid('${f.name}').primaryKey().defaultRandom()`
       }
-      
+
       // Handle different types
       if (f.type === 'string' && m.maxLength) {
         return `varchar('${f.name}', { length: ${m.maxLength} })`
@@ -37,12 +37,12 @@ export const DIALECTS = {
     imports: ['sqliteTable', 'text', 'integer', 'real'],
     makeCol(f) {
       const m = f.meta || {}
-      
+
       // Handle primary key
       if (m.primaryKey && f.type === 'string') {
         return `text('${f.name}').primaryKey()`
       }
-      
+
       // Handle different types
       if (f.type === 'decimal') return `real('${f.name}')`
       if (f.type === 'number') return `integer('${f.name}')`

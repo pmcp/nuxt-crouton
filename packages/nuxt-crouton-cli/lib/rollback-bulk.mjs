@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // rollback-bulk.mjs — Bulk rollback operations for layers and config files
 
-import fsp from 'fs/promises'
-import path from 'path'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
 import chalk from 'chalk'
 
 // Import utilities

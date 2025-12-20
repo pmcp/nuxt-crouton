@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // install-modules.mjs - Install and configure FYIT scaffolder modules
 
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import fsp from 'fs/promises'
-import path from 'path'
-import readline from 'readline'
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
+import readline from 'node:readline'
 
 const execAsync = promisify(exec)
 
@@ -14,7 +14,7 @@ const rl = readline.createInterface({
   output: process.stdout
 })
 
-const question = (query) => new Promise(resolve => rl.question(query, resolve))
+const question = query => new Promise(resolve => rl.question(query, resolve))
 
 // Available modules
 const MODULES = {
@@ -214,7 +214,7 @@ process.on('SIGINT', () => {
   process.exit(0)
 })
 
-main().catch(error => {
+main().catch((error) => {
   console.error('\n❌ Fatal error:', error.message)
   rl.close()
   process.exit(1)

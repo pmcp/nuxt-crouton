@@ -17,7 +17,7 @@ import {
   createTestSession,
   createTestTeam,
   createTestMember,
-  createTestSubscription,
+  createTestSubscription
 } from './setup'
 
 describe('Integration: Billing', () => {
@@ -37,7 +37,7 @@ describe('Integration: Billing', () => {
     it('should detect billing enabled from config', async () => {
       mockClient = setupIntegrationMocks({
         user: createTestUser(),
-        session: createTestSession(),
+        session: createTestSession()
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -47,7 +47,7 @@ describe('Integration: Billing', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useBilling } = await import('../../app/composables/useBilling')
@@ -67,7 +67,7 @@ describe('Integration: Billing', () => {
         user,
         session,
         teams: [team],
-        members: [createTestMember({ userId: user.id, organizationId: team.id })],
+        members: [createTestMember({ userId: user.id, organizationId: team.id })]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -77,7 +77,7 @@ describe('Integration: Billing', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useBilling } = await import('../../app/composables/useBilling')
@@ -102,7 +102,7 @@ describe('Integration: Billing', () => {
         user,
         session,
         teams: [team],
-        subscription,
+        subscription
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -112,7 +112,7 @@ describe('Integration: Billing', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useBilling } = await import('../../app/composables/useBilling')
@@ -132,14 +132,14 @@ describe('Integration: Billing', () => {
       const subscription = createTestSubscription({
         status: 'active',
         planId: 'pro',
-        cancelAtPeriodEnd: true,
+        cancelAtPeriodEnd: true
       })
 
       mockClient = setupIntegrationMocks({
         user,
         session,
         teams: [team],
-        subscription,
+        subscription
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -149,7 +149,7 @@ describe('Integration: Billing', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useBilling } = await import('../../app/composables/useBilling')
@@ -171,7 +171,7 @@ describe('Integration: Billing', () => {
       mockClient = setupIntegrationMocks({
         user,
         session,
-        teams: [createTestTeam()],
+        teams: [createTestTeam()]
       })
 
       vi.stubGlobal('useSession', () => ({
@@ -181,7 +181,7 @@ describe('Integration: Billing', () => {
         isPending: { value: false },
         error: { value: null },
         refresh: vi.fn(),
-        clear: vi.fn(),
+        clear: vi.fn()
       }))
 
       const { useBilling } = await import('../../app/composables/useBilling')

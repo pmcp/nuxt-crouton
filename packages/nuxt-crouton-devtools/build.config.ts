@@ -8,7 +8,7 @@ export default defineBuildConfig({
       input: 'src/module.ts',
       outDir: 'dist',
       name: 'module',
-      format: 'esm',
+      format: 'esm'
     },
     // Runtime server files (plugins, middleware, utils)
     {
@@ -16,7 +16,7 @@ export default defineBuildConfig({
       outDir: 'dist/runtime/server',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
-      loaders: ['js'],
+      loaders: ['js']
     },
     // Runtime RPC files (server handlers)
     {
@@ -24,8 +24,8 @@ export default defineBuildConfig({
       outDir: 'dist/runtime/server-rpc',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
-      loaders: ['js'],
-    },
+      loaders: ['js']
+    }
   ],
   declaration: true,
   clean: true,
@@ -36,7 +36,7 @@ export default defineBuildConfig({
     '@nuxt/schema',
     'h3',
     'vue',
-    'nuxt',
+    'nuxt'
   ],
   hooks: {
     'build:done': () => {

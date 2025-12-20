@@ -28,7 +28,7 @@ const getFieldComponent = (field: string) => {
 // Create a map of field to resolved component for each field (using resolveComponent in render context)
 const fieldComponentMap = computed(() => {
   const map: Record<string, any> = {}
-  props.fields?.forEach(field => {
+  props.fields?.forEach((field) => {
     const componentName = getFieldComponent(field)
     console.log(`[Input] Field "${field}" -> Component "${componentName}"`)
     map[field] = componentName
@@ -102,7 +102,7 @@ function isLocaleComplete(localeCode: string): boolean {
     if (!localeData) return false
 
     // Check if all fields have values
-    return props.fields.every(field => {
+    return props.fields.every((field) => {
       const value = localeData[field]
       return value && value.trim() !== ''
     })
@@ -114,7 +114,7 @@ function isLocaleComplete(localeCode: string): boolean {
 
 // Translation status for all locales
 const translationStatus = computed(() => {
-  return locales.value.map(loc => {
+  return locales.value.map((loc) => {
     const localeCode = typeof loc === 'string' ? loc : loc.code
     return {
       locale: localeCode,
@@ -138,13 +138,16 @@ const translationStatus = computed(() => {
           v-for="loc in locales"
           :key="typeof loc === 'string' ? loc : loc.code"
           :variant="editingLocale === (typeof loc === 'string' ? loc : loc.code) ? 'solid' : 'outline'"
-          @click="editingLocale = typeof loc === 'string' ? loc : loc.code"
           size="sm"
           class="w-full"
+          @click="editingLocale = typeof loc === 'string' ? loc : loc.code"
         >
           <span class="flex items-center gap-2">
             {{ (typeof loc === 'string' ? loc : loc.code).toUpperCase() }}
-            <span v-if="(typeof loc === 'string' ? loc : loc.code) === 'en'" class="text-red-500">*</span>
+            <span
+              v-if="(typeof loc === 'string' ? loc : loc.code) === 'en'"
+              class="text-red-500"
+            >*</span>
             <UIcon
               v-if="translationStatus.find(s => s.locale === (typeof loc === 'string' ? loc : loc.code))?.complete"
               name="i-lucide-check-circle"
@@ -156,7 +159,10 @@ const translationStatus = computed(() => {
     </div>
 
     <!-- Multi-field mode: show inputs for each field -->
-    <div v-if="isMultiField" class="space-y-3">
+    <div
+      v-if="isMultiField"
+      class="space-y-3"
+    >
       <UFormField
         v-for="field in fields"
         :key="field"
@@ -176,24 +182,24 @@ const translationStatus = computed(() => {
         <UTextarea
           v-else-if="getFieldComponent(field) === 'UTextarea'"
           :model-value="getFieldValue(field, editingLocale)"
-          @update:model-value="updateFieldValue(field, $event)"
           :placeholder="editingLocale !== 'en' && getFieldValue(field, 'en') ? `Fallback: ${getFieldValue(field, 'en')}` : (defaultValues?.[field] || '')"
           :color="error && editingLocale === 'en' && !getFieldValue(field, editingLocale) ? 'error' : 'primary'"
           :highlight="!!(error && editingLocale === 'en' && !getFieldValue(field, editingLocale))"
           class="w-full"
           size="lg"
+          @update:model-value="updateFieldValue(field, $event)"
         />
 
         <!-- UInput (default) -->
         <UInput
           v-else
           :model-value="getFieldValue(field, editingLocale)"
-          @update:model-value="updateFieldValue(field, $event)"
           :placeholder="editingLocale !== 'en' && getFieldValue(field, 'en') ? `Fallback: ${getFieldValue(field, 'en')}` : (defaultValues?.[field] || '')"
           :color="error && editingLocale === 'en' && !getFieldValue(field, editingLocale) ? 'error' : 'primary'"
           :highlight="!!(error && editingLocale === 'en' && !getFieldValue(field, editingLocale))"
           class="w-full"
           size="lg"
+          @update:model-value="updateFieldValue(field, $event)"
         />
 
         <!-- Show English reference when editing other languages -->
@@ -207,7 +213,10 @@ const translationStatus = computed(() => {
     </div>
 
     <!-- Single field mode (backwards compat) -->
-    <div v-else class="space-y-3">
+    <div
+      v-else
+      class="space-y-3"
+    >
       <UFormField
         :label="`Translation (${editingLocale.toUpperCase()})${editingLocale === 'en' ? ' *' : ''}`"
         :name="`values.${editingLocale}`"
@@ -215,12 +224,12 @@ const translationStatus = computed(() => {
       >
         <UInput
           :model-value="getFieldValue('', editingLocale)"
-          @update:model-value="updateFieldValue('', $event)"
           :placeholder="editingLocale !== 'en' && getFieldValue('', 'en') ? `Fallback: ${getFieldValue('', 'en')}` : ''"
           :color="error && editingLocale === 'en' && !getFieldValue('', editingLocale) ? 'error' : 'primary'"
           :highlight="!!(error && editingLocale === 'en' && !getFieldValue('', editingLocale))"
           class="w-full"
           size="lg"
+          @update:model-value="updateFieldValue('', $event)"
         />
       </UFormField>
 

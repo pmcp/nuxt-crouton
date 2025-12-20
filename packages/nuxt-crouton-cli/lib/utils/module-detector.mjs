@@ -1,6 +1,6 @@
 // module-detector.mjs - Detect and validate required Nuxt modules
-import fsp from 'fs/promises'
-import path from 'path'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
 
 /**
  * Check if a package/layer is installed in package.json
@@ -146,8 +146,8 @@ export async function detectRequiredDependencies(config) {
   }
 
   // Check if translations are needed
-  const hasTranslations = config?.translations?.collections &&
-    Object.keys(config.translations.collections).length > 0
+  const hasTranslations = config?.translations?.collections
+    && Object.keys(config.translations.collections).length > 0
 
   if (hasTranslations && !config.noTranslations) {
     // Check for nuxt-crouton-i18n layer (addon)
@@ -233,7 +233,7 @@ export function displayMissingDependencies(dependencies) {
   console.log('The following layers are required for your collection:')
   console.log('═'.repeat(60))
 
-  dependencies.missing.forEach(dep => {
+  dependencies.missing.forEach((dep) => {
     const prefix = dep.critical ? '🚨' : '📦'
     console.log(`\n${prefix} ${dep.name}${dep.critical ? ' [CRITICAL]' : ''}`)
     console.log(`   Reason: ${dep.reason}`)
@@ -258,7 +258,7 @@ export function displayMissingDependencies(dependencies) {
   }
 
   // Show addon layers
-  dependencies.missing.forEach(dep => {
+  dependencies.missing.forEach((dep) => {
     if (dep.name !== '@friendlyinternet/nuxt-crouton') {
       console.log(`     '${dep.name}',  // Addon layer`)
     }
@@ -294,7 +294,7 @@ export async function ensureLayersExtended(layers) {
       const moduleIndex = content.indexOf('modules:')
       if (moduleIndex !== -1) {
         const insertPoint = content.lastIndexOf('}', moduleIndex)
-        const layerPaths = layers.map(l => {
+        const layerPaths = layers.map((l) => {
           const layerPath = isNpmPackage(l) ? l : `./layers/${l}`
           return `    '${layerPath}'`
         }).join(',\n')
@@ -334,7 +334,7 @@ export async function ensureLayersExtended(layers) {
   } catch (e) {
     console.warn(`⚠️  Could not update nuxt.config.ts: ${e.message}`)
     console.log(`   Please manually add to extends array:`)
-    layers.forEach(layer => {
+    layers.forEach((layer) => {
       const layerPath = isNpmPackage(layer) ? layer : `./layers/${layer}`
       console.log(`     '${layerPath}'`)
     })

@@ -34,7 +34,7 @@ import type {
   OAuthProviderConfig,
   BillingConfig,
   StripeConfig,
-  StripePlan,
+  StripePlan
 } from '../../types/config'
 
 // Re-export type helpers for use in this module
@@ -88,7 +88,7 @@ export function createAuth(options: CreateAuthOptions) {
     baseURL,
     schema,
     stripeSecretKey,
-    stripeWebhookSecret,
+    stripeWebhookSecret
   } = options
 
   // Build Better Auth configuration
@@ -96,7 +96,7 @@ export function createAuth(options: CreateAuthOptions) {
     // Database adapter
     database: drizzleAdapter(db, {
       provider,
-      ...(schema && { schema }),
+      ...(schema && { schema })
     }),
 
     // Base URL for callbacks
@@ -117,14 +117,14 @@ export function createAuth(options: CreateAuthOptions) {
     // Advanced options
     advanced: {
       // Generate secure IDs
-      generateId: () => crypto.randomUUID(),
+      generateId: () => crypto.randomUUID()
     },
 
     // Plugins - Organization (Teams), Passkey, 2FA, and Stripe support
     plugins: buildPlugins(config, baseURL, stripeSecretKey, stripeWebhookSecret),
 
     // Database hooks for single-tenant mode (auto-add users to default org)
-    databaseHooks: buildDatabaseHooks(config, db),
+    databaseHooks: buildDatabaseHooks(config, db)
   }
 
   // Create and return the Better Auth instance
@@ -148,7 +148,7 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
       enabled: true,
       autoSignIn: true,
       // Default password requirements
-      minPasswordLength: 8,
+      minPasswordLength: 8
     }
   }
 
@@ -160,11 +160,11 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
     minPasswordLength: customConfig.minLength ?? 8,
     // Password reset
     sendResetPassword: customConfig.resetEnabled !== false
-      ? async ({ user, url }: { user: { email: string }; url: string }) => {
-          // TODO: Phase 2.x - Implement email sending
-          console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
-        }
-      : undefined,
+      ? async ({ user, url }: { user: { email: string }, url: string }) => {
+        // TODO: Phase 2.x - Implement email sending
+        console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
+      }
+      : undefined
   }
 }
 
@@ -177,8 +177,8 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
     updateAge: 60 * 60 * 24, // 1 day
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60, // 5 minutes
-    },
+      maxAge: 5 * 60 // 5 minutes
+    }
   }
 
   if (!sessionConfig) {
@@ -188,7 +188,7 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
   return {
     expiresIn: sessionConfig.expiresIn ?? defaults.expiresIn,
     updateAge: sessionConfig.updateAge ?? defaults.updateAge,
-    cookieCache: defaults.cookieCache,
+    cookieCache: defaults.cookieCache
   }
 }
 
@@ -242,8 +242,8 @@ function buildDatabaseHooks(
             if (config.debug) {
               console.log(`[crouton/auth] User ${user.email} added to default org (single-tenant)`)
             }
-          },
-        },
+          }
+        }
       },
       session: {
         create: {
@@ -254,9 +254,9 @@ function buildDatabaseHooks(
             if (config.debug) {
               console.log(`[crouton/auth] Session ${session.id} set to default org (single-tenant)`)
             }
-          },
-        },
-      },
+          }
+        }
+      }
     }
   }
 
@@ -271,8 +271,8 @@ function buildDatabaseHooks(
           if (config.debug) {
             console.log(`[crouton/auth] Personal org ${orgId} created for user ${user.email} (personal mode)`)
           }
-        },
-      },
+        }
+      }
     },
     session: {
       create: {
@@ -287,9 +287,9 @@ function buildDatabaseHooks(
               console.log(`[crouton/auth] Session ${session.id} set to personal org ${personalOrgId} (personal mode)`)
             }
           }
-        },
-      },
-    },
+        }
+      }
+    }
   }
 }
 
@@ -480,7 +480,7 @@ function buildPlugins(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [
     // Organization plugin is always enabled (teams support)
-    organization(buildOrganizationConfig(config)),
+    organization(buildOrganizationConfig(config))
   ]
 
   // Conditionally add passkey plugin
@@ -546,7 +546,7 @@ function buildPasskeyConfig(
     return {
       rpID: defaultRpId,
       rpName: 'Application',
-      origin,
+      origin
     }
   }
 
@@ -570,8 +570,8 @@ function buildPasskeyConfig(
       // Require resident key for usernameless authentication
       residentKey: 'preferred',
       // Require user verification (biometric or PIN)
-      userVerification: 'preferred',
-    },
+      userVerification: 'preferred'
+    }
   }
 }
 
@@ -628,13 +628,13 @@ function buildTwoFactorConfig(
       // TOTP defaults
       totpOptions: {
         digits: 6,
-        period: 30,
+        period: 30
       },
       // Backup codes defaults
       backupCodeOptions: {
         amount: 10,
-        length: 10,
-      },
+        length: 10
+      }
     }
   }
 
@@ -651,14 +651,14 @@ function buildTwoFactorConfig(
   const totpOptions = totpEnabled
     ? {
         digits: 6,
-        period: 30,
+        period: 30
       }
     : undefined
 
   // Build backup code options
   const backupCodeOptions = {
     amount: customConfig.backupCodesCount ?? 10,
-    length: 10,
+    length: 10
   }
 
   return {
@@ -668,7 +668,7 @@ function buildTwoFactorConfig(
     // Always include backup codes
     backupCodeOptions,
     // Skip verification on enable is false by default for security
-    skipVerificationOnEnable: false,
+    skipVerificationOnEnable: false
   }
 }
 
@@ -749,7 +749,7 @@ export function getTwoFactorInfo(config: CroutonAuthConfig): TwoFactorInfo | nul
     hasTrustedDevices: customConfig.trustedDevices !== false,
     backupCodesCount: customConfig.backupCodesCount ?? 10,
     issuer: customConfig.issuer ?? config.appName ?? 'Application',
-    trustedDeviceExpiryDays: customConfig.trustedDeviceExpiry ?? 30,
+    trustedDeviceExpiryDays: customConfig.trustedDeviceExpiry ?? 30
   }
 }
 
@@ -827,7 +827,7 @@ function buildStripePluginConfig(
   // Create Stripe client instance
   const stripeClient = new Stripe(stripeSecretKey, {
     apiVersion: '2025-04-30.basil', // Use latest API version
-    typescript: true,
+    typescript: true
   })
 
   // Build plans configuration
@@ -853,9 +853,9 @@ function buildStripePluginConfig(
           userId: user.id,
           // In personal mode, user is the billing entity
           // In multi-tenant/single-tenant, organization is the billing entity
-          billingMode: mode === 'personal' ? 'user' : 'organization',
-        },
-      },
+          billingMode: mode === 'personal' ? 'user' : 'organization'
+        }
+      }
     }),
 
     // Subscription configuration
@@ -884,7 +884,7 @@ function buildStripePluginConfig(
             subscriptionId: subscription.id,
             plan: plan?.name,
             referenceId: subscription.referenceId,
-            stripeSubscriptionId: event.data.object.id,
+            stripeSubscriptionId: event.data.object.id
           })
         }
       },
@@ -894,7 +894,7 @@ function buildStripePluginConfig(
           console.log(`[crouton/auth] Subscription updated:`, {
             subscriptionId: subscription.id,
             status: subscription.status,
-            stripeSubscriptionId: event.data.object.id,
+            stripeSubscriptionId: event.data.object.id
           })
         }
       },
@@ -905,7 +905,7 @@ function buildStripePluginConfig(
             subscriptionId: subscription.id,
             reason: cancellationDetails?.reason,
             feedback: cancellationDetails?.feedback,
-            stripeSubscriptionId: event.data.object.id,
+            stripeSubscriptionId: event.data.object.id
           })
         }
       },
@@ -914,10 +914,10 @@ function buildStripePluginConfig(
         if (debug) {
           console.log(`[crouton/auth] Subscription deleted:`, {
             subscriptionId: subscription.id,
-            stripeSubscriptionId: event.data.object.id,
+            stripeSubscriptionId: event.data.object.id
           })
         }
-      },
+      }
     },
 
     // Handle any Stripe webhook event
@@ -940,7 +940,7 @@ function buildStripePluginConfig(
           break
         // Add more event handlers as needed
       }
-    },
+    }
   })
 }
 
@@ -972,14 +972,14 @@ function buildStripePlansConfig(
         price: plan.price,
         currency: plan.currency ?? 'usd',
         interval: plan.interval,
-        features: plan.features ?? [],
-      },
+        features: plan.features ?? []
+      }
     }
 
     // Add trial configuration if specified
     if (defaultTrialDays && defaultTrialDays > 0) {
       basePlan.freeTrial = {
-        days: defaultTrialDays,
+        days: defaultTrialDays
       }
     }
 
@@ -1067,20 +1067,20 @@ export function getBillingInfo(config: CroutonAuthConfig): BillingInfo | null {
     enabled: true,
     provider: 'stripe',
     hasPlans: (stripeConfig.plans?.length ?? 0) > 0,
-    plans: stripeConfig.plans?.map((plan) => ({
+    plans: stripeConfig.plans?.map(plan => ({
       id: plan.id,
       name: plan.name,
       description: plan.description,
       price: plan.price,
       currency: plan.currency ?? 'usd',
       interval: plan.interval,
-      features: plan.features ?? [],
+      features: plan.features ?? []
     })) ?? [],
     hasTrialPeriod: (stripeConfig.trialDays ?? 0) > 0,
     trialDays: stripeConfig.trialDays ?? 0,
     customerPortalEnabled: stripeConfig.customerPortal !== false,
     // Billing mode depends on auth mode
-    billingMode: config.mode === 'personal' ? 'user' : 'organization',
+    billingMode: config.mode === 'personal' ? 'user' : 'organization'
   }
 }
 
@@ -1141,15 +1141,15 @@ export function getStripePublishableKey(config: CroutonAuthConfig): string | nul
 /**
  * Subscription status values
  */
-export type SubscriptionStatus =
-  | 'active'
-  | 'trialing'
-  | 'canceled'
-  | 'incomplete'
-  | 'incomplete_expired'
-  | 'past_due'
-  | 'unpaid'
-  | 'paused'
+export type SubscriptionStatus
+  = | 'active'
+    | 'trialing'
+    | 'canceled'
+    | 'incomplete'
+    | 'incomplete_expired'
+    | 'past_due'
+    | 'unpaid'
+    | 'paused'
 
 /**
  * Check if a subscription status is considered "active" (has access)
@@ -1259,7 +1259,7 @@ function buildGitHubConfig(config: GitHubOAuthConfig): SocialProviderConfig {
     clientId: config.clientId,
     clientSecret: config.clientSecret,
     scope: scopes,
-    disableSignUp: config.allowSignUp === false,
+    disableSignUp: config.allowSignUp === false
   }
 }
 
@@ -1278,7 +1278,7 @@ function buildGoogleConfig(config: GoogleOAuthConfig): SocialProviderConfig {
     // Ensure we can get refresh tokens (Google only issues on first consent)
     accessType: 'offline' as const,
     // Always show account selector for better UX
-    prompt: 'select_account' as const,
+    prompt: 'select_account' as const
   }
 }
 
@@ -1292,7 +1292,7 @@ function buildDiscordConfig(config: DiscordOAuthConfig): SocialProviderConfig {
     clientId: config.clientId,
     clientSecret: config.clientSecret,
     scope: config.scopes,
-    disableSignUp: config.allowSignUp === false,
+    disableSignUp: config.allowSignUp === false
   }
 }
 
@@ -1306,7 +1306,7 @@ function buildGenericProviderConfig(config: OAuthProviderConfig): SocialProvider
   return {
     clientId: config.clientId,
     clientSecret: config.clientSecret,
-    scope: config.scopes,
+    scope: config.scopes
   }
 }
 
@@ -1373,8 +1373,8 @@ function buildOrganizationConfig(config: CroutonAuthConfig) {
     sendInvitationEmail: async (data: {
       id: string
       email: string
-      organization: { name: string; id: string }
-      inviter: { user: { name: string; email: string } }
+      organization: { name: string, id: string }
+      inviter: { user: { name: string, email: string } }
       role: string
       expiresAt: Date
     }) => {
@@ -1387,12 +1387,12 @@ function buildOrganizationConfig(config: CroutonAuthConfig) {
         expiresAt: data.expiresAt,
         // The app should use this ID to create an accept link:
         // e.g., `${baseUrl}/auth/accept-invitation/${data.id}`
-        invitationId: data.id,
+        invitationId: data.id
       })
     },
 
     // Organization lifecycle hooks
-    organizationHooks: buildOrganizationHooks(config),
+    organizationHooks: buildOrganizationHooks(config)
   }
 }
 
@@ -1405,36 +1405,36 @@ function buildOrganizationHooks(config: CroutonAuthConfig) {
   return {
     // After organization is created - set up any mode-specific defaults
     afterCreateOrganization: async (ctx: {
-      organization: { id: string; name: string; slug: string }
-      user: { id: string; name: string }
+      organization: { id: string, name: string, slug: string }
+      user: { id: string, name: string }
     }) => {
       if (config.debug) {
         console.log(`[crouton/auth] Organization created:`, {
           id: ctx.organization.id,
           name: ctx.organization.name,
-          mode,
+          mode
         })
       }
     },
 
     // After member is added - handle mode-specific member setup
     afterAddMember: async (ctx: {
-      member: { id: string; role: string }
-      user: { id: string; name: string; email: string }
-      organization: { id: string; name: string }
+      member: { id: string, role: string }
+      user: { id: string, name: string, email: string }
+      organization: { id: string, name: string }
     }) => {
       if (config.debug) {
         console.log(`[crouton/auth] Member added:`, {
           userId: ctx.user.id,
           organizationId: ctx.organization.id,
-          role: ctx.member.role,
+          role: ctx.member.role
         })
       }
     },
 
     // Before creating invitation - validate based on config
     beforeCreateInvitation: async (ctx: {
-      invitation: { email: string; role: string; expiresAt: Date }
+      invitation: { email: string, role: string, expiresAt: Date }
       organization: { id: string }
     }) => {
       // In single-tenant mode, all invitations should use the default team
@@ -1450,10 +1450,10 @@ function buildOrganizationHooks(config: CroutonAuthConfig) {
       return {
         data: {
           ...ctx.invitation,
-          role: ctx.invitation.role || defaultRole,
-        },
+          role: ctx.invitation.role || defaultRole
+        }
       }
-    },
+    }
   }
 }
 
@@ -1487,18 +1487,18 @@ const BUILTIN_PROVIDERS: Record<string, Omit<OAuthProviderInfo, 'id'>> = {
   github: {
     name: 'GitHub',
     icon: 'i-simple-icons-github',
-    color: '#24292e',
+    color: '#24292e'
   },
   google: {
     name: 'Google',
     icon: 'i-simple-icons-google',
-    color: '#4285f4',
+    color: '#4285f4'
   },
   discord: {
     name: 'Discord',
     icon: 'i-simple-icons-discord',
-    color: '#5865f2',
-  },
+    color: '#5865f2'
+  }
 }
 
 /**
@@ -1523,7 +1523,7 @@ export function getConfiguredOAuthProviders(
     if (builtin) {
       providers.push({
         id: providerId,
-        ...builtin,
+        ...builtin
       })
     } else {
       // Custom provider - use ID as name, generic icon
@@ -1531,7 +1531,7 @@ export function getConfiguredOAuthProviders(
         id: providerId,
         name: providerId.charAt(0).toUpperCase() + providerId.slice(1),
         icon: 'i-heroicons-key',
-        color: '#6b7280',
+        color: '#6b7280'
       })
     }
   }
@@ -1608,7 +1608,7 @@ export function getPasskeyInfo(config: CroutonAuthConfig): PasskeyInfo | null {
     enabled: true,
     rpName: customConfig.rpName ?? 'Application',
     conditionalUI: customConfig.conditionalUI !== false,
-    supportsAutofill: customConfig.conditionalUI !== false,
+    supportsAutofill: customConfig.conditionalUI !== false
   }
 }
 
@@ -1642,8 +1642,8 @@ export function isWebAuthnSupported(): boolean {
 
   // Check for WebAuthn support
   return (
-    typeof PublicKeyCredential !== 'undefined' &&
-    typeof navigator.credentials !== 'undefined'
+    typeof PublicKeyCredential !== 'undefined'
+    && typeof navigator.credentials !== 'undefined'
   )
 }
 

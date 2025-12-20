@@ -22,7 +22,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  error: null,
+  error: null
 })
 
 const emit = defineEmits<{
@@ -43,7 +43,7 @@ const authClient = useAuthClient()
 // Form state (populated from current user)
 const state = reactive({
   name: '',
-  image: '',
+  image: ''
 })
 
 // Populate form when user changes
@@ -55,15 +55,15 @@ watch(
       state.image = u.image ?? ''
     }
   },
-  { immediate: true },
+  { immediate: true }
 )
 
 // Track if form has changes
 const hasChanges = computed(() => {
   if (!user.value) return false
   return (
-    state.name !== (user.value.name ?? '') ||
-    state.image !== (user.value.image ?? '')
+    state.name !== (user.value.name ?? '')
+    || state.image !== (user.value.image ?? '')
   )
 })
 
@@ -96,7 +96,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
   try {
     const result = await authClient.updateUser({
       name: event.data.name,
-      image: event.data.image || undefined,
+      image: event.data.image || undefined
     })
 
     if (result.error) {
@@ -108,7 +108,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: t('account.profileUpdated'),
       description: 'Your profile has been saved.',
-      color: 'success',
+      color: 'success'
     })
 
     emit('saved')
@@ -117,7 +117,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     toast.add({
       title: 'Error',
       description: message,
-      color: 'error',
+      color: 'error'
     })
   } finally {
     internalLoading.value = false
@@ -136,7 +136,9 @@ function resetForm() {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">{{ t('account.profile') }}</h3>
+      <h3 class="text-lg font-semibold">
+        {{ t('account.profile') }}
+      </h3>
       <p class="text-sm text-muted mt-1">
         Update your personal information.
       </p>
@@ -166,14 +168,22 @@ function resetForm() {
           />
         </div>
         <div class="flex-1">
-          <p class="font-medium">{{ state.name || 'Your Name' }}</p>
-          <p class="text-sm text-muted">{{ user?.email }}</p>
+          <p class="font-medium">
+            {{ state.name || 'Your Name' }}
+          </p>
+          <p class="text-sm text-muted">
+            {{ user?.email }}
+          </p>
         </div>
       </div>
 
       <USeparator />
 
-      <UFormField label="Display name" name="name" required>
+      <UFormField
+        label="Display name"
+        name="name"
+        required
+      >
         <UInput
           v-model="state.name"
           placeholder="John Doe"
@@ -182,7 +192,10 @@ function resetForm() {
         />
       </UFormField>
 
-      <UFormField label="Avatar URL" name="image">
+      <UFormField
+        label="Avatar URL"
+        name="image"
+      >
         <template #hint>
           <span class="text-xs text-muted">Optional. Enter a URL to your profile picture.</span>
         </template>

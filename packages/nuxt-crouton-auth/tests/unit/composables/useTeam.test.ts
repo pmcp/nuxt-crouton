@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, computed, readonly } from 'vue'
 import type { Team, Member, MemberRole } from '../../../types'
 
+// Import after mocks
+import { useTeam } from '../../../app/composables/useTeam'
+
 // Mock auth client for organizations
 const mockAuthClient = {
   useListOrganizations: vi.fn(),
@@ -18,8 +21,8 @@ const mockAuthClient = {
     listInvitations: vi.fn(),
     cancelInvitation: vi.fn(),
     acceptInvitation: vi.fn(),
-    rejectInvitation: vi.fn(),
-  },
+    rejectInvitation: vi.fn()
+  }
 }
 
 // Mock organization data
@@ -45,15 +48,15 @@ const mockActiveOrgData = ref<{
   isDefault?: boolean
   ownerId?: string
   createdAt: string
-  members?: Array<{ userId: string; role: string }>
+  members?: Array<{ userId: string, role: string }>
 } | null>(null)
 
 // Mock session user
-const mockSessionUser = ref<{ id: string; email: string } | null>(null)
+const mockSessionUser = ref<{ id: string, email: string } | null>(null)
 
 // Setup global mocks
 vi.stubGlobal('useNuxtApp', () => ({
-  $authClient: mockAuthClient,
+  $authClient: mockAuthClient
 }))
 
 vi.stubGlobal('useRuntimeConfig', () => ({
@@ -63,15 +66,15 @@ vi.stubGlobal('useRuntimeConfig', () => ({
         mode: 'multi-tenant',
         teams: {
           allowCreate: true,
-          limit: 5,
-        },
-      },
-    },
-  },
+          limit: 5
+        }
+      }
+    }
+  }
 }))
 
 vi.stubGlobal('useSession', () => ({
-  user: mockSessionUser,
+  user: mockSessionUser
 }))
 
 vi.stubGlobal('ref', ref)
@@ -80,15 +83,12 @@ vi.stubGlobal('readonly', readonly)
 
 // Setup mock return values - must be done before import
 mockAuthClient.useListOrganizations = vi.fn(() => ({
-  data: mockOrganizationsData,
+  data: mockOrganizationsData
 }))
 
 mockAuthClient.useActiveOrganization = vi.fn(() => ({
-  data: mockActiveOrgData,
+  data: mockActiveOrgData
 }))
-
-// Import after mocks
-import { useTeam } from '../../../app/composables/useTeam'
 
 describe('useTeam', () => {
   beforeEach(() => {
@@ -126,7 +126,7 @@ describe('useTeam', () => {
         logo: 'https://example.com/logo.png',
         createdAt: '2024-01-01T00:00:00Z',
         personal: false,
-        isDefault: false,
+        isDefault: false
       }
 
       const { currentTeam } = useTeam()
@@ -135,7 +135,7 @@ describe('useTeam', () => {
         name: 'Test Team',
         slug: 'test-team',
         personal: false,
-        isDefault: false,
+        isDefault: false
       })
     })
 
@@ -147,7 +147,7 @@ describe('useTeam', () => {
     it('should return teams list when organizations exist', () => {
       mockOrganizationsData.value = [
         { id: 'org-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00Z' },
-        { id: 'org-2', name: 'Team 2', slug: 'team-2', createdAt: '2024-01-02T00:00:00Z' },
+        { id: 'org-2', name: 'Team 2', slug: 'team-2', createdAt: '2024-01-02T00:00:00Z' }
       ]
 
       const { teams } = useTeam()
@@ -175,7 +175,7 @@ describe('useTeam', () => {
         name: 'Test Team',
         slug: 'test-team',
         createdAt: '2024-01-01T00:00:00Z',
-        members: [{ userId: 'user-1', role: 'owner' }],
+        members: [{ userId: 'user-1', role: 'owner' }]
       }
 
       const { currentRole } = useTeam()
@@ -191,8 +191,8 @@ describe('useTeam', () => {
         createdAt: '2024-01-01T00:00:00Z',
         members: [
           { userId: 'user-1', role: 'owner' },
-          { userId: 'user-2', role: 'member' },
-        ],
+          { userId: 'user-2', role: 'member' }
+        ]
       }
 
       const { currentRole } = useTeam()
@@ -204,7 +204,7 @@ describe('useTeam', () => {
     it('should show team switcher in multi-tenant mode with multiple teams', () => {
       mockOrganizationsData.value = [
         { id: 'org-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00Z' },
-        { id: 'org-2', name: 'Team 2', slug: 'team-2', createdAt: '2024-01-02T00:00:00Z' },
+        { id: 'org-2', name: 'Team 2', slug: 'team-2', createdAt: '2024-01-02T00:00:00Z' }
       ]
 
       const { showTeamSwitcher } = useTeam()
@@ -213,7 +213,7 @@ describe('useTeam', () => {
 
     it('should hide team switcher with single team', () => {
       mockOrganizationsData.value = [
-        { id: 'org-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00Z' },
+        { id: 'org-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00Z' }
       ]
 
       const { showTeamSwitcher } = useTeam()
@@ -227,7 +227,7 @@ describe('useTeam', () => {
 
     it('should allow team creation within limit', () => {
       mockOrganizationsData.value = [
-        { id: 'org-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00Z' },
+        { id: 'org-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00Z' }
       ]
 
       const { canCreateTeam } = useTeam()
@@ -239,7 +239,7 @@ describe('useTeam', () => {
         id: `org-${i}`,
         name: `Team ${i}`,
         slug: `team-${i}`,
-        createdAt: '2024-01-01T00:00:00Z',
+        createdAt: '2024-01-01T00:00:00Z'
       }))
 
       const { canCreateTeam } = useTeam()
@@ -253,7 +253,7 @@ describe('useTeam', () => {
         name: 'Test',
         slug: 'test',
         createdAt: '2024-01-01T00:00:00Z',
-        members: [{ userId: 'user-1', role: 'admin' }],
+        members: [{ userId: 'user-1', role: 'admin' }]
       }
 
       const { canInviteMembers, isAdmin } = useTeam()
@@ -268,7 +268,7 @@ describe('useTeam', () => {
         name: 'Test',
         slug: 'test',
         createdAt: '2024-01-01T00:00:00Z',
-        members: [{ userId: 'user-1', role: 'member' }],
+        members: [{ userId: 'user-1', role: 'member' }]
       }
 
       const { canInviteMembers, isOwner } = useTeam()
@@ -285,14 +285,14 @@ describe('useTeam', () => {
       await switchTeam('org-2')
 
       expect(mockAuthClient.organization.setActive).toHaveBeenCalledWith({
-        organizationId: 'org-2',
+        organizationId: 'org-2'
       })
     })
 
     it('should throw on switch error', async () => {
       mockAuthClient.organization.setActive.mockResolvedValue({
         data: null,
-        error: { message: 'Team not found' },
+        error: { message: 'Team not found' }
       })
 
       const { switchTeam, error } = useTeam()
@@ -310,7 +310,7 @@ describe('useTeam', () => {
       await switchTeamBySlug('my-team')
 
       expect(mockAuthClient.organization.setActive).toHaveBeenCalledWith({
-        organizationSlug: 'my-team',
+        organizationSlug: 'my-team'
       })
     })
   })
@@ -326,9 +326,9 @@ describe('useTeam', () => {
           id: 'new-org',
           name: 'New Team',
           slug: 'new-team',
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T00:00:00Z'
         },
-        error: null,
+        error: null
       })
 
       const { createTeam } = useTeam()
@@ -338,7 +338,7 @@ describe('useTeam', () => {
         name: 'New Team',
         slug: 'new-team',
         logo: undefined,
-        metadata: undefined,
+        metadata: undefined
       })
       expect(team.name).toBe('New Team')
     })
@@ -348,7 +348,7 @@ describe('useTeam', () => {
         id: `org-${i}`,
         name: `Team ${i}`,
         slug: `team-${i}`,
-        createdAt: '2024-01-01T00:00:00Z',
+        createdAt: '2024-01-01T00:00:00Z'
       }))
 
       const { createTeam, error } = useTeam()
@@ -365,16 +365,16 @@ describe('useTeam', () => {
         id: 'org-1',
         name: 'Old Name',
         slug: 'old-slug',
-        createdAt: '2024-01-01T00:00:00Z',
+        createdAt: '2024-01-01T00:00:00Z'
       }
       mockAuthClient.organization.update.mockResolvedValue({
         data: {
           id: 'org-1',
           name: 'New Name',
           slug: 'new-slug',
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T00:00:00Z'
         },
-        error: null,
+        error: null
       })
 
       const { updateTeam } = useTeam()
@@ -386,8 +386,8 @@ describe('useTeam', () => {
           name: 'New Name',
           slug: 'new-slug',
           logo: undefined,
-          metadata: undefined,
-        },
+          metadata: undefined
+        }
       })
       expect(team.name).toBe('New Name')
     })
@@ -410,7 +410,7 @@ describe('useTeam', () => {
         name: 'Test',
         slug: 'test',
         createdAt: '2024-01-01T00:00:00Z',
-        members: [{ userId: 'user-1', role: 'owner' }],
+        members: [{ userId: 'user-1', role: 'owner' }]
       }
       mockAuthClient.organization.delete.mockResolvedValue({ data: {}, error: null })
 
@@ -418,7 +418,7 @@ describe('useTeam', () => {
       await deleteTeam()
 
       expect(mockAuthClient.organization.delete).toHaveBeenCalledWith({
-        organizationId: 'org-1',
+        organizationId: 'org-1'
       })
     })
 
@@ -429,7 +429,7 @@ describe('useTeam', () => {
         name: 'Test',
         slug: 'test',
         createdAt: '2024-01-01T00:00:00Z',
-        members: [{ userId: 'user-1', role: 'admin' }],
+        members: [{ userId: 'user-1', role: 'admin' }]
       }
 
       const { deleteTeam, error } = useTeam()
@@ -446,16 +446,16 @@ describe('useTeam', () => {
           id: 'org-1',
           name: 'Test',
           slug: 'test',
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T00:00:00Z'
         }
         mockAuthClient.organization.listMembers.mockResolvedValue({
           data: {
             members: [
               { id: 'm-1', organizationId: 'org-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00Z' },
-              { id: 'm-2', organizationId: 'org-1', userId: 'user-2', role: 'member', createdAt: '2024-01-02T00:00:00Z' },
-            ],
+              { id: 'm-2', organizationId: 'org-1', userId: 'user-2', role: 'member', createdAt: '2024-01-02T00:00:00Z' }
+            ]
           },
-          error: null,
+          error: null
         })
 
         const { loadMembers, members } = useTeam()
@@ -483,7 +483,7 @@ describe('useTeam', () => {
           name: 'Test',
           slug: 'test',
           createdAt: '2024-01-01T00:00:00Z',
-          members: [{ userId: 'user-1', role: 'owner' }],
+          members: [{ userId: 'user-1', role: 'owner' }]
         }
         mockAuthClient.organization.inviteMember.mockResolvedValue({ data: {}, error: null })
 
@@ -493,7 +493,7 @@ describe('useTeam', () => {
         expect(mockAuthClient.organization.inviteMember).toHaveBeenCalledWith({
           organizationId: 'org-1',
           email: 'new@example.com',
-          role: 'member',
+          role: 'member'
         })
       })
 
@@ -504,7 +504,7 @@ describe('useTeam', () => {
           name: 'Test',
           slug: 'test',
           createdAt: '2024-01-01T00:00:00Z',
-          members: [{ userId: 'user-1', role: 'member' }],
+          members: [{ userId: 'user-1', role: 'member' }]
         }
 
         const { inviteMember, error } = useTeam()
@@ -523,7 +523,7 @@ describe('useTeam', () => {
           name: 'Test',
           slug: 'test',
           createdAt: '2024-01-01T00:00:00Z',
-          members: [{ userId: 'user-1', role: 'owner' }],
+          members: [{ userId: 'user-1', role: 'owner' }]
         }
         mockAuthClient.organization.removeMember.mockResolvedValue({ data: {}, error: null })
         mockAuthClient.organization.listMembers.mockResolvedValue({ data: { members: [] }, error: null })
@@ -533,7 +533,7 @@ describe('useTeam', () => {
 
         expect(mockAuthClient.organization.removeMember).toHaveBeenCalledWith({
           organizationId: 'org-1',
-          memberIdOrEmail: 'user-2',
+          memberIdOrEmail: 'user-2'
         })
       })
     })
@@ -546,7 +546,7 @@ describe('useTeam', () => {
           name: 'Test',
           slug: 'test',
           createdAt: '2024-01-01T00:00:00Z',
-          members: [{ userId: 'user-1', role: 'owner' }],
+          members: [{ userId: 'user-1', role: 'owner' }]
         }
         mockAuthClient.organization.updateMemberRole.mockResolvedValue({ data: {}, error: null })
         mockAuthClient.organization.listMembers.mockResolvedValue({ data: { members: [] }, error: null })
@@ -557,7 +557,7 @@ describe('useTeam', () => {
         expect(mockAuthClient.organization.updateMemberRole).toHaveBeenCalledWith({
           organizationId: 'org-1',
           memberId: 'user-2',
-          role: 'admin',
+          role: 'admin'
         })
       })
     })
@@ -572,8 +572,8 @@ describe('useTeam', () => {
           createdAt: '2024-01-01T00:00:00Z',
           members: [
             { userId: 'user-1', role: 'owner' },
-            { userId: 'user-2', role: 'member' },
-          ],
+            { userId: 'user-2', role: 'member' }
+          ]
         }
         mockAuthClient.organization.removeMember.mockResolvedValue({ data: {}, error: null })
 
@@ -582,7 +582,7 @@ describe('useTeam', () => {
 
         expect(mockAuthClient.organization.removeMember).toHaveBeenCalledWith({
           organizationId: 'org-1',
-          memberIdOrEmail: 'user-2',
+          memberIdOrEmail: 'user-2'
         })
       })
 
@@ -593,7 +593,7 @@ describe('useTeam', () => {
           name: 'Test',
           slug: 'test',
           createdAt: '2024-01-01T00:00:00Z',
-          members: [{ userId: 'user-1', role: 'owner' }],
+          members: [{ userId: 'user-1', role: 'owner' }]
         }
 
         const { leaveTeam, error } = useTeam()
@@ -611,15 +611,15 @@ describe('useTeam', () => {
           id: 'org-1',
           name: 'Test',
           slug: 'test',
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T00:00:00Z'
         }
         mockAuthClient.organization.listInvitations.mockResolvedValue({
           data: {
             invitations: [
-              { id: 'inv-1', email: 'pending@example.com', role: 'member' },
-            ],
+              { id: 'inv-1', email: 'pending@example.com', role: 'member' }
+            ]
           },
-          error: null,
+          error: null
         })
 
         const { getPendingInvitations } = useTeam()
@@ -638,7 +638,7 @@ describe('useTeam', () => {
         await cancelInvitation('inv-1')
 
         expect(mockAuthClient.organization.cancelInvitation).toHaveBeenCalledWith({
-          invitationId: 'inv-1',
+          invitationId: 'inv-1'
         })
       })
     })
@@ -651,7 +651,7 @@ describe('useTeam', () => {
         await acceptInvitation('inv-1')
 
         expect(mockAuthClient.organization.acceptInvitation).toHaveBeenCalledWith({
-          invitationId: 'inv-1',
+          invitationId: 'inv-1'
         })
       })
     })
@@ -664,7 +664,7 @@ describe('useTeam', () => {
         await rejectInvitation('inv-1')
 
         expect(mockAuthClient.organization.rejectInvitation).toHaveBeenCalledWith({
-          invitationId: 'inv-1',
+          invitationId: 'inv-1'
         })
       })
     })
@@ -677,7 +677,7 @@ describe('useTeam', () => {
         name: 'Legacy Team',
         slug: 'legacy-team',
         createdAt: '2024-01-01T00:00:00Z',
-        metadata: JSON.stringify({ personal: true, isDefault: true, ownerId: 'user-1' }),
+        metadata: JSON.stringify({ personal: true, isDefault: true, ownerId: 'user-1' })
       }
 
       const { currentTeam } = useTeam()
@@ -695,7 +695,7 @@ describe('useTeam', () => {
         personal: true,
         isDefault: true,
         ownerId: 'user-new',
-        metadata: JSON.stringify({ personal: false, isDefault: false, ownerId: 'user-old' }),
+        metadata: JSON.stringify({ personal: false, isDefault: false, ownerId: 'user-old' })
       }
 
       const { currentTeam } = useTeam()
@@ -711,7 +711,7 @@ describe('useTeam', () => {
         slug: 'sqlite-team',
         createdAt: '2024-01-01T00:00:00Z',
         personal: 1 as unknown as boolean,
-        isDefault: 0 as unknown as boolean,
+        isDefault: 0 as unknown as boolean
       }
 
       const { currentTeam } = useTeam()

@@ -7,15 +7,15 @@ export default defineBuildConfig({
       outDir: 'dist/app/composables',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
-      loaders: ['js'],
+      loaders: ['js']
     },
     {
       input: 'server/database/schema',
       outDir: 'dist/server/database/schema',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
-      loaders: ['js'],
-    },
+      loaders: ['js']
+    }
   ],
   declaration: true,
   clean: true,
@@ -26,6 +26,6 @@ export default defineBuildConfig({
     'h3',
     'vue',
     'nuxt',
-    'zod',
-  ],
+    'zod'
+  ]
 })

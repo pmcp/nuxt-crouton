@@ -16,7 +16,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  defaultTab: 'profile',
+  defaultTab: 'profile'
 })
 
 const { t } = useT()
@@ -31,8 +31,8 @@ const tabs = computed(() => {
     {
       value: 'profile',
       label: t('account.profile'),
-      icon: 'i-lucide-user',
-    },
+      icon: 'i-lucide-user'
+    }
   ]
 
   // Only show password tab if password auth is enabled
@@ -40,7 +40,7 @@ const tabs = computed(() => {
     items.push({
       value: 'password',
       label: t('auth.password'),
-      icon: 'i-lucide-lock',
+      icon: 'i-lucide-lock'
     })
   }
 
@@ -49,7 +49,7 @@ const tabs = computed(() => {
     items.push({
       value: 'security',
       label: t('account.security'),
-      icon: 'i-lucide-shield',
+      icon: 'i-lucide-shield'
     })
   }
 
@@ -58,7 +58,7 @@ const tabs = computed(() => {
     items.push({
       value: 'linked',
       label: t('account.linkedAccounts'),
-      icon: 'i-lucide-link',
+      icon: 'i-lucide-link'
     })
   }
 
@@ -66,7 +66,7 @@ const tabs = computed(() => {
   items.push({
     value: 'danger',
     label: t('account.dangerZone'),
-    icon: 'i-lucide-alert-triangle',
+    icon: 'i-lucide-alert-triangle'
   })
 
   return items
@@ -76,7 +76,9 @@ const tabs = computed(() => {
 <template>
   <div class="space-y-6">
     <div>
-      <h2 class="text-2xl font-bold">{{ t('account.settings') }}</h2>
+      <h2 class="text-2xl font-bold">
+        {{ t('account.settings') }}
+      </h2>
       <p class="text-muted mt-1">
         {{ t('account.settingsDescription') }}
       </p>
@@ -97,7 +99,10 @@ const tabs = computed(() => {
           <AccountPasswordForm v-else-if="item.value === 'password'" />
 
           <!-- Security Tab -->
-          <div v-else-if="item.value === 'security'" class="space-y-8">
+          <div
+            v-else-if="item.value === 'security'"
+            class="space-y-8"
+          >
             <AccountTwoFactorSetup v-if="has2FA" />
             <USeparator v-if="has2FA && hasPasskeys" />
             <AccountPasskeyManager v-if="hasPasskeys" />

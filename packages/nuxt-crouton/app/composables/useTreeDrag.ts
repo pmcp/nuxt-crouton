@@ -13,7 +13,7 @@ import { readonly } from 'vue'
 const expandTimeouts: Record<string, ReturnType<typeof setTimeout>> = {}
 
 // Track which items were auto-expanded during this drag (to collapse them later)
-let autoExpandedIds: Set<string> = new Set()
+const autoExpandedIds: Set<string> = new Set()
 
 // Track whether the move is blocked (set by onMove, read by onEnd)
 let moveBlocked = false
@@ -39,8 +39,8 @@ export function useTreeDrag() {
     dropTargetId.value = null
     moveBlocked = false
     // Clear any pending expand timeouts
-    Object.values(expandTimeouts).forEach((timeout) => clearTimeout(timeout))
-    Object.keys(expandTimeouts).forEach((key) => delete expandTimeouts[key])
+    Object.values(expandTimeouts).forEach(timeout => clearTimeout(timeout))
+    Object.keys(expandTimeouts).forEach(key => delete expandTimeouts[key])
     // Collapse all auto-expanded items
     for (const id of autoExpandedIds) {
       expandedItems.value[id] = false
@@ -229,6 +229,6 @@ export function useTreeDrag() {
     isMoveBlocked,
 
     // Validation
-    isDescendantDrop,
+    isDescendantDrop
   }
 }

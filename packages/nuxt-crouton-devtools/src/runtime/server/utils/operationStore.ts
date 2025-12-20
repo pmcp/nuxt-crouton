@@ -58,7 +58,7 @@ class OperationStore {
 
     if (filters?.status) {
       const isError = filters.status === 'error'
-      filtered = filtered.filter(op => {
+      filtered = filtered.filter((op) => {
         return isError ? op.status >= 400 : op.status < 400
       })
     }

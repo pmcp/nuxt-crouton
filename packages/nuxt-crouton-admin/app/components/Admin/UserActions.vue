@@ -16,14 +16,14 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false,
+  loading: false
 })
 
 const emit = defineEmits<{
-  'ban': [user: AdminUserListItem]
-  'unban': [user: AdminUserListItem]
-  'delete': [user: AdminUserListItem]
-  'impersonate': [user: AdminUserListItem]
+  ban: [user: AdminUserListItem]
+  unban: [user: AdminUserListItem]
+  delete: [user: AdminUserListItem]
+  impersonate: [user: AdminUserListItem]
 }>()
 
 const items = computed(() => {
@@ -40,8 +40,8 @@ const items = computed(() => {
       label: 'Impersonate',
       icon: 'i-heroicons-eye',
       click: () => emit('impersonate', props.user),
-      disabled: props.user.banned || props.user.superAdmin,
-    },
+      disabled: props.user.banned || props.user.superAdmin
+    }
   ]
 
   // Ban/Unban actions
@@ -50,16 +50,16 @@ const items = computed(() => {
         {
           label: 'Unban User',
           icon: 'i-heroicons-check-circle',
-          click: () => emit('unban', props.user),
-        },
+          click: () => emit('unban', props.user)
+        }
       ]
     : [
         {
           label: 'Ban User',
           icon: 'i-heroicons-no-symbol',
           click: () => emit('ban', props.user),
-          disabled: props.user.superAdmin,
-        },
+          disabled: props.user.superAdmin
+        }
       ]
 
   // Destructive actions
@@ -68,8 +68,8 @@ const items = computed(() => {
       label: 'Delete User',
       icon: 'i-heroicons-trash',
       click: () => emit('delete', props.user),
-      disabled: props.user.superAdmin,
-    },
+      disabled: props.user.superAdmin
+    }
   ]
 
   actions.push(viewActions)
@@ -81,7 +81,10 @@ const items = computed(() => {
 </script>
 
 <template>
-  <UDropdownMenu :items="items" :disabled="loading">
+  <UDropdownMenu
+    :items="items"
+    :disabled="loading"
+  >
     <UButton
       color="neutral"
       variant="ghost"

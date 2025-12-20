@@ -29,7 +29,7 @@ import type { ImpersonationState } from '../../types/admin'
 const impersonationState = ref<ImpersonationState>({
   isImpersonating: false,
   originalAdminId: null,
-  impersonatedUser: null,
+  impersonatedUser: null
 })
 
 // Track if we've checked the server state
@@ -57,13 +57,11 @@ export function useImpersonation() {
       impersonationState.value = state
       hasCheckedStatus.value = true
       return state
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to check impersonation status'
       // Don't throw - just return current state
       return impersonationState.value
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -80,7 +78,7 @@ export function useImpersonation() {
     try {
       const state = await $fetch<ImpersonationState>('/api/admin/impersonate/start', {
         method: 'POST',
-        body: { userId },
+        body: { userId }
       })
 
       impersonationState.value = state
@@ -88,13 +86,11 @@ export function useImpersonation() {
       // Refresh the page to load the app as the impersonated user
       // The session has been modified on the server, so we need a full refresh
       window.location.href = window.location.pathname
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : 'Failed to start impersonation'
       error.value = errorMessage
       throw new Error(errorMessage)
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -109,7 +105,7 @@ export function useImpersonation() {
     error.value = null
     try {
       const state = await $fetch<ImpersonationState>('/api/admin/impersonate/stop', {
-        method: 'POST',
+        method: 'POST'
       })
 
       impersonationState.value = state
@@ -117,13 +113,11 @@ export function useImpersonation() {
       // Refresh the page to load the app as the admin user
       // The session has been modified on the server, so we need a full refresh
       window.location.href = redirectTo
-    }
-    catch (e: unknown) {
+    } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : 'Failed to stop impersonation'
       error.value = errorMessage
       throw new Error(errorMessage)
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -145,6 +139,6 @@ export function useImpersonation() {
     // Methods
     checkStatus,
     startImpersonation,
-    stopImpersonation,
+    stopImpersonation
   }
 }

@@ -34,7 +34,7 @@ const defaultState: TeamState = {
   teamSlug: null,
   team: null,
   resolved: false,
-  error: null,
+  error: null
 }
 
 /**
@@ -62,7 +62,7 @@ export function useTeamState() {
       teamSlug: context.teamSlug,
       team: context.team ?? null,
       resolved: true,
-      error: null,
+      error: null
     }
   }
 
@@ -75,7 +75,7 @@ export function useTeamState() {
       teamSlug: null,
       team: null,
       resolved: true,
-      error,
+      error
     }
   }
 
@@ -110,6 +110,6 @@ export function useTeamState() {
     setTeamContext,
     setTeamError,
     clearTeamContext,
-    markUnresolved,
+    markUnresolved
   }
 }

@@ -71,7 +71,7 @@ export function useServerAuth(event?: H3Event): AuthInstance {
     provider: 'sqlite',
     secret,
     baseURL,
-    schema: authSchema,
+    schema: authSchema
   })
 
   // Cache the instance
@@ -93,7 +93,7 @@ export function useServerAuth(event?: H3Event): AuthInstance {
 export async function getServerSession(event: H3Event) {
   const auth = useServerAuth(event)
   return auth.api.getSession({
-    headers: event.headers,
+    headers: event.headers
   })
 }
 
@@ -110,7 +110,7 @@ export async function requireServerSession(event: H3Event) {
   if (!session?.user) {
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized',
+      message: 'Unauthorized'
     })
   }
 

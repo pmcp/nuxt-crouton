@@ -36,8 +36,8 @@ const {
   model: props.model,
   systemPrompt: props.systemPrompt,
   initialMessages: props.initialMessages,
-  onFinish: (message) => emit('finish', message),
-  onError: (err) => emit('error', err)
+  onFinish: message => emit('finish', message),
+  onError: err => emit('error', err)
 })
 
 // Auto-scroll to bottom on new messages
@@ -83,8 +83,13 @@ defineExpose({
         v-if="messages.length === 0"
         class="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500"
       >
-        <UIcon name="i-lucide-message-square" class="w-12 h-12 mb-3 opacity-50" />
-        <p class="text-sm">{{ emptyMessage }}</p>
+        <UIcon
+          name="i-lucide-message-square"
+          class="w-12 h-12 mb-3 opacity-50"
+        />
+        <p class="text-sm">
+          {{ emptyMessage }}
+        </p>
       </div>
 
       <!-- Message list -->
@@ -97,7 +102,10 @@ defineExpose({
     </div>
 
     <!-- Error alert -->
-    <div v-if="error" class="px-4 pb-2">
+    <div
+      v-if="error"
+      class="px-4 pb-2"
+    >
       <UAlert
         color="error"
         variant="soft"

@@ -26,16 +26,16 @@ try {
 }
 
 export default defineNuxtConfig({
-  $meta: {
-    name: 'nuxt-crouton',
-    description: 'Base CRUD layer for FYIT collections'
-  },
 
   modules: ['@nuxt/ui', '@vueuse/nuxt'],
 
   plugins: [
     { src: join(currentDir, 'app/plugins/tree-styles.client.ts'), mode: 'client' }
   ],
+  $meta: {
+    description: 'Base CRUD layer for FYIT collections',
+    name: 'nuxt-crouton'
+  },
 
   components: {
     dirs: [

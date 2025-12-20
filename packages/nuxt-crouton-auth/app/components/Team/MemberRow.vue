@@ -45,7 +45,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   canManage: false,
   isOwner: false,
-  loading: false,
+  loading: false
 })
 
 const emit = defineEmits<{
@@ -78,7 +78,7 @@ const initials = computed(() => {
 const roleOptions = computed(() => {
   const roles: Array<{ label: string, value: MemberRole }> = [
     { label: t('teams.member'), value: 'member' },
-    { label: t('teams.admin'), value: 'admin' },
+    { label: t('teams.admin'), value: 'admin' }
   ]
 
   // Only owners can transfer ownership
@@ -163,9 +163,14 @@ const roleBadgeColor = computed(() => {
           >
             {{ member.role }}
           </UBadge>
-          <span v-if="isSelf" class="text-xs text-muted">{{ t('teams.you') }}</span>
+          <span
+            v-if="isSelf"
+            class="text-xs text-muted"
+          >{{ t('teams.you') }}</span>
         </div>
-        <p class="text-sm text-muted">{{ member.user?.email }}</p>
+        <p class="text-sm text-muted">
+          {{ member.user?.email }}
+        </p>
       </div>
     </div>
 

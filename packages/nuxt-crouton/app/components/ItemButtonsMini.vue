@@ -2,10 +2,10 @@
   <div :class="containerClasses">
     <!-- VIEW -->
     <div v-if="view">
-      <!-- With tooltip-->
+      <!-- With tooltip -->
       <UTooltip
         v-if="viewTooltip.length > 0"
-        :popper="{placement: 'left', arrow: false  }"
+        :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
           <span class="italic">{{ viewTooltip }}</span>
@@ -22,7 +22,7 @@
         />
       </UTooltip>
 
-      <!-- Without tooltip-->
+      <!-- Without tooltip -->
       <UButton
         v-else
         :loading="viewLoading"
@@ -37,10 +37,10 @@
 
     <!-- DELETE -->
     <div v-if="delete">
-    <!-- With tooltip-->
+      <!-- With tooltip -->
       <UTooltip
         v-if="deleteTooltip.length > 0"
-        :popper="{placement: 'left', arrow: false  }"
+        :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
           <span class="italic">{{ deleteTooltip }}</span>
@@ -57,7 +57,7 @@
         />
       </UTooltip>
 
-      <!-- Without tooltip-->
+      <!-- Without tooltip -->
       <UButton
         v-else
         :loading="deleteLoading"
@@ -70,13 +70,12 @@
       />
     </div>
 
-
     <!-- UPDATE -->
     <div v-if="update">
-    <!-- With tooltip-->
+      <!-- With tooltip -->
       <UTooltip
-      v-if="updateTooltip.length > 0"
-      :popper="{placement: 'left', arrow: false  }"
+        v-if="updateTooltip.length > 0"
+        :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
           <span class="italic">{{ updateTooltip }}</span>
@@ -90,7 +89,7 @@
           @click="$emit('update')"
         />
       </UTooltip>
-      <!-- Without tooltip-->
+      <!-- Without tooltip -->
       <UButton
         v-else
         :loading="updateLoading"
@@ -103,10 +102,8 @@
       />
     </div>
   </div>
-
-
-
 </template>
+
 <script setup lang="ts">
 const props = defineProps({
   view: {
@@ -128,7 +125,7 @@ const props = defineProps({
   containerClasses: {
     type: String,
     default: 'flex flex-row gap-2'
-    },
+  },
   viewTooltip: {
     type: String,
     default: ''

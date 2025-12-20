@@ -37,7 +37,7 @@ const defaultSessionState = {
   error: computed(() => null),
   isAuthenticated: computed(() => false),
   refresh: async () => {},
-  clear: async () => {},
+  clear: async () => {}
 }
 
 export function useSession() {
@@ -53,12 +53,12 @@ export function useSession() {
   const {
     data: sessionData,
     isPending,
-    error: sessionError,
+    error: sessionError
   } = authClient.useSession()
 
   // Use Better Auth's reactive active organization hook
   const {
-    data: activeOrgData,
+    data: activeOrgData
   } = authClient.useActiveOrganization()
 
   // Computed accessors for cleaner API
@@ -72,7 +72,7 @@ export function useSession() {
       expiresAt: new Date(s.expiresAt),
       ipAddress: s.ipAddress ?? null,
       userAgent: s.userAgent ?? null,
-      activeOrganizationId: (s as Record<string, unknown>).activeOrganizationId as string | null ?? null,
+      activeOrganizationId: (s as Record<string, unknown>).activeOrganizationId as string | null ?? null
     }
   })
 
@@ -86,7 +86,7 @@ export function useSession() {
       image: u.image ?? null,
       emailVerified: u.emailVerified ?? false,
       createdAt: new Date(u.createdAt),
-      updatedAt: new Date(u.updatedAt),
+      updatedAt: new Date(u.updatedAt)
     }
   })
 
@@ -109,8 +109,7 @@ export function useSession() {
     if (org.metadata) {
       try {
         metadata = typeof org.metadata === 'string' ? JSON.parse(org.metadata) : org.metadata
-      }
-      catch {
+      } catch {
         metadata = {}
       }
     }
@@ -128,7 +127,7 @@ export function useSession() {
       isDefault: isDefaultOrg,
       ownerId: org.ownerId ?? (metadata.ownerId as string | undefined),
       createdAt: new Date(org.createdAt),
-      updatedAt: new Date(org.createdAt), // Better Auth doesn't have updatedAt
+      updatedAt: new Date(org.createdAt) // Better Auth doesn't have updatedAt
     }
   })
 
@@ -170,6 +169,6 @@ export function useSession() {
 
     // Methods
     refresh,
-    clear,
+    clear
   }
 }

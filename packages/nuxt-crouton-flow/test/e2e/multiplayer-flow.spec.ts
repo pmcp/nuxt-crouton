@@ -33,7 +33,7 @@ test.describe('Multiplayer Flow E2E', () => {
       // Drag node in page A
       const nodeA = pageA.locator('.vue-flow__node').first()
       await nodeA.dragTo(pageA.locator('.vue-flow'), {
-        targetPosition: { x: 200, y: 200 },
+        targetPosition: { x: 200, y: 200 }
       })
 
       // Verify node moved in page B

@@ -2,39 +2,42 @@
 <template>
   <!-- Modals -->
   <UModal
-      v-for="(state, index) in modalStates"
-      :key="state.id"
-      v-model:open="state.isOpen"
-      :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
-      :description="`Form for ${state.action || 'managing'} ${getCollectionName(state.collection)}`"
-      size="lg"
-      @update:open="(val: boolean) => handleClose(state.id, val)"
-      @after:leave="() => handleAfterLeave(state.id)"
+    v-for="(state, index) in modalStates"
+    :key="state.id"
+    v-model:open="state.isOpen"
+    :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
+    :description="`Form for ${state.action || 'managing'} ${getCollectionName(state.collection)}`"
+    size="lg"
+    @update:open="(val: boolean) => handleClose(state.id, val)"
+    @after:leave="() => handleAfterLeave(state.id)"
   >
     <template #body>
-      <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
+      <CroutonLoading
+        v-if="state.loading !== 'notLoading'"
+        class="h-full w-full"
+      />
 
       <CroutonFormDynamicLoader
-          v-else
-          :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-          :collection="state.collection"
-          :loading="state.loading"
-          :action="state.action"
-          :items="state.items"
-          :activeItem="state.activeItem"
+        v-else
+        :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
+        :collection="state.collection"
+        :loading="state.loading"
+        :action="state.action"
+        :items="state.items"
+        :active-item="state.activeItem"
       />
     </template>
   </UModal>
 
   <!-- Dialogs -->
   <UModal
-      v-for="(state, index) in dialogStates"
-      :key="state.id"
-      v-model:open="state.isOpen"
-      :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
-      :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
-      @update:open="(val: boolean) => handleClose(state.id, val)"
-      @after:leave="() => handleAfterLeave(state.id)"
+    v-for="(state, index) in dialogStates"
+    :key="state.id"
+    v-model:open="state.isOpen"
+    :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
+    :description="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
+    @update:open="(val: boolean) => handleClose(state.id, val)"
+    @after:leave="() => handleAfterLeave(state.id)"
   >
     <template #content="{ close }">
       <div class="p-6">
@@ -44,23 +47,26 @@
             {{ getCollectionName(state.collection) }}
           </h2>
           <UButton
-              icon="i-lucide-x"
-              variant="ghost"
-              size="xs"
-              @click.stop="close()"
+            icon="i-lucide-x"
+            variant="ghost"
+            size="xs"
+            @click.stop="close()"
           />
         </div>
 
         <div class="w-full">
-          <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
+          <CroutonLoading
+            v-if="state.loading !== 'notLoading'"
+            class="h-full w-full"
+          />
           <CroutonFormDynamicLoader
-              v-else
-              :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-              :collection="state.collection"
-              :loading="state.loading"
-              :action="state.action"
-              :items="state.items"
-              :activeItem="state.activeItem"
+            v-else
+            :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
+            :collection="state.collection"
+            :loading="state.loading"
+            :action="state.action"
+            :items="state.items"
+            :active-item="state.activeItem"
           />
         </div>
       </div>
@@ -69,53 +75,62 @@
 
   <!-- Expandable Slideovers -->
   <USlideover
-      v-for="(state, index) in slideoverStates"
-      :key="state.id"
-      v-model:open="state.isOpen"
-      :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
-      :description="`Form for ${state.action || 'managing'} ${getCollectionName(state.collection)}`"
-      side="right"
-      :ui="getSlideoverUi(state, index)"
-      :style="getSlideoverStyle(state, index)"
-      :class="[
+    v-for="(state, index) in slideoverStates"
+    :key="state.id"
+    v-model:open="state.isOpen"
+    :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
+    :description="`Form for ${state.action || 'managing'} ${getCollectionName(state.collection)}`"
+    side="right"
+    :ui="getSlideoverUi(state, index)"
+    :style="getSlideoverStyle(state, index)"
+    :class="[
       `crouton-slideover-level-${index}`,
       state.isExpanded ? 'crouton-slideover-expanded' : ''
     ]"
-      @update:open="(val: boolean) => handleSlideoverClose(state.id, val)"
-      @after:leave="() => handleAfterLeave(state.id)"
+    @update:open="(val: boolean) => handleSlideoverClose(state.id, val)"
+    @after:leave="() => handleAfterLeave(state.id)"
   >
     <!-- Enhanced actions with expand button alongside close -->
     <template #actions>
       <div class="flex items-center gap-2">
         <!-- Breadcrumb for nested slideovers -->
-        <span v-if="getPreviousSlideover(index) && !state.isExpanded" class="text-sm mr-2">
+        <span
+          v-if="getPreviousSlideover(index) && !state.isExpanded"
+          class="text-sm mr-2"
+        >
           {{ getPreviousSlideover(index)?.action }} {{ getPreviousSlideover(index)?.collection }} ›
         </span>
 
         <!-- Expand/Collapse button -->
         <UButton
-            :icon="state.isExpanded ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'"
-            variant="ghost"
-            color="neutral"
-            size="xs"
-            :title="state.isExpanded ? 'Collapse to sidebar' : 'Expand to fullscreen'"
-            @click.stop="toggleExpand(state.id)"
+          :icon="state.isExpanded ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          :title="state.isExpanded ? 'Collapse to sidebar' : 'Expand to fullscreen'"
+          @click.stop="toggleExpand(state.id)"
         />
       </div>
     </template>
 
     <!-- Body content -->
     <template #body>
-      <div v-if="state.isOpen && state.collection" class="w-full h-full ">
-        <CroutonLoading v-if="state.loading !== 'notLoading'" class="h-full w-full"/>
+      <div
+        v-if="state.isOpen && state.collection"
+        class="w-full h-full "
+      >
+        <CroutonLoading
+          v-if="state.loading !== 'notLoading'"
+          class="h-full w-full"
+        />
         <CroutonFormDynamicLoader
-            v-else
-            :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-            :collection="state.collection"
-            :loading="state.loading"
-            :action="state.action"
-            :items="state.items"
-            :activeItem="state.activeItem"
+          v-else
+          :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
+          :collection="state.collection"
+          :loading="state.loading"
+          :action="state.action"
+          :items="state.items"
+          :active-item="state.activeItem"
         />
       </div>
     </template>
@@ -138,7 +153,7 @@ interface CroutonState {
   loading: LoadingState
   isOpen: boolean
   containerType: 'slideover' | 'modal' | 'dialog'
-  isExpanded?: boolean  // Track expand state for each slideover
+  isExpanded?: boolean // Track expand state for each slideover
 }
 
 // Use the composables - destructure only needed properties
@@ -147,15 +162,15 @@ const { collectionWithCapitalSingular } = useFormatCollections()
 
 // Filter states by container type
 const modalStates = computed(() =>
-    croutonStates.value.filter(state => state.containerType === 'modal')
+  croutonStates.value.filter(state => state.containerType === 'modal')
 )
 
 const dialogStates = computed(() =>
-    croutonStates.value.filter(state => state.containerType === 'dialog')
+  croutonStates.value.filter(state => state.containerType === 'dialog')
 )
 
 const slideoverStates = computed(() =>
-    croutonStates.value.filter(state => state.containerType === 'slideover' || !state.containerType)
+  croutonStates.value.filter(state => state.containerType === 'slideover' || !state.containerType)
 )
 
 // Get formatted collection name
@@ -236,7 +251,7 @@ const getSlideoverStyle = (state: CroutonState, index: number) => {
   // For expanded state, only adjust positioning, let CSS handle width
   if (state.isExpanded) {
     return {
-      zIndex: baseZIndex + 100,
+      zIndex: baseZIndex + 100
       // Remove transition from inline styles - handle in CSS
     }
   }

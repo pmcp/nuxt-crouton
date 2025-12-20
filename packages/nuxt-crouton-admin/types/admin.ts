@@ -120,13 +120,13 @@ export interface BanPayload {
 /**
  * Predefined ban durations
  */
-export type BanDuration =
-  | 'permanent'
-  | '1_hour'
-  | '24_hours'
-  | '7_days'
-  | '30_days'
-  | '90_days'
+export type BanDuration
+  = | 'permanent'
+    | '1_hour'
+    | '24_hours'
+    | '7_days'
+    | '30_days'
+    | '90_days'
 
 /**
  * Ban duration config
@@ -146,7 +146,7 @@ export const BAN_DURATIONS: BanDurationOption[] = [
   { value: '7_days', label: '7 days', hours: 168 },
   { value: '30_days', label: '30 days', hours: 720 },
   { value: '90_days', label: '90 days', hours: 2160 },
-  { value: 'permanent', label: 'Permanent', hours: null },
+  { value: 'permanent', label: 'Permanent', hours: null }
 ]
 
 // ============================================================================

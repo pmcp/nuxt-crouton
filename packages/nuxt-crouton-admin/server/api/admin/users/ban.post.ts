@@ -31,14 +31,14 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
   if (!body.userId?.trim()) {
     throw createError({
       statusCode: 400,
-      message: 'User ID is required',
+      message: 'User ID is required'
     })
   }
 
   if (!body.reason?.trim()) {
     throw createError({
       statusCode: 400,
-      message: 'Ban reason is required',
+      message: 'Ban reason is required'
     })
   }
 
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
   if (body.userId === adminUser.id) {
     throw createError({
       statusCode: 400,
-      message: 'You cannot ban yourself',
+      message: 'You cannot ban yourself'
     })
   }
 
@@ -60,7 +60,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
   if (existingUsers.length === 0) {
     throw createError({
       statusCode: 404,
-      message: 'User not found',
+      message: 'User not found'
     })
   }
 
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
   if (targetUser.superAdmin) {
     throw createError({
       statusCode: 403,
-      message: 'Cannot ban super admin users',
+      message: 'Cannot ban super admin users'
     })
   }
 
@@ -86,7 +86,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
       banned: true,
       bannedReason: body.reason.trim(),
       bannedUntil: bannedUntil,
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
     .where(eq(user.id, body.userId))
 
@@ -116,6 +116,6 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
     superAdmin: updatedUser.superAdmin,
     banned: updatedUser.banned,
     bannedReason: updatedUser.bannedReason,
-    bannedUntil: updatedUser.bannedUntil,
+    bannedUntil: updatedUser.bannedUntil
   }
 })

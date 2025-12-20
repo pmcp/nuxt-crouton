@@ -25,8 +25,8 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   click: []
   dragStart: []
-  drag: [position: { lng: number; lat: number }]
-  dragEnd: [position: { lng: number; lat: number }]
+  drag: [position: { lng: number, lat: number }]
+  dragEnd: [position: { lng: number, lat: number }]
 }>()
 
 // Create marker using Nuxt-Mapbox helper

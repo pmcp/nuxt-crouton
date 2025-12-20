@@ -1,6 +1,6 @@
 // css-setup.mjs - Setup Tailwind CSS @source directive for Nuxt Crouton layers
-import fsp from 'fs/promises'
-import path from 'path'
+import fsp from 'node:fs/promises'
+import path from 'node:path'
 
 /**
  * Common CSS file locations to check (in order of preference)
@@ -166,7 +166,7 @@ async function ensureCssInNuxtConfig(projectRoot, cssRelativePath) {
       config = config.replace(cssArrayMatch[0], `css: [${currentCss}${newEntry}\n  ]`)
     } else {
       // Add css array to config
-      const configMatch = config.match(/defineNuxtConfig\s*\(\s*{/)
+      const configMatch = config.match(/defineNuxtConfig\s*\(\s*\{/)
       if (configMatch) {
         const insertIndex = configMatch.index + configMatch[0].length
         const cssBlock = `\n  css: [${nuxtCssPath}],`

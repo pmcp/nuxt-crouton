@@ -16,11 +16,21 @@
     </div>
 
     <!-- Asset Grid -->
-    <div v-if="pending" class="grid grid-cols-4 gap-4">
-      <USkeleton v-for="i in 8" :key="i" class="h-32 w-full" />
+    <div
+      v-if="pending"
+      class="grid grid-cols-4 gap-4"
+    >
+      <USkeleton
+        v-for="i in 8"
+        :key="i"
+        class="h-32 w-full"
+      />
     </div>
 
-    <div v-else-if="filteredAssets?.length" class="grid grid-cols-4 gap-4">
+    <div
+      v-else-if="filteredAssets?.length"
+      class="grid grid-cols-4 gap-4"
+    >
       <button
         v-for="asset in filteredAssets"
         :key="asset.id"
@@ -35,7 +45,7 @@
             :src="`/images/${asset.pathname}`"
             :alt="asset.alt || asset.filename"
             class="w-full h-full object-cover"
-          />
+          >
           <UIcon
             v-else
             name="i-lucide-file"
@@ -45,16 +55,28 @@
         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 text-xs truncate opacity-0 group-hover:opacity-100 transition-opacity">
           {{ asset.filename }}
         </div>
-        <div v-if="modelValue === asset.id" class="absolute top-2 right-2">
+        <div
+          v-if="modelValue === asset.id"
+          class="absolute top-2 right-2"
+        >
           <div class="bg-primary-500 rounded-full p-1">
-            <UIcon name="i-lucide-check" class="w-4 h-4 text-white" />
+            <UIcon
+              name="i-lucide-check"
+              class="w-4 h-4 text-white"
+            />
           </div>
         </div>
       </button>
     </div>
 
-    <div v-else class="text-center py-12 text-gray-500">
-      <UIcon name="i-lucide-image-off" class="w-12 h-12 mx-auto mb-2" />
+    <div
+      v-else
+      class="text-center py-12 text-gray-500"
+    >
+      <UIcon
+        name="i-lucide-image-off"
+        class="w-12 h-12 mx-auto mb-2"
+      />
       <p>No assets found</p>
     </div>
 
@@ -62,7 +84,9 @@
     <UModal v-model="showUploader">
       <template #content="{ close }">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">Upload New Asset</h3>
+          <h3 class="text-lg font-semibold mb-4">
+            Upload New Asset
+          </h3>
           <CroutonAssetsUploader @uploaded="handleUploaded(close)" />
         </div>
       </template>
@@ -90,8 +114,8 @@ const filteredAssets = computed(() => {
 
   const query = searchQuery.value.toLowerCase()
   return assets.value.filter((asset: any) =>
-    asset.filename?.toLowerCase().includes(query) ||
-    asset.alt?.toLowerCase().includes(query)
+    asset.filename?.toLowerCase().includes(query)
+    || asset.alt?.toLowerCase().includes(query)
   )
 })
 

@@ -25,7 +25,7 @@ import type { AIChatOptions, AIMessage } from '../types'
  */
 export function useChat(options: AIChatOptions = {}) {
   const config = useRuntimeConfig()
-  const defaults = config.public.croutonAI as { defaultProvider: string; defaultModel: string }
+  const defaults = config.public.croutonAI as { defaultProvider: string, defaultModel: string }
 
   // Try to get team context if nuxt-crouton is installed (provides useTeamContext)
   let teamId: string | undefined
@@ -33,8 +33,7 @@ export function useChat(options: AIChatOptions = {}) {
     // @ts-expect-error - useTeamContext may not be available if nuxt-crouton isn't installed
     const { getTeamId } = useTeamContext()
     teamId = getTeamId()
-  }
-  catch {
+  } catch {
     // nuxt-crouton not installed, continue without team context
   }
 
@@ -48,7 +47,7 @@ export function useChat(options: AIChatOptions = {}) {
       teamId,
       provider: options.provider || defaults.defaultProvider,
       model: options.model || defaults.defaultModel,
-      ...(options.body || {}),
+      ...(options.body || {})
     },
     headers: options.headers,
     credentials: options.credentials,
@@ -60,14 +59,14 @@ export function useChat(options: AIChatOptions = {}) {
         content: typeof message.content === 'string'
           ? message.content
           : message.parts?.filter(p => p.type === 'text').map(p => (p as { text: string }).text).join('') || '',
-        createdAt: message.createdAt,
+        createdAt: message.createdAt
       }
       options.onFinish?.(aiMessage)
     },
     onError: (error) => {
       options.onError?.(error)
     },
-    onResponse: options.onResponse,
+    onResponse: options.onResponse
   })
 
   // Computed loading state (AI SDK uses 'status' in v4)
@@ -83,7 +82,7 @@ export function useChat(options: AIChatOptions = {}) {
       content: typeof msg.content === 'string'
         ? msg.content
         : msg.parts?.filter(p => p.type === 'text').map(p => (p as { text: string }).text).join('') || '',
-      createdAt: msg.createdAt,
+      createdAt: msg.createdAt
     }))
   })
 
@@ -113,9 +112,9 @@ export function useChat(options: AIChatOptions = {}) {
         id: msg.id,
         role: msg.role,
         content: msg.content,
-        createdAt: msg.createdAt,
+        createdAt: msg.createdAt
       })))
-    },
+    }
   }
 }
 

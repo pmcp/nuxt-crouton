@@ -1,11 +1,14 @@
 <template>
-  <div v-if="isDev" class="translation-dev-toggle">
+  <div
+    v-if="isDev"
+    class="translation-dev-toggle"
+  >
     <UButton
       size="sm"
       color="gray"
       variant="soft"
       icon="i-lucide-languages"
-      :class="{ 'active': enabled }"
+      :class="{ active: enabled }"
       @click="toggleDevMode"
     >
       {{ enabled ? 'Disable translation dev mode' : 'Enable translation dev mode' }}
@@ -15,12 +18,17 @@
     <UModal v-model="showModal">
       <template #content="{ close }">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">Add Missing Translation</h3>
+          <h3 class="text-lg font-semibold mb-4">
+            Add Missing Translation
+          </h3>
 
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium mb-1">Key</label>
-              <UInput v-model="modalKey" disabled />
+              <UInput
+                v-model="modalKey"
+                disabled
+              />
             </div>
 
             <div>
@@ -37,13 +45,17 @@
           </div>
 
           <div class="flex justify-end gap-2 mt-6">
-            <UButton color="gray" variant="ghost" @click="close">
+            <UButton
+              color="gray"
+              variant="ghost"
+              @click="close"
+            >
               Cancel
             </UButton>
             <UButton
               color="primary"
-              @click="saveTranslation"
               :disabled="!modalTranslation.trim()"
+              @click="saveTranslation"
             >
               Save Translation
             </UButton>
@@ -55,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-const isDev = process.dev
+const isDev = import.meta.dev
 const enabled = useState('devMode.enabled', () => false)
 const showModal = ref(false)
 const modalKey = ref('')
@@ -77,7 +89,7 @@ const toggleDevMode = () => {
 }
 
 const startDetection = () => {
-  if (!process.client) return
+  if (!import.meta.client) return
 
   // Add class to body for styling
   document.body.classList.add('translation-dev-mode')
@@ -93,14 +105,14 @@ const startDetection = () => {
 }
 
 const stopDetection = () => {
-  if (!process.client) return
+  if (!import.meta.client) return
 
   // Remove body class and event listener
   document.body.classList.remove('translation-dev-mode')
   document.removeEventListener('click', handleClick, true)
 
   // Remove missing translation markers
-  document.querySelectorAll('.translation-missing').forEach(el => {
+  document.querySelectorAll('.translation-missing').forEach((el) => {
     el.classList.remove('translation-missing')
     el.removeAttribute('data-key')
   })
@@ -148,11 +160,11 @@ const scanForMissingTranslations = () => {
   const allElements = document.querySelectorAll('*')
   let foundCount = 0
 
-  allElements.forEach(element => {
+  allElements.forEach((element) => {
     // Skip if already marked or is script/style
-    if (element.classList.contains('translation-missing') ||
-        element.tagName === 'SCRIPT' ||
-        element.tagName === 'STYLE') return
+    if (element.classList.contains('translation-missing')
+      || element.tagName === 'SCRIPT'
+      || element.tagName === 'STYLE') return
 
     const textContent = element.textContent || ''
     const match = textContent.match(/\[([\w.-]+)\]/)
@@ -209,7 +221,6 @@ const saveTranslation = async () => {
     await refreshNuxtData()
     setTimeout(scanForMissingTranslations, 100)
     showModal.value = false
-
   } catch (error) {
     console.error('Failed to save translation:', error)
     toast.add({

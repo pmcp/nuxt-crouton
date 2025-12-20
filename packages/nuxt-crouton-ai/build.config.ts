@@ -7,7 +7,7 @@ export default defineBuildConfig({
       input: 'server/utils/index',
       outDir: 'dist/server/utils',
       builder: 'rollup',
-      declaration: true,
+      declaration: true
     },
     // Server utilities - providers
     {
@@ -15,7 +15,7 @@ export default defineBuildConfig({
       outDir: 'dist/server/utils/providers',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
-      loaders: ['js'],
+      loaders: ['js']
     },
     // App composables
     {
@@ -23,7 +23,7 @@ export default defineBuildConfig({
       outDir: 'dist/app/composables',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
-      loaders: ['js'],
+      loaders: ['js']
     },
     // App types
     {
@@ -31,8 +31,8 @@ export default defineBuildConfig({
       outDir: 'dist/app/types',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
-      loaders: ['js'],
-    },
+      loaders: ['js']
+    }
   ],
   declaration: true,
   clean: true,
@@ -47,6 +47,6 @@ export default defineBuildConfig({
     '@ai-sdk/vue',
     '@ai-sdk/openai',
     '@ai-sdk/anthropic',
-    '#imports',
-  ],
+    '#imports'
+  ]
 })

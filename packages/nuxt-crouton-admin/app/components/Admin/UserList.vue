@@ -14,7 +14,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  pageSize: 20,
+  pageSize: 20
 })
 
 const toast = useToast()
@@ -29,7 +29,7 @@ const {
   banUser,
   unbanUser,
   deleteUser,
-  createUser,
+  createUser
 } = useAdminUsers()
 
 const { startImpersonation } = useImpersonation()
@@ -52,7 +52,7 @@ const columns = [
   { accessorKey: 'banned', id: 'status', header: 'Status' },
   { accessorKey: 'membershipCount', id: 'membershipCount', header: 'Teams' },
   { accessorKey: 'createdAt', id: 'createdAt', header: 'Created' },
-  { accessorKey: 'id', id: 'actions', header: '' },
+  { accessorKey: 'id', id: 'actions', header: '' }
 ]
 
 // Load users on mount and when filters change
@@ -61,7 +61,7 @@ async function loadUsers(pageNum = 1) {
     page: pageNum,
     pageSize: props.pageSize,
     search: search.value || undefined,
-    status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
+    status: statusFilter.value !== 'all' ? statusFilter.value : undefined
   }
   await getUsers(filters)
 }
@@ -102,17 +102,16 @@ function handleDelete(user: AdminUserListItem) {
 async function handleImpersonate(user: AdminUserListItem) {
   try {
     await startImpersonation(user.id)
-  }
-  catch (e) {
+  } catch (e) {
     toast.add({
       title: 'Impersonation failed',
       description: e instanceof Error ? e.message : 'Unknown error',
-      color: 'error',
+      color: 'error'
     })
   }
 }
 
-async function confirmBan(payload: { reason: string; duration: number | null }) {
+async function confirmBan(payload: { reason: string, duration: number | null }) {
   if (!selectedUser.value) return
 
   actionLoading.value = true
@@ -121,19 +120,17 @@ async function confirmBan(payload: { reason: string; duration: number | null }) 
     toast.add({
       title: 'User banned',
       description: `${selectedUser.value.name} has been banned`,
-      color: 'success',
+      color: 'success'
     })
     showBanModal.value = false
     selectedUser.value = null
-  }
-  catch (e) {
+  } catch (e) {
     toast.add({
       title: 'Failed to ban user',
       description: e instanceof Error ? e.message : 'Unknown error',
-      color: 'error',
+      color: 'error'
     })
-  }
-  finally {
+  } finally {
     actionLoading.value = false
   }
 }
@@ -147,18 +144,16 @@ async function confirmUnban() {
     toast.add({
       title: 'User unbanned',
       description: `${selectedUser.value.name} has been unbanned`,
-      color: 'success',
+      color: 'success'
     })
     selectedUser.value = null
-  }
-  catch (e) {
+  } catch (e) {
     toast.add({
       title: 'Failed to unban user',
       description: e instanceof Error ? e.message : 'Unknown error',
-      color: 'error',
+      color: 'error'
     })
-  }
-  finally {
+  } finally {
     actionLoading.value = false
   }
 }
@@ -172,19 +167,17 @@ async function confirmDelete() {
     toast.add({
       title: 'User deleted',
       description: `${selectedUser.value.name} has been permanently deleted`,
-      color: 'success',
+      color: 'success'
     })
     showDeleteModal.value = false
     selectedUser.value = null
-  }
-  catch (e) {
+  } catch (e) {
     toast.add({
       title: 'Failed to delete user',
       description: e instanceof Error ? e.message : 'Unknown error',
-      color: 'error',
+      color: 'error'
     })
-  }
-  finally {
+  } finally {
     actionLoading.value = false
   }
 }
@@ -196,19 +189,17 @@ async function handleCreateUser(payload: CreateUserPayload) {
     toast.add({
       title: 'User created',
       description: `${payload.name} has been created`,
-      color: 'success',
+      color: 'success'
     })
     showCreateModal.value = false
     loadUsers(1)
-  }
-  catch (e) {
+  } catch (e) {
     toast.add({
       title: 'Failed to create user',
       description: e instanceof Error ? e.message : 'Unknown error',
-      color: 'error',
+      color: 'error'
     })
-  }
-  finally {
+  } finally {
     actionLoading.value = false
   }
 }
@@ -234,7 +225,7 @@ function formatDate(date: Date) {
           :items="[
             { value: 'all', label: 'All Users' },
             { value: 'active', label: 'Active' },
-            { value: 'banned', label: 'Banned' },
+            { value: 'banned', label: 'Banned' }
           ]"
           value-key="value"
           class="w-32"
@@ -275,8 +266,14 @@ function formatDate(date: Date) {
             <p class="font-medium text-gray-900 dark:text-white">
               {{ row.original.name }}
             </p>
-            <div v-if="row.original.superAdmin" class="flex items-center gap-1">
-              <UIcon name="i-heroicons-shield-check" class="size-3 text-amber-500" />
+            <div
+              v-if="row.original.superAdmin"
+              class="flex items-center gap-1"
+            >
+              <UIcon
+                name="i-heroicons-shield-check"
+                class="size-3 text-amber-500"
+              />
               <span class="text-xs text-amber-600 dark:text-amber-400">Super Admin</span>
             </div>
           </div>
@@ -328,7 +325,10 @@ function formatDate(date: Date) {
     </UTable>
 
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex justify-center">
+    <div
+      v-if="totalPages > 1"
+      class="flex justify-center"
+    >
       <UPagination
         :model-value="page"
         :total="total"

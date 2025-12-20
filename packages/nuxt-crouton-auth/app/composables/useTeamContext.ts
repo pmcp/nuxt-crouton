@@ -223,7 +223,7 @@ export function useTeamContext() {
       return {
         teamId: null,
         teamSlug: null,
-        needsRedirect: false,
+        needsRedirect: false
       }
     }
 
@@ -247,14 +247,14 @@ export function useTeamContext() {
               teamId: firstTeam.id,
               teamSlug: firstTeam.slug,
               needsRedirect: true,
-              redirectTo: newPath,
+              redirectTo: newPath
             }
           }
           // No teams at all
           return {
             teamId: null,
             teamSlug: null,
-            needsRedirect: false,
+            needsRedirect: false
           }
         }
 
@@ -262,8 +262,7 @@ export function useTeamContext() {
         if (activeOrganization.value?.id !== targetTeam.id) {
           try {
             await switchTeamBySlug(urlTeamParam)
-          }
-          catch (e) {
+          } catch (e) {
             console.error('[@crouton/auth] Failed to switch team:', e)
           }
         }
@@ -271,10 +270,9 @@ export function useTeamContext() {
         return {
           teamId: targetTeam.id,
           teamSlug: targetTeam.slug,
-          needsRedirect: false,
+          needsRedirect: false
         }
-      }
-      else {
+      } else {
         // No team in URL - check if we should add one
         const isDashboardRoute = route.path.startsWith('/dashboard')
 
@@ -285,7 +283,7 @@ export function useTeamContext() {
             teamId: activeOrganization.value.id,
             teamSlug: activeOrganization.value.slug,
             needsRedirect: true,
-            redirectTo: `/dashboard/${activeOrganization.value.slug}${pathWithoutDashboard ? `/${pathWithoutDashboard}` : ''}`,
+            redirectTo: `/dashboard/${activeOrganization.value.slug}${pathWithoutDashboard ? `/${pathWithoutDashboard}` : ''}`
           }
         }
 
@@ -293,16 +291,15 @@ export function useTeamContext() {
         return {
           teamId: activeOrganization.value?.id ?? null,
           teamSlug: activeOrganization.value?.slug ?? null,
-          needsRedirect: false,
+          needsRedirect: false
         }
       }
-    }
-    else {
+    } else {
       // Single-tenant or personal mode - just use session's active org
       return {
         teamId: activeOrganization.value?.id ?? null,
         teamSlug: activeOrganization.value?.slug ?? null,
-        needsRedirect: false,
+        needsRedirect: false
       }
     }
   }
@@ -343,6 +340,6 @@ export function useTeamContext() {
 
     // State management (for advanced use)
     setTeamContext: teamState.setTeamContext,
-    clearTeamContext: teamState.clearTeamContext,
+    clearTeamContext: teamState.clearTeamContext
   }
 }
