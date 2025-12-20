@@ -247,6 +247,7 @@ pnpm dev
 | 21 | Better Auth origin mismatch on dynamic ports | ✅ FIXED | useServerAuth now uses `getRequestURL(event)` to get actual origin when no `BETTER_AUTH_URL` is set |
 | 22 | Multi-tenant: no redirect for users with no teams | ✅ FIXED | Added `/onboarding/create-team` page and middleware redirect. Configurable via `crouton.auth.ui.redirects.noTeams` |
 | 26 | Login/register ignore redirect config | ✅ FIXED | login.vue and register.vue now use `useAuthRedirects()` instead of hardcoded `/dashboard` |
+| 27 | Auth config location confusing | ✅ DOCUMENTED | Use `croutonAuth: {}` in nuxt.config.ts, NOT `runtimeConfig.public.crouton.auth`. Module writes to runtimeConfig internally. |
 
 ---
 
