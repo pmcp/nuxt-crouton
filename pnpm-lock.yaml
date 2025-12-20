@@ -76,6 +76,9 @@ importers:
 
   apps/ko-ui:
     dependencies:
+      '@friendlyinternet/nuxt-crouton-themes':
+        specifier: workspace:*
+        version: link:../../packages/nuxt-crouton-themes
       '@iconify-json/lucide':
         specifier: ^1.2.74
         version: 1.2.81
@@ -580,6 +583,15 @@ importers:
       vitest:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.3)(jsdom@27.3.0)(lightningcss@1.30.2)(terser@5.44.1)
+
+  packages/nuxt-crouton-themes:
+    dependencies:
+      '@nuxt/ui':
+        specifier: ^4.0.0
+        version: 4.3.0(e6ec456a05cd73633e4389421e19924f)
+      nuxt:
+        specifier: ^4.0.0
+        version: 4.2.2(@parcel/watcher@2.5.1)(@types/node@22.19.3)(@vue/compiler-sfc@3.5.26)(better-sqlite3@12.5.0)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.5.0)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251217.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.5.0)(kysely@0.28.9)(pg@8.16.3)))(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251217.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.5.0)(kysely@0.28.9)(pg@8.16.3))(eslint@9.39.2(jiti@2.6.1))(ioredis@5.8.2)(lightningcss@1.30.2)(magicast@0.5.1)(optionator@0.9.4)(rolldown@1.0.0-beta.55)(rollup@4.53.5)(terser@5.44.1)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.0(@types/node@22.19.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(yaml@2.8.2)
 
 packages:
 

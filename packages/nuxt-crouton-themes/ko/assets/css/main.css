@@ -1,0 +1,582 @@
+/* KO-UI Design Tokens */
+/* Inspired by Teenage Engineering KO II */
+
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* ============================================
+   FONTS
+   ============================================ */
+
+@font-face {
+  font-display: swap;
+  font-family: 'ko-tech';
+  src: url('../fonts/tt34.otf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* ============================================
+   COLOR SYSTEM
+   Based on KO II hardware palette
+   ============================================ */
+
+:root {
+  /* === Surface Colors === */
+  --ko-surface-light: #c7c3c0;      /* Main chassis gray */
+  --ko-surface-mid: #908E8D;        /* Mid-tone gray */
+  --ko-surface-dark: #545251;       /* Dark button gray */
+  --ko-surface-panel: #171717;      /* Black panel/display area */
+  --ko-surface-recess: #2E2D2D;     /* Recessed areas */
+
+  /* === Text Colors === */
+  --ko-text-light: #F2F2F2;
+  --ko-text-muted: #E2E2E2;
+  --ko-text-dark: #403E3D;
+  --ko-text-label: #858384;
+
+  /* === Accent Colors === */
+  --ko-accent-orange: #FA5F28;      /* Primary accent (LEDs, highlights) */
+  --ko-accent-orange-dark: #d42a02; /* Darker orange for pressed states */
+  --ko-accent-red: #F12618;         /* Record button red */
+  --ko-accent-pink: #E62C5E;        /* Pink accent */
+  --ko-accent-blue: #429CCE;        /* Blue accent */
+
+  /* === Highlight Colors (for inset shadows) === */
+  --ko-highlight-light: #ffffff;
+  --ko-highlight-orange: #FDC7B4;
+  --ko-highlight-dark: #a8a6a4;
+  --ko-highlight-pink: #FFC2D2;
+  --ko-highlight-blue: #B4E0F9;
+  --ko-highlight-red: #FBCFCC;
+
+  /* === Spacing & Rhythm === */
+  --ko-spacing: 0.4em;
+  --ko-button-size: 4em;
+  --ko-button-radius: 10px;
+  --ko-wrapper-radius: 5px;
+
+  /* === Shadows === */
+  --ko-shadow-drop: rgba(0, 0, 0, 0.15) 4px 4px 6px;
+  --ko-shadow-pressed: rgba(0, 0, 0, 0.15) 0px 0px 0px;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+body {
+  font-family: 'ko-tech', system-ui, sans-serif;
+  background-color: var(--ko-surface-light);
+  color: var(--ko-text-dark);
+}
+
+/* ============================================
+   NUXT UI THEME CLASSES
+   Use with :ui="{ base: 'ko-tactile' }"
+   ============================================ */
+
+/* Base tactile button - default gray */
+.ko-tactile {
+  position: relative !important;
+  overflow: visible !important;
+  isolation: isolate !important;
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.075em !important;
+  text-transform: uppercase !important;
+  background-color: var(--ko-surface-light) !important;
+  color: var(--ko-text-dark) !important;
+  border: none !important;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #ffffff 1.5px 1.5px 2px 0px inset,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset !important;
+  transition: all 0.1s ease-in-out !important;
+}
+
+/* Dark bezel/wrapper effect */
+.ko-tactile::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background-color: var(--ko-surface-panel);
+  border-radius: var(--ko-wrapper-radius);
+  z-index: -1;
+}
+
+.ko-tactile:hover {
+  background-color: #bfbbb8 !important;
+}
+
+.ko-tactile:active {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset !important;
+  transform: translateY(0.5px);
+}
+
+/* Orange variant */
+.ko-tactile.ko-tactile--orange {
+  background-color: var(--ko-accent-orange) !important;
+  color: var(--ko-text-light) !important;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    var(--ko-highlight-orange) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-orange) -3.2px -3.2px 8px 0px inset !important;
+}
+
+.ko-tactile.ko-tactile--orange:hover {
+  background-color: #e85520 !important;
+}
+
+.ko-tactile.ko-tactile--orange:active {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-orange-dark) -3.2px -3.2px 8px 0px inset !important;
+}
+
+/* Dark variant */
+.ko-tactile.ko-tactile--dark {
+  background-color: var(--ko-surface-dark) !important;
+  color: var(--ko-text-light) !important;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    var(--ko-highlight-dark) 1.5px 1.5px 1px 0px inset,
+    var(--ko-surface-dark) -3.2px -3.2px 8px 0px inset !important;
+}
+
+.ko-tactile.ko-tactile--dark:hover {
+  background-color: #4a4948 !important;
+}
+
+.ko-tactile.ko-tactile--dark:active {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-surface-dark) -3.2px -3.2px 8px 0px inset !important;
+}
+
+/* Red variant */
+.ko-tactile.ko-tactile--red {
+  background-color: var(--ko-accent-red) !important;
+  color: var(--ko-text-light) !important;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    var(--ko-highlight-red) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-red) -3.2px -3.2px 8px 0px inset !important;
+}
+
+.ko-tactile.ko-tactile--red:hover {
+  background-color: #d92015 !important;
+}
+
+.ko-tactile.ko-tactile--red:active {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-red) -3.2px -3.2px 8px 0px inset !important;
+}
+
+/* Pink variant */
+.ko-tactile.ko-tactile--pink {
+  background-color: var(--ko-accent-pink) !important;
+  color: var(--ko-text-light) !important;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    var(--ko-highlight-pink) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-pink) -3.2px -3.2px 8px 0px inset !important;
+}
+
+.ko-tactile.ko-tactile--pink:hover {
+  background-color: #cc2550 !important;
+}
+
+.ko-tactile.ko-tactile--pink:active {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-pink) -3.2px -3.2px 8px 0px inset !important;
+}
+
+/* Blue variant */
+.ko-tactile.ko-tactile--blue {
+  background-color: var(--ko-accent-blue) !important;
+  color: var(--ko-text-light) !important;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    var(--ko-highlight-blue) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-blue) -3.2px -3.2px 8px 0px inset !important;
+}
+
+.ko-tactile.ko-tactile--blue:hover {
+  background-color: #3a8ab8 !important;
+}
+
+.ko-tactile.ko-tactile--blue:active {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-blue) -3.2px -3.2px 8px 0px inset !important;
+}
+
+/* Square shape modifier */
+.ko-tactile--square {
+  aspect-ratio: 1 !important;
+  padding: 1rem !important;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.ko-font {
+  font-family: 'ko-tech', sans-serif;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.ko-panel {
+  background-color: var(--ko-surface-panel);
+  color: var(--ko-text-light);
+}
+
+.ko-surface {
+  background-color: var(--ko-surface-light);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes ko-led-blink {
+  from {
+    background-color: var(--ko-surface-panel);
+    box-shadow: inset #863C22 0 -1px 9px;
+  }
+  25% {
+    background-color: var(--ko-accent-orange);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px,
+                inset #F40 0 -1px 9px,
+                #FA3C00 0 2px 12px;
+  }
+  70% {
+    background-color: var(--ko-accent-orange);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px,
+                inset #F40 0 -1px 9px,
+                #FA3C00 0 2px 12px;
+  }
+  to {
+    background-color: var(--ko-surface-panel);
+    box-shadow: inset #863C22 0 -1px 9px;
+  }
+}
+
+@keyframes ko-led-alive {
+  from {
+    background-color: var(--ko-surface-panel);
+    box-shadow: inset #863C22 0 -1px 9px;
+  }
+  2% {
+    background-color: var(--ko-accent-orange);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px,
+                inset #F40 0 -1px 9px,
+                #FA3C00 0 2px 12px;
+  }
+  3% {
+    background-color: var(--ko-surface-panel);
+    box-shadow: inset #863C22 0 -1px 9px;
+  }
+  4% {
+    background-color: var(--ko-accent-orange);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px,
+                inset #F40 0 -1px 9px,
+                #FA3C00 0 2px 12px;
+  }
+  98% {
+    background-color: var(--ko-accent-orange);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px,
+                inset #F40 0 -1px 9px,
+                #FA3C00 0 2px 12px;
+  }
+  to {
+    background-color: var(--ko-surface-panel);
+    box-shadow: inset #863C22 0 -1px 9px;
+  }
+}
+
+/* ============================================
+   KO-BEZEL CLASSES
+   For use with Nuxt UI components
+   Uses box-shadow spread for bezel effect (avoids z-index stacking issues)
+   ============================================ */
+
+/* Base bezel button - default gray
+   Uses ::before for dark bezel (sharp corners) and ::after for button face (round corners)
+   This creates the signature KO look with different corner radii */
+.ko-bezel {
+  position: relative !important;
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.075em !important;
+  text-transform: uppercase !important;
+  font-size: 0.7em !important;
+  border: none !important;
+  border-radius: var(--ko-button-radius) !important;
+  transition: all 0.1s ease-in-out !important;
+  /* Transparent bg - actual color comes from ::after */
+  background-color: transparent !important;
+  color: var(--ko-text-dark) !important;
+  z-index: 0 !important;
+  /* Center content */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Dark bezel - sharp corners */
+.ko-bezel::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background-color: var(--ko-surface-panel);
+  border-radius: var(--ko-wrapper-radius);
+  z-index: -2;
+  box-shadow: var(--ko-shadow-drop);
+}
+
+/* Button face - round corners */
+.ko-bezel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--ko-surface-light);
+  border-radius: var(--ko-button-radius);
+  z-index: -1;
+  box-shadow:
+    var(--ko-highlight-light) 1.5px 1.5px 2px 0px inset,
+    var(--ko-surface-light) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel:hover::after {
+  background-color: #bfbbb8;
+}
+
+.ko-bezel:active::before {
+  box-shadow: var(--ko-shadow-pressed);
+}
+
+.ko-bezel:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-surface-light) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel:active {
+  transform: translateY(0.5px);
+}
+
+/* Orange variant */
+.ko-bezel.ko-bezel--orange {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--orange::after {
+  background-color: var(--ko-accent-orange);
+  box-shadow:
+    var(--ko-highlight-orange) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-orange) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--orange:hover::after {
+  background-color: #e85520;
+}
+
+.ko-bezel.ko-bezel--orange:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-orange-dark) -3.2px -3.2px 8px 0px inset;
+}
+
+/* Dark variant */
+.ko-bezel.ko-bezel--dark {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--dark::after {
+  background-color: var(--ko-surface-dark);
+  box-shadow:
+    var(--ko-highlight-dark) 1.5px 1.5px 1px 0px inset,
+    var(--ko-surface-dark) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--dark:hover::after {
+  background-color: #4a4948;
+}
+
+.ko-bezel.ko-bezel--dark:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-surface-dark) -3.2px -3.2px 8px 0px inset;
+}
+
+/* Red variant */
+.ko-bezel.ko-bezel--red {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--red::after {
+  background-color: var(--ko-accent-red);
+  box-shadow:
+    var(--ko-highlight-red) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-red) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--red:hover::after {
+  background-color: #d92015;
+}
+
+.ko-bezel.ko-bezel--red:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-red) -3.2px -3.2px 8px 0px inset;
+}
+
+/* Pink variant */
+.ko-bezel.ko-bezel--pink {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--pink::after {
+  background-color: var(--ko-accent-pink);
+  box-shadow:
+    var(--ko-highlight-pink) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-pink) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--pink:hover::after {
+  background-color: #cc2550;
+}
+
+.ko-bezel.ko-bezel--pink:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-pink) -3.2px -3.2px 8px 0px inset;
+}
+
+/* Blue variant */
+.ko-bezel.ko-bezel--blue {
+  color: var(--ko-text-light) !important;
+}
+
+.ko-bezel.ko-bezel--blue::after {
+  background-color: var(--ko-accent-blue);
+  box-shadow:
+    var(--ko-highlight-blue) 1.5px 1.5px 1px 0px inset,
+    var(--ko-accent-blue) -3.2px -3.2px 8px 0px inset;
+}
+
+.ko-bezel.ko-bezel--blue:hover::after {
+  background-color: #3a8ab8;
+}
+
+.ko-bezel.ko-bezel--blue:active::after {
+  box-shadow:
+    inset 0.5px 0.5px 4px #000000,
+    var(--ko-accent-blue) -3.2px -3.2px 8px 0px inset;
+}
+
+/* ============================================
+   KO-INPUT CLASSES
+   LCD-style input with orange-on-dark aesthetic
+   ============================================ */
+
+.ko-input {
+  position: relative !important;
+  z-index: 0 !important;
+}
+
+/* Dark bezel wrapper - sharp corners */
+.ko-input::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background-color: var(--ko-surface-panel);
+  border-radius: var(--ko-wrapper-radius);
+  z-index: -1;
+  box-shadow: var(--ko-shadow-drop);
+}
+
+/* The actual input styling - applied via slot class */
+.ko-input-base {
+  font-family: 'ko-tech', monospace !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  background-color: var(--ko-surface-panel) !important;
+  color: var(--ko-accent-orange) !important;
+  border: 1px solid var(--ko-surface-recess) !important;
+  border-radius: var(--ko-button-radius) !important;
+  box-shadow: inset 1px 1px 4px rgba(0, 0, 0, 0.3) !important;
+  caret-color: var(--ko-accent-orange) !important;
+}
+
+.ko-input-base::placeholder {
+  color: var(--ko-surface-dark) !important;
+  opacity: 0.7 !important;
+}
+
+.ko-input-base:focus {
+  outline: none !important;
+  border-color: var(--ko-accent-orange) !important;
+  box-shadow:
+    inset 1px 1px 4px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--ko-accent-orange) !important;
+}
+
+/* ============================================
+   KO-CARD CLASSES
+   Hardware panel with beveled edges
+   ============================================ */
+
+.ko-card {
+  position: relative !important;
+  font-family: 'ko-tech', sans-serif !important;
+  background-color: var(--ko-surface-light) !important;
+  border: none !important;
+  border-radius: var(--ko-button-radius) !important;
+  box-shadow:
+    var(--ko-shadow-drop),
+    var(--ko-highlight-light) 1.5px 1.5px 2px 0px inset,
+    var(--ko-surface-mid) -2px -2px 4px 0px inset !important;
+  z-index: 0 !important;
+}
+
+/* Dark bezel wrapper - sharp corners */
+.ko-card::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  background-color: var(--ko-surface-panel);
+  border-radius: var(--ko-wrapper-radius);
+  z-index: -1;
+  box-shadow: var(--ko-shadow-drop);
+}
+
+/* Slot-based styling */
+.ko-card-header {
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+  color: var(--ko-text-label) !important;
+  border-bottom: 1px solid var(--ko-surface-mid) !important;
+}
+
+.ko-card-body {
+  color: var(--ko-text-dark) !important;
+}
+
+.ko-card-footer {
+  border-top: 1px solid var(--ko-surface-mid) !important;
+}

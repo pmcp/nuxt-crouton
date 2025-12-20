@@ -1,0 +1,34 @@
+{
+  "name": "@friendlyinternet/nuxt-crouton-themes",
+  "version": "1.0.0",
+  "description": "Swappable themes for Nuxt UI applications",
+  "type": "module",
+  "exports": {
+    "./ko": "./ko/nuxt.config.ts",
+    "./ko/*": "./ko/*"
+  },
+  "files": [
+    "ko"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "themes",
+    "nuxt-ui",
+    "teenage-engineering"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton-themes"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.0.0",
+    "nuxt": "^4.0.0"
+  }
+}

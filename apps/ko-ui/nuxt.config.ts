@@ -1,5 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  // Use the KO theme from the themes package
+  extends: ['@friendlyinternet/nuxt-crouton-themes/ko'],
+
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui'
@@ -8,8 +11,6 @@ export default defineNuxtConfig({
   devtools: {
     enabled: true
   },
-
-  css: ['@/assets/css/main.css'],
 
   // Future flags for Nuxt 4
   future: {
