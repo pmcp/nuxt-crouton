@@ -1059,6 +1059,7 @@ This project uses Claude Code skills, agents, and custom configurations.
 | Agent | `.claude/agents/sync-checker.md` | Verifies doc sync across artifacts | Sync rules change |
 | Settings | `.claude/settings.local.json` | Project-specific permissions | New tools needed |
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | AI-powered collection generation | CLI commands, field types change |
+| Themes | `packages/nuxt-crouton-themes/` | Swappable UI themes for Nuxt UI | New themes, theme components |
 
 ### Skills
 
@@ -1089,6 +1090,7 @@ Use the sync-checker agent to verify all generator documentation is in sync.
 | Add new agent | This section + agent file |
 | Add new skill | This section + skill file |
 | Add MCP tool | MCP Server package + this section |
+| Add new theme | `packages/nuxt-crouton-themes/`, docs package list, this section |
 
 ### MCP Server
 
@@ -1134,6 +1136,28 @@ The MCP server is registered in `.claude/settings.json`:
 4. AI calls `generate_collection` to execute generation
 
 See `packages/nuxt-crouton-mcp-server/CLAUDE.md` for detailed documentation
+
+### Themes Package
+
+The Themes Package (`packages/nuxt-crouton-themes/`) provides swappable UI themes for Nuxt UI applications.
+
+**Available Themes:**
+
+| Theme | Description | Usage |
+|-------|-------------|-------|
+| KO | Hardware-inspired (Teenage Engineering KO II) | `extends: ['@friendlyinternet/nuxt-crouton-themes/ko']` |
+
+**Features:**
+- Design tokens (CSS custom properties)
+- Nuxt UI component variant overrides (`variant="ko"`)
+- Theme-specific components (KoLed, KoKnob, KoPanel, etc.)
+- Subpath exports for tree-shaking
+
+**Adding a New Theme:**
+1. Create directory: `packages/nuxt-crouton-themes/{theme-name}/`
+2. Add `nuxt.config.ts`, `app.config.ts`, `assets/css/main.css`
+3. Update package.json exports
+4. See `packages/nuxt-crouton-themes/CLAUDE.md` for detailed guide
 
 ## MCP Improvement Capture
 
