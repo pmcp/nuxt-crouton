@@ -7,6 +7,7 @@
  *
  * This page automatically verifies the magic link token and signs the user in.
  */
+import { useAuthClient } from '../../../types/auth-client'
 
 definePageMeta({
   layout: 'auth'
@@ -26,12 +27,6 @@ const verifying = ref(false)
 const verified = ref(false)
 const verifyError = ref<string | null>(null)
 
-// Get the auth client
-function useAuthClient() {
-  const nuxtApp = useNuxtApp()
-  return nuxtApp.$authClient as ReturnType<typeof import('better-auth/client').createAuthClient>
-}
-
 // Verify magic link on mount
 onMounted(async () => {
   if (token.value) {
@@ -48,8 +43,9 @@ async function verifyMagicLink() {
 
   try {
     const authClient = useAuthClient()
+    // Better Auth 1.4.x requires query wrapper for token
     const result = await authClient.magicLink.verify({
-      token: token.value
+      query: { token: token.value! }
     })
 
     if (result.error) {

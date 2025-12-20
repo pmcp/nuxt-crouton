@@ -28,6 +28,7 @@
  * ```
  */
 // CroutonAuthConfig import removed - using useAuthConfig() composable
+import type { Team } from '../../types'
 
 /**
  * Team context resolution result
@@ -235,7 +236,7 @@ export function useTeamContext() {
         // Team in URL - validate user has access
         const { teams, switchTeamBySlug } = useTeam()
         const targetTeam = teams.value.find(
-          t => t.slug === urlTeamParam || t.id === urlTeamParam
+          (t: Team) => t.slug === urlTeamParam || t.id === urlTeamParam
         )
 
         if (!targetTeam) {

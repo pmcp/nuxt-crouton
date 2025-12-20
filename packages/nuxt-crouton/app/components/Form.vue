@@ -20,7 +20,7 @@
       <CroutonFormDynamicLoader
         v-else
         :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-        :collection="state.collection"
+        :collection="state.collection ?? undefined"
         :loading="state.loading"
         :action="state.action"
         :items="state.items"
@@ -62,7 +62,7 @@
           <CroutonFormDynamicLoader
             v-else
             :key="`${state.collection}-${state.action}-${state.activeItem?.id || 'new'}-${state.id}`"
-            :collection="state.collection"
+            :collection="state.collection ?? undefined"
             :loading="state.loading"
             :action="state.action"
             :items="state.items"
@@ -138,23 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Ref } from 'vue'
-
-// Type definitions
-type CroutonAction = 'create' | 'update' | 'delete' | undefined
-type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'create_open' | 'update_open' | 'delete_open'
-
-interface CroutonState {
-  id: string
-  action: CroutonAction
-  collection: string | null
-  activeItem: any
-  items: any[]
-  loading: LoadingState
-  isOpen: boolean
-  containerType: 'slideover' | 'modal' | 'dialog'
-  isExpanded?: boolean // Track expand state for each slideover
-}
+import type { CroutonState } from '../composables/useCrouton'
 
 // Use the composables - destructure only needed properties
 const { croutonStates, close, closeAll, removeState } = useCrouton()

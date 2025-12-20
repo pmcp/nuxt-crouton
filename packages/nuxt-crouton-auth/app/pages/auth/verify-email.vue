@@ -7,6 +7,7 @@
  *
  * Also shows a resend verification email option.
  */
+import { useAuthClient } from '../../../types/auth-client'
 
 definePageMeta({
   layout: 'auth'
@@ -28,12 +29,6 @@ const verifyError = ref<string | null>(null)
 const resending = ref(false)
 const resent = ref(false)
 
-// Get the auth client
-function useAuthClient() {
-  const nuxtApp = useNuxtApp()
-  return nuxtApp.$authClient as ReturnType<typeof import('better-auth/client').createAuthClient>
-}
-
 // Verify email on mount if token present
 onMounted(async () => {
   if (token.value) {
@@ -50,8 +45,9 @@ async function verifyEmail() {
 
   try {
     const authClient = useAuthClient()
+    // Better Auth 1.4.x requires query wrapper for token
     const result = await authClient.verifyEmail({
-      token: token.value
+      query: { token: token.value! }
     })
 
     if (result.error) {

@@ -8,11 +8,11 @@
  * - useCollectionMutation() for create/update/delete
  */
 
-// Type definitions
-type CroutonAction = 'create' | 'update' | 'delete' | 'view' | undefined
-type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'view_send' | 'create_open' | 'update_open' | 'delete_open' | 'view_open'
+// Type definitions - exported for use in components
+export type CroutonAction = 'create' | 'update' | 'delete' | 'view' | undefined
+export type LoadingState = 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'view_send' | 'create_open' | 'update_open' | 'delete_open' | 'view_open'
 
-interface CroutonState {
+export interface CroutonState {
   id: string
   action: CroutonAction
   collection: string | null
@@ -21,6 +21,7 @@ interface CroutonState {
   loading: LoadingState
   isOpen: boolean
   containerType: 'slideover' | 'modal' | 'dialog'
+  isExpanded?: boolean // Track expand state for slideovers
 }
 
 interface PaginationState {

@@ -157,7 +157,7 @@ export function useBilling() {
 
   const plan = computed<Plan | null>(() => {
     if (!subscription.value) return null
-    return plans.value.find(p => p.id === subscription.value?.plan) ?? null
+    return plans.value.find((p: Plan) => p.id === subscription.value?.plan) ?? null
   })
 
   const isPro = computed(() => {
@@ -398,7 +398,7 @@ export function useBilling() {
    * Get a plan by ID
    */
   function getPlan(planId: string): Plan | undefined {
-    return plans.value.find(p => p.id === planId)
+    return plans.value.find((p: Plan) => p.id === planId)
   }
 
   // Auto-fetch subscriptions on mount (if on client)

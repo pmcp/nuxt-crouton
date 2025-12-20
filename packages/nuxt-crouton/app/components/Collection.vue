@@ -88,7 +88,7 @@
         <p class="text-sm mt-4">
           Example Card.vue structure:
         </p>
-        <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
+        <pre v-pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
 &lt;script setup lang="ts"&gt;
 interface Props {
   item: any
@@ -163,7 +163,7 @@ defineProps&lt;Props&gt;()
       <p class="text-sm mt-4">
         Example Card.vue with grid layout:
       </p>
-      <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
+      <pre v-pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
 &lt;template&gt;
   &lt;UCard v-if="layout === 'grid'" class="hover:shadow-lg"&gt;
     &lt;template #header&gt;
@@ -231,7 +231,7 @@ defineProps&lt;Props&gt;()
       <p class="text-sm mt-4">
         Example Card.vue with detailed cards layout:
       </p>
-      <pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
+      <pre v-pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
 &lt;template&gt;
   &lt;UCard v-if="layout === 'cards'" class="hover:shadow-xl"&gt;
     &lt;template #header&gt;
@@ -287,7 +287,7 @@ defineProps&lt;Props&gt;()
 </template>
 
 <script lang="ts" setup>
-import { computed, resolveComponent, onMounted, getCurrentInstance } from 'vue'
+import { computed, resolveComponent, onMounted, getCurrentInstance, type Component } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
@@ -317,7 +317,7 @@ const props = withDefaults(defineProps<ListProps>(), {
 // Card component resolution
 const { toPascalCase } = useFormatCollections()
 
-const getCardComponent = (collectionName: string, variant?: string) => {
+const getCardComponent = (collectionName: string, variant?: string): Component | null => {
   const pascalName = toPascalCase(collectionName)
   const componentName = variant
     ? `${pascalName}${variant}`
@@ -330,13 +330,16 @@ const getCardComponent = (collectionName: string, variant?: string) => {
   // Check global components (Nuxt auto-imports register here)
   const appComponents = instance.appContext.components
   if (appComponents[componentName]) {
-    return resolveComponent(componentName)
+    const resolved = resolveComponent(componentName)
+    // resolveComponent returns string if not found, but we've verified it exists
+    return typeof resolved === 'string' ? null : resolved
   }
 
   // Also check lazy variants (LazyBookingsPagesCard)
   const lazyName = `Lazy${componentName}`
   if (appComponents[lazyName]) {
-    return resolveComponent(lazyName)
+    const resolved = resolveComponent(lazyName)
+    return typeof resolved === 'string' ? null : resolved
   }
 
   return null // No warning emitted
@@ -350,12 +353,12 @@ const customCardComponent = computed(() =>
 const breakpoints = useBreakpoints(breakpointsTailwind)
 
 // Normalize layout prop to ResponsiveLayout format
-const normalizedLayout = computed<ResponsiveLayout>(() => {
+const normalizedLayout = computed((): ResponsiveLayout => {
   const { layout } = props
 
   // If it's a preset name, use the preset
   if (typeof layout === 'string' && layout in presets) {
-    return presets[layout as keyof typeof presets]
+    return presets[layout as keyof typeof presets]!
   }
 
   // If it's a simple string layout, apply to all breakpoints

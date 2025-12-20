@@ -254,9 +254,9 @@ export function useTeam() {
 
       const result = await authClient.organization.create({
         name: data.name,
-        slug: data.slug,
+        slug: data.slug!,
         logo: data.logo,
-        metadata: data.metadata ? JSON.stringify(data.metadata) : undefined
+        metadata: data.metadata
       })
 
       if (result.error) {
@@ -293,7 +293,7 @@ export function useTeam() {
           name: data.name,
           slug: data.slug,
           logo: data.logo,
-          metadata: data.metadata ? JSON.stringify(data.metadata) : undefined
+          metadata: data.metadata
         }
       })
 
@@ -359,7 +359,7 @@ export function useTeam() {
 
     try {
       const result = await authClient.organization.listMembers({
-        organizationId: currentTeam.value.id
+        query: { organizationId: currentTeam.value.id }
       })
 
       if (result.error) {
@@ -525,7 +525,7 @@ export function useTeam() {
 
     try {
       const result = await authClient.organization.listInvitations({
-        organizationId: currentTeam.value.id
+        query: { organizationId: currentTeam.value.id }
       })
 
       if (result.error) {
@@ -533,7 +533,8 @@ export function useTeam() {
         return []
       }
 
-      return result.data?.invitations ?? []
+      // Better Auth 1.4.x returns array directly, not { invitations: [...] }
+      return result.data ?? []
     } catch (e) {
       console.error('Failed to get invitations:', e)
       return []

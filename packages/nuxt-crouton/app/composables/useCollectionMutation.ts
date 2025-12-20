@@ -140,7 +140,7 @@ export function useCollectionMutation(collection: string) {
     console.log('Data:', data)
 
     try {
-      const result = await $fetch(baseUrl, {
+      const result = await $fetch<{ id: string; [key: string]: any }>(baseUrl, {
         method: 'POST',
         body: data,
         credentials: 'include'

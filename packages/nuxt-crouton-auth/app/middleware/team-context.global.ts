@@ -248,6 +248,10 @@ async function resolveMultiTenantTeam(
     }
     // Has teams but no active - switch to first team and redirect
     const firstTeam = teams.value[0]
+    if (!firstTeam) {
+      // This shouldn't happen if we got here, but handle it gracefully
+      return { teamId: null, teamSlug: null, needsRedirect: false }
+    }
     try {
       await switchTeamBySlug(firstTeam.slug)
     } catch (e) {

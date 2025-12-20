@@ -65,8 +65,8 @@ export interface TwoFactorStatus {
 export interface TotpSetupData {
   /** TOTP URI for QR code generation */
   totpURI: string
-  /** Secret key for manual entry */
-  secret: string
+  /** Backup codes returned from enable 2FA */
+  backupCodes: string[]
 }
 
 export interface VerifyTotpOptions {
@@ -280,10 +280,12 @@ export function useAuth() {
     loading.value = true
     error.value = null
     try {
+      // Ensure name is always a string (Better Auth requires it)
+      const displayName = (data.name ?? data.email.split('@')[0]) as string
       const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,
-        name: data.name ?? data.email.split('@')[0]
+        name: displayName
       })
 
       if (result.error) {
@@ -325,7 +327,8 @@ export function useAuth() {
     loading.value = true
     error.value = null
     try {
-      const result = await authClient.forgetPassword({
+      // Better Auth 1.4.x: Use requestPasswordReset for sending the email
+      const result = await authClient.requestPasswordReset({
         email,
         redirectTo: window.location.origin + '/auth/reset-password'
       })
@@ -540,7 +543,7 @@ export function useAuth() {
 
       return {
         totpURI: result.data.totpURI,
-        secret: result.data.secret
+        backupCodes: result.data.backupCodes ?? []
       }
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Enable 2FA failed'
@@ -582,8 +585,11 @@ export function useAuth() {
    * Get the TOTP URI for QR code generation
    *
    * Use this to display a QR code for users to scan with their authenticator app.
+   * Requires password verification for security.
+   *
+   * @param password - Current password for verification
    */
-  async function getTotpUri(): Promise<string> {
+  async function getTotpUri(password: string): Promise<string> {
     loading.value = true
     error.value = null
     try {
@@ -591,7 +597,8 @@ export function useAuth() {
         throw new Error('Two-factor authentication is not enabled')
       }
 
-      const result = await authClient.twoFactor.getTOTPURI({})
+      // Better Auth 1.4.x: getTotpUri requires password
+      const result = await authClient.twoFactor.getTotpUri({ password })
 
       if (result.error) {
         throw new Error(result.error.message ?? 'Get TOTP URI failed')
@@ -668,42 +675,6 @@ export function useAuth() {
       return result.data?.backupCodes ?? []
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Generate backup codes failed'
-      throw e
-    } finally {
-      loading.value = false
-    }
-  }
-
-  /**
-   * View current backup codes
-   *
-   * Shows which codes have been used.
-   *
-   * @param password - Current password for verification
-   * @returns Array of backup codes with usage status
-   */
-  async function viewBackupCodes(password: string): Promise<BackupCodeInfo[]> {
-    loading.value = true
-    error.value = null
-    try {
-      if (!has2FA.value) {
-        throw new Error('Two-factor authentication is not enabled')
-      }
-
-      const result = await authClient.twoFactor.viewBackupCodes({
-        password
-      })
-
-      if (result.error) {
-        throw new Error(result.error.message ?? 'View backup codes failed')
-      }
-
-      return (result.data?.backupCodes ?? []).map((c: { code: string, isUsed: boolean }) => ({
-        code: c.code,
-        used: c.isUsed
-      }))
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'View backup codes failed'
       throw e
     } finally {
       loading.value = false
@@ -849,7 +820,6 @@ export function useAuth() {
     getTotpUri,
     verifyTotp,
     generateBackupCodes,
-    viewBackupCodes,
     verifyBackupCode,
     get2FAStatus
   }

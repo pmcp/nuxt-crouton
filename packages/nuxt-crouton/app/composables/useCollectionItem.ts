@@ -81,7 +81,7 @@ export async function useCollectionItem<T = any>(
 
   // Use manual reactive state with $fetch for dynamic dependent data
   // This approach is more suitable for data that changes based on user input
-  const data = ref(null)
+  const data = ref<any>(null)
   const pending = ref(false)
   const error = ref(null)
 
