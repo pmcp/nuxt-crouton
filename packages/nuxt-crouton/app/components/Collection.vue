@@ -317,6 +317,10 @@ const props = withDefaults(defineProps<ListProps>(), {
 // Card component resolution
 const { toPascalCase } = useFormatCollections()
 
+// Get collection config for hierarchy settings
+const { getConfig } = useCollections()
+const collectionConfig = computed(() => props.collection ? getConfig(props.collection) : null)
+
 const getCardComponent = (collectionName: string, variant?: string): Component | null => {
   const pascalName = toPascalCase(collectionName)
   const componentName = variant
@@ -389,18 +393,20 @@ const activeLayout = computed<LayoutType>(() => {
   return layout.base
 })
 
-// Hierarchy config for tree layout
-// This can be passed in via props or retrieved from collection config
+// Hierarchy config for tree layout - read from collection config
 const hierarchyConfig = computed<HierarchyConfig>(() => {
-  // Default hierarchy config - collections with hierarchy enabled
-  // will have this configured in their composable
-  return {
-    enabled: true,
-    parentField: 'parentId',
-    orderField: 'order',
-    pathField: 'path',
-    depthField: 'depth'
+  const config = collectionConfig.value?.hierarchy
+  if (config?.enabled) {
+    return {
+      enabled: true,
+      parentField: config.parentField || 'parentId',
+      orderField: config.orderField || 'order',
+      pathField: config.pathField || 'path',
+      depthField: config.depthField || 'depth'
+    }
   }
+  // Default to disabled for collections without hierarchy config
+  return { enabled: false }
 })
 
 // Tree mutation for drag-drop reordering

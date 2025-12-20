@@ -54,14 +54,26 @@ const currentLayout = ref(props.defaultLayout)
 // Use composable for formatting
 const { camelToTitleCase, toPascalCase } = useFormatCollections()
 
-// Layout options for switcher
-const layoutOptions = [
-  { value: 'table', icon: 'i-lucide-table' },
-  { value: 'list', icon: 'i-lucide-list' },
-  { value: 'grid', icon: 'i-lucide-grid-3x3' },
-  { value: 'cards', icon: 'i-lucide-layout-grid' },
-  { value: 'tree', icon: 'i-lucide-git-branch' }
-] as const
+// Get collection config to check hierarchy support
+const { getConfig } = useCollections()
+const collectionConfig = computed(() => getConfig(props.collectionName))
+
+// All available layout options
+const allLayoutOptions = [
+  { value: 'table' as const, icon: 'i-lucide-table' },
+  { value: 'list' as const, icon: 'i-lucide-list' },
+  { value: 'grid' as const, icon: 'i-lucide-grid-3x3' },
+  { value: 'cards' as const, icon: 'i-lucide-layout-grid' },
+  { value: 'tree' as const, icon: 'i-lucide-git-branch' }
+]
+
+// Filter layout options - only show tree if hierarchy is enabled
+const layoutOptions = computed(() => {
+  if (collectionConfig.value?.hierarchy?.enabled) {
+    return allLayoutOptions
+  }
+  return allLayoutOptions.filter(o => o.value !== 'tree')
+})
 
 // Convert collection name to component name
 // e.g., translationsUi -> TranslationsUiList
