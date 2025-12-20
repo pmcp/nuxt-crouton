@@ -34,15 +34,45 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Get session state
   const { isAuthenticated, activeOrganization, isPending } = useSession()
 
+  // Debug: trace middleware flow
+  console.log('[@crouton/auth] Middleware check:', {
+    path: to.path,
+    mode,
+    isPending: isPending.value,
+    isAuthenticated: isAuthenticated.value,
+    activeOrg: activeOrganization.value?.slug ?? null
+  })
+
   // Wait for session to load (important for initial navigation)
   if (isPending.value) {
-    // Mark as unresolved - will be resolved when session loads
-    markUnresolved()
-    return
+    console.log('[@crouton/auth] Session pending, waiting...')
+    // Wait for session to load (max 5 seconds)
+    await new Promise<void>((resolve) => {
+      const unwatch = watch(
+        () => isPending.value,
+        (pending) => {
+          if (!pending) {
+            unwatch()
+            resolve()
+          }
+        },
+        { immediate: true }
+      )
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        unwatch()
+        resolve()
+      }, 5000)
+    })
+    console.log('[@crouton/auth] Session loaded:', {
+      isAuthenticated: isAuthenticated.value,
+      activeOrg: activeOrganization.value?.slug ?? null
+    })
   }
 
   // Not authenticated - clear team context
   if (!isAuthenticated.value) {
+    console.log('[@crouton/auth] Not authenticated, returning early')
     clearTeamContext()
 
     // If trying to access dashboard without auth, let the auth middleware handle it
@@ -73,12 +103,19 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
       case 'personal': {
         // Use user's personal workspace from session
+        // In personal mode, routes are transformed to NOT have [team] param
+        // So we just set the team context without redirecting
+        console.log('[@crouton/auth] Personal mode:', {
+          path: to.path,
+          activeOrg: activeOrganization.value?.slug ?? null
+        })
         if (activeOrganization.value) {
           setTeamContext({
             teamId: activeOrganization.value.id,
             teamSlug: activeOrganization.value.slug,
             team: activeOrganization.value
           })
+          // No redirect needed - personal mode routes don't have team in URL
         } else {
           setTeamError('No personal workspace found')
         }
@@ -137,6 +174,15 @@ async function resolveMultiTenantTeam(
 
   const urlTeamParam = to.params.team as string | undefined
   const isDashboardRoute = to.path.startsWith('/dashboard')
+
+  // Debug logging
+  console.log('[@crouton/auth] resolveMultiTenantTeam:', {
+    path: to.path,
+    isDashboardRoute,
+    urlTeamParam,
+    activeOrg: activeOrganization.value?.slug ?? null,
+    teamsCount: teams.value.length
+  })
 
   if (urlTeamParam) {
     // Team specified in URL - validate user has access

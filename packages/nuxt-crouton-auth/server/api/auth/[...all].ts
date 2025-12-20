@@ -16,9 +16,23 @@
 import { useServerAuth } from '../../utils/useServerAuth'
 
 export default defineEventHandler(async (event) => {
-  // Get the auth instance (lazily initialized)
-  const auth = useServerAuth(event)
+  const url = getRequestURL(event)
+  console.log(`[@crouton/auth] API request: ${event.method} ${url.pathname}`)
 
-  // Convert H3 event to Web Request and handle with Better Auth
-  return auth.handler(toWebRequest(event))
+  try {
+    // Get the auth instance (lazily initialized)
+    const auth = useServerAuth(event)
+
+    // Convert H3 event to Web Request and handle with Better Auth
+    const response = await auth.handler(toWebRequest(event))
+
+    console.log(`[@crouton/auth] API response: ${response.status} for ${url.pathname}`)
+    return response
+  } catch (error) {
+    console.error(`[@crouton/auth] API error for ${url.pathname}:`, error)
+    throw createError({
+      statusCode: 500,
+      message: error instanceof Error ? error.message : 'Auth handler error'
+    })
+  }
 })

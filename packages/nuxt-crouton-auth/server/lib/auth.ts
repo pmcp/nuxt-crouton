@@ -14,9 +14,9 @@
  */
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { organization, twoFactor } from 'better-auth/plugins'
+import { organization, twoFactor, type TwoFactorOptions } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
-import { stripe as stripePlugin } from '@better-auth/stripe'
+import { stripe as stripePlugin, type StripePlan as BetterAuthStripePlan } from '@better-auth/stripe'
 import Stripe from 'stripe'
 import { sql } from 'drizzle-orm'
 import type { BetterAuthOptions } from 'better-auth'
@@ -116,9 +116,15 @@ export function createAuth(options: CreateAuthOptions) {
 
     // Advanced options
     advanced: {
-      // Generate secure IDs
-      generateId: () => crypto.randomUUID()
+      // Generate secure IDs - moved to database config in Better Auth 1.4.x
+      database: {
+        generateId: () => crypto.randomUUID()
+      }
     },
+
+    // Trusted origins for CORS/CSRF protection
+    // Allow requests from the baseURL origin and localhost for development
+    trustedOrigins: buildTrustedOrigins(baseURL),
 
     // Plugins - Organization (Teams), Passkey, 2FA, and Stripe support
     plugins: buildPlugins(config, baseURL, stripeSecretKey, stripeWebhookSecret),
@@ -166,6 +172,41 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
       }
       : undefined
   }
+}
+
+/**
+ * Build trusted origins for CORS/CSRF protection
+ *
+ * Better Auth validates the Origin header against trusted origins.
+ * This function generates the list based on the baseURL and
+ * includes localhost variants for development.
+ *
+ * @param baseURL - Application base URL
+ * @returns Array of trusted origin URLs
+ */
+function buildTrustedOrigins(baseURL: string): string[] {
+  const origins: Set<string> = new Set()
+
+  // Add the configured baseURL origin
+  try {
+    const url = new URL(baseURL)
+    origins.add(url.origin)
+  } catch {
+    // If baseURL is invalid, just add it as-is
+    origins.add(baseURL)
+  }
+
+  // In development, add common localhost variants
+  if (process.env.NODE_ENV !== 'production') {
+    // Add localhost with common development ports
+    const devPorts = ['3000', '3001', '3002', '3003', '4000', '5000']
+    for (const port of devPorts) {
+      origins.add(`http://localhost:${port}`)
+      origins.add(`http://127.0.0.1:${port}`)
+    }
+  }
+
+  return Array.from(origins)
 }
 
 /**
@@ -615,7 +656,7 @@ interface PasskeyPluginOptions {
 function buildTwoFactorConfig(
   twoFactorConfigInput: boolean | TwoFactorConfig | undefined,
   appName?: string
-): TwoFactorPluginOptions | null {
+): TwoFactorOptions | null {
   // Check if 2FA is enabled
   if (twoFactorConfigInput === false || twoFactorConfigInput === undefined) {
     return null
@@ -669,44 +710,10 @@ function buildTwoFactorConfig(
     backupCodeOptions,
     // Skip verification on enable is false by default for security
     skipVerificationOnEnable: false
-  }
+  } as TwoFactorOptions
 }
 
-/**
- * 2FA plugin options type
- */
-interface TwoFactorPluginOptions {
-  /** Issuer name shown in authenticator apps (e.g., "My App") */
-  issuer: string
-  /**
-   * TOTP (Time-based One-Time Password) configuration
-   * If undefined, TOTP is disabled
-   */
-  totpOptions?: {
-    /** Number of digits in the code (default: 6) */
-    digits: number
-    /** Time period in seconds for code validity (default: 30) */
-    period: number
-  }
-  /**
-   * Backup codes configuration for account recovery
-   */
-  backupCodeOptions?: {
-    /** Number of backup codes to generate (default: 10) */
-    amount: number
-    /** Length of each backup code (default: 10) */
-    length: number
-  }
-  /**
-   * Skip verification when enabling 2FA
-   * Should be false for security (default: false)
-   */
-  skipVerificationOnEnable?: boolean
-  /**
-   * Custom table name for 2FA data (default: "twoFactor")
-   */
-  twoFactorTable?: string
-}
+// TwoFactorOptions type is now imported from 'better-auth/plugins'
 
 // ============================================================================
 // 2FA Utility Functions
@@ -826,7 +833,7 @@ function buildStripePluginConfig(
 
   // Create Stripe client instance
   const stripeClient = new Stripe(stripeSecretKey, {
-    apiVersion: '2025-04-30.basil', // Use latest API version
+    apiVersion: '2025-02-24.acacia', // Use Stripe SDK's expected API version
     typescript: true
   })
 
@@ -845,7 +852,8 @@ function buildStripePluginConfig(
     createCustomerOnSignUp: true,
 
     // Customize customer creation
-    getCustomerCreateParams: async ({ user }) => ({
+    // Better Auth 1.4.x changed signature: (user, ctx) instead of ({ user })
+    getCustomerCreateParams: async (user, _ctx) => ({
       params: {
         email: user.email,
         name: user.name ?? undefined,
@@ -962,13 +970,13 @@ function buildStripePluginConfig(
 function buildStripePlansConfig(
   plans: StripePlan[] | undefined,
   defaultTrialDays?: number
-): StripePluginPlan[] {
+): BetterAuthStripePlan[] {
   if (!plans || plans.length === 0) {
     return []
   }
 
   return plans.map((plan) => {
-    const basePlan: StripePluginPlan = {
+    const basePlan: BetterAuthStripePlan = {
       name: plan.id,
       priceId: plan.stripePriceId,
       // Add limits as custom metadata for the plan
@@ -991,49 +999,6 @@ function buildStripePlansConfig(
 
     return basePlan
   })
-}
-
-/**
- * Better Auth Stripe plugin plan type
- */
-interface StripePluginPlan {
-  /** Plan identifier (used in API calls) */
-  name: string
-  /** Stripe Price ID */
-  priceId?: string
-  /** Stripe Price lookup key (alternative to priceId) */
-  lookupKey?: string
-  /** Annual discount price ID */
-  annualDiscountPriceId?: string
-  /** Plan limits/metadata */
-  limits?: Record<string, unknown>
-  /** Plan group for categorization */
-  group?: string
-  /** Free trial configuration */
-  freeTrial?: {
-    days: number
-    onTrialStart?: (subscription: SubscriptionData) => Promise<void>
-    onTrialEnd?: (data: { subscription: SubscriptionData }, ctx: unknown) => Promise<void>
-    onTrialExpired?: (subscription: SubscriptionData, ctx: unknown) => Promise<void>
-  }
-}
-
-/**
- * Subscription data type for hooks
- */
-interface SubscriptionData {
-  id: string
-  plan: string
-  referenceId: string
-  stripeCustomerId: string
-  stripeSubscriptionId: string
-  status: string
-  periodStart: Date
-  periodEnd: Date
-  cancelAtPeriodEnd: boolean
-  seats?: number
-  trialStart?: Date
-  trialEnd?: Date
 }
 
 // ============================================================================
