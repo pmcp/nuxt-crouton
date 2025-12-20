@@ -19,10 +19,9 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  // NuxtHub for SQLite database
+  // NuxtHub for SQLite database (v0.10+ uses 'db' with dialect)
   hub: {
-    // @ts-ignore - NuxtHub types not fully generated until prepare
-    database: true
+    db: 'sqlite'
   },
 
   routeRules: {

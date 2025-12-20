@@ -76,7 +76,7 @@ export function useServerAuth(event?: H3Event): AuthInstance {
 
   // Get database instance from NuxtHub v0.10+ (db from hub:db)
   if (typeof db === 'undefined' || db === null) {
-    throw new Error('[crouton/auth] No database available. Ensure NuxtHub is configured with hub.db')
+    throw new Error('[crouton/auth] No database available. Ensure NuxtHub is configured with hub.db: \'sqlite\' (or \'postgresql\' / \'mysql\')')
   }
 
   // Create the auth instance

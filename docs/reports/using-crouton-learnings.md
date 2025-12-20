@@ -202,6 +202,7 @@ pnpm dev
 | # | Issue | Status | Notes |
 |---|-------|--------|-------|
 | 16 | **Schema location mismatch** | ✅ FIXED | Generator now creates `server/db/schema.ts` for NuxtHub v0.10+ compatibility |
+| 25 | **NuxtHub v0.10+ config syntax** | ✅ FIXED | Use `hub: { db: 'sqlite' }` NOT `hub: { database: true }` - this is a v0.10 breaking change |
 
 ### HIGH PRIORITY
 
