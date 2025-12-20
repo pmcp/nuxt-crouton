@@ -2,53 +2,79 @@
 /**
  * Reset Password Page
  *
+ * Beautiful, modern reset password page using UAuthForm.
  * Handles password reset with token from email.
  * URL: /auth/reset-password?token=xxx
  */
-import type { FormSubmitEvent, FormError } from '@nuxt/ui'
+import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 
 definePageMeta({
   layout: 'auth',
   middleware: 'guest'
 })
 
+const { t } = useT()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 
-const { resetPassword, loading, error } = useAuth()
+const { resetPassword, loading } = useAuth()
+
+// Error state
+const formError = ref<string | null>(null)
 
 // Get token from query params
 const token = computed(() => route.query.token as string | undefined)
 
-// Form state
-const state = reactive({
-  password: '',
-  confirmPassword: ''
-})
-
 // Track if reset was successful
 const resetSuccess = ref(false)
 
-// Custom validation
-function validate(formState: Partial<typeof state>): FormError[] {
-  const errors: FormError[] = []
+// Minimum password length
+const minPasswordLength = 8
 
-  if (!formState.password) {
-    errors.push({ name: 'password', message: 'Password is required' })
-  } else if (formState.password.length < 8) {
-    errors.push({ name: 'password', message: 'Password must be at least 8 characters' })
+// Form fields
+const fields = computed<AuthFormField[]>(() => [{
+  name: 'password',
+  type: 'password',
+  label: t('auth.newPassword'),
+  placeholder: `At least ${minPasswordLength} characters`,
+  required: true
+}, {
+  name: 'confirmPassword',
+  type: 'password',
+  label: t('auth.confirmNewPassword'),
+  placeholder: 'Confirm your new password',
+  required: true
+}])
+
+// Submit button config
+const submitButton = computed(() => ({
+  label: t('auth.resetPassword'),
+  loading: loading.value,
+  block: true
+}))
+
+// Custom validation
+function validate(state: Record<string, unknown>) {
+  const errors: { name: string, message: string }[] = []
+
+  if (!state.password) {
+    errors.push({ name: 'password', message: t('errors.requiredField') })
+  } else if ((state.password as string).length < minPasswordLength) {
+    errors.push({ name: 'password', message: t('errors.minLength', { min: minPasswordLength }) })
   }
 
-  if (formState.password !== formState.confirmPassword) {
-    errors.push({ name: 'confirmPassword', message: 'Passwords do not match' })
+  if (state.password !== state.confirmPassword) {
+    errors.push({ name: 'confirmPassword', message: t('errors.passwordMismatch') })
   }
 
   return errors
 }
 
 // Handle form submission
-async function onSubmit(event: FormSubmitEvent<typeof state>) {
+async function onSubmit(event: FormSubmitEvent<{ password: string, confirmPassword: string }>) {
+  formError.value = null
+
   if (!token.value) {
     toast.add({
       title: 'Invalid link',
@@ -68,6 +94,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Password reset failed'
+    formError.value = message
     toast.add({
       title: 'Error',
       description: message,
@@ -83,34 +110,30 @@ function goToLogin() {
 </script>
 
 <template>
-  <div>
-    <!-- Header -->
-    <div class="text-center">
-      <h1 class="text-2xl font-bold text-highlighted">
-        Set new password
-      </h1>
-      <p class="mt-2 text-sm text-muted">
-        Enter your new password below.
-      </p>
-    </div>
-
+  <UPageCard>
     <!-- Invalid/missing token -->
     <div
       v-if="!token"
-      class="mt-8"
+      class="space-y-6"
     >
-      <UAlert
-        color="error"
-        icon="i-lucide-alert-triangle"
-        title="Invalid reset link"
-        description="The password reset link is invalid or has expired. Please request a new one."
-      />
-      <NuxtLink
-        to="/auth/forgot-password"
-        class="block mt-6"
-      >
+      <div class="text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-error/10">
+          <UIcon
+            name="i-lucide-alert-triangle"
+            class="h-6 w-6 text-error"
+          />
+        </div>
+        <h2 class="mt-4 text-xl font-semibold text-highlighted">
+          {{ t('auth.invalidResetLink') }}
+        </h2>
+        <p class="mt-2 text-muted">
+          {{ t('auth.invalidResetLinkDescription') }}
+        </p>
+      </div>
+
+      <NuxtLink to="/auth/forgot-password">
         <UButton block>
-          Request new link
+          {{ t('auth.requestNewLink') }}
         </UButton>
       </NuxtLink>
     </div>
@@ -118,81 +141,65 @@ function goToLogin() {
     <!-- Reset successful -->
     <div
       v-else-if="resetSuccess"
-      class="mt-8"
+      class="space-y-6"
     >
-      <UAlert
-        color="success"
-        icon="i-lucide-check-circle"
-        title="Password updated"
-        description="Your password has been reset successfully. You can now sign in with your new password."
-      />
+      <div class="text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+          <UIcon
+            name="i-lucide-check-circle"
+            class="h-6 w-6 text-success"
+          />
+        </div>
+        <h2 class="mt-4 text-xl font-semibold text-highlighted">
+          {{ t('auth.passwordUpdated') }}
+        </h2>
+        <p class="mt-2 text-muted">
+          {{ t('auth.passwordUpdatedDescription') }}
+        </p>
+      </div>
+
       <UButton
-        class="mt-6"
         block
         @click="goToLogin"
       >
-        Sign in
+        {{ t('auth.signIn') }}
       </UButton>
     </div>
 
     <!-- Reset Form -->
-    <UForm
+    <UAuthForm
       v-else
+      :fields="fields"
+      :submit="submitButton"
       :validate="validate"
-      :state="state"
-      class="mt-8 space-y-6"
+      :loading="loading"
+      :title="t('auth.setNewPassword')"
+      icon="i-lucide-lock"
       @submit="onSubmit"
     >
-      <UFormField
-        label="New password"
-        name="password"
+      <template #description>
+        {{ t('auth.setNewPasswordDescription') }}
+      </template>
+
+      <template
+        v-if="formError"
+        #validation
       >
-        <UInput
-          v-model="state.password"
-          type="password"
-          placeholder="At least 8 characters"
-          autocomplete="new-password"
-          icon="i-lucide-lock"
+        <UAlert
+          color="error"
+          icon="i-lucide-alert-circle"
+          :title="formError"
         />
-      </UFormField>
+      </template>
 
-      <UFormField
-        label="Confirm new password"
-        name="confirmPassword"
-      >
-        <UInput
-          v-model="state.confirmPassword"
-          type="password"
-          placeholder="Confirm your new password"
-          autocomplete="new-password"
-          icon="i-lucide-lock"
-        />
-      </UFormField>
-
-      <!-- Error Alert -->
-      <UAlert
-        v-if="error"
-        color="error"
-        icon="i-lucide-alert-circle"
-        :title="error"
-      />
-
-      <UButton
-        type="submit"
-        block
-        :loading="loading"
-      >
-        Reset password
-      </UButton>
-
-      <div class="text-center">
+      <template #footer>
         <NuxtLink
           to="/auth/login"
-          class="text-sm font-medium text-primary hover:text-primary/80"
+          class="text-primary font-medium"
         >
-          Back to sign in
+          {{ t('auth.backToSignIn') }}
         </NuxtLink>
-      </div>
-    </UForm>
-  </div>
+      </template>
+    </UAuthForm>
+  </UPageCard>
 </template>
