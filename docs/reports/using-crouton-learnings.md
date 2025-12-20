@@ -246,6 +246,7 @@ pnpm dev
 | 20 | Auth pages link to /terms and /privacy | ✅ FIXED | AuthRegisterForm now has `showTerms`, `termsUrl`, `privacyUrl` props |
 | 21 | Better Auth origin mismatch on dynamic ports | ✅ FIXED | useServerAuth now uses `getRequestURL(event)` to get actual origin when no `BETTER_AUTH_URL` is set |
 | 22 | Multi-tenant: no redirect for users with no teams | ✅ FIXED | Added `/onboarding/create-team` page and middleware redirect. Configurable via `crouton.auth.ui.redirects.noTeams` |
+| 26 | Login/register ignore redirect config | ✅ FIXED | login.vue and register.vue now use `useAuthRedirects()` instead of hardcoded `/dashboard` |
 
 ---
 

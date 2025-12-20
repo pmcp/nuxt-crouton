@@ -2,17 +2,17 @@
 /**
  * Register Page
  *
- * Displays registration form with:
- * - Name, email, password fields
- * - OAuth registration options
- * - Link to login
+ * Beautiful, modern registration page using UAuthForm.
+ * Supports email/password and OAuth registration.
  */
+import type { FormSubmitEvent, AuthFormField, ButtonProps } from '@nuxt/ui'
 
 definePageMeta({
   layout: 'auth',
   middleware: 'guest'
 })
 
+const { t } = useT()
 const router = useRouter()
 const toast = useToast()
 
@@ -22,26 +22,125 @@ const {
   hasPassword,
   hasOAuth,
   oauthProviders,
-  loading,
-  error
+  loading
 } = useAuth()
 
-// Handle registration form submission
-async function handleRegister(data: { name: string, email: string, password: string }) {
+const redirects = useAuthRedirects()
+
+// Error state
+const formError = ref<string | null>(null)
+
+// Minimum password length
+const minPasswordLength = 8
+
+// Build form fields
+const registerFields = computed<AuthFormField[]>(() => [{
+  name: 'name',
+  type: 'text',
+  label: t('forms.fullName'),
+  placeholder: 'John Doe',
+  required: true
+}, {
+  name: 'email',
+  type: 'email',
+  label: t('auth.email'),
+  placeholder: 'you@example.com',
+  required: true
+}, {
+  name: 'password',
+  type: 'password',
+  label: t('auth.password'),
+  placeholder: `At least ${minPasswordLength} characters`,
+  required: true
+}, {
+  name: 'confirmPassword',
+  type: 'password',
+  label: t('auth.confirmPassword'),
+  placeholder: 'Confirm your password',
+  required: true
+}])
+
+// OAuth provider configuration
+const providerConfig: Record<string, { icon: string, name: string }> = {
+  github: { icon: 'i-simple-icons-github', name: 'GitHub' },
+  google: { icon: 'i-simple-icons-google', name: 'Google' },
+  discord: { icon: 'i-simple-icons-discord', name: 'Discord' },
+  twitter: { icon: 'i-simple-icons-x', name: 'X' },
+  facebook: { icon: 'i-simple-icons-facebook', name: 'Facebook' },
+  apple: { icon: 'i-simple-icons-apple', name: 'Apple' },
+  microsoft: { icon: 'i-simple-icons-microsoft', name: 'Microsoft' },
+  linkedin: { icon: 'i-simple-icons-linkedin', name: 'LinkedIn' }
+}
+
+// Build OAuth providers for UAuthForm
+const providers = computed<ButtonProps[]>(() => {
+  if (!hasOAuth.value || oauthProviders.value.length === 0) {
+    return []
+  }
+
+  return oauthProviders.value.map((provider) => {
+    const config = providerConfig[provider] || { icon: 'i-lucide-user', name: provider }
+    return {
+      label: `Continue with ${config.name}`,
+      icon: config.icon,
+      onClick: () => handleOAuth(provider)
+    }
+  })
+})
+
+// Submit button config
+const submitButton = computed(() => ({
+  label: t('auth.createAccount'),
+  loading: loading.value,
+  block: true
+}))
+
+// Form validation
+function validate(state: Record<string, unknown>) {
+  const errors: { name: string, message: string }[] = []
+
+  if (!state.name) {
+    errors.push({ name: 'name', message: t('errors.requiredField') })
+  }
+
+  if (!state.email) {
+    errors.push({ name: 'email', message: t('errors.requiredField') })
+  } else if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(state.email as string)) {
+    errors.push({ name: 'email', message: t('errors.invalidEmail') })
+  }
+
+  if (!state.password) {
+    errors.push({ name: 'password', message: t('errors.requiredField') })
+  } else if ((state.password as string).length < minPasswordLength) {
+    errors.push({ name: 'password', message: t('errors.minLength', { min: minPasswordLength }) })
+  }
+
+  if (state.password !== state.confirmPassword) {
+    errors.push({ name: 'confirmPassword', message: t('errors.passwordMismatch') })
+  }
+
+  return errors
+}
+
+// Handle form submission
+async function onSubmit(event: FormSubmitEvent<{ name: string, email: string, password: string, confirmPassword: string }>) {
+  formError.value = null
+
   try {
     await register({
-      name: data.name,
-      email: data.email,
-      password: data.password
+      name: event.data.name,
+      email: event.data.email,
+      password: event.data.password
     })
     toast.add({
       title: 'Account created',
       description: 'Welcome! Your account has been created.',
       color: 'success'
     })
-    await router.push('/dashboard')
+    await router.push(redirects.afterRegister)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Registration failed'
+    formError.value = message
     toast.add({
       title: 'Error',
       description: message,
@@ -52,11 +151,12 @@ async function handleRegister(data: { name: string, email: string, password: str
 
 // Handle OAuth registration
 async function handleOAuth(provider: string) {
+  formError.value = null
   try {
     await loginWithOAuth(provider)
-    // OAuth redirects, no need to navigate
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'OAuth registration failed'
+    formError.value = message
     toast.add({
       title: 'Error',
       description: message,
@@ -67,59 +167,118 @@ async function handleOAuth(provider: string) {
 </script>
 
 <template>
-  <div>
-    <!-- Header -->
-    <div class="text-center">
-      <h1 class="text-2xl font-bold text-highlighted">
-        Create your account
-      </h1>
-      <p class="mt-2 text-sm text-muted">
-        Already have an account?
-        <NuxtLink
+  <UPageCard>
+    <UAuthForm
+      v-if="hasPassword"
+      :fields="registerFields"
+      :providers="providers"
+      :submit="submitButton"
+      :validate="validate"
+      :loading="loading"
+      :title="t('auth.createYourAccount')"
+      icon="i-lucide-user-plus"
+      :separator="providers.length > 0 ? 'or' : undefined"
+      @submit="onSubmit"
+    >
+      <template #description>
+        {{ t('auth.alreadyHaveAccount') }}
+        <ULink
           to="/auth/login"
-          class="font-medium text-primary hover:text-primary/80"
+          class="text-primary font-medium"
         >
-          Sign in
-        </NuxtLink>
+          {{ t('auth.signIn') }}
+        </ULink>
+      </template>
+
+      <template
+        v-if="formError"
+        #validation
+      >
+        <UAlert
+          color="error"
+          icon="i-lucide-alert-circle"
+          :title="formError"
+        />
+      </template>
+
+      <template #footer>
+        {{ t('auth.termsAgreement') }}
+        <ULink
+          to="/terms"
+          class="text-primary font-medium"
+        >
+          {{ t('auth.termsOfService') }}
+        </ULink>
+        {{ t('auth.and') }}
+        <ULink
+          to="/privacy"
+          class="text-primary font-medium"
+        >
+          {{ t('auth.privacyPolicy') }}
+        </ULink>
+      </template>
+    </UAuthForm>
+
+    <!-- OAuth only (no password auth) -->
+    <div
+      v-else-if="providers.length > 0"
+      class="space-y-6"
+    >
+      <div class="text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <UIcon
+            name="i-lucide-user-plus"
+            class="h-6 w-6 text-primary"
+          />
+        </div>
+        <h2 class="mt-4 text-xl font-semibold text-highlighted">
+          {{ t('auth.createYourAccount') }}
+        </h2>
+        <p class="mt-2 text-muted">
+          {{ t('auth.alreadyHaveAccount') }}
+          <ULink
+            to="/auth/login"
+            class="text-primary font-medium"
+          >
+            {{ t('auth.signIn') }}
+          </ULink>
+        </p>
+      </div>
+
+      <div class="space-y-3">
+        <UButton
+          v-for="(provider, index) in providers"
+          :key="index"
+          v-bind="provider"
+          color="neutral"
+          variant="subtle"
+          block
+        />
+      </div>
+
+      <UAlert
+        v-if="formError"
+        color="error"
+        icon="i-lucide-alert-circle"
+        :title="formError"
+      />
+
+      <p class="text-sm text-center text-muted">
+        {{ t('auth.termsAgreement') }}
+        <ULink
+          to="/terms"
+          class="text-primary font-medium"
+        >
+          {{ t('auth.termsOfService') }}
+        </ULink>
+        {{ t('auth.and') }}
+        <ULink
+          to="/privacy"
+          class="text-primary font-medium"
+        >
+          {{ t('auth.privacyPolicy') }}
+        </ULink>
       </p>
     </div>
-
-    <!-- OAuth Buttons -->
-    <div
-      v-if="hasOAuth && oauthProviders.length > 0"
-      class="mt-8"
-    >
-      <AuthOAuthButtons
-        :loading="loading"
-        @click="handleOAuth"
-      />
-    </div>
-
-    <!-- Separator -->
-    <div
-      v-if="hasOAuth && oauthProviders.length > 0 && hasPassword"
-      class="mt-6"
-    >
-      <div class="relative">
-        <div class="absolute inset-0 flex items-center">
-          <USeparator />
-        </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="bg-default px-2 text-muted">Or continue with</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Registration Form -->
-    <div
-      v-if="hasPassword"
-      class="mt-8"
-    >
-      <AuthRegisterForm
-        :loading="loading"
-        :error="error"
-        @submit="handleRegister"
-      />
-    </div>
-  </div>
+  </UPageCard>
 </template>

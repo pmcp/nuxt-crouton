@@ -2,18 +2,17 @@
 /**
  * Login Page
  *
- * Displays login options based on configured auth methods:
- * - Email/password form
- * - OAuth buttons
- * - Passkey button
- * - Magic link option
+ * Beautiful, modern login page using UAuthForm.
+ * Supports email/password, OAuth, passkeys, and magic links.
  */
+import type { FormSubmitEvent, AuthFormField, ButtonProps } from '@nuxt/ui'
 
 definePageMeta({
   layout: 'auth',
   middleware: 'guest'
 })
 
+const { t } = useT()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -29,31 +28,126 @@ const {
   hasMagicLink,
   oauthProviders,
   loading,
-  error,
   isWebAuthnSupported
 } = useAuth()
 
-// Magic link mode toggle
+const redirects = useAuthRedirects()
+
+// Error state
+const formError = ref<string | null>(null)
+
+// Magic link mode
 const showMagicLink = ref(false)
 const magicLinkSent = ref(false)
+const magicLinkEmail = ref('')
 
-// Get redirect URL from query or default to dashboard
+// Get redirect URL from query or use configured afterLogin redirect
 const redirectTo = computed(() => {
   const redirect = route.query.redirect as string | undefined
-  return redirect || '/dashboard'
+  return redirect || redirects.afterLogin
 })
 
-// Handle login form submission
-async function handleLogin(credentials: { email: string, password: string, rememberMe: boolean }) {
+// Check if passkey is available
+const passkeyAvailable = computed(() => {
+  return hasPasskeys.value && isWebAuthnSupported()
+})
+
+// Build form fields dynamically
+const loginFields = computed<AuthFormField[]>(() => {
+  if (showMagicLink.value) {
+    return [{
+      name: 'email',
+      type: 'email',
+      label: t('auth.email'),
+      placeholder: 'you@example.com',
+      required: true
+    }]
+  }
+
+  return [{
+    name: 'email',
+    type: 'email',
+    label: t('auth.email'),
+    placeholder: 'you@example.com',
+    required: true
+  }, {
+    name: 'password',
+    type: 'password',
+    label: t('auth.password'),
+    placeholder: 'Enter your password',
+    required: true
+  }, {
+    name: 'rememberMe',
+    type: 'checkbox',
+    label: t('auth.rememberMe')
+  }]
+})
+
+// OAuth provider configuration
+const providerConfig: Record<string, { icon: string, name: string }> = {
+  github: { icon: 'i-simple-icons-github', name: 'GitHub' },
+  google: { icon: 'i-simple-icons-google', name: 'Google' },
+  discord: { icon: 'i-simple-icons-discord', name: 'Discord' },
+  twitter: { icon: 'i-simple-icons-x', name: 'X' },
+  facebook: { icon: 'i-simple-icons-facebook', name: 'Facebook' },
+  apple: { icon: 'i-simple-icons-apple', name: 'Apple' },
+  microsoft: { icon: 'i-simple-icons-microsoft', name: 'Microsoft' },
+  linkedin: { icon: 'i-simple-icons-linkedin', name: 'LinkedIn' }
+}
+
+// Build OAuth providers for UAuthForm
+const providers = computed<ButtonProps[]>(() => {
+  const result: ButtonProps[] = []
+
+  if (hasOAuth.value && oauthProviders.value.length > 0) {
+    for (const provider of oauthProviders.value) {
+      const config = providerConfig[provider] || { icon: 'i-lucide-user', name: provider }
+      result.push({
+        label: `Continue with ${config.name}`,
+        icon: config.icon,
+        onClick: () => handleOAuth(provider)
+      })
+    }
+  }
+
+  // Add passkey button if available
+  if (passkeyAvailable.value) {
+    result.push({
+      label: 'Sign in with Passkey',
+      icon: 'i-lucide-fingerprint',
+      onClick: handlePasskey
+    })
+  }
+
+  return result
+})
+
+// Submit button config
+const submitButton = computed(() => ({
+  label: showMagicLink.value ? t('auth.sendMagicLink') : t('auth.signIn'),
+  loading: loading.value,
+  block: true
+}))
+
+// Handle form submission
+async function onSubmit(event: FormSubmitEvent<{ email: string, password?: string, rememberMe?: boolean }>) {
+  formError.value = null
+
+  if (showMagicLink.value) {
+    await handleMagicLink(event.data.email)
+    return
+  }
+
   try {
     await login({
-      email: credentials.email,
-      password: credentials.password,
-      rememberMe: credentials.rememberMe
+      email: event.data.email,
+      password: event.data.password!,
+      rememberMe: event.data.rememberMe || false
     })
     await router.push(redirectTo.value)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Login failed'
+    formError.value = message
     toast.add({
       title: 'Error',
       description: message,
@@ -64,11 +158,12 @@ async function handleLogin(credentials: { email: string, password: string, remem
 
 // Handle OAuth login
 async function handleOAuth(provider: string) {
+  formError.value = null
   try {
     await loginWithOAuth(provider)
-    // OAuth redirects, no need to navigate
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'OAuth login failed'
+    formError.value = message
     toast.add({
       title: 'Error',
       description: message,
@@ -79,11 +174,13 @@ async function handleOAuth(provider: string) {
 
 // Handle passkey login
 async function handlePasskey() {
+  formError.value = null
   try {
     await loginWithPasskey()
     await router.push(redirectTo.value)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Passkey login failed'
+    formError.value = message
     toast.add({
       title: 'Error',
       description: message,
@@ -97,6 +194,7 @@ async function handleMagicLink(email: string) {
   try {
     await loginWithMagicLink(email)
     magicLinkSent.value = true
+    magicLinkEmail.value = email
     toast.add({
       title: 'Check your email',
       description: 'We sent you a magic link to sign in.',
@@ -104,6 +202,7 @@ async function handleMagicLink(email: string) {
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Magic link failed'
+    formError.value = message
     toast.add({
       title: 'Error',
       description: message,
@@ -116,154 +215,157 @@ async function handleMagicLink(email: string) {
 function resetMagicLink() {
   magicLinkSent.value = false
   showMagicLink.value = false
+  magicLinkEmail.value = ''
+  formError.value = null
 }
 
-// Check if passkey is available
-const passkeyAvailable = computed(() => {
-  return hasPasskeys.value && isWebAuthnSupported()
-})
+// Toggle magic link mode
+function toggleMagicLink() {
+  showMagicLink.value = !showMagicLink.value
+  formError.value = null
+}
 </script>
 
 <template>
-  <div>
-    <!-- Header -->
-    <div class="text-center">
-      <h1 class="text-2xl font-bold text-highlighted">
-        Sign in to your account
-      </h1>
-      <p class="mt-2 text-sm text-muted">
-        Or
-        <NuxtLink
-          to="/auth/register"
-          class="font-medium text-primary hover:text-primary/80"
-        >
-          create a new account
-        </NuxtLink>
-      </p>
-    </div>
-
+  <UPageCard>
     <!-- Magic link sent confirmation -->
     <div
       v-if="magicLinkSent"
-      class="mt-8"
+      class="space-y-6"
     >
-      <UAlert
-        color="success"
-        icon="i-lucide-mail-check"
-        title="Check your inbox"
-        description="We sent a magic link to your email. Click the link to sign in."
-      />
+      <div class="text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+          <UIcon
+            name="i-lucide-mail-check"
+            class="h-6 w-6 text-success"
+          />
+        </div>
+        <h2 class="mt-4 text-xl font-semibold text-highlighted">
+          {{ t('auth.checkYourInbox') }}
+        </h2>
+        <p class="mt-2 text-muted">
+          We sent a magic link to <span class="font-medium text-highlighted">{{ magicLinkEmail }}</span>
+        </p>
+      </div>
+
       <UButton
-        class="mt-4"
-        variant="ghost"
+        variant="outline"
+        color="neutral"
         block
         @click="resetMagicLink"
       >
-        Back to login
+        {{ t('auth.backToSignIn') }}
       </UButton>
     </div>
 
+    <!-- Login Form -->
     <template v-else>
-      <!-- OAuth Buttons -->
-      <div
-        v-if="hasOAuth && oauthProviders.length > 0"
-        class="mt-8"
+      <UAuthForm
+        :fields="loginFields"
+        :providers="hasPassword ? providers : []"
+        :submit="submitButton"
+        :loading="loading"
+        :title="showMagicLink ? t('auth.signInWithMagicLink') : t('auth.welcomeBack')"
+        :icon="showMagicLink ? 'i-lucide-wand-2' : 'i-lucide-lock'"
+        :separator="hasPassword && providers.length > 0 ? 'or' : undefined"
+        @submit="onSubmit"
       >
-        <AuthOAuthButtons
-          :loading="loading"
-          @click="handleOAuth"
-        />
+        <template #description>
+          <template v-if="showMagicLink">
+            {{ t('auth.magicLinkDescription') }}
+          </template>
+          <template v-else>
+            {{ t('auth.dontHaveAccount') }}
+            <ULink
+              to="/auth/register"
+              class="text-primary font-medium"
+            >
+              {{ t('auth.signUp') }}
+            </ULink>
+          </template>
+        </template>
 
-        <!-- Passkey Button (shown with OAuth) -->
-        <div
-          v-if="passkeyAvailable"
-          class="mt-3"
+        <template
+          v-if="!showMagicLink && hasPassword"
+          #password-hint
         >
-          <AuthPasskeyButton
-            :loading="loading"
-            @click="handlePasskey"
+          <ULink
+            to="/auth/forgot-password"
+            class="text-primary font-medium"
+            tabindex="-1"
+          >
+            {{ t('auth.forgotPassword') }}
+          </ULink>
+        </template>
+
+        <template
+          v-if="formError"
+          #validation
+        >
+          <UAlert
+            color="error"
+            icon="i-lucide-alert-circle"
+            :title="formError"
+          />
+        </template>
+
+        <template #footer>
+          <template v-if="hasMagicLink && hasPassword">
+            <button
+              type="button"
+              class="text-sm text-primary font-medium hover:text-primary/80"
+              @click="toggleMagicLink"
+            >
+              {{ showMagicLink ? t('auth.signInWithPassword') : t('auth.signInWithMagicLink') }}
+            </button>
+          </template>
+        </template>
+      </UAuthForm>
+
+      <!-- Providers only (no password auth) -->
+      <div
+        v-if="!hasPassword && providers.length > 0"
+        class="space-y-6"
+      >
+        <div class="text-center">
+          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <UIcon
+              name="i-lucide-lock"
+              class="h-6 w-6 text-primary"
+            />
+          </div>
+          <h2 class="mt-4 text-xl font-semibold text-highlighted">
+            {{ t('auth.welcomeBack') }}
+          </h2>
+          <p class="mt-2 text-muted">
+            {{ t('auth.dontHaveAccount') }}
+            <ULink
+              to="/auth/register"
+              class="text-primary font-medium"
+            >
+              {{ t('auth.signUp') }}
+            </ULink>
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <UButton
+            v-for="(provider, index) in providers"
+            :key="index"
+            v-bind="provider"
+            color="neutral"
+            variant="subtle"
+            block
           />
         </div>
-      </div>
 
-      <!-- Separator -->
-      <div
-        v-if="hasOAuth && oauthProviders.length > 0 && hasPassword"
-        class="mt-6"
-      >
-        <div class="relative">
-          <div class="absolute inset-0 flex items-center">
-            <USeparator />
-          </div>
-          <div class="relative flex justify-center text-sm">
-            <span class="bg-default px-2 text-muted">Or continue with</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Magic Link Form -->
-      <div
-        v-if="showMagicLink && hasMagicLink"
-        class="mt-8"
-      >
-        <AuthMagicLinkForm
-          :loading="loading"
-          :error="error"
-          @submit="handleMagicLink"
-          @reset="showMagicLink = false"
-        />
-        <div
-          v-if="hasPassword"
-          class="mt-4 text-center"
-        >
-          <button
-            type="button"
-            class="text-sm font-medium text-primary hover:text-primary/80"
-            @click="showMagicLink = false"
-          >
-            Sign in with password
-          </button>
-        </div>
-      </div>
-
-      <!-- Email/Password Form -->
-      <div
-        v-else-if="hasPassword || hasMagicLink"
-        class="mt-8"
-      >
-        <AuthLoginForm
-          :loading="loading"
-          :error="error"
-          @submit="handleLogin"
-        />
-
-        <!-- Magic Link Toggle -->
-        <div
-          v-if="hasMagicLink && hasPassword"
-          class="mt-4 text-center"
-        >
-          <button
-            type="button"
-            class="text-sm font-medium text-primary hover:text-primary/80"
-            @click="showMagicLink = true"
-          >
-            Sign in with magic link
-          </button>
-        </div>
-      </div>
-
-      <!-- Passkey-only (no password, no OAuth) -->
-      <div
-        v-else-if="passkeyAvailable"
-        class="mt-8"
-      >
-        <AuthPasskeyButton
-          :loading="loading"
-          variant="solid"
-          color="primary"
-          @click="handlePasskey"
+        <UAlert
+          v-if="formError"
+          color="error"
+          icon="i-lucide-alert-circle"
+          :title="formError"
         />
       </div>
     </template>
-  </div>
+  </UPageCard>
 </template>
