@@ -25,10 +25,8 @@ export const blogPosts = sqliteTable('blog_posts', {
 
   order: integer('order').notNull().$default(() => 0),
   title: text('title').notNull(),
-  slug: text('slug').notNull(),
   content: text('content'),
   published: integer('published', { mode: 'boolean' }).$default(() => false),
-  publishedAt: text('publishedAt'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

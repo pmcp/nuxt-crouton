@@ -43,10 +43,8 @@ collections/posts/
 |-------|------|----------|
 | id | string (primary key) | Auto |
 | title | string | Yes |
-| slug | string | Yes |
 | content | text | No |
 | published | boolean | No |
-| publishedAt | string | No |
 | createdAt | timestamp | Auto |
 | updatedAt | timestamp | Auto |
 | createdBy | string | Auto |

@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/blog-posts
   - Zod schema: useBlogPosts() composable
-  - Fields: title, slug, content, published, publishedAt
+  - Fields: title, content, published
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -43,17 +43,11 @@
         <UFormField label="Title" name="title" class="not-last:pb-4">
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Slug" name="slug" class="not-last:pb-4">
-          <UInput v-model="state.slug" class="w-full" size="xl" />
-        </UFormField>
         <UFormField label="Content" name="content" class="not-last:pb-4">
           <UTextarea v-model="state.content" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Published" name="published" class="not-last:pb-4">
           <UCheckbox v-model="state.published" />
-        </UFormField>
-        <UFormField label="PublishedAt" name="publishedAt" class="not-last:pb-4">
-          <UInput v-model="state.publishedAt" class="w-full" size="xl" />
         </UFormField>
       </div>
       </template>

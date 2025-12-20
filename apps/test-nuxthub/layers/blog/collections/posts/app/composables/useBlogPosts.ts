@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/blog-posts
  * - Form component: BlogPostsForm
  * - List component: BlogPostsList
- * - Fields: id, title, slug, content, published, publishedAt
+ * - Fields: title, content, published
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -28,19 +28,14 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const blogPostSchema = z.object({
   title: z.string().min(1, 'title is required'),
-  slug: z.string().min(1, 'slug is required'),
   content: z.string().optional(),
-  published: z.boolean().optional(),
-  publishedAt: z.string().optional()
+  published: z.boolean().optional()
 })
 
 export const blogPostsColumns = [
-  { accessorKey: 'id', header: 'Id' },
   { accessorKey: 'title', header: 'Title' },
-  { accessorKey: 'slug', header: 'Slug' },
   { accessorKey: 'content', header: 'Content' },
-  { accessorKey: 'published', header: 'Published' },
-  { accessorKey: 'publishedAt', header: 'PublishedAt' }
+  { accessorKey: 'published', header: 'Published' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -51,10 +46,8 @@ const _blogPostsConfig = {
   componentName: 'BlogPostsForm',
   defaultValues: {
     title: '',
-    slug: '',
     content: '',
-    published: false,
-    publishedAt: ''
+    published: false
   },
   columns: blogPostsColumns,
 }
