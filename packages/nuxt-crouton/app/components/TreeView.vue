@@ -97,6 +97,7 @@ async function initRootSortable() {
         const allowNesting = props.hierarchy.allowNesting !== false
         if (!allowNesting && targetParentId) {
           treeDrag.setMoveBlocked(true)
+          treeDrag.setDropTarget(null) // Clear highlight
           return false
         }
 

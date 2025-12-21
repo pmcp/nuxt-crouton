@@ -200,6 +200,7 @@ async function initSortable() {
         // Only allow moves to root level (empty parentId)
         if (!props.allowNesting && targetParentId) {
           treeDrag.setMoveBlocked(true)
+          treeDrag.setDropTarget(null) // Clear highlight
           return false
         }
 
@@ -233,7 +234,12 @@ async function initSortable() {
 // ============ Lifecycle ============
 
 // Show children container when expanded OR when dragging (for empty items)
-const showChildren = computed(() => hasChildren.value ? isExpanded.value : treeDrag.isDragging())
+// But only show empty dropzone if nesting is allowed
+const showChildren = computed(() => {
+  if (hasChildren.value) return isExpanded.value
+  // Only show empty dropzone during drag if nesting is allowed
+  return props.allowNesting && treeDrag.isDragging()
+})
 
 watch(showChildren, async (show) => {
   if (show) {
