@@ -33,6 +33,7 @@ import { generateNuxtConfig } from './generators/nuxt-config.mjs'
 import { generateRepeaterItemComponent } from './generators/repeater-item-component.mjs'
 import { generateFieldComponents } from './generators/field-components.mjs'
 import { generateSeedFile } from './generators/seed-data.mjs'
+import { generateCollectionTypesRegistry } from './generators/collection-types-registry.mjs'
 
 const execAsync = promisify(exec)
 
@@ -1742,6 +1743,21 @@ async function main() {
           displayManualCssSetupInstructions()
         }
 
+        // Generate type registry for type-safe CRUD composables
+        if (!config.flags?.dryRun) {
+          console.log(`\n${'═'.repeat(60)}`)
+          console.log(`  TYPE REGISTRY`)
+          console.log(`${'═'.repeat(60)}\n`)
+
+          try {
+            const registryResult = await generateCollectionTypesRegistry(process.cwd())
+            console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
+            console.log(`  → ${registryResult.outputPath}`)
+          } catch (error) {
+            console.log(`⚠ Could not generate type registry: ${error.message}`)
+          }
+        }
+
         console.log(`\n${'═'.repeat(60)}`)
         console.log(`  ALL DONE!`)
         console.log(`${'═'.repeat(60)}\n`)
@@ -1856,6 +1872,21 @@ async function main() {
           displayManualCssSetupInstructions()
         }
 
+        // Generate type registry for type-safe CRUD composables
+        if (!config.flags?.dryRun) {
+          console.log(`\n${'═'.repeat(60)}`)
+          console.log(`  TYPE REGISTRY`)
+          console.log(`${'═'.repeat(60)}\n`)
+
+          try {
+            const registryResult = await generateCollectionTypesRegistry(process.cwd())
+            console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
+            console.log(`  → ${registryResult.outputPath}`)
+          } catch (error) {
+            console.log(`⚠ Could not generate type registry: ${error.message}`)
+          }
+        }
+
         console.log(`\n${'═'.repeat(60)}`)
         console.log(`  ALL DONE!`)
         console.log(`${'═'.repeat(60)}\n`)
@@ -1931,6 +1962,26 @@ async function main() {
 
       // Proceed with generation
       await writeScaffold({ ...args, fields })
+
+      // Generate type registry for type-safe CRUD composables
+      if (!args.dryRun) {
+        console.log(`\n${'═'.repeat(60)}`)
+        console.log(`  TYPE REGISTRY`)
+        console.log(`${'═'.repeat(60)}\n`)
+
+        try {
+          const registryResult = await generateCollectionTypesRegistry(process.cwd())
+          console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
+          console.log(`  → ${registryResult.outputPath}`)
+        } catch (error) {
+          console.log(`⚠ Could not generate type registry: ${error.message}`)
+        }
+
+        console.log(`\n${'═'.repeat(60)}`)
+        console.log(`  ALL DONE!`)
+        console.log(`${'═'.repeat(60)}\n`)
+        console.log(`Next step: Restart your Nuxt dev server\n`)
+      }
     }
   } catch (error) {
     console.error('Error:', error.message)

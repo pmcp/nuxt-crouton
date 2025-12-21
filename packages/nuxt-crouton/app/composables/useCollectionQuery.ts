@@ -1,12 +1,13 @@
 import type { Ref, ComputedRef } from 'vue'
 import type { UseFetchOptions } from 'nuxt/app'
+import type { CollectionTypeMap, CollectionItem, CollectionName } from '../types/collections'
 
 interface CollectionQueryOptions {
   query?: ComputedRef<Record<string, any>> | Ref<Record<string, any>>
   watch?: boolean
 }
 
-interface CollectionQueryReturn<T = any> {
+interface CollectionQueryReturn<T> {
   items: ComputedRef<T[]>
   data: Ref<any>
   refresh: () => Promise<void>
@@ -23,29 +24,31 @@ interface CollectionQueryReturn<T = any> {
  * - Automatic reactivity with watch
  * - Works with Nuxt's SSR/cache system
  * - Multiple views can coexist without conflicts
+ * - Type-safe: Only registered collections are allowed
  *
  * @example
- * // Basic usage
- * const { items, pending } = await useCollectionQuery('adminRoles')
+ * // Type-safe usage - type is automatically inferred
+ * const { items, pending } = await useCollectionQuery('blogPosts')
+ * // items is ComputedRef<BlogPost[]>
  *
  * @example
  * // With query parameters (pagination, filters)
  * const page = ref(1)
- * const { items, pending } = await useCollectionQuery('adminRoles', {
+ * const { items, pending } = await useCollectionQuery('blogPosts', {
  *   query: computed(() => ({ page: page.value, status: 'active' }))
  * })
  *
  * @example
  * // With translations
  * const { locale } = useI18n()
- * const { items, pending } = await useCollectionQuery('adminRoles', {
+ * const { items, pending } = await useCollectionQuery('blogPosts', {
  *   query: computed(() => ({ locale: locale.value }))
  * })
  */
-export async function useCollectionQuery<T = any>(
-  collection: string,
+export async function useCollectionQuery<K extends CollectionName>(
+  collection: K,
   options: CollectionQueryOptions = {}
-): Promise<CollectionQueryReturn<T>> {
+): Promise<CollectionQueryReturn<CollectionItem<K>>> {
   const route = useRoute()
   const collections = useCollections()
   const config = collections.getConfig(collection)
@@ -159,7 +162,7 @@ export async function useCollectionQuery<T = any>(
     }
 
     // Apply proxy transform if configured
-    return applyTransform(rawItems, config) as T[]
+    return applyTransform(rawItems, config) as CollectionItem<K>[]
   })
 
   console.log('[useCollectionQuery] Returning:', {

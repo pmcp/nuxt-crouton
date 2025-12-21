@@ -1,3 +1,15 @@
+import type { CollectionTypeMap, CollectionItem, CollectionFormData, CollectionName } from '../types/collections'
+
+/**
+ * Return type for collection mutations
+ */
+interface CollectionMutationReturn<K extends CollectionName> {
+  create: (data: CollectionFormData<K>) => Promise<CollectionItem<K>>
+  update: (id: string, updates: Partial<CollectionFormData<K>>) => Promise<CollectionItem<K>>
+  deleteItems: (ids: string[]) => Promise<void>
+  delete: (ids: string[]) => Promise<void>
+}
+
 /**
  * Collection mutation composable for Create, Update, Delete operations
  * Replaces the data-fetching parts of useCrouton with a focused mutation API
@@ -7,6 +19,7 @@
  * - Supports queries with parameters (e.g., { eventId: '123' }) - v3.0
  * - Toast notifications for success/error
  * - Works with Nuxt's query-based cache system
+ * - Type-safe: Only registered collections are allowed
  * - Extensive logging for debugging
  *
  * How it works:
@@ -16,18 +29,18 @@
  * 4. UI updates with fresh data from the server
  *
  * @example
- * const { create, update, deleteItems } = useCollectionMutation('adminRoles')
+ * // Type-safe usage - types are automatically inferred
+ * const { create, update, deleteItems } = useCollectionMutation('blogPosts')
+ * await create({ title: 'Hello', slug: 'hello' }) // Typed input!
  *
- * // Create
- * await create({ name: 'New Role' })
- *
- * // Update
+ * @example
+ * // Update and delete
  * await update('role-id', { name: 'Updated Name' })
- *
- * // Delete
  * await deleteItems(['id1', 'id2'])
  */
-export function useCollectionMutation(collection: string) {
+export function useCollectionMutation<K extends CollectionName>(
+  collection: K
+): CollectionMutationReturn<K> {
   const route = useRoute()
   const toast = useToast()
   const collections = useCollections()
