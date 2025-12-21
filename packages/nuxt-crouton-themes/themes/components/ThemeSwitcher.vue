@@ -19,7 +19,7 @@ const { currentTheme, currentThemeConfig, themes, setTheme, cycleTheme } = useTh
 const menuItems = computed(() =>
   themes.map(theme => ({
     label: theme.label,
-    click: () => setTheme(theme.name),
+    onSelect: () => setTheme(theme.name),
     active: currentTheme.value === theme.name
   }))
 )
