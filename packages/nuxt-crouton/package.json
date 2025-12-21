@@ -20,7 +20,9 @@
     "dev": "unbuild --stub",
     "prepack": "pnpm build",
     "sync-stub": "tsx scripts/sync-stub.ts",
-    "sync-stub:fix": "tsx scripts/sync-stub.ts --fix"
+    "sync-stub:fix": "tsx scripts/sync-stub.ts --fix",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "files": [
     "app",
@@ -71,7 +73,9 @@
   },
   "devDependencies": {
     "@types/sortablejs": "^1.15.8",
+    "happy-dom": "^16.6.0",
     "tsx": "^4.19.2",
-    "unbuild": "^3.6.1"
+    "unbuild": "^3.6.1",
+    "vitest": "^2.1.0"
   }
 }
