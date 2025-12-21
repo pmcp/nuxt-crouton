@@ -37,7 +37,7 @@ hub: { db: 'sqlite' }  // Multi-vendor mode, no wrangler needed
   "dependencies": {
     "@friendlyinternet/nuxt-crouton": "workspace:*",
     "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
-    "@nuxt/ui": "^3.1.0"
+    "@nuxt/ui": "^4.0.0"
   },
   "devDependencies": {
     "@friendlyinternet/nuxt-crouton-cli": "workspace:*"
@@ -47,6 +47,8 @@ hub: { db: 'sqlite' }  // Multi-vendor mode, no wrangler needed
   }
 }
 ```
+
+> **CRITICAL**: Use `@nuxt/ui@^4.0.0`, NOT v3. Auth pages use v4 components.
 
 **Status**: Installed
 
@@ -249,6 +251,8 @@ pnpm dev
 | 26 | Login/register ignore redirect config | ✅ FIXED | login.vue and register.vue now use `useAuthRedirects()` instead of hardcoded `/dashboard` |
 | 27 | Auth config location confusing | ✅ DOCUMENTED | Use `croutonAuth: {}` in nuxt.config.ts, NOT `runtimeConfig.public.crouton.auth`. Module writes to runtimeConfig internally. |
 | 28 | Redirect options not obvious | ✅ DOCUMENTED | Five redirect options: `afterLogin` (post-login), `afterRegister` (post-signup), `afterLogout` (post-logout), `authenticated` (logged-in users visiting /auth/* pages), `unauthenticated` (non-logged-in users visiting protected pages). All default to `/dashboard`. |
+| 29 | Route transformation for personal/single-tenant mode | ✅ FIXED | Vue Router 4 uses `:team()` syntax (with parentheses) for optional params. The regex in `transformTeamRoutes` was only matching `:team` without parentheses. Fixed by adding `/:team\(\)` pattern to the regex. Routes now correctly transform from `/dashboard/:team()` to `/dashboard`. |
+| 30 | Stale .nuxt cache causes component resolution issues | ✅ DOCUMENTED | When changing package versions (e.g., Nuxt UI v3→v4), delete `.nuxt` folder and run `nuxt prepare`. The `.nuxt/components.d.ts` can cache old component paths. |
 
 ---
 
@@ -300,15 +304,21 @@ export default defineNuxtConfig({
 ```json
 {
   "dependencies": {
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
     "@nuxthub/core": "^0.10.0",
+    "@nuxt/ui": "^4.0.0",
     "@libsql/client": "^0.15.0",
     "drizzle-orm": "^0.45.0"
   },
   "devDependencies": {
+    "@friendlyinternet/nuxt-crouton-cli": "workspace:*",
     "drizzle-kit": "^0.31.0"
   }
 }
 ```
+
+> **IMPORTANT**: Must use `@nuxt/ui@^4.0.0` or later. The auth pages use v4 components (`UAuthForm`, `UPageCard`) that don't exist in v3.
 
 ### Environment Variables
 

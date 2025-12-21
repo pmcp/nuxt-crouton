@@ -1,37 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  css: ['~/assets/css/main.css'],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-
-  css: ['~/assets/css/main.css'],
-
   extends: [
-    '@friendlyinternet/nuxt-crouton-themes/kr11',
     '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-auth',
     './layers/blog'
   ],
-
   modules: [
     '@nuxthub/core',
     '@nuxt/ui'
   ],
-
   hub: {
     db: 'sqlite'
   },
-
-  // Auth configuration using module's config key
-  croutonAuth: {
-    mode: 'personal',
-    debug: true,
-    ui: {
-      redirects: {
-        afterLogin: '/home',
-        afterRegister: '/home',
-        afterLogout: '/auth/login',
-        authenticated: '/home'  // Where to redirect logged-in users visiting /auth/* pages
-      }
-    }
-  }
 })

@@ -1,32 +1,38 @@
 <script setup lang="ts">
-const { user, loggedIn } = useSession()
+const { user, isAuthenticated } = useAuth()
 </script>
 
 <template>
   <div class="min-h-screen flex items-center justify-center">
-    <div class="text-center space-y-4">
-      <h1 class="text-3xl font-bold">
-        Crouton Test App
-      </h1>
-      <div v-if="loggedIn">
-        <p class="text-muted">Welcome, {{ user?.name }}</p>
-        <NuxtLink to="/home" class="text-primary hover:underline">
-          Go to Dashboard
-        </NuxtLink>
+    <UPageCard class="max-w-md w-full">
+      <template #title>
+        Welcome to Test NuxtHub
+      </template>
+      <template #description>
+        Testing crouton auth integration
+      </template>
+
+      <div class="space-y-4">
+        <div v-if="isAuthenticated" class="space-y-2">
+          <p class="text-sm text-muted">Logged in as: {{ user?.email }}</p>
+          <div class="flex gap-2">
+            <UButton to="/dashboard" color="primary">
+              Go to Dashboard
+            </UButton>
+            <UButton @click="useLogout()" variant="outline">
+              Logout
+            </UButton>
+          </div>
+        </div>
+        <div v-else class="flex gap-2">
+          <UButton to="/auth/login" color="primary">
+            Login
+          </UButton>
+          <UButton to="/auth/register" variant="outline">
+            Register
+          </UButton>
+        </div>
       </div>
-      <div v-else class="space-x-4">
-        <NuxtLink to="/auth/login">
-          <UButton>Login</UButton>
-        </NuxtLink>
-        <NuxtLink to="/auth/register">
-          <UButton variant="outline">Register</UButton>
-        </NuxtLink>
-      </div>
-      <div class="mt-6 pt-6 border-t border-gray-200">
-        <NuxtLink to="/ko-demo" class="text-sm text-muted hover:underline">
-          View KO Theme Demo →
-        </NuxtLink>
-      </div>
-    </div>
+    </UPageCard>
   </div>
 </template>

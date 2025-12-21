@@ -325,13 +325,16 @@ export default defineNuxtModule<CroutonAuthConfig>({
 function transformTeamRoutes(pages: NuxtPage[], debug?: boolean): void {
   for (const page of pages) {
     // Transform paths containing :team dynamic segment
+    // Note: Vue Router 4 uses :team() syntax for optional params
     if (page.path && page.path.includes(':team')) {
       const originalPath = page.path
 
-      // Remove :team segment from path
-      // Handles: /:team, /:team/, :team/ patterns
+      // Remove :team or :team() segment from path
+      // Handles: /:team, /:team(), /:team/, :team/ patterns
       page.path = page.path
+        .replace(/\/:team\(\)(?=\/|$)/, '') // Remove /:team() when followed by / or end
         .replace(/\/:team(?=\/|$)/, '') // Remove /:team when followed by / or end
+        .replace(/^:team\(\)(?=\/|$)/, '') // Remove :team() at start
         .replace(/^:team(?=\/|$)/, '') // Remove :team at start
         || '/' // Ensure we have at least a slash
 
