@@ -207,6 +207,12 @@ All generated collections are team-scoped. The generator:
 ## Testing
 
 ```bash
+# Run unit tests
+pnpm test
+
+# Watch mode for development
+pnpm test:watch
+
 # Test generation (dry run)
 crouton shop products --fields-file=schema.json --dry-run
 
@@ -216,6 +222,14 @@ crouton config ./crouton.config.js --dry-run
 # Verify generated code
 npx nuxt typecheck
 ```
+
+### Test Coverage
+
+| File | Tests |
+|------|-------|
+| `lib/utils/helpers.mjs` | Case conversion, type mapping, seed generators |
+| `lib/generators/types.mjs` | TypeScript type generation (snapshot) |
+| `lib/generators/composable.mjs` | Composable generation (snapshot) |
 
 ## Seed Data Generation
 

@@ -387,6 +387,37 @@ Configure in Claude Code or Claude Desktop to enable AI-powered collection creat
 
 See [@friendlyinternet/nuxt-crouton-mcp-server](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-mcp-server) for setup instructions.
 
+## Development
+
+### Running Tests
+
+```bash
+cd packages/nuxt-crouton-cli
+
+# Run all tests once
+pnpm test
+
+# Watch mode for development
+pnpm test:watch
+```
+
+Tests cover:
+- `lib/utils/helpers.mjs` - Case conversion, type mapping, seed generators
+- `lib/generators/types.mjs` - TypeScript type generation
+- `lib/generators/composable.mjs` - Composable generation
+
+### Project Structure
+
+```
+lib/
+├── generators/      # Template generators (14 files)
+├── utils/           # Helper utilities (8 files)
+└── generate-collection.mjs  # Main orchestrator
+tests/
+├── fixtures/        # Reusable test data
+└── unit/            # Unit and snapshot tests
+```
+
 ## License
 
 MIT © FYIT
