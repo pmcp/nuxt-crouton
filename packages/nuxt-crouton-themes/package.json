@@ -4,6 +4,8 @@
   "description": "Swappable themes for Nuxt UI applications",
   "type": "module",
   "exports": {
+    "./themes": "./themes/nuxt.config.ts",
+    "./themes/*": "./themes/*",
     "./ko": "./ko/nuxt.config.ts",
     "./ko/*": "./ko/*",
     "./minimal": "./minimal/nuxt.config.ts",
@@ -12,6 +14,7 @@
     "./kr11/*": "./kr11/*"
   },
   "files": [
+    "themes",
     "ko",
     "minimal",
     "kr11"

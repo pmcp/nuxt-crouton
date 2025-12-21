@@ -21,6 +21,63 @@ That's it! Your app now has the KO theme applied.
 
 ---
 
+## Theme Switching
+
+Want to let users switch between themes at runtime? Use the theming layer:
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  extends: [
+    '@friendlyinternet/nuxt-crouton-themes/themes',
+    '@friendlyinternet/nuxt-crouton-themes/ko',
+    '@friendlyinternet/nuxt-crouton-themes/minimal',
+    '@friendlyinternet/nuxt-crouton-themes/kr11'
+  ]
+})
+```
+
+```vue
+<script setup>
+const { variant } = useThemeToggle()
+</script>
+
+<template>
+  <!-- Theme toggle dropdown -->
+  <ThemeToggle />
+
+  <!-- Components automatically use selected theme -->
+  <UButton :variant="variant" color="primary">Themed Button</UButton>
+</template>
+```
+
+### ThemeToggle Component
+
+```vue
+<!-- Dropdown selector (default) -->
+<ThemeToggle />
+
+<!-- Inline button group -->
+<ThemeToggle mode="inline" />
+
+<!-- Single button that cycles through themes -->
+<ThemeToggle mode="cycle" />
+```
+
+### useThemeToggle Composable
+
+```ts
+const {
+  currentTheme,    // Current theme name ('default' | 'ko' | 'minimal' | 'kr11')
+  variant,         // Variant for Nuxt UI (undefined for default)
+  themes,          // Available theme configs
+  setTheme,        // Set theme by name
+  cycleTheme       // Cycle to next theme
+} = useThemeToggle()
+```
+
+---
+
 ## Available Themes
 
 ### KO Theme
@@ -332,9 +389,12 @@ button: {
 
 Each theme exports a Nuxt layer via subpath:
 
-| Theme | Import Path |
-|-------|-------------|
-| KO | `@friendlyinternet/nuxt-crouton-themes/ko` |
+| Layer | Import Path | Description |
+|-------|-------------|-------------|
+| Themes | `@friendlyinternet/nuxt-crouton-themes/themes` | Theme switching utilities |
+| KO | `@friendlyinternet/nuxt-crouton-themes/ko` | Teenage Engineering inspired |
+| Minimal | `@friendlyinternet/nuxt-crouton-themes/minimal` | Clean, Bauhaus-inspired |
+| KR-11 | `@friendlyinternet/nuxt-crouton-themes/kr11` | Korg rhythm box inspired |
 
 ### KO Theme Components
 

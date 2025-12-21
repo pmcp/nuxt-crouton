@@ -19,6 +19,12 @@ Swappable UI themes for Nuxt applications using Nuxt UI 4. Each theme is a self-
 ```
 packages/nuxt-crouton-themes/
 ├── package.json              # Subpath exports
+├── themes/                   # Theme switching utilities
+│   ├── nuxt.config.ts        # Layer config
+│   ├── composables/
+│   │   └── useThemeToggle.ts # Theme switching composable
+│   └── components/
+│       └── ThemeToggle.vue   # UI component for theme switching
 ├── ko/                       # KO theme (Teenage Engineering inspired)
 │   ├── nuxt.config.ts        # Layer config
 │   ├── app.config.ts         # Nuxt UI variants
@@ -37,6 +43,83 @@ packages/nuxt-crouton-themes/
 │   └── components/           # KrDisplay, KrPad, KrLed, etc.
 └── brutalist/                # Future theme
 ```
+
+## Themes Layer (`./themes`)
+
+The theming layer provides theme switching utilities that work across all themes. Includes a composable for managing theme state and a UI component for theme selection.
+
+### useThemeToggle Composable
+
+Manages theme state with SSR support and localStorage persistence.
+
+```ts
+const {
+  currentTheme,        // Readonly ref of current theme name
+  currentThemeConfig,  // Current theme config object
+  variant,             // Computed variant for Nuxt UI (undefined for 'default')
+  themes,              // Array of available theme configs
+  setTheme,            // Function to set theme by name
+  cycleTheme           // Function to cycle to next theme
+} = useThemeToggle()
+```
+
+**Theme Names:** `'default' | 'ko' | 'minimal' | 'kr11'`
+
+**Features:**
+- SSR-compatible state via `useState`
+- Persists to localStorage (`nuxt-crouton-theme`)
+- Adds body class (`theme-ko`, `theme-minimal`, etc.) for CSS targeting
+- Returns `undefined` variant for 'default' theme (uses Nuxt UI defaults)
+
+### ThemeToggle Component
+
+UI component for theme switching with three modes.
+
+```vue
+<!-- Dropdown selector (default) -->
+<ThemeToggle />
+
+<!-- Inline button group -->
+<ThemeToggle mode="inline" />
+
+<!-- Single button that cycles through themes -->
+<ThemeToggle mode="cycle" />
+```
+
+**Props:**
+- `mode`: `'dropdown' | 'inline' | 'cycle'` (default: `'dropdown'`)
+- `size`: `'xs' | 'sm' | 'md' | 'lg'` (default: `'sm'`)
+
+### Usage
+
+```ts
+// nuxt.config.ts - extend themes layer + specific themes
+export default defineNuxtConfig({
+  extends: [
+    '@friendlyinternet/nuxt-crouton-themes/themes',
+    '@friendlyinternet/nuxt-crouton-themes/ko',
+    '@friendlyinternet/nuxt-crouton-themes/minimal',
+    '@friendlyinternet/nuxt-crouton-themes/kr11'
+  ]
+})
+```
+
+```vue
+<script setup>
+const { variant } = useThemeToggle()
+</script>
+
+<template>
+  <!-- Theme toggle in header -->
+  <ThemeToggle />
+
+  <!-- Components use selected theme variant -->
+  <UButton :variant="variant" color="primary">Themed Button</UButton>
+  <UInput :variant="variant" placeholder="Themed input" />
+</template>
+```
+
+---
 
 ## Available Themes
 
