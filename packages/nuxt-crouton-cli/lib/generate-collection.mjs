@@ -841,26 +841,58 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
         : { enabled: false })
 
   // Handle translation configuration
-  if (!config && !noTranslations) {
-    // CLI mode without config: Create default translation config
-    // Auto-detect translatable fields based on common patterns
-    const translatableFieldNames = ['name', 'title', 'description', 'label',
-      'placeholder', 'helpText', 'content', 'message',
-      'remarkPrompt', 'terms', 'conditions', 'notes']
-    const translatableFields = fields
-      .filter(f => translatableFieldNames.includes(f.name)
-        && (f.type === 'string' || f.type === 'text'))
+  // Priority: 1) field-level meta.translatable, 2) collection-level translatable, 3) config.translations.collections
+  if (!noTranslations) {
+    // Check for field-level translatable markers (meta.translatable: true)
+    const fieldLevelTranslatable = fields
+      .filter(f => f.meta?.translatable === true)
       .map(f => f.name)
 
-    if (translatableFields.length > 0) {
-      config = {
-        translations: {
-          collections: {
-            [cases.plural]: translatableFields
-          }
-        }
+    // Check for collection-level translatable flag (auto-detect common patterns)
+    let collectionLevelTranslatable = []
+    if (collectionConfig?.translatable === true) {
+      const autoDetectFieldNames = ['name', 'title', 'description', 'label',
+        'placeholder', 'helpText', 'content', 'message',
+        'remarkPrompt', 'terms', 'conditions', 'notes']
+      collectionLevelTranslatable = fields
+        .filter(f => autoDetectFieldNames.includes(f.name)
+          && (f.type === 'string' || f.type === 'text' || f.type === 'richText'))
+        .map(f => f.name)
+    }
+
+    // Get config-level translatable fields
+    const configLevelTranslatable = config?.translations?.collections?.[cases.plural] || []
+
+    // Merge all sources (field-level takes precedence, then collection-level, then config-level)
+    const allTranslatableFields = [...new Set([
+      ...fieldLevelTranslatable,
+      ...collectionLevelTranslatable,
+      ...configLevelTranslatable
+    ])]
+
+    if (allTranslatableFields.length > 0) {
+      // Ensure config object exists
+      if (!config) {
+        config = {}
       }
-      console.log(`↻ Auto-detected translatable fields: ${translatableFields.join(', ')}`)
+      if (!config.translations) {
+        config.translations = { collections: {} }
+      }
+      if (!config.translations.collections) {
+        config.translations.collections = {}
+      }
+      config.translations.collections[cases.plural] = allTranslatableFields
+
+      // Log the source of translatable fields
+      if (fieldLevelTranslatable.length > 0) {
+        console.log(`↻ Field-level translatable: ${fieldLevelTranslatable.join(', ')}`)
+      }
+      if (collectionLevelTranslatable.length > 0) {
+        console.log(`↻ Auto-detected translatable (collection-level): ${collectionLevelTranslatable.join(', ')}`)
+      }
+      if (configLevelTranslatable.length > 0 && fieldLevelTranslatable.length === 0 && collectionLevelTranslatable.length === 0) {
+        console.log(`↻ Config-level translatable: ${configLevelTranslatable.join(', ')}`)
+      }
     }
   } else if (noTranslations && config) {
     // Override config to disable translations if flag is set
@@ -909,6 +941,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     originalCollectionName: collection, // Preserve original collection name before toCase processing
     layer,
     layerPascalCase,
+    layerCamelCase, // camelCase version for collection names (e.g., "knowledge-base" -> "knowledgeBase")
     fields,
     fieldsSchema: (() => {
       // Get list of translatable field names for this collection
@@ -1640,11 +1673,6 @@ async function main() {
             const fields = await loadFields(resolvedFieldsFile)
 
             // Check if this collection has translations
-            const hasTranslations = config?.translations?.collections?.[collectionName]?.length > 0
-            if (hasTranslations) {
-              hasAnyTranslations = true
-            }
-
             // Generate files but skip database creation (we'll do it in batch at the end)
             // Determine seed settings from collection config or global config
             const collectionSeed = collectionConfig?.seed === true
@@ -1670,6 +1698,12 @@ async function main() {
             })
 
             allCollections.push({ name: collectionName, layer: target.layer, fields })
+
+            // Check if this collection has translations (AFTER writeScaffold populates config.translations)
+            const hasTranslations = config?.translations?.collections?.[collectionName]?.length > 0
+            if (hasTranslations) {
+              hasAnyTranslations = true
+            }
           }
         }
 
@@ -1692,6 +1726,8 @@ async function main() {
           if (hasAnyTranslations) {
             console.log(`\n↻ Setting up translations support...`)
             await exportI18nSchema(config.flags?.force || false)
+            // Always register the translationsUi collection regardless of schema export method
+            await registerTranslationsUiCollection()
           }
 
           // Run database migration once for all collections
@@ -1773,11 +1809,6 @@ async function main() {
         // Process each target
         for (const target of config.targets) {
           for (const collection of target.collections) {
-            // Check if this collection has translations
-            const hasTranslations = config?.translations?.collections?.[collection]?.length > 0
-            if (hasTranslations) {
-              hasAnyTranslations = true
-            }
             console.log(`\nGenerating collection '${collection}' in layer '${target.layer}'...`)
 
             // Check for global seed settings (this code path doesn't have per-collection config)
@@ -1799,6 +1830,12 @@ async function main() {
             })
 
             allCollections.push({ name: collection, layer: target.layer, fields })
+
+            // Check if this collection has translations (AFTER writeScaffold populates config.translations)
+            const hasTranslations = config?.translations?.collections?.[collection]?.length > 0
+            if (hasTranslations) {
+              hasAnyTranslations = true
+            }
           }
         }
 
@@ -1821,6 +1858,8 @@ async function main() {
           if (hasAnyTranslations) {
             console.log(`\n↻ Setting up translations support...`)
             await exportI18nSchema(config.flags?.force || false)
+            // Always register the translationsUi collection regardless of schema export method
+            await registerTranslationsUiCollection()
           }
 
           // Run database migration once for all collections

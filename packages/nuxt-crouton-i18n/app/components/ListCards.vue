@@ -22,7 +22,7 @@ function hasTranslation(localeCode: string): boolean {
 
 <template>
   <div class="flex gap-1">
-    <TranslationsCardsMini
+    <CroutonI18nCardsMini
       v-for="loc in locales"
       :key="typeof loc === 'string' ? loc : loc.code"
       :locale="typeof loc === 'string' ? loc : loc.code"
