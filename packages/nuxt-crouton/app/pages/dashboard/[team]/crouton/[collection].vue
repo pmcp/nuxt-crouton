@@ -1,35 +1,28 @@
 <template>
-  <div class="px-6 pt-6">
-    <NuxtLink
-      :to="`/dashboard/${route.params.team}/crouton`"
-      class="hover:underline mb-4 inline-block"
+  <div>
+    <div
+      v-if="loading"
+      class="italic opacity-50 flex items-center gap-2"
     >
-      ← Back to collections
-    </NuxtLink>
-  </div>
+      <UIcon
+        name="i-lucide-loader-circle"
+        class="animate-spin"
+      />
+      Loading collection...
+    </div>
 
-  <div
-    v-if="loading"
-    class="m-6 italic opacity-50 flex items-center text-white gap-1"
-  >
-    <UIcon
-      name="i-lucide-loader-circle"
-      class="animate-spin"
+    <div
+      v-else-if="error"
+      class="text-red-600"
+    >
+      {{ error }}
+    </div>
+
+    <CroutonCollectionViewer
+      v-else
+      :collection-name="collectionName"
     />
-    Loading collection...
   </div>
-
-  <div
-    v-else-if="error"
-    class="text-red-600"
-  >
-    {{ error }}
-  </div>
-
-  <CroutonCollectionViewer
-    v-else
-    :collection-name="collectionName"
-  />
 </template>
 
 <script setup lang="ts">
@@ -53,6 +46,7 @@ onMounted(() => {
 })
 
 definePageMeta({
+  layout: 'dashboard',
   middleware: 'auth'
 })
 </script>

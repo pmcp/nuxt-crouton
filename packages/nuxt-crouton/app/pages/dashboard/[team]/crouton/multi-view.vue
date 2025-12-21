@@ -1,13 +1,7 @@
 <template>
-  <div class="px-6 py-6">
+  <div>
     <!-- Page Header -->
     <div class="mb-6">
-      <NuxtLink
-        :to="`/dashboard/${route.params.team}/crouton`"
-        class="hover:underline mb-4 inline-block text-sm text-muted-foreground"
-      >
-        ← Back to collections
-      </NuxtLink>
       <h1 class="text-2xl font-bold">
         Multi-Collection View Example
       </h1>
@@ -256,8 +250,6 @@ interface CroutonBaseRow {
   [key: string]: unknown
 }
 
-const route = useRoute()
-
 // Fetch real collection data
 const { items: bookings, pending: bookingsPending } = await useCollectionQuery('bookingsBookings')
 const { items: locations, pending: locationsPending } = await useCollectionQuery('bookingsLocations')
@@ -294,6 +286,7 @@ const activitiesColumns = [
 ]
 
 definePageMeta({
+  layout: 'dashboard',
   middleware: 'auth'
 })
 </script>
