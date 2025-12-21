@@ -2,7 +2,7 @@
 const runtimeConfig = useRuntimeConfig()
 const croutonConfig = computed(() => runtimeConfig.public.croutonConfig as Record<string, any> | null)
 
-const hasConfig = computed(() => !!croutonConfig.value)
+const hasConfig = computed(() => !!croutonConfig.value && Object.keys(croutonConfig.value).length > 0)
 
 const formattedConfig = computed(() => {
   if (!croutonConfig.value) return ''
@@ -38,22 +38,21 @@ const isOpen = ref(false)
     </template>
 
     <div v-if="hasConfig">
-      <UCollapsible v-model:open="isOpen">
-        <template #default="{ open }">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            class="w-full justify-between"
-            :trailing-icon="open ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-            @click="isOpen = !isOpen"
-          >
-            {{ open ? 'Hide configuration' : 'Show configuration' }}
-          </UButton>
-        </template>
+      <UCollapsible v-model:open="isOpen" class="flex flex-col gap-2">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="w-full justify-between"
+          :trailing-icon="isOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          :ui="{ trailingIcon: 'transition-transform duration-200' }"
+          block
+        >
+          {{ isOpen ? 'Hide configuration' : 'Show configuration' }}
+        </UButton>
 
         <template #content>
-          <div class="mt-3 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-auto max-h-96">
+          <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-auto max-h-96">
             <pre class="text-xs font-mono text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ formattedConfig }}</pre>
           </div>
         </template>
