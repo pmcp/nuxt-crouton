@@ -107,8 +107,12 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
     })
   }
 
-  // Get team from Better Auth organization API
-  const team = await getTeamById(event, teamId)
+  // Try to get team by ID first, then fall back to slug
+  let team = await getTeamById(event, teamId)
+  if (!team) {
+    // teamId might actually be a slug - try slug lookup
+    team = await getTeamBySlug(event, teamId)
+  }
   if (!team) {
     throw createError({
       statusCode: 404,
