@@ -2,7 +2,7 @@
 
 This document catalogs all legacy code, backwards compatibility layers, and technical debt in the nuxt-crouton ecosystem.
 
-**Last Updated**: 2025-12-20
+**Last Updated**: 2025-12-21
 
 ---
 
@@ -10,11 +10,11 @@ This document catalogs all legacy code, backwards compatibility layers, and tech
 
 | Category | Count | Status | Priority |
 |----------|-------|--------|----------|
-| Database Mode Legacy Support | 1 system | Active | Medium |
+| Database Mode Legacy Support | - | ✅ Removed | - |
 | Team Metadata Backward Compat | - | ✅ Removed | - |
-| Flow Component Legacy Mode | 1 system | Active | Low |
-| Placeholder Implementations | 3 locations | Planned | Medium |
-| Temporary/Helper Code | 4 instances | Active | Low |
+| Flow Component Legacy Mode | 1 system | Intentional Design | N/A |
+| Placeholder Implementations | 1 location | Active | Low |
+| Temporary/Helper Code | 3 instances | Active | Low |
 | Deprecated Components | 1 item | Documented | Low |
 | Polyfill Dependencies | 8 packages | Transitive | N/A |
 
@@ -123,63 +123,38 @@ The Flow component supports two operating modes:
 
 ## 4. Placeholder Implementations
 
-**Status**: Planned
-**Risk**: Medium (security implications for auth.ts)
+**Status**: Mostly Resolved
 **Package**: `@crouton/auth`
 
 ### Files
 
-| File | Lines | Description | Task |
-|------|-------|-------------|------|
-| `packages/nuxt-crouton-auth/server/lib/auth.ts` | 868-878 | Billing authorization returns `true` without check | Task 2.7/2.8 |
-| `packages/nuxt-crouton-auth/server/utils/team-auth.ts` | 30-47 | `isTeamMember()` warns and returns `false` | - |
-| `packages/nuxt-crouton-auth/app/composables/useAuth.ts` | 467-478 | Passkey update throws error | - |
+| File | Lines | Description | Status |
+|------|-------|-------------|--------|
+| `packages/nuxt-crouton-auth/server/lib/auth.ts` | 888-905 | Billing authorization | ✅ Implemented (2025-12-21) |
+| `packages/nuxt-crouton-auth/server/utils/team-auth.ts` | - | `isTeamMember()` | ✅ Removed (2025-12-21) |
+| `packages/nuxt-crouton-auth/app/composables/useAuth.ts` | 560-569 | Passkey update throws error | Active (Better Auth limitation) |
 
 ### Details
 
-#### 4.1 Billing Authorization (HIGH PRIORITY)
+#### 4.1 Billing Authorization - ✅ RESOLVED
 
-```typescript
-// packages/nuxt-crouton-auth/server/lib/auth.ts:868-878
-authorizeReference: async ({ referenceId, action, user }) => {
-  // For now, we log the attempt and return true (will be secured in Task 2.7/2.8)
-  if (debug) {
-    console.log(`[crouton/auth] Authorizing ${action} for reference ${referenceId} by user ${user.id}`)
-  }
-  // TODO: Implement proper authorization check via organization membership
-  // This should check if user is owner/admin of the organization
-  return true
-}
-```
+The `authorizeReference` callback now properly checks organization membership:
+- Uses `getOrganizationMembershipDirect()` for direct DB queries
+- Verifies user is `owner` or `admin` of the organization
+- Denies access for non-members or `member` role
 
-**Risk**: Any authenticated user can manage billing for any organization.
-**Action**: Implement proper organization membership check before production use.
+#### 4.2 Team Membership Check - ✅ REMOVED
 
-#### 4.2 Team Membership Check (LOW PRIORITY)
-
-```typescript
-// packages/nuxt-crouton-auth/server/utils/team-auth.ts:36-46
-// For now, we can't call getMembership without an event
-console.warn(
-  '[crouton/auth] isTeamMember called without event context. '
-  + 'Use resolveTeamAndCheckMembership(event) in API handlers instead.'
-)
-return false
-```
-
-**Risk**: Low - fails safely by returning `false`.
-**Action**: Consider deprecating or removing this function in favor of `resolveTeamAndCheckMembership()`.
+The broken `isTeamMember()` function has been removed. Use `isTeamMemberWithEvent(event, teamId, userId)` instead, which has access to H3 event context for Better Auth API calls.
 
 #### 4.3 Passkey Update (LOW PRIORITY)
 
 ```typescript
-// packages/nuxt-crouton-auth/app/composables/useAuth.ts:467-471
-// Better Auth doesn't have a direct update method
-// For now, we'll throw an error indicating this is not supported
-// TODO: Check if Better Auth supports passkey updates
+// packages/nuxt-crouton-auth/app/composables/useAuth.ts:560-569
 throw new Error('Passkey update is not currently supported. Delete and re-add instead.')
 ```
 
+**Status**: Active - this is a Better Auth limitation, not legacy code.
 **Risk**: None - feature disabled with clear user feedback.
 **Action**: Monitor Better Auth releases for passkey update support.
 
@@ -192,38 +167,28 @@ throw new Error('Passkey update is not currently supported. Delete and re-add in
 
 ### Files
 
-| File | Lines | Description |
-|------|-------|-------------|
-| `packages/nuxt-crouton-mcp-server/src/utils/cli.ts` | 63, 78 | Temporary file utilities for schema handling |
-| `apps/test/server/api/seed.post.ts` | 1 | Test seed endpoint (dev only) |
-| `packages/nuxt-crouton-i18n/app/composables/useT.ts` | ~260 | Locale assumption fallback |
+| File | Lines | Description | Status |
+|------|-------|-------------|--------|
+| `packages/nuxt-crouton-mcp-server/src/utils/cli.ts` | 63, 78 | Temporary file utilities | Standard utility |
+| `apps/test/server/api/seed.post.ts` | 1 | Test seed endpoint | ✅ Protected (2025-12-21) |
+| `packages/nuxt-crouton-i18n/app/composables/useT.ts` | ~260 | Locale assumption fallback | Acceptable |
 
 ### Details
 
 #### 5.1 CLI Temporary Files
 
+Standard utility pattern for schema handling - no action needed.
+
+#### 5.2 Test Seed Endpoint - ✅ PROTECTED
+
+The seed endpoint now includes a production guard:
 ```typescript
-// Write a schema to a temporary file and return the path
-// Clean up a temporary schema file
+if (process.env.NODE_ENV === 'production') {
+  throw createError({ statusCode: 404, message: 'Not found' })
+}
 ```
-
-Standard utility pattern - no action needed.
-
-#### 5.2 Test Seed Endpoint
-
-```typescript
-// Temporary seed endpoint for testing
-```
-
-Should not be deployed to production. Consider:
-- Adding environment check
-- Moving to CLI command
 
 #### 5.3 Locale Fallback
-
-```typescript
-// For now, just assume it exists if not already in availableLocales
-```
 
 Acceptable fallback behavior - no action needed.
 
@@ -275,21 +240,23 @@ Use UEditorToolbar from Nuxt UI instead...
 
 ---
 
-## Cleanup Checklist (Future)
+## Cleanup Checklist
 
-### High Priority
-- [ ] Implement billing authorization check (Task 2.7/2.8) - `auth.ts:868-878`
+### Completed (2025-12-21)
+- [x] Implement billing authorization check - `auth.ts:888-905`
+- [x] Remove broken `isTeamMember()` function
+- [x] Add environment protection to test seed endpoint
 
 ### Medium Priority
-- [ ] Consider renaming Flow "legacy mode" to "standalone mode"
+- [ ] Consider renaming Flow "legacy mode" to "standalone mode" for clarity
 
-### Low Priority
-- [ ] Add environment check to test seed endpoint
+### Low Priority (External Dependencies)
 - [ ] Monitor Better Auth for passkey update support
 
 ### Documentation
-- [ ] Update NuxtHub version requirements documentation
-- [x] Document deprecated CroutonEditorToolbar (already done)
+- [x] Update NuxtHub version requirements documentation
+- [x] Document deprecated CroutonEditorToolbar
+- [x] Update API docs to use `isTeamMemberWithEvent`
 
 ---
 

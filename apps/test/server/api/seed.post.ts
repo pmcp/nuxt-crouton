@@ -1,7 +1,12 @@
-// Temporary seed endpoint for testing
+// Seed endpoint for development/testing only
 import { blogPosts } from '~~/layers/blog/collections/posts/server/database/schema'
 
 export default defineEventHandler(async (event) => {
+  // Block in production
+  if (process.env.NODE_ENV === 'production') {
+    throw createError({ statusCode: 404, message: 'Not found' })
+  }
+
   try {
     console.log('[seed] Starting seed...')
 

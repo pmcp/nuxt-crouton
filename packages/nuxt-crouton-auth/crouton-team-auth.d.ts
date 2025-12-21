@@ -99,19 +99,6 @@ declare module '#crouton/team-auth' {
   export function resolveTeamAndCheckMembership(event: H3Event): Promise<TeamAuthResult>
 
   /**
-   * Checks if a user is a member of a team by team ID
-   *
-   * Note: This function is provided for backwards compatibility.
-   * When using Better Auth, prefer using resolveTeamAndCheckMembership
-   * in API handlers as it has access to the event context.
-   *
-   * @param teamId - The team's ID (organization ID in Better Auth)
-   * @param userId - The user's ID
-   * @returns Boolean indicating membership
-   */
-  export function isTeamMember(teamId: string, userId: string): Promise<boolean>
-
-  /**
    * Check if user is a member of a team (with event context)
    *
    * Preferred method when you have access to the H3 event.

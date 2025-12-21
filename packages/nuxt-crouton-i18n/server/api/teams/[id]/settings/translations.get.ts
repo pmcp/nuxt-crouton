@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { teamSettings } from '@friendlyinternet/nuxt-crouton/server/database/schema/teamSettings'
+import { isTeamMemberWithEvent } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { id: teamId } = getRouterParams(event)
@@ -12,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
 
   // Check if user has access to this team
-  const hasAccess = await isTeamMember(teamId, user.id)
+  const hasAccess = await isTeamMemberWithEvent(event, teamId, user.id)
   if (!hasAccess) {
     throw createError({
       statusCode: 403,

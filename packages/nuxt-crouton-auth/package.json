@@ -18,6 +18,10 @@
       "import": "./server/utils/team.ts",
       "types": "./server/utils/team.ts"
     },
+    "./server/utils/team-auth": {
+      "import": "./server/utils/team-auth.ts",
+      "types": "./server/utils/team-auth.ts"
+    },
     "./server/database/schema/auth": {
       "import": "./server/database/schema/auth.ts",
       "types": "./server/database/schema/auth.ts"

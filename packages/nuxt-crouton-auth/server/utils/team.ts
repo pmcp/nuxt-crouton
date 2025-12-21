@@ -8,7 +8,8 @@ import type { H3Event } from 'h3'
 import { createError, getRouterParam } from 'h3'
 import { useRuntimeConfig } from '#imports'
 import { drizzle } from 'drizzle-orm/d1'
-import { sql } from 'drizzle-orm'
+import { sql, eq, and } from 'drizzle-orm'
+import { member } from '../database/schema/auth'
 import type { Team, Member, User } from '../../types'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
@@ -461,6 +462,41 @@ export async function requireTeamAdmin(event: H3Event): Promise<TeamContext> {
  */
 export async function requireTeamOwner(event: H3Event): Promise<TeamContext> {
   return requireTeamRole(event, 'owner')
+}
+
+// ============================================================================
+// Direct Database Access (No Event Context)
+// ============================================================================
+
+/**
+ * Get organization membership directly from database
+ *
+ * Used when H3 event context is not available (e.g., Better Auth hooks like
+ * authorizeReference in the Stripe billing plugin).
+ *
+ * @param organizationId - Organization/team ID
+ * @param userId - User ID
+ * @returns Membership with role, or null if not a member
+ */
+export async function getOrganizationMembershipDirect(
+  organizationId: string,
+  userId: string
+): Promise<{ role: 'owner' | 'admin' | 'member' } | null> {
+  const d1 = hubDatabase()
+  const db = drizzle(d1)
+
+  const result = await db
+    .select({ role: member.role })
+    .from(member)
+    .where(and(
+      eq(member.organizationId, organizationId),
+      eq(member.userId, userId)
+    ))
+    .limit(1)
+
+  const row = result[0]
+  if (!row) return null
+  return { role: row.role as 'owner' | 'admin' | 'member' }
 }
 
 // ============================================================================

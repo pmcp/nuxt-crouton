@@ -886,15 +886,22 @@ function buildStripePluginConfig(
       // Authorization for reference-based subscriptions (organization billing)
       // This is called to verify a user can manage billing for an organization
       authorizeReference: mode === 'personal' ? undefined : async ({ referenceId, action, user }) => {
-        // For organization-based billing, we need to verify the user is an owner/admin
-        // This will be implemented by the actual auth instance
-        // For now, we log the attempt and return true (will be secured in Task 2.7/2.8)
-        if (debug) {
-          console.log(`[crouton/auth] Authorizing ${action} for reference ${referenceId} by user ${user.id}`)
+        // Verify user is owner/admin of the organization
+        const { getOrganizationMembershipDirect } = await import('../utils/team')
+        const membership = await getOrganizationMembershipDirect(referenceId, user.id)
+
+        if (!membership) {
+          if (debug) {
+            console.log(`[crouton/auth] Billing authorization denied: user ${user.id} is not a member of ${referenceId}`)
+          }
+          return false
         }
-        // TODO: Implement proper authorization check via organization membership
-        // This should check if user is owner/admin of the organization
-        return true
+
+        const isAuthorized = membership.role === 'owner' || membership.role === 'admin'
+        if (debug) {
+          console.log(`[crouton/auth] Billing authorization ${isAuthorized ? 'granted' : 'denied'}: ${action} for ${referenceId} by user ${user.id} (role: ${membership.role})`)
+        }
+        return isAuthorized
       },
 
       // Lifecycle hooks for subscription events

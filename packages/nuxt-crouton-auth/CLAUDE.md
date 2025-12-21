@@ -94,8 +94,9 @@ import {
   getTeamById,
   getTeamBySlug,
   getUserTeams,
-  isTeamMember,
-  canUserCreateTeam
+  isTeamMemberWithEvent,
+  canUserCreateTeam,
+  getOrganizationMembershipDirect
 } from '@crouton/auth/server'
 ```
 

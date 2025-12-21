@@ -594,6 +594,9 @@ importers:
       '@friendlyinternet/nuxt-crouton':
         specifier: workspace:*
         version: link:../nuxt-crouton
+      '@friendlyinternet/nuxt-crouton-auth':
+        specifier: workspace:*
+        version: link:../nuxt-crouton-auth
       '@nuxtjs/i18n':
         specifier: ^9.0.0
         version: 9.5.6(@vue/compiler-dom@3.5.26)(eslint@9.39.2(jiti@2.6.1))(magicast@0.5.1)(rollup@4.53.5)(vue@3.5.26(typescript@5.9.3))

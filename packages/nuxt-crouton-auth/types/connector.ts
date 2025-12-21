@@ -147,12 +147,6 @@ export interface BetterAuthConnector {
    * Compatible with nuxt-crouton's #crouton/team-auth
    */
   resolveTeamAndCheckMembership: (event: H3Event) => Promise<TeamAuthResult>
-
-  /**
-   * Check if user is team member
-   * Compatible with nuxt-crouton's #crouton/team-auth
-   */
-  isTeamMember: (teamId: string, userId: string) => Promise<boolean>
 }
 
 // ============================================================================
