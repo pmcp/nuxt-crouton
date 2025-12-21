@@ -5,8 +5,7 @@
  * Used by the SetupDashboard to show live database stats.
  */
 
-// Declare hubDatabase as available from NuxtHub
-declare const hubDatabase: () => { prepare: (sql: string) => { first: () => Promise<unknown> } }
+import { sql } from 'drizzle-orm'
 
 interface CroutonConfig {
   collections?: Array<{ name: string }>
@@ -34,6 +33,15 @@ export default defineEventHandler(async () => {
     }
   }
 
+  // Get database instance (NuxtHub auto-import)
+  let db: ReturnType<typeof useDB> | null = null
+  try {
+    db = useDB()
+  } catch {
+    // Database not available, return empty stats
+    return { success: true, data: stats }
+  }
+
   // Try to get database stats, but gracefully handle when db is unavailable
   for (const collectionDef of croutonConfig.collections) {
     const name = collectionDef.name
@@ -55,12 +63,15 @@ export default defineEventHandler(async () => {
     const tableName = `${toSnakeCase(layer)}_${toSnakeCase(name)}`
 
     try {
-      // Try to get count from database
-      const db = hubDatabase()
-      const result = await db.prepare(`SELECT COUNT(*) as count FROM ${tableName}`).first()
-      stats[collectionKey] = { count: (result as { count: number } | null)?.count || 0 }
+      // Use Drizzle's execute() for raw SQL query
+      const result = await db.execute(
+        sql`SELECT COUNT(*) as count FROM ${sql.raw(tableName)}`
+      )
+      // Result structure varies by driver, handle both array and object formats
+      const rows = Array.isArray(result) ? result : (result as any).rows || []
+      stats[collectionKey] = { count: rows[0]?.count || 0 }
     } catch {
-      // Database not available or table doesn't exist - return 0
+      // Table doesn't exist or query failed - return 0
       stats[collectionKey] = { count: 0 }
     }
   }
