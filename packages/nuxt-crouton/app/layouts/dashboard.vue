@@ -3,12 +3,13 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 // Check if ThemeSwitcher is available (from nuxt-crouton-themes)
 // Use lazy check to avoid SSR warnings when component doesn't exist
+// Use shallowRef for component refs to avoid Vue making them reactive (performance warning)
 const hasThemeSwitcher = ref(false)
-const ThemeSwitcherComponent = ref<ReturnType<typeof resolveComponent> | null>(null)
+const ThemeSwitcherComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
 
 // Check if TeamSwitcher is available (from nuxt-crouton-auth)
 const hasTeamSwitcher = ref(false)
-const TeamSwitcherComponent = ref<ReturnType<typeof resolveComponent> | null>(null)
+const TeamSwitcherComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
 
 // Check auth mode for multi-tenant support
 const config = useRuntimeConfig()
