@@ -1,10 +1,5 @@
 <script setup lang="ts">
-const colorMode = useColorMode()
 const { currentTheme } = useThemeSwitcher()
-
-const toggleColorMode = () => {
-  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-}
 
 // Theme-specific background classes
 const backgroundClass = computed(() => {
@@ -40,16 +35,7 @@ const headerClass = computed(() => {
       <header class="sticky top-0 z-50 border-b backdrop-blur-sm" :class="headerClass">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 class="text-xl font-bold text-gray-900 dark:text-white">Theme Playground</h1>
-          <div class="flex items-center gap-4">
-            <ThemeSwitcher />
-            <UButton
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
-              @click="toggleColorMode"
-            />
-          </div>
+          <ThemeSwitcher show-color-mode />
         </div>
       </header>
       <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

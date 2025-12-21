@@ -6,19 +6,28 @@ interface Props {
   mode?: 'dropdown' | 'inline' | 'cycle'
   /** Size of the switcher */
   size?: 'xs' | 'sm' | 'md' | 'lg'
+  /** Show dark mode toggle button */
+  showColorMode?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   mode: 'dropdown',
-  size: 'sm'
+  size: 'sm',
+  showColorMode: false
 })
 
 const { currentTheme, currentThemeConfig, themes, setTheme, cycleTheme } = useThemeSwitcher()
+const colorMode = useColorMode()
 
-// Dropdown menu items
+const toggleColorMode = () => {
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}
+
+// Dropdown menu items with custom slot for color swatches
 const menuItems = computed(() =>
   themes.map(theme => ({
     label: theme.label,
+    slot: theme.name,
     onSelect: () => setTheme(theme.name),
     active: currentTheme.value === theme.name
   }))
@@ -26,44 +35,100 @@ const menuItems = computed(() =>
 </script>
 
 <template>
-  <!-- Dropdown Mode -->
-  <UDropdownMenu
-    v-if="mode === 'dropdown'"
-    :items="menuItems"
-  >
+  <div class="flex items-center gap-1">
+    <!-- Dropdown Mode -->
+    <UDropdownMenu
+      v-if="mode === 'dropdown'"
+      :items="menuItems"
+    >
+      <UButton
+        color="neutral"
+        variant="ghost"
+        :size="size"
+        trailing-icon="i-lucide-chevron-down"
+      >
+        <!-- Color swatches for current theme -->
+        <span class="flex items-center gap-1.5">
+          <span class="flex -space-x-0.5">
+            <span
+              v-for="(color, i) in currentThemeConfig?.colors"
+              :key="i"
+              class="size-3 rounded-full ring-1 ring-white dark:ring-gray-800"
+              :style="{ backgroundColor: color }"
+            />
+          </span>
+          {{ currentThemeConfig?.label }}
+        </span>
+      </UButton>
+
+      <!-- Custom slots for each theme item -->
+      <template v-for="theme in themes" :key="theme.name" #[theme.name]>
+        <span class="flex items-center gap-2 w-full">
+          <span class="flex -space-x-0.5">
+            <span
+              v-for="(color, i) in theme.colors"
+              :key="i"
+              class="size-3 rounded-full ring-1 ring-white dark:ring-gray-800"
+              :style="{ backgroundColor: color }"
+            />
+          </span>
+          <span>{{ theme.label }}</span>
+        </span>
+      </template>
+    </UDropdownMenu>
+
+    <!-- Cycle Mode - Single button that cycles through themes -->
     <UButton
+      v-else-if="mode === 'cycle'"
       color="neutral"
       variant="ghost"
       :size="size"
-      icon="i-lucide-palette"
-      trailing-icon="i-lucide-chevron-down"
+      @click="cycleTheme"
     >
-      {{ currentThemeConfig?.label }}
+      <span class="flex items-center gap-1.5">
+        <span class="flex -space-x-0.5">
+          <span
+            v-for="(color, i) in currentThemeConfig?.colors"
+            :key="i"
+            class="size-3 rounded-full ring-1 ring-white dark:ring-gray-800"
+            :style="{ backgroundColor: color }"
+          />
+        </span>
+        {{ currentThemeConfig?.label }}
+      </span>
     </UButton>
-  </UDropdownMenu>
 
-  <!-- Cycle Mode - Single button that cycles through themes -->
-  <UButton
-    v-else-if="mode === 'cycle'"
-    color="neutral"
-    variant="ghost"
-    :size="size"
-    icon="i-lucide-palette"
-    @click="cycleTheme"
-  >
-    {{ currentThemeConfig?.label }}
-  </UButton>
+    <!-- Inline Mode - Button group -->
+    <UFieldGroup v-else :size="size">
+      <UButton
+        v-for="theme in themes"
+        :key="theme.name"
+        :color="currentTheme === theme.name ? 'primary' : 'neutral'"
+        :variant="currentTheme === theme.name ? 'solid' : 'ghost'"
+        @click="setTheme(theme.name)"
+      >
+        <span class="flex items-center gap-1.5">
+          <span class="flex -space-x-0.5">
+            <span
+              v-for="(color, i) in theme.colors"
+              :key="i"
+              class="size-2.5 rounded-full ring-1 ring-white dark:ring-gray-800"
+              :style="{ backgroundColor: color }"
+            />
+          </span>
+          {{ theme.label }}
+        </span>
+      </UButton>
+    </UFieldGroup>
 
-  <!-- Inline Mode - Button group -->
-  <UFieldGroup v-else :size="size">
+    <!-- Dark mode toggle -->
     <UButton
-      v-for="theme in themes"
-      :key="theme.name"
-      :color="currentTheme === theme.name ? 'primary' : 'neutral'"
-      :variant="currentTheme === theme.name ? 'solid' : 'ghost'"
-      @click="setTheme(theme.name)"
-    >
-      {{ theme.label }}
-    </UButton>
-  </UFieldGroup>
+      v-if="showColorMode"
+      color="neutral"
+      variant="ghost"
+      :size="size"
+      :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
+      @click="toggleColorMode"
+    />
+  </div>
 </template>

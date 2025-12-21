@@ -7,13 +7,35 @@ export interface ThemeConfig {
   name: ThemeName
   label: string
   description?: string
+  /** Color swatches to preview the theme's vibe */
+  colors: string[]
 }
 
 export const AVAILABLE_THEMES: ThemeConfig[] = [
-  { name: 'default', label: 'Default', description: 'Nuxt UI default styling' },
-  { name: 'ko', label: 'KO', description: 'Hardware-inspired (Teenage Engineering)' },
-  { name: 'minimal', label: 'Minimal', description: 'Clean, Bauhaus-inspired' },
-  { name: 'kr11', label: 'KR-11', description: 'Friendly drum machine aesthetic' }
+  {
+    name: 'default',
+    label: 'Default',
+    description: 'Nuxt UI default styling',
+    colors: ['#10b981', '#6b7280', '#f3f4f6'] // emerald, gray, light gray
+  },
+  {
+    name: 'ko',
+    label: 'KO',
+    description: 'Hardware-inspired (Teenage Engineering)',
+    colors: ['#f97316', '#1c1917', '#faf5f0'] // orange, dark, cream
+  },
+  {
+    name: 'minimal',
+    label: 'Minimal',
+    description: 'Clean, Bauhaus-inspired',
+    colors: ['#000000', '#ffffff', '#e5e5e5'] // black, white, light gray
+  },
+  {
+    name: 'kr11',
+    label: 'KR-11',
+    description: 'Friendly drum machine aesthetic',
+    colors: ['#6ee7b7', '#fcd34d', '#fca5a5'] // mint, gold, coral
+  }
 ]
 
 const STORAGE_KEY = 'nuxt-crouton-theme'
