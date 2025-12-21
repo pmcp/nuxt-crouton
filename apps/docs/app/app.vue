@@ -1,8 +1,22 @@
 <script setup lang="ts">
 const { seo } = useAppConfig()
 
-const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
+const { data: rawNavigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
 const { data: allSearchSections } = await useAsyncData('search-sections', () => queryCollectionSearchSections('docs'))
+
+// Add changelogs to navigation
+const navigation = computed(() => {
+  if (!rawNavigation.value) return []
+  return [
+    ...rawNavigation.value,
+    {
+      title: 'Changelog Tracker',
+      path: '/changelogs',
+      icon: 'i-lucide-git-branch',
+      children: []
+    }
+  ]
+})
 
 // Group search sections by page path and keep only the first (main) section per page
 const searchSections = computed(() => {
@@ -24,7 +38,16 @@ const searchSections = computed(() => {
     }
   })
 
-  return Array.from(pageMap.values())
+  // Add changelogs to search
+  const sections = Array.from(pageMap.values())
+  sections.push({
+    id: '/changelogs',
+    path: '/changelogs',
+    title: 'Changelog Tracker',
+    description: 'AI-summarized releases from key Nuxt ecosystem packages'
+  })
+
+  return sections
 })
 
 useHead({
