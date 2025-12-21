@@ -362,7 +362,7 @@ const remoteGhostNodes = computed<Node[]>(() => {
 })
 
 // ============================================
-// LEGACY MODE: Use props-based data
+// STANDALONE MODE: Use props-based data
 // ============================================
 
 // Convert rows to reactive ref
@@ -387,17 +387,17 @@ const layoutOptions = computed(() => ({
 
 const { applyLayout, applyLayoutToNew, needsLayout } = useFlowLayout(layoutOptions.value)
 
-// Position mutation (debounced) - only for legacy mode
+// Position mutation (debounced) - only for standalone mode
 const { debouncedUpdate } = useDebouncedPositionUpdate(
   props.collection,
   props.positionField,
   500
 )
 
-// Track if initial layout has been applied (legacy mode)
+// Track if initial layout has been applied (standalone mode)
 const initialLayoutApplied = ref(false)
 
-// Apply layout to nodes that need it (legacy mode only)
+// Apply layout to nodes that need it (standalone mode only)
 // Only applies layout ONCE on initial load, then preserves all positions
 const layoutedNodes = computed(() => {
   const nodes = dataNodes.value
@@ -532,7 +532,7 @@ onNodeDragStop((event: NodeDragEvent) => {
     // Final sync to Yjs
     syncState.updatePosition(node.id, position)
   } else {
-    // Persist via debounced mutation (legacy mode)
+    // Persist via debounced mutation (standalone mode)
     debouncedUpdate(node.id, position)
   }
 

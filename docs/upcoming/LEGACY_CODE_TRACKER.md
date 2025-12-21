@@ -12,7 +12,7 @@ This document catalogs all legacy code, backwards compatibility layers, and tech
 |----------|-------|--------|----------|
 | Database Mode Legacy Support | - | ✅ Removed | - |
 | Team Metadata Backward Compat | - | ✅ Removed | - |
-| Flow Component Legacy Mode | 1 system | Intentional Design | N/A |
+| Flow Component Standalone Mode | 1 system | Intentional Design | N/A |
 | Placeholder Implementations | 1 location | Active | Low |
 | Temporary/Helper Code | 3 instances | Active | Low |
 | Deprecated Components | 1 item | Documented | Low |
@@ -67,7 +67,7 @@ The simplified `mapOrganizationToTeam()` functions now directly read from column
 
 ---
 
-## 3. Flow Component Legacy Mode
+## 3. Flow Component Standalone Mode
 
 **Status**: Active (intentional dual-mode design)
 **Risk**: Low (working as designed)
@@ -77,7 +77,7 @@ The simplified `mapOrganizationToTeam()` functions now directly read from column
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `packages/nuxt-crouton-flow/app/components/Flow.vue` | 365-583 | Legacy mode implementation |
+| `packages/nuxt-crouton-flow/app/components/Flow.vue` | 365-583 | Standalone mode implementation |
 
 ### Purpose
 
@@ -85,39 +85,32 @@ The Flow component supports two operating modes:
 
 | Mode | Description | Use Case |
 |------|-------------|----------|
-| **Sync mode** (new) | Yjs CRDTs via Durable Objects | Real-time multiplayer |
-| **Legacy mode** (old) | Props-based data with debounced updates | Simple non-collaborative flows |
+| **Sync mode** | Yjs CRDTs via Durable Objects | Real-time multiplayer |
+| **Standalone mode** | Props-based data with debounced updates | Simple non-collaborative flows |
 
-### Legacy Mode Markers
+### Standalone Mode Markers
 
 ```typescript
 // Line 365: Section header
-// LEGACY MODE: Use props-based data
+// STANDALONE MODE: Use props-based data
 
 // Line 390: Position mutation
-// Position mutation (debounced) - only for legacy mode
+// Position mutation (debounced) - only for standalone mode
 
 // Line 397: Layout tracking
-// Track if initial layout has been applied (legacy mode)
+// Track if initial layout has been applied (standalone mode)
 
 // Line 400: Layout application
-// Apply layout to nodes that need it (legacy mode only)
-
-// Line 429: Node source
-// Use sync nodes or legacy nodes based on mode
+// Apply layout to nodes that need it (standalone mode only)
 
 // Line 535: Position persistence
-// Persist via debounced mutation (legacy mode)
-
-// Line 583: Drag feedback
-// Visual feedback for drag over (legacy - will be replaced by ghost nodes)
+// Persist via debounced mutation (standalone mode)
 ```
 
-### Cleanup Notes
+### Notes
 
-- **Do NOT remove** - Legacy mode is intentional for non-collaborative use cases
-- Consider renaming "legacy mode" to "standalone mode" for clarity
-- Ghost nodes feature mentioned at line 583 is pending implementation
+- **Do NOT remove** - Standalone mode is intentional for non-collaborative use cases
+- Ghost nodes feature is pending implementation
 
 ---
 
@@ -248,7 +241,7 @@ Use UEditorToolbar from Nuxt UI instead...
 - [x] Add environment protection to test seed endpoint
 
 ### Medium Priority
-- [ ] Consider renaming Flow "legacy mode" to "standalone mode" for clarity
+- [x] Renamed Flow "legacy mode" to "standalone mode" for clarity (2025-12-21)
 
 ### Low Priority (External Dependencies)
 - [ ] Monitor Better Auth for passkey update support
