@@ -1,0 +1,88 @@
+{
+  "packages": [
+    {
+      "name": "nuxt",
+      "repo": "nuxt/nuxt",
+      "priority": "critical",
+      "enabled": true
+    },
+    {
+      "name": "vue",
+      "repo": "vuejs/core",
+      "priority": "critical",
+      "enabled": true
+    },
+    {
+      "name": "@nuxt/ui",
+      "repo": "nuxt/ui",
+      "priority": "critical",
+      "enabled": true
+    },
+    {
+      "name": "drizzle-orm",
+      "repo": "drizzle-team/drizzle-orm",
+      "priority": "critical",
+      "enabled": true
+    },
+    {
+      "name": "better-auth",
+      "repo": "better-auth/better-auth",
+      "priority": "critical",
+      "enabled": true
+    },
+    {
+      "name": "@vueuse/core",
+      "repo": "vueuse/vueuse",
+      "priority": "high",
+      "enabled": true
+    },
+    {
+      "name": "ai",
+      "repo": "vercel/ai",
+      "priority": "high",
+      "enabled": true
+    },
+    {
+      "name": "stripe",
+      "repo": "stripe/stripe-node",
+      "priority": "high",
+      "enabled": true
+    },
+    {
+      "name": "typescript",
+      "repo": "microsoft/TypeScript",
+      "priority": "high",
+      "enabled": true
+    },
+    {
+      "name": "@nuxtjs/i18n",
+      "repo": "nuxt-modules/i18n",
+      "priority": "medium",
+      "enabled": true
+    },
+    {
+      "name": "@nuxthub/core",
+      "repo": "nuxt-hub/core",
+      "priority": "medium",
+      "enabled": true
+    },
+    {
+      "name": "zod",
+      "repo": "colinhacks/zod",
+      "priority": "medium",
+      "enabled": true
+    },
+    {
+      "name": "@nuxt/content",
+      "repo": "nuxt/content",
+      "priority": "medium",
+      "enabled": true
+    },
+    {
+      "name": "nitro",
+      "repo": "nitrojs/nitro",
+      "priority": "medium",
+      "enabled": true
+    }
+  ]
+}

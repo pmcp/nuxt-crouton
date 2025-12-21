@@ -26,6 +26,10 @@ export default defineAppConfig({
     search: true,
     colorMode: true,
     links: [{
+      'icon': 'i-lucide-git-branch',
+      'to': '/changelogs',
+      'aria-label': 'Changelog Tracker'
+    }, {
       'icon': 'i-simple-icons-github',
       'to': 'https://github.com/pmcp/nuxt-crouton',
       'target': '_blank',
