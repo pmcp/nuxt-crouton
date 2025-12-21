@@ -93,10 +93,19 @@ export function useSession() {
   async function fetchActiveOrg(): Promise<void> {
     if (!authClient?.organization?.getFullOrganization) return
 
+    console.log('[@crouton/auth] fetchActiveOrg: calling getFullOrganization...')
+
     try {
-      const { data } = await authClient.organization.getFullOrganization({
+      const { data, error } = await authClient.organization.getFullOrganization({
         fetchOptions: { headers }
       })
+
+      console.log('[@crouton/auth] fetchActiveOrg: response', {
+        hasData: !!data,
+        orgSlug: data?.slug ?? null,
+        error: error ?? null
+      })
+
       activeOrgState.value = data ?? null
 
       if (debug) {
@@ -105,6 +114,7 @@ export function useSession() {
         })
       }
     } catch (err) {
+      console.log('[@crouton/auth] fetchActiveOrg: EXCEPTION', err)
       if (debug) {
         console.log('[@crouton/auth] useSession: no active org', err)
       }

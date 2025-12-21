@@ -338,6 +338,8 @@ function buildDatabaseHooks(
             if (config.debug) {
               console.log(`[crouton/auth] Session ${session.id} set to personal org ${personalOrgId} (personal mode)`)
             }
+          } else if (config.debug) {
+            console.warn(`[crouton/auth] No personal org found for user ${session.userId}`)
           }
         }
       }

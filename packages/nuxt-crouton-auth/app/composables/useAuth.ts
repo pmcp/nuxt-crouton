@@ -89,7 +89,38 @@ export function useAuth() {
   const debug = config?.debug ?? false
 
   // Get reactive session from useSession composable
-  const { user: sessionUser, isAuthenticated, isPending, error: sessionError, refresh, clear } = useSession()
+  const { user: sessionUser, isAuthenticated, isPending, error: sessionError, refresh, clear, activeOrganization } = useSession()
+
+  /**
+   * Refresh session with retry for activeOrganization
+   *
+   * In personal/single-tenant modes, the database hook sets activeOrganizationId
+   * AFTER the session response is sent. This causes a timing issue where the
+   * initial refresh doesn't include the org. We retry after a delay to allow
+   * the hook to complete and the session to be updated in the database.
+   */
+  async function refreshWithOrgRetry(maxRetries = 3, delayMs = 200): Promise<void> {
+    await refresh()
+
+    // Only retry for personal/single-tenant modes
+    const mode = config?.mode ?? 'multi-tenant'
+    if (mode === 'multi-tenant') {
+      return
+    }
+
+    // If no activeOrg after initial refresh, retry with delays
+    for (let i = 0; i < maxRetries && !activeOrganization.value; i++) {
+      if (debug) {
+        console.log(`[@crouton/auth] refreshWithOrgRetry: attempt ${i + 1}/${maxRetries}, waiting ${delayMs}ms`)
+      }
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+      await refresh()
+    }
+
+    if (debug && !activeOrganization.value) {
+      console.warn('[@crouton/auth] refreshWithOrgRetry: activeOrganization still null after retries')
+    }
+  }
 
   if (debug) {
     console.log('[@crouton/auth] useAuth: initialized', {
@@ -173,16 +204,17 @@ export function useAuth() {
       }
 
       if (debug) {
-        console.log('[@crouton/auth] login: calling refresh to update session state')
+        console.log('[@crouton/auth] login: calling refreshWithOrgRetry to update session state')
       }
 
-      // Refresh session to update reactive state
-      await refresh()
+      // Refresh session with retry to handle async org assignment
+      await refreshWithOrgRetry()
 
       if (debug) {
         console.log('[@crouton/auth] login: after refresh', {
           isAuthenticated: isAuthenticated.value,
-          user: sessionUser.value?.email ?? null
+          user: sessionUser.value?.email ?? null,
+          activeOrg: activeOrganization.value?.slug ?? null
         })
       }
     } catch (e: unknown) {
@@ -344,16 +376,17 @@ export function useAuth() {
       }
 
       if (debug) {
-        console.log('[@crouton/auth] register: calling refresh to update session state')
+        console.log('[@crouton/auth] register: calling refreshWithOrgRetry to update session state')
       }
 
-      // Refresh session to update reactive state
-      await refresh()
+      // Refresh session with retry to handle async org assignment
+      await refreshWithOrgRetry()
 
       if (debug) {
         console.log('[@crouton/auth] register: after refresh', {
           isAuthenticated: isAuthenticated.value,
-          user: sessionUser.value?.email ?? null
+          user: sessionUser.value?.email ?? null,
+          activeOrg: activeOrganization.value?.slug ?? null
         })
       }
     } catch (e: unknown) {

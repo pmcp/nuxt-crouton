@@ -104,13 +104,14 @@ export function useTeam() {
 
   // Better Auth 1.4.x uses nanostores - these are Atoms, not functions
   // Access the atom directly and create computed refs from its value
-  const organizationsAtom = authClient.useListOrganizations
-  const activeOrgAtom = authClient.useActiveOrganization
+  // Guard against SSR where authClient may not have these properties
+  const organizationsAtom = authClient?.useListOrganizations
+  const activeOrgAtom = authClient?.useActiveOrganization
 
   // Create computed refs that access the atom's value
   // Use optional chaining since atom value might be undefined during SSR
-  const organizationsData = computed(() => organizationsAtom.value?.data ?? null)
-  const activeOrgData = computed(() => activeOrgAtom.value?.data ?? null)
+  const organizationsData = computed(() => organizationsAtom?.value?.data ?? null)
+  const activeOrgData = computed(() => activeOrgAtom?.value?.data ?? null)
 
   // Local state
   const loading = ref(false)

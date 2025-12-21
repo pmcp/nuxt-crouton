@@ -315,11 +315,20 @@ export function useTeamContext() {
     await navigateTo(url)
   }
 
+  /**
+   * Get the current team ID (convenience function for composables)
+   * Returns the unwrapped value of teamId computed ref
+   */
+  function getTeamId(): string | null {
+    return teamId.value
+  }
+
   return {
     // Core values
     teamId,
     teamSlug,
     team: teamState.team,
+    getTeamId,
 
     // State
     hasTeamContext,
