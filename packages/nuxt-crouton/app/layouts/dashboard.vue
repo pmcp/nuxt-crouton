@@ -2,8 +2,34 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 // Check if ThemeSwitcher is available (from nuxt-crouton-themes)
-const ThemeSwitcherComponent = resolveComponent('ThemeSwitcher')
-const hasThemeSwitcher = typeof ThemeSwitcherComponent !== 'string'
+// Use lazy check to avoid SSR warnings when component doesn't exist
+const hasThemeSwitcher = ref(false)
+const ThemeSwitcherComponent = ref<ReturnType<typeof resolveComponent> | null>(null)
+
+// Check if TeamSwitcher is available (from nuxt-crouton-auth)
+const hasTeamSwitcher = ref(false)
+const TeamSwitcherComponent = ref<ReturnType<typeof resolveComponent> | null>(null)
+
+// Check auth mode for multi-tenant support
+const config = useRuntimeConfig()
+const isMultiTenant = computed(() => config.public.crouton?.auth?.mode === 'multi-tenant')
+
+onMounted(() => {
+  const resolved = resolveComponent('ThemeSwitcher')
+  if (typeof resolved !== 'string') {
+    ThemeSwitcherComponent.value = resolved
+    hasThemeSwitcher.value = true
+  }
+
+  // Only load TeamSwitcher in multi-tenant mode
+  if (isMultiTenant.value) {
+    const teamSwitcher = resolveComponent('TeamSwitcher')
+    if (typeof teamSwitcher !== 'string') {
+      TeamSwitcherComponent.value = teamSwitcher
+      hasTeamSwitcher.value = true
+    }
+  }
+})
 
 // Try to use theme variant if available
 const variant = computed(() => {
@@ -16,20 +42,31 @@ const variant = computed(() => {
   }
 })
 
-// Get crouton config for navigation
-const { public: { croutonConfig } } = useRuntimeConfig()
+// Get collections from app config (the proper registry)
+const appConfig = useAppConfig()
 const route = useRoute()
 
-// Build navigation from collections config
+// Build navigation from crouton collections registry
 const collections = computed(() => {
-  const config = croutonConfig as { collections?: Record<string, { label?: string; icon?: string }> } | undefined
-  if (!config?.collections) return []
+  const registry = (appConfig.croutonCollections || {}) as Record<string, { name?: string; layer?: string }>
+  if (!registry || Object.keys(registry).length === 0) return []
 
-  return Object.entries(config.collections).map(([key, value]) => ({
-    key,
-    label: value.label || key.charAt(0).toUpperCase() + key.slice(1),
-    icon: value.icon || 'i-lucide-folder'
-  }))
+  return Object.entries(registry).map(([key, config]) => {
+    // Create a nice label from the collection name
+    // e.g., "projectManagementProjects" -> "Projects"
+    const simpleName = config.name || key
+    const label = simpleName
+      .replace(/^[a-z]+([A-Z])/, '$1') // Remove camelCase prefix (layer name)
+      .replace(/([A-Z])/g, ' $1') // Add spaces before capitals
+      .trim()
+      .replace(/^./, c => c.toUpperCase()) // Capitalize first letter
+
+    return {
+      key,
+      label,
+      icon: 'i-lucide-folder'
+    }
+  })
 })
 
 // Navigation items
@@ -90,11 +127,22 @@ const pageTitle = computed(() => {
       :ui="{ footer: 'border-t border-default' }"
     >
       <template #header="{ collapsed }">
-        <div v-if="!collapsed" class="flex items-center gap-2">
-          <UIcon name="i-lucide-croissant" class="size-5 text-primary" />
-          <span class="font-semibold text-sm">Crouton</span>
+        <div class="flex flex-col gap-2 w-full">
+          <!-- Logo -->
+          <div v-if="!collapsed" class="flex items-center gap-2">
+            <UIcon name="i-lucide-croissant" class="size-5 text-primary" />
+            <span class="font-semibold text-sm">Crouton</span>
+          </div>
+          <UIcon v-else name="i-lucide-croissant" class="size-5 text-primary mx-auto" />
+
+          <!-- Team Switcher (multi-tenant mode only) -->
+          <component
+            :is="TeamSwitcherComponent"
+            v-if="hasTeamSwitcher && !collapsed"
+            size="sm"
+            class="w-full"
+          />
         </div>
-        <UIcon v-else name="i-lucide-croissant" class="size-5 text-primary mx-auto" />
       </template>
 
       <template #default="{ collapsed }">
