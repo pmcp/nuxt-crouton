@@ -17,7 +17,8 @@
     "README.md"
   ],
   "scripts": {
-    "test": "node bin/crouton-generate.js --help"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "nuxt",
@@ -52,5 +53,9 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "vitest": "^2.1.0"
   }
 }
