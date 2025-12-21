@@ -288,16 +288,16 @@ export default defineNuxtModule<CroutonAuthConfig>({
     // Transpile the module
     nuxt.options.build.transpile.push(resolver.resolve('./'))
 
-    // Route transformation based on mode
-    // Multi-tenant: keep /dashboard/[team]/... routes
-    // Single-tenant/Personal: transform to /dashboard/... (remove [team] param)
+    // Route aliases based on mode
+    // Multi-tenant: only /dashboard/[team]/... routes work
+    // Single-tenant/Personal: add aliases so both /dashboard/[team]/... AND /dashboard/... work
     if (config.mode !== 'multi-tenant') {
       nuxt.hook('pages:extend', (pages) => {
-        transformTeamRoutes(pages, config.debug)
+        addTeamRouteAliases(pages, config.debug)
       })
 
       if (config.debug) {
-        console.log(`[${name}] Route transformation enabled for ${config.mode} mode`)
+        console.log(`[${name}] Route aliases enabled for ${config.mode} mode`)
       }
     }
 
@@ -314,46 +314,68 @@ export default defineNuxtModule<CroutonAuthConfig>({
 })
 
 /**
- * Transform team routes for single-tenant and personal modes
- * Removes [team] dynamic segment from dashboard routes
+ * Generate an alias path by removing :team segment
+ * Preserves the rest of the path structure
+ */
+function generateAliasPath(originalPath: string): string {
+  let aliasPath = originalPath
+    // Remove /:team() when followed by / or end
+    .replace(/\/:team\(\)(?=\/|$)/, '')
+    // Remove /:team when followed by / or end
+    .replace(/\/:team(?=\/|$)/, '')
+    // Remove :team() at start
+    .replace(/^:team\(\)(?=\/|$)/, '')
+    // Remove :team at start
+    .replace(/^:team(?=\/|$)/, '')
+
+  // Clean up double slashes and trailing slashes
+  aliasPath = aliasPath.replace(/\/+/g, '/').replace(/\/$/, '') || '/'
+
+  return aliasPath
+}
+
+/**
+ * Add route aliases for single-tenant and personal modes
+ * Adds alias paths without [team] segment while keeping original paths
+ *
+ * This allows both URL patterns to work:
+ * - /dashboard/:team/settings (main route - for multi-tenant compatibility)
+ * - /dashboard/settings (alias - for personal/single-tenant convenience)
+ *
+ * The middleware handles team resolution from session when not in URL.
  *
  * Examples:
- * - /dashboard/:team → /dashboard
- * - /dashboard/:team/settings → /dashboard/settings
- * - /dashboard/:team/locations → /dashboard/locations
+ * - /dashboard/:team → alias: /dashboard
+ * - /dashboard/:team/settings → alias: /dashboard/settings
+ * - /dashboard/:team/crouton → alias: /dashboard/crouton
  */
-function transformTeamRoutes(pages: NuxtPage[], debug?: boolean): void {
+function addTeamRouteAliases(pages: NuxtPage[], debug?: boolean): void {
   for (const page of pages) {
-    // Transform paths containing :team dynamic segment
-    // Note: Vue Router 4 uses :team() syntax for optional params
+    // Check if this page has a :team segment in its path
     if (page.path && page.path.includes(':team')) {
-      const originalPath = page.path
+      // Generate the alias path by removing :team segment
+      const aliasPath = generateAliasPath(page.path)
 
-      // Remove :team or :team() segment from path
-      // Handles: /:team, /:team(), /:team/, :team/ patterns
-      page.path = page.path
-        .replace(/\/:team\(\)(?=\/|$)/, '') // Remove /:team() when followed by / or end
-        .replace(/\/:team(?=\/|$)/, '') // Remove /:team when followed by / or end
-        .replace(/^:team\(\)(?=\/|$)/, '') // Remove :team() at start
-        .replace(/^:team(?=\/|$)/, '') // Remove :team at start
-        || '/' // Ensure we have at least a slash
+      if (aliasPath && aliasPath !== page.path) {
+        // Initialize alias array if needed, preserving existing aliases
+        const existingAliases = Array.isArray(page.alias)
+          ? page.alias
+          : (page.alias ? [page.alias] : [])
 
-      // Clean up double slashes
-      page.path = page.path.replace(/\/+/g, '/').replace(/\/$/, '') || '/'
+        // Only add if not already present
+        if (!existingAliases.includes(aliasPath)) {
+          page.alias = [...existingAliases, aliasPath]
 
-      // Update route name to remove team param
-      if (page.name) {
-        page.name = page.name.replace(/-team-/g, '-').replace(/-team$/, '')
-      }
-
-      if (debug) {
-        console.log(`[${name}] Route transformed: ${originalPath} → ${page.path}`)
+          if (debug) {
+            console.log(`[${name}] Route alias added: ${page.path} → alias: ${aliasPath}`)
+          }
+        }
       }
     }
 
-    // Recursively transform child routes
+    // Recursively process child routes
     if (page.children?.length) {
-      transformTeamRoutes(page.children, debug)
+      addTeamRouteAliases(page.children, debug)
     }
   }
 }
