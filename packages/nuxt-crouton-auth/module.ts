@@ -174,11 +174,12 @@ export default defineNuxtModule<CroutonAuthConfig>({
     }
 
     // Set runtime config
-    // Type assertion needed because defu creates union types that don't match CroutonAuthConfig
-    nuxt.options.runtimeConfig.public.crouton = defu(
-      nuxt.options.runtimeConfig.public.crouton,
-      { auth: config }
-    ) as typeof nuxt.options.runtimeConfig.public.crouton
+    // Use spread to preserve other crouton properties while ensuring auth config takes priority
+    // (defu preserves existing values, but we want the module's resolved config to win)
+    nuxt.options.runtimeConfig.public.crouton = {
+      ...nuxt.options.runtimeConfig.public.crouton,
+      auth: config
+    } as typeof nuxt.options.runtimeConfig.public.crouton
 
     // Register server-side auth secret
     nuxt.options.runtimeConfig.auth = defu(nuxt.options.runtimeConfig.auth, {
@@ -234,7 +235,7 @@ export default defineNuxtModule<CroutonAuthConfig>({
       path: resolver.resolve('./app/components/Team'),
       pathPrefix: false,
       prefix: 'Team',
-      global: false
+      global: true // Global so TeamSwitcher is available in dashboard layout
     })
 
     addComponentsDir({
