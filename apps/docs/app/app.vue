@@ -12,7 +12,7 @@ const navigation = computed(() => {
     {
       title: 'Changelog Tracker',
       path: '/changelogs',
-      icon: 'i-lucide-git-branch',
+      icon: 'i-lucide-history',
       children: []
     }
   ]
@@ -38,17 +38,18 @@ const searchSections = computed(() => {
     }
   })
 
-  // Add changelogs to search
-  const sections = Array.from(pageMap.values())
-  sections.push({
-    id: '/changelogs',
-    path: '/changelogs',
-    title: 'Changelog Tracker',
-    description: 'AI-summarized releases from key Nuxt ecosystem packages'
-  })
-
-  return sections
+  return Array.from(pageMap.values())
 })
+
+// Quick links for search (appears as separate group, not tied to navigation)
+const searchLinks = [
+  {
+    label: 'Changelog Tracker',
+    description: 'AI-summarized releases from Nuxt ecosystem packages',
+    icon: 'i-lucide-history',
+    to: '/changelogs'
+  }
+]
 
 useHead({
   meta: [
@@ -89,6 +90,7 @@ provide('navigation', navigation)
       <LazyUContentSearch
         :files="searchSections"
         :navigation="navigation"
+        :links="searchLinks"
       />
     </ClientOnly>
   </UApp>

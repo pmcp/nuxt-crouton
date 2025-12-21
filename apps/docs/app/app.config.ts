@@ -26,7 +26,7 @@ export default defineAppConfig({
     search: true,
     colorMode: true,
     links: [{
-      'icon': 'i-lucide-git-branch',
+      'icon': 'i-lucide-history',
       'to': '/changelogs',
       'aria-label': 'Changelog Tracker'
     }, {
