@@ -39,6 +39,9 @@ const GripIcon = () =>
 export function useTableColumns(options: UseTableColumnsOptions) {
   const { tString } = useT()
 
+  // Resolve component once in setup scope (not inside computed)
+  const CheckboxComponent = resolveComponent('CroutonTableCheckbox')
+
   // Check if drag handle should be shown
   const showDragHandle = computed(() => {
     if (!options.sortable) return false
@@ -47,8 +50,6 @@ export function useTableColumns(options: UseTableColumnsOptions) {
   })
 
   const allColumns = computed(() => {
-    // Use CroutonTableCheckbox which wraps UCheckbox
-    const CheckboxComponent = resolveComponent('CroutonTableCheckbox')
 
     const columns: TableColumn[] = []
 
