@@ -63,13 +63,10 @@
 
 /* ============================================
    BASE STYLES
+   Note: Body/background styling should be handled by the app,
+   not the theme. Use utility classes like .ko-surface or
+   bg-[var(--ko-surface-light)] in your app's layout.
    ============================================ */
-
-body {
-  font-family: 'ko-tech', system-ui, sans-serif;
-  background-color: var(--ko-surface-light);
-  color: var(--ko-text-dark);
-}
 
 /* ============================================
    NUXT UI THEME CLASSES
@@ -317,6 +314,7 @@ body {
    This creates the signature KO look with different corner radii */
 .ko-bezel {
   position: relative !important;
+  overflow: visible !important;  /* Required for ::before bezel to extend outside */
   font-family: 'ko-tech', sans-serif !important;
   letter-spacing: 0.075em !important;
   text-transform: uppercase !important;
@@ -541,6 +539,7 @@ body {
 
 .ko-card {
   position: relative !important;
+  overflow: visible !important;  /* Required for ::before bezel to extend outside */
   font-family: 'ko-tech', sans-serif !important;
   background-color: var(--ko-surface-light) !important;
   border: none !important;

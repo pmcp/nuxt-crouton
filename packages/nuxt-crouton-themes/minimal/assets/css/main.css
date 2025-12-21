@@ -46,15 +46,10 @@
 
 /* ============================================
    BASE STYLES
+   Note: Body/background styling should be handled by the app,
+   not the theme. Use utility classes like .minimal-bg or
+   bg-[var(--minimal-bg)] in your app's layout.
    ============================================ */
-
-body {
-  font-family: var(--minimal-font);
-  background-color: var(--minimal-bg);
-  color: var(--minimal-fg);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
 
 /* ============================================
    BUTTON STYLES

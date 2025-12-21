@@ -78,14 +78,10 @@
 
 /* ============================================
    BASE STYLES
+   Note: Body/background styling should be handled by the app,
+   not the theme. Use utility classes like .kr-surface or
+   bg-[var(--kr-chassis)] in your app's layout.
    ============================================ */
-
-body {
-  font-family: var(--kr-font);
-  background-color: var(--kr-chassis);
-  color: var(--kr-text-dark);
-  -webkit-font-smoothing: antialiased;
-}
 
 /* ============================================
    PAD BUTTON STYLES
