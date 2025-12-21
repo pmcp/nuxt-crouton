@@ -90,6 +90,15 @@ async function initRootSortable() {
       // Return false to prevent invalid drops (circular references)
       onMove: (evt: MoveEvent) => {
         const toContainer = evt.to as HTMLElement
+        const targetParentId = toContainer.dataset.parentId
+
+        // Block nesting when allowNesting is false (sortable-only mode)
+        // Only allow moves to root level (empty parentId)
+        const allowNesting = props.hierarchy.allowNesting !== false
+        if (!allowNesting && targetParentId) {
+          treeDrag.setMoveBlocked(true)
+          return false
+        }
 
         // Prevent dropping an item into its own descendants
         const shouldBlock = treeDrag.isDescendantDrop(toContainer)
@@ -161,6 +170,7 @@ onMounted(async () => {
           :collection="collection"
           :card-component="cardComponent"
           :column-id="columnId"
+          :allow-nesting="hierarchy.allowNesting !== false"
           @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
           @select="emit('select', $event)"
         />
