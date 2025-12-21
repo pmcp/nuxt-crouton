@@ -93,17 +93,32 @@ export function useTreeMutation(collection: string) {
 
     // For sortable-only collections, use reorder endpoint instead of move
     if (isSortableOnly) {
-      console.group('[useTreeMutation] REORDER (sortable-only mode)')
-      console.log('Collection:', collection)
-      console.log('Item ID:', id)
-      console.log('New Order:', newOrder)
-      console.log('Note: parentId ignored for sortable-only collections')
+      // Fetch current items to calculate new order for ALL siblings
+      const items = await $fetch<Array<{ id: string; order?: number }>>(baseUrl, {
+        credentials: 'include'
+      })
 
-      // Use reorderSiblings with just this item's new order
-      // The tree component should handle calculating the correct order for all siblings
-      await reorderSiblings([{ id, order: newOrder }])
+      // Sort by current order
+      const sortedItems = [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 
-      console.groupEnd()
+      // Find current index of moved item
+      const currentIndex = sortedItems.findIndex(item => item.id === id)
+      if (currentIndex === -1) {
+        console.error('[useTreeMutation] Moved item not found in collection')
+        return
+      }
+
+      // Remove item from current position and insert at new position
+      const [movedItem] = sortedItems.splice(currentIndex, 1)
+      sortedItems.splice(newOrder, 0, movedItem)
+
+      // Calculate new order values for ALL items
+      const updates = sortedItems.map((item, index) => ({
+        id: item.id,
+        order: index
+      }))
+
+      await reorderSiblings(updates)
       return
     }
 
