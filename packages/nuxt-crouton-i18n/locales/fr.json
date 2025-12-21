@@ -53,6 +53,8 @@
     "id": "ID",
     "createdAt": "Créé le",
     "updatedAt": "Mis à jour le",
+    "createdBy": "Créé par",
+    "updatedBy": "Mis à jour par",
     "actions": "Actions",
     "rowsPerPage": "Lignes par page",
     "rowsPerPageColon": "Lignes par page:",

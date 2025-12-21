@@ -53,6 +53,8 @@
     "id": "ID",
     "createdAt": "Aangemaakt op",
     "updatedAt": "Bijgewerkt op",
+    "createdBy": "Aangemaakt door",
+    "updatedBy": "Bijgewerkt door",
     "actions": "Acties",
     "rowsPerPage": "Rijen per pagina",
     "rowsPerPageColon": "Rijen per pagina:",
