@@ -1,13 +1,8 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-// Check if ThemeSwitcher is available (from nuxt-crouton-themes)
-// Use lazy check to avoid SSR warnings when component doesn't exist
-// Use shallowRef for component refs to avoid Vue making them reactive (performance warning)
-const hasThemeSwitcher = ref(false)
-const ThemeSwitcherComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
-
 // Check if TeamSwitcher is available (from nuxt-crouton-auth)
+// Use shallowRef for component refs to avoid Vue making them reactive (performance warning)
 const hasTeamSwitcher = ref(false)
 const TeamSwitcherComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
 
@@ -16,12 +11,6 @@ const config = useRuntimeConfig()
 const isMultiTenant = computed(() => config.public.crouton?.auth?.mode === 'multi-tenant')
 
 onMounted(() => {
-  const resolved = resolveComponent('ThemeSwitcher')
-  if (typeof resolved !== 'string') {
-    ThemeSwitcherComponent.value = resolved
-    hasThemeSwitcher.value = true
-  }
-
   // Only load TeamSwitcher in multi-tenant mode
   if (isMultiTenant.value) {
     const teamSwitcher = resolveComponent('TeamSwitcher')
@@ -32,10 +21,10 @@ onMounted(() => {
   }
 })
 
-// Try to use theme variant if available
+// Try to use theme variant if available (from nuxt-crouton-themes)
 const variant = computed(() => {
   try {
-    // @ts-expect-error - composable may not exist
+    // @ts-expect-error - composable may not exist when themes not installed
     const { variant: themeVariant } = useThemeSwitcher?.() ?? {}
     return themeVariant?.value
   } catch {
@@ -180,25 +169,11 @@ const pageTitle = computed(() => {
 
       <template #footer="{ collapsed }">
         <div class="flex items-center gap-2 w-full">
-          <!-- Theme Switcher (only if nuxt-crouton-themes is available) -->
-          <component
-            :is="ThemeSwitcherComponent"
-            v-if="hasThemeSwitcher"
+          <!-- Appearance switcher: shows ThemeSwitcher (if themes installed) + DarkModeSwitcher -->
+          <CroutonAppearanceSwitcher
             :mode="collapsed ? 'cycle' : 'dropdown'"
             size="sm"
-            show-color-mode
           />
-
-          <!-- Color mode toggle fallback when no theme switcher -->
-          <ClientOnly v-else>
-            <UButton
-              :icon="$colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              @click="$colorMode.preference = $colorMode.value === 'dark' ? 'light' : 'dark'"
-            />
-          </ClientOnly>
         </div>
       </template>
     </UDashboardSidebar>

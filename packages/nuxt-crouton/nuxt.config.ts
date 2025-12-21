@@ -70,6 +70,11 @@ export default defineNuxtConfig({
         path: join(currentDir, 'app/components'),
         prefix: 'Crouton',
         global: true
+      },
+      {
+        // ThemeSwitcher stub - registered without prefix so nuxt-crouton-themes can override it
+        path: join(currentDir, 'app/components/stubs'),
+        global: true
       }
     ]
   },

@@ -9,12 +9,11 @@ export default defineNuxtConfig({
     name: 'nuxt-crouton-themes/themes'
   },
 
-  // Register ThemeToggle component
+  // Register theme components globally (no prefix to match nuxt-crouton stub)
   components: {
     dirs: [
       {
         path: join(currentDir, 'components'),
-        prefix: 'Theme',
         global: true
       }
     ]
