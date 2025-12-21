@@ -109,20 +109,33 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
 
   // Try to get team by ID first, then fall back to slug
   let team = await getTeamById(event, teamId)
+  const resolvedVia = team ? 'id' : 'slug'
   if (!team) {
     // teamId might actually be a slug - try slug lookup
     team = await getTeamBySlug(event, teamId)
   }
   if (!team) {
+    console.log('[crouton/auth] Team not found:', { teamId, resolvedVia })
     throw createError({
       statusCode: 404,
       message: 'Team not found'
     })
   }
 
-  // Verify membership (same check for all modes)
-  const membership = await getMembership(event, teamId, session.user.id)
+  console.log('[crouton/auth] Team resolved:', {
+    urlParam: teamId,
+    resolvedVia,
+    teamId: team.id,
+    teamSlug: team.slug
+  })
+
+  // Verify membership using the actual team ID (not the URL param which might be a slug)
+  const membership = await getMembership(event, team.id, session.user.id)
   if (!membership) {
+    console.log('[crouton/auth] Membership check failed:', {
+      teamId: team.id,
+      userId: session.user.id
+    })
     throw createError({
       statusCode: 403,
       message: 'Not a team member'
