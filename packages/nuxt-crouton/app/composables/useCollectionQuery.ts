@@ -70,13 +70,6 @@ export async function useCollectionQuery<K extends CollectionName>(
     return `collection:${collection}:${queryStr}`
   })
 
-  console.log('[useCollectionQuery] Initializing:', {
-    collection,
-    cacheKey: cacheKey.value,
-    query: options.query?.value,
-    apiPath
-  })
-
   // Determine the full API path based on route context
   const fullApiPath = computed(() => {
     if (route.path.includes('/super-admin/')) {
@@ -107,28 +100,7 @@ export async function useCollectionQuery<K extends CollectionName>(
   const fetchOptions: UseFetchOptions<any> = {
     key: cacheKey.value,
     query: options.query,
-    watch: watchArray,
-    onRequest: ({ request, options }) => {
-      console.log('[useCollectionQuery] Request start:', {
-        request,
-        query: options.query
-      })
-    },
-    onResponse: ({ response }) => {
-      console.log('[useCollectionQuery] Response received:', {
-        status: response.status,
-        hasItems: !!response._data,
-        itemCount: Array.isArray(response._data)
-          ? response._data.length
-          : response._data?.items?.length || 0
-      })
-    },
-    onResponseError: ({ response }) => {
-      console.error('[useCollectionQuery] Error:', {
-        status: response.status,
-        statusText: response.statusText
-      })
-    }
+    watch: watchArray
   }
 
   const { data, refresh, pending, error } = await useFetch(
@@ -141,7 +113,6 @@ export async function useCollectionQuery<K extends CollectionName>(
   const items = computed(() => {
     const val = data.value
     if (!val) {
-      console.log('[useCollectionQuery] No data yet')
       return []
     }
 
@@ -149,27 +120,17 @@ export async function useCollectionQuery<K extends CollectionName>(
 
     // Handle array response
     if (Array.isArray(val)) {
-      console.log('[useCollectionQuery] Array response:', val.length, 'items')
       rawItems = val
     }
     // Handle paginated response
     else if (val.items && Array.isArray(val.items)) {
-      console.log('[useCollectionQuery] Paginated response:', val.items.length, 'items')
       rawItems = val.items
     } else {
-      console.log('[useCollectionQuery] Unexpected response format:', typeof val)
       return []
     }
 
     // Apply proxy transform if configured
     return applyTransform(rawItems, config) as CollectionItem<K>[]
-  })
-
-  console.log('[useCollectionQuery] Returning:', {
-    collection,
-    itemCount: items.value.length,
-    pending: pending.value,
-    hasError: !!error.value
   })
 
   return {

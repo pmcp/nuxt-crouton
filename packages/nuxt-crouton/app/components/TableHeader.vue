@@ -39,10 +39,6 @@ const props = defineProps({
 })
 
 const handleCreate = () => {
-  console.log('[TableHeader] Create button clicked')
-  console.log('[TableHeader] Collection:', props.collection)
-  console.log('[TableHeader] Create button prop value:', props.createButton)
   open('create', props.collection)
-  console.log('[TableHeader] open() function called')
 }
 </script>

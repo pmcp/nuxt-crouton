@@ -445,9 +445,4 @@ async function handleTreeMove(id: string, newParentId: string | null, newOrder: 
 
 // Crouton actions
 const { open: openCrouton } = useCrouton()
-
-// Version logging
-onMounted(() => {
-  console.log(`[nuxt-crouton v${CROUTON_VERSION}] Collection.vue loaded - ${COLLECTION_FIX}`)
-})
 </script>

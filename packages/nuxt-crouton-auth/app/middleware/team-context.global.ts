@@ -13,6 +13,8 @@
  * - useState('crouton-auth-team') - for reactive access in components
  * - Server: event.context.team (via server middleware)
  */
+import { useAuthClientSafe } from '../../types/auth-client'
+
 export default defineNuxtRouteMiddleware(async (to) => {
   const config = useAuthConfig()
   const mode = config?.mode ?? 'multi-tenant'
@@ -34,18 +36,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Get session state
   const { isAuthenticated, activeOrganization, isPending } = useSession()
 
-  // Debug: trace middleware flow
-  console.log('[@crouton/auth] Middleware check:', {
-    path: to.path,
-    mode,
-    isPending: isPending.value,
-    isAuthenticated: isAuthenticated.value,
-    activeOrg: activeOrganization.value?.slug ?? null
-  })
-
   // Wait for session to load (important for initial navigation)
   if (isPending.value) {
-    console.log('[@crouton/auth] Session pending, waiting...')
     // Wait for session to load (max 5 seconds)
     await new Promise<void>((resolve) => {
       const unwatch = watch(
@@ -64,15 +56,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
         resolve()
       }, 5000)
     })
-    console.log('[@crouton/auth] Session loaded:', {
-      isAuthenticated: isAuthenticated.value,
-      activeOrg: activeOrganization.value?.slug ?? null
-    })
   }
 
   // Not authenticated - clear team context
   if (!isAuthenticated.value) {
-    console.log('[@crouton/auth] Not authenticated, returning early')
     clearTeamContext()
 
     // If trying to access dashboard without auth, let the auth middleware handle it
@@ -105,10 +92,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
         // Use user's personal workspace from session
         // In personal mode, routes are transformed to NOT have [team] param
         // So we just set the team context without redirecting
-        console.log('[@crouton/auth] Personal mode:', {
-          path: to.path,
-          activeOrg: activeOrganization.value?.slug ?? null
-        })
         if (activeOrganization.value) {
           setTeamContext({
             teamId: activeOrganization.value.id,
@@ -175,15 +158,6 @@ async function resolveMultiTenantTeam(
   const urlTeamParam = to.params.team as string | undefined
   const isDashboardRoute = to.path.startsWith('/dashboard')
 
-  // Debug logging
-  console.log('[@crouton/auth] resolveMultiTenantTeam:', {
-    path: to.path,
-    isDashboardRoute,
-    urlTeamParam,
-    activeOrg: activeOrganization.value?.slug ?? null,
-    teamsCount: teams.value.length
-  })
-
   if (urlTeamParam) {
     // Team specified in URL - validate user has access
     const targetTeam = teams.value.find(
@@ -236,7 +210,25 @@ async function resolveMultiTenantTeam(
     }
   } else if (isDashboardRoute && !activeOrganization.value) {
     // Dashboard route but NO active org - check if user has any teams
-    if (teams.value.length === 0) {
+    // Teams might not be loaded yet from nanostore, so fetch them explicitly
+    // Use a minimal type that works with both Team[] and raw API response
+    let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
+    if (userTeams.length === 0) {
+      // Try fetching teams directly from the API (client-side only)
+      try {
+        const authClient = useAuthClientSafe()
+        if (authClient?.organization?.list) {
+          const result = await authClient.organization.list()
+          if (result.data && result.data.length > 0) {
+            userTeams = result.data
+          }
+        }
+      } catch (e) {
+        console.error('[@crouton/auth] Failed to fetch teams:', e)
+      }
+    }
+
+    if (userTeams.length === 0) {
       // No teams at all - redirect to create team page
       const noTeamsRedirect = config?.ui?.redirects?.noTeams ?? '/onboarding/create-team'
       return {
@@ -247,7 +239,7 @@ async function resolveMultiTenantTeam(
       }
     }
     // Has teams but no active - switch to first team and redirect
-    const firstTeam = teams.value[0]
+    const firstTeam = userTeams[0]
     if (!firstTeam) {
       // This shouldn't happen if we got here, but handle it gracefully
       return { teamId: null, teamSlug: null, needsRedirect: false }

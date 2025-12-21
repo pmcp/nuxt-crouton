@@ -30,17 +30,10 @@ const fieldComponentMap = computed(() => {
   const map: Record<string, any> = {}
   props.fields?.forEach((field) => {
     const componentName = getFieldComponent(field)
-    console.log(`[Input] Field "${field}" -> Component "${componentName}"`)
     map[field] = componentName
   })
   return map
 })
-
-// Log component mappings when fieldComponents prop changes
-watch(() => props.fieldComponents, (newVal) => {
-  console.log('[Input] fieldComponents prop:', newVal)
-  console.log('[Input] Available fields:', props.fields)
-}, { immediate: true })
 
 const { locale, locales } = useI18n()
 
@@ -175,7 +168,6 @@ const translationStatus = computed(() => {
           v-if="getFieldComponent(field) === 'CroutonEditorSimple'"
           :model-value="getFieldValue(field, editingLocale)"
           @update:model-value="updateFieldValue(field, $event)"
-          @vue:mounted="console.log(`[Input] CroutonEditorSimple mounted for field: ${field}`)"
         />
 
         <!-- UTextarea (for text type fields without custom component) -->
