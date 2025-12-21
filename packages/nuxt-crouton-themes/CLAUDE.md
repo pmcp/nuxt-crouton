@@ -22,9 +22,9 @@ packages/nuxt-crouton-themes/
 ├── themes/                   # Theme switching utilities
 │   ├── nuxt.config.ts        # Layer config
 │   ├── composables/
-│   │   └── useThemeToggle.ts # Theme switching composable
+│   │   └── useThemeSwitcher.ts # Theme switching composable
 │   └── components/
-│       └── ThemeToggle.vue   # UI component for theme switching
+│       └── ThemeSwitcher.vue   # UI component for theme switching
 ├── ko/                       # KO theme (Teenage Engineering inspired)
 │   ├── nuxt.config.ts        # Layer config
 │   ├── app.config.ts         # Nuxt UI variants
@@ -48,7 +48,7 @@ packages/nuxt-crouton-themes/
 
 The theming layer provides theme switching utilities that work across all themes. Includes a composable for managing theme state and a UI component for theme selection.
 
-### useThemeToggle Composable
+### useThemeSwitcher Composable
 
 Manages theme state with SSR support and localStorage persistence.
 
@@ -60,7 +60,7 @@ const {
   themes,              // Array of available theme configs
   setTheme,            // Function to set theme by name
   cycleTheme           // Function to cycle to next theme
-} = useThemeToggle()
+} = useThemeSwitcher()
 ```
 
 **Theme Names:** `'default' | 'ko' | 'minimal' | 'kr11'`
@@ -71,19 +71,19 @@ const {
 - Adds body class (`theme-ko`, `theme-minimal`, etc.) for CSS targeting
 - Returns `undefined` variant for 'default' theme (uses Nuxt UI defaults)
 
-### ThemeToggle Component
+### ThemeSwitcher Component
 
 UI component for theme switching with three modes.
 
 ```vue
 <!-- Dropdown selector (default) -->
-<ThemeToggle />
+<ThemeSwitcher />
 
 <!-- Inline button group -->
-<ThemeToggle mode="inline" />
+<ThemeSwitcher mode="inline" />
 
 <!-- Single button that cycles through themes -->
-<ThemeToggle mode="cycle" />
+<ThemeSwitcher mode="cycle" />
 ```
 
 **Props:**
@@ -106,12 +106,12 @@ export default defineNuxtConfig({
 
 ```vue
 <script setup>
-const { variant } = useThemeToggle()
+const { variant } = useThemeSwitcher()
 </script>
 
 <template>
-  <!-- Theme toggle in header -->
-  <ThemeToggle />
+  <!-- Theme switcher in header -->
+  <ThemeSwitcher />
 
   <!-- Components use selected theme variant -->
   <UButton :variant="variant" color="primary">Themed Button</UButton>

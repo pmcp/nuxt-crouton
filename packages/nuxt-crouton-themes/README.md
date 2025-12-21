@@ -39,32 +39,32 @@ export default defineNuxtConfig({
 
 ```vue
 <script setup>
-const { variant } = useThemeToggle()
+const { variant } = useThemeSwitcher()
 </script>
 
 <template>
-  <!-- Theme toggle dropdown -->
-  <ThemeToggle />
+  <!-- Theme switcher dropdown -->
+  <ThemeSwitcher />
 
   <!-- Components automatically use selected theme -->
   <UButton :variant="variant" color="primary">Themed Button</UButton>
 </template>
 ```
 
-### ThemeToggle Component
+### ThemeSwitcher Component
 
 ```vue
 <!-- Dropdown selector (default) -->
-<ThemeToggle />
+<ThemeSwitcher />
 
 <!-- Inline button group -->
-<ThemeToggle mode="inline" />
+<ThemeSwitcher mode="inline" />
 
 <!-- Single button that cycles through themes -->
-<ThemeToggle mode="cycle" />
+<ThemeSwitcher mode="cycle" />
 ```
 
-### useThemeToggle Composable
+### useThemeSwitcher Composable
 
 ```ts
 const {
@@ -73,7 +73,7 @@ const {
   themes,          // Available theme configs
   setTheme,        // Set theme by name
   cycleTheme       // Cycle to next theme
-} = useThemeToggle()
+} = useThemeSwitcher()
 ```
 
 ---

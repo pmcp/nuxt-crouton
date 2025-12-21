@@ -89,9 +89,7 @@ export default defineAppConfig({
     badge: {
       variants: {
         variant: {
-          kr11: {
-            root: 'kr-badge'
-          }
+          kr11: 'kr-badge'
         }
       }
     }

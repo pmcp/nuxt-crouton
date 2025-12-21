@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { useThemeToggle, type ThemeName } from '../composables/useThemeToggle'
+import { useThemeSwitcher, type ThemeName } from '../composables/useThemeSwitcher'
 
 interface Props {
   /** Show as dropdown menu (default) or inline buttons */
   mode?: 'dropdown' | 'inline' | 'cycle'
-  /** Size of the toggle */
+  /** Size of the switcher */
   size?: 'xs' | 'sm' | 'md' | 'lg'
 }
 
@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'sm'
 })
 
-const { currentTheme, currentThemeConfig, themes, setTheme, cycleTheme } = useThemeToggle()
+const { currentTheme, currentThemeConfig, themes, setTheme, cycleTheme } = useThemeSwitcher()
 
 // Dropdown menu items
 const menuItems = computed(() =>
@@ -38,7 +38,7 @@ const menuItems = computed(() =>
       icon="i-lucide-palette"
       trailing-icon="i-lucide-chevron-down"
     >
-      {{ currentThemeConfig.label }}
+      {{ currentThemeConfig?.label }}
     </UButton>
   </UDropdownMenu>
 
@@ -51,11 +51,11 @@ const menuItems = computed(() =>
     icon="i-lucide-palette"
     @click="cycleTheme"
   >
-    {{ currentThemeConfig.label }}
+    {{ currentThemeConfig?.label }}
   </UButton>
 
   <!-- Inline Mode - Button group -->
-  <UButtonGroup v-else :size="size">
+  <UFieldGroup v-else :size="size">
     <UButton
       v-for="theme in themes"
       :key="theme.name"
@@ -65,5 +65,5 @@ const menuItems = computed(() =>
     >
       {{ theme.label }}
     </UButton>
-  </UButtonGroup>
+  </UFieldGroup>
 </template>

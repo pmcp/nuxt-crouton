@@ -1,4 +1,4 @@
-// Theme Toggle Composable
+// Theme Switcher Composable
 // Provides reactive theme switching across the entire UI
 
 export type ThemeName = 'ko' | 'minimal' | 'kr11' | 'default'
@@ -18,7 +18,7 @@ export const AVAILABLE_THEMES: ThemeConfig[] = [
 
 const STORAGE_KEY = 'nuxt-crouton-theme'
 
-export function useThemeToggle() {
+export function useThemeSwitcher() {
   const appConfig = useAppConfig()
 
   // Reactive theme state - uses useState for SSR compatibility
@@ -58,7 +58,7 @@ export function useThemeToggle() {
   function cycleTheme() {
     const currentIndex = AVAILABLE_THEMES.findIndex(t => t.name === currentTheme.value)
     const nextIndex = (currentIndex + 1) % AVAILABLE_THEMES.length
-    setTheme(AVAILABLE_THEMES[nextIndex].name)
+    setTheme(AVAILABLE_THEMES[nextIndex]!.name)
   }
 
   // Update body class for theme-specific CSS variables
