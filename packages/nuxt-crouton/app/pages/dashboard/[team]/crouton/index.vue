@@ -1,5 +1,5 @@
 <template>
-  <CroutonSetupDashboardIndex />
+  <CroutonSetupDashboard />
 </template>
 
 <script setup lang="ts">

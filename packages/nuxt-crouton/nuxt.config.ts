@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { join, dirname } from 'node:path'
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
+import type { NitroConfig } from 'nitropack'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
@@ -29,6 +30,31 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo'],
 
+  // Inject crouton.config.js at build time for runtime access
+  hooks: {
+    'nitro:config': async (nitroConfig: NitroConfig) => {
+      const configPaths = [
+        join(process.cwd(), 'crouton.config.js'),
+        join(process.cwd(), 'crouton.config.mjs')
+      ]
+
+      for (const configPath of configPaths) {
+        if (existsSync(configPath)) {
+          try {
+            const config = await import(configPath)
+            nitroConfig.runtimeConfig = nitroConfig.runtimeConfig || {}
+            nitroConfig.runtimeConfig.public = nitroConfig.runtimeConfig.public || {}
+            nitroConfig.runtimeConfig.public.croutonConfig = config.default
+            console.log('[nuxt-crouton] Loaded crouton config from:', configPath)
+          } catch (err) {
+            console.warn('[nuxt-crouton] Failed to load crouton config:', err)
+          }
+          break
+        }
+      }
+    }
+  },
+
   plugins: [
     { src: join(currentDir, 'app/plugins/tree-styles.client.ts'), mode: 'client' }
   ],
@@ -36,6 +62,7 @@ export default defineNuxtConfig({
     description: 'Base CRUD layer for FYIT collections',
     name: 'nuxt-crouton'
   },
+
 
   components: {
     dirs: [
