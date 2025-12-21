@@ -4,6 +4,9 @@
  * Low-level session management composable using Better Auth client.
  * Provides reactive access to the current session, user, and active organization.
  *
+ * Uses Nuxt's useState for shared state across all callers (components, middleware, plugins).
+ * Subscriptions to Better Auth nanostores are setup ONCE per app lifecycle.
+ *
  * @example
  * ```vue
  * <script setup>
@@ -19,50 +22,39 @@ export interface SessionData {
   user: User
 }
 
-// Default SSR-safe return value
-const defaultSessionState = {
-  data: ref(null),
-  session: computed(() => null),
-  user: computed(() => null),
-  activeOrganization: computed(() => null),
-  isPending: ref(true),
-  error: computed(() => null),
-  isAuthenticated: computed(() => false),
-  refresh: async () => {},
-  clear: async () => {}
-}
+// State keys for useState
+const SESSION_STATE_KEY = 'crouton-auth-session-atom'
+const ORG_STATE_KEY = 'crouton-auth-org-atom'
+const SUBSCRIBED_KEY = 'crouton-auth-subscribed'
 
 export function useSession() {
   const authClient = useAuthClientSafe()
   const config = useRuntimeConfig()
   const debug = (config.public?.crouton?.auth as { debug?: boolean } | undefined)?.debug ?? false
 
-  // On server-side or if authClient is not available, return empty reactive state
-  // The client will hydrate with real data
-  if (!authClient || !authClient.useSession) {
-    if (debug) {
-      console.log('[@crouton/auth] useSession: no authClient available (SSR or not initialized)')
-    }
-    return defaultSessionState
-  }
-
-  // Better Auth 1.4.x uses nanostores - these are Atoms
-  // We need to subscribe to them and update Vue refs when they change
-  const sessionAtom = authClient.useSession
-  const activeOrgAtom = authClient.useActiveOrganization
-
-  // Create Vue refs to hold the nanostore values
-  // These will be updated when the nanostores change
+  // Use useState for shared state - works in components, middleware, plugins
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sessionAtomValue = ref<any>(sessionAtom.value)
+  const sessionAtomValue = useState<any>(SESSION_STATE_KEY, () => {
+    return authClient?.useSession?.value ?? null
+  })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const activeOrgAtomValue = ref<any>(activeOrgAtom.value)
+  const activeOrgAtomValue = useState<any>(ORG_STATE_KEY, () => {
+    return authClient?.useActiveOrganization?.value ?? null
+  })
 
-  // Subscribe to nanostore changes and update Vue refs
-  // This bridges nanostore reactivity with Vue's reactivity system
-  if (import.meta.client) {
+  // Track if subscriptions are setup (once per app, not per call)
+  const isSubscribed = useState(SUBSCRIBED_KEY, () => false)
+
+  // Setup nanostore subscriptions ONCE for the app lifecycle
+  // No cleanup needed - these are intentionally long-lived
+  if (import.meta.client && authClient?.useSession && !isSubscribed.value) {
+    isSubscribed.value = true
+
+    const sessionAtom = authClient.useSession
+    const activeOrgAtom = authClient.useActiveOrganization
+
     // Subscribe to session atom changes
-    const unsubSession = sessionAtom.subscribe((value: unknown) => {
+    sessionAtom.subscribe((value: unknown) => {
       if (debug) {
         console.log('[@crouton/auth] useSession: sessionAtom updated', {
           hasData: !!(value as { data?: unknown })?.data,
@@ -70,30 +62,46 @@ export function useSession() {
           user: ((value as { data?: { user?: { email?: string } } })?.data?.user?.email) ?? null
         })
       }
-      sessionAtomValue.value = value as any
+      sessionAtomValue.value = value
     })
 
     // Subscribe to active org atom changes
-    const unsubOrg = activeOrgAtom.subscribe((value: unknown) => {
+    activeOrgAtom.subscribe((value: unknown) => {
       if (debug) {
         console.log('[@crouton/auth] useSession: activeOrgAtom updated', {
           hasData: !!value,
           org: ((value as { data?: { slug?: string } })?.data?.slug) ?? null
         })
       }
-      activeOrgAtomValue.value = value as any
+      activeOrgAtomValue.value = value
     })
 
-    // Clean up subscriptions when component unmounts
-    onUnmounted(() => {
-      unsubSession()
-      unsubOrg()
-    })
+    if (debug) {
+      console.log('[@crouton/auth] useSession: subscriptions setup (once)')
+    }
   }
 
-  // Debug: Log initial atom state
+  // On server-side or if authClient is not available, return SSR-safe defaults
+  if (!authClient || !authClient.useSession) {
+    if (debug) {
+      console.log('[@crouton/auth] useSession: no authClient available (SSR or not initialized)')
+    }
+    return {
+      data: computed(() => null),
+      session: computed(() => null as Session | null),
+      user: computed(() => null as User | null),
+      activeOrganization: computed(() => null as Team | null),
+      isPending: computed(() => true),
+      error: computed(() => null as Error | null),
+      isAuthenticated: computed(() => false),
+      refresh: async () => {},
+      clear: async () => {}
+    }
+  }
+
+  // Debug: Log initial state
   if (debug) {
-    console.log('[@crouton/auth] useSession: initial atom state', {
+    console.log('[@crouton/auth] useSession: initial state', {
       sessionAtomValue: sessionAtomValue.value,
       activeOrgAtomValue: activeOrgAtomValue.value
     })
@@ -167,37 +175,25 @@ export function useSession() {
       name: string
       slug: string
       logo?: string | null
-      metadata?: string | Record<string, unknown> | null
-      // New columns from Task 6.2
       personal?: boolean | number | null
       isDefault?: boolean | number | null
       ownerId?: string | null
       createdAt: string | Date
     }
-    // Parse metadata if it's a string (for legacy data)
-    let metadata: Record<string, unknown> = {}
-    if (org.metadata) {
-      try {
-        metadata = typeof org.metadata === 'string' ? JSON.parse(org.metadata) : org.metadata
-      } catch {
-        metadata = {}
-      }
-    }
-    // Prefer new columns (Task 6.2), fall back to metadata for backward compatibility
     // SQLite returns 0/1 for booleans, so check for truthy value
-    const isPersonal = org.personal === true || org.personal === 1 || metadata.personal === true
-    const isDefaultOrg = org.isDefault === true || org.isDefault === 1 || metadata.isDefault === true
+    const isPersonal = org.personal === true || org.personal === 1
+    const isDefaultOrg = org.isDefault === true || org.isDefault === 1
     return {
       id: org.id,
       name: org.name,
       slug: org.slug,
       logo: org.logo ?? null,
-      metadata,
+      metadata: {},
       personal: isPersonal,
       isDefault: isDefaultOrg,
-      ownerId: org.ownerId ?? (metadata.ownerId as string | undefined),
+      ownerId: org.ownerId ?? undefined,
       createdAt: new Date(org.createdAt),
-      updatedAt: new Date(org.createdAt) // Better Auth doesn't have updatedAt
+      updatedAt: new Date(org.createdAt)
     }
   })
 

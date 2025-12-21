@@ -11,7 +11,7 @@ This document catalogs all legacy code, backwards compatibility layers, and tech
 | Category | Count | Status | Priority |
 |----------|-------|--------|----------|
 | Database Mode Legacy Support | 1 system | Active | Medium |
-| Team Metadata Backward Compat | 3 files | Active | Low |
+| Team Metadata Backward Compat | - | ✅ Removed | - |
 | Flow Component Legacy Mode | 1 system | Active | Low |
 | Placeholder Implementations | 3 locations | Planned | Medium |
 | Temporary/Helper Code | 4 instances | Active | Low |
@@ -53,55 +53,17 @@ The legacy fallback has been removed. The system now requires NuxtHub v0.10+ wit
 
 ## 2. Team Metadata Backward Compatibility
 
-**Status**: Active
-**Risk**: Low (data migration complete, compat layer for safety)
+**Status**: ✅ Removed (2025-12-21)
 **Package**: `@crouton/auth`
 
-### Files
+### Resolution
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `packages/nuxt-crouton-auth/server/utils/team.ts` | 455-496 | `mapOrganizationToTeam()` function |
-| `packages/nuxt-crouton-auth/app/composables/useTeam.ts` | 47-79 | Client-side `mapOrganizationToTeam()` |
-| `packages/nuxt-crouton-auth/app/composables/useSession.ts` | ~99 | Session team metadata parsing |
-
-### Purpose
-
-Supports both **new structured columns** (Task 6.2) and **legacy JSON metadata** for backward compatibility when reading team/organization data.
-
-**New columns** (preferred):
+Legacy metadata fallback has been removed. The code now only uses the structured database columns:
 - `personal` (boolean)
 - `isDefault` (boolean)
 - `ownerId` (string)
 
-**Legacy approach**: These values stored in `metadata` JSON column.
-
-### Code Pattern
-
-```typescript
-// Parse metadata if it's a string (for legacy data)
-let metadata: Record<string, unknown> = {}
-if (org.metadata) {
-  try {
-    metadata = typeof org.metadata === 'string'
-      ? JSON.parse(org.metadata)
-      : org.metadata
-  } catch {
-    metadata = {}
-  }
-}
-
-// Prefer new columns (Task 6.2), fall back to metadata for backward compatibility
-// SQLite returns 0/1 for booleans, so check for truthy value
-const isPersonal = org.personal === true || org.personal === 1 || metadata.personal === true
-const isDefaultOrg = org.isDefault === true || org.isDefault === 1 || metadata.isDefault === true
-```
-
-### Cleanup Notes
-
-- Keep compatibility layer until all deployments have migrated data
-- Consider adding deprecation warning when legacy metadata is detected
-- Can be removed after confirming no legacy data exists in production
+The simplified `mapOrganizationToTeam()` functions now directly read from columns without parsing JSON metadata.
 
 ---
 
@@ -319,13 +281,11 @@ Use UEditorToolbar from Nuxt UI instead...
 - [ ] Implement billing authorization check (Task 2.7/2.8) - `auth.ts:868-878`
 
 ### Medium Priority
-- [ ] Add deprecation warning for legacy team metadata when detected
 - [ ] Consider renaming Flow "legacy mode" to "standalone mode"
 
 ### Low Priority
 - [ ] Add environment check to test seed endpoint
 - [ ] Monitor Better Auth for passkey update support
-- [ ] Remove team metadata compat after confirming no legacy data in production
 
 ### Documentation
 - [ ] Update NuxtHub version requirements documentation

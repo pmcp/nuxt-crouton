@@ -671,37 +671,21 @@ describe('useTeam', () => {
   })
 
   describe('organization mapping', () => {
-    it('should handle legacy metadata format', () => {
+    it('should map organization columns to team properties', () => {
       mockActiveOrgData.value = {
         id: 'org-1',
-        name: 'Legacy Team',
-        slug: 'legacy-team',
+        name: 'Test Team',
+        slug: 'test-team',
         createdAt: '2024-01-01T00:00:00Z',
-        metadata: JSON.stringify({ personal: true, isDefault: true, ownerId: 'user-1' })
+        personal: true,
+        isDefault: true,
+        ownerId: 'user-1'
       }
 
       const { currentTeam } = useTeam()
       expect(currentTeam.value?.personal).toBe(true)
       expect(currentTeam.value?.isDefault).toBe(true)
       expect(currentTeam.value?.ownerId).toBe('user-1')
-    })
-
-    it('should prefer new columns over metadata', () => {
-      mockActiveOrgData.value = {
-        id: 'org-1',
-        name: 'New Format Team',
-        slug: 'new-format',
-        createdAt: '2024-01-01T00:00:00Z',
-        personal: true,
-        isDefault: true,
-        ownerId: 'user-new',
-        metadata: JSON.stringify({ personal: false, isDefault: false, ownerId: 'user-old' })
-      }
-
-      const { currentTeam } = useTeam()
-      expect(currentTeam.value?.personal).toBe(true)
-      expect(currentTeam.value?.isDefault).toBe(true)
-      expect(currentTeam.value?.ownerId).toBe('user-new')
     })
 
     it('should handle SQLite boolean format (0/1)', () => {

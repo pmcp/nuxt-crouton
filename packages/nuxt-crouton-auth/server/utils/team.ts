@@ -452,46 +452,31 @@ export async function requireTeamOwner(event: H3Event): Promise<TeamContext> {
 
 /**
  * Map Better Auth organization response to our Team type
- *
- * Supports both new columns (Task 6.2) and legacy metadata for backward compatibility.
  */
 function mapOrganizationToTeam(org: {
   id: string
   name: string
   slug: string
   logo?: string | null
-  metadata?: string | null
-  // New columns from Task 6.2
   personal?: boolean | number | null
   isDefault?: boolean | number | null
   ownerId?: string | null
   createdAt: string | Date
 }): Team {
-  // Parse metadata if it's a string (for legacy data)
-  let metadata: Record<string, unknown> = {}
-  if (org.metadata) {
-    try {
-      metadata = typeof org.metadata === 'string' ? JSON.parse(org.metadata) : org.metadata
-    } catch {
-      metadata = {}
-    }
-  }
-
-  // Prefer new columns (Task 6.2), fall back to metadata for backward compatibility
   // SQLite returns 0/1 for booleans, so check for truthy value
-  const isPersonal = org.personal === true || org.personal === 1 || metadata.personal === true
-  const isDefaultOrg = org.isDefault === true || org.isDefault === 1 || metadata.isDefault === true
+  const isPersonal = org.personal === true || org.personal === 1
+  const isDefaultOrg = org.isDefault === true || org.isDefault === 1
 
   return {
     id: org.id,
     name: org.name,
     slug: org.slug,
     logo: org.logo ?? null,
-    metadata,
+    metadata: {},
     personal: isPersonal,
     isDefault: isDefaultOrg,
-    ownerId: org.ownerId ?? (metadata.ownerId as string | undefined),
+    ownerId: org.ownerId ?? undefined,
     createdAt: new Date(org.createdAt),
-    updatedAt: new Date(org.createdAt) // Better Auth doesn't have updatedAt, use createdAt
+    updatedAt: new Date(org.createdAt)
   }
 }
