@@ -110,13 +110,18 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
 
   // Try to get team by ID first, then fall back to slug
   let team = await getTeamById(event, teamId)
-  const resolvedVia = team ? 'id' : 'slug'
+  let resolvedVia: 'id' | 'slug' = 'id'
+
   if (!team) {
-    // teamId might actually be a slug - try slug lookup
+    // ID lookup didn't find it, try slug
+    console.log('[crouton/auth] Team not found by ID, trying slug:', teamId)
     team = await getTeamBySlug(event, teamId)
+    resolvedVia = 'slug'
   }
+
+  // Only log error if BOTH lookups failed
   if (!team) {
-    console.log('[crouton/auth] Team not found:', { teamId, resolvedVia })
+    console.error('[crouton/auth] Team not found by ID or slug:', teamId)
     throw createError({
       statusCode: 404,
       message: 'Team not found'
@@ -222,8 +227,8 @@ export async function getTeamById(event: H3Event, teamId: string): Promise<Team 
 
     // Map Better Auth organization to our Team type
     return mapOrganizationToTeam(response)
-  } catch (error) {
-    console.error('[crouton/auth] getTeamById error:', error)
+  } catch {
+    // Silently return null - caller handles logging if both ID and slug fail
     return null
   }
 }
@@ -254,8 +259,8 @@ export async function getTeamBySlug(event: H3Event, slug: string): Promise<Team 
 
     // Map Better Auth organization to our Team type
     return mapOrganizationToTeam(response)
-  } catch (error) {
-    console.error('[crouton/auth] getTeamBySlug error:', error)
+  } catch {
+    // Silently return null - caller handles logging if both ID and slug fail
     return null
   }
 }
