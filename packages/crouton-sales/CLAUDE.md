@@ -9,6 +9,7 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 | File | Purpose |
 |------|---------|
 | `app/composables/usePosOrder.ts` | Cart management, checkout, price calculations |
+| `app/composables/useHelperAuth.ts` | Helper authentication (wraps @crouton/auth) |
 | `app/composables/usePosProducts.ts` | Product fetching with category filtering |
 | `app/composables/usePosCategories.ts` | Category management for products |
 | `app/composables/usePosEvents.ts` | Event management (pop-ups, markets) |
@@ -117,11 +118,75 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 2. Modify formatting functions
 3. Import your custom formatter in API routes
 
+## Helper Authentication
+
+Helpers (volunteers, staff) authenticate with an event's shared PIN. The authentication is managed by `@crouton/auth`'s scoped access system.
+
+### Client-side Usage
+
+```typescript
+const {
+  isHelper,
+  helperName,
+  eventId,
+  teamId,
+  login,
+  logout
+} = useHelperAuth()
+
+// Login with PIN
+await login({
+  teamId: 'team-123',
+  eventId: 'event-456',
+  pin: '1234',
+  helperName: 'John'  // For new helpers
+  // OR helperId: 'existing-helper-id'  // For returning helpers
+})
+
+// Check authentication
+if (isHelper.value) {
+  console.log(`Welcome, ${helperName.value}!`)
+}
+
+// Logout
+await logout()
+```
+
+### Server-side Validation
+
+```typescript
+// In API handlers
+import { requireScopedAccess } from '@crouton/auth/server'
+
+export default defineEventHandler(async (event) => {
+  const access = await requireScopedAccess(event, 'pos-helper-token')
+
+  // access.displayName - Helper's name
+  // access.resourceId - Event ID
+  // access.organizationId - Team ID
+  // access.role - 'helper'
+})
+```
+
+### Event PIN Setup
+
+Events must have a `helperPin` field configured:
+
+```json
+// schemas/events.json
+{
+  "helperPin": {
+    "type": "string",
+    "meta": { "label": "Helper PIN", "maxLength": 6 }
+  }
+}
+```
+
 ## Dependencies
 
 - **Extends**: `@friendlyinternet/nuxt-crouton` (required)
-- **Peer deps**: `@nuxtjs/i18n ^9.0.0`, `zod ^3.0.0`
-- **Optional**: `nuxt-crouton-auth` for helper authentication
+- **Peer deps**: `@crouton/auth`, `@nuxtjs/i18n ^9.0.0`, `zod ^3.0.0`
+- **Optional**: `node-thermal-printer` for receipt printing
 
 ## Testing
 

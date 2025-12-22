@@ -1,7 +1,7 @@
 # Brief: Extract crouton-sales Package
 
 **Created**: 2024-12-18
-**Status**: In Progress (Phase 2 Complete)
+**Status**: In Progress (Phase 4 Complete)
 **Owner**: TBD
 
 ---
@@ -16,7 +16,7 @@ Extract the POS/sales system from `crouton-sales` app into a reusable package `@
 
 | Metric | Value |
 |--------|-------|
-| Tasks | 10 / 16 completed |
+| Tasks | 13 / 16 completed |
 | Phases | 5 |
 | Priority | High |
 
@@ -92,18 +92,21 @@ Extract the POS/sales system from `crouton-sales` app into a reusable package `@
 
 ### Phase 4: Helper Auth Migration
 
-- [ ] **4.1** Extend nuxt-crouton-auth with "helper" role concept
-  - Add `role: 'helper'` as limited access type
-  - Add `scopedTo: { type: 'event', id: 'xxx' }` for event-specific access
-  - Implement PIN as login method option
+- [x] **4.1** Extend nuxt-crouton-auth with "helper" role concept ✅
+  - Added `scopedAccessToken` table for resource-scoped authentication
+  - Supports scoping to any resource type (event, booking, etc.)
+  - PIN authentication handled by consuming package (event.helperPin)
+  - Server utils: createScopedToken, validateScopedToken, requireScopedAccess
 
-- [ ] **4.2** Migrate helper schema to auth package
-  - Move `helpers` collection to auth or remove
-  - Update login flow to use Better Auth session
+- [x] **4.2** Migrate helper schema to auth package ✅
+  - Added `scopedAccessToken` schema to `@crouton/auth`
+  - Created `useScopedAccess` composable with `useEventAccess` shorthand
+  - Added API endpoints: validate, logout, refresh
 
-- [ ] **4.3** Update crouton-sales to consume helper auth
-  - Replace `useHelperAuth.ts` with auth package integration
-  - Update middleware for helper route protection
+- [x] **4.3** Update crouton-sales to consume helper auth ✅
+  - Created `useHelperAuth.ts` composable wrapping auth package
+  - Added `@crouton/auth` as peer dependency
+  - Backwards compatible with existing login flow
 
 ### Phase 5: Integration & Testing
 

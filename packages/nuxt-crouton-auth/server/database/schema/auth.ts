@@ -299,6 +299,56 @@ export const domain = sqliteTable('domain', {
 ])
 
 // ============================================================================
+// Scoped Access Token Table
+// ============================================================================
+
+/**
+ * Scoped Access Token table - Resource-scoped authentication
+ *
+ * Provides lightweight, temporary authentication for resource-specific access.
+ * Used for scenarios where a full user account isn't needed:
+ * - Event helpers (POS/sales)
+ * - Guest access to bookings
+ * - Temporary attendee access
+ *
+ * Unlike Better Auth sessions, these tokens:
+ * - Don't require a user account
+ * - Are scoped to a specific resource (event, booking, etc.)
+ * - Support PIN-based authentication (PIN managed by consuming package)
+ * - Have configurable expiration
+ */
+export const scopedAccessToken = sqliteTable('scopedAccessToken', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  /** Organization/team the token belongs to */
+  organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  /** Unique token string for authentication */
+  token: text('token').notNull().unique(),
+  /** Type of resource this token is scoped to (e.g., 'event', 'booking') */
+  resourceType: text('resourceType').notNull(),
+  /** ID of the specific resource */
+  resourceId: text('resourceId').notNull(),
+  /** Display name for the token holder (e.g., helper name, guest name) */
+  displayName: text('displayName').notNull(),
+  /** Role for authorization (e.g., 'helper', 'attendee', 'guest') */
+  role: text('role').notNull().default('guest'),
+  /** Whether this token is currently active */
+  isActive: integer('isActive', { mode: 'boolean' }).notNull().default(true),
+  /** When this token expires */
+  expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
+  /** Last activity timestamp */
+  lastActiveAt: integer('lastActiveAt', { mode: 'timestamp' }),
+  /** Additional metadata (JSON) */
+  metadata: text('metadata'),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, table => [
+  index('scoped_access_token_idx').on(table.token),
+  index('scoped_access_org_idx').on(table.organizationId),
+  index('scoped_access_resource_idx').on(table.resourceType, table.resourceId),
+  index('scoped_access_active_idx').on(table.isActive, table.expiresAt)
+])
+
+// ============================================================================
 // Relations
 // ============================================================================
 
@@ -379,6 +429,13 @@ export const domainRelations = relations(domain, ({ one }) => ({
   })
 }))
 
+export const scopedAccessTokenRelations = relations(scopedAccessToken, ({ one }) => ({
+  organization: one(organization, {
+    fields: [scopedAccessToken.organizationId],
+    references: [organization.id]
+  })
+}))
+
 // ============================================================================
 // Type Exports
 // ============================================================================
@@ -415,3 +472,6 @@ export type NewSubscription = typeof subscription.$inferInsert
 
 export type Domain = typeof domain.$inferSelect
 export type NewDomain = typeof domain.$inferInsert
+
+export type ScopedAccessToken = typeof scopedAccessToken.$inferSelect
+export type NewScopedAccessToken = typeof scopedAccessToken.$inferInsert

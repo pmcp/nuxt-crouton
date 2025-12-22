@@ -278,6 +278,79 @@ export default defineNuxtConfig({
 - Minimum TTL is 60 seconds (NuxtHub KV limitation)
 - See [nuxthub-ratelimit docs](https://github.com/fayazara/nuxthub-ratelimit)
 
+## Scoped Access Tokens
+
+Provides lightweight, resource-scoped authentication for scenarios where full user accounts aren't needed:
+- Event helpers (POS/sales)
+- Guest access to bookings
+- Temporary attendee access
+
+### Server Utilities
+
+```typescript
+import {
+  createScopedToken,
+  validateScopedToken,
+  validateScopedTokenFromEvent,
+  requireScopedAccess,
+  requireScopedAccessToResource,
+  revokeScopedToken,
+  revokeScopedTokensForResource,
+  listScopedTokensForResource
+} from '@crouton/auth/server'
+
+// Create a helper token
+const { token, expiresAt } = await createScopedToken({
+  organizationId: 'team-123',
+  resourceType: 'event',
+  resourceId: 'event-456',
+  displayName: 'John Helper',
+  role: 'helper',
+  expiresIn: 8 * 60 * 60 * 1000 // 8 hours
+})
+
+// Validate in API handler
+export default defineEventHandler(async (event) => {
+  const access = await requireScopedAccess(event, 'pos-helper-token')
+  // access.displayName, access.resourceId, etc.
+})
+```
+
+### Client Composable
+
+```typescript
+// For POS helpers
+const {
+  isAuthenticated,
+  displayName,
+  resourceId,
+  login,
+  logout
+} = useEventAccess()
+
+// Generic scoped access
+const access = useScopedAccess('booking')
+```
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/auth/scoped-access/validate` | POST | Validate a token |
+| `/api/auth/scoped-access/logout` | POST | Revoke a token |
+| `/api/auth/scoped-access/refresh` | POST | Extend token expiration |
+
+### Database Schema
+
+The `scopedAccessToken` table stores:
+- `token`: Unique authentication token
+- `organizationId`: Team the token belongs to
+- `resourceType`: Type of resource (e.g., 'event', 'booking')
+- `resourceId`: ID of the specific resource
+- `displayName`: Name of the token holder
+- `role`: Authorization role (e.g., 'helper', 'guest')
+- `expiresAt`: Token expiration timestamp
+
 ## Dependencies
 
 - **Extends**: None (standalone module/layer)
