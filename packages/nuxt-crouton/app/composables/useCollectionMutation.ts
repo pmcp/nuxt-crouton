@@ -1,3 +1,4 @@
+import type { ComputedRef } from 'vue'
 import type { CollectionTypeMap, CollectionItem, CollectionFormData, CollectionName } from '../types/collections'
 
 /**
@@ -8,6 +9,8 @@ interface CollectionMutationReturn<K extends CollectionName> {
   update: (id: string, updates: Partial<CollectionFormData<K>>) => Promise<CollectionItem<K>>
   deleteItems: (ids: string[]) => Promise<void>
   delete: (ids: string[]) => Promise<void>
+  /** Whether team context is available (required for mutations) */
+  isReady: ComputedRef<boolean>
 }
 
 /**
@@ -54,6 +57,12 @@ export function useCollectionMutation<K extends CollectionName>(
 
   const apiPath = config.apiPath || collection
 
+  // Check if team context is available (for super-admin routes, always ready)
+  const isReady = computed(() => {
+    if (route.path.includes('/super-admin/')) return true
+    return !!getTeamId()
+  })
+
   // Helper to get the correct API base path
   const getApiBasePath = () => {
     if (route.path.includes('/super-admin/')) {
@@ -62,8 +71,8 @@ export function useCollectionMutation<K extends CollectionName>(
 
     const teamId = getTeamId()
     if (!teamId) {
-      console.error('[useCollectionMutation] Team context required but not available')
-      throw new Error('Team context required for this operation')
+      console.warn('[useCollectionMutation] Team context not yet available - waiting for auth to load')
+      throw new Error('Team context not yet available. Please wait for authentication to complete.')
     }
 
     return `/api/teams/${teamId}/${apiPath}`
@@ -325,6 +334,8 @@ export function useCollectionMutation<K extends CollectionName>(
     update,
     deleteItems,
     // Alias for compatibility
-    delete: deleteItems
+    delete: deleteItems,
+    // Team context availability check
+    isReady
   }
 }

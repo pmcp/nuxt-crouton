@@ -78,35 +78,48 @@ export async function useCollectionQuery<K extends CollectionName>(
 
     const teamId = getTeamId()
     if (!teamId) {
-      console.error('[useCollectionQuery] Team context required but not available', {
-        collection,
-        routePath: route.path,
-        teamParam: route.params.team
-      })
-      // Return a path that will likely 404, but at least be valid
-      // The error will be caught and exposed via the error ref
-      return `/api/teams/undefined/${apiPath}`
+      // Team context not yet available (SSR or before auth loads)
+      // Return null to skip the fetch - client will retry when context is available
+      return null
     }
 
     return `/api/teams/${teamId}/${apiPath}`
   })
 
-  // Build watch array - watch query if provided
+  // Track if we should skip fetching (no team context yet)
+  const shouldSkip = computed(() => fullApiPath.value === null)
+
+  // Build watch array - watch query if provided, and also watch fullApiPath for team context changes
   const watchArray = options.query && options.watch !== false
-    ? [options.query]
-    : []
+    ? [options.query, fullApiPath]
+    : [fullApiPath]
+
+  // Local state for when we skip fetching
+  const localData = ref<any>(null)
+  const localPending = ref(false)
+  const localError = ref<any>(null)
 
   // Use Nuxt's useFetch with proper caching
+  // Skip fetching if no team context (will re-fetch when context becomes available)
   const fetchOptions: UseFetchOptions<any> = {
     key: cacheKey.value,
     query: options.query,
-    watch: watchArray
+    watch: watchArray,
+    immediate: !shouldSkip.value
   }
 
-  const { data, refresh, pending, error } = await useFetch(
-    fullApiPath.value,
+  const { data, refresh: doRefresh, pending, error } = await useFetch(
+    () => fullApiPath.value || '/api/__skip__',
     fetchOptions
   )
+
+  // Custom refresh that checks team context
+  const refresh = async () => {
+    if (shouldSkip.value) {
+      return // Can't refresh without team context
+    }
+    await doRefresh()
+  }
 
   // Return normalized data structure
   // Handle both array responses and paginated responses
