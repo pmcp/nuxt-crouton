@@ -463,6 +463,7 @@ export default {
 // | dependsOnField       | string  | Field in referenced record to load             |
 // | dependsOnCollection  | string  | Collection to fetch dependent data from        |
 // | displayAs            | string  | Display mode: 'slotButtonGroup'               |
+// | translatable         | boolean | Mark field for i18n translation support        |
 //
 // ============================================================
 // REFERENCE FIELDS

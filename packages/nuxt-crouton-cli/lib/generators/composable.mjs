@@ -5,9 +5,10 @@ import { toCase } from '../utils/helpers.mjs'
  * Generate AI context header for composable files
  */
 function generateAIHeader(data, apiPath) {
-  const { singular, plural, layerPascalCase, pascalCasePlural, layer, fields } = data
+  const { singular, plural, layerPascalCase, layerCamelCase, pascalCasePlural, layer, fields } = data
   const fieldNames = fields.map(f => f.name).join(', ')
-  const prefixedPlural = `${layerPascalCase.toLowerCase()}${pascalCasePlural}`
+  // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
+  const prefixedPlural = `${layerCamelCase}${pascalCasePlural}`
 
   return `/**
  * @crouton-generated
@@ -37,9 +38,10 @@ function generateAIHeader(data, apiPath) {
 }
 
 export function generateComposable(data, config = {}) {
-  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layer, fields, hierarchy, sortable } = data
-  const prefixedSingular = `${layerPascalCase.toLowerCase()}${pascalCase}`
-  const prefixedPlural = `${layerPascalCase.toLowerCase()}${pascalCasePlural}`
+  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields, hierarchy, sortable } = data
+  // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
+  const prefixedSingular = `${layerCamelCase}${pascalCase}`
+  const prefixedPlural = `${layerCamelCase}${pascalCasePlural}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
 
   // Create kebab-case API path with layer prefix

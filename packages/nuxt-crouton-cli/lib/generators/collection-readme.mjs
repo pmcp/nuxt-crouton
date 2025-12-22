@@ -13,9 +13,13 @@ export function generateCollectionReadme(data, config = {}) {
     hierarchy
   } = data
 
+  // Use layerCamelCase if available, fallback to layerPascalCase.toLowerCase() for backwards compatibility
+  const layerCamelCase = data.layerCamelCase || layerPascalCase.toLowerCase()
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
-  const prefixedCamelCasePlural = `${layer}${pascalCasePlural}`
+  // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
+  const prefixedCamelCasePlural = `${layerCamelCase}${pascalCasePlural}`
+  const prefixedCamelCase = `${layerCamelCase}${pascalCase}`
   const apiPath = `${layer}-${plural}`
   const generatedDate = new Date().toISOString().split('T')[0]
 
@@ -172,10 +176,10 @@ const { create, update, deleteItems } = useCollectionMutation('${prefixedCamelCa
 ### Schema & Validation
 
 \`\`\`typescript
-import { ${layer}${pascalCase}Schema } from './app/composables/use${prefixedPascalCasePlural}'
+import { ${prefixedCamelCase}Schema } from './app/composables/use${prefixedPascalCasePlural}'
 
 // Validate data
-const result = ${layer}${pascalCase}Schema.safeParse(data)
+const result = ${prefixedCamelCase}Schema.safeParse(data)
 \`\`\`
 
 ## Customization Guide
@@ -201,7 +205,7 @@ Edit \`app/components/Form.vue\`:
 
 Edit \`app/composables/use${prefixedPascalCasePlural}.ts\`:
 \`\`\`typescript
-export const ${layer}${pascalCase}Schema = z.object({
+export const ${prefixedCamelCase}Schema = z.object({
   // ... existing fields
   email: z.string().email('Invalid email'),
   age: z.number().min(0).max(120)

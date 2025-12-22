@@ -202,11 +202,34 @@ See `crouton.config.example.js` for a complete example with all available option
       "unique": true,          // Add unique constraint
       "maxLength": 255,        // Maximum string length
       "precision": 10,         // Decimal precision
-      "scale": 2              // Decimal scale
+      "scale": 2,              // Decimal scale
+      "translatable": true     // Enable i18n translation support
     }
   }
 }
 ```
+
+### Translatable Fields
+
+Mark fields for multi-language support using `translatable: true`:
+
+```json
+{
+  "title": {
+    "type": "string",
+    "meta": { "required": true, "translatable": true }
+  },
+  "description": {
+    "type": "text",
+    "meta": { "translatable": true }
+  }
+}
+```
+
+Fields marked as translatable will:
+- Generate `CroutonI18nInput` components in forms
+- Store translations in a `translations` JSON field
+- Require the `@friendlyinternet/nuxt-crouton-i18n` package
 
 ## Generated Structure
 

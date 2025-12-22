@@ -77,6 +77,7 @@ export const basicTypesData = {
   pascalCasePlural: 'Products',
   layer: 'shop',
   layerPascalCase: 'Shop',
+  layerCamelCase: 'shop', // camelCase version for collection names
   fields: basicFields,
   fieldsTypes: `name: string
   description: string
@@ -94,6 +95,7 @@ export const basicComposableData = {
   pascalCasePlural: 'Products',
   layer: 'shop',
   layerPascalCase: 'Shop',
+  layerCamelCase: 'shop', // camelCase version for collection names
   fields: basicFields,
   fieldsSchema: `name: z.string().max(255),
     description: z.string().optional(),
