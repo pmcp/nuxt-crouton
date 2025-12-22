@@ -62,7 +62,7 @@
         <UFormField label="Age Group" name="group" class="not-last:pb-4">
           <CroutonFormOptionsSelect
             v-model="state.group"
-            options-collection="bookingsBookingsSettings"
+            options-collection="bookingsSettings"
             options-field="groups"
             label="Age Group"
           />
@@ -77,7 +77,7 @@
         <UFormField label="Status" name="status" class="not-last:pb-4">
           <CroutonFormOptionsSelect
             v-model="state.status"
-            options-collection="bookingsBookingsSettings"
+            options-collection="bookingsSettings"
             options-field="statuses"
             label="Status"
           />

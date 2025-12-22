@@ -163,8 +163,17 @@ export function generateFormComponent(data, config = {}) {
       const creatable = field.meta.creatable !== false // Default to true
 
       // Resolve the collection name with layer prefix
-      const refCases = toCase(optionsCollection)
-      const resolvedOptionsCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
+      // If optionsCollection already starts with layer prefix, use as-is
+      // Otherwise add the layer prefix (for backwards compatibility with short names like "settings")
+      let resolvedOptionsCollection
+      if (optionsCollection.startsWith(layerCamelCase)) {
+        // Already has prefix (e.g., "bookingsSettings")
+        resolvedOptionsCollection = optionsCollection
+      } else {
+        // Add prefix (e.g., "settings" -> "bookingsSettings")
+        const refCases = toCase(optionsCollection)
+        resolvedOptionsCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
+      }
 
       return `        <UFormField label="${label}" name="${field.name}" class="not-last:pb-4">
           <CroutonFormOptionsSelect
