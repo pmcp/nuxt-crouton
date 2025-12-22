@@ -22,9 +22,6 @@ Multi-language support extending the base layer with i18n capabilities.
 #### [@friendlyinternet/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
 Rich text editor integration extending the base layer with Tiptap.
 
-#### [@friendlyinternet/nuxt-crouton-supersaas](./packages/nuxt-crouton-supersaas)
-SuperSaaS integration layer - connectors, translations, and utilities for SuperSaaS applications.
-
 #### [@friendlyinternet/nuxt-crouton-ai](./packages/nuxt-crouton-ai)
 AI integration layer with chat, completion, and multi-provider support (OpenAI, Anthropic).
 
@@ -57,7 +54,6 @@ pnpm add -D @friendlyinternet/nuxt-crouton-cli
 # Addon layers (install as needed)
 pnpm add @friendlyinternet/nuxt-crouton-i18n       # Multi-language support
 pnpm add @friendlyinternet/nuxt-crouton-editor    # Rich text editing
-pnpm add @friendlyinternet/nuxt-crouton-supersaas # SuperSaaS integration
 pnpm add @friendlyinternet/nuxt-crouton-ai        # AI chat/completion
 pnpm add @friendlyinternet/nuxt-crouton-assets    # Asset management
 pnpm add @friendlyinternet/nuxt-crouton-events    # Event/calendar features
@@ -79,7 +75,6 @@ export default defineNuxtConfig({
     // Optional addon layers (add only what you need)
     '@friendlyinternet/nuxt-crouton-i18n',      // Multi-language support
     '@friendlyinternet/nuxt-crouton-editor',    // Rich text editing
-    '@friendlyinternet/nuxt-crouton-supersaas', // SuperSaaS integration
     '@friendlyinternet/nuxt-crouton-ai',        // AI chat/completion
     '@friendlyinternet/nuxt-crouton-assets',    // Asset management
     '@friendlyinternet/nuxt-crouton-events',    // Event/calendar features
@@ -100,9 +95,6 @@ All components and composables are auto-imported:
   <CrudButton action="create" collection="products" />
   <CroutonReferenceSelect v-model="category" collection="categories" />
 
-  <!-- External Collections (from supersaas layer) -->
-  <CroutonReferenceSelect v-model="userId" collection="users" />
-
   <!-- Translation Components (from i18n layer) -->
   <CroutonI18nInput v-model="translations" :fields="['name', 'description']" />
   <CroutonI18nLanguageSwitcher />
@@ -114,7 +106,6 @@ All components and composables are auto-imported:
 <script setup>
 // Composables are auto-imported
 const { items, create, update } = useCrud('products')
-const { users } = useUsers() // From supersaas layer
 const { t } = useT()
 </script>
 ```
@@ -126,7 +117,6 @@ const { t } = useT()
     │
     ├── @friendlyinternet/nuxt-crouton-i18n        (addon - multi-language)
     ├── @friendlyinternet/nuxt-crouton-editor      (addon - rich text)
-    ├── @friendlyinternet/nuxt-crouton-supersaas   (addon - SuperSaaS)
     ├── @friendlyinternet/nuxt-crouton-ai          (addon - AI chat)
     ├── @friendlyinternet/nuxt-crouton-assets      (addon - asset management)
     ├── @friendlyinternet/nuxt-crouton-events      (addon - events/calendar)
@@ -163,20 +153,11 @@ const { t } = useT()
 - ✅ **Toolbar** - Formatting options
 - ✅ **Commands** - Keyboard shortcuts
 
-### SuperSaaS Layer (`@friendlyinternet/nuxt-crouton-supersaas`)
-- ✅ Everything from base layer
-- ✅ **SuperSaaS Connector** - Team-based user management
-- ✅ **NuxSaaS Connector** - Admin-level user management
-- ✅ **useUsers()** - External user collection composable
-- ✅ **External Collection API** - Ready-to-use endpoints
-- ✅ **App-level i18n** - Common translation strings
-
 ### Collection Generator (`@friendlyinternet/nuxt-crouton-cli`)
 - ✅ **CLI Scaffolding** - Generate complete CRUD collections
 - ✅ **Form Generation** - Auto-generate forms from schema
 - ✅ **List Generation** - Auto-generate tables and lists
 - ✅ **API Generation** - Create endpoints and validation
-- ✅ **Connector Detection** - Auto-detect and install connectors
 - ✅ **Rollback Support** - Undo generated collections
 
 ### AI Layer (`@friendlyinternet/nuxt-crouton-ai`)

@@ -157,34 +157,6 @@ export default {
   ],
 
   // ============================================================
-  // EXTERNAL CONNECTORS
-  // ============================================================
-  // Configure connectors for :referenced collections (e.g., :users, :teams)
-  // These are external collections from auth systems like SuperSaaS, Supabase, Clerk
-  //
-  // When your schema has refTarget: ':users', the generator will:
-  // 1. Detect the external reference
-  // 2. Look for connector config here
-  // 3. Auto-setup or prompt based on autoConnectors flag
-  connectors: {
-    // SuperSaaS users connector
-    users: {
-      type: 'supersaas', // Connector type: 'supersaas' | 'supabase' | 'clerk'
-      autoInstall: true, // Install @friendlyinternet/nuxt-crouton-supersaas
-      copyFiles: true, // Copy connector files to project
-      updateAppConfig: true // Auto-register in app.config.ts
-    }
-
-    // Example: Teams connector (if needed)
-    // teams: {
-    //   type: 'supersaas',
-    //   autoInstall: true,
-    //   copyFiles: true,
-    //   updateAppConfig: true
-    // }
-  },
-
-  // ============================================================
   // FLAGS (Generation Behavior)
   // ============================================================
   flags: {
@@ -263,21 +235,7 @@ export default {
      *
      * @default false
      */
-    dryRun: false,
-
-    // --------------------------------------------------------
-    // CONNECTOR BEHAVIOR
-    // --------------------------------------------------------
-
-    /**
-     * autoConnectors: Auto-configure connectors without prompting
-     *
-     * When true: Uses the `connectors` config above automatically
-     * When false: Prompts interactively when external refs detected
-     *
-     * @default false
-     */
-    autoConnectors: false
+    dryRun: false
   }
 
   // ============================================================

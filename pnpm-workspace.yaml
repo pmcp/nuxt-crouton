@@ -1,5 +1,4 @@
 packages:
   - 'packages/*'
-  - '!packages/nuxt-crouton-supersaas'
   - 'apps/*'
   - 'examples/*'
