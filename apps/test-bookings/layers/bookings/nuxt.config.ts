@@ -4,5 +4,10 @@ export default defineNuxtConfig({
   $meta: {
     name: 'bookings-layer',
     description: 'Generated bookings collections'
-  }
+  },
+  extends: [
+    './collections/bookings',
+    './collections/locations',
+    './collections/settings'
+  ]
 })
