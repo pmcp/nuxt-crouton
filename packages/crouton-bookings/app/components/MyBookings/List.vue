@@ -425,15 +425,15 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="!hasBookings" class="text-center py-12">
-      <UIcon name="i-lucide-calendar-x" class="w-16 h-16 text-muted mx-auto mb-4" />
-      <h3 class="text-lg font-medium mb-2">
-        {{ t('bookings.list.noBookings') }}
-      </h3>
-      <p class="text-muted mb-6">
-        {{ t('bookings.list.noBookingsDescription') }}
-      </p>
-    </div>
+<!--    <div v-else-if="!hasBookings" class="text-center py-12">-->
+<!--      <UIcon name="i-lucide-calendar-x" class="w-16 h-16 text-muted mx-auto mb-4" />-->
+<!--      <h3 class="text-lg font-medium mb-2">-->
+<!--        {{ t('bookings.list.noBookings') }}-->
+<!--      </h3>-->
+<!--      <p class="text-muted mb-6">-->
+<!--        {{ t('bookings.list.noBookingsDescription') }}-->
+<!--      </p>-->
+<!--    </div>-->
 
     <!-- Bookings list -->
     <div v-else class="space-y-4">

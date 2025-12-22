@@ -56,12 +56,11 @@
   },
   "allowedMemberIds": {
     "type": "array",
-    "refTarget": "member",
-    "refScope": "adapter",
     "meta": {
-      "label": "Allowed Members",
+      "label": "Allowed Member IDs",
       "area": "sidebar",
-      "group": "access"
+      "group": "access",
+      "help": "User IDs that are allowed to book at this location"
     }
   },
   "slots": {
