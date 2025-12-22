@@ -1357,14 +1357,14 @@ function buildOrganizationConfig(config: CroutonAuthConfig) {
   }
 
   // Determine organization limit
-  // If autoCreateOnSignup is set with limit=0, default to 1 (personal workspace only)
-  const getOrganizationLimit = () => {
-    if (teamsConfig.limit !== undefined && teamsConfig.limit > 0) {
-      return teamsConfig.limit
+  // Better Auth interprets undefined as unlimited, 0 would mean "no orgs allowed"
+  const getOrganizationLimit = (): number | undefined => {
+    const limit = teamsConfig.limit
+    // If limit is 0 or undefined, return undefined (unlimited in Better Auth)
+    if (limit === undefined || limit === 0) {
+      return undefined
     }
-    // If auto-create is enabled and no explicit limit, default to allowing additional orgs
-    // Users can create/join more orgs if allowCreate is true
-    return teamsConfig.limit ?? 0 // 0 = unlimited
+    return limit
   }
 
   return {
