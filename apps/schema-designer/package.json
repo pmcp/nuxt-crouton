@@ -1,0 +1,19 @@
+{
+  "name": "schema-designer",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^9.3.0"
+  },
+  "devDependencies": {
+    "@nuxt/ui": "^3.0.0",
+    "nuxt": "^3.15.0"
+  }
+}
