@@ -429,7 +429,7 @@ async function handleSubmit() {
       >
         <div class="p-3 flex items-center gap-3">
           <!-- Date card -->
-          <DateBadge
+          <CroutonBookingDateBadge
             v-if="formState.date"
             :date="formState.date"
             :variant="canAddToCart ? 'primary' : 'muted'"

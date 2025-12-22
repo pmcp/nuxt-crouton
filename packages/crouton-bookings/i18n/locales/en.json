@@ -6,7 +6,18 @@
     "date": "Date",
     "slot": "Time Slot",
     "allDay": "All Day",
-    "status": "Status",
+    "status": {
+      "active": "Active",
+      "cancelled": "Cancelled",
+      "booked": "Booked",
+      "pending": "Pending",
+      "completed": "Completed"
+    },
+    "meta": {
+      "bookedOn": "Booked on {date}",
+      "emailsSent": "{sent}/{total} emails sent",
+      "emailsFailed": "{failed}/{total} emails failed"
+    },
     "group": "Group",
     "cart": {
       "title": "Your Cart",

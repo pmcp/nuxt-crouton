@@ -156,7 +156,7 @@ function confirmAction() {
   <div class="bg-elevated/50 rounded-lg overflow-hidden group">
     <div class="p-3 flex items-center gap-3">
       <!-- Date card -->
-      <DateBadge :date="date" :variant="dateBadgeVariant" :highlighted="highlighted" :highlight-color="slotColor" />
+      <CroutonBookingDateBadge :date="date" :variant="dateBadgeVariant" :highlighted="highlighted" :highlight-color="slotColor" />
 
       <!-- Content -->
       <div class="flex-1 flex flex-col gap-1">

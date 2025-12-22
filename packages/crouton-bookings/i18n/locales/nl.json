@@ -6,7 +6,18 @@
     "date": "Datum",
     "slot": "Tijdslot",
     "allDay": "Hele dag",
-    "status": "Status",
+    "status": {
+      "active": "Actief",
+      "cancelled": "Geannuleerd",
+      "booked": "Geboekt",
+      "pending": "In afwachting",
+      "completed": "Voltooid"
+    },
+    "meta": {
+      "bookedOn": "Geboekt op {date}",
+      "emailsSent": "{sent}/{total} e-mails verzonden",
+      "emailsFailed": "{failed}/{total} e-mails mislukt"
+    },
     "group": "Groep",
     "cart": {
       "title": "Je Winkelwagen",
