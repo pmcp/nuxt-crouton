@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { FieldType } from '../../types/schema'
 
+const props = defineProps<{
+  isFieldFromAI?: (fieldId: string) => boolean
+}>()
+
 const {
   state,
   addField,
@@ -110,11 +114,12 @@ function onFieldDragEnd() {
         v-if="state.fields.length > 0"
         class="space-y-2"
       >
-        <CroutonSchemaDesignerFieldItem
+        <SchemaDesignerFieldItem
           v-for="(field, index) in state.fields"
           :key="field.id"
           :field="field"
           :index="index"
+          :is-new="isFieldFromAI?.(field.id)"
           draggable="true"
           @dragstart="onFieldDragStart(index)"
           @dragover="onFieldDragOver($event, index)"
@@ -138,5 +143,5 @@ function onFieldDragEnd() {
   </div>
 
   <!-- Field Editor Slideover -->
-  <CroutonSchemaDesignerFieldEditor />
+  <SchemaDesignerFieldEditor />
 </template>
