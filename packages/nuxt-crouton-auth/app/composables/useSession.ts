@@ -90,6 +90,7 @@ export function useSession() {
   }
 
   // Fetch active organization
+  // If no active org is set (400 error), try to find and set one automatically
   async function fetchActiveOrg(): Promise<void> {
     if (!authClient?.organization?.getFullOrganization) return
 
@@ -98,17 +99,66 @@ export function useSession() {
         fetchOptions: { headers }
       })
 
-      activeOrgState.value = data ?? null
+      if (error || !data) {
+        // No active org set - try to find and set one (personal/single-tenant mode)
+        if (debug) {
+          console.log('[@crouton/auth] useSession: no active org, trying to find one...')
+        }
+        await trySetDefaultOrg()
+        return
+      }
+
+      activeOrgState.value = data
 
       if (debug) {
         console.log('[@crouton/auth] useSession: fetched active org', {
-          org: data?.slug ?? null,
-          error: error ?? null
+          org: data?.slug ?? null
         })
       }
     } catch (err) {
       if (debug) {
-        console.log('[@crouton/auth] useSession: no active org', err)
+        console.log('[@crouton/auth] useSession: getFullOrganization failed, trying to find org', err)
+      }
+      // Try to find and set an org
+      await trySetDefaultOrg()
+    }
+  }
+
+  // Try to find and set a default organization (for personal/single-tenant modes)
+  async function trySetDefaultOrg(): Promise<void> {
+    if (!authClient?.organization) return
+
+    try {
+      // List user's organizations
+      const { data: orgs } = await authClient.organization.list({
+        fetchOptions: { headers }
+      })
+
+      if (debug) {
+        console.log('[@crouton/auth] useSession: found orgs', orgs?.length ?? 0)
+      }
+
+      if (orgs && orgs.length > 0) {
+        // Set the first org as active
+        const firstOrg = orgs[0]
+        await authClient.organization.setActive({
+          organizationId: firstOrg.id
+        })
+
+        if (debug) {
+          console.log('[@crouton/auth] useSession: set active org to', firstOrg.slug)
+        }
+
+        // Now fetch the full org data
+        const { data: fullOrg } = await authClient.organization.getFullOrganization({
+          fetchOptions: { headers }
+        })
+
+        activeOrgState.value = fullOrg ?? null
+      }
+    } catch (err) {
+      if (debug) {
+        console.log('[@crouton/auth] useSession: failed to set default org', err)
       }
       activeOrgState.value = null
     }
