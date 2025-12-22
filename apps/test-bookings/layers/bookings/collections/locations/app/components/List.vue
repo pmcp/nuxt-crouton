@@ -49,15 +49,17 @@
       <CroutonEditorPreview :content="row.original.content" />
     </template>
     <template #allowedMemberIds-cell="{ row }">
-      <div v-if="row.original.allowedMemberIds && row.original.allowedMemberIds.length > 0" class="flex flex-wrap gap-1">
-        <CroutonItemCardMini
-          v-for="itemId in row.original.allowedMemberIds"
-          :key="itemId"
-          :id="itemId"
-          collection="teamMembers"
-        />
+      <div v-if="row.original.allowedMemberIdsData && row.original.allowedMemberIdsData.length > 0" class="flex flex-wrap gap-1">
+        <UBadge
+          v-for="member in row.original.allowedMemberIdsData"
+          :key="member.id"
+          variant="soft"
+          size="xs"
+        >
+          {{ member.user?.name || member.userId }}
+        </UBadge>
       </div>
-      <span v-else class="text-gray-400">—</span>
+      <span v-else class="text-muted">—</span>
     </template>
     <template #slots-cell="{ row }">
       <BookingsLocationsSlotCardMini :value="row.original.slots" />

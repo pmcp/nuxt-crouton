@@ -7,10 +7,14 @@ export default defineNuxtConfig({
   },
 
   extends: [
-    '@friendlyinternet/nuxt-crouton'
+    '@friendlyinternet/nuxt-crouton-schema-designer'
   ],
 
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxthub/core', '@nuxt/ui'],
+
+  hub: {
+    db: 'sqlite'
+  },
 
   css: ['~/assets/css/main.css']
 })
