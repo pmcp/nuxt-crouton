@@ -1,12 +1,5 @@
 <script setup lang="ts">
-const colorMode = useColorMode()
-
-// Load saved state on mount
-const { loadFromLocalStorage } = useSchemaDesigner()
-
-onMounted(() => {
-  loadFromLocalStorage()
-})
+// App entry point - the schema designer pages handle all logic
 </script>
 
 <template>
