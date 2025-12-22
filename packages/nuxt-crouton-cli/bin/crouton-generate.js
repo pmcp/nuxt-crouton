@@ -94,8 +94,8 @@ program
 
 // Main generate command
 program
-  .command('generate <layer> <collection>', { isDefault: true })
-  .description('Generate a new CRUD collection')
+  .command('generate [layer] [collection]', { isDefault: true })
+  .description('Generate collections (auto-detects crouton.config.js if no args)')
   .option('-f, --fields-file <path>', 'Path to JSON schema file')
   .option('-d, --dialect <type>', 'Database dialect (pg or sqlite)', 'sqlite')
   .option('--auto-relations', 'Add relation stubs in comments')
@@ -108,6 +108,51 @@ program
   .option('--count <number>', 'Number of seed records (default: 25)', '25')
   .option('-c, --config <path>', 'Use config file instead of CLI args')
   .action(async (layer, collection, options) => {
+    // If no layer/collection provided, auto-detect config file
+    if (!layer && !collection && !options.config) {
+      const extensions = ['.js', '.mjs', '.cjs', '.ts']
+      const baseName = './crouton.config'
+      let configPath = null
+
+      for (const ext of extensions) {
+        const testPath = `${baseName}${ext}`
+        if (fs.existsSync(testPath)) {
+          configPath = testPath
+          break
+        }
+      }
+
+      if (!configPath) {
+        console.error(chalk.red('Error: No crouton.config.js found in current directory'))
+        console.log(chalk.yellow('\nTo generate collections, either:'))
+        console.log(chalk.cyan('  1. Create a crouton.config.js file in this directory'))
+        console.log(chalk.cyan('  2. Use explicit arguments: crouton generate <layer> <collection> --fields-file=schema.json'))
+        process.exit(1)
+      }
+
+      // Use config mode
+      const spinner = ora('Loading config...').start()
+      try {
+        const args = ['--config', configPath]
+        spinner.stop()
+        process.argv = ['node', 'generate-collection.mjs', ...args]
+        await import(generatorPath)
+        return
+      } catch (error) {
+        spinner.fail('Generation failed')
+        console.error(chalk.red(error.message))
+        process.exit(1)
+      }
+    }
+
+    // Validate that both layer AND collection are provided for explicit mode
+    if ((!layer || !collection) && !options.config) {
+      console.error(chalk.red('Error: Both layer and collection are required'))
+      console.log(chalk.yellow('\nUsage: crouton generate <layer> <collection> --fields-file=schema.json'))
+      console.log(chalk.yellow('   Or: crouton generate (auto-detects crouton.config.js)'))
+      process.exit(1)
+    }
+
     const spinner = ora('Generating collection...').start()
 
     try {
