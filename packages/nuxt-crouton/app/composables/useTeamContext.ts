@@ -6,7 +6,7 @@
  * otherwise falls back to route.params.team (might be slug or ID).
  *
  * When @crouton/auth is installed, this composable integrates with Better Auth's
- * mode-aware team resolution (multi-tenant, single-tenant, personal).
+ * team resolution. URLs always include [team] param (industry standard).
  *
  * API:
  * - getTeamId(): string | undefined - Function-based getter (original API)
@@ -36,7 +36,6 @@
  */
 export function useTeamContext() {
   const route = useRoute()
-  const config = useRuntimeConfig().public.crouton?.auth as { mode?: string } | undefined
 
   /**
    * Get team identifier for API calls
@@ -84,9 +83,9 @@ export function useTeamContext() {
 
   /**
    * Whether URLs should include team param
-   * Only true for multi-tenant mode
+   * Always true - we always use [team] in URLs (industry standard)
    */
-  const useTeamInUrl = computed(() => config?.mode === 'multi-tenant')
+  const useTeamInUrl = computed(() => true)
 
   /**
    * Whether team context is available

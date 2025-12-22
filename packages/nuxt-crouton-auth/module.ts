@@ -13,7 +13,6 @@ import {
   addServerPlugin,
   addPlugin
 } from '@nuxt/kit'
-import type { NuxtPage } from '@nuxt/schema'
 import { defu } from 'defu'
 import type { CroutonAuthConfig } from './types/config'
 
@@ -23,7 +22,6 @@ export const version = '0.1.0'
 
 // Default configuration
 const defaults: CroutonAuthConfig = {
-  mode: 'personal',
   methods: {
     password: true,
     oauth: undefined,
@@ -33,8 +31,16 @@ const defaults: CroutonAuthConfig = {
     phone: false
   },
   teams: {
+    // Team creation behavior
+    autoCreateOnSignup: false,
+    defaultTeamSlug: undefined,
+    // Permissions
     allowCreate: true,
-    limit: 5,
+    limit: 0, // 0 = unlimited
+    // UI display
+    showSwitcher: true,
+    showManagement: true,
+    // Membership
     memberLimit: 100,
     requireInvite: true,
     invitationExpiry: 172800, // 48 hours
@@ -70,12 +76,7 @@ const defaults: CroutonAuthConfig = {
  * Validate the configuration
  */
 function validateConfig(config: CroutonAuthConfig): void {
-  // Validate mode
-  if (!['multi-tenant', 'single-tenant', 'personal'].includes(config.mode)) {
-    throw new Error(
-      `[${name}] Invalid mode: ${config.mode}. Must be 'multi-tenant', 'single-tenant', or 'personal'.`
-    )
-  }
+  const teams = config.teams ?? {}
 
   // Validate billing config
   if (config.billing?.enabled && !config.billing.stripe) {
@@ -93,55 +94,25 @@ function validateConfig(config: CroutonAuthConfig): void {
     }
   }
 
-  // Mode-specific validation
-  if (config.mode === 'personal') {
-    if (config.teams?.allowCreate) {
-      console.info(
-        `[${name}] Personal mode: Team creation is automatically managed (one team per user).`
-      )
-    }
+  // Warn about conflicting team creation settings
+  if (teams.autoCreateOnSignup && teams.defaultTeamSlug) {
+    console.warn(
+      `[${name}] Both autoCreateOnSignup and defaultTeamSlug are set. ` +
+      `autoCreateOnSignup will create a personal workspace AND user will be added to the default team.`
+    )
   }
 
-  if (config.mode === 'single-tenant') {
-    if (config.teams?.limit && config.teams.limit > 1) {
-      console.warn(
-        `[${name}] Single-tenant mode: Team limit should be 1. Ignoring configured limit.`
-      )
-    }
+  // Info about team creation behavior
+  if (teams.autoCreateOnSignup) {
+    console.info(
+      `[${name}] autoCreateOnSignup enabled: Each new user will get their own workspace.`
+    )
   }
-}
 
-/**
- * Apply mode-specific defaults
- */
-function applyModeDefaults(config: CroutonAuthConfig): CroutonAuthConfig {
-  switch (config.mode) {
-    case 'multi-tenant':
-      return defu(config, {
-        teams: {
-          allowCreate: true,
-          limit: 5
-        }
-      })
-
-    case 'single-tenant':
-      return defu(config, {
-        teams: {
-          allowCreate: false,
-          limit: 1
-        }
-      })
-
-    case 'personal':
-      return defu(config, {
-        teams: {
-          allowCreate: false,
-          limit: 1
-        }
-      })
-
-    default:
-      return config
+  if (teams.defaultTeamSlug) {
+    console.info(
+      `[${name}] defaultTeamSlug set: All new users will join team "${teams.defaultTeamSlug}".`
+    )
   }
 }
 
@@ -160,18 +131,11 @@ export default defineNuxtModule<CroutonAuthConfig>({
   async setup(moduleConfig, nuxt) {
     const resolver = createResolver(import.meta.url)
 
-    // Merge config with mode-specific defaults
-    const config = applyModeDefaults(
-      defu(moduleConfig, defaults)
-    )
+    // Merge config with defaults
+    const config = defu(moduleConfig, defaults)
 
     // Validate configuration
     validateConfig(config)
-
-    // Log mode in development
-    if (nuxt.options.dev && config.debug) {
-      console.log(`[${name}] Running in ${config.mode} mode`)
-    }
 
     // Set runtime config
     // Use spread to preserve other crouton properties while ensuring auth config takes priority
@@ -258,11 +222,12 @@ export default defineNuxtModule<CroutonAuthConfig>({
       handler: resolver.resolve('./server/api/auth/[...all]')
     })
 
-    // Add server plugins based on mode
+    // Add server plugins
     addServerPlugin(resolver.resolve('./server/plugins/auth-init'))
 
-    if (config.mode === 'single-tenant') {
-      addServerPlugin(resolver.resolve('./server/plugins/single-tenant-init'))
+    // Add team initialization plugin if auto-creating workspaces or using default team
+    if (config.teams?.autoCreateOnSignup || config.teams?.defaultTeamSlug) {
+      addServerPlugin(resolver.resolve('./server/plugins/team-init'))
     }
 
     // Note: Route middleware is auto-discovered from app/middleware/ when used as a layer
@@ -289,23 +254,16 @@ export default defineNuxtModule<CroutonAuthConfig>({
     // Transpile the module
     nuxt.options.build.transpile.push(resolver.resolve('./'))
 
-    // Route aliases based on mode
-    // Multi-tenant: only /dashboard/[team]/... routes work
-    // Single-tenant/Personal: add aliases so both /dashboard/[team]/... AND /dashboard/... work
-    if (config.mode !== 'multi-tenant') {
-      nuxt.hook('pages:extend', (pages) => {
-        addTeamRouteAliases(pages, config.debug)
-      })
-
-      if (config.debug) {
-        console.log(`[${name}] Route aliases enabled for ${config.mode} mode`)
-      }
-    }
-
     // Log setup complete
     if (config.debug) {
+      const teams = config.teams ?? {}
       console.log(`[${name}] Module setup complete`)
-      console.log(`[${name}] Mode: ${config.mode}`)
+      console.log(`[${name}] Team config:`, {
+        autoCreateOnSignup: teams.autoCreateOnSignup,
+        defaultTeamSlug: teams.defaultTeamSlug,
+        allowCreate: teams.allowCreate,
+        showSwitcher: teams.showSwitcher
+      })
       console.log(`[${name}] Auth methods:`, Object.keys(config.methods || {}).filter(k => config.methods?.[k as keyof typeof config.methods]))
       if (config.billing?.enabled) {
         console.log(`[${name}] Billing: enabled (${config.billing.provider})`)
@@ -313,73 +271,6 @@ export default defineNuxtModule<CroutonAuthConfig>({
     }
   }
 })
-
-/**
- * Generate an alias path by removing :team segment
- * Preserves the rest of the path structure
- */
-function generateAliasPath(originalPath: string): string {
-  let aliasPath = originalPath
-    // Remove /:team() when followed by / or end
-    .replace(/\/:team\(\)(?=\/|$)/, '')
-    // Remove /:team when followed by / or end
-    .replace(/\/:team(?=\/|$)/, '')
-    // Remove :team() at start
-    .replace(/^:team\(\)(?=\/|$)/, '')
-    // Remove :team at start
-    .replace(/^:team(?=\/|$)/, '')
-
-  // Clean up double slashes and trailing slashes
-  aliasPath = aliasPath.replace(/\/+/g, '/').replace(/\/$/, '') || '/'
-
-  return aliasPath
-}
-
-/**
- * Add route aliases for single-tenant and personal modes
- * Adds alias paths without [team] segment while keeping original paths
- *
- * This allows both URL patterns to work:
- * - /dashboard/:team/settings (main route - for multi-tenant compatibility)
- * - /dashboard/settings (alias - for personal/single-tenant convenience)
- *
- * The middleware handles team resolution from session when not in URL.
- *
- * Examples:
- * - /dashboard/:team → alias: /dashboard
- * - /dashboard/:team/settings → alias: /dashboard/settings
- * - /dashboard/:team/crouton → alias: /dashboard/crouton
- */
-function addTeamRouteAliases(pages: NuxtPage[], debug?: boolean): void {
-  for (const page of pages) {
-    // Check if this page has a :team segment in its path
-    if (page.path && page.path.includes(':team')) {
-      // Generate the alias path by removing :team segment
-      const aliasPath = generateAliasPath(page.path)
-
-      if (aliasPath && aliasPath !== page.path) {
-        // Initialize alias array if needed, preserving existing aliases
-        const existingAliases = Array.isArray(page.alias)
-          ? page.alias
-          : (page.alias ? [page.alias] : [])
-
-        // Only add if not already present
-        if (!existingAliases.includes(aliasPath)) {
-          page.alias = [...existingAliases, aliasPath]
-
-          if (debug) {
-            console.log(`[${name}] Route alias added: ${page.path} → alias: ${aliasPath}`)
-          }
-        }
-      }
-    }
-
-    // Recursively process child routes
-    if (page.children?.length) {
-      addTeamRouteAliases(page.children, debug)
-    }
-  }
-}
 
 // Re-export types
 export type { CroutonAuthConfig } from './types/config'

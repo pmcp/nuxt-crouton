@@ -2,7 +2,7 @@
  * Server Team Utilities
  *
  * Server-side team/organization helpers.
- * Includes mode-aware team resolution that works across all three modes.
+ * Unified team resolution from URL params or session.
  */
 import type { H3Event } from 'h3'
 import { createError, getRouterParam } from 'h3'
@@ -13,7 +13,10 @@ import { member } from '../database/schema/auth'
 import type { Team, Member, User } from '../../types'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
-import type { D1Database } from '@nuxthub/core'
+
+// D1Database type from Cloudflare workers-types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type D1Database = any
 
 // hubDatabase is a NuxtHub auto-import, declare it for TypeScript
 declare function hubDatabase(): D1Database
@@ -75,31 +78,13 @@ export interface TeamContext {
  * ```
  */
 export async function resolveTeamAndCheckMembership(event: H3Event): Promise<TeamContext> {
-  const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
-
   // Get authenticated session from Better Auth (cast to extended type with org properties)
   const session = await requireServerSession(event) as OrganizationSession
 
-  let teamId: string | undefined
-
-  switch (config?.mode) {
-    case 'single-tenant':
-      // Always use the default team
-      teamId = config.defaultTeamId ?? 'default'
-      break
-
-    case 'personal':
-      // Use user's personal team from session
-      teamId = session.session.activeOrganizationId ?? undefined
-      break
-
-    case 'multi-tenant':
-    default:
-      // From URL param (API routes use /teams/[id]/...)
-      // Fall back to session's active org
-      teamId = getRouterParam(event, 'id') ?? session.session.activeOrganizationId ?? undefined
-      break
-  }
+  // Unified resolution: URL param first, then session's active org
+  // From URL param (API routes use /teams/[id]/...)
+  // Fall back to session's active org
+  const teamId = getRouterParam(event, 'id') ?? session.session.activeOrganizationId ?? undefined
 
   if (!teamId) {
     throw createError({
@@ -296,23 +281,23 @@ export async function getUserTeams(event: H3Event): Promise<Team[]> {
 /**
  * Get or create default organization
  *
- * Used in single-tenant mode to ensure a default org exists.
+ * Used when defaultTeamSlug is set to ensure a default org exists.
  * Can be called during request handling to lazily create the default org.
  *
- * Note: In single-tenant mode, the default org is typically created
- * automatically via databaseHooks on first user signup. This function
- * can be used to manually trigger creation or fetch the default org.
+ * Note: The default org is typically created automatically via databaseHooks
+ * on first user signup. This function can be used to manually trigger
+ * creation or fetch the default org.
  *
  * @param event - H3 event (needed for database access)
  * @returns The default organization
  */
 export async function getOrCreateDefaultOrganization(event: H3Event): Promise<Team> {
   const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
-  const defaultTeamId = config?.defaultTeamId ?? 'default'
+  const defaultTeamSlug = config?.teams?.defaultTeamSlug ?? 'default'
   const appName = config?.appName ?? 'Default Workspace'
 
-  // First, try to get the existing default team
-  const existingTeam = await getTeamById(event, defaultTeamId)
+  // First, try to get the existing default team by slug
+  const existingTeam = await getTeamBySlug(event, defaultTeamSlug)
   if (existingTeam) {
     return existingTeam
   }
@@ -323,17 +308,18 @@ export async function getOrCreateDefaultOrganization(event: H3Event): Promise<Te
   const db = drizzle(d1)
 
   const now = new Date().toISOString()
+  const orgId = crypto.randomUUID()
 
   try {
     // Use isDefault column (Task 6.2) instead of metadata
     await db.run(sql`
       INSERT INTO organization (id, name, slug, isDefault, personal, createdAt)
-      VALUES (${defaultTeamId}, ${appName}, 'default', 1, 0, ${now})
+      VALUES (${orgId}, ${appName}, ${defaultTeamSlug}, 1, 0, ${now})
     `)
-    console.log(`[crouton/auth] Created default organization "${appName}" (ID: ${defaultTeamId})`)
+    console.log(`[crouton/auth] Created default organization "${appName}" (slug: ${defaultTeamSlug})`)
   } catch (error: unknown) {
     // Handle race condition - if another request created it, fetch it
-    const existingAfterRace = await getTeamById(event, defaultTeamId)
+    const existingAfterRace = await getTeamBySlug(event, defaultTeamSlug)
     if (existingAfterRace) {
       return existingAfterRace
     }
@@ -342,7 +328,7 @@ export async function getOrCreateDefaultOrganization(event: H3Event): Promise<Te
   }
 
   // Fetch and return the created team
-  const newTeam = await getTeamById(event, defaultTeamId)
+  const newTeam = await getTeamBySlug(event, defaultTeamSlug)
   if (!newTeam) {
     throw new Error('[crouton/auth] Failed to create default organization')
   }
@@ -406,11 +392,6 @@ export async function createPersonalWorkspace(event: H3Event, userId: string, us
 export async function canUserCreateTeam(event: H3Event, userId: string, _userId?: string): Promise<boolean> {
   const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
 
-  // Check mode - only multi-tenant allows team creation
-  if (config?.mode !== 'multi-tenant') {
-    return false
-  }
-
   // Check if team creation is allowed
   if (config?.teams?.allowCreate === false) {
     return false
@@ -418,7 +399,12 @@ export async function canUserCreateTeam(event: H3Event, userId: string, _userId?
 
   // Get user's current teams
   const teams = await getUserTeams(event)
-  const limit = config?.teams?.limit ?? 5
+  const limit = config?.teams?.limit ?? 0 // 0 = unlimited
+
+  // If limit is 0 (unlimited), always allow
+  if (limit === 0) {
+    return true
+  }
 
   return teams.length < limit
 }

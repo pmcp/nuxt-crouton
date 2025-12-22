@@ -1,13 +1,12 @@
 /**
  * Global Team Context Middleware
  *
- * Automatically resolves and syncs team context based on auth mode.
+ * Automatically resolves and syncs team context.
  * Runs on ALL routes (global middleware) to ensure team context is available.
  *
- * Behavior by mode:
- * - Multi-tenant: Validates team in URL, redirects if invalid, syncs with session
- * - Single-tenant: Uses default team from config
- * - Personal: Uses user's personal workspace from session
+ * Unified resolution strategy:
+ * 1. Check URL params first: [team] route param
+ * 2. Fall back to session's active organization
  *
  * Team context is stored in:
  * - useState('crouton-auth-team') - for reactive access in components
@@ -17,14 +16,12 @@ import { useAuthClientSafe } from '../../types/auth-client'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const config = useAuthConfig()
-  const mode = config?.mode ?? 'multi-tenant'
 
   // Get team state (shared via useState)
   const {
     setTeamContext,
     setTeamError,
-    clearTeamContext,
-    markUnresolved
+    clearTeamContext
   } = useTeamState()
 
   // Skip for auth routes - no team context needed
@@ -71,66 +68,31 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Debug logging
   if (config?.debug) {
-    console.log(`[@crouton/auth] Team context middleware: ${to.path}, mode=${mode}`)
+    console.log(`[@crouton/auth] Team context middleware: ${to.path}`)
   }
 
   try {
-    // Resolve team based on mode
-    switch (mode) {
-      case 'single-tenant': {
-        // Always use the default team
-        const teamId = config?.defaultTeamId ?? 'default'
-        setTeamContext({
-          teamId,
-          teamSlug: 'default',
-          team: activeOrganization.value ?? null
-        })
-        break
+    // Unified team resolution
+    const resolution = await resolveTeamContext(to, config)
+
+    if (resolution.error) {
+      setTeamError(resolution.error)
+    } else if (resolution.teamId) {
+      setTeamContext({
+        teamId: resolution.teamId,
+        teamSlug: resolution.teamSlug,
+        team: activeOrganization.value ?? null
+      })
+    } else {
+      clearTeamContext()
+    }
+
+    // Handle redirects
+    if (resolution.needsRedirect && resolution.redirectTo) {
+      if (config?.debug) {
+        console.log(`[@crouton/auth] Redirecting to: ${resolution.redirectTo}`)
       }
-
-      case 'personal': {
-        // Use user's personal workspace from session
-        // In personal mode, routes are transformed to NOT have [team] param
-        // So we just set the team context without redirecting
-        if (activeOrganization.value) {
-          setTeamContext({
-            teamId: activeOrganization.value.id,
-            teamSlug: activeOrganization.value.slug,
-            team: activeOrganization.value
-          })
-          // No redirect needed - personal mode routes don't have team in URL
-        } else {
-          setTeamError('No personal workspace found')
-        }
-        break
-      }
-
-      case 'multi-tenant':
-      default: {
-        // Handle multi-tenant mode with URL-based team resolution
-        const resolution = await resolveMultiTenantTeam(to, config)
-
-        if (resolution.error) {
-          setTeamError(resolution.error)
-        } else if (resolution.teamId) {
-          setTeamContext({
-            teamId: resolution.teamId,
-            teamSlug: resolution.teamSlug,
-            team: activeOrganization.value ?? null
-          })
-        } else {
-          clearTeamContext()
-        }
-
-        // Handle redirects
-        if (resolution.needsRedirect && resolution.redirectTo) {
-          if (config?.debug) {
-            console.log(`[@crouton/auth] Redirecting to: ${resolution.redirectTo}`)
-          }
-          return navigateTo(resolution.redirectTo, { replace: true })
-        }
-        break
-      }
+      return navigateTo(resolution.redirectTo, { replace: true })
     }
   } catch (error) {
     console.error('[@crouton/auth] Team context middleware error:', error)
@@ -140,9 +102,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 })
 
 /**
- * Resolve team context for multi-tenant mode
+ * Resolve team context from URL and session
  */
-async function resolveMultiTenantTeam(
+async function resolveTeamContext(
   to: ReturnType<typeof useRoute>,
   config: ReturnType<typeof useAuthConfig>
 ): Promise<{

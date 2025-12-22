@@ -114,8 +114,8 @@ export function useBilling() {
   // Check if billing is enabled
   const enabled = computed(() => config?.billing?.enabled === true && !!config?.billing?.stripe?.publishableKey)
 
-  // Get billing mode (user vs organization)
-  const billingMode = computed(() => config?.mode === 'personal' ? 'user' : 'organization')
+  // Get billing mode - always organization (personal workspaces are orgs with 1 member)
+  const billingMode = computed(() => 'organization' as const)
 
   // Return stub if billing not enabled
   if (!enabled.value) {
@@ -144,10 +144,7 @@ export function useBilling() {
 
   // Get the current team ID for organization billing
   const getCurrentReferenceId = (): string | undefined => {
-    if (billingMode.value === 'user') {
-      return undefined // Use user's ID (handled by Better Auth)
-    }
-    // For organization billing, try to get team from route or session
+    // Always use organization billing - try to get team from route or session
     const teamId = route.params.team as string | undefined
     return teamId
   }

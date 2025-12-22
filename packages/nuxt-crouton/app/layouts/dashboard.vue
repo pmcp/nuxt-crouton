@@ -6,13 +6,13 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const hasTeamSwitcher = ref(false)
 const TeamSwitcherComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
 
-// Check auth mode for multi-tenant support
+// Check if team switcher should be shown
 const config = useRuntimeConfig()
-const isMultiTenant = computed(() => config.public.crouton?.auth?.mode === 'multi-tenant')
+const showSwitcher = computed(() => config.public.crouton?.auth?.teams?.showSwitcher !== false)
 
 onMounted(() => {
-  // Only load TeamSwitcher in multi-tenant mode
-  if (isMultiTenant.value) {
+  // Load TeamSwitcher if enabled
+  if (showSwitcher.value) {
     const teamSwitcher = resolveComponent('TeamSwitcher')
     if (typeof teamSwitcher !== 'string') {
       TeamSwitcherComponent.value = teamSwitcher

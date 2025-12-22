@@ -258,9 +258,9 @@ describe('server/lib/auth', () => {
       expect(info?.billingMode).toBe('organization')
     })
 
-    it('should set billingMode to user for personal mode', () => {
+    it('should always use organization billingMode (even for personal workspaces)', () => {
       const config: CroutonAuthConfig = {
-        mode: 'personal',
+        teams: { autoCreateOnSignup: true, allowCreate: false },
         billing: {
           enabled: true,
           stripe: {
@@ -271,7 +271,8 @@ describe('server/lib/auth', () => {
       }
       const info = getBillingInfo(config)
 
-      expect(info?.billingMode).toBe('user')
+      // Billing is always organization-based now (personal workspace = org with 1 member)
+      expect(info?.billingMode).toBe('organization')
     })
   })
 
@@ -505,58 +506,54 @@ describe('server/lib/auth', () => {
   })
 })
 
-describe('Mode-specific behavior', () => {
-  describe('multi-tenant mode', () => {
+describe('Configuration patterns (flag-based)', () => {
+  describe('team creation enabled pattern', () => {
     it('should allow organization creation by users', () => {
       const config: CroutonAuthConfig = {
-        mode: 'multi-tenant',
-        teams: { allowCreate: true }
+        teams: { allowCreate: true, showSwitcher: true }
       }
-      // In multi-tenant mode, users can create organizations
-      expect(config.mode).toBe('multi-tenant')
       expect(config.teams?.allowCreate).toBe(true)
+      expect(config.teams?.showSwitcher).toBe(true)
     })
 
     it('should use configurable organization limit', () => {
       const config: CroutonAuthConfig = {
-        mode: 'multi-tenant',
-        teams: { limit: 10 }
+        teams: { allowCreate: true, limit: 10 }
       }
       expect(config.teams?.limit).toBe(10)
     })
   })
 
-  describe('single-tenant mode', () => {
-    it('should use default team ID', () => {
+  describe('default team pattern', () => {
+    it('should use defaultTeamSlug', () => {
       const config: CroutonAuthConfig = {
-        mode: 'single-tenant',
-        defaultTeamId: 'my-default-team',
+        teams: { defaultTeamSlug: 'acme-corp', allowCreate: false },
         appName: 'My App'
       }
-      expect(config.defaultTeamId).toBe('my-default-team')
+      expect(config.teams?.defaultTeamSlug).toBe('acme-corp')
     })
 
-    it('should fall back to "default" when defaultTeamId not set', () => {
+    it('should hide switcher when only one team', () => {
       const config: CroutonAuthConfig = {
-        mode: 'single-tenant',
+        teams: { defaultTeamSlug: 'acme', allowCreate: false, showSwitcher: false },
         appName: 'My App'
       }
-      expect(config.defaultTeamId ?? 'default').toBe('default')
+      expect(config.teams?.showSwitcher).toBe(false)
     })
   })
 
-  describe('personal mode', () => {
-    it('should limit organizations to 1', () => {
+  describe('personal workspace pattern', () => {
+    it('should auto-create workspace on signup', () => {
       const config: CroutonAuthConfig = {
-        mode: 'personal'
+        teams: { autoCreateOnSignup: true, allowCreate: false }
       }
-      // Personal mode automatically limits to 1 org per user
-      expect(config.mode).toBe('personal')
+      expect(config.teams?.autoCreateOnSignup).toBe(true)
+      expect(config.teams?.allowCreate).toBe(false)
     })
 
-    it('should use user billing mode', () => {
+    it('should use organization billing (personal workspace = org with 1 member)', () => {
       const config: CroutonAuthConfig = {
-        mode: 'personal',
+        teams: { autoCreateOnSignup: true },
         billing: {
           enabled: true,
           stripe: {
@@ -566,7 +563,8 @@ describe('Mode-specific behavior', () => {
         }
       }
       const info = getBillingInfo(config)
-      expect(info?.billingMode).toBe('user')
+      // Billing is always organization-based now
+      expect(info?.billingMode).toBe('organization')
     })
   })
 })

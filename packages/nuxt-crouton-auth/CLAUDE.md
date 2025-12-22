@@ -4,13 +4,26 @@
 
 Authentication layer for Nuxt applications using Better Auth. Provides teams/organizations, billing (Stripe), passkeys (WebAuthn), 2FA, and OAuth support. This is the **canonical source** for team authentication in the nuxt-crouton ecosystem.
 
-## Operational Modes
+## Configuration Patterns
 
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| `multi-tenant` | Users can create/join multiple organizations | SaaS platforms |
-| `single-tenant` | One organization, multiple users | Company apps |
-| `personal` | One organization per user | Personal workspaces |
+URLs always include `[team]` param (industry standard: Linear, Notion, Vercel, GitHub).
+
+| Pattern | Configuration | Use Case |
+|---------|---------------|----------|
+| Team Creation | `teams: { allowCreate: true, showSwitcher: true }` | SaaS platforms |
+| Default Team | `teams: { defaultTeamSlug: 'acme', allowCreate: false, showSwitcher: false }` | Company apps |
+| Personal Workspace | `teams: { autoCreateOnSignup: true, allowCreate: false, showSwitcher: false }` | Personal apps |
+
+### TeamsConfig Flags
+
+| Flag | Purpose | Default |
+|------|---------|---------|
+| `autoCreateOnSignup` | Auto-create personal workspace on signup | false |
+| `defaultTeamSlug` | Everyone joins this team on signup | undefined |
+| `allowCreate` | Can users create additional teams | true |
+| `showSwitcher` | Show team switcher UI | true |
+| `showManagement` | Show team management UI | true |
+| `limit` | Max teams per user (0 = unlimited) | 0 |
 
 ## Key Files
 
@@ -116,7 +129,14 @@ export default defineNuxtConfig({
   modules: ['@crouton/auth'],
 
   croutonAuth: {
-    mode: 'multi-tenant', // 'multi-tenant' | 'single-tenant' | 'personal'
+    // Team configuration (see Configuration Patterns above)
+    teams: {
+      allowCreate: true,     // Can create additional teams
+      showSwitcher: true,    // Show team switcher UI
+      showManagement: true,  // Show team management settings
+      // autoCreateOnSignup: true,  // For personal workspace pattern
+      // defaultTeamSlug: 'acme',   // For default team pattern
+    },
 
     // Enable/disable features
     emailPassword: true,
@@ -130,7 +150,7 @@ export default defineNuxtConfig({
       github: true
     },
 
-    // Billing (Stripe)
+    // Billing (Stripe) - always organization-based
     billing: {
       enabled: true,
       plans: [

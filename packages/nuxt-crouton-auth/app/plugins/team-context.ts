@@ -8,7 +8,6 @@
  * - $croutonAuth.getTeamId() - Get current team ID
  * - $croutonAuth.getTeamSlug() - Get current team slug
  * - $croutonAuth.getTeam() - Get full team object
- * - $croutonAuth.mode - Get current auth mode
  *
  * Collections can use this to scope queries and mutations to the current team.
  *
@@ -20,7 +19,7 @@
  * ```
  */
 import type { Team } from '../../types'
-import type { CroutonAuthConfig, AuthMode } from '../../types/config'
+import type { CroutonAuthConfig } from '../../types/config'
 
 export interface CroutonAuthContext {
   /**
@@ -40,11 +39,6 @@ export interface CroutonAuthContext {
    * Returns null if no team context is available
    */
   getTeam: () => Team | null
-
-  /**
-   * Get the current auth mode
-   */
-  mode: 'multi-tenant' | 'single-tenant' | 'personal'
 
   /**
    * Check if team context is available
@@ -76,13 +70,6 @@ function getPluginAuthConfig(): CroutonAuthConfig | undefined {
 }
 
 export default defineNuxtPlugin((nuxtApp) => {
-  const config = getPluginAuthConfig()
-  const configMode = config?.mode
-  // Validate mode is one of the expected values
-  const mode: AuthMode = (configMode === 'multi-tenant' || configMode === 'single-tenant' || configMode === 'personal')
-    ? configMode
-    : 'personal'
-
   // Create the context object
   const croutonAuth: CroutonAuthContext = {
     getTeamId: () => {
@@ -123,8 +110,6 @@ export default defineNuxtPlugin((nuxtApp) => {
         return null
       }
     },
-
-    mode,
 
     hasTeamContext: () => {
       return croutonAuth.getTeamId() !== null

@@ -7,10 +7,10 @@ let mockRoute = {
   params: { team: 'test-team' }
 }
 
-// Mock runtime config
+// Mock runtime config (mode removed - always use [team] in URLs)
 let mockRuntimeConfig = {
   public: {
-    crouton: { auth: { mode: 'multi-tenant' } }
+    crouton: { auth: {} }
   }
 }
 
@@ -43,7 +43,7 @@ describe('useTeamContext', () => {
     }
     mockRuntimeConfig = {
       public: {
-        crouton: { auth: { mode: 'multi-tenant' } }
+        crouton: { auth: {} }
       }
     }
     mockUseTeam = null
@@ -179,31 +179,13 @@ describe('useTeamContext', () => {
   })
 
   describe('useTeamInUrl', () => {
-    it('returns true for multi-tenant mode', () => {
-      mockRuntimeConfig = {
-        public: {
-          crouton: { auth: { mode: 'multi-tenant' } }
-        }
-      }
-
+    it('always returns true (team always in URL)', () => {
       const { useTeamInUrl } = useTeamContext()
 
       expect(useTeamInUrl.value).toBe(true)
     })
 
-    it('returns false for single-tenant mode', () => {
-      mockRuntimeConfig = {
-        public: {
-          crouton: { auth: { mode: 'single-tenant' } }
-        }
-      }
-
-      const { useTeamInUrl } = useTeamContext()
-
-      expect(useTeamInUrl.value).toBe(false)
-    })
-
-    it('returns false when mode not set', () => {
+    it('returns true regardless of config', () => {
       mockRuntimeConfig = {
         public: {
           crouton: {}
@@ -212,57 +194,38 @@ describe('useTeamContext', () => {
 
       const { useTeamInUrl } = useTeamContext()
 
-      expect(useTeamInUrl.value).toBe(false)
+      expect(useTeamInUrl.value).toBe(true)
     })
   })
 
   describe('buildDashboardUrl', () => {
-    it('includes team slug in multi-tenant mode', () => {
-      mockRuntimeConfig = {
-        public: {
-          crouton: { auth: { mode: 'multi-tenant' } }
-        }
-      }
-
+    it('always includes team slug in URL', () => {
       const { buildDashboardUrl } = useTeamContext()
 
       expect(buildDashboardUrl('/settings')).toBe('/dashboard/test-team/settings')
     })
 
-    it('excludes team in single-tenant mode', () => {
-      mockRuntimeConfig = {
-        public: {
-          crouton: { auth: { mode: 'single-tenant' } }
-        }
-      }
-
-      const { buildDashboardUrl } = useTeamContext()
-
-      expect(buildDashboardUrl('/settings')).toBe('/dashboard/settings')
-    })
-
     it('handles path without leading slash', () => {
-      mockRuntimeConfig = {
-        public: {
-          crouton: { auth: { mode: 'multi-tenant' } }
-        }
-      }
-
       const { buildDashboardUrl } = useTeamContext()
 
       expect(buildDashboardUrl('bookings')).toBe('/dashboard/test-team/bookings')
     })
 
     it('allows team slug override', () => {
-      mockRuntimeConfig = {
-        public: {
-          crouton: { auth: { mode: 'multi-tenant' } }
-        }
+      const { buildDashboardUrl } = useTeamContext()
+
+      expect(buildDashboardUrl('/settings', 'other-team')).toBe('/dashboard/other-team/settings')
+    })
+
+    it('falls back to /dashboard when no team available', () => {
+      mockRoute = {
+        path: '/super-admin',
+        params: {}
       }
 
       const { buildDashboardUrl } = useTeamContext()
 
-      expect(buildDashboardUrl('/settings', 'other-team')).toBe('/dashboard/other-team/settings')
+      expect(buildDashboardUrl('/settings')).toBe('/dashboard/settings')
     })
   })
 

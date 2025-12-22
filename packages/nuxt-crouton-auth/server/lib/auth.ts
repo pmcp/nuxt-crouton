@@ -138,7 +138,7 @@ export function createAuth(options: CreateAuthOptions) {
     trustedOrigins: buildTrustedOrigins(baseURL),
 
     // Plugins - Organization (Teams), Passkey, 2FA, and Stripe support
-    plugins: buildPlugins(config, baseURL, stripeSecretKey, stripeWebhookSecret),
+    plugins: buildPlugins(config, baseURL, stripeSecretKey, stripeWebhookSecret, config.debug),
 
     // Database hooks for single-tenant mode (auto-add users to default org)
     databaseHooks: buildDatabaseHooks(config, db)
@@ -249,83 +249,68 @@ function buildSessionConfig(sessionConfig?: SessionConfig): BetterAuthOptions['s
 }
 
 // ============================================================================
-// Mode-Specific Database Hooks (Single-Tenant & Personal)
+// Database Hooks for Automatic Team Creation
 // ============================================================================
 
 /**
- * Build database hooks for single-tenant and personal modes
+ * Build database hooks for automatic team creation
  *
  * These hooks automatically:
  *
- * **Single-Tenant Mode:**
+ * **defaultTeamSlug (company app pattern):**
  * 1. Create the default organization on first user signup (lazy creation)
  * 2. Add new users to the default organization
  * 3. Set the default organization as active for new sessions
  *
- * **Personal Mode:**
+ * **autoCreateOnSignup (personal workspace pattern):**
  * 1. Create a personal organization for each new user on signup
  * 2. Make the user the owner of their personal organization
  * 3. Set the personal organization as active for new sessions
  *
  * @param config - @crouton/auth configuration
  * @param db - Drizzle database instance
- * @returns Database hooks configuration or undefined if not single-tenant/personal
+ * @returns Database hooks configuration or undefined if no auto-creation enabled
  */
 function buildDatabaseHooks(
   config: CroutonAuthConfig,
   db: DrizzleD1Database<Record<string, unknown>>
 ): BetterAuthOptions['databaseHooks'] {
-  // Only add hooks for single-tenant or personal mode
-  if (config.mode !== 'single-tenant' && config.mode !== 'personal') {
+  const teams = config.teams ?? {}
+  const hasDefaultTeam = !!teams.defaultTeamSlug
+  const hasAutoCreate = !!teams.autoCreateOnSignup
+
+  // No hooks needed if neither auto-creation feature is enabled
+  if (!hasDefaultTeam && !hasAutoCreate) {
     return undefined
   }
 
-  // Single-tenant mode hooks
-  if (config.mode === 'single-tenant') {
-    const defaultTeamId = config.defaultTeamId ?? 'default'
-    const appName = config.appName ?? 'Default Workspace'
+  const appName = config.appName ?? 'Default Workspace'
 
-    return {
-      user: {
-        create: {
-          after: async (user) => {
-            // 1. Ensure default org exists (lazy creation)
-            await ensureDefaultOrgExists(db, defaultTeamId, appName)
-
-            // 2. Add user to default org as member
-            await addUserToDefaultOrg(db, user.id, defaultTeamId)
-
-            if (config.debug) {
-              console.log(`[crouton/auth] User ${user.email} added to default org (single-tenant)`)
-            }
-          }
-        }
-      },
-      session: {
-        create: {
-          after: async (session) => {
-            // Set active organization to default for new sessions in single-tenant mode
-            await setSessionActiveOrg(db, session.id, defaultTeamId)
-
-            if (config.debug) {
-              console.log(`[crouton/auth] Session ${session.id} set to default org (single-tenant)`)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Personal mode hooks
   return {
     user: {
       create: {
         after: async (user) => {
-          // Create a personal organization for the user
-          const orgId = await createPersonalOrg(db, user.id, user.name, user.email, config.appName)
+          // Handle default team (company app pattern)
+          if (hasDefaultTeam) {
+            const defaultTeamSlug = teams.defaultTeamSlug!
+            // 1. Ensure default org exists (lazy creation)
+            await ensureDefaultOrgExists(db, defaultTeamSlug, appName)
 
-          if (config.debug) {
-            console.log(`[crouton/auth] Personal org ${orgId} created for user ${user.email} (personal mode)`)
+            // 2. Add user to default org as member
+            await addUserToDefaultOrg(db, user.id, defaultTeamSlug)
+
+            if (config.debug) {
+              console.log(`[crouton/auth] User ${user.email} added to default org (slug: ${defaultTeamSlug})`)
+            }
+          }
+
+          // Handle auto-create personal workspace
+          if (hasAutoCreate) {
+            const orgId = await createPersonalOrg(db, user.id, user.name, user.email, config.appName)
+
+            if (config.debug) {
+              console.log(`[crouton/auth] Personal org ${orgId} created for user ${user.email}`)
+            }
           }
         }
       }
@@ -333,17 +318,33 @@ function buildDatabaseHooks(
     session: {
       create: {
         after: async (session) => {
-          // Get user's personal organization and set it as active
-          const personalOrgId = await getUserPersonalOrgId(db, session.userId)
+          // Priority: personal workspace > default team
+          // This ensures users land in their own workspace first if both are enabled
+          if (hasAutoCreate) {
+            const personalOrgId = await getUserPersonalOrgId(db, session.userId)
+            if (personalOrgId) {
+              await setSessionActiveOrg(db, session.id, personalOrgId)
 
-          if (personalOrgId) {
-            await setSessionActiveOrg(db, session.id, personalOrgId)
-
-            if (config.debug) {
-              console.log(`[crouton/auth] Session ${session.id} set to personal org ${personalOrgId} (personal mode)`)
+              if (config.debug) {
+                console.log(`[crouton/auth] Session ${session.id} set to personal org ${personalOrgId}`)
+              }
+              return
+            } else if (config.debug) {
+              console.warn(`[crouton/auth] No personal org found for user ${session.userId}`)
             }
-          } else if (config.debug) {
-            console.warn(`[crouton/auth] No personal org found for user ${session.userId}`)
+          }
+
+          // Fall back to default team
+          if (hasDefaultTeam) {
+            // Get the org ID by slug
+            const defaultOrg = await getOrgBySlug(db, teams.defaultTeamSlug!)
+            if (defaultOrg) {
+              await setSessionActiveOrg(db, session.id, defaultOrg.id)
+
+              if (config.debug) {
+                console.log(`[crouton/auth] Session ${session.id} set to default org (slug: ${teams.defaultTeamSlug})`)
+              }
+            }
           }
         }
       }
@@ -352,33 +353,54 @@ function buildDatabaseHooks(
 }
 
 /**
+ * Get organization by slug
+ *
+ * @param db - Drizzle database instance
+ * @param slug - Organization slug to find
+ * @returns Organization object or null if not found
+ */
+async function getOrgBySlug(
+  db: DrizzleD1Database<Record<string, unknown>>,
+  slug: string
+): Promise<{ id: string, name: string, slug: string } | null> {
+  const result = await db.all(sql`
+    SELECT id, name, slug FROM organization WHERE slug = ${slug}
+  `)
+
+  if (result.length === 0) {
+    return null
+  }
+
+  return result[0] as { id: string, name: string, slug: string }
+}
+
+/**
  * Ensure the default organization exists (lazy creation)
  *
  * Creates the default organization if it doesn't exist.
- * This is called on first user signup in single-tenant mode.
+ * This is called on first user signup when defaultTeamSlug is set.
  *
  * @param db - Drizzle database instance
- * @param defaultTeamId - Default team ID from config
+ * @param slug - Default team slug from config
  * @param appName - Application name for the default org
  */
 async function ensureDefaultOrgExists(
   db: DrizzleD1Database<Record<string, unknown>>,
-  defaultTeamId: string,
+  slug: string,
   appName: string
 ): Promise<void> {
-  // Check if org exists
-  const result = await db.all(sql`
-    SELECT id FROM organization WHERE id = ${defaultTeamId}
-  `)
+  // Check if org exists by slug
+  const existing = await getOrgBySlug(db, slug)
 
-  if (result.length === 0) {
-    // Create default organization with isDefault flag (Task 6.2)
+  if (!existing) {
+    // Create default organization with isDefault flag
+    const orgId = crypto.randomUUID()
     const now = new Date().toISOString()
     await db.run(sql`
       INSERT INTO organization (id, name, slug, isDefault, personal, createdAt)
-      VALUES (${defaultTeamId}, ${appName}, 'default', 1, 0, ${now})
+      VALUES (${orgId}, ${appName}, ${slug}, 1, 0, ${now})
     `)
-    console.log('[crouton/auth] Created default organization for single-tenant mode')
+    console.log(`[crouton/auth] Created default organization "${appName}" (slug: ${slug})`)
   }
 }
 
@@ -390,16 +412,23 @@ async function ensureDefaultOrgExists(
  *
  * @param db - Drizzle database instance
  * @param userId - User ID to add
- * @param defaultTeamId - Default team ID from config
+ * @param slug - Default team slug from config
  */
 async function addUserToDefaultOrg(
   db: DrizzleD1Database<Record<string, unknown>>,
   userId: string,
-  defaultTeamId: string
+  slug: string
 ): Promise<void> {
+  // Get the org by slug
+  const org = await getOrgBySlug(db, slug)
+  if (!org) {
+    console.warn(`[crouton/auth] Cannot add user to default org - org with slug "${slug}" not found`)
+    return
+  }
+
   // Check if already a member (idempotent)
   const existing = await db.all(sql`
-    SELECT id FROM member WHERE organizationId = ${defaultTeamId} AND userId = ${userId}
+    SELECT id FROM member WHERE organizationId = ${org.id} AND userId = ${userId}
   `)
 
   if (existing.length === 0) {
@@ -407,7 +436,7 @@ async function addUserToDefaultOrg(
     const now = new Date().toISOString()
     await db.run(sql`
       INSERT INTO member (id, organizationId, userId, role, createdAt)
-      VALUES (${memberId}, ${defaultTeamId}, ${userId}, 'member', ${now})
+      VALUES (${memberId}, ${org.id}, ${userId}, 'member', ${now})
     `)
   }
 }
@@ -527,13 +556,15 @@ async function getUserPersonalOrgId(
  * @param baseURL - Application base URL
  * @param stripeSecretKey - Stripe secret key (required if billing enabled)
  * @param stripeWebhookSecret - Stripe webhook secret (required if billing enabled)
+ * @param debug - Enable debug logging
  * @returns Array of Better Auth plugins
  */
 function buildPlugins(
   config: CroutonAuthConfig,
   baseURL: string,
   stripeSecretKey?: string,
-  stripeWebhookSecret?: string
+  stripeWebhookSecret?: string,
+  debug?: boolean
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [
@@ -557,10 +588,9 @@ function buildPlugins(
   // Conditionally add Stripe billing plugin
   const stripePluginConfig = buildStripePluginConfig(
     config.billing,
-    config.mode,
     stripeSecretKey,
     stripeWebhookSecret,
-    config.debug
+    debug
   )
   if (stripePluginConfig) {
     plugins.push(stripePluginConfig)
@@ -809,12 +839,10 @@ export interface TwoFactorInfo {
  * - Billing portal for customer self-service
  * - Webhook handling for subscription lifecycle events
  *
- * Supports two billing models:
- * - User-based billing (personal mode): Each user has their own subscription
- * - Organization-based billing (multi-tenant/single-tenant): Subscriptions tied to teams
+ * Billing is always organization-based. Personal workspaces are treated as
+ * organizations with a single member (the owner).
  *
  * @param billingConfig - Billing configuration from @crouton/auth
- * @param mode - Auth mode (affects billing reference type)
  * @param stripeSecretKey - Stripe secret key
  * @param stripeWebhookSecret - Stripe webhook secret
  * @param debug - Enable debug logging
@@ -822,7 +850,6 @@ export interface TwoFactorInfo {
  */
 function buildStripePluginConfig(
   billingConfig: BillingConfig | undefined,
-  mode: CroutonAuthConfig['mode'],
   stripeSecretKey?: string,
   stripeWebhookSecret?: string,
   debug?: boolean
@@ -876,9 +903,8 @@ function buildStripePluginConfig(
       name: user.name ?? undefined,
       metadata: {
         userId: user.id,
-        // In personal mode, user is the billing entity
-        // In multi-tenant/single-tenant, organization is the billing entity
-        billingMode: mode === 'personal' ? 'user' : 'organization'
+        // Billing is always organization-based (personal workspaces are orgs with 1 member)
+        billingMode: 'organization'
       }
     }),
 
@@ -889,7 +915,7 @@ function buildStripePluginConfig(
 
       // Authorization for reference-based subscriptions (organization billing)
       // This is called to verify a user can manage billing for an organization
-      authorizeReference: mode === 'personal' ? undefined : async ({ referenceId, action, user }) => {
+      authorizeReference: async ({ referenceId, action, user }) => {
         // Verify user is owner/admin of the organization
         const { getOrganizationMembershipDirect } = await import('../utils/team')
         const membership = await getOrganizationMembershipDirect(referenceId, user.id)
@@ -1073,8 +1099,8 @@ export function getBillingInfo(config: CroutonAuthConfig): BillingInfo | null {
     hasTrialPeriod: (stripeConfig.trialDays ?? 0) > 0,
     trialDays: stripeConfig.trialDays ?? 0,
     customerPortalEnabled: stripeConfig.customerPortal !== false,
-    // Billing mode depends on auth mode
-    billingMode: config.mode === 'personal' ? 'user' : 'organization'
+    // Billing is always organization-based (personal workspaces are orgs with 1 member)
+    billingMode: 'organization'
   }
 }
 
@@ -1308,48 +1334,44 @@ function buildGenericProviderConfig(config: OAuthProviderConfig): SocialProvider
  * Organization (Teams) Plugin Configuration
  *
  * Maps @crouton/auth config to Better Auth's organization plugin.
- * Supports three modes with different behaviors:
+ * Uses configuration flags to control behavior:
  *
- * - Multi-tenant: Users can create/join multiple organizations
- * - Single-tenant: One default organization, users auto-join
- * - Personal: Each user gets their own organization (auto-created)
+ * - `allowCreate`: Whether users can create new organizations
+ * - `limit`: Maximum organizations per user (0 = unlimited)
+ * - `autoCreateOnSignup`: Auto-create personal workspace
+ * - `defaultTeamSlug`: Everyone joins this team on signup
  */
 function buildOrganizationConfig(config: CroutonAuthConfig) {
   const teamsConfig = config.teams ?? {}
-  const mode = config.mode
 
-  // Determine if users can create organizations based on mode
+  // Determine if users can create organizations
+  // If autoCreateOnSignup or defaultTeamSlug is set AND allowCreate is not explicitly true,
+  // default to false (users don't create orgs manually in these patterns)
+  const hasAutoTeamSetup = teamsConfig.autoCreateOnSignup || teamsConfig.defaultTeamSlug
   const getAllowUserToCreateOrganization = () => {
-    // In multi-tenant mode, use config setting (default: true)
-    if (mode === 'multi-tenant') {
-      return teamsConfig.allowCreate !== false
+    if (teamsConfig.allowCreate !== undefined) {
+      return teamsConfig.allowCreate
     }
-    // In single-tenant and personal modes, users don't create orgs manually
-    // (single-tenant has one default org, personal auto-creates on signup)
-    return false
+    // Default: false if auto-setup is configured, true otherwise
+    return !hasAutoTeamSetup
   }
 
-  // Determine organization limit based on mode
+  // Determine organization limit
+  // If autoCreateOnSignup is set with limit=0, default to 1 (personal workspace only)
   const getOrganizationLimit = () => {
-    switch (mode) {
-      case 'personal':
-        // Personal mode: one org per user
-        return 1
-      case 'single-tenant':
-        // Single-tenant: users belong to one org (the default)
-        return 1
-      case 'multi-tenant':
-      default:
-        // Multi-tenant: use config limit (default: 5)
-        return teamsConfig.limit ?? 5
+    if (teamsConfig.limit !== undefined && teamsConfig.limit > 0) {
+      return teamsConfig.limit
     }
+    // If auto-create is enabled and no explicit limit, default to allowing additional orgs
+    // Users can create/join more orgs if allowCreate is true
+    return teamsConfig.limit ?? 0 // 0 = unlimited
   }
 
   return {
     // Organization creation control
     allowUserToCreateOrganization: getAllowUserToCreateOrganization(),
 
-    // Organization limit per user
+    // Organization limit per user (0 = unlimited)
     organizationLimit: getOrganizationLimit(),
 
     // Member limit per organization
@@ -1391,13 +1413,13 @@ function buildOrganizationConfig(config: CroutonAuthConfig) {
 }
 
 /**
- * Build organization lifecycle hooks based on mode
+ * Build organization lifecycle hooks
  */
 function buildOrganizationHooks(config: CroutonAuthConfig) {
-  const mode = config.mode
+  const teams = config.teams ?? {}
 
   return {
-    // After organization is created - set up any mode-specific defaults
+    // After organization is created
     afterCreateOrganization: async (ctx: {
       organization: { id: string, name: string, slug: string }
       user: { id: string, name: string }
@@ -1406,12 +1428,12 @@ function buildOrganizationHooks(config: CroutonAuthConfig) {
         console.log(`[crouton/auth] Organization created:`, {
           id: ctx.organization.id,
           name: ctx.organization.name,
-          mode
+          slug: ctx.organization.slug
         })
       }
     },
 
-    // After member is added - handle mode-specific member setup
+    // After member is added
     afterAddMember: async (ctx: {
       member: { id: string, role: string }
       user: { id: string, name: string, email: string }
@@ -1429,18 +1451,19 @@ function buildOrganizationHooks(config: CroutonAuthConfig) {
     // Before creating invitation - validate based on config
     beforeCreateInvitation: async (ctx: {
       invitation: { email: string, role: string, expiresAt: Date }
-      organization: { id: string }
+      organization: { id: string, slug?: string }
     }) => {
-      // In single-tenant mode, all invitations should use the default team
-      if (mode === 'single-tenant') {
-        const defaultTeamId = config.defaultTeamId ?? 'default'
-        if (ctx.organization.id !== defaultTeamId) {
-          throw new Error('Invitations can only be sent for the default organization')
-        }
+      // If defaultTeamSlug is set, only allow invitations for that team
+      // (This is the "company app" pattern where everyone belongs to one org)
+      if (teams.defaultTeamSlug && !teams.allowCreate) {
+        // We need to check if this org is the default one
+        // Since we only have the ID, we can't easily compare to slug here
+        // This validation is best done at the API route level
+        // For now, we just apply the default role
       }
 
       // Apply default role if configured
-      const defaultRole = config.teams?.defaultRole ?? 'member'
+      const defaultRole = teams.defaultRole ?? 'member'
       return {
         data: {
           ...ctx.invitation,

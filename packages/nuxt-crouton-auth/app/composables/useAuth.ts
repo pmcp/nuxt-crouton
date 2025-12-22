@@ -94,17 +94,17 @@ export function useAuth() {
   /**
    * Refresh session with retry for activeOrganization
    *
-   * In personal/single-tenant modes, the database hook sets activeOrganizationId
-   * AFTER the session response is sent. This causes a timing issue where the
-   * initial refresh doesn't include the org. We retry after a delay to allow
-   * the hook to complete and the session to be updated in the database.
+   * When auto-creating workspaces or using default teams, the database hook sets
+   * activeOrganizationId AFTER the session response is sent. This causes a timing
+   * issue where the initial refresh doesn't include the org. We retry after a delay
+   * to allow the hook to complete and the session to be updated in the database.
    */
   async function refreshWithOrgRetry(maxRetries = 3, delayMs = 200): Promise<void> {
     await refresh()
 
-    // Only retry for personal/single-tenant modes
-    const mode = config?.mode ?? 'multi-tenant'
-    if (mode === 'multi-tenant') {
+    // Only retry if auto-creating workspaces or using default team
+    const hasAutoSetup = config?.teams?.autoCreateOnSignup || config?.teams?.defaultTeamSlug
+    if (!hasAutoSetup) {
       return
     }
 
@@ -125,7 +125,6 @@ export function useAuth() {
   if (debug) {
     console.log('[@crouton/auth] useAuth: initialized', {
       hasConfig: !!config,
-      mode: config?.mode,
       hasAuthClient: !!authClient
     })
   }

@@ -49,8 +49,8 @@ const {
 
 const { buildDashboardUrl } = useTeamContext()
 
-// Show in multi-tenant mode (regardless of team count)
-const showSwitcher = computed(() => config?.mode === 'multi-tenant')
+// Show switcher based on config (default: show if multiple teams exist)
+const showSwitcher = computed(() => config?.teams?.showSwitcher !== false)
 
 // Create team modal state
 const showCreateModal = ref(false)

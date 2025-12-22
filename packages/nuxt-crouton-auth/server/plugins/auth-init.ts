@@ -25,5 +25,10 @@ export default defineNitroPlugin(async () => {
     return
   }
 
-  console.log(`[@crouton/auth] Auth plugin initialized (mode: ${authConfig.mode})`)
+  const teamsConfig = authConfig.teams ?? {}
+  console.log(`[@crouton/auth] Auth plugin initialized`, {
+    autoCreateOnSignup: teamsConfig.autoCreateOnSignup,
+    defaultTeamSlug: teamsConfig.defaultTeamSlug,
+    allowCreate: teamsConfig.allowCreate
+  })
 })

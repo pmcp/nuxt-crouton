@@ -53,12 +53,12 @@ describe('useAuthConfig', () => {
     })
   })
 
-  describe('useAuthMode', () => {
-    it('should return multi-tenant when configured', () => {
+  describe('useAuthMode (deprecated - infers mode from flags)', () => {
+    it('should infer multi-tenant when allowCreate is true', () => {
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {
           crouton: {
-            auth: { mode: 'multi-tenant' }
+            auth: { teams: { allowCreate: true, showSwitcher: true } }
           }
         }
       }))
@@ -67,11 +67,11 @@ describe('useAuthConfig', () => {
       expect(mode).toBe('multi-tenant')
     })
 
-    it('should return single-tenant when configured', () => {
+    it('should infer single-tenant when defaultTeamSlug is set and allowCreate is false', () => {
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {
           crouton: {
-            auth: { mode: 'single-tenant' }
+            auth: { teams: { defaultTeamSlug: 'acme', allowCreate: false } }
           }
         }
       }))
@@ -80,20 +80,21 @@ describe('useAuthConfig', () => {
       expect(mode).toBe('single-tenant')
     })
 
-    it('should return personal as default when not configured', () => {
+    it('should return multi-tenant as default when not configured', () => {
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {}
       }))
 
       const mode = useAuthMode()
-      expect(mode).toBe('personal')
+      // Default behavior is multi-tenant (allowCreate: true by default)
+      expect(mode).toBe('multi-tenant')
     })
 
-    it('should return personal for invalid mode', () => {
+    it('should infer personal when autoCreateOnSignup is true and allowCreate is false', () => {
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {
           crouton: {
-            auth: { mode: 'invalid-mode' }
+            auth: { teams: { autoCreateOnSignup: true, allowCreate: false } }
           }
         }
       }))
@@ -103,12 +104,12 @@ describe('useAuthConfig', () => {
     })
   })
 
-  describe('useIsMultiTenant', () => {
-    it('should return true for multi-tenant mode', () => {
+  describe('useIsMultiTenant (deprecated - checks allowCreate flag)', () => {
+    it('should return true when allowCreate is true', () => {
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {
           crouton: {
-            auth: { mode: 'multi-tenant' }
+            auth: { teams: { allowCreate: true } }
           }
         }
       }))
@@ -116,11 +117,11 @@ describe('useAuthConfig', () => {
       expect(useIsMultiTenant()).toBe(true)
     })
 
-    it('should return false for single-tenant mode', () => {
+    it('should return false when allowCreate is false', () => {
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {
           crouton: {
-            auth: { mode: 'single-tenant' }
+            auth: { teams: { allowCreate: false } }
           }
         }
       }))
@@ -128,16 +129,17 @@ describe('useAuthConfig', () => {
       expect(useIsMultiTenant()).toBe(false)
     })
 
-    it('should return false for personal mode', () => {
+    it('should return true by default (allowCreate defaults to true)', () => {
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {
           crouton: {
-            auth: { mode: 'personal' }
+            auth: {}
           }
         }
       }))
 
-      expect(useIsMultiTenant()).toBe(false)
+      // allowCreate is not explicitly false, so it's considered true
+      expect(useIsMultiTenant()).toBe(true)
     })
   })
 

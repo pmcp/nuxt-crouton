@@ -125,10 +125,10 @@ export const verification = sqliteTable('verification', {
 /**
  * Organization table - Teams/workspaces
  *
- * Stores organization (team) data. In @crouton/auth:
- * - Multi-tenant: Users create/join multiple organizations
- * - Single-tenant: One default organization for all users (isDefault = true)
- * - Personal: One organization per user (personal = true, auto-created)
+ * Stores organization (team) data. Configuration flags control behavior:
+ * - teams.allowCreate=true: Users can create multiple organizations
+ * - teams.defaultTeamSlug: All users join this org on signup (isDefault = true)
+ * - teams.autoCreateOnSignup: Auto-create personal workspace (personal = true)
  */
 export const organization = sqliteTable('organization', {
   id: text('id').primaryKey(),
@@ -137,10 +137,10 @@ export const organization = sqliteTable('organization', {
   logo: text('logo'),
   metadata: text('metadata'), // JSON string for additional data
 
-  // Mode-specific flags (Task 6.2)
-  /** True if this is a personal workspace (personal mode) */
+  // Organization type flags
+  /** True if this is a personal workspace (autoCreateOnSignup config) */
   personal: integer('personal', { mode: 'boolean' }).notNull().default(false),
-  /** True if this is the default organization (single-tenant mode) */
+  /** True if this is the default organization (defaultTeamSlug config) */
   isDefault: integer('isDefault', { mode: 'boolean' }).notNull().default(false),
   /** Owner user ID for personal workspaces */
   ownerId: text('ownerId'),
@@ -150,9 +150,9 @@ export const organization = sqliteTable('organization', {
   index('organization_slug_idx').on(table.slug),
   // Index for finding personal workspaces by owner
   index('organization_owner_idx').on(table.ownerId),
-  // Index for finding the default organization (single-tenant mode)
+  // Index for finding the default organization (defaultTeamSlug config)
   index('organization_default_idx').on(table.isDefault),
-  // Index for filtering personal workspaces
+  // Index for filtering personal workspaces (autoCreateOnSignup config)
   index('organization_personal_idx').on(table.personal)
 ])
 

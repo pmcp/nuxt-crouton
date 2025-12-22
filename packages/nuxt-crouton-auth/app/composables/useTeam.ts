@@ -146,19 +146,20 @@ export function useTeam() {
     return member?.role as MemberRole ?? null
   })
 
-  // Mode-aware computed properties
+  // Flag-based computed properties
   const showTeamSwitcher = computed(() => {
-    return config?.mode === 'multi-tenant' && teams.value.length > 1
+    if (config?.teams?.showSwitcher === false) return false
+    return teams.value.length > 1
   })
 
   const showTeamManagement = computed(() => {
-    return config?.mode === 'multi-tenant'
+    return config?.teams?.showManagement !== false
   })
 
   const canCreateTeam = computed(() => {
-    if (config?.mode !== 'multi-tenant') return false
     if (config?.teams?.allowCreate === false) return false
-    const limit = config?.teams?.limit ?? 5
+    const limit = config?.teams?.limit ?? 0 // 0 = unlimited
+    if (limit === 0) return true
     return teams.value.length < limit
   })
 

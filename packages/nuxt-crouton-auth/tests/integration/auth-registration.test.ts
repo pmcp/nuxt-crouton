@@ -6,7 +6,7 @@
  * - Password validation
  * - Email verification
  * - Password reset flow
- * - Mode-specific behavior (personal workspace creation)
+ * - Config-specific behavior (auto-create workspace, default team)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
@@ -273,7 +273,7 @@ describe('Integration: Registration Flow', () => {
     })
   })
 
-  describe('Registration in Multi-Tenant Mode', () => {
+  describe('Registration with Team Creation Enabled', () => {
     it('should allow team creation after registration', async () => {
       const user = createTestUser({ id: 'new-user-id' })
       const session = createTestSession({ userId: user.id })
@@ -299,14 +299,14 @@ describe('Integration: Registration Flow', () => {
     })
   })
 
-  describe('Registration in Personal Mode', () => {
+  describe('Registration with Auto-Create Workspace', () => {
     it('should auto-create personal workspace on registration', async () => {
-      // Configure personal mode
+      // Configure autoCreateOnSignup
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {
           crouton: {
             auth: {
-              mode: 'personal',
+              teams: { autoCreateOnSignup: true, allowCreate: false },
               methods: { password: true }
             }
           }
@@ -336,15 +336,14 @@ describe('Integration: Registration Flow', () => {
     })
   })
 
-  describe('Registration in Single-Tenant Mode', () => {
+  describe('Registration with Default Team', () => {
     it('should auto-add to default team on registration', async () => {
-      // Configure single-tenant mode
+      // Configure defaultTeamSlug
       vi.stubGlobal('useRuntimeConfig', () => ({
         public: {
           crouton: {
             auth: {
-              mode: 'single-tenant',
-              defaultTeamId: 'default',
+              teams: { defaultTeamSlug: 'default', allowCreate: false },
               methods: { password: true }
             }
           }
@@ -392,7 +391,7 @@ describe('Integration: Registration Flow', () => {
         public: {
           crouton: {
             auth: {
-              mode: 'multi-tenant',
+              teams: { allowCreate: true },
               methods: { password: false, oauth: { github: {} } }
             }
           }

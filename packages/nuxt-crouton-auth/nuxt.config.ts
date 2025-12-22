@@ -27,7 +27,6 @@ export default defineNuxtConfig({
     public: {
       crouton: {
         auth: {
-          mode: 'personal' as const,
           methods: {
             password: true,
             oauth: undefined,
@@ -36,9 +35,13 @@ export default defineNuxtConfig({
             magicLink: false
           },
           teams: {
+            autoCreateOnSignup: false,
+            defaultTeamSlug: undefined,
             allowCreate: true,
-            limit: 5,
-            memberLimit: 100
+            limit: 0, // 0 = unlimited
+            memberLimit: 100,
+            showSwitcher: true,
+            showManagement: true
           },
           billing: {
             enabled: false

@@ -2,7 +2,7 @@
  * @crouton/auth Configuration Types
  *
  * Configuration interface for the @crouton/auth Nuxt layer.
- * Supports three operational modes: multi-tenant, single-tenant, and personal.
+ * Uses a unified "everything is a team" model where configuration flags control behavior.
  */
 
 // ============================================================================
@@ -179,39 +179,111 @@ export interface AuthMethodsConfig {
 
 /**
  * Team (organization) configuration
+ *
+ * Common patterns:
+ * - SaaS (multi-tenant): `{ allowCreate: true, showSwitcher: true }`
+ * - Company app (single-tenant): `{ defaultTeamSlug: 'acme-corp', allowCreate: false, showSwitcher: false }`
+ * - Personal app: `{ autoCreateOnSignup: true, allowCreate: false, showSwitcher: false }`
  */
 export interface TeamsConfig {
+  // =========================================================================
+  // Team Creation Behavior (replaces mode)
+  // =========================================================================
+
+  /**
+   * Auto-create a personal workspace on user signup
+   *
+   * When true, each new user gets their own workspace automatically.
+   * The workspace is marked with `personal: true` and `ownerId: userId`.
+   *
+   * Use case: Personal productivity apps where each user has their own space.
+   *
+   * @default false
+   */
+  autoCreateOnSignup?: boolean
+
+  /**
+   * Default team slug that all users join on signup
+   *
+   * When set, all new users are automatically added to this team.
+   * The team is auto-created on first boot if it doesn't exist.
+   *
+   * Use case: Company apps where everyone belongs to one team.
+   *
+   * @example 'acme-corp'
+   * @default undefined
+   */
+  defaultTeamSlug?: string
+
+  // =========================================================================
+  // Team Creation Permissions
+  // =========================================================================
+
   /**
    * Allow users to create new teams
-   * Multi-tenant: true by default
-   * Single-tenant/Personal: false by default
+   *
+   * @default true
    */
   allowCreate?: boolean
+
   /**
-   * Maximum number of teams per user (default: 5)
-   * Only applies to multi-tenant mode
+   * Maximum number of teams per user (0 = unlimited)
+   *
+   * @default 0 (unlimited)
    */
   limit?: number
+
+  // =========================================================================
+  // UI Display Options
+  // =========================================================================
+
+  /**
+   * Show team switcher in UI
+   *
+   * Set to false for single-team experiences where users don't need to switch.
+   *
+   * @default true
+   */
+  showSwitcher?: boolean
+
+  /**
+   * Show team management UI (settings, members, etc.)
+   *
+   * Set to false to hide team settings from users.
+   *
+   * @default true
+   */
+  showManagement?: boolean
+
+  // =========================================================================
+  // Team Membership Settings
+  // =========================================================================
+
   /**
    * Maximum members per team (default: 100)
    */
   memberLimit?: number
+
   /**
    * Require email invitation to join team (default: true)
    */
   requireInvite?: boolean
+
   /**
    * Invitation link expiry in seconds (default: 172800 = 48 hours)
    */
   invitationExpiry?: number
+
   /**
    * Require email verification before accepting invitations (default: false)
    */
   requireEmailVerification?: boolean
+
   /**
    * Default role for new members (default: 'member')
    */
   defaultRole?: 'member' | 'admin'
+
   /**
    * Available roles in the team
    */
@@ -353,65 +425,38 @@ export interface SessionConfig {
 // ============================================================================
 
 /**
- * Authentication mode
- *
- * - `multi-tenant`: Users can create/join multiple organizations
- * - `single-tenant`: One organization, multiple users (team/company app)
- * - `personal`: One organization per user (personal productivity app)
- */
-export type AuthMode = 'multi-tenant' | 'single-tenant' | 'personal'
-
-/**
  * Main @crouton/auth configuration interface
  *
- * @example
+ * Uses a unified "everything is a team" model. Configuration flags in `teams`
+ * control behavior instead of discrete modes.
+ *
+ * @example SaaS (multi-tenant style)
  * ```typescript
- * // nuxt.config.ts
- * export default defineNuxtConfig({
- *   crouton: {
- *     auth: {
- *       mode: 'multi-tenant',
- *       methods: {
- *         password: true,
- *         oauth: {
- *           github: { clientId: '...', clientSecret: '...' }
- *         },
- *         passkeys: true,
- *         twoFactor: true
- *       },
- *       billing: {
- *         enabled: true,
- *         provider: 'stripe'
- *       }
- *     }
- *   }
- * })
+ * croutonAuth: {
+ *   teams: { allowCreate: true, showSwitcher: true },
+ *   methods: { password: true, oauth: { github: {...} } }
+ * }
+ * ```
+ *
+ * @example Company app (single-tenant style)
+ * ```typescript
+ * croutonAuth: {
+ *   teams: { defaultTeamSlug: 'acme-corp', allowCreate: false, showSwitcher: false }
+ * }
+ * ```
+ *
+ * @example Personal app
+ * ```typescript
+ * croutonAuth: {
+ *   teams: { autoCreateOnSignup: true, allowCreate: false, showSwitcher: false }
+ * }
  * ```
  */
 export interface CroutonAuthConfig {
   /**
-   * Authentication mode
+   * Application name
    *
-   * - `multi-tenant`: Users can create/join multiple organizations (SaaS apps)
-   * - `single-tenant`: One organization, multiple users (team/company apps)
-   * - `personal`: One organization per user (personal productivity apps)
-   *
-   * @default 'personal'
-   */
-  mode: AuthMode
-
-  /**
-   * Default team ID for single-tenant mode
-   *
-   * In single-tenant mode, this is the ID of the default organization
-   * that all users belong to. Auto-created on first boot if not exists.
-   *
-   * @default 'default'
-   */
-  defaultTeamId?: string
-
-  /**
-   * Application name (used for default team name in single-tenant mode)
+   * Used for auto-created team names and display purposes.
    *
    * @example 'My Company App'
    */
@@ -424,6 +469,9 @@ export interface CroutonAuthConfig {
 
   /**
    * Team (organization) configuration
+   *
+   * Controls team creation behavior, permissions, and UI display.
+   * See TeamsConfig for common patterns.
    */
   teams?: TeamsConfig
 
@@ -448,6 +496,16 @@ export interface CroutonAuthConfig {
    */
   debug?: boolean
 }
+
+/**
+ * @deprecated Use TeamsConfig flags instead of AuthMode.
+ *
+ * Migration guide:
+ * - `mode: 'multi-tenant'` → `teams: { allowCreate: true, showSwitcher: true }`
+ * - `mode: 'single-tenant'` → `teams: { defaultTeamSlug: 'slug', allowCreate: false, showSwitcher: false }`
+ * - `mode: 'personal'` → `teams: { autoCreateOnSignup: true, allowCreate: false, showSwitcher: false }`
+ */
+export type AuthMode = 'multi-tenant' | 'single-tenant' | 'personal'
 
 // ============================================================================
 // Runtime Configuration Types

@@ -2,12 +2,11 @@
  * Server Team Context Middleware
  *
  * Automatically resolves team context for API routes and injects
- * it into `event.context.team` based on the configured auth mode.
+ * it into `event.context.team`.
  *
- * Mode-specific behavior:
- * - Multi-tenant: Resolves from URL param ([team] or [id]) or session
- * - Single-tenant: Always uses the default team
- * - Personal: Uses user's personal workspace from session
+ * Resolution strategy (unified):
+ * 1. Check URL params first: [team] or [id] route params
+ * 2. Fall back to session's active organization
  *
  * Note: This middleware runs on all routes but only populates context
  * for authenticated requests. API routes should use `requireTeamMember()`
@@ -23,16 +22,11 @@ declare module 'h3' {
     team?: Team | null
     teamId?: string | null
     teamSlug?: string | null
-    authMode?: 'multi-tenant' | 'single-tenant' | 'personal'
   }
 }
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
-  const mode = config?.mode ?? 'multi-tenant'
-
-  // Set the auth mode in context for downstream use
-  event.context.authMode = mode
 
   // Skip for non-API routes (let Nuxt handle pages)
   const path = getRequestPath(event)
@@ -61,36 +55,18 @@ export default defineEventHandler(async (event) => {
     let teamId: string | null = null
     let teamSlug: string | null = null
 
-    switch (mode) {
-      case 'single-tenant':
-        // Always use the default team
-        teamId = config?.defaultTeamId ?? 'default'
-        teamSlug = 'default'
-        break
+    // Unified resolution: URL param first, then session's active org
+    // Check URL params: /api/teams/[id]/... or /dashboard/[team]/...
+    const urlTeamParam = getRouterParam(event, 'id') ?? getRouterParam(event, 'team')
 
-      case 'personal':
-        // Use session's active org (personal workspace)
-        // Note: activeOrganizationId is added by organization plugin but not in base session type
-        teamId = (session.session as Record<string, unknown>).activeOrganizationId as string | null ?? null
-        // Slug will be resolved from team data below
-        break
-
-      case 'multi-tenant':
-      default: {
-        // Check URL params first: /api/teams/[id]/... or /dashboard/[team]/...
-        const urlTeamParam = getRouterParam(event, 'id') ?? getRouterParam(event, 'team')
-
-        if (urlTeamParam) {
-          // URL param could be ID or slug
-          teamId = urlTeamParam
-          teamSlug = urlTeamParam
-        } else {
-          // Fall back to session's active org
-          // Note: activeOrganizationId is added by organization plugin but not in base session type
-          teamId = (session.session as Record<string, unknown>).activeOrganizationId as string | null ?? null
-        }
-        break
-      }
+    if (urlTeamParam) {
+      // URL param could be ID or slug
+      teamId = urlTeamParam
+      teamSlug = urlTeamParam
+    } else {
+      // Fall back to session's active org
+      // Note: activeOrganizationId is added by organization plugin but not in base session type
+      teamId = (session.session as Record<string, unknown>).activeOrganizationId as string | null ?? null
     }
 
     // Store in context
@@ -103,7 +79,7 @@ export default defineEventHandler(async (event) => {
 
     // Debug logging
     if (config?.debug) {
-      console.log(`[@crouton/auth] Server team context: mode=${mode}, teamId=${teamId}, teamSlug=${teamSlug}`)
+      console.log(`[@crouton/auth] Server team context: teamId=${teamId}, teamSlug=${teamSlug}`)
     }
   } catch {
     // Don't throw - just log and continue without team context
