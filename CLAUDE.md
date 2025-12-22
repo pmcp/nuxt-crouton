@@ -389,6 +389,24 @@ New Agent: "I see Task 1.5 is complete. Starting Task 1.6..."
 - **Architecture**: Domain-Driven Design with Nuxt Layers
 - **Testing**: Vitest + Playwright
 
+## Critical Gotchas (DO NOT MAKE THESE MISTAKES)
+
+### NuxtHub Database Config
+**ALWAYS use `hub: { db: 'sqlite' }` — NEVER use `hub: { database: true }`**
+
+```typescript
+// ✅ CORRECT - works for local dev and migrations
+hub: { db: 'sqlite' }
+
+// ❌ WRONG - causes "Cannot resolve entry module .nuxt/hub/db/schema.entry.ts"
+hub: { database: true }
+```
+
+The `database: true` option does NOT work for local development. It causes migration failures because the schema entry file is never generated. Use `db: 'sqlite'` for:
+- Local SQLite development without wrangler
+- Database migrations (`npx nuxt db generate/migrate`)
+- Avoiding Cloudflare dependencies during local dev
+
 ## MANDATORY: TypeScript Checking
 **EVERY agent and Claude Code MUST run `npx nuxt typecheck` after making changes**
 - Run after creating/modifying Vue components
