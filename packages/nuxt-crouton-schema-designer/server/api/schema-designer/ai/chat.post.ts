@@ -11,7 +11,8 @@
 import { streamText } from 'ai'
 
 export default defineEventHandler(async (event) => {
-  const { messages, systemPrompt, model = 'claude-sonnet-4-5-20241022' } = await readBody(event)
+  const body = await readBody(event)
+  const { messages, systemPrompt, model = 'claude-sonnet-4-5-20250929' } = body
 
   // createAIProvider is auto-imported from nuxt-crouton-ai layer
   // @ts-expect-error - auto-imported by nitro when AI layer is extended
@@ -38,11 +39,10 @@ export default defineEventHandler(async (event) => {
     })
 
     return result.toDataStreamResponse()
-  } catch (e) {
-    console.error('AI streaming error:', e)
+  } catch (e: any) {
     throw createError({
       statusCode: 500,
-      statusMessage: e instanceof Error ? e.message : 'AI request failed'
+      statusMessage: e?.message || 'AI request failed'
     })
   }
 })

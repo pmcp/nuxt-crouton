@@ -132,7 +132,8 @@ export function useSchemaAI() {
       // @ts-expect-error - useChat may not be available if nuxt-crouton-ai isn't installed
       chatInstance = useChat({
         api: '/api/schema-designer/ai/chat',
-        model: 'claude-sonnet-4-5-20241022',
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-5-20250929',
         onFinish: (message: { content: string }) => {
           // Final sync when streaming completes
           syncFromAIResponse(message.content, true)

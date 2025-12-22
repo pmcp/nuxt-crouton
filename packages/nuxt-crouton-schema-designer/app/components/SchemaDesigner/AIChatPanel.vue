@@ -4,6 +4,7 @@ const {
   input,
   isLoading,
   isAIAvailable,
+  error,
   sendMessage,
   clearChat,
   updateInput
@@ -149,6 +150,17 @@ function handleKeydown(e: KeyboardEvent) {
                   <span class="w-2 h-2 bg-[var(--ui-text-muted)] rounded-full animate-bounce" style="animation-delay: 150ms" />
                   <span class="w-2 h-2 bg-[var(--ui-text-muted)] rounded-full animate-bounce" style="animation-delay: 300ms" />
                 </div>
+              </div>
+            </div>
+
+            <!-- Error Message -->
+            <div v-if="error" class="flex gap-3 justify-start">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+                <UIcon name="i-lucide-alert-circle" class="text-red-500" />
+              </div>
+              <div class="max-w-[85%] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                <p class="font-medium">Error</p>
+                <p class="text-xs mt-1">{{ error.message }}</p>
               </div>
             </div>
           </template>
