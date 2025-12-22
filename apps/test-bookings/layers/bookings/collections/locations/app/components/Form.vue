@@ -36,17 +36,10 @@
     :schema="schema"
     :state="state"
     @submit="handleSubmit"
-    @error="handleValidationError"
   >
-    <CroutonFormLayout :tabs="tabs" :navigation-items="navigationItems" :tab-errors="tabErrorCounts" v-model="activeSection">
-      <template #main="{ activeSection }">
-      <div v-show="!tabs || activeSection === 'address'" class="flex flex-col gap-4 p-1">
-        <UFormField label="Zip" name="zip" class="not-last:pb-4">
-          <UInput v-model="state.zip" class="w-full" size="xl" />
-        </UFormField>
-      </div>
-
-      <div v-show="!tabs || activeSection === 'scheduling'" class="flex flex-col gap-4 p-1">
+    <CroutonFormLayout>
+      <template #main>
+      <div class="flex flex-col gap-4 p-1">
         <UFormField label="Slots" name="slots" class="not-last:pb-4">
           <CroutonFormRepeater
             v-model="state.slots"
@@ -62,10 +55,11 @@
 
       <CroutonI18nInput
         v-model="state.translations"
-        :fields="['title', 'street', 'city', 'content']"
+        :fields="['title', 'street', 'zip', 'city', 'content']"
         :default-values="{
           title: state.title || '',
           street: state.street || '',
+          zip: state.zip || '',
           city: state.city || '',
           content: state.content || ''
         }"
@@ -110,19 +104,11 @@
       </template>
 
       <template #footer>
-        <CroutonValidationErrorSummary
-          v-if="validationErrors.length > 0"
-          :tab-errors="tabErrorCounts"
-          :navigation-items="navigationItems"
-          @switch-tab="switchToTab"
-        />
-
         <CroutonFormActionButton
           :action="action"
           :collection="collection"
           :items="items"
           :loading="loading"
-          :has-validation-errors="validationErrors.length > 0"
         />
       </template>
     </CroutonFormLayout>
@@ -137,46 +123,9 @@ const props = defineProps<BookingsLocationFormProps>()
 const { defaultValue, schema, collection } = useBookingsLocations()
 
 // Form layout configuration
-const navigationItems = [
-  { label: 'Address', value: 'address' },
-  { label: 'Scheduling', value: 'scheduling' }
-]
+const tabs = ref(false)
 
-const tabs = ref(true)
-const activeSection = ref('address')
 
-// Map field names to their tab groups for error tracking
-const fieldToGroup: Record<string, string> = {
-  'zip': 'address',
-  'slots': 'scheduling'
-}
-
-// Track validation errors for tab indicators
-const validationErrors = ref<Array<{ name: string; message: string }>>([])
-
-// Handle form validation errors
-const handleValidationError = (event: any) => {
-  if (event?.errors) {
-    validationErrors.value = event.errors
-  }
-}
-
-// Compute errors per tab
-const tabErrorCounts = computed(() => {
-  const counts: Record<string, number> = {}
-
-  validationErrors.value.forEach(error => {
-    const tabName = fieldToGroup[error.name] || 'general'
-    counts[tabName] = (counts[tabName] || 0) + 1
-  })
-
-  return counts
-})
-
-// Switch to a specific tab (for clicking error links)
-const switchToTab = (tabValue: string) => {
-  activeSection.value = tabValue
-}
 
 // Use new mutation composable for data operations
 const { create, update, deleteItems } = useCollectionMutation(collection)
@@ -200,9 +149,6 @@ const handleSubmit = async () => {
     } else if (props.action === 'delete') {
       await deleteItems(props.items)
     }
-
-    // Clear validation errors on successful submission
-    validationErrors.value = []
 
     close()
 

@@ -42,6 +42,9 @@
     <template #street-cell="{ row }">
       {{ t(row.original, 'street') }}
     </template>
+    <template #zip-cell="{ row }">
+      {{ t(row.original, 'zip') }}
+    </template>
     <template #city-cell="{ row }">
       {{ t(row.original, 'city') }}
     </template>
@@ -69,7 +72,7 @@
       <CroutonMapsPreview :location="row.original.location" />
     </template>
     <template #translations-cell="{ row }">
-      <CroutonI18nListCards :item="row.original" :fields="['title', 'street', 'city', 'content']" />
+      <CroutonI18nListCards :item="row.original" :fields="['title', 'street', 'zip', 'city', 'content']" />
     </template>
   </CroutonCollection>
 </template>

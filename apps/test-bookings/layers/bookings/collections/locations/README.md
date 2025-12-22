@@ -15,7 +15,7 @@
 
 ## Features
 
-- Multi-language support for: title, street, city, content
+- Multi-language support for: title, street, zip, city, content
 - Repeater fields: slots
 
 ## File Structure

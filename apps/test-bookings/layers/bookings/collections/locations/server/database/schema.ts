@@ -16,7 +16,7 @@ const jsonColumn = customType<any>({
     return JSON.stringify(value)
   },
 })
-// Note: This collection has translatable fields: title, street, city, content
+// Note: This collection has translatable fields: title, street, zip, city, content
 // Translations are stored in a JSON field without indexes for performance baseline
 
 export const bookingsLocations = sqliteTable('bookings_locations', {
@@ -42,6 +42,7 @@ export const bookingsLocations = sqliteTable('bookings_locations', {
     [locale: string]: {
       title?: string
       street?: string
+      zip?: string
       city?: string
       content?: string
     }

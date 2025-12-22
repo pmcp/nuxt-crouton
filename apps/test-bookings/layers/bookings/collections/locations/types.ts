@@ -36,8 +36,8 @@ export interface BookingsLocation {
   allowedMemberIds?: string[]
   slots?: any[]
   inventoryMode?: boolean
-  quantity?: string[] | null
-  translations?: Record<string, { title?: string; street?: string; city?: string; content?: string }>
+  quantity?: number
+  translations?: Record<string, { title?: string; street?: string; zip?: string; city?: string; content?: string }>
   locale?: string
   createdAt: Date
   updatedAt: Date

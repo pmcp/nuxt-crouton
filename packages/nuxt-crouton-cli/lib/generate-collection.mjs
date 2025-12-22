@@ -510,27 +510,9 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
 
     if (!collectionsBlockRegex.test(content)) {
       // No croutonCollections block yet, add one
-      // Check for external connector imports (e.g., usersConfig) and preserve them
-      const externalConnectorImports = content.match(/import\s+\{\s*(\w+Config)\s*\}\s+from\s+['"]@friendlyinternet\/nuxt-crouton-supersaas\//g)
-      let additionalEntries = ''
-
-      if (externalConnectorImports) {
-        for (const importLine of externalConnectorImports) {
-          const configMatch = importLine.match(/\{\s*(\w+Config)\s*\}/)
-          if (configMatch) {
-            const configName = configMatch[1]
-            const collectionName = configName.replace('Config', '')
-            // Only add if not already in content
-            if (!content.includes(`${collectionName}:`)) {
-              additionalEntries += `    ${collectionName}: ${configName},\n`
-            }
-          }
-        }
-      }
-
       content = content.replace(
         'defineAppConfig({',
-        `defineAppConfig({\n  croutonCollections: {\n${additionalEntries}${entryLine}\n  },`
+        `defineAppConfig({\n  croutonCollections: {\n${entryLine}\n  },`
       )
     } else {
       content = content.replace(collectionsBlockRegex, match => `${match}${entryLine}\n`)
@@ -949,8 +931,10 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
       const regularFieldsSchema = fields
         .filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name))
         .map((f) => {
-          // Check if this is a dependent field (should be treated as array)
-          const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
+          // Check if this is a collection-dependent field (should be treated as array)
+          // Only fields with dependsOnCollection or slotButtonGroup displayAs should be arrays
+          // Simple dependsOn (for UI visibility) should keep their original type
+          const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
 
           // Override Zod schema for dependent fields to use array
           const baseZod = isDependentField ? 'z.array(z.string())' : f.zod
@@ -1034,8 +1018,10 @@ ${translationsFieldSchema}
     })(),
     fieldsDefault: (() => {
       let fieldDefaults = fields.filter(f => f.name !== 'id').map((f) => {
-        // Check if this is a dependent field (should default to null, not empty string)
-        const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
+        // Check if this is a collection-dependent field (should default to null, not empty string)
+        // Only fields with dependsOnCollection or slotButtonGroup displayAs should default to null
+        // Simple dependsOn (for UI visibility) should use their normal defaults
+        const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
         if (isDependentField) {
           return `${f.name}: null`
         }
@@ -1064,8 +1050,10 @@ ${translationsFieldSchema}
       return baseColumns + translationsColumn
     })(),
     fieldsTypes: fields.filter(f => f.name !== 'id').map((f) => {
-      // Check if this is a dependent field (should be string[] | null)
-      const isDependentField = f.meta?.dependsOn || f.meta?.displayAs === 'slotButtonGroup'
+      // Check if this is a collection-dependent field (should be string[] | null)
+      // Only fields with dependsOnCollection or slotButtonGroup displayAs should use array type
+      // Simple dependsOn (for UI visibility) should use their normal type
+      const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
       const tsType = isDependentField ? 'string[] | null' : f.tsType
       return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
     }).join('\n  '),
@@ -1547,60 +1535,6 @@ async function main() {
       if (!validation.valid) {
         console.error('\n⛔ Cannot proceed with generation due to validation errors\n')
         process.exit(1)
-      }
-
-      // Detect external collection references (e.g., :users, :teams)
-      // Note: detectExternalReferences scans schemas for adapter-scoped refs
-      // For now, we skip this step as the connector system is not fully implemented
-      const externalRefs = new Map()
-
-      if (externalRefs.size > 0) {
-        console.log(`✓ Found ${externalRefs.size} external collection(s):`)
-        console.log(formatExternalReferences(externalRefs))
-        console.log()
-
-        // Process each external reference
-        for (const [collectionName, usingCollections] of externalRefs) {
-          const recommendations = getConnectorRecommendations(collectionName)
-
-          // Check if connector is configured
-          const connectorConfig = config.connectors?.[collectionName]
-
-          if (connectorConfig && config.flags?.autoConnectors) {
-            // Config-based mode: Auto-install without prompting
-            console.log(`\n↻ Setting up connector for '${collectionName}' (${connectorConfig.type})...`)
-
-            const projectRoot = process.cwd()
-
-            // Install package if needed
-            if (connectorConfig.autoInstall) {
-              await installConnectorPackage(projectRoot)
-            }
-
-            // Setup connector via layer (no file copying)
-            console.log(`📦 Setting up ${collectionName} connector from package...`)
-
-            // Add connector layer to nuxt.config
-            await addConnectorToNuxtConfig(projectRoot)
-
-            // Update app.config to import from package
-            await updateAppConfigWithPackageImport(projectRoot, collectionName, connectorConfig.type)
-
-            console.log(`✓ ${collectionName} connector configured via layer`)
-
-            console.log(`✓ Connector '${collectionName}' setup complete`)
-          } else if (!config.flags?.autoConnectors) {
-            // Interactive mode: Prompt user
-            await setupConnectorInteractive(process.cwd(), collectionName, recommendations)
-          } else {
-            console.log(`⊘ No connector configured for '${collectionName}' - skipping`)
-            console.log(`  ℹ  You'll need to set this up manually or configure in crouton.config.js`)
-          }
-        }
-
-        console.log(`\n${'─'.repeat(60)}\n`)
-      } else {
-        console.log(`✓ No external references detected\n`)
       }
 
       // Handle both config formats

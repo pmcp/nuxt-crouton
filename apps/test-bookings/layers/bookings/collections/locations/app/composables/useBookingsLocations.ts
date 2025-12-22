@@ -27,14 +27,14 @@ import { z } from 'zod'
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const bookingsLocationSchema = z.object({
-  zip: z.string().optional(),
   location: z.string().optional(),
   allowedMemberIds: z.array(z.string()).optional(),
   slots: z.array(z.any()).optional(),
   inventoryMode: z.boolean().optional(),
-  quantity: z.array(z.string()).optional(),
+  quantity: z.number().optional(),
   title: z.string().optional(),
   street: z.string().optional(),
+  zip: z.string().optional(),
   city: z.string().optional(),
   content: z.string().optional(),
   translations: z.record(
@@ -42,6 +42,7 @@ export const bookingsLocationSchema = z.object({
     z.object({
       title: z.string().min(1, 'Title is required'),
       street: z.string().optional(),
+      zip: z.string().optional(),
       city: z.string().optional(),
       content: z.string().optional()
     })
@@ -81,17 +82,13 @@ const _bookingsLocationsConfig = {
     allowedMemberIds: [],
     slots: [],
     inventoryMode: false,
-    quantity: null,
+    quantity: 0,
     translations: {}
   },
   columns: bookingsLocationsColumns,
   dependentFieldComponents: {
     slots: 'BookingsLocationsSlotSelect',
     quantity: 'BookingsLocationsQuantitySelect'
-  },
-  sortable: {
-    enabled: true,
-    orderField: 'order'
   },
 }
 
