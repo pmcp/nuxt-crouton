@@ -43,7 +43,7 @@ const PREVIEW_PROPS: Record<string, { props?: Record<string, any>; slots?: Recor
   UNavigationMenu: { props: { items: [{ label: 'Home' }, { label: 'About' }, { label: 'Contact' }] } },
   UCalendar: { props: {} },
   UCarousel: { props: { items: [{ src: '' }, { src: '' }] } },
-  UTable: { props: { data: [{ id: 1, name: 'Item 1' }, { id: 2, name: 'Item 2' }], columns: [{ key: 'id', label: 'ID' }, { key: 'name', label: 'Name' }] } },
+  UTable: { props: { data: [{ id: 1, name: 'Item 1' }, { id: 2, name: 'Item 2' }], columns: [{ id: 'id', accessorKey: 'id', header: 'ID' }, { id: 'name', accessorKey: 'name', header: 'Name' }] } },
   UTimeline: { props: { items: [{ title: 'Event 1' }, { title: 'Event 2' }] } },
   UTree: { props: { items: [{ label: 'Root', children: [{ label: 'Child' }] }] } },
   UUser: { props: { name: 'John Doe', description: 'Developer' } },

@@ -3,33 +3,124 @@ import type { NodeProps } from '@vue-flow/core'
 import type { ComponentNodeData, ThemeName, VariantName } from '~/composables/useCanvasNodes'
 import { THEMES, VARIANTS } from '~/composables/useCanvasNodes'
 
+// Import Nuxt UI components from #components (Nuxt's auto-import system)
+import {
+  UAccordion,
+  UAlert,
+  UAvatar,
+  UAvatarGroup,
+  UBadge,
+  UBreadcrumb,
+  UButton,
+  UButtonGroup,
+  UCalendar,
+  UCard,
+  UCarousel,
+  UCheckbox,
+  UCheckboxGroup,
+  UChip,
+  UCollapsible,
+  UColorPicker,
+  UIcon,
+  UInput,
+  UInputMenu,
+  UInputNumber,
+  UInputTags,
+  UKbd,
+  ULink,
+  UNavigationMenu,
+  UPagination,
+  UPinInput,
+  UPopover,
+  UProgress,
+  URadioGroup,
+  USelect,
+  USelectMenu,
+  USeparator,
+  USkeleton,
+  USlider,
+  UStepper,
+  USwitch,
+  UTable,
+  UTabs,
+  UTextarea,
+  UTimeline,
+  UTooltip,
+  UTree,
+} from '#components'
+
 const props = defineProps<NodeProps<ComponentNodeData>>()
 
 const { updateNodeData, getComputedVariant, removeNode } = useCanvasNodes()
 
-// Local state for selectors
-const selectedTheme = ref<ThemeName>(props.data.theme)
-const selectedVariant = ref<VariantName>(props.data.baseVariant)
+// Writable computed refs - reactive to prop changes + update node data on set
+const selectedTheme = computed({
+  get: () => props.data.theme,
+  set: (value: ThemeName) => updateNodeData(props.id, { theme: value })
+})
+
+const selectedVariant = computed({
+  get: () => props.data.baseVariant,
+  set: (value: VariantName) => updateNodeData(props.id, { baseVariant: value })
+})
 
 // Computed variant for the actual component
 const computedVariant = computed(() => {
   return getComputedVariant(selectedTheme.value, selectedVariant.value)
 })
 
-// Update node data when selections change
-watch([selectedTheme, selectedVariant], ([theme, variant]) => {
-  updateNodeData(props.id, { theme, baseVariant: variant })
-})
-
-// Resolve all components at setup time from registry
-const { componentNames } = useComponentRegistry()
-const componentMap: Record<string, ReturnType<typeof resolveComponent>> = Object.fromEntries(
-  componentNames.map(name => [name, resolveComponent(name)])
-)
+// Component map using the imported components
+// Using 'any' because Nuxt UI components have complex generic slot types
+// that don't match Vue's Component type exactly
+const componentMap: Record<string, any> = {
+  UAccordion,
+  UAlert,
+  UAvatar,
+  UAvatarGroup,
+  UBadge,
+  UBreadcrumb,
+  UButton,
+  UButtonGroup,
+  UCalendar,
+  UCard,
+  UCarousel,
+  UCheckbox,
+  UCheckboxGroup,
+  UChip,
+  UCollapsible,
+  UColorPicker,
+  UIcon,
+  UInput,
+  UInputMenu,
+  UInputNumber,
+  UInputTags,
+  UKbd,
+  ULink,
+  UNavigationMenu,
+  UPagination,
+  UPinInput,
+  UPopover,
+  UProgress,
+  URadioGroup,
+  USelect,
+  USelectMenu,
+  USeparator,
+  USkeleton,
+  USlider,
+  UStepper,
+  USwitch,
+  UTable,
+  UTabs,
+  UTextarea,
+  UTimeline,
+  UTooltip,
+  UTree,
+}
 
 // Get the resolved component
 const ResolvedComponent = computed(() => {
-  return componentMap[props.data.componentName] || props.data.componentName
+  const name = props.data.componentName
+  return componentMap[name] || name
 })
 
 // Check if component supports slots
