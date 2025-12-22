@@ -1,6 +1,0 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
-
-/* Scan crouton layer components for Tailwind classes */
-@source "../../../node_modules/@friendlyinternet/nuxt-crouton/app/components/**/*.vue";
-@source "../../../node_modules/@friendlyinternet/nuxt-crouton-auth/app/components/**/*.vue";
