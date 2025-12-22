@@ -435,3 +435,186 @@
 .kr-display-text--blink {
   animation: kr-display-blink 1s ease-in-out infinite;
 }
+
+/* ============================================
+   KR-OUTLINE STYLES
+   Bordered, transparent background
+   ============================================ */
+
+.kr-outline {
+  font-family: var(--kr-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  background-color: transparent !important;
+  color: var(--kr-text-dark) !important;
+  border: 2px solid var(--kr-chassis-dark) !important;
+  border-radius: var(--kr-pad-radius) !important;
+  transition: all var(--kr-transition-fast) !important;
+}
+
+.kr-outline:hover {
+  background-color: var(--kr-chassis-light) !important;
+}
+
+.kr-outline:active {
+  transform: translateY(1px) !important;
+}
+
+.kr-outline.kr-outline--mint {
+  border-color: var(--kr-pad-mint) !important;
+  color: #2a9d6d !important;
+}
+
+.kr-outline.kr-outline--mint:hover {
+  background-color: rgba(126, 232, 199, 0.15) !important;
+}
+
+.kr-outline.kr-outline--gold {
+  border-color: var(--kr-pad-gold) !important;
+  color: #9a7832 !important;
+}
+
+.kr-outline.kr-outline--gold:hover {
+  background-color: rgba(212, 168, 83, 0.15) !important;
+}
+
+.kr-outline.kr-outline--coral {
+  border-color: var(--kr-pad-coral) !important;
+  color: #d4614f !important;
+}
+
+.kr-outline.kr-outline--coral:hover {
+  background-color: rgba(255, 154, 139, 0.15) !important;
+}
+
+/* ============================================
+   KR-SOFT STYLES
+   Subtle background, no border
+   ============================================ */
+
+.kr-soft {
+  font-family: var(--kr-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  background-color: var(--kr-chassis-light) !important;
+  color: var(--kr-text-dark) !important;
+  border: none !important;
+  border-radius: var(--kr-pad-radius) !important;
+  transition: all var(--kr-transition-fast) !important;
+}
+
+.kr-soft:hover {
+  background-color: var(--kr-chassis-dark) !important;
+}
+
+.kr-soft:active {
+  transform: translateY(1px) !important;
+}
+
+.kr-soft.kr-soft--mint {
+  background-color: rgba(126, 232, 199, 0.2) !important;
+  color: #2a9d6d !important;
+}
+
+.kr-soft.kr-soft--mint:hover {
+  background-color: rgba(126, 232, 199, 0.35) !important;
+}
+
+.kr-soft.kr-soft--gold {
+  background-color: rgba(212, 168, 83, 0.2) !important;
+  color: #9a7832 !important;
+}
+
+.kr-soft.kr-soft--gold:hover {
+  background-color: rgba(212, 168, 83, 0.35) !important;
+}
+
+.kr-soft.kr-soft--coral {
+  background-color: rgba(255, 154, 139, 0.2) !important;
+  color: #d4614f !important;
+}
+
+.kr-soft.kr-soft--coral:hover {
+  background-color: rgba(255, 154, 139, 0.35) !important;
+}
+
+/* ============================================
+   KR-GHOST STYLES
+   Transparent, text only
+   ============================================ */
+
+.kr-ghost {
+  font-family: var(--kr-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  background-color: transparent !important;
+  color: var(--kr-text-dark) !important;
+  border: none !important;
+  border-radius: var(--kr-pad-radius) !important;
+  transition: all var(--kr-transition-fast) !important;
+}
+
+.kr-ghost:hover {
+  background-color: var(--kr-chassis-light) !important;
+}
+
+.kr-ghost:active {
+  transform: translateY(1px) !important;
+}
+
+.kr-ghost.kr-ghost--mint {
+  color: #2a9d6d !important;
+}
+
+.kr-ghost.kr-ghost--mint:hover {
+  background-color: rgba(126, 232, 199, 0.15) !important;
+}
+
+.kr-ghost.kr-ghost--gold {
+  color: #9a7832 !important;
+}
+
+.kr-ghost.kr-ghost--gold:hover {
+  background-color: rgba(212, 168, 83, 0.15) !important;
+}
+
+.kr-ghost.kr-ghost--coral {
+  color: #d4614f !important;
+}
+
+.kr-ghost.kr-ghost--coral:hover {
+  background-color: rgba(255, 154, 139, 0.15) !important;
+}
+
+/* ============================================
+   KR-LINK STYLES
+   Underlined text link
+   ============================================ */
+
+.kr-link {
+  font-family: var(--kr-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  background-color: transparent !important;
+  color: var(--kr-text-dark) !important;
+  border: none !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  transition: all var(--kr-transition-fast) !important;
+}
+
+.kr-link:hover {
+  text-decoration-thickness: 2px !important;
+}
+
+.kr-link.kr-link--mint {
+  color: #2a9d6d !important;
+}
+
+.kr-link.kr-link--gold {
+  color: #9a7832 !important;
+}
+
+.kr-link.kr-link--coral {
+  color: #d4614f !important;
+}

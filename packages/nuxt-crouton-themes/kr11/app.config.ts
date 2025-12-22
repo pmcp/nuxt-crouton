@@ -9,56 +9,61 @@ export default defineAppConfig({
     },
 
     button: {
-      slots: {
-        base: [
-          'font-medium inline-flex items-center justify-center',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          'transition-all duration-100'
-        ]
-      },
-
+      // Note: No slots.base override - let Nuxt UI handle base classes to avoid hydration mismatches
       variants: {
         variant: {
-          kr11: ''
+          kr11: '',
+          'kr11-solid': '',
+          'kr11-outline': '',
+          'kr11-soft': '',
+          'kr11-ghost': '',
+          'kr11-link': ''
         }
       },
 
       compoundVariants: [
-        // KR11 + Primary (mint green - play button)
-        {
-          color: 'primary',
-          variant: 'kr11',
-          class: 'kr-pad kr-pad--mint'
-        },
-        // KR11 + Neutral (cream pad)
-        {
-          color: 'neutral',
-          variant: 'kr11',
-          class: 'kr-pad'
-        },
-        // KR11 + Warning (golden yellow - fill buttons)
-        {
-          color: 'warning',
-          variant: 'kr11',
-          class: 'kr-pad kr-pad--gold'
-        },
-        // KR11 + Error (coral pink - accent pad)
-        {
-          color: 'error',
-          variant: 'kr11',
-          class: 'kr-pad kr-pad--coral'
-        },
-        // KR11 + Secondary (small mode button style)
-        {
-          color: 'secondary',
-          variant: 'kr11',
-          class: 'kr-mode-btn'
-        },
-        // KR11 default
-        {
-          variant: 'kr11',
-          class: 'kr-pad'
-        }
+        // === BASE KR11 (pad style) ===
+        { color: 'primary', variant: 'kr11', class: 'kr-pad kr-pad--mint' },
+        { color: 'neutral', variant: 'kr11', class: 'kr-pad' },
+        { color: 'warning', variant: 'kr11', class: 'kr-pad kr-pad--gold' },
+        { color: 'error', variant: 'kr11', class: 'kr-pad kr-pad--coral' },
+        { color: 'secondary', variant: 'kr11', class: 'kr-mode-btn' },
+        { variant: 'kr11', class: 'kr-pad' },
+
+        // === KR11-SOLID (same as base) ===
+        { color: 'primary', variant: 'kr11-solid', class: 'kr-pad kr-pad--mint' },
+        { color: 'neutral', variant: 'kr11-solid', class: 'kr-pad' },
+        { color: 'warning', variant: 'kr11-solid', class: 'kr-pad kr-pad--gold' },
+        { color: 'error', variant: 'kr11-solid', class: 'kr-pad kr-pad--coral' },
+        { variant: 'kr11-solid', class: 'kr-pad' },
+
+        // === KR11-OUTLINE ===
+        { color: 'primary', variant: 'kr11-outline', class: 'kr-outline kr-outline--mint' },
+        { color: 'neutral', variant: 'kr11-outline', class: 'kr-outline' },
+        { color: 'warning', variant: 'kr11-outline', class: 'kr-outline kr-outline--gold' },
+        { color: 'error', variant: 'kr11-outline', class: 'kr-outline kr-outline--coral' },
+        { variant: 'kr11-outline', class: 'kr-outline' },
+
+        // === KR11-SOFT ===
+        { color: 'primary', variant: 'kr11-soft', class: 'kr-soft kr-soft--mint' },
+        { color: 'neutral', variant: 'kr11-soft', class: 'kr-soft' },
+        { color: 'warning', variant: 'kr11-soft', class: 'kr-soft kr-soft--gold' },
+        { color: 'error', variant: 'kr11-soft', class: 'kr-soft kr-soft--coral' },
+        { variant: 'kr11-soft', class: 'kr-soft' },
+
+        // === KR11-GHOST ===
+        { color: 'primary', variant: 'kr11-ghost', class: 'kr-ghost kr-ghost--mint' },
+        { color: 'neutral', variant: 'kr11-ghost', class: 'kr-ghost' },
+        { color: 'warning', variant: 'kr11-ghost', class: 'kr-ghost kr-ghost--gold' },
+        { color: 'error', variant: 'kr11-ghost', class: 'kr-ghost kr-ghost--coral' },
+        { variant: 'kr11-ghost', class: 'kr-ghost' },
+
+        // === KR11-LINK ===
+        { color: 'primary', variant: 'kr11-link', class: 'kr-link kr-link--mint' },
+        { color: 'neutral', variant: 'kr11-link', class: 'kr-link' },
+        { color: 'warning', variant: 'kr11-link', class: 'kr-link kr-link--gold' },
+        { color: 'error', variant: 'kr11-link', class: 'kr-link kr-link--coral' },
+        { variant: 'kr11-link', class: 'kr-link' }
       ]
     },
 

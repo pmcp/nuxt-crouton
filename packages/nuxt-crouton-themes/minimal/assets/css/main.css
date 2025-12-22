@@ -233,3 +233,197 @@
 .minimal-hover-lift:hover {
   transform: translateY(-2px);
 }
+
+/* ============================================
+   MINIMAL-OUTLINE STYLES
+   Thin border, transparent background
+   ============================================ */
+
+.minimal-outline {
+  font-family: var(--minimal-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  letter-spacing: -0.01em !important;
+  border-radius: var(--minimal-radius) !important;
+  border: var(--minimal-border-width) solid var(--minimal-black) !important;
+  background-color: transparent !important;
+  color: var(--minimal-black) !important;
+  transition: all var(--minimal-transition) !important;
+}
+
+.minimal-outline:hover {
+  background-color: var(--minimal-gray-100) !important;
+}
+
+.minimal-outline:active {
+  transform: translateY(1px);
+}
+
+.minimal-outline.minimal-outline--primary {
+  border-color: var(--minimal-black) !important;
+  color: var(--minimal-black) !important;
+}
+
+.minimal-outline.minimal-outline--primary:hover {
+  background-color: var(--minimal-black) !important;
+  color: var(--minimal-white) !important;
+}
+
+.minimal-outline.minimal-outline--neutral {
+  border-color: var(--minimal-gray-300) !important;
+  color: var(--minimal-gray-600) !important;
+}
+
+.minimal-outline.minimal-outline--neutral:hover {
+  border-color: var(--minimal-gray-400) !important;
+  background-color: var(--minimal-gray-50) !important;
+}
+
+.minimal-outline.minimal-outline--error {
+  border-color: #dc2626 !important;
+  color: #dc2626 !important;
+}
+
+.minimal-outline.minimal-outline--error:hover {
+  background-color: #fef2f2 !important;
+}
+
+/* ============================================
+   MINIMAL-SOFT STYLES
+   Subtle gray background, no border
+   ============================================ */
+
+.minimal-soft {
+  font-family: var(--minimal-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  letter-spacing: -0.01em !important;
+  border-radius: var(--minimal-radius) !important;
+  border: none !important;
+  background-color: var(--minimal-gray-100) !important;
+  color: var(--minimal-black) !important;
+  transition: all var(--minimal-transition) !important;
+}
+
+.minimal-soft:hover {
+  background-color: var(--minimal-gray-200) !important;
+}
+
+.minimal-soft:active {
+  transform: translateY(1px);
+}
+
+.minimal-soft.minimal-soft--primary {
+  background-color: var(--minimal-gray-900) !important;
+  color: var(--minimal-white) !important;
+}
+
+.minimal-soft.minimal-soft--primary:hover {
+  background-color: var(--minimal-gray-800) !important;
+}
+
+.minimal-soft.minimal-soft--neutral {
+  background-color: var(--minimal-gray-100) !important;
+  color: var(--minimal-gray-700) !important;
+}
+
+.minimal-soft.minimal-soft--neutral:hover {
+  background-color: var(--minimal-gray-200) !important;
+}
+
+.minimal-soft.minimal-soft--error {
+  background-color: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+.minimal-soft.minimal-soft--error:hover {
+  background-color: #fee2e2 !important;
+}
+
+/* ============================================
+   MINIMAL-GHOST STYLES
+   Transparent, text only
+   ============================================ */
+
+.minimal-ghost {
+  font-family: var(--minimal-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  letter-spacing: -0.01em !important;
+  border-radius: var(--minimal-radius) !important;
+  border: none !important;
+  background-color: transparent !important;
+  color: var(--minimal-black) !important;
+  transition: all var(--minimal-transition) !important;
+}
+
+.minimal-ghost:hover {
+  background-color: var(--minimal-gray-100) !important;
+}
+
+.minimal-ghost:active {
+  transform: translateY(1px);
+}
+
+.minimal-ghost.minimal-ghost--primary {
+  color: var(--minimal-black) !important;
+}
+
+.minimal-ghost.minimal-ghost--primary:hover {
+  background-color: var(--minimal-gray-100) !important;
+}
+
+.minimal-ghost.minimal-ghost--neutral {
+  color: var(--minimal-gray-600) !important;
+}
+
+.minimal-ghost.minimal-ghost--neutral:hover {
+  background-color: var(--minimal-gray-50) !important;
+  color: var(--minimal-black) !important;
+}
+
+.minimal-ghost.minimal-ghost--error {
+  color: #dc2626 !important;
+}
+
+.minimal-ghost.minimal-ghost--error:hover {
+  background-color: #fef2f2 !important;
+}
+
+/* ============================================
+   MINIMAL-LINK STYLES
+   Underlined text link
+   ============================================ */
+
+.minimal-link {
+  font-family: var(--minimal-font) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  letter-spacing: -0.01em !important;
+  border: none !important;
+  background-color: transparent !important;
+  color: var(--minimal-black) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  transition: all var(--minimal-transition) !important;
+}
+
+.minimal-link:hover {
+  text-decoration-thickness: 2px !important;
+}
+
+.minimal-link.minimal-link--primary {
+  color: var(--minimal-black) !important;
+}
+
+.minimal-link.minimal-link--neutral {
+  color: var(--minimal-gray-600) !important;
+}
+
+.minimal-link.minimal-link--neutral:hover {
+  color: var(--minimal-black) !important;
+}
+
+.minimal-link.minimal-link--error {
+  color: #dc2626 !important;
+}

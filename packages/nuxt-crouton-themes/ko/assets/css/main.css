@@ -579,3 +579,255 @@
 .ko-card-footer {
   border-top: 1px solid var(--ko-surface-mid) !important;
 }
+
+/* ============================================
+   KO-OUTLINE CLASSES
+   Bordered button with transparent background
+   ============================================ */
+
+.ko-outline {
+  position: relative !important;
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.075em !important;
+  text-transform: uppercase !important;
+  font-size: 0.7em !important;
+  background-color: transparent !important;
+  border: 2px solid var(--ko-surface-dark) !important;
+  border-radius: var(--ko-button-radius) !important;
+  color: var(--ko-text-dark) !important;
+  transition: all 0.1s ease-in-out !important;
+}
+
+.ko-outline:hover {
+  background-color: var(--ko-surface-light) !important;
+}
+
+.ko-outline:active {
+  transform: translateY(1px);
+}
+
+.ko-outline.ko-outline--orange {
+  border-color: var(--ko-accent-orange) !important;
+  color: var(--ko-accent-orange) !important;
+}
+
+.ko-outline.ko-outline--orange:hover {
+  background-color: rgba(250, 95, 40, 0.1) !important;
+}
+
+.ko-outline.ko-outline--dark {
+  border-color: var(--ko-surface-dark) !important;
+  color: var(--ko-text-dark) !important;
+}
+
+.ko-outline.ko-outline--dark:hover {
+  background-color: rgba(84, 82, 81, 0.1) !important;
+}
+
+.ko-outline.ko-outline--red {
+  border-color: var(--ko-accent-red) !important;
+  color: var(--ko-accent-red) !important;
+}
+
+.ko-outline.ko-outline--red:hover {
+  background-color: rgba(241, 38, 24, 0.1) !important;
+}
+
+.ko-outline.ko-outline--pink {
+  border-color: var(--ko-accent-pink) !important;
+  color: var(--ko-accent-pink) !important;
+}
+
+.ko-outline.ko-outline--pink:hover {
+  background-color: rgba(230, 44, 94, 0.1) !important;
+}
+
+.ko-outline.ko-outline--blue {
+  border-color: var(--ko-accent-blue) !important;
+  color: var(--ko-accent-blue) !important;
+}
+
+.ko-outline.ko-outline--blue:hover {
+  background-color: rgba(66, 156, 206, 0.1) !important;
+}
+
+/* ============================================
+   KO-SOFT CLASSES
+   Subtle background, no border
+   ============================================ */
+
+.ko-soft {
+  position: relative !important;
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.075em !important;
+  text-transform: uppercase !important;
+  font-size: 0.7em !important;
+  background-color: var(--ko-surface-light) !important;
+  border: none !important;
+  border-radius: var(--ko-button-radius) !important;
+  color: var(--ko-text-dark) !important;
+  transition: all 0.1s ease-in-out !important;
+}
+
+.ko-soft:hover {
+  background-color: #bfbbb8 !important;
+}
+
+.ko-soft:active {
+  transform: translateY(1px);
+}
+
+.ko-soft.ko-soft--orange {
+  background-color: rgba(250, 95, 40, 0.15) !important;
+  color: var(--ko-accent-orange) !important;
+}
+
+.ko-soft.ko-soft--orange:hover {
+  background-color: rgba(250, 95, 40, 0.25) !important;
+}
+
+.ko-soft.ko-soft--dark {
+  background-color: rgba(84, 82, 81, 0.15) !important;
+  color: var(--ko-text-dark) !important;
+}
+
+.ko-soft.ko-soft--dark:hover {
+  background-color: rgba(84, 82, 81, 0.25) !important;
+}
+
+.ko-soft.ko-soft--red {
+  background-color: rgba(241, 38, 24, 0.15) !important;
+  color: var(--ko-accent-red) !important;
+}
+
+.ko-soft.ko-soft--red:hover {
+  background-color: rgba(241, 38, 24, 0.25) !important;
+}
+
+.ko-soft.ko-soft--pink {
+  background-color: rgba(230, 44, 94, 0.15) !important;
+  color: var(--ko-accent-pink) !important;
+}
+
+.ko-soft.ko-soft--pink:hover {
+  background-color: rgba(230, 44, 94, 0.25) !important;
+}
+
+.ko-soft.ko-soft--blue {
+  background-color: rgba(66, 156, 206, 0.15) !important;
+  color: var(--ko-accent-blue) !important;
+}
+
+.ko-soft.ko-soft--blue:hover {
+  background-color: rgba(66, 156, 206, 0.25) !important;
+}
+
+/* ============================================
+   KO-GHOST CLASSES
+   Transparent background, text color only
+   ============================================ */
+
+.ko-ghost {
+  position: relative !important;
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.075em !important;
+  text-transform: uppercase !important;
+  font-size: 0.7em !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: var(--ko-button-radius) !important;
+  color: var(--ko-text-dark) !important;
+  transition: all 0.1s ease-in-out !important;
+}
+
+.ko-ghost:hover {
+  background-color: rgba(199, 195, 192, 0.3) !important;
+}
+
+.ko-ghost:active {
+  transform: translateY(1px);
+}
+
+.ko-ghost.ko-ghost--orange {
+  color: var(--ko-accent-orange) !important;
+}
+
+.ko-ghost.ko-ghost--orange:hover {
+  background-color: rgba(250, 95, 40, 0.1) !important;
+}
+
+.ko-ghost.ko-ghost--dark {
+  color: var(--ko-text-dark) !important;
+}
+
+.ko-ghost.ko-ghost--dark:hover {
+  background-color: rgba(84, 82, 81, 0.1) !important;
+}
+
+.ko-ghost.ko-ghost--red {
+  color: var(--ko-accent-red) !important;
+}
+
+.ko-ghost.ko-ghost--red:hover {
+  background-color: rgba(241, 38, 24, 0.1) !important;
+}
+
+.ko-ghost.ko-ghost--pink {
+  color: var(--ko-accent-pink) !important;
+}
+
+.ko-ghost.ko-ghost--pink:hover {
+  background-color: rgba(230, 44, 94, 0.1) !important;
+}
+
+.ko-ghost.ko-ghost--blue {
+  color: var(--ko-accent-blue) !important;
+}
+
+.ko-ghost.ko-ghost--blue:hover {
+  background-color: rgba(66, 156, 206, 0.1) !important;
+}
+
+/* ============================================
+   KO-LINK CLASSES
+   Text link style with underline
+   ============================================ */
+
+.ko-link {
+  position: relative !important;
+  font-family: 'ko-tech', sans-serif !important;
+  letter-spacing: 0.075em !important;
+  text-transform: uppercase !important;
+  font-size: 0.7em !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--ko-text-dark) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+  transition: all 0.1s ease-in-out !important;
+}
+
+.ko-link:hover {
+  text-decoration-thickness: 2px !important;
+}
+
+.ko-link.ko-link--orange {
+  color: var(--ko-accent-orange) !important;
+}
+
+.ko-link.ko-link--dark {
+  color: var(--ko-text-dark) !important;
+}
+
+.ko-link.ko-link--red {
+  color: var(--ko-accent-red) !important;
+}
+
+.ko-link.ko-link--pink {
+  color: var(--ko-accent-pink) !important;
+}
+
+.ko-link.ko-link--blue {
+  color: var(--ko-accent-blue) !important;
+}

@@ -9,44 +9,54 @@ export default defineAppConfig({
     },
 
     button: {
-      slots: {
-        base: [
-          'font-medium inline-flex items-center justify-center',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          'transition-all duration-150'
-        ]
-      },
-
+      // Note: No slots.base override - let Nuxt UI handle base classes to avoid hydration mismatches
       variants: {
         variant: {
-          minimal: ''
+          minimal: '',
+          'minimal-solid': '',
+          'minimal-outline': '',
+          'minimal-soft': '',
+          'minimal-ghost': '',
+          'minimal-link': ''
         }
       },
 
       compoundVariants: [
         // Minimal + Primary (black)
-        {
-          color: 'primary',
-          variant: 'minimal',
-          class: 'minimal-btn minimal-btn--primary'
-        },
-        // Minimal + Neutral (gray outline)
-        {
-          color: 'neutral',
-          variant: 'minimal',
-          class: 'minimal-btn minimal-btn--neutral'
-        },
-        // Minimal + Error (black with red text)
-        {
-          color: 'error',
-          variant: 'minimal',
-          class: 'minimal-btn minimal-btn--error'
-        },
-        // Minimal default
-        {
-          variant: 'minimal',
-          class: 'minimal-btn'
-        }
+        { color: 'primary', variant: 'minimal', class: 'minimal-btn minimal-btn--primary' },
+        { color: 'neutral', variant: 'minimal', class: 'minimal-btn minimal-btn--neutral' },
+        { color: 'error', variant: 'minimal', class: 'minimal-btn minimal-btn--error' },
+        { variant: 'minimal', class: 'minimal-btn' },
+
+        // === MINIMAL-SOLID (same as base minimal) ===
+        { color: 'primary', variant: 'minimal-solid', class: 'minimal-btn minimal-btn--primary' },
+        { color: 'neutral', variant: 'minimal-solid', class: 'minimal-btn minimal-btn--neutral' },
+        { color: 'error', variant: 'minimal-solid', class: 'minimal-btn minimal-btn--error' },
+        { variant: 'minimal-solid', class: 'minimal-btn' },
+
+        // === MINIMAL-OUTLINE ===
+        { color: 'primary', variant: 'minimal-outline', class: 'minimal-outline minimal-outline--primary' },
+        { color: 'neutral', variant: 'minimal-outline', class: 'minimal-outline minimal-outline--neutral' },
+        { color: 'error', variant: 'minimal-outline', class: 'minimal-outline minimal-outline--error' },
+        { variant: 'minimal-outline', class: 'minimal-outline' },
+
+        // === MINIMAL-SOFT ===
+        { color: 'primary', variant: 'minimal-soft', class: 'minimal-soft minimal-soft--primary' },
+        { color: 'neutral', variant: 'minimal-soft', class: 'minimal-soft minimal-soft--neutral' },
+        { color: 'error', variant: 'minimal-soft', class: 'minimal-soft minimal-soft--error' },
+        { variant: 'minimal-soft', class: 'minimal-soft' },
+
+        // === MINIMAL-GHOST ===
+        { color: 'primary', variant: 'minimal-ghost', class: 'minimal-ghost minimal-ghost--primary' },
+        { color: 'neutral', variant: 'minimal-ghost', class: 'minimal-ghost minimal-ghost--neutral' },
+        { color: 'error', variant: 'minimal-ghost', class: 'minimal-ghost minimal-ghost--error' },
+        { variant: 'minimal-ghost', class: 'minimal-ghost' },
+
+        // === MINIMAL-LINK ===
+        { color: 'primary', variant: 'minimal-link', class: 'minimal-link minimal-link--primary' },
+        { color: 'neutral', variant: 'minimal-link', class: 'minimal-link minimal-link--neutral' },
+        { color: 'error', variant: 'minimal-link', class: 'minimal-link minimal-link--error' },
+        { variant: 'minimal-link', class: 'minimal-link' }
       ]
     },
 

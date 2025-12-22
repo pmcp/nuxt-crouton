@@ -9,19 +9,16 @@ export default defineAppConfig({
     },
 
     button: {
-      // Extend the base slot with KO font
-      slots: {
-        base: [
-          'rounded-md font-medium inline-flex items-center disabled:cursor-not-allowed aria-disabled:cursor-not-allowed disabled:opacity-75 aria-disabled:opacity-75',
-          'transition-colors'
-        ]
-      },
-
-      // Add 'ko' to the variant options
+      // Add KO variants - base and compound (ko-ghost, ko-outline, etc)
+      // Note: No slots.base override - let Nuxt UI handle base classes to avoid hydration mismatches
       variants: {
         variant: {
-          // KO variant - placeholder, actual styling via compoundVariants
-          ko: ''
+          ko: '',
+          'ko-solid': '',
+          'ko-outline': '',
+          'ko-soft': '',
+          'ko-ghost': '',
+          'ko-link': ''
         }
       },
 
@@ -61,7 +58,47 @@ export default defineAppConfig({
         {
           variant: 'ko',
           class: 'ko-bezel'
-        }
+        },
+
+        // === KO-SOLID (same as base ko) ===
+        { variant: 'ko-solid', color: 'primary', class: 'ko-bezel ko-bezel--orange' },
+        { variant: 'ko-solid', color: 'neutral', class: 'ko-bezel ko-bezel--dark' },
+        { variant: 'ko-solid', color: 'error', class: 'ko-bezel ko-bezel--red' },
+        { variant: 'ko-solid', color: 'secondary', class: 'ko-bezel ko-bezel--pink' },
+        { variant: 'ko-solid', color: 'info', class: 'ko-bezel ko-bezel--blue' },
+        { variant: 'ko-solid', class: 'ko-bezel' },
+
+        // === KO-OUTLINE ===
+        { variant: 'ko-outline', color: 'primary', class: 'ko-outline ko-outline--orange' },
+        { variant: 'ko-outline', color: 'neutral', class: 'ko-outline ko-outline--dark' },
+        { variant: 'ko-outline', color: 'error', class: 'ko-outline ko-outline--red' },
+        { variant: 'ko-outline', color: 'secondary', class: 'ko-outline ko-outline--pink' },
+        { variant: 'ko-outline', color: 'info', class: 'ko-outline ko-outline--blue' },
+        { variant: 'ko-outline', class: 'ko-outline' },
+
+        // === KO-SOFT ===
+        { variant: 'ko-soft', color: 'primary', class: 'ko-soft ko-soft--orange' },
+        { variant: 'ko-soft', color: 'neutral', class: 'ko-soft ko-soft--dark' },
+        { variant: 'ko-soft', color: 'error', class: 'ko-soft ko-soft--red' },
+        { variant: 'ko-soft', color: 'secondary', class: 'ko-soft ko-soft--pink' },
+        { variant: 'ko-soft', color: 'info', class: 'ko-soft ko-soft--blue' },
+        { variant: 'ko-soft', class: 'ko-soft' },
+
+        // === KO-GHOST ===
+        { variant: 'ko-ghost', color: 'primary', class: 'ko-ghost ko-ghost--orange' },
+        { variant: 'ko-ghost', color: 'neutral', class: 'ko-ghost ko-ghost--dark' },
+        { variant: 'ko-ghost', color: 'error', class: 'ko-ghost ko-ghost--red' },
+        { variant: 'ko-ghost', color: 'secondary', class: 'ko-ghost ko-ghost--pink' },
+        { variant: 'ko-ghost', color: 'info', class: 'ko-ghost ko-ghost--blue' },
+        { variant: 'ko-ghost', class: 'ko-ghost' },
+
+        // === KO-LINK ===
+        { variant: 'ko-link', color: 'primary', class: 'ko-link ko-link--orange' },
+        { variant: 'ko-link', color: 'neutral', class: 'ko-link ko-link--dark' },
+        { variant: 'ko-link', color: 'error', class: 'ko-link ko-link--red' },
+        { variant: 'ko-link', color: 'secondary', class: 'ko-link ko-link--pink' },
+        { variant: 'ko-link', color: 'info', class: 'ko-link ko-link--blue' },
+        { variant: 'ko-link', class: 'ko-link' }
       ]
     },
 
