@@ -153,22 +153,19 @@ const themeBackgroundStyle = computed(() => {
 <template>
   <div class="component-node">
     <!-- Header with controls -->
-    <div class="component-node-header">
+    <div class="component-node-header nopan nodrag nowheel">
       <span class="font-mono text-xs opacity-70">{{ data.componentName }}</span>
 
       <div class="flex-1" />
 
-      <!-- Variant selector (theme is global via useThemeSwitcher) -->
-      <!-- Stop pointer events to prevent Vue Flow from capturing clicks -->
-      <div class="nopan nodrag nowheel" @pointerdown.stop @mousedown.stop>
-        <USelectMenu
-          v-model="selectedVariant"
-          :items="VARIANTS"
-          value-key="value"
-          size="xs"
-          class="w-24"
-        />
-      </div>
+      <!-- Variant selector - use USelect instead of USelectMenu for simpler interaction -->
+      <USelect
+        v-model="selectedVariant"
+        :items="VARIANTS"
+        value-key="value"
+        size="xs"
+        class="w-24"
+      />
 
       <!-- Remove button -->
       <UButton
@@ -176,8 +173,7 @@ const themeBackgroundStyle = computed(() => {
         variant="ghost"
         size="xs"
         color="neutral"
-        class="nopan nodrag"
-        @click.stop="removeNode(id)"
+        @click="removeNode(id)"
       />
     </div>
 
