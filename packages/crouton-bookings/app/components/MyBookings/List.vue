@@ -312,6 +312,63 @@ function hasBookingOnDate(date: DateValue): boolean {
   })
 }
 
+// Get bookings for a specific date (respects status filters)
+function getBookingsForDate(date: DateValue): Booking[] {
+  if (!filteredBookings.value.length) return []
+  const dateStr = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+  return filteredBookings.value.filter((b) => {
+    const bookingDate = new Date(b.date)
+    const bookingStr = toLocalDateStr(bookingDate)
+    return bookingStr === dateStr
+  })
+}
+
+// Get unique locations with bookings for a specific date
+interface LocationBooking {
+  locationId: string
+  locationTitle: string
+  bookings: Booking[]
+  slots: SlotItem[]
+  bookedSlotIds: string[]
+}
+
+function getLocationBookingsForDate(date: DateValue): LocationBooking[] {
+  const dateBookings = getBookingsForDate(date)
+  if (dateBookings.length === 0) return []
+
+  // Group bookings by location
+  const locationMap = new Map<string, Booking[]>()
+  dateBookings.forEach((b) => {
+    const existing = locationMap.get(b.location) || []
+    existing.push(b)
+    locationMap.set(b.location, existing)
+  })
+
+  // Convert to array with slot data
+  return Array.from(locationMap.entries()).map(([locationId, locBookings]) => {
+    // Get slots from the first booking's location data (all bookings at same location have same slots)
+    const locationSlots = locBookings[0] ? parseLocationSlots(locBookings[0]) : []
+    // Collect all booked slot IDs from all bookings at this location
+    const bookedIds: string[] = []
+    locBookings.forEach((b) => {
+      const ids = parseBookingSlotIds(b)
+      bookedIds.push(...ids)
+    })
+
+    return {
+      locationId,
+      locationTitle: locBookings[0]?.locationData?.title || 'Unknown',
+      bookings: locBookings,
+      slots: locationSlots.filter(s => s.id !== 'all-day').map(s => ({
+        id: s.id,
+        label: s.label || s.value || s.id,
+        color: s.color || '#94a3b8',
+      })),
+      bookedSlotIds: bookedIds,
+    }
+  })
+}
+
 // When calendar date is selected, check if we need to expand the date range
 watch(selectedDate, (newDate) => {
   if (!newDate) return
@@ -487,8 +544,12 @@ function syncCalendarToScroll() {
       hoveredDate.value = null // Clear day highlight, switch to week highlight
     }
 
-    // Always update selectedDate for highlighting bookings
-    selectedDate.value = bookingDate
+    // Only update selectedDate if it's different (avoids loops)
+    const newDateStr = toLocalDateStr(bookingDate)
+    const currentDateStr = selectedDate.value ? toLocalDateStr(selectedDate.value) : ''
+    if (newDateStr !== currentDateStr) {
+      selectedDate.value = bookingDate
+    }
 
     useTimeoutFn(() => {
       isSyncing.value = false
@@ -509,6 +570,7 @@ useEventListener(scrollContainer, 'scroll', onBookingsScroll, { passive: true })
 
 // Refs for scroll sync
 const scrollAreaRef = useTemplateRef<HTMLElement>('scrollAreaRef')
+const monthCalendar = useTemplateRef('monthCalendar')
 const bookingRefs = new Map<string, HTMLElement>()
 
 // Convert selectedDate (Date | null) to CalendarDate for UCalendar
@@ -602,7 +664,10 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
               ]"
               @click="toggleLocation(loc.id)"
             >
-              <span class="text-xs font-medium">{{ loc.title }}</span>
+              <CroutonBookingLocationCardMini
+                :title="loc.title"
+                :slots="loc.slots"
+              />
             </button>
           </div>
 
@@ -652,10 +717,13 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
             @hover="onDayHover"
           >
             <template #day="{ day }">
-              <div class="mt-1 min-h-[8px] flex items-center justify-center">
-                <div
-                  v-if="hasBookingOnDate(asDateValue(day))"
-                  class="w-1.5 h-1.5 rounded-full bg-primary"
+              <div v-if="hasBookingOnDate(asDateValue(day))" class="flex flex-col gap-0.5">
+                <CroutonBookingSlotIndicator
+                  v-for="lb in getLocationBookingsForDate(asDateValue(day))"
+                  :key="lb.locationId"
+                  :slots="lb.slots"
+                  :booked-slot-ids="lb.bookedSlotIds"
+                  size="sm"
                 />
               </div>
             </template>
@@ -664,6 +732,7 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
           <!-- Month Calendar View -->
           <div v-else>
             <UCalendar
+              ref="monthCalendar"
               v-model="selectedCalendarDate"
               :number-of-months="numberOfMonths"
               size="sm"
@@ -676,10 +745,15 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
                   @mouseenter="onDayHover(day.toDate(getLocalTimeZone()))"
                 >
                   <span>{{ day.day }}</span>
-                  <div
-                    v-if="hasBookingOnDate(day)"
-                    class="w-1.5 h-1.5 rounded-full bg-primary mt-0.5"
-                  />
+                  <div v-if="hasBookingOnDate(day)" class="flex flex-col gap-0.5 mt-0.5">
+                    <CroutonBookingSlotIndicator
+                      v-for="lb in getLocationBookingsForDate(day)"
+                      :key="lb.locationId"
+                      :slots="lb.slots"
+                      :booked-slot-ids="lb.bookedSlotIds"
+                      size="xs"
+                    />
+                  </div>
                 </div>
               </template>
             </UCalendar>
