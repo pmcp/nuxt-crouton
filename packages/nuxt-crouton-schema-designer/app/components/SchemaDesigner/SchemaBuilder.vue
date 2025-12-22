@@ -114,7 +114,7 @@ function onFieldDragEnd() {
         v-if="state.fields.length > 0"
         class="space-y-2"
       >
-        <SchemaDesignerFieldItem
+        <CroutonSchemaDesignerFieldItem
           v-for="(field, index) in state.fields"
           :key="field.id"
           :field="field"
@@ -143,5 +143,5 @@ function onFieldDragEnd() {
   </div>
 
   <!-- Field Editor Slideover -->
-  <SchemaDesignerFieldEditor />
+  <CroutonSchemaDesignerFieldEditor />
 </template>
