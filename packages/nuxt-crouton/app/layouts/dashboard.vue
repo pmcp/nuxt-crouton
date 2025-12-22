@@ -50,7 +50,7 @@ const appConfig = useAppConfig()
 const route = useRoute()
 
 // Get team context (handles personal/single-tenant modes where team isn't in URL)
-const { teamSlug: teamSlugRef } = useTeamContext()
+const { teamSlug: teamSlugRef, teamId: teamIdRef, buildDashboardUrl } = useTeamContext()
 
 // Build navigation from crouton collections registry
 const collections = computed(() => {
@@ -77,12 +77,18 @@ const collections = computed(() => {
 
 // Navigation items
 const navItems = computed<NavigationMenuItem[][]>(() => {
-  const teamSlug = teamSlugRef.value || ''
+  // Use teamSlug if available, fallback to teamId for URL construction
+  const teamParam = teamSlugRef.value || teamIdRef.value || ''
+
+  // Don't render navigation links until team context is available
+  if (!teamParam) {
+    return [[], []]
+  }
 
   const collectionItems: NavigationMenuItem[] = collections.value.map(col => ({
     label: col.label,
     icon: col.icon,
-    to: `/dashboard/${teamSlug}/crouton/${col.key}`,
+    to: `/dashboard/${teamParam}/crouton/${col.key}`,
     active: route.path.includes(`/crouton/${col.key}`)
   }))
 
@@ -90,8 +96,8 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     {
       label: 'Dashboard',
       icon: 'i-lucide-layout-dashboard',
-      to: `/dashboard/${teamSlug}/crouton`,
-      active: route.path === `/dashboard/${teamSlug}/crouton`
+      to: `/dashboard/${teamParam}/crouton`,
+      active: route.path.endsWith('/crouton')
     },
     ...(collectionItems.length > 0 ? [{
       label: 'Collections',
@@ -105,7 +111,7 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     {
       label: 'Settings',
       icon: 'i-lucide-settings',
-      to: `/dashboard/${teamSlug}/settings`
+      to: `/dashboard/${teamParam}/settings`
     }
   ]
 

@@ -38,6 +38,16 @@ export default defineNuxtPlugin(() => {
     })
   }
 
+  // Fetch active organization to populate the nanostore atom
+  // This ensures useActiveOrganization has data after login
+  authClient.organization.getFullOrganization().then((result) => {
+    if (config?.debug && result.data) {
+      console.log('[@crouton/auth] Active organization loaded:', result.data.name)
+    }
+  }).catch(() => {
+    // No active org or not logged in - that's fine
+  })
+
   return {
     provide: {
       authClient
