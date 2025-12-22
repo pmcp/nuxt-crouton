@@ -36,7 +36,7 @@ export default defineNuxtConfig({
     '@friendlyinternet/nuxt-crouton-i18n',
     '@friendlyinternet/nuxt-crouton-rich-text'
   ]
-})
+})pre
 ```
 
 ### After
