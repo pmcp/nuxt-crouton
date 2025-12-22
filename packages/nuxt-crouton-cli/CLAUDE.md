@@ -60,11 +60,23 @@ lib/generators/
 ```json
 {
   "id": { "type": "string", "meta": { "primaryKey": true } },
-  "name": { "type": "string", "meta": { "required": true, "maxLength": 255 } },
+  "name": { "type": "string", "meta": { "required": true, "maxLength": 255, "translatable": true } },
   "price": { "type": "decimal", "meta": { "precision": 10, "scale": 2 } },
   "categoryId": { "type": "string", "refTarget": "categories" }
 }
 ```
+
+### Field Meta Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `required` | boolean | Field is required |
+| `maxLength` | number | Max string length |
+| `translatable` | boolean | Enable i18n translation support |
+| `default` | any | Default value |
+| `primaryKey` | boolean | Mark as primary key |
+| `label` | string | Human-readable label |
+| `area` | string | Form area: main/sidebar/meta |
 
 ## Field Types
 
@@ -292,6 +304,7 @@ The generator auto-detects field types and generates appropriate data:
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | CLI commands, field types change |
 | Auth Package | `packages/nuxt-crouton-auth/CLAUDE.md` | If `@crouton/auth/server` exports change |
 | External Docs | `apps/docs/content/` | Any user-facing change |
+| FormPreview.vue | `packages/nuxt-crouton-schema-designer/.../FormPreview.vue` | Form component mapping changes |
 
 ### Step 1: Classify Your Change
 
@@ -306,6 +319,7 @@ Before finishing, identify what type of change you made:
 | New command | CLAUDE.md, README, Skill, MCP, External docs |
 | Config format change | CLAUDE.md, README, Examples, Skill, External docs |
 | Generator template change | CLAUDE.md (Key Files), maybe External docs |
+| Form component mapping change | FormPreview.vue, External docs |
 
 ### Step 2: Update Package Documentation
 
@@ -326,6 +340,11 @@ For non-internal changes:
 - [ ] **Example configs** (`examples/`)
   - [ ] Add new flags/options with comments
   - [ ] Update defaults if changed
+
+- [ ] **FormPreview.vue** (if form-component.mjs changed)
+  - [ ] Field type to component mapping
+  - [ ] Form layout structure (CroutonFormLayout slots)
+  - [ ] Default values for field types
 
 ### Step 3: Update Claude Skill
 
