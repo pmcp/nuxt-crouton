@@ -79,11 +79,38 @@ export const CATEGORIES = [
   { key: 'data', label: 'Data' },
   { key: 'navigation', label: 'Navigation' },
   { key: 'overlay', label: 'Overlays' },
+  { key: 'crouton', label: 'Crouton' },
 ] as const
 
-// Build the registry from generated list + preview props
+// Crouton-specific components (from @friendlyinternet/nuxt-crouton)
+export const CROUTON_COMPONENTS = [
+  { name: 'CroutonDarkModeSwitcher', title: 'Dark Mode Switcher', category: 'crouton' },
+  { name: 'CroutonAppearanceSwitcher', title: 'Appearance Switcher', category: 'crouton' },
+  { name: 'CroutonDate', title: 'Date', category: 'crouton' },
+  { name: 'CroutonTablePagination', title: 'Table Pagination', category: 'crouton' },
+  { name: 'CroutonFormLayout', title: 'Form Layout', category: 'crouton' },
+  { name: 'CroutonTableSearch', title: 'Table Search', category: 'crouton' },
+] as const
+
+// Crouton component preview props
+const CROUTON_PREVIEW_PROPS: Record<string, { props?: Record<string, any>; slots?: Record<string, string> }> = {
+  CroutonDarkModeSwitcher: { props: { size: 'md' } },
+  CroutonAppearanceSwitcher: { props: { mode: 'dropdown', size: 'sm' } },
+  CroutonDate: { props: { date: new Date().toISOString() } },
+  CroutonTablePagination: { props: { page: 1, pageCount: 10, totalItems: 100 } },
+  CroutonFormLayout: { props: { tabs: false } },
+  CroutonTableSearch: { props: { placeholder: 'Search...', debounceMs: 300 } },
+}
+
+// Merge preview props
+Object.assign(PREVIEW_PROPS, CROUTON_PREVIEW_PROPS)
+
+// Combine all components (Nuxt UI + Crouton)
+const ALL_COMPONENTS = [...COMPONENT_LIST, ...CROUTON_COMPONENTS]
+
+// Build the registry from combined list + preview props
 export const COMPONENT_REGISTRY: Record<string, ComponentConfig> = Object.fromEntries(
-  COMPONENT_LIST.map(comp => {
+  ALL_COMPONENTS.map(comp => {
     const preview = PREVIEW_PROPS[comp.name] || {}
     return [comp.name, {
       name: comp.name,
@@ -95,8 +122,8 @@ export const COMPONENT_REGISTRY: Record<string, ComponentConfig> = Object.fromEn
   })
 )
 
-// List of all component names for resolving (from generated)
-export const COMPONENT_NAMES = GENERATED_COMPONENT_NAMES
+// List of all component names for resolving (Nuxt UI + Crouton)
+export const COMPONENT_NAMES = [...GENERATED_COMPONENT_NAMES, ...CROUTON_COMPONENTS.map(c => c.name)]
 
 export function useComponentRegistry() {
   const components = Object.values(COMPONENT_REGISTRY)

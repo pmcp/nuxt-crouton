@@ -47,6 +47,13 @@ import {
   UTimeline,
   UTooltip,
   UTree,
+  // Crouton components
+  CroutonDarkModeSwitcher,
+  CroutonAppearanceSwitcher,
+  CroutonDate,
+  CroutonTablePagination,
+  CroutonFormLayout,
+  CroutonTableSearch,
 } from '#components'
 
 const props = defineProps<NodeProps<ComponentNodeData>>()
@@ -73,6 +80,7 @@ const computedVariant = computed(() => {
 // Using 'any' because Nuxt UI components have complex generic slot types
 // that don't match Vue's Component type exactly
 const componentMap: Record<string, any> = {
+  // Nuxt UI components
   UAccordion,
   UAlert,
   UAvatar,
@@ -115,6 +123,13 @@ const componentMap: Record<string, any> = {
   UTimeline,
   UTooltip,
   UTree,
+  // Crouton components
+  CroutonDarkModeSwitcher,
+  CroutonAppearanceSwitcher,
+  CroutonDate,
+  CroutonTablePagination,
+  CroutonFormLayout,
+  CroutonTableSearch,
 }
 
 // Get the resolved component
@@ -126,6 +141,17 @@ const ResolvedComponent = computed(() => {
 // Check if component supports slots
 const hasSlotContent = computed(() => {
   return props.data.slots && Object.keys(props.data.slots).length > 0
+})
+
+// Theme-specific background styles for accurate preview
+const themeBackgroundStyle = computed(() => {
+  const backgrounds: Record<ThemeName, string> = {
+    default: '#ffffff',
+    ko: 'var(--ko-surface-light, #c7c3c0)',
+    minimal: '#ffffff',
+    kr11: 'var(--kr-chassis, #e5e2dd)',
+  }
+  return { backgroundColor: backgrounds[selectedTheme.value] || '#ffffff' }
 })
 </script>
 
@@ -166,7 +192,7 @@ const hasSlotContent = computed(() => {
     </div>
 
     <!-- Component preview -->
-    <div class="component-node-preview">
+    <div class="component-node-preview" :style="themeBackgroundStyle">
       <component
         :is="ResolvedComponent"
         v-bind="data.props"
