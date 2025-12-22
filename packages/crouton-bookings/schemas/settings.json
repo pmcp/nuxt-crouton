@@ -3,7 +3,7 @@
     "type": "repeater",
     "meta": {
       "label": "Booking Statuses",
-      "repeaterComponent": "OptionItem",
+      "repeaterComponent": "CroutonFormTranslatableOptionItem",
       "addLabel": "Add Status",
       "sortable": true,
       "area": "main",
@@ -14,7 +14,7 @@
     "type": "repeater",
     "meta": {
       "label": "Age Groups",
-      "repeaterComponent": "OptionItem",
+      "repeaterComponent": "CroutonFormTranslatableOptionItem",
       "addLabel": "Add Group",
       "sortable": true,
       "area": "main",

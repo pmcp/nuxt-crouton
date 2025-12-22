@@ -20,9 +20,9 @@
     <USelectMenu
       v-else
       v-model="selectedValue"
-      :items="options"
+      :items="translatedOptions"
       value-key="value"
-      label-key="label"
+      label-key="displayLabel"
       :placeholder="placeholder || `Select ${label}`"
       :loading="pending"
       :disabled="!!error"
@@ -31,7 +31,7 @@
       class="w-full"
     >
       <template #item-label="{ item }">
-        <span>{{ (item as OptionItem)?.label || (item as OptionItem)?.value }}</span>
+        <span>{{ (item as any)?.displayLabel || (item as OptionItem)?.label || (item as OptionItem)?.value }}</span>
       </template>
 
       <template
@@ -122,10 +122,15 @@
 <script setup lang="ts">
 import { nanoid } from 'nanoid'
 
+interface OptionItemTranslations {
+  label?: Record<string, string>
+}
+
 interface OptionItem {
   id: string
   value: string
   label: string
+  translations?: OptionItemTranslations
 }
 
 interface Props {
@@ -146,9 +151,21 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const { locale } = useI18n()
 
 // Fetch settings data using existing nuxt-crouton composable
 const { items, pending, error, refresh } = await useCollectionQuery(props.optionsCollection)
+
+// Get translated label for an option
+function getTranslatedLabel(item: OptionItem): string {
+  // Check for translation in current locale
+  const translation = item.translations?.label?.[locale.value]
+  if (translation) {
+    return translation
+  }
+  // Fallback to default label
+  return item.label || item.value || ''
+}
 
 // Helper to get user-friendly error message
 const getErrorMessage = () => {
@@ -182,7 +199,16 @@ const options = computed<OptionItem[]>(() => {
   return fieldData.map((item: any) => ({
     id: item.id || nanoid(),
     value: item.value || item.label?.toLowerCase().replace(/\s+/g, '-') || '',
-    label: item.label || item.value || ''
+    label: item.label || item.value || '',
+    translations: item.translations || undefined
+  }))
+})
+
+// Options with translated labels for display
+const translatedOptions = computed(() => {
+  return options.value.map(item => ({
+    ...item,
+    displayLabel: getTranslatedLabel(item)
   }))
 })
 

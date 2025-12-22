@@ -72,6 +72,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { getStatusLabel } = useBookingOptions()
 
 // Check if we have valid position info
 const hasPositionInfo = computed(() => props.totalSlots > 0 && props.slotPosition >= 0)
@@ -153,7 +154,10 @@ function confirmAction() {
 </script>
 
 <template>
-  <div class="bg-elevated/50 rounded-lg overflow-hidden group">
+  <div
+    class="bg-elevated/50 rounded-lg overflow-hidden group transition-all duration-200"
+    :class="{ 'ring-2 ring-primary/50 bg-primary/5': highlighted }"
+  >
     <div class="p-3 flex items-center gap-3">
       <!-- Date card -->
       <CroutonBookingDateBadge :date="date" :variant="dateBadgeVariant" :highlighted="highlighted" :highlight-color="slotColor" />
@@ -227,7 +231,7 @@ function confirmAction() {
           variant="subtle"
           size="sm"
         >
-          {{ t(`bookings.status.${status}`) }}
+          {{ getStatusLabel(status) }}
         </UBadge>
 
         <!-- Email action buttons (inline) -->
