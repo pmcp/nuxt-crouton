@@ -50,7 +50,10 @@ const appConfig = useAppConfig()
 const route = useRoute()
 
 // Get team context (handles personal/single-tenant modes where team isn't in URL)
-const { teamSlug: teamSlugRef, teamId: teamIdRef, buildDashboardUrl } = useTeamContext()
+const { teamSlug: teamSlugRef, teamId: teamIdRef, buildDashboardUrl, hasTeamContext } = useTeamContext()
+
+// Show loading state until team context is available
+const isAuthLoading = computed(() => !hasTeamContext.value)
 
 // Build navigation from crouton collections registry
 const collections = computed(() => {
@@ -214,7 +217,15 @@ const pageTitle = computed(() => {
 
       <template #default>
         <div class="p-6">
-          <slot />
+          <!-- Show loading state while auth is initializing -->
+          <div v-if="isAuthLoading" class="flex items-center justify-center h-64">
+            <div class="flex flex-col items-center gap-4">
+              <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-muted" />
+              <p class="text-sm text-muted">Loading...</p>
+            </div>
+          </div>
+          <!-- Render content once team context is available -->
+          <slot v-else />
         </div>
       </template>
     </UDashboardPanel>
