@@ -1,0 +1,94 @@
+{
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "translatable": true,
+      "label": "Template Name",
+      "maxLength": 200,
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "subject": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "translatable": true,
+      "label": "Email Subject",
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "body": {
+    "type": "richtext",
+    "meta": {
+      "required": true,
+      "translatable": true,
+      "label": "Email Body",
+      "help": "Variables: {{customer_name}}, {{booking_date}}, {{booking_slot}}, {{location_name}}, {{location_address}}, {{team_name}}",
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "fromEmail": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "From Email Address",
+      "area": "sidebar",
+      "group": "configuration"
+    }
+  },
+  "triggerType": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Trigger Type",
+      "options": ["booking_confirmed", "reminder_before", "booking_cancelled", "follow_up_after"],
+      "displayAs": "optionsSelect",
+      "area": "sidebar",
+      "group": "configuration"
+    }
+  },
+  "recipientType": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "default": "customer",
+      "label": "Send To",
+      "options": ["customer", "admin", "both"],
+      "displayAs": "optionsSelect",
+      "area": "sidebar",
+      "group": "configuration"
+    }
+  },
+  "isActive": {
+    "type": "boolean",
+    "meta": {
+      "default": true,
+      "label": "Active",
+      "area": "sidebar",
+      "group": "configuration"
+    }
+  },
+  "hoursOffset": {
+    "type": "number",
+    "meta": {
+      "default": 0,
+      "label": "Hours Offset",
+      "help": "Negative = before booking, Positive = after booking",
+      "area": "sidebar",
+      "group": "configuration"
+    }
+  },
+  "locationId": {
+    "type": "string",
+    "refTarget": "locations",
+    "meta": {
+      "label": "Location (optional)",
+      "area": "sidebar",
+      "group": "configuration"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "bookings": {
+    "title": "Boekingen",
+    "booking": "Boeking",
+    "location": "Locatie",
+    "date": "Datum",
+    "slot": "Tijdslot",
+    "allDay": "Hele dag",
+    "status": "Status",
+    "group": "Groep",
+    "cart": {
+      "title": "Je Winkelwagen",
+      "empty": "Je winkelwagen is leeg",
+      "add": "Toevoegen aan Winkelwagen",
+      "remove": "Verwijderen",
+      "clear": "Winkelwagen Legen",
+      "submit": "Boekingen Bevestigen",
+      "submitting": "Bevestigen..."
+    },
+    "availability": {
+      "available": "Beschikbaar",
+      "unavailable": "Niet beschikbaar",
+      "fullyBooked": "Volgeboekt",
+      "remaining": "{count} beschikbaar"
+    },
+    "myBookings": {
+      "title": "Mijn Boekingen",
+      "upcoming": "Aankomend",
+      "past": "Afgelopen",
+      "noBookings": "Geen boekingen gevonden",
+      "cancel": "Boeking Annuleren",
+      "cancelled": "Geannuleerd"
+    },
+    "wizard": {
+      "selectLocation": "Selecteer Locatie",
+      "selectDate": "Selecteer Datum",
+      "selectSlot": "Selecteer Tijdslot",
+      "confirmation": "Bevestiging",
+      "next": "Volgende",
+      "back": "Terug",
+      "confirm": "Boeking Bevestigen"
+    }
+  }
+}

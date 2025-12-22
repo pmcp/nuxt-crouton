@@ -1,0 +1,44 @@
+{
+  "bookings": {
+    "title": "Bookings",
+    "booking": "Booking",
+    "location": "Location",
+    "date": "Date",
+    "slot": "Time Slot",
+    "allDay": "All Day",
+    "status": "Status",
+    "group": "Group",
+    "cart": {
+      "title": "Your Cart",
+      "empty": "Your cart is empty",
+      "add": "Add to Cart",
+      "remove": "Remove",
+      "clear": "Clear Cart",
+      "submit": "Confirm Bookings",
+      "submitting": "Confirming..."
+    },
+    "availability": {
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "fullyBooked": "Fully Booked",
+      "remaining": "{count} remaining"
+    },
+    "myBookings": {
+      "title": "My Bookings",
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "noBookings": "No bookings found",
+      "cancel": "Cancel Booking",
+      "cancelled": "Cancelled"
+    },
+    "wizard": {
+      "selectLocation": "Select Location",
+      "selectDate": "Select Date",
+      "selectSlot": "Select Time Slot",
+      "confirmation": "Confirmation",
+      "next": "Next",
+      "back": "Back",
+      "confirm": "Confirm Booking"
+    }
+  }
+}

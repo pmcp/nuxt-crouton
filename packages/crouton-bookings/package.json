@@ -1,0 +1,57 @@
+{
+  "name": "@friendlyinternet/crouton-bookings",
+  "version": "1.0.0",
+  "description": "Booking system layer for Nuxt Crouton - slot-based and inventory-based reservations",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "server",
+    "schemas",
+    "i18n",
+    "nuxt.config.ts",
+    "README.md",
+    "SCHEMAS.md"
+  ],
+  "exports": {
+    ".": "./nuxt.config.ts"
+  },
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crouton",
+    "bookings",
+    "reservations",
+    "scheduling"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-bookings"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
+    "@nuxtjs/i18n": "^9.0.0 || ^10.0.0",
+    "@internationalized/date": "^3.0.0",
+    "@vueuse/core": "^11.0.0 || ^12.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "unbuild": "^3.6.1"
+  }
+}
