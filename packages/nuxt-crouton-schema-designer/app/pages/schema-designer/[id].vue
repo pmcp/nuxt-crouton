@@ -21,6 +21,10 @@ const project = ref<SchemaProject | null>(null)
 const saving = ref(false)
 const showExport = ref(false)
 
+// Right panel view toggle
+type RightPanelView = 'preview' | 'code'
+const rightPanelView = ref<RightPanelView>('preview')
+
 // Load project on mount
 onMounted(async () => {
   if (projectId.value && projectId.value !== 'new') {
@@ -33,7 +37,8 @@ onMounted(async () => {
           collectionName: project.value.collectionName,
           layerName: project.value.layerName,
           fields: project.value.schema.fields || [],
-          options: project.value.options
+          options: project.value.options,
+          cardTemplate: project.value.schema.cardTemplate
         })
       }
     } catch (e) {
@@ -131,9 +136,45 @@ watch(state, () => {
         <CroutonSchemaDesignerSchemaBuilder />
       </main>
 
-      <!-- Right: Preview Panel (50% width) -->
+      <!-- Right: Preview/Code Panel (50% width) -->
       <aside class="w-1/2 border-l border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] overflow-hidden flex flex-col">
-        <CroutonSchemaDesignerPreviewPanel />
+        <!-- Panel Tabs -->
+        <div class="flex border-b border-[var(--ui-border)] bg-[var(--ui-bg)]">
+          <button
+            :class="[
+              'px-4 py-2 text-sm font-medium transition-colors',
+              rightPanelView === 'preview'
+                ? 'text-[var(--ui-primary)] border-b-2 border-[var(--ui-primary)]'
+                : 'text-[var(--ui-text-muted)] hover:text-[var(--ui-text)]'
+            ]"
+            @click="rightPanelView = 'preview'"
+          >
+            <span class="flex items-center gap-2">
+              <UIcon name="i-lucide-eye" />
+              Preview
+            </span>
+          </button>
+          <button
+            :class="[
+              'px-4 py-2 text-sm font-medium transition-colors',
+              rightPanelView === 'code'
+                ? 'text-[var(--ui-primary)] border-b-2 border-[var(--ui-primary)]'
+                : 'text-[var(--ui-text-muted)] hover:text-[var(--ui-text)]'
+            ]"
+            @click="rightPanelView = 'code'"
+          >
+            <span class="flex items-center gap-2">
+              <UIcon name="i-lucide-code" />
+              Card Template
+            </span>
+          </button>
+        </div>
+
+        <!-- Panel Content -->
+        <div class="flex-1 overflow-hidden">
+          <CroutonSchemaDesignerPreviewPanel v-if="rightPanelView === 'preview'" />
+          <CroutonSchemaDesignerCodeEditor v-else />
+        </div>
       </aside>
     </div>
 

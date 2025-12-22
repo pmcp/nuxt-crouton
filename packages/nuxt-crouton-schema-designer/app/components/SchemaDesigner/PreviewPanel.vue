@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { state } = useSchemaDesigner()
 const { generateMockRows, generateColumns } = useMockData()
+const { compiledComponent: cardComponent, compilationError } = useCompiledCard()
 
 type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'form'
 const currentLayout = ref<LayoutType>('table')
@@ -83,6 +84,20 @@ function refreshData() {
       </div>
     </div>
 
+    <!-- Compilation Error Banner -->
+    <div
+      v-if="compilationError"
+      class="mx-4 mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg"
+    >
+      <div class="flex items-start gap-2">
+        <UIcon name="i-lucide-alert-circle" class="text-red-500 mt-0.5 shrink-0" />
+        <div class="text-sm">
+          <div class="font-medium text-red-600 dark:text-red-400">Template Error</div>
+          <code class="text-xs text-[var(--ui-text-muted)] break-all">{{ compilationError }}</code>
+        </div>
+      </div>
+    </div>
+
     <!-- Preview Content -->
     <div class="flex-1 overflow-auto" :key="refreshKey">
       <template v-if="hasValidFields">
@@ -100,6 +115,7 @@ function refreshData() {
           :rows="mockRows"
           :layout="currentLayout"
           :collection="state.collectionName || 'preview'"
+          :card-component="cardComponent"
           stateless
         />
       </template>

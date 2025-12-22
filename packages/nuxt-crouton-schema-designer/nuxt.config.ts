@@ -45,6 +45,11 @@ export default defineNuxtConfig({
     }
   },
 
+  // Enable Vue runtime compiler for live template preview
+  vue: {
+    runtimeCompiler: true
+  },
+
   // Compatibility
   compatibilityDate: '2025-01-01',
 
