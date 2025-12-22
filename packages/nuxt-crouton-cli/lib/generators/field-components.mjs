@@ -60,9 +60,9 @@ if (model.value && !model.value.id) {
  * Uses CroutonFormDependentSelectOption for card-based rendering
  */
 function generateSelectComponent(fieldName, fieldPascalCase, collectionData) {
-  const { layerPascalCase, pascalCasePlural } = collectionData
+  const { layerPascalCase, layerCamelCase, pascalCasePlural } = collectionData
   // Build the dependent collection name for component resolution
-  const dependentCollection = `${layerPascalCase.toLowerCase()}${pascalCasePlural}`
+  const dependentCollection = `${layerCamelCase}${pascalCasePlural}`
 
   return `<template>
   <div>

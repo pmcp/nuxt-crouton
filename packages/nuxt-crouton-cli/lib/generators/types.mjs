@@ -34,10 +34,10 @@ function generateAIHeader(data) {
 }
 
 export function generateTypes(data, config = null) {
-  const { pascalCase, pascalCasePlural, layerPascalCase, singular, layer, plural, fields } = data
+  const { pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, singular, layer, plural, fields } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
-  const prefixedSingular = `${layerPascalCase.toLowerCase()}${pascalCase}`
+  const prefixedSingular = `${layerCamelCase}${pascalCase}`
 
   const composablePath = `./app/composables/use${prefixedPascalCasePlural}`
 

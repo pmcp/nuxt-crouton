@@ -59,7 +59,7 @@ function humanizeGroupName(groupName) {
 }
 
 export function generateFormComponent(data, config = {}) {
-  const { pascalCase, pascalCasePlural, layerPascalCase, fields, singular, plural, layer, hierarchy } = data
+  const { pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, fields, singular, plural, layer, hierarchy } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
 
@@ -139,7 +139,7 @@ export function generateFormComponent(data, config = {}) {
 
       // Resolve the collection name with layer prefix
       const refCases = toCase(dependsOnCollection)
-      const resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+      const resolvedCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
 
       // Determine dependent label (capitalize first letter)
       const dependentLabel = dependsOn.charAt(0).toUpperCase() + dependsOn.slice(1)
@@ -164,7 +164,7 @@ export function generateFormComponent(data, config = {}) {
 
       // Resolve the collection name with layer prefix
       const refCases = toCase(optionsCollection)
-      const resolvedOptionsCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+      const resolvedOptionsCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
 
       return `        <UFormField label="${label}" name="${field.name}" class="not-last:pb-4">
           <CroutonFormOptionsSelect
@@ -191,7 +191,7 @@ export function generateFormComponent(data, config = {}) {
       } else {
         // Local layer reference: add layer prefix
         const refCases = toCase(field.refTarget)
-        resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+        resolvedCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
       }
 
       // Auto-detect if this references an asset collection
@@ -312,7 +312,7 @@ export function generateFormComponent(data, config = {}) {
         <UFormField label="Parent" name="${parentField}" class="not-last:pb-4">
           <CroutonFormParentSelect
             v-model="state.${parentField}"
-            collection="${layerPascalCase.toLowerCase()}${pascalCasePlural}"
+            collection="${layerCamelCase}${pascalCasePlural}"
             :current-id="state.id"
             label="Parent"
           />

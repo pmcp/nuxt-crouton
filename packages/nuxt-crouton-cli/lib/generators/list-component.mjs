@@ -5,8 +5,9 @@ import { toCase } from '../utils/helpers.mjs'
  * Generate AI context header for List.vue components
  */
 function generateAIHeader(data, apiPath) {
-  const { plural, layer, layerPascalCase, pascalCasePlural, fields } = data
-  const prefixedCamelCasePlural = `${layer}${pascalCasePlural}`
+  const { plural, layer, layerPascalCase, layerCamelCase, pascalCasePlural, fields } = data
+  // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
+  const prefixedCamelCasePlural = `${layerCamelCase}${pascalCasePlural}`
   const columnFields = fields.filter(f => f.name !== 'id').map(f => f.name).join(', ')
 
   return `<!--
@@ -36,9 +37,10 @@ function generateAIHeader(data, apiPath) {
 }
 
 export function generateListComponent(data, config = {}) {
-  const { plural, pascalCasePlural, layerPascalCase, layer, fields } = data
+  const { plural, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields } = data
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
-  const prefixedCamelCasePlural = `${layer}${pascalCasePlural}`
+  // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
+  const prefixedCamelCasePlural = `${layerCamelCase}${pascalCasePlural}`
   const apiPath = `${layer}-${plural}`
 
   // Check for translations
@@ -101,7 +103,7 @@ export function generateListComponent(data, config = {}) {
       } else {
         // Local layer reference: add layer prefix
         const refCases = toCase(field.refTarget)
-        resolvedCollection = `${layerPascalCase.toLowerCase()}${refCases.pascalCasePlural}`
+        resolvedCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
       }
 
       // Check if this is an array-type reference (multi-select)
@@ -143,7 +145,7 @@ export function generateListComponent(data, config = {}) {
     }).join('')}${dependentFields.map((field) => {
       // Resolve the dependent collection with layer prefix
       const dependentCollectionCases = toCase(field.meta.dependsOnCollection)
-      const resolvedDependentCollection = `${layerPascalCase.toLowerCase()}${dependentCollectionCases.pascalCasePlural}`
+      const resolvedDependentCollection = `${layerCamelCase}${dependentCollectionCases.pascalCasePlural}`
 
       return `
     <template #${field.name}-cell="{ row }">

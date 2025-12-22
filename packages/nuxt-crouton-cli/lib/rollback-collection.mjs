@@ -117,7 +117,7 @@ export async function cleanAppConfig(collectionName, layer, dryRun) {
       .join('')
 
     const collectionKey = `${layerCamelCase}${cases.pascalCasePlural}`
-    const configExportName = `${layerPascalCase.toLowerCase()}${cases.pascalCasePlural}Config`
+    const configExportName = `${layerCamelCase}${cases.pascalCasePlural}Config`
 
     // Check if the collection exists in the registry
     if (!content.includes(collectionKey)) {

@@ -1316,7 +1316,7 @@ ${translationsFieldSchema}
 
   // Update collection registry
   const collectionKey = `${layerCamelCase}${cases.pascalCasePlural}`
-  const configExportName = `${layerPascalCase.toLowerCase()}${cases.pascalCasePlural}Config`
+  const configExportName = `${layerCamelCase}${cases.pascalCasePlural}Config`
   await updateRegistry({
     layer,
     collection: cases.plural,
