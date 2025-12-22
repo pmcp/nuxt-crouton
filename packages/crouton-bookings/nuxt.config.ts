@@ -6,10 +6,10 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 export default defineNuxtConfig({
 
   // Note: This is an addon layer - users must explicitly extend:
-  // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/crouton-bookings', './layers/bookings']
+  // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/nuxt-crouton-i18n', '@friendlyinternet/crouton-bookings', './layers/bookings']
 
-  // i18n module for automatic locale merging
-  modules: ['@nuxtjs/i18n'],
+  // i18n module is provided by nuxt-crouton-i18n layer
+  // No need to declare it here - just provide locale files
 
   $meta: {
     description: 'Booking system layer for Nuxt Crouton - slot-based and inventory-based reservations',
