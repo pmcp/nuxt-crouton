@@ -1,16 +1,10 @@
 <script setup lang="ts">
-import type { VariantName } from '~/composables/useCanvasNodes'
-
-const props = defineProps<{
-  variant?: VariantName
-}>()
-
 // Global theme from useThemeSwitcher (for display only, theme styling is automatic)
 const { currentTheme } = useThemeSwitcher()
 
-// Variant is passed directly - theme mapping happens via updateAppConfig
+// Default variant - components will use theme-mapped styles automatically
 // Cast to any because different Nuxt UI components have different variant type unions
-const variant = computed(() => (props.variant || undefined) as any)
+const variant = computed(() => 'solid' as any)
 
 // Modal state
 const isModalOpen = ref(false)

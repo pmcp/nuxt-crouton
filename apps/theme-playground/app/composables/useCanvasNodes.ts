@@ -134,18 +134,6 @@ export function useCanvasNodes() {
     nodeIdCounter = 0
   }
 
-  function setAllVariants(newVariant: VariantName) {
-    nodes.value = nodes.value.map((node): ComponentNode => {
-      if (node.type === 'component') {
-        return {
-          ...node,
-          data: { ...node.data, variant: newVariant } as ComponentNodeData
-        }
-      }
-      return node
-    })
-  }
-
   function updateNodeData(nodeId: string, updates: Partial<ComponentNodeData>) {
     nodes.value = nodes.value.map((node): ComponentNode => {
       if (node.id === nodeId) {
@@ -168,7 +156,6 @@ export function useCanvasNodes() {
     updateNodeData,
     removeNode,
     populateAllComponents,
-    clearCanvas,
-    setAllVariants
+    clearCanvas
   }
 }

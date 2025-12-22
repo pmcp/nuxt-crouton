@@ -3,9 +3,8 @@ import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
-import { VARIANTS, type VariantName } from '~/composables/useCanvasNodes'
 
-const { nodes, addNode, populateAllComponents, clearCanvas, setAllVariants } = useCanvasNodes()
+const { nodes, addNode, populateAllComponents, clearCanvas } = useCanvasNodes()
 const { fitView } = useVueFlow()
 
 // Global theme from useThemeSwitcher (sets variant mappings via updateAppConfig)
@@ -14,14 +13,6 @@ const { currentTheme, themes, setTheme } = useThemeSwitcher()
 // View mode: 'canvas' or 'page'
 type ViewMode = 'canvas' | 'page'
 const viewMode = ref<ViewMode>('canvas')
-
-// Global variant state for "Apply to All"
-const globalVariant = ref<VariantName>('')
-
-// Watch for variant changes and apply to all nodes
-watch(globalVariant, (variant) => {
-  setAllVariants(variant)
-})
 
 // Handle drop from catalog
 function onDrop(event: DragEvent) {
@@ -105,7 +96,7 @@ function handlePopulateAll() {
         <USeparator orientation="vertical" class="h-6" />
       </template>
 
-      <!-- Global theme/variant controls (shared) -->
+      <!-- Global theme control (variant is per-node) -->
       <div class="flex items-center gap-2">
         <span class="text-xs text-[var(--ui-text-muted)]">Theme:</span>
         <USelectMenu
@@ -115,17 +106,6 @@ function handlePopulateAll() {
           size="sm"
           class="w-28"
           @update:model-value="setTheme($event)"
-        />
-      </div>
-
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-[var(--ui-text-muted)]">Variant:</span>
-        <USelectMenu
-          v-model="globalVariant"
-          :items="VARIANTS"
-          value-key="value"
-          size="sm"
-          class="w-28"
         />
       </div>
     </div>
@@ -163,7 +143,6 @@ function handlePopulateAll() {
     <!-- Page View -->
     <PageView
       v-else
-      :variant="globalVariant || undefined"
       class="pt-16"
     />
   </div>
