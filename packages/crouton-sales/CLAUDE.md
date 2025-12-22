@@ -70,28 +70,35 @@ export default defineNuxtConfig({
 
 ## Components
 
+Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `SalesAdminPosSidebar`).
+
 ### Customer-Facing (`Client/`)
-| Component | Purpose |
-|-----------|---------|
-| `Cart.vue` | Shopping cart display |
-| `ProductList.vue` | Product grid with filtering |
-| `CategoryTabs.vue` | Category navigation |
-| `ProductOptionsSelect.vue` | Product variant selection |
-| `CartTotal.vue` | Order total display |
-| `OrderInterface.vue` | Main order page wrapper |
-| `Selector.vue` | Event/helper selection |
-| `OfflineBanner.vue` | Offline mode indicator |
+| Component | Auto-import Name | Purpose |
+|-----------|------------------|---------|
+| `Cart.vue` | `SalesClientCart` | Shopping cart display with quantity controls |
+| `ProductList.vue` | `SalesClientProductList` | Product grid with inline option selection |
+| `CategoryTabs.vue` | `SalesClientCategoryTabs` | Category navigation tabs |
+| `ProductOptionsSelect.vue` | `SalesClientProductOptionsSelect` | Product variant/option selection |
+| `CartTotal.vue` | `SalesClientCartTotal` | Order total display with item count |
+| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components |
+| `Selector.vue` | `SalesClientSelector` | Client selector with create-on-type |
+| `OfflineBanner.vue` | `SalesClientOfflineBanner` | Offline mode indicator |
+
+### Orders (`Pos/`)
+| Component | Auto-import Name | Purpose |
+|-----------|------------------|---------|
+| `OrdersList.vue` | `SalesPosOrdersList` | Orders table with status filtering and auto-refresh |
 
 ### Admin (`Admin/`)
-| Component | Purpose |
-|-----------|---------|
-| `PosSidebar.vue` | Admin navigation sidebar |
+| Component | Auto-import Name | Purpose |
+|-----------|------------------|---------|
+| `PosSidebar.vue` | `SalesAdminPosSidebar` | Admin navigation sidebar |
 
 ### Print Settings (`Settings/`) - Opt-in
-| Component | Purpose |
-|-----------|---------|
-| `ReceiptSettingsModal.vue` | Printer configuration |
-| `PrintPreviewModal.vue` | Receipt preview |
+| Component | Auto-import Name | Purpose |
+|-----------|------------------|---------|
+| `ReceiptSettingsModal.vue` | `SalesSettingsReceiptSettingsModal` | Receipt text customization |
+| `PrintPreviewModal.vue` | `SalesSettingsPrintPreviewModal` | Receipt preview with test print |
 
 ## Common Tasks
 

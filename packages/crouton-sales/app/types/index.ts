@@ -5,6 +5,9 @@
 
 export type { ProductOption, SalesProduct, CartItem, UsePosOrderOptions } from '../composables/usePosOrder'
 
+// Re-export ProductOption for direct import in components
+export { type ProductOption } from '../composables/usePosOrder'
+
 // Order status enum
 export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled'
 
