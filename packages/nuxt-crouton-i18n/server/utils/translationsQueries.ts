@@ -1,6 +1,6 @@
 import { eq, and, isNull } from 'drizzle-orm'
 import { translationsUi } from '../database/schema'
-import * as tables from '@@/server/database/schema'
+import { organization } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
 
 /**
  * Get team/organization by slug for translations
@@ -14,8 +14,8 @@ export async function getTeamBySlugForTranslations(slug: string) {
 
   const team = await db
     .select()
-    .from(tables.organization)
-    .where(eq(tables.organization.slug, slug))
+    .from(organization)
+    .where(eq(organization.slug, slug))
     .get()
 
   if (!team) {
