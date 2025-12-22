@@ -498,9 +498,43 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
           />
         </div>
 
-        <!-- Month Calendar View -->
+        <!-- Calendar View with Toggle -->
         <div class="bg-elevated/50 rounded-lg p-2">
+          <!-- View Mode Toggle -->
+          <div class="flex justify-end mb-2">
+            <UFieldGroup size="xs">
+              <UButton
+                :variant="calendarViewMode === 'week' ? 'solid' : 'outline'"
+                color="neutral"
+                icon="i-lucide-calendar-days"
+                @click="calendarViewMode = 'week'"
+              />
+              <UButton
+                :variant="calendarViewMode === 'month' ? 'solid' : 'outline'"
+                color="neutral"
+                icon="i-lucide-calendar"
+                @click="calendarViewMode = 'month'"
+              />
+            </UFieldGroup>
+          </div>
+
+          <!-- Week Calendar View -->
+          <CroutonBookingWeekStrip
+            v-if="calendarViewMode === 'week'"
+            v-model="selectedDate"
+            size="sm"
+          >
+            <template #day="{ day }">
+              <div
+                v-if="hasBookingOnDate(asDateValue(day))"
+                class="w-1.5 h-1.5 rounded-full bg-primary"
+              />
+            </template>
+          </CroutonBookingWeekStrip>
+
+          <!-- Month Calendar View -->
           <UCalendar
+            v-else
             v-model="selectedCalendarDate"
             :number-of-months="numberOfMonths"
             size="sm"
