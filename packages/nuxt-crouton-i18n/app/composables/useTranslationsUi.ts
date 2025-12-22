@@ -6,7 +6,9 @@ import { z } from 'zod'
 export const translationsUiSchema = z.object({
   keyPath: z.string().min(1, 'Key path is required'),
   category: z.string().min(1, 'Category is required'),
-  values: z.record(z.string()).refine(
+  // NOTE: Using z.record(z.string(), z.string()) instead of z.record(z.string())
+  // due to Zod v4 + Vitest bug where implicit key schema breaks parsing
+  values: z.record(z.string(), z.string()).refine(
     values => values.en && values.en.trim() !== '',
     { message: 'English translation is required' }
   ),

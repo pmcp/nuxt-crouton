@@ -16,7 +16,10 @@
     "README.md"
   ],
   "scripts": {
-    "crouton:i18n:seed": "npx tsx ./cli/seed.ts"
+    "crouton:i18n:seed": "npx tsx ./cli/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "nuxt",

@@ -14,7 +14,10 @@
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
     "@friendlyinternet/nuxt-crouton": ">=0.5.0",
@@ -29,7 +32,10 @@
     "yjs": "^13.6.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241127.0"
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "happy-dom": "^15.11.7",
+    "vitest": "^2.1.8"
   },
   "keywords": [
     "nuxt",
