@@ -159,16 +159,14 @@ const themeBackgroundStyle = computed(() => {
       <div class="flex-1" />
 
       <!-- Variant selector (theme is global via useThemeSwitcher) -->
-      <!-- Stop pointer events to prevent Vue Flow from capturing clicks -->
-      <div class="nopan nodrag nowheel" @pointerdown.stop @mousedown.stop>
-        <USelectMenu
-          v-model="selectedVariant"
-          :items="VARIANTS"
-          value-key="value"
-          size="xs"
-          class="w-24"
-        />
-      </div>
+      <!-- nopan nodrag nowheel classes allow interaction inside Vue Flow nodes -->
+      <USelectMenu
+        v-model="selectedVariant"
+        :items="VARIANTS"
+        value-key="value"
+        size="xs"
+        class="w-24 nopan nodrag nowheel"
+      />
 
       <!-- Remove button -->
       <UButton
@@ -177,7 +175,7 @@ const themeBackgroundStyle = computed(() => {
         size="xs"
         color="neutral"
         class="nopan nodrag"
-        @click.stop="removeNode(id)"
+        @click="removeNode(id)"
       />
     </div>
 
