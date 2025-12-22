@@ -521,7 +521,7 @@ async function handleSubmit() {
 
       <!-- Cart items -->
       <div v-else class="space-y-2">
-        <BookingSidebarBookingItem
+        <CroutonBookingBookingSidebarBookingItem
           v-for="item in cart"
           :key="item.id"
           :id="item.id"

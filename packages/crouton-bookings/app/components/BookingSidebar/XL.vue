@@ -77,7 +77,7 @@ function toggleCart() {
           >
             <template #book>
               <ClientOnly>
-                <BookingSidebarForm :hide-location-select="true" />
+                <CroutonBookingBookingSidebarForm :hide-location-select="true" />
                 <template #fallback>
                   <div class="p-4 space-y-4 animate-pulse">
                     <div class="h-8 bg-neutral-200 dark:bg-neutral-700 rounded" />
@@ -88,7 +88,7 @@ function toggleCart() {
             </template>
 
             <template #my-bookings>
-              <BookingSidebarMyBookings />
+              <CroutonBookingBookingSidebarMyBookings />
             </template>
           </UTabs>
 
@@ -151,7 +151,7 @@ function toggleCart() {
                 />
               </div>
               <div class="flex-1 overflow-y-auto">
-                <BookingSidebarCart />
+                <CroutonBookingBookingSidebarCart />
               </div>
             </div>
           </Transition>
@@ -162,7 +162,7 @@ function toggleCart() {
     <div class="relative min-h-[350px] bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
       <!-- Full-width map -->
       <ClientOnly>
-        <BookingSidebarLocationMap :location="selectedLocation" />
+        <CroutonBookingBookingSidebarLocationMap :location="selectedLocation" />
         <template #fallback>
           <div class="absolute inset-0 flex items-center justify-center">
             <UIcon name="i-lucide-loader-2" class="w-8 h-8 animate-spin text-neutral-400" />
@@ -182,7 +182,7 @@ function toggleCart() {
           v-else-if="locations && locations.length > 0"
           class="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm rounded-full shadow-lg px-2 py-1.5"
         >
-          <BookingSidebarLocationNav
+          <CroutonBookingBookingSidebarLocationNav
             v-model="formState.locationId"
             :locations="locations"
           />
@@ -194,7 +194,7 @@ function toggleCart() {
     <div class="overflow-y-auto">
       <!-- Content Section (below map) -->
       <div class="bg-white dark:bg-neutral-950">
-        <BookingSidebarLocationContent :location="selectedLocation" />
+        <CroutonBookingBookingSidebarLocationContent :location="selectedLocation" />
       </div>
 
       <!-- Mobile: Booking form below content -->
@@ -208,7 +208,7 @@ function toggleCart() {
         >
           <template #book>
             <ClientOnly>
-              <BookingSidebarForm :hide-location-select="true" />
+              <CroutonBookingBookingSidebarForm :hide-location-select="true" />
               <template #fallback>
                 <div class="p-4 space-y-4 animate-pulse">
                   <div class="h-8 bg-neutral-200 dark:bg-neutral-700 rounded" />
@@ -219,7 +219,7 @@ function toggleCart() {
           </template>
 
           <template #my-bookings>
-            <BookingSidebarMyBookings />
+            <CroutonBookingBookingSidebarMyBookings />
           </template>
         </UTabs>
 
@@ -258,7 +258,7 @@ function toggleCart() {
             leave-to-class="max-h-0 opacity-0"
           >
             <div v-if="isCartOpen" class="overflow-hidden">
-              <BookingSidebarCart />
+              <CroutonBookingBookingSidebarCart />
             </div>
           </Transition>
         </div>

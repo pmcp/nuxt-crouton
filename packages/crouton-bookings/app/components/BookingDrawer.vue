@@ -15,7 +15,7 @@ const { isOpen } = useBookingCart()
   >
     <template #content>
       <div class="h-full w-full overflow-hidden">
-        <BookingSidebarSM />
+        <CroutonBookingBookingSidebarSM />
       </div>
     </template>
   </USlideover>

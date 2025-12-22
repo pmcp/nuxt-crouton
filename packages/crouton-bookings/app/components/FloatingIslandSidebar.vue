@@ -159,7 +159,7 @@ function toggleBookingSidebar() {
         v-if="isOpen"
         style="height: calc(100vh - 5rem);"
       >
-        <BookingSidebarSM class="pt-4" />
+        <CroutonBookingBookingSidebarSM class="pt-4" />
       </div>
     </div>
   </Transition>

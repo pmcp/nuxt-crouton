@@ -5,13 +5,9 @@
  *
  * Response includes:
  * - Booking details with location data
- * - Owner and creator user info
- * - Email stats (if email module is enabled)
  */
 import { eq, and, asc, gte, lte } from 'drizzle-orm'
-import { alias } from 'drizzle-orm/sqlite-core'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
-import { user } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
 
@@ -23,9 +19,6 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const startDate = query.startDate ? new Date(String(query.startDate)) : null
   const endDate = query.endDate ? new Date(String(query.endDate)) : null
-
-  const ownerUsers = alias(user, 'ownerUsers')
-  const createdByUsers = alias(user, 'createdByUsers')
 
   // Build where conditions
   const conditions = [
@@ -56,24 +49,20 @@ export default defineEventHandler(async (event) => {
       updatedAt: bookingsBookings.updatedAt,
       createdBy: bookingsBookings.createdBy,
       updatedBy: bookingsBookings.updatedBy,
-      locationData: bookingsLocations,
-      ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl,
-      },
-      createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl,
+      locationData: {
+        id: bookingsLocations.id,
+        title: bookingsLocations.title,
+        street: bookingsLocations.street,
+        zip: bookingsLocations.zip,
+        city: bookingsLocations.city,
+        location: bookingsLocations.location,
+        slots: bookingsLocations.slots,
+        inventoryMode: bookingsLocations.inventoryMode,
+        quantity: bookingsLocations.quantity,
       },
     })
     .from(bookingsBookings)
     .leftJoin(bookingsLocations, eq(bookingsBookings.location, bookingsLocations.id))
-    .leftJoin(ownerUsers, eq(bookingsBookings.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(bookingsBookings.createdBy, createdByUsers.id))
     .where(and(...conditions))
     .orderBy(asc(bookingsBookings.date))
 

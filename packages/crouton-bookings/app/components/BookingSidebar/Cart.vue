@@ -63,7 +63,7 @@ function goToBooking() {
 
       <!-- Items List -->
       <div class="space-y-2 mb-4">
-        <BookingSidebarBookingItem
+        <CroutonBookingBookingSidebarBookingItem
           v-for="item in cart"
           :key="item.id"
           :id="item.id"

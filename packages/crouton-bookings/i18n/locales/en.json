@@ -31,6 +31,16 @@
       "cancel": "Cancel Booking",
       "cancelled": "Cancelled"
     },
+    "list": {
+      "noBookings": "No bookings yet",
+      "noBookingsDescription": "You haven't made any bookings yet. Start by selecting a location and time slot."
+    },
+    "email": {
+      "resendConfirmation": "Resend Confirmation",
+      "sendReminder": "Send Reminder",
+      "sendCancellation": "Send Cancellation",
+      "sendFollowUp": "Send Follow-Up"
+    },
     "wizard": {
       "selectLocation": "Select Location",
       "selectDate": "Select Date",

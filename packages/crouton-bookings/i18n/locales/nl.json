@@ -31,6 +31,16 @@
       "cancel": "Boeking Annuleren",
       "cancelled": "Geannuleerd"
     },
+    "list": {
+      "noBookings": "Nog geen boekingen",
+      "noBookingsDescription": "Je hebt nog geen boekingen gemaakt. Begin door een locatie en tijdslot te selecteren."
+    },
+    "email": {
+      "resendConfirmation": "Bevestiging Opnieuw Verzenden",
+      "sendReminder": "Herinnering Verzenden",
+      "sendCancellation": "Annulering Verzenden",
+      "sendFollowUp": "Follow-up Verzenden"
+    },
     "wizard": {
       "selectLocation": "Selecteer Locatie",
       "selectDate": "Selecteer Datum",

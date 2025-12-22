@@ -509,7 +509,7 @@ function getBookingsByLocation(dateValue: DateValue): Map<string, Booking[]> {
 
       <!-- Items List -->
       <div class="flex-1 min-h-0 overflow-y-auto space-y-2">
-        <BookingSidebarBookingItem
+        <CroutonBookingBookingSidebarBookingItem
           v-for="booking in filteredBookings"
           :key="booking.id"
           :id="booking.id"

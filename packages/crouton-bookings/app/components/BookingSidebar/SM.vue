@@ -37,11 +37,11 @@ const tabItems = computed<TabsItem[]>(() => [
       }"
     >
       <template #book>
-        <BookingSidebarForm class="p-3"/>
+        <CroutonBookingBookingSidebarForm class="p-3"/>
       </template>
 
       <template #my-bookings>
-        <BookingSidebarMyBookings class="p-3"/>
+        <CroutonBookingBookingSidebarMyBookings class="p-3"/>
       </template>
     </UTabs>
   </div>

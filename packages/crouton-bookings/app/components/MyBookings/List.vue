@@ -175,12 +175,16 @@ async function expandDateRange(targetDate: Date) {
   }
 }
 
-// Fetch settings for group labels
+// Fetch settings for group labels (optional - may not exist if settings collection not generated)
 interface GroupItem { id: string, label: string }
 interface SettingsData { enableGroups?: boolean, groups?: GroupItem[] }
 const { data: settingsData } = useFetch<SettingsData[]>(
-  () => `/api/crouton-bookings/teams/${teamId.value}/settings`,
-  { key: 'mybookings-settings' },
+  () => `/api/teams/${teamId.value}/bookings-settings`,
+  {
+    key: 'mybookings-settings',
+    // Settings are optional - don't throw if not found
+    default: () => [],
+  },
 )
 const groupOptions = computed(() => settingsData.value?.[0]?.groups ?? [])
 
@@ -528,7 +532,7 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
           :data-booking-id="booking.id"
           :data-booking-date="toLocalDateStr(new Date(booking.date))"
         >
-          <BookingSidebarBookingItem
+          <CroutonBookingBookingSidebarBookingItem
             :id="booking.id"
             :location-title="booking.locationData?.title || 'Unknown Location'"
             :slot-label="getSlotLabel(booking)"

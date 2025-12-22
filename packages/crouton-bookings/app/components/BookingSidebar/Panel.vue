@@ -9,6 +9,6 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <BookingSidebarXL v-if="size === 'xl'" />
-  <BookingSidebarSM v-else />
+  <CroutonBookingBookingSidebarXL v-if="size === 'xl'" />
+  <CroutonBookingBookingSidebarSM v-else />
 </template>
