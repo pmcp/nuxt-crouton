@@ -6,25 +6,10 @@ export default defineNuxtConfig({
   extends: [
     '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-auth',
+    '@friendlyinternet/nuxt-crouton-i18n',
     '@friendlyinternet/crouton-bookings',
     './layers/bookings'
   ],
   modules: ['@nuxthub/core', '@nuxt/ui'],
-  hub: { db: 'sqlite' },
-
-  // Enable booking email features (optional)
-  runtimeConfig: {
-    croutonBookings: {
-      email: {
-        enabled: false // Set to true to enable email features
-      }
-    },
-    public: {
-      croutonBookings: {
-        email: {
-          enabled: false
-        }
-      }
-    }
-  }
+  hub: { db: 'sqlite' }
 })

@@ -1,13 +1,29 @@
-// Generated layer for bookings collections
-// Run `pnpm crouton generate` to populate with collections
+import { basename } from 'path'
+
+const layerName = basename(__dirname)
+
 export default defineNuxtConfig({
-  $meta: {
-    name: 'bookings-layer',
-    description: 'Generated bookings collections'
+  components: {
+    dirs: [
+      {
+        path: './components',
+        prefix: layerName,
+        global: true // Makes them available globally
+      }
+    ]
   },
   extends: [
-    './collections/bookings',
+    '@friendlyinternet/nuxt-crouton-i18n',
     './collections/locations',
+    './collections/bookings',
     './collections/settings'
-  ]
+  ],
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json' },
+      { code: 'nl', file: 'nl.json' },
+      { code: 'fr', file: 'fr.json' }
+    ],
+    langDir: './locales'
+  }
 })

@@ -32,7 +32,7 @@ export const bookingsLocationSchema = z.object({
   allowedMemberIds: z.array(z.string()).optional(),
   slots: z.array(z.any()).optional(),
   inventoryMode: z.boolean().optional(),
-  quantity: z.number().optional(),
+  quantity: z.array(z.string()).optional(),
   title: z.string().optional(),
   street: z.string().optional(),
   city: z.string().optional(),

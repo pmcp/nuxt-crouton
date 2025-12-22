@@ -3,7 +3,8 @@ import { eq, and, desc, asc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { BookingsLocation, NewBookingsLocation } from '../../types'
-import { user, member } from '~~/server/db/schema'
+import { user } from '~~/server/db/schema'
+import { teamMembers } from '~~/server/db/schema'
 
 export async function getAllBookingsLocations(teamId: string) {
   const db = useDB()
@@ -43,7 +44,7 @@ export async function getAllBookingsLocations(teamId: string) {
 
   // Post-query processing for array references
   if (locations.length > 0) {
-    // Post-process array references to member
+    // Post-process array references to teamMembers
     const allTeammembersIds = new Set()
     locations.forEach(item => {
         if (item.allowedMemberIds) {
@@ -64,8 +65,8 @@ export async function getAllBookingsLocations(teamId: string) {
     if (allTeammembersIds.size > 0) {
       const relatedTeammembers = await db
         .select()
-        .from(member)
-        .where(inArray(member.id, Array.from(allTeammembersIds)))
+        .from(teamMembers)
+        .where(inArray(teamMembers.id, Array.from(allTeammembersIds)))
 
       locations.forEach(item => {
         item.allowedMemberIdsData = []
@@ -131,7 +132,7 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
 
   // Post-query processing for array references
   if (locations.length > 0) {
-    // Post-process array references to member
+    // Post-process array references to teamMembers
     const allTeammembersIds = new Set()
     locations.forEach(item => {
         if (item.allowedMemberIds) {
@@ -152,8 +153,8 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
     if (allTeammembersIds.size > 0) {
       const relatedTeammembers = await db
         .select()
-        .from(member)
-        .where(inArray(member.id, Array.from(allTeammembersIds)))
+        .from(teamMembers)
+        .where(inArray(teamMembers.id, Array.from(allTeammembersIds)))
 
       locations.forEach(item => {
         item.allowedMemberIdsData = []

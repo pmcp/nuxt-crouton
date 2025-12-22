@@ -1,26 +1,22 @@
 export default {
   collections: [
     {
-      name: 'bookings',
-      fieldsFile: './schemas/booking.json',
-      sortable: false,
-      translatable: false
-    },
-    {
       name: 'locations',
       fieldsFile: './schemas/location.json',
       sortable: true,
-      translatable: false
+      translatable: true
+    },
+    {
+      name: 'bookings',
+      fieldsFile: './schemas/booking.json'
     },
     {
       name: 'settings',
-      fieldsFile: './schemas/settings.json',
-      sortable: false,
-      translatable: false
+      fieldsFile: './schemas/settings.json'
     }
   ],
   targets: [
-    { layer: 'bookings', collections: ['bookings', 'locations', 'settings'] }
+    { layer: 'bookings', collections: ['locations', 'bookings', 'settings'] }
   ],
   dialect: 'sqlite',
   flags: {
