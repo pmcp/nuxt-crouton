@@ -1,24 +1,16 @@
 <script setup lang="ts">
-import type { ThemeName, VariantName } from '~/composables/useCanvasNodes'
+import type { VariantName } from '~/composables/useCanvasNodes'
 
 const props = defineProps<{
-  theme: ThemeName
-  baseVariant: VariantName
+  variant?: VariantName
 }>()
 
-// Compute the actual variant to pass to components
-const computedVariant = computed(() => {
-  if (props.theme === 'default') {
-    return props.baseVariant || undefined
-  }
-  if (props.baseVariant) {
-    return `${props.theme}-${props.baseVariant}`
-  }
-  return props.theme
-})
+// Global theme from useThemeSwitcher (for display only, theme styling is automatic)
+const { currentTheme } = useThemeSwitcher()
 
-// Cast variant for components that may not support all variants
-const variant = computed(() => computedVariant.value as any)
+// Variant is passed directly - theme mapping happens via updateAppConfig
+// Cast to any because different Nuxt UI components have different variant type unions
+const variant = computed(() => (props.variant || undefined) as any)
 
 // Modal state
 const isModalOpen = ref(false)
@@ -106,7 +98,7 @@ const formLayoutTabs = [
       <div class="text-center">
         <h1 class="text-3xl font-bold mb-2">Page View</h1>
         <p class="text-sm text-[var(--ui-text-muted)]">
-          Current Theme: <span class="font-semibold text-[var(--ui-text)]">{{ theme }}</span>
+          Current Theme: <span class="font-semibold text-[var(--ui-text)]">{{ currentTheme }}</span>
           <span v-if="variant" class="ml-2 text-xs">
             (variant: <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">{{ variant }}</code>)
           </span>

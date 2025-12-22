@@ -3,24 +3,22 @@ import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
-import { THEMES, VARIANTS, type ThemeName, type VariantName } from '~/composables/useCanvasNodes'
+import { VARIANTS, type VariantName } from '~/composables/useCanvasNodes'
 
-const { nodes, addNode, populateAllComponents, clearCanvas, setAllThemes, setAllVariants } = useCanvasNodes()
+const { nodes, addNode, populateAllComponents, clearCanvas, setAllVariants } = useCanvasNodes()
 const { fitView } = useVueFlow()
+
+// Global theme from useThemeSwitcher (sets variant mappings via updateAppConfig)
+const { currentTheme, themes, setTheme } = useThemeSwitcher()
 
 // View mode: 'canvas' or 'page'
 type ViewMode = 'canvas' | 'page'
 const viewMode = ref<ViewMode>('canvas')
 
-// Global theme/variant state for "Apply to All"
-const globalTheme = ref<ThemeName>('default')
+// Global variant state for "Apply to All"
 const globalVariant = ref<VariantName>('')
 
-// Watch for changes and apply to all
-watch(globalTheme, (theme) => {
-  setAllThemes(theme)
-})
-
+// Watch for variant changes and apply to all nodes
 watch(globalVariant, (variant) => {
   setAllVariants(variant)
 })
@@ -111,11 +109,12 @@ function handlePopulateAll() {
       <div class="flex items-center gap-2">
         <span class="text-xs text-[var(--ui-text-muted)]">Theme:</span>
         <USelectMenu
-          v-model="globalTheme"
-          :items="THEMES"
+          :model-value="currentTheme"
+          :items="themes.map(t => ({ value: t.name, label: t.label }))"
           value-key="value"
           size="sm"
           class="w-28"
+          @update:model-value="setTheme($event)"
         />
       </div>
 
@@ -164,8 +163,7 @@ function handlePopulateAll() {
     <!-- Page View -->
     <PageView
       v-else
-      :theme="globalTheme"
-      :base-variant="globalVariant"
+      :variant="globalVariant || undefined"
       class="pt-16"
     />
   </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { NodeProps } from '@vue-flow/core'
-import type { ComponentNodeData, ThemeName, VariantName } from '~/composables/useCanvasNodes'
-import { THEMES, VARIANTS } from '~/composables/useCanvasNodes'
+import type { ComponentNodeData, VariantName } from '~/composables/useCanvasNodes'
+import { VARIANTS } from '~/composables/useCanvasNodes'
 
 // Import Nuxt UI components from #components (Nuxt's auto-import system)
 import {
@@ -58,22 +58,15 @@ import {
 
 const props = defineProps<NodeProps<ComponentNodeData>>()
 
-const { updateNodeData, getComputedVariant, removeNode } = useCanvasNodes()
+const { updateNodeData, removeNode } = useCanvasNodes()
 
-// Writable computed refs - reactive to prop changes + update node data on set
-const selectedTheme = computed({
-  get: () => props.data.theme,
-  set: (value: ThemeName) => updateNodeData(props.id, { theme: value })
-})
+// Global theme from useThemeSwitcher (for background styling)
+const { currentTheme } = useThemeSwitcher()
 
+// Writable computed ref for variant - updates node data on set
 const selectedVariant = computed({
-  get: () => props.data.baseVariant,
-  set: (value: VariantName) => updateNodeData(props.id, { baseVariant: value })
-})
-
-// Computed variant for the actual component
-const computedVariant = computed(() => {
-  return getComputedVariant(selectedTheme.value, selectedVariant.value)
+  get: () => props.data.variant,
+  set: (value: VariantName) => updateNodeData(props.id, { variant: value })
 })
 
 // Component map using the imported components
@@ -144,6 +137,8 @@ const hasSlotContent = computed(() => {
 })
 
 // Theme-specific background styles for accurate preview
+// Uses global theme from useThemeSwitcher
+type ThemeName = 'default' | 'ko' | 'minimal' | 'kr11'
 const themeBackgroundStyle = computed(() => {
   const backgrounds: Record<ThemeName, string> = {
     default: '#ffffff',
@@ -151,7 +146,7 @@ const themeBackgroundStyle = computed(() => {
     minimal: '#ffffff',
     kr11: 'var(--kr-chassis, #e5e2dd)',
   }
-  return { backgroundColor: backgrounds[selectedTheme.value] || '#ffffff' }
+  return { backgroundColor: backgrounds[currentTheme.value as ThemeName] || '#ffffff' }
 })
 </script>
 
@@ -163,22 +158,13 @@ const themeBackgroundStyle = computed(() => {
 
       <div class="flex-1" />
 
-      <!-- Theme selector -->
-      <USelectMenu
-        v-model="selectedTheme"
-        :items="THEMES"
-        value-key="value"
-        size="xs"
-        class="w-20"
-      />
-
-      <!-- Variant selector -->
+      <!-- Variant selector (theme is global via useThemeSwitcher) -->
       <USelectMenu
         v-model="selectedVariant"
         :items="VARIANTS"
         value-key="value"
         size="xs"
-        class="w-20"
+        class="w-24"
       />
 
       <!-- Remove button -->
@@ -196,7 +182,7 @@ const themeBackgroundStyle = computed(() => {
       <component
         :is="ResolvedComponent"
         v-bind="data.props"
-        :variant="computedVariant"
+        :variant="selectedVariant || undefined"
       >
         <template v-if="hasSlotContent">
           {{ data.slots?.default }}
@@ -206,10 +192,10 @@ const themeBackgroundStyle = computed(() => {
 
     <!-- Variant indicator -->
     <div
-      v-if="computedVariant"
+      v-if="selectedVariant"
       class="px-3 py-1 text-xs text-center border-t border-[var(--ui-border)] opacity-50"
     >
-      variant="{{ computedVariant }}"
+      variant="{{ selectedVariant }}"
     </div>
   </div>
 </template>

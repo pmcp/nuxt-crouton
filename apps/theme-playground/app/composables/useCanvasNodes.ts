@@ -1,25 +1,17 @@
 import type { Node } from '@vue-flow/core'
 import { COMPONENT_REGISTRY, CATEGORIES, type ComponentConfig } from './useComponentRegistry'
 
-export type ThemeName = 'default' | 'ko' | 'minimal' | 'kr11'
+// Standard Nuxt UI variant names (theme mapping happens via updateAppConfig)
 export type VariantName = 'solid' | 'soft' | 'ghost' | 'outline' | 'link' | ''
 
 export interface ComponentNodeData {
   componentName: string
-  theme: ThemeName
-  baseVariant: VariantName
+  variant: VariantName
   props: Record<string, any>
   slots?: Record<string, string>
 }
 
 export type ComponentNode = Node<ComponentNodeData>
-
-export const THEMES: { value: ThemeName; label: string }[] = [
-  { value: 'default', label: 'Default' },
-  { value: 'ko', label: 'KO' },
-  { value: 'minimal', label: 'Minimal' },
-  { value: 'kr11', label: 'KR-11' }
-]
 
 export const VARIANTS: { value: VariantName; label: string }[] = [
   { value: '', label: 'None' },
@@ -58,8 +50,7 @@ export function useCanvasNodes() {
       position: position || { x: 100 + (nodes.value.length * 50), y: 100 + (nodes.value.length * 50) },
       data: {
         componentName: config.name,
-        theme: 'default',
-        baseVariant: '',
+        variant: '',
         props: { ...config.defaultProps },
         slots: config.slots ? { ...config.slots } : undefined
       }
@@ -100,8 +91,7 @@ export function useCanvasNodes() {
         position: { x: LAYOUT.startX, y: currentY },
         data: {
           componentName: '',
-          theme: 'default',
-          baseVariant: '',
+          variant: '',
           props: { label: category.label, count: components.length },
           slots: undefined
         }
@@ -124,8 +114,7 @@ export function useCanvasNodes() {
           position: { x, y },
           data: {
             componentName: config.name,
-            theme: 'default',
-            baseVariant: '',
+            variant: '',
             props: { ...config.defaultProps },
             slots: config.slots ? { ...config.slots } : undefined
           }
@@ -145,24 +134,12 @@ export function useCanvasNodes() {
     nodeIdCounter = 0
   }
 
-  function setAllThemes(theme: ThemeName) {
+  function setAllVariants(newVariant: VariantName) {
     nodes.value = nodes.value.map((node): ComponentNode => {
       if (node.type === 'component') {
         return {
           ...node,
-          data: { ...node.data, theme } as ComponentNodeData
-        }
-      }
-      return node
-    })
-  }
-
-  function setAllVariants(variant: VariantName) {
-    nodes.value = nodes.value.map((node): ComponentNode => {
-      if (node.type === 'component') {
-        return {
-          ...node,
-          data: { ...node.data, baseVariant: variant } as ComponentNodeData
+          data: { ...node.data, variant: newVariant } as ComponentNodeData
         }
       }
       return node
@@ -185,25 +162,13 @@ export function useCanvasNodes() {
     nodes.value = nodes.value.filter(node => node.id !== nodeId)
   }
 
-  function getComputedVariant(theme: ThemeName, baseVariant: VariantName): string | undefined {
-    if (theme === 'default') {
-      return baseVariant || undefined
-    }
-    if (baseVariant) {
-      return `${theme}-${baseVariant}`
-    }
-    return theme
-  }
-
   return {
     nodes,
     addNode,
     updateNodeData,
     removeNode,
-    getComputedVariant,
     populateAllComponents,
     clearCanvas,
-    setAllThemes,
     setAllVariants
   }
 }
