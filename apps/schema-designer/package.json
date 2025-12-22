@@ -14,7 +14,7 @@
     "@friendlyinternet/nuxt-crouton": "workspace:*"
   },
   "devDependencies": {
-    "@nuxt/ui": "^3.0.0",
-    "nuxt": "^3.15.0"
+    "@nuxt/ui": "^4.0.0",
+    "nuxt": "^4.2.2"
   }
 }

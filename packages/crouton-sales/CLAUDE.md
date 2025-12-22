@@ -9,7 +9,7 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 | File | Purpose |
 |------|---------|
 | `app/composables/usePosOrder.ts` | Cart management, checkout, price calculations |
-| `app/composables/useHelperAuth.ts` | Helper authentication (wraps @crouton/auth) |
+| `app/composables/useHelperAuth.ts` | Helper authentication (wraps nuxt-crouton-auth) |
 | `app/composables/usePosProducts.ts` | Product fetching with category filtering |
 | `app/composables/usePosCategories.ts` | Category management for products |
 | `app/composables/usePosEvents.ts` | Event management (pop-ups, markets) |
@@ -120,7 +120,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 
 ## Helper Authentication
 
-Helpers (volunteers, staff) authenticate with an event's shared PIN. The authentication is managed by `@crouton/auth`'s scoped access system.
+Helpers (volunteers, staff) authenticate with an event's shared PIN. The authentication is managed by `@friendlyinternet/nuxt-crouton-auth`'s scoped access system.
 
 ### Client-side Usage
 
@@ -156,7 +156,7 @@ await logout()
 
 ```typescript
 // In API handlers
-import { requireScopedAccess } from '@crouton/auth/server'
+import { requireScopedAccess } from '@friendlyinternet/nuxt-crouton-auth/server'
 
 export default defineEventHandler(async (event) => {
   const access = await requireScopedAccess(event, 'pos-helper-token')
@@ -185,7 +185,7 @@ Events must have a `helperPin` field configured:
 ## Dependencies
 
 - **Extends**: `@friendlyinternet/nuxt-crouton` (required)
-- **Peer deps**: `@crouton/auth`, `@nuxtjs/i18n ^9.0.0`, `zod ^3.0.0`
+- **Peer deps**: `@friendlyinternet/nuxt-crouton-auth`, `@nuxtjs/i18n ^9.0.0`, `zod ^3.0.0`
 - **Optional**: `node-thermal-printer` for receipt printing
 
 ## Testing

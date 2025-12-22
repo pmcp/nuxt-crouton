@@ -2,7 +2,7 @@
  * Helper Authentication Composable
  *
  * Provides authentication for event helpers (volunteers, staff) in the POS system.
- * This composable wraps `@crouton/auth`'s scoped access functionality to provide
+ * This composable wraps `@friendlyinternet/nuxt-crouton-auth`'s scoped access functionality to provide
  * PIN-based authentication scoped to specific events.
  *
  * Helpers authenticate with:
@@ -32,9 +32,9 @@
  * ```
  */
 
-// Re-export from @crouton/auth for convenience
+// Re-export from @friendlyinternet/nuxt-crouton-auth for convenience
 // The useEventAccess composable provides the core functionality
-export { useEventAccess } from '@crouton/auth/app/composables/useScopedAccess'
+export { useEventAccess } from '@friendlyinternet/nuxt-crouton-auth/app/composables/useScopedAccess'
 
 export interface HelperSession {
   token: string
@@ -61,7 +61,7 @@ export interface HelperLoginOptions {
  * Helper authentication composable
  *
  * Provides backwards-compatible API matching the original useHelperAuth.
- * Uses @crouton/auth's scoped access under the hood.
+ * Uses @friendlyinternet/nuxt-crouton-auth's scoped access under the hood.
  */
 export function useHelperAuth() {
   // State management using Nuxt's useState for SSR compatibility

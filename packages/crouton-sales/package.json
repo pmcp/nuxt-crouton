@@ -50,7 +50,7 @@
   "peerDependencies": {
     "nuxt": "^4.0.0",
     "@friendlyinternet/nuxt-crouton": "workspace:*",
-    "@crouton/auth": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
     "@nuxtjs/i18n": "^9.0.0 || ^10.0.0",
     "zod": "^3.0.0",
     "node-thermal-printer": "^4.0.0"
