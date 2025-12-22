@@ -1,0 +1,29 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "title": { "type": "string", "meta": { "required": true, "maxLength": 300 } },
+  "description": { "type": "text" },
+  "status": {
+    "type": "enum",
+    "meta": {
+      "options": ["todo", "in-progress", "review", "done"],
+      "default": "todo"
+    }
+  },
+  "priority": {
+    "type": "enum",
+    "meta": {
+      "options": ["low", "medium", "high", "urgent"],
+      "default": "medium"
+    }
+  },
+  "projectId": {
+    "type": "reference",
+    "meta": {
+      "references": "projects",
+      "onDelete": "cascade"
+    }
+  },
+  "dueDate": { "type": "date" },
+  "completedAt": { "type": "datetime" },
+  "estimatedHours": { "type": "number" }
+}

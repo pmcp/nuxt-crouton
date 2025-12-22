@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@source "../../../node_modules/@friendlyinternet/nuxt-crouton/app/components/**/*.vue";
+@source "../../../node_modules/@friendlyinternet/nuxt-crouton-auth/app/components/**/*.vue";

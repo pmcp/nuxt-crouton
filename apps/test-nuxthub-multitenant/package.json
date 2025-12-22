@@ -1,31 +1,24 @@
 {
   "name": "test-nuxthub-multitenant",
-  "type": "module",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build": "nuxt build",
     "dev": "nuxt dev",
-    "generate": "nuxt generate",
+    "build": "nuxt build",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
     "crouton": "crouton"
   },
   "dependencies": {
     "@friendlyinternet/nuxt-crouton": "workspace:*",
     "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-i18n": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-themes": "workspace:*",
-    "@libsql/client": "^0.15.0",
-    "@nuxt/ui": "^4.0.0",
     "@nuxthub/core": "^0.10.0",
+    "@nuxt/ui": "^4.0.0",
+    "@libsql/client": "^0.15.0",
     "drizzle-orm": "^0.45.0",
-    "nuxt": "^4.2.2",
-    "vue": "^3.5.25",
-    "vue-router": "^4.6.4"
+    "nuxt": "^4.0.0"
   },
   "devDependencies": {
     "@friendlyinternet/nuxt-crouton-cli": "workspace:*",
-    "@playwright/test": "^1.57.0",
     "drizzle-kit": "^0.31.0"
   }
 }
