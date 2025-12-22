@@ -56,7 +56,7 @@
   },
   "allowedMemberIds": {
     "type": "array",
-    "refTarget": "teamMembers",
+    "refTarget": "member",
     "refScope": "adapter",
     "meta": {
       "label": "Allowed Members",

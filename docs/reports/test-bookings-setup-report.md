@@ -26,9 +26,19 @@ Creating a fresh test-bookings app to dogfood the `@friendlyinternet/crouton-boo
 - **Time spent**: 1 min
 
 ### Issue #2: pnpm install fails with workspace package not found
-- **Description**: `@friendlyinternet/nuxt-crouton-ai@workspace:*` referenced in nuxt-crouton-schema-designer but pnpm fails to resolve
-- **Resolution**: TBD - investigating
-- **Time spent**: TBD
+- **Description**: `@friendlyinternet/nuxt-crouton-ai@workspace:*` referenced but excluded from pnpm-workspace.yaml
+- **Resolution**: User added package back to workspace
+- **Time spent**: 2 min
+
+### Issue #3: teamMembers table not found
+- **Description**: Schema used `refTarget: "teamMembers"` but auth package exports `member` table
+- **Resolution**: Changed schema to use `refTarget: "member"` and regenerated
+- **Time spent**: 3 min
+
+### Issue #4: crouton-email module warning
+- **Description**: `#crouton-email/server/utils/email` import warning in crouton-bookings package
+- **Resolution**: Expected - email module is optional. Works without it.
+- **Time spent**: 0 (just a warning)
 
 ---
 
@@ -46,25 +56,39 @@ extends: [
 
 ### crouton.config.js
 ```js
-// Will be added after creation
+export default {
+  collections: [
+    { name: 'locations', fieldsFile: './schemas/location.json', sortable: true, translatable: true },
+    { name: 'bookings', fieldsFile: './schemas/booking.json' },
+    { name: 'settings', fieldsFile: './schemas/settings.json' }
+  ],
+  targets: [
+    { layer: 'bookings', collections: ['locations', 'bookings', 'settings'] }
+  ],
+  dialect: 'sqlite',
+  flags: { useMetadata: true, force: true }
+}
 ```
 
 ---
 
 ## Lessons Learned
 
-1. TBD
+1. **Auth env var**: Use `BETTER_AUTH_SECRET` not `NUXT_AUTH_PASSWORD`
+2. **Schema refTarget must match actual table names**: Use `member` not `teamMembers` (matches auth package export)
+3. **Layer type errors are expected**: Generated layers have typecheck errors due to auto-import context, but runtime works
+4. **crouton-email is optional**: The warning about missing email module is expected when not using email features
 
 ---
 
 ## Final Status
 
-- [ ] App skeleton created
-- [ ] Schemas copied
-- [ ] Collections generated
-- [ ] Migrations run
-- [ ] Typecheck passes
-- [ ] Dev server starts
+- [x] App skeleton created
+- [x] Schemas copied
+- [x] Collections generated
+- [x] Migrations run
+- [x] Dev server starts (with expected crouton-email warning)
+- [ ] Typecheck passes (layer type issues exist but runtime works)
 
 ---
 

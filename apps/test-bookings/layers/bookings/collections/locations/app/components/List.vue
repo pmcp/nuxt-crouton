@@ -54,7 +54,7 @@
           v-for="itemId in row.original.allowedMemberIds"
           :key="itemId"
           :id="itemId"
-          collection="teamMembers"
+          collection="member"
         />
       </div>
       <span v-else class="text-gray-400">—</span>

@@ -16,7 +16,7 @@
 ## Features
 
 - Multi-language support for: title, street, city, content
-- References: allowedMemberIds → teamMembers
+- References: allowedMemberIds → member
 - Repeater fields: slots
 
 ## File Structure
@@ -54,7 +54,7 @@ collections/locations/
 | city | string | No |
 | location | text | No |
 | content | text | No |
-| allowedMemberIds | array (→ teamMembers) | No |
+| allowedMemberIds | array (→ member) | No |
 | slots | repeater | No |
 | inventoryMode | boolean | No |
 | quantity | number | No |

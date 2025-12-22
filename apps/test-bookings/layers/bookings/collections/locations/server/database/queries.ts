@@ -4,7 +4,7 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { BookingsLocation, NewBookingsLocation } from '../../types'
 import { user } from '~~/server/db/schema'
-import { teamMembers } from '~~/server/db/schema'
+import { member } from '~~/server/db/schema'
 
 export async function getAllBookingsLocations(teamId: string) {
   const db = useDB()
@@ -44,8 +44,8 @@ export async function getAllBookingsLocations(teamId: string) {
 
   // Post-query processing for array references
   if (locations.length > 0) {
-    // Post-process array references to teamMembers
-    const allTeammembersIds = new Set()
+    // Post-process array references to member
+    const allMemberIds = new Set()
     locations.forEach(item => {
         if (item.allowedMemberIds) {
           try {
@@ -53,7 +53,7 @@ export async function getAllBookingsLocations(teamId: string) {
               ? JSON.parse(item.allowedMemberIds)
               : item.allowedMemberIds
             if (Array.isArray(ids)) {
-              ids.forEach(id => allTeammembersIds.add(id))
+              ids.forEach(id => allMemberIds.add(id))
             }
           } catch (e) {
             // Handle parsing errors gracefully
@@ -62,11 +62,11 @@ export async function getAllBookingsLocations(teamId: string) {
         }
       })
 
-    if (allTeammembersIds.size > 0) {
-      const relatedTeammembers = await db
+    if (allMemberIds.size > 0) {
+      const relatedMember = await db
         .select()
-        .from(teamMembers)
-        .where(inArray(teamMembers.id, Array.from(allTeammembersIds)))
+        .from(member)
+        .where(inArray(member.id, Array.from(allMemberIds)))
 
       locations.forEach(item => {
         item.allowedMemberIdsData = []
@@ -76,7 +76,7 @@ export async function getAllBookingsLocations(teamId: string) {
               ? JSON.parse(item.allowedMemberIds)
               : item.allowedMemberIds
             if (Array.isArray(ids)) {
-              item.allowedMemberIdsData = relatedTeammembers.filter(r => ids.includes(r.id))
+              item.allowedMemberIdsData = relatedMember.filter(r => ids.includes(r.id))
             }
           } catch (e) {
             console.error('Error mapping allowedMemberIds:', e)
@@ -132,8 +132,8 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
 
   // Post-query processing for array references
   if (locations.length > 0) {
-    // Post-process array references to teamMembers
-    const allTeammembersIds = new Set()
+    // Post-process array references to member
+    const allMemberIds = new Set()
     locations.forEach(item => {
         if (item.allowedMemberIds) {
           try {
@@ -141,7 +141,7 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
               ? JSON.parse(item.allowedMemberIds)
               : item.allowedMemberIds
             if (Array.isArray(ids)) {
-              ids.forEach(id => allTeammembersIds.add(id))
+              ids.forEach(id => allMemberIds.add(id))
             }
           } catch (e) {
             // Handle parsing errors gracefully
@@ -150,11 +150,11 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
         }
       })
 
-    if (allTeammembersIds.size > 0) {
-      const relatedTeammembers = await db
+    if (allMemberIds.size > 0) {
+      const relatedMember = await db
         .select()
-        .from(teamMembers)
-        .where(inArray(teamMembers.id, Array.from(allTeammembersIds)))
+        .from(member)
+        .where(inArray(member.id, Array.from(allMemberIds)))
 
       locations.forEach(item => {
         item.allowedMemberIdsData = []
@@ -164,7 +164,7 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
               ? JSON.parse(item.allowedMemberIds)
               : item.allowedMemberIds
             if (Array.isArray(ids)) {
-              item.allowedMemberIdsData = relatedTeammembers.filter(r => ids.includes(r.id))
+              item.allowedMemberIdsData = relatedMember.filter(r => ids.includes(r.id))
             }
           } catch (e) {
             console.error('Error mapping allowedMemberIds:', e)

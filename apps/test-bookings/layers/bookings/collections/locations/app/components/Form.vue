@@ -90,7 +90,7 @@
         <UFormField label="AllowedMemberIds" name="allowedMemberIds" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.allowedMemberIds"
-            collection="teamMembers"
+            collection="member"
             label="AllowedMemberIds"
             multiple
           />
