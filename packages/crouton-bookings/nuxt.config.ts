@@ -32,6 +32,31 @@ export default defineNuxtConfig({
     dirs: [join(currentDir, 'app/composables')]
   },
 
+  // Auto-import server utilities
+  nitro: {
+    imports: {
+      dirs: [join(currentDir, 'server/utils')]
+    }
+  },
+
+  // Runtime config with email module options
+  runtimeConfig: {
+    // Server-only config
+    croutonBookings: {
+      email: {
+        enabled: false // Set to true to enable email features
+      }
+    },
+    // Public config
+    public: {
+      croutonBookings: {
+        email: {
+          enabled: false // Mirror for client-side awareness
+        }
+      }
+    }
+  },
+
   // i18n configuration - translations auto-merge when this layer is extended
   i18n: {
     locales: [

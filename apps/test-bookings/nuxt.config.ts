@@ -1,0 +1,30 @@
+// https://nuxt.com/docs/api/configuration/nuxt-config
+export default defineNuxtConfig({
+  css: ['~/assets/css/main.css'],
+  compatibilityDate: '2025-07-15',
+  devtools: { enabled: true },
+  extends: [
+    '@friendlyinternet/nuxt-crouton',
+    '@friendlyinternet/nuxt-crouton-auth',
+    '@friendlyinternet/crouton-bookings',
+    './layers/bookings'
+  ],
+  modules: ['@nuxthub/core', '@nuxt/ui'],
+  hub: { db: 'sqlite' },
+
+  // Enable booking email features (optional)
+  runtimeConfig: {
+    croutonBookings: {
+      email: {
+        enabled: false // Set to true to enable email features
+      }
+    },
+    public: {
+      croutonBookings: {
+        email: {
+          enabled: false
+        }
+      }
+    }
+  }
+})
