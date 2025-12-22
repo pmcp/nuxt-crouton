@@ -102,16 +102,16 @@ export function useTeam() {
   const config = useAuthConfig()
   const authClient = useAuthClient()
 
-  // Better Auth 1.4.x uses nanostores - these are Atoms, not functions
-  // Access the atom directly and create computed refs from its value
-  // Guard against SSR where authClient may not have these properties
-  const organizationsAtom = authClient?.useListOrganizations
-  const activeOrgAtom = authClient?.useActiveOrganization
+  // Use useSession's activeOrganization which is properly populated via getFullOrganization()
+  // This replaces the nanostore atoms which aren't automatically synced
+  const { activeOrganization: sessionActiveOrg } = useSession()
 
-  // Create computed refs that access the atom's value
-  // Use optional chaining since atom value might be undefined during SSR
+  // For organizations list, still use the atom but with fallback
+  const organizationsAtom = authClient?.useListOrganizations
   const organizationsData = computed(() => organizationsAtom?.value?.data ?? null)
-  const activeOrgData = computed(() => activeOrgAtom?.value?.data ?? null)
+
+  // Use session's active org instead of nanostore (which doesn't auto-populate)
+  const activeOrgData = computed(() => sessionActiveOrg.value)
 
   // Local state
   const loading = ref(false)
@@ -119,10 +119,8 @@ export function useTeam() {
   const membersData = ref<Member[]>([])
 
   // Computed: current team (active organization)
-  const currentTeam = computed<Team | null>(() => {
-    if (!activeOrgData.value) return null
-    return mapOrganizationToTeam(activeOrgData.value)
-  })
+  // activeOrgData is already a Team type from useSession
+  const currentTeam = computed<Team | null>(() => activeOrgData.value)
 
   // Computed: all user's teams
   const teams = computed<Team[]>(() => {
