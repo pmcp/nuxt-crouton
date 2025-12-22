@@ -256,8 +256,7 @@ describe('useAuth', () => {
   })
 
   describe('loginWithOAuth', () => {
-    // TODO: window.location mock complexity
-    it.todo('should call signIn.social with provider', async () => {
+    it('should call signIn.social with provider', async () => {
       mockAuthClient.signIn.social.mockResolvedValue({ data: {}, error: null })
 
       const { loginWithOAuth } = useAuth()
@@ -269,8 +268,7 @@ describe('useAuth', () => {
       })
     })
 
-    // TODO: window.location mock complexity
-    it.todo('should throw on OAuth error', async () => {
+    it('should throw on OAuth error', async () => {
       mockAuthClient.signIn.social.mockResolvedValue({
         data: null,
         error: { message: 'OAuth failed' }
@@ -320,8 +318,7 @@ describe('useAuth', () => {
   })
 
   describe('loginWithMagicLink', () => {
-    // TODO: window.location mock complexity
-    it.todo('should call signIn.magicLink with email', async () => {
+    it('should call signIn.magicLink with email', async () => {
       mockAuthClient.signIn.magicLink.mockResolvedValue({ data: {}, error: null })
 
       const { loginWithMagicLink } = useAuth()
@@ -333,8 +330,7 @@ describe('useAuth', () => {
       })
     })
 
-    // TODO: window.location mock complexity
-    it.todo('should throw on magic link error', async () => {
+    it('should throw on magic link error', async () => {
       mockAuthClient.signIn.magicLink.mockResolvedValue({
         data: null,
         error: { message: 'Magic link failed' }
@@ -411,8 +407,7 @@ describe('useAuth', () => {
   })
 
   describe('forgotPassword', () => {
-    // TODO: window.location mock complexity
-    it.todo('should call requestPasswordReset with email', async () => {
+    it('should call requestPasswordReset with email', async () => {
       mockAuthClient.requestPasswordReset.mockResolvedValue({ data: {}, error: null })
 
       const { forgotPassword } = useAuth()
@@ -424,8 +419,7 @@ describe('useAuth', () => {
       })
     })
 
-    // TODO: window.location mock complexity
-    it.todo('should throw on forgot password error', async () => {
+    it('should throw on forgot password error', async () => {
       mockAuthClient.requestPasswordReset.mockResolvedValue({
         data: null,
         error: { message: 'User not found' }
@@ -686,8 +680,7 @@ describe('useAuth', () => {
 
   describe('WebAuthn support helpers', () => {
     describe('isWebAuthnSupported', () => {
-      // TODO: requires browser WebAuthn API
-      it.todo('should return true when WebAuthn is available', () => {
+      it('should return true when WebAuthn is available', () => {
         const { isWebAuthnSupported } = useAuth()
         expect(isWebAuthnSupported()).toBe(true)
       })

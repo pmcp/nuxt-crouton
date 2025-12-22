@@ -105,8 +105,7 @@ describe('Integration: Login Flow', () => {
   })
 
   describe('OAuth Login', () => {
-    // TODO: window.location mock complexity
-    it.todo('should initiate OAuth flow with provider', async () => {
+    it('should initiate OAuth flow with provider', async () => {
       mockClient = setupIntegrationMocks()
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -120,8 +119,7 @@ describe('Integration: Login Flow', () => {
       })
     })
 
-    // TODO: window.location mock complexity
-    it.todo('should support multiple OAuth providers', async () => {
+    it('should support multiple OAuth providers', async () => {
       mockClient = setupIntegrationMocks()
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -182,8 +180,7 @@ describe('Integration: Login Flow', () => {
   })
 
   describe('Magic Link Login', () => {
-    // TODO: window.location mock complexity
-    it.todo('should send magic link to email', async () => {
+    it('should send magic link to email', async () => {
       mockClient = setupIntegrationMocks()
 
       const { useAuth } = await import('../../app/composables/useAuth')

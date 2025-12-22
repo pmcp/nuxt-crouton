@@ -155,8 +155,7 @@ describe('Integration: Team Operations', () => {
       )
     })
 
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should show team switcher only in multi-tenant mode with multiple teams', async () => {
+    it('should show team switcher only in multi-tenant mode with multiple teams', async () => {
       mockClient = setupIntegrationMocks({
         user: createTestUser(),
         session: createTestSession(),

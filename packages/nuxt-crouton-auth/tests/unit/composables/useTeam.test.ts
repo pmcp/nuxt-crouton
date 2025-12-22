@@ -130,8 +130,7 @@ describe('useTeam', () => {
       expect(currentTeam.value).toBeNull()
     })
 
-    // TODO: Better Auth nanostore mock complexity - tracked for future refactoring
-    it.todo('should return currentTeam when active organization exists', () => {
+    it('should return currentTeam when active organization exists', () => {
       mockActiveOrgData.value = {
         id: 'org-1',
         name: 'Test Team',
@@ -157,8 +156,7 @@ describe('useTeam', () => {
       expect(teams.value).toEqual([])
     })
 
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should return teams list when organizations exist', () => {
+    it('should return teams list when organizations exist', () => {
       mockOrganizationsData.value = [
         { id: 'org-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00Z' },
         { id: 'org-2', name: 'Team 2', slug: 'team-2', createdAt: '2024-01-02T00:00:00Z' }
@@ -196,8 +194,7 @@ describe('useTeam', () => {
       expect(currentRole.value).toBeNull()
     })
 
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should return user role when authenticated and member', () => {
+    it('should return user role when authenticated and member', () => {
       mockSessionUser.value = { id: 'user-1', email: 'test@example.com' }
       mockActiveOrgData.value = {
         id: 'org-1',
@@ -216,8 +213,7 @@ describe('useTeam', () => {
   })
 
   describe('mode-aware flags', () => {
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should show team switcher in multi-tenant mode with multiple teams', () => {
+    it('should show team switcher in multi-tenant mode with multiple teams', () => {
       mockOrganizationsData.value = [
         { id: 'org-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00Z' },
         { id: 'org-2', name: 'Team 2', slug: 'team-2', createdAt: '2024-01-02T00:00:00Z' }
@@ -250,8 +246,7 @@ describe('useTeam', () => {
       expect(canCreateTeam.value).toBe(true)
     })
 
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should prevent team creation at limit', () => {
+    it('should prevent team creation at limit', () => {
       mockOrganizationsData.value = Array(5).fill(null).map((_, i) => ({
         id: `org-${i}`,
         name: `Team ${i}`,
@@ -263,8 +258,7 @@ describe('useTeam', () => {
       expect(canCreateTeam.value).toBe(false)
     })
 
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should allow invite for owner/admin', () => {
+    it('should allow invite for owner/admin', () => {
       mockSessionUser.value = { id: 'user-1', email: 'test@example.com' }
       mockActiveOrgData.value = {
         id: 'org-1',
@@ -361,8 +355,7 @@ describe('useTeam', () => {
       expect(team.name).toBe('New Team')
     })
 
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should throw when at team limit', async () => {
+    it('should throw when at team limit', async () => {
       mockOrganizationsData.value = Array(5).fill(null).map((_, i) => ({
         id: `org-${i}`,
         name: `Team ${i}`,
@@ -379,8 +372,7 @@ describe('useTeam', () => {
   })
 
   describe('updateTeam', () => {
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should call organization.update', async () => {
+    it('should call organization.update', async () => {
       mockActiveOrgData.value = {
         id: 'org-1',
         name: 'Old Name',
@@ -423,8 +415,7 @@ describe('useTeam', () => {
   })
 
   describe('deleteTeam', () => {
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should call organization.delete for owner', async () => {
+    it('should call organization.delete for owner', async () => {
       mockSessionUser.value = { id: 'user-1', email: 'test@example.com' }
       mockActiveOrgData.value = {
         id: 'org-1',
@@ -443,8 +434,7 @@ describe('useTeam', () => {
       })
     })
 
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should throw when not owner', async () => {
+    it('should throw when not owner', async () => {
       mockSessionUser.value = { id: 'user-1', email: 'test@example.com' }
       mockActiveOrgData.value = {
         id: 'org-1',
@@ -463,8 +453,7 @@ describe('useTeam', () => {
 
   describe('member management', () => {
     describe('loadMembers', () => {
-      // TODO: Better Auth nanostore mock complexity
-      it.todo('should load members for current team', async () => {
+      it('should load members for current team', async () => {
         mockActiveOrgData.value = {
           id: 'org-1',
           name: 'Test',
@@ -499,8 +488,7 @@ describe('useTeam', () => {
     })
 
     describe('inviteMember', () => {
-      // TODO: Better Auth nanostore mock complexity
-      it.todo('should call organization.inviteMember', async () => {
+      it('should call organization.inviteMember', async () => {
         mockSessionUser.value = { id: 'user-1', email: 'owner@example.com' }
         mockActiveOrgData.value = {
           id: 'org-1',
@@ -521,8 +509,7 @@ describe('useTeam', () => {
         })
       })
 
-      // TODO: Better Auth nanostore mock complexity
-      it.todo('should throw when not authorized', async () => {
+      it('should throw when not authorized', async () => {
         mockSessionUser.value = { id: 'user-1', email: 'member@example.com' }
         mockActiveOrgData.value = {
           id: 'org-1',
@@ -541,8 +528,7 @@ describe('useTeam', () => {
     })
 
     describe('removeMember', () => {
-      // TODO: Better Auth nanostore mock complexity
-      it.todo('should call organization.removeMember', async () => {
+      it('should call organization.removeMember', async () => {
         mockSessionUser.value = { id: 'user-1', email: 'owner@example.com' }
         mockActiveOrgData.value = {
           id: 'org-1',
@@ -565,8 +551,7 @@ describe('useTeam', () => {
     })
 
     describe('updateMemberRole', () => {
-      // TODO: Better Auth nanostore mock complexity
-      it.todo('should call organization.updateMemberRole', async () => {
+      it('should call organization.updateMemberRole', async () => {
         mockSessionUser.value = { id: 'user-1', email: 'owner@example.com' }
         mockActiveOrgData.value = {
           id: 'org-1',
@@ -590,8 +575,7 @@ describe('useTeam', () => {
     })
 
     describe('leaveTeam', () => {
-      // TODO: Better Auth nanostore mock complexity
-      it.todo('should allow member to leave', async () => {
+      it('should allow member to leave', async () => {
         mockSessionUser.value = { id: 'user-2', email: 'member@example.com' }
         mockActiveOrgData.value = {
           id: 'org-1',
@@ -614,8 +598,7 @@ describe('useTeam', () => {
         })
       })
 
-      // TODO: Better Auth nanostore mock complexity
-      it.todo('should prevent owner from leaving', async () => {
+      it('should prevent owner from leaving', async () => {
         mockSessionUser.value = { id: 'user-1', email: 'owner@example.com' }
         mockActiveOrgData.value = {
           id: 'org-1',
@@ -635,8 +618,7 @@ describe('useTeam', () => {
 
   describe('invitation methods', () => {
     describe('getPendingInvitations', () => {
-      // TODO: Better Auth nanostore mock complexity
-      it.todo('should return invitations list', async () => {
+      it('should return invitations list', async () => {
         mockActiveOrgData.value = {
           id: 'org-1',
           name: 'Test',
@@ -701,8 +683,7 @@ describe('useTeam', () => {
   })
 
   describe('organization mapping', () => {
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should map organization columns to team properties', () => {
+    it('should map organization columns to team properties', () => {
       mockActiveOrgData.value = {
         id: 'org-1',
         name: 'Test Team',
@@ -719,8 +700,7 @@ describe('useTeam', () => {
       expect(currentTeam.value?.ownerId).toBe('user-1')
     })
 
-    // TODO: Better Auth nanostore mock complexity
-    it.todo('should handle SQLite boolean format (0/1)', () => {
+    it('should handle SQLite boolean format (0/1)', () => {
       mockActiveOrgData.value = {
         id: 'org-1',
         name: 'SQLite Team',

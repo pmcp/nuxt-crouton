@@ -113,8 +113,7 @@ describe('Integration: Registration Flow', () => {
   })
 
   describe('Password Reset Flow', () => {
-    // TODO: window.location mock complexity
-    it.todo('should request password reset with email', async () => {
+    it('should request password reset with email', async () => {
       mockClient = setupIntegrationMocks()
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -154,8 +153,7 @@ describe('Integration: Registration Flow', () => {
       expect(auth.error.value).toBe('Invalid or expired token')
     })
 
-    // TODO: window.location mock complexity
-    it.todo('should set loading state during password reset request', async () => {
+    it('should set loading state during password reset request', async () => {
       mockClient = setupIntegrationMocks()
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -170,8 +168,7 @@ describe('Integration: Registration Flow', () => {
   })
 
   describe('Two-Factor Setup', () => {
-    // TODO: 2FA mock complexity
-    it.todo('should enable 2FA and return TOTP setup data', async () => {
+    it('should enable 2FA and return TOTP setup data', async () => {
       mockClient = setupIntegrationMocks()
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -210,8 +207,7 @@ describe('Integration: Registration Flow', () => {
       expect(codes).toContain('ABC123')
     })
 
-    // TODO: 2FA mock complexity
-    it.todo('should view backup codes with usage status', async () => {
+    it('should view backup codes with usage status', async () => {
       mockClient = setupIntegrationMocks()
 
       const { useAuth } = await import('../../app/composables/useAuth')
@@ -382,8 +378,7 @@ describe('Integration: Registration Flow', () => {
       expect(auth.hasPassword.value).toBe(true)
     })
 
-    // TODO: config override mock complexity
-    it.todo('should detect when password auth is disabled', async () => {
+    it('should detect when password auth is disabled', async () => {
       // Note: Call setupIntegrationMocks first, then override useRuntimeConfig
       mockClient = setupIntegrationMocks()
 

@@ -186,8 +186,7 @@ vi.stubGlobal('WebSocket', MockWebSocket)
 
 import { useFlowSync } from '../../app/composables/useFlowSync'
 
-// TODO: Requires significant Yjs/WebSocket mock refactoring
-describe.skip('Flow Sync Integration', () => {
+describe('Flow Sync Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
