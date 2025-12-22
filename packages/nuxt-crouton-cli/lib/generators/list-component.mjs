@@ -50,6 +50,9 @@ export function generateListComponent(data, config = {}) {
   // Check for reference fields (fields with refTarget property)
   const referenceFields = fields.filter(f => f.refTarget)
 
+  // Check for plain array fields (without refTarget - just display as badges)
+  const plainArrayFields = fields.filter(f => f.type === 'array' && !f.refTarget)
+
   // Check for date fields
   const dateFields = fields.filter(f => f.type === 'date')
 
@@ -131,7 +134,21 @@ export function generateListComponent(data, config = {}) {
         collection="${resolvedCollection}"
       />
     </template>`
-    }).join('')}${dateFields.map(field => `
+    }).join('')}${plainArrayFields.map(field => `
+    <template #${field.name}-cell="{ row }">
+      <div v-if="row.original.${field.name} && row.original.${field.name}.length > 0" class="flex flex-wrap gap-1">
+        <UBadge
+          v-for="(item, idx) in row.original.${field.name}"
+          :key="idx"
+          color="neutral"
+          variant="subtle"
+          size="xs"
+        >
+          {{ item }}
+        </UBadge>
+      </div>
+      <span v-else class="text-gray-400">—</span>
+    </template>`).join('')}${dateFields.map(field => `
     <template #${field.name}-cell="{ row }">
       <CroutonDate :date="row.original.${field.name}"></CroutonDate>
     </template>`).join('')}${repeaterFields.map((field) => {

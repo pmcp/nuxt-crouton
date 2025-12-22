@@ -88,12 +88,14 @@
 
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="AllowedMemberIds" name="allowedMemberIds" class="not-last:pb-4">
-          <CroutonFormReferenceSelect
-            v-model="state.allowedMemberIds"
-            collection="member"
-            label="AllowedMemberIds"
-            multiple
+          <UTextarea
+            :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
+            @update:model-value="(val) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
+            class="w-full"
+            :rows="6"
+            placeholder="Enter one value per line"
           />
+          <p class="text-sm text-gray-500 mt-1">Enter one value per line</p>
         </UFormField>
       </div>
 

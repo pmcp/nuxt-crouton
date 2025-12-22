@@ -9,8 +9,6 @@ import { promisify } from 'node:util'
 // Import utilities
 import { toCase, toSnakeCase, mapType, typeMapping } from './utils/helpers.mjs'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
-import { detectExternalReferences, getConnectorRecommendations, formatExternalReferences } from './utils/connector-detector.mjs'
-import { setupConnectorInteractive, installConnectorPackage, addConnectorToNuxtConfig, updateAppConfigWithPackageImport } from './utils/connector-installer.mjs'
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
 
 // Import generators
@@ -1552,30 +1550,9 @@ async function main() {
       }
 
       // Detect external collection references (e.g., :users, :teams)
-      console.log(`\n${'─'.repeat(60)}`)
-      console.log(`Detecting external collection references...`)
-      console.log(`${'─'.repeat(60)}\n`)
-
-      // For enhanced config format, we need to scan all schema files
-      // For simple config format, use the single schemaPath
-      let schemaPathToScan
-      if (config.collections && Array.isArray(config.collections)) {
-        // Enhanced format: Get directory from first collection's fieldsFile
-        const firstFieldsFile = config.collections[0]?.fieldsFile
-        if (firstFieldsFile) {
-          const resolvedPath = config._configDir && !path.isAbsolute(firstFieldsFile)
-            ? path.resolve(config._configDir, firstFieldsFile)
-            : path.resolve(firstFieldsFile)
-          schemaPathToScan = path.dirname(resolvedPath)
-        } else {
-          schemaPathToScan = '.'
-        }
-      } else {
-        // Simple format: use schemaPath
-        schemaPathToScan = config.schemaPath || '.'
-      }
-
-      const externalRefs = await detectExternalReferences(schemaPathToScan)
+      // Note: detectExternalReferences scans schemas for adapter-scoped refs
+      // For now, we skip this step as the connector system is not fully implemented
+      const externalRefs = new Map()
 
       if (externalRefs.size > 0) {
         console.log(`✓ Found ${externalRefs.size} external collection(s):`)

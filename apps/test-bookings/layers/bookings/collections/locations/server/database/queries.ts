@@ -4,7 +4,6 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { BookingsLocation, NewBookingsLocation } from '../../types'
 import { user } from '~~/server/db/schema'
-import { member } from '~~/server/db/schema'
 
 export async function getAllBookingsLocations(teamId: string) {
   const db = useDB()
@@ -41,50 +40,6 @@ export async function getAllBookingsLocations(teamId: string) {
     .leftJoin(updatedByUser, eq(tables.bookingsLocations.updatedBy, updatedByUser.id))
     .where(eq(tables.bookingsLocations.teamId, teamId))
     .orderBy(asc(tables.bookingsLocations.order), desc(tables.bookingsLocations.createdAt))
-
-  // Post-query processing for array references
-  if (locations.length > 0) {
-    // Post-process array references to member
-    const allMemberIds = new Set()
-    locations.forEach(item => {
-        if (item.allowedMemberIds) {
-          try {
-            const ids = typeof item.allowedMemberIds === 'string'
-              ? JSON.parse(item.allowedMemberIds)
-              : item.allowedMemberIds
-            if (Array.isArray(ids)) {
-              ids.forEach(id => allMemberIds.add(id))
-            }
-          } catch (e) {
-            // Handle parsing errors gracefully
-            console.error('Error parsing allowedMemberIds:', e)
-          }
-        }
-      })
-
-    if (allMemberIds.size > 0) {
-      const relatedMember = await db
-        .select()
-        .from(member)
-        .where(inArray(member.id, Array.from(allMemberIds)))
-
-      locations.forEach(item => {
-        item.allowedMemberIdsData = []
-        if (item.allowedMemberIds) {
-          try {
-            const ids = typeof item.allowedMemberIds === 'string'
-              ? JSON.parse(item.allowedMemberIds)
-              : item.allowedMemberIds
-            if (Array.isArray(ids)) {
-              item.allowedMemberIdsData = relatedMember.filter(r => ids.includes(r.id))
-            }
-          } catch (e) {
-            console.error('Error mapping allowedMemberIds:', e)
-          }
-        }
-      })
-    }
-  }
 
   return locations
 }
@@ -129,50 +84,6 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
       )
     )
     .orderBy(asc(tables.bookingsLocations.order), desc(tables.bookingsLocations.createdAt))
-
-  // Post-query processing for array references
-  if (locations.length > 0) {
-    // Post-process array references to member
-    const allMemberIds = new Set()
-    locations.forEach(item => {
-        if (item.allowedMemberIds) {
-          try {
-            const ids = typeof item.allowedMemberIds === 'string'
-              ? JSON.parse(item.allowedMemberIds)
-              : item.allowedMemberIds
-            if (Array.isArray(ids)) {
-              ids.forEach(id => allMemberIds.add(id))
-            }
-          } catch (e) {
-            // Handle parsing errors gracefully
-            console.error('Error parsing allowedMemberIds:', e)
-          }
-        }
-      })
-
-    if (allMemberIds.size > 0) {
-      const relatedMember = await db
-        .select()
-        .from(member)
-        .where(inArray(member.id, Array.from(allMemberIds)))
-
-      locations.forEach(item => {
-        item.allowedMemberIdsData = []
-        if (item.allowedMemberIds) {
-          try {
-            const ids = typeof item.allowedMemberIds === 'string'
-              ? JSON.parse(item.allowedMemberIds)
-              : item.allowedMemberIds
-            if (Array.isArray(ids)) {
-              item.allowedMemberIdsData = relatedMember.filter(r => ids.includes(r.id))
-            }
-          } catch (e) {
-            console.error('Error mapping allowedMemberIds:', e)
-          }
-        }
-      })
-    }
-  }
 
   return locations
 }

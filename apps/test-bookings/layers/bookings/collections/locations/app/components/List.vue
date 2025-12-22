@@ -45,14 +45,20 @@
     <template #city-cell="{ row }">
       {{ t(row.original, 'city') }}
     </template>
+    <template #content-cell="{ row }">
+      {{ t(row.original, 'content') }}
+    </template>
     <template #allowedMemberIds-cell="{ row }">
       <div v-if="row.original.allowedMemberIds && row.original.allowedMemberIds.length > 0" class="flex flex-wrap gap-1">
-        <CroutonItemCardMini
-          v-for="itemId in row.original.allowedMemberIds"
-          :key="itemId"
-          :id="itemId"
-          collection="member"
-        />
+        <UBadge
+          v-for="(item, idx) in row.original.allowedMemberIds"
+          :key="idx"
+          color="neutral"
+          variant="subtle"
+          size="xs"
+        >
+          {{ item }}
+        </UBadge>
       </div>
       <span v-else class="text-gray-400">—</span>
     </template>
