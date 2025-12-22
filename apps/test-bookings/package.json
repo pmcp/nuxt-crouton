@@ -11,9 +11,10 @@
     "crouton": "crouton"
   },
   "dependencies": {
+    "@friendlyinternet/crouton-bookings": "workspace:*",
     "@friendlyinternet/nuxt-crouton": "workspace:*",
     "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
-    "@friendlyinternet/crouton-bookings": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-i18n": "workspace:*",
     "@libsql/client": "^0.15.0",
     "@nuxt/ui": "^4.0.0",
     "@nuxthub/core": "^0.10.0",
