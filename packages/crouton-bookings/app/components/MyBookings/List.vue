@@ -549,6 +549,11 @@ function syncCalendarToScroll() {
     const currentDateStr = selectedDate.value ? toLocalDateStr(selectedDate.value) : ''
     if (newDateStr !== currentDateStr) {
       selectedDate.value = bookingDate
+
+      // Sync the week calendar view if active (only when date actually changed)
+      if (calendarViewMode.value === 'week' && weekCarousel.value) {
+        (weekCarousel.value as any).scrollToDate?.(bookingDate)
+      }
     }
 
     useTimeoutFn(() => {
@@ -570,8 +575,47 @@ useEventListener(scrollContainer, 'scroll', onBookingsScroll, { passive: true })
 
 // Refs for scroll sync
 const scrollAreaRef = useTemplateRef<HTMLElement>('scrollAreaRef')
+const weekCarousel = useTemplateRef('weekCarousel')
 const monthCalendar = useTemplateRef('monthCalendar')
 const bookingRefs = new Map<string, HTMLElement>()
+
+// Handle week change from carousel
+function onWeekChange(weekStart: Date, weekEnd: Date) {
+  if (isSyncing.value) return
+
+  // Check if we need to expand the date range
+  if (!isDateInLoadedRange(weekStart) || !isDateInLoadedRange(weekEnd)) {
+    expandDateRange(weekStart)
+  }
+
+  // Clear any hover state - carousel navigation takes priority
+  hoveredDate.value = null
+  suppressWeekHighlight.value = false
+
+  // Only update selectedDate if it's actually different (avoids loops)
+  const newDateStr = toLocalDateStr(weekStart)
+  const currentDateStr = selectedDate.value ? toLocalDateStr(selectedDate.value) : ''
+  if (newDateStr !== currentDateStr) {
+    selectedDate.value = weekStart
+  }
+
+  // Find first booking in this week and scroll to it
+  const firstBooking = filteredBookings.value.find((booking) => {
+    const bookingDate = new Date(booking.date)
+    return bookingDate >= weekStart && bookingDate <= weekEnd
+  })
+
+  if (firstBooking && scrollAreaRef.value) {
+    isSyncing.value = true
+    const el = bookingRefs.get(firstBooking.id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    setTimeout(() => {
+      isSyncing.value = false
+    }, 500)
+  }
+}
 
 // Convert selectedDate (Date | null) to CalendarDate for UCalendar
 const selectedCalendarDate = computed({
@@ -710,16 +754,19 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
           </div>
 
           <!-- Week Calendar View -->
-          <CroutonBookingWeekStrip
+          <CroutonWeekCalendar
             v-if="calendarViewMode === 'week'"
+            ref="weekCarousel"
             v-model="selectedDate"
+            :initial-weeks="52"
             size="sm"
-            @hover="onDayHover"
+            @week-change="onWeekChange"
+            @day-hover="onDayHover"
           >
-            <template #day="{ day }">
-              <div v-if="hasBookingOnDate(asDateValue(day))" class="flex flex-col gap-0.5">
+            <template #day="{ date }">
+              <div v-if="hasBookingOnDate(asDateValue(date))" class="flex flex-col gap-0.5">
                 <CroutonBookingSlotIndicator
-                  v-for="lb in getLocationBookingsForDate(asDateValue(day))"
+                  v-for="lb in getLocationBookingsForDate(asDateValue(date))"
                   :key="lb.locationId"
                   :slots="lb.slots"
                   :booked-slot-ids="lb.bookedSlotIds"
@@ -727,7 +774,7 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
                 />
               </div>
             </template>
-          </CroutonBookingWeekStrip>
+          </CroutonWeekCalendar>
 
           <!-- Month Calendar View -->
           <div v-else>

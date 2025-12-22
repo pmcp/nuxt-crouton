@@ -251,8 +251,14 @@ function addWeeksToFuture(count: number = props.expandCount) {
   weeks.value = [...weeks.value, ...newWeeks]
 }
 
+// Flag to prevent expansion during initial hydration
+const isReady = ref(false)
+
 // Check if we need to expand and do so
 function checkAndExpand(index: number) {
+  // Skip expansion during initial mount to prevent hydration loops
+  if (!isReady.value) return
+
   // Near the beginning - add past weeks
   if (index < props.expandThreshold) {
     addWeeksToPast(props.expandCount)
@@ -372,6 +378,10 @@ onMounted(() => {
   currentWeekIndex.value = startIndex.value
   nextTick(() => {
     onWeekSelect(startIndex.value)
+    // Mark as ready after initial setup to enable expansion
+    setTimeout(() => {
+      isReady.value = true
+    }, 100)
   })
 })
 
