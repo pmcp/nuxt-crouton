@@ -315,7 +315,6 @@
 .ko-bezel {
   position: relative !important;
   overflow: visible !important;  /* Required for ::before bezel to extend outside */
-  isolation: isolate !important;  /* Creates stacking context for negative z-index pseudo-elements */
   font-family: 'ko-tech', sans-serif !important;
   letter-spacing: 0.075em !important;
   text-transform: uppercase !important;
