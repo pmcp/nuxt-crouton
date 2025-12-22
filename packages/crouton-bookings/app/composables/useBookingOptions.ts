@@ -17,19 +17,21 @@ interface OptionItem {
 export function useBookingOptions() {
   const { locale } = useI18n()
 
-  // Fetch settings collection
-  const { items, pending, error, refresh } = useCollectionQuery('bookingsSettings')
+  // Fetch settings collection using useAsyncData pattern
+  const { data: settingsData, pending, error, refresh } = useFetch('/api/bookingsSettings', {
+    default: () => [],
+  })
 
   // Extract statuses from settings
   const statuses = computed<OptionItem[]>(() => {
-    const settings = items.value?.[0]
+    const settings = settingsData.value?.[0]
     if (!settings?.statuses) return []
     return settings.statuses as OptionItem[]
   })
 
   // Extract groups from settings
   const groups = computed<OptionItem[]>(() => {
-    const settings = items.value?.[0]
+    const settings = settingsData.value?.[0]
     if (!settings?.groups) return []
     return settings.groups as OptionItem[]
   })
