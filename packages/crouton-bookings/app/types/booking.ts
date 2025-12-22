@@ -30,29 +30,34 @@ export interface CartItem {
   id: string
   locationId: string
   locationTitle: string
-  date: string // ISO string for localStorage
+  date: Date | string
   slotId: string
   slotLabel: string
   slotColor?: string
-  totalSlots?: number
   slotPosition?: number
+  totalSlots?: number
   groupId?: string | null
   groupLabel?: string | null
   // Inventory mode
   isInventoryMode?: boolean
+  quantity?: number
+}
+
+export interface SettingsData {
+  id: string
+  teamId: string
+  enableGroups?: boolean
+  groups?: Array<{ id: string; label: string }>
 }
 
 export interface BookingData {
   id: string
+  teamId: string
+  locationId: string
   date: string | Date
+  slot: string
   status: string
-  location?: string
-  slot?: string | string[]
-  group?: string
-}
-
-export interface SettingsData {
-  enableGroups?: boolean
-  groups?: Array<{ id: string; label: string }>
-  statuses?: Array<{ id: string; label: string }>
+  owner?: string
+  createdAt?: string | Date
+  updatedAt?: string | Date
 }

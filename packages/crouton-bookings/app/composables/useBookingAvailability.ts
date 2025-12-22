@@ -119,9 +119,10 @@ export function useBookingAvailability(
   }
 
   // Get inventory availability for a specific date
-  function getInventoryAvailability(date: Date | DateValue): InventoryAvailability {
+  // Optional quantityOverride for use in components that don't have location context
+  function getInventoryAvailability(date: Date | DateValue, quantityOverride?: number): InventoryAvailability {
     const bookedCount = getBookedCountForDate(date)
-    const total = inventoryQuantity.value
+    const total = quantityOverride ?? inventoryQuantity.value
     const remaining = Math.max(0, total - bookedCount)
 
     return {

@@ -7,12 +7,17 @@ interface Props {
   locationId: string | null
   locationSlots: SlotOption[] | null | undefined
   modelValue?: Date | null
+  // Inventory mode support
+  inventoryMode?: boolean
+  inventoryQuantity?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   locationId: null,
   locationSlots: () => [],
-  modelValue: null
+  modelValue: null,
+  inventoryMode: false,
+  inventoryQuantity: 0
 })
 
 const emit = defineEmits<{
@@ -29,8 +34,16 @@ const {
   fetchAvailability,
   isDateFullyBooked,
   getBookedSlotsForDate,
-  getAvailableSlotsForDate
+  getAvailableSlotsForDate,
+  getInventoryAvailability
 } = useBookingAvailability(locationIdRef, locationSlotsRef)
+
+// Get inventory availability for a date (used in inventory mode)
+function getInventoryInfoForDate(date: DateValue) {
+  if (!props.inventoryMode) return null
+  const jsDate = date.toDate(getLocalTimeZone())
+  return getInventoryAvailability(jsDate, props.inventoryQuantity)
+}
 
 // Slots formatted for calendar indicator (excludes 'all-day')
 const calendarSlots = computed(() => {
@@ -104,8 +117,19 @@ function isDateDisabled(date: DateValue): boolean {
       <template #day="{ day }">
         <div class="flex flex-col items-center">
           <span>{{ day.day }}</span>
+          <!-- Inventory mode: show remaining count -->
+          <template v-if="inventoryMode">
+            <span
+              v-if="getInventoryInfoForDate(day)"
+              class="text-[10px] font-medium"
+              :class="getInventoryInfoForDate(day)?.remaining > 0 ? 'text-success' : 'text-error'"
+            >
+              {{ getInventoryInfoForDate(day)?.remaining }}/{{ inventoryQuantity }}
+            </span>
+          </template>
+          <!-- Slot mode: show slot indicators -->
           <CroutonBookingSlotIndicator
-            v-if="calendarSlots.length > 0 && getBookedSlotsForDate(day).length > 0"
+            v-else-if="calendarSlots.length > 0 && getBookedSlotsForDate(day).length > 0"
             :slots="calendarSlots"
             :booked-slot-ids="getBookedSlotsForDate(day)"
             size="xs"
@@ -116,14 +140,26 @@ function isDateDisabled(date: DateValue): boolean {
 
     <!-- Legend -->
     <div class="flex items-center gap-4 mt-3 text-xs text-muted justify-center">
-      <div class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-primary" />
-        <span>Booked</span>
-      </div>
-      <div class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-gray-100 dark:bg-gray-800" />
-        <span>Available</span>
-      </div>
+      <template v-if="inventoryMode">
+        <div class="flex items-center gap-1.5">
+          <span class="text-success font-medium">X/Y</span>
+          <span>Available</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-error font-medium">0/Y</span>
+          <span>Fully Booked</span>
+        </div>
+      </template>
+      <template v-else>
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-primary" />
+          <span>Booked</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-gray-100 dark:bg-gray-800" />
+          <span>Available</span>
+        </div>
+      </template>
     </div>
   </div>
 </template>
