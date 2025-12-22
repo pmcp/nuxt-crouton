@@ -1,7 +1,7 @@
 /**
  * AUTO-GENERATED from @nuxt/ui package
  * Run: node scripts/generate-components.mjs
- * Generated: 2025-12-22T09:26:50.370Z
+ * Generated: 2025-12-22T09:34:17.487Z
  */
 
 export const GENERATED_COMPONENTS = [
