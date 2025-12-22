@@ -98,7 +98,7 @@ function handleKeydown(e: KeyboardEvent) {
           class="flex-1 overflow-y-auto p-4 space-y-4"
         >
           <!-- Empty State with Suggestions -->
-          <SchemaDesignerAIPromptSuggestions
+          <CroutonSchemaDesignerAIPromptSuggestions
             v-if="messages.length === 0"
             @select="handleSuggestionSelect"
           />

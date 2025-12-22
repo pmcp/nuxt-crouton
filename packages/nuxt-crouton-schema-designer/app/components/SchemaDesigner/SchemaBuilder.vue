@@ -51,7 +51,8 @@ function onFieldDragEnd() {
 </script>
 
 <template>
-  <div class="p-6 space-y-6 max-w-2xl mx-auto">
+  <div>
+    <div class="p-6 space-y-6 max-w-2xl mx-auto">
     <!-- Collection Settings -->
     <div class="space-y-4">
       <h2 class="text-lg font-semibold">Collection Settings</h2>
@@ -140,8 +141,9 @@ function onFieldDragEnd() {
         </p>
       </div>
     </div>
-  </div>
+    </div>
 
-  <!-- Field Editor Slideover -->
-  <CroutonSchemaDesignerFieldEditor />
+    <!-- Field Editor Slideover -->
+    <CroutonSchemaDesignerFieldEditor />
+  </div>
 </template>
