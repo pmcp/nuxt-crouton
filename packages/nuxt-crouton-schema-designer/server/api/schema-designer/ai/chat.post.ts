@@ -8,7 +8,7 @@
  * when the parent app extends @friendlyinternet/nuxt-crouton-ai
  */
 
-import { streamText } from 'ai'
+import { streamText, generateText } from 'ai'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -33,13 +33,21 @@ export default defineEventHandler(async (event) => {
   ]
 
   try {
-    const result = await streamText({
+    console.log('[schema-ai-chat] Using model:', model)
+
+    // Try non-streaming first to get clearer errors
+    const result = await generateText({
       model: ai.model(model),
       messages: fullMessages
     })
 
-    return result.toDataStreamResponse()
+    console.log('[schema-ai-chat] Success! Text length:', result.text?.length)
+
+    // Return as plain text for now
+    return { role: 'assistant', content: result.text }
   } catch (e: any) {
+    console.error('[schema-ai-chat] Error:', e)
+    console.error('[schema-ai-chat] Error message:', e?.message)
     throw createError({
       statusCode: 500,
       statusMessage: e?.message || 'AI request failed'
