@@ -56,8 +56,8 @@ export function generateListComponent(data, config = {}) {
   // Check for repeater fields
   const repeaterFields = fields.filter(f => f.type === 'repeater')
 
-  // Check for dependent fields
-  const dependentFields = fields.filter(f => f.meta?.dependsOn)
+  // Check for dependent fields (with collection dependencies, not simple visibility toggles)
+  const dependentFields = fields.filter(f => f.meta?.dependsOn && f.meta?.dependsOnCollection)
 
   // Check for editor fields (fields using nuxt-crouton-editor components)
   const editorFields = fields.filter(f =>
