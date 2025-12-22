@@ -43,6 +43,7 @@
       "cancelled": "Geannuleerd"
     },
     "list": {
+      "loading": "Boekingen laden...",
       "noBookings": "Nog geen boekingen",
       "noBookingsDescription": "Je hebt nog geen boekingen gemaakt. Begin door een locatie en tijdslot te selecteren."
     },

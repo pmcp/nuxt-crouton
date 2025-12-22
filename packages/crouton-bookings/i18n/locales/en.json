@@ -43,6 +43,7 @@
       "cancelled": "Cancelled"
     },
     "list": {
+      "loading": "Loading bookings...",
       "noBookings": "No bookings yet",
       "noBookingsDescription": "You haven't made any bookings yet. Start by selecting a location and time slot."
     },
