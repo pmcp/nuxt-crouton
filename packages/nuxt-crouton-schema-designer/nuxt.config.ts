@@ -1,0 +1,57 @@
+import { join } from 'node:path'
+
+const currentDir = import.meta.dirname
+
+export default defineNuxtConfig({
+  // Layer metadata
+  $meta: {
+    name: '@crouton/schema-designer',
+    version: '0.1.0'
+  },
+
+  // Modules
+  modules: ['@vueuse/nuxt'],
+
+  // Components from the layer - using absolute path like nuxt-crouton main package
+  components: {
+    dirs: [
+      {
+        path: join(currentDir, 'app/components/SchemaDesigner'),
+        prefix: 'CroutonSchemaDesigner',
+        global: true
+      }
+    ]
+  },
+
+  // Auto-imports from the layer
+  imports: {
+    dirs: ['app/composables']
+  },
+
+  // Alias for types
+  alias: {
+    '~/types': './app/types'
+  },
+
+  // Runtime config defaults
+  runtimeConfig: {
+    public: {
+      crouton: {
+        schemaDesigner: {
+          // Schema designer page route prefix
+          routePrefix: '/schema-designer'
+        }
+      }
+    }
+  },
+
+  // Compatibility
+  compatibilityDate: '2025-01-01',
+
+  // Nitro server config
+  nitro: {
+    imports: {
+      dirs: ['server/utils']
+    }
+  }
+})

@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   },
 
   extends: [
+    '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-schema-designer'
   ],
 
