@@ -108,16 +108,16 @@ function openSaveDialog() {
     <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
       <!-- Left: AI Chat Panel -->
-      <SchemaDesignerAIChatPanel />
+      <CroutonSchemaDesignerAIChatPanel />
 
       <!-- Field Catalog -->
       <aside class="w-64 border-r border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] overflow-y-auto">
-        <SchemaDesignerFieldCatalog />
+        <CroutonSchemaDesignerFieldCatalog />
       </aside>
 
       <!-- Center: Schema Builder -->
       <main class="flex-1 overflow-y-auto bg-[var(--ui-bg)]">
-        <SchemaDesignerSchemaBuilder :is-field-from-ai="isFieldFromAI" />
+        <CroutonSchemaDesignerSchemaBuilder :is-field-from-ai="isFieldFromAI" />
       </main>
 
       <!-- Right: Preview/Code Panel -->
@@ -156,8 +156,8 @@ function openSaveDialog() {
 
         <!-- Panel Content -->
         <div class="flex-1 overflow-hidden">
-          <SchemaDesignerPreviewPanel v-if="rightPanelView === 'preview'" />
-          <SchemaDesignerCodeEditor v-else />
+          <CroutonSchemaDesignerPreviewPanel v-if="rightPanelView === 'preview'" />
+          <CroutonSchemaDesignerCodeEditor v-else />
         </div>
       </aside>
     </div>
@@ -224,6 +224,6 @@ function openSaveDialog() {
     </UModal>
 
     <!-- Export Modal -->
-    <SchemaDesignerExportPanel v-model="showExport" />
+    <CroutonSchemaDesignerExportPanel v-model="showExport" />
   </div>
 </template>
