@@ -21,9 +21,15 @@ watch([selectedTheme, selectedVariant], ([theme, variant]) => {
   updateNodeData(props.id, { theme, baseVariant: variant })
 })
 
-// Resolve the component dynamically
-const ComponentToRender = computed(() => {
-  return resolveComponent(props.data.componentName)
+// Resolve all components at setup time from registry
+const { componentNames } = useComponentRegistry()
+const componentMap: Record<string, ReturnType<typeof resolveComponent>> = Object.fromEntries(
+  componentNames.map(name => [name, resolveComponent(name)])
+)
+
+// Get the resolved component
+const ResolvedComponent = computed(() => {
+  return componentMap[props.data.componentName] || props.data.componentName
 })
 
 // Check if component supports slots
@@ -71,7 +77,7 @@ const hasSlotContent = computed(() => {
     <!-- Component preview -->
     <div class="component-node-preview">
       <component
-        :is="ComponentToRender"
+        :is="ResolvedComponent"
         v-bind="data.props"
         :variant="computedVariant"
       >
