@@ -25,133 +25,67 @@ const formState = computed(() => {
       state[field.name] = generateValue(field)
     } else {
       // Create mode: use defaults or empty values
-      state[field.name] = field.meta.default ?? getEmptyValue(field.type)
+      state[field.name] = field.meta.default ?? getDefaultValue(field)
     }
   }
 
   return state
 })
 
-function getEmptyValue(type: string): any {
-  switch (type) {
-    case 'string':
-    case 'text':
-    case 'uuid':
-      return ''
-    case 'number':
-    case 'integer':
-    case 'decimal':
-      return null
+// Get default value based on field type (matches generator logic)
+function getDefaultValue(field: SchemaField): any {
+  switch (field.type) {
     case 'boolean':
       return false
+    case 'number':
+    case 'decimal':
+    case 'integer':
+      return 0
     case 'date':
     case 'datetime':
       return null
+    case 'repeater':
+    case 'array':
+      return []
     case 'json':
       return {}
-    case 'array':
-    case 'repeater':
-      return []
     default:
       return ''
   }
 }
 
-// Get the appropriate Nuxt UI component for each field type
-function getFieldComponent(field: SchemaField): string {
-  // Check if custom component is specified
-  if (field.meta.component) {
-    return field.meta.component
-  }
+// Separate fields by area (matches generator logic)
+const mainFields = computed(() =>
+  props.fields.filter(f => f.name && (!f.meta?.area || f.meta.area === 'main'))
+)
 
-  switch (field.type) {
-    case 'string':
-      return 'UInput'
-    case 'text':
-      return 'UTextarea'
-    case 'number':
-    case 'integer':
-    case 'decimal':
-      return 'UInputNumber'
-    case 'boolean':
-      return 'USwitch'
-    case 'date':
-      return 'UInputDate'
-    case 'datetime':
-      return 'UInputDate'
-    case 'json':
-      return 'UTextarea'
-    case 'array':
-      return 'UInputTags'
-    case 'uuid':
-      return 'UInput'
-    case 'repeater':
-      return 'UTextarea'
-    default:
-      return 'UInput'
-  }
-}
+const sidebarFields = computed(() =>
+  props.fields.filter(f => f.name && f.meta?.area === 'sidebar')
+)
 
-// Get input props for each field type
-function getFieldProps(field: SchemaField): Record<string, any> {
-  const baseProps: Record<string, any> = {
-    disabled: true, // Read-only preview
-    placeholder: field.meta.label || field.name
-  }
+const hasSidebar = computed(() => sidebarFields.value.length > 0)
 
-  switch (field.type) {
-    case 'text':
-      return { ...baseProps, rows: 3 }
-    case 'number':
-    case 'integer':
-      return { ...baseProps, step: 1 }
-    case 'decimal':
-      return {
-        ...baseProps,
-        step: Math.pow(10, -(field.meta.scale || 2))
-      }
-    case 'string':
-      if (field.meta.maxLength) {
-        return { ...baseProps, maxlength: field.meta.maxLength }
-      }
-      return baseProps
-    case 'json':
-    case 'repeater':
-      return { ...baseProps, rows: 4, class: 'font-mono text-xs' }
-    case 'datetime':
-      return { ...baseProps, type: 'datetime-local' }
-    default:
-      return baseProps
-  }
-}
-
-// Format value for display
-function formatValue(field: SchemaField, value: any): any {
-  if (value === null || value === undefined) return ''
-
-  switch (field.type) {
-    case 'json':
-    case 'repeater':
-    case 'array':
-      return typeof value === 'object' ? JSON.stringify(value, null, 2) : value
-    case 'date':
-    case 'datetime':
-      return value instanceof Date ? value.toISOString().split('T')[0] : value
-    case 'boolean':
-      return !!value
-    default:
-      return value
-  }
-}
-
-// Get field label
+// Format field label (capitalize first letter)
 function getFieldLabel(field: SchemaField): string {
-  return field.meta.label || field.name
+  if (field.meta.label) return field.meta.label
+  return field.name.charAt(0).toUpperCase() + field.name.slice(1)
+}
+
+// Format value for display in JSON/array fields
+function formatJsonValue(value: any): string {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'object') return JSON.stringify(value, null, 2)
+  return String(value)
+}
+
+function formatArrayValue(value: any): string {
+  if (!Array.isArray(value)) return ''
+  return value.join('\n')
 }
 </script>
 
 <template>
-  <div class="p-4 space-y-4">
+  <div class="p-4">
     <!-- Empty state -->
     <div
       v-if="fields.length === 0 || !fields.some(f => f.name)"
@@ -161,81 +95,205 @@ function getFieldLabel(field: SchemaField): string {
       <p class="text-sm">Add fields to see form preview</p>
     </div>
 
-    <!-- Form preview -->
-    <UForm v-else :state="formState" class="space-y-4">
-      <template v-for="field in fields" :key="field.id">
-        <UFormField
-          v-if="field.name"
-          :label="getFieldLabel(field)"
-          :name="field.name"
-          :required="field.meta.required"
-        >
-          <!-- Boolean / Switch -->
-          <USwitch
-            v-if="field.type === 'boolean'"
-            :model-value="formatValue(field, formState[field.name])"
+    <!-- Form preview using CroutonFormLayout (matches generated forms) -->
+    <UForm v-else :state="formState">
+      <CroutonFormLayout>
+        <template #main>
+          <div class="flex flex-col gap-4 p-1">
+            <template v-for="field in mainFields" :key="field.id">
+              <!-- Boolean → UCheckbox (matches generator) -->
+              <UFormField
+                v-if="field.type === 'boolean'"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UCheckbox v-model="formState[field.name]" disabled />
+              </UFormField>
+
+              <!-- Text → UTextarea -->
+              <UFormField
+                v-else-if="field.type === 'text'"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UTextarea
+                  v-model="formState[field.name]"
+                  class="w-full"
+                  size="xl"
+                  disabled
+                />
+              </UFormField>
+
+              <!-- Number/Decimal/Integer → UInputNumber -->
+              <UFormField
+                v-else-if="['number', 'decimal', 'integer'].includes(field.type)"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UInputNumber
+                  v-model="formState[field.name]"
+                  class="w-full"
+                  disabled
+                />
+              </UFormField>
+
+              <!-- Date → CroutonCalendar (matches generator) -->
+              <UFormField
+                v-else-if="field.type === 'date'"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UInput
+                  :model-value="formState[field.name] ? new Date(formState[field.name]).toLocaleDateString() : ''"
+                  class="w-full"
+                  size="xl"
+                  disabled
+                  placeholder="Select date..."
+                />
+              </UFormField>
+
+              <!-- Datetime -->
+              <UFormField
+                v-else-if="field.type === 'datetime'"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UInput
+                  :model-value="formState[field.name] ? new Date(formState[field.name]).toLocaleString() : ''"
+                  class="w-full"
+                  size="xl"
+                  disabled
+                  placeholder="Select datetime..."
+                />
+              </UFormField>
+
+              <!-- Reference field → CroutonFormReferenceSelect (matches generator) -->
+              <UFormField
+                v-else-if="field.refTarget"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UInput
+                  :model-value="formState[field.name] || ''"
+                  class="w-full"
+                  size="xl"
+                  disabled
+                  :placeholder="`Select ${field.refTarget}...`"
+                />
+                <template #hint>
+                  <span class="text-xs text-[var(--ui-text-muted)]">
+                    References: {{ field.refTarget }}
+                  </span>
+                </template>
+              </UFormField>
+
+              <!-- JSON → UTextarea with JSON formatting -->
+              <UFormField
+                v-else-if="field.type === 'json'"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UTextarea
+                  :model-value="formatJsonValue(formState[field.name])"
+                  class="w-full font-mono text-sm"
+                  :rows="8"
+                  disabled
+                  placeholder="Enter JSON object"
+                />
+              </UFormField>
+
+              <!-- Repeater → CroutonFormRepeater placeholder -->
+              <UFormField
+                v-else-if="field.type === 'repeater'"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <div class="border border-dashed border-[var(--ui-border)] rounded-lg p-4 text-center text-[var(--ui-text-muted)]">
+                  <UIcon name="i-lucide-plus" class="text-lg mb-1" />
+                  <p class="text-sm">Repeater field: {{ field.name }}</p>
+                  <p class="text-xs">Will use CroutonFormRepeater</p>
+                </div>
+              </UFormField>
+
+              <!-- Array → UTextarea with line-separated values -->
+              <UFormField
+                v-else-if="field.type === 'array' && !field.refTarget"
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UTextarea
+                  :model-value="formatArrayValue(formState[field.name])"
+                  class="w-full"
+                  :rows="6"
+                  disabled
+                  placeholder="Enter one value per line"
+                />
+                <template #hint>
+                  <span class="text-xs text-[var(--ui-text-muted)]">
+                    Enter one value per line
+                  </span>
+                </template>
+              </UFormField>
+
+              <!-- Default: String → UInput -->
+              <UFormField
+                v-else
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UInput
+                  v-model="formState[field.name]"
+                  class="w-full"
+                  size="xl"
+                  disabled
+                />
+              </UFormField>
+            </template>
+          </div>
+        </template>
+
+        <!-- Sidebar area (matches generator area: 'sidebar') -->
+        <template v-if="hasSidebar" #sidebar>
+          <div class="flex flex-col gap-4 p-1">
+            <template v-for="field in sidebarFields" :key="field.id">
+              <!-- Simplified sidebar rendering -->
+              <UFormField
+                :label="getFieldLabel(field)"
+                :name="field.name"
+                class="not-last:pb-4"
+              >
+                <UInput
+                  v-model="formState[field.name]"
+                  class="w-full"
+                  size="xl"
+                  disabled
+                />
+              </UFormField>
+            </template>
+          </div>
+        </template>
+
+        <!-- Footer with action button (matches generator) -->
+        <template #footer>
+          <CroutonFormActionButton
+            :action="mode === 'create' ? 'create' : 'update'"
+            collection="preview"
+            :items="[]"
+            loading="notLoading"
             disabled
           />
-
-          <!-- Textarea for text, json, repeater -->
-          <UTextarea
-            v-else-if="['text', 'json', 'repeater'].includes(field.type)"
-            :model-value="formatValue(field, formState[field.name])"
-            v-bind="getFieldProps(field)"
-          />
-
-          <!-- Number input -->
-          <UInputNumber
-            v-else-if="['number', 'integer', 'decimal'].includes(field.type)"
-            :model-value="formatValue(field, formState[field.name])"
-            v-bind="getFieldProps(field)"
-          />
-
-          <!-- Date input -->
-          <UInput
-            v-else-if="['date', 'datetime'].includes(field.type)"
-            :model-value="formatValue(field, formState[field.name])"
-            :type="field.type === 'datetime' ? 'datetime-local' : 'date'"
-            v-bind="getFieldProps(field)"
-          />
-
-          <!-- Array / Tags -->
-          <UInputTags
-            v-else-if="field.type === 'array'"
-            :model-value="formState[field.name]"
-            disabled
-          />
-
-          <!-- Default: text input -->
-          <UInput
-            v-else
-            :model-value="formatValue(field, formState[field.name])"
-            v-bind="getFieldProps(field)"
-          />
-
-          <!-- Field info -->
-          <template #hint>
-            <span class="text-xs text-[var(--ui-text-muted)]">
-              {{ field.type }}
-              <span v-if="field.meta.maxLength">(max: {{ field.meta.maxLength }})</span>
-              <span v-if="field.meta.unique" class="ml-1">unique</span>
-              <span v-if="field.meta.translatable" class="ml-1">translatable</span>
-            </span>
-          </template>
-        </UFormField>
-      </template>
-
-      <!-- Metadata fields preview -->
-      <USeparator class="my-4" />
-      <p class="text-xs text-[var(--ui-text-muted)] mb-2">Auto-generated fields:</p>
-      <div class="grid grid-cols-2 gap-4 opacity-50">
-        <UFormField label="Created At" name="createdAt">
-          <UInput type="datetime-local" disabled placeholder="Auto-generated" />
-        </UFormField>
-        <UFormField label="Updated At" name="updatedAt">
-          <UInput type="datetime-local" disabled placeholder="Auto-generated" />
-        </UFormField>
-      </div>
+        </template>
+      </CroutonFormLayout>
     </UForm>
   </div>
 </template>
