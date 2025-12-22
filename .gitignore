@@ -42,3 +42,7 @@ coverage
 apps/playground/.data
 apps/test/.data
 apps/test-nuxthub/.data
+apps/test-nuxthub-multitenant/.data
+apps/schema-designer/.data
+apps/test-sales/.data
+apps/test-bookings/.data
