@@ -20,7 +20,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@friendlyinternet/nuxt-crouton": ">=0.5.0",
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
     "nuxt": "^3.0.0 || ^4.0.0"
   },
   "dependencies": {
