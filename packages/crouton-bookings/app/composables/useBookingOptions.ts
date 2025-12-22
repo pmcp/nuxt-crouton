@@ -16,11 +16,16 @@ interface OptionItem {
 
 export function useBookingOptions() {
   const { locale } = useI18n()
+  const { currentTeam } = useTeam()
 
-  // Fetch settings collection using useAsyncData pattern
-  const { data: settingsData, pending, error, refresh } = useFetch('/api/bookingsSettings', {
-    default: () => [],
-  })
+  // Fetch settings collection using team-scoped endpoint
+  const { data: settingsData, pending, error, refresh } = useFetch(
+    () => currentTeam.value?.id ? `/api/teams/${currentTeam.value.id}/bookings-settings` : null,
+    {
+      default: () => [],
+      watch: [() => currentTeam.value?.id],
+    }
+  )
 
   // Extract statuses from settings
   const statuses = computed<OptionItem[]>(() => {
