@@ -90,6 +90,10 @@ const _bookingsLocationsConfig = {
     slots: 'BookingsLocationsSlotSelect',
     quantity: 'BookingsLocationsQuantitySelect'
   },
+  sortable: {
+    enabled: true,
+    orderField: 'order'
+  },
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

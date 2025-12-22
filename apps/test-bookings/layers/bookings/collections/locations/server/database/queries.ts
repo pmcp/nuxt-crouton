@@ -1,5 +1,5 @@
 // Generated with array reference post-processing support (v2024-10-12)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, asc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { BookingsLocation, NewBookingsLocation } from '../../types'
@@ -39,7 +39,7 @@ export async function getAllBookingsLocations(teamId: string) {
     .leftJoin(createdByUser, eq(tables.bookingsLocations.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.bookingsLocations.updatedBy, updatedByUser.id))
     .where(eq(tables.bookingsLocations.teamId, teamId))
-    .orderBy(desc(tables.bookingsLocations.createdAt))
+    .orderBy(asc(tables.bookingsLocations.order), desc(tables.bookingsLocations.createdAt))
 
   return locations
 }
@@ -83,7 +83,7 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
         inArray(tables.bookingsLocations.id, locationIds)
       )
     )
-    .orderBy(desc(tables.bookingsLocations.createdAt))
+    .orderBy(asc(tables.bookingsLocations.order), desc(tables.bookingsLocations.createdAt))
 
   return locations
 }
@@ -158,4 +158,30 @@ export async function deleteBookingsLocation(
   }
 
   return { success: true }
+}
+
+// Sortable reorder queries (auto-generated when sortable: true)
+
+export async function reorderSiblingsBookingsLocations(
+  teamId: string,
+  updates: { id: string; order: number }[]
+) {
+  const db = useDB()
+
+  const results = await Promise.all(
+    updates.map(({ id, order }) =>
+      (db as any)
+        .update(tables.bookingsLocations)
+        .set({ order })
+        .where(
+          and(
+            eq(tables.bookingsLocations.id, id),
+            eq(tables.bookingsLocations.teamId, teamId)
+          )
+        )
+        .returning()
+    )
+  )
+
+  return { success: true, updated: results.flat().length }
 }

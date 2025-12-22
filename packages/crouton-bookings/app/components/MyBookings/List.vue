@@ -649,7 +649,7 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
             v-if="calendarViewMode === 'week'"
             v-model="selectedDate"
             size="sm"
-            @hover="hoveredDate = $event"
+            @hover="onDayHover"
           >
             <template #day="{ day }">
               <div class="mt-1 min-h-[8px] flex items-center justify-center">
@@ -662,7 +662,7 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
           </CroutonBookingWeekStrip>
 
           <!-- Month Calendar View -->
-          <div v-else @mouseleave="hoveredDate = null">
+          <div v-else>
             <UCalendar
               v-model="selectedCalendarDate"
               :number-of-months="numberOfMonths"
@@ -673,7 +673,7 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
               <template #day="{ day }">
                 <div
                   class="flex flex-col items-center"
-                  @mouseenter="hoveredDate = day.toDate(getLocalTimeZone())"
+                  @mouseenter="onDayHover(day.toDate(getLocalTimeZone()))"
                 >
                   <span>{{ day.day }}</span>
                   <div
