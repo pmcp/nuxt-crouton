@@ -22,6 +22,7 @@
   "zip": {
     "type": "string",
     "meta": {
+      "translatable": true,
       "label": "ZIP Code",
       "area": "main",
       "group": "address"
