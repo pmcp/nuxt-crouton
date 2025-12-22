@@ -61,6 +61,8 @@ export interface CollectionProps {
   create?: boolean
   hierarchy?: HierarchyConfig
   card?: 'Card' | 'CardMini' | 'CardSmall' | 'CardTree' | string
+  /** Direct card component (skips name resolution, for stateless mode) */
+  cardComponent?: any
   /** Enable drag-and-drop row reordering (table layout only) */
   sortable?: boolean | SortableOptions
   hideDefaultColumns?: {
@@ -70,6 +72,8 @@ export interface CollectionProps {
     updatedBy?: boolean
     actions?: boolean
   }
+  /** Stateless mode: no config lookup, no mutations, just renders data */
+  stateless?: boolean
 }
 
 // Keep aliases for backward compatibility

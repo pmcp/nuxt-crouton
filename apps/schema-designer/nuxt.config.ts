@@ -6,6 +6,10 @@ export default defineNuxtConfig({
     compatibilityVersion: 4
   },
 
+  extends: [
+    '@friendlyinternet/nuxt-crouton'
+  ],
+
   modules: ['@nuxt/ui'],
 
   css: ['~/assets/css/main.css']

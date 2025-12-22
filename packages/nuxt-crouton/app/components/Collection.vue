@@ -47,7 +47,8 @@
           <UButton
             color="primary"
             size="xs"
-            @click="openCrouton('create', collection)"
+            :variant="getVariant('solid')"
+            @click="handleCreate"
           >
             Create
           </UButton>
@@ -129,7 +130,8 @@ defineProps&lt;Props&gt;()
         <UButton
           color="primary"
           size="xs"
-          @click="openCrouton('create', collection)"
+          :variant="getVariant('solid')"
+          @click="handleCreate"
         >
           Create
         </UButton>
@@ -197,7 +199,8 @@ defineProps&lt;Props&gt;()
         <UButton
           color="primary"
           size="xs"
-          @click="openCrouton('create', collection)"
+          :variant="getVariant('solid')"
+          @click="handleCreate"
         >
           Create
         </UButton>
@@ -276,7 +279,7 @@ defineProps&lt;Props&gt;()
           <UButton
             color="primary"
             size="xs"
-            @click="openCrouton('create', collection)"
+            @click="handleCreate"
           >
             Create
           </UButton>
@@ -306,6 +309,8 @@ const props = withDefaults(defineProps<ListProps>(), {
   refreshFn: undefined,
   create: false,
   card: undefined,
+  cardComponent: undefined,
+  stateless: false,
   hideDefaultColumns: () => ({
     created_at: false,
     updated_at: false,
@@ -313,6 +318,11 @@ const props = withDefaults(defineProps<ListProps>(), {
     actions: false
   })
 })
+
+const emit = defineEmits<{
+  'move': [payload: { id: string; newParentId: string | null; newOrder: number }]
+  'create': []
+}>()
 
 // Card component resolution
 const { toPascalCase } = useFormatCollections()
@@ -349,9 +359,14 @@ const getCardComponent = (collectionName: string, variant?: string): Component |
   return null // No warning emitted
 }
 
-const customCardComponent = computed(() =>
-  props.collection ? getCardComponent(props.collection, props.card) : null
-)
+const customCardComponent = computed(() => {
+  // Use direct cardComponent prop if provided (stateless mode)
+  if (props.cardComponent) return props.cardComponent
+  // Skip resolution in stateless mode without cardComponent
+  if (props.stateless) return null
+  // Normal resolution by collection name
+  return props.collection ? getCardComponent(props.collection, props.card) : null
+})
 
 // Responsive breakpoint detection
 const breakpoints = useBreakpoints(breakpointsTailwind)
@@ -396,6 +411,12 @@ const activeLayout = computed<LayoutType>(() => {
 // Hierarchy config for tree layout - read from collection config
 // Supports both hierarchy (with nesting) and sortable (flat reorder only)
 const hierarchyConfig = computed<HierarchyConfig>(() => {
+  // Use prop directly if provided
+  if (props.hierarchy) return props.hierarchy
+
+  // In stateless mode, default to disabled
+  if (props.stateless) return { enabled: false }
+
   const hierConfig = collectionConfig.value?.hierarchy
   const sortConfig = collectionConfig.value?.sortable
 
@@ -424,11 +445,17 @@ const hierarchyConfig = computed<HierarchyConfig>(() => {
   return { enabled: false }
 })
 
-// Tree mutation for drag-drop reordering
-const treeMutation = props.collection ? useTreeMutation(props.collection) : null
+// Tree mutation for drag-drop reordering (skip in stateless mode)
+const treeMutation = (!props.stateless && props.collection) ? useTreeMutation(props.collection) : null
 
 // Handle tree move events (drag-drop reordering)
 async function handleTreeMove(id: string, newParentId: string | null, newOrder: number) {
+  // Always emit for external handling
+  emit('move', { id, newParentId, newOrder })
+
+  // In stateless mode, just emit - don't persist
+  if (props.stateless) return
+
   if (!treeMutation) {
     console.warn('[Collection] No collection specified for tree mutation')
     return
@@ -443,6 +470,25 @@ async function handleTreeMove(id: string, newParentId: string | null, newOrder: 
   }
 }
 
-// Crouton actions
-const { open: openCrouton } = useCrouton()
+// Crouton actions (skip in stateless mode)
+const crouton = props.stateless ? null : useCrouton()
+
+function handleCreate() {
+  if (props.stateless) {
+    emit('create')
+  } else {
+    crouton?.open('create', props.collection)
+  }
+}
+
+// Theme variant support
+const getVariant = (base: string) => {
+  try {
+    // @ts-expect-error - composable may not exist when themes not installed
+    const switcher = useThemeSwitcher?.()
+    return switcher?.getVariant?.(base) ?? base
+  } catch {
+    return base
+  }
+}
 </script>

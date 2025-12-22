@@ -59,74 +59,16 @@ function refreshData() {
     </div>
 
     <!-- Preview Content -->
-    <div class="flex-1 overflow-auto p-4" :key="refreshKey">
+    <div class="flex-1 overflow-auto" :key="refreshKey">
       <template v-if="hasValidFields">
-        <!-- Table Layout -->
-        <div v-if="currentLayout === 'table'" class="overflow-x-auto">
-          <UTable
-            :columns="columns"
-            :data="mockRows"
-            :ui="{
-              th: 'text-xs',
-              td: 'text-sm'
-            }"
-          />
-        </div>
-
-        <!-- List Layout -->
-        <div v-else-if="currentLayout === 'list'" class="space-y-2">
-          <div
-            v-for="(row, i) in mockRows"
-            :key="i"
-            class="p-3 bg-[var(--ui-bg)] border border-[var(--ui-border)] rounded-lg"
-          >
-            <div class="font-medium">
-              {{ state.fields[0]?.name ? row[state.fields[0].name] : 'Item ' + (i + 1) }}
-            </div>
-            <div v-if="state.fields[1]?.name" class="text-sm text-[var(--ui-text-muted)] truncate">
-              {{ row[state.fields[1].name] }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Grid Layout -->
-        <div v-else-if="currentLayout === 'grid'" class="grid grid-cols-2 gap-3">
-          <div
-            v-for="(row, i) in mockRows"
-            :key="i"
-            class="p-3 bg-[var(--ui-bg)] border border-[var(--ui-border)] rounded-lg"
-          >
-            <div class="font-medium text-sm truncate">
-              {{ state.fields[0]?.name ? row[state.fields[0].name] : 'Item ' + (i + 1) }}
-            </div>
-            <div v-if="state.fields[1]?.name" class="text-xs text-[var(--ui-text-muted)] truncate mt-1">
-              {{ row[state.fields[1].name] }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Cards Layout -->
-        <div v-else-if="currentLayout === 'cards'" class="space-y-4">
-          <div
-            v-for="(row, i) in mockRows"
-            :key="i"
-            class="p-4 bg-[var(--ui-bg)] border border-[var(--ui-border)] rounded-lg"
-          >
-            <div class="font-semibold mb-2">
-              {{ state.fields[0]?.name ? row[state.fields[0].name] : 'Item ' + (i + 1) }}
-            </div>
-            <div class="space-y-1">
-              <div
-                v-for="field in state.fields.slice(1, 4).filter(f => f.name)"
-                :key="field.id"
-                class="flex items-center gap-2 text-sm"
-              >
-                <span class="text-[var(--ui-text-muted)]">{{ field.meta.label || field.name }}:</span>
-                <span class="truncate">{{ row[field.name] }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Use CroutonCollection in stateless mode -->
+        <CroutonCollection
+          :columns="columns"
+          :rows="mockRows"
+          :layout="currentLayout"
+          :collection="state.collectionName || 'preview'"
+          stateless
+        />
       </template>
 
       <!-- Empty State -->
