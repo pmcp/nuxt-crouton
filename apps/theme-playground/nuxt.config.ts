@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   extends: [
+    '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-themes/themes',
     '@friendlyinternet/nuxt-crouton-themes/ko',
     '@friendlyinternet/nuxt-crouton-themes/minimal',

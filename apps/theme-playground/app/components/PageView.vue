@@ -87,6 +87,16 @@ const textareaValue = ref('')
 
 // Colors for buttons/badges
 const colors = ['primary', 'secondary', 'neutral', 'error', 'warning', 'info', 'success'] as const
+
+// Crouton components state
+const paginationPage = ref(1)
+const paginationPageCount = ref(10)
+const formLayoutTab = ref('general')
+const formLayoutTabs = [
+  { label: 'General', value: 'general', icon: 'i-lucide-settings' },
+  { label: 'Details', value: 'details', icon: 'i-lucide-file-text' },
+  { label: 'Advanced', value: 'advanced', icon: 'i-lucide-sliders' }
+]
 </script>
 
 <template>
@@ -451,6 +461,144 @@ const colors = ['primary', 'secondary', 'neutral', 'error', 'warning', 'info', '
           <USlider :default-value="[25, 75]" />
         </div>
       </section>
+
+      <!-- Crouton Components Section -->
+      <div class="border-t-4 border-dashed border-[var(--ui-border)] pt-16 mt-16">
+        <div class="text-center mb-12">
+          <h1 class="text-3xl font-bold mb-2">Crouton Components</h1>
+          <p class="text-sm text-[var(--ui-text-muted)]">
+            Components from <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">@friendlyinternet/nuxt-crouton</code>
+          </p>
+        </div>
+
+        <!-- Section: Appearance Controls -->
+        <section>
+          <h2 class="text-2xl font-bold mb-6 text-[var(--ui-text)]">Appearance Controls</h2>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-sm font-medium text-[var(--ui-text-muted)] mb-3">Dark Mode Switcher</h3>
+              <div class="flex items-center gap-4">
+                <CroutonDarkModeSwitcher size="xs" />
+                <CroutonDarkModeSwitcher size="sm" />
+                <CroutonDarkModeSwitcher size="md" />
+                <CroutonDarkModeSwitcher size="lg" />
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-medium text-[var(--ui-text-muted)] mb-3">Appearance Switcher (Theme + Dark Mode)</h3>
+              <div class="flex items-center gap-6">
+                <CroutonAppearanceSwitcher mode="dropdown" size="sm" />
+                <CroutonAppearanceSwitcher mode="inline" size="sm" />
+                <CroutonAppearanceSwitcher mode="cycle" size="sm" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section: Date Display -->
+        <section class="mt-16">
+          <h2 class="text-2xl font-bold mb-6 text-[var(--ui-text)]">Date Display</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <UCard :variant="variant">
+              <template #header>
+                <h3 class="font-semibold text-sm">Recent Date</h3>
+              </template>
+              <CroutonDate :date="new Date()" />
+            </UCard>
+
+            <UCard :variant="variant">
+              <template #header>
+                <h3 class="font-semibold text-sm">Yesterday</h3>
+              </template>
+              <CroutonDate :date="new Date(Date.now() - 86400000)" />
+            </UCard>
+
+            <UCard :variant="variant">
+              <template #header>
+                <h3 class="font-semibold text-sm">Last Week</h3>
+              </template>
+              <CroutonDate :date="new Date(Date.now() - 7 * 86400000)" />
+            </UCard>
+          </div>
+        </section>
+
+        <!-- Section: Table Pagination -->
+        <section class="mt-16">
+          <h2 class="text-2xl font-bold mb-6 text-[var(--ui-text)]">Table Pagination</h2>
+
+          <UCard :variant="variant">
+            <CroutonTablePagination
+              :page="paginationPage"
+              :page-count="paginationPageCount"
+              :total-items="156"
+              @update:page="paginationPage = $event"
+              @update:page-count="paginationPageCount = $event"
+            />
+          </UCard>
+        </section>
+
+        <!-- Section: Form Layout -->
+        <section class="mt-16">
+          <h2 class="text-2xl font-bold mb-6 text-[var(--ui-text)]">Form Layout</h2>
+
+          <UCard :variant="variant" class="p-0">
+            <CroutonFormLayout
+              v-model="formLayoutTab"
+              tabs
+              :navigation-items="formLayoutTabs"
+            >
+              <template #main="{ activeSection }">
+                <UCard :variant="variant">
+                  <div v-if="activeSection === 'general'" class="space-y-4">
+                    <UFormField label="Name" name="name">
+                      <UInput :variant="variant" placeholder="Enter name..." />
+                    </UFormField>
+                    <UFormField label="Email" name="email">
+                      <UInput :variant="variant" type="email" placeholder="Enter email..." />
+                    </UFormField>
+                  </div>
+                  <div v-else-if="activeSection === 'details'" class="space-y-4">
+                    <UFormField label="Description" name="description">
+                      <UTextarea :variant="variant" placeholder="Enter description..." />
+                    </UFormField>
+                  </div>
+                  <div v-else-if="activeSection === 'advanced'" class="space-y-4">
+                    <UFormField label="API Key" name="apiKey">
+                      <UInput :variant="variant" type="password" placeholder="Enter API key..." />
+                    </UFormField>
+                    <USwitch :variant="variant" label="Enable advanced features" />
+                  </div>
+                </UCard>
+              </template>
+
+              <template #sidebar>
+                <UCard :variant="variant">
+                  <template #header>
+                    <h4 class="font-semibold text-sm">Metadata</h4>
+                  </template>
+                  <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                      <span class="text-[var(--ui-text-muted)]">Status</span>
+                      <UBadge :variant="variant" color="success" size="sm">Active</UBadge>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-[var(--ui-text-muted)]">Created</span>
+                      <span>Dec 22, 2025</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-[var(--ui-text-muted)]">Updated</span>
+                      <span>Just now</span>
+                    </div>
+                  </div>
+                </UCard>
+              </template>
+            </CroutonFormLayout>
+          </UCard>
+        </section>
+      </div>
     </div>
   </div>
 </template>
