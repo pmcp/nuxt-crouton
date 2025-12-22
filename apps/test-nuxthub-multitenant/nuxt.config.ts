@@ -6,6 +6,10 @@ export default defineNuxtConfig({
   extends: [
     '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-auth',
+    '@friendlyinternet/nuxt-crouton-themes/themes',
+    '@friendlyinternet/nuxt-crouton-themes/ko',
+    '@friendlyinternet/nuxt-crouton-themes/minimal',
+    '@friendlyinternet/nuxt-crouton-themes/kr11',
     './layers/project-management',
     './layers/knowledge-base'
   ],
