@@ -2,7 +2,8 @@ import type { Node } from '@vue-flow/core'
 import { COMPONENT_REGISTRY, CATEGORIES, type ComponentConfig } from './useComponentRegistry'
 
 // Standard Nuxt UI variant names (theme mapping happens via updateAppConfig)
-export type VariantName = 'solid' | 'soft' | 'ghost' | 'outline' | 'link' | ''
+// 'none' is used internally for "no variant" - converted to undefined when applied
+export type VariantName = 'none' | 'solid' | 'soft' | 'ghost' | 'outline' | 'link'
 
 export interface ComponentNodeData {
   componentName: string
@@ -14,7 +15,7 @@ export interface ComponentNodeData {
 export type ComponentNode = Node<ComponentNodeData>
 
 export const VARIANTS: { value: VariantName; label: string }[] = [
-  { value: '', label: 'None' },
+  { value: 'none', label: 'None' },
   { value: 'solid', label: 'Solid' },
   { value: 'soft', label: 'Soft' },
   { value: 'ghost', label: 'Ghost' },
@@ -50,7 +51,7 @@ export function useCanvasNodes() {
       position: position || { x: 100 + (nodes.value.length * 50), y: 100 + (nodes.value.length * 50) },
       data: {
         componentName: config.name,
-        variant: '',
+        variant: 'none',
         props: { ...config.defaultProps },
         slots: config.slots ? { ...config.slots } : undefined
       }
@@ -91,7 +92,7 @@ export function useCanvasNodes() {
         position: { x: LAYOUT.startX, y: currentY },
         data: {
           componentName: '',
-          variant: '',
+          variant: 'none',
           props: { label: category.label, count: components.length },
           slots: undefined
         }
@@ -114,7 +115,7 @@ export function useCanvasNodes() {
           position: { x, y },
           data: {
             componentName: config.name,
-            variant: '',
+            variant: 'none',
             props: { ...config.defaultProps },
             slots: config.slots ? { ...config.slots } : undefined
           }

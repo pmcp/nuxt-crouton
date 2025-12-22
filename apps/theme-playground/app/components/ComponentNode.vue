@@ -160,12 +160,14 @@ const themeBackgroundStyle = computed(() => {
 
       <!-- Variant selector (theme is global via useThemeSwitcher) -->
       <!-- nopan nodrag nowheel classes allow interaction inside Vue Flow nodes -->
-      <USelectMenu
+      <USelect
         v-model="selectedVariant"
         :items="VARIANTS"
         value-key="value"
         size="xs"
         class="w-24 nopan nodrag nowheel"
+        :portal="false"
+        :ui="{ content: 'z-50' }"
       />
 
       <!-- Remove button -->
@@ -184,7 +186,7 @@ const themeBackgroundStyle = computed(() => {
       <component
         :is="ResolvedComponent"
         v-bind="data.props"
-        :variant="selectedVariant || undefined"
+        :variant="selectedVariant === 'none' ? undefined : selectedVariant"
       >
         <template v-if="hasSlotContent">
           {{ data.slots?.default }}
@@ -194,7 +196,7 @@ const themeBackgroundStyle = computed(() => {
 
     <!-- Variant indicator -->
     <div
-      v-if="selectedVariant"
+      v-if="selectedVariant && selectedVariant !== 'none'"
       class="px-3 py-1 text-xs text-center border-t border-[var(--ui-border)] opacity-50"
     >
       variant="{{ selectedVariant }}"
