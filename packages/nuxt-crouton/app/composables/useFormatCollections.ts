@@ -46,11 +46,18 @@ export function useFormatCollections() {
     if (stripped.endsWith('ies') && stripped.length > 3) {
       singular = stripped.slice(0, -3) + 'y'
     }
-    // Handle -es after sibilants: x, ch, sh, s, z (e.g., "boxes" → "box", "watches" → "watch")
+    // Handle -es after sibilants: x, ch, sh, ss (e.g., "boxes" → "box", "watches" → "watch")
     else if (stripped.endsWith('xes') || stripped.endsWith('ches')
-      || stripped.endsWith('shes') || stripped.endsWith('sses')
-      || stripped.endsWith('zes')) {
+      || stripped.endsWith('shes') || stripped.endsWith('sses')) {
       singular = stripped.slice(0, -2)
+    }
+    // Handle doubled z + es (e.g., "quizzes" → "quiz", "fizzes" → "fiz")
+    else if (stripped.endsWith('zzes')) {
+      singular = stripped.slice(0, -3)
+    }
+    // Handle single z + es (e.g., "sizes" → "size", "prizes" → "prize")
+    else if (stripped.endsWith('zes')) {
+      singular = stripped.slice(0, -1)
     }
     // Handle -oes → -o (e.g., "heroes" → "hero", "tomatoes" → "tomato")
     else if (stripped.endsWith('oes') && stripped.length > 3) {
@@ -58,10 +65,11 @@ export function useFormatCollections() {
       // Check if the character before "oes" is a vowel
       const lastChar = beforeOes[beforeOes.length - 1]
       if (lastChar && 'aeiou'.includes(lastChar.toLowerCase())) {
-        singular = stripped.slice(0, -2)
-      } else {
-        // Consonant + oes, just remove 's' (e.g., "echoes" → "echo")
+        // Vowel + oe + s pattern: just remove 's' (e.g., "shoes" → "shoe", "canoes" → "canoe")
         singular = stripped.slice(0, -1)
+      } else {
+        // Consonant + o + es pattern: remove 'es' (e.g., "heroes" → "hero", "echoes" → "echo")
+        singular = stripped.slice(0, -2)
       }
     }
     // Default: just remove trailing 's' (e.g., "articles" → "article", "users" → "user")

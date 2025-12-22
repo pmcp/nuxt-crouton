@@ -12,6 +12,7 @@
         v-if="createButton"
         color="primary"
         size="md"
+        :variant="getVariant('solid')"
         @click="handleCreate"
       >
         <span>Create <span class="hidden md:inline">{{ useFormatCollections().collectionWithCapitalSingular(collection) }}</span></span>
@@ -37,6 +38,16 @@ const props = defineProps({
     default: false
   }
 })
+
+// Theme variant support
+const getVariant = (base) => {
+  try {
+    const switcher = useThemeSwitcher?.()
+    return switcher?.getVariant?.(base) ?? base
+  } catch {
+    return base
+  }
+}
 
 const handleCreate = () => {
   open('create', props.collection)
