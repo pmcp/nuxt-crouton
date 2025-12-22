@@ -10,7 +10,7 @@
  */
 import { eq, and, asc, gte, lte, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
 import { users } from '~~/server/database/schema'

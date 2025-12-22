@@ -15,7 +15,7 @@
  *   bookings: Booking[]
  * }
  */
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 
 interface CartItem {

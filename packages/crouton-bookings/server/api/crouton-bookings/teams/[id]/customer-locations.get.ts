@@ -5,7 +5,7 @@
  * - Empty/null allowedMemberIds = open for everyone
  * - Has members in list = restricted to those members only
  */
-import { resolveTeamAndCheckMembership } from '@crouton/auth/server'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import { getAllBookingsLocations } from '~~/layers/bookings/collections/locations/server/database/queries'
 
 export default defineEventHandler(async (event) => {
