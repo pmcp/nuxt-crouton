@@ -1,0 +1,11 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "eventId": { "type": "uuid", "refTarget": "events", "meta": { "required": true, "label": "Event" } },
+  "locationId": { "type": "uuid", "refTarget": "locations", "meta": { "required": true, "label": "Location" } },
+  "title": { "type": "string", "meta": { "required": true, "label": "Printer Name", "maxLength": 100 } },
+  "ipAddress": { "type": "string", "meta": { "required": true, "label": "IP Address" } },
+  "port": { "type": "integer", "meta": { "label": "Port", "default": 9100 } },
+  "status": { "type": "integer", "meta": { "label": "Status", "default": 0, "helpText": "0=ready, 1=printing, 9=error" } },
+  "showPrices": { "type": "boolean", "meta": { "label": "Show Prices on Receipt", "default": true } },
+  "isActive": { "type": "boolean", "meta": { "label": "Active", "default": true } }
+}

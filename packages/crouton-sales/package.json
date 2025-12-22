@@ -1,0 +1,65 @@
+{
+  "name": "@friendlyinternet/crouton-sales",
+  "version": "1.0.0",
+  "description": "POS/Sales system for Nuxt Crouton - products, categories, orders, and optional thermal receipt printing",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "server",
+    "schemas",
+    "i18n",
+    "dist",
+    "nuxt.config.ts",
+    "module.ts",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./schemas/*": "./schemas/*"
+  },
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crouton",
+    "pos",
+    "sales",
+    "ecommerce",
+    "point-of-sale",
+    "thermal-printing"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-sales"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
+    "@nuxtjs/i18n": "^9.0.0 || ^10.0.0",
+    "zod": "^3.0.0",
+    "node-thermal-printer": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "node-thermal-printer": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "unbuild": "^3.6.1"
+  }
+}

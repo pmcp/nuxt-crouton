@@ -1,0 +1,68 @@
+{
+  "sales": {
+    "cart": {
+      "title": "Winkelwagen",
+      "empty": "Je winkelwagen is leeg",
+      "add": "Toevoegen",
+      "remove": "Verwijderen",
+      "clear": "Leegmaken",
+      "quantity": "Aantal",
+      "total": "Totaal",
+      "subtotal": "Subtotaal",
+      "checkout": "Afrekenen"
+    },
+    "products": {
+      "title": "Producten",
+      "search": "Zoek producten",
+      "noProducts": "Geen producten beschikbaar",
+      "outOfStock": "Uitverkocht",
+      "options": "Opties",
+      "remarks": "Opmerkingen",
+      "remarksPlaceholder": "Speciale verzoeken..."
+    },
+    "categories": {
+      "all": "Alles",
+      "title": "Categorieën"
+    },
+    "orders": {
+      "title": "Bestellingen",
+      "new": "Nieuwe Bestelling",
+      "pending": "In behandeling",
+      "completed": "Afgerond",
+      "cancelled": "Geannuleerd",
+      "orderNumber": "Bestelling #",
+      "customer": "Klant",
+      "items": "Items",
+      "status": "Status",
+      "createdAt": "Aangemaakt"
+    },
+    "events": {
+      "title": "Evenementen",
+      "select": "Selecteer evenement",
+      "noEvents": "Geen evenementen beschikbaar",
+      "active": "Actief",
+      "upcoming": "Aankomend",
+      "past": "Afgelopen"
+    },
+    "print": {
+      "title": "Printen",
+      "preview": "Voorbeeld",
+      "settings": "Printer Instellingen",
+      "queue": "Printwachtrij",
+      "printReceipt": "Bon Printen",
+      "printerName": "Printernaam",
+      "location": "Locatie",
+      "status": "Status"
+    },
+    "client": {
+      "name": "Naam",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "notes": "Notities"
+    },
+    "offline": {
+      "title": "Offline",
+      "message": "Je bent momenteel offline. Sommige functies kunnen beperkt zijn."
+    }
+  }
+}

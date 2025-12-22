@@ -1,0 +1,68 @@
+{
+  "sales": {
+    "cart": {
+      "title": "Cart",
+      "empty": "Your cart is empty",
+      "add": "Add to cart",
+      "remove": "Remove",
+      "clear": "Clear cart",
+      "quantity": "Quantity",
+      "total": "Total",
+      "subtotal": "Subtotal",
+      "checkout": "Checkout"
+    },
+    "products": {
+      "title": "Products",
+      "search": "Search products",
+      "noProducts": "No products available",
+      "outOfStock": "Out of stock",
+      "options": "Options",
+      "remarks": "Remarks",
+      "remarksPlaceholder": "Special requests..."
+    },
+    "categories": {
+      "all": "All",
+      "title": "Categories"
+    },
+    "orders": {
+      "title": "Orders",
+      "new": "New Order",
+      "pending": "Pending",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "orderNumber": "Order #",
+      "customer": "Customer",
+      "items": "Items",
+      "status": "Status",
+      "createdAt": "Created"
+    },
+    "events": {
+      "title": "Events",
+      "select": "Select event",
+      "noEvents": "No events available",
+      "active": "Active",
+      "upcoming": "Upcoming",
+      "past": "Past"
+    },
+    "print": {
+      "title": "Print",
+      "preview": "Preview",
+      "settings": "Printer Settings",
+      "queue": "Print Queue",
+      "printReceipt": "Print Receipt",
+      "printerName": "Printer Name",
+      "location": "Location",
+      "status": "Status"
+    },
+    "client": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "notes": "Notes"
+    },
+    "offline": {
+      "title": "Offline",
+      "message": "You are currently offline. Some features may be limited."
+    }
+  }
+}
