@@ -11,7 +11,7 @@
 import { streamText } from 'ai'
 
 export default defineEventHandler(async (event) => {
-  const { messages, systemPrompt, model = 'claude-sonnet-4-20250514' } = await readBody(event)
+  const { messages, systemPrompt, model = 'claude-sonnet-4-5-20241022' } = await readBody(event)
 
   // createAIProvider is auto-imported from nuxt-crouton-ai layer
   // @ts-expect-error - auto-imported by nitro when AI layer is extended
