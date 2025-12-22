@@ -3,6 +3,9 @@
  *
  * Streams AI responses for schema generation conversations.
  * Integrates with nuxt-crouton-ai for multi-provider support.
+ *
+ * Note: createAIProvider is auto-imported from nuxt-crouton-ai layer
+ * when the parent app extends @friendlyinternet/nuxt-crouton-ai
  */
 
 import { streamText } from 'ai'
@@ -10,19 +13,17 @@ import { streamText } from 'ai'
 export default defineEventHandler(async (event) => {
   const { messages, systemPrompt, model = 'gpt-4o' } = await readBody(event)
 
-  // Try to get AI provider from nuxt-crouton-ai
-  let ai: { model: (id: string) => ReturnType<ReturnType<typeof import('@ai-sdk/openai').createOpenAI>> }
-
-  try {
-    // Dynamic import to handle optional peer dependency
-    const { createAIProvider } = await import('@friendlyinternet/nuxt-crouton-ai/server')
-    ai = createAIProvider(event)
-  } catch (e) {
+  // createAIProvider is auto-imported from nuxt-crouton-ai layer
+  // @ts-expect-error - auto-imported by nitro when AI layer is extended
+  if (typeof createAIProvider !== 'function') {
     throw createError({
       statusCode: 500,
-      statusMessage: 'AI package not available. Please install @friendlyinternet/nuxt-crouton-ai'
+      statusMessage: 'AI package not available. Please extend @friendlyinternet/nuxt-crouton-ai in your nuxt.config.ts'
     })
   }
+
+  // @ts-expect-error - auto-imported by nitro
+  const ai = createAIProvider(event)
 
   // Build messages with system prompt
   const fullMessages = [
