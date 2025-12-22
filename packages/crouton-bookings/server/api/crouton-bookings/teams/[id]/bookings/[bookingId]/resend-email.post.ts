@@ -16,7 +16,7 @@ import {
   buildBookingEmailVariables,
   renderBookingEmailTemplate,
   type BookingEmailTriggerType
-} from '../../../../../utils/booking-emails'
+} from '../../../../../../utils/booking-emails'
 
 const bodySchema = z.object({
   triggerType: z.enum(['booking_confirmed', 'reminder_before', 'booking_cancelled', 'follow_up_after'])
