@@ -18,6 +18,7 @@ const mockAuthClient = {
   },
   signOut: vi.fn(),
   forgetPassword: vi.fn(),
+  requestPasswordReset: vi.fn(),
   resetPassword: vi.fn(),
   getSession: vi.fn(),
   passkey: {
@@ -73,6 +74,34 @@ vi.stubGlobal('useRuntimeConfig', () => ({
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
 vi.stubGlobal('readonly', readonly)
+
+// Mock useAuthConfig
+vi.stubGlobal('useAuthConfig', () => ({
+  mode: 'multi-tenant' as const,
+  debug: false,
+  methods: {
+    password: true,
+    oauth: {
+      github: { clientId: 'test-github', clientSecret: 'test' },
+      google: { clientId: 'test-google', clientSecret: 'test' }
+    },
+    passkeys: { enabled: true },
+    twoFactor: { enabled: true },
+    magicLink: { enabled: true }
+  },
+  ui: {
+    redirects: {
+      afterLogin: '/dashboard',
+      afterLogout: '/',
+      afterRegister: '/dashboard',
+      unauthenticated: '/auth/login',
+      authenticated: '/dashboard'
+    }
+  }
+}))
+
+// Mock useAuthClient
+vi.stubGlobal('useAuthClient', () => mockAuthClient)
 
 // Mock useSession as a global (since it's auto-imported in Nuxt)
 vi.stubGlobal('useSession', () => ({
@@ -378,20 +407,20 @@ describe('useAuth', () => {
   })
 
   describe('forgotPassword', () => {
-    it('should call forgetPassword with email', async () => {
-      mockAuthClient.forgetPassword.mockResolvedValue({ data: {}, error: null })
+    it('should call requestPasswordReset with email', async () => {
+      mockAuthClient.requestPasswordReset.mockResolvedValue({ data: {}, error: null })
 
       const { forgotPassword } = useAuth()
       await forgotPassword('test@example.com')
 
-      expect(mockAuthClient.forgetPassword).toHaveBeenCalledWith({
+      expect(mockAuthClient.requestPasswordReset).toHaveBeenCalledWith({
         email: 'test@example.com',
         redirectTo: 'http://localhost:3000/auth/reset-password'
       })
     })
 
     it('should throw on forgot password error', async () => {
-      mockAuthClient.forgetPassword.mockResolvedValue({
+      mockAuthClient.requestPasswordReset.mockResolvedValue({
         data: null,
         error: { message: 'User not found' }
       })
@@ -508,7 +537,8 @@ describe('useAuth', () => {
         mockAuthClient.twoFactor.enable.mockResolvedValue({
           data: {
             totpURI: 'otpauth://totp/App:user@example.com?secret=ABC123',
-            secret: 'ABC123'
+            secret: 'ABC123',
+            backupCodes: ['BACKUP1', 'BACKUP2']
           },
           error: null
         })
@@ -519,7 +549,7 @@ describe('useAuth', () => {
         expect(mockAuthClient.twoFactor.enable).toHaveBeenCalledWith({ password: 'password123' })
         expect(result).toMatchObject({
           totpURI: 'otpauth://totp/App:user@example.com?secret=ABC123',
-          secret: 'ABC123'
+          backupCodes: ['BACKUP1', 'BACKUP2']
         })
       })
 
@@ -593,26 +623,8 @@ describe('useAuth', () => {
       })
     })
 
-    describe('viewBackupCodes', () => {
-      it('should return backup codes with usage status', async () => {
-        const mockCodes = [
-          { code: 'ABC123', isUsed: false },
-          { code: 'DEF456', isUsed: true }
-        ]
-        mockAuthClient.twoFactor.viewBackupCodes.mockResolvedValue({
-          data: { backupCodes: mockCodes },
-          error: null
-        })
-
-        const { viewBackupCodes } = useAuth()
-        const codes = await viewBackupCodes('password123')
-
-        expect(codes).toEqual([
-          { code: 'ABC123', used: false },
-          { code: 'DEF456', used: true }
-        ])
-      })
-    })
+    // Note: viewBackupCodes was removed from the composable
+    // Backup codes are now returned as part of enable2FA response
 
     describe('verifyBackupCode', () => {
       it('should verify backup code', async () => {

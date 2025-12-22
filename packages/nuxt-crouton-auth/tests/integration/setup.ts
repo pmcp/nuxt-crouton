@@ -345,5 +345,46 @@ export const setupIntegrationMocks = (authClientOptions: MockAuthClientOptions =
     activeOrganization: computed(() => teams[0] ?? null)
   }))
 
+  // Mock useAuthConfig composable
+  vi.stubGlobal('useAuthConfig', () => ({
+    mode: 'multi-tenant' as const,
+    defaultTeamId: 'default',
+    appName: 'Test App',
+    methods: {
+      password: true,
+      oauth: {
+        github: { clientId: 'test-github', clientSecret: 'test' },
+        google: { clientId: 'test-google', clientSecret: 'test' }
+      },
+      passkeys: { enabled: true },
+      twoFactor: { enabled: true },
+      magicLink: { enabled: true }
+    },
+    teams: {
+      allowCreate: true,
+      limit: 5
+    },
+    billing: {
+      enabled: true,
+      stripe: {
+        publishableKey: 'pk_test_mock',
+        secretKey: 'sk_test_mock',
+        plans: [
+          { id: 'free', name: 'Free', price: 0 },
+          { id: 'pro', name: 'Pro', price: 29 }
+        ]
+      }
+    },
+    ui: {
+      redirects: {
+        afterLogin: '/dashboard',
+        afterLogout: '/',
+        afterRegister: '/dashboard',
+        unauthenticated: '/auth/login',
+        authenticated: '/dashboard'
+      }
+    }
+  }))
+
   return mockClient
 }

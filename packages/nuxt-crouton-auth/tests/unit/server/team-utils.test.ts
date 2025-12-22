@@ -630,7 +630,7 @@ describe('server/utils/team', () => {
       })
 
       const event = createMockEvent()
-      const _context = await requireTeamAdmin(event)
+      const context = await requireTeamAdmin(event)
 
       expect(context.membership.role).toBe('admin')
     })
@@ -641,7 +641,7 @@ describe('server/utils/team', () => {
       })
 
       const event = createMockEvent()
-      const _context = await requireTeamAdmin(event)
+      const context = await requireTeamAdmin(event)
 
       expect(context.membership.role).toBe('owner')
     })
@@ -672,7 +672,7 @@ describe('server/utils/team', () => {
       })
 
       const event = createMockEvent()
-      const _context = await requireTeamOwner(event)
+      const context = await requireTeamOwner(event)
 
       expect(context.membership.role).toBe('owner')
     })

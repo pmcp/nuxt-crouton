@@ -39,7 +39,7 @@ function refreshData() {
     <div class="p-4 border-b border-[var(--ui-border)] flex items-center justify-between">
       <h2 class="font-semibold">Preview</h2>
       <div class="flex items-center gap-2">
-        <UButtonGroup size="xs">
+        <UFieldGroup size="xs">
           <UButton
             v-for="layout in layouts"
             :key="layout.value"
@@ -47,7 +47,7 @@ function refreshData() {
             :icon="layout.icon"
             @click="currentLayout = layout.value"
           />
-        </UButtonGroup>
+        </UFieldGroup>
         <UButton
           variant="ghost"
           color="neutral"

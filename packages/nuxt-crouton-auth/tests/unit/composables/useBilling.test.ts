@@ -80,6 +80,59 @@ vi.stubGlobal('computed', computed)
 vi.stubGlobal('readonly', readonly)
 vi.stubGlobal('onMounted', mockOnMounted)
 
+// Mock useAuthConfig - returns config based on mocked useRuntimeConfig
+vi.stubGlobal('useAuthConfig', () => ({
+  mode: 'multi-tenant' as const,
+  billing: {
+    enabled: true,
+    stripe: {
+      publishableKey: 'pk_test_123',
+      plans: [
+        {
+          id: 'free',
+          name: 'Free',
+          price: 0,
+          currency: 'usd',
+          interval: 'month',
+          features: ['Basic features']
+        },
+        {
+          id: 'pro',
+          name: 'Pro',
+          price: 29,
+          currency: 'usd',
+          interval: 'month',
+          features: ['All features', 'Priority support']
+        },
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          price: 99,
+          currency: 'usd',
+          interval: 'month',
+          features: ['Everything in Pro', 'Custom integrations']
+        }
+      ]
+    }
+  },
+  methods: {
+    password: true,
+    oauth: { github: { clientId: 'test' }, google: { clientId: 'test' } },
+    passkeys: { enabled: true },
+    twoFactor: { enabled: true },
+    magicLink: { enabled: true }
+  },
+  ui: {
+    redirects: {
+      afterLogin: '/dashboard',
+      afterLogout: '/',
+      afterRegister: '/dashboard',
+      unauthenticated: '/auth/login',
+      authenticated: '/dashboard'
+    }
+  }
+}))
+
 // Mock import.meta.client
 Object.defineProperty(import.meta, 'client', {
   value: false, // Prevent auto-fetch in tests
@@ -483,6 +536,13 @@ describe('useBilling disabled', () => {
         }
       }
     }))
+    // Also override useAuthConfig
+    vi.stubGlobal('useAuthConfig', () => ({
+      mode: 'personal' as const,
+      billing: {
+        enabled: false
+      }
+    }))
   })
 
   afterEach(() => {
@@ -500,6 +560,17 @@ describe('useBilling disabled', () => {
               }
             }
           }
+        }
+      }
+    }))
+    // Restore useAuthConfig
+    vi.stubGlobal('useAuthConfig', () => ({
+      mode: 'multi-tenant' as const,
+      billing: {
+        enabled: true,
+        stripe: {
+          publishableKey: 'pk_test_123',
+          plans: []
         }
       }
     }))

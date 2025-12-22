@@ -81,6 +81,18 @@ vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
 vi.stubGlobal('readonly', readonly)
 
+// Mock useAuthConfig
+vi.stubGlobal('useAuthConfig', () => ({
+  mode: 'multi-tenant' as const,
+  teams: {
+    allowCreate: true,
+    limit: 5
+  }
+}))
+
+// Mock useAuthClient - used by useTeam internally
+vi.stubGlobal('useAuthClient', () => mockAuthClient)
+
 // Setup mock return values - must be done before import
 mockAuthClient.useListOrganizations = vi.fn(() => ({
   data: mockOrganizationsData
