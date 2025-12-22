@@ -28,7 +28,10 @@
     "lint:packages": "eslint packages/",
     "build": "pnpm -r build",
     "build:packages": "pnpm -r --filter './packages/*' build",
-    "test": "pnpm -r test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
     "typecheck": "pnpm -r --filter './apps/*' typecheck",
     "typecheck:mcp": "pnpm --filter nuxt-crouton-mcp-server typecheck",
     "publish:all": "pnpm -r publish --access public",
@@ -40,9 +43,11 @@
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^1.2.0",
+    "@vitest/coverage-v8": "^4.0.16",
     "eslint": "^9.17.0",
     "nuxt": "^4.0.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.16"
   },
   "pnpm": {
     "overrides": {
