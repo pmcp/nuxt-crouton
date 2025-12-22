@@ -68,6 +68,15 @@ export function generateListComponent(data, config = {}) {
     && (f.meta.component === 'EditorSimple' || f.meta.component.startsWith('Editor'))
   )
 
+  // Get field names that have special handling (editor, map, etc.) to avoid duplicate slots
+  const editorFieldNames = new Set(editorFields.map(f => f.name))
+  const mapFieldNames = new Set(fields.filter(f => f.meta?.group === 'map' || f.type === 'geojson').map(f => f.name))
+
+  // Filter translatable fields to exclude those with special component handling
+  const filteredTranslatableFields = translatableFields.filter(fieldName =>
+    !editorFieldNames.has(fieldName) && !mapFieldNames.has(fieldName)
+  )
+
   // Check for map/location fields (fields with group: "map" or type: "geojson")
   const mapFields = fields.filter(f =>
     f.meta?.group === 'map'
@@ -91,7 +100,7 @@ export function generateListComponent(data, config = {}) {
         :collection="'${prefixedCamelCasePlural}'"
         createButton
       />
-    </template>${translatableFields.map(field => `
+    </template>${filteredTranslatableFields.map(field => `
     <template #${field}-cell="{ row }">
       {{ t(row.original, '${field}') }}
     </template>`).join('')}${referenceFields.map((field) => {
