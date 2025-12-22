@@ -8,19 +8,12 @@
  * - Owner and creator user info
  * - Email stats (if email module is enabled)
  */
-import { eq, and, asc, gte, lte, inArray } from 'drizzle-orm'
+import { eq, and, asc, gte, lte } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import { user } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
-
-interface EmailStats {
-  total: number
-  sent: number
-  pending: number
-  failed: number
-}
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -84,50 +77,14 @@ export default defineEventHandler(async (event) => {
     .where(and(...conditions))
     .orderBy(asc(bookingsBookings.date))
 
-  // Try to get email stats if email module is enabled (gracefully handle missing table)
-  const bookingIds = bookings.map(b => b.id)
-  const emailStatsMap = new Map<string, EmailStats>()
-
-  if (bookingIds.length > 0) {
-    try {
-      // Dynamic import to handle optional email module
-      const { bookingsEmaillogs } = await import('~~/layers/bookings/collections/emaillogs/server/database/schema')
-
-      const emailLogs = await db
-        .select({
-          bookingId: bookingsEmaillogs.bookingId,
-          status: bookingsEmaillogs.status,
-        })
-        .from(bookingsEmaillogs)
-        .where(inArray(bookingsEmaillogs.bookingId, bookingIds))
-
-      // Aggregate stats by bookingId
-      for (const log of emailLogs) {
-        if (!log.bookingId) continue
-        const stats = emailStatsMap.get(log.bookingId) || { total: 0, sent: 0, pending: 0, failed: 0 }
-        stats.total++
-        if (log.status === 'sent') stats.sent++
-        else if (log.status === 'pending') stats.pending++
-        else if (log.status === 'failed') stats.failed++
-        emailStatsMap.set(log.bookingId, stats)
-      }
-    }
-    catch {
-      // Email module not enabled - skip email stats
-    }
-  }
-
-  // Attach email stats to each booking
-  const bookingsWithStats = bookings.map(booking => ({
-    ...booking,
-    emailStats: emailStatsMap.get(booking.id) || null,
-  }))
+  // Note: Email stats are not included by default.
+  // Apps with email enabled can extend this endpoint to add email stats.
 
   // If date params were provided, return with metadata
   // Otherwise return just the array for backwards compatibility
   if (startDate || endDate) {
     return {
-      items: bookingsWithStats,
+      items: bookings,
       dateRange: {
         startDate: startDate?.toISOString().split('T')[0] || null,
         endDate: endDate?.toISOString().split('T')[0] || null,
@@ -136,5 +93,5 @@ export default defineEventHandler(async (event) => {
   }
 
   // Backwards compatible: return array directly
-  return bookingsWithStats
+  return bookings
 })
