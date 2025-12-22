@@ -285,8 +285,16 @@ const filteredBookings = computed(() => {
   })
 })
 
-// Calendar - selected date
+// Calendar - selected date and hovered date
 const selectedDate = ref<Date | null>(null)
+// Hovered date from calendar (for exact day highlighting)
+const hoveredDate = ref<Date | null>(null)
+// Suppress week highlighting after hover ends (until scroll resumes)
+const suppressWeekHighlight = ref(false)
+// Flag to prevent infinite loops during sync
+const isSyncing = ref(false)
+// Flag to prevent hover-initiated scroll from re-enabling week highlighting
+const isHoverScroll = ref(false)
 
 // Helper to get local date string (YYYY-MM-DD) from a Date
 function toLocalDateStr(date: Date): string {
@@ -373,13 +381,131 @@ function getGroupLabel(groupId: string | null | undefined): string | null {
 }
 
 // Check if a booking should be highlighted
+// When hovering: only exact date matches
+// After hover ends: no highlights until scroll resumes
+// When scrolling: all bookings in the selected week
 function isBookingHighlighted(bookingDate: string | Date): boolean {
-  if (!selectedDate.value) return false
   const booking = new Date(bookingDate)
   const bookingStr = toLocalDateStr(booking)
-  const selectedStr = toLocalDateStr(selectedDate.value)
-  return bookingStr === selectedStr
+
+  // If hovering, only highlight exact date match
+  if (hoveredDate.value) {
+    const hoveredStr = toLocalDateStr(hoveredDate.value)
+    return bookingStr === hoveredStr
+  }
+
+  // After hover ends, suppress week highlighting until scroll resumes
+  if (suppressWeekHighlight.value) return false
+
+  // Otherwise, highlight by week (when scrolling)
+  if (!selectedDate.value) return false
+  const selected = selectedDate.value
+
+  // Get start of week for both dates (Monday = start)
+  const getWeekStart = (date: Date) => {
+    const d = new Date(date)
+    const day = d.getDay()
+    const diff = day === 0 ? -6 : 1 - day // Adjust for Monday start
+    d.setDate(d.getDate() + diff)
+    d.setHours(0, 0, 0, 0)
+    return d.getTime()
+  }
+
+  return getWeekStart(booking) === getWeekStart(selected)
 }
+
+// Scroll container ref (main scrollable area)
+const scrollContainer = ref<HTMLElement | null>(null)
+
+// Scroll to first booking on a specific date (positions at 40% of viewport)
+function scrollToDateBooking(date: Date) {
+  const dateStr = toLocalDateStr(date)
+  const booking = filteredBookings.value.find((b) => {
+    return toLocalDateStr(new Date(b.date)) === dateStr
+  })
+
+  if (booking && scrollContainer.value) {
+    const el = bookingRefs.get(booking.id)
+    if (el) {
+      isSyncing.value = true
+      isHoverScroll.value = true
+      const rect = el.getBoundingClientRect()
+      const targetY = windowHeight.value * 0.4
+      const scrollOffset = rect.top - targetY + scrollContainer.value.scrollTop
+      scrollContainer.value.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+      setTimeout(() => {
+        isSyncing.value = false
+      }, 500)
+      // Keep isHoverScroll true longer to prevent residual scroll from re-enabling highlights
+      setTimeout(() => {
+        isHoverScroll.value = false
+      }, 1000)
+    }
+  }
+}
+
+// Handle hover from week/month calendar (also scrolls to booking)
+// hoveredDate persists after mouseleave - only cleared when user scrolls
+function onDayHover(date: Date | null) {
+  if (date) {
+    hoveredDate.value = date
+    suppressWeekHighlight.value = true
+    scrollToDateBooking(date)
+  }
+  // Don't clear hoveredDate on mouseleave - keep highlight until scroll
+}
+
+// Find booking closest to 40% of viewport and sync calendar
+function syncCalendarToScroll() {
+  if (isSyncing.value) return
+
+  // Trigger point at 40% of viewport height
+  const triggerPoint = windowHeight.value * 0.4
+  let closestDate: string | null = null
+  let closestDistance = Infinity
+
+  bookingRefs.forEach((el) => {
+    const rect = el.getBoundingClientRect()
+    const elementCenter = rect.top + rect.height / 2
+    const distance = Math.abs(elementCenter - triggerPoint)
+
+    if (distance < closestDistance) {
+      closestDistance = distance
+      closestDate = el.getAttribute('data-booking-date')
+    }
+  })
+
+  if (closestDate) {
+    // Parse YYYY-MM-DD as local date (not UTC)
+    const [year, month, day] = closestDate.split('-').map(Number)
+    const bookingDate = new Date(year!, month! - 1, day)
+    isSyncing.value = true
+
+    // Re-enable week highlighting only on user-initiated scroll (not hover scroll)
+    if (!isHoverScroll.value) {
+      suppressWeekHighlight.value = false
+      hoveredDate.value = null // Clear day highlight, switch to week highlight
+    }
+
+    // Always update selectedDate for highlighting bookings
+    selectedDate.value = bookingDate
+
+    useTimeoutFn(() => {
+      isSyncing.value = false
+    }, 500)
+  }
+}
+
+// Debounced scroll handler
+const onBookingsScroll = useDebounceFn(syncCalendarToScroll, 150)
+
+// Set up scroll listener on mount
+onMounted(() => {
+  scrollContainer.value = document.querySelector('.w-full.flex-1.overflow-y-auto')
+})
+
+// Use VueUse's useEventListener for automatic cleanup
+useEventListener(scrollContainer, 'scroll', onBookingsScroll, { passive: true })
 
 // Refs for scroll sync
 const scrollAreaRef = useTemplateRef<HTMLElement>('scrollAreaRef')
@@ -523,34 +649,41 @@ const numberOfMonths = computed(() => windowWidth.value < 768 ? 1 : 3)
             v-if="calendarViewMode === 'week'"
             v-model="selectedDate"
             size="sm"
+            @hover="hoveredDate = $event"
           >
             <template #day="{ day }">
-              <div
-                v-if="hasBookingOnDate(asDateValue(day))"
-                class="w-1.5 h-1.5 rounded-full bg-primary"
-              />
+              <div class="mt-1 min-h-[8px] flex items-center justify-center">
+                <div
+                  v-if="hasBookingOnDate(asDateValue(day))"
+                  class="w-1.5 h-1.5 rounded-full bg-primary"
+                />
+              </div>
             </template>
           </CroutonBookingWeekStrip>
 
           <!-- Month Calendar View -->
-          <UCalendar
-            v-else
-            v-model="selectedCalendarDate"
-            :number-of-months="numberOfMonths"
-            size="sm"
-            class="w-full"
-            :ui="{ root: 'w-full', header: 'justify-between', gridRow: 'grid grid-cols-7 mb-1' }"
-          >
-            <template #day="{ day }">
-              <div class="flex flex-col items-center">
-                <span>{{ day.day }}</span>
+          <div v-else @mouseleave="hoveredDate = null">
+            <UCalendar
+              v-model="selectedCalendarDate"
+              :number-of-months="numberOfMonths"
+              size="sm"
+              class="w-full"
+              :ui="{ root: 'w-full', header: 'justify-between', gridRow: 'grid grid-cols-7 mb-1' }"
+            >
+              <template #day="{ day }">
                 <div
-                  v-if="hasBookingOnDate(day)"
-                  class="w-1.5 h-1.5 rounded-full bg-primary mt-0.5"
-                />
-              </div>
-            </template>
-          </UCalendar>
+                  class="flex flex-col items-center"
+                  @mouseenter="hoveredDate = day.toDate(getLocalTimeZone())"
+                >
+                  <span>{{ day.day }}</span>
+                  <div
+                    v-if="hasBookingOnDate(day)"
+                    class="w-1.5 h-1.5 rounded-full bg-primary mt-0.5"
+                  />
+                </div>
+              </template>
+            </UCalendar>
+          </div>
         </div>
       </div>
 

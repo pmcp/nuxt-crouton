@@ -18,6 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'update:modelValue': [value: Date | null]
+  'hover': [value: Date | null]
 }>()
 
 // Current week's reference date (for navigation)
@@ -163,13 +164,14 @@ const sizeClasses = computed(() => {
     </div>
 
     <!-- Days Grid -->
-    <div class="grid grid-cols-7 gap-1">
+    <div class="grid grid-cols-7 gap-1" @mouseleave="emit('hover', null)">
       <div
         v-for="day in weekDays"
         :key="day.date.toString()"
         class="flex flex-col items-center cursor-pointer group"
         :class="sizeClasses.cell"
         @click="selectDay(day)"
+        @mouseenter="emit('hover', day.jsDate)"
       >
         <!-- Weekday label -->
         <span :class="['text-muted uppercase tracking-wider font-medium', sizeClasses.weekday]">
@@ -192,9 +194,9 @@ const sizeClasses = computed(() => {
         </span>
 
         <!-- Slot for indicators -->
-        <div class="mt-1 min-h-[8px]">
-          <slot name="day" :day="day.date" :js-date="day.jsDate" />
-        </div>
+        <slot name="day" :day="day.date" :js-date="day.jsDate">
+          <div class="mt-1 min-h-[8px]" />
+        </slot>
       </div>
     </div>
   </div>
