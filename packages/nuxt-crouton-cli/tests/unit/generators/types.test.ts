@@ -1,5 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { generateTypes } from '../../../lib/generators/types.mjs'
+
+// Mock date to prevent snapshot failures due to @generated timestamp
+beforeAll(() => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2025-01-01'))
+})
+
+afterAll(() => {
+  vi.useRealTimers()
+})
 import {
   basicTypesData,
   minimalConfig,
