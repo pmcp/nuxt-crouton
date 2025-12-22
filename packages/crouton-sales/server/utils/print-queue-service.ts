@@ -254,13 +254,5 @@ export function generatePrintJobsForOrder(
   return jobs
 }
 
-// Re-export receipt formatter types and functions
-export {
-  formatReceipt,
-  formatTestReceipt,
-  DEFAULT_RECEIPT_SETTINGS,
-  type ReceiptItem,
-  type ReceiptData,
-  type ReceiptSettings,
-  type FormattedReceipt
-} from './receipt-formatter'
+// Note: formatReceipt, formatTestReceipt, DEFAULT_RECEIPT_SETTINGS and types
+// are exported from ./receipt-formatter.ts - import from there directly

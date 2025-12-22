@@ -209,9 +209,13 @@ function buildTrustedOrigins(baseURL: string): string[] {
 
   // In development, add common localhost variants
   if (process.env.NODE_ENV !== 'production') {
-    // Add localhost with common development ports
-    const devPorts = ['3000', '3001', '3002', '3003', '4000', '5000']
-    for (const port of devPorts) {
+    // Add localhost with development ports (3000-3020 for dynamic port assignment)
+    for (let port = 3000; port <= 3020; port++) {
+      origins.add(`http://localhost:${port}`)
+      origins.add(`http://127.0.0.1:${port}`)
+    }
+    // Also add other common dev ports
+    for (const port of ['4000', '5000', '8080']) {
       origins.add(`http://localhost:${port}`)
       origins.add(`http://127.0.0.1:${port}`)
     }

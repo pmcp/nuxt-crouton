@@ -22,19 +22,35 @@ onMounted(() => {
 })
 
 // Try to use theme variant if available (from nuxt-crouton-themes)
-const variant = computed(() => {
+// Returns both the base variant and getVariant helper for compound variants
+const themeHelpers = computed(() => {
   try {
     // @ts-expect-error - composable may not exist when themes not installed
-    const { variant: themeVariant } = useThemeSwitcher?.() ?? {}
-    return themeVariant?.value
+    const switcher = useThemeSwitcher?.()
+    if (switcher) {
+      return {
+        variant: switcher.variant?.value,
+        getVariant: switcher.getVariant
+      }
+    }
   } catch {
-    return undefined
+    // Themes not installed
+  }
+  return {
+    variant: undefined,
+    getVariant: (base: string) => base // Passthrough when themes not installed
   }
 })
+
+const variant = computed(() => themeHelpers.value.variant)
+const getVariant = (base: string) => themeHelpers.value.getVariant(base)
 
 // Get collections from app config (the proper registry)
 const appConfig = useAppConfig()
 const route = useRoute()
+
+// Get team context (handles personal/single-tenant modes where team isn't in URL)
+const { teamSlug: teamSlugRef } = useTeamContext()
 
 // Build navigation from crouton collections registry
 const collections = computed(() => {
@@ -61,7 +77,7 @@ const collections = computed(() => {
 
 // Navigation items
 const navItems = computed<NavigationMenuItem[][]>(() => {
-  const teamSlug = route.params.team as string
+  const teamSlug = teamSlugRef.value || ''
 
   const collectionItems: NavigationMenuItem[] = collections.value.map(col => ({
     label: col.label,
@@ -140,10 +156,9 @@ const pageTitle = computed(() => {
           :label="collapsed ? undefined : 'Search...'"
           icon="i-lucide-search"
           color="neutral"
-          variant="outline"
+          :variant="getVariant('outline')"
           block
           :square="collapsed"
-          :variant-override="variant"
         >
           <template v-if="!collapsed" #trailing>
             <div class="flex items-center gap-0.5 ms-auto">
