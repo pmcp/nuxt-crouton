@@ -10,6 +10,7 @@
     :refresh-fn="refreshFn"
     :hide-default-columns="hideDefaultColumns"
     :sortable="sortable"
+    :stateless="stateless"
   >
     <template #header>
       <slot name="header">

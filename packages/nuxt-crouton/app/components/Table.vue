@@ -86,8 +86,10 @@
             <CroutonItemButtonsMini
               delete
               update
-              @delete="openCrouton('delete', collection, [row.original.id])"
-              @update="openCrouton('update', collection, [row.original.id])"
+              :disabled="stateless"
+              :disabled-tooltip="stateless ? 'Preview only' : ''"
+              @delete="openCrouton?.('delete', collection, [row.original.id])"
+              @update="openCrouton?.('update', collection, [row.original.id])"
             />
           </template>
         </UTable>
@@ -134,6 +136,7 @@ const props = withDefaults(defineProps<TableProps>(), {
   paginationData: null,
   refreshFn: undefined,
   sortable: false,
+  stateless: false,
   hideDefaultColumns: () => ({
     createdAt: false,
     updatedAt: false,
@@ -145,7 +148,19 @@ const props = withDefaults(defineProps<TableProps>(), {
 
 // Composables
 const { t, tString } = useT()
-const { open: openCrouton, setPagination, getPagination } = useCrouton()
+
+// Only use useCrouton when not in stateless mode
+const croutonComposable = props.stateless ? null : useCrouton()
+const openCrouton = croutonComposable?.open
+const setPagination = croutonComposable?.setPagination ?? (() => {})
+const getPagination = croutonComposable?.getPagination ?? (() => ({
+  currentPage: 1,
+  pageSize: 10,
+  sortBy: 'createdAt',
+  sortDirection: 'desc' as const,
+  totalItems: 0,
+  totalPages: 0
+}))
 
 // Refs
 const tableRef = useTemplateRef<any>('tableRef')

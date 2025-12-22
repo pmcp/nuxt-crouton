@@ -2,23 +2,24 @@
   <div :class="containerClasses">
     <!-- VIEW -->
     <div v-if="view">
-      <!-- With tooltip -->
+      <!-- With tooltip (always show when disabled) -->
       <UTooltip
-        v-if="viewTooltip.length > 0"
+        v-if="effectiveViewTooltip.length > 0 || disabled"
         :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
-          <span class="italic">{{ viewTooltip }}</span>
+          <span class="italic">{{ effectiveViewTooltip || 'Preview only' }}</span>
         </template>
 
         <UButton
           :loading="viewLoading"
+          :disabled="disabled"
           icon="i-lucide-eye"
           color="neutral"
           variant="soft"
           size="xs"
           :class="buttonClasses"
-          @click="$emit('view')"
+          @click="!disabled && $emit('view')"
         />
       </UTooltip>
 
@@ -26,34 +27,36 @@
       <UButton
         v-else
         :loading="viewLoading"
+        :disabled="disabled"
         icon="i-lucide-eye"
         color="neutral"
         variant="soft"
         size="xs"
         :class="buttonClasses"
-        @click="$emit('view')"
+        @click="!disabled && $emit('view')"
       />
     </div>
 
     <!-- DELETE -->
     <div v-if="delete">
-      <!-- With tooltip -->
+      <!-- With tooltip (always show when disabled) -->
       <UTooltip
-        v-if="deleteTooltip.length > 0"
+        v-if="effectiveDeleteTooltip.length > 0 || disabled"
         :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
-          <span class="italic">{{ deleteTooltip }}</span>
+          <span class="italic">{{ effectiveDeleteTooltip || 'Preview only' }}</span>
         </template>
 
         <UButton
           :loading="deleteLoading"
+          :disabled="disabled"
           icon="i-ph-trash-duotone"
           color="error"
           variant="soft"
           size="xs"
           :class="buttonClasses"
-          @click="$emit('delete')"
+          @click="!disabled && $emit('delete')"
         />
       </UTooltip>
 
@@ -61,44 +64,47 @@
       <UButton
         v-else
         :loading="deleteLoading"
+        :disabled="disabled"
         icon="i-ph-trash-duotone"
         color="error"
         variant="soft"
         size="xs"
         :class="buttonClasses"
-        @click="$emit('delete')"
+        @click="!disabled && $emit('delete')"
       />
     </div>
 
     <!-- UPDATE -->
     <div v-if="update">
-      <!-- With tooltip -->
+      <!-- With tooltip (always show when disabled) -->
       <UTooltip
-        v-if="updateTooltip.length > 0"
+        v-if="effectiveUpdateTooltip.length > 0 || disabled"
         :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
-          <span class="italic">{{ updateTooltip }}</span>
+          <span class="italic">{{ effectiveUpdateTooltip || 'Preview only' }}</span>
         </template>
         <UButton
           :loading="updateLoading"
+          :disabled="disabled"
           icon="i-ph-pencil"
           color="neutral"
           size="xs"
           :class="buttonClasses"
-          @click="$emit('update')"
+          @click="!disabled && $emit('update')"
         />
       </UTooltip>
       <!-- Without tooltip -->
       <UButton
         v-else
         :loading="updateLoading"
+        :disabled="disabled"
         icon="i-ph-pencil"
         color="primary"
         variant="soft"
         size="xs"
         :class="buttonClasses"
-        @click="$emit('update')"
+        @click="!disabled && $emit('update')"
       />
     </div>
   </div>
@@ -149,6 +155,19 @@ const props = defineProps({
   deleteLoading: {
     type: Boolean,
     default: false
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  disabledTooltip: {
+    type: String,
+    default: ''
   }
 })
+
+// Use disabled tooltip when disabled, otherwise use button-specific tooltip
+const effectiveViewTooltip = computed(() => props.disabled && props.disabledTooltip ? props.disabledTooltip : props.viewTooltip)
+const effectiveUpdateTooltip = computed(() => props.disabled && props.disabledTooltip ? props.disabledTooltip : props.updateTooltip)
+const effectiveDeleteTooltip = computed(() => props.disabled && props.disabledTooltip ? props.disabledTooltip : props.deleteTooltip)
 </script>
