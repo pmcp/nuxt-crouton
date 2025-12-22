@@ -11,9 +11,9 @@
 import { eq, and, asc, gte, lte, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { user } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
-import { users } from '~~/server/database/schema'
 
 interface EmailStats {
   total: number
@@ -31,8 +31,8 @@ export default defineEventHandler(async (event) => {
   const startDate = query.startDate ? new Date(String(query.startDate)) : null
   const endDate = query.endDate ? new Date(String(query.endDate)) : null
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
+  const ownerUsers = alias(user, 'ownerUsers')
+  const createdByUsers = alias(user, 'createdByUsers')
 
   // Build where conditions
   const conditions = [
