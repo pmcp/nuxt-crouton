@@ -2,14 +2,15 @@
 /**
  * Team Switcher Component
  *
- * Dropdown menu to switch between teams (organizations).
- * Only shown in multi-tenant mode when user has multiple teams.
+ * Select menu to switch between teams (organizations) or create new ones.
+ * Always shown in multi-tenant mode, even with just one team.
  *
  * @example
  * ```vue
  * <TeamSwitcher />
  * ```
  */
+import type { SelectMenuItem, AvatarProps } from '@nuxt/ui'
 import type { Team } from '../../../types'
 
 interface Props {
@@ -19,11 +20,14 @@ interface Props {
   label?: string
   /** Size variant */
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  /** Hide search input for small lists */
+  searchable?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showCreate: true,
-  size: 'md'
+  size: 'md',
+  searchable: false
 })
 
 const emit = defineEmits<{
@@ -34,91 +38,137 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useT()
+const config = useAuthConfig()
 const {
   currentTeam,
   teams,
   switchTeam,
-  showTeamSwitcher,
   canCreateTeam,
   loading
 } = useTeam()
 
 const { buildDashboardUrl } = useTeamContext()
 
-// Handle team switch
-async function handleSwitch(team: Team) {
-  if (team.id === currentTeam.value?.id) return
+// Show in multi-tenant mode (regardless of team count)
+const showSwitcher = computed(() => config?.mode === 'multi-tenant')
 
-  await switchTeam(team.id)
-  emit('switch', team)
+// Create team modal state
+const showCreateModal = ref(false)
 
-  // Navigate to new team's dashboard
-  const dashboardUrl = buildDashboardUrl(team.slug, '')
-  await navigateTo(dashboardUrl)
-}
-
-// Handle create team click
-function handleCreate() {
-  emit('create')
-}
-
-// Build items for dropdown menu
-const menuItems = computed(() => {
-  const items: Array<{ label: string, icon: string, click?: () => void, slot?: string }[]> = []
-
-  // Team list
-  const teamItems = teams.value.map(team => ({
+// Build items for select menu
+const selectItems = computed<SelectMenuItem[][]>(() => {
+  const teamItems: SelectMenuItem[] = teams.value.map(team => ({
     label: team.name,
-    icon: team.id === currentTeam.value?.id ? 'i-lucide-check' : 'i-lucide-building-2',
-    click: () => handleSwitch(team)
+    value: team.id,
+    icon: 'i-lucide-building-2'
   }))
 
+  const groups: SelectMenuItem[][] = []
+
   if (teamItems.length > 0) {
-    items.push(teamItems)
+    groups.push(teamItems)
   }
 
   // Create team option
   if (props.showCreate && canCreateTeam.value) {
-    items.push([
+    groups.push([
       {
         label: t('teams.createTeam'),
-        icon: 'i-lucide-plus',
-        click: handleCreate
+        value: '__create__',
+        icon: 'i-lucide-plus'
       }
     ])
   }
 
-  return items
+  return groups
 })
+
+// Selected team ID for v-model
+const selectedTeamId = computed({
+  get: () => currentTeam.value?.id,
+  set: async (value: string | undefined) => {
+    if (!value) return
+
+    // Handle create team action
+    if (value === '__create__') {
+      showCreateModal.value = true
+      emit('create')
+      return
+    }
+
+    // Switch team
+    const team = teams.value.find(t => t.id === value)
+    if (team && team.id !== currentTeam.value?.id) {
+      await switchTeam(team.id)
+      emit('switch', team)
+
+      // Navigate to new team's dashboard
+      const dashboardUrl = buildDashboardUrl(team.slug, '')
+      await navigateTo(dashboardUrl)
+    }
+  }
+})
+
+// Handle team created - switch to it
+async function handleTeamCreated(team: Team) {
+  showCreateModal.value = false
+  await switchTeam(team.id)
+  emit('switch', team)
+
+  const dashboardUrl = buildDashboardUrl(team.slug, '')
+  await navigateTo(dashboardUrl)
+}
 </script>
 
 <template>
-  <UDropdownMenu
-    v-if="showTeamSwitcher"
-    :items="menuItems"
-  >
-    <UButton
+  <div v-if="showSwitcher">
+    <USelectMenu
+      v-model="selectedTeamId"
+      :items="selectItems"
+      value-key="value"
       :size="size"
-      variant="ghost"
       :loading="loading"
-      trailing-icon="i-lucide-chevron-down"
+      :search-input="searchable"
+      :placeholder="label || t('teams.selectTeam')"
+      :icon="currentTeam?.logo ? undefined : 'i-lucide-building-2'"
+      variant="ghost"
+      class="w-full"
+      :ui="{
+        base: 'w-full justify-between',
+        trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+      }"
     >
-      <template #leading>
+      <template #leading="{ ui }">
         <UAvatar
           v-if="currentTeam?.logo"
           :src="currentTeam.logo"
-          :alt="currentTeam.name"
-          size="2xs"
+          :alt="currentTeam?.name"
+          :size="(ui.leadingAvatarSize() as AvatarProps['size'])"
+          :class="ui.leadingAvatar()"
         />
         <UIcon
           v-else
           name="i-lucide-building-2"
-          class="size-4"
+          :class="ui.leadingIcon()"
         />
       </template>
-      {{ label || currentTeam?.name || t('teams.selectTeam') }}
-    </UButton>
-  </UDropdownMenu>
+    </USelectMenu>
+
+    <!-- Create Team Modal -->
+    <UModal v-model:open="showCreateModal">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            {{ t('teams.createTeam') }}
+          </h3>
+          <TeamCreateForm
+            @success="handleTeamCreated"
+            @cancel="close"
+          />
+        </div>
+      </template>
+    </UModal>
+  </div>
 
   <!-- Non-multi-tenant: just show current team name -->
   <div
