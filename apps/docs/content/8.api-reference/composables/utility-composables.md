@@ -485,6 +485,229 @@ open('create', 'shopProducts', [], 'slideover', {
 
 ---
 
+## useCroutonShortcuts
+
+Keyboard shortcuts for power-user CRUD operations with platform-aware bindings and visual hints.
+
+### Type Signature
+
+```typescript
+interface CroutonShortcutConfig {
+  create: string   // Open create form
+  save: string     // Submit current form
+  close: string    // Close current form/modal
+  delete: string   // Delete selected items
+  search: string   // Focus search input
+}
+
+interface UseCroutonShortcutsOptions {
+  collection: string
+  shortcuts?: Partial<CroutonShortcutConfig>
+  disabled?: MaybeRef<boolean>
+  selected?: Ref<string[]>
+  searchRef?: Ref<HTMLInputElement | null>
+  handlers?: {
+    onSave?: () => void | Promise<void>
+    onDelete?: (ids: string[]) => void | Promise<void>
+    onCreate?: () => void
+  }
+}
+
+function useCroutonShortcuts(options: UseCroutonShortcutsOptions): {
+  shortcuts: CroutonShortcutConfig
+  formatShortcut: (action: keyof CroutonShortcutConfig) => string
+  pause: () => void
+  resume: () => void
+  isActive: Ref<boolean>
+}
+```
+
+### Default Shortcuts
+
+| Action | Mac | Windows/Linux | Context |
+|--------|-----|---------------|---------|
+| Create | `⌘N` | `Ctrl+N` | When no form is open |
+| Save | `⌘S` | `Ctrl+S` | When form is open |
+| Close | `Escape` | `Escape` | Closes form/modal |
+| Delete | `⌘⌫` | `Ctrl+Backspace` | With selection |
+| Search | `⌘K` or `/` | `Ctrl+K` or `/` | Focus search input |
+
+### Basic Usage
+
+```vue
+<script setup lang="ts">
+const selected = ref<string[]>([])
+const searchRef = ref<HTMLInputElement | null>(null)
+
+const { formatShortcut } = useCroutonShortcuts({
+  collection: 'shopProducts',
+  selected,
+  searchRef,
+  handlers: {
+    onSave: () => formRef.value?.submit(),
+    onDelete: async (ids) => {
+      if (confirm(`Delete ${ids.length} items?`)) {
+        await deleteItems(ids)
+        selected.value = []
+      }
+    }
+  }
+})
+</script>
+
+<template>
+  <div class="flex justify-between mb-4">
+    <UInput ref="searchRef" placeholder="Search..." />
+
+    <UButton @click="open('create', 'shopProducts')">
+      New Product
+      <CroutonShortcutHint :shortcut="formatShortcut('create')" subtle />
+    </UButton>
+  </div>
+
+  <CroutonCollection
+    v-model:selected="selected"
+    collection="shopProducts"
+    selectable
+  />
+</template>
+```
+
+### Custom Shortcuts
+
+Override default key bindings:
+
+```vue
+<script setup lang="ts">
+useCroutonShortcuts({
+  collection: 'posts',
+  shortcuts: {
+    create: 'Meta+Shift+n',  // ⌘⇧N instead of ⌘N
+    search: 'Meta+f',        // ⌘F instead of ⌘K
+  }
+})
+</script>
+```
+
+### Pause/Resume
+
+Temporarily disable shortcuts (e.g., during custom modal):
+
+```vue
+<script setup lang="ts">
+const isCustomModalOpen = ref(false)
+const { pause, resume, isActive } = useCroutonShortcuts({
+  collection: 'posts',
+  disabled: isCustomModalOpen, // Option 1: Reactive disable
+})
+
+// Option 2: Manual control
+const openCustomModal = () => {
+  pause()
+  isCustomModalOpen.value = true
+}
+
+const closeCustomModal = () => {
+  isCustomModalOpen.value = false
+  resume()
+}
+</script>
+```
+
+### Display Shortcut Hints
+
+Use the `CroutonShortcutHint` component:
+
+```vue
+<script setup lang="ts">
+const { formatShortcut } = useCroutonShortcuts({ collection: 'posts' })
+</script>
+
+<template>
+  <!-- Inline with button -->
+  <UButton>
+    Save
+    <CroutonShortcutHint :shortcut="formatShortcut('save')" subtle />
+  </UButton>
+
+  <!-- Standalone -->
+  <div class="flex items-center gap-2">
+    <span>Press</span>
+    <CroutonShortcutHint :shortcut="formatShortcut('search')" />
+    <span>to search</span>
+  </div>
+</template>
+```
+
+### Context-Aware Behavior
+
+Shortcuts are automatically disabled when:
+- User is typing in an `<input>` or `<textarea>`
+- User is in a `contenteditable` element
+- `disabled` option is true
+- `pause()` has been called
+
+```vue
+<script setup lang="ts">
+// Shortcuts won't fire when user is typing in search
+const searchRef = ref<HTMLInputElement | null>(null)
+
+useCroutonShortcuts({
+  collection: 'posts',
+  searchRef,
+  // ⌘N won't fire while typing in searchRef
+})
+</script>
+```
+
+### Form Save Handler
+
+Connect to form submission:
+
+```vue
+<script setup lang="ts">
+const formRef = ref()
+
+useCroutonShortcuts({
+  collection: 'posts',
+  handlers: {
+    onSave: () => {
+      // Trigger form submission on ⌘S
+      formRef.value?.submit()
+    }
+  }
+})
+</script>
+
+<template>
+  <UForm ref="formRef" @submit="handleSubmit">
+    <!-- form fields -->
+  </UForm>
+</template>
+```
+
+### Best Practices
+
+**DO:**
+- ✅ Provide visual hints with `CroutonShortcutHint` for discoverability
+- ✅ Use `formatShortcut()` for platform-aware display
+- ✅ Connect `onSave` to form submission for ⌘S support
+- ✅ Connect `onDelete` with confirmation dialog
+- ✅ Disable during custom modals that capture focus
+
+**DON'T:**
+- ❌ Override common browser shortcuts (⌘C, ⌘V, ⌘Z)
+- ❌ Forget to handle delete confirmation
+- ❌ Leave shortcuts active during text editing
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Shortcuts not firing | Check `isActive` value, ensure not typing in input |
+| ⌘S opens browser save | Verify `onSave` handler is provided |
+| Delete fires without selection | Check `selected` ref is populated |
+| Wrong platform symbols | Ensure using `formatShortcut()` not hardcoded strings |
 
 ---
 
