@@ -12,8 +12,12 @@ Core CRUD layer for Nuxt applications. Provides composables, components, and ser
 | `app/composables/useCollectionQuery.ts` | Async data fetching with query-based caching |
 | `app/composables/useCollectionMutation.ts` | Create/update/delete with auto cache invalidation |
 | `app/composables/useCollections.ts` | Collection config registry from `app.config.croutonCollections` |
+| `app/composables/useCroutonShortcuts.ts` | Keyboard shortcuts for CRUD operations |
+| `app/composables/useCollectionExport.ts` | CSV/JSON export for collection data |
 | `app/components/Collection.vue` | Multi-layout display (table, list, grid, cards, tree) |
 | `app/components/Form.vue` | Main CRUD form handler with nested modal support |
+| `app/components/ShortcutHint.vue` | Visual keyboard shortcut badges (`<kbd>` elements) |
+| `app/components/ExportButton.vue` | Ready-to-use export dropdown button |
 | `app/composables/useTeamContext.ts` | Team context access (teamId, teamSlug from route or auth) |
 
 ## Architecture
@@ -23,6 +27,7 @@ useCrouton()          → Modal state (open/close/nesting)
 useCollectionQuery()  → Data fetching (SSR-safe, cached)
 useCollectionMutation() → CRUD operations (auto-refresh cache)
 useCollections()      → Config registry (componentMap, apiPath, references)
+useCroutonShortcuts() → Keyboard shortcuts (create, save, close, delete, search)
 useTeamContext()      → Team ID/slug from route params (client-side)
 ```
 
@@ -79,6 +84,37 @@ Mutations invalidate ALL cache keys for the collection.
 useNuxtApp().hook('crouton:mutation', ({ operation, collection, itemId, data }) => {
   // operation: 'create' | 'update' | 'delete' | 'move' | 'reorder'
 })
+```
+
+## Keyboard Shortcuts
+
+Power-user keyboard shortcuts via `useCroutonShortcuts()`:
+
+| Action | Mac | Windows | Context |
+|--------|-----|---------|---------|
+| Create | `⌘N` | `Ctrl+N` | When no form open |
+| Save | `⌘S` | `Ctrl+S` | When form open |
+| Close | `Esc` | `Esc` | Closes form/modal |
+| Delete | `⌘⌫` | `Ctrl+Backspace` | With selection |
+| Search | `⌘K` or `/` | `Ctrl+K` or `/` | Focus search |
+
+```typescript
+// Basic usage
+const searchRef = ref<HTMLInputElement | null>(null)
+const selected = ref<string[]>([])
+
+const { formatShortcut } = useCroutonShortcuts({
+  collection: 'posts',
+  selected,
+  searchRef,
+  handlers: {
+    onSave: () => formRef.value?.submit(),
+    onDelete: (ids) => confirmDelete(ids),
+  }
+})
+
+// Display shortcut hints
+<UButton>New <CroutonShortcutHint :shortcut="formatShortcut('create')" subtle /></UButton>
 ```
 
 ## Common Tasks

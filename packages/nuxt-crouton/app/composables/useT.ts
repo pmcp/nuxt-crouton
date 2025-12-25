@@ -64,6 +64,16 @@ export function useT() {
     'common.change': 'Change',
 
     // ===================
+    // EXPORT (~6 keys)
+    // ===================
+    'export.button': 'Export',
+    'export.csv': 'Export as CSV',
+    'export.json': 'Export as JSON',
+    'export.noData': 'No data to export',
+    'export.success': 'Export completed',
+    'export.error': 'Export failed',
+
+    // ===================
     // TABLE (~25 keys)
     // ===================
     'table.id': 'ID',

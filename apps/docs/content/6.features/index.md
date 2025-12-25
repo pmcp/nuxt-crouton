@@ -149,6 +149,21 @@ Interactive graph visualization with real-time collaboration:
 
 ---
 
+### 10. Data Export
+**File**: `15.export.md` | **Status**: Stable ✅
+
+Export collection data to CSV and JSON formats:
+- CSV and JSON export formats
+- Custom field selection and labeling
+- Field and row transformations
+- Server-side query exports
+- Ready-to-use export button component
+- i18n support for labels
+
+**Use case**: Reporting, data backups, data migration, audit exports
+
+---
+
 ## Choosing the Right Features
 
 ### For Production Apps
