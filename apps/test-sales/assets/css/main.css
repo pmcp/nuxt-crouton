@@ -1,0 +1,4 @@
+
+/* Scan Nuxt Crouton layers for Tailwind classes */
+@source "../../../node_modules/@friendlyinternet/nuxt-crouton*/app/**/*.{vue,js,ts}";
+/* Test Sales App - Custom Styles */

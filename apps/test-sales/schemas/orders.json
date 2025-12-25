@@ -1,0 +1,10 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "eventId": { "type": "uuid", "refTarget": "events", "meta": { "required": true, "label": "Event" } },
+  "clientId": { "type": "uuid", "refTarget": "clients", "meta": { "label": "Client" } },
+  "clientName": { "type": "string", "meta": { "label": "Client Name", "maxLength": 200 } },
+  "eventOrderNumber": { "type": "integer", "meta": { "label": "Order Number" } },
+  "overallRemarks": { "type": "text", "meta": { "label": "Special Instructions" } },
+  "isPersonnel": { "type": "boolean", "meta": { "label": "Staff Order", "default": false } },
+  "status": { "type": "string", "meta": { "required": true, "label": "Status", "default": "pending" } }
+}
