@@ -228,4 +228,75 @@ describe('useTableSearch', () => {
       expect(onSearch).toHaveBeenLastCalledWith('')
     })
   })
+
+  describe('debounce timing behavior', () => {
+    // Note: The current mock immediately executes the debounced function
+    // These tests document the expected debounce behavior
+
+    it('debounce ms is correctly passed to useDebounceFn', () => {
+      // Default 300ms
+      useTableSearch()
+      expect(lastDebounceMs).toBe(300)
+
+      // Custom value
+      useTableSearch({ debounceMs: 150 })
+      expect(lastDebounceMs).toBe(150)
+
+      // Zero debounce
+      useTableSearch({ debounceMs: 0 })
+      expect(lastDebounceMs).toBe(0)
+    })
+
+    it('debounced function is properly created', () => {
+      useTableSearch()
+
+      // The debounced function should be stored
+      expect(lastDebounceFn).toBeDefined()
+      expect(typeof lastDebounceFn).toBe('function')
+    })
+
+    it('rapid searches should ideally only trigger callback once per debounce period', async () => {
+      // Note: This test documents expected behavior
+      // With real debounce, rapid calls would be batched
+      // Current mock executes immediately, so all calls go through
+      const onSearch = vi.fn()
+      const { handleSearch } = useTableSearch({ onSearch, debounceMs: 300 })
+
+      // Simulate rapid typing
+      await handleSearch('a')
+      await handleSearch('ab')
+      await handleSearch('abc')
+
+      // With real debounce: onSearch should be called 1 time with 'abc'
+      // With current immediate mock: called 3 times
+      // This test documents the expectation
+      expect(onSearch).toHaveBeenCalled()
+      // The last call should always have the final value
+      expect(onSearch).toHaveBeenLastCalledWith('abc')
+    })
+
+    it('different debounce values create different timings', () => {
+      // Fast debounce for autocomplete
+      useTableSearch({ debounceMs: 100 })
+      expect(lastDebounceMs).toBe(100)
+
+      // Slow debounce for expensive searches
+      useTableSearch({ debounceMs: 1000 })
+      expect(lastDebounceMs).toBe(1000)
+    })
+
+    it('debounce function wraps the search handler correctly', async () => {
+      const onSearch = vi.fn()
+      useTableSearch({ onSearch })
+
+      // The stored debounced function should call onSearch when invoked
+      expect(lastDebounceFn).toBeDefined()
+
+      // Manually invoke the debounced function to verify it works
+      if (lastDebounceFn) {
+        await lastDebounceFn('manual test')
+        expect(onSearch).toHaveBeenCalledWith('manual test')
+      }
+    })
+  })
 })

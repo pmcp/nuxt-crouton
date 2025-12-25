@@ -242,6 +242,44 @@ describe('useCrouton', () => {
       expect(croutonStates.value[0].activeItem).toEqual(mockItem)
     })
 
+    it('handles multiple IDs in query format', async () => {
+      const mockItems = [
+        { id: 'prod-1', name: 'Product 1' },
+        { id: 'prod-2', name: 'Product 2' },
+        { id: 'prod-3', name: 'Product 3' }
+      ]
+      mockFetch.mockResolvedValue(mockItems)
+
+      const { open, croutonStates } = useCrouton()
+
+      // Open with multiple IDs (e.g., for bulk view/edit)
+      await open('update', 'products', ['prod-1', 'prod-2', 'prod-3'])
+
+      // Verify the query format for multiple IDs - comma-separated
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/teams/test-team/shop-products',
+        expect.objectContaining({
+          method: 'GET',
+          query: { ids: 'prod-1,prod-2,prod-3' } // IDs joined with comma
+        })
+      )
+
+      // For update action, activeItem is set to first item from response
+      expect(croutonStates.value[0].activeItem).toEqual(mockItems[0])
+    })
+
+    it('stores IDs in items array for delete action', async () => {
+      const { open, croutonStates } = useCrouton()
+
+      // For delete action, items array is populated with IDs
+      await open('delete', 'products', ['prod-1', 'prod-2', 'prod-3'])
+
+      // Items array should contain all passed IDs for delete
+      expect(croutonStates.value[0].items).toEqual(['prod-1', 'prod-2', 'prod-3'])
+      // No activeItem for delete action
+      expect(croutonStates.value[0].activeItem).toEqual({})
+    })
+
     it('uses RESTful path for restful fetchStrategy', async () => {
       const mockItem = { id: 'post-1', title: 'Test Post' }
       mockFetch.mockResolvedValue(mockItem)

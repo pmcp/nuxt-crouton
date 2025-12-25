@@ -104,6 +104,116 @@ describe('useTableData', () => {
       expect(searchedRows.value[0].name).toBe('Banana')
     })
 
+    it('handles special characters in search', () => {
+      const { page, pageCount } = createPaginationRefs()
+      const search = ref('@test')
+      const specialRows = [
+        { id: '1', name: 'user@email.com', category: 'Email', price: 0, createdAt: '2024-01-01' },
+        { id: '2', name: 'Price: $100', category: 'Price', price: 100, createdAt: '2024-01-02' },
+        { id: '3', name: 'Hash#tag', category: 'Social', price: 0, createdAt: '2024-01-03' },
+        { id: '4', name: 'Normal Item', category: 'Other', price: 50, createdAt: '2024-01-04' }
+      ]
+      const rows = ref(specialRows)
+      const sort = ref({ column: 'name', direction: 'asc' as const })
+
+      const { searchedRows } = useTableData({
+        rows,
+        search,
+        sort,
+        page,
+        pageCount,
+        serverPagination: false
+      })
+
+      // Should match "user@test..." - but our data has @email, so no matches expected
+      expect(searchedRows.value).toHaveLength(0)
+
+      // Search for @ symbol
+      search.value = '@'
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('user@email.com')
+
+      // Search for $ symbol
+      search.value = '$'
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('Price: $100')
+
+      // Search for # symbol
+      search.value = '#'
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('Hash#tag')
+    })
+
+    it('handles unicode and emoji in search', () => {
+      const { page, pageCount } = createPaginationRefs()
+      const unicodeRows = [
+        { id: '1', name: 'Café Latte', category: 'Drink', price: 5, createdAt: '2024-01-01' },
+        { id: '2', name: 'Piñata Party', category: 'Event', price: 20, createdAt: '2024-01-02' },
+        { id: '3', name: 'Müsli Bowl', category: 'Food', price: 8, createdAt: '2024-01-03' },
+        { id: '4', name: '🎉 Celebration', category: 'Event', price: 0, createdAt: '2024-01-04' },
+        { id: '5', name: 'Regular Item', category: 'Other', price: 10, createdAt: '2024-01-05' }
+      ]
+      const rows = ref(unicodeRows)
+      const search = ref('café')
+      const sort = ref({ column: 'name', direction: 'asc' as const })
+
+      const { searchedRows } = useTableData({
+        rows,
+        search,
+        sort,
+        page,
+        pageCount,
+        serverPagination: false
+      })
+
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('Café Latte')
+
+      // Search for ñ character
+      search.value = 'ñ'
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('Piñata Party')
+
+      // Search for ü character
+      search.value = 'ü'
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('Müsli Bowl')
+
+      // Search for emoji
+      search.value = '🎉'
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('🎉 Celebration')
+    })
+
+    it('handles accented characters case-insensitively', () => {
+      const { page, pageCount } = createPaginationRefs()
+      const accentedRows = [
+        { id: '1', name: 'Élégant Design', category: 'Art', price: 100, createdAt: '2024-01-01' },
+        { id: '2', name: 'Naïve Implementation', category: 'Code', price: 0, createdAt: '2024-01-02' }
+      ]
+      const rows = ref(accentedRows)
+      const search = ref('ÉLÉGANT')
+      const sort = ref({ column: 'name', direction: 'asc' as const })
+
+      const { searchedRows } = useTableData({
+        rows,
+        search,
+        sort,
+        page,
+        pageCount,
+        serverPagination: false
+      })
+
+      // Case-insensitive search for accented characters
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('Élégant Design')
+
+      // Search with lowercase accented character
+      search.value = 'naïve'
+      expect(searchedRows.value).toHaveLength(1)
+      expect(searchedRows.value[0].name).toBe('Naïve Implementation')
+    })
+
     it('returns empty array for no matches', () => {
       const { page, pageCount } = createPaginationRefs()
       const search = ref('xyz123')
