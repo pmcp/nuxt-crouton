@@ -2,6 +2,13 @@ import type { FieldTypeConfig, FieldType } from '../types/schema'
 
 export const FIELD_TYPES: FieldTypeConfig[] = [
   {
+    type: 'uuid',
+    label: 'UUID',
+    icon: 'i-lucide-key',
+    description: 'Unique identifier',
+    defaultMeta: { primaryKey: true }
+  },
+  {
     type: 'string',
     label: 'String',
     icon: 'i-lucide-type',
