@@ -9,9 +9,10 @@
  */
 
 import { ref, computed, toValue } from 'vue'
-import { defineShortcuts } from '@nuxt/ui/composables'
 import type { MaybeRef, Ref } from 'vue'
 import useCrouton from './useCrouton'
+
+// defineShortcuts is auto-imported from Nuxt UI
 
 // Types
 export interface CroutonShortcutConfig {
@@ -35,8 +36,8 @@ export interface UseCroutonShortcutsOptions {
   /** Selected item IDs for bulk operations */
   selected?: Ref<string[]>
 
-  /** Reference to search input for focus */
-  searchRef?: Ref<HTMLInputElement | null>
+  /** Reference to search input for focus (can be HTMLInputElement or component ref like UInput) */
+  searchRef?: Ref<HTMLInputElement | { $el?: HTMLElement } | null>
 
   /** Custom action handlers */
   handlers?: {
@@ -164,13 +165,33 @@ export function useCroutonShortcuts(
     },
   }
 
+  // Helper to focus search input (handles both raw input and component refs)
+  const focusSearch = () => {
+    const ref = options.searchRef?.value
+    if (!ref) return
+
+    // If it's an HTMLInputElement, focus directly
+    if (ref instanceof HTMLInputElement) {
+      ref.focus()
+      return
+    }
+
+    // If it's a component ref (like UInput), find the input inside
+    const el = ref.$el
+    if (el) {
+      const input = el.tagName === 'INPUT' ? el : el.querySelector('input')
+      if (input instanceof HTMLInputElement) {
+        input.focus()
+      }
+    }
+  }
+
   // SEARCH - Focus search input (meta+k = ⌘K on Mac, Ctrl+K on Windows)
   shortcutsConfig[shortcuts.search] = {
     usingInput: false, // Don't trigger when already typing
     handler: () => {
       if (!isActive.value) return
-
-      options.searchRef?.value?.focus()
+      focusSearch()
     },
   }
 
@@ -179,8 +200,7 @@ export function useCroutonShortcuts(
     usingInput: false, // Don't trigger when typing
     handler: () => {
       if (!isActive.value) return
-
-      options.searchRef?.value?.focus()
+      focusSearch()
     },
   }
 
