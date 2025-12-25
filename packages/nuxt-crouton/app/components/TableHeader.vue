@@ -8,6 +8,12 @@
     <template #right>
       <slot name="extraButtons" />
 
+      <CroutonExportButton
+        v-if="exportButton && rows?.length"
+        :collection="collection"
+        :rows="rows"
+      />
+
       <UButton
         v-if="createButton"
         color="primary"
@@ -36,6 +42,14 @@ const props = defineProps({
   createButton: {
     type: Boolean,
     default: false
+  },
+  exportButton: {
+    type: Boolean,
+    default: true
+  },
+  rows: {
+    type: Array,
+    default: () => []
   }
 })
 

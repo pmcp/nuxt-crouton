@@ -18,6 +18,7 @@
           v-if="create"
           :collection="collection"
           :create-button="create"
+          :rows="rows"
         />
       </slot>
     </template>
