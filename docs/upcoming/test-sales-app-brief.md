@@ -125,6 +125,7 @@ Create a minimal test app at `apps/test-sales/` to verify the `@friendlyinternet
 ```
 apps/test-sales/
 ├── app/
+│   ├── assets/css/main.css
 │   └── pages/
 │       ├── index.vue
 │       └── order.vue
@@ -144,7 +145,6 @@ apps/test-sales/
 ├── server/
 │   └── database/
 │       └── migrations/
-├── assets/css/main.css
 ├── crouton.config.js
 ├── nuxt.config.ts
 ├── package.json
