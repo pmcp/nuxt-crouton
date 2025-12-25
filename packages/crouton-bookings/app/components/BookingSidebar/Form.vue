@@ -58,29 +58,18 @@ watch(
   { immediate: true },
 )
 
-// Fallback colors for slots without a color set (assigned by index)
-const FALLBACK_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#14b8a6', '#a855f7', '#ef4444']
-const DEFAULT_SLOT_COLOR = '#9ca3af'
+// Default color when location has no color set
+const DEFAULT_LOCATION_COLOR = '#3b82f6'
 
-// Get fallback color by slot index
-function getFallbackColor(slotId: string): string {
-  // Find index in allSlots (skip 'all-day' at index 0)
-  const index = allSlots.value.findIndex(s => s.id === slotId)
-  if (index <= 0) return DEFAULT_SLOT_COLOR
-  const color = FALLBACK_COLORS[(index - 1) % FALLBACK_COLORS.length]
-  return color ?? DEFAULT_SLOT_COLOR
-}
+// Get the location color (now at location level, not slot level)
+const locationColor = computed(() => {
+  return selectedLocation.value?.color || DEFAULT_LOCATION_COLOR
+})
 
-// Get the color for a slot (from slot data or fallback)
-function getSlotColorById(slotId: string): string {
-  const slot = allSlots.value.find(s => s.id === slotId)
-  // Use slot color if set, otherwise use fallback based on index
-  return slot?.color || getFallbackColor(slotId)
-}
-
-// Get booked slots with their colors for a date
+// Get booked slots with location color for a date
 function getBookedSlotsWithColors(date: Date): Array<{ id: string, label: string, color: string }> {
   const bookedIds = getBookedSlotsForDate(date)
+  const color = locationColor.value
   // Filter out 'all-day' - if all-day is booked, date is fully booked anyway
   return bookedIds
     .filter(id => id !== 'all-day')
@@ -89,7 +78,7 @@ function getBookedSlotsWithColors(date: Date): Array<{ id: string, label: string
       return {
         id,
         label: slot?.label || id,
-        color: slot?.color || getFallbackColor(id),
+        color, // Use location color for all slots
       }
     })
 }
@@ -180,12 +169,13 @@ watch(
 
 // Slots formatted for calendar indicator (excludes 'all-day')
 const calendarSlots = computed(() => {
+  const color = locationColor.value
   return allSlots.value
     .filter(s => s.id !== 'all-day')
     .map(s => ({
       id: s.id,
       label: s.label || s.value || s.id,
-      color: s.color || getFallbackColor(s.id),
+      color, // Use location color for all slots
     }))
 })
 
@@ -225,7 +215,7 @@ const previewData = computed(() => {
     weekday: d?.toLocaleDateString('en-US', { weekday: 'short' }) ?? '---',
     locationTitle: cachedLocationTitle.value,
     slotLabel: slot?.label || slot?.value || t('bookings.slots.selectSlot'),
-    slotColor: slot?.color || (slot ? getSlotColorById(slot.id) : DEFAULT_SLOT_COLOR),
+    slotColor: locationColor.value, // Use location color
     groupLabel: group?.label || null,
     hasSlot: !!formState.slotId,
     isInventoryMode: false,

@@ -3,15 +3,18 @@ interface SlotItem {
   id: string
   label?: string
   value?: string
-  color?: string
 }
 
 interface Props {
   slots?: SlotItem[] | string | null | undefined
   selectedSlotId: string | null
+  /** Location color to use for slot indicators */
+  color?: string
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  color: '#3b82f6'
+})
 
 const emit = defineEmits<{
   select: [slotId: string]
@@ -68,9 +71,9 @@ function isSelected(slot: SlotItem): boolean {
         @click="emit('select', slot.id)"
       >
         <div
-          v-if="slot.color"
+          v-if="color"
           class="w-3 h-3 rounded-full mx-auto mb-2"
-          :style="{ backgroundColor: slot.color }"
+          :style="{ backgroundColor: color }"
         />
         <span class="block text-sm">
           {{ getSlotLabel(slot) }}

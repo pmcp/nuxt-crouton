@@ -3,7 +3,6 @@ import type { DateValue } from '@internationalized/date'
 export interface SlotOption {
   id: string
   label: string
-  color?: string
 }
 
 export interface AvailabilityData {

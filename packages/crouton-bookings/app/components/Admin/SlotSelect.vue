@@ -6,13 +6,16 @@ interface Props {
   locationId: string | null
   availableSlots: SlotOption[]
   selectedDate: Date | null
+  /** Location color to use for slot indicators */
+  color?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: null,
   locationId: null,
   availableSlots: () => [],
-  selectedDate: null
+  selectedDate: null,
+  color: '#3b82f6'
 })
 
 const emit = defineEmits<{
@@ -38,7 +41,6 @@ const slotOptions = computed(() =>
   props.availableSlots.map((slot, index) => ({
     value: slot.id,
     label: slot.label,
-    color: slot.color,
     index
   }))
 )
@@ -77,7 +79,7 @@ const selectedSlot = computed({
             <CroutonBookingSlotSingleIndicator
               :total-slots="slotOptions.length"
               :position="slot.index"
-              :color="slot.color"
+              :color="color"
               :label="slot.label"
               size="sm"
             />

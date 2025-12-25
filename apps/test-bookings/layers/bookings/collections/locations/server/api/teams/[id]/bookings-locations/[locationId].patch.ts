@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
   }
 
   return await updateBookingsLocation(locationId, team.id, user.id, {
+    color: body.color,
     title: body.title,
     street: body.street,
     zip: body.zip,

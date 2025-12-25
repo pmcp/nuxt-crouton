@@ -27,6 +27,7 @@ export interface BookingsLocation {
   id: string
   teamId: string
   owner: string
+  color?: string
   title: string
   street?: string
   zip?: string

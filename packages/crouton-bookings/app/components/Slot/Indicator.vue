@@ -1,18 +1,20 @@
 <script setup lang="ts">
 interface SlotItem {
   id: string
-  color?: string
   label?: string
 }
 
 interface Props {
   slots: SlotItem[]
   bookedSlotIds?: string[]
+  /** Color to use for booked slots (from location) */
+  color?: string
   size?: 'xs' | 'sm' | 'md' | 'lg'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   bookedSlotIds: () => [],
+  color: '#3b82f6',
   size: 'md'
 })
 
@@ -45,7 +47,7 @@ function isBooked(slotId: string): boolean {
         sizeClasses[size],
         isBooked(slot.id) ? '' : 'bg-elevated'
       ]"
-      :style="isBooked(slot.id) ? { backgroundColor: slot.color || '#94a3b8' } : undefined"
+      :style="isBooked(slot.id) ? { backgroundColor: color } : undefined"
       :title="slot.label"
     />
   </div>

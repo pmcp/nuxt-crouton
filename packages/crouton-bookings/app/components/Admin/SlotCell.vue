@@ -3,7 +3,11 @@ interface SlotItem {
   id: string
   label?: string
   value?: string
-  color?: string
+}
+
+interface LocationData {
+  color?: string | null
+  slots?: SlotItem[] | string
 }
 
 interface Props {
@@ -14,14 +18,19 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Fetch location to get slots config
-const { data: locationData } = useFetch<{ slots?: SlotItem[] | string }[]>(
+// Fetch location to get slots config and color
+const { data: locationData } = useFetch<LocationData[]>(
   () => `/api/crouton-bookings/teams/${props.teamId}/customer-locations?ids=${props.locationId}`,
   {
     key: `location-slots-${props.locationId}`,
     immediate: !!props.teamId && !!props.locationId
   }
 )
+
+// Get location color (now at location level)
+const locationColor = computed(() => {
+  return locationData.value?.[0]?.color || '#3b82f6'
+})
 
 // Parse location slots
 const locationSlots = computed<SlotItem[]>(() => {
@@ -63,7 +72,7 @@ const slotInfo = computed(() => {
   return {
     totalSlots: locationSlots.value.length,
     position,
-    color: slot?.color,
+    color: locationColor.value, // Use location color
     label: slot?.label || slot?.value || slot?.id
   }
 })

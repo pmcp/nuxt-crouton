@@ -27,6 +27,7 @@ import { z } from 'zod'
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const bookingsLocationSchema = z.object({
+  color: z.string().optional(),
   location: z.string().optional(),
   allowedMemberIds: z.array(z.string()).optional(),
   slots: z.array(z.any()).optional(),
@@ -53,6 +54,7 @@ export const bookingsLocationSchema = z.object({
 })
 
 export const bookingsLocationsColumns = [
+  { accessorKey: 'color', header: 'Color' },
   { accessorKey: 'title', header: 'Title' },
   { accessorKey: 'street', header: 'Street' },
   { accessorKey: 'zip', header: 'Zip' },
@@ -73,6 +75,7 @@ const _bookingsLocationsConfig = {
   apiPath: 'bookings-locations',
   componentName: 'BookingsLocationsForm',
   defaultValues: {
+    color: '',
     title: '',
     street: '',
     zip: '',

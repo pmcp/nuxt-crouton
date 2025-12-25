@@ -6,7 +6,6 @@ interface SlotItem {
   id: string
   label?: string
   value?: string
-  color?: string
 }
 
 interface Booking {
@@ -20,6 +19,7 @@ interface Booking {
   locationData?: {
     id: string
     title: string
+    color?: string | null
     street?: string
     city?: string
     slots?: SlotItem[] | string
@@ -224,50 +224,13 @@ function hasBookingsOnDate(dateValue: DateValue): boolean {
   return getBookingsForDate(dateValue).length > 0
 }
 
-// Fallback colors for slots without a color set
-const FALLBACK_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#14b8a6', '#a855f7', '#ef4444']
-const DEFAULT_SLOT_COLOR = '#9ca3af'
+// Default color when location has no color set
+const DEFAULT_LOCATION_COLOR = '#3b82f6'
 
-// Get slot color for a booking
+// Get color for a booking (now from location, not slot)
 function getBookingSlotColor(booking: Booking): string {
-  if (!booking.slot || !booking.locationData?.slots) return DEFAULT_SLOT_COLOR
-
-  let locationSlots: SlotItem[]
-  try {
-    locationSlots = typeof booking.locationData.slots === 'string'
-      ? JSON.parse(booking.locationData.slots)
-      : booking.locationData.slots
-  }
-  catch {
-    return DEFAULT_SLOT_COLOR
-  }
-
-  if (!Array.isArray(locationSlots)) return DEFAULT_SLOT_COLOR
-
-  let bookingSlotIds: string[]
-  try {
-    bookingSlotIds = typeof booking.slot === 'string'
-      ? JSON.parse(booking.slot)
-      : booking.slot
-  }
-  catch {
-    return DEFAULT_SLOT_COLOR
-  }
-
-  if (!Array.isArray(bookingSlotIds) || bookingSlotIds.length === 0) return DEFAULT_SLOT_COLOR
-
-  // Find the slot and get its color
-  const slot = locationSlots.find(s => bookingSlotIds.includes(s.id))
-  if (slot?.color) return slot.color
-
-  // Fallback color based on slot index
-  const index = locationSlots.findIndex(s => bookingSlotIds.includes(s.id))
-  if (index >= 0) {
-    const color = FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-    return color ?? DEFAULT_SLOT_COLOR
-  }
-
-  return DEFAULT_SLOT_COLOR
+  // Use location color if set, otherwise default
+  return booking.locationData?.color || DEFAULT_LOCATION_COLOR
 }
 
 // Get slot position info for a booking

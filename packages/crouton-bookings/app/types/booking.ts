@@ -2,7 +2,9 @@ export interface SlotItem {
   id: string
   label?: string
   value?: string
-  color?: string
+  translations?: {
+    label?: Record<string, string>
+  }
 }
 
 export interface LocationData {
@@ -10,6 +12,7 @@ export interface LocationData {
   teamId: string
   owner: string
   title: string
+  color?: string | null
   street?: string | null
   zip?: string | null
   city?: string | null

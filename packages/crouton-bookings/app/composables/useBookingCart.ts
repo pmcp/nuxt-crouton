@@ -384,7 +384,8 @@ export function useBookingCart() {
     const position = slots.findIndex(s => s.id === slotId)
     if (position === -1) return null
     return {
-      color: slots[position]?.color,
+      // Color is now at location level, not slot level
+      color: selectedLocation.value?.color || undefined,
       totalSlots: slots.length,
       position,
     }

@@ -73,6 +73,9 @@
 
       <template #sidebar>
       <div class="flex flex-col gap-4 p-1">
+        <UFormField label="Color" name="color" help="Color used for this location's bookings in the calendar">
+          <UColorPicker v-model="state.color" class="w-full" />
+        </UFormField>
       </div>
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Location" name="location" class="not-last:pb-4">

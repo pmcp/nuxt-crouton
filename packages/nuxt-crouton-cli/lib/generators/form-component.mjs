@@ -111,11 +111,15 @@ export function generateFormComponent(data, config = {}) {
     ? Math.max(...addressFields.map(af => fieldsToDisplay.findIndex(f => f.name === af.name)))
     : -1
 
-  // Helper to resolve component names (handles editor component aliasing)
+  // Helper to resolve component names (handles component aliasing)
   const resolveComponentName = (componentName) => {
     // Transform EditorSimple to CroutonEditorSimple to match actual registration
     if (componentName === 'EditorSimple') {
       return 'CroutonEditorSimple'
+    }
+    // Transform ColorPicker to UColorPicker for Nuxt UI 4
+    if (componentName === 'ColorPicker') {
+      return 'UColorPicker'
     }
     return componentName
   }

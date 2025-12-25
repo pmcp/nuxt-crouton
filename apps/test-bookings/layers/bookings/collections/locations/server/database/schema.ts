@@ -26,6 +26,7 @@ export const bookingsLocations = sqliteTable('bookings_locations', {
   owner: text('owner').notNull(),
 
   order: integer('order').notNull().$default(() => 0),
+  color: text('color'),
   title: text('title').notNull(),
   street: text('street'),
   zip: text('zip'),

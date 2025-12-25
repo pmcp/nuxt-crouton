@@ -10,6 +10,16 @@
       "group": "basic"
     }
   },
+  "color": {
+    "type": "string",
+    "meta": {
+      "label": "Color",
+      "component": "ColorPicker",
+      "area": "sidebar",
+      "group": "basic",
+      "help": "Color used for this location's bookings in the calendar"
+    }
+  },
   "street": {
     "type": "string",
     "meta": {

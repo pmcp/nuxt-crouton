@@ -36,6 +36,14 @@
         createButton
       />
     </template>
+    <template #color-cell="{ row }">
+      <div
+        v-if="row.original.color"
+        class="w-6 h-6 rounded-full border border-gray-200 dark:border-gray-700"
+        :style="{ backgroundColor: row.original.color }"
+      />
+      <span v-else class="text-gray-400">—</span>
+    </template>
     <template #title-cell="{ row }">
       {{ t(row.original, 'title') }}
     </template>
