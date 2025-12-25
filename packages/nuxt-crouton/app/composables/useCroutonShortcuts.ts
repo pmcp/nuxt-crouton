@@ -4,11 +4,12 @@
  * Provides keyboard shortcuts for power users to quickly navigate
  * and perform actions in Crouton-based admin interfaces.
  *
- * Uses VueUse's useMagicKeys for cross-browser key detection.
+ * Uses Nuxt UI's defineShortcuts for reliable cross-platform key detection.
+ * Shortcuts automatically convert meta (⌘) to ctrl on non-Mac platforms.
  */
 
-import { ref, computed, toValue, watch } from 'vue'
-import { useMagicKeys, useActiveElement } from '@vueuse/core'
+import { ref, computed, toValue } from 'vue'
+import { defineShortcuts } from '@nuxt/ui/composables'
 import type { MaybeRef, Ref } from 'vue'
 import useCrouton from './useCrouton'
 
@@ -25,7 +26,7 @@ export interface UseCroutonShortcutsOptions {
   /** Collection name for CRUD operations */
   collection: string
 
-  /** Override default key bindings */
+  /** Override default key bindings (use Nuxt UI format: meta_k, ctrl_shift_f) */
   shortcuts?: Partial<CroutonShortcutConfig>
 
   /** Disable all shortcuts (e.g., when custom modal is open) */
@@ -67,32 +68,31 @@ const isMac = import.meta.client
   ? navigator.platform.toUpperCase().includes('MAC')
   : false
 
-// Default shortcuts using VueUse key format
+// Default shortcuts using Nuxt UI defineShortcuts format
+// meta_ automatically converts to ctrl_ on non-Mac platforms
 const DEFAULT_SHORTCUTS: CroutonShortcutConfig = {
-  create: isMac ? 'Meta+n' : 'Control+n',
-  save: isMac ? 'Meta+s' : 'Control+s',
-  close: 'Escape',
-  delete: isMac ? 'Meta+Backspace' : 'Control+Backspace',
-  search: isMac ? 'Meta+k' : 'Control+k',
+  create: 'meta_n',
+  save: 'meta_s',
+  close: 'escape',
+  delete: 'meta_backspace',
+  search: 'meta_k',
 }
 
 // Format for display
 const KEY_SYMBOLS: Record<string, string> = {
-  Meta: '⌘',
-  Control: 'Ctrl',
-  Alt: '⌥',
-  Shift: '⇧',
-  Backspace: '⌫',
-  Escape: 'Esc',
-  Enter: '↵',
+  meta: isMac ? '⌘' : 'Ctrl',
+  ctrl: 'Ctrl',
+  alt: '⌥',
+  shift: '⇧',
+  backspace: '⌫',
+  escape: 'Esc',
+  enter: '↵',
 }
 
 export function useCroutonShortcuts(
   options: UseCroutonShortcutsOptions
 ): UseCroutonShortcutsReturn {
   const { open, close, showCrouton } = useCrouton()
-  const keys = useMagicKeys()
-  const activeElement = useActiveElement()
 
   // Merge with defaults
   const shortcuts: CroutonShortcutConfig = {
@@ -103,15 +103,6 @@ export function useCroutonShortcuts(
   // Pause/resume state
   const isPaused = ref(false)
 
-  // Check if we should ignore shortcuts (typing in input)
-  const isTyping = computed(() => {
-    const el = activeElement.value
-    if (!el) return false
-    const tag = el.tagName.toLowerCase()
-    const isEditable = el.getAttribute('contenteditable') === 'true'
-    return tag === 'input' || tag === 'textarea' || isEditable
-  })
-
   // Combined active state
   const isActive = computed(() => {
     if (isPaused.value) return false
@@ -119,23 +110,14 @@ export function useCroutonShortcuts(
     return true
   })
 
-  // Should we handle this shortcut?
-  const shouldHandle = (allowInForm = false) => {
-    if (!isActive.value) return false
-    // Some shortcuts (like save, close) work in forms
-    // Others (like create, delete) only work outside forms
-    if (!allowInForm && isTyping.value) return false
-    return true
-  }
+  // Build the shortcuts config for defineShortcuts
+  const shortcutsConfig: Record<string, any> = {}
 
-  // ============ Shortcut Handlers ============
-
-  // CREATE - Open new form
-  watch(
-    () => keys[shortcuts.create]?.value,
-    (pressed: boolean | undefined) => {
-      if (!pressed) return
-      if (!shouldHandle(false)) return
+  // CREATE - Open new form (meta+n = ⌘N on Mac, Ctrl+N on Windows)
+  shortcutsConfig[shortcuts.create] = {
+    usingInput: false, // Don't trigger when typing
+    handler: () => {
+      if (!isActive.value) return
       if (showCrouton.value) return // Don't open if form already open
 
       if (options.handlers?.onCreate) {
@@ -143,88 +125,74 @@ export function useCroutonShortcuts(
       } else {
         open('create', options.collection)
       }
-    }
-  )
+    },
+  }
 
-  // SAVE - Submit current form
-  watch(
-    () => keys[shortcuts.save]?.value,
-    (pressed: boolean | undefined) => {
-      if (!pressed) return
-      if (!shouldHandle(true)) return
+  // SAVE - Submit current form (meta+s = ⌘S on Mac, Ctrl+S on Windows)
+  shortcutsConfig[shortcuts.save] = {
+    usingInput: true, // Allow while typing in form
+    handler: () => {
+      if (!isActive.value) return
       if (!showCrouton.value) return // Only when form is open
 
-      // Prevent browser save dialog
-      if (import.meta.client) {
-        const event = window.event as KeyboardEvent | undefined
-        event?.preventDefault()
-      }
-
       options.handlers?.onSave?.()
-    }
-  )
+    },
+  }
 
-  // CLOSE - Close current form
-  watch(
-    () => keys[shortcuts.close]?.value,
-    (pressed: boolean | undefined) => {
-      if (!pressed) return
+  // CLOSE - Close current form (Escape)
+  shortcutsConfig[shortcuts.close] = {
+    usingInput: true, // Allow while typing
+    handler: () => {
       if (!isActive.value) return
-      if (showCrouton.value) {
-        close()
-      }
-    }
-  )
+      if (!showCrouton.value) return
 
-  // DELETE - Delete selected items
-  watch(
-    () => keys[shortcuts.delete]?.value,
-    (pressed: boolean | undefined) => {
-      if (!pressed) return
-      if (!shouldHandle(false)) return
+      close()
+    },
+  }
+
+  // DELETE - Delete selected items (meta+backspace)
+  shortcutsConfig[shortcuts.delete] = {
+    usingInput: false, // Don't trigger when typing
+    handler: () => {
+      if (!isActive.value) return
       if (showCrouton.value) return // Don't delete while in form
 
       const ids = options.selected?.value
       if (!ids?.length) return
 
       options.handlers?.onDelete?.(ids)
-    }
-  )
+    },
+  }
 
-  // SEARCH - Focus search input (Cmd/Ctrl+K)
-  watch(
-    () => keys[shortcuts.search]?.value,
-    (pressed: boolean | undefined) => {
-      if (!pressed) return
-      if (!shouldHandle(false)) return
-
-      // Prevent browser default (Chrome address bar)
-      if (import.meta.client) {
-        const event = window.event as KeyboardEvent | undefined
-        event?.preventDefault()
-      }
+  // SEARCH - Focus search input (meta+k = ⌘K on Mac, Ctrl+K on Windows)
+  shortcutsConfig[shortcuts.search] = {
+    usingInput: false, // Don't trigger when already typing
+    handler: () => {
+      if (!isActive.value) return
 
       options.searchRef?.value?.focus()
-    }
-  )
+    },
+  }
 
-  // Also support "/" for search (common pattern)
-  watch(
-    () => keys['/']?.value,
-    (pressed: boolean | undefined) => {
-      if (!pressed) return
-      if (!shouldHandle(false)) return
-      if (isTyping.value) return // Don't trigger when typing
+  // SEARCH alternate - "/" key (common pattern like GitHub, Notion)
+  shortcutsConfig['/'] = {
+    usingInput: false, // Don't trigger when typing
+    handler: () => {
+      if (!isActive.value) return
+
       options.searchRef?.value?.focus()
-    }
-  )
+    },
+  }
+
+  // Register all shortcuts with Nuxt UI
+  defineShortcuts(shortcutsConfig)
 
   // ============ Utilities ============
 
   function formatShortcut(action: keyof CroutonShortcutConfig): string {
     const shortcut = shortcuts[action]
     return shortcut
-      .split('+')
+      .split('_')
       .map(key => KEY_SYMBOLS[key] || key.toUpperCase())
       .join(isMac ? '' : '+')
   }
