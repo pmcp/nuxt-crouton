@@ -11,6 +11,8 @@ const {
   support,
   projectName,
   targetPath,
+  folderSelected,
+  selectedFolderName,
   isGenerating,
   progress,
   error,
@@ -238,9 +240,21 @@ const currentStepIndex = computed(() => {
           </UButton>
         </div>
         <template #hint>
-          <span v-if="!support.hasNativePicker" class="text-amber-500">
-            Native folder picker not available. Enter the full path manually.
-          </span>
+          <div class="space-y-1">
+            <div v-if="folderSelected" class="text-green-600 flex items-center gap-1">
+              <UIcon name="i-lucide-folder-check" />
+              Folder selected: <strong>{{ selectedFolderName }}</strong>
+            </div>
+            <div v-if="folderSelected" class="text-[var(--ui-text-muted)]">
+              Enter the full path to this folder (e.g., /Users/you/projects/{{ selectedFolderName }})
+            </div>
+            <div v-else-if="!support.hasNativePicker" class="text-amber-500">
+              Native folder picker not available. Enter the full path manually.
+            </div>
+            <div v-else class="text-[var(--ui-text-muted)]">
+              Click Browse to select a folder, then enter the full path.
+            </div>
+          </div>
         </template>
       </UFormField>
 

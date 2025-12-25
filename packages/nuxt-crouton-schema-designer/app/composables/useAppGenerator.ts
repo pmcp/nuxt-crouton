@@ -36,9 +36,17 @@ export function useAppGenerator() {
     canWriteFiles: typeof window !== 'undefined' && 'FileSystemWritableFileStream' in window
   }))
 
+  // Track if folder was selected via native picker
+  const folderSelected = ref(false)
+  const selectedFolderName = ref('')
+
   /**
    * Select a folder using native file picker
    * Returns the folder name (not full path - API limitation)
+   *
+   * NOTE: The File System Access API does NOT provide the full filesystem path.
+   * We get a handle for writing files, but the user must still enter the path
+   * for server-side CLI execution.
    */
   async function selectFolder(): Promise<string | null> {
     if (!support.value.hasNativePicker) {
@@ -53,7 +61,13 @@ export function useAppGenerator() {
       })
 
       directoryHandle.value = handle
-      projectName.value = handle.name
+      selectedFolderName.value = handle.name
+      folderSelected.value = true
+
+      // Use folder name as project name if not set
+      if (!projectName.value) {
+        projectName.value = handle.name
+      }
 
       return handle.name
     } catch (e: any) {
@@ -358,6 +372,8 @@ export {}
     directoryHandle.value = null
     targetPath.value = ''
     projectName.value = ''
+    folderSelected.value = false
+    selectedFolderName.value = ''
     isGenerating.value = false
     currentStep.value = ''
     progress.value = { step: '', message: '', progress: 0 }
@@ -370,6 +386,8 @@ export {}
     directoryHandle,
     targetPath,
     projectName,
+    folderSelected,
+    selectedFolderName,
     isGenerating,
     currentStep,
     progress,
