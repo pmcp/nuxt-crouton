@@ -2,6 +2,16 @@ import type { ComputedRef } from 'vue'
 import type { CollectionTypeMap, CollectionItem, CollectionFormData, CollectionName } from '../types/collections'
 
 /**
+ * Generate a unique correlation ID for mutation tracking
+ * Format: crtn_{timestamp}_{random}
+ */
+function generateCorrelationId(): string {
+  const timestamp = Date.now().toString(36)
+  const random = Math.random().toString(36).substring(2, 10)
+  return `crtn_${timestamp}_${random}`
+}
+
+/**
  * Return type for collection mutations
  */
 interface CollectionMutationReturn<K extends CollectionName> {
@@ -156,9 +166,12 @@ export function useCollectionMutation<K extends CollectionName>(
    */
   const create = async (data: any) => {
     const baseUrl = getApiBasePath()
+    const correlationId = generateCorrelationId()
+    const timestamp = Date.now()
 
     console.group('[useCollectionMutation] CREATE')
     console.log('Collection:', collection)
+    console.log('Correlation ID:', correlationId)
     console.log('Data:', data)
 
     try {
@@ -177,7 +190,9 @@ export function useCollectionMutation<K extends CollectionName>(
         collection,
         itemId: result.id,
         data,
-        result
+        result,
+        correlationId,
+        timestamp
       })
 
       // Invalidate cache to trigger refetch in all views
@@ -212,15 +227,33 @@ export function useCollectionMutation<K extends CollectionName>(
 
   /**
    * Update an existing item
+   * Fetches the item before updating to enable beforeData tracking for change diffs
    */
   const update = async (id: string, updates: any) => {
     const baseUrl = getApiBasePath()
     const url = `${baseUrl}/${id}`
+    const correlationId = generateCorrelationId()
+    const timestamp = Date.now()
 
     console.group('[useCollectionMutation] UPDATE')
     console.log('Collection:', collection)
     console.log('Item ID:', id)
+    console.log('Correlation ID:', correlationId)
     console.log('Updates:', updates)
+
+    // Fetch the current item state before applying updates (for change tracking)
+    let beforeData: Record<string, unknown> | undefined
+    try {
+      const existingItem = await $fetch<Record<string, unknown>>(url, {
+        method: 'GET',
+        credentials: 'include'
+      })
+      beforeData = existingItem
+      console.log('📋 Before data fetched for change tracking')
+    } catch (fetchError) {
+      // Non-critical: continue with update even if we can't fetch beforeData
+      console.warn('[useCollectionMutation] Could not fetch beforeData:', fetchError)
+    }
 
     try {
       const result = await $fetch(url, {
@@ -232,13 +265,17 @@ export function useCollectionMutation<K extends CollectionName>(
       console.log('✅ API Success:', result)
 
       // Emit hook for event tracking (zero overhead if no listeners)
+      // Include beforeData for change diff calculation
       const nuxtApp = useNuxtApp()
       await nuxtApp.hooks.callHook('crouton:mutation', {
         operation: 'update',
         collection,
         itemId: id,
         updates,
-        result
+        result,
+        beforeData,
+        correlationId,
+        timestamp
       })
 
       // Invalidate both the item cache AND the collection to refresh list views
@@ -276,10 +313,13 @@ export function useCollectionMutation<K extends CollectionName>(
    */
   const deleteItems = async (ids: string[]) => {
     const baseUrl = getApiBasePath()
+    const correlationId = generateCorrelationId()
+    const timestamp = Date.now()
 
     console.group('[useCollectionMutation] DELETE')
     console.log('Collection:', collection)
     console.log('Item IDs:', ids)
+    console.log('Correlation ID:', correlationId)
 
     try {
       // Delete each item individually
@@ -299,7 +339,9 @@ export function useCollectionMutation<K extends CollectionName>(
       await nuxtApp.hooks.callHook('crouton:mutation', {
         operation: 'delete',
         collection,
-        itemIds: ids
+        itemIds: ids,
+        correlationId,
+        timestamp
       })
 
       // Invalidate cache to trigger refetch (includes individual item caches)

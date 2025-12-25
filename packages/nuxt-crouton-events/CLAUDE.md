@@ -10,7 +10,14 @@ Automatic event tracking and audit trail for Nuxt Crouton collections. Hooks int
 |------|---------|
 | `app/composables/useCroutonEvents.ts` | Query enriched events with user data |
 | `app/composables/useCroutonEventsHealth.ts` | Monitor tracking health |
-| `app/components/List.vue` | Standard collection list component |
+| `app/composables/useCroutonEventsExport.ts` | Export events as CSV/JSON |
+| `app/components/CroutonActivityLog.vue` | Main activity log page with stats |
+| `app/components/CroutonActivityTimeline.vue` | Timeline visualization with date groups |
+| `app/components/CroutonActivityTimelineItem.vue` | Individual event row |
+| `app/components/CroutonActivityFilters.vue` | Filter controls (collection, operation, date) |
+| `app/components/CroutonEventDetail.vue` | Event detail modal |
+| `app/components/CroutonEventChangesTable.vue` | Before/after diff table |
+| `server/api/teams/[teamId]/crouton-events/export.get.ts` | Export API endpoint |
 | `events-schema.json` | Event collection schema |
 
 ## How It Works
@@ -100,11 +107,39 @@ const { data: health } = useCroutonEventsHealth()
 // health.total, health.failed, health.lastError
 ```
 
-## Component
+## Admin UI Components
+
+Ready-to-use components for building an activity/audit interface:
 
 ```vue
-<!-- Use generated list component -->
-<CroutonEventsCollectionEventsList />
+<!-- Full activity log page with filters and pagination -->
+<CroutonActivityLog />
+
+<!-- Timeline visualization (embed in your own layout) -->
+<CroutonActivityTimeline :events="events" @view="openDetail" />
+
+<!-- Individual timeline item -->
+<CroutonActivityTimelineItem :event="event" />
+
+<!-- Filter controls -->
+<CroutonActivityFilters v-model="filters" :collections="collections" />
+
+<!-- Event detail modal -->
+<CroutonEventDetail v-model:open="isOpen" :event="selectedEvent" />
+
+<!-- Before/after changes table -->
+<CroutonEventChangesTable :changes="event.changes" :before-data="event.beforeData" />
+```
+
+### Export Functionality
+
+```typescript
+// Use the export composable
+const { downloadCSV, downloadJSON, exporting } = useCroutonEventsExport()
+
+// Download with current filters
+await downloadCSV(filters)
+await downloadJSON(filters)
 ```
 
 ## Common Tasks

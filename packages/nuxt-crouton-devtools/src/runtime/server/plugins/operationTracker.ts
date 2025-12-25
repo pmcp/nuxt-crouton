@@ -18,6 +18,24 @@ function extractCollectionName(path: string): string {
 }
 
 /**
+ * Extract item ID from API path for get/update/delete operations
+ * Path format: /api/crouton-collection/{collection}/{itemId}
+ */
+function extractItemId(path: string): string | undefined {
+  // Match patterns like /api/crouton-collection/users/abc123
+  // where abc123 is the item ID (not a query param or search suffix)
+  const match = path.match(/\/api\/crouton-collection\/[^/]+\/([a-zA-Z0-9_-]+)(?:\?|$)/)
+  const itemId = match?.[1]
+
+  // Exclude known non-ID paths
+  if (itemId === 'search' || itemId === 'export') {
+    return undefined
+  }
+
+  return itemId
+}
+
+/**
  * Detect operation type from HTTP method and path
  */
 function detectOperation(method: string, path: string): Operation['operation'] {
@@ -64,7 +82,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
   }
 
   // Track request timing
-  const requestTimings = new Map<string, { startTime: number, id: string, path: string, method: string, collection: string, operation: Operation['operation'] }>()
+  const requestTimings = new Map<string, { startTime: number, id: string, path: string, method: string, collection: string, operation: Operation['operation'], itemId?: string }>()
 
   // Hook: Before request
   nitroApp.hooks.hook('request', (event) => {
@@ -79,6 +97,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
     const id = generateId()
     const collection = extractCollectionName(path)
     const operation = detectOperation(method, path)
+    const itemId = extractItemId(path)
 
     requestTimings.set(event.node.req as any, {
       startTime: Date.now(),
@@ -86,7 +105,8 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
       path,
       method,
       collection,
-      operation
+      operation,
+      itemId
     })
   })
 
@@ -112,7 +132,8 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
       status,
       duration,
       teamContext,
-      error: status >= 400 ? `HTTP ${status}` : undefined
+      error: status >= 400 ? `HTTP ${status}` : undefined,
+      itemId: timing.itemId
     })
 
     // Clean up

@@ -17,6 +17,8 @@ export interface Operation {
   teamContext?: string
   error?: string
   metadata?: Record<string, any>
+  /** Item ID for get/update/delete operations (used for event correlation) */
+  itemId?: string
 }
 
 export interface OperationFilters {

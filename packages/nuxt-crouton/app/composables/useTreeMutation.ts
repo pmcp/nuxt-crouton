@@ -1,4 +1,14 @@
 /**
+ * Generate a unique correlation ID for mutation tracking
+ * Format: crtn_{timestamp}_{random}
+ */
+function generateCorrelationId(): string {
+  const timestamp = Date.now().toString(36)
+  const random = Math.random().toString(36).substring(2, 10)
+  return `crtn_${timestamp}_${random}`
+}
+
+/**
  * Tree mutation composable for hierarchy operations
  * Handles move and reorder operations for tree-structured collections
  *
@@ -124,12 +134,15 @@ export function useTreeMutation(collection: string) {
 
     // Full hierarchy mode - use the /move endpoint
     const url = `${baseUrl}/${id}/move`
+    const correlationId = generateCorrelationId()
+    const timestamp = Date.now()
 
     console.group('[useTreeMutation] MOVE NODE')
     console.log('Collection:', collection)
     console.log('Item ID:', id)
     console.log('New Parent ID:', newParentId)
     console.log('New Order:', newOrder)
+    console.log('Correlation ID:', correlationId)
 
     moving.value = true
     markSaving(id)
@@ -161,7 +174,9 @@ export function useTreeMutation(collection: string) {
         operation: 'move',
         collection,
         itemId: id,
-        data: { parentId: newParentId, order: newOrder }
+        data: { parentId: newParentId, order: newOrder },
+        correlationId,
+        timestamp
       })
 
       // Invalidate cache to trigger refetch
@@ -199,10 +214,13 @@ export function useTreeMutation(collection: string) {
   ): Promise<void> => {
     const baseUrl = getApiBasePath()
     const url = `${baseUrl}/reorder`
+    const correlationId = generateCorrelationId()
+    const timestamp = Date.now()
 
     console.group('[useTreeMutation] REORDER SIBLINGS')
     console.log('Collection:', collection)
     console.log('Updates:', updates)
+    console.log('Correlation ID:', correlationId)
 
     reordering.value = true
 
@@ -220,7 +238,9 @@ export function useTreeMutation(collection: string) {
       await nuxtApp.hooks.callHook('crouton:mutation', {
         operation: 'reorder',
         collection,
-        data: { updates }
+        data: { updates },
+        correlationId,
+        timestamp
       })
 
       // Invalidate cache to trigger refetch

@@ -13,6 +13,12 @@ export interface CroutonMutationEvent {
   data?: Record<string, unknown>
   updates?: Record<string, unknown>
   result?: unknown
+  /** The item data before the mutation (for update operations, enables change tracking) */
+  beforeData?: Record<string, unknown>
+  /** Correlation ID for linking related operations and events */
+  correlationId?: string
+  /** Timestamp when the mutation was initiated */
+  timestamp?: number
 }
 
 declare module '#app' {

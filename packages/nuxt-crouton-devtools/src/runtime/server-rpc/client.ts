@@ -72,6 +72,15 @@ const HTML_CONTENT = `<!DOCTYPE html>
               <i class="fas fa-database mr-2"></i>
               Data Browser
             </button>
+            <button
+              v-if="eventsAvailable"
+              @click="activeTab = 'activity'"
+              :class="{ 'tab-active': activeTab === 'activity' }"
+              class="pb-3 px-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <i class="fas fa-history mr-2"></i>
+              Activity ({{ events.length }})
+            </button>
           </div>
         </div>
       </div>
@@ -509,6 +518,51 @@ const HTML_CONTENT = `<!DOCTYPE html>
                       <code class="block bg-gray-50 dark:bg-gray-900 p-3 rounded-lg text-sm font-mono text-gray-900 dark:text-white">{{ selectedOperation.teamContext }}</code>
                     </div>
 
+                    <!-- Correlated Events Section -->
+                    <div v-if="eventsAvailable && selectedOperation.itemId">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          <i class="fas fa-link mr-1"></i>
+                          Linked Events
+                        </span>
+                        <span v-if="correlatedEventsLoading" class="text-xs text-gray-500">
+                          <i class="fas fa-spinner fa-spin mr-1"></i>
+                          Loading...
+                        </span>
+                      </div>
+
+                      <div v-if="correlatedEvents.length > 0" class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 space-y-2">
+                        <div
+                          v-for="evt in correlatedEvents"
+                          :key="evt.id"
+                          class="flex items-center justify-between text-sm"
+                        >
+                          <div class="flex items-center gap-2">
+                            <span :class="getEventOperationClass(evt.operation)" class="px-2 py-0.5 text-xs font-bold rounded-full uppercase">
+                              {{ evt.operation }}
+                            </span>
+                            <span class="text-gray-600 dark:text-gray-400 font-mono text-xs">
+                              {{ evt.changes?.length || 0 }} changes
+                            </span>
+                          </div>
+                          <span class="text-gray-500 dark:text-gray-400 text-xs">
+                            {{ formatTime(evt.timestamp) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div v-else-if="!correlatedEventsLoading" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-center">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">No linked events found</span>
+                      </div>
+                    </div>
+
+                    <div v-else-if="eventsAvailable && !selectedOperation.itemId">
+                      <span class="block text-sm text-gray-500 dark:text-gray-400 italic">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        No item ID available for event correlation
+                      </span>
+                    </div>
+
                     <div>
                       <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Full Data (JSON)</span>
                       <pre class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-auto text-xs font-mono border border-gray-200 dark:border-gray-700">{{ JSON.stringify(selectedOperation, null, 2) }}</pre>
@@ -812,6 +866,264 @@ const HTML_CONTENT = `<!DOCTYPE html>
             </div>
           </div>
         </div>
+
+        <!-- Activity Tab (Events Integration) -->
+        <div v-show="activeTab === 'activity'">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Activity Log</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Persisted mutation events from nuxt-crouton-events</p>
+            </div>
+            <button
+              @click="fetchEvents"
+              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              :disabled="eventsLoading"
+            >
+              <i class="fas fa-sync-alt" :class="{ 'fa-spin': eventsLoading }"></i>
+              Refresh
+            </button>
+          </div>
+
+          <!-- Events Health Stats -->
+          <div v-if="eventsHealth" class="space-y-4 mb-6">
+            <!-- Main Stats Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Total Events</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ eventsHealth.totalEvents }}</p>
+                  </div>
+                  <i class="fas fa-history text-blue-500 text-2xl"></i>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Today</p>
+                    <p class="text-2xl font-bold text-green-600">{{ eventsHealth.todayEvents }}</p>
+                  </div>
+                  <i class="fas fa-calendar-day text-green-500 text-2xl"></i>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">This Week</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ eventsHealth.thisWeekEvents || 0 }}</p>
+                  </div>
+                  <i class="fas fa-calendar-week text-blue-500 text-2xl"></i>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Status</p>
+                    <p class="text-2xl font-bold" :class="getHealthStatusClass(eventsHealth.status)">
+                      {{ formatHealthStatus(eventsHealth.status) }}
+                    </p>
+                  </div>
+                  <i class="fas fa-heartbeat text-2xl" :class="getHealthStatusClass(eventsHealth.status)"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Operation Breakdown Row -->
+            <div v-if="eventsHealth.byOperation" class="grid grid-cols-3 md:grid-cols-6 gap-4">
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div class="flex items-center gap-2">
+                  <span class="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 px-2 py-1 text-xs font-bold rounded">CREATE</span>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">{{ eventsHealth.byOperation.create || 0 }}</span>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div class="flex items-center gap-2">
+                  <span class="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 text-xs font-bold rounded">UPDATE</span>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">{{ eventsHealth.byOperation.update || 0 }}</span>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div class="flex items-center gap-2">
+                  <span class="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 px-2 py-1 text-xs font-bold rounded">DELETE</span>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">{{ eventsHealth.byOperation.delete || 0 }}</span>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div class="text-center">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Collections</p>
+                  <p class="text-lg font-bold text-purple-600">{{ eventsHealth.collectionsTracked }}</p>
+                </div>
+              </div>
+              <div v-if="eventsHealth.oldestEvent" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 col-span-2">
+                <div class="text-center">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Time Range</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 font-mono">
+                    {{ formatShortDate(eventsHealth.oldestEvent) }} — {{ formatShortDate(eventsHealth.newestEvent) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Events Filters -->
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Collection</label>
+                <select v-model="eventFilters.collection" @change="fetchEvents" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <option value="">All Collections</option>
+                  <option v-for="col in eventsHealth?.collections || []" :key="col" :value="col">{{ col }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Operation</label>
+                <select v-model="eventFilters.operation" @change="fetchEvents" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <option value="">All Operations</option>
+                  <option value="create">Create</option>
+                  <option value="update">Update</option>
+                  <option value="delete">Delete</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Limit</label>
+                <select v-model="eventFilters.limit" @change="fetchEvents" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <option :value="25">25</option>
+                  <option :value="50">50</option>
+                  <option :value="100">100</option>
+                  <option :value="200">200</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Events List -->
+          <div v-if="events.length === 0 && !eventsLoading" class="text-center py-16">
+            <i class="fas fa-history text-gray-300 dark:text-gray-600 text-6xl mb-6"></i>
+            <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-3">No events yet</h3>
+            <p class="text-gray-600 dark:text-gray-400">Make some mutations to see them tracked here</p>
+          </div>
+
+          <div v-else-if="eventsLoading" class="flex items-center justify-center py-16">
+            <div class="text-center">
+              <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary-600 mx-auto mb-4"></div>
+              <p class="text-gray-600 dark:text-gray-400">Loading events...</p>
+            </div>
+          </div>
+
+          <div v-else class="space-y-2">
+            <div
+              v-for="evt in events"
+              :key="evt.id"
+              @click="viewEventDetails(evt)"
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4 flex-1">
+                  <div class="text-xs text-gray-500 dark:text-gray-400 font-mono w-20">
+                    {{ formatTime(evt.timestamp) }}
+                  </div>
+                  <span :class="getEventOperationClass(evt.operation)" class="px-3 py-1 text-xs font-bold rounded-full uppercase">
+                    {{ evt.operation }}
+                  </span>
+                  <div class="flex-1">
+                    <div class="font-medium text-gray-900 dark:text-white">{{ evt.collectionName }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">{{ evt.itemId }}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">
+                    <i class="fas fa-user mr-1"></i>
+                    {{ evt.userName || 'Unknown' }}
+                  </span>
+                  <span class="text-gray-600 dark:text-gray-400 font-mono text-sm">
+                    {{ evt.changes?.length || 0 }} changes
+                  </span>
+                  <i class="fas fa-chevron-right text-gray-400"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Event Detail Modal -->
+          <transition name="fade">
+            <div v-if="selectedEvent" @click.self="closeEventDetails" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <transition name="modal">
+                <div v-if="selectedEvent" @click.stop class="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-auto shadow-2xl">
+                  <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-start justify-between z-10">
+                    <div>
+                      <h2 class="text-xl font-bold text-gray-900 dark:text-white">Event Details</h2>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">{{ selectedEvent.id }}</p>
+                    </div>
+                    <button
+                      @click="closeEventDetails"
+                      class="w-10 h-10 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <i class="fas fa-times text-xl"></i>
+                    </button>
+                  </div>
+
+                  <div class="p-6 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Collection</span>
+                        <span class="text-gray-900 dark:text-white font-medium">{{ selectedEvent.collectionName }}</span>
+                      </div>
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Operation</span>
+                        <span :class="getEventOperationClass(selectedEvent.operation)" class="inline-block px-3 py-1 text-xs font-bold rounded-full uppercase">
+                          {{ selectedEvent.operation }}
+                        </span>
+                      </div>
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Item ID</span>
+                        <code class="text-gray-900 dark:text-white font-mono">{{ selectedEvent.itemId }}</code>
+                      </div>
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">User</span>
+                        <span class="text-gray-900 dark:text-white">{{ selectedEvent.userName || selectedEvent.userId }}</span>
+                      </div>
+                      <div class="col-span-2">
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Timestamp</span>
+                        <span class="text-gray-900 dark:text-white font-mono text-sm">{{ formatFullTime(selectedEvent.timestamp) }}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Changes ({{ selectedEvent.changes?.length || 0 }})</span>
+                      <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-auto max-h-64">
+                        <table class="w-full text-sm">
+                          <thead>
+                            <tr class="text-left text-gray-600 dark:text-gray-400">
+                              <th class="pb-2">Field</th>
+                              <th class="pb-2">Old Value</th>
+                              <th class="pb-2">New Value</th>
+                            </tr>
+                          </thead>
+                          <tbody class="font-mono">
+                            <tr v-for="change in selectedEvent.changes" :key="change.fieldName" class="border-t border-gray-200 dark:border-gray-700">
+                              <td class="py-2 font-medium">{{ change.fieldName }}</td>
+                              <td class="py-2 text-red-600 dark:text-red-400">{{ change.oldValue ? JSON.parse(change.oldValue) : '-' }}</td>
+                              <td class="py-2 text-green-600 dark:text-green-400">{{ change.newValue ? JSON.parse(change.newValue) : '-' }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end">
+                    <button
+                      @click="closeEventDetails"
+                      class="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </transition>
+            </div>
+          </transition>
+        </div>
       </div>
     </div>
   </div>
@@ -858,7 +1170,23 @@ const HTML_CONTENT = `<!DOCTYPE html>
           // Data Browser (Phase 3)
           selectedDataCollection: '',
           selectedLayout: 'table',
-          iframeLoaded: false
+          iframeLoaded: false,
+
+          // Activity (Events Integration)
+          events: [],
+          eventsLoading: false,
+          eventsAvailable: false,
+          eventsHealth: null,
+          eventFilters: {
+            collection: '',
+            operation: '',
+            limit: 50
+          },
+          selectedEvent: null,
+
+          // Operation ↔ Event Correlation
+          correlatedEvents: [],
+          correlatedEventsLoading: false
         }
       },
       computed: {
@@ -978,9 +1306,16 @@ const HTML_CONTENT = `<!DOCTYPE html>
         },
         viewOperationDetails(operation) {
           this.selectedOperation = operation
+          // Fetch correlated events if events are available
+          if (this.eventsAvailable && operation.itemId) {
+            this.fetchCorrelatedEvents(operation)
+          } else {
+            this.correlatedEvents = []
+          }
         },
         closeOperationDetails() {
           this.selectedOperation = null
+          this.correlatedEvents = []
         },
         formatTime(timestamp) {
           const date = new Date(timestamp)
@@ -1223,6 +1558,117 @@ const HTML_CONTENT = `<!DOCTYPE html>
             'cards': 'fas fa-th-large'
           }
           return icons[layout] || 'fas fa-table'
+        },
+
+        // Activity (Events) methods
+        async fetchEvents() {
+          try {
+            this.eventsLoading = true
+            const params = new URLSearchParams()
+            if (this.eventFilters.collection) params.set('collection', this.eventFilters.collection)
+            if (this.eventFilters.operation) params.set('operation', this.eventFilters.operation)
+            if (this.eventFilters.limit) params.set('limit', String(this.eventFilters.limit))
+
+            const response = await fetch('/__nuxt_crouton_devtools/api/events?' + params.toString())
+            const data = await response.json()
+
+            if (data.success && data.available) {
+              this.events = data.data || []
+              this.eventsAvailable = true
+            } else {
+              this.events = []
+              this.eventsAvailable = data.available || false
+            }
+          } catch (e) {
+            console.error('Failed to fetch events:', e)
+            this.events = []
+          } finally {
+            this.eventsLoading = false
+          }
+        },
+        async fetchEventsHealth() {
+          try {
+            const response = await fetch('/__nuxt_crouton_devtools/api/events/health')
+            const data = await response.json()
+
+            if (data.success && data.available) {
+              this.eventsHealth = data.data || null
+              this.eventsAvailable = true
+            } else {
+              this.eventsHealth = null
+              this.eventsAvailable = data.available || false
+            }
+          } catch (e) {
+            console.error('Failed to fetch events health:', e)
+            this.eventsHealth = null
+            this.eventsAvailable = false
+          }
+        },
+        viewEventDetails(evt) {
+          this.selectedEvent = evt
+        },
+        closeEventDetails() {
+          this.selectedEvent = null
+        },
+        getEventOperationClass(operation) {
+          const classes = {
+            'create': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+            'update': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+            'delete': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+          }
+          return classes[operation] || 'bg-gray-100 text-gray-800'
+        },
+        getHealthStatusClass(status) {
+          const classes = {
+            'healthy': 'text-green-600',
+            'warning': 'text-yellow-600',
+            'inactive': 'text-gray-400'
+          }
+          return classes[status] || 'text-gray-600'
+        },
+        formatHealthStatus(status) {
+          const labels = {
+            'healthy': 'Healthy',
+            'warning': 'Stale',
+            'inactive': 'Inactive'
+          }
+          return labels[status] || status
+        },
+        formatShortDate(isoString) {
+          if (!isoString) return ''
+          const date = new Date(isoString)
+          return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        },
+
+        // Operation ↔ Event Correlation
+        async fetchCorrelatedEvents(operation) {
+          if (!operation.itemId || !operation.collection) {
+            this.correlatedEvents = []
+            return
+          }
+
+          try {
+            this.correlatedEventsLoading = true
+            const params = new URLSearchParams({
+              collection: operation.collection,
+              itemId: operation.itemId,
+              limit: '10'
+            })
+
+            const response = await fetch('/__nuxt_crouton_devtools/api/events?' + params.toString())
+            const data = await response.json()
+
+            if (data.success && data.available) {
+              this.correlatedEvents = data.data || []
+            } else {
+              this.correlatedEvents = []
+            }
+          } catch (e) {
+            console.error('Failed to fetch correlated events:', e)
+            this.correlatedEvents = []
+          } finally {
+            this.correlatedEventsLoading = false
+          }
         }
       },
       watch: {
@@ -1233,6 +1679,11 @@ const HTML_CONTENT = `<!DOCTYPE html>
           } else {
             this.stopAutoRefresh()
           }
+
+          if (newTab === 'activity') {
+            this.fetchEvents()
+            this.fetchEventsHealth()
+          }
         },
         selectedDataCollection() {
           this.iframeLoaded = false
@@ -1242,6 +1693,9 @@ const HTML_CONTENT = `<!DOCTYPE html>
         this.fetchCollections()
         this.fetchOperations()
         this.fetchEndpoints()
+        // Check if events package is available
+        this.fetchEventsHealth()
+        this.fetchEvents()
       },
       beforeUnmount() {
         this.stopAutoRefresh()

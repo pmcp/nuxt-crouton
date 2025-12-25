@@ -10,15 +10,23 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 |------|---------|
 | `src/module.ts` | Nuxt module entry point |
 | `src/runtime/pages/data-browser.vue` | Collection inspector UI |
-| `src/runtime/server-rpc/*.ts` | Server RPC functions |
+| `src/runtime/server-rpc/client.ts` | Embedded DevTools UI (Vue app) |
+| `src/runtime/server-rpc/collections.ts` | Get collections RPC |
+| `src/runtime/server-rpc/operations.ts` | Get operations RPC |
+| `src/runtime/server-rpc/events.ts` | Query persisted events (when events package installed) |
+| `src/runtime/server-rpc/eventsHealth.ts` | Events health statistics |
+| `src/runtime/server/utils/operationStore.ts` | In-memory operation tracking |
+| `src/runtime/server/plugins/operationTracker.ts` | Nitro plugin for tracking API calls |
 
 ## Features
 
-- Collection inspector (view all registered collections)
-- Configuration details (schemas, metadata, settings)
-- Search & filter by name, layer, API path
-- Refresh on demand
+- **Collections Tab** - View all registered collections with search & filter
+- **Operations Tab** - Monitor live CRUD operations in real-time
+- **API Explorer Tab** - Test collection endpoints interactively
+- **Data Browser Tab** - Browse collection data with layout options
+- **Activity Tab** - Unified events view (when `nuxt-crouton-events` installed)
 - Dark mode support
+- Auto-refresh capabilities
 
 ## Installation
 
@@ -52,21 +60,38 @@ export default defineNuxtConfig({
 - Layer type
 - Full JSON configuration
 
+### Activity Tab (Events Integration)
+
+When `nuxt-crouton-events` is installed, the Activity tab appears automatically:
+
+- **Health Dashboard** - Total events, today's count, this week, status
+- **Operation Breakdown** - CREATE/UPDATE/DELETE counts
+- **Filters** - By collection, operation type, limit
+- **Events List** - Timeline of persisted mutation events
+- **Event ↔ Operation Correlation** - Link HTTP operations to events via itemId
+
+The module auto-detects the events package via layer inspection.
+
 ## Architecture
 
 ```
 src/
-├── module.ts                    # Nuxt module
+├── module.ts                    # Nuxt module (events detection, tab registration)
 ├── runtime/
 │   ├── pages/
-│   │   └── data-browser.vue    # Main DevTools UI
+│   │   └── data-browser.vue    # Data browser page
 │   ├── server-rpc/
+│   │   ├── client.ts           # Embedded Vue app (all tabs)
 │   │   ├── collections.ts      # Get collections
 │   │   ├── endpoints.ts        # List endpoints
-│   │   └── operations.ts       # Track operations
+│   │   ├── operations.ts       # Track operations
+│   │   ├── events.ts           # Query persisted events
+│   │   └── eventsHealth.ts     # Events health stats
 │   └── server/
-│       └── utils/              # Tracking utilities
-└── client/                     # DevTools client
+│       ├── plugins/
+│       │   └── operationTracker.ts  # Nitro plugin
+│       └── utils/
+│           └── operationStore.ts    # In-memory store
 ```
 
 ## Common Tasks
@@ -91,10 +116,12 @@ cd playground && pnpm dev
 
 ## Roadmap
 
-- Phase 2: CRUD operations monitoring, API testing
-- Phase 3: Collection data browser with inline editing
-- Phase 4: Generator history and rollback
-- Phase 5: Schema validation, i18n manager
+- ✅ Phase 1: Collection inspector
+- ✅ Phase 2: CRUD operations monitoring, API testing
+- ✅ Phase 3: Collection data browser
+- ✅ Phase 4: Events integration (Activity tab)
+- Phase 5: Generator history and rollback
+- Phase 6: Schema validation, i18n manager
 
 ## Dependencies
 

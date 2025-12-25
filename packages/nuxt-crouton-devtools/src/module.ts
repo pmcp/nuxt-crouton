@@ -20,10 +20,19 @@ export default defineNuxtModule<ModuleOptions>({
 
     const resolver = createResolver(import.meta.url)
 
-    // Store collections config in Nitro runtime config
+    // Detect if nuxt-crouton-events package is installed
+    const hasEventsPackage = nuxt.options._layers?.some(
+      (layer: any) => layer.config?.name?.includes('nuxt-crouton-events')
+        || layer.cwd?.includes('nuxt-crouton-events')
+    ) ?? false
+
+    // Store collections config and events detection in Nitro runtime config
     nuxt.options.nitro = nuxt.options.nitro || {}
     nuxt.options.nitro.runtimeConfig = nuxt.options.nitro.runtimeConfig || {}
     nuxt.options.nitro.runtimeConfig.croutonCollections = nuxt.options.appConfig?.croutonCollections || {}
+    nuxt.options.nitro.runtimeConfig.croutonDevtools = {
+      hasEventsPackage
+    }
 
     // Register operation tracker via Nitro plugin hook
     nuxt.hook('nitro:config', (nitroConfig) => {
@@ -64,6 +73,17 @@ export default defineNuxtModule<ModuleOptions>({
       route: '/__nuxt_crouton_devtools/api/execute',
       handler: resolver.resolve('./runtime/server-rpc/executeRequest'),
       method: 'post'
+    })
+
+    // Add events-specific RPC handlers (when events package detected)
+    addServerHandler({
+      route: '/__nuxt_crouton_devtools/api/events',
+      handler: resolver.resolve('./runtime/server-rpc/events')
+    })
+
+    addServerHandler({
+      route: '/__nuxt_crouton_devtools/api/events/health',
+      handler: resolver.resolve('./runtime/server-rpc/eventsHealth')
     })
 
     // Serve the static HTML client app
