@@ -4,15 +4,20 @@ const modelValue = defineModel<boolean>({ default: false })
 const { state, isValid, validationErrors } = useSchemaDesigner()
 const { exportSchema, exportConfig, exportCliCommand, exportCardComponent, downloadSchema, downloadCardComponent } = useSchemaExport()
 
-type Tab = 'schema' | 'card' | 'config' | 'cli'
+type Tab = 'schema' | 'card' | 'config' | 'cli' | 'createApp'
 const activeTab = ref<Tab>('schema')
 
 const tabs: { value: Tab; label: string; icon: string }[] = [
   { value: 'schema', label: 'Schema JSON', icon: 'i-lucide-braces' },
   { value: 'card', label: 'Card.vue', icon: 'i-lucide-layout-template' },
   { value: 'config', label: 'Config', icon: 'i-lucide-settings' },
-  { value: 'cli', label: 'CLI Command', icon: 'i-lucide-terminal' }
+  { value: 'cli', label: 'CLI Command', icon: 'i-lucide-terminal' },
+  { value: 'createApp', label: 'Create App', icon: 'i-lucide-rocket' }
 ]
+
+function handleClose() {
+  modelValue.value = false
+}
 
 const schemaOutput = computed(() => exportSchema(state.value))
 const cardOutput = computed(() => exportCardComponent(state.value))
@@ -25,6 +30,7 @@ const currentOutput = computed(() => {
     case 'card': return cardOutput.value
     case 'config': return configOutput.value
     case 'cli': return cliOutput.value
+    default: return ''
   }
 })
 
@@ -118,58 +124,65 @@ function handleDownload() {
           </button>
         </div>
 
-        <!-- Output -->
-        <div class="relative">
-          <pre
-            class="p-4 bg-[var(--ui-bg-elevated)] rounded-lg overflow-auto max-h-96 text-sm font-mono"
-          >{{ currentOutput }}</pre>
+        <!-- Create App Panel -->
+        <template v-if="activeTab === 'createApp'">
+          <CroutonSchemaDesignerCreateAppPanel @close="handleClose" />
+        </template>
 
-          <div class="absolute top-2 right-2 flex gap-1">
-            <UButton
-              variant="ghost"
-              color="neutral"
-              size="xs"
-              icon="i-lucide-copy"
-              @click="copyToClipboard"
-            />
-          </div>
-        </div>
+        <!-- Export Output -->
+        <template v-else>
+          <div class="relative">
+            <pre
+              class="p-4 bg-[var(--ui-bg-elevated)] rounded-lg overflow-auto max-h-96 text-sm font-mono"
+            >{{ currentOutput }}</pre>
 
-        <!-- Actions -->
-        <div class="flex items-center justify-between pt-2">
-          <div class="text-sm text-[var(--ui-text-muted)]">
-            <template v-if="activeTab === 'schema'">
-              Save as <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">schemas/{{ state.collectionName || 'collection' }}.json</code>
-            </template>
-            <template v-else-if="activeTab === 'card'">
-              Save as <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">layers/{{ state.layerName }}/collections/{{ state.collectionName }}/app/components/Card.vue</code>
-            </template>
-            <template v-else-if="activeTab === 'config'">
-              Add to your <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">crouton.config.js</code>
-            </template>
-            <template v-else>
-              Run in your project directory
-            </template>
+            <div class="absolute top-2 right-2 flex gap-1">
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                icon="i-lucide-copy"
+                @click="copyToClipboard"
+              />
+            </div>
           </div>
 
-          <div class="flex gap-2">
-            <UButton
-              v-if="activeTab === 'schema' || activeTab === 'card'"
-              variant="outline"
-              icon="i-lucide-download"
-              :disabled="!isValid"
-              @click="handleDownload"
-            >
-              {{ activeTab === 'card' ? 'Download Card.vue' : 'Download JSON' }}
-            </UButton>
-            <UButton
-              icon="i-lucide-copy"
-              @click="copyToClipboard"
-            >
-              Copy to Clipboard
-            </UButton>
+          <!-- Actions -->
+          <div class="flex items-center justify-between pt-2">
+            <div class="text-sm text-[var(--ui-text-muted)]">
+              <template v-if="activeTab === 'schema'">
+                Save as <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">schemas/{{ state.collectionName || 'collection' }}.json</code>
+              </template>
+              <template v-else-if="activeTab === 'card'">
+                Save as <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">layers/{{ state.layerName }}/collections/{{ state.collectionName }}/app/components/Card.vue</code>
+              </template>
+              <template v-else-if="activeTab === 'config'">
+                Add to your <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">crouton.config.js</code>
+              </template>
+              <template v-else>
+                Run in your project directory
+              </template>
+            </div>
+
+            <div class="flex gap-2">
+              <UButton
+                v-if="activeTab === 'schema' || activeTab === 'card'"
+                variant="outline"
+                icon="i-lucide-download"
+                :disabled="!isValid"
+                @click="handleDownload"
+              >
+                {{ activeTab === 'card' ? 'Download Card.vue' : 'Download JSON' }}
+              </UButton>
+              <UButton
+                icon="i-lucide-copy"
+                @click="copyToClipboard"
+              >
+                Copy to Clipboard
+              </UButton>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
     </template>
   </UModal>

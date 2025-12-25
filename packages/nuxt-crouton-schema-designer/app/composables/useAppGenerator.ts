@@ -1,0 +1,387 @@
+import { ref, computed } from 'vue'
+import type {
+  CreateAppOptions,
+  GenerationProgress,
+  CreateAppResult,
+  FileTemplate,
+  FileSystemSupport
+} from '../types/app-generator'
+
+/**
+ * useAppGenerator - Orchestrates creating a new Nuxt Crouton app
+ *
+ * Uses File System Access API for native folder picking (Chrome/Edge)
+ * with fallback to manual path input for other browsers.
+ */
+export function useAppGenerator() {
+  // State
+  const directoryHandle = ref<FileSystemDirectoryHandle | null>(null)
+  const targetPath = ref('')
+  const projectName = ref('')
+  const isGenerating = ref(false)
+  const currentStep = ref('')
+  const progress = ref<GenerationProgress>({
+    step: '',
+    message: '',
+    progress: 0
+  })
+  const error = ref<string | null>(null)
+  const result = ref<CreateAppResult | null>(null)
+
+  /**
+   * Check browser support for File System Access API
+   */
+  const support = computed<FileSystemSupport>(() => ({
+    hasNativePicker: typeof window !== 'undefined' && 'showDirectoryPicker' in window,
+    canWriteFiles: typeof window !== 'undefined' && 'FileSystemWritableFileStream' in window
+  }))
+
+  /**
+   * Select a folder using native file picker
+   * Returns the folder name (not full path - API limitation)
+   */
+  async function selectFolder(): Promise<string | null> {
+    if (!support.value.hasNativePicker) {
+      return null
+    }
+
+    try {
+      // @ts-expect-error - showDirectoryPicker is not in all TS libs
+      const handle = await window.showDirectoryPicker({
+        mode: 'readwrite',
+        startIn: 'documents'
+      })
+
+      directoryHandle.value = handle
+      projectName.value = handle.name
+
+      return handle.name
+    } catch (e: any) {
+      if (e.name === 'AbortError') {
+        // User cancelled - not an error
+        return null
+      }
+      throw e
+    }
+  }
+
+  /**
+   * Write a file using the FileSystemHandle
+   * Creates directories as needed
+   */
+  async function writeFile(handle: FileSystemDirectoryHandle, path: string, content: string): Promise<void> {
+    const parts = path.split('/')
+    const fileName = parts.pop()!
+    let currentHandle = handle
+
+    // Create nested directories
+    for (const dir of parts) {
+      if (dir) {
+        currentHandle = await currentHandle.getDirectoryHandle(dir, { create: true })
+      }
+    }
+
+    // Create and write file
+    const fileHandle = await currentHandle.getFileHandle(fileName, { create: true })
+    const writable = await fileHandle.createWritable()
+    await writable.write(content)
+    await writable.close()
+  }
+
+  /**
+   * Write all template files using FileSystemHandle
+   */
+  async function writeTemplateFiles(templates: FileTemplate[]): Promise<string[]> {
+    if (!directoryHandle.value) {
+      throw new Error('No directory selected')
+    }
+
+    const filesCreated: string[] = []
+
+    for (const template of templates) {
+      await writeFile(directoryHandle.value, template.path, template.content)
+      filesCreated.push(template.path)
+    }
+
+    return filesCreated
+  }
+
+  /**
+   * Generate template files for the project
+   * Returns templates that will be written client-side
+   */
+  function generateTemplates(options: CreateAppOptions): FileTemplate[] {
+    const templates: FileTemplate[] = []
+
+    // package.json
+    const deps: Record<string, string> = {
+      'nuxt': '^4.0.0',
+      '@friendlyinternet/nuxt-crouton': 'latest'
+    }
+    const devDeps: Record<string, string> = {
+      '@nuxt/ui': '^3.0.0',
+      '@nuxthub/core': 'latest',
+      'typescript': '^5.0.0'
+    }
+
+    if (options.options.includeAuth) {
+      deps['@friendlyinternet/nuxt-crouton-auth'] = 'latest'
+    }
+    if (options.options.includeI18n) {
+      deps['@friendlyinternet/nuxt-crouton-i18n'] = 'latest'
+    }
+
+    templates.push({
+      path: 'package.json',
+      content: JSON.stringify({
+        name: options.projectName,
+        private: true,
+        type: 'module',
+        scripts: {
+          dev: 'nuxt dev',
+          build: 'nuxt build',
+          preview: 'nuxt preview',
+          generate: 'nuxt generate',
+          typecheck: 'npx nuxt typecheck',
+          'db:generate': 'npx nuxt db generate',
+          'db:migrate': 'npx nuxt db migrate'
+        },
+        dependencies: deps,
+        devDependencies: devDeps
+      }, null, 2)
+    })
+
+    // nuxt.config.ts
+    const extendsLayers = ["'@friendlyinternet/nuxt-crouton'"]
+    if (options.options.includeAuth) {
+      extendsLayers.push("'@friendlyinternet/nuxt-crouton-auth'")
+    }
+    if (options.options.includeI18n) {
+      extendsLayers.push("'@friendlyinternet/nuxt-crouton-i18n'")
+    }
+    extendsLayers.push(`'./layers/${options.layerName}'`)
+
+    templates.push({
+      path: 'nuxt.config.ts',
+      content: `export default defineNuxtConfig({
+  extends: [
+    ${extendsLayers.join(',\n    ')}
+  ],
+
+  modules: [
+    '@nuxt/ui',
+    '@nuxthub/core'
+  ],
+
+  hub: {
+    db: '${options.options.dialect}'
+  },
+
+  css: ['~/assets/css/main.css'],
+
+  devtools: { enabled: true },
+
+  compatibilityDate: '2025-01-01'
+})
+`
+    })
+
+    // tsconfig.json
+    templates.push({
+      path: 'tsconfig.json',
+      content: JSON.stringify({
+        extends: './.nuxt/tsconfig.json'
+      }, null, 2)
+    })
+
+    // app/assets/css/main.css
+    templates.push({
+      path: 'app/assets/css/main.css',
+      content: `@import "tailwindcss";
+@import "@nuxt/ui";
+`
+    })
+
+    // .env.example
+    templates.push({
+      path: '.env.example',
+      content: `# Database
+NUXT_HUB_PROJECT_KEY=
+
+# Auth (if using @friendlyinternet/nuxt-crouton-auth)
+NUXT_SESSION_PASSWORD=your-32-char-secret-here
+`
+    })
+
+    // app.config.ts
+    templates.push({
+      path: 'app.config.ts',
+      content: `export default defineAppConfig({
+  // Collection registry will be auto-generated
+})
+`
+    })
+
+    // server/db/schema.ts
+    templates.push({
+      path: 'server/db/schema.ts',
+      content: `// Auto-generated database schema exports
+// Collections will register their schemas here
+export {}
+`
+    })
+
+    // Layer nuxt.config.ts
+    templates.push({
+      path: `layers/${options.layerName}/nuxt.config.ts`,
+      content: `export default defineNuxtConfig({
+  // Layer configuration
+  // Collections will be added here after generation
+})
+`
+    })
+
+    // Schema JSON file
+    templates.push({
+      path: `schemas/${options.collectionName}.json`,
+      content: JSON.stringify(options.schema, null, 2)
+    })
+
+    // crouton.config.js
+    const collectionConfig: Record<string, any> = {
+      name: options.collectionName,
+      fieldsFile: `./schemas/${options.collectionName}.json`
+    }
+    if (options.options.hierarchy) collectionConfig.hierarchy = true
+    if (options.options.sortable) collectionConfig.sortable = true
+    if (options.options.seed) {
+      collectionConfig.seed = true
+      collectionConfig.seedCount = options.options.seedCount || 25
+    }
+
+    templates.push({
+      path: 'crouton.config.js',
+      content: `export default {
+  dialect: '${options.options.dialect}',
+  collections: [
+    ${JSON.stringify(collectionConfig, null, 4).split('\n').join('\n    ')}
+  ],
+  targets: [
+    {
+      layer: '${options.layerName}',
+      collections: ['${options.collectionName}']
+    }
+  ]
+}
+`
+    })
+
+    return templates
+  }
+
+  /**
+   * Create the app - main orchestration function
+   */
+  async function createApp(options: CreateAppOptions): Promise<CreateAppResult> {
+    isGenerating.value = true
+    error.value = null
+    result.value = null
+
+    try {
+      // Step 1: Initialize
+      updateProgress('init', 'Creating project structure...', 10)
+
+      // Step 2: Generate and write template files
+      updateProgress('templates', 'Generating configuration files...', 20)
+      const templates = generateTemplates(options)
+
+      if (directoryHandle.value && support.value.canWriteFiles) {
+        // Write files client-side via FileSystemHandle
+        const filesCreated = await writeTemplateFiles(templates)
+        updateProgress('templates', `Created ${filesCreated.length} files`, 40)
+      }
+
+      // Step 3: Call server to run CLI
+      updateProgress('cli', 'Running crouton generator...', 50)
+
+      const response = await $fetch<CreateAppResult>('/api/schema-designer/create-app', {
+        method: 'POST',
+        body: {
+          ...options,
+          // If we wrote files client-side, server just needs to run CLI
+          templatesWritten: !!directoryHandle.value
+        }
+      })
+
+      if (!response.success) {
+        throw new Error(response.errors.join(', '))
+      }
+
+      // Step 4: Install dependencies (if requested)
+      if (options.options.installDependencies) {
+        updateProgress('dependencies', 'Installing dependencies...', 80)
+        // This is handled by the server endpoint
+      }
+
+      // Step 5: Complete
+      updateProgress('complete', 'Project ready!', 100)
+
+      result.value = response
+      return response
+
+    } catch (e: any) {
+      const errorMessage = e.message || 'Failed to create app'
+      error.value = errorMessage
+      updateProgress('error', errorMessage, progress.value.progress)
+      throw e
+    } finally {
+      isGenerating.value = false
+    }
+  }
+
+  /**
+   * Update progress state
+   */
+  function updateProgress(step: string, message: string, pct: number) {
+    currentStep.value = step
+    progress.value = {
+      step,
+      message,
+      progress: pct
+    }
+  }
+
+  /**
+   * Reset all state
+   */
+  function reset() {
+    directoryHandle.value = null
+    targetPath.value = ''
+    projectName.value = ''
+    isGenerating.value = false
+    currentStep.value = ''
+    progress.value = { step: '', message: '', progress: 0 }
+    error.value = null
+    result.value = null
+  }
+
+  return {
+    // State
+    directoryHandle,
+    targetPath,
+    projectName,
+    isGenerating,
+    currentStep,
+    progress,
+    error,
+    result,
+    support,
+
+    // Methods
+    selectFolder,
+    writeTemplateFiles,
+    generateTemplates,
+    createApp,
+    reset
+  }
+}
