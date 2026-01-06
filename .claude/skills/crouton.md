@@ -123,6 +123,45 @@ Use this skill when the user mentions:
 }
 ```
 
+### Select Dropdown (Static Options)
+
+For fields with a fixed set of options, use `options` + `displayAs: "optionsSelect"`:
+
+```json
+{
+  "status": {
+    "type": "string",
+    "meta": {
+      "label": "Status",
+      "options": ["draft", "published", "archived"],
+      "displayAs": "optionsSelect",
+      "required": true
+    }
+  }
+}
+```
+
+Options are auto-formatted as labels: `"draft"` → `"Draft"`, `"in_progress"` → `"In Progress"`
+
+### Select Dropdown (Database-Driven)
+
+For options stored in another collection:
+
+```json
+{
+  "category": {
+    "type": "string",
+    "meta": {
+      "label": "Category",
+      "displayAs": "optionsSelect",
+      "optionsCollection": "settings",
+      "optionsField": "categories",
+      "creatable": true
+    }
+  }
+}
+```
+
 ## Process
 
 ### Step 1: Gather Requirements

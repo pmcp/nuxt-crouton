@@ -58,6 +58,15 @@ function humanizeGroupName(groupName) {
     .trim()
 }
 
+// Helper: Convert snake_case or kebab-case to human-readable label
+// e.g., 'booking_created' → 'Booking Created'
+function formatOptionLabel(value) {
+  if (typeof value !== 'string') return String(value)
+  return value
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
 export function generateFormComponent(data, config = {}) {
   const { pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, fields, singular, plural, layer, hierarchy } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
@@ -99,6 +108,13 @@ export function generateFormComponent(data, config = {}) {
   const { hasAddress, addressFields, coordinateFields, hasCoordinates } = addressDetection
   const coordinateFieldName = hasAddress && hasCoordinates ? getCoordinateFieldName(coordinateFields) : null
   const shouldGenerateMap = useMaps && hasAddress && coordinateFieldName
+
+  // Track fields with inline options for script generation (static USelect options)
+  const fieldsWithInlineOptions = regularFields.filter(
+    f => f.meta?.displayAs === 'optionsSelect'
+      && Array.isArray(f.meta?.options)
+      && !f.meta?.optionsCollection
+  )
 
   // Generate form fields for regular (non-translatable) fields only
   // Filter out coordinate fields if using maps (they'll be managed by the map component)
@@ -155,6 +171,19 @@ export function generateFormComponent(data, config = {}) {
             dependent-collection="${resolvedCollection}"
             dependent-field="${dependsOnField}"
             dependent-label="${dependentLabel}"
+          />
+        </UFormField>`
+    }
+
+    // Check if this is a static options select field (inline meta.options array)
+    if (field.meta?.displayAs === 'optionsSelect' && Array.isArray(field.meta?.options) && !field.meta?.optionsCollection) {
+      const label = field.meta.label || fieldName
+      return `        <UFormField label="${label}" name="${field.name}" class="not-last:pb-4">
+          <USelect
+            v-model="state.${field.name}"
+            :items="${field.name}Options"
+            class="w-full"
+            size="xl"
           />
         </UFormField>`
     }
@@ -492,6 +521,21 @@ const tabs = ref(true)
 const activeSection = ref('${navigationItems[0]?.value || 'general'}')`
     : 'const tabs = ref(false)'
 
+  // Generate inline options arrays for static USelect fields
+  const inlineOptionsCode = fieldsWithInlineOptions.length > 0
+    ? fieldsWithInlineOptions.map((field) => {
+        const options = field.meta.options
+        const optionsArray = options.map((opt) => {
+          // Support both string values and {label, value} objects
+          if (typeof opt === 'object' && opt !== null && opt.label && opt.value !== undefined) {
+            return `  { label: '${opt.label}', value: '${opt.value}' }`
+          }
+          return `  { label: '${formatOptionLabel(opt)}', value: '${opt}' }`
+        }).join(',\n')
+        return `const ${field.name}Options = [\n${optionsArray}\n]`
+      }).join('\n\n')
+    : ''
+
   // Generate field-to-group mapping for error tracking
   const fieldGroupMapping = useTabs ? mainGroups : new Map()
   const fieldToGroupCode = useTabs
@@ -609,7 +653,7 @@ const { defaultValue, schema, collection } = use${prefixedPascalCasePlural}()
 
 // Form layout configuration
 ${navigationItemsCode}
-${fieldToGroupCode}
+${inlineOptionsCode ? `\n// Static select options\n${inlineOptionsCode}\n` : ''}${fieldToGroupCode}
 ${errorTrackingCode}
 
 // Use new mutation composable for data operations

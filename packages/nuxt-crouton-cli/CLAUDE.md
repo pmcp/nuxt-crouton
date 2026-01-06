@@ -77,6 +77,13 @@ lib/generators/
 | `primaryKey` | boolean | Mark as primary key |
 | `label` | string | Human-readable label |
 | `area` | string | Form area: main/sidebar/meta |
+| `group` | string | Group fields together (creates tabs when multiple main groups) |
+| `options` | string[] | Inline options for USelect dropdown (use with `displayAs: "optionsSelect"`) |
+| `displayAs` | string | Display hint: `"optionsSelect"` for dropdowns |
+| `optionsCollection` | string | Collection name for database-driven options |
+| `optionsField` | string | Field in options collection containing values |
+| `creatable` | boolean | Allow creating new options (default: true) |
+| `component` | string | Custom component name override |
 
 ## Field Types
 
