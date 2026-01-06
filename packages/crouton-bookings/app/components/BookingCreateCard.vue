@@ -26,6 +26,8 @@ const {
   isSubmitting,
   isInventoryMode,
   getInventoryAvailability,
+  availabilityLoading,
+  fetchAvailability,
 } = useBookingCart()
 
 // Local state
@@ -147,17 +149,32 @@ const formattedDate = computed(() => {
 
       <!-- Slot selection (slot mode) -->
       <div v-if="localLocationId && !isInventoryMode && allSlots.length > 0" class="flex flex-wrap gap-1.5">
-        <UButton
-          v-for="slot in allSlots"
-          :key="slot.id"
-          size="xs"
-          :variant="localSlotId === slot.id ? 'solid' : 'soft'"
-          :color="localSlotId === slot.id ? 'primary' : 'neutral'"
-          :disabled="isSlotDisabled(slot.id)"
-          @click="localSlotId = slot.id"
-        >
-          {{ slot.label || slot.id }}
-        </UButton>
+        <!-- Loading state -->
+        <template v-if="availabilityLoading">
+          <div v-for="i in 3" :key="i" class="h-6 w-16 bg-elevated rounded animate-pulse" />
+        </template>
+
+        <!-- Slots -->
+        <template v-else>
+          <UButton
+            v-for="slot in allSlots"
+            :key="slot.id"
+            size="xs"
+            :variant="localSlotId === slot.id ? 'solid' : 'soft'"
+            :color="localSlotId === slot.id ? 'primary' : (isSlotDisabled(slot.id) ? 'error' : 'neutral')"
+            :disabled="isSlotDisabled(slot.id)"
+            @click="localSlotId = slot.id"
+          >
+            <span :class="{ 'line-through': isSlotDisabled(slot.id) }">
+              {{ slot.label || slot.id }}
+            </span>
+            <UIcon
+              v-if="isSlotDisabled(slot.id)"
+              name="i-lucide-ban"
+              class="size-3 ml-0.5"
+            />
+          </UButton>
+        </template>
       </div>
 
       <!-- Inventory mode info -->
