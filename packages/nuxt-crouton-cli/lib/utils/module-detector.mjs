@@ -343,9 +343,19 @@ export async function ensureLayersExtended(layers) {
         // Determine the correct path format
         const layerPath = isNpmPackage(layer) ? `'${layer}'` : `'./layers/${layer}'`
 
-        // For npm packages, check if already extended (in any format)
-        if (isNpmPackage(layer) && content.includes(`'${layer}'`)) {
-          continue // Already extended
+        // For npm packages, check if already extended (in any format including local paths)
+        if (isNpmPackage(layer)) {
+          // Direct match for npm package name
+          if (content.includes(`'${layer}'`)) {
+            continue // Already extended
+          }
+
+          // Check for local path match (e.g., /path/to/nuxt-crouton or /path/to/nuxt-crouton-auth)
+          const packageShortName = layer.replace('@friendlyinternet/', '')
+          const localPathRegex = new RegExp(`[/\\\\]${packageShortName}['"\`\\s,\\]]`)
+          if (localPathRegex.test(content)) {
+            continue // Already extended via local path
+          }
         }
 
         if (!content.includes(layerPath)) {
