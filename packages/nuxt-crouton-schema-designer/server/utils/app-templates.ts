@@ -54,7 +54,7 @@ export function generatePackageJson(options: AppTemplateOptions): string {
   }
 
   const devDeps: Record<string, string> = {
-    '@nuxt/ui': '^3.0.0',
+    '@nuxt/ui': '^4.0.0',
     '@nuxthub/core': 'latest',
     'typescript': '^5.0.0',
     'drizzle-kit': '^0.31.0'
