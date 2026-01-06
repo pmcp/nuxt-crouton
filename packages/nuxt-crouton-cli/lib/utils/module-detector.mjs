@@ -4,6 +4,7 @@ import path from 'node:path'
 
 /**
  * Check if a package/layer is installed in package.json
+ * Handles both npm package names and local file: paths
  */
 async function isPackageInstalled(packageName) {
   try {
@@ -15,7 +16,28 @@ async function isPackageInstalled(packageName) {
       ...packageJson.devDependencies || {}
     }
 
-    return packageName in deps
+    // Direct match for npm package name
+    if (packageName in deps) {
+      return true
+    }
+
+    // Check for local file: paths that reference the package
+    // e.g., "file:/path/to/nuxt-crouton" for "@friendlyinternet/nuxt-crouton"
+    const packageShortName = packageName.replace('@friendlyinternet/', '')
+    for (const [name, version] of Object.entries(deps)) {
+      // Check if the dependency value is a file: path containing the package name
+      if (typeof version === 'string' && version.startsWith('file:')) {
+        if (version.endsWith(`/${packageShortName}`) || version.includes(`/${packageShortName}/`)) {
+          return true
+        }
+      }
+      // Also check if the dep name itself matches the short name with file: value
+      if (name === packageName && typeof version === 'string') {
+        return true
+      }
+    }
+
+    return false
   } catch (e) {
     console.warn(`Warning: Could not read package.json: ${e.message}`)
     return false
@@ -24,6 +46,7 @@ async function isPackageInstalled(packageName) {
 
 /**
  * Check if a layer is extended in nuxt.config
+ * Handles both npm package names and local file paths
  */
 async function isLayerExtended(layerName) {
   try {
@@ -34,7 +57,20 @@ async function isLayerExtended(layerName) {
     const extendsMatch = nuxtConfig.match(/extends:\s*\[([\s\S]*?)\]/)
     if (extendsMatch) {
       const extendsContent = extendsMatch[1]
-      return extendsContent.includes(layerName)
+
+      // Direct match for npm package name
+      if (extendsContent.includes(layerName)) {
+        return true
+      }
+
+      // Check for local path match (e.g., /path/to/nuxt-crouton or /path/to/nuxt-crouton-auth)
+      // Extract the package short name from @friendlyinternet/nuxt-crouton-auth -> nuxt-crouton-auth
+      const packageShortName = layerName.replace('@friendlyinternet/', '')
+      // Match paths ending with the package name (with possible trailing quote/comma)
+      const localPathRegex = new RegExp(`[/\\\\]${packageShortName}['"\`\\s,\\]]`)
+      if (localPathRegex.test(extendsContent)) {
+        return true
+      }
     }
     return false
   } catch (e) {

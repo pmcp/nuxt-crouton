@@ -3,6 +3,13 @@
  * Used when File System Access API is not available (Firefox/Safari)
  */
 
+import {
+  type MonorepoContext,
+  detectMonorepoContext,
+  getPackageDependency,
+  getExtendsReference
+} from './monorepo-detection'
+
 /**
  * Configuration for a single collection
  */
@@ -23,6 +30,8 @@ export interface AppTemplateOptions {
   dialect: 'sqlite' | 'pg'
   includeAuth: boolean
   includeI18n: boolean
+  /** Monorepo context for local package references */
+  monorepoContext?: MonorepoContext
 }
 
 export interface GeneratedFile {
@@ -34,9 +43,11 @@ export interface GeneratedFile {
  * Generate package.json content
  */
 export function generatePackageJson(options: AppTemplateOptions): string {
+  const context = options.monorepoContext ?? detectMonorepoContext()
+
   const deps: Record<string, string> = {
     'nuxt': '^4.0.0',
-    '@friendlyinternet/nuxt-crouton': 'latest'
+    '@friendlyinternet/nuxt-crouton': getPackageDependency('crouton', context)
   }
 
   const devDeps: Record<string, string> = {
@@ -46,10 +57,10 @@ export function generatePackageJson(options: AppTemplateOptions): string {
   }
 
   if (options.includeAuth) {
-    deps['@friendlyinternet/nuxt-crouton-auth'] = 'latest'
+    deps['@friendlyinternet/nuxt-crouton-auth'] = getPackageDependency('auth', context)
   }
   if (options.includeI18n) {
-    deps['@friendlyinternet/nuxt-crouton-i18n'] = 'latest'
+    deps['@friendlyinternet/nuxt-crouton-i18n'] = getPackageDependency('i18n', context)
   }
 
   return JSON.stringify({
@@ -74,13 +85,15 @@ export function generatePackageJson(options: AppTemplateOptions): string {
  * Generate nuxt.config.ts content
  */
 export function generateNuxtConfig(options: AppTemplateOptions): string {
-  const extendsLayers = ["'@friendlyinternet/nuxt-crouton'"]
+  const context = options.monorepoContext ?? detectMonorepoContext()
+
+  const extendsLayers = [`'${getExtendsReference('crouton', context)}'`]
 
   if (options.includeAuth) {
-    extendsLayers.push("'@friendlyinternet/nuxt-crouton-auth'")
+    extendsLayers.push(`'${getExtendsReference('auth', context)}'`)
   }
   if (options.includeI18n) {
-    extendsLayers.push("'@friendlyinternet/nuxt-crouton-i18n'")
+    extendsLayers.push(`'${getExtendsReference('i18n', context)}'`)
   }
   extendsLayers.push(`'./layers/${options.layerName}'`)
 

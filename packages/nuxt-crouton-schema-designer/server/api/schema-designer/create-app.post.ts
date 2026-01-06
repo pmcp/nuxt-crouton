@@ -13,6 +13,7 @@ import { mkdir, writeFile, access, constants } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { z } from 'zod'
 import { generateAllTemplates } from '../../utils/app-templates'
+import { detectMonorepoContext } from '../../utils/monorepo-detection'
 
 const execAsync = promisify(exec)
 
@@ -94,9 +95,14 @@ export default defineEventHandler(async (event) => {
     console.log(`[create-app] Creating project at: ${projectPath} with ${collections.length} collection(s)`)
     await mkdir(projectPath, { recursive: true })
 
+    // Detect monorepo context for local package references
+    const monorepoContext = detectMonorepoContext()
+    console.log('[create-app] Monorepo detection:', JSON.stringify(monorepoContext, null, 2))
+
     // Step 3: Write template files (if not done client-side)
     if (!templatesWritten) {
       console.log('[create-app] Writing template files...')
+      console.log('[create-app] Options:', { includeAuth: options.includeAuth, includeI18n: options.includeI18n })
 
       const templates = generateAllTemplates({
         projectName,
@@ -104,8 +110,21 @@ export default defineEventHandler(async (event) => {
         collections,
         dialect: options.dialect,
         includeAuth: options.includeAuth,
-        includeI18n: options.includeI18n
+        includeI18n: options.includeI18n,
+        monorepoContext
       })
+
+      // Log the package.json content for debugging
+      const pkgJson = templates.find(t => t.path === 'package.json')
+      if (pkgJson) {
+        console.log('[create-app] Generated package.json:', pkgJson.content)
+      }
+
+      // Log the nuxt.config.ts content for debugging
+      const nuxtConfig = templates.find(t => t.path === 'nuxt.config.ts')
+      if (nuxtConfig) {
+        console.log('[create-app] Generated nuxt.config.ts:', nuxtConfig.content)
+      }
 
       for (const template of templates) {
         const filePath = join(projectPath, template.path)
@@ -120,7 +139,9 @@ export default defineEventHandler(async (event) => {
         filesCreated.push(template.path)
       }
 
-      console.log(`[create-app] Created ${filesCreated.length} files`)
+      console.log(`[create-app] Created ${filesCreated.length} files:`, filesCreated)
+    } else {
+      console.log('[create-app] Templates already written client-side, skipping...')
     }
 
     // Step 4: Install dependencies (required for CLI to work)
