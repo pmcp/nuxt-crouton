@@ -57,6 +57,7 @@ export function generatePackageJson(options: AppTemplateOptions): string {
     name: options.projectName,
     private: true,
     type: 'module',
+    packageManager: 'pnpm@10.0.0',
     scripts: {
       dev: 'nuxt dev',
       build: 'nuxt build',

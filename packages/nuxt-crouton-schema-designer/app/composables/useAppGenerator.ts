@@ -153,6 +153,7 @@ export function useAppGenerator() {
         name: options.projectName,
         private: true,
         type: 'module',
+        packageManager: 'pnpm@10.0.0',
         scripts: {
           dev: 'nuxt dev',
           build: 'nuxt build',
