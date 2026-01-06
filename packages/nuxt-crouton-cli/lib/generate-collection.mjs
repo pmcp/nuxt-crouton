@@ -1939,9 +1939,5 @@ async function main() {
   }
 }
 
-main().then(() => {
-  process.exit(0)
-}).catch((error) => {
-  console.error('Fatal error:', error)
-  process.exit(1)
-})
+// Use top-level await so dynamic imports wait for completion
+await main()
