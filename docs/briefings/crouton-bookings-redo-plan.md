@@ -1,6 +1,6 @@
 # Crouton Bookings Package - Redo Plan
 
-> **Status**: In Progress (Phase 4 Complete)
+> **Status**: In Progress (Phase 6 Complete)
 > **Created**: 2025-01-06
 > **Goal**: Rebuild the bookings list view properly from the prototype
 
@@ -271,15 +271,32 @@ BookingsList.vue
 
 ---
 
-### Phase 6: Booking Creation (Future)
+### Phase 6: Booking Creation ✅
 > **Goal**: New approach to creating bookings
 
-- [ ] Design new creation flow
-- [ ] _TBD based on requirements_
+- [x] Design new creation flow - inline card at date position
+- [x] Create `BookingCreateCard.vue` component
+  - Location selection (auto-selects first)
+  - Slot selection with availability checking
+  - Loading state while fetching availability
+  - Visual feedback for disabled slots (strikethrough, ban icon, error color)
+  - "All Day" disabled when any slot is booked
+  - Create/Cancel actions
+- [x] Update `List.vue` to render inline create card
+  - Card appears at correct date position in the list
+  - Handles empty list case (card shown alone)
+  - Handles existing bookings case (card after date's bookings)
+  - Auto-scrolls to create card when it appears
+- [x] Wire up page with `@day-click` → `creatingAtDate` → List
+- [x] **Checkpoint**: Can create bookings by clicking calendar days ✅
 
 **Decisions:**
-- User wants different approach than prototype sidebar flow
-- _Details TBD_
+- **Inline card** instead of modal - booking is created "in context"
+- Card appears at the correct date position in the booking list
+- Uses existing `useBookingCart` composable for availability and submission
+- Availability fetched automatically when location selected (3 months)
+- Disabled slots show: strikethrough text, ban icon, error color
+- Callback ref pattern used for scrollIntoView (handles multiple conditional refs)
 
 ---
 
@@ -380,6 +397,19 @@ components/
 - Calendar becomes visual indicator of availability + action trigger
 - Slot indicators show what's booked vs available at a glance
 - Creation component (Phase 6) will show existing bookings for the day + allow booking empty slots
+
+### 2025-01-07 - Booking Creation (Phase 6)
+- **Scroll-to-day**: List scrolls to show bookings when hovering calendar days
+- **Inline creation**: Click day → BookingCreateCard appears at date position in list
+- **UX decisions**:
+  - Rejected modal approach ("i dont want a modal tho")
+  - Card appears at correct date position for context
+  - Auto-scrolls to card when it appears
+- **Slot availability**:
+  - Shows loading skeleton while fetching
+  - Disabled slots: strikethrough, ban icon, error color
+  - "All Day" disabled when any slot booked
+- **Technical fix**: Callback ref pattern for scrollIntoView (multiple conditional refs issue)
 
 ---
 
