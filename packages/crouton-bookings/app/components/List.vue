@@ -166,8 +166,9 @@ watch(
   (newDate) => {
     if (!newDate) return
 
-    const targetKey = findNearestDateKey(newDate)
-    if (!targetKey) return
+    // Only scroll if there are bookings on the exact date (not nearest)
+    const targetKey = formatDateKey(newDate)
+    if (!allDateKeys.value.includes(targetKey)) return
 
     const element = dateElementRefs.value.get(targetKey)
     if (element) {
