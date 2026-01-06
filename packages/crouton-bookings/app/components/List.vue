@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, type ComponentPublicInstance } from 'vue'
 import type { Booking } from '../types/booking'
 
 interface Props {
@@ -199,8 +199,18 @@ const creatingDateHasBookings = computed(() => {
   return allDateKeys.value.includes(creatingAtDateKey.value)
 })
 
-// Ref for the create card element
-const createCardRef = ref<HTMLElement | null>(null)
+// Ref for the create card element - use callback ref to handle multiple conditional refs
+const createCardElement = ref<HTMLElement | null>(null)
+
+// Callback ref setter - ensures we always get the element, not an array
+function setCreateCardRef(el: HTMLElement | ComponentPublicInstance | null) {
+  // Handle Vue component instances (get $el) or plain HTML elements
+  if (el && '$el' in el) {
+    createCardElement.value = el.$el as HTMLElement
+  } else {
+    createCardElement.value = el as HTMLElement | null
+  }
+}
 
 // Scroll to create card when it appears
 watch(
@@ -210,8 +220,9 @@ watch(
 
     // Scroll to the create card
     nextTick(() => {
-      if (createCardRef.value) {
-        createCardRef.value.scrollIntoView({
+      const el = createCardElement.value
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         })
@@ -257,7 +268,7 @@ watch(
     <!-- Empty state (but might have create card) -->
     <div v-else-if="resolvedBookings.length === 0">
       <!-- Inline create card when empty -->
-      <div v-if="creatingAtDate" ref="createCardRef">
+      <div v-if="creatingAtDate" :ref="setCreateCardRef">
         <CroutonBookingsBookingCreateCard
           :date="creatingAtDate"
           @created="emit('created')"
@@ -285,7 +296,7 @@ watch(
       <!-- Create card for new date (not in existing groups) -->
       <div
         v-if="creatingAtDate && !creatingDateHasBookings"
-        ref="createCardRef"
+        :ref="setCreateCardRef"
       >
         <CroutonBookingsBookingCreateCard
           :date="creatingAtDate"
@@ -321,7 +332,7 @@ watch(
           <!-- Inline create card if creating at this date -->
           <div
             v-if="creatingAtDateKey === dateGroup.dateKey"
-            ref="createCardRef"
+            :ref="setCreateCardRef"
           >
             <CroutonBookingsBookingCreateCard
               :date="creatingAtDate!"
