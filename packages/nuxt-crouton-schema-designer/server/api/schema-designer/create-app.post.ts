@@ -133,8 +133,7 @@ export default defineEventHandler(async (event) => {
         timeout: 300000, // 5 minute timeout for install
         env: {
           ...process.env,
-          FORCE_COLOR: '0',
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0' // Auto-accept Corepack downloads
+          FORCE_COLOR: '0'
         }
       })
       console.log('[create-app] Dependencies installed:', stdout.slice(0, 200))
