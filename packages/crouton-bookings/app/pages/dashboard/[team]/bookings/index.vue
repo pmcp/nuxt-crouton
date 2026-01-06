@@ -19,6 +19,9 @@ const filterState = ref({
 // Inline creation state - date where we're creating a booking
 const creatingAtDate = ref<Date | null>(null)
 
+// Scroll to date - triggers scroll after booking creation
+const scrollToDate = ref<Date | null>(null)
+
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
   return filterState.value.statuses.length > 0 || filterState.value.locations.length > 0
@@ -55,10 +58,19 @@ function onCalendarDayClick(date: Date) {
   creatingAtDate.value = date
 }
 
-// Handle booking created - refresh the list and close inline form
-function onBookingCreated() {
+// Handle booking created - refresh the list and scroll to new booking
+async function onBookingCreated() {
+  // Store the date before clearing
+  const dateToScrollTo = creatingAtDate.value
   creatingAtDate.value = null
-  refresh()
+
+  // Refresh to get the new booking
+  await refresh()
+
+  // Scroll to the newly created booking
+  if (dateToScrollTo) {
+    scrollToDate.value = dateToScrollTo
+  }
 }
 
 // Handle cancel creation
@@ -94,6 +106,7 @@ function onCancelCreate() {
             :has-active-filters="hasActiveFilters"
             :highlighted-date="hoveredDate"
             :creating-at-date="creatingAtDate"
+            :scroll-to-date="scrollToDate"
             @created="onBookingCreated"
             @cancel-create="onCancelCreate"
           />

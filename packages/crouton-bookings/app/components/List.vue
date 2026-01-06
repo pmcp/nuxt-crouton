@@ -17,6 +17,8 @@ interface Props {
   highlightedDate?: Date | null
   /** Date where inline creation card should appear */
   creatingAtDate?: Date | null
+  /** Date to scroll to (after booking creation) */
+  scrollToDate?: Date | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -27,6 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
   hasActiveFilters: false,
   highlightedDate: null,
   creatingAtDate: null,
+  scrollToDate: null,
 })
 
 const emit = defineEmits<{
@@ -176,6 +179,26 @@ watch(
   },
 )
 
+// Watch for scrollToDate changes (after booking creation)
+watch(
+  () => props.scrollToDate,
+  (newDate) => {
+    if (!newDate) return
+
+    // Wait for DOM to update with new booking
+    nextTick(() => {
+      const targetKey = formatDateKey(newDate)
+      const element = dateElementRefs.value.get(targetKey)
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }
+    })
+  },
+)
+
 // Check if a booking should be highlighted
 function isHighlighted(booking: Booking): boolean {
   if (!props.highlightedDate) return false
@@ -203,7 +226,7 @@ const creatingDateHasBookings = computed(() => {
 const createCardElement = ref<HTMLElement | null>(null)
 
 // Callback ref setter - ensures we always get the element, not an array
-function setCreateCardRef(el: HTMLElement | ComponentPublicInstance | null) {
+function setCreateCardRef(el: Element | ComponentPublicInstance | null) {
   // Handle Vue component instances (get $el) or plain HTML elements
   if (el && '$el' in el) {
     createCardElement.value = el.$el as HTMLElement
