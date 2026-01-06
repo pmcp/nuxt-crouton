@@ -1,6 +1,6 @@
 # Crouton Bookings Package - Redo Plan
 
-> **Status**: In Progress (Phase 2 Complete)
+> **Status**: In Progress (Phase 4 Complete)
 > **Created**: 2025-01-06
 > **Goal**: Rebuild the bookings list view properly from the prototype
 
@@ -10,10 +10,11 @@ The initial port from `/Users/pmcp/Projects/crouton-bookings/layers/customer-boo
 
 ### What We Want
 - Weekly calendar on top (toggleable to month view)
-- Filterable list of bookings below
+- Filterable list of bookings below (status/location filters only)
 - Proper slot visualization per location
 - Simpler layout: calendar fixed, list scrolls independently
-- Eventually: booking creation (different approach than prototype)
+- Booking creation by clicking calendar day (Phase 6)
+- Hover calendar → highlight matching bookings in list
 
 ### What We Don't Want (Yet)
 - Sidebar booking flow (`BookingSidebar/*`)
@@ -200,42 +201,50 @@ BookingsList.vue
 
 ---
 
-### Phase 3: Calendar + Filters
+### Phase 3: Calendar + Filters ✅
 > **Goal**: Calendar navigation and filtering working
 
-- [ ] Port/clean `WeekStrip.vue`
-  - Review for improvements
-  - Ensure slot indicators work per day per location
-- [ ] Create `BookingsCalendar.vue`
-  - Week/month toggle
-  - Wraps WeekStrip or UCalendar
-  - Emits selected date/range
-- [ ] Create `BookingsFilters.vue`
-  - Status toggles (from settings, not hardcoded)
-  - Location toggles with LocationCardMini
-- [ ] Wire up:
-  - Calendar selection filters list
-  - Filter toggles filter list
-- [ ] **Checkpoint**: Can filter by date, status, location
+- [x] Review `WeekStrip.vue` - already has #day slot, works well
+- [x] Create `Calendar.vue` (CroutonBookingsCalendar)
+  - Week/month view toggle using UTabs
+  - Week mode uses WeekStrip.vue
+  - Month mode uses UCalendar
+  - Slot indicators per location per day
+  - Emits selected date via v-model
+- [x] Create `Filters.vue` (CroutonBookingsFilters)
+  - Status toggles from settings.statuses
+  - Location toggles with color indicators
+  - Clear all filters button
+- [x] Create `useBookingFilters.ts` composable
+- [x] Update `useBookingsList.ts` to also fetch locations
+- [x] Update `List.vue` to accept filtered bookings as prop
+- [x] Wire up bookings page with calendar + filters
+- [x] **Checkpoint**: Can filter by date, status, location ✅
 
 **Decisions:**
-- _TBD_
+- Component names: `Calendar.vue`, `Filters.vue` (no redundant "Bookings" prefix since CroutonBookings is already the component prefix)
+- Show ALL statuses by default (including cancelled)
+- Filters always visible (not collapsible)
+- Status filtering uses `value` field to match booking.status
+- Seed data updated to include statuses configuration
+- Settings statuses stored as JSON string in DB, Filters.vue parses with `parsedStatuses` computed
 
 ---
 
-### Phase 4: Bidirectional Sync
-> **Goal**: Calendar and list stay in sync
+### Phase 4: Calendar Interaction Model ✅
+> **Goal**: Define clear interaction pattern for calendar
 
-- [ ] Click calendar day → scroll list to that date's bookings
-- [ ] Scroll list → calendar follows to show current date range
-- [ ] Hover calendar day → highlight matching bookings
-- [ ] Handle edge cases:
-  - No bookings on selected date
-  - Date outside loaded range (expand query)
-- [ ] **Checkpoint**: Smooth bidirectional sync
+- [x] Remove date selection/filter from calendar
+- [x] Hover calendar day → highlight matching bookings in list
+- [x] Click calendar day → placeholder for booking creation (Phase 6)
+- [x] **Checkpoint**: Clear interaction model defined
 
 **Decisions:**
-- _TBD_
+- Calendar is **action-oriented** not filter-oriented
+- **Hover** = navigate/preview (highlights matching BookingCards)
+- **Click** = create booking (opens creation flow in Phase 6)
+- Date filtering removed entirely - use status/location filters only
+- Slot indicators show availability at a glance
 
 ---
 
@@ -360,6 +369,17 @@ components/
 - **Testing**: Add to Phase 5 (unit + component tests)
 - **DateBadge**: Keep existing component, looks good
 - **Each location has own slots**: SlotIndicator shows per-location, multiple indicators per day if multiple locations have bookings
+
+### 2025-01-07 - Calendar Interaction Model (Phase 4)
+- **Problem**: Three behaviors clashed: click filters, click scrolls, click creates booking
+- **Solution**: Simplified to action-oriented model:
+  - **Hover** = navigate/preview (highlight matching bookings)
+  - **Click** = create booking (opens creation flow in Phase 6)
+- **Removed**: Date filtering from calendar entirely
+- **Kept**: Status/location filters in separate Filters component
+- Calendar becomes visual indicator of availability + action trigger
+- Slot indicators show what's booked vs available at a glance
+- Creation component (Phase 6) will show existing bookings for the day + allow booking empty slots
 
 ---
 
