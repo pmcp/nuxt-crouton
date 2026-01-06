@@ -215,10 +215,19 @@ NUXT_SESSION_PASSWORD=your-32-char-secret-here
   })
 
   // server/db/schema.ts
+  const schemaImports: string[] = []
+
+  if (options.includeAuth) {
+    schemaImports.push(`// Auth schema (Better Auth tables)
+export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'`)
+  }
+
   files.push({
     path: 'server/db/schema.ts',
     content: `// Auto-generated database schema exports
 // Collections will register their schemas here
+${schemaImports.length > 0 ? '\n' + schemaImports.join('\n\n') + '\n' : ''}
+// Collection schemas will be added by the crouton CLI
 export {}
 `
   })
