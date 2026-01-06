@@ -8,19 +8,28 @@ interface SlotItem {
 interface Props {
   title: string
   slots?: SlotItem[]
+  bookedSlotIds?: string[]
+  color?: string
+  size?: 'xs' | 'sm' | 'md'
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  slots: () => [],
+  bookedSlotIds: () => [],
+  color: '#3b82f6',
+  size: 'xs',
+})
 </script>
 
 <template>
   <div class="flex items-center gap-1.5">
-    <span class="text-xs font-medium">{{ title }}</span>
-    <CroutonBookingSlotIndicator
-      v-if="slots && slots.length > 0"
-      :slots="slots"
-      :booked-slot-ids="[]"
-      size="xs"
+    <span class="text-xs font-medium truncate">{{ title }}</span>
+    <CroutonBookingsSlotIndicator
+      v-if="props.slots && props.slots.length > 0"
+      :slots="props.slots"
+      :booked-slot-ids="props.bookedSlotIds"
+      :color="props.color"
+      :size="props.size"
     />
   </div>
 </template>

@@ -24,21 +24,20 @@ export function useBookingOptions() {
     {
       default: () => [],
       watch: [() => currentTeam.value?.id],
+      server: false, // Avoid SSR hydration mismatch - team context is client-side
     }
   )
 
-  // Extract statuses from settings
+  // Extract statuses from settings (already parsed by jsonColumn in schema)
   const statuses = computed<OptionItem[]>(() => {
     const settings = settingsData.value?.[0]
-    if (!settings?.statuses) return []
-    return settings.statuses as OptionItem[]
+    return Array.isArray(settings?.statuses) ? settings.statuses : []
   })
 
-  // Extract groups from settings
+  // Extract groups from settings (already parsed by jsonColumn in schema)
   const groups = computed<OptionItem[]>(() => {
     const settings = settingsData.value?.[0]
-    if (!settings?.groups) return []
-    return settings.groups as OptionItem[]
+    return Array.isArray(settings?.groups) ? settings.groups : []
   })
 
   /**

@@ -1,6 +1,6 @@
 # Crouton Bookings Package - Redo Plan
 
-> **Status**: In Progress (Phase 1 Complete)
+> **Status**: In Progress (Phase 2 Complete)
 > **Created**: 2025-01-06
 > **Goal**: Rebuild the bookings list view properly from the prototype
 
@@ -162,35 +162,41 @@ BookingsList.vue
 
 ---
 
-### Phase 2: Core Components
+### Phase 2: Core Components ✅
 > **Goal**: See a working list with slot visualization
 
-- [ ] Create types file `types/booking.ts`
-- [ ] Create `useBookingSlots.ts` composable
-  - `parseSlotIds()`, `parseLocationSlots()`, `getSlotLabel()`
-- [ ] Create `SlotIndicator.vue`
-  - Props: `slots` (all slots), `bookedSlotIds`, `size`
+- [x] Create types file `types/booking.ts`
+  - Added `Booking` interface with full API response shape
+  - Added `UserInfo` interface
+  - Enhanced `SettingsData` with statuses array
+- [x] Create `useBookingSlots.ts` composable
+  - `parseSlotIds()`, `parseLocationSlots()`, `getSlotLabel()`, `getSlotLabels()`, `getSlot()`
+- [x] Review `SlotIndicator.vue` (already exists, working well)
+  - Props: `slots`, `bookedSlotIds`, `color`, `size`
   - Shows colored dots, filled = booked
-- [ ] Create `LocationCardMini.vue`
-  - Props: `title`, `slots`
+- [x] Review/update `LocationCardMini.vue`
+  - Added: `bookedSlotIds`, `color`, `size` props
   - Shows location name + SlotIndicator
-- [ ] Keep/review `DateBadge.vue` (already exists, looks good)
-- [ ] Create `BookingCard.vue`
-  - Props: booking data (location, date, slot, status, user, etc.)
-  - Shows: DateBadge, location title, slot indicator, status badge, user avatar
-  - NO email actions yet
-- [ ] Create `useBookingsList.ts` composable
-  - Fetches all bookings (no date windowing, max ~200)
-  - Returns: bookings, locations, settings, loading state
-  - Sorts by date (ascending)
-- [ ] Create `BookingsList.vue` (simple version)
+- [x] Review `DateBadge.vue` (already exists, looks good)
+- [x] Create `BookingCard.vue`
+  - Props: `booking` (Booking type), `showStatus`, `highlighted`
+  - Shows: DateBadge, location title, slot indicator, status badge
+  - NO email actions yet (Phase 5)
+- [x] Create `useBookingsList.ts` composable
+  - Fetches bookings from `/api/crouton-bookings/teams/[id]/customer-bookings`
+  - Fetches settings from `/api/teams/[id]/bookings-settings`
+  - Returns: bookings (sorted by date), settings, loading, error, refresh
+- [x] Create `List.vue` (simple version)
   - Uses `useBookingsList` composable
   - Renders BookingCard for each
-  - Basic loading/empty states
-- [ ] **Checkpoint**: See scrollable list with slot indicators, sorted by date
+  - Loading skeleton, error state, empty state
+- [x] **Checkpoint**: See scrollable list with slot indicators, sorted by date
 
 **Decisions:**
-- _TBD_
+- Component prefix is `CroutonBookings` (plural) per nuxt.config.ts
+- List.vue is the main component, page uses `<CroutonBookingsList />`
+- BookingCard shows slot indicator inline with slot label text
+- Used existing Slot/Indicator.vue - works well, no changes needed
 
 ---
 
