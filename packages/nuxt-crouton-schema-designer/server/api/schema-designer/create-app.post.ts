@@ -127,20 +127,36 @@ export default defineEventHandler(async (event) => {
     // Always install because we need the CLI package to generate collections
     console.log('[create-app] Installing dependencies...')
 
-    try {
-      const { stdout } = await execAsync('pnpm install', {
-        cwd: projectPath,
-        timeout: 300000, // 5 minute timeout for install
-        env: {
-          ...process.env,
-          FORCE_COLOR: '0',
-          COREPACK_ENABLE: '0' // Completely disable Corepack
-        }
-      })
-      console.log('[create-app] Dependencies installed:', stdout.slice(0, 200))
-    } catch (installError: any) {
-      errors.push(`Dependency installation failed: ${installError.message}. Run "pnpm install" manually.`)
-      // Can't proceed without dependencies
+    // Try different pnpm paths to avoid Corepack shim issues
+    const pnpmPaths = [
+      '/opt/homebrew/bin/pnpm', // Homebrew (macOS ARM)
+      '/usr/local/bin/pnpm',    // Homebrew (macOS Intel)
+      'pnpm'                     // Fall back to PATH
+    ]
+
+    let installSuccess = false
+    for (const pnpmPath of pnpmPaths) {
+      try {
+        const { stdout } = await execAsync(`${pnpmPath} install`, {
+          cwd: projectPath,
+          timeout: 300000, // 5 minute timeout for install
+          env: {
+            ...process.env,
+            FORCE_COLOR: '0',
+            COREPACK_ENABLE: '0'
+          }
+        })
+        console.log('[create-app] Dependencies installed:', stdout.slice(0, 200))
+        installSuccess = true
+        break
+      } catch (e: any) {
+        console.log(`[create-app] ${pnpmPath} failed:`, e.message?.slice(0, 100))
+        continue
+      }
+    }
+
+    if (!installSuccess) {
+      errors.push('Dependency installation failed. Run "pnpm install" manually.')
       return {
         success: false,
         projectPath,
