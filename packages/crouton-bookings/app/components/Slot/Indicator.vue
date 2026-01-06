@@ -19,21 +19,27 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const sizeClasses = {
-  xs: 'w-1 h-1',
+  xs: 'w-1.5 h-1.5',
   sm: 'w-2 h-2',
   md: 'w-3 h-3',
   lg: 'w-4 h-4'
 }
 
 const gapClasses = {
-  xs: 'gap-1px',
-  sm: 'gap-1',
-  md: 'gap-1',
-  lg: 'gap-1'
+  xs: 'gap-1',
+  sm: 'gap-1.5',
+  md: 'gap-2',
+  lg: 'gap-2'
 }
 
 function isBooked(slotId: string): boolean {
   return props.bookedSlotIds?.includes(slotId) ?? false
+}
+
+// Compute unfilled slot color (same hue, 25% opacity)
+function getUnfilledColor(): string {
+  // Use the location color with reduced opacity
+  return props.color
 }
 </script>
 
@@ -43,11 +49,11 @@ function isBooked(slotId: string): boolean {
       v-for="slot in slots"
       :key="slot.id"
       class="rounded-full transition-colors"
-      :class="[
-        sizeClasses[size],
-        isBooked(slot.id) ? '' : 'bg-elevated'
-      ]"
-      :style="isBooked(slot.id) ? { backgroundColor: color } : undefined"
+      :class="sizeClasses[size]"
+      :style="{
+        backgroundColor: isBooked(slot.id) ? color : getUnfilledColor(),
+        opacity: isBooked(slot.id) ? 1 : 0.25
+      }"
       :title="slot.label"
     />
   </div>
