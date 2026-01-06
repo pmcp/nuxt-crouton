@@ -189,15 +189,17 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!cliPath) {
-      warnings.push('CLI not found. Run "npx crouton-generate config" manually after publishing @friendlyinternet/nuxt-crouton-cli.')
+      errors.push('CLI not found. Tried: ' + possibleCliPaths.join(', '))
       return {
-        success: true, // Templates were created, just CLI skipped
+        success: false,
         projectPath,
         errors,
         warnings,
         filesCreated
       }
     }
+
+    console.log('[create-app] Using CLI at:', cliPath)
 
     const configPath = join(projectPath, 'crouton.config.js')
     const cliCommand = `node ${cliPath} --config ${configPath}`
