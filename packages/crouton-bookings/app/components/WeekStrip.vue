@@ -99,7 +99,13 @@ function isToday(day: { date: DateValue }): boolean {
 }
 
 function selectDay(day: { date: DateValue, jsDate: Date }) {
-  emit('update:modelValue', day.jsDate)
+  // Toggle: if already selected, deselect
+  if (isSelected(day)) {
+    emit('update:modelValue', null)
+  }
+  else {
+    emit('update:modelValue', day.jsDate)
+  }
 }
 
 // Size classes
@@ -164,12 +170,17 @@ const sizeClasses = computed(() => {
     </div>
 
     <!-- Days Grid -->
-    <div class="grid grid-cols-7 gap-1" @mouseleave="emit('hover', null)">
+    <div class="grid grid-cols-7 gap-2" @mouseleave="emit('hover', null)">
       <div
         v-for="day in weekDays"
         :key="day.date.toString()"
-        class="flex flex-col items-center cursor-pointer group"
-        :class="sizeClasses.cell"
+        class="flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1"
+        :class="[
+          sizeClasses.cell,
+          isSelected(day)
+            ? 'bg-primary/15'
+            : 'hover:bg-elevated',
+        ]"
         @click="selectDay(day)"
         @mouseenter="emit('hover', day.jsDate)"
       >
@@ -184,10 +195,10 @@ const sizeClasses = computed(() => {
             'font-medium transition-colors',
             sizeClasses.day,
             isSelected(day)
-              ? 'text-primary'
+              ? 'text-primary font-semibold'
               : isToday(day)
                 ? 'text-primary'
-                : 'text-default group-hover:text-primary',
+                : 'text-default',
           ]"
         >
           {{ day.day }}
