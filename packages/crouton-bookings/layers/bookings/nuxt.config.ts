@@ -14,9 +14,6 @@ export default defineNuxtConfig({
   },
   extends: [
     '@friendlyinternet/nuxt-crouton-i18n',
-    './collections/locations',
-    './collections/bookings',
-    './collections/settings',
     './collections/emailtemplates',
     './collections/emaillogs'
   ],

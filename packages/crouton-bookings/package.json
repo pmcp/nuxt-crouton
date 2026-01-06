@@ -14,7 +14,9 @@
     "SCHEMAS.md"
   ],
   "exports": {
-    ".": "./nuxt.config.ts"
+    ".": "./nuxt.config.ts",
+    "./server/utils/email-service": "./server/utils/email-service.ts",
+    "./server/utils/booking-emails": "./server/utils/booking-emails.ts"
   },
   "scripts": {
     "build": "unbuild",

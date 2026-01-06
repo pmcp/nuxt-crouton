@@ -5,21 +5,22 @@
  * Requires:
  * - Email module enabled: runtimeConfig.croutonBookings.email.enabled = true
  * - @friendlyinternet/crouton-email installed and configured
- * - Email template and log schemas generated (optional but recommended)
+ * - Email template and log schemas generated
  *
  * Body: { triggerType: 'booking_confirmed' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after' }
  */
 import { z } from 'zod'
+import { eq, and } from 'drizzle-orm'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import {
   isBookingEmailEnabled,
-  getBookingEmailService,
-  buildBookingEmailVariables,
-  renderBookingEmailTemplate,
+  sendBookingEmails,
+  type BookingEmailContext,
   type BookingEmailTriggerType
-} from '../../../../../../utils/booking-emails'
+} from '../../../../../../utils/email-service'
 
 const bodySchema = z.object({
-  triggerType: z.enum(['booking_confirmed', 'reminder_before', 'booking_cancelled', 'follow_up_after'])
+  triggerType: z.enum(['booking_created', 'reminder_before', 'booking_cancelled', 'follow_up_after'])
 })
 
 export default defineEventHandler(async (event) => {
@@ -31,7 +32,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { id: teamId, bookingId } = getRouterParams(event)
+  const { team, user } = await resolveTeamAndCheckMembership(event)
+  const { bookingId } = getRouterParams(event)
 
   // Validate request body
   const body = await readBody(event)
@@ -39,35 +41,111 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Invalid request body. Expected { triggerType: "booking_confirmed" | "reminder_before" | "booking_cancelled" | "follow_up_after" }'
+      statusMessage: 'Invalid request body. Expected { triggerType: "booking_created" | "reminder_before" | "booking_cancelled" | "follow_up_after" }'
     })
   }
 
   const { triggerType } = parsed.data
+  const db = useDB()
 
-  // Get email service
-  const emailService = await getBookingEmailService()
-  if (!emailService) {
+  // Fetch booking with location data
+  let booking: any
+  try {
+    const { bookingsBookings } = await import(
+      '~~/layers/bookings/collections/bookings/server/database/schema'
+    )
+    const { bookingsLocations } = await import(
+      '~~/layers/bookings/collections/locations/server/database/schema'
+    )
+
+    const results = await db
+      .select({
+        id: bookingsBookings.id,
+        teamId: bookingsBookings.teamId,
+        owner: bookingsBookings.owner,
+        location: bookingsBookings.location,
+        date: bookingsBookings.date,
+        slot: bookingsBookings.slot,
+        status: bookingsBookings.status,
+        locationData: {
+          id: bookingsLocations.id,
+          title: bookingsLocations.title,
+          street: bookingsLocations.street,
+          city: bookingsLocations.city
+        }
+      })
+      .from(bookingsBookings)
+      .leftJoin(bookingsLocations, eq(bookingsBookings.location, bookingsLocations.id))
+      .where(
+        and(
+          eq(bookingsBookings.id, bookingId),
+          eq(bookingsBookings.teamId, team.id)
+        )
+      )
+      .limit(1)
+
+    booking = results[0]
+  }
+  catch (error) {
+    console.error('[resend-email] Failed to fetch booking:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Email service not available. Ensure @friendlyinternet/crouton-email is installed and configured.'
+      statusMessage: 'Failed to fetch booking data'
     })
   }
 
-  // Note: The consuming app needs to provide these functions
-  // This package provides the API structure; the app provides the data access
-  // Check if the app has registered booking email handlers
+  if (!booking) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Booking not found'
+    })
+  }
 
-  // For now, we emit an event that the consuming app can handle
-  // Apps can implement their own email logic by:
-  // 1. Defining a nitro plugin that registers hooks
-  // 2. Or by overriding this endpoint in their own server/api folder
+  // Build booking context for email
+  const bookingContext: BookingEmailContext = {
+    id: booking.id,
+    teamId: booking.teamId,
+    owner: booking.owner,
+    location: booking.location,
+    date: booking.date,
+    slot: booking.slot,
+    status: booking.status,
+    locationData: booking.locationData
+      ? {
+          id: booking.locationData.id,
+          name: booking.locationData.title || 'Location',
+          address: [booking.locationData.street, booking.locationData.city]
+            .filter(Boolean)
+            .join(', ')
+        }
+      : null,
+    ownerUser: {
+      id: user.id,
+      name: user.name || 'Customer',
+      email: user.email || ''
+    },
+    teamName: team.name
+  }
 
-  // Return a helpful error for now - apps need to implement the full flow
-  throw createError({
-    statusCode: 501,
-    statusMessage: `Email resend for trigger "${triggerType}" not implemented. ` +
-      'To implement: Override this endpoint in your app or register booking email hooks. ' +
-      'See crouton-bookings documentation for setup instructions.'
+  // Send email
+  const result = await sendBookingEmails({
+    booking: bookingContext,
+    triggerType: triggerType as BookingEmailTriggerType,
+    teamId: team.id,
+    userId: user.id
   })
+
+  if (!result.success) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: result.errors?.join(', ') || 'Failed to send email'
+    })
+  }
+
+  return {
+    success: true,
+    message: `Email resent for trigger: ${triggerType}`,
+    customerResult: result.customerResult,
+    adminResult: result.adminResult
+  }
 })

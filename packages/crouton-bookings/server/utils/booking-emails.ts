@@ -8,7 +8,7 @@
  * 3. Generate email-template and email-log schemas if using template system
  */
 
-export type BookingEmailTriggerType = 'booking_confirmed' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after'
+export type BookingEmailTriggerType = 'booking_created' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after'
 export type BookingEmailRecipientType = 'customer' | 'admin' | 'both'
 
 export interface BookingEmailTemplate {

@@ -1,3 +1,27 @@
+/**
+ * Email statistics for a booking
+ */
+export interface EmailStats {
+  total: number
+  sent: number
+  pending: number
+  failed: number
+}
+
+/**
+ * Email trigger types
+ */
+export type EmailTriggerType = 'booking_created' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after'
+
+/**
+ * Available email action for resending
+ */
+export interface AvailableEmailAction {
+  triggerType: EmailTriggerType
+  label: string
+  icon: string
+}
+
 export interface SlotItem {
   id: string
   label?: string
@@ -94,4 +118,7 @@ export interface Booking {
   locationData?: LocationData | null
   ownerUser?: UserInfo | null
   createdByUser?: UserInfo | null
+  // Email data (when email module is enabled)
+  emailStats?: EmailStats | null
+  emailActions?: AvailableEmailAction[]
 }

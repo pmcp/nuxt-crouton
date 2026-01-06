@@ -12,11 +12,17 @@
  * {
  *   success: true,
  *   count: number,
- *   bookings: Booking[]
+ *   bookings: Booking[],
+ *   emailsSent?: number
  * }
  */
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
+import {
+  isBookingEmailEnabled,
+  triggerBookingCreatedEmail,
+  type BookingEmailContext
+} from '../../../../utils/email-service'
 
 interface CartItem {
   id: string
@@ -95,10 +101,73 @@ export default defineEventHandler(async (event) => {
       .values(bookingsToInsert)
       .returning()
 
+    // Trigger booking_created emails (non-blocking)
+    let emailsSent = 0
+    if (isBookingEmailEnabled() && created.length > 0) {
+      // Build a map of locationId -> cart item for location titles
+      const locationMap = new Map(
+        body.bookings.map(item => [item.locationId, item])
+      )
+
+      // Send emails in background - don't block checkout
+      const emailPromises = created.map(async (booking) => {
+        const cartItem = locationMap.get(booking.location)
+
+        // Build booking context with available data
+        const bookingContext: BookingEmailContext = {
+          id: booking.id,
+          teamId: booking.teamId,
+          owner: booking.owner,
+          location: booking.location,
+          date: booking.date,
+          slot: booking.slot,
+          status: booking.status,
+          locationData: {
+            id: booking.location,
+            name: cartItem?.locationTitle || 'Location'
+          },
+          ownerUser: {
+            id: user.id,
+            name: user.name || 'Customer',
+            email: user.email || ''
+          },
+          teamName: team.name
+        }
+
+        try {
+          const result = await triggerBookingCreatedEmail(
+            bookingContext,
+            team.id,
+            user.id
+          )
+          return result.success ? 1 : 0
+        }
+        catch (err) {
+          console.error('[batch-bookings] Email trigger failed:', err)
+          return 0
+        }
+      })
+
+      // Wait for all emails to be triggered (with timeout)
+      try {
+        const results = await Promise.race([
+          Promise.all(emailPromises),
+          new Promise<number[]>(resolve =>
+            setTimeout(() => resolve([]), 5000) // 5s timeout
+          )
+        ])
+        emailsSent = results.reduce((sum, n) => sum + n, 0)
+      }
+      catch {
+        // Continue even if email sending fails
+      }
+    }
+
     return {
       success: true,
       count: created.length,
       bookings: created,
+      ...(emailsSent > 0 && { emailsSent })
     }
   }
   catch (error: unknown) {

@@ -13,26 +13,15 @@
  * knows the return type is BlogPost[] without requiring explicit generics.
  *
  * ## Registered Collections
- * - bookingsBookings: BookingsBooking
  * - bookingsEmaillogs: BookingsEmaillog
  * - bookingsEmailtemplates: BookingsEmailtemplate
- * - bookingsLocations: BookingsLocation
- * - bookingsSettings: BookingsSetting
  */
 
-import type { BookingsBooking, BookingsBookingFormData, NewBookingsBooking } from './layers/bookings/collections/bookings/types'
 import type { BookingsEmaillog, BookingsEmaillogFormData, NewBookingsEmaillog } from './layers/bookings/collections/emaillogs/types'
 import type { BookingsEmailtemplate, BookingsEmailtemplateFormData, NewBookingsEmailtemplate } from './layers/bookings/collections/emailtemplates/types'
-import type { BookingsLocation, BookingsLocationFormData, NewBookingsLocation } from './layers/bookings/collections/locations/types'
-import type { BookingsSetting, BookingsSettingFormData, NewBookingsSetting } from './layers/bookings/collections/settings/types'
 
 declare module '#crouton/types' {
   interface CollectionTypeMap {
-    bookingsBookings: {
-      Item: BookingsBooking
-      FormData: BookingsBookingFormData
-      NewItem: NewBookingsBooking
-    }
     bookingsEmaillogs: {
       Item: BookingsEmaillog
       FormData: BookingsEmaillogFormData
@@ -42,16 +31,6 @@ declare module '#crouton/types' {
       Item: BookingsEmailtemplate
       FormData: BookingsEmailtemplateFormData
       NewItem: NewBookingsEmailtemplate
-    }
-    bookingsLocations: {
-      Item: BookingsLocation
-      FormData: BookingsLocationFormData
-      NewItem: NewBookingsLocation
-    }
-    bookingsSettings: {
-      Item: BookingsSetting
-      FormData: BookingsSettingFormData
-      NewItem: NewBookingsSetting
     }
   }
 }

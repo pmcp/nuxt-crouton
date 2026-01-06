@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import type { Booking, SlotItem } from '../types/booking'
+import type { Booking, SlotItem, EmailTriggerType } from '../types/booking'
 
 interface Props {
   booking: Booking
   highlighted?: boolean
+  /** Which email action is currently being sent */
+  sendingEmailType?: EmailTriggerType | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   highlighted: false,
+  sendingEmailType: null,
 })
 
+const emit = defineEmits<{
+  'resend-email': [triggerType: EmailTriggerType]
+}>()
+
+const { t } = useI18n()
 const { parseSlotIds, parseLocationSlots, getSlotLabel } = useBookingSlots()
 const { getGroupLabel } = useBookingOptions()
+const { isEmailEnabled } = useBookingEmail()
 
 // Is this booking cancelled?
 const isCancelled = computed(() => props.booking.status === 'cancelled')
@@ -41,6 +50,38 @@ const locationColor = computed(() => {
 const isInventoryMode = computed(() => {
   return props.booking.locationData?.inventoryMode === true
 })
+
+// Email stats helpers
+const emailStats = computed(() => props.booking.emailStats)
+const emailActions = computed(() => props.booking.emailActions || [])
+
+const hasEmailData = computed(() => {
+  return isEmailEnabled.value && emailStats.value?.total
+})
+
+const emailStatusColor = computed((): 'success' | 'warning' | 'error' | 'neutral' => {
+  if (!emailStats.value?.total) return 'neutral'
+  if (emailStats.value.failed > 0) return 'error'
+  if (emailStats.value.pending > 0) return 'warning'
+  if (emailStats.value.sent === emailStats.value.total) return 'success'
+  return 'neutral'
+})
+
+const emailStatusIcon = computed(() => {
+  if (!emailStats.value?.total) return 'i-lucide-mail'
+  if (emailStats.value.failed > 0) return 'i-lucide-mail-x'
+  if (emailStats.value.pending > 0) return 'i-lucide-mail-question'
+  if (emailStats.value.sent === emailStats.value.total) return 'i-lucide-mail-check'
+  return 'i-lucide-mail'
+})
+
+const emailStatusText = computed(() => {
+  if (!emailStats.value?.total) return ''
+  if (emailStats.value.failed > 0) {
+    return t('bookings.meta.emailsFailed', { failed: emailStats.value.failed, total: emailStats.value.total })
+  }
+  return t('bookings.meta.emailsSent', { sent: emailStats.value.sent, total: emailStats.value.total })
+})
 </script>
 
 <template>
@@ -48,7 +89,7 @@ const isInventoryMode = computed(() => {
     variant="soft"
     :ui="{
       root: [
-        'transition-all duration-200',
+        'group transition-all duration-200',
         isCancelled ? 'opacity-60' : '',
         highlighted ? 'ring-1 ring-primary/30 bg-primary/[0.02]' : ''
       ],
@@ -104,6 +145,44 @@ const isInventoryMode = computed(() => {
         >
           {{ getGroupLabel(booking.group) }}
         </UBadge>
+
+        <!-- Email stats (when email enabled and data available) -->
+        <div
+          v-if="hasEmailData"
+          class="flex items-center gap-1 text-xs mt-0.5"
+          :class="{
+            'text-success': emailStatusColor === 'success',
+            'text-warning': emailStatusColor === 'warning',
+            'text-error': emailStatusColor === 'error',
+            'text-muted': emailStatusColor === 'neutral',
+          }"
+        >
+          <UIcon :name="emailStatusIcon" class="size-3" />
+          <span>{{ emailStatusText }}</span>
+        </div>
+      </div>
+
+      <!-- Email actions (right side) -->
+      <div
+        v-if="isEmailEnabled && emailActions.length > 0"
+        class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <UTooltip
+          v-for="action in emailActions"
+          :key="action.triggerType"
+          :text="action.label"
+        >
+          <UButton
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            :icon="action.icon"
+            :loading="sendingEmailType === action.triggerType"
+            :disabled="!!sendingEmailType"
+            class="transition-all duration-200 hover:scale-110 hover:text-primary"
+            @click="emit('resend-email', action.triggerType)"
+          />
+        </UTooltip>
       </div>
     </div>
   </UCard>

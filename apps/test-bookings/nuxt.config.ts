@@ -11,5 +11,17 @@ export default defineNuxtConfig({
     './layers/bookings'
   ],
   modules: ['@nuxthub/core', '@nuxt/ui'],
-  hub: { db: 'sqlite' }
+  hub: { db: 'sqlite' },
+
+  // Enable booking email functionality
+  runtimeConfig: {
+    croutonBookings: {
+      email: { enabled: true }
+    },
+    public: {
+      croutonBookings: {
+        email: { enabled: true }
+      }
+    }
+  }
 })

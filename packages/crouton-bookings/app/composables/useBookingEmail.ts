@@ -25,7 +25,7 @@ export function useBookingEmail() {
   async function resendEmail(
     teamId: string,
     bookingId: string,
-    triggerType: 'booking_confirmed' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after'
+    triggerType: 'booking_created' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after'
   ): Promise<{ success: boolean; error?: string }> {
     if (!isEmailEnabled.value) {
       return {

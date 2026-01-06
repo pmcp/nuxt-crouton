@@ -15,6 +15,13 @@
       "when": 1766691163979,
       "tag": "0001_married_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1767730075909,
+      "tag": "0002_tiresome_sabretooth",
+      "breakpoints": true
     }
   ]
 }

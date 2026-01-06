@@ -1,0 +1,59 @@
+{
+  "bookingId": {
+    "type": "string",
+    "refTarget": "bookings",
+    "meta": {
+      "label": "Booking",
+      "area": "main"
+    }
+  },
+  "templateId": {
+    "type": "string",
+    "refTarget": "emailTemplates",
+    "meta": {
+      "label": "Template",
+      "area": "main"
+    }
+  },
+  "recipientEmail": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Recipient Email",
+      "area": "main"
+    }
+  },
+  "triggerType": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Trigger Type",
+      "area": "main"
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "default": "pending",
+      "label": "Status",
+      "options": ["pending", "sent", "failed"],
+      "displayAs": "optionsSelect",
+      "area": "sidebar"
+    }
+  },
+  "sentAt": {
+    "type": "timestamp",
+    "meta": {
+      "label": "Sent At",
+      "area": "sidebar"
+    }
+  },
+  "error": {
+    "type": "text",
+    "meta": {
+      "label": "Error Message",
+      "area": "main"
+    }
+  }
+}
