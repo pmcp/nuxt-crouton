@@ -100,13 +100,16 @@ export default defineEventHandler(async (_event) => {
 
   console.log('[seed] Creating settings...')
 
-  // Create settings with groups (statuses are just confirmed/cancelled, no config needed)
+  // Create settings with statuses and groups
   const settings = {
     id: nanoid(),
     teamId,
     owner: memberId,
     order: 0,
-    statuses: null, // Not using configurable statuses - just confirmed/cancelled
+    statuses: JSON.stringify([
+      { id: 'confirmed', value: 'confirmed', label: 'Confirmed', color: '#22c55e' },
+      { id: 'cancelled', value: 'cancelled', label: 'Cancelled', color: '#ef4444' },
+    ]),
     groups: JSON.stringify([
       { id: 'adult', value: 'adult', label: 'Adults' },
       { id: 'junior', value: 'junior', label: 'Juniors' },
@@ -124,7 +127,7 @@ export default defineEventHandler(async (_event) => {
   console.log('[seed] Creating bookings...')
 
   // Create 25 bookings across a date range (mix of past and future)
-  const statuses = ['confirmed', 'confirmed', 'confirmed', 'confirmed', 'cancelled'] // 80% confirmed, 20% cancelled
+  const statuses = ['confirmed', 'confirmed', 'confirmed', 'confirmed', 'confirmed', 'confirmed', 'confirmed', 'cancelled'] // ~87% confirmed, ~13% cancelled
   const groups = ['adult', 'junior', 'senior', null]
   const bookings = []
 
