@@ -1,23 +1,34 @@
 <script setup lang="ts">
 import type { DateValue } from '@internationalized/date'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
-import type { Booking, LocationData, SlotItem } from '../types/booking'
+import type { Booking, LocationData, SettingsData, SlotItem } from '../types/booking'
+
+interface FilterState {
+  statuses: string[]
+  locations: string[]
+}
 
 interface Props {
   bookings?: Booking[]
   locations?: LocationData[]
+  settings?: SettingsData | null
   defaultView?: 'week' | 'month'
+  /** Filter state for status and location filters */
+  filters?: FilterState
 }
 
 const props = withDefaults(defineProps<Props>(), {
   bookings: () => [],
   locations: () => [],
+  settings: null,
   defaultView: 'week',
+  filters: () => ({ statuses: [], locations: [] }),
 })
 
 const emit = defineEmits<{
   'hover': [value: Date | null]
   'dayClick': [value: Date]
+  'update:filters': [value: FilterState]
 }>()
 
 const { parseSlotIds, parseLocationSlots } = useBookingSlots()
@@ -32,10 +43,94 @@ const monthFocusDate = ref(new CalendarDate(
   1
 ))
 
-// Group bookings by date string (YYYY-MM-DD)
+// Parse statuses from settings
+const parsedStatuses = computed(() => {
+  const raw = props.settings?.statuses
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    }
+    catch {
+      return []
+    }
+  }
+  return []
+})
+
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+  return props.filters.statuses.length > 0 || props.filters.locations.length > 0
+})
+
+// Toggle status filter
+function toggleStatus(statusValue: string) {
+  const current = [...props.filters.statuses]
+  const index = current.indexOf(statusValue)
+  if (index === -1) {
+    current.push(statusValue)
+  }
+  else {
+    current.splice(index, 1)
+  }
+  emit('update:filters', { ...props.filters, statuses: current })
+}
+
+// Toggle location filter
+function toggleLocation(locationId: string) {
+  const current = [...props.filters.locations]
+  const index = current.indexOf(locationId)
+  if (index === -1) {
+    current.push(locationId)
+  }
+  else {
+    current.splice(index, 1)
+  }
+  emit('update:filters', { ...props.filters, locations: current })
+}
+
+// Get status color
+function getStatusColor(status: { id: string, color?: string }): string {
+  return status.color || '#6b7280'
+}
+
+// Check if status is selected
+function isStatusSelected(statusValue: string): boolean {
+  return props.filters.statuses.includes(statusValue)
+}
+
+// Check if location is selected
+function isLocationSelected(locationId: string): boolean {
+  return props.filters.locations.includes(locationId)
+}
+
+// Filter bookings based on current filters
+const filteredBookings = computed(() => {
+  let result = props.bookings
+
+  // Filter by status
+  if (props.filters.statuses.length > 0) {
+    result = result.filter(booking =>
+      props.filters.statuses.includes(booking.status),
+    )
+  }
+
+  // Filter by location
+  if (props.filters.locations.length > 0) {
+    result = result.filter(booking =>
+      props.filters.locations.includes(booking.location),
+    )
+  }
+
+  return result
+})
+
+// Group bookings by date string (YYYY-MM-DD) - uses filtered bookings
 const bookingsByDate = computed(() => {
   const map = new Map<string, Booking[]>()
-  for (const booking of props.bookings) {
+  for (const booking of filteredBookings.value) {
     const date = new Date(booking.date)
     const key = formatDateKey(date)
     if (!map.has(key)) {
@@ -134,8 +229,52 @@ function hasBookings(date: Date): boolean {
 
 <template>
   <div class="flex flex-col gap-2">
-    <!-- View toggle -->
-    <div class="flex items-center justify-between">
+    <!-- Filters and view toggle on one line -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Status filters (inline) -->
+      <div v-if="parsedStatuses.length > 0" class="flex items-center gap-1">
+        <UButton
+          v-for="status in parsedStatuses"
+          :key="status.id || status.value"
+          size="xs"
+          :variant="isStatusSelected(status.value || status.id) ? 'solid' : 'soft'"
+          :color="isStatusSelected(status.value || status.id) ? 'primary' : 'neutral'"
+          @click="toggleStatus(status.value || status.id)"
+        >
+          <template #leading>
+            <span
+              class="w-2 h-2 rounded-full"
+              :style="{ backgroundColor: getStatusColor(status) }"
+            />
+          </template>
+          {{ status.label }}
+        </UButton>
+      </div>
+
+      <!-- Location filters (inline) -->
+      <div v-if="locations && locations.length > 0" class="flex items-center gap-1">
+        <UButton
+          v-for="location in locations"
+          :key="location.id"
+          size="xs"
+          :variant="isLocationSelected(location.id) ? 'solid' : 'soft'"
+          :color="isLocationSelected(location.id) ? 'primary' : 'neutral'"
+          @click="toggleLocation(location.id)"
+        >
+          <template #leading>
+            <span
+              class="w-2 h-2 rounded-full"
+              :style="{ backgroundColor: location.color || '#3b82f6' }"
+            />
+          </template>
+          {{ location.title }}
+        </UButton>
+      </div>
+
+      <!-- Spacer to push toggle to right -->
+      <div class="flex-1" />
+
+      <!-- View toggle (right aligned) -->
       <UTabs
         v-model="currentView"
         :items="[

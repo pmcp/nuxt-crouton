@@ -80,19 +80,14 @@ function isBookingHighlighted(bookingDate: string | Date): boolean {
 
     <template #body>
       <div class="flex flex-col gap-4 h-full p-4">
-        <!-- Calendar section -->
+        <!-- Calendar section with integrated filters -->
         <CroutonBookingsCalendar
+          v-model:filters="filterState"
           :bookings="bookings"
           :locations="locations"
+          :settings="settings"
           @hover="onCalendarHover"
           @day-click="onCalendarDayClick"
-        />
-
-        <!-- Filters section -->
-        <CroutonBookingsFilters
-          v-model="filterState"
-          :settings="settings"
-          :locations="locations"
         />
 
         <!-- List section -->

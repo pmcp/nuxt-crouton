@@ -50,7 +50,7 @@ const isInventoryMode = computed(() => {
       root: [
         'transition-all duration-200',
         isCancelled ? 'opacity-60' : '',
-        highlighted ? 'ring-2 ring-primary/50 bg-primary/5' : ''
+        highlighted ? 'ring-1 ring-primary/30 bg-primary/[0.02]' : ''
       ],
       body: 'p-2'
     }"
