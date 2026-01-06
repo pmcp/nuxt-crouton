@@ -9,6 +9,15 @@ export interface ParsedSchema {
   options?: Partial<CollectionOptions>
 }
 
+export interface ParsedMultiCollection {
+  layerName?: string
+  collections: Array<{
+    collectionName: string
+    fields: SchemaField[]
+    options?: Partial<CollectionOptions>
+  }>
+}
+
 export interface ParseResult {
   success: boolean
   schema: ParsedSchema | null
@@ -263,6 +272,161 @@ export function useStreamingSchemaParser() {
   }
 
   /**
+   * Parse multi-collection content from AI response
+   * Handles the new format with collections array
+   */
+  function parseMultiCollectionContent(content: string): ParsedMultiCollection {
+    const result: ParsedMultiCollection = {
+      layerName: undefined,
+      collections: []
+    }
+
+    const jsonStr = extractJSON(content)
+    if (!jsonStr) return result
+
+    // Check if this is the multi-collection format (has "collections" array)
+    if (!jsonStr.includes('"collections"')) {
+      return result
+    }
+
+    // Try to parse the complete JSON
+    let parsed: Record<string, unknown>
+    try {
+      parsed = JSON.parse(jsonStr)
+    } catch {
+      // JSON not complete yet, try to extract partial data
+      return parsePartialMultiCollectionContent(jsonStr)
+    }
+
+    // Extract layer name
+    if (typeof parsed.layerName === 'string') {
+      result.layerName = parsed.layerName
+    }
+
+    // Extract collections
+    if (Array.isArray(parsed.collections)) {
+      for (const coll of parsed.collections) {
+        if (!coll || typeof coll !== 'object') continue
+
+        const collectionName = typeof coll.collectionName === 'string' ? coll.collectionName : ''
+        if (!collectionName) continue
+
+        const fields: SchemaField[] = []
+        const rawFields = Array.isArray(coll.fields) ? coll.fields : []
+
+        for (const raw of rawFields) {
+          if (!raw || typeof raw !== 'object') continue
+
+          const { name, type, meta, refTarget } = raw as Record<string, unknown>
+
+          if (typeof name !== 'string' || !name) continue
+          if (typeof type !== 'string' || !isValidFieldType(type)) continue
+
+          const fieldHash = `${collectionName}:${name}:${type}`
+          if (processedFieldHashes.value.has(fieldHash)) continue
+
+          processedFieldHashes.value.add(fieldHash)
+
+          fields.push({
+            id: generateFieldId(),
+            name,
+            type,
+            meta: (meta || {}) as SchemaField['meta'],
+            ...(typeof refTarget === 'string' ? { refTarget } : {})
+          })
+        }
+
+        if (fields.length > 0 || collectionName) {
+          result.collections.push({
+            collectionName,
+            fields,
+            options: typeof coll.options === 'object' ? coll.options as Partial<CollectionOptions> : undefined
+          })
+        }
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Parse partial multi-collection content when JSON is incomplete
+   */
+  function parsePartialMultiCollectionContent(jsonStr: string): ParsedMultiCollection {
+    const result: ParsedMultiCollection = {
+      layerName: undefined,
+      collections: []
+    }
+
+    // Extract layer name
+    const layerMatch = jsonStr.match(/"layerName"\s*:\s*"([^"]+)"/)
+    if (layerMatch?.[1]) {
+      result.layerName = layerMatch[1]
+    }
+
+    // Split the JSON string by collection objects more carefully
+    // Find all collection blocks by looking for {"collectionName": patterns
+    const collectionStarts: number[] = []
+    const collectionNamePattern = /\{\s*"collectionName"\s*:\s*"([^"]+)"/g
+    let nameMatch
+    while ((nameMatch = collectionNamePattern.exec(jsonStr)) !== null) {
+      collectionStarts.push(nameMatch.index)
+    }
+
+    // Process each collection block
+    for (let i = 0; i < collectionStarts.length; i++) {
+      const start = collectionStarts[i]
+      // End is either the next collection start or end of string
+      const end = collectionStarts[i + 1] || jsonStr.length
+
+      const collectionBlock = jsonStr.slice(start, end)
+
+      // Extract collection name from this block
+      const nameMatch2 = collectionBlock.match(/"collectionName"\s*:\s*"([^"]+)"/)
+      const collectionName = nameMatch2?.[1]
+      if (!collectionName) continue
+
+      // Extract fields array from this specific block only
+      const fieldsMatch = collectionBlock.match(/"fields"\s*:\s*\[([\s\S]*?)(?:\]|$)/)
+      if (!fieldsMatch) continue
+
+      const fieldsStr = fieldsMatch[1] || ''
+
+      // Extract fields from this collection's fields array
+      const fields = extractCompleteFields(`{"fields": [${fieldsStr}]}`)
+        .filter(f => {
+          const hash = `${collectionName}:${f.name}:${f.type}`
+          if (processedFieldHashes.value.has(hash)) return false
+          processedFieldHashes.value.add(hash)
+          return true
+        })
+        .map(f => ({
+          id: generateFieldId(),
+          name: f.name,
+          type: f.type as FieldType,
+          meta: (f.meta || {}) as SchemaField['meta'],
+          ...(f.refTarget ? { refTarget: f.refTarget } : {})
+        }))
+
+      if (fields.length > 0) {
+        // Check if we already have this collection in result
+        const existingCollIdx = result.collections.findIndex(c => c.collectionName === collectionName)
+        if (existingCollIdx >= 0) {
+          result.collections[existingCollIdx]!.fields.push(...fields)
+        } else {
+          result.collections.push({
+            collectionName,
+            fields,
+            options: undefined
+          })
+        }
+      }
+    }
+
+    return result
+  }
+
+  /**
    * Reset the parser state (call when starting a new conversation)
    */
   function reset() {
@@ -273,6 +437,7 @@ export function useStreamingSchemaParser() {
     parseStreamingContent,
     parseCompleteSchema,
     parseStreamingMetadata,
+    parseMultiCollectionContent,
     reset,
     // For testing
     extractJSON,

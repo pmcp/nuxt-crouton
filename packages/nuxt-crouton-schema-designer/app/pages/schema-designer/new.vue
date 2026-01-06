@@ -4,6 +4,7 @@ const { createProject, loading } = useSchemaProjects()
 const {
   state,
   multiState,
+  collections,
   isValid,
   validationErrors,
   reset
@@ -18,6 +19,9 @@ const showSaveDialog = ref(false)
 // Right panel view toggle
 type RightPanelView = 'preview' | 'code'
 const rightPanelView = ref<RightPanelView>('preview')
+
+// Display info for header
+const collectionCount = computed(() => collections.value.length)
 
 // Reset designer state on mount
 onMounted(() => {
@@ -72,9 +76,17 @@ function openSaveDialog() {
         />
         <div>
           <h1 class="font-semibold">New Schema</h1>
-          <p class="text-xs text-[var(--ui-text-muted)]">
-            {{ state.layerName || 'layer' }}/{{ state.collectionName || 'collection' }}
-          </p>
+          <div class="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
+            <span class="flex items-center gap-1">
+              <UIcon name="i-lucide-layers" class="size-3" />
+              {{ state.layerName || 'layer' }}
+            </span>
+            <span class="text-[var(--ui-border)]">|</span>
+            <span class="flex items-center gap-1">
+              <UIcon name="i-lucide-database" class="size-3" />
+              {{ collectionCount }} {{ collectionCount === 1 ? 'collection' : 'collections' }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -110,56 +122,65 @@ function openSaveDialog() {
       <!-- Left: AI Chat Panel -->
       <CroutonSchemaDesignerAIChatPanel />
 
-      <!-- Field Catalog -->
-      <aside class="w-64 border-r border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] overflow-y-auto">
-        <CroutonSchemaDesignerFieldCatalog />
-      </aside>
+      <!-- Right: Collection Tabs + Editor -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Collection Tabs -->
+        <CroutonSchemaDesignerCollectionTabs />
 
-      <!-- Center: Schema Builder -->
-      <main class="flex-1 overflow-y-auto bg-[var(--ui-bg)]">
-        <CroutonSchemaDesignerSchemaBuilder :is-field-from-ai="isFieldFromAI" />
-      </main>
+        <!-- Editor Area -->
+        <div class="flex-1 flex overflow-hidden">
+          <!-- Field Catalog -->
+          <aside class="w-64 border-r border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] overflow-y-auto">
+            <CroutonSchemaDesignerFieldCatalog />
+          </aside>
 
-      <!-- Right: Preview/Code Panel -->
-      <aside class="w-[40%] border-l border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] overflow-hidden flex flex-col">
-        <!-- Panel Tabs -->
-        <div class="flex border-b border-[var(--ui-border)] bg-[var(--ui-bg)]">
-          <button
-            :class="[
-              'px-4 py-2 text-sm font-medium transition-colors',
-              rightPanelView === 'preview'
-                ? 'text-[var(--ui-primary)] border-b-2 border-[var(--ui-primary)]'
-                : 'text-[var(--ui-text-muted)] hover:text-[var(--ui-text)]'
-            ]"
-            @click="rightPanelView = 'preview'"
-          >
-            <span class="flex items-center gap-2">
-              <UIcon name="i-lucide-eye" />
-              Preview
-            </span>
-          </button>
-          <button
-            :class="[
-              'px-4 py-2 text-sm font-medium transition-colors',
-              rightPanelView === 'code'
-                ? 'text-[var(--ui-primary)] border-b-2 border-[var(--ui-primary)]'
-                : 'text-[var(--ui-text-muted)] hover:text-[var(--ui-text)]'
-            ]"
-            @click="rightPanelView = 'code'"
-          >
-            <span class="flex items-center gap-2">
-              <UIcon name="i-lucide-code" />
-              Card Template
-            </span>
-          </button>
+          <!-- Center: Schema Builder -->
+          <main class="flex-1 overflow-y-auto bg-[var(--ui-bg)]">
+            <CroutonSchemaDesignerSchemaBuilder :is-field-from-ai="isFieldFromAI" />
+          </main>
+
+          <!-- Right: Preview/Code Panel -->
+          <aside class="w-[40%] border-l border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] overflow-hidden flex flex-col">
+            <!-- Panel Tabs -->
+            <div class="flex border-b border-[var(--ui-border)] bg-[var(--ui-bg)]">
+              <button
+                :class="[
+                  'px-4 py-2 text-sm font-medium transition-colors',
+                  rightPanelView === 'preview'
+                    ? 'text-[var(--ui-primary)] border-b-2 border-[var(--ui-primary)]'
+                    : 'text-[var(--ui-text-muted)] hover:text-[var(--ui-text)]'
+                ]"
+                @click="rightPanelView = 'preview'"
+              >
+                <span class="flex items-center gap-2">
+                  <UIcon name="i-lucide-eye" />
+                  Preview
+                </span>
+              </button>
+              <button
+                :class="[
+                  'px-4 py-2 text-sm font-medium transition-colors',
+                  rightPanelView === 'code'
+                    ? 'text-[var(--ui-primary)] border-b-2 border-[var(--ui-primary)]'
+                    : 'text-[var(--ui-text-muted)] hover:text-[var(--ui-text)]'
+                ]"
+                @click="rightPanelView = 'code'"
+              >
+                <span class="flex items-center gap-2">
+                  <UIcon name="i-lucide-code" />
+                  Card Template
+                </span>
+              </button>
+            </div>
+
+            <!-- Panel Content -->
+            <div class="flex-1 overflow-hidden">
+              <CroutonSchemaDesignerPreviewPanel v-if="rightPanelView === 'preview'" />
+              <CroutonSchemaDesignerCodeEditor v-else />
+            </div>
+          </aside>
         </div>
-
-        <!-- Panel Content -->
-        <div class="flex-1 overflow-hidden">
-          <CroutonSchemaDesignerPreviewPanel v-if="rightPanelView === 'preview'" />
-          <CroutonSchemaDesignerCodeEditor v-else />
-        </div>
-      </aside>
+      </div>
     </div>
 
     <!-- Validation Errors -->
