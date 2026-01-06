@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <UDashboardPanel id="customers">
+
     <div
       v-if="loading"
       class="italic opacity-50 flex items-center gap-2"
@@ -22,7 +23,7 @@
       v-else
       :collection-name="collectionName"
     />
-  </div>
+  </UDashboardPanel>
 </template>
 
 <script setup lang="ts">
