@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:modelValue': [value: Date | null]
   'hover': [value: Date | null]
+  'dayClick': [value: Date]
 }>()
 
 // Current week's reference date (for navigation)
@@ -81,31 +82,13 @@ function goToToday() {
   referenceDate.value = today(getLocalTimeZone())
 }
 
-// Selection
-const selectedDate = computed(() => {
-  if (!props.modelValue) return null
-  const d = props.modelValue
-  return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
-})
-
-function isSelected(day: { date: DateValue }): boolean {
-  if (!selectedDate.value) return false
-  return day.date.compare(selectedDate.value) === 0
-}
-
 function isToday(day: { date: DateValue }): boolean {
   const todayDate = today(getLocalTimeZone())
   return day.date.compare(todayDate) === 0
 }
 
-function selectDay(day: { date: DateValue, jsDate: Date }) {
-  // Toggle: if already selected, deselect
-  if (isSelected(day)) {
-    emit('update:modelValue', null)
-  }
-  else {
-    emit('update:modelValue', day.jsDate)
-  }
+function onDayClick(day: { date: DateValue, jsDate: Date }) {
+  emit('dayClick', day.jsDate)
 }
 
 // Size classes
@@ -174,14 +157,9 @@ const sizeClasses = computed(() => {
       <div
         v-for="day in weekDays"
         :key="day.date.toString()"
-        class="flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1"
-        :class="[
-          sizeClasses.cell,
-          isSelected(day)
-            ? 'bg-primary/15'
-            : 'hover:bg-elevated',
-        ]"
-        @click="selectDay(day)"
+        class="flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1 hover:bg-elevated"
+        :class="sizeClasses.cell"
+        @click="onDayClick(day)"
         @mouseenter="emit('hover', day.jsDate)"
       >
         <!-- Weekday label -->
@@ -194,11 +172,7 @@ const sizeClasses = computed(() => {
           :class="[
             'font-medium transition-colors',
             sizeClasses.day,
-            isSelected(day)
-              ? 'text-primary font-semibold'
-              : isToday(day)
-                ? 'text-primary'
-                : 'text-default',
+            isToday(day) ? 'text-primary' : 'text-default',
           ]"
         >
           {{ day.day }}
