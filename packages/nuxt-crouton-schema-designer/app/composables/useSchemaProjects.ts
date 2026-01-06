@@ -1,4 +1,4 @@
-import type { SchemaProject, CreateProjectPayload, UpdateProjectPayload } from '../types'
+import type { SchemaProject, CreateProjectPayload, UpdateProjectPayload, CollectionSchema } from '../types'
 
 export function useSchemaProjects() {
   const projects = useState<SchemaProject[]>('schema-projects', () => [])

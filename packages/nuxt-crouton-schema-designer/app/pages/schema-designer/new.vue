@@ -3,6 +3,7 @@ const router = useRouter()
 const { createProject, loading } = useSchemaProjects()
 const {
   state,
+  multiState,
   isValid,
   validationErrors,
   reset
@@ -24,18 +25,17 @@ onMounted(() => {
 })
 
 async function handleSave() {
-  if (!projectName.value || !state.value.collectionName || !state.value.layerName) {
+  if (!projectName.value || !multiState.value.layerName || multiState.value.collections.length === 0) {
     return
   }
 
   creating.value = true
   try {
+    // Use multi-collection format for new projects
     const project = await createProject({
       name: projectName.value,
-      layerName: state.value.layerName,
-      collectionName: state.value.collectionName,
-      schema: state.value,
-      options: state.value.options
+      layerName: multiState.value.layerName,
+      collections: multiState.value.collections
     })
 
     showSaveDialog.value = false
@@ -193,12 +193,16 @@ function openSaveDialog() {
 
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span class="text-[var(--ui-text-muted)]">Collection:</span>
-                <span class="ml-2 font-medium">{{ state.collectionName }}</span>
-              </div>
-              <div>
                 <span class="text-[var(--ui-text-muted)]">Layer:</span>
                 <span class="ml-2 font-medium">{{ state.layerName }}</span>
+              </div>
+              <div>
+                <span class="text-[var(--ui-text-muted)]">Collections:</span>
+                <span class="ml-2 font-medium">{{ multiState.collections.length }}</span>
+              </div>
+              <div>
+                <span class="text-[var(--ui-text-muted)]">Active:</span>
+                <span class="ml-2 font-medium">{{ state.collectionName }}</span>
               </div>
               <div>
                 <span class="text-[var(--ui-text-muted)]">Fields:</span>

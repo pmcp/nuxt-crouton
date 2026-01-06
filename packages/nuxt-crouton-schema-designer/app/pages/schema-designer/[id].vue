@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SchemaProject } from '../../types'
+import type { SchemaProject, CollectionSchema } from '../../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -8,14 +8,15 @@ const projectId = computed(() => route.params.id as string)
 const { getProject, updateProject, loading } = useSchemaProjects()
 const {
   state,
-  setCollectionName,
-  setLayerName,
-  setOptions,
+  collections,
+  multiState,
   loadState,
+  loadMultiState,
   isValid,
   validationErrors,
   reset
 } = useSchemaDesigner()
+const { isFieldFromAI } = useSchemaAI()
 
 const project = ref<SchemaProject | null>(null)
 const saving = ref(false)
@@ -33,13 +34,19 @@ onMounted(async () => {
 
       // Load the schema state
       if (project.value) {
-        loadState({
-          collectionName: project.value.collectionName,
-          layerName: project.value.layerName,
-          fields: project.value.schema.fields || [],
-          options: project.value.options,
-          cardTemplate: project.value.schema.cardTemplate
-        })
+        // Use multi-collection loading if collections available
+        if (project.value.collections && project.value.collections.length > 0) {
+          loadMultiState(project.value.layerName, project.value.collections as CollectionSchema[])
+        } else {
+          // Fallback to legacy single-collection loading
+          loadState({
+            collectionName: project.value.collectionName,
+            layerName: project.value.layerName,
+            fields: project.value.schema.fields || [],
+            options: project.value.options,
+            cardTemplate: project.value.schema.cardTemplate
+          })
+        }
       }
     } catch (e) {
       console.error('Failed to load project:', e)
@@ -53,12 +60,11 @@ async function save() {
 
   saving.value = true
   try {
+    // Save using multi-collection format
     await updateProject(project.value.id, {
       name: project.value.name,
-      layerName: state.value.layerName,
-      collectionName: state.value.collectionName,
-      schema: state.value,
-      options: state.value.options
+      layerName: multiState.value.layerName,
+      collections: multiState.value.collections
     })
   } catch (e) {
     console.error('Failed to save project:', e)
@@ -70,8 +76,8 @@ async function save() {
 // Debounced auto-save
 const debouncedSave = useDebounceFn(save, 2000)
 
-// Watch for changes and auto-save
-watch(state, () => {
+// Watch for changes and auto-save (watch multiState for multi-collection support)
+watch(multiState, () => {
   if (project.value) {
     debouncedSave()
   }
@@ -126,14 +132,17 @@ watch(state, () => {
 
     <!-- Main Content -->
     <div v-else class="flex-1 flex overflow-hidden">
-      <!-- Left: Field Catalog -->
+      <!-- Left: AI Chat Panel -->
+      <CroutonSchemaDesignerAIChatPanel />
+
+      <!-- Field Catalog -->
       <aside class="w-64 border-r border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] overflow-y-auto">
         <CroutonSchemaDesignerFieldCatalog />
       </aside>
 
       <!-- Center: Schema Builder -->
       <main class="flex-1 overflow-y-auto bg-[var(--ui-bg)]">
-        <CroutonSchemaDesignerSchemaBuilder />
+        <CroutonSchemaDesignerSchemaBuilder :is-field-from-ai="isFieldFromAI" />
       </main>
 
       <!-- Right: Preview/Code Panel (50% width) -->
