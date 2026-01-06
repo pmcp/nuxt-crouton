@@ -47,13 +47,17 @@ export function generatePackageJson(options: AppTemplateOptions): string {
 
   const deps: Record<string, string> = {
     'nuxt': '^4.0.0',
-    '@friendlyinternet/nuxt-crouton': getPackageDependency('crouton', context)
+    '@friendlyinternet/nuxt-crouton': getPackageDependency('crouton', context),
+    // Drizzle ORM for NuxtHub database
+    'drizzle-orm': '^0.45.0',
+    '@libsql/client': '^0.15.0'
   }
 
   const devDeps: Record<string, string> = {
     '@nuxt/ui': '^3.0.0',
     '@nuxthub/core': 'latest',
-    'typescript': '^5.0.0'
+    'typescript': '^5.0.0',
+    'drizzle-kit': '^0.31.0'
   }
 
   if (options.includeAuth) {
