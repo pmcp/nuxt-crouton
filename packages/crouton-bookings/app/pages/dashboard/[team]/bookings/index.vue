@@ -4,10 +4,8 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const toast = useToast()
-
 // Fetch all data
-const { bookings, settings, locations, loading, error } = useBookingsList()
+const { bookings, settings, locations, loading, error, refresh } = useBookingsList()
 
 // Hovered date (from calendar) - used to highlight bookings
 const hoveredDate = ref<Date | null>(null)
@@ -17,6 +15,9 @@ const filterState = ref({
   statuses: [] as string[],
   locations: [] as string[],
 })
+
+// Inline creation state - date where we're creating a booking
+const creatingAtDate = ref<Date | null>(null)
 
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
@@ -47,28 +48,22 @@ const filteredBookings = computed(() => {
 // Handle calendar hover - scroll to date and highlight
 function onCalendarHover(date: Date | null) {
   hoveredDate.value = date
-  // TODO: scroll list to this date
 }
 
-// Handle calendar day click - open booking creation (placeholder)
+// Handle calendar day click - start inline creation at that date
 function onCalendarDayClick(date: Date) {
-  toast.add({
-    title: 'Create Booking',
-    description: `Booking creation for ${date.toLocaleDateString()} coming soon!`,
-    icon: 'i-lucide-calendar-plus',
-    color: 'info',
-  })
+  creatingAtDate.value = date
 }
 
-// Check if a booking matches the hovered date
-function isBookingHighlighted(bookingDate: string | Date): boolean {
-  if (!hoveredDate.value) return false
-  const bDate = new Date(bookingDate)
-  return (
-    bDate.getFullYear() === hoveredDate.value.getFullYear()
-    && bDate.getMonth() === hoveredDate.value.getMonth()
-    && bDate.getDate() === hoveredDate.value.getDate()
-  )
+// Handle booking created - refresh the list and close inline form
+function onBookingCreated() {
+  creatingAtDate.value = null
+  refresh()
+}
+
+// Handle cancel creation
+function onCancelCreate() {
+  creatingAtDate.value = null
 }
 </script>
 
@@ -98,6 +93,9 @@ function isBookingHighlighted(bookingDate: string | Date): boolean {
             :error="error"
             :has-active-filters="hasActiveFilters"
             :highlighted-date="hoveredDate"
+            :creating-at-date="creatingAtDate"
+            @created="onBookingCreated"
+            @cancel-create="onCancelCreate"
           />
         </div>
       </div>

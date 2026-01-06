@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue'
 import type { Booking } from '../types/booking'
 
 interface Props {
@@ -14,6 +15,8 @@ interface Props {
   hasActiveFilters?: boolean
   /** Date to highlight (from calendar hover) */
   highlightedDate?: Date | null
+  /** Date where inline creation card should appear */
+  creatingAtDate?: Date | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -23,7 +26,13 @@ const props = withDefaults(defineProps<Props>(), {
   emptyMessage: 'Your bookings will appear here',
   hasActiveFilters: false,
   highlightedDate: null,
+  creatingAtDate: null,
 })
+
+const emit = defineEmits<{
+  created: []
+  cancelCreate: []
+}>()
 
 // Use composable for fetching if bookings not provided
 const listData = props.bookings === undefined ? useBookingsList() : null
@@ -46,32 +55,126 @@ function handleRefresh() {
   listData?.refresh()
 }
 
-// Group bookings by month/year for separators
-interface BookingGroup {
-  key: string
-  label: string
+// Container ref for scrolling
+const listContainerRef = ref<HTMLElement | null>(null)
+
+// Map of date keys to element refs for scroll targeting
+const dateElementRefs = ref<Map<string, HTMLElement>>(new Map())
+
+// Format date as YYYY-MM-DD for map key
+function formatDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+// Group bookings by month/year for separators, with date subgroups for scrolling
+interface DateGroup {
+  dateKey: string
+  date: Date
   bookings: Booking[]
 }
 
-const groupedBookings = computed((): BookingGroup[] => {
-  const groups: BookingGroup[] = []
-  let currentKey = ''
+interface MonthGroup {
+  key: string
+  label: string
+  dateGroups: DateGroup[]
+}
+
+const groupedBookings = computed((): MonthGroup[] => {
+  const monthGroups: MonthGroup[] = []
+  let currentMonthKey = ''
 
   for (const booking of resolvedBookings.value) {
     const date = new Date(booking.date)
-    const key = `${date.getFullYear()}-${date.getMonth()}`
-    const label = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(date)
+    const monthKey = `${date.getFullYear()}-${date.getMonth()}`
+    const dateKey = formatDateKey(date)
+    const monthLabel = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(date)
 
-    if (key !== currentKey) {
-      currentKey = key
-      groups.push({ key, label, bookings: [] })
+    // Find or create month group
+    if (monthKey !== currentMonthKey) {
+      currentMonthKey = monthKey
+      monthGroups.push({ key: monthKey, label: monthLabel, dateGroups: [] })
     }
 
-    groups[groups.length - 1].bookings.push(booking)
+    const currentMonth = monthGroups[monthGroups.length - 1]
+
+    // Find or create date group within month
+    let dateGroup = currentMonth.dateGroups.find(dg => dg.dateKey === dateKey)
+    if (!dateGroup) {
+      dateGroup = { dateKey, date: new Date(date), bookings: [] }
+      currentMonth.dateGroups.push(dateGroup)
+    }
+
+    dateGroup.bookings.push(booking)
   }
 
-  return groups
+  return monthGroups
 })
+
+// Get all unique date keys for scroll targeting
+const allDateKeys = computed(() => {
+  const keys: string[] = []
+  for (const monthGroup of groupedBookings.value) {
+    for (const dateGroup of monthGroup.dateGroups) {
+      keys.push(dateGroup.dateKey)
+    }
+  }
+  return keys
+})
+
+// Find the nearest date key to scroll to (for dates without bookings)
+function findNearestDateKey(targetDate: Date): string | null {
+  const targetKey = formatDateKey(targetDate)
+  const keys = allDateKeys.value
+
+  if (keys.length === 0) return null
+  if (keys.includes(targetKey)) return targetKey
+
+  // Find nearest date
+  const targetTime = targetDate.getTime()
+  let nearestKey = keys[0]
+  let nearestDiff = Infinity
+
+  for (const key of keys) {
+    const [year, month, day] = key.split('-').map(Number)
+    const keyDate = new Date(year, month - 1, day)
+    const diff = Math.abs(keyDate.getTime() - targetTime)
+
+    if (diff < nearestDiff) {
+      nearestDiff = diff
+      nearestKey = key
+    }
+  }
+
+  return nearestKey
+}
+
+// Register element ref for a date
+function setDateRef(dateKey: string, el: HTMLElement | null) {
+  if (el) {
+    dateElementRefs.value.set(dateKey, el)
+  } else {
+    dateElementRefs.value.delete(dateKey)
+  }
+}
+
+// Watch for highlighted date changes and scroll
+watch(
+  () => props.highlightedDate,
+  (newDate) => {
+    if (!newDate) return
+
+    const targetKey = findNearestDateKey(newDate)
+    if (!targetKey) return
+
+    const element = dateElementRefs.value.get(targetKey)
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }
+  },
+)
 
 // Check if a booking should be highlighted
 function isHighlighted(booking: Booking): boolean {
@@ -83,6 +186,24 @@ function isHighlighted(booking: Booking): boolean {
     && bookingDate.getDate() === props.highlightedDate.getDate()
   )
 }
+
+// Scroll to top when creation card appears
+watch(
+  () => props.creatingAtDate,
+  (newDate) => {
+    if (!newDate) return
+
+    // Scroll list to top so create card is visible
+    nextTick(() => {
+      if (listContainerRef.value) {
+        listContainerRef.value.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }
+    })
+  },
+)
 </script>
 
 <template>
@@ -119,7 +240,7 @@ function isHighlighted(booking: Booking): boolean {
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="resolvedBookings.length === 0" class="bg-elevated/50 rounded-lg p-8 text-center">
+    <div v-else-if="resolvedBookings.length === 0 && !creatingAtDate" class="bg-elevated/50 rounded-lg p-8 text-center">
       <UIcon
         :name="hasActiveFilters ? 'i-lucide-filter-x' : 'i-lucide-calendar-x'"
         class="w-12 h-12 text-muted mx-auto mb-3"
@@ -133,23 +254,39 @@ function isHighlighted(booking: Booking): boolean {
     </div>
 
     <!-- Bookings list with month/year separators -->
-    <div v-else class="flex flex-col gap-4">
-      <div v-for="group in groupedBookings" :key="group.key" class="flex flex-col gap-2">
+    <div v-else ref="listContainerRef" class="flex flex-col gap-4">
+      <!-- Create card always at top -->
+      <CroutonBookingsBookingCreateCard
+        v-if="creatingAtDate"
+        :date="creatingAtDate"
+        @created="emit('created')"
+        @cancel="emit('cancelCreate')"
+      />
+
+      <div v-for="monthGroup in groupedBookings" :key="monthGroup.key" class="flex flex-col gap-2">
         <!-- Month/Year separator -->
-        <div class="flex items-center gap-2 py-1">
+        <div class="flex items-center gap-2 py-1 sticky top-0 bg-default/95 backdrop-blur-sm z-10">
           <span class="text-xs font-medium text-muted uppercase tracking-wider">
-            {{ group.label }}
+            {{ monthGroup.label }}
           </span>
           <div class="flex-1 h-px bg-muted/20" />
         </div>
 
-        <!-- Bookings in this group -->
-        <CroutonBookingsBookingCard
-          v-for="booking in group.bookings"
-          :key="booking.id"
-          :booking="booking"
-          :highlighted="isHighlighted(booking)"
-        />
+        <!-- Date groups within month -->
+        <div
+          v-for="dateGroup in monthGroup.dateGroups"
+          :key="dateGroup.dateKey"
+          :ref="(el) => setDateRef(dateGroup.dateKey, el as HTMLElement)"
+          class="flex flex-col gap-1.5"
+        >
+          <!-- Bookings for this date -->
+          <CroutonBookingsBookingCard
+            v-for="booking in dateGroup.bookings"
+            :key="booking.id"
+            :booking="booking"
+            :highlighted="isHighlighted(booking)"
+          />
+        </div>
       </div>
     </div>
   </div>
