@@ -165,7 +165,7 @@ function getDisplayName(collection: CollectionSchema): string {
     </UTooltip>
 
     <!-- Add Collection Modal -->
-    <UModal v-model="showAddModal">
+    <UModal v-model:open="showAddModal">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">Add Collection</h3>
@@ -196,7 +196,7 @@ function getDisplayName(collection: CollectionSchema): string {
     </UModal>
 
     <!-- Rename Collection Modal -->
-    <UModal v-model="showRenameModal">
+    <UModal v-model:open="showRenameModal">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">Rename Collection</h3>

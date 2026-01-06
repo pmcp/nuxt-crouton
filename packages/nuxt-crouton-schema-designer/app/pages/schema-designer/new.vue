@@ -198,7 +198,7 @@ function openSaveDialog() {
     </div>
 
     <!-- Save Project Dialog -->
-    <UModal v-model="showSaveDialog">
+    <UModal v-model:open="showSaveDialog">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">Save Project</h3>
@@ -215,7 +215,7 @@ function openSaveDialog() {
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span class="text-[var(--ui-text-muted)]">Layer:</span>
-                <span class="ml-2 font-medium">{{ state.layerName }}</span>
+                <span class="ml-2 font-medium">{{ state.layerName || '—' }}</span>
               </div>
               <div>
                 <span class="text-[var(--ui-text-muted)]">Collections:</span>
@@ -223,11 +223,24 @@ function openSaveDialog() {
               </div>
               <div>
                 <span class="text-[var(--ui-text-muted)]">Active:</span>
-                <span class="ml-2 font-medium">{{ state.collectionName }}</span>
+                <span class="ml-2 font-medium">{{ state.collectionName || '—' }}</span>
               </div>
               <div>
                 <span class="text-[var(--ui-text-muted)]">Fields:</span>
                 <span class="ml-2 font-medium">{{ state.fields.length }}</span>
+              </div>
+            </div>
+
+            <!-- Validation Errors in Dialog -->
+            <div v-if="validationErrors.length > 0" class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <div class="flex items-start gap-2">
+                <UIcon name="i-lucide-alert-circle" class="text-red-500 mt-0.5" />
+                <div class="text-sm text-red-600 dark:text-red-400">
+                  <p class="font-medium">Please fix these issues:</p>
+                  <ul class="list-disc list-inside mt-1">
+                    <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -238,7 +251,7 @@ function openSaveDialog() {
             </UButton>
             <UButton
               :loading="creating"
-              :disabled="!projectName"
+              :disabled="!projectName || !isValid"
               @click="handleSave"
             >
               Save & Continue Editing
