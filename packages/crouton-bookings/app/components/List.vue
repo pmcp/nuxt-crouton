@@ -292,7 +292,7 @@ watch(
     <!-- Empty state (but might have create card) -->
     <div v-else-if="resolvedBookings.length === 0">
       <!-- Inline create card when empty -->
-      <div v-if="creatingAtDate" :ref="setCreateCardRef">
+      <div v-if="creatingAtDate" :ref="setCreateCardRef" class="scroll-mt-4">
         <CroutonBookingsBookingCreateCard
           :date="creatingAtDate"
           @created="emit('created')"
@@ -321,6 +321,7 @@ watch(
       <div
         v-if="creatingAtDate && !creatingDateHasBookings"
         :ref="setCreateCardRef"
+        class="scroll-mt-4"
       >
         <CroutonBookingsBookingCreateCard
           :date="creatingAtDate"
@@ -343,7 +344,7 @@ watch(
           v-for="dateGroup in monthGroup.dateGroups"
           :key="dateGroup.dateKey"
           :ref="(el) => setDateRef(dateGroup.dateKey, el as HTMLElement)"
-          class="flex flex-col gap-1.5"
+          class="flex flex-col gap-1.5 scroll-mt-4"
         >
           <!-- Bookings for this date -->
           <CroutonBookingsBookingCard
@@ -357,6 +358,7 @@ watch(
           <div
             v-if="creatingAtDateKey === dateGroup.dateKey"
             :ref="setCreateCardRef"
+            class="scroll-mt-4"
           >
             <CroutonBookingsBookingCreateCard
               :date="creatingAtDate!"
