@@ -44,14 +44,18 @@ const isInventoryMode = computed(() => {
 </script>
 
 <template>
-  <div
-    class="rounded-lg overflow-hidden transition-all duration-200"
-    :class="[
-      isCancelled ? 'bg-elevated/30 opacity-60' : 'bg-elevated/50',
-      { 'ring-2 ring-primary/50 bg-primary/5': highlighted }
-    ]"
+  <UCard
+    variant="soft"
+    :ui="{
+      root: [
+        'transition-all duration-200',
+        isCancelled ? 'opacity-60' : '',
+        highlighted ? 'ring-2 ring-primary/50 bg-primary/5' : ''
+      ],
+      body: 'p-2'
+    }"
   >
-    <div class="p-3 flex items-center gap-3">
+    <div class="flex items-center gap-3">
       <!-- Date badge -->
       <CroutonBookingsDateBadge
         :date="booking.date"
@@ -63,18 +67,18 @@ const isInventoryMode = computed(() => {
       <!-- Content -->
       <div class="flex-1 flex flex-col gap-1 min-w-0">
         <!-- Location title -->
-        <p
+        <span
           class="text-sm font-medium truncate"
           :class="{ 'line-through text-muted': isCancelled }"
         >
           {{ booking.locationData?.title || 'Unknown Location' }}
-        </p>
+        </span>
 
         <!-- Slot indicator or inventory -->
         <div class="flex items-center gap-2">
           <template v-if="isInventoryMode">
             <div class="flex items-center gap-1.5">
-              <UIcon name="i-lucide-box" class="w-3 h-3 text-primary" />
+              <UIcon name="i-lucide-box" class="size-3 text-primary" />
               <span class="text-xs text-muted">{{ slotLabel }}</span>
             </div>
           </template>
@@ -91,12 +95,16 @@ const isInventoryMode = computed(() => {
         </div>
 
         <!-- Group badge if present -->
-        <div v-if="booking.group" class="mt-0.5">
-          <UBadge color="neutral" variant="subtle" size="sm">
-            {{ getGroupLabel(booking.group) }}
-          </UBadge>
-        </div>
+        <UBadge
+          v-if="booking.group"
+          color="neutral"
+          variant="subtle"
+          size="xs"
+          class="mt-0.5 w-fit"
+        >
+          {{ getGroupLabel(booking.group) }}
+        </UBadge>
       </div>
     </div>
-  </div>
+  </UCard>
 </template>

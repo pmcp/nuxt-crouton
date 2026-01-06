@@ -52,8 +52,6 @@ const route = useRoute()
 // Get team context (handles personal/single-tenant modes where team isn't in URL)
 const { teamSlug: teamSlugRef, teamId: teamIdRef, buildDashboardUrl, hasTeamContext } = useTeamContext()
 
-// Show loading state until team context is available
-const isAuthLoading = computed(() => !hasTeamContext.value)
 
 // Build navigation from crouton collections registry
 const collections = computed(() => {
@@ -121,17 +119,6 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
   return [mainItems, bottomItems]
 })
 
-// Page title from route meta or path
-const pageTitle = computed(() => {
-  const meta = route.meta as { title?: string }
-  if (meta.title) return meta.title
-
-  // Extract from path
-  const segments = route.path.split('/').filter(Boolean)
-  const lastSegment = segments[segments.length - 1]
-  if (lastSegment === 'crouton') return 'Dashboard'
-  return lastSegment?.charAt(0).toUpperCase() + lastSegment?.slice(1) || 'Dashboard'
-})
 </script>
 
 <template>
@@ -202,32 +189,8 @@ const pageTitle = computed(() => {
       </template>
     </UDashboardSidebar>
 
-    <UDashboardPanel>
-      <template #header>
-        <UDashboardNavbar :title="pageTitle">
-          <template #leading>
-            <UDashboardSidebarCollapse />
-          </template>
-
-          <template #right>
-            <slot name="navbar-right" />
-          </template>
-        </UDashboardNavbar>
-      </template>
-
-      <template #default>
-        <div class="p-6">
-          <!-- Show loading state while auth is initializing -->
-          <div v-if="isAuthLoading" class="flex items-center justify-center h-64">
-            <div class="flex flex-col items-center gap-4">
-              <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-muted" />
-              <p class="text-sm text-muted">Loading...</p>
-            </div>
-          </div>
-          <!-- Render content once team context is available -->
-          <slot v-else />
-        </div>
-      </template>
-    </UDashboardPanel>
+    <!-- Pages provide their own UDashboardPanel with #header and #body slots -->
+    <!-- This follows the official Nuxt UI dashboard pattern for proper scrolling -->
+    <slot />
   </UDashboardGroup>
 </template>

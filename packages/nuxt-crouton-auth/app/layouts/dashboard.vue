@@ -33,8 +33,6 @@ const appName = computed(() => props.appName ?? config.public.crouton?.auth?.app
       :app-name="appName"
     />
 
-    <UDashboardPanel>
-      <slot />
-    </UDashboardPanel>
+    <slot />
   </UDashboardGroup>
 </template>

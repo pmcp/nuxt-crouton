@@ -6,8 +6,13 @@ definePageMeta({
 </script>
 
 <template>
-  <div class="p-6 max-w-2xl mx-auto">
-    <h1 class="text-xl font-semibold mb-4">My Bookings</h1>
-    <CroutonBookingsList />
-  </div>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar title="My Bookings" />
+    </template>
+
+    <template #body>
+      <CroutonBookingsList />
+    </template>
+  </UDashboardPanel>
 </template>
