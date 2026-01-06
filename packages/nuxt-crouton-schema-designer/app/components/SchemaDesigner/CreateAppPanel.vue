@@ -274,10 +274,12 @@ const currentStepIndex = computed(() => {
         <div class="space-y-2">
           <UCheckbox
             v-model="options.includeAuth"
+            name="includeAuth"
             label="Authentication (@friendlyinternet/nuxt-crouton-auth)"
           />
           <UCheckbox
             v-model="options.includeI18n"
+            name="includeI18n"
             label="Internationalization (@friendlyinternet/nuxt-crouton-i18n)"
           />
         </div>

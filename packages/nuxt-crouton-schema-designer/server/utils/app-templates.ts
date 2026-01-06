@@ -111,8 +111,7 @@ export function generateCroutonConfig(options: AppTemplateOptions): string {
   if (options.hierarchy) collectionConfig.hierarchy = true
   if (options.sortable) collectionConfig.sortable = true
   if (options.seed) {
-    collectionConfig.seed = true
-    collectionConfig.seedCount = options.seedCount || 25
+    collectionConfig.seed = { count: options.seedCount || 25 }
   }
 
   return `export default {

@@ -10,7 +10,7 @@
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 import { mkdir, writeFile, access, constants } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { z } from 'zod'
 import { generateAllTemplates } from '../../utils/app-templates'
 
@@ -65,14 +65,25 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Step 1: Validate target path is writable
+    // If target doesn't exist, check if parent directory is writable (we'll create it)
+    let pathToCheck = targetPath
     try {
       await access(targetPath, constants.W_OK)
     } catch {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Target path is not writable: ${targetPath}`
-      })
+      // Target doesn't exist - check parent directory instead
+      pathToCheck = dirname(targetPath)
+      try {
+        await access(pathToCheck, constants.W_OK)
+      } catch {
+        throw createError({
+          statusCode: 400,
+          statusMessage: `Target path is not writable: ${targetPath} (parent directory ${pathToCheck} is not accessible)`
+        })
+      }
     }
+
+    // Create target directory if it doesn't exist
+    await mkdir(targetPath, { recursive: true })
 
     // Step 2: Create project directory
     console.log(`[create-app] Creating project at: ${projectPath}`)
@@ -113,16 +124,10 @@ export default defineEventHandler(async (event) => {
     }
 
     // Step 4: Run crouton CLI to generate collection
+    // Uses crouton.config.js which contains all options (dialect, hierarchy, sortable, seed)
     console.log('[create-app] Running crouton generator...')
 
-    const schemaPath = `./schemas/${collectionName}.json`
-    let cliFlags = `--fields-file=${schemaPath} --dialect=${options.dialect}`
-
-    if (options.hierarchy) cliFlags += ' --hierarchy'
-    if (options.sortable) cliFlags += ' --sortable'
-    if (options.seed) cliFlags += ` --seed --count=${options.seedCount || 25}`
-
-    const cliCommand = `npx crouton-generate ${layerName} ${collectionName} ${cliFlags}`
+    const cliCommand = `npx crouton-generate --config ./crouton.config.js`
 
     try {
       const { stdout, stderr } = await execAsync(cliCommand, {
