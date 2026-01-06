@@ -167,10 +167,40 @@ export default defineEventHandler(async (event) => {
     }
 
     // Step 5: Run crouton CLI to generate collections
-    // Uses crouton.config.js which contains all collection configs
+    // Run CLI from monorepo (since it's not published to npm)
     console.log('[create-app] Running crouton generator...')
 
-    const cliCommand = `npx crouton-generate config`
+    // Find the CLI - try multiple possible locations
+    const possibleCliPaths = [
+      join(process.cwd(), 'packages/nuxt-crouton-cli/bin/crouton-generate.js'),
+      join(process.cwd(), '../../packages/nuxt-crouton-cli/bin/crouton-generate.js'), // From apps/schema-designer
+      join(dirname(new URL(import.meta.url).pathname), '../../../../nuxt-crouton-cli/bin/crouton-generate.js') // Relative to this file
+    ]
+
+    let cliPath = ''
+    for (const path of possibleCliPaths) {
+      try {
+        await access(path, constants.R_OK)
+        cliPath = path
+        break
+      } catch {
+        continue
+      }
+    }
+
+    if (!cliPath) {
+      warnings.push('CLI not found. Run "npx crouton-generate config" manually after publishing @friendlyinternet/nuxt-crouton-cli.')
+      return {
+        success: true, // Templates were created, just CLI skipped
+        projectPath,
+        errors,
+        warnings,
+        filesCreated
+      }
+    }
+
+    const configPath = join(projectPath, 'crouton.config.js')
+    const cliCommand = `node ${cliPath} --config ${configPath}`
 
     try {
       const { stdout, stderr } = await execAsync(cliCommand, {
