@@ -157,11 +157,16 @@ const sizeClasses = computed(() => {
       <div
         v-for="day in weekDays"
         :key="day.date.toString()"
-        class="flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1 hover:bg-elevated"
+        class="group relative flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1 hover:bg-elevated"
         :class="sizeClasses.cell"
         @click="onDayClick(day)"
         @mouseenter="emit('hover', day.jsDate)"
       >
+        <!-- Add booking indicator (shows on hover) -->
+        <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <UIcon name="i-lucide-plus" class="size-3 text-primary" />
+        </div>
+
         <!-- Weekday label -->
         <span :class="['text-muted uppercase tracking-wider font-medium', sizeClasses.weekday]">
           {{ day.weekdayShort }}

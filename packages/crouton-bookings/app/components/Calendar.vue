@@ -316,9 +316,14 @@ function hasBookings(date: Date): boolean {
     >
       <template #day="{ day }">
         <div
-          class="flex flex-col items-center cursor-pointer hover:bg-elevated rounded px-1 py-0.5 transition-colors"
+          class="group relative flex flex-col items-center cursor-pointer hover:bg-elevated rounded px-1 py-0.5 transition-colors"
           @click="emit('dayClick', day.toDate(getLocalTimeZone()))"
         >
+          <!-- Add booking indicator (shows on hover) -->
+          <div class="absolute -top-0.5 -right-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <UIcon name="i-lucide-plus" class="size-2.5 text-primary" />
+          </div>
+
           <span>{{ day.day }}</span>
           <div class="flex flex-col gap-0.5 mt-0.5 min-h-[8px]">
             <template v-for="indicator in getIndicatorsForDate(day.toDate(getLocalTimeZone()))" :key="indicator.locationId">
