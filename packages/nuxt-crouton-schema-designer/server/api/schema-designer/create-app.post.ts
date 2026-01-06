@@ -134,7 +134,9 @@ export default defineEventHandler(async (event) => {
         env: {
           ...process.env,
           FORCE_COLOR: '0',
-          COREPACK_ENABLE_STRICT: '0' // Disable Corepack enforcement
+          COREPACK_ENABLE_STRICT: '0',
+          COREPACK_ENABLE_AUTO_PIN: '0',
+          COREPACK_ENABLE_PROJECT_SPEC: '0'
         }
       })
       console.log('[create-app] Dependencies installed:', stdout.slice(0, 200))
