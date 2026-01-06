@@ -21,7 +21,7 @@ export default defineNuxtConfig({
     dirs: [
       {
         path: join(currentDir, 'app/components'),
-        prefix: 'CroutonBooking',
+        prefix: 'CroutonBookings',
         global: true
       }
     ]

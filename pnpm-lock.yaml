@@ -291,6 +291,46 @@ importers:
         specifier: ^0.31.0
         version: 0.31.8
 
+  apps/test-sales:
+    dependencies:
+      '@friendlyinternet/crouton-sales':
+        specifier: workspace:*
+        version: link:../../packages/crouton-sales
+      '@friendlyinternet/nuxt-crouton':
+        specifier: workspace:*
+        version: link:../../packages/nuxt-crouton
+      '@friendlyinternet/nuxt-crouton-auth':
+        specifier: workspace:*
+        version: link:../../packages/nuxt-crouton-auth
+      '@libsql/client':
+        specifier: ^0.15.0
+        version: 0.15.15
+      '@nuxt/ui':
+        specifier: ^4.0.0
+        version: 4.3.0(6c4ec99dc6a87c6e677e8aa054805c44)
+      '@nuxthub/core':
+        specifier: ^0.10.0
+        version: 0.10.3(db0@0.3.4(@libsql/client@0.15.15)(better-sqlite3@12.5.0)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251217.0)(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.5.0)(kysely@0.28.9)(pg@8.16.3)))(ioredis@5.8.2)(magicast@0.5.1)(typescript@5.9.3)(vue-tsc@3.1.8(typescript@5.9.3))
+      drizzle-orm:
+        specifier: ^0.45.0
+        version: 0.45.1(@cloudflare/workers-types@4.20251217.0)(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.5.0)(kysely@0.28.9)(pg@8.16.3)
+      nuxt:
+        specifier: ^4.0.0
+        version: 4.2.2(@libsql/client@0.15.15)(@parcel/watcher@2.5.1)(@types/node@22.19.3)(@vue/compiler-sfc@3.5.26)(better-sqlite3@12.5.0)(cac@6.7.14)(db0@0.3.4(@libsql/client@0.15.15)(better-sqlite3@12.5.0)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251217.0)(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.5.0)(kysely@0.28.9)(pg@8.16.3)))(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251217.0)(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.5.0)(kysely@0.28.9)(pg@8.16.3))(eslint@9.39.2(jiti@2.6.1))(ioredis@5.8.2)(lightningcss@1.30.2)(magicast@0.5.1)(optionator@0.9.4)(rolldown@1.0.0-beta.55)(rollup@4.53.5)(terser@5.44.1)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.0(@types/node@22.19.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vue-tsc@3.1.8(typescript@5.9.3))(yaml@2.8.2)
+      vue:
+        specifier: ^3.5.13
+        version: 3.5.26(typescript@5.9.3)
+      vue-router:
+        specifier: ^4.6.4
+        version: 4.6.4(vue@3.5.26(typescript@5.9.3))
+    devDependencies:
+      '@friendlyinternet/nuxt-crouton-cli':
+        specifier: workspace:*
+        version: link:../../packages/nuxt-crouton-cli
+      drizzle-kit:
+        specifier: ^0.31.0
+        version: 0.31.8
+
   apps/theme-playground:
     dependencies:
       '@friendlyinternet/nuxt-crouton-themes':
