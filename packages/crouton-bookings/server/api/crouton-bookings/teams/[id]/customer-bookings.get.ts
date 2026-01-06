@@ -52,6 +52,7 @@ export default defineEventHandler(async (event) => {
       locationData: {
         id: bookingsLocations.id,
         title: bookingsLocations.title,
+        color: bookingsLocations.color,
         street: bookingsLocations.street,
         zip: bookingsLocations.zip,
         city: bookingsLocations.city,
