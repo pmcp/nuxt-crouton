@@ -6,10 +6,6 @@
   "main": "./nuxt.config.ts",
   "exports": {
     ".": "./nuxt.config.ts",
-    "./server": {
-      "types": "./dist/server/utils/index.d.ts",
-      "import": "./dist/server/utils/index.mjs"
-    },
     "./schemas/*": "./schemas/*",
     "./types": "./app/types/index.ts"
   },

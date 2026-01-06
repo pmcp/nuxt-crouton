@@ -63,7 +63,9 @@ NUXT_PUBLIC_CROUTON_AI_DEFAULT_MODEL=gpt-4o
 
 ```typescript
 // server/api/ai/chat.post.ts
-import { createAIProvider, streamText } from '@friendlyinternet/nuxt-crouton-ai/server'
+// createAIProvider is auto-imported when extending the layer
+// streamText comes from the 'ai' package (Vercel AI SDK)
+import { streamText } from 'ai'
 
 export default defineEventHandler(async (event) => {
   const { messages, model } = await readBody(event)
@@ -196,13 +198,14 @@ const {
 
 ## Server Utilities
 
+All server utilities are auto-imported when extending the layer.
+
 ### createAIProvider
 
 Factory function for creating AI provider instances.
 
 ```typescript
-import { createAIProvider, streamText, generateText } from '@friendlyinternet/nuxt-crouton-ai/server'
-
+// All utilities auto-imported - no import statement needed
 export default defineEventHandler(async (event) => {
   const ai = createAIProvider(event)
 
@@ -221,13 +224,14 @@ export default defineEventHandler(async (event) => {
 ### Available Providers
 
 ```typescript
-import { AI_PROVIDERS, getAvailableProviders } from '@friendlyinternet/nuxt-crouton-ai/server'
+// AI_PROVIDERS and helpers are auto-imported
+export default defineEventHandler(async (event) => {
+  // Get all providers
+  console.log(AI_PROVIDERS.openai.models)
 
-// Get all providers
-console.log(AI_PROVIDERS.openai.models)
-
-// Get configured providers (with API keys)
-const available = getAvailableProviders(useRuntimeConfig())
+  // Get configured providers (with API keys)
+  const available = getAvailableProviders(useRuntimeConfig())
+})
 ```
 
 ## Generating Collections for Persistence

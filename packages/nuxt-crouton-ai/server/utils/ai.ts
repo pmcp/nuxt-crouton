@@ -2,11 +2,12 @@
  * AI Provider Factory for server-side usage
  *
  * Creates AI providers configured from runtime config.
+ * Auto-imported when extending the @friendlyinternet/nuxt-crouton-ai layer.
  *
  * @example
  * ```ts
- * // In your server endpoint
- * import { createAIProvider, streamText } from '@friendlyinternet/nuxt-crouton-ai/server'
+ * // In your server endpoint (createAIProvider is auto-imported)
+ * import { streamText } from 'ai'
  *
  * export default defineEventHandler(async (event) => {
  *   const ai = createAIProvider(event)

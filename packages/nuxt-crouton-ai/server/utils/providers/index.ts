@@ -2,17 +2,16 @@
  * AI Provider Registry
  *
  * Central registry of all available AI providers and their models.
+ * Auto-imported when extending the @friendlyinternet/nuxt-crouton-ai layer.
  *
  * @example
  * ```ts
- * import { AI_PROVIDERS, getAvailableProviders } from '@friendlyinternet/nuxt-crouton-ai/server'
- *
- * // Get all provider info
+ * // In a server endpoint (no import needed - auto-imported)
  * const openai = AI_PROVIDERS.openai
  * console.log(openai.models) // List of available models
  *
  * // Get only configured providers
- * const available = getAvailableProviders(config)
+ * const available = getAvailableProviders(useRuntimeConfig())
  * ```
  */
 
@@ -20,8 +19,7 @@ import { OPENAI_PROVIDER, OPENAI_MODELS } from './openai'
 import { ANTHROPIC_PROVIDER, ANTHROPIC_MODELS } from './anthropic'
 import type { AIProviderInfo, AIModelInfo, AIRuntimeConfig } from './types'
 
-// Re-export types
-export type { AIProviderInfo, AIModelInfo, AIRuntimeConfig }
+// Note: Types are auto-imported from types.ts - no re-export needed
 
 /**
  * Registry of all supported AI providers

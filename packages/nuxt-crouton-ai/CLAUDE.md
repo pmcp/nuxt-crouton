@@ -74,7 +74,7 @@ const { messages, input, handleSubmit, isLoading } = useChat({
 
 ```typescript
 // server/api/ai/chat.post.ts
-import { createAIProvider } from '@friendlyinternet/nuxt-crouton-ai/server'
+// createAIProvider is auto-imported when extending the layer
 import { streamText } from 'ai'
 
 export default defineEventHandler(async (event) => {
