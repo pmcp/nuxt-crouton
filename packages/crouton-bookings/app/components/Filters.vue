@@ -171,7 +171,11 @@ function isLocationAvailable(locationId: string): boolean {
           <template #leading>
             <span
               class="w-2 h-2 rounded-full"
-              :style="{ backgroundColor: getStatusColor(status) }"
+              :style="{
+                backgroundColor: (!isStatusAvailable(status.value || status.id) && !isStatusSelected(status.value || status.id))
+                  ? '#9ca3af'
+                  : getStatusColor(status)
+              }"
             />
           </template>
           {{ status.label }}
@@ -196,7 +200,11 @@ function isLocationAvailable(locationId: string): boolean {
           <template #leading>
             <span
               class="w-2 h-2 rounded-full"
-              :style="{ backgroundColor: location.color || '#3b82f6' }"
+              :style="{
+                backgroundColor: (!isLocationAvailable(location.id) && !isLocationSelected(location.id))
+                  ? '#9ca3af'
+                  : (location.color || '#3b82f6')
+              }"
             />
           </template>
           {{ location.title }}
