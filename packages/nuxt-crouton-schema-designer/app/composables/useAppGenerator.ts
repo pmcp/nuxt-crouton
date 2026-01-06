@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import type {
   CreateAppOptions,
+  CollectionConfig,
   GenerationProgress,
   CreateAppResult,
   FileTemplate,
@@ -121,7 +122,7 @@ export function useAppGenerator() {
   }
 
   /**
-   * Generate template files for the project
+   * Generate template files for the project (multi-collection support)
    * Returns templates that will be written client-side
    */
   function generateTemplates(options: CreateAppOptions): FileTemplate[] {
@@ -135,6 +136,7 @@ export function useAppGenerator() {
     const devDeps: Record<string, string> = {
       '@nuxt/ui': '^3.0.0',
       '@nuxthub/core': 'latest',
+      '@friendlyinternet/nuxt-crouton-cli': 'latest',
       'typescript': '^5.0.0'
     }
 
@@ -255,35 +257,41 @@ export {}
 `
     })
 
-    // Schema JSON file
-    templates.push({
-      path: `schemas/${options.collectionName}.json`,
-      content: JSON.stringify(options.schema, null, 2)
+    // Schema JSON files for each collection
+    for (const collection of options.collections) {
+      templates.push({
+        path: `schemas/${collection.name}.json`,
+        content: JSON.stringify(collection.schema, null, 2)
+      })
+    }
+
+    // crouton.config.js - multi-collection support
+    const collectionConfigs = options.collections.map((col) => {
+      const config: Record<string, any> = {
+        name: col.name,
+        fieldsFile: `./schemas/${col.name}.json`
+      }
+      if (col.hierarchy) config.hierarchy = true
+      if (col.sortable) config.sortable = true
+      if (col.seed) {
+        config.seed = { count: col.seedCount || 25 }
+      }
+      return config
     })
 
-    // crouton.config.js
-    const collectionConfig: Record<string, any> = {
-      name: options.collectionName,
-      fieldsFile: `./schemas/${options.collectionName}.json`
-    }
-    if (options.options.hierarchy) collectionConfig.hierarchy = true
-    if (options.options.sortable) collectionConfig.sortable = true
-    if (options.options.seed) {
-      collectionConfig.seed = true
-      collectionConfig.seedCount = options.options.seedCount || 25
-    }
+    const collectionNames = options.collections.map(c => c.name)
 
     templates.push({
       path: 'crouton.config.js',
       content: `export default {
   dialect: '${options.options.dialect}',
   collections: [
-    ${JSON.stringify(collectionConfig, null, 4).split('\n').join('\n    ')}
+    ${collectionConfigs.map(c => JSON.stringify(c, null, 4).split('\n').join('\n    ')).join(',\n    ')}
   ],
   targets: [
     {
       layer: '${options.layerName}',
-      collections: ['${options.collectionName}']
+      collections: ${JSON.stringify(collectionNames)}
     }
   ]
 }
@@ -312,29 +320,26 @@ export {}
       if (directoryHandle.value && support.value.canWriteFiles) {
         // Write files client-side via FileSystemHandle
         const filesCreated = await writeTemplateFiles(templates)
-        updateProgress('templates', `Created ${filesCreated.length} files`, 40)
+        updateProgress('templates', `Created ${filesCreated.length} files`, 30)
       }
 
-      // Step 3: Call server to run CLI
-      updateProgress('cli', 'Running crouton generator...', 50)
+      // Step 3: Install dependencies (required for CLI)
+      updateProgress('dependencies', 'Installing dependencies...', 40)
+
+      // Step 4: Call server to install deps and run CLI
+      updateProgress('cli', 'Running crouton generator...', 60)
 
       const response = await $fetch<CreateAppResult>('/api/schema-designer/create-app', {
         method: 'POST',
         body: {
           ...options,
-          // If we wrote files client-side, server just needs to run CLI
+          // If we wrote files client-side, server just needs to install and run CLI
           templatesWritten: !!directoryHandle.value
         }
       })
 
       if (!response.success) {
         throw new Error(response.errors.join(', '))
-      }
-
-      // Step 4: Install dependencies (if requested)
-      if (options.options.installDependencies) {
-        updateProgress('dependencies', 'Installing dependencies...', 80)
-        // This is handled by the server endpoint
       }
 
       // Step 5: Complete

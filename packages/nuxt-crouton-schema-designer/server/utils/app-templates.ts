@@ -3,18 +3,26 @@
  * Used when File System Access API is not available (Firefox/Safari)
  */
 
-export interface AppTemplateOptions {
-  projectName: string
-  collectionName: string
-  layerName: string
+/**
+ * Configuration for a single collection
+ */
+export interface CollectionConfig {
+  name: string
   schema: Record<string, unknown>
-  dialect: 'sqlite' | 'pg'
-  includeAuth: boolean
-  includeI18n: boolean
   hierarchy?: boolean
   sortable?: boolean
   seed?: boolean
   seedCount?: number
+}
+
+export interface AppTemplateOptions {
+  projectName: string
+  layerName: string
+  /** Multiple collections to generate */
+  collections: CollectionConfig[]
+  dialect: 'sqlite' | 'pg'
+  includeAuth: boolean
+  includeI18n: boolean
 }
 
 export interface GeneratedFile {
@@ -34,6 +42,7 @@ export function generatePackageJson(options: AppTemplateOptions): string {
   const devDeps: Record<string, string> = {
     '@nuxt/ui': '^3.0.0',
     '@nuxthub/core': 'latest',
+    '@friendlyinternet/nuxt-crouton-cli': 'latest',
     'typescript': '^5.0.0'
   }
 
@@ -100,29 +109,37 @@ export function generateNuxtConfig(options: AppTemplateOptions): string {
 }
 
 /**
- * Generate crouton.config.js content
+ * Generate crouton.config.js content for multiple collections
  */
 export function generateCroutonConfig(options: AppTemplateOptions): string {
-  const collectionConfig: Record<string, any> = {
-    name: options.collectionName,
-    fieldsFile: `./schemas/${options.collectionName}.json`
-  }
+  // Build collection configs
+  const collectionConfigs = options.collections.map((col) => {
+    const config: Record<string, any> = {
+      name: col.name,
+      fieldsFile: `./schemas/${col.name}.json`
+    }
 
-  if (options.hierarchy) collectionConfig.hierarchy = true
-  if (options.sortable) collectionConfig.sortable = true
-  if (options.seed) {
-    collectionConfig.seed = { count: options.seedCount || 25 }
-  }
+    if (col.hierarchy) config.hierarchy = true
+    if (col.sortable) config.sortable = true
+    if (col.seed) {
+      config.seed = { count: col.seedCount || 25 }
+    }
+
+    return config
+  })
+
+  // All collection names for the target
+  const collectionNames = options.collections.map(c => c.name)
 
   return `export default {
   dialect: '${options.dialect}',
   collections: [
-    ${JSON.stringify(collectionConfig, null, 4).split('\n').join('\n    ')}
+    ${collectionConfigs.map(c => JSON.stringify(c, null, 4).split('\n').join('\n    ')).join(',\n    ')}
   ],
   targets: [
     {
       layer: '${options.layerName}',
-      collections: ['${options.collectionName}']
+      collections: ${JSON.stringify(collectionNames)}
     }
   ]
 }
@@ -130,7 +147,7 @@ export function generateCroutonConfig(options: AppTemplateOptions): string {
 }
 
 /**
- * Generate all template files for the project
+ * Generate all template files for the project (multi-collection support)
  */
 export function generateAllTemplates(options: AppTemplateOptions): GeneratedFile[] {
   const files: GeneratedFile[] = []
@@ -200,11 +217,13 @@ export {}
 `
   })
 
-  // Schema JSON file
-  files.push({
-    path: `schemas/${options.collectionName}.json`,
-    content: JSON.stringify(options.schema, null, 2)
-  })
+  // Schema JSON files for each collection
+  for (const collection of options.collections) {
+    files.push({
+      path: `schemas/${collection.name}.json`,
+      content: JSON.stringify(collection.schema, null, 2)
+    })
+  }
 
   // crouton.config.js
   files.push({

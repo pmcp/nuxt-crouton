@@ -16,22 +16,27 @@ import { generateAllTemplates } from '../../utils/app-templates'
 
 const execAsync = promisify(exec)
 
+// Schema for a single collection config
+const CollectionConfigSchema = z.object({
+  name: z.string().min(1).max(50),
+  schema: z.record(z.string(), z.unknown()),
+  hierarchy: z.boolean().optional(),
+  sortable: z.boolean().optional(),
+  seed: z.boolean().optional(),
+  seedCount: z.number().optional()
+})
+
 const CreateAppSchema = z.object({
   projectName: z.string().min(1).max(100),
   targetPath: z.string().min(1),
-  collectionName: z.string().min(1).max(50),
   layerName: z.string().min(1).max(50),
-  schema: z.record(z.string(), z.unknown()),
+  /** Multiple collections to generate */
+  collections: z.array(CollectionConfigSchema).min(1),
   templatesWritten: z.boolean().optional(),
   options: z.object({
-    installDependencies: z.boolean().default(false),
     dialect: z.enum(['sqlite', 'pg']).default('sqlite'),
     includeAuth: z.boolean().default(false),
-    includeI18n: z.boolean().default(false),
-    hierarchy: z.boolean().optional(),
-    sortable: z.boolean().optional(),
-    seed: z.boolean().optional(),
-    seedCount: z.number().optional()
+    includeI18n: z.boolean().default(false)
   })
 })
 
@@ -56,7 +61,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { projectName, targetPath, collectionName, layerName, schema, templatesWritten, options } = parsed.data
+  const { projectName, targetPath, layerName, collections, templatesWritten, options } = parsed.data
   const projectPath = join(targetPath, projectName)
 
   const errors: string[] = []
@@ -86,7 +91,7 @@ export default defineEventHandler(async (event) => {
     await mkdir(targetPath, { recursive: true })
 
     // Step 2: Create project directory
-    console.log(`[create-app] Creating project at: ${projectPath}`)
+    console.log(`[create-app] Creating project at: ${projectPath} with ${collections.length} collection(s)`)
     await mkdir(projectPath, { recursive: true })
 
     // Step 3: Write template files (if not done client-side)
@@ -95,16 +100,11 @@ export default defineEventHandler(async (event) => {
 
       const templates = generateAllTemplates({
         projectName,
-        collectionName,
         layerName,
-        schema,
+        collections,
         dialect: options.dialect,
         includeAuth: options.includeAuth,
-        includeI18n: options.includeI18n,
-        hierarchy: options.hierarchy,
-        sortable: options.sortable,
-        seed: options.seed,
-        seedCount: options.seedCount
+        includeI18n: options.includeI18n
       })
 
       for (const template of templates) {
@@ -123,11 +123,37 @@ export default defineEventHandler(async (event) => {
       console.log(`[create-app] Created ${filesCreated.length} files`)
     }
 
-    // Step 4: Run crouton CLI to generate collection
-    // Uses crouton.config.js which contains all options (dialect, hierarchy, sortable, seed)
+    // Step 4: Install dependencies (required for CLI to work)
+    // Always install because we need the CLI package to generate collections
+    console.log('[create-app] Installing dependencies...')
+
+    try {
+      const { stdout } = await execAsync('pnpm install', {
+        cwd: projectPath,
+        timeout: 300000, // 5 minute timeout for install
+        env: {
+          ...process.env,
+          FORCE_COLOR: '0'
+        }
+      })
+      console.log('[create-app] Dependencies installed:', stdout.slice(0, 200))
+    } catch (installError: any) {
+      errors.push(`Dependency installation failed: ${installError.message}. Run "pnpm install" manually.`)
+      // Can't proceed without dependencies
+      return {
+        success: false,
+        projectPath,
+        errors,
+        warnings,
+        filesCreated
+      }
+    }
+
+    // Step 5: Run crouton CLI to generate collections
+    // Uses crouton.config.js which contains all collection configs
     console.log('[create-app] Running crouton generator...')
 
-    const cliCommand = `npx crouton-generate --config ./crouton.config.js`
+    const cliCommand = `npx crouton-generate config`
 
     try {
       const { stdout, stderr } = await execAsync(cliCommand, {
@@ -148,33 +174,8 @@ export default defineEventHandler(async (event) => {
       }
     } catch (cliError: any) {
       console.error('[create-app] CLI error:', cliError)
-
-      // CLI might have partially succeeded - check for common errors
-      if (cliError.message?.includes('ENOENT')) {
-        errors.push('crouton-generate not found. The project was created but collection was not generated.')
-        warnings.push('Run "pnpm install" then "pnpm crouton config" manually.')
-      } else {
-        errors.push(`CLI error: ${cliError.message}`)
-      }
-    }
-
-    // Step 5: Install dependencies (if requested and no errors)
-    if (options.installDependencies && errors.length === 0) {
-      console.log('[create-app] Installing dependencies...')
-
-      try {
-        const { stdout } = await execAsync('pnpm install', {
-          cwd: projectPath,
-          timeout: 300000, // 5 minute timeout for install
-          env: {
-            ...process.env,
-            FORCE_COLOR: '0'
-          }
-        })
-        console.log('[create-app] Dependencies installed:', stdout.slice(0, 200))
-      } catch (installError: any) {
-        warnings.push(`Dependency installation failed: ${installError.message}. Run "pnpm install" manually.`)
-      }
+      errors.push(`CLI error: ${cliError.message}`)
+      warnings.push('Run "npx crouton-generate config" manually to generate collections.')
     }
 
     return {

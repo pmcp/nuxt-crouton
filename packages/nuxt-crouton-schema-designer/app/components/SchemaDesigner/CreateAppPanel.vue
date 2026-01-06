@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { GENERATION_STEPS } from '../../types/app-generator'
+import type { CollectionConfig } from '../../types/app-generator'
+import type { CollectionSchema, SchemaField } from '../../types/schema'
 
 const emit = defineEmits<{
   close: []
 }>()
 
-const { state } = useSchemaDesigner()
-const { exportSchema } = useSchemaExport()
+const { multiState, collections } = useSchemaDesigner()
 const {
   support,
   projectName,
@@ -24,22 +25,78 @@ const {
 
 const toast = useToast()
 
-// Form state
+// Form state - global options only, per-collection options come from collections
 const options = ref({
-  installDependencies: true,
   dialect: 'sqlite' as const,
   includeAuth: false,
-  includeI18n: false,
-  hierarchy: state.value.options.hierarchy,
-  sortable: state.value.options.sortable,
-  seed: state.value.options.seed,
-  seedCount: state.value.options.seedCount
+  includeI18n: false
 })
 
-// Initialize project name from collection
+/**
+ * Convert fields to schema export format
+ */
+function fieldsToSchema(fields: SchemaField[]): Record<string, unknown> {
+  const schema: Record<string, any> = {}
+
+  // Add id field first
+  schema.id = { type: 'uuid', meta: { primaryKey: true } }
+
+  // Add user fields
+  for (const field of fields) {
+    if (!field.name) continue
+
+    const fieldDef: Record<string, any> = {
+      type: field.type
+    }
+
+    // Add meta if there are any properties set
+    const meta: Record<string, any> = {}
+    if (field.meta.required) meta.required = true
+    if (field.meta.maxLength) meta.maxLength = field.meta.maxLength
+    if (field.meta.label) meta.label = field.meta.label
+    if (field.meta.translatable) meta.translatable = true
+    if (field.meta.area) meta.area = field.meta.area
+    if (field.meta.unique) meta.unique = true
+    if (field.meta.default !== undefined) meta.default = field.meta.default
+    if (field.meta.group) meta.group = field.meta.group
+    if (field.meta.precision) meta.precision = field.meta.precision
+    if (field.meta.scale) meta.scale = field.meta.scale
+
+    if (Object.keys(meta).length > 0) {
+      fieldDef.meta = meta
+    }
+
+    // Add refTarget if set
+    if (field.refTarget) {
+      fieldDef.refTarget = field.refTarget
+    }
+
+    schema[field.name] = fieldDef
+  }
+
+  return schema
+}
+
+/**
+ * Convert multi-collection state to CollectionConfig array
+ */
+function collectionsToConfigs(): CollectionConfig[] {
+  return collections.value.map((col: CollectionSchema) => ({
+    name: col.collectionName,
+    schema: fieldsToSchema(col.fields),
+    hierarchy: col.options.hierarchy,
+    sortable: col.options.sortable,
+    seed: col.options.seed,
+    seedCount: col.options.seedCount
+  }))
+}
+
+// Initialize project name from layer
 onMounted(() => {
-  if (!projectName.value && state.value.collectionName) {
-    projectName.value = `${state.value.layerName}-${state.value.collectionName}-app`
+  if (!projectName.value && multiState.value.layerName) {
+    const collectionCount = collections.value.length
+    const suffix = collectionCount > 1 ? 'app' : collections.value[0]?.collectionName || 'app'
+    projectName.value = `${multiState.value.layerName}-${suffix}`
   }
 })
 
@@ -76,21 +133,20 @@ async function handleCreate() {
   }
 
   try {
-    const schema = JSON.parse(exportSchema(state.value))
+    const collectionConfigs = collectionsToConfigs()
 
     await createApp({
       projectName: projectName.value,
       targetPath: targetPath.value,
-      collectionName: state.value.collectionName,
-      layerName: state.value.layerName,
-      schema,
+      layerName: multiState.value.layerName,
+      collections: collectionConfigs,
       options: options.value
     })
 
     if (result.value?.success) {
       toast.add({
         title: 'Project created!',
-        description: `Created at ${result.value.projectPath}`,
+        description: `Created ${collectionConfigs.length} collection(s) at ${result.value.projectPath}`,
         icon: 'i-lucide-check-circle',
         color: 'success'
       })
@@ -134,7 +190,6 @@ const currentStepIndex = computed(() => {
         <div class="text-sm font-medium">Next Steps:</div>
         <div class="p-3 bg-[var(--ui-bg-elevated)] rounded-lg font-mono text-sm space-y-1">
           <div>cd {{ projectName }}</div>
-          <div v-if="!options.installDependencies">pnpm install</div>
           <div>pnpm dev</div>
         </div>
       </div>
@@ -285,42 +340,34 @@ const currentStepIndex = computed(() => {
         </div>
       </UFormField>
 
-      <!-- Options -->
-      <UFormField label="Options">
-        <div class="space-y-2">
-          <UCheckbox
-            v-model="options.installDependencies"
-            label="Install dependencies (pnpm install)"
-          />
-          <UCheckbox
-            v-model="options.seed"
-            label="Generate seed data"
-          />
-        </div>
-      </UFormField>
-
-      <!-- Seed Count -->
-      <UFormField v-if="options.seed" label="Seed Records">
-        <UInput
-          v-model.number="options.seedCount"
-          type="number"
-          :min="1"
-          :max="1000"
-        />
-      </UFormField>
+      <!-- Info about per-collection options -->
+      <div class="text-xs text-[var(--ui-text-muted)] p-2 bg-[var(--ui-bg-elevated)] rounded">
+        Per-collection options (hierarchy, seed, etc.) are configured in each collection's settings.
+        Dependencies will be installed automatically.
+      </div>
 
       <!-- Summary -->
-      <div class="p-3 bg-[var(--ui-bg-elevated)] rounded-lg text-sm space-y-1">
+      <div class="p-3 bg-[var(--ui-bg-elevated)] rounded-lg text-sm space-y-2">
         <div class="font-medium">Will create:</div>
         <div class="text-[var(--ui-text-muted)]">
           <span class="font-mono">{{ targetPath }}/{{ projectName }}</span>
         </div>
         <div class="text-[var(--ui-text-muted)]">
-          Layer: <span class="font-mono">{{ state.layerName }}</span> /
-          Collection: <span class="font-mono">{{ state.collectionName }}</span>
+          Layer: <span class="font-mono">{{ multiState.layerName }}</span>
         </div>
         <div class="text-[var(--ui-text-muted)]">
-          Fields: {{ state.fields.length }}
+          <span class="font-medium">{{ collections.length }} Collection{{ collections.length > 1 ? 's' : '' }}:</span>
+        </div>
+        <div class="pl-3 space-y-1">
+          <div
+            v-for="col in collections"
+            :key="col.id"
+            class="text-[var(--ui-text-muted)] flex items-center gap-2"
+          >
+            <UIcon name="i-lucide-database" class="text-xs opacity-50" />
+            <span class="font-mono">{{ col.collectionName }}</span>
+            <span class="text-xs opacity-50">({{ col.fields.length }} fields)</span>
+          </div>
         </div>
       </div>
 

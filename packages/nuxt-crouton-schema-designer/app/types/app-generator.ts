@@ -3,35 +3,41 @@
  * Scaffolds a complete Nuxt Crouton app from a designed schema
  */
 
+/**
+ * Configuration for a single collection in the app
+ */
+export interface CollectionConfig {
+  /** Collection name (e.g., 'products', 'orders') */
+  name: string
+  /** Schema fields in export format */
+  schema: Record<string, unknown>
+  /** Enable hierarchy for this collection */
+  hierarchy?: boolean
+  /** Enable sortable for this collection */
+  sortable?: boolean
+  /** Generate seed data for this collection */
+  seed?: boolean
+  /** Number of seed records for this collection */
+  seedCount?: number
+}
+
 export interface CreateAppOptions {
   /** Project/folder name */
   projectName: string
   /** Filesystem path to create project in */
   targetPath: string
-  /** Collection name from schema designer */
-  collectionName: string
   /** Layer name from schema designer */
   layerName: string
-  /** Schema fields in export format */
-  schema: Record<string, unknown>
+  /** Collections to generate (multi-collection support) */
+  collections: CollectionConfig[]
   /** Generation options */
   options: {
-    /** Run pnpm install after generation */
-    installDependencies: boolean
     /** Database dialect */
     dialect: 'sqlite' | 'pg'
     /** Include @friendlyinternet/nuxt-crouton-auth */
     includeAuth: boolean
     /** Include @friendlyinternet/nuxt-crouton-i18n */
     includeI18n: boolean
-    /** Enable hierarchy for collection */
-    hierarchy?: boolean
-    /** Enable sortable for collection */
-    sortable?: boolean
-    /** Generate seed data */
-    seed?: boolean
-    /** Number of seed records */
-    seedCount?: number
   }
 }
 
@@ -44,9 +50,8 @@ export interface GenerationStep {
 export const GENERATION_STEPS: GenerationStep[] = [
   { id: 'init', label: 'Initialize', description: 'Creating project directory...' },
   { id: 'templates', label: 'Templates', description: 'Generating configuration files...' },
-  { id: 'schema', label: 'Schema', description: 'Writing schema file...' },
-  { id: 'cli', label: 'Generate', description: 'Running crouton generator...' },
   { id: 'dependencies', label: 'Dependencies', description: 'Installing dependencies...' },
+  { id: 'cli', label: 'Generate', description: 'Running crouton generator...' },
   { id: 'complete', label: 'Complete', description: 'Project ready!' }
 ]
 

@@ -187,16 +187,31 @@ function isHighlighted(booking: Booking): boolean {
   )
 }
 
-// Scroll to top when creation card appears
+// Creation date key for positioning the inline create card
+const creatingAtDateKey = computed(() => {
+  if (!props.creatingAtDate) return null
+  return formatDateKey(props.creatingAtDate)
+})
+
+// Check if creating at date is in an existing date group
+const creatingDateHasBookings = computed(() => {
+  if (!creatingAtDateKey.value) return false
+  return allDateKeys.value.includes(creatingAtDateKey.value)
+})
+
+// Ref for the create card element
+const createCardRef = ref<HTMLElement | null>(null)
+
+// Scroll to create card when it appears
 watch(
   () => props.creatingAtDate,
   (newDate) => {
     if (!newDate) return
 
-    // Scroll list to top so create card is visible
+    // Scroll to the create card
     nextTick(() => {
-      if (listContainerRef.value) {
-        listContainerRef.value.scrollIntoView({
+      if (createCardRef.value) {
+        createCardRef.value.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         })
@@ -239,29 +254,45 @@ watch(
       </UButton>
     </div>
 
-    <!-- Empty state -->
-    <div v-else-if="resolvedBookings.length === 0 && !creatingAtDate" class="bg-elevated/50 rounded-lg p-8 text-center">
-      <UIcon
-        :name="hasActiveFilters ? 'i-lucide-filter-x' : 'i-lucide-calendar-x'"
-        class="w-12 h-12 text-muted mx-auto mb-3"
-      />
-      <p class="text-sm font-medium">
-        {{ hasActiveFilters ? 'No matching bookings' : 'No bookings yet' }}
-      </p>
-      <p class="text-xs text-muted mt-1">
-        {{ hasActiveFilters ? 'Try adjusting your filters' : emptyMessage }}
-      </p>
+    <!-- Empty state (but might have create card) -->
+    <div v-else-if="resolvedBookings.length === 0">
+      <!-- Inline create card when empty -->
+      <div v-if="creatingAtDate" ref="createCardRef">
+        <CroutonBookingsBookingCreateCard
+          :date="creatingAtDate"
+          @created="emit('created')"
+          @cancel="emit('cancelCreate')"
+        />
+      </div>
+
+      <!-- Empty message when not creating -->
+      <div v-else class="bg-elevated/50 rounded-lg p-8 text-center">
+        <UIcon
+          :name="hasActiveFilters ? 'i-lucide-filter-x' : 'i-lucide-calendar-x'"
+          class="w-12 h-12 text-muted mx-auto mb-3"
+        />
+        <p class="text-sm font-medium">
+          {{ hasActiveFilters ? 'No matching bookings' : 'No bookings yet' }}
+        </p>
+        <p class="text-xs text-muted mt-1">
+          {{ hasActiveFilters ? 'Try adjusting your filters' : emptyMessage }}
+        </p>
+      </div>
     </div>
 
     <!-- Bookings list with month/year separators -->
     <div v-else ref="listContainerRef" class="flex flex-col gap-4">
-      <!-- Create card always at top -->
-      <CroutonBookingsBookingCreateCard
-        v-if="creatingAtDate"
-        :date="creatingAtDate"
-        @created="emit('created')"
-        @cancel="emit('cancelCreate')"
-      />
+      <!-- Create card for new date (not in existing groups) -->
+      <div
+        v-if="creatingAtDate && !creatingDateHasBookings"
+        ref="createCardRef"
+      >
+        <CroutonBookingsBookingCreateCard
+          :date="creatingAtDate"
+          @created="emit('created')"
+          @cancel="emit('cancelCreate')"
+        />
+      </div>
 
       <div v-for="monthGroup in groupedBookings" :key="monthGroup.key" class="flex flex-col gap-2">
         <!-- Month/Year separator -->
@@ -286,6 +317,18 @@ watch(
             :booking="booking"
             :highlighted="isHighlighted(booking)"
           />
+
+          <!-- Inline create card if creating at this date -->
+          <div
+            v-if="creatingAtDateKey === dateGroup.dateKey"
+            ref="createCardRef"
+          >
+            <CroutonBookingsBookingCreateCard
+              :date="creatingAtDate!"
+              @created="emit('created')"
+              @cancel="emit('cancelCreate')"
+            />
+          </div>
         </div>
       </div>
     </div>
