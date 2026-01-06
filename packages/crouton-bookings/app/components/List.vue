@@ -12,6 +12,8 @@ interface Props {
   emptyMessage?: string
   /** Whether filters are active (changes empty state message) */
   hasActiveFilters?: boolean
+  /** Date to highlight (from calendar hover) */
+  highlightedDate?: Date | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -20,6 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
   error: undefined,
   emptyMessage: 'Your bookings will appear here',
   hasActiveFilters: false,
+  highlightedDate: null,
 })
 
 // Use composable for fetching if bookings not provided
@@ -69,6 +72,17 @@ const groupedBookings = computed((): BookingGroup[] => {
 
   return groups
 })
+
+// Check if a booking should be highlighted
+function isHighlighted(booking: Booking): boolean {
+  if (!props.highlightedDate) return false
+  const bookingDate = new Date(booking.date)
+  return (
+    bookingDate.getFullYear() === props.highlightedDate.getFullYear()
+    && bookingDate.getMonth() === props.highlightedDate.getMonth()
+    && bookingDate.getDate() === props.highlightedDate.getDate()
+  )
+}
 </script>
 
 <template>
@@ -134,6 +148,7 @@ const groupedBookings = computed((): BookingGroup[] => {
           v-for="booking in group.bookings"
           :key="booking.id"
           :booking="booking"
+          :highlighted="isHighlighted(booking)"
         />
       </div>
     </div>
