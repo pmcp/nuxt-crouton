@@ -201,7 +201,7 @@ export function generateAllTemplates(options: AppTemplateOptions): GeneratedFile
 NUXT_HUB_PROJECT_KEY=
 
 # Auth (if using @friendlyinternet/nuxt-crouton-auth)
-NUXT_SESSION_PASSWORD=your-32-char-secret-here
+BETTER_AUTH_SECRET=your-32-char-secret-here
 `
   })
 
