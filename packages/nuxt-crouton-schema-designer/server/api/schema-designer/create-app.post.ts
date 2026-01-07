@@ -187,11 +187,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Step 5: Run crouton CLI to generate collections
-    // Run CLI from monorepo (since it's not published to npm)
-    console.log('[create-app] Running crouton generator...')
-
-    // Find the CLI - try multiple possible locations
+    // Step 5: Find CLI path (needed for both module add and collection generation)
     const possibleCliPaths = [
       join(process.cwd(), 'packages/nuxt-crouton-cli/bin/crouton-generate.js'),
       join(process.cwd(), '../../packages/nuxt-crouton-cli/bin/crouton-generate.js'), // From apps/schema-designer
@@ -221,6 +217,45 @@ export default defineEventHandler(async (event) => {
     }
 
     console.log('[create-app] Using CLI at:', cliPath)
+
+    // Step 6: Run crouton add for enabled modules (handles schema exports + migrations)
+    const modulesToAdd: string[] = []
+    if (options.includeAuth) modulesToAdd.push('auth')
+    if (options.includeI18n) modulesToAdd.push('i18n')
+
+    if (modulesToAdd.length > 0) {
+      console.log('[create-app] Adding modules:', modulesToAdd.join(', '))
+
+      for (const moduleName of modulesToAdd) {
+        try {
+          // Use --skip-install since packages are already in package.json and installed
+          const addCommand = `node ${cliPath} add ${moduleName} --skip-install`
+          console.log(`[create-app] Running: ${addCommand}`)
+
+          const { stdout, stderr } = await execAsync(addCommand, {
+            cwd: projectPath,
+            timeout: 120000,
+            env: {
+              ...process.env,
+              FORCE_COLOR: '0'
+            }
+          })
+
+          if (stdout) {
+            console.log(`[create-app] crouton add ${moduleName} output:`, stdout)
+          }
+          if (stderr) {
+            console.warn(`[create-app] crouton add ${moduleName} stderr:`, stderr)
+          }
+        } catch (addError: any) {
+          console.error(`[create-app] crouton add ${moduleName} error:`, addError.message)
+          warnings.push(`Module setup warning for ${moduleName}: ${addError.message}. Run "crouton add ${moduleName}" manually.`)
+        }
+      }
+    }
+
+    // Step 7: Run crouton CLI to generate collections
+    console.log('[create-app] Running crouton generator...')
 
     const configPath = join(projectPath, 'crouton.config.js')
     const cliCommand = `node ${cliPath} --config ${configPath}`
