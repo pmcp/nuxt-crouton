@@ -222,6 +222,11 @@ BETTER_AUTH_SECRET=your-32-char-secret-here
 export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'`)
   }
 
+  if (options.includeI18n) {
+    schemaImports.push(`// I18n schema (translations table)
+export * from '@friendlyinternet/nuxt-crouton-i18n/server/database/schema'`)
+  }
+
   files.push({
     path: 'server/db/schema.ts',
     content: `// Auto-generated database schema exports
