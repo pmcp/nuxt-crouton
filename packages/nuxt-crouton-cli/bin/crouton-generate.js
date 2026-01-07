@@ -290,35 +290,83 @@ program
     }
   })
 
-// Add command - adds features to existing projects
+// Add command - adds modules or features to existing projects
 program
-  .command('add <feature>')
-  .description('Add features to existing projects (e.g., events)')
-  .option('--dry-run', 'Preview what will be generated')
-  .option('--force', 'Overwrite existing files')
-  .action(async (feature, options) => {
+  .command('add [items...]')
+  .description('Add Crouton modules or features to your project')
+  .option('--skip-migrations', 'Skip migration generation and application')
+  .option('--skip-install', 'Skip package installation (assume already installed)')
+  .option('--dry-run', 'Preview what will be done without making changes')
+  .option('--force', 'Force reinstall even if already installed')
+  .option('--list', 'List all available modules')
+  .action(async (items, options) => {
     try {
-      if (feature === 'events') {
-        const addEventsPath = join(__dirname, '..', 'lib', 'add-events.mjs')
+      // Handle --list flag or no items
+      if (options.list || !items || items.length === 0) {
+        const addModulePath = join(__dirname, '..', 'lib', 'add-module.mjs')
+        const { listAvailableModules } = await import(addModulePath)
+        listAvailableModules()
+        return
+      }
 
-        if (!fs.existsSync(addEventsPath)) {
-          console.error(chalk.red('Error: add-events script not found. Please ensure the package is properly installed.'))
-          process.exit(1)
+      // Import module registry to check if items are modules
+      const registryPath = join(__dirname, '..', 'lib', 'module-registry.mjs')
+      const { getModule } = await import(registryPath)
+
+      // Separate modules from features
+      const modules = []
+      const features = []
+
+      for (const item of items) {
+        if (getModule(item)) {
+          modules.push(item)
+        } else if (item === 'events') {
+          features.push(item)
+        } else {
+          // Unknown - try as module first (will show helpful error)
+          modules.push(item)
         }
+      }
 
-        const { addEvents } = await import(addEventsPath)
-        await addEvents({
+      // Add modules if any
+      if (modules.length > 0) {
+        const addModulePath = join(__dirname, '..', 'lib', 'add-module.mjs')
+        const { addModules } = await import(addModulePath)
+
+        const result = await addModules(modules, {
+          skipInstall: options.skipInstall,
+          skipMigrations: options.skipMigrations,
           dryRun: options.dryRun,
           force: options.force
         })
-      } else {
-        console.error(chalk.red(`Unknown feature: ${feature}`))
-        console.log(chalk.yellow('\nAvailable features:'))
-        console.log(chalk.cyan('  events  - Add crouton-events layer for audit trails'))
-        process.exit(1)
+
+        if (!result.success) {
+          process.exit(1)
+        }
+      }
+
+      // Add features if any
+      for (const feature of features) {
+        if (feature === 'events') {
+          const addEventsPath = join(__dirname, '..', 'lib', 'add-events.mjs')
+
+          if (!fs.existsSync(addEventsPath)) {
+            console.error(chalk.red('Error: add-events script not found. Please ensure the package is properly installed.'))
+            process.exit(1)
+          }
+
+          const { addEvents } = await import(addEventsPath)
+          await addEvents({
+            dryRun: options.dryRun,
+            force: options.force
+          })
+        }
       }
     } catch (error) {
-      console.error(chalk.red('Add feature failed:'), error.message)
+      console.error(chalk.red('Add failed:'), error.message)
+      if (process.env.DEBUG) {
+        console.error(error.stack)
+      }
       process.exit(1)
     }
   })

@@ -9,12 +9,77 @@ CLI tool that generates complete CRUD collections for Nuxt Crouton applications.
 ```bash
 crouton <layer> <collection> [options]       # Generate single collection
 crouton config [path] [--only name]          # Generate from config file
+crouton add <modules...>                     # Add Crouton modules to project
+crouton add --list                           # List available modules
 crouton install                              # Install required modules
 crouton init [-o path]                       # Create example schema
 crouton rollback <layer> <collection>        # Remove collection
 crouton rollback-interactive                 # Interactive removal UI
 crouton seed-translations                    # Seed i18n data
 ```
+
+## Add Command (Module Installation)
+
+Add Crouton modules with automatic configuration:
+
+```bash
+# Add a single module
+crouton add auth
+
+# Add multiple modules
+crouton add bookings i18n
+
+# Preview what would be done
+crouton add auth --dry-run
+
+# Skip migration generation
+crouton add auth --skip-migrations
+
+# Force reinstall
+crouton add auth --force
+
+# List available modules
+crouton add --list
+```
+
+### Add Command Options
+
+| Option | Description |
+|--------|-------------|
+| `--skip-migrations` | Skip running `npx nuxt db:generate` and `db:migrate` |
+| `--skip-install` | Skip `pnpm add` (assume already installed) |
+| `--dry-run` | Preview what would be done without making changes |
+| `--force` | Force reinstall even if already installed |
+| `--list` | List all available modules |
+
+### Available Modules
+
+| Module | Package | Has Schema | Description |
+|--------|---------|------------|-------------|
+| `auth` | `@friendlyinternet/nuxt-crouton-auth` | ● | Authentication with Better Auth |
+| `i18n` | `@friendlyinternet/nuxt-crouton-i18n` | ● | Multi-language support |
+| `bookings` | `@friendlyinternet/crouton-bookings` | ○ | Booking system |
+| `editor` | `@friendlyinternet/nuxt-crouton-editor` | ○ | Rich text editor |
+| `assets` | `@friendlyinternet/nuxt-crouton-assets` | ○ | Asset management |
+| `events` | `@friendlyinternet/nuxt-crouton-events` | ○ | Event tracking/audit trail |
+| `flow` | `@friendlyinternet/nuxt-crouton-flow` | ○ | Vue Flow graphs |
+| `email` | `@friendlyinternet/nuxt-crouton-email` | ○ | Email integration |
+| `maps` | `@friendlyinternet/nuxt-crouton-maps` | ○ | Map integration |
+| `ai` | `@friendlyinternet/nuxt-crouton-ai` | ○ | AI integration |
+| `devtools` | `@friendlyinternet/nuxt-crouton-devtools` | ○ | Nuxt Devtools |
+| `admin` | `@friendlyinternet/nuxt-crouton-admin` | ○ | Admin dashboard |
+
+● = Has database schema (will update `server/db/schema.ts`)
+○ = No database tables
+
+### What `crouton add` Does
+
+1. **Validates** module exists and dependencies are installed
+2. **Installs** package via detected package manager (pnpm/yarn/npm)
+3. **Updates** `nuxt.config.ts` - adds to `extends` array
+4. **Updates** `server/db/schema.ts` - adds schema export (if applicable)
+5. **Generates** migrations with `npx nuxt db:generate` (if applicable)
+6. **Applies** migrations with `npx nuxt db:migrate` (if applicable)
 
 ## Key Options
 
@@ -36,8 +101,13 @@ crouton seed-translations                    # Seed i18n data
 | `bin/crouton-generate.js` | CLI entry point (Commander.js) |
 | `lib/generate-collection.mjs` | Main orchestrator (~74KB) |
 | `lib/generators/*.mjs` | Template generators (14 files) |
+| `lib/module-registry.mjs` | Module definitions for `crouton add` |
+| `lib/add-module.mjs` | Module installation implementation |
 | `lib/utils/helpers.mjs` | Case conversion, type mapping |
 | `lib/utils/dialects.mjs` | PostgreSQL/SQLite configs |
+| `lib/utils/detect-package-manager.mjs` | Detect pnpm/yarn/npm |
+| `lib/utils/update-nuxt-config.mjs` | Update nuxt.config.ts extends |
+| `lib/utils/update-schema-index.mjs` | Update schema exports |
 
 ## Generators Structure
 
