@@ -229,7 +229,8 @@ export default defineEventHandler(async (event) => {
       for (const moduleName of modulesToAdd) {
         try {
           // Use --skip-install since packages are already in package.json and installed
-          const addCommand = `node ${cliPath} add ${moduleName} --skip-install`
+          // Use --skip-migrations since nuxt prepare hasn't run yet (migrations handled by final generate step)
+          const addCommand = `node ${cliPath} add ${moduleName} --skip-install --skip-migrations`
           console.log(`[create-app] Running: ${addCommand}`)
 
           const { stdout, stderr } = await execAsync(addCommand, {
