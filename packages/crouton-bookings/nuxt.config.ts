@@ -16,7 +16,7 @@ export default defineNuxtConfig({
     name: 'crouton-bookings'
   },
 
-  // Component configuration - prefixed with CroutonBooking
+  // Component configuration - prefixed with CroutonBookings
   components: {
     dirs: [
       {

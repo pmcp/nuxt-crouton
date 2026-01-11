@@ -91,8 +91,11 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       enableHiding: false
     })
 
-    // Add user-defined columns
-    columns.push(...options.columns)
+    // Add user-defined columns (ensure id is set from accessorKey for slot matching)
+    columns.push(...options.columns.map(col => ({
+      ...col,
+      id: col.id ?? col.accessorKey
+    })))
 
     // Add default columns conditionally
     if (!options.hideDefaultColumns?.createdAt) {
