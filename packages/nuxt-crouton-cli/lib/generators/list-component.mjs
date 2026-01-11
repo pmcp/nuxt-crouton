@@ -56,6 +56,9 @@ export function generateListComponent(data, config = {}) {
   // Check for date fields
   const dateFields = fields.filter(f => f.type === 'date')
 
+  // Check for boolean fields
+  const booleanFields = fields.filter(f => f.type === 'boolean')
+
   // Check for repeater fields
   const repeaterFields = fields.filter(f => f.type === 'repeater')
 
@@ -160,6 +163,9 @@ export function generateListComponent(data, config = {}) {
     </template>`).join('')}${dateFields.map(field => `
     <template #${field.name}-cell="{ row }">
       <CroutonDate :date="row.original.${field.name}"></CroutonDate>
+    </template>`).join('')}${booleanFields.map(field => `
+    <template #${field.name}-cell="{ row }">
+      <CroutonBoolean :value="row.original.${field.name}" />
     </template>`).join('')}${repeaterFields.map((field) => {
       const fieldCases = toCase(field.name)
       const cardMiniComponent = `${layerPascalCase}${pascalCasePlural}${fieldCases.pascalCase}CardMini`
