@@ -24,6 +24,7 @@
     },
     "./server/database/schema/auth": {
       "import": "./server/database/schema/auth.ts",
+      "require": "./server/database/schema/auth.ts",
       "types": "./server/database/schema/auth.ts"
     }
   },
