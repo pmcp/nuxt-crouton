@@ -46,3 +46,8 @@ apps/test-nuxthub-multitenant/.data
 apps/schema-designer/.data
 apps/test-sales/.data
 apps/test-bookings/.data
+
+# Generated test apps (from schema-designer)
+apps/schematest/
+apps/schematest2/
+apps/schematest/content-app/.data
