@@ -24,6 +24,15 @@ const nuxtApp = useNuxtApp()
 const customComponent = computed(() => {
   return nuxtApp.vueApp.component(componentName.value) || null
 })
+
+// Determine best display label: title > name > label > id
+const displayLabel = computed(() => {
+  if (!item.value) return null
+  return item.value.title
+    || item.value.name
+    || item.value.label
+    || props.id
+})
 </script>
 
 <template>
@@ -55,7 +64,7 @@ const customComponent = computed(() => {
         v-if="pending"
         class="h-4 w-full"
       />
-      <span v-else-if="item">{{ item.title }}</span>
+      <span v-else-if="item">{{ displayLabel }}</span>
       <span
         v-else-if="error"
         class="text-red-500"
