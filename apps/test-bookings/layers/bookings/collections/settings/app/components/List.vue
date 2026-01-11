@@ -2,7 +2,7 @@
   @crouton-generated
   @collection settings
   @layer bookings
-  @generated 2025-12-22
+  @generated 2026-01-11
 
   ## AI Context
   - List component for settings collection

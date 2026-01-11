@@ -38,6 +38,7 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
     "resend": "^4.0.0",
     "vue-email": "^0.8.0"
   },

@@ -13,7 +13,7 @@ definePageMeta({
 
     <template #body>
       <div class="h-full p-4">
-        <CroutonBookingsBookingsPanel />
+        <CroutonBookingsPanel />
       </div>
     </template>
   </UDashboardPanel>

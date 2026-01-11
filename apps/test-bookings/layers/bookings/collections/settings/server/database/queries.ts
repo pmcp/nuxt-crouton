@@ -1,4 +1,4 @@
-// Generated with array reference post-processing support (v2024-10-12)
+// Generated with JSON field post-processing support (v2025-01-11)
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
@@ -40,6 +40,34 @@ export async function getAllBookingsSettings(teamId: string) {
     .leftJoin(updatedByUser, eq(tables.bookingsSettings.updatedBy, updatedByUser.id))
     .where(eq(tables.bookingsSettings.teamId, teamId))
     .orderBy(desc(tables.bookingsSettings.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  settings.forEach((item: any) => {
+      // Parse statuses from JSON string
+      if (typeof item.statuses === 'string') {
+        try {
+          item.statuses = JSON.parse(item.statuses)
+        } catch (e) {
+          console.error('Error parsing statuses:', e)
+          item.statuses = []
+        }
+      }
+      if (item.statuses === null || item.statuses === undefined) {
+        item.statuses = []
+      }
+      // Parse groups from JSON string
+      if (typeof item.groups === 'string') {
+        try {
+          item.groups = JSON.parse(item.groups)
+        } catch (e) {
+          console.error('Error parsing groups:', e)
+          item.groups = []
+        }
+      }
+      if (item.groups === null || item.groups === undefined) {
+        item.groups = []
+      }
+  })
 
   return settings
 }
@@ -84,6 +112,34 @@ export async function getBookingsSettingsByIds(teamId: string, settingIds: strin
       )
     )
     .orderBy(desc(tables.bookingsSettings.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  settings.forEach((item: any) => {
+      // Parse statuses from JSON string
+      if (typeof item.statuses === 'string') {
+        try {
+          item.statuses = JSON.parse(item.statuses)
+        } catch (e) {
+          console.error('Error parsing statuses:', e)
+          item.statuses = []
+        }
+      }
+      if (item.statuses === null || item.statuses === undefined) {
+        item.statuses = []
+      }
+      // Parse groups from JSON string
+      if (typeof item.groups === 'string') {
+        try {
+          item.groups = JSON.parse(item.groups)
+        } catch (e) {
+          console.error('Error parsing groups:', e)
+          item.groups = []
+        }
+      }
+      if (item.groups === null || item.groups === undefined) {
+        item.groups = []
+      }
+  })
 
   return settings
 }

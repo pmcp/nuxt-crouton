@@ -1,4 +1,4 @@
-// Generated with array reference post-processing support (v2024-10-12)
+// Generated with JSON field post-processing support (v2025-01-11)
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'

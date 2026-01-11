@@ -51,3 +51,4 @@ apps/test-bookings/.data
 apps/schematest/
 apps/schematest2/
 apps/schematest/content-app/.data
+apps/schematest/faq-app/.data

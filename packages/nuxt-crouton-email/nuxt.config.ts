@@ -1,3 +1,6 @@
+import { fileURLToPath } from 'node:url'
+import vue from '@vitejs/plugin-vue'
+
 export default defineNuxtConfig({
   // Layer metadata
   $meta: {
@@ -55,10 +58,20 @@ export default defineNuxtConfig({
   // Compatibility
   compatibilityDate: '2024-11-01',
 
+  // Alias for consuming packages (e.g., crouton-bookings)
+  alias: {
+    '#crouton-email': fileURLToPath(new URL('./', import.meta.url))
+  },
+
   // Nitro server config
   nitro: {
     imports: {
       dirs: ['server/utils']
+    },
+    // Required for vue-email: enables Vue SFC compilation in server context
+    // See: https://vuemail.net/getting-started/nuxt-nitro
+    rollupConfig: {
+      plugins: [vue()]
     }
   }
 })

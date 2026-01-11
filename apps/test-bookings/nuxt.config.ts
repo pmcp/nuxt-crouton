@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   extends: [
     '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-auth',
+    '@friendlyinternet/nuxt-crouton-email',
     '@friendlyinternet/nuxt-crouton-i18n',
     '@friendlyinternet/nuxt-crouton-maps',
     '@friendlyinternet/crouton-bookings',

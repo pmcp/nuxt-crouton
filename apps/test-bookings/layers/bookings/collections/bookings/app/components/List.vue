@@ -2,7 +2,7 @@
   @crouton-generated
   @collection bookings
   @layer bookings
-  @generated 2025-12-22
+  @generated 2026-01-11
 
   ## AI Context
   - List component for bookings collection
@@ -30,18 +30,11 @@
     :loading="pending"
   >
     <template #header>
-      <div class="flex items-center justify-between p-4">
-        <h2 class="text-lg font-semibold">Bookings</h2>
-        <div class="flex items-center gap-2">
-          <CroutonExportButton
-            collection="bookingsBookings"
-            :rows="bookings || []"
-          />
-          <UButton color="primary" @click="open('create', 'bookingsBookings')">
-            Create Booking
-          </UButton>
-        </div>
-      </div>
+      <CroutonTableHeader
+        title="BookingsBookings"
+        :collection="'bookingsBookings'"
+        createButton
+      />
     </template>
     <template #location-cell="{ row }">
       <CroutonItemCardMini
@@ -76,7 +69,6 @@ const props = withDefaults(defineProps<{
 })
 
 const { columns } = useBookingsBookings()
-const { open } = useCrouton()
 
 const { items: bookings, pending } = await useCollectionQuery(
   'bookingsBookings'
