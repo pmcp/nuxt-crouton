@@ -446,14 +446,23 @@ watch(
     <!-- Empty state (but might have create card) -->
     <div v-else-if="resolvedBookings.length === 0">
       <!-- Inline create card when empty -->
-      <div v-if="creatingAtDate" :ref="setCreateCardRef" class="scroll-mt-4">
-        <CroutonBookingsBookingCreateCard
-          :date="creatingAtDate"
-          :active-location-filter="activeLocationFilter"
-          @created="emit('created')"
-          @cancel="emit('cancelCreate')"
-        />
-      </div>
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 scale-95 -translate-y-2"
+        enter-to-class="opacity-100 scale-100 translate-y-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div v-if="creatingAtDate" :ref="setCreateCardRef" class="scroll-mt-4">
+          <CroutonBookingsBookingCreateCard
+            :date="creatingAtDate"
+            :active-location-filter="activeLocationFilter"
+            @created="emit('created')"
+            @cancel="emit('cancelCreate')"
+          />
+        </div>
+      </Transition>
 
       <!-- Empty message when not creating -->
       <div v-else class="bg-elevated/50 rounded-lg p-8 text-center">
@@ -489,34 +498,52 @@ watch(
           class="flex flex-col gap-1.5 scroll-mt-4"
         >
           <!-- Create card for placeholder date (new date with no bookings) -->
-          <div
-            v-if="dateGroup.isCreatePlaceholder && creatingAtDate"
-            :ref="setCreateCardRef"
-            class="scroll-mt-4"
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 scale-95 -translate-y-2"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
           >
-            <CroutonBookingsBookingCreateCard
-              :date="creatingAtDate"
-              :active-location-filter="activeLocationFilter"
-              @created="emit('created')"
-              @cancel="emit('cancelCreate')"
-            />
-          </div>
-
-          <!-- Bookings for this date -->
-          <template v-else>
-            <!-- Inline create card at TOP if creating at this date (existing date with bookings) -->
             <div
-              v-if="creatingAtDateKey === dateGroup.dateKey"
+              v-if="dateGroup.isCreatePlaceholder && creatingAtDate"
               :ref="setCreateCardRef"
               class="scroll-mt-4"
             >
               <CroutonBookingsBookingCreateCard
-                :date="creatingAtDate!"
+                :date="creatingAtDate"
                 :active-location-filter="activeLocationFilter"
                 @created="emit('created')"
                 @cancel="emit('cancelCreate')"
               />
             </div>
+          </Transition>
+
+          <!-- Bookings for this date -->
+          <template v-else>
+            <!-- Inline create card at TOP if creating at this date (existing date with bookings) -->
+            <Transition
+              enter-active-class="transition-all duration-300 ease-out"
+              enter-from-class="opacity-0 scale-95 -translate-y-2"
+              enter-to-class="opacity-100 scale-100 translate-y-0"
+              leave-active-class="transition-all duration-200 ease-in"
+              leave-from-class="opacity-100 scale-100"
+              leave-to-class="opacity-0 scale-95"
+            >
+              <div
+                v-if="creatingAtDateKey === dateGroup.dateKey"
+                :ref="setCreateCardRef"
+                class="scroll-mt-4"
+              >
+                <CroutonBookingsBookingCreateCard
+                  :date="creatingAtDate!"
+                  :active-location-filter="activeLocationFilter"
+                  @created="emit('created')"
+                  @cancel="emit('cancelCreate')"
+                />
+              </div>
+            </Transition>
 
             <CroutonBookingsBookingCard
               v-for="booking in dateGroup.bookings"
