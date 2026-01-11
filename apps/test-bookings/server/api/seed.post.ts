@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsSettings } from '~~/layers/bookings/collections/settings/server/database/schema'
+import { bookingsEmailtemplates } from '~~/layers/bookings/collections/emailtemplates/server/database/schema'
 
 export default defineEventHandler(async (_event) => {
   // Block in production
@@ -24,6 +25,7 @@ export default defineEventHandler(async (_event) => {
   await db.delete(bookingsBookings)
   await db.delete(bookingsLocations)
   await db.delete(bookingsSettings)
+  await db.delete(bookingsEmailtemplates)
 
   console.log('[seed] Creating locations...')
 
@@ -124,6 +126,66 @@ export default defineEventHandler(async (_event) => {
   await db.insert(bookingsSettings).values(settings)
   console.log('[seed] Created settings')
 
+  console.log('[seed] Creating email templates...')
+
+  // Create email templates
+  const emailTemplates = [
+    {
+      id: nanoid(),
+      teamId,
+      owner: memberId,
+      order: 0,
+      name: 'Booking Confirmation',
+      triggerType: 'booking_created',
+      recipientType: 'customer',
+      subject: 'Your booking is confirmed - {{location_title}}',
+      body: `<h1>Booking Confirmed!</h1>
+<p>Hi {{customer_name}},</p>
+<p>Your booking has been confirmed:</p>
+<ul>
+  <li><strong>Location:</strong> {{location_title}}</li>
+  <li><strong>Date:</strong> {{booking_date}}</li>
+  <li><strong>Time:</strong> {{booking_slot}}</li>
+  <li><strong>Address:</strong> {{location_street}}, {{location_city}}</li>
+</ul>
+<p>See you there!</p>
+<p>Best regards,<br>{{team_name}}</p>`,
+      isActive: true,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: nanoid(),
+      teamId,
+      owner: memberId,
+      order: 1,
+      name: 'Booking Cancellation',
+      triggerType: 'booking_cancelled',
+      recipientType: 'customer',
+      subject: 'Your booking has been cancelled - {{location_title}}',
+      body: `<h1>Booking Cancelled</h1>
+<p>Hi {{customer_name}},</p>
+<p>Your booking has been cancelled:</p>
+<ul>
+  <li><strong>Location:</strong> {{location_title}}</li>
+  <li><strong>Date:</strong> {{booking_date}}</li>
+  <li><strong>Time:</strong> {{booking_slot}}</li>
+</ul>
+<p>If you have any questions, please contact us.</p>
+<p>Best regards,<br>{{team_name}}</p>`,
+      isActive: true,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ]
+
+  await db.insert(bookingsEmailtemplates).values(emailTemplates)
+  console.log(`[seed] Created ${emailTemplates.length} email templates`)
+
   console.log('[seed] Creating bookings...')
 
   // Create 25 bookings across a date range (mix of past and future)
@@ -190,6 +252,7 @@ export default defineEventHandler(async (_event) => {
       locations: locations.length,
       bookings: bookings.length,
       settings: 1,
+      emailTemplates: emailTemplates.length,
       statusBreakdown: statusCounts,
       locationBreakdown: locationCounts,
     },

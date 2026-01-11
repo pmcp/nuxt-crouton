@@ -22,6 +22,13 @@
       "when": 1767730075909,
       "tag": "0002_tiresome_sabretooth",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1767747000000,
+      "tag": "0003_email_tables",
+      "breakpoints": true
     }
   ]
 }
