@@ -3,6 +3,3 @@
 
 // Export auth schema from crouton-auth package
 export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
-export { bookingsEmailtemplates } from '../../layers/bookings/collections/emailtemplates/server/database/schema'
-export * from './translations-ui'
-export { bookingsEmaillogs } from '../../layers/bookings/collections/emaillogs/server/database/schema'
