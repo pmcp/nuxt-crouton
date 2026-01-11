@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2025-12-22
+ * @generated 2026-01-11
  *
  * ## AI Context
  * - Composable: useBookingsLocations
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/bookings-locations
  * - Form component: BookingsLocationsForm
  * - List component: BookingsLocationsList
- * - Fields: title, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
+ * - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -54,8 +54,8 @@ export const bookingsLocationSchema = z.object({
 })
 
 export const bookingsLocationsColumns = [
-  { accessorKey: 'color', header: 'Color' },
   { accessorKey: 'title', header: 'Title' },
+  { accessorKey: 'color', header: 'Color' },
   { accessorKey: 'street', header: 'Street' },
   { accessorKey: 'zip', header: 'Zip' },
   { accessorKey: 'city', header: 'City' },
@@ -75,8 +75,8 @@ const _bookingsLocationsConfig = {
   apiPath: 'bookings-locations',
   componentName: 'BookingsLocationsForm',
   defaultValues: {
-    color: '',
     title: '',
+    color: '',
     street: '',
     zip: '',
     city: '',

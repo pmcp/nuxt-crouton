@@ -2,14 +2,14 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2025-12-22
+  @generated 2026-01-11
 
   ## AI Context
   - Form component for locations collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/bookings-locations
   - Zod schema: useBookingsLocations() composable
-  - Fields: title, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
+  - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -73,10 +73,13 @@
 
       <template #sidebar>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Color" name="color" help="Color used for this location's bookings in the calendar">
-          <UColorPicker v-model="state.color" class="w-full" />
+      </div>
+      <div class="flex flex-col gap-4 p-1">
+        <UFormField label="Color" name="color" class="not-last:pb-4">
+          <UColorPicker v-model="state.color" />
         </UFormField>
       </div>
+
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Location" name="location" class="not-last:pb-4">
           <UTextarea v-model="state.location" class="w-full" size="xl" />

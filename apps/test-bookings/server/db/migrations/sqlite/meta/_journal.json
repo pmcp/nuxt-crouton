@@ -29,6 +29,20 @@
       "when": 1767747000000,
       "tag": "0003_email_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1768161625647,
+      "tag": "0004_grey_enchantress",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1768162586635,
+      "tag": "0005_nosy_wendell_vaughn",
+      "breakpoints": true
     }
   ]
 }

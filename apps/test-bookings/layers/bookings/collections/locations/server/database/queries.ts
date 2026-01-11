@@ -1,4 +1,4 @@
-// Generated with array reference post-processing support (v2024-10-12)
+// Generated with JSON field post-processing support (v2025-01-11)
 import { eq, and, desc, asc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
@@ -40,6 +40,22 @@ export async function getAllBookingsLocations(teamId: string) {
     .leftJoin(updatedByUser, eq(tables.bookingsLocations.updatedBy, updatedByUser.id))
     .where(eq(tables.bookingsLocations.teamId, teamId))
     .orderBy(asc(tables.bookingsLocations.order), desc(tables.bookingsLocations.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  locations.forEach((item: any) => {
+      // Parse slots from JSON string
+      if (typeof item.slots === 'string') {
+        try {
+          item.slots = JSON.parse(item.slots)
+        } catch (e) {
+          console.error('Error parsing slots:', e)
+          item.slots = []
+        }
+      }
+      if (item.slots === null || item.slots === undefined) {
+        item.slots = []
+      }
+  })
 
   return locations
 }
@@ -84,6 +100,22 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
       )
     )
     .orderBy(asc(tables.bookingsLocations.order), desc(tables.bookingsLocations.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  locations.forEach((item: any) => {
+      // Parse slots from JSON string
+      if (typeof item.slots === 'string') {
+        try {
+          item.slots = JSON.parse(item.slots)
+        } catch (e) {
+          console.error('Error parsing slots:', e)
+          item.slots = []
+        }
+      }
+      if (item.slots === null || item.slots === undefined) {
+        item.slots = []
+      }
+  })
 
   return locations
 }

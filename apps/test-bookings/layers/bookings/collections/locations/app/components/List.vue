@@ -2,14 +2,14 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2025-12-22
+  @generated 2026-01-11
 
   ## AI Context
   - List component for locations collection
   - Collection name: bookingsLocations
   - API endpoint: /api/teams/[id]/bookings-locations
   - Columns composable: useBookingsLocations()
-  - Column fields: title, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
+  - Column fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -36,14 +36,6 @@
         createButton
       />
     </template>
-    <template #color-cell="{ row }">
-      <div
-        v-if="row.original.color"
-        class="w-6 h-6 rounded-full border border-gray-200 dark:border-gray-700"
-        :style="{ backgroundColor: row.original.color }"
-      />
-      <span v-else class="text-gray-400">—</span>
-    </template>
     <template #title-cell="{ row }">
       {{ t(row.original, 'title') }}
     </template>
@@ -63,12 +55,15 @@
           :key="idx"
           color="neutral"
           variant="subtle"
-          size="xs"
+          size="md"
         >
           {{ item }}
         </UBadge>
       </div>
       <span v-else class="text-gray-400">—</span>
+    </template>
+    <template #inventoryMode-cell="{ row }">
+      <CroutonBoolean :value="row.original.inventoryMode" />
     </template>
     <template #slots-cell="{ row }">
       <BookingsLocationsSlotCardMini :value="row.original.slots" />

@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2025-12-22
+ * @generated 2026-01-11
  *
  * ## AI Context
  * - Main interface: BookingsLocation
  * - Form data type: BookingsLocationFormData
  * - New item type: NewBookingsLocation
  * - Form props: BookingsLocationFormProps
- * - Fields: title, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
+ * - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -27,8 +27,8 @@ export interface BookingsLocation {
   id: string
   teamId: string
   owner: string
-  color?: string
   title: string
+  color?: string
   street?: string
   zip?: string
   city?: string
