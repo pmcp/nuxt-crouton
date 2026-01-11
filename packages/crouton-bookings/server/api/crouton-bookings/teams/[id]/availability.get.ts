@@ -71,10 +71,19 @@ export default defineEventHandler(async (event) => {
   // Aggregate by date
   const availabilityData: Record<string, { bookedSlots: string[], bookedCount: number }> = {}
 
+  // Helper to convert date to local YYYY-MM-DD (not UTC)
+  function toLocalDateKey(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
   for (const booking of bookings) {
-    const dateKey = booking.date instanceof Date
-      ? booking.date.toISOString().substring(0, 10)
-      : new Date(booking.date as string).toISOString().substring(0, 10)
+    const bookingDate = booking.date instanceof Date
+      ? booking.date
+      : new Date(booking.date as string)
+    const dateKey = toLocalDateKey(bookingDate)
 
     if (!availabilityData[dateKey]) {
       availabilityData[dateKey] = { bookedSlots: [], bookedCount: 0 }

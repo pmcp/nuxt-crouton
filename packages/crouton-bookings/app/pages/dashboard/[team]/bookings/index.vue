@@ -114,6 +114,7 @@ function onCancelCreate() {
             :highlighted-date="hoveredDate"
             :creating-at-date="creatingAtDate"
             :scroll-to-date="scrollToDate"
+            :active-location-filter="filterState.locations"
             @created="onBookingCreated"
             @cancel-create="onCancelCreate"
           />

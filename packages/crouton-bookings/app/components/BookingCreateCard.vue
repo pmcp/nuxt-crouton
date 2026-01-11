@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import type { LocationData } from '../types/booking'
 
 interface Props {
   /** The date for this booking */
   date: Date
+  /** Active location filter - if set, only these locations are selectable */
+  activeLocationFilter?: string[]
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  activeLocationFilter: undefined,
+})
 
 const emit = defineEmits<{
   created: []
@@ -53,12 +58,27 @@ watch(localSlotId, (v) => {
   formState.slotId = v
 })
 
-// Auto-select first location
+// Auto-select first enabled location
 watch(
-  () => locations.value,
-  (locs) => {
+  [() => locations.value, () => props.activeLocationFilter],
+  ([locs, filter]: [LocationData[] | undefined, string[] | undefined]) => {
     if (locs && locs.length > 0 && !localLocationId.value) {
-      localLocationId.value = locs[0].id
+      // Find first enabled location
+      const firstEnabled = locs.find((loc: LocationData) => {
+        if (!filter || filter.length === 0) return true
+        return filter.includes(loc.id)
+      })
+      if (firstEnabled) {
+        localLocationId.value = firstEnabled.id
+      }
+    }
+    // If current selection becomes disabled, clear it
+    if (localLocationId.value && filter && filter.length > 0) {
+      if (!filter.includes(localLocationId.value)) {
+        // Find first enabled location to switch to
+        const firstEnabled = locs?.find((loc: LocationData) => filter.includes(loc.id))
+        localLocationId.value = firstEnabled?.id || null
+      }
     }
   },
   { immediate: true },
@@ -101,6 +121,16 @@ const formattedDate = computed(() => {
     day: 'numeric',
   }).format(props.date)
 })
+
+// Check if a location is enabled based on active filter
+function isLocationEnabled(locationId: string): boolean {
+  // If no filter is set, all locations are enabled
+  if (!props.activeLocationFilter || props.activeLocationFilter.length === 0) {
+    return true
+  }
+  // Only locations in the active filter are enabled
+  return props.activeLocationFilter.includes(locationId)
+}
 </script>
 
 <template>
@@ -135,12 +165,14 @@ const formattedDate = computed(() => {
           size="xs"
           :variant="localLocationId === location.id ? 'solid' : 'soft'"
           :color="localLocationId === location.id ? 'primary' : 'neutral'"
+          :disabled="!isLocationEnabled(location.id)"
+          :class="{ 'opacity-40': !isLocationEnabled(location.id) }"
           @click="localLocationId = location.id"
         >
           <template #leading>
             <span
               class="w-2 h-2 rounded-full"
-              :style="{ backgroundColor: location.color || '#3b82f6' }"
+              :style="{ backgroundColor: isLocationEnabled(location.id) ? (location.color || '#3b82f6') : '#9ca3af' }"
             />
           </template>
           {{ location.title }}

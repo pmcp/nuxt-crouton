@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, type ComponentPublicInstance } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 import type { Booking } from '../types/booking'
 
 interface Props {
@@ -19,6 +19,8 @@ interface Props {
   creatingAtDate?: Date | null
   /** Date to scroll to (after booking creation) */
   scrollToDate?: Date | null
+  /** Active location filter - when set, only these locations are selectable in create form */
+  activeLocationFilter?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,11 +32,16 @@ const props = withDefaults(defineProps<Props>(), {
   highlightedDate: null,
   creatingAtDate: null,
   scrollToDate: null,
+  activeLocationFilter: undefined,
 })
 
 const emit = defineEmits<{
   created: []
   cancelCreate: []
+  /** Emitted when the top visible date changes (week changed during scroll) */
+  topVisibleDateChange: [date: Date]
+  /** Emitted when hovering over a booking */
+  bookingHover: [date: Date | null]
 }>()
 
 // Use composable for fetching if bookings not provided
@@ -74,6 +81,7 @@ interface DateGroup {
   dateKey: string
   date: Date
   bookings: Booking[]
+  isCreatePlaceholder?: boolean
 }
 
 interface MonthGroup {
@@ -111,6 +119,80 @@ const groupedBookings = computed((): MonthGroup[] => {
   }
 
   return monthGroups
+})
+
+// Extended grouped bookings that includes the creation date placeholder in the correct position
+const groupedBookingsWithCreateDate = computed((): MonthGroup[] => {
+  const baseGroups = groupedBookings.value
+
+  // If not creating or already has bookings on that date, return as-is
+  if (!props.creatingAtDate || creatingDateHasBookings.value) {
+    return baseGroups
+  }
+
+  // Create a deep copy to avoid mutating the original
+  const result: MonthGroup[] = JSON.parse(JSON.stringify(baseGroups))
+
+  const createDate = props.creatingAtDate
+  const createMonthKey = `${createDate.getFullYear()}-${createDate.getMonth()}`
+  const createDateKey = formatDateKey(createDate)
+  const createMonthLabel = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(createDate)
+
+  // Find or create the month group for the creation date
+  let monthIndex = result.findIndex(mg => mg.key === createMonthKey)
+
+  if (monthIndex === -1) {
+    // Need to insert a new month group in the correct position
+    const newMonthGroup: MonthGroup = {
+      key: createMonthKey,
+      label: createMonthLabel,
+      dateGroups: [{
+        dateKey: createDateKey,
+        date: new Date(createDate),
+        bookings: [],
+        isCreatePlaceholder: true,
+      }],
+    }
+
+    // Find correct position (sorted by date)
+    const createTime = createDate.getTime()
+    let insertIndex = result.length // default to end
+
+    for (let i = 0; i < result.length; i++) {
+      const firstDateInMonth = result[i].dateGroups[0]?.date
+      if (firstDateInMonth && new Date(firstDateInMonth).getTime() > createTime) {
+        insertIndex = i
+        break
+      }
+    }
+
+    result.splice(insertIndex, 0, newMonthGroup)
+  }
+  else {
+    // Month exists, insert the date group in the correct position
+    const monthGroup = result[monthIndex]
+    const createTime = createDate.getTime()
+
+    // Find correct position within the month (sorted by date)
+    let insertIndex = monthGroup.dateGroups.length // default to end
+
+    for (let i = 0; i < monthGroup.dateGroups.length; i++) {
+      const dateGroupTime = new Date(monthGroup.dateGroups[i].date).getTime()
+      if (dateGroupTime > createTime) {
+        insertIndex = i
+        break
+      }
+    }
+
+    monthGroup.dateGroups.splice(insertIndex, 0, {
+      dateKey: createDateKey,
+      date: new Date(createDate),
+      bookings: [],
+      isCreatePlaceholder: true,
+    })
+  }
+
+  return result
 })
 
 // Get all unique date keys for scroll targeting
@@ -295,6 +377,7 @@ watch(
       <div v-if="creatingAtDate" :ref="setCreateCardRef" class="scroll-mt-4">
         <CroutonBookingsBookingCreateCard
           :date="creatingAtDate"
+          :active-location-filter="activeLocationFilter"
           @created="emit('created')"
           @cancel="emit('cancelCreate')"
         />
@@ -317,20 +400,7 @@ watch(
 
     <!-- Bookings list with month/year separators -->
     <div v-else ref="listContainerRef" class="flex flex-col gap-4">
-      <!-- Create card for new date (not in existing groups) -->
-      <div
-        v-if="creatingAtDate && !creatingDateHasBookings"
-        :ref="setCreateCardRef"
-        class="scroll-mt-4"
-      >
-        <CroutonBookingsBookingCreateCard
-          :date="creatingAtDate"
-          @created="emit('created')"
-          @cancel="emit('cancelCreate')"
-        />
-      </div>
-
-      <div v-for="monthGroup in groupedBookings" :key="monthGroup.key" class="flex flex-col gap-2">
+      <div v-for="monthGroup in groupedBookingsWithCreateDate" :key="monthGroup.key" class="flex flex-col gap-2">
         <!-- Month/Year separator -->
         <div class="flex items-center gap-2 py-1 sticky top-0 bg-default/95 backdrop-blur-sm z-10">
           <span class="text-xs font-medium text-muted uppercase tracking-wider">
@@ -346,26 +416,43 @@ watch(
           :ref="(el) => setDateRef(dateGroup.dateKey, el as HTMLElement)"
           class="flex flex-col gap-1.5 scroll-mt-4"
         >
-          <!-- Bookings for this date -->
-          <CroutonBookingsBookingCard
-            v-for="booking in dateGroup.bookings"
-            :key="booking.id"
-            :booking="booking"
-            :highlighted="isHighlighted(booking)"
-          />
-
-          <!-- Inline create card if creating at this date -->
+          <!-- Create card for placeholder date (new date with no bookings) -->
           <div
-            v-if="creatingAtDateKey === dateGroup.dateKey"
+            v-if="dateGroup.isCreatePlaceholder && creatingAtDate"
             :ref="setCreateCardRef"
             class="scroll-mt-4"
           >
             <CroutonBookingsBookingCreateCard
-              :date="creatingAtDate!"
+              :date="creatingAtDate"
+              :active-location-filter="activeLocationFilter"
               @created="emit('created')"
               @cancel="emit('cancelCreate')"
             />
           </div>
+
+          <!-- Bookings for this date -->
+          <template v-else>
+            <!-- Inline create card at TOP if creating at this date (existing date with bookings) -->
+            <div
+              v-if="creatingAtDateKey === dateGroup.dateKey"
+              :ref="setCreateCardRef"
+              class="scroll-mt-4"
+            >
+              <CroutonBookingsBookingCreateCard
+                :date="creatingAtDate!"
+                :active-location-filter="activeLocationFilter"
+                @created="emit('created')"
+                @cancel="emit('cancelCreate')"
+              />
+            </div>
+
+            <CroutonBookingsBookingCard
+              v-for="booking in dateGroup.bookings"
+              :key="booking.id"
+              :booking="booking"
+              :highlighted="isHighlighted(booking)"
+            />
+          </template>
         </div>
       </div>
     </div>
