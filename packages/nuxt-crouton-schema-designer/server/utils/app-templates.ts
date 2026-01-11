@@ -231,15 +231,8 @@ export {}
 `
   })
 
-  // Layer nuxt.config.ts
-  files.push({
-    path: `layers/${options.layerName}/nuxt.config.ts`,
-    content: `export default defineNuxtConfig({
-  // Layer configuration
-  // Collections will be added here after generation
-})
-`
-  })
+  // NOTE: Layer nuxt.config.ts is NOT generated here - the crouton CLI creates it
+  // with proper extends array and component configuration
 
   // Schema JSON files for each collection
   for (const collection of options.collections) {
