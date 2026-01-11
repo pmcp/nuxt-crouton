@@ -112,9 +112,15 @@ const filteredBookings = computed(() => {
 
   // Filter by status
   if (props.filters.statuses.length > 0) {
+    // If specific statuses are selected, show only those
     result = result.filter(booking =>
       props.filters.statuses.includes(booking.status),
     )
+  }
+  else {
+    // By default, exclude cancelled bookings from calendar indicators
+    // (cancelled slots should appear as free/available)
+    result = result.filter(booking => booking.status !== 'cancelled')
   }
 
   // Filter by location
