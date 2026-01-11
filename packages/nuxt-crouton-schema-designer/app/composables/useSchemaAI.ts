@@ -150,7 +150,7 @@ This creates a foreign key reference to another collection.
 2. **NEVER include timestamp or audit fields** - These are AUTO-GENERATED:
    - createdAt, updatedAt, createdBy, updatedBy - Do NOT add these
 3. Use **camelCase** for field names (e.g., userId, productName)
-4. Use **singular, lowercase** collection names (e.g., "product" not "Products")
+4. Use **plural, camelCase** collection names (e.g., "products", "categories", "faqCategories")
 5. Choose appropriate field types:
    - 'string' for short text (max 255 chars)
    - 'text' for long content
