@@ -40,8 +40,8 @@ const emit = defineEmits<{
   cancelCreate: []
   /** Emitted when the top visible date changes (week changed during scroll) */
   topVisibleDateChange: [date: Date]
-  /** Emitted when hovering over a booking */
-  bookingHover: [date: Date | null]
+  /** Emitted when clicking on a booking's date visualization */
+  dateClick: [date: Date]
 }>()
 
 // Use composable for fetching if bookings not provided
@@ -233,13 +233,85 @@ function findNearestDateKey(targetDate: Date): string | null {
   return nearestKey
 }
 
-// Register element ref for a date
+// Track top visible date for calendar sync
+const lastEmittedWeek = ref<string | null>(null)
+const observer = ref<IntersectionObserver | null>(null)
+
+// Get ISO week key to detect week changes
+function getWeekKey(date: Date): string {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7))
+  const yearStart = new Date(d.getFullYear(), 0, 1)
+  const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return `${d.getFullYear()}-W${weekNum}`
+}
+
+// IntersectionObserver callback to find top visible date group
+function observerCallback(entries: IntersectionObserverEntry[]) {
+  // Find topmost visible date group
+  let topEntry: IntersectionObserverEntry | null = null
+  let topY = Infinity
+
+  for (const entry of entries) {
+    if (entry.isIntersecting && entry.boundingClientRect.top < topY && entry.boundingClientRect.top >= 0) {
+      topY = entry.boundingClientRect.top
+      topEntry = entry
+    }
+  }
+
+  if (topEntry) {
+    const dateKey = topEntry.target.getAttribute('data-date-key')
+    if (dateKey) {
+      const [year, month, day] = dateKey.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      const weekKey = getWeekKey(date)
+
+      // Only emit if week changed
+      if (weekKey !== lastEmittedWeek.value) {
+        lastEmittedWeek.value = weekKey
+        emit('topVisibleDateChange', date)
+      }
+    }
+  }
+}
+
+// Register element ref for a date and observe for scroll tracking
 function setDateRef(dateKey: string, el: HTMLElement | null) {
   if (el) {
     dateElementRefs.value.set(dateKey, el)
+    el.setAttribute('data-date-key', dateKey)
+    observer.value?.observe(el)
   } else {
+    const existing = dateElementRefs.value.get(dateKey)
+    if (existing) {
+      observer.value?.unobserve(existing)
+    }
     dateElementRefs.value.delete(dateKey)
   }
+}
+
+// Set up IntersectionObserver on mount
+onMounted(() => {
+  observer.value = new IntersectionObserver(observerCallback, {
+    rootMargin: '-10% 0px -80% 0px', // Top 10-20% of viewport triggers
+    threshold: 0,
+  })
+
+  // Observe any already-registered elements
+  for (const el of dateElementRefs.value.values()) {
+    observer.value.observe(el)
+  }
+})
+
+// Clean up observer on unmount
+onUnmounted(() => {
+  observer.value?.disconnect()
+})
+
+// Handle click on booking date - emit to navigate calendar
+function onBookingDateClick(date: Date) {
+  emit('dateClick', date)
 }
 
 // Watch for highlighted date changes and scroll
@@ -451,6 +523,7 @@ watch(
               :key="booking.id"
               :booking="booking"
               :highlighted="isHighlighted(booking)"
+              @date-click="onBookingDateClick"
             />
           </template>
         </div>

@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'resend-email': [triggerType: EmailTriggerType]
+  'date-click': [date: Date]
 }>()
 
 const { t } = useI18n()
@@ -97,13 +98,19 @@ const emailStatusText = computed(() => {
     }"
   >
     <div class="flex items-center gap-3">
-      <!-- Date badge -->
-      <CroutonBookingsDateBadge
-        :date="booking.date"
-        :variant="isCancelled ? 'error' : 'primary'"
-        :highlighted="highlighted"
-        :highlight-color="locationColor"
-      />
+      <!-- Date badge (clickable to navigate calendar) -->
+      <button
+        type="button"
+        class="cursor-pointer hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg"
+        @click="emit('date-click', new Date(booking.date))"
+      >
+        <CroutonBookingsDateBadge
+          :date="booking.date"
+          :variant="isCancelled ? 'error' : 'primary'"
+          :highlighted="highlighted"
+          :highlight-color="locationColor"
+        />
+      </button>
 
       <!-- Content -->
       <div class="flex-1 flex flex-col gap-1 min-w-0">

@@ -7,7 +7,10 @@ definePageMeta({
 // Fetch all data
 const { bookings, settings, locations, loading, error, refresh } = useBookingsList()
 
-// Hovered date (from calendar) - used to highlight bookings
+// Ref for Calendar control (to sync with list scroll)
+const calendarRef = ref<{ goToDate: (date: Date) => void } | null>(null)
+
+// Hovered date (from calendar OR list) - used to highlight bookings/calendar days
 const hoveredDate = ref<Date | null>(null)
 
 // Filter state (status, location and showCancelled toggle)
@@ -84,6 +87,17 @@ async function onBookingCreated() {
 function onCancelCreate() {
   creatingAtDate.value = null
 }
+
+// Handle list scroll - sync calendar to top visible date (week changes)
+function onTopVisibleDateChange(date: Date) {
+  calendarRef.value?.goToDate(date)
+}
+
+// Handle click on booking date - navigate calendar and highlight
+function onDateClick(date: Date) {
+  calendarRef.value?.goToDate(date)
+  hoveredDate.value = date
+}
 </script>
 
 <template>
@@ -96,10 +110,12 @@ function onCancelCreate() {
       <div class="flex flex-col gap-4 h-full p-4">
         <!-- Calendar section with integrated filters -->
         <CroutonBookingsCalendar
+          ref="calendarRef"
           v-model:filters="filterState"
           :bookings="bookings"
           :locations="locations"
           :settings="settings"
+          :highlighted-date="hoveredDate"
           @hover="onCalendarHover"
           @day-click="onCalendarDayClick"
         />
@@ -117,6 +133,8 @@ function onCancelCreate() {
             :active-location-filter="filterState.locations"
             @created="onBookingCreated"
             @cancel-create="onCancelCreate"
+            @top-visible-date-change="onTopVisibleDateChange"
+            @date-click="onDateClick"
           />
         </div>
       </div>

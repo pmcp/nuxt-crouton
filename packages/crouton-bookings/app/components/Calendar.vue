@@ -16,6 +16,8 @@ interface Props {
   defaultView?: 'week' | 'month'
   /** Filter state for status and location filters */
   filters?: FilterState
+  /** Date to highlight (from external hover, e.g., list item hover) */
+  highlightedDate?: Date | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -24,6 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
   settings: null,
   defaultView: 'week',
   filters: () => ({ statuses: [], locations: [], showCancelled: false }),
+  highlightedDate: null,
 })
 
 const emit = defineEmits<{
@@ -33,6 +36,19 @@ const emit = defineEmits<{
 }>()
 
 const { parseSlotIds, parseLocationSlots } = useBookingSlots()
+
+// Ref for WeekStrip control
+const weekStripRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void } | null>(null)
+
+// Navigate week strip to a specific date
+function goToDate(date: Date) {
+  weekStripRef.value?.goToDate(date)
+}
+
+// Expose methods for parent control
+defineExpose({
+  goToDate,
+})
 
 // Map visibility state
 const showMap = ref(false)
@@ -446,7 +462,9 @@ function hasBookings(date: Date): boolean {
     <!-- Week View -->
     <CroutonBookingsWeekStrip
       v-if="currentView === 'week'"
+      ref="weekStripRef"
       size="md"
+      :highlighted-date="highlightedDate"
       @hover="onWeekHover"
       @day-click="onWeekDayClick"
     >

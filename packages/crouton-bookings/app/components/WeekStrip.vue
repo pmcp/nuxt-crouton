@@ -7,6 +7,8 @@ interface Props {
   weekStartsOn?: 0 | 1 // 0 = Sunday, 1 = Monday
   size?: 'sm' | 'md' | 'lg'
   variant?: 'default' | 'beams' | 'bars'
+  /** Date to highlight (from external hover) */
+  highlightedDate?: Date | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -14,6 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
   weekStartsOn: 1, // Monday default
   size: 'md',
   variant: 'default',
+  highlightedDate: null,
 })
 
 const emit = defineEmits<{
@@ -82,9 +85,32 @@ function goToToday() {
   referenceDate.value = today(getLocalTimeZone())
 }
 
+function goToDate(date: Date) {
+  referenceDate.value = new CalendarDate(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    date.getDate(),
+  )
+}
+
+// Expose methods for parent control
+defineExpose({
+  goToDate,
+  goToToday,
+})
+
 function isToday(day: { date: DateValue }): boolean {
   const todayDate = today(getLocalTimeZone())
   return day.date.compare(todayDate) === 0
+}
+
+function isHighlighted(day: { jsDate: Date }): boolean {
+  if (!props.highlightedDate) return false
+  return (
+    day.jsDate.getFullYear() === props.highlightedDate.getFullYear()
+    && day.jsDate.getMonth() === props.highlightedDate.getMonth()
+    && day.jsDate.getDate() === props.highlightedDate.getDate()
+  )
 }
 
 function onDayClick(day: { date: DateValue, jsDate: Date }) {
@@ -158,7 +184,10 @@ const sizeClasses = computed(() => {
         v-for="day in weekDays"
         :key="day.date.toString()"
         class="group relative flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1 hover:bg-elevated"
-        :class="sizeClasses.cell"
+        :class="[
+          sizeClasses.cell,
+          isHighlighted(day) && 'bg-primary/10 ring-1 ring-primary/30',
+        ]"
         @click="onDayClick(day)"
         @mouseenter="emit('hover', day.jsDate)"
       >
