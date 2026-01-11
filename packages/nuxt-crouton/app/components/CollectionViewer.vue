@@ -10,7 +10,7 @@
         :key="layoutOption.value"
         :icon="layoutOption.icon"
         :color="currentLayout === layoutOption.value ? 'primary' : 'neutral'"
-        :variant="currentLayout === layoutOption.value ? 'solid' : 'ghost'"
+      :variant="currentLayout === layoutOption.value ? 'solid' : 'ghost'"
         size="sm"
         @click="currentLayout = layoutOption.value"
       />

@@ -189,8 +189,6 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
       </template>
     </UDashboardSidebar>
 
-    <!-- Pages provide their own UDashboardPanel with #header and #body slots -->
-    <!-- This follows the official Nuxt UI dashboard pattern for proper scrolling -->
     <slot />
   </UDashboardGroup>
 </template>

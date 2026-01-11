@@ -20,7 +20,7 @@
         />
       </div>
 
-      <div class="relative">
+      <div class="relative overflow-x-auto">
         <!-- Loading overlay -->
         <div
           v-if="loadingPage"
