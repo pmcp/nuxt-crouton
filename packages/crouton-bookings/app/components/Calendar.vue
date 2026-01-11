@@ -40,9 +40,18 @@ const { parseSlotIds, parseLocationSlots } = useBookingSlots()
 // Ref for WeekStrip control
 const weekStripRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void } | null>(null)
 
-// Navigate week strip to a specific date
+// Navigate to a specific date (works for both week and month view)
 function goToDate(date: Date) {
-  weekStripRef.value?.goToDate(date)
+  if (currentView.value === 'week') {
+    weekStripRef.value?.goToDate(date)
+  } else {
+    // Update month view to show the month containing this date
+    monthFocusDate.value = new CalendarDate(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      date.getDate(),
+    )
+  }
 }
 
 // Expose methods for parent control
@@ -316,6 +325,16 @@ function hasBookings(date: Date): boolean {
   const key = formatDateKey(date)
   return bookingsByDate.value.has(key)
 }
+
+// Check if a date is highlighted (for month view)
+function isDayHighlighted(date: Date): boolean {
+  if (!props.highlightedDate) return false
+  return (
+    date.getFullYear() === props.highlightedDate.getFullYear()
+    && date.getMonth() === props.highlightedDate.getMonth()
+    && date.getDate() === props.highlightedDate.getDate()
+  )
+}
 </script>
 
 <template>
@@ -492,6 +511,7 @@ function hasBookings(date: Date): boolean {
       <template #day="{ day }">
         <div
           class="group relative flex flex-col items-center cursor-pointer hover:bg-elevated rounded px-1 py-0.5 transition-colors"
+          :class="isDayHighlighted(day.toDate(getLocalTimeZone())) && 'bg-primary/10 ring-1 ring-primary/30'"
           @click="emit('dayClick', day.toDate(getLocalTimeZone()))"
         >
           <!-- Add booking indicator (shows on hover) -->
