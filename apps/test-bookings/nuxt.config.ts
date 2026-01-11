@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-auth',
     '@friendlyinternet/nuxt-crouton-i18n',
+    '@friendlyinternet/nuxt-crouton-maps',
     '@friendlyinternet/crouton-bookings',
     './layers/bookings'
   ],
@@ -21,6 +22,12 @@ export default defineNuxtConfig({
     public: {
       croutonBookings: {
         email: { enabled: true }
+      },
+      mapbox: {
+        accessToken: process.env.MAPBOX_TOKEN || '',
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [4.3517, 50.8503], // Brussels [lng, lat]
+        zoom: 12
       }
     }
   }

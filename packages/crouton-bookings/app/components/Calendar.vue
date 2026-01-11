@@ -397,14 +397,14 @@ function hasBookings(date: Date): boolean {
       leave-to-class="opacity-0 max-h-0"
     >
       <div v-if="showMap && hasLocationsWithCoordinates" class="overflow-hidden rounded-lg">
-        <CroutonMapMap
+        <CroutonMapsMap
           :center="mapCenter"
           :zoom="12"
           height="250px"
           fly-to-on-center-change
         >
           <template #default="{ map }">
-            <CroutonMapMarker
+            <CroutonMapsMarker
               v-for="location in locationsWithCoordinates"
               :key="location.id"
               :map="map"
@@ -414,7 +414,7 @@ function hasBookings(date: Date): boolean {
               @click="onMarkerClick(location.id)"
             />
           </template>
-        </CroutonMapMap>
+        </CroutonMapsMap>
       </div>
     </Transition>
 
