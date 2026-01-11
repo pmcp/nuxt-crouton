@@ -151,7 +151,7 @@ export function generateListComponent(data, config = {}) {
           :key="idx"
           color="neutral"
           variant="subtle"
-          size="xs"
+          size="md"
         >
           {{ item }}
         </UBadge>
