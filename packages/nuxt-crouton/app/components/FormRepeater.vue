@@ -54,9 +54,15 @@ useSortable(containerRef, items, {
 // BUT don't break useSortable by creating new array references during our own emissions
 watch(() => props.modelValue, (newVal) => {
   if (newVal && !isEmitting.value) {
+    // Diagnostic logging to debug JSON parsing issues
+    console.log('[CroutonFormRepeater] External modelValue synced:', {
+      type: typeof newVal,
+      isArray: Array.isArray(newVal),
+      value: newVal,
+      length: newVal?.length
+    })
     // Only sync if this is a true external change (not from our own emit)
     items.value = [...newVal]
-    console.log('[CroutonFormRepeater] External modelValue synced:', items.value)
   }
 }, { deep: true })
 
@@ -115,6 +121,14 @@ onMounted(() => {
     initialItemCount: items.value.length,
     addLabel: props.addLabel,
     componentResolved: componentResolved.value
+  })
+
+  // Diagnostic logging to debug JSON parsing issues
+  console.log('[CroutonFormRepeater] Initial modelValue:', {
+    type: typeof props.modelValue,
+    isArray: Array.isArray(props.modelValue),
+    value: props.modelValue,
+    length: props.modelValue?.length
   })
 
   if (!componentResolved.value) {

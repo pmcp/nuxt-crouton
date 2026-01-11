@@ -222,6 +222,27 @@ export async function reorderSiblings${prefixedPascalCasePlural}(
 }`
 }
 
+// Helper to detect JSON/repeater fields that need post-query parsing
+// These fields are stored as JSON strings in SQLite but need to be parsed arrays/objects
+function detectJsonFields(data) {
+  const jsonFields = []
+
+  if (data.fields) {
+    data.fields.forEach((field) => {
+      if (field.type === 'repeater' || field.type === 'json') {
+        jsonFields.push({
+          fieldName: field.name,
+          fieldType: field.type,
+          // repeater fields should default to [], json fields to null
+          defaultValue: field.type === 'repeater' ? '[]' : 'null'
+        })
+      }
+    })
+  }
+
+  return jsonFields
+}
+
 // Helper to detect reference fields that need LEFT JOINs or post-query processing
 function detectReferenceFields(data, config) {
   const singleReferences = [] // For leftJoin
@@ -387,6 +408,34 @@ export function generateQueries(data, config = null) {
     }`
   }
 
+  // Detect JSON/repeater fields that need parsing
+  const jsonFields = detectJsonFields(data)
+
+  // Generate post-query processing code for JSON fields (repeater, json types)
+  // These fields come back as strings from SQLite and need to be parsed
+  let jsonFieldProcessing = ''
+  if (jsonFields.length > 0) {
+    const fieldParsers = jsonFields.map(field => `
+      // Parse ${field.fieldName} from JSON string
+      if (typeof item.${field.fieldName} === 'string') {
+        try {
+          item.${field.fieldName} = JSON.parse(item.${field.fieldName})
+        } catch (e) {
+          console.error('Error parsing ${field.fieldName}:', e)
+          item.${field.fieldName} = ${field.defaultValue}
+        }
+      }
+      if (item.${field.fieldName} === null || item.${field.fieldName} === undefined) {
+        item.${field.fieldName} = ${field.defaultValue}
+      }`).join('')
+
+    jsonFieldProcessing = `
+  // Post-query processing for JSON fields (repeater/json types)
+  ${plural}.forEach((item: any) => {${fieldParsers}
+  })
+`
+  }
+
   // Generate post-query processing code for array references
   let postQueryProcessing = ''
   if (arrayReferences.length > 0) {
@@ -486,7 +535,7 @@ export function generateQueries(data, config = null) {
   // Generate sortable queries if sortable is enabled (but hierarchy is not)
   const sortableQueries = generateSortableQueries(data, tableName, prefixedPascalCasePlural)
 
-  return `// Generated with array reference post-processing support (v2024-10-12)
+  return `// Generated with JSON field post-processing support (v2025-01-11)
 import { eq, and, desc${ascImport}, inArray${sqlImport} } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
@@ -500,7 +549,7 @@ ${aliasDefinitions}
     .from(tables.${tableName})${leftJoins}
     .where(eq(tables.${tableName}.teamId, teamId))
     .orderBy(${orderByClause})
-${postQueryProcessing}
+${jsonFieldProcessing}${postQueryProcessing}
   return ${plural}
 }
 
@@ -517,7 +566,7 @@ ${aliasDefinitions}
       )
     )
     .orderBy(${orderByClause})
-${postQueryProcessing}
+${jsonFieldProcessing}${postQueryProcessing}
   return ${plural}
 }
 
