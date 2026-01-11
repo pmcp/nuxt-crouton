@@ -18,8 +18,8 @@
  */
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
+import { isBookingEmailEnabled } from '../../../../utils/booking-emails'
 import {
-  isBookingEmailEnabled,
   triggerBookingCreatedEmail,
   type BookingEmailContext
 } from '../../../../utils/email-service'

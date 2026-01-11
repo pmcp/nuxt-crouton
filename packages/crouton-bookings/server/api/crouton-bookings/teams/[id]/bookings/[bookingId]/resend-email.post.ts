@@ -14,9 +14,11 @@ import { eq, and } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import {
   isBookingEmailEnabled,
-  sendBookingEmails,
-  type BookingEmailContext,
   type BookingEmailTriggerType
+} from '../../../../../../utils/booking-emails'
+import {
+  sendBookingEmails,
+  type BookingEmailContext
 } from '../../../../../../utils/email-service'
 
 const bodySchema = z.object({

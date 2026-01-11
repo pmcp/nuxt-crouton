@@ -24,10 +24,6 @@ import {
   type BookingWithEmailContext
 } from './booking-emails'
 
-// Re-export for consumers
-export { isBookingEmailEnabled }
-export type { BookingEmailTriggerType, BookingEmailResult, BookingEmailVariables }
-
 /**
  * Extended booking context with team information
  */
