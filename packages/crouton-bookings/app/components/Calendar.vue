@@ -18,6 +18,8 @@ interface Props {
   filters?: FilterState
   /** Date to highlight (from external hover, e.g., list item hover) */
   highlightedDate?: Date | null
+  /** Date currently being used for booking creation */
+  creatingAtDate?: Date | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -27,6 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
   defaultView: 'week',
   filters: () => ({ statuses: [], locations: [], showCancelled: false }),
   highlightedDate: null,
+  creatingAtDate: null,
 })
 
 const emit = defineEmits<{
@@ -335,6 +338,19 @@ function isDayHighlighted(date: Date): boolean {
     && date.getDate() === props.highlightedDate.getDate()
   )
 }
+
+// Check if we're in create mode
+const isCreating = computed(() => props.creatingAtDate !== null)
+
+// Check if a date is the creating date
+function isCreatingDate(date: Date): boolean {
+  if (!props.creatingAtDate) return false
+  return (
+    date.getFullYear() === props.creatingAtDate.getFullYear()
+    && date.getMonth() === props.creatingAtDate.getMonth()
+    && date.getDate() === props.creatingAtDate.getDate()
+  )
+}
 </script>
 
 <template>
@@ -484,6 +500,7 @@ function isDayHighlighted(date: Date): boolean {
       ref="weekStripRef"
       size="md"
       :highlighted-date="highlightedDate"
+      :creating-at-date="creatingAtDate"
       @hover="onWeekHover"
       @day-click="onWeekDayClick"
     >
@@ -522,16 +539,21 @@ function isDayHighlighted(date: Date): boolean {
             type="button"
             class="group relative w-full h-full min-h-[70px] flex flex-col items-center justify-start pt-2 pb-1 cursor-pointer rounded-lg transition-all duration-200 overflow-hidden"
             :class="[
-              isDayHighlighted(day.toDate(getLocalTimeZone()))
-                ? 'bg-elevated shadow-sm'
-                : 'hover:bg-elevated/80',
+              isCreatingDate(day.toDate(getLocalTimeZone()))
+                ? 'bg-elevated shadow-md'
+                : isDayHighlighted(day.toDate(getLocalTimeZone()))
+                  ? 'bg-elevated shadow-sm'
+                  : 'hover:bg-elevated/80',
               hasBookings(day.toDate(getLocalTimeZone()))
                 ? 'bg-muted/30'
                 : '',
+              isCreating && !isCreatingDate(day.toDate(getLocalTimeZone()))
+                ? 'opacity-40'
+                : '',
             ]"
             @click="emit('dayClick', day.toDate(getLocalTimeZone()))"
-            @mouseenter="emit('hover', day.toDate(getLocalTimeZone()))"
-            @mouseleave="emit('hover', null)"
+            @mouseenter="!isCreating && emit('hover', day.toDate(getLocalTimeZone()))"
+            @mouseleave="!isCreating && emit('hover', null)"
           >
             <!-- Day number -->
             <span

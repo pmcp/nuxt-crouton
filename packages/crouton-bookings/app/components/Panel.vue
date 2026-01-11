@@ -205,6 +205,7 @@ defineExpose({
       :locations="resolvedLocations"
       :settings="resolvedSettings"
       :highlighted-date="hoveredDate"
+      :creating-at-date="creatingAtDate"
       @hover="onCalendarHover"
       @day-click="onCalendarDayClick"
     />

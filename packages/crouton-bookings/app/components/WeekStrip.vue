@@ -9,6 +9,8 @@ interface Props {
   variant?: 'default' | 'beams' | 'bars'
   /** Date to highlight (from external hover) */
   highlightedDate?: Date | null
+  /** Date currently being used for booking creation */
+  creatingAtDate?: Date | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -17,6 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   variant: 'default',
   highlightedDate: null,
+  creatingAtDate: null,
 })
 
 const emit = defineEmits<{
@@ -113,6 +116,19 @@ function isHighlighted(day: { jsDate: Date }): boolean {
   )
 }
 
+// Check if we're in create mode
+const isCreating = computed(() => props.creatingAtDate !== null)
+
+// Check if a date is the creating date
+function isCreatingDate(day: { jsDate: Date }): boolean {
+  if (!props.creatingAtDate) return false
+  return (
+    day.jsDate.getFullYear() === props.creatingAtDate.getFullYear()
+    && day.jsDate.getMonth() === props.creatingAtDate.getMonth()
+    && day.jsDate.getDate() === props.creatingAtDate.getDate()
+  )
+}
+
 function onDayClick(day: { date: DateValue, jsDate: Date }) {
   emit('dayClick', day.jsDate)
 }
@@ -179,17 +195,20 @@ const sizeClasses = computed(() => {
     </div>
 
     <!-- Days Grid -->
-    <div class="grid grid-cols-7 gap-2" @mouseleave="emit('hover', null)">
+    <div class="grid grid-cols-7 gap-2" @mouseleave="!isCreating && emit('hover', null)">
       <div
         v-for="day in weekDays"
         :key="day.date.toString()"
         class="group relative flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1 hover:bg-elevated"
         :class="[
           sizeClasses.cell,
-          isHighlighted(day) && 'bg-elevated shadow-sm',
+          isCreatingDate(day)
+            ? 'bg-elevated shadow-md'
+            : isHighlighted(day) && 'bg-elevated shadow-sm',
+          isCreating && !isCreatingDate(day) && 'opacity-40',
         ]"
         @click="onDayClick(day)"
-        @mouseenter="emit('hover', day.jsDate)"
+        @mouseenter="!isCreating && emit('hover', day.jsDate)"
       >
         <!-- Add booking indicator (shows on hover) -->
         <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
