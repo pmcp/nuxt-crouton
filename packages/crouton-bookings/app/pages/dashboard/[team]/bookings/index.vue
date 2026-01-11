@@ -10,10 +10,11 @@ const { bookings, settings, locations, loading, error, refresh } = useBookingsLi
 // Hovered date (from calendar) - used to highlight bookings
 const hoveredDate = ref<Date | null>(null)
 
-// Filter state (status and location only - no date filter)
+// Filter state (status, location and showCancelled toggle)
 const filterState = ref({
   statuses: [] as string[],
   locations: [] as string[],
+  showCancelled: false,
 })
 
 // Inline creation state - date where we're creating a booking
@@ -24,14 +25,20 @@ const scrollToDate = ref<Date | null>(null)
 
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
-  return filterState.value.statuses.length > 0 || filterState.value.locations.length > 0
+  return filterState.value.statuses.length > 0 || filterState.value.locations.length > 0 || filterState.value.showCancelled
 })
 
 // Apply filters to bookings
 const filteredBookings = computed(() => {
   let result = bookings.value
 
-  // Filter by status
+  // Filter cancelled bookings based on toggle
+  // By default (showCancelled = false), hide cancelled bookings
+  if (!filterState.value.showCancelled) {
+    result = result.filter(booking => booking.status !== 'cancelled')
+  }
+
+  // Legacy: Filter by specific statuses if provided (for backward compatibility)
   if (filterState.value.statuses.length > 0) {
     result = result.filter(booking =>
       filterState.value.statuses.includes(booking.status),

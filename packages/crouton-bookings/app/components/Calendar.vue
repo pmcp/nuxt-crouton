@@ -6,6 +6,7 @@ import type { Booking, LocationData, SettingsData, SlotItem } from '../types/boo
 interface FilterState {
   statuses: string[]
   locations: string[]
+  showCancelled?: boolean
 }
 
 interface Props {
@@ -22,7 +23,7 @@ const props = withDefaults(defineProps<Props>(), {
   locations: () => [],
   settings: null,
   defaultView: 'week',
-  filters: () => ({ statuses: [], locations: [] }),
+  filters: () => ({ statuses: [], locations: [], showCancelled: false }),
 })
 
 const emit = defineEmits<{
@@ -62,10 +63,18 @@ const parsedStatuses = computed(() => {
 
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
-  return props.filters.statuses.length > 0 || props.filters.locations.length > 0
+  return props.filters.statuses.length > 0 || props.filters.locations.length > 0 || props.filters.showCancelled
 })
 
-// Toggle status filter
+// Computed for show cancelled toggle
+const showCancelled = computed({
+  get: () => props.filters.showCancelled ?? false,
+  set: (value: boolean) => {
+    emit('update:filters', { ...props.filters, showCancelled: value })
+  },
+})
+
+// Toggle status filter (kept for backward compatibility)
 function toggleStatus(statusValue: string) {
   const current = [...props.filters.statuses]
   const index = current.indexOf(statusValue)
@@ -110,17 +119,17 @@ function isLocationSelected(locationId: string): boolean {
 const filteredBookings = computed(() => {
   let result = props.bookings
 
-  // Filter by status
+  // Filter cancelled bookings based on toggle
+  // By default (showCancelled = false), hide cancelled bookings
+  if (!props.filters.showCancelled) {
+    result = result.filter(booking => booking.status !== 'cancelled')
+  }
+
+  // Legacy: Filter by specific statuses if provided (for backward compatibility)
   if (props.filters.statuses.length > 0) {
-    // If specific statuses are selected, show only those
     result = result.filter(booking =>
       props.filters.statuses.includes(booking.status),
     )
-  }
-  else {
-    // By default, exclude cancelled bookings from calendar indicators
-    // (cancelled slots should appear as free/available)
-    result = result.filter(booking => booking.status !== 'cancelled')
   }
 
   // Filter by location
@@ -234,50 +243,72 @@ function hasBookings(date: Date): boolean {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
-    <!-- Filters and view toggle on one line -->
-    <div class="flex items-center gap-2 flex-wrap">
-      <!-- Status filters (inline) -->
-      <div v-if="parsedStatuses.length > 0" class="flex items-center gap-1">
-        <UButton
-          v-for="status in parsedStatuses"
-          :key="status.id || status.value"
-          size="xs"
-          :variant="isStatusSelected(status.value || status.id) ? 'solid' : 'soft'"
-          :color="isStatusSelected(status.value || status.id) ? 'primary' : 'neutral'"
-          @click="toggleStatus(status.value || status.id)"
-        >
-          <template #leading>
-            <span
-              class="w-2 h-2 rounded-full"
-              :style="{ backgroundColor: getStatusColor(status) }"
-            />
-          </template>
-          {{ status.label }}
-        </UButton>
-      </div>
+  <div class="flex flex-col gap-3">
+    <!-- Location filter cards -->
+    <div v-if="locations && locations.length > 0" class="flex flex-wrap gap-2">
+      <button
+        v-for="location in locations"
+        :key="location.id"
+        class="group relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200"
+        :class="[
+          isLocationSelected(location.id)
+            ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+            : 'border-default bg-default hover:border-muted hover:bg-elevated',
+        ]"
+        @click="toggleLocation(location.id)"
+      >
+        <!-- Color indicator bar -->
+        <div
+          class="absolute left-0 top-2 bottom-2 w-1 rounded-full transition-opacity"
+          :style="{ backgroundColor: location.color || '#3b82f6' }"
+          :class="isLocationSelected(location.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-75'"
+        />
 
-      <!-- Location filters (inline) -->
-      <div v-if="locations && locations.length > 0" class="flex items-center gap-1">
-        <UButton
-          v-for="location in locations"
-          :key="location.id"
-          size="xs"
-          :variant="isLocationSelected(location.id) ? 'solid' : 'soft'"
-          :color="isLocationSelected(location.id) ? 'primary' : 'neutral'"
-          @click="toggleLocation(location.id)"
+        <!-- Location icon -->
+        <div
+          class="ml-1 flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+          :class="isLocationSelected(location.id) ? 'bg-primary/20' : 'bg-muted'"
         >
-          <template #leading>
-            <span
-              class="w-2 h-2 rounded-full"
-              :style="{ backgroundColor: location.color || '#3b82f6' }"
-            />
-          </template>
-          {{ location.title }}
-        </UButton>
-      </div>
+          <UIcon
+            name="i-lucide-map-pin"
+            class="w-4 h-4"
+            :class="isLocationSelected(location.id) ? 'text-primary' : 'text-muted'"
+          />
+        </div>
 
-      <!-- Spacer to push toggle to right -->
+        <!-- Location info -->
+        <div class="flex flex-col items-start min-w-0">
+          <span
+            class="text-sm font-medium truncate max-w-[120px]"
+            :class="isLocationSelected(location.id) ? 'text-primary' : 'text-default'"
+          >
+            {{ location.title }}
+          </span>
+          <span v-if="location.city" class="text-xs text-muted truncate max-w-[120px]">
+            {{ location.city }}
+          </span>
+        </div>
+
+        <!-- Selection indicator -->
+        <UIcon
+          v-if="isLocationSelected(location.id)"
+          name="i-lucide-check"
+          class="w-4 h-4 text-primary ml-1 flex-shrink-0"
+        />
+      </button>
+    </div>
+
+    <!-- Controls row: Show cancelled toggle + View toggle -->
+    <div class="flex items-center gap-3">
+      <!-- Show cancelled toggle -->
+      <USwitch
+        v-model="showCancelled"
+        size="xs"
+        color="error"
+        label="Show cancelled"
+      />
+
+      <!-- Spacer to push view toggle to right -->
       <div class="flex-1" />
 
       <!-- View toggle (right aligned) -->
