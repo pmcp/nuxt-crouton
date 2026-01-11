@@ -126,11 +126,11 @@ async function handleTeamCreated(team: Team) {
       v-model="selectedTeamId"
       :items="selectItems"
       value-key="value"
+      label-key="label"
       :size="size"
       :loading="loading"
       :search-input="searchable"
       :placeholder="label || t('teams.selectTeam')"
-      :icon="currentTeam?.logo ? undefined : 'i-lucide-building-2'"
       variant="ghost"
       class="w-full"
       :ui="{
@@ -151,6 +151,9 @@ async function handleTeamCreated(team: Team) {
           name="i-lucide-building-2"
           :class="ui.leadingIcon()"
         />
+      </template>
+      <template #default>
+        <span class="truncate">{{ currentTeam?.name || label || t('teams.selectTeam') }}</span>
       </template>
     </USelectMenu>
 
