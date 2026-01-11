@@ -205,14 +205,8 @@ BETTER_AUTH_SECRET=your-32-char-secret-here
 `
   })
 
-  // app.config.ts
-  files.push({
-    path: 'app.config.ts',
-    content: `export default defineAppConfig({
-  // Collection registry will be auto-generated
-})
-`
-  })
+  // NOTE: app.config.ts is NOT generated here - the crouton CLI creates it
+  // at app/app.config.ts with proper collection registrations
 
   // server/db/schema.ts
   const schemaImports: string[] = []
