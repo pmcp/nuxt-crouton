@@ -502,36 +502,70 @@ function isDayHighlighted(date: Date): boolean {
     </CroutonBookingsWeekStrip>
 
     <!-- Month View -->
-    <UCalendar
-      v-else
-      v-model="monthFocusDate"
-      size="sm"
-      :week-starts-on="1"
-    >
-      <template #day="{ day }">
-        <div
-          class="group relative flex flex-col items-center cursor-pointer hover:bg-elevated rounded px-1 py-0.5 transition-colors"
-          :class="isDayHighlighted(day.toDate(getLocalTimeZone())) && 'bg-primary/10 ring-1 ring-primary/30'"
-          @click="emit('dayClick', day.toDate(getLocalTimeZone()))"
-        >
-          <!-- Add booking indicator (shows on hover) -->
-          <div class="absolute -top-0.5 -right-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <UIcon name="i-lucide-plus" class="size-2.5 text-primary" />
-          </div>
+    <div v-else class="w-full">
+      <UCalendar
+        v-model="monthFocusDate"
+        size="md"
+        :week-starts-on="1"
+        :ui="{
+          root: 'w-full',
+          body: 'p-2',
+          grid: 'w-full border-separate border-spacing-x-3 border-spacing-y-1',
+          headCell: 'text-center',
+          cell: 'w-full text-center p-1',
+          cellTrigger: 'w-full h-full p-0 rounded-lg data-[selected]:bg-transparent data-[selected]:text-inherit hover:bg-transparent focus:bg-transparent',
+        }"
+        class="[&_table]:w-full [&_table]:table-fixed"
+      >
+        <template #day="{ day }">
+          <button
+            type="button"
+            class="group relative w-full h-full min-h-[70px] flex flex-col items-center justify-start pt-2 pb-1 cursor-pointer rounded-lg transition-all duration-200 overflow-hidden"
+            :class="[
+              isDayHighlighted(day.toDate(getLocalTimeZone()))
+                ? 'bg-elevated shadow-sm'
+                : 'hover:bg-elevated/80',
+              hasBookings(day.toDate(getLocalTimeZone()))
+                ? 'bg-muted/30'
+                : '',
+            ]"
+            @click="emit('dayClick', day.toDate(getLocalTimeZone()))"
+            @mouseenter="emit('hover', day.toDate(getLocalTimeZone()))"
+            @mouseleave="emit('hover', null)"
+          >
+            <!-- Day number -->
+            <span
+              class="text-sm font-medium transition-colors"
+              :class="[
+                isDayHighlighted(day.toDate(getLocalTimeZone()))
+                  ? 'text-primary'
+                  : hasBookings(day.toDate(getLocalTimeZone()))
+                    ? 'text-default'
+                    : 'text-muted',
+              ]"
+            >
+              {{ day.day }}
+            </span>
 
-          <span>{{ day.day }}</span>
-          <div class="flex flex-col gap-0.5 mt-0.5 min-h-[8px]">
-            <template v-for="indicator in getIndicatorsForDate(day.toDate(getLocalTimeZone()))" :key="indicator.locationId">
-              <CroutonBookingsSlotIndicator
-                :slots="indicator.slots"
-                :booked-slot-ids="indicator.bookedSlotIds"
-                :color="indicator.color"
-                size="xs"
-              />
-            </template>
-          </div>
-        </div>
-      </template>
-    </UCalendar>
+            <!-- Add booking indicator (shows on hover) -->
+            <div class="absolute -top-0.5 -right-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <UIcon name="i-lucide-plus" class="size-3 text-primary" />
+            </div>
+
+            <!-- Slot indicators (one row per location) -->
+            <div class="flex flex-col items-center gap-0.5 mt-1 w-full overflow-hidden">
+              <template v-for="indicator in getIndicatorsForDate(day.toDate(getLocalTimeZone()))" :key="indicator.locationId">
+                <CroutonBookingsSlotIndicator
+                  :slots="indicator.slots"
+                  :booked-slot-ids="indicator.bookedSlotIds"
+                  :color="indicator.color"
+                  size="xs"
+                />
+              </template>
+            </div>
+          </button>
+        </template>
+      </UCalendar>
+    </div>
   </div>
 </template>

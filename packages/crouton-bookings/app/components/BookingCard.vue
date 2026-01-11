@@ -92,7 +92,7 @@ const emailStatusText = computed(() => {
       root: [
         'group transition-all duration-200',
         isCancelled ? 'opacity-60' : '',
-        highlighted ? 'ring-1 ring-primary/30 bg-primary/[0.02]' : ''
+        highlighted ? 'bg-elevated shadow-sm' : ''
       ],
       body: 'p-2'
     }"

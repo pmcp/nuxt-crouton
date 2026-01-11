@@ -137,7 +137,7 @@ function isLocationEnabled(locationId: string): boolean {
   <UCard
     variant="outline"
     :ui="{
-      root: 'ring-2 ring-primary/50 bg-primary/[0.02]',
+      root: 'bg-elevated shadow-md',
       body: 'p-3',
     }"
   >

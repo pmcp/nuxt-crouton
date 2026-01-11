@@ -186,7 +186,7 @@ const sizeClasses = computed(() => {
         class="group relative flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1 hover:bg-elevated"
         :class="[
           sizeClasses.cell,
-          isHighlighted(day) && 'bg-primary/10 ring-1 ring-primary/30',
+          isHighlighted(day) && 'bg-elevated shadow-sm',
         ]"
         @click="onDayClick(day)"
         @mouseenter="emit('hover', day.jsDate)"
