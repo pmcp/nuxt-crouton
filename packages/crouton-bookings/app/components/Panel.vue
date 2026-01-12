@@ -153,6 +153,7 @@ function onCalendarHover(date: Date | null) {
 // Handle calendar day click - start inline creation at that date
 function onCalendarDayClick(date: Date) {
   creatingAtDate.value = date
+  hoveredDate.value = null // Clear hover highlight when starting to create
 }
 
 // Handle booking created - refresh the list and scroll to new booking
