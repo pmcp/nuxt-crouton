@@ -36,6 +36,7 @@ const emit = defineEmits<{
   'hover': [value: Date | null]
   'dayClick': [value: Date]
   'update:filters': [value: FilterState]
+  'hoverBooking': [bookingId: string | null]
 }>()
 
 const { parseSlotIds, parseLocationSlots } = useBookingSlots()
@@ -273,6 +274,7 @@ function getIndicatorsForDate(date: Date): Array<{
   color: string
   slots: SlotItem[]
   bookedSlotIds: string[]
+  bookings: Booking[]
 }> {
   const dayBookings = getBookingsForDate(date)
   if (dayBookings.length === 0) return []
@@ -294,6 +296,7 @@ function getIndicatorsForDate(date: Date): Array<{
     color: string
     slots: SlotItem[]
     bookedSlotIds: string[]
+    bookings: Booking[]
   }> = []
 
   for (const [locationId, locationBookings] of byLocation) {
@@ -327,6 +330,7 @@ function getIndicatorsForDate(date: Date): Array<{
       color: location.color || '#3b82f6',
       slots: parseLocationSlots(location),
       bookedSlotIds: uniqueBookedSlotIds,
+      bookings: locationBookings,
     })
   }
 
@@ -545,8 +549,10 @@ info    <!-- Controls row: Toggles + View toggle -->
             <CroutonBookingsSlotIndicator
               :slots="indicator.slots"
               :booked-slot-ids="indicator.bookedSlotIds"
+              :bookings="indicator.bookings"
               :color="indicator.color"
               size="xs"
+              @hover-booking="(id) => emit('hoverBooking', id)"
             />
           </template>
         </div>
@@ -616,8 +622,10 @@ info    <!-- Controls row: Toggles + View toggle -->
                 <CroutonBookingsSlotIndicator
                   :slots="indicator.slots"
                   :booked-slot-ids="indicator.bookedSlotIds"
+                  :bookings="indicator.bookings"
                   :color="indicator.color"
                   size="xs"
+                  @hover-booking="(id) => emit('hoverBooking', id)"
                 />
               </template>
             </div>

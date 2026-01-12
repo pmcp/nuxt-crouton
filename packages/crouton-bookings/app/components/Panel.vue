@@ -95,6 +95,9 @@ const calendarRef = ref<{ goToDate: (date: Date) => void } | null>(null)
 // Hovered date (from calendar OR list) - used to highlight bookings/calendar days
 const hoveredDate = ref<Date | null>(null)
 
+// Hovered booking ID (from calendar indicator hover) - used to highlight specific booking in list
+const hoveredBookingId = ref<string | null>(null)
+
 // Filter state (status, location and showCancelled toggle)
 const filterState = ref<FilterState>({
   statuses: props.initialFilters.statuses ?? [],
@@ -211,6 +214,7 @@ defineExpose({
       :creating-at-date="creatingAtDate"
       @hover="onCalendarHover"
       @day-click="onCalendarDayClick"
+      @hover-booking="(id) => hoveredBookingId = id"
     />
 
     <!-- List section -->
@@ -221,6 +225,7 @@ defineExpose({
         :error="resolvedError"
         :has-active-filters="hasActiveFilters"
         :highlighted-date="hoveredDate"
+        :highlighted-booking-id="hoveredBookingId"
         :creating-at-date="creatingAtDate"
         :scroll-to-date="scrollToDate"
         :active-location-filter="filterState.locations"

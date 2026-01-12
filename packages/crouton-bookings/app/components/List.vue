@@ -15,6 +15,8 @@ interface Props {
   hasActiveFilters?: boolean
   /** Date to highlight (from calendar hover) */
   highlightedDate?: Date | null
+  /** Specific booking ID to highlight (from calendar indicator hover) */
+  highlightedBookingId?: string | null
   /** Date where inline creation card should appear */
   creatingAtDate?: Date | null
   /** Date to scroll to (after booking creation) */
@@ -30,6 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
   emptyMessage: 'Your bookings will appear here',
   hasActiveFilters: false,
   highlightedDate: null,
+  highlightedBookingId: null,
   creatingAtDate: null,
   scrollToDate: null,
   activeLocationFilter: undefined,
@@ -435,6 +438,12 @@ watch(
 
 // Check if a booking should be highlighted
 function isHighlighted(booking: Booking): boolean {
+  // Prioritize specific booking ID highlight (from indicator hover)
+  if (props.highlightedBookingId) {
+    return booking.id === props.highlightedBookingId
+  }
+
+  // Fall back to date-based highlight (from calendar day hover)
   if (!props.highlightedDate) return false
   const bookingDate = new Date(booking.date)
   return (

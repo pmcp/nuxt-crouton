@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { Booking } from '../../types/booking'
+
 interface SlotItem {
   id: string
   label?: string
@@ -7,6 +9,8 @@ interface SlotItem {
 interface Props {
   slots: SlotItem[]
   bookedSlotIds?: string[]
+  /** Bookings data for hover highlighting */
+  bookings?: Booking[]
   /** Color to use for booked slots (from location) */
   color?: string
   size?: 'xs' | 'sm' | 'md' | 'lg'
@@ -14,31 +18,56 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   bookedSlotIds: () => [],
+  bookings: () => [],
   color: '#3b82f6',
-  size: 'md'
+  size: 'md',
 })
+
+const emit = defineEmits<{
+  /** Emitted when hovering over a booked slot, with the booking ID */
+  hoverBooking: [bookingId: string | null]
+}>()
+
+const { parseSlotIds } = useBookingSlots()
 
 const sizeClasses = {
   xs: 'w-1.5 h-1.5',
   sm: 'w-2 h-2',
   md: 'w-3 h-3',
-  lg: 'w-4 h-4'
+  lg: 'w-4 h-4',
 }
 
 const gapClasses = {
   xs: 'gap-1',
   sm: 'gap-1.5',
   md: 'gap-2',
-  lg: 'gap-2'
+  lg: 'gap-2',
 }
 
 function isBooked(slotId: string): boolean {
   return props.bookedSlotIds?.includes(slotId) ?? false
 }
 
+// Get booking for a specific slot
+function getBookingForSlot(slotId: string): Booking | undefined {
+  return props.bookings?.find((booking) => {
+    const slotIds = parseSlotIds(booking.slot)
+    return slotIds.includes(slotId) || slotIds.includes('all-day')
+  })
+}
+
+// Handle hover on a slot
+function onSlotHover(slotId: string) {
+  const booking = getBookingForSlot(slotId)
+  emit('hoverBooking', booking?.id ?? null)
+}
+
+function onSlotLeave() {
+  emit('hoverBooking', null)
+}
+
 // Compute unfilled slot color (same hue, 25% opacity)
 function getUnfilledColor(): string {
-  // Use the location color with reduced opacity
   return props.color
 }
 </script>
@@ -49,12 +78,14 @@ function getUnfilledColor(): string {
       v-for="slot in slots"
       :key="slot.id"
       class="rounded-full transition-colors"
-      :class="sizeClasses[size]"
+      :class="[sizeClasses[size], isBooked(slot.id) ? 'cursor-pointer' : '']"
       :style="{
         backgroundColor: isBooked(slot.id) ? color : getUnfilledColor(),
-        opacity: isBooked(slot.id) ? 1 : 0.25
+        opacity: isBooked(slot.id) ? 1 : 0.25,
       }"
       :title="slot.label"
+      @mouseenter="isBooked(slot.id) && onSlotHover(slot.id)"
+      @mouseleave="onSlotLeave"
     />
   </div>
 </template>
