@@ -310,6 +310,13 @@ function getIndicatorsForDate(date: Date): Array<{
     })
   }
 
+  // Sort indicators by location index to ensure consistent ordering across days
+  indicators.sort((a, b) => {
+    const indexA = props.locations.findIndex(l => l.id === a.locationId)
+    const indexB = props.locations.findIndex(l => l.id === b.locationId)
+    return indexA - indexB
+  })
+
   return indicators
 }
 
@@ -351,6 +358,28 @@ function isCreatingDate(date: Date): boolean {
     && date.getDate() === props.creatingAtDate.getDate()
   )
 }
+
+// Compute max indicators across all days for uniform row height
+const maxIndicatorCount = computed(() => {
+  let max = 0
+  for (const [, bookings] of bookingsByDate.value) {
+    // Count unique locations for this date
+    const locations = new Set(bookings.map(b => b.location))
+    max = Math.max(max, locations.size)
+  }
+  return max
+})
+
+// Calculate cell height based on max indicators
+// Base height: 20px (day number) + padding
+// Each indicator row: ~10px
+const monthCellHeight = computed(() => {
+  const baseHeight = 24 // day number + top padding
+  const indicatorHeight = 10 // per indicator row
+  const bottomPadding = 4
+  const minHeight = 40
+  return Math.max(minHeight, baseHeight + (maxIndicatorCount.value * indicatorHeight) + bottomPadding)
+})
 </script>
 
 <template>
@@ -527,7 +556,7 @@ function isCreatingDate(date: Date): boolean {
         :ui="{
           root: 'w-full',
           body: 'p-1',
-          grid: 'w-full border-separate border-spacing-x-1 border-spacing-y-0',
+          grid: 'w-full',
           headCell: 'text-center text-xs',
           cell: 'w-full text-center p-0.5',
           cellTrigger: 'w-full h-full p-0 rounded-md data-[selected]:bg-transparent data-[selected]:text-inherit hover:bg-transparent focus:bg-transparent',
@@ -537,7 +566,8 @@ function isCreatingDate(date: Date): boolean {
         <template #day="{ day }">
           <button
             type="button"
-            class="group relative w-full h-full min-h-[48px] flex flex-col items-center justify-start pt-1 pb-0.5 cursor-pointer rounded-md transition-all duration-200 overflow-hidden"
+            class="group relative w-full flex flex-col items-center justify-start pt-1 pb-1 cursor-pointer rounded-md transition-all duration-200"
+            :style="{ minHeight: `${monthCellHeight}px` }"
             :class="[
               isCreatingDate(day.toDate(getLocalTimeZone()))
                 ? 'bg-elevated shadow-md'
@@ -574,8 +604,8 @@ function isCreatingDate(date: Date): boolean {
               <UIcon name="i-lucide-plus" class="size-3 text-primary" />
             </div>
 
-            <!-- Slot indicators (one row per location) -->
-            <div class="flex flex-col items-center gap-0.5 mt-1 w-full overflow-hidden">
+            <!-- Slot indicators (all locations) -->
+            <div class="flex flex-col items-center gap-0.5 mt-0.5 w-full">
               <template v-for="indicator in getIndicatorsForDate(day.toDate(getLocalTimeZone()))" :key="indicator.locationId">
                 <CroutonBookingsSlotIndicator
                   :slots="indicator.slots"
