@@ -258,3 +258,46 @@ defineExpose({
   background: rgba(255, 255, 255, 0.9);
 }
 </style>
+
+<!-- Global styles for Mapbox popups (not scoped to allow dark mode support) -->
+<style>
+/* Dark mode popup styles using Nuxt UI CSS variables */
+.dark .mapboxgl-popup-content {
+  background-color: var(--ui-bg-elevated);
+  color: var(--ui-text);
+  border-radius: 0.5rem;
+  box-shadow: var(--ui-shadow-lg);
+}
+
+.dark .mapboxgl-popup-tip {
+  border-top-color: var(--ui-bg-elevated);
+  border-bottom-color: var(--ui-bg-elevated);
+}
+
+/* Also handle anchor positions */
+.dark .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+  border-bottom-color: var(--ui-bg-elevated);
+}
+
+.dark .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  border-top-color: var(--ui-bg-elevated);
+}
+
+.dark .mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: var(--ui-bg-elevated);
+}
+
+.dark .mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: var(--ui-bg-elevated);
+}
+
+/* Close button in dark mode */
+.dark .mapboxgl-popup-close-button {
+  color: var(--ui-text-muted);
+}
+
+.dark .mapboxgl-popup-close-button:hover {
+  color: var(--ui-text);
+  background-color: var(--ui-bg-accented);
+}
+</style>

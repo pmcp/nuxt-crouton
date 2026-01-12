@@ -40,6 +40,16 @@ const emit = defineEmits<{
 
 const { parseSlotIds, parseLocationSlots } = useBookingSlots()
 
+// Color mode for dark theme map
+const colorMode = useColorMode()
+
+// Map style based on color mode
+const mapStyle = computed(() => {
+  return colorMode.value === 'dark'
+    ? 'mapbox://styles/mapbox/dark-v11'
+    : 'mapbox://styles/mapbox/streets-v12'
+})
+
 // Ref for WeekStrip control
 const weekStripRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void } | null>(null)
 
@@ -489,6 +499,7 @@ const monthCellHeight = computed(() => {
         <CroutonMapsMap
           :center="mapCenter"
           :zoom="12"
+          :style="mapStyle"
           height="250px"
           fly-to-on-center-change
         >
@@ -499,7 +510,7 @@ const monthCellHeight = computed(() => {
               :map="map"
               :position="location.coordinates"
               :color="location.color || '#3b82f6'"
-              :popup-content="`<div class='p-2'><strong>${location.title}</strong>${location.city ? `<br><span class='text-gray-500 text-sm'>${location.city}</span>` : ''}</div>`"
+              :popup-content="`<div class='p-2'><strong>${location.title}</strong>${location.city ? `<br><span style='opacity: 0.7; font-size: 0.875rem;'>${location.city}</span>` : ''}</div>`"
               @click="onMarkerClick(location.id)"
             />
           </template>
