@@ -522,22 +522,22 @@ function isCreatingDate(date: Date): boolean {
     <div v-else class="w-full">
       <UCalendar
         v-model="monthFocusDate"
-        size="md"
+        size="sm"
         :week-starts-on="1"
         :ui="{
           root: 'w-full',
-          body: 'p-2',
-          grid: 'w-full border-separate border-spacing-x-3 border-spacing-y-1',
-          headCell: 'text-center',
-          cell: 'w-full text-center p-1',
-          cellTrigger: 'w-full h-full p-0 rounded-lg data-[selected]:bg-transparent data-[selected]:text-inherit hover:bg-transparent focus:bg-transparent',
+          body: 'p-1',
+          grid: 'w-full border-separate border-spacing-x-1 border-spacing-y-0',
+          headCell: 'text-center text-xs',
+          cell: 'w-full text-center p-0.5',
+          cellTrigger: 'w-full h-full p-0 rounded-md data-[selected]:bg-transparent data-[selected]:text-inherit hover:bg-transparent focus:bg-transparent',
         }"
         class="[&_table]:w-full [&_table]:table-fixed"
       >
         <template #day="{ day }">
           <button
             type="button"
-            class="group relative w-full h-full min-h-[70px] flex flex-col items-center justify-start pt-2 pb-1 cursor-pointer rounded-lg transition-all duration-200 overflow-hidden"
+            class="group relative w-full h-full min-h-[48px] flex flex-col items-center justify-start pt-1 pb-0.5 cursor-pointer rounded-md transition-all duration-200 overflow-hidden"
             :class="[
               isCreatingDate(day.toDate(getLocalTimeZone()))
                 ? 'bg-elevated shadow-md'
@@ -557,7 +557,7 @@ function isCreatingDate(date: Date): boolean {
           >
             <!-- Day number -->
             <span
-              class="text-sm font-medium transition-colors"
+              class="text-xs font-medium transition-colors"
               :class="[
                 isDayHighlighted(day.toDate(getLocalTimeZone()))
                   ? 'text-primary'
