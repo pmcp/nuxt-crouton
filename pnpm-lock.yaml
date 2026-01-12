@@ -364,6 +364,9 @@ importers:
       '@friendlyinternet/nuxt-crouton':
         specifier: workspace:*
         version: link:../nuxt-crouton
+      '@friendlyinternet/nuxt-crouton-editor':
+        specifier: workspace:*
+        version: link:../nuxt-crouton-editor
       '@internationalized/date':
         specifier: ^3.0.0
         version: 3.10.1

@@ -14,6 +14,8 @@ Booking system layer for Nuxt applications that provides both slot-based booking
 | `app/composables/useCustomerBooking.ts` | Complete customer booking flow |
 | `app/composables/useBookingsSettings.ts` | Team booking settings |
 | `app/composables/useBookingEmail.ts` | Email functionality (opt-in) |
+| `app/composables/useBookingEmailVariables.ts` | Email template variables + demo data for previews |
+| `app/pages/dashboard/[team]/settings/email-templates.vue` | Email template management page |
 | `app/components/BookingSidebar/` | Sidebar booking components |
 | `app/components/CustomerBooking/` | Full-page booking wizard |
 | `app/components/Admin/` | Admin booking management |
@@ -131,6 +133,60 @@ export default defineNuxtConfig({
 1. Edit `server/utils/booking-emails.ts` for utilities
 2. Apps override `resend-email.post.ts` for custom logic
 3. Email module is opt-in via `croutonBookings.email.enabled`
+
+### Manage Email Templates
+
+Navigate to `/dashboard/[team]/settings/email-templates` to manage email templates.
+
+**Available Variables:**
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{{customer_name}}` | Customer's name | John Doe |
+| `{{customer_email}}` | Customer's email | john@example.com |
+| `{{booking_date}}` | Formatted booking date | Monday, January 15, 2024 |
+| `{{booking_slot}}` | Time slot(s) | 10:00 - 11:00 |
+| `{{location_name}}` | Location name | Main Office |
+| `{{location_title}}` | Location title | Downtown Branch |
+| `{{location_street}}` | Street address | 123 Main St |
+| `{{location_city}}` | City | Amsterdam |
+| `{{location_address}}` | Full address | 123 Main St, Amsterdam |
+| `{{team_name}}` | Team/business name | Amsterdam Tennis Club |
+| `{{team_email}}` | Team contact email | info@amsterdamtennis.nl |
+| `{{team_phone}}` | Team contact phone | +31 20 987 6543 |
+| `{{booking_reference}}` | Booking reference number | BK-2025-0124 |
+
+**Trigger Types:**
+
+| Trigger | When Sent |
+|---------|-----------|
+| `booking_created` | When a new booking is made |
+| `reminder_before` | Before the booking date (use `daysOffset`) |
+| `booking_cancelled` | When a booking is cancelled |
+| `follow_up_after` | After the booking date (use `daysOffset`) |
+
+**Using the Editor:**
+
+The email template editor supports:
+- Rich text editing via TipTap
+- Variable insertion by typing `{{` to trigger autocomplete
+- Live preview with realistic demo data
+- Translation tabs (EN, NL, FR) for multilingual templates
+- Location selector (specific location or "All Locations")
+- Responsive layout (side-by-side on desktop, tabs on mobile)
+
+**Demo Data for Preview:**
+
+The `useBookingEmailVariables()` composable provides realistic demo data for previews:
+
+```typescript
+const { variables, getPreviewValues, demoData } = useBookingEmailVariables()
+
+// Demo customer: Emma van der Berg, emma.vanderberg@gmail.com
+// Demo booking: Friday, January 24, 2025 at 14:00 - 15:00
+// Demo location: Court A, Sportlaan 42, Amsterdam
+// Demo team: Amsterdam Tennis Club
+```
 
 ## Dependencies
 

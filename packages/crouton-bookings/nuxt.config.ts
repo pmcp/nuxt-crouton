@@ -4,6 +4,8 @@ import { join } from 'node:path'
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineNuxtConfig({
+  // Extend the editor layer for email template editing
+  extends: ['@friendlyinternet/nuxt-crouton-editor'],
 
   // Note: This is an addon layer - users must explicitly extend:
   // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/nuxt-crouton-i18n', '@friendlyinternet/crouton-bookings', './layers/bookings']

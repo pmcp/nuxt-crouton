@@ -20,11 +20,21 @@ export default defineNuxtConfig({
     ]
   },
 
+  // Auto-imports for composables
+  imports: {
+    dirs: [join(currentDir, 'app/composables')]
+  },
+
+  // Alias for types
+  alias: {
+    '#crouton-editor': join(currentDir, 'app')
+  },
+
   // Add hooks for debugging component registration
   hooks: {
-    'components:extend': (components) => {
-      const editorComponents = components.filter(c => c.pascalName?.startsWith('CroutonEditor'))
-      console.log('[nuxt-crouton-editor] Registered editor components:', editorComponents.map(c => c.pascalName))
+    'components:extend': (components: Array<{ pascalName?: string }>) => {
+      const editorComponents = components.filter((c: { pascalName?: string }) => c.pascalName?.startsWith('CroutonEditor'))
+      console.log('[nuxt-crouton-editor] Registered editor components:', editorComponents.map((c: { pascalName?: string }) => c.pascalName))
     }
   }
 })
