@@ -300,4 +300,5 @@ defineExpose({
   color: var(--ui-text);
   background-color: var(--ui-bg-accented);
 }
+
 </style>

@@ -18,6 +18,8 @@ interface Props {
   animationDuration?: number
   /** Animation easing function or preset name (default: 'easeInOutCubic') */
   animationEasing?: 'linear' | 'ease' | 'easeInOut' | 'easeInOutCubic' | ((t: number) => number)
+  /** Whether the marker is in an active/selected state */
+  active?: boolean
 }
 
 const props = defineProps<Props>()
@@ -77,7 +79,14 @@ onMounted(() => {
 
     // Add event listeners
     if (marker.value) {
-      marker.value.getElement().addEventListener('click', () => emit('click'))
+      const element = marker.value.getElement()
+      element.addEventListener('click', () => emit('click'))
+
+      // Apply initial active state (dim non-selected markers)
+      if (props.active === false) {
+        element.style.opacity = '0.4'
+        element.style.transition = 'opacity 0.2s ease'
+      }
 
       if (markerOptions.draggable) {
         marker.value.on('dragstart', () => emit('dragStart'))
@@ -92,6 +101,18 @@ onMounted(() => {
       }
     }
   })
+})
+
+// Watch for active state changes (dim non-selected markers)
+watch(() => props.active, (isActive) => {
+  if (!marker.value) return
+  const element = marker.value.getElement()
+  element.style.transition = 'opacity 0.2s ease'
+  if (isActive === false) {
+    element.style.opacity = '0.4'
+  } else {
+    element.style.opacity = '1'
+  }
 })
 
 // Watch for position changes with optional animation

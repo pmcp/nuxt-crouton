@@ -404,88 +404,97 @@ const monthCellHeight = computed(() => {
 
 <template>
   <div class="flex flex-col gap-3">
-    <!-- Location filter cards -->
-    <div v-if="locations && locations.length > 0" class="flex flex-wrap gap-2">
-      <button
-        v-for="location in locations"
-        :key="location.id"
-        class="group relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200"
-        :class="[
-          isLocationSelected(location.id)
-            ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-            : 'border-default bg-default hover:border-muted hover:bg-elevated',
-        ]"
-        @click="toggleLocation(location.id)"
-      >
-        <!-- Color indicator bar -->
-        <div
-          class="absolute left-0 top-2 bottom-2 w-1 rounded-full transition-opacity"
-          :style="{ backgroundColor: location.color || '#3b82f6' }"
-          :class="isLocationSelected(location.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-75'"
-        />
+info    <!-- Controls row: Toggles + View toggle -->
+    <div class="flex items-center gap-3">
+      <!-- Show locations toggle -->
+      <USwitch
+        v-if="locations && locations.length > 0"
+        v-model="showLocations"
+        size="xs"
+        label="Show locations"
+      />
 
-        <!-- Location icon -->
-        <div
-          class="ml-1 flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center transition-colors"
-          :class="isLocationSelected(location.id) ? 'bg-primary/20' : 'bg-muted'"
-        >
-          <UIcon
-            name="i-lucide-map-pin"
-            class="w-4 h-4"
-            :class="isLocationSelected(location.id) ? 'text-primary' : 'text-muted'"
-          />
-        </div>
-
-        <!-- Location info -->
-        <div class="flex flex-col items-start min-w-0">
-          <span
-            class="text-sm font-medium truncate max-w-[120px]"
-            :class="isLocationSelected(location.id) ? 'text-primary' : 'text-default'"
-          >
-            {{ location.title }}
-          </span>
-          <span v-if="location.city" class="text-xs text-muted truncate max-w-[120px]">
-            {{ location.city }}
-          </span>
-        </div>
-
-        <!-- Selection indicator -->
-        <UIcon
-          v-if="isLocationSelected(location.id)"
-          name="i-lucide-check"
-          class="w-4 h-4 text-primary ml-1 flex-shrink-0"
-        />
-      </button>
-
-      <!-- Map toggle button -->
-      <button
+      <!-- Show map toggle -->
+      <USwitch
         v-if="hasLocationsWithCoordinates"
-        class="group flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200"
-        :class="[
-          showMap
-            ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-            : 'border-default bg-default hover:border-muted hover:bg-elevated',
+        v-model="showMap"
+        size="xs"
+        label="Show map"
+      />
+
+      <!-- Show cancelled toggle -->
+      <USwitch
+        v-model="showCancelled"
+        size="xs"
+        color="error"
+        label="Show cancelled"
+      />
+
+      <!-- Spacer to push view toggle to right -->
+      <div class="flex-1" />
+
+      <!-- View toggle (right aligned) -->
+      <UTabs
+        v-model="currentView"
+        :items="[
+          { label: 'Week', value: 'week' },
+          { label: 'Month', value: 'month' },
         ]"
-        @click="showMap = !showMap"
-      >
-        <UIcon
-          name="i-lucide-map"
-          class="w-4 h-4"
-          :class="showMap ? 'text-primary' : 'text-muted'"
-        />
-        <span
-          class="text-sm font-medium"
-          :class="showMap ? 'text-primary' : 'text-default'"
-        >
-          Map
-        </span>
-        <UIcon
-          :name="showMap ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-          class="w-3 h-3"
-          :class="showMap ? 'text-primary' : 'text-muted'"
-        />
-      </button>
+        size="xs"
+        :ui="{ trigger: 'cursor-pointer' }"
+      />
     </div>
+
+    <!-- Location filter cards (collapsible) -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 max-h-0"
+      enter-to-class="opacity-100 max-h-[200px]"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 max-h-[200px]"
+      leave-to-class="opacity-0 max-h-0"
+    >
+      <div v-if="showLocations && locations && locations.length > 0" class="flex flex-wrap gap-2 overflow-hidden">
+        <button
+          v-for="location in locations"
+          :key="location.id"
+          class="group relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200"
+          :class="[
+            isLocationSelected(location.id)
+              ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+              : 'border-default bg-default hover:border-muted hover:bg-elevated',
+          ]"
+          @click="toggleLocation(location.id)"
+        >
+          <!-- Color indicator bar -->
+          <div
+            class="absolute left-0 top-2 bottom-2 w-1 rounded-full transition-opacity"
+            :style="{ backgroundColor: location.color || '#3b82f6' }"
+            :class="isLocationSelected(location.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-75'"
+          />
+
+          <!-- Location info -->
+          <div class="flex flex-col items-start min-w-0 ml-2">
+            <span
+              class="text-sm font-medium truncate max-w-[120px]"
+              :class="isLocationSelected(location.id) ? 'text-primary' : 'text-default'"
+            >
+              {{ location.title }}
+            </span>
+            <span v-if="location.city" class="text-xs text-muted truncate max-w-[120px]">
+              {{ location.city }}
+            </span>
+          </div>
+
+          <!-- Selection indicator -->
+          <UIcon
+            v-if="isLocationSelected(location.id)"
+            name="i-lucide-check"
+            class="w-4 h-4 text-primary ml-1 flex-shrink-0"
+          />
+        </button>
+      </div>
+    </Transition>
 
     <!-- Map section (collapsible) -->
     <Transition
@@ -511,6 +520,7 @@ const monthCellHeight = computed(() => {
               :map="map"
               :position="location.coordinates"
               :color="location.color || '#3b82f6'"
+              :active="filters.locations.length > 0 ? isLocationSelected(location.id) : undefined"
               :popup-content="`<div class='p-2'><strong>${location.title}</strong>${location.city ? `<br><span style='opacity: 0.7; font-size: 0.875rem;'>${location.city}</span>` : ''}</div>`"
               @click="onMarkerClick(location.id)"
             />
@@ -518,31 +528,6 @@ const monthCellHeight = computed(() => {
         </CroutonMapsMap>
       </div>
     </Transition>
-
-    <!-- Controls row: Show cancelled toggle + View toggle -->
-    <div class="flex items-center gap-3">
-      <!-- Show cancelled toggle -->
-      <USwitch
-        v-model="showCancelled"
-        size="xs"
-        color="error"
-        label="Show cancelled"
-      />
-
-      <!-- Spacer to push view toggle to right -->
-      <div class="flex-1" />
-
-      <!-- View toggle (right aligned) -->
-      <UTabs
-        v-model="currentView"
-        :items="[
-          { label: 'Week', value: 'week' },
-          { label: 'Month', value: 'month' },
-        ]"
-        size="xs"
-        :ui="{ trigger: 'cursor-pointer' }"
-      />
-    </div>
 
     <!-- Week View -->
     <CroutonBookingsWeekStrip
