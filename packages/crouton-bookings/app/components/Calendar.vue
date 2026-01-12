@@ -294,8 +294,17 @@ function getIndicatorsForDate(date: Date): Array<{
 
     // Get all slot IDs booked for this location on this day
     const bookedSlotIds: string[] = []
+    const locationSlots = parseLocationSlots(location)
+
     for (const booking of locationBookings) {
-      bookedSlotIds.push(...parseSlotIds(booking.slot))
+      const slotIds = parseSlotIds(booking.slot)
+      // If "all-day" is booked, treat all slots as booked
+      if (slotIds.includes('all-day')) {
+        bookedSlotIds.push(...locationSlots.map(s => s.id))
+      }
+      else {
+        bookedSlotIds.push(...slotIds)
+      }
     }
 
     // Get unique slot IDs

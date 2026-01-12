@@ -65,6 +65,63 @@ function handleRefresh() {
   listData?.refresh()
 }
 
+// Email functionality
+const { resendEmail, isEmailEnabled } = useBookingEmail()
+const toast = useToast()
+const route = useRoute()
+
+// Track which booking/email type is currently being sent
+const sendingEmailState = ref<{ bookingId: string; triggerType: string } | null>(null)
+
+// Handle resend email from BookingCard
+async function handleResendEmail(booking: Booking, triggerType: string) {
+  if (!isEmailEnabled.value) return
+
+  const teamId = route.params.team as string
+  if (!teamId) return
+
+  sendingEmailState.value = { bookingId: booking.id, triggerType }
+
+  try {
+    const result = await resendEmail(teamId, booking.id, triggerType as any)
+
+    if (result.success) {
+      toast.add({
+        title: 'Email sent',
+        description: 'Confirmation email has been resent successfully',
+        color: 'success',
+      })
+      // Refresh the list to update email stats
+      handleRefresh()
+    }
+    else {
+      toast.add({
+        title: 'Failed to send email',
+        description: result.error || 'An error occurred',
+        color: 'error',
+      })
+    }
+  }
+  catch (error: any) {
+    toast.add({
+      title: 'Failed to send email',
+      description: error.message || 'An error occurred',
+      color: 'error',
+    })
+  }
+  finally {
+    sendingEmailState.value = null
+  }
+}
+
+// Get the sending email type for a specific booking
+function getSendingEmailType(bookingId: string): string | null {
+  if (sendingEmailState.value?.bookingId === bookingId) {
+    return sendingEmailState.value.triggerType
+  }
+  return null
+}
+
 // Container ref for scrolling
 const listContainerRef = ref<HTMLElement | null>(null)
 
@@ -523,7 +580,9 @@ watch(
               :key="booking.id"
               :booking="booking"
               :highlighted="isHighlighted(booking)"
+              :sending-email-type="getSendingEmailType(booking.id)"
               @date-click="onBookingDateClick"
+              @resend-email="(triggerType) => handleResendEmail(booking, triggerType)"
             />
           </template>
         </div>

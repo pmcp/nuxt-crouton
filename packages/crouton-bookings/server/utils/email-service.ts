@@ -333,11 +333,14 @@ async function sendSingleEmail(options: {
   const provider = await getEmailProvider()
 
   if (!provider) {
+    console.warn('[booking-email] No email provider configured. Either register a custom provider or install @friendlyinternet/crouton-email.')
     return {
       success: false,
       error: 'No email provider configured. Either register a custom provider or install @friendlyinternet/crouton-email.'
     }
   }
+
+  console.log('[booking-email] Sending email to:', options.to, '| Subject:', options.subject)
 
   try {
     const result = await provider.send({
@@ -347,12 +350,19 @@ async function sendSingleEmail(options: {
       from: options.from
     })
 
+    if (result.success) {
+      console.log('[booking-email] ✓ Email sent successfully to:', options.to)
+    } else {
+      console.error('[booking-email] ✗ Email failed:', result.error)
+    }
+
     return {
       success: result.success,
       error: result.error
     }
   }
   catch (error: any) {
+    console.error('[booking-email] ✗ Email exception:', error.message)
     return {
       success: false,
       error: error.message || 'Failed to send email'
