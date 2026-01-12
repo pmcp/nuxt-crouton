@@ -186,7 +186,7 @@ const moreVariablesItems = computed(() => {
   return props.variables.slice(6).map(v => ({
     label: v.label,
     icon: v.icon || 'i-lucide-braces',
-    click: () => insertVariable(v.name)
+    onSelect: () => insertVariable(v.name)
   }))
 })
 </script>
