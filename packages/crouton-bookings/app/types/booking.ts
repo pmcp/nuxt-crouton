@@ -9,6 +9,17 @@ export interface EmailStats {
 }
 
 /**
+ * Detailed email status for a specific trigger type
+ */
+export interface EmailTriggerStatus {
+  triggerType: EmailTriggerType
+  status: 'sent' | 'pending' | 'failed' | 'not_sent'
+  sentAt?: string | null
+  /** For scheduled emails like reminders - when they will be sent */
+  scheduledFor?: string | null
+}
+
+/**
  * Email trigger types
  */
 export type EmailTriggerType = 'booking_created' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after'
@@ -121,4 +132,6 @@ export interface Booking {
   // Email data (when email module is enabled)
   emailStats?: EmailStats | null
   emailActions?: AvailableEmailAction[]
+  /** Detailed status per email trigger type */
+  emailDetails?: EmailTriggerStatus[]
 }

@@ -72,7 +72,8 @@ defineExpose({
   goToDate,
 })
 
-// Map visibility state
+// Visibility states
+const showLocations = ref(false)
 const showMap = ref(false)
 
 // View toggle state

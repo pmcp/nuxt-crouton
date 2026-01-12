@@ -43,6 +43,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   /** Emitted when a booking is created */
   created: []
+  /** Emitted when a booking is updated */
+  updated: []
   /** Emitted when filters change */
   'update:filters': [filters: FilterState]
 }>()
@@ -227,6 +229,7 @@ defineExpose({
         @cancel-create="onCancelCreate"
         @top-visible-date-change="onTopVisibleDateChange"
         @date-click="onDateClick"
+        @updated="emit('updated')"
       />
     </div>
   </div>

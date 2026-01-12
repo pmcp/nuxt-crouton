@@ -42,7 +42,29 @@ const emit = defineEmits<{
   topVisibleDateChange: [date: Date]
   /** Emitted when clicking on a booking's date visualization */
   dateClick: [date: Date]
+  /** Emitted when a booking is updated */
+  updated: []
 }>()
+
+// Track which booking is being edited (inline edit mode)
+const editingBookingId = ref<string | null>(null)
+
+// Handle edit click - show inline edit form
+function handleEditClick(booking: Booking) {
+  editingBookingId.value = booking.id
+}
+
+// Handle edit cancel
+function handleEditCancel() {
+  editingBookingId.value = null
+}
+
+// Handle booking updated
+function handleBookingUpdated() {
+  editingBookingId.value = null
+  handleRefresh()
+  emit('updated')
+}
 
 // Use composable for fetching if bookings not provided
 const listData = props.bookings === undefined ? useBookingsList() : null
@@ -575,15 +597,27 @@ watch(
               />
             </div>
 
-            <CroutonBookingsBookingCard
-              v-for="booking in dateGroup.bookings"
-              :key="booking.id"
-              :booking="booking"
-              :highlighted="isHighlighted(booking)"
-              :sending-email-type="getSendingEmailType(booking.id)"
-              @date-click="onBookingDateClick"
-              @resend-email="(triggerType) => handleResendEmail(booking, triggerType)"
-            />
+            <template v-for="booking in dateGroup.bookings" :key="booking.id">
+              <!-- Show edit card if this booking is being edited -->
+              <CroutonBookingsBookingCreateCard
+                v-if="editingBookingId === booking.id"
+                :date="new Date(booking.date)"
+                :booking="booking"
+                :active-location-filter="activeLocationFilter"
+                @updated="handleBookingUpdated"
+                @cancel="handleEditCancel"
+              />
+              <!-- Show normal card otherwise -->
+              <CroutonBookingsBookingCard
+                v-else
+                :booking="booking"
+                :highlighted="isHighlighted(booking)"
+                :sending-email-type="getSendingEmailType(booking.id)"
+                @date-click="onBookingDateClick"
+                @resend-email="(triggerType) => handleResendEmail(booking, triggerType)"
+                @edit="handleEditClick(booking)"
+              />
+            </template>
           </template>
         </div>
       </div>

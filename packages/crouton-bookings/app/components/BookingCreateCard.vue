@@ -1,22 +1,29 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { LocationData } from '../types/booking'
+import type { Booking, LocationData } from '../types/booking'
 
 interface Props {
   /** The date for this booking */
   date: Date
   /** Active location filter - if set, only these locations are selectable */
   activeLocationFilter?: string[]
+  /** Existing booking to edit (if provided, component is in edit mode) */
+  booking?: Booking
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activeLocationFilter: undefined,
+  booking: undefined,
 })
 
 const emit = defineEmits<{
   created: []
+  updated: []
   cancel: []
 }>()
+
+// Are we in edit mode?
+const isEditMode = computed(() => !!props.booking)
 
 const {
   formState,
@@ -33,17 +40,38 @@ const {
   getInventoryAvailability,
   availabilityLoading,
   fetchAvailability,
+  // Group support
+  enableGroups,
+  groupOptions,
 } = useBookingCart()
 
-// Local state
-const localLocationId = ref<string | null>(null)
-const localSlotId = ref<string | null>(null)
+// Local state - initialize from booking if in edit mode
+const localLocationId = ref<string | null>(props.booking?.location ?? null)
+const localSlotId = ref<string | null>(props.booking?.slot ?? null)
+const localGroupId = ref<string | null>(props.booking?.group ?? null)
+
+// Track if we're updating
+const isUpdating = ref(false)
+
+// Route for team ID
+const route = useRoute()
+const teamId = computed(() => route.params.team as string)
 
 // Sync form state when component mounts or date changes
 watch(() => props.date, (newDate) => {
   formState.date = newDate
   formState.locationId = localLocationId.value
   formState.slotId = localSlotId.value
+  formState.groupId = localGroupId.value
+}, { immediate: true })
+
+// Initialize from booking when entering edit mode
+watch(() => props.booking, (booking) => {
+  if (booking) {
+    localLocationId.value = booking.location
+    localSlotId.value = booking.slot
+    localGroupId.value = booking.group ?? null
+  }
 }, { immediate: true })
 
 // Sync local location to form state
@@ -56,6 +84,11 @@ watch(localLocationId, (v) => {
 // Sync local slot to form state
 watch(localSlotId, (v) => {
   formState.slotId = v
+})
+
+// Sync local group to form state
+watch(localGroupId, (v) => {
+  formState.groupId = v
 })
 
 // Auto-select first enabled location
@@ -94,6 +127,9 @@ const inventoryInfo = computed(() => {
 const canSubmit = computed(() => {
   if (!localLocationId.value) return false
 
+  // If groups are enabled, require a group selection
+  if (enableGroups.value && !localGroupId.value) return false
+
   if (isInventoryMode.value) {
     return inventoryInfo.value?.available ?? false
   } else {
@@ -101,15 +137,36 @@ const canSubmit = computed(() => {
   }
 })
 
-// Handle create
-async function handleCreate() {
+// Handle create or update
+async function handleSubmit() {
   if (!canSubmit.value) return
 
-  addToCart()
-  const result = await submitAll()
-
-  if (result) {
-    emit('created')
+  if (isEditMode.value && props.booking) {
+    // Update existing booking
+    isUpdating.value = true
+    try {
+      await $fetch(`/api/teams/${teamId.value}/bookings/${props.booking.id}`, {
+        method: 'PUT',
+        body: {
+          location: localLocationId.value,
+          slot: localSlotId.value,
+          group: localGroupId.value,
+          date: props.date.toISOString().split('T')[0],
+        },
+      })
+      emit('updated')
+    } catch (error) {
+      console.error('Failed to update booking:', error)
+    } finally {
+      isUpdating.value = false
+    }
+  } else {
+    // Create new booking
+    addToCart()
+    const result = await submitAll()
+    if (result) {
+      emit('created')
+    }
   }
 }
 
@@ -145,8 +202,8 @@ function isLocationEnabled(locationId: string): boolean {
       <!-- Header with date and close -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-calendar-plus" class="size-4 text-primary" />
-          <span class="text-sm font-medium">New booking for {{ formattedDate }}</span>
+          <UIcon :name="isEditMode ? 'i-lucide-pencil' : 'i-lucide-calendar-plus'" class="size-4 text-primary" />
+          <span class="text-sm font-medium">{{ isEditMode ? 'Edit booking for' : 'New booking for' }} {{ formattedDate }}</span>
         </div>
         <UButton
           icon="i-lucide-x"
@@ -176,6 +233,20 @@ function isLocationEnabled(locationId: string): boolean {
             />
           </template>
           {{ location.title }}
+        </UButton>
+      </div>
+
+      <!-- Group selection (when groups are enabled) -->
+      <div v-if="enableGroups && groupOptions.length > 0" class="flex flex-wrap gap-1.5">
+        <UButton
+          v-for="group in groupOptions"
+          :key="group.id"
+          size="xs"
+          :variant="localGroupId === group.id ? 'solid' : 'soft'"
+          :color="localGroupId === group.id ? 'primary' : 'neutral'"
+          @click="localGroupId = group.id"
+        >
+          {{ group.label }}
         </UButton>
       </div>
 
@@ -234,11 +305,11 @@ function isLocationEnabled(locationId: string): boolean {
         <UButton
           color="primary"
           size="xs"
-          :disabled="!canSubmit || isSubmitting"
-          :loading="isSubmitting"
-          @click="handleCreate"
+          :disabled="!canSubmit || isSubmitting || isUpdating"
+          :loading="isSubmitting || isUpdating"
+          @click="handleSubmit"
         >
-          Create
+          {{ isEditMode ? 'Save' : 'Create' }}
         </UButton>
       </div>
     </div>

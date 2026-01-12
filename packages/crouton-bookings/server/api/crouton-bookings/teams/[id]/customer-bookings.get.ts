@@ -9,10 +9,11 @@
  */
 import { eq, and, asc, gte, lte } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { user as userTable } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
 import { isBookingEmailEnabled } from '../../../../utils/booking-emails'
-import { getBookingEmailStats } from '../../../../utils/email-service'
+import { getBookingEmailStats, getBookingEmailDetails } from '../../../../utils/email-service'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -67,9 +68,16 @@ export default defineEventHandler(async (event) => {
         inventoryMode: bookingsLocations.inventoryMode,
         quantity: bookingsLocations.quantity,
       },
+      createdByUser: {
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        avatarUrl: userTable.image,
+      },
     })
     .from(bookingsBookings)
     .leftJoin(bookingsLocations, eq(bookingsBookings.location, bookingsLocations.id))
+    .leftJoin(userTable, eq(bookingsBookings.createdBy, userTable.id))
     .where(and(...conditions))
     .orderBy(asc(bookingsBookings.date))
 
@@ -103,10 +111,14 @@ export default defineEventHandler(async (event) => {
   if (emailEnabled) {
     enrichedBookings = await Promise.all(
       bookings.map(async (booking) => {
-        const emailStats = await getBookingEmailStats(booking.id, team.id)
+        const [emailStats, emailDetails] = await Promise.all([
+          getBookingEmailStats(booking.id, team.id),
+          getBookingEmailDetails(booking.id, team.id, booking.date)
+        ])
         return {
           ...booking,
           emailStats,
+          emailDetails,
           emailActions: getEmailActionsForBooking(booking)
         }
       })

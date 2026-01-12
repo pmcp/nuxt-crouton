@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Booking, SlotItem, EmailTriggerType } from '../types/booking'
+import type { Booking, SlotItem, EmailTriggerType, EmailTriggerStatus } from '../types/booking'
 
 interface Props {
   booking: Booking
@@ -16,9 +16,10 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'resend-email': [triggerType: EmailTriggerType]
   'date-click': [date: Date]
+  'edit': [booking: Booking]
 }>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { parseSlotIds, parseLocationSlots, getSlotLabel } = useBookingSlots()
 const { getGroupLabel } = useBookingOptions()
 const { isEmailEnabled } = useBookingEmail()
@@ -52,36 +53,105 @@ const isInventoryMode = computed(() => {
   return props.booking.locationData?.inventoryMode === true
 })
 
-// Email stats helpers
-const emailStats = computed(() => props.booking.emailStats)
+// Booker info - handle Drizzle leftJoin which returns { id: null, name: null } instead of null
+const bookerName = computed(() => {
+  const ownerName = props.booking.ownerUser?.name
+  const createdByName = props.booking.createdByUser?.name
+  // Filter out empty/null names
+  if (ownerName && ownerName.trim()) return ownerName
+  if (createdByName && createdByName.trim()) return createdByName
+  return null
+})
+
+const bookerAvatar = computed(() => {
+  return props.booking.ownerUser?.avatarUrl
+    || props.booking.createdByUser?.avatarUrl
+    || null
+})
+
+const bookerInitials = computed(() => {
+  if (!bookerName.value) return '?'
+  return bookerName.value
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+})
+
+// Email details helpers
+const emailDetails = computed(() => props.booking.emailDetails || [])
 const emailActions = computed(() => props.booking.emailActions || [])
 
-const hasEmailData = computed(() => {
-  return isEmailEnabled.value && emailStats.value?.total
+const confirmationStatus = computed((): EmailTriggerStatus | null => {
+  return emailDetails.value.find(e => e.triggerType === 'booking_created') || null
 })
 
-const emailStatusColor = computed((): 'success' | 'warning' | 'error' | 'neutral' => {
-  if (!emailStats.value?.total) return 'neutral'
-  if (emailStats.value.failed > 0) return 'error'
-  if (emailStats.value.pending > 0) return 'warning'
-  if (emailStats.value.sent === emailStats.value.total) return 'success'
-  return 'neutral'
+const reminderStatus = computed((): EmailTriggerStatus | null => {
+  return emailDetails.value.find(e => e.triggerType === 'reminder_before') || null
 })
 
-const emailStatusIcon = computed(() => {
-  if (!emailStats.value?.total) return 'i-lucide-mail'
-  if (emailStats.value.failed > 0) return 'i-lucide-mail-x'
-  if (emailStats.value.pending > 0) return 'i-lucide-mail-question'
-  if (emailStats.value.sent === emailStats.value.total) return 'i-lucide-mail-check'
-  return 'i-lucide-mail'
-})
+// Format date for display (e.g., "Jan 10")
+function formatShortDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return new Intl.DateTimeFormat(locale.value, { month: 'short', day: 'numeric' }).format(date)
+}
 
-const emailStatusText = computed(() => {
-  if (!emailStats.value?.total) return ''
-  if (emailStats.value.failed > 0) {
-    return t('bookings.meta.emailsFailed', { failed: emailStats.value.failed, total: emailStats.value.total })
+// Get confirmation status text
+const confirmationText = computed(() => {
+  const status = confirmationStatus.value
+  if (!status) return null
+
+  if (status.status === 'sent' && status.sentAt) {
+    return `Sent ${formatShortDate(status.sentAt)}`
   }
-  return t('bookings.meta.emailsSent', { sent: emailStats.value.sent, total: emailStats.value.total })
+  if (status.status === 'pending') {
+    return 'Pending'
+  }
+  if (status.status === 'failed') {
+    return 'Failed'
+  }
+  return null // not_sent - don't show
+})
+
+// Get reminder status text
+const reminderText = computed(() => {
+  const status = reminderStatus.value
+  if (!status) return null
+
+  if (status.status === 'sent' && status.sentAt) {
+    return `Sent ${formatShortDate(status.sentAt)}`
+  }
+  if (status.status === 'pending') {
+    return 'Pending'
+  }
+  if (status.status === 'failed') {
+    return 'Failed'
+  }
+  if (status.status === 'not_sent' && status.scheduledFor) {
+    return `Sends ${formatShortDate(status.scheduledFor)}`
+  }
+  return null
+})
+
+// Email dropdown items - use onSelect for Nuxt UI 4
+const emailDropdownItems = computed(() => {
+  return emailActions.value.map(action => ({
+    label: action.label,
+    icon: action.icon,
+    disabled: !!props.sendingEmailType,
+    loading: props.sendingEmailType === action.triggerType,
+    onSelect: () => emit('resend-email', action.triggerType as EmailTriggerType)
+  }))
+})
+
+const hasEmailDropdown = computed(() => {
+  return isEmailEnabled.value && emailDropdownItems.value.length > 0
+})
+
+const hasEmailStatus = computed(() => {
+  return isEmailEnabled.value && (confirmationText.value || reminderText.value)
 })
 </script>
 
@@ -90,18 +160,18 @@ const emailStatusText = computed(() => {
     variant="soft"
     :ui="{
       root: [
-        'group transition-all duration-200',
+        'transition-all duration-200',
         isCancelled ? 'opacity-60' : '',
         highlighted ? 'bg-elevated shadow-sm' : ''
       ],
       body: 'p-2'
     }"
   >
-    <div class="flex items-center gap-3">
+    <div class="flex gap-3">
       <!-- Date badge (clickable to navigate calendar) -->
       <button
         type="button"
-        class="cursor-pointer hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg"
+        class="shrink-0 cursor-pointer hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg"
         @click="emit('date-click', new Date(booking.date))"
       >
         <CroutonBookingsDateBadge
@@ -112,84 +182,135 @@ const emailStatusText = computed(() => {
         />
       </button>
 
-      <!-- Content -->
-      <div class="flex-1 flex flex-col gap-1 min-w-0">
-        <!-- Location title -->
-        <span
-          class="text-sm font-medium truncate"
-          :class="{ 'line-through text-muted': isCancelled }"
-        >
-          {{ booking.locationData?.title || 'Unknown Location' }}
-        </span>
+      <!-- Main content area -->
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start justify-between gap-4">
+          <!-- Left: Main booking info -->
+          <div class="flex flex-col gap-1 min-w-0 flex-1">
+            <!-- Location name -->
+            <span
+              class="text-sm font-medium truncate"
+              :class="{ 'line-through text-muted': isCancelled }"
+            >
+              {{ booking.locationData?.title || 'Unknown Location' }}
+            </span>
 
-        <!-- Slot indicator or inventory -->
-        <div class="flex items-center gap-2">
-          <template v-if="isInventoryMode">
-            <div class="flex items-center gap-1.5">
-              <UIcon name="i-lucide-box" class="size-3 text-primary" />
-              <span class="text-xs text-muted">{{ slotLabel }}</span>
+            <!-- Slot indicator + time -->
+            <div class="flex items-center gap-2">
+              <template v-if="isInventoryMode">
+                <UIcon name="i-lucide-box" class="size-3 text-primary" />
+                <span class="text-xs text-muted">{{ slotLabel }}</span>
+              </template>
+              <template v-else>
+                <CroutonBookingsSlotIndicator
+                  v-if="locationSlots.length > 0"
+                  :slots="locationSlots"
+                  :booked-slot-ids="bookedSlotIds"
+                  :color="isCancelled ? '#9ca3af' : locationColor"
+                  size="sm"
+                />
+                <span class="text-xs text-muted">{{ slotLabel }}</span>
+              </template>
             </div>
-          </template>
-          <template v-else>
-            <CroutonBookingsSlotIndicator
-              v-if="locationSlots.length > 0"
-              :slots="locationSlots"
-              :booked-slot-ids="bookedSlotIds"
-              :color="isCancelled ? '#9ca3af' : locationColor"
-              size="sm"
-            />
-            <span class="text-xs text-muted">{{ slotLabel }}</span>
-          </template>
+
+            <!-- Group badge + Email status -->
+            <div class="flex items-center gap-3 flex-wrap">
+              <UBadge
+                v-if="booking.group"
+                color="neutral"
+                variant="subtle"
+                size="xs"
+              >
+                {{ getGroupLabel(booking.group) }}
+              </UBadge>
+
+              <!-- Email status inline -->
+              <div v-if="hasEmailStatus" class="flex items-center gap-2 text-[11px]">
+                <div
+                  v-if="confirmationText"
+                  class="flex items-center gap-1"
+                  :class="{
+                    'text-success': confirmationStatus?.status === 'sent',
+                    'text-warning': confirmationStatus?.status === 'pending',
+                    'text-error': confirmationStatus?.status === 'failed',
+                  }"
+                >
+                  <UIcon
+                    :name="confirmationStatus?.status === 'sent' ? 'i-lucide-check' : confirmationStatus?.status === 'failed' ? 'i-lucide-x' : 'i-lucide-clock'"
+                    class="size-3"
+                  />
+                  <span>{{ confirmationText }}</span>
+                </div>
+                <div
+                  v-if="reminderText"
+                  class="flex items-center gap-1"
+                  :class="{
+                    'text-success': reminderStatus?.status === 'sent',
+                    'text-warning': reminderStatus?.status === 'pending',
+                    'text-error': reminderStatus?.status === 'failed',
+                    'text-muted': reminderStatus?.status === 'not_sent',
+                  }"
+                >
+                  <UIcon
+                    :name="reminderStatus?.status === 'sent' ? 'i-lucide-bell-ring' : 'i-lucide-bell'"
+                    class="size-3"
+                  />
+                  <span>{{ reminderText }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Booker + Actions -->
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            <!-- Booker info -->
+            <div v-if="bookerName" class="flex items-center gap-1.5">
+              <UAvatar
+                v-if="bookerAvatar"
+                :src="bookerAvatar"
+                :alt="bookerName"
+                size="2xs"
+              />
+              <div
+                v-else
+                class="size-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-medium"
+              >
+                {{ bookerInitials }}
+              </div>
+              <span class="text-xs text-muted">{{ bookerName }}</span>
+            </div>
+
+            <!-- Actions row -->
+            <div class="flex items-center gap-1">
+              <!-- Edit button -->
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                icon="i-lucide-pencil"
+                @click="emit('edit', booking)"
+              />
+
+              <!-- Send email dropdown -->
+              <UDropdownMenu
+                v-if="hasEmailDropdown"
+                :items="emailDropdownItems"
+                :ui="{ content: 'min-w-40' }"
+              >
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  icon="i-lucide-send"
+                  trailing-icon="i-lucide-chevron-down"
+                  :loading="!!sendingEmailType"
+                >
+                  Send
+                </UButton>
+              </UDropdownMenu>
+            </div>
+          </div>
         </div>
-
-        <!-- Group badge if present -->
-        <UBadge
-          v-if="booking.group"
-          color="neutral"
-          variant="subtle"
-          size="xs"
-          class="mt-0.5 w-fit"
-        >
-          {{ getGroupLabel(booking.group) }}
-        </UBadge>
-
-        <!-- Email stats (when email enabled and data available) -->
-        <div
-          v-if="hasEmailData"
-          class="flex items-center gap-1 text-xs mt-0.5"
-          :class="{
-            'text-success': emailStatusColor === 'success',
-            'text-warning': emailStatusColor === 'warning',
-            'text-error': emailStatusColor === 'error',
-            'text-muted': emailStatusColor === 'neutral',
-          }"
-        >
-          <UIcon :name="emailStatusIcon" class="size-3" />
-          <span>{{ emailStatusText }}</span>
-        </div>
-      </div>
-
-      <!-- Email actions (right side) -->
-      <div
-        v-if="isEmailEnabled && emailActions.length > 0"
-        class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <UTooltip
-          v-for="action in emailActions"
-          :key="action.triggerType"
-          :text="action.label"
-        >
-          <UButton
-            variant="ghost"
-            color="neutral"
-            size="xs"
-            :icon="action.icon"
-            :loading="sendingEmailType === action.triggerType"
-            :disabled="!!sendingEmailType"
-            class="transition-all duration-200 hover:scale-110 hover:text-primary"
-            @click="emit('resend-email', action.triggerType)"
-          />
-        </UTooltip>
       </div>
     </div>
   </UCard>

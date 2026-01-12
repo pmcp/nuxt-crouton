@@ -601,3 +601,103 @@ export async function getBookingEmailStats(
     return { total: 0, sent: 0, pending: 0, failed: 0 }
   }
 }
+
+/**
+ * Email trigger status for UI display
+ */
+export interface EmailTriggerStatusResult {
+  triggerType: BookingEmailTriggerType
+  status: 'sent' | 'pending' | 'failed' | 'not_sent'
+  sentAt?: string | null
+  scheduledFor?: string | null
+}
+
+/**
+ * Get detailed email status per trigger type for a booking
+ * Returns status for confirmation and reminder emails
+ */
+export async function getBookingEmailDetails(
+  bookingId: string,
+  teamId: string,
+  bookingDate: string | Date
+): Promise<EmailTriggerStatusResult[]> {
+  const db = useDB()
+  const results: EmailTriggerStatusResult[] = []
+
+  try {
+    const { bookingsEmaillogs } = await import(
+      '~~/layers/bookings/collections/emaillogs/server/database/schema'
+    )
+    const { bookingsEmailtemplates } = await import(
+      '~~/layers/bookings/collections/emailtemplates/server/database/schema'
+    )
+
+    // Get all email logs for this booking
+    const logs = await db
+      .select({
+        triggerType: bookingsEmaillogs.triggerType,
+        status: bookingsEmaillogs.status,
+        sentAt: bookingsEmaillogs.sentAt,
+      })
+      .from(bookingsEmaillogs)
+      .where(
+        and(
+          eq(bookingsEmaillogs.bookingId, bookingId),
+          eq(bookingsEmaillogs.teamId, teamId)
+        )
+      )
+
+    // Get active templates to know what reminders are scheduled
+    const templates = await db
+      .select({
+        triggerType: bookingsEmailtemplates.triggerType,
+        daysOffset: bookingsEmailtemplates.daysOffset,
+      })
+      .from(bookingsEmailtemplates)
+      .where(
+        and(
+          eq(bookingsEmailtemplates.teamId, teamId),
+          eq(bookingsEmailtemplates.isActive, true)
+        )
+      )
+
+    // Process confirmation (booking_created)
+    const confirmationLog = logs.find(l => l.triggerType === 'booking_created')
+    results.push({
+      triggerType: 'booking_created',
+      status: confirmationLog?.status as any || 'not_sent',
+      sentAt: confirmationLog?.sentAt || null,
+    })
+
+    // Process reminder (reminder_before)
+    const reminderLog = logs.find(l => l.triggerType === 'reminder_before')
+    const reminderTemplate = templates.find(t => t.triggerType === 'reminder_before')
+
+    if (reminderLog) {
+      results.push({
+        triggerType: 'reminder_before',
+        status: reminderLog.status as any,
+        sentAt: reminderLog.sentAt || null,
+      })
+    }
+    else if (reminderTemplate) {
+      // Calculate when reminder will be sent
+      const booking = new Date(bookingDate)
+      const daysOffset = reminderTemplate.daysOffset || 1
+      const scheduledDate = new Date(booking)
+      scheduledDate.setDate(scheduledDate.getDate() - daysOffset)
+
+      results.push({
+        triggerType: 'reminder_before',
+        status: 'not_sent',
+        scheduledFor: scheduledDate.toISOString(),
+      })
+    }
+
+    return results
+  }
+  catch (error) {
+    console.error('[booking-email] Failed to get email details:', error)
+    return results
+  }
+}

@@ -73,8 +73,9 @@ export function useBookingCart() {
   )
 
   // Settings computed values
-  const enableGroups = computed(() => settingsData.value?.[0]?.enableGroups ?? false)
   const groupOptions = computed(() => settingsData.value?.[0]?.groups ?? [])
+  // Enable groups if there are any group options defined
+  const enableGroups = computed(() => groupOptions.value.length > 0)
 
   // Form state - use useState for shared state across components
   const formStateRef = useState<{
