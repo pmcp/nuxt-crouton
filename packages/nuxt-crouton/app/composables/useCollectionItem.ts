@@ -117,9 +117,7 @@ export async function useCollectionItem<T = any>(
     }
   }
 
-  // Initial fetch
-  await fetchItem()
-
+  // Register lifecycle hooks BEFORE any await (Vue 3 requirement)
   // On client mount, retry fetch if it was skipped during SSR due to missing team context
   // This ensures data loads correctly after hydration when team state becomes available
   onMounted(async () => {
@@ -132,6 +130,9 @@ export async function useCollectionItem<T = any>(
   watch(itemId, async () => {
     await fetchItem()
   })
+
+  // Initial fetch (after hooks are registered)
+  await fetchItem()
 
   const refresh = fetchItem
 
