@@ -45,13 +45,26 @@ const {
   groupOptions,
 } = useBookingCart()
 
+// For parsing slot JSON strings
+const { parseSlotIds } = useBookingSlots()
+
+// Helper to extract first slot ID from booking slot (which is JSON string like '["09:00"]')
+function getFirstSlotId(slot: string | null | undefined): string | null {
+  if (!slot) return null
+  const parsed = parseSlotIds(slot)
+  return parsed.length > 0 ? parsed[0] : null
+}
+
 // Local state - initialize from booking if in edit mode
 const localLocationId = ref<string | null>(props.booking?.location ?? null)
-const localSlotId = ref<string | null>(props.booking?.slot ?? null)
+const localSlotId = ref<string | null>(getFirstSlotId(props.booking?.slot))
 const localGroupId = ref<string | null>(props.booking?.group ?? null)
 
 // Track if we're updating
 const isUpdating = ref(false)
+
+// Track if we're in initial edit mode setup (to prevent clearing slot)
+const isInitialEditSetup = ref(!!props.booking)
 
 // Route for team ID
 const route = useRoute()
@@ -68,15 +81,25 @@ watch(() => props.date, (newDate) => {
 // Initialize from booking when entering edit mode
 watch(() => props.booking, (booking) => {
   if (booking) {
+    // Set editing booking ID to exclude from availability check
+    formState.editingBookingId = booking.id
     localLocationId.value = booking.location
-    localSlotId.value = booking.slot
+    localSlotId.value = getFirstSlotId(booking.slot)
     localGroupId.value = booking.group ?? null
+  } else {
+    // Clear editing state when not in edit mode
+    formState.editingBookingId = null
   }
 }, { immediate: true })
 
 // Sync local location to form state
 watch(localLocationId, (v) => {
   formState.locationId = v
+  // Don't clear slot during initial edit mode setup
+  if (isInitialEditSetup.value) {
+    isInitialEditSetup.value = false
+    return
+  }
   localSlotId.value = null
   formState.slotId = null
 })
@@ -145,15 +168,18 @@ async function handleSubmit() {
     // Update existing booking
     isUpdating.value = true
     try {
-      await $fetch(`/api/teams/${teamId.value}/bookings/${props.booking.id}`, {
-        method: 'PUT',
+      await $fetch(`/api/crouton-bookings/teams/${teamId.value}/bookings/${props.booking.id}`, {
+        method: 'PATCH',
         body: {
           location: localLocationId.value,
-          slot: localSlotId.value,
+          // Slot is stored as JSON array string in DB
+          slot: localSlotId.value ? JSON.stringify([localSlotId.value]) : null,
           group: localGroupId.value,
           date: props.date.toISOString().split('T')[0],
         },
       })
+      // Clear editing state
+      formState.editingBookingId = null
       emit('updated')
     } catch (error) {
       console.error('Failed to update booking:', error)
@@ -188,6 +214,12 @@ function isLocationEnabled(locationId: string): boolean {
   // Only locations in the active filter are enabled
   return props.activeLocationFilter.includes(locationId)
 }
+
+// Handle cancel - clear editing state
+function handleCancel() {
+  formState.editingBookingId = null
+  emit('cancel')
+}
 </script>
 
 <template>
@@ -210,7 +242,7 @@ function isLocationEnabled(locationId: string): boolean {
           color="neutral"
           variant="ghost"
           size="xs"
-          @click="emit('cancel')"
+          @click="handleCancel"
         />
       </div>
 
@@ -298,7 +330,7 @@ function isLocationEnabled(locationId: string): boolean {
           color="neutral"
           variant="ghost"
           size="xs"
-          @click="emit('cancel')"
+          @click="handleCancel"
         >
           Cancel
         </UButton>

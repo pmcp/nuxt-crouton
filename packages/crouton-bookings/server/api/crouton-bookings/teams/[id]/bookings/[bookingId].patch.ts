@@ -1,0 +1,89 @@
+/**
+ * Update a booking - allows any team member to update bookings
+ * (not restricted to owner like the generated CRUD endpoint)
+ */
+import { eq, and } from 'drizzle-orm'
+import { z } from 'zod'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
+
+const updateSchema = z.object({
+  location: z.string().optional(),
+  date: z.string().optional(),
+  slot: z.string().optional(),
+  group: z.string().nullable().optional(),
+  status: z.enum(['pending', 'confirmed', 'cancelled']).optional(),
+})
+
+export default defineEventHandler(async (event) => {
+  const { team, user } = await resolveTeamAndCheckMembership(event)
+  const db = useDB()
+
+  const bookingId = getRouterParam(event, 'bookingId')
+  if (!bookingId) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Booking ID is required',
+    })
+  }
+
+  // Validate body
+  const body = await readBody(event)
+  const parsed = updateSchema.safeParse(body)
+  if (!parsed.success) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Invalid request body',
+      data: parsed.error.issues,
+    })
+  }
+
+  // Check booking exists and belongs to this team
+  const [existing] = await db
+    .select()
+    .from(bookingsBookings)
+    .where(
+      and(
+        eq(bookingsBookings.id, bookingId),
+        eq(bookingsBookings.teamId, team.id),
+      ),
+    )
+
+  if (!existing) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Booking not found',
+    })
+  }
+
+  // Build update data
+  const updateData: Record<string, unknown> = {
+    updatedBy: user.id,
+    updatedAt: new Date(),
+  }
+
+  if (parsed.data.location !== undefined) {
+    updateData.location = parsed.data.location
+  }
+  if (parsed.data.date !== undefined) {
+    updateData.date = new Date(parsed.data.date)
+  }
+  if (parsed.data.slot !== undefined) {
+    updateData.slot = parsed.data.slot
+  }
+  if (parsed.data.group !== undefined) {
+    updateData.group = parsed.data.group
+  }
+  if (parsed.data.status !== undefined) {
+    updateData.status = parsed.data.status
+  }
+
+  // Update the booking
+  const [updated] = await db
+    .update(bookingsBookings)
+    .set(updateData)
+    .where(eq(bookingsBookings.id, bookingId))
+    .returning()
+
+  return updated
+})

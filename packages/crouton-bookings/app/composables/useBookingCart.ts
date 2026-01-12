@@ -83,11 +83,13 @@ export function useBookingCart() {
     date: Date | null
     slotId: string | null
     groupId: string | null
+    editingBookingId: string | null
   }>('croutonBookingFormState', () => ({
     locationId: null,
     date: null,
     slotId: null,
     groupId: null,
+    editingBookingId: null,
   }))
 
   // Create a reactive wrapper to maintain the existing API
@@ -100,6 +102,8 @@ export function useBookingCart() {
     set slotId(v: string | null) { formStateRef.value.slotId = v },
     get groupId() { return formStateRef.value.groupId },
     set groupId(v: string | null) { formStateRef.value.groupId = v },
+    get editingBookingId() { return formStateRef.value.editingBookingId },
+    set editingBookingId(v: string | null) { formStateRef.value.editingBookingId = v },
   })
 
   // Availability data from API
@@ -165,15 +169,19 @@ export function useBookingCart() {
 
     availabilityLoading.value = true
     try {
+      // Build query params, optionally excluding a booking (for editing)
+      const queryParams: Record<string, string> = {
+        locationId: formState.locationId,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      }
+      if (formState.editingBookingId) {
+        queryParams.excludeBookingId = formState.editingBookingId
+      }
+
       const data = await $fetch<AvailabilityData>(
         `/api/crouton-bookings/teams/${teamId.value}/availability`,
-        {
-          query: {
-            locationId: formState.locationId,
-            startDate: startDate.toISOString(),
-            endDate: endDate.toISOString(),
-          },
-        },
+        { query: queryParams },
       )
       availabilityData.value = data
     }
@@ -326,8 +334,8 @@ export function useBookingCart() {
     return bookedIds.map(id => getSlotLabel(id))
   }
 
-  // Fetch availability when location changes
-  watch(() => formState.locationId, () => {
+  // Fetch availability when location or editing state changes
+  watch([() => formState.locationId, () => formState.editingBookingId], () => {
     availabilityData.value = {}
     if (formState.locationId) {
       // Fetch 3 months of availability

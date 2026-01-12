@@ -178,6 +178,12 @@ async function onBookingCreated() {
   emit('created')
 }
 
+// Handle booking updated - refresh the list
+async function onBookingUpdated() {
+  await refresh()
+  emit('updated')
+}
+
 // Handle cancel creation
 function onCancelCreate() {
   creatingAtDate.value = null
@@ -234,7 +240,7 @@ defineExpose({
         @cancel-create="onCancelCreate"
         @top-visible-date-change="onTopVisibleDateChange"
         @date-click="onDateClick"
-        @updated="emit('updated')"
+        @updated="onBookingUpdated"
       />
     </div>
   </div>

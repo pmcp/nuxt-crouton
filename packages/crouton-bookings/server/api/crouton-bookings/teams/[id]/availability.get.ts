@@ -7,6 +7,7 @@
  * - locationId: string (required)
  * - startDate: ISO date string (required)
  * - endDate: ISO date string (required)
+ * - excludeBookingId: string (optional) - exclude this booking from availability check (for editing)
  *
  * Response format:
  * {
@@ -14,7 +15,7 @@
  *   "2024-01-16": { bookedSlots: ["all-day"], bookedCount: 1 }
  * }
  */
-import { eq, and, gte, lte, sql } from 'drizzle-orm'
+import { eq, and, gte, lte, ne } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 
@@ -25,6 +26,7 @@ export default defineEventHandler(async (event) => {
   const locationId = query.locationId as string
   const startDateStr = query.startDate as string
   const endDateStr = query.endDate as string
+  const excludeBookingId = query.excludeBookingId as string | undefined
 
   if (!locationId) {
     throw createError({
@@ -52,6 +54,19 @@ export default defineEventHandler(async (event) => {
 
   const db = useDB()
 
+  // Build where conditions
+  const conditions = [
+    eq(bookingsBookings.location, locationId),
+    eq(bookingsBookings.status, 'active'),
+    gte(bookingsBookings.date, startDate),
+    lte(bookingsBookings.date, endDate),
+  ]
+
+  // Exclude a specific booking (for editing mode)
+  if (excludeBookingId) {
+    conditions.push(ne(bookingsBookings.id, excludeBookingId))
+  }
+
   // Get all bookings for the location in the date range
   const bookings = await db
     .select({
@@ -59,14 +74,7 @@ export default defineEventHandler(async (event) => {
       slot: bookingsBookings.slot
     })
     .from(bookingsBookings)
-    .where(
-      and(
-        eq(bookingsBookings.location, locationId),
-        eq(bookingsBookings.status, 'active'),
-        gte(bookingsBookings.date, startDate),
-        lte(bookingsBookings.date, endDate)
-      )
-    )
+    .where(and(...conditions))
 
   // Aggregate by date
   const availabilityData: Record<string, { bookedSlots: string[], bookedCount: number }> = {}
