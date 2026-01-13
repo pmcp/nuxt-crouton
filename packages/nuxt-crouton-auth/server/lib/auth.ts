@@ -127,7 +127,7 @@ export function createAuth(options: CreateAuthOptions) {
     trustedOrigins: buildTrustedOrigins(baseURL),
 
     // Plugins - Organization (Teams), Passkey, and 2FA support
-    plugins: buildPlugins(config, baseURL, config.debug),
+    plugins: buildPlugins(config, baseURL, config.debug, db),
 
     // Database hooks for single-tenant mode (auto-add users to default org)
     databaseHooks: buildDatabaseHooks(config, db)
@@ -544,18 +544,20 @@ async function getUserPersonalOrgId(
  * @param config - @crouton/auth configuration
  * @param baseURL - Application base URL
  * @param debug - Enable debug logging
+ * @param db - Drizzle database instance
  * @returns Array of Better Auth plugins
  */
 function buildPlugins(
   config: CroutonAuthConfig,
   baseURL: string,
-  debug?: boolean
+  debug?: boolean,
+  db?: DrizzleD1Database<Record<string, unknown>>
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [
     // Organization plugin is always enabled (teams support)
     // Cast to any to work around strict typing - config is validated at runtime
-    organization(buildOrganizationConfig(config) as any)
+    organization(buildOrganizationConfig(config, db) as any)
   ]
 
   // Conditionally add passkey plugin
@@ -950,7 +952,10 @@ function buildGenericProviderConfig(config: OAuthProviderConfig): SocialProvider
  * - `autoCreateOnSignup`: Auto-create personal workspace
  * - `defaultTeamSlug`: Everyone joins this team on signup
  */
-function buildOrganizationConfig(config: CroutonAuthConfig) {
+function buildOrganizationConfig(
+  config: CroutonAuthConfig,
+  db?: DrizzleD1Database<Record<string, unknown>>
+) {
   const teamsConfig = config.teams ?? {}
 
   // Determine if users can create organizations
@@ -1017,14 +1022,17 @@ function buildOrganizationConfig(config: CroutonAuthConfig) {
     },
 
     // Organization lifecycle hooks
-    organizationHooks: buildOrganizationHooks(config)
+    organizationHooks: buildOrganizationHooks(config, db)
   }
 }
 
 /**
  * Build organization lifecycle hooks
  */
-function buildOrganizationHooks(config: CroutonAuthConfig) {
+function buildOrganizationHooks(
+  config: CroutonAuthConfig,
+  db?: DrizzleD1Database<Record<string, unknown>>
+) {
   const teams = config.teams ?? {}
 
   return {
@@ -1033,11 +1041,26 @@ function buildOrganizationHooks(config: CroutonAuthConfig) {
       organization: { id: string, name: string, slug: string }
       user: { id: string, name: string }
     }) => {
+      // Set ownerId on the organization (Better Auth doesn't do this automatically)
+      if (db) {
+        try {
+          await db.run(sql`
+            UPDATE organization SET ownerId = ${ctx.user.id} WHERE id = ${ctx.organization.id}
+          `)
+          if (config.debug) {
+            console.log(`[crouton/auth] Set ownerId ${ctx.user.id} on organization ${ctx.organization.id}`)
+          }
+        } catch (e) {
+          console.error(`[crouton/auth] Failed to set ownerId on organization:`, e)
+        }
+      }
+
       if (config.debug) {
         console.log(`[crouton/auth] Organization created:`, {
           id: ctx.organization.id,
           name: ctx.organization.name,
-          slug: ctx.organization.slug
+          slug: ctx.organization.slug,
+          ownerId: ctx.user.id
         })
       }
     },
