@@ -372,6 +372,9 @@
     "support": "Support",
     "docs": "Documentation",
     "backToDashboard": "Back to Dashboard",
-    "accountSettings": "Account Settings"
+    "accountSettings": "Account Settings",
+    "collections": "Collections",
+    "admin": "Admin",
+    "superAdmin": "Super Admin"
   }
 }
