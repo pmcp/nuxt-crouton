@@ -4,9 +4,12 @@ import type { PackageManifest, ConfigOption, PackageInstance } from '../../types
 interface Props {
   manifest: PackageManifest
   instance: PackageInstance
+  compact?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  compact: false
+})
 
 const emit = defineEmits<{
   'update:config': [key: string, value: unknown]
@@ -51,9 +54,9 @@ function getConfigValue(key: string): unknown {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Package Header -->
-    <div class="flex items-start gap-4 pb-4 border-b border-[var(--ui-border)]">
+  <div :class="compact ? 'space-y-4' : 'space-y-6'">
+    <!-- Package Header (hidden in compact mode) -->
+    <div v-if="!compact" class="flex items-start gap-4 pb-4 border-b border-[var(--ui-border)]">
       <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-[var(--ui-bg-elevated)]">
         <UIcon
           :name="manifest.icon"
@@ -297,8 +300,8 @@ function getConfigValue(key: string): unknown {
       </div>
     </div>
 
-    <!-- Dependencies -->
-    <div v-if="manifest.dependencies.length > 0" class="space-y-2">
+    <!-- Dependencies (hidden in compact mode) -->
+    <div v-if="manifest.dependencies.length > 0 && !compact" class="space-y-2">
       <h4 class="text-sm font-semibold text-[var(--ui-text-muted)] uppercase tracking-wide">
         Dependencies
       </h4>
