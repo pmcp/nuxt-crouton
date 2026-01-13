@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAuthClientSafe } from '@friendlyinternet/nuxt-crouton-auth/types/auth-client'
+
 /**
  * Admin Index Redirect
  *
@@ -10,21 +12,23 @@ definePageMeta({
 })
 
 const { teams, switchTeamBySlug } = useTeam()
-const authClient = useAuthClient()
 
 onMounted(async () => {
   // First check if teams are already loaded in nanostore
-  let userTeams = teams.value
+  let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
 
   // If not, fetch directly from Better Auth API
-  if (userTeams.length === 0 && authClient?.organization?.list) {
-    try {
-      const result = await authClient.organization.list()
-      if (result.data && result.data.length > 0) {
-        userTeams = result.data
+  if (userTeams.length === 0) {
+    const authClient = useAuthClientSafe()
+    if (authClient?.organization?.list) {
+      try {
+        const result = await authClient.organization.list()
+        if (result.data && result.data.length > 0) {
+          userTeams = result.data
+        }
+      } catch (e) {
+        console.error('[@crouton/admin] Failed to fetch teams:', e)
       }
-    } catch (e) {
-      console.error('[@crouton/admin] Failed to fetch teams:', e)
     }
   }
 
