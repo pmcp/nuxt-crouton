@@ -341,52 +341,53 @@ Same as current Step 4.
 
 ## Build Phases
 
-### Phase 1: Update AI System Prompt (0.5 day)
+### Phase 1: Update AI System Prompt (0.5 day) ✅ COMPLETE
 
-- [ ] **Task 1.1**: Add package context to system prompt
+- [x] **Task 1.1**: Add package context to system prompt
   - Add package descriptions and capabilities
   - Add "when to suggest" guidelines
   - Add example conversations
 
-- [ ] **Task 1.2**: Update output format
+- [x] **Task 1.2**: Update output format
   - Add packages array to JSON schema
   - Add projectName, baseLayerName fields
   - Update parsing to handle new format
 
-- [ ] **Task 1.3**: Test with current UI
+- [x] **Task 1.3**: Test with current UI
   - Verify AI can suggest packages in responses
   - Test parsing of new format
 
-### Phase 2: Update useSchemaAI Composable (1 day)
+### Phase 2: Update useSchemaAI Composable (1 day) ✅ COMPLETE (done as part of Phase 1)
 
-- [ ] **Task 2.1**: Add new types
+- [x] **Task 2.1**: Add new types
   - AIProjectSuggestion interface
   - AIPackageSuggestion interface
 
-- [ ] **Task 2.2**: Implement parseProjectSuggestion
+- [x] **Task 2.2**: Implement parseProjectSuggestion
   - Parse packages array from AI response
   - Parse project metadata
   - Handle both old and new formats
 
-- [ ] **Task 2.3**: Implement syncFromAIProjectSuggestion
+- [x] **Task 2.3**: Implement syncFromAIProjectSuggestion
   - Connect to useProjectComposer for package adding
   - Sync collections as before
   - Set project name/layer name
 
-- [ ] **Task 2.4**: Update streaming parser
+- [x] **Task 2.4**: Update streaming parser
   - Handle packages in streamed content
   - Real-time package suggestions
 
-### Phase 3: Update useProjectComposer (0.5 day)
+### Phase 3: Update useProjectComposer (0.5 day) - PARTIAL
 
-- [ ] **Task 3.1**: Add AI integration methods
-  - addPackageFromAI() with reason tracking
-  - setProjectNameFromAI()
-  - setBaseLayerNameFromAI()
+- [x] **Task 3.1**: Add AI integration methods (done in useSchemaAI)
+  - aiSuggestedPackages state with reason tracking
+  - aiProjectName state
+  - aiBaseLayerName state
+  - removeAISuggestedPackage() method
 
-- [ ] **Task 3.2**: Track AI suggestions
-  - Store reasons for package suggestions
-  - Display in UI
+- [ ] **Task 3.2**: Wire AI suggestions to useProjectComposer
+  - Actually call addPackage() when user accepts suggestion
+  - Display suggested packages in UI
 
 ### Phase 4: Create New UI Components (1 day)
 

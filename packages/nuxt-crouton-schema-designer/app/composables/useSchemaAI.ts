@@ -3,6 +3,7 @@ import type { SchemaField, FieldType, CollectionSchema, CollectionOptions } from
 import { FIELD_TYPES, META_PROPERTIES } from './useFieldTypes'
 import { useSchemaDesigner } from './useSchemaDesigner'
 import { useStreamingSchemaParser } from './useStreamingSchemaParser'
+import type { AIPackageSuggestion } from './useStreamingSchemaParser'
 
 /**
  * Build the system prompt for schema generation
@@ -20,6 +21,43 @@ function buildSystemPrompt(currentState: {
     `| ${mp.key} | ${mp.type} | ${mp.description} |`
   ).join('\n')
 
+  // Package context for AI to recommend appropriate packages
+  const packageContext = `
+## Available Crouton Packages
+
+You can recommend these packages when appropriate. **Packages provide pre-built functionality** that saves time compared to creating custom collections.
+
+| Package | Use When | Collections Included |
+|---------|----------|---------------------|
+| crouton-bookings | User mentions: bookings, appointments, reservations, scheduling, calendar, slots, availability, courts, rooms, rentals, equipment booking | bookings, locations, settings, emailTemplates (opt-in), emailLogs (opt-in) |
+| crouton-sales | User mentions: sales, POS, point of sale, orders, products, events, markets, pop-up shop, retail, checkout, receipts, invoices | events, products, categories, orders, orderItems, locations, clients, eventSettings, printers (opt-in), printQueues (opt-in) |
+
+### Package Details
+
+**crouton-bookings** - Slot-based and inventory booking system
+- Perfect for: Tennis courts, meeting rooms, appointments, equipment rentals
+- Features: Time slot management, availability checking, booking cart, email notifications (opt-in)
+- Layer name: \`bookings\` (fixed)
+
+**crouton-sales** - Event-based Point of Sale system
+- Perfect for: Pop-up events, markets, food sales, temporary retail
+- Features: Product catalog, categories, order management, thermal receipt printing (opt-in)
+- Layer name: \`sales\` (fixed)
+
+## When to Suggest Packages
+
+1. **Analyze user intent** - Look for keywords that match package purposes
+2. **Suggest package first** - If a package covers 70%+ of the use case, recommend it
+3. **Create custom collections** - For anything packages don't cover
+4. **Combine both** - Often users need packages + custom collections
+
+## Package vs Custom Collection Decision
+
+- **Use package** when: Domain matches well (bookings, POS), features align, time-to-value matters
+- **Use custom** when: Unique business logic, package doesn't fit, full control needed
+
+`
+
   const currentCollectionsJson = currentState.collections.length > 0 && currentState.collections.some(c => c.fields.length > 0)
     ? `\n\nCurrent project state (existing collections in this project):\n\`\`\`json\n${JSON.stringify({
         layerName: currentState.layerName,
@@ -34,8 +72,8 @@ function buildSystemPrompt(currentState: {
 
 Your role:
 1. Help users design database schemas for their applications
-2. **Create multiple related collections** when the user asks for an "app", "system", or describes multiple entities
-3. Ask 2-3 clarifying questions if requirements are vague
+2. **Recommend packages** when they fit the user's needs (bookings, sales/POS)
+3. **Create custom collections** for anything packages don't cover
 4. Generate valid JSON schemas with proper cross-collection references
 
 ## Available Field Types
@@ -50,90 +88,144 @@ ${fieldTypesTable}
 |----------|------|-------------|
 ${metaPropsTable}
 
+${packageContext}
+
 ## Output Format - IMPORTANT
 
-**For a single collection**, output:
+**Always output this structure:**
+
 \`\`\`json
 {
-  "layerName": "shop",
+  "projectName": "My App Name",
+  "baseLayerName": "myApp",
+  "packages": [
+    {
+      "packageId": "crouton-bookings",
+      "reason": "For appointment scheduling and availability management"
+    }
+  ],
   "collections": [
     {
-      "collectionName": "products",
+      "collectionName": "staff",
       "fields": [
         { "name": "id", "type": "uuid", "meta": { "primaryKey": true } },
-        { "name": "title", "type": "string", "meta": { "required": true, "maxLength": 255 } },
-        { "name": "price", "type": "decimal", "meta": { "precision": 10, "scale": 2 } }
+        { "name": "name", "type": "string", "meta": { "required": true } }
       ],
-      "options": { "sortable": true, "seed": true, "seedCount": 25 }
+      "options": { "seed": true, "seedCount": 10 }
     }
   ]
 }
 \`\`\`
 
-**For multiple collections** (e.g., "create an e-commerce app"):
+### Output Fields
+
+- **projectName**: Human-readable name (e.g., "Tennis Club Manager")
+- **baseLayerName**: camelCase layer name for custom collections (e.g., "tennisClub")
+- **packages**: Array of recommended packages (can be empty if none fit)
+- **collections**: Array of custom collections (can be empty if packages cover everything)
+
+### Example: Tennis Club App (Package + Custom)
+
 \`\`\`json
 {
-  "layerName": "ecommerce",
+  "projectName": "Tennis Club Manager",
+  "baseLayerName": "tennisClub",
+  "packages": [
+    {
+      "packageId": "crouton-bookings",
+      "reason": "For court reservations with time slots and availability"
+    }
+  ],
   "collections": [
     {
-      "collectionName": "products",
+      "collectionName": "members",
+      "fields": [
+        { "name": "id", "type": "uuid", "meta": { "primaryKey": true } },
+        { "name": "name", "type": "string", "meta": { "required": true, "maxLength": 255 } },
+        { "name": "email", "type": "string", "meta": { "required": true } },
+        { "name": "membershipLevel", "type": "string", "meta": { "required": true } },
+        { "name": "joinDate", "type": "date", "meta": { "required": true } }
+      ],
+      "options": { "seed": true, "seedCount": 50 }
+    },
+    {
+      "collectionName": "tournaments",
+      "fields": [
+        { "name": "id", "type": "uuid", "meta": { "primaryKey": true } },
+        { "name": "name", "type": "string", "meta": { "required": true } },
+        { "name": "startDate", "type": "date", "meta": { "required": true } },
+        { "name": "endDate", "type": "date" },
+        { "name": "maxParticipants", "type": "integer" }
+      ],
+      "options": { "seed": true, "seedCount": 5 }
+    }
+  ]
+}
+\`\`\`
+
+### Example: Blog (Custom Collections Only)
+
+\`\`\`json
+{
+  "projectName": "My Blog",
+  "baseLayerName": "blog",
+  "packages": [],
+  "collections": [
+    {
+      "collectionName": "posts",
       "fields": [
         { "name": "id", "type": "uuid", "meta": { "primaryKey": true } },
         { "name": "title", "type": "string", "meta": { "required": true, "maxLength": 255 } },
-        { "name": "description", "type": "text" },
-        { "name": "price", "type": "decimal", "meta": { "precision": 10, "scale": 2, "required": true } },
-        { "name": "categoryId", "type": "string", "meta": { "required": true }, "refTarget": "categories" }
-      ],
-      "options": { "sortable": true, "seed": true, "seedCount": 25 }
+        { "name": "content", "type": "text", "meta": { "required": true } },
+        { "name": "published", "type": "boolean", "meta": { "default": false } }
+      ]
     },
     {
       "collectionName": "categories",
       "fields": [
         { "name": "id", "type": "uuid", "meta": { "primaryKey": true } },
-        { "name": "name", "type": "string", "meta": { "required": true, "maxLength": 100 } },
-        { "name": "slug", "type": "string", "meta": { "required": true, "unique": true } },
-        { "name": "parentId", "type": "string", "refTarget": "categories" }
-      ],
-      "options": { "hierarchy": true, "seed": true, "seedCount": 10 }
-    },
-    {
-      "collectionName": "orders",
-      "fields": [
-        { "name": "id", "type": "uuid", "meta": { "primaryKey": true } },
-        { "name": "orderNumber", "type": "string", "meta": { "required": true, "unique": true } },
-        { "name": "status", "type": "string", "meta": { "required": true } },
-        { "name": "total", "type": "decimal", "meta": { "precision": 10, "scale": 2 } },
-        { "name": "customerId", "type": "string", "meta": { "required": true }, "refTarget": "customers" },
-        { "name": "items", "type": "json", "meta": { "label": "Order Items" } }
-      ],
-      "options": { "sortable": true, "seed": true, "seedCount": 50 }
-    },
-    {
-      "collectionName": "customers",
-      "fields": [
-        { "name": "id", "type": "uuid", "meta": { "primaryKey": true } },
-        { "name": "email", "type": "string", "meta": { "required": true, "unique": true } },
-        { "name": "firstName", "type": "string", "meta": { "required": true, "maxLength": 100 } },
-        { "name": "lastName", "type": "string", "meta": { "required": true, "maxLength": 100 } }
-      ],
-      "options": { "seed": true, "seedCount": 20 }
+        { "name": "name", "type": "string", "meta": { "required": true } },
+        { "name": "slug", "type": "string", "meta": { "required": true, "unique": true } }
+      ]
     }
   ]
 }
 \`\`\`
 
-## When to Create Multiple Collections
+### Example: Food Festival (Package Only)
 
-Create MULTIPLE collections when the user says:
-- "Create an app for..." / "Build a ... app"
-- "Create a ... system" / "Build a ... platform"
-- Mentions multiple entities like "products AND categories" or "users, posts, and comments"
-- Asks for something that clearly involves relationships (e.g., "blog with comments")
+\`\`\`json
+{
+  "projectName": "Food Festival POS",
+  "baseLayerName": "festival",
+  "packages": [
+    {
+      "packageId": "crouton-sales",
+      "reason": "Complete POS system with products, categories, and orders"
+    }
+  ],
+  "collections": []
+}
+\`\`\`
 
-Create a SINGLE collection when the user says:
-- "Create a collection for..." / "Add a collection for..."
-- "Create a ... table" / "I need a ... schema"
-- Only mentions one entity
+## When to Recommend Packages vs Custom Collections
+
+**Recommend crouton-bookings when:**
+- User mentions: bookings, appointments, reservations, scheduling, courts, rooms, rentals
+- Examples: "tennis club", "meeting room booking", "appointment scheduler", "equipment rental"
+
+**Recommend crouton-sales when:**
+- User mentions: sales, POS, point of sale, orders, products, events, markets, retail
+- Examples: "food truck", "pop-up shop", "event sales", "market stall"
+
+**Create custom collections when:**
+- The domain doesn't match any package (blogs, CRM, inventory management, etc.)
+- User explicitly wants custom control
+- Package covers most needs but user needs additional entities
+
+**Combine both when:**
+- Package covers core functionality + user needs additional features
+- Example: "Tennis club with member management" → bookings package + members collection
 
 ## Cross-Collection References
 
@@ -162,14 +254,16 @@ This creates a foreign key reference to another collection.
 6. Mark important fields as required: true
 7. Set maxLength for string fields
 8. When modifying existing collections, output the FULL schema with all fields
+9. **Always output JSON with projectName, baseLayerName, packages, and collections arrays**
 ${currentCollectionsJson}
 
 ## Conversation Style
 
 - Be concise and helpful
-- For app requests, generate all related collections immediately
-- Explain your schema design choices briefly
-- After generating, ask if the user wants any changes or additional collections`
+- **Always explain why you're recommending (or not recommending) a package**
+- For app requests, generate JSON immediately
+- Describe what the package provides if you recommend one
+- Ask if the user wants any changes after generating`
 }
 
 /**
@@ -185,6 +279,7 @@ export interface SchemaFieldWithAI extends SchemaField {
  * Integrates AI chat with the schema designer for live-updating
  * schema generation as the AI streams its response.
  * Supports multi-collection generation for complete app scaffolding.
+ * Now also supports package suggestions from AI.
  */
 export function useSchemaAI() {
   const designer = useSchemaDesigner()
@@ -195,6 +290,13 @@ export function useSchemaAI() {
 
   // Track which collections were created by AI (for animation)
   const aiCreatedCollectionIds = ref<Set<string>>(new Set())
+
+  // Track AI-suggested packages with reasons
+  const aiSuggestedPackages = ref<AIPackageSuggestion[]>([])
+
+  // Track AI-suggested project metadata
+  const aiProjectName = ref<string>('')
+  const aiBaseLayerName = ref<string>('')
 
   // Check if AI package is available
   const isAIAvailable = ref(false)
@@ -213,7 +315,8 @@ export function useSchemaAI() {
    */
   function initializeChat() {
     try {
-      // @ts-expect-error - useChat may not be available if nuxt-crouton-ai isn't installed
+      // useChat may not be available if nuxt-crouton-ai isn't installed
+      // The try/catch handles this at runtime
       chatInstance = useChat({
         api: '/api/schema-designer/ai/chat',
         provider: 'anthropic',
@@ -276,10 +379,57 @@ export function useSchemaAI() {
 
   /**
    * Sync schema state from AI response
-   * Handles both single-collection (legacy) and multi-collection responses
+   * Handles the new project suggestion format with packages, and legacy formats
    */
   function syncFromAIResponse(content: string, isFinal: boolean) {
-    // First, try to parse as multi-collection format
+    // First, try to parse as new project suggestion format (with packages)
+    const projectSuggestion = parser.parseProjectSuggestion(content)
+
+    // Check if this is a new format response (has packages or projectName or baseLayerName)
+    const hasNewFormatData = projectSuggestion.packages.length > 0 ||
+      projectSuggestion.projectName ||
+      projectSuggestion.baseLayerName ||
+      projectSuggestion.collections.length > 0
+
+    if (hasNewFormatData) {
+      // Sync project metadata
+      if (projectSuggestion.projectName) {
+        aiProjectName.value = projectSuggestion.projectName
+      }
+      if (projectSuggestion.baseLayerName) {
+        aiBaseLayerName.value = projectSuggestion.baseLayerName
+        // Also set in designer for backward compatibility
+        if (!designer.multiState.value.layerName) {
+          designer.multiState.value.layerName = projectSuggestion.baseLayerName
+        }
+      }
+
+      // Sync packages - update the list of AI-suggested packages
+      if (projectSuggestion.packages.length > 0) {
+        // Merge new packages, avoiding duplicates
+        for (const pkg of projectSuggestion.packages) {
+          const existingIdx = aiSuggestedPackages.value.findIndex(p => p.packageId === pkg.packageId)
+          if (existingIdx === -1) {
+            aiSuggestedPackages.value.push(pkg)
+          } else {
+            // Update reason if changed
+            aiSuggestedPackages.value[existingIdx] = pkg
+          }
+        }
+      }
+
+      // Sync collections if present
+      if (projectSuggestion.collections.length > 0) {
+        syncMultipleCollections({
+          layerName: projectSuggestion.baseLayerName,
+          collections: projectSuggestion.collections
+        }, isFinal)
+      }
+
+      return
+    }
+
+    // Fallback: try to parse as legacy multi-collection format
     const multiCollectionResult = parser.parseMultiCollectionContent(content)
 
     if (multiCollectionResult.collections.length > 0) {
@@ -526,7 +676,7 @@ export function useSchemaAI() {
   }
 
   /**
-   * Clear the chat history
+   * Clear the chat history and AI suggestions
    */
   function clearChat() {
     if (chatInstance) {
@@ -534,6 +684,27 @@ export function useSchemaAI() {
     }
     messages.value = []
     parser.reset()
+    // Also clear AI suggestions
+    clearAISuggestions()
+  }
+
+  /**
+   * Clear only AI suggestions (packages, project metadata) without clearing chat
+   */
+  function clearAISuggestions() {
+    aiSuggestedPackages.value = []
+    aiProjectName.value = ''
+    aiBaseLayerName.value = ''
+  }
+
+  /**
+   * Remove a specific package from AI suggestions
+   */
+  function removeAISuggestedPackage(packageId: string) {
+    const idx = aiSuggestedPackages.value.findIndex(p => p.packageId === packageId)
+    if (idx !== -1) {
+      aiSuggestedPackages.value.splice(idx, 1)
+    }
   }
 
   /**
@@ -563,9 +734,16 @@ export function useSchemaAI() {
     aiAddedFieldIds,
     aiCreatedCollectionIds,
 
+    // AI-suggested packages and project metadata
+    aiSuggestedPackages,
+    aiProjectName,
+    aiBaseLayerName,
+
     // Methods
     sendMessage,
     clearChat,
+    clearAISuggestions,
+    removeAISuggestedPackage,
     suggestSchema,
     suggestApp,
     isFieldFromAI,

@@ -18,6 +18,28 @@ export interface ParsedMultiCollection {
   }>
 }
 
+/**
+ * Package suggestion from AI response
+ */
+export interface AIPackageSuggestion {
+  packageId: string
+  reason: string
+}
+
+/**
+ * Full project suggestion including packages and collections
+ */
+export interface ParsedProjectSuggestion {
+  projectName?: string
+  baseLayerName?: string
+  packages: AIPackageSuggestion[]
+  collections: Array<{
+    collectionName: string
+    fields: SchemaField[]
+    options?: Partial<CollectionOptions>
+  }>
+}
+
 export interface ParseResult {
   success: boolean
   schema: ParsedSchema | null
@@ -427,6 +449,198 @@ export function useStreamingSchemaParser() {
   }
 
   /**
+   * Parse full project suggestion including packages from AI response
+   * This is the new format that includes projectName, baseLayerName, packages, and collections
+   */
+  function parseProjectSuggestion(content: string): ParsedProjectSuggestion {
+    const result: ParsedProjectSuggestion = {
+      projectName: undefined,
+      baseLayerName: undefined,
+      packages: [],
+      collections: []
+    }
+
+    const jsonStr = extractJSON(content)
+    if (!jsonStr) return result
+
+    // Try to parse complete JSON first
+    let parsed: Record<string, unknown>
+    try {
+      parsed = JSON.parse(jsonStr)
+    } catch {
+      // JSON not complete yet, try partial extraction
+      return parsePartialProjectSuggestion(jsonStr)
+    }
+
+    // Extract project metadata
+    if (typeof parsed.projectName === 'string') {
+      result.projectName = parsed.projectName
+    }
+    if (typeof parsed.baseLayerName === 'string') {
+      result.baseLayerName = parsed.baseLayerName
+    }
+
+    // Extract packages
+    if (Array.isArray(parsed.packages)) {
+      for (const pkg of parsed.packages) {
+        if (!pkg || typeof pkg !== 'object') continue
+        const { packageId, reason } = pkg as Record<string, unknown>
+        if (typeof packageId === 'string' && packageId) {
+          result.packages.push({
+            packageId,
+            reason: typeof reason === 'string' ? reason : ''
+          })
+        }
+      }
+    }
+
+    // Extract collections (reuse multi-collection logic)
+    if (Array.isArray(parsed.collections)) {
+      for (const coll of parsed.collections) {
+        if (!coll || typeof coll !== 'object') continue
+
+        const collectionName = typeof coll.collectionName === 'string' ? coll.collectionName : ''
+        if (!collectionName) continue
+
+        const fields: SchemaField[] = []
+        const rawFields = Array.isArray(coll.fields) ? coll.fields : []
+
+        for (const raw of rawFields) {
+          if (!raw || typeof raw !== 'object') continue
+
+          const { name, type, meta, refTarget } = raw as Record<string, unknown>
+
+          if (typeof name !== 'string' || !name) continue
+          if (typeof type !== 'string' || !isValidFieldType(type)) continue
+
+          const fieldHash = `${collectionName}:${name}:${type}`
+          if (processedFieldHashes.value.has(fieldHash)) continue
+
+          processedFieldHashes.value.add(fieldHash)
+
+          fields.push({
+            id: generateFieldId(),
+            name,
+            type,
+            meta: (meta || {}) as SchemaField['meta'],
+            ...(typeof refTarget === 'string' ? { refTarget } : {})
+          })
+        }
+
+        if (fields.length > 0 || collectionName) {
+          result.collections.push({
+            collectionName,
+            fields,
+            options: typeof coll.options === 'object' ? coll.options as Partial<CollectionOptions> : undefined
+          })
+        }
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Parse partial project suggestion when JSON is incomplete
+   */
+  function parsePartialProjectSuggestion(jsonStr: string): ParsedProjectSuggestion {
+    const result: ParsedProjectSuggestion = {
+      projectName: undefined,
+      baseLayerName: undefined,
+      packages: [],
+      collections: []
+    }
+
+    // Extract projectName
+    const projectNameMatch = jsonStr.match(/"projectName"\s*:\s*"([^"]+)"/)
+    if (projectNameMatch?.[1]) {
+      result.projectName = projectNameMatch[1]
+    }
+
+    // Extract baseLayerName
+    const baseLayerMatch = jsonStr.match(/"baseLayerName"\s*:\s*"([^"]+)"/)
+    if (baseLayerMatch?.[1]) {
+      result.baseLayerName = baseLayerMatch[1]
+    }
+
+    // Extract packages array
+    const packagesMatch = jsonStr.match(/"packages"\s*:\s*\[([\s\S]*?)(?:\]|$)/)
+    if (packagesMatch?.[1]) {
+      const packagesStr = packagesMatch[1]
+      // Extract individual package objects
+      const pkgPattern = /\{\s*"packageId"\s*:\s*"([^"]+)"(?:\s*,\s*"reason"\s*:\s*"([^"]*)")?\s*\}/g
+      let pkgMatch
+      while ((pkgMatch = pkgPattern.exec(packagesStr)) !== null) {
+        const [, packageId, reason] = pkgMatch
+        if (packageId) {
+          result.packages.push({
+            packageId,
+            reason: reason || ''
+          })
+        }
+      }
+    }
+
+    // Extract collections using existing partial logic
+    const collectionsMatch = jsonStr.match(/"collections"\s*:\s*\[([\s\S]*)$/)
+    if (collectionsMatch) {
+      // Find all collection blocks
+      const collectionStarts: number[] = []
+      const collectionNamePattern = /\{\s*"collectionName"\s*:\s*"([^"]+)"/g
+      let nameMatch
+      while ((nameMatch = collectionNamePattern.exec(jsonStr)) !== null) {
+        collectionStarts.push(nameMatch.index)
+      }
+
+      for (let i = 0; i < collectionStarts.length; i++) {
+        const start = collectionStarts[i]
+        const end = collectionStarts[i + 1] || jsonStr.length
+
+        const collectionBlock = jsonStr.slice(start, end)
+
+        const nameMatch2 = collectionBlock.match(/"collectionName"\s*:\s*"([^"]+)"/)
+        const collectionName = nameMatch2?.[1]
+        if (!collectionName) continue
+
+        const fieldsMatch = collectionBlock.match(/"fields"\s*:\s*\[([\s\S]*?)(?:\]|$)/)
+        if (!fieldsMatch) continue
+
+        const fieldsStr = fieldsMatch[1] || ''
+
+        const fields = extractCompleteFields(`{"fields": [${fieldsStr}]}`)
+          .filter(f => {
+            const hash = `${collectionName}:${f.name}:${f.type}`
+            if (processedFieldHashes.value.has(hash)) return false
+            processedFieldHashes.value.add(hash)
+            return true
+          })
+          .map(f => ({
+            id: generateFieldId(),
+            name: f.name,
+            type: f.type as FieldType,
+            meta: (f.meta || {}) as SchemaField['meta'],
+            ...(f.refTarget ? { refTarget: f.refTarget } : {})
+          }))
+
+        if (fields.length > 0) {
+          const existingCollIdx = result.collections.findIndex(c => c.collectionName === collectionName)
+          if (existingCollIdx >= 0) {
+            result.collections[existingCollIdx]!.fields.push(...fields)
+          } else {
+            result.collections.push({
+              collectionName,
+              fields,
+              options: undefined
+            })
+          }
+        }
+      }
+    }
+
+    return result
+  }
+
+  /**
    * Reset the parser state (call when starting a new conversation)
    */
   function reset() {
@@ -438,6 +652,7 @@ export function useStreamingSchemaParser() {
     parseCompleteSchema,
     parseStreamingMetadata,
     parseMultiCollectionContent,
+    parseProjectSuggestion,
     reset,
     // For testing
     extractJSON,
