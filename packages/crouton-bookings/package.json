@@ -10,11 +10,13 @@
     "schemas",
     "i18n",
     "nuxt.config.ts",
+    "crouton.manifest.ts",
     "README.md",
     "SCHEMAS.md"
   ],
   "exports": {
     ".": "./nuxt.config.ts",
+    "./crouton.manifest": "./crouton.manifest.ts",
     "./server/utils/email-service": "./server/utils/email-service.ts",
     "./server/utils/booking-emails": "./server/utils/booking-emails.ts"
   },
@@ -57,6 +59,7 @@
     "zod": "^3.0.0"
   },
   "devDependencies": {
+    "@friendlyinternet/nuxt-crouton-schema-designer": "workspace:*",
     "unbuild": "^3.6.1"
   }
 }

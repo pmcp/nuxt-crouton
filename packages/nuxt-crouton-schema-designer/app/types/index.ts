@@ -1,4 +1,5 @@
 export * from './schema'
+export * from './package-manifest'
 
 // Project persistence types
 export interface SchemaProject {

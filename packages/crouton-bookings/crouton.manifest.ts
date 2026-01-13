@@ -1,0 +1,136 @@
+import type { PackageManifest } from '@friendlyinternet/nuxt-crouton-schema-designer/types'
+import bookingSchema from './schemas/booking.json'
+import locationSchema from './schemas/location.json'
+import settingsSchema from './schemas/settings.json'
+import emailTemplateSchema from './schemas/email-template.json'
+import emailLogSchema from './schemas/email-log.json'
+
+const manifest: PackageManifest = {
+  id: 'crouton-bookings',
+  name: 'Booking System',
+  description: 'Slot-based and inventory booking with optional email notifications. Perfect for courts, rooms, appointments, equipment rentals, and more.',
+  icon: 'i-heroicons-calendar',
+  version: '1.0.0',
+
+  layer: {
+    name: 'bookings',
+    editable: false,
+    reason: 'Table names are prefixed with "bookings" (e.g., bookingsBookings). This cannot be changed.'
+  },
+
+  dependencies: [
+    '@friendlyinternet/nuxt-crouton',
+    '@friendlyinternet/nuxt-crouton-auth'
+  ],
+
+  collections: [
+    {
+      name: 'booking',
+      tableName: 'bookingsBookings',
+      description: 'Individual booking/reservation records with date, slot, location, and customer info.',
+      schema: bookingSchema,
+      schemaPath: './schemas/booking.json'
+    },
+    {
+      name: 'location',
+      tableName: 'bookingsLocations',
+      description: 'Bookable venues, resources, or items. Supports time slots or inventory-based booking.',
+      schema: locationSchema,
+      schemaPath: './schemas/location.json'
+    },
+    {
+      name: 'settings',
+      tableName: 'bookingsSettings',
+      description: 'Team-wide booking configuration including statuses and age groups.',
+      schema: settingsSchema,
+      schemaPath: './schemas/settings.json'
+    },
+    {
+      name: 'email-template',
+      tableName: 'bookingsEmailtemplates',
+      description: 'Email notification templates for booking confirmations, reminders, and follow-ups.',
+      schema: emailTemplateSchema,
+      schemaPath: './schemas/email-template.json',
+      optional: true,
+      condition: 'config.email.enabled'
+    },
+    {
+      name: 'email-log',
+      tableName: 'bookingsEmaillogs',
+      description: 'Log of sent emails with status tracking.',
+      schema: emailLogSchema,
+      schemaPath: './schemas/email-log.json',
+      optional: true,
+      condition: 'config.email.enabled'
+    }
+  ],
+
+  configuration: {
+    'email.enabled': {
+      type: 'boolean',
+      label: 'Enable Email Notifications',
+      description: 'Send booking confirmations, reminders, and follow-ups via email.',
+      default: false
+    },
+    'bookingModes': {
+      type: 'multiselect',
+      label: 'Booking Modes',
+      description: 'How resources can be booked.',
+      default: ['slots'],
+      options: [
+        { value: 'slots', label: 'Time Slots (courts, rooms, appointments)' },
+        { value: 'inventory', label: 'Inventory (equipment, tickets, rentals)' }
+      ]
+    }
+  },
+
+  extensionPoints: [
+    {
+      collection: 'booking',
+      allowedFields: ['customData', 'metadata', 'notes'],
+      description: 'Add custom fields to booking records for additional data capture.'
+    },
+    {
+      collection: 'location',
+      allowedFields: ['customData', 'metadata', 'amenities'],
+      description: 'Add custom fields to locations for venue-specific attributes.'
+    }
+  ],
+
+  provides: {
+    composables: [
+      'useBookingAvailability',
+      'useBookingCart',
+      'useCustomerBooking',
+      'useBookingEmail',
+      'useBookingEmailVariables',
+      'useBookingFilters',
+      'useBookingsList',
+      'useBookingsSettings',
+      'useBookingSlots',
+      'useBookingOptions'
+    ],
+    components: [
+      { name: 'CroutonBookingPanel', description: 'Main booking sidebar container', props: ['locationId', 'teamId'] },
+      { name: 'CroutonBookingCalendar', description: 'Calendar date picker for booking', props: ['modelValue', 'availableDates'] },
+      { name: 'CroutonBookingWeekStrip', description: 'Week date navigation strip', props: ['modelValue', 'startDate'] },
+      { name: 'CroutonBookingList', description: 'Bookings list with filters', props: ['teamId', 'filters'] },
+      { name: 'CroutonBookingCard', description: 'Individual booking display card', props: ['booking'] },
+      { name: 'CroutonBookingCustomerBookingWizard', description: 'Full multi-step booking wizard', props: ['teamId', 'locations'] },
+      { name: 'CroutonBookingAdminCalendar', description: 'Admin calendar view with slot management', props: ['teamId', 'locationId'] },
+      { name: 'CroutonBookingSlotIndicator', description: 'Visual slot availability indicator', props: ['slots', 'bookings'] },
+      { name: 'CroutonBookingDateBadge', description: 'Date display badge', props: ['date', 'format'] },
+      { name: 'CroutonBookingFilters', description: 'Booking filter controls', props: ['modelValue'] }
+    ],
+    apiRoutes: [
+      '/api/crouton-bookings/teams/[teamId]/availability',
+      '/api/crouton-bookings/teams/[teamId]/customer-bookings',
+      '/api/crouton-bookings/teams/[teamId]/customer-bookings-batch',
+      '/api/crouton-bookings/teams/[teamId]/customer-locations',
+      '/api/crouton-bookings/teams/[teamId]/bookings/[bookingId]',
+      '/api/crouton-bookings/teams/[teamId]/bookings/[bookingId]/resend-email'
+    ]
+  }
+}
+
+export default manifest
