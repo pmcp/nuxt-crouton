@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useAuthClientSafe } from '@friendlyinternet/nuxt-crouton-auth/types/auth-client'
-
 /**
  * Admin Index Redirect
  *
@@ -12,6 +10,7 @@ definePageMeta({
 })
 
 const { teams, switchTeamBySlug } = useTeam()
+const nuxtApp = useNuxtApp()
 
 onMounted(async () => {
   // First check if teams are already loaded in nanostore
@@ -19,7 +18,7 @@ onMounted(async () => {
 
   // If not, fetch directly from Better Auth API
   if (userTeams.length === 0) {
-    const authClient = useAuthClientSafe()
+    const authClient = nuxtApp.$authClient as any
     if (authClient?.organization?.list) {
       try {
         const result = await authClient.organization.list()
