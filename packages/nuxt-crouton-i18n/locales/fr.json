@@ -48,7 +48,9 @@
     "saveChanges": "Enregistrer les modifications",
     "proceed": "Continuer",
     "change": "Changer",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "accessRestricted": "Accès restreint",
+    "error": "Erreur"
   },
   "table": {
     "id": "ID",
@@ -341,7 +343,11 @@
     "manageMembersDescription": "Ajouter, supprimer et gérer les membres de l'équipe",
     "invitations": "Invitations",
     "manageInvitationsDescription": "Gérer les invitations d'équipe en attente",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "adminAccessRequired": "Vous devez être administrateur ou propriétaire de l'équipe pour accéder à cette page.",
+    "teamDeleted": "Équipe supprimée",
+    "teamDeletedDescription": "L'équipe a été supprimée définitivement.",
+    "settingsSaved": "Les paramètres de l'équipe ont été enregistrés."
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -353,6 +359,7 @@
     "support": "Support",
     "docs": "Documentation",
     "backToDashboard": "Retour au tableau de bord",
+    "backToAdmin": "Retour à l'administration",
     "accountSettings": "Paramètres du compte"
   }
 }

@@ -48,7 +48,9 @@
     "saveChanges": "Save Changes",
     "proceed": "Proceed",
     "change": "Change",
-    "settings": "Settings"
+    "settings": "Settings",
+    "accessRestricted": "Access Restricted",
+    "error": "Error"
   },
   "table": {
     "id": "ID",
@@ -367,7 +369,11 @@
     "manageMembersDescription": "Add, remove, and manage team members",
     "invitations": "Invitations",
     "manageInvitationsDescription": "Manage pending team invitations",
-    "settings": "Settings"
+    "settings": "Settings",
+    "adminAccessRequired": "You need to be a team admin or owner to access this page.",
+    "teamDeleted": "Team Deleted",
+    "teamDeletedDescription": "The team has been permanently deleted.",
+    "settingsSaved": "Team settings have been saved."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -379,6 +385,7 @@
     "support": "Support",
     "docs": "Documentation",
     "backToDashboard": "Back to Dashboard",
+    "backToAdmin": "Back to Admin",
     "accountSettings": "Account Settings",
     "collections": "Collections",
     "admin": "Admin",

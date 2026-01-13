@@ -62,6 +62,8 @@ export function useT() {
     'common.saveChanges': 'Save Changes',
     'common.proceed': 'Proceed',
     'common.change': 'Change',
+    'common.accessRestricted': 'Access Restricted',
+    'common.error': 'Error',
 
     // ===================
     // EXPORT (~6 keys)
@@ -380,6 +382,10 @@ export function useT() {
     'teams.cancelInvitation': 'Cancel invitation',
     'teams.decline': 'Decline',
     'teams.accept': 'Accept',
+    'teams.adminAccessRequired': 'You need to be a team admin or owner to access this page.',
+    'teams.teamDeleted': 'Team Deleted',
+    'teams.teamDeletedDescription': 'The team has been permanently deleted.',
+    'teams.settingsSaved': 'Team settings have been saved.',
 
     // ===================
     // ADMIN (~10 keys)
@@ -395,7 +401,7 @@ export function useT() {
     'admin.systemSettings': 'System Settings',
 
     // ===================
-    // NAVIGATION (~12 keys)
+    // NAVIGATION (~13 keys)
     // Common nav items
     // ===================
     'navigation.dashboard': 'Dashboard',
@@ -407,6 +413,7 @@ export function useT() {
     'navigation.support': 'Support',
     'navigation.docs': 'Documentation',
     'navigation.backToDashboard': 'Back to Dashboard',
+    'navigation.backToAdmin': 'Back to Admin',
     'navigation.accountSettings': 'Account Settings',
     'navigation.collections': 'Collections'
   }

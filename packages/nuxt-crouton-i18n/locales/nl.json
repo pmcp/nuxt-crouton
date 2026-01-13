@@ -48,7 +48,9 @@
     "saveChanges": "Wijzigingen opslaan",
     "proceed": "Doorgaan",
     "change": "Wijzigen",
-    "settings": "Instellingen"
+    "settings": "Instellingen",
+    "accessRestricted": "Toegang beperkt",
+    "error": "Fout"
   },
   "table": {
     "id": "ID",
@@ -341,7 +343,11 @@
     "manageMembersDescription": "Teamleden toevoegen, verwijderen en beheren",
     "invitations": "Uitnodigingen",
     "manageInvitationsDescription": "Beheer openstaande teamuitnodigingen",
-    "settings": "Instellingen"
+    "settings": "Instellingen",
+    "adminAccessRequired": "Je moet een teambeheerder of eigenaar zijn om deze pagina te openen.",
+    "teamDeleted": "Team verwijderd",
+    "teamDeletedDescription": "Het team is permanent verwijderd.",
+    "settingsSaved": "Teaminstellingen zijn opgeslagen."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -353,6 +359,7 @@
     "support": "Ondersteuning",
     "docs": "Documentatie",
     "backToDashboard": "Terug naar dashboard",
+    "backToAdmin": "Terug naar beheer",
     "accountSettings": "Accountinstellingen"
   }
 }
