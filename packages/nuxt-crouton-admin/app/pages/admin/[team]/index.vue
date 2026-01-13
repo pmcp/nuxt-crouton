@@ -9,7 +9,7 @@
  */
 definePageMeta({
   middleware: ['auth', 'team-admin'],
-  layout: 'dashboard'
+  layout: 'admin'
 })
 
 const route = useRoute()

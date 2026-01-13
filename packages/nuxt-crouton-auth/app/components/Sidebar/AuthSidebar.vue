@@ -2,9 +2,11 @@
 /**
  * AuthSidebar Component
  *
- * Main sidebar component for the dashboard layout.
+ * Main sidebar component for dashboard and admin layouts.
  * Uses Nuxt UI's DashboardSidebar with navigation menu.
+ * Context-aware: shows different navigation based on route context (dashboard vs admin).
  * Mode-aware: shows team management features only in multi-tenant mode.
+ * Auto-discovers app routes via useCroutonApps().
  *
  * @example
  * ```vue
@@ -35,54 +37,131 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { t } = useT()
-const { buildDashboardUrl } = useTeamContext()
+const route = useRoute()
+const { buildDashboardUrl, teamSlug } = useTeamContext()
 const { showTeamManagement } = useTeam()
+
+// Get auto-discovered app routes
+const { dashboardRoutes, adminRoutes, settingsRoutes } = useCroutonApps()
+
+// Detect context: admin vs dashboard
+const isAdminContext = computed(() => route.path.startsWith('/admin'))
+
+// Build admin URL helper
+function buildAdminUrl(path: string): string {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  const slug = teamSlug.value
+  if (slug) {
+    return `/admin/${slug}${cleanPath}`
+  }
+  return `/admin${cleanPath}`
+}
+
+// Build URL based on context
+function buildContextUrl(path: string): string {
+  return isAdminContext.value ? buildAdminUrl(path) : buildDashboardUrl(path, '')
+}
+
+// Convert app routes to navigation items
+function appRoutesToNavItems(routes: Array<{ path: string; label: string; icon?: string }>): NavigationMenuItem[] {
+  return routes.map((appRoute) => ({
+    label: t(appRoute.label) || appRoute.label,
+    icon: appRoute.icon || 'i-lucide-folder',
+    to: buildContextUrl(appRoute.path)
+  }))
+}
 
 // Default navigation items if none provided
 const defaultNavItems = computed<NavigationMenuItem[][]>(() => {
-  const route = useRoute()
-  const baseUrl = buildDashboardUrl('', '')
+  const baseUrl = isAdminContext.value ? buildAdminUrl('') : buildDashboardUrl('', '')
 
+  // Main items - dashboard/admin home
   const mainItems: NavigationMenuItem[] = [
     {
-      label: t('navigation.dashboard'),
+      label: isAdminContext.value ? t('navigation.admin') : t('navigation.dashboard'),
       icon: 'i-lucide-layout-dashboard',
-      to: baseUrl || '/dashboard',
-      active: route.path === baseUrl || route.path === '/dashboard'
+      to: baseUrl || (isAdminContext.value ? '/admin' : '/dashboard'),
+      active: route.path === baseUrl || route.path === '/dashboard' || route.path === '/admin'
     }
   ]
+
+  // Add app-specific routes based on context
+  const appRoutes = isAdminContext.value ? adminRoutes.value : dashboardRoutes.value
+  if (appRoutes.length > 0) {
+    mainItems.push(...appRoutesToNavItems(appRoutes))
+  }
+
+  // Settings section
+  const settingsChildren: NavigationMenuItem[] = []
+
+  if (isAdminContext.value) {
+    // Admin context: team settings
+    settingsChildren.push(
+      {
+        label: t('teams.teamSettings'),
+        icon: 'i-lucide-building-2',
+        to: `${baseUrl}/settings`
+      },
+      {
+        label: t('teams.members'),
+        icon: 'i-lucide-users',
+        to: `${baseUrl}/members`
+      },
+      {
+        label: t('teams.invitationsShort') || t('teams.invitations') || 'Invitations',
+        icon: 'i-lucide-mail',
+        to: `${baseUrl}/invitations`
+      }
+    )
+
+    // Add app-specific settings routes (e.g., email templates from bookings)
+    if (settingsRoutes.value.length > 0) {
+      settingsChildren.push(
+        ...settingsRoutes.value.map((appRoute) => ({
+          label: t(appRoute.label) || appRoute.label,
+          icon: appRoute.icon || 'i-lucide-settings',
+          to: `${baseUrl}/settings${appRoute.path}`
+        }))
+      )
+    }
+  } else {
+    // Dashboard context: account settings
+    settingsChildren.push(
+      {
+        label: t('navigation.account'),
+        icon: 'i-lucide-user',
+        to: `${baseUrl}/settings`
+      },
+      {
+        label: t('account.security'),
+        icon: 'i-lucide-shield',
+        to: `${baseUrl}/settings/security`
+      }
+    )
+
+    // Team settings in dashboard (if multi-tenant)
+    if (showTeamManagement.value) {
+      settingsChildren.push(
+        {
+          label: t('teams.team'),
+          icon: 'i-lucide-building-2',
+          to: `${baseUrl}/settings/team`
+        },
+        {
+          label: t('teams.members'),
+          icon: 'i-lucide-users',
+          to: `${baseUrl}/settings/members`
+        }
+      )
+    }
+  }
 
   const settingsItems: NavigationMenuItem[] = [
     {
       label: t('navigation.settings'),
       icon: 'i-lucide-settings',
-      defaultOpen: route.path.includes('/settings'),
-      children: [
-        {
-          label: t('navigation.account'),
-          icon: 'i-lucide-user',
-          to: `${baseUrl}/settings`
-        },
-        {
-          label: t('account.security'),
-          icon: 'i-lucide-shield',
-          to: `${baseUrl}/settings/security`
-        },
-        ...(showTeamManagement.value
-          ? [
-              {
-                label: t('teams.team'),
-                icon: 'i-lucide-building-2',
-                to: `${baseUrl}/settings/team`
-              },
-              {
-                label: t('teams.members'),
-                icon: 'i-lucide-users',
-                to: `${baseUrl}/settings/members`
-              }
-            ]
-          : [])
-      ]
+      defaultOpen: route.path.includes('/settings') || route.path.includes('/members') || route.path.includes('/invitations'),
+      children: settingsChildren
     }
   ]
 
