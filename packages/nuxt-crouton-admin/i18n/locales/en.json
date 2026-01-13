@@ -1,0 +1,76 @@
+{
+  "superAdmin": {
+    "title": "Super Admin",
+    "dashboard": "Dashboard",
+    "stats": {
+      "totalUsers": "Total Users",
+      "newThisWeek": "New This Week",
+      "bannedUsers": "Banned Users",
+      "totalTeams": "Total Teams",
+      "activeSessions": "Active Sessions",
+      "superAdmins": "Super Admins",
+      "failedToLoad": "Failed to load stats"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "manageUsers": "Manage Users",
+      "manageUsersDescription": "View, create, and manage user accounts",
+      "viewTeams": "View Teams",
+      "viewTeamsDescription": "Browse all teams and their members"
+    },
+    "users": {
+      "title": "Users",
+      "name": "Name",
+      "email": "Email",
+      "status": "Status",
+      "teams": "Teams",
+      "created": "Created",
+      "searchPlaceholder": "Search users...",
+      "filterAll": "All Users",
+      "filterActive": "Active",
+      "filterBanned": "Banned",
+      "statusActive": "Active",
+      "statusBanned": "Banned",
+      "createUser": "Create User",
+      "banUser": "Ban User",
+      "unbanUser": "Unban User",
+      "deleteUser": "Delete User",
+      "impersonate": "Impersonate",
+      "userBanned": "User banned",
+      "userBannedDescription": "{name} has been banned",
+      "userUnbanned": "User unbanned",
+      "userUnbannedDescription": "{name} has been unbanned",
+      "userDeleted": "User deleted",
+      "userDeletedDescription": "{name} has been permanently deleted",
+      "userCreated": "User created",
+      "userCreatedDescription": "{name} has been created",
+      "failedToBan": "Failed to ban user",
+      "failedToUnban": "Failed to unban user",
+      "failedToDelete": "Failed to delete user",
+      "failedToCreate": "Failed to create user",
+      "deleteConfirmTitle": "Delete User",
+      "deleteConfirmMessage": "Are you sure you want to permanently delete {name}? This action cannot be undone.",
+      "impersonationFailed": "Impersonation failed"
+    },
+    "teams": {
+      "title": "Teams",
+      "name": "Name",
+      "slug": "Slug",
+      "owner": "Owner",
+      "members": "Members",
+      "type": "Type",
+      "created": "Created",
+      "searchPlaceholder": "Search teams...",
+      "filterAll": "All Teams",
+      "filterTeam": "Team Workspaces",
+      "filterPersonal": "Personal Workspaces",
+      "typePersonal": "Personal",
+      "typeTeam": "Team",
+      "defaultTeam": "Default team"
+    },
+    "impersonation": {
+      "banner": "You are impersonating {name}",
+      "stopImpersonation": "Stop Impersonation"
+    }
+  }
+}

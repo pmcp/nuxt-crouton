@@ -15,6 +15,14 @@ export default defineNuxtConfig({
     version: '0.1.0'
   },
 
+  // i18n configuration for auth translations
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json' }
+    ],
+    langDir: '../i18n/locales'
+  },
+
   // Runtime config defaults
   runtimeConfig: {
     // Server-only config

@@ -95,7 +95,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       <UInput
         v-model="state.password"
         type="password"
-        placeholder="Enter your password"
+        :placeholder="t('auth.placeholders.password')"
         autocomplete="current-password"
         icon="i-lucide-lock"
       />

@@ -8,6 +8,14 @@ export default defineNuxtConfig({
     version: '0.1.0'
   },
 
+  // i18n configuration for admin translations
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json' }
+    ],
+    langDir: '../i18n/locales'
+  },
+
   // Components from the layer
   components: [
     { path: 'app/components', pathPrefix: false }

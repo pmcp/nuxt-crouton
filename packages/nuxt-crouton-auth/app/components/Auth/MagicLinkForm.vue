@@ -77,7 +77,7 @@ function handleReset() {
         color="success"
         icon="i-lucide-mail-check"
         :title="t('auth.checkYourInbox')"
-        description="We sent a magic link to your email. Click the link to sign in."
+        :description="t('auth.magicLinkSentDescription')"
       />
       <UButton
         class="mt-4"
@@ -85,7 +85,7 @@ function handleReset() {
         block
         @click="handleReset"
       >
-        Try another email
+        {{ t('auth.tryAnotherEmail') }}
       </UButton>
     </div>
 

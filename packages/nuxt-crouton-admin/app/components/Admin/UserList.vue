@@ -8,6 +8,8 @@
 import { ref, watch, onMounted } from 'vue'
 import type { AdminUserListItem, UserListFilters, CreateUserPayload } from '../../../types/admin'
 
+const { t } = useT()
+
 interface Props {
   /** Initial page size */
   pageSize?: number
@@ -46,14 +48,14 @@ const selectedUser = ref<AdminUserListItem | null>(null)
 const actionLoading = ref(false)
 
 // Table columns
-const columns = [
-  { accessorKey: 'name', id: 'name', header: 'Name' },
-  { accessorKey: 'email', id: 'email', header: 'Email' },
-  { accessorKey: 'banned', id: 'status', header: 'Status' },
-  { accessorKey: 'membershipCount', id: 'membershipCount', header: 'Teams' },
-  { accessorKey: 'createdAt', id: 'createdAt', header: 'Created' },
+const columns = computed(() => [
+  { accessorKey: 'name', id: 'name', header: t('superAdmin.users.name') },
+  { accessorKey: 'email', id: 'email', header: t('superAdmin.users.email') },
+  { accessorKey: 'banned', id: 'status', header: t('superAdmin.users.status') },
+  { accessorKey: 'membershipCount', id: 'membershipCount', header: t('superAdmin.users.teams') },
+  { accessorKey: 'createdAt', id: 'createdAt', header: t('superAdmin.users.created') },
   { accessorKey: 'id', id: 'actions', header: '' }
-]
+])
 
 // Load users on mount and when filters change
 async function loadUsers(pageNum = 1) {
@@ -104,8 +106,8 @@ async function handleImpersonate(user: AdminUserListItem) {
     await startImpersonation(user.id)
   } catch (e) {
     toast.add({
-      title: 'Impersonation failed',
-      description: e instanceof Error ? e.message : 'Unknown error',
+      title: t('superAdmin.users.impersonationFailed'),
+      description: e instanceof Error ? e.message : t('errors.generic'),
       color: 'error'
     })
   }
@@ -118,16 +120,16 @@ async function confirmBan(payload: { reason: string, duration: number | null }) 
   try {
     await banUser(selectedUser.value.id, payload)
     toast.add({
-      title: 'User banned',
-      description: `${selectedUser.value.name} has been banned`,
+      title: t('superAdmin.users.userBanned'),
+      description: t('superAdmin.users.userBannedDescription', { name: selectedUser.value.name }),
       color: 'success'
     })
     showBanModal.value = false
     selectedUser.value = null
   } catch (e) {
     toast.add({
-      title: 'Failed to ban user',
-      description: e instanceof Error ? e.message : 'Unknown error',
+      title: t('superAdmin.users.failedToBan'),
+      description: e instanceof Error ? e.message : t('errors.generic'),
       color: 'error'
     })
   } finally {
@@ -142,15 +144,15 @@ async function confirmUnban() {
   try {
     await unbanUser(selectedUser.value.id)
     toast.add({
-      title: 'User unbanned',
-      description: `${selectedUser.value.name} has been unbanned`,
+      title: t('superAdmin.users.userUnbanned'),
+      description: t('superAdmin.users.userUnbannedDescription', { name: selectedUser.value.name }),
       color: 'success'
     })
     selectedUser.value = null
   } catch (e) {
     toast.add({
-      title: 'Failed to unban user',
-      description: e instanceof Error ? e.message : 'Unknown error',
+      title: t('superAdmin.users.failedToUnban'),
+      description: e instanceof Error ? e.message : t('errors.generic'),
       color: 'error'
     })
   } finally {
@@ -165,16 +167,16 @@ async function confirmDelete() {
   try {
     await deleteUser(selectedUser.value.id)
     toast.add({
-      title: 'User deleted',
-      description: `${selectedUser.value.name} has been permanently deleted`,
+      title: t('superAdmin.users.userDeleted'),
+      description: t('superAdmin.users.userDeletedDescription', { name: selectedUser.value.name }),
       color: 'success'
     })
     showDeleteModal.value = false
     selectedUser.value = null
   } catch (e) {
     toast.add({
-      title: 'Failed to delete user',
-      description: e instanceof Error ? e.message : 'Unknown error',
+      title: t('superAdmin.users.failedToDelete'),
+      description: e instanceof Error ? e.message : t('errors.generic'),
       color: 'error'
     })
   } finally {
@@ -187,16 +189,16 @@ async function handleCreateUser(payload: CreateUserPayload) {
   try {
     await createUser(payload)
     toast.add({
-      title: 'User created',
-      description: `${payload.name} has been created`,
+      title: t('superAdmin.users.userCreated'),
+      description: t('superAdmin.users.userCreatedDescription', { name: payload.name }),
       color: 'success'
     })
     showCreateModal.value = false
     loadUsers(1)
   } catch (e) {
     toast.add({
-      title: 'Failed to create user',
-      description: e instanceof Error ? e.message : 'Unknown error',
+      title: t('superAdmin.users.failedToCreate'),
+      description: e instanceof Error ? e.message : t('errors.generic'),
       color: 'error'
     })
   } finally {
@@ -216,16 +218,16 @@ function formatDate(date: Date) {
       <div class="flex flex-1 gap-2">
         <UInput
           v-model="search"
-          placeholder="Search users..."
+          :placeholder="t('superAdmin.users.searchPlaceholder')"
           icon="i-heroicons-magnifying-glass"
           class="max-w-xs"
         />
         <USelect
           v-model="statusFilter"
           :items="[
-            { value: 'all', label: 'All Users' },
-            { value: 'active', label: 'Active' },
-            { value: 'banned', label: 'Banned' }
+            { value: 'all', label: t('superAdmin.users.filterAll') },
+            { value: 'active', label: t('superAdmin.users.filterActive') },
+            { value: 'banned', label: t('superAdmin.users.filterBanned') }
           ]"
           value-key="value"
           class="w-32"
@@ -236,7 +238,7 @@ function formatDate(date: Date) {
         icon="i-heroicons-plus"
         @click="showCreateModal = true"
       >
-        Create User
+        {{ t('superAdmin.users.createUser') }}
       </UButton>
     </div>
 
@@ -274,7 +276,7 @@ function formatDate(date: Date) {
                 name="i-heroicons-shield-check"
                 class="size-3 text-amber-500"
               />
-              <span class="text-xs text-amber-600 dark:text-amber-400">Super Admin</span>
+              <span class="text-xs text-amber-600 dark:text-amber-400">{{ t('superAdmin.title') }}</span>
             </div>
           </div>
         </div>
@@ -296,7 +298,7 @@ function formatDate(date: Date) {
           :color="row.original.banned ? 'error' : 'success'"
           variant="soft"
         >
-          {{ row.original.banned ? 'Banned' : 'Active' }}
+          {{ row.original.banned ? t('superAdmin.users.statusBanned') : t('superAdmin.users.statusActive') }}
         </UBadge>
       </template>
 
@@ -342,7 +344,7 @@ function formatDate(date: Date) {
       <template #content>
         <div class="p-6">
           <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-            Ban User
+            {{ t('superAdmin.users.banUser') }}
           </h3>
           <AdminUserBanForm
             v-if="selectedUser"
@@ -360,12 +362,10 @@ function formatDate(date: Date) {
       <template #content>
         <div class="p-6">
           <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-            Delete User
+            {{ t('superAdmin.users.deleteConfirmTitle') }}
           </h3>
           <p class="mb-4 text-gray-600 dark:text-gray-400">
-            Are you sure you want to permanently delete
-            <strong>{{ selectedUser?.name }}</strong>?
-            This action cannot be undone.
+            {{ t('superAdmin.users.deleteConfirmMessage', { name: selectedUser?.name }) }}
           </p>
           <div class="flex justify-end gap-2">
             <UButton
@@ -374,14 +374,14 @@ function formatDate(date: Date) {
               :disabled="actionLoading"
               @click="showDeleteModal = false"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton
               color="error"
               :loading="actionLoading"
               @click="confirmDelete"
             >
-              Delete User
+              {{ t('superAdmin.users.deleteUser') }}
             </UButton>
           </div>
         </div>
@@ -393,7 +393,7 @@ function formatDate(date: Date) {
       <template #content>
         <div class="p-6">
           <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-            Create User
+            {{ t('superAdmin.users.createUser') }}
           </h3>
           <AdminUserCreateForm
             :loading="actionLoading"

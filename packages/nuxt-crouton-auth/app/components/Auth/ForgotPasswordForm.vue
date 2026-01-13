@@ -80,7 +80,7 @@ function handleReset() {
         color="success"
         icon="i-lucide-mail-check"
         :title="t('auth.checkYourInbox')"
-        description="We sent a password reset link to your email. Click the link to reset your password."
+        :description="t('auth.resetLinkSentDescription')"
       />
 
       <div class="mt-6 space-y-3">
@@ -89,7 +89,7 @@ function handleReset() {
           block
           @click="handleReset"
         >
-          Try another email
+          {{ t('auth.tryAnotherEmail') }}
         </UButton>
         <NuxtLink
           v-if="showBackLink"

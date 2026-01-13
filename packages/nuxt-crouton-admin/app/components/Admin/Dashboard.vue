@@ -8,6 +8,8 @@
 import { computed, onMounted } from 'vue'
 import type { AdminStats } from '../../../types/admin'
 
+const { t } = useT()
+
 interface Props {
   /** Pre-loaded stats (optional, will fetch if not provided) */
   stats?: AdminStats | null
@@ -40,39 +42,39 @@ const statCards = computed(() => {
 
   return [
     {
-      label: 'Total Users',
+      label: t('superAdmin.stats.totalUsers'),
       value: displayStats.value.totalUsers,
       icon: 'i-heroicons-users',
       trend: displayStats.value.newUsersToday,
       color: 'primary' as const
     },
     {
-      label: 'New This Week',
+      label: t('superAdmin.stats.newThisWeek'),
       value: displayStats.value.newUsersWeek,
       icon: 'i-heroicons-user-plus',
       color: 'success' as const
     },
     {
-      label: 'Banned Users',
+      label: t('superAdmin.stats.bannedUsers'),
       value: displayStats.value.bannedUsers,
       icon: 'i-heroicons-no-symbol',
       color: displayStats.value.bannedUsers > 0 ? 'warning' as const : 'primary' as const
     },
     {
-      label: 'Total Teams',
+      label: t('superAdmin.stats.totalTeams'),
       value: displayStats.value.totalTeams,
       icon: 'i-heroicons-building-office-2',
       trend: displayStats.value.newTeamsWeek,
       color: 'primary' as const
     },
     {
-      label: 'Active Sessions',
+      label: t('superAdmin.stats.activeSessions'),
       value: displayStats.value.activeSessions,
       icon: 'i-heroicons-signal',
       color: 'success' as const
     },
     {
-      label: 'Super Admins',
+      label: t('superAdmin.stats.superAdmins'),
       value: displayStats.value.superAdminCount,
       icon: 'i-heroicons-shield-check',
       color: 'primary' as const
@@ -80,20 +82,20 @@ const statCards = computed(() => {
   ]
 })
 
-const quickActions = [
+const quickActions = computed(() => [
   {
-    label: 'Manage Users',
-    description: 'View, create, and manage user accounts',
+    label: t('superAdmin.quickActions.manageUsers'),
+    description: t('superAdmin.quickActions.manageUsersDescription'),
     icon: 'i-heroicons-users',
     path: '/super-admin/users'
   },
   {
-    label: 'View Teams',
-    description: 'Browse all teams and their members',
+    label: t('superAdmin.quickActions.viewTeams'),
+    description: t('superAdmin.quickActions.viewTeamsDescription'),
     icon: 'i-heroicons-building-office-2',
     path: '/super-admin/teams'
   }
-]
+])
 
 function handleQuickAction(path: string) {
   emit('navigate', path)
@@ -109,7 +111,7 @@ function handleQuickAction(path: string) {
       color="error"
       variant="soft"
       icon="i-heroicons-exclamation-triangle"
-      title="Failed to load stats"
+      :title="t('superAdmin.stats.failedToLoad')"
       :description="error"
     />
 
@@ -133,7 +135,7 @@ function handleQuickAction(path: string) {
       class="pt-4"
     >
       <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
-        Quick Actions
+        {{ t('superAdmin.quickActions.title') }}
       </h3>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <button

@@ -10,18 +10,17 @@
  * <AuthOAuthButtons @click="handleOAuth" />
  * ```
  */
+const { t } = useT()
+
 interface Props {
   /** Show loading state */
   loading?: boolean
-  /** Override text (default: "Continue with {Provider}") */
-  textPrefix?: string
   /** Layout direction */
   direction?: 'vertical' | 'horizontal'
 }
 
 withDefaults(defineProps<Props>(), {
   loading: false,
-  textPrefix: 'Continue with',
   direction: 'vertical'
 })
 
@@ -76,7 +75,7 @@ function handleClick(provider: string) {
       :loading="loading"
       @click="handleClick(provider)"
     >
-      {{ textPrefix }} {{ getProviderConfig(provider).name }}
+      {{ t('auth.continueWith', { provider: getProviderConfig(provider).name }) }}
     </UButton>
   </div>
 </template>

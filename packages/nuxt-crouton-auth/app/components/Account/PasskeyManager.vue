@@ -56,9 +56,9 @@ async function loadPasskeys() {
   try {
     passkeys.value = await listPasskeys()
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to load passkeys'
+    const message = e instanceof Error ? e.message : t('account.passkey.failedToLoadPasskeys')
     toast.add({
-      title: 'Error',
+      title: t('errors.generic'),
       description: message,
       color: 'error'
     })
@@ -72,21 +72,21 @@ async function handleAddPasskey() {
   addLoading.value = true
   try {
     await addPasskey({
-      name: `Passkey ${passkeys.value.length + 1}`
+      name: t('account.passkey.defaultName', { number: passkeys.value.length + 1 })
     })
 
     toast.add({
-      title: 'Passkey added',
-      description: 'Your new passkey has been registered.',
+      title: t('account.passkey.passkeyAdded'),
+      description: t('account.passkey.passkeyAddedDescription'),
       color: 'success'
     })
 
     // Reload list
     await loadPasskeys()
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to add passkey'
+    const message = e instanceof Error ? e.message : t('account.passkey.failedToAddPasskey')
     toast.add({
-      title: 'Error',
+      title: t('errors.generic'),
       description: message,
       color: 'error'
     })
@@ -102,17 +102,17 @@ async function handleDeletePasskey(id: string) {
     await deletePasskey(id)
 
     toast.add({
-      title: 'Passkey removed',
-      description: 'The passkey has been deleted.',
+      title: t('account.passkey.passkeyRemoved'),
+      description: t('account.passkey.passkeyRemovedDescription'),
       color: 'success'
     })
 
     // Remove from local list
     passkeys.value = passkeys.value.filter(p => p.id !== id)
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to delete passkey'
+    const message = e instanceof Error ? e.message : t('account.passkey.failedToDeletePasskey')
     toast.add({
-      title: 'Error',
+      title: t('errors.generic'),
       description: message,
       color: 'error'
     })

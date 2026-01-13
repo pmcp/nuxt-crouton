@@ -79,7 +79,7 @@ function validate(formState: Partial<typeof state>): FormError[] {
   if (!formState.slug?.trim()) {
     errors.push({ name: 'slug', message: t('errors.requiredField') })
   } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(formState.slug)) {
-    errors.push({ name: 'slug', message: 'Slug must contain only lowercase letters, numbers, and hyphens' })
+    errors.push({ name: 'slug', message: t('teams.slugValidation') })
   } else if (formState.slug.length < 2) {
     errors.push({ name: 'slug', message: t('errors.minLength', { min: 2 }) })
   } else if (formState.slug.length > 30) {
@@ -99,8 +99,8 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
 
   if (!canCreateTeam.value) {
     toast.add({
-      title: 'Cannot create team',
-      description: 'You have reached the maximum number of teams.',
+      title: t('teams.cannotCreateTeam'),
+      description: t('teams.maxTeamsReached'),
       color: 'error'
     })
     return
@@ -114,8 +114,8 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     })
 
     toast.add({
-      title: 'Team created',
-      description: `${team.name} has been created successfully.`,
+      title: t('teams.teamCreated'),
+      description: t('teams.teamCreatedDescription', { name: team.name }),
       color: 'success'
     })
 
@@ -126,9 +126,9 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     state.slug = ''
     autoSlug.value = true
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to create team'
+    const message = e instanceof Error ? e.message : t('teams.failedToCreateTeam')
     toast.add({
-      title: 'Error',
+      title: t('errors.generic'),
       description: message,
       color: 'error'
     })
@@ -159,13 +159,13 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     </UFormField>
 
     <UFormField
-      label="URL slug"
+      :label="t('teams.urlSlug')"
       name="slug"
       required
     >
       <template #hint>
         <span class="text-xs text-muted">
-          Your team URL will be: /dashboard/<strong>{{ state.slug || 'your-slug' }}</strong>
+          {{ t('teams.urlSlugHintPrefix') }} /dashboard/<strong>{{ state.slug || t('teams.yourSlug') }}</strong>
         </span>
       </template>
       <UInput

@@ -102,7 +102,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       <UInput
         v-model="state.name"
         type="text"
-        placeholder="John Doe"
+        :placeholder="t('auth.placeholders.name')"
         autocomplete="name"
         icon="i-lucide-user"
       />
@@ -128,7 +128,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       <UInput
         v-model="state.password"
         type="password"
-        :placeholder="`At least ${minPasswordLength} characters`"
+        :placeholder="t('auth.placeholders.atLeastChars', { min: minPasswordLength })"
         autocomplete="new-password"
         icon="i-lucide-lock"
       />
@@ -141,7 +141,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       <UInput
         v-model="state.confirmPassword"
         type="password"
-        placeholder="Confirm your password"
+        :placeholder="t('auth.placeholders.confirmPassword')"
         autocomplete="new-password"
         icon="i-lucide-lock"
       />
@@ -167,19 +167,19 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       v-if="showTerms"
       class="text-center text-xs text-muted"
     >
-      By creating an account, you agree to our
+      {{ t('auth.termsAgreement') }}
       <NuxtLink
         :to="termsUrl"
         class="text-primary hover:text-primary/80"
       >
-        Terms of Service
+        {{ t('auth.termsOfService') }}
       </NuxtLink>
-      and
+      {{ t('auth.and') }}
       <NuxtLink
         :to="privacyUrl"
         class="text-primary hover:text-primary/80"
       >
-        Privacy Policy
+        {{ t('auth.privacyPolicy') }}
       </NuxtLink>
     </p>
   </UForm>

@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "resetLinkSentDescription": "We sent a password reset link to your email. Click the link to reset your password.",
+    "magicLinkSentDescription": "We sent a magic link to your email. Click the link to sign in.",
+    "tryAnotherEmail": "Try another email",
+    "continueWith": "Continue with {provider}",
+    "placeholders": {
+      "email": "you@example.com",
+      "password": "Enter your password",
+      "confirmPassword": "Confirm your password",
+      "name": "John Doe",
+      "atLeastChars": "At least {min} characters"
+    }
+  },
+  "teams": {
+    "slugValidation": "Slug must contain only lowercase letters, numbers, and hyphens",
+    "cannotCreateTeam": "Cannot create team",
+    "maxTeamsReached": "You have reached the maximum number of teams.",
+    "teamCreated": "Team created",
+    "teamCreatedDescription": "{name} has been created successfully.",
+    "failedToCreateTeam": "Failed to create team",
+    "urlSlugHintPrefix": "Your team URL will be:",
+    "yourSlug": "your-slug",
+    "roleUpdated": "Role updated",
+    "roleUpdatedDescription": "Member role has been updated.",
+    "failedToUpdateRole": "Failed to update role",
+    "memberRemoved": "Member removed",
+    "memberRemovedDescription": "Member has been removed from the team.",
+    "failedToRemoveMember": "Failed to remove member"
+  },
+  "account": {
+    "passkey": {
+      "name": "Passkey name",
+      "namePlaceholder": "My MacBook",
+      "defaultName": "Passkey {number}",
+      "creatingPasskey": "Creating passkey...",
+      "passkeyAdded": "Passkey added",
+      "passkeyAddedDescription": "Your new passkey has been registered.",
+      "passkeyRemoved": "Passkey removed",
+      "passkeyRemovedDescription": "The passkey has been deleted.",
+      "failedToLoadPasskeys": "Failed to load passkeys",
+      "failedToAddPasskey": "Failed to add passkey",
+      "failedToDeletePasskey": "Failed to delete passkey"
+    }
+  }
+}

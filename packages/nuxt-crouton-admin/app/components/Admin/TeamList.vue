@@ -7,6 +7,8 @@
 import { ref, watch, onMounted } from 'vue'
 import type { TeamListFilters } from '../../../types/admin'
 
+const { t } = useT()
+
 interface Props {
   /** Initial page size */
   pageSize?: number
@@ -31,14 +33,14 @@ const search = ref('')
 const personalFilter = ref<'all' | 'personal' | 'team'>('all')
 
 // Table columns
-const columns = [
-  { accessorKey: 'name', id: 'name', header: 'Name' },
-  { accessorKey: 'slug', id: 'slug', header: 'Slug' },
-  { accessorKey: 'ownerName', id: 'owner', header: 'Owner' },
-  { accessorKey: 'memberCount', id: 'memberCount', header: 'Members' },
-  { accessorKey: 'personal', id: 'type', header: 'Type' },
-  { accessorKey: 'createdAt', id: 'createdAt', header: 'Created' }
-]
+const columns = computed(() => [
+  { accessorKey: 'name', id: 'name', header: t('superAdmin.teams.name') },
+  { accessorKey: 'slug', id: 'slug', header: t('superAdmin.teams.slug') },
+  { accessorKey: 'ownerName', id: 'owner', header: t('superAdmin.teams.owner') },
+  { accessorKey: 'memberCount', id: 'memberCount', header: t('superAdmin.teams.members') },
+  { accessorKey: 'personal', id: 'type', header: t('superAdmin.teams.type') },
+  { accessorKey: 'createdAt', id: 'createdAt', header: t('superAdmin.teams.created') }
+])
 
 // Load teams on mount and when filters change
 async function loadTeams(pageNum = 1) {
@@ -79,16 +81,16 @@ function formatDate(date: Date) {
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
       <UInput
         v-model="search"
-        placeholder="Search teams..."
+        :placeholder="t('superAdmin.teams.searchPlaceholder')"
         icon="i-heroicons-magnifying-glass"
         class="max-w-xs"
       />
       <USelect
         v-model="personalFilter"
         :items="[
-          { value: 'all', label: 'All Teams' },
-          { value: 'team', label: 'Team Workspaces' },
-          { value: 'personal', label: 'Personal Workspaces' }
+          { value: 'all', label: t('superAdmin.teams.filterAll') },
+          { value: 'team', label: t('superAdmin.teams.filterTeam') },
+          { value: 'personal', label: t('superAdmin.teams.filterPersonal') }
         ]"
         value-key="value"
         class="w-44"
@@ -125,7 +127,7 @@ function formatDate(date: Date) {
               v-if="row.original.isDefault"
               class="text-xs text-gray-500"
             >
-              Default team
+              {{ t('superAdmin.teams.defaultTeam') }}
             </p>
           </div>
         </div>
@@ -169,7 +171,7 @@ function formatDate(date: Date) {
           :color="row.original.personal ? 'gray' : 'primary'"
           variant="soft"
         >
-          {{ row.original.personal ? 'Personal' : 'Team' }}
+          {{ row.original.personal ? t('superAdmin.teams.typePersonal') : t('superAdmin.teams.typeTeam') }}
         </UBadge>
       </template>
 

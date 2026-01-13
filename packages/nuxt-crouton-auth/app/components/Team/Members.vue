@@ -64,15 +64,15 @@ async function handleRoleChange(memberId: string, role: MemberRole) {
     if (member) {
       await updateMemberRole(member.userId, role)
       toast.add({
-        title: 'Role updated',
-        description: 'Member role has been updated.',
+        title: t('teams.roleUpdated'),
+        description: t('teams.roleUpdatedDescription'),
         color: 'success'
       })
     }
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to update role'
+    const message = e instanceof Error ? e.message : t('teams.failedToUpdateRole')
     toast.add({
-      title: 'Error',
+      title: t('errors.generic'),
       description: message,
       color: 'error'
     })
@@ -90,15 +90,15 @@ async function handleRemove(memberId: string) {
     if (member) {
       await removeMember(member.userId)
       toast.add({
-        title: 'Member removed',
-        description: 'Member has been removed from the team.',
+        title: t('teams.memberRemoved'),
+        description: t('teams.memberRemovedDescription'),
         color: 'success'
       })
     }
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to remove member'
+    const message = e instanceof Error ? e.message : t('teams.failedToRemoveMember')
     toast.add({
-      title: 'Error',
+      title: t('errors.generic'),
       description: message,
       color: 'error'
     })
