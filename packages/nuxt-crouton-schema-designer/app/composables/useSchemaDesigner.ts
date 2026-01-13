@@ -48,11 +48,10 @@ function createDefaultCollection(name: string = ''): CollectionSchema {
 }
 
 function createDefaultMultiState(): MultiCollectionState {
-  const defaultCollection = createDefaultCollection()
   return {
     layerName: '',
-    collections: [defaultCollection],
-    activeCollectionId: defaultCollection.id
+    collections: [],
+    activeCollectionId: null
   }
 }
 

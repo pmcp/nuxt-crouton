@@ -121,16 +121,17 @@ function goToStep(step: WizardStep) {
   }
 }
 
-function nextStep() {
+async function nextStep() {
   const nextIndex = currentStepIndex.value + 1
   if (nextIndex < steps.length) {
     const nextStepObj = steps[nextIndex]
     if (nextStepObj) {
-      // When moving from chat to review, sync AI suggestions
+      // When moving from chat to review, sync AI suggestions and pre-fill names
       if (currentStep.value === 'chat') {
-        syncAISuggestionsToProject()
+        await syncAISuggestionsToProject()
+        prefillFromAI()
       }
-      // When moving to details, pre-fill from AI
+      // Also pre-fill when moving to details (in case user skipped or came back)
       if (nextStepObj.id === 'details') {
         prefillFromAI()
       }
@@ -150,8 +151,13 @@ function prevStep() {
 }
 
 // Sync AI suggestions to the project composer
-function syncAISuggestionsToProject() {
-  // Packages are already synced via acceptedPackageIds/addPackage flow
+async function syncAISuggestionsToProject() {
+  // Auto-add any AI-suggested packages that haven't been accepted yet
+  for (const pkg of aiSuggestedPackages.value) {
+    if (!acceptedPackageIds.value.has(pkg.packageId)) {
+      await addPackage(pkg.packageId)
+    }
+  }
   // Collections are synced via useSchemaAI directly to useSchemaDesigner
 }
 
