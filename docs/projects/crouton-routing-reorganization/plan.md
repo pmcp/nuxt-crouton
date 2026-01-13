@@ -791,17 +791,16 @@ export default defineNuxtConfig({
 - [x] Add translation keys (bookings.admin.title, bookings.settings.emailTemplates)
 - [x] Test auto-discovery works
 
-### Phase 8: Update Documentation (0.5 day) 🔄 NEXT
+### Phase 8: Update Documentation (0.5 day) ✅ COMPLETE
 
-- [ ] Update getting started guide
-- [ ] Update packages documentation
-- [ ] Update troubleshooting guide
-- [ ] Update admin feature docs
+- [x] Update getting started guide
+- [x] Update packages documentation
+- [x] Update troubleshooting guide
+- [x] Update admin feature docs
 
-### Phase 9: Update Test Apps (0.5 day)
+### Phase 9: Update Test Apps (0.5 day) 🔄 NEXT
 
 - [ ] Simplify test-bookings extends
-- [ ] Update schema-designer if needed
 - [ ] Run full test suite
 - [ ] Manual testing of all tiers
 
