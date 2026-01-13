@@ -76,14 +76,15 @@ const appAdminItems = computed<NavigationMenuItem[]>(() => {
 })
 
 // Convert app settings routes to navigation items
+// Settings routes are under /admin/[team]/settings/ so we prepend /settings
 const appSettingsItems = computed<NavigationMenuItem[]>(() => {
   if (!settingsRoutes.value.length) return []
 
   return settingsRoutes.value.map(appRoute => ({
     label: t(appRoute.label),
     icon: appRoute.icon || 'i-lucide-settings-2',
-    to: buildAdminUrl(appRoute.path),
-    active: route.path.includes(appRoute.path),
+    to: buildAdminUrl(`/settings${appRoute.path}`),
+    active: route.path.includes(`/settings${appRoute.path}`),
     ...(appRoute.badge !== undefined && { badge: String(appRoute.badge) })
   }))
 })
