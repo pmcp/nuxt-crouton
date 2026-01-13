@@ -382,7 +382,20 @@ export function useT() {
     'teams.accept': 'Accept',
 
     // ===================
-    // NAVIGATION (~10 keys)
+    // ADMIN (~10 keys)
+    // For admin pages
+    // ===================
+    'admin.dashboard': 'Dashboard',
+    'admin.users': 'Users',
+    'admin.teams': 'Teams',
+    'admin.settings': 'Settings',
+    'admin.superAdmin': 'Super Admin',
+    'admin.teamAdmin': 'Team Admin',
+    'admin.manageTeam': 'Manage Team',
+    'admin.systemSettings': 'System Settings',
+
+    // ===================
+    // NAVIGATION (~12 keys)
     // Common nav items
     // ===================
     'navigation.dashboard': 'Dashboard',
@@ -394,7 +407,8 @@ export function useT() {
     'navigation.support': 'Support',
     'navigation.docs': 'Documentation',
     'navigation.backToDashboard': 'Back to Dashboard',
-    'navigation.accountSettings': 'Account Settings'
+    'navigation.accountSettings': 'Account Settings',
+    'navigation.collections': 'Collections'
   }
 
   const translate = (key: string, _options?: any): string => fallbacks[key] || key
