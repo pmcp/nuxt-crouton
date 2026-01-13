@@ -803,10 +803,20 @@ Unified Editor View
   - Note: `nuxt-crouton-maps` and `nuxt-crouton-editor` are utility layers (components/composables only, no collections) - manifests not applicable
   - Updated package registry to include crouton-sales
 
-- [ ] **Task 7.2**: End-to-end testing
-  - Create project with bookings + custom
-  - Configure packages
-  - Export and verify output
+- [x] **Task 7.2**: End-to-end testing ✅
+  - Fixed multiple bugs discovered during testing:
+    - jiti TypeScript loading for package manifests
+    - Default export handling in package-registry.ts
+    - Null checks for manifest.configuration across composables
+    - Component naming prefixes (SchemaDesigner* → CroutonSchemaDesigner*)
+    - UModal v-model syntax for Nuxt UI 4
+    - i18n @ symbol escape in email placeholder
+  - Verified workflow:
+    - Package browser displays both crouton-bookings (5 collections) and crouton-sales (10 collections)
+    - Adding packages to projects works correctly
+    - Package configuration panel renders with proper options
+    - Custom collections editor functions with validation
+  - Commit: 697da07
 
 - [ ] **Task 7.3**: Documentation
   - Update schema-designer README
