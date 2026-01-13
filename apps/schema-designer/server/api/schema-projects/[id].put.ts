@@ -1,29 +1,31 @@
 import { eq } from 'drizzle-orm'
 import { schemaProjects } from '../../db/schema'
-
-interface CollectionSchema {
-  id: string
-  collectionName: string
-  fields: any[]
-  options: Record<string, unknown>
-  cardTemplate?: string
-}
+import { migrateProject, type SchemaProjectRecord } from '../../utils/project-migration'
+import type { PackageInstance, CollectionSchema } from '@friendlyinternet/nuxt-crouton-schema-designer/types'
 
 interface UpdateProjectPayload {
   name?: string
+  /** Base layer name for custom collections (new format) */
+  baseLayerName?: string
+  /** @deprecated Use baseLayerName instead */
   layerName?: string
+  /** Selected packages with configuration (new format) */
+  packages?: PackageInstance[]
+  /** Multi-collection support */
+  collections?: CollectionSchema[]
   /** @deprecated Use collections array instead */
   collectionName?: string
   /** @deprecated Use collections array instead */
   schema?: Record<string, unknown>
   options?: Record<string, unknown>
-  /** Multi-collection support */
-  collections?: CollectionSchema[]
 }
 
 /**
  * Update a schema project
- * Supports both legacy single-collection and new multi-collection formats
+ * Supports three formats:
+ * 1. New package-aware: { name, baseLayerName, packages, collections }
+ * 2. Multi-collection: { name, layerName, collections }
+ * 3. Legacy: { name, layerName, collectionName, schema, options }
  */
 export default defineEventHandler(async (event) => {
   // db is auto-imported from hub:db (NuxtHub 0.10+)
@@ -40,9 +42,22 @@ export default defineEventHandler(async (event) => {
   // Build update object with only provided fields
   const updates: Record<string, unknown> = {}
   if (body.name !== undefined) updates.name = body.name
-  if (body.layerName !== undefined) updates.layerName = body.layerName
 
-  // Multi-collection support: prefer collections over legacy schema
+  // Handle baseLayerName (new format) or layerName (legacy)
+  if (body.baseLayerName !== undefined) {
+    updates.baseLayerName = body.baseLayerName
+    updates.layerName = body.baseLayerName // Keep legacy field in sync
+  } else if (body.layerName !== undefined) {
+    updates.layerName = body.layerName
+    updates.baseLayerName = body.layerName // Update new field too
+  }
+
+  // Handle packages array (new format)
+  if (body.packages !== undefined) {
+    updates.packages = body.packages
+  }
+
+  // Handle collections array
   if (body.collections !== undefined) {
     updates.collections = body.collections
 
@@ -53,7 +68,7 @@ export default defineEventHandler(async (event) => {
       updates.collectionName = firstCollection.collectionName
       updates.schema = {
         collectionName: firstCollection.collectionName,
-        layerName: body.layerName,
+        layerName: body.baseLayerName || body.layerName,
         fields: firstCollection.fields,
         options: firstCollection.options,
         cardTemplate: firstCollection.cardTemplate
@@ -87,17 +102,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Return with collections populated (backwards compat)
-  const projectWithCollections = {
-    ...project,
-    collections: project.collections || (project.schema ? [{
-      id: `collection-legacy-${project.id}`,
-      collectionName: project.collectionName,
-      fields: (project.schema as any)?.fields || [],
-      options: project.options,
-      cardTemplate: (project.schema as any)?.cardTemplate
-    }] : null)
-  }
+  // Return migrated/normalized project
+  const normalizedProject = migrateProject(project as unknown as SchemaProjectRecord)
 
-  return { project: projectWithCollections }
+  return { project: normalizedProject }
 })

@@ -1,6 +1,7 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { nanoid } from 'nanoid'
 import type { SchemaDesignerState, CollectionOptions, CollectionSchema } from '../../../app/types/schema'
+import type { PackageInstance } from '../../../app/types/package-manifest'
 
 /**
  * Schema projects table for storing schema designer projects
@@ -8,9 +9,13 @@ import type { SchemaDesignerState, CollectionOptions, CollectionSchema } from '.
  * for use with the crouton CLI
  *
  * Migration note: Projects can have either:
- * - Legacy: single schema/collectionName (for backwards compatibility)
- * - New: collections array (for multi-collection projects)
- * When reading, check collections first; if null, use legacy schema
+ * - Legacy: single schema/collectionName/layerName (for backwards compatibility)
+ * - New: packages array + collections array + baseLayerName (for package-aware projects)
+ *
+ * When reading:
+ * 1. Check if packages is present → new format
+ * 2. Otherwise, check collections → multi-collection format
+ * 3. Fall back to legacy schema/collectionName
  */
 export const schemaProjects = sqliteTable('schema_projects', {
   id: text('id')
@@ -19,6 +24,13 @@ export const schemaProjects = sqliteTable('schema_projects', {
 
   // Project metadata
   name: text('name').notNull(),
+
+  // Base layer name for custom collections (new format)
+  // Falls back to layerName for legacy projects
+  baseLayerName: text('base_layer_name'),
+
+  // Legacy layer name (for backwards compatibility)
+  // @deprecated Use baseLayerName instead
   layerName: text('layer_name').notNull(),
 
   // Legacy single-collection fields (for backwards compatibility)
@@ -34,6 +46,11 @@ export const schemaProjects = sqliteTable('schema_projects', {
   options: text('options', { mode: 'json' })
     .$type<CollectionOptions>()
     .notNull(),
+
+  // Package support (nullable for migration)
+  // When present, this project uses the package-aware format
+  packages: text('packages', { mode: 'json' })
+    .$type<PackageInstance[]>(),
 
   // Multi-collection support (nullable for migration)
   // When this is present, it takes precedence over legacy schema/collectionName

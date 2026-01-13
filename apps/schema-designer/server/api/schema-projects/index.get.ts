@@ -1,9 +1,10 @@
 import { eq, desc } from 'drizzle-orm'
 import { schemaProjects } from '../../db/schema'
+import { migrateProject, type SchemaProjectRecord } from '../../utils/project-migration'
 
 /**
  * List all schema projects
- * Provides backwards compatibility by including collections data
+ * Migrates legacy projects to the new package-aware format on read
  */
 export default defineEventHandler(async (event) => {
   // db is auto-imported from hub:db (NuxtHub 0.10+)
@@ -24,17 +25,10 @@ export default defineEventHandler(async (event) => {
         .from(schemaProjects)
         .orderBy(desc(schemaProjects.updatedAt))
 
-  // Add collections for backwards compatibility
-  const projects = rawProjects.map(project => ({
-    ...project,
-    collections: project.collections || (project.schema ? [{
-      id: `collection-legacy-${project.id}`,
-      collectionName: project.collectionName,
-      fields: (project.schema as any)?.fields || [],
-      options: project.options,
-      cardTemplate: (project.schema as any)?.cardTemplate
-    }] : null)
-  }))
+  // Migrate all projects to normalized format
+  const projects = rawProjects.map(project =>
+    migrateProject(project as unknown as SchemaProjectRecord)
+  )
 
   return {
     projects,
