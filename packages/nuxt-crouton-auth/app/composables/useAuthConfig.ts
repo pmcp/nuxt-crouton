@@ -40,11 +40,6 @@ interface RuntimeAuthConfig {
     defaultRole?: string
     roles?: Array<{ id: string; name: string; permissions?: string[] }>
   }
-  billing?: {
-    enabled?: boolean
-    provider?: string
-    stripe?: object
-  }
   ui?: {
     theme?: string
     redirects?: {

@@ -12,7 +12,6 @@ import {
   magicLinkClient
 } from 'better-auth/client/plugins'
 import { passkeyClient } from '@better-auth/passkey/client'
-import { stripeClient } from '@better-auth/stripe/client'
 
 /**
  * Create a fully-typed auth client with all plugins
@@ -23,7 +22,6 @@ const _typedAuthClient = createAuthClient({
     organizationClient(),
     passkeyClient(),
     twoFactorClient(),
-    stripeClient({ subscription: true }),
     magicLinkClient()
   ]
 })

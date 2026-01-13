@@ -14,7 +14,6 @@ definePageMeta({
 
 const { user } = useSession()
 const { currentTeam, showTeamManagement } = useTeam()
-const { enabled: billingEnabled, subscription, isPro, isTrialing } = useBilling()
 const { buildDashboardUrl } = useTeamContext()
 
 // Quick stats/links
@@ -45,15 +44,6 @@ const quickLinks = computed(() => {
     )
   }
 
-  if (billingEnabled.value) {
-    links.push({
-      label: 'Billing',
-      description: 'Manage your subscription and payment method',
-      icon: 'i-lucide-credit-card',
-      to: buildDashboardUrl('/settings/billing')
-    })
-  }
-
   return links
 })
 </script>
@@ -74,49 +64,6 @@ const quickLinks = computed(() => {
         </template>
       </p>
     </div>
-
-    <!-- Subscription Status (if billing enabled) -->
-    <UCard v-if="billingEnabled && subscription">
-      <div class="flex items-center gap-4">
-        <div class="p-3 rounded-full bg-primary/10">
-          <UIcon
-            :name="isPro ? 'i-lucide-crown' : 'i-lucide-clock'"
-            class="size-6 text-primary"
-          />
-        </div>
-        <div class="flex-1">
-          <p class="font-medium">
-            <template v-if="isTrialing">
-              Trial Active
-            </template>
-            <template v-else-if="isPro">
-              Pro Plan Active
-            </template>
-            <template v-else>
-              Free Plan
-            </template>
-          </p>
-          <p class="text-sm text-muted">
-            <template v-if="isTrialing">
-              Your trial gives you access to all premium features.
-            </template>
-            <template v-else-if="isPro">
-              You have full access to all premium features.
-            </template>
-            <template v-else>
-              Upgrade to unlock premium features.
-            </template>
-          </p>
-        </div>
-        <NuxtLink :to="buildDashboardUrl('/settings/billing')">
-          <UButton
-            :label="isPro ? 'Manage' : 'Upgrade'"
-            :variant="isPro ? 'outline' : 'solid'"
-            size="sm"
-          />
-        </NuxtLink>
-      </div>
-    </UCard>
 
     <!-- Quick Links Grid -->
     <div>
@@ -148,30 +95,5 @@ const quickLinks = computed(() => {
         </NuxtLink>
       </div>
     </div>
-
-    <!-- Getting Started (if no subscription) -->
-    <UCard
-      v-if="billingEnabled && !subscription"
-      class="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20"
-    >
-      <div class="text-center py-4">
-        <UIcon
-          name="i-lucide-rocket"
-          class="size-12 mx-auto mb-4 text-primary"
-        />
-        <h3 class="text-xl font-bold mb-2">
-          Get Started with Pro
-        </h3>
-        <p class="text-muted mb-6 max-w-md mx-auto">
-          Unlock all premium features and take your productivity to the next level.
-        </p>
-        <NuxtLink :to="buildDashboardUrl('/settings/billing')">
-          <UButton
-            label="View Plans"
-            size="lg"
-          />
-        </NuxtLink>
-      </div>
-    </UCard>
   </div>
 </template>

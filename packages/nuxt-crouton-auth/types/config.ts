@@ -303,62 +303,6 @@ export interface TeamRole {
 }
 
 // ============================================================================
-// Billing Configuration
-// ============================================================================
-
-/**
- * Stripe configuration
- */
-export interface StripeConfig {
-  /** Stripe publishable key */
-  publishableKey: string
-  /** Stripe secret key (server-only) */
-  secretKey: string
-  /** Stripe webhook secret */
-  webhookSecret: string
-  /** Subscription plans */
-  plans?: StripePlan[]
-  /** Trial period in days (default: 0) */
-  trialDays?: number
-  /** Enable customer portal (default: true) */
-  customerPortal?: boolean
-}
-
-/**
- * Stripe subscription plan
- */
-export interface StripePlan {
-  /** Plan identifier */
-  id: string
-  /** Display name */
-  name: string
-  /** Description */
-  description?: string
-  /** Price ID from Stripe */
-  stripePriceId: string
-  /** Price amount (for display) */
-  price: number
-  /** Currency (default: 'usd') */
-  currency?: string
-  /** Billing interval */
-  interval: 'month' | 'year'
-  /** Plan features (for display) */
-  features?: string[]
-}
-
-/**
- * Billing configuration
- */
-export interface BillingConfig {
-  /** Enable billing features */
-  enabled?: boolean
-  /** Billing provider (currently only 'stripe' supported) */
-  provider?: 'stripe'
-  /** Stripe configuration */
-  stripe?: StripeConfig
-}
-
-// ============================================================================
 // UI Configuration
 // ============================================================================
 
@@ -476,11 +420,6 @@ export interface CroutonAuthConfig {
   teams?: TeamsConfig
 
   /**
-   * Billing configuration
-   */
-  billing?: BillingConfig
-
-  /**
    * UI configuration
    */
   ui?: UIConfig
@@ -524,11 +463,6 @@ export interface AuthServerRuntimeConfig {
     [provider: string]: {
       clientSecret: string
     }
-  }
-  /** Stripe secrets (server-only) */
-  stripe?: {
-    secretKey: string
-    webhookSecret: string
   }
 }
 

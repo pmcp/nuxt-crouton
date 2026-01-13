@@ -29,10 +29,6 @@ export type {
   // Teams
   TeamsConfig,
   TeamRole,
-  // Billing
-  StripeConfig,
-  StripePlan,
-  BillingConfig,
   // UI
   RedirectConfig,
   UIConfig,
@@ -71,10 +67,6 @@ export type {
   MemberWithUser,
   Invitation,
   InvitationWithInviter,
-  // Subscription
-  SubscriptionStatus,
-  Subscription,
-  SubscriptionWithPlan,
   // OAuth
   LinkedAccount,
   // Passkey

@@ -6,11 +6,6 @@ import {
   createAuth,
   isTwoFactorEnabled,
   getTwoFactorInfo,
-  isBillingEnabled,
-  getBillingInfo,
-  getStripePublishableKey,
-  isSubscriptionActive,
-  isSubscriptionInGracePeriod,
   isPasskeyEnabled,
   getPasskeyInfo,
   isWebAuthnSupported,
@@ -38,17 +33,8 @@ vi.mock('@better-auth/passkey', () => ({
   passkey: vi.fn((config: unknown) => ({ type: 'passkey', config }))
 }))
 
-vi.mock('@better-auth/stripe', () => ({
-  stripe: vi.fn((config: unknown) => ({ type: 'stripe', config }))
-}))
-
 vi.mock('better-auth/adapters/drizzle', () => ({
   drizzleAdapter: vi.fn(() => ({ type: 'drizzle' }))
-}))
-
-// Mock Stripe client
-vi.mock('stripe', () => ({
-  default: vi.fn(() => ({}))
 }))
 
 // Mock drizzle-orm
@@ -85,10 +71,6 @@ describe('server/lib/auth', () => {
     })
 
     it.skip('should create auth instance with all methods enabled', () => {
-      // Tested via integration tests
-    })
-
-    it.skip('should create auth instance with billing enabled', () => {
       // Tested via integration tests
     })
   })
@@ -184,152 +166,6 @@ describe('server/lib/auth', () => {
       expect(info?.backupCodesCount).toBe(5)
       expect(info?.hasTrustedDevices).toBe(false)
       expect(info?.trustedDeviceExpiryDays).toBe(14)
-    })
-  })
-
-  describe('isBillingEnabled', () => {
-    it('should return false when billing is undefined', () => {
-      const config: CroutonAuthConfig = { mode: 'multi-tenant' }
-      expect(isBillingEnabled(config)).toBe(false)
-    })
-
-    it('should return false when billing.enabled is false', () => {
-      const config: CroutonAuthConfig = {
-        mode: 'multi-tenant',
-        billing: { enabled: false }
-      }
-      expect(isBillingEnabled(config)).toBe(false)
-    })
-
-    it('should return false when billing enabled but no stripe config', () => {
-      const config: CroutonAuthConfig = {
-        mode: 'multi-tenant',
-        billing: { enabled: true }
-      }
-      expect(isBillingEnabled(config)).toBe(false)
-    })
-
-    it('should return true when billing enabled with stripe config', () => {
-      const config: CroutonAuthConfig = {
-        mode: 'multi-tenant',
-        billing: {
-          enabled: true,
-          stripe: {
-            publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123'
-          }
-        }
-      }
-      expect(isBillingEnabled(config)).toBe(true)
-    })
-  })
-
-  describe('getBillingInfo', () => {
-    it('should return null when billing is disabled', () => {
-      const config: CroutonAuthConfig = { mode: 'multi-tenant' }
-      expect(getBillingInfo(config)).toBeNull()
-    })
-
-    it('should return billing info when enabled', () => {
-      const config: CroutonAuthConfig = {
-        mode: 'multi-tenant',
-        billing: {
-          enabled: true,
-          stripe: {
-            publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123',
-            trialDays: 14,
-            plans: [
-              { id: 'pro', name: 'Pro Plan', price: 29, interval: 'month', stripePriceId: 'price_123' }
-            ]
-          }
-        }
-      }
-      const info = getBillingInfo(config)
-
-      expect(info).not.toBeNull()
-      expect(info?.enabled).toBe(true)
-      expect(info?.provider).toBe('stripe')
-      expect(info?.hasPlans).toBe(true)
-      expect(info?.plans).toHaveLength(1)
-      expect(info?.plans[0].name).toBe('Pro Plan')
-      expect(info?.hasTrialPeriod).toBe(true)
-      expect(info?.trialDays).toBe(14)
-      expect(info?.billingMode).toBe('organization')
-    })
-
-    it('should always use organization billingMode (even for personal workspaces)', () => {
-      const config: CroutonAuthConfig = {
-        teams: { autoCreateOnSignup: true, allowCreate: false },
-        billing: {
-          enabled: true,
-          stripe: {
-            publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123'
-          }
-        }
-      }
-      const info = getBillingInfo(config)
-
-      // Billing is always organization-based now (personal workspace = org with 1 member)
-      expect(info?.billingMode).toBe('organization')
-    })
-  })
-
-  describe('getStripePublishableKey', () => {
-    it('should return null when billing is not configured', () => {
-      const config: CroutonAuthConfig = { mode: 'multi-tenant' }
-      expect(getStripePublishableKey(config)).toBeNull()
-    })
-
-    it('should return publishable key when configured', () => {
-      const config: CroutonAuthConfig = {
-        mode: 'multi-tenant',
-        billing: {
-          enabled: true,
-          stripe: {
-            publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123'
-          }
-        }
-      }
-      expect(getStripePublishableKey(config)).toBe('pk_test_123')
-    })
-  })
-
-  describe('isSubscriptionActive', () => {
-    it('should return true for active status', () => {
-      expect(isSubscriptionActive('active')).toBe(true)
-    })
-
-    it('should return true for trialing status', () => {
-      expect(isSubscriptionActive('trialing')).toBe(true)
-    })
-
-    it('should return false for canceled status', () => {
-      expect(isSubscriptionActive('canceled')).toBe(false)
-    })
-
-    it('should return false for past_due status', () => {
-      expect(isSubscriptionActive('past_due')).toBe(false)
-    })
-
-    it('should return false for unpaid status', () => {
-      expect(isSubscriptionActive('unpaid')).toBe(false)
-    })
-  })
-
-  describe('isSubscriptionInGracePeriod', () => {
-    it('should return true for past_due status', () => {
-      expect(isSubscriptionInGracePeriod('past_due')).toBe(true)
-    })
-
-    it('should return false for active status', () => {
-      expect(isSubscriptionInGracePeriod('active')).toBe(false)
-    })
-
-    it('should return false for canceled status', () => {
-      expect(isSubscriptionInGracePeriod('canceled')).toBe(false)
     })
   })
 
@@ -549,22 +385,6 @@ describe('Configuration patterns (flag-based)', () => {
       }
       expect(config.teams?.autoCreateOnSignup).toBe(true)
       expect(config.teams?.allowCreate).toBe(false)
-    })
-
-    it('should use organization billing (personal workspace = org with 1 member)', () => {
-      const config: CroutonAuthConfig = {
-        teams: { autoCreateOnSignup: true },
-        billing: {
-          enabled: true,
-          stripe: {
-            publishableKey: 'pk_test_123',
-            secretKey: 'sk_test_123'
-          }
-        }
-      }
-      const info = getBillingInfo(config)
-      // Billing is always organization-based now
-      expect(info?.billingMode).toBe('organization')
     })
   })
 })

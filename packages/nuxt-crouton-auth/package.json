@@ -1,7 +1,7 @@
 {
   "name": "@friendlyinternet/nuxt-crouton-auth",
   "version": "0.1.0",
-  "description": "Authentication layer for Nuxt applications using Better Auth with teams, billing, passkeys, and 2FA support",
+  "description": "Authentication layer for Nuxt applications using Better Auth with teams, passkeys, and 2FA support",
   "type": "module",
   "exports": {
     ".": "./nuxt.config.ts",
@@ -57,15 +57,12 @@
     "seed": "tsx scripts/seed.ts",
     "seed:users": "tsx scripts/seed.ts users",
     "seed:orgs": "tsx scripts/seed.ts orgs",
-    "seed:billing": "tsx scripts/seed.ts billing",
     "seed:clear": "tsx scripts/seed.ts clear"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.2.0",
-    "@better-auth/stripe": "^1.2.0",
     "better-auth": "^1.2.0",
-    "defu": "^6.1.4",
-    "stripe": "^17.0.0"
+    "defu": "^6.1.4"
   },
   "devDependencies": {
     "@better-auth/cli": "^1.2.0",
@@ -124,9 +121,6 @@
     "totp",
     "teams",
     "organizations",
-    "billing",
-    "stripe",
-    "subscription",
     "multi-tenant",
     "saas"
   ],

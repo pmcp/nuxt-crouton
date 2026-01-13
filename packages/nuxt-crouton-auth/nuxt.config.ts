@@ -43,9 +43,6 @@ export default defineNuxtConfig({
             showSwitcher: true,
             showManagement: true
           },
-          billing: {
-            enabled: false
-          },
           ui: {
             theme: 'default' as const,
             redirects: {

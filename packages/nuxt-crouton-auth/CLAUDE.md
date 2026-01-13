@@ -2,7 +2,7 @@
 
 ## Package Purpose
 
-Authentication layer for Nuxt applications using Better Auth. Provides teams/organizations, billing (Stripe), passkeys (WebAuthn), 2FA, and OAuth support. This is the **canonical source** for team authentication in the nuxt-crouton ecosystem.
+Authentication layer for Nuxt applications using Better Auth. Provides teams/organizations, passkeys (WebAuthn), 2FA, and OAuth support. This is the **canonical source** for team authentication in the nuxt-crouton ecosystem.
 
 ## Configuration Patterns
 
@@ -46,7 +46,6 @@ URLs always include `[team]` param (industry standard: Linear, Notion, Vercel, G
 | `useTeam()` | Team/organization management |
 | `useTeamContext()` | Current team context |
 | `useTeamState()` | Team state management |
-| `useBilling()` | Subscription and billing management |
 
 ## Components
 
@@ -64,10 +63,6 @@ URLs always include `[team]` param (industry standard: Linear, Notion, Vercel, G
 - `CreateForm`, `Switcher`, `Settings`
 - `Members`, `MemberRow`, `MemberInviteForm`
 - `Invitations`, `DeleteConfirm`
-
-### Billing Components
-- `CurrentPlan`, `PlanCard`, `PricingTable`
-- `UpgradeButton`, `PortalButton`, `UsageDisplay`
 
 ### Sidebar Components
 - `AuthSidebar`, `TeamSection`, `UserMenu`
@@ -148,15 +143,6 @@ export default defineNuxtConfig({
     oauth: {
       google: true,
       github: true
-    },
-
-    // Billing (Stripe) - always organization-based
-    billing: {
-      enabled: true,
-      plans: [
-        { id: 'free', name: 'Free', price: 0 },
-        { id: 'pro', name: 'Pro', price: 29 }
-      ]
     }
   }
 })
@@ -174,10 +160,6 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-
-# Stripe (optional)
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
 ```
 
 ## Database Schema
@@ -193,7 +175,6 @@ Located in `server/database/schema/auth.ts`:
 - `invitation` - Pending invitations
 - `passkey` - WebAuthn credentials
 - `twoFactor` - 2FA settings
-- `subscription` - Stripe subscriptions
 
 ## CLI Commands
 
@@ -209,7 +190,6 @@ pnpm migrate:reset     # Reset database
 pnpm seed              # Seed all
 pnpm seed:users        # Seed test users
 pnpm seed:orgs         # Seed organizations
-pnpm seed:billing      # Seed billing data
 pnpm seed:clear        # Clear all data
 ```
 
@@ -221,12 +201,6 @@ pnpm seed:clear        # Clear all data
 2. Add environment variables
 3. Update `types/config.ts` if needed
 4. Add button in `OAuthButtons.vue` component
-
-### Add a new billing plan
-
-1. Create plan in Stripe dashboard
-2. Add to `croutonAuth.billing.plans` config
-3. Update `PricingTable.vue` if custom display needed
 
 ### Customize auth pages
 
@@ -375,7 +349,7 @@ The `scopedAccessToken` table stores:
 
 - **Extends**: None (standalone module/layer)
 - **Used by**: `@friendlyinternet/nuxt-crouton` and all crouton packages (canonical team auth)
-- **Core deps**: better-auth, @better-auth/stripe, @better-auth/passkey, stripe
+- **Core deps**: better-auth, @better-auth/passkey
 - **Recommended**: nuxthub-ratelimit (optional peer dependency for rate limiting)
 
 ## Testing
@@ -389,8 +363,8 @@ pnpm test:integration  # Integration tests only
 ## Naming Conventions
 
 ```
-Component: AuthLoginForm, TeamSwitcher, BillingCurrentPlan
-Composable: useAuth, useTeam, useBilling
+Component: AuthLoginForm, TeamSwitcher, AccountSettings
+Composable: useAuth, useTeam, useSession
 API: /api/auth/[...all] (Better Auth handles routing)
 Middleware: auth, guest, team-context
 ```

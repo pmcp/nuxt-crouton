@@ -2,12 +2,11 @@
  * Auth Client Plugin
  *
  * Initializes the Better Auth client on the client-side.
- * Configures organization, passkey, 2FA, and Stripe client plugins based on @crouton/auth config.
+ * Configures organization, passkey, and 2FA client plugins based on @crouton/auth config.
  */
 import { createAuthClient } from 'better-auth/client'
 import { organizationClient, twoFactorClient } from 'better-auth/client/plugins'
 import { passkeyClient } from '@better-auth/passkey/client'
-import { stripeClient } from '@better-auth/stripe/client'
 import type { CroutonAuthConfig } from '../../types/config'
 
 // Helper to get auth config with proper typing (used in plugins where composables may not be available)
@@ -33,7 +32,6 @@ export default defineNuxtPlugin(() => {
     console.log('[@crouton/auth] Client plugin initialized', {
       hasPasskeys: isPasskeyEnabled(config),
       hasTwoFactor: isTwoFactorEnabled(config),
-      hasBilling: isBillingEnabled(config),
       hasOrganization: true
     })
   }
@@ -66,14 +64,6 @@ function buildClientPlugins(config?: CroutonAuthConfig) {
   // Conditionally add 2FA client
   if (isTwoFactorEnabled(config)) {
     plugins.push(twoFactorClient())
-  }
-
-  // Conditionally add Stripe client for billing
-  if (isBillingEnabled(config)) {
-    plugins.push(stripeClient({
-      // Enable subscription management
-      subscription: true
-    }))
   }
 
   return plugins
@@ -109,18 +99,4 @@ function isTwoFactorEnabled(config?: CroutonAuthConfig): boolean {
     return true
   }
   return twoFactorConfig.enabled !== false
-}
-
-/**
- * Check if billing is enabled in the configuration
- */
-function isBillingEnabled(config?: CroutonAuthConfig): boolean {
-  if (!config) return false
-
-  const billingConfig = config.billing
-  if (!billingConfig?.enabled) {
-    return false
-  }
-  // Also need Stripe configuration (at least publishable key for client-side)
-  return !!billingConfig.stripe?.publishableKey
 }

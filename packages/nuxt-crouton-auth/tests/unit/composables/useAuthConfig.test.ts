@@ -19,8 +19,7 @@ describe('useAuthConfig', () => {
           crouton: {
             auth: {
               mode: 'multi-tenant',
-              appName: 'Test App',
-              billing: { enabled: true }
+              appName: 'Test App'
             }
           }
         }
@@ -29,7 +28,6 @@ describe('useAuthConfig', () => {
       const config = useAuthConfig()
       expect(config?.mode).toBe('multi-tenant')
       expect(config?.appName).toBe('Test App')
-      expect(config?.billing?.enabled).toBe(true)
     })
 
     it('should return undefined when not configured', () => {

@@ -47,10 +47,6 @@ const defaults: CroutonAuthConfig = {
     requireEmailVerification: false,
     defaultRole: 'member'
   },
-  billing: {
-    enabled: false,
-    provider: 'stripe'
-  },
   ui: {
     theme: 'default',
     redirects: {
@@ -77,13 +73,6 @@ const defaults: CroutonAuthConfig = {
  */
 function validateConfig(config: CroutonAuthConfig): void {
   const teams = config.teams ?? {}
-
-  // Validate billing config
-  if (config.billing?.enabled && !config.billing.stripe) {
-    console.warn(
-      `[${name}] Billing is enabled but Stripe is not configured. Billing features will be disabled.`
-    )
-  }
 
   // Validate passkey config for production
   if (config.methods?.passkeys && typeof config.methods.passkeys === 'object') {
@@ -202,13 +191,6 @@ export default defineNuxtModule<CroutonAuthConfig>({
       global: true // Global so TeamSwitcher is available in dashboard layout
     })
 
-    addComponentsDir({
-      path: resolver.resolve('./app/components/Billing'),
-      pathPrefix: false,
-      prefix: 'Billing',
-      global: false
-    })
-
     // Add server utilities
     nuxt.options.nitro = defu(nuxt.options.nitro, {
       imports: {
@@ -265,9 +247,6 @@ export default defineNuxtModule<CroutonAuthConfig>({
         showSwitcher: teams.showSwitcher
       })
       console.log(`[${name}] Auth methods:`, Object.keys(config.methods || {}).filter(k => config.methods?.[k as keyof typeof config.methods]))
-      if (config.billing?.enabled) {
-        console.log(`[${name}] Billing: enabled (${config.billing.provider})`)
-      }
     }
   }
 })

@@ -182,71 +182,6 @@ export interface InvitationWithInviter extends Invitation {
 }
 
 // ============================================================================
-// Subscription/Billing Types
-// ============================================================================
-
-/**
- * Subscription status
- */
-export type SubscriptionStatus
-  = | 'active'
-    | 'trialing'
-    | 'past_due'
-    | 'canceled'
-    | 'unpaid'
-    | 'incomplete'
-    | 'incomplete_expired'
-    | 'paused'
-
-/**
- * Subscription
- */
-export interface Subscription {
-  /** Subscription ID */
-  id: string
-  /** Stripe subscription ID */
-  stripeSubscriptionId: string
-  /** Stripe customer ID */
-  stripeCustomerId: string
-  /** Associated user ID (personal mode) */
-  userId?: string
-  /** Associated organization ID (team billing) */
-  organizationId?: string
-  /** Current plan ID */
-  planId: string
-  /** Subscription status */
-  status: SubscriptionStatus
-  /** Current period start */
-  currentPeriodStart: Date
-  /** Current period end */
-  currentPeriodEnd: Date
-  /** Cancellation timestamp (if canceled) */
-  cancelAt?: Date | null
-  /** Whether subscription is set to cancel at period end */
-  cancelAtPeriodEnd: boolean
-  /** Trial end timestamp */
-  trialEnd?: Date | null
-  /** Subscription creation timestamp */
-  createdAt: Date
-  /** Last update timestamp */
-  updatedAt: Date
-}
-
-/**
- * Subscription with plan details
- */
-export interface SubscriptionWithPlan extends Subscription {
-  plan: {
-    id: string
-    name: string
-    price: number
-    currency: string
-    interval: 'month' | 'year'
-    features?: string[]
-  }
-}
-
-// ============================================================================
 // OAuth Account Types
 // ============================================================================
 
@@ -326,9 +261,6 @@ export type AuthEventType
     | 'memberRoleChanged'
     | 'invitationSent'
     | 'invitationAccepted'
-    | 'subscriptionCreated'
-    | 'subscriptionUpdated'
-    | 'subscriptionCanceled'
 
 /**
  * Auth event payload
