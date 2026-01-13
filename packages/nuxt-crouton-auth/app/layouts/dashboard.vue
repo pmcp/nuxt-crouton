@@ -5,8 +5,14 @@
  * Main dashboard layout with sidebar and content area.
  * Uses Nuxt UI's DashboardGroup for responsive sidebar management.
  *
+ * Uses UDashboardPanel with UDashboardNavbar to provide:
+ * - Mobile sidebar toggle button
+ * - Proper header spacing
+ * - Responsive layout structure
+ *
  * Usage: Set definePageMeta({ layout: 'dashboard' }) in your page.
  */
+
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 interface Props {
@@ -33,6 +39,14 @@ const appName = computed(() => props.appName ?? config.public.crouton?.auth?.app
       :app-name="appName"
     />
 
-    <slot />
+    <UDashboardPanel>
+      <template #header>
+        <UDashboardNavbar :title="appName" />
+      </template>
+
+      <template #body>
+        <slot />
+      </template>
+    </UDashboardPanel>
   </UDashboardGroup>
 </template>
