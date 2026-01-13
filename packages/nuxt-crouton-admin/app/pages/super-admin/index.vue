@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * Admin Dashboard Page
+ * Super Admin Dashboard Page
  *
- * Main admin landing page with stats overview and quick actions.
+ * Main super admin landing page with stats overview and quick actions.
  * Protected by super-admin middleware.
  */
 definePageMeta({
@@ -10,7 +10,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Admin Dashboard'
+  title: 'Super Admin Dashboard'
 })
 </script>
 
@@ -27,7 +27,7 @@ useSeoMeta({
         </div>
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            Admin Dashboard
+            Super Admin Dashboard
           </h1>
           <p class="text-sm text-gray-500 dark:text-gray-400">
             Manage users, teams, and monitor system activity

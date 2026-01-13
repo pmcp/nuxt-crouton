@@ -5,7 +5,7 @@
 Admin dashboard for Nuxt applications using crouton-auth. Provides two tiers of administration:
 
 1. **Team Admin** (`/admin/[team]/*`) - Team-specific management for team admins/owners
-2. **Super Admin** (`/admin/*`) - System-wide management for app owners
+2. **Super Admin** (`/super-admin/*`) - System-wide management for app owners
 
 Requires `@crouton/auth` as a peer dependency (uses its user/session/team tables and composables).
 
@@ -87,9 +87,9 @@ Requires `@crouton/auth` as a peer dependency (uses its user/session/team tables
 
 | Page | Purpose |
 |------|---------|
-| `/admin` | Dashboard with stats overview |
-| `/admin/users` | User management page |
-| `/admin/teams` | Team oversight page |
+| `/super-admin` | Dashboard with stats overview |
+| `/super-admin/users` | User management page |
+| `/super-admin/teams` | Team oversight page |
 
 ## Middleware
 
@@ -198,8 +198,8 @@ export default defineNuxtConfig({
     public: {
       crouton: {
         admin: {
-          // Admin page route prefix (default: /admin)
-          routePrefix: '/admin',
+          // Super admin page route prefix (default: /super-admin)
+          routePrefix: '/super-admin',
           // Enable impersonation feature
           impersonation: true,
           // Dashboard stats refresh interval (ms)
@@ -237,7 +237,7 @@ await db.update(user)
 
 2. Pages are automatically available:
    - Team admin: `/admin/[team]/*`
-   - Super admin: `/admin/*`
+   - Super admin: `/super-admin/*`
 
 3. Customize by creating your own pages that override the defaults
 
@@ -276,7 +276,7 @@ interface AdminStats {
 ## Route Structure
 
 ```
-/admin/                         # SUPER ADMIN (app owner only)
+/super-admin/                   # SUPER ADMIN (app owner only)
 ├── index                       # System dashboard
 ├── users                       # All users management
 └── teams                       # All teams management
@@ -307,5 +307,5 @@ Component: AdminDashboard, AdminUserList, ImpersonationBanner
 Composable: useAdminUsers, useAdminTeams, useImpersonation
 API: /api/admin/users, /api/admin/teams, /api/admin/impersonate/*
 Middleware: super-admin, team-admin
-Page: /admin/* (super), /admin/[team]/* (team)
+Page: /super-admin/* (super), /admin/[team]/* (team)
 ```

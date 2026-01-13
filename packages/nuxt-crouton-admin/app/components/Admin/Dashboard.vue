@@ -85,13 +85,13 @@ const quickActions = [
     label: 'Manage Users',
     description: 'View, create, and manage user accounts',
     icon: 'i-heroicons-users',
-    path: '/admin/users'
+    path: '/super-admin/users'
   },
   {
     label: 'View Teams',
     description: 'Browse all teams and their members',
     icon: 'i-heroicons-building-office-2',
-    path: '/admin/teams'
+    path: '/super-admin/teams'
   }
 ]
 
