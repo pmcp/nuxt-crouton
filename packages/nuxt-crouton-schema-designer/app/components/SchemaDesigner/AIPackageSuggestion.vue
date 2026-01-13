@@ -17,24 +17,27 @@ const emit = defineEmits<{
   reject: [packageId: string]
 }>()
 
-// Package info mapping
-const packageInfo: Record<string, { name: string; icon: string; description: string }> = {
+// Package info mapping with included collections
+const packageInfo: Record<string, { name: string; icon: string; description: string; collections: string[] }> = {
   'crouton-bookings': {
     name: 'Crouton Bookings',
     icon: 'i-lucide-calendar-check',
-    description: 'Slot-based booking system with availability checking and email notifications'
+    description: 'Slot-based booking system with availability checking',
+    collections: ['bookings', 'locations', 'settings', 'emailTemplates', 'emailLogs']
   },
   'crouton-sales': {
     name: 'Crouton Sales',
     icon: 'i-lucide-shopping-cart',
-    description: 'Event-based POS system with products, orders, and receipt printing'
+    description: 'Event-based POS with products and orders',
+    collections: ['events', 'products', 'categories', 'orders', 'orderItems', 'locations', 'clients']
   }
 }
 
 const info = computed(() => packageInfo[props.suggestion.packageId] || {
   name: props.suggestion.packageId,
   icon: 'i-lucide-package',
-  description: 'Crouton package'
+  description: 'Crouton package',
+  collections: []
 })
 </script>
 
@@ -83,10 +86,24 @@ const info = computed(() => packageInfo[props.suggestion.packageId] || {
     </div>
 
     <!-- AI Reason -->
-    <div class="mb-3 p-2 rounded bg-[var(--ui-bg-elevated)] border border-[var(--ui-border)]">
+    <div class="mb-2 p-2 rounded bg-[var(--ui-bg-elevated)] border border-[var(--ui-border)]">
       <p class="text-xs text-[var(--ui-text-muted)] italic">
         "{{ suggestion.reason }}"
       </p>
+    </div>
+
+    <!-- Included Collections -->
+    <div v-if="info.collections.length > 0" class="mb-3">
+      <p class="text-[10px] text-[var(--ui-text-muted)] uppercase tracking-wide mb-1">Includes:</p>
+      <div class="flex flex-wrap gap-1">
+        <span
+          v-for="col in info.collections"
+          :key="col"
+          class="text-[10px] px-1.5 py-0.5 rounded bg-[var(--ui-bg-elevated)] text-[var(--ui-text-muted)]"
+        >
+          {{ col }}
+        </span>
+      </div>
     </div>
 
     <!-- Actions -->
