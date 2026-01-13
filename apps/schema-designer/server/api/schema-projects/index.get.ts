@@ -1,5 +1,5 @@
 import { eq, desc } from 'drizzle-orm'
-import { schemaProjects } from '../../db/schema'
+import { schemaProjects } from '../../database/schema'
 import { migrateProject, type SchemaProjectRecord } from '../../utils/project-migration'
 
 /**

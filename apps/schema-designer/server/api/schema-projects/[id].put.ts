@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { schemaProjects } from '../../db/schema'
+import { schemaProjects } from '../../database/schema'
 import { migrateProject, type SchemaProjectRecord } from '../../utils/project-migration'
 import type { PackageInstance, CollectionSchema } from '@friendlyinternet/nuxt-crouton-schema-designer/types'
 

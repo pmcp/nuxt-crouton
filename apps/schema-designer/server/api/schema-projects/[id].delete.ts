@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { schemaProjects } from '../../db/schema'
+import { schemaProjects } from '../../database/schema'
 
 export default defineEventHandler(async (event) => {
   // db is auto-imported from hub:db (NuxtHub 0.10+)
