@@ -2,10 +2,22 @@
 
 ## Package Purpose
 
-Super admin dashboard for Nuxt applications using crouton-auth. Provides user management, team oversight, impersonation, and moderation features. Requires `@crouton/auth` as a peer dependency (uses its user/session/team tables).
+Admin dashboard for Nuxt applications using crouton-auth. Provides two tiers of administration:
+
+1. **Team Admin** (`/admin/[team]/*`) - Team-specific management for team admins/owners
+2. **Super Admin** (`/admin/*`) - System-wide management for app owners
+
+Requires `@crouton/auth` as a peer dependency (uses its user/session/team tables and composables).
 
 ## Key Features
 
+### Team Admin (new)
+- **Team Dashboard**: Overview with quick navigation for team admins
+- **Member Management**: View, invite, and manage team members
+- **Invitation Management**: View and cancel pending invitations
+- **Team Settings**: Update team name, slug, logo, and delete team
+
+### Super Admin
 - **User Management**: List, create, ban, unban, delete users
 - **Team Oversight**: View all teams/organizations and their members
 - **Impersonation**: Debug as any user with visual indicator
@@ -18,8 +30,13 @@ Super admin dashboard for Nuxt applications using crouton-auth. Provides user ma
 |------|---------|
 | `nuxt.config.ts` | Layer configuration |
 | `types/admin.ts` | Type definitions for admin features |
-| `app/middleware/super-admin.ts` | Route protection middleware |
+| `app/middleware/super-admin.ts` | Route protection for super admin pages |
+| `app/middleware/team-admin.ts` | Route protection for team admin pages |
 | `server/utils/admin.ts` | Server-side admin utilities |
+
+### Composables
+| File | Purpose |
+|------|---------|
 | `app/composables/useAdminUsers.ts` | User management composable |
 | `app/composables/useAdminTeams.ts` | Team management composable |
 | `app/composables/useAdminStats.ts` | Dashboard statistics composable |
@@ -57,6 +74,17 @@ Super admin dashboard for Nuxt applications using crouton-auth. Provides user ma
 
 ## Pages
 
+### Team Admin Pages (new)
+
+| Page | Purpose |
+|------|---------|
+| `/admin/[team]` | Team admin dashboard |
+| `/admin/[team]/members` | Team member management |
+| `/admin/[team]/invitations` | Pending invitations management |
+| `/admin/[team]/settings` | Team settings (name, slug, logo, delete) |
+
+### Super Admin Pages
+
 | Page | Purpose |
 |------|---------|
 | `/admin` | Dashboard with stats overview |
@@ -65,9 +93,26 @@ Super admin dashboard for Nuxt applications using crouton-auth. Provides user ma
 
 ## Middleware
 
+### team-admin (new)
+
+Protects routes that require team admin or owner privileges for a specific team.
+
+```vue
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'team-admin'
+})
+</script>
+```
+
+**What it checks:**
+1. User is authenticated
+2. User is a member of the team in the route param `[team]`
+3. User has `admin` or `owner` role in that team
+
 ### super-admin
 
-Protects routes to require super admin privileges.
+Protects routes that require super admin privileges.
 
 ```vue
 <script setup lang="ts">
@@ -190,7 +235,9 @@ await db.update(user)
    })
    ```
 
-2. Pages are automatically available at `/admin/*`
+2. Pages are automatically available:
+   - Team admin: `/admin/[team]/*`
+   - Super admin: `/admin/*`
 
 3. Customize by creating your own pages that override the defaults
 
@@ -226,9 +273,25 @@ interface AdminStats {
 }
 ```
 
+## Route Structure
+
+```
+/admin/                         # SUPER ADMIN (app owner only)
+├── index                       # System dashboard
+├── users                       # All users management
+└── teams                       # All teams management
+
+/admin/[team]/                  # TEAM ADMIN (team admins/owners)
+├── index                       # Team admin dashboard
+├── members                     # Team member management
+├── invitations                 # Pending invitations
+└── settings                    # Team settings
+```
+
 ## Dependencies
 
 - **Requires**: `@friendlyinternet/nuxt-crouton-auth` (peer dependency)
+- **Uses from auth**: `useTeam()`, `useSession()`, Team* components
 - **Works with**: Any Nuxt UI 4 app
 
 ## Testing
@@ -243,5 +306,6 @@ pnpm typecheck  # Run type checking
 Component: AdminDashboard, AdminUserList, ImpersonationBanner
 Composable: useAdminUsers, useAdminTeams, useImpersonation
 API: /api/admin/users, /api/admin/teams, /api/admin/impersonate/*
-Middleware: super-admin
+Middleware: super-admin, team-admin
+Page: /admin/* (super), /admin/[team]/* (team)
 ```

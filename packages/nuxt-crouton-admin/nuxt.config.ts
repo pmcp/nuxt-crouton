@@ -24,7 +24,9 @@ export default defineNuxtConfig({
     public: {
       crouton: {
         admin: {
-          // Admin page route prefix (default: /admin)
+          // Super admin page route prefix (default: /admin)
+          // Note: Super admin routes are at /admin/*
+          // Team admin routes are at /admin/[team]/*
           routePrefix: '/admin',
           // Enable impersonation feature
           impersonation: true,
