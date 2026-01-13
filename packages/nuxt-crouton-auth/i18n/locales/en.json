@@ -5,7 +5,7 @@
     "tryAnotherEmail": "Try another email",
     "continueWith": "Continue with {provider}",
     "placeholders": {
-      "email": "you@example.com",
+      "email": "you{'@'}example.com",
       "password": "Enter your password",
       "confirmPassword": "Confirm your password",
       "name": "John Doe",

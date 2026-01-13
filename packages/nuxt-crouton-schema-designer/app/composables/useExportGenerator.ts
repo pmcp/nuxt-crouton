@@ -163,7 +163,7 @@ ${layerConfigs.join(',\n')}
       // Build config object from non-default values
       const pkgConfig: Record<string, unknown> = {}
       for (const [key, value] of Object.entries(pkg.configuration)) {
-        const option = manifest.configuration[key] as ConfigOption | undefined
+        const option = (manifest.configuration || {})[key] as ConfigOption | undefined
         // Include if different from default
         if (option && JSON.stringify(value) !== JSON.stringify(option.default)) {
           pkgConfig[key] = value

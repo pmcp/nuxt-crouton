@@ -131,7 +131,7 @@ function getPackageConfigStatus(pkg: PackageInstance): 'configured' | 'default' 
   if (!manifest) return 'incomplete'
 
   const hasNonDefault = Object.entries(pkg.configuration).some(([key, value]) => {
-    const option = manifest.configuration[key]
+    const option = (manifest.configuration || {})[key]
     return option && JSON.stringify(value) !== JSON.stringify(option.default)
   })
 
@@ -376,7 +376,7 @@ function getPackageConfigStatus(pkg: PackageInstance): 'configured' | 'default' 
           v-if="selectedPackageId && selectedPackageManifest && selectedPackageInstance"
           class="p-6"
         >
-          <SchemaDesignerPackageConfigPanel
+          <CroutonSchemaDesignerPackageConfigPanel
             :manifest="selectedPackageManifest"
             :instance="selectedPackageInstance"
             @update:config="handlePackageConfigUpdate"
@@ -389,7 +389,7 @@ function getPackageConfigStatus(pkg: PackageInstance): 'configured' | 'default' 
           v-else-if="selectedCollectionId && selectedCollection"
           class="h-full"
         >
-          <SchemaDesignerSchemaBuilder />
+          <CroutonSchemaDesignerSchemaBuilder />
         </div>
 
         <!-- Empty State -->
@@ -475,7 +475,7 @@ function getPackageConfigStatus(pkg: PackageInstance): 'configured' | 'default' 
 
     <!-- Package Browser Modal -->
     <UModal
-      v-model="showPackageBrowser"
+      v-model:open="showPackageBrowser"
       :ui="{ width: 'max-w-4xl' }"
     >
       <template #content="{ close }">
@@ -497,7 +497,7 @@ function getPackageConfigStatus(pkg: PackageInstance): 'configured' | 'default' 
             </UButton>
           </div>
 
-          <SchemaDesignerPackageBrowser
+          <CroutonSchemaDesignerPackageBrowser
             :selected-package-ids="selectedPackageIds"
             @toggle="handlePackageToggle"
           />

@@ -8,6 +8,7 @@
 import { existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createJiti } from 'jiti'
 import type { PackageManifest, PackageSummary } from '../../app/types/package-manifest'
 import { toPackageSummary } from '../../app/types/package-manifest'
 
@@ -21,6 +22,12 @@ const WORKSPACE_PACKAGES = [
 let manifestCache: Map<string, PackageManifest> | null = null
 let lastCacheTime = 0
 const CACHE_TTL = 60_000 // 1 minute cache
+
+// Create jiti instance for loading TypeScript files
+const jiti = createJiti(import.meta.url, {
+  interopDefault: true,
+  esmResolve: true
+})
 
 /**
  * Find the monorepo packages directory
@@ -61,10 +68,11 @@ async function loadManifestFromDisk(packageName: string): Promise<PackageManifes
   }
 
   try {
-    // Dynamic import of the manifest file
-    // Note: In production, this may need to be compiled first
-    const module = await import(/* @vite-ignore */ manifestPath)
-    return module.default as PackageManifest
+    // Use jiti to load TypeScript files at runtime
+    const module = await jiti.import(manifestPath) as { default?: PackageManifest } | PackageManifest
+    // Handle both default export and direct export
+    const manifest = 'default' in module && module.default ? module.default : module as PackageManifest
+    return manifest
   } catch (error) {
     console.error(`Failed to load manifest for ${packageName}:`, error)
     return null

@@ -135,13 +135,13 @@ function getConfigValue(key: string): unknown {
     </div>
 
     <!-- Configuration Options -->
-    <div v-if="Object.keys(manifest.configuration).length > 0" class="space-y-4">
+    <div v-if="manifest.configuration && Object.keys(manifest.configuration).length > 0" class="space-y-4">
       <h4 class="text-sm font-semibold text-[var(--ui-text-muted)] uppercase tracking-wide">
         Configuration
       </h4>
 
       <div
-        v-for="(option, key) in manifest.configuration"
+        v-for="(option, key) in (manifest.configuration || {})"
         :key="key"
         v-show="isOptionVisible(key)"
         class="space-y-2"

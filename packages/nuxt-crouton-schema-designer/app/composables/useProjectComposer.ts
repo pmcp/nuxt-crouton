@@ -76,7 +76,7 @@ export function useProjectComposer() {
 
     // Initialize with defaults
     const defaultConfig: Record<string, unknown> = {}
-    for (const [key, option] of Object.entries(manifest.configuration)) {
+    for (const [key, option] of Object.entries(manifest.configuration || {})) {
       const configOption = option as ConfigOption
       defaultConfig[key] = configOption.default
     }
