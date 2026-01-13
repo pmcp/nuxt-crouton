@@ -396,8 +396,14 @@ export function useProjectComposer() {
       errors.push(`Duplicate layer names: ${[...new Set(duplicateLayers)].join(', ')}`)
     }
 
-    // Include schema designer validation errors
-    errors.push(...schemaDesigner.validationErrors.value)
+    // Include schema designer validation errors only if there are custom collections
+    // When using only packages, schema designer errors don't apply
+    if (customCollections.value.length > 0) {
+      errors.push(...schemaDesigner.validationErrors.value)
+    } else if (packages.value.length === 0) {
+      // No packages and no custom collections - require at least one
+      errors.push('At least one package or custom collection is required')
+    }
 
     return errors
   })

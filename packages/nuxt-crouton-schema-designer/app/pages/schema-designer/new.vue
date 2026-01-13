@@ -211,8 +211,7 @@ async function handleSave() {
     })
 
     showSaveDialog.value = false
-    // Navigate to the editor
-    router.push(`/schema-designer/${project.id}`)
+    // Stay on current page - project is saved
   } catch (e) {
     console.error('Failed to create project:', e)
   } finally {
