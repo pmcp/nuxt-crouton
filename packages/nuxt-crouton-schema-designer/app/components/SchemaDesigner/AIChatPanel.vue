@@ -7,11 +7,26 @@ const {
   error,
   sendMessage,
   clearChat,
-  updateInput
+  updateInput,
+  aiSuggestedPackages,
+  aiProjectName,
+  aiBaseLayerName,
+  aiCreatedCollectionIds,
+  removeAISuggestedPackage
 } = useSchemaAI()
+
+const { schemaDesigner: designer, addPackage, removePackage, packages } = useProjectComposer()
 
 const isCollapsed = ref(false)
 const chatContainer = ref<HTMLElement | null>(null)
+
+// Track which packages have been accepted (added to project)
+const acceptedPackageIds = computed(() => {
+  return new Set(packages.value.map((p: { packageId: string }) => p.packageId))
+})
+
+// Track loading state per package
+const loadingPackageIds = ref<Set<string>>(new Set())
 
 // Auto-scroll to bottom when new messages arrive
 watch(messages, async () => {
@@ -39,6 +54,39 @@ function handleKeydown(e: KeyboardEvent) {
     handleSubmit()
   }
 }
+
+async function handleAcceptPackage(packageId: string) {
+  loadingPackageIds.value.add(packageId)
+  try {
+    await addPackage(packageId)
+  } finally {
+    loadingPackageIds.value.delete(packageId)
+  }
+}
+
+function handleRejectPackage(packageId: string) {
+  // If already accepted, remove from project
+  if (acceptedPackageIds.value.has(packageId)) {
+    removePackage(packageId)
+  }
+  // Remove from AI suggestions list
+  removeAISuggestedPackage(packageId)
+}
+
+function handleCollectionClick(collectionId: string) {
+  designer.setActiveCollection(collectionId)
+}
+
+// Check if a collection is new (recently created by AI)
+function isCollectionNew(collectionId: string): boolean {
+  return aiCreatedCollectionIds.value.has(collectionId)
+}
+
+// Computed for whether to show AI suggestions panel
+const hasAISuggestions = computed(() => {
+  return aiSuggestedPackages.value.length > 0 ||
+    designer.collections.value.some((c: { id: string }) => isCollectionNew(c.id))
+})
 </script>
 
 <template>
@@ -93,6 +141,61 @@ function handleKeydown(e: KeyboardEvent) {
 
       <!-- Chat Content -->
       <template v-else>
+        <!-- AI Suggestions Panel (shows when AI has suggested packages/collections) -->
+        <div
+          v-if="hasAISuggestions"
+          class="p-3 border-b border-[var(--ui-border)] bg-[var(--ui-bg-elevated)]/50 space-y-3 max-h-64 overflow-y-auto"
+        >
+          <!-- AI Project Suggestion -->
+          <div v-if="aiProjectName || aiBaseLayerName" class="text-xs space-y-1">
+            <p v-if="aiProjectName" class="flex items-center gap-2">
+              <UIcon name="i-lucide-folder" class="text-[var(--ui-text-muted)]" />
+              <span class="text-[var(--ui-text-muted)]">Project:</span>
+              <span class="font-medium">{{ aiProjectName }}</span>
+            </p>
+            <p v-if="aiBaseLayerName" class="flex items-center gap-2">
+              <UIcon name="i-lucide-layers" class="text-[var(--ui-text-muted)]" />
+              <span class="text-[var(--ui-text-muted)]">Layer:</span>
+              <span class="font-medium font-mono">{{ aiBaseLayerName }}</span>
+            </p>
+          </div>
+
+          <!-- Package Suggestions -->
+          <div v-if="aiSuggestedPackages.length > 0" class="space-y-2">
+            <h4 class="text-xs font-semibold text-[var(--ui-text-muted)] uppercase tracking-wide flex items-center gap-2">
+              <UIcon name="i-lucide-package" />
+              Suggested Packages
+            </h4>
+            <CroutonSchemaDesignerAIPackageSuggestion
+              v-for="pkg in aiSuggestedPackages"
+              :key="pkg.packageId"
+              :suggestion="pkg"
+              :accepted="acceptedPackageIds.has(pkg.packageId)"
+              :loading="loadingPackageIds.has(pkg.packageId)"
+              @accept="handleAcceptPackage"
+              @reject="handleRejectPackage"
+            />
+          </div>
+
+          <!-- Collection Previews (for AI-created collections) -->
+          <div
+            v-if="designer.collections.value.length > 0 && designer.collections.value.some((c: { id: string }) => isCollectionNew(c.id))"
+            class="space-y-2"
+          >
+            <h4 class="text-xs font-semibold text-[var(--ui-text-muted)] uppercase tracking-wide flex items-center gap-2">
+              <UIcon name="i-lucide-database" />
+              Created Collections
+            </h4>
+            <CroutonSchemaDesignerAICollectionPreview
+              v-for="collection in designer.collections.value.filter((c: { id: string }) => isCollectionNew(c.id))"
+              :key="collection.id"
+              :collection="collection"
+              :is-new="true"
+              @click="handleCollectionClick"
+            />
+          </div>
+        </div>
+
         <!-- Messages Area -->
         <div
           ref="chatContainer"
@@ -196,11 +299,18 @@ function handleKeydown(e: KeyboardEvent) {
 
     <!-- Collapsed indicator -->
     <div v-else class="flex-1 flex items-center justify-center">
-      <UIcon
-        name="i-lucide-sparkles"
-        class="text-[var(--ui-primary)] rotate-90"
-        :class="{ 'animate-pulse': isLoading }"
-      />
+      <div class="relative">
+        <UIcon
+          name="i-lucide-sparkles"
+          class="text-[var(--ui-primary)] rotate-90"
+          :class="{ 'animate-pulse': isLoading }"
+        />
+        <!-- Suggestion indicator when collapsed -->
+        <div
+          v-if="aiSuggestedPackages.length > 0"
+          class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--ui-primary)] animate-pulse"
+        />
+      </div>
     </div>
   </div>
 </template>
