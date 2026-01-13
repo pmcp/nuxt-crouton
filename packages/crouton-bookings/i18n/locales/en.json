@@ -42,6 +42,13 @@
       "cancel": "Cancel Booking",
       "cancelled": "Cancelled"
     },
+    "admin": {
+      "title": "Manage Bookings",
+      "description": "View and manage all team bookings"
+    },
+    "settings": {
+      "emailTemplates": "Email Templates"
+    },
     "list": {
       "loading": "Loading bookings...",
       "noBookings": "No bookings yet",

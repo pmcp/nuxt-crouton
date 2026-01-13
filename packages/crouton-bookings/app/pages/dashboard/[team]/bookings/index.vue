@@ -3,12 +3,14 @@ definePageMeta({
   layout: 'dashboard',
   middleware: 'auth',
 })
+
+const { t } = useI18n()
 </script>
 
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="My Bookings" />
+      <UDashboardNavbar :title="t('bookings.myBookings.title')" />
     </template>
 
     <template #body>

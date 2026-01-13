@@ -42,6 +42,13 @@
       "cancel": "Boeking Annuleren",
       "cancelled": "Geannuleerd"
     },
+    "admin": {
+      "title": "Boekingen Beheren",
+      "description": "Bekijk en beheer alle team boekingen"
+    },
+    "settings": {
+      "emailTemplates": "E-mail Sjablonen"
+    },
     "list": {
       "loading": "Boekingen laden...",
       "noBookings": "Nog geen boekingen",
