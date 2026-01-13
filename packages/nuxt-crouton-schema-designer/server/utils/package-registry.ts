@@ -14,9 +14,7 @@ import { toPackageSummary } from '../../app/types/package-manifest'
 // Known packages in workspace that may have manifests
 const WORKSPACE_PACKAGES = [
   'crouton-bookings',
-  // Future packages can be added here:
-  // 'crouton-maps',
-  // 'nuxt-crouton-editor',
+  'crouton-sales',
 ]
 
 // Cache for loaded manifests

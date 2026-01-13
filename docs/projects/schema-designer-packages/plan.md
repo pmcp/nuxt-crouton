@@ -680,127 +680,128 @@ Unified Editor View
 
 ## Build Phases
 
-### Phase 1: Foundation (2 days)
+### Phase 1: Foundation (2 days) ✅
 
-- [ ] **Task 1.1**: Define TypeScript interfaces
+- [x] **Task 1.1**: Define TypeScript interfaces
   - Create `types/package-manifest.ts`
   - Create `types/project-composer.ts`
   - Update `types/schema.ts` with new project structure
 
-- [ ] **Task 1.2**: Create crouton-bookings manifest
+- [x] **Task 1.2**: Create crouton-bookings manifest
   - Create `packages/crouton-bookings/crouton.manifest.ts`
   - Import existing JSON schemas
   - Define all configuration options
   - Document extension points
 
-- [ ] **Task 1.3**: Create package registry utility
+- [x] **Task 1.3**: Create package registry utility
   - Create `server/utils/package-registry.ts`
   - Implement manifest loading from workspace
   - Add caching layer
 
-- [ ] **Task 1.4**: Add package API endpoints
+- [x] **Task 1.4**: Add package API endpoints
   - Create `GET /api/schema-designer/packages`
   - Create `GET /api/schema-designer/packages/[id]`
   - Test with crouton-bookings manifest
 
-### Phase 2: Composables (2 days)
+### Phase 2: Composables (2 days) ✅
 
-- [ ] **Task 2.1**: Create usePackageRegistry composable
+- [x] **Task 2.1**: Create usePackageRegistry composable
   - Load packages from API
   - Cache in state
   - Provide search/filter helpers
 
-- [ ] **Task 2.2**: Create usePackageConfig composable
+- [x] **Task 2.2**: Create usePackageConfig composable
   - Initialize config from defaults
   - Handle conditional options (dependsOn)
   - Validate configuration
 
-- [ ] **Task 2.3**: Create useProjectComposer composable
+- [x] **Task 2.3**: Create useProjectComposer composable
   - Manage packages + custom collections
   - Integrate with existing useSchemaDesigner
   - Provide cross-reference helpers (getAllCollections)
 
-- [ ] **Task 2.4**: Create useExportGenerator composable
+- [x] **Task 2.4**: Create useExportGenerator composable
   - Generate nuxt.config.ts
   - Generate crouton.config.js
   - Generate schema JSON files
   - Generate CLI commands
 
-### Phase 3: Components (3 days)
+### Phase 3: Components (3 days) ✅
 
-- [ ] **Task 3.1**: Create PackageCard component
+- [x] **Task 3.1**: Create PackageCard component
   - Display package info (icon, name, description)
   - Add/Remove toggle
   - Collection count badge
 
-- [ ] **Task 3.2**: Create PackageBrowser component
+- [x] **Task 3.2**: Create PackageBrowser component
   - Grid of PackageCards
   - Search/filter input
   - Loading state
 
-- [ ] **Task 3.3**: Create PackageConfigPanel component
+- [x] **Task 3.3**: Create PackageConfigPanel component
   - Dynamic form from manifest.configuration
   - Conditional field visibility
   - Layer name display
 
-- [ ] **Task 3.4**: Create PackageCollectionView component
+- [x] **Task 3.4**: Create PackageCollectionView component
   - Read-only field list
   - Extension point indicators
   - Add extension field action
 
-- [ ] **Task 3.5**: Create ProjectComposer component
+- [x] **Task 3.5**: Create ProjectComposer component
   - Tab layout: Packages | Custom
   - Package list with config indicators
   - Custom collection list
   - AI generation input
 
-### Phase 4: Page Integration (2 days)
+### Phase 4: Page Integration (2 days) ✅
 
-- [ ] **Task 4.1**: Update new.vue with composer flow
+- [x] **Task 4.1**: Update new.vue with composer flow
   - Add step navigation
   - Integrate ProjectComposer
   - Connect to existing SchemaBuilder
 
-- [ ] **Task 4.2**: Update [id].vue for unified editing
+- [x] **Task 4.2**: Update [id].vue for unified editing
   - Package/Custom tab navigation
   - Read-only package view
   - Full editing for custom
 
-- [ ] **Task 4.3**: Update ExportPanel for combined export
+- [x] **Task 4.3**: Update ExportPanel for combined export
   - Show nuxt.config.ts preview
   - Show crouton.config.js preview
   - Download bundle option
 
-### Phase 5: Data Migration (1 day)
+### Phase 5: Data Migration (1 day) ✅
 
-- [ ] **Task 5.1**: Update database schema
+- [x] **Task 5.1**: Update database schema
   - Add new columns (packages, baseLayerName)
   - Keep legacy columns for migration
 
-- [ ] **Task 5.2**: Create migration utility
+- [x] **Task 5.2**: Create migration utility
   - Convert legacy single-collection projects
   - Map to new structure
 
-- [ ] **Task 5.3**: Update API handlers
+- [x] **Task 5.3**: Update API handlers
   - Handle both old and new formats
   - Auto-migrate on load
 
-### Phase 6: Cross-References (1 day)
+### Phase 6: Cross-References (1 day) ✅
 
-- [ ] **Task 6.1**: Update FieldCatalog
+- [x] **Task 6.1**: Update FieldCatalog
   - Add "References" section
   - Show all collections (package + custom)
   - Enable cross-package refs
 
-- [ ] **Task 6.2**: Update reference field type
+- [x] **Task 6.2**: Update reference field type
   - Support package collection targets
   - Show source indicator (package/custom)
 
 ### Phase 7: Polish & Testing (2 days)
 
-- [ ] **Task 7.1**: Add additional package manifests
-  - crouton-maps (if applicable)
-  - nuxt-crouton-editor (if applicable)
+- [x] **Task 7.1**: Add additional package manifests ✅
+  - Added `crouton-sales` manifest (10 collections, print.enabled config)
+  - Note: `nuxt-crouton-maps` and `nuxt-crouton-editor` are utility layers (components/composables only, no collections) - manifests not applicable
+  - Updated package registry to include crouton-sales
 
 - [ ] **Task 7.2**: End-to-end testing
   - Create project with bookings + custom
