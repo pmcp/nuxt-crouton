@@ -84,6 +84,13 @@ export const FIELD_TYPES: FieldTypeConfig[] = [
     icon: 'i-lucide-list',
     description: 'String array',
     defaultMeta: {}
+  },
+  {
+    type: 'reference',
+    label: 'Reference',
+    icon: 'i-lucide-link',
+    description: 'Reference to another collection',
+    defaultMeta: {}
   }
 ]
 

@@ -11,6 +11,7 @@ export type FieldType =
   | 'json'
   | 'repeater'
   | 'array'
+  | 'reference'
 
 export interface FieldMeta {
   required?: boolean

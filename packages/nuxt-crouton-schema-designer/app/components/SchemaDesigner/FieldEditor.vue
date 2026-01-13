@@ -1,8 +1,59 @@
 <script setup lang="ts">
 import type { FieldType, FieldMeta } from '../../types/schema'
+import type { RefTargetOption } from '../../composables/useProjectComposer'
 
 const { selectedField, selectedFieldId, updateField, selectField } = useSchemaDesigner()
 const { FIELD_TYPES, META_PROPERTIES } = useFieldTypes()
+
+// Try to use project composer for reference targets (may not be available in standalone mode)
+let refTargets: Ref<RefTargetOption[]>
+let hasProjectComposer = false
+
+try {
+  const composer = useProjectComposer()
+  refTargets = computed(() => composer.getRefTargets())
+  hasProjectComposer = true
+} catch {
+  // Project composer not available, use empty ref targets
+  refTargets = ref([])
+}
+
+// Build grouped options for USelectMenu
+const refTargetOptions = computed(() => {
+  if (refTargets.value.length === 0) return []
+
+  const options: { label: string; value: string; badge?: string; icon?: string }[] = []
+
+  // Package collections
+  const packageTargets = refTargets.value.filter(t => t.group === 'package')
+  if (packageTargets.length > 0) {
+    for (const target of packageTargets) {
+      options.push({
+        value: target.value,
+        label: target.label,
+        badge: 'package',
+        icon: 'i-lucide-package'
+      })
+    }
+  }
+
+  // Custom collections
+  const customTargets = refTargets.value.filter(t => t.group === 'custom')
+  if (customTargets.length > 0) {
+    for (const target of customTargets) {
+      options.push({
+        value: target.value,
+        label: target.label,
+        badge: 'custom',
+        icon: 'i-lucide-layers'
+      })
+    }
+  }
+
+  return options
+})
+
+const hasRefTargetOptions = computed(() => refTargetOptions.value.length > 0)
 
 const isOpen = computed({
   get: () => selectedFieldId.value !== null,
@@ -191,15 +242,80 @@ const areaOptions = [
         <!-- Reference Target (for relations) -->
         <USeparator label="Relations" />
 
-        <UFormField label="Reference Target">
-          <UInput
-            v-model="localField.refTarget"
-            placeholder="e.g., :users or categories"
-          />
-          <template #hint>
-            Use : prefix for external refs (e.g., :users)
-          </template>
-        </UFormField>
+        <!-- Reference target picker when options available -->
+        <template v-if="hasRefTargetOptions">
+          <UFormField label="Reference Target">
+            <USelectMenu
+              v-model="localField.refTarget"
+              :items="refTargetOptions"
+              value-key="value"
+              placeholder="Select a collection"
+              searchable
+              searchable-placeholder="Search collections..."
+            >
+              <template #leading>
+                <UIcon
+                  v-if="localField.refTarget"
+                  :name="refTargetOptions.find(o => o.value === localField.refTarget)?.icon || 'i-lucide-link'"
+                  class="text-[var(--ui-text-muted)]"
+                />
+                <UIcon v-else name="i-lucide-link" class="text-[var(--ui-text-muted)]" />
+              </template>
+              <template #item="{ item }">
+                <div class="flex items-center gap-2 w-full">
+                  <UIcon :name="item.icon || 'i-lucide-link'" class="text-[var(--ui-text-muted)]" />
+                  <span class="flex-1 truncate">{{ item.label }}</span>
+                  <UBadge
+                    :color="item.badge === 'package' ? 'info' : 'success'"
+                    size="xs"
+                    variant="subtle"
+                  >
+                    {{ item.badge }}
+                  </UBadge>
+                </div>
+              </template>
+            </USelectMenu>
+            <template #hint>
+              Select a collection from packages or custom collections
+            </template>
+          </UFormField>
+
+          <!-- Show current reference target info -->
+          <div v-if="localField.refTarget" class="bg-[var(--ui-bg-elevated)] rounded-md p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <UIcon
+                :name="refTargetOptions.find(o => o.value === localField.refTarget)?.icon || 'i-lucide-link'"
+                class="text-[var(--ui-text-muted)]"
+              />
+              <span class="text-sm font-medium">
+                {{ refTargetOptions.find(o => o.value === localField.refTarget)?.label || localField.refTarget }}
+              </span>
+              <UBadge
+                :color="refTargetOptions.find(o => o.value === localField.refTarget)?.badge === 'package' ? 'info' : 'success'"
+                size="xs"
+                variant="subtle"
+              >
+                {{ refTargetOptions.find(o => o.value === localField.refTarget)?.badge || 'custom' }}
+              </UBadge>
+            </div>
+            <div class="text-xs text-[var(--ui-text-muted)] font-mono">
+              {{ localField.refTarget }}
+            </div>
+          </div>
+        </template>
+
+        <!-- Fallback to text input when no options available -->
+        <template v-else>
+          <UFormField label="Reference Target">
+            <UInput
+              v-model="localField.refTarget"
+              placeholder="e.g., :users or categories"
+            />
+            <template #hint>
+              Use : prefix for external refs (e.g., :users)
+            </template>
+          </UFormField>
+        </template>
 
         <!-- Decimal-specific -->
         <template v-if="localField.type === 'decimal'">
