@@ -3,35 +3,45 @@
  * Admin Index Redirect
  *
  * Redirects to the user's first team admin dashboard.
- * Similar to /dashboard redirect behavior.
- * Uses a watcher to wait for teams data to load from Better Auth.
+ * Fetches teams directly from Better Auth API if nanostore isn't populated.
  */
 definePageMeta({
   middleware: 'auth'
 })
 
-const { teams } = useTeam()
-const hasRedirected = ref(false)
+const { teams, switchTeamBySlug } = useTeam()
+const authClient = useAuthClient()
 
-// Watch for teams to be populated (Better Auth loads async)
-watch(teams, async (newTeams) => {
-  if (hasRedirected.value) return
+onMounted(async () => {
+  // First check if teams are already loaded in nanostore
+  let userTeams = teams.value
 
-  if (newTeams.length > 0) {
-    hasRedirected.value = true
-    await navigateTo(`/admin/${newTeams[0].slug}`, { replace: true })
-  }
-}, { immediate: true })
-
-// Fallback: if no teams after a delay, redirect to create team
-onMounted(() => {
-  setTimeout(async () => {
-    if (hasRedirected.value) return
-    if (teams.value.length === 0) {
-      hasRedirected.value = true
-      await navigateTo('/onboarding/create-team', { replace: true })
+  // If not, fetch directly from Better Auth API
+  if (userTeams.length === 0 && authClient?.organization?.list) {
+    try {
+      const result = await authClient.organization.list()
+      if (result.data && result.data.length > 0) {
+        userTeams = result.data
+      }
+    } catch (e) {
+      console.error('[@crouton/admin] Failed to fetch teams:', e)
     }
-  }, 2000) // Wait 2s for teams to load before assuming none exist
+  }
+
+  // Redirect based on teams
+  if (userTeams.length > 0) {
+    const firstTeam = userTeams[0]
+    // Switch active team if needed
+    try {
+      await switchTeamBySlug(firstTeam.slug)
+    } catch (e) {
+      // Ignore switch errors, still redirect
+    }
+    await navigateTo(`/admin/${firstTeam.slug}`, { replace: true })
+  } else {
+    // No teams - redirect to create one
+    await navigateTo('/onboarding/create-team', { replace: true })
+  }
 })
 </script>
 
