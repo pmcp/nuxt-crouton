@@ -377,7 +377,7 @@ Same as current Step 4.
   - Handle packages in streamed content
   - Real-time package suggestions
 
-### Phase 3: Update useProjectComposer (0.5 day) - PARTIAL
+### Phase 3: Update useProjectComposer (0.5 day) ✅ COMPLETE
 
 - [x] **Task 3.1**: Add AI integration methods (done in useSchemaAI)
   - aiSuggestedPackages state with reason tracking
@@ -385,50 +385,53 @@ Same as current Step 4.
   - aiBaseLayerName state
   - removeAISuggestedPackage() method
 
-- [ ] **Task 3.2**: Wire AI suggestions to useProjectComposer
-  - Actually call addPackage() when user accepts suggestion
-  - Display suggested packages in UI
+- [x] **Task 3.2**: Wire AI suggestions to useProjectComposer
+  - Actually call addPackage() when user accepts suggestion (in new.vue handleAcceptPackage)
+  - Display suggested packages in UI (live preview sidebar)
 
-### Phase 4: Create New UI Components (1 day)
+### Phase 4: Create New UI Components (1 day) ✅ COMPLETE
 
-- [ ] **Task 4.1**: Create AIWelcomeChat.vue
-  - Full-height chat interface
-  - Welcome message with examples
-  - Suggestion chips for common apps
+- [x] **Task 4.1**: Create AIWelcomeChat.vue
+  - Integrated directly into new.vue Step 1 (full-screen chat)
+  - Welcome message with header and description
+  - AIPromptSuggestions component for suggestion chips
 
-- [ ] **Task 4.2**: Create AIPackageSuggestion.vue
+- [x] **Task 4.2**: Create AIPackageSuggestion.vue
   - Card showing suggested package
   - Reason from AI
-  - Toggle to accept/reject
+  - Toggle to accept/reject with loading states
 
-- [ ] **Task 4.3**: Create AICollectionPreview.vue
-  - Compact collection card
-  - Field count, name
-  - Animation when created
+- [x] **Task 4.3**: Create AICollectionPreview.vue
+  - Compact collection card with animation
+  - Field count, name, ref indicator
+  - Click handler to navigate
 
-- [ ] **Task 4.4**: Create AICreationSummary.vue
-  - Summary of what AI built
-  - Packages + collections list
+- [x] **Task 4.4**: Create AICreationSummary.vue
+  - Implemented as live preview sidebar in new.vue Step 1
+  - Shows packages and collections in real-time
 
-### Phase 5: Restructure Wizard (1.5 days)
+### Phase 5: Restructure Wizard (1.5 days) ✅ COMPLETE
 
-- [ ] **Task 5.1**: Redesign new.vue Step 1
+- [x] **Task 5.1**: Redesign new.vue Step 1
   - Replace Project Setup with AI Chat
   - Full-screen chat experience
-  - Live preview sidebar
+  - Live preview sidebar showing packages/collections
 
-- [ ] **Task 5.2**: Redesign Step 2 as Review
+- [x] **Task 5.2**: Redesign Step 2 as Review
+  - Uses existing ProjectComposer component
   - Show AI-created packages
   - Show AI-created collections
   - Allow editing/removal
 
-- [ ] **Task 5.3**: Move Project Details to Step 3
-  - Pre-fill from AI suggestions
-  - Simple confirmation step
+- [x] **Task 5.3**: Move Project Details to Step 3
+  - Pre-fill from AI suggestions (aiProjectName, aiBaseLayerName)
+  - Shows "AI suggested" hint when values match
+  - Simple confirmation step with summary
 
-- [ ] **Task 5.4**: Update step navigation
-  - New validation logic
-  - New step order
+- [x] **Task 5.4**: Update step navigation
+  - New step order: chat → review → details → export
+  - New validation logic (hasContent for chat step)
+  - Auto-sync AI suggestions to project on step transition
 
 ### Phase 6: Polish & Testing (0.5 day)
 

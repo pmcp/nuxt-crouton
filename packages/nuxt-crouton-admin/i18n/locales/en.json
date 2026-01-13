@@ -1,4 +1,14 @@
 {
+  "admin": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "teams": "Teams",
+    "settings": "Settings",
+    "superAdmin": "Super Admin",
+    "teamAdmin": "Team Admin",
+    "manageTeam": "Manage Team",
+    "systemSettings": "System Settings"
+  },
   "superAdmin": {
     "title": "Super Admin",
     "dashboard": "Dashboard",
