@@ -27,6 +27,13 @@ try {
 }
 
 export default defineNuxtConfig({
+  // Auto-include i18n, auth, and admin layers
+  // Order matters: i18n provides translation system that auth/admin consume
+  extends: [
+    '@friendlyinternet/nuxt-crouton-i18n',
+    '@friendlyinternet/nuxt-crouton-auth',
+    '@friendlyinternet/nuxt-crouton-admin'
+  ],
 
   modules: ['@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo'],
 

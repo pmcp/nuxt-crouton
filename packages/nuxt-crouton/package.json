@@ -54,6 +54,9 @@
     "access": "public"
   },
   "dependencies": {
+    "@friendlyinternet/nuxt-crouton-admin": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-i18n": "workspace:*",
     "@nuxt/image": "^1.11.0",
     "@nuxtjs/seo": "^3.3.0",
     "@vueuse/core": "^13.3.0",
@@ -62,14 +65,8 @@
     "sortablejs": "^1.15.6"
   },
   "peerDependencies": {
-    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
     "@nuxt/ui": "^4.3.0",
     "nuxt": "^4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@friendlyinternet/nuxt-crouton-auth": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@types/sortablejs": "^1.15.8",

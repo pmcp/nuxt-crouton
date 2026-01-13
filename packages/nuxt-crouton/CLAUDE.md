@@ -4,6 +4,42 @@
 
 Core CRUD layer for Nuxt applications. Provides composables, components, and server utilities for building data-driven admin panels with team-scoped access, nested forms, and smart caching.
 
+**Single-install experience:** Installing `@friendlyinternet/nuxt-crouton` automatically includes i18n, auth, and admin packages - no need to install them separately.
+
+## Auto-Included Packages
+
+When you extend `nuxt-crouton`, you automatically get:
+
+| Package | Provides | Routes |
+|---------|----------|--------|
+| `nuxt-crouton-i18n` | Translation system (`useT`), DB-backed translations, team overrides | None |
+| `nuxt-crouton-auth` | Authentication, teams, sessions, OAuth, passkeys, 2FA | `/auth/*` |
+| `nuxt-crouton-admin` | Super admin dashboard, user/team management, impersonation | `/super-admin/*` |
+
+**Order matters:** i18n is loaded first (provides translation system), then auth (uses i18n), then admin (uses both).
+
+### Simplified Setup
+
+```typescript
+// nuxt.config.ts - BEFORE (manual)
+export default defineNuxtConfig({
+  extends: [
+    '@friendlyinternet/nuxt-crouton',
+    '@friendlyinternet/nuxt-crouton-auth',
+    '@friendlyinternet/nuxt-crouton-admin',
+    '@friendlyinternet/nuxt-crouton-i18n',
+    '@friendlyinternet/crouton-bookings',
+  ]
+})
+
+// nuxt.config.ts - AFTER (auto-included)
+export default defineNuxtConfig({
+  extends: [
+    '@friendlyinternet/nuxt-crouton',           // Includes auth, admin, i18n
+    '@friendlyinternet/crouton-bookings',       // Optional apps
+  ]
+})
+
 ## Key Files
 
 | File | Purpose |
@@ -142,9 +178,9 @@ const { formatShortcut } = useCroutonShortcuts({
 
 ## Dependencies
 
-- **Extends**: None (base layer)
-- **Required by**: All other crouton packages
-- **Peer deps**: `@nuxt/ui ^4.0.0`, `nuxt ^4.0.0`, `@crouton/auth` (for team auth)
+- **Auto-includes**: `nuxt-crouton-i18n`, `nuxt-crouton-auth`, `nuxt-crouton-admin`
+- **Required by**: App packages (e.g., `crouton-bookings`)
+- **Peer deps**: `@nuxt/ui ^4.0.0`, `nuxt ^4.0.0`
 
 ## Type Definitions
 
