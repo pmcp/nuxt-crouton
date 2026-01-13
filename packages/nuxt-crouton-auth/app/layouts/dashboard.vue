@@ -40,13 +40,14 @@ const appName = computed(() => props.appName ?? config.public.crouton?.auth?.app
     />
 
     <UDashboardPanel>
-      <template #header>
-        <UDashboardNavbar :title="appName" />
-      </template>
-
-      <template #body>
+      <UDashboardNavbar :title="appName">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+      </UDashboardNavbar>
+      <div class="flex-1 overflow-y-auto">
         <slot />
-      </template>
+      </div>
     </UDashboardPanel>
   </UDashboardGroup>
 </template>

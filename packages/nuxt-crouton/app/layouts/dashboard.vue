@@ -17,13 +17,14 @@
   <UDashboardGroup>
     <CroutonDashboardSidebar />
     <UDashboardPanel>
-      <template #header>
-        <UDashboardNavbar title="Dashboard" />
-      </template>
-
-      <template #body>
+      <UDashboardNavbar title="Dashboard">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+      </UDashboardNavbar>
+      <div class="flex-1 overflow-y-auto">
         <slot />
-      </template>
+      </div>
     </UDashboardPanel>
   </UDashboardGroup>
 </template>

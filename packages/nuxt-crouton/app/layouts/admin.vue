@@ -16,13 +16,14 @@
   <UDashboardGroup>
     <CroutonAdminSidebar context="team" />
     <UDashboardPanel>
-      <template #header>
-        <UDashboardNavbar title="Admin" />
-      </template>
-
-      <template #body>
+      <UDashboardNavbar title="Admin">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+      </UDashboardNavbar>
+      <div class="flex-1 overflow-y-auto">
         <slot />
-      </template>
+      </div>
     </UDashboardPanel>
   </UDashboardGroup>
 </template>

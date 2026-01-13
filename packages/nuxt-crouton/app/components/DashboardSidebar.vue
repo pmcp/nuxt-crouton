@@ -158,25 +158,23 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     :ui="{ footer: 'border-t border-default' }"
   >
     <template #header="{ collapsed }">
-      <div class="flex flex-col gap-2 w-full">
-        <!-- Logo -->
-        <div v-if="!collapsed" class="flex items-center gap-2">
-          <UIcon name="i-lucide-croissant" class="size-5 text-primary" />
-          <span class="font-semibold text-sm">Crouton</span>
-        </div>
-        <UIcon v-else name="i-lucide-croissant" class="size-5 text-primary mx-auto" />
-
-        <!-- Team Switcher (multi-tenant mode only) -->
-        <component
-          :is="TeamSwitcherComponent"
-          v-if="hasTeamSwitcher && !collapsed"
-          size="sm"
-          class="w-full"
-        />
+      <!-- Logo only - single line to align with navbar height -->
+      <div v-if="!collapsed" class="flex items-center gap-2">
+        <UIcon name="i-lucide-croissant" class="size-5 text-primary" />
+        <span class="font-semibold text-sm">Crouton</span>
       </div>
+      <UIcon v-else name="i-lucide-croissant" class="size-5 text-primary mx-auto" />
     </template>
 
     <template #default="{ collapsed }">
+      <!-- Team Switcher (multi-tenant mode only) -->
+      <component
+        :is="TeamSwitcherComponent"
+        v-if="hasTeamSwitcher && !collapsed"
+        size="sm"
+        class="w-full"
+      />
+
       <UButton
         :label="collapsed ? undefined : t('common.search') + '...'"
         icon="i-lucide-search"
