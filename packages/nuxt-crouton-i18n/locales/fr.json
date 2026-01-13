@@ -47,7 +47,8 @@
     "viewAll": "Tout voir",
     "saveChanges": "Enregistrer les modifications",
     "proceed": "Continuer",
-    "change": "Changer"
+    "change": "Changer",
+    "settings": "Paramètres"
   },
   "table": {
     "id": "ID",
@@ -334,7 +335,13 @@
     "noPendingInvitations": "Aucune invitation en attente",
     "cancelInvitation": "Annuler l'invitation",
     "decline": "Refuser",
-    "accept": "Accepter"
+    "accept": "Accepter",
+    "teamAdmin": "Admin d'équipe",
+    "teamAdminDescription": "Gérer les paramètres et les membres de l'équipe",
+    "manageMembersDescription": "Ajouter, supprimer et gérer les membres de l'équipe",
+    "invitations": "Invitations",
+    "manageInvitationsDescription": "Gérer les invitations d'équipe en attente",
+    "settings": "Paramètres"
   },
   "navigation": {
     "dashboard": "Tableau de bord",

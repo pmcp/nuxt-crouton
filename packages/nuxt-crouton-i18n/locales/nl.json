@@ -47,7 +47,8 @@
     "viewAll": "Alles bekijken",
     "saveChanges": "Wijzigingen opslaan",
     "proceed": "Doorgaan",
-    "change": "Wijzigen"
+    "change": "Wijzigen",
+    "settings": "Instellingen"
   },
   "table": {
     "id": "ID",
@@ -334,7 +335,13 @@
     "noPendingInvitations": "Geen openstaande uitnodigingen",
     "cancelInvitation": "Uitnodiging annuleren",
     "decline": "Afwijzen",
-    "accept": "Accepteren"
+    "accept": "Accepteren",
+    "teamAdmin": "Teambeheerder",
+    "teamAdminDescription": "Beheer teaminstellingen en leden",
+    "manageMembersDescription": "Teamleden toevoegen, verwijderen en beheren",
+    "invitations": "Uitnodigingen",
+    "manageInvitationsDescription": "Beheer openstaande teamuitnodigingen",
+    "settings": "Instellingen"
   },
   "navigation": {
     "dashboard": "Dashboard",

@@ -47,7 +47,8 @@
     "viewAll": "View all",
     "saveChanges": "Save Changes",
     "proceed": "Proceed",
-    "change": "Change"
+    "change": "Change",
+    "settings": "Settings"
   },
   "table": {
     "id": "ID",
@@ -360,7 +361,13 @@
     "noPendingInvitations": "No pending invitations",
     "cancelInvitation": "Cancel invitation",
     "decline": "Decline",
-    "accept": "Accept"
+    "accept": "Accept",
+    "teamAdmin": "Team Admin",
+    "teamAdminDescription": "Manage team settings and members",
+    "manageMembersDescription": "Add, remove, and manage team members",
+    "invitations": "Invitations",
+    "manageInvitationsDescription": "Manage pending team invitations",
+    "settings": "Settings"
   },
   "navigation": {
     "dashboard": "Dashboard",
