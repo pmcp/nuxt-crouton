@@ -12,6 +12,9 @@ Visual schema designer for Nuxt Crouton collections. Provides a drag-and-drop in
 - **Live Preview**: See mock data rendered in table/list/grid/cards layouts
 - **Project Persistence**: Save schemas as projects with NuxtHub D1
 - **Export Options**: JSON schema, crouton.config.js snippet, CLI command
+- **Package Integration**: Browse and add crouton packages (crouton-bookings, crouton-sales)
+- **Package Configuration**: Configure package options (email notifications, booking modes, etc.)
+- **Cross-References**: Reference collections from packages in custom collections
 
 ## Key Files
 
@@ -19,13 +22,18 @@ Visual schema designer for Nuxt Crouton collections. Provides a drag-and-drop in
 |------|---------|
 | `nuxt.config.ts` | Layer configuration |
 | `app/types/schema.ts` | Type definitions for schema fields and state |
+| `app/types/package-manifest.ts` | Package manifest type definitions |
 | `app/composables/useSchemaDesigner.ts` | Main state management composable |
 | `app/composables/useSchemaProjects.ts` | Project CRUD composable |
 | `app/composables/useFieldTypes.ts` | Field type registry |
 | `app/composables/useMockData.ts` | Faker.js mock data generation |
 | `app/composables/useSchemaExport.ts` | Export functionality |
+| `app/composables/usePackageRegistry.ts` | Package discovery and caching |
+| `app/composables/useProjectComposer.ts` | Package + custom collection composition |
+| `app/composables/useExportGenerator.ts` | Generate nuxt.config, crouton.config |
 | `app/components/SchemaDesigner/FormPreview.vue` | Form preview (must sync with generator) |
 | `server/database/schema/schema-designer.ts` | Drizzle schema for projects table |
+| `server/utils/package-registry.ts` | Server-side manifest loading with jiti |
 
 ## Composables
 
@@ -36,6 +44,9 @@ Visual schema designer for Nuxt Crouton collections. Provides a drag-and-drop in
 | `useFieldTypes()` | Field type definitions with icons and defaults |
 | `useMockData()` | Generate fake data based on field names/types |
 | `useSchemaExport()` | Export schema as JSON, config, or CLI command |
+| `usePackageRegistry()` | Load and cache package manifests from API |
+| `useProjectComposer()` | Unified state for packages + custom collections |
+| `useExportGenerator()` | Generate nuxt.config.ts, crouton.config.js, schema files |
 
 ## Components
 
@@ -50,6 +61,13 @@ Visual schema designer for Nuxt Crouton collections. Provides a drag-and-drop in
 ### Project Components
 - `SchemaDesigner/ProjectList.vue` - List of saved projects
 - `SchemaDesigner/ProjectCard.vue` - Project card with actions
+
+### Package Integration Components
+- `SchemaDesigner/PackageBrowser.vue` - Grid of available packages with search
+- `SchemaDesigner/PackageCard.vue` - Individual package card (add/remove toggle)
+- `SchemaDesigner/PackageConfigPanel.vue` - Configuration form for selected package
+- `SchemaDesigner/PackageCollectionView.vue` - Read-only view of package collections
+- `SchemaDesigner/ProjectComposer.vue` - Main composition view (packages + custom)
 
 ## Sync Requirements
 
@@ -93,6 +111,7 @@ Form structure must match generator:
 
 ## API Endpoints
 
+### Project Endpoints
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/api/schema-projects` | List all projects |
@@ -100,6 +119,12 @@ Form structure must match generator:
 | GET | `/api/schema-projects/[id]` | Get project by ID |
 | PUT | `/api/schema-projects/[id]` | Update project |
 | DELETE | `/api/schema-projects/[id]` | Delete project |
+
+### Package Registry Endpoints
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/schema-designer/packages` | List available packages (summaries) |
+| GET | `/api/schema-designer/packages/[id]` | Get full package manifest |
 
 ## Database Schema
 
@@ -209,3 +234,128 @@ Navigate to `/schema-designer` in your app.
 2. Click "Export Schema"
 3. Copy the JSON to `schemas/[collection].json`
 4. Run `pnpm crouton [layer] [collection]`
+
+## Package Manifest Authoring
+
+To make a crouton package discoverable in the schema designer, create a `crouton.manifest.ts` file in the package root.
+
+### Manifest Structure
+
+```typescript
+// packages/your-package/crouton.manifest.ts
+import type { PackageManifest } from '@friendlyinternet/nuxt-crouton-schema-designer'
+
+const manifest: PackageManifest = {
+  // Identity
+  id: 'your-package',              // Package identifier
+  name: 'Your Package',            // Display name
+  description: 'Description...',   // Brief description
+  icon: 'i-heroicons-star',        // Iconify icon name
+  version: '1.0.0',
+
+  // Layer configuration
+  layer: {
+    name: 'yourPkg',               // Layer name (table prefix)
+    editable: false,               // Can user change it?
+    reason: 'Tables use yourPkg prefix'
+  },
+
+  // Dependencies (auto-added to extends)
+  dependencies: [
+    '@friendlyinternet/nuxt-crouton',
+    '@friendlyinternet/nuxt-crouton-auth'
+  ],
+
+  // Collections this package provides
+  collections: [
+    {
+      name: 'item',
+      tableName: 'yourPkgItems',
+      description: 'Items in this package',
+      schema: { /* field definitions */ },
+      optional: false
+    },
+    {
+      name: 'log',
+      tableName: 'yourPkgLogs',
+      description: 'Activity logs',
+      schema: { /* ... */ },
+      optional: true,
+      condition: 'config.logging.enabled'  // Only if config enabled
+    }
+  ],
+
+  // Configuration options (shown as form in UI)
+  configuration: {
+    'logging.enabled': {
+      type: 'boolean',
+      label: 'Enable Logging',
+      description: 'Track activity in logs collection',
+      default: false
+    },
+    'mode': {
+      type: 'select',
+      label: 'Mode',
+      default: 'basic',
+      options: [
+        { value: 'basic', label: 'Basic' },
+        { value: 'advanced', label: 'Advanced' }
+      ]
+    }
+  },
+
+  // Extension points (what custom fields can be added)
+  extensionPoints: [
+    {
+      collection: 'item',
+      allowedFields: ['customData'],
+      description: 'Add custom fields to items'
+    }
+  ],
+
+  // Documentation (what package provides)
+  provides: {
+    composables: ['useYourComposable'],
+    components: [
+      { name: 'CroutonYourComponent', description: 'Main component' }
+    ],
+    apiRoutes: ['/api/your-package/custom-endpoint']
+  }
+}
+
+export default manifest
+```
+
+### Registering a Package
+
+Add your package to the registry in `server/utils/package-registry.ts`:
+
+```typescript
+const WORKSPACE_PACKAGES = [
+  'crouton-bookings',
+  'crouton-sales',
+  'your-package',  // Add here
+]
+```
+
+### Configuration Types
+
+| Type | UI Component | Notes |
+|------|-------------|-------|
+| `boolean` | UCheckbox | Toggle options |
+| `string` | UInput | Text input |
+| `number` | UInputNumber | Numeric input |
+| `select` | USelect | Single selection dropdown |
+| `multiselect` | Checkbox group | Multiple selections |
+
+### Conditional Collections
+
+Use `optional: true` and `condition` to conditionally include collections:
+
+```typescript
+{
+  name: 'email-log',
+  optional: true,
+  condition: 'config.email.enabled'  // Only included when email.enabled is true
+}
+```
