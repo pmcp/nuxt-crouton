@@ -133,17 +133,30 @@ export function useTeam() {
 
   // Get current user's role in active team
   const currentRole = computed<MemberRole | null>(() => {
-    // Check if we have active org data with members
-    const activeOrg = activeOrgData.value as { members?: Array<{ userId: string, role: string }> } | null
-    if (!activeOrg?.members) return null
+    // First try: check if we have active org data with members array
+    const activeOrg = activeOrgData.value as { id?: string; members?: Array<{ userId: string, role: string }> } | null
 
     // Get current user from session
     const { user } = useSession()
-    if (!user.value) return null
 
-    // Find member entry
-    const member = activeOrg.members.find(m => m.userId === user.value?.id)
-    return member?.role as MemberRole ?? null
+    if (activeOrg?.members && user.value) {
+      // Find member entry in active org members
+      const member = activeOrg.members.find(m => m.userId === user.value?.id)
+      if (member?.role) {
+        return member.role as MemberRole
+      }
+    }
+
+    // Second try: check organizationsData (from organization.list()) which includes role
+    // This is more reliable because list() returns the user's role in each org
+    if (activeOrg?.id && organizationsData.value) {
+      const orgFromList = organizationsData.value.find((org: any) => org.id === activeOrg.id)
+      if (orgFromList?.role) {
+        return orgFromList.role as MemberRole
+      }
+    }
+
+    return null
   })
 
   // Flag-based computed properties
