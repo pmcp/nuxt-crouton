@@ -1,0 +1,40 @@
+{
+  "name": "@friendlyinternet/nuxt-crouton-pages",
+  "version": "1.0.0",
+  "description": "Page management system for Nuxt Crouton with page types, tree layout, and CMS functionality",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "server",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "cms",
+    "pages",
+    "crouton"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton-pages"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "@nuxt/ui": "^4.3.0",
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
+    "@friendlyinternet/nuxt-crouton-editor": "workspace:*"
+  }
+}
