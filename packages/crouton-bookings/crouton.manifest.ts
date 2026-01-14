@@ -46,7 +46,7 @@ const manifest: PackageManifest = {
       schemaPath: './schemas/settings.json'
     },
     {
-      name: 'email-template',
+      name: 'emailtemplate',
       tableName: 'bookingsEmailtemplates',
       description: 'Email notification templates for booking confirmations, reminders, and follow-ups.',
       schema: emailTemplateSchema,
@@ -55,7 +55,7 @@ const manifest: PackageManifest = {
       condition: 'config.email.enabled'
     },
     {
-      name: 'email-log',
+      name: 'emaillog',
       tableName: 'bookingsEmaillogs',
       description: 'Log of sent emails with status tracking.',
       schema: emailLogSchema,
