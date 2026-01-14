@@ -211,7 +211,6 @@ const sizeClasses = computed(() => {
           isCreatingDate(day)
             ? 'bg-elevated shadow-md'
             : isHighlighted(day) && 'bg-elevated shadow-sm',
-          isCreating && !isCreatingDate(day) && 'opacity-40',
         ]"
         @click="onDayClick(day)"
       >
