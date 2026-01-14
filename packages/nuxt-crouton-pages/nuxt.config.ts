@@ -50,5 +50,13 @@ export default defineNuxtConfig({
   nitro: {
     // Include server middleware and utils
     scanDirs: ['./server']
+  },
+
+  // i18n translations
+  i18n: {
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' }
+    ],
+    langDir: './locales'
   }
 })

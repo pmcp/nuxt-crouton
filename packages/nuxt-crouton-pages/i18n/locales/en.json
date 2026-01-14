@@ -1,0 +1,34 @@
+{
+  "pages": {
+    "admin": {
+      "pages": "Pages",
+      "title": "Pages",
+      "createPage": "Create Page",
+      "editPage": "Edit Page",
+      "pageType": "Page Type",
+      "content": "Content",
+      "settings": "Settings"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "visibility": {
+      "public": "Public",
+      "members": "Members Only",
+      "hidden": "Hidden"
+    },
+    "fields": {
+      "title": "Title",
+      "slug": "URL Slug",
+      "pageType": "Page Type",
+      "content": "Content",
+      "status": "Status",
+      "visibility": "Visibility",
+      "showInNavigation": "Show in Navigation",
+      "seoTitle": "SEO Title",
+      "seoDescription": "SEO Description"
+    }
+  }
+}
