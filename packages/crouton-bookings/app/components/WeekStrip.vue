@@ -130,6 +130,12 @@ function isCreatingDate(day: { jsDate: Date }): boolean {
 }
 
 function onDayClick(day: { date: DateValue, jsDate: Date }) {
+  // Click navigates to the day in the list
+  emit('hover', day.jsDate)
+}
+
+function onAddClick(event: Event, day: { date: DateValue, jsDate: Date }) {
+  event.stopPropagation() // Don't trigger day click
   emit('dayClick', day.jsDate)
 }
 
@@ -195,7 +201,7 @@ const sizeClasses = computed(() => {
     </div>
 
     <!-- Days Grid -->
-    <div class="grid grid-cols-7 gap-2" @mouseleave="!isCreating && emit('hover', null)">
+    <div class="grid grid-cols-7 gap-2">
       <div
         v-for="day in weekDays"
         :key="day.date.toString()"
@@ -208,13 +214,7 @@ const sizeClasses = computed(() => {
           isCreating && !isCreatingDate(day) && 'opacity-40',
         ]"
         @click="onDayClick(day)"
-        @mouseenter="!isCreating && emit('hover', day.jsDate)"
       >
-        <!-- Add booking indicator (shows on hover) -->
-        <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <UIcon name="i-lucide-plus" class="size-3 text-primary" />
-        </div>
-
         <!-- Weekday label -->
         <span :class="['text-muted uppercase tracking-wider font-medium', sizeClasses.weekday]">
           {{ day.weekdayShort }}
@@ -235,6 +235,16 @@ const sizeClasses = computed(() => {
         <slot name="day" :day="day.date" :js-date="day.jsDate">
           <div class="mt-1 min-h-[8px]" />
         </slot>
+
+        <!-- Add booking tab (slides down from under the date block on hover) -->
+        <button
+          v-if="!isCreating"
+          type="button"
+          class="absolute bottom-0 left-0 right-0 translate-y-0 flex items-center justify-center h-6 bg-neutral-700 rounded-b-lg opacity-0 transition-all duration-200 ease-out group-hover:translate-y-4 group-hover:opacity-100 hover:bg-neutral-600 active:scale-[0.98] z-10"
+          @click="onAddClick($event, day)"
+        >
+          <UIcon name="i-lucide-plus" class="size-3.5 text-neutral-300" />
+        </button>
       </div>
     </div>
   </div>
