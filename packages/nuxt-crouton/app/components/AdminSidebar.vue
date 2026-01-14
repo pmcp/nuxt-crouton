@@ -1,6 +1,24 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
+// Check if TeamSwitcher is available (from nuxt-crouton-auth)
+const hasTeamSwitcher = ref(false)
+const TeamSwitcherComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
+
+// Check if team switcher should be shown (for team admin only)
+const runtimeConfig = useRuntimeConfig()
+const showSwitcher = computed(() => runtimeConfig.public.crouton?.auth?.teams?.showSwitcher !== false)
+
+onMounted(() => {
+  if (showSwitcher.value) {
+    const teamSwitcher = resolveComponent('TeamSwitcher')
+    if (typeof teamSwitcher !== 'string') {
+      TeamSwitcherComponent.value = teamSwitcher
+      hasTeamSwitcher.value = true
+    }
+  }
+})
+
 interface Props {
   /**
    * The type of admin context: 'team' for team admin, 'super' for super admin
@@ -210,19 +228,33 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
   >
     <template #header="{ collapsed }">
       <div class="flex flex-col gap-2 w-full">
-        <!-- Admin badge/logo -->
-        <div v-if="!collapsed" class="flex items-center gap-2">
+        <!-- Team Switcher in header (team admin only) -->
+        <component
+          :is="TeamSwitcherComponent"
+          v-if="hasTeamSwitcher && !collapsed && context === 'team'"
+          route-prefix="/admin"
+          size="sm"
+          class="w-full"
+        />
+        <!-- Collapsed: show settings icon for team admin -->
+        <UIcon
+          v-else-if="collapsed && context === 'team'"
+          name="i-lucide-settings"
+          class="size-5 text-primary mx-auto"
+        />
+        <!-- Super Admin header -->
+        <div v-else-if="context === 'super' && !collapsed" class="flex items-center gap-2">
           <UIcon
-            :name="context === 'super' ? 'i-lucide-shield-check' : 'i-lucide-settings'"
+            name="i-lucide-shield-check"
             class="size-5 text-primary"
           />
           <span class="font-semibold text-sm">
-            {{ context === 'super' ? t('admin.superAdmin') || 'Super Admin' : t('admin.teamAdmin') || 'Team Admin' }}
+            {{ t('admin.superAdmin') || 'Super Admin' }}
           </span>
         </div>
         <UIcon
-          v-else
-          :name="context === 'super' ? 'i-lucide-shield-check' : 'i-lucide-settings'"
+          v-else-if="context === 'super' && collapsed"
+          name="i-lucide-shield-check"
           class="size-5 text-primary mx-auto"
         />
       </div>

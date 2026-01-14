@@ -22,12 +22,15 @@ interface Props {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   /** Hide search input for small lists */
   searchable?: boolean
+  /** Route prefix for navigation after team switch (default: /dashboard) */
+  routePrefix?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showCreate: true,
   size: 'md',
-  searchable: false
+  searchable: false,
+  routePrefix: '/dashboard'
 })
 
 const emit = defineEmits<{
@@ -46,8 +49,6 @@ const {
   canCreateTeam,
   loading
 } = useTeam()
-
-const { buildDashboardUrl } = useTeamContext()
 
 // Show switcher based on config (default: show if multiple teams exist)
 const showSwitcher = computed(() => config?.teams?.showSwitcher !== false)
@@ -102,9 +103,9 @@ const selectedTeamId = computed({
       await switchTeam(team.id)
       emit('switch', team)
 
-      // Navigate to new team's dashboard
-      const dashboardUrl = buildDashboardUrl(team.slug, '')
-      await navigateTo(dashboardUrl)
+      // Navigate to new team's context (dashboard or admin)
+      const targetUrl = `${props.routePrefix}/${team.slug}`
+      await navigateTo(targetUrl)
     }
   }
 })
@@ -115,8 +116,8 @@ async function handleTeamCreated(team: Team) {
   await switchTeam(team.id)
   emit('switch', team)
 
-  const dashboardUrl = buildDashboardUrl(team.slug, '')
-  await navigateTo(dashboardUrl)
+  const targetUrl = `${props.routePrefix}/${team.slug}`
+  await navigateTo(targetUrl)
 }
 </script>
 
