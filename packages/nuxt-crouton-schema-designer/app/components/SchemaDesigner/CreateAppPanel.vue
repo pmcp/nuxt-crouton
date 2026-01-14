@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { GENERATION_STEPS } from '../../types/app-generator'
-import type { CollectionConfig } from '../../types/app-generator'
+import type { CollectionConfig, PackageConfig } from '../../types/app-generator'
 import type { CollectionSchema, SchemaField } from '../../types/schema'
+import type { PackageInstance } from '../../types/package-manifest'
 
 const emit = defineEmits<{
   close: []
 }>()
 
 const { multiState, collections } = useSchemaDesigner()
+const {
+  projectName: composerProjectName,
+  baseLayerName,
+  packages,
+  packageManifests,
+  customCollections,
+  hasPackages
+} = useProjectComposer()
+
 const {
   support,
   projectName,
@@ -25,11 +35,51 @@ const {
 
 const toast = useToast()
 
+// Determine if we're in package mode
+const isPackageMode = computed(() => hasPackages.value)
+
+// Get the effective layer name
+// When a package has a non-editable layer name, use it instead of the base layer name
+const effectiveLayerName = computed(() => {
+  if (isPackageMode.value) {
+    // Check if any package has a non-editable layer name
+    for (const pkg of packages.value) {
+      const manifest = packageManifests.value.get(pkg.packageId)
+      if (manifest?.layer && !manifest.layer.editable) {
+        return manifest.layer.name
+      }
+    }
+    // Fall back to base layer name for custom collections
+    return baseLayerName.value
+  }
+  return multiState.value.layerName
+})
+
+// Get the effective collections (custom collections in package mode, all in legacy mode)
+const effectiveCollections = computed(() => {
+  return isPackageMode.value ? customCollections.value : collections.value
+})
+
 // Form state - global options only, per-collection options come from collections
 const options = ref({
   dialect: 'sqlite' as const,
   includeAuth: false,
   includeI18n: false
+})
+
+// Auto-detect auth/i18n from packages
+watchEffect(() => {
+  if (isPackageMode.value) {
+    for (const pkg of packages.value) {
+      const manifest = packageManifests.value.get(pkg.packageId)
+      if (manifest?.dependencies?.includes('@friendlyinternet/nuxt-crouton-auth')) {
+        options.value.includeAuth = true
+      }
+      if (manifest?.dependencies?.includes('@friendlyinternet/nuxt-crouton-i18n')) {
+        options.value.includeI18n = true
+      }
+    }
+  }
 })
 
 /**
@@ -81,7 +131,7 @@ function fieldsToSchema(fields: SchemaField[]): Record<string, unknown> {
  * Convert multi-collection state to CollectionConfig array
  */
 function collectionsToConfigs(): CollectionConfig[] {
-  return collections.value.map((col: CollectionSchema) => ({
+  return effectiveCollections.value.map((col: CollectionSchema) => ({
     name: col.collectionName,
     schema: fieldsToSchema(col.fields),
     hierarchy: col.options.hierarchy,
@@ -91,12 +141,31 @@ function collectionsToConfigs(): CollectionConfig[] {
   }))
 }
 
-// Initialize project name from layer
+/**
+ * Convert packages to PackageConfig array
+ */
+function packagesToConfigs(): PackageConfig[] {
+  return packages.value.map((pkg: PackageInstance) => {
+    const manifest = packageManifests.value.get(pkg.packageId)
+    return {
+      packageId: pkg.packageId,
+      layerName: pkg.layerName,
+      config: pkg.config || {},
+      npmPackage: manifest?.npmPackage
+    }
+  })
+}
+
+// Initialize project name from layer or composer
 onMounted(() => {
-  if (!projectName.value && multiState.value.layerName) {
-    const collectionCount = collections.value.length
-    const suffix = collectionCount > 1 ? 'app' : collections.value[0]?.collectionName || 'app'
-    projectName.value = `${multiState.value.layerName}-${suffix}`
+  if (!projectName.value) {
+    if (isPackageMode.value && composerProjectName.value) {
+      projectName.value = composerProjectName.value.toLowerCase().replace(/\s+/g, '-')
+    } else if (effectiveLayerName.value) {
+      const collectionCount = effectiveCollections.value.length
+      const suffix = collectionCount > 1 ? 'app' : effectiveCollections.value[0]?.collectionName || 'app'
+      projectName.value = `${effectiveLayerName.value}-${suffix}`
+    }
   }
 })
 
@@ -134,19 +203,25 @@ async function handleCreate() {
 
   try {
     const collectionConfigs = collectionsToConfigs()
+    const packageConfigs = isPackageMode.value ? packagesToConfigs() : []
 
     await createApp({
       projectName: projectName.value,
       targetPath: targetPath.value,
-      layerName: multiState.value.layerName,
+      layerName: effectiveLayerName.value,
       collections: collectionConfigs,
+      packages: packageConfigs,
       options: options.value
     })
 
     if (result.value?.success) {
+      const itemCount = collectionConfigs.length + packageConfigs.length
+      const itemLabel = packageConfigs.length > 0
+        ? `${packageConfigs.length} package(s) and ${collectionConfigs.length} collection(s)`
+        : `${collectionConfigs.length} collection(s)`
       toast.add({
         title: 'Project created!',
-        description: `Created ${collectionConfigs.length} collection(s) at ${result.value.projectPath}`,
+        description: `Created ${itemLabel} at ${result.value.projectPath}`,
         icon: 'i-lucide-check-circle',
         color: 'success'
       })
@@ -353,14 +428,33 @@ const currentStepIndex = computed(() => {
           <span class="font-mono">{{ targetPath }}/{{ projectName }}</span>
         </div>
         <div class="text-[var(--ui-text-muted)]">
-          Layer: <span class="font-mono">{{ multiState.layerName }}</span>
+          Layer: <span class="font-mono">{{ effectiveLayerName }}</span>
         </div>
-        <div class="text-[var(--ui-text-muted)]">
-          <span class="font-medium">{{ collections.length }} Collection{{ collections.length > 1 ? 's' : '' }}:</span>
+
+        <!-- Packages (if in package mode) -->
+        <template v-if="isPackageMode && packages.length > 0">
+          <div class="text-[var(--ui-text-muted)]">
+            <span class="font-medium">{{ packages.length }} Package{{ packages.length > 1 ? 's' : '' }}:</span>
+          </div>
+          <div class="pl-3 space-y-1">
+            <div
+              v-for="pkg in packages"
+              :key="pkg.packageId"
+              class="text-[var(--ui-text-muted)] flex items-center gap-2"
+            >
+              <UIcon :name="packageManifests.get(pkg.packageId)?.icon || 'i-lucide-package'" class="text-xs text-[var(--ui-primary)]" />
+              <span class="font-mono">{{ packageManifests.get(pkg.packageId)?.name || pkg.packageId }}</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Collections -->
+        <div v-if="effectiveCollections.length > 0" class="text-[var(--ui-text-muted)]">
+          <span class="font-medium">{{ effectiveCollections.length }} {{ isPackageMode ? 'Custom ' : '' }}Collection{{ effectiveCollections.length > 1 ? 's' : '' }}:</span>
         </div>
-        <div class="pl-3 space-y-1">
+        <div v-if="effectiveCollections.length > 0" class="pl-3 space-y-1">
           <div
-            v-for="col in collections"
+            v-for="col in effectiveCollections"
             :key="col.id"
             class="text-[var(--ui-text-muted)] flex items-center gap-2"
           >
@@ -368,6 +462,9 @@ const currentStepIndex = computed(() => {
             <span class="font-mono">{{ col.collectionName }}</span>
             <span class="text-xs opacity-50">({{ col.fields.length }} fields)</span>
           </div>
+        </div>
+        <div v-else-if="!isPackageMode" class="text-[var(--ui-text-muted)] italic">
+          No collections defined
         </div>
       </div>
 
