@@ -140,6 +140,7 @@ function resetForm() {
         :label="t('auth.currentPassword')"
         name="currentPassword"
         required
+        class="w-full"
       >
         <UInput
           v-model="state.currentPassword"
@@ -147,6 +148,7 @@ function resetForm() {
           placeholder="Enter current password"
           icon="i-lucide-lock"
           :disabled="isLoading"
+          class="w-full"
         />
       </UFormField>
 
@@ -156,6 +158,7 @@ function resetForm() {
         :label="t('auth.newPassword')"
         name="newPassword"
         required
+        class="w-full"
       >
         <template #hint>
           <span class="text-xs text-muted">Minimum 8 characters</span>
@@ -166,6 +169,7 @@ function resetForm() {
           placeholder="Enter new password"
           icon="i-lucide-key"
           :disabled="isLoading"
+          class="w-full"
         />
       </UFormField>
 
@@ -173,6 +177,7 @@ function resetForm() {
         :label="t('auth.confirmPassword')"
         name="confirmPassword"
         required
+        class="w-full"
       >
         <UInput
           v-model="state.confirmPassword"
@@ -180,6 +185,7 @@ function resetForm() {
           placeholder="Confirm new password"
           icon="i-lucide-key"
           :disabled="isLoading"
+          class="w-full"
         />
       </UFormField>
 

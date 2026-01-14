@@ -183,18 +183,21 @@ function resetForm() {
         label="Display name"
         name="name"
         required
+        class="w-full"
       >
         <UInput
           v-model="state.name"
           placeholder="John Doe"
           icon="i-lucide-user"
           :disabled="isLoading"
+          class="w-full"
         />
       </UFormField>
 
       <UFormField
         label="Avatar URL"
         name="image"
+        class="w-full"
       >
         <template #hint>
           <span class="text-xs text-muted">Optional. Enter a URL to your profile picture.</span>
@@ -204,6 +207,7 @@ function resetForm() {
           placeholder="https://example.com/avatar.png"
           icon="i-lucide-image"
           :disabled="isLoading"
+          class="w-full"
         />
       </UFormField>
 
