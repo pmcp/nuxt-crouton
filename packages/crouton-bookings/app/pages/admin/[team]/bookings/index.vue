@@ -5,6 +5,9 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+
+// Fetch all team bookings (admin view)
+const { items: bookings, pending, refresh } = await useCollectionQuery('bookingsBookings')
 </script>
 
 <template>
@@ -16,21 +19,17 @@ const { t } = useI18n()
             icon="i-lucide-plus"
             color="primary"
             :label="t('common.create')"
-            @click="useCrouton().open('bookings-bookings', 'create')"
+            @click="useCrouton().open('bookingsBookings', 'create')"
           />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <div class="h-full p-4">
-        <CroutonCollection
-          collection="bookings-bookings"
-          layout="table"
-          :columns="['date', 'slot', 'location', 'owner', 'status', 'createdAt']"
-          :default-sort="{ field: 'date', direction: 'desc' }"
-          :show-search="true"
-          :show-pagination="true"
+      <div class="p-4">
+        <CroutonBookingsList
+          :bookings="bookings"
+          :loading="pending"
         />
       </div>
     </template>
