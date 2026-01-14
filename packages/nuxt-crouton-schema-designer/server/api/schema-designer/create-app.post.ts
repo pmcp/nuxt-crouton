@@ -27,12 +27,22 @@ const CollectionConfigSchema = z.object({
   seedCount: z.number().optional()
 })
 
+// Schema for a package to include
+const PackageConfigSchema = z.object({
+  packageId: z.string().min(1),
+  layerName: z.string().min(1),
+  config: z.record(z.string(), z.unknown()).optional().default({}),
+  npmPackage: z.string().optional()
+})
+
 const CreateAppSchema = z.object({
   projectName: z.string().min(1).max(100),
   targetPath: z.string().min(1),
   layerName: z.string().min(1).max(50),
   /** Multiple collections to generate */
   collections: z.array(CollectionConfigSchema).min(1),
+  /** Packages to include (e.g., crouton-bookings) */
+  packages: z.array(PackageConfigSchema).optional().default([]),
   templatesWritten: z.boolean().optional(),
   options: z.object({
     dialect: z.enum(['sqlite', 'pg']).default('sqlite'),
@@ -62,7 +72,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { projectName, targetPath, layerName, collections, templatesWritten, options } = parsed.data
+  const { projectName, targetPath, layerName, collections, packages, templatesWritten, options } = parsed.data
   const projectPath = join(targetPath, projectName)
 
   const errors: string[] = []
@@ -108,6 +118,7 @@ export default defineEventHandler(async (event) => {
         projectName,
         layerName,
         collections,
+        packages,
         dialect: options.dialect,
         includeAuth: options.includeAuth,
         includeI18n: options.includeI18n,

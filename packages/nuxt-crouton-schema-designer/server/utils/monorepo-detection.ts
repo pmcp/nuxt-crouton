@@ -69,14 +69,24 @@ export function detectMonorepoContext(): MonorepoContext {
  * Get the dependency value for a package (file: path or npm version)
  */
 export function getPackageDependency(
-  packageName: 'auth' | 'i18n' | 'crouton',
+  packageName: 'auth' | 'i18n' | 'crouton' | string,
   context: MonorepoContext,
   npmVersion: string = 'latest'
 ): string {
-  const localPath = context.packagePaths[packageName]
+  // Check predefined packages first
+  if (packageName in context.packagePaths) {
+    const localPath = context.packagePaths[packageName as keyof typeof context.packagePaths]
+    if (context.isMonorepo && localPath) {
+      return `file:${localPath}`
+    }
+  }
 
-  if (context.isMonorepo && localPath) {
-    return `file:${localPath}`
+  // For dynamic packages (e.g., crouton-bookings), check if they exist in monorepo
+  if (context.isMonorepo && context.monorepoRoot) {
+    const dynamicPath = join(context.monorepoRoot, 'packages', packageName)
+    if (existsSync(dynamicPath)) {
+      return `file:${dynamicPath}`
+    }
   }
 
   return npmVersion
@@ -87,19 +97,32 @@ export function getPackageDependency(
  * For local packages, use the absolute path; for npm, use the package name
  */
 export function getExtendsReference(
-  packageName: 'auth' | 'i18n' | 'crouton',
+  packageName: 'auth' | 'i18n' | 'crouton' | string,
   context: MonorepoContext
 ): string {
-  const localPath = context.packagePaths[packageName]
-  const npmNames = {
+  const npmNames: Record<string, string> = {
     auth: '@friendlyinternet/nuxt-crouton-auth',
     i18n: '@friendlyinternet/nuxt-crouton-i18n',
     crouton: '@friendlyinternet/nuxt-crouton'
-  } as const
-
-  if (context.isMonorepo && localPath) {
-    return localPath
   }
 
-  return npmNames[packageName]
+  // Check predefined packages first
+  if (packageName in context.packagePaths) {
+    const localPath = context.packagePaths[packageName as keyof typeof context.packagePaths]
+    if (context.isMonorepo && localPath) {
+      return localPath
+    }
+    return npmNames[packageName] || `@friendlyinternet/${packageName}`
+  }
+
+  // For dynamic packages (e.g., crouton-bookings), check if they exist in monorepo
+  if (context.isMonorepo && context.monorepoRoot) {
+    const dynamicPath = join(context.monorepoRoot, 'packages', packageName)
+    if (existsSync(dynamicPath)) {
+      return dynamicPath
+    }
+  }
+
+  // Fall back to npm package name
+  return `@friendlyinternet/${packageName}`
 }

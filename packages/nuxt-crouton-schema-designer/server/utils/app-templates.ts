@@ -22,11 +22,23 @@ export interface CollectionConfig {
   seedCount?: number
 }
 
+/**
+ * Configuration for a package to include
+ */
+export interface PackageConfig {
+  packageId: string
+  layerName: string
+  config?: Record<string, unknown>
+  npmPackage?: string
+}
+
 export interface AppTemplateOptions {
   projectName: string
   layerName: string
   /** Multiple collections to generate */
   collections: CollectionConfig[]
+  /** Packages to include (e.g., crouton-bookings) */
+  packages?: PackageConfig[]
   dialect: 'sqlite' | 'pg'
   includeAuth: boolean
   includeI18n: boolean
@@ -67,6 +79,20 @@ export function generatePackageJson(options: AppTemplateOptions): string {
     deps['@friendlyinternet/nuxt-crouton-i18n'] = getPackageDependency('i18n', context)
   }
 
+  // Add package dependencies
+  if (options.packages && options.packages.length > 0) {
+    for (const pkg of options.packages) {
+      if (pkg.npmPackage) {
+        // Use npm package name
+        deps[pkg.npmPackage] = 'latest'
+      } else {
+        // Use local package reference for monorepo development
+        const packageName = `@friendlyinternet/${pkg.packageId}`
+        deps[packageName] = getPackageDependency(pkg.packageId, context)
+      }
+    }
+  }
+
   return JSON.stringify({
     name: options.projectName,
     private: true,
@@ -99,6 +125,21 @@ export function generateNuxtConfig(options: AppTemplateOptions): string {
   if (options.includeI18n) {
     extendsLayers.push(`'${getExtendsReference('i18n', context)}'`)
   }
+
+  // Add packages to extends
+  if (options.packages && options.packages.length > 0) {
+    for (const pkg of options.packages) {
+      if (pkg.npmPackage) {
+        // Use npm package name
+        extendsLayers.push(`'${pkg.npmPackage}'`)
+      } else {
+        // Use local package reference for monorepo development
+        extendsLayers.push(`'${getExtendsReference(pkg.packageId, context)}'`)
+      }
+    }
+  }
+
+  // Custom collections layer goes last
   extendsLayers.push(`'./layers/${options.layerName}'`)
 
   return `export default defineNuxtConfig({
