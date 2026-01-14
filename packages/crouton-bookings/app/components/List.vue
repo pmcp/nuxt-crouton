@@ -622,6 +622,7 @@ watch(
                 :booking="booking"
                 :active-location-filter="activeLocationFilter"
                 @updated="handleBookingUpdated"
+                @cancelled="handleBookingUpdated"
                 @cancel="handleEditCancel"
               />
               <!-- Show normal card otherwise -->

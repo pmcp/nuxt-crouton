@@ -20,6 +20,7 @@ const emit = defineEmits<{
   created: []
   updated: []
   cancel: []
+  cancelled: []
 }>()
 
 // Are we in edit mode?
@@ -63,12 +64,16 @@ const localGroupId = ref<string | null>(props.booking?.group ?? null)
 // Track if we're updating
 const isUpdating = ref(false)
 
+// Track if we're cancelling the booking
+const isCancelling = ref(false)
+const showCancelConfirm = ref(false)
+
 // Track if we're in initial edit mode setup (to prevent clearing slot)
 const isInitialEditSetup = ref(!!props.booking)
 
-// Route for team ID
-const route = useRoute()
-const teamId = computed(() => route.params.team as string)
+// Team ID from auth context
+const { currentTeam } = useTeam()
+const teamId = computed(() => currentTeam.value?.id)
 
 // Sync form state when component mounts or date changes
 watch(() => props.date, (newDate) => {
@@ -220,6 +225,32 @@ function handleCancel() {
   formState.editingBookingId = null
   emit('cancel')
 }
+
+// Handle cancel booking (change status to cancelled)
+async function handleCancelBooking() {
+  if (!props.booking || !teamId.value) return
+
+  isCancelling.value = true
+  try {
+    await $fetch(`/api/crouton-bookings/teams/${teamId.value}/bookings/${props.booking.id}`, {
+      method: 'PATCH',
+      body: {
+        status: 'cancelled',
+      },
+    })
+    // Clear editing state
+    formState.editingBookingId = null
+    showCancelConfirm.value = false
+    emit('cancelled')
+  } catch (error) {
+    console.error('Failed to cancel booking:', error)
+  } finally {
+    isCancelling.value = false
+  }
+}
+
+// Check if booking is already cancelled
+const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
 </script>
 
 <template>
@@ -324,25 +355,67 @@ function handleCancel() {
         </span>
       </div>
 
+      <!-- Cancel booking confirmation -->
+      <div v-if="isEditMode && showCancelConfirm" class="bg-error/10 rounded-lg px-3 py-2">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-xs text-muted">Cancel this booking?</span>
+          <div class="flex items-center gap-2">
+            <UButton
+              variant="ghost"
+              color="neutral"
+              size="xs"
+              @click="showCancelConfirm = false"
+            >
+              Keep
+            </UButton>
+            <UButton
+              variant="soft"
+              color="error"
+              size="xs"
+              :loading="isCancelling"
+              @click="handleCancelBooking"
+            >
+              Cancel Booking
+            </UButton>
+          </div>
+        </div>
+      </div>
+
       <!-- Actions -->
-      <div class="flex justify-end gap-2">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          size="xs"
-          @click="handleCancel"
-        >
-          Cancel
-        </UButton>
-        <UButton
-          color="primary"
-          size="xs"
-          :disabled="!canSubmit || isSubmitting || isUpdating"
-          :loading="isSubmitting || isUpdating"
-          @click="handleSubmit"
-        >
-          {{ isEditMode ? 'Save' : 'Create' }}
-        </UButton>
+      <div class="flex justify-between gap-2">
+        <!-- Cancel booking button (only in edit mode, not already cancelled) -->
+        <div>
+          <UButton
+            v-if="isEditMode && !isAlreadyCancelled && !showCancelConfirm"
+            color="error"
+            variant="ghost"
+            size="xs"
+            icon="i-lucide-x-circle"
+            @click="showCancelConfirm = true"
+          >
+            Cancel Booking
+          </UButton>
+        </div>
+
+        <div class="flex gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            @click="handleCancel"
+          >
+            {{ isEditMode ? 'Close' : 'Cancel' }}
+          </UButton>
+          <UButton
+            color="primary"
+            size="xs"
+            :disabled="!canSubmit || isSubmitting || isUpdating || isAlreadyCancelled"
+            :loading="isSubmitting || isUpdating"
+            @click="handleSubmit"
+          >
+            {{ isEditMode ? 'Save' : 'Create' }}
+          </UButton>
+        </div>
       </div>
     </div>
   </UCard>

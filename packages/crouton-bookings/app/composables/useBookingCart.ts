@@ -18,20 +18,23 @@ const ALL_DAY_SLOT: SlotItem = {
  * Supports both slot-based and inventory-based booking modes
  */
 export function useBookingCart() {
-  const route = useRoute()
   const toast = useToast()
+  const { currentTeam } = useTeam()
 
-  // Team ID from route - support both 'team' and 'teamSlug' params
-  const teamId = computed(() => (route.params.team || route.params.teamSlug) as string)
+  // Team ID from auth context (consistent with useBookingsList)
+  const teamId = computed(() => currentTeam.value?.id)
 
   // Cart persisted in localStorage
   const cart = useLocalStorage<CartItem[]>('crouton-booking-cart', [])
 
   // Fetch customer bookings for the "My Bookings" count and list
   const { data: myBookings, status: myBookingsStatus, refresh: refreshMyBookings } = useFetch<BookingData[]>(
-    () => `/api/crouton-bookings/teams/${teamId.value}/customer-bookings`,
+    () => teamId.value
+      ? `/api/crouton-bookings/teams/${teamId.value}/customer-bookings`
+      : null,
     {
       key: 'crouton-booking-sidebar-customer-bookings',
+      watch: [teamId],
     },
   )
 
@@ -66,9 +69,12 @@ export function useBookingCart() {
 
   // Fetch booking settings (for enableGroups and groups options)
   const { data: settingsData } = useFetch<SettingsData[]>(
-    () => `/api/teams/${teamId.value}/bookings-settings`,
+    () => teamId.value
+      ? `/api/teams/${teamId.value}/bookings-settings`
+      : null,
     {
       key: 'crouton-booking-cart-settings',
+      watch: [teamId],
     },
   )
 
@@ -112,10 +118,13 @@ export function useBookingCart() {
 
   // Fetch allowed locations
   const { data: locations, status: locationsStatus, refresh: refreshLocations } = useFetch<LocationData[]>(
-    () => `/api/crouton-bookings/teams/${teamId.value}/customer-locations`,
+    () => teamId.value
+      ? `/api/crouton-bookings/teams/${teamId.value}/customer-locations`
+      : null,
     {
       key: 'crouton-booking-cart-locations',
-      getCachedData: () => undefined,
+      watch: [teamId],
+      default: () => [],
     },
   )
 
