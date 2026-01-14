@@ -3,27 +3,18 @@
  * Team Admin Layout
  *
  * Layout for team admin pages (/admin/[team]/*).
- * Uses the AdminSidebar component with team context.
+ * Provides sidebar + slot - pages provide their own UDashboardPanel.
  *
- * Uses UDashboardPanel with UDashboardNavbar to provide:
- * - Mobile sidebar toggle button
- * - Proper header spacing
- * - Responsive layout structure
+ * This allows each section (bookings, team settings, etc.) to:
+ * - Have its own title in UDashboardNavbar
+ * - Add horizontal tabs via UNavigationMenu
+ * - Control their own panel structure
  */
 </script>
 
 <template>
   <UDashboardGroup>
     <CroutonAdminSidebar context="team" />
-    <UDashboardPanel>
-      <UDashboardNavbar title="Admin">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-      </UDashboardNavbar>
-      <div class="flex-1 overflow-hidden">
-        <slot />
-      </div>
-    </UDashboardPanel>
+    <slot />
   </UDashboardGroup>
 </template>

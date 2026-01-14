@@ -33,38 +33,26 @@ function handleInvited() {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto space-y-8">
-    <!-- Header with back link -->
-    <div>
-      <NuxtLink
-        :to="`/admin/${teamSlug}`"
-        class="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground mb-4"
-      >
-        <UIcon
-          name="i-lucide-arrow-left"
-          class="size-4"
-        />
-        {{ t('navigation.backToAdmin') }}
-      </NuxtLink>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="t('teams.teamMembers')">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+        <template #trailing>
+          <UButton
+            v-if="canInviteMembers"
+            icon="i-lucide-user-plus"
+            @click="handleInvite"
+          >
+            {{ t('teams.invite') }}
+          </UButton>
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold">
-            {{ t('teams.teamMembers') }}
-          </h1>
-          <p class="text-muted mt-1">
-            {{ t('teams.manageMembersDescription') }}
-          </p>
-        </div>
-        <UButton
-          v-if="canInviteMembers"
-          icon="i-lucide-user-plus"
-          @click="handleInvite"
-        >
-          {{ t('teams.invite') }}
-        </UButton>
-      </div>
-    </div>
+    <template #body>
+      <div class="max-w-4xl mx-auto space-y-8 p-6">
 
     <!-- Team Info -->
     <UCard v-if="currentTeam">
@@ -118,5 +106,7 @@ function handleInvited() {
         />
       </div>
     </UModal>
-  </div>
+      </div>
+    </template>
+  </UDashboardPanel>
 </template>

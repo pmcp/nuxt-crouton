@@ -1,9 +1,4 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: 'admin',
-  middleware: 'auth'
-})
-
 const route = useRoute()
 const teamId = computed(() => route.params.team as string)
 
@@ -285,28 +280,26 @@ function getLocationName(locationId: string | null) {
 </script>
 
 <template>
-  <UDashboardPanel>
-    <template #header>
-      <UDashboardNavbar title="Email Templates">
-        <template #right>
-          <UDropdownMenu
-            :items="[
-              { label: 'Booking Created', icon: 'i-lucide-calendar-plus', click: () => openCreateForm('booking_created') },
-              { label: 'Reminder Before', icon: 'i-lucide-bell', click: () => openCreateForm('reminder_before') },
-              { label: 'Booking Cancelled', icon: 'i-lucide-calendar-x', click: () => openCreateForm('booking_cancelled') },
-              { label: 'Follow Up After', icon: 'i-lucide-mail-check', click: () => openCreateForm('follow_up_after') }
-            ]"
-          >
-            <UButton icon="i-lucide-plus" color="primary">
-              New Template
-            </UButton>
-          </UDropdownMenu>
-        </template>
-      </UDashboardNavbar>
-    </template>
-
-    <template #body>
-      <div class="p-6 space-y-8">
+  <div class="p-6 space-y-8">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold">Email Templates</h1>
+        <p class="text-muted mt-1">Configure automated email notifications for bookings</p>
+      </div>
+      <UDropdownMenu
+        :items="[
+          { label: 'Booking Created', icon: 'i-lucide-calendar-plus', click: () => openCreateForm('booking_created') },
+          { label: 'Reminder Before', icon: 'i-lucide-bell', click: () => openCreateForm('reminder_before') },
+          { label: 'Booking Cancelled', icon: 'i-lucide-calendar-x', click: () => openCreateForm('booking_cancelled') },
+          { label: 'Follow Up After', icon: 'i-lucide-mail-check', click: () => openCreateForm('follow_up_after') }
+        ]"
+      >
+        <UButton icon="i-lucide-plus" color="primary">
+          New Template
+        </UButton>
+      </UDropdownMenu>
+    </div>
         <!-- Loading state -->
         <div v-if="status === 'pending'" class="flex justify-center py-12">
           <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-muted" />
@@ -453,9 +446,7 @@ function getLocationName(locationId: string | null) {
             </div>
           </div>
         </div>
-      </div>
-    </template>
-  </UDashboardPanel>
+  </div>
 
   <!-- Edit/Create Modal -->
   <UModal v-model:open="showForm" :title="formAction === 'create' ? 'New Email Template' : 'Edit Template'">

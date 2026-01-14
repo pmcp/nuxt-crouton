@@ -44,6 +44,8 @@
     },
     "admin": {
       "title": "Bookings",
+      "sectionTitle": "Bookings",
+      "overview": "Overview",
       "description": "View and manage all team bookings"
     },
     "settings": {

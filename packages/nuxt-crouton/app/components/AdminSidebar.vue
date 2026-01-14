@@ -65,13 +65,18 @@ const appGroups = computed<NavigationMenuItem[]>(() => {
     if (allRoutes.length === 0) continue
 
     // Convert routes to navigation items
-    const routeItems: NavigationMenuItem[] = allRoutes.map(appRoute => ({
-      label: t(appRoute.label),
-      icon: appRoute.icon,
-      to: buildAdminUrl(appRoute.path),
-      active: route.path.includes(appRoute.path),
-      ...(appRoute.badge !== undefined && { badge: String(appRoute.badge) })
-    }))
+    const routeItems: NavigationMenuItem[] = allRoutes.map(appRoute => {
+      const fullPath = buildAdminUrl(appRoute.path)
+      // Exact match: current path equals the route path (with or without trailing slash)
+      const isExactMatch = route.path === fullPath || route.path === `${fullPath}/`
+      return {
+        label: t(appRoute.label),
+        icon: appRoute.icon,
+        to: fullPath,
+        active: isExactMatch,
+        ...(appRoute.badge !== undefined && { badge: String(appRoute.badge) })
+      }
+    })
 
     // Single-item apps appear flat (no group header)
     if (routeItems.length === 1) {

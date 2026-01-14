@@ -69,7 +69,17 @@ const adminNavItems = computed(() => [
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto space-y-8">
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="t('teams.teamAdmin')">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+      </UDashboardNavbar>
+    </template>
+
+    <template #body>
+      <div class="max-w-5xl mx-auto space-y-8 p-6">
     <!-- Header -->
     <div>
       <h1 class="text-2xl font-bold">
@@ -186,5 +196,7 @@ const adminNavItems = computed(() => [
         </div>
       </UCard>
     </div>
-  </div>
+      </div>
+    </template>
+  </UDashboardPanel>
 </template>

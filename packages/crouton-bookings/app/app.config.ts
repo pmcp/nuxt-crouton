@@ -14,21 +14,21 @@ export default defineAppConfig({
         }
       ],
       // Admin routes (appear in /admin/[team]/ sidebar)
+      // These appear as sub-items under the "Bookings" section
       adminRoutes: [
         {
           path: '/bookings',
-          label: 'bookings.admin.title',
+          label: 'bookings.admin.overview',
           icon: 'i-lucide-calendar'
-        }
-      ],
-      // Settings routes (appear in /admin/[team]/settings/)
-      settingsRoutes: [
+        },
         {
-          path: '/email-templates',
+          path: '/bookings/email-templates',
           label: 'bookings.settings.emailTemplates',
           icon: 'i-lucide-mail'
         }
-      ]
+      ],
+      // Settings routes - empty (booking settings are under /bookings/ not /settings/)
+      settingsRoutes: []
     }
   }
 })

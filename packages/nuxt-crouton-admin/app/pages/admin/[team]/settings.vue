@@ -54,27 +54,17 @@ function handleSaved() {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-8">
-    <!-- Header with back link -->
-    <div>
-      <NuxtLink
-        :to="`/admin/${teamSlug}`"
-        class="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground mb-4"
-      >
-        <UIcon
-          name="i-lucide-arrow-left"
-          class="size-4"
-        />
-        {{ t('navigation.backToAdmin') }}
-      </NuxtLink>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="t('teams.teamSettings')">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-      <h1 class="text-2xl font-bold">
-        {{ t('teams.teamSettings') }}
-      </h1>
-      <p class="text-muted mt-1">
-        {{ t('teams.teamSettingsDescription') }}
-      </p>
-    </div>
+    <template #body>
+      <div class="max-w-3xl mx-auto space-y-8 p-6">
 
     <!-- Not a team admin -->
     <UCard
@@ -117,5 +107,7 @@ function handleSaved() {
         @confirm="handleDelete"
       />
     </template>
-  </div>
+      </div>
+    </template>
+  </UDashboardPanel>
 </template>

@@ -44,6 +44,8 @@
     },
     "admin": {
       "title": "Boekingen",
+      "sectionTitle": "Boekingen",
+      "overview": "Overzicht",
       "description": "Bekijk en beheer alle team boekingen"
     },
     "settings": {
