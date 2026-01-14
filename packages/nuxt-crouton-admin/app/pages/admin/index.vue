@@ -3,16 +3,25 @@
  * Admin Index Redirect
  *
  * Redirects to the user's first team admin dashboard.
- * Fetches teams directly from Better Auth API if nanostore isn't populated.
+ * Waits for session to be ready, then fetches teams directly from Better Auth API.
  */
 definePageMeta({
   middleware: 'auth'
 })
 
 const { teams, switchTeamBySlug } = useTeam()
+const { isPending } = useSession()
+const route = useRoute()
 const nuxtApp = useNuxtApp()
+const hasRedirected = ref(false)
 
-onMounted(async () => {
+async function fetchAndRedirect() {
+  // Prevent multiple redirects and only redirect from exact /admin path
+  if (hasRedirected.value || route.path !== '/admin') {
+    return
+  }
+  hasRedirected.value = true
+
   // First check if teams are already loaded in nanostore
   let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
 
@@ -45,7 +54,14 @@ onMounted(async () => {
     // No teams - redirect to create one
     await navigateTo('/onboarding/create-team', { replace: true })
   }
-})
+}
+
+// Wait for session to be ready before checking teams
+watch(isPending, async (pending) => {
+  if (!pending) {
+    await fetchAndRedirect()
+  }
+}, { immediate: true })
 </script>
 
 <template>

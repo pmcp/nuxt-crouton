@@ -29,19 +29,19 @@ const stats = computed(() => [
     label: t('teams.members'),
     value: members.value.length,
     icon: 'i-lucide-users',
-    to: `/admin/${teamSlug.value}/members`
+    to: `/admin/${teamSlug.value}/team`
   },
   {
     label: t('teams.settings'),
     value: '',
     icon: 'i-lucide-settings',
-    to: `/admin/${teamSlug.value}/settings`
+    to: `/admin/${teamSlug.value}/team/settings`
   },
   {
     label: t('teams.invitations'),
     value: '',
     icon: 'i-lucide-mail',
-    to: `/admin/${teamSlug.value}/invitations`
+    to: `/admin/${teamSlug.value}/team/invitations`
   }
 ])
 
@@ -51,19 +51,19 @@ const adminNavItems = computed(() => [
     title: t('teams.members'),
     description: t('teams.manageMembersDescription'),
     icon: 'i-lucide-users',
-    to: `/admin/${teamSlug.value}/members`
+    to: `/admin/${teamSlug.value}/team`
   },
   {
     title: t('teams.invitations'),
     description: t('teams.manageInvitationsDescription'),
     icon: 'i-lucide-mail-plus',
-    to: `/admin/${teamSlug.value}/invitations`
+    to: `/admin/${teamSlug.value}/team/invitations`
   },
   {
     title: t('teams.teamSettings'),
     description: t('teams.teamSettingsDescription'),
     icon: 'i-lucide-settings',
-    to: `/admin/${teamSlug.value}/settings`
+    to: `/admin/${teamSlug.value}/team/settings`
   }
 ])
 </script>
@@ -79,7 +79,7 @@ const adminNavItems = computed(() => [
     </template>
 
     <template #body>
-      <div class="max-w-5xl mx-auto space-y-8 p-6">
+      <div class="space-y-6 p-6">
     <!-- Header -->
     <div>
       <h1 class="text-2xl font-bold">
@@ -116,7 +116,7 @@ const adminNavItems = computed(() => [
             /{{ currentTeam.slug }}
           </p>
         </div>
-        <NuxtLink :to="`/admin/${teamSlug}/settings`">
+        <NuxtLink :to="`/admin/${teamSlug}/team/settings`">
           <UButton
             icon="i-lucide-settings"
             variant="ghost"

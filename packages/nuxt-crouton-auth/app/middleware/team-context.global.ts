@@ -120,15 +120,31 @@ async function resolveTeamContext(
   const urlTeamParam = to.params.team as string | undefined
   const isDashboardRoute = to.path.startsWith('/dashboard')
 
+  // Ensure teams are loaded - fetch from API if nanostore is empty
+  let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
+  if (userTeams.length === 0) {
+    try {
+      const authClient = useAuthClientSafe()
+      if (authClient?.organization?.list) {
+        const result = await authClient.organization.list()
+        if (result.data && result.data.length > 0) {
+          userTeams = result.data
+        }
+      }
+    } catch (e) {
+      console.error('[@crouton/auth] Failed to fetch teams:', e)
+    }
+  }
+
   if (urlTeamParam) {
     // Team specified in URL - validate user has access
-    const targetTeam = teams.value.find(
+    const targetTeam = userTeams.find(
       t => t.slug === urlTeamParam || t.id === urlTeamParam
     )
 
     if (!targetTeam) {
       // Team not found or no access - redirect to first available team
-      const firstTeam = teams.value[0]
+      const firstTeam = userTeams[0]
       if (firstTeam) {
         const newPath = to.path.replace(`/${urlTeamParam}`, `/${firstTeam.slug}`)
         return {
