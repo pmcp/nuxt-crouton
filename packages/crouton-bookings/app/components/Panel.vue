@@ -105,6 +105,52 @@ const filterState = ref<FilterState>({
   showCancelled: props.initialFilters.showCancelled ?? false,
 })
 
+// Visibility states for panel sections
+const showCalendar = ref(true)
+const showLocations = ref(false)
+const showMap = ref(false)
+
+// Parse GeoJSON coordinates from location data
+function parseLocationCoordinates(location: LocationData): [number, number] | null {
+  if (!location.location) return null
+
+  try {
+    const geo = typeof location.location === 'string'
+      ? JSON.parse(location.location)
+      : location.location
+
+    if (geo?.type === 'Point' && Array.isArray(geo.coordinates) && geo.coordinates.length >= 2) {
+      return [geo.coordinates[0], geo.coordinates[1]]
+    }
+
+    if (Array.isArray(geo) && geo.length >= 2) {
+      return [geo[0], geo[1]]
+    }
+
+    return null
+  }
+  catch {
+    return null
+  }
+}
+
+// Check if we have any locations with coordinates to show map toggle
+const hasLocationsWithCoordinates = computed(() => {
+  return resolvedLocations.value.some(location => parseLocationCoordinates(location) !== null)
+})
+
+// Toggle location filter (used by map marker clicks)
+function toggleLocation(locationId: string) {
+  const current = [...filterState.value.locations]
+  const index = current.indexOf(locationId)
+  if (index === -1) {
+    current.push(locationId)
+  } else {
+    current.splice(index, 1)
+  }
+  filterState.value.locations = current
+}
+
 // Emit filter changes
 watch(filterState, (newFilters) => {
   emit('update:filters', { ...newFilters })
@@ -209,19 +255,60 @@ defineExpose({
 
 <template>
   <div class="flex flex-col gap-4 h-full">
-    <!-- Calendar section with integrated filters -->
-    <CroutonBookingsCalendar
-      ref="calendarRef"
-      v-model:filters="filterState"
-      :bookings="resolvedBookings"
+    <!-- Filter controls -->
+    <CroutonBookingsPanelFilters
       :locations="resolvedLocations"
-      :settings="resolvedSettings"
-      :highlighted-date="hoveredDate"
-      :creating-at-date="creatingAtDate"
-      @hover="onCalendarHover"
-      @day-click="onCalendarDayClick"
-      @hover-booking="(id) => hoveredBookingId = id"
+      :selected-locations="filterState.locations"
+      :show-locations="showLocations"
+      :show-map="showMap"
+      :show-calendar="showCalendar"
+      :has-locations-with-coordinates="hasLocationsWithCoordinates"
+      @update:selected-locations="filterState.locations = $event"
+      @update:show-locations="showLocations = $event"
+      @update:show-map="showMap = $event"
+      @update:show-calendar="showCalendar = $event"
     />
+
+    <!-- Map section (independent, collapsible) -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 max-h-0"
+      enter-to-class="opacity-100 max-h-[300px]"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 max-h-[300px]"
+      leave-to-class="opacity-0 max-h-0"
+    >
+      <CroutonBookingsPanelMap
+        v-if="showMap && hasLocationsWithCoordinates"
+        :locations="resolvedLocations"
+        :selected-locations="filterState.locations"
+        @toggle-location="toggleLocation"
+      />
+    </Transition>
+
+    <!-- Calendar section (collapsible) -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 max-h-0"
+      enter-to-class="opacity-100 max-h-[500px]"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 max-h-[500px]"
+      leave-to-class="opacity-0 max-h-0"
+    >
+      <CroutonBookingsCalendar
+        v-if="showCalendar"
+        ref="calendarRef"
+        v-model:filters="filterState"
+        :bookings="resolvedBookings"
+        :locations="resolvedLocations"
+        :settings="resolvedSettings"
+        :highlighted-date="hoveredDate"
+        :creating-at-date="creatingAtDate"
+        @hover="onCalendarHover"
+        @day-click="onCalendarDayClick"
+        @hover-booking="(id) => hoveredBookingId = id"
+      />
+    </Transition>
 
     <!-- List section -->
     <div class="flex-1 overflow-y-auto">
