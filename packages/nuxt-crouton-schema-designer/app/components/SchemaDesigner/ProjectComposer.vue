@@ -137,6 +137,28 @@ function getPackageConfigStatus(pkg: PackageInstance): 'configured' | 'default' 
 
   return hasNonDefault ? 'configured' : 'default'
 }
+
+// Check if any package has a non-editable layer name (then we don't need baseLayerName)
+const hasFixedLayerPackage = computed(() => {
+  for (const pkg of packages.value) {
+    const manifest = getPackageManifest(pkg.packageId)
+    if (manifest?.layer && !manifest.layer.editable) {
+      return true
+    }
+  }
+  return false
+})
+
+// Get the fixed layer name from the package (for display)
+const fixedLayerName = computed(() => {
+  for (const pkg of packages.value) {
+    const manifest = getPackageManifest(pkg.packageId)
+    if (manifest?.layer && !manifest.layer.editable) {
+      return manifest.layer.name
+    }
+  }
+  return null
+})
 </script>
 
 <template>
@@ -151,12 +173,23 @@ function getPackageConfigStatus(pkg: PackageInstance): 'configured' | 'default' 
             size="sm"
           />
         </UFormField>
-        <UFormField label="Base Layer Name" required>
+        <!-- Hide base layer name when package has fixed layer -->
+        <UFormField v-if="!hasFixedLayerPackage" label="Base Layer Name" required>
           <UInput
             v-model="baseLayerName"
             placeholder="app"
             size="sm"
           />
+        </UFormField>
+        <UFormField v-else label="Layer Name">
+          <UInput
+            :model-value="fixedLayerName"
+            disabled
+            size="sm"
+          />
+          <template #hint>
+            Set by package (not editable)
+          </template>
         </UFormField>
       </div>
     </div>
