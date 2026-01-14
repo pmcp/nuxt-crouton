@@ -41,38 +41,65 @@ function parseArgs() {
   }
 }
 
-// Find all locale files in layers
+// Find all locale files in layers and packages
 async function findLocaleFiles(specificLayer = null) {
-  const layersDir = path.resolve('layers')
   const localeFiles = []
 
-  try {
-    const layers = await fsp.readdir(layersDir)
+  // Search paths: layers/ (app-specific) and packages/ (monorepo)
+  const searchRoots = [
+    { dir: path.resolve('layers'), type: 'layer' },
+    { dir: path.resolve('packages'), type: 'package' }
+  ]
 
-    for (const layer of layers) {
-      // Skip if specific layer requested and this isn't it
-      if (specificLayer && layer !== specificLayer) continue
+  // Possible locale subdirectories within each layer/package
+  const localePaths = ['i18n/locales', 'locales']
 
-      const localesPath = path.join(layersDir, layer, 'i18n', 'locales')
+  for (const { dir, type } of searchRoots) {
+    try {
+      const entries = await fsp.readdir(dir)
 
-      try {
-        const files = await fsp.readdir(localesPath)
-        for (const file of files) {
-          if (file.endsWith('.json')) {
-            localeFiles.push({
-              layer,
-              locale: file.replace('.json', ''),
-              path: path.join(localesPath, file)
-            })
+      for (const entry of entries) {
+        // Skip if specific layer/package requested and this isn't it
+        if (specificLayer && entry !== specificLayer) continue
+
+        const entryPath = path.join(dir, entry)
+
+        // Check if it's a directory
+        try {
+          const stat = await fsp.stat(entryPath)
+          if (!stat.isDirectory()) continue
+        } catch {
+          continue
+        }
+
+        // Try each possible locale path
+        for (const localePath of localePaths) {
+          const localesDir = path.join(entryPath, localePath)
+
+          try {
+            const files = await fsp.readdir(localesDir)
+            for (const file of files) {
+              if (file.endsWith('.json')) {
+                localeFiles.push({
+                  layer: entry,
+                  type,
+                  locale: file.replace('.json', ''),
+                  path: path.join(localesDir, file)
+                })
+              }
+            }
+          } catch {
+            // No locales directory at this path, skip
           }
         }
-      } catch {
-        // No locales directory in this layer, skip
       }
+    } catch {
+      // Directory doesn't exist, skip
     }
-  } catch {
-    console.error(chalk.red('Error: layers/ directory not found'))
-    process.exit(1)
+  }
+
+  if (localeFiles.length === 0) {
+    console.log(chalk.yellow('No locale files found in layers/ or packages/'))
   }
 
   return localeFiles
@@ -248,7 +275,7 @@ ${chalk.bold('Usage:')}
   crouton-generate seed-translations [options]
 
 ${chalk.bold('Options:')}
-  --layer <name>     Seed from specific layer only (default: all layers)
+  --layer <name>     Seed from specific layer/package only (default: all)
   --team <id>        Team ID/slug to seed to (default: system)
   --dry-run          Preview translations without seeding
   --force            Overwrite existing translations
@@ -256,12 +283,18 @@ ${chalk.bold('Options:')}
   --sql              Output SQL statements instead of using API
   -h, --help         Show this help message
 
+${chalk.bold('Search Paths:')}
+  - layers/*/i18n/locales/*.json
+  - layers/*/locales/*.json
+  - packages/*/i18n/locales/*.json
+  - packages/*/locales/*.json
+
 ${chalk.bold('Examples:')}
   # Preview all translations
   crouton-generate seed-translations --dry-run
 
-  # Seed from bookings layer only
-  crouton-generate seed-translations --layer bookings
+  # Seed from specific package
+  crouton-generate seed-translations --layer nuxt-crouton-i18n
 
   # Output SQL for manual insertion
   crouton-generate seed-translations --sql > seed.sql
@@ -283,8 +316,9 @@ ${chalk.bold('Note:')}
   const localeFiles = await findLocaleFiles(config.layer)
 
   if (localeFiles.length === 0) {
-    console.log(chalk.yellow('\nNo locale files found in layers/*/i18n/locales/'))
-    console.log(chalk.gray('Run the generator with translations enabled to create locale files.'))
+    console.log(chalk.yellow('\nNo locale files found'))
+    console.log(chalk.gray('Searched: layers/*/i18n/locales/, layers/*/locales/'))
+    console.log(chalk.gray('          packages/*/i18n/locales/, packages/*/locales/'))
     return
   }
 
@@ -302,11 +336,13 @@ ${chalk.bold('Note:')}
 
       translations.push({
         layer: file.layer,
+        type: file.type,
         locale: file.locale,
         items
       })
 
-      console.log(chalk.gray(`  ${file.layer}/${file.locale}.json: ${items.length} keys`))
+      const prefix = file.type === 'package' ? 'pkg:' : ''
+      console.log(chalk.gray(`  ${prefix}${file.layer}/${file.locale}.json: ${items.length} keys`))
     } catch (error) {
       console.error(chalk.red(`  Error parsing ${file.path}: ${error.message}`))
     }
