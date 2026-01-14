@@ -51,16 +51,25 @@ function hasErrors(collection: CollectionSchema): boolean {
   return getCollectionErrors(collection).length > 0
 }
 
+// Check if collection is from a package
+function isFromPackage(collection: CollectionSchema): boolean {
+  return Boolean(collection.fromPackage)
+}
+
 // Context menu for each tab
 function getContextMenuItems(collection: CollectionSchema): ContextMenuItem[][] {
-  const canDelete = collections.value.length > 1
+  const canDelete = collections.value.length > 1 && !isFromPackage(collection)
+  const canRename = !isFromPackage(collection)
 
   return [
     [
       {
         label: 'Rename',
         icon: 'i-lucide-pencil',
-        onSelect: () => openRenameModal(collection)
+        disabled: !canRename,
+        onSelect: () => {
+          if (canRename) openRenameModal(collection)
+        }
       },
       {
         label: 'Duplicate',
@@ -127,6 +136,13 @@ function getDisplayName(collection: CollectionSchema): string {
           ]"
           @click="setActiveCollection(collection.id)"
         >
+          <!-- Package icon for package collections -->
+          <UIcon
+            v-if="isFromPackage(collection)"
+            name="i-lucide-package"
+            class="size-3.5 text-[var(--ui-text-muted)]"
+          />
+
           <!-- Collection name -->
           <span :class="{ 'italic opacity-60': !collection.collectionName }">
             {{ getDisplayName(collection) }}

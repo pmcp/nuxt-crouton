@@ -302,6 +302,9 @@ export function useSession() {
     activeOrgState.value = null
   }
 
+  // Raw active org state (includes members from getFullOrganization)
+  const activeOrgRaw = computed(() => activeOrgState.value)
+
   return {
     // Raw data (for advanced use)
     data: sessionData,
@@ -310,6 +313,9 @@ export function useSession() {
     session,
     user,
     activeOrganization,
+
+    // Raw active org with members (for role checking)
+    activeOrgRaw,
 
     // Status
     isPending,

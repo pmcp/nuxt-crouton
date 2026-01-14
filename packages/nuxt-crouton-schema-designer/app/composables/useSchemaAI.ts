@@ -1,7 +1,9 @@
 import { ref, watch, computed } from 'vue'
-import type { SchemaField, FieldType, CollectionSchema, CollectionOptions } from '../types/schema'
+import type { SchemaField, FieldType, FieldMeta, CollectionSchema, CollectionOptions } from '../types/schema'
+import type { PackageManifest, PackageCollection, PackageSchemaField } from '../types/package-manifest'
 import { FIELD_TYPES, META_PROPERTIES } from './useFieldTypes'
 import { useSchemaDesigner } from './useSchemaDesigner'
+import { usePackageRegistry } from './usePackageRegistry'
 import { useStreamingSchemaParser } from './useStreamingSchemaParser'
 import type { AIPackageSuggestion } from './useStreamingSchemaParser'
 
@@ -38,18 +40,45 @@ You can recommend these packages when appropriate. **Packages provide pre-built 
 - Perfect for: Tennis courts, meeting rooms, appointments, equipment rentals
 - Features: Time slot management, availability checking, booking cart, email notifications (opt-in)
 - Layer name: \`bookings\` (fixed)
+- **Optional features to ask about:**
+  - Email notifications (booking confirmations, reminders) - enables emailTemplates and emailLogs collections
 
 **crouton-sales** - Event-based Point of Sale system
 - Perfect for: Pop-up events, markets, food sales, temporary retail
 - Features: Product catalog, categories, order management, thermal receipt printing (opt-in)
 - Layer name: \`sales\` (fixed)
+- **Optional features to ask about:**
+  - Thermal receipt printing - enables printers and printQueues collections
 
 ## When to Suggest Packages
 
 1. **Analyze user intent** - Look for keywords that match package purposes
 2. **Suggest package first** - If a package covers 70%+ of the use case, recommend it
-3. **Create custom collections** - For anything packages don't cover
-4. **Combine both** - Often users need packages + custom collections
+3. **ASK ABOUT OPTIONAL FEATURES** - When recommending a package, always ask about its optional features
+4. **Create custom collections** - For anything packages don't cover
+5. **Combine both** - Often users need packages + custom collections
+
+## IMPORTANT: Ask About Optional Features
+
+When you suggest a package, **always ask the user about optional features**. For example:
+
+For crouton-bookings:
+"I recommend the **crouton-bookings** package for your booking system. Do you want to enable **email notifications** for booking confirmations and reminders? (This adds emailTemplates and emailLogs collections)"
+
+For crouton-sales:
+"I recommend the **crouton-sales** package for your POS system. Do you need **thermal receipt printing** support? (This adds printers and printQueues collections)"
+
+Include the user's answer in the \`packages\` array with a \`configuration\` object:
+
+\`\`\`json
+{
+  "packageId": "crouton-bookings",
+  "reason": "For appointment scheduling and availability management",
+  "configuration": {
+    "email.enabled": true
+  }
+}
+\`\`\`
 
 ## Package vs Custom Collection Decision
 
@@ -283,6 +312,7 @@ export interface SchemaFieldWithAI extends SchemaField {
  */
 export function useSchemaAI() {
   const designer = useSchemaDesigner()
+  const packageRegistry = usePackageRegistry()
   const parser = useStreamingSchemaParser()
 
   // Track AI-added fields for animation
@@ -708,6 +738,232 @@ export function useSchemaAI() {
   }
 
   /**
+   * Convert a package schema field to a SchemaField with locked flag
+   */
+  function convertPackageField(
+    name: string,
+    field: PackageSchemaField,
+    packageId: string
+  ): SchemaField {
+    return {
+      id: `field-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name,
+      type: field.type as FieldType,
+      meta: (field.meta || {}) as FieldMeta,
+      refTarget: field.refTarget,
+      locked: true,
+      fromPackage: packageId
+    }
+  }
+
+  /**
+   * Convert a package collection to a CollectionSchema with locked fields
+   */
+  function convertPackageCollection(
+    collection: PackageCollection,
+    packageId: string
+  ): CollectionSchema {
+    const fields: SchemaField[] = []
+
+    // Convert schema fields (handle both object and array formats)
+    if (collection.schema) {
+      for (const [fieldName, fieldDef] of Object.entries(collection.schema)) {
+        fields.push(convertPackageField(fieldName, fieldDef, packageId))
+      }
+    }
+
+    return {
+      id: `collection-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      collectionName: collection.name,
+      fields,
+      options: {
+        hierarchy: false,
+        sortable: false,
+        translatable: false,
+        seed: false,
+        seedCount: 25
+      },
+      fromPackage: packageId,
+      packageTableName: collection.tableName,
+      packageDescription: collection.description
+    }
+  }
+
+  /**
+   * Evaluate a condition string against configuration.
+   * Supports conditions like "config.email.enabled"
+   */
+  function evaluateCondition(condition: string, config: Record<string, unknown>): boolean {
+    const match = condition.match(/^config\.(.+)$/)
+    if (!match) return true
+
+    const configPath = match[1]
+    if (!configPath) return true
+
+    const value = config[configPath]
+    return Boolean(value)
+  }
+
+  /**
+   * Check if a collection should be imported based on its optional status and condition.
+   */
+  function shouldImportCollection(
+    collection: PackageCollection,
+    config: Record<string, unknown>
+  ): boolean {
+    // Always import non-optional collections
+    if (!collection.optional) return true
+
+    // For optional collections, check the condition
+    if (collection.condition) {
+      return evaluateCondition(collection.condition, config)
+    }
+
+    // Optional without condition - import by default
+    return true
+  }
+
+  /**
+   * Import collections from a package manifest into the designer.
+   * Fields from the package are marked as locked.
+   * Optional collections are imported based on their conditions and the provided config.
+   */
+  async function importPackageCollections(
+    packageId: string,
+    config: Record<string, unknown> = {}
+  ): Promise<boolean> {
+    const manifest = await packageRegistry.getPackage(packageId)
+    if (!manifest) {
+      console.error(`Failed to load manifest for package ${packageId}`)
+      return false
+    }
+
+    // Track if this is the first collection we're adding (for empty state replacement)
+    let replacedEmptyFirst = false
+
+    // Import each collection from the package
+    for (const pkgCollection of manifest.collections) {
+      // Check if this collection should be imported based on config
+      if (!shouldImportCollection(pkgCollection, config)) {
+        continue
+      }
+
+      // Check if collection already exists
+      const existingCollection = designer.collections.value.find(
+        (c: CollectionSchema) => c.collectionName === pkgCollection.name && c.fromPackage === packageId
+      )
+
+      if (existingCollection) {
+        // Collection already imported, skip
+        continue
+      }
+
+      // Convert and add the collection
+      const newCollection = convertPackageCollection(pkgCollection, packageId)
+
+      // Check if we should replace an empty first collection
+      const firstCollection = designer.collections.value[0]
+      const isFirstCollectionEmpty = !replacedEmptyFirst &&
+        designer.collections.value.length === 1 &&
+        !firstCollection?.collectionName &&
+        firstCollection?.fields.length === 0
+
+      if (isFirstCollectionEmpty && firstCollection) {
+        // Replace the empty first collection with our package collection
+        replacedEmptyFirst = true
+        Object.assign(firstCollection, newCollection)
+        aiCreatedCollectionIds.value.add(firstCollection.id)
+      } else {
+        // Add as new collection
+        designer.multiState.value.collections.push(newCollection)
+        aiCreatedCollectionIds.value.add(newCollection.id)
+      }
+
+      // Animation cleanup
+      setTimeout(() => {
+        aiCreatedCollectionIds.value.delete(newCollection.id)
+      }, 3000)
+
+      // Mark fields for animation
+      for (const field of newCollection.fields) {
+        aiAddedFieldIds.value.add(field.id)
+        setTimeout(() => {
+          aiAddedFieldIds.value.delete(field.id)
+        }, 2500)
+      }
+    }
+
+    // Select the first imported collection
+    const firstImported = designer.collections.value.find(
+      (c: CollectionSchema) => c.fromPackage === packageId
+    )
+    if (firstImported) {
+      designer.setActiveCollection(firstImported.id)
+    }
+
+    return true
+  }
+
+  /**
+   * Sync optional collections for a package when configuration changes.
+   * Adds collections that are now enabled, removes collections that are now disabled.
+   */
+  async function syncPackageCollections(
+    packageId: string,
+    config: Record<string, unknown>
+  ): Promise<void> {
+    const manifest = await packageRegistry.getPackage(packageId)
+    if (!manifest) return
+
+    for (const pkgCollection of manifest.collections) {
+      // Only process optional collections
+      if (!pkgCollection.optional) continue
+
+      const shouldBeImported = shouldImportCollection(pkgCollection, config)
+      const existingCollection = designer.collections.value.find(
+        (c: CollectionSchema) => c.collectionName === pkgCollection.name && c.fromPackage === packageId
+      )
+
+      if (shouldBeImported && !existingCollection) {
+        // Collection should be imported but isn't - add it
+        const newCollection = convertPackageCollection(pkgCollection, packageId)
+        designer.multiState.value.collections.push(newCollection)
+        aiCreatedCollectionIds.value.add(newCollection.id)
+
+        setTimeout(() => {
+          aiCreatedCollectionIds.value.delete(newCollection.id)
+        }, 3000)
+
+        for (const field of newCollection.fields) {
+          aiAddedFieldIds.value.add(field.id)
+          setTimeout(() => {
+            aiAddedFieldIds.value.delete(field.id)
+          }, 2500)
+        }
+      } else if (!shouldBeImported && existingCollection) {
+        // Collection shouldn't be imported but is - remove it
+        designer.multiState.value.collections = designer.multiState.value.collections.filter(
+          (c: CollectionSchema) => c.id !== existingCollection.id
+        )
+      }
+    }
+  }
+
+  /**
+   * Remove all collections from a specific package
+   */
+  function removePackageCollections(packageId: string) {
+    designer.multiState.value.collections = designer.multiState.value.collections.filter(
+      (c: CollectionSchema) => c.fromPackage !== packageId
+    )
+
+    // Select a remaining collection if needed
+    if (designer.collections.value.length > 0 && !designer.activeCollection.value) {
+      designer.setActiveCollection(designer.collections.value[0]!.id)
+    }
+  }
+
+  /**
    * Manually trigger a schema suggestion
    */
   async function suggestSchema(description: string) {
@@ -748,6 +1004,11 @@ export function useSchemaAI() {
     suggestApp,
     isFieldFromAI,
     isCollectionFromAI,
+
+    // Package import methods
+    importPackageCollections,
+    removePackageCollections,
+    syncPackageCollections,
 
     // For v-model binding on input
     updateInput: (value: string) => {

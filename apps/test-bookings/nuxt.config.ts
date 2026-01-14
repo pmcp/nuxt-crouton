@@ -6,6 +6,8 @@ export default defineNuxtConfig({
   // nuxt-crouton now auto-includes auth, admin, and i18n
   extends: [
     '@friendlyinternet/nuxt-crouton',          // Core (includes auth, admin, i18n)
+    '@friendlyinternet/nuxt-crouton-editor',   // Rich text editor
+    '@friendlyinternet/nuxt-crouton-pages',    // CMS pages with page types
     '@friendlyinternet/nuxt-crouton-email',    // Optional: Email functionality
     '@friendlyinternet/nuxt-crouton-maps',     // Optional: Maps functionality
     '@friendlyinternet/crouton-bookings',      // Bookings app (auto-discovered)
@@ -22,6 +24,12 @@ export default defineNuxtConfig({
     public: {
       croutonBookings: {
         email: { enabled: true }
+      },
+      croutonPages: {
+        // Set to true to redirect /dashboard/[team] → /[team]
+        redirectDashboard: false,
+        // App domains that are NOT custom domains
+        appDomains: ['localhost']
       },
       mapbox: {
         accessToken: process.env.MAPBOX_TOKEN || '',

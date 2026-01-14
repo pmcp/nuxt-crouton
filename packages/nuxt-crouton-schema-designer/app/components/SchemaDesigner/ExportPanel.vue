@@ -48,7 +48,8 @@ const packageTabs: { value: Tab; label: string; icon: string }[] = [
   { value: 'croutonConfig', label: 'crouton.config.js', icon: 'i-lucide-file-code' },
   { value: 'schema', label: 'Schemas', icon: 'i-lucide-braces' },
   { value: 'cli', label: 'CLI Commands', icon: 'i-lucide-terminal' },
-  { value: 'bundle', label: 'Download', icon: 'i-lucide-download' }
+  { value: 'bundle', label: 'Download', icon: 'i-lucide-download' },
+  { value: 'createApp', label: 'Create App', icon: 'i-lucide-rocket' }
 ]
 
 // Tabs for legacy mode
@@ -249,8 +250,8 @@ function downloadAllFiles() {
           </button>
         </div>
 
-        <!-- Create App Panel (Legacy mode only) -->
-        <template v-if="activeTab === 'createApp' && !isPackageMode">
+        <!-- Create App Panel -->
+        <template v-if="activeTab === 'createApp'">
           <CroutonSchemaDesignerCreateAppPanel @close="handleClose" />
         </template>
 

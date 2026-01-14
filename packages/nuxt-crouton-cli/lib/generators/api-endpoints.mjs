@@ -76,7 +76,7 @@ ${dateConversions}  return await create${prefixedPascalCase}({
 }
 
 export function generatePatchEndpoint(data, config = null) {
-  const { singular, pascalCase, pascalCasePlural, layerPascalCase, fields, plural, layer } = data
+  const { singular, camelCase, pascalCase, pascalCasePlural, layerPascalCase, fields, plural, layer } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
 
@@ -109,8 +109,8 @@ import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-au
 import type { ${prefixedPascalCase} } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
-  const { ${singular}Id } = getRouterParams(event)
-  if (!${singular}Id) {
+  const { ${camelCase}Id } = getRouterParams(event)
+  if (!${camelCase}Id) {
     throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
   }
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -120,7 +120,7 @@ export default defineEventHandler(async (event) => {
 
   // Handle translation updates properly
   if (body.translations && body.locale) {
-    const [existing] = await get${prefixedPascalCasePlural}ByIds(team.id, [${singular}Id]) as any[]
+    const [existing] = await get${prefixedPascalCasePlural}ByIds(team.id, [${camelCase}Id]) as any[]
     if (existing) {
       body.translations = {
         ...existing.translations,
@@ -133,14 +133,14 @@ export default defineEventHandler(async (event) => {
   }`
     : ''}
 
-  return await update${prefixedPascalCase}(${singular}Id, team.id, user.id, {
+  return await update${prefixedPascalCase}(${camelCase}Id, team.id, user.id, {
 ${fieldSelection}
   })
 })`
 }
 
 export function generateDeleteEndpoint(data, config = null) {
-  const { singular, pascalCase, layerPascalCase, layer, plural } = data
+  const { singular, camelCase, pascalCase, layerPascalCase, layer, plural } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
 
   const queriesPath = '../../../../database/queries'
@@ -151,20 +151,20 @@ import { delete${prefixedPascalCase} } from '${queriesPath}'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
-  const { ${singular}Id } = getRouterParams(event)
-  if (!${singular}Id) {
+  const { ${camelCase}Id } = getRouterParams(event)
+  if (!${camelCase}Id) {
     throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
   }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
-  return await delete${prefixedPascalCase}(${singular}Id, team.id, user.id)
+  return await delete${prefixedPascalCase}(${camelCase}Id, team.id, user.id)
 })`
 }
 
 // Generate move endpoint for hierarchy-enabled collections
 // Creates [id]/move.patch.ts - moves an item to a new parent and position
 export function generateMoveEndpoint(data, config = null) {
-  const { singular, pascalCase, layerPascalCase } = data
+  const { singular, camelCase, pascalCase, layerPascalCase } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
 
   const queriesPath = '../../../../../database/queries'
@@ -175,8 +175,8 @@ import { updatePosition${prefixedPascalCase} } from '${queriesPath}'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
-  const { ${singular}Id } = getRouterParams(event)
-  if (!${singular}Id) {
+  const { ${camelCase}Id } = getRouterParams(event)
+  if (!${camelCase}Id) {
     throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
   }
   const { team } = await resolveTeamAndCheckMembership(event)
@@ -191,7 +191,7 @@ export default defineEventHandler(async (event) => {
   // parentId can be null (move to root) or a valid ID
   const parentId = body.parentId ?? null
 
-  return await updatePosition${prefixedPascalCase}(team.id, ${singular}Id, parentId, body.order)
+  return await updatePosition${prefixedPascalCase}(team.id, ${camelCase}Id, parentId, body.order)
 })`
 }
 

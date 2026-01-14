@@ -16,6 +16,8 @@ const emit = defineEmits<{
 
 const fieldCount = computed(() => props.collection.fields.length)
 const hasRefFields = computed(() => props.collection.fields.some(f => f.refTarget))
+const isFromPackage = computed(() => Boolean(props.collection.fromPackage))
+const lockedFieldCount = computed(() => props.collection.fields.filter(f => f.locked).length)
 </script>
 
 <template>
@@ -34,16 +36,20 @@ const hasRefFields = computed(() => props.collection.fields.some(f => f.refTarge
       :class="[
         isNew
           ? 'bg-[var(--ui-primary)]/10'
-          : 'bg-[var(--ui-bg-elevated)] group-hover:bg-[var(--ui-primary)]/10'
+          : isFromPackage
+            ? 'bg-amber-500/10'
+            : 'bg-[var(--ui-bg-elevated)] group-hover:bg-[var(--ui-primary)]/10'
       ]"
     >
       <UIcon
-        name="i-lucide-database"
+        :name="isFromPackage ? 'i-lucide-package' : 'i-lucide-database'"
         class="text-lg transition-colors"
         :class="[
           isNew
             ? 'text-[var(--ui-primary)]'
-            : 'text-[var(--ui-text-muted)] group-hover:text-[var(--ui-primary)]'
+            : isFromPackage
+              ? 'text-amber-600'
+              : 'text-[var(--ui-text-muted)] group-hover:text-[var(--ui-primary)]'
         ]"
       />
     </div>
@@ -57,9 +63,17 @@ const hasRefFields = computed(() => props.collection.fields.some(f => f.refTarge
         <UBadge v-if="isNew" color="primary" variant="subtle" size="xs">
           New
         </UBadge>
+        <UBadge v-if="isFromPackage" color="warning" variant="subtle" size="xs">
+          <UIcon name="i-lucide-package" class="mr-0.5 text-[10px]" />
+          {{ collection.fromPackage }}
+        </UBadge>
       </div>
       <div class="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
         <span>{{ fieldCount }} field{{ fieldCount !== 1 ? 's' : '' }}</span>
+        <span v-if="lockedFieldCount > 0" class="flex items-center gap-1">
+          <UIcon name="i-lucide-lock" class="text-[10px]" />
+          {{ lockedFieldCount }} locked
+        </span>
         <span v-if="hasRefFields" class="flex items-center gap-1">
           <UIcon name="i-lucide-link" class="text-[10px]" />
           Has refs

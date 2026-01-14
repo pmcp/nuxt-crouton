@@ -28,7 +28,9 @@ const {
   aiBaseLayerName,
   aiCreatedCollectionIds,
   removeAISuggestedPackage,
-  clearAISuggestions
+  clearAISuggestions,
+  importPackageCollections,
+  removePackageCollections
 } = useSchemaAI()
 
 // Project composer for package-aware mode
@@ -264,6 +266,14 @@ function handleKeydown(e: KeyboardEvent) {
 async function handleAcceptPackage(packageId: string) {
   loadingPackageIds.value.add(packageId)
   try {
+    // Get the configuration from the AI suggestion (if any)
+    const suggestion = aiSuggestedPackages.value.find(p => p.packageId === packageId)
+    const config = suggestion?.configuration || {}
+
+    // Import the package's collections into the designer with locked fields
+    // Pass the config so optional collections are imported based on user's choices
+    await importPackageCollections(packageId, config)
+    // Also track in project composer for export
     await addPackage(packageId)
   } finally {
     loadingPackageIds.value.delete(packageId)
@@ -271,8 +281,9 @@ async function handleAcceptPackage(packageId: string) {
 }
 
 function handleRejectPackage(packageId: string) {
-  // If already accepted, remove from project
+  // If already accepted, remove collections and from project
   if (acceptedPackageIds.value.has(packageId)) {
+    removePackageCollections(packageId)
     removePackage(packageId)
   }
   // Remove from AI suggestions list

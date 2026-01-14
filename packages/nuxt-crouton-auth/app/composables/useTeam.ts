@@ -104,7 +104,8 @@ export function useTeam() {
 
   // Use useSession's activeOrganization which is properly populated via getFullOrganization()
   // This replaces the nanostore atoms which aren't automatically synced
-  const { activeOrganization: sessionActiveOrg } = useSession()
+  // Also get activeOrgRaw which includes members array for role checking
+  const { activeOrganization: sessionActiveOrg, activeOrgRaw } = useSession()
 
   // For organizations list, still use the atom but with fallback
   const organizationsAtom = authClient?.useListOrganizations
@@ -132,31 +133,19 @@ export function useTeam() {
   const members = computed(() => membersData.value)
 
   // Get current user's role in active team
+  // Uses raw org data from getFullOrganization() which includes members array
   const currentRole = computed<MemberRole | null>(() => {
-    // First try: check if we have active org data with members array
-    const activeOrg = activeOrgData.value as { id?: string; members?: Array<{ userId: string, role: string }> } | null
-
-    // Get current user from session
     const { user } = useSession()
+    if (!user.value) return null
 
-    if (activeOrg?.members && user.value) {
-      // Find member entry in active org members
-      const member = activeOrg.members.find(m => m.userId === user.value?.id)
-      if (member?.role) {
-        return member.role as MemberRole
-      }
-    }
+    const rawOrg = activeOrgRaw.value as {
+      members?: Array<{ userId: string; role: string }>
+    } | null
 
-    // Second try: check organizationsData (from organization.list()) which includes role
-    // This is more reliable because list() returns the user's role in each org
-    if (activeOrg?.id && organizationsData.value) {
-      const orgFromList = organizationsData.value.find((org: any) => org.id === activeOrg.id)
-      if (orgFromList?.role) {
-        return orgFromList.role as MemberRole
-      }
-    }
+    if (!rawOrg?.members) return null
 
-    return null
+    const member = rawOrg.members.find(m => m.userId === user.value?.id)
+    return (member?.role as MemberRole) ?? null
   })
 
   // Flag-based computed properties

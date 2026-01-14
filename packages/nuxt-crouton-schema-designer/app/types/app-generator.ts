@@ -21,6 +21,20 @@ export interface CollectionConfig {
   seedCount?: number
 }
 
+/**
+ * Configuration for a package to include in the app
+ */
+export interface PackageConfig {
+  /** Package ID from manifest (e.g., 'crouton-bookings') */
+  packageId: string
+  /** Layer name for this package */
+  layerName: string
+  /** Package-specific configuration */
+  config: Record<string, unknown>
+  /** NPM package name if published */
+  npmPackage?: string
+}
+
 export interface CreateAppOptions {
   /** Project/folder name */
   projectName: string
@@ -30,6 +44,8 @@ export interface CreateAppOptions {
   layerName: string
   /** Collections to generate (multi-collection support) */
   collections: CollectionConfig[]
+  /** Packages to include */
+  packages?: PackageConfig[]
   /** Generation options */
   options: {
     /** Database dialect */

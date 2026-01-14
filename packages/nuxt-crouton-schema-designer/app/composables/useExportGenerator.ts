@@ -105,33 +105,41 @@ export function useExportGenerator() {
   function generateCroutonConfig(): string {
     const { packages, packageManifests, baseLayerName, customCollections } = composer
 
-    const layerConfigs: string[] = []
+    // Group collections by layer
+    const collectionsByLayer = new Map<string, { layerName: string; packageName?: string; collections: string[] }>()
 
-    // Add package layer configurations
-    for (const pkg of packages.value) {
-      const manifest = packageManifests.value.get(pkg.packageId)
-      if (!manifest) continue
+    for (const collection of customCollections.value) {
+      if (!collection.collectionName) continue
 
-      const enabledCollections = composer.getEnabledPackageCollections(pkg.packageId)
-      const collectionNames = enabledCollections.map((c: PackageCollection) => `'${c.name}'`)
+      let layerName = baseLayerName.value
+      let packageName: string | undefined
 
-      layerConfigs.push(`  // ${manifest.name}
-  {
-    layer: '${pkg.layerName}',
-    collections: [${collectionNames.join(', ')}]
-  }`)
+      // If from a package, use the package's layer name
+      if (collection.fromPackage) {
+        const pkg = packages.value.find((p: PackageInstance) => p.packageId === collection.fromPackage)
+        if (pkg) {
+          layerName = pkg.layerName
+          const manifest = packageManifests.value.get(pkg.packageId)
+          packageName = manifest?.name
+        }
+      }
+
+      if (!collectionsByLayer.has(layerName)) {
+        collectionsByLayer.set(layerName, { layerName, packageName, collections: [] })
+      }
+      collectionsByLayer.get(layerName)!.collections.push(collection.collectionName)
     }
 
-    // Add custom collections layer
-    if (customCollections.value.length > 0) {
-      const customCollectionNames = customCollections.value
-        .filter((c: CollectionSchema) => c.collectionName)
-        .map((c: CollectionSchema) => `'${c.collectionName}'`)
+    const layerConfigs: string[] = []
 
-      layerConfigs.push(`  // Custom Collections
+    for (const [_layerName, layerData] of collectionsByLayer) {
+      const collectionNames = layerData.collections.map(c => `'${c}'`)
+      const comment = layerData.packageName || 'Custom Collections'
+
+      layerConfigs.push(`  // ${comment}
   {
-    layer: '${baseLayerName.value}',
-    collections: [${customCollectionNames.join(', ')}]
+    layer: '${layerData.layerName}',
+    collections: [${collectionNames.join(', ')}]
   }`)
     }
 
@@ -189,20 +197,32 @@ ${layerConfigs.join(',\n')}
   }
 
   /**
-   * Generate schema JSON files for custom collections.
+   * Generate schema JSON files for all collections.
+   * Package-derived collections include both locked fields and user-added fields.
    */
   function generateSchemaFiles(): SchemaFile[] {
-    const { customCollections, baseLayerName } = composer
+    const { customCollections, baseLayerName, packages, packageManifests } = composer
     const files: SchemaFile[] = []
 
     for (const collection of customCollections.value) {
       if (!collection.collectionName) continue
 
+      // Determine the layer name for this collection
+      let layerName = baseLayerName.value
+
+      // If from a package, use the package's layer name
+      if (collection.fromPackage) {
+        const pkg = packages.value.find((p: PackageInstance) => p.packageId === collection.fromPackage)
+        if (pkg) {
+          layerName = pkg.layerName
+        }
+      }
+
       const schema = buildSchemaJson(collection)
       const filename = `${collection.collectionName}.json`
 
       files.push({
-        path: `layers/${baseLayerName.value}/schemas/${filename}`,
+        path: `layers/${layerName}/schemas/${filename}`,
         filename,
         content: JSON.stringify(schema, null, 2)
       })
@@ -244,26 +264,25 @@ ${layerConfigs.join(',\n')}
    * Generate CLI commands to run for setup.
    */
   function generateCommands(): string[] {
-    const { packages, packageManifests, baseLayerName, customCollections } = composer
+    const { packages, baseLayerName, customCollections } = composer
     const commands: string[] = []
 
-    // Generate collections for each package layer
-    for (const pkg of packages.value) {
-      const manifest = packageManifests.value.get(pkg.packageId)
-      if (!manifest) continue
-
-      const enabledCollections = composer.getEnabledPackageCollections(pkg.packageId)
-
-      for (const collection of enabledCollections) {
-        commands.push(`pnpm crouton ${pkg.layerName} ${collection.name}`)
-      }
-    }
-
-    // Generate custom collections
+    // Generate all collections (package-derived and custom)
     for (const collection of customCollections.value) {
-      if (collection.collectionName) {
-        commands.push(`pnpm crouton ${baseLayerName.value} ${collection.collectionName}`)
+      if (!collection.collectionName) continue
+
+      // Determine the layer name for this collection
+      let layerName = baseLayerName.value
+
+      // If from a package, use the package's layer name
+      if (collection.fromPackage) {
+        const pkg = packages.value.find((p: PackageInstance) => p.packageId === collection.fromPackage)
+        if (pkg) {
+          layerName = pkg.layerName
+        }
       }
+
+      commands.push(`pnpm crouton ${layerName} ${collection.collectionName}`)
     }
 
     // Add database migration commands

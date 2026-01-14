@@ -146,6 +146,15 @@ export function useAppGenerator() {
       deps['@friendlyinternet/nuxt-crouton-i18n'] = 'latest'
     }
 
+    // Add package dependencies
+    if (options.packages && options.packages.length > 0) {
+      for (const pkg of options.packages) {
+        if (pkg.npmPackage) {
+          deps[pkg.npmPackage] = 'latest'
+        }
+      }
+    }
+
     templates.push({
       path: 'package.json',
       content: JSON.stringify({
@@ -174,7 +183,23 @@ export function useAppGenerator() {
     if (options.options.includeI18n) {
       extendsLayers.push("'@friendlyinternet/nuxt-crouton-i18n'")
     }
-    extendsLayers.push(`'./layers/${options.layerName}'`)
+
+    // Add package layers
+    if (options.packages && options.packages.length > 0) {
+      for (const pkg of options.packages) {
+        if (pkg.npmPackage) {
+          extendsLayers.push(`'${pkg.npmPackage}'`)
+        } else {
+          // Local package (for development)
+          extendsLayers.push(`'./layers/${pkg.layerName}'`)
+        }
+      }
+    }
+
+    // Add custom collections layer if there are any custom collections
+    if (options.collections.length > 0) {
+      extendsLayers.push(`'./layers/${options.layerName}'`)
+    }
 
     templates.push({
       path: 'nuxt.config.ts',

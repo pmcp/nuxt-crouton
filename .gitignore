@@ -52,3 +52,7 @@ apps/schematest/
 apps/schematest2/
 apps/schematest/content-app/.data
 apps/schematest/faq-app/.data
+apps/booking-system-test1/.data
+apps/booking-system-test/.data
+apps/bookingsnewtest/.data
+apps/booking-system/.data

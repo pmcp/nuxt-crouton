@@ -39,42 +39,18 @@ const themeHelpers = computed(() => {
   }
 })
 
-const variant = computed(() => themeHelpers.value.variant)
 const getVariant = (base: string) => themeHelpers.value.getVariant(base)
 
 // Translation support
 const { t } = useT()
 
-// Get collections from app config
-const appConfig = useAppConfig()
 const route = useRoute()
 
 // Get team context
-const { teamSlug: teamSlugRef, teamId: teamIdRef, buildDashboardUrl, hasTeamContext } = useTeamContext()
+const { teamSlug: teamSlugRef, teamId: teamIdRef } = useTeamContext()
 
 // Get auto-discovered app routes
 const { dashboardRoutes } = useCroutonApps()
-
-// Build navigation from crouton collections registry
-const collections = computed(() => {
-  const registry = (appConfig.croutonCollections || {}) as Record<string, { name?: string; layer?: string }>
-  if (!registry || Object.keys(registry).length === 0) return []
-
-  return Object.entries(registry).map(([key, config]) => {
-    const simpleName = config.name || key
-    const label = simpleName
-      .replace(/^[a-z]+([A-Z])/, '$1')
-      .replace(/([A-Z])/g, ' $1')
-      .trim()
-      .replace(/^./, c => c.toUpperCase())
-
-    return {
-      key,
-      label,
-      icon: 'i-lucide-folder'
-    }
-  })
-})
 
 // Convert app routes to navigation items
 const appRouteItems = computed<NavigationMenuItem[]>(() => {
@@ -106,14 +82,6 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     return [[], []]
   }
 
-  // Collection items
-  const collectionItems: NavigationMenuItem[] = collections.value.map(col => ({
-    label: col.label,
-    icon: col.icon,
-    to: `/dashboard/${teamParam}/crouton/${col.key}`,
-    active: route.path.includes(`/crouton/${col.key}`)
-  }))
-
   // Core dashboard items
   const coreItems: NavigationMenuItem[] = [
     {
@@ -127,15 +95,8 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
   // Build main navigation
   const mainItems: NavigationMenuItem[] = [
     ...coreItems,
-    // Auto-discovered app routes
-    ...appRouteItems.value,
-    // Collections (if any)
-    ...(collectionItems.length > 0 ? [{
-      label: t('navigation.collections') || 'Collections',
-      icon: 'i-lucide-database',
-      defaultOpen: true,
-      children: collectionItems
-    }] : [])
+    // Auto-discovered app routes (e.g., Bookings)
+    ...appRouteItems.value
   ]
 
   // Bottom items

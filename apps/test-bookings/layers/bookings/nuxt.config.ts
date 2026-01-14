@@ -19,5 +19,13 @@ export default defineNuxtConfig({
     './collections/settings',
     './collections/emailtemplates',
     './collections/emaillogs'
-  ]
+  ],
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json' },
+      { code: 'nl', file: 'nl.json' },
+      { code: 'fr', file: 'fr.json' }
+    ],
+    langDir: './locales'
+  }
 })

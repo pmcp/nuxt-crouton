@@ -40,6 +40,9 @@ export interface SchemaField {
   type: FieldType
   meta: FieldMeta
   refTarget?: string
+  // Package integration - fields from packages are locked
+  locked?: boolean           // If true, field cannot be removed or have core properties changed
+  fromPackage?: string       // Package ID this field came from (e.g., 'crouton-bookings')
 }
 
 export interface CollectionOptions {
@@ -60,6 +63,10 @@ export interface CollectionSchema {
   fields: SchemaField[]
   options: CollectionOptions
   cardTemplate?: string        // Custom Card.vue template code
+  // Package integration - collections imported from packages
+  fromPackage?: string         // Package ID this collection came from (e.g., 'crouton-bookings')
+  packageTableName?: string    // Original table name from package (e.g., 'bookingsBookings')
+  packageDescription?: string  // Description from package manifest
 }
 
 /**

@@ -24,6 +24,7 @@ export interface ParsedMultiCollection {
 export interface AIPackageSuggestion {
   packageId: string
   reason: string
+  configuration?: Record<string, unknown>
 }
 
 /**
@@ -484,11 +485,14 @@ export function useStreamingSchemaParser() {
     if (Array.isArray(parsed.packages)) {
       for (const pkg of parsed.packages) {
         if (!pkg || typeof pkg !== 'object') continue
-        const { packageId, reason } = pkg as Record<string, unknown>
+        const { packageId, reason, configuration } = pkg as Record<string, unknown>
         if (typeof packageId === 'string' && packageId) {
           result.packages.push({
             packageId,
-            reason: typeof reason === 'string' ? reason : ''
+            reason: typeof reason === 'string' ? reason : '',
+            configuration: typeof configuration === 'object' && configuration !== null
+              ? configuration as Record<string, unknown>
+              : undefined
           })
         }
       }
@@ -567,15 +571,25 @@ export function useStreamingSchemaParser() {
     const packagesMatch = jsonStr.match(/"packages"\s*:\s*\[([\s\S]*?)(?:\]|$)/)
     if (packagesMatch?.[1]) {
       const packagesStr = packagesMatch[1]
-      // Extract individual package objects
-      const pkgPattern = /\{\s*"packageId"\s*:\s*"([^"]+)"(?:\s*,\s*"reason"\s*:\s*"([^"]*)")?\s*\}/g
+      // Extract individual package objects with optional configuration
+      // This pattern handles packages with or without configuration
+      const pkgPattern = /\{\s*"packageId"\s*:\s*"([^"]+)"(?:\s*,\s*"reason"\s*:\s*"([^"]*)")?(?:\s*,\s*"configuration"\s*:\s*(\{[^}]*\}))?\s*\}/g
       let pkgMatch
       while ((pkgMatch = pkgPattern.exec(packagesStr)) !== null) {
-        const [, packageId, reason] = pkgMatch
+        const [, packageId, reason, configStr] = pkgMatch
         if (packageId) {
+          let configuration: Record<string, unknown> | undefined
+          if (configStr) {
+            try {
+              configuration = JSON.parse(configStr)
+            } catch {
+              // Ignore malformed config
+            }
+          }
           result.packages.push({
             packageId,
-            reason: reason || ''
+            reason: reason || '',
+            configuration
           })
         }
       }

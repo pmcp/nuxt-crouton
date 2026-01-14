@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection bookings
  * @layer bookings
- * @generated 2026-01-11
+ * @generated 2026-01-14
  *
  * ## AI Context
  * - Main interface: BookingsBooking

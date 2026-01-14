@@ -13,6 +13,10 @@ const { selectField, removeField, updateField } = useSchemaDesigner()
 // Animation state for AI-added fields
 const showNewAnimation = ref(props.isNew || false)
 
+// Check if field is locked (from package)
+const isLocked = computed(() => props.field.locked === true)
+const fromPackage = computed(() => props.field.fromPackage)
+
 // Clear animation after delay
 watch(() => props.isNew, (isNew) => {
   if (isNew) {
@@ -27,6 +31,9 @@ const isEditing = ref(false)
 const editName = ref('')
 
 function startEdit() {
+  // Don't allow editing locked field names
+  if (isLocked.value) return
+
   editName.value = props.field.name
   isEditing.value = true
   nextTick(() => {
@@ -54,6 +61,11 @@ function handleKeydown(e: KeyboardEvent) {
     cancelEdit()
   }
 }
+
+function handleDelete() {
+  if (isLocked.value) return
+  removeField(props.field.id)
+}
 </script>
 
 <template>
@@ -63,13 +75,26 @@ function handleKeydown(e: KeyboardEvent) {
     :class="[
       showNewAnimation
         ? 'border-[var(--ui-primary)] ring-2 ring-[var(--ui-primary)]/30 animate-pulse'
-        : 'border-[var(--ui-border)]'
+        : isLocked
+          ? 'border-[var(--ui-border)] bg-[var(--ui-bg-muted)]/30'
+          : 'border-[var(--ui-border)]'
     ]"
     @click="selectField(field.id)"
   >
-    <!-- Drag Handle -->
-    <div class="cursor-grab active:cursor-grabbing text-[var(--ui-text-muted)]">
+    <!-- Drag Handle (hidden for locked fields) -->
+    <div
+      v-if="!isLocked"
+      class="cursor-grab active:cursor-grabbing text-[var(--ui-text-muted)]"
+    >
       <UIcon name="i-lucide-grip-vertical" />
+    </div>
+    <!-- Lock Icon (shown for locked fields) -->
+    <div
+      v-else
+      class="text-[var(--ui-text-muted)]"
+      title="This field is required by the package"
+    >
+      <UIcon name="i-lucide-lock" />
     </div>
 
     <!-- Field Type Icon -->
@@ -89,8 +114,11 @@ function handleKeydown(e: KeyboardEvent) {
     <div class="flex-1 min-w-0">
       <div v-if="!isEditing" class="flex items-center gap-2">
         <span
-          class="font-medium cursor-text"
-          :class="{ 'text-[var(--ui-text-muted)] italic': !field.name }"
+          class="font-medium"
+          :class="[
+            !field.name ? 'text-[var(--ui-text-muted)] italic' : '',
+            isLocked ? 'cursor-default' : 'cursor-text'
+          ]"
           @click.stop="startEdit"
         >
           {{ field.name || 'unnamed' }}
@@ -102,6 +130,15 @@ function handleKeydown(e: KeyboardEvent) {
           size="xs"
         >
           required
+        </UBadge>
+        <UBadge
+          v-if="isLocked"
+          color="neutral"
+          variant="subtle"
+          size="xs"
+        >
+          <UIcon name="i-lucide-package" class="mr-1 text-[10px]" />
+          package
         </UBadge>
       </div>
       <input
@@ -132,11 +169,12 @@ function handleKeydown(e: KeyboardEvent) {
         @click.stop="selectField(field.id)"
       />
       <UButton
+        v-if="!isLocked"
         variant="ghost"
         color="error"
         size="xs"
         icon="i-lucide-trash-2"
-        @click.stop="removeField(field.id)"
+        @click.stop="handleDelete"
       />
     </div>
   </div>

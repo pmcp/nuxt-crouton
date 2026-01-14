@@ -75,6 +75,121 @@ export interface CroutonAppRoute {
 }
 
 /**
+ * Configuration field definition for page type settings.
+ * Used to define configurable options when creating a page of a specific type.
+ */
+export interface CroutonPageTypeConfigField {
+  /**
+   * Field name (used as key in config object).
+   * @example 'locationId', 'showFilters', 'pageSize'
+   */
+  name: string
+
+  /**
+   * Display label for the field.
+   * @example 'Default Location', 'Show Filters'
+   */
+  label: string
+
+  /**
+   * Field input type.
+   */
+  type: 'string' | 'boolean' | 'number' | 'select' | 'reference'
+
+  /**
+   * Default value for the field.
+   */
+  default?: unknown
+
+  /**
+   * Whether the field is required.
+   */
+  required?: boolean
+
+  /**
+   * Options for select fields.
+   */
+  options?: { value: string; label: string }[]
+
+  /**
+   * Collection name for reference fields.
+   * @example 'bookingsLocations'
+   */
+  referenceCollection?: string
+}
+
+/**
+ * A page type that an app provides for CMS use.
+ * Page types are pre-built templates/components that render specific app functionality.
+ * Admins can create pages of these types in the page management UI.
+ */
+export interface CroutonPageType {
+  /**
+   * Unique identifier for this page type within the app.
+   * Combined with appId creates global uniqueness: 'bookings:calendar'
+   * @example 'calendar', 'wizard', 'my-bookings'
+   */
+  id: string
+
+  /**
+   * Display name for the page type.
+   * Shown in admin UI when selecting page type.
+   * @example 'Booking Calendar', 'Booking Wizard'
+   */
+  name: string
+
+  /**
+   * Description of what this page type provides.
+   * @example 'Shows an interactive calendar for customers to make bookings'
+   */
+  description?: string
+
+  /**
+   * Icon for the page type.
+   * Uses Lucide icons with 'i-lucide-' prefix.
+   * @example 'i-lucide-calendar', 'i-lucide-list'
+   */
+  icon?: string
+
+  /**
+   * The Vue component name to render for this page type.
+   * Must be a globally registered component from the app package.
+   * @example 'CroutonBookingsCalendar', 'CroutonBookingsCustomerBookingWizard'
+   */
+  component: string
+
+  /**
+   * Default props to pass to the component.
+   * Page-specific overrides can be stored in the page record.
+   */
+  defaultProps?: Record<string, unknown>
+
+  /**
+   * Configuration schema for page-specific settings.
+   * These appear in the admin form when creating/editing a page of this type.
+   */
+  configSchema?: CroutonPageTypeConfigField[]
+
+  /**
+   * Category for organizing page types in the UI.
+   * @example 'customer', 'admin', 'display'
+   */
+  category?: string
+
+  /**
+   * Whether this page type requires authentication.
+   * @default false
+   */
+  requiresAuth?: boolean
+
+  /**
+   * Preview image URL for the page type.
+   * Shown in admin selection UI.
+   */
+  previewImage?: string
+}
+
+/**
  * Configuration for a Crouton app that can register routes
  * across different navigation contexts (dashboard, admin, settings).
  */
@@ -118,6 +233,25 @@ export interface CroutonAppConfig {
    * Paths will be prefixed appropriately.
    */
   settingsRoutes?: CroutonAppRoute[]
+
+  /**
+   * Page types this app provides for CMS use.
+   * These appear in the admin page creation flow, allowing admins
+   * to create pages that render app-specific components.
+   * @example
+   * ```typescript
+   * pageTypes: [
+   *   {
+   *     id: 'calendar',
+   *     name: 'Booking Calendar',
+   *     component: 'CroutonBookingsCalendar',
+   *     icon: 'i-lucide-calendar',
+   *     category: 'customer'
+   *   }
+   * ]
+   * ```
+   */
+  pageTypes?: CroutonPageType[]
 }
 
 /**
