@@ -392,6 +392,7 @@
     "collections": "Collections",
     "admin": "Admin",
     "superAdmin": "Super Admin",
-    "team": "Team"
+    "team": "Team",
+    "translations": "Translations"
   }
 }

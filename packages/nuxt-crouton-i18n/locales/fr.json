@@ -361,6 +361,11 @@
     "docs": "Documentation",
     "backToDashboard": "Retour au tableau de bord",
     "backToAdmin": "Retour à l'administration",
-    "accountSettings": "Paramètres du compte"
+    "accountSettings": "Paramètres du compte",
+    "collections": "Collections",
+    "admin": "Administration",
+    "superAdmin": "Super Admin",
+    "team": "Équipe",
+    "translations": "Traductions"
   }
 }

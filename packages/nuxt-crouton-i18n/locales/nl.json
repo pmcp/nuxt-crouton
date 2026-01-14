@@ -363,6 +363,10 @@
     "backToDashboard": "Terug naar dashboard",
     "backToAdmin": "Terug naar beheer",
     "accountSettings": "Accountinstellingen",
-    "team": "Team"
+    "collections": "Collecties",
+    "admin": "Beheer",
+    "superAdmin": "Superbeheerder",
+    "team": "Team",
+    "translations": "Vertalingen"
   }
 }
