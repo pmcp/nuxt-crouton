@@ -11,6 +11,7 @@
     :hide-default-columns="hideDefaultColumns"
     :sortable="sortable"
     :stateless="stateless"
+    class="h-full"
   >
     <template #header>
       <slot name="header">

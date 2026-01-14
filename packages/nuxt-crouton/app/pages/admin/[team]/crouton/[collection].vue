@@ -41,7 +41,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <UDashboardPanel id="admin-collection">
+  <UDashboardPanel
+    id="admin-collection"
+    :ui="{ root: 'relative flex flex-col min-w-0 flex-1 h-full overflow-hidden' }"
+  >
     <template #header>
       <UDashboardNavbar :title="collectionTitle">
         <template #leading>
@@ -50,29 +53,29 @@ onMounted(() => {
       </UDashboardNavbar>
     </template>
 
-    <template #body>
-      <div
-        v-if="loading"
-        class="italic opacity-50 flex items-center gap-2 p-4"
-      >
-        <UIcon
-          name="i-lucide-loader-circle"
-          class="animate-spin"
-        />
-        {{ t('common.loading') }}
-      </div>
-
-      <div
-        v-else-if="error"
-        class="text-red-600 p-4"
-      >
-        {{ error }}
-      </div>
-
-      <CroutonCollectionViewer
-        v-else
-        :collection-name="collectionName"
+    <!-- Use default slot instead of body for full-height content without auto-scroll -->
+    <div
+      v-if="loading"
+      class="italic opacity-50 flex items-center gap-2 p-4"
+    >
+      <UIcon
+        name="i-lucide-loader-circle"
+        class="animate-spin"
       />
-    </template>
+      {{ t('common.loading') }}
+    </div>
+
+    <div
+      v-else-if="error"
+      class="text-red-600 p-4"
+    >
+      {{ error }}
+    </div>
+
+    <CroutonCollectionViewer
+      v-else
+      :collection-name="collectionName"
+      class="flex-1 min-h-0"
+    />
   </UDashboardPanel>
 </template>

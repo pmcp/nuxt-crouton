@@ -1,101 +1,109 @@
 <template>
-  <UDashboardPanel :id="collection || 'crouton-table'">
-    <template #header>
+  <div
+    :id="collection || 'crouton-table'"
+    class="flex flex-col h-full"
+  >
+    <!-- Header slot -->
+    <div
+      v-if="$slots.header"
+      class="shrink-0"
+    >
       <slot name="header" />
-    </template>
+    </div>
 
-    <template #body>
-      <!-- Filters -->
-      <div class="flex items-center justify-between gap-3">
-        <CroutonTableSearch
-          v-model="search"
-          :placeholder="tString('table.search')"
-          :debounce-ms="300"
-        />
+    <!-- Filters - fixed height -->
+    <div class="flex items-center justify-between gap-3 shrink-0 px-4 py-3">
+      <CroutonTableSearch
+        v-model="search"
+        :placeholder="tString('table.search')"
+        :debounce-ms="300"
+      />
 
-        <CroutonTableActions
-          :selected-rows="selectedRows"
-          :collection="collection"
-          :table="tableRef"
-        />
-      </div>
+      <CroutonTableActions
+        :selected-rows="selectedRows"
+        :collection="collection"
+        :table="tableRef"
+      />
+    </div>
 
-      <div class="relative overflow-x-auto">
-        <!-- Loading overlay -->
-        <div
-          v-if="loadingPage"
-          class="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center"
-        >
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-lucide-loader-2"
-              class="animate-spin"
-            />
-            <span class="text-sm">{{ t('common.loading') }}</span>
-          </div>
+    <!-- Table container - scrollable -->
+    <div class="relative flex-1 min-h-0 overflow-auto px-4">
+      <!-- Loading overlay -->
+      <div
+        v-if="loadingPage"
+        class="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center"
+      >
+        <div class="flex items-center gap-2">
+          <UIcon
+            name="i-lucide-loader-2"
+            class="animate-spin"
+          />
+          <span class="text-sm">{{ t('common.loading') }}</span>
         </div>
-
-        <UTable
-          ref="tableRef"
-          v-model:row-selection="rowSelection"
-          v-model:sort="sort"
-          v-model:column-visibility="columnVisibility"
-          :data="slicedRows"
-          :columns="allColumns as any"
-          class="shrink-0"
-          :class="{ 'opacity-50': loadingPage }"
-          :ui="tableStyles"
-        >
-          <!-- Pass all slots from parent -->
-          <template
-            v-for="(_, slot) of $slots"
-            #[slot]="scope"
-          >
-            <slot
-              :name="slot"
-              v-bind="scope"
-            />
-          </template>
-
-          <!-- Default column templates -->
-          <template #createdBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
-            <CroutonUsersCardMini
-              v-if="row.original.createdByUser"
-              :item="row.original.createdByUser"
-              :name="true"
-            />
-          </template>
-
-          <template #createdAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
-            <CroutonDate :date="row.original.createdAt" />
-          </template>
-
-          <template #updatedBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
-            <CroutonUsersCardMini
-              v-if="row.original.updatedByUser"
-              :item="row.original.updatedByUser"
-              :name="true"
-            />
-          </template>
-
-          <template #updatedAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
-            <CroutonDate :date="row.original.updatedAt" />
-          </template>
-
-          <template #actions-cell="{ row }: { row: { original: CroutonBaseRow } }">
-            <CroutonItemButtonsMini
-              delete
-              update
-              :disabled="stateless"
-              :disabled-tooltip="stateless ? 'Preview only' : ''"
-              @delete="openCrouton?.('delete', collection, [row.original.id])"
-              @update="openCrouton?.('update', collection, [row.original.id])"
-            />
-          </template>
-        </UTable>
       </div>
 
-      <!-- Pagination -->
+      <UTable
+        ref="tableRef"
+        v-model:row-selection="rowSelection"
+        v-model:sort="sort"
+        v-model:column-visibility="columnVisibility"
+        :data="slicedRows"
+        :columns="allColumns as any"
+        class="shrink-0"
+        :class="{ 'opacity-50': loadingPage }"
+        :ui="tableStyles"
+      >
+        <!-- Pass all slots from parent -->
+        <template
+          v-for="(_, slot) of $slots"
+          #[slot]="scope"
+        >
+          <slot
+            :name="slot"
+            v-bind="scope"
+          />
+        </template>
+
+        <!-- Default column templates -->
+        <template #createdBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
+          <CroutonUsersCardMini
+            v-if="row.original.createdByUser"
+            :item="row.original.createdByUser"
+            :name="true"
+          />
+        </template>
+
+        <template #createdAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
+          <CroutonDate :date="row.original.createdAt" />
+        </template>
+
+        <template #updatedBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
+          <CroutonUsersCardMini
+            v-if="row.original.updatedByUser"
+            :item="row.original.updatedByUser"
+            :name="true"
+          />
+        </template>
+
+        <template #updatedAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
+          <CroutonDate :date="row.original.updatedAt" />
+        </template>
+
+        <template #actions-cell="{ row }: { row: { original: CroutonBaseRow } }">
+          <CroutonItemButtonsMini
+            delete
+            update
+            :disabled="stateless"
+            :disabled-tooltip="stateless ? 'Preview only' : ''"
+            @delete="openCrouton?.('delete', collection, [row.original.id])"
+            @update="openCrouton?.('update', collection, [row.original.id])"
+          />
+        </template>
+      </UTable>
+    </div>
+
+    <!-- Pagination - fixed at bottom -->
+    <div class="shrink-0 border-t border-default px-4">
       <CroutonTablePagination
         :page="page"
         :page-count="pageCount"
@@ -104,8 +112,8 @@
         @update:page="page = $event"
         @update:page-count="handlePageCountChange"
       />
-    </template>
-  </UDashboardPanel>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
