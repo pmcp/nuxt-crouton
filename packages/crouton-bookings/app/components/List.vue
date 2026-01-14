@@ -173,31 +173,39 @@ interface MonthGroup {
 }
 
 const groupedBookings = computed((): MonthGroup[] => {
-  const monthGroups: MonthGroup[] = []
-  let currentMonthKey = ''
+  // Use a Map to consolidate all bookings by month (avoids duplicate month headers)
+  const monthMap = new Map<string, MonthGroup>()
 
   for (const booking of resolvedBookings.value) {
     const date = new Date(booking.date)
-    const monthKey = `${date.getFullYear()}-${date.getMonth()}`
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`
     const dateKey = formatDateKey(date)
     const monthLabel = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(date)
 
-    // Find or create month group
-    if (monthKey !== currentMonthKey) {
-      currentMonthKey = monthKey
-      monthGroups.push({ key: monthKey, label: monthLabel, dateGroups: [] })
+    // Find or create month group in the Map
+    let monthGroup = monthMap.get(monthKey)
+    if (!monthGroup) {
+      monthGroup = { key: monthKey, label: monthLabel, dateGroups: [] }
+      monthMap.set(monthKey, monthGroup)
     }
 
-    const currentMonth = monthGroups[monthGroups.length - 1]
-
     // Find or create date group within month
-    let dateGroup = currentMonth.dateGroups.find(dg => dg.dateKey === dateKey)
+    let dateGroup = monthGroup.dateGroups.find(dg => dg.dateKey === dateKey)
     if (!dateGroup) {
       dateGroup = { dateKey, date: new Date(date), bookings: [] }
-      currentMonth.dateGroups.push(dateGroup)
+      monthGroup.dateGroups.push(dateGroup)
     }
 
     dateGroup.bookings.push(booking)
+  }
+
+  // Sort month keys chronologically and convert Map to array
+  const sortedMonthKeys = [...monthMap.keys()].sort()
+  const monthGroups = sortedMonthKeys.map(key => monthMap.get(key)!)
+
+  // Sort date groups within each month chronologically
+  for (const monthGroup of monthGroups) {
+    monthGroup.dateGroups.sort((a, b) => a.date.getTime() - b.date.getTime())
   }
 
   return monthGroups
@@ -216,7 +224,7 @@ const groupedBookingsWithCreateDate = computed((): MonthGroup[] => {
   const result: MonthGroup[] = JSON.parse(JSON.stringify(baseGroups))
 
   const createDate = props.creatingAtDate
-  const createMonthKey = `${createDate.getFullYear()}-${createDate.getMonth()}`
+  const createMonthKey = `${createDate.getFullYear()}-${String(createDate.getMonth()).padStart(2, '0')}`
   const createDateKey = formatDateKey(createDate)
   const createMonthLabel = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(createDate)
 
