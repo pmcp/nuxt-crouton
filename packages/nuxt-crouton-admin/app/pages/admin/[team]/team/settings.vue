@@ -5,13 +5,8 @@
  * Team configuration settings including name, slug, and logo.
  * Only accessible by team admins/owners.
  *
- * @route /admin/[team]/settings
+ * @route /admin/[team]/team/settings
  */
-definePageMeta({
-  middleware: ['auth', 'team-admin'],
-  layout: 'admin'
-})
-
 const route = useRoute()
 const { t } = useT()
 const { currentTeam, isOwner, deleteTeam, isAdmin } = useTeam()
@@ -54,20 +49,9 @@ function handleSaved() {
 </script>
 
 <template>
-  <UDashboardPanel>
-    <template #header>
-      <UDashboardNavbar :title="t('teams.teamSettings')">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-      </UDashboardNavbar>
-    </template>
-
-    <template #body>
-      <div class="max-w-3xl mx-auto space-y-8 p-6">
-
+  <div class="p-6">
     <!-- Not a team admin -->
-    <UCard
+    <div
       v-if="!isAdmin"
       class="text-center py-8"
     >
@@ -75,29 +59,23 @@ function handleSaved() {
         name="i-lucide-shield-alert"
         class="size-12 mx-auto mb-4 text-muted opacity-50"
       />
-      <h3 class="text-lg font-medium">
-        {{ t('common.accessRestricted') }}
-      </h3>
-      <p class="text-muted mt-2 max-w-md mx-auto">
-        {{ t('teams.adminAccessRequired') }}
-      </p>
-      <NuxtLink :to="`/admin/${teamSlug}`">
+      <h3 class="text-lg font-medium">{{ t('common.accessRestricted') || 'Access Restricted' }}</h3>
+      <p class="text-muted mt-2 max-w-md mx-auto">{{ t('teams.adminAccessRequired') || 'Admin access required' }}</p>
+      <NuxtLink :to="`/admin/${teamSlug}/team`">
         <UButton
-          :label="t('navigation.backToAdmin')"
+          :label="t('navigation.backToTeam') || 'Back to Team'"
           variant="outline"
           class="mt-4"
         />
       </NuxtLink>
-    </UCard>
+    </div>
 
     <!-- Team Settings Form -->
     <template v-else>
-      <UCard>
-        <TeamSettings
-          @saved="handleSaved"
-          @delete="showDeleteModal = true"
-        />
-      </UCard>
+      <TeamSettings
+        @saved="handleSaved"
+        @delete="showDeleteModal = true"
+      />
 
       <!-- Delete Confirmation Modal -->
       <TeamDeleteConfirm
@@ -107,7 +85,5 @@ function handleSaved() {
         @confirm="handleDelete"
       />
     </template>
-      </div>
-    </template>
-  </UDashboardPanel>
+  </div>
 </template>

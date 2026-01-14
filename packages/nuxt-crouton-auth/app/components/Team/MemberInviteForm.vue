@@ -160,6 +160,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
         placeholder="colleague@example.com"
         icon="i-lucide-mail"
         :disabled="isLoading"
+        class="w-full"
       />
     </UFormField>
 

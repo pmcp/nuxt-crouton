@@ -137,23 +137,15 @@ const roleBadgeColor = computed(() => {
 </script>
 
 <template>
-  <div class="flex items-center justify-between py-3 px-4 hover:bg-muted/50 rounded-lg transition-colors">
-    <div class="flex items-center gap-3">
-      <!-- Avatar -->
-      <UAvatar
-        v-if="member.user?.image"
-        :src="member.user.image"
-        :alt="displayName"
-        size="sm"
-      />
-      <UAvatar
-        v-else
-        :text="initials"
-        size="sm"
-      />
-
-      <!-- Name and Email -->
-      <div>
+  <div class="flex items-center justify-between py-3 px-4 hover:bg-muted/50 transition-colors">
+    <!-- User Info -->
+    <UUser
+      :name="displayName"
+      :description="member.user?.email"
+      :avatar="{ src: member.user?.image, text: initials }"
+      size="md"
+    >
+      <template #name>
         <div class="flex items-center gap-2">
           <span class="font-medium">{{ displayName }}</span>
           <UBadge
@@ -166,13 +158,10 @@ const roleBadgeColor = computed(() => {
           <span
             v-if="isSelf"
             class="text-xs text-muted"
-          >{{ t('teams.you') }}</span>
+          >({{ t('teams.you') }})</span>
         </div>
-        <p class="text-sm text-muted">
-          {{ member.user?.email }}
-        </p>
-      </div>
-    </div>
+      </template>
+    </UUser>
 
     <!-- Actions -->
     <div class="flex items-center gap-2">

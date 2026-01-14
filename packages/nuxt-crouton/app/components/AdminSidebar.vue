@@ -117,8 +117,8 @@ const dashboardItem = computed<NavigationMenuItem | null>(() => {
   }
 })
 
-// Team group (core team management items including settings)
-const teamGroup = computed<NavigationMenuItem | null>(() => {
+// Team group with sub-items (navigates to team section with horizontal tabs)
+const teamItem = computed<NavigationMenuItem | null>(() => {
   if (props.context === 'super') {
     // Super Admin uses flat items, not a team group
     return null
@@ -127,6 +127,7 @@ const teamGroup = computed<NavigationMenuItem | null>(() => {
   const teamParam = teamSlugRef.value || teamIdRef.value || ''
   if (!teamParam) return null
 
+  const teamPath = `/admin/${teamParam}/team`
   return {
     label: t('navigation.team') || 'Team',
     icon: 'i-lucide-users',
@@ -135,20 +136,20 @@ const teamGroup = computed<NavigationMenuItem | null>(() => {
       {
         label: t('teams.members') || 'Members',
         icon: 'i-lucide-users',
-        to: `/admin/${teamParam}/members`,
-        active: route.path.includes('/members')
+        to: teamPath,
+        active: route.path === teamPath || route.path === `${teamPath}/`
       },
       {
-        label: t('teams.pendingInvitations') || 'Invitations',
+        label: t('teams.invitations') || 'Invitations',
         icon: 'i-lucide-mail',
-        to: `/admin/${teamParam}/invitations`,
-        active: route.path.includes('/invitations')
+        to: `${teamPath}/invitations`,
+        active: route.path === `${teamPath}/invitations` || route.path === `${teamPath}/invitations/`
       },
       {
         label: t('teams.teamSettings') || 'Settings',
         icon: 'i-lucide-settings',
-        to: `/admin/${teamParam}/settings`,
-        active: route.path === `/admin/${teamParam}/settings` || route.path === `/admin/${teamParam}/settings/`
+        to: `${teamPath}/settings`,
+        active: route.path === `${teamPath}/settings` || route.path === `${teamPath}/settings/`
       }
     ]
   }
@@ -189,8 +190,8 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
   }
 
   // 3. For team admin: Team group (Members, Invitations, Settings)
-  if (teamGroup.value) {
-    mainItems.push(teamGroup.value)
+  if (teamItem.value) {
+    mainItems.push(teamItem.value)
   }
 
   // 4. App groups (Bookings, etc.) - each app gets its own group
