@@ -185,6 +185,7 @@ function getIndicatorsForDate(date: Date): Array<{
   color: string
   slots: SlotItem[]
   bookedSlotIds: string[]
+  cancelledSlotIds: string[]
   bookings: Booking[]
 }> {
   const dayBookings = getBookingsForDate(date)
@@ -207,6 +208,7 @@ function getIndicatorsForDate(date: Date): Array<{
     color: string
     slots: SlotItem[]
     bookedSlotIds: string[]
+    cancelledSlotIds: string[]
     bookings: Booking[]
   }> = []
 
@@ -219,21 +221,32 @@ function getIndicatorsForDate(date: Date): Array<{
 
     // Get all slot IDs booked for this location on this day
     const bookedSlotIds: string[] = []
+    const cancelledSlotIds: string[] = []
     const locationSlots = parseLocationSlots(location)
 
     for (const booking of locationBookings) {
       const slotIds = parseSlotIds(booking.slot)
+      const isCancelled = booking.status === 'cancelled'
+
       // If "all-day" is booked, treat all slots as booked
       if (slotIds.includes('all-day')) {
-        bookedSlotIds.push(...locationSlots.map(s => s.id))
+        const allSlotIds = locationSlots.map(s => s.id)
+        bookedSlotIds.push(...allSlotIds)
+        if (isCancelled) {
+          cancelledSlotIds.push(...allSlotIds)
+        }
       }
       else {
         bookedSlotIds.push(...slotIds)
+        if (isCancelled) {
+          cancelledSlotIds.push(...slotIds)
+        }
       }
     }
 
     // Get unique slot IDs
     const uniqueBookedSlotIds = [...new Set(bookedSlotIds)]
+    const uniqueCancelledSlotIds = [...new Set(cancelledSlotIds)]
 
     indicators.push({
       locationId,
@@ -241,6 +254,7 @@ function getIndicatorsForDate(date: Date): Array<{
       color: location.color || '#3b82f6',
       slots: parseLocationSlots(location),
       bookedSlotIds: uniqueBookedSlotIds,
+      cancelledSlotIds: uniqueCancelledSlotIds,
       bookings: locationBookings,
     })
   }
@@ -358,6 +372,7 @@ const monthCellHeight = computed(() => {
             <CroutonBookingsSlotIndicator
               :slots="indicator.slots"
               :booked-slot-ids="indicator.bookedSlotIds"
+              :cancelled-slot-ids="indicator.cancelledSlotIds"
               :bookings="indicator.bookings"
               :color="indicator.color"
               size="xs"
@@ -431,6 +446,7 @@ const monthCellHeight = computed(() => {
                 <CroutonBookingsSlotIndicator
                   :slots="indicator.slots"
                   :booked-slot-ids="indicator.bookedSlotIds"
+                  :cancelled-slot-ids="indicator.cancelledSlotIds"
                   :bookings="indicator.bookings"
                   :color="indicator.color"
                   size="xs"

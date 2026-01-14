@@ -9,17 +9,26 @@ interface SlotItem {
 interface Props {
   slots: SlotItem[]
   bookedSlotIds?: string[]
+  /** Slot IDs that belong to cancelled bookings (shown in red) */
+  cancelledSlotIds?: string[]
   /** Bookings data for hover highlighting */
   bookings?: Booking[]
-  /** Color to use for booked slots (from location) */
+  /** Color to use for unfilled slots and booked slots (from location) */
   color?: string
+  /** Optional override color for booked slots (e.g., red for cancelled) */
+  bookedColor?: string
+  /** Color for cancelled slots */
+  cancelledColor?: string
   size?: 'xs' | 'sm' | 'md' | 'lg'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   bookedSlotIds: () => [],
+  cancelledSlotIds: () => [],
   bookings: () => [],
   color: '#3b82f6',
+  bookedColor: undefined,
+  cancelledColor: '#ef4444',
   size: 'md',
 })
 
@@ -46,6 +55,16 @@ const gapClasses = {
 
 function isBooked(slotId: string): boolean {
   return props.bookedSlotIds?.includes(slotId) ?? false
+}
+
+function isCancelled(slotId: string): boolean {
+  return props.cancelledSlotIds?.includes(slotId) ?? false
+}
+
+// Get the color for a booked slot (red if cancelled, bookedColor if provided, otherwise location color)
+function getBookedSlotColor(slotId: string): string {
+  if (isCancelled(slotId)) return props.cancelledColor
+  return props.bookedColor || props.color
 }
 
 // Get booking for a specific slot
@@ -80,7 +99,7 @@ function getUnfilledColor(): string {
       class="rounded-full transition-colors"
       :class="[sizeClasses[size], isBooked(slot.id) ? 'cursor-pointer' : '']"
       :style="{
-        backgroundColor: isBooked(slot.id) ? color : getUnfilledColor(),
+        backgroundColor: isBooked(slot.id) ? getBookedSlotColor(slot.id) : getUnfilledColor(),
         opacity: isBooked(slot.id) ? 1 : 0.25,
       }"
       :title="slot.label"

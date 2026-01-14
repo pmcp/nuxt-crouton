@@ -197,7 +197,7 @@ function confirmAction() {
                 v-if="slotPositionInfo"
                 :total-slots="slotPositionInfo.totalSlots"
                 :position="slotPositionInfo.position"
-                :color="slotPositionInfo.color"
+                :color="booking.status === 'cancelled' ? '#ef4444' : slotPositionInfo.color"
                 :label="slotLabel"
                 size="sm"
               />

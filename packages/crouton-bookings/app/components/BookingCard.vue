@@ -206,7 +206,8 @@ const hasEmailStatus = computed(() => {
                   v-if="locationSlots.length > 0"
                   :slots="locationSlots"
                   :booked-slot-ids="bookedSlotIds"
-                  :color="isCancelled ? '#9ca3af' : locationColor"
+                  :cancelled-slot-ids="isCancelled ? bookedSlotIds : []"
+                  :color="locationColor"
                   size="sm"
                 />
                 <span class="text-xs text-muted">{{ slotLabel }}</span>
