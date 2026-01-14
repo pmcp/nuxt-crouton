@@ -162,37 +162,46 @@ const sortedMembers = computed(() => {
       <p>{{ t('teams.noMembersFound') }}</p>
     </div>
 
-    <!-- Members List -->
+    <!-- Members Grid -->
     <div
       v-else
-      class="space-y-2"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
     >
       <div
         v-for="member in sortedMembers"
         :key="member.id"
-        class="flex items-center justify-between py-2"
+        class="relative p-4 rounded-lg border border-default bg-elevated hover:bg-muted/50 transition-colors"
       >
-        <UUser
-          :name="member.user?.name || member.user?.email || 'Unknown'"
-          :description="member.user?.email"
-          :avatar="{ src: member.user?.image, text: (member.user?.name || member.user?.email || '?').slice(0, 2).toUpperCase() }"
-        >
-          <template #default>
-            <div class="flex items-center gap-2">
-              <UBadge
-                :color="member.role === 'owner' ? 'primary' : member.role === 'admin' ? 'info' : 'neutral'"
-                variant="subtle"
-                size="xs"
-              >
-                {{ member.role }}
-              </UBadge>
-              <span v-if="member.userId === user?.id" class="text-xs text-muted">({{ t('teams.you') }})</span>
-            </div>
-          </template>
-        </UUser>
+        <!-- Role badge in corner -->
+        <div class="absolute top-3 right-3">
+          <UBadge
+            :color="member.role === 'owner' ? 'primary' : member.role === 'admin' ? 'info' : 'neutral'"
+            variant="subtle"
+            size="xs"
+          >
+            {{ member.role }}
+          </UBadge>
+        </div>
+
+        <!-- Member info centered -->
+        <div class="flex flex-col items-center text-center pt-2 pb-4">
+          <UAvatar
+            :src="member.user?.image"
+            :text="(member.user?.name || member.user?.email || '?').slice(0, 2).toUpperCase()"
+            size="xl"
+            class="mb-3"
+          />
+          <div class="font-medium truncate max-w-full">
+            {{ member.user?.name || member.user?.email || 'Unknown' }}
+            <span v-if="member.userId === user?.id" class="text-xs text-muted">({{ t('teams.you') }})</span>
+          </div>
+          <div class="text-sm text-muted truncate max-w-full">
+            {{ member.user?.email }}
+          </div>
+        </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center justify-center gap-2 pt-3 border-t border-default">
           <USelectMenu
             v-if="canManageMembers && !(member.userId === user?.id && !isOwner) && !(member.role === 'owner' && !isOwner)"
             :model-value="member.role"
@@ -217,6 +226,14 @@ const sortedMembers = computed(() => {
             :loading="loadingMemberId === member.id"
             @click="handleRemove(member.id)"
           />
+
+          <!-- Show placeholder if no actions available -->
+          <span
+            v-if="!canManageMembers || (member.userId === user?.id && !isOwner) || (member.role === 'owner' && !isOwner)"
+            class="text-xs text-muted"
+          >
+            {{ t('teams.noActions') }}
+          </span>
         </div>
       </div>
     </div>

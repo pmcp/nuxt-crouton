@@ -316,6 +316,7 @@
     "memberCount": "{count} membre(s)",
     "loadingMembers": "Chargement des membres...",
     "noMembersFound": "Aucun membre trouvé",
+    "noActions": "Aucune action disponible",
     "you": "(vous)",
     "urlSlug": "Slug URL",
     "urlSlugHint": "Modifier le slug mettra à jour toutes les URLs de l'équipe.",
