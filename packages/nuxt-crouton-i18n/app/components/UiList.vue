@@ -75,18 +75,22 @@
 
       <!-- System Values -->
       <template #systemValues-cell="{ row }">
-        <CroutonI18nDisplay :translations="row.original.systemValues" />
+        <span class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+          {{ row.original.systemValues?.en || '—' }}
+        </span>
       </template>
 
       <!-- Team Override -->
       <template #teamValues-cell="{ row }">
         <template v-if="row.original.hasOverride">
-          <CroutonI18nDisplay :translations="row.original.teamValues" />
+          <span class="text-sm text-primary line-clamp-2">
+            {{ row.original.teamValues?.en || '—' }}
+          </span>
         </template>
         <span
           v-else
           class="text-gray-400 text-sm italic"
-        >No override</span>
+        >—</span>
       </template>
 
       <!-- Status -->
@@ -137,12 +141,23 @@
             </code>
           </div>
 
-          <div class="space-y-1">
+          <div class="space-y-2">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">System Values</label>
-            <CroutonI18nDisplay
+            <div
               v-if="editingItem"
-              :translations="editingItem.systemValues"
-            />
+              class="space-y-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3"
+            >
+              <div
+                v-for="locale in locales"
+                :key="locale"
+                class="flex gap-2"
+              >
+                <span class="w-8 text-xs font-medium text-gray-500 uppercase shrink-0 pt-0.5">{{ locale }}</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">
+                  {{ editingItem.systemValues?.[locale] || '—' }}
+                </span>
+              </div>
+            </div>
           </div>
 
           <USeparator />
@@ -211,10 +226,10 @@ const { data: items, pending, error, refresh } = await useFetch<TranslationWithO
 
 // Table columns
 const columns = [
-  { accessorKey: 'keyPath', header: 'Key Path' },
+  { accessorKey: 'keyPath', header: 'Key' },
   { accessorKey: 'category', header: 'Category' },
-  { accessorKey: 'systemValues', header: 'System Values' },
-  { accessorKey: 'teamValues', header: 'Team Override' },
+  { accessorKey: 'systemValues', header: 'Value (EN)' },
+  { accessorKey: 'teamValues', header: 'Override' },
   { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'actions', header: '' }
 ]
