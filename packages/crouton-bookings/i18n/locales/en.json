@@ -43,7 +43,7 @@
       "cancelled": "Cancelled"
     },
     "admin": {
-      "title": "Manage Bookings",
+      "title": "Bookings",
       "description": "View and manage all team bookings"
     },
     "settings": {

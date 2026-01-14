@@ -360,6 +360,7 @@
     "docs": "Documentatie",
     "backToDashboard": "Terug naar dashboard",
     "backToAdmin": "Terug naar beheer",
-    "accountSettings": "Accountinstellingen"
+    "accountSettings": "Accountinstellingen",
+    "team": "Team"
   }
 }

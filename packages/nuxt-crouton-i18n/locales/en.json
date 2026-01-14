@@ -389,6 +389,7 @@
     "accountSettings": "Account Settings",
     "collections": "Collections",
     "admin": "Admin",
-    "superAdmin": "Super Admin"
+    "superAdmin": "Super Admin",
+    "team": "Team"
   }
 }

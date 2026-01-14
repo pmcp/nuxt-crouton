@@ -153,6 +153,29 @@ export function useCroutonApps() {
     return app.settingsRoutes.filter((route: CroutonAppRoute) => !route.hidden)
   }
 
+  /**
+   * Get all routes for an app combined (admin + settings).
+   * Settings routes are automatically prefixed with /settings.
+   * Useful for building navigation groups by app.
+   *
+   * @param appId - The unique identifier of the app
+   * @returns Array of all routes for the app (admin routes + settings routes with /settings prefix)
+   */
+  function getAppAllRoutes(appId: string): CroutonAppRoute[] {
+    const app = getApp(appId)
+    if (!app) return []
+
+    const adminRoutes = (app.adminRoutes || []).filter((r: CroutonAppRoute) => !r.hidden)
+    const settingsRoutes = (app.settingsRoutes || [])
+      .filter((r: CroutonAppRoute) => !r.hidden)
+      .map((r: CroutonAppRoute) => ({
+        ...r,
+        path: `/settings${r.path}` // Prepend settings path
+      }))
+
+    return [...adminRoutes, ...settingsRoutes]
+  }
+
   return {
     // Reactive state
     apps,
@@ -165,6 +188,7 @@ export function useCroutonApps() {
     hasApp,
     getAppDashboardRoutes,
     getAppAdminRoutes,
-    getAppSettingsRoutes
+    getAppSettingsRoutes,
+    getAppAllRoutes
   }
 }
