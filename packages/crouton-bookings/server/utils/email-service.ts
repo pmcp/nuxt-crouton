@@ -232,9 +232,9 @@ export async function updateEmailLogStatus(
 }
 
 /**
- * Render email template with variables
+ * Render booking email template with variables
  */
-export function renderEmailTemplate(
+export function renderBookingEmail(
   template: { subject: string; body: string },
   variables: ExtendedEmailVariables
 ): { subject: string; body: string } {
@@ -417,7 +417,7 @@ export async function sendBookingEmails(
 
   // Process each matching template
   for (const template of templates) {
-    const { subject, body } = renderEmailTemplate(
+    const { subject, body } = renderBookingEmail(
       { subject: template.subject, body: template.body },
       variables
     )
