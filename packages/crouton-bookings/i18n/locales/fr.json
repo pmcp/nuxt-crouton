@@ -1,0 +1,84 @@
+{
+  "bookings": {
+    "title": "Réservations",
+    "booking": "Réservation",
+    "location": "Lieu",
+    "date": "Date",
+    "slot": "Créneau horaire",
+    "allDay": "Toute la journée",
+    "status": {
+      "active": "Actif",
+      "cancelled": "Annulé",
+      "booked": "Réservé",
+      "pending": "En attente",
+      "completed": "Terminé"
+    },
+    "meta": {
+      "bookedOn": "Réservé le {date}",
+      "emailsSent": "{sent}/{total} e-mails envoyés",
+      "emailsFailed": "{failed}/{total} e-mails échoués"
+    },
+    "group": "Groupe",
+    "cart": {
+      "title": "Votre Panier",
+      "empty": "Votre panier est vide",
+      "add": "Ajouter au Panier",
+      "remove": "Supprimer",
+      "clear": "Vider le Panier",
+      "submit": "Confirmer les Réservations",
+      "submitting": "Confirmation..."
+    },
+    "availability": {
+      "available": "Disponible",
+      "unavailable": "Indisponible",
+      "fullyBooked": "Complet",
+      "remaining": "{count} restant(s)"
+    },
+    "myBookings": {
+      "title": "Mes Réservations",
+      "upcoming": "À venir",
+      "past": "Passées",
+      "noBookings": "Aucune réservation trouvée",
+      "cancel": "Annuler la Réservation",
+      "cancelled": "Annulée"
+    },
+    "admin": {
+      "title": "Réservations",
+      "sectionTitle": "Réservations",
+      "overview": "Aperçu",
+      "locations": "Lieux",
+      "settings": "Paramètres",
+      "description": "Voir et gérer toutes les réservations de l'équipe"
+    },
+    "locations": {
+      "title": "Lieux",
+      "empty": "Aucun lieu pour le moment. Créez votre premier lieu réservable."
+    },
+    "settings": {
+      "title": "Paramètres",
+      "empty": "Aucun paramètre configuré. Créez les paramètres de réservation pour cette équipe.",
+      "emailTemplates": "Modèles d'e-mails",
+      "emailLogs": "Journaux d'e-mails"
+    },
+    "list": {
+      "loading": "Chargement des réservations...",
+      "noBookings": "Aucune réservation",
+      "noBookingsDescription": "Vous n'avez pas encore fait de réservation. Commencez par sélectionner un lieu et un créneau horaire."
+    },
+    "email": {
+      "resendConfirmation": "Renvoyer la Confirmation",
+      "sendReminder": "Envoyer un Rappel",
+      "sendCancellation": "Envoyer l'Annulation",
+      "sendFollowUp": "Envoyer un Suivi"
+    },
+    "wizard": {
+      "selectLocation": "Sélectionner le Lieu",
+      "selectDate": "Sélectionner la Date",
+      "selectSlot": "Sélectionner le Créneau",
+      "confirmation": "Confirmation",
+      "next": "Suivant",
+      "back": "Retour",
+      "confirm": "Confirmer la Réservation"
+    }
+  }
+}

@@ -9,7 +9,7 @@
   },
   "templateId": {
     "type": "string",
-    "refTarget": "emailTemplates",
+    "refTarget": "emailtemplates",
     "meta": {
       "label": "Template",
       "area": "main"

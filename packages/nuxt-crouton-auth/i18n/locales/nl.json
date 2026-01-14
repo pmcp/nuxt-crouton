@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "resetLinkSentDescription": "We hebben een link om je wachtwoord te resetten naar je e-mail gestuurd. Klik op de link om je wachtwoord te resetten.",
+    "magicLinkSentDescription": "We hebben een magic link naar je e-mail gestuurd. Klik op de link om in te loggen.",
+    "tryAnotherEmail": "Probeer een ander e-mailadres",
+    "continueWith": "Doorgaan met {provider}",
+    "placeholders": {
+      "email": "jij{'@'}voorbeeld.com",
+      "password": "Voer je wachtwoord in",
+      "confirmPassword": "Bevestig je wachtwoord",
+      "name": "Jan Jansen",
+      "atLeastChars": "Minimaal {min} tekens"
+    }
+  },
+  "teams": {
+    "slugValidation": "Slug mag alleen kleine letters, cijfers en koppeltekens bevatten",
+    "cannotCreateTeam": "Kan team niet aanmaken",
+    "maxTeamsReached": "Je hebt het maximale aantal teams bereikt.",
+    "teamCreated": "Team aangemaakt",
+    "teamCreatedDescription": "{name} is succesvol aangemaakt.",
+    "failedToCreateTeam": "Team aanmaken mislukt",
+    "urlSlugHintPrefix": "Je team URL wordt:",
+    "yourSlug": "jouw-slug",
+    "roleUpdated": "Rol bijgewerkt",
+    "roleUpdatedDescription": "De rol van het lid is bijgewerkt.",
+    "failedToUpdateRole": "Rol bijwerken mislukt",
+    "memberRemoved": "Lid verwijderd",
+    "memberRemovedDescription": "Het lid is uit het team verwijderd.",
+    "failedToRemoveMember": "Lid verwijderen mislukt"
+  },
+  "account": {
+    "passkey": {
+      "name": "Passkey naam",
+      "namePlaceholder": "Mijn MacBook",
+      "defaultName": "Passkey {number}",
+      "creatingPasskey": "Passkey aanmaken...",
+      "passkeyAdded": "Passkey toegevoegd",
+      "passkeyAddedDescription": "Je nieuwe passkey is geregistreerd.",
+      "passkeyRemoved": "Passkey verwijderd",
+      "passkeyRemovedDescription": "De passkey is verwijderd.",
+      "failedToLoadPasskeys": "Passkeys laden mislukt",
+      "failedToAddPasskey": "Passkey toevoegen mislukt",
+      "failedToDeletePasskey": "Passkey verwijderen mislukt"
+    }
+  }
+}

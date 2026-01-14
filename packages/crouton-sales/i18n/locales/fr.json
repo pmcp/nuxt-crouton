@@ -1,0 +1,68 @@
+{
+  "sales": {
+    "cart": {
+      "title": "Panier",
+      "empty": "Votre panier est vide",
+      "add": "Ajouter au panier",
+      "remove": "Supprimer",
+      "clear": "Vider le panier",
+      "quantity": "Quantité",
+      "total": "Total",
+      "subtotal": "Sous-total",
+      "checkout": "Passer à la caisse"
+    },
+    "products": {
+      "title": "Produits",
+      "search": "Rechercher des produits",
+      "noProducts": "Aucun produit disponible",
+      "outOfStock": "Rupture de stock",
+      "options": "Options",
+      "remarks": "Remarques",
+      "remarksPlaceholder": "Demandes spéciales..."
+    },
+    "categories": {
+      "all": "Tout",
+      "title": "Catégories"
+    },
+    "orders": {
+      "title": "Commandes",
+      "new": "Nouvelle Commande",
+      "pending": "En attente",
+      "completed": "Terminée",
+      "cancelled": "Annulée",
+      "orderNumber": "Commande #",
+      "customer": "Client",
+      "items": "Articles",
+      "status": "Statut",
+      "createdAt": "Créée le"
+    },
+    "events": {
+      "title": "Événements",
+      "select": "Sélectionner un événement",
+      "noEvents": "Aucun événement disponible",
+      "active": "Actif",
+      "upcoming": "À venir",
+      "past": "Passé"
+    },
+    "print": {
+      "title": "Impression",
+      "preview": "Aperçu",
+      "settings": "Paramètres de l'imprimante",
+      "queue": "File d'impression",
+      "printReceipt": "Imprimer le Reçu",
+      "printerName": "Nom de l'imprimante",
+      "location": "Lieu",
+      "status": "Statut"
+    },
+    "client": {
+      "name": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "notes": "Notes"
+    },
+    "offline": {
+      "title": "Hors ligne",
+      "message": "Vous êtes actuellement hors ligne. Certaines fonctionnalités peuvent être limitées."
+    }
+  }
+}

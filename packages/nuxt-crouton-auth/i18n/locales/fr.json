@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "resetLinkSentDescription": "Nous avons envoyé un lien de réinitialisation à votre e-mail. Cliquez sur le lien pour réinitialiser votre mot de passe.",
+    "magicLinkSentDescription": "Nous avons envoyé un lien magique à votre e-mail. Cliquez sur le lien pour vous connecter.",
+    "tryAnotherEmail": "Essayer un autre e-mail",
+    "continueWith": "Continuer avec {provider}",
+    "placeholders": {
+      "email": "vous{'@'}exemple.com",
+      "password": "Entrez votre mot de passe",
+      "confirmPassword": "Confirmez votre mot de passe",
+      "name": "Jean Dupont",
+      "atLeastChars": "Au moins {min} caractères"
+    }
+  },
+  "teams": {
+    "slugValidation": "Le slug ne peut contenir que des lettres minuscules, des chiffres et des tirets",
+    "cannotCreateTeam": "Impossible de créer l'équipe",
+    "maxTeamsReached": "Vous avez atteint le nombre maximum d'équipes.",
+    "teamCreated": "Équipe créée",
+    "teamCreatedDescription": "{name} a été créée avec succès.",
+    "failedToCreateTeam": "Échec de la création de l'équipe",
+    "urlSlugHintPrefix": "L'URL de votre équipe sera :",
+    "yourSlug": "votre-slug",
+    "roleUpdated": "Rôle mis à jour",
+    "roleUpdatedDescription": "Le rôle du membre a été mis à jour.",
+    "failedToUpdateRole": "Échec de la mise à jour du rôle",
+    "memberRemoved": "Membre retiré",
+    "memberRemovedDescription": "Le membre a été retiré de l'équipe.",
+    "failedToRemoveMember": "Échec du retrait du membre"
+  },
+  "account": {
+    "passkey": {
+      "name": "Nom de la passkey",
+      "namePlaceholder": "Mon MacBook",
+      "defaultName": "Passkey {number}",
+      "creatingPasskey": "Création de la passkey...",
+      "passkeyAdded": "Passkey ajoutée",
+      "passkeyAddedDescription": "Votre nouvelle passkey a été enregistrée.",
+      "passkeyRemoved": "Passkey supprimée",
+      "passkeyRemovedDescription": "La passkey a été supprimée.",
+      "failedToLoadPasskeys": "Échec du chargement des passkeys",
+      "failedToAddPasskey": "Échec de l'ajout de la passkey",
+      "failedToDeletePasskey": "Échec de la suppression de la passkey"
+    }
+  }
+}

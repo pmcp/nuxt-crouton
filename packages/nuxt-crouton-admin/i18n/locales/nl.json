@@ -1,0 +1,86 @@
+{
+  "admin": {
+    "dashboard": "Dashboard",
+    "users": "Gebruikers",
+    "teams": "Teams",
+    "settings": "Instellingen",
+    "superAdmin": "Superadmin",
+    "teamAdmin": "Teambeheerder",
+    "manageTeam": "Team Beheren",
+    "systemSettings": "Systeeminstellingen"
+  },
+  "superAdmin": {
+    "title": "Superadmin",
+    "dashboard": "Dashboard",
+    "stats": {
+      "totalUsers": "Totaal Gebruikers",
+      "newThisWeek": "Nieuw Deze Week",
+      "bannedUsers": "Geblokkeerde Gebruikers",
+      "totalTeams": "Totaal Teams",
+      "activeSessions": "Actieve Sessies",
+      "superAdmins": "Superadmins",
+      "failedToLoad": "Statistieken laden mislukt"
+    },
+    "quickActions": {
+      "title": "Snelle Acties",
+      "manageUsers": "Gebruikers Beheren",
+      "manageUsersDescription": "Bekijk, maak en beheer gebruikersaccounts",
+      "viewTeams": "Teams Bekijken",
+      "viewTeamsDescription": "Bekijk alle teams en hun leden"
+    },
+    "users": {
+      "title": "Gebruikers",
+      "name": "Naam",
+      "email": "E-mail",
+      "status": "Status",
+      "teams": "Teams",
+      "created": "Aangemaakt",
+      "searchPlaceholder": "Zoek gebruikers...",
+      "filterAll": "Alle Gebruikers",
+      "filterActive": "Actief",
+      "filterBanned": "Geblokkeerd",
+      "statusActive": "Actief",
+      "statusBanned": "Geblokkeerd",
+      "createUser": "Gebruiker Aanmaken",
+      "banUser": "Gebruiker Blokkeren",
+      "unbanUser": "Gebruiker Deblokkeren",
+      "deleteUser": "Gebruiker Verwijderen",
+      "impersonate": "Imiteren",
+      "userBanned": "Gebruiker geblokkeerd",
+      "userBannedDescription": "{name} is geblokkeerd",
+      "userUnbanned": "Gebruiker gedeblokkeerd",
+      "userUnbannedDescription": "{name} is gedeblokkeerd",
+      "userDeleted": "Gebruiker verwijderd",
+      "userDeletedDescription": "{name} is permanent verwijderd",
+      "userCreated": "Gebruiker aangemaakt",
+      "userCreatedDescription": "{name} is aangemaakt",
+      "failedToBan": "Blokkeren mislukt",
+      "failedToUnban": "Deblokkeren mislukt",
+      "failedToDelete": "Verwijderen mislukt",
+      "failedToCreate": "Aanmaken mislukt",
+      "deleteConfirmTitle": "Gebruiker Verwijderen",
+      "deleteConfirmMessage": "Weet je zeker dat je {name} permanent wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "impersonationFailed": "Imitatie mislukt"
+    },
+    "teams": {
+      "title": "Teams",
+      "name": "Naam",
+      "slug": "Slug",
+      "owner": "Eigenaar",
+      "members": "Leden",
+      "type": "Type",
+      "created": "Aangemaakt",
+      "searchPlaceholder": "Zoek teams...",
+      "filterAll": "Alle Teams",
+      "filterTeam": "Team Werkruimtes",
+      "filterPersonal": "Persoonlijke Werkruimtes",
+      "typePersonal": "Persoonlijk",
+      "typeTeam": "Team",
+      "defaultTeam": "Standaard team"
+    },
+    "impersonation": {
+      "banner": "Je imiteert {name}",
+      "stopImpersonation": "Stop Imitatie"
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "admin": {
+    "dashboard": "Tableau de bord",
+    "users": "Utilisateurs",
+    "teams": "Équipes",
+    "settings": "Paramètres",
+    "superAdmin": "Super Admin",
+    "teamAdmin": "Admin d'équipe",
+    "manageTeam": "Gérer l'équipe",
+    "systemSettings": "Paramètres système"
+  },
+  "superAdmin": {
+    "title": "Super Admin",
+    "dashboard": "Tableau de bord",
+    "stats": {
+      "totalUsers": "Total des utilisateurs",
+      "newThisWeek": "Nouveaux cette semaine",
+      "bannedUsers": "Utilisateurs bannis",
+      "totalTeams": "Total des équipes",
+      "activeSessions": "Sessions actives",
+      "superAdmins": "Super Admins",
+      "failedToLoad": "Échec du chargement des statistiques"
+    },
+    "quickActions": {
+      "title": "Actions rapides",
+      "manageUsers": "Gérer les utilisateurs",
+      "manageUsersDescription": "Voir, créer et gérer les comptes utilisateurs",
+      "viewTeams": "Voir les équipes",
+      "viewTeamsDescription": "Parcourir toutes les équipes et leurs membres"
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "name": "Nom",
+      "email": "E-mail",
+      "status": "Statut",
+      "teams": "Équipes",
+      "created": "Créé",
+      "searchPlaceholder": "Rechercher des utilisateurs...",
+      "filterAll": "Tous les utilisateurs",
+      "filterActive": "Actifs",
+      "filterBanned": "Bannis",
+      "statusActive": "Actif",
+      "statusBanned": "Banni",
+      "createUser": "Créer un utilisateur",
+      "banUser": "Bannir l'utilisateur",
+      "unbanUser": "Débannir l'utilisateur",
+      "deleteUser": "Supprimer l'utilisateur",
+      "impersonate": "Se faire passer pour",
+      "userBanned": "Utilisateur banni",
+      "userBannedDescription": "{name} a été banni",
+      "userUnbanned": "Utilisateur débanni",
+      "userUnbannedDescription": "{name} a été débanni",
+      "userDeleted": "Utilisateur supprimé",
+      "userDeletedDescription": "{name} a été supprimé définitivement",
+      "userCreated": "Utilisateur créé",
+      "userCreatedDescription": "{name} a été créé",
+      "failedToBan": "Échec du bannissement",
+      "failedToUnban": "Échec du débannissement",
+      "failedToDelete": "Échec de la suppression",
+      "failedToCreate": "Échec de la création",
+      "deleteConfirmTitle": "Supprimer l'utilisateur",
+      "deleteConfirmMessage": "Êtes-vous sûr de vouloir supprimer définitivement {name} ? Cette action est irréversible.",
+      "impersonationFailed": "Échec de l'usurpation d'identité"
+    },
+    "teams": {
+      "title": "Équipes",
+      "name": "Nom",
+      "slug": "Slug",
+      "owner": "Propriétaire",
+      "members": "Membres",
+      "type": "Type",
+      "created": "Créé",
+      "searchPlaceholder": "Rechercher des équipes...",
+      "filterAll": "Toutes les équipes",
+      "filterTeam": "Espaces d'équipe",
+      "filterPersonal": "Espaces personnels",
+      "typePersonal": "Personnel",
+      "typeTeam": "Équipe",
+      "defaultTeam": "Équipe par défaut"
+    },
+    "impersonation": {
+      "banner": "Vous vous faites passer pour {name}",
+      "stopImpersonation": "Arrêter l'usurpation"
+    }
+  }
+}
