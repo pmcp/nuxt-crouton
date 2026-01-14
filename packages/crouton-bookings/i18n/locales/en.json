@@ -46,9 +46,17 @@
       "title": "Bookings",
       "sectionTitle": "Bookings",
       "overview": "Overview",
+      "locations": "Locations",
+      "settings": "Settings",
       "description": "View and manage all team bookings"
     },
+    "locations": {
+      "title": "Locations",
+      "empty": "No locations yet. Create your first bookable location."
+    },
     "settings": {
+      "title": "Settings",
+      "empty": "No settings configured. Create booking settings for this team.",
       "emailTemplates": "Email Templates",
       "emailLogs": "Email Logs"
     },

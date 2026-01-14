@@ -46,9 +46,17 @@
       "title": "Boekingen",
       "sectionTitle": "Boekingen",
       "overview": "Overzicht",
+      "locations": "Locaties",
+      "settings": "Instellingen",
       "description": "Bekijk en beheer alle team boekingen"
     },
+    "locations": {
+      "title": "Locaties",
+      "empty": "Nog geen locaties. Maak je eerste boekbare locatie aan."
+    },
     "settings": {
+      "title": "Instellingen",
+      "empty": "Geen instellingen geconfigureerd. Maak boekingsinstellingen voor dit team.",
       "emailTemplates": "E-mail Sjablonen",
       "emailLogs": "E-mail Logs"
     },

@@ -26,6 +26,16 @@ const tabs = computed(() => [
       exact: true // Only highlight when exactly on /bookings, not child routes
     },
     {
+      label: t('bookings.admin.locations') || 'Locations',
+      icon: 'i-lucide-map-pin',
+      to: `/admin/${teamSlug.value}/bookings/locations`
+    },
+    {
+      label: t('bookings.admin.settings') || 'Settings',
+      icon: 'i-lucide-settings',
+      to: `/admin/${teamSlug.value}/bookings/settings`
+    },
+    {
       label: t('bookings.settings.emailTemplates') || 'Email Templates',
       icon: 'i-lucide-mail',
       to: `/admin/${teamSlug.value}/bookings/email-templates`
