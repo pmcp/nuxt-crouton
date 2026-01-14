@@ -62,7 +62,13 @@ const _translationsUiConfig = {
   componentName: 'CroutonI18nUiForm',
   defaultValues: TRANSLATIONS_UI_DEFAULTS,
   columns: TRANSLATIONS_UI_COLUMNS,
-  defaultPagination: TRANSLATIONS_UI_PAGINATION
+  defaultPagination: TRANSLATIONS_UI_PAGINATION,
+  adminNav: {
+    enabled: false,  // Translations has its own dedicated nav item, not in Collections group
+    icon: 'i-lucide-languages',
+    label: 'Translations',
+    order: 100
+  }
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

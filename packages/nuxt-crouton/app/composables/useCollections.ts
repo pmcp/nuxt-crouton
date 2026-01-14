@@ -7,6 +7,7 @@ interface CollectionConfig {
   layer?: string
   componentName?: string
   apiPath?: string
+  displayName?: string
   defaultPagination?: {
     currentPage: number
     pageSize: number
@@ -53,6 +54,24 @@ interface CollectionConfig {
   sortable?: {
     enabled: boolean
     orderField?: string
+  }
+  /**
+   * Admin navigation configuration.
+   * Controls how this collection appears in the admin sidebar.
+   *
+   * @example
+   * adminNav: {
+   *   enabled: true,           // Show in admin sidebar (default: true)
+   *   icon: 'i-lucide-users',  // Lucide icon class
+   *   label: 'Users',          // Override display name
+   *   order: 10                // Sort order in navigation
+   * }
+   */
+  adminNav?: {
+    enabled?: boolean
+    icon?: string
+    label?: string
+    order?: number
   }
   [key: string]: any
 }

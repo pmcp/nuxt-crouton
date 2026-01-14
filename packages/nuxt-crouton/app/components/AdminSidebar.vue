@@ -5,17 +5,29 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const hasTeamSwitcher = ref(false)
 const TeamSwitcherComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
 
+// Check if UserMenu is available (from nuxt-crouton-auth)
+const hasUserMenu = ref(false)
+const UserMenuComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
+
 // Check if team switcher should be shown (for team admin only)
 const runtimeConfig = useRuntimeConfig()
 const showSwitcher = computed(() => runtimeConfig.public.crouton?.auth?.teams?.showSwitcher !== false)
 
 onMounted(() => {
+  // Resolve TeamSwitcher
   if (showSwitcher.value) {
     const teamSwitcher = resolveComponent('TeamSwitcher')
     if (typeof teamSwitcher !== 'string') {
       TeamSwitcherComponent.value = teamSwitcher
       hasTeamSwitcher.value = true
     }
+  }
+
+  // Resolve UserMenu (SidebarUserMenu)
+  const userMenu = resolveComponent('SidebarUserMenu')
+  if (typeof userMenu !== 'string') {
+    UserMenuComponent.value = userMenu
+    hasUserMenu.value = true
   }
 })
 
@@ -62,6 +74,9 @@ const route = useRoute()
 
 // Get auto-discovered app routes
 const { appsList, getAppAllRoutes } = useCroutonApps()
+
+// Get registered collections for admin navigation
+const { adminCollections } = useCroutonCollectionsNav()
 
 // Build URL based on context
 const buildAdminUrl = (path: string): string => {
@@ -173,6 +188,45 @@ const teamItem = computed<NavigationMenuItem | null>(() => {
   }
 })
 
+// Translations item - standalone nav item for i18n management
+const translationsItem = computed<NavigationMenuItem | null>(() => {
+  if (props.context === 'super') return null
+
+  const teamParam = teamSlugRef.value || teamIdRef.value || ''
+  if (!teamParam) return null
+
+  const translationsPath = `/admin/${teamParam}/translations`
+  return {
+    label: t('navigation.translations') || 'Translations',
+    icon: 'i-lucide-languages',
+    to: translationsPath,
+    active: route.path === translationsPath || route.path.startsWith(`${translationsPath}/`)
+  }
+})
+
+// Collections group - registered crouton collections
+const collectionsItem = computed<NavigationMenuItem | null>(() => {
+  if (props.context === 'super') return null
+  if (adminCollections.value.length === 0) return null
+
+  const teamParam = teamSlugRef.value || teamIdRef.value || ''
+  if (!teamParam) return null
+
+  const basePath = `/admin/${teamParam}/crouton`
+
+  return {
+    label: t('navigation.collections') || 'Collections',
+    icon: 'i-lucide-database',
+    defaultOpen: false,
+    children: adminCollections.value.map(col => ({
+      label: col.label,
+      icon: col.icon,
+      to: `${basePath}/${col.name}`,
+      active: route.path.includes(`${basePath}/${col.name}`)
+    }))
+  }
+})
+
 // Super Admin core items (flat, no grouping)
 const superAdminItems = computed<NavigationMenuItem[]>(() => {
   if (props.context !== 'super') return []
@@ -212,7 +266,17 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     mainItems.push(teamItem.value)
   }
 
-  // 4. App groups (Bookings, etc.) - each app gets its own group
+  // 4. Translations (standalone item)
+  if (translationsItem.value) {
+    mainItems.push(translationsItem.value)
+  }
+
+  // 5. Collections group (registered crouton collections)
+  if (collectionsItem.value) {
+    mainItems.push(collectionsItem.value)
+  }
+
+  // 6. App groups (Bookings, etc.) - each app gets its own group
   mainItems.push(...appGroups.value)
 
   // No bottom items - everything is in the main navigation now
@@ -277,24 +341,19 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     </template>
 
     <template #footer="{ collapsed }">
-      <div class="flex items-center gap-2 w-full">
+      <div class="flex flex-col gap-2 w-full">
+        <!-- User Menu -->
+        <component
+          :is="UserMenuComponent"
+          v-if="hasUserMenu"
+          :collapsed="collapsed"
+        />
+
+        <!-- Appearance switcher -->
         <CroutonAppearanceSwitcher
           :mode="collapsed ? 'cycle' : 'dropdown'"
           size="sm"
         />
-
-        <!-- Back to dashboard link -->
-        <UButton
-          v-if="!collapsed && context === 'team'"
-          :to="hasTeamContext ? `/dashboard/${teamSlugRef || teamIdRef}` : '/dashboard'"
-          color="neutral"
-          :variant="getVariant('ghost')"
-          size="sm"
-          icon="i-lucide-arrow-left"
-          class="ml-auto"
-        >
-          {{ t('navigation.backToDashboard') || 'Back' }}
-        </UButton>
       </div>
     </template>
   </UDashboardSidebar>
