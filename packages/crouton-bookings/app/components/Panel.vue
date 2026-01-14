@@ -262,11 +262,13 @@ defineExpose({
       :show-locations="showLocations"
       :show-map="showMap"
       :show-calendar="showCalendar"
+      :show-cancelled="filterState.showCancelled"
       :has-locations-with-coordinates="hasLocationsWithCoordinates"
       @update:selected-locations="filterState.locations = $event"
       @update:show-locations="showLocations = $event"
       @update:show-map="showMap = $event"
       @update:show-calendar="showCalendar = $event"
+      @update:show-cancelled="filterState.showCancelled = $event"
     />
 
     <!-- Map section (independent, collapsible) -->

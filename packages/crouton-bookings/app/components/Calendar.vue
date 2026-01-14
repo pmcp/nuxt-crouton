@@ -333,18 +333,8 @@ const monthCellHeight = computed(() => {
 
 <template>
   <div class="flex flex-col gap-3">
-    <!-- Controls row: Show cancelled (left) + View toggle (right) -->
-    <div class="flex items-center justify-between">
-      <!-- Show cancelled toggle -->
-      <USwitch
-        :model-value="filters.showCancelled"
-        size="xs"
-        color="error"
-        label="Cancelled"
-        @update:model-value="emit('update:filters', { ...filters, showCancelled: $event })"
-      />
-
-      <!-- View toggle (Week/Month) -->
+    <!-- View toggle (Week/Month) -->
+    <div class="flex justify-end">
       <UTabs
         v-model="currentView"
         :items="[

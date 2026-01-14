@@ -13,6 +13,8 @@ interface Props {
   showCalendar: boolean
   /** Whether there are locations with coordinates (for map toggle) */
   hasLocationsWithCoordinates: boolean
+  /** Whether to show cancelled bookings */
+  showCancelled: boolean
 }
 
 const props = defineProps<Props>()
@@ -22,6 +24,7 @@ const emit = defineEmits<{
   'update:showLocations': [value: boolean]
   'update:showMap': [value: boolean]
   'update:showCalendar': [value: boolean]
+  'update:showCancelled': [value: boolean]
 }>()
 
 // Toggle location selection
@@ -70,6 +73,15 @@ function isLocationSelected(locationId: string): boolean {
         size="xs"
         label="Map"
         @update:model-value="emit('update:showMap', $event)"
+      />
+
+      <!-- Show cancelled toggle -->
+      <USwitch
+        :model-value="showCancelled"
+        size="xs"
+        color="error"
+        label="Cancelled"
+        @update:model-value="emit('update:showCancelled', $event)"
       />
     </div>
 
