@@ -13,10 +13,16 @@ export default {
     {
       name: 'settings',
       fieldsFile: './schemas/settings.json'
+    },
+    {
+      name: 'pages',
+      fieldsFile: './schemas/pages.json',
+      sortable: true
     }
   ],
   targets: [
-    { layer: 'bookings', collections: ['locations', 'bookings', 'settings'] }
+    { layer: 'bookings', collections: ['locations', 'bookings', 'settings'] },
+    { layer: 'pages', collections: ['pages'] }
   ],
   dialect: 'sqlite',
   flags: {

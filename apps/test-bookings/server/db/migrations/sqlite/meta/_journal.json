@@ -43,6 +43,13 @@
       "when": 1768162586635,
       "tag": "0005_nosy_wendell_vaughn",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1768424898018,
+      "tag": "0006_early_fenris",
+      "breakpoints": true
     }
   ]
 }

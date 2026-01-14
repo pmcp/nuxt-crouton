@@ -11,7 +11,8 @@ export default defineNuxtConfig({
     '@friendlyinternet/nuxt-crouton-email',    // Optional: Email functionality
     '@friendlyinternet/nuxt-crouton-maps',     // Optional: Maps functionality
     '@friendlyinternet/crouton-bookings',      // Bookings app (auto-discovered)
-    './layers/bookings'                        // Local customizations
+    './layers/bookings',                       // Local customizations
+    './layers/pages'
   ],
   modules: ['@nuxthub/core', '@nuxt/ui'],
   hub: { db: 'sqlite' },

@@ -18,6 +18,7 @@
  * - bookingsEmailtemplates: BookingsEmailtemplate
  * - bookingsLocations: BookingsLocation
  * - bookingsSettings: BookingsSetting
+ * - pagesPages: PagesPage
  */
 
 import type { BookingsBooking, BookingsBookingFormData, NewBookingsBooking } from './layers/bookings/collections/bookings/types'
@@ -25,6 +26,7 @@ import type { BookingsEmaillog, BookingsEmaillogFormData, NewBookingsEmaillog } 
 import type { BookingsEmailtemplate, BookingsEmailtemplateFormData, NewBookingsEmailtemplate } from './layers/bookings/collections/emailtemplates/types'
 import type { BookingsLocation, BookingsLocationFormData, NewBookingsLocation } from './layers/bookings/collections/locations/types'
 import type { BookingsSetting, BookingsSettingFormData, NewBookingsSetting } from './layers/bookings/collections/settings/types'
+import type { PagesPage, PagesPageFormData, NewPagesPage } from './layers/pages/collections/pages/types'
 
 declare module '#crouton/types' {
   interface CollectionTypeMap {
@@ -52,6 +54,11 @@ declare module '#crouton/types' {
       Item: BookingsSetting
       FormData: BookingsSettingFormData
       NewItem: NewBookingsSetting
+    }
+    pagesPages: {
+      Item: PagesPage
+      FormData: PagesPageFormData
+      NewItem: NewPagesPage
     }
   }
 }
