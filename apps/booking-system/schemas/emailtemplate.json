@@ -1,0 +1,94 @@
+{
+  "id": {
+    "type": "uuid",
+    "meta": {
+      "primaryKey": true
+    }
+  },
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "maxLength": 200,
+      "label": "Template Name",
+      "translatable": true,
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "subject": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Email Subject",
+      "translatable": true,
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "body": {
+    "type": "richtext",
+    "meta": {
+      "required": true,
+      "label": "Email Body",
+      "translatable": true,
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "fromEmail": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "From Email Address",
+      "area": "sidebar",
+      "group": "configuration"
+    }
+  },
+  "triggerType": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Trigger Type",
+      "area": "sidebar",
+      "group": "configuration"
+    }
+  },
+  "recipientType": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Send To",
+      "area": "sidebar",
+      "default": "customer",
+      "group": "configuration"
+    }
+  },
+  "isActive": {
+    "type": "boolean",
+    "meta": {
+      "label": "Active",
+      "area": "sidebar",
+      "default": true,
+      "group": "configuration"
+    }
+  },
+  "daysOffset": {
+    "type": "number",
+    "meta": {
+      "label": "Days Offset",
+      "area": "sidebar",
+      "default": 0,
+      "group": "configuration"
+    }
+  },
+  "locationId": {
+    "type": "string",
+    "meta": {
+      "label": "Location (optional)",
+      "area": "sidebar",
+      "group": "configuration"
+    },
+    "refTarget": "locations"
+  }
+}

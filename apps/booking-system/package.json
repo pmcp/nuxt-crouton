@@ -1,0 +1,28 @@
+{
+  "name": "booking-system",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "generate": "nuxt generate",
+    "typecheck": "npx nuxt typecheck",
+    "db:generate": "npx nuxt db generate",
+    "db:migrate": "npx nuxt db migrate"
+  },
+  "dependencies": {
+    "nuxt": "^4.0.0",
+    "@friendlyinternet/nuxt-crouton": "file:/Users/pmcp/Projects/nuxt-crouton/packages/nuxt-crouton",
+    "drizzle-orm": "^0.45.0",
+    "@libsql/client": "^0.15.0",
+    "@friendlyinternet/nuxt-crouton-auth": "file:/Users/pmcp/Projects/nuxt-crouton/packages/nuxt-crouton-auth",
+    "@friendlyinternet/crouton-bookings": "file:/Users/pmcp/Projects/nuxt-crouton/packages/crouton-bookings"
+  },
+  "devDependencies": {
+    "@nuxt/ui": "^4.0.0",
+    "@nuxthub/core": "latest",
+    "typescript": "^5.0.0",
+    "drizzle-kit": "^0.31.0"
+  }
+}

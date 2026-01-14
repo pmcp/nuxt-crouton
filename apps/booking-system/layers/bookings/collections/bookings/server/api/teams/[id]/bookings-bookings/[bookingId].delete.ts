@@ -1,0 +1,14 @@
+// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { deleteBookingsBooking } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+
+export default defineEventHandler(async (event) => {
+  const { bookingId } = getRouterParams(event)
+  if (!bookingId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing booking ID' })
+  }
+  const { team, user } = await resolveTeamAndCheckMembership(event)
+
+  return await deleteBookingsBooking(bookingId, team.id, user.id)
+})
