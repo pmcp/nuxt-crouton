@@ -6,7 +6,8 @@
  *   crouton-generate seed-translations [options]
  *
  * Options:
- *   --layer <name>     Seed from specific layer (default: all layers)
+ *   --app <path>       App directory to read nuxt.config.ts from (auto-detects packages)
+ *   --layer <name>     Seed from specific layer/package only (default: all)
  *   --team <id>        Team ID to seed to (default: system/null)
  *   --dry-run          Preview what will be seeded
  *   --force            Overwrite existing translations
@@ -16,6 +17,11 @@
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import chalk from 'chalk'
+
+// Packages that are auto-included when extending nuxt-crouton
+const AUTO_INCLUDES = {
+  'nuxt-crouton': ['nuxt-crouton-i18n', 'nuxt-crouton-auth', 'nuxt-crouton-admin']
+}
 
 // Parse command line arguments
 function parseArgs() {
@@ -32,6 +38,7 @@ function parseArgs() {
   }
 
   return {
+    app: getArg('app'),
     layer: getArg('layer'),
     team: getArg('team') || 'system',
     dryRun: args.includes('--dry-run'),
@@ -41,8 +48,99 @@ function parseArgs() {
   }
 }
 
+/**
+ * Parse nuxt.config.ts to extract the extends array
+ * Uses simple regex parsing to avoid requiring TypeScript compilation
+ */
+async function parseNuxtConfigExtends(appDir) {
+  const configPath = path.join(appDir, 'nuxt.config.ts')
+
+  try {
+    const content = await fsp.readFile(configPath, 'utf-8')
+
+    // Match extends array - handles multi-line arrays
+    const extendsMatch = content.match(/extends\s*:\s*\[([\s\S]*?)\]/)
+    if (!extendsMatch) {
+      console.log(chalk.yellow(`  No extends array found in ${configPath}`))
+      return []
+    }
+
+    // Extract string values from the array
+    const arrayContent = extendsMatch[1]
+    const packages = []
+
+    // Match quoted strings (both single and double quotes)
+    const stringMatches = arrayContent.matchAll(/['"]([^'"]+)['"]/g)
+    for (const match of stringMatches) {
+      packages.push(match[1])
+    }
+
+    return packages
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      console.log(chalk.yellow(`  No nuxt.config.ts found in ${appDir}`))
+    } else {
+      console.log(chalk.red(`  Error reading config: ${error.message}`))
+    }
+    return []
+  }
+}
+
+/**
+ * Map npm package name to local package directory name
+ * @friendlyinternet/nuxt-crouton -> nuxt-crouton
+ * @friendlyinternet/crouton-bookings -> crouton-bookings
+ */
+function packageNameToDir(packageName) {
+  // Handle scoped packages: @scope/name -> name
+  if (packageName.startsWith('@')) {
+    const parts = packageName.split('/')
+    return parts[parts.length - 1]
+  }
+  // Handle relative paths: ./layers/bookings -> null (skip, it's local)
+  if (packageName.startsWith('.')) {
+    return null
+  }
+  return packageName
+}
+
+/**
+ * Get all package directories that should be included based on app config
+ */
+async function getPackagesFromAppConfig(appDir) {
+  console.log(chalk.cyan(`\nReading app config from ${appDir}...`))
+
+  const extends_ = await parseNuxtConfigExtends(appDir)
+  if (extends_.length === 0) {
+    return null // Fall back to scanning all packages
+  }
+
+  const packageDirs = new Set()
+
+  for (const pkg of extends_) {
+    const dirName = packageNameToDir(pkg)
+    if (dirName) {
+      packageDirs.add(dirName)
+
+      // Add auto-included packages
+      if (AUTO_INCLUDES[dirName]) {
+        for (const included of AUTO_INCLUDES[dirName]) {
+          packageDirs.add(included)
+        }
+      }
+    }
+  }
+
+  console.log(chalk.green(`✓ Found ${packageDirs.size} packages to seed from:`))
+  for (const dir of packageDirs) {
+    console.log(chalk.gray(`    ${dir}`))
+  }
+
+  return packageDirs
+}
+
 // Find all locale files in layers and packages
-async function findLocaleFiles(specificLayer = null) {
+async function findLocaleFiles(specificLayer = null, allowedPackages = null) {
   const localeFiles = []
 
   // Search paths: layers/ (app-specific) and packages/ (monorepo)
@@ -61,6 +159,11 @@ async function findLocaleFiles(specificLayer = null) {
       for (const entry of entries) {
         // Skip if specific layer/package requested and this isn't it
         if (specificLayer && entry !== specificLayer) continue
+
+        // Skip if we have an allowed list and this package isn't in it
+        if (allowedPackages && type === 'package' && !allowedPackages.has(entry)) {
+          continue
+        }
 
         const entryPath = path.join(dir, entry)
 
@@ -275,6 +378,7 @@ ${chalk.bold('Usage:')}
   crouton-generate seed-translations [options]
 
 ${chalk.bold('Options:')}
+  --app <path>       App directory to read nuxt.config.ts from (recommended)
   --layer <name>     Seed from specific layer/package only (default: all)
   --team <id>        Team ID/slug to seed to (default: system)
   --dry-run          Preview translations without seeding
@@ -290,10 +394,13 @@ ${chalk.bold('Search Paths:')}
   - packages/*/locales/*.json
 
 ${chalk.bold('Examples:')}
-  # Preview all translations
-  crouton-generate seed-translations --dry-run
+  # Seed only packages used by your app (recommended)
+  crouton-generate seed-translations --app apps/test-bookings
 
-  # Seed from specific package
+  # Preview what would be seeded
+  crouton-generate seed-translations --app apps/test-bookings --dry-run
+
+  # Seed from specific package only
   crouton-generate seed-translations --layer nuxt-crouton-i18n
 
   # Output SQL for manual insertion
@@ -301,19 +408,30 @@ ${chalk.bold('Examples:')}
 
 ${chalk.bold('Note:')}
   The dev server must be running for API seeding to work.
-  Use --sql flag to generate SQL statements for direct database insertion.
+  Use --app to only seed translations from packages your app actually uses.
 `)
     return
   }
 
   console.log(chalk.bold('\n📦 Crouton Translation Seeder\n'))
+  console.log(chalk.gray(`  App: ${config.app || '(all packages)'}`))
   console.log(chalk.gray(`  Layer: ${config.layer || 'all'}`))
   console.log(chalk.gray(`  Team: ${config.team}`))
   console.log(chalk.gray(`  Mode: ${config.dryRun ? 'dry-run' : 'seed'}`))
 
+  // Get allowed packages from app config (if --app specified)
+  let allowedPackages = null
+  if (config.app) {
+    allowedPackages = await getPackagesFromAppConfig(config.app)
+    if (!allowedPackages || allowedPackages.size === 0) {
+      console.log(chalk.yellow('\nCould not determine packages from app config, falling back to all packages'))
+      allowedPackages = null
+    }
+  }
+
   // Find locale files
   console.log(chalk.cyan('\nScanning for locale files...'))
-  const localeFiles = await findLocaleFiles(config.layer)
+  const localeFiles = await findLocaleFiles(config.layer, allowedPackages)
 
   if (localeFiles.length === 0) {
     console.log(chalk.yellow('\nNo locale files found'))
