@@ -238,9 +238,9 @@ const sizeClasses = computed(() => {
 
         <!-- Add booking tab (slides down from under the date block on hover) -->
         <button
-          v-if="!isCreating"
+          v-if="!isCreatingDate(day)"
           type="button"
-          class="absolute bottom-0 left-0 right-0 translate-y-0 flex items-center justify-center h-6 bg-neutral-700 rounded-b-lg opacity-0 transition-all duration-200 ease-out group-hover:translate-y-4 group-hover:opacity-100 hover:bg-neutral-600 active:scale-[0.98] z-10"
+          class="absolute bottom-0 left-0 right-0 translate-y-0 flex items-center justify-center h-6 bg-neutral-700 rounded-b-lg opacity-0 cursor-pointer transition-all duration-200 ease-out group-hover:translate-y-4 group-hover:opacity-100 hover:bg-neutral-600 active:scale-[0.98] z-10"
           @click="onAddClick($event, day)"
         >
           <UIcon name="i-lucide-plus" class="size-3.5 text-neutral-300" />
