@@ -400,8 +400,7 @@ const monthCellHeight = computed(() => {
         class="[&_table]:w-full [&_table]:table-fixed"
       >
         <template #day="{ day }">
-          <button
-            type="button"
+          <div
             class="group relative w-full flex flex-col items-center justify-start pt-1 pb-1 cursor-pointer rounded-md transition-all duration-200"
             :style="{ minHeight: `${monthCellHeight}px` }"
             :class="[
@@ -413,13 +412,8 @@ const monthCellHeight = computed(() => {
               hasBookings(day.toDate(getLocalTimeZone()))
                 ? 'bg-muted/30'
                 : '',
-              isCreating && !isCreatingDate(day.toDate(getLocalTimeZone()))
-                ? 'opacity-40'
-                : '',
             ]"
-            @click="emit('dayClick', day.toDate(getLocalTimeZone()))"
-            @mouseenter="!isCreating && emit('hover', day.toDate(getLocalTimeZone()))"
-            @mouseleave="!isCreating && emit('hover', null)"
+            @click="emit('hover', day.toDate(getLocalTimeZone()))"
           >
             <!-- Day number -->
             <span
@@ -435,11 +429,6 @@ const monthCellHeight = computed(() => {
               {{ day.day }}
             </span>
 
-            <!-- Add booking indicator (shows on hover) -->
-            <div class="absolute -top-0.5 -right-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <UIcon name="i-lucide-plus" class="size-3 text-primary" />
-            </div>
-
             <!-- Slot indicators (all locations) -->
             <div class="flex flex-col items-center gap-0.5 mt-0.5 w-full">
               <template v-for="indicator in getIndicatorsForDate(day.toDate(getLocalTimeZone()))" :key="indicator.locationId">
@@ -454,7 +443,17 @@ const monthCellHeight = computed(() => {
                 />
               </template>
             </div>
-          </button>
+
+            <!-- Add booking tab (slides down from under the date block on hover) -->
+            <button
+              v-if="!isCreatingDate(day.toDate(getLocalTimeZone()))"
+              type="button"
+              class="absolute bottom-0 left-0 right-0 translate-y-0 flex items-center justify-center h-4 bg-neutral-700 rounded-b-md opacity-0 cursor-pointer transition-all duration-200 ease-out group-hover:translate-y-1 group-hover:opacity-100 hover:bg-neutral-600 active:scale-[0.98] z-10"
+              @click.stop="emit('dayClick', day.toDate(getLocalTimeZone()))"
+            >
+              <UIcon name="i-lucide-plus" class="size-2.5 text-neutral-300" />
+            </button>
+          </div>
         </template>
       </UCalendar>
     </div>
