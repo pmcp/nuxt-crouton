@@ -341,20 +341,12 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     </template>
 
     <template #footer="{ collapsed }">
-      <div class="flex flex-col gap-2 w-full">
-        <!-- User Menu -->
-        <component
-          :is="UserMenuComponent"
-          v-if="hasUserMenu"
-          :collapsed="collapsed"
-        />
-
-        <!-- Appearance switcher -->
-        <CroutonAppearanceSwitcher
-          :mode="collapsed ? 'cycle' : 'dropdown'"
-          size="sm"
-        />
-      </div>
+      <!-- User Menu -->
+      <component
+        :is="UserMenuComponent"
+        v-if="hasUserMenu"
+        :collapsed="collapsed"
+      />
     </template>
   </UDashboardSidebar>
 </template>
