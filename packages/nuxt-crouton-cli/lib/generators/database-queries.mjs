@@ -1,7 +1,8 @@
 // Generator for database queries
+import { toKebabCase } from '../utils/helpers.mjs'
 
 // Helper to generate tree-specific queries when hierarchy is enabled
-function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, plural, singular) {
+function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, camelCasePlural, singular) {
   const hierarchy = data.hierarchy
   if (!hierarchy || !hierarchy.enabled) {
     return ''
@@ -33,13 +34,13 @@ interface TreeItem {
 export async function getTreeData${prefixedPascalCasePlural}(teamId: string) {
   const db = useDB()
 
-  const ${plural} = await (db as any)
+  const ${camelCasePlural} = await (db as any)
     .select()
     .from(tables.${tableName})
     .where(eq(tables.${tableName}.teamId, teamId))
     .orderBy(tables.${tableName}.${pathField}, tables.${tableName}.${orderField})
 
-  return ${plural} as TreeItem[]
+  return ${camelCasePlural} as TreeItem[]
 }
 
 export async function updatePosition${prefixedPascalCase}(
@@ -303,14 +304,15 @@ function detectReferenceFields(data, config) {
 
 export function generateQueries(data, config = null) {
   console.log('[database-queries.mjs] Running LATEST VERSION with array reference post-processing support')
-  const { singular, plural, pascalCase, pascalCasePlural, layer, layerPascalCase } = data
+  const { singular, camelCase, camelCasePlural, plural, pascalCase, pascalCasePlural, layer, layerPascalCase } = data
   // Use layer-prefixed table name to match schema export
   // Convert layer to camelCase to ensure valid JavaScript identifier
   const layerCamelCase = layer
     .split(/[-_]/)
     .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
-  const tableName = `${layerCamelCase}${plural.charAt(0).toUpperCase() + plural.slice(1)}`
+  // Use pascalCasePlural which properly handles hyphens (e.g., email-templates -> EmailTemplates)
+  const tableName = `${layerCamelCase}${pascalCasePlural}`
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
   const typesPath = '../../types'
@@ -336,8 +338,9 @@ export function generateQueries(data, config = null) {
 `
     } else {
       // Local layer collection - import from sibling directory
-      // Use lowercase for folder path (folders are created as lowercase plural)
-      schemaImports += `import * as ${collection}Schema from '../../../${collection.toLowerCase()}/server/database/schema'
+      // Use kebab-case for folder path (folders are created as kebab-case plural)
+      // e.g., emailTemplates -> email-templates
+      schemaImports += `import * as ${collection}Schema from '../../../${toKebabCase(collection)}/server/database/schema'
 `
     }
   })
@@ -359,12 +362,11 @@ export function generateQueries(data, config = null) {
       const collectionIdentifier = ref.targetCollection
 
       // For external refs, use table name as-is (no layer prefix)
-      // For local refs, add the layer prefix
-      // Convert collection to lowercase first to match folder/export naming
-      const lowercaseCollection = collectionIdentifier.toLowerCase()
+      // For local refs, add the layer prefix with PascalCase collection name
+      // e.g., app + emailTemplates -> appEmailTemplates
       const refTableName = ref.isExternal
         ? collectionIdentifier
-        : `${layerCamelCase}${lowercaseCollection.charAt(0).toUpperCase() + lowercaseCollection.slice(1)}`
+        : `${layerCamelCase}${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}`
 
       if (ref.isUserReference) {
         // Special user reference handling
@@ -530,7 +532,7 @@ export function generateQueries(data, config = null) {
     : `desc(tables.${tableName}.createdAt)`
 
   // Generate tree queries if hierarchy is enabled
-  const treeQueries = generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, plural)
+  const treeQueries = generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, camelCasePlural)
 
   // Generate sortable queries if sortable is enabled (but hierarchy is not)
   const sortableQueries = generateSortableQueries(data, tableName, prefixedPascalCasePlural)
@@ -544,41 +546,41 @@ ${schemaImports}
 export async function getAll${prefixedPascalCasePlural}(teamId: string) {
   const db = useDB()
 ${aliasDefinitions}
-  const ${plural} = await (db as any)
+  const ${camelCasePlural} = await (db as any)
     .select(${selectClause ? `${selectClause} as any` : '()'})
     .from(tables.${tableName})${leftJoins}
     .where(eq(tables.${tableName}.teamId, teamId))
     .orderBy(${orderByClause})
 ${jsonFieldProcessing}${postQueryProcessing}
-  return ${plural}
+  return ${camelCasePlural}
 }
 
-export async function get${prefixedPascalCasePlural}ByIds(teamId: string, ${singular}Ids: string[]) {
+export async function get${prefixedPascalCasePlural}ByIds(teamId: string, ${camelCase}Ids: string[]) {
   const db = useDB()
 ${aliasDefinitions}
-  const ${plural} = await (db as any)
+  const ${camelCasePlural} = await (db as any)
     .select(${selectClause ? `${selectClause} as any` : '()'})
     .from(tables.${tableName})${leftJoins}
     .where(
       and(
         eq(tables.${tableName}.teamId, teamId),
-        inArray(tables.${tableName}.id, ${singular}Ids)
+        inArray(tables.${tableName}.id, ${camelCase}Ids)
       )
     )
     .orderBy(${orderByClause})
 ${jsonFieldProcessing}${postQueryProcessing}
-  return ${plural}
+  return ${camelCasePlural}
 }
 
 export async function create${prefixedPascalCase}(data: New${prefixedPascalCase}) {
   const db = useDB()
 
-  const [${singular}] = await (db as any)
+  const [${camelCase}] = await (db as any)
     .insert(tables.${tableName})
     .values(data)
     .returning()
 
-  return ${singular}
+  return ${camelCase}
 }
 
 export async function update${prefixedPascalCase}(
@@ -589,7 +591,7 @@ export async function update${prefixedPascalCase}(
 ) {
   const db = useDB()
 
-  const [${singular}] = await (db as any)
+  const [${camelCase}] = await (db as any)
     .update(tables.${tableName})
     .set({
       ...updates,
@@ -604,14 +606,14 @@ export async function update${prefixedPascalCase}(
     )
     .returning()
 
-  if (!${singular}) {
+  if (!${camelCase}) {
     throw createError({
       statusCode: 404,
       statusMessage: '${prefixedPascalCase} not found or unauthorized'
     })
   }
 
-  return ${singular}
+  return ${camelCase}
 }
 
 export async function delete${prefixedPascalCase}(

@@ -12,6 +12,15 @@ export function toSnakeCase(str) {
     .toLowerCase()
 }
 
+// Convert camelCase or PascalCase to kebab-case
+// e.g., emailTemplates -> email-templates, EmailTemplates -> email-templates
+export function toKebabCase(str) {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+    .toLowerCase()
+}
+
 export function toCase(str) {
   const singular = str.endsWith('s') && str.length > 1 ? str.slice(0, -1) : str
   const plural = str.endsWith('s') ? str : str + 's'

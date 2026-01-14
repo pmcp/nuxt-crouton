@@ -60,7 +60,8 @@ export async function cleanSchemaIndex(collectionName, layer, dryRun) {
       .split(/[-_]/)
       .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
       .join('')
-    const exportName = `${layerCamelCase}${cases.plural.charAt(0).toUpperCase() + cases.plural.slice(1)}`
+    // Use pascalCasePlural which properly handles hyphens (e.g., email-templates -> EmailTemplates)
+    const exportName = `${layerCamelCase}${cases.pascalCasePlural}`
 
     // Remove the export line
     const exportPattern = new RegExp(

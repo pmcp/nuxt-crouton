@@ -2,7 +2,7 @@
 import { toSnakeCase } from '../utils/helpers.mjs'
 
 export function generateSchema(data, dialect, config = null) {
-  const { plural, layer, layerPascalCase, singular, hierarchy } = data
+  const { plural, layer, layerPascalCase, singular, hierarchy, pascalCasePlural } = data
 
   // Get original collection name from data (before toCase processing)
   // For system collections, we need to preserve the original camelCase
@@ -13,7 +13,8 @@ export function generateSchema(data, dialect, config = null) {
     .split(/[-_]/)
     .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
-  const exportName = `${layerCamelCase}${plural.charAt(0).toUpperCase() + plural.slice(1)}`
+  // Use pascalCasePlural which properly handles hyphens (e.g., email-templates -> EmailTemplates)
+  const exportName = `${layerCamelCase}${pascalCasePlural}`
 
   // Check if this collection needs translations
   const needsTranslations = config?.translations?.collections?.[plural] || config?.translations?.collections?.[singular]
