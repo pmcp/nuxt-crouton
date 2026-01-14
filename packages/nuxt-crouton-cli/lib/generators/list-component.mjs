@@ -37,7 +37,7 @@ function generateAIHeader(data, apiPath) {
 }
 
 export function generateListComponent(data, config = {}) {
-  const { plural, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields } = data
+  const { plural, camelCasePlural, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields } = data
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
   // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
   const prefixedCamelCasePlural = `${layerCamelCase}${pascalCasePlural}`
@@ -220,7 +220,7 @@ const { locale } = useI18n()`
   : ''}
 const { columns } = use${prefixedPascalCasePlural}()
 
-const { items: ${plural}, pending } = await useCollectionQuery(
+const { items: ${camelCasePlural}, pending } = await useCollectionQuery(
   '${prefixedCamelCasePlural}'
 )
 </script>`

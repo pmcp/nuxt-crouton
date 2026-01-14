@@ -5,6 +5,7 @@ export function generateCollectionReadme(data, config = {}) {
   const {
     singular,
     plural,
+    camelCasePlural,
     pascalCase,
     pascalCasePlural,
     layerPascalCase,
@@ -162,7 +163,7 @@ await $fetch(\`/api/teams/\${teamId}/${apiPath}/\${${singular}Id}\`, {
 \`\`\`vue
 <script setup lang="ts">
 // Query items
-const { items: ${plural}, pending } = await useCollectionQuery('${prefixedCamelCasePlural}')
+const { items: ${camelCasePlural}, pending } = await useCollectionQuery('${prefixedCamelCasePlural}')
 
 // Mutations
 const { create, update, deleteItems } = useCollectionMutation('${prefixedCamelCasePlural}')
