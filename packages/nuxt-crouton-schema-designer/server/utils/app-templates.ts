@@ -142,7 +142,33 @@ export function generateNuxtConfig(options: AppTemplateOptions): string {
   // Custom collections layer goes last
   extendsLayers.push(`'./layers/${options.layerName}'`)
 
+  // Build alias section for monorepo to avoid duplicate imports
+  let aliasSection = ''
+  if (context.isMonorepo && context.monorepoRoot) {
+    const aliases: string[] = []
+
+    // Always alias auth and i18n when in monorepo (they're auto-included by nuxt-crouton)
+    if (context.packagePaths.auth) {
+      aliases.push(`    '@friendlyinternet/nuxt-crouton-auth': '${context.packagePaths.auth}'`)
+    }
+    if (context.packagePaths.i18n) {
+      aliases.push(`    '@friendlyinternet/nuxt-crouton-i18n': '${context.packagePaths.i18n}'`)
+    }
+
+    if (aliases.length > 0) {
+      aliasSection = `
+
+  // Monorepo: alias package imports to local paths
+  // Required because generated code imports from @friendlyinternet/* packages
+  // and pnpm symlinks point to .ts files that Rollup can't parse
+  alias: {
+${aliases.join(',\n')}
+  },`
+    }
+  }
+
   return `export default defineNuxtConfig({
+  // nuxt-crouton auto-includes: i18n, auth, admin
   extends: [
     ${extendsLayers.join(',\n    ')}
   ],
@@ -150,7 +176,7 @@ export function generateNuxtConfig(options: AppTemplateOptions): string {
   modules: [
     '@nuxt/ui',
     '@nuxthub/core'
-  ],
+  ],${aliasSection}
 
   hub: {
     db: '${options.dialect}'
