@@ -54,11 +54,13 @@ const gapClasses = {
 }
 
 function isBooked(slotId: string): boolean {
-  return props.bookedSlotIds?.includes(slotId) ?? false
+  // Check if this specific slot is booked OR if "all-day" is booked (means all slots are filled)
+  return props.bookedSlotIds?.includes(slotId) || props.bookedSlotIds?.includes('all-day') || false
 }
 
 function isCancelled(slotId: string): boolean {
-  return props.cancelledSlotIds?.includes(slotId) ?? false
+  // Check if this specific slot is cancelled OR if "all-day" is cancelled
+  return props.cancelledSlotIds?.includes(slotId) || props.cancelledSlotIds?.includes('all-day') || false
 }
 
 // Get the color for a booked slot (red if cancelled, bookedColor if provided, otherwise location color)
