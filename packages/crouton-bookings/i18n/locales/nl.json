@@ -49,7 +49,8 @@
       "description": "Bekijk en beheer alle team boekingen"
     },
     "settings": {
-      "emailTemplates": "E-mail Sjablonen"
+      "emailTemplates": "E-mail Sjablonen",
+      "emailLogs": "E-mail Logs"
     },
     "list": {
       "loading": "Boekingen laden...",

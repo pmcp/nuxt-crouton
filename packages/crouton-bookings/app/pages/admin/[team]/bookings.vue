@@ -29,6 +29,11 @@ const tabs = computed(() => [
       label: t('bookings.settings.emailTemplates') || 'Email Templates',
       icon: 'i-lucide-mail',
       to: `/admin/${teamSlug.value}/bookings/email-templates`
+    },
+    {
+      label: t('bookings.settings.emailLogs') || 'Email Logs',
+      icon: 'i-lucide-file-text',
+      to: `/admin/${teamSlug.value}/bookings/email-logs`
     }
   ]
 ])

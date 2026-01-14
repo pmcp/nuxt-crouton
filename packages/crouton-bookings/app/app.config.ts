@@ -25,6 +25,11 @@ export default defineAppConfig({
           path: '/bookings/email-templates',
           label: 'bookings.settings.emailTemplates',
           icon: 'i-lucide-mail'
+        },
+        {
+          path: '/bookings/email-logs',
+          label: 'bookings.settings.emailLogs',
+          icon: 'i-lucide-file-text'
         }
       ],
       // Settings routes - empty (booking settings are under /bookings/ not /settings/)
