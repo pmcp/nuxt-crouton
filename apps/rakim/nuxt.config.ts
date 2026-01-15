@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     '@friendlyinternet/nuxt-crouton',
     '@friendlyinternet/nuxt-crouton-ai'
   ],
+  hub: { db: 'sqlite' },
   runtimeConfig: {
     // Anthropic API key for AI features
     anthropicApiKey: process.env.NUXT_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY
