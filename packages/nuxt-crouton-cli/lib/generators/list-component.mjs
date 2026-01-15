@@ -190,10 +190,14 @@ export function generateListComponent(data, config = {}) {
       />
       <span v-else class="text-gray-400">—</span>
     </template>`
-    }).join('')}${editorFields.map(field => `
+    }).join('')}${editorFields.map(field => {
+      const isTranslatable = translatableFields.includes(field.name)
+      const contentAccess = isTranslatable ? `t(row.original, '${field.name}')` : `row.original.${field.name}`
+      return `
     <template #${field.name}-cell="{ row }">
-      <CroutonEditorPreview :content="row.original.${field.name}" />
-    </template>`).join('')}${mapFields.map(field => `
+      <CroutonEditorPreview :content="${contentAccess}" />
+    </template>`
+    }).join('')}${mapFields.map(field => `
     <template #${field.name}-cell="{ row }">
       <CroutonMapsPreview :location="row.original.${field.name}" />
     </template>`).join('')}${hasTranslations

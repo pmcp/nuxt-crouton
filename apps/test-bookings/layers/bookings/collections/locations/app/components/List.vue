@@ -2,7 +2,7 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2026-01-14
+  @generated 2026-01-15
 
   ## AI Context
   - List component for locations collection
@@ -69,7 +69,7 @@
       <BookingsLocationsSlotCardMini :value="row.original.slots" />
     </template>
     <template #content-cell="{ row }">
-      <CroutonEditorPreview :content="row.original.content" />
+      <CroutonEditorPreview :content="t(row.original, 'content')" />
     </template>
     <template #location-cell="{ row }">
       <CroutonMapsPreview :location="row.original.location" />
