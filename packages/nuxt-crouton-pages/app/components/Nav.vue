@@ -6,12 +6,14 @@ import type { NavigationMenuItem } from '@nuxt/ui'
  *
  * Displays navigation links from published pages using UNavigationMenu.
  * Floating pill-style nav inspired by Nuxt UI portfolio template.
+ * Includes language switcher and dark/light mode toggle.
  *
  * @example
  * <CroutonPagesNav />
  */
 
 const { navigation, isLoading, isActive } = useNavigation()
+const colorMode = useColorMode()
 
 // Transform navigation data to UNavigationMenu format
 const menuItems = computed<NavigationMenuItem[]>(() => {
@@ -31,6 +33,10 @@ const menuItems = computed<NavigationMenuItem[]>(() => {
       : undefined
   }))
 })
+
+const toggleColorMode = () => {
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}
 </script>
 
 <template>
@@ -42,16 +48,35 @@ const menuItems = computed<NavigationMenuItem[]>(() => {
         <USkeleton class="h-6 w-16 rounded-full" />
       </div>
     </template>
-    <UNavigationMenu
+    <div
       v-else
-      :items="menuItems"
-      variant="link"
-      color="neutral"
-      class="bg-muted/80 backdrop-blur-sm rounded-full px-2 sm:px-4 border border-default shadow-lg shadow-neutral-950/5"
-      :ui="{
-        link: 'px-2 py-1',
-        linkLeadingIcon: 'hidden'
-      }"
-    />
+      class="flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-full px-2 sm:px-4 border border-default shadow-lg shadow-neutral-950/5"
+    >
+      <UNavigationMenu
+        :items="menuItems"
+        variant="link"
+        color="neutral"
+        :ui="{
+          link: 'px-2 py-1',
+          linkLeadingIcon: 'hidden'
+        }"
+      />
+
+      <USeparator orientation="vertical" class="h-5 mx-1" />
+
+      <!-- Language Switcher -->
+      <CroutonI18nLanguageSwitcher class="w-auto" />
+
+      <!-- Dark/Light Mode Toggle -->
+      <ClientOnly>
+        <UButton
+          :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          @click="toggleColorMode"
+        />
+      </ClientOnly>
+    </div>
   </div>
 </template>
