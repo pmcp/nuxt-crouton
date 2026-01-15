@@ -1,7 +1,7 @@
 import type { z } from 'zod'
-import type { discubotConfigSchema } from './app/composables/useDiscubotConfigs'
+import type { rakimConfigSchema } from './app/composables/useRakimConfigs'
 
-export interface DiscubotConfig {
+export interface RakimConfig {
   id: string
   teamId: string
   owner: string
@@ -33,13 +33,13 @@ export interface DiscubotConfig {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type DiscubotConfigFormData = z.infer<typeof discubotConfigSchema>
-export type NewDiscubotConfig = Omit<DiscubotConfig, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type RakimConfigFormData = z.infer<typeof rakimConfigSchema>
+export type NewRakimConfig = Omit<RakimConfig, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface DiscubotConfigFormProps {
+export interface RakimConfigFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: DiscubotConfig | Record<string, never> // DiscubotConfig for update, empty object for create
+  activeItem: RakimConfig | Record<string, never> // RakimConfig for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

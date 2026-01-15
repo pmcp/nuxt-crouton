@@ -17,7 +17,7 @@ const jsonColumn = customType<any>({
   },
 })
 
-export const discubotUsermappings = sqliteTable('discubot_usermappings', {
+export const rakimUsermappings = sqliteTable('rakim_usermappings', {
   id: text('id').primaryKey().$default(() => nanoid()),
 
   teamId: text('teamId').notNull(),

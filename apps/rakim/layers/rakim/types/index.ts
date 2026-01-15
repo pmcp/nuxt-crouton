@@ -1,5 +1,5 @@
 /**
- * Shared TypeScript types for Discubot
+ * Shared TypeScript types for Rakim
  *
  * These types are used across services, adapters, and the processor pipeline.
  */
@@ -182,7 +182,7 @@ export interface NotionTaskResult {
 export interface NotionInputConfig {
   /** Notion API token */
   notionToken: string
-  /** Trigger keyword for discussion detection (default: '@discubot', configurable per flow) */
+  /** Trigger keyword for discussion detection (default: '@rakim', configurable per flow) */
   triggerKeyword: string
   /** Optional workspace ID for display/organization purposes */
   workspaceId?: string

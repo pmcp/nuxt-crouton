@@ -1,7 +1,7 @@
 /**
- * System Constants for Discubot
+ * System Constants for Rakim
  *
- * These constants are used throughout the Discubot layer for automated operations
+ * These constants are used throughout the Rakim layer for automated operations
  * that don't have a specific user context (e.g., webhook processing, scheduled jobs).
  */
 

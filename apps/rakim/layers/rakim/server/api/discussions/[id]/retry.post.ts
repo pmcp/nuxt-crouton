@@ -14,11 +14,11 @@
  */
 
 import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
-import { getDiscubotDiscussionsByIds } from '#layers/discubot/collections/discussions/server/database/queries'
-import { createDiscubotJob } from '#layers/discubot/collections/jobs/server/database/queries'
-import { processDiscussion } from '#layers/discubot/server/services/processor'
-import { SYSTEM_USER_ID } from '#layers/discubot/server/utils/constants'
-import type { ParsedDiscussion, DiscussionThread } from '#layers/discubot/types'
+import { getRakimDiscussionsByIds } from '#layers/rakim/collections/discussions/server/database/queries'
+import { createRakimJob } from '#layers/rakim/collections/jobs/server/database/queries'
+import { processDiscussion } from '#layers/rakim/server/services/processor'
+import { SYSTEM_USER_ID } from '#layers/rakim/server/utils/constants'
+import type { ParsedDiscussion, DiscussionThread } from '#layers/rakim/types'
 
 interface RetryRequestBody {
   skipAI?: boolean
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
     })
 
     // 4. Load discussion from database
-    const discussions = await getDiscubotDiscussionsByIds(team.id, [discussionId])
+    const discussions = await getRakimDiscussionsByIds(team.id, [discussionId])
 
     if (!discussions || discussions.length === 0) {
       throw createError({
@@ -108,7 +108,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 7. Create NEW job record for this retry attempt
-    const job = await createDiscubotJob({
+    const job = await createRakimJob({
       teamId: discussion.teamId as string,
       owner: SYSTEM_USER_ID,
       discussionId: discussion.id as string,

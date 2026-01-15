@@ -48,9 +48,9 @@
  * ```
  */
 
-import type { SourceConfig } from '#layers/discubot/types'
-import { getAdapter } from '#layers/discubot/server/adapters'
-import { testNotionConnection } from '#layers/discubot/server/services/notion'
+import type { SourceConfig } from '#layers/rakim/types'
+import { getAdapter } from '#layers/rakim/server/adapters'
+import { testNotionConnection } from '#layers/rakim/server/services/notion'
 
 /**
  * Request to test by config ID

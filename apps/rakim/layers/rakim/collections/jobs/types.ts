@@ -1,7 +1,7 @@
 import type { z } from 'zod'
-import type { discubotJobSchema } from './app/composables/useDiscubotJobs'
+import type { rakimJobSchema } from './app/composables/useRakimJobs'
 
-export interface DiscubotJob {
+export interface RakimJob {
   id: string
   teamId: string
   owner: string
@@ -26,13 +26,13 @@ export interface DiscubotJob {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type DiscubotJobFormData = z.infer<typeof discubotJobSchema>
-export type NewDiscubotJob = Omit<DiscubotJob, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type RakimJobFormData = z.infer<typeof rakimJobSchema>
+export type NewRakimJob = Omit<RakimJob, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface DiscubotJobFormProps {
+export interface RakimJobFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: DiscubotJob | Record<string, never> // DiscubotJob for update, empty object for create
+  activeItem: RakimJob | Record<string, never> // RakimJob for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

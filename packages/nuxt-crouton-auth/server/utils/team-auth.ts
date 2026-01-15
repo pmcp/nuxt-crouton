@@ -1,14 +1,17 @@
 /**
- * Team Auth Utilities - Additional Functions
+ * Team Auth Utilities - Entry Point
  *
- * This module provides additional utility functions for team authentication
- * that are not part of the main team.ts file.
+ * This module is the entry point for team authentication utilities.
+ * It re-exports all functions from team.ts and provides additional helpers.
  *
- * NOTE: All main team utilities (resolveTeamAndCheckMembership, getTeamById, etc.)
- * should be imported from './team' - this file only contains supplementary functions.
+ * Usage:
+ *   import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
  *
- * Types should also be imported from './team' or '../../types/connector' directly.
+ * Types should be imported from '../../types/connector' directly.
  */
+
+// Re-export all main team utilities
+export * from './team'
 
 import type { H3Event } from 'h3'
 

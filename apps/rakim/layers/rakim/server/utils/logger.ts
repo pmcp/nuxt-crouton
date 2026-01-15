@@ -14,7 +14,7 @@
  *
  * Usage:
  * ```typescript
- * import { logger } from '~/layers/discubot/server/utils/logger'
+ * import { logger } from '~/layers/rakim/server/utils/logger'
  *
  * logger.info('User logged in', { userId: '123', ip: '1.2.3.4' })
  * logger.error('API call failed', error, { endpoint: '/api/users' })

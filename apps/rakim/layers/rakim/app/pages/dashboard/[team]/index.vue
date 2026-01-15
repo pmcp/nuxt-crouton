@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import FlowList from '#layers/discubot/app/components/flows/FlowList.vue'
+import FlowList from '#layers/rakim/app/components/flows/FlowList.vue'
 
 const { currentTeam } = useTeam()
 

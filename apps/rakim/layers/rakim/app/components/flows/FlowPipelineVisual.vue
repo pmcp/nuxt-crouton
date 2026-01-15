@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Flow, FlowInput, FlowOutput } from '#layers/discubot/types'
+import type { Flow, FlowInput, FlowOutput } from '#layers/rakim/types'
 
 interface Props {
   flow: Flow

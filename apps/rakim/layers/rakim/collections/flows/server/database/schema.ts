@@ -17,11 +17,13 @@ const jsonColumn = customType<any>({
   },
 })
 
-export const discubotFlows = sqliteTable('discubot_flows', {
+export const rakimFlows = sqliteTable('rakim_flows', {
   id: text('id').primaryKey().$default(() => nanoid()),
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
+
+  order: integer('order').notNull().$default(() => 0),
   name: text('name').notNull(),
   description: text('description'),
   availableDomains: jsonColumn('availableDomains').$default(() => (null)),
@@ -29,7 +31,6 @@ export const discubotFlows = sqliteTable('discubot_flows', {
   anthropicApiKey: text('anthropicApiKey'),
   aiSummaryPrompt: text('aiSummaryPrompt'),
   aiTaskPrompt: text('aiTaskPrompt'),
-  replyPersonality: text('replyPersonality'), // Preset key or 'custom:...' for AI prompt
   active: integer('active', { mode: 'boolean' }).notNull().$default(() => false),
   onboardingComplete: integer('onboardingComplete', { mode: 'boolean' }).notNull().$default(() => false),
 

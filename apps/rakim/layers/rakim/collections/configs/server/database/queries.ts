@@ -2,122 +2,122 @@
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
-import type { DiscubotConfig, NewDiscubotConfig } from '../../types'
-import { users } from '~~/server/database/schema'
+import type { RakimConfig, NewRakimConfig } from '../../types'
+import { user } from '~~/server/db/schema'
 
-export async function getAllDiscubotConfigs(teamId: string) {
+export async function getAllRakimConfigs(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const configs = await db
     .select({
-      ...tables.discubotConfigs,
+      ...tables.rakimConfigs,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotConfigs)
-    .leftJoin(ownerUsers, eq(tables.discubotConfigs.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotConfigs.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotConfigs.updatedBy, updatedByUsers.id))
-    .where(eq(tables.discubotConfigs.teamId, teamId))
-    .orderBy(desc(tables.discubotConfigs.createdAt))
+    .from(tables.rakimConfigs)
+    .leftJoin(ownerUser, eq(tables.rakimConfigs.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimConfigs.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimConfigs.updatedBy, updatedByUser.id))
+    .where(eq(tables.rakimConfigs.teamId, teamId))
+    .orderBy(desc(tables.rakimConfigs.createdAt))
 
   return configs
 }
 
-export async function getDiscubotConfigsByIds(teamId: string, configIds: string[]) {
+export async function getRakimConfigsByIds(teamId: string, configIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const configs = await db
     .select({
-      ...tables.discubotConfigs,
+      ...tables.rakimConfigs,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotConfigs)
-    .leftJoin(ownerUsers, eq(tables.discubotConfigs.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotConfigs.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotConfigs.updatedBy, updatedByUsers.id))
+    .from(tables.rakimConfigs)
+    .leftJoin(ownerUser, eq(tables.rakimConfigs.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimConfigs.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimConfigs.updatedBy, updatedByUser.id))
     .where(
       and(
-        eq(tables.discubotConfigs.teamId, teamId),
-        inArray(tables.discubotConfigs.id, configIds)
+        eq(tables.rakimConfigs.teamId, teamId),
+        inArray(tables.rakimConfigs.id, configIds)
       )
     )
-    .orderBy(desc(tables.discubotConfigs.createdAt))
+    .orderBy(desc(tables.rakimConfigs.createdAt))
 
   return configs
 }
 
-export async function createDiscubotConfig(data: NewDiscubotConfig) {
+export async function createRakimConfig(data: NewRakimConfig) {
   const db = useDB()
 
   const [config] = await db
-    .insert(tables.discubotConfigs)
+    .insert(tables.rakimConfigs)
     .values(data)
     .returning()
 
   return config
 }
 
-export async function updateDiscubotConfig(
+export async function updateRakimConfig(
   recordId: string,
   teamId: string,
   ownerId: string,
-  updates: Partial<DiscubotConfig>
+  updates: Partial<RakimConfig>
 ) {
   const db = useDB()
 
   const [config] = await db
-    .update(tables.discubotConfigs)
+    .update(tables.rakimConfigs)
     .set({
       ...updates,
       updatedBy: ownerId
     })
     .where(
       and(
-        eq(tables.discubotConfigs.id, recordId),
-        eq(tables.discubotConfigs.teamId, teamId),
-        eq(tables.discubotConfigs.owner, ownerId)
+        eq(tables.rakimConfigs.id, recordId),
+        eq(tables.rakimConfigs.teamId, teamId),
+        eq(tables.rakimConfigs.owner, ownerId)
       )
     )
     .returning()
@@ -125,14 +125,14 @@ export async function updateDiscubotConfig(
   if (!config) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotConfig not found or unauthorized'
+      statusMessage: 'RakimConfig not found or unauthorized'
     })
   }
 
   return config
 }
 
-export async function deleteDiscubotConfig(
+export async function deleteRakimConfig(
   recordId: string,
   teamId: string,
   ownerId: string
@@ -140,12 +140,12 @@ export async function deleteDiscubotConfig(
   const db = useDB()
 
   const [deleted] = await db
-    .delete(tables.discubotConfigs)
+    .delete(tables.rakimConfigs)
     .where(
       and(
-        eq(tables.discubotConfigs.id, recordId),
-        eq(tables.discubotConfigs.teamId, teamId),
-        eq(tables.discubotConfigs.owner, ownerId)
+        eq(tables.rakimConfigs.id, recordId),
+        eq(tables.rakimConfigs.teamId, teamId),
+        eq(tables.rakimConfigs.owner, ownerId)
       )
     )
     .returning()
@@ -153,7 +153,7 @@ export async function deleteDiscubotConfig(
   if (!deleted) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotConfig not found or unauthorized'
+      statusMessage: 'RakimConfig not found or unauthorized'
     })
   }
 
@@ -164,7 +164,7 @@ export async function deleteDiscubotConfig(
  * Find config by email address or email slug
  * Used by resend webhook to match incoming emails to configs
  */
-export async function findDiscubotConfigByEmail(emailAddress: string) {
+export async function findRakimConfigByEmail(emailAddress: string) {
   const db = useDB()
 
   // Extract email slug (part before @) for matching
@@ -172,10 +172,10 @@ export async function findDiscubotConfigByEmail(emailAddress: string) {
 
   const [config] = await db
     .select()
-    .from(tables.discubotConfigs)
+    .from(tables.rakimConfigs)
     .where(
       and(
-        eq(tables.discubotConfigs.emailAddress, emailAddress)
+        eq(tables.rakimConfigs.emailAddress, emailAddress)
       )
     )
     .limit(1)
@@ -184,10 +184,10 @@ export async function findDiscubotConfigByEmail(emailAddress: string) {
   if (!config) {
     const [configBySlug] = await db
       .select()
-      .from(tables.discubotConfigs)
+      .from(tables.rakimConfigs)
       .where(
         and(
-          eq(tables.discubotConfigs.emailSlug, emailSlug)
+          eq(tables.rakimConfigs.emailSlug, emailSlug)
         )
       )
       .limit(1)

@@ -99,14 +99,14 @@
               <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Discussion</div>
               <CroutonItemCardMini
                 :id="job.discussionId"
-                collection="discubotDiscussions"
+                collection="rakimDiscussions"
               />
             </div>
             <div>
               <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Source Config</div>
               <CroutonItemCardMini
                 :id="job.sourceConfigId"
-                collection="discubotConfigs"
+                collection="rakimConfigs"
               />
             </div>
           </div>
@@ -124,7 +124,7 @@
             >
               <CroutonItemCardMini
                 :id="taskId"
-                collection="discubotTasks"
+                collection="rakimTasks"
               />
             </div>
           </div>
@@ -254,7 +254,7 @@ const switchToEditMode = () => {
 const viewDiscussion = () => {
   if (item.value?.discussionId) {
     close()
-    open('view', 'discubotDiscussions', [item.value.discussionId])
+    open('view', 'rakimDiscussions', [item.value.discussionId])
   }
 }
 

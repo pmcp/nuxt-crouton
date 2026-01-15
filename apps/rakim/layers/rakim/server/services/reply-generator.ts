@@ -1,7 +1,7 @@
 /**
  * Reply Generator Service - Personality-driven reply message generation
  *
- * This service generates reply messages for Discubot with customizable personalities.
+ * This service generates reply messages for Rakim with customizable personalities.
  * It supports:
  * - Preset personalities (professional, friendly, concise, pirate, robot, zen)
  * - Custom AI-generated personalities via prompts
@@ -16,7 +16,7 @@
  * ```
  */
 
-import type { NotionTaskResult } from '#layers/discubot/types'
+import type { NotionTaskResult } from '#layers/rakim/types'
 import { logger } from '../utils/logger'
 
 /**

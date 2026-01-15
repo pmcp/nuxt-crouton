@@ -21,7 +21,7 @@ import type {
   SourceConfig,
   ValidationResult,
   ThreadMessage,
-} from '~/layers/discubot/types'
+} from '~/layers/rakim/types'
 import { AdapterError } from './base'
 import { logger } from '../utils/logger'
 

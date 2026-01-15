@@ -7,7 +7,7 @@
  * Useful for initial setup or migration from other systems.
  */
 
-import { bulkImportMappings } from '#layers/discubot/server/services/userMapping'
+import { bulkImportMappings } from '#layers/rakim/server/services/userMapping'
 
 export default defineEventHandler(async (event) => {
   try {

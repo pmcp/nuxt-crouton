@@ -2,103 +2,103 @@
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
-import type { DiscubotDiscussion, NewDiscubotDiscussion } from '../../types'
+import type { RakimDiscussion, NewRakimDiscussion } from '../../types'
 import * as configsSchema from '../../../configs/server/database/schema'
 import * as jobsSchema from '../../../jobs/server/database/schema'
-import { users } from '~~/server/database/schema'
+import { user } from '~~/server/db/schema'
 
-export async function getAllDiscubotDiscussions(teamId: string) {
+export async function getAllRakimDiscussions(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const discussions = await db
     .select({
-      ...tables.discubotDiscussions,
-      sourceConfigIdData: configsSchema.discubotConfigs,
-      syncJobIdData: jobsSchema.discubotJobs,
+      ...tables.rakimDiscussions,
+      sourceConfigIdData: configsSchema.rakimConfigs,
+      syncJobIdData: jobsSchema.rakimJobs,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotDiscussions)
-    .leftJoin(configsSchema.discubotConfigs, eq(tables.discubotDiscussions.sourceConfigId, configsSchema.discubotConfigs.id))
-    .leftJoin(jobsSchema.discubotJobs, eq(tables.discubotDiscussions.syncJobId, jobsSchema.discubotJobs.id))
-    .leftJoin(ownerUsers, eq(tables.discubotDiscussions.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotDiscussions.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotDiscussions.updatedBy, updatedByUsers.id))
-    .where(eq(tables.discubotDiscussions.teamId, teamId))
-    .orderBy(desc(tables.discubotDiscussions.createdAt))
+    .from(tables.rakimDiscussions)
+    .leftJoin(configsSchema.rakimConfigs, eq(tables.rakimDiscussions.sourceConfigId, configsSchema.rakimConfigs.id))
+    .leftJoin(jobsSchema.rakimJobs, eq(tables.rakimDiscussions.syncJobId, jobsSchema.rakimJobs.id))
+    .leftJoin(ownerUser, eq(tables.rakimDiscussions.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimDiscussions.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimDiscussions.updatedBy, updatedByUser.id))
+    .where(eq(tables.rakimDiscussions.teamId, teamId))
+    .orderBy(desc(tables.rakimDiscussions.createdAt))
 
   return discussions
 }
 
-export async function getDiscubotDiscussionsByIds(teamId: string, discussionIds: string[]) {
+export async function getRakimDiscussionsByIds(teamId: string, discussionIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const discussions = await db
     .select({
-      ...tables.discubotDiscussions,
-      sourceConfigIdData: configsSchema.discubotConfigs,
-      syncJobIdData: jobsSchema.discubotJobs,
+      ...tables.rakimDiscussions,
+      sourceConfigIdData: configsSchema.rakimConfigs,
+      syncJobIdData: jobsSchema.rakimJobs,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotDiscussions)
-    .leftJoin(configsSchema.discubotConfigs, eq(tables.discubotDiscussions.sourceConfigId, configsSchema.discubotConfigs.id))
-    .leftJoin(jobsSchema.discubotJobs, eq(tables.discubotDiscussions.syncJobId, jobsSchema.discubotJobs.id))
-    .leftJoin(ownerUsers, eq(tables.discubotDiscussions.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotDiscussions.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotDiscussions.updatedBy, updatedByUsers.id))
+    .from(tables.rakimDiscussions)
+    .leftJoin(configsSchema.rakimConfigs, eq(tables.rakimDiscussions.sourceConfigId, configsSchema.rakimConfigs.id))
+    .leftJoin(jobsSchema.rakimJobs, eq(tables.rakimDiscussions.syncJobId, jobsSchema.rakimJobs.id))
+    .leftJoin(ownerUser, eq(tables.rakimDiscussions.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimDiscussions.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimDiscussions.updatedBy, updatedByUser.id))
     .where(
       and(
-        eq(tables.discubotDiscussions.teamId, teamId),
-        inArray(tables.discubotDiscussions.id, discussionIds)
+        eq(tables.rakimDiscussions.teamId, teamId),
+        inArray(tables.rakimDiscussions.id, discussionIds)
       )
     )
-    .orderBy(desc(tables.discubotDiscussions.createdAt))
+    .orderBy(desc(tables.rakimDiscussions.createdAt))
 
   return discussions
 }
 
-export async function createDiscubotDiscussion(data: NewDiscubotDiscussion & { createdBy?: string; updatedBy?: string }) {
+export async function createRakimDiscussion(data: NewRakimDiscussion & { createdBy?: string; updatedBy?: string }) {
   const db = useDB()
 
   // Ensure audit fields are set (defaulting to owner if not provided)
@@ -109,32 +109,32 @@ export async function createDiscubotDiscussion(data: NewDiscubotDiscussion & { c
   }
 
   const [discussion] = await db
-    .insert(tables.discubotDiscussions)
+    .insert(tables.rakimDiscussions)
     .values(insertData)
     .returning()
 
   return discussion
 }
 
-export async function updateDiscubotDiscussion(
+export async function updateRakimDiscussion(
   recordId: string,
   teamId: string,
   ownerId: string,
-  updates: Partial<DiscubotDiscussion>
+  updates: Partial<RakimDiscussion>
 ) {
   const db = useDB()
 
   const [discussion] = await db
-    .update(tables.discubotDiscussions)
+    .update(tables.rakimDiscussions)
     .set({
       ...updates,
       updatedBy: ownerId
     })
     .where(
       and(
-        eq(tables.discubotDiscussions.id, recordId),
-        eq(tables.discubotDiscussions.teamId, teamId),
-        eq(tables.discubotDiscussions.owner, ownerId)
+        eq(tables.rakimDiscussions.id, recordId),
+        eq(tables.rakimDiscussions.teamId, teamId),
+        eq(tables.rakimDiscussions.owner, ownerId)
       )
     )
     .returning()
@@ -142,14 +142,14 @@ export async function updateDiscubotDiscussion(
   if (!discussion) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotDiscussion not found or unauthorized'
+      statusMessage: 'RakimDiscussion not found or unauthorized'
     })
   }
 
   return discussion
 }
 
-export async function deleteDiscubotDiscussion(
+export async function deleteRakimDiscussion(
   recordId: string,
   teamId: string,
   ownerId: string
@@ -157,12 +157,12 @@ export async function deleteDiscubotDiscussion(
   const db = useDB()
 
   const [deleted] = await db
-    .delete(tables.discubotDiscussions)
+    .delete(tables.rakimDiscussions)
     .where(
       and(
-        eq(tables.discubotDiscussions.id, recordId),
-        eq(tables.discubotDiscussions.teamId, teamId),
-        eq(tables.discubotDiscussions.owner, ownerId)
+        eq(tables.rakimDiscussions.id, recordId),
+        eq(tables.rakimDiscussions.teamId, teamId),
+        eq(tables.rakimDiscussions.owner, ownerId)
       )
     )
     .returning()
@@ -170,7 +170,7 @@ export async function deleteDiscubotDiscussion(
   if (!deleted) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotDiscussion not found or unauthorized'
+      statusMessage: 'RakimDiscussion not found or unauthorized'
     })
   }
 

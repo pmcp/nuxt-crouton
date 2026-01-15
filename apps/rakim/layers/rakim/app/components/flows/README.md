@@ -1,7 +1,7 @@
 # Temporary Flow Components
 
 **Status**: Temporary Location (During Development)
-**Final Destination**: `layers/discubot/collections/*/app/components/`
+**Final Destination**: `layers/rakim/collections/*/app/components/`
 **Migration Timeline**: Phase 9 of Flows Redesign
 
 ## Purpose
@@ -29,10 +29,10 @@ Once created, this directory will contain:
 
 After schema stabilizes and collections are finalized:
 
-1. **Move FlowBuilder.vue** → `layers/discubot/collections/flows/app/components/FlowBuilder.vue`
-2. **Move InputManager.vue** → `layers/discubot/collections/flow-inputs/app/components/InputManager.vue`
-3. **Move OutputManager.vue** → `layers/discubot/collections/flow-outputs/app/components/OutputManager.vue`
-4. **Move FlowList.vue** → `layers/discubot/collections/flows/app/components/FlowList.vue`
+1. **Move FlowBuilder.vue** → `layers/rakim/collections/flows/app/components/FlowBuilder.vue`
+2. **Move InputManager.vue** → `layers/rakim/collections/flow-inputs/app/components/InputManager.vue`
+3. **Move OutputManager.vue** → `layers/rakim/collections/flow-outputs/app/components/OutputManager.vue`
+4. **Move FlowList.vue** → `layers/rakim/collections/flows/app/components/FlowList.vue`
 5. **Update all imports** in page files
 6. **Test everything** still works
 7. **Remove this directory**
@@ -45,7 +45,7 @@ After schema stabilizes and collections are finalized:
 
 ## Notes
 
-- Components in this directory use composables from `layers/discubot/composables/`
+- Components in this directory use composables from `layers/rakim/composables/`
 - OAuth logic: `useFlowOAuth.ts`
 - Field mapping: `useFieldMapping.ts`
 - Schema fetching: `useNotionSchema.ts`

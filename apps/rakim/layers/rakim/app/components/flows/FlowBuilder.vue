@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { humanId } from 'human-id'
 import type { FormSubmitEvent, StepperItem } from '@nuxt/ui'
-import type { Flow, FlowInput, FlowOutput, NotionOutputConfig, NotionInputConfig } from '~/layers/discubot/types'
+import type { Flow, FlowInput, FlowOutput, NotionOutputConfig, NotionInputConfig } from '~/layers/rakim/types'
 
 /**
  * FlowBuilder - Multi-step wizard for creating/editing flows
@@ -301,7 +301,7 @@ const inputFormState = reactive<Partial<InputFormData>>({
   sourceMetadata: {},
   // Notion-specific fields
   notionToken: '',
-  triggerKeyword: '@discubot'
+  triggerKeyword: '@rakim'
 })
 
 // Modal state control
@@ -445,7 +445,7 @@ const { openOAuthPopup, waitingForOAuth } = useFlowOAuth({
     if (savedFlowId.value) {
       console.log('[FlowBuilder] Refetching inputs for flow:', savedFlowId.value)
       try {
-        const response = await $fetch<FlowInput[]>(`/api/teams/${props.teamId}/discubot-flowinputs`)
+        const response = await $fetch<FlowInput[]>(`/api/teams/${props.teamId}/rakim-flowinputs`)
         // Filter inputs for this flow
         const flowInputs = response.filter(input => input.flowId === savedFlowId.value)
 
@@ -512,7 +512,7 @@ function resetInputForm(sourceType: 'slack' | 'figma' | 'email' | 'notion') {
   // Reset Notion-specific fields
   if (sourceType === 'notion') {
     inputFormState.notionToken = ''
-    inputFormState.triggerKeyword = 'discubot'
+    inputFormState.triggerKeyword = 'rakim'
   } else {
     inputFormState.notionToken = ''
     inputFormState.triggerKeyword = ''
@@ -528,7 +528,7 @@ async function saveInput(event: FormSubmitEvent<InputFormData>, close: () => voi
     sourceMetadata = {
       ...sourceMetadata,
       notionToken: inputFormState.notionToken,
-      triggerKeyword: inputFormState.triggerKeyword || 'discubot'
+      triggerKeyword: inputFormState.triggerKeyword || 'rakim'
     } as NotionInputConfig
   }
 
@@ -545,7 +545,7 @@ async function saveInput(event: FormSubmitEvent<InputFormData>, close: () => voi
   // Save immediately to database if we have a flowId
   if (savedFlowId.value) {
     try {
-      const savedInput = await $fetch<FlowInput>(`/api/teams/${props.teamId}/discubot-flowinputs`, {
+      const savedInput = await $fetch<FlowInput>(`/api/teams/${props.teamId}/rakim-flowinputs`, {
         method: 'POST',
         body: {
           ...inputData,
@@ -588,7 +588,7 @@ async function deleteInput(index: number) {
   // If input has an ID, delete from database
   if (input.id) {
     try {
-      await $fetch(`/api/teams/${props.teamId}/discubot-flowinputs/${input.id}`, {
+      await $fetch(`/api/teams/${props.teamId}/rakim-flowinputs/${input.id}`, {
         method: 'DELETE',
       })
     } catch (error: any) {
@@ -628,7 +628,7 @@ async function saveEditInput() {
   // If input has an ID, update in database
   if (input.id && savedFlowId.value) {
     try {
-      await $fetch(`/api/teams/${props.teamId}/discubot-flowinputs/${input.id}`, {
+      await $fetch(`/api/teams/${props.teamId}/rakim-flowinputs/${input.id}`, {
         method: 'PATCH',
         body: {
           name: input.name,
@@ -985,7 +985,7 @@ async function deleteOutput(index: number) {
   // If output has an ID, delete from database
   if (output.id) {
     try {
-      await $fetch(`/api/teams/${props.teamId}/discubot-flowoutputs/${output.id}`, {
+      await $fetch(`/api/teams/${props.teamId}/rakim-flowoutputs/${output.id}`, {
         method: 'DELETE',
       })
     } catch (error: any) {
@@ -1025,7 +1025,7 @@ async function saveEditOutput() {
   // If output has an ID, update in database
   if (output.id && savedFlowId.value) {
     try {
-      await $fetch(`/api/teams/${props.teamId}/discubot-flowoutputs/${output.id}`, {
+      await $fetch(`/api/teams/${props.teamId}/rakim-flowoutputs/${output.id}`, {
         method: 'PATCH',
         body: {
           name: output.name,
@@ -1131,7 +1131,7 @@ async function onFlowSubmit(event: FormSubmitEvent<FlowSchema>) {
         onboardingComplete: false
       }
 
-      const flowResponse = await $fetch<{ id: string }>(`/api/teams/${props.teamId}/discubot-flows`, {
+      const flowResponse = await $fetch<{ id: string }>(`/api/teams/${props.teamId}/rakim-flows`, {
         method: 'POST',
         body: flowData
       })
@@ -1198,7 +1198,7 @@ async function saveFlow() {
       onboardingComplete: true
     }
 
-    await $fetch(`/api/teams/${props.teamId}/discubot-flows/${flowId}`, {
+    await $fetch(`/api/teams/${props.teamId}/rakim-flows/${flowId}`, {
       method: 'PATCH',
       body: flowData
     })
@@ -1209,7 +1209,7 @@ async function saveFlow() {
       console.log('[FlowBuilder] Input:', input.name, 'hasId:', !!input.id, 'sourceType:', input.sourceType)
       if (!input.id) {
         try {
-          const savedInput = await $fetch(`/api/teams/${props.teamId}/discubot-flowinputs`, {
+          const savedInput = await $fetch(`/api/teams/${props.teamId}/rakim-flowinputs`, {
             method: 'POST',
             body: {
               ...input,
@@ -1227,7 +1227,7 @@ async function saveFlow() {
     // Save only NEW outputs (those without an id)
     for (const output of outputsList.value) {
       if (!output.id) {
-        await $fetch(`/api/teams/${props.teamId}/discubot-flowoutputs`, {
+        await $fetch(`/api/teams/${props.teamId}/rakim-flowoutputs`, {
           method: 'POST',
           body: {
             ...output,
@@ -1917,12 +1917,12 @@ function cancel() {
                           >
                             <UInput
                               v-model="inputFormState.triggerKeyword"
-                              placeholder="discubot"
+                              placeholder="rakim"
                               class="w-full"
                             />
                             <template #hint>
                               <span class="text-muted-foreground text-xs">
-                                Examples: discubot, task, todo
+                                Examples: rakim, task, todo
                               </span>
                             </template>
                           </UFormField>
@@ -2144,11 +2144,11 @@ function cancel() {
                     <UFormField
                       v-if="editingInput.sourceType === 'notion'"
                       label="Trigger Keyword"
-                      help="Keyword that triggers task creation (e.g., discubot)"
+                      help="Keyword that triggers task creation (e.g., rakim)"
                     >
                       <UInput
                         v-model="editingInput.sourceMetadata.triggerKeyword"
-                        placeholder="discubot"
+                        placeholder="rakim"
                         class="w-full"
                       />
                     </UFormField>
@@ -2591,7 +2591,7 @@ function cancel() {
     </UStepper>
 
     <!-- User Mapping Drawer -->
-    <DiscubotUsermappingsUserMappingDrawer
+    <RakimUsermappingsUserMappingDrawer
       v-if="userMappingContext"
       v-model:open="isUserMappingDrawerOpen"
       :source-type="userMappingContext.sourceType"

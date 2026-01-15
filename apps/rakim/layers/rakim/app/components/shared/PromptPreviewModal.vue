@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PromptPreview } from '#layers/discubot/app/composables/usePromptPreview'
+import type { PromptPreview } from '#layers/rakim/app/composables/usePromptPreview'
 
 interface Props {
   modelValue: boolean

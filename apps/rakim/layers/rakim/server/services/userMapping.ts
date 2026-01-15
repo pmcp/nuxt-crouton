@@ -66,7 +66,7 @@ export async function getOrCreateUserMapping(
   input: UserMappingInput
 ): Promise<UserMappingResult | null> {
   const db = useDrizzle()
-  const { discubotUsermappings: userMappings } = useTables()
+  const { rakimUsermappings: userMappings } = useTables()
   const user = await requireUserSession(event)
 
   try {
@@ -188,7 +188,7 @@ export async function findMappingByEmail(
   email: string
 ): Promise<UserMappingResult | null> {
   const db = useDrizzle()
-  const { discubotUsermappings: userMappings } = useTables()
+  const { rakimUsermappings: userMappings } = useTables()
 
   try {
     const results = await db

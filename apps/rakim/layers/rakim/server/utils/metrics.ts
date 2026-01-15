@@ -13,7 +13,7 @@
  *
  * Usage:
  * ```typescript
- * import { metrics } from '~/layers/discubot/server/utils/metrics'
+ * import { metrics } from '~/layers/rakim/server/utils/metrics'
  *
  * const timer = metrics.start('ai.generate_summary')
  * // ... operation ...

@@ -140,10 +140,10 @@
 </template>
 
 <script setup lang="ts">
-import type { DiscubotConfigFormProps, DiscubotConfigFormData } from '../../types'
+import type { RakimConfigFormProps, RakimConfigFormData } from '../../types'
 
-const props = defineProps<DiscubotConfigFormProps>()
-const { defaultValue, schema, collection } = useDiscubotConfigs()
+const props = defineProps<RakimConfigFormProps>()
+const { defaultValue, schema, collection } = useRakimConfigs()
 
 // Form layout configuration
 const navigationItems = [
@@ -213,7 +213,7 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<DiscubotConfigFormData & { id?: string | null }>(initialValues)
+const state = ref<RakimConfigFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {

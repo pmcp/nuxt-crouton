@@ -2,7 +2,7 @@
  * Retry utility with exponential backoff
  *
  * Provides simple retry logic for async operations that may fail temporarily.
- * Used throughout Discubot for external API calls (Claude, Notion, Figma, Slack).
+ * Used throughout Rakim for external API calls (Claude, Notion, Figma, Slack).
  *
  * @module retry
  */

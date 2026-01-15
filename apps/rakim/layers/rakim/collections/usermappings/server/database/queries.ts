@@ -2,93 +2,93 @@
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
-import type { DiscubotUserMapping, NewDiscubotUserMapping } from '../../types'
-import { users } from '~~/server/database/schema'
+import type { RakimUserMapping, NewRakimUserMapping } from '../../types'
+import { user } from '~~/server/db/schema'
 
-export async function getAllDiscubotUserMappings(teamId: string) {
+export async function getAllRakimUserMappings(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const usermappings = await db
     .select({
-      ...tables.discubotUsermappings,
+      ...tables.rakimUsermappings,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotUsermappings)
-    .leftJoin(ownerUsers, eq(tables.discubotUsermappings.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotUsermappings.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotUsermappings.updatedBy, updatedByUsers.id))
-    .where(eq(tables.discubotUsermappings.teamId, teamId))
-    .orderBy(desc(tables.discubotUsermappings.createdAt))
+    .from(tables.rakimUsermappings)
+    .leftJoin(ownerUser, eq(tables.rakimUsermappings.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimUsermappings.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimUsermappings.updatedBy, updatedByUser.id))
+    .where(eq(tables.rakimUsermappings.teamId, teamId))
+    .orderBy(desc(tables.rakimUsermappings.createdAt))
 
   return usermappings
 }
 
-export async function getDiscubotUserMappingsByIds(teamId: string, usermappingIds: string[]) {
+export async function getRakimUserMappingsByIds(teamId: string, usermappingIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const usermappings = await db
     .select({
-      ...tables.discubotUsermappings,
+      ...tables.rakimUsermappings,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotUsermappings)
-    .leftJoin(ownerUsers, eq(tables.discubotUsermappings.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotUsermappings.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotUsermappings.updatedBy, updatedByUsers.id))
+    .from(tables.rakimUsermappings)
+    .leftJoin(ownerUser, eq(tables.rakimUsermappings.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimUsermappings.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimUsermappings.updatedBy, updatedByUser.id))
     .where(
       and(
-        eq(tables.discubotUsermappings.teamId, teamId),
-        inArray(tables.discubotUsermappings.id, usermappingIds)
+        eq(tables.rakimUsermappings.teamId, teamId),
+        inArray(tables.rakimUsermappings.id, usermappingIds)
       )
     )
-    .orderBy(desc(tables.discubotUsermappings.createdAt))
+    .orderBy(desc(tables.rakimUsermappings.createdAt))
 
   return usermappings
 }
 
-export async function createDiscubotUserMapping(data: NewDiscubotUserMapping & { createdBy?: string; updatedBy?: string }) {
+export async function createRakimUserMapping(data: NewRakimUserMapping & { createdBy?: string; updatedBy?: string }) {
   const db = useDB()
 
   // Ensure audit fields are set (defaulting to owner if not provided)
@@ -99,18 +99,18 @@ export async function createDiscubotUserMapping(data: NewDiscubotUserMapping & {
   }
 
   const [usermapping] = await db
-    .insert(tables.discubotUsermappings)
+    .insert(tables.rakimUsermappings)
     .values(insertData)
     .returning()
 
   return usermapping
 }
 
-export async function updateDiscubotUserMapping(
+export async function updateRakimUserMapping(
   recordId: string,
   teamId: string,
   ownerId: string,
-  updates: Partial<DiscubotUserMapping>
+  updates: Partial<RakimUserMapping>
 ) {
   const db = useDB()
   const { or } = await import('drizzle-orm')
@@ -128,15 +128,15 @@ export async function updateDiscubotUserMapping(
   }
 
   const [usermapping] = await db
-    .update(tables.discubotUsermappings)
+    .update(tables.rakimUsermappings)
     .set(setData)
     .where(
       and(
-        eq(tables.discubotUsermappings.id, recordId),
-        eq(tables.discubotUsermappings.teamId, teamId),
+        eq(tables.rakimUsermappings.id, recordId),
+        eq(tables.rakimUsermappings.teamId, teamId),
         or(
-          eq(tables.discubotUsermappings.owner, ownerId),
-          eq(tables.discubotUsermappings.owner, 'system')
+          eq(tables.rakimUsermappings.owner, ownerId),
+          eq(tables.rakimUsermappings.owner, 'system')
         )
       )
     )
@@ -145,14 +145,14 @@ export async function updateDiscubotUserMapping(
   if (!usermapping) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotUserMapping not found or unauthorized'
+      statusMessage: 'RakimUserMapping not found or unauthorized'
     })
   }
 
   return usermapping
 }
 
-export async function deleteDiscubotUserMapping(
+export async function deleteRakimUserMapping(
   recordId: string,
   teamId: string,
   ownerId: string
@@ -162,14 +162,14 @@ export async function deleteDiscubotUserMapping(
 
   // Allow delete if user owns the record OR it's a system-owned (discovered) mapping
   const [deleted] = await db
-    .delete(tables.discubotUsermappings)
+    .delete(tables.rakimUsermappings)
     .where(
       and(
-        eq(tables.discubotUsermappings.id, recordId),
-        eq(tables.discubotUsermappings.teamId, teamId),
+        eq(tables.rakimUsermappings.id, recordId),
+        eq(tables.rakimUsermappings.teamId, teamId),
         or(
-          eq(tables.discubotUsermappings.owner, ownerId),
-          eq(tables.discubotUsermappings.owner, 'system')
+          eq(tables.rakimUsermappings.owner, ownerId),
+          eq(tables.rakimUsermappings.owner, 'system')
         )
       )
     )
@@ -178,7 +178,7 @@ export async function deleteDiscubotUserMapping(
   if (!deleted) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotUserMapping not found or unauthorized'
+      statusMessage: 'RakimUserMapping not found or unauthorized'
     })
   }
 

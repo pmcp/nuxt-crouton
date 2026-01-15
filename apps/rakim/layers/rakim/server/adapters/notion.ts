@@ -22,7 +22,7 @@ import type {
   SourceConfig,
   ValidationResult,
   ThreadMessage,
-} from '#layers/discubot/types'
+} from '#layers/rakim/types'
 import { AdapterError, type DiscussionSourceAdapter } from './base'
 import { logger } from '../utils/logger'
 
@@ -37,11 +37,11 @@ const NOTION_API_BASE = 'https://api.notion.com/v1'
 const NOTION_API_VERSION = '2022-06-28'
 
 /**
- * Default trigger keyword for activating Discubot
+ * Default trigger keyword for activating Rakim
  * Note: For Notion input, we check for the word without @ prefix
  * since Notion doesn't use @ mentions the same way as Slack/Figma
  */
-const DEFAULT_TRIGGER_KEYWORD = 'discubot'
+const DEFAULT_TRIGGER_KEYWORD = 'rakim'
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -406,7 +406,7 @@ function extractBlockText(block: { type: string; [key: string]: any }): string {
  * Check if a trigger keyword exists in rich text content
  *
  * @param richText - Array of rich text objects
- * @param keyword - The trigger keyword to search for (default: @discubot)
+ * @param keyword - The trigger keyword to search for (default: @rakim)
  * @returns true if the keyword is found in the content
  */
 function checkForTrigger(

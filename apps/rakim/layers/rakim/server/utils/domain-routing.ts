@@ -12,7 +12,7 @@
  * 5. If no default output configured → throw error
  */
 
-import type { DetectedTask, FlowOutput } from '#layers/discubot/types'
+import type { DetectedTask, FlowOutput } from '#layers/rakim/types'
 import { logger } from './logger'
 
 /**

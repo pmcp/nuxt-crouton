@@ -2,127 +2,127 @@
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
-import type { DiscubotFlowOutput, NewDiscubotFlowOutput } from '../../types'
+import type { RakimFlowOutput, NewRakimFlowOutput } from '../../types'
 import * as flowsSchema from '../../../flows/server/database/schema'
-import { users } from '~~/server/database/schema'
+import { user } from '~~/server/db/schema'
 
-export async function getAllDiscubotFlowOutputs(teamId: string) {
+export async function getAllRakimFlowOutputs(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const flowoutputs = await db
     .select({
-      ...tables.discubotFlowoutputs,
-      flowIdData: flowsSchema.discubotFlows,
+      ...tables.rakimFlowoutputs,
+      flowIdData: flowsSchema.rakimFlows,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotFlowoutputs)
-    .leftJoin(flowsSchema.discubotFlows, eq(tables.discubotFlowoutputs.flowId, flowsSchema.discubotFlows.id))
-    .leftJoin(ownerUsers, eq(tables.discubotFlowoutputs.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotFlowoutputs.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotFlowoutputs.updatedBy, updatedByUsers.id))
-    .where(eq(tables.discubotFlowoutputs.teamId, teamId))
-    .orderBy(desc(tables.discubotFlowoutputs.createdAt))
+    .from(tables.rakimFlowoutputs)
+    .leftJoin(flowsSchema.rakimFlows, eq(tables.rakimFlowoutputs.flowId, flowsSchema.rakimFlows.id))
+    .leftJoin(ownerUser, eq(tables.rakimFlowoutputs.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimFlowoutputs.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimFlowoutputs.updatedBy, updatedByUser.id))
+    .where(eq(tables.rakimFlowoutputs.teamId, teamId))
+    .orderBy(desc(tables.rakimFlowoutputs.createdAt))
 
   return flowoutputs
 }
 
-export async function getDiscubotFlowOutputsByIds(teamId: string, flowoutputIds: string[]) {
+export async function getRakimFlowOutputsByIds(teamId: string, flowoutputIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const flowoutputs = await db
     .select({
-      ...tables.discubotFlowoutputs,
-      flowIdData: flowsSchema.discubotFlows,
+      ...tables.rakimFlowoutputs,
+      flowIdData: flowsSchema.rakimFlows,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotFlowoutputs)
-    .leftJoin(flowsSchema.discubotFlows, eq(tables.discubotFlowoutputs.flowId, flowsSchema.discubotFlows.id))
-    .leftJoin(ownerUsers, eq(tables.discubotFlowoutputs.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotFlowoutputs.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotFlowoutputs.updatedBy, updatedByUsers.id))
+    .from(tables.rakimFlowoutputs)
+    .leftJoin(flowsSchema.rakimFlows, eq(tables.rakimFlowoutputs.flowId, flowsSchema.rakimFlows.id))
+    .leftJoin(ownerUser, eq(tables.rakimFlowoutputs.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimFlowoutputs.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimFlowoutputs.updatedBy, updatedByUser.id))
     .where(
       and(
-        eq(tables.discubotFlowoutputs.teamId, teamId),
-        inArray(tables.discubotFlowoutputs.id, flowoutputIds)
+        eq(tables.rakimFlowoutputs.teamId, teamId),
+        inArray(tables.rakimFlowoutputs.id, flowoutputIds)
       )
     )
-    .orderBy(desc(tables.discubotFlowoutputs.createdAt))
+    .orderBy(desc(tables.rakimFlowoutputs.createdAt))
 
   return flowoutputs
 }
 
-export async function createDiscubotFlowOutput(data: NewDiscubotFlowOutput) {
+export async function createRakimFlowOutput(data: NewRakimFlowOutput) {
   const db = useDB()
 
   const [flowoutput] = await db
-    .insert(tables.discubotFlowoutputs)
+    .insert(tables.rakimFlowoutputs)
     .values(data)
     .returning()
 
   return flowoutput
 }
 
-export async function updateDiscubotFlowOutput(
+export async function updateRakimFlowOutput(
   recordId: string,
   teamId: string,
   ownerId: string,
-  updates: Partial<DiscubotFlowOutput>
+  updates: Partial<RakimFlowOutput>
 ) {
   const db = useDB()
 
   const [flowoutput] = await db
-    .update(tables.discubotFlowoutputs)
+    .update(tables.rakimFlowoutputs)
     .set({
       ...updates,
       updatedBy: ownerId
     })
     .where(
       and(
-        eq(tables.discubotFlowoutputs.id, recordId),
-        eq(tables.discubotFlowoutputs.teamId, teamId),
-        eq(tables.discubotFlowoutputs.owner, ownerId)
+        eq(tables.rakimFlowoutputs.id, recordId),
+        eq(tables.rakimFlowoutputs.teamId, teamId),
+        eq(tables.rakimFlowoutputs.owner, ownerId)
       )
     )
     .returning()
@@ -130,14 +130,14 @@ export async function updateDiscubotFlowOutput(
   if (!flowoutput) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotFlowOutput not found or unauthorized'
+      statusMessage: 'RakimFlowOutput not found or unauthorized'
     })
   }
 
   return flowoutput
 }
 
-export async function deleteDiscubotFlowOutput(
+export async function deleteRakimFlowOutput(
   recordId: string,
   teamId: string,
   ownerId: string
@@ -145,12 +145,12 @@ export async function deleteDiscubotFlowOutput(
   const db = useDB()
 
   const [deleted] = await db
-    .delete(tables.discubotFlowoutputs)
+    .delete(tables.rakimFlowoutputs)
     .where(
       and(
-        eq(tables.discubotFlowoutputs.id, recordId),
-        eq(tables.discubotFlowoutputs.teamId, teamId),
-        eq(tables.discubotFlowoutputs.owner, ownerId)
+        eq(tables.rakimFlowoutputs.id, recordId),
+        eq(tables.rakimFlowoutputs.teamId, teamId),
+        eq(tables.rakimFlowoutputs.owner, ownerId)
       )
     )
     .returning()
@@ -158,7 +158,7 @@ export async function deleteDiscubotFlowOutput(
   if (!deleted) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotFlowOutput not found or unauthorized'
+      statusMessage: 'RakimFlowOutput not found or unauthorized'
     })
   }
 

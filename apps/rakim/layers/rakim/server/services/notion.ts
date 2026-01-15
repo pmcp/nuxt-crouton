@@ -23,7 +23,7 @@ import type {
   NotionTaskResult,
   FlowOutput,
   NotionOutputConfig,
-} from '#layers/discubot/types'
+} from '#layers/rakim/types'
 import { retryWithBackoff } from '../utils/retry'
 import { logger } from '../utils/logger'
 import { parseContentWithLinks, parseContentWithMentionsAndLinks } from '../utils/emoji-converter'

@@ -1,7 +1,7 @@
 import type { z } from 'zod'
-import type { discubotFlowOutputSchema } from './app/composables/useDiscubotFlowOutputs'
+import type { rakimFlowOutputSchema } from './app/composables/useRakimFlowOutputs'
 
-export interface DiscubotFlowOutput {
+export interface RakimFlowOutput {
   id: string
   teamId: string
   owner: string
@@ -20,13 +20,13 @@ export interface DiscubotFlowOutput {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type DiscubotFlowOutputFormData = z.infer<typeof discubotFlowOutputSchema>
-export type NewDiscubotFlowOutput = Omit<DiscubotFlowOutput, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type RakimFlowOutputFormData = z.infer<typeof rakimFlowOutputSchema>
+export type NewRakimFlowOutput = Omit<RakimFlowOutput, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface DiscubotFlowOutputFormProps {
+export interface RakimFlowOutputFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: DiscubotFlowOutput | Record<string, never> // DiscubotFlowOutput for update, empty object for create
+  activeItem: RakimFlowOutput | Record<string, never> // RakimFlowOutput for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

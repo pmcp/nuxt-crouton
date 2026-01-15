@@ -1,15 +1,15 @@
 <template>
   <CroutonCollection
     :layout="layout"
-    collection="discubotFlowInputs"
+    collection="rakimFlowInputs"
     :columns="columns"
     :rows="flowinputs || []"
     :loading="pending"
   >
     <template #header>
       <CroutonTableHeader
-        title="DiscubotFlowInputs"
-        :collection="'discubotFlowInputs'"
+        title="RakimFlowInputs"
+        :collection="'rakimFlowInputs'"
         createButton
       />
     </template>
@@ -17,7 +17,7 @@
       <CroutonItemCardMini
         v-if="row.original.flowId"
         :id="row.original.flowId"
-        collection="discubotFlows"
+        collection="rakimFlows"
       />
     </template>
   </CroutonCollection>
@@ -30,9 +30,9 @@ const props = withDefaults(defineProps<{
   layout: 'table'
 })
 
-const { columns } = useDiscubotFlowInputs()
+const { columns } = useRakimFlowInputs()
 
 const { items: flowinputs, pending } = await useCollectionQuery(
-  'discubotFlowInputs'
+  'rakimFlowInputs'
 )
 </script>

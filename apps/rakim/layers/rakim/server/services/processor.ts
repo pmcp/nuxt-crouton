@@ -1,7 +1,7 @@
 /**
  * Processor Service - Discussion Processing Orchestration
  *
- * This is the heart of Discubot. It orchestrates the complete workflow:
+ * This is the heart of Rakim. It orchestrates the complete workflow:
  *
  * **Processing Pipeline (6 Stages):**
  *
@@ -36,7 +36,7 @@ import type {
   Flow,
   FlowInput,
   FlowOutput,
-} from '#layers/discubot/types'
+} from '#layers/rakim/types'
 import { analyzeDiscussion } from './ai'
 import { extractMentionsFromComment } from '../adapters/figma'
 import { createNotionTask, createNotionTasks, createNotionConfigFromOutput, type SourceMetadata } from './notion'
@@ -152,15 +152,15 @@ async function storeDiscoveredUsers(
     return 0
   }
 
-  const { createDiscubotUserMapping } = await import(
-    '#layers/discubot/collections/usermappings/server/database/queries'
+  const { createRakimUserMapping } = await import(
+    '#layers/rakim/collections/usermappings/server/database/queries'
   )
 
   // Get existing mappings to avoid duplicates
-  const { getAllDiscubotUserMappings } = await import(
-    '#layers/discubot/collections/usermappings/server/database/queries'
+  const { getAllRakimUserMappings } = await import(
+    '#layers/rakim/collections/usermappings/server/database/queries'
   )
-  const existingMappings = await getAllDiscubotUserMappings(teamId)
+  const existingMappings = await getAllRakimUserMappings(teamId)
 
   // Debug: log what we got
   logger.debug('Existing mappings for duplicate check', {
@@ -197,7 +197,7 @@ async function storeDiscoveredUsers(
     }
 
     try {
-      await createDiscubotUserMapping({
+      await createRakimUserMapping({
         teamId,
         owner: SYSTEM_USER_ID,
         sourceType,
@@ -367,23 +367,23 @@ async function loadFlow(
   const db = useDB()
 
   // Import schemas
-  const { discubotFlowinputs } = await import(
-    '#layers/discubot/collections/flowinputs/server/database/schema'
+  const { rakimFlowinputs } = await import(
+    '#layers/rakim/collections/flowinputs/server/database/schema'
   )
-  const { discubotFlows } = await import(
-    '#layers/discubot/collections/flows/server/database/schema'
+  const { rakimFlows } = await import(
+    '#layers/rakim/collections/flows/server/database/schema'
   )
-  const { discubotFlowoutputs } = await import(
-    '#layers/discubot/collections/flowoutputs/server/database/schema'
+  const { rakimFlowoutputs } = await import(
+    '#layers/rakim/collections/flowoutputs/server/database/schema'
   )
 
   // Query all active inputs of this source type
   const inputs = await db
     .select()
-    .from(discubotFlowinputs)
+    .from(rakimFlowinputs)
     .where(and(
-      eq(discubotFlowinputs.sourceType, sourceType),
-      eq(discubotFlowinputs.active, true),
+      eq(rakimFlowinputs.sourceType, sourceType),
+      eq(rakimFlowinputs.active, true),
     ))
     .all()
 
@@ -415,10 +415,10 @@ async function loadFlow(
   for (const input of candidateInputs) {
     const [existingFlow] = await db
       .select()
-      .from(discubotFlows)
+      .from(rakimFlows)
       .where(and(
-        eq(discubotFlows.id, input.flowId),
-        eq(discubotFlows.active, true),
+        eq(rakimFlows.id, input.flowId),
+        eq(rakimFlows.active, true),
       ))
       .limit(1)
 
@@ -450,20 +450,20 @@ async function loadFlow(
   // Load all inputs for this flow
   const allInputs = await db
     .select()
-    .from(discubotFlowinputs)
+    .from(rakimFlowinputs)
     .where(and(
-      eq(discubotFlowinputs.flowId, flow.id),
-      eq(discubotFlowinputs.active, true),
+      eq(rakimFlowinputs.flowId, flow.id),
+      eq(rakimFlowinputs.active, true),
     ))
     .all()
 
   // Load all outputs for this flow
   const outputs = await db
     .select()
-    .from(discubotFlowoutputs)
+    .from(rakimFlowoutputs)
     .where(and(
-      eq(discubotFlowoutputs.flowId, flow.id),
-      eq(discubotFlowoutputs.active, true),
+      eq(rakimFlowoutputs.flowId, flow.id),
+      eq(rakimFlowoutputs.active, true),
     ))
     .all()
 
@@ -499,16 +499,16 @@ async function loadSourceConfig(
   const db = useDB()
 
   // Import the schema table
-  const { discubotConfigs } = await import('#layers/discubot-configs/server/database/schema')
+  const { rakimConfigs } = await import('#layers/rakim/collections/configs/server/database/schema')
 
   // Query by sourceMetadata.slackTeamId (for Slack) or teamId (for other sources)
   // The teamId passed here is the Slack workspace team ID from the webhook
   const configs = await db
     .select()
-    .from(discubotConfigs)
+    .from(rakimConfigs)
     .where(and(
-      eq(discubotConfigs.sourceType, sourceType),
-      eq(discubotConfigs.active, true),
+      eq(rakimConfigs.sourceType, sourceType),
+      eq(rakimConfigs.active, true),
     ))
     .all()
 
@@ -589,14 +589,14 @@ async function saveDiscussion(
   currentTeamId = actualTeamId
 
   // Import Crouton query
-  const { createDiscubotDiscussion } = await import(
-    '#layers/discubot/collections/discussions/server/database/queries'
+  const { createRakimDiscussion } = await import(
+    '#layers/rakim/collections/discussions/server/database/queries'
   )
 
   // Create discussion record
   // NOTE: For Figma, authorHandle and participants contain email addresses at this point
   // They will be updated after thread building with actual user names
-  const discussion = await createDiscubotDiscussion({
+  const discussion = await createRakimDiscussion({
     teamId: actualTeamId, // Use actual team ID from config, not source identifier
     owner: SYSTEM_USER_ID,
     sourceType: parsed.sourceType,
@@ -652,12 +652,12 @@ async function updateDiscussionStatus(
   }
 
   // Import Crouton query
-  const { updateDiscubotDiscussion } = await import(
-    '#layers/discubot/collections/discussions/server/database/queries'
+  const { updateRakimDiscussion } = await import(
+    '#layers/rakim/collections/discussions/server/database/queries'
   )
 
   // Update discussion with new status
-  await updateDiscubotDiscussion(
+  await updateRakimDiscussion(
     discussionId,
     currentTeamId,
     SYSTEM_USER_ID,
@@ -698,12 +698,12 @@ async function updateDiscussionMetadata(
   }
 
   // Import Crouton query
-  const { updateDiscubotDiscussion } = await import(
-    '#layers/discubot/collections/discussions/server/database/queries'
+  const { updateRakimDiscussion } = await import(
+    '#layers/rakim/collections/discussions/server/database/queries'
   )
 
   // Update discussion with correct authorHandle and participants from thread
-  await updateDiscubotDiscussion(
+  await updateRakimDiscussion(
     discussionId,
     currentTeamId,
     SYSTEM_USER_ID,
@@ -741,12 +741,12 @@ async function updateDiscussionResults(
   }
 
   // Import Crouton query
-  const { updateDiscubotDiscussion } = await import(
-    '#layers/discubot/collections/discussions/server/database/queries'
+  const { updateRakimDiscussion } = await import(
+    '#layers/rakim/collections/discussions/server/database/queries'
   )
 
   // Update discussion with all processing results
-  await updateDiscubotDiscussion(
+  await updateRakimDiscussion(
     discussionId,
     currentTeamId,
     SYSTEM_USER_ID,
@@ -790,8 +790,8 @@ async function saveTaskRecords(
 
   try {
     // Import Crouton query for task creation
-    const { createDiscubotTask } = await import(
-      '#layers/discubot/collections/tasks/server/database/queries'
+    const { createRakimTask } = await import(
+      '#layers/rakim/collections/tasks/server/database/queries'
     )
 
     const taskIds: string[] = []
@@ -808,7 +808,7 @@ async function saveTaskRecords(
       }
 
       try {
-        const task = await createDiscubotTask({
+        const task = await createRakimTask({
           teamId: currentTeamId,
           owner: SYSTEM_USER_ID,
           discussionId,
@@ -851,11 +851,11 @@ async function saveTaskRecords(
 
     // Update discussion with task IDs
     if (taskIds.length > 0) {
-      const { updateDiscubotDiscussion } = await import(
-        '#layers/discubot/collections/discussions/server/database/queries'
+      const { updateRakimDiscussion } = await import(
+        '#layers/rakim/collections/discussions/server/database/queries'
       )
 
-      await updateDiscubotDiscussion(
+      await updateRakimDiscussion(
         discussionId,
         currentTeamId,
         SYSTEM_USER_ID,
@@ -939,8 +939,8 @@ async function buildThread(
   // Build handle map for Figma (only if we have user mappings)
   if (userMappings && parsed.sourceType === 'figma' && teamId) {
     try {
-      const { getAllDiscubotUserMappings } = await import('#layers/discubot/collections/usermappings/server/database/queries')
-      const allUserMappings = await getAllDiscubotUserMappings(teamId)
+      const { getAllRakimUserMappings } = await import('#layers/rakim/collections/usermappings/server/database/queries')
+      const allUserMappings = await getAllRakimUserMappings(teamId)
 
       for (const mapping of allUserMappings) {
         if (mapping.sourceType === 'figma' && mapping.active && mapping.sourceUserName) {
@@ -1187,8 +1187,8 @@ export async function processDiscussion(
     // - Bootstrap/User Sync comments: Always allow (they don't create tasks)
     // - Failed discussions: Allow retry
     const db = useDB()
-    const { discubotDiscussions } = await import(
-      '#layers/discubot/collections/discussions/server/database/schema'
+    const { rakimDiscussions } = await import(
+      '#layers/rakim/collections/discussions/server/database/schema'
     )
 
     // Check if this looks like a bootstrap comment (before we have the full thread)
@@ -1196,9 +1196,9 @@ export async function processDiscussion(
     const isLikelyBootstrap = contentLower.includes('user sync') || contentLower.includes('bootstrap')
 
     const [existingDiscussion] = await db
-      .select({ id: discubotDiscussions.id, status: discubotDiscussions.status })
-      .from(discubotDiscussions)
-      .where(eq(discubotDiscussions.sourceThreadId, parsed.sourceThreadId))
+      .select({ id: rakimDiscussions.id, status: rakimDiscussions.status })
+      .from(rakimDiscussions)
+      .where(eq(rakimDiscussions.sourceThreadId, parsed.sourceThreadId))
       .limit(1)
 
     if (existingDiscussion) {
@@ -1236,8 +1236,8 @@ export async function processDiscussion(
 
       // Delete the old record to allow fresh processing
       await db
-        .delete(discubotDiscussions)
-        .where(eq(discubotDiscussions.id, existingDiscussion.id))
+        .delete(rakimDiscussions)
+        .where(eq(rakimDiscussions.id, existingDiscussion.id))
     }
 
     // ============================================================================
@@ -1340,10 +1340,10 @@ export async function processDiscussion(
     }
 
     try {
-      const { getAllDiscubotUserMappings } = await import(
-        '#layers/discubot/collections/usermappings/server/database/queries'
+      const { getAllRakimUserMappings } = await import(
+        '#layers/rakim/collections/usermappings/server/database/queries'
       )
-      const allUserMappings = await getAllDiscubotUserMappings(actualTeamId)
+      const allUserMappings = await getAllRakimUserMappings(actualTeamId)
 
       const userIdToMentionMap = new Map<string, { name: string; notionId: string }>()
 
@@ -1376,11 +1376,11 @@ export async function processDiscussion(
     // CREATE JOB RECORD (After config loaded to get correct teamId)
     // ============================================================================
     try {
-      const { createDiscubotJob } = await import(
-        '#layers/discubot/collections/jobs/server/database/queries'
+      const { createRakimJob } = await import(
+        '#layers/rakim/collections/jobs/server/database/queries'
       )
 
-      const job = await createDiscubotJob({
+      const job = await createRakimJob({
         teamId: actualTeamId,
         owner: SYSTEM_USER_ID,
         discussionId: '', // Will update after discussion is created
@@ -1425,20 +1425,20 @@ export async function processDiscussion(
     // Update job with discussion ID (sourceConfigId already set during creation)
     if (jobId && discussionId) {
       try {
-        const { updateDiscubotJob } = await import(
-          '#layers/discubot/collections/jobs/server/database/queries'
+        const { updateRakimJob } = await import(
+          '#layers/rakim/collections/jobs/server/database/queries'
         )
 
-        await updateDiscubotJob(jobId, actualTeamId, SYSTEM_USER_ID, {
+        await updateRakimJob(jobId, actualTeamId, SYSTEM_USER_ID, {
           discussionId,
         })
 
         // Link discussion to job
-        const { updateDiscubotDiscussion } = await import(
-          '#layers/discubot/collections/discussions/server/database/queries'
+        const { updateRakimDiscussion } = await import(
+          '#layers/rakim/collections/discussions/server/database/queries'
         )
 
-        await updateDiscubotDiscussion(
+        await updateRakimDiscussion(
           discussionId,
           currentTeamId!,
           SYSTEM_USER_ID,
@@ -1508,10 +1508,10 @@ export async function processDiscussion(
       })
 
       // Update the discussion record with the correct URL and threadId using Crouton query
-      const { updateDiscubotDiscussion } = await import(
-        '#layers/discubot/collections/discussions/server/database/queries'
+      const { updateRakimDiscussion } = await import(
+        '#layers/rakim/collections/discussions/server/database/queries'
       )
-      await updateDiscubotDiscussion(
+      await updateRakimDiscussion(
         discussionId,
         currentTeamId!,
         SYSTEM_USER_ID,
@@ -1701,11 +1701,11 @@ export async function processDiscussion(
       if (jobId) {
         const processingTime = Date.now() - startTime
         try {
-          const { updateDiscubotJob } = await import(
-            '#layers/discubot/collections/jobs/server/database/queries'
+          const { updateRakimJob } = await import(
+            '#layers/rakim/collections/jobs/server/database/queries'
           )
 
-          await updateDiscubotJob(jobId, actualTeamId, SYSTEM_USER_ID, {
+          await updateRakimJob(jobId, actualTeamId, SYSTEM_USER_ID, {
             status: 'completed',
             completedAt: new Date(),
             processingTime,
@@ -2003,11 +2003,11 @@ export async function processDiscussion(
     // ============================================================================
     if (jobId) {
       try {
-        const { updateDiscubotJob } = await import(
-          '#layers/discubot/collections/jobs/server/database/queries'
+        const { updateRakimJob } = await import(
+          '#layers/rakim/collections/jobs/server/database/queries'
         )
 
-        await updateDiscubotJob(jobId, actualTeamId, SYSTEM_USER_ID, {
+        await updateRakimJob(jobId, actualTeamId, SYSTEM_USER_ID, {
           status: 'completed',
           completedAt: new Date(),
           processingTime,
@@ -2059,11 +2059,11 @@ export async function processDiscussion(
         const errorStack = error instanceof Error ? error.stack : undefined
         const processingTime = Date.now() - startTime
 
-        const { updateDiscubotJob } = await import(
-          '#layers/discubot/collections/jobs/server/database/queries'
+        const { updateRakimJob } = await import(
+          '#layers/rakim/collections/jobs/server/database/queries'
         )
 
-        await updateDiscubotJob(jobId, actualTeamId, SYSTEM_USER_ID, {
+        await updateRakimJob(jobId, actualTeamId, SYSTEM_USER_ID, {
           status: 'failed',
           completedAt: new Date(),
           processingTime,
@@ -2174,11 +2174,11 @@ async function updateJobStatus(
   }
 
   try {
-    const { updateDiscubotJob } = await import(
-      '#layers/discubot/collections/jobs/server/database/queries'
+    const { updateRakimJob } = await import(
+      '#layers/rakim/collections/jobs/server/database/queries'
     )
 
-    await updateDiscubotJob(jobId, teamId, SYSTEM_USER_ID, updates)
+    await updateRakimJob(jobId, teamId, SYSTEM_USER_ID, updates)
 
     logger.debug('Job updated', {
       jobId,

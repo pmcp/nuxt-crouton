@@ -5,16 +5,16 @@
  *
  * Flow:
  * 1. Notion webhook received (task status changed to "Done")
- * 2. Query discubot database for task by notionPageId
+ * 2. Query rakim database for task by notionPageId
  * 3. Load discussion and source config
  * 4. Post completion message to original Slack/Figma thread
  *
  * @see https://developers.notion.com/reference/webhooks
  */
 
-import { getAdapter } from '#layers/discubot/server/adapters'
+import { getAdapter } from '#layers/rakim/server/adapters'
 import { eq, and } from 'drizzle-orm'
-import { logger } from '#layers/discubot/server/utils/logger'
+import { logger } from '#layers/rakim/server/utils/logger'
 
 /**
  * Notion webhook payload structure
@@ -105,14 +105,14 @@ export default defineEventHandler(async (event) => {
     // QUERY TASK BY NOTION PAGE ID
     // ============================================================================
     const db = useDB()
-    const { discubotTasks } = await import('#layers/discubot/collections/tasks/server/database/schema')
-    const { discubotDiscussions } = await import('#layers/discubot/collections/discussions/server/database/schema')
-    const { discubotConfigs } = await import('#layers/discubot-configs/server/database/schema')
+    const { rakimTasks } = await import('#layers/rakim/collections/tasks/server/database/schema')
+    const { rakimDiscussions } = await import('#layers/rakim/collections/discussions/server/database/schema')
+    const { rakimConfigs } = await import('#layers/rakim/collections/configs/server/database/schema')
 
     const task = await db
       .select()
-      .from(discubotTasks)
-      .where(eq(discubotTasks.notionPageId, notionPageId))
+      .from(rakimTasks)
+      .where(eq(rakimTasks.notionPageId, notionPageId))
       .limit(1)
       .get()
 
@@ -136,8 +136,8 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     const discussion = await db
       .select()
-      .from(discubotDiscussions)
-      .where(eq(discubotDiscussions.id, task.discussionId))
+      .from(rakimDiscussions)
+      .where(eq(rakimDiscussions.id, task.discussionId))
       .limit(1)
       .get()
 
@@ -164,8 +164,8 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     const config = await db
       .select()
-      .from(discubotConfigs)
-      .where(eq(discubotConfigs.id, discussion.sourceConfigId))
+      .from(rakimConfigs)
+      .where(eq(rakimConfigs.id, discussion.sourceConfigId))
       .limit(1)
       .get()
 

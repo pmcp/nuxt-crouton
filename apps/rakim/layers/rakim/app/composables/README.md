@@ -1,4 +1,4 @@
-# Discubot Composables
+# Rakim Composables
 
 This directory contains reusable composables extracted from custom components to protect them from Crouton regeneration.
 
@@ -169,7 +169,7 @@ Each composable can be tested independently:
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import { calculateSimilarity, generateAutoMapping } from '#layers/discubot/composables/useFieldMapping'
+import { calculateSimilarity, generateAutoMapping } from '#layers/rakim/composables/useFieldMapping'
 
 describe('useFieldMapping', () => {
   it('calculates exact match similarity', () => {
@@ -195,8 +195,8 @@ describe('useFieldMapping', () => {
 ## Migration Notes
 
 ### Original Location
-- **Before**: Logic embedded in `layers/discubot/collections/configs/app/components/Form.vue`
-- **After**: Extracted to `layers/discubot/composables/*.ts`
+- **Before**: Logic embedded in `layers/rakim/collections/configs/app/components/Form.vue`
+- **After**: Extracted to `layers/rakim/composables/*.ts`
 
 ### What Was Extracted
 1. **OAuth Logic** (lines 1275-1372): `openOAuthPopup()`, `handleOAuthMessage()`, event listeners
@@ -206,12 +206,12 @@ describe('useFieldMapping', () => {
 ### Components Using These Composables
 
 **Current**:
-- `layers/discubot/collections/configs/app/components/Form.vue`
+- `layers/rakim/collections/configs/app/components/Form.vue`
 
 **Future (after flows generation)**:
-- `layers/discubot/components/flows/FlowBuilder.vue`
-- `layers/discubot/components/flows/InputManager.vue`
-- `layers/discubot/components/flows/OutputManager.vue`
+- `layers/rakim/components/flows/FlowBuilder.vue`
+- `layers/rakim/components/flows/InputManager.vue`
+- `layers/rakim/components/flows/OutputManager.vue`
 
 ---
 

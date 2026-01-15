@@ -1,8 +1,17 @@
-import { findUserById } from '@@/server/database/queries/users'
-import { sendEmail } from '@@/server/services/email'
-import { getDiscubotConfigsByIds } from '#layers/discubot/collections/configs/server/database/queries'
-import { updateDiscubotInboxMessage } from '#layers/discubot/collections/inboxmessages/server/database/queries'
+import { eq } from 'drizzle-orm'
+import { emailService } from '@friendlyinternet/nuxt-crouton-email/server/utils/email'
+import { user as userTable } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+import { getRakimConfigsByIds } from '#layers/rakim/collections/configs/server/database/queries'
+import { updateRakimInboxMessage } from '#layers/rakim/collections/inboxmessages/server/database/queries'
 import { logger } from '../utils/logger'
+
+/**
+ * Find a user by ID from the auth user table
+ */
+async function findUserById(userId: string) {
+  const db = useDB()
+  return db.select().from(userTable).where(eq(userTable.id, userId)).get()
+}
 
 export interface ForwardEmailParams {
   inboxMessageId: string
@@ -38,7 +47,7 @@ export async function forwardEmailToConfigOwner(
 ): Promise<ForwardEmailResult> {
   try {
     // 1. Get config
-    const configs = await getDiscubotConfigsByIds(params.teamId, [params.configId])
+    const configs = await getRakimConfigsByIds(params.teamId, [params.configId])
     const config = configs?.[0]
 
     if (!config) {
@@ -66,15 +75,15 @@ export async function forwardEmailToConfigOwner(
     }
 
     // 4. Send forwarded email
-    await sendEmail({
+    await emailService.send({
       to: owner.email,
-      subject: `[Discubot Inbox] ${params.subject}`,
+      subject: `[Rakim Inbox] ${params.subject}`,
       html: buildForwardedEmailHtml(params),
       text: buildForwardedEmailText(params),
     })
 
     // 5. Update inbox message with forwarding info
-    await updateDiscubotInboxMessage(params.teamId, params.inboxMessageId, {
+    await updateRakimInboxMessage(params.teamId, params.inboxMessageId, {
       forwardedTo: owner.email,
       forwardedAt: new Date(),
     })
@@ -105,13 +114,13 @@ function buildForwardedEmailHtml(params: ForwardEmailParams): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Forwarded Email from Discubot</title>
+  <title>Forwarded Email from Rakim</title>
 </head>
 <body style="margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
     <!-- Header -->
     <div style="background-color: #4f46e5; padding: 24px; text-align: center;">
-      <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">Forwarded Email from Discubot</h1>
+      <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">Forwarded Email from Rakim</h1>
     </div>
 
     <!-- Metadata -->
@@ -143,10 +152,10 @@ function buildForwardedEmailHtml(params: ForwardEmailParams): string {
     <!-- Footer -->
     <div style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; text-align: center;">
       <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 12px;">
-        This email was automatically forwarded from your Discubot inbox.
+        This email was automatically forwarded from your Rakim inbox.
       </p>
       <a href="${baseUrl}/dashboard/inbox" style="color: #4f46e5; font-size: 12px; text-decoration: none; font-weight: 600;">
-        View in Discubot →
+        View in Rakim →
       </a>
     </div>
   </div>
@@ -160,7 +169,7 @@ function buildForwardedEmailHtml(params: ForwardEmailParams): string {
  */
 function buildForwardedEmailText(params: ForwardEmailParams): string {
   return `
-Forwarded Email from Discubot
+Forwarded Email from Rakim
 ===============================
 
 Type: ${formatMessageType(params.messageType)}
@@ -173,7 +182,7 @@ ${params.textBody || 'No text content available'}
 
 ---
 
-This email was automatically forwarded from your Discubot inbox.
+This email was automatically forwarded from your Rakim inbox.
 View your inbox: ${process.env.BASE_URL || 'http://localhost:3000'}/dashboard/inbox
   `.trim()
 }

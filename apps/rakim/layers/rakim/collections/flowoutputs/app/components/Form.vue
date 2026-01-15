@@ -57,7 +57,7 @@
         <UFormField label="FlowId" name="flowId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.flowId"
-            collection="discubotFlows"
+            collection="rakimFlows"
             label="FlowId"
           />
         </UFormField>
@@ -97,10 +97,10 @@
 </template>
 
 <script setup lang="ts">
-import type { DiscubotFlowOutputFormProps, DiscubotFlowOutputFormData } from '../../types'
+import type { RakimFlowOutputFormProps, RakimFlowOutputFormData } from '../../types'
 
-const props = defineProps<DiscubotFlowOutputFormProps>()
-const { defaultValue, schema, collection } = useDiscubotFlowOutputs()
+const props = defineProps<RakimFlowOutputFormProps>()
+const { defaultValue, schema, collection } = useRakimFlowOutputs()
 
 // Form layout configuration
 const navigationItems = [
@@ -158,7 +158,7 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<DiscubotFlowOutputFormData & { id?: string | null }>(initialValues)
+const state = ref<RakimFlowOutputFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {

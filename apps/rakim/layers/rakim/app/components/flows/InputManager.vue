@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { FlowInput } from '~/layers/discubot/types'
+import type { FlowInput } from '~/layers/rakim/types'
 
 /**
  * InputManager Component
@@ -141,7 +141,7 @@ const { openOAuthPopup, waitingForOAuth } = useFlowOAuth({
     if (props.editMode) {
       console.log('[InputManager] Edit mode detected, refetching inputs...')
       try {
-        const response = await $fetch<FlowInput[]>(`/api/teams/${props.teamId}/discubot-flowinputs`)
+        const response = await $fetch<FlowInput[]>(`/api/teams/${props.teamId}/rakim-flowinputs`)
         // Filter inputs for this flow
         const flowInputs = response.filter(input => input.flowId === props.flowId)
 
@@ -256,7 +256,7 @@ async function saveNewInput() {
 
     // If in edit mode, save to API
     if (props.editMode) {
-      const response = await $fetch(`/api/teams/${props.teamId}/discubot-flowinputs`, {
+      const response = await $fetch(`/api/teams/${props.teamId}/rakim-flowinputs`, {
         method: 'POST',
         body: newInput,
       })
@@ -326,7 +326,7 @@ async function updateInput() {
 
     // If in edit mode, update via API
     if (props.editMode) {
-      const response = await $fetch(`/api/teams/${props.teamId}/discubot-flowinputs/${editingInput.value.id}`, {
+      const response = await $fetch(`/api/teams/${props.teamId}/rakim-flowinputs/${editingInput.value.id}`, {
         method: 'PATCH',
         body: updatedInput,
       })
@@ -387,7 +387,7 @@ async function deleteInput() {
   try {
     // If in edit mode, delete via API
     if (props.editMode) {
-      await $fetch(`/api/teams/${props.teamId}/discubot-flowinputs/${deletingInput.value.id}`, {
+      await $fetch(`/api/teams/${props.teamId}/rakim-flowinputs/${deletingInput.value.id}`, {
         method: 'DELETE',
       })
 
@@ -424,7 +424,7 @@ async function deleteInput() {
 function generateWebhookUrl(sourceType: string): string {
   // Use the public runtime config to get the base URL
   const config = useRuntimeConfig()
-  const baseUrl = config.public.baseUrl || 'https://discubot.app'
+  const baseUrl = config.public.baseUrl || 'https://rakim.app'
 
   if (sourceType === 'slack') {
     return `${baseUrl}/api/webhooks/slack`
@@ -694,7 +694,7 @@ watch(() => props.modelValue, (newValue) => {
                 <UInput
                   v-model="inputFormState.emailAddress"
                   type="email"
-                  placeholder="e.g., figma-comments@discubot.app"
+                  placeholder="e.g., figma-comments@rakim.app"
                   help="This will be generated based on your slug"
                 />
               </UFormField>
@@ -776,7 +776,7 @@ watch(() => props.modelValue, (newValue) => {
                 <UInput
                   v-model="inputFormState.emailAddress"
                   type="email"
-                  placeholder="e.g., figma-comments@discubot.app"
+                  placeholder="e.g., figma-comments@rakim.app"
                 />
               </UFormField>
             </template>

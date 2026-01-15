@@ -1,15 +1,15 @@
 <template>
   <CroutonCollection
     :layout="layout"
-    collection="discubotTasks"
+    collection="rakimTasks"
     :columns="columns"
     :rows="tasks || []"
     :loading="pending"
   >
     <template #header>
       <CroutonTableHeader
-        title="DiscubotTasks"
-        :collection="'discubotTasks'"
+        title="RakimTasks"
+        :collection="'rakimTasks'"
         createButton
       />
     </template>
@@ -17,14 +17,14 @@
       <CroutonItemCardMini
         v-if="row.original.discussionId"
         :id="row.original.discussionId"
-        collection="discubotDiscussions"
+        collection="rakimDiscussions"
       />
     </template>
     <template #syncJobId-cell="{ row }">
       <CroutonItemCardMini
         v-if="row.original.syncJobId"
         :id="row.original.syncJobId"
-        collection="discubotJobs"
+        collection="rakimJobs"
       />
     </template>
   </CroutonCollection>
@@ -37,9 +37,9 @@ const props = withDefaults(defineProps<{
   layout: 'table'
 })
 
-const { columns } = useDiscubotTasks()
+const { columns } = useRakimTasks()
 
 const { items: tasks, pending } = await useCollectionQuery(
-  'discubotTasks'
+  'rakimTasks'
 )
 </script>

@@ -1,7 +1,7 @@
 import type { z } from 'zod'
-import type { discubotUserMappingSchema } from './app/composables/useDiscubotUserMappings'
+import type { rakimUserMappingSchema } from './app/composables/useRakimUserMappings'
 
-export interface DiscubotUserMapping {
+export interface RakimUserMapping {
   id: string
   teamId: string
   owner: string
@@ -26,13 +26,13 @@ export interface DiscubotUserMapping {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type DiscubotUserMappingFormData = z.infer<typeof discubotUserMappingSchema>
-export type NewDiscubotUserMapping = Omit<DiscubotUserMapping, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type RakimUserMappingFormData = z.infer<typeof rakimUserMappingSchema>
+export type NewRakimUserMapping = Omit<RakimUserMapping, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface DiscubotUserMappingFormProps {
+export interface RakimUserMappingFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: DiscubotUserMapping | Record<string, never> // DiscubotUserMapping for update, empty object for create
+  activeItem: RakimUserMapping | Record<string, never> // RakimUserMapping for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

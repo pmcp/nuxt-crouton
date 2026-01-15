@@ -2,127 +2,127 @@
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
-import type { DiscubotInboxMessage, NewDiscubotInboxMessage } from '../../types'
+import type { RakimInboxMessage, NewRakimInboxMessage } from '../../types'
 import * as configsSchema from '../../../configs/server/database/schema'
-import { users } from '~~/server/database/schema'
+import { user } from '~~/server/db/schema'
 
-export async function getAllDiscubotInboxMessages(teamId: string) {
+export async function getAllRakimInboxMessages(teamId: string) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const inboxmessages = await db
     .select({
-      ...tables.discubotInboxmessages,
-      configIdData: configsSchema.discubotConfigs,
+      ...tables.rakimInboxmessages,
+      configIdData: configsSchema.rakimConfigs,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotInboxmessages)
-    .leftJoin(configsSchema.discubotConfigs, eq(tables.discubotInboxmessages.configId, configsSchema.discubotConfigs.id))
-    .leftJoin(ownerUsers, eq(tables.discubotInboxmessages.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotInboxmessages.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotInboxmessages.updatedBy, updatedByUsers.id))
-    .where(eq(tables.discubotInboxmessages.teamId, teamId))
-    .orderBy(desc(tables.discubotInboxmessages.createdAt))
+    .from(tables.rakimInboxmessages)
+    .leftJoin(configsSchema.rakimConfigs, eq(tables.rakimInboxmessages.configId, configsSchema.rakimConfigs.id))
+    .leftJoin(ownerUser, eq(tables.rakimInboxmessages.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimInboxmessages.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimInboxmessages.updatedBy, updatedByUser.id))
+    .where(eq(tables.rakimInboxmessages.teamId, teamId))
+    .orderBy(desc(tables.rakimInboxmessages.createdAt))
 
   return inboxmessages
 }
 
-export async function getDiscubotInboxMessagesByIds(teamId: string, inboxmessageIds: string[]) {
+export async function getRakimInboxMessagesByIds(teamId: string, inboxmessageIds: string[]) {
   const db = useDB()
 
-  const ownerUsers = alias(users, 'ownerUsers')
-  const createdByUsers = alias(users, 'createdByUsers')
-  const updatedByUsers = alias(users, 'updatedByUsers')
+  const ownerUser = alias(user, 'ownerUser')
+  const createdByUser = alias(user, 'createdByUser')
+  const updatedByUser = alias(user, 'updatedByUser')
 
   const inboxmessages = await db
     .select({
-      ...tables.discubotInboxmessages,
-      configIdData: configsSchema.discubotConfigs,
+      ...tables.rakimInboxmessages,
+      configIdData: configsSchema.rakimConfigs,
       ownerUser: {
-        id: ownerUsers.id,
-        name: ownerUsers.name,
-        email: ownerUsers.email,
-        avatarUrl: ownerUsers.avatarUrl
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
       },
       createdByUser: {
-        id: createdByUsers.id,
-        name: createdByUsers.name,
-        email: createdByUsers.email,
-        avatarUrl: createdByUsers.avatarUrl
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
       },
       updatedByUser: {
-        id: updatedByUsers.id,
-        name: updatedByUsers.name,
-        email: updatedByUsers.email,
-        avatarUrl: updatedByUsers.avatarUrl
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
       }
     })
-    .from(tables.discubotInboxmessages)
-    .leftJoin(configsSchema.discubotConfigs, eq(tables.discubotInboxmessages.configId, configsSchema.discubotConfigs.id))
-    .leftJoin(ownerUsers, eq(tables.discubotInboxmessages.owner, ownerUsers.id))
-    .leftJoin(createdByUsers, eq(tables.discubotInboxmessages.createdBy, createdByUsers.id))
-    .leftJoin(updatedByUsers, eq(tables.discubotInboxmessages.updatedBy, updatedByUsers.id))
+    .from(tables.rakimInboxmessages)
+    .leftJoin(configsSchema.rakimConfigs, eq(tables.rakimInboxmessages.configId, configsSchema.rakimConfigs.id))
+    .leftJoin(ownerUser, eq(tables.rakimInboxmessages.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimInboxmessages.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimInboxmessages.updatedBy, updatedByUser.id))
     .where(
       and(
-        eq(tables.discubotInboxmessages.teamId, teamId),
-        inArray(tables.discubotInboxmessages.id, inboxmessageIds)
+        eq(tables.rakimInboxmessages.teamId, teamId),
+        inArray(tables.rakimInboxmessages.id, inboxmessageIds)
       )
     )
-    .orderBy(desc(tables.discubotInboxmessages.createdAt))
+    .orderBy(desc(tables.rakimInboxmessages.createdAt))
 
   return inboxmessages
 }
 
-export async function createDiscubotInboxMessage(data: NewDiscubotInboxMessage) {
+export async function createRakimInboxMessage(data: NewRakimInboxMessage) {
   const db = useDB()
 
   const [inboxmessage] = await db
-    .insert(tables.discubotInboxmessages)
+    .insert(tables.rakimInboxmessages)
     .values(data)
     .returning()
 
   return inboxmessage
 }
 
-export async function updateDiscubotInboxMessage(
+export async function updateRakimInboxMessage(
   recordId: string,
   teamId: string,
   ownerId: string,
-  updates: Partial<DiscubotInboxMessage>
+  updates: Partial<RakimInboxMessage>
 ) {
   const db = useDB()
 
   const [inboxmessage] = await db
-    .update(tables.discubotInboxmessages)
+    .update(tables.rakimInboxmessages)
     .set({
       ...updates,
       updatedBy: ownerId
     })
     .where(
       and(
-        eq(tables.discubotInboxmessages.id, recordId),
-        eq(tables.discubotInboxmessages.teamId, teamId),
-        eq(tables.discubotInboxmessages.owner, ownerId)
+        eq(tables.rakimInboxmessages.id, recordId),
+        eq(tables.rakimInboxmessages.teamId, teamId),
+        eq(tables.rakimInboxmessages.owner, ownerId)
       )
     )
     .returning()
@@ -130,14 +130,14 @@ export async function updateDiscubotInboxMessage(
   if (!inboxmessage) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotInboxMessage not found or unauthorized'
+      statusMessage: 'RakimInboxMessage not found or unauthorized'
     })
   }
 
   return inboxmessage
 }
 
-export async function deleteDiscubotInboxMessage(
+export async function deleteRakimInboxMessage(
   recordId: string,
   teamId: string,
   ownerId: string
@@ -145,12 +145,12 @@ export async function deleteDiscubotInboxMessage(
   const db = useDB()
 
   const [deleted] = await db
-    .delete(tables.discubotInboxmessages)
+    .delete(tables.rakimInboxmessages)
     .where(
       and(
-        eq(tables.discubotInboxmessages.id, recordId),
-        eq(tables.discubotInboxmessages.teamId, teamId),
-        eq(tables.discubotInboxmessages.owner, ownerId)
+        eq(tables.rakimInboxmessages.id, recordId),
+        eq(tables.rakimInboxmessages.teamId, teamId),
+        eq(tables.rakimInboxmessages.owner, ownerId)
       )
     )
     .returning()
@@ -158,7 +158,7 @@ export async function deleteDiscubotInboxMessage(
   if (!deleted) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'DiscubotInboxMessage not found or unauthorized'
+      statusMessage: 'RakimInboxMessage not found or unauthorized'
     })
   }
 

@@ -57,7 +57,7 @@ const editingMappingId = ref<string | null>(null)
 async function fetchExistingMappings() {
   loadingMappings.value = true
   try {
-    const response = await $fetch<any[]>(`/api/teams/${props.teamId}/discubot-usermappings`)
+    const response = await $fetch<any[]>(`/api/teams/${props.teamId}/rakim-usermappings`)
 
     // Filter by sourceType and sourceWorkspaceId
     const allMappings = response.filter(m =>
@@ -95,7 +95,7 @@ async function saveDiscoveredMapping(mapping: any, notionUserId: string) {
   const notionUser = notionUsers.value.find(u => u.id === notionUserId)
 
   try {
-    await $fetch(`/api/teams/${props.teamId}/discubot-usermappings/${mapping.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/rakim-usermappings/${mapping.id}`, {
       method: 'PATCH',
       body: {
         notionUserId,
@@ -169,7 +169,7 @@ async function addManualMapping() {
   try {
     if (isEditing) {
       // Update existing mapping
-      await $fetch(`/api/teams/${props.teamId}/discubot-usermappings/${editingMappingId.value}`, {
+      await $fetch(`/api/teams/${props.teamId}/rakim-usermappings/${editingMappingId.value}`, {
         method: 'PATCH',
         body: {
           sourceUserId: manualForm.sourceUserId || manualForm.sourceUserEmail,
@@ -190,7 +190,7 @@ async function addManualMapping() {
       })
     } else {
       // Create new mapping
-      await $fetch(`/api/teams/${props.teamId}/discubot-usermappings`, {
+      await $fetch(`/api/teams/${props.teamId}/rakim-usermappings`, {
         method: 'POST',
         body: {
           sourceType: 'figma',
@@ -237,7 +237,7 @@ async function addManualMapping() {
 // Delete mapping
 async function deleteMapping(mapping: any) {
   try {
-    await $fetch(`/api/teams/${props.teamId}/discubot-usermappings/${mapping.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/rakim-usermappings/${mapping.id}`, {
       method: 'DELETE'
     })
 
@@ -375,7 +375,7 @@ onMounted(initialize)
 
           <!-- Notion user picker -->
           <div class="flex-1">
-            <DiscubotUsermappingsNotionUserPicker
+            <RakimUsermappingsNotionUserPicker
               :notion-token="notionToken"
               :team-id="teamId"
               placeholder="Select Notion user..."
@@ -446,7 +446,7 @@ onMounted(initialize)
           </UFormField>
 
           <UFormField label="Notion User">
-            <DiscubotUsermappingsNotionUserPicker
+            <RakimUsermappingsNotionUserPicker
               v-model="manualForm.notionUserId"
               :notion-token="notionToken"
               :team-id="teamId"
@@ -471,7 +471,7 @@ onMounted(initialize)
     <!-- Existing Mappings -->
     <div v-if="existingMappings.length > 0" class="space-y-3">
       <h5 class="font-medium">Existing Mappings ({{ existingMappings.length }})</h5>
-      <DiscubotUsermappingsUserMappingTable
+      <RakimUsermappingsUserMappingTable
         :mappings="existingMappings"
         :loading="loadingMappings"
         compact

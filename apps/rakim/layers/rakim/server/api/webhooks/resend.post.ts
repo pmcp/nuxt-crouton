@@ -47,17 +47,17 @@
  * @see https://resend.com/docs/dashboard/webhooks/introduction
  */
 
-import type { ParsedDiscussion } from '~/layers/discubot/types'
-import { getAdapter } from '#layers/discubot/server/adapters'
-import { processDiscussion } from '#layers/discubot/server/services/processor'
-import { fetchResendEmail, transformToMailgunFormat } from '#layers/discubot/server/utils/resendEmail'
-import { rateLimit, RateLimitPresets } from '#layers/discubot/server/utils/rateLimit'
-import { classifyFigmaEmail, shouldForwardEmail } from '#layers/discubot/server/utils/emailClassifier'
-import { forwardEmailToConfigOwner } from '#layers/discubot/server/utils/emailForwarding'
-import { createDiscubotInboxMessage } from '#layers/discubot/collections/inboxmessages/server/database/queries'
-import { findDiscubotConfigByEmail } from '#layers/discubot/collections/configs/server/database/queries'
-import { findFlowInputByEmailAddress } from '#layers/discubot/collections/flowinputs/server/database/queries'
-import { SYSTEM_USER_ID } from '#layers/discubot/server/utils/constants'
+import type { ParsedDiscussion } from '~/layers/rakim/types'
+import { getAdapter } from '#layers/rakim/server/adapters'
+import { processDiscussion } from '#layers/rakim/server/services/processor'
+import { fetchResendEmail, transformToMailgunFormat } from '#layers/rakim/server/utils/resendEmail'
+import { rateLimit, RateLimitPresets } from '#layers/rakim/server/utils/rateLimit'
+import { classifyFigmaEmail, shouldForwardEmail } from '#layers/rakim/server/utils/emailClassifier'
+import { forwardEmailToConfigOwner } from '#layers/rakim/server/utils/emailForwarding'
+import { createRakimInboxMessage } from '#layers/rakim/collections/inboxmessages/server/database/queries'
+import { findRakimConfigByEmail } from '#layers/rakim/collections/configs/server/database/queries'
+import { findFlowInputByEmailAddress } from '#layers/rakim/collections/flowinputs/server/database/queries'
+import { SYSTEM_USER_ID } from '#layers/rakim/server/utils/constants'
 
 /**
  * Resend webhook payload structure
@@ -140,7 +140,7 @@ async function findConfigByRecipient(recipientEmail: string): Promise<{ config?:
     }
 
     // 2. Fall back to legacy configs (backward compatibility)
-    const config = await findDiscubotConfigByEmail(recipientEmail)
+    const config = await findRakimConfigByEmail(recipientEmail)
 
     if (config) {
       logger.debug('[Resend Webhook] Found matching legacy config', {
@@ -378,7 +378,7 @@ export default defineEventHandler(async (event) => {
 
       // Store in inbox
       try {
-        const inboxMessage = await createDiscubotInboxMessage({
+        const inboxMessage = await createRakimInboxMessage({
           configId,
           messageType: classification.messageType,
           from: resendEmail.from,

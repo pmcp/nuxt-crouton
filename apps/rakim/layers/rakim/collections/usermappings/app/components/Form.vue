@@ -98,10 +98,10 @@
 </template>
 
 <script setup lang="ts">
-import type { DiscubotUserMappingFormProps, DiscubotUserMappingFormData } from '../../types'
+import type { RakimUserMappingFormProps, RakimUserMappingFormData } from '../../types'
 
-const props = defineProps<DiscubotUserMappingFormProps>()
-const { defaultValue, schema, collection } = useDiscubotUserMappings()
+const props = defineProps<RakimUserMappingFormProps>()
+const { defaultValue, schema, collection } = useRakimUserMappings()
 
 // Form layout configuration
 const navigationItems = [
@@ -162,7 +162,7 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<DiscubotUserMappingFormData & { id?: string | null }>(initialValues)
+const state = ref<RakimUserMappingFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {

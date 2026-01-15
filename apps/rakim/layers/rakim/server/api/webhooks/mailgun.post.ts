@@ -15,7 +15,7 @@
  * {
  *   "subject": "Jane commented on Design File",
  *   "from": "jane@company.com",
- *   "recipient": "team-slug@discubot.example.com",
+ *   "recipient": "team-slug@rakim.example.com",
  *   "body-plain": "Plain text content",
  *   "body-html": "<html>...</html>",
  *   "stripped-text": "Stripped plain text",
@@ -29,11 +29,11 @@
  * @see https://documentation.mailgun.com/en/latest/api-sending.html#webhooks
  */
 
-import type { ParsedDiscussion } from '~/layers/discubot/types'
-import { getAdapter } from '#layers/discubot/server/adapters'
-import { processDiscussion } from '#layers/discubot/server/services/processor'
-import { verifyMailgunSignature } from '#layers/discubot/server/utils/webhookSecurity'
-import { rateLimit, RateLimitPresets } from '#layers/discubot/server/utils/rateLimit'
+import type { ParsedDiscussion } from '~/layers/rakim/types'
+import { getAdapter } from '#layers/rakim/server/adapters'
+import { processDiscussion } from '#layers/rakim/server/services/processor'
+import { verifyMailgunSignature } from '#layers/rakim/server/utils/webhookSecurity'
+import { rateLimit, RateLimitPresets } from '#layers/rakim/server/utils/rateLimit'
 
 /**
  * Mailgun webhook payload structure

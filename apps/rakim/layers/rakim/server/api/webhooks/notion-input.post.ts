@@ -17,16 +17,16 @@
  */
 
 import crypto from 'node:crypto'
-import { getAdapter } from '#layers/discubot/server/adapters'
-import { processDiscussion } from '#layers/discubot/server/services/processor'
-import type { ProcessingResult } from '#layers/discubot/server/services/processor'
+import { getAdapter } from '#layers/rakim/server/adapters'
+import { processDiscussion } from '#layers/rakim/server/services/processor'
+import type { ProcessingResult } from '#layers/rakim/server/services/processor'
 import {
   fetchComment,
   checkForTrigger,
   DEFAULT_TRIGGER_KEYWORD,
   type NotionWebhookPayload,
-} from '#layers/discubot/server/adapters/notion'
-import { logger } from '#layers/discubot/server/utils/logger'
+} from '#layers/rakim/server/adapters/notion'
+import { logger } from '#layers/rakim/server/utils/logger'
 
 /**
  * Replay attack prevention window (5 minutes)
@@ -333,21 +333,21 @@ export default defineEventHandler(async (event) => {
 
     // Try to find a flow input for this Notion workspace
     const db = useDB()
-    const { discubotFlowinputs } = await import(
-      '#layers/discubot/collections/flowinputs/server/database/schema'
+    const { rakimFlowinputs } = await import(
+      '#layers/rakim/collections/flowinputs/server/database/schema'
     )
-    const { discubotFlows } = await import(
-      '#layers/discubot/collections/flows/server/database/schema'
+    const { rakimFlows } = await import(
+      '#layers/rakim/collections/flows/server/database/schema'
     )
     const { eq, and } = await import('drizzle-orm')
 
     // Query for Notion inputs
     const inputs = await db
       .select()
-      .from(discubotFlowinputs)
+      .from(rakimFlowinputs)
       .where(and(
-        eq(discubotFlowinputs.sourceType, 'notion'),
-        eq(discubotFlowinputs.active, true),
+        eq(rakimFlowinputs.sourceType, 'notion'),
+        eq(rakimFlowinputs.active, true),
       ))
       .all()
 
@@ -363,10 +363,10 @@ export default defineEventHandler(async (event) => {
         // Verify the flow exists and is active
         const [flow] = await db
           .select()
-          .from(discubotFlows)
+          .from(rakimFlows)
           .where(and(
-            eq(discubotFlows.id, input.flowId),
-            eq(discubotFlows.active, true),
+            eq(rakimFlows.id, input.flowId),
+            eq(rakimFlows.active, true),
           ))
           .limit(1)
 
@@ -395,10 +395,10 @@ export default defineEventHandler(async (event) => {
         if (hasToken) {
           const [flow] = await db
             .select()
-            .from(discubotFlows)
+            .from(rakimFlows)
             .where(and(
-              eq(discubotFlows.id, input.flowId),
-              eq(discubotFlows.active, true),
+              eq(rakimFlows.id, input.flowId),
+              eq(rakimFlows.active, true),
             ))
             .limit(1)
 
@@ -482,12 +482,12 @@ export default defineEventHandler(async (event) => {
       }
 
       await db
-        .update(discubotFlowinputs)
+        .update(rakimFlowinputs)
         .set({
           sourceMetadata: updatedMetadata,
           updatedAt: new Date(),
         })
-        .where(eq(discubotFlowinputs.id, matchedInput.id))
+        .where(eq(rakimFlowinputs.id, matchedInput.id))
 
       // Update local reference for this request
       matchedInput.sourceMetadata = updatedMetadata

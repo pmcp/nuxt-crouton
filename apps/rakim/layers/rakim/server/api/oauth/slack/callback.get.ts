@@ -167,13 +167,13 @@ export default defineEventHandler(async (event) => {
     const accessToken = tokenData.access_token
 
     // Import database and queries
-    const { getAllDiscubotFlows, createDiscubotFlow, getDiscubotFlowById } = await import(
-      '#layers/discubot/collections/flows/server/database/queries'
+    const { getAllRakimFlows, createRakimFlow, getRakimFlowById } = await import(
+      '#layers/rakim/collections/flows/server/database/queries'
     )
-    const { getAllDiscubotFlowInputs, createDiscubotFlowInput } = await import(
-      '#layers/discubot/collections/flowinputs/server/database/queries'
+    const { getAllRakimFlowInputs, createRakimFlowInput } = await import(
+      '#layers/rakim/collections/flowinputs/server/database/queries'
     )
-    const { SYSTEM_USER_ID } = await import('#layers/discubot/server/utils/constants')
+    const { SYSTEM_USER_ID } = await import('#layers/rakim/server/utils/constants')
 
     // Determine which flow to add the input to
     let flowId: string
@@ -182,19 +182,19 @@ export default defineEventHandler(async (event) => {
     if (requestedFlowId) {
       // If specific flowId was provided, try to use that one
       try {
-        const requestedFlow = await getDiscubotFlowById(requestedFlowId, teamId)
+        const requestedFlow = await getRakimFlowById(requestedFlowId, teamId)
         flowId = requestedFlowId
         logger.debug('[OAuth] Using requested flow', { flowId, flowName: requestedFlow.name })
       } catch {
         // Requested flow doesn't exist, fall back to first flow or create new
         logger.warn('[OAuth] Requested flow not found, falling back', { requestedFlowId })
-        const existingFlows = await getAllDiscubotFlows(teamId)
+        const existingFlows = await getAllRakimFlows(teamId)
         if (existingFlows && existingFlows.length > 0) {
           flowId = existingFlows[0].id
           logger.debug('[OAuth] Using first existing flow', { flowId, flowName: existingFlows[0].name })
         } else {
           // Create new flow
-          const newFlow = await createDiscubotFlow({
+          const newFlow = await createRakimFlow({
             name: `${slackTeamName} Flow`,
             description: 'Created via Slack OAuth',
             availableDomains: ['design', 'frontend', 'backend', 'product'],
@@ -216,13 +216,13 @@ export default defineEventHandler(async (event) => {
       }
     } else {
       // No specific flow requested - use first existing or create new (backward compatible)
-      const existingFlows = await getAllDiscubotFlows(teamId)
+      const existingFlows = await getAllRakimFlows(teamId)
       if (existingFlows && existingFlows.length > 0) {
         flowId = existingFlows[0].id
         logger.debug('[OAuth] Using first existing flow', { flowId, flowName: existingFlows[0].name })
       } else {
         // Create new flow with default settings
-        const newFlow = await createDiscubotFlow({
+        const newFlow = await createRakimFlow({
           name: `${slackTeamName} Flow`,
           description: 'Created via Slack OAuth',
           availableDomains: ['design', 'frontend', 'backend', 'product'],
@@ -244,7 +244,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check if this Slack workspace is already connected (by slackTeamId)
-    const allInputs = await getAllDiscubotFlowInputs(teamId)
+    const allInputs = await getAllRakimFlowInputs(teamId)
     const existingInputs = allInputs?.filter(input => input.flowId === flowId) || []
     const duplicateInput = existingInputs.find(input =>
       input.sourceType === 'slack' &&
@@ -272,7 +272,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create new Slack input
-    const newInput = await createDiscubotFlowInput({
+    const newInput = await createRakimFlowInput({
       flowId,
       sourceType: 'slack',
       name: slackTeamName,

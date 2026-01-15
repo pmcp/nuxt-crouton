@@ -2,11 +2,11 @@
  * Base Adapter Interface for Discussion Sources
  *
  * This file defines the standardized interface that all discussion source
- * adapters must implement. The adapter pattern allows Discubot to support
+ * adapters must implement. The adapter pattern allows Rakim to support
  * multiple discussion platforms (Figma, Slack, Linear, etc.) while maintaining
  * a consistent processing pipeline.
  *
- * @see docs/briefings/discubot-architecture-brief.md (Section: Source Adapter Pattern)
+ * @see docs/briefings/rakim-architecture-brief.md (Section: Source Adapter Pattern)
  */
 
 import type {
@@ -15,7 +15,7 @@ import type {
   DiscussionStatus,
   SourceConfig,
   ValidationResult,
-} from '~/layers/discubot/types'
+} from '~/layers/rakim/types'
 import { logger } from '../utils/logger'
 
 /**

@@ -5,13 +5,13 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineNuxtConfig({
   $meta: {
-    name: 'discubot-flowinputs',
+    name: 'rakim-flowinputs',
   },
   components: {
     dirs: [
       {
         path: join(currentDir, 'app/components'),
-        prefix: 'DiscubotFlowInputs',
+        prefix: 'RakimFlowInputs',
         global: true
       }
     ]

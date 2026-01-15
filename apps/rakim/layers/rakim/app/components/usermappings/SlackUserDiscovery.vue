@@ -77,7 +77,7 @@ const editingNotionUserId = ref<string | null>(null)
 async function fetchExistingMappings() {
   loadingMappings.value = true
   try {
-    const response = await $fetch<any[]>(`/api/teams/${props.teamId}/discubot-usermappings`)
+    const response = await $fetch<any[]>(`/api/teams/${props.teamId}/rakim-usermappings`)
     // Filter by sourceType and sourceWorkspaceId
     existingMappings.value = response.filter(m =>
       m.sourceType === 'slack' && m.sourceWorkspaceId === props.workspaceId
@@ -160,7 +160,7 @@ async function saveMatches() {
 
   try {
     for (const match of matches.value) {
-      await $fetch(`/api/teams/${props.teamId}/discubot-usermappings`, {
+      await $fetch(`/api/teams/${props.teamId}/rakim-usermappings`, {
         method: 'POST',
         body: {
           sourceType: 'slack',
@@ -206,7 +206,7 @@ async function saveMatches() {
 // Delete existing mapping
 async function deleteMapping(mapping: any) {
   try {
-    await $fetch(`/api/teams/${props.teamId}/discubot-usermappings/${mapping.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/rakim-usermappings/${mapping.id}`, {
       method: 'DELETE'
     })
 
@@ -246,7 +246,7 @@ async function saveEditedMapping() {
   const notionUser = notionUsers.value.find(u => u.id === editingNotionUserId.value)
 
   try {
-    await $fetch(`/api/teams/${props.teamId}/discubot-usermappings/${editingMapping.value.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/rakim-usermappings/${editingMapping.value.id}`, {
       method: 'PATCH',
       body: {
         notionUserId: editingNotionUserId.value,
@@ -450,7 +450,7 @@ onMounted(initialize)
 
             <!-- Notion user picker -->
             <div class="flex-1">
-              <DiscubotUsermappingsNotionUserPicker
+              <RakimUsermappingsNotionUserPicker
                 :notion-token="notionToken"
                 :team-id="teamId"
                 placeholder="Select Notion user..."
@@ -495,7 +495,7 @@ onMounted(initialize)
 
           <!-- Notion user picker -->
           <div class="flex-1">
-            <DiscubotUsermappingsNotionUserPicker
+            <RakimUsermappingsNotionUserPicker
               v-model="editingNotionUserId"
               :notion-token="notionToken"
               :team-id="teamId"
@@ -520,7 +520,7 @@ onMounted(initialize)
       <!-- Existing Mappings -->
       <div v-if="existingMappings.length > 0" class="space-y-3">
         <h5 class="font-medium">Existing Mappings ({{ existingMappings.length }})</h5>
-        <DiscubotUsermappingsUserMappingTable
+        <RakimUsermappingsUserMappingTable
           :mappings="existingMappings"
           :loading="loadingMappings"
           compact

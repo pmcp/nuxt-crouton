@@ -81,7 +81,7 @@
         <UFormField label="SourceConfigId" name="sourceConfigId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.sourceConfigId"
-            collection="discubotConfigs"
+            collection="rakimConfigs"
             label="SourceConfigId"
           />
         </UFormField>
@@ -125,7 +125,7 @@
         <UFormField label="SyncJobId" name="syncJobId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.syncJobId"
-            collection="discubotJobs"
+            collection="rakimJobs"
             label="SyncJobId"
           />
         </UFormField>
@@ -187,10 +187,10 @@
 </template>
 
 <script setup lang="ts">
-import type { DiscubotDiscussionFormProps, DiscubotDiscussionFormData } from '../../types'
+import type { RakimDiscussionFormProps, RakimDiscussionFormData } from '../../types'
 
-const props = defineProps<DiscubotDiscussionFormProps>()
-const { defaultValue, schema, collection } = useDiscubotDiscussions()
+const props = defineProps<RakimDiscussionFormProps>()
+const { defaultValue, schema, collection } = useRakimDiscussions()
 
 // Form layout configuration
 const navigationItems = [
@@ -259,7 +259,7 @@ if (props.action === 'update' && props.activeItem?.id) {
   }
 }
 
-const state = ref<DiscubotDiscussionFormData & { id?: string | null }>(initialValues)
+const state = ref<RakimDiscussionFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {

@@ -1,15 +1,15 @@
 <template>
   <CroutonCollection
     :layout="layout"
-    collection="discubotConfigs"
+    collection="rakimConfigs"
     :columns="columns"
     :rows="configs || []"
     :loading="pending"
   >
     <template #header>
       <CroutonTableHeader
-        title="DiscubotConfigs"
-        :collection="'discubotConfigs'"
+        title="RakimConfigs"
+        :collection="'rakimConfigs'"
         createButton
       />
     </template>
@@ -23,9 +23,9 @@ const props = withDefaults(defineProps<{
   layout: 'table'
 })
 
-const { columns } = useDiscubotConfigs()
+const { columns } = useRakimConfigs()
 
 const { items: configs, pending } = await useCollectionQuery(
-  'discubotConfigs'
+  'rakimConfigs'
 )
 </script>

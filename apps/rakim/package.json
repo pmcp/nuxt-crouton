@@ -12,7 +12,9 @@
   "dependencies": {
     "@friendlyinternet/nuxt-crouton": "workspace:*",
     "@friendlyinternet/nuxt-crouton-ai": "workspace:*",
+    "@libsql/client": "^0.17.0",
     "cheerio": "^1.1.2",
+    "drizzle-orm": "^0.45.1",
     "nuxt": "^4.2.2",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"

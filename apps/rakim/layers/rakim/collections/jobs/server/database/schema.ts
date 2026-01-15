@@ -17,7 +17,7 @@ const jsonColumn = customType<any>({
   },
 })
 
-export const discubotJobs = sqliteTable('discubot_jobs', {
+export const rakimJobs = sqliteTable('rakim_jobs', {
   id: text('id').primaryKey().$default(() => nanoid()),
 
   teamId: text('teamId').notNull(),

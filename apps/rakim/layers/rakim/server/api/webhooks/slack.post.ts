@@ -16,9 +16,9 @@
  * @see https://api.slack.com/events-api
  */
 
-import { getAdapter } from '#layers/discubot/server/adapters'
-import { processDiscussion } from '#layers/discubot/server/services/processor'
-import type { ProcessingResult } from '#layers/discubot/server/services/processor'
+import { getAdapter } from '#layers/rakim/server/adapters'
+import { processDiscussion } from '#layers/rakim/server/services/processor'
+import type { ProcessingResult } from '#layers/rakim/server/services/processor'
 
 export default defineEventHandler(async (event) => {
   logger.debug('[Slack Webhook] ===== REQUEST RECEIVED =====')

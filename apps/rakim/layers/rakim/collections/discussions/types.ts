@@ -1,7 +1,7 @@
 import type { z } from 'zod'
-import type { discubotDiscussionSchema } from './app/composables/useDiscubotDiscussions'
+import type { rakimDiscussionSchema } from './app/composables/useRakimDiscussions'
 
-export interface DiscubotDiscussion {
+export interface RakimDiscussion {
   id: string
   teamId: string
   owner: string
@@ -33,13 +33,13 @@ export interface DiscubotDiscussion {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type DiscubotDiscussionFormData = z.infer<typeof discubotDiscussionSchema>
-export type NewDiscubotDiscussion = Omit<DiscubotDiscussion, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type RakimDiscussionFormData = z.infer<typeof rakimDiscussionSchema>
+export type NewRakimDiscussion = Omit<RakimDiscussion, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface DiscubotDiscussionFormProps {
+export interface RakimDiscussionFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: DiscubotDiscussion | Record<string, never> // DiscubotDiscussion for update, empty object for create
+  activeItem: RakimDiscussion | Record<string, never> // RakimDiscussion for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

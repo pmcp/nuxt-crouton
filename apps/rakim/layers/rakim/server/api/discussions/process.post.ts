@@ -51,12 +51,12 @@
  * ```
  */
 
-import type { ParsedDiscussion, DiscussionThread, SourceConfig } from '~/layers/discubot/types'
+import type { ParsedDiscussion, DiscussionThread, SourceConfig } from '~/layers/rakim/types'
 import {
   processDiscussion,
   processDiscussionById,
   retryFailedDiscussion,
-} from '#layers/discubot/server/services/processor'
+} from '#layers/rakim/server/services/processor'
 
 /**
  * Request payload for direct processing

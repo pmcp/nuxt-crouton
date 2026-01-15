@@ -1,15 +1,15 @@
 <template>
   <CroutonCollection
     :layout="layout"
-    collection="discubotInboxMessages"
+    collection="rakimInboxMessages"
     :columns="columns"
     :rows="inboxmessages || []"
     :loading="pending"
   >
     <template #header>
       <CroutonTableHeader
-        title="DiscubotInboxMessages"
-        :collection="'discubotInboxMessages'"
+        title="RakimInboxMessages"
+        :collection="'rakimInboxMessages'"
         createButton
       />
     </template>
@@ -17,7 +17,7 @@
       <CroutonItemCardMini
         v-if="row.original.configId"
         :id="row.original.configId"
-        collection="discubotConfigs"
+        collection="rakimConfigs"
       />
     </template>
     <template #receivedAt-cell="{ row }">
@@ -36,9 +36,9 @@ const props = withDefaults(defineProps<{
   layout: 'table'
 })
 
-const { columns } = useDiscubotInboxMessages()
+const { columns } = useRakimInboxMessages()
 
 const { items: inboxmessages, pending } = await useCollectionQuery(
-  'discubotInboxMessages'
+  'rakimInboxMessages'
 )
 </script>

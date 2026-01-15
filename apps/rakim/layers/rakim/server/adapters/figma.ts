@@ -19,7 +19,7 @@ import type {
   SourceConfig,
   ValidationResult,
   ThreadMessage,
-} from '#layers/discubot/types'
+} from '#layers/rakim/types'
 import { AdapterError, type DiscussionSourceAdapter } from './base'
 import {
   parseFigmaEmail,
@@ -118,7 +118,7 @@ export class FigmaAdapter implements DiscussionSourceAdapter {
       }
 
       // Resolve team ID from recipient email
-      // Format expected: <team-slug>@discubot.yourdomain.com
+      // Format expected: <team-slug>@rakim.yourdomain.com
       const teamId = this.extractTeamIdFromRecipient(payload.recipient)
 
       // Extract email slug for config matching (the part before @)
@@ -545,7 +545,7 @@ export class FigmaAdapter implements DiscussionSourceAdapter {
   /**
    * Extract team ID from recipient email address
    *
-   * Expected format: <team-slug>@discubot.yourdomain.com
+   * Expected format: <team-slug>@rakim.yourdomain.com
    * Falls back to 'default' if parsing fails
    */
   private extractTeamIdFromRecipient(recipient: string): string {

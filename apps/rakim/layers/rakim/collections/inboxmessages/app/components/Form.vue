@@ -44,7 +44,7 @@
         <UFormField label="ConfigId" name="configId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.configId"
-            collection="discubotConfigs"
+            collection="rakimConfigs"
             label="ConfigId"
           />
         </UFormField>
@@ -102,10 +102,10 @@
 </template>
 
 <script setup lang="ts">
-import type { DiscubotInboxMessageFormProps, DiscubotInboxMessageFormData } from '../../types'
+import type { RakimInboxMessageFormProps, RakimInboxMessageFormData } from '../../types'
 
-const props = defineProps<DiscubotInboxMessageFormProps>()
-const { defaultValue, schema, collection } = useDiscubotInboxMessages()
+const props = defineProps<RakimInboxMessageFormProps>()
+const { defaultValue, schema, collection } = useRakimInboxMessages()
 
 // Form layout configuration
 const navigationItems = [
@@ -173,7 +173,7 @@ if (props.action === 'update' && props.activeItem?.id) {
   }
 }
 
-const state = ref<DiscubotInboxMessageFormData & { id?: string | null }>(initialValues)
+const state = ref<RakimInboxMessageFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {

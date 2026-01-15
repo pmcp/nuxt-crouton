@@ -1,7 +1,7 @@
 import type { z } from 'zod'
-import type { discubotInboxMessageSchema } from './app/composables/useDiscubotInboxMessages'
+import type { rakimInboxMessageSchema } from './app/composables/useRakimInboxMessages'
 
-export interface DiscubotInboxMessage {
+export interface RakimInboxMessage {
   id: string
   teamId: string
   owner: string
@@ -25,13 +25,13 @@ export interface DiscubotInboxMessage {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type DiscubotInboxMessageFormData = z.infer<typeof discubotInboxMessageSchema>
-export type NewDiscubotInboxMessage = Omit<DiscubotInboxMessage, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type RakimInboxMessageFormData = z.infer<typeof rakimInboxMessageSchema>
+export type NewRakimInboxMessage = Omit<RakimInboxMessage, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface DiscubotInboxMessageFormProps {
+export interface RakimInboxMessageFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: DiscubotInboxMessage | Record<string, never> // DiscubotInboxMessage for update, empty object for create
+  activeItem: RakimInboxMessage | Record<string, never> // RakimInboxMessage for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

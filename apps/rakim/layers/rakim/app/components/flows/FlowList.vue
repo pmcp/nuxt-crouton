@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
-import type { Flow, FlowInput, FlowOutput } from '#layers/discubot/types'
-import FlowPipelineVisual from '#layers/discubot/app/components/flows/FlowPipelineVisual.vue'
+import type { Flow, FlowInput, FlowOutput } from '#layers/rakim/types'
+import FlowPipelineVisual from '#layers/rakim/app/components/flows/FlowPipelineVisual.vue'
 
 // Resolve UI components for use in render functions
 const UBadge = resolveComponent('UBadge')
@@ -36,9 +36,9 @@ const fetchData = async () => {
   try {
     // Fetch all data in parallel
     const [flowsResponse, inputsResponse, outputsResponse] = await Promise.all([
-      $fetch<Flow[]>(`/api/teams/${props.teamId}/discubot-flows`),
-      $fetch<FlowInput[]>(`/api/teams/${props.teamId}/discubot-flowinputs`),
-      $fetch<FlowOutput[]>(`/api/teams/${props.teamId}/discubot-flowoutputs`)
+      $fetch<Flow[]>(`/api/teams/${props.teamId}/rakim-flows`),
+      $fetch<FlowInput[]>(`/api/teams/${props.teamId}/rakim-flowinputs`),
+      $fetch<FlowOutput[]>(`/api/teams/${props.teamId}/rakim-flowoutputs`)
     ])
 
     flows.value = flowsResponse
@@ -142,15 +142,15 @@ const rows = computed(() => {
 
 // Handle create new flow
 const handleCreateFlow = () => {
-  console.log('[FlowList] Create button clicked, navigating to:', `/dashboard/${props.teamSlug}/discubot/flows/create`)
+  console.log('[FlowList] Create button clicked, navigating to:', `/dashboard/${props.teamSlug}/rakim/flows/create`)
   console.log('[FlowList] Team slug:', props.teamSlug)
   console.log('[FlowList] Team ID:', props.teamId)
-  router.push(`/dashboard/${props.teamSlug}/discubot/flows/create`)
+  router.push(`/dashboard/${props.teamSlug}/rakim/flows/create`)
 }
 
 // Handle edit flow
 const handleEditFlow = (flowId: string) => {
-  router.push(`/dashboard/${props.teamSlug}/discubot/flows/${flowId}`)
+  router.push(`/dashboard/${props.teamSlug}/rakim/flows/${flowId}`)
 }
 
 // Handle delete flow (show confirmation)
@@ -165,7 +165,7 @@ const confirmDelete = async () => {
 
   isDeleting.value = true
   try {
-    await $fetch(`/api/teams/${props.teamId}/discubot-flows/${flowToDelete.value.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/rakim-flows/${flowToDelete.value.id}`, {
       method: 'DELETE'
     })
 
