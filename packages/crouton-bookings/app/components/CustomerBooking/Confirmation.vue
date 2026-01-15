@@ -19,10 +19,12 @@ const emit = defineEmits<{
   submit: []
 }>()
 
+const { locale } = useI18n()
+
 // Format date for display
 const formattedDate = computed(() => {
   if (!props.date) return ''
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale.value, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',

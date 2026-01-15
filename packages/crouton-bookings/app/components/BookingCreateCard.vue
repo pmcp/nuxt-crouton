@@ -48,6 +48,7 @@ const {
 
 // For parsing slot JSON strings
 const { parseSlotIds } = useBookingSlots()
+const { locale } = useI18n()
 
 // Helper to extract first slot ID from booking slot (which is JSON string like '["09:00"]')
 function getFirstSlotId(slot: string | null | undefined): string | null {
@@ -58,7 +59,6 @@ function getFirstSlotId(slot: string | null | undefined): string | null {
 
 // Get localized location title with fallbacks
 function getLocationTitle(location: LocationData): string {
-  const { locale } = useI18n()
   const translations = location.translations as Record<string, { title?: string }> | undefined
 
   return translations?.[locale.value]?.title
@@ -214,7 +214,7 @@ async function handleSubmit() {
 
 // Format date for display
 const formattedDate = computed(() => {
-  return new Intl.DateTimeFormat('en', {
+  return new Intl.DateTimeFormat(locale.value, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',

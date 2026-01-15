@@ -28,6 +28,8 @@ const emit = defineEmits<{
   'dayClick': [value: Date]
 }>()
 
+const { locale } = useI18n()
+
 // Current week's reference date (for navigation)
 const referenceDate = ref(today(getLocalTimeZone()))
 
@@ -48,8 +50,8 @@ const weekDays = computed(() => {
     days.push({
       date,
       day: date.day,
-      weekday: new Intl.DateTimeFormat('en', { weekday: 'short' }).format(date.toDate(getLocalTimeZone())),
-      weekdayShort: new Intl.DateTimeFormat('en', { weekday: 'narrow' }).format(date.toDate(getLocalTimeZone())),
+      weekday: new Intl.DateTimeFormat(locale.value, { weekday: 'short' }).format(date.toDate(getLocalTimeZone())),
+      weekdayShort: new Intl.DateTimeFormat(locale.value, { weekday: 'narrow' }).format(date.toDate(getLocalTimeZone())),
       jsDate: date.toDate(getLocalTimeZone()),
     })
   }
@@ -63,15 +65,15 @@ const weekLabel = computed(() => {
   const startDate = start.toDate(getLocalTimeZone())
   const endDate = end.toDate(getLocalTimeZone())
 
-  const monthYear = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' })
+  const monthYear = new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' })
 
   // If same month, show "December 2025"
   if (start.month === end.month) {
     return monthYear.format(startDate)
   }
   // If different months, show "Dec - Jan 2025" or "Dec 2024 - Jan 2025"
-  const startMonth = new Intl.DateTimeFormat('en', { month: 'short' }).format(startDate)
-  const endMonthYear = new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric' }).format(endDate)
+  const startMonth = new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(startDate)
+  const endMonthYear = new Intl.DateTimeFormat(locale.value, { month: 'short', year: 'numeric' }).format(endDate)
   return `${startMonth} - ${endMonthYear}`
 })
 

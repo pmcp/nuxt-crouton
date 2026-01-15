@@ -96,6 +96,7 @@ function handleRefresh() {
 const { resendEmail, isEmailEnabled } = useBookingEmail()
 const toast = useToast()
 const route = useRoute()
+const { locale } = useI18n()
 
 // Track which booking/email type is currently being sent
 const sendingEmailState = ref<{ bookingId: string; triggerType: string } | null>(null)
@@ -188,7 +189,7 @@ const groupedBookings = computed((): MonthGroup[] => {
     const date = new Date(booking.date)
     const monthKey = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`
     const dateKey = formatDateKey(date)
-    const monthLabel = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(date)
+    const monthLabel = new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(date)
 
     // Find or create month group in the Map
     let monthGroup = monthMap.get(monthKey)
@@ -234,7 +235,7 @@ const groupedBookingsWithCreateDate = computed((): MonthGroup[] => {
   const createDate = props.creatingAtDate
   const createMonthKey = `${createDate.getFullYear()}-${String(createDate.getMonth()).padStart(2, '0')}`
   const createDateKey = formatDateKey(createDate)
-  const createMonthLabel = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(createDate)
+  const createMonthLabel = new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(createDate)
 
   // Find or create the month group for the creation date
   let monthIndex = result.findIndex(mg => mg.key === createMonthKey)

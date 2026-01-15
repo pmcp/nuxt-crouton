@@ -14,12 +14,14 @@ const props = withDefaults(defineProps<Props>(), {
   highlightColor: undefined,
 })
 
+const { locale } = useI18n()
+
 const parsed = computed(() => {
   const d = typeof props.date === 'string' ? new Date(props.date) : props.date
   return {
     day: d.getDate(),
-    month: d.toLocaleDateString('en-US', { month: 'short' }),
-    weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
+    month: d.toLocaleDateString(locale.value, { month: 'short' }),
+    weekday: d.toLocaleDateString(locale.value, { weekday: 'short' }),
   }
 })
 
