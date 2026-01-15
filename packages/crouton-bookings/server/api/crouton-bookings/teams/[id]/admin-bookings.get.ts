@@ -1,11 +1,6 @@
 /**
- * Customer-facing endpoint - returns only bookings created by the current user
- *
- * Supports date range queries: ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
- *
- * Response includes:
- * - Booking details with location data
- * - Email stats and actions (when email module is enabled)
+ * Admin-facing endpoint - returns ALL bookings for a team (not just current user's)
+ * Includes email stats and details for each booking
  */
 import { eq, and, asc, gte, lte } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
@@ -27,10 +22,9 @@ export default defineEventHandler(async (event) => {
   const startDate = query.startDate ? new Date(String(query.startDate)) : null
   const endDate = query.endDate ? new Date(String(query.endDate)) : null
 
-  // Build where conditions
+  // Build where conditions - admin sees ALL team bookings
   const conditions = [
     eq(bookingsBookings.teamId, team.id),
-    eq(bookingsBookings.createdBy, user.id),
   ]
 
   // Add date range conditions if provided
@@ -41,7 +35,7 @@ export default defineEventHandler(async (event) => {
     conditions.push(lte(bookingsBookings.date, endDate))
   }
 
-  // Get bookings created by this user
+  // Get all bookings for this team
   const bookings = await db
     .select({
       id: bookingsBookings.id,
@@ -69,7 +63,7 @@ export default defineEventHandler(async (event) => {
         quantity: bookingsLocations.quantity,
         translations: bookingsLocations.translations,
       },
-      createdByUser: {
+      ownerUser: {
         id: userTable.id,
         name: userTable.name,
         email: userTable.email,
@@ -78,7 +72,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(bookingsBookings)
     .leftJoin(bookingsLocations, eq(bookingsBookings.location, bookingsLocations.id))
-    .leftJoin(userTable, eq(bookingsBookings.createdBy, userTable.id))
+    .leftJoin(userTable, eq(bookingsBookings.owner, userTable.id))
     .where(and(...conditions))
     .orderBy(asc(bookingsBookings.date))
 
@@ -126,18 +120,5 @@ export default defineEventHandler(async (event) => {
     )
   }
 
-  // If date params were provided, return with metadata
-  // Otherwise return just the array for backwards compatibility
-  if (startDate || endDate) {
-    return {
-      items: enrichedBookings,
-      dateRange: {
-        startDate: startDate?.toISOString().split('T')[0] || null,
-        endDate: endDate?.toISOString().split('T')[0] || null,
-      },
-    }
-  }
-
-  // Backwards compatible: return array directly
   return enrichedBookings
 })
