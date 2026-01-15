@@ -5,7 +5,8 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   extends: [
     '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-ai'
+    '@friendlyinternet/nuxt-crouton-ai',
+    './layers/rakim'
   ],
   hub: { db: 'sqlite' },
   runtimeConfig: {
