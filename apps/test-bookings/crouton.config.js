@@ -27,6 +27,7 @@ export default {
   dialect: 'sqlite',
   flags: {
     useMetadata: true,
+    useMaps: true,
     force: true
   }
 }

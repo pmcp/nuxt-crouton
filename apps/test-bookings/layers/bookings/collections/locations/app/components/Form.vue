@@ -82,7 +82,33 @@
 
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Location" name="location" class="not-last:pb-4">
-          <UTextarea v-model="state.location" class="w-full" size="xl" />
+          <!-- Map Display -->
+          <CroutonMapsMap
+            :center="mapCenter"
+            :zoom="14"
+            height="250px"
+            class="rounded-lg border"
+            :fly-to-on-center-change="true"
+            @load="handleMapLoad"
+          >
+            <template #default="{ map }">
+              <CroutonMapsMarker
+                v-if="hasValidCoordinates"
+                :map="map"
+                :position="mapCenter"
+                color="#3b82f6"
+                :options="{ draggable: true }"
+                :animate-transitions="true"
+                @drag-end="handleMarkerDragEnd"
+              />
+            </template>
+          </CroutonMapsMap>
+          <p v-if="geocoding" class="text-sm text-[var(--ui-text-muted)] mt-2">
+            Geocoding address...
+          </p>
+          <p v-else-if="!hasValidCoordinates" class="text-sm text-[var(--ui-text-muted)] mt-2">
+            Enter an address to show on map
+          </p>
         </UFormField>
       </div>
 
@@ -145,6 +171,101 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   : { ...defaultValue }
 
 const state = ref<BookingsLocationFormData & { id?: string | null }>(initialValues)
+
+// Map & Geocoding functionality
+const { geocode, loading: geocoding } = useGeocode()
+const mapInstance = ref<any>(null)
+
+// Parse existing coordinates from location field
+const parseCoordinates = (value: any): [number, number] | null => {
+  if (!value) return null
+  if (Array.isArray(value) && value.length === 2) {
+    return [value[0], value[1]]
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed) && parsed.length === 2) {
+        return [parsed[0], parsed[1]]
+      }
+    } catch { /* ignore parse errors */ }
+  }
+  return null
+}
+
+// Map center from location field or default (Brussels)
+const mapCenter = computed<[number, number]>(() => {
+  const coords = parseCoordinates(state.value.location)
+  return coords || [4.3517, 50.8503]
+})
+
+// Check if we have valid coordinates
+const hasValidCoordinates = computed(() => {
+  return parseCoordinates(state.value.location) !== null
+})
+
+// Store map instance when loaded
+const handleMapLoad = (map: any) => {
+  mapInstance.value = map
+}
+
+// Handle marker drag to update coordinates
+const handleMarkerDragEnd = (position: { lng: number, lat: number }) => {
+  state.value.location = JSON.stringify([position.lng, position.lat])
+}
+
+// Get address from translations (default locale)
+const getAddressFromTranslations = () => {
+  const translations = state.value.translations as Record<string, any> | undefined
+  if (!translations) return null
+
+  // Try to get from default locale (en) or first available
+  const localeData = translations.en || Object.values(translations)[0]
+  if (!localeData) return null
+
+  const parts: string[] = []
+  if (localeData.street) parts.push(localeData.street)
+  if (localeData.zip) parts.push(localeData.zip)
+  if (localeData.city) parts.push(localeData.city)
+
+  return parts.length > 0 ? parts.join(', ') : null
+}
+
+// Handle geocoding of address fields
+const handleGeocode = async () => {
+  const addressQuery = getAddressFromTranslations()
+  if (!addressQuery) return
+
+  const result = await geocode(addressQuery)
+  if (result) {
+    state.value.location = JSON.stringify(result.coordinates)
+
+    // Fly to new location
+    if (mapInstance.value) {
+      mapInstance.value.flyTo({
+        center: result.coordinates,
+        zoom: 15,
+        duration: 800
+      })
+    }
+  }
+}
+
+// Auto-geocode when address fields change (debounced)
+watchDebounced(
+  () => {
+    const translations = state.value.translations as Record<string, any> | undefined
+    if (!translations?.en) return null
+    return `${translations.en.street || ''}-${translations.en.zip || ''}-${translations.en.city || ''}`
+  },
+  async (newVal, oldVal) => {
+    // Only geocode if address actually changed and we have some data
+    if (newVal && newVal !== oldVal && getAddressFromTranslations()) {
+      await handleGeocode()
+    }
+  },
+  { debounce: 1500, maxWait: 5000 }
+)
 
 const handleSubmit = async () => {
   try {
