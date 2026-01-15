@@ -128,31 +128,7 @@ export async function detectRequiredDependencies(config) {
   const baseLayerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton')
   const baseLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton')
 
-  // Check for @friendlyinternet/nuxt-crouton-auth package (required for team-based authentication)
-  const authPackageInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-auth')
-  const authLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-auth')
-
-  if (!authPackageInstalled) {
-    // @friendlyinternet/nuxt-crouton-auth is required for all generated endpoints
-    required.missing.push({
-      type: 'package',
-      name: '@friendlyinternet/nuxt-crouton-auth',
-      reason: 'Required for team-based authentication in generated endpoints',
-      installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-auth',
-      configCmd: `Add '@friendlyinternet/nuxt-crouton-auth' to extends array in nuxt.config.ts`,
-      critical: true
-    })
-  } else if (!authLayerExtended) {
-    required.missing.push({
-      type: 'layer',
-      name: '@friendlyinternet/nuxt-crouton-auth',
-      reason: 'Package is installed but NOT added to nuxt.config.ts extends[]',
-      installCmd: '(already installed)',
-      configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton-auth']`,
-      critical: true
-    })
-  }
-
+  // Check base layer status first
   if (baseLayerInstalled && !baseLayerExtended) {
     // Package installed but not added to nuxt.config.ts extends[]
     required.missing.push({
@@ -161,23 +137,45 @@ export async function detectRequiredDependencies(config) {
       reason: 'Package is installed but NOT added to nuxt.config.ts extends[]',
       installCmd: '(already installed)',
       configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton']`,
-      critical: true
+      critical: true,
+      note: 'Auth, admin, and i18n are automatically included when using the core package.'
     })
   } else if (!baseLayerInstalled) {
     // Fallback to check for local crouton layer
     const croutonLayerExists = await layerExists('crouton')
     if (!croutonLayerExists) {
-      required.missing.push({
-        type: 'layer',
-        name: '@friendlyinternet/nuxt-crouton',
-        reason: 'Required for Crouton components',
-        installCmd: 'pnpm add @friendlyinternet/nuxt-crouton',
-        configCmd: `Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts`
-      })
+      // Core not installed - check if standalone auth is available
+      const authPackageInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-auth')
+      const authLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-auth')
+
+      if (!authPackageInstalled && !authLayerExtended) {
+        // Neither core nor auth available - recommend installing core (which includes auth)
+        required.missing.push({
+          type: 'package',
+          name: '@friendlyinternet/nuxt-crouton',
+          reason: 'Required for Crouton collections (includes auth, admin, and i18n)',
+          installCmd: 'pnpm add @friendlyinternet/nuxt-crouton',
+          configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton']`,
+          critical: true
+        })
+      } else if (authPackageInstalled && !authLayerExtended) {
+        // Standalone auth installed but not extended - this is a legacy setup
+        required.missing.push({
+          type: 'layer',
+          name: '@friendlyinternet/nuxt-crouton-auth',
+          reason: 'Package is installed but NOT added to nuxt.config.ts extends[]',
+          installCmd: '(already installed)',
+          configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton-auth']`,
+          critical: true,
+          note: 'Consider using @friendlyinternet/nuxt-crouton instead (includes auth + admin + i18n).'
+        })
+      }
+      // If auth is extended standalone, that's fine too
     } else {
       required.layers.push('crouton')
     }
   } else {
+    // Core is installed AND extended - auth is bundled, no separate check needed
     required.layers.push('@friendlyinternet/nuxt-crouton')
   }
 
@@ -276,30 +274,53 @@ export function displayMissingDependencies(dependencies) {
     console.log(`\n   Installation steps:`)
     console.log(`   1. Install: ${dep.installCmd}`)
     console.log(`   2. Configure: ${dep.configCmd}`)
+    if (dep.note) {
+      console.log(`\n   ℹ️  ${dep.note}`)
+    }
   })
 
   console.log('\n═'.repeat(60))
-  console.log('\n💡 Quick install all:')
 
-  const installCmds = dependencies.missing.map(d => d.installCmd.replace('pnpm add ', '')).join(' ')
-  console.log(`   pnpm add ${installCmds}`)
+  // Get packages that need installation (not already installed)
+  const toInstall = dependencies.missing
+    .filter(d => !d.installCmd.includes('already installed'))
+    .map(d => d.installCmd.replace('pnpm add ', ''))
+    .filter(Boolean)
 
-  console.log('\nThen add ALL required layers to nuxt.config.ts:')
-  console.log(`   extends: [`)
-
-  // Always show base layer first if it's missing
-  const hasBaseMissing = dependencies.missing.some(d => d.name === '@friendlyinternet/nuxt-crouton')
-  if (hasBaseMissing) {
-    console.log(`     '@friendlyinternet/nuxt-crouton',  // Base layer (always required)`)
+  if (toInstall.length > 0) {
+    console.log('\n💡 Quick install:')
+    console.log(`   pnpm add ${toInstall.join(' ')}`)
   }
 
-  // Show addon layers
-  dependencies.missing.forEach((dep) => {
-    if (dep.name !== '@friendlyinternet/nuxt-crouton') {
-      console.log(`     '${dep.name}',  // Addon layer`)
-    }
-  })
-  console.log(`     // ... other layers`)
+  // Check if core package is being added (which includes auth/admin/i18n)
+  const hasCoreMissing = dependencies.missing.some(d => d.name === '@friendlyinternet/nuxt-crouton')
+
+  console.log('\nThen add to nuxt.config.ts:')
+  console.log(`   extends: [`)
+
+  if (hasCoreMissing) {
+    // Core includes auth, admin, and i18n - only show core
+    console.log(`     '@friendlyinternet/nuxt-crouton',  // Includes auth, admin, i18n`)
+    // Show other addon layers (not auth/admin/i18n since they're bundled)
+    dependencies.missing.forEach((dep) => {
+      const bundledPackages = [
+        '@friendlyinternet/nuxt-crouton',
+        '@friendlyinternet/nuxt-crouton-auth',
+        '@friendlyinternet/nuxt-crouton-admin',
+        '@friendlyinternet/nuxt-crouton-i18n'
+      ]
+      if (!bundledPackages.includes(dep.name)) {
+        console.log(`     '${dep.name}',  // Addon layer`)
+      }
+    })
+  } else {
+    // No core - show all missing layers
+    dependencies.missing.forEach((dep) => {
+      console.log(`     '${dep.name}',`)
+    })
+  }
+
+  console.log(`     // ... your layers`)
   console.log(`   ]`)
 
   console.log('\n')

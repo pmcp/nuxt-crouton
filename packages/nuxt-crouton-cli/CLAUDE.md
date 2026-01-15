@@ -56,8 +56,9 @@ crouton add --list
 
 | Module | Package | Has Schema | Description |
 |--------|---------|------------|-------------|
-| `auth` | `@friendlyinternet/nuxt-crouton-auth` | ● | Authentication with Better Auth |
-| `i18n` | `@friendlyinternet/nuxt-crouton-i18n` | ● | Multi-language support |
+| `auth` | `@friendlyinternet/nuxt-crouton-auth` | ● | Authentication with Better Auth (**bundled in core**) |
+| `i18n` | `@friendlyinternet/nuxt-crouton-i18n` | ● | Multi-language support (**bundled in core**) |
+| `admin` | `@friendlyinternet/nuxt-crouton-admin` | ○ | Admin dashboard (**bundled in core**) |
 | `bookings` | `@friendlyinternet/crouton-bookings` | ○ | Booking system |
 | `editor` | `@friendlyinternet/nuxt-crouton-editor` | ○ | Rich text editor |
 | `assets` | `@friendlyinternet/nuxt-crouton-assets` | ○ | Asset management |
@@ -67,10 +68,10 @@ crouton add --list
 | `maps` | `@friendlyinternet/nuxt-crouton-maps` | ○ | Map integration |
 | `ai` | `@friendlyinternet/nuxt-crouton-ai` | ○ | AI integration |
 | `devtools` | `@friendlyinternet/nuxt-crouton-devtools` | ○ | Nuxt Devtools |
-| `admin` | `@friendlyinternet/nuxt-crouton-admin` | ○ | Admin dashboard |
 
 ● = Has database schema (will update `server/db/schema.ts`)
 ○ = No database tables
+**bundled in core** = Automatically included when using `@friendlyinternet/nuxt-crouton`
 
 ### What `crouton add` Does
 
@@ -281,9 +282,16 @@ With `--hierarchy`:
 ## Team Authentication
 
 All generated collections are team-scoped. The generator:
-- Imports team auth from `@crouton/auth/server` (NOT `#crouton/team-auth`)
+- Imports team auth from `@friendlyinternet/nuxt-crouton-auth/server/utils/team`
 - Uses `resolveTeamAndCheckMembership()` for membership validation
-- Requires `@crouton/auth` package to be installed in the consuming project
+- Requires the core `@friendlyinternet/nuxt-crouton` package (which bundles auth, admin, and i18n)
+
+**Note:** The core package (`@friendlyinternet/nuxt-crouton`) automatically includes:
+- `@friendlyinternet/nuxt-crouton-auth` - Team-based authentication
+- `@friendlyinternet/nuxt-crouton-admin` - Admin dashboard
+- `@friendlyinternet/nuxt-crouton-i18n` - Internationalization
+
+You only need to add the core package to your `nuxt.config.ts` extends array.
 
 **Note**: The `useTeamUtility` flag has been removed. All collections are now team-scoped by default.
 
