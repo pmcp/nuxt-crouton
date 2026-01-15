@@ -72,18 +72,19 @@ export function useBookingOptions() {
   }
 
   /**
-   * Look up group label by value
+   * Look up group label by ID
+   * Note: Bookings store the group's ID, not value
    */
-  function getGroupLabel(groupValue: string): string {
-    if (!groupValue) return ''
+  function getGroupLabel(groupId: string): string {
+    if (!groupId) return ''
 
-    const group = groups.value.find(g => g.value === groupValue)
+    const group = groups.value.find(g => g.id === groupId)
     if (group) {
       return getTranslatedLabel(group)
     }
 
-    // Fallback to capitalizing the value
-    return groupValue.charAt(0).toUpperCase() + groupValue.slice(1)
+    // Fallback to the raw ID (shouldn't normally happen)
+    return groupId
   }
 
   return {
