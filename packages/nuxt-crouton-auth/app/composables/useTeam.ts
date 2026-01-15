@@ -98,6 +98,49 @@ function mapMember(m: {
   }
 }
 
+/**
+ * Extract error message from Better Auth error responses
+ *
+ * Better Auth can return errors in various formats:
+ * - { code: "ORGANIZATION_ALREADY_EXISTS", message: "Organization already exists" }
+ * - Standard Error objects
+ * - Fetch errors with nested structures
+ */
+function extractErrorMessage(e: unknown, fallback: string): string {
+  // Handle standard Error objects
+  if (e instanceof Error) {
+    return e.message || fallback
+  }
+
+  // Handle Better Auth error objects with code/message
+  if (e && typeof e === 'object') {
+    const obj = e as Record<string, unknown>
+
+    // Direct message property
+    if (typeof obj.message === 'string' && obj.message) {
+      return obj.message
+    }
+
+    // Nested error object (common in fetch responses)
+    if (obj.error && typeof obj.error === 'object') {
+      const nested = obj.error as Record<string, unknown>
+      if (typeof nested.message === 'string' && nested.message) {
+        return nested.message
+      }
+    }
+
+    // Body with error (fetch response pattern)
+    if (obj.body && typeof obj.body === 'object') {
+      const body = obj.body as Record<string, unknown>
+      if (typeof body.message === 'string' && body.message) {
+        return body.message
+      }
+    }
+  }
+
+  return fallback
+}
+
 export function useTeam() {
   const config = useAuthConfig()
   const authClient = useAuthClient()
@@ -200,8 +243,9 @@ export function useTeam() {
         throw new Error(result.error.message ?? 'Failed to switch team')
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to switch team'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to switch team')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -222,8 +266,9 @@ export function useTeam() {
         throw new Error(result.error.message ?? 'Failed to switch team')
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to switch team'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to switch team')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -257,8 +302,9 @@ export function useTeam() {
 
       return mapOrganizationToTeam(result.data)
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to create team'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to create team')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -295,8 +341,9 @@ export function useTeam() {
 
       return mapOrganizationToTeam(result.data)
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to update team'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to update team')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -325,8 +372,9 @@ export function useTeam() {
         throw new Error(result.error.message ?? 'Failed to delete team')
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to delete team'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to delete team')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -388,8 +436,9 @@ export function useTeam() {
         throw new Error(result.error.message ?? 'Failed to invite member')
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to invite member'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to invite member')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -422,8 +471,9 @@ export function useTeam() {
       // Refresh members list
       await loadMembers()
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to remove member'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to remove member')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -457,8 +507,9 @@ export function useTeam() {
       // Refresh members list
       await loadMembers()
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to update role'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to update role')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -494,8 +545,9 @@ export function useTeam() {
         throw new Error(result.error.message ?? 'Failed to leave team')
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to leave team'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to leave team')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -544,8 +596,9 @@ export function useTeam() {
         throw new Error(result.error.message ?? 'Failed to cancel invitation')
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to cancel invitation'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to cancel invitation')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -566,8 +619,9 @@ export function useTeam() {
         throw new Error(result.error.message ?? 'Failed to accept invitation')
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to accept invitation'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to accept invitation')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
@@ -588,8 +642,9 @@ export function useTeam() {
         throw new Error(result.error.message ?? 'Failed to reject invitation')
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to reject invitation'
-      throw e
+      const message = extractErrorMessage(e, 'Failed to reject invitation')
+      error.value = message
+      throw new Error(message)
     } finally {
       loading.value = false
     }
