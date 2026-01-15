@@ -205,7 +205,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
   >
     <!-- Slide-out action menu -->
     <div
-      class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center gap-0.5 px-1.5 bg-elevated/95 backdrop-blur-sm transition-transform duration-200 ease-out z-10"
+      class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center px-2 bg-elevated/95 backdrop-blur-sm transition-transform duration-200 ease-out z-10"
       :class="isHovered ? 'translate-x-0' : 'translate-x-full'"
     >
       <UButton
@@ -214,13 +214,6 @@ const timelineItems = computed<TimelineItem[]>(() => {
         size="xs"
         icon="i-lucide-pencil"
         @click="emit('edit', booking)"
-      />
-      <UButton
-        variant="ghost"
-        color="error"
-        size="xs"
-        icon="i-lucide-trash-2"
-        @click="emit('delete', booking)"
       />
     </div>
 
@@ -282,19 +275,17 @@ const timelineItems = computed<TimelineItem[]>(() => {
           </div>
 
           <!-- User info -->
-          <div class="flex items-center gap-1 text-xs">
-            <div v-if="bookerUser" class="flex items-center gap-1">
-              <UPopover>
-                <CroutonUsersCardMini :item="bookerUser" name class="cursor-pointer" />
-                <template #content>
-                  <div class="p-3 space-y-1 text-sm">
-                    <div class="font-medium">{{ bookerUser.name }}</div>
-                    <div v-if="bookerUser.email" class="text-muted text-xs">{{ bookerUser.email }}</div>
-                  </div>
-                </template>
-              </UPopover>
-              <span v-if="booking.createdAt" class="text-muted whitespace-nowrap">on {{ createdDateText }}</span>
-            </div>
+          <div v-if="bookerUser" class="flex items-center gap-1 text-xs text-muted">
+            <UPopover>
+              <span class="cursor-pointer hover:text-default transition-colors">{{ bookerUser.name }}</span>
+              <template #content>
+                <div class="p-3 space-y-1 text-sm">
+                  <div class="font-medium">{{ bookerUser.name }}</div>
+                  <div v-if="bookerUser.email" class="text-muted text-xs">{{ bookerUser.email }}</div>
+                </div>
+              </template>
+            </UPopover>
+            <span v-if="booking.createdAt" class="whitespace-nowrap">on {{ createdDateText }}</span>
           </div>
         </div>
       </div>
