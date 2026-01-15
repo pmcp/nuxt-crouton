@@ -14,6 +14,19 @@ definePageMeta({
 })
 
 const route = useRoute()
+
+// Reserved prefixes that should NOT be treated as team slugs
+// These routes are handled by other packages (auth, admin, etc.)
+const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
+const teamParam = route.params.team as string
+
+if (reservedPrefixes.includes(teamParam)) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Page Not Found'
+  })
+}
+
 const { t } = useT()
 const { getPageType } = usePageTypes()
 const { isCustomDomain, hideTeamInUrl } = useDomainContext()
