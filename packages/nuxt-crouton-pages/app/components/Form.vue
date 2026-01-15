@@ -27,6 +27,16 @@ const props = withDefaults(defineProps<Props>(), {
   activeItem: () => ({})
 })
 
+// Debug logging
+console.log('[CroutonPagesForm] mounted with:', {
+  action: props.action,
+  activeItem: props.activeItem,
+  hasId: !!props.activeItem?.id,
+  hasTitle: !!props.activeItem?.title,
+  hasContent: !!props.activeItem?.content,
+  items: props.items
+})
+
 const { t } = useT()
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')

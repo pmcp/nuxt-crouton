@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-01-14
+ * @generated 2026-01-15
  *
  * ## AI Context
  * - Composable: usePagesPages
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/pages-pages
  * - Form component: PagesPagesForm
  * - List component: PagesPagesList
- * - Fields: name, label, icon, description, hierarchy, fields
+ * - Fields: title, slug, pageType, content, config, status, visibility, publishedAt, showInNavigation, seoTitle, seoDescription, translations
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -27,40 +27,63 @@ import { z } from 'zod'
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const pagesPageSchema = z.object({
-  name: z.string().optional(),
-  label: z.string().optional(),
-  icon: z.string().optional(),
-  description: z.string().optional(),
-  hierarchy: z.string().optional(),
-  fields: z.string().optional()
+  title: z.string().min(1, 'title is required'),
+  slug: z.string().min(1, 'slug is required'),
+  pageType: z.string().min(1, 'pageType is required'),
+  content: z.string().optional(),
+  config: z.record(z.string(), z.any()).optional(),
+  status: z.string().min(1, 'status is required'),
+  visibility: z.string().min(1, 'visibility is required'),
+  publishedAt: z.date().optional(),
+  showInNavigation: z.boolean().optional(),
+  seoTitle: z.string().optional(),
+  seoDescription: z.string().optional(),
+  translations: z.record(z.string(), z.any()).optional(),
+  parentId: z.string().nullable().optional()
 })
 
 export const pagesPagesColumns = [
-  { accessorKey: 'name', header: 'Name' },
-  { accessorKey: 'label', header: 'Label' },
-  { accessorKey: 'icon', header: 'Icon' },
-  { accessorKey: 'description', header: 'Description' },
-  { accessorKey: 'hierarchy', header: 'Hierarchy' },
-  { accessorKey: 'fields', header: 'Fields' }
+  { accessorKey: 'title', header: 'Title' },
+  { accessorKey: 'slug', header: 'Slug' },
+  { accessorKey: 'pageType', header: 'PageType' },
+  { accessorKey: 'content', header: 'Content' },
+  { accessorKey: 'config', header: 'Config' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'visibility', header: 'Visibility' },
+  { accessorKey: 'publishedAt', header: 'PublishedAt' },
+  { accessorKey: 'showInNavigation', header: 'ShowInNavigation' },
+  { accessorKey: 'seoTitle', header: 'SeoTitle' },
+  { accessorKey: 'seoDescription', header: 'SeoDescription' },
+  { accessorKey: 'translations', header: 'Translations' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
+// Note: componentName intentionally omitted - uses CroutonPagesForm from pages package
 const _pagesPagesConfig = {
   name: 'pagesPages',
   layer: 'pages',
   apiPath: 'pages-pages',
-  componentName: 'PagesPagesForm',
   defaultValues: {
-    name: '',
-    label: '',
-    icon: '',
-    description: '',
-    hierarchy: '',
-    fields: ''
+    title: '',
+    slug: '',
+    pageType: '',
+    content: '',
+    config: {},
+    status: '',
+    visibility: '',
+    publishedAt: null,
+    showInNavigation: false,
+    seoTitle: '',
+    seoDescription: '',
+    translations: {},
+    parentId: null
   },
   columns: pagesPagesColumns,
-  sortable: {
+  hierarchy: {
     enabled: true,
+    parentField: 'parentId',
+    pathField: 'path',
+    depthField: 'depth',
     orderField: 'order'
   },
 }

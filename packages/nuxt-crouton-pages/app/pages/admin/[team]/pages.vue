@@ -3,7 +3,8 @@
  * Admin Pages Management
  *
  * Uses CroutonCollection with tree layout for hierarchical page management.
- * Supports drag-drop reordering and page type selection on create.
+ * The Create/Edit forms use the standard Crouton slideover flow with
+ * CroutonPagesForm registered via app.config.ts.
  */
 definePageMeta({
   layout: 'admin',
@@ -12,30 +13,18 @@ definePageMeta({
 
 const { t } = useT()
 const route = useRoute()
-const { getPageType, pageTypes } = usePageTypes()
+const { getPageType } = usePageTypes()
+const crouton = useCrouton()
 
 // Team context
 const team = computed(() => route.params.team as string)
 
-// Modal state for creating new pages
-const showCreateModal = ref(false)
-const selectedPageType = ref('core:regular')
-const createStep = ref<'type' | 'form'>('type')
+// Fetch pages data
+const { data: pages, pending } = await useCollectionQuery<any>('pagesPages')
 
-// Reset create modal state
-function openCreateModal() {
-  selectedPageType.value = 'core:regular'
-  createStep.value = 'type'
-  showCreateModal.value = true
-}
-
-function handleTypeSelected() {
-  createStep.value = 'form'
-}
-
-function handleCreateClose() {
-  showCreateModal.value = false
-  createStep.value = 'type'
+// Open create form using standard Crouton flow
+function openCreateForm() {
+  crouton.open('create', 'pagesPages', [], 'slideover')
 }
 
 // Get display info for a page type
@@ -49,27 +38,11 @@ function getPageTypeDisplay(pageType: string) {
 
 // Custom columns for the collection
 const columns = [
-  {
-    key: 'title',
-    label: t('pages.title') || 'Title',
-    sortable: true
-  },
-  {
-    key: 'slug',
-    label: t('pages.slug') || 'Slug'
-  },
-  {
-    key: 'pageType',
-    label: t('pages.type') || 'Type'
-  },
-  {
-    key: 'status',
-    label: t('pages.status') || 'Status'
-  },
-  {
-    key: 'visibility',
-    label: t('pages.visibility') || 'Visibility'
-  }
+  { key: 'title', label: 'Title', sortable: true },
+  { key: 'slug', label: 'Slug' },
+  { key: 'pageType', label: 'Type' },
+  { key: 'status', label: 'Status' },
+  { key: 'visibility', label: 'Visibility' }
 ]
 
 // Status badge colors
@@ -98,17 +71,23 @@ const visibilityIcons: Record<string, string> = {
         <UButton
           color="primary"
           icon="i-lucide-plus"
-          @click="openCreateModal"
+          @click="openCreateForm"
         >
           {{ t('pages.create') || 'New Page' }}
         </UButton>
       </template>
     </UDashboardNavbar>
 
-    <UDashboardPanelContent>
-      <!-- Pages collection with tree layout -->
+    <div class="flex-1 overflow-auto p-4">
+      <div v-if="pending" class="flex items-center gap-2 text-muted">
+        <UIcon name="i-lucide-loader-circle" class="animate-spin" />
+        Loading...
+      </div>
+
       <CroutonCollection
+        v-else
         collection="pagesPages"
+        :rows="pages || []"
         layout="tree"
         :columns="columns"
         show-search
@@ -154,77 +133,6 @@ const visibilityIcons: Record<string, string> = {
           </code>
         </template>
       </CroutonCollection>
-    </UDashboardPanelContent>
-
-    <!-- Create Page Modal -->
-    <UModal v-model="showCreateModal" :ui="{ width: 'max-w-2xl' }">
-      <template #content>
-        <div class="p-6">
-          <!-- Step 1: Select Page Type -->
-          <template v-if="createStep === 'type'">
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="text-xl font-semibold">
-                {{ t('pages.selectType') || 'Select Page Type' }}
-              </h2>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-x"
-                @click="handleCreateClose"
-              />
-            </div>
-
-            <CroutonPagesAdminPageTypeSelector v-model="selectedPageType" />
-
-            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-default">
-              <UButton
-                color="neutral"
-                variant="ghost"
-                @click="handleCreateClose"
-              >
-                {{ t('common.cancel') || 'Cancel' }}
-              </UButton>
-              <UButton
-                color="primary"
-                @click="handleTypeSelected"
-              >
-                {{ t('common.continue') || 'Continue' }}
-                <UIcon name="i-lucide-arrow-right" class="ml-2" />
-              </UButton>
-            </div>
-          </template>
-
-          <!-- Step 2: Page Form -->
-          <template v-else>
-            <div class="flex items-center gap-3 mb-6">
-              <UButton
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-arrow-left"
-                size="sm"
-                @click="createStep = 'type'"
-              />
-              <div>
-                <h2 class="text-xl font-semibold">
-                  {{ t('pages.createNew') || 'Create New Page' }}
-                </h2>
-                <p class="text-sm text-muted">
-                  {{ getPageTypeDisplay(selectedPageType).name }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Use CroutonForm with pre-filled pageType -->
-            <CroutonForm
-              collection="pagesPages"
-              mode="create"
-              :initial-data="{ pageType: selectedPageType }"
-              @success="handleCreateClose"
-              @cancel="handleCreateClose"
-            />
-          </template>
-        </div>
-      </template>
-    </UModal>
+    </div>
   </UDashboardPanel>
 </template>

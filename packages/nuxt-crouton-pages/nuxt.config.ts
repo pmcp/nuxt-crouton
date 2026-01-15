@@ -21,7 +21,7 @@ export default defineNuxtConfig({
   ],
 
   // Components auto-import with CroutonPages prefix
-  // PagesForm.vue → CroutonPagesPagesForm
+  // Form.vue → CroutonPagesForm
   components: {
     dirs: [
       {
