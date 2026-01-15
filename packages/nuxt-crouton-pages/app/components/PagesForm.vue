@@ -48,18 +48,13 @@ const defaultValue = {
 }
 
 // Initialize form state
+// Form only mounts after CroutonFormDynamicLoader loading completes,
+// so activeItem should already be populated from the API
 const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
 const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
-
-// Watch for activeItem changes (data loaded asynchronously from API)
-watch(() => props.activeItem, (newItem) => {
-  if (props.action === 'update' && newItem?.id) {
-    state.value = { ...defaultValue, ...newItem }
-  }
-}, { immediate: true })
 
 // Computed values
 const selectedPageType = computed(() => getPageType(state.value.pageType))
