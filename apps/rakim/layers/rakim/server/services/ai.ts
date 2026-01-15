@@ -9,9 +9,11 @@
  *
  * For MVP we use Map-based caching (single-server deployment).
  * In Phase 6, this can be upgraded to KV caching for multi-region deployment.
+ *
+ * Uses @friendlyinternet/nuxt-crouton-ai for AI provider access.
  */
 
-import Anthropic from '@anthropic-ai/sdk'
+import { generateText } from 'ai'
 import type {
   AIAnalysisOptions,
   AIAnalysisResult,
@@ -19,7 +21,7 @@ import type {
   CacheEntry,
   DiscussionThread,
   TaskDetectionResult,
-} from '#layers/discubot/types'
+} from '#layers/rakim/types'
 import { retryWithBackoff } from '../utils/retry'
 import { logger } from '../utils/logger'
 
@@ -104,31 +106,15 @@ function setCachedAnalysis(
 }
 
 /**
- * Initialize Anthropic client
- * Uses API key from runtime config or environment variable
+ * Get the AI model for Claude via crouton-ai
+ * Uses createAIProvider from @friendlyinternet/nuxt-crouton-ai (auto-imported)
  *
- * Checks environment variable first for standalone testing,
- * then falls back to Nuxt runtime config.
+ * @param modelId - The Claude model ID (defaults to claude-sonnet-4-5-20250929)
+ * @returns Language model instance for use with generateText
  */
-function getAnthropicClient(): Anthropic {
-  let apiKey = process.env.ANTHROPIC_API_KEY
-
-  // Try Nuxt runtime config if not in env (and if available)
-  if (!apiKey) {
-    try {
-      const config = useRuntimeConfig()
-      apiKey = config.anthropicApiKey
-    }
-    catch {
-      // useRuntimeConfig not available (standalone testing)
-    }
-  }
-
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not configured')
-  }
-
-  return new Anthropic({ apiKey })
+function getAIModel(modelId = 'claude-sonnet-4-5-20250929') {
+  const ai = createAIProvider()
+  return ai.model(modelId)
 }
 
 /**
@@ -243,8 +229,6 @@ async function generateSummary(
   thread: DiscussionThread,
   options: AIAnalysisOptions = {},
 ): Promise<AISummary> {
-  const client = getAnthropicClient()
-
   const { sourceType, customSummaryPrompt, customPrompt, availableDomains } = options
 
   // Use customSummaryPrompt if available, fallback to customPrompt for backward compatibility
@@ -263,9 +247,9 @@ async function generateSummary(
 
   const response = await retryWithBackoff(
     () =>
-      client.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 1024,
+      generateText({
+        model: getAIModel('claude-sonnet-4-5-20250929'),
+        maxTokens: 1024,
         messages: [
           {
             role: 'user',
@@ -281,16 +265,13 @@ async function generateSummary(
     },
   )
 
-  const content = response.content[0]
-  if (!content) {
+  const responseText = response.text
+  if (!responseText) {
     throw new Error('No content in Claude response')
-  }
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Claude')
   }
 
   // Parse JSON response
-  const jsonMatch = content.text.match(/\{[\s\S]*\}/)
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/)
   if (!jsonMatch) {
     throw new Error('Failed to parse JSON from Claude response')
   }
@@ -321,7 +302,6 @@ async function detectTasks(
   thread: DiscussionThread,
   options: AIAnalysisOptions = {},
 ): Promise<TaskDetectionResult> {
-  const client = getAnthropicClient()
 
   // Helper to get display name (authorName if available, fallback to authorHandle)
   const getDisplayName = (authorName?: string, authorHandle?: string) =>
@@ -554,9 +534,9 @@ Respond with ONLY valid JSON in this exact format:
 
   const response = await retryWithBackoff(
     () =>
-      client.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 2048,
+      generateText({
+        model: getAIModel('claude-sonnet-4-5-20250929'),
+        maxTokens: 2048,
         messages: [
           {
             role: 'user',
@@ -572,16 +552,13 @@ Respond with ONLY valid JSON in this exact format:
     },
   )
 
-  const content = response.content[0]
-  if (!content) {
+  const responseText = response.text
+  if (!responseText) {
     throw new Error('No content in Claude response')
-  }
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Claude')
   }
 
   // Parse JSON response
-  const jsonMatch = content.text.match(/\{[\s\S]*\}/)
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/)
   if (!jsonMatch) {
     throw new Error('Failed to parse JSON from Claude response')
   }
