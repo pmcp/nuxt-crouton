@@ -17,7 +17,11 @@ const emit = defineEmits<{
   'resend-email': [triggerType: EmailTriggerType]
   'date-click': [date: Date]
   'edit': [booking: Booking]
+  'delete': [booking: Booking]
 }>()
+
+// Hover state for action menu
+const isHovered = ref(false)
 
 const { t, locale } = useI18n()
 const { parseSlotIds, parseLocationSlots, getSlotLabel } = useBookingSlots()
@@ -54,29 +58,24 @@ const isInventoryMode = computed(() => {
 })
 
 // Booker info - handle Drizzle leftJoin which returns { id: null, name: null } instead of null
-const bookerName = computed(() => {
-  const ownerName = props.booking.ownerUser?.name
-  const createdByName = props.booking.createdByUser?.name
-  // Filter out empty/null names
-  if (ownerName && ownerName.trim()) return ownerName
-  if (createdByName && createdByName.trim()) return createdByName
+const bookerUser = computed(() => {
+  const owner = props.booking.ownerUser
+  const createdBy = props.booking.createdByUser
+
+  // Prefer owner, fallback to createdBy
+  if (owner?.name && owner.name.trim()) {
+    return { name: owner.name, email: owner.email, avatarUrl: owner.avatarUrl }
+  }
+  if (createdBy?.name && createdBy.name.trim()) {
+    return { name: createdBy.name, email: createdBy.email, avatarUrl: createdBy.avatarUrl }
+  }
   return null
 })
 
-const bookerAvatar = computed(() => {
-  return props.booking.ownerUser?.avatarUrl
-    || props.booking.createdByUser?.avatarUrl
-    || null
-})
-
-const bookerInitials = computed(() => {
-  if (!bookerName.value) return '?'
-  return bookerName.value
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+// Format created date (e.g., "Jan 5")
+const createdDateText = computed(() => {
+  if (!props.booking.createdAt) return ''
+  return formatShortDate(String(props.booking.createdAt))
 })
 
 // Email details helpers
@@ -160,18 +159,41 @@ const hasEmailStatus = computed(() => {
     variant="soft"
     :ui="{
       root: [
-        'transition-all duration-200',
+        'transition-all duration-200 relative overflow-hidden',
         isCancelled ? 'opacity-60' : '',
         highlighted ? 'bg-elevated shadow-sm' : ''
       ],
-      body: 'p-2'
+      body: 'p-2 sm:p-2'
     }"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
+    <!-- Slide-out action menu -->
+    <div
+      class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center gap-0.5 px-1.5 bg-elevated/95 backdrop-blur-sm transition-transform duration-200 ease-out"
+      :class="isHovered ? 'translate-x-0' : 'translate-x-full'"
+    >
+      <UButton
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        icon="i-lucide-pencil"
+        @click="emit('edit', booking)"
+      />
+      <UButton
+        variant="ghost"
+        color="error"
+        size="xs"
+        icon="i-lucide-trash-2"
+        @click="emit('delete', booking)"
+      />
+    </div>
+
     <div class="flex gap-3">
       <!-- Date badge (clickable to navigate calendar) -->
       <button
         type="button"
-        class="shrink-0 cursor-pointer hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg"
+        class="shrink-0 cursor-pointer hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg self-start"
         @click="emit('date-click', new Date(booking.date))"
       >
         <CroutonBookingsDateBadge
@@ -182,135 +204,121 @@ const hasEmailStatus = computed(() => {
         />
       </button>
 
-      <!-- Main content area -->
-      <div class="flex-1 min-w-0">
-        <div class="flex items-start justify-between gap-4">
-          <!-- Left: Main booking info -->
-          <div class="flex flex-col gap-1 min-w-0 flex-1">
-            <!-- Location name -->
-            <span
-              class="text-sm font-medium truncate"
-              :class="{ 'line-through text-muted': isCancelled }"
+      <!-- Main content -->
+      <div class="flex-1 min-w-0 flex flex-col gap-2">
+        <!-- Top row: Location info -->
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <!-- Location name -->
+          <span
+            class="text-sm font-medium truncate"
+            :class="{ 'line-through text-muted': isCancelled }"
+          >
+            {{ booking.locationData?.title || 'Unknown Location' }}
+          </span>
+
+          <!-- Slot indicator + time + group -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <template v-if="isInventoryMode">
+              <UIcon name="i-lucide-box" class="size-3 text-primary" />
+              <span class="text-xs text-muted">{{ slotLabel }}</span>
+            </template>
+            <template v-else>
+              <CroutonBookingsSlotIndicator
+                v-if="locationSlots.length > 0"
+                :slots="locationSlots"
+                :booked-slot-ids="bookedSlotIds"
+                :cancelled-slot-ids="isCancelled ? bookedSlotIds : []"
+                :color="locationColor"
+                size="sm"
+              />
+              <span class="text-xs text-muted">{{ slotLabel }}</span>
+            </template>
+
+            <!-- Group badge inline -->
+            <UBadge
+              v-if="booking.group"
+              color="neutral"
+              variant="subtle"
+              size="sm"
             >
-              {{ booking.locationData?.title || 'Unknown Location' }}
-            </span>
+              {{ getGroupLabel(booking.group) }}
+            </UBadge>
+          </div>
+        </div>
 
-            <!-- Slot indicator + time -->
-            <div class="flex items-center gap-2">
-              <template v-if="isInventoryMode">
-                <UIcon name="i-lucide-box" class="size-3 text-primary" />
-                <span class="text-xs text-muted">{{ slotLabel }}</span>
-              </template>
-              <template v-else>
-                <CroutonBookingsSlotIndicator
-                  v-if="locationSlots.length > 0"
-                  :slots="locationSlots"
-                  :booked-slot-ids="bookedSlotIds"
-                  :cancelled-slot-ids="isCancelled ? bookedSlotIds : []"
-                  :color="locationColor"
-                  size="sm"
-                />
-                <span class="text-xs text-muted">{{ slotLabel }}</span>
-              </template>
-            </div>
-
-            <!-- Group badge + Email status -->
-            <div class="flex items-center gap-3 flex-wrap">
-              <UBadge
-                v-if="booking.group"
-                color="neutral"
-                variant="subtle"
-                size="xs"
-              >
-                {{ getGroupLabel(booking.group) }}
-              </UBadge>
-
-              <!-- Email status inline -->
-              <div v-if="hasEmailStatus" class="flex items-center gap-2 text-[11px]">
-                <div
-                  v-if="confirmationText"
-                  class="flex items-center gap-1"
-                  :class="{
-                    'text-success': confirmationStatus?.status === 'sent',
-                    'text-warning': confirmationStatus?.status === 'pending',
-                    'text-error': confirmationStatus?.status === 'failed',
-                  }"
-                >
-                  <UIcon
-                    :name="confirmationStatus?.status === 'sent' ? 'i-lucide-check' : confirmationStatus?.status === 'failed' ? 'i-lucide-x' : 'i-lucide-clock'"
-                    class="size-3"
-                  />
-                  <span>{{ confirmationText }}</span>
+        <!-- Bottom row: User info + Email status -->
+        <div class="flex items-center gap-4 flex-wrap">
+          <!-- User info (compact) -->
+          <div v-if="bookerUser" class="flex items-center gap-1 text-xs">
+            <UPopover>
+              <CroutonUsersCardMini :item="bookerUser" name class="cursor-pointer" />
+              <template #content>
+                <div class="p-3 space-y-1 text-sm">
+                  <div class="font-medium">{{ bookerUser.name }}</div>
+                  <div v-if="bookerUser.email" class="text-muted text-xs">{{ bookerUser.email }}</div>
                 </div>
-                <div
-                  v-if="reminderText"
-                  class="flex items-center gap-1"
-                  :class="{
-                    'text-success': reminderStatus?.status === 'sent',
-                    'text-warning': reminderStatus?.status === 'pending',
-                    'text-error': reminderStatus?.status === 'failed',
-                    'text-muted': reminderStatus?.status === 'not_sent',
-                  }"
-                >
-                  <UIcon
-                    :name="reminderStatus?.status === 'sent' ? 'i-lucide-bell-ring' : 'i-lucide-bell'"
-                    class="size-3"
-                  />
-                  <span>{{ reminderText }}</span>
-                </div>
-              </div>
-            </div>
+              </template>
+            </UPopover>
+            <span v-if="booking.createdAt" class="text-muted whitespace-nowrap">on {{ createdDateText }}</span>
           </div>
 
-          <!-- Right: Booker + Actions -->
-          <div class="flex flex-col items-end gap-1 shrink-0">
-            <!-- Booker info -->
-            <div v-if="bookerName" class="flex items-center gap-1.5">
-              <UAvatar
-                v-if="bookerAvatar"
-                :src="bookerAvatar"
-                :alt="bookerName"
-                size="2xs"
-              />
+          <!-- Email status (compact) -->
+          <template v-if="hasEmailStatus">
+            <USeparator orientation="vertical" class="h-4" />
+            <div class="flex items-center gap-3 text-xs">
+              <!-- Confirmation -->
               <div
-                v-else
-                class="size-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-medium"
+                v-if="confirmationText"
+                class="flex items-center gap-1"
+                :class="{
+                  'text-success': confirmationStatus?.status === 'sent',
+                  'text-warning': confirmationStatus?.status === 'pending',
+                  'text-error': confirmationStatus?.status === 'failed',
+                }"
               >
-                {{ bookerInitials }}
+                <UIcon
+                  :name="confirmationStatus?.status === 'sent' ? 'i-lucide-mail-check' : confirmationStatus?.status === 'failed' ? 'i-lucide-mail-x' : 'i-lucide-mail'"
+                  class="size-3.5"
+                />
+                <span>{{ confirmationText }}</span>
               </div>
-              <span class="text-xs text-muted">{{ bookerName }}</span>
-            </div>
 
-            <!-- Actions row -->
-            <div class="flex items-center gap-1">
-              <!-- Edit button -->
-              <UButton
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                icon="i-lucide-pencil"
-                @click="emit('edit', booking)"
-              />
-
-              <!-- Send email dropdown -->
-              <UDropdownMenu
-                v-if="hasEmailDropdown"
-                :items="emailDropdownItems"
-                :ui="{ content: 'min-w-40' }"
+              <!-- Reminder -->
+              <div
+                v-if="reminderText"
+                class="flex items-center gap-1"
+                :class="{
+                  'text-success': reminderStatus?.status === 'sent',
+                  'text-warning': reminderStatus?.status === 'pending',
+                  'text-error': reminderStatus?.status === 'failed',
+                  'text-muted': reminderStatus?.status === 'not_sent',
+                }"
               >
-                <UButton
-                  variant="ghost"
-                  color="neutral"
-                  size="xs"
-                  icon="i-lucide-send"
-                  trailing-icon="i-lucide-chevron-down"
-                  :loading="!!sendingEmailType"
-                >
-                  Send
-                </UButton>
-              </UDropdownMenu>
+                <UIcon
+                  :name="reminderStatus?.status === 'sent' ? 'i-lucide-bell-ring' : 'i-lucide-bell'"
+                  class="size-3.5"
+                />
+                <span>{{ reminderText }}</span>
+              </div>
             </div>
-          </div>
+          </template>
+
+          <!-- Send email dropdown -->
+          <UDropdownMenu
+            v-if="hasEmailDropdown"
+            :items="emailDropdownItems"
+            :ui="{ content: 'min-w-40' }"
+          >
+            <UButton
+              variant="ghost"
+              color="neutral"
+              size="2xs"
+              icon="i-lucide-send"
+              :loading="!!sendingEmailType"
+            >
+              Send
+            </UButton>
+          </UDropdownMenu>
         </div>
       </div>
     </div>

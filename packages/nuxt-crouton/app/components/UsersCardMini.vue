@@ -2,15 +2,17 @@
 interface UserItem {
   title?: string
   name?: string
+  email?: string
   avatarUrl?: string
 }
 
 interface Props {
   item?: UserItem
+  /** Show name next to avatar */
   name?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   name: false
 })
 </script>
@@ -18,7 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
 <template>
   <div
     v-if="item"
-    class="w-full flex gap-2"
+    class="flex items-center gap-2"
   >
     <UTooltip
       :content="{
@@ -37,9 +39,6 @@ const props = withDefaults(defineProps<Props>(), {
         class="ring-2 ring-neutral-200 dark:ring-white/10"
       />
     </UTooltip>
-    <span
-      v-if="name"
-      class=""
-    >{{ item.name }}</span>
+    <span v-if="name" class="truncate">{{ item.name }}</span>
   </div>
 </template>
