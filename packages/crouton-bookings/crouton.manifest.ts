@@ -104,7 +104,6 @@ const manifest: PackageManifest = {
       'useCustomerBooking',
       'useBookingEmail',
       'useBookingEmailVariables',
-      'useBookingFilters',
       'useBookingsList',
       'useBookingsSettings',
       'useBookingSlots',
@@ -117,10 +116,8 @@ const manifest: PackageManifest = {
       { name: 'CroutonBookingList', description: 'Bookings list with filters', props: ['teamId', 'filters'] },
       { name: 'CroutonBookingCard', description: 'Individual booking display card', props: ['booking'] },
       { name: 'CroutonBookingCustomerBookingWizard', description: 'Full multi-step booking wizard', props: ['teamId', 'locations'] },
-      { name: 'CroutonBookingAdminCalendar', description: 'Admin calendar view with slot management', props: ['teamId', 'locationId'] },
       { name: 'CroutonBookingSlotIndicator', description: 'Visual slot availability indicator', props: ['slots', 'bookings'] },
-      { name: 'CroutonBookingDateBadge', description: 'Date display badge', props: ['date', 'format'] },
-      { name: 'CroutonBookingFilters', description: 'Booking filter controls', props: ['modelValue'] }
+      { name: 'CroutonBookingDateBadge', description: 'Date display badge', props: ['date', 'format'] }
     ],
     apiRoutes: [
       '/api/crouton-bookings/teams/[teamId]/availability',

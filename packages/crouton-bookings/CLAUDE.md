@@ -16,9 +16,7 @@ Booking system layer for Nuxt applications that provides both slot-based booking
 | `app/composables/useBookingEmail.ts` | Email functionality (opt-in) |
 | `app/composables/useBookingEmailVariables.ts` | Email template variables + demo data for previews |
 | `app/pages/dashboard/[team]/settings/email-templates.vue` | Email template management page |
-| `app/components/BookingSidebar/` | Sidebar booking components |
 | `app/components/CustomerBooking/` | Full-page booking wizard |
-| `app/components/Admin/` | Admin booking management |
 | `app/types/booking.ts` | TypeScript type definitions |
 | `server/api/crouton-bookings/` | API endpoints |
 | `server/utils/booking-emails.ts` | Email utilities |
@@ -30,35 +28,22 @@ Booking system layer for Nuxt applications that provides both slot-based booking
 
 ```
 CroutonBooking
-├── BookingSidebar/
-│   ├── Panel.vue       - Main sidebar container
-│   ├── Form.vue        - Date/slot selection
-│   ├── Cart.vue        - Shopping cart
-│   ├── MyBookings.vue  - User's bookings list
-│   ├── BookingItem.vue - Single booking display
-│   ├── LocationNav.vue - Location navigation
-│   ├── LocationContent.vue - Location details
-│   └── LocationMap.vue - Optional map display
 ├── CustomerBooking/
 │   ├── Wizard.vue      - Full-page wizard
 │   ├── LocationCard.vue - Location selection
 │   ├── SlotPicker.vue  - Time slot picker
 │   └── Confirmation.vue - Booking confirmation
-├── Admin/
-│   ├── Calendar.vue    - Admin calendar view
-│   ├── SlotSelect.vue  - Admin slot selection
-│   ├── Card.vue        - Admin booking card
-│   └── SlotCell.vue    - Calendar slot cell
 ├── Slot/
-│   ├── Indicator.vue   - Visual slot indicator
-│   └── SingleIndicator.vue - Single slot dot
+│   └── Indicator.vue   - Visual slot indicator
+├── Panel.vue           - Main booking sidebar
+├── Calendar.vue        - Calendar date picker
+├── List.vue            - Bookings list
+├── BookingCard.vue     - Individual booking card
+├── BookingCreateCard.vue - Booking creation form
 ├── WeekStrip.vue       - Week date navigation
 ├── DateBadge.vue       - Date display badge
-├── BookingDrawer.vue   - Mobile booking drawer
-├── BookingFloatingButton.vue - Mobile floating action
-├── FloatingIslandNav.vue - Mobile navigation
-├── FloatingIslandSidebar.vue - Mobile sidebar
-└── MyBookings/List.vue - Admin bookings list
+├── PanelFilters.vue    - Filter controls
+└── PanelMap.vue        - Map display
 ```
 
 ### API Endpoints
