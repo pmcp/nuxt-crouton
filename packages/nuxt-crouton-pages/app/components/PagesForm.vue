@@ -30,7 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
 const { t } = useT()
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
-const { close, loading: croutonLoading } = useCrouton()
+const { open, close, loading: croutonLoading } = useCrouton()
 
 // Default values for new pages
 const defaultValue = {
@@ -119,6 +119,15 @@ async function handleSubmit() {
     close()
   } catch (error) {
     console.error('Form submission failed:', error)
+  }
+}
+
+// Open delete confirmation dialog
+function openDeleteConfirm() {
+  if (state.value.id) {
+    // Close current form and open delete confirmation
+    close()
+    open('delete', 'pagesPages', [state.value.id])
   }
 }
 
@@ -260,12 +269,27 @@ const fieldComponents = {
       </template>
 
       <template #footer>
-        <CroutonFormActionButton
-          :action="action"
-          :collection="collection"
-          :items="items"
-          :loading="loading"
-        />
+        <div class="flex items-center gap-2 w-full">
+          <!-- Save button -->
+          <CroutonFormActionButton
+            :action="action"
+            :collection="collection"
+            :items="items"
+            :loading="loading"
+            class="flex-1"
+          />
+
+          <!-- Delete button (only on update) -->
+          <UTooltip v-if="action === 'update' && state.id" text="Delete page">
+            <UButton
+              color="error"
+              variant="ghost"
+              icon="i-lucide-trash-2"
+              size="md"
+              @click="openDeleteConfirm"
+            />
+          </UTooltip>
+        </div>
       </template>
     </CroutonFormLayout>
   </UForm>

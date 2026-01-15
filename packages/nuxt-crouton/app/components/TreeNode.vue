@@ -88,13 +88,6 @@ function getItemActions(item: TreeNodeType) {
         icon: 'i-lucide-pencil',
         onSelect: () => open('update', props.collection, [item.id])
       }
-      // {
-      //   label: 'Add child',
-      //   icon: 'i-lucide-plus',
-      //   onSelect: () => {
-      //     console.log('Add child to:', item.id)
-      //   }
-      // }
     ],
     [
       {
@@ -126,6 +119,14 @@ function getItemActions(item: TreeNodeType) {
             emit('move', item.id, null, 0, props.columnId || null)
           }
         }
+      }
+    ],
+    [
+      {
+        label: 'Delete',
+        icon: 'i-lucide-trash-2',
+        color: 'error' as const,
+        onSelect: () => open('delete', props.collection, [item.id])
       }
     ]
   ]
