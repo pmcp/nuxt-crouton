@@ -35,13 +35,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Get the team by slug
-  // No auth required - translations are public read-only UI strings
-  const team = await getTeamBySlugForTranslations(teamSlug)
+  try {
+    // Get the team by slug
+    // No auth required - translations are public read-only UI strings
+    const team = await getTeamBySlugForTranslations(teamSlug)
 
-  const query = getQuery(event)
-  const locale = query.locale as string | undefined
+    const query = getQuery(event)
+    const locale = query.locale as string | undefined
 
-  // Get system translations with team overrides using the centralized query
-  return await getSystemTranslationsWithTeamOverrides(team.id, locale)
+    // Get system translations with team overrides using the centralized query
+    return await getSystemTranslationsWithTeamOverrides(team.id, locale)
+  } catch (error: any) {
+    console.error('[translations-ui] Error for team slug:', teamSlug, error.message, error.stack)
+    throw error
+  }
 })

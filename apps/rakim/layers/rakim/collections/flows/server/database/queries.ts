@@ -88,6 +88,56 @@ export async function getRakimFlowsByIds(teamId: string, flowIds: string[]) {
   return flows
 }
 
+export async function getRakimFlowById(teamId: string, flowId: string) {
+  const db = useDB()
+
+  const ownerUser = alias(user as any, 'ownerUser')
+  const createdByUser = alias(user as any, 'createdByUser')
+  const updatedByUser = alias(user as any, 'updatedByUser')
+
+  const [flow] = await (db as any)
+    .select({
+      ...tables.rakimFlows,
+      ownerUser: {
+        id: ownerUser.id,
+        name: ownerUser.name,
+        email: ownerUser.email,
+        image: ownerUser.image
+      },
+      createdByUser: {
+        id: createdByUser.id,
+        name: createdByUser.name,
+        email: createdByUser.email,
+        image: createdByUser.image
+      },
+      updatedByUser: {
+        id: updatedByUser.id,
+        name: updatedByUser.name,
+        email: updatedByUser.email,
+        image: updatedByUser.image
+      }
+    } as any)
+    .from(tables.rakimFlows)
+    .leftJoin(ownerUser, eq(tables.rakimFlows.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.rakimFlows.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.rakimFlows.updatedBy, updatedByUser.id))
+    .where(
+      and(
+        eq(tables.rakimFlows.teamId, teamId),
+        eq(tables.rakimFlows.id, flowId)
+      )
+    )
+
+  if (!flow) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Flow not found'
+    })
+  }
+
+  return flow
+}
+
 export async function createRakimFlow(data: NewRakimFlow) {
   const db = useDB()
 
