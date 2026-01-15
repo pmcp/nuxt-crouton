@@ -13,6 +13,7 @@
     "@friendlyinternet/nuxt-crouton": "workspace:*",
     "@friendlyinternet/nuxt-crouton-ai": "workspace:*",
     "@libsql/client": "^0.17.0",
+    "human-id": "^4.1.1",
     "cheerio": "^1.1.2",
     "drizzle-orm": "^0.45.1",
     "nuxt": "^4.2.2",
