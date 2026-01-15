@@ -19,6 +19,7 @@
  */
 
 import { randomBytes } from 'node:crypto'
+import { kv } from 'hub:kv'
 
 /**
  * Required Slack OAuth scopes for the bot
@@ -55,10 +56,13 @@ const SLACK_SCOPES = [
 ].join(',')
 
 export default defineEventHandler(async (event) => {
+  console.log('[OAuth] Slack install endpoint hit')
   try {
     // Get environment variables
     const config = useRuntimeConfig(event)
+    console.log('[OAuth] Config loaded, checking for clientId...')
     const clientId = config.slackClientId || process.env.SLACK_CLIENT_ID
+    console.log('[OAuth] clientId:', clientId ? 'present' : 'missing')
     const baseUrl = config.public.baseUrl || process.env.BASE_URL || 'http://localhost:3000'
 
     // Validate required configuration
@@ -80,7 +84,8 @@ export default defineEventHandler(async (event) => {
 
     // Store state token with team ID, flow ID, and opener origin in NuxtHub KV
     // TTL of 300 seconds (5 minutes) for automatic cleanup
-    await hubKV().set(`oauth:state:${state}`, {
+    console.log('[OAuth] Storing state in KV...')
+    await kv.set(`oauth:state:${state}`, {
       teamId,
       flowId, // Optional: if provided, input will be added to this specific flow
       openerOrigin, // For postMessage back to parent window
@@ -102,7 +107,7 @@ export default defineEventHandler(async (event) => {
     // Optional: Add user scopes if needed (for actions on behalf of users)
     // slackAuthUrl.searchParams.set('user_scope', 'users:read')
 
-    logger.debug('[OAuth] Initiating Slack OAuth flow', {
+    console.log('[OAuth] Initiating Slack OAuth flow', {
       teamId,
       flowId: flowId || 'auto-detect',
       state: state.substring(0, 8) + '...',
@@ -112,13 +117,13 @@ export default defineEventHandler(async (event) => {
     // Redirect to Slack authorization page
     return sendRedirect(event, slackAuthUrl.toString(), 302)
   }
-  catch (error) {
-    logger.error('[OAuth] Failed to initiate Slack OAuth flow:', error)
+  catch (error: any) {
+    console.error('[OAuth] Failed to initiate Slack OAuth flow:', error?.message, error?.stack)
 
-    // Return user-friendly error
+    // Return detailed error for debugging
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to initiate Slack authorization',
+      statusMessage: `Failed to initiate Slack authorization: ${error?.message || 'Unknown error'}`,
     })
   }
 })
