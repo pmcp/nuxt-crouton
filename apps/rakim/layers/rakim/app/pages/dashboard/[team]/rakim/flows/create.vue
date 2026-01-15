@@ -1,5 +1,6 @@
 <template>
-  <AppContainer title="Create Flow">
+  <UContainer class="py-6">
+    <h1 class="text-2xl font-bold mb-6">Create Flow</h1>
     <div class="mb-6">
       <NuxtLink
         :to="`/dashboard/${currentTeam?.slug}/rakim/flows`"
@@ -18,7 +19,7 @@
     <div v-else class="text-center text-muted-foreground">
       Loading...
     </div>
-  </AppContainer>
+  </UContainer>
 </template>
 
 <script setup lang="ts">

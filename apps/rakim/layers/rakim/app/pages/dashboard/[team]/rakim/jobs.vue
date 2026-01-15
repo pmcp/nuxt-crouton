@@ -1,5 +1,6 @@
 <template>
-  <AppContainer title="Job Monitoring">
+  <UContainer class="py-6">
+    <h1 class="text-2xl font-bold mb-6">Job Monitoring</h1>
     <!-- Back Button -->
     <div class="mb-4">
       <NuxtLink
@@ -250,7 +251,7 @@
           </div>
       </UCard>
     </div>
-  </AppContainer>
+  </UContainer>
 </template>
 
 <script setup lang="ts">

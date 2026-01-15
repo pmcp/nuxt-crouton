@@ -1,5 +1,6 @@
 <template>
-  <AppContainer title="Home">
+  <UContainer class="py-6">
+    <h1 class="text-2xl font-bold mb-6">Home</h1>
     <FlowList
       v-if="currentTeam?.id"
       :team-id="currentTeam.id"
@@ -8,7 +9,7 @@
     <div v-else class="text-center text-muted-foreground">
       Loading...
     </div>
-  </AppContainer>
+  </UContainer>
 </template>
 
 <script setup lang="ts">

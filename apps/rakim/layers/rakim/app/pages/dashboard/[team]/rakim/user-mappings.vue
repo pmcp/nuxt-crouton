@@ -1,5 +1,6 @@
 <template>
-  <AppContainer title="User Mappings">
+  <UContainer class="py-6">
+    <h1 class="text-2xl font-bold mb-6">User Mappings</h1>
     <div class="mb-4">
       <NuxtLink
         :to="`/dashboard/${currentTeam?.slug}`"
@@ -14,7 +15,7 @@
       collection-name="rakimUserMappings"
       default-layout="table"
     />
-  </AppContainer>
+  </UContainer>
 </template>
 
 <script setup lang="ts">

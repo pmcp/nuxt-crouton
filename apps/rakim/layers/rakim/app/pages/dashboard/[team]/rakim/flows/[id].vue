@@ -1,5 +1,6 @@
 <template>
-  <AppContainer :title="pageTitle">
+  <UContainer class="py-6">
+    <h1 class="text-2xl font-bold mb-6">{{ pageTitle }}</h1>
     <div class="mb-6">
       <NuxtLink
         :to="`/dashboard/${currentTeam?.slug}/rakim/flows`"
@@ -31,7 +32,7 @@
       :outputs="outputs"
       @saved="handleFlowSaved"
     />
-  </AppContainer>
+  </UContainer>
 </template>
 
 <script setup lang="ts">

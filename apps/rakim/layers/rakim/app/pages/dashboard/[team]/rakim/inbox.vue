@@ -1,5 +1,6 @@
 <template>
-  <AppContainer title="Email Inbox">
+  <UContainer class="py-6">
+    <h1 class="text-2xl font-bold mb-6">Email Inbox</h1>
     <!-- Back Button -->
     <div class="mb-4">
       <NuxtLink
@@ -285,7 +286,7 @@
         </div>
       </template>
     </UModal>
-  </AppContainer>
+  </UContainer>
 </template>
 
 <script setup lang="ts">
