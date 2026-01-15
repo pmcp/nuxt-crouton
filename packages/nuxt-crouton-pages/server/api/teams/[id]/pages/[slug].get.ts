@@ -6,7 +6,7 @@
  *
  * GET /api/teams/[id]/pages/[slug]
  */
-import { eq, and, or } from 'drizzle-orm'
+import { eq, and, or, asc } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const teamParam = getRouterParam(event, 'id')
@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Handle empty slug (homepage)
-  const slug = slugParam || ''
+  // Handle empty slug or _home (homepage)
+  const slug = (!slugParam || slugParam === '_home') ? '' : slugParam
 
   try {
     const database = db
@@ -49,26 +49,52 @@ export default defineEventHandler(async (event) => {
 
     // Try to get page from pagesPages table
     try {
-      const pagesSchema = await import('#crouton/schema/pages')
+      const pagesSchema = await import('~~/layers/pages/collections/pages/server/database/schema')
 
-      // Find page by slug
-      const page = await database
-        .select()
-        .from(pagesSchema.pagesPages)
-        .where(
-          and(
-            eq(pagesSchema.pagesPages.teamId, team.id),
-            eq(pagesSchema.pagesPages.slug, slug)
+      let page: any
+
+      if (!slug) {
+        // Homepage: fetch first published root page by sort order
+        page = await database
+          .select()
+          .from(pagesSchema.pagesPages)
+          .where(
+            and(
+              eq(pagesSchema.pagesPages.teamId, team.id),
+              eq(pagesSchema.pagesPages.status, 'published'),
+              eq(pagesSchema.pagesPages.depth, 0) // Root level only
+            )
           )
-        )
-        .limit(1)
-        .then((rows: any[]) => rows[0])
+          .orderBy(asc(pagesSchema.pagesPages.order))
+          .limit(1)
+          .then((rows: any[]) => rows[0])
 
-      if (!page) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'Page not found'
-        })
+        if (!page) {
+          throw createError({
+            statusCode: 404,
+            statusMessage: 'No published homepage found'
+          })
+        }
+      } else {
+        // Regular page: find by exact slug
+        page = await database
+          .select()
+          .from(pagesSchema.pagesPages)
+          .where(
+            and(
+              eq(pagesSchema.pagesPages.teamId, team.id),
+              eq(pagesSchema.pagesPages.slug, slug)
+            )
+          )
+          .limit(1)
+          .then((rows: any[]) => rows[0])
+
+        if (!page) {
+          throw createError({
+            statusCode: 404,
+            statusMessage: 'Page not found'
+          })
+        }
       }
 
       // Check page status
@@ -126,6 +152,31 @@ export default defineEventHandler(async (event) => {
       }
       // visibility === 'public' - allow access
 
+      // Resolve translations - merge translated fields over base values
+      if (page.translations) {
+        try {
+          const translations = typeof page.translations === 'string'
+            ? JSON.parse(page.translations)
+            : page.translations
+
+          // Try to get locale from header, fallback to 'en'
+          const acceptLang = getHeader(event, 'accept-language')
+          const locale = acceptLang?.split(',')[0]?.split('-')[0] || 'en'
+          const localeTranslations = translations[locale] || translations['en'] || Object.values(translations)[0]
+
+          if (localeTranslations && typeof localeTranslations === 'object') {
+            // Merge translated fields (title, content, etc.)
+            for (const [key, value] of Object.entries(localeTranslations)) {
+              if (value !== null && value !== undefined) {
+                page[key] = value
+              }
+            }
+          }
+        } catch (e) {
+          console.error('[pages] Translation parsing error:', e)
+        }
+      }
+
       return {
         data: page,
         meta: {
@@ -135,7 +186,7 @@ export default defineEventHandler(async (event) => {
       }
     } catch (error: any) {
       if (error.statusCode) throw error
-      // pagesPages table doesn't exist
+      // pagesPages table doesn't exist or schema import failed
       throw createError({
         statusCode: 404,
         statusMessage: 'Page not found'

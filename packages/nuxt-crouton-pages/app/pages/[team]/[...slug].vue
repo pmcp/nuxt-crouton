@@ -44,8 +44,9 @@ const slug = computed(() => {
 // Build API URL - slug might be empty for homepage
 const apiUrl = computed(() => {
   const baseUrl = `/api/teams/${team.value}/pages`
-  // Use the slug endpoint if we have a slug, otherwise get by empty slug
-  return slug.value ? `${baseUrl}/${encodeURIComponent(slug.value)}` : `${baseUrl}/`
+  // Always use slug endpoint - use '_home' for homepage (empty slug)
+  // The API handles '_home' as "get first published root page"
+  return `${baseUrl}/${slug.value || '_home'}`
 })
 
 // Fetch page by team and slug
