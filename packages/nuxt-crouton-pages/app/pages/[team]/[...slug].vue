@@ -58,12 +58,17 @@ const { data: pageResponse, status, error } = await useFetch(apiUrl, {
 // Extract page from response
 const page = computed(() => pageResponse.value)
 
-// Handle 404
+// Handle errors
 if (error.value?.statusCode === 404) {
   throw createError({
     statusCode: 404,
     statusMessage: 'Page Not Found'
   })
+}
+
+// Handle 401 - redirect to login for members-only pages
+if (error.value?.statusCode === 401) {
+  navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
 }
 
 // Get page type info
@@ -95,7 +100,7 @@ useHead({
 </script>
 
 <template>
-  <div class="page-view min-h-screen">
+  <div class="page-view">
     <!-- Loading -->
     <div v-if="status === 'pending'" class="flex justify-center items-center py-24">
       <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-primary" />
@@ -103,17 +108,13 @@ useHead({
 
     <!-- Page content -->
     <template v-else-if="page">
-      <!-- Page header (optional - can be removed if pages handle their own) -->
-      <header v-if="page.title && pageType?.id === 'regular'" class="border-b border-default">
-        <div class="max-w-4xl mx-auto px-4 py-8">
-          <h1 class="text-3xl font-bold">{{ page.title }}</h1>
-        </div>
+      <!-- Page header for regular content pages -->
+      <header v-if="page.title && pageType?.id === 'regular'" class="mb-6">
+        <h1 class="text-3xl font-bold">{{ page.title }}</h1>
       </header>
 
       <!-- Page content -->
-      <main class="max-w-4xl mx-auto">
-        <CroutonPagesRenderer :page="page" />
-      </main>
+      <CroutonPagesRenderer :page="page" />
     </template>
 
     <!-- Error / Not found -->
