@@ -8,6 +8,7 @@ export function useBookingsList() {
   const { currentTeam } = useTeam()
 
   // Fetch bookings (client-only, depends on auth context)
+  // Use same key as useBookingCart to share cache
   const {
     data: bookingsData,
     pending: bookingsLoading,
@@ -18,6 +19,7 @@ export function useBookingsList() {
       ? `/api/crouton-bookings/teams/${currentTeam.value.id}/customer-bookings`
       : null,
     {
+      key: 'crouton-booking-sidebar-customer-bookings',
       default: () => [],
       watch: [() => currentTeam.value?.id],
       server: false, // Avoid SSR hydration mismatch - team context is client-side

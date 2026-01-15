@@ -45,6 +45,8 @@ const emit = defineEmits<{
   created: []
   /** Emitted when a booking is updated */
   updated: []
+  /** Emitted when an email is sent */
+  emailSent: []
   /** Emitted when filters change */
   'update:filters': [filters: FilterState]
 }>()
@@ -213,21 +215,29 @@ async function onBookingCreated() {
   const dateToScrollTo = creatingAtDate.value
   creatingAtDate.value = null
 
-  // Refresh to get the new booking
-  await refresh()
-
-  // Scroll to the newly created booking
-  if (dateToScrollTo) {
-    scrollToDate.value = dateToScrollTo
-  }
-
+  // Emit first so parent can refresh data
   emit('created')
+
+  // Then scroll to the newly created booking
+  if (dateToScrollTo) {
+    // Wait for parent's refresh to complete and DOM to update
+    // Using setTimeout because emit() is synchronous and doesn't wait for parent's async handler
+    setTimeout(() => {
+      scrollToDate.value = dateToScrollTo
+    }, 300)
+  }
 }
 
 // Handle booking updated - refresh the list
 async function onBookingUpdated() {
   await refresh()
   emit('updated')
+}
+
+// Handle email sent - refresh the list to update email stats
+async function onEmailSent() {
+  await refresh()
+  emit('emailSent')
 }
 
 // Handle cancel creation
@@ -330,6 +340,7 @@ defineExpose({
         @top-visible-date-change="onTopVisibleDateChange"
         @date-click="onDateClick"
         @updated="onBookingUpdated"
+        @email-sent="onEmailSent"
       />
     </div>
   </div>

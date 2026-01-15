@@ -47,6 +47,8 @@ const emit = defineEmits<{
   dateClick: [date: Date]
   /** Emitted when a booking is updated */
   updated: []
+  /** Emitted when an email is sent (so parent can refresh email stats) */
+  emailSent: []
 }>()
 
 // Track which booking is being edited (inline edit mode)
@@ -102,8 +104,12 @@ const sendingEmailState = ref<{ bookingId: string; triggerType: string } | null>
 async function handleResendEmail(booking: Booking, triggerType: string) {
   if (!isEmailEnabled.value) return
 
-  const teamId = route.params.team as string
-  if (!teamId) return
+  // Use booking's teamId (more reliable than route params)
+  const teamId = booking.teamId || route.params.team as string
+  if (!teamId) {
+    console.error('[List] No teamId available for email send')
+    return
+  }
 
   sendingEmailState.value = { bookingId: booking.id, triggerType }
 
@@ -118,6 +124,8 @@ async function handleResendEmail(booking: Booking, triggerType: string) {
       })
       // Refresh the list to update email stats
       handleRefresh()
+      // Emit so parent can refresh if using external data
+      emit('emailSent')
     }
     else {
       toast.add({
@@ -404,10 +412,15 @@ function onBookingDateClick(date: Date) {
   emit('dateClick', date)
 }
 
+// Flag to temporarily disable highlight scroll during creation scroll
+const isScrollingToCreated = ref(false)
+
 // Watch for highlighted date changes and scroll
 watch(
   () => props.highlightedDate,
   (newDate) => {
+    // Skip if we're scrolling to a newly created booking
+    if (isScrollingToCreated.value) return
     if (!newDate) return
 
     // Only scroll if there are bookings on the exact date (not nearest)
@@ -430,16 +443,24 @@ watch(
   (newDate) => {
     if (!newDate) return
 
+    // Disable highlight scroll temporarily
+    isScrollingToCreated.value = true
+
     // Wait for DOM to update with new booking
     nextTick(() => {
       const targetKey = formatDateKey(newDate)
       const element = dateElementRefs.value.get(targetKey)
+
       if (element) {
         element.scrollIntoView({
-          behavior: 'smooth',
+          behavior: 'instant',
           block: 'start',
         })
       }
+      // Re-enable highlight scroll shortly after
+      setTimeout(() => {
+        isScrollingToCreated.value = false
+      }, 100)
     })
   },
 )
