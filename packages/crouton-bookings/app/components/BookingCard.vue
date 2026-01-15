@@ -98,63 +98,86 @@ const createdDateText = computed(() => {
 // Email details from API
 const emailDetails = computed(() => props.booking.emailDetails || [])
 
-// Simple email action buttons
-interface EmailAction {
+// Timeline item for email status display
+interface TimelineItem {
   type: EmailTriggerType
   icon: string
+  status: 'sent' | 'pending' | 'failed' | 'not_sent'
+  date: string | null
   tooltip: string
-  canSend: boolean
 }
 
-const emailActions = computed<EmailAction[]>(() => {
-  const actions: EmailAction[] = []
+// Get opacity class based on email status
+function getTimelineOpacity(status: TimelineItem['status']): string {
+  switch (status) {
+    case 'sent': return 'opacity-100'
+    case 'pending': return 'opacity-70'
+    case 'failed': return 'opacity-100 text-error'
+    default: return 'opacity-30 hover:opacity-60'
+  }
+}
+
+// Format timeline date from ISO string
+function formatTimelineDate(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null
+  const date = new Date(dateStr)
+  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }).format(date)
+}
+
+// Build timeline items from email details
+const timelineItems = computed<TimelineItem[]>(() => {
+  const items: TimelineItem[] = []
   const bookingDate = props.booking.date ? new Date(props.booking.date) : null
   const now = new Date()
   const isPast = bookingDate ? bookingDate < now : false
 
-  // Confirmation email - always available
+  // Confirmation email - always shown
   const confirmDetail = emailDetails.value.find(e => e.triggerType === 'booking_created')
-  actions.push({
+  items.push({
     type: 'booking_created',
     icon: confirmDetail?.status === 'sent' ? 'i-lucide-mail-check' : 'i-lucide-mail',
-    tooltip: confirmDetail?.status === 'sent' ? 'Resend confirmation' : 'Send confirmation',
-    canSend: true
+    status: confirmDetail?.status || 'not_sent',
+    date: formatTimelineDate(confirmDetail?.sentAt),
+    tooltip: confirmDetail?.status === 'sent' ? 'Resend confirmation' : 'Send confirmation'
   })
 
-  // Reminder - only for future bookings
+  // Reminder - only for future bookings (not cancelled)
   if (!isPast && !isCancelled.value) {
     const reminderDetail = emailDetails.value.find(e => e.triggerType === 'reminder_before')
-    actions.push({
+    items.push({
       type: 'reminder_before',
       icon: reminderDetail?.status === 'sent' ? 'i-lucide-bell-ring' : 'i-lucide-bell',
-      tooltip: reminderDetail?.status === 'sent' ? 'Resend reminder' : 'Send reminder',
-      canSend: true
+      status: reminderDetail?.status || 'not_sent',
+      date: formatTimelineDate(reminderDetail?.sentAt || reminderDetail?.scheduledFor),
+      tooltip: reminderDetail?.status === 'sent' ? 'Resend reminder' : 'Send reminder'
     })
   }
 
   // Cancellation - only if cancelled
   if (isCancelled.value) {
     const cancelDetail = emailDetails.value.find(e => e.triggerType === 'booking_cancelled')
-    actions.push({
+    items.push({
       type: 'booking_cancelled',
       icon: cancelDetail?.status === 'sent' ? 'i-lucide-mail-x' : 'i-lucide-mail-minus',
-      tooltip: cancelDetail?.status === 'sent' ? 'Resend cancellation' : 'Send cancellation',
-      canSend: true
+      status: cancelDetail?.status || 'not_sent',
+      date: formatTimelineDate(cancelDetail?.sentAt),
+      tooltip: cancelDetail?.status === 'sent' ? 'Resend cancellation' : 'Send cancellation'
     })
   }
 
-  // Follow-up - only for past bookings
+  // Follow-up - only for past bookings (not cancelled)
   if (isPast && !isCancelled.value) {
     const followupDetail = emailDetails.value.find(e => e.triggerType === 'follow_up_after')
-    actions.push({
+    items.push({
       type: 'follow_up_after',
-      icon: followupDetail?.status === 'sent' ? 'i-lucide-mail-check' : 'i-lucide-mail-question',
-      tooltip: followupDetail?.status === 'sent' ? 'Resend follow-up' : 'Send follow-up',
-      canSend: true
+      icon: followupDetail?.status === 'sent' ? 'i-lucide-message-square-reply' : 'i-lucide-message-square',
+      status: followupDetail?.status || 'not_sent',
+      date: formatTimelineDate(followupDetail?.sentAt || followupDetail?.scheduledFor),
+      tooltip: followupDetail?.status === 'sent' ? 'Resend follow-up' : 'Send follow-up'
     })
   }
 
-  return actions
+  return items
 })
 </script>
 
@@ -268,23 +291,26 @@ const emailActions = computed<EmailAction[]>(() => {
         </div>
       </div>
 
-      <!-- Email action buttons -->
-      <div v-if="isEmailEnabled && emailActions.length > 0" class="flex items-center gap-1 pr-8">
+      <!-- Email timeline -->
+      <div v-if="isEmailEnabled && timelineItems.length > 0" class="flex items-center gap-3 pr-8">
         <UTooltip
-          v-for="action in emailActions"
-          :key="action.type"
-          :text="action.tooltip"
+          v-for="item in timelineItems"
+          :key="item.type"
+          :text="item.tooltip"
         >
-          <UButton
-            variant="ghost"
-            color="neutral"
-            size="xs"
-            :icon="action.icon"
-            :loading="sendingEmailType === action.type"
-            :disabled="!!sendingEmailType || !action.canSend"
-            class="opacity-50 hover:opacity-100"
-            @click="emit('resend-email', action.type)"
-          />
+          <button
+            type="button"
+            class="flex flex-col items-center gap-0.5 transition-all cursor-pointer"
+            :class="[
+              getTimelineOpacity(item.status),
+              sendingEmailType === item.type ? 'animate-pulse' : ''
+            ]"
+            :disabled="!!sendingEmailType"
+            @click="emit('resend-email', item.type)"
+          >
+            <UIcon :name="item.icon" class="size-4" />
+            <span class="text-[10px] text-muted whitespace-nowrap">{{ item.date || '—' }}</span>
+          </button>
         </UTooltip>
       </div>
     </div>
