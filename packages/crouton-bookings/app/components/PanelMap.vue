@@ -13,6 +13,17 @@ const emit = defineEmits<{
   'toggle-location': [locationId: string]
 }>()
 
+// Get localized location title with fallbacks
+function getLocationTitle(location: LocationData): string {
+  const { locale } = useI18n()
+  const translations = location.translations as Record<string, { title?: string }> | undefined
+
+  return translations?.[locale.value]?.title
+    || translations?.en?.title
+    || location.title
+    || 'Untitled'
+}
+
 // Color mode for dark theme map
 const colorMode = useColorMode()
 
@@ -96,7 +107,7 @@ function onMarkerClick(locationId: string) {
           :position="location.coordinates"
           :color="location.color || '#3b82f6'"
           :active="selectedLocations.length > 0 ? isLocationSelected(location.id) : undefined"
-          :popup-content="`<div class='p-2'><strong>${location.title}</strong>${location.city ? `<br><span style='opacity: 0.7; font-size: 0.875rem;'>${location.city}</span>` : ''}</div>`"
+          :popup-content="`<div class='p-2'><strong>${getLocationTitle(location)}</strong>${location.city ? `<br><span style='opacity: 0.7; font-size: 0.875rem;'>${location.city}</span>` : ''}</div>`"
           @click="onMarkerClick(location.id)"
         />
       </template>

@@ -59,6 +59,8 @@ export interface LocationData {
   // Inventory mode fields
   inventoryMode?: boolean
   quantity?: number
+  // Translations for i18n support
+  translations?: Record<string, { title?: string; street?: string; zip?: string; city?: string; content?: string }>
   createdAt?: string | Date
   updatedAt?: string | Date
   createdBy?: string

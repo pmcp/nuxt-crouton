@@ -41,6 +41,17 @@ const emit = defineEmits<{
 
 const { parseSlotIds, parseLocationSlots } = useBookingSlots()
 
+// Get localized location title with fallbacks
+function getLocationTitle(location: LocationData): string {
+  const { locale } = useI18n()
+  const translations = location.translations as Record<string, { title?: string }> | undefined
+
+  return translations?.[locale.value]?.title
+    || translations?.en?.title
+    || location.title
+    || 'Untitled'
+}
+
 // Ref for WeekStrip control
 const weekStripRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void } | null>(null)
 
@@ -250,7 +261,7 @@ function getIndicatorsForDate(date: Date): Array<{
 
     indicators.push({
       locationId,
-      locationTitle: location.title || 'Unknown',
+      locationTitle: getLocationTitle(location),
       color: location.color || '#3b82f6',
       slots: parseLocationSlots(location),
       bookedSlotIds: uniqueBookedSlotIds,

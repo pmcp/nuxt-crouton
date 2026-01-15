@@ -11,7 +11,8 @@ export default defineNuxtConfig({
   // i18n configuration for admin translations
   i18n: {
     locales: [
-      { code: 'en', file: 'en.json' }
+      { code: 'en', file: 'en.json' },
+      { code: 'fr', file: 'fr.json' }
     ],
     langDir: '../i18n/locales'
   },

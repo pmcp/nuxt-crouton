@@ -1,0 +1,47 @@
+{
+  "pages": {
+    "title": "Pages",
+    "create": "Créer une page",
+    "createNew": "Créer une nouvelle page",
+    "selectType": "Sélectionner le type de page",
+    "empty": "Aucune page pour le moment",
+    "emptyDescription": "Créez votre première page pour commencer",
+    "admin": {
+      "pages": "Pages",
+      "title": "Pages",
+      "createPage": "Créer une page",
+      "editPage": "Modifier la page",
+      "pageType": "Type de page",
+      "content": "Contenu",
+      "settings": "Paramètres"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "published": "Publié",
+      "archived": "Archivé"
+    },
+    "visibility": {
+      "public": "Public",
+      "members": "Membres uniquement",
+      "hidden": "Caché"
+    },
+    "fields": {
+      "title": "Titre",
+      "slug": "Slug URL",
+      "pageType": "Type de page",
+      "content": "Contenu",
+      "status": "Statut",
+      "visibility": "Visibilité",
+      "showInNavigation": "Afficher dans la navigation",
+      "seoTitle": "Titre SEO",
+      "seoDescription": "Description SEO"
+    }
+  },
+  "common": {
+    "cancel": "Annuler",
+    "continue": "Continuer",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "back": "Retour"
+  }
+}

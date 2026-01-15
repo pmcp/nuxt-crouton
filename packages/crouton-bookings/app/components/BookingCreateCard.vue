@@ -56,6 +56,17 @@ function getFirstSlotId(slot: string | null | undefined): string | null {
   return parsed.length > 0 ? parsed[0] : null
 }
 
+// Get localized location title with fallbacks
+function getLocationTitle(location: LocationData): string {
+  const { locale } = useI18n()
+  const translations = location.translations as Record<string, { title?: string }> | undefined
+
+  return translations?.[locale.value]?.title
+    || translations?.en?.title
+    || location.title
+    || 'Untitled'
+}
+
 // Local state - initialize from booking if in edit mode
 const localLocationId = ref<string | null>(props.booking?.location ?? null)
 const localSlotId = ref<string | null>(getFirstSlotId(props.booking?.slot))
@@ -295,7 +306,7 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
               :style="{ backgroundColor: isLocationEnabled(location.id) ? (location.color || '#3b82f6') : '#9ca3af' }"
             />
           </template>
-          {{ location.title }}
+          {{ getLocationTitle(location) }}
         </UButton>
       </div>
 

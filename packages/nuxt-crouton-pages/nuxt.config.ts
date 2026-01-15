@@ -1,3 +1,8 @@
+import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
+
+const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
 /**
  * Nuxt Crouton Pages Layer
  *
@@ -16,18 +21,20 @@ export default defineNuxtConfig({
   ],
 
   // Components auto-import with CroutonPages prefix
+  // PagesForm.vue → CroutonPagesPagesForm
   components: {
     dirs: [
       {
-        path: './app/components',
-        prefix: 'CroutonPages'
+        path: join(currentDir, 'app/components'),
+        prefix: 'CroutonPages',
+        global: true
       }
     ]
   },
 
   // Auto-import composables
   imports: {
-    dirs: ['./app/composables']
+    dirs: [join(currentDir, 'app/composables')]
   },
 
   // Runtime config schema
@@ -49,14 +56,32 @@ export default defineNuxtConfig({
   // Nitro server configuration
   nitro: {
     // Include server middleware and utils
-    scanDirs: ['./server']
+    scanDirs: ['./server'],
+    // Mark app-specific aliases as external (they're defined by consuming apps)
+    externals: {
+      inline: ['#crouton/schema/pages']
+    },
+    rollupConfig: {
+      external: ['#crouton/schema/pages']
+    }
+  },
+
+  // Vite configuration for build-time
+  vite: {
+    build: {
+      rollupOptions: {
+        // Mark as external - these aliases are provided by consuming apps
+        external: ['#crouton/schema/pages']
+      }
+    }
   },
 
   // i18n translations
   i18n: {
     locales: [
-      { code: 'en', name: 'English', file: 'en.json' }
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'fr', name: 'Français', file: 'fr.json' }
     ],
-    langDir: './locales'
+    langDir: './i18n/locales'
   }
 })

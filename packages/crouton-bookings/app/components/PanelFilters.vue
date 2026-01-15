@@ -43,6 +43,17 @@ function toggleLocation(locationId: string) {
 function isLocationSelected(locationId: string): boolean {
   return props.selectedLocations.includes(locationId)
 }
+
+// Get localized location title with fallbacks
+function getLocationTitle(location: LocationData): string {
+  const { locale } = useI18n()
+  const translations = location.translations as Record<string, { title?: string }> | undefined
+
+  return translations?.[locale.value]?.title
+    || translations?.en?.title
+    || location.title
+    || 'Untitled'
+}
 </script>
 
 <template>
@@ -119,7 +130,7 @@ function isLocationSelected(locationId: string): boolean {
               class="text-sm font-medium truncate max-w-[120px]"
               :class="isLocationSelected(location.id) ? 'text-primary' : 'text-default'"
             >
-              {{ location.title }}
+              {{ getLocationTitle(location) }}
             </span>
             <span v-if="location.city" class="text-xs text-muted truncate max-w-[120px]">
               {{ location.city }}

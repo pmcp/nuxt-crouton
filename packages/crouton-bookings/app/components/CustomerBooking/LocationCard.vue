@@ -14,6 +14,17 @@ const emit = defineEmits<{
   select: [location: LocationData]
 }>()
 
+// Get localized location title with fallbacks
+function getLocationTitle(location: LocationData): string {
+  const { locale } = useI18n()
+  const translations = location.translations as Record<string, { title?: string }> | undefined
+
+  return translations?.[locale.value]?.title
+    || translations?.en?.title
+    || location.title
+    || 'Untitled'
+}
+
 const fullAddress = computed(() => {
   const parts = [
     props.location.street,
@@ -57,7 +68,7 @@ const availableQuantity = computed(() => props.location.quantity || 0)
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">
           <h3 class="font-semibold text-gray-900 truncate">
-            {{ location.title }}
+            {{ getLocationTitle(location) }}
           </h3>
           <UIcon
             v-if="selected"
