@@ -10,12 +10,14 @@ export default defineNuxtConfig({
   },
 
   // Component configuration - provides CroutonEditorSimple wrapper for UEditor
+  // Priority 1 ensures editor components override stubs from nuxt-crouton
   components: {
     dirs: [
       {
         path: join(currentDir, 'app/components'),
         prefix: 'CroutonEditor',
-        global: true
+        global: true,
+        priority: 1
       }
     ]
   },

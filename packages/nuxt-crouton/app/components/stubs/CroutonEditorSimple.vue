@@ -1,69 +1,29 @@
-<template>
-  <UEditor
-    v-model="model"
-    :content-type="contentType"
-    :placeholder="placeholder"
-    :starter-kit="starterKit"
-    :extensions="extensions"
-    :editable="editable"
-    :autofocus="autofocus"
-    :markdown="markdown"
-    :image="image"
-    :mention="mention"
-    :handlers="handlers"
-    :ui="mergedUi"
-    @create="$emit('create', $event)"
-    @update="$emit('update', $event)"
-    @focus="$emit('focus', $event)"
-    @blur="$emit('blur', $event)"
-  >
-    <template #default="{ editor, handlers: editorHandlers }">
-      <slot
-        :editor="editor"
-        :handlers="editorHandlers"
-      />
-    </template>
-  </UEditor>
-</template>
-
 <script setup lang="ts">
-// Stub component - overridden by nuxt-crouton-editor when installed
-// Provides basic UEditor fallback when the full editor package is not used
-import { computed } from 'vue'
+/**
+ * CroutonEditorSimple Stub
+ *
+ * Fallback when nuxt-crouton-editor is not installed.
+ * Provides basic UEditor with toolbar.
+ */
+import type { EditorToolbarItem } from '@nuxt/ui'
 import type { Editor } from '@tiptap/vue-3'
-
-type EditorContentType = 'html' | 'markdown' | 'json'
 
 interface Props {
   modelValue?: string | null
   placeholder?: string
-  contentType?: EditorContentType
-  starterKit?: Record<string, any>
-  extensions?: any[]
+  contentType?: 'html' | 'markdown' | 'json'
   editable?: boolean
-  autofocus?: boolean | 'start' | 'end' | 'all' | number
-  markdown?: Record<string, any>
-  image?: Record<string, any>
-  mention?: Record<string, any>
-  handlers?: Record<string, any>
-  ui?: {
-    root?: string
-    content?: string
-    base?: string
-  }
+  showToolbar?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   contentType: 'html',
-  editable: true
+  editable: true,
+  showToolbar: true
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
-  'create': [{ editor: Editor }]
-  'update': [{ editor: Editor }]
-  'focus': [{ editor: Editor }]
-  'blur': [{ editor: Editor }]
 }>()
 
 const model = computed({
@@ -71,9 +31,40 @@ const model = computed({
   set: value => emit('update:modelValue', value)
 })
 
-const mergedUi = computed(() => ({
-  root: 'h-full',
-  content: 'h-full',
-  ...props.ui
-}))
+const toolbarItems: EditorToolbarItem[][] = [
+  [
+    { kind: 'undo', icon: 'i-lucide-undo', tooltip: { text: 'Undo' } },
+    { kind: 'redo', icon: 'i-lucide-redo', tooltip: { text: 'Redo' } }
+  ],
+  [
+    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
+    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
+    { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } }
+  ],
+  [
+    { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
+  ]
+]
 </script>
+
+<template>
+  <UEditor
+    v-slot="{ editor }"
+    v-model="model"
+    :content-type="contentType"
+    :placeholder="placeholder"
+    :editable="editable"
+    class="flex flex-col h-full"
+    :ui="{
+      root: 'h-full flex flex-col',
+      content: 'flex-1 overflow-auto p-4'
+    }"
+  >
+    <UEditorToolbar
+      v-if="editor && showToolbar"
+      :editor="editor"
+      :items="toolbarItems"
+      class="border-b border-default px-2 py-1.5"
+    />
+  </UEditor>
+</template>

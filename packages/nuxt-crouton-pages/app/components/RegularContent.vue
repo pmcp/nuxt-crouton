@@ -19,7 +19,7 @@ const props = defineProps<Props>()
 </script>
 
 <template>
-  <article class="page-content prose prose-lg dark:prose-invert max-w-none">
+  <article class="page-content prose prose-lg dark:prose-invert max-w-none px-4 py-6">
     <div v-if="page.content" v-html="page.content" />
     <div v-else class="text-muted text-center py-12">
       <UIcon name="i-lucide-file-text" class="size-12 mb-4 mx-auto block" />
@@ -29,52 +29,76 @@ const props = defineProps<Props>()
 </template>
 
 <style scoped>
-.page-content {
-  @apply px-4 py-6;
-}
-
+/* Additional prose styling for v-html content */
 .page-content :deep(h1) {
-  @apply text-3xl font-bold mb-4;
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
 }
 
 .page-content :deep(h2) {
-  @apply text-2xl font-semibold mb-3 mt-8;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  margin-top: 2rem;
 }
 
 .page-content :deep(h3) {
-  @apply text-xl font-semibold mb-2 mt-6;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
 }
 
 .page-content :deep(p) {
-  @apply mb-4 leading-relaxed;
+  margin-bottom: 1rem;
+  line-height: 1.625;
 }
 
 .page-content :deep(ul),
 .page-content :deep(ol) {
-  @apply mb-4 pl-6;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
 }
 
 .page-content :deep(li) {
-  @apply mb-2;
+  margin-bottom: 0.5rem;
 }
 
 .page-content :deep(a) {
-  @apply text-primary hover:underline;
+  color: var(--ui-primary);
+}
+
+.page-content :deep(a:hover) {
+  text-decoration: underline;
 }
 
 .page-content :deep(blockquote) {
-  @apply border-l-4 border-primary pl-4 italic my-4;
+  border-left: 4px solid var(--ui-primary);
+  padding-left: 1rem;
+  font-style: italic;
+  margin: 1rem 0;
 }
 
 .page-content :deep(code) {
-  @apply bg-muted px-1.5 py-0.5 rounded text-sm;
+  background-color: var(--ui-bg-muted);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
 }
 
 .page-content :deep(pre) {
-  @apply bg-muted p-4 rounded-lg overflow-x-auto my-4;
+  background-color: var(--ui-bg-muted);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
 }
 
 .page-content :deep(img) {
-  @apply rounded-lg my-4 max-w-full h-auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  max-width: 100%;
+  height: auto;
 }
 </style>

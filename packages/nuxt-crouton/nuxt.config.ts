@@ -79,9 +79,11 @@ export default defineNuxtConfig({
         global: true
       },
       {
-        // ThemeSwitcher stub - registered without prefix so nuxt-crouton-themes can override it
+        // Stubs - low priority so other packages can override
+        // e.g., nuxt-crouton-editor overrides CroutonEditorSimple
         path: join(currentDir, 'app/components/stubs'),
-        global: true
+        global: true,
+        priority: -1
       }
     ]
   },
