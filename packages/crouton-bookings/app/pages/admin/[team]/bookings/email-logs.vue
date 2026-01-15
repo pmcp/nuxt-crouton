@@ -23,6 +23,18 @@ const { data: emailLogs, status, refresh } = await useFetch(
   }
 )
 
+// Refresh on every navigation to this page (handles keep-alive and client navigation)
+onActivated(() => {
+  refresh()
+})
+
+// Also refresh when route changes (for direct navigation)
+watch(() => route.fullPath, () => {
+  if (route.path.endsWith('/email-logs')) {
+    refresh()
+  }
+})
+
 // Normalize items from API response
 const logs = computed(() => {
   if (!emailLogs.value) return []
