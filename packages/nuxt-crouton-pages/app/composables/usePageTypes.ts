@@ -42,19 +42,6 @@ export function usePageTypes() {
   const pageTypes = computed<AggregatedPageType[]>(() => {
     const types: AggregatedPageType[] = []
 
-    // Add built-in "Regular Page" type
-    types.push({
-      id: 'regular',
-      appId: 'core',
-      appName: 'Core',
-      fullId: 'core:regular',
-      name: 'Regular Page',
-      description: 'A standard page with rich text content',
-      icon: 'i-lucide-file-text',
-      component: 'CroutonPagesRegularContent',
-      category: 'content'
-    })
-
     // Aggregate page types from all apps
     for (const app of appsList.value) {
       if (!app.pageTypes) continue
@@ -130,7 +117,7 @@ export function usePageTypes() {
    * Get the default page type (Regular Page).
    */
   function getDefaultPageType(): AggregatedPageType {
-    return getPageType('core:regular')!
+    return getPageType('pages:regular')!
   }
 
   return {

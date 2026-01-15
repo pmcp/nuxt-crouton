@@ -36,7 +36,7 @@ const { close, loading: croutonLoading } = useCrouton()
 const defaultValue = {
   title: '',
   slug: '',
-  pageType: 'core:regular',
+  pageType: 'pages:regular',
   content: '',
   config: {},
   status: 'draft',
@@ -57,7 +57,7 @@ const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
 // Computed values
 const selectedPageType = computed(() => getPageType(state.value.pageType))
 const isRegularPage = computed(() =>
-  state.value.pageType === 'core:regular' || state.value.pageType === 'regular'
+  state.value.pageType === 'pages:regular' || state.value.pageType === 'regular'
 )
 
 // Page type options for dropdown
