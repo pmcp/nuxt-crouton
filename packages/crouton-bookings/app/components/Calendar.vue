@@ -361,7 +361,7 @@ const monthCellHeight = computed(() => {
 </script>
 
 <template>
-  <div class="sticky top-4 z-20 flex flex-col gap-3 bg-default rounded-lg p-3 -m-3">
+  <div class="flex flex-col gap-3">
     <!-- View toggle (Today | Week / Month) -->
     <div class="flex justify-end items-baseline gap-1">
       <UButton

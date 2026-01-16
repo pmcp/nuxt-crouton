@@ -264,7 +264,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full">
+  <div class="flex flex-col gap-4 h-full min-h-0 overflow-hidden">
     <!-- Filter controls -->
     <CroutonBookingsPanelFilters
       :locations="resolvedLocations"
@@ -323,7 +323,7 @@ defineExpose({
     </Transition>
 
     <!-- List section -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 min-h-0 overflow-y-auto">
       <CroutonBookingsList
         :bookings="filteredBookings"
         :loading="resolvedLoading"
