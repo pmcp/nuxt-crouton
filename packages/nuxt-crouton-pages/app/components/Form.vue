@@ -325,6 +325,8 @@ const fieldComponents = {}
             :default-values="{
               title: state.title || ''
             }"
+            show-ai-translate
+            field-type="page"
             :field-components="fieldComponents"
             label="Title"
             @update:english="(data: { field: string, value: string }) => {

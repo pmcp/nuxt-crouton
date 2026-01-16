@@ -66,6 +66,8 @@
         :field-components="{
           content: 'CroutonEditorSimple'
         }"
+        show-ai-translate
+        field-type="location"
         label="Translations"
       />
       </div>

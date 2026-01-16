@@ -80,6 +80,8 @@
           excerpt: state.excerpt || '',
           content: state.content || ''
         }"
+        show-ai-translate
+        field-type="post"
         label="Translations"
       />
       </div>

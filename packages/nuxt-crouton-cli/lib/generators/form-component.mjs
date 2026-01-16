@@ -1,10 +1,10 @@
-// Generator for Form.vue component
+// Generator for _Form.vue component
 import { toCase } from '../utils/helpers.mjs'
 import { referencesAssets, getAssetComponent } from '../utils/asset-detector.mjs'
 import { detectAddressFields, getCoordinateFieldName } from '../utils/address-detector.mjs'
 
 /**
- * Generate AI context header for Form.vue components
+ * Generate AI context header for _Form.vue components
  */
 function generateAIHeader(data, apiPath) {
   const { plural, layer, layerPascalCase, pascalCasePlural, fields } = data
@@ -467,6 +467,8 @@ export function generateFormComponent(data, config = {}) {
           ${Object.entries(fieldComponentsMap).map(([field, component]) => `${field}: '${component}'`).join(',\n          ')}
         }"`
           : ''}
+        show-ai-translate
+        field-type="${collectionName}"
         label="Translations"
       />`
     : ''

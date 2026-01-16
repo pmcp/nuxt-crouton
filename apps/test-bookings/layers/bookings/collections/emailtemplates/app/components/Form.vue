@@ -52,6 +52,8 @@
           subject: state.subject || '',
           body: state.body || ''
         }"
+        show-ai-translate
+        field-type="email"
         label="Translations"
       />
       </div>

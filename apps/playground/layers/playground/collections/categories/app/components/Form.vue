@@ -58,6 +58,8 @@
           name: state.name || '',
           description: state.description || ''
         }"
+        show-ai-translate
+        field-type="category"
         label="Translations"
       />
       </div>
