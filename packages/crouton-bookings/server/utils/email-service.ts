@@ -614,12 +614,13 @@ export interface EmailTriggerStatusResult {
 
 /**
  * Get detailed email status per trigger type for a booking
- * Returns status for confirmation and reminder emails
+ * Returns status for all email types with scheduled dates based on templates
  */
 export async function getBookingEmailDetails(
   bookingId: string,
   teamId: string,
-  bookingDate: string | Date
+  bookingDate: string | Date,
+  bookingCreatedAt?: string | Date | null
 ): Promise<EmailTriggerStatusResult[]> {
   const db = useDB()
   const results: EmailTriggerStatusResult[] = []
@@ -647,7 +648,7 @@ export async function getBookingEmailDetails(
         )
       )
 
-    // Get active templates to know what reminders are scheduled
+    // Get active templates to know scheduled dates
     const templates = await db
       .select({
         triggerType: bookingsEmailtemplates.triggerType,
@@ -661,15 +662,33 @@ export async function getBookingEmailDetails(
         )
       )
 
-    // Process confirmation (booking_created)
-    const confirmationLog = logs.find(l => l.triggerType === 'booking_created')
-    results.push({
-      triggerType: 'booking_created',
-      status: confirmationLog?.status as any || 'not_sent',
-      sentAt: confirmationLog?.sentAt || null,
-    })
+    const booking = new Date(bookingDate)
+    const hasConfirmationTemplate = templates.some(t => t.triggerType === 'booking_created')
 
-    // Process reminder (reminder_before)
+    // Process confirmation (booking_created) - sent immediately when booked
+    const confirmationLog = logs.find(l => l.triggerType === 'booking_created')
+    if (confirmationLog) {
+      results.push({
+        triggerType: 'booking_created',
+        status: confirmationLog.status as any,
+        sentAt: confirmationLog.sentAt || null,
+      })
+    } else if (hasConfirmationTemplate) {
+      // Should have been sent when booking was created
+      results.push({
+        triggerType: 'booking_created',
+        status: 'not_sent',
+        scheduledFor: bookingCreatedAt ? new Date(bookingCreatedAt).toISOString() : null,
+      })
+    } else {
+      results.push({
+        triggerType: 'booking_created',
+        status: 'not_sent',
+        sentAt: null,
+      })
+    }
+
+    // Process reminder (reminder_before) - sent X days before event
     const reminderLog = logs.find(l => l.triggerType === 'reminder_before')
     const reminderTemplate = templates.find(t => t.triggerType === 'reminder_before')
 
@@ -679,11 +698,9 @@ export async function getBookingEmailDetails(
         status: reminderLog.status as any,
         sentAt: reminderLog.sentAt || null,
       })
-    }
-    else if (reminderTemplate) {
-      // Calculate when reminder will be sent
-      const booking = new Date(bookingDate)
-      const daysOffset = reminderTemplate.daysOffset || 1
+    } else if (reminderTemplate) {
+      // Calculate when reminder will be sent (daysOffset days before booking)
+      const daysOffset = Math.abs(reminderTemplate.daysOffset || 1)
       const scheduledDate = new Date(booking)
       scheduledDate.setDate(scheduledDate.getDate() - daysOffset)
 
@@ -691,6 +708,49 @@ export async function getBookingEmailDetails(
         triggerType: 'reminder_before',
         status: 'not_sent',
         scheduledFor: scheduledDate.toISOString(),
+      })
+    } else {
+      results.push({
+        triggerType: 'reminder_before',
+        status: 'not_sent',
+        sentAt: null,
+      })
+    }
+
+    // Process cancellation (booking_cancelled) - sent when cancelled, no schedule
+    const cancelLog = logs.find(l => l.triggerType === 'booking_cancelled')
+    results.push({
+      triggerType: 'booking_cancelled',
+      status: cancelLog?.status as any || 'not_sent',
+      sentAt: cancelLog?.sentAt || null,
+    })
+
+    // Process follow-up (follow_up_after) - sent X days after event
+    const followUpLog = logs.find(l => l.triggerType === 'follow_up_after')
+    const followUpTemplate = templates.find(t => t.triggerType === 'follow_up_after')
+
+    if (followUpLog) {
+      results.push({
+        triggerType: 'follow_up_after',
+        status: followUpLog.status as any,
+        sentAt: followUpLog.sentAt || null,
+      })
+    } else if (followUpTemplate) {
+      // Calculate when follow-up will be sent (daysOffset days after booking)
+      const daysOffset = Math.abs(followUpTemplate.daysOffset || 1)
+      const scheduledDate = new Date(booking)
+      scheduledDate.setDate(scheduledDate.getDate() + daysOffset)
+
+      results.push({
+        triggerType: 'follow_up_after',
+        status: 'not_sent',
+        scheduledFor: scheduledDate.toISOString(),
+      })
+    } else {
+      results.push({
+        triggerType: 'follow_up_after',
+        status: 'not_sent',
+        sentAt: null,
       })
     }
 

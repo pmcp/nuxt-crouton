@@ -69,6 +69,24 @@ function goToDate(date: Date) {
   }
 }
 
+// Navigate to today
+function goToToday() {
+  const todayDate = today(getLocalTimeZone())
+  const jsDate = todayDate.toDate(getLocalTimeZone())
+  goToDate(jsDate)
+  // Also highlight today as if it was clicked
+  emit('hover', jsDate)
+}
+
+// Handle tab change - "today" triggers navigation, others change view
+function onTabChange(value: string) {
+  if (value === 'today') {
+    goToToday()
+  } else {
+    currentView.value = value as 'week' | 'month'
+  }
+}
+
 // Expose methods for parent control
 defineExpose({
   goToDate,
@@ -343,9 +361,19 @@ const monthCellHeight = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
-    <!-- View toggle (Week/Month) -->
-    <div class="flex justify-end">
+  <div class="sticky top-4 z-20 flex flex-col gap-3 bg-default rounded-lg p-3 -m-3">
+    <!-- View toggle (Today | Week / Month) -->
+    <div class="flex justify-end items-baseline gap-1">
+      <UButton
+        variant="ghost"
+        color="neutral"
+        size="lg"
+        class="rounded-lg"
+        :ui="{ base: 'text-xs' }"
+        @click="goToToday"
+      >
+        Today
+      </UButton>
       <UTabs
         v-model="currentView"
         :items="[

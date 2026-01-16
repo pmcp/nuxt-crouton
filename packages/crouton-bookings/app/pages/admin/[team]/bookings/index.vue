@@ -1,8 +1,19 @@
 <script setup lang="ts">
 const { t } = useI18n()
+const route = useRoute()
 
-// Fetch all team bookings (admin view - all bookings, not just current user's)
-const { items: bookings, pending: bookingsPending, refresh: refreshBookings } = await useCollectionQuery('bookingsBookings')
+// Get team ID from route
+const teamId = computed(() => route.params.team as string)
+
+// Fetch all team bookings with email details (admin view - includes emailDetails with scheduledFor dates)
+const { data: bookings, pending: bookingsPending, refresh: refreshBookings } = await useFetch(
+  () => teamId.value ? `/api/crouton-bookings/teams/${teamId.value}/admin-bookings` : null,
+  {
+    default: () => [],
+    watch: [teamId],
+  }
+)
+
 const { items: locations, pending: locationsPending } = await useCollectionQuery('bookingsLocations')
 const { items: settings, pending: settingsPending } = await useCollectionQuery('bookingsSettings')
 
