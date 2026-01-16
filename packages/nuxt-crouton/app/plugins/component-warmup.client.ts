@@ -39,17 +39,21 @@ export default defineNuxtPlugin({
       }
     }
 
-    // Resolve each component to trigger registration
+    // Access components through Vue app's registry to trigger any lazy loading
+    // Note: resolveComponent() can only be used in render/setup context,
+    // so we access the registry directly instead
+    const registry = nuxtApp.vueApp._context.components
+    let warmedCount = 0
+
     for (const name of componentNames) {
-      try {
-        resolveComponent(name)
-      } catch {
-        // Component doesn't exist, that's fine
+      // Accessing the component in the registry may trigger lazy resolution
+      if (registry[name]) {
+        warmedCount++
       }
     }
 
-    if (componentNames.size > 0) {
-      console.debug(`[crouton] Warmed up ${componentNames.size} components`)
+    if (warmedCount > 0) {
+      console.debug(`[crouton] Warmed up ${warmedCount}/${componentNames.size} components`)
     }
   }
 })
