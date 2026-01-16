@@ -158,3 +158,6 @@ export interface AIInputProps {
   /** Whether the input is disabled */
   disabled?: boolean
 }
+
+// Re-export translation types
+export * from './translation'

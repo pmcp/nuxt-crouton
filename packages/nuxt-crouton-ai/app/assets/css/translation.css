@@ -1,0 +1,109 @@
+/**
+ * AI Translation Suggestion Styles
+ *
+ * Styles for the ghost text preview shown during translation suggestions.
+ * Similar to GitHub Copilot / VS Code inline suggestions.
+ */
+
+/* Ghost text decoration for translation suggestions */
+.translation-suggestion-ghost {
+  color: var(--ui-text-muted, rgb(156 163 175));
+  opacity: 0.6;
+  font-style: italic;
+  pointer-events: none;
+  user-select: none;
+  white-space: pre-wrap;
+}
+
+/* Dark mode adjustment */
+.dark .translation-suggestion-ghost {
+  color: var(--ui-text-muted, rgb(156 163 175));
+  opacity: 0.5;
+}
+
+/* Animation for suggestion appearance */
+.translation-suggestion-ghost {
+  animation: translation-suggestion-fade-in 0.2s ease-out;
+}
+
+@keyframes translation-suggestion-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+/* Loading state indicator */
+.translation-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ui-text-muted, rgb(156 163 175));
+  font-size: 0.75rem;
+}
+
+.translation-loading-spinner {
+  animation: translation-loading-spin 1s linear infinite;
+}
+
+@keyframes translation-loading-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tooltip styling for Tab/Escape hint */
+.translation-suggestion-ghost::after {
+  content: ' (Tab to accept)';
+  font-size: 0.65em;
+  opacity: 0.7;
+  vertical-align: super;
+}
+
+/* Alternative: Inline hint badge */
+.translation-suggestion-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  margin-left: 0.5rem;
+  background: var(--ui-bg-muted, rgb(243 244 246));
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--ui-text-muted, rgb(107 114 128));
+}
+
+.dark .translation-suggestion-hint {
+  background: var(--ui-bg-muted, rgb(55 65 81));
+  color: var(--ui-text-muted, rgb(156 163 175));
+}
+
+/* Keyboard shortcut badges */
+.translation-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem 0.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  background: var(--ui-bg, white);
+  border: 1px solid var(--ui-border, rgb(229 231 235));
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--ui-text-muted, rgb(107 114 128));
+  box-shadow: 0 1px 0 0 var(--ui-border, rgb(229 231 235));
+}
+
+.dark .translation-kbd {
+  background: var(--ui-bg, rgb(31 41 55));
+  border-color: var(--ui-border, rgb(75 85 99));
+  color: var(--ui-text-muted, rgb(156 163 175));
+}

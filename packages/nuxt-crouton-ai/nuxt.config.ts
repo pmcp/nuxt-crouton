@@ -10,6 +10,10 @@ export default defineNuxtConfig({
     name: 'crouton-ai'
   },
 
+  css: [
+    join(currentDir, 'app/assets/css/translation.css')
+  ],
+
   components: {
     dirs: [
       {

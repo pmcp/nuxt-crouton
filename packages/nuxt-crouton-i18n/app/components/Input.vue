@@ -14,6 +14,8 @@ const props = defineProps<{
   error?: string | boolean
   defaultValues?: Record<string, string> // Default values for each field (from main form fields)
   fieldComponents?: Record<string, string> // Custom components per field e.g., { content: 'EditorSimple' }
+  showAiTranslate?: boolean // Enable AI translation suggestions
+  fieldType?: string // Field type context for AI (e.g., 'product_name', 'description')
 }>()
 
 const emit = defineEmits<{
@@ -115,6 +117,61 @@ const translationStatus = computed(() => {
     }
   })
 })
+
+// AI Translation support
+const isTranslating = ref<Record<string, boolean>>({})
+
+// Get all translations for a field (for AI context)
+function getAllTranslationsForField(field: string): Record<string, string> {
+  const translations: Record<string, string> = {}
+
+  locales.value.forEach((loc) => {
+    const localeCode = typeof loc === 'string' ? loc : loc.code
+    const value = getFieldValue(field, localeCode)
+    if (value) {
+      translations[localeCode] = value
+    }
+  })
+
+  return translations
+}
+
+// Request AI translation for a specific field
+async function requestTranslation(field: string) {
+  const sourceText = getFieldValue(field, 'en')
+  if (!sourceText || editingLocale.value === 'en') return
+
+  const translationKey = `${editingLocale.value}-${field}`
+  isTranslating.value[translationKey] = true
+
+  try {
+    // Call the translation API directly
+    const result = await $fetch<{ text: string, confidence?: number }>('/api/ai/translate', {
+      method: 'POST',
+      body: {
+        sourceText,
+        sourceLanguage: 'en',
+        targetLanguage: editingLocale.value,
+        fieldType: props.fieldType || field,
+        existingTranslations: getAllTranslationsForField(field)
+      }
+    })
+
+    if (result?.text) {
+      updateFieldValue(field, result.text)
+    }
+  } catch (err) {
+    console.error('Translation error:', err)
+  } finally {
+    isTranslating.value[translationKey] = false
+  }
+}
+
+// Check if currently translating a specific field
+function isFieldTranslating(field: string): boolean {
+  const translationKey = `${editingLocale.value}-${field}`
+  return isTranslating.value[translationKey] || false
+}
 </script>
 
 <template>
@@ -163,12 +220,18 @@ const translationStatus = computed(() => {
         :name="`translations.${editingLocale}.${field}`"
         :required="editingLocale === 'en'"
       >
-        <!-- CroutonEditorSimple (rich text editor) -->
-        <CroutonEditorSimple
+        <!-- CroutonEditorSimple (rich text editor) - needs height container -->
+        <div
           v-if="getFieldComponent(field) === 'CroutonEditorSimple'"
-          :model-value="getFieldValue(field, editingLocale)"
-          @update:model-value="updateFieldValue(field, $event)"
-        />
+          class="border rounded-lg overflow-hidden border-gray-300 dark:border-gray-700"
+        >
+          <div class="h-64">
+            <CroutonEditorSimple
+              :model-value="getFieldValue(field, editingLocale)"
+              @update:model-value="updateFieldValue(field, $event)"
+            />
+          </div>
+        </div>
 
         <!-- UTextarea (for text type fields without custom component) -->
         <UTextarea
@@ -195,12 +258,25 @@ const translationStatus = computed(() => {
         />
 
         <!-- Show English reference when editing other languages -->
-        <p
+        <div
           v-if="editingLocale !== 'en' && getFieldValue(field, 'en')"
-          class="text-xs text-gray-500 mt-1"
+          class="flex items-center gap-2 mt-1"
         >
-          English: {{ getFieldValue(field, 'en') }}
-        </p>
+          <p class="text-xs text-gray-500">
+            English: {{ getFieldValue(field, 'en') }}
+          </p>
+          <UButton
+            v-if="showAiTranslate"
+            icon="i-lucide-sparkles"
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            :loading="isFieldTranslating(field)"
+            @click="requestTranslation(field)"
+          >
+            Translate
+          </UButton>
+        </div>
       </UFormField>
     </div>
 
@@ -226,12 +302,25 @@ const translationStatus = computed(() => {
       </UFormField>
 
       <!-- Show English reference when editing other languages -->
-      <p
+      <div
         v-if="editingLocale !== 'en' && getFieldValue('', 'en')"
-        class="text-xs text-gray-500 mt-1"
+        class="flex items-center gap-2 mt-1"
       >
-        English: {{ getFieldValue('', 'en') }}
-      </p>
+        <p class="text-xs text-gray-500">
+          English: {{ getFieldValue('', 'en') }}
+        </p>
+        <UButton
+          v-if="showAiTranslate"
+          icon="i-lucide-sparkles"
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          :loading="isFieldTranslating('')"
+          @click="requestTranslation('')"
+        >
+          Translate
+        </UButton>
+      </div>
     </div>
   </div>
 </template>

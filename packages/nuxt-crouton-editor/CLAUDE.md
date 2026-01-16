@@ -59,6 +59,27 @@ Full-featured wrapper around Nuxt UI's `UEditor` component.
 | `mention` | `object` | - | Mention extension options |
 | `handlers` | `object` | - | Custom handlers |
 | `ui` | `object` | `{ root: 'h-full', content: 'h-full' }` | Style customization |
+| `enableTranslationAI` | `boolean` | `false` | Enable AI translation button |
+| `translationContext` | `TranslationContext` | - | Context for AI translation |
+| `onTranslationAccept` | `(text: string) => void` | - | Callback when translation is accepted |
+
+**AI Translation:**
+
+```vue
+<CroutonEditorSimple
+  v-model="content"
+  enable-translation-ai
+  :translation-context="{
+    sourceText: selectedText,
+    sourceLanguage: 'en',
+    targetLanguage: 'nl',
+    fieldType: 'description'
+  }"
+  @translation-accept="handleTranslation"
+/>
+```
+
+When `enableTranslationAI` is `true`, a sparkles button appears in the toolbar. Clicking it (or pressing `⌘J`) translates the selected text using the AI translation API.
 
 ### CroutonEditorVariables
 

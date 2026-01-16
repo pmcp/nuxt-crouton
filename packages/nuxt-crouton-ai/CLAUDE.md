@@ -11,12 +11,17 @@ AI integration layer for Nuxt applications using Vercel AI SDK. Provides composa
 | `app/composables/useChat.ts` | Streaming chat with team context |
 | `app/composables/useCompletion.ts` | Text completion composable |
 | `app/composables/useAIProvider.ts` | Provider selection |
+| `app/composables/useTranslationSuggestion.ts` | AI-powered translation suggestions |
 | `app/components/Chatbox.vue` | Full chat interface component |
 | `app/components/Message.vue` | Single message bubble |
 | `app/components/Input.vue` | Message input with send |
 | `server/utils/ai.ts` | Server-side provider factory |
 | `server/utils/providers/index.ts` | Provider registry and helpers |
+| `server/api/ai/translate.post.ts` | Translation API endpoint |
 | `app/types/index.ts` | All TypeScript types |
+| `app/types/translation.ts` | Translation-specific types |
+| `app/editor/extensions/translation-ai.ts` | TipTap extension for translation |
+| `app/assets/css/translation.css` | Ghost text and suggestion styles |
 | `schemas/chat-conversations.json` | JSON schema for crouton generator |
 | `schemas/chat-conversations.ts` | TypeScript schema with Zod validation |
 
@@ -129,6 +134,107 @@ All components auto-import with `AI` prefix:
 - `Chatbox.vue` → `<AIChatbox />`
 - `Message.vue` → `<AIMessage />`
 - `Input.vue` → `<AIInput />`
+
+## AI Translation
+
+The package provides AI-powered translation suggestions for multi-language content.
+
+### Translation API Endpoint
+
+```typescript
+// POST /api/ai/translate
+{
+  "sourceText": "Hello world",
+  "sourceLanguage": "en",
+  "targetLanguage": "nl",
+  "fieldType": "product_name",          // Optional: for context
+  "existingTranslations": { "fr": "..." } // Optional: for consistency
+}
+
+// Response
+{
+  "text": "Hallo wereld",
+  "confidence": 0.9
+}
+```
+
+### useTranslationSuggestion Composable
+
+```typescript
+const { suggestion, isLoading, suggest, accept, clear } = useTranslationSuggestion()
+
+// Request translation
+const result = await suggest({
+  sourceText: 'Hello world',
+  sourceLanguage: 'en',
+  targetLanguage: 'nl',
+  fieldType: 'product_name'
+})
+
+// Use the result
+if (result) {
+  console.log(result.text) // "Hallo wereld"
+}
+```
+
+### TipTap Editor Extension
+
+```typescript
+import { TranslationAI } from '@friendlyinternet/nuxt-crouton-ai/editor'
+
+const editor = useEditor({
+  extensions: [
+    TranslationAI.configure({
+      getContext: () => ({
+        sourceText: getSelectedText(),
+        sourceLanguage: 'en',
+        targetLanguage: 'nl'
+      }),
+      onAccept: (text) => console.log('Accepted:', text)
+    })
+  ]
+})
+```
+
+**Keyboard Shortcuts:**
+- `Cmd/Ctrl+J` - Trigger translation suggestion
+- `Tab` - Accept suggestion
+- `Escape` - Dismiss suggestion
+
+### Integration with CroutonI18nInput
+
+```vue
+<CroutonI18nInput
+  v-model="translations"
+  :fields="['name', 'description']"
+  show-ai-translate
+  field-type="product"
+/>
+```
+
+### Integration with CroutonEditorSimple
+
+```vue
+<CroutonEditorSimple
+  v-model="content"
+  enable-translation-ai
+  :translation-context="{
+    sourceText: content,
+    sourceLanguage: 'en',
+    targetLanguage: 'nl'
+  }"
+  @translation-accept="(text) => handleTranslation(text)"
+/>
+```
+
+### Field Type Context
+
+The translation endpoint recognizes field types for better translations:
+- `product_name`, `product_description` - Marketing tone
+- `title`, `description`, `content` - Natural language
+- `label`, `button`, `tooltip` - Short UI text
+- `email_subject`, `email_body` - Email tone
+- `error`, `success` - Feedback messages
 
 ## Common Tasks
 

@@ -53,6 +53,14 @@ const { schema, columns, config } = useTranslationsUi()
   @update:english="(data) => { state[data.field] = data.value }"
 />
 
+<!-- Multi-language input with AI translation -->
+<CroutonI18nInput
+  v-model="state.translations"
+  :fields="['name', 'description']"
+  show-ai-translate
+  field-type="product"
+/>
+
 <!-- Display translated -->
 <CroutonI18nDisplay
   :translations="item.translations"
@@ -63,6 +71,27 @@ const { schema, columns, config } = useTranslationsUi()
 <!-- Language switcher -->
 <CroutonI18nLanguageSwitcher />
 ```
+
+### CroutonI18nInput Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `modelValue` | `object` | - | Translation values (v-model) |
+| `fields` | `string[]` | - | Fields to translate |
+| `label` | `string` | - | Optional label |
+| `error` | `string \| boolean` | - | Error state |
+| `defaultValues` | `Record<string, string>` | - | Default values per field |
+| `fieldComponents` | `Record<string, string>` | - | Custom components per field |
+| `showAiTranslate` | `boolean` | `false` | Enable AI translation button |
+| `fieldType` | `string` | - | Field type context for AI (e.g., 'product', 'email') |
+
+### AI Translation
+
+When `showAITranslate` is enabled, a "Translate" button appears next to the English reference when editing other languages. Clicking it sends the English text to `/api/ai/translate` (from `@friendlyinternet/nuxt-crouton-ai`).
+
+**Requirements:**
+- `@friendlyinternet/nuxt-crouton-ai` must be extended in your nuxt.config
+- OpenAI API key must be configured (`NUXT_OPENAI_API_KEY`)
 
 ## Component Naming
 
