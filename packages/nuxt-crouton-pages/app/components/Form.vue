@@ -332,7 +332,7 @@ const fieldComponents = {}
             name="content"
             class="mt-4"
           >
-            <div class="h-[500px]">
+            <div class="editor-container">
               <ClientOnly>
                 <CroutonPagesEditorBlockEditorWithPreview
                   v-model="editorContent"
@@ -454,3 +454,20 @@ const fieldComponents = {}
     </CroutonFormLayout>
   </UForm>
 </template>
+
+<style scoped>
+/* Resizable editor container */
+.editor-container {
+  height: 400px;
+  min-height: 200px;
+  max-height: 80vh;
+  resize: vertical;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+/* Resize handle visual indicator */
+.editor-container::-webkit-resizer {
+  background: linear-gradient(135deg, transparent 50%, var(--ui-border) 50%);
+}
+</style>
