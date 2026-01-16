@@ -187,6 +187,14 @@ export interface CroutonPageType {
    * Shown in admin selection UI.
    */
   previewImage?: string
+
+  /**
+   * Preferred layout for this page type.
+   * Used as default when creating pages of this type.
+   * @example 'default', 'full-height', 'full-screen'
+   * @default 'default'
+   */
+  preferredLayout?: 'default' | 'full-height' | 'full-screen'
 }
 
 /**

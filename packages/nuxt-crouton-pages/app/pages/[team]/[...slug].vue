@@ -8,10 +8,19 @@
  * URL patterns:
  * - Direct: example.com/acme/about → team=acme, slug=about
  * - Custom domain: booking.acme.com/about → resolved to team=acme via middleware
+ *
+ * Layout modes:
+ * - default: Normal scrollable content with padding
+ * - full-height: Fixed viewport height, content fills remaining space
+ * - full-screen: No padding, full viewport
  */
 definePageMeta({
   layout: 'public'
 })
+
+// Provide page layout to the layout component
+const pageLayout = ref<'default' | 'full-height' | 'full-screen'>('default')
+provide('pageLayout', pageLayout)
 
 const route = useRoute()
 
@@ -57,6 +66,15 @@ const { data: pageResponse, status, error } = await useFetch(apiUrl, {
 
 // Extract page from response
 const page = computed(() => pageResponse.value)
+
+// Update layout when page data changes
+watch(page, (newPage) => {
+  if (newPage?.layout) {
+    pageLayout.value = newPage.layout as 'default' | 'full-height' | 'full-screen'
+  } else {
+    pageLayout.value = 'default'
+  }
+}, { immediate: true })
 
 // Handle errors
 if (error.value?.statusCode === 404) {

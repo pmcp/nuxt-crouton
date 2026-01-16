@@ -52,6 +52,7 @@ const defaultValue = {
   status: 'draft',
   visibility: 'public',
   showInNavigation: true,
+  layout: 'default',
   parentId: null,
   order: 0,
   translations: {}
@@ -94,6 +95,32 @@ const visibilityOptions = [
   { value: 'members', label: t('pages.visibility.members') || 'Members Only' },
   { value: 'hidden', label: t('pages.visibility.hidden') || 'Hidden' }
 ]
+
+// Layout options
+const layoutOptions = [
+  { value: 'default', label: t('pages.layout.default') || 'Default (Scrollable)' },
+  { value: 'full-height', label: t('pages.layout.fullHeight') || 'Full Height (Fixed)' },
+  { value: 'full-screen', label: t('pages.layout.fullScreen') || 'Full Screen (No Padding)' }
+]
+
+// Track if layout was manually changed
+const layoutManuallyChanged = ref(false)
+
+// Auto-set layout based on pageType's preferredLayout (only on create, only if not manually changed)
+watch(() => state.value.pageType, (newPageType) => {
+  if (props.action === 'create' && !layoutManuallyChanged.value) {
+    const pageType = getPageType(newPageType)
+    if (pageType?.preferredLayout) {
+      state.value.layout = pageType.preferredLayout
+    } else {
+      state.value.layout = 'default'
+    }
+  }
+}, { immediate: true })
+
+function onLayoutChange() {
+  layoutManuallyChanged.value = true
+}
 
 // Auto-generate slug from title (only on create, only if not manually edited)
 const slugManuallyEdited = ref(!!props.activeItem?.slug)
@@ -276,6 +303,20 @@ const fieldComponents = {
           <!-- Show in Navigation -->
           <UFormField :label="t('pages.fields.showInNavigation') || 'Show in Navigation'" name="showInNavigation">
             <USwitch v-model="state.showInNavigation" />
+          </UFormField>
+
+          <!-- Layout -->
+          <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
+            <USelect
+              v-model="state.layout"
+              :items="layoutOptions"
+              value-key="value"
+              class="w-full"
+              @update:model-value="onLayoutChange"
+            />
+            <p class="text-xs text-muted mt-1">
+              {{ state.layout === 'full-height' ? 'Content fills the viewport height' : state.layout === 'full-screen' ? 'No padding, full viewport' : 'Normal scrollable content' }}
+            </p>
           </UFormField>
         </div>
       </template>

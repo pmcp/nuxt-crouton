@@ -54,7 +54,8 @@ export default defineAppConfig({
           description: 'Interactive booking page with calendar and availability',
           icon: 'i-lucide-calendar',
           component: 'CroutonBookingsPanel',
-          category: 'customer'
+          category: 'customer',
+          preferredLayout: 'full-height'
         }
       ]
     }
