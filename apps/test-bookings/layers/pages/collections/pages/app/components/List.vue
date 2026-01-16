@@ -2,14 +2,14 @@
   @crouton-generated
   @collection pages
   @layer pages
-  @generated 2026-01-14
+  @generated 2026-01-15
 
   ## AI Context
   - List component for pages collection
   - Collection name: pagesPages
   - API endpoint: /api/teams/[id]/pages-pages
   - Columns composable: usePagesPages()
-  - Column fields: name, label, icon, description, hierarchy, fields
+  - Column fields: title, slug, pageType, content, config, status, visibility, publishedAt, showInNavigation, seoTitle, seoDescription, translations
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -36,6 +36,12 @@
         createButton
       />
     </template>
+    <template #publishedAt-cell="{ row }">
+      <CroutonDate :date="row.original.publishedAt"></CroutonDate>
+    </template>
+    <template #showInNavigation-cell="{ row }">
+      <CroutonBoolean :value="row.original.showInNavigation" />
+    </template>
   </CroutonCollection>
 </template>
 
@@ -45,7 +51,7 @@ import usePagesPages from '../composables/usePagesPages'
 const props = withDefaults(defineProps<{
   layout?: any
 }>(), {
-  layout: 'table'
+  layout: 'tree'
 })
 
 const { columns } = usePagesPages()

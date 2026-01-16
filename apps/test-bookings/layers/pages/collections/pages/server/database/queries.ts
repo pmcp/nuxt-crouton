@@ -165,9 +165,40 @@ export async function createPagesPage(data: NewPagesPage) {
 
   const nextOrder = (maxOrderResult?.maxOrder ?? -1) + 1
 
+  // Generate a unique ID for the new page
+  const { nanoid } = await import('nanoid')
+  const newId = nanoid()
+
+  // Calculate path and depth based on parent
+  let path: string
+  let depth: number
+
+  if (parentId) {
+    const [parent] = await (db as any)
+      .select()
+      .from(tables.pagesPages)
+      .where(
+        and(
+          eq(tables.pagesPages.id, parentId),
+          eq(tables.pagesPages.teamId, teamId)
+        )
+      )
+
+    if (parent) {
+      path = `${parent.path}${newId}/`
+      depth = (parent.depth || 0) + 1
+    } else {
+      path = `/${newId}/`
+      depth = 0
+    }
+  } else {
+    path = `/${newId}/`
+    depth = 0
+  }
+
   const [page] = await (db as any)
     .insert(tables.pagesPages)
-    .values({ ...data, order: nextOrder })
+    .values({ ...data, id: newId, order: nextOrder, path, depth })
     .returning()
 
   return page

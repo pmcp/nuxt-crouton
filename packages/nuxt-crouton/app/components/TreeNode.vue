@@ -50,9 +50,13 @@ const isDropTarget = computed(() => treeDrag.isDropTarget(props.item.id))
 const hasChildren = computed(() => (props.item.children?.length ?? 0) > 0)
 const childCount = computed(() => props.item.children?.length ?? 0)
 
-// Collapse when children become empty
-watch(hasChildren, (has) => {
-  if (!has && isExpanded.value) {
+// Auto-expand when children are added, collapse when children become empty
+watch(hasChildren, (has, wasHas) => {
+  if (has && !wasHas) {
+    // Children were added - auto-expand to show them
+    treeDrag.setExpanded(props.item.id, true)
+  } else if (!has && isExpanded.value) {
+    // Children became empty - collapse
     treeDrag.setExpanded(props.item.id, false)
   }
 })

@@ -103,6 +103,54 @@ const layoutOptions = [
   { value: 'full-screen', label: t('pages.layout.fullScreen') || 'Full Screen (No Padding)' }
 ]
 
+// Parent page options - builds tree-structured options from items
+// Filters out current page and its descendants to prevent circular references
+const parentOptions = computed(() => {
+  const options: { value: string | null; label: string; disabled?: boolean }[] = [
+    { value: null, label: t('pages.parent.root') || '(Root level - no parent)' }
+  ]
+
+  if (!props.items || props.items.length === 0) {
+    return options
+  }
+
+  // Get all descendant IDs to exclude (prevent circular references)
+  const getDescendantIds = (pageId: string): Set<string> => {
+    const descendants = new Set<string>()
+    const findDescendants = (parentId: string) => {
+      for (const page of props.items) {
+        if (page.parentId === parentId) {
+          descendants.add(page.id)
+          findDescendants(page.id)
+        }
+      }
+    }
+    findDescendants(pageId)
+    return descendants
+  }
+
+  const currentId = state.value.id
+  const excludeIds = currentId ? getDescendantIds(currentId) : new Set<string>()
+  if (currentId) excludeIds.add(currentId)
+
+  // Build flat list with indentation based on depth
+  const buildOptions = (parentId: string | null = null, depth: number = 0) => {
+    const children = props.items.filter(p => p.parentId === parentId)
+    for (const page of children) {
+      const isExcluded = excludeIds.has(page.id)
+      options.push({
+        value: page.id,
+        label: `${'— '.repeat(depth)}${page.title || page.slug || 'Untitled'}`,
+        disabled: isExcluded
+      })
+      buildOptions(page.id, depth + 1)
+    }
+  }
+
+  buildOptions(null, 0)
+  return options
+})
+
 // Track if layout was manually changed
 const layoutManuallyChanged = ref(false)
 
@@ -170,18 +218,14 @@ function openDeleteConfirm() {
   }
 }
 
-// Translatable fields for regular pages
+// Translatable fields - only title for all pages
+// Content uses the block editor separately
 const translatableFields = computed(() => {
-  if (isRegularPage.value) {
-    return ['title', 'content']
-  }
   return ['title']
 })
 
-// Field components for translations (use editor for content)
-const fieldComponents = {
-  content: 'CroutonEditorSimple'
-}
+// No custom field components needed since we use BlockEditor for content
+const fieldComponents = {}
 </script>
 
 <template>
@@ -240,21 +284,34 @@ const fieldComponents = {
             </UInput>
           </UFormField>
 
-          <!-- Translatable Fields (title, content for regular pages) -->
+          <!-- Translatable Title Field -->
           <CroutonI18nInput
             v-model="state.translations"
             :fields="translatableFields"
             :default-values="{
-              title: state.title || '',
-              content: state.content || ''
+              title: state.title || ''
             }"
             :field-components="fieldComponents"
-            label="Content"
+            label="Title"
             @update:english="(data: { field: string, value: string }) => {
               if (data.field === 'title') state.title = data.value
-              if (data.field === 'content') state.content = data.value
             }"
           />
+
+          <!-- Block Editor for Regular Pages -->
+          <UFormField
+            v-if="isRegularPage"
+            label="Page Content"
+            name="content"
+            class="mt-4"
+          >
+            <div class="border border-default rounded-lg overflow-hidden h-[400px]">
+              <CroutonPagesEditorBlockEditor
+                v-model="state.content"
+                placeholder="Type / to insert a block..."
+              />
+            </div>
+          </UFormField>
 
           <!-- Config Fields (for app pages with configSchema) -->
           <template v-if="!isRegularPage && selectedPageType?.configSchema?.length">
@@ -316,6 +373,19 @@ const fieldComponents = {
             />
             <p class="text-xs text-muted mt-1">
               {{ state.layout === 'full-height' ? 'Content fills the viewport height' : state.layout === 'full-screen' ? 'No padding, full viewport' : 'Normal scrollable content' }}
+            </p>
+          </UFormField>
+
+          <!-- Parent Page -->
+          <UFormField :label="t('pages.fields.parent') || 'Parent Page'" name="parentId">
+            <USelect
+              v-model="state.parentId"
+              :items="parentOptions"
+              value-key="value"
+              class="w-full"
+            />
+            <p class="text-xs text-muted mt-1">
+              {{ state.parentId ? 'This page will be nested under the selected parent' : 'This page will appear at the root level' }}
             </p>
           </UFormField>
         </div>
