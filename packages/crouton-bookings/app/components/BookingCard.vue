@@ -24,6 +24,8 @@ const emit = defineEmits<{
 const isHovered = ref(false)
 // Mobile email panel state
 const isEmailPanelOpen = ref(false)
+// Activity timeline panel state
+const isTimelineOpen = ref(false)
 
 const { t, locale } = useI18n()
 const { parseSlotIds, parseLocationSlots, getSlotLabel } = useBookingSlots()
@@ -198,29 +200,31 @@ const timelineItems = computed<TimelineItem[]>(() => {
         isCancelled ? 'opacity-60' : '',
         highlighted ? 'bg-elevated shadow-sm' : ''
       ],
-      body: 'p-2 sm:p-2'
+      body: 'p-0 sm:p-0',
+      footer: 'sm:px-0 p-0'
     }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <!-- Slide-out action menu -->
-    <div
-      class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center px-2 bg-elevated/95 backdrop-blur-sm transition-transform duration-200 ease-out z-10"
-      :class="isHovered ? 'translate-x-0' : 'translate-x-full'"
-    >
-      <UButton
-        variant="ghost"
-        color="neutral"
-        size="xs"
-        icon="i-lucide-pencil"
-        @click="emit('edit', booking)"
-      />
-    </div>
+
 
     <!-- Main layout: responsive flex with space-between on desktop -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 relative">
+      <!-- Slide-out action menu -->
+      <div
+          class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center px-2 bg-elevated/95  transition-transform duration-200 ease-out z-10"
+          :class="isHovered ? 'translate-x-0' : 'translate-x-full'"
+      >
+        <UButton
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            icon="i-lucide-pencil"
+            @click="emit('edit', booking)"
+        />
+      </div>
       <!-- Left side: Date badge + Info -->
-      <div class="flex gap-3 flex-1 min-w-0 md:flex-initial">
+      <div class="p-2 flex gap-3 flex-1 min-w-0 md:flex-initial">
         <!-- Date badge (clickable to navigate calendar) -->
         <button
           type="button"
@@ -291,7 +295,11 @@ const timelineItems = computed<TimelineItem[]>(() => {
       </div>
 
       <!-- Email timeline (desktop only) -->
-      <div v-if="isEmailEnabled && timelineItems.length > 0" class="hidden md:flex items-center gap-4 pr-14">
+      <div
+          v-if="isEmailEnabled && timelineItems.length > 0"
+          class="hidden md:flex items-center gap-4 pr-14 transition-transform"
+          :class="isHovered ? 'translate-x-0' : 'translate-x-10'"
+      >
         <UTooltip
           v-for="item in timelineItems"
           :key="item.type"
@@ -359,5 +367,41 @@ const timelineItems = computed<TimelineItem[]>(() => {
         </div>
       </div>
     </div>
+
+    <!-- Activity Timeline Section -->
+    <template #footer>
+
+      <UCollapsible v-model:open="open" class="flex flex-col gap-2 w-full">
+        <UButton
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            class="text-muted hover:text-default w-full justify-start rounded-none"
+            @click="isTimelineOpen = !isTimelineOpen"
+        >
+          <UIcon name="i-lucide-history" class="size-4" />
+          <span>Activity</span>
+          <UIcon
+              name="i-lucide-chevron-down"
+              class="size-3 ml-auto transition-transform duration-200"
+              :class="isTimelineOpen ? 'rotate-180' : ''"
+
+          />
+        </UButton>
+
+        <template #content>
+          <!-- Collapsible timeline content -->
+          <div class="px-2">
+            <CroutonBookingsActivityTimeline :booking="booking" />
+          </div>
+        </template>
+      </UCollapsible>
+
+
+
+
+
+
+    </template>
   </UCard>
 </template>
