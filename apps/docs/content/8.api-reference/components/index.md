@@ -31,7 +31,6 @@ See [Form Components](/api-reference/components/form-components) for complete Cr
 | `Calendar` | Calendar picker | [Form](/api-reference/components/form-components#calendar) |
 | `CroutonCalendar` | Enhanced calendar | [Form](/api-reference/components/form-components#croutoncalendar) |
 | `CroutonCalendarYear` | Year calendar view | [Form](/api-reference/components/form-components#calendaryear) |
-| `CroutonWeekCalendar` | Swipeable week calendar | [Form](/api-reference/components/form-components#croutonweekcalendar) |
 | `CroutonFormActionButton` | Form action buttons | [Form](/api-reference/components/form-components#croutonformactionbutton) |
 | `CroutonFormDependentButtonGroup` | Conditional button groups | [Form](/api-reference/components/form-components#croutonformdependentbuttongroup) |
 | `CroutonFormDependentFieldLoader` | Load fields based on dependencies | [Form](/api-reference/components/form-components#croutonformdependentfieldloader) |
