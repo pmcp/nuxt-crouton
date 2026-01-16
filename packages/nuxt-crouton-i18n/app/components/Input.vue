@@ -20,6 +20,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: TranslationsValue]
+  'update:english': [data: { field: string, value: string }]
 }>()
 
 // Get the component name to use for a specific field (returns string for template resolution)
@@ -62,6 +63,11 @@ function getFieldValue(field: string, localeCode: string): string {
 // Update a specific field for a specific locale
 function updateFieldValue(field: string, value: string, localeCode?: string) {
   const targetLocale = localeCode || editingLocale.value
+
+  // Emit update:english when English value changes
+  if (targetLocale === 'en') {
+    emit('update:english', { field, value })
+  }
 
   if (isMultiField.value) {
     // Multi-field mode
