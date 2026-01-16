@@ -32,8 +32,11 @@ export interface BlockSuggestionItem {
   command: string
 }
 
+/** TipTap JSON document structure */
+type TipTapDoc = { type: 'doc'; content: unknown[] }
+
 interface Props {
-  modelValue?: string | null
+  modelValue?: string | TipTapDoc | null
   placeholder?: string
   contentType?: 'html' | 'markdown' | 'json'
   editable?: boolean
@@ -57,7 +60,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
+  'update:modelValue': [value: string | TipTapDoc]
   'create': [{ editor: Editor }]
   'update': [{ editor: Editor }]
   'block:select': [{ node: any; pos: number } | null]
@@ -65,8 +68,9 @@ const emit = defineEmits<{
 }>()
 
 // Two-way binding for editor content
+// Accepts both string and object, passes through to UEditor
 const content = computed({
-  get: () => props.modelValue || '',
+  get: () => props.modelValue || { type: 'doc', content: [] },
   set: (value) => emit('update:modelValue', value)
 })
 

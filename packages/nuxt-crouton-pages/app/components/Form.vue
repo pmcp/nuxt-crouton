@@ -79,18 +79,26 @@ const isRegularPage = computed(() =>
 )
 
 // Editor content computed - handles object/string conversion
-// UEditor with content-type="json" emits objects, but we store as strings
+// UEditor with content-type="json" expects objects, but we store as strings in DB
 const editorContent = computed({
   get: () => {
     const content = state.value.content
-    // If it's a string, return as-is (editor will parse it)
-    if (typeof content === 'string') return content
-    // If it's an object, stringify it
-    if (content && typeof content === 'object') return JSON.stringify(content)
-    return ''
+    // Parse JSON string to object for UEditor
+    if (typeof content === 'string' && content) {
+      try {
+        return JSON.parse(content)
+      } catch {
+        // Not valid JSON, return empty doc
+        return { type: 'doc', content: [] }
+      }
+    }
+    // Already an object, return as-is
+    if (content && typeof content === 'object') return content
+    // Empty content, return empty doc structure
+    return { type: 'doc', content: [] }
   },
   set: (value: string | object) => {
-    // Always store as string
+    // Always store as string in state (for DB)
     if (typeof value === 'object') {
       state.value.content = JSON.stringify(value)
     } else {

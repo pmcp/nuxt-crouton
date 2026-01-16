@@ -18,8 +18,11 @@ interface BlockSuggestionItem {
   command: string
 }
 
+/** TipTap JSON document structure */
+type TipTapDoc = { type: 'doc'; content: unknown[] }
+
 interface Props {
-  modelValue?: string | null
+  modelValue?: string | TipTapDoc | null
   placeholder?: string
   editable?: boolean
 }
@@ -30,12 +33,12 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
+  'update:modelValue': [value: string | TipTapDoc]
 }>()
 
-// Two-way binding
+// Two-way binding - pass through to CroutonEditorBlocks
 const content = computed({
-  get: () => props.modelValue || '',
+  get: () => props.modelValue || { type: 'doc', content: [] },
   set: (value) => emit('update:modelValue', value)
 })
 
