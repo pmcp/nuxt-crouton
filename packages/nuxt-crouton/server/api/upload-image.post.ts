@@ -25,7 +25,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const file = await hubBlob().put(image.name, image, {
+  // File extends Blob and has a name property; use it if available, otherwise generate one
+  const fileName = (image as File).name || `upload-${Date.now()}.${image.type.split('/')[1] || 'bin'}`
+  const file = await hubBlob().put(fileName, image, {
     addRandomSuffix: true
   })
 

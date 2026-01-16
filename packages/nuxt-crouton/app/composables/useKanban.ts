@@ -242,9 +242,10 @@ export function detectGroupableFields<T extends Record<string, any>>(
 
   const fieldStats: Record<string, Set<string>> = {}
   const sample = items[0]
+  if (!sample) return []
 
   // Analyze first item to get field names
-  for (const [field, value] of Object.entries(sample)) {
+  for (const [field, value] of Object.entries(sample as Record<string, any>)) {
     // Skip excluded fields
     if (exclude.includes(field)) continue
     // Skip fields ending with Id (likely references)
@@ -262,7 +263,7 @@ export function detectGroupableFields<T extends Record<string, any>>(
     for (const field of Object.keys(fieldStats)) {
       const value = item[field]
       if (value !== null && value !== undefined) {
-        fieldStats[field].add(String(value))
+        fieldStats[field]?.add(String(value))
       }
     }
   }

@@ -120,6 +120,10 @@ export function useTreeMutation(collection: string) {
 
       // Remove item from current position and insert at new position
       const [movedItem] = sortedItems.splice(currentIndex, 1)
+      if (!movedItem) {
+        console.error('[useTreeMutation] Failed to splice moved item')
+        return
+      }
       sortedItems.splice(newOrder, 0, movedItem)
 
       // Calculate new order values for ALL items
