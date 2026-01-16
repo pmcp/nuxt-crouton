@@ -33,6 +33,9 @@
       "fullHeight": "Full Height",
       "fullScreen": "Full Screen"
     },
+    "parent": {
+      "root": "Root (No Parent)"
+    },
     "fields": {
       "title": "Title",
       "slug": "URL Slug",
@@ -43,7 +46,8 @@
       "showInNavigation": "Show in Navigation",
       "seoTitle": "SEO Title",
       "seoDescription": "SEO Description",
-      "layout": "Layout"
+      "layout": "Layout",
+      "parent": "Parent Page"
     }
   },
   "common": {
