@@ -332,15 +332,14 @@ const fieldComponents = {}
             name="content"
             class="mt-4"
           >
-            <div class="editor-container">
+            <div class="editor-container border border-default rounded-lg">
               <ClientOnly>
-                <CroutonPagesEditorBlockEditorWithPreview
+                <CroutonPagesEditorBlockEditor
                   v-model="editorContent"
                   placeholder="Type / to insert a block..."
-                  preview-title="Page Preview"
                 />
                 <template #fallback>
-                  <div class="flex items-center justify-center h-full text-muted border border-default rounded-lg">
+                  <div class="flex items-center justify-center h-full text-muted">
                     <UIcon name="i-lucide-loader-2" class="size-6 animate-spin" />
                   </div>
                 </template>
@@ -429,7 +428,7 @@ const fieldComponents = {}
       </template>
 
       <template #footer>
-        <div class="flex items-center gap-2 pt-4 stillpb-8 w-full">
+        <div class="flex items-center gap-2 pt-4 pb-6 w-full">
           <!-- Save button -->
           <CroutonFormActionButton
             :action="action"
