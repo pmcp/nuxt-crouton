@@ -48,6 +48,8 @@ export default defineNuxtConfig({
     ],
     langDir: '../locales', // Relative to srcDir (app/)
     defaultLocale: 'en',
-    strategy: 'no_prefix' // Team routes handle locale manually: /team/en/page, /team/fr/page
+    strategy: 'no_prefix', // Team routes handle locale manually: /team/en/page, /team/fr/page
+    // Disable automatic redirects - we handle locale in public page routes only
+    detectBrowserLanguage: false
   }
 })
