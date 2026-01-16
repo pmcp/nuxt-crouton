@@ -145,52 +145,51 @@ defineExpose({
 
 <template>
   <div class="block-editor-with-preview w-full h-full flex flex-col">
-    <UTabs v-model="activeTab" :items="tabItems" class="w-full flex-1 flex flex-col min-h-0">
-      <template #content="{ item }">
-        <!-- Editor Tab -->
-        <div
-          v-show="item.value === 'editor'"
-          class="flex-1 min-h-0 pt-2"
-        >
-          <CroutonEditorBlocks
-            ref="editorBlocksRef"
-            v-model="content"
-            :placeholder="placeholder"
-            :editable="editable"
-            :extensions="pageBlockExtensions"
-            :suggestion-items="blockSuggestionItems"
-            content-type="json"
-            class="h-full border border-default rounded-lg"
-            @block:select="(node) => selectedNode = node"
-            @block:edit="(node) => { selectedNode = node; isPropertyPanelOpen = true }"
-          />
-        </div>
+    <!-- Tab buttons only -->
+    <UTabs v-model="activeTab" :items="tabItems" :content="false" />
 
-        <!-- Preview Tab -->
-        <div
-          v-show="item.value === 'preview'"
-          class="flex-1 min-h-0 pt-2"
-        >
-          <div class="border border-default rounded-lg overflow-hidden h-full flex flex-col">
-            <!-- Header -->
-            <div class="flex items-center justify-between px-4 py-2 border-b border-default bg-muted/30 flex-shrink-0">
-              <div class="flex items-center gap-2">
-                <UIcon name="i-lucide-eye" class="size-4 text-muted" />
-                <span class="text-sm font-medium">{{ previewTitle }}</span>
-              </div>
-            </div>
+    <!-- Editor Tab -->
+    <div
+      v-show="activeTab === 'editor'"
+      class="flex-1 min-h-0 pt-2"
+    >
+      <CroutonEditorBlocks
+        ref="editorBlocksRef"
+        v-model="content"
+        :placeholder="placeholder"
+        :editable="editable"
+        :extensions="pageBlockExtensions"
+        :suggestion-items="blockSuggestionItems"
+        content-type="json"
+        class="h-full border border-default rounded-lg"
+        @block:select="(node) => selectedNode = node"
+        @block:edit="(node) => { selectedNode = node; isPropertyPanelOpen = true }"
+      />
+    </div>
 
-            <!-- Preview content -->
-            <div class="flex-1 overflow-auto">
-              <CroutonPagesBlockContent
-                :content="content"
-                class="p-4"
-              />
-            </div>
+    <!-- Preview Tab -->
+    <div
+      v-show="activeTab === 'preview'"
+      class="flex-1 min-h-0 pt-2"
+    >
+      <div class="border border-default rounded-lg overflow-hidden h-full flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-2 border-b border-default bg-muted/30 flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-eye" class="size-4 text-muted" />
+            <span class="text-sm font-medium">{{ previewTitle }}</span>
           </div>
         </div>
-      </template>
-    </UTabs>
+
+        <!-- Preview content -->
+        <div class="flex-1 overflow-auto">
+          <CroutonPagesBlockContent
+            :content="content"
+            class="p-4"
+          />
+        </div>
+      </div>
+    </div>
 
     <!-- Property Panel - Rendered at root level for proper z-index/overlay -->
     <USlideover
@@ -211,12 +210,3 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
-/* Ensure tabs content fills available height */
-.block-editor-with-preview :deep([role="tabpanel"]) {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-</style>

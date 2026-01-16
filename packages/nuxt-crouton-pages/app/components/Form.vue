@@ -429,7 +429,7 @@ const fieldComponents = {}
       </template>
 
       <template #footer>
-        <div class="flex items-center gap-2 w-full">
+        <div class="flex items-center gap-2 pt-4 stillpb-8 w-full">
           <!-- Save button -->
           <CroutonFormActionButton
             :action="action"
