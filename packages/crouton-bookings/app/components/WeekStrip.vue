@@ -183,14 +183,14 @@ const sizeClasses = computed(() => {
           @click="prevWeek"
         />
       </div>
-      <button
-        type="button"
-        class="font-medium hover:text-primary transition-colors"
-        :class="sizeClasses.header"
+      <UButton
+        variant="ghost"
+        color="neutral"
+        :class="['font-medium', sizeClasses.header]"
         @click="goToToday"
       >
         {{ weekLabel }}
-      </button>
+      </UButton>
       <div class="flex items-center">
         <UButton
           icon="i-lucide-chevrons-right"

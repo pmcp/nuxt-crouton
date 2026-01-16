@@ -142,67 +142,57 @@ function viewError(error: string) {
 
     <!-- Logs Table -->
     <UCard v-else>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-default">
-              <th class="text-left py-3 px-4 font-medium text-muted">Status</th>
-              <th class="text-left py-3 px-4 font-medium text-muted">Recipient</th>
-              <th class="text-left py-3 px-4 font-medium text-muted">Type</th>
-              <th class="text-left py-3 px-4 font-medium text-muted">Sent At</th>
-              <th class="text-left py-3 px-4 font-medium text-muted">Created</th>
-              <th class="text-left py-3 px-4 font-medium text-muted">Error</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="log in logs"
-              :key="log.id"
-              class="border-b border-default last:border-0 hover:bg-muted/30 transition-colors"
-            >
-              <td class="py-3 px-4">
-                <UBadge
-                  :color="statusConfig[log.status]?.color || 'neutral'"
-                  variant="subtle"
-                  size="sm"
-                  class="inline-flex items-center gap-1"
-                >
-                  <UIcon
-                    :name="statusConfig[log.status]?.icon || 'i-lucide-circle'"
-                    class="size-3"
-                  />
-                  {{ log.status }}
-                </UBadge>
-              </td>
-              <td class="py-3 px-4">
-                <span class="font-mono text-xs">{{ log.recipientEmail }}</span>
-              </td>
-              <td class="py-3 px-4">
-                <span class="text-muted">{{ triggerLabels[log.triggerType] || log.triggerType }}</span>
-              </td>
-              <td class="py-3 px-4 text-muted">
-                {{ formatDate(log.sentAt) }}
-              </td>
-              <td class="py-3 px-4 text-muted">
-                {{ formatDate(log.createdAt) }}
-              </td>
-              <td class="py-3 px-4">
-                <UButton
-                  v-if="log.error"
-                  size="xs"
-                  color="error"
-                  variant="ghost"
-                  icon="i-lucide-alert-circle"
-                  @click="viewError(log.error)"
-                >
-                  View
-                </UButton>
-                <span v-else class="text-muted">-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <UTable
+        :data="logs"
+        :columns="[
+          { key: 'status', label: 'Status' },
+          { key: 'recipientEmail', label: 'Recipient' },
+          { key: 'triggerType', label: 'Type' },
+          { key: 'sentAt', label: 'Sent At' },
+          { key: 'createdAt', label: 'Created' },
+          { key: 'error', label: 'Error' }
+        ]"
+      >
+        <template #status-cell="{ row }">
+          <UBadge
+            :color="statusConfig[row.original.status]?.color || 'neutral'"
+            variant="subtle"
+            size="sm"
+            class="inline-flex items-center gap-1"
+          >
+            <UIcon
+              :name="statusConfig[row.original.status]?.icon || 'i-lucide-circle'"
+              class="size-3"
+            />
+            {{ row.original.status }}
+          </UBadge>
+        </template>
+        <template #recipientEmail-cell="{ row }">
+          <span class="font-mono text-xs">{{ row.original.recipientEmail }}</span>
+        </template>
+        <template #triggerType-cell="{ row }">
+          <span class="text-muted">{{ triggerLabels[row.original.triggerType] || row.original.triggerType }}</span>
+        </template>
+        <template #sentAt-cell="{ row }">
+          <span class="text-muted">{{ formatDate(row.original.sentAt) }}</span>
+        </template>
+        <template #createdAt-cell="{ row }">
+          <span class="text-muted">{{ formatDate(row.original.createdAt) }}</span>
+        </template>
+        <template #error-cell="{ row }">
+          <UButton
+            v-if="row.original.error"
+            size="xs"
+            color="error"
+            variant="ghost"
+            icon="i-lucide-alert-circle"
+            @click="viewError(row.original.error)"
+          >
+            View
+          </UButton>
+          <span v-else class="text-muted">-</span>
+        </template>
+      </UTable>
     </UCard>
   </div>
 

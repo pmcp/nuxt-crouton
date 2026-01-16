@@ -318,9 +318,11 @@ const timelineItems = computed<TimelineItem[]>(() => {
     <!-- Mobile email panel -->
     <div v-if="isEmailEnabled && timelineItems.length > 0" class="md:hidden mt-4 pt-3 border-t border-muted/20 relative">
       <!-- Trigger button -->
-      <button
-        type="button"
-        class="flex items-center gap-2 text-sm text-muted hover:text-default transition-colors py-1"
+      <UButton
+        variant="ghost"
+        color="neutral"
+        size="sm"
+        class="text-muted hover:text-default"
         @click="isEmailPanelOpen = !isEmailPanelOpen"
       >
         <UIcon name="i-lucide-mail" class="size-4" />
@@ -330,7 +332,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
           class="size-3 transition-transform duration-200"
           :class="isEmailPanelOpen ? 'rotate-180' : ''"
         />
-      </button>
+      </UButton>
 
       <!-- Slide-out email buttons -->
       <div

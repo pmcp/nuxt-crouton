@@ -58,27 +58,23 @@ function isSelected(slot: SlotItem): boolean {
     </div>
 
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-      <button
+      <UButton
         v-for="slot in normalizedSlots"
         :key="slot.id"
-        type="button"
-        class="p-4 rounded-lg border-2 transition-all duration-200 text-center"
-        :class="[
-          isSelected(slot)
-            ? 'border-primary bg-primary/10 text-primary font-semibold'
-            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700',
-        ]"
+        :variant="isSelected(slot) ? 'soft' : 'outline'"
+        :color="isSelected(slot) ? 'primary' : 'neutral'"
+        class="p-4 h-auto flex-col"
         @click="emit('select', slot.id)"
       >
         <div
           v-if="color"
-          class="w-3 h-3 rounded-full mx-auto mb-2"
+          class="w-3 h-3 rounded-full mb-2"
           :style="{ backgroundColor: color }"
         />
         <span class="block text-sm">
           {{ getSlotLabel(slot) }}
         </span>
-      </button>
+      </UButton>
     </div>
   </div>
 </template>

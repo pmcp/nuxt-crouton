@@ -458,29 +458,30 @@ function getLocationName(locationId: string | null) {
         </div>
 
         <!-- Language tabs -->
-        <div class="flex gap-1 p-1 bg-muted/30 rounded-lg">
-          <button
-            v-for="locale in locales"
-            :key="locale.code"
-            type="button"
-            class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
-            :class="[
-              activeLocale === locale.code
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-muted/50',
-              locale.required ? '' : ''
-            ]"
-            @click="activeLocale = locale.code"
-          >
-            {{ locale.label }}
-            <span v-if="locale.required" class="text-error ml-0.5">*</span>
-            <UIcon
-              v-if="hasTranslation(locale.code)"
-              name="i-lucide-check"
-              class="size-3 ml-1 inline"
-            />
-          </button>
-        </div>
+        <UTabs
+          v-model="activeLocale"
+          :items="locales.map(locale => ({
+            value: locale.code,
+            label: locale.label,
+            slot: locale.code
+          }))"
+          :ui="{
+            list: 'bg-muted/30 rounded-lg p-1',
+            trigger: 'flex-1 text-sm font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+          }"
+        >
+          <template v-for="locale in locales" :key="locale.code" #[`${locale.code}-label`]>
+            <span>
+              {{ locale.label }}
+              <span v-if="locale.required" class="text-error ml-0.5">*</span>
+              <UIcon
+                v-if="hasTranslation(locale.code)"
+                name="i-lucide-check"
+                class="size-3 ml-1 inline"
+              />
+            </span>
+          </template>
+        </UTabs>
 
         <!-- Name (translatable) -->
         <UFormField :label="`Template Name (${activeLocale.toUpperCase()})`" name="name" :required="activeLocale === 'en'">
