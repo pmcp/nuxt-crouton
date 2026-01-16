@@ -48,16 +48,6 @@ const localizedTitle = computed(() => {
 // Relative time ago
 const timeAgo = useTimeAgo(() => props.item.updatedAt || props.item.createdAt)
 
-// Visibility icon mapping
-const visibilityIcon = computed(() => {
-  switch (props.item.visibility) {
-    case 'public': return 'i-lucide-globe'
-    case 'members': return 'i-lucide-lock'
-    case 'hidden': return 'i-lucide-eye-off'
-    default: return 'i-lucide-globe'
-  }
-})
-
 // Status color mapping
 const statusColor = computed(() => {
   switch (props.item.status) {
@@ -65,6 +55,16 @@ const statusColor = computed(() => {
     case 'draft': return 'warning' as const
     case 'archived': return 'neutral' as const
     default: return 'neutral' as const
+  }
+})
+
+// Visibility color mapping
+const visibilityColor = computed(() => {
+  switch (props.item.visibility) {
+    case 'public': return 'info' as const
+    case 'members': return 'warning' as const
+    case 'hidden': return 'neutral' as const
+    default: return 'info' as const
   }
 })
 </script>
@@ -89,13 +89,15 @@ const statusColor = computed(() => {
 
     <!-- Right side: visibility, status, timestamp - fixed width for alignment -->
     <div class="flex items-center gap-2 shrink-0">
-      <!-- Visibility icon -->
-      <UTooltip :text="props.item.visibility || 'public'">
-        <UIcon
-          :name="visibilityIcon"
-          class="size-3.5 text-muted"
-        />
-      </UTooltip>
+      <!-- Visibility badge -->
+      <UBadge
+        :color="visibilityColor"
+        size="xs"
+        variant="subtle"
+        class="w-16 justify-center"
+      >
+        {{ props.item.visibility || 'public' }}
+      </UBadge>
 
       <!-- Status badge -->
       <UBadge
