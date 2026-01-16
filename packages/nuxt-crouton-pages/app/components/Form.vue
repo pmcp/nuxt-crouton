@@ -42,6 +42,9 @@ const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { open, close, loading: croutonLoading } = useCrouton()
 
+// Fetch all pages for parent selector
+const { items: allPages, pending: pagesPending } = await useCollectionQuery('pagesPages')
+
 // Default values for new pages
 const defaultValue = {
   title: '',
@@ -137,14 +140,15 @@ const layoutOptions = [
   { value: 'full-screen', label: t('pages.layout.fullScreen') || 'Full Screen (No Padding)' }
 ]
 
-// Parent page options - builds tree-structured options from items
+// Parent page options - builds tree-structured options from fetched pages
 // Filters out current page and its descendants to prevent circular references
 const parentOptions = computed(() => {
   const options: { value: string | null; label: string; disabled?: boolean }[] = [
-    { value: null, label: t('pages.parent.root') || '(Root level - no parent)' }
+    { value: null, label: t('pages.parent.root') || 'Root (No Parent)' }
   ]
 
-  if (!props.items || props.items.length === 0) {
+  const pages = allPages.value
+  if (!pages || pages.length === 0) {
     return options
   }
 
@@ -152,7 +156,7 @@ const parentOptions = computed(() => {
   const getDescendantIds = (pageId: string): Set<string> => {
     const descendants = new Set<string>()
     const findDescendants = (parentId: string) => {
-      for (const page of props.items) {
+      for (const page of pages) {
         if (page.parentId === parentId) {
           descendants.add(page.id)
           findDescendants(page.id)
@@ -169,7 +173,7 @@ const parentOptions = computed(() => {
 
   // Build flat list with indentation based on depth
   const buildOptions = (parentId: string | null = null, depth: number = 0) => {
-    const children = props.items.filter(p => p.parentId === parentId)
+    const children = pages.filter((p: any) => p.parentId === parentId)
     for (const page of children) {
       const isExcluded = excludeIds.has(page.id)
       options.push({
@@ -214,10 +218,6 @@ watch(() => state.value.title, (title) => {
       .replace(/^-|-$/g, '')
   }
 })
-
-function onSlugInput() {
-  slugManuallyEdited.value = true
-}
 
 // Form submission
 async function handleSubmit() {
@@ -304,20 +304,6 @@ const fieldComponents = {}
             </p>
           </UFormField>
 
-          <!-- Slug (non-translatable) -->
-          <UFormField :label="t('pages.fields.slug') || 'URL Slug'" name="slug" required>
-            <UInput
-              v-model="state.slug"
-              placeholder="page-url-slug"
-              class="w-full"
-              @input="onSlugInput"
-            >
-              <template #leading>
-                <span class="text-muted text-sm">/</span>
-              </template>
-            </UInput>
-          </UFormField>
-
           <!-- Translatable Title & Slug Fields -->
           <CroutonI18nInput
             v-model="state.translations"
@@ -332,7 +318,10 @@ const fieldComponents = {}
             label="Title & URL Slug"
             @update:english="(data: { field: string, value: string }) => {
               if (data.field === 'title') state.title = data.value
-              if (data.field === 'slug') state.slug = data.value
+              if (data.field === 'slug') {
+                state.slug = data.value
+                slugManuallyEdited = true
+              }
             }"
           />
 
@@ -428,6 +417,8 @@ const fieldComponents = {}
               v-model="state.parentId"
               :items="parentOptions"
               value-key="value"
+              :loading="pagesPending"
+              placeholder="Select parent page..."
               class="w-full"
             />
             <p class="text-xs text-muted mt-1">

@@ -6,7 +6,7 @@
  *
  * GET /api/teams/[id]/pages/[slug]
  */
-import { eq, and, or, asc } from 'drizzle-orm'
+import { eq, and, or, asc, sql } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const teamParam = getRouterParam(event, 'id')
@@ -21,6 +21,9 @@ export default defineEventHandler(async (event) => {
 
   // Handle empty slug or _home (homepage)
   const slug = (!slugParam || slugParam === '_home') ? '' : slugParam
+
+  // Get locale from query parameter (for translated slug lookup)
+  const locale = getQuery(event).locale as string || 'en'
 
   try {
     const database = db
@@ -76,7 +79,8 @@ export default defineEventHandler(async (event) => {
           })
         }
       } else {
-        // Regular page: find by exact slug
+        // Regular page: find by slug
+        // First try: exact match on base slug
         page = await database
           .select()
           .from(pagesSchema.pagesPages)
@@ -88,6 +92,21 @@ export default defineEventHandler(async (event) => {
           )
           .limit(1)
           .then((rows: any[]) => rows[0])
+
+        // Second try: search in translations JSON for locale-specific slug
+        if (!page && locale !== 'en') {
+          page = await database
+            .select()
+            .from(pagesSchema.pagesPages)
+            .where(
+              and(
+                eq(pagesSchema.pagesPages.teamId, team.id),
+                sql`json_extract(${pagesSchema.pagesPages.translations}, '$.' || ${locale} || '.slug') = ${slug}`
+              )
+            )
+            .limit(1)
+            .then((rows: any[]) => rows[0])
+        }
 
         if (!page) {
           throw createError({
@@ -159,18 +178,19 @@ export default defineEventHandler(async (event) => {
             ? JSON.parse(page.translations)
             : page.translations
 
-          // Try to get locale from header, fallback to 'en'
-          const acceptLang = getHeader(event, 'accept-language')
-          const locale = acceptLang?.split(',')[0]?.split('-')[0] || 'en'
+          // Use locale from query parameter (already extracted above)
           const localeTranslations = translations[locale] || translations['en'] || Object.values(translations)[0]
 
           if (localeTranslations && typeof localeTranslations === 'object') {
-            // Merge translated fields (title, content, etc.)
+            // Merge translated fields (title, slug, content, etc.) - but keep original slug for reference
+            const originalSlug = page.slug
             for (const [key, value] of Object.entries(localeTranslations)) {
               if (value !== null && value !== undefined) {
                 page[key] = value
               }
             }
+            // Store original English slug for canonical URL reference
+            page.baseSlug = originalSlug
           }
         } catch (e) {
           console.error('[pages] Translation parsing error:', e)
@@ -181,7 +201,10 @@ export default defineEventHandler(async (event) => {
         data: page,
         meta: {
           teamId: team.id,
-          teamSlug: team.slug
+          teamSlug: team.slug,
+          locale,
+          // Include raw translations for hreflang generation
+          translations: page.translations
         }
       }
     } catch (error: any) {

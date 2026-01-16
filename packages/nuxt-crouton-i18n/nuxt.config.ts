@@ -48,6 +48,6 @@ export default defineNuxtConfig({
     ],
     langDir: '../locales', // Relative to srcDir (app/)
     defaultLocale: 'en',
-    strategy: 'no_prefix'
+    strategy: 'prefix' // All URLs include locale prefix (e.g., /en/acme/about, /fr/acme/a-propos)
   }
 })

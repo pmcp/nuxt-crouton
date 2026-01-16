@@ -39,6 +39,9 @@ const { t } = useT()
 const { getPageType } = usePageTypes()
 const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 
+// i18n for locale handling and SEO
+const { locale, locales } = useI18n()
+
 // Get team and slug from route params
 const team = computed(() => route.params.team as string)
 const slug = computed(() => {
@@ -57,14 +60,16 @@ const apiUrl = computed(() => {
   return `${baseUrl}/${slug.value || '_home'}`
 })
 
-// Fetch page by team and slug
+// Fetch page by team and slug, passing current locale for translated slug lookup
 const { data: pageResponse, status, error } = await useFetch(apiUrl, {
-  watch: [team, slug],
-  transform: (data: any) => data?.data || data
+  query: { locale: locale.value },
+  watch: [team, slug, locale],
+  transform: (data: any) => data
 })
 
-// Extract page from response
-const page = computed(() => pageResponse.value)
+// Extract page and meta from response
+const page = computed(() => pageResponse.value?.data)
+const pageMeta = computed(() => pageResponse.value?.meta)
 
 // Get page type info (needed for layout fallback)
 const pageType = computed(() => {
@@ -119,9 +124,42 @@ useSeoMeta({
   description: () => page.value?.seoDescription || ''
 })
 
-// Page title for head
+// Build hreflang links for SEO
+const alternateLinks = computed(() => {
+  const translations = pageMeta.value?.translations
+  if (!translations || !page.value) return []
+
+  // Parse translations if string
+  const parsedTranslations = typeof translations === 'string'
+    ? JSON.parse(translations)
+    : translations
+
+  // Get base slug (English slug)
+  const baseSlug = page.value.baseSlug || page.value.slug
+
+  // Build alternate links for each locale
+  return locales.value.map((loc: { code: string }) => {
+    const translatedSlug = parsedTranslations?.[loc.code]?.slug || baseSlug
+    return {
+      rel: 'alternate',
+      hreflang: loc.code,
+      href: `/${loc.code}/${team.value}/${translatedSlug}`
+    }
+  })
+})
+
+// Page title and hreflang links for head
 useHead({
-  title: () => page.value?.title || 'Page'
+  title: () => page.value?.title || 'Page',
+  link: () => [
+    // Canonical URL (current locale and slug)
+    {
+      rel: 'canonical',
+      href: `/${locale.value}/${team.value}/${page.value?.slug || ''}`
+    },
+    // hreflang alternatives
+    ...alternateLinks.value
+  ]
 })
 </script>
 
