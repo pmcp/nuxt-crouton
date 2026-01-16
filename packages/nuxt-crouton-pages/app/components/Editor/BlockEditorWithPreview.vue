@@ -210,3 +210,20 @@ defineExpose({
     </USlideover>
   </div>
 </template>
+
+<style scoped>
+/* Ensure tabs content fills available height */
+.block-editor-with-preview :deep([role="tabpanel"]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Ensure the tab content wrapper also fills */
+.block-editor-with-preview :deep(.flex-1.min-h-0) {
+  flex: 1;
+  min-height: 0;
+}
+</style>

@@ -336,8 +336,8 @@ defineExpose({
       :handlers="blockHandlers"
       class="flex flex-col h-full overflow-hidden"
       :ui="{
-        root: 'h-full flex flex-col overflow-hidden',
-        content: 'flex-1 overflow-auto prose prose-sm dark:prose-invert max-w-none p-4 min-h-0'
+        root: 'h-full flex flex-col overflow-hidden min-h-0',
+        content: 'flex-1 overflow-auto prose prose-sm dark:prose-invert max-w-none p-4'
       }"
       @create="handleEditorCreate"
       @update="handleEditorUpdate"
