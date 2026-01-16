@@ -1,5 +1,14 @@
 {
   "pages": {
+    "title": "Pages",
+    "notFound": "Page not found",
+    "notFoundDescription": "The page you are looking for does not exist.",
+    "backToHome": "Back to Home",
+    "create": "Create Page",
+    "createNew": "Create New Page",
+    "selectType": "Select Page Type",
+    "empty": "No pages yet",
+    "emptyDescription": "Create your first page to get started",
     "admin": {
       "pages": "Pages",
       "title": "Pages",
@@ -19,6 +28,11 @@
       "members": "Members Only",
       "hidden": "Hidden"
     },
+    "layout": {
+      "default": "Default",
+      "fullHeight": "Full Height",
+      "fullScreen": "Full Screen"
+    },
     "fields": {
       "title": "Title",
       "slug": "URL Slug",
@@ -28,7 +42,15 @@
       "visibility": "Visibility",
       "showInNavigation": "Show in Navigation",
       "seoTitle": "SEO Title",
-      "seoDescription": "SEO Description"
+      "seoDescription": "SEO Description",
+      "layout": "Layout"
     }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back"
   }
 }
