@@ -65,6 +65,11 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
+// Ensure content is a string (database may return parsed JSON object)
+if (initialValues.content && typeof initialValues.content === 'object') {
+  initialValues.content = JSON.stringify(initialValues.content)
+}
+
 const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
 
 // Computed values
@@ -72,6 +77,27 @@ const selectedPageType = computed(() => getPageType(state.value.pageType))
 const isRegularPage = computed(() =>
   state.value.pageType === 'pages:regular' || state.value.pageType === 'regular'
 )
+
+// Editor content computed - handles object/string conversion
+// UEditor with content-type="json" emits objects, but we store as strings
+const editorContent = computed({
+  get: () => {
+    const content = state.value.content
+    // If it's a string, return as-is (editor will parse it)
+    if (typeof content === 'string') return content
+    // If it's an object, stringify it
+    if (content && typeof content === 'object') return JSON.stringify(content)
+    return ''
+  },
+  set: (value: string | object) => {
+    // Always store as string
+    if (typeof value === 'object') {
+      state.value.content = JSON.stringify(value)
+    } else {
+      state.value.content = value
+    }
+  }
+})
 
 // Page type options for dropdown
 const pageTypeOptions = computed(() =>
@@ -306,10 +332,17 @@ const fieldComponents = {}
             class="mt-4"
           >
             <div class="border border-default rounded-lg overflow-hidden h-[400px]">
-              <CroutonPagesEditorBlockEditor
-                v-model="state.content"
-                placeholder="Type / to insert a block..."
-              />
+              <ClientOnly>
+                <CroutonPagesEditorBlockEditor
+                  v-model="editorContent"
+                  placeholder="Type / to insert a block..."
+                />
+                <template #fallback>
+                  <div class="flex items-center justify-center h-full text-muted">
+                    <UIcon name="i-lucide-loader-2" class="size-6 animate-spin" />
+                  </div>
+                </template>
+              </ClientOnly>
             </div>
           </UFormField>
 

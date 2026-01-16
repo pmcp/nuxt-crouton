@@ -9,6 +9,7 @@ Rich text editor addon for Nuxt Crouton. Wraps Nuxt UI's `UEditor` (TipTap-based
 | File | Purpose |
 |------|---------|
 | `app/components/Simple.vue` | `CroutonEditorSimple` - Full-featured UEditor wrapper |
+| `app/components/Blocks.vue` | `CroutonEditorBlocks` - Block editor with property panel support |
 | `app/components/Variables.vue` | `CroutonEditorVariables` - Variable insertion menu ({{ trigger) |
 | `app/components/Preview.vue` | `CroutonEditorPreview` - Live preview with variable interpolation |
 | `app/components/WithPreview.vue` | `CroutonEditorWithPreview` - Editor + preview side-by-side |
@@ -77,6 +78,83 @@ Full-featured wrapper around Nuxt UI's `UEditor` component.
   }"
   @translation-accept="handleTranslation"
 />
+```
+
+### CroutonEditorBlocks
+
+Block-based editor with support for custom NodeView blocks and property panel editing.
+Built on CroutonEditorSimple, designed for structured page content.
+
+```vue
+<CroutonEditorBlocks
+  v-model="content"
+  :extensions="[MyBlockExtension]"
+  content-type="json"
+  placeholder="Type / to insert a block..."
+>
+  <!-- Custom property panel via slot -->
+  <template #property-panel="{ selectedNode, isOpen, close, updateAttrs, deleteBlock }">
+    <USlideover :model-value="isOpen" @update:model-value="!$event && close()">
+      <template #content>
+        <MyPropertyPanel
+          v-if="selectedNode"
+          :node="selectedNode.node"
+          @update="updateAttrs"
+          @delete="deleteBlock"
+          @close="close"
+        />
+      </template>
+    </USlideover>
+  </template>
+</CroutonEditorBlocks>
+```
+
+**Props:**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `modelValue` | `string \| null` | `''` | Content (v-model) |
+| `placeholder` | `string` | - | Placeholder text |
+| `contentType` | `'html' \| 'markdown' \| 'json'` | `'json'` | Output format |
+| `editable` | `boolean` | `true` | Enable/disable editing |
+| `extensions` | `array` | - | Custom TipTap block extensions |
+| `showToolbar` | `boolean` | `true` | Show the toolbar |
+| `showBubbleToolbar` | `boolean` | `false` | Show bubble toolbar on selection |
+
+**Events:**
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `update:modelValue` | `string` | Content changed |
+| `create` | `{ editor: Editor }` | Editor instance created |
+| `update` | `{ editor: Editor }` | Content updated |
+| `block:select` | `{ node, pos } \| null` | Block selected/deselected |
+| `block:edit` | `{ node, pos }` | Block edit requested |
+
+**Slot Props (property-panel):**
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `selectedNode` | `{ node, pos } \| null` | Currently selected block |
+| `isOpen` | `boolean` | Property panel open state |
+| `close` | `() => void` | Close the panel |
+| `updateAttrs` | `(attrs) => void` | Update block attributes |
+| `deleteBlock` | `() => void` | Delete selected block |
+
+**NodeView Block Communication:**
+
+NodeView components (rendered via VueNodeViewRenderer) can request the property panel
+to open by dispatching a custom DOM event:
+
+```typescript
+// In your block's NodeView component
+function handleOpenPanel() {
+  const event = new CustomEvent('block-edit-request', {
+    bubbles: true,
+    detail: { node: props.node, pos: props.getPos() }
+  })
+  document.dispatchEvent(event)
+}
 ```
 
 When `enableTranslationAI` is `true`, a sparkles button appears in the toolbar. Clicking it (or pressing `⌘J`) translates the selected text using the AI translation API.

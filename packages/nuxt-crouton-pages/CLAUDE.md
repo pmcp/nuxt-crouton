@@ -17,9 +17,16 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `app/composables/usePageTypes.ts` | Aggregate page types from all registered apps |
 | `app/composables/useDomainContext.ts` | Custom domain detection and context |
 | `app/composables/useNavigation.ts` | Build navigation from published pages |
+| `app/composables/usePageBlocks.ts` | Block manipulation utilities |
 | `app/components/Renderer.vue` | `CroutonPagesRenderer` - Renders page based on type |
 | `app/components/RegularContent.vue` | `CroutonPagesRegularContent` - Rich text content display |
-| `app/components/Admin/PageTypeSelector.vue` | Page type selection UI for admin |
+| `app/components/BlockContent.vue` | `CroutonPagesBlockContent` - Block-based content display |
+| `app/components/Editor/BlockEditor.vue` | Block-based page editor |
+| `app/components/Form.vue` | Page creation/editing form |
+| `app/types/blocks.ts` | Block type definitions |
+| `app/utils/block-registry.ts` | Block definitions and schemas |
+| `app/utils/content-detector.ts` | JSON vs HTML content detection |
+| `app/editor/extensions/page-blocks.ts` | TipTap extensions bundle |
 | `app/pages/[team]/[...slug].vue` | Public page catch-all route |
 | `server/middleware/01-domain-resolver.ts` | Resolves custom domains to teams |
 | `server/api/teams/[id]/pages.get.ts` | Get published pages for navigation |
@@ -100,12 +107,89 @@ const {
 } = usePageTypes()
 ```
 
+## Block-Based Page Editor
+
+The package includes a block-based page editor using TipTap and Nuxt UI page components.
+
+### Block Types
+
+| Block | Component | Purpose |
+|-------|-----------|---------|
+| `heroBlock` | UPageHero | Title, description, CTA, image |
+| `sectionBlock` | UPageSection | Feature grid with icons |
+| `ctaBlock` | UPageCTA | Call-to-action banner |
+| `cardGridBlock` | UPageGrid + UPageCard | Grid of cards |
+| `separatorBlock` | USeparator | Visual divider |
+| `richTextBlock` | prose div | Standard text content |
+
+### Content Format
+
+Content is stored as JSON in the `content` TEXT column:
+
+```typescript
+interface PageBlockContent {
+  type: 'doc'
+  content: PageBlock[]
+}
+
+interface PageBlock {
+  type: 'heroBlock' | 'sectionBlock' | 'ctaBlock' | 'cardGridBlock' | 'separatorBlock'
+  attrs: Record<string, any>
+}
+```
+
+### Auto-Detection
+
+The `Renderer.vue` component auto-detects content format:
+- **JSON with `type: 'doc'`** → Renders as blocks via `BlockContent.vue`
+- **HTML string** → Renders as legacy content via `RegularContent.vue`
+- **Empty** → Shows empty state
+
+### Using the Block Editor
+
+```vue
+<CroutonPagesEditorBlockEditor
+  v-model="content"
+  placeholder="Type / to insert a block..."
+/>
+```
+
+### usePageBlocks() Composable
+
+```typescript
+const {
+  parse,              // Parse JSON to blocks
+  serialize,          // Serialize blocks to JSON
+  detectFormat,       // Detect content format
+  createEmpty,        // Create empty doc
+  fromHtml,           // Convert HTML to blocks
+  addBlock,           // Add block to content
+  removeBlock,        // Remove block by index
+  updateBlock,        // Update block attrs
+  moveBlock,          // Reorder blocks
+  getAvailableBlocks, // Get block menu items
+  getBlockCategories, // Get blocks by category
+  getDefinition,      // Get block definition
+  getDefaults         // Get default attrs
+} = usePageBlocks()
+```
+
+### Adding Custom Blocks
+
+1. Define type in `app/types/blocks.ts`
+2. Add definition in `app/utils/block-registry.ts`
+3. Create TipTap extension in `app/editor/extensions/`
+4. Create view component in `app/components/Blocks/Views/`
+5. Create render component in `app/components/Blocks/Render/`
+
 ## Component Naming
 
 Components auto-import with `CroutonPages` prefix:
 - `Renderer.vue` → `<CroutonPagesRenderer />`
 - `RegularContent.vue` → `<CroutonPagesRegularContent />`
-- `Admin/PageTypeSelector.vue` → `<CroutonPagesAdminPageTypeSelector />`
+- `BlockContent.vue` → `<CroutonPagesBlockContent />`
+- `Editor/BlockEditor.vue` → `<CroutonPagesEditorBlockEditor />`
+- `Blocks/Render/HeroBlock.vue` → `<CroutonPagesBlocksRenderHeroBlock />`
 
 ## URL Structure
 
