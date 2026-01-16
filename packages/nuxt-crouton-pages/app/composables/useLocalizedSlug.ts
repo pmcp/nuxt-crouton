@@ -1,6 +1,12 @@
 /**
  * Composable for handling localized page slugs
  *
+ * URL structure: /team/locale/slug
+ * Examples:
+ * - /acme/en/about-us
+ * - /acme/fr/a-propos
+ * - /acme/nl/over-ons
+ *
  * Provides utilities for:
  * - Getting the translated slug for a specific locale
  * - Switching to a different locale with the correct translated slug URL
@@ -27,6 +33,7 @@ export function useLocalizedSlug() {
 
   /**
    * Build the full URL for a page in a specific locale
+   * URL structure: /team/locale/slug
    */
   function getLocalizedUrl(page: any, targetLocale: string): string {
     const slug = getSlugForLocale(page, targetLocale)
@@ -37,7 +44,7 @@ export function useLocalizedSlug() {
       return `/${targetLocale}/${slug}`
     }
 
-    return `/${targetLocale}/${teamSlug}/${slug}`
+    return `/${teamSlug}/${targetLocale}/${slug}`
   }
 
   /**
