@@ -377,7 +377,6 @@ const timelineItems = computed<TimelineItem[]>(() => {
             color="neutral"
             size="sm"
             class="text-muted hover:text-default w-full justify-start rounded-none"
-            @click="isTimelineOpen = !isTimelineOpen"
         >
           <UIcon name="i-lucide-history" class="size-4" />
           <span>Activity</span>
