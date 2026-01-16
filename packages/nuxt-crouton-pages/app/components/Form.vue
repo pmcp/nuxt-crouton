@@ -462,12 +462,6 @@ const fieldComponents = {}
   min-height: 200px;
   max-height: 80vh;
   resize: vertical;
-  overflow: hidden;
-  border-radius: 0.5rem;
-}
-
-/* Resize handle visual indicator */
-.editor-container::-webkit-resizer {
-  background: linear-gradient(135deg, transparent 50%, var(--ui-border) 50%);
+  overflow: auto;
 }
 </style>
