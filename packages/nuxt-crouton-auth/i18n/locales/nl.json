@@ -1,4 +1,8 @@
 {
+  "onboarding": {
+    "createTeamTitle": "Maak Je Eerste Team",
+    "createTeamDescription": "Begin door een werkruimte voor je projecten aan te maken."
+  },
   "auth": {
     "resetLinkSentDescription": "We hebben een link om je wachtwoord te resetten naar je e-mail gestuurd. Klik op de link om je wachtwoord te resetten.",
     "magicLinkSentDescription": "We hebben een magic link naar je e-mail gestuurd. Klik op de link om in te loggen.",

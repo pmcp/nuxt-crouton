@@ -1,4 +1,8 @@
 {
+  "onboarding": {
+    "createTeamTitle": "Créez Votre Première Équipe",
+    "createTeamDescription": "Commencez par créer un espace de travail pour vos projets."
+  },
   "auth": {
     "resetLinkSentDescription": "Nous avons envoyé un lien de réinitialisation à votre e-mail. Cliquez sur le lien pour réinitialiser votre mot de passe.",
     "magicLinkSentDescription": "Nous avons envoyé un lien magique à votre e-mail. Cliquez sur le lien pour vous connecter.",

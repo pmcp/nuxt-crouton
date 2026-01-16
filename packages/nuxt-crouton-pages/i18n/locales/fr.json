@@ -1,6 +1,9 @@
 {
   "pages": {
     "title": "Pages",
+    "notFound": "Page non trouvée",
+    "notFoundDescription": "La page que vous recherchez n'existe pas.",
+    "backToHome": "Retour à l'accueil",
     "create": "Créer une page",
     "createNew": "Créer une nouvelle page",
     "selectType": "Sélectionner le type de page",
@@ -25,6 +28,14 @@
       "members": "Membres uniquement",
       "hidden": "Caché"
     },
+    "layout": {
+      "default": "Par défaut",
+      "fullHeight": "Pleine hauteur",
+      "fullScreen": "Plein écran"
+    },
+    "parent": {
+      "root": "Racine (Pas de parent)"
+    },
     "fields": {
       "title": "Titre",
       "slug": "Slug URL",
@@ -34,7 +45,9 @@
       "visibility": "Visibilité",
       "showInNavigation": "Afficher dans la navigation",
       "seoTitle": "Titre SEO",
-      "seoDescription": "Description SEO"
+      "seoDescription": "Description SEO",
+      "layout": "Mise en page",
+      "parent": "Page parente"
     }
   },
   "common": {

@@ -128,6 +128,32 @@
     "tryAgain": "Probeer het opnieuw",
     "contactSupport": "Neem contact op met support als het probleem aanhoudt"
   },
+  "errorPage": {
+    "error": "Fout",
+    "backToHome": "Terug naar home",
+    "tryAgain": "Opnieuw proberen",
+    "helpfulLinks": "Hier zijn enkele handige links:",
+    "404": {
+      "title": "Pagina niet gevonden",
+      "description": "De pagina die je zoekt bestaat niet of is verplaatst."
+    },
+    "401": {
+      "title": "Niet geautoriseerd",
+      "description": "Log in om toegang te krijgen tot deze pagina."
+    },
+    "403": {
+      "title": "Toegang geweigerd",
+      "description": "Je hebt geen toestemming om deze pagina te bekijken."
+    },
+    "500": {
+      "title": "Serverfout",
+      "description": "Er is iets misgegaan aan onze kant. Probeer het later opnieuw."
+    },
+    "default": {
+      "title": "Fout",
+      "description": "Er is een onverwachte fout opgetreden."
+    }
+  },
   "success": {
     "saved": "Succesvol opgeslagen",
     "created": "Succesvol aangemaakt",

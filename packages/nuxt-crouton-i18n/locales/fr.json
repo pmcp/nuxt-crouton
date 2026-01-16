@@ -128,6 +128,32 @@
     "tryAgain": "Veuillez réessayer",
     "contactSupport": "Veuillez contacter le support si le problème persiste"
   },
+  "errorPage": {
+    "error": "Erreur",
+    "backToHome": "Retour à l'accueil",
+    "tryAgain": "Réessayer",
+    "helpfulLinks": "Voici quelques liens utiles :",
+    "404": {
+      "title": "Page non trouvée",
+      "description": "La page que vous recherchez n'existe pas ou a été déplacée."
+    },
+    "401": {
+      "title": "Non autorisé",
+      "description": "Veuillez vous connecter pour accéder à cette page."
+    },
+    "403": {
+      "title": "Accès refusé",
+      "description": "Vous n'avez pas la permission d'accéder à cette page."
+    },
+    "500": {
+      "title": "Erreur serveur",
+      "description": "Une erreur s'est produite de notre côté. Veuillez réessayer plus tard."
+    },
+    "default": {
+      "title": "Erreur",
+      "description": "Une erreur inattendue s'est produite."
+    }
+  },
   "success": {
     "saved": "Enregistré avec succès",
     "created": "Créé avec succès",
