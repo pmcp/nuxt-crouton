@@ -32,6 +32,10 @@ export default defineNuxtConfig({
       email: { enabled: true }
     },
     public: {
+      croutonAI: {
+        defaultProvider: 'anthropic',
+        defaultModel: 'claude-sonnet-4-20250514'
+      },
       croutonBookings: {
         email: { enabled: true }
       },

@@ -19,6 +19,7 @@ import { generateText } from 'ai'
 import { defineEventHandler, readBody, createError } from 'h3'
 import { createAIProvider } from '../../utils/ai'
 import { getLanguageName } from '../../../app/types/translation'
+import { useRuntimeConfig } from '#imports'
 
 const translateSchema = z.object({
   sourceText: z.string().min(1, 'Source text is required'),
@@ -94,9 +95,12 @@ export default defineEventHandler(async (event) => {
   prompt += `\n\nText to translate:\n${body.sourceText}`
 
   try {
-    // Get AI provider
+    // Get AI provider and default model from runtime config
+    const config = useRuntimeConfig(event)
     const ai = createAIProvider(event)
-    const model = body.model || 'gpt-4o-mini'
+    const croutonAIConfig = config.public?.croutonAI as { defaultModel?: string } | undefined
+    const defaultModel = croutonAIConfig?.defaultModel || 'gpt-4o-mini'
+    const model = body.model || defaultModel
 
     // Generate translation (non-streaming)
     const result = await generateText({
