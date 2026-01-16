@@ -100,20 +100,37 @@ function getInsertCommand(type: string): string {
 // Editor ref
 const editorBlocksRef = ref()
 
+// Property panel state (managed here, not in CroutonEditorBlocks)
+const selectedNode = ref<{ pos: number; node: any } | null>(null)
+const isPropertyPanelOpen = ref(false)
+
+function closePropertyPanel() {
+  isPropertyPanelOpen.value = false
+}
+
+function updateBlockAttrs(attrs: Record<string, unknown>) {
+  editorBlocksRef.value?.updateBlockAttrs(attrs)
+}
+
+function deleteBlock() {
+  editorBlocksRef.value?.deleteSelectedBlock()
+  closePropertyPanel()
+}
+
 // Expose editor utilities
 defineExpose({
   get editor() {
     return editorBlocksRef.value?.editor
   },
   get selectedNode() {
-    return editorBlocksRef.value?.selectedNode
+    return selectedNode.value
   },
   openPropertyPanel() {
-    return editorBlocksRef.value?.openPropertyPanel()
+    if (selectedNode.value) {
+      isPropertyPanelOpen.value = true
+    }
   },
-  updateBlockAttrs(attrs: Record<string, unknown>) {
-    return editorBlocksRef.value?.updateBlockAttrs(attrs)
-  },
+  updateBlockAttrs,
   deleteSelectedBlock() {
     return editorBlocksRef.value?.deleteSelectedBlock()
   },
@@ -144,27 +161,9 @@ defineExpose({
             :suggestion-items="blockSuggestionItems"
             content-type="json"
             class="h-full border border-default rounded-lg overflow-hidden"
-          >
-            <!-- Property Panel -->
-            <template #property-panel="{ selectedNode, isOpen, close, updateAttrs, deleteBlock }">
-              <USlideover
-                :open="isOpen"
-                title="Edit Block"
-                :ui="{ content: 'max-w-sm' }"
-                @update:open="!$event && close()"
-              >
-                <template #body>
-                  <CroutonPagesEditorBlockPropertyPanel
-                    v-if="selectedNode"
-                    :node="selectedNode.node"
-                    @update="updateAttrs"
-                    @delete="deleteBlock"
-                    @close="close"
-                  />
-                </template>
-              </USlideover>
-            </template>
-          </CroutonEditorBlocks>
+            @block:select="(node) => selectedNode = node"
+            @block:edit="(node) => { selectedNode = node; isPropertyPanelOpen = true }"
+          />
         </div>
 
         <!-- Preview Tab -->
@@ -192,5 +191,22 @@ defineExpose({
         </div>
       </template>
     </UTabs>
+
+    <!-- Property Panel - Rendered at root level for proper z-index/overlay -->
+    <USlideover
+      v-model:open="isPropertyPanelOpen"
+      title="Edit Block"
+      :ui="{ content: 'max-w-sm' }"
+    >
+      <template #body>
+        <CroutonPagesEditorBlockPropertyPanel
+          v-if="selectedNode"
+          :node="selectedNode.node"
+          @update="updateBlockAttrs"
+          @delete="deleteBlock"
+          @close="closePropertyPanel"
+        />
+      </template>
+    </USlideover>
   </div>
 </template>
