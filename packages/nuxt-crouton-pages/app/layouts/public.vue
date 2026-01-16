@@ -11,10 +11,47 @@
  * - full-screen: No padding, full viewport (for landing pages)
  */
 
-// Inject page layout from the page component
-const pageLayout = inject<Ref<'default' | 'full-height' | 'full-screen'>>('pageLayout', ref('default'))
+// Get page layout from shared state (set by page component via useState)
+const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayout', () => 'default')
 
-// Compute layout-specific classes
+// Refs for manual DOM update after hydration (to fix SSR mismatch)
+const containerRef = ref<HTMLElement>()
+const mainRef = ref<HTMLElement>()
+
+// Apply layout classes to DOM elements
+// Needed because: 1) SSR hydration mismatch, 2) navigation between pages
+function applyLayoutClasses() {
+  if (!containerRef.value || !mainRef.value) return
+
+  const container = containerRef.value
+  const main = mainRef.value
+
+  switch (pageLayout.value) {
+    case 'full-height':
+      container.className = 'bg-background h-screen flex flex-col overflow-hidden'
+      main.className = 'flex-1 overflow-hidden pt-20 sm:pt-24 px-4 sm:px-6 lg:px-8'
+      break
+    case 'full-screen':
+      container.className = 'bg-background min-h-screen'
+      main.className = 'pt-16'
+      break
+    default:
+      container.className = 'bg-background min-h-screen'
+      main.className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-8'
+  }
+}
+
+// Apply on mount (fixes SSR hydration mismatch)
+onMounted(() => {
+  nextTick(applyLayoutClasses)
+})
+
+// Watch for layout changes (handles navigation between pages)
+watch(pageLayout, () => {
+  nextTick(applyLayoutClasses)
+})
+
+// Compute layout-specific classes (used for SSR, then manually fixed after hydration)
 const containerClasses = computed(() => {
   switch (pageLayout.value) {
     case 'full-height':
@@ -39,12 +76,12 @@ const mainClasses = computed(() => {
 </script>
 
 <template>
-  <div class="bg-background" :class="containerClasses">
+  <div ref="containerRef" class="bg-background" :class="containerClasses">
     <!-- Floating navigation -->
     <CroutonPagesNav />
 
     <!-- Main content -->
-    <main :class="mainClasses">
+    <main ref="mainRef" :class="mainClasses">
       <slot />
     </main>
   </div>

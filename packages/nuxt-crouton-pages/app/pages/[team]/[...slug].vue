@@ -18,9 +18,8 @@ definePageMeta({
   layout: 'public'
 })
 
-// Provide page layout to the layout component
-const pageLayout = ref<'default' | 'full-height' | 'full-screen'>('default')
-provide('pageLayout', pageLayout)
+// Share page layout with the layout component via useState (works across components)
+const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayout', () => 'default')
 
 const route = useRoute()
 
@@ -67,13 +66,28 @@ const { data: pageResponse, status, error } = await useFetch(apiUrl, {
 // Extract page from response
 const page = computed(() => pageResponse.value)
 
-// Update layout when page data changes
-watch(page, (newPage) => {
-  if (newPage?.layout) {
-    pageLayout.value = newPage.layout as 'default' | 'full-height' | 'full-screen'
-  } else {
-    pageLayout.value = 'default'
+// Get page type info (needed for layout fallback)
+const pageType = computed(() => {
+  if (!page.value) return null
+  return getPageType(page.value.pageType || 'core:regular')
+})
+
+// Compute the desired layout based on page data
+const desiredLayout = computed(() => {
+  const p = page.value
+  const pt = pageType.value
+
+  if (p?.layout && p.layout !== 'default') {
+    return p.layout as 'default' | 'full-height' | 'full-screen'
+  } else if (pt?.preferredLayout) {
+    return pt.preferredLayout as 'default' | 'full-height' | 'full-screen'
   }
+  return 'default'
+})
+
+// Set layout whenever desiredLayout changes (handles SSR, hydration, and navigation)
+watch(desiredLayout, (layout) => {
+  pageLayout.value = layout
 }, { immediate: true })
 
 // Handle errors
@@ -88,12 +102,6 @@ if (error.value?.statusCode === 404) {
 if (error.value?.statusCode === 401) {
   navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
 }
-
-// Get page type info
-const pageType = computed(() => {
-  if (!page.value) return null
-  return getPageType(page.value.pageType || 'core:regular')
-})
 
 // Check authentication for protected pages
 const { user } = useSession()
@@ -118,7 +126,7 @@ useHead({
 </script>
 
 <template>
-  <div class="page-view">
+  <div class="page-view h-full">
     <!-- Loading -->
     <div v-if="status === 'pending'" class="flex justify-center items-center py-24">
       <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-primary" />

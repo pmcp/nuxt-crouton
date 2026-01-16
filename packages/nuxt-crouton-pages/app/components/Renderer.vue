@@ -2,9 +2,11 @@
 /**
  * Page Renderer Component
  *
- * Renders a page based on its page type. For regular pages, renders
- * the editor content. For app pages, renders the registered component.
+ * Renders a page based on its page type. For regular pages, auto-detects
+ * content format (blocks JSON vs legacy HTML) and renders accordingly.
+ * For app pages, renders the registered component.
  */
+import { detectContentFormat } from '../utils/content-detector'
 
 interface PageRecord {
   id: string
@@ -67,13 +69,42 @@ const componentProps = computed(() => {
 const isRegularPage = computed(() => {
   return !props.page.pageType || props.page.pageType === 'regular' || props.page.pageType === 'core:regular'
 })
+
+/**
+ * Detect content format for regular pages
+ * Returns: 'blocks' | 'html' | 'empty'
+ */
+const contentFormat = computed(() => {
+  if (!isRegularPage.value) return null
+  return detectContentFormat(props.page.content)
+})
+
 </script>
 
 <template>
-  <div class="page-renderer">
-    <!-- Regular page: render editor content -->
+  <div class="page-renderer h-full">
+    <!-- Regular page: detect format and render accordingly -->
     <template v-if="isRegularPage">
-      <CroutonPagesRegularContent :page="page" />
+      <!-- Block-based content (new format) -->
+      <CroutonPagesBlockContent
+        v-if="contentFormat === 'blocks'"
+        :content="page.content"
+      />
+
+      <!-- Legacy HTML content -->
+      <CroutonPagesRegularContent
+        v-else-if="contentFormat === 'html'"
+        :page="page"
+      />
+
+      <!-- Empty page -->
+      <div
+        v-else
+        class="text-center py-12 text-muted"
+      >
+        <UIcon name="i-lucide-file-text" class="size-12 mb-4 mx-auto block" />
+        <p>This page has no content yet.</p>
+      </div>
     </template>
 
     <!-- App page type: render the registered component -->
