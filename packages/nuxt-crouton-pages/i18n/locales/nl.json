@@ -1,0 +1,60 @@
+{
+  "pages": {
+    "title": "Pagina's",
+    "notFound": "Pagina niet gevonden",
+    "notFoundDescription": "De pagina die je zoekt bestaat niet.",
+    "backToHome": "Terug naar Home",
+    "create": "Pagina Aanmaken",
+    "createNew": "Nieuwe Pagina Aanmaken",
+    "selectType": "Selecteer Paginatype",
+    "empty": "Nog geen pagina's",
+    "emptyDescription": "Maak je eerste pagina aan om te beginnen",
+    "admin": {
+      "pages": "Pagina's",
+      "title": "Pagina's",
+      "createPage": "Pagina Aanmaken",
+      "editPage": "Pagina Bewerken",
+      "pageType": "Paginatype",
+      "content": "Inhoud",
+      "settings": "Instellingen"
+    },
+    "status": {
+      "draft": "Concept",
+      "published": "Gepubliceerd",
+      "archived": "Gearchiveerd"
+    },
+    "visibility": {
+      "public": "Openbaar",
+      "members": "Alleen Leden",
+      "hidden": "Verborgen"
+    },
+    "layout": {
+      "default": "Standaard",
+      "fullHeight": "Volledige Hoogte",
+      "fullScreen": "Volledig Scherm"
+    },
+    "parent": {
+      "root": "Root (Geen Ouder)"
+    },
+    "fields": {
+      "title": "Titel",
+      "slug": "URL Slug",
+      "pageType": "Paginatype",
+      "content": "Inhoud",
+      "status": "Status",
+      "visibility": "Zichtbaarheid",
+      "showInNavigation": "Tonen in Navigatie",
+      "seoTitle": "SEO Titel",
+      "seoDescription": "SEO Beschrijving",
+      "layout": "Layout",
+      "parent": "Bovenliggende Pagina"
+    }
+  },
+  "common": {
+    "cancel": "Annuleren",
+    "continue": "Doorgaan",
+    "save": "Opslaan",
+    "delete": "Verwijderen",
+    "back": "Terug"
+  }
+}

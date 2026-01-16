@@ -24,8 +24,8 @@ import type { KanbanConfig, KanbanColumnConfig } from '../types/table'
 export interface UseKanbanOptions<T extends Record<string, any>> {
   /** Items to display in the kanban */
   items: Ref<T[]> | ComputedRef<T[]> | T[]
-  /** Field to group items by */
-  groupField: string
+  /** Field to group items by (can be reactive) */
+  groupField: string | Ref<string> | ComputedRef<string>
   /** Field for ordering within columns (default: 'order') */
   orderField?: string
   /** Column configuration - if not provided, auto-detects from unique values */
@@ -83,7 +83,7 @@ export function useKanban<T extends Record<string, any>>(
 ): UseKanbanReturn<T> {
   const {
     items: rawItems,
-    groupField,
+    groupField: rawGroupField,
     orderField = 'order',
     columns: columnConfig,
     showUncategorized = true,
@@ -96,6 +96,12 @@ export function useKanban<T extends Record<string, any>>(
     return rawItems.value
   })
 
+  // Normalize groupField to be reactive
+  const groupField = computed<string>(() => {
+    if (typeof rawGroupField === 'string') return rawGroupField
+    return rawGroupField.value
+  })
+
   // Auto-detect columns from unique values if not provided
   const columns = computed<KanbanColumnConfig[]>(() => {
     if (columnConfig && columnConfig.length > 0) {
@@ -104,8 +110,9 @@ export function useKanban<T extends Record<string, any>>(
 
     // Extract unique values from items
     const uniqueValues = new Set<string | null>()
+    const currentGroupField = groupField.value
     for (const item of items.value) {
-      const value = item[groupField]
+      const value = item[currentGroupField]
       if (value !== undefined && value !== null && value !== '') {
         uniqueValues.add(String(value))
       } else if (showUncategorized) {
@@ -140,10 +147,11 @@ export function useKanban<T extends Record<string, any>>(
   // Group items by column
   const groupedItems = computed<KanbanColumn<T>[]>(() => {
     const result: KanbanColumn<T>[] = []
+    const currentGroupField = groupField.value
 
     for (const col of columns.value) {
       const columnItems = items.value.filter((item) => {
-        const value = item[groupField]
+        const value = item[currentGroupField]
         if (col.value === null) {
           return value === undefined || value === null || value === ''
         }
@@ -202,7 +210,7 @@ export function useKanban<T extends Record<string, any>>(
     isDragging,
     setDropTarget,
     isDropTarget,
-    groupField,
+    groupField: groupField.value,
     orderField
   }
 }

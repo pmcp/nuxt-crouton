@@ -70,7 +70,7 @@ const fieldOptions = computed(() => {
   }))
 })
 
-// Use kanban composable
+// Use kanban composable - pass activeGroupField as ref for reactivity
 const {
   groupedItems,
   draggingId,
@@ -80,7 +80,7 @@ const {
   isDropTarget
 } = useKanban({
   items: computed(() => props.rows),
-  groupField: activeGroupField.value,
+  groupField: activeGroupField,
   orderField: props.orderField,
   columns: props.columns,
   showUncategorized: true
@@ -141,8 +141,8 @@ function formatFieldLabel(field: string): string {
     </div>
 
     <!-- Kanban columns container -->
-    <div class="flex-1 overflow-x-auto overflow-y-hidden">
-      <div class="flex gap-4 p-4 min-h-full">
+    <div class="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
+      <div class="flex gap-4 p-4 h-full">
         <CroutonKanbanColumn
           v-for="column in groupedItems"
           :key="column.value ?? 'uncategorized'"

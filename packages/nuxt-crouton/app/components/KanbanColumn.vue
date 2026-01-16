@@ -128,7 +128,7 @@ const badgeColor = computed(() => {
 
 <template>
   <div
-    class="kanban-column flex flex-col bg-muted/30 rounded-lg min-w-72 max-w-80 w-72 shrink-0"
+    class="kanban-column flex flex-col bg-muted/30 rounded-lg min-w-72 max-w-80 w-72 shrink-0 h-full max-h-full"
     :class="{ 'ring-2 ring-primary/50': isDropTarget }"
   >
     <!-- Column Header -->
