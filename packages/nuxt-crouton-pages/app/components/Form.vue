@@ -252,10 +252,10 @@ function openDeleteConfirm() {
   }
 }
 
-// Translatable fields - only title for all pages
+// Translatable fields - title and slug for all pages
 // Content uses the block editor separately
 const translatableFields = computed(() => {
-  return ['title']
+  return ['title', 'slug']
 })
 
 // No custom field components needed since we use BlockEditor for content
@@ -318,37 +318,40 @@ const fieldComponents = {}
             </UInput>
           </UFormField>
 
-          <!-- Translatable Title Field -->
+          <!-- Translatable Title & Slug Fields -->
           <CroutonI18nInput
             v-model="state.translations"
             :fields="translatableFields"
             :default-values="{
-              title: state.title || ''
+              title: state.title || '',
+              slug: state.slug || ''
             }"
             show-ai-translate
             field-type="page"
             :field-components="fieldComponents"
-            label="Title"
+            label="Title & URL Slug"
             @update:english="(data: { field: string, value: string }) => {
               if (data.field === 'title') state.title = data.value
+              if (data.field === 'slug') state.slug = data.value
             }"
           />
 
-          <!-- Block Editor for Regular Pages -->
+          <!-- Block Editor for Regular Pages (with Preview) -->
           <UFormField
             v-if="isRegularPage"
             label="Page Content"
             name="content"
             class="mt-4"
           >
-            <div class="border border-default rounded-lg overflow-hidden h-[400px]">
+            <div class="h-[500px]">
               <ClientOnly>
-                <CroutonPagesEditorBlockEditor
+                <CroutonPagesEditorBlockEditorWithPreview
                   v-model="editorContent"
                   placeholder="Type / to insert a block..."
+                  preview-title="Page Preview"
                 />
                 <template #fallback>
-                  <div class="flex items-center justify-center h-full text-muted">
+                  <div class="flex items-center justify-center h-full text-muted border border-default rounded-lg">
                     <UIcon name="i-lucide-loader-2" class="size-6 animate-spin" />
                   </div>
                 </template>
