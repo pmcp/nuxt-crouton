@@ -36,9 +36,6 @@ const emit = defineEmits<{
   select: [item: TreeNodeType]
 }>()
 
-// Initialize expanded state (expand by default if has children)
-treeDrag.initExpanded(props.item.id, (props.item.children?.length ?? 0) > 0)
-
 // Refs
 const childrenRef = ref<HTMLElement | null>(null)
 let sortableInstance: SortableType | null = null
@@ -50,13 +47,16 @@ const isDropTarget = computed(() => treeDrag.isDropTarget(props.item.id))
 const hasChildren = computed(() => (props.item.children?.length ?? 0) > 0)
 const childCount = computed(() => props.item.children?.length ?? 0)
 
-// Auto-expand when children are added, collapse when children become empty
-watch(hasChildren, (has, wasHas) => {
-  if (has && !wasHas) {
-    // Children were added - auto-expand to show them
-    treeDrag.setExpanded(props.item.id, true)
-  } else if (!has && isExpanded.value) {
-    // Children became empty - collapse
+// Initialize/update expanded state reactively
+// Auto-expands when an item gains children for the first time
+watchEffect(() => {
+  const count = childCount.value
+  treeDrag.initExpanded(props.item.id, count > 0, count)
+})
+
+// Collapse when children become empty
+watch(hasChildren, (has) => {
+  if (!has && isExpanded.value) {
     treeDrag.setExpanded(props.item.id, false)
   }
 })

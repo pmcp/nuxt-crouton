@@ -28,6 +28,9 @@ export function useTreeDrag() {
   // Expanded state per item - persists across drag operations
   const expandedItems = useState<Record<string, boolean>>('tree-expanded', () => ({}))
 
+  // Track previous child counts to detect when items gain children
+  const childCounts = useState<Record<string, number>>('tree-child-counts', () => ({}))
+
   // ============ Drag State ============
 
   function startDrag(id: string) {
@@ -84,10 +87,20 @@ export function useTreeDrag() {
   /**
    * Initialize expanded state for a new item
    * Only sets if not already tracked (preserves user preference)
+   * Auto-expands when an item gains children for the first time
    */
-  function initExpanded(id: string, defaultExpanded: boolean) {
+  function initExpanded(id: string, defaultExpanded: boolean, childCount: number = 0) {
+    const previousChildCount = childCounts.value[id] ?? 0
+
+    // Track current child count
+    childCounts.value[id] = childCount
+
     if (!(id in expandedItems.value)) {
+      // First time seeing this item - use default
       expandedItems.value[id] = defaultExpanded
+    } else if (previousChildCount === 0 && childCount > 0) {
+      // Item just gained children - auto-expand to show them
+      expandedItems.value[id] = true
     }
   }
 
