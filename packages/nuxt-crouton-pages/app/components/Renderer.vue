@@ -65,9 +65,11 @@ const componentProps = computed(() => {
 
 /**
  * Check if this is a regular content page
+ * Handles: undefined, 'regular', 'core:regular', 'pages:regular'
  */
 const isRegularPage = computed(() => {
-  return !props.page.pageType || props.page.pageType === 'regular' || props.page.pageType === 'core:regular'
+  const pt = props.page.pageType
+  return !pt || pt === 'regular' || pt === 'core:regular' || pt === 'pages:regular' || pt.endsWith(':regular')
 })
 
 /**

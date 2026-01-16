@@ -134,12 +134,6 @@ useHead({
 
     <!-- Page content -->
     <template v-else-if="page">
-      <!-- Page header for regular content pages -->
-      <header v-if="page.title && pageType?.id === 'regular'" class="mb-6">
-        <h1 class="text-3xl font-bold">{{ page.title }}</h1>
-      </header>
-
-      <!-- Page content -->
       <CroutonPagesRenderer :page="page" />
     </template>
 
