@@ -8,7 +8,17 @@ import { pagesPagesConfig } from '../layers/pages/collections/pages/app/composab
 
 export default defineAppConfig({
   croutonCollections: {
-    pagesPages: pagesPagesConfig,
+    pagesPages: {
+      ...pagesPagesConfig,
+      kanban: {
+        groupField: 'status',
+        columns: [
+          { value: 'draft', label: 'Draft', color: 'warning' },
+          { value: 'published', label: 'Published', color: 'success' },
+          { value: 'archived', label: 'Archived', color: 'neutral' }
+        ]
+      }
+    },
     bookingsEmaillogs: bookingsEmaillogsConfig,
     bookingsEmailtemplates: bookingsEmailtemplatesConfig,
     translationsUi: translationsUiConfig,
