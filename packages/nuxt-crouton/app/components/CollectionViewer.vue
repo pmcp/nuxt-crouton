@@ -48,7 +48,7 @@
 <script setup lang="ts">
 interface Props {
   collectionName: string
-  defaultLayout?: 'table' | 'list' | 'grid' | 'cards' | 'tree'
+  defaultLayout?: 'table' | 'list' | 'grid' | 'cards' | 'tree' | 'kanban'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -71,18 +71,24 @@ const allLayoutOptions = [
   { value: 'list' as const, icon: 'i-lucide-list' },
   { value: 'grid' as const, icon: 'i-lucide-grid-3x3' },
   { value: 'cards' as const, icon: 'i-lucide-layout-grid' },
-  { value: 'tree' as const, icon: 'i-lucide-git-branch' }
+  { value: 'tree' as const, icon: 'i-lucide-git-branch' },
+  { value: 'kanban' as const, icon: 'i-lucide-columns-3' }
 ]
 
 // Filter layout options - show tree if hierarchy OR sortable is enabled
+// Kanban is always available as it auto-detects groupable fields
 const layoutOptions = computed(() => {
   const config = collectionConfig.value
   const supportsTree = config?.hierarchy?.enabled || config?.sortable?.enabled
 
-  if (supportsTree) {
-    return allLayoutOptions
+  let options = allLayoutOptions
+
+  // Hide tree if not supported
+  if (!supportsTree) {
+    options = options.filter(o => o.value !== 'tree')
   }
-  return allLayoutOptions.filter(o => o.value !== 'tree')
+
+  return options
 })
 
 // Convert collection name to component name

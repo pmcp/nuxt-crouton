@@ -290,12 +290,47 @@ defineProps&lt;Props&gt;()
       </slot>
     </template>
   </CroutonTree>
+
+  <!-- Kanban Layout -->
+  <div
+    v-else-if="activeLayout === 'kanban'"
+    class="h-full"
+  >
+    <slot name="header">
+      <div
+        v-if="create"
+        class="flex items-center justify-end px-4 py-2 border-b border-default"
+      >
+        <UButton
+          color="primary"
+          size="xs"
+          :variant="getVariant('solid')"
+          @click="handleCreate"
+        >
+          Create
+        </UButton>
+      </div>
+    </slot>
+
+    <CroutonKanban
+      :rows="rows"
+      :collection="collection"
+      :group-field="kanbanConfig?.groupField || 'status'"
+      :order-field="kanbanConfig?.orderField || 'order'"
+      :columns="kanbanConfig?.columns"
+      :card-component="customCardComponent"
+      :show-counts="kanbanConfig?.showCounts !== false"
+      :show-field-selector="true"
+      @move="handleKanbanMove"
+      @select="handleKanbanSelect"
+    />
+  </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, resolveComponent, onMounted, getCurrentInstance, type Component } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
-import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions } from '../types/table'
+import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions, KanbanConfig } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
 
 // Version logging for debugging
@@ -324,6 +359,8 @@ const props = withDefaults(defineProps<ListProps>(), {
 
 const emit = defineEmits<{
   'move': [payload: { id: string; newParentId: string | null; newOrder: number }]
+  'kanban-move': [payload: { id: string; newValue: string | null; newOrder: number }]
+  'kanban-select': [item: any]
   'create': []
 }>()
 
@@ -448,8 +485,25 @@ const hierarchyConfig = computed<HierarchyConfig>(() => {
   return { enabled: false }
 })
 
+// Kanban config - read from collection config or defaults
+const kanbanConfig = computed<KanbanConfig | null>(() => {
+  // In stateless mode, use defaults
+  if (props.stateless) {
+    return { groupField: 'status', orderField: 'order' }
+  }
+
+  const config = collectionConfig.value?.kanban as KanbanConfig | undefined
+  if (config) return config
+
+  // Default kanban config
+  return { groupField: 'status', orderField: 'order' }
+})
+
 // Tree mutation for drag-drop reordering (skip in stateless mode)
 const treeMutation = (!props.stateless && props.collection) ? useTreeMutation(props.collection) : null
+
+// Kanban mutation for column changes (uses regular collection mutation)
+const kanbanMutation = (!props.stateless && props.collection) ? useCollectionMutation(props.collection) : null
 
 // Handle tree move events (drag-drop reordering)
 async function handleTreeMove(id: string, newParentId: string | null, newOrder: number) {
@@ -471,6 +525,47 @@ async function handleTreeMove(id: string, newParentId: string | null, newOrder: 
   } catch (error) {
     console.error('[Collection] Tree move failed:', error)
   }
+}
+
+// Handle kanban move events (column changes and reordering)
+async function handleKanbanMove(payload: { id: string; newValue: string | null; newOrder: number }) {
+  const { id, newValue, newOrder } = payload
+
+  // Always emit for external handling
+  emit('kanban-move', payload)
+
+  // In stateless mode, just emit - don't persist
+  if (props.stateless) return
+
+  if (!kanbanMutation) {
+    console.warn('[Collection] No collection specified for kanban mutation')
+    return
+  }
+
+  const groupField = kanbanConfig.value?.groupField || 'status'
+  const orderField = kanbanConfig.value?.orderField || 'order'
+
+  console.log(`[Collection] Kanban move: ${id} -> ${groupField}=${newValue}, ${orderField}=${newOrder}`)
+
+  try {
+    await kanbanMutation.update(id, {
+      [groupField]: newValue,
+      [orderField]: newOrder
+    })
+  } catch (error) {
+    console.error('[Collection] Kanban move failed:', error)
+  }
+}
+
+// Handle kanban card selection
+function handleKanbanSelect(item: any) {
+  emit('kanban-select', item)
+
+  // In stateless mode, just emit
+  if (props.stateless) return
+
+  // Open the item in edit mode
+  crouton?.open('update', props.collection, item)
 }
 
 // Crouton actions (skip in stateless mode)

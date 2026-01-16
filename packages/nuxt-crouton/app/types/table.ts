@@ -20,7 +20,7 @@ export interface SortableOptions {
 }
 
 // Layout types
-export type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree'
+export type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree' | 'kanban'
 
 // Hierarchy configuration for tree layouts
 export interface HierarchyConfig {
@@ -31,6 +31,31 @@ export interface HierarchyConfig {
   orderField?: string // default: 'order'
   pathField?: string // default: 'path' (materialized path)
   depthField?: string // default: 'depth'
+}
+
+// Kanban configuration for kanban layouts
+export interface KanbanConfig {
+  /** Field to group items by (e.g., 'status', 'priority') */
+  groupField: string
+  /** Field for ordering within columns (default: 'order') */
+  orderField?: string
+  /** Static columns definition - overrides auto-detection from field options */
+  columns?: KanbanColumnConfig[]
+  /** Show column item counts (default: true) */
+  showCounts?: boolean
+  /** Allow creating items directly in columns (default: true) */
+  allowColumnCreate?: boolean
+}
+
+export interface KanbanColumnConfig {
+  /** Unique value for this column (matches groupField values) */
+  value: string | null
+  /** Display label for the column */
+  label: string
+  /** Optional color for column header/badge */
+  color?: string
+  /** Optional icon for column header */
+  icon?: string
 }
 
 export interface ResponsiveLayout {
