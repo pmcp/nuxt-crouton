@@ -3,9 +3,18 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+
+  // Include types directory for collection type augmentation
+  typescript: {
+    tsConfig: {
+      include: ['../types/**/*.d.ts']
+    }
+  },
+
   // nuxt-crouton now auto-includes auth, admin, and i18n
   extends: [
     '@friendlyinternet/nuxt-crouton',          // Core (includes auth, admin, i18n)
+    '@friendlyinternet/nuxt-crouton-ai',       // AI features (translation, chat)
     '@friendlyinternet/nuxt-crouton-editor',   // Rich text editor
     '@friendlyinternet/nuxt-crouton-pages',    // CMS pages with page types
     '@friendlyinternet/nuxt-crouton-email',    // Optional: Email functionality

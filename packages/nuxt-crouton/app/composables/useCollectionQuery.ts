@@ -1,6 +1,6 @@
 import type { Ref, ComputedRef } from 'vue'
 import type { UseFetchOptions } from 'nuxt/app'
-import type { CollectionTypeMap, CollectionItem, CollectionName } from '../types/collections'
+import type { CollectionTypeMap, CollectionItem, CollectionName } from '#crouton/types'
 
 interface CollectionQueryOptions {
   query?: ComputedRef<Record<string, any>> | Ref<Record<string, any>>

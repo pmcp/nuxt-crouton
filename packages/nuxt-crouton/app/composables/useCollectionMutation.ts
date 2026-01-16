@@ -1,5 +1,5 @@
 import type { ComputedRef } from 'vue'
-import type { CollectionTypeMap, CollectionItem, CollectionFormData, CollectionName } from '../types/collections'
+import type { CollectionTypeMap, CollectionItem, CollectionFormData, CollectionName } from '#crouton/types'
 
 /**
  * Generate a unique correlation ID for mutation tracking

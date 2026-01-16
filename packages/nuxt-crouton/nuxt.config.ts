@@ -35,14 +35,20 @@ export default defineNuxtConfig({
     '@friendlyinternet/nuxt-crouton-admin'
   ],
 
-  modules: ['@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo'],
+  modules: ['@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo'],
+
+  // NuxtHub configuration for database, KV, blob storage
+  // Apps can override with different providers (postgresql, mysql) or resource IDs
+  hub: {
+    db: 'sqlite' // Uses D1 on Cloudflare, local SQLite in dev
+  },
 
   // Inject crouton.config.js at build time for runtime access
   hooks: {
     'nitro:config': async (nitroConfig: NitroConfig) => {
       const configPaths = [
         join(process.cwd(), 'crouton.config.js'),
-        join(process.cwd(), 'crouton.config.mjs')
+        join(process.cwd(), 'crouton.config.js')
       ]
 
       for (const configPath of configPaths) {
@@ -90,6 +96,11 @@ export default defineNuxtConfig({
 
   imports: {
     dirs: [join(currentDir, 'app/composables')]
+  },
+
+  // Alias for collection type registry - allows module augmentation
+  alias: {
+    '#crouton/types': join(currentDir, 'app/types/collections.ts')
   },
 
   // Make registry available and auto-import server utils
