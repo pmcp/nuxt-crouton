@@ -371,7 +371,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
     <!-- Activity Timeline Section -->
     <template #footer>
 
-      <UCollapsible v-model:open="open" class="flex flex-col gap-2 w-full">
+      <UCollapsible v-model:open="isTimelineOpen" class="flex flex-col gap-2 w-full">
         <UButton
             variant="ghost"
             color="neutral"
