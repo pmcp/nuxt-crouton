@@ -144,13 +144,13 @@ defineExpose({
 </script>
 
 <template>
-  <div class="block-editor-with-preview w-full h-full flex flex-col">
-    <UTabs v-model="activeTab" :items="tabItems" class="w-full h-full flex flex-col">
+  <div class="block-editor-with-preview w-full h-full flex flex-col overflow-hidden">
+    <UTabs v-model="activeTab" :items="tabItems" class="w-full h-full flex flex-col overflow-hidden">
       <template #content="{ item }">
         <!-- Editor Tab -->
         <div
           v-show="item.value === 'editor'"
-          class="flex-1 min-h-0 pt-2"
+          class="flex-1 min-h-0 pt-2 overflow-hidden"
         >
           <CroutonEditorBlocks
             ref="editorBlocksRef"

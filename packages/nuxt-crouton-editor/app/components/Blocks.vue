@@ -323,7 +323,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="crouton-editor-blocks h-full flex flex-col">
+  <div class="crouton-editor-blocks h-full flex flex-col overflow-hidden">
     <!-- Editor using UEditor directly for full control -->
     <UEditor
       v-slot="{ editor }"
@@ -334,10 +334,10 @@ defineExpose({
       :autofocus="autofocus"
       :extensions="extensions"
       :handlers="blockHandlers"
-      class="flex flex-col h-full"
+      class="flex flex-col h-full overflow-hidden"
       :ui="{
-        root: 'h-full flex flex-col',
-        content: 'flex-1 overflow-auto prose prose-sm dark:prose-invert max-w-none p-4'
+        root: 'h-full flex flex-col overflow-hidden',
+        content: 'flex-1 overflow-auto prose prose-sm dark:prose-invert max-w-none p-4 min-h-0'
       }"
       @create="handleEditorCreate"
       @update="handleEditorUpdate"
