@@ -334,10 +334,10 @@ defineExpose({
       :autofocus="autofocus"
       :extensions="extensions"
       :handlers="blockHandlers"
-      class="flex flex-col flex-1 min-h-0"
+      class="flex flex-col h-full"
       :ui="{
         root: 'h-full flex flex-col',
-        content: 'flex-1 overflow-y-auto prose prose-sm dark:prose-invert max-w-none p-4'
+        content: 'flex-1 overflow-auto prose prose-sm dark:prose-invert max-w-none p-4'
       }"
       @create="handleEditorCreate"
       @update="handleEditorUpdate"

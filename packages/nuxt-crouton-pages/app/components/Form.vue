@@ -455,12 +455,7 @@ const fieldComponents = {}
 </template>
 
 <style scoped>
-/* Resizable editor container */
 .editor-container {
   height: 400px;
-  min-height: 200px;
-  max-height: 80vh;
-  resize: vertical;
-  overflow: auto;
 }
 </style>
