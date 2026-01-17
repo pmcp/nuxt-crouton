@@ -1,0 +1,44 @@
+{
+  "name": "@friendlyinternet/nuxt-crouton-collab",
+  "version": "0.1.0",
+  "description": "Real-time collaboration layer for Nuxt Crouton using Yjs CRDTs",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "exports": {
+    ".": "./nuxt.config.ts"
+  },
+  "files": [
+    "app",
+    "server",
+    "nuxt.config.ts"
+  ],
+  "scripts": {
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "yjs": "^13.6.0",
+    "y-protocols": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@friendlyinternet/nuxt-crouton": "workspace:*",
+    "nuxt": "^3.0.0 || ^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "collaboration",
+    "yjs",
+    "crdt",
+    "crouton",
+    "real-time"
+  ],
+  "author": "PMCP",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/friendlyinternet/nuxt-crouton"
+  }
+}

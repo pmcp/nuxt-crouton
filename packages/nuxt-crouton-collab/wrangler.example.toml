@@ -1,0 +1,80 @@
+# ============================================================================
+# Wrangler Configuration for nuxt-crouton-collab
+# ============================================================================
+#
+# Add these sections to your app's wrangler.toml to enable the CollabRoom
+# Durable Object for real-time collaboration via Yjs CRDTs.
+#
+# The CollabRoom is generic and supports multiple room types:
+# - pages: Y.XmlFragment for TipTap editor content
+# - flows: Y.Map for node graphs
+# - documents: Y.Text for plain text
+# - custom: Any room type your app defines
+#
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Durable Object Binding
+# ----------------------------------------------------------------------------
+# This binding allows your Nuxt app to access the CollabRoom Durable Object.
+# The COLLAB_ROOMS binding is used by the /api/collab/[roomId]/ws endpoint.
+
+[[durable_objects.bindings]]
+name = "COLLAB_ROOMS"
+class_name = "CollabRoom"
+
+# ----------------------------------------------------------------------------
+# Migration (Required for first deployment)
+# ----------------------------------------------------------------------------
+# This tells Cloudflare to create the CollabRoom Durable Object class.
+# Only needed on first deployment - subsequent deploys don't need this.
+
+[[migrations]]
+tag = "collab-v1"
+new_classes = ["CollabRoom"]
+
+# ============================================================================
+# D1 Database Migration
+# ============================================================================
+#
+# You also need to run the D1 migration to create the yjs_collab_states table.
+# This table stores the Yjs state for persistence across Durable Object restarts.
+#
+# Run this command (replace <DB_NAME> with your D1 database name):
+#
+#   npx wrangler d1 execute <DB_NAME> --file=./packages/nuxt-crouton-collab/server/database/migrations/0001_yjs_collab_states.sql
+#
+# For remote (production):
+#
+#   npx wrangler d1 execute <DB_NAME> --remote --file=./packages/nuxt-crouton-collab/server/database/migrations/0001_yjs_collab_states.sql
+#
+# ============================================================================
+
+# ============================================================================
+# Full Example wrangler.toml
+# ============================================================================
+#
+# Here's a complete example for a Nuxt app using nuxt-crouton-collab:
+#
+# ```toml
+# name = "my-nuxt-app"
+# compatibility_date = "2024-01-01"
+#
+# [vars]
+# NUXT_PUBLIC_SITE_URL = "https://my-app.example.com"
+#
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "my-app-db"
+# database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+#
+# [[durable_objects.bindings]]
+# name = "COLLAB_ROOMS"
+# class_name = "CollabRoom"
+#
+# [[migrations]]
+# tag = "collab-v1"
+# new_classes = ["CollabRoom"]
+# ```
+#
+# ============================================================================
