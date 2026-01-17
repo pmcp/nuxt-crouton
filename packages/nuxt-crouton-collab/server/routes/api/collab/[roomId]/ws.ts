@@ -7,28 +7,8 @@
  * URL pattern: /api/collab/[roomId]/ws?type=[roomType]
  * Example: /api/collab/page-123/ws?type=page
  */
-import * as Y from 'yjs'
 import { encodeStateAsUpdate, applyUpdate } from 'yjs'
-
-// In-memory storage for local development
-const rooms = new Map<string, {
-  doc: Y.Doc
-  peers: Set<{ send: (data: unknown) => void }>
-  awareness: Map<string, unknown>
-}>()
-
-function getOrCreateRoom(roomType: string, roomId: string) {
-  const roomKey = `${roomType}:${roomId}`
-  if (!rooms.has(roomKey)) {
-    const doc = new Y.Doc()
-    rooms.set(roomKey, {
-      doc,
-      peers: new Set(),
-      awareness: new Map()
-    })
-  }
-  return rooms.get(roomKey)!
-}
+import { getOrCreateRoom } from '../../../../utils/collabRoomStore'
 
 function broadcastToPeers(
   room: ReturnType<typeof getOrCreateRoom>,

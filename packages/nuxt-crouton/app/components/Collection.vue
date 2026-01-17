@@ -70,12 +70,26 @@
           :key="row.id || index"
           class="py-3 px-4 sm:px-6 hover:bg-muted/50 transition-colors"
         >
-          <component
-            :is="customCardComponent"
-            :item="row"
-            :layout="'list'"
-            :collection="collection"
-          />
+          <div class="flex items-start justify-between gap-2">
+            <component
+              :is="customCardComponent"
+              :item="row"
+              :layout="'list'"
+              :collection="collection"
+              class="flex-1 min-w-0"
+            />
+            <!-- Collab presence badge -->
+            <component
+              v-if="collabEditingBadgeComponent && row.id"
+              :is="collabEditingBadgeComponent"
+              :room-id="getCollabRoomId(row)"
+              :room-type="collabConfig.roomType || 'page'"
+              :current-user-id="collabConfig.currentUserId"
+              :poll-interval="collabConfig.pollInterval || 5000"
+              size="xs"
+              class="shrink-0"
+            />
+          </div>
         </li>
       </ul>
 
@@ -145,14 +159,29 @@ defineProps&lt;Props&gt;()
       v-if="customCardComponent && rows && rows.length > 0"
       class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
     >
-      <component
-        :is="customCardComponent"
+      <div
         v-for="(row, index) in rows"
         :key="row.id || index"
-        :item="row"
-        :layout="'grid'"
-        :collection="collection"
-      />
+        class="relative"
+      >
+        <component
+          :is="customCardComponent"
+          :item="row"
+          :layout="'grid'"
+          :collection="collection"
+        />
+        <!-- Collab presence badge -->
+        <component
+          v-if="collabEditingBadgeComponent && row.id"
+          :is="collabEditingBadgeComponent"
+          :room-id="getCollabRoomId(row)"
+          :room-type="collabConfig.roomType || 'page'"
+          :current-user-id="collabConfig.currentUserId"
+          :poll-interval="collabConfig.pollInterval || 5000"
+          size="xs"
+          class="absolute top-2 right-2"
+        />
+      </div>
     </div>
 
     <div
@@ -214,14 +243,29 @@ defineProps&lt;Props&gt;()
       v-if="customCardComponent && rows && rows.length > 0"
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6"
     >
-      <component
-        :is="customCardComponent"
+      <div
         v-for="(row, index) in rows"
         :key="row.id || index"
-        :item="row"
-        :layout="'cards'"
-        :collection="collection"
-      />
+        class="relative"
+      >
+        <component
+          :is="customCardComponent"
+          :item="row"
+          :layout="'cards'"
+          :collection="collection"
+        />
+        <!-- Collab presence badge -->
+        <component
+          v-if="collabEditingBadgeComponent && row.id"
+          :is="collabEditingBadgeComponent"
+          :room-id="getCollabRoomId(row)"
+          :room-type="collabConfig.roomType || 'page'"
+          :current-user-id="collabConfig.currentUserId"
+          :poll-interval="collabConfig.pollInterval || 5000"
+          size="xs"
+          class="absolute top-3 right-3"
+        />
+      </div>
     </div>
 
     <div
@@ -328,9 +372,9 @@ defineProps&lt;Props&gt;()
 </template>
 
 <script lang="ts" setup>
-import { computed, resolveComponent, onMounted, getCurrentInstance, type Component } from 'vue'
+import { computed, resolveComponent, getCurrentInstance, type Component } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
-import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions, KanbanConfig } from '../types/table'
+import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions, KanbanConfig, CollabPresenceConfig } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
 
 // Version logging for debugging
@@ -349,6 +393,7 @@ const props = withDefaults(defineProps<ListProps>(), {
   card: undefined,
   cardComponent: undefined,
   stateless: false,
+  showCollabPresence: false,
   hideDefaultColumns: () => ({
     created_at: false,
     updated_at: false,
@@ -407,6 +452,48 @@ const customCardComponent = computed(() => {
   // Normal resolution by collection name
   return props.collection ? getCardComponent(props.collection, props.card) : null
 })
+
+// Collaboration presence support
+// Resolves CollabEditingBadge component if nuxt-crouton-collab is installed
+const collabEditingBadgeComponent = computed<Component | null>(() => {
+  if (!props.showCollabPresence) return null
+
+  const instance = getCurrentInstance()
+  if (!instance) return null
+
+  const appComponents = instance.appContext.components
+
+  // Check for the component in global registry
+  if (appComponents['CollabEditingBadge']) {
+    const resolved = resolveComponent('CollabEditingBadge')
+    return typeof resolved === 'string' ? null : resolved
+  }
+
+  // Check lazy variant
+  if (appComponents['LazyCollabEditingBadge']) {
+    const resolved = resolveComponent('LazyCollabEditingBadge')
+    return typeof resolved === 'string' ? null : resolved
+  }
+
+  return null
+})
+
+// Collab presence configuration
+const collabConfig = computed<CollabPresenceConfig>(() => {
+  if (typeof props.showCollabPresence === 'object') {
+    return props.showCollabPresence
+  }
+  return {}
+})
+
+// Get room ID for a row
+function getCollabRoomId(row: any): string {
+  if (collabConfig.value.getRoomId) {
+    return collabConfig.value.getRoomId(row, props.collection)
+  }
+  // Default: {collection}-{id}
+  return `${props.collection}-${row.id}`
+}
 
 // Responsive breakpoint detection
 const breakpoints = useBreakpoints(breakpointsTailwind)

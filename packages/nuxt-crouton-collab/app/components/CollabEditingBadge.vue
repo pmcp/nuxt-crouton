@@ -1,0 +1,243 @@
+<script setup lang="ts">
+import { computed, toRef } from 'vue'
+import type { CollabAwarenessState } from '../types/collab'
+import { useCollabRoomUsers } from '../composables/useCollabRoomUsers'
+
+/**
+ * CollabEditingBadge - Shows "X editing" indicator for collection list items
+ *
+ * Used for Phase 6 global presence - displays a badge showing how many
+ * users are currently editing an item, with user avatars on hover.
+ *
+ * @example
+ * ```vue
+ * <!-- Basic usage with room ID -->
+ * <CollabEditingBadge
+ *   room-id="page-123"
+ *   room-type="page"
+ * />
+ *
+ * <!-- With current user exclusion -->
+ * <CollabEditingBadge
+ *   room-id="page-123"
+ *   room-type="page"
+ *   :current-user-id="currentUser?.id"
+ * />
+ *
+ * <!-- Custom poll interval -->
+ * <CollabEditingBadge
+ *   room-id="page-123"
+ *   :poll-interval="10000"
+ * />
+ * ```
+ */
+interface Props {
+  /** Room ID to check for users */
+  roomId: string
+
+  /** Room type (e.g., 'page', 'flow', 'document') */
+  roomType?: string
+
+  /** Current user ID to exclude from count */
+  currentUserId?: string
+
+  /** Polling interval in ms (default: 5000) */
+  pollInterval?: number
+
+  /** Size variant */
+  size?: 'xs' | 'sm' | 'md'
+
+  /** Whether to show user avatars on hover */
+  showAvatars?: boolean
+
+  /** Max avatars to show in tooltip */
+  maxAvatars?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  roomType: 'page',
+  currentUserId: undefined,
+  pollInterval: 5000,
+  size: 'xs',
+  showAvatars: true,
+  maxAvatars: 5
+})
+
+// Use the composable with reactive roomId
+const { otherUsers, otherCount, loading } = useCollabRoomUsers({
+  roomId: toRef(() => props.roomId),
+  roomType: props.roomType,
+  currentUserId: toRef(() => props.currentUserId),
+  pollInterval: props.pollInterval,
+  excludeSelf: !!props.currentUserId,
+  immediate: true
+})
+
+// Badge text
+const badgeText = computed(() => {
+  const count = otherCount.value
+  if (count === 0) return ''
+  if (count === 1) return '1 editing'
+  return `${count} editing`
+})
+
+// Size classes
+const sizeClasses = computed(() => {
+  switch (props.size) {
+    case 'xs':
+      return {
+        badge: 'text-[10px] px-1.5 py-0.5',
+        avatar: 'size-4 text-[8px]'
+      }
+    case 'sm':
+      return {
+        badge: 'text-xs px-2 py-0.5',
+        avatar: 'size-5 text-[10px]'
+      }
+    case 'md':
+      return {
+        badge: 'text-sm px-2 py-1',
+        avatar: 'size-6 text-xs'
+      }
+    default:
+      return {
+        badge: 'text-[10px] px-1.5 py-0.5',
+        avatar: 'size-4 text-[8px]'
+      }
+  }
+})
+
+// Visible users for tooltip
+const visibleUsers = computed(() => {
+  return otherUsers.value.slice(0, props.maxAvatars)
+})
+
+// Overflow count
+const overflowCount = computed(() => {
+  const overflow = otherUsers.value.length - props.maxAvatars
+  return overflow > 0 ? overflow : 0
+})
+
+// Get initials from user name
+function getInitials(name: string): string {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase()
+  }
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+}
+
+// Get text color for contrast
+function getTextColor(bgColor: string): string {
+  const hex = bgColor.replace('#', '')
+  if (hex.length !== 6) return 'white'
+
+  const r = parseInt(hex.slice(0, 2), 16)
+  const g = parseInt(hex.slice(2, 4), 16)
+  const b = parseInt(hex.slice(4, 6), 16)
+
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? '#1f2937' : 'white'
+}
+
+// Tooltip content showing user list
+const tooltipContent = computed(() => {
+  if (otherUsers.value.length === 0) return ''
+
+  const names = otherUsers.value.map(u => u.user?.name || 'Unknown')
+  if (names.length === 1) return names[0]
+  if (names.length === 2) return names.join(' and ')
+  if (names.length <= 4) {
+    return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]
+  }
+  return names.slice(0, 3).join(', ') + ` and ${names.length - 3} others`
+})
+</script>
+
+<template>
+  <div
+    v-if="otherCount > 0 && !loading"
+    class="collab-editing-badge inline-flex items-center"
+  >
+    <!-- Avatar-style badge with tooltip -->
+    <UTooltip
+      v-if="showAvatars"
+      :delay-duration="200"
+    >
+      <template #default>
+        <div
+          class="inline-flex items-center gap-1 rounded-full bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium"
+          :class="sizeClasses.badge"
+        >
+          <!-- Stacked mini avatars -->
+          <div class="flex -space-x-1">
+            <div
+              v-for="(user, index) in visibleUsers.slice(0, 3)"
+              :key="user.user?.id || index"
+              class="rounded-full flex items-center justify-center font-medium border border-white dark:border-gray-800"
+              :class="sizeClasses.avatar"
+              :style="{
+                backgroundColor: user.user?.color || '#6b7280',
+                color: getTextColor(user.user?.color || '#6b7280'),
+                zIndex: 3 - index
+              }"
+            >
+              {{ getInitials(user.user?.name || '') }}
+            </div>
+          </div>
+          <span>{{ badgeText }}</span>
+        </div>
+      </template>
+
+      <template #content>
+        <div class="p-2 max-w-xs">
+          <p class="text-sm font-medium mb-2">
+            Currently editing:
+          </p>
+          <div class="flex flex-wrap gap-1.5">
+            <div
+              v-for="(user, index) in visibleUsers"
+              :key="user.user?.id || index"
+              class="flex items-center gap-1.5 bg-muted/50 rounded-full px-2 py-0.5"
+            >
+              <div
+                class="size-5 rounded-full flex items-center justify-center text-[10px] font-medium"
+                :style="{
+                  backgroundColor: user.user?.color || '#6b7280',
+                  color: getTextColor(user.user?.color || '#6b7280')
+                }"
+              >
+                {{ getInitials(user.user?.name || '') }}
+              </div>
+              <span class="text-xs">{{ user.user?.name || 'Unknown' }}</span>
+            </div>
+            <div
+              v-if="overflowCount > 0"
+              class="flex items-center gap-1 text-xs text-muted-foreground"
+            >
+              +{{ overflowCount }} more
+            </div>
+          </div>
+        </div>
+      </template>
+    </UTooltip>
+
+    <!-- Simple text badge without tooltip -->
+    <div
+      v-else
+      class="inline-flex items-center rounded-full bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium"
+      :class="sizeClasses.badge"
+      :title="tooltipContent"
+    >
+      <span>{{ badgeText }}</span>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.collab-editing-badge {
+  /* Prevent layout shift while loading */
+  min-height: 1em;
+}
+</style>

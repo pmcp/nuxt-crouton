@@ -49,3 +49,10 @@ export {
   type CollabAwareness,
   type CollabProvider
 } from './useCollabEditor'
+
+// Room users polling (Phase 6 - Global Presence)
+export {
+  useCollabRoomUsers,
+  type UseCollabRoomUsersOptions,
+  type UseCollabRoomUsersReturn
+} from './useCollabRoomUsers'

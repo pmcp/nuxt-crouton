@@ -26,6 +26,10 @@ Real-time collaboration infrastructure for Nuxt Crouton using Yjs CRDTs. This pa
 | `app/components/CollabPresence.vue` | Stacked user avatars with overflow |
 | `app/components/CollabCursors.vue` | Remote cursor overlay rendering |
 | `app/components/CollabIndicator.vue` | Combined status + presence for toolbars |
+| `app/composables/useCollabRoomUsers.ts` | Poll room users via HTTP (Phase 6) |
+| `app/components/CollabEditingBadge.vue` | "X editing" badge for list items (Phase 6) |
+| `server/utils/collabRoomStore.ts` | Shared in-memory room storage for local dev |
+| `server/routes/api/collab/[roomId]/users.get.ts` | HTTP endpoint for room users |
 | `wrangler.example.toml` | Cloudflare configuration template |
 
 ## Architecture
@@ -365,6 +369,63 @@ Combined status + presence for toolbars/headers.
 | `users` | `CollabAwarenessState[]` | required | Users to display |
 | `maxVisibleUsers` | `number` | `3` | Max avatars to show |
 
+### useCollabRoomUsers (Phase 6 - Global Presence)
+
+Polls room users via HTTP for displaying presence in collection lists.
+
+```typescript
+const {
+  // Users
+  users,          // Ref<CollabAwarenessState[]> - All users
+  otherUsers,     // ComputedRef<CollabAwarenessState[]> - Excluding current user
+  count,          // ComputedRef<number> - Total count
+  otherCount,     // ComputedRef<number> - Other users count
+
+  // State
+  loading,        // Ref<boolean>
+  error,          // Ref<Error | null>
+  isPolling,      // ComputedRef<boolean>
+
+  // Actions
+  refresh,        // () => Promise<void>
+  startPolling,   // () => void
+  stopPolling     // () => void
+} = useCollabRoomUsers({
+  roomId: 'page-123',           // Can be string or Ref
+  roomType: 'page',             // default
+  pollInterval: 5000,           // default: 5 seconds
+  currentUserId: user.value?.id,// Exclude self from count
+  excludeSelf: true,            // default
+  immediate: true               // default: start polling on mount
+})
+```
+
+### CollabEditingBadge (Phase 6 Component)
+
+Shows "X editing" badge on collection list items.
+
+```vue
+<CollabEditingBadge
+  room-id="page-123"
+  room-type="page"
+  :current-user-id="currentUser?.id"
+  :poll-interval="5000"
+  size="xs"
+  :show-avatars="true"
+  :max-avatars="5"
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `roomId` | `string` | required | Room ID to check |
+| `roomType` | `string` | `'page'` | Room type |
+| `currentUserId` | `string` | - | Exclude self from count |
+| `pollInterval` | `number` | `5000` | Poll interval in ms |
+| `size` | `'xs' \| 'sm' \| 'md'` | `'xs'` | Badge size |
+| `showAvatars` | `boolean` | `true` | Show user avatars on hover |
+| `maxAvatars` | `number` | `5` | Max avatars in tooltip |
+
 ## WebSocket Protocol
 
 ### Binary Messages (Yjs Updates)
@@ -401,8 +462,23 @@ Raw Uint8Array containing Yjs update data.
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/collab/[roomId]/ws?type=X` | GET | WebSocket upgrade |
+| `/api/collab/[roomId]/users?type=X` | GET | Get current users (Phase 6) |
 | `/state` (via DO) | GET | Get current Yjs state as binary |
 | `/users` (via DO) | GET | Get current users JSON |
+
+### Users Endpoint Response
+
+```json
+{
+  "users": [
+    {
+      "user": { "id": "user-123", "name": "Alice", "color": "#ff0000" },
+      "cursor": { "x": 100, "y": 200 }
+    }
+  ],
+  "count": 1
+}
+```
 
 ## Types Reference
 
@@ -447,8 +523,8 @@ This package is part of a 7-phase collaboration implementation:
 | 2 | ✅ Complete | Core composables (useCollabConnection, useCollabSync, useCollabPresence, useCollabEditor) |
 | 3 | ✅ Complete | UI components (CollabStatus, CollabPresence, CollabCursors, CollabIndicator) |
 | 4 | ✅ Complete | Refactor crouton-flow to use this package |
-| 5 | Pending | Add collaborative editing to crouton-pages |
-| 6 | Pending | Global presence ("2 people editing" in lists) |
+| 5 | ✅ Complete | Add collaborative editing to crouton-pages |
+| 6 | ✅ Complete | Global presence ("2 people editing" in lists) |
 | 7 | Pending | Testing and documentation |
 
 ## Testing
@@ -464,8 +540,37 @@ npx tsc --noEmit --skipLibCheck \
   app/composables/useCollabConnection.ts \
   app/composables/useCollabSync.ts \
   app/composables/useCollabPresence.ts \
-  app/composables/useCollabEditor.ts
+  app/composables/useCollabEditor.ts \
+  app/composables/useCollabRoomUsers.ts
 ```
+
+## CroutonCollection Integration
+
+When both `nuxt-crouton` and `nuxt-crouton-collab` are installed, you can enable
+global presence badges in collection lists:
+
+```vue
+<CroutonCollection
+  collection="pages"
+  :rows="pages"
+  :show-collab-presence="true"
+/>
+
+<!-- With custom configuration -->
+<CroutonCollection
+  collection="pages"
+  :rows="pages"
+  :show-collab-presence="{
+    roomType: 'page',
+    currentUserId: currentUser?.id,
+    pollInterval: 10000,
+    getRoomId: (row, collection) => `${collection}-${row.id}`
+  }"
+/>
+```
+
+The badges appear automatically on list, grid, and cards layouts when users
+are actively editing those items.
 
 ## Common Tasks
 

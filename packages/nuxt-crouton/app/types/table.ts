@@ -75,6 +75,35 @@ export const layoutPresets: Record<string, ResponsiveLayout> = {
   'tree-default': { base: 'tree' }
 }
 
+/**
+ * Configuration for collaboration presence badges in collection lists
+ * Requires @friendlyinternet/nuxt-crouton-collab to be installed
+ */
+export interface CollabPresenceConfig {
+  /**
+   * Room type for collab connections
+   * @default 'page'
+   */
+  roomType?: string
+
+  /**
+   * Function to derive room ID from row data
+   * @default (row) => `${collection}-${row.id}`
+   */
+  getRoomId?: (row: any, collection: string) => string
+
+  /**
+   * Current user ID to exclude from presence count
+   */
+  currentUserId?: string
+
+  /**
+   * Polling interval in milliseconds
+   * @default 5000
+   */
+  pollInterval?: number
+}
+
 export interface CollectionProps {
   layout?: LayoutType | ResponsiveLayout | keyof typeof layoutPresets
   columns: TableColumn[]
@@ -99,6 +128,12 @@ export interface CollectionProps {
   }
   /** Stateless mode: no config lookup, no mutations, just renders data */
   stateless?: boolean
+  /**
+   * Show collaboration presence badges per row
+   * Requires @friendlyinternet/nuxt-crouton-collab to be installed
+   * Set to true for defaults, or provide CollabPresenceConfig for custom settings
+   */
+  showCollabPresence?: boolean | CollabPresenceConfig
 }
 
 // Keep aliases for backward compatibility
