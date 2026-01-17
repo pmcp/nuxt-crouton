@@ -1,5 +1,3 @@
-import { } from 'vue'
-
 interface TranslationOptions {
   params?: Record<string, any>
   fallback?: string
@@ -18,11 +16,29 @@ interface TranslationOptions {
  * 4. In dev mode, wraps translations with DevTranslationWrapper for inline editing
  */
 export function useT() {
-  const i18n = useI18n()
-  // Don't destructure t - call i18n.t() directly to ensure it always uses current translations
-  // Use computed to ensure locale stays reactive
-  const locale = computed(() => i18n.locale.value)
-  const { teamSlug } = useTeamContext()
+  // Safely get i18n - it may not be available during SSR on some routes
+  let i18n: ReturnType<typeof useI18n> | null = null
+  try {
+    i18n = useI18n()
+  } catch (error) {
+    // i18n not available, will use fallback behavior
+    if (import.meta.dev) {
+      console.warn('[useT] useI18n() not available, using fallback mode')
+    }
+  }
+
+  // Use computed to ensure locale stays reactive, with fallback to 'en'
+  const locale = computed(() => i18n?.locale?.value ?? 'en')
+
+  // Safely get team context - may not be available on all routes
+  let teamSlug: { value: string | null } = { value: null }
+  try {
+    const context = useTeamContext()
+    teamSlug = context.teamSlug
+  } catch (error) {
+    // Team context not available, that's fine for public routes
+  }
+
   const isDev = import.meta.dev
   const devModeEnabled = useState('devMode.enabled', () => false)
 
@@ -97,7 +113,7 @@ export function useT() {
 
     if (teamOverride) {
       translatedValue = teamOverride
-    } else {
+    } else if (i18n) {
       // Fall back to system translation
       const systemValue = params ? i18n.t(key, params as any) : i18n.t(key)
 
@@ -109,6 +125,10 @@ export function useT() {
       } else {
         translatedValue = systemValue
       }
+    } else {
+      // i18n not available - use fallback or key
+      isTranslationMissing = true
+      translatedValue = fallback || placeholder || `[${key}]`
     }
 
     // Apply parameter substitution
@@ -129,8 +149,8 @@ export function useT() {
     const { category = 'ui' } = options
     const currentTeamSlug = teamSlugFromRoute.value
     const teamOverride = teamTranslations.value?.[key]
-    const systemValue = i18n.t(key)
-    const isTranslationMissing = systemValue === key
+    const systemValue = i18n ? i18n.t(key) : key
+    const isTranslationMissing = !i18n || systemValue === key
 
     return {
       key,
@@ -158,7 +178,7 @@ export function useT() {
 
     if (teamOverride) {
       value = teamOverride
-    } else {
+    } else if (i18n) {
       const systemValue = params ? i18n.t(key, params as any) : i18n.t(key)
 
       // Check if translation is missing
@@ -167,6 +187,9 @@ export function useT() {
       } else {
         value = systemValue
       }
+    } else {
+      // i18n not available - use fallback or key
+      value = fallback || placeholder || `[${key}]`
     }
 
     // Apply parameter substitution
@@ -217,6 +240,8 @@ export function useT() {
 
     if (teamOverride) return true
 
+    if (!i18n) return false
+
     const systemValue = i18n.t(key)
     return systemValue !== key
   }
@@ -248,8 +273,8 @@ export function useT() {
    */
   const getTranslationMeta = (key: string) => {
     const teamOverride = teamTranslations.value?.[key]
-    const systemValue = i18n.t(key)
-    const isSystemMissing = systemValue === key
+    const systemValue = i18n ? i18n.t(key) : key
+    const isSystemMissing = !i18n || systemValue === key
 
     return {
       key,
