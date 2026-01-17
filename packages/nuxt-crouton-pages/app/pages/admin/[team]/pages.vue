@@ -15,6 +15,8 @@ const { t } = useT()
 const route = useRoute()
 const { getPageType } = usePageTypes()
 const crouton = useCrouton()
+const { locale } = useI18n()
+const { getSlugForLocale } = useLocalizedSlug()
 
 // Team context
 const team = computed(() => route.params.team as string)
@@ -129,7 +131,7 @@ const visibilityIcons: Record<string, string> = {
 
         <template #cell-slug="{ row }">
           <code class="text-xs bg-muted px-1.5 py-0.5 rounded">
-            /{{ team }}/{{ row.slug || '' }}
+            /{{ team }}/{{ locale }}/{{ getSlugForLocale(row, String(locale)) }}
           </code>
         </template>
       </CroutonCollection>

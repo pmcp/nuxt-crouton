@@ -32,6 +32,7 @@ const props = defineProps<Props>()
 
 const { getPageType } = usePageTypes()
 const { locale } = useI18n()
+const { getSlugForLocale } = useLocalizedSlug()
 
 // Get page type info for icon
 const pageType = computed(() => getPageType(props.item.pageType))
@@ -44,6 +45,9 @@ const localizedTitle = computed(() => {
     || props.item.title
     || 'Untitled'
 })
+
+// Get localized slug with fallbacks
+const localizedSlug = computed(() => getSlugForLocale(props.item, locale.value))
 
 // Relative time ago
 const timeAgo = useTimeAgo(() => props.item.updatedAt || props.item.createdAt)
@@ -83,7 +87,7 @@ const visibilityColor = computed(() => {
         {{ localizedTitle }}
       </span>
       <span class="text-xs text-muted truncate block">
-        /{{ props.item.slug || '' }}
+        /{{ localizedSlug }}
       </span>
     </div>
 
