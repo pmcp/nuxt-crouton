@@ -9,6 +9,9 @@ export default defineNuxtConfig({
     name: 'nuxt-crouton-flow'
   },
 
+  // Extend crouton-collab for shared collaboration infrastructure
+  extends: ['@friendlyinternet/nuxt-crouton-collab'],
+
   // Note: This is an addon layer - users must explicitly extend:
   // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/nuxt-crouton-flow']
 

@@ -1,15 +1,17 @@
 import { computed, type Ref } from 'vue'
-import type { YjsAwarenessState } from '../types/yjs'
+// Type is re-exported from our local types file
+import type { CollabAwarenessState } from '../types/yjs'
 
 interface UseFlowPresenceOptions {
-  users: Ref<YjsAwarenessState[]>
+  users: Ref<CollabAwarenessState[]>
   currentUserId?: string
 }
 
 /**
  * Composable for flow presence UI helpers
  *
- * Provides utilities for rendering user presence indicators
+ * Provides utilities for rendering user presence indicators in flow graphs.
+ * Uses the same CollabAwarenessState type as crouton-collab for consistency.
  *
  * @example
  * ```ts
@@ -24,7 +26,7 @@ export function useFlowPresence(options: UseFlowPresenceOptions) {
 
   // Other users (not current user)
   const otherUsers = computed(() =>
-    users.value.filter(u => u.user.id !== currentUserId)
+    users.value.filter(u => u.user?.id !== currentUserId)
   )
 
   // Users currently selecting a specific node
@@ -50,9 +52,31 @@ export function useFlowPresence(options: UseFlowPresenceOptions) {
     })
   }
 
+  // Get a consistent color for a user ID
+  const getUserColor = (userId: string): string => {
+    // Check if user is in the room and has a color
+    const roomUser = users.value.find(u => u.user?.id === userId)
+    if (roomUser?.user?.color) {
+      return roomUser.user.color
+    }
+    // Generate consistent color from ID
+    return generateUserColor(userId)
+  }
+
   return {
     otherUsers,
     getUsersSelectingNode,
-    getNodePresenceStyle
+    getNodePresenceStyle,
+    getUserColor
   }
+}
+
+// Helper to generate consistent color from user ID
+function generateUserColor(userId: string): string {
+  let hash = 0
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const hue = Math.abs(hash) % 360
+  return `hsl(${hue}, 70%, 50%)`
 }

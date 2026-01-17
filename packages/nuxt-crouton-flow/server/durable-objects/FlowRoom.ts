@@ -13,6 +13,18 @@ interface Session {
 }
 
 /**
+ * @deprecated Use CollabRoom from @friendlyinternet/nuxt-crouton-collab instead.
+ *
+ * This Durable Object is kept for backward compatibility with existing deployments.
+ * New flows should use CollabRoom via useFlowSync which now wraps useCollabSync.
+ *
+ * Migration path:
+ * 1. useFlowSync now uses `/api/collab/[roomId]/ws?type=flow` (from crouton-collab)
+ * 2. CollabRoom stores state in `yjs_collab_states` table with room_type='flow'
+ * 3. Existing flows using this FlowRoom will continue to work until migration
+ *
+ * ---
+ *
  * Durable Object that manages a single flow's Yjs document
  *
  * Responsibilities:

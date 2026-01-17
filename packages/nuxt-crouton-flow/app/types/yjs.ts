@@ -1,4 +1,37 @@
 /**
+ * User information for collaboration
+ * Compatible with crouton-collab's CollabUser
+ */
+export interface CollabUser {
+  id: string
+  name: string
+  color: string
+}
+
+/**
+ * Awareness state for presence - what each user is doing
+ * Compatible with crouton-collab's CollabAwarenessState
+ */
+export interface CollabAwarenessState {
+  user: CollabUser
+  cursor: { x: number; y: number } | null
+  selection?: { anchor: number; head: number } | null
+  selectedNodeId?: string | null
+  ghostNode?: { id: string; position: { x: number; y: number } } | null
+  [key: string]: unknown // Extensible for flow-specific properties
+}
+
+/**
+ * Connection state for a collaboration room
+ * Compatible with crouton-collab's CollabConnectionState
+ */
+export interface CollabConnectionState {
+  connected: boolean
+  synced: boolean
+  error: Error | null
+}
+
+/**
  * Node data stored in Yjs Y.Map
  */
 export interface YjsFlowNode {
@@ -13,6 +46,7 @@ export interface YjsFlowNode {
 
 /**
  * Ghost node state for drag preview
+ * Extended from collab's base ghost node with flow-specific fields
  */
 export interface YjsGhostNode {
   id: string
@@ -22,25 +56,15 @@ export interface YjsGhostNode {
 }
 
 /**
- * Awareness state for presence
+ * @deprecated Use CollabAwarenessState instead
+ * Kept for backward compatibility
  */
-export interface YjsAwarenessState {
-  user: {
-    id: string
-    name: string
-    color: string
-  }
-  cursor: { x: number, y: number } | null
-  selectedNodeId: string | null
-  ghostNode?: YjsGhostNode | null
-}
+export type YjsAwarenessState = CollabAwarenessState
 
 /**
- * Flow sync connection state
+ * @deprecated Use CollabConnectionState with users array instead
+ * Kept for backward compatibility
  */
-export interface FlowSyncState {
-  connected: boolean
-  synced: boolean
-  error: Error | null
-  users: YjsAwarenessState[]
+export interface FlowSyncState extends CollabConnectionState {
+  users: CollabAwarenessState[]
 }

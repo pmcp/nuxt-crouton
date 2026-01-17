@@ -4,13 +4,25 @@
 
 Vue Flow integration for Nuxt Crouton. Renders collection data as interactive node graphs with automatic DAG layout, real-time multiplayer sync via Yjs CRDTs, and presence awareness.
 
+**Uses crouton-collab for collaboration infrastructure** (as of Phase 4). Connection management, Yjs sync, and presence tracking are now provided by the shared collab package.
+
 ## Key Files
 
 | File | Purpose |
 |------|---------|
 | `app/components/Flow.vue` | Main graph component |
-| `app/composables/useFlowSync.ts` | Real-time sync state |
+| `app/composables/useFlowSync.ts` | Flow sync (wraps useCollabSync) |
 | `app/composables/useFlowPresence.ts` | Presence UI utilities |
+| `app/types/yjs.ts` | Flow node types (uses collab types) |
+| `server/durable-objects/FlowRoom.ts` | **DEPRECATED** - Use CollabRoom |
+| `server/routes/api/flow/[flowId]/ws.ts` | **DEPRECATED** - Use collab endpoint |
+
+## Dependencies
+
+- **Extends**: `@friendlyinternet/nuxt-crouton-collab` (for collaboration infrastructure)
+- **Peer Dependencies**: `@friendlyinternet/nuxt-crouton`
+- **Core**: `@vue-flow/core`, `@dagrejs/dagre`, `yjs`
+- **Plugins**: `@vue-flow/background`, `@vue-flow/controls`, `@vue-flow/minimap`
 
 ## Basic Usage
 
@@ -34,10 +46,11 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 ```
 
 When `sync` is enabled:
-1. Yjs CRDT manages all node state
-2. Cloudflare Durable Object handles WebSocket connections
-3. Changes broadcast to all connected clients
-4. Dual persistence: Yjs blob + individual rows
+1. Uses crouton-collab's CollabRoom Durable Object
+2. Connects to `/api/collab/[flowId]/ws?type=flow`
+3. Yjs CRDT manages all node state with conflict resolution
+4. Changes broadcast to all connected clients in real-time
+5. Dual persistence: Yjs blob + individual rows
 
 ## Props
 
@@ -65,20 +78,37 @@ When `sync` is enabled:
 
 ## Composables
 
+### useFlowSync (Wraps useCollabSync)
+
 ```typescript
-// Direct sync access
+// Provides flow-specific operations on top of collab sync
 const {
   nodes, connected, synced, error, users,
   createNode, updateNode, updatePosition, deleteNode,
-  selectNode, updateCursor
+  selectNode, updateCursor,
+  updateGhostNode, clearGhostNode
 } = useFlowSync({ flowId: 'my-flow', collection: 'decisions' })
+```
 
-// Presence UI
-const { otherUsers, getUsersSelectingNode, getNodePresenceStyle } = useFlowPresence({
+### useFlowPresence (Uses collab types)
+
+```typescript
+// Presence UI utilities for flow graphs
+const { otherUsers, getUsersSelectingNode, getNodePresenceStyle, getUserColor } = useFlowPresence({
   users: computed(() => syncState.users),
   currentUserId: currentUser.id
 })
 ```
+
+## UI Components
+
+Flow.vue uses these components from crouton-collab:
+
+| Component | Purpose | Props |
+|-----------|---------|-------|
+| `CollabStatus` | Connection status dot | `connected`, `synced`, `error` |
+| `CollabPresence` | User avatars | `users`, `maxVisible`, `size` |
+| `CollabCursors` | Remote cursor overlay | `users`, `showLabels` |
 
 ## Custom Node Components
 
@@ -104,30 +134,70 @@ defineProps<{
 
 ## Sync Prerequisites
 
-1. **D1 Migration**: Create `yjs_flow_states` table
-2. **Wrangler Config**: Configure `FlowRoom` Durable Object
-3. **Authentication**: Users via `useUserSession()`
+### 1. Extend crouton-collab in your app
+
+The flow package already extends crouton-collab, so you get this automatically when extending flow:
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  extends: [
+    '@friendlyinternet/nuxt-crouton',
+    '@friendlyinternet/nuxt-crouton-flow'  // Already extends crouton-collab
+  ]
+})
+```
+
+### 2. Configure Cloudflare Durable Objects
+
+```toml
+# wrangler.toml
+[[durable_objects.bindings]]
+name = "COLLAB_ROOMS"
+class_name = "CollabRoom"
+
+[[migrations]]
+tag = "collab-v1"
+new_classes = ["CollabRoom"]
+```
+
+### 3. Run D1 Migration
+
+```bash
+npx wrangler d1 execute <DB_NAME> \
+  --file=./node_modules/@friendlyinternet/nuxt-crouton-collab/server/database/migrations/0001_yjs_collab_states.sql
+```
+
+### 4. Authentication
+
+Users are auto-detected via `useUserSession()` from crouton-auth.
 
 ## Architecture
 
 ```
-Clients → WebSocket → Cloudflare Durable Object (FlowRoom)
+Clients → WebSocket → /api/collab/[flowId]/ws?type=flow
                               ↓
-                    Yjs Y.Doc per flow
+                    CollabRoom Durable Object
                               ↓
-                    D1 (yjs_flow_states + collection tables)
+                    Yjs Y.Doc (Y.Map for nodes)
+                              ↓
+                    D1 (yjs_collab_states + collection tables)
 ```
+
+**Note:** The old `/api/flow/[flowId]/ws` endpoint and `FlowRoom` Durable Object are deprecated but kept for backward compatibility.
+
+## Migration from Standalone FlowRoom
+
+If you were using the old flow-specific infrastructure:
+
+1. **No code changes needed** - useFlowSync now wraps useCollabSync internally
+2. **Update Cloudflare config** - Replace FlowRoom with CollabRoom
+3. **Data migration** - Move data from `yjs_flow_states` to `yjs_collab_states` with `room_type='flow'`
 
 ## Component Naming
 
 Components auto-import with `CroutonFlow` prefix:
 - `Flow.vue` → `<CroutonFlow />`
-
-## Dependencies
-
-- **Extends**: `@friendlyinternet/nuxt-crouton`
-- **Core**: `@vue-flow/core`, `@dagrejs/dagre`, `yjs`
-- **Plugins**: `@vue-flow/background`, `@vue-flow/controls`, `@vue-flow/minimap`
 
 ## Testing
 

@@ -446,7 +446,7 @@ This package is part of a 7-phase collaboration implementation:
 | 1 | ✅ Complete | Package foundation (CollabRoom DO, D1 table, types) |
 | 2 | ✅ Complete | Core composables (useCollabConnection, useCollabSync, useCollabPresence, useCollabEditor) |
 | 3 | ✅ Complete | UI components (CollabStatus, CollabPresence, CollabCursors, CollabIndicator) |
-| 4 | Pending | Refactor crouton-flow to use this package |
+| 4 | ✅ Complete | Refactor crouton-flow to use this package |
 | 5 | Pending | Add collaborative editing to crouton-pages |
 | 6 | Pending | Global presence ("2 people editing" in lists) |
 | 7 | Pending | Testing and documentation |

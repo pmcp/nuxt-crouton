@@ -5,8 +5,10 @@ import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import type { Node, NodeDragEvent } from '@vue-flow/core'
-import type { _CroutonFlowProps, FlowConfig, FlowPosition, CroutonDragData } from '../types/flow'
+import type { FlowConfig, FlowPosition, CroutonDragData } from '../types/flow'
 import type { YjsFlowNode } from '../types/yjs'
+// Type is re-exported from our local types file
+import type { CollabAwarenessState } from '../types/yjs'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
@@ -339,6 +341,13 @@ const syncEdges = computed(() => {
   return result
 })
 
+// Other users in the room (excluding current user)
+const otherUsersInRoom = computed<CollabAwarenessState[]>(() => {
+  if (!syncState) return []
+  const currentUserId = syncState.user.value?.id
+  return syncState.users.value.filter(u => u.user?.id !== currentUserId)
+})
+
 // Ghost nodes from other users' awareness (for multiplayer drag preview)
 const remoteGhostNodes = computed<Node[]>(() => {
   if (!props.sync || !syncState) return []
@@ -352,7 +361,8 @@ const remoteGhostNodes = computed<Node[]>(() => {
       position: u.ghostNode!.position,
       data: {
         isGhost: true,
-        title: u.ghostNode!.title,
+        // Flow-specific properties stored at top level of awareness state
+        title: (u as Record<string, unknown>).ghostNodeTitle || 'New Node',
         userName: u.user.name,
         userColor: u.user.color
       },
@@ -830,18 +840,31 @@ defineExpose({
     @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
-    <!-- Sync mode overlays -->
+    <!-- Sync mode overlays (uses crouton-collab components) -->
     <template v-if="sync && syncState">
-      <!-- Connection status indicator -->
-      <CroutonFlowConnectionStatus
-        :connected="syncState.connected.value"
-        :synced="syncState.synced.value"
-        :error="syncState.error.value"
-      />
+      <!-- Connection status indicator (bottom-left) -->
+      <div class="crouton-flow-status">
+        <CollabStatus
+          :connected="syncState.connected.value"
+          :synced="syncState.synced.value"
+          :error="syncState.error.value"
+          :show-label="false"
+        />
+      </div>
 
-      <!-- Presence overlay -->
-      <CroutonFlowPresence
-        :users="syncState.users.value"
+      <!-- Presence avatars (top-right) -->
+      <div class="crouton-flow-presence">
+        <CollabPresence
+          :users="otherUsersInRoom"
+          :max-visible="5"
+          size="sm"
+        />
+      </div>
+
+      <!-- Remote cursors overlay -->
+      <CollabCursors
+        :users="otherUsersInRoom"
+        :show-labels="true"
       />
     </template>
 
@@ -1024,5 +1047,20 @@ defineExpose({
 .crouton-flow-drop-target {
   outline: 2px dashed var(--color-primary-500, #3b82f6);
   outline-offset: -2px;
+}
+
+/* Collab overlay positioning */
+.crouton-flow-status {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 100;
+}
+
+.crouton-flow-presence {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
 }
 </style>

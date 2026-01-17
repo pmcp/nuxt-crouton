@@ -1,4 +1,17 @@
 /**
+ * @deprecated Use `/api/collab/[roomId]/ws?type=flow` from @friendlyinternet/nuxt-crouton-collab instead.
+ *
+ * This WebSocket route is kept for backward compatibility with existing deployments.
+ * New flows should use useFlowSync which now wraps useCollabSync and connects to
+ * the collab endpoint automatically.
+ *
+ * Migration path:
+ * 1. useFlowSync now uses `/api/collab/[roomId]/ws?type=flow`
+ * 2. The collab package provides a unified CollabRoom Durable Object
+ * 3. Existing flows using this endpoint will continue to work until migration
+ *
+ * ---
+ *
  * WebSocket route for flow sync (Nitro experimental websocket)
  *
  * This handles WebSocket connections for local development.
