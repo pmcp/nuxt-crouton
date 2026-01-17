@@ -18,6 +18,10 @@ Real-time collaboration infrastructure for Nuxt Crouton using Yjs CRDTs. This pa
 | `server/routes/api/collab/[roomId]/ws.ts` | WebSocket endpoint (local + production) |
 | `server/database/migrations/0001_yjs_collab_states.sql` | D1 table for state persistence |
 | `app/types/collab.ts` | TypeScript types for collaboration |
+| `app/composables/useCollabConnection.ts` | Low-level WebSocket connection manager |
+| `app/composables/useCollabSync.ts` | High-level Yjs structure sync |
+| `app/composables/useCollabPresence.ts` | Cursor/selection presence tracking |
+| `app/composables/useCollabEditor.ts` | TipTap editor integration |
 | `wrangler.example.toml` | Cloudflare configuration template |
 
 ## Architecture
@@ -113,14 +117,156 @@ npx wrangler d1 execute <DB_NAME> \
   --file=./packages/nuxt-crouton-collab/server/database/migrations/0001_yjs_collab_states.sql
 ```
 
-### 4. Connect from Client (Phase 2 composables)
+### 4. Connect from Client
 
 ```typescript
-// Phase 2 will add useCollabSync composable
-const { connected, synced, users } = useCollabSync({
+// For flows/graphs (Y.Map structure)
+const { ymap, data, connected, synced, users } = useCollabSync({
+  roomId: 'flow-123',
+  roomType: 'flow',
+  structure: 'map'
+})
+
+// For rich text editors (Y.XmlFragment structure)
+const { yxmlFragment, connected } = useCollabSync({
   roomId: 'page-123',
   roomType: 'page',
   structure: 'xmlFragment'
+})
+
+// For TipTap with full presence support
+const { ydoc, yxmlFragment, provider, users } = useCollabEditor({
+  roomId: 'page-123',
+  user: { name: 'Alice' }
+})
+```
+
+## Composables Reference
+
+### useCollabConnection (Low-Level)
+
+Manages WebSocket connections with exponential backoff reconnection.
+
+```typescript
+const {
+  connected,    // ComputedRef<boolean>
+  synced,       // ComputedRef<boolean>
+  error,        // ComputedRef<Error | null>
+  ws,           // Ref<WebSocket | null>
+  ydoc,         // Y.Doc
+  connect,      // () => void
+  disconnect,   // () => void
+  send,         // (data) => void
+  sendAwareness // (state) => void
+} = useCollabConnection({
+  roomId: 'room-123',
+  roomType: 'page',
+  autoConnect: true  // default
+})
+```
+
+### useCollabSync (High-Level)
+
+Wraps connection and provides typed access to Yjs structures.
+
+```typescript
+const {
+  // Connection state
+  connected, synced, error,
+
+  // Yjs structures (one populated based on structure option)
+  ymap,           // Y.Map | null
+  yarray,         // Y.Array | null
+  yxmlFragment,   // Y.XmlFragment | null
+  ytext,          // Y.Text | null
+
+  // Reactive data (auto-updated for Y.Map)
+  data,           // Ref<Record<string, unknown>>
+  arrayData,      // Ref<unknown[]>
+
+  // Users in room
+  users,          // Ref<CollabAwarenessState[]>
+
+  // Actions
+  connect, disconnect
+} = useCollabSync({
+  roomId: 'room-123',
+  roomType: 'flow',
+  structure: 'map',       // 'map' | 'array' | 'xmlFragment' | 'text'
+  structureName: 'nodes'  // optional, defaults to roomType
+})
+```
+
+### useCollabPresence
+
+Tracks cursor positions, selections, and presence for all users.
+
+```typescript
+const {
+  user,           // ComputedRef<CollabUser | null>
+  users,          // Ref<CollabAwarenessState[]>
+  otherUsers,     // ComputedRef<CollabAwarenessState[]>
+
+  // Actions
+  updateCursor,   // (cursor) => void
+  updateSelection,// (selection) => void
+  selectNode,     // (nodeId) => void
+  updateGhostNode,// (ghostNode) => void
+
+  // Utilities
+  getUsersSelectingNode,  // (nodeId) => CollabAwarenessState[]
+  getUserColor,           // (userId) => string
+  getNodePresenceStyle    // (nodeId) => { boxShadow?, borderColor? }
+} = useCollabPresence({
+  connection,     // from useCollabConnection
+  user: { name: 'Alice' }  // optional, auto-detected from session
+})
+```
+
+### useCollabEditor (TipTap Integration)
+
+Ready-to-use setup for collaborative rich text editing with TipTap.
+
+```typescript
+const {
+  // Connection state
+  connected, synced, error,
+
+  // Yjs for TipTap
+  ydoc,           // Y.Doc
+  yxmlFragment,   // Y.XmlFragment
+
+  // Presence
+  user, users, otherUsers,
+
+  // For TipTap Collaboration extension
+  provider,       // { awareness: { setLocalStateField, ... } }
+
+  // Actions
+  connect, disconnect,
+  updateCursor, updateSelection
+} = useCollabEditor({
+  roomId: 'page-123',
+  roomType: 'page',    // default
+  field: 'content',    // default
+  user: { name: 'Alice', color: '#ff0000' }
+})
+
+// Use with TipTap
+import { Collaboration } from '@tiptap/extension-collaboration'
+import { CollaborationCursor } from '@tiptap/extension-collaboration-cursor'
+
+const editor = useEditor({
+  extensions: [
+    Collaboration.configure({
+      document: ydoc,
+      field: 'content'
+    }),
+    CollaborationCursor.configure({
+      provider,
+      user: { name: 'Alice', color: '#ff0000' }
+    })
+  ]
 })
 ```
 
@@ -202,8 +348,8 @@ This package is part of a 7-phase collaboration implementation:
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| 1 | ✅ Complete | Package foundation (this) |
-| 2 | Pending | Core composables (useCollabSync, useCollabPresence, useCollabEditor) |
+| 1 | ✅ Complete | Package foundation (CollabRoom DO, D1 table, types) |
+| 2 | ✅ Complete | Core composables (useCollabConnection, useCollabSync, useCollabPresence, useCollabEditor) |
 | 3 | Pending | UI components (Status, Presence, Cursors) |
 | 4 | Pending | Refactor crouton-flow to use this package |
 | 5 | Pending | Add collaborative editing to crouton-pages |
@@ -214,12 +360,16 @@ This package is part of a 7-phase collaboration implementation:
 
 ```bash
 # MANDATORY after any changes
+cd packages/nuxt-crouton-collab
 npx nuxt typecheck
 
-# Note: In the monorepo, typecheck may show errors from other packages.
-# Verify the collab package's own files compile correctly:
-cd packages/nuxt-crouton-collab
-npx tsc --noEmit --skipLibCheck app/types/collab.ts
+# Alternative: Verify specific files compile
+npx tsc --noEmit --skipLibCheck \
+  app/types/collab.ts \
+  app/composables/useCollabConnection.ts \
+  app/composables/useCollabSync.ts \
+  app/composables/useCollabPresence.ts \
+  app/composables/useCollabEditor.ts
 ```
 
 ## Common Tasks
