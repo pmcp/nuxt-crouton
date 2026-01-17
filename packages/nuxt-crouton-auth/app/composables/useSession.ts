@@ -92,6 +92,8 @@ export function useSession() {
   // Fetch active organization
   // If no active org is set (400 error), try to find and set one automatically
   async function fetchActiveOrg(): Promise<void> {
+    // Don't fetch org data if user is not authenticated (prevents 401 console errors)
+    if (!userState.value) return
     if (!authClient?.organization?.getFullOrganization) return
 
     try {
@@ -126,6 +128,8 @@ export function useSession() {
 
   // Try to find and set a default organization (for personal/single-tenant modes)
   async function trySetDefaultOrg(): Promise<void> {
+    // Don't try to set org if user is not authenticated (prevents 401 console errors)
+    if (!userState.value) return
     if (!authClient?.organization) return
 
     try {
@@ -182,11 +186,18 @@ export function useSession() {
       }
 
       await fetchSession()
-      await fetchActiveOrg()
+      // Only fetch org if user is authenticated (prevents 401 console errors)
+      if (userState.value) {
+        await fetchActiveOrg()
+      }
     })
 
-    // Initial fetch
-    fetchSession().then(() => fetchActiveOrg())
+    // Initial fetch - only fetch org if session exists
+    fetchSession().then(() => {
+      if (userState.value) {
+        fetchActiveOrg()
+      }
+    })
   }
 
   // On server, try to fetch session if we have headers
@@ -194,7 +205,10 @@ export function useSession() {
     // Use callOnce to avoid duplicate fetches during SSR
     callOnce('crouton-auth-ssr-fetch', async () => {
       await fetchSession()
-      await fetchActiveOrg()
+      // Only fetch org if user is authenticated (prevents 401 console errors)
+      if (userState.value) {
+        await fetchActiveOrg()
+      }
     })
   }
 
