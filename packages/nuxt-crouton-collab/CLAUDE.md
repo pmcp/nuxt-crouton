@@ -22,6 +22,10 @@ Real-time collaboration infrastructure for Nuxt Crouton using Yjs CRDTs. This pa
 | `app/composables/useCollabSync.ts` | High-level Yjs structure sync |
 | `app/composables/useCollabPresence.ts` | Cursor/selection presence tracking |
 | `app/composables/useCollabEditor.ts` | TipTap editor integration |
+| `app/components/CollabStatus.vue` | Connection status indicator (dot + label) |
+| `app/components/CollabPresence.vue` | Stacked user avatars with overflow |
+| `app/components/CollabCursors.vue` | Remote cursor overlay rendering |
+| `app/components/CollabIndicator.vue` | Combined status + presence for toolbars |
 | `wrangler.example.toml` | Cloudflare configuration template |
 
 ## Architecture
@@ -270,6 +274,97 @@ const editor = useEditor({
 })
 ```
 
+## UI Components Reference
+
+### CollabStatus
+
+Connection status indicator with colored dot and optional label.
+
+```vue
+<CollabStatus
+  :connected="connection.connected"
+  :synced="connection.synced"
+  :error="connection.error"
+  :show-label="true"
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `connected` | `boolean` | required | WebSocket connected |
+| `synced` | `boolean` | required | Initial sync complete |
+| `error` | `Error \| null` | `null` | Connection error |
+| `showLabel` | `boolean` | `true` | Show text label |
+
+Status colors:
+- Green: synced and ready
+- Yellow (pulsing): connecting or syncing
+- Red: error
+- Gray: disconnected
+
+### CollabPresence
+
+Stacked user avatars with overflow indicator.
+
+```vue
+<CollabPresence
+  :users="presence.otherUsers"
+  :max-visible="5"
+  size="sm"
+  :show-tooltip="true"
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `users` | `CollabAwarenessState[]` | required | Users to display |
+| `maxVisible` | `number` | `5` | Max avatars before +N |
+| `size` | `'xs' \| 'sm' \| 'md'` | `'sm'` | Avatar size |
+| `showTooltip` | `boolean` | `true` | Show name on hover |
+
+### CollabCursors
+
+Remote cursor overlay for canvas/editor content.
+
+```vue
+<div class="relative">
+  <CollabCursors
+    :users="presence.otherUsers"
+    :show-labels="true"
+  />
+  <!-- Your content here -->
+</div>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `users` | `CollabAwarenessState[]` | required | Users with cursors |
+| `showLabels` | `boolean` | `true` | Show name labels |
+| `offsetX` | `number` | `0` | X position offset |
+| `offsetY` | `number` | `0` | Y position offset |
+
+### CollabIndicator
+
+Combined status + presence for toolbars/headers.
+
+```vue
+<CollabIndicator
+  :connected="connection.connected"
+  :synced="connection.synced"
+  :error="connection.error"
+  :users="presence.otherUsers"
+  :max-visible-users="3"
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `connected` | `boolean` | required | WebSocket connected |
+| `synced` | `boolean` | required | Initial sync complete |
+| `error` | `Error \| null` | `null` | Connection error |
+| `users` | `CollabAwarenessState[]` | required | Users to display |
+| `maxVisibleUsers` | `number` | `3` | Max avatars to show |
+
 ## WebSocket Protocol
 
 ### Binary Messages (Yjs Updates)
@@ -350,7 +445,7 @@ This package is part of a 7-phase collaboration implementation:
 |-------|--------|-------------|
 | 1 | ✅ Complete | Package foundation (CollabRoom DO, D1 table, types) |
 | 2 | ✅ Complete | Core composables (useCollabConnection, useCollabSync, useCollabPresence, useCollabEditor) |
-| 3 | Pending | UI components (Status, Presence, Cursors) |
+| 3 | ✅ Complete | UI components (CollabStatus, CollabPresence, CollabCursors, CollabIndicator) |
 | 4 | Pending | Refactor crouton-flow to use this package |
 | 5 | Pending | Add collaborative editing to crouton-pages |
 | 6 | Pending | Global presence ("2 people editing" in lists) |

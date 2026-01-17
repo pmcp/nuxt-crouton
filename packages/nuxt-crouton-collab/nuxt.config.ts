@@ -17,9 +17,14 @@ export default defineNuxtConfig({
     '#collab-types': join(currentDir, 'app/types/collab.ts')
   },
 
-  // Composables auto-import (for Phase 2)
+  // Composables auto-import
   imports: {
     dirs: [join(currentDir, 'app/composables')]
+  },
+
+  // Components auto-import
+  components: {
+    dirs: [join(currentDir, 'app/components')]
   },
 
   // Nitro server configuration for WebSocket sync
