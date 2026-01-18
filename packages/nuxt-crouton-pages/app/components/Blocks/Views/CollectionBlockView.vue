@@ -34,16 +34,17 @@ const layoutNames: Record<CollectionLayout, string> = {
 const layoutDisplay = computed(() => layoutNames[attrs.value.layout] || 'Table')
 
 // Reference to this component's root element for finding parent editor
-const wrapperRef = ref<HTMLElement | null>(null)
+const wrapperRef = ref<InstanceType<typeof NodeViewWrapper> | null>(null)
 
 // Cache the editor ID once mounted (traverse up from this element to find parent editor)
 const cachedEditorId = ref<string | undefined>(undefined)
 
 onMounted(() => {
   // Traverse up DOM to find the parent editor with data-editor-id
-  let el: HTMLElement | null = wrapperRef.value
+  // wrapperRef.value is the component instance, .$el is the DOM element
+  let el: HTMLElement | null = wrapperRef.value?.$el as HTMLElement | null
   while (el) {
-    if (el.classList.contains('crouton-editor-blocks') && el.dataset.editorId) {
+    if (el.classList?.contains('crouton-editor-blocks') && el.dataset?.editorId) {
       cachedEditorId.value = el.dataset.editorId
       break
     }
