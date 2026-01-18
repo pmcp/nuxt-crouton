@@ -228,25 +228,27 @@ const suggestionMenuItems = computed<EditorSuggestionMenuItem[][]>(() => {
 })
 
 // Custom handlers for block insertion
-// UEditor handlers must have an `execute` method that returns a TipTap chain
+// These are passed to UEditor and used by UEditorSuggestionMenu
+// Format: { [kind]: { execute: (editor) => chain, isActive?: (editor) => boolean } }
 const blockHandlers = computed(() => {
-  const handlers: Record<string, { execute: (editor: Editor) => any }> = {}
+  const handlers: Record<string, { execute: (editor: Editor) => any; isActive?: (editor: Editor) => boolean }> = {}
 
   for (const item of props.suggestionItems || []) {
     handlers[item.command] = {
       execute: (editor: Editor) => {
-        // Use editor.commands directly - this returns boolean, not a chain
-        // But we need to return a chain for UEditor's suggestion menu
+        // Try to call the registered command on the editor
         const command = (editor.commands as any)[item.command]
         if (command) {
-          // Execute the command directly
           command()
-          // Return a dummy chain that's already complete
-          return { run: () => true }
         } else {
           console.warn(`[CroutonEditorBlocks] Command not found: ${item.command}`)
-          return { run: () => false }
         }
+        // Return a chain for compatibility with UEditor handler system
+        return editor.chain().focus()
+      },
+      isActive: (editor: Editor) => {
+        // Check if this block type is currently selected
+        return editor.isActive(item.type)
       }
     }
   }
@@ -347,14 +349,16 @@ defineExpose({
       class="border-b border-default px-2 py-1.5 flex-shrink-0"
     />
 
-    <!-- Editor -->
+    <!-- Editor with slash command suggestion menu -->
     <UEditor
+      v-slot="{ editor }"
       v-model="content"
       :content-type="contentType"
       :placeholder="placeholder"
       :editable="editable"
       :autofocus="autofocus"
       :extensions="extensions"
+      :handlers="blockHandlers"
       class="flex-1"
       :ui="{
         root: 'h-full',
@@ -362,7 +366,14 @@ defineExpose({
       }"
       @create="handleEditorCreate"
       @update="handleEditorUpdate"
-    />
+    >
+      <!-- Slash command menu for block insertion -->
+      <UEditorSuggestionMenu
+        v-if="suggestionMenuItems.length > 0"
+        :editor="editor"
+        :items="suggestionMenuItems"
+      />
+    </UEditor>
 
     <!-- Property Panel Slot -->
     <slot

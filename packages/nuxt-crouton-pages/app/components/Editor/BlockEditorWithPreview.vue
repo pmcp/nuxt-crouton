@@ -1,25 +1,26 @@
-<script lang="ts">
-// Module-level: Extensions created ONCE, completely outside Vue's reactivity
+<script setup lang="ts">
 import { markRaw } from 'vue'
 import { PageBlocks } from '../../editor/extensions/page-blocks'
-
-// Page block extensions (Hero, Section, CTA, CardGrid, Separator)
-// Using markRaw to prevent Vue reactivity from interfering with TipTap internals
-const PAGE_BLOCK_EXTENSIONS = markRaw([
-  PageBlocks.configure({
-    enableSlashCommands: false
-  })
-])
-</script>
-
-<script setup lang="ts">
 /**
  * Page Block Editor with Preview
  *
  * Block editor with live preview panel showing rendered Nuxt UI Page components.
  * Uses tabs to switch between editor and preview.
+ *
+ * IMPORTANT: Extensions are created per-component-instance to avoid TipTap's
+ * "Adding different instances of a keyed plugin" error that occurs when
+ * module-level extensions are reused across editor remounts or HMR reloads.
  */
 import { getBlockMenuItems } from '../../utils/block-registry'
+
+// Create extensions once per component instance, wrapped in markRaw to prevent
+// Vue's reactivity system from proxying TipTap internals
+// Note: enableSlashCommands is false because we use UEditorSuggestionMenu instead
+const pageBlockExtensions = markRaw([
+  PageBlocks.configure({
+    enableSlashCommands: false
+  })
+])
 
 /** TipTap JSON document structure */
 type TipTapDoc = { type: 'doc'; content: unknown[] }
@@ -179,7 +180,8 @@ defineExpose({
         v-model="content"
         :placeholder="placeholder"
         :editable="editable"
-        :extensions="PAGE_BLOCK_EXTENSIONS"
+        :extensions="pageBlockExtensions"
+        :suggestion-items="blockSuggestionItems"
         content-type="json"
         class="h-full border border-default rounded-lg"
         @block:select="(node) => selectedNode = node"
