@@ -4,6 +4,7 @@
  *
  * A block-based editor built on UEditor with slash command support.
  * Supports custom NodeView blocks with property panel editing.
+ * Supports real-time collaboration via Yjs when yxmlFragment is provided.
  *
  * Usage:
  * <CroutonEditorBlocks
@@ -12,10 +13,18 @@
  *   :suggestion-items="blockItems"
  *   content-type="json"
  * />
+ *
+ * With collaboration:
+ * <CroutonEditorBlocks
+ *   :yxml-fragment="collabFragment"
+ *   :extensions="[MyBlockExtension]"
+ *   content-type="json"
+ * />
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, markRaw } from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 import type { EditorSuggestionMenuItem, EditorToolbarItem } from '@nuxt/ui'
+import type * as Y from 'yjs'
 
 export interface BlockSuggestionItem {
   /** Block type name (e.g., 'heroBlock') */
@@ -49,6 +58,21 @@ interface Props {
   showBubbleToolbar?: boolean
   /** Block items for slash command menu */
   suggestionItems?: BlockSuggestionItem[]
+  /**
+   * Y.XmlFragment for real-time collaboration.
+   * When provided, editor syncs to Yjs instead of using modelValue.
+   * Content is stored in the Y.XmlFragment and synced via WebSocket.
+   */
+  yxmlFragment?: Y.XmlFragment
+  /**
+   * Collab provider for cursor awareness (optional).
+   * Used by CollaborationCursor extension to show other users' cursors.
+   */
+  collabProvider?: { awareness: any }
+  /**
+   * User info for collaboration cursors.
+   */
+  collabUser?: { name: string; color?: string }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -57,6 +81,74 @@ const props = withDefaults(defineProps<Props>(), {
   showToolbar: true,
   showBubbleToolbar: true,
   suggestionItems: () => []
+})
+
+// Dynamically load Collaboration extension if yxmlFragment is provided
+const collabExtensions = ref<any[]>([])
+const collabReady = ref(false)
+
+// Key to force editor recreation when collab mode changes
+// This ensures the Collaboration extension is properly initialized
+const editorKey = computed(() => {
+  const fragmentId = props.yxmlFragment ? 'collab' : 'local'
+  const readyState = collabReady.value ? 'ready' : 'loading'
+  return `${fragmentId}-${readyState}`
+})
+
+// Load Collaboration extension when yxmlFragment is provided
+watch(() => props.yxmlFragment, async (fragment) => {
+  console.log('[CroutonEditorBlocks] yxmlFragment changed:', fragment ? 'has fragment' : 'no fragment')
+  if (fragment) {
+    // Log fragment details to help debug sync issues
+    const fragmentDoc = (fragment as any).doc
+    console.log('[CroutonEditorBlocks] Fragment doc guid:', fragmentDoc?.guid, 'fragment length:', fragment.length)
+
+    collabReady.value = false
+    try {
+      // Dynamically import TipTap Collaboration extension
+      const { Collaboration } = await import('@tiptap/extension-collaboration')
+      console.log('[CroutonEditorBlocks] Collaboration extension imported, configuring with fragment, doc guid:', fragmentDoc?.guid)
+      const extensions: any[] = [
+        Collaboration.configure({
+          fragment
+        })
+      ]
+
+      // Note: CollaborationCursor requires y-websocket provider format with awareness.setLocalStateField
+      // Our custom WebSocket connection doesn't provide this, so cursor sync is disabled for now
+      // Content sync still works via the Collaboration extension above
+
+      collabExtensions.value = markRaw(extensions)
+      collabReady.value = true
+      console.log('[CroutonEditorBlocks] Collab extensions loaded, editorKey:', editorKey.value)
+    } catch (e) {
+      console.warn('[CroutonEditorBlocks] @tiptap/extension-collaboration not installed, collab disabled', e)
+      collabReady.value = true // Still mark ready so editor can render
+    }
+  } else {
+    console.log('[CroutonEditorBlocks] No fragment, clearing collab extensions')
+    collabExtensions.value = []
+    collabReady.value = true
+  }
+}, { immediate: true })
+
+// Combine base extensions with collab extensions
+const allExtensions = computed(() => {
+  const base = props.extensions || []
+  return [...base, ...collabExtensions.value]
+})
+
+// In collab mode, we don't use v-model - content syncs via Yjs
+const isCollabMode = computed(() => !!props.yxmlFragment)
+
+// StarterKit options - disable undoRedo when collaboration is enabled
+// TipTap's Collaboration extension has built-in history via y-prosemirror
+// that conflicts with the standard undo-redo extension
+const starterKitOptions = computed(() => {
+  if (isCollabMode.value) {
+    return { undoRedo: false }
+  }
+  return {}
 })
 
 const emit = defineEmits<{
@@ -256,47 +348,60 @@ const blockHandlers = computed(() => {
   return handlers
 })
 
-// Base toolbar items
-const toolbarItems: EditorToolbarItem[][] = [
-  [
-    { kind: 'undo', icon: 'i-lucide-undo', tooltip: { text: 'Undo' } },
-    { kind: 'redo', icon: 'i-lucide-redo', tooltip: { text: 'Redo' } }
-  ],
-  [
-    {
-      icon: 'i-lucide-heading',
-      tooltip: { text: 'Headings' },
-      content: { align: 'start' },
-      items: [
-        { kind: 'heading', level: 1, icon: 'i-lucide-heading-1', label: 'Heading 1' },
-        { kind: 'heading', level: 2, icon: 'i-lucide-heading-2', label: 'Heading 2' },
-        { kind: 'heading', level: 3, icon: 'i-lucide-heading-3', label: 'Heading 3' }
-      ]
-    },
-    {
-      icon: 'i-lucide-list',
-      tooltip: { text: 'Lists' },
-      content: { align: 'start' },
-      items: [
-        { kind: 'bulletList', icon: 'i-lucide-list', label: 'Bullet List' },
-        { kind: 'orderedList', icon: 'i-lucide-list-ordered', label: 'Ordered List' }
-      ]
-    },
-    { kind: 'blockquote', icon: 'i-lucide-text-quote', tooltip: { text: 'Quote' } },
-    { kind: 'codeBlock', icon: 'i-lucide-square-code', tooltip: { text: 'Code' } },
-    { kind: 'horizontalRule', icon: 'i-lucide-separator-horizontal', tooltip: { text: 'Divider' } }
-  ],
-  [
-    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
-    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
-    { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Underline' } },
-    { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough', tooltip: { text: 'Strike' } },
-    { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } }
-  ],
-  [
-    { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
-  ]
-]
+// Base toolbar items - computed to conditionally include undo/redo
+// In collab mode, undo/redo is handled by y-prosemirror which doesn't
+// register the same commands, so we hide the buttons to avoid errors
+const toolbarItems = computed<EditorToolbarItem[][]>(() => {
+  const items: EditorToolbarItem[][] = []
+
+  // Only include undo/redo when NOT in collab mode
+  if (!isCollabMode.value) {
+    items.push([
+      { kind: 'undo', icon: 'i-lucide-undo', tooltip: { text: 'Undo' } },
+      { kind: 'redo', icon: 'i-lucide-redo', tooltip: { text: 'Redo' } }
+    ])
+  }
+
+  // Formatting items (always shown)
+  items.push(
+    [
+      {
+        icon: 'i-lucide-heading',
+        tooltip: { text: 'Headings' },
+        content: { align: 'start' },
+        items: [
+          { kind: 'heading', level: 1, icon: 'i-lucide-heading-1', label: 'Heading 1' },
+          { kind: 'heading', level: 2, icon: 'i-lucide-heading-2', label: 'Heading 2' },
+          { kind: 'heading', level: 3, icon: 'i-lucide-heading-3', label: 'Heading 3' }
+        ]
+      },
+      {
+        icon: 'i-lucide-list',
+        tooltip: { text: 'Lists' },
+        content: { align: 'start' },
+        items: [
+          { kind: 'bulletList', icon: 'i-lucide-list', label: 'Bullet List' },
+          { kind: 'orderedList', icon: 'i-lucide-list-ordered', label: 'Ordered List' }
+        ]
+      },
+      { kind: 'blockquote', icon: 'i-lucide-text-quote', tooltip: { text: 'Quote' } },
+      { kind: 'codeBlock', icon: 'i-lucide-square-code', tooltip: { text: 'Code' } },
+      { kind: 'horizontalRule', icon: 'i-lucide-separator-horizontal', tooltip: { text: 'Divider' } }
+    ],
+    [
+      { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
+      { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
+      { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Underline' } },
+      { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough', tooltip: { text: 'Strike' } },
+      { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } }
+    ],
+    [
+      { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
+    ]
+  )
+
+  return items
+})
 
 // Bubble toolbar items
 const bubbleToolbarItems: EditorToolbarItem[][] = [
@@ -332,6 +437,7 @@ defineExpose({
   editor: editorInstance,
   selectedNode,
   isPropertyPanelOpen,
+  isCollabMode,
   openPropertyPanel,
   closePropertyPanel,
   updateBlockAttrs,
@@ -350,14 +456,18 @@ defineExpose({
     />
 
     <!-- Editor with slash command suggestion menu -->
+    <!-- In collab mode, content syncs via Yjs, not v-model -->
+    <!-- Key forces recreation when collab extensions load -->
     <UEditor
       v-slot="{ editor, handlers }"
+      :key="editorKey"
       v-model="content"
       :content-type="contentType"
       :placeholder="placeholder"
       :editable="editable"
       :autofocus="autofocus"
-      :extensions="extensions"
+      :starter-kit="starterKitOptions"
+      :extensions="allExtensions"
       :handlers="blockHandlers"
       class="flex-1 min-h-0"
       :ui="{

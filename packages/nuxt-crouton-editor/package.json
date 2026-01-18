@@ -32,9 +32,13 @@
     "access": "public"
   },
   "peerDependencies": {
-    "nuxt": "^4.0.0",
-    "@nuxt/ui": "^4.3.0",
     "@friendlyinternet/nuxt-crouton": "workspace:*",
-    "@nuxt/icon": "^1.0.0"
+    "@nuxt/icon": "^1.0.0",
+    "@nuxt/ui": "^4.3.0",
+    "nuxt": "^4.0.0"
+  },
+  "dependencies": {
+    "@tiptap/extension-collaboration": "^3.15.3",
+    "@tiptap/extension-collaboration-cursor": "^3.0.0"
   }
 }
