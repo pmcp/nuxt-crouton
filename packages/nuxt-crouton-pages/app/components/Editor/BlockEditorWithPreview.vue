@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { markRaw } from 'vue'
+import type * as Y from 'yjs'
 import { PageBlocks } from '../../editor/extensions/page-blocks'
 /**
  * Page Block Editor with Preview
  *
  * Block editor with live preview panel showing rendered Nuxt UI Page components.
  * Uses tabs to switch between editor and preview.
+ * Supports real-time collaboration via Yjs when yxmlFragment is provided.
  *
  * IMPORTANT: Extensions are created per-component-instance to avoid TipTap's
  * "Adding different instances of a keyed plugin" error that occurs when
@@ -42,6 +44,19 @@ interface Props {
   previewTitle?: string
   /** Default active tab */
   defaultTab?: 'editor' | 'preview'
+  /**
+   * Y.XmlFragment for real-time collaboration.
+   * When provided, editor syncs to Yjs instead of using modelValue.
+   */
+  yxmlFragment?: Y.XmlFragment
+  /**
+   * Collab provider for cursor awareness (optional).
+   */
+  collabProvider?: { awareness: any }
+  /**
+   * User info for collaboration cursors.
+   */
+  collabUser?: { name: string; color?: string }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -182,6 +197,9 @@ defineExpose({
         :editable="editable"
         :extensions="pageBlockExtensions"
         :suggestion-items="blockSuggestionItems"
+        :yxml-fragment="yxmlFragment"
+        :collab-provider="collabProvider"
+        :collab-user="collabUser"
         content-type="json"
         class="h-full border border-default rounded-lg"
         @block:select="(node) => selectedNode = node"
