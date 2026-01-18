@@ -145,12 +145,12 @@ function viewError(error: string) {
       <UTable
         :data="logs"
         :columns="[
-          { key: 'status', label: 'Status' },
-          { key: 'recipientEmail', label: 'Recipient' },
-          { key: 'triggerType', label: 'Type' },
-          { key: 'sentAt', label: 'Sent At' },
-          { key: 'createdAt', label: 'Created' },
-          { key: 'error', label: 'Error' }
+          { accessorKey: 'status', header: 'Status' },
+          { accessorKey: 'recipientEmail', header: 'Recipient' },
+          { accessorKey: 'triggerType', header: 'Type' },
+          { accessorKey: 'sentAt', header: 'Sent At' },
+          { accessorKey: 'createdAt', header: 'Created' },
+          { accessorKey: 'error', header: 'Error' }
         ]"
       >
         <template #status-cell="{ row }">

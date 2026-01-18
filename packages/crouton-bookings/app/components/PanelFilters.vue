@@ -59,41 +59,52 @@ function getLocationTitle(location: LocationData): string {
 <template>
   <div class="flex flex-col gap-3">
     <!-- Toggle controls row -->
-    <div class="flex items-center gap-3 flex-wrap">
+    <div class="flex items-center gap-2 flex-wrap">
       <!-- Show calendar toggle -->
-      <USwitch
-        :model-value="showCalendar"
+      <UButton
         size="xs"
-        label="Calendar"
-        @update:model-value="emit('update:showCalendar', $event)"
-      />
+        :color="showCalendar ? 'primary' : 'neutral'"
+        :variant="showCalendar ? 'solid' : 'ghost'"
+        icon="i-lucide-calendar"
+        @click="emit('update:showCalendar', !showCalendar)"
+      >
+        Calendar
+      </UButton>
 
       <!-- Show locations toggle -->
-      <USwitch
+      <UButton
         v-if="locations && locations.length > 0"
-        :model-value="showLocations"
         size="xs"
-        label="Locations"
-        @update:model-value="emit('update:showLocations', $event)"
-      />
+        :color="showLocations ? 'primary' : 'neutral'"
+        :variant="showLocations ? 'solid' : 'ghost'"
+        icon="i-lucide-map-pin"
+        @click="emit('update:showLocations', !showLocations)"
+      >
+        Locations
+      </UButton>
 
       <!-- Show map toggle -->
-      <USwitch
+      <UButton
         v-if="hasLocationsWithCoordinates"
-        :model-value="showMap"
         size="xs"
-        label="Map"
-        @update:model-value="emit('update:showMap', $event)"
-      />
+        :color="showMap ? 'primary' : 'neutral'"
+        :variant="showMap ? 'solid' : 'ghost'"
+        icon="i-lucide-map"
+        @click="emit('update:showMap', !showMap)"
+      >
+        Map
+      </UButton>
 
       <!-- Show cancelled toggle -->
-      <USwitch
-        :model-value="showCancelled"
+      <UButton
         size="xs"
-        color="error"
-        label="Cancelled"
-        @update:model-value="emit('update:showCancelled', $event)"
-      />
+        :color="showCancelled ? 'error' : 'neutral'"
+        :variant="showCancelled ? 'solid' : 'ghost'"
+        icon="i-lucide-x-circle"
+        @click="emit('update:showCancelled', !showCancelled)"
+      >
+        Cancelled
+      </UButton>
     </div>
 
     <!-- Location filter cards (collapsible) -->
