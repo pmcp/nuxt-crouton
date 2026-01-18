@@ -32,6 +32,9 @@ const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { open, close, loading: croutonLoading } = useCrouton()
 
+// Local saving state for spinner
+const isSaving = ref(false)
+
 // Get current user for collab (content sync)
 const getCurrentUser = () => {
   try {
@@ -284,6 +287,7 @@ function onLayoutChange() {
 
 // Form submission
 async function handleSubmit() {
+  isSaving.value = true
   try {
     // Prepare translations, extracting collab content if needed
     let translations = { ...state.value.translations }
@@ -322,6 +326,8 @@ async function handleSubmit() {
     close()
   } catch (error) {
     console.error('Form submission failed:', error)
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -582,7 +588,7 @@ const fieldComponents = computed(() => {
                 color="primary"
                 size="xs"
                 icon="i-lucide-save"
-                :loading="croutonLoading === 'create' || croutonLoading === 'update'"
+                :loading="isSaving"
               >
                 {{ action === 'create' ? 'Create' : 'Save' }}
               </UButton>
