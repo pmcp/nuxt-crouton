@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, onMounted, watch, type Ref, type ComputedRef } from 'vue'
 import type { UseCollabConnectionReturn } from './useCollabConnection'
 import { generateUserColor } from './useCollabConnection'
 import type { CollabUser, CollabAwarenessState } from '../types/collab'
@@ -79,8 +79,8 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
     // Try to get user from session (nuxt-crouton-auth)
     if (!providedUser) {
       try {
-        // @ts-expect-error - useUserSession may not be available
-        const { user: sessionUser } = useUserSession()
+        // @ts-expect-error - useSession may not be available if auth module not installed
+        const { user: sessionUser } = useSession()
         if (sessionUser?.value) {
           const userRecord = sessionUser.value as Record<string, unknown>
           const userId = String(userRecord.id || userRecord.sub || 'anonymous')
@@ -92,7 +92,7 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
           }
         }
       } catch {
-        // useUserSession not available, continue with fallback
+        // useSession not available, continue with fallback
       }
     }
 
@@ -129,7 +129,11 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
    * Send current awareness state to server
    */
   function sendCurrentState(): void {
-    if (!user.value) return
+    console.log('[CollabPresence] sendCurrentState called, user:', user.value)
+    if (!user.value) {
+      console.log('[CollabPresence] No user, skipping awareness')
+      return
+    }
 
     const awarenessState: CollabAwarenessState = {
       user: user.value,
@@ -139,6 +143,7 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
       ghostNode: currentState.value.ghostNode ?? null
     }
 
+    console.log('[CollabPresence] Sending awareness:', awarenessState)
     connection.sendAwareness(awarenessState)
   }
 
@@ -211,10 +216,27 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
 
   // Send initial awareness on mount
   onMounted(() => {
+    console.log('[CollabPresence] onMounted - user:', user.value, 'connected:', connection.connected.value)
     if (user.value && connection.connected.value) {
       sendCurrentState()
     }
   })
+
+  // Watch for connection state changes - send awareness when connected
+  watch(
+    () => connection.connected.value,
+    (connected) => {
+      console.log('[CollabPresence] connection.connected changed to:', connected, 'user:', user.value)
+      if (connected && user.value) {
+        // Small delay to ensure WebSocket is ready
+        setTimeout(() => {
+          console.log('[CollabPresence] Sending awareness after delay')
+          sendCurrentState()
+        }, 100)
+      }
+    },
+    { immediate: false }
+  )
 
   return {
     // Current user
