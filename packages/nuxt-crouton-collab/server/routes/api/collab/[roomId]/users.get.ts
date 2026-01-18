@@ -10,7 +10,7 @@
  *   "count": 1
  * }
  */
-import { getRoomUsers, getAllRooms } from '../../../../utils/collabRoomStore'
+import { getRoomUsers } from '../../../../utils/collabRoomStore'
 
 export default defineEventHandler((event) => {
   const roomId = getRouterParam(event, 'roomId')
@@ -25,12 +25,6 @@ export default defineEventHandler((event) => {
   }
 
   const users = getRoomUsers(roomType, roomId)
-
-  // Debug: log all rooms to see what's registered
-  const allRooms = getAllRooms()
-  console.log('[Collab /users] Request for:', { roomType, roomId })
-  console.log('[Collab /users] All rooms:', Array.from(allRooms.keys()))
-  console.log('[Collab /users] Users found:', users.length)
 
   return {
     users,

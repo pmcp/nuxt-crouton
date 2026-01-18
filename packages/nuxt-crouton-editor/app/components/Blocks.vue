@@ -97,17 +97,11 @@ const editorKey = computed(() => {
 
 // Load Collaboration extension when yxmlFragment is provided
 watch(() => props.yxmlFragment, async (fragment) => {
-  console.log('[CroutonEditorBlocks] yxmlFragment changed:', fragment ? 'has fragment' : 'no fragment')
   if (fragment) {
-    // Log fragment details to help debug sync issues
-    const fragmentDoc = (fragment as any).doc
-    console.log('[CroutonEditorBlocks] Fragment doc guid:', fragmentDoc?.guid, 'fragment length:', fragment.length)
-
     collabReady.value = false
     try {
       // Dynamically import TipTap Collaboration extension
       const { Collaboration } = await import('@tiptap/extension-collaboration')
-      console.log('[CroutonEditorBlocks] Collaboration extension imported, configuring with fragment, doc guid:', fragmentDoc?.guid)
       const extensions: any[] = [
         Collaboration.configure({
           fragment
@@ -120,13 +114,11 @@ watch(() => props.yxmlFragment, async (fragment) => {
 
       collabExtensions.value = markRaw(extensions)
       collabReady.value = true
-      console.log('[CroutonEditorBlocks] Collab extensions loaded, editorKey:', editorKey.value)
     } catch (e) {
       console.warn('[CroutonEditorBlocks] @tiptap/extension-collaboration not installed, collab disabled', e)
       collabReady.value = true // Still mark ready so editor can render
     }
   } else {
-    console.log('[CroutonEditorBlocks] No fragment, clearing collab extensions')
     collabExtensions.value = []
     collabReady.value = true
   }

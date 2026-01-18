@@ -152,7 +152,6 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
       }
 
       // Send local Yjs updates to server
-      console.log('[CollabConnection] Attaching ydoc update listener, ydoc guid:', ydoc.guid)
       ydoc.on('update', handleYjsUpdate)
     } catch (error) {
       console.error('[useCollabConnection] Failed to create WebSocket:', error)
@@ -167,20 +166,14 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
    * Handle Yjs updates and send to server
    */
   function handleYjsUpdate(update: Uint8Array, origin: unknown): void {
-    console.log('[CollabConnection] ydoc update triggered, origin:', origin, 'update size:', update.length)
-
     // Don't send updates that came from the server
     if (origin === 'remote') {
-      console.log('[CollabConnection] Skipping remote origin update')
       return
     }
 
     // Send to server if connected
     if (ws.value?.readyState === WebSocket.OPEN) {
-      console.log('[CollabConnection] Sending Yjs update to server, size:', update.length)
       ws.value.send(update)
-    } else {
-      console.log('[CollabConnection] WebSocket not open, cannot send update. readyState:', ws.value?.readyState)
     }
   }
 
@@ -298,17 +291,13 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
    * Send awareness state update
    */
   function sendAwareness(awarenessState: CollabAwarenessState): void {
-    console.log('[CollabConnection] sendAwareness called, ws state:', ws.value?.readyState, 'OPEN:', WebSocket.OPEN)
     if (ws.value?.readyState === WebSocket.OPEN) {
       const message: CollabRoomMessage = {
         type: 'awareness',
         userId: awarenessState.user.id,
         state: awarenessState
       }
-      console.log('[CollabConnection] Sending awareness message:', JSON.stringify(message))
       ws.value.send(JSON.stringify(message))
-    } else {
-      console.log('[CollabConnection] WebSocket not open, cannot send awareness')
     }
   }
 

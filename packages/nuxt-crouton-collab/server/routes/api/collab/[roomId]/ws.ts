@@ -36,7 +36,6 @@ function handleJsonMessage(
 ) {
   if (parsed.type === 'awareness') {
     const clientId = parsed.userId || parsed.clientId
-    console.log('[Collab WS] Awareness update received:', { clientId })
     if (clientId) {
       const peerWithUserId = peer as unknown as { _userId: string | null; _connectionCounted?: boolean }
       const previousUserId = peerWithUserId._userId
@@ -57,13 +56,11 @@ function handleJsonMessage(
         const currentCount = room.userConnectionCounts.get(clientId) || 0
         room.userConnectionCounts.set(clientId, currentCount + 1)
         peerWithUserId._connectionCounted = true
-        console.log('[Collab WS] User connection count:', clientId, '->', currentCount + 1)
       }
 
       // Always update awareness state (cursor position, etc. may change)
       room.awareness.set(clientId, parsed.state)
       peerWithUserId._userId = clientId
-      console.log('[Collab WS] Awareness stored. Unique users:', room.awareness.size)
     }
     // Broadcast awareness to all peers
     const awarenessMessage = JSON.stringify({
@@ -95,7 +92,6 @@ export default defineWebSocketHandler({
     const roomId = pathParts[collabIndex + 1] || 'default'
     const roomType = url.searchParams.get('type') || 'generic'
 
-    console.log('[Collab WS] Connection opened:', { roomType, roomId, roomKey: `${roomType}:${roomId}` })
     const room = getOrCreateRoom(roomType, roomId)
     const peerWithSend = peer as unknown as { send: (data: unknown) => void }
     room.peers.add(peerWithSend)
@@ -125,12 +121,9 @@ export default defineWebSocketHandler({
   },
 
   message(peer, message) {
-    console.log('[Collab WS] Message received, type:', typeof message, 'constructor:', message?.constructor?.name)
-
     const peerData = peer as unknown as { _collabRoom?: ReturnType<typeof getOrCreateRoom> }
     const room = peerData._collabRoom
     if (!room) {
-      console.log('[Collab WS] No room found for peer')
       return
     }
 
@@ -154,7 +147,6 @@ export default defineWebSocketHandler({
           try {
             const jsonStr = new TextDecoder().decode(data)
             const parsed = JSON.parse(jsonStr)
-            console.log('[Collab WS] Parsed JSON message type:', parsed.type)
             handleJsonMessage(peer, room, parsed)
           } catch (e) {
             console.warn('[Collab WS] Failed to parse JSON from binary:', e)
@@ -163,10 +155,8 @@ export default defineWebSocketHandler({
         }
 
         // It's binary Yjs data
-        console.log('[Collab WS] Processing Yjs binary update, size:', data.length)
         try {
           applyUpdate(room.doc, data)
-          console.log('[Collab WS] Applied Yjs update, broadcasting to', room.peers.size - 1, 'other peers')
           broadcastToPeers(room, peer, data)
         } catch (yjsError) {
           console.error('[Collab WS] Failed to apply Yjs update:', yjsError)
@@ -177,12 +167,11 @@ export default defineWebSocketHandler({
 
     // Handle plain string messages
     if (typeof message === 'string') {
-      console.log('[Collab WS] Message is string:', message.substring(0, 100))
       try {
         const parsed = JSON.parse(message)
         handleJsonMessage(peer, room, parsed)
       } catch {
-        console.warn('[Collab WS] Failed to parse string as JSON')
+        // Not valid JSON, ignore
       }
       return
     }
@@ -200,7 +189,6 @@ export default defineWebSocketHandler({
         // Only process if it looks like JSON
         if (textContent && (textContent.startsWith('{') || textContent.startsWith('['))) {
           const parsed = JSON.parse(textContent)
-          console.log('[Collab WS] Parsed text message type:', parsed.type)
           handleJsonMessage(peer, room, parsed)
         }
       } catch {
@@ -227,17 +215,14 @@ export default defineWebSocketHandler({
       // Decrement user connection count and only remove from awareness when last connection closes
       if (peerData._userId && peerData._connectionCounted) {
         const currentCount = room.userConnectionCounts.get(peerData._userId) || 0
-        console.log('[Collab WS] Connection closing for user:', peerData._userId, 'current count:', currentCount)
 
         if (currentCount <= 1) {
           // Last connection for this user - remove from awareness
           room.userConnectionCounts.delete(peerData._userId)
           room.awareness.delete(peerData._userId)
-          console.log('[Collab WS] User fully disconnected, removed from awareness:', peerData._userId, 'Remaining unique users:', room.awareness.size)
         } else {
           // User still has other connections - just decrement count
           room.userConnectionCounts.set(peerData._userId, currentCount - 1)
-          console.log('[Collab WS] User still has', currentCount - 1, 'other connection(s):', peerData._userId)
         }
       }
 

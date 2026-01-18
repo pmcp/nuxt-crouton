@@ -133,13 +133,11 @@ export function useCollabLocalizedContent(
    */
   function getXmlFragment(locale: string): Y.XmlFragment {
     if (fragmentsByLocale.has(locale)) {
-      console.log('[CollabLocalizedContent] getXmlFragment returning cached fragment for locale:', locale, 'ydoc guid:', ydoc.guid)
       return fragmentsByLocale.get(locale)!
     }
 
     // Create new fragment for this locale
     const fragmentName = `${fieldPrefix}-${locale}`
-    console.log('[CollabLocalizedContent] Creating new fragment:', fragmentName, 'from ydoc guid:', ydoc.guid)
     const fragment = ydoc.getXmlFragment(fragmentName)
     fragmentsByLocale.set(locale, fragment)
 

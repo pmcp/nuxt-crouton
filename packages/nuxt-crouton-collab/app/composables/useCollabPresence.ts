@@ -76,47 +76,32 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
 
   // Auto-detect user from session or use provided
   const user = computed<CollabUser | null>(() => {
-    console.log('[CollabPresence] user computed - providedUser:', providedUser)
-
     // Try to get user from session (nuxt-crouton-auth)
     if (!providedUser) {
       try {
         // @ts-expect-error - useSession may not be available if auth module not installed
         const sessionResult = useSession()
-        console.log('[CollabPresence] useSession() returned:', sessionResult)
-        console.log('[CollabPresence] sessionResult.user:', sessionResult?.user)
-        console.log('[CollabPresence] sessionResult.user?.value:', sessionResult?.user?.value)
 
         const sessionUser = sessionResult?.user
         if (sessionUser?.value) {
           const userRecord = sessionUser.value as Record<string, unknown>
-          console.log('[CollabPresence] userRecord keys:', Object.keys(userRecord))
-          console.log('[CollabPresence] userRecord.id:', userRecord.id)
-          console.log('[CollabPresence] userRecord.name:', userRecord.name)
-          console.log('[CollabPresence] userRecord.email:', userRecord.email)
-          console.log('[CollabPresence] userRecord.sub:', userRecord.sub)
 
           const userId = String(userRecord.id || userRecord.sub || 'anonymous')
           const userName = String(userRecord.name || userRecord.email || 'Anonymous')
-          console.log('[CollabPresence] Resolved userId:', userId, 'userName:', userName)
 
           return {
             id: userId,
             name: userName,
             color: generateUserColor(userId)
           }
-        } else {
-          console.log('[CollabPresence] No sessionUser.value - user not logged in?')
         }
-      } catch (err) {
+      } catch {
         // useSession not available, continue with fallback
-        console.log('[CollabPresence] useSession() threw error:', err)
       }
     }
 
     // Use provided user info
     if (providedUser) {
-      console.log('[CollabPresence] Using providedUser:', providedUser)
       // Generate a random ID if we don't have one from session
       const randomId = typeof window !== 'undefined'
         ? `user-${Math.random().toString(36).slice(2, 9)}`
@@ -129,7 +114,6 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
       }
     }
 
-    console.log('[CollabPresence] No user found, returning null')
     return null
   })
 
@@ -149,9 +133,7 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
    * Send current awareness state to server
    */
   function sendCurrentState(): void {
-    console.log('[CollabPresence] sendCurrentState called, user:', user.value)
     if (!user.value) {
-      console.log('[CollabPresence] No user, skipping awareness')
       return
     }
 
@@ -163,7 +145,6 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
       ghostNode: currentState.value.ghostNode ?? null
     }
 
-    console.log('[CollabPresence] Sending awareness:', awarenessState)
     connection.sendAwareness(awarenessState)
   }
 
@@ -236,7 +217,6 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
 
   // Send initial awareness on mount
   onMounted(() => {
-    console.log('[CollabPresence] onMounted - user:', user.value, 'connected:', connection.connected.value)
     if (user.value && connection.connected.value) {
       sendCurrentState()
     }
@@ -246,11 +226,9 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
   watch(
     () => connection.connected.value,
     (connected) => {
-      console.log('[CollabPresence] connection.connected changed to:', connected, 'user:', user.value)
       if (connected && user.value) {
         // Small delay to ensure WebSocket is ready
         setTimeout(() => {
-          console.log('[CollabPresence] Sending awareness after delay')
           sendCurrentState()
         }, 100)
       }

@@ -141,7 +141,6 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
    */
   async function fetchUsers(): Promise<void> {
     const roomId = roomIdRef.value
-    console.log('[useCollabRoomUsers] fetchUsers called, roomId:', roomId)
     if (!roomId) {
       users.value = []
       return
@@ -149,7 +148,6 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
 
     try {
       const url = `/api/collab/${roomId}/users`
-      console.log('[useCollabRoomUsers] Fetching:', url, 'type:', roomType)
       const response = await $fetch<{ users: CollabAwarenessState[]; count: number }>(
         url,
         {
@@ -157,11 +155,9 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
         }
       )
 
-      console.log('[useCollabRoomUsers] Response:', response)
       users.value = response.users || []
       error.value = null
     } catch (err) {
-      console.error('[useCollabRoomUsers] Failed to fetch users:', err)
       error.value = err instanceof Error ? err : new Error('Failed to fetch users')
       // Don't clear users on error - keep stale data
     }
