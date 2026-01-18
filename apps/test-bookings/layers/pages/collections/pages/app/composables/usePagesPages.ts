@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-01-15
+ * @generated 2026-01-18
  *
  * ## AI Context
  * - Composable: usePagesPages
@@ -58,11 +58,11 @@ export const pagesPagesColumns = [
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
-// Note: componentName intentionally omitted - uses CroutonPagesForm from pages package
 const _pagesPagesConfig = {
   name: 'pagesPages',
   layer: 'pages',
   apiPath: 'pages-pages',
+  componentName: 'CroutonPagesForm',
   defaultValues: {
     title: '',
     slug: '',
