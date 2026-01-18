@@ -163,6 +163,15 @@ const pageTypeOptions = computed(() =>
   }))
 )
 
+// Page type dropdown items for UDropdownMenu
+const pageTypeDropdownItems = computed(() => [
+  pageTypes.value.map(type => ({
+    label: type.name,
+    icon: type.icon,
+    onSelect: () => { state.value.pageType = type.fullId }
+  }))
+])
+
 // Status config with colors
 const statusConfig: Record<string, { color: string; icon: string; label: string }> = {
   draft: { color: 'warning', icon: 'i-lucide-pencil', label: t('pages.status.draft') || 'Draft' },
@@ -365,169 +374,205 @@ const fieldComponents = computed(() => {
         <div class="flex flex-col h-full">
           <!-- Compact Header Bar -->
           <div class="flex flex-wrap items-center gap-3 pb-3 mb-4 border-b border-default">
-            <!-- Page Type (compact with icon) -->
-            <div class="flex items-center gap-2">
-              <UIcon
-                :name="selectedPageType?.icon || 'i-lucide-file'"
-                class="size-4 text-muted"
-              />
-              <USelect
-                v-model="state.pageType"
-                :items="pageTypeOptions"
-                value-key="value"
-                :disabled="action === 'update'"
-                size="xs"
-                class="w-36"
-              />
-            </div>
-
-            <!-- Status Selector (dropdown with colored dots) -->
-            <UDropdownMenu
-              :items="statusDropdownItems"
-              :content="{ align: 'start' }"
-            >
-              <UButton
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                class="px-2"
+            <!-- Page Type, Status, Visibility & Settings (grouped) -->
+            <UFieldGroup>
+              <!-- Page Type Selector (dropdown on create, popover on edit) -->
+              <UDropdownMenu
+                v-if="action === 'create'"
+                :items="pageTypeDropdownItems"
+                :content="{ align: 'start' }"
               >
-                <span
-                  :class="[
-                    'block size-3 rounded-full',
-                    `bg-${statusConfig[state.status]?.color || 'warning'}`
-                  ]"
-                />
-              </UButton>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <UIcon
+                    :name="selectedPageType?.icon || 'i-lucide-file'"
+                    class="size-4"
+                  />
+                </UButton>
 
-              <template #draft="{ item }">
-                <span class="flex items-center gap-2">
-                  <span class="block size-2.5 rounded-full bg-warning" />
-                  {{ item.label }}
-                </span>
-              </template>
-              <template #published="{ item }">
-                <span class="flex items-center gap-2">
-                  <span class="block size-2.5 rounded-full bg-success" />
-                  {{ item.label }}
-                </span>
-              </template>
-              <template #archived="{ item }">
-                <span class="flex items-center gap-2">
-                  <span class="block size-2.5 rounded-full bg-error" />
-                  {{ item.label }}
-                </span>
-              </template>
-            </UDropdownMenu>
-
-            <!-- Visibility Selector (dropdown with icons) -->
-            <UDropdownMenu
-              :items="visibilityDropdownItems"
-              :content="{ align: 'start' }"
-            >
-              <UButton
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                class="px-2"
+                <template #item="{ item }">
+                  <span class="flex items-center gap-2">
+                    <UIcon :name="item.icon || 'i-lucide-file'" class="size-4 text-muted" />
+                    {{ item.label }}
+                  </span>
+                </template>
+              </UDropdownMenu>
+              <UPopover v-else>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <UIcon
+                    :name="selectedPageType?.icon || 'i-lucide-file'"
+                    class="size-4"
+                  />
+                </UButton>
+                <template #content>
+                  <div class="p-3 text-sm">
+                    <div class="font-medium">{{ selectedPageType?.name || 'Regular Page' }}</div>
+                    <div v-if="selectedPageType?.description" class="text-muted text-xs mt-1">
+                      {{ selectedPageType.description }}
+                    </div>
+                  </div>
+                </template>
+              </UPopover>
+              <!-- Status Selector (dropdown with colored dots) -->
+              <UDropdownMenu
+                :items="statusDropdownItems"
+                :content="{ align: 'start' }"
               >
-                <UIcon
-                  :name="visibilityConfig[state.visibility]?.icon || 'i-lucide-globe'"
-                  class="size-4 text-muted"
-                />
-              </UButton>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <span
+                    :class="[
+                      'block size-3 rounded-full',
+                      `bg-${statusConfig[state.status]?.color || 'warning'}`
+                    ]"
+                  />
+                </UButton>
 
-              <template #public="{ item }">
-                <span class="flex items-center gap-2">
-                  <UIcon name="i-lucide-globe" class="size-4 text-muted" />
-                  {{ item.label }}
-                </span>
-              </template>
-              <template #members="{ item }">
-                <span class="flex items-center gap-2">
-                  <UIcon name="i-lucide-users" class="size-4 text-muted" />
-                  {{ item.label }}
-                </span>
-              </template>
-              <template #hidden="{ item }">
-                <span class="flex items-center gap-2">
-                  <UIcon name="i-lucide-eye-off" class="size-4 text-muted" />
-                  {{ item.label }}
-                </span>
-              </template>
-            </UDropdownMenu>
+                <template #draft="{ item }">
+                  <span class="flex items-center gap-2">
+                    <span class="block size-2.5 rounded-full bg-warning" />
+                    {{ item.label }}
+                  </span>
+                </template>
+                <template #published="{ item }">
+                  <span class="flex items-center gap-2">
+                    <span class="block size-2.5 rounded-full bg-success" />
+                    {{ item.label }}
+                  </span>
+                </template>
+                <template #archived="{ item }">
+                  <span class="flex items-center gap-2">
+                    <span class="block size-2.5 rounded-full bg-error" />
+                    {{ item.label }}
+                  </span>
+                </template>
+              </UDropdownMenu>
+
+              <!-- Visibility Selector (dropdown with icons) -->
+              <UDropdownMenu
+                :items="visibilityDropdownItems"
+                :content="{ align: 'start' }"
+              >
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <UIcon
+                    :name="visibilityConfig[state.visibility]?.icon || 'i-lucide-globe'"
+                    class="size-4 text-muted"
+                  />
+                </UButton>
+
+                <template #public="{ item }">
+                  <span class="flex items-center gap-2">
+                    <UIcon name="i-lucide-globe" class="size-4 text-muted" />
+                    {{ item.label }}
+                  </span>
+                </template>
+                <template #members="{ item }">
+                  <span class="flex items-center gap-2">
+                    <UIcon name="i-lucide-users" class="size-4 text-muted" />
+                    {{ item.label }}
+                  </span>
+                </template>
+                <template #hidden="{ item }">
+                  <span class="flex items-center gap-2">
+                    <UIcon name="i-lucide-eye-off" class="size-4 text-muted" />
+                    {{ item.label }}
+                  </span>
+                </template>
+              </UDropdownMenu>
+
+              <!-- Page Settings Popover -->
+              <UPopover>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  icon="i-lucide-settings"
+                  size="xs"
+                />
+                <template #content>
+                  <div class="p-4 w-72 space-y-4">
+                    <div class="text-sm font-medium text-default mb-3">Page Settings</div>
+
+                    <!-- Show in Navigation -->
+                    <UFormField :label="t('pages.fields.showInNavigation') || 'Show in Nav'" name="showInNavigation">
+                      <USwitch v-model="state.showInNavigation" />
+                    </UFormField>
+
+                    <!-- Layout -->
+                    <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
+                      <USelect
+                        v-model="state.layout"
+                        :items="layoutOptions"
+                        value-key="value"
+                        size="sm"
+                        class="w-full"
+                        @update:model-value="onLayoutChange"
+                      />
+                    </UFormField>
+
+                    <!-- Parent Page -->
+                    <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
+                      <USelect
+                        v-model="state.parentId"
+                        :items="parentOptions"
+                        value-key="value"
+                        :loading="pagesPending"
+                        placeholder="None"
+                        size="sm"
+                        class="w-full"
+                      />
+                    </UFormField>
+                  </div>
+                </template>
+              </UPopover>
+            </UFieldGroup>
 
             <!-- Spacer -->
             <div class="flex-1" />
 
             <!-- Note: Collab presence is shown in the slideover header by base CroutonForm -->
 
-            <!-- Page Settings Popover -->
-            <UPopover>
+            <!-- Delete & Save Buttons (grouped) -->
+            <UFieldGroup>
+              <!-- Delete Button (update mode only) -->
               <UButton
+                v-if="action === 'update' && state.id"
+                color="error"
                 variant="ghost"
-                color="neutral"
-                icon="i-lucide-settings"
+                icon="i-lucide-trash-2"
                 size="xs"
+                @click="openDeleteConfirm"
               />
-              <template #content>
-                <div class="p-4 w-72 space-y-4">
-                  <div class="text-sm font-medium text-default mb-3">Page Settings</div>
 
-                  <!-- Show in Navigation -->
-                  <UFormField :label="t('pages.fields.showInNavigation') || 'Show in Nav'" name="showInNavigation">
-                    <USwitch v-model="state.showInNavigation" />
-                  </UFormField>
-
-                  <!-- Layout -->
-                  <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
-                    <USelect
-                      v-model="state.layout"
-                      :items="layoutOptions"
-                      value-key="value"
-                      size="sm"
-                      class="w-full"
-                      @update:model-value="onLayoutChange"
-                    />
-                  </UFormField>
-
-                  <!-- Parent Page -->
-                  <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
-                    <USelect
-                      v-model="state.parentId"
-                      :items="parentOptions"
-                      value-key="value"
-                      :loading="pagesPending"
-                      placeholder="None"
-                      size="sm"
-                      class="w-full"
-                    />
-                  </UFormField>
-                </div>
-              </template>
-            </UPopover>
-
-            <!-- Delete Button (update mode only) -->
-            <UButton
-              v-if="action === 'update' && state.id"
-              color="error"
-              variant="ghost"
-              icon="i-lucide-trash-2"
-              size="xs"
-              @click="openDeleteConfirm"
-            />
-
-            <!-- Save Button - subtle -->
-            <UButton
-              type="submit"
-              variant="ghost"
-              color="primary"
-              size="xs"
-              icon="i-lucide-save"
-              :loading="croutonLoading === 'create' || croutonLoading === 'update'"
-            >
-              {{ action === 'create' ? 'Create' : 'Save' }}
-            </UButton>
+              <!-- Save Button -->
+              <UButton
+                type="submit"
+                variant="ghost"
+                color="primary"
+                size="xs"
+                icon="i-lucide-save"
+                :loading="croutonLoading === 'create' || croutonLoading === 'update'"
+              >
+                {{ action === 'create' ? 'Create' : 'Save' }}
+              </UButton>
+            </UFieldGroup>
           </div>
 
           <!-- Translatable Fields - grows to fill space -->
