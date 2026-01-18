@@ -11,6 +11,7 @@
     :hide-default-columns="hideDefaultColumns"
     :sortable="sortable"
     :stateless="stateless"
+    :show-collab-presence="showCollabPresence"
     class="h-full"
   >
     <template #header>
@@ -70,28 +71,27 @@
           :key="row.id || index"
           class="py-3 px-4 sm:px-6 hover:bg-muted/50 transition-colors"
         >
-          <div class="flex items-start justify-between gap-2">
-            <component
-              :is="customCardComponent || CroutonDefaultCard"
-              :item="row"
-              :layout="'list'"
-              :collection="collection"
-              :stateless="stateless"
-              class="flex-1 min-w-0"
-            />
-            <!-- Collab presence badge -->
-            <component
-              v-if="collabEditingBadgeComponent && row.id"
-              :is="collabEditingBadgeComponent"
-              :room-id="getCollabRoomId(row)"
-              :room-type="collabConfig.roomType || collection"
-              :current-user-id="collabConfig.currentUserId"
-              :poll-interval="collabConfig.pollInterval || 5000"
-              :show-self="collabConfig.showSelf"
-              size="xs"
-              class="shrink-0"
-            />
-          </div>
+          <component
+            :is="customCardComponent || CroutonDefaultCard"
+            :item="row"
+            :layout="'list'"
+            :collection="collection"
+            :stateless="stateless"
+            class="flex-1 min-w-0"
+          >
+            <template v-if="collabEditingBadgeComponent && row.id" #presence>
+              <component
+                :is="collabEditingBadgeComponent"
+                :room-id="getCollabRoomId(row)"
+                :room-type="collabConfig.roomType || collection"
+                :current-user-id="collabConfig.currentUserId"
+                :poll-interval="collabConfig.pollInterval || 5000"
+                :show-self="collabConfig.showSelf"
+                size="sm"
+                variant="avatars"
+              />
+            </template>
+          </component>
         </li>
       </ul>
 
@@ -161,8 +161,8 @@
             :current-user-id="collabConfig.currentUserId"
             :poll-interval="collabConfig.pollInterval || 5000"
             :show-self="collabConfig.showSelf"
-            size="xs"
-            avatar-only
+            size="sm"
+            variant="avatars"
           />
         </template>
       </component>

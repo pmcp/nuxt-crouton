@@ -52,7 +52,7 @@ const formattedJson = computed(() => {
 })
 
 // Truncate ID for display
-const truncatedId = computed(() => {
+const displayId = computed(() => {
   const id = String(props.item.id || '')
   if (id.length > 12) {
     return `${id.slice(0, 6)}...${id.slice(-4)}`
@@ -60,16 +60,25 @@ const truncatedId = computed(() => {
   return id
 })
 
-// Grid card classes based on size
-const gridCardClasses = computed(() => {
+// UCard ui overrides based on size
+const cardUi = computed(() => {
   switch (props.size) {
     case 'compact':
-      return 'p-2 bg-default border border-default rounded-lg hover:shadow-md transition-shadow'
+      return {
+        root: 'hover:shadow-md transition-shadow',
+        body: 'p-2'
+      }
     case 'spacious':
-      return 'p-4 bg-default border border-default rounded-xl hover:shadow-lg transition-shadow'
+      return {
+        root: 'rounded-xl hover:shadow-lg transition-shadow',
+        body: 'p-4'
+      }
     case 'comfortable':
     default:
-      return 'p-3 bg-default border border-default rounded-lg hover:shadow-md transition-shadow'
+      return {
+        root: 'hover:shadow-md transition-shadow',
+        body: 'p-3'
+      }
   }
 })
 
@@ -120,6 +129,8 @@ const jsonPreClasses = computed(() => {
   >
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
+        <slot name="presence" />
+        <CroutonCardHelpModal :collection="collection" layout="list" />
         <span
           v-if="displayLabel"
           class="font-medium text-default truncate"
@@ -127,7 +138,7 @@ const jsonPreClasses = computed(() => {
           {{ displayLabel }}
         </span>
         <code class="text-xs text-muted bg-muted/30 px-1.5 py-0.5 rounded font-mono">
-          {{ truncatedId }}
+          {{ item.id }}
         </code>
       </div>
       <UCollapsible v-model:open="isExpanded">
@@ -146,7 +157,6 @@ const jsonPreClasses = computed(() => {
       </UCollapsible>
     </div>
 
-    <!-- Action buttons (show on hover) -->
     <CroutonItemButtonsMini
       v-if="!stateless"
       delete
@@ -158,22 +168,34 @@ const jsonPreClasses = computed(() => {
   </div>
 
   <!-- Grid Layout (with size variants) -->
-  <div
+  <UCard
     v-else-if="layout === 'grid'"
-    :class="gridCardClasses"
-    class="group relative"
+    variant="outline"
+    :ui="cardUi"
   >
-    <div :class="gridGapClasses">
-      <div class="flex items-start justify-between gap-2">
-        <span
-          v-if="displayLabel"
-          :class="labelTextClasses"
-        >
-          {{ displayLabel }}
-        </span>
-        <code :class="idTextClasses">
-          {{ truncatedId }}
-        </code>
+    <div :class="gridGapClasses" class="group">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <slot name="presence" />
+          <CroutonCardHelpModal :collection="collection" layout="grid" />
+          <code :class="idTextClasses" class="truncate">
+            {{ displayId }}
+          </code>
+          <span
+            v-if="displayLabel"
+            :class="labelTextClasses"
+          >
+            {{ displayLabel }}
+          </span>
+        </div>
+        <CroutonItemButtonsMini
+          v-if="!stateless"
+          delete
+          update
+          class="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+          @delete="handleDelete"
+          @update="handleEdit"
+        />
       </div>
       <USeparator v-if="size === 'spacious'" />
       <UCollapsible v-model:open="isExpanded">
@@ -191,18 +213,5 @@ const jsonPreClasses = computed(() => {
         </template>
       </UCollapsible>
     </div>
-
-    <!-- Action buttons (absolute positioned, show on hover) -->
-    <div
-      v-if="!stateless"
-      class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-    >
-      <CroutonItemButtonsMini
-        delete
-        update
-        @delete="handleDelete"
-        @update="handleEdit"
-      />
-    </div>
-  </div>
+  </UCard>
 </template>

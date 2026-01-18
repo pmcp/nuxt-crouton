@@ -89,18 +89,22 @@
           <CroutonDate :date="row.original.updatedAt" />
         </template>
 
+        <template #presence-cell="{ row }: { row: { original: CroutonBaseRow } }">
+          <component
+            v-if="collabEditingBadgeComponent && row.original?.id"
+            :is="collabEditingBadgeComponent"
+            :room-id="getCollabRoomId(row.original)"
+            :room-type="collabConfig.roomType || collection"
+            :current-user-id="collabConfig.currentUserId"
+            :poll-interval="collabConfig.pollInterval || 5000"
+            :show-self="collabConfig.showSelf"
+            size="sm"
+            variant="avatars"
+          />
+        </template>
+
         <template #actions-cell="{ row }: { row: { original: CroutonBaseRow } }">
           <div class="flex items-center gap-2">
-            <component
-              v-if="collabEditingBadgeComponent && row.original?.id"
-              :is="collabEditingBadgeComponent"
-              :room-id="getCollabRoomId(row.original)"
-              :room-type="collabConfig.roomType || collection"
-              :current-user-id="collabConfig.currentUserId"
-              :poll-interval="collabConfig.pollInterval || 5000"
-              :show-self="collabConfig.showSelf"
-              size="xs"
-            />
             <CroutonItemButtonsMini
               delete
               update
@@ -163,6 +167,7 @@ const props = withDefaults(defineProps<TableProps>(), {
     updatedAt: false,
     createdBy: false,
     updatedBy: false,
+    presence: false,
     actions: false
   })
 })
@@ -220,7 +225,8 @@ if (serverPaginationData.value) {
 const { allColumns } = useTableColumns({
   columns: props.columns,
   hideDefaultColumns: props.hideDefaultColumns,
-  sortable: props.sortable
+  sortable: props.sortable,
+  showCollabPresence: !!props.showCollabPresence
 })
 
 const { slicedRows, pageTotalToShow } = useTableData({

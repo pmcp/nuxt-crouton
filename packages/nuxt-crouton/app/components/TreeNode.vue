@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
         :current-user-id="collabConfig.currentUserId"
         :poll-interval="collabConfig.pollInterval || 5000"
         :show-self="collabConfig.showSelf"
-        size="xs"
+        size="sm"
         class="shrink-0"
       />
 

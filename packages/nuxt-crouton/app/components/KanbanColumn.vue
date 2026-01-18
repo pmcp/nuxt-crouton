@@ -246,7 +246,7 @@ const crouton = useCrouton()
           :current-user-id="collabConfig.currentUserId"
           :poll-interval="collabConfig.pollInterval || 5000"
           :show-self="collabConfig.showSelf"
-          size="xs"
+          size="sm"
           class="absolute top-2 right-2"
         />
       </div>

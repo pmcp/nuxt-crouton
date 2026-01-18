@@ -63,16 +63,17 @@ const currentExample = computed(() => codeExamples[props.layout])
 </script>
 
 <template>
-  <UButton
-    color="neutral"
-    variant="ghost"
-    size="xs"
-    icon="i-lucide-info"
-    class="opacity-60 hover:opacity-100"
-    @click="isOpen = true"
-  />
+  <div>
+    <UButton
+      color="neutral"
+      variant="ghost"
+      size="xs"
+      icon="i-lucide-info"
+      class="opacity-60 hover:opacity-100"
+      @click="isOpen = true"
+    />
 
-  <UModal v-model:open="isOpen">
+    <UModal v-model:open="isOpen">
     <template #content>
       <div class="p-6 max-w-lg">
         <div class="flex items-start justify-between mb-4">
@@ -129,4 +130,5 @@ const currentExample = computed(() => codeExamples[props.layout])
       </div>
     </template>
   </UModal>
+  </div>
 </template>

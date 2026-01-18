@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRef, watch } from 'vue'
+import { computed, toRef, TransitionGroup } from 'vue'
 import type { CollabAwarenessState } from '../types/collab'
 import { useCollabRoomUsers } from '../composables/useCollabRoomUsers'
 
@@ -71,8 +71,6 @@ const props = withDefaults(defineProps<Props>(), {
   showSelf: false
 })
 
-console.log('[CollabEditingBadge] Mounting for roomId:', props.roomId, 'roomType:', props.roomType)
-
 // Use the composable with reactive roomId
 const { otherUsers, otherCount, loading, users } = useCollabRoomUsers({
   roomId: toRef(() => props.roomId),
@@ -82,11 +80,6 @@ const { otherUsers, otherCount, loading, users } = useCollabRoomUsers({
   excludeSelf: !!props.currentUserId,
   immediate: true
 })
-
-// Debug: watch for changes
-watch([users, otherUsers, otherCount], ([u, ou, oc]) => {
-  console.log('[CollabEditingBadge] Users updated:', { users: u, otherUsers: ou, otherCount: oc, showSelf: props.showSelf })
-}, { immediate: true })
 
 // Display users/count - use all users when showSelf is true, otherwise just others
 const displayUsers = computed(() => props.showSelf ? users.value : otherUsers.value)
@@ -100,28 +93,28 @@ const badgeText = computed(() => {
   return `${count} editing`
 })
 
-// Size classes
+// Size classes - avatars are slightly larger for better visibility
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'xs':
       return {
         badge: 'text-[10px] px-1.5 py-0.5',
-        avatar: 'size-4 text-[8px]'
+        avatar: 'size-5 text-[9px]'
       }
     case 'sm':
       return {
         badge: 'text-xs px-2 py-0.5',
-        avatar: 'size-5 text-[10px]'
+        avatar: 'size-6 text-[10px]'
       }
     case 'md':
       return {
         badge: 'text-sm px-2 py-1',
-        avatar: 'size-6 text-xs'
+        avatar: 'size-7 text-xs'
       }
     default:
       return {
         badge: 'text-[10px] px-1.5 py-0.5',
-        avatar: 'size-4 text-[8px]'
+        avatar: 'size-5 text-[9px]'
       }
   }
 })
@@ -202,27 +195,30 @@ const avatarsTooltip = computed(() => {
       :text="avatarsTooltip"
     >
       <div class="flex -space-x-1.5">
-        <div
-          v-for="(user, index) in visibleUsers.slice(0, 3)"
-          :key="user.user?.id || index"
-          class="rounded-full flex items-center justify-center font-medium border-2 border-white dark:border-gray-900 shadow-sm"
-          :class="sizeClasses.avatar"
-          :style="{
-            backgroundColor: user.user?.color || '#6b7280',
-            color: getTextColor(user.user?.color || '#6b7280'),
-            zIndex: 3 - index
-          }"
-        >
-          {{ getInitials(user.user?.name || '') }}
-        </div>
-        <!-- Overflow indicator -->
-        <div
-          v-if="displayCount > 3"
-          class="rounded-full flex items-center justify-center font-medium border-2 border-white dark:border-gray-900 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shadow-sm"
-          :class="sizeClasses.avatar"
-        >
-          +{{ displayCount - 3 }}
-        </div>
+        <TransitionGroup name="avatar-pop">
+          <div
+            v-for="(user, index) in visibleUsers.slice(0, 3)"
+            :key="user.user?.id || index"
+            class="rounded-full flex items-center justify-center font-medium border-2 border-white dark:border-gray-900 shadow-sm"
+            :class="sizeClasses.avatar"
+            :style="{
+              backgroundColor: user.user?.color || '#6b7280',
+              color: getTextColor(user.user?.color || '#6b7280'),
+              zIndex: 3 - index
+            }"
+          >
+            {{ getInitials(user.user?.name || '') }}
+          </div>
+          <!-- Overflow indicator -->
+          <div
+            v-if="displayCount > 3"
+            key="overflow"
+            class="rounded-full flex items-center justify-center font-medium border-2 border-white dark:border-gray-900 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shadow-sm"
+            :class="sizeClasses.avatar"
+          >
+            +{{ displayCount - 3 }}
+          </div>
+        </TransitionGroup>
       </div>
     </UTooltip>
 
@@ -238,19 +234,21 @@ const avatarsTooltip = computed(() => {
         >
           <!-- Stacked mini avatars -->
           <div class="flex -space-x-1">
-            <div
-              v-for="(user, index) in visibleUsers.slice(0, 3)"
-              :key="user.user?.id || index"
-              class="rounded-full flex items-center justify-center font-medium border border-white dark:border-gray-800"
-              :class="sizeClasses.avatar"
-              :style="{
-                backgroundColor: user.user?.color || '#6b7280',
-                color: getTextColor(user.user?.color || '#6b7280'),
-                zIndex: 3 - index
-              }"
-            >
-              {{ getInitials(user.user?.name || '') }}
-            </div>
+            <TransitionGroup name="avatar-pop">
+              <div
+                v-for="(user, index) in visibleUsers.slice(0, 3)"
+                :key="user.user?.id || index"
+                class="rounded-full flex items-center justify-center font-medium border border-white dark:border-gray-800"
+                :class="sizeClasses.avatar"
+                :style="{
+                  backgroundColor: user.user?.color || '#6b7280',
+                  color: getTextColor(user.user?.color || '#6b7280'),
+                  zIndex: 3 - index
+                }"
+              >
+                {{ getInitials(user.user?.name || '') }}
+              </div>
+            </TransitionGroup>
           </div>
           <span>{{ badgeText }}</span>
         </div>
@@ -265,7 +263,8 @@ const avatarsTooltip = computed(() => {
             <div
               v-for="(user, index) in visibleUsers"
               :key="user.user?.id || index"
-              class="flex items-center gap-1.5 bg-muted/50 rounded-full px-2 py-0.5"
+              class="user-chip flex items-center gap-1.5 bg-muted/50 rounded-full px-2 py-0.5"
+              :style="{ animationDelay: `${index * 60}ms` }"
             >
               <div
                 class="size-5 rounded-full flex items-center justify-center text-[10px] font-medium"
@@ -280,7 +279,8 @@ const avatarsTooltip = computed(() => {
             </div>
             <div
               v-if="overflowCount > 0"
-              class="flex items-center gap-1 text-xs text-muted-foreground"
+              class="user-chip flex items-center gap-1 text-xs text-muted-foreground"
+              :style="{ animationDelay: `${visibleUsers.length * 60}ms` }"
             >
               +{{ overflowCount }} more
             </div>
@@ -305,5 +305,73 @@ const avatarsTooltip = computed(() => {
 .collab-editing-badge {
   /* Prevent layout shift while loading */
   min-height: 1em;
+}
+
+/* Avatar pop-in animation */
+.avatar-pop-enter-active {
+  animation: avatar-bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.avatar-pop-leave-active {
+  animation: avatar-pop-out 0.2s ease-in forwards;
+}
+
+.avatar-pop-move {
+  transition: transform 0.3s ease;
+}
+
+@keyframes avatar-bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-180deg);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.4) rotate(15deg);
+  }
+  60% {
+    transform: scale(0.85) rotate(-8deg);
+  }
+  80% {
+    transform: scale(1.1) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes avatar-pop-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* User chip pop-in animation (for tooltip content) */
+.user-chip {
+  animation: user-bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes user-bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0) translateY(-8px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) translateY(2px);
+  }
+  75% {
+    transform: scale(0.9) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 </style>

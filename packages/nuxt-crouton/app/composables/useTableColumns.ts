@@ -8,10 +8,13 @@ interface UseTableColumnsOptions {
     updatedAt?: boolean
     createdBy?: boolean
     updatedBy?: boolean
+    presence?: boolean
     actions?: boolean
   }
   /** Enable drag handle column for sortable tables */
   sortable?: boolean | SortableOptions
+  /** Show collab presence column (requires nuxt-crouton-collab) */
+  showCollabPresence?: boolean
 }
 
 // Grip vertical icon SVG for drag handle (lucide-grip-vertical)
@@ -91,27 +94,31 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       enableHiding: false
     })
 
-    // Add user-defined columns (ensure id is set from accessorKey for slot matching)
-    columns.push(...options.columns.map(col => ({
-      ...col,
-      id: col.id ?? col.accessorKey
-    })))
+    // Add presence column first (leftmost after select) if collab presence is enabled
+    if (options.showCollabPresence && !options.hideDefaultColumns?.presence) {
+      columns.push({
+        id: 'presence',
+        header: '',
+        enableSorting: false,
+        enableHiding: false
+      })
+    }
 
-    // Add default columns conditionally
+    // Add actions column next to presence
+    if (!options.hideDefaultColumns?.actions) {
+      columns.push({
+        accessorKey: 'actions',
+        id: 'actions',
+        header: ''
+      })
+    }
+
+    // Add timestamp/audit columns after actions
     if (!options.hideDefaultColumns?.createdAt) {
       columns.push({
         accessorKey: 'createdAt',
         id: 'createdAt',
         header: tString('table.createdAt'),
-        sortable: true
-      })
-    }
-
-    if (!options.hideDefaultColumns?.updatedAt) {
-      columns.push({
-        accessorKey: 'updatedAt',
-        id: 'updatedAt',
-        header: tString('table.updatedAt'),
         sortable: true
       })
     }
@@ -125,6 +132,15 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       })
     }
 
+    if (!options.hideDefaultColumns?.updatedAt) {
+      columns.push({
+        accessorKey: 'updatedAt',
+        id: 'updatedAt',
+        header: tString('table.updatedAt'),
+        sortable: true
+      })
+    }
+
     if (!options.hideDefaultColumns?.updatedBy) {
       columns.push({
         accessorKey: 'updatedBy',
@@ -134,13 +150,11 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       })
     }
 
-    if (!options.hideDefaultColumns?.actions) {
-      columns.push({
-        accessorKey: 'actions',
-        id: 'actions',
-        header: tString('table.actions')
-      })
-    }
+    // Add user-defined columns at the end
+    columns.push(...options.columns.map(col => ({
+      ...col,
+      id: col.id ?? col.accessorKey
+    })))
 
     return columns
   })

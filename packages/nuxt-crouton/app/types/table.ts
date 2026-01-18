@@ -142,6 +142,7 @@ export interface CollectionProps {
     updatedAt?: boolean
     createdBy?: boolean
     updatedBy?: boolean
+    presence?: boolean
     actions?: boolean
   }
   /** Stateless mode: no config lookup, no mutations, just renders data */
