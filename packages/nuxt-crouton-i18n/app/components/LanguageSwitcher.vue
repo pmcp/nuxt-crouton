@@ -1,43 +1,23 @@
 <template>
-  <ULocaleSelect
+  <USelect
     :model-value="locale"
-    :locales="availableLocales"
-    class="w-full"
+    :items="localeItems"
+    value-key="code"
+    class="w-auto"
     variant="ghost"
-    @update:model-value="handleLocaleChange($event)"
-  >
-    <template #leading="{ locale }">
-      <span>{{ flags[locale.code] || '🌐' }}</span>
-    </template>
-
-    <template #item="{ locale, selected }">
-      <div class="flex items-center gap-2 w-full">
-        <span>{{ flags[locale.code] || '🌐' }}</span>
-        <span class="flex-1">{{ locale.name }}</span>
-        <UIcon
-          v-if="selected"
-          name="i-lucide-check"
-          class="h-4 w-4 text-green-500"
-        />
-      </div>
-    </template>
-  </ULocaleSelect>
+    :ui="{ trailingIcon: 'size-4' }"
+    @update:model-value="handleLocaleChange"
+  />
 </template>
 
 <script setup lang="ts">
-import { en, nl, fr } from '@nuxt/ui/locale'
-
 const { locale, setLocale } = useI18n()
 
-// Map the locales to match the i18n configuration
-const availableLocales = [en, nl, fr]
-
-// Custom flags for each locale
-const flags: Record<string, string> = {
-  en: '🌹',
-  nl: '🦁',
-  fr: '🐔'
-}
+const localeItems = [
+  { code: 'en', label: 'EN' },
+  { code: 'nl', label: 'NL' },
+  { code: 'fr', label: 'FR' }
+]
 
 const handleLocaleChange = async (newLocale: string) => {
   await setLocale(newLocale)
