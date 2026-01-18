@@ -53,7 +53,7 @@ export default defineNuxtRouteMiddleware((to) => {
   // Check if we have a redirect for this path
   if (rest in redirectMap) {
     const newPath = `/${team}${redirectMap[rest]}`
-    console.log(`[crouton-pages] Redirecting deprecated dashboard URL: ${path} → ${newPath}`)
+    console.log(`🍞 crouton:pages → ${newPath}`)
     return navigateTo(newPath, { redirectCode: 301 })
   }
 
