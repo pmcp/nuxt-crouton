@@ -72,6 +72,16 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       })
     }
 
+    // Add presence column first (leftmost) if collab presence is enabled
+    if (options.showCollabPresence && !options.hideDefaultColumns?.presence) {
+      columns.push({
+        id: 'presence',
+        header: '',
+        enableSorting: false,
+        enableHiding: false
+      })
+    }
+
     // Add select checkbox column
     columns.push({
       id: 'select',
@@ -94,22 +104,14 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       enableHiding: false
     })
 
-    // Add presence column first (leftmost after select) if collab presence is enabled
-    if (options.showCollabPresence && !options.hideDefaultColumns?.presence) {
-      columns.push({
-        id: 'presence',
-        header: '',
-        enableSorting: false,
-        enableHiding: false
-      })
-    }
-
-    // Add actions column next to presence
+    // Actions column after select
     if (!options.hideDefaultColumns?.actions) {
       columns.push({
         accessorKey: 'actions',
         id: 'actions',
-        header: ''
+        header: '',
+        enableSorting: false,
+        enableHiding: false
       })
     }
 
