@@ -20,7 +20,10 @@ export interface SortableOptions {
 }
 
 // Layout types
-export type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree' | 'kanban'
+export type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban'
+
+// Grid size options (replaces separate grid/cards layouts)
+export type GridSize = 'compact' | 'comfortable' | 'spacious'
 
 // Hierarchy configuration for tree layouts
 export interface HierarchyConfig {
@@ -119,6 +122,14 @@ export interface CollectionProps {
   cardComponent?: any
   /** Enable drag-and-drop row reordering (table layout only) */
   sortable?: boolean | SortableOptions
+  /**
+   * Grid size for grid layout
+   * - compact: 4 columns, tight spacing (old 'grid' layout)
+   * - comfortable: 3 columns, medium spacing (default)
+   * - spacious: 2 columns, generous spacing (old 'cards' layout)
+   * @default 'comfortable'
+   */
+  gridSize?: GridSize
   hideDefaultColumns?: {
     createdAt?: boolean
     updatedAt?: boolean

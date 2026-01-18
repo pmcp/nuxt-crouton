@@ -125,7 +125,7 @@
     </template>
   </UDashboardPanel>
 
-  <!-- Grid Layout -->
+  <!-- Grid Layout (with size variants: compact, comfortable, spacious) -->
   <div v-else-if="activeLayout === 'grid'">
     <slot name="header">
       <div
@@ -145,7 +145,7 @@
 
     <div
       v-if="rows && rows.length > 0"
-      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
+      :class="gridContainerClasses"
     >
       <div
         v-for="(row, index) in rows"
@@ -155,8 +155,9 @@
         <component
           :is="customCardComponent || CroutonDefaultCard"
           :item="row"
-          :layout="'grid'"
+          layout="grid"
           :collection="collection"
+          :size="effectiveGridSize"
         />
         <!-- Collab presence badge -->
         <component
@@ -167,93 +168,14 @@
           :current-user-id="collabConfig.currentUserId"
           :poll-interval="collabConfig.pollInterval || 5000"
           size="xs"
-          class="absolute top-2 right-2"
+          :class="gridBadgePositionClasses"
         />
         <!-- Card customization help (when using default card) -->
         <CroutonCardHelpModal
           v-if="!customCardComponent"
           :collection="collection"
           layout="grid"
-          class="absolute top-2 right-2"
-        />
-      </div>
-    </div>
-
-    <div
-      v-else
-      class="text-center text-muted p-8"
-    >
-      <p class="text-lg font-medium">
-        No items yet
-      </p>
-      <p class="text-sm mt-1">
-        Create your first {{ collection }} item to get started
-      </p>
-    </div>
-
-    <!-- Pagination -->
-    <div
-      v-if="serverPagination && paginationData"
-      class="p-4 border-t border-default"
-    >
-      <CroutonTablePagination
-        :page="paginationData.currentPage"
-        :page-count="paginationData.totalPages || Math.ceil(paginationData.totalItems / paginationData.pageSize)"
-        :total-items="paginationData.totalItems"
-      />
-    </div>
-  </div>
-
-  <!-- Cards Layout -->
-  <div v-else-if="activeLayout === 'cards'">
-    <slot name="header">
-      <div
-        v-if="create"
-        class="flex items-center justify-end px-4 py-2 border-b border-default"
-      >
-        <UButton
-          color="primary"
-          size="xs"
-          :variant="getVariant('solid')"
-          @click="handleCreate"
-        >
-          Create
-        </UButton>
-      </div>
-    </slot>
-
-    <div
-      v-if="rows && rows.length > 0"
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6"
-    >
-      <div
-        v-for="(row, index) in rows"
-        :key="row.id || index"
-        class="relative"
-      >
-        <component
-          :is="customCardComponent || CroutonDefaultCard"
-          :item="row"
-          :layout="'cards'"
-          :collection="collection"
-        />
-        <!-- Collab presence badge -->
-        <component
-          v-if="collabEditingBadgeComponent && row.id"
-          :is="collabEditingBadgeComponent"
-          :room-id="getCollabRoomId(row)"
-          :room-type="collabConfig.roomType || 'page'"
-          :current-user-id="collabConfig.currentUserId"
-          :poll-interval="collabConfig.pollInterval || 5000"
-          size="xs"
-          class="absolute top-3 right-3"
-        />
-        <!-- Card customization help (when using default card) -->
-        <CroutonCardHelpModal
-          v-if="!customCardComponent"
-          :collection="collection"
-          layout="cards"
-          class="absolute top-3 right-3"
+          :class="gridBadgePositionClasses"
         />
       </div>
     </div>
@@ -350,12 +272,12 @@
 <script lang="ts" setup>
 import { computed, resolveComponent, getCurrentInstance, type Component } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
-import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions, KanbanConfig, CollabPresenceConfig } from '../types/table'
+import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions, KanbanConfig, CollabPresenceConfig, GridSize } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
 
 // Version logging for debugging
-const CROUTON_VERSION = '1.7.0'
-const COLLECTION_FIX = 'Default card shows item data with collapsible JSON'
+const CROUTON_VERSION = '1.8.0'
+const COLLECTION_FIX = 'Consolidated grid/cards layouts with size prop'
 
 // Resolve default card component for fallback
 const CroutonDefaultCard = resolveComponent('CroutonDefaultCard')
@@ -373,6 +295,7 @@ const props = withDefaults(defineProps<ListProps>(), {
   cardComponent: undefined,
   stateless: false,
   showCollabPresence: false,
+  gridSize: 'comfortable',
   hideDefaultColumns: () => ({
     created_at: false,
     updated_at: false,
@@ -430,6 +353,35 @@ const customCardComponent = computed(() => {
   if (props.stateless) return null
   // Normal resolution by collection name
   return props.collection ? getCardComponent(props.collection, props.card) : null
+})
+
+// Grid size configuration
+// Supports backward compat: 'cards' layout maps to 'spacious', regular 'grid' defaults to 'comfortable'
+const effectiveGridSize = computed<GridSize>(() => {
+  return props.gridSize || 'comfortable'
+})
+
+// Grid container classes based on size
+const gridContainerClasses = computed(() => {
+  const size = effectiveGridSize.value
+  switch (size) {
+    case 'compact':
+      // 4 columns on large, tight spacing (old 'grid' layout)
+      return 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3'
+    case 'spacious':
+      // 2-3 columns, generous spacing (old 'cards' layout)
+      return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6'
+    case 'comfortable':
+    default:
+      // 3 columns, medium spacing (default)
+      return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4'
+  }
+})
+
+// Badge/icon position classes based on grid size
+const gridBadgePositionClasses = computed(() => {
+  const size = effectiveGridSize.value
+  return size === 'spacious' ? 'absolute top-3 right-3' : 'absolute top-2 right-2'
 })
 
 // Collaboration presence support

@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted, nextTick, onBeforeUnmount, type Component } from 'vue'
+import { ref, computed, onMounted, nextTick, onBeforeUnmount, resolveComponent, type Component } from 'vue'
 import type SortableType from 'sortablejs'
 import type { SortableEvent, MoveEvent } from 'sortablejs'
+import type { CollabPresenceConfig } from '../types/table'
 
 interface Props {
   /** Unique identifier for this column (the groupField value) */
@@ -22,6 +23,8 @@ interface Props {
   showCount?: boolean
   /** Whether the column is currently the drop target */
   isDropTarget?: boolean
+  /** Show collaboration presence badges on cards */
+  showCollabPresence?: boolean | CollabPresenceConfig
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,7 +33,8 @@ const props = withDefaults(defineProps<Props>(), {
   icon: undefined,
   cardComponent: null,
   showCount: true,
-  isDropTarget: false
+  isDropTarget: false,
+  showCollabPresence: false
 })
 
 const emit = defineEmits<{
@@ -124,6 +128,39 @@ const badgeColor = computed(() => {
   }
   return colorMap[props.color] || props.color
 })
+
+// ============ Collab Presence Support ============
+
+// Resolve CollabEditingBadge component if nuxt-crouton-collab is installed
+const collabEditingBadgeComponent = computed<Component | null>(() => {
+  if (!props.showCollabPresence) return null
+
+  // Try to resolve the component - Nuxt auto-imports will work with resolveComponent
+  const resolved = resolveComponent('CollabEditingBadge')
+  if (typeof resolved !== 'string') return resolved
+
+  // Try lazy variant
+  const lazyResolved = resolveComponent('LazyCollabEditingBadge')
+  if (typeof lazyResolved !== 'string') return lazyResolved
+
+  return null
+})
+
+// Collab presence configuration
+const collabConfig = computed<CollabPresenceConfig>(() => {
+  if (typeof props.showCollabPresence === 'object') {
+    return props.showCollabPresence
+  }
+  return {}
+})
+
+// Get room ID for an item
+function getCollabRoomId(item: any): string {
+  if (collabConfig.value.getRoomId) {
+    return collabConfig.value.getRoomId(item, props.collection)
+  }
+  return `${props.collection}-${item.id}`
+}
 </script>
 
 <template>
@@ -159,7 +196,7 @@ const badgeColor = computed(() => {
         v-for="item in items"
         :key="item.id"
         :data-id="item.id"
-        class="kanban-card cursor-grab active:cursor-grabbing"
+        class="kanban-card cursor-grab active:cursor-grabbing relative"
         @click="emit('select', item)"
       >
         <!-- Use custom card component if provided -->
@@ -186,6 +223,18 @@ const badgeColor = computed(() => {
             {{ item.description }}
           </div>
         </UCard>
+
+        <!-- Collab presence badge overlay -->
+        <component
+          v-if="collabEditingBadgeComponent && item.id"
+          :is="collabEditingBadgeComponent"
+          :room-id="getCollabRoomId(item)"
+          :room-type="collabConfig.roomType || 'page'"
+          :current-user-id="collabConfig.currentUserId"
+          :poll-interval="collabConfig.pollInterval || 5000"
+          size="xs"
+          class="absolute top-2 right-2"
+        />
       </div>
 
       <!-- Empty state -->

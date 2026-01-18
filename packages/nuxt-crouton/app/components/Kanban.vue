@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref, watch, type Component } from 'vue'
-import type { KanbanColumnConfig } from '../types/table'
+import type { KanbanColumnConfig, CollabPresenceConfig } from '../types/table'
 import { useKanban, detectGroupableFields } from '../composables/useKanban'
 
 interface Props {
@@ -22,6 +22,8 @@ interface Props {
   showFieldSelector?: boolean
   /** Fields available for grouping (auto-detected if not provided) */
   groupableFields?: string[]
+  /** Show collaboration presence badges on cards */
+  showCollabPresence?: boolean | CollabPresenceConfig
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -33,7 +35,8 @@ const props = withDefaults(defineProps<Props>(), {
   cardComponent: null,
   showCounts: true,
   showFieldSelector: false,
-  groupableFields: undefined
+  groupableFields: undefined,
+  showCollabPresence: false
 })
 
 const emit = defineEmits<{
@@ -154,6 +157,7 @@ function formatFieldLabel(field: string): string {
           :card-component="cardComponent"
           :show-count="showCounts"
           :is-drop-target="isDropTarget(column.value)"
+          :show-collab-presence="showCollabPresence"
           @move="handleMove"
           @select="handleSelect"
           @drag-start="handleDragStart"

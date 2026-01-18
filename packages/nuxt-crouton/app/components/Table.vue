@@ -90,14 +90,25 @@
         </template>
 
         <template #actions-cell="{ row }: { row: { original: CroutonBaseRow } }">
-          <CroutonItemButtonsMini
-            delete
-            update
-            :disabled="stateless"
-            :disabled-tooltip="stateless ? 'Preview only' : ''"
-            @delete="openCrouton?.('delete', collection, [row.original.id])"
-            @update="openCrouton?.('update', collection, [row.original.id])"
-          />
+          <div class="flex items-center gap-2">
+            <component
+              v-if="collabEditingBadgeComponent && row.original?.id"
+              :is="collabEditingBadgeComponent"
+              :room-id="getCollabRoomId(row.original)"
+              :room-type="collabConfig.roomType || 'page'"
+              :current-user-id="collabConfig.currentUserId"
+              :poll-interval="collabConfig.pollInterval || 5000"
+              size="xs"
+            />
+            <CroutonItemButtonsMini
+              delete
+              update
+              :disabled="stateless"
+              :disabled-tooltip="stateless ? 'Preview only' : ''"
+              @delete="openCrouton?.('delete', collection, [row.original.id])"
+              @update="openCrouton?.('update', collection, [row.original.id])"
+            />
+          </div>
         </template>
       </UTable>
     </div>
@@ -117,7 +128,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableProps, TableSort, PaginationData, SortableOptions } from '../types/table'
+import { resolveComponent, type Component } from 'vue'
+import type { TableProps, TableSort, PaginationData, SortableOptions, CollabPresenceConfig } from '../types/table'
 import { useTableData } from '../composables/useTableData'
 import { useTableColumns } from '../composables/useTableColumns'
 import { useT } from '../composables/useT'
@@ -235,6 +247,39 @@ const sortableConfig = computed<SortableOptions>(() => {
   if (typeof props.sortable === 'object') return props.sortable
   return {}
 })
+
+// ============ Collab Presence Support ============
+
+// Resolve CollabEditingBadge component if nuxt-crouton-collab is installed
+const collabEditingBadgeComponent = computed<Component | null>(() => {
+  if (!props.showCollabPresence) return null
+
+  // Try to resolve the component - Nuxt auto-imports will work with resolveComponent
+  const resolved = resolveComponent('CollabEditingBadge')
+  if (typeof resolved !== 'string') return resolved
+
+  // Try lazy variant
+  const lazyResolved = resolveComponent('LazyCollabEditingBadge')
+  if (typeof lazyResolved !== 'string') return lazyResolved
+
+  return null
+})
+
+// Collab presence configuration
+const collabConfig = computed<CollabPresenceConfig>(() => {
+  if (typeof props.showCollabPresence === 'object') {
+    return props.showCollabPresence
+  }
+  return {}
+})
+
+// Get room ID for a row
+function getCollabRoomId(row: CroutonBaseRow): string {
+  if (collabConfig.value.getRoomId) {
+    return collabConfig.value.getRoomId(row, props.collection)
+  }
+  return `${props.collection}-${row.id}`
+}
 
 // Stable class name for tbody targeting (used by useSortable)
 const sortableClass = `crouton-sortable-${props.collection || 'table'}`

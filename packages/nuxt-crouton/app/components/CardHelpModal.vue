@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 
 interface Props {
   collection: string
-  layout?: 'list' | 'grid' | 'cards'
+  layout?: 'list' | 'grid'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -17,8 +17,9 @@ const codeExamples = {
   list: `<script setup lang="ts">
 interface Props {
   item: any
-  layout: 'list' | 'grid' | 'cards'
+  layout: 'list' | 'grid'
   collection: string
+  size?: 'compact' | 'comfortable' | 'spacious'
 }
 defineProps<Props>()
 <\/script>
@@ -27,39 +28,31 @@ defineProps<Props>()
   <div v-if="layout === 'list'" class="flex items-center gap-3">
     <div class="flex-1">
       <span class="font-medium">{{ item.name }}</span>
-      <span class="text-muted text-sm">{{ item.description }}</span>
+      <span class="text-muted text-sm ml-2">{{ item.description }}</span>
     </div>
   </div>
 </template>`,
   grid: `<script setup lang="ts">
 interface Props {
   item: any
-  layout: 'list' | 'grid' | 'cards'
+  layout: 'list' | 'grid'
   collection: string
+  size?: 'compact' | 'comfortable' | 'spacious'
 }
-defineProps<Props>()
+const props = defineProps<Props>()
 <\/script>
 
 <template>
-  <div v-if="layout === 'grid'" class="p-3 rounded-lg border hover:shadow-md">
+  <div
+    v-if="layout === 'grid'"
+    :class="[
+      'rounded-lg border hover:shadow-md transition-shadow',
+      size === 'spacious' ? 'p-4' : 'p-3'
+    ]"
+  >
     <h3 class="font-medium truncate">{{ item.title }}</h3>
     <p class="text-sm text-muted mt-1">{{ item.description }}</p>
-  </div>
-</template>`,
-  cards: `<script setup lang="ts">
-interface Props {
-  item: any
-  layout: 'list' | 'grid' | 'cards'
-  collection: string
-}
-defineProps<Props>()
-<\/script>
-
-<template>
-  <div v-if="layout === 'cards'" class="p-4 rounded-xl border hover:shadow-lg">
-    <h3 class="text-lg font-semibold">{{ item.title }}</h3>
-    <p class="text-muted mt-2">{{ item.description }}</p>
-    <div class="flex gap-2 mt-4">
+    <div v-if="size === 'spacious'" class="flex gap-2 mt-3">
       <UBadge>{{ item.status }}</UBadge>
     </div>
   </div>
@@ -119,7 +112,7 @@ const currentExample = computed(() => codeExamples[props.layout])
 
           <div class="bg-info/10 border border-info/20 rounded-lg p-3">
             <p class="text-xs text-info">
-              <strong>Tip:</strong> Your Card.vue receives <code class="bg-info/20 px-1 rounded">item</code>, <code class="bg-info/20 px-1 rounded">layout</code>, and <code class="bg-info/20 px-1 rounded">collection</code> props. Handle all layouts (list, grid, cards) in one component using <code class="bg-info/20 px-1 rounded">v-if</code>.
+              <strong>Tip:</strong> Your Card.vue receives <code class="bg-info/20 px-1 rounded">item</code>, <code class="bg-info/20 px-1 rounded">layout</code>, <code class="bg-info/20 px-1 rounded">collection</code>, and <code class="bg-info/20 px-1 rounded">size</code> props. Handle both layouts (list, grid) in one component. The <code class="bg-info/20 px-1 rounded">size</code> prop controls grid density (compact, comfortable, spacious).
             </p>
           </div>
         </div>
