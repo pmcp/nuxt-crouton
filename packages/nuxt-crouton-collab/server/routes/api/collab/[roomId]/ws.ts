@@ -38,10 +38,32 @@ function handleJsonMessage(
     const clientId = parsed.userId || parsed.clientId
     console.log('[Collab WS] Awareness update received:', { clientId })
     if (clientId) {
+      const peerWithUserId = peer as unknown as { _userId: string | null; _connectionCounted?: boolean }
+      const previousUserId = peerWithUserId._userId
+
+      // If this peer already counted for a different user, decrement that user's count
+      if (previousUserId && previousUserId !== clientId && peerWithUserId._connectionCounted) {
+        const prevCount = room.userConnectionCounts.get(previousUserId) || 0
+        if (prevCount <= 1) {
+          room.userConnectionCounts.delete(previousUserId)
+          room.awareness.delete(previousUserId)
+        } else {
+          room.userConnectionCounts.set(previousUserId, prevCount - 1)
+        }
+      }
+
+      // Increment connection count for this user (only once per peer)
+      if (!peerWithUserId._connectionCounted || previousUserId !== clientId) {
+        const currentCount = room.userConnectionCounts.get(clientId) || 0
+        room.userConnectionCounts.set(clientId, currentCount + 1)
+        peerWithUserId._connectionCounted = true
+        console.log('[Collab WS] User connection count:', clientId, '->', currentCount + 1)
+      }
+
+      // Always update awareness state (cursor position, etc. may change)
       room.awareness.set(clientId, parsed.state)
-      const peerWithUserId = peer as unknown as { _userId: string | null }
       peerWithUserId._userId = clientId
-      console.log('[Collab WS] Awareness stored. Total users:', room.awareness.size)
+      console.log('[Collab WS] Awareness stored. Unique users:', room.awareness.size)
     }
     // Broadcast awareness to all peers
     const awarenessMessage = JSON.stringify({
@@ -196,18 +218,30 @@ export default defineWebSocketHandler({
       _roomId?: string
       _roomType?: string
       _userId?: string | null
+      _connectionCounted?: boolean
     }
     const room = peerData._collabRoom
     if (room) {
       room.peers.delete(peer as unknown as { send: (data: unknown) => void })
 
-      // Remove user from awareness when they disconnect
-      if (peerData._userId) {
-        room.awareness.delete(peerData._userId)
-        console.log('[Collab WS] User disconnected, removed from awareness:', peerData._userId, 'Remaining users:', room.awareness.size)
+      // Decrement user connection count and only remove from awareness when last connection closes
+      if (peerData._userId && peerData._connectionCounted) {
+        const currentCount = room.userConnectionCounts.get(peerData._userId) || 0
+        console.log('[Collab WS] Connection closing for user:', peerData._userId, 'current count:', currentCount)
+
+        if (currentCount <= 1) {
+          // Last connection for this user - remove from awareness
+          room.userConnectionCounts.delete(peerData._userId)
+          room.awareness.delete(peerData._userId)
+          console.log('[Collab WS] User fully disconnected, removed from awareness:', peerData._userId, 'Remaining unique users:', room.awareness.size)
+        } else {
+          // User still has other connections - just decrement count
+          room.userConnectionCounts.set(peerData._userId, currentCount - 1)
+          console.log('[Collab WS] User still has', currentCount - 1, 'other connection(s):', peerData._userId)
+        }
       }
 
-      // Broadcast updated awareness (user left)
+      // Broadcast updated awareness (user may have left)
       const awarenessMessage = JSON.stringify({
         type: 'awareness',
         users: Array.from(room.awareness.values())

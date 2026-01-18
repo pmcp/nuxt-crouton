@@ -12,6 +12,8 @@ export interface CollabRoomData {
   doc: Y.Doc
   peers: Set<{ send: (data: unknown) => void }>
   awareness: Map<string, unknown>
+  /** Track connection count per userId for deduplication */
+  userConnectionCounts: Map<string, number>
 }
 
 // Shared room storage
@@ -27,7 +29,8 @@ export function getOrCreateRoom(roomType: string, roomId: string): CollabRoomDat
     rooms.set(roomKey, {
       doc,
       peers: new Set(),
-      awareness: new Map()
+      awareness: new Map(),
+      userConnectionCounts: new Map()
     })
   }
   return rooms.get(roomKey)!
