@@ -9,4 +9,3 @@ export { bookingsSettings } from '../../layers/bookings/collections/settings/ser
 export * from './translations-ui'
 export { bookingsEmailtemplates } from '../../layers/bookings/collections/emailtemplates/server/database/schema'
 export { bookingsEmaillogs } from '../../layers/bookings/collections/emaillogs/server/database/schema'
-export { pagesPages } from '../../layers/pages/collections/pages/server/database/schema'
