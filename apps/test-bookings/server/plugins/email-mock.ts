@@ -7,8 +7,6 @@
 import { registerEmailProvider } from '@friendlyinternet/crouton-bookings/server/utils/email-service'
 
 export default defineNitroPlugin(() => {
-  console.log('[email-mock] Registering mock email provider')
-
   registerEmailProvider({
     async send({ to, subject, html, from }) {
       console.log('\n' + '='.repeat(60))
@@ -30,5 +28,7 @@ export default defineNitroPlugin(() => {
     }
   })
 
-  console.log('[email-mock] Mock email provider registered')
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[email-mock] ✓ Mock provider active')
+  }
 })

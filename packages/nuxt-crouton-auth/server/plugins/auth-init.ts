@@ -5,6 +5,10 @@
  * The actual Better Auth instance is lazily initialized on first request
  * since NuxtHub's D1 database binding is only available during request handling.
  */
+
+// Deduplicate logs across plugin resolution
+const _authPluginLogged = (globalThis as Record<string, boolean>).__croutonAuthPluginLogged ??= false
+
 export default defineNitroPlugin(async () => {
   const config = useRuntimeConfig()
 
@@ -25,10 +29,9 @@ export default defineNitroPlugin(async () => {
     return
   }
 
-  const teamsConfig = authConfig.teams ?? {}
-  console.log(`[@crouton/auth] Auth plugin initialized`, {
-    autoCreateOnSignup: teamsConfig.autoCreateOnSignup,
-    defaultTeamSlug: teamsConfig.defaultTeamSlug,
-    allowCreate: teamsConfig.allowCreate
-  })
+  // Log once in development
+  if (process.env.NODE_ENV !== 'production' && !_authPluginLogged) {
+    (globalThis as Record<string, boolean>).__croutonAuthPluginLogged = true
+    console.log('[@crouton/auth] ✓ Auth ready')
+  }
 })

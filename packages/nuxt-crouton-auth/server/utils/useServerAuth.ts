@@ -92,8 +92,6 @@ export function useServerAuth(event?: H3Event): AuthInstance {
   // Cache the instance
   setAuthInstance(auth)
 
-  console.log('[crouton/auth] Auth instance initialized')
-
   return auth
 }
 
