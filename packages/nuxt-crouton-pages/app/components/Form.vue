@@ -374,8 +374,47 @@ const fieldComponents = computed(() => {
         <div class="flex flex-col h-full">
           <!-- Compact Header Bar -->
           <div class="flex flex-wrap items-center gap-3 pb-3 mb-4 border-b border-default">
-            <!-- Page Type, Status, Visibility & Settings (grouped) -->
+            <!-- Status, Page Type, Visibility & Settings (grouped) -->
             <UFieldGroup>
+              <!-- Status Selector (dropdown with colored dots) -->
+              <UDropdownMenu
+                :items="statusDropdownItems"
+                :content="{ align: 'start' }"
+              >
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <span
+                    :class="[
+                      'block size-3 rounded-full',
+                      `bg-${statusConfig[state.status]?.color || 'warning'}`
+                    ]"
+                  />
+                </UButton>
+
+                <template #draft="{ item }">
+                  <span class="flex items-center gap-2">
+                    <span class="block size-2.5 rounded-full bg-warning" />
+                    {{ item.label }}
+                  </span>
+                </template>
+                <template #published="{ item }">
+                  <span class="flex items-center gap-2">
+                    <span class="block size-2.5 rounded-full bg-success" />
+                    {{ item.label }}
+                  </span>
+                </template>
+                <template #archived="{ item }">
+                  <span class="flex items-center gap-2">
+                    <span class="block size-2.5 rounded-full bg-error" />
+                    {{ item.label }}
+                  </span>
+                </template>
+              </UDropdownMenu>
+
               <!-- Page Type Selector (dropdown on create, popover on edit) -->
               <UDropdownMenu
                 v-if="action === 'create'"
@@ -422,45 +461,6 @@ const fieldComponents = computed(() => {
                   </div>
                 </template>
               </UPopover>
-
-              <!-- Status Selector (dropdown with colored dots) -->
-              <UDropdownMenu
-                :items="statusDropdownItems"
-                :content="{ align: 'start' }"
-              >
-                <UButton
-                  variant="ghost"
-                  color="neutral"
-                  size="xs"
-                  class="px-2"
-                >
-                  <span
-                    :class="[
-                      'block size-3 rounded-full',
-                      `bg-${statusConfig[state.status]?.color || 'warning'}`
-                    ]"
-                  />
-                </UButton>
-
-                <template #draft="{ item }">
-                  <span class="flex items-center gap-2">
-                    <span class="block size-2.5 rounded-full bg-warning" />
-                    {{ item.label }}
-                  </span>
-                </template>
-                <template #published="{ item }">
-                  <span class="flex items-center gap-2">
-                    <span class="block size-2.5 rounded-full bg-success" />
-                    {{ item.label }}
-                  </span>
-                </template>
-                <template #archived="{ item }">
-                  <span class="flex items-center gap-2">
-                    <span class="block size-2.5 rounded-full bg-error" />
-                    {{ item.label }}
-                  </span>
-                </template>
-              </UDropdownMenu>
 
               <!-- Visibility Selector (dropdown with icons) -->
               <UDropdownMenu

@@ -16,6 +16,7 @@ interface PageItem {
   pageType?: string
   status?: string
   visibility?: string
+  showInNavigation?: boolean
   updatedAt?: string | Date
   createdAt?: string | Date
   translations?: Record<string, { title?: string; slug?: string }>
@@ -58,11 +59,11 @@ const localizedSlug = computed(() => getSlugForLocale(props.item, locale.value))
 // Relative time ago
 const timeAgo = useTimeAgo(() => props.item.updatedAt || props.item.createdAt)
 
-// Status config - colored icons (matches Form.vue)
-const statusConfig: Record<string, { icon: string; color: string; label: string }> = {
-  draft: { icon: 'i-lucide-pencil', color: 'text-warning', label: 'Draft' },
-  published: { icon: 'i-lucide-check', color: 'text-success', label: 'Published' },
-  archived: { icon: 'i-lucide-archive', color: 'text-error', label: 'Archived' }
+// Status config - colored dots (matches Form.vue)
+const statusConfig: Record<string, { dotColor: string; label: string }> = {
+  draft: { dotColor: 'bg-warning', label: 'Draft' },
+  published: { dotColor: 'bg-success', label: 'Published' },
+  archived: { dotColor: 'bg-error', label: 'Archived' }
 }
 
 // Visibility config - icons only, no color variation
@@ -74,6 +75,11 @@ const visibilityConfig: Record<string, { icon: string; label: string }> = {
 
 const statusStyle = computed(() => statusConfig[props.item.status || ''] || statusConfig.draft)
 const visibilityStyle = computed(() => visibilityConfig[props.item.visibility || ''] || visibilityConfig.public)
+
+// Show in navigation indicator
+const showInMenuLabel = computed(() =>
+  props.item.showInNavigation ? 'Shown in Menu' : 'Hidden from Menu'
+)
 </script>
 
 <template>
@@ -84,7 +90,7 @@ const visibilityStyle = computed(() => visibilityConfig[props.item.visibility ||
   >
     <!-- Page type icon -->
     <UIcon
-      :name="pageTypeInfo?.icon || 'i-lucide-file-text'"
+      :name="pageTypeInfo?.icon || 'i-lucide-file'"
       class="size-4 shrink-0 text-muted"
     />
 
@@ -98,8 +104,18 @@ const visibilityStyle = computed(() => visibilityConfig[props.item.visibility ||
       </span>
     </div>
 
-    <!-- Right side: visibility icon, status dot, timestamp -->
-    <div class="flex items-center gap-3 shrink-0">
+    <!-- Right side: indicators grouped -->
+    <div class="flex items-center gap-2 shrink-0">
+      <!-- Relative timestamp -->
+      <span class="text-xs text-muted tabular-nums">
+        {{ timeAgo }}
+      </span>
+
+      <!-- Status dot -->
+      <UTooltip :text="statusStyle.label">
+        <span :class="['block size-2.5 rounded-full', statusStyle.dotColor]" />
+      </UTooltip>
+
       <!-- Visibility icon -->
       <UTooltip :text="visibilityStyle.label">
         <UIcon
@@ -108,18 +124,13 @@ const visibilityStyle = computed(() => visibilityConfig[props.item.visibility ||
         />
       </UTooltip>
 
-      <!-- Status icon -->
-      <UTooltip :text="statusStyle.label">
+      <!-- Show in menu icon -->
+      <UTooltip :text="showInMenuLabel">
         <UIcon
-          :name="statusStyle.icon"
-          :class="['size-4', statusStyle.color]"
+          name="i-lucide-menu"
+          :class="['size-4', item.showInNavigation ? 'text-muted' : 'opacity-30']"
         />
       </UTooltip>
-
-      <!-- Relative timestamp -->
-      <span class="text-xs text-muted tabular-nums w-20 text-right">
-        {{ timeAgo }}
-      </span>
 
       <!-- Presence slot for collab badges -->
       <slot name="presence" />
@@ -134,7 +145,7 @@ const visibilityStyle = computed(() => visibilityConfig[props.item.visibility ||
     <!-- Page type icon -->
     <div class="shrink-0 size-10 rounded-lg bg-elevated flex items-center justify-center">
       <UIcon
-        :name="pageTypeInfo?.icon || 'i-lucide-file-text'"
+        :name="pageTypeInfo?.icon || 'i-lucide-file'"
         class="size-5 text-muted"
       />
     </div>
@@ -143,13 +154,20 @@ const visibilityStyle = computed(() => visibilityConfig[props.item.visibility ||
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
         <span class="font-medium truncate">{{ localizedTitle }}</span>
-        <!-- Status icon -->
+        <!-- Status dot -->
         <UTooltip :text="statusStyle.label">
-          <UIcon :name="statusStyle.icon" :class="['size-4', statusStyle.color]" />
+          <span :class="['block size-2.5 rounded-full', statusStyle.dotColor]" />
         </UTooltip>
         <!-- Visibility icon -->
         <UTooltip :text="visibilityStyle.label">
           <UIcon :name="visibilityStyle.icon" class="size-4 text-muted" />
+        </UTooltip>
+        <!-- Show in menu icon -->
+        <UTooltip :text="showInMenuLabel">
+          <UIcon
+            name="i-lucide-menu"
+            :class="['size-4', item.showInNavigation ? 'text-muted' : 'opacity-30']"
+          />
         </UTooltip>
       </div>
       <div class="flex items-center gap-2 text-sm text-muted">
@@ -171,13 +189,13 @@ const visibilityStyle = computed(() => visibilityConfig[props.item.visibility ||
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon
-          :name="pageTypeInfo?.icon || 'i-lucide-file-text'"
+          :name="pageTypeInfo?.icon || 'i-lucide-file'"
           class="size-5 text-muted"
         />
         <span class="font-medium truncate flex-1">{{ localizedTitle }}</span>
-        <!-- Status icon -->
+        <!-- Status dot -->
         <UTooltip :text="statusStyle.label">
-          <UIcon :name="statusStyle.icon" :class="['size-4', statusStyle.color]" />
+          <span :class="['block size-2.5 rounded-full', statusStyle.dotColor]" />
         </UTooltip>
       </div>
     </template>
@@ -187,6 +205,13 @@ const visibilityStyle = computed(() => visibilityConfig[props.item.visibility ||
         <!-- Visibility icon -->
         <UTooltip :text="visibilityStyle.label">
           <UIcon :name="visibilityStyle.icon" class="size-4 text-muted" />
+        </UTooltip>
+        <!-- Show in menu icon -->
+        <UTooltip :text="showInMenuLabel">
+          <UIcon
+            name="i-lucide-menu"
+            :class="['size-4', item.showInNavigation ? 'text-muted' : 'opacity-30']"
+          />
         </UTooltip>
         <span class="font-mono truncate">/{{ localizedSlug }}</span>
       </div>
