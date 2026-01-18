@@ -122,6 +122,10 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 
 const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
 
+// Track when collab content has been loaded (prevents race condition with Yjs sync)
+// Start as true for create action, false for update (will be set true after content loads)
+const contentReady = ref(props.action === 'create')
+
 // Initialize Yjs fragments with existing content when editing
 // This happens after collab connection is established
 if (collabLocalizedContent && props.action === 'update' && props.activeItem?.translations) {
@@ -144,10 +148,15 @@ if (collabLocalizedContent && props.action === 'update' && props.activeItem?.tra
             }
           }
         }
+        // Mark content as ready AFTER all locales loaded
+        contentReady.value = true
       }
     },
     { immediate: true }
   )
+} else if (props.action === 'update') {
+  // No collab content to load for update action, ready immediately
+  contentReady.value = true
 }
 
 // Computed values
@@ -598,6 +607,7 @@ const fieldComponents = computed(() => {
           <!-- Translatable Fields - grows to fill space -->
           <div class="flex-1 min-h-0 overflow-hidden">
             <CroutonI18nInput
+              v-if="contentReady"
               v-model="state.translations"
               :fields="translatableFields"
               layout="side-by-side"
@@ -607,6 +617,10 @@ const fieldComponents = computed(() => {
               :collab="collabForI18n"
               class="h-full"
             />
+            <!-- Loading spinner while collab content initializes -->
+            <div v-else class="h-full flex items-center justify-center">
+              <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
+            </div>
           </div>
 
           <!-- Config Fields (for app pages with configSchema) -->

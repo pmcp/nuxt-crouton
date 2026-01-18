@@ -282,20 +282,45 @@ async function requestTranslation(field: string, targetLocale?: string) {
   isTranslating.value[translationKey] = true
 
   try {
-    // Call the translation API with all available translations for context
-    const result = await $fetch<{ text: string, confidence?: number }>('/api/ai/translate', {
-      method: 'POST',
-      body: {
-        sourceText,
-        sourceLanguage: sourceLang,
-        targetLanguage: targetLang,
-        fieldType: props.fieldType || field,
-        existingTranslations: allTranslations
+    // Check if this is block content (JSON)
+    if (isBlockEditorField(field)) {
+      // Parse and translate block content
+      let content: any
+      try {
+        content = typeof sourceText === 'string' ? JSON.parse(sourceText) : sourceText
+      } catch {
+        console.error('Failed to parse block content')
+        return
       }
-    })
 
-    if (result?.text) {
-      updateFieldValue(field, result.text, targetLang)
+      const result = await $fetch<{ content: any, translatedCount?: number }>('/api/ai/translate-blocks', {
+        method: 'POST',
+        body: {
+          content,
+          sourceLanguage: sourceLang,
+          targetLanguage: targetLang
+        }
+      })
+
+      if (result?.content) {
+        updateFieldValue(field, JSON.stringify(result.content), targetLang)
+      }
+    } else {
+      // Regular text translation
+      const result = await $fetch<{ text: string, confidence?: number }>('/api/ai/translate', {
+        method: 'POST',
+        body: {
+          sourceText,
+          sourceLanguage: sourceLang,
+          targetLanguage: targetLang,
+          fieldType: props.fieldType || field,
+          existingTranslations: allTranslations
+        }
+      })
+
+      if (result?.text) {
+        updateFieldValue(field, result.text, targetLang)
+      }
     }
   } catch (err) {
     console.error('Translation error:', err)
@@ -365,7 +390,7 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
               </label>
               <!-- AI Translate button (shows when any other locale has content) -->
               <UTooltip
-                v-if="showAiTranslate && hasSourceContent(field, narrowLocaleTab) && !isBlockEditorField(field)"
+                v-if="showAiTranslate && hasSourceContent(field, narrowLocaleTab)"
                 :text="getTranslateTooltip(field, narrowLocaleTab)"
               >
                 <UButton
@@ -597,7 +622,7 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
                 </label>
                 <!-- AI Translate button inline with label -->
                 <UTooltip
-                  v-if="showAiTranslate && hasSourceContent(field, secondaryEditingLocale) && !isBlockEditorField(field)"
+                  v-if="showAiTranslate && hasSourceContent(field, secondaryEditingLocale)"
                   :text="getTranslateTooltip(field, secondaryEditingLocale)"
                 >
                   <UButton
@@ -817,7 +842,7 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
               </p>
             </template>
             <UButton
-              v-if="showAiTranslate && !isBlockEditorField(field)"
+              v-if="showAiTranslate"
               icon="i-lucide-sparkles"
               size="xs"
               variant="ghost"
@@ -825,19 +850,7 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
               :loading="isFieldTranslating(field)"
               @click="requestTranslation(field)"
             >
-              Translate
-            </UButton>
-            <!-- For block content, AI translate needs special handling (coming soon) -->
-            <UButton
-              v-if="showAiTranslate && isBlockEditorField(field)"
-              icon="i-lucide-sparkles"
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              disabled
-              title="AI translation for blocks coming soon"
-            >
-              Translate blocks
+              {{ isBlockEditorField(field) ? 'Translate blocks' : 'Translate' }}
             </UButton>
           </div>
         </UFormField>
