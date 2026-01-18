@@ -16,15 +16,15 @@ const props = defineProps<{
 
 const attrs = computed(() => props.node.attrs)
 
-// Reference to this component's root element for finding parent editor
-const wrapperRef = ref<InstanceType<typeof NodeViewWrapper> | null>(null)
+// Reference to inner element for finding parent editor
+const innerRef = ref<HTMLElement | null>(null)
 
 // Cache the editor ID once mounted (traverse up from this element to find parent editor)
 const cachedEditorId = ref<string | undefined>(undefined)
 
 onMounted(() => {
-  // wrapperRef.value is the component instance, .$el is the DOM element
-  let el: HTMLElement | null = wrapperRef.value?.$el as HTMLElement | null
+  // Traverse up DOM to find the parent editor with data-editor-id
+  let el: HTMLElement | null = innerRef.value
   while (el) {
     if (el.classList?.contains('crouton-editor-blocks') && el.dataset?.editorId) {
       cachedEditorId.value = el.dataset.editorId
@@ -46,13 +46,12 @@ function handleOpenPanel() {
 
 <template>
   <NodeViewWrapper
-    ref="wrapperRef"
     class="block-wrapper my-1 cursor-pointer"
     :class="{ 'border-l-2 border-l-primary/50': selected }"
     data-type="card-grid-block"
     @dblclick="handleOpenPanel"
   >
-    <div class="relative group rounded border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50 transition-colors">
+    <div ref="innerRef" class="relative group rounded border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50 transition-colors">
       <!-- Block Content -->
       <div class="p-3">
         <!-- Block Header -->
