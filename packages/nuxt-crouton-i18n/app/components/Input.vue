@@ -370,7 +370,7 @@ function hasSourceContent(field: string): boolean {
             <!-- CroutonPagesEditorBlockEditorWithPreview -->
             <div
               v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditorWithPreview'"
-              class="flex-1 border rounded-md overflow-hidden border-default"
+              class="flex-1 min-h-[350px] max-h-[600px]"
             >
               <CroutonPagesEditorBlockEditorWithPreview
                 :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
@@ -480,7 +480,7 @@ function hasSourceContent(field: string): boolean {
               <!-- CroutonPagesEditorBlockEditorWithPreview -->
               <div
                 v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditorWithPreview'"
-                class="flex-1 border rounded-md overflow-hidden border-default"
+                class="flex-1 min-h-[350px] max-h-[600px]"
               >
                 <CroutonPagesEditorBlockEditorWithPreview
                   :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
@@ -598,7 +598,7 @@ function hasSourceContent(field: string): boolean {
               <!-- CroutonPagesEditorBlockEditorWithPreview -->
               <div
                 v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditorWithPreview'"
-                class="flex-1 border rounded-md overflow-hidden border-default"
+                class="flex-1 min-h-[350px] max-h-[600px]"
               >
                 <CroutonPagesEditorBlockEditorWithPreview
                   :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
@@ -714,7 +714,7 @@ function hasSourceContent(field: string): boolean {
           <!-- CroutonPagesEditorBlockEditorWithPreview (block editor with preview toggle) -->
           <div
             v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditorWithPreview'"
-            class="border rounded-lg overflow-hidden border-gray-300 dark:border-gray-700"
+            class="h-[500px] min-h-[350px] max-h-[600px]"
           >
             <CroutonPagesEditorBlockEditorWithPreview
               :model-value="collab ? undefined : getFieldValue(field, editingLocale)"

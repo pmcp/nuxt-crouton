@@ -251,10 +251,4 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
-/* Add breathing room at bottom of editor content */
-:deep(.tiptap.ProseMirror) {
-  padding-bottom: 8rem;
-}
-</style>
 
