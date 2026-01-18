@@ -233,6 +233,19 @@ function onDelete() {
               @update:model-value="onFieldChange(field.name, $event)"
             />
           </UFormField>
+
+          <!-- Collection Picker -->
+          <UFormField
+            v-else-if="field.type === 'collection'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesCollectionPicker
+              :model-value="localAttrs[field.name] as string || ''"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
         </template>
       </div>
 
