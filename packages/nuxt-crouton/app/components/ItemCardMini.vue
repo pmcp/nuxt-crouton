@@ -25,13 +25,51 @@ const customComponent = computed(() => {
   return nuxtApp.vueApp.component(componentName.value) || null
 })
 
-// Determine best display label: title > name > label > id
+// Helper to get translated field value with fallback chain
+// Checks translations.{locale}.{field} with fallback locales, then field itself
+const getTranslatedField = (entity: any, field: string): string | null => {
+  if (!entity) return null
+
+  // First check direct field value
+  const directValue = entity[field]
+  if (directValue && typeof directValue === 'string' && directValue.trim()) {
+    return directValue
+  }
+
+  // Check translations if available
+  const translations = entity.translations
+  if (translations && typeof translations === 'object') {
+    // Try common locales in order of preference
+    const locales = ['en', 'nl', 'fr', 'de', 'es', 'it', 'pt']
+    for (const locale of locales) {
+      const translatedValue = translations[locale]?.[field]
+      if (translatedValue && typeof translatedValue === 'string' && translatedValue.trim()) {
+        return translatedValue
+      }
+    }
+  }
+
+  return null
+}
+
+// Determine best display label: title > name > label (with translation support) > id
 const displayLabel = computed(() => {
   if (!item.value) return null
-  return item.value.title
-    || item.value.name
-    || item.value.label
-    || props.id
+
+  // Try title (with translations)
+  const title = getTranslatedField(item.value, 'title')
+  if (title) return title
+
+  // Try name (with translations)
+  const name = getTranslatedField(item.value, 'name')
+  if (name) return name
+
+  // Try label (with translations)
+  const label = getTranslatedField(item.value, 'label')
+  if (label) return label
+
+  // Fallback to ID
+  return props.id
 })
 </script>
 
