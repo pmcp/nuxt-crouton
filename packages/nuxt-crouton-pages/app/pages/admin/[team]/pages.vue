@@ -6,6 +6,8 @@
  * The Create/Edit forms use the standard Crouton slideover flow with
  * CroutonPagesForm registered via app.config.ts.
  */
+import { resolveComponent, type Component } from 'vue'
+
 definePageMeta({
   layout: 'admin',
   middleware: ['auth', 'team-admin']
@@ -17,6 +19,9 @@ const { getPageType } = usePageTypes()
 const crouton = useCrouton()
 const { locale } = useI18n()
 const { getSlugForLocale } = useLocalizedSlug()
+
+// Resolve the card component for tree layout
+const CroutonPagesCard = resolveComponent('CroutonPagesCard') as Component
 
 // Team context
 const team = computed(() => route.params.team as string)
@@ -92,6 +97,7 @@ const visibilityConfig: Record<string, { icon: string; color: string }> = {
         :rows="pages || []"
         layout="tree"
         :columns="columns"
+        :card-component="CroutonPagesCard"
         show-search
         :show-collab-presence="{
           roomType: 'pagesPages',
