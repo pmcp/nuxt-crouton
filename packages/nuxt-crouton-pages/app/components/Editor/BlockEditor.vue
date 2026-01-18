@@ -100,7 +100,8 @@ function getInsertCommand(type: string): string {
     sectionBlock: 'insertSectionBlock',
     ctaBlock: 'insertCTABlock',
     cardGridBlock: 'insertCardGridBlock',
-    separatorBlock: 'insertSeparatorBlock'
+    separatorBlock: 'insertSeparatorBlock',
+    collectionBlock: 'insertCollectionBlock'
   }
   return commands[type] || type
 }
