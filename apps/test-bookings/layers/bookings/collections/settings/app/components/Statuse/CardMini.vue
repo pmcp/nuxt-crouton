@@ -5,12 +5,12 @@
         <UBadge
           v-for="(item, index) in normalizedValue.slice(0, 3)"
           :key="index"
-          color="gray"
+          color="neutral"
           variant="subtle"
         >
           {{ item.label || item.value || item }}
         </UBadge>
-        <UBadge v-if="normalizedValue.length > 3" color="gray" variant="subtle">
+        <UBadge v-if="normalizedValue.length > 3" color="neutral" variant="subtle">
           +{{ normalizedValue.length - 3 }} more
         </UBadge>
       </div>

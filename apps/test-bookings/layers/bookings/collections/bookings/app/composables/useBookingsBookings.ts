@@ -28,7 +28,7 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const bookingsBookingSchema = z.object({
   location: z.string().min(1, 'location is required'),
-  date: z.date({ required_error: 'date is required' }),
+  date: z.date({ message: 'date is required' }),
   slot: z.array(z.string()).min(1, 'slot is required'),
   group: z.string().optional(),
   status: z.string().min(1, 'status is required')
