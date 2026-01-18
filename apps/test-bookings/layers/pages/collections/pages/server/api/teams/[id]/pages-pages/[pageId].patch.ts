@@ -14,11 +14,17 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<Partial<PagesPage>>(event)
 
   return await updatePagesPage(pageId, team.id, user.id, {
-    name: body.name,
-    label: body.label,
-    icon: body.icon,
-    description: body.description,
-    hierarchy: body.hierarchy,
-    fields: body.fields
+    title: body.title,
+    slug: body.slug,
+    pageType: body.pageType,
+    content: body.content,
+    config: body.config,
+    status: body.status,
+    visibility: body.visibility,
+    publishedAt: body.publishedAt ? new Date(body.publishedAt) : body.publishedAt,
+    showInNavigation: body.showInNavigation,
+    seoTitle: body.seoTitle,
+    seoDescription: body.seoDescription,
+    translations: body.translations
   })
 })

@@ -11,6 +11,10 @@ export default defineEventHandler(async (event) => {
   // Exclude id field to let the database generate it
   const { id, ...dataWithoutId } = body
 
+  // Convert date string to Date object
+  if (dataWithoutId.publishedAt) {
+    dataWithoutId.publishedAt = new Date(dataWithoutId.publishedAt)
+  }
   return await createPagesPage({
     ...dataWithoutId,
     teamId: team.id,

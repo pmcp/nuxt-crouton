@@ -1,25 +1,24 @@
 // Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { getPagesPagesByIds } from '../../../../database/queries'
+import { updatePositionPagesPage } from '../../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
   const { pageId } = getRouterParams(event)
-  console.log('[pages-pages GET] pageId:', pageId)
-
   if (!pageId) {
     throw createError({ statusCode: 400, statusMessage: 'Missing page ID' })
   }
-
   const { team } = await resolveTeamAndCheckMembership(event)
-  console.log('[pages-pages GET] team:', team.id)
 
-  const pages = await getPagesPagesByIds(team.id, [pageId])
-  console.log('[pages-pages GET] pages found:', pages.length, pages[0] ? { id: pages[0].id, title: pages[0].title, content: pages[0].content?.substring(0, 50) } : null)
+  const body = await readBody(event)
 
-  if (!pages.length) {
-    throw createError({ statusCode: 404, statusMessage: 'Page not found' })
+  // Validate input
+  if (body.order === undefined || typeof body.order !== 'number') {
+    throw createError({ statusCode: 400, statusMessage: 'order is required and must be a number' })
   }
 
-  return pages[0]
+  // parentId can be null (move to root) or a valid ID
+  const parentId = body.parentId ?? null
+
+  return await updatePositionPagesPage(team.id, pageId, parentId, body.order)
 })
