@@ -71,34 +71,76 @@ const getCurrentUser = () => {
   return { name: 'Anonymous', color: undefined }
 }
 
-// Try to set up collab if package is installed and we have a roomId
-// Must be called at top level for composable compatibility
+// Set up collab if package is installed
+// Must be called at top level for composable compatibility (Vue's rules)
+// Pass null roomId for create action - composable handles null gracefully
+const collabRoomIdForContent = props.action === 'update' && props.activeItem?.id
+  ? `page-${props.activeItem.id}`
+  : null
+
 let collabSetup: any = null
-console.log('[PagesForm] Checking collab setup - action:', props.action, 'activeItem.id:', props.activeItem?.id)
-if (props.action === 'update' && props.activeItem?.id) {
-  try {
-    // @ts-expect-error - useCollabEditor may not exist if collab package not installed
-    if (typeof useCollabEditor === 'function') {
-      const roomId = `page-${props.activeItem.id}`
-      const currentUser = getCurrentUser()
-      console.log('[PagesForm] Setting up collab - roomId:', roomId, 'user:', currentUser)
-      // @ts-expect-error - conditional call
-      collabSetup = useCollabEditor({
-        roomId,
-        roomType: 'page',
-        field: 'presence', // Just for presence, not syncing content
-        user: currentUser
-      })
-      collabConnection.value = collabSetup
-      console.log('[PagesForm] Collab setup complete:', collabSetup)
-    } else {
-      console.log('[PagesForm] useCollabEditor not available')
-    }
-  } catch (e) {
-    console.log('[PagesForm] Collab setup error:', e)
-    // Collab package not installed, silently ignore
+let collabLocalizedContent: any = null
+
+console.log('[PagesForm] Collab setup - roomId:', collabRoomIdForContent)
+
+// Set up presence tracking (shows who's editing)
+try {
+  // @ts-expect-error - useCollabEditor may not exist if collab package not installed
+  if (typeof useCollabEditor === 'function' && collabRoomIdForContent) {
+    const currentUser = getCurrentUser()
+    console.log('[PagesForm] Setting up collab presence - user:', currentUser)
+    // @ts-expect-error - conditional call
+    collabSetup = useCollabEditor({
+      roomId: collabRoomIdForContent,
+      roomType: 'page',
+      field: 'presence',
+      user: currentUser
+    })
+    collabConnection.value = collabSetup
+    console.log('[PagesForm] Collab presence setup complete')
   }
+} catch (e) {
+  console.log('[PagesForm] Collab presence setup error:', e)
 }
+
+// Set up localized content sync (real-time editing per locale)
+// Always call at top level - pass null roomId for create action
+try {
+  // @ts-expect-error - useCollabLocalizedContent may not exist if collab package not installed
+  if (typeof useCollabLocalizedContent === 'function') {
+    const currentUser = getCurrentUser()
+    console.log('[PagesForm] Setting up collab localized content - roomId:', collabRoomIdForContent)
+    // @ts-expect-error - conditional call
+    collabLocalizedContent = useCollabLocalizedContent({
+      roomId: collabRoomIdForContent,
+      roomType: 'page',
+      fieldPrefix: 'content',
+      user: currentUser
+    })
+    console.log('[PagesForm] Collab localized content setup complete')
+  } else {
+    console.log('[PagesForm] useCollabLocalizedContent not available')
+  }
+} catch (e) {
+  console.log('[PagesForm] Collab localized content setup error:', e)
+}
+
+// Collab connection for CroutonI18nInput (provides getXmlFragment for block editors)
+const collabForI18n = computed(() => {
+  // Only provide collab when we have a valid connection
+  if (!collabLocalizedContent || !collabRoomIdForContent) return undefined
+  // Check if connected
+  if (!collabLocalizedContent.connected?.value) {
+    console.log('[PagesForm] collabForI18n - not connected yet')
+    return undefined
+  }
+  console.log('[PagesForm] collabForI18n - connected, providing collab interface')
+  return {
+    getXmlFragment: (locale: string) => collabLocalizedContent.getXmlFragment(locale),
+    connection: collabLocalizedContent.connection,
+    user: getCurrentUser()
+  }
+})
 
 // Fetch all pages for parent selector
 const { items: allPages, pending: pagesPending } = await useCollectionQuery('pagesPages')
@@ -125,6 +167,36 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   : { ...defaultValue }
 
 const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
+
+// Initialize Yjs fragments with existing content when editing
+// This happens after collab connection is established
+if (collabLocalizedContent && props.action === 'update' && props.activeItem?.translations) {
+  const translations = props.activeItem.translations as Record<string, { content?: string }>
+  console.log('[PagesForm] Initializing Yjs with existing translations:', Object.keys(translations))
+
+  // Wait for collab to connect before loading content
+  watch(
+    () => collabLocalizedContent?.connected?.value,
+    (connected) => {
+      if (connected) {
+        for (const [locale, data] of Object.entries(translations)) {
+          if (data?.content) {
+            try {
+              const contentJson = typeof data.content === 'string'
+                ? JSON.parse(data.content)
+                : data.content
+              console.log('[PagesForm] Loading content for locale:', locale)
+              collabLocalizedContent.setContentJson(locale, contentJson)
+            } catch (e) {
+              console.warn('[PagesForm] Failed to parse content for locale:', locale, e)
+            }
+          }
+        }
+      }
+    },
+    { immediate: true }
+  )
+}
 
 // Computed values
 const selectedPageType = computed(() => getPageType(state.value.pageType))
@@ -237,8 +309,34 @@ function onLayoutChange() {
 // Form submission
 async function handleSubmit() {
   try {
+    // Prepare translations, extracting collab content if needed
+    let translations = { ...state.value.translations }
+
+    // When collab is active for content, extract from Yjs fragments
+    if (collabLocalizedContent && isRegularPage.value) {
+      const activeFragments = collabLocalizedContent.getActiveFragments()
+      console.log('[PagesForm] handleSubmit - extracting collab content from', activeFragments.length, 'fragments')
+
+      for (const { locale } of activeFragments) {
+        // Extract content JSON from Yjs fragment
+        const contentJson = collabLocalizedContent.getContentJson(locale)
+        console.log('[PagesForm] handleSubmit - extracted content for', locale, ':', contentJson)
+
+        // Merge into translations
+        if (!translations[locale]) {
+          translations[locale] = {}
+        }
+        // Store as JSON string for the content field
+        translations[locale] = {
+          ...translations[locale],
+          content: JSON.stringify(contentJson)
+        }
+      }
+    }
+
     const data = {
       ...state.value,
+      translations,
       // Config only used for app pages (non-regular)
       config: !isRegularPage.value ? state.value.config : null
       // Note: content is stored in translations.{locale}.content, not at root level
@@ -304,50 +402,84 @@ const fieldComponents = computed(() => {
   >
     <CroutonFormLayout>
       <template #main>
-        <div class="flex flex-col gap-4 p-1">
-          <!-- Collab presence indicator (when editing and collab is available) -->
-          <div v-if="collabConnection?.connected?.value" class="flex items-center justify-end gap-2 -mt-2 mb-2">
-            <CollabIndicator
-              :connected="collabConnection.connected.value"
-              :synced="collabConnection.synced.value"
-              :error="collabConnection.error?.value || null"
-              :users="collabConnection.users?.value || []"
-              :max-visible-users="3"
+        <div class="flex flex-col h-full">
+          <!-- Compact Header Bar -->
+          <div class="flex flex-wrap items-center gap-3 pb-3 mb-4 border-b border-default">
+            <!-- Page Type (compact with icon) -->
+            <div class="flex items-center gap-2">
+              <UIcon
+                :name="selectedPageType?.icon || 'i-lucide-file'"
+                class="size-4 text-muted"
+              />
+              <USelect
+                v-model="state.pageType"
+                :items="pageTypeOptions"
+                value-key="value"
+                :disabled="action === 'update'"
+                size="xs"
+                class="w-36"
+              />
+            </div>
+
+            <!-- Status Badge/Select -->
+            <USelect
+              v-model="state.status"
+              :items="statusOptions"
+              value-key="value"
+              size="xs"
+              class="w-24"
             />
+
+            <!-- Spacer -->
+            <div class="flex-1" />
+
+            <!-- Collab presence indicator (when editing and collab is available) -->
+            <div v-if="collabConnection?.connected?.value" class="flex items-center gap-2">
+              <CollabIndicator
+                :connected="collabConnection.connected.value"
+                :synced="collabConnection.synced.value"
+                :error="collabConnection.error?.value || null"
+                :users="collabConnection.users?.value || []"
+                :max-visible-users="3"
+              />
+            </div>
+
+            <!-- Delete Button (update mode only) -->
+            <UButton
+              v-if="action === 'update' && state.id"
+              color="error"
+              variant="ghost"
+              icon="i-lucide-trash-2"
+              size="xs"
+              @click="openDeleteConfirm"
+            />
+
+            <!-- Save Button - subtle -->
+            <UButton
+              type="submit"
+              variant="ghost"
+              color="primary"
+              size="xs"
+              icon="i-lucide-save"
+              :loading="croutonLoading === 'create' || croutonLoading === 'update'"
+            >
+              {{ action === 'create' ? 'Create' : 'Save' }}
+            </UButton>
           </div>
 
-          <!-- Page Type Selector -->
-          <UFormField :label="t('pages.fields.pageType') || 'Page Type'" name="pageType">
-            <USelect
-              v-model="state.pageType"
-              :items="pageTypeOptions"
-              value-key="value"
-              :disabled="action === 'update'"
-              class="w-full"
-            >
-              <template #leading>
-                <UIcon
-                  v-if="selectedPageType?.icon"
-                  :name="selectedPageType.icon"
-                  class="size-4"
-                />
-              </template>
-            </USelect>
-            <p v-if="selectedPageType?.description" class="text-sm text-muted mt-1">
-              {{ selectedPageType.description }}
-            </p>
-          </UFormField>
-
-          <!-- Translatable Fields (Title, Slug, and Content for regular pages) -->
-          <!-- All content is per-locale - no "base language" -->
-          <CroutonI18nInput
-            v-model="state.translations"
-            :fields="translatableFields"
-            show-ai-translate
-            field-type="page"
-            :field-components="fieldComponents"
-            :label="isRegularPage ? 'Page Content (Translatable)' : 'Title & URL Slug'"
-          />
+          <!-- Translatable Fields - grows to fill space -->
+          <div class="flex-1 min-h-0 overflow-hidden">
+            <CroutonI18nInput
+              v-model="state.translations"
+              :fields="translatableFields"
+              layout="side-by-side"
+              show-ai-translate
+              field-type="page"
+              :field-components="fieldComponents"
+              :collab="collabForI18n"
+              class="h-full"
+            />
+          </div>
 
           <!-- Config Fields (for app pages with configSchema) -->
           <template v-if="!isRegularPage && selectedPageType?.configSchema?.length">
@@ -368,90 +500,62 @@ const fieldComponents = computed(() => {
               <p>The page will display the {{ selectedPageType?.name }} component.</p>
             </div>
           </template>
+
+          <!-- Page Settings Accordion (collapsed by default) -->
+          <UAccordion
+            :items="[{ label: 'Page Settings', value: 'settings', icon: 'i-lucide-settings' }]"
+            :default-value="[]"
+          >
+            <template #body="{ item }">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/10 rounded-b-lg">
+                <!-- Visibility -->
+                <UFormField :label="t('pages.fields.visibility') || 'Visibility'" name="visibility">
+                  <USelect
+                    v-model="state.visibility"
+                    :items="visibilityOptions"
+                    value-key="value"
+                    size="sm"
+                    class="w-full"
+                  />
+                </UFormField>
+
+                <!-- Show in Navigation -->
+                <UFormField :label="t('pages.fields.showInNavigation') || 'Show in Nav'" name="showInNavigation">
+                  <div class="h-9 flex items-center">
+                    <USwitch v-model="state.showInNavigation" />
+                  </div>
+                </UFormField>
+
+                <!-- Layout -->
+                <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
+                  <USelect
+                    v-model="state.layout"
+                    :items="layoutOptions"
+                    value-key="value"
+                    size="sm"
+                    class="w-full"
+                    @update:model-value="onLayoutChange"
+                  />
+                </UFormField>
+
+                <!-- Parent Page -->
+                <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
+                  <USelect
+                    v-model="state.parentId"
+                    :items="parentOptions"
+                    value-key="value"
+                    :loading="pagesPending"
+                    placeholder="None"
+                    size="sm"
+                    class="w-full"
+                  />
+                </UFormField>
+              </div>
+            </template>
+          </UAccordion>
         </div>
       </template>
 
-      <template #sidebar>
-        <div class="flex flex-col gap-4 p-1">
-          <!-- Status -->
-          <UFormField :label="t('pages.fields.status') || 'Status'" name="status">
-            <USelect
-              v-model="state.status"
-              :items="statusOptions"
-              value-key="value"
-              class="w-full"
-            />
-          </UFormField>
-
-          <!-- Visibility -->
-          <UFormField :label="t('pages.fields.visibility') || 'Visibility'" name="visibility">
-            <USelect
-              v-model="state.visibility"
-              :items="visibilityOptions"
-              value-key="value"
-              class="w-full"
-            />
-          </UFormField>
-
-          <!-- Show in Navigation -->
-          <UFormField :label="t('pages.fields.showInNavigation') || 'Show in Navigation'" name="showInNavigation">
-            <USwitch v-model="state.showInNavigation" />
-          </UFormField>
-
-          <!-- Layout -->
-          <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
-            <USelect
-              v-model="state.layout"
-              :items="layoutOptions"
-              value-key="value"
-              class="w-full"
-              @update:model-value="onLayoutChange"
-            />
-            <p class="text-xs text-muted mt-1">
-              {{ state.layout === 'full-height' ? 'Content fills the viewport height' : state.layout === 'full-screen' ? 'No padding, full viewport' : 'Normal scrollable content' }}
-            </p>
-          </UFormField>
-
-          <!-- Parent Page -->
-          <UFormField :label="t('pages.fields.parent') || 'Parent Page'" name="parentId">
-            <USelect
-              v-model="state.parentId"
-              :items="parentOptions"
-              value-key="value"
-              :loading="pagesPending"
-              placeholder="Select parent page..."
-              class="w-full"
-            />
-            <p class="text-xs text-muted mt-1">
-              {{ state.parentId ? 'This page will be nested under the selected parent' : 'This page will appear at the root level' }}
-            </p>
-          </UFormField>
-        </div>
-      </template>
-
-      <template #footer>
-        <div class="flex items-center gap-2 pt-4 pb-6 w-full">
-          <!-- Save button -->
-          <CroutonFormActionButton
-            :action="action"
-            :collection="collection"
-            :items="items"
-            :loading="loading"
-            class="flex-1"
-          />
-
-          <!-- Delete button (only on update) -->
-          <UTooltip v-if="action === 'update' && state.id" text="Delete page">
-            <UButton
-              color="error"
-              variant="ghost"
-              icon="i-lucide-trash-2"
-              size="md"
-              @click="openDeleteConfirm"
-            />
-          </UTooltip>
-        </div>
-      </template>
     </CroutonFormLayout>
   </UForm>
 </template>

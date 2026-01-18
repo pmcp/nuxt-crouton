@@ -76,9 +76,9 @@ const sidebarAccordionItems = [{
       class="flex flex-col gap-6 w-full mx-auto flex-grow "
     >
       <!-- Grid Container (only when sidebar exists) -->
-      <div :class="hasSidebar ? '@container grid grid-cols-1 @lg:grid-cols-3 gap-6' : ''">
+      <div :class="hasSidebar ? '@container grid grid-cols-1 @lg:grid-cols-3 gap-6' : 'flex flex-col flex-1 min-h-0'">
         <!-- Main Area -->
-        <div :class="hasSidebar ? '@lg:col-span-2 space-y-6' : 'space-y-6'">
+        <div :class="hasSidebar ? '@lg:col-span-2 space-y-6' : 'flex-1 flex flex-col min-h-0'">
           <!-- Tab Navigation (optional) -->
 
           <UTabs
@@ -95,8 +95,9 @@ const sidebarAccordionItems = [{
             :active-section="activeSection"
           />
 
-          <!-- Mobile / Small area: Accordion at top -->
+          <!-- Mobile / Small area: Accordion at top (only when sidebar exists) -->
           <div
+            v-if="hasSidebar"
             class="@lg:hidden mb-6"
             :ui="{ body: 'sm:p-4 ' }"
           >
