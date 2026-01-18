@@ -26,6 +26,10 @@
       "import": "./server/database/schema/auth.ts",
       "require": "./server/database/schema/auth.ts",
       "types": "./server/database/schema/auth.ts"
+    },
+    "./server/utils/useServerAuth": {
+      "import": "./server/utils/useServerAuth.ts",
+      "types": "./server/utils/useServerAuth.ts"
     }
   },
   "main": "./nuxt.config.ts",
