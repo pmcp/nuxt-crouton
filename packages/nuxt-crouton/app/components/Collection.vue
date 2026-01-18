@@ -391,21 +391,17 @@ const gridBadgePositionClasses = computed(() => {
 const collabEditingBadgeComponent = computed<Component | null>(() => {
   if (!props.showCollabPresence) return null
 
-  const instance = getCurrentInstance()
-  if (!instance) return null
-
-  const appComponents = instance.appContext.components
-
-  // Check for the component in global registry
-  if (appComponents['CollabEditingBadge']) {
+  // Use resolveComponent directly - Nuxt auto-imports won't appear in appContext.components
+  // resolveComponent returns a string if not found, otherwise returns the component
+  try {
     const resolved = resolveComponent('CollabEditingBadge')
-    return typeof resolved === 'string' ? null : resolved
-  }
+    if (typeof resolved !== 'string') return resolved
 
-  // Check lazy variant
-  if (appComponents['LazyCollabEditingBadge']) {
-    const resolved = resolveComponent('LazyCollabEditingBadge')
-    return typeof resolved === 'string' ? null : resolved
+    // Try lazy variant
+    const lazyResolved = resolveComponent('LazyCollabEditingBadge')
+    if (typeof lazyResolved !== 'string') return lazyResolved
+  } catch {
+    // Component not available
   }
 
   return null
