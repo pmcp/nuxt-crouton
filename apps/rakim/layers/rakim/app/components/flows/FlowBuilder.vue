@@ -1680,7 +1680,7 @@ function cancel() {
                       size="sm"
                       @click="resetInputForm('slack'); isSlackModalOpen = true"
                     >
-                      <UIcon name="i-simple-icons-slack" />
+                      <UIcon name="i-lucide-slack" />
                       Add Slack
                     </UButton>
 
@@ -1718,7 +1718,7 @@ function cancel() {
                             :loading="waitingForOAuth"
                             @click="openOAuthPopup"
                           >
-                            <UIcon name="i-simple-icons-slack" />
+                            <UIcon name="i-lucide-slack" />
                             Connect Slack Workspace
                           </UButton>
                           <div v-if="inputFormState.sourceMetadata?.slackTeamId" class="text-sm text-muted">
@@ -1755,7 +1755,7 @@ function cancel() {
                       variant="outline"
                       @click="resetInputForm('figma'); isFigmaModalOpen = true"
                     >
-                      <UIcon name="i-simple-icons-figma" />
+                      <UIcon name="i-lucide-figma" />
                       Add Figma
                     </UButton>
 
@@ -2035,7 +2035,7 @@ function cancel() {
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <UIcon
-                      :name="input.sourceType === 'slack' ? 'i-simple-icons-slack' : input.sourceType === 'notion' ? 'i-simple-icons-notion' : 'i-simple-icons-figma'"
+                      :name="input.sourceType === 'slack' ? 'i-lucide-slack' : input.sourceType === 'notion' ? 'i-simple-icons-notion' : 'i-lucide-figma'"
                       class="w-5 h-5"
                     />
                     <div>

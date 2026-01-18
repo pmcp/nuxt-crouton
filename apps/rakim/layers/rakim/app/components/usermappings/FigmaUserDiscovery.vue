@@ -360,7 +360,7 @@ onMounted(initialize)
         >
           <!-- Figma user -->
           <div class="flex items-center gap-2 flex-1 min-w-0">
-            <UIcon name="i-simple-icons-figma" class="w-5 h-5 flex-shrink-0" />
+            <UIcon name="i-lucide-figma" class="w-5 h-5 flex-shrink-0" />
             <div class="min-w-0">
               <p class="font-medium truncate">
                 {{ mapping.sourceUserName || mapping.sourceUserId }}
@@ -485,7 +485,7 @@ onMounted(initialize)
       v-if="existingMappings.length === 0 && discoveredMappings.length === 0 && !loadingMappings"
       class="text-center py-8 text-muted"
     >
-      <UIcon name="i-simple-icons-figma" class="w-12 h-12 mx-auto mb-3 opacity-30" />
+      <UIcon name="i-lucide-figma" class="w-12 h-12 mx-auto mb-3 opacity-30" />
       <p>No Figma user mappings yet</p>
       <p class="text-sm mt-1">Use the bootstrap comment or add mappings manually</p>
     </div>

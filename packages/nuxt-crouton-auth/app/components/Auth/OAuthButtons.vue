@@ -33,14 +33,14 @@ const { hasOAuth, oauthProviders } = useAuth()
 
 // OAuth provider configuration
 const providerConfig: Record<string, { icon: string, color?: string, name: string }> = {
-  github: { icon: 'i-simple-icons-github', name: 'GitHub' },
+  github: { icon: 'i-lucide-github', name: 'GitHub' },
   google: { icon: 'i-simple-icons-google', name: 'Google' },
   discord: { icon: 'i-simple-icons-discord', color: '#5865F2', name: 'Discord' },
-  twitter: { icon: 'i-simple-icons-x', name: 'X' },
-  facebook: { icon: 'i-simple-icons-facebook', color: '#1877F2', name: 'Facebook' },
+  twitter: { icon: 'i-lucide-twitter', name: 'X' },
+  facebook: { icon: 'i-lucide-facebook', color: '#1877F2', name: 'Facebook' },
   apple: { icon: 'i-simple-icons-apple', name: 'Apple' },
   microsoft: { icon: 'i-simple-icons-microsoft', name: 'Microsoft' },
-  linkedin: { icon: 'i-simple-icons-linkedin', color: '#0A66C2', name: 'LinkedIn' }
+  linkedin: { icon: 'i-lucide-linkedin', color: '#0A66C2', name: 'LinkedIn' }
 }
 
 // Get config for a provider

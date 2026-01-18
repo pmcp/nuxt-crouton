@@ -280,7 +280,7 @@ describe('server/lib/auth', () => {
       }
       const providers = getConfiguredOAuthProviders(oauthConfig)
 
-      expect(providers[0].icon).toBe('i-simple-icons-github')
+      expect(providers[0].icon).toBe('i-lucide-github')
       expect(providers[0].color).toBe('#24292e')
       expect(providers[0].name).toBe('GitHub')
     })

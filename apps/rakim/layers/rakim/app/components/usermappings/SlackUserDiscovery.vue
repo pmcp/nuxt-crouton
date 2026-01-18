@@ -480,7 +480,7 @@ onMounted(initialize)
         <div class="flex items-center gap-3 p-4 rounded-lg border-2 border-primary bg-primary-50 dark:bg-primary-950">
           <!-- Source user (read-only) -->
           <div class="flex items-center gap-2 flex-1 min-w-0">
-            <UIcon name="i-simple-icons-slack" class="w-5 h-5 flex-shrink-0" />
+            <UIcon name="i-lucide-slack" class="w-5 h-5 flex-shrink-0" />
             <div class="min-w-0">
               <p class="font-medium truncate">
                 {{ editingMapping.sourceUserName || editingMapping.sourceUserId }}
@@ -534,7 +534,7 @@ onMounted(initialize)
         v-if="slackUsers.length === 0 && !loading && !slackError"
         class="text-center py-8 text-muted"
       >
-        <UIcon name="i-simple-icons-slack" class="w-12 h-12 mx-auto mb-3 opacity-30" />
+        <UIcon name="i-lucide-slack" class="w-12 h-12 mx-auto mb-3 opacity-30" />
         <p>No Slack users found</p>
         <p class="text-sm mt-1">Check your Slack token and workspace connection</p>
       </div>

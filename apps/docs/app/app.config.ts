@@ -30,7 +30,7 @@ export default defineAppConfig({
       'to': '/changelogs',
       'aria-label': 'Changelog Tracker'
     }, {
-      'icon': 'i-simple-icons-github',
+      'icon': 'i-lucide-github',
       'to': 'https://github.com/pmcp/nuxt-crouton',
       'target': '_blank',
       'aria-label': 'Nuxt Crouton on GitHub'
@@ -40,7 +40,7 @@ export default defineAppConfig({
     credits: `Built with Nuxt Crouton • © ${new Date().getFullYear()}`,
     colorMode: false,
     links: [{
-      'icon': 'i-simple-icons-github',
+      'icon': 'i-lucide-github',
       'to': 'https://github.com/pmcp/nuxt-crouton',
       'target': '_blank',
       'aria-label': 'Nuxt Crouton on GitHub'

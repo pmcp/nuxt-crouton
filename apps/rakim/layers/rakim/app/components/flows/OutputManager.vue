@@ -218,7 +218,7 @@ const outputTypeOptions = [
   },
   {
     label: 'GitHub',
-    icon: 'i-simple-icons-github',
+    icon: 'i-lucide-github',
     click: () => openAddModal('github'),
     disabled: true, // Future feature
   },
@@ -652,7 +652,7 @@ function getOutputTypeIcon(type: string): string {
     case 'notion':
       return 'i-heroicons-document-text'
     case 'github':
-      return 'i-simple-icons-github'
+      return 'i-lucide-github'
     case 'linear':
       return 'i-simple-icons-linear'
     default:

@@ -13,7 +13,7 @@
         label: 'Use this template',
         to: 'https://github.com/nuxt-ui-templates/starter',
         target: '_blank',
-        icon: 'i-simple-icons-github',
+        icon: 'i-lucide-github',
         size: 'xl',
         color: 'neutral',
         variant: 'subtle'
@@ -66,7 +66,7 @@
           label: 'View on GitHub',
           to: 'https://github.com/nuxt-ui-templates/starter',
           target: '_blank',
-          icon: 'i-simple-icons-github',
+          icon: 'i-lucide-github',
           color: 'neutral',
           variant: 'outline'
         }]"

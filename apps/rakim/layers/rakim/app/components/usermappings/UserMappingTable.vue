@@ -46,8 +46,8 @@ const emit = defineEmits<{
 // Source type icons
 const sourceTypeIcon = (type: string) => {
   switch (type) {
-    case 'slack': return 'i-simple-icons-slack'
-    case 'figma': return 'i-simple-icons-figma'
+    case 'slack': return 'i-lucide-slack'
+    case 'figma': return 'i-lucide-figma'
     default: return 'i-lucide-user'
   }
 }

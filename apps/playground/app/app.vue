@@ -42,7 +42,7 @@ useSeoMeta({
         <UButton
           to="https://github.com/nuxt-ui-templates/starter"
           target="_blank"
-          icon="i-simple-icons-github"
+          icon="i-lucide-github"
           aria-label="GitHub"
           color="neutral"
           variant="ghost"
@@ -69,7 +69,7 @@ useSeoMeta({
         <UButton
           to="https://github.com/nuxt-ui-templates/starter"
           target="_blank"
-          icon="i-simple-icons-github"
+          icon="i-lucide-github"
           aria-label="GitHub"
           color="neutral"
           variant="ghost"

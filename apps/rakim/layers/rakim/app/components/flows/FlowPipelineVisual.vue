@@ -16,8 +16,8 @@ const activeOutputs = computed(() => props.outputs.filter(o => o.active))
 // Source icon mapping
 function getSourceIcon(sourceType: string): string {
   const icons: Record<string, string> = {
-    slack: 'i-simple-icons-slack',
-    figma: 'i-simple-icons-figma',
+    slack: 'i-lucide-slack',
+    figma: 'i-lucide-figma',
     notion: 'i-simple-icons-notion',
     email: 'i-lucide-mail',
   }
@@ -39,7 +39,7 @@ function getSourceColor(sourceType: string): string {
 function getOutputIcon(outputType: string): string {
   const icons: Record<string, string> = {
     notion: 'i-simple-icons-notion',
-    github: 'i-simple-icons-github',
+    github: 'i-lucide-github',
     linear: 'i-simple-icons-linear',
   }
   return icons[outputType] || 'i-lucide-send'

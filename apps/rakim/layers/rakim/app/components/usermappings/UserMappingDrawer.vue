@@ -53,8 +53,8 @@ const sourceTypeLabel = computed(() => {
 
 const sourceTypeIcon = computed(() => {
   switch (props.sourceType) {
-    case 'slack': return 'i-simple-icons-slack'
-    case 'figma': return 'i-simple-icons-figma'
+    case 'slack': return 'i-lucide-slack'
+    case 'figma': return 'i-lucide-figma'
     case 'notion': return 'i-simple-icons-notion'
     default: return 'i-lucide-user'
   }

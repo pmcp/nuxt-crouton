@@ -85,14 +85,14 @@ const loginFields = computed<AuthFormField[]>(() => {
 
 // OAuth provider configuration
 const providerConfig: Record<string, { icon: string, name: string }> = {
-  github: { icon: 'i-simple-icons-github', name: 'GitHub' },
+  github: { icon: 'i-lucide-github', name: 'GitHub' },
   google: { icon: 'i-simple-icons-google', name: 'Google' },
   discord: { icon: 'i-simple-icons-discord', name: 'Discord' },
-  twitter: { icon: 'i-simple-icons-x', name: 'X' },
-  facebook: { icon: 'i-simple-icons-facebook', name: 'Facebook' },
+  twitter: { icon: 'i-lucide-twitter', name: 'X' },
+  facebook: { icon: 'i-lucide-facebook', name: 'Facebook' },
   apple: { icon: 'i-simple-icons-apple', name: 'Apple' },
   microsoft: { icon: 'i-simple-icons-microsoft', name: 'Microsoft' },
-  linkedin: { icon: 'i-simple-icons-linkedin', name: 'LinkedIn' }
+  linkedin: { icon: 'i-lucide-linkedin', name: 'LinkedIn' }
 }
 
 // Build OAuth providers for UAuthForm

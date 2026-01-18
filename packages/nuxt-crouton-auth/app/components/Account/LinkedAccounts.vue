@@ -42,13 +42,13 @@ const isLoading = computed(() => props.loading || listLoading.value)
 
 // Provider info for display
 const providerInfo: Record<string, { name: string, icon: string, color: string }> = {
-  github: { name: 'GitHub', icon: 'i-simple-icons-github', color: 'gray' },
+  github: { name: 'GitHub', icon: 'i-lucide-github', color: 'gray' },
   google: { name: 'Google', icon: 'i-simple-icons-google', color: 'red' },
   discord: { name: 'Discord', icon: 'i-simple-icons-discord', color: 'indigo' },
   apple: { name: 'Apple', icon: 'i-simple-icons-apple', color: 'gray' },
   microsoft: { name: 'Microsoft', icon: 'i-simple-icons-microsoft', color: 'blue' },
-  twitter: { name: 'X (Twitter)', icon: 'i-simple-icons-x', color: 'gray' },
-  facebook: { name: 'Facebook', icon: 'i-simple-icons-facebook', color: 'blue' }
+  twitter: { name: 'X (Twitter)', icon: 'i-lucide-twitter', color: 'gray' },
+  facebook: { name: 'Facebook', icon: 'i-lucide-facebook', color: 'blue' }
 }
 
 // Get provider display info

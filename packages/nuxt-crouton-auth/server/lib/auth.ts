@@ -1135,7 +1135,7 @@ export interface OAuthProviderInfo {
 const BUILTIN_PROVIDERS: Record<string, Omit<OAuthProviderInfo, 'id'>> = {
   github: {
     name: 'GitHub',
-    icon: 'i-simple-icons-github',
+    icon: 'i-lucide-github',
     color: '#24292e'
   },
   google: {
