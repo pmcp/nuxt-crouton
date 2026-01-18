@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue'
+import { computed, toRef, watch } from 'vue'
 import type { CollabAwarenessState } from '../types/collab'
 import { useCollabRoomUsers } from '../composables/useCollabRoomUsers'
 
@@ -52,6 +52,9 @@ interface Props {
 
   /** Max avatars to show in tooltip */
   maxAvatars?: number
+
+  /** Display variant: 'badge' shows green pill with text, 'avatars' shows only stacked circles */
+  variant?: 'badge' | 'avatars'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -60,11 +63,14 @@ const props = withDefaults(defineProps<Props>(), {
   pollInterval: 5000,
   size: 'xs',
   showAvatars: true,
-  maxAvatars: 5
+  maxAvatars: 5,
+  variant: 'badge'
 })
 
+console.log('[CollabEditingBadge] Mounting for roomId:', props.roomId, 'roomType:', props.roomType)
+
 // Use the composable with reactive roomId
-const { otherUsers, otherCount, loading } = useCollabRoomUsers({
+const { otherUsers, otherCount, loading, users } = useCollabRoomUsers({
   roomId: toRef(() => props.roomId),
   roomType: props.roomType,
   currentUserId: toRef(() => props.currentUserId),
@@ -72,6 +78,11 @@ const { otherUsers, otherCount, loading } = useCollabRoomUsers({
   excludeSelf: !!props.currentUserId,
   immediate: true
 })
+
+// Debug: watch for changes
+watch([users, otherUsers, otherCount], ([u, ou, oc]) => {
+  console.log('[CollabEditingBadge] Users updated:', { users: u, otherUsers: ou, otherCount: oc })
+}, { immediate: true })
 
 // Badge text
 const badgeText = computed(() => {
@@ -153,6 +164,22 @@ const tooltipContent = computed(() => {
   }
   return names.slice(0, 3).join(', ') + ` and ${names.length - 3} others`
 })
+
+// Tooltip for avatars variant: "X editing: names"
+const avatarsTooltip = computed(() => {
+  if (otherUsers.value.length === 0) return ''
+
+  const count = otherCount.value
+  const names = otherUsers.value.map(u => u.user?.name || 'Unknown')
+
+  if (count === 1) {
+    return `1 editing: ${names[0]}`
+  }
+  if (names.length <= 3) {
+    return `${count} editing: ${names.join(', ')}`
+  }
+  return `${count} editing: ${names.slice(0, 3).join(', ')} and ${names.length - 3} more`
+})
 </script>
 
 <template>
@@ -160,9 +187,40 @@ const tooltipContent = computed(() => {
     v-if="otherCount > 0 && !loading"
     class="collab-editing-badge inline-flex items-center"
   >
-    <!-- Avatar-style badge with tooltip -->
+    <!-- AVATARS VARIANT: Just stacked circles with simple tooltip -->
     <UTooltip
-      v-if="showAvatars"
+      v-if="variant === 'avatars'"
+      :delay-duration="200"
+      :text="avatarsTooltip"
+    >
+      <div class="flex -space-x-1.5">
+        <div
+          v-for="(user, index) in visibleUsers.slice(0, 3)"
+          :key="user.user?.id || index"
+          class="rounded-full flex items-center justify-center font-medium border-2 border-white dark:border-gray-900 shadow-sm"
+          :class="sizeClasses.avatar"
+          :style="{
+            backgroundColor: user.user?.color || '#6b7280',
+            color: getTextColor(user.user?.color || '#6b7280'),
+            zIndex: 3 - index
+          }"
+        >
+          {{ getInitials(user.user?.name || '') }}
+        </div>
+        <!-- Overflow indicator -->
+        <div
+          v-if="otherCount > 3"
+          class="rounded-full flex items-center justify-center font-medium border-2 border-white dark:border-gray-900 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shadow-sm"
+          :class="sizeClasses.avatar"
+        >
+          +{{ otherCount - 3 }}
+        </div>
+      </div>
+    </UTooltip>
+
+    <!-- BADGE VARIANT: Green pill with text + avatars (default) -->
+    <UTooltip
+      v-else-if="showAvatars"
       :delay-duration="200"
     >
       <template #default>

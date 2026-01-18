@@ -90,16 +90,19 @@
     @update:open="(val: boolean) => handleSlideoverClose(state.id, val)"
     @after:leave="() => handleAfterLeave(state.id)"
   >
-    <!-- Enhanced actions with expand button alongside close -->
+    <!-- Enhanced actions with presence avatars and expand button -->
     <template #actions>
-      <div class="flex items-center gap-2">
-        <!-- Breadcrumb for nested slideovers -->
-        <span
-          v-if="getPreviousSlideover(index) && !state.isExpanded"
-          class="text-sm mr-2"
-        >
-          {{ getPreviousSlideover(index)?.action }} {{ getPreviousSlideover(index)?.collection }} ›
-        </span>
+      <div class="flex items-center gap-1.5">
+        <!-- Collab presence avatars (shows who else is editing) -->
+        <CollabEditingBadge
+          v-if="state.action === 'update' && state.activeItem?.id && hasCollabSupport"
+          :room-id="`${state.collection}-${state.activeItem.id}`"
+          :room-type="state.collection || 'generic'"
+          :current-user-id="currentUserId"
+          :poll-interval="5000"
+          size="sm"
+          variant="avatars"
+        />
 
         <!-- Expand/Collapse button -->
         <UButton
@@ -144,6 +147,127 @@ import type { CroutonState } from '../composables/useCrouton'
 const { croutonStates, close, closeAll, removeState } = useCrouton()
 const { collectionWithCapitalSingular } = useFormatCollections()
 
+// Check if collab support is available (CollabEditingBadge component exists)
+const hasCollabSupport = computed(() => {
+  try {
+    const component = resolveComponent('CollabEditingBadge')
+    const isAvailable = typeof component !== 'string' // resolveComponent returns string if not found
+    console.log('[CroutonForm] hasCollabSupport:', isAvailable, 'component type:', typeof component)
+    return isAvailable
+  } catch (e) {
+    console.log('[CroutonForm] hasCollabSupport check failed:', e)
+    return false
+  }
+})
+
+// Get current user for presence
+const currentUser = computed(() => {
+  try {
+    // @ts-expect-error - useSession may not exist if auth package not installed
+    if (typeof useSession === 'function') {
+      // @ts-expect-error - conditional call
+      const { user } = useSession()
+      if (user?.value) {
+        return {
+          id: user.value.id,
+          name: user.value.name || user.value.email || 'Anonymous'
+        }
+      }
+    }
+  } catch {
+    // Auth package not installed
+  }
+  return null
+})
+
+const currentUserId = computed(() => currentUser.value?.id || null)
+
+// Track active collab WebSocket connections for each slideover
+const collabWebSockets = ref<Map<string, WebSocket>>(new Map())
+
+// Set up collab presence for a state using simple WebSocket
+const setupCollabPresence = (state: CroutonState) => {
+  console.log('[CroutonForm] setupCollabPresence called for:', state.collection, state.id)
+
+  if (import.meta.server) {
+    console.log('[CroutonForm] Skipping - SSR')
+    return
+  }
+  if (!hasCollabSupport.value) {
+    console.log('[CroutonForm] Skipping - no collab support')
+    return
+  }
+  if (state.action !== 'update') {
+    console.log('[CroutonForm] Skipping - action is not update:', state.action)
+    return
+  }
+  if (!state.activeItem?.id) {
+    console.log('[CroutonForm] Skipping - no activeItem.id')
+    return
+  }
+
+  // Skip if already connected
+  if (collabWebSockets.value.has(state.id)) {
+    console.log('[CroutonForm] Skipping - already connected')
+    return
+  }
+
+  const roomId = `${state.collection}-${state.activeItem.id}`
+  const roomType = state.collection || 'generic'
+
+  console.log('[CroutonForm] Creating WebSocket for room:', roomId, 'type:', roomType)
+
+  try {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const url = `${protocol}//${window.location.host}/api/collab/${roomId}/ws?type=${roomType}`
+
+    console.log('[CroutonForm] WebSocket URL:', url)
+    const ws = new WebSocket(url)
+    collabWebSockets.value.set(state.id, ws)
+
+    ws.onopen = () => {
+      console.log('[CroutonForm] WebSocket connected for room:', roomId)
+      // Send awareness message to register presence
+      const user = currentUser.value
+      console.log('[CroutonForm] Current user:', user)
+      if (user) {
+        const awarenessMessage = JSON.stringify({
+          type: 'awareness',
+          userId: user.id,
+          state: {
+            user: {
+              id: user.id,
+              name: user.name,
+              color: `hsl(${Math.abs(user.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % 360}, 70%, 50%)`
+            }
+          }
+        })
+        console.log('[CroutonForm] Sending awareness:', awarenessMessage)
+        ws.send(awarenessMessage)
+      }
+    }
+
+    ws.onerror = (e) => {
+      console.log('[CroutonForm] Collab presence WebSocket error:', e)
+    }
+  } catch (e) {
+    console.log('[CroutonForm] Collab presence setup failed:', e)
+  }
+}
+
+// Clean up collab WebSocket when slideover closes
+const cleanupCollabPresence = (stateId: string) => {
+  const ws = collabWebSockets.value.get(stateId)
+  if (ws) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.close()
+    } else if (ws.readyState === WebSocket.CONNECTING) {
+      ws.onopen = () => ws.close()
+    }
+  }
+  collabWebSockets.value.delete(stateId)
+}
+
 // Filter states by container type
 const modalStates = computed(() =>
   croutonStates.value.filter(state => state.containerType === 'modal')
@@ -156,6 +280,17 @@ const dialogStates = computed(() =>
 const slideoverStates = computed(() =>
   croutonStates.value.filter(state => state.containerType === 'slideover' || !state.containerType)
 )
+
+// Watch for new slideover states and set up collab presence
+watch(slideoverStates, (states) => {
+  console.log('[CroutonForm] slideoverStates changed, count:', states.length)
+  for (const state of states) {
+    console.log('[CroutonForm] State:', state.collection, state.action, 'isOpen:', state.isOpen, 'activeItem?.id:', state.activeItem?.id)
+    if (state.isOpen && state.action === 'update' && state.activeItem?.id) {
+      setupCollabPresence(state)
+    }
+  }
+}, { deep: true, immediate: true })
 
 // Get formatted collection name
 const getCollectionName = (collection: string | null): string => {
@@ -195,6 +330,7 @@ const handleSlideoverClose = (stateId: string, isOpen: boolean): void => {
 
 // Handle after leave animation complete - actually remove the state
 const handleAfterLeave = (stateId: string): void => {
+  cleanupCollabPresence(stateId)
   removeState(stateId)
 }
 

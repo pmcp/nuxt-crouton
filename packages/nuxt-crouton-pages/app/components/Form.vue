@@ -32,43 +32,24 @@ const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { open, close, loading: croutonLoading } = useCrouton()
 
-// Collab presence - connect to room when editing existing page
-// This makes the current user visible in CollabEditingBadge for other users
-// Only activates if nuxt-crouton-collab is installed
-// Room ID format: {collection}-{id} to match base CroutonForm convention
-const collabRoomId = computed(() =>
-  props.action === 'update' && props.activeItem?.id
-    ? `pagesPages-${props.activeItem.id}`
-    : null
-)
-
-// Collab connection state (reactive)
-const collabConnection = ref<any>(null)
-
-// Get current user for collab presence (try auth package if available)
+// Get current user for collab (content sync)
 const getCurrentUser = () => {
   try {
     // @ts-expect-error - useSession may not exist if auth package not installed
     if (typeof useSession === 'function') {
       // @ts-expect-error - conditional call
       const { user: sessionUser } = useSession()
-      console.log('[PagesForm] getCurrentUser - sessionUser:', sessionUser?.value)
       if (sessionUser?.value) {
         const u = sessionUser.value as Record<string, unknown>
-        const name = String(u.name || u.email || 'Anonymous')
-        console.log('[PagesForm] getCurrentUser - resolved name:', name)
         return {
-          name,
+          name: String(u.name || u.email || 'Anonymous'),
           color: undefined // Let collab generate consistent color from ID
         }
       }
     }
-  } catch (e) {
+  } catch {
     // Auth package not installed
-    console.log('[PagesForm] getCurrentUser - error:', e)
   }
-  // Fallback to generic user
-  console.log('[PagesForm] getCurrentUser - falling back to Anonymous')
   return { name: 'Anonymous', color: undefined }
 }
 
@@ -79,63 +60,32 @@ const collabRoomIdForContent = props.action === 'update' && props.activeItem?.id
   ? `pagesPages-${props.activeItem.id}`
   : null
 
-let collabSetup: any = null
 let collabLocalizedContent: any = null
 
-console.log('[PagesForm] Collab setup - roomId:', collabRoomIdForContent)
-
-// Set up presence tracking (shows who's editing)
-try {
-  // @ts-expect-error - useCollabEditor may not exist if collab package not installed
-  if (typeof useCollabEditor === 'function' && collabRoomIdForContent) {
-    const currentUser = getCurrentUser()
-    console.log('[PagesForm] Setting up collab presence - user:', currentUser)
-    // @ts-expect-error - conditional call
-    collabSetup = useCollabEditor({
-      roomId: collabRoomIdForContent,
-      roomType: 'pagesPages',
-      field: 'presence',
-      user: currentUser
-    })
-    collabConnection.value = collabSetup
-    console.log('[PagesForm] Collab presence setup complete')
-  }
-} catch (e) {
-  console.log('[PagesForm] Collab presence setup error:', e)
-}
+// Note: Presence tracking is handled by the base CroutonForm component
+// which shows CollabEditingBadge in the slideover header
 
 // Set up localized content sync (real-time editing per locale)
 // Always call at top level - pass null roomId for create action
 try {
   // @ts-expect-error - useCollabLocalizedContent may not exist if collab package not installed
   if (typeof useCollabLocalizedContent === 'function') {
-    const currentUser = getCurrentUser()
-    console.log('[PagesForm] Setting up collab localized content - roomId:', collabRoomIdForContent)
     // @ts-expect-error - conditional call
     collabLocalizedContent = useCollabLocalizedContent({
       roomId: collabRoomIdForContent,
       roomType: 'pagesPages',
       fieldPrefix: 'content',
-      user: currentUser
+      user: getCurrentUser()
     })
-    console.log('[PagesForm] Collab localized content setup complete')
-  } else {
-    console.log('[PagesForm] useCollabLocalizedContent not available')
   }
-} catch (e) {
-  console.log('[PagesForm] Collab localized content setup error:', e)
+} catch {
+  // Collab package not installed
 }
 
 // Collab connection for CroutonI18nInput (provides getXmlFragment for block editors)
 const collabForI18n = computed(() => {
-  // Only provide collab when we have a valid connection
   if (!collabLocalizedContent || !collabRoomIdForContent) return undefined
-  // Check if connected
-  if (!collabLocalizedContent.connected?.value) {
-    console.log('[PagesForm] collabForI18n - not connected yet')
-    return undefined
-  }
-  console.log('[PagesForm] collabForI18n - connected, providing collab interface')
+  if (!collabLocalizedContent.connected?.value) return undefined
   return {
     getXmlFragment: (locale: string) => collabLocalizedContent.getXmlFragment(locale),
     connection: collabLocalizedContent.connection,
@@ -173,7 +123,6 @@ const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
 // This happens after collab connection is established
 if (collabLocalizedContent && props.action === 'update' && props.activeItem?.translations) {
   const translations = props.activeItem.translations as Record<string, { content?: string }>
-  console.log('[PagesForm] Initializing Yjs with existing translations:', Object.keys(translations))
 
   // Wait for collab to connect before loading content
   watch(
@@ -186,10 +135,9 @@ if (collabLocalizedContent && props.action === 'update' && props.activeItem?.tra
               const contentJson = typeof data.content === 'string'
                 ? JSON.parse(data.content)
                 : data.content
-              console.log('[PagesForm] Loading content for locale:', locale)
               collabLocalizedContent.setContentJson(locale, contentJson)
-            } catch (e) {
-              console.warn('[PagesForm] Failed to parse content for locale:', locale, e)
+            } catch {
+              // Failed to parse content for locale
             }
           }
         }
@@ -316,18 +264,11 @@ async function handleSubmit() {
     // When collab is active for content, extract from Yjs fragments
     if (collabLocalizedContent && isRegularPage.value) {
       const activeFragments = collabLocalizedContent.getActiveFragments()
-      console.log('[PagesForm] handleSubmit - extracting collab content from', activeFragments.length, 'fragments')
-
       for (const { locale } of activeFragments) {
-        // Extract content JSON from Yjs fragment
         const contentJson = collabLocalizedContent.getContentJson(locale)
-        console.log('[PagesForm] handleSubmit - extracted content for', locale, ':', contentJson)
-
-        // Merge into translations
         if (!translations[locale]) {
           translations[locale] = {}
         }
-        // Store as JSON string for the content field
         translations[locale] = {
           ...translations[locale],
           content: JSON.stringify(contentJson)
@@ -434,16 +375,7 @@ const fieldComponents = computed(() => {
             <!-- Spacer -->
             <div class="flex-1" />
 
-            <!-- Collab presence indicator (when editing and collab is available) -->
-            <div v-if="collabConnection?.connected?.value" class="flex items-center gap-2">
-              <CollabIndicator
-                :connected="collabConnection.connected.value"
-                :synced="collabConnection.synced.value"
-                :error="collabConnection.error?.value || null"
-                :users="collabConnection.users?.value || []"
-                :max-visible-users="3"
-              />
-            </div>
+            <!-- Note: Collab presence is shown in the slideover header by base CroutonForm -->
 
             <!-- Page Settings Popover -->
             <UPopover>

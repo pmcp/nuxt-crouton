@@ -141,19 +141,23 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
    */
   async function fetchUsers(): Promise<void> {
     const roomId = roomIdRef.value
+    console.log('[useCollabRoomUsers] fetchUsers called, roomId:', roomId)
     if (!roomId) {
       users.value = []
       return
     }
 
     try {
+      const url = `/api/collab/${roomId}/users`
+      console.log('[useCollabRoomUsers] Fetching:', url, 'type:', roomType)
       const response = await $fetch<{ users: CollabAwarenessState[]; count: number }>(
-        `/api/collab/${roomId}/users`,
+        url,
         {
           query: { type: roomType }
         }
       )
 
+      console.log('[useCollabRoomUsers] Response:', response)
       users.value = response.users || []
       error.value = null
     } catch (err) {

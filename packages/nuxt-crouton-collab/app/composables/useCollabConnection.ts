@@ -264,7 +264,17 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
     }
 
     if (ws.value) {
-      ws.value.close()
+      // Only close if the WebSocket is OPEN or CLOSING
+      // Closing a CONNECTING WebSocket causes console errors
+      if (ws.value.readyState === WebSocket.OPEN || ws.value.readyState === WebSocket.CLOSING) {
+        ws.value.close()
+      } else if (ws.value.readyState === WebSocket.CONNECTING) {
+        // WebSocket is still connecting - set up handler to close when it opens
+        const socket = ws.value
+        socket.onopen = () => {
+          socket.close()
+        }
+      }
       ws.value = null
     }
 
