@@ -821,6 +821,11 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
           }
         : { enabled: false })
 
+  // Detect collab configuration (enables presence indicators in List.vue)
+  const collab = collectionConfig?.collab === true
+    ? { enabled: true }
+    : { enabled: false }
+
   // Handle translation configuration
   // Priority: 1) field-level meta.translatable, 2) collection-level translatable, 3) config.translations.collections
   if (!noTranslations) {
@@ -1059,7 +1064,8 @@ ${translationsFieldSchema}
       return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
     }).join('\n  '),
     hierarchy, // Pass hierarchy config to generators
-    sortable // Pass sortable config to generators
+    sortable, // Pass sortable config to generators
+    collab // Pass collab config to generators (enables presence indicators)
   }
 
   if (dryRun) {

@@ -202,7 +202,8 @@ export default {
   collections: [
     { name: 'products', fieldsFile: './schemas/products.json', hierarchy: true },
     { name: 'authors', fieldsFile: './schemas/authors.json', seed: true },          // seed with defaults
-    { name: 'posts', fieldsFile: './schemas/posts.json', seed: { count: 50 } }      // seed with custom count
+    { name: 'posts', fieldsFile: './schemas/posts.json', seed: { count: 50 } },     // seed with custom count
+    { name: 'bookings', fieldsFile: './schemas/bookings.json', collab: true }       // enable collab presence
   ],
   dialect: 'sqlite',
   seed: {
@@ -278,6 +279,11 @@ Always added to schema:
 
 With `--hierarchy`:
 - `parentId`, `path`, `depth`, `order`
+
+With `collab: true` (in config):
+- Adds `show-collab-presence` prop to List.vue
+- Adds `useSession()` and `collabConfig` computed to script
+- Requires `@friendlyinternet/nuxt-crouton-collab` to be extended
 
 ## Team Authentication
 

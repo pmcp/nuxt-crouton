@@ -86,6 +86,9 @@ export function generateListComponent(data, config = {}) {
     || f.type === 'geojson'
   )
 
+  // Check for collab presence support
+  const hasCollab = data?.collab?.enabled === true
+
   // Generate AI context header
   const aiHeader = generateAIHeader(data, apiPath)
 
@@ -95,7 +98,8 @@ export function generateListComponent(data, config = {}) {
     collection="${prefixedCamelCasePlural}"
     :columns="columns"
     :rows="${plural} || []"
-    :loading="pending"
+    :loading="pending"${hasCollab ? `
+    :show-collab-presence="collabConfig"` : ''}
   >
     <template #header>
       <CroutonTableHeader
@@ -227,5 +231,18 @@ const { columns } = use${prefixedPascalCasePlural}()
 const { items: ${camelCasePlural}, pending } = await useCollectionQuery(
   '${prefixedCamelCasePlural}'
 )
+${hasCollab
+    ? `
+// Get current user for presence filtering
+const { data: session } = useSession()
+
+// Collab presence config
+const collabConfig = computed(() => ({
+  roomType: 'page',
+  currentUserId: session.value?.user?.id,
+  pollInterval: 5000
+}))
+`
+    : ''}
 </script>`
 }

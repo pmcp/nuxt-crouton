@@ -174,6 +174,7 @@ Ask the user:
    - Translations? (i18n for multiple languages)
    - Hierarchy? (parent-child tree structure)
    - Maps? (address/location fields)
+   - Collab? (show who's editing items in realtime)
 
 ### Step 2: Create Schema File
 
@@ -199,7 +200,8 @@ export default {
   collections: [
     { name: '{collection}', fieldsFile: './schemas/{collection}.json' },
     { name: 'products', fieldsFile: './schemas/products.json', seed: true },  // with seed data
-    { name: 'categories', fieldsFile: './schemas/categories.json', seed: { count: 50 } }
+    { name: 'categories', fieldsFile: './schemas/categories.json', seed: { count: 50 } },
+    { name: 'bookings', fieldsFile: './schemas/bookings.json', collab: true }  // collab presence
   ],
   dialect: 'sqlite',  // or 'pg' for PostgreSQL
   seed: {

@@ -60,6 +60,15 @@ export default {
       sortable: true // Enable drag-to-reorder (without hierarchy)
     },
 
+    // Collection with collab presence support (realtime editing indicators)
+    // Adds: show-collab-presence prop to List.vue
+    // Requires: @friendlyinternet/nuxt-crouton-collab to be extended
+    {
+      name: 'bookings',
+      fieldsFile: './schemas/bookings.json',
+      collab: true // Enable presence indicators in list view
+    },
+
     // Collection with seed data generation
     // Generates: seed.ts file with drizzle-seed for realistic test data
     {
