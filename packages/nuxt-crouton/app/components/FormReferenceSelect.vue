@@ -39,7 +39,7 @@
       </template>
 
       <template #item-label="{ item }">
-        <span>{{ (item as Record<string, any>)?.[labelKey] || (item as Record<string, any>)?.id }}</span>
+        <span>{{ tContent(item, labelKey) || (item as Record<string, any>)?.id }}</span>
       </template>
 
       <template #content-top>
@@ -85,6 +85,7 @@ const emit = defineEmits<{
 }>()
 
 const { open, close } = useCrouton()
+const { tContent } = useT()
 
 // Fetch items from the referenced collection (with optional query filter)
 const { items, pending, refresh, error } = await useCollectionQuery(props.collection, {
@@ -112,11 +113,20 @@ const getErrorMessage = () => {
   return error.value.statusMessage || 'An error occurred while loading data.'
 }
 
-// Helper to get item label by ID
+// Computed map for reactive label lookup - uses tContent to resolve translations
+const itemLabelsMap = computed(() => {
+  const map = new Map<string, string>()
+  for (const item of items.value) {
+    // Use tContent to resolve translated field, falls back to direct field access
+    const label = tContent(item, props.labelKey) || item.id
+    map.set(item.id, label)
+  }
+  return map
+})
+
+// Helper to get item label by ID (uses computed map for reactivity)
 const getItemLabel = (id: string): string => {
-  const item = items.value.find(item => item.id === id)
-  if (!item) return id // Fallback to ID if item not found
-  return (item as Record<string, any>)[props.labelKey] || item.id
+  return itemLabelsMap.value.get(id) || id
 }
 
 // Instance-specific state to prevent cross-contamination between multiple forms

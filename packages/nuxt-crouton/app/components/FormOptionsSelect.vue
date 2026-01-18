@@ -30,6 +30,16 @@
       searchable
       class="w-full"
     >
+      <!-- Explicitly show selected label since value-key returns value, not object -->
+      <template #default="{ modelValue }">
+        <span v-if="modelValue" class="truncate">
+          {{ getOptionLabel(modelValue as string) }}
+        </span>
+        <span v-else class="text-dimmed truncate">
+          {{ placeholder || `Select ${label}` }}
+        </span>
+      </template>
+
       <template #item-label="{ item }">
         <span>{{ (item as any)?.displayLabel || (item as OptionItem)?.label || (item as OptionItem)?.value }}</span>
       </template>
@@ -211,6 +221,25 @@ const translatedOptions = computed(() => {
     displayLabel: getTranslatedLabel(item)
   }))
 })
+
+// Computed map for reactive label lookup - maps both value AND id to label
+const optionLabelsMap = computed(() => {
+  const map = new Map<string, string>()
+  for (const opt of translatedOptions.value) {
+    const label = opt.displayLabel || opt.label || opt.value
+    map.set(opt.value, label)
+    // Also map by id in case the stored value is the id
+    if (opt.id && opt.id !== opt.value) {
+      map.set(opt.id, label)
+    }
+  }
+  return map
+})
+
+// Helper to get option label by value (uses computed map for reactivity)
+function getOptionLabel(value: string): string {
+  return optionLabelsMap.value.get(value) || value
+}
 
 // Two-way binding for v-model
 const selectedValue = computed({
