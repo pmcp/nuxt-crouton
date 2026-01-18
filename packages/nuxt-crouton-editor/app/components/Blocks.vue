@@ -55,7 +55,7 @@ const props = withDefaults(defineProps<Props>(), {
   contentType: 'json',
   editable: true,
   showToolbar: true,
-  showBubbleToolbar: false,
+  showBubbleToolbar: true,
   suggestionItems: () => []
 })
 
@@ -403,6 +403,18 @@ defineExpose({
         v-if="suggestionMenuItems.length > 0"
         :editor="editor"
         :items="suggestionMenuItems"
+      />
+
+      <!-- Bubble toolbar on text selection -->
+      <UEditorToolbar
+        v-if="showBubbleToolbar"
+        :editor="editor"
+        :items="bubbleToolbarItems"
+        layout="bubble"
+        :should-show="({ view, state }: any) => {
+          const { selection } = state
+          return view.hasFocus() && !selection.empty
+        }"
       />
     </UEditor>
 
