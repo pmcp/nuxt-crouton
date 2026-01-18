@@ -14,10 +14,9 @@ database_name = "rakim-db"
 database_id = "a0642ee2-3477-4052-8b86-1801470127cb"
 
 # KV Namespace binding
-# Create via: npx wrangler kv namespace create KV
 [[kv_namespaces]]
 binding = "KV"
-id = "" # TODO: Add your KV namespace ID after creating it
+id = "8fe47e29cb8a48bca362b77e072f932c"
 
 # Environment variables (set in Cloudflare dashboard or via wrangler secret)
 # [vars]

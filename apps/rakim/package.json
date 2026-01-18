@@ -8,11 +8,11 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "deploy": "nuxt build && wrangler pages deploy dist",
-    "deploy:preview": "nuxt build && wrangler pages deploy dist --branch preview",
+    "cf:deploy": "nuxt build && npx wrangler pages deploy dist",
+    "cf:preview": "nuxt build && npx wrangler pages deploy dist --branch preview",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "wrangler d1 migrations apply rakim-db --local",
-    "db:migrate:prod": "wrangler d1 migrations apply rakim-db --remote"
+    "db:migrate": "npx wrangler d1 migrations apply rakim-db --local",
+    "db:migrate:prod": "npx wrangler d1 migrations apply rakim-db --remote"
   },
   "dependencies": {
     "@friendlyinternet/nuxt-crouton": "workspace:*",
