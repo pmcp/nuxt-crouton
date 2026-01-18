@@ -61,7 +61,7 @@
 
     <template #body>
       <ul
-        v-if="customCardComponent && rows && rows.length > 0"
+        v-if="rows && rows.length > 0"
         role="list"
         class="divide-y divide-default"
       >
@@ -72,7 +72,7 @@
         >
           <div class="flex items-start justify-between gap-2">
             <component
-              :is="customCardComponent"
+              :is="customCardComponent || CroutonDefaultCard"
               :item="row"
               :layout="'list'"
               :collection="collection"
@@ -89,6 +89,12 @@
               size="xs"
               class="shrink-0"
             />
+            <!-- Card customization help (when using default card) -->
+            <CroutonCardHelpModal
+              v-if="!customCardComponent"
+              :collection="collection"
+              layout="list"
+            />
           </div>
         </li>
       </ul>
@@ -97,30 +103,12 @@
         v-else
         class="text-center text-muted p-8"
       >
-        <p class="text-lg font-medium mb-2">
-          Create Card.vue for list layout
+        <p class="text-lg font-medium">
+          No items yet
         </p>
-        <code class="text-xs bg-muted/30 px-2 py-1 rounded">
-          layers/{layer}/collections/{{ collection }}/app/components/Card.vue
-        </code>
-        <p class="text-sm mt-4">
-          Example Card.vue structure:
+        <p class="text-sm mt-1">
+          Create your first {{ collection }} item to get started
         </p>
-        <pre v-pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
-&lt;script setup lang="ts"&gt;
-interface Props {
-  item: any
-  layout: 'list' | 'grid' | 'cards'
-  collection: string
-}
-defineProps&lt;Props&gt;()
-&lt;/script&gt;
-
-&lt;template&gt;
-  &lt;div v-if="layout === 'list'"&gt;
-    {{ item.name }}
-  &lt;/div&gt;
-&lt;/template&gt;</pre>
       </div>
 
       <!-- Pagination -->
@@ -156,7 +144,7 @@ defineProps&lt;Props&gt;()
     </slot>
 
     <div
-      v-if="customCardComponent && rows && rows.length > 0"
+      v-if="rows && rows.length > 0"
       class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
     >
       <div
@@ -165,7 +153,7 @@ defineProps&lt;Props&gt;()
         class="relative"
       >
         <component
-          :is="customCardComponent"
+          :is="customCardComponent || CroutonDefaultCard"
           :item="row"
           :layout="'grid'"
           :collection="collection"
@@ -181,6 +169,13 @@ defineProps&lt;Props&gt;()
           size="xs"
           class="absolute top-2 right-2"
         />
+        <!-- Card customization help (when using default card) -->
+        <CroutonCardHelpModal
+          v-if="!customCardComponent"
+          :collection="collection"
+          layout="grid"
+          class="absolute top-2 right-2"
+        />
       </div>
     </div>
 
@@ -188,24 +183,12 @@ defineProps&lt;Props&gt;()
       v-else
       class="text-center text-muted p-8"
     >
-      <p class="text-lg font-medium mb-2">
-        Create Card.vue for grid layout
+      <p class="text-lg font-medium">
+        No items yet
       </p>
-      <code class="text-xs bg-muted/30 px-2 py-1 rounded">
-        layers/{layer}/collections/{{ collection }}/app/components/Card.vue
-      </code>
-      <p class="text-sm mt-4">
-        Example Card.vue with grid layout:
+      <p class="text-sm mt-1">
+        Create your first {{ collection }} item to get started
       </p>
-      <pre v-pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
-&lt;template&gt;
-  &lt;UCard v-if="layout === 'grid'" class="hover:shadow-lg"&gt;
-    &lt;template #header&gt;
-      &lt;h3&gt;{{ item.title }}&lt;/h3&gt;
-    &lt;/template&gt;
-    {{ item.description }}
-  &lt;/UCard&gt;
-&lt;/template&gt;</pre>
     </div>
 
     <!-- Pagination -->
@@ -240,7 +223,7 @@ defineProps&lt;Props&gt;()
     </slot>
 
     <div
-      v-if="customCardComponent && rows && rows.length > 0"
+      v-if="rows && rows.length > 0"
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6"
     >
       <div
@@ -249,7 +232,7 @@ defineProps&lt;Props&gt;()
         class="relative"
       >
         <component
-          :is="customCardComponent"
+          :is="customCardComponent || CroutonDefaultCard"
           :item="row"
           :layout="'cards'"
           :collection="collection"
@@ -265,6 +248,13 @@ defineProps&lt;Props&gt;()
           size="xs"
           class="absolute top-3 right-3"
         />
+        <!-- Card customization help (when using default card) -->
+        <CroutonCardHelpModal
+          v-if="!customCardComponent"
+          :collection="collection"
+          layout="cards"
+          class="absolute top-3 right-3"
+        />
       </div>
     </div>
 
@@ -272,27 +262,12 @@ defineProps&lt;Props&gt;()
       v-else
       class="text-center text-muted p-8"
     >
-      <p class="text-lg font-medium mb-2">
-        Create Card.vue for cards layout
+      <p class="text-lg font-medium">
+        No items yet
       </p>
-      <code class="text-xs bg-muted/30 px-2 py-1 rounded">
-        layers/{layer}/collections/{{ collection }}/app/components/Card.vue
-      </code>
-      <p class="text-sm mt-4">
-        Example Card.vue with detailed cards layout:
+      <p class="text-sm mt-1">
+        Create your first {{ collection }} item to get started
       </p>
-      <pre v-pre class="text-left text-xs bg-muted/20 p-4 rounded mt-2 max-w-md mx-auto overflow-auto">
-&lt;template&gt;
-  &lt;UCard v-if="layout === 'cards'" class="hover:shadow-xl"&gt;
-    &lt;template #header&gt;
-      &lt;h3 class="text-lg"&gt;{{ item.title }}&lt;/h3&gt;
-    &lt;/template&gt;
-    &lt;div class="space-y-2"&gt;
-      &lt;p&gt;{{ item.description }}&lt;/p&gt;
-      &lt;!-- More detailed content --&gt;
-    &lt;/div&gt;
-  &lt;/UCard&gt;
-&lt;/template&gt;</pre>
     </div>
 
     <!-- Pagination -->
@@ -315,6 +290,7 @@ defineProps&lt;Props&gt;()
     :collection="collection"
     :hierarchy="hierarchyConfig"
     :card-component="customCardComponent"
+    :show-collab-presence="showCollabPresence"
     @move="handleTreeMove"
   >
     <template #header>
@@ -378,8 +354,11 @@ import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyC
 import { layoutPresets as presets } from '../types/table'
 
 // Version logging for debugging
-const CROUTON_VERSION = '1.6.1'
-const COLLECTION_FIX = 'Silent card component detection (no Vue warnings)'
+const CROUTON_VERSION = '1.7.0'
+const COLLECTION_FIX = 'Default card shows item data with collapsible JSON'
+
+// Resolve default card component for fallback
+const CroutonDefaultCard = resolveComponent('CroutonDefaultCard')
 
 const props = withDefaults(defineProps<ListProps>(), {
   layout: 'table',
