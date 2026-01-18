@@ -25,6 +25,19 @@
       searchable
       class="w-full"
     >
+      <!-- Explicitly show the selected value label since value-key returns ID, not object -->
+      <template #default="{ modelValue }">
+        <span v-if="modelValue && !multiple" class="truncate">
+          {{ getItemLabel(modelValue as string) }}
+        </span>
+        <span v-else-if="modelValue && multiple && (modelValue as string[]).length > 0" class="truncate">
+          {{ (modelValue as string[]).map(id => getItemLabel(id)).join(', ') }}
+        </span>
+        <span v-else class="text-dimmed truncate">
+          Select {{ label || collection }}
+        </span>
+      </template>
+
       <template #item-label="{ item }">
         <span>{{ (item as Record<string, any>)?.[labelKey] || (item as Record<string, any>)?.id }}</span>
       </template>
@@ -99,6 +112,13 @@ const getErrorMessage = () => {
   return error.value.statusMessage || 'An error occurred while loading data.'
 }
 
+// Helper to get item label by ID
+const getItemLabel = (id: string): string => {
+  const item = items.value.find(item => item.id === id)
+  if (!item) return id // Fallback to ID if item not found
+  return (item as Record<string, any>)[props.labelKey] || item.id
+}
+
 // Instance-specific state to prevent cross-contamination between multiple forms
 const localValue = ref<string | string[] | null>(
   props.multiple
@@ -116,28 +136,15 @@ watch(() => props.modelValue, (newValue) => {
 })
 
 // Computed v-model for two-way binding
+// With value-key="id", USelectMenu expects the ID as modelValue
+// It internally finds and displays the matching item
 const selected = computed({
   get: () => {
-    if (props.multiple) {
-      const ids = localValue.value as string[]
-      return items.value.filter(item => ids.includes(item.id))
-    } else {
-      const id = localValue.value as string | null
-      return items.value.find(item => item.id === id) || null
-    }
+    return localValue.value
   },
-  set: (value: any | any[] | null) => {
-    if (props.multiple) {
-      // USelectMenu with multiple emits an array of objects
-      const ids = value ? value.map((v: any) => typeof v === 'string' ? v : v?.id).filter(Boolean) : []
-      localValue.value = ids
-      emit('update:modelValue', ids.length > 0 ? ids : null)
-    } else {
-      // USelectMenu with value-key emits the ID string directly, not the object
-      const id = typeof value === 'string' ? value : value?.id
-      localValue.value = id
-      emit('update:modelValue', id || null)
-    }
+  set: (value: string | string[] | null) => {
+    localValue.value = value
+    emit('update:modelValue', value)
   }
 })
 
