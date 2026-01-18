@@ -41,7 +41,7 @@ Package expects tables with `sales` prefix:
 - `salesLocations`, `salesClients`, `salesEventsettings`
 - `salesPrinters`, `salesPrintqueues` (if print enabled)
 
-User MUST use `sales` as layer name in crouton.config.mjs.
+User MUST use `sales` as layer name in crouton.config.js.
 
 ## Configuration
 
@@ -64,7 +64,7 @@ export default defineNuxtConfig({
 
 1. `pnpm add @friendlyinternet/crouton-sales`
 2. Copy schemas from package to local `./schemas/`
-3. Configure crouton.config.mjs with `sales` layer
+3. Configure crouton.config.js with `sales` layer
 4. Run `crouton config`
 5. Add package to nuxt.config extends
 6. POS system ready

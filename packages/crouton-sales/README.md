@@ -42,7 +42,7 @@ Available schemas:
 
 ### 2. Configure Crouton
 
-Create `crouton.config.mjs`:
+Create `crouton.config.js`:
 
 ```javascript
 export default {
@@ -104,7 +104,7 @@ export default defineNuxtConfig({
 For thermal receipt printing, add printer schemas to your config:
 
 ```javascript
-// crouton.config.mjs
+// crouton.config.js
 export default {
   collections: [
     // ... existing collections ...
