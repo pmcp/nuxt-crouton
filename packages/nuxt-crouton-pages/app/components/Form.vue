@@ -170,12 +170,30 @@ const statusConfig: Record<string, { color: string; icon: string; label: string 
   archived: { color: 'error', icon: 'i-lucide-archive', label: t('pages.status.archived') || 'Archived' }
 }
 
-// Visibility config with icons
-const visibilityConfig: Record<string, { icon: string; color: string; label: string }> = {
-  public: { icon: 'i-lucide-globe', color: 'success', label: t('pages.visibility.public') || 'Public' },
-  members: { icon: 'i-lucide-users', color: 'warning', label: t('pages.visibility.members') || 'Members Only' },
-  hidden: { icon: 'i-lucide-eye-off', color: 'neutral', label: t('pages.visibility.hidden') || 'Hidden' }
+// Status dropdown items for UDropdownMenu
+const statusDropdownItems = computed(() => [
+  Object.entries(statusConfig).map(([status, config]) => ({
+    label: config.label,
+    slot: status as 'draft' | 'published' | 'archived',
+    onSelect: () => { state.value.status = status }
+  }))
+])
+
+// Visibility config with icons (no color variation - just different icons)
+const visibilityConfig: Record<string, { icon: string; label: string }> = {
+  public: { icon: 'i-lucide-globe', label: t('pages.visibility.public') || 'Public' },
+  members: { icon: 'i-lucide-users', label: t('pages.visibility.members') || 'Members Only' },
+  hidden: { icon: 'i-lucide-eye-off', label: t('pages.visibility.hidden') || 'Hidden' }
 }
+
+// Visibility dropdown items for UDropdownMenu
+const visibilityDropdownItems = computed(() => [
+  Object.entries(visibilityConfig).map(([visibility, config]) => ({
+    label: config.label,
+    slot: visibility as 'public' | 'members' | 'hidden',
+    onSelect: () => { state.value.visibility = visibility }
+  }))
+])
 
 // Layout options
 const layoutOptions = [
@@ -363,32 +381,81 @@ const fieldComponents = computed(() => {
               />
             </div>
 
-            <!-- Status Selector (colored dots) -->
-            <div class="flex items-center gap-1 border border-default rounded-md p-0.5">
-              <UTooltip
-                v-for="(config, status) in statusConfig"
-                :key="status"
-                :text="config.label"
+            <!-- Status Selector (dropdown with colored dots) -->
+            <UDropdownMenu
+              :items="statusDropdownItems"
+              :content="{ align: 'start' }"
+            >
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                class="px-2"
               >
-                <button
-                  type="button"
+                <span
                   :class="[
-                    'p-1.5 rounded transition-all',
-                    state.status === status
-                      ? 'bg-elevated ring-1 ring-default'
-                      : 'hover:bg-elevated/50'
+                    'block size-3 rounded-full',
+                    `bg-${statusConfig[state.status]?.color || 'warning'}`
                   ]"
-                  @click="state.status = status"
-                >
-                  <span
-                    :class="[
-                      'block size-2.5 rounded-full',
-                      `bg-${config.color}`
-                    ]"
-                  />
-                </button>
-              </UTooltip>
-            </div>
+                />
+              </UButton>
+
+              <template #draft="{ item }">
+                <span class="flex items-center gap-2">
+                  <span class="block size-2.5 rounded-full bg-warning" />
+                  {{ item.label }}
+                </span>
+              </template>
+              <template #published="{ item }">
+                <span class="flex items-center gap-2">
+                  <span class="block size-2.5 rounded-full bg-success" />
+                  {{ item.label }}
+                </span>
+              </template>
+              <template #archived="{ item }">
+                <span class="flex items-center gap-2">
+                  <span class="block size-2.5 rounded-full bg-error" />
+                  {{ item.label }}
+                </span>
+              </template>
+            </UDropdownMenu>
+
+            <!-- Visibility Selector (dropdown with icons) -->
+            <UDropdownMenu
+              :items="visibilityDropdownItems"
+              :content="{ align: 'start' }"
+            >
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                class="px-2"
+              >
+                <UIcon
+                  :name="visibilityConfig[state.visibility]?.icon || 'i-lucide-globe'"
+                  class="size-4 text-muted"
+                />
+              </UButton>
+
+              <template #public="{ item }">
+                <span class="flex items-center gap-2">
+                  <UIcon name="i-lucide-globe" class="size-4 text-muted" />
+                  {{ item.label }}
+                </span>
+              </template>
+              <template #members="{ item }">
+                <span class="flex items-center gap-2">
+                  <UIcon name="i-lucide-users" class="size-4 text-muted" />
+                  {{ item.label }}
+                </span>
+              </template>
+              <template #hidden="{ item }">
+                <span class="flex items-center gap-2">
+                  <UIcon name="i-lucide-eye-off" class="size-4 text-muted" />
+                  {{ item.label }}
+                </span>
+              </template>
+            </UDropdownMenu>
 
             <!-- Spacer -->
             <div class="flex-1" />
@@ -406,36 +473,6 @@ const fieldComponents = computed(() => {
               <template #content>
                 <div class="p-4 w-72 space-y-4">
                   <div class="text-sm font-medium text-default mb-3">Page Settings</div>
-
-                  <!-- Visibility -->
-                  <UFormField :label="t('pages.fields.visibility') || 'Visibility'" name="visibility">
-                    <div class="flex items-center gap-1">
-                      <UTooltip
-                        v-for="(config, visibility) in visibilityConfig"
-                        :key="visibility"
-                        :text="config.label"
-                      >
-                        <button
-                          type="button"
-                          :class="[
-                            'flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-all',
-                            state.visibility === visibility
-                              ? 'bg-elevated ring-1 ring-default'
-                              : 'hover:bg-elevated/50'
-                          ]"
-                          @click="state.visibility = visibility"
-                        >
-                          <UIcon
-                            :name="config.icon"
-                            :class="[
-                              'size-4',
-                              state.visibility === visibility ? `text-${config.color}` : 'text-muted'
-                            ]"
-                          />
-                        </button>
-                      </UTooltip>
-                    </div>
-                  </UFormField>
 
                   <!-- Show in Navigation -->
                   <UFormField :label="t('pages.fields.showInNavigation') || 'Show in Nav'" name="showInNavigation">
