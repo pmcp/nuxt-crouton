@@ -11,6 +11,7 @@ import { SectionBlock } from './section-block'
 import { CTABlock } from './cta-block'
 import { CardGridBlock } from './card-grid-block'
 import { SeparatorBlock } from './separator-block'
+import { CollectionBlock } from './collection-block'
 import { BlockCommands } from './block-commands'
 
 export interface PageBlocksOptions {
@@ -23,6 +24,7 @@ export interface PageBlocksOptions {
     cta?: boolean
     cardGrid?: boolean
     separator?: boolean
+    collection?: boolean
   }
   /**
    * Enable slash commands for block insertion
@@ -44,7 +46,8 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         section: true,
         cta: true,
         cardGrid: true,
-        separator: true
+        separator: true,
+        collection: true
       },
       enableSlashCommands: true,
       suggestionOptions: {}
@@ -71,6 +74,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.separator !== false) {
       extensions.push(SeparatorBlock)
     }
+    if (blocks?.collection !== false) {
+      extensions.push(CollectionBlock)
+    }
 
     // Add slash commands if enabled
     if (enableSlashCommands) {
@@ -89,6 +95,7 @@ export { SectionBlock } from './section-block'
 export { CTABlock } from './cta-block'
 export { CardGridBlock } from './card-grid-block'
 export { SeparatorBlock } from './separator-block'
+export { CollectionBlock } from './collection-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 
 // Export types
@@ -97,6 +104,7 @@ export type { SectionBlockOptions } from './section-block'
 export type { CTABlockOptions } from './cta-block'
 export type { CardGridBlockOptions } from './card-grid-block'
 export type { SeparatorBlockOptions } from './separator-block'
+export type { CollectionBlockOptions } from './collection-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks
