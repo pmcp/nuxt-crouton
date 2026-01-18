@@ -5,8 +5,16 @@
  * Renders a page based on its page type. For regular pages, auto-detects
  * content format (blocks JSON vs legacy HTML) and renders accordingly.
  * For app pages, renders the registered component.
+ *
+ * Content is fetched from translations.{locale}.content with fallback to English.
  */
 import { detectContentFormat } from '../utils/content-detector'
+
+interface TranslationData {
+  title?: string
+  slug?: string
+  content?: string
+}
 
 interface PageRecord {
   id: string
@@ -21,6 +29,7 @@ interface PageRecord {
   showInNavigation: boolean
   parentId?: string | null
   order: number
+  translations?: Record<string, TranslationData>
 }
 
 interface Props {
@@ -30,7 +39,23 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { locale } = useI18n()
 const { getPageType } = usePageTypes()
+
+/**
+ * Get localized content with fallback to English
+ */
+const localizedContent = computed(() => {
+  const translations = props.page.translations
+  if (!translations) {
+    // Fallback to legacy content field
+    return props.page.content
+  }
+
+  // Try current locale first, then English fallback
+  const localeData = translations[locale.value] || translations.en
+  return localeData?.content || props.page.content
+})
 
 /**
  * Resolved page type information
@@ -78,7 +103,7 @@ const isRegularPage = computed(() => {
  */
 const contentFormat = computed(() => {
   if (!isRegularPage.value) return null
-  return detectContentFormat(props.page.content)
+  return detectContentFormat(localizedContent.value)
 })
 
 </script>
@@ -90,13 +115,13 @@ const contentFormat = computed(() => {
       <!-- Block-based content (new format) -->
       <CroutonPagesBlockContent
         v-if="contentFormat === 'blocks'"
-        :content="page.content"
+        :content="localizedContent"
       />
 
       <!-- Legacy HTML content -->
       <CroutonPagesRegularContent
         v-else-if="contentFormat === 'html'"
-        :page="page"
+        :content="localizedContent"
       />
 
       <!-- Empty page -->

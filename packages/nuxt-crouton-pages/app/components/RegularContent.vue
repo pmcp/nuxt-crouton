@@ -3,6 +3,7 @@
  * Regular Page Content Component
  *
  * Renders rich text content from the editor for regular (non-app) pages.
+ * Accepts either a page object or direct content string.
  */
 
 interface PageRecord {
@@ -12,15 +13,20 @@ interface PageRecord {
 }
 
 interface Props {
-  page: PageRecord
+  page?: PageRecord
+  /** Direct content string (takes precedence over page.content) */
+  content?: string | null
 }
 
 const props = defineProps<Props>()
+
+/** Resolved content - props.content takes precedence over page.content */
+const resolvedContent = computed(() => props.content || props.page?.content)
 </script>
 
 <template>
   <article class="page-content prose prose-lg dark:prose-invert max-w-none px-4 py-6">
-    <div v-if="page.content" v-html="page.content" />
+    <div v-if="resolvedContent" v-html="resolvedContent" />
     <div v-else class="text-muted text-center py-12">
       <UIcon name="i-lucide-file-text" class="size-12 mb-4 mx-auto block" />
       <p>This page has no content yet.</p>
