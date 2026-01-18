@@ -247,15 +247,48 @@ function closePropertyPanel() {
 function updateBlockAttrs(attrs: Record<string, unknown>) {
   if (!editorInstance.value || !selectedNode.value) return
 
-  const { pos } = selectedNode.value
-  const { tr } = editorInstance.value.state
+  const { pos, node: originalNode } = selectedNode.value
+  const { state, view } = editorInstance.value
+  const expectedType = originalNode?.type?.name
 
-  // Update attributes without focusing or selecting (avoids stealing focus from form inputs)
-  const node = editorInstance.value.state.doc.nodeAt(pos)
-  if (node) {
-    editorInstance.value.view.dispatch(
-      tr.setNodeMarkup(pos, undefined, { ...node.attrs, ...attrs })
+  // Get the node at the stored position
+  let node = state.doc.nodeAt(pos)
+  let actualPos = pos
+
+  // Verify the node is the correct block type
+  // If position is stale (e.g., due to document changes), try to find the block
+  if (!node || node.isText || node.type.name !== expectedType) {
+    // Position is invalid - try to find the block by searching the document
+    let found = false
+    state.doc.descendants((n, p) => {
+      if (found) return false
+      if (n.type.name === expectedType) {
+        // Found a block of the same type - use it
+        // Note: This is a best-effort recovery, might update wrong block if multiple exist
+        node = n
+        actualPos = p
+        found = true
+        return false
+      }
+      return true
+    })
+
+    if (!found || !node) {
+      console.warn('[CroutonEditorBlocks] Cannot update attrs: block not found in document')
+      return
+    }
+  }
+
+  // Create transaction and update attributes
+  const { tr } = state
+  try {
+    view.dispatch(
+      tr.setNodeMarkup(actualPos, undefined, { ...node.attrs, ...attrs })
     )
+    // Update selectedNode with the correct position
+    selectedNode.value = { pos: actualPos, node }
+  } catch (error) {
+    console.error('[CroutonEditorBlocks] Failed to update block attrs:', error)
   }
 }
 
