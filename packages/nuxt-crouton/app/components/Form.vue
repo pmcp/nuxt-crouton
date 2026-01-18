@@ -81,6 +81,7 @@
     :title="`${state.action ? state.action.charAt(0).toUpperCase() + state.action.slice(1) : ''} ${getCollectionName(state.collection)}`"
     :description="`Form for ${state.action || 'managing'} ${getCollectionName(state.collection)}`"
     side="right"
+    :close="false"
     :ui="getSlideoverUi(state, index)"
     :style="getSlideoverStyle(state, index)"
     :class="[
@@ -90,15 +91,15 @@
     @update:open="(val: boolean) => handleSlideoverClose(state.id, val)"
     @after:leave="() => handleAfterLeave(state.id)"
   >
-    <!-- Enhanced actions with presence avatars and expand button -->
+    <!-- Enhanced actions with presence avatars, expand button, and close -->
     <template #actions>
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-2 ml-auto">
         <!-- Collab presence avatars (shows who else is editing) -->
+        <!-- TODO: Re-add :current-user-id="currentUserId" after testing to exclude self -->
         <CollabEditingBadge
           v-if="state.action === 'update' && state.activeItem?.id && hasCollabSupport"
           :room-id="`${state.collection}-${state.activeItem.id}`"
           :room-type="state.collection || 'generic'"
-          :current-user-id="currentUserId"
           :poll-interval="5000"
           size="sm"
           variant="avatars"
@@ -112,6 +113,16 @@
           size="xs"
           :title="state.isExpanded ? 'Collapse to sidebar' : 'Expand to fullscreen'"
           @click.stop="toggleExpand(state.id)"
+        />
+
+        <!-- Close button (inline with other actions) -->
+        <UButton
+          icon="i-lucide-x"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          title="Close"
+          @click.stop="handleSlideoverClose(state.id, false)"
         />
       </div>
     </template>
