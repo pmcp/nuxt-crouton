@@ -74,24 +74,36 @@ function handleOpenPanel() {
         </div>
 
         <!-- Preview Content -->
-        <div class="text-center">
-          <p v-if="attrs.headline" class="text-xs font-medium text-primary mb-1">
-            {{ attrs.headline }}
-          </p>
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-1">
-            {{ attrs.title || 'Hero Title' }}
-          </h2>
-          <p v-if="attrs.description" class="text-sm text-gray-500 dark:text-gray-400 max-w-xl mx-auto line-clamp-2">
-            {{ attrs.description }}
-          </p>
-          <div v-if="attrs.links?.length" class="mt-2 flex justify-center gap-1.5">
-            <span
-              v-for="(link, index) in attrs.links"
-              :key="index"
-              class="px-2.5 py-1 bg-primary/10 text-primary rounded text-xs"
-            >
-              {{ link.label }}
-            </span>
+        <div class="flex items-center gap-4">
+          <!-- Image thumbnail -->
+          <div v-if="attrs.image" class="flex-shrink-0">
+            <img
+              :src="attrs.image"
+              :alt="attrs.title || 'Hero image'"
+              class="w-16 h-16 object-cover rounded"
+            />
+          </div>
+
+          <!-- Text content -->
+          <div class="flex-1 min-w-0" :class="{ 'text-center': !attrs.image }">
+            <p v-if="attrs.headline" class="text-xs font-medium text-primary mb-1">
+              {{ attrs.headline }}
+            </p>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
+              {{ attrs.title || 'Hero Title' }}
+            </h2>
+            <p v-if="attrs.description" class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+              {{ attrs.description }}
+            </p>
+            <div v-if="attrs.links?.length" class="mt-2 flex gap-1.5" :class="{ 'justify-center': !attrs.image }">
+              <span
+                v-for="(link, index) in attrs.links"
+                :key="index"
+                class="px-2.5 py-1 bg-primary/10 text-primary rounded text-xs"
+              >
+                {{ link.label }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
