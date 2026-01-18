@@ -35,7 +35,8 @@ const blockComponents: Record<string, string> = {
   ctaBlock: 'CroutonPagesBlocksRenderCTABlock',
   cardGridBlock: 'CroutonPagesBlocksRenderCardGridBlock',
   separatorBlock: 'CroutonPagesBlocksRenderSeparatorBlock',
-  richTextBlock: 'CroutonPagesBlocksRenderRichTextBlock'
+  richTextBlock: 'CroutonPagesBlocksRenderRichTextBlock',
+  collectionBlock: 'CroutonPagesBlocksRenderCollectionBlock'
 }
 
 // Block types to skip (empty structural blocks from TipTap)
