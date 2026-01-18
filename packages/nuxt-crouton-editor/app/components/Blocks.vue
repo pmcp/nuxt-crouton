@@ -351,7 +351,7 @@ defineExpose({
 
     <!-- Editor with slash command suggestion menu -->
     <UEditor
-      v-slot="{ editor }"
+      v-slot="{ editor, handlers }"
       v-model="content"
       :content-type="contentType"
       :placeholder="placeholder"
@@ -362,11 +362,42 @@ defineExpose({
       class="flex-1 min-h-0"
       :ui="{
         root: 'h-full flex flex-col',
-        content: 'flex-1 min-h-0 p-4 prose prose-sm dark:prose-invert max-w-none overflow-auto'
+        content: 'flex-1 min-h-0 p-4 pl-10 prose prose-sm dark:prose-invert max-w-none overflow-auto'
       }"
       @create="handleEditorCreate"
       @update="handleEditorUpdate"
     >
+      <!-- Global drag handle for all blocks -->
+      <UEditorDragHandle
+        v-if="editable"
+        v-slot="{ ui, onClick }"
+        :editor="editor"
+      >
+        <!-- Plus button to add blocks -->
+        <UButton
+          icon="i-lucide-plus"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          :class="ui.handle()"
+          @click="(e: MouseEvent) => {
+            e.stopPropagation()
+            const selected = onClick()
+            if (suggestionMenuItems.length > 0) {
+              handlers.suggestion?.execute(editor, { pos: selected?.pos }).run()
+            }
+          }"
+        />
+        <!-- Drag grip -->
+        <UButton
+          icon="i-lucide-grip-vertical"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          :class="ui.handle()"
+        />
+      </UEditorDragHandle>
+
       <!-- Slash command menu for block insertion -->
       <UEditorSuggestionMenu
         v-if="suggestionMenuItems.length > 0"
