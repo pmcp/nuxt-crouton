@@ -147,58 +147,9 @@ export async function getPagesPagesByIds(teamId: string, pageIds: string[]) {
 export async function createPagesPage(data: NewPagesPage) {
   const db = useDB()
 
-  // Auto-calculate next order for siblings (same parentId)
-  const parentId = data.parentId || null
-  const teamId = data.teamId
-
-  const [maxOrderResult] = await (db as any)
-    .select({ maxOrder: sql<number>`COALESCE(MAX(${tables.pagesPages.order}), -1)` })
-    .from(tables.pagesPages)
-    .where(
-      and(
-        eq(tables.pagesPages.teamId, teamId),
-        parentId
-          ? eq(tables.pagesPages.parentId, parentId)
-          : sql`${tables.pagesPages.parentId} IS NULL`
-      )
-    )
-
-  const nextOrder = (maxOrderResult?.maxOrder ?? -1) + 1
-
-  // Generate a unique ID for the new page
-  const { nanoid } = await import('nanoid')
-  const newId = nanoid()
-
-  // Calculate path and depth based on parent
-  let path: string
-  let depth: number
-
-  if (parentId) {
-    const [parent] = await (db as any)
-      .select()
-      .from(tables.pagesPages)
-      .where(
-        and(
-          eq(tables.pagesPages.id, parentId),
-          eq(tables.pagesPages.teamId, teamId)
-        )
-      )
-
-    if (parent) {
-      path = `${parent.path}${newId}/`
-      depth = (parent.depth || 0) + 1
-    } else {
-      path = `/${newId}/`
-      depth = 0
-    }
-  } else {
-    path = `/${newId}/`
-    depth = 0
-  }
-
   const [page] = await (db as any)
     .insert(tables.pagesPages)
-    .values({ ...data, id: newId, order: nextOrder, path, depth })
+    .values(data)
     .returning()
 
   return page
