@@ -42,6 +42,7 @@ export interface NavigationItem {
 
 export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const route = useRoute()
+  const { locale } = useI18n()
   const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 
   // Resolve team from prop, route, or domain context
@@ -71,8 +72,9 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       p.visibility !== 'hidden'
     )
 
-    // Build path prefix based on domain context
-    const pathPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
+    // Build path prefix based on domain context (includes locale)
+    const teamPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
+    const pathPrefix = `${teamPrefix}/${locale.value}`
 
     // Convert to NavigationItem format
     const items: NavigationItem[] = navPages.map((p: any) => ({
