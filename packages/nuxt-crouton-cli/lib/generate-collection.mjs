@@ -1151,7 +1151,7 @@ ${translationsFieldSchema}
   // All endpoints now use @crouton/auth for team-based authentication
   const files = [
     {
-      path: path.join(base, 'app', 'components', 'Form.vue'),
+      path: path.join(base, 'app', 'components', '_Form.vue'),
       content: generateFormComponent(data, config)
     },
     {

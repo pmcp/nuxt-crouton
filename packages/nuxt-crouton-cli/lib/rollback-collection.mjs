@@ -296,7 +296,7 @@ export async function checkForCollectionFiles(layer, collection) {
 
   // Check for key files
   const keyPaths = [
-    path.join(base, 'app', 'components', 'Form.vue'),
+    path.join(base, 'app', 'components', '_Form.vue'),
     path.join(base, 'app', 'components', 'List.vue'),
     path.join(base, 'server', 'database', 'schema.ts'),
     path.join(base, 'server', 'database', 'queries.ts')
