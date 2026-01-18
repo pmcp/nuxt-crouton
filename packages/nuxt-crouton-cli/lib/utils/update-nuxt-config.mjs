@@ -28,13 +28,35 @@ export async function addToNuxtConfigExtends(configPath, packageName) {
     const existingExtends = extendsMatch[1].trim()
 
     if (existingExtends) {
-      // Has existing entries
-      const hasTrailingComma = existingExtends.trimEnd().endsWith(',')
-      const newEntry = hasTrailingComma
-        ? `\n    '${packageName}',`
-        : `,\n    '${packageName}'`
+      // Has existing entries - need to handle comments properly
+      // Find the last quoted string entry and check if it has a trailing comma
+      // Pattern: match last string (single or double quoted) possibly followed by comma and/or comment
+      const lastEntryMatch = existingExtends.match(/(['"`][^'"`]+['"`])\s*(,)?\s*(\/\/[^\n]*)?[\s]*$/)
 
-      const newExtends = existingExtends + newEntry
+      let newExtends
+      if (lastEntryMatch) {
+        const hasComma = !!lastEntryMatch[2]
+        const comment = lastEntryMatch[3] || ''
+
+        if (hasComma) {
+          // Already has comma, just add new entry
+          newExtends = existingExtends + `\n    '${packageName}'`
+        } else {
+          // No comma after last entry - need to insert one
+          // Replace the last entry with: entry + comma + comment (if any) + newline + new entry
+          const lastEntry = lastEntryMatch[1]
+          const beforeLastEntry = existingExtends.slice(0, existingExtends.lastIndexOf(lastEntry))
+          newExtends = beforeLastEntry + lastEntry + ',' + (comment ? ' ' + comment : '') + `\n    '${packageName}'`
+        }
+      } else {
+        // Fallback: simple append with comma
+        const hasTrailingComma = existingExtends.trimEnd().endsWith(',')
+        const newEntry = hasTrailingComma
+          ? `\n    '${packageName}'`
+          : `,\n    '${packageName}'`
+        newExtends = existingExtends + newEntry
+      }
+
       content = content.replace(extendsMatch[0], `extends: [${newExtends}\n  ]`)
     } else {
       // Empty extends array
