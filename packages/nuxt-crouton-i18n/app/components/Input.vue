@@ -78,20 +78,37 @@ const editingLocale = ref(locale.value)
 
 // Layout mode (defaults to tabs for backwards compatibility)
 const layoutMode = computed(() => props.layout ?? 'tabs')
-const primaryLoc = computed(() => props.primaryLocale ?? 'en')
 
-// For side-by-side mode: track secondary locale (right column)
+// For side-by-side mode: track both locales (both selectable)
+const allLocaleCodes = computed(() =>
+  locales.value.map(l => typeof l === 'string' ? l : l.code)
+)
+
+// Left column locale (defaults to 'en' or first available)
+const primaryEditingLocale = ref(
+  props.primaryLocale ||
+  (allLocaleCodes.value.includes('en') ? 'en' : allLocaleCodes.value[0]) ||
+  'en'
+)
+
+// Right column locale (defaults to second available locale)
 const secondaryEditingLocale = ref(
   props.secondaryLocale ||
-  (locales.value.find(l => (typeof l === 'string' ? l : l.code) !== primaryLoc.value) as any)?.code ||
+  allLocaleCodes.value.find(code => code !== primaryEditingLocale.value) ||
   'nl'
 )
 
-// Other locales for dropdown (excludes primary)
-const otherLocales = computed(() =>
-  locales.value
-    .map(l => typeof l === 'string' ? l : l.code)
-    .filter(code => code !== primaryLoc.value)
+// Locale options for left dropdown (excludes right's selection)
+const leftLocaleOptions = computed(() =>
+  allLocaleCodes.value
+    .filter(code => code !== secondaryEditingLocale.value)
+    .map(code => ({ value: code, label: code.toUpperCase() }))
+)
+
+// Locale options for right dropdown (excludes left's selection)
+const rightLocaleOptions = computed(() =>
+  allLocaleCodes.value
+    .filter(code => code !== primaryEditingLocale.value)
     .map(code => ({ value: code, label: code.toUpperCase() }))
 )
 
@@ -202,11 +219,12 @@ function getAllTranslationsForField(field: string): Record<string, string> {
   return translations
 }
 
-// Request AI translation for a specific field
+// Request AI translation for a specific field (translates from left column to right column)
 async function requestTranslation(field: string, targetLocale?: string) {
+  const sourceLang = primaryEditingLocale.value
   const targetLang = targetLocale || editingLocale.value
-  const sourceText = getFieldValue(field, 'en')
-  if (!sourceText || targetLang === 'en') return
+  const sourceText = getFieldValue(field, sourceLang)
+  if (!sourceText || targetLang === sourceLang) return
 
   const translationKey = `${targetLang}-${field}`
   isTranslating.value[translationKey] = true
@@ -217,7 +235,7 @@ async function requestTranslation(field: string, targetLocale?: string) {
       method: 'POST',
       body: {
         sourceText,
-        sourceLanguage: 'en',
+        sourceLanguage: sourceLang,
         targetLanguage: targetLang,
         fieldType: props.fieldType || field,
         existingTranslations: getAllTranslationsForField(field)
@@ -248,9 +266,9 @@ function isBlockEditorField(field: string): boolean {
          component === 'CroutonPagesEditorBlockEditorWithPreview'
 }
 
-// Check if English content exists for a field
-function hasEnglishContent(field: string): boolean {
-  const value = getFieldValue(field, 'en')
+// Check if left column (source) has content for a field
+function hasSourceContent(field: string): boolean {
+  const value = getFieldValue(field, primaryEditingLocale.value)
   if (!value) return false
   if (isBlockEditorField(field)) {
     // For block editors, check if it's valid JSON with content
@@ -272,16 +290,19 @@ function hasEnglishContent(field: string): boolean {
     <!-- ============================================= -->
     <template v-if="layoutMode === 'side-by-side' && isMultiField">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
-        <!-- LEFT COLUMN: Primary locale (fixed, usually English) -->
+        <!-- LEFT COLUMN: Primary locale (selectable) -->
         <div class="flex flex-col min-h-0">
-          <!-- Column header - matches height of right column's select -->
+          <!-- Column header with dropdown -->
           <div class="flex items-center gap-2 h-7 mb-3 border-b border-default">
-            <div class="flex items-center gap-1.5 px-2.5 h-7 bg-muted/50 rounded-md text-xs font-medium uppercase tracking-wide">
-              {{ primaryLoc }}
-              <span class="text-red-500">*</span>
-            </div>
+            <USelect
+              v-model="primaryEditingLocale"
+              :items="leftLocaleOptions"
+              value-key="value"
+              size="xs"
+              class="flex-1"
+            />
             <UIcon
-              v-if="isLocaleComplete(primaryLoc)"
+              v-if="isLocaleComplete(primaryEditingLocale)"
               name="i-lucide-check-circle"
               class="text-green-500 size-3.5"
             />
@@ -310,8 +331,8 @@ function hasEnglishContent(field: string): boolean {
               >
                 <div class="h-full min-h-[200px]">
                   <CroutonEditorSimple
-                    :model-value="getFieldValue(field, primaryLoc)"
-                    @update:model-value="updateFieldValue(field, $event, primaryLoc)"
+                    :model-value="getFieldValue(field, primaryEditingLocale)"
+                    @update:model-value="updateFieldValue(field, $event, primaryEditingLocale)"
                   />
                 </div>
               </div>
@@ -323,13 +344,13 @@ function hasEnglishContent(field: string): boolean {
               >
                 <div class="h-full min-h-[350px]">
                   <CroutonPagesEditorBlockEditor
-                    :model-value="collab ? undefined : getFieldValue(field, primaryLoc)"
-                    :yxml-fragment="collab?.getXmlFragment(primaryLoc)"
+                    :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
+                    :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
                     :collab-provider="collab?.connection"
                     :collab-user="collab?.user"
                     :editable="true"
                     placeholder="Type / to insert a block..."
-                    @update:model-value="!collab && updateFieldValue(field, $event, primaryLoc)"
+                    @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
                   />
                 </div>
               </div>
@@ -340,38 +361,38 @@ function hasEnglishContent(field: string): boolean {
                 class="flex-1 border rounded-md overflow-hidden border-default"
               >
                 <CroutonPagesEditorBlockEditorWithPreview
-                  :model-value="collab ? undefined : getFieldValue(field, primaryLoc)"
-                  :yxml-fragment="collab?.getXmlFragment(primaryLoc)"
+                  :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
+                  :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
                   :collab-provider="collab?.connection"
                   :collab-user="collab?.user"
                   :editable="true"
                   placeholder="Type / to insert a block..."
-                  @update:model-value="!collab && updateFieldValue(field, $event, primaryLoc)"
+                  @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
                 />
               </div>
 
               <!-- UTextarea -->
               <UTextarea
                 v-else-if="getFieldComponent(field) === 'UTextarea'"
-                :model-value="getFieldValue(field, primaryLoc)"
+                :model-value="getFieldValue(field, primaryEditingLocale)"
                 :placeholder="defaultValues?.[field] || ''"
-                :color="error && !getFieldValue(field, primaryLoc) ? 'error' : 'primary'"
-                :highlight="!!(error && !getFieldValue(field, primaryLoc))"
+                :color="error && !getFieldValue(field, primaryEditingLocale) ? 'error' : 'primary'"
+                :highlight="!!(error && !getFieldValue(field, primaryEditingLocale))"
                 class="w-full"
                 size="sm"
-                @update:model-value="updateFieldValue(field, $event, primaryLoc)"
+                @update:model-value="updateFieldValue(field, $event, primaryEditingLocale)"
               />
 
               <!-- UInput (default) -->
               <UInput
                 v-else
-                :model-value="getFieldValue(field, primaryLoc)"
+                :model-value="getFieldValue(field, primaryEditingLocale)"
                 :placeholder="defaultValues?.[field] || ''"
-                :color="error && !getFieldValue(field, primaryLoc) ? 'error' : 'primary'"
-                :highlight="!!(error && !getFieldValue(field, primaryLoc))"
+                :color="error && !getFieldValue(field, primaryEditingLocale) ? 'error' : 'primary'"
+                :highlight="!!(error && !getFieldValue(field, primaryEditingLocale))"
                 class="w-full"
                 size="sm"
-                @update:model-value="updateFieldValue(field, $event, primaryLoc)"
+                @update:model-value="updateFieldValue(field, $event, primaryEditingLocale)"
               />
             </div>
           </div>
@@ -383,7 +404,7 @@ function hasEnglishContent(field: string): boolean {
           <div class="flex items-center gap-2 h-7 mb-3 border-b border-default">
             <USelect
               v-model="secondaryEditingLocale"
-              :items="otherLocales"
+              :items="rightLocaleOptions"
               value-key="value"
               size="xs"
               class="flex-1"
@@ -411,7 +432,7 @@ function hasEnglishContent(field: string): boolean {
                 </label>
                 <!-- AI Translate button inline with label -->
                 <UButton
-                  v-if="showAiTranslate && hasEnglishContent(field) && !isBlockEditorField(field)"
+                  v-if="showAiTranslate && hasSourceContent(field) && !isBlockEditorField(field)"
                   icon="i-lucide-sparkles"
                   size="2xs"
                   variant="ghost"
@@ -472,7 +493,7 @@ function hasEnglishContent(field: string): boolean {
               <UTextarea
                 v-else-if="getFieldComponent(field) === 'UTextarea'"
                 :model-value="getFieldValue(field, secondaryEditingLocale)"
-                :placeholder="getFieldValue(field, primaryLoc) ? `${primaryLoc.toUpperCase()}: ${getFieldValue(field, primaryLoc)}` : ''"
+                :placeholder="getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : ''"
                 class="w-full"
                 size="sm"
                 @update:model-value="updateFieldValue(field, $event, secondaryEditingLocale)"
@@ -482,7 +503,7 @@ function hasEnglishContent(field: string): boolean {
               <UInput
                 v-else
                 :model-value="getFieldValue(field, secondaryEditingLocale)"
-                :placeholder="getFieldValue(field, primaryLoc) ? `${primaryLoc.toUpperCase()}: ${getFieldValue(field, primaryLoc)}` : ''"
+                :placeholder="getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : ''"
                 class="w-full"
                 size="sm"
                 @update:model-value="updateFieldValue(field, $event, secondaryEditingLocale)"
@@ -610,7 +631,7 @@ function hasEnglishContent(field: string): boolean {
 
           <!-- Show English reference when editing other languages -->
           <div
-            v-if="editingLocale !== 'en' && hasEnglishContent(field)"
+            v-if="editingLocale !== 'en' && hasSourceContent(field)"
             class="flex items-center gap-2 mt-1"
           >
             <!-- For block editors, don't show raw JSON -->
