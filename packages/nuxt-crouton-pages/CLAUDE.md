@@ -62,6 +62,81 @@ CroutonPagesRenderer
     └── pageType === 'bookings:calendar' → CroutonBookingsCalendar
 ```
 
+## Package + Generated Layer Workflow
+
+The pages system uses a split architecture where the **package provides UI components** and the **generated layer provides the data layer**.
+
+### What the Package Provides
+
+```
+packages/nuxt-crouton-pages/
+├── app/components/
+│   ├── Form.vue          # CroutonPagesForm - admin CRUD form
+│   ├── Card.vue          # CroutonPagesCard - tree view card
+│   ├── List.vue          # CroutonPagesList - convenience wrapper
+│   ├── Renderer.vue      # Public page display
+│   └── Editor/, Blocks/  # Block editor components
+├── app/pages/
+│   └── admin/[team]/pages.vue  # Admin page management route
+├── app/composables/      # usePageTypes, useDomainContext, etc.
+├── app/app.config.ts     # Registers componentName: 'CroutonPagesForm'
+└── server/api/           # Public read APIs
+```
+
+### What the Generated Layer Provides
+
+```
+apps/{app}/layers/pages/collections/pages/
+├── types.ts                          # Generated TypeScript types
+├── app/composables/usePagesPages.ts  # Columns, schema, config
+├── server/api/.../                   # Admin CRUD APIs
+└── server/database/                  # Schema + queries
+```
+
+### How Form Resolution Works
+
+1. **Package registers component**: In `app/app.config.ts`:
+   ```typescript
+   croutonCollections: {
+     pagesPages: {
+       componentName: 'CroutonPagesForm'
+     }
+   }
+   ```
+
+2. **Admin route uses CroutonCollection**: The package's `/admin/[team]/pages.vue` uses `CroutonCollection` with tree layout
+
+3. **Form resolution**: When user clicks create/edit, `CroutonForm` resolves to `CroutonPagesForm` via the `componentName` registration
+
+4. **Data from generated layer**: The form uses composables and APIs from the generated layer
+
+### Using Pages in a New App
+
+1. **Install package**: Add to `nuxt.config.ts`:
+   ```typescript
+   extends: ['@friendlyinternet/nuxt-crouton-pages']
+   ```
+
+2. **Generate collection**: Create `schemas/pages.json` and run:
+   ```bash
+   pnpm crouton generate
+   ```
+
+3. **Run migrations**:
+   ```bash
+   pnpm db:migrate
+   ```
+
+4. **Use**: Navigate to `/admin/[team]/pages` - package provides the UI
+
+### Important: No Generated Components Needed
+
+The generated layer should **NOT** have a `Form.vue` or `List.vue` - these are provided by the package. If the CLI generates them, they can be deleted. The generated layer only needs:
+- `types.ts` - TypeScript types
+- `app/composables/usePagesPages.ts` - Columns and schema
+- `server/api/` - CRUD APIs
+- `server/database/` - Database schema and queries
+
 ## Page Type Registration
 
 Apps register page types in `app.config.ts`:
