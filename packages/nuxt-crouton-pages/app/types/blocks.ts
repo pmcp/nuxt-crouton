@@ -17,6 +17,7 @@ export type BlockType =
   | 'cardGridBlock'
   | 'separatorBlock'
   | 'richTextBlock'
+  | 'collectionBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -124,6 +125,21 @@ export interface RichTextBlockAttrs {
   content: string
 }
 
+export type CollectionLayout = 'table' | 'list' | 'grid' | 'cards'
+
+export interface CollectionBlockAttrs {
+  /** Collection name from registry (e.g., 'blogPosts', 'products') */
+  collection: string
+  /** Optional title to display above the collection */
+  title?: string
+  /** Layout to render the collection in */
+  layout: CollectionLayout
+  /** Number of items per page */
+  pageSize?: number
+  /** Whether to show pagination controls */
+  showPagination?: boolean
+}
+
 // ============================================================================
 // Block Type Union
 // ============================================================================
@@ -135,6 +151,7 @@ export type BlockAttrs =
   | CardGridBlockAttrs
   | SeparatorBlockAttrs
   | RichTextBlockAttrs
+  | CollectionBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -169,6 +186,10 @@ export interface RichTextBlock extends PageBlock<RichTextBlockAttrs> {
   type: 'richTextBlock'
 }
 
+export interface CollectionBlock extends PageBlock<CollectionBlockAttrs> {
+  type: 'collectionBlock'
+}
+
 // ============================================================================
 // Document Type
 // ============================================================================
@@ -194,7 +215,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'collection'
   label: string
   description?: string
   required?: boolean
@@ -245,4 +266,8 @@ export function isSeparatorBlock(block: PageBlock): block is SeparatorBlock {
 
 export function isRichTextBlock(block: PageBlock): block is RichTextBlock {
   return block.type === 'richTextBlock'
+}
+
+export function isCollectionBlock(block: PageBlock): block is CollectionBlock {
+  return block.type === 'collectionBlock'
 }
