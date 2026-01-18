@@ -274,10 +274,12 @@ function hasEnglishContent(field: string): boolean {
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
         <!-- LEFT COLUMN: Primary locale (fixed, usually English) -->
         <div class="flex flex-col min-h-0">
-          <!-- Column header - minimal -->
-          <div class="flex items-center gap-2 pb-2 mb-3 border-b border-default">
-            <span class="font-medium text-xs uppercase tracking-wide text-muted">{{ primaryLoc }}</span>
-            <span class="text-red-500 text-xs">*</span>
+          <!-- Column header - matches height of right column's select -->
+          <div class="flex items-center gap-2 h-7 mb-3 border-b border-default">
+            <div class="flex items-center gap-1.5 px-2.5 h-7 bg-muted/50 rounded-md text-xs font-medium uppercase tracking-wide">
+              {{ primaryLoc }}
+              <span class="text-red-500">*</span>
+            </div>
             <UIcon
               v-if="isLocaleComplete(primaryLoc)"
               name="i-lucide-check-circle"
@@ -295,9 +297,11 @@ function hasEnglishContent(field: string): boolean {
                 field === 'content' ? 'flex-1 min-h-[300px]' : ''
               ]"
             >
-              <label class="text-xs font-medium text-muted uppercase tracking-wide">
-                {{ field }}
-              </label>
+              <div class="flex items-center h-5">
+                <label class="text-xs font-medium text-muted uppercase tracking-wide">
+                  {{ field }}
+                </label>
+              </div>
 
               <!-- CroutonEditorSimple -->
               <div
@@ -375,14 +379,14 @@ function hasEnglishContent(field: string): boolean {
 
         <!-- RIGHT COLUMN: Secondary locale (selectable) -->
         <div class="flex flex-col min-h-0">
-          <!-- Column header - minimal, matches left column -->
-          <div class="flex items-center gap-2 pb-2 mb-3 border-b border-default">
+          <!-- Column header - matches height of left column -->
+          <div class="flex items-center gap-2 h-7 mb-3 border-b border-default">
             <USelect
               v-model="secondaryEditingLocale"
               :items="otherLocales"
               value-key="value"
               size="xs"
-              class="w-16"
+              class="flex-1"
             />
             <UIcon
               v-if="isLocaleComplete(secondaryEditingLocale)"
@@ -401,7 +405,7 @@ function hasEnglishContent(field: string): boolean {
                 field === 'content' ? 'flex-1 min-h-[300px]' : ''
               ]"
             >
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between h-5">
                 <label class="text-xs font-medium text-muted uppercase tracking-wide">
                   {{ field }}
                 </label>
@@ -409,7 +413,7 @@ function hasEnglishContent(field: string): boolean {
                 <UButton
                   v-if="showAiTranslate && hasEnglishContent(field) && !isBlockEditorField(field)"
                   icon="i-lucide-sparkles"
-                  size="xs"
+                  size="2xs"
                   variant="ghost"
                   color="neutral"
                   :loading="isFieldTranslating(field, secondaryEditingLocale)"
