@@ -2,7 +2,7 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2026-01-15
+  @generated 2026-01-18
 
   ## AI Context
   - List component for locations collection
@@ -28,7 +28,6 @@
     :columns="columns"
     :rows="locations || []"
     :loading="pending"
-    show-collab-presence
   >
     <template #header>
       <CroutonTableHeader
@@ -97,4 +96,5 @@ const { columns } = useBookingsLocations()
 const { items: locations, pending } = await useCollectionQuery(
   'bookingsLocations'
 )
+
 </script>

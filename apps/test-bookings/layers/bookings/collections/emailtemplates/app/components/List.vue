@@ -28,7 +28,7 @@
     :columns="columns"
     :rows="emailtemplates || []"
     :loading="pending"
-    show-collab-presence
+    :show-collab-presence="{ showSelf: true }"
   >
     <template #header>
       <CroutonTableHeader
