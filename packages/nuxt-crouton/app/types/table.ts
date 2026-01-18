@@ -116,8 +116,8 @@ export interface CollabPresenceConfig {
 
 export interface CollectionProps {
   layout?: LayoutType | ResponsiveLayout | keyof typeof layoutPresets
-  columns: TableColumn[]
-  rows: any[]
+  columns?: TableColumn[]
+  rows?: any[]
   collection: string
   serverPagination?: boolean
   paginationData?: PaginationData | null
@@ -138,6 +138,7 @@ export interface CollectionProps {
    */
   gridSize?: GridSize
   hideDefaultColumns?: {
+    select?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     createdBy?: boolean

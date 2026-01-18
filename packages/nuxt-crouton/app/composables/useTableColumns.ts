@@ -4,6 +4,7 @@ import type { TableColumn, SortableOptions } from '../types/table'
 interface UseTableColumnsOptions {
   columns: TableColumn[]
   hideDefaultColumns?: {
+    select?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     createdBy?: boolean
@@ -82,27 +83,29 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       })
     }
 
-    // Add select checkbox column
-    columns.push({
-      id: 'select',
-      header: ({ table }: any) =>
-        h(CheckboxComponent, {
-          'modelValue': table.getIsSomePageRowsSelected()
-            ? 'indeterminate'
-            : table.getIsAllPageRowsSelected(),
-          'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-            table.toggleAllPageRowsSelected(!!value),
-          'aria-label': tString('table.selectAll')
-        }),
-      cell: ({ row }: any) =>
-        h(CheckboxComponent, {
-          'modelValue': row.getIsSelected(),
-          'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-          'aria-label': tString('table.selectRow')
-        }),
-      enableSorting: false,
-      enableHiding: false
-    })
+    // Add select checkbox column (unless hidden)
+    if (!options.hideDefaultColumns?.select) {
+      columns.push({
+        id: 'select',
+        header: ({ table }: any) =>
+          h(CheckboxComponent, {
+            'modelValue': table.getIsSomePageRowsSelected()
+              ? 'indeterminate'
+              : table.getIsAllPageRowsSelected(),
+            'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
+              table.toggleAllPageRowsSelected(!!value),
+            'aria-label': tString('table.selectAll')
+          }),
+        cell: ({ row }: any) =>
+          h(CheckboxComponent, {
+            'modelValue': row.getIsSelected(),
+            'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
+            'aria-label': tString('table.selectRow')
+          }),
+        enableSorting: false,
+        enableHiding: false
+      })
+    }
 
     // Actions column after select
     if (!options.hideDefaultColumns?.actions) {

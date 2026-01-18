@@ -287,9 +287,12 @@ const props = withDefaults(defineProps<ListProps>(), {
   showCollabPresence: false,
   gridSize: 'comfortable',
   hideDefaultColumns: () => ({
-    created_at: false,
-    updated_at: false,
+    select: false,
+    createdAt: false,
+    updatedAt: false,
+    createdBy: false,
     updatedBy: false,
+    presence: false,
     actions: false
   })
 })

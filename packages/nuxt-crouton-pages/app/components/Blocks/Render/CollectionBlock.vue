@@ -3,8 +3,7 @@
  * Collection Block Public Renderer
  *
  * Renders an embedded collection in read-only mode using CroutonCollection.
- * Uses :create="false" to hide the create button and :hide-default-columns="{ actions: true }"
- * to hide action buttons, giving a clean public view.
+ * Uses stateless mode to provide clean public view without admin actions.
  * Supports table, list, grid, and cards layouts.
  */
 import type { CollectionBlockAttrs } from '../../../types/blocks'
@@ -32,6 +31,35 @@ const pageSize = computed(() => {
 
 // Map layout value
 const layout = computed(() => props.attrs.layout || 'table')
+
+// Fetch collection data
+const { items, pending } = props.attrs.collection
+  ? await useCollectionQuery(props.attrs.collection, {
+      pagination: {
+        currentPage: 1,
+        pageSize: pageSize.value,
+        sortBy: 'createdAt',
+        sortDirection: 'desc'
+      }
+    })
+  : { items: ref([]), pending: ref(false) }
+
+// Generate basic columns from data (if available) for table layout
+// This provides a fallback when no explicit columns are configured
+const autoColumns = computed(() => {
+  if (!items.value?.length) return []
+
+  const firstItem = items.value[0]
+  const skipFields = ['id', 'teamId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy']
+
+  return Object.keys(firstItem)
+    .filter(key => !skipFields.includes(key) && !key.endsWith('User'))
+    .slice(0, 5) // Limit to first 5 fields for cleaner display
+    .map(key => ({
+      accessorKey: key,
+      header: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')
+    }))
+})
 </script>
 
 <template>
@@ -62,20 +90,31 @@ const layout = computed(() => props.attrs.layout || 'table')
       <p>Collection "{{ attrs.collection }}" not found</p>
     </div>
 
-    <!-- Render collection -->
+    <!-- Loading state -->
+    <div
+      v-else-if="pending"
+      class="p-8 text-center text-muted"
+    >
+      <UIcon name="i-lucide-loader-2" class="size-8 mb-2 mx-auto animate-spin" />
+      <p>Loading...</p>
+    </div>
+
+    <!-- Render collection in stateless/read-only mode -->
     <CroutonCollection
       v-else
       :collection="attrs.collection"
       :layout="layout"
-      :create="false"
-      :hide-default-columns="{ actions: true }"
-      :initial-pagination="{
-        currentPage: 1,
-        pageSize: pageSize,
-        sortBy: 'createdAt',
-        sortDirection: 'desc'
+      :columns="autoColumns"
+      :rows="items || []"
+      :stateless="true"
+      :hide-default-columns="{
+        select: true,
+        actions: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true
       }"
-      :show-pagination="attrs.showPagination !== false"
       class="collection-block-content"
     />
   </div>

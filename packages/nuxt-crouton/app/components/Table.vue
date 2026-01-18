@@ -11,8 +11,11 @@
       <slot name="header" />
     </div>
 
-    <!-- Filters - fixed height -->
-    <div class="flex items-center justify-between gap-3 shrink-0 px-4 py-3">
+    <!-- Filters - fixed height (hidden in stateless mode) -->
+    <div
+      v-if="!stateless"
+      class="flex items-center justify-between gap-3 shrink-0 px-4 py-3"
+    >
       <CroutonTableSearch
         v-model="search"
         :placeholder="tString('table.search')"
@@ -163,6 +166,7 @@ const props = withDefaults(defineProps<TableProps>(), {
   sortable: false,
   stateless: false,
   hideDefaultColumns: () => ({
+    select: false,
     createdAt: false,
     updatedAt: false,
     createdBy: false,
