@@ -1,6 +1,7 @@
 {
   "title": {
     "type": "string",
+    "translatable": true,
     "meta": {
       "required": true,
       "label": "Title",
@@ -32,6 +33,7 @@
   },
   "content": {
     "type": "text",
+    "translatable": true,
     "meta": {
       "label": "Content",
       "area": "main",
@@ -84,6 +86,7 @@
   },
   "seoTitle": {
     "type": "string",
+    "translatable": true,
     "meta": {
       "label": "SEO Title",
       "maxLength": 60,
@@ -93,6 +96,7 @@
   },
   "seoDescription": {
     "type": "string",
+    "translatable": true,
     "meta": {
       "label": "SEO Description",
       "maxLength": 160,

@@ -1,6 +1,7 @@
 {
   "statuses": {
     "type": "repeater",
+    "translatableProperties": ["label"],
     "meta": {
       "label": "Booking Statuses",
       "repeaterComponent": "OptionItem",
@@ -12,6 +13,7 @@
   },
   "groups": {
     "type": "repeater",
+    "translatableProperties": ["label"],
     "meta": {
       "label": "Age Groups",
       "repeaterComponent": "OptionItem",
