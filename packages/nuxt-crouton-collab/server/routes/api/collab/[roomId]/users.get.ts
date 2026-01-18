@@ -1,33 +1,36 @@
 /**
  * HTTP endpoint to get current users in a collaboration room
  *
- * Used by Phase 6 global presence feature to show "X people editing"
- * badges on collection list items.
+ * Used by CollabEditingBadge for presence polling.
+ * URL: /api/collab/[roomId]/users?type=[roomType]
  *
- * URL pattern: GET /api/collab/[roomId]/users?type=[roomType]
- * Example: GET /api/collab/page-123/users?type=page
- *
- * Response:
+ * Example response:
  * {
- *   users: CollabAwarenessState[],
- *   count: number
+ *   "users": [{ "user": { "id": "...", "name": "...", "color": "..." }, "cursor": null }],
+ *   "count": 1
  * }
  */
-import { getRoomUsers } from '../../../../utils/collabRoomStore'
+import { getRoomUsers, getAllRooms } from '../../../../utils/collabRoomStore'
 
 export default defineEventHandler((event) => {
   const roomId = getRouterParam(event, 'roomId')
   const query = getQuery(event)
-  const roomType = (query.type as string) || 'generic'
+  const roomType = (query.type as string) || 'page'
 
   if (!roomId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Missing roomId parameter'
+      message: 'Missing roomId parameter'
     })
   }
 
   const users = getRoomUsers(roomType, roomId)
+
+  // Debug: log all rooms to see what's registered
+  const allRooms = getAllRooms()
+  console.log('[Collab /users] Request for:', { roomType, roomId })
+  console.log('[Collab /users] All rooms:', Array.from(allRooms.keys()))
+  console.log('[Collab /users] Users found:', users.length)
 
   return {
     users,

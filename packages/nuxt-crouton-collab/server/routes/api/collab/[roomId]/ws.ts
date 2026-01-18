@@ -85,19 +85,22 @@ export default defineWebSocketHandler({
     const roomId = pathParts[collabIndex + 1] || 'default'
     const roomType = url.searchParams.get('type') || 'generic'
 
+    console.log('[Collab WS] Connection opened:', { roomType, roomId, roomKey: `${roomType}:${roomId}` })
     const room = getOrCreateRoom(roomType, roomId)
     const peerWithSend = peer as unknown as { send: (data: unknown) => void }
     room.peers.add(peerWithSend)
 
-    // Store room reference on peer
+    // Store room reference on peer (including userId for cleanup on close)
     const peerData = peer as unknown as {
       _collabRoom: typeof room
       _roomId: string
       _roomType: string
+      _userId: string | null
     }
     peerData._collabRoom = room
     peerData._roomId = roomId
     peerData._roomType = roomType
+    peerData._userId = null
 
     // Send current state to new peer
     const stateUpdate = encodeStateAsUpdate(room.doc)
@@ -112,14 +115,20 @@ export default defineWebSocketHandler({
   },
 
   message(peer, message) {
+    console.log('[Collab WS] Message received, type:', typeof message, 'constructor:', message?.constructor?.name)
+
     const peerData = peer as unknown as { _collabRoom?: ReturnType<typeof getOrCreateRoom> }
     const room = peerData._collabRoom
-    if (!room) return
+    if (!room) {
+      console.log('[Collab WS] No room found for peer')
+      return
+    }
 
     // Extract text from crossws Message wrapper if present
     let textContent: string | null = null
     if (typeof message === 'string') {
       textContent = message
+      console.log('[Collab WS] Message is string:', textContent.substring(0, 100))
     } else if (
       message
       && typeof message === 'object'
@@ -127,19 +136,31 @@ export default defineWebSocketHandler({
       && typeof (message as { text: unknown }).text === 'function'
     ) {
       const wsMessage = message as { text: () => string; rawData: unknown }
-      if (typeof wsMessage.rawData === 'string') {
+      console.log('[Collab WS] Message has text() method, rawData type:', typeof wsMessage.rawData)
+      // Try to get text regardless of rawData type
+      try {
         textContent = wsMessage.text()
+        console.log('[Collab WS] Extracted text:', textContent?.substring(0, 100))
+      } catch (e) {
+        console.log('[Collab WS] Failed to extract text:', e)
       }
     }
 
     // Handle string messages (JSON)
+    console.log('[Collab WS] textContent after extraction:', textContent ? 'has value' : 'null')
     if (textContent !== null) {
       try {
         const parsed = JSON.parse(textContent)
+        console.log('[Collab WS] Parsed message type:', parsed.type)
         if (parsed.type === 'awareness') {
           const clientId = parsed.userId || parsed.clientId
+          console.log('[Collab WS] Awareness update received:', { clientId, state: parsed.state?.user })
           if (clientId) {
             room.awareness.set(clientId, parsed.state)
+            // Track userId on peer for cleanup on close
+            const peerData = peer as unknown as { _userId: string | null }
+            peerData._userId = clientId
+            console.log('[Collab WS] Awareness stored. Total users:', room.awareness.size)
           }
           // Broadcast awareness to all peers
           const awarenessMessage = JSON.stringify({
@@ -232,10 +253,17 @@ export default defineWebSocketHandler({
       _collabRoom?: ReturnType<typeof getOrCreateRoom>
       _roomId?: string
       _roomType?: string
+      _userId?: string | null
     }
     const room = peerData._collabRoom
     if (room) {
       room.peers.delete(peer as unknown as { send: (data: unknown) => void })
+
+      // Remove user from awareness when they disconnect
+      if (peerData._userId) {
+        room.awareness.delete(peerData._userId)
+        console.log('[Collab WS] User disconnected, removed from awareness:', peerData._userId, 'Remaining users:', room.awareness.size)
+      }
 
       // Broadcast updated awareness (user left)
       const awarenessMessage = JSON.stringify({

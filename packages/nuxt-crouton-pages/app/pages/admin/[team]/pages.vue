@@ -93,13 +93,17 @@ const visibilityIcons: Record<string, string> = {
         layout="tree"
         :columns="columns"
         show-search
+        :show-collab-presence="{
+          roomType: 'page',
+          getRoomId: (row: any) => `page-${row.id}`
+        }"
         :empty-state="{
           icon: 'i-lucide-file-text',
           title: t('pages.empty') || 'No pages yet',
           description: t('pages.emptyDescription') || 'Create your first page to get started.'
         }"
       >
-        <!-- Custom cell renderers -->
+        <!-- Custom cell renderers for table layout (tree uses built-in rendering) -->
         <template #cell-pageType="{ row }">
           <div class="flex items-center gap-2">
             <UIcon

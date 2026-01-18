@@ -29,6 +29,7 @@
           :collection="collection"
           :hierarchy="hierarchy"
           :card-component="cardComponent"
+          :show-collab-presence="showCollabPresence"
           @move="handleMove"
         />
       </div>
@@ -56,7 +57,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { Component } from 'vue'
-import type { HierarchyConfig } from '../types/table'
+import type { HierarchyConfig, CollabPresenceConfig } from '../types/table'
 
 export interface TreeNode {
   id: string
@@ -74,13 +75,16 @@ interface Props {
   hierarchy: HierarchyConfig
   loading?: boolean
   cardComponent?: Component | null
+  /** Show collaboration presence badges on tree nodes */
+  showCollabPresence?: boolean | CollabPresenceConfig
 }
 
 const props = withDefaults(defineProps<Props>(), {
   rows: () => [],
   hierarchy: () => ({ enabled: true }),
   loading: false,
-  cardComponent: null
+  cardComponent: null,
+  showCollabPresence: false
 })
 
 const emit = defineEmits<{

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount, getCurrentInstance, resolveComponent } from 'vue'
 import type { Component } from 'vue'
 import type { TreeNode as TreeNodeType } from './Tree.vue'
+import type { CollabPresenceConfig } from '../types/table'
 import type SortableType from 'sortablejs'
 import type { SortableEvent, MoveEvent } from 'sortablejs'
 
@@ -20,6 +21,8 @@ interface Props {
   columnId?: string
   /** Whether nesting is allowed (false for sortable-only mode) */
   allowNesting?: boolean
+  /** Show collaboration presence badges */
+  showCollabPresence?: boolean | CollabPresenceConfig
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -28,7 +31,8 @@ const props = withDefaults(defineProps<Props>(), {
   collection: '',
   cardComponent: null,
   columnId: '',
-  allowNesting: true
+  allowNesting: true,
+  showCollabPresence: false
 })
 
 const emit = defineEmits<{
@@ -64,6 +68,48 @@ watch(hasChildren, (has) => {
 // Flash animation state from global composable (triggered by useTreeMutation)
 const { flashingCounts } = useTreeItemState()
 const isCountFlashing = computed(() => !!flashingCounts.value[props.item.id])
+
+// ============ Collab Presence Support ============
+
+// Resolve CollabEditingBadge component if nuxt-crouton-collab is installed
+// Note: Nuxt auto-imports don't appear in appContext.components, so we try resolveComponent directly
+const collabEditingBadgeComponent = computed<Component | null>(() => {
+  if (!props.showCollabPresence) {
+    return null
+  }
+
+  // Try to resolve the component - Nuxt auto-imports will work with resolveComponent
+  // If the component doesn't exist, resolveComponent returns the string name
+  const resolved = resolveComponent('CollabEditingBadge')
+  if (typeof resolved !== 'string') {
+    return resolved
+  }
+
+  // Try lazy variant
+  const lazyResolved = resolveComponent('LazyCollabEditingBadge')
+  if (typeof lazyResolved !== 'string') {
+    return lazyResolved
+  }
+
+  return null
+})
+
+// Collab presence configuration
+const collabConfig = computed<CollabPresenceConfig>(() => {
+  if (typeof props.showCollabPresence === 'object') {
+    return props.showCollabPresence
+  }
+  return {}
+})
+
+// Get room ID for this item
+function getCollabRoomId(): string {
+  if (collabConfig.value.getRoomId) {
+    return collabConfig.value.getRoomId(props.item, props.collection)
+  }
+  // Default: {collection}-{id}
+  return `${props.collection}-${props.item.id}`
+}
 
 // ============ UI Helpers ============
 
@@ -343,6 +389,18 @@ onBeforeUnmount(() => {
         </UBadge>
       </template>
 
+      <!-- Collab presence badge -->
+      <component
+        v-if="collabEditingBadgeComponent && item.id"
+        :is="collabEditingBadgeComponent"
+        :room-id="getCollabRoomId()"
+        :room-type="collabConfig.roomType || 'page'"
+        :current-user-id="collabConfig.currentUserId"
+        :poll-interval="collabConfig.pollInterval || 5000"
+        size="xs"
+        class="shrink-0"
+      />
+
       <!-- Actions dropdown -->
       <div class="opacity-0 group-hover:opacity-100 transition-opacity">
         <UDropdownMenu
@@ -382,6 +440,7 @@ onBeforeUnmount(() => {
         :card-component="cardComponent"
         :column-id="columnId"
         :allow-nesting="allowNesting"
+        :show-collab-presence="showCollabPresence"
         @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
         @select="emit('select', $event)"
       />

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import type { Component } from 'vue'
-import type { HierarchyConfig } from '../types/table'
+import type { HierarchyConfig, CollabPresenceConfig } from '../types/table'
 import type { TreeNode } from './Tree.vue'
 import type SortableType from 'sortablejs'
 import type { SortableEvent, MoveEvent } from 'sortablejs'
@@ -16,6 +16,8 @@ interface Props {
   cardComponent?: Component | null
   /** Unique identifier for this tree column (used for cross-column drag detection) */
   columnId?: string
+  /** Show collaboration presence badges on tree nodes */
+  showCollabPresence?: boolean | CollabPresenceConfig
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -23,7 +25,8 @@ const props = withDefaults(defineProps<Props>(), {
   hierarchy: () => ({ enabled: true }),
   labelKey: 'name',
   cardComponent: null,
-  columnId: ''
+  columnId: '',
+  showCollabPresence: false
 })
 
 const emit = defineEmits<{
@@ -172,6 +175,7 @@ onMounted(async () => {
           :card-component="cardComponent"
           :column-id="columnId"
           :allow-nesting="hierarchy.allowNesting !== false"
+          :show-collab-presence="showCollabPresence"
           @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
           @select="emit('select', $event)"
         />
