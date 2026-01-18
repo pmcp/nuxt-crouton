@@ -112,26 +112,21 @@ const rightLocaleOptions = computed(() =>
     .map(code => ({ value: code, label: code.toUpperCase() }))
 )
 
-// For narrow screens: tab-based locale switching
+// For narrow screens: tab-based locale switching (shows ALL locales)
 const narrowLocaleTab = ref(primaryEditingLocale.value)
 
-// Tab items for narrow view (shows both locales from side-by-side)
-const narrowLocaleTabs = computed(() => [
-  {
-    value: primaryEditingLocale.value,
-    label: primaryEditingLocale.value.toUpperCase(),
-    icon: isLocaleComplete(primaryEditingLocale.value) ? 'i-lucide-check-circle' : undefined
-  },
-  {
-    value: secondaryEditingLocale.value,
-    label: secondaryEditingLocale.value.toUpperCase(),
-    icon: isLocaleComplete(secondaryEditingLocale.value) ? 'i-lucide-check-circle' : undefined
-  }
-])
+// Tab items for narrow view - show ALL available locales
+const narrowLocaleTabs = computed(() =>
+  allLocaleCodes.value.map(code => ({
+    value: code,
+    label: code.toUpperCase()
+  }))
+)
 
-// Sync narrow tab when locales change
-watch([primaryEditingLocale, secondaryEditingLocale], ([primary]) => {
-  if (narrowLocaleTab.value !== primary && narrowLocaleTab.value !== secondaryEditingLocale.value) {
+// Sync narrow tab when primary locale changes
+watch(primaryEditingLocale, (primary) => {
+  // Only reset if current tab no longer exists in available locales
+  if (!allLocaleCodes.value.includes(narrowLocaleTab.value)) {
     narrowLocaleTab.value = primary
   }
 })

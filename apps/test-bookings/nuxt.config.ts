@@ -16,15 +16,29 @@ export default defineNuxtConfig({
     '@friendlyinternet/nuxt-crouton',          // Core (includes auth, admin, i18n)
     '@friendlyinternet/nuxt-crouton-ai',       // AI features (translation, chat)
     '@friendlyinternet/nuxt-crouton-editor',   // Rich text editor
+    '@friendlyinternet/nuxt-crouton-collab',   // Real-time collaboration (Yjs)
     '@friendlyinternet/nuxt-crouton-pages',    // CMS pages with page types
     '@friendlyinternet/nuxt-crouton-email',    // Optional: Email functionality
     '@friendlyinternet/nuxt-crouton-maps',     // Optional: Maps functionality
     '@friendlyinternet/crouton-bookings',      // Bookings app (auto-discovered)
-    './layers/bookings',                       // Local customizations
-    './layers/pages'
+    './layers/bookings'                        // Local customizations
   ],
   modules: ['@nuxthub/core', '@nuxt/ui'],
   hub: { db: 'sqlite' },
+
+  // Fix for TipTap "Adding different instances of a keyed plugin" error
+  // See: https://ui.nuxt.com/docs/components/editor
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@nuxt/ui > prosemirror-state',
+        '@nuxt/ui > prosemirror-transform',
+        '@nuxt/ui > prosemirror-model',
+        '@nuxt/ui > prosemirror-view',
+        '@nuxt/ui > prosemirror-gapcursor'
+      ]
+    }
+  },
 
   // Enable booking email functionality
   runtimeConfig: {
