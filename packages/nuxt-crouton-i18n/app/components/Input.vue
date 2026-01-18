@@ -112,13 +112,29 @@ const rightLocaleOptions = computed(() =>
     .map(code => ({ value: code, label: code.toUpperCase() }))
 )
 
-// Debug collab prop
-watch(() => props.collab, (collab) => {
-  console.log('[CroutonI18nInput] collab prop changed:', collab ? 'has collab' : 'no collab')
-  if (collab) {
-    console.log('[CroutonI18nInput] collab.getXmlFragment:', typeof collab.getXmlFragment)
+// For narrow screens: tab-based locale switching
+const narrowLocaleTab = ref(primaryEditingLocale.value)
+
+// Tab items for narrow view (shows both locales from side-by-side)
+const narrowLocaleTabs = computed(() => [
+  {
+    value: primaryEditingLocale.value,
+    label: primaryEditingLocale.value.toUpperCase(),
+    icon: isLocaleComplete(primaryEditingLocale.value) ? 'i-lucide-check-circle' : undefined
+  },
+  {
+    value: secondaryEditingLocale.value,
+    label: secondaryEditingLocale.value.toUpperCase(),
+    icon: isLocaleComplete(secondaryEditingLocale.value) ? 'i-lucide-check-circle' : undefined
   }
-}, { immediate: true })
+])
+
+// Sync narrow tab when locales change
+watch([primaryEditingLocale, secondaryEditingLocale], ([primary]) => {
+  if (narrowLocaleTab.value !== primary && narrowLocaleTab.value !== secondaryEditingLocale.value) {
+    narrowLocaleTab.value = primary
+  }
+})
 
 // Detect if we're in multi-field mode
 const isMultiField = computed(() => props.fields && props.fields.length > 0)
@@ -286,10 +302,121 @@ function hasSourceContent(field: string): boolean {
 <template>
   <div class="flex flex-col h-full">
     <!-- ============================================= -->
-    <!-- SIDE-BY-SIDE LAYOUT (for wide viewports)     -->
+    <!-- SIDE-BY-SIDE LAYOUT (with tabs on narrow)    -->
     <!-- ============================================= -->
     <template v-if="layoutMode === 'side-by-side' && isMultiField">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
+      <!-- NARROW: Tab-based locale switching (< lg screens) -->
+      <div class="lg:hidden flex flex-col h-full min-h-0">
+        <!-- Locale tabs -->
+        <UTabs
+          v-model="narrowLocaleTab"
+          :items="narrowLocaleTabs"
+          :content="false"
+          class="mb-3"
+        />
+
+        <!-- Fields for active locale -->
+        <div class="flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto">
+          <div
+            v-for="field in fields"
+            :key="`narrow-${field}`"
+            :class="[
+              'flex flex-col gap-1',
+              field === 'content' ? 'flex-1 min-h-[300px]' : ''
+            ]"
+          >
+            <div class="flex items-center justify-between h-5">
+              <label class="text-xs font-medium text-muted uppercase tracking-wide">
+                {{ field }}
+              </label>
+              <!-- AI Translate button (only for secondary locale) -->
+              <UButton
+                v-if="showAiTranslate && narrowLocaleTab === secondaryEditingLocale && hasSourceContent(field) && !isBlockEditorField(field)"
+                icon="i-lucide-sparkles"
+                size="2xs"
+                variant="ghost"
+                color="neutral"
+                :loading="isFieldTranslating(field, narrowLocaleTab)"
+                @click="requestTranslation(field, narrowLocaleTab)"
+              />
+            </div>
+
+            <!-- CroutonEditorSimple -->
+            <div
+              v-if="getFieldComponent(field) === 'CroutonEditorSimple'"
+              class="flex-1 border rounded-md overflow-hidden border-default"
+            >
+              <div class="h-full min-h-[200px]">
+                <CroutonEditorSimple
+                  :model-value="getFieldValue(field, narrowLocaleTab)"
+                  @update:model-value="updateFieldValue(field, $event, narrowLocaleTab)"
+                />
+              </div>
+            </div>
+
+            <!-- CroutonPagesEditorBlockEditor -->
+            <div
+              v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditor'"
+              class="flex-1 border rounded-md overflow-hidden border-default"
+            >
+              <div class="h-full min-h-[350px]">
+                <CroutonPagesEditorBlockEditor
+                  :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
+                  :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
+                  :collab-provider="collab?.connection"
+                  :collab-user="collab?.user"
+                  :editable="true"
+                  placeholder="Type / to insert a block..."
+                  @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
+                />
+              </div>
+            </div>
+
+            <!-- CroutonPagesEditorBlockEditorWithPreview -->
+            <div
+              v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditorWithPreview'"
+              class="flex-1 border rounded-md overflow-hidden border-default"
+            >
+              <CroutonPagesEditorBlockEditorWithPreview
+                :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
+                :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
+                :collab-provider="collab?.connection"
+                :collab-user="collab?.user"
+                :editable="true"
+                placeholder="Type / to insert a block..."
+                @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
+              />
+            </div>
+
+            <!-- UTextarea -->
+            <UTextarea
+              v-else-if="getFieldComponent(field) === 'UTextarea'"
+              :model-value="getFieldValue(field, narrowLocaleTab)"
+              :placeholder="narrowLocaleTab !== primaryEditingLocale && getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : (defaultValues?.[field] || '')"
+              :color="error && !getFieldValue(field, narrowLocaleTab) ? 'error' : 'primary'"
+              :highlight="!!(error && !getFieldValue(field, narrowLocaleTab))"
+              class="w-full"
+              size="sm"
+              @update:model-value="updateFieldValue(field, $event, narrowLocaleTab)"
+            />
+
+            <!-- UInput (default) -->
+            <UInput
+              v-else
+              :model-value="getFieldValue(field, narrowLocaleTab)"
+              :placeholder="narrowLocaleTab !== primaryEditingLocale && getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : (defaultValues?.[field] || '')"
+              :color="error && !getFieldValue(field, narrowLocaleTab) ? 'error' : 'primary'"
+              :highlight="!!(error && !getFieldValue(field, narrowLocaleTab))"
+              class="w-full"
+              size="sm"
+              @update:model-value="updateFieldValue(field, $event, narrowLocaleTab)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDE: Side-by-side columns (lg+ screens) -->
+      <div class="hidden lg:grid grid-cols-2 gap-6 h-full min-h-0">
         <!-- LEFT COLUMN: Primary locale (selectable) -->
         <div class="flex flex-col min-h-0">
           <!-- Column header with dropdown -->
