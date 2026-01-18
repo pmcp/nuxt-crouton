@@ -12,11 +12,12 @@ When you extend `nuxt-crouton`, you automatically get:
 
 | Package | Provides | Routes |
 |---------|----------|--------|
+| `@nuxthub/core` | Database (D1/SQLite), KV storage, blob storage, multi-vendor support | None |
 | `nuxt-crouton-i18n` | Translation system (`useT`), DB-backed translations, team overrides | None |
 | `nuxt-crouton-auth` | Authentication, teams, sessions, OAuth, passkeys, 2FA | `/auth/*` |
 | `nuxt-crouton-admin` | Super admin dashboard, user/team management, impersonation | `/super-admin/*` |
 
-**Order matters:** i18n is loaded first (provides translation system), then auth (uses i18n), then admin (uses both).
+**Order matters:** NuxtHub loads first (provides database), then i18n (provides translations), then auth (uses both), then admin (uses all).
 
 ### Simplified Setup
 
@@ -178,9 +179,38 @@ const { formatShortcut } = useCroutonShortcuts({
 
 ## Dependencies
 
-- **Auto-includes**: `nuxt-crouton-i18n`, `nuxt-crouton-auth`, `nuxt-crouton-admin`
+- **Auto-includes**: `@nuxthub/core`, `nuxt-crouton-i18n`, `nuxt-crouton-auth`, `nuxt-crouton-admin`
 - **Required by**: App packages (e.g., `crouton-bookings`)
 - **Peer deps**: `@nuxt/ui ^4.0.0`, `nuxt ^4.0.0`
+
+## NuxtHub Configuration
+
+The core package includes `@nuxthub/core` with sensible defaults:
+
+```typescript
+// Default hub config (can be overridden in your app)
+hub: {
+  db: 'sqlite'  // Uses D1 on Cloudflare, local SQLite in dev
+}
+```
+
+**Override in your app** to use different providers or add features:
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  extends: ['@friendlyinternet/nuxt-crouton'],
+
+  // Override or extend hub config
+  hub: {
+    db: 'postgresql',  // Use PostgreSQL instead
+    kv: true,          // Enable KV storage
+    blob: true         // Enable blob storage
+  }
+})
+```
+
+**Deployment**: NuxtHub is multi-vendor - deploy to Cloudflare Workers, Vercel, or any supported provider. See [NuxtHub docs](https://hub.nuxt.com/docs/getting-started/deploy) for deployment options.
 
 ## Type Definitions
 
