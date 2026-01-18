@@ -333,25 +333,19 @@ export {}
     error.value = null
     result.value = null
 
-    console.log('[useAppGenerator] Starting app creation with options:', options)
-
     try {
       // Step 1: Initialize
-      console.log('[useAppGenerator] Step 1: Initialize')
       updateProgress('init', 'Creating project structure...', 10)
 
       // Step 2: Generate template files
       // NOTE: Always delegate to server for template generation to use monorepo-aware
       // local package paths when auth/i18n packages aren't published to npm yet
-      console.log('[useAppGenerator] Step 2: Generate templates (server-side)')
       updateProgress('templates', 'Generating configuration files...', 20)
 
       // Step 3: Install dependencies (required for CLI)
-      console.log('[useAppGenerator] Step 3: Install dependencies')
       updateProgress('dependencies', 'Installing dependencies...', 40)
 
       // Step 4: Call server to write templates, install deps and run CLI
-      console.log('[useAppGenerator] Step 4: Calling server API...')
       updateProgress('cli', 'Running crouton generator...', 60)
 
       const response = await $fetch<CreateAppResult>('/api/schema-designer/create-app', {
@@ -363,22 +357,17 @@ export {}
         }
       })
 
-      console.log('[useAppGenerator] Server response:', response)
-
       if (!response.success) {
-        console.error('[useAppGenerator] Server returned failure:', response.errors)
         throw new Error(response.errors.join(', '))
       }
 
       // Step 5: Complete
-      console.log('[useAppGenerator] Step 5: Complete!')
       updateProgress('complete', 'Project ready!', 100)
 
       result.value = response
       return response
 
     } catch (e: any) {
-      console.error('[useAppGenerator] Error during app creation:', e)
       const errorMessage = e.message || 'Failed to create app'
       error.value = errorMessage
       updateProgress('error', errorMessage, progress.value.progress)

@@ -109,9 +109,6 @@ export default function () {
         const apiPath = config?.apiPath || collection
         const fetchStrategy = config?.fetchStrategy || 'query'
 
-        console.log('[useCrouton] open', actionIn, 'for collection:', collection, 'ids:', ids)
-        console.log('[useCrouton] config:', { apiPath, fetchStrategy })
-
         // Determine base API path
         let basePath: string
         if (route.path.includes('/super-admin/')) {
@@ -119,7 +116,6 @@ export default function () {
         } else {
           const teamId = getTeamId()
           if (!teamId) {
-            console.error('[useCrouton] Team context required but not available')
             throw new Error('Team context required to open form')
           }
           basePath = `/api/teams/${teamId}/${apiPath}`
@@ -138,16 +134,12 @@ export default function () {
           queryParams = { ids: ids.join(',') }
         }
 
-        console.log('[useCrouton] fetching from:', fullApiPath, 'query:', queryParams)
-
         // Fetch the item to edit
         const response = await $fetch<any>(fullApiPath, {
           method: 'GET',
           query: queryParams,
           credentials: 'include'
         })
-
-        console.log('[useCrouton] raw response:', response)
 
         // Extract the active item from response
         let activeItem: any
@@ -156,8 +148,6 @@ export default function () {
         } else {
           activeItem = Array.isArray(response) ? response[0] : response
         }
-
-        console.log('[useCrouton] extracted activeItem:', activeItem ? { id: activeItem.id, title: activeItem.title, hasContent: !!activeItem.content } : null)
 
         // Update the state
         const stateIndex = croutonStates.value.findIndex((s: CroutonState) => s.id === newState.id)

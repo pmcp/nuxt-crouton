@@ -600,17 +600,12 @@ async function handleTreeMove(id: string, newParentId: string | null, newOrder: 
   // In stateless mode, just emit - don't persist
   if (props.stateless) return
 
-  if (!treeMutation) {
-    console.warn('[Collection] No collection specified for tree mutation')
-    return
-  }
-
-  console.log(`[Collection] Tree move: ${id} -> parent: ${newParentId}, order: ${newOrder}`)
+  if (!treeMutation) return
 
   try {
     await treeMutation.moveNode(id, newParentId, newOrder)
-  } catch (error) {
-    console.error('[Collection] Tree move failed:', error)
+  } catch (_error) {
+    // Error is already handled by treeMutation with toast notification
   }
 }
 
@@ -624,23 +619,18 @@ async function handleKanbanMove(payload: { id: string; newValue: string | null; 
   // In stateless mode, just emit - don't persist
   if (props.stateless) return
 
-  if (!kanbanMutation) {
-    console.warn('[Collection] No collection specified for kanban mutation')
-    return
-  }
+  if (!kanbanMutation) return
 
   const groupField = kanbanConfig.value?.groupField || 'status'
   const orderField = kanbanConfig.value?.orderField || 'order'
-
-  console.log(`[Collection] Kanban move: ${id} -> ${groupField}=${newValue}, ${orderField}=${newOrder}`)
 
   try {
     await kanbanMutation.update(id, {
       [groupField]: newValue,
       [orderField]: newOrder
     })
-  } catch (error) {
-    console.error('[Collection] Kanban move failed:', error)
+  } catch (_error) {
+    // Error is already handled by kanbanMutation with toast notification
   }
 }
 

@@ -52,45 +52,24 @@ const customComponent = computed(() => {
 
   const componentName = `${collectionPascal}${fieldPascal}CardMini`
 
-  console.log('🔍 Looking for component:', componentName)
-  console.log('📦 Props:', {
-    collection: props.dependentCollection,
-    field: props.dependentField,
-    value: props.value,
-    dependentValue: props.dependentValue
-  })
-
   try {
     const resolvedComponent = resolveComponent(componentName)
-    console.log('✅ Component found!')
     return resolvedComponent
-  } catch (e) {
-    console.log('❌ Component not found:', e)
+  } catch (_e) {
     return null
   }
 })
 
 // Resolve IDs to full objects from parent's field array
 const resolvedItems = computed(() => {
-  console.log('🔄 Resolving items...', {
-    parentItem: parentItem.value,
-    value: props.value,
-    field: props.dependentField
-  })
-
   if (!parentItem.value || !props.value) return []
 
   const ids = Array.isArray(props.value) ? props.value : [props.value]
   const fieldData = parentItem.value[props.dependentField] || []
 
-  console.log('📊 Field data:', fieldData)
-  console.log('🎯 Looking for IDs:', ids)
-
   const result = ids
     .map(id => fieldData.find((opt: any) => opt.id === id))
     .filter(Boolean)
-
-  console.log('✨ Resolved items:', result)
 
   return result
 })

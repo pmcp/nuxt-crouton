@@ -99,9 +99,6 @@ const startDetection = () => {
 
   // Add click handler for missing translations
   document.addEventListener('click', handleClick, true)
-
-  // Debug: Log that detection started
-  console.log('Translation dev mode: Detection started, scanning for missing translations')
 }
 
 const stopDetection = () => {
@@ -121,30 +118,18 @@ const stopDetection = () => {
 const handleClick = (e: MouseEvent) => {
   const target = e.target as HTMLElement
 
-  // Debug: Log all clicks when dev mode is enabled
-  if (enabled.value) {
-    console.log('Click detected on:', target, 'Classes:', target.classList)
-  }
-
   // Check if clicked element or its parent has missing translation
   let element = target
   let depth = 0
   while (element && depth < 5) { // Increased depth to check more parents
     if (element.classList?.contains('translation-missing')) {
       const key = element.getAttribute('data-key')
-      console.log('Found translation-missing element:', element, 'Key:', key)
       if (key) {
         e.preventDefault()
         e.stopPropagation()
         modalKey.value = key
         modalTranslation.value = ''
-        console.log('Setting showModal to true for key:', key)
         showModal.value = true
-        console.log('showModal.value is now:', showModal.value)
-        // Force reactivity update
-        nextTick(() => {
-          console.log('After nextTick, showModal.value:', showModal.value)
-        })
         return
       }
     }
@@ -158,7 +143,6 @@ const scanForMissingTranslations = () => {
 
   // Find all elements containing [key] pattern in text content
   const allElements = document.querySelectorAll('*')
-  let foundCount = 0
 
   allElements.forEach((element) => {
     // Skip if already marked or is script/style
@@ -173,12 +157,8 @@ const scanForMissingTranslations = () => {
       element.classList.add('translation-missing')
       element.setAttribute('data-key', match[1])
       element.setAttribute('title', `Click to add translation for: ${match[1]}`)
-      foundCount++
-      console.log('Marked missing translation:', match[1], 'on element:', element)
     }
   })
-
-  console.log(`Translation scan complete. Found ${foundCount} missing translations.`)
 }
 
 const saveTranslation = async () => {
@@ -230,11 +210,6 @@ const saveTranslation = async () => {
     })
   }
 }
-
-// Watch for modal state changes
-watch(showModal, (newValue) => {
-  console.log('showModal changed to:', newValue)
-})
 
 // Lifecycle
 onMounted(() => {

@@ -93,7 +93,6 @@ watch(activeGroupField, () => {
 
 // Handle move event from column
 async function handleMove(itemId: string, newColumnValue: string | null, newOrder: number) {
-  console.log('[Kanban] Move:', { itemId, newColumnValue, newOrder })
   emit('move', { id: itemId, newValue: newColumnValue, newOrder })
 }
 

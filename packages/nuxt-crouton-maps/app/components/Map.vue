@@ -35,11 +35,8 @@ const emit = defineEmits<{
   error: [error: string]
 }>()
 
-console.log('[CroutonMapsMap] Component mounted with props:', props)
-
 // Get map config
 const config = useMapConfig()
-console.log('[CroutonMapsMap] Config loaded:', config)
 
 // Map state
 const mapInstance = ref<any>(null)
@@ -71,7 +68,6 @@ const handleMapError = (err: any) => {
 
 // Use Nuxt-Mapbox composable to get map instance using callback
 useMapbox(props.id, (map) => {
-  console.log('[CroutonMapsMap] Map loaded via useMapbox callback:', !!map)
   if (map && !isLoaded.value) {
     handleMapLoad(map)
   }

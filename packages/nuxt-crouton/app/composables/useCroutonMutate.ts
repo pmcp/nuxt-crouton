@@ -27,8 +27,6 @@ export function useCroutonMutate() {
     collection: string,
     data: any
   ) => {
-    console.log('[useCroutonMutate]', action, collection, data)
-
     const { create, update, deleteItems } = useCollectionMutation(collection)
 
     if (action === 'create') {

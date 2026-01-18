@@ -186,7 +186,6 @@ export function useTreeDrag() {
 
     // If dropping directly into the dragged item's children container
     if (targetParentId === dragId) {
-      console.log('[isDescendantDrop] BLOCKED: dropping into own children')
       return true
     }
 
@@ -205,7 +204,6 @@ export function useTreeDrag() {
     // If target's path contains the dragged item's ID, it's a descendant
     // Path format is like: /grandparentId/parentId/itemId/
     if (targetPath.includes(`/${dragId}/`)) {
-      console.log('[isDescendantDrop] BLOCKED: target is a descendant. targetPath:', targetPath, 'dragId:', dragId)
       return true
     }
 

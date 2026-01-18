@@ -78,10 +78,8 @@ export function useTreeMutation(collection: string) {
    * Invalidate cache for this collection (triggers refetch in all views)
    */
   const invalidateCache = async () => {
-    console.log('[useTreeMutation] Invalidating cache for:', collection)
     const baseCacheKey = `collection:${collection}:{}`
     await refreshNuxtData(baseCacheKey)
-    console.log('[useTreeMutation] ✅ Cache refreshed!')
   }
 
   /**
@@ -141,13 +139,6 @@ export function useTreeMutation(collection: string) {
     const correlationId = generateCorrelationId()
     const timestamp = Date.now()
 
-    console.group('[useTreeMutation] MOVE NODE')
-    console.log('Collection:', collection)
-    console.log('Item ID:', id)
-    console.log('New Parent ID:', newParentId)
-    console.log('New Order:', newOrder)
-    console.log('Correlation ID:', correlationId)
-
     moving.value = true
     markSaving(id)
 
@@ -160,8 +151,6 @@ export function useTreeMutation(collection: string) {
         },
         credentials: 'include'
       })
-
-      console.log('✅ Move successful')
 
       // Visual feedback via row flash animation - call BEFORE cache invalidation
       // so the state is set before the tree re-renders
@@ -185,12 +174,7 @@ export function useTreeMutation(collection: string) {
 
       // Invalidate cache to trigger refetch
       await invalidateCache()
-
-      console.groupEnd()
     } catch (error: any) {
-      console.error('❌ Move failed:', error)
-      console.groupEnd()
-
       markError(id)
 
       const errorMessage = error.data?.message || error.data || 'Move failed'
@@ -221,11 +205,6 @@ export function useTreeMutation(collection: string) {
     const correlationId = generateCorrelationId()
     const timestamp = Date.now()
 
-    console.group('[useTreeMutation] REORDER SIBLINGS')
-    console.log('Collection:', collection)
-    console.log('Updates:', updates)
-    console.log('Correlation ID:', correlationId)
-
     reordering.value = true
 
     try {
@@ -234,8 +213,6 @@ export function useTreeMutation(collection: string) {
         body: { updates },
         credentials: 'include'
       })
-
-      console.log('✅ Reorder successful')
 
       // Emit hook for event tracking
       const nuxtApp = useNuxtApp()
@@ -250,14 +227,9 @@ export function useTreeMutation(collection: string) {
       // Invalidate cache to trigger refetch
       await invalidateCache()
 
-      console.groupEnd()
-
       // Visual feedback via row flash animation for all reordered items
       updates.forEach(update => markSaved(update.id))
     } catch (error: any) {
-      console.error('❌ Reorder failed:', error)
-      console.groupEnd()
-
       const errorMessage = error.data?.message || error.data || 'Reorder failed'
 
       toast.add({

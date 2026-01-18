@@ -54,13 +54,6 @@ useSortable(containerRef, items, {
 // BUT don't break useSortable by creating new array references during our own emissions
 watch(() => props.modelValue, (newVal) => {
   if (newVal && !isEmitting.value) {
-    // Diagnostic logging to debug JSON parsing issues
-    console.log('[CroutonFormRepeater] External modelValue synced:', {
-      type: typeof newVal,
-      isArray: Array.isArray(newVal),
-      value: newVal,
-      length: newVal?.length
-    })
     // Only sync if this is a true external change (not from our own emit)
     items.value = [...newVal]
   }
@@ -68,34 +61,16 @@ watch(() => props.modelValue, (newVal) => {
 
 const addItem = () => {
   const newItem = { id: nanoid() }
-  console.log('[CroutonFormRepeater] Adding item:', {
-    componentName: props.componentName,
-    newItem,
-    currentCount: items.value.length
-  })
   items.value = [...items.value, newItem]
   emit('update:modelValue', items.value)
 }
 
 const removeItem = (index: number) => {
-  const itemToRemove = items.value[index]
-  console.log('[CroutonFormRepeater] Removing item:', {
-    componentName: props.componentName,
-    index,
-    item: itemToRemove,
-    currentCount: items.value.length
-  })
   items.value = items.value.filter((_, i) => i !== index)
   emit('update:modelValue', items.value)
 }
 
 const updateItem = (index: number, val: any) => {
-  console.log('[CroutonFormRepeater] Updating item:', {
-    componentName: props.componentName,
-    index,
-    oldValue: items.value[index],
-    newValue: val
-  })
   const newItems = [...items.value]
   newItems[index] = val
   items.value = newItems
@@ -113,25 +88,9 @@ const componentResolved = computed(() => {
   }
 })
 
-// Log component initialization
+// Warn in development if component cannot be resolved
 onMounted(() => {
-  console.log('[CroutonFormRepeater] Component mounted:', {
-    componentName: props.componentName,
-    sortable: props.sortable,
-    initialItemCount: items.value.length,
-    addLabel: props.addLabel,
-    componentResolved: componentResolved.value
-  })
-
-  // Diagnostic logging to debug JSON parsing issues
-  console.log('[CroutonFormRepeater] Initial modelValue:', {
-    type: typeof props.modelValue,
-    isArray: Array.isArray(props.modelValue),
-    value: props.modelValue,
-    length: props.modelValue?.length
-  })
-
-  if (!componentResolved.value) {
+  if (!componentResolved.value && import.meta.dev) {
     console.warn(`[CroutonFormRepeater] Warning: Component "${props.componentName}" may not be resolved correctly. Check that:
 1. The component is registered globally
 2. The component name matches the registered name (including any prefixes)

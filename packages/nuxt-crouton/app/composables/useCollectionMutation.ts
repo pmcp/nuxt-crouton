@@ -102,10 +102,6 @@ export function useCollectionMutation<K extends CollectionName>(
     refreshCollection: boolean = true,
     mutationData?: any
   ) => {
-    console.log('[useCollectionMutation v3.0] Invalidating cache for:', collection)
-    console.log('[useCollectionMutation v3.0] DEBUG - itemIds received:', itemIds, 'type:', typeof itemIds)
-    console.log('[useCollectionMutation v3.0] DEBUG - refreshCollection:', refreshCollection)
-
     // Refresh ALL cache keys for this collection (supports queries with parameters)
     // Queries Nuxt's payload.data to find all matching keys
     if (refreshCollection) {
@@ -116,8 +112,6 @@ export function useCollectionMutation<K extends CollectionName>(
       const allKeys = Object.keys(nuxtApp.payload.data)
       const matchingKeys = allKeys.filter(key => key.startsWith(prefix))
 
-      console.log('[useCollectionMutation v3.0] Refreshing collection cache keys:', matchingKeys)
-
       // Refresh all queries for this collection
       await Promise.all(matchingKeys.map(key => refreshNuxtData(key)))
     }
@@ -127,7 +121,6 @@ export function useCollectionMutation<K extends CollectionName>(
       const ids = Array.isArray(itemIds) ? itemIds : [itemIds]
       for (const id of ids) {
         const itemCacheKey = `collection-item:${collection}:${id}`
-        console.log('[useCollectionMutation v3.0] Refreshing item cache key:', itemCacheKey)
         await refreshNuxtData(itemCacheKey)
       }
     }
@@ -136,29 +129,23 @@ export function useCollectionMutation<K extends CollectionName>(
     // If this collection declares references and mutation data is provided,
     // refresh the item caches for referenced collections
     if (config?.references && mutationData) {
-      console.log('[useCollectionMutation v3.0] Processing references:', config.references)
-
       for (const [field, refCollection] of Object.entries(config.references)) {
         const refId = mutationData[field]
 
         if (refId && typeof refId === 'string') {
           const refCacheKey = `collection-item:${refCollection}:${refId}`
-          console.log('[useCollectionMutation v3.0] Refreshing referenced item cache:', refCacheKey)
           await refreshNuxtData(refCacheKey)
         } else if (Array.isArray(refId)) {
           // Handle array references (e.g., multiple IDs)
           for (const id of refId) {
             if (id && typeof id === 'string') {
               const refCacheKey = `collection-item:${refCollection}:${id}`
-              console.log('[useCollectionMutation v3.0] Refreshing referenced item cache:', refCacheKey)
               await refreshNuxtData(refCacheKey)
             }
           }
         }
       }
     }
-
-    console.log('[useCollectionMutation v3.0] ✅ Cache refreshed!')
   }
 
   /**
@@ -169,19 +156,12 @@ export function useCollectionMutation<K extends CollectionName>(
     const correlationId = generateCorrelationId()
     const timestamp = Date.now()
 
-    console.group('[useCollectionMutation] CREATE')
-    console.log('Collection:', collection)
-    console.log('Correlation ID:', correlationId)
-    console.log('Data:', data)
-
     try {
       const result = await $fetch<{ id: string; [key: string]: any }>(baseUrl, {
         method: 'POST',
         body: data,
         credentials: 'include'
       })
-
-      console.log('✅ API Success:', result)
 
       // Emit hook for event tracking (zero overhead if no listeners)
       const nuxtApp = useNuxtApp()
@@ -199,8 +179,6 @@ export function useCollectionMutation<K extends CollectionName>(
       // Pass mutation data to refresh referenced item caches
       await invalidateCache(undefined, true, data)
 
-      console.groupEnd()
-
       toast.add({
         title: 'Created successfully',
         icon: 'i-lucide-check',
@@ -209,9 +187,6 @@ export function useCollectionMutation<K extends CollectionName>(
 
       return result
     } catch (error: any) {
-      console.error('❌ API Error:', error)
-      console.groupEnd()
-
       const errorMessage = error.data?.message || error.data || 'Creation failed'
 
       toast.add({
@@ -235,12 +210,6 @@ export function useCollectionMutation<K extends CollectionName>(
     const correlationId = generateCorrelationId()
     const timestamp = Date.now()
 
-    console.group('[useCollectionMutation] UPDATE')
-    console.log('Collection:', collection)
-    console.log('Item ID:', id)
-    console.log('Correlation ID:', correlationId)
-    console.log('Updates:', updates)
-
     // Fetch the current item state before applying updates (for change tracking)
     let beforeData: Record<string, unknown> | undefined
     try {
@@ -249,10 +218,8 @@ export function useCollectionMutation<K extends CollectionName>(
         credentials: 'include'
       })
       beforeData = existingItem
-      console.log('📋 Before data fetched for change tracking')
-    } catch (fetchError) {
+    } catch (_fetchError) {
       // Non-critical: continue with update even if we can't fetch beforeData
-      console.warn('[useCollectionMutation] Could not fetch beforeData:', fetchError)
     }
 
     try {
@@ -261,8 +228,6 @@ export function useCollectionMutation<K extends CollectionName>(
         body: updates,
         credentials: 'include'
       })
-
-      console.log('✅ API Success:', result)
 
       // Emit hook for event tracking (zero overhead if no listeners)
       // Include beforeData for change diff calculation
@@ -282,8 +247,6 @@ export function useCollectionMutation<K extends CollectionName>(
       // Pass mutation data to refresh referenced item caches
       await invalidateCache(id, true, updates)
 
-      console.groupEnd()
-
       toast.add({
         title: 'Updated successfully',
         icon: 'i-lucide-check',
@@ -292,9 +255,6 @@ export function useCollectionMutation<K extends CollectionName>(
 
       return result
     } catch (error: any) {
-      console.error('❌ API Error:', error)
-      console.groupEnd()
-
       const errorMessage = error.data?.message || error.data || 'Update failed'
 
       toast.add({
@@ -316,11 +276,6 @@ export function useCollectionMutation<K extends CollectionName>(
     const correlationId = generateCorrelationId()
     const timestamp = Date.now()
 
-    console.group('[useCollectionMutation] DELETE')
-    console.log('Collection:', collection)
-    console.log('Item IDs:', ids)
-    console.log('Correlation ID:', correlationId)
-
     try {
       // Delete each item individually
       await Promise.all(
@@ -331,8 +286,6 @@ export function useCollectionMutation<K extends CollectionName>(
           })
         )
       )
-
-      console.log('✅ API Success: Deleted', ids.length, 'item(s)')
 
       // Emit hook for event tracking (zero overhead if no listeners)
       const nuxtApp = useNuxtApp()
@@ -347,17 +300,12 @@ export function useCollectionMutation<K extends CollectionName>(
       // Invalidate cache to trigger refetch (includes individual item caches)
       await invalidateCache(ids)
 
-      console.groupEnd()
-
       toast.add({
         title: `Deleted ${ids.length} item(s)`,
         icon: 'i-lucide-check',
         color: 'primary'
       })
     } catch (error: any) {
-      console.error('❌ API Error:', error)
-      console.groupEnd()
-
       const errorMessage = error.data?.message || error.data || 'Delete failed'
 
       toast.add({
