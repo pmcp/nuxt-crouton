@@ -192,10 +192,22 @@ const isPropertyPanelOpen = ref(false)
 // IMPORTANT: Only handle events for THIS editor instance (check editorId)
 function handleBlockEditRequest(event: Event) {
   const customEvent = event as CustomEvent<{ node: any; pos: number; editorId?: string }>
+  const eventEditorId = customEvent.detail.editorId
+
+  console.log('[Blocks.vue] Received block-edit-request', {
+    myEditorId: editorId,
+    eventEditorId,
+    matches: eventEditorId === editorId,
+    willHandle: !eventEditorId || eventEditorId === editorId
+  })
+
   // Only handle if event is for this editor instance
-  if (customEvent.detail.editorId && customEvent.detail.editorId !== editorId) {
+  if (eventEditorId && eventEditorId !== editorId) {
+    console.log('[Blocks.vue] Ignoring event - not for this editor')
     return
   }
+
+  console.log('[Blocks.vue] Handling event - opening property panel')
   selectedNode.value = { pos: customEvent.detail.pos, node: customEvent.detail.node }
   isPropertyPanelOpen.value = true
   emit('block:edit', customEvent.detail)

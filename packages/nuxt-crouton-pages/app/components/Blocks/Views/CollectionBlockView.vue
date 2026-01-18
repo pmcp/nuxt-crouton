@@ -8,7 +8,7 @@
  * Note: Uses explicit imports because this component is loaded
  * via VueNodeViewRenderer which bypasses Nuxt auto-imports.
  */
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import { NodeViewWrapper } from '@tiptap/vue-3'
 import type { CollectionBlockAttrs, CollectionLayout } from '../../../types/blocks'
 
@@ -39,20 +39,41 @@ const innerRef = ref<HTMLElement | null>(null)
 // Cache the editor ID once mounted (traverse up from this element to find parent editor)
 const cachedEditorId = ref<string | undefined>(undefined)
 
-onMounted(() => {
+onMounted(async () => {
+  // Wait for next tick - TipTap mounts NodeView before attaching to DOM
+  await nextTick()
+  // Additional small delay to ensure DOM is fully attached
+  await new Promise(resolve => setTimeout(resolve, 0))
+
   // Traverse up DOM to find the parent editor with data-editor-id
   let el: HTMLElement | null = innerRef.value
+  let depth = 0
+  console.log('[CollectionBlockView] Starting DOM traversal from:', el?.tagName, el?.className)
   while (el) {
-    if (el.classList?.contains('crouton-editor-blocks') && el.dataset?.editorId) {
+    depth++
+    const hasClass = el.classList?.contains('crouton-editor-blocks')
+    const hasDataId = el.dataset?.editorId
+    console.log(`[CollectionBlockView] Depth ${depth}:`, el.tagName, {
+      className: el.className?.substring(0, 50),
+      hasClass,
+      hasDataId,
+      editorId: hasDataId
+    })
+    if (hasClass && hasDataId) {
       cachedEditorId.value = el.dataset.editorId
+      console.log('[CollectionBlockView] Found editorId:', cachedEditorId.value)
       break
     }
     el = el.parentElement
+  }
+  if (!cachedEditorId.value) {
+    console.warn('[CollectionBlockView] Could not find parent editor with data-editor-id!')
   }
 })
 
 // Handler that opens property panel by dispatching a custom event
 function handleOpenPanel() {
+  console.log('[CollectionBlockView] handleOpenPanel called, editorId:', cachedEditorId.value)
   const event = new CustomEvent('block-edit-request', {
     bubbles: true,
     detail: { node: props.node, pos: props.getPos(), editorId: cachedEditorId.value }
