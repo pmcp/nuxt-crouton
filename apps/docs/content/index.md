@@ -46,7 +46,7 @@ Generate working forms, tables, and TypeScript types in 30 seconds. **Nuxt Crout
 
   # Generated files:
   # ✅ List.vue - Table/grid/card views
-  # ✅ Form.vue - Create/edit/delete forms
+  # ✅ _Form.vue - Create/edit/delete forms
   # ✅ useProducts.ts - Validation & config
   # ✅ types.ts - Full TypeScript support
   ```

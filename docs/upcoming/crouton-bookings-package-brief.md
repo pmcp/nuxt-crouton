@@ -99,7 +99,7 @@ Extract the booking system from `crouton-bookings` app into a reusable package `
 
 - [ ] **4.3** Documentation
   - README with setup instructions
-  - Example crouton.config.mjs
+  - Example crouton.config.js
   - Document both slot and inventory modes
 
 ---
@@ -173,7 +173,7 @@ export default defineNuxtConfig({
 
 1. **Install package**: `pnpm add @friendlyinternet/crouton-bookings`
 2. **Copy schemas**: From package to local `./schemas/`
-3. **Configure crouton**: Use `bookings` as layer name in crouton.config.mjs
+3. **Configure crouton**: Use `bookings` as layer name in crouton.config.js
 4. **Generate**: `crouton config`
 5. **Extend**: Add package to nuxt.config extends
 6. **Done**: Booking system ready
@@ -212,7 +212,7 @@ Package expects tables named:
 - `bookingsEmailtemplates` (if email enabled)
 - `bookingsEmaillogs` (if email enabled)
 
-User MUST generate collections using `bookings` as the layer name in crouton.config.mjs.
+User MUST generate collections using `bookings` as the layer name in crouton.config.js.
 
 ---
 

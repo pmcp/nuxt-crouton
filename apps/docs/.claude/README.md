@@ -108,7 +108,7 @@ pnpm crouton-generate shop products --fields product-schema.json
 
 # Generates:
 # ✅ List.vue - Table/grid/card views
-# ✅ Form.vue - Create/edit/delete forms
+# ✅ _Form.vue - Create/edit/delete forms
 # ✅ useProducts.ts - Validation & config
 # ✅ types.ts - Full TypeScript support
 ```

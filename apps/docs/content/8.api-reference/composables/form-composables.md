@@ -405,7 +405,7 @@ const {
 } = useCrouton()
 
 // These all reference the LAST item in croutonStates array
-// Useful for global Form.vue component rendering
+// Useful for global _Form.vue component rendering
 </script>
 
 <template>

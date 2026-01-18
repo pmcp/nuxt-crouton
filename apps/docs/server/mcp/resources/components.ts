@@ -303,7 +303,7 @@ app/components/ProductsForm.vue  # Overrides generated form
 
 \`\`\`vue
 <script setup lang="ts">
-import BaseProductsForm from '#crouton/products/components/Form.vue'
+import BaseProductsForm from '#crouton/products/components/_Form.vue'
 </script>
 
 <template>

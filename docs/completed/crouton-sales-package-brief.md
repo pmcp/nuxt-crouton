@@ -117,7 +117,7 @@ Extract the POS/sales system from `crouton-sales` app into a reusable package `@
 
 - [x] **5.2** Documentation ✅
   - README with comprehensive setup instructions
-  - Example crouton.config.mjs with all collections
+  - Example crouton.config.js with all collections
   - Documented print module configuration (opt-in)
   - Documented helper auth integration with @crouton/auth
   - Updated CLAUDE.md with accurate file listings
@@ -207,7 +207,7 @@ export default defineNuxtConfig({
 
 1. **Install package**: `pnpm add @friendlyinternet/crouton-sales`
 2. **Copy schemas**: From package to local `./schemas/`
-3. **Configure crouton**: Use `sales` as layer name in crouton.config.mjs
+3. **Configure crouton**: Use `sales` as layer name in crouton.config.js
 4. **Generate**: `crouton config`
 5. **Extend**: Add package to nuxt.config extends
 6. **Done**: POS system ready
@@ -252,7 +252,7 @@ Package expects tables named:
 - `salesPrinters` (if print enabled)
 - `salesPrintqueues` (if print enabled)
 
-User MUST generate collections using `sales` as the layer name in crouton.config.mjs.
+User MUST generate collections using `sales` as the layer name in crouton.config.js.
 
 ---
 

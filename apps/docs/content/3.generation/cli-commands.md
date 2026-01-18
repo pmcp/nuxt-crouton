@@ -251,7 +251,7 @@ crouton-generate shop products --fields-file=product-schema.json --dry-run
 layers/shop/
   ├── components/products/
   │   ├── List.vue (new)
-  │   ├── Form.vue (new)
+  │   ├── _Form.vue (new)
   │   └── Table.vue (new)
   ├── composables/
   │   └── useProducts.ts (new)

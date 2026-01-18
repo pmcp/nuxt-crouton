@@ -146,7 +146,7 @@ When opening a form (`create_open` or `update_open`):
 The Loading component works seamlessly with generated Crouton forms:
 
 ```vue
-<!-- layers/products/collections/products/app/components/Form.vue -->
+<!-- layers/products/collections/products/app/components/_Form.vue -->
 <template>
   <div>
     <!-- Automatically shows loading state during form operations -->
@@ -545,7 +545,7 @@ const tabErrors = computed(() => {
 Using ValidationErrorSummary with generated Crouton forms:
 
 ```vue
-<!-- layers/products/collections/products/app/components/Form.vue -->
+<!-- layers/products/collections/products/app/components/_Form.vue -->
 <template>
   <div>
     <!-- Show validation errors at top -->
