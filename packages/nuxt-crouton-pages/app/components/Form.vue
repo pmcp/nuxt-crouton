@@ -35,9 +35,10 @@ const { open, close, loading: croutonLoading } = useCrouton()
 // Collab presence - connect to room when editing existing page
 // This makes the current user visible in CollabEditingBadge for other users
 // Only activates if nuxt-crouton-collab is installed
+// Room ID format: {collection}-{id} to match base CroutonForm convention
 const collabRoomId = computed(() =>
   props.action === 'update' && props.activeItem?.id
-    ? `page-${props.activeItem.id}`
+    ? `pagesPages-${props.activeItem.id}`
     : null
 )
 
@@ -75,7 +76,7 @@ const getCurrentUser = () => {
 // Must be called at top level for composable compatibility (Vue's rules)
 // Pass null roomId for create action - composable handles null gracefully
 const collabRoomIdForContent = props.action === 'update' && props.activeItem?.id
-  ? `page-${props.activeItem.id}`
+  ? `pagesPages-${props.activeItem.id}`
   : null
 
 let collabSetup: any = null
@@ -92,7 +93,7 @@ try {
     // @ts-expect-error - conditional call
     collabSetup = useCollabEditor({
       roomId: collabRoomIdForContent,
-      roomType: 'page',
+      roomType: 'pagesPages',
       field: 'presence',
       user: currentUser
     })
@@ -113,7 +114,7 @@ try {
     // @ts-expect-error - conditional call
     collabLocalizedContent = useCollabLocalizedContent({
       roomId: collabRoomIdForContent,
-      roomType: 'page',
+      roomType: 'pagesPages',
       fieldPrefix: 'content',
       user: currentUser
     })
@@ -444,6 +445,62 @@ const fieldComponents = computed(() => {
               />
             </div>
 
+            <!-- Page Settings Popover -->
+            <UPopover>
+              <UButton
+                variant="ghost"
+                color="neutral"
+                icon="i-lucide-settings"
+                size="xs"
+              />
+              <template #content>
+                <div class="p-4 w-72 space-y-4">
+                  <div class="text-sm font-medium text-default mb-3">Page Settings</div>
+
+                  <!-- Visibility -->
+                  <UFormField :label="t('pages.fields.visibility') || 'Visibility'" name="visibility">
+                    <USelect
+                      v-model="state.visibility"
+                      :items="visibilityOptions"
+                      value-key="value"
+                      size="sm"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <!-- Show in Navigation -->
+                  <UFormField :label="t('pages.fields.showInNavigation') || 'Show in Nav'" name="showInNavigation">
+                    <USwitch v-model="state.showInNavigation" />
+                  </UFormField>
+
+                  <!-- Layout -->
+                  <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
+                    <USelect
+                      v-model="state.layout"
+                      :items="layoutOptions"
+                      value-key="value"
+                      size="sm"
+                      class="w-full"
+                      @update:model-value="onLayoutChange"
+                    />
+                  </UFormField>
+
+                  <!-- Parent Page -->
+                  <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
+                    <USelect
+                      v-model="state.parentId"
+                      :items="parentOptions"
+                      value-key="value"
+                      :loading="pagesPending"
+                      placeholder="None"
+                      size="sm"
+                      class="w-full"
+                    />
+                  </UFormField>
+                </div>
+              </template>
+            </UPopover>
+
             <!-- Delete Button (update mode only) -->
             <UButton
               v-if="action === 'update' && state.id"
@@ -501,58 +558,6 @@ const fieldComponents = computed(() => {
             </div>
           </template>
 
-          <!-- Page Settings Accordion (collapsed by default) -->
-          <UAccordion
-            :items="[{ label: 'Page Settings', value: 'settings', icon: 'i-lucide-settings' }]"
-            :default-value="[]"
-          >
-            <template #body="{ item }">
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/10 rounded-b-lg">
-                <!-- Visibility -->
-                <UFormField :label="t('pages.fields.visibility') || 'Visibility'" name="visibility">
-                  <USelect
-                    v-model="state.visibility"
-                    :items="visibilityOptions"
-                    value-key="value"
-                    size="sm"
-                    class="w-full"
-                  />
-                </UFormField>
-
-                <!-- Show in Navigation -->
-                <UFormField :label="t('pages.fields.showInNavigation') || 'Show in Nav'" name="showInNavigation">
-                  <div class="h-9 flex items-center">
-                    <USwitch v-model="state.showInNavigation" />
-                  </div>
-                </UFormField>
-
-                <!-- Layout -->
-                <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
-                  <USelect
-                    v-model="state.layout"
-                    :items="layoutOptions"
-                    value-key="value"
-                    size="sm"
-                    class="w-full"
-                    @update:model-value="onLayoutChange"
-                  />
-                </UFormField>
-
-                <!-- Parent Page -->
-                <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
-                  <USelect
-                    v-model="state.parentId"
-                    :items="parentOptions"
-                    value-key="value"
-                    :loading="pagesPending"
-                    placeholder="None"
-                    size="sm"
-                    class="w-full"
-                  />
-                </UFormField>
-              </div>
-            </template>
-          </UAccordion>
         </div>
       </template>
 

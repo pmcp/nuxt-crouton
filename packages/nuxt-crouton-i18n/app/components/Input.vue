@@ -401,9 +401,21 @@ function hasEnglishContent(field: string): boolean {
                 field === 'content' ? 'flex-1 min-h-[300px]' : ''
               ]"
             >
-              <label class="text-xs font-medium text-muted uppercase tracking-wide">
-                {{ field }}
-              </label>
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-medium text-muted uppercase tracking-wide">
+                  {{ field }}
+                </label>
+                <!-- AI Translate button inline with label -->
+                <UButton
+                  v-if="showAiTranslate && hasEnglishContent(field) && !isBlockEditorField(field)"
+                  icon="i-lucide-sparkles"
+                  size="xs"
+                  variant="ghost"
+                  color="neutral"
+                  :loading="isFieldTranslating(field, secondaryEditingLocale)"
+                  @click="requestTranslation(field, secondaryEditingLocale)"
+                />
+              </div>
 
               <!-- CroutonEditorSimple -->
               <div
@@ -472,47 +484,6 @@ function hasEnglishContent(field: string): boolean {
                 @update:model-value="updateFieldValue(field, $event, secondaryEditingLocale)"
               />
 
-              <!-- English reference + AI translate for secondary column -->
-              <div
-                v-if="hasEnglishContent(field)"
-                class="flex items-center gap-2 mt-1"
-              >
-                <!-- For block editors -->
-                <template v-if="isBlockEditorField(field)">
-                  <p class="text-xs text-muted">
-                    <UIcon name="i-lucide-file-text" class="inline size-3 mr-1" />
-                    {{ primaryLoc.toUpperCase() }} version available
-                  </p>
-                </template>
-                <!-- For text fields, show truncated text -->
-                <template v-else>
-                  <p class="text-xs text-muted truncate max-w-[200px]">
-                    {{ primaryLoc.toUpperCase() }}: {{ getFieldValue(field, primaryLoc) }}
-                  </p>
-                </template>
-                <UButton
-                  v-if="showAiTranslate && !isBlockEditorField(field)"
-                  icon="i-lucide-sparkles"
-                  size="xs"
-                  variant="ghost"
-                  color="neutral"
-                  :loading="isFieldTranslating(field, secondaryEditingLocale)"
-                  @click="requestTranslation(field, secondaryEditingLocale)"
-                >
-                  Translate
-                </UButton>
-                <UButton
-                  v-if="showAiTranslate && isBlockEditorField(field)"
-                  icon="i-lucide-sparkles"
-                  size="xs"
-                  variant="ghost"
-                  color="neutral"
-                  disabled
-                  title="AI translation for blocks coming soon"
-                >
-                  Translate blocks
-                </UButton>
-              </div>
             </div>
           </div>
         </div>
