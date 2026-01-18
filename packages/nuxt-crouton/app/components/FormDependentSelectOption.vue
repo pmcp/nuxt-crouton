@@ -1,9 +1,9 @@
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-wrap gap-2">
     <div
       v-for="option in options"
       :key="option.id"
-      class="cursor-pointer transition-all"
+      class="w-fit cursor-pointer transition-all"
       :class="[
         isSelected(option.id)
           ? 'ring-2 ring-primary-500 rounded-lg'
