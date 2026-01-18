@@ -1,4 +1,8 @@
 {
+  "onboarding": {
+    "createTeamTitle": "Create Your First Team",
+    "createTeamDescription": "Get started by creating a workspace for your projects."
+  },
   "auth": {
     "resetLinkSentDescription": "We sent a password reset link to your email. Click the link to reset your password.",
     "magicLinkSentDescription": "We sent a magic link to your email. Click the link to sign in.",
