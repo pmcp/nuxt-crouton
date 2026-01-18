@@ -180,14 +180,22 @@ const content = computed({
 // Editor instance (populated via @create event)
 const editorInstance = ref<Editor | null>(null)
 
+// Unique ID for this editor instance (used to scope block-edit-request events)
+const editorId = `crouton-editor-${Math.random().toString(36).slice(2, 11)}`
+
 // State for property panel
 const selectedNode = ref<{ pos: number; node: any } | null>(null)
 const isPropertyPanelOpen = ref(false)
 
 // Listen for block edit requests from NodeView components
 // (They can't use provide/inject due to VueNodeViewRenderer boundary)
+// IMPORTANT: Only handle events for THIS editor instance (check editorId)
 function handleBlockEditRequest(event: Event) {
-  const customEvent = event as CustomEvent<{ node: any; pos: number }>
+  const customEvent = event as CustomEvent<{ node: any; pos: number; editorId?: string }>
+  // Only handle if event is for this editor instance
+  if (customEvent.detail.editorId && customEvent.detail.editorId !== editorId) {
+    return
+  }
   selectedNode.value = { pos: customEvent.detail.pos, node: customEvent.detail.node }
   isPropertyPanelOpen.value = true
   emit('block:edit', customEvent.detail)
@@ -460,6 +468,7 @@ const bubbleToolbarItems: EditorToolbarItem[][] = [
 // Expose editor instance and utilities
 defineExpose({
   editor: editorInstance,
+  editorId,
   selectedNode,
   isPropertyPanelOpen,
   isCollabMode,
@@ -471,7 +480,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="crouton-editor-blocks h-full flex flex-col overflow-hidden">
+  <div class="crouton-editor-blocks h-full flex flex-col overflow-hidden" :data-editor-id="editorId">
     <!-- Toolbar using captured editor instance -->
     <UEditorToolbar
       v-if="editorInstance && showToolbar"

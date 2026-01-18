@@ -2,7 +2,7 @@
 /**
  * Separator Block Editor View
  */
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { NodeViewWrapper } from '@tiptap/vue-3'
 import type { SeparatorBlockAttrs } from '../../../types/blocks'
 
@@ -16,11 +16,28 @@ const props = defineProps<{
 
 const attrs = computed(() => props.node.attrs)
 
+// Reference to this component's root element for finding parent editor
+const wrapperRef = ref<HTMLElement | null>(null)
+
+// Cache the editor ID once mounted (traverse up from this element to find parent editor)
+const cachedEditorId = ref<string | undefined>(undefined)
+
+onMounted(() => {
+  let el: HTMLElement | null = wrapperRef.value
+  while (el) {
+    if (el.classList.contains('crouton-editor-blocks') && el.dataset.editorId) {
+      cachedEditorId.value = el.dataset.editorId
+      break
+    }
+    el = el.parentElement
+  }
+})
+
 // Handler that opens property panel by dispatching a custom event
 function handleOpenPanel() {
   const event = new CustomEvent('block-edit-request', {
     bubbles: true,
-    detail: { node: props.node, pos: props.getPos() }
+    detail: { node: props.node, pos: props.getPos(), editorId: cachedEditorId.value }
   })
   document.dispatchEvent(event)
 }
@@ -28,6 +45,7 @@ function handleOpenPanel() {
 
 <template>
   <NodeViewWrapper
+    ref="wrapperRef"
     class="block-wrapper my-1 cursor-pointer"
     :class="{ 'border-l-2 border-l-primary/50': selected }"
     data-type="separator-block"
