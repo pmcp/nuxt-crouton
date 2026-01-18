@@ -163,15 +163,13 @@ const hasCollabSupport = computed(() => {
   try {
     const component = resolveComponent('CollabEditingBadge')
     const isAvailable = typeof component !== 'string' // resolveComponent returns string if not found
-    console.log('[CroutonForm] hasCollabSupport:', isAvailable, 'component type:', typeof component)
     return isAvailable
-  } catch (e) {
-    console.log('[CroutonForm] hasCollabSupport check failed:', e)
+  } catch {
     return false
   }
 })
 
-// Get current user for presence
+// Get current user for presence - with anonymous fallback
 const currentUser = computed(() => {
   try {
     // @ts-expect-error - useSession may not exist if auth package not installed
@@ -188,7 +186,12 @@ const currentUser = computed(() => {
   } catch {
     // Auth package not installed
   }
-  return null
+  // Return anonymous user with session-unique ID for presence tracking
+  // This ensures presence works even when not logged in
+  return {
+    id: `anonymous-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    name: 'Anonymous'
+  }
 })
 
 const currentUserId = computed(() => currentUser.value?.id || null)
@@ -196,73 +199,56 @@ const currentUserId = computed(() => currentUser.value?.id || null)
 // Track active collab WebSocket connections for each slideover
 const collabWebSockets = ref<Map<string, WebSocket>>(new Map())
 
+// Generate consistent color from user ID
+const generateUserColor = (userId: string): string => {
+  let hash = 0
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const hue = Math.abs(hash) % 360
+  return `hsl(${hue}, 70%, 50%)`
+}
+
 // Set up collab presence for a state using simple WebSocket
 const setupCollabPresence = (state: CroutonState) => {
-  console.log('[CroutonForm] setupCollabPresence called for:', state.collection, state.id)
-
-  if (import.meta.server) {
-    console.log('[CroutonForm] Skipping - SSR')
-    return
-  }
-  if (!hasCollabSupport.value) {
-    console.log('[CroutonForm] Skipping - no collab support')
-    return
-  }
-  if (state.action !== 'update') {
-    console.log('[CroutonForm] Skipping - action is not update:', state.action)
-    return
-  }
-  if (!state.activeItem?.id) {
-    console.log('[CroutonForm] Skipping - no activeItem.id')
-    return
-  }
-
-  // Skip if already connected
-  if (collabWebSockets.value.has(state.id)) {
-    console.log('[CroutonForm] Skipping - already connected')
-    return
-  }
+  if (import.meta.server) return
+  if (!hasCollabSupport.value) return
+  if (state.action !== 'update') return
+  if (!state.activeItem?.id) return
+  if (collabWebSockets.value.has(state.id)) return
 
   const roomId = `${state.collection}-${state.activeItem.id}`
   const roomType = state.collection || 'generic'
-
-  console.log('[CroutonForm] Creating WebSocket for room:', roomId, 'type:', roomType)
 
   try {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const url = `${protocol}//${window.location.host}/api/collab/${roomId}/ws?type=${roomType}`
 
-    console.log('[CroutonForm] WebSocket URL:', url)
     const ws = new WebSocket(url)
     collabWebSockets.value.set(state.id, ws)
 
     ws.onopen = () => {
-      console.log('[CroutonForm] WebSocket connected for room:', roomId)
       // Send awareness message to register presence
       const user = currentUser.value
-      console.log('[CroutonForm] Current user:', user)
-      if (user) {
-        const awarenessMessage = JSON.stringify({
-          type: 'awareness',
-          userId: user.id,
-          state: {
-            user: {
-              id: user.id,
-              name: user.name,
-              color: `hsl(${Math.abs(user.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % 360}, 70%, 50%)`
-            }
+      const awarenessMessage = JSON.stringify({
+        type: 'awareness',
+        userId: user.id,
+        state: {
+          user: {
+            id: user.id,
+            name: user.name,
+            color: generateUserColor(user.id)
           }
-        })
-        console.log('[CroutonForm] Sending awareness:', awarenessMessage)
-        ws.send(awarenessMessage)
-      }
+        }
+      })
+      ws.send(awarenessMessage)
     }
 
-    ws.onerror = (e) => {
-      console.log('[CroutonForm] Collab presence WebSocket error:', e)
+    ws.onerror = () => {
+      // Silent fail - presence is not critical
     }
-  } catch (e) {
-    console.log('[CroutonForm] Collab presence setup failed:', e)
+  } catch {
+    // Silent fail - presence is not critical
   }
 }
 
@@ -294,9 +280,7 @@ const slideoverStates = computed(() =>
 
 // Watch for new slideover states and set up collab presence
 watch(slideoverStates, (states) => {
-  console.log('[CroutonForm] slideoverStates changed, count:', states.length)
   for (const state of states) {
-    console.log('[CroutonForm] State:', state.collection, state.action, 'isOpen:', state.isOpen, 'activeItem?.id:', state.activeItem?.id)
     if (state.isOpen && state.action === 'update' && state.activeItem?.id) {
       setupCollabPresence(state)
     }

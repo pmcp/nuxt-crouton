@@ -95,9 +95,10 @@
               v-if="collabEditingBadgeComponent && row.original?.id"
               :is="collabEditingBadgeComponent"
               :room-id="getCollabRoomId(row.original)"
-              :room-type="collabConfig.roomType || 'page'"
+              :room-type="collabConfig.roomType || collection"
               :current-user-id="collabConfig.currentUserId"
               :poll-interval="collabConfig.pollInterval || 5000"
+              :show-self="collabConfig.showSelf"
               size="xs"
             />
             <CroutonItemButtonsMini

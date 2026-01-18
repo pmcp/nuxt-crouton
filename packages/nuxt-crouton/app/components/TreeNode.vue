@@ -394,9 +394,10 @@ onBeforeUnmount(() => {
         v-if="collabEditingBadgeComponent && item.id"
         :is="collabEditingBadgeComponent"
         :room-id="getCollabRoomId()"
-        :room-type="collabConfig.roomType || 'page'"
+        :room-type="collabConfig.roomType || collection"
         :current-user-id="collabConfig.currentUserId"
         :poll-interval="collabConfig.pollInterval || 5000"
+        :show-self="collabConfig.showSelf"
         size="xs"
         class="shrink-0"
       />

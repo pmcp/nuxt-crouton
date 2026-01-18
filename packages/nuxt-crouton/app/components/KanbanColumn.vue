@@ -242,9 +242,10 @@ const crouton = useCrouton()
           v-if="collabEditingBadgeComponent && item.id"
           :is="collabEditingBadgeComponent"
           :room-id="getCollabRoomId(item)"
-          :room-type="collabConfig.roomType || 'page'"
+          :room-type="collabConfig.roomType || collection"
           :current-user-id="collabConfig.currentUserId"
           :poll-interval="collabConfig.pollInterval || 5000"
+          :show-self="collabConfig.showSelf"
           size="xs"
           class="absolute top-2 right-2"
         />

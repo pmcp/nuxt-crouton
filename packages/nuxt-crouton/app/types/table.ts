@@ -105,6 +105,13 @@ export interface CollabPresenceConfig {
    * @default 5000
    */
   pollInterval?: number
+
+  /**
+   * Show self in the presence count (for testing)
+   * Normally only shows other users
+   * @default false
+   */
+  showSelf?: boolean
 }
 
 export interface CollectionProps {

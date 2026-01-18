@@ -55,6 +55,9 @@ interface Props {
 
   /** Display variant: 'badge' shows green pill with text, 'avatars' shows only stacked circles */
   variant?: 'badge' | 'avatars'
+
+  /** Show self in the count (for testing) - normally only shows other users */
+  showSelf?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -64,7 +67,8 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'xs',
   showAvatars: true,
   maxAvatars: 5,
-  variant: 'badge'
+  variant: 'badge',
+  showSelf: false
 })
 
 console.log('[CollabEditingBadge] Mounting for roomId:', props.roomId, 'roomType:', props.roomType)
@@ -81,12 +85,16 @@ const { otherUsers, otherCount, loading, users } = useCollabRoomUsers({
 
 // Debug: watch for changes
 watch([users, otherUsers, otherCount], ([u, ou, oc]) => {
-  console.log('[CollabEditingBadge] Users updated:', { users: u, otherUsers: ou, otherCount: oc })
+  console.log('[CollabEditingBadge] Users updated:', { users: u, otherUsers: ou, otherCount: oc, showSelf: props.showSelf })
 }, { immediate: true })
+
+// Display users/count - use all users when showSelf is true, otherwise just others
+const displayUsers = computed(() => props.showSelf ? users.value : otherUsers.value)
+const displayCount = computed(() => displayUsers.value.length)
 
 // Badge text
 const badgeText = computed(() => {
-  const count = otherCount.value
+  const count = displayCount.value
   if (count === 0) return ''
   if (count === 1) return '1 editing'
   return `${count} editing`
@@ -120,12 +128,12 @@ const sizeClasses = computed(() => {
 
 // Visible users for tooltip
 const visibleUsers = computed(() => {
-  return otherUsers.value.slice(0, props.maxAvatars)
+  return displayUsers.value.slice(0, props.maxAvatars)
 })
 
 // Overflow count
 const overflowCount = computed(() => {
-  const overflow = otherUsers.value.length - props.maxAvatars
+  const overflow = displayUsers.value.length - props.maxAvatars
   return overflow > 0 ? overflow : 0
 })
 
@@ -154,9 +162,9 @@ function getTextColor(bgColor: string): string {
 
 // Tooltip content showing user list
 const tooltipContent = computed(() => {
-  if (otherUsers.value.length === 0) return ''
+  if (displayUsers.value.length === 0) return ''
 
-  const names = otherUsers.value.map(u => u.user?.name || 'Unknown')
+  const names = displayUsers.value.map(u => u.user?.name || 'Unknown')
   if (names.length === 1) return names[0]
   if (names.length === 2) return names.join(' and ')
   if (names.length <= 4) {
@@ -167,10 +175,10 @@ const tooltipContent = computed(() => {
 
 // Tooltip for avatars variant: "X editing: names"
 const avatarsTooltip = computed(() => {
-  if (otherUsers.value.length === 0) return ''
+  if (displayUsers.value.length === 0) return ''
 
-  const count = otherCount.value
-  const names = otherUsers.value.map(u => u.user?.name || 'Unknown')
+  const count = displayCount.value
+  const names = displayUsers.value.map(u => u.user?.name || 'Unknown')
 
   if (count === 1) {
     return `1 editing: ${names[0]}`
@@ -184,7 +192,7 @@ const avatarsTooltip = computed(() => {
 
 <template>
   <div
-    v-if="otherCount > 0 && !loading"
+    v-if="displayCount > 0 && !loading"
     class="collab-editing-badge inline-flex items-center"
   >
     <!-- AVATARS VARIANT: Just stacked circles with simple tooltip -->
@@ -209,11 +217,11 @@ const avatarsTooltip = computed(() => {
         </div>
         <!-- Overflow indicator -->
         <div
-          v-if="otherCount > 3"
+          v-if="displayCount > 3"
           class="rounded-full flex items-center justify-center font-medium border-2 border-white dark:border-gray-900 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shadow-sm"
           :class="sizeClasses.avatar"
         >
-          +{{ otherCount - 3 }}
+          +{{ displayCount - 3 }}
         </div>
       </div>
     </UTooltip>

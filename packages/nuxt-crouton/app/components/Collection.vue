@@ -84,17 +84,12 @@
               v-if="collabEditingBadgeComponent && row.id"
               :is="collabEditingBadgeComponent"
               :room-id="getCollabRoomId(row)"
-              :room-type="collabConfig.roomType || 'page'"
+              :room-type="collabConfig.roomType || collection"
               :current-user-id="collabConfig.currentUserId"
               :poll-interval="collabConfig.pollInterval || 5000"
+              :show-self="collabConfig.showSelf"
               size="xs"
               class="shrink-0"
-            />
-            <!-- Card customization help (when using default card) -->
-            <CroutonCardHelpModal
-              v-if="!customCardComponent"
-              :collection="collection"
-              layout="list"
             />
           </div>
         </li>
@@ -148,38 +143,29 @@
       v-if="rows && rows.length > 0"
       :class="gridContainerClasses"
     >
-      <div
+      <component
         v-for="(row, index) in rows"
         :key="row.id || index"
-        class="relative"
+        :is="customCardComponent || CroutonDefaultCard"
+        :item="row"
+        layout="grid"
+        :collection="collection"
+        :size="effectiveGridSize"
+        :stateless="stateless"
       >
-        <component
-          :is="customCardComponent || CroutonDefaultCard"
-          :item="row"
-          layout="grid"
-          :collection="collection"
-          :size="effectiveGridSize"
-          :stateless="stateless"
-        />
-        <!-- Collab presence badge -->
-        <component
-          v-if="collabEditingBadgeComponent && row.id"
-          :is="collabEditingBadgeComponent"
-          :room-id="getCollabRoomId(row)"
-          :room-type="collabConfig.roomType || 'page'"
-          :current-user-id="collabConfig.currentUserId"
-          :poll-interval="collabConfig.pollInterval || 5000"
-          size="xs"
-          :class="gridBadgePositionClasses"
-        />
-        <!-- Card customization help (when using default card) -->
-        <CroutonCardHelpModal
-          v-if="!customCardComponent"
-          :collection="collection"
-          layout="grid"
-          :class="gridBadgePositionClasses"
-        />
-      </div>
+        <template v-if="collabEditingBadgeComponent && row.id" #presence>
+          <component
+            :is="collabEditingBadgeComponent"
+            :room-id="getCollabRoomId(row)"
+            :room-type="collabConfig.roomType || collection"
+            :current-user-id="collabConfig.currentUserId"
+            :poll-interval="collabConfig.pollInterval || 5000"
+            :show-self="collabConfig.showSelf"
+            size="xs"
+            avatar-only
+          />
+        </template>
+      </component>
     </div>
 
     <div
@@ -381,9 +367,10 @@ const gridContainerClasses = computed(() => {
 })
 
 // Badge/icon position classes based on grid size
+// Info icon goes bottom-left to avoid overlap with action buttons (top-right)
 const gridBadgePositionClasses = computed(() => {
   const size = effectiveGridSize.value
-  return size === 'spacious' ? 'absolute top-3 right-3' : 'absolute top-2 right-2'
+  return size === 'spacious' ? 'absolute bottom-3 left-3' : 'absolute bottom-2 left-2'
 })
 
 // Collaboration presence support
