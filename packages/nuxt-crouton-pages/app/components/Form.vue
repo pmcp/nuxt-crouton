@@ -382,19 +382,17 @@ const fieldComponents = computed(() => {
                 :items="pageTypeDropdownItems"
                 :content="{ align: 'start' }"
               >
-                <UTooltip :text="selectedPageType?.name || 'Page Type'" :delay-duration="0">
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    class="px-2"
-                  >
-                    <UIcon
-                      :name="selectedPageType?.icon || 'i-lucide-file'"
-                      class="size-4"
-                    />
-                  </UButton>
-                </UTooltip>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <UIcon
+                    :name="selectedPageType?.icon || 'i-lucide-file'"
+                    class="size-4"
+                  />
+                </UButton>
 
                 <template #item="{ item }">
                   <span class="flex items-center gap-2">
@@ -404,19 +402,17 @@ const fieldComponents = computed(() => {
                 </template>
               </UDropdownMenu>
               <UPopover v-else>
-                <UTooltip :text="selectedPageType?.name || 'Page Type'" :delay-duration="0">
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    class="px-2"
-                  >
-                    <UIcon
-                      :name="selectedPageType?.icon || 'i-lucide-file'"
-                      class="size-4"
-                    />
-                  </UButton>
-                </UTooltip>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <UIcon
+                    :name="selectedPageType?.icon || 'i-lucide-file'"
+                    class="size-4"
+                  />
+                </UButton>
                 <template #content>
                   <div class="p-3 text-sm">
                     <div class="font-medium">{{ selectedPageType?.name || 'Regular Page' }}</div>
@@ -432,21 +428,19 @@ const fieldComponents = computed(() => {
                 :items="statusDropdownItems"
                 :content="{ align: 'start' }"
               >
-                <UTooltip :text="statusConfig[state.status]?.label || 'Status'" :delay-duration="0">
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    class="px-2"
-                  >
-                    <span
-                      :class="[
-                        'block size-3 rounded-full',
-                        `bg-${statusConfig[state.status]?.color || 'warning'}`
-                      ]"
-                    />
-                  </UButton>
-                </UTooltip>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <span
+                    :class="[
+                      'block size-3 rounded-full',
+                      `bg-${statusConfig[state.status]?.color || 'warning'}`
+                    ]"
+                  />
+                </UButton>
 
                 <template #draft="{ item }">
                   <span class="flex items-center gap-2">
@@ -473,19 +467,17 @@ const fieldComponents = computed(() => {
                 :items="visibilityDropdownItems"
                 :content="{ align: 'start' }"
               >
-                <UTooltip :text="visibilityConfig[state.visibility]?.label || 'Visibility'" :delay-duration="0">
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    class="px-2"
-                  >
-                    <UIcon
-                      :name="visibilityConfig[state.visibility]?.icon || 'i-lucide-globe'"
-                      class="size-4 text-muted"
-                    />
-                  </UButton>
-                </UTooltip>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  class="px-2"
+                >
+                  <UIcon
+                    :name="visibilityConfig[state.visibility]?.icon || 'i-lucide-globe'"
+                    class="size-4 text-muted"
+                  />
+                </UButton>
 
                 <template #public="{ item }">
                   <span class="flex items-center gap-2">
@@ -508,7 +500,7 @@ const fieldComponents = computed(() => {
               </UDropdownMenu>
 
               <!-- Show in Navigation Toggle -->
-              <UTooltip :text="state.showInNavigation ? 'In Navigation' : 'Hidden from Navigation'" :delay-duration="0">
+              <UTooltip :text="state.showInNavigation ? 'Shown in Menu' : 'Hidden from Menu'" :delay-duration="0">
                 <UButton
                   variant="ghost"
                   color="neutral"
@@ -517,53 +509,53 @@ const fieldComponents = computed(() => {
                   @click="state.showInNavigation = !state.showInNavigation"
                 >
                   <UIcon
-                    :name="state.showInNavigation ? 'i-lucide-panel-left' : 'i-lucide-panel-left-close'"
-                    :class="['size-4', state.showInNavigation ? 'text-muted' : 'text-muted/50']"
+                    name="i-lucide-menu"
+                    :class="['size-4', state.showInNavigation ? 'text-muted' : 'opacity-30']"
                   />
                 </UButton>
               </UTooltip>
 
               <!-- Page Settings Popover -->
-              <UPopover>
-                <UTooltip text="Settings" :delay-duration="0">
+              <UTooltip text="Settings" :delay-duration="0">
+                <UPopover>
                   <UButton
                     variant="ghost"
                     color="neutral"
                     icon="i-lucide-settings"
                     size="xs"
                   />
-                </UTooltip>
-                <template #content>
-                  <div class="p-4 w-72 space-y-4">
-                    <div class="text-sm font-medium text-default mb-3">Page Settings</div>
+                  <template #content>
+                    <div class="p-4 w-72 space-y-4">
+                      <div class="text-sm font-medium text-default mb-3">Page Settings</div>
 
-                    <!-- Layout -->
-                    <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
-                      <USelect
-                        v-model="state.layout"
-                        :items="layoutOptions"
-                        value-key="value"
-                        size="sm"
-                        class="w-full"
-                        @update:model-value="onLayoutChange"
-                      />
-                    </UFormField>
+                      <!-- Layout -->
+                      <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
+                        <USelect
+                          v-model="state.layout"
+                          :items="layoutOptions"
+                          value-key="value"
+                          size="sm"
+                          class="w-full"
+                          @update:model-value="onLayoutChange"
+                        />
+                      </UFormField>
 
-                    <!-- Parent Page -->
-                    <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
-                      <USelect
-                        v-model="state.parentId"
-                        :items="parentOptions"
-                        value-key="value"
-                        :loading="pagesPending"
-                        placeholder="None"
-                        size="sm"
-                        class="w-full"
-                      />
-                    </UFormField>
-                  </div>
-                </template>
-              </UPopover>
+                      <!-- Parent Page -->
+                      <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
+                        <USelect
+                          v-model="state.parentId"
+                          :items="parentOptions"
+                          value-key="value"
+                          :loading="pagesPending"
+                          placeholder="None"
+                          size="sm"
+                          class="w-full"
+                        />
+                      </UFormField>
+                    </div>
+                  </template>
+                </UPopover>
+              </UTooltip>
             </UFieldGroup>
 
             <!-- Spacer -->
