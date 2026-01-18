@@ -5,6 +5,7 @@
  * Uses CroutonEditorBlocks with page-specific block extensions
  * (Hero, Section, CTA, CardGrid, Separator).
  */
+import { markRaw } from 'vue'
 import { PageBlocks } from '../../editor/extensions/page-blocks'
 import { getBlockMenuItems } from '../../utils/block-registry'
 
@@ -36,18 +37,33 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | TipTapDoc]
 }>()
 
+// Empty TipTap document - must have at least one paragraph node
+const emptyDoc: TipTapDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
+
 // Two-way binding - pass through to CroutonEditorBlocks
 const content = computed({
-  get: () => props.modelValue || { type: 'doc', content: [] },
+  get: () => {
+    if (props.modelValue) {
+      // Ensure JSON docs have at least one node (TipTap requirement)
+      if (typeof props.modelValue === 'object') {
+        const doc = props.modelValue as TipTapDoc
+        if (!doc.content || doc.content.length === 0) {
+          return emptyDoc
+        }
+      }
+      return props.modelValue
+    }
+    return emptyDoc
+  },
   set: (value) => emit('update:modelValue', value)
 })
 
-// Page block extensions
-const pageBlockExtensions = [
+// Page block extensions - markRaw prevents Vue reactivity from interfering with TipTap
+const pageBlockExtensions = markRaw([
   PageBlocks.configure({
-    enableSlashCommands: false // We use UEditorSuggestionMenu instead
+    enableSlashCommands: false // We use CroutonEditorBlocks suggestion menu instead
   })
-]
+])
 
 // Convert block menu items to suggestion items for CroutonEditorBlocks
 const blockSuggestionItems = computed<BlockSuggestionItem[]>(() => {

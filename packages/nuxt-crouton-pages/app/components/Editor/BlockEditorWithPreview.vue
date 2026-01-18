@@ -1,3 +1,17 @@
+<script lang="ts">
+// Module-level: Extensions created ONCE, completely outside Vue's reactivity
+import { markRaw } from 'vue'
+import { PageBlocks } from '../../editor/extensions/page-blocks'
+
+// Page block extensions (Hero, Section, CTA, CardGrid, Separator)
+// Using markRaw to prevent Vue reactivity from interfering with TipTap internals
+const PAGE_BLOCK_EXTENSIONS = markRaw([
+  PageBlocks.configure({
+    enableSlashCommands: false
+  })
+])
+</script>
+
 <script setup lang="ts">
 /**
  * Page Block Editor with Preview
@@ -5,7 +19,6 @@
  * Block editor with live preview panel showing rendered Nuxt UI Page components.
  * Uses tabs to switch between editor and preview.
  */
-import { PageBlocks } from '../../editor/extensions/page-blocks'
 import { getBlockMenuItems } from '../../utils/block-registry'
 
 /** TipTap JSON document structure */
@@ -41,9 +54,24 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | TipTapDoc]
 }>()
 
+// Empty TipTap document - must have at least one paragraph node
+const emptyDoc: TipTapDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
+
 // Two-way binding
 const content = computed({
-  get: () => props.modelValue || { type: 'doc', content: [] },
+  get: () => {
+    if (props.modelValue) {
+      // Ensure JSON docs have at least one node (TipTap requirement)
+      if (typeof props.modelValue === 'object') {
+        const doc = props.modelValue as TipTapDoc
+        if (!doc.content || doc.content.length === 0) {
+          return emptyDoc
+        }
+      }
+      return props.modelValue
+    }
+    return emptyDoc
+  },
   set: (value) => emit('update:modelValue', value)
 })
 
@@ -52,13 +80,6 @@ const activeTab = ref(props.defaultTab)
 const tabItems = [
   { label: 'Editor', value: 'editor', icon: 'i-lucide-edit-3' },
   { label: 'Preview', value: 'preview', icon: 'i-lucide-eye' }
-]
-
-// Page block extensions
-const pageBlockExtensions = [
-  PageBlocks.configure({
-    enableSlashCommands: false
-  })
 ]
 
 // Block suggestion items
@@ -158,8 +179,7 @@ defineExpose({
         v-model="content"
         :placeholder="placeholder"
         :editable="editable"
-        :extensions="pageBlockExtensions"
-        :suggestion-items="blockSuggestionItems"
+        :extensions="PAGE_BLOCK_EXTENSIONS"
         content-type="json"
         class="h-full border border-default rounded-lg"
         @block:select="(node) => selectedNode = node"

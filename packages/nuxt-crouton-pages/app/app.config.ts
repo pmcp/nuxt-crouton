@@ -1,4 +1,13 @@
 export default defineAppConfig({
+  // Register the pages form component for the pagesPages collection
+  // This allows the standard Crouton form flow to use our custom form
+  // Consuming apps can override by setting their own componentName
+  croutonCollections: {
+    pagesPages: {
+      componentName: 'CroutonPagesForm'
+    }
+  },
+
   // App auto-discovery registration for crouton-pages
   croutonApps: {
     pages: {

@@ -27,16 +27,6 @@ const props = withDefaults(defineProps<Props>(), {
   activeItem: () => ({})
 })
 
-// Debug logging
-console.log('[CroutonPagesForm] mounted with:', {
-  action: props.action,
-  activeItem: props.activeItem,
-  hasId: !!props.activeItem?.id,
-  hasTitle: !!props.activeItem?.title,
-  hasContent: !!props.activeItem?.content,
-  items: props.items
-})
-
 const { t } = useT()
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
@@ -83,22 +73,35 @@ const isRegularPage = computed(() =>
 
 // Editor content computed - handles object/string conversion
 // UEditor with content-type="json" expects objects, but we store as strings in DB
+// Empty TipTap document - must have at least one paragraph node
+const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
+
 const editorContent = computed({
   get: () => {
     const content = state.value.content
     // Parse JSON string to object for UEditor
     if (typeof content === 'string' && content) {
       try {
-        return JSON.parse(content)
+        const parsed = JSON.parse(content)
+        // Ensure document has content (TipTap requires at least one node)
+        if (parsed?.type === 'doc' && (!parsed.content || parsed.content.length === 0)) {
+          return emptyDoc
+        }
+        return parsed
       } catch {
         // Not valid JSON, return empty doc
-        return { type: 'doc', content: [] }
+        return emptyDoc
       }
     }
-    // Already an object, return as-is
-    if (content && typeof content === 'object') return content
+    // Already an object, return as-is (but ensure it has content)
+    if (content && typeof content === 'object') {
+      if (content.type === 'doc' && (!content.content || content.content.length === 0)) {
+        return emptyDoc
+      }
+      return content
+    }
     // Empty content, return empty doc structure
-    return { type: 'doc', content: [] }
+    return emptyDoc
   },
   set: (value: string | object) => {
     // Always store as string in state (for DB)
@@ -325,18 +328,19 @@ const fieldComponents = {}
             }"
           />
 
-          <!-- Block Editor for Regular Pages (with Preview) -->
+          <!-- Block Editor for Regular Pages -->
           <UFormField
             v-if="isRegularPage"
             label="Page Content"
             name="content"
             class="mt-4"
           >
-            <div class="editor-container border border-default rounded-lg">
+            <div class="editor-container">
               <ClientOnly>
-                <CroutonPagesEditorBlockEditor
+                <CroutonPagesEditorBlockEditorWithPreview
                   v-model="editorContent"
                   placeholder="Type / to insert a block..."
+                  :editable="true"
                 />
                 <template #fallback>
                   <div class="flex items-center justify-center h-full text-muted">
