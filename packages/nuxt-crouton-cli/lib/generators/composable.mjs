@@ -2,6 +2,65 @@
 import { toCase } from '../utils/helpers.mjs'
 
 /**
+ * Generate Zod schema for a repeater item with optional translatable properties
+ * When meta.translatableProperties is present, includes translations validation
+ */
+function generateRepeaterItemSchema(field, layerCamelCase, pascalCasePlural) {
+  const { pascalCase: fieldPascalCase, camelCase: fieldCamelCase } = toCase(field.name)
+  const schemaName = `${layerCamelCase}${pascalCasePlural}${fieldPascalCase}ItemSchema`
+
+  const translatableProps = field.meta?.translatableProperties || []
+  const properties = field.meta?.properties || {}
+
+  // Generate schema fields
+  const schemaFields = []
+
+  // Always add id
+  schemaFields.push('id: z.string()')
+
+  // Add all properties from meta.properties
+  for (const [propName, propDef] of Object.entries(properties)) {
+    const zodType = mapPropertyToZod(propDef)
+    if (propDef.required === true) {
+      schemaFields.push(`${propName}: ${zodType}`)
+    } else {
+      schemaFields.push(`${propName}: ${zodType}.optional()`)
+    }
+  }
+
+  // Add translations schema if there are translatable properties
+  if (translatableProps.length > 0) {
+    const translationFields = translatableProps.map(prop => `      ${prop}: z.string().optional()`).join(',\n')
+    schemaFields.push(`translations: z.record(z.string(), z.object({\n${translationFields}\n    })).optional()`)
+  }
+
+  return {
+    name: schemaName,
+    code: `export const ${schemaName} = z.object({
+  ${schemaFields.join(',\n  ')}
+})`
+  }
+}
+
+/**
+ * Map property type to Zod schema
+ */
+function mapPropertyToZod(propDef) {
+  const type = propDef.type || 'string'
+  const zodMap = {
+    string: 'z.string()',
+    text: 'z.string()',
+    number: 'z.number()',
+    decimal: 'z.number()',
+    boolean: 'z.boolean()',
+    date: 'z.date()',
+    json: 'z.record(z.string(), z.any())',
+    array: 'z.array(z.string())'
+  }
+  return zodMap[type] || 'z.string()'
+}
+
+/**
  * Generate AI context header for composable files
  */
 function generateAIHeader(data, apiPath) {
@@ -91,9 +150,18 @@ export function generateComposable(data, config = {}) {
   // Generate AI context header
   const aiHeader = generateAIHeader(data, apiPath)
 
+  // Generate item schemas for repeater fields with translatableProperties or properties
+  const repeaterItemSchemas = fields
+    .filter(f => f.type === 'repeater' && (f.meta?.translatableProperties || f.meta?.properties))
+    .map(f => generateRepeaterItemSchema(f, layerCamelCase, pascalCasePlural))
+
+  const itemSchemasCode = repeaterItemSchemas.length > 0
+    ? repeaterItemSchemas.map(s => s.code).join('\n\n') + '\n\n'
+    : ''
+
   return `${aiHeader}import { z } from 'zod'
 
-// Schema exported separately - Zod 4 schemas cannot survive deep cloning
+${itemSchemasCode}// Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const ${prefixedSingular}Schema = z.object({
   ${data.fieldsSchema}

@@ -942,8 +942,18 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
           // Simple dependsOn (for UI visibility) should keep their original type
           const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
 
+          // Check if this is a repeater with typed properties
+          const hasRepeaterProperties = f.type === 'repeater' && (f.meta?.translatableProperties || f.meta?.properties)
+
           // Override Zod schema for dependent fields to use array
-          const baseZod = isDependentField ? 'z.array(z.string())' : f.zod
+          let baseZod = isDependentField ? 'z.array(z.string())' : f.zod
+
+          // For repeaters with properties, use the generated item schema
+          if (hasRepeaterProperties) {
+            const { pascalCase: fieldPascalCase } = toCase(f.name)
+            const itemSchemaName = `${layerCamelCase}${cases.pascalCasePlural}${fieldPascalCase}ItemSchema`
+            baseZod = `z.array(${itemSchemaName})`
+          }
 
           if (f.meta?.required) {
             // Handle different types appropriately for required fields
@@ -1243,8 +1253,8 @@ ${translationsFieldSchema}
       const fieldFolderPath = path.join(base, 'app', 'components', fieldFolderName)
       await fsp.mkdir(fieldFolderPath, { recursive: true })
 
-      // Generate all three field components
-      const { input, select, cardMini } = generateFieldComponents(field.name, data)
+      // Generate all three field components (pass full field object for translatableProperties support)
+      const { input, select, cardMini } = generateFieldComponents(field, data)
 
       files.push({
         path: path.join(fieldFolderPath, 'Input.vue'),

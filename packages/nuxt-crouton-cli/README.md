@@ -231,6 +231,32 @@ Fields marked as translatable will:
 - Store translations in a `translations` JSON field
 - Require the `@friendlyinternet/nuxt-crouton-i18n` package
 
+### Translatable Repeater Fields
+
+For repeater fields where each item needs per-item translations (e.g., time slots, dropdown options):
+
+```json
+{
+  "slots": {
+    "type": "repeater",
+    "meta": {
+      "translatableProperties": ["label", "description"],
+      "properties": {
+        "label": { "type": "string", "required": true, "label": "Slot Name" },
+        "description": { "type": "text", "label": "Description" },
+        "value": { "type": "string", "label": "Slot ID" }
+      }
+    }
+  }
+}
+```
+
+This generates:
+- Typed item interface with translations support
+- Item-level Zod schema for validation
+- Language tabs UI with completion indicators in the form
+- Non-translatable fields only shown when editing English
+
 ## Generated Structure
 
 ```

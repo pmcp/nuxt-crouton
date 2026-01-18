@@ -83,7 +83,16 @@
       "sortable": true,
       "area": "main",
       "group": "scheduling",
-      "help": "Only used in slot mode. Hidden when inventory mode is enabled."
+      "help": "Only used in slot mode. Hidden when inventory mode is enabled.",
+      "translatableProperties": ["label", "description"],
+      "properties": {
+        "label": { "type": "string", "required": true, "label": "Slot Name" },
+        "description": { "type": "text", "label": "Description" },
+        "value": { "type": "string", "label": "Slot ID" },
+        "startTime": { "type": "string", "label": "Start Time" },
+        "endTime": { "type": "string", "label": "End Time" },
+        "maxCapacity": { "type": "number", "label": "Max Capacity" }
+      }
     }
   },
   "inventoryMode": {

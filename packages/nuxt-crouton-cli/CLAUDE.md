@@ -155,6 +155,48 @@ lib/generators/
 | `optionsField` | string | Field in options collection containing values |
 | `creatable` | boolean | Allow creating new options (default: true) |
 | `component` | string | Custom component name override |
+| `translatableProperties` | string[] | (Repeater) Properties to support per-item translations |
+| `properties` | object | (Repeater) Typed property definitions for repeater items |
+
+### Translatable Repeater Fields
+
+Repeater fields can support per-item translations using `translatableProperties` and `properties`:
+
+```json
+{
+  "slots": {
+    "type": "repeater",
+    "meta": {
+      "translatableProperties": ["label", "description"],
+      "properties": {
+        "label": { "type": "string", "required": true, "label": "Slot Name" },
+        "description": { "type": "text", "label": "Description" },
+        "value": { "type": "string", "label": "Slot ID" },
+        "maxCapacity": { "type": "number", "label": "Max Capacity" }
+      }
+    }
+  }
+}
+```
+
+**Generated data structure:**
+```typescript
+{
+  id: "abc123",
+  label: "morning",           // English (default)
+  description: "Morning slot",
+  value: "slot-1",            // Non-translatable
+  translations: {
+    label: { nl: "ochtend", fr: "matin" },
+    description: { nl: "Ochtendslot", fr: "Créneau du matin" }
+  }
+}
+```
+
+**Generated artifacts:**
+- `types.ts`: Item interface with translations support
+- `use[Collection].ts`: Typed Zod schema for repeater items
+- `[Field]/Input.vue`: Language tabs with completion indicators
 
 ## Field Types
 
@@ -167,8 +209,10 @@ lib/generators/
 | boolean | `z.boolean()` | `boolean` | `false` |
 | date | `z.date()` | `Date \| null` | `null` |
 | json | `z.record(z.any())` | `Record<string, any>` | `{}` |
-| repeater | `z.array(z.any())` | `any[]` | `[]` |
+| repeater | `z.array(z.any())` or typed¹ | `any[]` or typed¹ | `[]` |
 | array | `z.array(z.string())` | `string[]` | `[]` |
+
+¹ When `meta.properties` is defined, generates typed item schema (see Translatable Repeater Fields)
 
 ## Generated Output
 

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2026-01-15
+ * @generated 2026-01-18
  *
  * ## AI Context
  * - Main interface: BookingsLocation
@@ -22,6 +22,20 @@
 
 import type { z } from 'zod'
 import type { bookingsLocationSchema } from './app/composables/useBookingsLocations'
+
+export interface BookingsLocationsSlotItem {
+  id: string
+  label: string
+  description?: string
+  value?: string
+  startTime?: string
+  endTime?: string
+  maxCapacity?: number
+  translations?: {
+    label?: Record<string, string>
+    description?: Record<string, string>
+  }
+}
 
 export interface BookingsLocation {
   id: string

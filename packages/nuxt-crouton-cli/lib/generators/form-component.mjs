@@ -468,7 +468,7 @@ export function generateFormComponent(data, config = {}) {
         }"`
           : ''}
         show-ai-translate
-        field-type="${collectionName}"
+        field-type="${plural}"
         label="Translations"
       />`
     : ''

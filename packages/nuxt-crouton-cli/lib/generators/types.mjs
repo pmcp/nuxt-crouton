@@ -1,4 +1,5 @@
 // Generator for TypeScript types
+import { toCase } from '../utils/helpers.mjs'
 
 /**
  * Generate AI context header for types files
@@ -31,6 +32,58 @@ function generateAIHeader(data) {
  */
 
 `
+}
+
+/**
+ * Generate item interface for a translatable repeater field
+ * When meta.translatableProperties is present, generates interface with translations support
+ */
+function generateRepeaterItemInterface(field, layerPascalCase, pascalCasePlural) {
+  const { pascalCase: fieldPascalCase } = toCase(field.name)
+  const interfaceName = `${layerPascalCase}${pascalCasePlural}${fieldPascalCase}Item`
+
+  const translatableProps = field.meta?.translatableProperties || []
+  const properties = field.meta?.properties || {}
+
+  // Generate property lines
+  const propertyLines = []
+
+  // Always add id
+  propertyLines.push('  id: string')
+
+  // Add all properties from meta.properties
+  for (const [propName, propDef] of Object.entries(properties)) {
+    const isRequired = propDef.required === true
+    const tsType = mapPropertyType(propDef.type)
+    propertyLines.push(`  ${propName}${isRequired ? '' : '?'}: ${tsType}`)
+  }
+
+  // Add translations property if there are translatable properties
+  if (translatableProps.length > 0) {
+    const translationFields = translatableProps.map(prop => `    ${prop}?: Record<string, string>`).join('\n')
+    propertyLines.push(`  translations?: {\n${translationFields}\n  }`)
+  }
+
+  return `export interface ${interfaceName} {
+${propertyLines.join('\n')}
+}`
+}
+
+/**
+ * Map property type to TypeScript type
+ */
+function mapPropertyType(type) {
+  const typeMap = {
+    string: 'string',
+    text: 'string',
+    number: 'number',
+    decimal: 'number',
+    boolean: 'boolean',
+    date: 'Date | null',
+    json: 'Record<string, any>',
+    array: 'string[]'
+  }
+  return typeMap[type] || 'string'
 }
 
 export function generateTypes(data, config = null) {
@@ -80,10 +133,20 @@ export function generateTypes(data, config = null) {
   // Generate AI context header
   const aiHeader = generateAIHeader(data)
 
+  // Find repeater fields with translatableProperties and generate their item interfaces
+  const repeaterItemInterfaces = fields
+    .filter(f => f.type === 'repeater' && (f.meta?.translatableProperties || f.meta?.properties))
+    .map(f => generateRepeaterItemInterface(f, layerPascalCase, pascalCasePlural))
+    .join('\n\n')
+
+  const repeaterInterfacesBlock = repeaterItemInterfaces
+    ? `${repeaterItemInterfaces}\n\n`
+    : ''
+
   return `${aiHeader}import type { z } from 'zod'
 import type { ${prefixedSingular}Schema } from '${composablePath}'
 
-export interface ${prefixedPascalCase} {
+${repeaterInterfacesBlock}export interface ${prefixedPascalCase} {
   id: string
 ${teamFields}  ${data.fieldsTypes}
 ${translationsType}${metadataFields}  optimisticId?: string

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2026-01-15
+ * @generated 2026-01-18
  *
  * ## AI Context
  * - Composable: useBookingsLocations
@@ -24,13 +24,27 @@
 
 import { z } from 'zod'
 
+export const bookingsLocationsSlotItemSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  description: z.string().optional(),
+  value: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  maxCapacity: z.number().optional(),
+  translations: z.record(z.string(), z.object({
+      label: z.string().optional(),
+      description: z.string().optional()
+    })).optional()
+})
+
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const bookingsLocationSchema = z.object({
   color: z.string().optional(),
   location: z.string().optional(),
   allowedMemberIds: z.array(z.string()).optional(),
-  slots: z.array(z.any()).optional(),
+  slots: z.array(bookingsLocationsSlotItemSchema).optional(),
   inventoryMode: z.boolean().optional(),
   quantity: z.number().optional(),
   title: z.string().optional(),

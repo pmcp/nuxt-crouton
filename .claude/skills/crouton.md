@@ -103,6 +103,7 @@ Use this skill when the user mentions:
 | date, timestamp, when | `date` | `"startDate": { "type": "date" }` |
 | json, object, settings | `json` | `"settings": { "type": "json" }` |
 | list of items, repeater | `repeater` | `"items": { "type": "repeater" }` |
+| translatable list | `repeater` | See Translatable Repeater section below |
 | tags, string list | `array` | `"tags": { "type": "array" }` |
 
 ### Common Field Meta Options
@@ -158,6 +159,47 @@ For options stored in another collection:
       "optionsField": "categories",
       "creatable": true
     }
+  }
+}
+```
+
+### Translatable Repeater (Per-Item Translations)
+
+For repeater fields where each item needs translations (e.g., time slots, options with labels):
+
+```json
+{
+  "slots": {
+    "type": "repeater",
+    "meta": {
+      "translatableProperties": ["label", "description"],
+      "properties": {
+        "label": { "type": "string", "required": true, "label": "Slot Name" },
+        "description": { "type": "text", "label": "Description" },
+        "value": { "type": "string", "label": "Slot ID" },
+        "maxCapacity": { "type": "number", "label": "Max Capacity" }
+      }
+    }
+  }
+}
+```
+
+**Generated features:**
+- Language tabs (EN, NL, FR, etc.) with completion indicators
+- Non-translatable fields only shown in English locale
+- Fallback placeholder showing English value when editing translations
+- Typed item interface and Zod schema
+
+**Data structure:**
+```typescript
+{
+  id: "abc123",
+  label: "morning",           // English (default)
+  description: "Morning slot",
+  value: "slot-1",            // Non-translatable
+  translations: {
+    label: { nl: "ochtend", fr: "matin" },
+    description: { nl: "Ochtendslot", fr: "Créneau du matin" }
   }
 }
 ```
