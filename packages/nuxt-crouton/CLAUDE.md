@@ -51,7 +51,7 @@ export default defineNuxtConfig({
 | `app/composables/useCollections.ts` | Collection config registry from `app.config.croutonCollections` |
 | `app/composables/useCroutonShortcuts.ts` | Keyboard shortcuts for CRUD operations |
 | `app/composables/useCollectionExport.ts` | CSV/JSON export for collection data |
-| `app/components/Collection.vue` | Multi-layout display (table, list, grid, cards, tree) |
+| `app/components/Collection.vue` | Multi-layout display (table, list, grid, tree, kanban) |
 | `app/components/Form.vue` | Main CRUD form handler with nested modal support |
 | `app/components/ShortcutHint.vue` | Visual keyboard shortcut badges (`<kbd>` elements) |
 | `app/components/ExportButton.vue` | Ready-to-use export dropdown button |
@@ -216,7 +216,8 @@ export default defineNuxtConfig({
 
 ```typescript
 // Key types from app/types/table.ts
-type LayoutType = 'table' | 'list' | 'grid' | 'cards' | 'tree'
+type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban'
+type GridSize = 'compact' | 'comfortable' | 'spacious'
 interface PaginationData { currentPage, pageSize, totalItems, sortBy, sortDirection }
 interface HierarchyConfig { enabled, parentField?, orderField?, pathField? }
 ```
