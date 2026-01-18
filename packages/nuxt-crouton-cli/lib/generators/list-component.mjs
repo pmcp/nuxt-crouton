@@ -65,6 +65,9 @@ export function generateListComponent(data, config = {}) {
   // Check for dependent fields (with collection dependencies, not simple visibility toggles)
   const dependentFields = fields.filter(f => f.meta?.dependsOn && f.meta?.dependsOnCollection)
 
+  // Check for options fields (fields with optionsCollection - typically from settings singletons)
+  const optionsFields = fields.filter(f => f.meta?.optionsCollection && f.meta?.optionsField)
+
   // Check for editor fields (fields using nuxt-crouton-editor components)
   const editorFields = fields.filter(f =>
     f.meta?.component
@@ -191,6 +194,21 @@ export function generateListComponent(data, config = {}) {
         :dependent-value="row.original.${field.meta.dependsOn}"
         dependent-collection="${resolvedDependentCollection}"
         dependent-field="${field.meta.dependsOnField}"
+      />
+      <span v-else class="text-gray-400">—</span>
+    </template>`
+    }).join('')}${optionsFields.map((field) => {
+      // optionsCollection is already the full collection name (e.g., "bookingsSettings")
+      // so we use it directly without adding a layer prefix
+      const resolvedOptionsCollection = field.meta.optionsCollection
+
+      return `
+    <template #${field.name}-cell="{ row }">
+      <CroutonOptionsFieldCardMini
+        v-if="row.original.${field.name}"
+        :value="row.original.${field.name}"
+        options-collection="${resolvedOptionsCollection}"
+        options-field="${field.meta.optionsField}"
       />
       <span v-else class="text-gray-400">—</span>
     </template>`

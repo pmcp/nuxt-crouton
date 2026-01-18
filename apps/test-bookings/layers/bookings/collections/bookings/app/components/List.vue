@@ -2,7 +2,7 @@
   @crouton-generated
   @collection bookings
   @layer bookings
-  @generated 2026-01-14
+  @generated 2026-01-18
 
   ## AI Context
   - List component for bookings collection
@@ -28,7 +28,6 @@
     :columns="columns"
     :rows="bookings || []"
     :loading="pending"
-    show-collab-presence
   >
     <template #header>
       <CroutonTableHeader
@@ -57,6 +56,24 @@
       />
       <span v-else class="text-gray-400">—</span>
     </template>
+    <template #group-cell="{ row }">
+      <CroutonOptionsFieldCardMini
+        v-if="row.original.group"
+        :value="row.original.group"
+        options-collection="bookingsSettings"
+        options-field="groups"
+      />
+      <span v-else class="text-gray-400">—</span>
+    </template>
+    <template #status-cell="{ row }">
+      <CroutonOptionsFieldCardMini
+        v-if="row.original.status"
+        :value="row.original.status"
+        options-collection="bookingsSettings"
+        options-field="statuses"
+      />
+      <span v-else class="text-gray-400">—</span>
+    </template>
   </CroutonCollection>
 </template>
 
@@ -74,4 +91,5 @@ const { columns } = useBookingsBookings()
 const { items: bookings, pending } = await useCollectionQuery(
   'bookingsBookings'
 )
+
 </script>
