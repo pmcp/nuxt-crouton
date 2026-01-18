@@ -24,18 +24,18 @@ export default defineNitroPlugin(async () => {
 
   // Log auto-create on signup configuration
   if (teams.autoCreateOnSignup) {
-    console.log(`[@crouton/auth] Auto-create workspace enabled`)
-    console.log(`[@crouton/auth] Each new user will get their own personal workspace`)
+    console.log(`🍞 crouton:auth Auto-create workspace enabled`)
+    console.log(`🍞 crouton:auth Each new user will get their own personal workspace`)
   }
 
   // Log default team configuration
   if (teams.defaultTeamSlug) {
-    console.log(`[@crouton/auth] Default team enabled`)
-    console.log(`[@crouton/auth] Default team "${appName}" (slug: ${teams.defaultTeamSlug}) will be created on first user signup`)
+    console.log(`🍞 crouton:auth Default team enabled`)
+    console.log(`🍞 crouton:auth Default team "${appName}" (slug: ${teams.defaultTeamSlug}) will be created on first user signup`)
   }
 
   // Log combined behavior if both are set
   if (teams.autoCreateOnSignup && teams.defaultTeamSlug) {
-    console.log(`[@crouton/auth] Note: Users will get both a personal workspace AND be added to the default team`)
+    console.log(`🍞 crouton:auth Note: Users will get both a personal workspace AND be added to the default team`)
   }
 })

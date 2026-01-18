@@ -7,7 +7,7 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-editor')) {
   _dependencies.add('nuxt-crouton-editor')
-  console.log('[nuxt-crouton-editor] ✓ Editor layer loaded')
+  console.log('🍞 crouton:editor ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({

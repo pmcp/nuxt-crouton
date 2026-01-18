@@ -6,7 +6,7 @@ const currentDir = import.meta.dirname
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-schema-designer')) {
   _dependencies.add('nuxt-crouton-schema-designer')
-  console.log('[nuxt-crouton-schema-designer] ✓ Schema Designer layer loaded')
+  console.log('🍞 crouton:schema-designer ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({

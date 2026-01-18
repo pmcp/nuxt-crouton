@@ -7,7 +7,7 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-collab')) {
   _dependencies.add('nuxt-crouton-collab')
-  console.log('[nuxt-crouton-collab] ✓ Collab layer loaded')
+  console.log('🍞 crouton:collab ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({

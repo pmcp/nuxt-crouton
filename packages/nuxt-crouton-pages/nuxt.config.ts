@@ -7,7 +7,7 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-pages')) {
   _dependencies.add('nuxt-crouton-pages')
-  console.log('[nuxt-crouton-pages] ✓ Pages layer loaded')
+  console.log('🍞 crouton:pages ✓ Layer loaded')
 }
 
 /**

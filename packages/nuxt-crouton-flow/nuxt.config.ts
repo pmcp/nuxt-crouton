@@ -7,7 +7,7 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-flow')) {
   _dependencies.add('nuxt-crouton-flow')
-  console.log('[nuxt-crouton-flow] ✓ Flow layer loaded')
+  console.log('🍞 crouton:flow ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({

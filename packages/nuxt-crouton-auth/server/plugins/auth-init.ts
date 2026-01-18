@@ -16,7 +16,7 @@ export default defineNitroPlugin(async () => {
   const secret = config.auth?.secret || process.env.BETTER_AUTH_SECRET
   if (!secret) {
     console.warn(
-      '[@crouton/auth] BETTER_AUTH_SECRET is not set. Authentication will not work properly in production.'
+      '🍞 crouton:auth BETTER_AUTH_SECRET is not set. Authentication will not work properly in production.'
     )
   }
 
@@ -24,7 +24,7 @@ export default defineNitroPlugin(async () => {
   const authConfig = config.public?.crouton?.auth
   if (!authConfig) {
     console.warn(
-      '[@crouton/auth] No auth configuration found. Add crouton.auth config to nuxt.config.ts'
+      '🍞 crouton:auth No auth configuration found. Add crouton.auth config to nuxt.config.ts'
     )
     return
   }
@@ -32,6 +32,6 @@ export default defineNitroPlugin(async () => {
   // Log once in development
   if (process.env.NODE_ENV !== 'production' && !_authPluginLogged) {
     (globalThis as Record<string, boolean>).__croutonAuthPluginLogged = true
-    console.log('[@crouton/auth] ✓ Auth ready')
+    console.log('🍞 crouton:auth ✓ Auth ready')
   }
 })

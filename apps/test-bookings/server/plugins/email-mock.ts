@@ -29,6 +29,6 @@ export default defineNitroPlugin(() => {
   })
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log('[email-mock] ✓ Mock provider active')
+    console.log('🍞 crouton:email ✓ Mock provider active')
   }
 })

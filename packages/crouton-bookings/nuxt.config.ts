@@ -7,7 +7,7 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-bookings')) {
   _dependencies.add('crouton-bookings')
-  console.log('[crouton-bookings] ✓ Bookings layer loaded')
+  console.log('🍞 crouton:bookings ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({

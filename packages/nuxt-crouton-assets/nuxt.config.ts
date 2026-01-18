@@ -7,7 +7,7 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-assets')) {
   _dependencies.add('nuxt-crouton-assets')
-  console.log('[nuxt-crouton-assets] ✓ Assets layer loaded')
+  console.log('🍞 crouton:assets ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({

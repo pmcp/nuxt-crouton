@@ -7,7 +7,7 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-maps')) {
   _dependencies.add('nuxt-crouton-maps')
-  console.log('[nuxt-crouton-maps] ✓ Maps layer loaded')
+  console.log('🍞 crouton:maps ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({

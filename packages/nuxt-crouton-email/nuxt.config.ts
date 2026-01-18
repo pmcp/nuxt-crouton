@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-email')) {
   _dependencies.add('nuxt-crouton-email')
-  console.log('[nuxt-crouton-email] ✓ Email layer loaded')
+  console.log('🍞 crouton:email ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({

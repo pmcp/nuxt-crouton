@@ -10,7 +10,7 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton')) {
   _dependencies.add('nuxt-crouton')
-  console.log('[nuxt-crouton] ✓ Core layer loaded')
+  console.log('🍞 crouton:core ✓ Layer loaded')
 }
 
 // Resolve @crouton/auth package path (handles both installed and workspace:* scenarios)
@@ -27,7 +27,7 @@ try {
   if (existsSync(teamAuthPath)) {
     croutonAuthPath = teamAuthPath
   } else {
-    console.warn('[nuxt-crouton] @crouton/auth found but team-auth.ts missing at:', teamAuthPath)
+    console.warn('🍞 crouton:core @crouton/auth found but team-auth.ts missing at:', teamAuthPath)
   }
 } catch {
   // @crouton/auth not installed - will use fallback or error at runtime
@@ -65,9 +65,9 @@ export default defineNuxtConfig({
             nitroConfig.runtimeConfig = nitroConfig.runtimeConfig || {}
             nitroConfig.runtimeConfig.public = nitroConfig.runtimeConfig.public || {}
             nitroConfig.runtimeConfig.public.croutonConfig = config.default
-            console.log('[nuxt-crouton] Loaded crouton config from:', configPath)
+            console.log('🍞 crouton:core Loaded config from:', configPath)
           } catch (err) {
-            console.warn('[nuxt-crouton] Failed to load crouton config:', err)
+            console.warn('🍞 crouton:core Failed to load config:', err)
           }
           break
         }
