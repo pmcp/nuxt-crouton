@@ -127,15 +127,18 @@ const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
 const contentReady = ref(props.action === 'create')
 
 // Initialize Yjs fragments with existing content when editing
-// This happens after collab connection is established
+// This happens after collab connection is SYNCED (not just connected)
+// IMPORTANT: Wait for synced, not just connected, to avoid race condition
+// where setContentJson is called while server is still sending initial state
 if (collabLocalizedContent && props.action === 'update' && props.activeItem?.translations) {
   const translations = props.activeItem.translations as Record<string, { content?: string }>
 
-  // Wait for collab to connect before loading content
+  // Wait for collab to SYNC before loading content
+  // synced means the server has sent its initial state
   watch(
-    () => collabLocalizedContent?.connected?.value,
-    (connected) => {
-      if (connected) {
+    () => collabLocalizedContent?.synced?.value,
+    (synced) => {
+      if (synced) {
         for (const [locale, data] of Object.entries(translations)) {
           if (data?.content) {
             try {
