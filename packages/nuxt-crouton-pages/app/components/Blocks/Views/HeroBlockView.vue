@@ -12,8 +12,6 @@ import { computed } from 'vue'
 import { NodeViewWrapper } from '@tiptap/vue-3'
 import type { HeroBlockAttrs } from '../../../types/blocks'
 
-console.log('[HeroBlockView] Component loading')
-
 const props = defineProps<{
   node: { attrs: HeroBlockAttrs }
   selected: boolean
@@ -27,14 +25,11 @@ const attrs = computed(() => props.node.attrs)
 
 // Handler that opens property panel by dispatching a custom event
 function handleOpenPanel() {
-  console.log('[HeroBlockView] handleOpenPanel called', { node: props.node, pos: props.getPos() })
   const event = new CustomEvent('block-edit-request', {
     bubbles: true,
     detail: { node: props.node, pos: props.getPos() }
   })
-  console.log('[HeroBlockView] Dispatching event to document')
   document.dispatchEvent(event)
-  console.log('[HeroBlockView] Event dispatched')
 }
 </script>
 
