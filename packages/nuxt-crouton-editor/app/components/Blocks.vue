@@ -67,10 +67,29 @@ const emit = defineEmits<{
   'block:edit': [{ node: any; pos: number }]
 }>()
 
+// Empty TipTap document - must have at least one paragraph node
+const emptyDoc: TipTapDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
+
 // Two-way binding for editor content
-// Accepts both string and object, passes through to UEditor
+// Returns appropriate empty value based on content type
 const content = computed({
-  get: () => props.modelValue || { type: 'doc', content: [] },
+  get: () => {
+    if (props.modelValue) {
+      // Ensure JSON docs have at least one node (TipTap requirement)
+      if (props.contentType === 'json' && typeof props.modelValue === 'object') {
+        const doc = props.modelValue as TipTapDoc
+        if (!doc.content || doc.content.length === 0) {
+          return emptyDoc
+        }
+      }
+      return props.modelValue
+    }
+    // Return appropriate empty value for content type
+    if (props.contentType === 'json') {
+      return emptyDoc
+    }
+    return '' // For html and markdown
+  },
   set: (value) => emit('update:modelValue', value)
 })
 
@@ -84,17 +103,13 @@ const isPropertyPanelOpen = ref(false)
 // Listen for block edit requests from NodeView components
 // (They can't use provide/inject due to VueNodeViewRenderer boundary)
 function handleBlockEditRequest(event: Event) {
-  console.log('[CroutonEditorBlocks] Received block-edit-request event', event)
   const customEvent = event as CustomEvent<{ node: any; pos: number }>
-  console.log('[CroutonEditorBlocks] Event detail:', customEvent.detail)
   selectedNode.value = { pos: customEvent.detail.pos, node: customEvent.detail.node }
   isPropertyPanelOpen.value = true
-  console.log('[CroutonEditorBlocks] isPropertyPanelOpen set to:', isPropertyPanelOpen.value)
   emit('block:edit', customEvent.detail)
 }
 
 onMounted(() => {
-  console.log('[CroutonEditorBlocks] Mounting, adding block-edit-request listener')
   document.addEventListener('block-edit-request', handleBlockEditRequest)
 })
 
@@ -324,52 +339,30 @@ defineExpose({
 
 <template>
   <div class="crouton-editor-blocks h-full flex flex-col">
-    <!-- Editor using UEditor directly for full control -->
+    <!-- Toolbar using captured editor instance -->
+    <UEditorToolbar
+      v-if="editorInstance && showToolbar"
+      :editor="editorInstance"
+      :items="toolbarItems"
+      class="border-b border-default px-2 py-1.5 flex-shrink-0"
+    />
+
+    <!-- Editor -->
     <UEditor
-      v-slot="{ editor }"
       v-model="content"
       :content-type="contentType"
       :placeholder="placeholder"
       :editable="editable"
       :autofocus="autofocus"
       :extensions="extensions"
-      :handlers="blockHandlers"
-      class="flex flex-col h-full"
+      class="flex-1"
       :ui="{
-        root: 'h-full flex flex-col',
-        content: 'flex-1 overflow-auto prose prose-sm dark:prose-invert max-w-none p-4'
+        root: 'h-full',
+        content: 'h-full p-4 min-h-[200px] prose prose-sm dark:prose-invert max-w-none overflow-auto'
       }"
       @create="handleEditorCreate"
       @update="handleEditorUpdate"
-    >
-      <!-- Fixed toolbar at top -->
-      <UEditorToolbar
-        v-if="editor && showToolbar"
-        :editor="editor"
-        :items="toolbarItems"
-        class="border-b border-default px-2 py-1.5 flex-shrink-0"
-      />
-
-      <!-- Bubble toolbar on text selection -->
-      <UEditorToolbar
-        v-if="editor && showBubbleToolbar"
-        :editor="editor"
-        :items="bubbleToolbarItems"
-        layout="bubble"
-        :should-show="({ view, state }: any) => {
-          const { selection } = state
-          return view.hasFocus() && !selection.empty
-        }"
-      />
-
-      <!-- Slash command suggestion menu -->
-      <UEditorSuggestionMenu
-        v-if="editor && suggestionItems?.length"
-        :editor="editor"
-        :items="suggestionMenuItems"
-        char="/"
-      />
-    </UEditor>
+    />
 
     <!-- Property Panel Slot -->
     <slot
