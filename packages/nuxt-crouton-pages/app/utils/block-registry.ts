@@ -14,6 +14,7 @@ import type {
   CardGridBlockAttrs,
   SeparatorBlockAttrs,
   RichTextBlockAttrs,
+  CollectionBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -311,6 +312,65 @@ export const richTextBlockDefinition: BlockDefinition<RichTextBlockAttrs> = {
   ]
 }
 
+export const collectionBlockDefinition: BlockDefinition<CollectionBlockAttrs> = {
+  type: 'collectionBlock',
+  name: 'Collection',
+  description: 'Embed a collection in view-only mode',
+  icon: 'i-lucide-database',
+  category: 'content',
+  defaultAttrs: {
+    collection: '',
+    layout: 'table',
+    pageSize: 10,
+    showPagination: true
+  },
+  schema: [
+    {
+      name: 'collection',
+      type: 'collection',
+      label: 'Collection',
+      required: true,
+      description: 'Select a collection to display'
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+      description: 'Optional title above the collection'
+    },
+    {
+      name: 'layout',
+      type: 'select',
+      label: 'Layout',
+      options: [
+        { label: 'Table', value: 'table' },
+        { label: 'List', value: 'list' },
+        { label: 'Grid', value: 'grid' },
+        { label: 'Cards', value: 'cards' }
+      ],
+      defaultValue: 'table'
+    },
+    {
+      name: 'pageSize',
+      type: 'select',
+      label: 'Items per page',
+      options: [
+        { label: '5 items', value: '5' },
+        { label: '10 items', value: '10' },
+        { label: '20 items', value: '20' },
+        { label: '50 items', value: '50' }
+      ],
+      defaultValue: '10'
+    },
+    {
+      name: 'showPagination',
+      type: 'switch',
+      label: 'Show Pagination',
+      defaultValue: true
+    }
+  ]
+}
+
 // ============================================================================
 // Registry
 // ============================================================================
@@ -321,7 +381,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   ctaBlock: ctaBlockDefinition,
   cardGridBlock: cardGridBlockDefinition,
   separatorBlock: separatorBlockDefinition,
-  richTextBlock: richTextBlockDefinition
+  richTextBlock: richTextBlockDefinition,
+  collectionBlock: collectionBlockDefinition
 }
 
 // ============================================================================
