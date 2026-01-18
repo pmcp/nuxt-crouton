@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount, getCurrentInstance, resolveComponent } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount, getCurrentInstance, resolveComponent, inject, type ComputedRef } from 'vue'
 import type { Component } from 'vue'
 import type { TreeNode as TreeNodeType } from './Tree.vue'
 import type { CollabPresenceConfig } from '../types/table'
@@ -71,24 +71,36 @@ const isCountFlashing = computed(() => !!flashingCounts.value[props.item.id])
 
 // ============ Collab Presence Support ============
 
+// Try to inject the resolved component from Collection.vue (preferred)
+// This avoids issues with resolveComponent not finding auto-imported components
+const injectedCollabComponent = inject<ComputedRef<Component | null> | null>('collabEditingBadgeComponent', null)
+
 // Resolve CollabEditingBadge component if nuxt-crouton-collab is installed
-// Note: Nuxt auto-imports don't appear in appContext.components, so we try resolveComponent directly
+// First tries inject, then falls back to resolveComponent
 const collabEditingBadgeComponent = computed<Component | null>(() => {
   if (!props.showCollabPresence) {
     return null
   }
 
-  // Try to resolve the component - Nuxt auto-imports will work with resolveComponent
-  // If the component doesn't exist, resolveComponent returns the string name
-  const resolved = resolveComponent('CollabEditingBadge')
-  if (typeof resolved !== 'string') {
-    return resolved
+  // Use injected component from Collection.vue if available
+  if (injectedCollabComponent?.value) {
+    return injectedCollabComponent.value
   }
 
-  // Try lazy variant
-  const lazyResolved = resolveComponent('LazyCollabEditingBadge')
-  if (typeof lazyResolved !== 'string') {
-    return lazyResolved
+  // Fallback: Try to resolve the component directly
+  try {
+    const resolved = resolveComponent('CollabEditingBadge')
+    if (typeof resolved !== 'string') {
+      return resolved
+    }
+
+    // Try lazy variant
+    const lazyResolved = resolveComponent('LazyCollabEditingBadge')
+    if (typeof lazyResolved !== 'string') {
+      return lazyResolved
+    }
+  } catch {
+    // Component not available
   }
 
   return null
@@ -399,6 +411,7 @@ onBeforeUnmount(() => {
         :poll-interval="collabConfig.pollInterval || 5000"
         :show-self="collabConfig.showSelf"
         size="sm"
+        variant="avatars"
         class="shrink-0"
       />
 

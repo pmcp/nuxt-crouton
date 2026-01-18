@@ -1,7 +1,8 @@
 <template>
-  <!-- Table Layout -->
-  <CroutonTable
-    v-if="activeLayout === 'table'"
+  <div class="crouton-collection">
+    <!-- Table Layout -->
+    <CroutonTable
+      v-if="activeLayout === 'table'"
     :collection="collection"
     :columns="columns"
     :rows="rows"
@@ -255,10 +256,11 @@
       @select="handleKanbanSelect"
     />
   </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, resolveComponent, getCurrentInstance, type Component } from 'vue'
+import { computed, resolveComponent, getCurrentInstance, provide, type Component } from 'vue'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions, KanbanConfig, CollabPresenceConfig, GridSize } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
@@ -376,7 +378,9 @@ const gridBadgePositionClasses = computed(() => {
 // Collaboration presence support
 // Resolves CollabEditingBadge component if nuxt-crouton-collab is installed
 const collabEditingBadgeComponent = computed<Component | null>(() => {
-  if (!props.showCollabPresence) return null
+  if (!props.showCollabPresence) {
+    return null
+  }
 
   // Use resolveComponent directly - Nuxt auto-imports won't appear in appContext.components
   // resolveComponent returns a string if not found, otherwise returns the component
@@ -393,6 +397,10 @@ const collabEditingBadgeComponent = computed<Component | null>(() => {
 
   return null
 })
+
+// Provide the resolved component for child components (Tree, TreeView, TreeNode)
+// This ensures they can access it without their own resolveComponent calls failing
+provide('collabEditingBadgeComponent', collabEditingBadgeComponent)
 
 // Collab presence configuration
 const collabConfig = computed<CollabPresenceConfig>(() => {

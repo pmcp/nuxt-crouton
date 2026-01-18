@@ -47,18 +47,18 @@ const columns = [
   { key: 'visibility', label: 'Visibility' }
 ]
 
-// Status badge colors
-const statusColors: Record<string, string> = {
-  draft: 'warning',
-  published: 'success',
-  archived: 'neutral'
+// Status colors (for dot indicators)
+const statusConfig: Record<string, { color: string; icon: string }> = {
+  draft: { color: 'bg-warning', icon: 'i-lucide-pencil' },
+  published: { color: 'bg-success', icon: 'i-lucide-check' },
+  archived: { color: 'bg-neutral', icon: 'i-lucide-archive' }
 }
 
-// Visibility icons
-const visibilityIcons: Record<string, string> = {
-  public: 'i-lucide-globe',
-  members: 'i-lucide-users',
-  hidden: 'i-lucide-eye-off'
+// Visibility icons with colors
+const visibilityConfig: Record<string, { icon: string; color: string }> = {
+  public: { icon: 'i-lucide-globe', color: 'text-success' },
+  members: { icon: 'i-lucide-users', color: 'text-warning' },
+  hidden: { icon: 'i-lucide-eye-off', color: 'text-muted' }
 }
 </script>
 
@@ -94,8 +94,8 @@ const visibilityIcons: Record<string, string> = {
         :columns="columns"
         show-search
         :show-collab-presence="{
-          roomType: 'page',
-          getRoomId: (row: any) => `page-${row.id}`
+          roomType: 'pagesPages',
+          showSelf: true
         }"
         :empty-state="{
           icon: 'i-lucide-file-text',
