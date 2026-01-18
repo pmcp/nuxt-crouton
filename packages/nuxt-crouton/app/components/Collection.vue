@@ -76,6 +76,7 @@
               :item="row"
               :layout="'list'"
               :collection="collection"
+              :stateless="stateless"
               class="flex-1 min-w-0"
             />
             <!-- Collab presence badge -->
@@ -158,6 +159,7 @@
           layout="grid"
           :collection="collection"
           :size="effectiveGridSize"
+          :stateless="stateless"
         />
         <!-- Collab presence badge -->
         <component

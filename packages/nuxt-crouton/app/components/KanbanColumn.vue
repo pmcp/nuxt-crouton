@@ -161,6 +161,9 @@ function getCollabRoomId(item: any): string {
   }
   return `${props.collection}-${item.id}`
 }
+
+// Crouton for actions
+const crouton = useCrouton()
 </script>
 
 <template>
@@ -211,7 +214,7 @@ function getCollabRoomId(item: any): string {
         <!-- Default card rendering -->
         <UCard
           v-else
-          class="hover:shadow-md transition-shadow"
+          class="hover:shadow-md transition-shadow group relative"
         >
           <div class="text-sm">
             {{ item.name || item.title || item.label || item.id }}
@@ -221,6 +224,16 @@ function getCollabRoomId(item: any): string {
             class="text-xs text-muted mt-1 line-clamp-2"
           >
             {{ item.description }}
+          </div>
+
+          <!-- Action buttons (show on hover) -->
+          <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <CroutonItemButtonsMini
+              delete
+              update
+              @delete.stop="crouton?.open('delete', collection, [item.id])"
+              @update.stop="crouton?.open('update', collection, [item.id])"
+            />
           </div>
         </UCard>
 

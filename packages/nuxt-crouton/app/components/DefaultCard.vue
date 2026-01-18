@@ -8,11 +8,26 @@ interface Props {
   collection: string
   /** Grid size variant (only used when layout='grid') */
   size?: GridSize
+  /** When true, hides action buttons (stateless/preview mode) */
+  stateless?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  size: 'comfortable'
+  size: 'comfortable',
+  stateless: false
 })
+
+// Crouton for actions
+const crouton = useCrouton()
+
+// Action handlers
+function handleEdit() {
+  crouton?.open('update', props.collection, [props.item.id])
+}
+
+function handleDelete() {
+  crouton?.open('delete', props.collection, [props.item.id])
+}
 
 const isExpanded = ref(false)
 
@@ -101,7 +116,7 @@ const jsonPreClasses = computed(() => {
   <!-- List Layout -->
   <div
     v-if="layout === 'list'"
-    class="flex items-center gap-3"
+    class="group flex items-center gap-3"
   >
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
@@ -130,12 +145,23 @@ const jsonPreClasses = computed(() => {
         </template>
       </UCollapsible>
     </div>
+
+    <!-- Action buttons (show on hover) -->
+    <CroutonItemButtonsMini
+      v-if="!stateless"
+      delete
+      update
+      class="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+      @delete="handleDelete"
+      @update="handleEdit"
+    />
   </div>
 
   <!-- Grid Layout (with size variants) -->
   <div
     v-else-if="layout === 'grid'"
     :class="gridCardClasses"
+    class="group relative"
   >
     <div :class="gridGapClasses">
       <div class="flex items-start justify-between gap-2">
@@ -164,6 +190,19 @@ const jsonPreClasses = computed(() => {
           <pre :class="jsonPreClasses">{{ formattedJson }}</pre>
         </template>
       </UCollapsible>
+    </div>
+
+    <!-- Action buttons (absolute positioned, show on hover) -->
+    <div
+      v-if="!stateless"
+      class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+    >
+      <CroutonItemButtonsMini
+        delete
+        update
+        @delete="handleDelete"
+        @update="handleEdit"
+      />
     </div>
   </div>
 </template>
