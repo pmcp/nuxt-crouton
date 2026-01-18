@@ -2,7 +2,9 @@
 /**
  * Collection Block Public Renderer
  *
- * Renders an embedded collection in view-only mode using CroutonCollection.
+ * Renders an embedded collection in read-only mode using CroutonCollection.
+ * Uses :create="false" to hide the create button and :hide-default-columns="{ actions: true }"
+ * to hide action buttons, giving a clean public view.
  * Supports table, list, grid, and cards layouts.
  */
 import type { CollectionBlockAttrs } from '../../../types/blocks'
@@ -65,7 +67,8 @@ const layout = computed(() => props.attrs.layout || 'table')
       v-else
       :collection="attrs.collection"
       :layout="layout"
-      :stateless="true"
+      :create="false"
+      :hide-default-columns="{ actions: true }"
       :initial-pagination="{
         currentPage: 1,
         pageSize: pageSize,
