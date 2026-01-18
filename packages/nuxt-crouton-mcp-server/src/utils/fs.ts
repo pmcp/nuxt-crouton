@@ -81,7 +81,7 @@ async function getCollectionInfo(
   name: string,
   path: string
 ): Promise<CollectionInfo> {
-  const hasForm = await fileExists(join(path, 'app', 'components', 'Form.vue'))
+  const hasForm = await fileExists(join(path, 'app', 'components', '_Form.vue'))
   const hasList = await fileExists(join(path, 'app', 'components', 'List.vue'))
   const hasApi = await fileExists(join(path, 'server', 'api'))
   const hasSchema = await fileExists(join(path, 'server', 'database', 'schema.ts'))
