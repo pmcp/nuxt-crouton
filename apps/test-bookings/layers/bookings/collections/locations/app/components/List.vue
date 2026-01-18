@@ -28,6 +28,7 @@
     :columns="columns"
     :rows="locations || []"
     :loading="pending"
+    show-collab-presence
   >
     <template #header>
       <CroutonTableHeader

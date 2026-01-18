@@ -28,6 +28,7 @@
     :columns="columns"
     :rows="emailtemplates || []"
     :loading="pending"
+    show-collab-presence
   >
     <template #header>
       <CroutonTableHeader
