@@ -340,7 +340,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="crouton-editor-blocks h-full flex flex-col">
+  <div class="crouton-editor-blocks h-full flex flex-col overflow-hidden">
     <!-- Toolbar using captured editor instance -->
     <UEditorToolbar
       v-if="editorInstance && showToolbar"
@@ -359,10 +359,10 @@ defineExpose({
       :autofocus="autofocus"
       :extensions="extensions"
       :handlers="blockHandlers"
-      class="flex-1"
+      class="flex-1 min-h-0"
       :ui="{
-        root: 'h-full',
-        content: 'h-full p-4 min-h-[200px] prose prose-sm dark:prose-invert max-w-none overflow-auto'
+        root: 'h-full flex flex-col',
+        content: 'flex-1 min-h-0 p-4 prose prose-sm dark:prose-invert max-w-none overflow-auto'
       }"
       @create="handleEditorCreate"
       @update="handleEditorUpdate"
