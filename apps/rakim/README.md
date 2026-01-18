@@ -73,3 +73,7 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Cloudflare Deployment
+
+For detailed instructions on deploying Rakim to Cloudflare Pages with D1 and KV, see the [Deployment Guide](./docs/DEPLOYMENT.md).
