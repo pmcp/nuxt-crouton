@@ -3,6 +3,13 @@ import { join } from 'node:path'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
+// Development startup log (deduplicated across layer resolution)
+const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-assets')) {
+  _dependencies.add('nuxt-crouton-assets')
+  console.log('[nuxt-crouton-assets] ✓ Assets layer loaded')
+}
+
 export default defineNuxtConfig({
   $meta: {
     description: 'Asset management addon layer for nuxt-crouton with centralized media library',

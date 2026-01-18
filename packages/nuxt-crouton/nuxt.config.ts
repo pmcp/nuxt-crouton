@@ -6,6 +6,13 @@ import type { NitroConfig } from 'nitropack'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
+// Development startup log (deduplicated across layer resolution)
+const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton')) {
+  _dependencies.add('nuxt-crouton')
+  console.log('[nuxt-crouton] ✓ Core layer loaded')
+}
+
 // Resolve @crouton/auth package path (handles both installed and workspace:* scenarios)
 let croutonAuthPath: string | undefined
 try {

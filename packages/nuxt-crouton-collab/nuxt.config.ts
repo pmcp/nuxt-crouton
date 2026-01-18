@@ -3,6 +3,13 @@ import { join } from 'node:path'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
+// Development startup log (deduplicated across layer resolution)
+const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-collab')) {
+  _dependencies.add('nuxt-crouton-collab')
+  console.log('[nuxt-crouton-collab] ✓ Collab layer loaded')
+}
+
 export default defineNuxtConfig({
   $meta: {
     description: 'Real-time collaboration layer for Nuxt Crouton using Yjs CRDTs',
@@ -35,9 +42,10 @@ export default defineNuxtConfig({
   },
 
   // Vite optimization for Yjs
+  // Note: y-protocols only exports subpaths, no main entry
   vite: {
     optimizeDeps: {
-      include: ['yjs', 'y-protocols']
+      include: ['yjs', 'y-protocols/sync', 'y-protocols/awareness']
     }
   }
 })

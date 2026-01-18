@@ -3,6 +3,13 @@ import { join } from 'node:path'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
+// Development startup log (deduplicated across layer resolution)
+const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-sales')) {
+  _dependencies.add('crouton-sales')
+  console.log('[crouton-sales] ✓ Sales layer loaded')
+}
+
 export default defineNuxtConfig({
   // Usage:
   // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/crouton-sales', './layers/sales']

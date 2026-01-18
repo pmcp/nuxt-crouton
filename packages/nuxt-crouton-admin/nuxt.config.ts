@@ -1,3 +1,10 @@
+// Development startup log (deduplicated across layer resolution)
+const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-admin')) {
+  _dependencies.add('nuxt-crouton-admin')
+  console.log('[nuxt-crouton-admin] ✓ Admin layer loaded')
+}
+
 export default defineNuxtConfig({
   // Note: crouton-auth should be extended by the consumer before crouton-admin
   // This ensures auth composables and server utils are available

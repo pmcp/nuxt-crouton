@@ -3,6 +3,13 @@ import { join } from 'node:path'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
+// Development startup log (deduplicated across layer resolution)
+const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-i18n')) {
+  _dependencies.add('nuxt-crouton-i18n')
+  console.log('[nuxt-crouton-i18n] ✓ i18n layer loaded (locales: en, nl, fr)')
+}
+
 export default defineNuxtConfig({
 
   // Note: This is an addon layer - users must explicitly extend both:

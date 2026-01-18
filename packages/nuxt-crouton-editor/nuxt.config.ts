@@ -3,6 +3,13 @@ import { join } from 'node:path'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
+// Development startup log (deduplicated across layer resolution)
+const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-editor')) {
+  _dependencies.add('nuxt-crouton-editor')
+  console.log('[nuxt-crouton-editor] ✓ Editor layer loaded')
+}
+
 export default defineNuxtConfig({
   $meta: {
     description: 'Rich text editor addon layer for Crouton collections (wraps Nuxt UI Editor)',
@@ -30,13 +37,5 @@ export default defineNuxtConfig({
   // Alias for types
   alias: {
     '#crouton-editor': join(currentDir, 'app')
-  },
-
-  // Add hooks for debugging component registration
-  hooks: {
-    'components:extend': (components: Array<{ pascalName?: string }>) => {
-      const editorComponents = components.filter((c: { pascalName?: string }) => c.pascalName?.startsWith('CroutonEditor'))
-      console.log('[nuxt-crouton-editor] Registered editor components:', editorComponents.map((c: { pascalName?: string }) => c.pascalName))
-    }
   }
 })
