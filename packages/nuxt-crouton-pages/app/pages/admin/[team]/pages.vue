@@ -51,7 +51,7 @@ const columns = [
 const statusConfig: Record<string, { color: string; icon: string }> = {
   draft: { color: 'bg-warning', icon: 'i-lucide-pencil' },
   published: { color: 'bg-success', icon: 'i-lucide-check' },
-  archived: { color: 'bg-neutral', icon: 'i-lucide-archive' }
+  archived: { color: 'bg-error', icon: 'i-lucide-archive' }
 }
 
 // Visibility icons with colors
@@ -115,20 +115,21 @@ const visibilityConfig: Record<string, { icon: string; color: string }> = {
         </template>
 
         <template #cell-status="{ row }">
-          <UBadge
-            :color="statusColors[row.status] || 'neutral'"
-            variant="subtle"
-            size="sm"
-          >
-            {{ row.status }}
-          </UBadge>
+          <UTooltip :text="row.status" class="capitalize">
+            <span
+              :class="[
+                'inline-block size-2.5 rounded-full',
+                statusConfig[row.status]?.color || 'bg-neutral'
+              ]"
+            />
+          </UTooltip>
         </template>
 
         <template #cell-visibility="{ row }">
-          <UTooltip :text="row.visibility">
+          <UTooltip :text="row.visibility" class="capitalize">
             <UIcon
-              :name="visibilityIcons[row.visibility] || 'i-lucide-eye'"
-              class="size-4 text-muted"
+              :name="visibilityConfig[row.visibility]?.icon || 'i-lucide-eye'"
+              :class="['size-4', visibilityConfig[row.visibility]?.color || 'text-muted']"
             />
           </UTooltip>
         </template>

@@ -163,19 +163,19 @@ const pageTypeOptions = computed(() =>
   }))
 )
 
-// Status options
-const statusOptions = [
-  { value: 'draft', label: t('pages.status.draft') || 'Draft' },
-  { value: 'published', label: t('pages.status.published') || 'Published' },
-  { value: 'archived', label: t('pages.status.archived') || 'Archived' }
-]
+// Status config with colors
+const statusConfig: Record<string, { color: string; icon: string; label: string }> = {
+  draft: { color: 'warning', icon: 'i-lucide-pencil', label: t('pages.status.draft') || 'Draft' },
+  published: { color: 'success', icon: 'i-lucide-check', label: t('pages.status.published') || 'Published' },
+  archived: { color: 'error', icon: 'i-lucide-archive', label: t('pages.status.archived') || 'Archived' }
+}
 
-// Visibility options
-const visibilityOptions = [
-  { value: 'public', label: t('pages.visibility.public') || 'Public' },
-  { value: 'members', label: t('pages.visibility.members') || 'Members Only' },
-  { value: 'hidden', label: t('pages.visibility.hidden') || 'Hidden' }
-]
+// Visibility config with icons
+const visibilityConfig: Record<string, { icon: string; color: string; label: string }> = {
+  public: { icon: 'i-lucide-globe', color: 'success', label: t('pages.visibility.public') || 'Public' },
+  members: { icon: 'i-lucide-users', color: 'warning', label: t('pages.visibility.members') || 'Members Only' },
+  hidden: { icon: 'i-lucide-eye-off', color: 'neutral', label: t('pages.visibility.hidden') || 'Hidden' }
+}
 
 // Layout options
 const layoutOptions = [
@@ -363,14 +363,32 @@ const fieldComponents = computed(() => {
               />
             </div>
 
-            <!-- Status Badge/Select -->
-            <USelect
-              v-model="state.status"
-              :items="statusOptions"
-              value-key="value"
-              size="xs"
-              class="w-24"
-            />
+            <!-- Status Selector (colored dots) -->
+            <div class="flex items-center gap-1 border border-default rounded-md p-0.5">
+              <UTooltip
+                v-for="(config, status) in statusConfig"
+                :key="status"
+                :text="config.label"
+              >
+                <button
+                  type="button"
+                  :class="[
+                    'p-1.5 rounded transition-all',
+                    state.status === status
+                      ? 'bg-elevated ring-1 ring-default'
+                      : 'hover:bg-elevated/50'
+                  ]"
+                  @click="state.status = status"
+                >
+                  <span
+                    :class="[
+                      'block size-2.5 rounded-full',
+                      `bg-${config.color}`
+                    ]"
+                  />
+                </button>
+              </UTooltip>
+            </div>
 
             <!-- Spacer -->
             <div class="flex-1" />
@@ -391,13 +409,32 @@ const fieldComponents = computed(() => {
 
                   <!-- Visibility -->
                   <UFormField :label="t('pages.fields.visibility') || 'Visibility'" name="visibility">
-                    <USelect
-                      v-model="state.visibility"
-                      :items="visibilityOptions"
-                      value-key="value"
-                      size="sm"
-                      class="w-full"
-                    />
+                    <div class="flex items-center gap-1">
+                      <UTooltip
+                        v-for="(config, visibility) in visibilityConfig"
+                        :key="visibility"
+                        :text="config.label"
+                      >
+                        <button
+                          type="button"
+                          :class="[
+                            'flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-all',
+                            state.visibility === visibility
+                              ? 'bg-elevated ring-1 ring-default'
+                              : 'hover:bg-elevated/50'
+                          ]"
+                          @click="state.visibility = visibility"
+                        >
+                          <UIcon
+                            :name="config.icon"
+                            :class="[
+                              'size-4',
+                              state.visibility === visibility ? `text-${config.color}` : 'text-muted'
+                            ]"
+                          />
+                        </button>
+                      </UTooltip>
+                    </div>
                   </UFormField>
 
                   <!-- Show in Navigation -->
