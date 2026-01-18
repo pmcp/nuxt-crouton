@@ -76,28 +76,47 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
 
   // Auto-detect user from session or use provided
   const user = computed<CollabUser | null>(() => {
+    console.log('[CollabPresence] user computed - providedUser:', providedUser)
+
     // Try to get user from session (nuxt-crouton-auth)
     if (!providedUser) {
       try {
         // @ts-expect-error - useSession may not be available if auth module not installed
-        const { user: sessionUser } = useSession()
+        const sessionResult = useSession()
+        console.log('[CollabPresence] useSession() returned:', sessionResult)
+        console.log('[CollabPresence] sessionResult.user:', sessionResult?.user)
+        console.log('[CollabPresence] sessionResult.user?.value:', sessionResult?.user?.value)
+
+        const sessionUser = sessionResult?.user
         if (sessionUser?.value) {
           const userRecord = sessionUser.value as Record<string, unknown>
+          console.log('[CollabPresence] userRecord keys:', Object.keys(userRecord))
+          console.log('[CollabPresence] userRecord.id:', userRecord.id)
+          console.log('[CollabPresence] userRecord.name:', userRecord.name)
+          console.log('[CollabPresence] userRecord.email:', userRecord.email)
+          console.log('[CollabPresence] userRecord.sub:', userRecord.sub)
+
           const userId = String(userRecord.id || userRecord.sub || 'anonymous')
           const userName = String(userRecord.name || userRecord.email || 'Anonymous')
+          console.log('[CollabPresence] Resolved userId:', userId, 'userName:', userName)
+
           return {
             id: userId,
             name: userName,
             color: generateUserColor(userId)
           }
+        } else {
+          console.log('[CollabPresence] No sessionUser.value - user not logged in?')
         }
-      } catch {
+      } catch (err) {
         // useSession not available, continue with fallback
+        console.log('[CollabPresence] useSession() threw error:', err)
       }
     }
 
     // Use provided user info
     if (providedUser) {
+      console.log('[CollabPresence] Using providedUser:', providedUser)
       // Generate a random ID if we don't have one from session
       const randomId = typeof window !== 'undefined'
         ? `user-${Math.random().toString(36).slice(2, 9)}`
@@ -110,6 +129,7 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
       }
     }
 
+    console.log('[CollabPresence] No user found, returning null')
     return null
   })
 

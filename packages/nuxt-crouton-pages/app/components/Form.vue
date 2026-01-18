@@ -32,15 +32,81 @@ const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { open, close, loading: croutonLoading } = useCrouton()
 
+// Collab presence - connect to room when editing existing page
+// This makes the current user visible in CollabEditingBadge for other users
+// Only activates if nuxt-crouton-collab is installed
+const collabRoomId = computed(() =>
+  props.action === 'update' && props.activeItem?.id
+    ? `page-${props.activeItem.id}`
+    : null
+)
+
+// Collab connection state (reactive)
+const collabConnection = ref<any>(null)
+
+// Get current user for collab presence (try auth package if available)
+const getCurrentUser = () => {
+  try {
+    // @ts-expect-error - useSession may not exist if auth package not installed
+    if (typeof useSession === 'function') {
+      // @ts-expect-error - conditional call
+      const { user: sessionUser } = useSession()
+      console.log('[PagesForm] getCurrentUser - sessionUser:', sessionUser?.value)
+      if (sessionUser?.value) {
+        const u = sessionUser.value as Record<string, unknown>
+        const name = String(u.name || u.email || 'Anonymous')
+        console.log('[PagesForm] getCurrentUser - resolved name:', name)
+        return {
+          name,
+          color: undefined // Let collab generate consistent color from ID
+        }
+      }
+    }
+  } catch (e) {
+    // Auth package not installed
+    console.log('[PagesForm] getCurrentUser - error:', e)
+  }
+  // Fallback to generic user
+  console.log('[PagesForm] getCurrentUser - falling back to Anonymous')
+  return { name: 'Anonymous', color: undefined }
+}
+
+// Try to set up collab if package is installed and we have a roomId
+// Must be called at top level for composable compatibility
+let collabSetup: any = null
+console.log('[PagesForm] Checking collab setup - action:', props.action, 'activeItem.id:', props.activeItem?.id)
+if (props.action === 'update' && props.activeItem?.id) {
+  try {
+    // @ts-expect-error - useCollabEditor may not exist if collab package not installed
+    if (typeof useCollabEditor === 'function') {
+      const roomId = `page-${props.activeItem.id}`
+      const currentUser = getCurrentUser()
+      console.log('[PagesForm] Setting up collab - roomId:', roomId, 'user:', currentUser)
+      // @ts-expect-error - conditional call
+      collabSetup = useCollabEditor({
+        roomId,
+        roomType: 'page',
+        field: 'presence', // Just for presence, not syncing content
+        user: currentUser
+      })
+      collabConnection.value = collabSetup
+      console.log('[PagesForm] Collab setup complete:', collabSetup)
+    } else {
+      console.log('[PagesForm] useCollabEditor not available')
+    }
+  } catch (e) {
+    console.log('[PagesForm] Collab setup error:', e)
+    // Collab package not installed, silently ignore
+  }
+}
+
 // Fetch all pages for parent selector
 const { items: allPages, pending: pagesPending } = await useCollectionQuery('pagesPages')
 
 // Default values for new pages
+// Note: title, slug, content are all stored in translations.{locale}
 const defaultValue = {
-  title: '',
-  slug: '',
   pageType: 'pages:regular',
-  content: '',
   config: {},
   status: 'draft',
   visibility: 'public',
@@ -48,7 +114,7 @@ const defaultValue = {
   layout: 'default',
   parentId: null,
   order: 0,
-  translations: {}
+  translations: {} // { en: { title, slug, content }, nl: { ... }, ... }
 }
 
 // Initialize form state
@@ -58,11 +124,6 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-// Ensure content is a string (database may return parsed JSON object)
-if (initialValues.content && typeof initialValues.content === 'object') {
-  initialValues.content = JSON.stringify(initialValues.content)
-}
-
 const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
 
 // Computed values
@@ -71,47 +132,6 @@ const isRegularPage = computed(() =>
   state.value.pageType === 'pages:regular' || state.value.pageType === 'regular'
 )
 
-// Editor content computed - handles object/string conversion
-// UEditor with content-type="json" expects objects, but we store as strings in DB
-// Empty TipTap document - must have at least one paragraph node
-const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
-
-const editorContent = computed({
-  get: () => {
-    const content = state.value.content
-    // Parse JSON string to object for UEditor
-    if (typeof content === 'string' && content) {
-      try {
-        const parsed = JSON.parse(content)
-        // Ensure document has content (TipTap requires at least one node)
-        if (parsed?.type === 'doc' && (!parsed.content || parsed.content.length === 0)) {
-          return emptyDoc
-        }
-        return parsed
-      } catch {
-        // Not valid JSON, return empty doc
-        return emptyDoc
-      }
-    }
-    // Already an object, return as-is (but ensure it has content)
-    if (content && typeof content === 'object') {
-      if (content.type === 'doc' && (!content.content || content.content.length === 0)) {
-        return emptyDoc
-      }
-      return content
-    }
-    // Empty content, return empty doc structure
-    return emptyDoc
-  },
-  set: (value: string | object) => {
-    // Always store as string in state (for DB)
-    if (typeof value === 'object') {
-      state.value.content = JSON.stringify(value)
-    } else {
-      state.value.content = value
-    }
-  }
-})
 
 // Page type options for dropdown
 const pageTypeOptions = computed(() =>
@@ -211,25 +231,17 @@ function onLayoutChange() {
   layoutManuallyChanged.value = true
 }
 
-// Auto-generate slug from title (only on create, only if not manually edited)
-const slugManuallyEdited = ref(!!props.activeItem?.slug)
-watch(() => state.value.title, (title) => {
-  if (!slugManuallyEdited.value && props.action === 'create') {
-    state.value.slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-  }
-})
+// Note: Auto-slug generation is handled by CroutonI18nInput
+// when title changes in a locale, slug for that locale can be auto-generated
 
 // Form submission
 async function handleSubmit() {
   try {
     const data = {
       ...state.value,
-      // Only include content for regular pages, config for app pages
-      content: isRegularPage.value ? state.value.content : null,
+      // Config only used for app pages (non-regular)
       config: !isRegularPage.value ? state.value.config : null
+      // Note: content is stored in translations.{locale}.content, not at root level
     }
 
     if (props.action === 'create') {
@@ -255,14 +267,22 @@ function openDeleteConfirm() {
   }
 }
 
-// Translatable fields - title and slug for all pages
-// Content uses the block editor separately
+// Translatable fields - title, slug, and content for regular pages
+// All content is per-locale (no "base language")
 const translatableFields = computed(() => {
+  if (isRegularPage.value) {
+    return ['title', 'slug', 'content']
+  }
   return ['title', 'slug']
 })
 
-// No custom field components needed since we use BlockEditor for content
-const fieldComponents = {}
+// Field components - use block editor for content field
+const fieldComponents = computed(() => {
+  if (isRegularPage.value) {
+    return { content: 'CroutonPagesEditorBlockEditorWithPreview' }
+  }
+  return {}
+})
 </script>
 
 <template>
@@ -285,6 +305,17 @@ const fieldComponents = {}
     <CroutonFormLayout>
       <template #main>
         <div class="flex flex-col gap-4 p-1">
+          <!-- Collab presence indicator (when editing and collab is available) -->
+          <div v-if="collabConnection?.connected?.value" class="flex items-center justify-end gap-2 -mt-2 mb-2">
+            <CollabIndicator
+              :connected="collabConnection.connected.value"
+              :synced="collabConnection.synced.value"
+              :error="collabConnection.error?.value || null"
+              :users="collabConnection.users?.value || []"
+              :max-visible-users="3"
+            />
+          </div>
+
           <!-- Page Type Selector -->
           <UFormField :label="t('pages.fields.pageType') || 'Page Type'" name="pageType">
             <USelect
@@ -307,49 +338,16 @@ const fieldComponents = {}
             </p>
           </UFormField>
 
-          <!-- Translatable Title & Slug Fields -->
+          <!-- Translatable Fields (Title, Slug, and Content for regular pages) -->
+          <!-- All content is per-locale - no "base language" -->
           <CroutonI18nInput
             v-model="state.translations"
             :fields="translatableFields"
-            :default-values="{
-              title: state.title || '',
-              slug: state.slug || ''
-            }"
             show-ai-translate
             field-type="page"
             :field-components="fieldComponents"
-            label="Title & URL Slug"
-            @update:english="(data: { field: string, value: string }) => {
-              if (data.field === 'title') state.title = data.value
-              if (data.field === 'slug') {
-                state.slug = data.value
-                slugManuallyEdited = true
-              }
-            }"
+            :label="isRegularPage ? 'Page Content (Translatable)' : 'Title & URL Slug'"
           />
-
-          <!-- Block Editor for Regular Pages -->
-          <UFormField
-            v-if="isRegularPage"
-            label="Page Content"
-            name="content"
-            class="mt-4"
-          >
-            <div class="editor-container">
-              <ClientOnly>
-                <CroutonPagesEditorBlockEditorWithPreview
-                  v-model="editorContent"
-                  placeholder="Type / to insert a block..."
-                  :editable="true"
-                />
-                <template #fallback>
-                  <div class="flex items-center justify-center h-full text-muted">
-                    <UIcon name="i-lucide-loader-2" class="size-6 animate-spin" />
-                  </div>
-                </template>
-              </ClientOnly>
-            </div>
-          </UFormField>
 
           <!-- Config Fields (for app pages with configSchema) -->
           <template v-if="!isRegularPage && selectedPageType?.configSchema?.length">
@@ -458,8 +456,3 @@ const fieldComponents = {}
   </UForm>
 </template>
 
-<style scoped>
-.editor-container {
-  height: 400px;
-}
-</style>
