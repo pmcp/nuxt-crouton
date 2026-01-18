@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
   const sourceLang = getLanguageName(body.sourceLanguage)
   const targetLang = getLanguageName(body.targetLanguage)
 
-  let prompt = `You are a professional translator. Translate the following text from ${sourceLang} to ${targetLang}.`
+  let prompt = `You are a professional translator. Your task is to translate text from ${sourceLang} to ${targetLang}.`
 
   // Add field type context
   if (body.fieldType) {
@@ -76,11 +76,14 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Add existing translations for consistency
+  // Add existing translations for consistency (only other languages, not source or target)
   if (body.existingTranslations && Object.keys(body.existingTranslations).length > 0) {
-    prompt += '\n\nFor consistency, here are existing translations of this text:'
-    for (const [lang, translation] of Object.entries(body.existingTranslations)) {
-      if (translation && lang !== body.sourceLanguage && lang !== body.targetLanguage) {
+    const otherTranslations = Object.entries(body.existingTranslations)
+      .filter(([lang, text]) => text && lang !== body.sourceLanguage && lang !== body.targetLanguage)
+
+    if (otherTranslations.length > 0) {
+      prompt += '\n\nFor consistency, here are existing translations in other languages:'
+      for (const [lang, translation] of otherTranslations) {
         prompt += `\n- ${getLanguageName(lang)}: "${translation}"`
       }
     }
@@ -91,8 +94,8 @@ export default defineEventHandler(async (event) => {
     prompt += `\n\nAdditional instructions: ${body.customInstructions}`
   }
 
-  prompt += '\n\nReturn ONLY the translation, no explanations or quotes.'
-  prompt += `\n\nText to translate:\n${body.sourceText}`
+  prompt += '\n\nIMPORTANT: Return ONLY the translated text in ' + targetLang + '. No explanations, no quotes, no prefixes.'
+  prompt += `\n\n${sourceLang} text to translate:\n"""${body.sourceText}"""`
 
   try {
     // Get AI provider and default model from runtime config

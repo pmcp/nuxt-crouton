@@ -231,17 +231,58 @@ function getAllTranslationsForField(field: string): Record<string, string> {
 }
 
 // Request AI translation for a specific field (translates from left column to right column)
+// Check if a value has meaningful content (handles strings and JSON)
+function hasContent(value: unknown): boolean {
+  if (!value) return false
+  if (typeof value !== 'string') return false
+  const trimmed = value.trim()
+  if (!trimmed) return false
+  // Check if it's block editor JSON with no content
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      return parsed?.content?.length > 0
+    } catch {
+      return true // Not JSON, treat as text
+    }
+  }
+  return true
+}
+
+// Find the best source locale for translation (prefers EN, then any with content)
+function findBestSourceLocale(field: string, targetLocale: string): string | null {
+  const allTranslations = getAllTranslationsForField(field)
+
+  // Remove target locale from candidates and filter to those with content
+  const candidates = Object.entries(allTranslations)
+    .filter(([locale, value]) => locale !== targetLocale && hasContent(value))
+
+  if (candidates.length === 0) return null
+
+  // Prefer English if available
+  const english = candidates.find(([locale]) => locale === 'en')
+  if (english) return 'en'
+
+  // Otherwise return first available
+  return candidates[0][0]
+}
+
 async function requestTranslation(field: string, targetLocale?: string) {
-  const sourceLang = primaryEditingLocale.value
   const targetLang = targetLocale || editingLocale.value
-  const sourceText = getFieldValue(field, sourceLang)
+  const allTranslations = getAllTranslationsForField(field)
+
+  // Find best source locale
+  const sourceLang = findBestSourceLocale(field, targetLang)
+  if (!sourceLang) return
+
+  const sourceText = allTranslations[sourceLang]
   if (!sourceText || targetLang === sourceLang) return
 
   const translationKey = `${targetLang}-${field}`
   isTranslating.value[translationKey] = true
 
   try {
-    // Call the translation API directly
+    // Call the translation API with all available translations for context
     const result = await $fetch<{ text: string, confidence?: number }>('/api/ai/translate', {
       method: 'POST',
       body: {
@@ -249,7 +290,7 @@ async function requestTranslation(field: string, targetLocale?: string) {
         sourceLanguage: sourceLang,
         targetLanguage: targetLang,
         fieldType: props.fieldType || field,
-        existingTranslations: getAllTranslationsForField(field)
+        existingTranslations: allTranslations
       }
     })
 
@@ -277,20 +318,18 @@ function isBlockEditorField(field: string): boolean {
          component === 'CroutonPagesEditorBlockEditorWithPreview'
 }
 
-// Check if left column (source) has content for a field
-function hasSourceContent(field: string): boolean {
-  const value = getFieldValue(field, primaryEditingLocale.value)
-  if (!value) return false
-  if (isBlockEditorField(field)) {
-    // For block editors, check if it's valid JSON with content
-    try {
-      const parsed = typeof value === 'string' ? JSON.parse(value) : value
-      return parsed?.content?.length > 0
-    } catch {
-      return false
-    }
-  }
-  return value.trim() !== ''
+// Check if ANY other locale has content for a field (to enable translation)
+function hasSourceContent(field: string, targetLocale?: string): boolean {
+  const target = targetLocale || editingLocale.value
+  const sourceLang = findBestSourceLocale(field, target)
+  return sourceLang !== null
+}
+
+// Get tooltip text showing which language will be used as source
+function getTranslateTooltip(field: string, targetLocale: string): string {
+  const sourceLang = findBestSourceLocale(field, targetLocale)
+  if (!sourceLang) return 'Translate'
+  return `Translate from ${sourceLang.toUpperCase()}`
 }
 </script>
 
@@ -324,16 +363,20 @@ function hasSourceContent(field: string): boolean {
               <label class="text-xs font-medium text-muted uppercase tracking-wide">
                 {{ field }}
               </label>
-              <!-- AI Translate button (only for secondary locale) -->
-              <UButton
-                v-if="showAiTranslate && narrowLocaleTab === secondaryEditingLocale && hasSourceContent(field) && !isBlockEditorField(field)"
-                icon="i-lucide-sparkles"
-                size="2xs"
-                variant="ghost"
-                color="neutral"
-                :loading="isFieldTranslating(field, narrowLocaleTab)"
-                @click="requestTranslation(field, narrowLocaleTab)"
-              />
+              <!-- AI Translate button (shows when any other locale has content) -->
+              <UTooltip
+                v-if="showAiTranslate && hasSourceContent(field, narrowLocaleTab) && !isBlockEditorField(field)"
+                :text="getTranslateTooltip(field, narrowLocaleTab)"
+              >
+                <UButton
+                  icon="i-lucide-sparkles"
+                  size="2xs"
+                  variant="ghost"
+                  color="neutral"
+                  :loading="isFieldTranslating(field, narrowLocaleTab)"
+                  @click="requestTranslation(field, narrowLocaleTab)"
+                />
+              </UTooltip>
             </div>
 
             <!-- CroutonEditorSimple -->
@@ -553,15 +596,19 @@ function hasSourceContent(field: string): boolean {
                   {{ field }}
                 </label>
                 <!-- AI Translate button inline with label -->
-                <UButton
-                  v-if="showAiTranslate && hasSourceContent(field) && !isBlockEditorField(field)"
-                  icon="i-lucide-sparkles"
-                  size="2xs"
-                  variant="ghost"
-                  color="neutral"
-                  :loading="isFieldTranslating(field, secondaryEditingLocale)"
-                  @click="requestTranslation(field, secondaryEditingLocale)"
-                />
+                <UTooltip
+                  v-if="showAiTranslate && hasSourceContent(field, secondaryEditingLocale) && !isBlockEditorField(field)"
+                  :text="getTranslateTooltip(field, secondaryEditingLocale)"
+                >
+                  <UButton
+                    icon="i-lucide-sparkles"
+                    size="2xs"
+                    variant="ghost"
+                    color="neutral"
+                    :loading="isFieldTranslating(field, secondaryEditingLocale)"
+                    @click="requestTranslation(field, secondaryEditingLocale)"
+                  />
+                </UTooltip>
               </div>
 
               <!-- CroutonEditorSimple -->
@@ -751,22 +798,22 @@ function hasSourceContent(field: string): boolean {
             @update:model-value="updateFieldValue(field, $event)"
           />
 
-          <!-- Show English reference when editing other languages -->
+          <!-- Show source reference when other locales have content -->
           <div
-            v-if="editingLocale !== 'en' && hasSourceContent(field)"
+            v-if="hasSourceContent(field, editingLocale)"
             class="flex items-center gap-2 mt-1"
           >
             <!-- For block editors, don't show raw JSON -->
             <template v-if="isBlockEditorField(field)">
               <p class="text-xs text-gray-500">
                 <UIcon name="i-lucide-file-text" class="inline w-3 h-3 mr-1" />
-                English version available
+                {{ findBestSourceLocale(field, editingLocale)?.toUpperCase() }} version available
               </p>
             </template>
             <!-- For text fields, show the actual text -->
             <template v-else>
               <p class="text-xs text-gray-500">
-                English: {{ getFieldValue(field, 'en') }}
+                {{ findBestSourceLocale(field, editingLocale)?.toUpperCase() }}: {{ getFieldValue(field, findBestSourceLocale(field, editingLocale) || 'en') }}
               </p>
             </template>
             <UButton

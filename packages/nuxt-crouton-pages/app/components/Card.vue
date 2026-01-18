@@ -88,11 +88,13 @@ const showInMenuLabel = computed(() =>
     v-if="layout === 'tree'"
     class="flex items-center gap-2 flex-1 min-w-0"
   >
-    <!-- Page type icon -->
-    <UIcon
-      :name="pageTypeInfo?.icon || 'i-lucide-file'"
-      class="size-4 shrink-0 text-muted"
-    />
+    <!-- Page type icon with tooltip -->
+    <UTooltip :text="pageTypeInfo?.name || 'Regular Page'">
+      <UIcon
+        :name="pageTypeInfo?.icon || 'i-lucide-file'"
+        class="size-4 shrink-0 text-muted"
+      />
+    </UTooltip>
 
     <!-- Title and slug -->
     <div class="flex-1 min-w-0">
