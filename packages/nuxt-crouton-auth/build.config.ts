@@ -2,7 +2,8 @@ import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
   entries: [
-    { input: 'module', name: 'module' }
+    { input: 'module', name: 'module' },
+    { input: 'server/database/schema/auth', name: 'schema/auth' }
   ],
   declaration: true,
   clean: true,
@@ -17,6 +18,9 @@ export default defineBuildConfig({
     'better-auth',
     'vue',
     'h3',
-    '#imports'
+    '#imports',
+    'drizzle-orm',
+    'drizzle-orm/sqlite-core',
+    'nanoid'
   ]
 })
