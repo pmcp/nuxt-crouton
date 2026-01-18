@@ -12,12 +12,8 @@ export default defineNuxtConfig({
     './layers/rakim'
   ],
   hub: {
-    // D1 Database - created via: npx wrangler d1 create rakim-db
-    db: {
-      dialect: 'sqlite',
-      driver: 'd1',
-      connection: { databaseId: 'a0642ee2-3477-4052-8b86-1801470127cb' }
-    },
+    // D1 + KV bindings configured in wrangler.toml
+    db: 'sqlite',
     kv: true
   },
   runtimeConfig: {
@@ -30,9 +26,9 @@ export default defineNuxtConfig({
       passkeys: false
     }
   },
-  // Cloudflare Workers deployment
+  // Cloudflare Pages deployment
   nitro: {
-    preset: 'cloudflare-module',
+    preset: 'cloudflare-pages',
     // Exclude passkey-related packages that use tsyringe (CF Workers incompatible)
     moduleSideEffects: ['reflect-metadata'],
     rollupConfig: {
