@@ -728,11 +728,11 @@ Search and replace in your codebase:
 - [x] Internal imports already updated
 
 ### Phase 5: Build & Publish (NOT STARTED)
-- [ ] Register @fyit npm org first!
-- [ ] Reset versions to 1.0.0
-- [ ] Build all packages
-- [ ] Run typecheck
-- [ ] Publish in dependency order
+- [x] Register @fyit npm org first!
+- [x] Reset versions to 0.1.0
+- [x] Build all packages
+- [x] Run typecheck
+- [x] Publish in dependency order
 
 ### Phase 6: Deprecate (NOT STARTED)
 - [ ] Deprecate all old packages on npm (requires publish first)
