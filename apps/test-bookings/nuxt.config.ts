@@ -11,17 +11,17 @@ export default defineNuxtConfig({
     }
   },
 
-  // nuxt-crouton now auto-includes auth, admin, and i18n
+  // crouton-core now auto-includes auth, admin, and i18n
   extends: [
-    '@friendlyinternet/nuxt-crouton',          // Core (includes auth, admin, i18n)
-    '@friendlyinternet/nuxt-crouton-ai',       // AI features (translation, chat)
-    '@friendlyinternet/nuxt-crouton-editor',   // Rich text editor
-    '@friendlyinternet/nuxt-crouton-collab',   // Real-time collaboration (Yjs)
-    '@friendlyinternet/nuxt-crouton-pages',    // CMS pages with page types
-    '@friendlyinternet/nuxt-crouton-email',    // Optional: Email functionality
-    '@friendlyinternet/nuxt-crouton-maps',     // Optional: Maps functionality
-    '@friendlyinternet/crouton-bookings',      // Bookings app (auto-discovered)
-    './layers/bookings',                       // Local customizations
+    '@fyit/crouton-core',          // Core (includes auth, admin, i18n)
+    '@fyit/crouton-ai',            // AI features (translation, chat)
+    '@fyit/crouton-editor',        // Rich text editor
+    '@fyit/crouton-collab',        // Real-time collaboration (Yjs)
+    '@fyit/crouton-pages',         // CMS pages with page types
+    '@fyit/crouton-email',         // Optional: Email functionality
+    '@fyit/crouton-maps',          // Optional: Maps functionality
+    '@fyit/crouton-bookings',      // Bookings app (auto-discovered)
+    './layers/bookings',           // Local customizations
     './layers/pages'
   ],
   modules: ['@nuxthub/core', '@nuxt/ui'],

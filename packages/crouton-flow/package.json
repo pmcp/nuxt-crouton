@@ -1,0 +1,65 @@
+{
+  "name": "@fyit/crouton-flow",
+  "version": "0.1.0",
+  "description": "Vue Flow integration for nuxt-crouton - graph/DAG visualization for collections",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "exports": {
+    ".": "./nuxt.config.ts"
+  },
+  "files": [
+    "app",
+    "nuxt.config.ts"
+  ],
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-collab": "workspace:*",
+    "nuxt": "^3.0.0 || ^4.0.0"
+  },
+  "dependencies": {
+    "@fyit/crouton-collab": "workspace:*",
+    "@vue-flow/core": "^1.41.2",
+    "@vue-flow/background": "^1.3.0",
+    "@vue-flow/controls": "^1.1.2",
+    "@vue-flow/minimap": "^1.5.0",
+    "@dagrejs/dagre": "^1.1.4",
+    "yjs": "^13.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "happy-dom": "^15.11.7",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "vue-flow",
+    "graph",
+    "dag",
+    "visualization",
+    "crouton"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-flow"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}

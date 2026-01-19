@@ -1,0 +1,53 @@
+{
+  "name": "@fyit/crouton-i18n",
+  "version": "1.3.0",
+  "description": "i18n layer extending nuxt-crouton for multi-language support",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "bin": {
+    "crouton-i18n-seed": "./cli/seed.ts"
+  },
+  "files": [
+    "app",
+    "server",
+    "locales",
+    "cli",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "crouton:i18n:seed": "npx tsx ./cli/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "translations",
+    "i18n",
+    "multi-language"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-i18n"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@nuxtjs/i18n": "^9.0.0"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "drizzle-orm": ">=0.30.0",
+    "zod": "^4.0.0"
+  }
+}

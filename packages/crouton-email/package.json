@@ -1,0 +1,90 @@
+{
+  "name": "@fyit/crouton-email",
+  "version": "0.1.0",
+  "description": "Email infrastructure for Nuxt applications using Vue Email templates and Resend delivery",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./nuxt.config.ts",
+      "types": "./types/index.ts"
+    },
+    "./types": {
+      "import": "./types/index.ts",
+      "types": "./types/index.ts"
+    },
+    "./server/utils/email": {
+      "import": "./server/utils/email.ts",
+      "types": "./server/utils/email.ts"
+    },
+    "./server/utils/senders": {
+      "import": "./server/utils/senders.ts",
+      "types": "./server/utils/senders.ts"
+    }
+  },
+  "main": "./nuxt.config.ts",
+  "types": "./types/index.ts",
+  "files": [
+    "app",
+    "server",
+    "types",
+    "nuxt.config.ts",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "nuxi dev playground",
+    "dev:prepare": "nuxi prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "resend": "^4.0.0",
+    "vue-email": "^0.8.0"
+  },
+  "devDependencies": {
+    "@nuxt/kit": "^3.14.0",
+    "@nuxt/schema": "^3.14.0",
+    "nuxt": "^3.14.0",
+    "typescript": "^5.7.0",
+    "vue": "^3.5.25"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.3.0",
+    "nuxt": "^3.14.0 || ^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nuxt/ui": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-email"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "email",
+    "vue-email",
+    "resend",
+    "templates",
+    "verification",
+    "magic-link",
+    "transactional-email"
+  ],
+  "author": "FYIT",
+  "license": "MIT"
+}

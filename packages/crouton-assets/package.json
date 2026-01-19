@@ -1,0 +1,48 @@
+{
+  "name": "@fyit/crouton-assets",
+  "version": "0.3.0",
+  "description": "Asset management layer extending nuxt-crouton for centralized media library",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "files": [
+    "app",
+    "server",
+    "collections",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "assets",
+    "media",
+    "images",
+    "file-upload",
+    "nuxthub"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-assets"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "@fyit/crouton-core": "workspace:*",
+    "@nuxthub/core": "^0.7.0",
+    "@vueuse/core": "^11.0.0"
+  }
+}

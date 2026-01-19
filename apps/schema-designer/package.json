@@ -10,9 +10,9 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@friendlyinternet/nuxt-crouton": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-ai": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-schema-designer": "workspace:*",
+    "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-ai": "workspace:*",
+    "@fyit/crouton-schema-designer": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "nanoid": "^5.1.6"
   },

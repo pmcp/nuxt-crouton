@@ -2,11 +2,11 @@
 export default defineNuxtConfig({
   // Extend crouton layers
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth',
-    '@friendlyinternet/nuxt-crouton-i18n',
-    '@friendlyinternet/nuxt-crouton-editor',
-    '@friendlyinternet/nuxt-crouton-flow',
+    '@fyit/crouton-core',
+    '@fyit/crouton-auth',
+    '@fyit/crouton-i18n',
+    '@fyit/crouton-editor',
+    '@fyit/crouton-flow',
     './layers/playground'
   ],
 

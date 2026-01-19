@@ -1,0 +1,134 @@
+{
+  "name": "@fyit/crouton-auth",
+  "version": "0.1.0",
+  "description": "Authentication layer for Nuxt applications using Better Auth with teams, passkeys, and 2FA support",
+  "type": "module",
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./module": {
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs",
+      "types": "./dist/module.d.ts"
+    },
+    "./types": {
+      "import": "./types/index.ts",
+      "types": "./types/index.ts"
+    },
+    "./server/utils/team": {
+      "import": "./server/utils/team.ts",
+      "types": "./server/utils/team.ts"
+    },
+    "./server/utils/team-auth": {
+      "import": "./server/utils/team-auth.ts",
+      "types": "./server/utils/team-auth.ts"
+    },
+    "./server/database/schema/auth": {
+      "import": "./dist/schema/auth.mjs",
+      "require": "./dist/schema/auth.cjs",
+      "types": "./dist/schema/auth.d.ts"
+    },
+    "./server/utils/useServerAuth": {
+      "import": "./server/utils/useServerAuth.ts",
+      "types": "./server/utils/useServerAuth.ts"
+    }
+  },
+  "main": "./nuxt.config.ts",
+  "files": [
+    "dist",
+    "app",
+    "server",
+    "types",
+    "nuxt.config.ts",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "nuxi dev playground",
+    "dev:prepare": "nuxi prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest",
+    "test:unit": "vitest run --dir tests/unit",
+    "test:integration": "vitest run --dir tests/integration",
+    "prepublishOnly": "pnpm run build",
+    "release": "pnpm run build && npm publish --access public",
+    "migrate:status": "tsx scripts/migrate.ts status",
+    "migrate:generate": "tsx scripts/migrate.ts generate",
+    "migrate:push": "tsx scripts/migrate.ts push",
+    "migrate:check": "tsx scripts/migrate.ts check",
+    "migrate:reset": "tsx scripts/migrate.ts reset",
+    "seed": "tsx scripts/seed.ts",
+    "seed:users": "tsx scripts/seed.ts users",
+    "seed:orgs": "tsx scripts/seed.ts orgs",
+    "seed:clear": "tsx scripts/seed.ts clear"
+  },
+  "dependencies": {
+    "@better-auth/passkey": "^1.2.0",
+    "better-auth": "^1.2.0",
+    "defu": "^6.1.4"
+  },
+  "devDependencies": {
+    "@better-auth/cli": "^1.2.0",
+    "@nuxt/kit": "^3.14.0",
+    "@nuxt/schema": "^3.14.0",
+    "@types/better-sqlite3": "^7.6.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "better-sqlite3": "^11.0.0",
+    "drizzle-kit": "^0.20.0",
+    "jsdom": "^25.0.1",
+    "nuxt": "^3.14.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0",
+    "unbuild": "^2.0.0",
+    "vitest": "^2.1.9",
+    "vue": "^3.5.25"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.3.0",
+    "nuxt": "^3.14.0 || ^4.0.0",
+    "nuxthub-ratelimit": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nuxt/ui": {
+      "optional": true
+    },
+    "nuxthub-ratelimit": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-auth"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "nuxt-layer",
+    "authentication",
+    "better-auth",
+    "oauth",
+    "passkeys",
+    "webauthn",
+    "2fa",
+    "totp",
+    "teams",
+    "organizations",
+    "multi-tenant",
+    "saas"
+  ],
+  "author": "FYIT",
+  "license": "MIT"
+}

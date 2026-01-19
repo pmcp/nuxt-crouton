@@ -1,0 +1,61 @@
+{
+  "name": "@fyit/crouton-cli",
+  "version": "2.0.0",
+  "description": "CLI for Nuxt Crouton - Generate complete CRUD collections with API, components, and database schema",
+  "type": "module",
+  "bin": {
+    "crouton": "./bin/crouton-generate.js",
+    "crouton-generate": "./bin/crouton-generate.js",
+    "crouton-rollback": "./lib/rollback-collection.mjs",
+    "crouton-rollback-bulk": "./lib/rollback-bulk.mjs",
+    "crouton-rollback-interactive": "./lib/rollback-interactive.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "schemas",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "nuxt",
+    "crouton",
+    "generator",
+    "scaffolding",
+    "cli",
+    "nuxt-crouton",
+    "collection"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "drizzle-seed": "^0.3.1",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.12",
+    "ora": "^8.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "vitest": "^2.1.0"
+  }
+}

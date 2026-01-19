@@ -4,9 +4,9 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth',
-    '@friendlyinternet/crouton-sales',
+    '@fyit/crouton-core',
+    '@fyit/crouton-auth',
+    '@fyit/crouton-sales',
     './layers/sales'
   ],
   modules: ['@nuxthub/core', '@nuxt/ui'],

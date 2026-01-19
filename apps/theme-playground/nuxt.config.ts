@@ -3,11 +3,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-themes/themes',
-    '@friendlyinternet/nuxt-crouton-themes/ko',
-    '@friendlyinternet/nuxt-crouton-themes/minimal',
-    '@friendlyinternet/nuxt-crouton-themes/kr11'
+    '@fyit/crouton-core',
+    '@fyit/crouton-themes/themes',
+    '@fyit/crouton-themes/ko',
+    '@fyit/crouton-themes/minimal',
+    '@fyit/crouton-themes/kr11'
   ],
 
   modules: ['@nuxt/ui'],

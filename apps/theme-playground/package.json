@@ -11,7 +11,7 @@
     "generate:components": "node scripts/generate-components.mjs"
   },
   "dependencies": {
-    "@friendlyinternet/nuxt-crouton-themes": "workspace:*",
+    "@fyit/crouton-themes": "workspace:*",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/controls": "^1.1.2",
     "@vue-flow/core": "^1.41.2",

@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   // Use the KO theme from the themes package
-  extends: ['@friendlyinternet/nuxt-crouton-themes/ko'],
+  extends: ['@fyit/crouton-themes/ko'],
 
   modules: [
     '@nuxt/eslint',

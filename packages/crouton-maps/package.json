@@ -1,0 +1,45 @@
+{
+  "name": "@fyit/crouton-maps",
+  "version": "0.3.1",
+  "description": "Map integration layer for Nuxt Crouton with Mapbox support",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crouton",
+    "maps",
+    "mapbox",
+    "mapbox-gl",
+    "geolocation"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-maps"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "nuxt-mapbox": "^1.6.4"
+  },
+  "devDependencies": {
+    "mapbox-gl": "^3.0.0"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "@nuxt/ui": "^4.3.0"
+  }
+}

@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     ]
   },
   extends: [
-    '@friendlyinternet/nuxt-crouton-i18n',
+    '@fyit/crouton-i18n',
     './collections/tags',
     './collections/categories',
     './collections/posts',

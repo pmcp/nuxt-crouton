@@ -7,9 +7,9 @@ export default defineNuxtConfig({
   },
 
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-ai',
-    '@friendlyinternet/nuxt-crouton-schema-designer'
+    '@fyit/crouton-core',
+    '@fyit/crouton-ai',
+    '@fyit/crouton-schema-designer'
   ],
 
   modules: ['@nuxthub/core', '@nuxt/ui'],

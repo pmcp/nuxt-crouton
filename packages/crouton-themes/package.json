@@ -1,0 +1,51 @@
+{
+  "name": "@fyit/crouton-themes",
+  "version": "1.0.0",
+  "description": "Swappable themes for Nuxt UI applications",
+  "type": "module",
+  "exports": {
+    "./themes": "./themes/nuxt.config.ts",
+    "./themes/*": "./themes/*",
+    "./ko": "./ko/nuxt.config.ts",
+    "./ko/*": "./ko/*",
+    "./minimal": "./minimal/nuxt.config.ts",
+    "./minimal/*": "./minimal/*",
+    "./kr11": "./kr11/nuxt.config.ts",
+    "./kr11/*": "./kr11/*"
+  },
+  "files": [
+    "themes",
+    "ko",
+    "minimal",
+    "kr11"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "themes",
+    "nuxt-ui",
+    "teenage-engineering",
+    "minimal",
+    "minimalist",
+    "korg",
+    "drum-machine"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-themes"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.0.0",
+    "nuxt": "^4.0.0"
+  }
+}

@@ -12,7 +12,7 @@ if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-sales')
 
 export default defineNuxtConfig({
   // Usage:
-  // extends: ['@friendlyinternet/nuxt-crouton', '@friendlyinternet/crouton-sales', './layers/sales']
+  // extends: ['@fyit/crouton-core', '@fyit/crouton-sales', './layers/sales']
 
   modules: ['@nuxtjs/i18n'],
 
