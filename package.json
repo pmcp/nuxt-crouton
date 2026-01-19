@@ -24,8 +24,6 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "lint:apps": "pnpm -r --filter './apps/*' lint",
-    "lint:packages": "eslint packages/",
     "build": "pnpm -r build",
     "build:packages": "pnpm -r --filter './packages/*' build",
     "test": "vitest run",
