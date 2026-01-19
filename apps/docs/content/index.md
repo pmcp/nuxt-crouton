@@ -15,7 +15,7 @@ orientation: horizontal
 Ship Fast [CRUD Applications]{.text-primary}.
 
 #description
-Generate working forms, tables, and TypeScript types in 30 seconds. **Nuxt Crouton** is a code generator and composable library for building maintainable CRUD applications in **[Nuxt](https://nuxt.com)** 4. Built on the opinionated [SuperSaaS](https://supersaas.dev/) foundation. Generate → Customize → Own.
+Generate working forms, tables, and TypeScript types in 30 seconds. **Nuxt Crouton** is a code generator and composable library for building maintainable CRUD applications in **[Nuxt](https://nuxt.com)** 4. Includes built-in auth, admin, and i18n. Generate → Customize → Own.
 
 #links
   :::u-button

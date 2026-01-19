@@ -60,20 +60,7 @@ File upload and asset management:
 
 ---
 
-### 4. SuperSaaS Integration
-**File**: `8.supersaas-integration.md` | **Status**: Stable ✅
-
-SuperSaaS integration layer for team-based applications:
-- SuperSaaS connector (team-based user management)
-- App-level i18n locale files (common UI strings)
-- External collection utilities
-- API endpoint helpers
-
-**Use case**: Building multi-tenant apps with SuperSaaS for team/user management
-
----
-
-### 5. AI Integration
+### 4. AI Integration
 **File**: `13.ai.md` | **Status**: Stable ✅
 
 AI chat and completion capabilities:
@@ -88,7 +75,7 @@ AI chat and completion capabilities:
 
 ---
 
-### 6. Events System
+### 5. Events System
 **File**: `9.events.md` | **Status**: Experimental ⚠️
 
 Event-driven architecture for collections:
@@ -104,7 +91,7 @@ Event-driven architecture for collections:
 
 ---
 
-### 7. Maps Integration
+### 6. Maps Integration
 **File**: `10.maps.md` | **Status**: Beta 🔬
 
 Location and map features:
@@ -118,7 +105,7 @@ Location and map features:
 
 ---
 
-### 8. DevTools
+### 7. DevTools
 **File**: `11.devtools.md` | **Status**: Beta 🔬
 
 Enhanced development experience:
@@ -132,7 +119,7 @@ Enhanced development experience:
 
 ---
 
-### 9. Flow Visualization
+### 8. Flow Visualization
 **File**: `12.flow.md` | **Status**: Beta 🔬
 
 Interactive graph visualization with real-time collaboration:
@@ -149,7 +136,7 @@ Interactive graph visualization with real-time collaboration:
 
 ---
 
-### 10. Data Export
+### 9. Data Export
 **File**: `15.export.md` | **Status**: Stable ✅
 
 Export collection data to CSV and JSON formats:
@@ -172,7 +159,7 @@ Use **Stable** features with confidence. These are thoroughly tested and have st
 **Recommended**:
 - Internationalization for multi-language needs
 - AI Integration for chat and content generation
-- SuperSaaS Integration for team-based applications
+- Data Export for reporting and backups
 - Any stable features you need
 
 ### For Non-Critical Apps
