@@ -48,10 +48,18 @@
     "visualization",
     "crouton"
   ],
-  "author": "PMCP",
+  "author": "FYIT",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/friendlyinternet/nuxt-crouton"
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton-flow"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
   }
 }

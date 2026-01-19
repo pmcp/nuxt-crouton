@@ -106,11 +106,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/crouton-digital/crouton-auth.git"
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/nuxt-crouton-auth"
   },
-  "homepage": "https://github.com/crouton-digital/crouton-auth#readme",
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
   "bugs": {
-    "url": "https://github.com/crouton-digital/crouton-auth/issues"
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
   },
   "keywords": [
     "nuxt",
@@ -128,6 +129,6 @@
     "multi-tenant",
     "saas"
   ],
-  "author": "Crouton Digital",
+  "author": "FYIT",
   "license": "MIT"
 }

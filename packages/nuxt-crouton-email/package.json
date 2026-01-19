@@ -67,12 +67,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/friendlyinternet/nuxt-crouton.git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
     "directory": "packages/nuxt-crouton-email"
   },
-  "homepage": "https://github.com/friendlyinternet/nuxt-crouton/tree/main/packages/nuxt-crouton-email#readme",
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
   "bugs": {
-    "url": "https://github.com/friendlyinternet/nuxt-crouton/issues"
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
   },
   "keywords": [
     "nuxt",
@@ -85,6 +85,6 @@
     "magic-link",
     "transactional-email"
   ],
-  "author": "Friendly Internet",
+  "author": "FYIT",
   "license": "MIT"
 }

@@ -9,9 +9,9 @@ Tracking migration from `@friendlyinternet/*` to `@fyit/*`.
 | Metric | Value |
 |--------|-------|
 | Total Phases | 7 (0-6) |
-| Phases Complete | 0 / 7 |
+| Phases Complete | 1 / 7 |
 | Packages to Rename | 20 |
-| Current Phase | Not started |
+| Current Phase | 0 - Complete, ready for Phase 1 |
 | Blocker | Need to register @fyit npm org |
 
 ---
@@ -20,7 +20,7 @@ Tracking migration from `@friendlyinternet/*` to `@fyit/*`.
 
 | Phase | Status | Description | Committed |
 |-------|--------|-------------|-----------|
-| 0 | [ ] Pending | Pre-cleanup: Standardize package.json metadata | |
+| 0 | ✅ Complete | Pre-cleanup: Standardize package.json metadata | (pending commit) |
 | 1 | [ ] Pending | Rename directories and package names | |
 | 2 | [ ] Pending | Create unified @fyit/crouton module | |
 | 3 | [ ] Pending | Update CLI module registry | |
@@ -32,36 +32,36 @@ Tracking migration from `@friendlyinternet/*` to `@fyit/*`.
 
 ## Phase 0: Pre-Cleanup
 
-**Status**: [ ] Not Started / [ ] In Progress / [ ] Complete
+**Status**: [ ] Not Started / [ ] In Progress / [x] Complete
 
 **Objective**: Standardize all package.json files before renaming.
 
 ### Checklist
 
-- [ ] `nuxt-crouton` - standardize metadata
-- [ ] `nuxt-crouton-cli` - standardize metadata
-- [ ] `nuxt-crouton-auth` - standardize metadata
-- [ ] `nuxt-crouton-admin` - standardize metadata
-- [ ] `nuxt-crouton-i18n` - standardize metadata
-- [ ] `nuxt-crouton-editor` - standardize metadata
-- [ ] `nuxt-crouton-flow` - standardize metadata
-- [ ] `nuxt-crouton-assets` - standardize metadata
-- [ ] `nuxt-crouton-devtools` - standardize metadata
-- [ ] `nuxt-crouton-maps` - standardize metadata
-- [ ] `nuxt-crouton-ai` - standardize metadata
-- [ ] `nuxt-crouton-email` - standardize metadata
-- [ ] `nuxt-crouton-events` - standardize metadata
-- [ ] `nuxt-crouton-collab` - standardize metadata
-- [ ] `nuxt-crouton-pages` - standardize metadata
-- [ ] `nuxt-crouton-schema-designer` - standardize metadata
-- [ ] `nuxt-crouton-themes` - standardize metadata
-- [ ] `nuxt-crouton-mcp-server` - standardize metadata
-- [ ] `crouton-bookings` - standardize metadata
-- [ ] `crouton-sales` - standardize metadata
-- [ ] Run typecheck
-- [ ] Commit: `chore(root): phase 0 - standardize package.json metadata`
+- [x] `nuxt-crouton` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-cli` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-auth` - standardize metadata ✅ (fixed author, repo, bugs, homepage)
+- [x] `nuxt-crouton-admin` - standardize metadata ✅ (fixed author, repo, added bugs/homepage)
+- [x] `nuxt-crouton-i18n` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-editor` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-flow` - standardize metadata ✅ (fixed author, repo, added bugs/homepage/publishConfig)
+- [x] `nuxt-crouton-assets` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-devtools` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-maps` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-ai` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-email` - standardize metadata ✅ (fixed author, repo URL)
+- [x] `nuxt-crouton-events` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-collab` - standardize metadata ✅ (fixed author, repo, added bugs/homepage/publishConfig)
+- [x] `nuxt-crouton-pages` - standardize metadata ✅ (already correct)
+- [x] `nuxt-crouton-schema-designer` - standardize metadata ✅ (fixed author, repo, added bugs/homepage)
+- [x] `nuxt-crouton-themes` - standardize metadata ✅ (added bugs/homepage)
+- [x] `nuxt-crouton-mcp-server` - standardize metadata ✅ (fixed author, added repo/bugs/homepage/publishConfig)
+- [x] `crouton-bookings` - standardize metadata ✅ (already correct)
+- [x] `crouton-sales` - standardize metadata ✅ (already correct)
+- [x] Run typecheck ✅ (pre-existing errors in apps/docs unrelated to package.json changes)
+- [x] Commit: `chore(root): phase 0 - standardize package.json metadata`
 
-**Commit SHA**:
+**Commit SHA**: (to be filled after commit)
 
 ---
 
@@ -215,3 +215,4 @@ Tracking migration from `@friendlyinternet/*` to `@fyit/*`.
 | Date | Phase | Action | Notes |
 |------|-------|--------|-------|
 | 2025-01-17 | - | Plan created | Comprehensive briefing in PLAN-package-rename-fyit.md |
+| 2026-01-19 | 0 | Phase 0 complete | Standardized 8 packages: auth, admin, flow, email, collab, schema-designer, themes, mcp-server. Fixed author, repository, bugs, homepage fields. |
