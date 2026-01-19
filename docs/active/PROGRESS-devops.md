@@ -8,7 +8,7 @@ Unified tracker for CI, testing, and release infrastructure across all plans.
 
 | Metric | Value |
 |--------|-------|
-| Tasks Completed | 1 / 15 |
+| Tasks Completed | 2 / 15 |
 | Total Estimated | ~19.5 hours |
 | Plans Covered | 2 |
 
@@ -34,7 +34,7 @@ Get existing tests running in CI, establish tooling baseline.
 | # | Task | Plan | Hours | Status | Notes |
 |---|------|------|-------|--------|-------|
 | 1.1 | [x] ✅ Fix CI to run all existing tests | Testing P1 | 2h | Done | Added test job to ci.yml |
-| 1.2 | [ ] Add `check-docs.mjs` script | CI P1 | 0.25h | Pending | Verify all packages have CLAUDE.md |
+| 1.2 | [x] ✅ Add `check-docs.mjs` script | CI P1 | 0.25h | Done | Also created missing crouton/CLAUDE.md |
 | 1.3 | [ ] Add docs-check job to CI | CI P1 | 0.25h | Pending | Fail CI if docs missing |
 | 1.4 | [ ] Install @nuxt/test-utils | Testing P1.5 | 0.5h | Pending | `pnpm add -D @nuxt/test-utils` |
 | 1.5 | [ ] Migrate 1 composable test to @nuxt/test-utils | Testing P1.5 | 1h | Pending | Prove the pattern works |
