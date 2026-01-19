@@ -17,6 +17,30 @@
 
 export default {
   // ============================================================
+  // FEATURE FLAGS (Unified Config)
+  // ============================================================
+  // Which crouton packages to enable. Used by getCroutonLayers()
+  // in nuxt.config.ts and by the module at runtime.
+  //
+  // Core features (enabled by default):
+  //   auth: true      - Better Auth with teams
+  //   admin: true     - Admin dashboard
+  //   i18n: true      - Multi-language support
+  //
+  // Optional features (disabled by default):
+  features: {
+    editor: true,     // TipTap rich text editor
+    pages: true,      // CMS pages system
+    // bookings: true // Booking system
+    // sales: true    // Point of Sale
+    // email: true    // Email with Resend
+    // assets: true   // Media library
+    // events: true   // Audit trail
+    // collab: true   // Real-time collaboration
+    // ai: true       // AI/LLM integration
+  },
+
+  // ============================================================
   // DATABASE DIALECT
   // ============================================================
   // Required: 'pg' (PostgreSQL) or 'sqlite'

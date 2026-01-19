@@ -10,6 +10,11 @@
  */
 
 export default {
+  // Feature flags (optional) - used by getCroutonLayers()
+  // features: {
+  //   editor: true,  // Enable TipTap rich text
+  // },
+
   dialect: 'sqlite',
 
   // Enhanced format: each collection has its own schema

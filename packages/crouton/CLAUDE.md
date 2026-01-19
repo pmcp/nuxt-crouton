@@ -44,104 +44,89 @@ Unified Nuxt module that aggregates all Crouton packages into a single entry poi
 
 ## Configuration
 
+Configuration is unified in `crouton.config.js` - single source of truth for both features and collection generation.
+
+### Unified Config (Recommended)
+
+```javascript
+// crouton.config.js
+export default {
+  // Feature flags - which packages to enable
+  features: {
+    // Core (enabled by default): auth, admin, i18n
+    editor: true,     // TipTap rich text
+    pages: true,      // CMS pages
+    // bookings: true // Booking system
+  },
+
+  // Collection generation (used by CLI)
+  collections: [
+    { name: 'products', fieldsFile: './schemas/products.json' }
+  ],
+  targets: [
+    { layer: 'shop', collections: ['products'] }
+  ],
+  dialect: 'sqlite'
+}
+```
+
 ```typescript
-// nuxt.config.ts
+// nuxt.config.ts - simplified, reads from crouton.config.js
+import { getCroutonLayers } from '@fyit/crouton'
+
 export default defineNuxtConfig({
-  modules: ['@fyit/crouton'],
-
-  crouton: {
-    // Global settings
-    apiPrefix: '/api',      // Default: '/api'
-    defaultPageSize: 20,    // Default: 20
-
-    // Core add-ons (enabled by default, can disable)
-    auth: true,             // Better Auth with teams
-    admin: true,            // Admin dashboard
-    i18n: true,             // Multi-language support
-
-    // Optional add-ons (disabled by default)
-    editor: false,          // TipTap rich text
-    flow: false,            // Vue Flow graphs
-    assets: false,          // Media library
-    maps: false,            // Mapbox integration
-    ai: false,              // AI/LLM integration
-    email: false,           // Email with Resend
-    events: false,          // Audit trail
-    collab: false,          // Real-time collaboration
-    pages: false,           // CMS pages
-    devtools: undefined,    // Auto-detect (dev mode)
-
-    // Mini-apps (disabled by default)
-    bookings: false,        // Booking system
-    sales: false            // Point of Sale
-  }
+  extends: [
+    ...getCroutonLayers(),  // Auto-reads from crouton.config.js
+    './layers/shop'         // Your generated layers
+  ],
+  modules: ['@fyit/crouton', '@nuxthub/core', '@nuxt/ui'],
+  hub: { db: 'sqlite' }
 })
 ```
 
-## Usage Examples
+### Feature Options
 
-### Minimal Setup (Core Features)
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `auth` | `true` | Better Auth with teams, passkeys, 2FA |
+| `admin` | `true` | Admin dashboard |
+| `i18n` | `true` | Multi-language support |
+| `editor` | `false` | TipTap rich text |
+| `flow` | `false` | Vue Flow graphs |
+| `assets` | `false` | Media library |
+| `maps` | `false` | Mapbox integration |
+| `ai` | `false` | AI/LLM integration |
+| `email` | `false` | Email with Resend |
+| `events` | `false` | Audit trail |
+| `collab` | `false` | Real-time collaboration |
+| `pages` | `false` | CMS pages |
+| `bookings` | `false` | Booking system |
+| `sales` | `false` | Point of Sale |
+
+### Alternative: Inline Options
+
+You can still pass options directly if you don't want a config file:
 
 ```typescript
 // nuxt.config.ts
+import { getCroutonLayers } from '@fyit/crouton'
+
 export default defineNuxtConfig({
+  extends: getCroutonLayers({ editor: true, pages: true }),
   modules: ['@fyit/crouton']
-  // Gets: core, auth, admin, i18n automatically
-})
-```
-
-### Full-Featured App
-
-```typescript
-// nuxt.config.ts
-export default defineNuxtConfig({
-  modules: ['@fyit/crouton'],
-
-  crouton: {
-    editor: true,
-    assets: true,
-    events: true,
-    pages: true
-  }
-})
-```
-
-### Booking Application
-
-```typescript
-// nuxt.config.ts
-export default defineNuxtConfig({
-  modules: ['@fyit/crouton'],
-
-  crouton: {
-    bookings: true,
-    email: true
-  }
-})
-```
-
-### Disable Core Features
-
-```typescript
-// nuxt.config.ts
-export default defineNuxtConfig({
-  modules: ['@fyit/crouton'],
-
-  crouton: {
-    auth: false,   // Use your own auth
-    admin: false,  // No admin UI
-    i18n: false    // No translations
-  }
 })
 ```
 
 ## How It Works
 
-1. Module registers with Nuxt using `defineNuxtModule`
-2. On setup, it adds `@fyit/crouton-core` to `nuxt.options.extends`
-3. Based on options, it conditionally adds other package layers
-4. Each added layer brings its own composables, components, and server utilities
-5. Layers are resolved by Nuxt's layer system, allowing overrides
+1. `getCroutonLayers()` loads `crouton.config.js` and reads the `features` section
+2. Returns array of package names based on enabled features
+3. These are added to `extends` in nuxt.config.ts
+4. Module also reads the same config at setup time
+5. Each layer brings its own composables, components, and server utilities
+6. Layers are resolved by Nuxt's layer system, allowing overrides
+
+**Config priority**: `nuxt.config.ts crouton:` options override `crouton.config.js features`
 
 ## Runtime Config
 

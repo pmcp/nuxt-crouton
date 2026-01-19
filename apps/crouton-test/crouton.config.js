@@ -1,4 +1,13 @@
 export default {
+  // Feature flags - which crouton packages to enable
+  features: {
+    // Core (enabled by default): auth, admin, i18n
+    // Optional features:
+    editor: true,  // For rich text in pages
+    // bookings: true,  // Enable when using bookings package
+  },
+
+  // Collections to generate (used by CLI)
   collections: [
     {
       name: 'locations',

@@ -134,6 +134,13 @@ program
       const spinner = ora('Loading config...').start()
       try {
         const args = ['--config', configPath]
+        // Pass through relevant flags from CLI
+        if (options.force) {
+          args.push('--force')
+        }
+        if (options.dryRun) {
+          args.push('--dry-run')
+        }
         spinner.stop()
         process.argv = ['node', 'generate-collection.mjs', ...args]
         await import(generatorPath)

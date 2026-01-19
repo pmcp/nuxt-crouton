@@ -1,3 +1,80 @@
+/**
+ * Collection definition for code generation
+ */
+export interface CroutonCollectionConfig {
+  name: string
+  fieldsFile?: string
+  fields?: Record<string, any>
+  sortable?: boolean
+  translatable?: boolean
+  hierarchy?: {
+    enabled: boolean
+    parentField?: string
+    orderField?: string
+    pathField?: string
+    depthField?: string
+  }
+  seed?: boolean | { count?: number }
+  collab?: boolean
+}
+
+/**
+ * Target layer configuration
+ */
+export interface CroutonTargetConfig {
+  layer: string
+  collections: string[]
+}
+
+/**
+ * Unified crouton.config.js configuration
+ * Single source of truth for both CLI generation and runtime features
+ */
+export interface CroutonConfig {
+  /**
+   * Feature flags for runtime (which packages to enable)
+   * Used by getCroutonLayers() and the module
+   */
+  features?: CroutonOptions
+
+  /**
+   * Collections to generate (used by CLI)
+   */
+  collections?: CroutonCollectionConfig[]
+
+  /**
+   * Layer targets for collections (used by CLI)
+   */
+  targets?: CroutonTargetConfig[]
+
+  /**
+   * Database dialect
+   * @default 'sqlite'
+   */
+  dialect?: 'sqlite' | 'pg'
+
+  /**
+   * Generation flags (used by CLI)
+   */
+  flags?: {
+    noTranslations?: boolean
+    force?: boolean
+    dryRun?: boolean
+    autoRelations?: boolean
+  }
+
+  /**
+   * Seed data configuration
+   */
+  seed?: {
+    defaultCount?: number
+    defaultTeamId?: string
+  }
+}
+
+/**
+ * Feature options for enabling/disabling Crouton packages
+ */
 export interface CroutonOptions {
   /**
    * API prefix for all collection endpoints

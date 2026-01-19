@@ -240,9 +240,23 @@ layers/[layer]/collections/[collection]/
 
 ## Config File Format
 
+The `crouton.config.js` is a **unified configuration** that serves both:
+- **CLI**: Collection generation (collections, targets, dialect)
+- **Module**: Feature flags (features section, read by `getCroutonLayers()`)
+
 ```javascript
 // crouton.config.js
 export default {
+  // Feature flags - which crouton packages to enable
+  // Used by getCroutonLayers() in nuxt.config.ts
+  features: {
+    // Core (enabled by default): auth, admin, i18n
+    editor: true,     // TipTap rich text
+    pages: true,      // CMS pages
+    // bookings: true // Enable booking system
+  },
+
+  // Collection generation (used by CLI)
   collections: [
     { name: 'products', fieldsFile: './schemas/products.json', hierarchy: true },
     { name: 'authors', fieldsFile: './schemas/authors.json', seed: true },          // seed with defaults
@@ -263,6 +277,21 @@ export default {
   }
 }
 ```
+
+### Features Reference
+
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `auth` | `true` | Authentication (Better Auth) |
+| `admin` | `true` | Admin dashboard |
+| `i18n` | `true` | Multi-language support |
+| `editor` | `false` | TipTap rich text editor |
+| `pages` | `false` | CMS pages system |
+| `bookings` | `false` | Booking system |
+| `sales` | `false` | Point of Sale |
+| `email` | `false` | Email with Resend |
+| `assets` | `false` | Media library |
+| `events` | `false` | Audit trail |
 
 ## Examples
 

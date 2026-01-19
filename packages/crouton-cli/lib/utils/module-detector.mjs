@@ -21,6 +21,12 @@ async function isPackageInstalled(packageName) {
       return true
     }
 
+    // If @fyit/crouton (unified module) is installed, all @fyit/crouton-* packages are available
+    // because they're bundled as dependencies of the unified module
+    if (packageName.startsWith('@fyit/crouton-') && '@fyit/crouton' in deps) {
+      return true
+    }
+
     // Check for local file: paths that reference the package
     // e.g., "file:/path/to/nuxt-crouton" for "@fyit/crouton"
     const packageShortName = packageName.replace('@fyit/', '')
@@ -52,6 +58,15 @@ async function isLayerExtended(layerName) {
   try {
     const nuxtConfigPath = path.resolve('nuxt.config.ts')
     const nuxtConfig = await fsp.readFile(nuxtConfigPath, 'utf-8')
+
+    // Check if using getCroutonLayers() helper - this includes all crouton packages dynamically
+    if (nuxtConfig.includes('getCroutonLayers')) {
+      // getCroutonLayers() returns all @fyit/crouton-* packages based on options
+      // If the layer is a crouton package, assume it's included
+      if (layerName.startsWith('@fyit/crouton')) {
+        return true
+      }
+    }
 
     // Check if layer is in extends array
     const extendsMatch = nuxtConfig.match(/extends:\s*\[([\s\S]*?)\]/)
