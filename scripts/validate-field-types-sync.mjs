@@ -16,13 +16,13 @@ const projectRoot = join(__dirname, '..')
 // Source of truth: Generator field types
 const generatorHelpersPath = join(
   projectRoot,
-  'packages/nuxt-crouton-cli/lib/utils/helpers.mjs'
+  'packages/crouton-cli/lib/utils/helpers.mjs'
 )
 
 // MCP server field types
 const mcpFieldTypesPath = join(
   projectRoot,
-  'packages/nuxt-crouton-mcp-server/src/utils/field-types.ts'
+  'packages/crouton-mcp/src/utils/field-types.ts'
 )
 
 // Claude skill field types
