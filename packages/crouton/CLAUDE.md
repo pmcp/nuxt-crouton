@@ -128,6 +128,61 @@ export default defineNuxtConfig({
 
 **Config priority**: `nuxt.config.ts crouton:` options override `crouton.config.js features`
 
+## Packages vs Generated Layers (IMPORTANT)
+
+Mini-app packages like `@fyit/crouton-bookings` and `@fyit/crouton-pages` provide **UI components and navigation**, but they need **generated layers for the data layer** (database schema, APIs).
+
+### What Each Provides
+
+| Layer Type | Provides | Examples |
+|------------|----------|----------|
+| **Packages** (via features) | UI components, admin pages, navigation (`croutonApps`), composables, i18n | `@fyit/crouton-bookings`, `@fyit/crouton-pages` |
+| **Generated layers** (via CLI) | Database schema, API endpoints, collection configs, types | `./layers/bookings`, `./layers/pages` |
+
+### Correct Setup Pattern
+
+```javascript
+// crouton.config.js
+export default {
+  features: {
+    editor: true,
+    bookings: true,  // Enables @fyit/crouton-bookings (UI + navigation)
+    pages: true,     // Enables @fyit/crouton-pages (UI + navigation)
+  },
+  collections: [
+    { name: 'locations', fieldsFile: './schemas/location.json' },
+    { name: 'bookings', fieldsFile: './schemas/booking.json' },
+    { name: 'pages', fieldsFile: './schemas/pages.json', hierarchy: true }
+  ],
+  targets: [
+    { layer: 'bookings', collections: ['locations', 'bookings'] },
+    { layer: 'pages', collections: ['pages'] }
+  ]
+}
+```
+
+```typescript
+// nuxt.config.ts
+import { getCroutonLayers } from '@fyit/crouton'
+
+export default defineNuxtConfig({
+  extends: [
+    ...getCroutonLayers(),  // Includes @fyit/crouton-bookings, @fyit/crouton-pages
+    './layers/bookings',    // Generated data layer (schema + APIs)
+    './layers/pages'        // Generated data layer (schema + APIs)
+  ],
+  modules: ['@fyit/crouton', '@nuxthub/core', '@nuxt/ui'],
+  hub: { db: 'sqlite' }
+})
+```
+
+### Why Both Are Needed
+
+- **Without packages**: Collections appear under generic "Collections" dropdown in admin sidebar
+- **With packages**: Collections get dedicated top-level navigation (e.g., "Bookings" section with sub-items)
+- **Without generated layers**: No database tables or API endpoints
+- **With generated layers**: Full CRUD functionality with your custom schema
+
 ## Runtime Config
 
 The module sets these runtime config values:

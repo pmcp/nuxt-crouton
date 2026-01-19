@@ -3,8 +3,9 @@ export default {
   features: {
     // Core (enabled by default): auth, admin, i18n
     // Optional features:
-    editor: true,  // For rich text in pages
-    // bookings: true,  // Enable when using bookings package
+    editor: true,   // For rich text in pages
+    bookings: true, // Enables @fyit/crouton-bookings (UI + navigation)
+    pages: true,    // Enables @fyit/crouton-pages (UI + navigation)
   },
 
   // Collections to generate (used by CLI)

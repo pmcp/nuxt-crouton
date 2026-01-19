@@ -63,13 +63,18 @@ export async function getActiveTemplatesForTrigger(
   triggerType: BookingEmailTriggerType,
   locationId?: string | null
 ): Promise<any[]> {
+  // Early return if email is not enabled
+  if (!isBookingEmailEnabled()) {
+    return []
+  }
+
   const db = useDB()
 
   try {
-    // Dynamic import to work with layer pattern
-    const { bookingsEmailtemplates } = await import(
-      '~~/layers/bookings/collections/emailtemplates/server/database/schema'
-    )
+    // Dynamic import with @vite-ignore to prevent build-time resolution
+    // This allows the collection to be optional
+    const schemaPath = '~~/layers/bookings/collections/emailtemplates/server/database/schema'
+    const { bookingsEmailtemplates } = await import(/* @vite-ignore */ schemaPath)
 
     // Build conditions
     const conditions = [
@@ -170,12 +175,17 @@ export async function logEmailSend(options: {
   status: 'pending' | 'sent' | 'failed'
   error?: string
 }): Promise<string | null> {
+  // Early return if email is not enabled
+  if (!isBookingEmailEnabled()) {
+    return null
+  }
+
   const db = useDB()
 
   try {
-    const { bookingsEmaillogs } = await import(
-      '~~/layers/bookings/collections/emaillogs/server/database/schema'
-    )
+    // Dynamic import with @vite-ignore to prevent build-time resolution
+    const schemaPath = '~~/layers/bookings/collections/emaillogs/server/database/schema'
+    const { bookingsEmaillogs } = await import(/* @vite-ignore */ schemaPath)
 
     const [log] = await db
       .insert(bookingsEmaillogs)
@@ -210,12 +220,17 @@ export async function updateEmailLogStatus(
   status: 'sent' | 'failed',
   error?: string
 ): Promise<void> {
+  // Early return if email is not enabled
+  if (!isBookingEmailEnabled()) {
+    return
+  }
+
   const db = useDB()
 
   try {
-    const { bookingsEmaillogs } = await import(
-      '~~/layers/bookings/collections/emaillogs/server/database/schema'
-    )
+    // Dynamic import with @vite-ignore to prevent build-time resolution
+    const schemaPath = '~~/layers/bookings/collections/emaillogs/server/database/schema'
+    const { bookingsEmaillogs } = await import(/* @vite-ignore */ schemaPath)
 
     await db
       .update(bookingsEmaillogs)
@@ -570,12 +585,17 @@ export async function getBookingEmailStats(
   bookingId: string,
   teamId: string
 ): Promise<{ total: number; sent: number; pending: number; failed: number }> {
+  // Early return if email is not enabled
+  if (!isBookingEmailEnabled()) {
+    return { total: 0, sent: 0, pending: 0, failed: 0 }
+  }
+
   const db = useDB()
 
   try {
-    const { bookingsEmaillogs } = await import(
-      '~~/layers/bookings/collections/emaillogs/server/database/schema'
-    )
+    // Dynamic import with @vite-ignore to prevent build-time resolution
+    const schemaPath = '~~/layers/bookings/collections/emaillogs/server/database/schema'
+    const { bookingsEmaillogs } = await import(/* @vite-ignore */ schemaPath)
 
     const logs = await db
       .select({
@@ -622,16 +642,21 @@ export async function getBookingEmailDetails(
   bookingDate: string | Date,
   bookingCreatedAt?: string | Date | null
 ): Promise<EmailTriggerStatusResult[]> {
-  const db = useDB()
   const results: EmailTriggerStatusResult[] = []
 
+  // Early return if email is not enabled
+  if (!isBookingEmailEnabled()) {
+    return results
+  }
+
+  const db = useDB()
+
   try {
-    const { bookingsEmaillogs } = await import(
-      '~~/layers/bookings/collections/emaillogs/server/database/schema'
-    )
-    const { bookingsEmailtemplates } = await import(
-      '~~/layers/bookings/collections/emailtemplates/server/database/schema'
-    )
+    // Dynamic imports with @vite-ignore to prevent build-time resolution
+    const emailLogsPath = '~~/layers/bookings/collections/emaillogs/server/database/schema'
+    const emailTemplatesPath = '~~/layers/bookings/collections/emailtemplates/server/database/schema'
+    const { bookingsEmaillogs } = await import(/* @vite-ignore */ emailLogsPath)
+    const { bookingsEmailtemplates } = await import(/* @vite-ignore */ emailTemplatesPath)
 
     // Get all email logs for this booking
     const logs = await db
