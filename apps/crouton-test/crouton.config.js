@@ -27,6 +27,7 @@ export default {
     {
       name: 'pages',
       fieldsFile: './schemas/pages.json',
+      formComponent: 'CroutonPagesForm', // Use package-provided form
       sortable: true,
       hierarchy: {
         enabled: true,

@@ -1075,7 +1075,8 @@ ${translationsFieldSchema}
     }).join('\n  '),
     hierarchy, // Pass hierarchy config to generators
     sortable, // Pass sortable config to generators
-    collab // Pass collab config to generators (enables presence indicators)
+    collab, // Pass collab config to generators (enables presence indicators)
+    collectionConfig // Pass collection config for formComponent option
   }
 
   if (dryRun) {
@@ -1088,7 +1089,11 @@ ${translationsFieldSchema}
       console.log(`   • API endpoints: [id]/move.patch.ts, reorder.patch.ts`)
       console.log(`   • Form: Parent picker component\n`)
     }
-    console.log(`• ${base}/app/components/Form.vue`)
+    if (!collectionConfig?.formComponent) {
+      console.log(`• ${base}/app/components/Form.vue`)
+    } else {
+      console.log(`• Form.vue skipped (using ${collectionConfig.formComponent})`)
+    }
     console.log(`• ${base}/app/components/List.vue`)
 
     // Show repeater components
@@ -1166,10 +1171,11 @@ ${translationsFieldSchema}
   // Generate all files using modules
   // All endpoints now use @crouton/auth for team-based authentication
   const files = [
-    {
+    // Only generate Form.vue if no custom formComponent specified
+    ...(collectionConfig?.formComponent ? [] : [{
       path: path.join(base, 'app', 'components', '_Form.vue'),
       content: generateFormComponent(data, config)
-    },
+    }]),
     {
       path: path.join(base, 'app', 'components', 'List.vue'),
       content: generateListComponent(data, config)
