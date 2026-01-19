@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { teamSettings } from '@fyit/crouton/server/database/schema/teamSettings'
+import { teamSettings } from '@fyit/crouton-core/server/database/schema/teamSettings'
 import { isTeamMemberWithEvent } from '@fyit/crouton-auth/server/utils/team-auth'
 
 export default defineEventHandler(async (event) => {
