@@ -5,8 +5,8 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 // Development startup log (deduplicated across layer resolution)
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
-if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-i18n')) {
-  _dependencies.add('nuxt-crouton-i18n')
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-i18n')) {
+  _dependencies.add('crouton-i18n')
   console.log('🍞 crouton:i18n ✓ Layer loaded (locales: en, nl, fr)')
 }
 
@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/i18n'],
   $meta: {
     description: 'i18n addon layer for FYIT collections',
-    name: 'nuxt-crouton-i18n'
+    name: 'crouton-i18n'
   },
 
   // Component configuration

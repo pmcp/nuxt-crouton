@@ -5,15 +5,15 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 // Development startup log (deduplicated across layer resolution)
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
-if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-flow')) {
-  _dependencies.add('nuxt-crouton-flow')
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-flow')) {
+  _dependencies.add('crouton-flow')
   console.log('🍞 crouton:flow ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({
   $meta: {
     description: 'Vue Flow integration layer for Nuxt Crouton - graph/DAG visualization',
-    name: 'nuxt-crouton-flow'
+    name: 'crouton-flow'
   },
 
   // Extend crouton-collab for shared collaboration infrastructure

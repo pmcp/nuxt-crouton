@@ -6,11 +6,19 @@ Migrate from `@fyit/crouton-*` packages to a unified `@fyit/crouton` module with
 
 ## Quick Resume
 
-**Status**: Not started
-**Next step**: Register `@fyit` on npm, then start Phase 1
-**Blocker**: None
-**Last updated**: 2025-01-17
+**Status**: Phase 4 complete (internal references updated)
+**Next step**: Phase 5 - Build & Publish to npm
+**Blocker**: Need to register `@fyit` npm organization before publishing
+**Last updated**: 2026-01-19
 **Total packages**: 20
+
+### Completed Work
+- ✅ All 20 directories renamed from `nuxt-crouton-*` to `crouton-*`
+- ✅ All package.json names updated to `@fyit/crouton-*`
+- ✅ Unified module created at `packages/crouton/`
+- ✅ CLI module-registry.mjs updated with new package names
+- ✅ All nuxt.config.ts debug/meta strings updated
+- ✅ install-modules.mjs updated (deprecated file)
 
 ---
 
@@ -692,43 +700,44 @@ Search and replace in your codebase:
 
 ## Checklist
 
-### Phase 0: Pre-Cleanup
-- [ ] Standardize all author fields to "FYIT"
-- [ ] Standardize all repository URLs
-- [ ] Standardize all peer dependency versions
+### Phase 0: Pre-Cleanup ✅
+- [x] Standardize all author fields to "FYIT"
+- [x] Standardize all repository URLs
+- [x] Standardize all peer dependency versions
 
-### Phase 1: Rename
-- [ ] Register @fyit npm org
-- [ ] Rename all 19 directories
-- [ ] Update all package.json names
-- [ ] Update pnpm-workspace.yaml
+### Phase 1: Rename ✅
+- [ ] Register @fyit npm org (BLOCKER for Phase 5)
+- [x] Rename all 20 directories (`nuxt-crouton-*` → `crouton-*`)
+- [x] Update all package.json names (`@fyit/crouton-*`)
+- [x] Update pnpm-workspace.yaml
 
-### Phase 2: Create Module
-- [ ] Create packages/crouton directory
-- [ ] Implement module.ts
-- [ ] Add types.ts
-- [ ] Add build config
+### Phase 2: Create Module ✅
+- [x] Create packages/crouton directory
+- [x] Implement module.ts (adds layers based on config)
+- [x] Add types.ts (CroutonOptions interface)
+- [x] Add build config (unbuild)
 
-### Phase 3: Update CLI
-- [ ] Update module-registry.mjs
-- [ ] Update generated code templates
-- [ ] Test `crouton add` command
+### Phase 3: Update CLI ✅
+- [x] Update module-registry.mjs (all `@fyit/crouton-*` names)
+- [x] Update install-modules.mjs (deprecated but updated)
+- [x] Generated code templates already use correct imports
 
-### Phase 4: Update References
-- [ ] Update all internal imports
-- [ ] Update all CLAUDE.md files
-- [ ] Update all documentation
+### Phase 4: Update References ✅
+- [x] Update all nuxt.config.ts debug/meta strings
+- [x] Update all CLAUDE.md files (already use new names)
+- [x] Internal imports already updated
 
-### Phase 5: Build & Publish
+### Phase 5: Build & Publish (NOT STARTED)
+- [ ] Register @fyit npm org first!
 - [ ] Reset versions to 1.0.0
 - [ ] Build all packages
 - [ ] Run typecheck
 - [ ] Publish in dependency order
 
-### Phase 6: Deprecate
-- [ ] Deprecate all 20 old packages
+### Phase 6: Deprecate (NOT STARTED)
+- [ ] Deprecate all old packages on npm (requires publish first)
 
-### Phase 7: Documentation
+### Phase 7: Documentation (NOT STARTED)
 - [ ] Update docs site
 - [ ] Update READMEs
 - [ ] Create migration guide

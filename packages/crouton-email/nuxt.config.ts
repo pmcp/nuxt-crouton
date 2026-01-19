@@ -3,8 +3,8 @@ import vue from '@vitejs/plugin-vue'
 
 // Development startup log (deduplicated across layer resolution)
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
-if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-email')) {
-  _dependencies.add('nuxt-crouton-email')
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-email')) {
+  _dependencies.add('crouton-email')
   console.log('🍞 crouton:email ✓ Layer loaded')
 }
 

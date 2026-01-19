@@ -5,15 +5,15 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 // Development startup log (deduplicated across layer resolution)
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
-if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-collab')) {
-  _dependencies.add('nuxt-crouton-collab')
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-collab')) {
+  _dependencies.add('crouton-collab')
   console.log('🍞 crouton:collab ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({
   $meta: {
     description: 'Real-time collaboration layer for Nuxt Crouton using Yjs CRDTs',
-    name: 'nuxt-crouton-collab'
+    name: 'crouton-collab'
   },
 
   // Note: This is an addon layer - users must explicitly extend:

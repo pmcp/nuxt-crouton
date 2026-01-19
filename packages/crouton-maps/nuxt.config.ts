@@ -5,8 +5,8 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 // Development startup log (deduplicated across layer resolution)
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
-if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-maps')) {
-  _dependencies.add('nuxt-crouton-maps')
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-maps')) {
+  _dependencies.add('crouton-maps')
   console.log('🍞 crouton:maps ✓ Layer loaded')
 }
 
@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   modules: ['nuxt-mapbox'],
   $meta: {
     description: 'Map integration layer for Nuxt Crouton with Mapbox support',
-    name: 'nuxt-crouton-maps'
+    name: 'crouton-maps'
   },
 
   // Component configuration

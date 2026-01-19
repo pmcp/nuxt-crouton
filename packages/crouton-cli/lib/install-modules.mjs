@@ -16,9 +16,11 @@ const rl = readline.createInterface({
 const question = query => new Promise(resolve => rl.question(query, resolve))
 
 // Available modules
+// NOTE: This file is deprecated. Use `crouton add <module>` instead.
+// Keeping for backwards compatibility.
 const MODULES = {
-  '@fyit/nuxt-translations': {
-    name: '@fyit/nuxt-translations',
+  '@fyit/crouton-i18n': {
+    name: '@fyit/crouton-i18n',
     description: 'Translations support for multi-language fields',
     required: ['@nuxtjs/i18n'],
     features: [
@@ -28,8 +30,8 @@ const MODULES = {
       '✨ Translation composables (useT, useEntityTranslations)'
     ]
   },
-  '@fyit/nuxt-crouton': {
-    name: '@fyit/nuxt-crouton',
+  '@fyit/crouton-core': {
+    name: '@fyit/crouton-core',
     description: 'Crouton components and utilities for collections',
     required: [],
     features: [

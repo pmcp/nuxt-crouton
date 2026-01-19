@@ -5,15 +5,15 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 // Development startup log (deduplicated across layer resolution)
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
-if (process.env.NODE_ENV !== 'production' && !_dependencies.has('nuxt-crouton-editor')) {
-  _dependencies.add('nuxt-crouton-editor')
+if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-editor')) {
+  _dependencies.add('crouton-editor')
   console.log('🍞 crouton:editor ✓ Layer loaded')
 }
 
 export default defineNuxtConfig({
   $meta: {
     description: 'Rich text editor addon layer for Crouton collections (wraps Nuxt UI Editor)',
-    name: 'nuxt-crouton-editor'
+    name: 'crouton-editor'
   },
 
   // Component configuration - provides CroutonEditorSimple wrapper for UEditor
