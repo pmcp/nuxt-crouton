@@ -9,6 +9,7 @@
     "server",
     "schemas",
     "i18n",
+    "dist",
     "nuxt.config.ts",
     "crouton.manifest.ts",
     "README.md",
@@ -17,8 +18,14 @@
   "exports": {
     ".": "./nuxt.config.ts",
     "./crouton.manifest": "./crouton.manifest.ts",
-    "./server/utils/email-service": "./server/utils/email-service.ts",
-    "./server/utils/booking-emails": "./server/utils/booking-emails.ts"
+    "./server/utils/email-service": {
+      "types": "./dist/server/utils/email-service.d.ts",
+      "import": "./dist/server/utils/email-service.mjs"
+    },
+    "./server/utils/booking-emails": {
+      "types": "./dist/server/utils/booking-emails.d.ts",
+      "import": "./dist/server/utils/booking-emails.mjs"
+    }
   },
   "scripts": {
     "build": "unbuild",
