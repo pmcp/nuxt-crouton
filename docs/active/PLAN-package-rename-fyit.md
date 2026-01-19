@@ -601,27 +601,19 @@ cd packages/crouton && pnpm publish --access public
 ### Phase 6: Deprecate Old Packages (30 min)
 
 ```bash
-# Deprecate all old packages
-npm deprecate "@fyit/crouton" "Moved to @fyit/crouton - see migration guide"
-npm deprecate "@fyit/crouton-auth" "Moved to @fyit/crouton-auth"
-npm deprecate "@fyit/crouton-admin" "Moved to @fyit/crouton-admin"
-npm deprecate "@fyit/crouton-i18n" "Moved to @fyit/crouton-i18n"
-npm deprecate "@fyit/crouton-editor" "Moved to @fyit/crouton-editor"
-npm deprecate "@fyit/crouton-flow" "Moved to @fyit/crouton-flow"
-npm deprecate "@fyit/crouton-assets" "Moved to @fyit/crouton-assets"
-npm deprecate "@fyit/crouton-devtools" "Moved to @fyit/crouton-devtools"
-npm deprecate "@fyit/crouton-maps" "Moved to @fyit/crouton-maps"
-npm deprecate "@fyit/crouton-ai" "Moved to @fyit/crouton-ai"
-npm deprecate "@fyit/crouton-email" "Moved to @fyit/crouton-email"
-npm deprecate "@fyit/crouton-events" "Moved to @fyit/crouton-events"
-npm deprecate "@fyit/crouton-collab" "Moved to @fyit/crouton-collab"
-npm deprecate "@fyit/crouton-pages" "Moved to @fyit/crouton-pages"
-npm deprecate "@fyit/crouton-cli" "Moved to @fyit/crouton-cli"
-npm deprecate "@fyit/crouton-schema-designer" "Moved to @fyit/crouton-schema-designer"
-npm deprecate "@fyit/crouton-themes" "Moved to @fyit/crouton-themes"
-npm deprecate "@fyit/crouton-mcp-server" "Moved to @fyit/crouton-mcp"
-npm deprecate "@fyit/crouton-bookings" "Moved to @fyit/crouton-bookings"
-npm deprecate "@fyit/crouton-sales" "Moved to @fyit/crouton-sales"
+# Deprecate all @friendlyinternet packages pointing to new @fyit packages
+npm deprecate "@friendlyinternet/nuxt-crouton" "Moved to @fyit/crouton-core - see https://github.com/pmcp/nuxt-crouton"
+npm deprecate "@friendlyinternet/nuxt-crouton-editor" "Moved to @fyit/crouton-editor"
+npm deprecate "@friendlyinternet/nuxt-crouton-translations" "Moved to @fyit/crouton-i18n"
+npm deprecate "@friendlyinternet/nuxt-crouton-collection-generator" "Moved to @fyit/crouton-cli"
+npm deprecate "@friendlyinternet/nuxt-crouton-i18n" "Moved to @fyit/crouton-i18n"
+npm deprecate "@friendlyinternet/nuxt-crouton-maps" "Moved to @fyit/crouton-maps"
+npm deprecate "@friendlyinternet/nuxt-crouton-assets" "Moved to @fyit/crouton-assets"
+npm deprecate "@friendlyinternet/nuxt-crouton-connector" "Moved to @fyit/crouton-auth"
+npm deprecate "@friendlyinternet/nuxt-crouton-devtools" "Moved to @fyit/crouton-devtools"
+npm deprecate "@friendlyinternet/nuxt-crouton-events" "Moved to @fyit/crouton-events"
+npm deprecate "@friendlyinternet/nuxt-crouton-supersaas" "Package discontinued - SuperSaaS references removed"
+npm deprecate "@friendlyinternet/crouton-auth" "Moved to @fyit/crouton-auth"
 ```
 
 ---
@@ -734,8 +726,8 @@ Search and replace in your codebase:
 - [x] Run typecheck
 - [x] Publish in dependency order
 
-### Phase 6: Deprecate (NOT STARTED)
-- [ ] Deprecate all old packages on npm (requires publish first)
+### Phase 6: Deprecate @friendlyinternet packages (NOT STARTED)
+- [ ] Deprecate all 12 @friendlyinternet/* packages on npm
 
 ### Phase 7: Documentation (NOT STARTED)
 - [ ] Update docs site
