@@ -71,7 +71,7 @@ server.tool(
   validateSchemaToolDefinition.description,
   validateSchemaInputSchema,
   async (args) => {
-    const result = handleValidateSchema(args)
+    const result = handleValidateSchema(args as Parameters<typeof handleValidateSchema>[0])
     return {
       content: [
         {

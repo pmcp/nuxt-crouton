@@ -33,7 +33,7 @@ export async function handleListCollections(
     if (!byLayer[collection.layer]) {
       byLayer[collection.layer] = []
     }
-    byLayer[collection.layer].push(collection)
+    byLayer[collection.layer]!.push(collection)
   }
 
   return {

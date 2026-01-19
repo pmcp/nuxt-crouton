@@ -139,7 +139,7 @@ export function handleValidateSchema(input: ValidateSchemaInput): ValidationResu
 }
 
 export const validateSchemaInputSchema = {
-  schema: z.record(z.any()).describe('The schema object to validate'),
+  schema: z.record(z.string(), z.any()).describe('The schema object to validate'),
   options: z
     .object({
       hierarchy: z.boolean().optional().describe('Whether hierarchy support will be enabled'),
