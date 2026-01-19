@@ -1,0 +1,171 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`API Endpoint Generators > generateDeleteEndpoint > generates correct output for basic collection 1`] = `
+"// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { deleteShopProduct } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+
+export default defineEventHandler(async (event) => {
+  const { productId } = getRouterParams(event)
+  if (!productId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing product ID' })
+  }
+  const { team, user } = await resolveTeamAndCheckMembership(event)
+
+  return await deleteShopProduct(productId, team.id, user.id)
+})"
+`;
+
+exports[`API Endpoint Generators > generateGetEndpoint > generates correct output for basic collection 1`] = `
+"// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { getAllShopProducts, getShopProductsByIds } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+
+export default defineEventHandler(async (event) => {
+  const { team } = await resolveTeamAndCheckMembership(event)
+
+  const query = getQuery(event)
+  if (query.ids) {
+    const ids = String(query.ids).split(',')
+    return await getShopProductsByIds(team.id, ids)
+  }
+
+  return await getAllShopProducts(team.id)
+})"
+`;
+
+exports[`API Endpoint Generators > generateMoveEndpoint > generates correct output for hierarchy collection 1`] = `
+"// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { updatePositionShopCategory } from '../../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+
+export default defineEventHandler(async (event) => {
+  const { categoryId } = getRouterParams(event)
+  if (!categoryId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing category ID' })
+  }
+  const { team } = await resolveTeamAndCheckMembership(event)
+
+  const body = await readBody(event)
+
+  // Validate input
+  if (body.order === undefined || typeof body.order !== 'number') {
+    throw createError({ statusCode: 400, statusMessage: 'order is required and must be a number' })
+  }
+
+  // parentId can be null (move to root) or a valid ID
+  const parentId = body.parentId ?? null
+
+  return await updatePositionShopCategory(team.id, categoryId, parentId, body.order)
+})"
+`;
+
+exports[`API Endpoint Generators > generatePatchEndpoint > generates correct output for basic collection 1`] = `
+"// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { updateShopProduct } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import type { ShopProduct } from '../../../../../types'
+
+export default defineEventHandler(async (event) => {
+  const { productId } = getRouterParams(event)
+  if (!productId) {
+    throw createError({ statusCode: 400, statusMessage: 'Missing product ID' })
+  }
+  const { team, user } = await resolveTeamAndCheckMembership(event)
+
+  const body = await readBody<Partial<ShopProduct>>(event)
+
+  return await updateShopProduct(productId, team.id, user.id, {
+    name: body.name,
+    description: body.description,
+    price: body.price,
+    active: body.active
+  })
+})"
+`;
+
+exports[`API Endpoint Generators > generatePostEndpoint > generates correct output for basic collection 1`] = `
+"// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { createShopProduct } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+
+export default defineEventHandler(async (event) => {
+  const { team, user } = await resolveTeamAndCheckMembership(event)
+
+  const body = await readBody(event)
+
+  // Exclude id field to let the database generate it
+  const { id, ...dataWithoutId } = body
+
+  return await createShopProduct({
+    ...dataWithoutId,
+    teamId: team.id,
+    owner: user.id,
+    createdBy: user.id,
+    updatedBy: user.id
+  })
+})"
+`;
+
+exports[`API Endpoint Generators > generateReorderEndpoint > generates correct output for hierarchy collection 1`] = `
+"// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { reorderSiblingsShopCategories } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+
+export default defineEventHandler(async (event) => {
+  const { team } = await resolveTeamAndCheckMembership(event)
+
+  const body = await readBody(event)
+
+  // Validate input - expect array of { id, order }
+  if (!Array.isArray(body.updates)) {
+    throw createError({ statusCode: 400, statusMessage: 'updates must be an array' })
+  }
+
+  for (const update of body.updates) {
+    if (!update.id || typeof update.order !== 'number') {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Each update must have id and order (number)'
+      })
+    }
+  }
+
+  return await reorderSiblingsShopCategories(team.id, body.updates)
+})"
+`;
+
+exports[`API Endpoint Generators > generateReorderEndpoint > generates correct output for sortable collection 1`] = `
+"// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { reorderSiblingsShopTags } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+
+export default defineEventHandler(async (event) => {
+  const { team } = await resolveTeamAndCheckMembership(event)
+
+  const body = await readBody(event)
+
+  // Validate input - expect array of { id, order }
+  if (!Array.isArray(body.updates)) {
+    throw createError({ statusCode: 400, statusMessage: 'updates must be an array' })
+  }
+
+  for (const update of body.updates) {
+    if (!update.id || typeof update.order !== 'number') {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Each update must have id and order (number)'
+      })
+    }
+  }
+
+  return await reorderSiblingsShopTags(team.id, body.updates)
+})"
+`;

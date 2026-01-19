@@ -189,3 +189,224 @@ export const noMetadataConfig = {
     useMetadata: false
   }
 }
+
+// ============ Form Component Test Data ============
+
+/**
+ * Data object for form component tests (basic)
+ */
+export const formComponentData = {
+  singular: 'product',
+  plural: 'products',
+  camelCase: 'product',
+  pascalCase: 'Product',
+  pascalCasePlural: 'Products',
+  layer: 'shop',
+  layerPascalCase: 'Shop',
+  layerCamelCase: 'shop',
+  fields: basicFields,
+  hierarchy: null,
+  sortable: null
+}
+
+/**
+ * Data object for form component tests with hierarchy enabled
+ */
+export const formWithHierarchyData = {
+  ...formComponentData,
+  singular: 'category',
+  plural: 'categories',
+  camelCase: 'category',
+  pascalCase: 'Category',
+  pascalCasePlural: 'Categories',
+  hierarchy: {
+    enabled: true,
+    parentField: 'parentId',
+    pathField: 'path',
+    depthField: 'depth',
+    orderField: 'order'
+  }
+}
+
+/**
+ * Data object for form component tests with reference fields
+ */
+export const formWithRefsData = {
+  ...formComponentData,
+  fields: fieldsWithRefs
+}
+
+/**
+ * Fields with date type for form component tests
+ */
+export const fieldsWithDate = [
+  { name: 'name', type: 'string', meta: { required: true } },
+  { name: 'publishedAt', type: 'date', meta: {} },
+  { name: 'expiresAt', type: 'date', meta: {} }
+]
+
+/**
+ * Data object for form component tests with date fields
+ */
+export const formWithDateData = {
+  ...formComponentData,
+  fields: fieldsWithDate
+}
+
+// ============ API Endpoints Test Data ============
+
+/**
+ * Data object for API endpoint tests
+ */
+export const apiEndpointData = {
+  singular: 'product',
+  plural: 'products',
+  camelCase: 'product',
+  pascalCase: 'Product',
+  pascalCasePlural: 'Products',
+  layer: 'shop',
+  layerPascalCase: 'Shop',
+  layerCamelCase: 'shop',
+  fields: basicFields,
+  hierarchy: null,
+  sortable: null
+}
+
+/**
+ * Data object for API endpoint tests with hierarchy
+ */
+export const apiWithHierarchyData = {
+  ...apiEndpointData,
+  singular: 'category',
+  plural: 'categories',
+  camelCase: 'category',
+  pascalCase: 'Category',
+  pascalCasePlural: 'Categories',
+  hierarchy: {
+    enabled: true,
+    parentField: 'parentId',
+    pathField: 'path',
+    depthField: 'depth',
+    orderField: 'order'
+  }
+}
+
+/**
+ * Data object for API endpoint tests with sortable
+ */
+export const apiWithSortableData = {
+  ...apiEndpointData,
+  singular: 'tag',
+  plural: 'tags',
+  camelCase: 'tag',
+  pascalCase: 'Tag',
+  pascalCasePlural: 'Tags',
+  sortable: {
+    enabled: true,
+    orderField: 'order'
+  }
+}
+
+/**
+ * Data object for API endpoint tests with date fields
+ */
+export const apiWithDateData = {
+  ...apiEndpointData,
+  fields: fieldsWithDate
+}
+
+// ============ Database Schema Test Data ============
+
+/**
+ * Data object for database schema tests
+ */
+export const schemaData = {
+  singular: 'product',
+  plural: 'products',
+  layer: 'shop',
+  layerPascalCase: 'Shop',
+  pascalCasePlural: 'Products',
+  originalCollectionName: 'products',
+  fields: basicFields,
+  hierarchy: null,
+  sortable: null
+}
+
+/**
+ * Data object for database schema tests with hierarchy
+ */
+export const schemaWithHierarchyData = {
+  ...schemaData,
+  singular: 'category',
+  plural: 'categories',
+  pascalCasePlural: 'Categories',
+  originalCollectionName: 'categories',
+  hierarchy: {
+    enabled: true,
+    parentField: 'parentId',
+    pathField: 'path',
+    depthField: 'depth',
+    orderField: 'order'
+  }
+}
+
+/**
+ * Data object for database schema tests with all field types
+ */
+export const schemaWithAllTypesData = {
+  ...schemaData,
+  fields: allTypesFields
+}
+
+/**
+ * Data object for database schema tests with sortable
+ */
+export const schemaWithSortableData = {
+  ...schemaData,
+  singular: 'tag',
+  plural: 'tags',
+  pascalCasePlural: 'Tags',
+  originalCollectionName: 'tags',
+  sortable: true
+}
+
+// ============ Seed Data Test Data ============
+
+/**
+ * Data object for seed file tests
+ */
+export const seedData = {
+  singular: 'product',
+  plural: 'products',
+  layer: 'shop',
+  layerPascalCase: 'Shop',
+  layerCamelCase: 'shop',
+  pascalCasePlural: 'Products',
+  fields: seedTestFields,
+  hierarchy: null
+}
+
+/**
+ * Data object for seed file tests with hierarchy
+ */
+export const seedWithHierarchyData = {
+  ...seedData,
+  singular: 'category',
+  plural: 'categories',
+  pascalCasePlural: 'Categories',
+  hierarchy: {
+    enabled: true,
+    parentField: 'parentId',
+    pathField: 'path',
+    depthField: 'depth',
+    orderField: 'order'
+  }
+}
+
+/**
+ * Data object for seed file tests with foreign keys
+ */
+export const seedWithForeignKeyData = {
+  ...seedData,
+  fields: fieldsWithRefs
+}
