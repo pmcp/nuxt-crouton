@@ -151,6 +151,94 @@ Export collection data to CSV and JSON formats:
 
 ---
 
+### 10. Admin Dashboard
+**File**: `14.admin.md` | **Status**: Stable ✅
+
+Super admin dashboard for system-wide management:
+- User management (list, create, ban, unban, delete)
+- Team oversight (view all teams/members)
+- User impersonation for debugging
+- System statistics overview
+- Super admin middleware
+
+**Use case**: Platform administration, user moderation, system monitoring
+
+---
+
+### 11. Collaboration
+**File**: `16.collaboration.md` | **Status**: Beta 🔬
+
+Real-time collaboration with presence awareness:
+- Live cursor tracking
+- User presence indicators
+- Real-time document sync
+- Yjs + Durable Objects integration
+- Conflict resolution
+
+**Use case**: Collaborative editing, real-time dashboards, multiplayer features
+
+---
+
+### 12. Email
+**File**: `17.email.md` | **Status**: Stable ✅
+
+Email infrastructure with Vue Email templates:
+- Verification codes and magic links
+- Password reset and team invitations
+- Vue Email templates with Resend delivery
+- Client flow components
+- Integration with auth system
+
+**Use case**: Authentication flows, transactional emails, team invitations
+
+---
+
+### 13. Pages (CMS)
+**File**: `18.pages.md` | **Status**: Stable ✅
+
+CMS-like page management system:
+- Block-based page editor
+- Page types from app packages
+- Tree organization with drag-and-drop
+- Custom domain support
+- Public page routing
+
+**Use case**: Marketing sites, documentation, customer portals
+
+---
+
+### 14. Bookings
+**File**: `19.bookings.md` | **Status**: Experimental ⚠️
+
+Booking system for appointments and reservations:
+- Slot-based bookings (courts, rooms)
+- Inventory-based reservations (equipment)
+- Customer booking wizard
+- Cart system for multiple bookings
+- Email notifications (opt-in)
+
+**Use case**: Sports facilities, healthcare, rentals, services
+
+**Note**: API under active development.
+
+---
+
+### 15. Sales (POS)
+**File**: `20.sales.md` | **Status**: Experimental ⚠️
+
+Event-based Point of Sale system:
+- Products and categories
+- Cart and checkout flow
+- Helper authentication (PIN-based)
+- Offline support
+- Thermal receipt printing (opt-in)
+
+**Use case**: Markets, pop-up shops, events, food service
+
+**Note**: API under active development.
+
+---
+
 ## Choosing the Right Features
 
 ### For Production Apps
@@ -160,6 +248,9 @@ Use **Stable** features with confidence. These are thoroughly tested and have st
 - Internationalization for multi-language needs
 - AI Integration for chat and content generation
 - Data Export for reporting and backups
+- Admin Dashboard for user/team management
+- Email for authentication and transactional emails
+- Pages for CMS-like content management
 - Any stable features you need
 
 ### For Non-Critical Apps
@@ -169,7 +260,7 @@ Use **Stable** features with confidence. These are thoroughly tested and have st
 - Rich Text Editor for content-heavy apps
 - Maps Integration for location features
 - Flow Visualization for workflows and decision trees
-- External Connectors for API integrations
+- Collaboration for real-time multiplayer features
 - DevTools during development
 
 ### For Experimentation
@@ -178,6 +269,8 @@ Use **Stable** features with confidence. These are thoroughly tested and have st
 **Use with caution**:
 - Assets & File Management (storage patterns may evolve)
 - Events System (hook signatures may change)
+- Bookings (mini-app, API may change)
+- Sales/POS (mini-app, API may change)
 
 ## Feature Combinations
 
