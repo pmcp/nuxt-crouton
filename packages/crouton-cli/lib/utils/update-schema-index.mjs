@@ -12,7 +12,7 @@ const DEFAULT_SCHEMA_CONTENT = `// Database schema exports
 /**
  * Add a schema export to the schema index file
  * @param {string} schemaPath - Path to schema index file (e.g., server/db/schema.ts)
- * @param {string} exportPath - Import path to add (e.g., '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth')
+ * @param {string} exportPath - Import path to add (e.g., '@fyit/crouton-auth/server/database/schema/auth')
  * @returns {Promise<{added: boolean, reason?: string, created?: boolean}>}
  */
 export async function addSchemaExport(schemaPath, exportPath) {

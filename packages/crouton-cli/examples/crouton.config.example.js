@@ -62,7 +62,7 @@ export default {
 
     // Collection with collab presence support (realtime editing indicators)
     // Adds: show-collab-presence prop to List.vue
-    // Requires: @friendlyinternet/nuxt-crouton-collab to be extended
+    // Requires: @fyit/crouton-collab to be extended
     {
       name: 'bookings',
       fieldsFile: './schemas/bookings.json',

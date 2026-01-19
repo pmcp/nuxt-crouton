@@ -226,7 +226,7 @@ program
       if (!fs.existsSync(installModulesPath)) {
         spinner.fail('Install script not found')
         console.log(chalk.yellow('Please install modules manually:'))
-        console.log(chalk.cyan('  pnpm add @friendlyinternet/nuxt-crouton'))
+        console.log(chalk.cyan('  pnpm add @fyit/crouton'))
         process.exit(1)
       }
 

@@ -88,8 +88,8 @@ async function parseNuxtConfigExtends(appDir) {
 
 /**
  * Map npm package name to local package directory name
- * @friendlyinternet/nuxt-crouton -> nuxt-crouton
- * @friendlyinternet/crouton-bookings -> crouton-bookings
+ * @fyit/crouton -> crouton
+ * @fyit/crouton-bookings -> crouton-bookings
  */
 function packageNameToDir(packageName) {
   // Handle scoped packages: @scope/name -> name

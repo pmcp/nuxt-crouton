@@ -18,8 +18,8 @@ const question = query => new Promise(resolve => rl.question(query, resolve))
 
 // Available layers
 const LAYERS = {
-  '@friendlyinternet/nuxt-crouton': {
-    name: '@friendlyinternet/nuxt-crouton',
+  '@fyit/crouton': {
+    name: '@fyit/crouton',
     description: 'Base Crouton layer with essential components (always required)',
     required: [],
     features: [
@@ -30,8 +30,8 @@ const LAYERS = {
       '✨ Crouton composables (useCrouton, useCollections)'
     ]
   },
-  '@friendlyinternet/nuxt-crouton-i18n': {
-    name: '@friendlyinternet/nuxt-crouton-i18n',
+  '@fyit/crouton-i18n': {
+    name: '@fyit/crouton-i18n',
     description: 'Multi-language addon (requires base layer)',
     requiresBase: true,
     required: ['@nuxtjs/i18n'],
@@ -43,8 +43,8 @@ const LAYERS = {
       '✨ Works with base Crouton features'
     ]
   },
-  '@friendlyinternet/nuxt-crouton-editor': {
-    name: '@friendlyinternet/nuxt-crouton-editor',
+  '@fyit/crouton-editor': {
+    name: '@fyit/crouton-editor',
     description: 'Rich text editor addon (requires base layer)',
     requiresBase: true,
     required: ['@tiptap/vue-3', '@tiptap/starter-kit'],

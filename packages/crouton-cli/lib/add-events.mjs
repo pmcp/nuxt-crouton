@@ -268,7 +268,7 @@ export async function deleteCroutonCollectionEvent(
 
   apiGet: `// Team-based endpoint - requires @crouton/auth package
 import { getAllCroutonCollectionEvents, getCroutonCollectionEventsByIds } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
@@ -285,7 +285,7 @@ export default defineEventHandler(async (event) => {
 
   apiPost: `// Team-based endpoint - requires @crouton/auth package
 import { createCroutonCollectionEvent } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -312,7 +312,7 @@ export default defineEventHandler(async (event) => {
 
   apiPatch: `// Team-based endpoint - requires @crouton/auth package
 import { updateCroutonCollectionEvent } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -333,7 +333,7 @@ export default defineEventHandler(async (event) => {
 
   apiDelete: `// Team-based endpoint - requires @crouton/auth package
 import { deleteCroutonCollectionEvent } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -528,9 +528,9 @@ export async function addEvents(options = {}) {
   console.log(chalk.gray('     pnpm drizzle-kit generate'))
   console.log(chalk.gray('     pnpm drizzle-kit migrate'))
   console.log(chalk.cyan('\n  2. Add nuxt-crouton-events package (for auto-tracking):'))
-  console.log(chalk.gray('     pnpm add @friendlyinternet/nuxt-crouton-events'))
+  console.log(chalk.gray('     pnpm add @fyit/crouton-events'))
   console.log(chalk.cyan('\n  3. Add to nuxt.config.ts extends:'))
-  console.log(chalk.gray('     \'@friendlyinternet/nuxt-crouton-events\''))
+  console.log(chalk.gray('     \'@fyit/crouton-events\''))
   console.log()
 }
 

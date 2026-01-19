@@ -9,30 +9,43 @@
  * @property {string[]} [tables] - Database tables created by this module
  * @property {string[]} [dependencies] - Other modules that must be installed first
  * @property {string[]} [peerDependencies] - Optional peer dependencies to check
+ * @property {boolean} [bundled] - Whether this module is bundled in @fyit/crouton
  */
 
 /** @type {Record<string, CroutonModule>} */
 export const MODULES = {
   auth: {
-    package: '@friendlyinternet/nuxt-crouton-auth',
-    schemaExport: '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth',
+    package: '@fyit/crouton-auth',
+    schemaExport: '@fyit/crouton-auth/server/database/schema/auth',
     description: 'Authentication with Better Auth - teams, billing, passkeys, 2FA',
     tables: ['user', 'session', 'account', 'verification', 'organization', 'member', 'invitation', 'passkey', 'twoFactor', 'subscription'],
     dependencies: [],
-    peerDependencies: ['better-auth', '@better-auth/passkey', '@better-auth/stripe']
+    peerDependencies: ['better-auth', '@better-auth/passkey', '@better-auth/stripe'],
+    bundled: true // Included in @fyit/crouton
   },
 
   i18n: {
-    package: '@friendlyinternet/nuxt-crouton-i18n',
-    schemaExport: '@friendlyinternet/nuxt-crouton-i18n/server/database/schema',
+    package: '@fyit/crouton-i18n',
+    schemaExport: '@fyit/crouton-i18n/server/database/schema',
     description: 'Multi-language support with database-backed translations',
     tables: ['translationsUi'],
     dependencies: ['auth'],
-    peerDependencies: ['@nuxtjs/i18n']
+    peerDependencies: ['@nuxtjs/i18n'],
+    bundled: true // Included in @fyit/crouton
+  },
+
+  admin: {
+    package: '@fyit/crouton-admin',
+    schemaExport: null, // No database tables
+    description: 'Admin dashboard components',
+    tables: [],
+    dependencies: ['auth'],
+    peerDependencies: [],
+    bundled: true // Included in @fyit/crouton
   },
 
   bookings: {
-    package: '@friendlyinternet/crouton-bookings',
+    package: '@fyit/crouton-bookings',
     schemaExport: null, // Uses generated collections, no built-in schema
     description: 'Booking system - slots and inventory-based reservations',
     tables: [], // Tables come from generated collections
@@ -41,7 +54,7 @@ export const MODULES = {
   },
 
   editor: {
-    package: '@friendlyinternet/nuxt-crouton-editor',
+    package: '@fyit/crouton-editor',
     schemaExport: null, // No database tables
     description: 'Rich text editor - TipTap-based with slash commands',
     tables: [],
@@ -50,7 +63,7 @@ export const MODULES = {
   },
 
   assets: {
-    package: '@friendlyinternet/nuxt-crouton-assets',
+    package: '@fyit/crouton-assets',
     schemaExport: null, // Uses generated collections
     description: 'Asset management - media library with NuxtHub blob storage',
     tables: [],
@@ -59,7 +72,7 @@ export const MODULES = {
   },
 
   events: {
-    package: '@friendlyinternet/nuxt-crouton-events',
+    package: '@fyit/crouton-events',
     schemaExport: null, // Uses generated collections
     description: 'Event tracking - audit trail for all CRUD operations',
     tables: [],
@@ -68,7 +81,7 @@ export const MODULES = {
   },
 
   flow: {
-    package: '@friendlyinternet/nuxt-crouton-flow',
+    package: '@fyit/crouton-flow',
     schemaExport: null, // No database tables
     description: 'Vue Flow integration - interactive node graphs',
     tables: [],
@@ -77,7 +90,7 @@ export const MODULES = {
   },
 
   email: {
-    package: '@friendlyinternet/nuxt-crouton-email',
+    package: '@fyit/crouton-email',
     schemaExport: null, // No database tables (uses external service)
     description: 'Email integration with Vue Email and Resend',
     tables: [],
@@ -86,7 +99,7 @@ export const MODULES = {
   },
 
   maps: {
-    package: '@friendlyinternet/nuxt-crouton-maps',
+    package: '@fyit/crouton-maps',
     schemaExport: null, // No database tables
     description: 'Map integration with Mapbox',
     tables: [],
@@ -95,7 +108,7 @@ export const MODULES = {
   },
 
   ai: {
-    package: '@friendlyinternet/nuxt-crouton-ai',
+    package: '@fyit/crouton-ai',
     schemaExport: null, // No database tables
     description: 'AI integration with Anthropic Claude',
     tables: [],
@@ -104,7 +117,7 @@ export const MODULES = {
   },
 
   devtools: {
-    package: '@friendlyinternet/nuxt-crouton-devtools',
+    package: '@fyit/crouton-devtools',
     schemaExport: null, // No database tables
     description: 'Nuxt Devtools integration for Crouton',
     tables: [],
@@ -112,13 +125,40 @@ export const MODULES = {
     peerDependencies: []
   },
 
-  admin: {
-    package: '@friendlyinternet/nuxt-crouton-admin',
-    schemaExport: null, // No database tables
-    description: 'Admin dashboard components',
+  collab: {
+    package: '@fyit/crouton-collab',
+    schemaExport: null, // Uses Cloudflare Durable Objects
+    description: 'Real-time collaboration with Yjs CRDTs',
     tables: [],
-    dependencies: ['auth'],
+    dependencies: [],
+    peerDependencies: ['yjs', 'y-protocols']
+  },
+
+  pages: {
+    package: '@fyit/crouton-pages',
+    schemaExport: null, // Uses generated collections
+    description: 'Page builder with TipTap editor',
+    tables: [],
+    dependencies: ['editor'],
     peerDependencies: []
+  },
+
+  themes: {
+    package: '@fyit/crouton-themes',
+    schemaExport: null, // No database tables
+    description: 'Swappable UI themes for Nuxt UI',
+    tables: [],
+    dependencies: [],
+    peerDependencies: ['@nuxt/ui']
+  },
+
+  'schema-designer': {
+    package: '@fyit/crouton-schema-designer',
+    schemaExport: null, // No database tables
+    description: 'Visual schema editor for collection generation',
+    tables: [],
+    dependencies: [],
+    peerDependencies: ['@nuxt/ui']
   }
 }
 
@@ -159,13 +199,14 @@ export function getModuleAlias(packageName) {
 
 /**
  * List all available modules
- * @returns {Array<{alias: string, package: string, description: string}>}
+ * @returns {Array<{alias: string, package: string, description: string, hasSchema: boolean, bundled: boolean}>}
  */
 export function listModules() {
   return Object.entries(MODULES).map(([alias, module]) => ({
     alias,
     package: module.package,
     description: module.description,
-    hasSchema: !!module.schemaExport
+    hasSchema: !!module.schemaExport,
+    bundled: !!module.bundled
   }))
 }

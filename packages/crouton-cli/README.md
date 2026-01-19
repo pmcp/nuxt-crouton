@@ -16,13 +16,13 @@ A powerful CLI tool for generating complete CRUD collections in Nuxt Crouton app
 ### Global Installation (Recommended)
 
 ```bash
-npm install -g @friendlyinternet/nuxt-crouton-cli
+npm install -g @fyit/crouton-cli
 ```
 
 ### Or use with npx
 
 ```bash
-npx @friendlyinternet/nuxt-crouton-cli <command>
+npx @fyit/crouton-cli <command>
 ```
 
 ## Quick Start
@@ -229,7 +229,7 @@ Mark fields for multi-language support using `translatable: true`:
 Fields marked as translatable will:
 - Generate `CroutonI18nInput` components in forms
 - Store translations in a `translations` JSON field
-- Require the `@friendlyinternet/nuxt-crouton-i18n` package
+- Require the `@fyit/crouton-i18n` package
 
 ### Translatable Repeater Fields
 
@@ -377,23 +377,23 @@ The seed generator auto-detects field names and generates appropriate data (emai
 
 - Node.js 18+
 - Nuxt 3 or 4
-- @friendlyinternet/nuxt-crouton installed
+- @fyit/crouton installed
 - Drizzle ORM configured
 
 ## Integration with Nuxt Crouton
 
-This generator is designed to work seamlessly with [@friendlyinternet/nuxt-crouton](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton).
+This generator is designed to work seamlessly with [@fyit/crouton](https://www.npmjs.com/package/@fyit/crouton).
 
 First, install and configure Nuxt Crouton:
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton
+pnpm add @fyit/crouton
 ```
 
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton']
+  extends: ['@fyit/crouton']
 })
 ```
 
@@ -423,7 +423,7 @@ The generated code is yours to modify!
 For AI-assisted collection generation, use the companion MCP server:
 
 ```bash
-npm install -g @friendlyinternet/nuxt-crouton-mcp-server
+npm install -g @fyit/crouton-mcp
 ```
 
 The MCP server enables AI assistants like Claude to:
@@ -434,7 +434,7 @@ The MCP server enables AI assistants like Claude to:
 
 Configure in Claude Code or Claude Desktop to enable AI-powered collection creation.
 
-See [@friendlyinternet/nuxt-crouton-mcp-server](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-mcp-server) for setup instructions.
+See [@fyit/crouton-mcp](https://www.npmjs.com/package/@fyit/crouton-mcp) for setup instructions.
 
 ## Development
 
@@ -474,5 +474,5 @@ MIT © FYIT
 ## Links
 
 - [GitHub Repository](https://github.com/pmcp/nuxt-crouton)
-- [Nuxt Crouton Package](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton)
+- [Nuxt Crouton Package](https://www.npmjs.com/package/@fyit/crouton)
 - [Report Issues](https://github.com/pmcp/nuxt-crouton/issues)

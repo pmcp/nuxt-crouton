@@ -151,7 +151,7 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
 // This file is auto-managed by crouton-generate
 
 // Export auth schema from crouton-auth package
-export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+export * from '@fyit/crouton-auth/server/database/schema/auth'
 `
         await fsp.writeFile(schemaIndexPath, content)
         console.log('✓ Created server/db/schema.ts with auth schema')
@@ -202,7 +202,7 @@ async function registerTranslationsUiCollection() {
     ? path.resolve('app/app.config.ts')
     : path.resolve('app.config.ts')
 
-  const importStatement = `import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'`
+  const importStatement = `import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'`
   const collectionKey = 'translationsUi'
   const configName = 'translationsUiConfig'
 
@@ -260,7 +260,7 @@ async function registerTranslationsUiCollection() {
   } catch (error) {
     console.error(`! Could not register translationsUi collection:`, error.message)
     console.log(`  Please manually add to app.config.ts:`)
-    console.log(`    import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'`)
+    console.log(`    import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'`)
     console.log(`    croutonCollections: { translationsUi: translationsUiConfig }`)
     return false
   }
@@ -639,7 +639,7 @@ export default defineNuxtConfig({
     if (extendsMatch) {
       const currentExtends = extendsMatch[1]
       const newCollection = `'./collections/${cases.plural}'`
-      const translationsLayer = `'@friendlyinternet/nuxt-crouton-i18n'`
+      const translationsLayer = `'@fyit/crouton-i18n'`
 
       // Parse existing entries
       let lines = currentExtends.split('\n')
@@ -1289,7 +1289,7 @@ ${translationsFieldSchema}
     console.log(`  ✓ ${path.relative(base, file.path)}`)
   }
 
-  // Note: team-auth utility is now provided by @friendlyinternet/nuxt-crouton package
+  // Note: team-auth utility is now provided by @fyit/crouton package
   // No need to generate it per-layer
 
   // Check if we're using translations

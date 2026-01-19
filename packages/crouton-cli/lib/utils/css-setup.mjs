@@ -18,7 +18,7 @@ const CSS_FILE_LOCATIONS = [
 /**
  * The @source directive to add for scanning Nuxt Crouton layers
  */
-const CROUTON_SOURCE_DIRECTIVE = '@source "../../../node_modules/@friendlyinternet/nuxt-crouton*/app/**/*.{vue,js,ts}";'
+const CROUTON_SOURCE_DIRECTIVE = '@source "../../../node_modules/@fyit/crouton*/app/**/*.{vue,js,ts}";'
 
 /**
  * Check if a file exists
@@ -52,7 +52,7 @@ function calculateNodeModulesPath(cssRelativePath) {
   // Count directory depth from project root
   const depth = cssRelativePath.split('/').length - 1
   const upDirs = '../'.repeat(depth + 1) // +1 to get out of the css file's directory
-  return `${upDirs}node_modules/@friendlyinternet/nuxt-crouton*/app/**/*.{vue,js,ts}`
+  return `${upDirs}node_modules/@fyit/crouton*/app/**/*.{vue,js,ts}`
 }
 
 /**
@@ -61,7 +61,7 @@ function calculateNodeModulesPath(cssRelativePath) {
 async function hasSourceDirective(cssPath) {
   try {
     const content = await fsp.readFile(cssPath, 'utf-8')
-    return content.includes('@friendlyinternet/nuxt-crouton')
+    return content.includes('@fyit/crouton')
   } catch {
     return false
   }
@@ -247,7 +247,7 @@ export function displayManualCssSetupInstructions() {
 Tailwind CSS v4 doesn't automatically scan npm packages.
 Add this @source directive to your main CSS file:
 
-  @source "../node_modules/@friendlyinternet/nuxt-crouton*/app/**/*.{vue,js,ts}";
+  @source "../node_modules/@fyit/crouton*/app/**/*.{vue,js,ts}";
 
 Example (app/assets/css/main.css):
 ────────────────────────────────────────────────────────────────
@@ -255,7 +255,7 @@ Example (app/assets/css/main.css):
   @import "@nuxt/ui";
 
   /* Scan Nuxt Crouton layers for Tailwind classes */
-  @source "../../../node_modules/@friendlyinternet/nuxt-crouton*/app/**/*.{vue,js,ts}";
+  @source "../../../node_modules/@fyit/crouton*/app/**/*.{vue,js,ts}";
 ────────────────────────────────────────────────────────────────
 
 Note: Adjust the "../" depth based on your CSS file location.

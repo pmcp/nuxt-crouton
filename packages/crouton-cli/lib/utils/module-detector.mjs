@@ -22,8 +22,8 @@ async function isPackageInstalled(packageName) {
     }
 
     // Check for local file: paths that reference the package
-    // e.g., "file:/path/to/nuxt-crouton" for "@friendlyinternet/nuxt-crouton"
-    const packageShortName = packageName.replace('@friendlyinternet/', '')
+    // e.g., "file:/path/to/nuxt-crouton" for "@fyit/crouton"
+    const packageShortName = packageName.replace('@fyit/', '')
     for (const [name, version] of Object.entries(deps)) {
       // Check if the dependency value is a file: path containing the package name
       if (typeof version === 'string' && version.startsWith('file:')) {
@@ -64,8 +64,8 @@ async function isLayerExtended(layerName) {
       }
 
       // Check for local path match (e.g., /path/to/nuxt-crouton or /path/to/nuxt-crouton-auth)
-      // Extract the package short name from @friendlyinternet/nuxt-crouton-auth -> nuxt-crouton-auth
-      const packageShortName = layerName.replace('@friendlyinternet/', '')
+      // Extract the package short name from @fyit/crouton-auth -> nuxt-crouton-auth
+      const packageShortName = layerName.replace('@fyit/', '')
       // Match paths ending with the package name (with possible trailing quote/comma)
       const localPathRegex = new RegExp(`[/\\\\]${packageShortName}['"\`\\s,\\]]`)
       if (localPathRegex.test(extendsContent)) {
@@ -125,18 +125,18 @@ export async function detectRequiredDependencies(config) {
   }
 
   // Always check for base Crouton layer first
-  const baseLayerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton')
-  const baseLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton')
+  const baseLayerInstalled = await isPackageInstalled('@fyit/crouton')
+  const baseLayerExtended = await isLayerExtended('@fyit/crouton')
 
   // Check base layer status first
   if (baseLayerInstalled && !baseLayerExtended) {
     // Package installed but not added to nuxt.config.ts extends[]
     required.missing.push({
       type: 'layer',
-      name: '@friendlyinternet/nuxt-crouton',
+      name: '@fyit/crouton',
       reason: 'Package is installed but NOT added to nuxt.config.ts extends[]',
       installCmd: '(already installed)',
-      configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton']`,
+      configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@fyit/crouton']`,
       critical: true,
       note: 'Auth, admin, and i18n are automatically included when using the core package.'
     })
@@ -145,29 +145,29 @@ export async function detectRequiredDependencies(config) {
     const croutonLayerExists = await layerExists('crouton')
     if (!croutonLayerExists) {
       // Core not installed - check if standalone auth is available
-      const authPackageInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-auth')
-      const authLayerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-auth')
+      const authPackageInstalled = await isPackageInstalled('@fyit/crouton-auth')
+      const authLayerExtended = await isLayerExtended('@fyit/crouton-auth')
 
       if (!authPackageInstalled && !authLayerExtended) {
         // Neither core nor auth available - recommend installing core (which includes auth)
         required.missing.push({
           type: 'package',
-          name: '@friendlyinternet/nuxt-crouton',
+          name: '@fyit/crouton',
           reason: 'Required for Crouton collections (includes auth, admin, and i18n)',
-          installCmd: 'pnpm add @friendlyinternet/nuxt-crouton',
-          configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton']`,
+          installCmd: 'pnpm add @fyit/crouton',
+          configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@fyit/crouton']`,
           critical: true
         })
       } else if (authPackageInstalled && !authLayerExtended) {
         // Standalone auth installed but not extended - this is a legacy setup
         required.missing.push({
           type: 'layer',
-          name: '@friendlyinternet/nuxt-crouton-auth',
+          name: '@fyit/crouton-auth',
           reason: 'Package is installed but NOT added to nuxt.config.ts extends[]',
           installCmd: '(already installed)',
-          configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@friendlyinternet/nuxt-crouton-auth']`,
+          configCmd: `Add to nuxt.config.ts:\n\n   extends: ['@fyit/crouton-auth']`,
           critical: true,
-          note: 'Consider using @friendlyinternet/nuxt-crouton instead (includes auth + admin + i18n).'
+          note: 'Consider using @fyit/crouton instead (includes auth + admin + i18n).'
         })
       }
       // If auth is extended standalone, that's fine too
@@ -176,7 +176,7 @@ export async function detectRequiredDependencies(config) {
     }
   } else {
     // Core is installed AND extended - auth is bundled, no separate check needed
-    required.layers.push('@friendlyinternet/nuxt-crouton')
+    required.layers.push('@fyit/crouton')
   }
 
   // Check if translations are needed
@@ -185,11 +185,11 @@ export async function detectRequiredDependencies(config) {
 
   if (hasTranslations && !config.noTranslations) {
     // Check for nuxt-crouton-i18n layer (addon)
-    const layerInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-i18n')
-    const layerExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-i18n')
+    const layerInstalled = await isPackageInstalled('@fyit/crouton-i18n')
+    const layerExtended = await isLayerExtended('@fyit/crouton-i18n')
 
     if (layerInstalled && layerExtended) {
-      required.layers.push('@friendlyinternet/nuxt-crouton-i18n')
+      required.layers.push('@fyit/crouton-i18n')
     } else {
       // Fallback to check for local translations layer
       const translationsLayerExists = await layerExists('translations')
@@ -198,10 +198,10 @@ export async function detectRequiredDependencies(config) {
       } else {
         required.missing.push({
           type: 'layer',
-          name: '@friendlyinternet/nuxt-crouton-i18n',
+          name: '@fyit/crouton-i18n',
           reason: 'Required addon for translation fields',
-          installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-i18n',
-          configCmd: `Add BOTH '@friendlyinternet/nuxt-crouton' and '@friendlyinternet/nuxt-crouton-i18n' to extends array`
+          installCmd: 'pnpm add @fyit/crouton-i18n',
+          configCmd: `Add BOTH '@fyit/crouton' and '@fyit/crouton-i18n' to extends array`
         })
       }
     }
@@ -211,18 +211,18 @@ export async function detectRequiredDependencies(config) {
   const hasEditorFields = hasFieldWithComponent(config, 'CroutonEditorSimple')
 
   if (hasEditorFields) {
-    const editorInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-editor')
-    const editorExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-editor')
+    const editorInstalled = await isPackageInstalled('@fyit/crouton-editor')
+    const editorExtended = await isLayerExtended('@fyit/crouton-editor')
 
     if (editorInstalled && editorExtended) {
-      required.layers.push('@friendlyinternet/nuxt-crouton-editor')
+      required.layers.push('@fyit/crouton-editor')
     } else {
       required.missing.push({
         type: 'layer',
-        name: '@friendlyinternet/nuxt-crouton-editor',
+        name: '@fyit/crouton-editor',
         reason: 'Required addon for CroutonEditorSimple rich text editor',
-        installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-editor',
-        configCmd: `Add '@friendlyinternet/nuxt-crouton-editor' to extends array`
+        installCmd: 'pnpm add @fyit/crouton-editor',
+        configCmd: `Add '@fyit/crouton-editor' to extends array`
       })
     }
   }
@@ -231,18 +231,18 @@ export async function detectRequiredDependencies(config) {
   const useMaps = config?.flags?.useMaps === true
 
   if (useMaps) {
-    const mapsInstalled = await isPackageInstalled('@friendlyinternet/nuxt-crouton-maps')
-    const mapsExtended = await isLayerExtended('@friendlyinternet/nuxt-crouton-maps')
+    const mapsInstalled = await isPackageInstalled('@fyit/crouton-maps')
+    const mapsExtended = await isLayerExtended('@fyit/crouton-maps')
 
     if (mapsInstalled && mapsExtended) {
-      required.layers.push('@friendlyinternet/nuxt-crouton-maps')
+      required.layers.push('@fyit/crouton-maps')
     } else {
       required.missing.push({
         type: 'layer',
-        name: '@friendlyinternet/nuxt-crouton-maps',
+        name: '@fyit/crouton-maps',
         reason: 'Required addon for map display and geocoding features (useMaps: true)',
-        installCmd: 'pnpm add @friendlyinternet/nuxt-crouton-maps',
-        configCmd: `Add '@friendlyinternet/nuxt-crouton-maps' to extends array`
+        installCmd: 'pnpm add @fyit/crouton-maps',
+        configCmd: `Add '@fyit/crouton-maps' to extends array`
       })
     }
   }
@@ -293,21 +293,21 @@ export function displayMissingDependencies(dependencies) {
   }
 
   // Check if core package is being added (which includes auth/admin/i18n)
-  const hasCoreMissing = dependencies.missing.some(d => d.name === '@friendlyinternet/nuxt-crouton')
+  const hasCoreMissing = dependencies.missing.some(d => d.name === '@fyit/crouton')
 
   console.log('\nThen add to nuxt.config.ts:')
   console.log(`   extends: [`)
 
   if (hasCoreMissing) {
     // Core includes auth, admin, and i18n - only show core
-    console.log(`     '@friendlyinternet/nuxt-crouton',  // Includes auth, admin, i18n`)
+    console.log(`     '@fyit/crouton',  // Includes auth, admin, i18n`)
     // Show other addon layers (not auth/admin/i18n since they're bundled)
     dependencies.missing.forEach((dep) => {
       const bundledPackages = [
-        '@friendlyinternet/nuxt-crouton',
-        '@friendlyinternet/nuxt-crouton-auth',
-        '@friendlyinternet/nuxt-crouton-admin',
-        '@friendlyinternet/nuxt-crouton-i18n'
+        '@fyit/crouton',
+        '@fyit/crouton-auth',
+        '@fyit/crouton-admin',
+        '@fyit/crouton-i18n'
       ]
       if (!bundledPackages.includes(dep.name)) {
         console.log(`     '${dep.name}',  // Addon layer`)
@@ -372,7 +372,7 @@ export async function ensureLayersExtended(layers) {
           }
 
           // Check for local path match (e.g., /path/to/nuxt-crouton or /path/to/nuxt-crouton-auth)
-          const packageShortName = layer.replace('@friendlyinternet/', '')
+          const packageShortName = layer.replace('@fyit/', '')
           const localPathRegex = new RegExp(`[/\\\\]${packageShortName}['"\`\\s,\\]]`)
           if (localPathRegex.test(content)) {
             continue // Already extended via local path
