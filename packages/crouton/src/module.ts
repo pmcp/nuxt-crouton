@@ -1,7 +1,53 @@
-import { defineNuxtModule, createResolver } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, resolvePath } from '@nuxt/kit'
 import type { CroutonOptions } from './types'
 
 export type { CroutonOptions }
+
+/**
+ * Helper to get the layers to extend based on crouton options.
+ * Use this in your nuxt.config.ts extends array.
+ *
+ * @example
+ * ```ts
+ * import { getCroutonLayers } from '@fyit/crouton'
+ *
+ * export default defineNuxtConfig({
+ *   extends: getCroutonLayers({ bookings: true, email: true }),
+ *   modules: ['@fyit/crouton']
+ * })
+ * ```
+ */
+export function getCroutonLayers(options: CroutonOptions = {}): string[] {
+  const layers: string[] = []
+
+  // Always include core
+  layers.push('@fyit/crouton-core')
+
+  // Core add-ons (enabled by default)
+  if (options.auth !== false) layers.push('@fyit/crouton-auth')
+  if (options.admin !== false) layers.push('@fyit/crouton-admin')
+  if (options.i18n !== false) layers.push('@fyit/crouton-i18n')
+
+  // Optional add-ons
+  if (options.editor) layers.push('@fyit/crouton-editor')
+  if (options.flow) layers.push('@fyit/crouton-flow')
+  if (options.assets) layers.push('@fyit/crouton-assets')
+  if (options.maps) layers.push('@fyit/crouton-maps')
+  if (options.ai) layers.push('@fyit/crouton-ai')
+  if (options.email) layers.push('@fyit/crouton-email')
+  if (options.events) layers.push('@fyit/crouton-events')
+  if (options.collab) layers.push('@fyit/crouton-collab')
+  if (options.pages) layers.push('@fyit/crouton-pages')
+
+  // Devtools (skip in getCroutonLayers since it's dev-only)
+  // if (options.devtools) layers.push('@fyit/crouton-devtools')
+
+  // Mini-apps
+  if (options.bookings) layers.push('@fyit/crouton-bookings')
+  if (options.sales) layers.push('@fyit/crouton-sales')
+
+  return layers
+}
 
 export default defineNuxtModule<CroutonOptions>({
   meta: {
@@ -39,101 +85,35 @@ export default defineNuxtModule<CroutonOptions>({
     sales: false
   },
 
-  setup(options, nuxt) {
+  async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
-    // Set runtime config for global settings
+    // Set runtime config for global settings (merge, don't overwrite)
     nuxt.options.runtimeConfig.public.crouton = {
+      ...nuxt.options.runtimeConfig.public.crouton,
       apiPrefix: options.apiPrefix!,
       defaultPageSize: options.defaultPageSize!
     }
 
-    // Initialize extends array if not present
-    nuxt.options.extends ||= []
+    // NOTE: Layers must be added via extends in nuxt.config.ts BEFORE modules load.
+    // This module cannot dynamically add layers - use getCroutonLayers() helper instead.
+    // See documentation for proper setup.
 
-    // Helper to add a layer
-    const addLayer = (packageName: string) => {
-      // Ensure extends is an array
-      if (!Array.isArray(nuxt.options.extends)) {
-        nuxt.options.extends = [nuxt.options.extends].filter(Boolean) as string[]
-      }
-      nuxt.options.extends.push(packageName)
-    }
+    // Check if required layers are present and warn if not
+    const requiredLayers = getCroutonLayers(options)
+    const existingLayers = (nuxt.options._layers || []).map((l: any) => l.config?.name || l.cwd)
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Always include core
-    // ═══════════════════════════════════════════════════════════════════════════
-    addLayer('@fyit/crouton-core')
+    const missingLayers = requiredLayers.filter(layer => {
+      // Check if any existing layer path contains the package name
+      return !existingLayers.some((existing: string) =>
+        existing.includes(layer.replace('@fyit/', ''))
+      )
+    })
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Core add-ons (bundled, can be disabled)
-    // ═══════════════════════════════════════════════════════════════════════════
-    if (options.auth !== false) {
-      addLayer('@fyit/crouton-auth')
-    }
-
-    if (options.admin !== false) {
-      addLayer('@fyit/crouton-admin')
-    }
-
-    if (options.i18n !== false) {
-      addLayer('@fyit/crouton-i18n')
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Optional add-ons
-    // ═══════════════════════════════════════════════════════════════════════════
-    if (options.editor) {
-      addLayer('@fyit/crouton-editor')
-    }
-
-    if (options.flow) {
-      addLayer('@fyit/crouton-flow')
-    }
-
-    if (options.assets) {
-      addLayer('@fyit/crouton-assets')
-    }
-
-    if (options.maps) {
-      addLayer('@fyit/crouton-maps')
-    }
-
-    if (options.ai) {
-      addLayer('@fyit/crouton-ai')
-    }
-
-    if (options.email) {
-      addLayer('@fyit/crouton-email')
-    }
-
-    if (options.events) {
-      addLayer('@fyit/crouton-events')
-    }
-
-    if (options.collab) {
-      addLayer('@fyit/crouton-collab')
-    }
-
-    if (options.pages) {
-      addLayer('@fyit/crouton-pages')
-    }
-
-    // Devtools: enabled by default in dev mode, can be explicitly set
-    const enableDevtools = options.devtools ?? nuxt.options.dev
-    if (enableDevtools) {
-      addLayer('@fyit/crouton-devtools')
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Mini-apps
-    // ═══════════════════════════════════════════════════════════════════════════
-    if (options.bookings) {
-      addLayer('@fyit/crouton-bookings')
-    }
-
-    if (options.sales) {
-      addLayer('@fyit/crouton-sales')
+    if (missingLayers.length > 0) {
+      console.warn(`[crouton] Missing layers! Add these to your nuxt.config.ts extends:`)
+      console.warn(`         extends: ['${missingLayers.join("', '")}']`)
+      console.warn(`         Or use the getCroutonLayers() helper function.`)
     }
 
     // Log enabled features in development
@@ -152,7 +132,7 @@ export default defineNuxtModule<CroutonOptions>({
         options.events && 'events',
         options.collab && 'collab',
         options.pages && 'pages',
-        enableDevtools && 'devtools',
+        (options.devtools ?? nuxt.options.dev) && 'devtools',
         options.bookings && 'bookings',
         options.sales && 'sales'
       ].filter(Boolean)

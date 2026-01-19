@@ -44,7 +44,23 @@
     "access": "public"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.15.0"
+    "@nuxt/kit": "^3.15.0",
+    "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-admin": "workspace:*",
+    "@fyit/crouton-i18n": "workspace:*",
+    "@fyit/crouton-editor": "workspace:*",
+    "@fyit/crouton-flow": "workspace:*",
+    "@fyit/crouton-assets": "workspace:*",
+    "@fyit/crouton-maps": "workspace:*",
+    "@fyit/crouton-ai": "workspace:*",
+    "@fyit/crouton-email": "workspace:*",
+    "@fyit/crouton-events": "workspace:*",
+    "@fyit/crouton-collab": "workspace:*",
+    "@fyit/crouton-pages": "workspace:*",
+    "@fyit/crouton-devtools": "workspace:*",
+    "@fyit/crouton-bookings": "workspace:*",
+    "@fyit/crouton-sales": "workspace:*"
   },
   "devDependencies": {
     "nuxt": "^4.0.0",
