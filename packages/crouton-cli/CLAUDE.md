@@ -261,7 +261,8 @@ export default {
     { name: 'products', fieldsFile: './schemas/products.json', hierarchy: true },
     { name: 'authors', fieldsFile: './schemas/authors.json', seed: true },          // seed with defaults
     { name: 'posts', fieldsFile: './schemas/posts.json', seed: { count: 50 } },     // seed with custom count
-    { name: 'bookings', fieldsFile: './schemas/bookings.json', collab: true }       // enable collab presence
+    { name: 'bookings', fieldsFile: './schemas/bookings.json', collab: true },      // enable collab presence
+    { name: 'pages', fieldsFile: './schemas/pages.json', formComponent: 'CroutonPagesForm' }  // use package form
   ],
   dialect: 'sqlite',
   seed: {
@@ -292,6 +293,51 @@ export default {
 | `email` | `false` | Email with Resend |
 | `assets` | `false` | Media library |
 | `events` | `false` | Audit trail |
+
+### Collection Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `name` | string | Collection name (required) |
+| `fieldsFile` | string | Path to JSON schema file (required) |
+| `hierarchy` | boolean \| object | Enable tree structure with parent/child relationships |
+| `sortable` | boolean \| object | Enable drag-drop reordering |
+| `seed` | boolean \| object | Generate seed data file with Faker |
+| `collab` | boolean | Enable real-time presence indicators |
+| `translatable` | boolean | Mark all string fields as translatable |
+| `formComponent` | string | Use a custom form component instead of generating Form.vue |
+
+### formComponent Option
+
+When a Crouton package (like `@fyit/crouton-pages`) provides its own form component, you can skip generating a redundant Form.vue by specifying `formComponent`:
+
+```javascript
+collections: [
+  {
+    name: 'pages',
+    fieldsFile: './schemas/pages.json',
+    formComponent: 'CroutonPagesForm',  // Use package-provided form
+    hierarchy: true
+  }
+]
+```
+
+**What this does:**
+1. Skips generating `Form.vue` in the collection directory
+2. Sets `componentName` in the composable to the specified component name
+3. The package's form component is used instead for create/edit operations
+
+**When to use:**
+- When using `@fyit/crouton-pages` with `features.pages: true` → use `formComponent: 'CroutonPagesForm'`
+- When using `@fyit/crouton-bookings` with custom forms → use `formComponent: 'CroutonBookingsForm'`
+- When you have a custom form component that handles the collection's data entry
+
+**Dry-run output:**
+```
+• Form.vue skipped (using CroutonPagesForm)
+• layers/pages/collections/pages/app/components/List.vue
+...
+```
 
 ## Examples
 
