@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { schemaProjects } from '../../database/schema'
 import { migrateProject, type SchemaProjectRecord } from '../../utils/project-migration'
-import type { PackageInstance, CollectionSchema } from '@friendlyinternet/nuxt-crouton-schema-designer/types'
+import type { PackageInstance, CollectionSchema } from '@fyit/crouton-schema-designer/types'
 
 interface UpdateProjectPayload {
   name?: string

@@ -1,5 +1,5 @@
 /**
- * @deprecated Use `/api/collab/[roomId]/ws?type=flow` from @friendlyinternet/nuxt-crouton-collab instead.
+ * @deprecated Use `/api/collab/[roomId]/ws?type=flow` from @fyit/crouton-collab instead.
  *
  * This WebSocket route is kept for backward compatibility with existing deployments.
  * New flows should use useFlowSync which now wraps useCollabSync and connects to

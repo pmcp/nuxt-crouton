@@ -4,7 +4,7 @@
  * Defines the pages collection schema for the CMS-like page system.
  * Generate with: pnpm crouton generate
  */
-import { defineCroutonManifest } from '@friendlyinternet/nuxt-crouton-cli'
+import { defineCroutonManifest } from '@fyit/crouton-cli'
 
 export default defineCroutonManifest({
   layer: 'pages',

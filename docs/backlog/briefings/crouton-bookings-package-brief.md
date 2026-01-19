@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Extract the booking system from `crouton-bookings` app into a reusable package `@friendlyinternet/crouton-bookings` in the nuxt-crouton monorepo. The package will support both slot-based bookings (courts, rooms) and inventory-based reservations (equipment pools, rentals).
+Extract the booking system from `crouton-bookings` app into a reusable package `@fyit/crouton-bookings` in the nuxt-crouton monorepo. The package will support both slot-based bookings (courts, rooms) and inventory-based reservations (equipment pools, rentals).
 
 ---
 
@@ -91,7 +91,7 @@ Extract the booking system from `crouton-bookings` app into a reusable package `
 
 - [ ] **4.1** Add email module (opt-in)
   - Conditional based on `croutonBookings.email.enabled`
-  - Integrate with `@friendlyinternet/crouton-email`
+  - Integrate with `@fyit/crouton-email`
 
 - [ ] **4.2** Update crouton-bookings app to use package (dogfooding)
   - Replace duplicated code with package extends
@@ -157,8 +157,8 @@ Resource → Quantity → User picks date → Booking
 // User's nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/crouton-bookings',
+    '@fyit/crouton',
+    '@fyit/crouton-bookings',
     './layers/bookings'  // Generated layer
   ],
   croutonBookings: {
@@ -171,7 +171,7 @@ export default defineNuxtConfig({
 
 ## User Workflow
 
-1. **Install package**: `pnpm add @friendlyinternet/crouton-bookings`
+1. **Install package**: `pnpm add @fyit/crouton-bookings`
 2. **Copy schemas**: From package to local `./schemas/`
 3. **Configure crouton**: Use `bookings` as layer name in crouton.config.js
 4. **Generate**: `crouton config`
@@ -240,5 +240,5 @@ User MUST generate collections using `bookings` as the layer name in crouton.con
 1. **Always run `npx nuxt typecheck`** after making changes
 2. **Convention is critical**: Package imports assume `bookings` layer name
 3. **Inventory mode is new**: Current app only has slot mode, need to implement inventory logic
-4. **Email uses existing package**: Integrate with `@friendlyinternet/crouton-email`
+4. **Email uses existing package**: Integrate with `@fyit/crouton-email`
 5. **Test by dogfooding**: Update crouton-bookings app to use the package

@@ -1,6 +1,6 @@
 # Crouton Migration Plan
 
-Migrate from `@friendlyinternet/nuxt-crouton-*` packages to a unified `@fyit/crouton` module with opt-in layers.
+Migrate from `@fyit/crouton-*` packages to a unified `@fyit/crouton` module with opt-in layers.
 
 ---
 
@@ -21,50 +21,50 @@ The main entry point that auto-includes bundled add-ons.
 
 | Current | New | Notes |
 |---------|-----|-------|
-| `@friendlyinternet/nuxt-crouton` | `@fyit/crouton-core` | Base CRUD layer |
+| `@fyit/crouton` | `@fyit/crouton-core` | Base CRUD layer |
 
 ### 2. Core Add-ons (Bundled)
 Automatically extended when using `@fyit/crouton`. Can be disabled.
 
 | Current | New | Notes |
 |---------|-----|-------|
-| `@friendlyinternet/nuxt-crouton-auth` | `@fyit/crouton-auth` | Better Auth, teams, passkeys |
-| `@friendlyinternet/nuxt-crouton-admin` | `@fyit/crouton-admin` | Admin dashboard |
-| `@friendlyinternet/nuxt-crouton-i18n` | `@fyit/crouton-i18n` | Multi-language support |
+| `@fyit/crouton-auth` | `@fyit/crouton-auth` | Better Auth, teams, passkeys |
+| `@fyit/crouton-admin` | `@fyit/crouton-admin` | Admin dashboard |
+| `@fyit/crouton-i18n` | `@fyit/crouton-i18n` | Multi-language support |
 
 ### 3. Optional Add-ons
 Standalone packages users add as needed.
 
 | Current | New | Notes |
 |---------|-----|-------|
-| `@friendlyinternet/nuxt-crouton-editor` | `@fyit/crouton-editor` | TipTap rich text |
-| `@friendlyinternet/nuxt-crouton-flow` | `@fyit/crouton-flow` | Vue Flow graphs |
-| `@friendlyinternet/nuxt-crouton-assets` | `@fyit/crouton-assets` | Media library |
-| `@friendlyinternet/nuxt-crouton-devtools` | `@fyit/crouton-devtools` | Nuxt DevTools |
-| `@friendlyinternet/nuxt-crouton-maps` | `@fyit/crouton-maps` | Mapbox integration |
-| `@friendlyinternet/nuxt-crouton-ai` | `@fyit/crouton-ai` | AI/LLM integration |
-| `@friendlyinternet/nuxt-crouton-email` | `@fyit/crouton-email` | Vue Email + Resend |
-| `@friendlyinternet/nuxt-crouton-events` | `@fyit/crouton-events` | Audit trail |
-| `@friendlyinternet/nuxt-crouton-collab` | `@fyit/crouton-collab` | Real-time Yjs |
-| `@friendlyinternet/nuxt-crouton-pages` | `@fyit/crouton-pages` | CMS pages |
+| `@fyit/crouton-editor` | `@fyit/crouton-editor` | TipTap rich text |
+| `@fyit/crouton-flow` | `@fyit/crouton-flow` | Vue Flow graphs |
+| `@fyit/crouton-assets` | `@fyit/crouton-assets` | Media library |
+| `@fyit/crouton-devtools` | `@fyit/crouton-devtools` | Nuxt DevTools |
+| `@fyit/crouton-maps` | `@fyit/crouton-maps` | Mapbox integration |
+| `@fyit/crouton-ai` | `@fyit/crouton-ai` | AI/LLM integration |
+| `@fyit/crouton-email` | `@fyit/crouton-email` | Vue Email + Resend |
+| `@fyit/crouton-events` | `@fyit/crouton-events` | Audit trail |
+| `@fyit/crouton-collab` | `@fyit/crouton-collab` | Real-time Yjs |
+| `@fyit/crouton-pages` | `@fyit/crouton-pages` | CMS pages |
 
 ### 4. Mini-Apps
 Complete business applications built on Crouton.
 
 | Current | New | Notes |
 |---------|-----|-------|
-| `@friendlyinternet/crouton-bookings` | `@fyit/crouton-bookings` | Booking system |
-| `@friendlyinternet/crouton-sales` | `@fyit/crouton-sales` | POS system |
+| `@fyit/crouton-bookings` | `@fyit/crouton-bookings` | Booking system |
+| `@fyit/crouton-sales` | `@fyit/crouton-sales` | POS system |
 
 ### 5. Tooling
 Development and AI tools.
 
 | Current | New | Notes |
 |---------|-----|-------|
-| `@friendlyinternet/nuxt-crouton-cli` | `@fyit/crouton-cli` | Collection generator |
-| `@friendlyinternet/nuxt-crouton-schema-designer` | `@fyit/crouton-schema-designer` | Visual schema editor |
-| `@friendlyinternet/nuxt-crouton-mcp-server` | `@fyit/crouton-mcp` | MCP server for AI |
-| `@friendlyinternet/nuxt-crouton-themes` | `@fyit/crouton-themes` | UI themes |
+| `@fyit/crouton-cli` | `@fyit/crouton-cli` | Collection generator |
+| `@fyit/crouton-schema-designer` | `@fyit/crouton-schema-designer` | Visual schema editor |
+| `@fyit/crouton-mcp-server` | `@fyit/crouton-mcp` | MCP server for AI |
+| `@fyit/crouton-themes` | `@fyit/crouton-themes` | UI themes |
 
 ---
 
@@ -75,10 +75,10 @@ Development and AI tools.
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-i18n',
-    '@friendlyinternet/nuxt-crouton-editor',
-    '@friendlyinternet/crouton-bookings'
+    '@fyit/crouton',
+    '@fyit/crouton-i18n',
+    '@fyit/crouton-editor',
+    '@fyit/crouton-bookings'
   ]
 })
 ```
@@ -268,9 +268,9 @@ Use find/replace across all package.json files:
 
 | Find | Replace |
 |------|---------|
-| `@friendlyinternet/nuxt-crouton-` | `@fyit/crouton-` |
-| `@friendlyinternet/nuxt-crouton` | `@fyit/crouton-core` |
-| `@friendlyinternet/crouton-` | `@fyit/crouton-` |
+| `@fyit/crouton-` | `@fyit/crouton-` |
+| `@fyit/crouton` | `@fyit/crouton-core` |
+| `@fyit/crouton-` | `@fyit/crouton-` |
 
 #### 4. Update pnpm-workspace.yaml
 
@@ -510,26 +510,26 @@ Search and replace across entire codebase:
 
 | Find | Replace |
 |------|---------|
-| `@friendlyinternet/nuxt-crouton-auth` | `@fyit/crouton-auth` |
-| `@friendlyinternet/nuxt-crouton-admin` | `@fyit/crouton-admin` |
-| `@friendlyinternet/nuxt-crouton-i18n` | `@fyit/crouton-i18n` |
-| `@friendlyinternet/nuxt-crouton-editor` | `@fyit/crouton-editor` |
-| `@friendlyinternet/nuxt-crouton-flow` | `@fyit/crouton-flow` |
-| `@friendlyinternet/nuxt-crouton-assets` | `@fyit/crouton-assets` |
-| `@friendlyinternet/nuxt-crouton-devtools` | `@fyit/crouton-devtools` |
-| `@friendlyinternet/nuxt-crouton-maps` | `@fyit/crouton-maps` |
-| `@friendlyinternet/nuxt-crouton-ai` | `@fyit/crouton-ai` |
-| `@friendlyinternet/nuxt-crouton-email` | `@fyit/crouton-email` |
-| `@friendlyinternet/nuxt-crouton-events` | `@fyit/crouton-events` |
-| `@friendlyinternet/nuxt-crouton-collab` | `@fyit/crouton-collab` |
-| `@friendlyinternet/nuxt-crouton-pages` | `@fyit/crouton-pages` |
-| `@friendlyinternet/nuxt-crouton-cli` | `@fyit/crouton-cli` |
-| `@friendlyinternet/nuxt-crouton-schema-designer` | `@fyit/crouton-schema-designer` |
-| `@friendlyinternet/nuxt-crouton-themes` | `@fyit/crouton-themes` |
-| `@friendlyinternet/nuxt-crouton-mcp-server` | `@fyit/crouton-mcp` |
-| `@friendlyinternet/nuxt-crouton` | `@fyit/crouton-core` |
-| `@friendlyinternet/crouton-bookings` | `@fyit/crouton-bookings` |
-| `@friendlyinternet/crouton-sales` | `@fyit/crouton-sales` |
+| `@fyit/crouton-auth` | `@fyit/crouton-auth` |
+| `@fyit/crouton-admin` | `@fyit/crouton-admin` |
+| `@fyit/crouton-i18n` | `@fyit/crouton-i18n` |
+| `@fyit/crouton-editor` | `@fyit/crouton-editor` |
+| `@fyit/crouton-flow` | `@fyit/crouton-flow` |
+| `@fyit/crouton-assets` | `@fyit/crouton-assets` |
+| `@fyit/crouton-devtools` | `@fyit/crouton-devtools` |
+| `@fyit/crouton-maps` | `@fyit/crouton-maps` |
+| `@fyit/crouton-ai` | `@fyit/crouton-ai` |
+| `@fyit/crouton-email` | `@fyit/crouton-email` |
+| `@fyit/crouton-events` | `@fyit/crouton-events` |
+| `@fyit/crouton-collab` | `@fyit/crouton-collab` |
+| `@fyit/crouton-pages` | `@fyit/crouton-pages` |
+| `@fyit/crouton-cli` | `@fyit/crouton-cli` |
+| `@fyit/crouton-schema-designer` | `@fyit/crouton-schema-designer` |
+| `@fyit/crouton-themes` | `@fyit/crouton-themes` |
+| `@fyit/crouton-mcp-server` | `@fyit/crouton-mcp` |
+| `@fyit/crouton` | `@fyit/crouton-core` |
+| `@fyit/crouton-bookings` | `@fyit/crouton-bookings` |
+| `@fyit/crouton-sales` | `@fyit/crouton-sales` |
 
 **Files to update:**
 - All `package.json` files
@@ -594,26 +594,26 @@ cd packages/crouton && pnpm publish --access public
 
 ```bash
 # Deprecate all old packages
-npm deprecate "@friendlyinternet/nuxt-crouton" "Moved to @fyit/crouton - see migration guide"
-npm deprecate "@friendlyinternet/nuxt-crouton-auth" "Moved to @fyit/crouton-auth"
-npm deprecate "@friendlyinternet/nuxt-crouton-admin" "Moved to @fyit/crouton-admin"
-npm deprecate "@friendlyinternet/nuxt-crouton-i18n" "Moved to @fyit/crouton-i18n"
-npm deprecate "@friendlyinternet/nuxt-crouton-editor" "Moved to @fyit/crouton-editor"
-npm deprecate "@friendlyinternet/nuxt-crouton-flow" "Moved to @fyit/crouton-flow"
-npm deprecate "@friendlyinternet/nuxt-crouton-assets" "Moved to @fyit/crouton-assets"
-npm deprecate "@friendlyinternet/nuxt-crouton-devtools" "Moved to @fyit/crouton-devtools"
-npm deprecate "@friendlyinternet/nuxt-crouton-maps" "Moved to @fyit/crouton-maps"
-npm deprecate "@friendlyinternet/nuxt-crouton-ai" "Moved to @fyit/crouton-ai"
-npm deprecate "@friendlyinternet/nuxt-crouton-email" "Moved to @fyit/crouton-email"
-npm deprecate "@friendlyinternet/nuxt-crouton-events" "Moved to @fyit/crouton-events"
-npm deprecate "@friendlyinternet/nuxt-crouton-collab" "Moved to @fyit/crouton-collab"
-npm deprecate "@friendlyinternet/nuxt-crouton-pages" "Moved to @fyit/crouton-pages"
-npm deprecate "@friendlyinternet/nuxt-crouton-cli" "Moved to @fyit/crouton-cli"
-npm deprecate "@friendlyinternet/nuxt-crouton-schema-designer" "Moved to @fyit/crouton-schema-designer"
-npm deprecate "@friendlyinternet/nuxt-crouton-themes" "Moved to @fyit/crouton-themes"
-npm deprecate "@friendlyinternet/nuxt-crouton-mcp-server" "Moved to @fyit/crouton-mcp"
-npm deprecate "@friendlyinternet/crouton-bookings" "Moved to @fyit/crouton-bookings"
-npm deprecate "@friendlyinternet/crouton-sales" "Moved to @fyit/crouton-sales"
+npm deprecate "@fyit/crouton" "Moved to @fyit/crouton - see migration guide"
+npm deprecate "@fyit/crouton-auth" "Moved to @fyit/crouton-auth"
+npm deprecate "@fyit/crouton-admin" "Moved to @fyit/crouton-admin"
+npm deprecate "@fyit/crouton-i18n" "Moved to @fyit/crouton-i18n"
+npm deprecate "@fyit/crouton-editor" "Moved to @fyit/crouton-editor"
+npm deprecate "@fyit/crouton-flow" "Moved to @fyit/crouton-flow"
+npm deprecate "@fyit/crouton-assets" "Moved to @fyit/crouton-assets"
+npm deprecate "@fyit/crouton-devtools" "Moved to @fyit/crouton-devtools"
+npm deprecate "@fyit/crouton-maps" "Moved to @fyit/crouton-maps"
+npm deprecate "@fyit/crouton-ai" "Moved to @fyit/crouton-ai"
+npm deprecate "@fyit/crouton-email" "Moved to @fyit/crouton-email"
+npm deprecate "@fyit/crouton-events" "Moved to @fyit/crouton-events"
+npm deprecate "@fyit/crouton-collab" "Moved to @fyit/crouton-collab"
+npm deprecate "@fyit/crouton-pages" "Moved to @fyit/crouton-pages"
+npm deprecate "@fyit/crouton-cli" "Moved to @fyit/crouton-cli"
+npm deprecate "@fyit/crouton-schema-designer" "Moved to @fyit/crouton-schema-designer"
+npm deprecate "@fyit/crouton-themes" "Moved to @fyit/crouton-themes"
+npm deprecate "@fyit/crouton-mcp-server" "Moved to @fyit/crouton-mcp"
+npm deprecate "@fyit/crouton-bookings" "Moved to @fyit/crouton-bookings"
+npm deprecate "@fyit/crouton-sales" "Moved to @fyit/crouton-sales"
 ```
 
 ---
@@ -634,8 +634,8 @@ npm deprecate "@friendlyinternet/crouton-sales" "Moved to @fyit/crouton-sales"
 
 ```bash
 # Remove old packages
-pnpm remove @friendlyinternet/nuxt-crouton @friendlyinternet/nuxt-crouton-auth \
-  @friendlyinternet/nuxt-crouton-i18n @friendlyinternet/nuxt-crouton-editor
+pnpm remove @fyit/crouton @fyit/crouton-auth \
+  @fyit/crouton-i18n @fyit/crouton-editor
 
 # Install new unified module
 pnpm add @fyit/crouton
@@ -646,10 +646,10 @@ pnpm add @fyit/crouton
 ```diff
 export default defineNuxtConfig({
 -  extends: [
--    '@friendlyinternet/nuxt-crouton',
--    '@friendlyinternet/nuxt-crouton-auth',
--    '@friendlyinternet/nuxt-crouton-i18n',
--    '@friendlyinternet/nuxt-crouton-editor'
+-    '@fyit/crouton',
+-    '@fyit/crouton-auth',
+-    '@fyit/crouton-i18n',
+-    '@fyit/crouton-editor'
 -  ]
 +  modules: ['@fyit/crouton'],
 +  crouton: {
@@ -666,8 +666,8 @@ If you prefer explicit control:
 ```diff
 export default defineNuxtConfig({
 -  extends: [
--    '@friendlyinternet/nuxt-crouton',
--    '@friendlyinternet/nuxt-crouton-editor'
+-    '@fyit/crouton',
+-    '@fyit/crouton-editor'
 -  ]
 +  extends: [
 +    '@fyit/crouton-core',
@@ -684,9 +684,9 @@ Search and replace in your codebase:
 
 | Find | Replace |
 |------|---------|
-| `@friendlyinternet/nuxt-crouton/` | `@fyit/crouton-core/` |
-| `@friendlyinternet/nuxt-crouton-auth/` | `@fyit/crouton-auth/` |
-| `@friendlyinternet/crouton-bookings/` | `@fyit/crouton-bookings/` |
+| `@fyit/crouton/` | `@fyit/crouton-core/` |
+| `@fyit/crouton-auth/` | `@fyit/crouton-auth/` |
+| `@fyit/crouton-bookings/` | `@fyit/crouton-bookings/` |
 
 ---
 

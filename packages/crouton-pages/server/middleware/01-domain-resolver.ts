@@ -12,7 +12,7 @@
  * This middleware runs before team-context middleware (prefixed with 01-).
  */
 import { eq, and } from 'drizzle-orm'
-import * as authSchema from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+import * as authSchema from '@fyit/crouton-auth/server/database/schema/auth'
 
 // Extend H3EventContext for domain resolution
 declare module 'h3' {

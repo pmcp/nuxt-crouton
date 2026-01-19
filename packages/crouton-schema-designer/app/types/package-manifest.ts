@@ -20,7 +20,7 @@ export interface PackageManifest {
   }
 
   // Dependencies (auto-included in extends)
-  dependencies: string[]          // ['@friendlyinternet/nuxt-crouton']
+  dependencies: string[]          // ['@fyit/crouton']
 
   // Collections this package provides
   collections: PackageCollection[]

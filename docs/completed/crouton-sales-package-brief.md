@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Extract the POS/sales system from `crouton-sales` app into a reusable package `@friendlyinternet/crouton-sales` in the nuxt-crouton monorepo. The package supports event-based point-of-sale with products, categories, orders, and optional thermal receipt printing. Helper authentication will be migrated to `nuxt-crouton-auth` as part of this work.
+Extract the POS/sales system from `crouton-sales` app into a reusable package `@fyit/crouton-sales` in the nuxt-crouton monorepo. The package supports event-based point-of-sale with products, categories, orders, and optional thermal receipt printing. Helper authentication will be migrated to `nuxt-crouton-auth` as part of this work.
 
 ---
 
@@ -26,7 +26,7 @@ Extract the POS/sales system from `crouton-sales` app into a reusable package `@
 
 | Decision | Choice |
 |----------|--------|
-| Package name | `@friendlyinternet/crouton-sales` |
+| Package name | `@fyit/crouton-sales` |
 | Table prefix | `sales` (expects `salesProducts`, `salesOrders`, etc.) |
 | Print module | Opt-in via `croutonSales.print.enabled` config |
 | Helper auth | Migrate to `nuxt-crouton-auth` as limited role |
@@ -190,9 +190,9 @@ Event → Products/Categories → Customer selects → Cart → Order → Print 
 // User's nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth',  // Required for helper auth
-    '@friendlyinternet/crouton-sales',
+    '@fyit/crouton',
+    '@fyit/crouton-auth',  // Required for helper auth
+    '@fyit/crouton-sales',
     './layers/sales'  // Generated layer
   ],
   croutonSales: {
@@ -205,7 +205,7 @@ export default defineNuxtConfig({
 
 ## User Workflow
 
-1. **Install package**: `pnpm add @friendlyinternet/crouton-sales`
+1. **Install package**: `pnpm add @fyit/crouton-sales`
 2. **Copy schemas**: From package to local `./schemas/`
 3. **Configure crouton**: Use `sales` as layer name in crouton.config.js
 4. **Generate**: `crouton config`

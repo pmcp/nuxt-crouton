@@ -139,8 +139,8 @@ If user approves:
    - Add section to CLAUDE.md following existing format
 
 2. **For outdated references:**
-   - Find and replace `@friendlyinternet/nuxt-crouton-*` → `@fyit/crouton-*`
-   - Find and replace `@friendlyinternet/crouton-*` → `@fyit/crouton-*`
+   - Find and replace `@fyit/crouton-*` → `@fyit/crouton-*`
+   - Find and replace `@fyit/crouton-*` → `@fyit/crouton-*`
 
 ### Step 5: Verify
 
@@ -317,7 +317,7 @@ Claude: Auditing crouton-maps...
 2. ⚠️ README.md missing
 
 3. ⚠️ Outdated reference in nuxt.config.ts:
-   - Line 5: "@friendlyinternet/nuxt-crouton-maps"
+   - Line 5: "@fyit/crouton-maps"
 
 Coverage: 40% (2/5 exports documented)
 

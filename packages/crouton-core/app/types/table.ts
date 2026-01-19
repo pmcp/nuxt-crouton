@@ -80,7 +80,7 @@ export const layoutPresets: Record<string, ResponsiveLayout> = {
 
 /**
  * Configuration for collaboration presence badges in collection lists
- * Requires @friendlyinternet/nuxt-crouton-collab to be installed
+ * Requires @fyit/crouton-collab to be installed
  */
 export interface CollabPresenceConfig {
   /**
@@ -150,7 +150,7 @@ export interface CollectionProps {
   stateless?: boolean
   /**
    * Show collaboration presence badges per row
-   * Requires @friendlyinternet/nuxt-crouton-collab to be installed
+   * Requires @fyit/crouton-collab to be installed
    * Set to true for defaults, or provide CollabPresenceConfig for custom settings
    */
   showCollabPresence?: boolean | CollabPresenceConfig

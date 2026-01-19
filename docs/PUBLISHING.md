@@ -11,7 +11,7 @@ This guide covers how to publish the Nuxt Crouton packages to npm.
    npm whoami  # Should show your username
    ```
 
-3. **Organization Access**: Make sure you have access to the `@friendlyinternet` organization on npm
+3. **Organization Access**: Make sure you have access to the `@fyit` organization on npm
 
 4. **pnpm Installed**: This project uses pnpm for package management
    ```bash
@@ -59,9 +59,9 @@ pnpm publish --access public
 ### Step 4: Verify Publication
 
 Check that your packages are live:
-- https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton
-- https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-i18n
-- https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-editor
+- https://www.npmjs.com/package/@fyit/crouton
+- https://www.npmjs.com/package/@fyit/crouton-i18n
+- https://www.npmjs.com/package/@fyit/crouton-editor
 
 ## Updating Packages
 
@@ -103,15 +103,15 @@ Once published, anyone can install your packages:
 
 ```bash
 # Install base package (always required)
-pnpm add @friendlyinternet/nuxt-crouton
+pnpm add @fyit/crouton
 
 # Install addon packages as needed
-pnpm add @friendlyinternet/nuxt-crouton-i18n    # For translations
-pnpm add @friendlyinternet/nuxt-crouton-editor  # For rich text
+pnpm add @fyit/crouton-i18n    # For translations
+pnpm add @fyit/crouton-editor  # For rich text
 
 # Or if npm hangs, clear cache first:
 npm cache clean --force
-npm install @friendlyinternet/nuxt-crouton @friendlyinternet/nuxt-crouton-i18n
+npm install @fyit/crouton @fyit/crouton-i18n
 ```
 
 And use in `nuxt.config.ts` (explicit pattern):
@@ -119,9 +119,9 @@ And use in `nuxt.config.ts` (explicit pattern):
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',       // Base (always required)
-    '@friendlyinternet/nuxt-crouton-i18n',  // Addon for translations
-    '@friendlyinternet/nuxt-crouton-editor' // Addon for rich text
+    '@fyit/crouton',       // Base (always required)
+    '@fyit/crouton-i18n',  // Addon for translations
+    '@fyit/crouton-editor' // Addon for rich text
   ]
 })
 ```
@@ -138,13 +138,13 @@ npm login   # Login if needed
 
 ### "Permission denied"
 - Make sure you're using `--access public` for scoped packages
-- Check that you own the npm scope (@friendlyinternet)
+- Check that you own the npm scope (@fyit)
 - Verify organization access: `npm org ls <your-username>`
 
 ### "npm install hanging"
 If users report that `npm install` hangs when installing your packages, recommend using `pnpm` instead:
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton
+pnpm add @fyit/crouton
 ```
 This is due to npm's complex dependency resolution with peer dependencies.
 

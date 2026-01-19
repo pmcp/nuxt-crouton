@@ -47,7 +47,7 @@ Transform schema-designer into an app designer with package discovery, configura
 │  │                                                                     │ │
 │  │   Reads manifests from:                                             │ │
 │  │   • Workspace packages (packages/crouton-*/crouton.manifest.ts)    │ │
-│  │   • npm packages (@friendlyinternet/crouton-*)                     │ │
+│  │   • npm packages (@fyit/crouton-*)                     │ │
 │  │                                                                     │ │
 │  └────────────────────────────────────────────────────────────────────┘ │
 │                                    │                                     │
@@ -106,7 +106,7 @@ export interface PackageManifest {
   }
 
   // Dependencies (auto-included in extends)
-  dependencies: string[]          // ['@friendlyinternet/nuxt-crouton']
+  dependencies: string[]          // ['@fyit/crouton']
 
   // Collections this package provides
   collections: PackageCollection[]
@@ -162,7 +162,7 @@ export interface ComponentInfo {
 ```typescript
 // packages/crouton-bookings/crouton.manifest.ts
 
-import type { PackageManifest } from '@friendlyinternet/nuxt-crouton-schema-designer'
+import type { PackageManifest } from '@fyit/crouton-schema-designer'
 import bookingSchema from './schemas/booking.json'
 import locationSchema from './schemas/location.json'
 import settingsSchema from './schemas/settings.json'
@@ -183,8 +183,8 @@ export default {
   },
 
   dependencies: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth'
+    '@fyit/crouton',
+    '@fyit/crouton-auth'
   ],
 
   collections: [
@@ -613,7 +613,7 @@ export async function loadPackageManifests(): Promise<PackageManifest[]> {
   for (const pkg of WORKSPACE_PACKAGES) {
     try {
       // Dynamic import of manifest
-      const manifest = await import(`@friendlyinternet/${pkg}/crouton.manifest`)
+      const manifest = await import(`@fyit/${pkg}/crouton.manifest`)
       manifests.push(manifest.default)
     } catch (e) {
       console.warn(`Could not load manifest for ${pkg}:`, e)

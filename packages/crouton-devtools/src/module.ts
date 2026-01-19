@@ -5,7 +5,7 @@ export interface ModuleOptions {}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: '@friendlyinternet/nuxt-crouton-devtools',
+    name: '@fyit/crouton-devtools',
     configKey: 'croutonDevtools',
     compatibility: {
       nuxt: '^4.0.0'

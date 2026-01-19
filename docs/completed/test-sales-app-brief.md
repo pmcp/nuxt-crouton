@@ -9,7 +9,7 @@
 
 ## Goal
 
-Create a minimal test app at `apps/test-sales/` to verify the `@friendlyinternet/crouton-sales` package works end-to-end.
+Create a minimal test app at `apps/test-sales/` to verify the `@fyit/crouton-sales` package works end-to-end.
 
 ---
 
@@ -34,9 +34,9 @@ Create a minimal test app at `apps/test-sales/` to verify the `@friendlyinternet
 
 - [x] **1.2** Configure dependencies
   - Add workspace dependencies:
-    - `@friendlyinternet/nuxt-crouton`: `workspace:*`
-    - `@friendlyinternet/nuxt-crouton-auth`: `workspace:*`
-    - `@friendlyinternet/crouton-sales`: `workspace:*`
+    - `@fyit/crouton`: `workspace:*`
+    - `@fyit/crouton-auth`: `workspace:*`
+    - `@fyit/crouton-sales`: `workspace:*`
   - Add required deps: `@nuxt/ui`, `@nuxthub/core`, `zod`
 
 ### Phase 2: Collection Generation
@@ -85,9 +85,9 @@ Create a minimal test app at `apps/test-sales/` to verify the `@friendlyinternet
   ```typescript
   export default defineNuxtConfig({
     extends: [
-      '@friendlyinternet/nuxt-crouton',
-      '@friendlyinternet/nuxt-crouton-auth',
-      '@friendlyinternet/crouton-sales',
+      '@fyit/crouton',
+      '@fyit/crouton-auth',
+      '@fyit/crouton-sales',
       './layers/sales'
     ],
     modules: [
@@ -166,9 +166,9 @@ apps/test-sales/
     "typecheck": "npx nuxt typecheck"
   },
   "dependencies": {
-    "@friendlyinternet/nuxt-crouton": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
-    "@friendlyinternet/crouton-sales": "workspace:*",
+    "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-sales": "workspace:*",
     "@nuxt/ui": "^4.0.0",
     "@nuxthub/core": "^0.8.0",
     "nuxt": "^4.0.0",

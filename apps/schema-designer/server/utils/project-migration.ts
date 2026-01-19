@@ -9,8 +9,8 @@
  * 3. Both → Package-aware format with packages array
  */
 
-import type { CollectionSchema, CollectionOptions, SchemaDesignerState } from '@friendlyinternet/nuxt-crouton-schema-designer/types'
-import type { PackageInstance } from '@friendlyinternet/nuxt-crouton-schema-designer/types'
+import type { CollectionSchema, CollectionOptions, SchemaDesignerState } from '@fyit/crouton-schema-designer/types'
+import type { PackageInstance } from '@fyit/crouton-schema-designer/types'
 
 /**
  * Raw database record structure

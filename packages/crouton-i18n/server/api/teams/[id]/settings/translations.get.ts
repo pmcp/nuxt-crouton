@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { teamSettings } from '@friendlyinternet/nuxt-crouton/server/database/schema/teamSettings'
-import { isTeamMemberWithEvent } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team-auth'
+import { teamSettings } from '@fyit/crouton/server/database/schema/teamSettings'
+import { isTeamMemberWithEvent } from '@fyit/crouton-auth/server/utils/team-auth'
 
 export default defineEventHandler(async (event) => {
   const { id: teamId } = getRouterParams(event)

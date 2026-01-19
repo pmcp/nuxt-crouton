@@ -10,7 +10,7 @@
  *
  * @example
  * ```ts
- * import type { CollabUser, CollabAwarenessState } from '@friendlyinternet/nuxt-crouton-collab'
+ * import type { CollabUser, CollabAwarenessState } from '@fyit/crouton-collab'
  *
  * const user: CollabUser = {
  *   id: 'user-123',

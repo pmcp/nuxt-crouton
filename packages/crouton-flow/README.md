@@ -14,7 +14,7 @@ Vue Flow integration layer for Nuxt Crouton - graph/DAG visualization with real-
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-flow
+pnpm add @fyit/crouton-flow
 ```
 
 Add to your `nuxt.config.ts`:
@@ -22,8 +22,8 @@ Add to your `nuxt.config.ts`:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-flow'
+    '@fyit/crouton',
+    '@fyit/crouton-flow'
   ]
 })
 ```

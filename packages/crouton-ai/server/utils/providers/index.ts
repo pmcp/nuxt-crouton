@@ -2,7 +2,7 @@
  * AI Provider Registry
  *
  * Central registry of all available AI providers and their models.
- * Auto-imported when extending the @friendlyinternet/nuxt-crouton-ai layer.
+ * Auto-imported when extending the @fyit/crouton-ai layer.
  *
  * @example
  * ```ts

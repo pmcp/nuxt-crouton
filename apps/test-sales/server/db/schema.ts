@@ -2,7 +2,7 @@
 // This file is auto-managed by crouton-generate
 
 // Export auth schema from crouton-auth package
-export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+export * from '@fyit/crouton-auth/server/database/schema/auth'
 export { salesEvents } from '../../layers/sales/collections/events/server/database/schema'
 export { salesProducts } from '../../layers/sales/collections/products/server/database/schema'
 export { salesCategories } from '../../layers/sales/collections/categories/server/database/schema'

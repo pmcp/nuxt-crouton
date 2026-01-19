@@ -50,9 +50,9 @@ export interface CreateAppOptions {
   options: {
     /** Database dialect */
     dialect: 'sqlite' | 'pg'
-    /** Include @friendlyinternet/nuxt-crouton-auth */
+    /** Include @fyit/crouton-auth */
     includeAuth: boolean
-    /** Include @friendlyinternet/nuxt-crouton-i18n */
+    /** Include @fyit/crouton-i18n */
     includeI18n: boolean
   }
 }

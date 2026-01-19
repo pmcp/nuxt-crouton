@@ -22,15 +22,15 @@ Update `package.json`:
 ```json
 {
   "dependencies": {
-    "@friendlyinternet/nuxt-crouton": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
+    "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-auth": "workspace:*",
     "@nuxthub/core": "^0.10.0",
     "@nuxt/ui": "^4.0.0",
     "@libsql/client": "^0.15.0",
     "drizzle-orm": "^0.45.0"
   },
   "devDependencies": {
-    "@friendlyinternet/nuxt-crouton-cli": "workspace:*",
+    "@fyit/crouton-cli": "workspace:*",
     "drizzle-kit": "^0.31.0"
   },
   "scripts": {
@@ -51,8 +51,8 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth'
+    '@fyit/crouton',
+    '@fyit/crouton-auth'
   ],
   modules: ['@nuxthub/core', '@nuxt/ui'],
   hub: { db: 'sqlite' }
@@ -91,8 +91,8 @@ Create `app/assets/css/main.css`:
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-@source "../../../node_modules/@friendlyinternet/nuxt-crouton/app/components/**/*.vue";
-@source "../../../node_modules/@friendlyinternet/nuxt-crouton-auth/app/components/**/*.vue";
+@source "../../../node_modules/@fyit/crouton/app/components/**/*.vue";
+@source "../../../node_modules/@fyit/crouton-auth/app/components/**/*.vue";
 ```
 
 > **Note**: The crouton CLI now auto-adds @source directives, but creating the file first avoids issues.
@@ -316,8 +316,8 @@ Testing a multi-tenant app with multiple collections across different layers.
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth'
+    '@fyit/crouton',
+    '@fyit/crouton-auth'
   ],
   croutonAuth: {
     mode: 'multi-tenant',  // Enable multi-team support

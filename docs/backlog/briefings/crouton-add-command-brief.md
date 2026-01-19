@@ -16,7 +16,7 @@ crouton add i18n
 ### Current Flow (Manual - 5 Steps)
 ```bash
 # 1. Install package
-pnpm add @friendlyinternet/crouton-bookings
+pnpm add @fyit/crouton-bookings
 
 # 2. Edit nuxt.config.ts - add to extends array
 # 3. Edit server/db/schema.ts - add schema exports
@@ -42,7 +42,7 @@ npx nuxt db:migrate
 crouton add bookings
 
 # Full package name (also supported)
-crouton add @friendlyinternet/crouton-bookings
+crouton add @fyit/crouton-bookings
 
 # Multiple modules
 crouton add bookings i18n
@@ -60,31 +60,31 @@ Map short aliases to full package info:
 // lib/module-registry.mjs
 export const MODULES = {
   bookings: {
-    package: '@friendlyinternet/crouton-bookings',
-    schemaExport: '@friendlyinternet/crouton-bookings/server/database/schema',
+    package: '@fyit/crouton-bookings',
+    schemaExport: '@fyit/crouton-bookings/server/database/schema',
     description: 'Booking system with locations and time slots',
     tables: ['bookings_bookings', 'bookings_locations', 'bookings_settings']
   },
   i18n: {
-    package: '@friendlyinternet/nuxt-crouton-i18n',
-    schemaExport: '@friendlyinternet/nuxt-crouton-i18n/server/database/schema',
+    package: '@fyit/crouton-i18n',
+    schemaExport: '@fyit/crouton-i18n/server/database/schema',
     description: 'Multi-language translations',
     tables: ['translations_ui']
   },
   auth: {
-    package: '@friendlyinternet/nuxt-crouton-auth',
-    schemaExport: '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth',
+    package: '@fyit/crouton-auth',
+    schemaExport: '@fyit/crouton-auth/server/database/schema/auth',
     description: 'Better Auth integration',
     tables: ['user', 'session', 'account', 'organization', 'member', '...']
   },
   editor: {
-    package: '@friendlyinternet/nuxt-crouton-editor',
+    package: '@fyit/crouton-editor',
     schemaExport: null, // No database tables
     description: 'Rich text editor'
   },
   assets: {
-    package: '@friendlyinternet/nuxt-crouton-assets',
-    schemaExport: '@friendlyinternet/nuxt-crouton-assets/server/database/schema',
+    package: '@fyit/crouton-assets',
+    schemaExport: '@fyit/crouton-assets/server/database/schema',
     description: 'File uploads and image management',
     tables: ['assets']
   }
@@ -105,7 +105,7 @@ The command should execute these steps in order:
 │    └─ Detect package manager (pnpm/npm/yarn)                │
 ├─────────────────────────────────────────────────────────────┤
 │ 2. Install Package                                          │
-│    └─ pnpm add @friendlyinternet/crouton-bookings           │
+│    └─ pnpm add @fyit/crouton-bookings           │
 ├─────────────────────────────────────────────────────────────┤
 │ 3. Update nuxt.config.ts                                    │
 │    ├─ Parse existing config                                 │
@@ -251,14 +251,14 @@ program
 ### Already Installed
 ```
 $ crouton add bookings
-⚠️  @friendlyinternet/crouton-bookings is already installed.
+⚠️  @fyit/crouton-bookings is already installed.
     Run with --force to reinstall and regenerate migrations.
 ```
 
 ### Missing Dependencies
 ```
 $ crouton add bookings
-❌ Error: @friendlyinternet/nuxt-crouton-auth is required but not installed.
+❌ Error: @fyit/crouton-auth is required but not installed.
    Run: crouton add auth bookings
 ```
 
@@ -281,7 +281,7 @@ $ crouton add bookings
 ```
 $ crouton add bookings
 
-📦 Installing @friendlyinternet/crouton-bookings...
+📦 Installing @fyit/crouton-bookings...
    ✓ Package installed
 
 📝 Updating nuxt.config.ts...

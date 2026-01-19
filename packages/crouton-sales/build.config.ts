@@ -28,6 +28,6 @@ export default defineBuildConfig({
     'vue',
     'nuxt',
     'zod',
-    '@friendlyinternet/nuxt-crouton'
+    '@fyit/crouton'
   ]
 })

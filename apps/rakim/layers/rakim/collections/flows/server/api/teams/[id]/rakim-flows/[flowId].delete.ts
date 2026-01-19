@@ -1,7 +1,7 @@
-// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
+// Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 import { deleteRakimFlow } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
   const { flowId } = getRouterParams(event)

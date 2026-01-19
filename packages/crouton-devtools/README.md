@@ -1,4 +1,4 @@
-# @friendlyinternet/nuxt-crouton-devtools
+# @fyit/crouton-devtools
 
 DevTools integration for Nuxt Crouton - visual inspection and management of CRUD collections.
 
@@ -15,7 +15,7 @@ DevTools integration for Nuxt Crouton - visual inspection and management of CRUD
 ## Installation
 
 ```bash
-pnpm add -D @friendlyinternet/nuxt-crouton-devtools
+pnpm add -D @fyit/crouton-devtools
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ Add the module to your `nuxt.config.ts`:
 export default defineNuxtConfig({
   modules: [
     '@nuxt/devtools',
-    '@friendlyinternet/nuxt-crouton-devtools'
+    '@fyit/crouton-devtools'
   ],
 
   devtools: {
@@ -67,7 +67,7 @@ This package only runs in development mode and has zero impact on your productio
 
 - Nuxt 4+
 - @nuxt/devtools
-- @friendlyinternet/nuxt-crouton
+- @fyit/crouton
 
 ## Roadmap
 

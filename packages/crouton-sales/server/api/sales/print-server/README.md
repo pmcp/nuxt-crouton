@@ -27,7 +27,7 @@ Poll for pending print jobs for an event.
 ```typescript
 // server/api/sales/print-server/events/[eventId]/jobs.get.ts
 import { eq, and } from 'drizzle-orm'
-import { PRINT_STATUS } from '@friendlyinternet/crouton-sales/server/utils/print-queue-service'
+import { PRINT_STATUS } from '@fyit/crouton-sales/server/utils/print-queue-service'
 // Import from your generated layer
 import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
 import { salesPrinters } from '~~/layers/sales/collections/printers/server/database/schema'
@@ -80,7 +80,7 @@ Mark a print job as completed.
 ```typescript
 // server/api/sales/print-server/jobs/[jobId]/complete.post.ts
 import { eq } from 'drizzle-orm'
-import { PRINT_STATUS } from '@friendlyinternet/crouton-sales/server/utils/print-queue-service'
+import { PRINT_STATUS } from '@fyit/crouton-sales/server/utils/print-queue-service'
 import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
 
 export default defineEventHandler(async (event) => {
@@ -120,7 +120,7 @@ Mark a print job as failed.
 ```typescript
 // server/api/sales/print-server/jobs/[jobId]/fail.post.ts
 import { eq } from 'drizzle-orm'
-import { PRINT_STATUS } from '@friendlyinternet/crouton-sales/server/utils/print-queue-service'
+import { PRINT_STATUS } from '@fyit/crouton-sales/server/utils/print-queue-service'
 import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
 
 export default defineEventHandler(async (event) => {

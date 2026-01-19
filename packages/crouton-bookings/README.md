@@ -1,11 +1,11 @@
-# @friendlyinternet/crouton-bookings
+# @fyit/crouton-bookings
 
 A booking system layer for Nuxt applications. Supports both **slot-based bookings** (courts, rooms, time slots) and **inventory-based reservations** (equipment, rentals).
 
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/crouton-bookings
+pnpm add @fyit/crouton-bookings
 ```
 
 ## Quick Start
@@ -16,9 +16,9 @@ pnpm add @friendlyinternet/crouton-bookings
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth',
-    '@friendlyinternet/crouton-bookings',
+    '@fyit/crouton',
+    '@fyit/crouton-auth',
+    '@fyit/crouton-bookings',
     './layers/bookings' // Your generated layer
   ],
   // ... other config
@@ -27,7 +27,7 @@ export default defineNuxtConfig({
 
 ### 2. Create schemas
 
-Copy the schemas from `node_modules/@friendlyinternet/crouton-bookings/schemas/` to your `schemas/` directory, or create your own based on the reference schemas.
+Copy the schemas from `node_modules/@fyit/crouton-bookings/schemas/` to your `schemas/` directory, or create your own based on the reference schemas.
 
 **Required schemas:**
 - `booking.json` - Individual bookings
@@ -200,7 +200,7 @@ export default defineNuxtConfig({
 ```
 
 Also requires:
-- `@friendlyinternet/crouton-email` package
+- `@fyit/crouton-email` package
 - Email template and log schemas (optional)
 
 See [SCHEMAS.md](./SCHEMAS.md) for email schema details.

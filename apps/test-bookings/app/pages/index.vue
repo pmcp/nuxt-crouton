@@ -5,7 +5,7 @@
 <template>
   <div class="p-8">
     <h1 class="text-2xl font-bold mb-4">Test Bookings App</h1>
-    <p class="text-neutral-600 mb-8">Dogfooding the @friendlyinternet/crouton-bookings package</p>
+    <p class="text-neutral-600 mb-8">Dogfooding the @fyit/crouton-bookings package</p>
 
     <div class="grid gap-4">
       <UCard>

@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     const database = db
 
     // First, resolve team ID from slug if needed
-    const authSchema = await import('@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth')
+    const authSchema = await import('@fyit/crouton-auth/server/database/schema/auth')
 
     const team = await database
       .select({ id: authSchema.organization.id })
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
     // Check if user is authenticated and a team member
     let isMember = false
     try {
-      const { getServerSession } = await import('@friendlyinternet/nuxt-crouton-auth/server/utils/useServerAuth')
+      const { getServerSession } = await import('@fyit/crouton-auth/server/utils/useServerAuth')
       const session = await getServerSession(event)
 
       if (session?.user) {

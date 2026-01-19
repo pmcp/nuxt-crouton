@@ -1,7 +1,7 @@
-// Team-based endpoint - requires @friendlyinternet/nuxt-crouton-auth package
+// Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 import { updatePlaygroundCategorie, getPlaygroundCategoriesByIds } from '../../../../database/queries'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import type { PlaygroundCategorie } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {

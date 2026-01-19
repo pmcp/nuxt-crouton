@@ -133,7 +133,7 @@ const hasAISuggestions = computed(() => {
           <UIcon name="i-lucide-bot-off" class="text-4xl text-[var(--ui-text-muted)]" />
           <p class="text-sm text-[var(--ui-text-muted)]">
             AI features require the<br />
-            <code class="text-xs bg-[var(--ui-bg-elevated)] px-1 rounded">@friendlyinternet/nuxt-crouton-ai</code><br />
+            <code class="text-xs bg-[var(--ui-bg-elevated)] px-1 rounded">@fyit/crouton-ai</code><br />
             package to be installed.
           </p>
         </div>

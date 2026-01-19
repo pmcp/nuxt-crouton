@@ -8,8 +8,8 @@
  * - Email stats and actions (when email module is enabled)
  */
 import { eq, and, asc, gte, lte } from 'drizzle-orm'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
-import { user as userTable } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import { user as userTable } from '@fyit/crouton-auth/server/database/schema/auth'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
 import { isBookingEmailEnabled } from '../../../../utils/booking-emails'

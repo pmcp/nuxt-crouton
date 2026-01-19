@@ -101,9 +101,9 @@ export function getExtendsReference(
   context: MonorepoContext
 ): string {
   const npmNames: Record<string, string> = {
-    auth: '@friendlyinternet/nuxt-crouton-auth',
-    i18n: '@friendlyinternet/nuxt-crouton-i18n',
-    crouton: '@friendlyinternet/nuxt-crouton'
+    auth: '@fyit/crouton-auth',
+    i18n: '@fyit/crouton-i18n',
+    crouton: '@fyit/crouton'
   }
 
   // Check predefined packages first
@@ -112,7 +112,7 @@ export function getExtendsReference(
     if (context.isMonorepo && localPath) {
       return localPath
     }
-    return npmNames[packageName] || `@friendlyinternet/${packageName}`
+    return npmNames[packageName] || `@fyit/${packageName}`
   }
 
   // For dynamic packages (e.g., crouton-bookings), check if they exist in monorepo
@@ -124,5 +124,5 @@ export function getExtendsReference(
   }
 
   // Fall back to npm package name
-  return `@friendlyinternet/${packageName}`
+  return `@fyit/${packageName}`
 }

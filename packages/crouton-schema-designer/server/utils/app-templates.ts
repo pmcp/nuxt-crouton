@@ -59,7 +59,7 @@ export function generatePackageJson(options: AppTemplateOptions): string {
 
   const deps: Record<string, string> = {
     'nuxt': '^4.0.0',
-    '@friendlyinternet/nuxt-crouton': getPackageDependency('crouton', context),
+    '@fyit/crouton': getPackageDependency('crouton', context),
     // Drizzle ORM for NuxtHub database
     'drizzle-orm': '^0.45.0',
     '@libsql/client': '^0.15.0'
@@ -73,10 +73,10 @@ export function generatePackageJson(options: AppTemplateOptions): string {
   }
 
   if (options.includeAuth) {
-    deps['@friendlyinternet/nuxt-crouton-auth'] = getPackageDependency('auth', context)
+    deps['@fyit/crouton-auth'] = getPackageDependency('auth', context)
   }
   if (options.includeI18n) {
-    deps['@friendlyinternet/nuxt-crouton-i18n'] = getPackageDependency('i18n', context)
+    deps['@fyit/crouton-i18n'] = getPackageDependency('i18n', context)
   }
 
   // Add package dependencies
@@ -87,7 +87,7 @@ export function generatePackageJson(options: AppTemplateOptions): string {
         deps[pkg.npmPackage] = 'latest'
       } else {
         // Use local package reference for monorepo development
-        const packageName = `@friendlyinternet/${pkg.packageId}`
+        const packageName = `@fyit/${pkg.packageId}`
         deps[packageName] = getPackageDependency(pkg.packageId, context)
       }
     }
@@ -149,17 +149,17 @@ export function generateNuxtConfig(options: AppTemplateOptions): string {
 
     // Always alias auth and i18n when in monorepo (they're auto-included by nuxt-crouton)
     if (context.packagePaths.auth) {
-      aliases.push(`    '@friendlyinternet/nuxt-crouton-auth': '${context.packagePaths.auth}'`)
+      aliases.push(`    '@fyit/crouton-auth': '${context.packagePaths.auth}'`)
     }
     if (context.packagePaths.i18n) {
-      aliases.push(`    '@friendlyinternet/nuxt-crouton-i18n': '${context.packagePaths.i18n}'`)
+      aliases.push(`    '@fyit/crouton-i18n': '${context.packagePaths.i18n}'`)
     }
 
     if (aliases.length > 0) {
       aliasSection = `
 
   // Monorepo: alias package imports to local paths
-  // Required because generated code imports from @friendlyinternet/* packages
+  // Required because generated code imports from @fyit/* packages
   // and pnpm symlinks point to .ts files that Rollup can't parse
   alias: {
 ${aliases.join(',\n')}
@@ -267,7 +267,7 @@ export function generateAllTemplates(options: AppTemplateOptions): GeneratedFile
     content: `# Database
 NUXT_HUB_PROJECT_KEY=
 
-# Auth (if using @friendlyinternet/nuxt-crouton-auth)
+# Auth (if using @fyit/crouton-auth)
 BETTER_AUTH_SECRET=your-32-char-secret-here
 `
   })
@@ -280,12 +280,12 @@ BETTER_AUTH_SECRET=your-32-char-secret-here
 
   if (options.includeAuth) {
     schemaImports.push(`// Auth schema (Better Auth tables)
-export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'`)
+export * from '@fyit/crouton-auth/server/database/schema/auth'`)
   }
 
   if (options.includeI18n) {
     schemaImports.push(`// I18n schema (translations table)
-export * from '@friendlyinternet/nuxt-crouton-i18n/server/database/schema'`)
+export * from '@fyit/crouton-i18n/server/database/schema'`)
   }
 
   files.push({

@@ -8,36 +8,36 @@ Nuxt Crouton is a collection of Nuxt Layers that provide instant CRUD functional
 
 ### Core
 
-#### [@friendlyinternet/nuxt-crouton](./packages/nuxt-crouton)
+#### [@fyit/crouton](./packages/nuxt-crouton)
 Base CRUD layer with essential components and composables for data management.
 
-#### [@friendlyinternet/nuxt-crouton-cli](./packages/nuxt-crouton-cli)
+#### [@fyit/crouton-cli](./packages/nuxt-crouton-cli)
 CLI tool to generate complete CRUD collections with API endpoints, components, and database schema.
 
 ### Addon Layers
 
-#### [@friendlyinternet/nuxt-crouton-i18n](./packages/nuxt-crouton-i18n)
+#### [@fyit/crouton-i18n](./packages/nuxt-crouton-i18n)
 Multi-language support extending the base layer with i18n capabilities.
 
-#### [@friendlyinternet/nuxt-crouton-editor](./packages/nuxt-crouton-editor)
+#### [@fyit/crouton-editor](./packages/nuxt-crouton-editor)
 Rich text editor integration extending the base layer with Tiptap.
 
-#### [@friendlyinternet/nuxt-crouton-ai](./packages/nuxt-crouton-ai)
+#### [@fyit/crouton-ai](./packages/nuxt-crouton-ai)
 AI integration layer with chat, completion, and multi-provider support (OpenAI, Anthropic).
 
-#### [@friendlyinternet/nuxt-crouton-assets](./packages/nuxt-crouton-assets)
+#### [@fyit/crouton-assets](./packages/nuxt-crouton-assets)
 Centralized asset management with NuxtHub blob storage integration.
 
-#### [@friendlyinternet/nuxt-crouton-events](./packages/nuxt-crouton-events)
+#### [@fyit/crouton-events](./packages/nuxt-crouton-events)
 Event management with calendar integration and scheduling capabilities.
 
-#### [@friendlyinternet/nuxt-crouton-maps](./packages/nuxt-crouton-maps)
+#### [@fyit/crouton-maps](./packages/nuxt-crouton-maps)
 Map integration with location fields and geocoding support.
 
-#### [@friendlyinternet/nuxt-crouton-flow](./packages/nuxt-crouton-flow)
+#### [@fyit/crouton-flow](./packages/nuxt-crouton-flow)
 Visual flow builder with drag-and-drop workflow creation.
 
-#### [@friendlyinternet/nuxt-crouton-devtools](./packages/nuxt-crouton-devtools)
+#### [@fyit/crouton-devtools](./packages/nuxt-crouton-devtools)
 Development tools and debugging utilities for Crouton applications.
 
 ## 🚀 Quick Start
@@ -46,20 +46,20 @@ Development tools and debugging utilities for Crouton applications.
 
 ```bash
 # Core (always required)
-pnpm add @friendlyinternet/nuxt-crouton
+pnpm add @fyit/crouton
 
 # CLI scaffolding tool (dev dependency)
-pnpm add -D @friendlyinternet/nuxt-crouton-cli
+pnpm add -D @fyit/crouton-cli
 
 # Addon layers (install as needed)
-pnpm add @friendlyinternet/nuxt-crouton-i18n       # Multi-language support
-pnpm add @friendlyinternet/nuxt-crouton-editor    # Rich text editing
-pnpm add @friendlyinternet/nuxt-crouton-ai        # AI chat/completion
-pnpm add @friendlyinternet/nuxt-crouton-assets    # Asset management
-pnpm add @friendlyinternet/nuxt-crouton-events    # Event/calendar features
-pnpm add @friendlyinternet/nuxt-crouton-maps      # Map integration
-pnpm add @friendlyinternet/nuxt-crouton-flow      # Visual flow builder
-pnpm add @friendlyinternet/nuxt-crouton-devtools  # Dev tools
+pnpm add @fyit/crouton-i18n       # Multi-language support
+pnpm add @fyit/crouton-editor    # Rich text editing
+pnpm add @fyit/crouton-ai        # AI chat/completion
+pnpm add @fyit/crouton-assets    # Asset management
+pnpm add @fyit/crouton-events    # Event/calendar features
+pnpm add @fyit/crouton-maps      # Map integration
+pnpm add @fyit/crouton-flow      # Visual flow builder
+pnpm add @fyit/crouton-devtools  # Dev tools
 ```
 
 ### Configuration
@@ -70,17 +70,17 @@ Add to your `nuxt.config.ts`:
 export default defineNuxtConfig({
   extends: [
     // Base layer (always required)
-    '@friendlyinternet/nuxt-crouton',
+    '@fyit/crouton',
 
     // Optional addon layers (add only what you need)
-    '@friendlyinternet/nuxt-crouton-i18n',      // Multi-language support
-    '@friendlyinternet/nuxt-crouton-editor',    // Rich text editing
-    '@friendlyinternet/nuxt-crouton-ai',        // AI chat/completion
-    '@friendlyinternet/nuxt-crouton-assets',    // Asset management
-    '@friendlyinternet/nuxt-crouton-events',    // Event/calendar features
-    '@friendlyinternet/nuxt-crouton-maps',      // Map integration
-    '@friendlyinternet/nuxt-crouton-flow',      // Visual flow builder
-    '@friendlyinternet/nuxt-crouton-devtools',  // Dev tools
+    '@fyit/crouton-i18n',      // Multi-language support
+    '@fyit/crouton-editor',    // Rich text editing
+    '@fyit/crouton-ai',        // AI chat/completion
+    '@fyit/crouton-assets',    // Asset management
+    '@fyit/crouton-events',    // Event/calendar features
+    '@fyit/crouton-maps',      // Map integration
+    '@fyit/crouton-flow',      // Visual flow builder
+    '@fyit/crouton-devtools',  // Dev tools
   ]
 })
 ```
@@ -113,26 +113,26 @@ const { t } = useT()
 ## 🏗️ Architecture
 
 ```
-@friendlyinternet/nuxt-crouton (base layer - always required)
+@fyit/crouton (base layer - always required)
     │
-    ├── @friendlyinternet/nuxt-crouton-i18n        (addon - multi-language)
-    ├── @friendlyinternet/nuxt-crouton-editor      (addon - rich text)
-    ├── @friendlyinternet/nuxt-crouton-ai          (addon - AI chat)
-    ├── @friendlyinternet/nuxt-crouton-assets      (addon - asset management)
-    ├── @friendlyinternet/nuxt-crouton-events      (addon - events/calendar)
-    ├── @friendlyinternet/nuxt-crouton-maps        (addon - maps/location)
-    ├── @friendlyinternet/nuxt-crouton-flow        (addon - visual flows)
-    └── @friendlyinternet/nuxt-crouton-devtools    (addon - dev tools)
+    ├── @fyit/crouton-i18n        (addon - multi-language)
+    ├── @fyit/crouton-editor      (addon - rich text)
+    ├── @fyit/crouton-ai          (addon - AI chat)
+    ├── @fyit/crouton-assets      (addon - asset management)
+    ├── @fyit/crouton-events      (addon - events/calendar)
+    ├── @fyit/crouton-maps        (addon - maps/location)
+    ├── @fyit/crouton-flow        (addon - visual flows)
+    └── @fyit/crouton-devtools    (addon - dev tools)
 ```
 
 **Explicit Configuration**: Always include the base layer plus any addons you need. This makes dependencies clear and explicit.
 
 **Development Tools**:
-- `@friendlyinternet/nuxt-crouton-cli` - CLI for scaffolding collections
+- `@fyit/crouton-cli` - CLI for scaffolding collections
 
 ## 🎯 Features
 
-### Base Layer (`@friendlyinternet/nuxt-crouton`)
+### Base Layer (`@fyit/crouton`)
 - ✅ **CrudButton** - Generic action buttons
 - ✅ **CroutonReferenceSelect** - Entity selection dropdowns
 - ✅ **ExpandableSlideover** - Expandable panels
@@ -140,55 +140,55 @@ const { t } = useT()
 - ✅ **useCrud()** - Complete CRUD operations
 - ✅ **useCollections()** - Collection management
 
-### i18n Layer (`@friendlyinternet/nuxt-crouton-i18n`)
+### i18n Layer (`@fyit/crouton-i18n`)
 - ✅ Everything from base layer
 - ✅ **CroutonI18nInput** - Multi-language input fields
 - ✅ **CroutonI18nLanguageSwitcher** - Language selection
 - ✅ **useT()** - Translation composable
 - ✅ **i18n** - Pre-configured with EN, NL, FR
 
-### Editor Layer (`@friendlyinternet/nuxt-crouton-editor`)
+### Editor Layer (`@fyit/crouton-editor`)
 - ✅ Everything from base layer
 - ✅ **Rich Text Editor** - Tiptap integration
 - ✅ **Toolbar** - Formatting options
 - ✅ **Commands** - Keyboard shortcuts
 
-### Collection Generator (`@friendlyinternet/nuxt-crouton-cli`)
+### Collection Generator (`@fyit/crouton-cli`)
 - ✅ **CLI Scaffolding** - Generate complete CRUD collections
 - ✅ **Form Generation** - Auto-generate forms from schema
 - ✅ **List Generation** - Auto-generate tables and lists
 - ✅ **API Generation** - Create endpoints and validation
 - ✅ **Rollback Support** - Undo generated collections
 
-### AI Layer (`@friendlyinternet/nuxt-crouton-ai`)
+### AI Layer (`@fyit/crouton-ai`)
 - ✅ **useChat()** - Streaming chat with conversation history
 - ✅ **useCompletion()** - Text completion for single-turn AI
 - ✅ **AIChatbox** - Complete chat interface component
 - ✅ **Multi-Provider** - OpenAI and Anthropic support
 - ✅ **Server Utilities** - Provider factory and streaming
 
-### Assets Layer (`@friendlyinternet/nuxt-crouton-assets`)
+### Assets Layer (`@fyit/crouton-assets`)
 - ✅ **CroutonAssetsPicker** - Visual asset browser
 - ✅ **CroutonAssetsUploader** - File upload with metadata
 - ✅ **useAssetUpload()** - Programmatic upload handling
 - ✅ **NuxtHub Integration** - Cloudflare blob storage
 
-### Events Layer (`@friendlyinternet/nuxt-crouton-events`)
+### Events Layer (`@fyit/crouton-events`)
 - ✅ **Calendar Components** - Event scheduling UI
 - ✅ **Date/Time Fields** - Calendar-aware form inputs
 - ✅ **Recurring Events** - Schedule patterns support
 
-### Maps Layer (`@friendlyinternet/nuxt-crouton-maps`)
+### Maps Layer (`@fyit/crouton-maps`)
 - ✅ **Map Components** - Interactive map display
 - ✅ **Location Fields** - Address input with geocoding
 - ✅ **Marker Support** - Pin locations on maps
 
-### Flow Layer (`@friendlyinternet/nuxt-crouton-flow`)
+### Flow Layer (`@fyit/crouton-flow`)
 - ✅ **Visual Editor** - Drag-and-drop flow builder
 - ✅ **Node Types** - Configurable workflow nodes
 - ✅ **Flow Execution** - Runtime workflow engine
 
-### DevTools Layer (`@friendlyinternet/nuxt-crouton-devtools`)
+### DevTools Layer (`@fyit/crouton-devtools`)
 - ✅ **Debug Panel** - Inspect collections and state
 - ✅ **API Explorer** - Test generated endpoints
 - ✅ **Schema Viewer** - View collection schemas

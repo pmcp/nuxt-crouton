@@ -10,7 +10,7 @@
  * - JSON: Returns array of events
  */
 import { eq, and, gte, lte } from 'drizzle-orm'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
   // Authenticate and check team membership

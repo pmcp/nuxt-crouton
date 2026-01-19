@@ -45,7 +45,7 @@ Modular crouton architecture with three-tier routing (user/admin/super-admin) an
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         USER INSTALLS                                   │
 │                                                                         │
-│   pnpm add @friendlyinternet/nuxt-crouton                               │
+│   pnpm add @fyit/crouton                               │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
@@ -78,9 +78,9 @@ Modular crouton architecture with three-tier routing (user/admin/super-admin) an
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         OPTIONAL APPS                                   │
 │                                                                         │
-│   pnpm add @friendlyinternet/crouton-bookings                           │
-│   pnpm add @friendlyinternet/crouton-maps                               │
-│   pnpm add @friendlyinternet/crouton-editor                             │
+│   pnpm add @fyit/crouton-bookings                           │
+│   pnpm add @fyit/crouton-maps                               │
+│   pnpm add @fyit/crouton-editor                             │
 │                                                                         │
 │   Each app:                                                             │
 │   • Provides its own translations (bookings.*, etc.)                    │
@@ -165,11 +165,11 @@ Modular crouton architecture with three-tier routing (user/admin/super-admin) an
 
 ```json
 {
-  "name": "@friendlyinternet/nuxt-crouton",
+  "name": "@fyit/crouton",
   "dependencies": {
-    "@friendlyinternet/nuxt-crouton-i18n": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-admin": "workspace:*"
+    "@fyit/crouton-i18n": "workspace:*",
+    "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-admin": "workspace:*"
   }
 }
 ```
@@ -180,9 +180,9 @@ Modular crouton architecture with three-tier routing (user/admin/super-admin) an
 // packages/nuxt-crouton/nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-i18n',   // Must be first (provides useT)
-    '@friendlyinternet/nuxt-crouton-auth',   // Uses i18n
-    '@friendlyinternet/nuxt-crouton-admin'   // Uses i18n + auth
+    '@fyit/crouton-i18n',   // Must be first (provides useT)
+    '@fyit/crouton-auth',   // Uses i18n
+    '@fyit/crouton-admin'   // Uses i18n + auth
   ]
 })
 ```
@@ -496,9 +496,9 @@ Files to update:
 // packages/nuxt-crouton/nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-i18n',
-    '@friendlyinternet/nuxt-crouton-auth',
-    '@friendlyinternet/nuxt-crouton-admin'
+    '@fyit/crouton-i18n',
+    '@fyit/crouton-auth',
+    '@fyit/crouton-admin'
   ]
 })
 ```
@@ -507,9 +507,9 @@ export default defineNuxtConfig({
 // packages/nuxt-crouton/package.json
 {
   "dependencies": {
-    "@friendlyinternet/nuxt-crouton-i18n": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-auth": "workspace:*",
-    "@friendlyinternet/nuxt-crouton-admin": "workspace:*"
+    "@fyit/crouton-i18n": "workspace:*",
+    "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-admin": "workspace:*"
   }
 }
 ```
@@ -714,15 +714,15 @@ export default defineAppConfig({
 export default defineNuxtConfig({
   extends: [
     // BEFORE:
-    // '@friendlyinternet/nuxt-crouton',
-    // '@friendlyinternet/nuxt-crouton-auth',
-    // '@friendlyinternet/nuxt-crouton-i18n',
+    // '@fyit/crouton',
+    // '@fyit/crouton-auth',
+    // '@fyit/crouton-i18n',
     // ...
 
     // AFTER:
-    '@friendlyinternet/nuxt-crouton',           // Includes auth, admin, i18n
-    '@friendlyinternet/crouton-bookings',
-    '@friendlyinternet/nuxt-crouton-maps',
+    '@fyit/crouton',           // Includes auth, admin, i18n
+    '@fyit/crouton-bookings',
+    '@fyit/crouton-maps',
     './layers/bookings'
   ]
 })
@@ -808,7 +808,7 @@ export default defineNuxtConfig({
 
 ## Success Criteria
 
-1. **Single install** — `pnpm add @friendlyinternet/nuxt-crouton` gives you everything
+1. **Single install** — `pnpm add @fyit/crouton` gives you everything
 2. **Clear tiers** — User, admin, super-admin routes are intuitive
 3. **Auto-discovery** — Adding crouton-bookings automatically shows in sidebar
 4. **Full i18n** — All UI is translatable, team overrides work
@@ -824,17 +824,17 @@ export default defineNuxtConfig({
 ```typescript
 // BEFORE
 extends: [
-  '@friendlyinternet/nuxt-crouton',
-  '@friendlyinternet/nuxt-crouton-auth',
-  '@friendlyinternet/nuxt-crouton-admin',
-  '@friendlyinternet/nuxt-crouton-i18n',
-  '@friendlyinternet/crouton-bookings',
+  '@fyit/crouton',
+  '@fyit/crouton-auth',
+  '@fyit/crouton-admin',
+  '@fyit/crouton-i18n',
+  '@fyit/crouton-bookings',
 ]
 
 // AFTER
 extends: [
-  '@friendlyinternet/nuxt-crouton',
-  '@friendlyinternet/crouton-bookings',
+  '@fyit/crouton',
+  '@fyit/crouton-bookings',
 ]
 ```
 

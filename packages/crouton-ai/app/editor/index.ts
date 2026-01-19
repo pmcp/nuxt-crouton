@@ -1,9 +1,9 @@
 /**
- * Editor Extensions for @friendlyinternet/nuxt-crouton-ai
+ * Editor Extensions for @fyit/crouton-ai
  *
  * @example
  * ```ts
- * import { TranslationAI } from '@friendlyinternet/nuxt-crouton-ai/editor'
+ * import { TranslationAI } from '@fyit/crouton-ai/editor'
  * ```
  */
 

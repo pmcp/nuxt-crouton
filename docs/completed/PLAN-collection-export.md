@@ -2,7 +2,7 @@
 
 ## Overview
 
-Add data export capabilities to `@friendlyinternet/nuxt-crouton` core package, enabling users to export collection data to CSV and JSON formats.
+Add data export capabilities to `@fyit/crouton` core package, enabling users to export collection data to CSV and JSON formats.
 
 ---
 

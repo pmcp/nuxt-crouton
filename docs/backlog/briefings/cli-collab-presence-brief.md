@@ -166,5 +166,5 @@ const collabConfig = computed(() => ({
 
 ## Dependencies
 
-- Requires `@friendlyinternet/nuxt-crouton-collab` to be extended in app
+- Requires `@fyit/crouton-collab` to be extended in app
 - Uses `useSession()` from `nuxt-crouton-auth`

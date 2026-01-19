@@ -9,7 +9,7 @@
  *
  * Required setup:
  * - Enable: runtimeConfig.croutonBookings.email.enabled = true
- * - Install: @friendlyinternet/crouton-email (or implement custom email provider)
+ * - Install: @fyit/crouton-email (or implement custom email provider)
  * - Generate: email-template and email-log collections
  */
 import { eq, and } from 'drizzle-orm'
@@ -276,7 +276,7 @@ let _customEmailProvider: CustomEmailProvider | null = null
  *
  * @example
  * // server/plugins/email.ts
- * import { registerEmailProvider } from '@friendlyinternet/crouton-bookings/server/utils/email-service'
+ * import { registerEmailProvider } from '@fyit/crouton-bookings/server/utils/email-service'
  * import { Resend } from 'resend'
  *
  * export default defineNitroPlugin(() => {
@@ -333,10 +333,10 @@ async function sendSingleEmail(options: {
   const provider = await getEmailProvider()
 
   if (!provider) {
-    console.warn('[booking-email] No email provider configured. Either register a custom provider or install @friendlyinternet/crouton-email.')
+    console.warn('[booking-email] No email provider configured. Either register a custom provider or install @fyit/crouton-email.')
     return {
       success: false,
-      error: 'No email provider configured. Either register a custom provider or install @friendlyinternet/crouton-email.'
+      error: 'No email provider configured. Either register a custom provider or install @fyit/crouton-email.'
     }
   }
 

@@ -1,4 +1,4 @@
-import type { PackageManifest } from '@friendlyinternet/nuxt-crouton-schema-designer/types'
+import type { PackageManifest } from '@fyit/crouton-schema-designer/types'
 import eventsSchema from './schemas/events.json'
 import productsSchema from './schemas/products.json'
 import categoriesSchema from './schemas/categories.json'
@@ -24,8 +24,8 @@ const manifest: PackageManifest = {
   },
 
   dependencies: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth'
+    '@fyit/crouton',
+    '@fyit/crouton-auth'
   ],
 
   collections: [

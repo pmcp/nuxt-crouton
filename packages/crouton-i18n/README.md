@@ -1,6 +1,6 @@
-# @friendlyinternet/nuxt-crouton-i18n
+# @fyit/crouton-i18n
 
-Multi-language support layer extending `@friendlyinternet/nuxt-crouton` for FYIT scaffolded collections.
+Multi-language support layer extending `@fyit/crouton` for FYIT scaffolded collections.
 
 ## Features
 
@@ -15,7 +15,7 @@ Multi-language support layer extending `@friendlyinternet/nuxt-crouton` for FYIT
 
 ```bash
 # Install both base and addon
-pnpm add @friendlyinternet/nuxt-crouton @friendlyinternet/nuxt-crouton-i18n
+pnpm add @fyit/crouton @fyit/crouton-i18n
 ```
 
 ## Quick Start (Using Generator)
@@ -85,8 +85,8 @@ If you're not using the generator, follow these steps:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',       // Base layer (required)
-    '@friendlyinternet/nuxt-crouton-i18n'   // i18n addon
+    '@fyit/crouton',       // Base layer (required)
+    '@fyit/crouton-i18n'   // i18n addon
   ]
 })
 ```
@@ -133,7 +133,7 @@ pnpm db:generate
 In `app/app.config.ts`:
 
 ```typescript
-import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'
+import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
 
 export default defineAppConfig({
   croutonCollections: {
@@ -365,8 +365,8 @@ Override default locales in your nuxt.config:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-i18n'
+    '@fyit/crouton',
+    '@fyit/crouton-i18n'
   ],
 
   i18n: {
@@ -382,9 +382,9 @@ export default defineNuxtConfig({
 ## Layer Architecture
 
 ```
-@friendlyinternet/nuxt-crouton (base CRUD - required)
+@fyit/crouton (base CRUD - required)
     +
-@friendlyinternet/nuxt-crouton-i18n (addon - this layer)
+@fyit/crouton-i18n (addon - this layer)
 ```
 
 ## Troubleshooting
@@ -406,7 +406,7 @@ langDir: './locales'
 Ensure the collection is registered in `app.config.ts`:
 
 ```typescript
-import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'
+import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
 
 croutonCollections: {
   translationsUi: translationsUiConfig

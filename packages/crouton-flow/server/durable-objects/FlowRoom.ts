@@ -13,7 +13,7 @@ interface Session {
 }
 
 /**
- * @deprecated Use CollabRoom from @friendlyinternet/nuxt-crouton-collab instead.
+ * @deprecated Use CollabRoom from @fyit/crouton-collab instead.
  *
  * This Durable Object is kept for backward compatibility with existing deployments.
  * New flows should use CollabRoom via useFlowSync which now wraps useCollabSync.

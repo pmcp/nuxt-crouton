@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { emailService } from '@friendlyinternet/nuxt-crouton-email/server/utils/email'
-import { user as userTable } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+import { emailService } from '@fyit/crouton-email/server/utils/email'
+import { user as userTable } from '@fyit/crouton-auth/server/database/schema/auth'
 import { getRakimConfigsByIds } from '#layers/rakim/collections/configs/server/database/queries'
 import { updateRakimInboxMessage } from '#layers/rakim/collections/inboxmessages/server/database/queries'
 import { logger } from '../utils/logger'

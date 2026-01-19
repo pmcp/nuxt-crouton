@@ -453,7 +453,7 @@ const formLayoutTabs = [
         <div class="text-center mb-12">
           <h1 class="text-3xl font-bold mb-2">Crouton Components</h1>
           <p class="text-sm text-[var(--ui-text-muted)]">
-            Components from <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">@friendlyinternet/nuxt-crouton</code>
+            Components from <code class="bg-[var(--ui-bg-elevated)] px-1 rounded">@fyit/crouton</code>
           </p>
         </div>
 

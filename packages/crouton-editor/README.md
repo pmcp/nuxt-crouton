@@ -17,7 +17,7 @@ Rich text editor addon layer for Nuxt Crouton, now powered by **Nuxt UI Editor**
 ### 1. Install the package
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-editor
+pnpm add @fyit/crouton-editor
 ```
 
 ### 2. Ensure Nuxt UI is configured
@@ -29,8 +29,8 @@ This package requires `@nuxt/ui` v3.4+ to be installed and configured in your pr
 export default defineNuxtConfig({
   modules: ['@nuxt/ui'],
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-editor'
+    '@fyit/crouton',
+    '@fyit/crouton-editor'
   ]
 })
 ```
@@ -142,8 +142,8 @@ const slashItems: EditorSuggestionMenuItem[][] = [
    export default defineNuxtConfig({
      modules: ['@nuxt/ui'], // Required
      extends: [
-       '@friendlyinternet/nuxt-crouton',
-       '@friendlyinternet/nuxt-crouton-editor'
+       '@fyit/crouton',
+       '@fyit/crouton-editor'
      ]
    })
    ```

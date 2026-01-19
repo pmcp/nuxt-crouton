@@ -1,4 +1,4 @@
-# @friendlyinternet/crouton-sales
+# @fyit/crouton-sales
 
 Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, categories, orders, and optional thermal receipt printing.
 
@@ -15,7 +15,7 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/crouton-sales
+pnpm add @fyit/crouton-sales
 ```
 
 ## Quick Start
@@ -25,7 +25,7 @@ pnpm add @friendlyinternet/crouton-sales
 Copy schema files from this package to your project's `./schemas/` directory:
 
 ```bash
-cp node_modules/@friendlyinternet/crouton-sales/schemas/*.json ./schemas/
+cp node_modules/@fyit/crouton-sales/schemas/*.json ./schemas/
 ```
 
 Available schemas:
@@ -91,9 +91,9 @@ This creates `./layers/sales/` with all CRUD components, composables, and API en
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth',  // Required for helper auth
-    '@friendlyinternet/crouton-sales',
+    '@fyit/crouton',
+    '@fyit/crouton-auth',  // Required for helper auth
+    '@fyit/crouton-sales',
     './layers/sales'  // Your generated layer
   ]
 })
@@ -274,7 +274,7 @@ After running `crouton config`, your `./layers/sales/` will have:
 
 ```typescript
 // In API handlers
-import { requireScopedAccess } from '@friendlyinternet/nuxt-crouton-auth/server'
+import { requireScopedAccess } from '@fyit/crouton-auth/server'
 
 export default defineEventHandler(async (event) => {
   const access = await requireScopedAccess(event, 'pos-helper-token')
@@ -323,8 +323,8 @@ This is why the `layer: 'sales'` configuration is **required**.
 ## Dependencies
 
 ### Required
-- `@friendlyinternet/nuxt-crouton` - Core module
-- `@friendlyinternet/nuxt-crouton-auth` - For helper authentication
+- `@fyit/crouton` - Core module
+- `@fyit/crouton-auth` - For helper authentication
 - `@nuxtjs/i18n` ^9.0.0 or ^10.0.0
 - `zod` ^3.0.0
 

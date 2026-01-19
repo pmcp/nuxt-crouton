@@ -1,7 +1,7 @@
-// Team-based endpoint - requires @friendlyinternet/nuxt-crouton package
-// The #crouton/team-auth alias is provided by @friendlyinternet/nuxt-crouton
-// Install: pnpm add @friendlyinternet/nuxt-crouton
-// Config: Add '@friendlyinternet/nuxt-crouton' to extends array in nuxt.config.ts
+// Team-based endpoint - requires @fyit/crouton package
+// The #crouton/team-auth alias is provided by @fyit/crouton
+// Install: pnpm add @fyit/crouton
+// Config: Add '@fyit/crouton' to extends array in nuxt.config.ts
 import { updateRakimFlowOutput } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 import type { RakimFlowOutput } from '../../../../../types'

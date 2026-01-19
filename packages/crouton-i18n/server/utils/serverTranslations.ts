@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { teamSettings } from '@friendlyinternet/nuxt-crouton/server/database/schema/teamSettings'
+import { teamSettings } from '@fyit/crouton/server/database/schema/teamSettings'
 import en from '../../locales/en.json'
 import nl from '../../locales/nl.json'
 import fr from '../../locales/fr.json'

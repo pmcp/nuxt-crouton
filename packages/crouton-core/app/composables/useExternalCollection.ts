@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { defineExternalCollection } from '@friendlyinternet/nuxt-crouton'
+ * import { defineExternalCollection } from '@fyit/crouton'
  * import { z } from 'zod'
  *
  * const userSchema = z.object({

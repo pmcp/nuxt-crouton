@@ -1489,7 +1489,7 @@ Found 2 issues:
    - CroutonEditorToolbar not in CLAUDE.md
 
 2. ⚠️ Outdated reference
-   - Line 42: "@friendlyinternet/nuxt-crouton-editor"
+   - Line 42: "@fyit/crouton-editor"
 
 Coverage: 83% (5/6 exports documented)
 

@@ -72,10 +72,10 @@ watchEffect(() => {
   if (isPackageMode.value) {
     for (const pkg of packages.value) {
       const manifest = packageManifests.value.get(pkg.packageId)
-      if (manifest?.dependencies?.includes('@friendlyinternet/nuxt-crouton-auth')) {
+      if (manifest?.dependencies?.includes('@fyit/crouton-auth')) {
         options.value.includeAuth = true
       }
-      if (manifest?.dependencies?.includes('@friendlyinternet/nuxt-crouton-i18n')) {
+      if (manifest?.dependencies?.includes('@fyit/crouton-i18n')) {
         options.value.includeI18n = true
       }
     }
@@ -405,12 +405,12 @@ const currentStepIndex = computed(() => {
           <UCheckbox
             v-model="options.includeAuth"
             name="includeAuth"
-            label="Authentication (@friendlyinternet/nuxt-crouton-auth)"
+            label="Authentication (@fyit/crouton-auth)"
           />
           <UCheckbox
             v-model="options.includeI18n"
             name="includeI18n"
-            label="Internationalization (@friendlyinternet/nuxt-crouton-i18n)"
+            label="Internationalization (@fyit/crouton-i18n)"
           />
         </div>
       </UFormField>

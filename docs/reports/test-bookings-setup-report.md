@@ -7,7 +7,7 @@
 
 ## Summary
 
-Creating a fresh test-bookings app to dogfood the `@friendlyinternet/crouton-bookings` package.
+Creating a fresh test-bookings app to dogfood the `@fyit/crouton-bookings` package.
 
 ---
 
@@ -26,7 +26,7 @@ Creating a fresh test-bookings app to dogfood the `@friendlyinternet/crouton-boo
 - **Time spent**: 1 min
 
 ### Issue #2: pnpm install fails with workspace package not found
-- **Description**: `@friendlyinternet/nuxt-crouton-ai@workspace:*` referenced but excluded from pnpm-workspace.yaml
+- **Description**: `@fyit/crouton-ai@workspace:*` referenced but excluded from pnpm-workspace.yaml
 - **Resolution**: User added package back to workspace
 - **Time spent**: 2 min
 
@@ -47,9 +47,9 @@ Creating a fresh test-bookings app to dogfood the `@friendlyinternet/crouton-boo
 ### nuxt.config.ts
 ```ts
 extends: [
-  '@friendlyinternet/nuxt-crouton',
-  '@friendlyinternet/nuxt-crouton-auth',
-  '@friendlyinternet/crouton-bookings',
+  '@fyit/crouton',
+  '@fyit/crouton-auth',
+  '@fyit/crouton-bookings',
   './layers/bookings'
 ]
 ```

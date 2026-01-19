@@ -1,4 +1,4 @@
-# @friendlyinternet/nuxt-crouton-events
+# @fyit/crouton-events
 
 Event tracking and audit trail for Nuxt Crouton collections. Automatically tracks all CREATE, UPDATE, and DELETE operations across your collections.
 
@@ -15,7 +15,7 @@ Event tracking and audit trail for Nuxt Crouton collections. Automatically track
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-events
+pnpm add @fyit/crouton-events
 ```
 
 ## Setup
@@ -26,8 +26,8 @@ Add to your Nuxt layers:
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-events' // Add this
+    '@fyit/crouton',
+    '@fyit/crouton-events' // Add this
   ]
 })
 ```

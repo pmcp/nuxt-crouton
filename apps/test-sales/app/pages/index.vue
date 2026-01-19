@@ -20,7 +20,7 @@ const collections = [
 <template>
   <div class="p-8">
     <h1 class="text-2xl font-bold mb-4">Test Sales App</h1>
-    <p class="text-neutral-500 mb-2">Dogfooding the @friendlyinternet/crouton-sales package</p>
+    <p class="text-neutral-500 mb-2">Dogfooding the @fyit/crouton-sales package</p>
     <p v-if="teamSlug" class="text-sm text-neutral-400 mb-8">
       Team: <code class="bg-neutral-800 px-2 py-0.5 rounded">{{ teamSlug }}</code>
     </p>

@@ -11,7 +11,7 @@
  *
  * @example
  * ```ts
- * import { TranslationAI } from '@friendlyinternet/nuxt-crouton-ai/editor'
+ * import { TranslationAI } from '@fyit/crouton-ai/editor'
  *
  * const editor = useEditor({
  *   extensions: [

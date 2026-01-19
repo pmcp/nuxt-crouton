@@ -4,7 +4,7 @@
  */
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 
 const updateSchema = z.object({

@@ -5,7 +5,7 @@
  * Integrates with nuxt-crouton-ai for multi-provider support.
  *
  * Note: createAIProvider is auto-imported from nuxt-crouton-ai layer
- * when the parent app extends @friendlyinternet/nuxt-crouton-ai
+ * when the parent app extends @fyit/crouton-ai
  */
 
 import { streamText } from 'ai'
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   if (typeof createAIProvider !== 'function') {
     throw createError({
       statusCode: 500,
-      statusMessage: 'AI package not available. Please extend @friendlyinternet/nuxt-crouton-ai in your nuxt.config.ts'
+      statusMessage: 'AI package not available. Please extend @fyit/crouton-ai in your nuxt.config.ts'
     })
   }
 

@@ -1,4 +1,4 @@
-# @friendlyinternet/nuxt-crouton-ai
+# @fyit/crouton-ai
 
 AI integration layer for Nuxt Crouton applications. Provides multi-provider AI chat with streaming support, built on [Vercel AI SDK](https://ai-sdk.dev/).
 
@@ -13,14 +13,14 @@ AI integration layer for Nuxt Crouton applications. Provides multi-provider AI c
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-ai
+pnpm add @fyit/crouton-ai
 ```
 
 Add to your `nuxt.config.ts`:
 
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-ai']
+  extends: ['@fyit/crouton-ai']
 })
 ```
 
@@ -242,7 +242,7 @@ The package includes a schema for generating a chat conversations collection usi
 
 ```bash
 # Generate in a new 'ai' layer
-pnpm crouton ai chatConversations --fields-file=node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json
+pnpm crouton ai chatConversations --fields-file=node_modules/@fyit/crouton-ai/schemas/chat-conversations.json
 ```
 
 ### Option 2: Config File
@@ -253,7 +253,7 @@ export default {
   collections: [
     {
       name: 'chatConversations',
-      fieldsFile: 'node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json'
+      fieldsFile: 'node_modules/@fyit/crouton-ai/schemas/chat-conversations.json'
     }
   ],
   targets: [
@@ -334,7 +334,7 @@ import type {
   ChatConversation,
   NewChatConversation,
   ChatMessage
-} from '@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations'
+} from '@fyit/crouton-ai/schemas/chat-conversations'
 ```
 
 ## Examples

@@ -16,7 +16,7 @@
  * }
  */
 import { eq, and, gte, lte, ne } from 'drizzle-orm'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 
 export default defineEventHandler(async (event) => {

@@ -28,10 +28,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build MCP Server
-        run: pnpm --filter @friendlyinternet/nuxt-crouton-mcp-server build
+        run: pnpm --filter @fyit/crouton-mcp-server build
 
       - name: Type check MCP Server
-        run: pnpm --filter @friendlyinternet/nuxt-crouton-mcp-server typecheck
+        run: pnpm --filter @fyit/crouton-mcp-server typecheck
 
   sync-validation:
     name: Sync Validation
@@ -68,7 +68,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build MCP Server
-        run: pnpm --filter @friendlyinternet/nuxt-crouton-mcp-server build
+        run: pnpm --filter @fyit/crouton-mcp-server build
 
       - name: Run MCP Server tests
-        run: pnpm --filter @friendlyinternet/nuxt-crouton-mcp-server test
+        run: pnpm --filter @fyit/crouton-mcp-server test

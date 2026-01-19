@@ -1,4 +1,4 @@
-import type { CroutonPageType } from '@friendlyinternet/nuxt-crouton/app/types/app'
+import type { CroutonPageType } from '@fyit/crouton/app/types/app'
 
 /**
  * Aggregated page type with app context.

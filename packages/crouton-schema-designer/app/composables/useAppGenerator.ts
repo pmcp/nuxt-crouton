@@ -131,7 +131,7 @@ export function useAppGenerator() {
     // package.json
     const deps: Record<string, string> = {
       'nuxt': '^4.0.0',
-      '@friendlyinternet/nuxt-crouton': 'latest'
+      '@fyit/crouton': 'latest'
     }
     const devDeps: Record<string, string> = {
       '@nuxt/ui': '^3.0.0',
@@ -140,10 +140,10 @@ export function useAppGenerator() {
     }
 
     if (options.options.includeAuth) {
-      deps['@friendlyinternet/nuxt-crouton-auth'] = 'latest'
+      deps['@fyit/crouton-auth'] = 'latest'
     }
     if (options.options.includeI18n) {
-      deps['@friendlyinternet/nuxt-crouton-i18n'] = 'latest'
+      deps['@fyit/crouton-i18n'] = 'latest'
     }
 
     // Add package dependencies
@@ -176,12 +176,12 @@ export function useAppGenerator() {
     })
 
     // nuxt.config.ts
-    const extendsLayers = ["'@friendlyinternet/nuxt-crouton'"]
+    const extendsLayers = ["'@fyit/crouton'"]
     if (options.options.includeAuth) {
-      extendsLayers.push("'@friendlyinternet/nuxt-crouton-auth'")
+      extendsLayers.push("'@fyit/crouton-auth'")
     }
     if (options.options.includeI18n) {
-      extendsLayers.push("'@friendlyinternet/nuxt-crouton-i18n'")
+      extendsLayers.push("'@fyit/crouton-i18n'")
     }
 
     // Add package layers
@@ -248,7 +248,7 @@ export function useAppGenerator() {
       content: `# Database
 NUXT_HUB_PROJECT_KEY=
 
-# Auth (if using @friendlyinternet/nuxt-crouton-auth)
+# Auth (if using @fyit/crouton-auth)
 BETTER_AUTH_SECRET=your-32-char-secret-here
 `
     })

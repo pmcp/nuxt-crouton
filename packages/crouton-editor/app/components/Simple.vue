@@ -31,7 +31,7 @@ interface Props {
   showToolbar?: boolean
   showBubbleToolbar?: boolean
   extensions?: any[]
-  /** Enable AI translation suggestions (requires @friendlyinternet/nuxt-crouton-ai) */
+  /** Enable AI translation suggestions (requires @fyit/crouton-ai) */
   enableTranslationAI?: boolean
   /** Translation context for AI suggestions */
   translationContext?: TranslationContext

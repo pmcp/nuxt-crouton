@@ -1,4 +1,4 @@
-# @friendlyinternet/nuxt-crouton-mcp-server
+# @fyit/crouton-mcp-server
 
 MCP (Model Context Protocol) server for AI-powered collection generation in Nuxt Crouton applications.
 
@@ -28,7 +28,7 @@ pnpm build
 ### Global Installation
 
 ```bash
-npm install -g @friendlyinternet/nuxt-crouton-mcp-server
+npm install -g @fyit/crouton-mcp-server
 ```
 
 ## Configuration
@@ -211,12 +211,12 @@ npx @modelcontextprotocol/inspector node dist/index.js
 ## Requirements
 
 - Node.js >= 18
-- `@friendlyinternet/nuxt-crouton-cli` (peer dependency)
+- `@fyit/crouton-cli` (peer dependency)
 
 ## Related
 
-- [@friendlyinternet/nuxt-crouton](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton) - Core Crouton package
-- [@friendlyinternet/nuxt-crouton-cli](https://www.npmjs.com/package/@friendlyinternet/nuxt-crouton-cli) - CLI generator
+- [@fyit/crouton](https://www.npmjs.com/package/@fyit/crouton) - Core Crouton package
+- [@fyit/crouton-cli](https://www.npmjs.com/package/@fyit/crouton-cli) - CLI generator
 
 ## License
 

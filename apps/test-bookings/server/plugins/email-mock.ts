@@ -4,7 +4,7 @@
  * This plugin registers a mock email provider that logs emails to the console
  * instead of actually sending them. Perfect for development and testing.
  */
-import { registerEmailProvider } from '@friendlyinternet/crouton-bookings/server/utils/email-service'
+import { registerEmailProvider } from '@fyit/crouton-bookings/server/utils/email-service'
 
 export default defineNitroPlugin(() => {
   registerEmailProvider({

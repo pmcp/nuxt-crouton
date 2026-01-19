@@ -1,12 +1,12 @@
 # Briefing: nuxt-crouton-email Build Issue
 
 **Date**: 2026-01-11
-**Package**: `@friendlyinternet/nuxt-crouton-email`
+**Package**: `@fyit/crouton-email`
 **Status**: Blocked - Cannot be used in consuming apps
 
 ## Problem Summary
 
-When adding `@friendlyinternet/nuxt-crouton-email` to a consuming app (test-bookings), the Nitro build fails with:
+When adding `@fyit/crouton-email` to a consuming app (test-bookings), the Nitro build fails with:
 
 ```
 ERROR  RollupError: ../../packages/nuxt-crouton-email/server/emails/Verification.vue (1:0):

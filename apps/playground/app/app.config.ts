@@ -3,7 +3,7 @@ import { playgroundCategoriesConfig } from '../layers/playground/collections/cat
 import { playgroundPostsConfig } from '../layers/playground/collections/posts/app/composables/usePlaygroundPosts'
 import { playgroundDecisionsConfig } from '../layers/playground/collections/decisions/app/composables/usePlaygroundDecisions'
 import { playgroundOptionsConfig } from '../layers/playground/collections/options/app/composables/usePlaygroundOptions'
-import { translationsUiConfig } from '@friendlyinternet/nuxt-crouton-i18n/app/composables/useTranslationsUi'
+import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
 
 export default defineAppConfig({
   croutonCollections: {

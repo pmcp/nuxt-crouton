@@ -8,7 +8,7 @@
  * Since crouton-admin extends crouton-auth, the schema types are available.
  */
 import { drizzle } from 'drizzle-orm/d1'
-import * as authSchema from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+import * as authSchema from '@fyit/crouton-auth/server/database/schema/auth'
 
 // Declare hubDatabase as it's a global from NuxtHub
 // D1Database is from @cloudflare/workers-types

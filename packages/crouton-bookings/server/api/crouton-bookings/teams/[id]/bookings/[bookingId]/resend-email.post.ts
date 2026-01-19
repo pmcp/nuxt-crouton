@@ -4,14 +4,14 @@
  *
  * Requires:
  * - Email module enabled: runtimeConfig.croutonBookings.email.enabled = true
- * - @friendlyinternet/crouton-email installed and configured
+ * - @fyit/crouton-email installed and configured
  * - Email template and log schemas generated
  *
  * Body: { triggerType: 'booking_confirmed' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after' }
  */
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
-import { resolveTeamAndCheckMembership } from '@friendlyinternet/nuxt-crouton-auth/server/utils/team'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import {
   isBookingEmailEnabled,
   type BookingEmailTriggerType

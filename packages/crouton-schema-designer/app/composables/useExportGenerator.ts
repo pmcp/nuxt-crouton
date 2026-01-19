@@ -143,7 +143,7 @@ export function useExportGenerator() {
   }`)
     }
 
-    return `/** @type {import('@friendlyinternet/nuxt-crouton-cli').CroutonConfig} */
+    return `/** @type {import('@fyit/crouton-cli').CroutonConfig} */
 export default {
   layers: [
 ${layerConfigs.join(',\n')}

@@ -1,11 +1,11 @@
-# @friendlyinternet/nuxt-crouton-themes
+# @fyit/crouton-themes
 
 Swappable UI themes for Nuxt applications using Nuxt UI 4. Each theme provides design tokens, component variants, and optional custom components as a self-contained Nuxt layer.
 
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-themes
+pnpm add @fyit/crouton-themes
 ```
 
 ## Quick Start
@@ -13,7 +13,7 @@ pnpm add @friendlyinternet/nuxt-crouton-themes
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-themes/ko']
+  extends: ['@fyit/crouton-themes/ko']
 })
 ```
 
@@ -29,10 +29,10 @@ Want to let users switch between themes at runtime? Use the theming layer:
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-themes/themes',
-    '@friendlyinternet/nuxt-crouton-themes/ko',
-    '@friendlyinternet/nuxt-crouton-themes/minimal',
-    '@friendlyinternet/nuxt-crouton-themes/kr11'
+    '@fyit/crouton-themes/themes',
+    '@fyit/crouton-themes/ko',
+    '@fyit/crouton-themes/minimal',
+    '@fyit/crouton-themes/kr11'
   ]
 })
 ```
@@ -85,7 +85,7 @@ const {
 Hardware-inspired styling based on the Teenage Engineering KO II sampler. Features tactile button bevels, LCD-style inputs, and an industrial color palette.
 
 ```ts
-extends: ['@friendlyinternet/nuxt-crouton-themes/ko']
+extends: ['@fyit/crouton-themes/ko']
 ```
 
 #### Nuxt UI Variants
@@ -391,10 +391,10 @@ Each theme exports a Nuxt layer via subpath:
 
 | Layer | Import Path | Description |
 |-------|-------------|-------------|
-| Themes | `@friendlyinternet/nuxt-crouton-themes/themes` | Theme switching utilities |
-| KO | `@friendlyinternet/nuxt-crouton-themes/ko` | Teenage Engineering inspired |
-| Minimal | `@friendlyinternet/nuxt-crouton-themes/minimal` | Clean, Bauhaus-inspired |
-| KR-11 | `@friendlyinternet/nuxt-crouton-themes/kr11` | Korg rhythm box inspired |
+| Themes | `@fyit/crouton-themes/themes` | Theme switching utilities |
+| KO | `@fyit/crouton-themes/ko` | Teenage Engineering inspired |
+| Minimal | `@fyit/crouton-themes/minimal` | Clean, Bauhaus-inspired |
+| KR-11 | `@fyit/crouton-themes/kr11` | Korg rhythm box inspired |
 
 ### KO Theme Components
 

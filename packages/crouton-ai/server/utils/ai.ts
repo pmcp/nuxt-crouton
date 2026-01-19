@@ -2,7 +2,7 @@
  * AI Provider Factory for server-side usage
  *
  * Creates AI providers configured from runtime config.
- * Auto-imported when extending the @friendlyinternet/nuxt-crouton-ai layer.
+ * Auto-imported when extending the @fyit/crouton-ai layer.
  *
  * @example
  * ```ts
@@ -78,7 +78,7 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
     openai: () => {
       if (!config.openaiApiKey) {
         throw new Error(
-          '@friendlyinternet/nuxt-crouton-ai: OpenAI API key not configured. '
+          '@fyit/crouton-ai: OpenAI API key not configured. '
           + 'Set NUXT_OPENAI_API_KEY environment variable or configure runtimeConfig.openaiApiKey'
         )
       }
@@ -95,7 +95,7 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
     anthropic: () => {
       if (!config.anthropicApiKey) {
         throw new Error(
-          '@friendlyinternet/nuxt-crouton-ai: Anthropic API key not configured. '
+          '@fyit/crouton-ai: Anthropic API key not configured. '
           + 'Set NUXT_ANTHROPIC_API_KEY environment variable or configure runtimeConfig.anthropicApiKey'
         )
       }

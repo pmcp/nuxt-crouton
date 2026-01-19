@@ -621,7 +621,7 @@ function useCollectionProxy(): {
 
 ```typescript
 // app.config.ts
-import { defineExternalCollection } from '@friendlyinternet/nuxt-crouton'
+import { defineExternalCollection } from '@fyit/crouton'
 import { z } from 'zod'
 
 const membersSchema = z.object({
@@ -976,7 +976,7 @@ Simple external users collection:
 ```typescript
 // utils/collections.ts
 import { z } from 'zod'
-import { defineExternalCollection } from '@friendlyinternet/nuxt-crouton'
+import { defineExternalCollection } from '@fyit/crouton'
 
 const userSchema = z.object({
   id: z.string(),
@@ -1098,7 +1098,7 @@ Register several external sources:
 ```typescript
 // app.config.ts
 import { z } from 'zod'
-import { defineExternalCollection } from '@friendlyinternet/nuxt-crouton'
+import { defineExternalCollection } from '@fyit/crouton'
 
 // Define schemas (see Basic Usage for full examples)
 const userSchema = z.object({ /* ... */ })

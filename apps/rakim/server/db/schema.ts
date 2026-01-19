@@ -2,7 +2,7 @@
 // This file is auto-managed by crouton-generate
 
 // Export auth schema from crouton-auth package
-export * from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+export * from '@fyit/crouton-auth/server/database/schema/auth'
 
 // Export all collection tables
 export { rakimConfigs } from '../../layers/rakim/collections/configs/server/database/schema'

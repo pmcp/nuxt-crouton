@@ -1,6 +1,6 @@
 import { schemaProjects } from '../../database/schema'
 import { migrateProject, type SchemaProjectRecord } from '../../utils/project-migration'
-import type { PackageInstance, CollectionSchema } from '@friendlyinternet/nuxt-crouton-schema-designer/types'
+import type { PackageInstance, CollectionSchema } from '@fyit/crouton-schema-designer/types'
 
 interface CreateProjectPayload {
   name: string

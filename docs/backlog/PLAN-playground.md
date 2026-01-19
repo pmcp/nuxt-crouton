@@ -36,10 +36,10 @@ Create a playground demo site showcasing nuxt-crouton's capabilities. This is a 
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',           // Core
-    '@friendlyinternet/nuxt-crouton-i18n',      // Translations
-    '@friendlyinternet/nuxt-crouton-editor',    // Rich text
-    '@friendlyinternet/nuxt-crouton-flow',      // Flow visualization
+    '@fyit/crouton',           // Core
+    '@fyit/crouton-i18n',      // Translations
+    '@fyit/crouton-editor',    // Rich text
+    '@fyit/crouton-flow',      // Flow visualization
   ],
 })
 ```

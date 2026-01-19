@@ -1,10 +1,10 @@
 /**
  * Booking email utilities for crouton-bookings
  *
- * These utilities integrate with @friendlyinternet/crouton-email when available.
+ * These utilities integrate with @fyit/crouton-email when available.
  * Users must:
  * 1. Enable email: runtimeConfig.croutonBookings.email.enabled = true
- * 2. Install @friendlyinternet/crouton-email
+ * 2. Install @fyit/crouton-email
  * 3. Generate email-template and email-log schemas if using template system
  */
 

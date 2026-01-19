@@ -1,6 +1,6 @@
 import { eq, and, isNull } from 'drizzle-orm'
 import { translationsUi } from '../database/schema'
-import { organization } from '@friendlyinternet/nuxt-crouton-auth/server/database/schema/auth'
+import { organization } from '@fyit/crouton-auth/server/database/schema/auth'
 
 /**
  * Get team/organization by slug for translations

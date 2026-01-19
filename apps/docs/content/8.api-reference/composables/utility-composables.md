@@ -714,7 +714,7 @@ useCroutonShortcuts({
 ## useEntityTranslations
 
 ::callout{type="warning" icon="i-heroicons-exclamation-triangle"}
-**Package Required**: This composable is part of the `@friendlyinternet/nuxt-crouton-i18n` package. It is **not available** in the core `@friendlyinternet/nuxt-crouton` package. Install the i18n package to use this composable.
+**Package Required**: This composable is part of the `@fyit/crouton-i18n` package. It is **not available** in the core `@fyit/crouton` package. Install the i18n package to use this composable.
 ::
 
 Display translated field values with automatic locale fallback.
@@ -817,7 +817,7 @@ When the user switches languages, `useCollectionQuery` automatically refetches d
 ## useAssetUpload
 
 ::callout{type="warning" icon="i-heroicons-exclamation-triangle"}
-**Package Required**: This composable is part of the `@friendlyinternet/nuxt-crouton-assets` package. It is **not available** in the core `@friendlyinternet/nuxt-crouton` package. Install the assets package to use this composable.
+**Package Required**: This composable is part of the `@fyit/crouton-assets` package. It is **not available** in the core `@fyit/crouton` package. Install the assets package to use this composable.
 ::
 
 Programmatic asset upload with metadata tracking.
@@ -1360,7 +1360,7 @@ This composable provides a **reference implementation** for connecting external 
 ```typescript
 // app/composables/useUsers.ts
 import { z } from 'zod'
-import { defineExternalCollection } from '@friendlyinternet/nuxt-crouton'
+import { defineExternalCollection } from '@fyit/crouton'
 
 const userSchema = z.object({
   id: z.string(),
@@ -2053,7 +2053,7 @@ debugErrors()
 ## useT
 
 ::callout{type="info" icon="i-heroicons-information-circle"}
-**Stub vs Full Implementation**: The core `@friendlyinternet/nuxt-crouton` package provides a **stub implementation** of `useT()` with English fallbacks for common UI strings. For full i18n support (database-backed translations, multiple locales, translation management UI), install `@friendlyinternet/nuxt-crouton-i18n`.
+**Stub vs Full Implementation**: The core `@fyit/crouton` package provides a **stub implementation** of `useT()` with English fallbacks for common UI strings. For full i18n support (database-backed translations, multiple locales, translation management UI), install `@fyit/crouton-i18n`.
 ::
 
 Translation helper composable with fallback support for UI strings and content.
@@ -2097,7 +2097,7 @@ function useT(): {
 **Two Modes:**
 
 1. **Stub Mode (Base Layer)**: Returns English fallbacks for common UI strings
-2. **Full i18n Mode**: Activated when `@friendlyinternet/nuxt-crouton-i18n` layer is installed
+2. **Full i18n Mode**: Activated when `@fyit/crouton-i18n` layer is installed
 
 ### Basic Usage (Stub Mode)
 
@@ -2310,10 +2310,10 @@ console.log(info)
 
 ### Full i18n Mode
 
-When `@friendlyinternet/nuxt-crouton-i18n` is installed, `useT()` is automatically replaced with full i18n functionality:
+When `@fyit/crouton-i18n` is installed, `useT()` is automatically replaced with full i18n functionality:
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-i18n
+pnpm add @fyit/crouton-i18n
 ```
 
 **Additional features in i18n mode:**
@@ -2411,7 +2411,7 @@ export function useT() {
 |-------|----------|
 | Translation returns key | Key not in fallback map, add to fallbacks or install i18n layer |
 | `tContent` returns empty | Check entity has `translations` object and field exists |
-| Locale not switching | Install `@friendlyinternet/nuxt-crouton-i18n` for full support |
+| Locale not switching | Install `@fyit/crouton-i18n` for full support |
 | Missing translations | Use i18n layer's translation management UI |
 
 

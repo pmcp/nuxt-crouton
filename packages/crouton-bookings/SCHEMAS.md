@@ -1,6 +1,6 @@
 # Required Schemas Reference
 
-This document describes the schemas required by `@friendlyinternet/crouton-bookings`.
+This document describes the schemas required by `@fyit/crouton-bookings`.
 
 ## Convention Requirement
 

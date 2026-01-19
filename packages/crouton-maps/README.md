@@ -1,4 +1,4 @@
-# @friendlyinternet/nuxt-crouton-maps
+# @fyit/crouton-maps
 
 > Map integration layer for Nuxt Crouton with Mapbox support
 
@@ -17,7 +17,7 @@ Add interactive maps to your Nuxt Crouton applications with this powerful, easy-
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-maps
+pnpm add @fyit/crouton-maps
 ```
 
 ## Setup
@@ -28,8 +28,8 @@ pnpm add @friendlyinternet/nuxt-crouton-maps
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-maps'
+    '@fyit/crouton',
+    '@fyit/crouton-maps'
   ],
 
   runtimeConfig: {
@@ -405,7 +405,7 @@ import type {
   MarkerInstance,
   GeocodeResult,
   UseMapOptions
-} from '@friendlyinternet/nuxt-crouton-maps'
+} from '@fyit/crouton-maps'
 ```
 
 ## Future Roadmap

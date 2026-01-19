@@ -1,4 +1,4 @@
-# @friendlyinternet/nuxt-crouton-assets
+# @fyit/crouton-assets
 
 Centralized asset management system for Nuxt Crouton. Provides a full-featured media library with team-based ownership, metadata tracking, and browsing capabilities.
 
@@ -15,7 +15,7 @@ Centralized asset management system for Nuxt Crouton. Provides a full-featured m
 ## Installation
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-assets
+pnpm add @fyit/crouton-assets
 ```
 
 ## Setup
@@ -23,7 +23,7 @@ pnpm add @friendlyinternet/nuxt-crouton-assets
 ### 1. Install the package
 
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton-assets
+pnpm add @fyit/crouton-assets
 ```
 
 ### 2. Configure Nuxt
@@ -33,8 +33,8 @@ Add to your `nuxt.config.ts`:
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-assets'  // Add assets layer
+    '@fyit/crouton',
+    '@fyit/crouton-assets'  // Add assets layer
   ],
   hub: {
     blob: true  // Required: Enable NuxtHub blob storage
@@ -47,7 +47,7 @@ export default defineNuxtConfig({
 Use the collection generator to create the assets collection in your project:
 
 ```bash
-crouton-generate core assets --fields-file=node_modules/@friendlyinternet/nuxt-crouton-assets/assets-schema.json --dialect=sqlite
+crouton-generate core assets --fields-file=node_modules/@fyit/crouton-assets/assets-schema.json --dialect=sqlite
 ```
 
 Or create your own schema and generate:
@@ -205,7 +205,7 @@ The assets collection includes:
 ## Requirements
 
 - Nuxt 4+
-- @friendlyinternet/nuxt-crouton
+- @fyit/crouton
 - @nuxthub/core with blob storage enabled
 - @vueuse/core
 

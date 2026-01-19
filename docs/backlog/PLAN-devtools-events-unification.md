@@ -447,19 +447,19 @@ No breaking changes. Both packages continue to work standalone:
 ```typescript
 // Works: Events only (production audit)
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-events']
+  extends: ['@fyit/crouton-events']
 })
 
 // Works: DevTools only (development)
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-devtools']
+  extends: ['@fyit/crouton-devtools']
 })
 
 // Works: Both (enhanced experience)
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-events',
-    '@friendlyinternet/nuxt-crouton-devtools'
+    '@fyit/crouton-events',
+    '@fyit/crouton-devtools'
   ]
 })
 ```

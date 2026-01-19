@@ -9,7 +9,7 @@ Reusable Playwright E2E test templates for any Crouton application.
 npx crouton e2e:init
 
 # Or manually copy
-cp -r node_modules/@friendlyinternet/nuxt-crouton/e2e-templates ./e2e
+cp -r node_modules/@fyit/crouton/e2e-templates ./e2e
 ```
 
 ## What's Included

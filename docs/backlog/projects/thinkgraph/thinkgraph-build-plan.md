@@ -45,8 +45,8 @@ A **visual thinking graph** where:
 - **Docs**: https://github.com/pmcp/crouton-docs (or https://crouton-docs.vercel.app)
 - **What it is**: Nuxt 3 layers for instant CRUD functionality
 - **Key packages**:
-  - `@friendlyinternet/nuxt-crouton` — base CRUD layer
-  - `@friendlyinternet/nuxt-crouton-collection-generator` — CLI to scaffold collections
+  - `@fyit/crouton` — base CRUD layer
+  - `@fyit/crouton-collection-generator` — CLI to scaffold collections
 
 ### llm CLI (Simon Willison's tool)
 
@@ -175,17 +175,17 @@ ThinkGraph goes further: cross-AI, mergeable, portable.
 
 ```bash
 # Install the layers
-pnpm add @friendlyinternet/nuxt-crouton
+pnpm add @fyit/crouton
 
 # For collection generator CLI
-pnpm add -D @friendlyinternet/nuxt-crouton-collection-generator
+pnpm add -D @fyit/crouton-collection-generator
 ```
 
 **nuxt.config.ts:**
 ```typescript
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton'
+    '@fyit/crouton'
   ]
 })
 ```

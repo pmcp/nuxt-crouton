@@ -191,19 +191,19 @@ crouton-generate install
 ```
 
 This installs:
-- `@friendlyinternet/nuxt-crouton`
+- `@fyit/crouton`
 - Required peer dependencies
 - Updates nuxt.config.ts with extends
 
 **Manual installation**:
 ```bash
-pnpm add @friendlyinternet/nuxt-crouton
+pnpm add @fyit/crouton
 ```
 
 Then update nuxt.config.ts:
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton']
+  extends: ['@fyit/crouton']
 })
 ```
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Add keyboard shortcuts to `@friendlyinternet/nuxt-crouton` core package to improve power-user experience and accessibility.
+Add keyboard shortcuts to `@fyit/crouton` core package to improve power-user experience and accessibility.
 
 ---
 

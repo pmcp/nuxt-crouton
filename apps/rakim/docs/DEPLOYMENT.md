@@ -87,8 +87,8 @@ apps/rakim/
 
 ```
 rakim
-├── @friendlyinternet/nuxt-crouton
-├── @friendlyinternet/nuxt-crouton-ai
+├── @fyit/crouton
+├── @fyit/crouton-ai
 └── ./layers/rakim
 ```
 

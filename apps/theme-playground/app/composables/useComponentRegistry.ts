@@ -82,7 +82,7 @@ export const CATEGORIES = [
   { key: 'crouton', label: 'Crouton' },
 ] as const
 
-// Crouton-specific components (from @friendlyinternet/nuxt-crouton)
+// Crouton-specific components (from @fyit/crouton)
 export const CROUTON_COMPONENTS = [
   { name: 'CroutonDarkModeSwitcher', title: 'Dark Mode Switcher', category: 'crouton' },
   { name: 'CroutonAppearanceSwitcher', title: 'Appearance Switcher', category: 'crouton' },

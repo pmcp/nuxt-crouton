@@ -10,7 +10,7 @@
  * For MVP we use Map-based caching (single-server deployment).
  * In Phase 6, this can be upgraded to KV caching for multi-region deployment.
  *
- * Uses @friendlyinternet/nuxt-crouton-ai for AI provider access.
+ * Uses @fyit/crouton-ai for AI provider access.
  */
 
 import { generateText } from 'ai'
@@ -107,7 +107,7 @@ function setCachedAnalysis(
 
 /**
  * Get the AI model for Claude via crouton-ai
- * Uses createAIProvider from @friendlyinternet/nuxt-crouton-ai (auto-imported)
+ * Uses createAIProvider from @fyit/crouton-ai (auto-imported)
  *
  * @param modelId - The Claude model ID (defaults to claude-sonnet-4-5-20250929)
  * @returns Language model instance for use with generateText
