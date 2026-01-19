@@ -2,7 +2,10 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    include: ['app/composables/__tests__/**/*.test.ts'],
+    include: [
+      'app/composables/__tests__/**/*.test.ts',
+      'tests/**/*.test.ts'
+    ],
     environment: 'happy-dom',
     globals: true,
     coverage: {
