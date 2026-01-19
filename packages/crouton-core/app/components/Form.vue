@@ -95,9 +95,9 @@
     <template #actions>
       <div class="flex items-center gap-2 ml-auto">
         <!-- Collab presence avatars (shows who else is editing) -->
-        <!-- TODO: Re-add :current-user-id="currentUserId" after testing to exclude self -->
+        <!-- Stub in crouton-core, real component in crouton-collab -->
         <CollabEditingBadge
-          v-if="state.action === 'update' && state.activeItem?.id && hasCollabSupport"
+          v-if="state.action === 'update' && state.activeItem?.id"
           :room-id="`${state.collection}-${state.activeItem.id}`"
           :room-type="state.collection || 'generic'"
           :poll-interval="5000"
