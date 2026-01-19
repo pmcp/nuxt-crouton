@@ -290,7 +290,7 @@ interface AdminStats {
 
 ## Dependencies
 
-- **Requires**: `@friendlyinternet/nuxt-crouton-auth` (peer dependency)
+- **Requires**: `@fyit/crouton-auth` (peer dependency)
 - **Uses from auth**: `useTeam()`, `useSession()`, Team* components
 - **Works with**: Any Nuxt UI 4 app
 

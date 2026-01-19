@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-themes
+# CLAUDE.md - @fyit/crouton-themes
 
 ## Package Purpose
 
@@ -96,10 +96,10 @@ UI component for theme switching with three modes.
 // nuxt.config.ts - extend themes layer + specific themes
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton-themes/themes',
-    '@friendlyinternet/nuxt-crouton-themes/ko',
-    '@friendlyinternet/nuxt-crouton-themes/minimal',
-    '@friendlyinternet/nuxt-crouton-themes/kr11'
+    '@fyit/crouton-themes/themes',
+    '@fyit/crouton-themes/ko',
+    '@fyit/crouton-themes/minimal',
+    '@fyit/crouton-themes/kr11'
   ]
 })
 ```
@@ -196,7 +196,7 @@ Friendly, tactile styling inspired by the Korg KR-11 Compact Rhythm Box.
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-themes/kr11']
+  extends: ['@fyit/crouton-themes/kr11']
 })
 ```
 
@@ -247,7 +247,7 @@ Hardware-inspired styling based on the Teenage Engineering KO II sampler.
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-themes/ko']
+  extends: ['@fyit/crouton-themes/ko']
 })
 ```
 

@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-devtools
+# CLAUDE.md - @fyit/crouton-devtools
 
 ## Package Purpose
 
@@ -35,7 +35,7 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 export default defineNuxtConfig({
   modules: [
     '@nuxt/devtools',
-    '@friendlyinternet/nuxt-crouton-devtools'
+    '@fyit/crouton-devtools'
   ],
   devtools: {
     enabled: true

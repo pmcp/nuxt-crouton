@@ -1,8 +1,8 @@
-# CLAUDE.md - @friendlyinternet/crouton-bookings
+# CLAUDE.md - @fyit/crouton-bookings
 
 ## Package Purpose
 
-Booking system layer for Nuxt applications that provides both slot-based bookings (courts, rooms, appointments) and inventory-based reservations (equipment, rentals). Works as a Nuxt layer that integrates with `@friendlyinternet/nuxt-crouton` and `@friendlyinternet/nuxt-crouton-auth`.
+Booking system layer for Nuxt applications that provides both slot-based bookings (courts, rooms, appointments) and inventory-based reservations (equipment, rentals). Works as a Nuxt layer that integrates with `@fyit/crouton` and `@fyit/crouton-auth`.
 
 ## Key Files
 
@@ -68,9 +68,9 @@ CroutonBooking
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth',
-    '@friendlyinternet/crouton-bookings',
+    '@fyit/crouton',
+    '@fyit/crouton-auth',
+    '@fyit/crouton-bookings',
     './layers/bookings' // Generated collections
   ],
 
@@ -176,8 +176,8 @@ const { variables, getPreviewValues, demoData } = useBookingEmailVariables()
 
 ## Dependencies
 
-- **Required**: `@friendlyinternet/nuxt-crouton`, `@friendlyinternet/nuxt-crouton-auth`
-- **Optional**: `@friendlyinternet/crouton-email` (for email features)
+- **Required**: `@fyit/crouton`, `@fyit/crouton-auth`
+- **Optional**: `@fyit/crouton-email` (for email features)
 - **Peer**: `@nuxtjs/i18n` (auto-included)
 
 ## Table Naming Convention

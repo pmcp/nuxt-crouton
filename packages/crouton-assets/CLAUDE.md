@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-assets
+# CLAUDE.md - @fyit/crouton-assets
 
 ## Package Purpose
 
@@ -40,8 +40,8 @@ Your Project (generated)
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-assets'
+    '@fyit/crouton',
+    '@fyit/crouton-assets'
   ],
   hub: {
     blob: true  // Required: Enable NuxtHub blob storage
@@ -53,7 +53,7 @@ export default defineNuxtConfig({
 
 ```bash
 crouton-generate core assets \
-  --fields-file=node_modules/@friendlyinternet/nuxt-crouton-assets/assets-schema.json \
+  --fields-file=node_modules/@fyit/crouton-assets/assets-schema.json \
   --dialect=sqlite
 ```
 
@@ -123,7 +123,7 @@ Query with `contentType` filter (e.g., `image/*`).
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton` (required)
+- **Extends**: `@fyit/crouton` (required)
 - **Requires**: `@nuxthub/core` with `hub.blob: true`
 - **Peer deps**: `@vueuse/core ^11.0.0`
 

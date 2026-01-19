@@ -69,12 +69,12 @@ All apps extend the crouton packages:
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
+    '@fyit/crouton',
     // Optional feature packages:
-    '@friendlyinternet/nuxt-crouton-auth',
-    '@friendlyinternet/nuxt-crouton-ai',
-    '@friendlyinternet/nuxt-crouton-collab',
-    '@friendlyinternet/nuxt-crouton-editor',
+    '@fyit/crouton-auth',
+    '@fyit/crouton-ai',
+    '@fyit/crouton-collab',
+    '@fyit/crouton-editor',
     // Local generated layer:
     './layers/{app-name}'
   ],

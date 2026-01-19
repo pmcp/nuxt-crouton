@@ -149,7 +149,7 @@ Form structure must match generator:
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-schema-designer'],
+  extends: ['@fyit/crouton-schema-designer'],
 
   // Required: NuxtHub for database persistence
   modules: ['@nuxthub/core'],
@@ -207,7 +207,7 @@ interface SchemaProject {
 
 ## Dependencies
 
-- **Requires**: `@friendlyinternet/nuxt-crouton` (for CroutonCollection preview)
+- **Requires**: `@fyit/crouton` (for CroutonCollection preview)
 - **Uses**: `@faker-js/faker` for mock data generation
 - **Works with**: NuxtHub D1 for persistence
 
@@ -243,7 +243,7 @@ To make a crouton package discoverable in the schema designer, create a `crouton
 
 ```typescript
 // packages/your-package/crouton.manifest.ts
-import type { PackageManifest } from '@friendlyinternet/nuxt-crouton-schema-designer'
+import type { PackageManifest } from '@fyit/crouton-schema-designer'
 
 const manifest: PackageManifest = {
   // Identity
@@ -262,8 +262,8 @@ const manifest: PackageManifest = {
 
   // Dependencies (auto-added to extends)
   dependencies: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth'
+    '@fyit/crouton',
+    '@fyit/crouton-auth'
   ],
 
   // Collections this package provides

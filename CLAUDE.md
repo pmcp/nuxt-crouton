@@ -1163,7 +1163,7 @@ The Themes Package (`packages/nuxt-crouton-themes/`) provides swappable UI theme
 
 | Theme | Description | Usage |
 |-------|-------------|-------|
-| KO | Hardware-inspired (Teenage Engineering KO II) | `extends: ['@friendlyinternet/nuxt-crouton-themes/ko']` |
+| KO | Hardware-inspired (Teenage Engineering KO II) | `extends: ['@fyit/crouton-themes/ko']` |
 
 **Features:**
 - Design tokens (CSS custom properties)

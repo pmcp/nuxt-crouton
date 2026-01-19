@@ -348,7 +348,7 @@ The `scopedAccessToken` table stores:
 ## Dependencies
 
 - **Extends**: None (standalone module/layer)
-- **Used by**: `@friendlyinternet/nuxt-crouton` and all crouton packages (canonical team auth)
+- **Used by**: `@fyit/crouton` and all crouton packages (canonical team auth)
 - **Core deps**: better-auth, @better-auth/passkey
 - **Recommended**: nuxthub-ratelimit (optional peer dependency for rate limiting)
 

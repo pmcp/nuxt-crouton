@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-mcp-server
+# CLAUDE.md - @fyit/crouton-mcp
 
 ## Package Purpose
 
@@ -203,7 +203,7 @@ If field types change in generator:
 ## Dependencies
 
 - **Extends**: `@modelcontextprotocol/sdk` (MCP protocol)
-- **Wraps**: `@friendlyinternet/nuxt-crouton-cli` (CLI)
+- **Wraps**: `@fyit/crouton-cli` (CLI)
 - **Runtime**: Node.js >= 18
 
 ## Testing

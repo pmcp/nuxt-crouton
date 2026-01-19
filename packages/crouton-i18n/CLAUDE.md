@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-i18n
+# CLAUDE.md - @fyit/crouton-i18n
 
 ## Package Purpose
 
@@ -87,10 +87,10 @@ const { schema, columns, config } = useTranslationsUi()
 
 ### AI Translation
 
-When `showAITranslate` is enabled, a "Translate" button appears next to the English reference when editing other languages. Clicking it sends the English text to `/api/ai/translate` (from `@friendlyinternet/nuxt-crouton-ai`).
+When `showAITranslate` is enabled, a "Translate" button appears next to the English reference when editing other languages. Clicking it sends the English text to `/api/ai/translate` (from `@fyit/crouton-ai`).
 
 **Requirements:**
-- `@friendlyinternet/nuxt-crouton-ai` must be extended in your nuxt.config
+- `@fyit/crouton-ai` must be extended in your nuxt.config
 - OpenAI API key must be configured (`NUXT_OPENAI_API_KEY`)
 
 ## Component Naming
@@ -133,8 +133,8 @@ crouton-generate seed-translations --layer shop # Specific layer
 // Layer nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-i18n'
+    '@fyit/crouton',
+    '@fyit/crouton-i18n'
   ],
   i18n: {
     locales: [
@@ -174,7 +174,7 @@ langDir: './locales'
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton` (required)
+- **Extends**: `@fyit/crouton` (required)
 - **Peer deps**: `@nuxtjs/i18n ^9.0.0`, `drizzle-orm >=0.30.0`, `zod ^3.20.0`
 
 ## Testing

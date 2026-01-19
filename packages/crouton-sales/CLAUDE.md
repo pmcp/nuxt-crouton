@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/crouton-sales
+# CLAUDE.md - @fyit/crouton-sales
 
 ## Package Purpose
 
@@ -49,9 +49,9 @@ User MUST use `sales` as layer name in crouton.config.js.
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth',  // Required for helper auth
-    '@friendlyinternet/crouton-sales',
+    '@fyit/crouton',
+    '@fyit/crouton-auth',  // Required for helper auth
+    '@fyit/crouton-sales',
     './layers/sales'  // Generated layer
   ],
   croutonSales: {
@@ -62,7 +62,7 @@ export default defineNuxtConfig({
 
 ## Usage Workflow
 
-1. `pnpm add @friendlyinternet/crouton-sales`
+1. `pnpm add @fyit/crouton-sales`
 2. Copy schemas from package to local `./schemas/`
 3. Configure crouton.config.js with `sales` layer
 4. Run `crouton config`
@@ -120,7 +120,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 
 ## Helper Authentication
 
-Helpers (volunteers, staff) authenticate with an event's shared PIN. The authentication is managed by `@friendlyinternet/nuxt-crouton-auth`'s scoped access system.
+Helpers (volunteers, staff) authenticate with an event's shared PIN. The authentication is managed by `@fyit/crouton-auth`'s scoped access system.
 
 ### Client-side Usage
 
@@ -156,7 +156,7 @@ await logout()
 
 ```typescript
 // In API handlers
-import { requireScopedAccess } from '@friendlyinternet/nuxt-crouton-auth/server'
+import { requireScopedAccess } from '@fyit/crouton-auth/server'
 
 export default defineEventHandler(async (event) => {
   const access = await requireScopedAccess(event, 'pos-helper-token')
@@ -184,8 +184,8 @@ Events must have a `helperPin` field configured:
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton` (required)
-- **Peer deps**: `@friendlyinternet/nuxt-crouton-auth`, `@nuxtjs/i18n ^9.0.0`, `zod ^3.0.0`
+- **Extends**: `@fyit/crouton` (required)
+- **Peer deps**: `@fyit/crouton-auth`, `@nuxtjs/i18n ^9.0.0`, `zod ^3.0.0`
 - **Optional**: `node-thermal-printer` for receipt printing
 
 ## Testing

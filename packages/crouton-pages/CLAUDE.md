@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-pages
+# CLAUDE.md - @fyit/crouton-pages
 
 ## Package Purpose
 
@@ -114,7 +114,7 @@ apps/{app}/layers/pages/collections/pages/
 
 1. **Install package**: Add to `nuxt.config.ts`:
    ```typescript
-   extends: ['@friendlyinternet/nuxt-crouton-pages']
+   extends: ['@fyit/crouton-pages']
    ```
 
 2. **Generate collection**: Create `schemas/pages.json` and run:
@@ -402,9 +402,9 @@ export default defineNuxtConfig({
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton`, `@friendlyinternet/nuxt-crouton-editor`
+- **Extends**: `@fyit/crouton`, `@fyit/crouton-editor`
 - **Uses**: Collection tree/sortable for admin page list
-- **Uses**: Domain table from `@friendlyinternet/nuxt-crouton-auth`
+- **Uses**: Domain table from `@fyit/crouton-auth`
 
 ## Dashboard Deprecation
 

@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-ai
+# CLAUDE.md - @fyit/crouton-ai
 
 ## Package Purpose
 
@@ -50,7 +50,7 @@ NUXT_ANTHROPIC_API_KEY=sk-ant-...
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-ai'],
+  extends: ['@fyit/crouton-ai'],
   runtimeConfig: {
     public: {
       croutonAI: {
@@ -180,7 +180,7 @@ if (result) {
 ### TipTap Editor Extension
 
 ```typescript
-import { TranslationAI } from '@friendlyinternet/nuxt-crouton-ai/editor'
+import { TranslationAI } from '@fyit/crouton-ai/editor'
 
 const editor = useEditor({
   extensions: [
@@ -255,8 +255,8 @@ The translation endpoint recognizes field types for better translations:
 3. Use `streamText` or `generateText` from `ai` package
 
 ### Generate chat conversations collection
-1. Run: `pnpm crouton ai chatConversations --fields-file=node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json`
-2. Or use config file with `fieldsFile: 'node_modules/@friendlyinternet/nuxt-crouton-ai/schemas/chat-conversations.json'`
+1. Run: `pnpm crouton ai chatConversations --fields-file=node_modules/@fyit/crouton-ai/schemas/chat-conversations.json`
+2. Or use config file with `fieldsFile: 'node_modules/@fyit/crouton-ai/schemas/chat-conversations.json'`
 3. Generated collection includes: title, messages, provider, model, systemPrompt, metadata
 4. Use `importMessages()` / `exportMessages()` from `useChat()` for persistence
 

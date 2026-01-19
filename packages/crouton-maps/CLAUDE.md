@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-maps
+# CLAUDE.md - @fyit/crouton-maps
 
 ## Package Purpose
 
@@ -22,8 +22,8 @@ Map integration layer for Nuxt Crouton with Mapbox GL JS. Provides map component
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-maps'
+    '@fyit/crouton',
+    '@fyit/crouton-maps'
   ],
   runtimeConfig: {
     public: {
@@ -135,7 +135,7 @@ Pass Mapbox Studio style URL to `style` prop.
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton`
+- **Extends**: `@fyit/crouton`
 - **Core**: `nuxt-mapbox ^1.6.4`
 - **Peer deps**: `nuxt ^4.0.0`, `@nuxt/ui ^4.0.0`
 

@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-events
+# CLAUDE.md - @fyit/crouton-events
 
 ## Package Purpose
 
@@ -40,8 +40,8 @@ User Action → nuxt-crouton mutation → crouton:mutation hook
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-events'
+    '@fyit/crouton',
+    '@fyit/crouton-events'
   ],
   runtimeConfig: {
     public: {
@@ -155,7 +155,7 @@ Query events with filters and export as JSON/CSV.
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton` (required)
+- **Extends**: `@fyit/crouton` (required)
 - **Peer deps**: `nuxt ^4.0.0`, `@nuxt/ui ^4.0.0`
 
 ## Storage Estimate

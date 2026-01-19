@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-collab
+# CLAUDE.md - @fyit/crouton-collab
 
 ## Package Purpose
 
@@ -102,7 +102,7 @@ The `type` query parameter differentiates room types:
 
 ```typescript
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton-collab']
+  extends: ['@fyit/crouton-collab']
 })
 ```
 
@@ -509,7 +509,7 @@ type CollabStructure = 'map' | 'array' | 'xmlFragment' | 'text'
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton`
+- **Extends**: `@fyit/crouton`
 - **Runtime**: `yjs`, `y-protocols`
 - **Dev**: `@cloudflare/workers-types`
 

@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-cli
+# CLAUDE.md - @fyit/crouton-cli
 
 ## Package Purpose
 
@@ -56,22 +56,22 @@ crouton add --list
 
 | Module | Package | Has Schema | Description |
 |--------|---------|------------|-------------|
-| `auth` | `@friendlyinternet/nuxt-crouton-auth` | ● | Authentication with Better Auth (**bundled in core**) |
-| `i18n` | `@friendlyinternet/nuxt-crouton-i18n` | ● | Multi-language support (**bundled in core**) |
-| `admin` | `@friendlyinternet/nuxt-crouton-admin` | ○ | Admin dashboard (**bundled in core**) |
-| `bookings` | `@friendlyinternet/crouton-bookings` | ○ | Booking system |
-| `editor` | `@friendlyinternet/nuxt-crouton-editor` | ○ | Rich text editor |
-| `assets` | `@friendlyinternet/nuxt-crouton-assets` | ○ | Asset management |
-| `events` | `@friendlyinternet/nuxt-crouton-events` | ○ | Event tracking/audit trail |
-| `flow` | `@friendlyinternet/nuxt-crouton-flow` | ○ | Vue Flow graphs |
-| `email` | `@friendlyinternet/nuxt-crouton-email` | ○ | Email integration |
-| `maps` | `@friendlyinternet/nuxt-crouton-maps` | ○ | Map integration |
-| `ai` | `@friendlyinternet/nuxt-crouton-ai` | ○ | AI integration |
-| `devtools` | `@friendlyinternet/nuxt-crouton-devtools` | ○ | Nuxt Devtools |
+| `auth` | `@fyit/crouton-auth` | ● | Authentication with Better Auth (**bundled in core**) |
+| `i18n` | `@fyit/crouton-i18n` | ● | Multi-language support (**bundled in core**) |
+| `admin` | `@fyit/crouton-admin` | ○ | Admin dashboard (**bundled in core**) |
+| `bookings` | `@fyit/crouton-bookings` | ○ | Booking system |
+| `editor` | `@fyit/crouton-editor` | ○ | Rich text editor |
+| `assets` | `@fyit/crouton-assets` | ○ | Asset management |
+| `events` | `@fyit/crouton-events` | ○ | Event tracking/audit trail |
+| `flow` | `@fyit/crouton-flow` | ○ | Vue Flow graphs |
+| `email` | `@fyit/crouton-email` | ○ | Email integration |
+| `maps` | `@fyit/crouton-maps` | ○ | Map integration |
+| `ai` | `@fyit/crouton-ai` | ○ | AI integration |
+| `devtools` | `@fyit/crouton-devtools` | ○ | Nuxt Devtools |
 
 ● = Has database schema (will update `server/db/schema.ts`)
 ○ = No database tables
-**bundled in core** = Automatically included when using `@friendlyinternet/nuxt-crouton`
+**bundled in core** = Automatically included when using `@fyit/crouton`
 
 ### What `crouton add` Does
 
@@ -327,19 +327,19 @@ With `--hierarchy`:
 With `collab: true` (in config):
 - Adds `show-collab-presence` prop to List.vue
 - Adds `useSession()` and `collabConfig` computed to script
-- Requires `@friendlyinternet/nuxt-crouton-collab` to be extended
+- Requires `@fyit/crouton-collab` to be extended
 
 ## Team Authentication
 
 All generated collections are team-scoped. The generator:
-- Imports team auth from `@friendlyinternet/nuxt-crouton-auth/server/utils/team`
+- Imports team auth from `@fyit/crouton-auth/server/utils/team`
 - Uses `resolveTeamAndCheckMembership()` for membership validation
-- Requires the core `@friendlyinternet/nuxt-crouton` package (which bundles auth, admin, and i18n)
+- Requires the core `@fyit/crouton` package (which bundles auth, admin, and i18n)
 
-**Note:** The core package (`@friendlyinternet/nuxt-crouton`) automatically includes:
-- `@friendlyinternet/nuxt-crouton-auth` - Team-based authentication
-- `@friendlyinternet/nuxt-crouton-admin` - Admin dashboard
-- `@friendlyinternet/nuxt-crouton-i18n` - Internationalization
+**Note:** The core package (`@fyit/crouton`) automatically includes:
+- `@fyit/crouton-auth` - Team-based authentication
+- `@fyit/crouton-admin` - Admin dashboard
+- `@fyit/crouton-i18n` - Internationalization
 
 You only need to add the core package to your `nuxt.config.ts` extends array.
 
@@ -348,7 +348,7 @@ You only need to add the core package to your `nuxt.config.ts` extends array.
 ## Dependencies
 
 - **Extends**: None (standalone CLI)
-- **Works with**: `@friendlyinternet/nuxt-crouton`
+- **Works with**: `@fyit/crouton`
 - **Dev deps**: commander, chalk, inquirer, ora, fs-extra
 
 ## Testing

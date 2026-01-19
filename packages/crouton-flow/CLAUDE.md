@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-flow
+# CLAUDE.md - @fyit/crouton-flow
 
 ## Package Purpose
 
@@ -19,8 +19,8 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton-collab` (for collaboration infrastructure)
-- **Peer Dependencies**: `@friendlyinternet/nuxt-crouton`
+- **Extends**: `@fyit/crouton-collab` (for collaboration infrastructure)
+- **Peer Dependencies**: `@fyit/crouton`
 - **Core**: `@vue-flow/core`, `@dagrejs/dagre`, `yjs`
 - **Plugins**: `@vue-flow/background`, `@vue-flow/controls`, `@vue-flow/minimap`
 
@@ -142,8 +142,8 @@ The flow package already extends crouton-collab, so you get this automatically w
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-flow'  // Already extends crouton-collab
+    '@fyit/crouton',
+    '@fyit/crouton-flow'  // Already extends crouton-collab
   ]
 })
 ```
@@ -165,7 +165,7 @@ new_classes = ["CollabRoom"]
 
 ```bash
 npx wrangler d1 execute <DB_NAME> \
-  --file=./node_modules/@friendlyinternet/nuxt-crouton-collab/server/database/migrations/0001_yjs_collab_states.sql
+  --file=./node_modules/@fyit/crouton-collab/server/database/migrations/0001_yjs_collab_states.sql
 ```
 
 ### 4. Authentication

@@ -1,10 +1,10 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton
+# CLAUDE.md - @fyit/crouton
 
 ## Package Purpose
 
 Core CRUD layer for Nuxt applications. Provides composables, components, and server utilities for building data-driven admin panels with team-scoped access, nested forms, and smart caching.
 
-**Single-install experience:** Installing `@friendlyinternet/nuxt-crouton` automatically includes i18n, auth, and admin packages - no need to install them separately.
+**Single-install experience:** Installing `@fyit/crouton` automatically includes i18n, auth, and admin packages - no need to install them separately.
 
 ## Auto-Included Packages
 
@@ -25,19 +25,19 @@ When you extend `nuxt-crouton`, you automatically get:
 // nuxt.config.ts - BEFORE (manual)
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-auth',
-    '@friendlyinternet/nuxt-crouton-admin',
-    '@friendlyinternet/nuxt-crouton-i18n',
-    '@friendlyinternet/crouton-bookings',
+    '@fyit/crouton',
+    '@fyit/crouton-auth',
+    '@fyit/crouton-admin',
+    '@fyit/crouton-i18n',
+    '@fyit/crouton-bookings',
   ]
 })
 
 // nuxt.config.ts - AFTER (auto-included)
 export default defineNuxtConfig({
   extends: [
-    '@friendlyinternet/nuxt-crouton',           // Includes auth, admin, i18n
-    '@friendlyinternet/crouton-bookings',       // Optional apps
+    '@fyit/crouton',           // Includes auth, admin, i18n
+    '@fyit/crouton-bookings',       // Optional apps
   ]
 })
 
@@ -199,7 +199,7 @@ hub: {
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
-  extends: ['@friendlyinternet/nuxt-crouton'],
+  extends: ['@fyit/crouton'],
 
   // Override or extend hub config
   hub: {

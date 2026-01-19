@@ -1,4 +1,4 @@
-# CLAUDE.md - @friendlyinternet/nuxt-crouton-editor
+# CLAUDE.md - @fyit/crouton-editor
 
 ## Package Purpose
 
@@ -327,8 +327,8 @@ interface EditorVariableGroup {
 export default defineNuxtConfig({
   modules: ['@nuxt/ui'],  // Required (v3.4.0+)
   extends: [
-    '@friendlyinternet/nuxt-crouton',
-    '@friendlyinternet/nuxt-crouton-editor'
+    '@fyit/crouton',
+    '@fyit/crouton-editor'
   ]
 })
 ```
@@ -408,7 +408,7 @@ const variables = [
 
 ## Dependencies
 
-- **Extends**: `@friendlyinternet/nuxt-crouton`
+- **Extends**: `@fyit/crouton`
 - **Requires**: `@nuxt/ui ^3.4.0` (provides TipTap integration)
 - **Peer deps**: `@nuxt/icon ^1.0.0`
 
