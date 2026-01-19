@@ -534,8 +534,9 @@ export function generateQueries(data, config = null) {
   // Generate tree queries if hierarchy is enabled
   const treeQueries = generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, camelCasePlural)
 
-  // Generate sortable queries if sortable is enabled (but hierarchy is not)
-  const sortableQueries = generateSortableQueries(data, tableName, prefixedPascalCasePlural)
+  // Generate sortable queries if sortable is enabled but hierarchy is not
+  // (hierarchy already includes reorderSiblings, so we skip to avoid duplicate exports)
+  const sortableQueries = hasHierarchy ? '' : generateSortableQueries(data, tableName, prefixedPascalCasePlural)
 
   return `// Generated with JSON field post-processing support (v2025-01-11)
 import { eq, and, desc${ascImport}, inArray${sqlImport} } from 'drizzle-orm'
