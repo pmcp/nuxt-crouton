@@ -47,6 +47,7 @@ export default defineBuildConfig({
     '@ai-sdk/vue',
     '@ai-sdk/openai',
     '@ai-sdk/anthropic',
+    '@ai-sdk/ui-utils',
     '#imports'
   ]
 })
