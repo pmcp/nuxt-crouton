@@ -13,6 +13,7 @@ Lightweight developer tooling for documentation checks, API tracking, cross-pack
 | Package | Scripts in `scripts/` (no separate package needed) |
 | Status | Planning |
 | Estimated effort | ~1.5 hours for core features |
+| Related Plan | [PLAN-testing.md](./PLAN-testing.md) - Testing infrastructure |
 
 ---
 
@@ -316,22 +317,19 @@ package-check:
 
 ---
 
-## Testing (Separate Effort)
+## Testing
 
-The original plan has **no testing coverage**. Current state:
+See **[PLAN-testing.md](./PLAN-testing.md)** for the complete testing strategy.
 
-| Package | Test Files | Status |
-|---------|------------|--------|
-| crouton-core | 1 (template) | ❌ No real tests |
-| crouton-flow | 1 (e2e) | 🟡 Minimal |
-| All others | 0 | ❌ No tests |
+**Summary**: The monorepo has ~60 existing tests across 8 packages (more than originally thought). The testing plan covers:
+- Fixing CI to run all existing tests (Phase 1)
+- Adopting `@nuxt/test-utils` per Nuxt 4 best practices (Phase 1.5)
+- Adding CLI generator tests (Phase 2)
+- Auth integration tests (Phase 3)
+- Core API tests (Phase 4)
+- E2E smoke tests (Phase 5)
 
-**Recommendation**: Create a separate `PLAN-testing.md` with:
-- Which packages need tests first (core, auth, cli)
-- Unit tests for composables with Vitest
-- Component tests with `@nuxt/test-utils`
-- E2E tests for critical flows with Playwright
-- CI integration for test runs
+The CI workflow in this plan assumes tests are configured per PLAN-testing.md.
 
 ---
 
