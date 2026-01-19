@@ -20,7 +20,7 @@ Tracking migration from `@friendlyinternet/*` to `@fyit/*`.
 
 | Phase | Status | Description | Committed |
 |-------|--------|-------------|-----------|
-| 0 | ✅ Complete | Pre-cleanup: Standardize package.json metadata | (pending commit) |
+| 0 | ✅ Complete | Pre-cleanup: Standardize package.json metadata | 786fbdaa |
 | 1 | [ ] Pending | Rename directories and package names | |
 | 2 | [ ] Pending | Create unified @fyit/crouton module | |
 | 3 | [ ] Pending | Update CLI module registry | |
@@ -61,7 +61,7 @@ Tracking migration from `@friendlyinternet/*` to `@fyit/*`.
 - [x] Run typecheck ✅ (pre-existing errors in apps/docs unrelated to package.json changes)
 - [x] Commit: `chore(root): phase 0 - standardize package.json metadata`
 
-**Commit SHA**: (to be filled after commit)
+**Commit SHA**: 786fbdaa505ce2210107e3b60b630ea96027d5bc
 
 ---
 
