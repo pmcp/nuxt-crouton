@@ -395,17 +395,30 @@ export async function ensureLayersExtended(layers) {
         }
 
         if (!content.includes(layerPath)) {
-          // Add to extends array
-          const extendsMatch = content.match(/extends:\s*\[([^\]]*)\]/)
+          // Add to extends array - use multiline regex to capture the full array content
+          const extendsMatch = content.match(/extends:\s*\[([\s\S]*?)\]/)
           if (extendsMatch) {
             const currentExtends = extendsMatch[1]
-            const newExtends = currentExtends.trim()
-              ? `${currentExtends},\n    ${layerPath}`
-              : `\n    ${layerPath}\n  `
-            content = content.replace(
-              /extends:\s*\[([^\]]*)\]/,
-              `extends: [${newExtends}]`
-            )
+            // Find the last non-whitespace character position
+            const trimmedExtends = currentExtends.trimEnd()
+
+            // Check if there's already content (not empty)
+            if (trimmedExtends) {
+              // Remove trailing comma if present, then add our entry with comma
+              const withoutTrailingComma = trimmedExtends.replace(/,\s*$/, '')
+              const newExtends = `${withoutTrailingComma},\n    ${layerPath}\n  `
+              content = content.replace(
+                /extends:\s*\[([\s\S]*?)\]/,
+                `extends: [${newExtends}]`
+              )
+            } else {
+              // Empty extends array
+              const newExtends = `\n    ${layerPath}\n  `
+              content = content.replace(
+                /extends:\s*\[([\s\S]*?)\]/,
+                `extends: [${newExtends}]`
+              )
+            }
           }
         }
       }

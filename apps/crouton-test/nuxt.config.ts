@@ -1,3 +1,5 @@
+import { getCroutonLayers } from '@fyit/crouton'
+
 export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   compatibilityDate: '2025-01-19',
@@ -5,18 +7,13 @@ export default defineNuxtConfig({
 
   // Layers - based on crouton.config.js features
   extends: [
-    '@fyit/crouton-core',
-    '@fyit/crouton-auth',
-    '@fyit/crouton-admin',
-    '@fyit/crouton-i18n',
-    '@fyit/crouton-editor',
-    '@fyit/crouton-pages',
-    '@fyit/crouton-bookings',
+    ...getCroutonLayers(),
     './layers/bookings',
     './layers/pages'
   ],
 
   modules: [
+    '@fyit/crouton',
     '@nuxthub/core',
     '@nuxt/ui'
   ],
