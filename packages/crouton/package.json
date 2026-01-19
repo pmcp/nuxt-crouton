@@ -1,0 +1,56 @@
+{
+  "name": "@fyit/crouton",
+  "version": "1.0.0",
+  "description": "Unified Nuxt CRUD framework with opt-in features",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/module.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.ts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "crouton",
+    "crud",
+    "admin",
+    "database",
+    "framework"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^3.15.0"
+  },
+  "devDependencies": {
+    "nuxt": "^4.0.0",
+    "unbuild": "^3.6.1"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0"
+  }
+}
