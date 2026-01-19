@@ -11,9 +11,9 @@ import {
 // Mock yjs
 vi.mock('yjs', () => {
   return {
-    Doc: vi.fn().mockImplementation(() => ({
-      destroy: vi.fn()
-    }))
+    Doc: class MockDoc {
+      destroy = vi.fn()
+    }
   }
 })
 

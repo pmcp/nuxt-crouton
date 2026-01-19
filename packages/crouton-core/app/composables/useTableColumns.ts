@@ -107,32 +107,18 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       })
     }
 
-    // Actions column after select
-    if (!options.hideDefaultColumns?.actions) {
-      columns.push({
-        accessorKey: 'actions',
-        id: 'actions',
-        header: '',
-        enableSorting: false,
-        enableHiding: false
-      })
-    }
+    // Add user-defined columns after select
+    columns.push(...options.columns.map(col => ({
+      ...col,
+      id: col.id ?? col.accessorKey
+    })))
 
-    // Add timestamp/audit columns after actions
+    // Add timestamp/audit columns after user columns
     if (!options.hideDefaultColumns?.createdAt) {
       columns.push({
         accessorKey: 'createdAt',
         id: 'createdAt',
         header: tString('table.createdAt'),
-        sortable: true
-      })
-    }
-
-    if (!options.hideDefaultColumns?.createdBy) {
-      columns.push({
-        accessorKey: 'createdBy',
-        id: 'createdBy',
-        header: tString('table.createdBy'),
         sortable: true
       })
     }
@@ -146,6 +132,15 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       })
     }
 
+    if (!options.hideDefaultColumns?.createdBy) {
+      columns.push({
+        accessorKey: 'createdBy',
+        id: 'createdBy',
+        header: tString('table.createdBy'),
+        sortable: true
+      })
+    }
+
     if (!options.hideDefaultColumns?.updatedBy) {
       columns.push({
         accessorKey: 'updatedBy',
@@ -155,11 +150,16 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       })
     }
 
-    // Add user-defined columns at the end
-    columns.push(...options.columns.map(col => ({
-      ...col,
-      id: col.id ?? col.accessorKey
-    })))
+    // Actions column at the end
+    if (!options.hideDefaultColumns?.actions) {
+      columns.push({
+        accessorKey: 'actions',
+        id: 'actions',
+        header: tString('table.actions'),
+        enableSorting: false,
+        enableHiding: false
+      })
+    }
 
     return columns
   })

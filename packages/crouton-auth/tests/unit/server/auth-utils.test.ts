@@ -7,11 +7,13 @@ import {
   requireAuth,
   getAuthUser,
   requireTeamMember,
-  requireTeamAdmin,
-  requireTeamOwner,
   getTeamFromContext,
   setTeamContext
 } from '../../../server/utils/auth'
+import {
+  requireTeamAdmin,
+  requireTeamOwner
+} from '../../../server/utils/team'
 import { getServerSession, requireServerSession, useServerAuth } from '../../../server/utils/useServerAuth'
 
 // Mock H3Event
@@ -323,7 +325,7 @@ describe('server/utils/auth', () => {
       const event = createMockEvent()
       const context = await requireTeamAdmin(event)
 
-      expect(context.member.role).toBe('admin')
+      expect(context.membership.role).toBe('admin')
     })
 
     it('should return context for owner user', async () => {
@@ -339,7 +341,7 @@ describe('server/utils/auth', () => {
       const event = createMockEvent()
       const context = await requireTeamAdmin(event)
 
-      expect(context.member.role).toBe('owner')
+      expect(context.membership.role).toBe('owner')
     })
 
     it('should throw 403 for regular member', async () => {
@@ -380,7 +382,7 @@ describe('server/utils/auth', () => {
       const event = createMockEvent()
       const context = await requireTeamOwner(event)
 
-      expect(context.member.role).toBe('owner')
+      expect(context.membership.role).toBe('owner')
     })
 
     it('should throw 403 for admin user', async () => {

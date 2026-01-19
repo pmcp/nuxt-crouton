@@ -54,6 +54,20 @@ const mockActiveOrgData = ref<{
 // Mock session user
 const mockSessionUser = ref<{ id: string, email: string } | null>(null)
 
+// Mock session active organization (Team type from useSession)
+const mockSessionActiveOrg = ref<{
+  id: string
+  name: string
+  slug: string
+  logo?: string | null
+  metadata?: Record<string, unknown>
+  personal?: boolean
+  isDefault?: boolean
+  ownerId?: string
+  createdAt: Date
+  updatedAt: Date
+} | null>(null)
+
 // Setup global mocks
 vi.stubGlobal('useNuxtApp', () => ({
   $authClient: mockAuthClient
@@ -74,7 +88,9 @@ vi.stubGlobal('useRuntimeConfig', () => ({
 }))
 
 vi.stubGlobal('useSession', () => ({
-  user: mockSessionUser
+  user: mockSessionUser,
+  activeOrganization: mockSessionActiveOrg,
+  activeOrgRaw: mockActiveOrgData
 }))
 
 vi.stubGlobal('ref', ref)
@@ -121,6 +137,7 @@ describe('useTeam', () => {
     // Reset state
     mockOrganizationsData.value = null
     mockActiveOrgData.value = null
+    mockSessionActiveOrg.value = null
     mockSessionUser.value = null
   })
 
