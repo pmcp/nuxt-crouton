@@ -1,6 +1,6 @@
 {
   "name": "@fyit/crouton",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Unified Nuxt CRUD framework with opt-in features",
   "type": "module",
   "main": "./dist/module.mjs",

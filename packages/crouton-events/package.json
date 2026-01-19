@@ -1,6 +1,6 @@
 {
   "name": "@fyit/crouton-events",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "description": "Event tracking layer for Nuxt Crouton - Audit trail for all CRUD operations",
   "type": "module",
   "main": "./nuxt.config.ts",

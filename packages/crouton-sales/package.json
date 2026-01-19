@@ -1,6 +1,6 @@
 {
   "name": "@fyit/crouton-sales",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "POS/Sales system for Nuxt Crouton - products, categories, orders, and optional thermal receipt printing",
   "type": "module",
   "main": "./nuxt.config.ts",
