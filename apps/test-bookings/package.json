@@ -30,5 +30,6 @@
   "devDependencies": {
     "@fyit/crouton-cli": "workspace:*",
     "drizzle-kit": "^0.31.0"
-  }
+  },
+  "version": "0.1.0"
 }

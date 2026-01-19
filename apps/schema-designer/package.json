@@ -22,5 +22,6 @@
     "@nuxthub/core": "^0.10.0",
     "drizzle-kit": "^0.31.8",
     "nuxt": "^4.2.2"
-  }
+  },
+  "version": "0.1.0"
 }
