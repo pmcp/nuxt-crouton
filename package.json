@@ -40,17 +40,23 @@
     "version:patch": "pnpm -r exec npm version patch --no-git-tag-version",
     "version:minor": "pnpm -r exec npm version minor --no-git-tag-version",
     "version:major": "pnpm -r exec npm version major --no-git-tag-version",
-    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules"
+    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules",
+    "changelog": "changelogithub",
+    "check:publint": "publint ./packages/crouton",
+    "check:attw": "attw --pack ./packages/crouton --ignore-rules cjs-resolves-to-esm"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
     "@nuxt/eslint-config": "^1.2.0",
     "@nuxt/test-utils": "^3.23.0",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
     "@vue/test-utils": "^2.4.6",
+    "changelogithub": "^14.0.0",
     "eslint": "^9.17.0",
     "happy-dom": "^20.3.3",
     "nuxt": "^4.0.0",
+    "publint": "^0.3.16",
     "typescript": "^5.7.2",
     "vitest": "^4.0.16"
   },

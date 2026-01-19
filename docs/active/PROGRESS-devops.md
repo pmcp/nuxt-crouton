@@ -8,7 +8,7 @@ Unified tracker for CI, testing, and release infrastructure across all plans.
 
 | Metric | Value |
 |--------|-------|
-| Tasks Completed | 5 / 15 |
+| Tasks Completed | 10 / 15 |
 | Total Estimated | ~19.5 hours |
 | Plans Covered | 2 |
 
@@ -18,8 +18,8 @@ Unified tracker for CI, testing, and release infrastructure across all plans.
 
 | Plan | Focus | Est. Hours | Status |
 |------|-------|------------|--------|
-| [PLAN-crouton-ci.md](./PLAN-crouton-ci.md) | Release tooling, docs checks, package validation | 1.5h | Planning |
-| [PLAN-testing.md](./PLAN-testing.md) | Unit tests, integration tests, E2E | 18h | Planning |
+| [PLAN-crouton-ci.md](./PLAN-crouton-ci.md) | Release tooling, docs checks, package validation | 1.5h | Complete |
+| [PLAN-testing.md](./PLAN-testing.md) | Unit tests, integration tests, E2E | 18h | In Progress |
 
 ---
 
@@ -53,16 +53,16 @@ Set up changelog generation and package validation.
 
 | # | Task | Plan | Hours | Status | Notes |
 |---|------|------|-------|--------|-------|
-| 2.1 | [ ] Install changelogithub | CI P3 | 0.25h | Pending | `pnpm add -D changelogithub -w` |
-| 2.2 | [ ] Create changelogithub.config.ts | CI P3 | 0.25h | Pending | Scope mapping for all packages |
-| 2.3 | [ ] Install publint + attw | CI P4 | 0.25h | Pending | `pnpm add -D publint @arethetypeswrong/cli -w` |
-| 2.4 | [ ] Add package-check CI job | CI P4 | 0.25h | Pending | Run publint + attw on @fyit/crouton |
-| 2.5 | [ ] Test release workflow | CI P3 | 0.5h | Pending | Dry-run `pnpm changelog` |
+| 2.1 | [x] ✅ Install changelogithub | CI P3 | 0.25h | Done | Added changelogithub v14 |
+| 2.2 | [x] ✅ Create changelogithub.config.ts | CI P3 | 0.25h | Done | Scope mapping for 21 packages |
+| 2.3 | [x] ✅ Install publint + attw | CI P4 | 0.25h | Done | Added publint v0.3, attw v0.18 |
+| 2.4 | [x] ✅ Add package-check CI job | CI P4 | 0.25h | Done | Added package-check job to ci.yml |
+| 2.5 | [x] ✅ Test release workflow | CI P3 | 0.5h | Done | All dry-runs passed |
 
 **Sprint 2 Definition of Done**:
-- [ ] `pnpm changelog` generates release notes
-- [ ] CI fails if package exports are broken
-- [ ] CI fails if TypeScript types don't resolve
+- [x] ✅ `pnpm changelog` generates release notes
+- [x] ✅ CI fails if package exports are broken
+- [x] ✅ CI fails if TypeScript types don't resolve
 
 ---
 
@@ -138,16 +138,22 @@ jobs:
 
 ## Daily Log
 
-### [Date]
+### 2026-01-19
 
 **Completed**:
-- (none yet)
+- Sprint 2: Release Tooling (Tasks 2.1-2.5)
+  - Installed changelogithub v14
+  - Created changelogithub.config.ts with scope mapping for 21 packages
+  - Installed publint v0.3 and attw v0.18
+  - Added package-check CI job to ci.yml
+  - Tested all dry-runs successfully
 
 **Blocked**:
-- (none yet)
+- (none)
 
 **Notes**:
-- (none yet)
+- ESM-only packages trigger attw CJS warning (expected); using --ignore-rules cjs-resolves-to-esm
+- Changelog grouped by scope working correctly
 
 ---
 
@@ -188,11 +194,11 @@ Sprint 2 can run in parallel with Sprint 3-5 if desired.
 ## Success Criteria (All Plans)
 
 From **PLAN-crouton-ci.md**:
-- [ ] CI fails if any package is missing CLAUDE.md
-- [ ] `pnpm changelog` generates release notes from commits
-- [ ] CI fails if package.json exports don't match built files (publint)
-- [ ] CI fails if TypeScript types don't resolve correctly (attw)
-- [ ] Field types stay in sync (already working)
+- [x] ✅ CI fails if any package is missing CLAUDE.md
+- [x] ✅ `pnpm changelog` generates release notes from commits
+- [x] ✅ CI fails if package.json exports don't match built files (publint)
+- [x] ✅ CI fails if TypeScript types don't resolve correctly (attw)
+- [x] ✅ Field types stay in sync (already working)
 
 From **PLAN-testing.md**:
 - [ ] CI runs all existing tests (~60)

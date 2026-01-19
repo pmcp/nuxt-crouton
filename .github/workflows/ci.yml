@@ -109,3 +109,32 @@ jobs:
 
       - name: Run all tests
         run: pnpm test
+
+  package-check:
+    name: Package Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build crouton package
+        run: pnpm --filter '@fyit/crouton' build
+
+      - name: Check package exports (publint)
+        run: pnpm check:publint
+
+      - name: Check TypeScript types (attw)
+        run: pnpm check:attw
