@@ -6,6 +6,11 @@ export default defineConfig({
       'app/composables/__tests__/**/*.test.ts',
       'tests/**/*.test.ts'
     ],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.nuxt/**'
+    ],
     environment: 'happy-dom',
     globals: true,
     coverage: {

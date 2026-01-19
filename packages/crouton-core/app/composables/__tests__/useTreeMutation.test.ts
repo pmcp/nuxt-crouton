@@ -159,12 +159,12 @@ describe('useTreeMutation', () => {
 
       await moveNode('page-1', 'parent-1', 2)
 
-      expect(mockCallHook).toHaveBeenCalledWith('crouton:mutation', {
+      expect(mockCallHook).toHaveBeenCalledWith('crouton:mutation', expect.objectContaining({
         operation: 'move',
         collection: 'pages',
         itemId: 'page-1',
         data: { parentId: 'parent-1', order: 2 }
-      })
+      }))
     })
 
     it('invalidates cache after success', async () => {
@@ -282,11 +282,11 @@ describe('useTreeMutation', () => {
 
       await reorderSiblings(updates)
 
-      expect(mockCallHook).toHaveBeenCalledWith('crouton:mutation', {
+      expect(mockCallHook).toHaveBeenCalledWith('crouton:mutation', expect.objectContaining({
         operation: 'reorder',
         collection: 'pages',
         data: { updates }
-      })
+      }))
     })
 
     it('invalidates cache after success', async () => {

@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [vue()],
   test: {
     include: ['tests/**/*.test.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.nuxt/**'
+    ],
     environment: 'happy-dom',
     globals: true,
     coverage: {
