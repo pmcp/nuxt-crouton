@@ -158,113 +158,6 @@ import type { CroutonState } from '../composables/useCrouton'
 const { croutonStates, close, closeAll, removeState } = useCrouton()
 const { collectionWithCapitalSingular } = useFormatCollections()
 
-// Check if collab support is available (CollabEditingBadge component exists)
-const hasCollabSupport = computed(() => {
-  try {
-    const component = resolveComponent('CollabEditingBadge')
-    const isAvailable = typeof component !== 'string' // resolveComponent returns string if not found
-    return isAvailable
-  } catch {
-    return false
-  }
-})
-
-// Get current user for presence - with anonymous fallback
-const currentUser = computed(() => {
-  try {
-    // @ts-expect-error - useSession may not exist if auth package not installed
-    if (typeof useSession === 'function') {
-      // @ts-expect-error - conditional call
-      const { user } = useSession()
-      if (user?.value) {
-        return {
-          id: user.value.id,
-          name: user.value.name || user.value.email || 'Anonymous'
-        }
-      }
-    }
-  } catch {
-    // Auth package not installed
-  }
-  // Return anonymous user with session-unique ID for presence tracking
-  // This ensures presence works even when not logged in
-  return {
-    id: `anonymous-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    name: 'Anonymous'
-  }
-})
-
-const currentUserId = computed(() => currentUser.value?.id || null)
-
-// Track active collab WebSocket connections for each slideover
-const collabWebSockets = ref<Map<string, WebSocket>>(new Map())
-
-// Generate consistent color from user ID
-const generateUserColor = (userId: string): string => {
-  let hash = 0
-  for (let i = 0; i < userId.length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash) % 360
-  return `hsl(${hue}, 70%, 50%)`
-}
-
-// Set up collab presence for a state using simple WebSocket
-const setupCollabPresence = (state: CroutonState) => {
-  if (import.meta.server) return
-  if (!hasCollabSupport.value) return
-  if (state.action !== 'update') return
-  if (!state.activeItem?.id) return
-  if (collabWebSockets.value.has(state.id)) return
-
-  const roomId = `${state.collection}-${state.activeItem.id}`
-  const roomType = state.collection || 'generic'
-
-  try {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const url = `${protocol}//${window.location.host}/api/collab/${roomId}/ws?type=${roomType}`
-
-    const ws = new WebSocket(url)
-    collabWebSockets.value.set(state.id, ws)
-
-    ws.onopen = () => {
-      // Send awareness message to register presence
-      const user = currentUser.value
-      const awarenessMessage = JSON.stringify({
-        type: 'awareness',
-        userId: user.id,
-        state: {
-          user: {
-            id: user.id,
-            name: user.name,
-            color: generateUserColor(user.id)
-          }
-        }
-      })
-      ws.send(awarenessMessage)
-    }
-
-    ws.onerror = () => {
-      // Silent fail - presence is not critical
-    }
-  } catch {
-    // Silent fail - presence is not critical
-  }
-}
-
-// Clean up collab WebSocket when slideover closes
-const cleanupCollabPresence = (stateId: string) => {
-  const ws = collabWebSockets.value.get(stateId)
-  if (ws) {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.close()
-    } else if (ws.readyState === WebSocket.CONNECTING) {
-      ws.onopen = () => ws.close()
-    }
-  }
-  collabWebSockets.value.delete(stateId)
-}
-
 // Filter states by container type
 const modalStates = computed(() =>
   croutonStates.value.filter(state => state.containerType === 'modal')
@@ -277,15 +170,6 @@ const dialogStates = computed(() =>
 const slideoverStates = computed(() =>
   croutonStates.value.filter(state => state.containerType === 'slideover' || !state.containerType)
 )
-
-// Watch for new slideover states and set up collab presence
-watch(slideoverStates, (states) => {
-  for (const state of states) {
-    if (state.isOpen && state.action === 'update' && state.activeItem?.id) {
-      setupCollabPresence(state)
-    }
-  }
-}, { deep: true, immediate: true })
 
 // Get formatted collection name
 const getCollectionName = (collection: string | null): string => {
@@ -325,7 +209,6 @@ const handleSlideoverClose = (stateId: string, isOpen: boolean): void => {
 
 // Handle after leave animation complete - actually remove the state
 const handleAfterLeave = (stateId: string): void => {
-  cleanupCollabPresence(stateId)
   removeState(stateId)
 }
 
