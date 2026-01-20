@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1768861867848,
+      "tag": "0000_loose_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1768907501622,
+      "tag": "0001_nostalgic_fixer",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1768908019871,
+      "tag": "0002_solid_silver_sable",
+      "breakpoints": true
+    }
+  ]
+}
