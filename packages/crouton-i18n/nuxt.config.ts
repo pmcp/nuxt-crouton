@@ -43,15 +43,7 @@ export default defineNuxtConfig({
 
   // Composables
   imports: {
-    dirs: [join(currentDir, 'app/composables')],
-    // Explicitly override useT from nuxt-crouton stub with our full implementation
-    imports: [
-      {
-        name: 'useT',
-        from: join(currentDir, 'app/composables/useT'),
-        priority: 10 // Higher priority to override the stub
-      }
-    ]
+    dirs: [join(currentDir, 'app/composables')]
   },
 
   // i18n configuration

@@ -32,7 +32,6 @@
 <script lang="ts" setup>
 import { upperFirst } from 'scule'
 import type { TableActionsProps } from '../types/table'
-import { useT } from '../composables/useT'
 
 const { tString } = useT()
 const { open } = useCrouton()

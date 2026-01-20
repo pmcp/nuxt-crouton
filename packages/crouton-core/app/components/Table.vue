@@ -140,7 +140,6 @@ import { resolveComponent, type Component } from 'vue'
 import type { TableProps, TableSort, PaginationData, SortableOptions, CollabPresenceConfig } from '../types/table'
 import { useTableData } from '../composables/useTableData'
 import { useTableColumns } from '../composables/useTableColumns'
-import { useT } from '../composables/useT'
 import { useSortable } from '@vueuse/integrations/useSortable'
 
 // Base row type for table data
