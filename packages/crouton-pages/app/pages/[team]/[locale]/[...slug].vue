@@ -24,14 +24,6 @@ const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayo
 
 const route = useRoute()
 
-// Initialize translation composable FIRST so t() is always available in template
-// (even if we throw an error later, Vue SSR may still try to render the error state)
-// useT now safely skips loading for reserved prefixes, so this is safe to call early
-const { t } = useT()
-
-// useDomainContext is also needed in the error template, call it early
-const { isCustomDomain, hideTeamInUrl } = useDomainContext()
-
 // Reserved prefixes that should NOT be treated as team slugs
 // These routes are handled by other packages (auth, admin, etc.)
 const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
@@ -44,8 +36,9 @@ if (reservedPrefixes.includes(teamParam)) {
   })
 }
 
-// Initialize page-specific composables AFTER reserved prefix check
+const { t } = useT()
 const { getPageType } = usePageTypes()
+const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 
 // i18n for locale handling and SEO
 const { locale: i18nLocale, locales, setLocale } = useI18n()

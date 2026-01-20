@@ -49,18 +49,9 @@ export function useT() {
   const teamTranslations = useState<Record<string, any>>('teamTranslations', () => ({}))
   const teamTranslationsLoaded = useState<boolean>('teamTranslationsLoaded', () => false)
 
-  // Reserved prefixes that should NOT trigger team translation loading
-  // These are not valid team slugs and would cause API errors
-  const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-
   // Load team translations if not already loaded
   const loadTeamTranslations = async () => {
     if (!teamSlugFromRoute.value || teamTranslationsLoaded.value) {
-      return
-    }
-
-    // Skip loading for reserved prefixes (not valid teams)
-    if (reservedPrefixes.includes(teamSlugFromRoute.value)) {
       return
     }
 
