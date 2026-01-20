@@ -6,10 +6,11 @@
  * since NuxtHub's D1 database binding is only available during request handling.
  */
 
-// Deduplicate logs across plugin resolution
-const _authPluginLogged = (globalThis as Record<string, boolean>).__croutonAuthPluginLogged ??= false
-
 export default defineNitroPlugin(async () => {
+  // Deduplicate across layer resolution - check inside plugin, not at module load
+  if ((globalThis as Record<string, boolean>).__croutonAuthPluginLogged) return
+  (globalThis as Record<string, boolean>).__croutonAuthPluginLogged = true
+
   const config = useRuntimeConfig()
 
   // Validate required environment variables
@@ -29,9 +30,8 @@ export default defineNitroPlugin(async () => {
     return
   }
 
-  // Log once in development
-  if (process.env.NODE_ENV !== 'production' && !_authPluginLogged) {
-    (globalThis as Record<string, boolean>).__croutonAuthPluginLogged = true
+  // Log in development
+  if (process.env.NODE_ENV !== 'production') {
     console.log('🍞 crouton:auth ✓ Auth ready')
   }
 })
