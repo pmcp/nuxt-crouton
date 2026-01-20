@@ -187,17 +187,24 @@ function isLocaleComplete(localeCode: string): boolean {
   if (!props.modelValue) return false
 
   if (isMultiField.value) {
-    const localeData = props.modelValue[localeCode] as Record<string, string> | undefined
+    const localeData = props.modelValue[localeCode] as Record<string, unknown> | undefined
     if (!localeData) return false
 
     // Check if all fields have values
     return props.fields.every((field) => {
       const value = localeData[field]
-      return value && value.trim() !== ''
+      if (!value) return false
+      // Handle string values (title, slug, etc.)
+      if (typeof value === 'string') return value.trim() !== ''
+      // Handle object values (block editor JSON content)
+      if (typeof value === 'object') return true
+      return !!value
     })
   } else {
     const value = props.modelValue[localeCode]
-    return !!(value && (value as string).trim() !== '')
+    if (!value) return false
+    if (typeof value === 'string') return value.trim() !== ''
+    return !!value
   }
 }
 
