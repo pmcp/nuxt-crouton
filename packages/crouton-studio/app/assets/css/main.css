@@ -1,0 +1,5 @@
+/* Crouton Studio CSS */
+/* Import Tailwind CSS v4 and Nuxt UI */
+
+@import "tailwindcss";
+@import "@nuxt/ui";
