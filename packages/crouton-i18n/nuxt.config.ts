@@ -29,6 +29,14 @@ export default defineNuxtConfig({
         path: join(currentDir, 'app/components'),
         prefix: 'CroutonI18n',
         global: true
+      },
+      // AITranslateButton stub without prefix - allows crouton-ai to override it
+      // with the real implementation that has the same name
+      {
+        path: join(currentDir, 'app/components'),
+        pattern: 'AITranslateButton.vue',
+        prefix: '',
+        global: true
       }
     ]
   },

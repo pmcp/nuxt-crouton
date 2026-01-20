@@ -74,10 +74,6 @@ const fieldComponentMap = computed(() => {
 const { locale, locales } = useI18n()
 const toast = useToast()
 
-// Check if crouton-ai is available (provides /api/ai/translate)
-const config = useRuntimeConfig()
-const isAIAvailable = computed(() => !!config.public.croutonAI)
-
 // Track which locale we're editing (for tabs mode)
 const editingLocale = ref(locale.value)
 
@@ -387,6 +383,73 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
   if (!sourceLang) return 'Translate'
   return `Translate from ${sourceLang.toUpperCase()}`
 }
+
+// Get the best source text for translation (used by AITranslateButton)
+function getBestSourceText(field: string, targetLocale: string): string | undefined {
+  const sourceLang = findBestSourceLocale(field, targetLocale)
+  if (!sourceLang) return undefined
+  const allTranslations = getAllTranslationsForField(field)
+  return allTranslations[sourceLang]
+}
+
+// Request block editor translation (controlled mode - parent handles the API call)
+async function requestBlockTranslation(field: string, targetLocale: string) {
+  const sourceLang = findBestSourceLocale(field, targetLocale)
+  if (!sourceLang) return
+
+  const allTranslations = getAllTranslationsForField(field)
+  const sourceText = allTranslations[sourceLang]
+  if (!sourceText) return
+
+  const translationKey = `${targetLocale}-${field}`
+  isTranslating.value[translationKey] = true
+
+  try {
+    // Parse and translate block content
+    let content: any
+    try {
+      content = typeof sourceText === 'string' ? JSON.parse(sourceText) : sourceText
+    } catch {
+      console.error('Failed to parse block content')
+      return
+    }
+
+    const result = await $fetch<{ content: any, translatedCount?: number }>('/api/ai/translate-blocks', {
+      method: 'POST',
+      body: {
+        content,
+        sourceLanguage: sourceLang,
+        targetLanguage: targetLocale
+      }
+    })
+
+    if (result?.content) {
+      updateFieldValue(field, JSON.stringify(result.content), targetLocale)
+    }
+  } catch (err: any) {
+    console.error('Block translation error:', err)
+
+    const errorMessage = err?.data?.statusMessage || err?.message || 'Translation failed'
+
+    if (errorMessage.includes('API key not configured') || errorMessage.includes('No AI API key')) {
+      toast.add({
+        title: 'AI Translation Not Configured',
+        description: 'Set NUXT_ANTHROPIC_API_KEY or NUXT_OPENAI_API_KEY in your .env file',
+        icon: 'i-lucide-key',
+        color: 'warning'
+      })
+    } else {
+      toast.add({
+        title: 'Translation Failed',
+        description: errorMessage,
+        icon: 'i-lucide-alert-circle',
+        color: 'error'
+      })
+    }
+  } finally {
+    isTranslating.value[translationKey] = false
+  }
+}
 </script>
 
 <template>
@@ -419,20 +482,29 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
               <label class="text-xs font-medium text-muted uppercase tracking-wide">
                 {{ field }}
               </label>
-              <!-- AI Translate button (shows when AI package is available and source content exists) -->
-              <UTooltip
-                v-if="showAiTranslate && isAIAvailable && hasSourceContent(field, narrowLocaleTab)"
-                :text="getTranslateTooltip(field, narrowLocaleTab)"
-              >
-                <UButton
-                  icon="i-lucide-sparkles"
-                  size="2xs"
-                  variant="ghost"
-                  color="neutral"
-                  :loading="isFieldTranslating(field, narrowLocaleTab)"
-                  @click="requestTranslation(field, narrowLocaleTab)"
-                />
-              </UTooltip>
+              <!-- AI Translate button - uses stub (renders nothing) if crouton-ai not extended -->
+              <AITranslateButton
+                v-if="showAiTranslate && !isBlockEditorField(field)"
+                :source-text="getBestSourceText(field, narrowLocaleTab)"
+                :source-language="findBestSourceLocale(field, narrowLocaleTab)"
+                :target-language="narrowLocaleTab"
+                :field-type="fieldType || field"
+                :existing-translations="getAllTranslationsForField(field)"
+                size="2xs"
+                icon-only
+                @translate="(text) => updateFieldValue(field, text, narrowLocaleTab)"
+              />
+              <!-- Block editor translation (controlled mode) -->
+              <AITranslateButton
+                v-if="showAiTranslate && isBlockEditorField(field)"
+                :loading="isFieldTranslating(field, narrowLocaleTab)"
+                :disabled="!hasSourceContent(field, narrowLocaleTab)"
+                :tooltip="getTranslateTooltip(field, narrowLocaleTab)"
+                size="2xs"
+                icon-only
+                is-block-editor
+                @click="requestBlockTranslation(field, narrowLocaleTab)"
+              />
             </div>
 
             <!-- CroutonEditorSimple -->
@@ -651,20 +723,29 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
                 <label class="text-xs font-medium text-muted uppercase tracking-wide">
                   {{ field }}
                 </label>
-                <!-- AI Translate button inline with label (only when AI package available) -->
-                <UTooltip
-                  v-if="showAiTranslate && isAIAvailable && hasSourceContent(field, secondaryEditingLocale)"
-                  :text="getTranslateTooltip(field, secondaryEditingLocale)"
-                >
-                  <UButton
-                    icon="i-lucide-sparkles"
-                    size="2xs"
-                    variant="ghost"
-                    color="neutral"
-                    :loading="isFieldTranslating(field, secondaryEditingLocale)"
-                    @click="requestTranslation(field, secondaryEditingLocale)"
-                  />
-                </UTooltip>
+                <!-- AI Translate button - uses stub (renders nothing) if crouton-ai not extended -->
+                <AITranslateButton
+                  v-if="showAiTranslate && !isBlockEditorField(field)"
+                  :source-text="getBestSourceText(field, secondaryEditingLocale)"
+                  :source-language="findBestSourceLocale(field, secondaryEditingLocale)"
+                  :target-language="secondaryEditingLocale"
+                  :field-type="fieldType || field"
+                  :existing-translations="getAllTranslationsForField(field)"
+                  size="2xs"
+                  icon-only
+                  @translate="(text) => updateFieldValue(field, text, secondaryEditingLocale)"
+                />
+                <!-- Block editor translation (controlled mode) -->
+                <AITranslateButton
+                  v-if="showAiTranslate && isBlockEditorField(field)"
+                  :loading="isFieldTranslating(field, secondaryEditingLocale)"
+                  :disabled="!hasSourceContent(field, secondaryEditingLocale)"
+                  :tooltip="getTranslateTooltip(field, secondaryEditingLocale)"
+                  size="2xs"
+                  icon-only
+                  is-block-editor
+                  @click="requestBlockTranslation(field, secondaryEditingLocale)"
+                />
               </div>
 
               <!-- CroutonEditorSimple -->
@@ -872,17 +953,25 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
                 {{ findBestSourceLocale(field, editingLocale)?.toUpperCase() }}: {{ getFieldValue(field, findBestSourceLocale(field, editingLocale) || 'en') }}
               </p>
             </template>
-            <UButton
-              v-if="showAiTranslate && isAIAvailable"
-              icon="i-lucide-sparkles"
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              :loading="isFieldTranslating(field)"
-              @click="requestTranslation(field)"
-            >
-              {{ isBlockEditorField(field) ? 'Translate blocks' : 'Translate' }}
-            </UButton>
+            <!-- AI Translate button - uses stub (renders nothing) if crouton-ai not extended -->
+            <AITranslateButton
+              v-if="showAiTranslate && !isBlockEditorField(field)"
+              :source-text="getBestSourceText(field, editingLocale)"
+              :source-language="findBestSourceLocale(field, editingLocale)"
+              :target-language="editingLocale"
+              :field-type="fieldType || field"
+              :existing-translations="getAllTranslationsForField(field)"
+              @translate="(text) => updateFieldValue(field, text, editingLocale)"
+            />
+            <!-- Block editor translation (controlled mode) -->
+            <AITranslateButton
+              v-if="showAiTranslate && isBlockEditorField(field)"
+              :loading="isFieldTranslating(field, editingLocale)"
+              :disabled="!hasSourceContent(field, editingLocale)"
+              :tooltip="getTranslateTooltip(field, editingLocale)"
+              is-block-editor
+              @click="requestBlockTranslation(field, editingLocale)"
+            />
           </div>
         </UFormField>
       </div>
@@ -908,25 +997,24 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
           />
         </UFormField>
 
-        <!-- Show English reference when editing other languages -->
+        <!-- Show source reference when other locales have content -->
         <div
-          v-if="editingLocale !== 'en' && getFieldValue('', 'en')"
+          v-if="hasSourceContent('', editingLocale)"
           class="flex items-center gap-2 mt-1"
         >
           <p class="text-xs text-gray-500">
-            English: {{ getFieldValue('', 'en') }}
+            {{ findBestSourceLocale('', editingLocale)?.toUpperCase() }}: {{ getFieldValue('', findBestSourceLocale('', editingLocale) || 'en') }}
           </p>
-          <UButton
-            v-if="showAiTranslate && isAIAvailable"
-            icon="i-lucide-sparkles"
-            size="xs"
-            variant="ghost"
-            color="neutral"
-            :loading="isFieldTranslating('')"
-            @click="requestTranslation('')"
-          >
-            Translate
-          </UButton>
+          <!-- AI Translate button - uses stub (renders nothing) if crouton-ai not extended -->
+          <AITranslateButton
+            v-if="showAiTranslate"
+            :source-text="getBestSourceText('', editingLocale)"
+            :source-language="findBestSourceLocale('', editingLocale)"
+            :target-language="editingLocale"
+            :field-type="fieldType"
+            :existing-translations="getAllTranslationsForField('')"
+            @translate="(text) => updateFieldValue('', text, editingLocale)"
+          />
         </div>
       </div>
     </template>
