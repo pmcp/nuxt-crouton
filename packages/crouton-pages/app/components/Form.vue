@@ -302,7 +302,7 @@ async function handleSubmit() {
   isSaving.value = true
   try {
     // Prepare translations, extracting collab content if needed
-    let translations = { ...state.value.translations }
+    let translations = { ...state.value.translations } as Record<string, { title?: string; slug?: string; content?: string }>
 
     // When collab is active for content, extract from Yjs fragments
     if (collabLocalizedContent && isRegularPage.value) {
@@ -319,7 +319,31 @@ async function handleSubmit() {
       }
     }
 
-    const data = {
+    // Validate: At least one locale must have a title
+    const hasTitle = Object.values(translations).some(
+      (t) => t?.title && t.title.trim().length > 0
+    )
+    if (!hasTitle) {
+      const toast = useToast()
+      toast.add({
+        title: 'Title required',
+        description: 'Please enter a title for at least one language',
+        color: 'error'
+      })
+      return
+    }
+
+    // Auto-generate slugs for locales that have title but no slug
+    for (const [locale, data] of Object.entries(translations)) {
+      if (data?.title && (!data?.slug || data.slug.trim() === '')) {
+        translations[locale] = {
+          ...data,
+          slug: slugify(data.title)
+        }
+      }
+    }
+
+    const submitData = {
       ...state.value,
       translations,
       // Config only used for app pages (non-regular)
@@ -328,9 +352,9 @@ async function handleSubmit() {
     }
 
     if (props.action === 'create') {
-      await create(data)
+      await create(submitData)
     } else if (props.action === 'update' && state.value.id) {
-      await update(state.value.id, data)
+      await update(state.value.id, submitData)
     } else if (props.action === 'delete') {
       await deleteItems(props.items)
     }
@@ -350,6 +374,16 @@ function openDeleteConfirm() {
     close()
     open('delete', 'pagesPages', [state.value.id])
   }
+}
+
+// Simple slugify function for auto-generating slugs from titles
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 // Translatable fields - title, slug, and content for regular pages
