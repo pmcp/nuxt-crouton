@@ -611,10 +611,33 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 field === 'content' ? 'flex-1 min-h-[300px]' : ''
               ]"
             >
-              <div class="flex items-center h-5">
+              <div class="flex items-center justify-between h-5">
                 <label class="text-xs font-medium text-muted uppercase tracking-wide">
                   {{ field }}
                 </label>
+                <!-- AI Translate button for primary locale -->
+                <AITranslateButton
+                  v-if="showAiTranslate && !isBlockEditorField(field)"
+                  :source-text="getBestSourceText(field, primaryEditingLocale)"
+                  :source-language="findBestSourceLocale(field, primaryEditingLocale)"
+                  :target-language="primaryEditingLocale"
+                  :field-type="fieldType || field"
+                  :existing-translations="getAllTranslationsForField(field)"
+                  size="2xs"
+                  icon-only
+                  @translate="(text) => updateFieldValue(field, text, primaryEditingLocale)"
+                />
+                <!-- Block editor translation for primary locale -->
+                <AITranslateButton
+                  v-if="showAiTranslate && isBlockEditorField(field)"
+                  :loading="isFieldTranslating(field, primaryEditingLocale)"
+                  :disabled="!hasSourceContent(field, primaryEditingLocale)"
+                  :tooltip="getTranslateTooltip(field, primaryEditingLocale)"
+                  size="2xs"
+                  icon-only
+                  is-block-editor
+                  @click="requestBlockTranslation(field, primaryEditingLocale)"
+                />
               </div>
 
               <!-- CroutonEditorSimple -->
