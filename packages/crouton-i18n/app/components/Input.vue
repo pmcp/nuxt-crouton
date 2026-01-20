@@ -72,6 +72,11 @@ const fieldComponentMap = computed(() => {
 })
 
 const { locale, locales } = useI18n()
+const toast = useToast()
+
+// Check if crouton-ai is available (provides /api/ai/translate)
+const config = useRuntimeConfig()
+const isAIAvailable = computed(() => !!config.public.croutonAI)
 
 // Track which locale we're editing (for tabs mode)
 const editingLocale = ref(locale.value)
@@ -329,8 +334,27 @@ async function requestTranslation(field: string, targetLocale?: string) {
         updateFieldValue(field, result.text, targetLang)
       }
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Translation error:', err)
+
+    // Show user-friendly toast for common errors
+    const errorMessage = err?.data?.statusMessage || err?.message || 'Translation failed'
+
+    if (errorMessage.includes('API key not configured')) {
+      toast.add({
+        title: 'AI Translation Not Configured',
+        description: 'Set NUXT_OPENAI_API_KEY or NUXT_ANTHROPIC_API_KEY in your .env file',
+        icon: 'i-lucide-key',
+        color: 'warning'
+      })
+    } else {
+      toast.add({
+        title: 'Translation Failed',
+        description: errorMessage,
+        icon: 'i-lucide-alert-circle',
+        color: 'error'
+      })
+    }
   } finally {
     isTranslating.value[translationKey] = false
   }
@@ -395,9 +419,9 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
               <label class="text-xs font-medium text-muted uppercase tracking-wide">
                 {{ field }}
               </label>
-              <!-- AI Translate button (shows when any other locale has content) -->
+              <!-- AI Translate button (shows when AI package is available and source content exists) -->
               <UTooltip
-                v-if="showAiTranslate && hasSourceContent(field, narrowLocaleTab)"
+                v-if="showAiTranslate && isAIAvailable && hasSourceContent(field, narrowLocaleTab)"
                 :text="getTranslateTooltip(field, narrowLocaleTab)"
               >
                 <UButton
@@ -627,9 +651,9 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
                 <label class="text-xs font-medium text-muted uppercase tracking-wide">
                   {{ field }}
                 </label>
-                <!-- AI Translate button inline with label -->
+                <!-- AI Translate button inline with label (only when AI package available) -->
                 <UTooltip
-                  v-if="showAiTranslate && hasSourceContent(field, secondaryEditingLocale)"
+                  v-if="showAiTranslate && isAIAvailable && hasSourceContent(field, secondaryEditingLocale)"
                   :text="getTranslateTooltip(field, secondaryEditingLocale)"
                 >
                   <UButton
@@ -849,7 +873,7 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
               </p>
             </template>
             <UButton
-              v-if="showAiTranslate"
+              v-if="showAiTranslate && isAIAvailable"
               icon="i-lucide-sparkles"
               size="xs"
               variant="ghost"
@@ -893,7 +917,7 @@ function getTranslateTooltip(field: string, targetLocale: string): string {
             English: {{ getFieldValue('', 'en') }}
           </p>
           <UButton
-            v-if="showAiTranslate"
+            v-if="showAiTranslate && isAIAvailable"
             icon="i-lucide-sparkles"
             size="xs"
             variant="ghost"

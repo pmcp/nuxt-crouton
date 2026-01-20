@@ -158,6 +158,45 @@ lib/generators/
 | `translatableProperties` | string[] | (Repeater) Properties to support per-item translations |
 | `properties` | object | (Repeater) Typed property definitions for repeater items |
 
+### Translatable Fields Pattern
+
+When a field has `translatable: true`, the root-level column becomes a cache/fallback.
+The actual value lives in `translations.{locale}.fieldName`.
+
+**Important:** Translatable fields should have `required: false` at the root level,
+because the value is derived from translations, not stored directly.
+
+```json
+// ✅ Correct: translatable field is NOT required
+{
+  "title": {
+    "type": "string",
+    "translatable": true,
+    "meta": {
+      "required": false,
+      "label": "Title"
+    }
+  }
+}
+
+// ❌ Wrong: Will fail when title only exists in translations!
+{
+  "title": {
+    "type": "string",
+    "translatable": true,
+    "meta": {
+      "required": true,
+      "label": "Title"
+    }
+  }
+}
+```
+
+**Why this matters:**
+- When creating a record, the form may only populate `translations.en.title`
+- If the root `title` column has `NOT NULL` constraint, the insert fails
+- Making it nullable allows the root column to be empty while translations hold the values
+
 ### Translatable Repeater Fields
 
 Repeater fields can support per-item translations using `translatableProperties` and `properties`:
@@ -293,6 +332,27 @@ export default {
 | `email` | `false` | Email with Resend |
 | `assets` | `false` | Media library |
 | `events` | `false` | Audit trail |
+| `ai` | `false` | AI/LLM integration (see below) |
+| `collab` | `false` | Real-time collaboration |
+
+### AI Feature Configuration
+
+The `ai` feature supports both boolean and object configuration:
+
+```javascript
+features: {
+  // Simple: uses OpenAI gpt-4o-mini by default
+  ai: true,
+
+  // With options: specify model (auto-detects provider from model name)
+  ai: { defaultModel: 'claude-sonnet-4-20250514' },  // Uses Anthropic
+  ai: { defaultModel: 'gpt-4o' },                     // Uses OpenAI
+}
+```
+
+**Environment variables required:**
+- `NUXT_OPENAI_API_KEY` - For OpenAI models (gpt-*, o1-*, o3-*)
+- `NUXT_ANTHROPIC_API_KEY` - For Anthropic models (claude-*)
 
 ### Collection Options
 

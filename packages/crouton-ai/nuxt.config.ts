@@ -36,14 +36,17 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Server-only (API keys)
-    openaiApiKey: '',
-    anthropicApiKey: '',
+    // Server-only (API keys and model override)
+    openaiApiKey: '',      // NUXT_OPENAI_API_KEY
+    anthropicApiKey: '',   // NUXT_ANTHROPIC_API_KEY
+    aiDefaultModel: '',    // NUXT_AI_DEFAULT_MODEL (optional, auto-detects from available keys)
 
     public: {
       croutonAI: {
-        defaultProvider: 'openai',
-        defaultModel: 'gpt-4o'
+        // These can be overridden in nuxt.config.ts crouton: { ai: { ... } }
+        // But prefer using env vars or let it auto-detect from API keys
+        defaultProvider: '',
+        defaultModel: ''
       }
     }
   },

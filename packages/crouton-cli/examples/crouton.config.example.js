@@ -37,7 +37,11 @@ export default {
     // assets: true   // Media library
     // events: true   // Audit trail
     // collab: true   // Real-time collaboration
-    // ai: true       // AI/LLM integration
+
+    // AI/LLM integration - supports boolean or object config
+    // ai: true,  // Uses OpenAI gpt-4o-mini by default
+    // ai: { defaultModel: 'claude-sonnet-4-20250514' },  // Use Anthropic Claude
+    // ai: { defaultModel: 'gpt-4o' },  // Use specific OpenAI model
   },
 
   // ============================================================

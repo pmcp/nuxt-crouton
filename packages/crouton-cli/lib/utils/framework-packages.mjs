@@ -14,7 +14,7 @@ export function getFrameworkPackages(features = {}) {
   if (features.flow) packages.push('@fyit/crouton-flow')
   if (features.assets) packages.push('@fyit/crouton-assets')
   if (features.maps) packages.push('@fyit/crouton-maps')
-  if (features.ai) packages.push('@fyit/crouton-ai')
+  if (features.ai) packages.push('@fyit/crouton-ai')  // Supports boolean or { defaultModel: '...' }
   if (features.email) packages.push('@fyit/crouton-email')
   if (features.events) packages.push('@fyit/crouton-events')
   if (features.collab) packages.push('@fyit/crouton-collab')

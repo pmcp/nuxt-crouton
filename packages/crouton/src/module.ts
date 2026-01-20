@@ -154,6 +154,16 @@ export default defineNuxtModule<CroutonOptions>({
       defaultPageSize: mergedOptions.defaultPageSize || 20
     }
 
+    // Set AI runtime config if AI is enabled
+    if (mergedOptions.ai) {
+      const aiConfig = typeof mergedOptions.ai === 'object' ? mergedOptions.ai : {}
+      nuxt.options.runtimeConfig.public.croutonAI = {
+        ...nuxt.options.runtimeConfig.public.croutonAI,
+        defaultModel: aiConfig.defaultModel || 'gpt-4o-mini',
+        defaultProvider: aiConfig.defaultProvider
+      }
+    }
+
     // NOTE: Layers must be added via extends in nuxt.config.ts BEFORE modules load.
     // This module cannot dynamically add layers - use getCroutonLayers() helper instead.
     // See documentation for proper setup.

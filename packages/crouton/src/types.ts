@@ -1,4 +1,22 @@
 /**
+ * AI feature configuration options
+ */
+export interface CroutonAIOptions {
+  /**
+   * Default AI model to use for translations, completions, etc.
+   * Examples: 'gpt-4o-mini', 'claude-sonnet-4-20250514'
+   * @default 'gpt-4o-mini'
+   */
+  defaultModel?: string
+
+  /**
+   * Default AI provider
+   * Auto-detected from model name if not specified
+   */
+  defaultProvider?: 'openai' | 'anthropic'
+}
+
+/**
  * Collection definition for code generation
  */
 export interface CroutonCollectionConfig {
@@ -140,9 +158,13 @@ export interface CroutonOptions {
 
   /**
    * AI/LLM integration with Vercel AI SDK
+   * Pass `true` to enable with defaults, or an object to configure
    * @default false
+   * @example
+   * ai: true  // Uses gpt-4o-mini by default
+   * ai: { defaultModel: 'claude-sonnet-4-20250514' }  // Use Claude
    */
-  ai?: boolean
+  ai?: boolean | CroutonAIOptions
 
   /**
    * Email with Vue Email and Resend

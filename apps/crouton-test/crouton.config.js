@@ -6,6 +6,7 @@ export default {
     editor: true,   // For rich text in pages
     bookings: true, // Enables @fyit/crouton-bookings (UI + navigation)
     pages: true,    // Enables @fyit/crouton-pages (UI + navigation)
+    ai: { defaultModel: 'claude-sonnet-4-20250514' }, // Use Claude for AI translation
   },
 
   // Collections to generate (used by CLI)
