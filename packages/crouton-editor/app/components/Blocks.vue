@@ -24,7 +24,6 @@
 import { ref, computed, onMounted, onUnmounted, watch, markRaw } from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 import type { EditorSuggestionMenuItem, EditorToolbarItem } from '@nuxt/ui'
-import type * as Y from 'yjs'
 
 export interface BlockSuggestionItem {
   /** Block type name (e.g., 'heroBlock') */
@@ -63,7 +62,7 @@ interface Props {
    * When provided, editor syncs to Yjs instead of using modelValue.
    * Content is stored in the Y.XmlFragment and synced via WebSocket.
    */
-  yxmlFragment?: Y.XmlFragment
+  yxmlFragment?: unknown
   /**
    * Collab provider for cursor awareness (optional).
    * Used by CollaborationCursor extension to show other users' cursors.
@@ -104,7 +103,7 @@ watch(() => props.yxmlFragment, async (fragment) => {
       const { Collaboration } = await import('@tiptap/extension-collaboration')
       const extensions: any[] = [
         Collaboration.configure({
-          fragment
+          fragment: fragment as any
         })
       ]
 
