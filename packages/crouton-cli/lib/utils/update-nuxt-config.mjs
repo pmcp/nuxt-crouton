@@ -1,6 +1,7 @@
 // Update nuxt.config.ts to add a package to the extends array
 
 import fs from 'fs-extra'
+import { getFrameworkPackages } from './framework-packages.mjs'
 
 /**
  * Add a package to the extends array in nuxt.config.ts
@@ -96,4 +97,50 @@ export async function isInNuxtConfigExtends(configPath, packageName) {
 
   const content = await fs.readFile(configPath, 'utf-8')
   return content.includes(packageName)
+}
+
+/**
+ * Sync framework packages in nuxt.config.ts based on features
+ * - Removes getCroutonLayers() import and usage if present
+ * - Adds framework packages based on features config
+ * @param {string} configPath - Path to nuxt.config.ts
+ * @param {object} features - Features config object
+ * @returns {Promise<{synced: boolean, packages?: string[], reason?: string}>}
+ */
+export async function syncFrameworkPackages(configPath, features = {}) {
+  if (!await fs.pathExists(configPath)) {
+    return { synced: false, reason: 'nuxt.config.ts not found' }
+  }
+
+  let content = await fs.readFile(configPath, 'utf-8')
+  let modified = false
+
+  // Remove getCroutonLayers() import if present
+  const importRegex = /import\s*\{\s*getCroutonLayers\s*\}\s*from\s*['"]@fyit\/crouton['"]\s*\n?/g
+  if (importRegex.test(content)) {
+    content = content.replace(importRegex, '')
+    modified = true
+  }
+
+  // Remove ...getCroutonLayers() spread if present (with various spacing/argument patterns)
+  const spreadRegex = /\.\.\.getCroutonLayers\([^)]*\),?\s*/g
+  if (spreadRegex.test(content)) {
+    content = content.replace(spreadRegex, '')
+    modified = true
+  }
+
+  // Write back if we removed getCroutonLayers usage
+  if (modified) {
+    await fs.writeFile(configPath, content, 'utf-8')
+  }
+
+  // Get framework packages based on features
+  const packages = getFrameworkPackages(features)
+
+  // Add each package to extends (reuses existing function, handles deduplication)
+  for (const pkg of packages) {
+    await addToNuxtConfigExtends(configPath, pkg)
+  }
+
+  return { synced: true, packages }
 }

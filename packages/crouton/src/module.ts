@@ -40,6 +40,10 @@ function loadCroutonConfig(): CroutonConfig | null {
  * Helper to get the layers to extend based on crouton config.
  * Reads from crouton.config.js automatically, or accepts explicit options.
  *
+ * @deprecated The CLI now manages extends automatically.
+ * Run `crouton config` to sync framework packages to nuxt.config.ts.
+ * This function will be removed in a future version.
+ *
  * @example
  * ```ts
  * import { getCroutonLayers } from '@fyit/crouton'
@@ -58,6 +62,10 @@ function loadCroutonConfig(): CroutonConfig | null {
  * ```
  */
 export function getCroutonLayers(options?: CroutonOptions): string[] {
+  console.warn(
+    '[crouton] getCroutonLayers() is deprecated. ' +
+    'Run `crouton config` - it now manages framework packages automatically.'
+  )
   // If no options passed, try to load from crouton.config.js
   const config = options ? null : loadCroutonConfig()
   const features = options || config?.features || {}

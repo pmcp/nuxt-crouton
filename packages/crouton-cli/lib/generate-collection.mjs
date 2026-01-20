@@ -10,6 +10,7 @@ import { promisify } from 'node:util'
 import { toCase, toSnakeCase, mapType, typeMapping } from './utils/helpers.mjs'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
+import { syncFrameworkPackages } from './utils/update-nuxt-config.mjs'
 
 // Import generators
 import { generateFormComponent } from './generators/form-component.mjs'
@@ -1558,6 +1559,22 @@ async function main() {
       if (!validation.valid) {
         console.error('\n⛔ Cannot proceed with generation due to validation errors\n')
         process.exit(1)
+      }
+
+      // Sync framework packages based on features config
+      if (config.features) {
+        console.log('\n' + '═'.repeat(60))
+        console.log('  FRAMEWORK PACKAGES')
+        console.log('═'.repeat(60) + '\n')
+        console.log('↻ Syncing framework packages...')
+        const nuxtConfigPath = path.resolve('nuxt.config.ts')
+        const result = await syncFrameworkPackages(nuxtConfigPath, config.features)
+        if (result.synced) {
+          console.log(`✓ Synced ${result.packages.length} framework packages to extends`)
+          result.packages.forEach(pkg => console.log(`  • ${pkg}`))
+        } else {
+          console.log(`⚠ Could not sync framework packages: ${result.reason}`)
+        }
       }
 
       // Handle both config formats
