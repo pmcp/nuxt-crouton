@@ -51,7 +51,7 @@ export interface CroutonTargetConfig {
 export interface CroutonConfig {
   /**
    * Feature flags for runtime (which packages to enable)
-   * Used by getCroutonLayers() and the module
+   * Used by 'crouton config' CLI command and the module
    */
   features?: CroutonOptions
 

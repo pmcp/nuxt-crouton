@@ -37,39 +37,10 @@ function loadCroutonConfig(): CroutonConfig | null {
 }
 
 /**
- * Helper to get the layers to extend based on crouton config.
- * Reads from crouton.config.js automatically, or accepts explicit options.
- *
- * @deprecated The CLI now manages extends automatically.
- * Run `crouton config` to sync framework packages to nuxt.config.ts.
- * This function will be removed in a future version.
- *
- * @example
- * ```ts
- * import { getCroutonLayers } from '@fyit/crouton'
- *
- * // Auto-load from crouton.config.js
- * export default defineNuxtConfig({
- *   extends: [...getCroutonLayers(), './layers/my-layer'],
- *   modules: ['@fyit/crouton']
- * })
- *
- * // Or with explicit options
- * export default defineNuxtConfig({
- *   extends: getCroutonLayers({ bookings: true }),
- *   modules: ['@fyit/crouton']
- * })
- * ```
+ * Internal helper to compute required layers based on features.
+ * Used for validation warnings only.
  */
-export function getCroutonLayers(options?: CroutonOptions): string[] {
-  console.warn(
-    '[crouton] getCroutonLayers() is deprecated. ' +
-    'Run `crouton config` - it now manages framework packages automatically.'
-  )
-  // If no options passed, try to load from crouton.config.js
-  const config = options ? null : loadCroutonConfig()
-  const features = options || config?.features || {}
-
+function getRequiredLayers(features: CroutonOptions): string[] {
   const layers: string[] = []
 
   // Always include core
@@ -90,9 +61,6 @@ export function getCroutonLayers(options?: CroutonOptions): string[] {
   if (features.events) layers.push('@fyit/crouton-events')
   if (features.collab) layers.push('@fyit/crouton-collab')
   if (features.pages) layers.push('@fyit/crouton-pages')
-
-  // Devtools (skip in getCroutonLayers since it's dev-only)
-  // if (features.devtools) layers.push('@fyit/crouton-devtools')
 
   // Mini-apps
   if (features.bookings) layers.push('@fyit/crouton-bookings')
@@ -165,11 +133,11 @@ export default defineNuxtModule<CroutonOptions>({
     }
 
     // NOTE: Layers must be added via extends in nuxt.config.ts BEFORE modules load.
-    // This module cannot dynamically add layers - use getCroutonLayers() helper instead.
+    // This module cannot dynamically add layers. Run 'crouton config' to sync extends.
     // See documentation for proper setup.
 
     // Check if required layers are present and warn if not
-    const requiredLayers = getCroutonLayers(mergedOptions)
+    const requiredLayers = getRequiredLayers(mergedOptions)
     const existingLayers = (nuxt.options._layers || []).map((l: any) => l.config?.name || l.cwd)
 
     const missingLayers = requiredLayers.filter(layer => {
@@ -182,7 +150,7 @@ export default defineNuxtModule<CroutonOptions>({
     if (missingLayers.length > 0) {
       console.warn(`[crouton] Missing layers! Add these to your nuxt.config.ts extends:`)
       console.warn(`         extends: ['${missingLayers.join("', '")}']`)
-      console.warn(`         Or use the getCroutonLayers() helper function.`)
+      console.warn(`         Or run 'crouton config' to sync automatically.`)
     }
 
     // Log enabled features in development
