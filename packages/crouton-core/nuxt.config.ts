@@ -120,24 +120,5 @@ export default defineNuxtConfig({
       // Team auth uses @crouton/auth (Better Auth) when available
       ...(croutonAuthPath && { '#crouton/team-auth': croutonAuthPath })
     }
-  },
-
-  // Vite configuration to dedupe packages that must be singletons
-  // This prevents "X was already imported" errors from packages like Yjs and ProseMirror
-  vite: {
-    resolve: {
-      dedupe: [
-        'yjs',
-        'y-prosemirror',
-        'y-protocols',
-        'prosemirror-state',
-        'prosemirror-view',
-        'prosemirror-model',
-        'prosemirror-transform',
-        '@tiptap/pm',
-        '@tiptap/core',
-        'vue'
-      ]
-    }
   }
 })

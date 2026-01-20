@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { markRaw } from 'vue'
+import type * as Y from 'yjs'
 import { PageBlocks } from '../../editor/extensions/page-blocks'
 /**
  * Page Block Editor with Preview
@@ -47,7 +48,7 @@ interface Props {
    * Y.XmlFragment for real-time collaboration.
    * When provided, editor syncs to Yjs instead of using modelValue.
    */
-  yxmlFragment?: unknown
+  yxmlFragment?: Y.XmlFragment
   /**
    * Collab provider for cursor awareness (optional).
    */
