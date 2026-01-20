@@ -19,13 +19,16 @@ export default {
   // ============================================================
   // FEATURE FLAGS (Unified Config)
   // ============================================================
-  // Which crouton packages to enable. Used by getCroutonLayers()
-  // in nuxt.config.ts and by the module at runtime.
+  // Which crouton packages to enable.
   //
-  // Core features (enabled by default):
-  //   auth: true      - Better Auth with teams
-  //   admin: true     - Admin dashboard
-  //   i18n: true      - Multi-language support
+  // IMPORTANT: @fyit/crouton-core BUNDLES these packages automatically:
+  //   - @fyit/crouton-auth  (Better Auth with teams)
+  //   - @fyit/crouton-admin (Admin dashboard)
+  //   - @fyit/crouton-i18n  (Multi-language support)
+  //
+  // DO NOT add auth, admin, or i18n to your nuxt.config.ts extends array
+  // separately - they are included via crouton-core. Adding them separately
+  // causes duplicate layer loading and SSR errors.
   //
   // Optional features (disabled by default):
   features: {

@@ -71,7 +71,12 @@ crouton add --list
 
 ● = Has database schema (will update `server/db/schema.ts`)
 ○ = No database tables
-**bundled in core** = Automatically included when using `@fyit/crouton`
+**bundled in core** = Automatically included when using `@fyit/crouton-core`
+
+⚠️ **WARNING**: Do NOT add bundled packages (`auth`, `i18n`, `admin`) to your
+`nuxt.config.ts` extends array separately. They are already included via
+`@fyit/crouton-core`. Adding them separately causes duplicate layer loading
+and SSR errors like `$setup.t is not a function`.
 
 ### What `crouton add` Does
 
@@ -320,11 +325,15 @@ export default {
 
 ### Features Reference
 
+**IMPORTANT:** `@fyit/crouton-core` automatically bundles auth, admin, and i18n.
+DO NOT add these to your `nuxt.config.ts` extends array separately - doing so
+causes duplicate layer loading and SSR errors (e.g., `$setup.t is not a function`).
+
 | Feature | Default | Description |
 |---------|---------|-------------|
-| `auth` | `true` | Authentication (Better Auth) |
-| `admin` | `true` | Admin dashboard |
-| `i18n` | `true` | Multi-language support |
+| `auth` | bundled | Authentication (Better Auth) - **included in core** |
+| `admin` | bundled | Admin dashboard - **included in core** |
+| `i18n` | bundled | Multi-language support - **included in core** |
 | `editor` | `false` | TipTap rich text editor |
 | `pages` | `false` | CMS pages system |
 | `bookings` | `false` | Booking system |

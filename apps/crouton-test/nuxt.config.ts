@@ -4,13 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   // Layers - based on crouton.config.js features
-  // IMPORTANT: Framework packages first, then local layers at the end
+  // IMPORTANT: @fyit/crouton-core BUNDLES auth, admin, and i18n automatically.
+  // DO NOT add them separately - it causes duplicate layer loading and SSR errors.
   extends: [
-    '@fyit/crouton-i18n',
+    '@fyit/crouton-core',        // Core (includes auth, admin, i18n)
     '@fyit/crouton-ai',
-    '@fyit/crouton-core',
-    '@fyit/crouton-auth',
-    '@fyit/crouton-admin',
     '@fyit/crouton-editor',
     '@fyit/crouton-pages',
     '@fyit/crouton-bookings',

@@ -1,13 +1,28 @@
 /**
  * Get list of framework packages based on features config
+ *
+ * IMPORTANT: @fyit/crouton-core already includes these packages internally:
+ * - @fyit/crouton-auth
+ * - @fyit/crouton-admin
+ * - @fyit/crouton-i18n
+ *
+ * DO NOT add them separately - it causes duplicate layer loading which breaks
+ * composable resolution (e.g., useT becomes "$setup.t is not a function").
+ *
+ * @see packages/crouton-core/nuxt.config.ts - extends array
  */
 export function getFrameworkPackages(features = {}) {
-  const packages = ['@fyit/crouton-core']  // Always include core
+  // Core package includes auth, admin, and i18n - always required
+  const packages = ['@fyit/crouton-core']
 
-  // Core add-ons (enabled by default, can be disabled with `false`)
-  if (features.auth !== false) packages.push('@fyit/crouton-auth')
-  if (features.admin !== false) packages.push('@fyit/crouton-admin')
-  if (features.i18n !== false) packages.push('@fyit/crouton-i18n')
+  // NOTE: auth, admin, i18n are BUNDLED in crouton-core
+  // The features flags below are intentionally NOT adding separate packages.
+  // They exist for future use (e.g., disabling features at runtime) but
+  // should NOT result in separate package additions to the extends array.
+  //
+  // Previously this code added @fyit/crouton-auth, @fyit/crouton-admin,
+  // @fyit/crouton-i18n separately - this caused SSR errors from duplicate
+  // composable resolution.
 
   // Optional add-ons (disabled by default, must be explicitly enabled)
   if (features.editor) packages.push('@fyit/crouton-editor')
