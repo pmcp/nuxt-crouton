@@ -1,0 +1,43 @@
+{
+  "name": "@fyit/crouton-studio",
+  "version": "0.0.1",
+  "description": "AI-powered studio for building Nuxt apps with Crouton",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "exports": {
+    ".": "./nuxt.config.ts"
+  },
+  "files": [
+    "app",
+    "server",
+    "nuxt.config.ts"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crouton",
+    "studio",
+    "ai",
+    "app-builder"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-studio"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@fyit/crouton-ai": "workspace:*"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0"
+  }
+}
