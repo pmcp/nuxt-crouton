@@ -640,7 +640,6 @@ export default defineNuxtConfig({
     if (extendsMatch) {
       const currentExtends = extendsMatch[1]
       const newCollection = `'./collections/${cases.plural}'`
-      const translationsLayer = `'@fyit/crouton-i18n'`
 
       // Parse existing entries
       let lines = currentExtends.split('\n')
@@ -658,13 +657,9 @@ export default defineNuxtConfig({
         needsUpdate = true
       }
 
-      // Check if translations layer needs to be added (when using translations)
-      if (hasTranslations && !lines.includes(translationsLayer) && !lines.some(l => l.includes('translations'))) {
-        // Add translations layer at the beginning for proper component resolution
-        lines.unshift(translationsLayer)
-        needsUpdate = true
-        console.log(`↻ Adding translations layer to ${layer} config for TranslationsInput component`)
-      }
+      // REMOVED: Don't add @fyit/crouton-i18n to local layers
+      // It's already inherited from the main config via @fyit/crouton-core
+      // Adding it here causes duplicate module loading and SSR issues
 
       if (needsUpdate) {
         // Format with proper indentation
@@ -676,12 +671,9 @@ export default defineNuxtConfig({
         config = config.replace(extendsMatch[0], `extends: [\n${updatedExtends}\n  ]`)
       }
 
-      // Add i18n config to existing configs if translations are enabled and not present
-      if (hasTranslations && configExists && !config.includes('i18n:')) {
-        config = await addI18nConfigToLayer(configPath, config)
-        needsUpdate = true
-        console.log(`↻ Adding i18n config to ${layer} layer nuxt.config.ts`)
-      }
+      // REMOVED: Don't add i18n config to local layers
+      // Local layers inherit i18n from the main config
+      // Having separate i18n configs per layer causes module conflicts
 
       if (needsUpdate) {
         await fsp.writeFile(configPath, config)
@@ -1305,10 +1297,9 @@ ${translationsFieldSchema}
   // Update layer root nuxt.config.ts to extend the new collection (and translations layer if needed)
   await updateLayerRootConfig(layer, collection, hasTranslations)
 
-  // Setup i18n folder structure and locale files if translations are enabled
-  if (hasTranslations) {
-    await setupLayerI18n(layer, collection)
-  }
+  // REMOVED: Don't create local i18n files
+  // Translations are handled by the main i18n layer
+  // Local locale files cause path resolution issues
 
   // Update root nuxt.config.ts to extend the layer
   await updateRootNuxtConfig(layer)
