@@ -2,7 +2,8 @@
   "title": {
     "type": "string",
     "meta": {
-      "required": true,
+      "required": false,
+      "translatable": true,
       "label": "Title",
       "maxLength": 200,
       "area": "main"
@@ -11,7 +12,8 @@
   "slug": {
     "type": "string",
     "meta": {
-      "required": true,
+      "required": false,
+      "translatable": true,
       "label": "URL Slug",
       "maxLength": 200,
       "unique": true,
@@ -33,6 +35,7 @@
   "content": {
     "type": "text",
     "meta": {
+      "translatable": true,
       "label": "Content",
       "area": "main",
       "component": "CroutonEditorSimple",
@@ -110,6 +113,7 @@
   "seoTitle": {
     "type": "string",
     "meta": {
+      "translatable": true,
       "label": "SEO Title",
       "maxLength": 60,
       "area": "meta",
@@ -119,6 +123,7 @@
   "seoDescription": {
     "type": "string",
     "meta": {
+      "translatable": true,
       "label": "SEO Description",
       "maxLength": 160,
       "area": "meta",

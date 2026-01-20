@@ -33,10 +33,19 @@ export default defineEventHandler(async (event) => {
 }
 
 export function generatePostEndpoint(data, config = null) {
-  const { singular, pascalCase, layerPascalCase, layer, plural, fields } = data
+  const { singular, pascalCase, pascalCasePlural, layerPascalCase, layer, plural, fields } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
+  const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
 
   const queriesPath = '../../../../database/queries'
+
+  // Check if hierarchy is enabled
+  const hasHierarchy = data.hierarchy?.enabled === true
+
+  // Get hierarchy field names
+  const parentField = data.hierarchy?.parentField || 'parentId'
+  const pathField = data.hierarchy?.pathField || 'path'
+  const depthField = data.hierarchy?.depthField || 'depth'
 
   // Check if there are any date fields
   const dateFields = fields.filter(f => f.type === 'date')
@@ -52,9 +61,55 @@ export function generatePostEndpoint(data, config = null) {
     ).join('\n') + '\n'
     : ''
 
+  // Generate imports based on hierarchy needs
+  const imports = hasHierarchy
+    ? `import { create${prefixedPascalCase}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'
+import { nanoid } from 'nanoid'`
+    : `import { create${prefixedPascalCase} } from '${queriesPath}'`
+
+  // Generate hierarchy path calculation code if needed
+  const hierarchyCalc = hasHierarchy
+    ? `
+  // Generate ID upfront for correct path calculation
+  const recordId = nanoid()
+
+  // Calculate path based on parentId
+  let ${pathField} = \`/\${recordId}/\`
+  let ${depthField} = 0
+
+  if (dataWithoutId.${parentField}) {
+    const [parent] = await get${prefixedPascalCasePlural}ByIds(team.id, [dataWithoutId.${parentField}])
+    if (parent) {
+      ${pathField} = \`\${parent.${pathField}}\${recordId}/\`
+      ${depthField} = (parent.${depthField} || 0) + 1
+    }
+  }
+`
+    : ''
+
+  // Generate the create call based on hierarchy
+  const createCall = hasHierarchy
+    ? `return await create${prefixedPascalCase}({
+    ...dataWithoutId,
+    id: recordId,
+    ${pathField},
+    ${depthField},
+    teamId: team.id,
+    owner: user.id,
+    createdBy: user.id,
+    updatedBy: user.id
+  })`
+    : `return await create${prefixedPascalCase}({
+    ...dataWithoutId,
+    teamId: team.id,
+    owner: user.id,
+    createdBy: user.id,
+    updatedBy: user.id
+  })`
+
   return `// Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { create${prefixedPascalCase} } from '${queriesPath}'
+${imports}
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
@@ -62,16 +117,10 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  // Exclude id field to let the database generate it
+  // Exclude id field${hasHierarchy ? ' (we generate it for path calculation)' : ' to let the database generate it'}
   const { id, ...dataWithoutId } = body
-
-${dateConversions}  return await create${prefixedPascalCase}({
-    ...dataWithoutId,
-    teamId: team.id,
-    owner: user.id,
-    createdBy: user.id,
-    updatedBy: user.id
-  })
+${hierarchyCalc}
+${dateConversions}  ${createCall}
 })`
 }
 
