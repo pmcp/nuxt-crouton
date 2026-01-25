@@ -10,6 +10,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-core',        // Core (includes auth, admin, i18n)
     '@fyit/crouton-ai',
     '@fyit/crouton-editor',
+    '@fyit/crouton-collab',      // Collaboration (Yjs-based real-time editing)
     '@fyit/crouton-pages',
     '@fyit/crouton-bookings',
     // Local layers must come last to override framework defaults
