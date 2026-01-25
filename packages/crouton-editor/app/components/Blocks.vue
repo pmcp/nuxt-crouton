@@ -256,24 +256,63 @@ function handleEditorBlur() {
 }
 
 // Track selection changes to find selected block
+// Also refresh selectedNode if property panel is open (for collab updates)
 function handleEditorUpdate(event: { editor: Editor }) {
   const editor = event.editor
   const { from } = editor.state.selection
   const $pos = editor.state.doc.resolve(from)
 
-  // Find the nearest block node
+  // If property panel is open with a blockId, refresh the node data
+  // This keeps the panel in sync with collaborative changes
+  if (isPropertyPanelOpen.value && selectedNode.value?.node?.attrs?.blockId) {
+    const blockId = selectedNode.value.node.attrs.blockId
+    let foundNode: any = null
+    let foundPos = -1
+
+    editor.state.doc.descendants((n, p) => {
+      if (n.attrs?.blockId === blockId) {
+        foundNode = n
+        foundPos = p
+        return false
+      }
+      return true
+    })
+
+    if (foundNode && foundPos >= 0) {
+      // Update with fresh node data
+      selectedNode.value = { pos: foundPos, node: foundNode }
+    } else {
+      // Block was deleted by another user
+      const toast = useToast()
+      toast.add({
+        title: 'Block was deleted',
+        description: 'Another user deleted this block.',
+        color: 'warning'
+      })
+      isPropertyPanelOpen.value = false
+      selectedNode.value = null
+    }
+  }
+
+  // Find the nearest block node from selection
   for (let depth = $pos.depth; depth > 0; depth--) {
     const node = $pos.node(depth)
     if (node.type.name.endsWith('Block')) {
       const pos = $pos.before(depth)
-      selectedNode.value = { pos, node }
-      emit('block:select', selectedNode.value)
+      // Only update selectedNode if panel is closed (don't override panel's block)
+      if (!isPropertyPanelOpen.value) {
+        selectedNode.value = { pos, node }
+      }
+      emit('block:select', { pos, node })
       emit('update', event)
       return
     }
   }
 
-  selectedNode.value = null
+  // Only clear if panel is closed
+  if (!isPropertyPanelOpen.value) {
+    selectedNode.value = null
+  }
   emit('block:select', null)
   emit('update', event)
 }
