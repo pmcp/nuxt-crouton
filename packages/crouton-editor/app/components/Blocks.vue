@@ -273,7 +273,11 @@ function handleEditorUpdate(event: { editor: Editor }) {
     }
   }
 
-  selectedNode.value = null
+  // Only clear selectedNode if property panel is NOT open
+  // When panel is open, we need to keep the reference for updates
+  if (!isPropertyPanelOpen.value) {
+    selectedNode.value = null
+  }
   emit('block:select', null)
   emit('update', event)
 }
