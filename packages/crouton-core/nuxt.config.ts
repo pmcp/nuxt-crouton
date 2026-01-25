@@ -50,6 +50,46 @@ export default defineNuxtConfig({
     db: 'sqlite' // Uses D1 on Cloudflare, local SQLite in dev
   },
 
+  // Vite configuration to prevent duplicate module instances
+  // This is critical for Yjs and ProseMirror which check constructor identity
+  // See: https://github.com/yjs/yjs/issues/438
+  // See: https://ui.nuxt.com/docs/components/editor (keyed plugin error fix)
+  vite: {
+    // Pre-bundle ProseMirror to avoid "Adding different instances of a keyed plugin" error
+    // This is the official Nuxt UI fix for Editor component issues
+    optimizeDeps: {
+      include: [
+        // ProseMirror - fixes "keyed plugin" error
+        '@nuxt/ui > prosemirror-state',
+        '@nuxt/ui > prosemirror-transform',
+        '@nuxt/ui > prosemirror-model',
+        '@nuxt/ui > prosemirror-view',
+        '@nuxt/ui > prosemirror-gapcursor',
+        // Yjs - fixes "already imported" warning
+        '@nuxt/ui > yjs',
+        '@nuxt/ui > y-prosemirror'
+      ]
+    },
+    resolve: {
+      dedupe: [
+        // Yjs and related protocols
+        'yjs',
+        'y-prosemirror',
+        'y-protocols',
+        // ProseMirror modules (used by TipTap)
+        'prosemirror-state',
+        'prosemirror-view',
+        'prosemirror-model',
+        'prosemirror-transform',
+        // TipTap core (shares ProseMirror instances)
+        '@tiptap/pm',
+        '@tiptap/core',
+        // Vue (prevent multiple instances in SSR)
+        'vue'
+      ]
+    }
+  },
+
   // Inject crouton.config.js at build time for runtime access
   hooks: {
     'nitro:config': async (nitroConfig: NitroConfig) => {

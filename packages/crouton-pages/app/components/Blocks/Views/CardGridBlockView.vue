@@ -2,7 +2,7 @@
 /**
  * Card Grid Block Editor View
  */
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { NodeViewWrapper } from '@tiptap/vue-3'
 import type { CardGridBlockAttrs } from '../../../types/blocks'
 
@@ -19,26 +19,25 @@ const attrs = computed(() => props.node.attrs)
 // Reference to inner element for finding parent editor
 const innerRef = ref<HTMLElement | null>(null)
 
-// Cache the editor ID once mounted (traverse up from this element to find parent editor)
-const cachedEditorId = ref<string | undefined>(undefined)
-
-onMounted(() => {
-  // Traverse up DOM to find the parent editor with data-editor-id
+// Find the editor ID by traversing up the DOM
+function findEditorId(): string | undefined {
   let el: HTMLElement | null = innerRef.value
   while (el) {
     if (el.classList?.contains('crouton-editor-blocks') && el.dataset?.editorId) {
-      cachedEditorId.value = el.dataset.editorId
-      break
+      return el.dataset.editorId
     }
     el = el.parentElement
   }
-})
+  return undefined
+}
 
 // Handler that opens property panel by dispatching a custom event
 function handleOpenPanel() {
+  // Find editorId at click time (more reliable than caching on mount)
+  const editorId = findEditorId()
   const event = new CustomEvent('block-edit-request', {
     bubbles: true,
-    detail: { node: props.node, pos: props.getPos(), editorId: cachedEditorId.value }
+    detail: { node: props.node, pos: props.getPos(), editorId }
   })
   document.dispatchEvent(event)
 }

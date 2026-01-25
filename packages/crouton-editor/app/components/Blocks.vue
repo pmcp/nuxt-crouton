@@ -86,6 +86,8 @@ const props = withDefaults(defineProps<Props>(), {
 // Dynamically load Collaboration extension if yxmlFragment is provided
 const collabExtensions = ref<any[]>([])
 const collabReady = ref(false)
+const collabLoading = ref(false)
+const lastFragmentId = ref<string | null>(null)
 
 // Key to force editor recreation when collab mode changes
 // This ensures the Collaboration extension is properly initialized
@@ -96,9 +98,21 @@ const editorKey = computed(() => {
 })
 
 // Load Collaboration extension when yxmlFragment is provided
+// Guard against multiple simultaneous loads (can happen with i18n tabs)
 watch(() => props.yxmlFragment, async (fragment) => {
   if (fragment) {
+    // Generate a unique ID for this fragment to detect duplicate loads
+    const fragmentId = (fragment as any)._item?.id?.toString() || String(Date.now())
+
+    // Skip if we're already loading this fragment or have already loaded it
+    if (collabLoading.value || lastFragmentId.value === fragmentId) {
+      return
+    }
+
+    collabLoading.value = true
     collabReady.value = false
+    lastFragmentId.value = fragmentId
+
     try {
       // Dynamically import TipTap Collaboration extension
       const { Collaboration } = await import('@tiptap/extension-collaboration')
@@ -115,12 +129,20 @@ watch(() => props.yxmlFragment, async (fragment) => {
       collabExtensions.value = markRaw(extensions)
       collabReady.value = true
     } catch (e) {
-      console.warn('[CroutonEditorBlocks] @tiptap/extension-collaboration not installed, collab disabled', e)
+      // TipTap collab extensions are provided by @fyit/crouton-collab package.
+      // If that package isn't installed, this is expected and collab is simply disabled.
+      console.warn('[CroutonEditorBlocks] Collaboration disabled - @fyit/crouton-collab not installed')
+      if (import.meta.dev) {
+        console.debug('[CroutonEditorBlocks] Dynamic import error:', e)
+      }
       collabReady.value = true // Still mark ready so editor can render
+    } finally {
+      collabLoading.value = false
     }
   } else {
     collabExtensions.value = []
     collabReady.value = true
+    lastFragmentId.value = null
   }
 }, { immediate: true })
 
@@ -194,8 +216,9 @@ function handleBlockEditRequest(event: Event) {
   const customEvent = event as CustomEvent<{ node: any; pos: number; editorId?: string }>
   const eventEditorId = customEvent.detail.editorId
 
-  // Only handle if event is for this editor instance
-  if (eventEditorId && eventEditorId !== editorId) {
+  // Only handle if event has an editorId that matches this editor
+  // If editorId is missing (DOM traversal failed), skip to avoid duplicate handling
+  if (!eventEditorId || eventEditorId !== editorId) {
     return
   }
 
@@ -259,47 +282,51 @@ function updateBlockAttrs(attrs: Record<string, unknown>) {
   if (!editorInstance.value || !selectedNode.value) return
 
   const { pos, node: originalNode } = selectedNode.value
-  const { state, view } = editorInstance.value
   const expectedType = originalNode?.type?.name
 
-  // Get the node at the stored position
-  let node = state.doc.nodeAt(pos)
-  let actualPos = pos
+  // Get fresh state from editor (important for collaborative editing where state can change)
+  const view = editorInstance.value.view
+  const state = view.state
 
-  // Verify the node is the correct block type
-  // If position is stale (e.g., due to document changes), try to find the block
-  if (!node || node.isText || node.type.name !== expectedType) {
-    // Position is invalid - try to find the block by searching the document
-    let found = false
-    state.doc.descendants((n, p) => {
-      if (found) return false
-      if (n.type.name === expectedType) {
-        // Found a block of the same type - use it
-        // Note: This is a best-effort recovery, might update wrong block if multiple exist
-        node = n
-        actualPos = p
-        found = true
-        return false
-      }
-      return true
-    })
-
-    if (!found || !node) {
-      console.warn('[CroutonEditorBlocks] Cannot update attrs: block not found in document')
-      return
-    }
-  }
-
-  // Create transaction and update attributes
-  const { tr } = state
   try {
+    // Get the node at the stored position
+    let node = state.doc.nodeAt(pos)
+    let actualPos = pos
+
+    // Verify the node is the correct block type
+    // If position is stale (e.g., due to document changes), try to find the block
+    if (!node || node.isText || node.type.name !== expectedType) {
+      // Position is invalid - try to find the block by searching the document
+      let found = false
+      state.doc.descendants((n, p) => {
+        if (found) return false
+        if (n.type.name === expectedType) {
+          // Found a block of the same type - use it
+          // Note: This is a best-effort recovery, might update wrong block if multiple exist
+          node = n
+          actualPos = p
+          found = true
+          return false
+        }
+        return true
+      })
+
+      if (!found || !node) {
+        console.warn('[CroutonEditorBlocks] Cannot update attrs: block not found in document')
+        return
+      }
+    }
+
+    // Create transaction and update attributes
+    const { tr } = state
     view.dispatch(
       tr.setNodeMarkup(actualPos, undefined, { ...node.attrs, ...attrs })
     )
     // Update selectedNode with the correct position
     selectedNode.value = { pos: actualPos, node }
   } catch (error) {
-    console.error('[CroutonEditorBlocks] Failed to update block attrs:', error)
+    // Position errors can occur during collaborative editing when document changes
+    console.warn('[CroutonEditorBlocks] Failed to update block attrs (document may have changed):', error)
   }
 }
 

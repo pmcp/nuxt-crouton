@@ -138,6 +138,7 @@ function getInsertCommand(type: string): string {
 // Editor ref
 const editorBlocksRef = ref()
 
+
 // Property panel state (managed here, not in CroutonEditorBlocks)
 const selectedNode = ref<{ pos: number; node: any } | null>(null)
 const isPropertyPanelOpen = ref(false)
