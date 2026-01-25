@@ -57,7 +57,9 @@
     "@fyit/crouton-admin": "workspace:*",
     "@fyit/crouton-auth": "workspace:*",
     "@fyit/crouton-i18n": "workspace:*",
+    "@libsql/client": "^0.15.0",
     "@nuxt/image": "^1.11.0",
+    "@nuxt/ui": "^4.3.0",
     "@nuxtjs/seo": "^3.3.0",
     "@vueuse/core": "^13.3.0",
     "@vueuse/integrations": "^13.3.0",
@@ -65,7 +67,6 @@
     "sortablejs": "^1.15.6"
   },
   "peerDependencies": {
-    "@nuxt/ui": "^4.3.0",
     "nuxt": "^4.0.0"
   },
   "devDependencies": {

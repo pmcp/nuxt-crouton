@@ -53,7 +53,7 @@ export default defineNuxtPlugin({
     }
 
     if (warmedCount > 0) {
-      console.debug(`[crouton] Warmed up ${warmedCount}/${componentNames.size} components`)
+      console.debug(`🍞 crouton:core Warmed up ${warmedCount}/${componentNames.size} components`)
     }
   }
 })

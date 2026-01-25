@@ -179,9 +179,10 @@ const { formatShortcut } = useCroutonShortcuts({
 
 ## Dependencies
 
-- **Auto-includes**: `@nuxthub/core`, `nuxt-crouton-i18n`, `nuxt-crouton-auth`, `nuxt-crouton-admin`
+- **Auto-includes**: `@nuxthub/core`, `@nuxt/ui`, `nuxt-crouton-i18n`, `nuxt-crouton-auth`, `nuxt-crouton-admin`
+- **Runtime deps**: `@libsql/client` (required for SQLite - pnpm doesn't hoist from layers)
 - **Required by**: App packages (e.g., `crouton-bookings`)
-- **Peer deps**: `@nuxt/ui ^4.0.0`, `nuxt ^4.0.0`
+- **Peer deps**: `nuxt ^4.0.0`
 
 ## NuxtHub Configuration
 

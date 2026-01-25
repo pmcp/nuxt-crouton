@@ -201,7 +201,7 @@ runtimeConfig.public.crouton = {
 
 Console logs enabled features on startup:
 ```
-[crouton] Enabled features: core, auth, admin, i18n, editor
+🍞 crouton ✓ Enabled features: core, auth, admin, i18n, editor
 ```
 
 ### Add a new feature package

@@ -18,9 +18,7 @@ export default defineNuxtConfig({
   ],
 
   modules: [
-    '@fyit/crouton',
-    '@nuxthub/core',
-    '@nuxt/ui'
+    '@fyit/crouton'
   ],
 
   // Auth configuration

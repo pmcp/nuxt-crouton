@@ -134,13 +134,13 @@ const slashItems: EditorSuggestionMenuItem[][] = [
 1. **Update dependencies**:
    ```bash
    pnpm remove nuxt-tiptap @tiptap/vue-3 @tiptap/starter-kit
-   pnpm add @nuxt/ui@^3.4.0
+   # @nuxt/ui is now included via @fyit/crouton-core
    ```
 
 2. **Update nuxt.config.ts**:
    ```typescript
    export default defineNuxtConfig({
-     modules: ['@nuxt/ui'], // Required
+     modules: ['@fyit/crouton'],
      extends: [
        '@fyit/crouton',
        '@fyit/crouton-editor'

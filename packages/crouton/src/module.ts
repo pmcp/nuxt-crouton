@@ -148,9 +148,9 @@ export default defineNuxtModule<CroutonOptions>({
     })
 
     if (missingLayers.length > 0) {
-      console.warn(`[crouton] Missing layers! Add these to your nuxt.config.ts extends:`)
-      console.warn(`         extends: ['${missingLayers.join("', '")}']`)
-      console.warn(`         Or run 'crouton config' to sync automatically.`)
+      console.warn(`🍞 crouton:module Missing layers! Add these to your nuxt.config.ts extends:`)
+      console.warn(`                  extends: ['${missingLayers.join("', '")}']`)
+      console.warn(`                  Or run 'crouton config' to sync automatically.`)
     }
 
     // Log enabled features in development
@@ -174,9 +174,9 @@ export default defineNuxtModule<CroutonOptions>({
         mergedOptions.sales && 'sales'
       ].filter(Boolean)
 
-      console.log(`[crouton] Enabled features: ${enabledFeatures.join(', ')}`)
+      console.log(`🍞 crouton ✓ Enabled features: ${enabledFeatures.join(', ')}`)
       if (fileConfig) {
-        console.log(`[crouton] Config loaded from crouton.config.js`)
+        console.log(`🍞 crouton ✓ Config loaded from crouton.config.js`)
       }
     }
   }
