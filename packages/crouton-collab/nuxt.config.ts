@@ -46,6 +46,9 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: ['yjs', 'y-protocols/sync', 'y-protocols/awareness']
+    },
+    resolve: {
+      dedupe: ['yjs', 'y-protocols', 'lib0']
     }
   }
 })
