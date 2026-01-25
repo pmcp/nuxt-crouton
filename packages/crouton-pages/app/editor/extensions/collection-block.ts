@@ -9,6 +9,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
 import type { CollectionBlockAttrs } from '../../types/blocks'
 import { collectionBlockDefinition } from '../../utils/block-registry'
+import { generateBlockId, blockIdAttribute } from './block-utils'
 import CollectionBlockView from '../../components/Blocks/Views/CollectionBlockView.vue'
 
 export interface CollectionBlockOptions {
@@ -47,6 +48,7 @@ export const CollectionBlock = Node.create<CollectionBlockOptions>({
 
   addAttributes() {
     return {
+      ...blockIdAttribute,
       collection: {
         default: collectionBlockDefinition.defaultAttrs.collection
       },
@@ -105,6 +107,7 @@ export const CollectionBlock = Node.create<CollectionBlockOptions>({
         return commands.insertContent({
           type: this.name,
           attrs: {
+            blockId: generateBlockId(),
             ...collectionBlockDefinition.defaultAttrs,
             ...attrs
           }

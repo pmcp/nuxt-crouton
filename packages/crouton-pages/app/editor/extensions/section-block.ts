@@ -8,6 +8,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
 import type { SectionBlockAttrs } from '../../types/blocks'
 import { sectionBlockDefinition } from '../../utils/block-registry'
+import { generateBlockId, blockIdAttribute } from './block-utils'
 import SectionBlockView from '../../components/Blocks/Views/SectionBlockView.vue'
 
 export interface SectionBlockOptions {
@@ -40,6 +41,7 @@ export const SectionBlock = Node.create<SectionBlockOptions>({
 
   addAttributes() {
     return {
+      ...blockIdAttribute,
       headline: {
         default: sectionBlockDefinition.defaultAttrs.headline
       },
@@ -107,6 +109,7 @@ export const SectionBlock = Node.create<SectionBlockOptions>({
         return commands.insertContent({
           type: this.name,
           attrs: {
+            blockId: generateBlockId(),
             ...sectionBlockDefinition.defaultAttrs,
             ...attrs
           }

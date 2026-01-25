@@ -9,6 +9,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
 import type { HeroBlockAttrs } from '../../types/blocks'
 import { heroBlockDefinition } from '../../utils/block-registry'
+import { generateBlockId, blockIdAttribute } from './block-utils'
 import HeroBlockView from '../../components/Blocks/Views/HeroBlockView.vue'
 
 export interface HeroBlockOptions {
@@ -47,6 +48,7 @@ export const HeroBlock = Node.create<HeroBlockOptions>({
 
   addAttributes() {
     return {
+      ...blockIdAttribute,
       headline: {
         default: heroBlockDefinition.defaultAttrs.headline
       },
@@ -102,6 +104,7 @@ export const HeroBlock = Node.create<HeroBlockOptions>({
         return commands.insertContent({
           type: this.name,
           attrs: {
+            blockId: generateBlockId(),
             ...heroBlockDefinition.defaultAttrs,
             ...attrs
           }

@@ -8,6 +8,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
 import type { CTABlockAttrs } from '../../types/blocks'
 import { ctaBlockDefinition } from '../../utils/block-registry'
+import { generateBlockId, blockIdAttribute } from './block-utils'
 import CTABlockView from '../../components/Blocks/Views/CTABlockView.vue'
 
 export interface CTABlockOptions {
@@ -40,6 +41,7 @@ export const CTABlock = Node.create<CTABlockOptions>({
 
   addAttributes() {
     return {
+      ...blockIdAttribute,
       title: {
         default: ctaBlockDefinition.defaultAttrs.title
       },
@@ -92,6 +94,7 @@ export const CTABlock = Node.create<CTABlockOptions>({
         return commands.insertContent({
           type: this.name,
           attrs: {
+            blockId: generateBlockId(),
             ...ctaBlockDefinition.defaultAttrs,
             ...attrs
           }

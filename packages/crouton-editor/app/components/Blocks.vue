@@ -209,6 +209,9 @@ const editorId = `crouton-editor-${Math.random().toString(36).slice(2, 11)}`
 const selectedNode = ref<{ pos: number; node: any } | null>(null)
 const isPropertyPanelOpen = ref(false)
 
+// Track editor focus state (used to prevent suggestion menu in unfocused collab editors)
+const editorHasFocus = ref(false)
+
 // Listen for block edit requests from NodeView components
 // (They can't use provide/inject due to VueNodeViewRenderer boundary)
 // IMPORTANT: Only handle events for THIS editor instance (check editorId)
@@ -238,7 +241,18 @@ onUnmounted(() => {
 // Handle editor creation
 function handleEditorCreate(event: { editor: Editor }) {
   editorInstance.value = event.editor
+  editorHasFocus.value = event.editor.isFocused
   emit('create', event)
+}
+
+// Handle editor focus (used to show suggestion menu only in focused editor)
+function handleEditorFocus() {
+  editorHasFocus.value = true
+}
+
+// Handle editor blur
+function handleEditorBlur() {
+  editorHasFocus.value = false
 }
 
 // Track selection changes to find selected block
@@ -281,40 +295,46 @@ function closePropertyPanel() {
 function updateBlockAttrs(attrs: Record<string, unknown>) {
   if (!editorInstance.value || !selectedNode.value) return
 
-  const { pos, node: originalNode } = selectedNode.value
-  const expectedType = originalNode?.type?.name
+  const { node: originalNode } = selectedNode.value
+  const blockId = originalNode?.attrs?.blockId
 
   // Get fresh state from editor (important for collaborative editing where state can change)
   const view = editorInstance.value.view
   const state = view.state
 
   try {
-    // Get the node at the stored position
-    let node = state.doc.nodeAt(pos)
-    let actualPos = pos
+    let node: any = null
+    let actualPos: number = -1
 
-    // Verify the node is the correct block type
-    // If position is stale (e.g., due to document changes), try to find the block
-    if (!node || node.isText || node.type.name !== expectedType) {
-      // Position is invalid - try to find the block by searching the document
-      let found = false
+    // Find block by blockId (reliable) or fall back to position (legacy)
+    if (blockId) {
+      // Search by blockId - reliable even after document changes
       state.doc.descendants((n, p) => {
-        if (found) return false
-        if (n.type.name === expectedType) {
-          // Found a block of the same type - use it
-          // Note: This is a best-effort recovery, might update wrong block if multiple exist
+        if (n.attrs?.blockId === blockId) {
           node = n
           actualPos = p
-          found = true
-          return false
+          return false // Stop searching
         }
         return true
       })
+    } else {
+      // Legacy fallback: use stored position
+      const { pos } = selectedNode.value
+      node = state.doc.nodeAt(pos)
+      actualPos = pos
+    }
 
-      if (!found || !node) {
-        console.warn('[CroutonEditorBlocks] Cannot update attrs: block not found in document')
-        return
-      }
+    if (!node || actualPos < 0) {
+      // Block was deleted or not found
+      const toast = useToast()
+      toast.add({
+        title: 'Block not found',
+        description: 'The block may have been deleted. Please close and try again.',
+        color: 'warning'
+      })
+      isPropertyPanelOpen.value = false
+      selectedNode.value = null
+      return
     }
 
     // Create transaction and update attributes
@@ -326,7 +346,13 @@ function updateBlockAttrs(attrs: Record<string, unknown>) {
     selectedNode.value = { pos: actualPos, node }
   } catch (error) {
     // Position errors can occur during collaborative editing when document changes
-    console.warn('[CroutonEditorBlocks] Failed to update block attrs (document may have changed):', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Could not update block',
+      description: 'The document changed. Please close and try again.',
+      color: 'warning'
+    })
+    console.warn('[CroutonEditorBlocks] Failed to update block attrs:', error)
   }
 }
 
@@ -334,15 +360,56 @@ function updateBlockAttrs(attrs: Record<string, unknown>) {
 function deleteSelectedBlock() {
   if (!editorInstance.value || !selectedNode.value) return
 
-  const { pos } = selectedNode.value
-  editorInstance.value.chain()
-    .focus()
-    .setNodeSelection(pos)
-    .deleteSelection()
-    .run()
+  const { node: originalNode } = selectedNode.value
+  const blockId = originalNode?.attrs?.blockId
+  const view = editorInstance.value.view
+  const state = view.state
 
-  selectedNode.value = null
-  isPropertyPanelOpen.value = false
+  try {
+    let actualPos: number = -1
+
+    // Find block by blockId (reliable) or fall back to position (legacy)
+    if (blockId) {
+      state.doc.descendants((n, p) => {
+        if (n.attrs?.blockId === blockId) {
+          actualPos = p
+          return false
+        }
+        return true
+      })
+    } else {
+      actualPos = selectedNode.value.pos
+    }
+
+    if (actualPos < 0) {
+      const toast = useToast()
+      toast.add({
+        title: 'Block not found',
+        description: 'The block may have already been deleted.',
+        color: 'warning'
+      })
+      selectedNode.value = null
+      isPropertyPanelOpen.value = false
+      return
+    }
+
+    editorInstance.value.chain()
+      .focus()
+      .setNodeSelection(actualPos)
+      .deleteSelection()
+      .run()
+
+    selectedNode.value = null
+    isPropertyPanelOpen.value = false
+  } catch (error) {
+    const toast = useToast()
+    toast.add({
+      title: 'Could not delete block',
+      description: 'The document changed. Please try again.',
+      color: 'warning'
+    })
+    console.warn('[CroutonEditorBlocks] Failed to delete block:', error)
+  }
 }
 
 // Convert block items to suggestion menu items with handlers
@@ -540,6 +607,8 @@ defineExpose({
       }"
       @create="handleEditorCreate"
       @update="handleEditorUpdate"
+      @focus="handleEditorFocus"
+      @blur="handleEditorBlur"
     >
       <!-- Global drag handle for all blocks -->
       <UEditorDragHandle
@@ -573,8 +642,11 @@ defineExpose({
       </UEditorDragHandle>
 
       <!-- Slash command menu for block insertion -->
+      <!-- Only show when editor has focus to reduce (not eliminate) spurious menus in collab mode -->
+      <!-- TODO: Nuxt UI should expose shouldShow with isChangeOrigin support for proper collab -->
+      <!-- See: https://github.com/nuxt/ui/issues/XXXX -->
       <UEditorSuggestionMenu
-        v-if="suggestionMenuItems.length > 0"
+        v-if="suggestionMenuItems.length > 0 && editorHasFocus"
         :editor="editor"
         :items="suggestionMenuItems"
       />

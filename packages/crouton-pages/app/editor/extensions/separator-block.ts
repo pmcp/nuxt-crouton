@@ -8,6 +8,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
 import type { SeparatorBlockAttrs } from '../../types/blocks'
 import { separatorBlockDefinition } from '../../utils/block-registry'
+import { generateBlockId, blockIdAttribute } from './block-utils'
 import SeparatorBlockView from '../../components/Blocks/Views/SeparatorBlockView.vue'
 
 export interface SeparatorBlockOptions {
@@ -40,6 +41,7 @@ export const SeparatorBlock = Node.create<SeparatorBlockOptions>({
 
   addAttributes() {
     return {
+      ...blockIdAttribute,
       label: {
         default: separatorBlockDefinition.defaultAttrs.label
       },
@@ -74,6 +76,7 @@ export const SeparatorBlock = Node.create<SeparatorBlockOptions>({
         return commands.insertContent({
           type: this.name,
           attrs: {
+            blockId: generateBlockId(),
             ...separatorBlockDefinition.defaultAttrs,
             ...attrs
           }

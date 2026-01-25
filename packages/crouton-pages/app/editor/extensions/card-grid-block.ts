@@ -8,6 +8,7 @@ import { Node, mergeAttributes } from '@tiptap/core'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
 import type { CardGridBlockAttrs } from '../../types/blocks'
 import { cardGridBlockDefinition } from '../../utils/block-registry'
+import { generateBlockId, blockIdAttribute } from './block-utils'
 import CardGridBlockView from '../../components/Blocks/Views/CardGridBlockView.vue'
 
 export interface CardGridBlockOptions {
@@ -40,6 +41,7 @@ export const CardGridBlock = Node.create<CardGridBlockOptions>({
 
   addAttributes() {
     return {
+      ...blockIdAttribute,
       headline: {
         default: cardGridBlockDefinition.defaultAttrs.headline
       },
@@ -89,6 +91,7 @@ export const CardGridBlock = Node.create<CardGridBlockOptions>({
         return commands.insertContent({
           type: this.name,
           attrs: {
+            blockId: generateBlockId(),
             ...cardGridBlockDefinition.defaultAttrs,
             ...attrs
           }
