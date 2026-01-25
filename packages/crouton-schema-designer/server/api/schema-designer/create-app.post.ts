@@ -55,8 +55,8 @@ export default defineEventHandler(async (event) => {
   // Security check: Only allow in development
   if (process.env.NODE_ENV === 'production') {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Create App is only available in development mode'
+      status: 403,
+      statusText: 'Create App is only available in development mode'
     })
   }
 
@@ -66,8 +66,8 @@ export default defineEventHandler(async (event) => {
 
   if (!parsed.success) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid request',
+      status: 400,
+      statusText: 'Invalid request',
       data: parsed.error.flatten()
     })
   }
@@ -92,8 +92,8 @@ export default defineEventHandler(async (event) => {
         await access(pathToCheck, constants.W_OK)
       } catch {
         throw createError({
-          statusCode: 400,
-          statusMessage: `Target path is not writable: ${targetPath} (parent directory ${pathToCheck} is not accessible)`
+          status: 400,
+          statusText: `Target path is not writable: ${targetPath} (parent directory ${pathToCheck} is not accessible)`
         })
       }
     }

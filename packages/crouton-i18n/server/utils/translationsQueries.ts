@@ -20,8 +20,8 @@ export async function getTeamBySlugForTranslations(slug: string) {
 
   if (!team) {
     throw createError({
-      statusCode: 404,
-      statusMessage: `Team not found: ${slug}`
+      status: 404,
+      statusText: `Team not found: ${slug}`
     })
   }
 
@@ -216,8 +216,8 @@ export async function verifyTeamTranslation(translationId: string, teamId: strin
 
   if (!existing) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Translation not found or does not belong to this team'
+      status: 404,
+      statusText: 'Translation not found or does not belong to this team'
     })
   }
 

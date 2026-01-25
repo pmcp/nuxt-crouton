@@ -29,8 +29,8 @@ export default defineEventHandler(async (event) => {
   // Check if email module is enabled
   if (!isBookingEmailEnabled()) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Email module is not enabled. Set runtimeConfig.croutonBookings.email.enabled = true'
+      status: 400,
+      statusText: 'Email module is not enabled. Set runtimeConfig.croutonBookings.email.enabled = true'
     })
   }
 
@@ -42,8 +42,8 @@ export default defineEventHandler(async (event) => {
   const parsed = bodySchema.safeParse(body)
   if (!parsed.success) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid request body. Expected { triggerType: "booking_created" | "reminder_before" | "booking_cancelled" | "follow_up_after" }'
+      status: 400,
+      statusText: 'Invalid request body. Expected { triggerType: "booking_created" | "reminder_before" | "booking_cancelled" | "follow_up_after" }'
     })
   }
 
@@ -91,15 +91,15 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     console.error('[resend-email] Failed to fetch booking:', error)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to fetch booking data'
+      status: 500,
+      statusText: 'Failed to fetch booking data'
     })
   }
 
   if (!booking) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Booking not found'
+      status: 404,
+      statusText: 'Booking not found'
     })
   }
 
@@ -139,8 +139,8 @@ export default defineEventHandler(async (event) => {
 
   if (!result.success) {
     throw createError({
-      statusCode: 500,
-      statusMessage: result.errors?.join(', ') || 'Failed to send email'
+      status: 500,
+      statusText: result.errors?.join(', ') || 'Failed to send email'
     })
   }
 

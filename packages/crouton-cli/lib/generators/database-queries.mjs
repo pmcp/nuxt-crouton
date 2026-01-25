@@ -64,8 +64,8 @@ export async function updatePosition${prefixedPascalCase}(
 
   if (!current) {
     throw createError({
-      statusCode: 404,
-      statusMessage: '${prefixedPascalCase} not found'
+      status: 404,
+      statusText: '${prefixedPascalCase} not found'
     })
   }
 
@@ -86,16 +86,16 @@ export async function updatePosition${prefixedPascalCase}(
 
     if (!parent) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Parent ${prefixedPascalCase} not found'
+        status: 400,
+        statusText: 'Parent ${prefixedPascalCase} not found'
       })
     }
 
     // Prevent moving item to its own descendant
     if (parent.${pathField}.startsWith(current.${pathField})) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Cannot move item to its own descendant'
+        status: 400,
+        statusText: 'Cannot move item to its own descendant'
       })
     }
 
@@ -609,8 +609,8 @@ export async function update${prefixedPascalCase}(
 
   if (!${camelCase}) {
     throw createError({
-      statusCode: 404,
-      statusMessage: '${prefixedPascalCase} not found or unauthorized'
+      status: 404,
+      statusText: '${prefixedPascalCase} not found or unauthorized'
     })
   }
 
@@ -637,8 +637,8 @@ export async function delete${prefixedPascalCase}(
 
   if (!deleted) {
     throw createError({
-      statusCode: 404,
-      statusMessage: '${prefixedPascalCase} not found or unauthorized'
+      status: 404,
+      statusText: '${prefixedPascalCase} not found or unauthorized'
     })
   }
 

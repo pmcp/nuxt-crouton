@@ -53,7 +53,7 @@ export async function requireAuth(event: H3Event): Promise<User> {
 
   if (!session?.user) {
     throw createError({
-      statusCode: 401,
+      status: 401,
       message: 'Unauthorized'
     })
   }

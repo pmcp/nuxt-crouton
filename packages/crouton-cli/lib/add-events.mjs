@@ -229,8 +229,8 @@ export async function updateCroutonCollectionEvent(
 
   if (!event) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'CroutonCollectionEvent not found or unauthorized',
+      status: 404,
+      statusText: 'CroutonCollectionEvent not found or unauthorized',
     })
   }
 
@@ -257,8 +257,8 @@ export async function deleteCroutonCollectionEvent(
 
   if (!deleted) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'CroutonCollectionEvent not found or unauthorized',
+      status: 404,
+      statusText: 'CroutonCollectionEvent not found or unauthorized',
     })
   }
 
@@ -320,8 +320,8 @@ export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, 'eventId')
   if (!eventId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Event ID is required',
+      status: 400,
+      statusText: 'Event ID is required',
     })
   }
 
@@ -341,8 +341,8 @@ export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, 'eventId')
   if (!eventId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Event ID is required',
+      status: 400,
+      statusText: 'Event ID is required',
     })
   }
 

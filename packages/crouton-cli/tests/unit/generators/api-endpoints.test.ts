@@ -110,7 +110,7 @@ describe('API Endpoint Generators', () => {
     it('validates required ID parameter', () => {
       const result = generatePatchEndpoint(apiEndpointData, minimalConfig as AnyConfig)
       expect(result).toContain("if (!productId)")
-      expect(result).toContain("throw createError({ statusCode: 400, statusMessage: 'Missing product ID' })")
+      expect(result).toContain("throw createError({ status: 400, statusText: 'Missing product ID' })")
     })
 
     it('handles date field conversion in updates', () => {
@@ -145,7 +145,7 @@ describe('API Endpoint Generators', () => {
     it('validates required ID parameter', () => {
       const result = generateDeleteEndpoint(apiEndpointData, minimalConfig as AnyConfig)
       expect(result).toContain("if (!productId)")
-      expect(result).toContain("throw createError({ statusCode: 400, statusMessage: 'Missing product ID' })")
+      expect(result).toContain("throw createError({ status: 400, statusText: 'Missing product ID' })")
     })
   })
 

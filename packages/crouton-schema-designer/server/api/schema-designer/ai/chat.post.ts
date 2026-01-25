@@ -18,8 +18,8 @@ export default defineEventHandler(async (event) => {
   // @ts-expect-error - auto-imported by nitro when AI layer is extended
   if (typeof createAIProvider !== 'function') {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'AI package not available. Please extend @fyit/crouton-ai in your nuxt.config.ts'
+      status: 500,
+      statusText: 'AI package not available. Please extend @fyit/crouton-ai in your nuxt.config.ts'
     })
   }
 
@@ -58,8 +58,8 @@ export default defineEventHandler(async (event) => {
     console.error('[schema-ai-chat] Error message:', e?.message)
     console.error('[schema-ai-chat] Error stack:', e?.stack)
     throw createError({
-      statusCode: 500,
-      statusMessage: e?.message || 'AI request failed'
+      status: 500,
+      statusText: e?.message || 'AI request failed'
     })
   }
 })

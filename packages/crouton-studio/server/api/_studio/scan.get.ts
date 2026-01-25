@@ -27,8 +27,8 @@ export default defineEventHandler(async () => {
   catch (error) {
     console.error('Error scanning app:', error)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to scan app',
+      status: 500,
+      statusText: 'Failed to scan app',
       data: {
         error: error instanceof Error ? error.message : 'Unknown error'
       }

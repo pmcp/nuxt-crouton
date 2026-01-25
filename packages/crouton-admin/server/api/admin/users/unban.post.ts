@@ -31,7 +31,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
 
   if (!body.userId?.trim()) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'User ID is required'
     })
   }
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
 
   if (existingUsers.length === 0) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'User not found'
     })
   }
@@ -55,7 +55,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
   // Check if user is actually banned
   if (!targetUser.banned) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'User is not banned'
     })
   }

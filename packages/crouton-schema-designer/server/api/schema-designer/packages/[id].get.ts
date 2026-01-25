@@ -12,8 +12,8 @@ export default defineEventHandler(async (event) => {
 
   if (!id) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Package ID is required'
+      status: 400,
+      statusText: 'Package ID is required'
     })
   }
 
@@ -22,22 +22,22 @@ export default defineEventHandler(async (event) => {
 
     if (!manifest) {
       throw createError({
-        statusCode: 404,
-        statusMessage: `Package "${id}" not found`
+        status: 404,
+        statusText: `Package "${id}" not found`
       })
     }
 
     return manifest
   } catch (error) {
     // Re-throw if it's already a createError
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (error && typeof error === 'object' && 'status' in error) {
       throw error
     }
 
     console.error(`Failed to load manifest for ${id}:`, error)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to load package manifest'
+      status: 500,
+      statusText: 'Failed to load package manifest'
     })
   }
 })

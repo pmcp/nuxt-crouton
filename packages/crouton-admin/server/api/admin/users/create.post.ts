@@ -76,21 +76,21 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
 
   if (!body.name?.trim()) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Name is required'
     })
   }
 
   if (!body.email?.trim()) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Email is required'
     })
   }
 
   if (!body.password || body.password.length < 8) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Password must be at least 8 characters'
     })
   }
@@ -104,7 +104,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
 
   if (existingUser.length > 0) {
     throw createError({
-      statusCode: 409,
+      status: 409,
       message: 'A user with this email already exists'
     })
   }

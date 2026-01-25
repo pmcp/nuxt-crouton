@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
 
   if (!token) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Token is required'
+      status: 400,
+      statusText: 'Token is required'
     })
   }
 

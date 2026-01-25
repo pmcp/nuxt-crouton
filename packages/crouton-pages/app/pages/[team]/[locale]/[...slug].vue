@@ -36,7 +36,11 @@ if (reservedPrefixes.includes(teamParam)) {
   })
 }
 
-const { t } = useT()
+// Get translation function with fallback for SSR edge cases
+const useTranslation = useT()
+const t = typeof useTranslation?.t === 'function'
+  ? useTranslation.t
+  : (key: string) => `[${key}]`
 const { getPageType } = usePageTypes()
 const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 

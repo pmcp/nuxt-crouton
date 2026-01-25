@@ -74,10 +74,10 @@ export function createExternalCollectionHandler<T>(
     } catch (error) {
       console.error('[createExternalCollectionHandler] Error:', error)
       throw createError({
-        statusCode: error instanceof Error && 'statusCode' in error
-          ? (error as any).statusCode
+        status: error instanceof Error && 'status' in error
+          ? (error as any).status
           : 500,
-        statusMessage: error instanceof Error
+        statusText: error instanceof Error
           ? error.message
           : 'Failed to fetch external collection'
       })

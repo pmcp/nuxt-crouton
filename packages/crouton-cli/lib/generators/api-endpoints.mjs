@@ -160,7 +160,7 @@ import type { ${prefixedPascalCase} } from '../../../../../types'
 export default defineEventHandler(async (event) => {
   const { ${camelCase}Id } = getRouterParams(event)
   if (!${camelCase}Id) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
+    throw createError({ status: 400, statusText: 'Missing ${singular} ID' })
   }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
@@ -202,7 +202,7 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 export default defineEventHandler(async (event) => {
   const { ${camelCase}Id } = getRouterParams(event)
   if (!${camelCase}Id) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
+    throw createError({ status: 400, statusText: 'Missing ${singular} ID' })
   }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
@@ -226,7 +226,7 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 export default defineEventHandler(async (event) => {
   const { ${camelCase}Id } = getRouterParams(event)
   if (!${camelCase}Id) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing ${singular} ID' })
+    throw createError({ status: 400, statusText: 'Missing ${singular} ID' })
   }
   const { team } = await resolveTeamAndCheckMembership(event)
 
@@ -234,7 +234,7 @@ export default defineEventHandler(async (event) => {
 
   // Validate input
   if (body.order === undefined || typeof body.order !== 'number') {
-    throw createError({ statusCode: 400, statusMessage: 'order is required and must be a number' })
+    throw createError({ status: 400, statusText: 'order is required and must be a number' })
   }
 
   // parentId can be null (move to root) or a valid ID
@@ -268,14 +268,14 @@ export default defineEventHandler(async (event) => {
 
   // Validate input - expect array of { id, ${orderField} }
   if (!Array.isArray(body.updates)) {
-    throw createError({ statusCode: 400, statusMessage: 'updates must be an array' })
+    throw createError({ status: 400, statusText: 'updates must be an array' })
   }
 
   for (const update of body.updates) {
     if (!update.id || typeof update.${orderField} !== 'number') {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Each update must have id and ${orderField} (number)'
+        status: 400,
+        statusText: 'Each update must have id and ${orderField} (number)'
       })
     }
   }

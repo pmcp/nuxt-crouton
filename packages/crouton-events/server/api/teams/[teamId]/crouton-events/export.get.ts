@@ -40,8 +40,8 @@ export default defineEventHandler(async (event) => {
       eventsTable = schema.croutonEvents
     } catch {
       throw createError({
-        statusCode: 500,
-        statusMessage: 'Events collection not found. Make sure the events collection is generated.'
+        status: 500,
+        statusText: 'Events collection not found. Make sure the events collection is generated.'
       })
     }
   }

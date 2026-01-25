@@ -122,7 +122,7 @@ export async function requireServerSession(event: H3Event) {
 
   if (!session?.user) {
     throw createError({
-      statusCode: 401,
+      status: 401,
       message: 'Unauthorized'
     })
   }

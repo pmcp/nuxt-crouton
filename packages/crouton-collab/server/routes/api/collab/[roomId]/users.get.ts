@@ -19,7 +19,7 @@ export default defineEventHandler((event) => {
 
   if (!roomId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Missing roomId parameter'
     })
   }

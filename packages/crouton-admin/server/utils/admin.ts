@@ -62,8 +62,8 @@ export async function requireSuperAdmin(event: H3Event): Promise<AdminContext> {
 
   if (!session?.user) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'Authentication required'
     })
   }
@@ -78,8 +78,8 @@ export async function requireSuperAdmin(event: H3Event): Promise<AdminContext> {
 
     if (isStillBanned) {
       throw createError({
-        statusCode: 403,
-        statusMessage: 'Forbidden',
+        status: 403,
+        statusText: 'Forbidden',
         message: user.bannedReason || 'Your account has been banned'
       })
     }
@@ -88,8 +88,8 @@ export async function requireSuperAdmin(event: H3Event): Promise<AdminContext> {
   // Check super admin status
   if (!user.superAdmin) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Forbidden',
+      status: 403,
+      statusText: 'Forbidden',
       message: 'Super admin access required'
     })
   }

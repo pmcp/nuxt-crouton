@@ -48,16 +48,16 @@ export default defineEventHandler(async (event) => {
 
   if (!body.bookings || !Array.isArray(body.bookings) || body.bookings.length === 0) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'No bookings provided',
+      status: 400,
+      statusText: 'No bookings provided',
     })
   }
 
   // Limit batch size to prevent abuse
   if (body.bookings.length > 20) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Maximum 20 bookings per batch',
+      status: 400,
+      statusText: 'Maximum 20 bookings per batch',
     })
   }
 
@@ -173,8 +173,8 @@ export default defineEventHandler(async (event) => {
   catch (error: unknown) {
     console.error('Failed to create batch bookings:', error)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to create bookings',
+      status: 500,
+      statusText: 'Failed to create bookings',
     })
   }
 })

@@ -60,6 +60,15 @@ export default defineNuxtConfig({
     }
   },
 
+  // Route rules for ISR caching (Nuxt 4.3+)
+  // Published pages benefit from Incremental Static Regeneration
+  routeRules: {
+    // Public page content - cache for 1 hour with ISR
+    '/api/teams/*/pages/**': { isr: 3600 },
+    // Published pages navigation - cache for 1 hour
+    '/api/teams/*/pages': { isr: 3600 }
+  },
+
   // Nitro server configuration
   nitro: {
     // Include server middleware and utils

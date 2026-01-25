@@ -28,7 +28,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
 
   if (!currentSession?.session?.id) {
     throw createError({
-      statusCode: 401,
+      status: 401,
       message: 'No active session found'
     })
   }
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
 
   if (sessions.length === 0) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Session not found'
     })
   }
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
   // Check if currently impersonating
   if (!currentDbSession.impersonatingFrom) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Not currently impersonating any user'
     })
   }
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
       .where(eq(session.id, currentSession.session.id))
 
     throw createError({
-      statusCode: 401,
+      status: 401,
       message: 'Original admin account no longer exists. Session invalidated.'
     })
   }

@@ -14,8 +14,8 @@ export default defineEventHandler(async (event) => {
 
   if (!teamParam) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Team ID or slug is required'
+      status: 400,
+      statusText: 'Team ID or slug is required'
     })
   }
 
@@ -45,8 +45,8 @@ export default defineEventHandler(async (event) => {
 
     if (!team) {
       throw createError({
-        statusCode: 404,
-        statusMessage: 'Team not found'
+        status: 404,
+        statusText: 'Team not found'
       })
     }
 
@@ -74,8 +74,8 @@ export default defineEventHandler(async (event) => {
 
         if (!page) {
           throw createError({
-            statusCode: 404,
-            statusMessage: 'No published homepage found'
+            status: 404,
+            statusText: 'No published homepage found'
           })
         }
       } else {
@@ -110,8 +110,8 @@ export default defineEventHandler(async (event) => {
 
         if (!page) {
           throw createError({
-            statusCode: 404,
-            statusMessage: 'Page not found'
+            status: 404,
+            statusText: 'Page not found'
           })
         }
       }
@@ -119,8 +119,8 @@ export default defineEventHandler(async (event) => {
       // Check page status
       if (page.status !== 'published') {
         throw createError({
-          statusCode: 404,
-          statusMessage: 'Page not found'
+          status: 404,
+          statusText: 'Page not found'
         })
       }
 
@@ -136,8 +136,8 @@ export default defineEventHandler(async (event) => {
 
           if (!session?.user) {
             throw createError({
-              statusCode: 401,
-              statusMessage: 'Authentication required'
+              status: 401,
+              statusText: 'Authentication required'
             })
           }
 
@@ -156,16 +156,16 @@ export default defineEventHandler(async (event) => {
 
           if (!membership) {
             throw createError({
-              statusCode: 403,
-              statusMessage: 'Access denied - not a team member'
+              status: 403,
+              statusText: 'Access denied - not a team member'
             })
           }
         } catch (authError: any) {
-          if (authError.statusCode) throw authError
+          if (authError.status) throw authError
           // Auth not available, deny access
           throw createError({
-            statusCode: 401,
-            statusMessage: 'Authentication required'
+            status: 401,
+            statusText: 'Authentication required'
           })
         }
       }
@@ -208,19 +208,19 @@ export default defineEventHandler(async (event) => {
         }
       }
     } catch (error: any) {
-      if (error.statusCode) throw error
+      if (error.status) throw error
       // pagesPages table doesn't exist or schema import failed
       throw createError({
-        statusCode: 404,
-        statusMessage: 'Page not found'
+        status: 404,
+        statusText: 'Page not found'
       })
     }
   } catch (error: any) {
-    if (error.statusCode) throw error
+    if (error.status) throw error
     console.error('[crouton-pages] Error fetching page:', error)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to fetch page'
+      status: 500,
+      statusText: 'Failed to fetch page'
     })
   }
 })

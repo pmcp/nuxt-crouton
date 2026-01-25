@@ -6,8 +6,8 @@ export default defineEventHandler(async (event) => {
   const { id: teamId } = getRouterParams(event)
   if (!teamId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Team ID is required'
+      status: 400,
+      statusText: 'Team ID is required'
     })
   }
   const { user } = await requireUserSession(event)
@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
   const hasAccess = await isTeamMemberWithEvent(event, teamId, user.id)
   if (!hasAccess) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Unauthorized - you are not a member of this team'
+      status: 403,
+      statusText: 'Unauthorized - you are not a member of this team'
     })
   }
 

@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
 
   if (!token) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Token is required'
+      status: 400,
+      statusText: 'Token is required'
     })
   }
 
@@ -25,8 +25,8 @@ export default defineEventHandler(async (event) => {
 
   if (!newExpiresAt) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Token not found or already expired'
+      status: 404,
+      statusText: 'Token not found or already expired'
     })
   }
 

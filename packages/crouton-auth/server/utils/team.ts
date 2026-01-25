@@ -88,7 +88,7 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
 
   if (!teamId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'No team context available'
     })
   }
@@ -102,7 +102,7 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
   // Only throw error if BOTH lookups failed
   if (!team) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Team not found'
     })
   }
@@ -111,7 +111,7 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
   const membership = await getMembership(event, team.id, session.user.id)
   if (!membership) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'Not a team member'
     })
   }
@@ -416,7 +416,7 @@ export async function requireTeamRole(
 
   if (userRoleLevel < requiredRoleLevel) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: `Requires ${requiredRole} role or higher`
     })
   }

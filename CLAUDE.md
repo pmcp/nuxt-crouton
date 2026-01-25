@@ -806,6 +806,82 @@ const { data, pending, error, refresh } = await useFetch('/api/data')
 - Cache API responses appropriately
 - Leverage edge caching on NuxtHub
 
+## Nuxt 4.3+ Patterns
+
+### Nitro v3 Error Handling
+Use `status` and `statusText` instead of the deprecated `statusCode`/`statusMessage`:
+
+```typescript
+// ✅ Correct (Nitro v3 compatible)
+throw createError({
+  status: 404,
+  statusText: 'Resource not found'
+})
+
+// ❌ Deprecated (will be removed in Nitro v3)
+throw createError({
+  statusCode: 404,
+  statusMessage: 'Resource not found'
+})
+```
+
+### ISR/SWR Caching with Route Rules
+Configure route-level caching using `routeRules`:
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  routeRules: {
+    // ISR: Incremental Static Regeneration (cached, revalidated)
+    '/api/teams/*/pages/**': { isr: 3600 },  // 1 hour cache
+
+    // SWR: Stale-While-Revalidate (serve stale, fetch fresh)
+    '/api/teams/*/translations/**': { swr: 600 },  // 10 min cache
+
+    // Static: Pre-rendered at build time
+    '/about': { prerender: true }
+  }
+})
+```
+
+**When to use each:**
+- **ISR** - Content that changes occasionally (published pages, docs)
+- **SWR** - Data that benefits from freshness but can be stale briefly (translations, config)
+- **Prerender** - Static content that never changes between deploys
+
+### Module Disabling from Layers
+Users extending `@fyit/crouton` can disable optional modules:
+
+```typescript
+// In user's nuxt.config.ts
+export default defineNuxtConfig({
+  extends: ['@fyit/crouton'],
+  modules: {
+    '@fyit/crouton-ai': false,    // Disable AI if not needed
+    '@fyit/crouton-maps': false   // Disable maps
+  }
+})
+```
+
+### Route Groups (Future Pattern)
+Parenthesized folder names can expose authorization context via `route.meta.groups`:
+
+```
+pages/
+├── (public)/          → route.meta.groups: ['public']
+├── (auth)/            → route.meta.groups: ['auth']
+├── (team-admin)/      → route.meta.groups: ['team-admin']
+└── (super-admin)/     → route.meta.groups: ['super-admin']
+```
+
+### #server Alias
+Use `#server` for cleaner server imports with automatic client-side protection:
+
+```typescript
+// Server-only code
+import { useDrizzle } from '#server/utils/drizzle'
+```
+
 ## Sub-Agent Usage
 
 When delegating to sub-agents:
@@ -843,8 +919,8 @@ export default defineEventHandler(async (event) => {
     return { success: true, data: result }
   } catch (error) {
     throw createError({
-      statusCode: error.statusCode || 500,
-      statusMessage: error.message
+      status: error.status || 500,
+      statusText: error.message
     })
   }
 })

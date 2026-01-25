@@ -30,15 +30,15 @@ export default defineEventHandler(async (event) => {
 
   if (!locationId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'locationId is required'
+      status: 400,
+      statusText: 'locationId is required'
     })
   }
 
   if (!startDateStr || !endDateStr) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'startDate and endDate are required'
+      status: 400,
+      statusText: 'startDate and endDate are required'
     })
   }
 
@@ -47,8 +47,8 @@ export default defineEventHandler(async (event) => {
 
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid date format'
+      status: 400,
+      statusText: 'Invalid date format'
     })
   }
 

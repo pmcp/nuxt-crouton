@@ -8,8 +8,8 @@ export default defineEventHandler(async (event) => {
 
   if (!(image instanceof Blob)) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Image is required and must be a valid file'
+      status: 400,
+      statusText: 'Image is required and must be a valid file'
     })
   }
 
@@ -20,8 +20,8 @@ export default defineEventHandler(async (event) => {
     })
   } catch (error: unknown) {
     throw createError({
-      statusCode: 400,
-      statusMessage: (error as Error).message || (error as string)
+      status: 400,
+      statusText: (error as Error).message || (error as string)
     })
   }
 

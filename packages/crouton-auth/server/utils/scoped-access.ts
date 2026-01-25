@@ -219,8 +219,8 @@ export async function requireScopedAccess(
 
   if (!access) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Invalid or expired access token'
+      status: 401,
+      statusText: 'Invalid or expired access token'
     })
   }
 
@@ -249,8 +249,8 @@ export async function requireScopedAccessToResource(
 
   if (access.resourceType !== resourceType || access.resourceId !== resourceId) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Access denied to this resource'
+      status: 403,
+      statusText: 'Access denied to this resource'
     })
   }
 

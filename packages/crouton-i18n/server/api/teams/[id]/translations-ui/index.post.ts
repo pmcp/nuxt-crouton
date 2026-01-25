@@ -17,8 +17,8 @@ export default defineEventHandler(async (event) => {
   // const isAdmin = await isTeamAdmin(team.id, user.id)
   // if (!isAdmin) {
   //   throw createError({
-  //     statusCode: 403,
-  //     statusMessage: 'Unauthorized - admin access required'
+  //     status: 403,
+  //     statusText: 'Unauthorized - admin access required'
   //   })
   // }
 
@@ -27,8 +27,8 @@ export default defineEventHandler(async (event) => {
   // Validate required fields
   if (!body.keyPath || !body.category || !body.values) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Missing required fields: keyPath, category, values'
+      status: 400,
+      statusText: 'Missing required fields: keyPath, category, values'
     })
   }
 
@@ -41,8 +41,8 @@ export default defineEventHandler(async (event) => {
   // If system translation exists and is not overrideable, reject
   if (systemTranslation && !systemTranslation.isOverrideable) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'This system translation cannot be overridden'
+      status: 403,
+      statusText: 'This system translation cannot be overridden'
     })
   }
 
@@ -63,8 +63,8 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     if (error.message?.includes('UNIQUE constraint failed')) {
       throw createError({
-        statusCode: 409,
-        statusMessage: 'A translation with this keyPath already exists for this team'
+        status: 409,
+        statusText: 'A translation with this keyPath already exists for this team'
       })
     }
     throw error

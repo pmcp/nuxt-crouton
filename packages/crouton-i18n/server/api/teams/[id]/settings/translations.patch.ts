@@ -6,8 +6,8 @@ export default defineEventHandler(async (event) => {
   const { id: teamId } = getRouterParams(event)
   if (!teamId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Team ID is required'
+      status: 400,
+      statusText: 'Team ID is required'
     })
   }
   const { user } = await requireUserSession(event)
@@ -17,16 +17,16 @@ export default defineEventHandler(async (event) => {
   const hasAccess = await isTeamAdmin(teamId, user.id)
   if (!hasAccess) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Unauthorized - only team admins can modify translations'
+      status: 403,
+      statusText: 'Unauthorized - only team admins can modify translations'
     })
   }
 
   // Validate the translations structure
   if (body.translations && typeof body.translations !== 'object') {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid translations format'
+      status: 400,
+      statusText: 'Invalid translations format'
     })
   }
 

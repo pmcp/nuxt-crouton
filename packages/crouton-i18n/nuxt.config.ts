@@ -15,6 +15,15 @@ export default defineNuxtConfig({
   // Note: This is an addon layer - users must explicitly extend both:
   // extends: ['@fyit/crouton-core', '@fyit/crouton-i18n']
 
+  // Route rules for SWR caching (Nuxt 4.3+)
+  // Translation bundles rarely change - use stale-while-revalidate
+  routeRules: {
+    // Translation settings - SWR with 10 min cache
+    '/api/teams/*/settings/translations': { swr: 600 },
+    // Translation UI collection - SWR with 10 min cache
+    '/api/teams/*/translations-ui/**': { swr: 600 }
+  },
+
   // Add i18n module
   modules: ['@nuxtjs/i18n'],
   $meta: {

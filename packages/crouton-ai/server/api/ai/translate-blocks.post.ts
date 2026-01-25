@@ -164,8 +164,8 @@ export default defineEventHandler(async (event) => {
 
   if (!parseResult.success) {
     throw createError({
-      statusCode: 400,
-      statusMessage: parseResult.error.issues[0]?.message || 'Invalid request body'
+      status: 400,
+      statusText: parseResult.error.issues[0]?.message || 'Invalid request body'
     })
   }
 
@@ -242,8 +242,8 @@ ${targetLang} translations:`
   } catch (error: any) {
     console.error('Block translation error:', error)
     throw createError({
-      statusCode: 500,
-      statusMessage: error.message || 'Block translation failed'
+      status: 500,
+      statusText: error.message || 'Block translation failed'
     })
   }
 })

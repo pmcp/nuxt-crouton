@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error(`[@crouton/auth] API error for ${url.pathname}:`, error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: error instanceof Error ? error.message : 'Auth handler error'
     })
   }

@@ -18,8 +18,8 @@ export default defineEventHandler(async (event) => {
 
   if (!teamParam) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Team ID or slug is required'
+      status: 400,
+      statusText: 'Team ID or slug is required'
     })
   }
 
@@ -49,8 +49,8 @@ export default defineEventHandler(async (event) => {
 
     if (!team) {
       throw createError({
-        statusCode: 404,
-        statusMessage: 'Team not found'
+        status: 404,
+        statusText: 'Team not found'
       })
     }
 
@@ -150,13 +150,13 @@ export default defineEventHandler(async (event) => {
       }
     }
   } catch (error: any) {
-    if (error.statusCode) {
+    if (error.status) {
       throw error
     }
     console.error('[crouton-pages] Error fetching pages:', error)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to fetch pages'
+      status: 500,
+      statusText: 'Failed to fetch pages'
     })
   }
 })

@@ -25,7 +25,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminTeamDetai
 
   if (!teamId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Team ID is required'
     })
   }
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminTeamDetai
 
   if (orgs.length === 0) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Team not found'
     })
   }

@@ -22,8 +22,8 @@ export default defineEventHandler(async (event) => {
   const bookingId = getRouterParam(event, 'bookingId')
   if (!bookingId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Booking ID is required',
+      status: 400,
+      statusText: 'Booking ID is required',
     })
   }
 
@@ -32,8 +32,8 @@ export default defineEventHandler(async (event) => {
   const parsed = updateSchema.safeParse(body)
   if (!parsed.success) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid request body',
+      status: 400,
+      statusText: 'Invalid request body',
       data: parsed.error.issues,
     })
   }
@@ -51,8 +51,8 @@ export default defineEventHandler(async (event) => {
 
   if (!existing) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Booking not found',
+      status: 404,
+      statusText: 'Booking not found',
     })
   }
 

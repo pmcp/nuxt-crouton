@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
   // Only allow in development mode
   if (!import.meta.dev) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Seed endpoint only available in development mode'
+      status: 403,
+      statusText: 'Seed endpoint only available in development mode'
     })
   }
 
@@ -26,8 +26,8 @@ export default defineEventHandler(async (event) => {
   // Validate required fields
   if (!body.keyPath || !body.category || !body.values) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Missing required fields: keyPath, category, values'
+      status: 400,
+      statusText: 'Missing required fields: keyPath, category, values'
     })
   }
 
@@ -47,8 +47,8 @@ export default defineEventHandler(async (event) => {
     const errorMessage = error instanceof Error ? error.message : String(error)
     if (errorMessage.includes('UNIQUE constraint failed')) {
       throw createError({
-        statusCode: 409,
-        statusMessage: 'A translation with this keyPath already exists'
+        status: 409,
+        statusText: 'A translation with this keyPath already exists'
       })
     }
     throw error

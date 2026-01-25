@@ -27,7 +27,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
 
   if (!userId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'User ID is required'
     })
   }
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
 
   if (users.length === 0) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'User not found'
     })
   }

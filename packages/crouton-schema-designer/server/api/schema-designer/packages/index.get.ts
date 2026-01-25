@@ -14,8 +14,8 @@ export default defineEventHandler(async () => {
   } catch (error) {
     console.error('Failed to load package summaries:', error)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to load package list'
+      status: 500,
+      statusText: 'Failed to load package list'
     })
   }
 })

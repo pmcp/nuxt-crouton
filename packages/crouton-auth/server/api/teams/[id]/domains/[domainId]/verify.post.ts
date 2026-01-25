@@ -12,8 +12,8 @@ export default defineEventHandler(async (event) => {
   const domainId = getRouterParam(event, 'domainId')
   if (!domainId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Domain ID is required'
+      status: 400,
+      statusText: 'Domain ID is required'
     })
   }
 
@@ -30,8 +30,8 @@ export default defineEventHandler(async (event) => {
 
   if (!domain) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Domain not found'
+      status: 404,
+      statusText: 'Domain not found'
     })
   }
 

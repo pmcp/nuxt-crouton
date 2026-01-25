@@ -37,7 +37,7 @@ export default defineEventHandler(async (event: H3Event): Promise<DeleteResponse
 
   if (!body.userId?.trim()) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'User ID is required'
     })
   }
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event: H3Event): Promise<DeleteResponse
   // Don't allow deleting yourself
   if (body.userId === adminUser.id) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'You cannot delete yourself'
     })
   }
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event: H3Event): Promise<DeleteResponse
 
   if (existingUsers.length === 0) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'User not found'
     })
   }
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event: H3Event): Promise<DeleteResponse
   // Don't allow deleting super admins (protect other admins)
   if (targetUser.superAdmin) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'Cannot delete super admin users'
     })
   }

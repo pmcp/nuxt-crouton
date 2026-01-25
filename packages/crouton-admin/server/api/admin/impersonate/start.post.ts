@@ -34,7 +34,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
 
   if (!body.userId?.trim()) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'User ID is required'
     })
   }
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
   // Don't allow impersonating yourself
   if (body.userId === adminUser.id) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'You cannot impersonate yourself'
     })
   }
@@ -56,7 +56,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
 
   if (targetUsers.length === 0) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'User not found'
     })
   }
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
   // Don't allow impersonating super admins (protect other admins)
   if (targetUser.superAdmin) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'Cannot impersonate super admin users'
     })
   }
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
 
     if (isStillBanned) {
       throw createError({
-        statusCode: 400,
+        status: 400,
         message: 'Cannot impersonate banned users'
       })
     }
@@ -93,7 +93,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
 
   if (!currentSession?.session?.id) {
     throw createError({
-      statusCode: 401,
+      status: 401,
       message: 'No active session found'
     })
   }
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
 
   if (existingSessions.length > 0 && existingSessions[0].impersonatingFrom) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Already impersonating a user. Stop current impersonation first.'
     })
   }

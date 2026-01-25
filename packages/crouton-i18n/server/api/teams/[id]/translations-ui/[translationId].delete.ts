@@ -7,8 +7,8 @@ export default defineEventHandler(async (event) => {
 
   if (!translationId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Translation ID is required'
+      status: 400,
+      statusText: 'Translation ID is required'
     })
   }
 
@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
   // const isAdmin = await isTeamAdmin(team.id, user.id)
   // if (!isAdmin) {
   //   throw createError({
-  //     statusCode: 403,
-  //     statusMessage: 'Unauthorized - admin access required'
+  //     status: 403,
+  //     statusText: 'Unauthorized - admin access required'
   //   })
   // }
 
