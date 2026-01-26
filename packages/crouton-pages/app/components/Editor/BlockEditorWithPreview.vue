@@ -108,7 +108,7 @@ const localContent = ref<string | TipTapDoc>(normalizeContent(props.modelValue))
 // Sync local content when prop changes from parent
 watch(() => props.modelValue, (newValue) => {
   localContent.value = normalizeContent(newValue)
-}, { deep: true })
+})
 
 // Two-way binding for editor - writes to both local state AND emits to parent
 const content = computed({

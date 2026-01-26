@@ -38,6 +38,8 @@ type TranslationsValue = SingleFieldValue | MultiFieldValue | null
 interface CollabConnection {
   /** Get Y.XmlFragment for a specific locale */
   getXmlFragment: (locale: string) => any
+  /** Set content from JSON (updates Yjs XmlFragment directly) */
+  setContentJson?: (locale: string, content: unknown) => void
   /** Get collab provider for cursor awareness */
   connection?: { awareness?: any }
   /** Current user info */
@@ -326,6 +328,10 @@ const translationStatus = computed(() => {
 // AI Translation support
 const isTranslating = ref<Record<string, boolean>>({})
 
+// Force re-mount key for block editors after translation
+// Incremented to force Vue to re-create the component with new content
+const blockEditorRefreshKey = ref(0)
+
 // Get all translations for a field (for AI context)
 function getAllTranslationsForField(field: string): Record<string, string> {
   const translations: Record<string, string> = {}
@@ -519,23 +525,12 @@ function getBestSourceText(field: string, targetLocale: string): string | undefi
 
 // Request block editor translation (controlled mode - parent handles the API call)
 async function requestBlockTranslation(field: string, targetLocale: string) {
-  console.log('[BlockTranslation] Starting translation', { field, targetLocale })
-
   const sourceLang = findBestSourceLocale(field, targetLocale)
-  console.log('[BlockTranslation] Source language:', sourceLang)
-  if (!sourceLang) {
-    console.log('[BlockTranslation] No source language found, aborting')
-    return
-  }
+  if (!sourceLang) return
 
   const allTranslations = getAllTranslationsForField(field)
-  console.log('[BlockTranslation] All translations:', allTranslations)
   const sourceText = allTranslations[sourceLang]
-  console.log('[BlockTranslation] Source text type:', typeof sourceText, sourceText)
-  if (!sourceText) {
-    console.log('[BlockTranslation] No source text found, aborting')
-    return
-  }
+  if (!sourceText) return
 
   const translationKey = `${targetLocale}-${field}`
   isTranslating.value[translationKey] = true
@@ -545,13 +540,10 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
     let content: any
     try {
       content = typeof sourceText === 'string' ? JSON.parse(sourceText) : sourceText
-      console.log('[BlockTranslation] Parsed content:', content)
-    } catch (parseErr) {
-      console.error('[BlockTranslation] Failed to parse block content:', parseErr)
+    } catch {
       return
     }
 
-    console.log('[BlockTranslation] Calling API with:', { content, sourceLang, targetLocale })
     const result = await $fetch<{ content: any, translatedCount?: number, totalCount?: number }>('/api/ai/translate-blocks', {
       method: 'POST',
       body: {
@@ -560,19 +552,35 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
         targetLanguage: targetLocale
       }
     })
-    console.log('[BlockTranslation] API result:', result)
 
     if (result?.content) {
       const serialized = JSON.stringify(result.content)
-      console.log('[BlockTranslation] Updating field with:', { field, targetLocale, serialized })
+
+      // In collab mode, update Yjs XmlFragment directly for visual update
+      if (props.collab?.setContentJson) {
+        props.collab.setContentJson(targetLocale, result.content)
+        toast.add({
+          title: 'Translation Complete',
+          description: `Translated ${result.translatedCount} text blocks.`,
+          icon: 'i-lucide-check',
+          color: 'success'
+        })
+      } else if (props.collab) {
+        // Collab mode but setContentJson not available (older API)
+        toast.add({
+          title: 'Translation Saved',
+          description: `Translated ${result.translatedCount} text blocks. Save and reload to see in editor.`,
+          icon: 'i-lucide-check',
+          color: 'success'
+        })
+      }
+
+      // Always update form state (for persisting and non-collab mode)
       updateFieldValue(field, serialized, targetLocale)
-      console.log('[BlockTranslation] Field updated successfully')
-    } else {
-      console.log('[BlockTranslation] No content in result')
+      // Force block editor to re-mount with new content (for non-collab mode)
+      blockEditorRefreshKey.value++
     }
   } catch (err: any) {
-    console.error('Block translation error:', err)
-
     const errorMessage = err?.data?.statusMessage || err?.message || 'Translation failed'
 
     if (errorMessage.includes('API key not configured') || errorMessage.includes('No AI API key')) {
@@ -954,6 +962,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 class="flex-1 min-h-[350px] max-h-[600px]"
               >
                 <CroutonPagesEditorBlockEditorWithPreview
+                  :key="`${field}-${secondaryEditingLocale}-${blockEditorRefreshKey}`"
                   :ref="(el: any) => { if (el) secondaryEditorRefs[field] = el }"
                   :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
                   :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
