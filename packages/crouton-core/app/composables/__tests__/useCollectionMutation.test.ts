@@ -584,12 +584,15 @@ describe('useCollectionMutation', () => {
         path: '/dashboard/products',
         params: {} // No team param
       }
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       const { create } = useCollectionMutation('products')
 
       await expect(create({ name: 'Product' })).rejects.toThrow(
         'Team context not yet available'
       )
+
+      consoleSpy.mockRestore()
     })
   })
 

@@ -38,9 +38,12 @@ describe('useFlowMutation', () => {
   describe('initialization', () => {
     it('throws error when collection not found', () => {
       mockGetConfig.mockReturnValue(undefined)
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       expect(() => useFlowMutation('unknown-collection'))
         .toThrow('Collection "unknown-collection" not registered')
+
+      consoleSpy.mockRestore()
     })
 
     it('initializes with pending false and no error', () => {
@@ -97,10 +100,13 @@ describe('useFlowMutation', () => {
 
     it('throws error when team context not available (non-super-admin)', async () => {
       mockGetTeamId.mockReturnValue(null)
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const { updatePosition } = useFlowMutation('decisions')
 
       await expect(updatePosition('node-1', { x: 100, y: 200 }))
         .rejects.toThrow('Team context required for this operation')
+
+      consoleSpy.mockRestore()
     })
 
     it('sets pending during request', async () => {
@@ -206,6 +212,8 @@ describe('useFlowMutation', () => {
 })
 
 describe('useDebouncedPositionUpdate', () => {
+  let vueWarnSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
@@ -214,10 +222,13 @@ describe('useDebouncedPositionUpdate', () => {
     mockGetConfig.mockReturnValue({ apiPath: 'decisions' })
     mockGetTeamId.mockReturnValue('team-123')
     mockRoute.path = '/dashboard'
+    // Suppress Vue lifecycle warnings when testing composables outside component context
+    vueWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    vueWarnSpy.mockRestore()
   })
 
   it('debounces position updates', async () => {

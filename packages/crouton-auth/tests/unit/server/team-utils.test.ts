@@ -313,11 +313,13 @@ describe('server/utils/team', () => {
 
     it('should return null on API error', async () => {
       mockAuthApi.listMembers.mockRejectedValue(new Error('API error'))
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       const event = createMockEvent()
       const member = await getMembership(event, 'team-1', 'user-1')
 
       expect(member).toBeNull()
+      consoleSpy.mockRestore()
     })
 
     it('should map role correctly', async () => {
@@ -464,11 +466,13 @@ describe('server/utils/team', () => {
 
     it('should return empty array on API error', async () => {
       mockAuthApi.listOrganizations.mockRejectedValue(new Error('API error'))
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       const event = createMockEvent()
       const teams = await getUserTeams(event)
 
       expect(teams).toHaveLength(0)
+      consoleSpy.mockRestore()
     })
   })
 

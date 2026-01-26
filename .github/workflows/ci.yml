@@ -113,6 +113,16 @@ jobs:
             fi
           done
 
+      - name: Prepare packages with tests that depend on .nuxt
+        run: |
+          # Packages with tests that have tsconfig.json extending .nuxt/tsconfig.json
+          for pkg in packages/crouton-auth; do
+            if [ -f "$pkg/nuxt.config.ts" ] && [ -f "$pkg/vitest.config.ts" ]; then
+              echo "Preparing $pkg"
+              (cd "$pkg" && npx nuxt prepare)
+            fi
+          done
+
       - name: Run all tests
         run: pnpm test
 
