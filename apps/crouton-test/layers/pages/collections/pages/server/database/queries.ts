@@ -1,5 +1,5 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm'
+import { eq, and, desc, asc, inArray, sql, isNull } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { PagesPage, NewPagesPage } from '../../types'
@@ -118,6 +118,21 @@ export async function getPagesPagesByIds(teamId: string, pageIds: string[]) {
   })
 
   return pages
+}
+
+export async function getNextOrderPagesPage(teamId: string, parentId: string | null) {
+  const db = useDB()
+
+  const condition = parentId
+    ? and(eq(tables.pagesPages.teamId, teamId), eq(tables.pagesPages.parentId, parentId))
+    : and(eq(tables.pagesPages.teamId, teamId), isNull(tables.pagesPages.parentId))
+
+  const [result] = await (db as any)
+    .select({ maxOrder: sql<number>`COALESCE(MAX("order"), -1)` })
+    .from(tables.pagesPages)
+    .where(condition)
+
+  return (result?.maxOrder ?? -1) + 1
 }
 
 export async function createPagesPage(data: NewPagesPage) {
