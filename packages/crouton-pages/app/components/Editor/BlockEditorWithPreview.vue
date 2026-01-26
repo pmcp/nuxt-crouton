@@ -45,6 +45,12 @@ interface Props {
   /** Default active tab */
   defaultTab?: 'editor' | 'preview'
   /**
+   * Preview zoom scale (0.5 = 50%, 1 = 100%).
+   * Smaller values show more content in less space.
+   * @default 0.6
+   */
+  previewScale?: number
+  /**
    * Y.XmlFragment for real-time collaboration.
    * When provided, editor syncs to Yjs instead of using modelValue.
    */
@@ -63,8 +69,16 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Type / to insert a block...',
   editable: true,
   previewTitle: 'Page Preview',
-  defaultTab: 'editor'
+  defaultTab: 'editor',
+  previewScale: 0.6
 })
+
+// Computed styles for zoom effect
+const previewZoomStyle = computed(() => ({
+  transform: `scale(${currentScale.value})`,
+  transformOrigin: 'top left',
+  width: `${100 / currentScale.value}%`
+}))
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | TipTapDoc]
@@ -109,6 +123,10 @@ const content = computed({
 
 // Preview content - uses local state for immediate updates
 const previewContent = computed(() => localContent.value)
+
+// Zoom state - can toggle between scaled and 100%
+const isZoomedOut = ref(true)
+const currentScale = computed(() => isZoomedOut.value ? props.previewScale : 1)
 
 // Tab state
 const activeTab = ref(props.defaultTab)
@@ -240,14 +258,28 @@ defineExpose({
             <UIcon name="i-lucide-eye" class="size-4 text-muted" />
             <span class="text-sm font-medium">{{ previewTitle }}</span>
           </div>
+          <!-- Zoom toggle -->
+          <UButton
+            :icon="isZoomedOut ? 'i-lucide-zoom-in' : 'i-lucide-zoom-out'"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :title="isZoomedOut ? 'Zoom to 100%' : `Zoom to ${Math.round(previewScale * 100)}%`"
+            @click="isZoomedOut = !isZoomedOut"
+          >
+            <span class="text-xs text-muted ml-1">{{ Math.round(currentScale * 100) }}%</span>
+          </UButton>
         </div>
 
         <!-- Preview content - uses local state for immediate updates -->
+        <!-- Zoomed out to show more content in small containers -->
         <div class="flex-1 overflow-auto">
-          <CroutonPagesBlockContent
-            :content="previewContent"
-            class="p-4"
-          />
+          <div :style="previewZoomStyle">
+            <CroutonPagesBlockContent
+              :content="previewContent"
+              class="p-4"
+            />
+          </div>
         </div>
       </div>
     </div>
