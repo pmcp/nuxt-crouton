@@ -98,8 +98,14 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies (skip postinstall scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build packages
+        run: pnpm build:packages
+
+      - name: Prepare apps
+        run: pnpm -r --filter './apps/*' exec nuxt prepare
 
       - name: Run all tests
         run: pnpm test
