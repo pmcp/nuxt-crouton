@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { slugify } from '../utils/slugify'
+
 /**
  * TranslatableOptionItem - Repeater item for translatable dropdown options
  *
@@ -104,14 +106,6 @@ function hasTranslation(localeCode: string): boolean {
     return !!(props.modelValue?.label?.trim())
   }
   return !!(props.modelValue?.translations?.label?.[localeCode]?.trim())
-}
-
-// Slugify helper for auto-generating value
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
 }
 
 // Auto-generate value from label when label changes (if value is empty or matches old slug)

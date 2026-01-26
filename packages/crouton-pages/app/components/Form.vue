@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// slugify is auto-imported from @fyit/crouton/app/utils/slugify.ts via Nuxt layers
+
 /**
  * Pages Collection Form
  *
@@ -376,16 +378,6 @@ function openDeleteConfirm() {
   }
 }
 
-// Simple slugify function for auto-generating slugs from titles
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
 // Translatable fields - title, slug, and content for regular pages
 // All content is per-locale (no "base language")
 const translatableFields = computed(() => {
@@ -402,6 +394,11 @@ const fieldComponents = computed(() => {
   }
   return {}
 })
+
+// Field options - enable real-time slug sanitization
+const fieldOptions = {
+  slug: { transform: 'slug' as const }
+}
 </script>
 
 <template>
@@ -651,6 +648,7 @@ const fieldComponents = computed(() => {
               show-ai-translate
               field-type="page"
               :field-components="fieldComponents"
+              :field-options="fieldOptions"
               :collab="collabForI18n"
               class="h-full"
             />
