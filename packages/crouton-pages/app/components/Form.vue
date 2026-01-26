@@ -93,7 +93,7 @@ const collabForI18n = computed(() => {
   if (!collabLocalizedContent.connected?.value) return undefined
   return {
     getXmlFragment: (locale: string) => collabLocalizedContent.getXmlFragment(locale),
-    setContentJson: (locale: string, content: unknown) => collabLocalizedContent.setContentJson(locale, content),
+    setContentJson: (locale: string, content: unknown, force?: boolean) => collabLocalizedContent.setContentJson(locale, content, force),
     connection: collabLocalizedContent.connection,
     user: getCurrentUser()
   }

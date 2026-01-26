@@ -38,8 +38,8 @@ type TranslationsValue = SingleFieldValue | MultiFieldValue | null
 interface CollabConnection {
   /** Get Y.XmlFragment for a specific locale */
   getXmlFragment: (locale: string) => any
-  /** Set content from JSON (updates Yjs XmlFragment directly) */
-  setContentJson?: (locale: string, content: unknown) => void
+  /** Set content from JSON (updates Yjs XmlFragment directly). Use force=true to overwrite existing content. */
+  setContentJson?: (locale: string, content: unknown, force?: boolean) => void
   /** Get collab provider for cursor awareness */
   connection?: { awareness?: any }
   /** Current user info */
@@ -593,8 +593,9 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
       const serialized = JSON.stringify(result.content)
 
       // In collab mode, update Yjs XmlFragment directly for visual update
+      // Use force=true to overwrite existing content (AI translation should always apply)
       if (props.collab?.setContentJson) {
-        props.collab.setContentJson(targetLocale, result.content)
+        props.collab.setContentJson(targetLocale, result.content, true)
         toast.add({
           title: 'Translation Complete',
           description: `Translated ${result.translatedCount} text blocks.`,

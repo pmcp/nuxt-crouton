@@ -62,9 +62,16 @@ export interface UseCollabLocalizedContentReturn {
 
   /**
    * Set content for a locale from JSON
-   * Useful for initializing from database
+   * Only sets content if the fragment is empty (no existing collaborative edits)
+   * Use force=true to overwrite even if content exists (e.g., for AI translation)
    */
-  setContentJson: (locale: string, content: unknown) => void
+  setContentJson: (locale: string, content: unknown, force?: boolean) => void
+
+  /**
+   * Check if a locale's fragment has any content
+   * Useful for determining if collaborative edits exist before overwriting
+   */
+  hasContent: (locale: string) => boolean
 
   // Actions
   connect: () => void
@@ -167,11 +174,42 @@ export function useCollabLocalizedContent(
   }
 
   /**
-   * Set content for a locale from JSON
-   * Clears existing content and sets new content from JSON
+   * Check if a locale's fragment has any meaningful content
+   * Returns true if there are any elements in the fragment
    */
-  function setContentJson(locale: string, content: unknown): void {
+  function hasContent(locale: string): boolean {
     const fragment = getXmlFragment(locale)
+    // Check if fragment has any children
+    if (fragment.length === 0) return false
+
+    // Check if it's just an empty paragraph (TipTap default)
+    if (fragment.length === 1) {
+      const firstItem = fragment.get(0)
+      if (firstItem instanceof Y.XmlElement) {
+        // Empty paragraph has no children
+        if (firstItem.nodeName === 'paragraph' && firstItem.length === 0) {
+          return false
+        }
+      }
+    }
+
+    return true
+  }
+
+  /**
+   * Set content for a locale from JSON
+   * Only sets content if the fragment is empty (no existing collaborative edits)
+   * Use force=true to overwrite even if content exists (e.g., for AI translation)
+   */
+  function setContentJson(locale: string, content: unknown, force = false): void {
+    const fragment = getXmlFragment(locale)
+
+    // Skip if fragment already has content from other collaborators
+    // unless force=true (used for AI translation which should overwrite)
+    if (!force && hasContent(locale)) {
+      return
+    }
+
     // Clear existing content
     fragment.delete(0, fragment.length)
 
@@ -201,6 +239,7 @@ export function useCollabLocalizedContent(
     getActiveFragments,
     getContentJson,
     setContentJson,
+    hasContent,
 
     // Actions
     connect,
