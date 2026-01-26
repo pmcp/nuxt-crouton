@@ -99,19 +99,33 @@ const secondaryEditingLocale = ref(
   'nl'
 )
 
-// Locale options for left dropdown (excludes right's selection)
-const leftLocaleOptions = computed(() =>
+// Locale options for both dropdowns (all locales available)
+const allLocaleOptions = computed(() =>
   allLocaleCodes.value
-    .filter(code => code !== secondaryEditingLocale.value)
     .map(code => ({ value: code, label: code.toUpperCase() }))
 )
 
-// Locale options for right dropdown (excludes left's selection)
-const rightLocaleOptions = computed(() =>
-  allLocaleCodes.value
-    .filter(code => code !== primaryEditingLocale.value)
-    .map(code => ({ value: code, label: code.toUpperCase() }))
+// Detect when both panels have the same language selected
+const isSameLocale = computed(() =>
+  primaryEditingLocale.value === secondaryEditingLocale.value
 )
+
+// Refs to secondary column BlockEditorWithPreview instances (per field)
+const secondaryEditorRefs = ref<Record<string, any>>({})
+
+// When same locale is selected, switch secondary to preview; otherwise editor
+watch(isSameLocale, (same) => {
+  // For each field that uses BlockEditorWithPreview
+  for (const ref of Object.values(secondaryEditorRefs.value)) {
+    if (ref) {
+      if (same) {
+        ref.showPreview?.()
+      } else {
+        ref.showEditor?.()
+      }
+    }
+  }
+})
 
 // For narrow screens: tab-based locale switching (shows ALL locales)
 const narrowLocaleTab = ref(primaryEditingLocale.value)
@@ -589,7 +603,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
           <div class="flex items-center gap-2 h-7 mb-3 border-b border-default">
             <USelect
               v-model="primaryEditingLocale"
-              :items="leftLocaleOptions"
+              :items="allLocaleOptions"
               value-key="value"
               size="xs"
               class="flex-1"
@@ -720,7 +734,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
           <div class="flex items-center gap-2 h-7 mb-3 border-b border-default">
             <USelect
               v-model="secondaryEditingLocale"
-              :items="rightLocaleOptions"
+              :items="allLocaleOptions"
               value-key="value"
               size="xs"
               class="flex-1"
@@ -808,11 +822,13 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 class="flex-1 min-h-[350px] max-h-[600px]"
               >
                 <CroutonPagesEditorBlockEditorWithPreview
+                  :ref="(el: any) => { if (el) secondaryEditorRefs[field] = el }"
                   :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
                   :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
                   :collab-provider="collab?.connection"
                   :collab-user="collab?.user"
                   :editable="true"
+                  :default-tab="isSameLocale ? 'preview' : 'editor'"
                   placeholder="Type / to insert a block..."
                   @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
                 />
