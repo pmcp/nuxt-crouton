@@ -332,6 +332,42 @@ const isTranslating = ref<Record<string, boolean>>({})
 // Incremented to force Vue to re-create the component with new content
 const blockEditorRefreshKey = ref(0)
 
+// Block editor translation confirmation state
+const pendingBlockTranslation = ref<{ field: string, locale: string } | null>(null)
+const showBlockTranslateConfirm = ref(false)
+
+// Check if target field has content (for translation confirmation)
+function hasTargetContent(field: string, targetLocale: string): boolean {
+  const value = getFieldValue(field, targetLocale)
+  return hasContent(value)
+}
+
+// Confirm block editor translation (shows confirmation if target has content)
+function confirmBlockTranslation(field: string, locale: string) {
+  if (hasTargetContent(field, locale)) {
+    pendingBlockTranslation.value = { field, locale }
+    showBlockTranslateConfirm.value = true
+  } else {
+    requestBlockTranslation(field, locale)
+  }
+}
+
+// Cancel block translation confirmation
+function cancelBlockTranslation() {
+  pendingBlockTranslation.value = null
+  showBlockTranslateConfirm.value = false
+}
+
+// Proceed with block translation after confirmation
+function proceedWithBlockTranslation() {
+  if (pendingBlockTranslation.value) {
+    const { field, locale } = pendingBlockTranslation.value
+    requestBlockTranslation(field, locale)
+  }
+  pendingBlockTranslation.value = null
+  showBlockTranslateConfirm.value = false
+}
+
 // Get all translations for a field (for AI context)
 function getAllTranslationsForField(field: string): Record<string, string> {
   const translations: Record<string, string> = {}
@@ -642,6 +678,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 :target-language="narrowLocaleTab"
                 :field-type="fieldType || field"
                 :existing-translations="getAllTranslationsForField(field)"
+                :target-has-content="hasTargetContent(field, narrowLocaleTab)"
+                :available-translations="getAllTranslationsForField(field)"
                 size="2xs"
                 icon-only
                 @translate="(text) => updateFieldValue(field, text, narrowLocaleTab)"
@@ -655,7 +693,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 size="2xs"
                 icon-only
                 is-block-editor
-                @click="requestBlockTranslation(field, narrowLocaleTab)"
+                @click="confirmBlockTranslation(field, narrowLocaleTab)"
               />
             </div>
 
@@ -683,7 +721,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                   :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
                   :collab-provider="collab?.connection"
                   :collab-user="collab?.user"
-                  :editable="true"
+                  :editable="!isFieldTranslating(field, narrowLocaleTab)"
                   placeholder="Type / to insert a block..."
                   @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
                 />
@@ -700,7 +738,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
                 :collab-provider="collab?.connection"
                 :collab-user="collab?.user"
-                :editable="true"
+                :editable="!isFieldTranslating(field, narrowLocaleTab)"
                 placeholder="Type / to insert a block..."
                 @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
               />
@@ -776,6 +814,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                   :target-language="primaryEditingLocale"
                   :field-type="fieldType || field"
                   :existing-translations="getAllTranslationsForField(field)"
+                  :target-has-content="hasTargetContent(field, primaryEditingLocale)"
+                  :available-translations="getAllTranslationsForField(field)"
                   size="2xs"
                   icon-only
                   @translate="(text) => updateFieldValue(field, text, primaryEditingLocale)"
@@ -789,7 +829,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                   size="2xs"
                   icon-only
                   is-block-editor
-                  @click="requestBlockTranslation(field, primaryEditingLocale)"
+                  @click="confirmBlockTranslation(field, primaryEditingLocale)"
                 />
               </div>
 
@@ -817,7 +857,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                     :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
                     :collab-provider="collab?.connection"
                     :collab-user="collab?.user"
-                    :editable="true"
+                    :editable="!isFieldTranslating(field, primaryEditingLocale)"
                     placeholder="Type / to insert a block..."
                     @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
                   />
@@ -834,7 +874,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                   :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
                   :collab-provider="collab?.connection"
                   :collab-user="collab?.user"
-                  :editable="true"
+                  :editable="!isFieldTranslating(field, primaryEditingLocale)"
                   placeholder="Type / to insert a block..."
                   @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
                 />
@@ -908,6 +948,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                   :target-language="secondaryEditingLocale"
                   :field-type="fieldType || field"
                   :existing-translations="getAllTranslationsForField(field)"
+                  :target-has-content="hasTargetContent(field, secondaryEditingLocale)"
+                  :available-translations="getAllTranslationsForField(field)"
                   size="2xs"
                   icon-only
                   @translate="(text) => updateFieldValue(field, text, secondaryEditingLocale)"
@@ -921,7 +963,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                   size="2xs"
                   icon-only
                   is-block-editor
-                  @click="requestBlockTranslation(field, secondaryEditingLocale)"
+                  @click="confirmBlockTranslation(field, secondaryEditingLocale)"
                 />
               </div>
 
@@ -949,7 +991,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                     :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
                     :collab-provider="collab?.connection"
                     :collab-user="collab?.user"
-                    :editable="true"
+                    :editable="!isFieldTranslating(field, secondaryEditingLocale)"
                     placeholder="Type / to insert a block..."
                     @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
                   />
@@ -968,7 +1010,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                   :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
                   :collab-provider="collab?.connection"
                   :collab-user="collab?.user"
-                  :editable="true"
+                  :editable="!isFieldTranslating(field, secondaryEditingLocale)"
                   :default-tab="isSameLocale ? 'preview' : 'editor'"
                   placeholder="Type / to insert a block..."
                   @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
@@ -1069,7 +1111,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 :yxml-fragment="collab?.getXmlFragment(editingLocale)"
                 :collab-provider="collab?.connection"
                 :collab-user="collab?.user"
-                :editable="true"
+                :editable="!isFieldTranslating(field, editingLocale)"
                 placeholder="Type / to insert a block..."
                 @update:model-value="!collab && updateFieldValue(field, $event)"
               />
@@ -1086,7 +1128,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               :yxml-fragment="collab?.getXmlFragment(editingLocale)"
               :collab-provider="collab?.connection"
               :collab-user="collab?.user"
-              :editable="true"
+              :editable="!isFieldTranslating(field, editingLocale)"
               placeholder="Type / to insert a block..."
               @update:model-value="!collab && updateFieldValue(field, $event)"
             />
@@ -1143,6 +1185,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               :target-language="editingLocale"
               :field-type="fieldType || field"
               :existing-translations="getAllTranslationsForField(field)"
+              :target-has-content="hasTargetContent(field, editingLocale)"
+              :available-translations="getAllTranslationsForField(field)"
               @translate="(text) => updateFieldValue(field, text, editingLocale)"
             />
             <!-- Block editor translation (controlled mode) -->
@@ -1152,7 +1196,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               :disabled="!hasSourceContent(field, editingLocale)"
               :tooltip="getTranslateTooltip(field, editingLocale)"
               is-block-editor
-              @click="requestBlockTranslation(field, editingLocale)"
+              @click="confirmBlockTranslation(field, editingLocale)"
             />
           </div>
         </UFormField>
@@ -1196,10 +1240,46 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
             :target-language="editingLocale"
             :field-type="fieldType"
             :existing-translations="getAllTranslationsForField('')"
+            :target-has-content="hasTargetContent('', editingLocale)"
+            :available-translations="getAllTranslationsForField('')"
             @translate="(text) => updateFieldValue('', text, editingLocale)"
           />
         </div>
       </div>
     </template>
+
+    <!-- Block editor translation confirmation modal -->
+    <UModal v-model:open="showBlockTranslateConfirm">
+      <template #content>
+        <div class="p-6">
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 size-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <UIcon name="i-lucide-alert-triangle" class="size-5 text-primary" />
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold">Replace existing translation?</h3>
+              <p class="text-sm text-muted mt-1">
+                The target field already has content. Translating will replace it with a new AI-generated translation.
+              </p>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              @click="cancelBlockTranslation"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              color="primary"
+              @click="proceedWithBlockTranslation"
+            >
+              Replace
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
