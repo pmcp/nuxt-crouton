@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
   const locale = getQuery(event).locale as string || 'en'
 
   try {
-    const database = db
+    const database = useDB()
 
     // Resolve team
     const authSchema = await import('@fyit/crouton-auth/server/database/schema/auth')

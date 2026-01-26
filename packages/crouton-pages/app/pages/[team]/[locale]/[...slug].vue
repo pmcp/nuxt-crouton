@@ -37,10 +37,19 @@ if (reservedPrefixes.includes(teamParam)) {
 }
 
 // Get translation function with fallback for SSR edge cases
-const useTranslation = useT()
-const t = typeof useTranslation?.t === 'function'
-  ? useTranslation.t
-  : (key: string) => `[${key}]`
+// Wrap in try-catch to handle cases where the composable fails during SSR
+let t: (key: string, options?: any) => string = (key: string) => `[${key}]`
+try {
+  const useTranslation = useT()
+  if (typeof useTranslation?.t === 'function') {
+    t = useTranslation.t
+  }
+} catch (error) {
+  // useT failed during SSR - use fallback
+  if (import.meta.dev) {
+    console.warn('[crouton-pages] useT() failed, using fallback:', error)
+  }
+}
 const { getPageType } = usePageTypes()
 const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 

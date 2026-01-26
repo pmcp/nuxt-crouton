@@ -88,8 +88,8 @@ export default defineEventHandler(async (event) => {
   // Look up the domain in the database
   try {
     // Use Drizzle to query the domain table
-    // db is auto-imported from 'hub:db' in NuxtHub
-    const database = db
+    // useDB() is the NuxtHub auto-import for database access
+    const database = useDB()
 
     const domainRecord = await database
       .select({

@@ -211,13 +211,15 @@ export function useCollectionMutation<K extends CollectionName>(
     const timestamp = Date.now()
 
     // Fetch the current item state before applying updates (for change tracking)
+    // Uses query-based fetch (?ids=) to match generated endpoint pattern
     let beforeData: Record<string, unknown> | undefined
     try {
-      const existingItem = await $fetch<Record<string, unknown>>(url, {
+      const items = await $fetch<Record<string, unknown>[]>(baseUrl, {
         method: 'GET',
+        query: { ids: id },
         credentials: 'include'
       })
-      beforeData = existingItem
+      beforeData = Array.isArray(items) ? items[0] : items
     } catch (_fetchError) {
       // Non-critical: continue with update even if we can't fetch beforeData
     }

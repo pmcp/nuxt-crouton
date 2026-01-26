@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
   try {
     // Import schema - using dynamic import since layer structure
     // In consuming apps, this would be auto-imported
-    const database = db
+    const database = useDB()
 
     // First, resolve team ID from slug if needed
     const authSchema = await import('@fyit/crouton-auth/server/database/schema/auth')
