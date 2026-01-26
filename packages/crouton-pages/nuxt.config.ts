@@ -61,13 +61,12 @@ export default defineNuxtConfig({
   },
 
   // Route rules for ISR caching (Nuxt 4.3+)
-  // Published pages benefit from Incremental Static Regeneration
-  routeRules: {
-    // Public page content - cache for 1 hour with ISR
-    '/api/teams/*/pages/**': { isr: 3600 },
-    // Published pages navigation - cache for 1 hour
-    '/api/teams/*/pages': { isr: 3600 }
-  },
+  // NOTE: Wildcards like '/api/teams/*/pages/**' break layer route matching in Nitro 2.13.1
+  // Use specific patterns to avoid conflicts with generated layer routes (/api/teams/[id]/pages-pages/**)
+  // ISR caching disabled until we have a safe pattern that doesn't conflict with collection APIs
+  // routeRules: {
+  //   '/api/teams/*/pages/**': { isr: 3600 }  // BROKEN: conflicts with pages-pages layer routes
+  // },
 
   // Nitro server configuration
   nitro: {

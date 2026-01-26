@@ -16,13 +16,14 @@ export default defineNuxtConfig({
   // extends: ['@fyit/crouton-core', '@fyit/crouton-i18n']
 
   // Route rules for SWR caching (Nuxt 4.3+)
-  // Translation bundles rarely change - use stale-while-revalidate
-  routeRules: {
-    // Translation settings - SWR with 10 min cache
-    '/api/teams/*/settings/translations': { swr: 600 },
-    // Translation UI collection - SWR with 10 min cache
-    '/api/teams/*/translations-ui/**': { swr: 600 }
-  },
+  // NOTE: ISR/SWR route rules with wildcards can break routes from extended layers in Nitro 2.13.x
+  // The glob patterns interfere with layer route resolution, causing handlers to never execute.
+  // See: https://github.com/nuxt/nuxt/issues/33140, https://github.com/nuxt/nuxt/issues/32192
+  // Disabled until Nitro fixes layer route + routeRules interaction
+  // routeRules: {
+  //   '/api/teams/*/settings/translations': { swr: 600 },
+  //   '/api/teams/*/translations-ui/**': { swr: 600 }
+  // },
 
   // Add i18n module
   modules: ['@nuxtjs/i18n'],
