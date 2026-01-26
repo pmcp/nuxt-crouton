@@ -9,7 +9,17 @@
  * The actual page rendering happens in [team]/[locale]/[...slug].vue
  */
 const route = useRoute()
-const { locale } = useI18n()
+
+// Safely get locale - may fail during unexpected SSR contexts (e.g., refreshNuxtData triggers)
+let locale = ref('en')
+try {
+  const i18n = useI18n()
+  locale = i18n.locale
+} catch (error) {
+  if (import.meta.dev) {
+    console.warn('[crouton-pages] useI18n() failed in redirect route, using fallback locale')
+  }
+}
 
 // Reserved prefixes that should NOT be treated as team slugs
 const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']

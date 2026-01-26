@@ -81,17 +81,44 @@ export function useT() {
   }
 
   // Watch for team changes and reload translations
+  // Only run with immediate: true on client or when we have a valid SSR request context
+  // During unexpected SSR (e.g., refreshNuxtData triggers), we may not have proper context
   watch(teamSlugFromRoute, () => {
     teamTranslationsLoaded.value = false
     teamTranslations.value = {}
-    loadTeamTranslations()
+    // Only load translations in valid contexts
+    if (import.meta.client) {
+      loadTeamTranslations()
+    } else if (import.meta.server) {
+      // On server, only load if we have a valid request event context
+      try {
+        const event = useRequestEvent()
+        if (event) {
+          loadTeamTranslations()
+        }
+      } catch {
+        // No request context available - skip loading on server
+      }
+    }
   }, { immediate: true })
 
   // Watch for locale changes and reload translations
   watch(locale, () => {
     teamTranslationsLoaded.value = false
     teamTranslations.value = {}
-    loadTeamTranslations()
+    // Only load translations in valid contexts (same protection as team watcher)
+    if (import.meta.client) {
+      loadTeamTranslations()
+    } else if (import.meta.server) {
+      try {
+        const event = useRequestEvent()
+        if (event) {
+          loadTeamTranslations()
+        }
+      } catch {
+        // No request context available - skip loading on server
+      }
+    }
   })
 
   /**
