@@ -44,9 +44,12 @@ let mockDb = createMockDb()
 // Setup global mocks
 vi.stubGlobal('useDB', () => mockDb)
 
-vi.stubGlobal('createError', (options: { statusCode: number, statusMessage: string }) => {
-  const error = new Error(options.statusMessage) as Error & { statusCode: number }
-  error.statusCode = options.statusCode
+vi.stubGlobal('createError', (options: { statusCode?: number, statusMessage?: string, status?: number, statusText?: string }) => {
+  // Support both old (statusCode/statusMessage) and new (status/statusText) Nitro v3 patterns
+  const message = options.statusText || options.statusMessage || ''
+  const code = options.status || options.statusCode || 500
+  const error = new Error(message) as Error & { statusCode: number }
+  error.statusCode = code
   return error
 })
 

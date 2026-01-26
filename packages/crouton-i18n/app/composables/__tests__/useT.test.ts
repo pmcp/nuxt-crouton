@@ -39,8 +39,8 @@ vi.stubGlobal('useState', (key: string, init: () => any) => {
 
 vi.stubGlobal('$fetch', mockFetch)
 
-// Mock import.meta.dev
-vi.stubGlobal('import', { meta: { dev: false } })
+// Note: import.meta.client, import.meta.server, and import.meta.dev
+// are defined in vitest.config.ts via the `define` option
 
 // Import composable after mocking
 import { useT } from '../useT'
@@ -499,31 +499,33 @@ describe('useT', () => {
   })
 
   describe('team translation loading', () => {
-    it('loads team translations on init when team slug exists', async () => {
+    it('loads team translations when refreshTranslations is called', async () => {
       mockTeamSlug = ref('my-team')
       mockFetch.mockResolvedValue([
         { keyPath: 'common.save', systemValues: { en: 'Save' } }
       ])
 
-      useT()
+      const { refreshTranslations } = useT()
 
-      // Wait for async loading
-      await vi.waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          '/api/teams/my-team/translations-ui/with-system',
-          expect.objectContaining({
-            query: { locale: 'en' }
-          })
-        )
-      })
+      // Explicitly trigger loading via refreshTranslations
+      await refreshTranslations()
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/teams/my-team/translations-ui/with-system',
+        expect.objectContaining({
+          query: { locale: 'en' }
+        })
+      )
     })
 
-    it('does not load team translations when no team slug', () => {
+    it('does not load team translations when no team slug', async () => {
       mockTeamSlug = ref(null)
       mockFetch.mockResolvedValue([])
 
-      useT()
+      const { refreshTranslations } = useT()
+      await refreshTranslations()
 
+      // Fetch is not called because there's no team slug
       expect(mockFetch).not.toHaveBeenCalled()
     })
 
@@ -533,11 +535,10 @@ describe('useT', () => {
         { keyPath: 'common.save', teamValues: { en: 'Team Save' }, systemValues: { en: 'Save' } }
       ])
 
-      useT()
+      const { refreshTranslations } = useT()
+      await refreshTranslations()
 
-      await vi.waitFor(() => {
-        expect(stateStore['teamTranslations'].value).toHaveProperty('common.save', 'Team Save')
-      })
+      expect(stateStore['teamTranslations'].value).toHaveProperty('common.save', 'Team Save')
     })
 
     it('uses system values when no team override', async () => {
@@ -546,11 +547,10 @@ describe('useT', () => {
         { keyPath: 'common.save', systemValues: { en: 'System Save' } }
       ])
 
-      useT()
+      const { refreshTranslations } = useT()
+      await refreshTranslations()
 
-      await vi.waitFor(() => {
-        expect(stateStore['teamTranslations'].value).toHaveProperty('common.save', 'System Save')
-      })
+      expect(stateStore['teamTranslations'].value).toHaveProperty('common.save', 'System Save')
     })
 
     it('handles API error gracefully', async () => {
@@ -558,12 +558,10 @@ describe('useT', () => {
       mockTeamSlug = ref('my-team')
       mockFetch.mockRejectedValue(new Error('Network error'))
 
-      useT()
+      const { refreshTranslations } = useT()
+      await refreshTranslations()
 
-      await vi.waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('[useT] Failed to load team translations:', expect.any(Error))
-      })
-
+      expect(consoleSpy).toHaveBeenCalledWith('[useT] Failed to load team translations:', expect.any(Error))
       consoleSpy.mockRestore()
     })
   })
