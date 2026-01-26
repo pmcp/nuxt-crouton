@@ -87,12 +87,13 @@ try {
   // Collab package not installed
 }
 
-// Collab connection for CroutonI18nInput (provides getXmlFragment and setContentJson for block editors)
+// Collab connection for CroutonI18nInput (provides getXmlFragment, getContentJson, setContentJson for block editors)
 const collabForI18n = computed(() => {
   if (!collabLocalizedContent || !collabRoomIdForContent) return undefined
   if (!collabLocalizedContent.connected?.value) return undefined
   return {
     getXmlFragment: (locale: string) => collabLocalizedContent.getXmlFragment(locale),
+    getContentJson: (locale: string) => collabLocalizedContent.getContentJson(locale),
     setContentJson: (locale: string, content: unknown, force?: boolean) => collabLocalizedContent.setContentJson(locale, content, force),
     connection: collabLocalizedContent.connection,
     user: getCurrentUser()

@@ -38,6 +38,8 @@ type TranslationsValue = SingleFieldValue | MultiFieldValue | null
 interface CollabConnection {
   /** Get Y.XmlFragment for a specific locale */
   getXmlFragment: (locale: string) => any
+  /** Get content from Yjs XmlFragment as JSON (for reading live editor content) */
+  getContentJson?: (locale: string) => unknown
   /** Set content from JSON (updates Yjs XmlFragment directly). Use force=true to overwrite existing content. */
   setContentJson?: (locale: string, content: unknown, force?: boolean) => void
   /** Get collab provider for cursor awareness */
@@ -369,14 +371,26 @@ function proceedWithBlockTranslation() {
 }
 
 // Get all translations for a field (for AI context)
+// In collab mode for block editors, reads live content from Yjs fragments
 function getAllTranslationsForField(field: string): Record<string, string> {
   const translations: Record<string, string> = {}
+  const isBlockField = isBlockEditorField(field)
 
   locales.value.forEach((loc) => {
     const localeCode = typeof loc === 'string' ? loc : loc.code
-    const value = getFieldValue(field, localeCode)
-    if (value) {
-      translations[localeCode] = value
+
+    // In collab mode for block editors, read from Yjs fragment (live content)
+    if (isBlockField && props.collab?.getContentJson) {
+      const liveContent = props.collab.getContentJson(localeCode)
+      if (liveContent && typeof liveContent === 'object') {
+        translations[localeCode] = JSON.stringify(liveContent)
+      }
+    } else {
+      // Fall back to form state for non-collab or non-block fields
+      const value = getFieldValue(field, localeCode)
+      if (value) {
+        translations[localeCode] = value
+      }
     }
   })
 
