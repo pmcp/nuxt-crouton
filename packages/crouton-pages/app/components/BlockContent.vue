@@ -39,34 +39,89 @@ const blockComponents: Record<string, string> = {
   collectionBlock: 'CroutonPagesBlocksRenderCollectionBlock'
 }
 
-// Block types to skip (empty structural blocks from TipTap)
-const skipBlockTypes = ['paragraph']
-
 // Get component name for a block type
 function getBlockComponent(type: string): string | null {
   return blockComponents[type] || null
 }
 
-// Check if block should be skipped
-function shouldSkipBlock(type: string): boolean {
-  return skipBlockTypes.includes(type)
+/**
+ * Check if a block is an empty paragraph (no text content)
+ * TipTap creates empty paragraphs as structural elements - we skip those
+ * But paragraphs with text content should be rendered
+ */
+function isEmptyParagraph(block: PageBlock): boolean {
+  if (block.type !== 'paragraph') return false
+  // Check if paragraph has any text content
+  const content = (block as any).content
+  if (!content || !Array.isArray(content) || content.length === 0) {
+    return true
+  }
+  // Check if content has any text
+  return !content.some((node: any) => node.type === 'text' && node.text?.trim())
 }
 
-// Filter blocks to render (skip empty structural blocks)
+/**
+ * Convert paragraph block to HTML for rendering
+ */
+function paragraphToHtml(block: PageBlock): string {
+  const content = (block as any).content
+  if (!content || !Array.isArray(content)) return ''
+
+  const textParts = content.map((node: any) => {
+    if (node.type === 'text') {
+      let text = node.text || ''
+      // Apply marks (bold, italic, etc.)
+      if (node.marks) {
+        for (const mark of node.marks) {
+          if (mark.type === 'bold') text = `<strong>${text}</strong>`
+          else if (mark.type === 'italic') text = `<em>${text}</em>`
+          else if (mark.type === 'underline') text = `<u>${text}</u>`
+          else if (mark.type === 'strike') text = `<s>${text}</s>`
+          else if (mark.type === 'code') text = `<code>${text}</code>`
+          else if (mark.type === 'link' && mark.attrs?.href) {
+            text = `<a href="${mark.attrs.href}"${mark.attrs.target ? ` target="${mark.attrs.target}"` : ''}>${text}</a>`
+          }
+        }
+      }
+      return text
+    }
+    return ''
+  })
+
+  return textParts.join('')
+}
+
+// Filter blocks to render (skip only truly empty structural blocks)
 const renderableBlocks = computed(() => {
-  return blocks.value.filter(block => !shouldSkipBlock(block.type))
+  return blocks.value.filter(block => !isEmptyParagraph(block))
 })
+
+// Check if block is a paragraph (for special rendering)
+function isParagraph(type: string): boolean {
+  return type === 'paragraph'
+}
 </script>
 
 <template>
   <div class="block-content">
+
     <template v-if="renderableBlocks.length > 0">
       <template v-for="(block, index) in renderableBlocks" :key="index">
+        <!-- Custom block components -->
         <component
           :is="getBlockComponent(block.type)"
           v-if="getBlockComponent(block.type)"
           :attrs="block.attrs"
         />
+
+        <!-- Paragraph blocks (rendered as prose) -->
+        <p
+          v-else-if="isParagraph(block.type)"
+          class="prose prose-lg dark:prose-invert max-w-none"
+          v-html="paragraphToHtml(block)"
+        />
+
+        <!-- Unknown block type warning -->
         <div
           v-else
           class="p-4 bg-warning/10 text-warning rounded-lg my-4"

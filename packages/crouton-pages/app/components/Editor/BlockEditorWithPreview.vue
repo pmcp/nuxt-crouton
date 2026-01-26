@@ -73,23 +73,42 @@ const emit = defineEmits<{
 // Empty TipTap document - must have at least one paragraph node
 const emptyDoc: TipTapDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 
-// Two-way binding
-const content = computed({
-  get: () => {
-    if (props.modelValue) {
-      // Ensure JSON docs have at least one node (TipTap requirement)
-      if (typeof props.modelValue === 'object') {
-        const doc = props.modelValue as TipTapDoc
-        if (!doc.content || doc.content.length === 0) {
-          return emptyDoc
-        }
+// Helper to normalize content
+function normalizeContent(value: string | TipTapDoc | null | undefined): string | TipTapDoc {
+  if (value) {
+    if (typeof value === 'object') {
+      const doc = value as TipTapDoc
+      if (!doc.content || doc.content.length === 0) {
+        return emptyDoc
       }
-      return props.modelValue
     }
-    return emptyDoc
-  },
-  set: (value) => emit('update:modelValue', value)
+    return value
+  }
+  return emptyDoc
+}
+
+// Local content state - tracks the current editor content for immediate preview updates
+// This avoids waiting for the v-model round-trip through parent components
+const localContent = ref<string | TipTapDoc>(normalizeContent(props.modelValue))
+
+// Sync local content when prop changes from parent
+watch(() => props.modelValue, (newValue) => {
+  localContent.value = normalizeContent(newValue)
+}, { deep: true })
+
+// Two-way binding for editor - writes to both local state AND emits to parent
+const content = computed({
+  get: () => localContent.value,
+  set: (value) => {
+    // Update local state immediately for preview
+    localContent.value = value
+    // Also emit to parent for form state
+    emit('update:modelValue', value)
+  }
 })
+
+// Preview content - uses local state for immediate updates
+const previewContent = computed(() => localContent.value)
 
 // Tab state
 const activeTab = ref(props.defaultTab)
@@ -223,10 +242,10 @@ defineExpose({
           </div>
         </div>
 
-        <!-- Preview content -->
+        <!-- Preview content - uses local state for immediate updates -->
         <div class="flex-1 overflow-auto">
           <CroutonPagesBlockContent
-            :content="content"
+            :content="previewContent"
             class="p-4"
           />
         </div>
