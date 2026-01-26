@@ -46,6 +46,15 @@ export interface AIProviderFactory {
    * @returns Language model instance ready for use with streamText/generateText
    */
   model: (modelId: string) => ReturnType<ReturnType<typeof createOpenAI>> | ReturnType<ReturnType<typeof createAnthropic>>
+
+  /**
+   * Get the default model ID based on configuration and available API keys
+   * Priority: NUXT_AI_DEFAULT_MODEL > config.defaultModel > auto-detect from keys
+   *
+   * @returns Default model ID (e.g., 'claude-sonnet-4-20250514' or 'gpt-4o-mini')
+   * @throws Error if no API keys are configured
+   */
+  getDefaultModel: () => string
 }
 
 /**
@@ -124,6 +133,25 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
       // Default to OpenAI for unknown models
       const provider = createAIProvider(event).openai()
       return provider(modelId)
+    },
+
+    getDefaultModel: () => {
+      const croutonAIConfig = config.public?.croutonAI as { defaultModel?: string } | undefined
+
+      // Priority: env var > config > auto-detect from API keys
+      const envModel = config.aiDefaultModel as string | undefined
+      if (envModel) return envModel
+
+      if (croutonAIConfig?.defaultModel) return croutonAIConfig.defaultModel
+
+      // Auto-detect based on available API keys (prefer Anthropic)
+      if (config.anthropicApiKey) return 'claude-sonnet-4-20250514'
+      if (config.openaiApiKey) return 'gpt-4o-mini'
+
+      throw new Error(
+        '@fyit/crouton-ai: No AI API key configured. '
+        + 'Set NUXT_ANTHROPIC_API_KEY or NUXT_OPENAI_API_KEY environment variable'
+      )
     }
   }
 }

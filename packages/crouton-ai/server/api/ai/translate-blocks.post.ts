@@ -17,7 +17,6 @@ import { generateText } from 'ai'
 import { defineEventHandler, readBody, createError } from 'h3'
 import { createAIProvider } from '../../utils/ai'
 import { getLanguageName } from '../../../app/types/translation'
-import { useRuntimeConfig } from '#imports'
 
 const translateBlocksSchema = z.object({
   content: z.any(), // Block content JSON
@@ -202,24 +201,8 @@ ${textsToTranslate}
 ${targetLang} translations:`
 
   try {
-    const config = useRuntimeConfig(event)
     const ai = createAIProvider(event)
-    const croutonAIConfig = config.public?.croutonAI as { defaultModel?: string } | undefined
-
-    // Determine default model (priority: env var > config > auto-detect from API keys)
-    let defaultModel = (config.aiDefaultModel as string)  // NUXT_AI_DEFAULT_MODEL env var
-      || croutonAIConfig?.defaultModel
-    if (!defaultModel) {
-      // Auto-detect based on available API keys
-      if (config.anthropicApiKey) {
-        defaultModel = 'claude-sonnet-4-20250514'
-      } else if (config.openaiApiKey) {
-        defaultModel = 'gpt-4o-mini'
-      } else {
-        throw new Error('No AI API key configured. Set NUXT_ANTHROPIC_API_KEY or NUXT_OPENAI_API_KEY')
-      }
-    }
-    const model = body.model || defaultModel
+    const model = body.model || ai.getDefaultModel()
 
     const result = await generateText({
       model: ai.model(model),
