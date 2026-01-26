@@ -101,11 +101,17 @@ jobs:
       - name: Install dependencies (skip postinstall scripts)
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build packages
-        run: pnpm build:packages
+      - name: Build crouton module
+        run: pnpm --filter '@fyit/crouton' build
 
       - name: Prepare apps
-        run: pnpm -r --filter './apps/*' exec nuxt prepare
+        run: |
+          for dir in apps/*/; do
+            if [ -f "$dir/nuxt.config.ts" ]; then
+              echo "Preparing $dir"
+              (cd "$dir" && npx nuxt prepare)
+            fi
+          done
 
       - name: Run all tests
         run: pnpm test
