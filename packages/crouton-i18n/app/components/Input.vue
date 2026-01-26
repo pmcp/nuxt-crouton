@@ -1,4 +1,28 @@
 <script setup lang="ts">
+import { useDebounceFn } from '@vueuse/core'
+
+// Field transform types and functions
+type FieldTransformName = 'slug' | 'lowercase' | 'uppercase' | 'trim'
+type FieldTransformFn = (value: string) => string
+
+// Slugify function for URL-safe slug generation
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+// Available field transforms
+const fieldTransforms: Record<FieldTransformName, FieldTransformFn> = {
+  slug: slugify,
+  lowercase: (v: string) => v.toLowerCase(),
+  uppercase: (v: string) => v.toUpperCase(),
+  trim: (v: string) => v.trim(),
+}
+
 // This component handles translations for both:
 // 1. Single field: { en: "value", nl: "waarde" }
 // 2. Multiple fields: { en: { name: "...", description: "..." }, nl: { ... } }
@@ -18,6 +42,14 @@ interface CollabConnection {
   connection?: { awareness?: any }
   /** Current user info */
   user?: { name: string; color?: string }
+}
+
+/**
+ * Field options for configurable field transformations.
+ */
+interface FieldOptions {
+  /** Transform to apply: preset name or custom function */
+  transform?: FieldTransformName | FieldTransformFn
 }
 
 const props = defineProps<{
@@ -49,6 +81,11 @@ const props = defineProps<{
    * If not set, shows a dropdown to select.
    */
   secondaryLocale?: string
+  /**
+   * Field-specific options like transforms.
+   * E.g., { slug: { transform: 'slug' } }
+   */
+  fieldOptions?: Record<string, FieldOptions>
 }>()
 
 const emit = defineEmits<{
@@ -197,6 +234,58 @@ function updateFieldValue(field: string, value: string, localeCode?: string) {
   }
 }
 
+// Get the transform function for a field (if configured)
+function getFieldTransform(field: string): FieldTransformFn | undefined {
+  const options = props.fieldOptions?.[field]
+  if (!options?.transform) return undefined
+
+  if (typeof options.transform === 'function') {
+    return options.transform
+  }
+
+  return fieldTransforms[options.transform]
+}
+
+// Debounced transform application (200ms delay for smooth typing)
+const applyTransformDebounced = useDebounceFn((field: string, value: string, localeCode: string) => {
+  const transform = getFieldTransform(field)
+  if (transform) {
+    const transformed = transform(value)
+    if (transformed !== value) {
+      updateFieldValue(field, transformed, localeCode)
+    }
+  }
+}, 200)
+
+// Update field with optional debounced transform (for input events)
+function updateFieldWithTransform(field: string, value: string, localeCode?: string) {
+  const targetLocale = localeCode || editingLocale.value
+
+  // Always update immediately with raw value for responsive typing
+  updateFieldValue(field, value, targetLocale)
+
+  // Schedule debounced transform if configured
+  const transform = getFieldTransform(field)
+  if (transform) {
+    applyTransformDebounced(field, value, targetLocale)
+  }
+}
+
+// Handle blur - apply transform immediately
+function handleFieldBlur(field: string, localeCode?: string) {
+  const targetLocale = localeCode || editingLocale.value
+  const transform = getFieldTransform(field)
+  if (!transform) return
+
+  const currentValue = getFieldValue(field, targetLocale)
+  if (!currentValue) return
+
+  const transformed = transform(currentValue)
+  if (transformed !== currentValue) {
+    updateFieldValue(field, transformed, targetLocale)
+  }
+}
+
 // Check if a locale has all required fields filled
 function isLocaleComplete(localeCode: string): boolean {
   if (!props.modelValue) return false
@@ -253,12 +342,34 @@ function getAllTranslationsForField(field: string): Record<string, string> {
 }
 
 // Request AI translation for a specific field (translates from left column to right column)
-// Check if a value has meaningful content (handles strings and JSON)
+// Check if a value has meaningful content (handles strings, JSON, and TipTapDoc objects)
 function hasContent(value: unknown): boolean {
   if (!value) return false
+
+  // Handle object values (TipTapDoc from block editor with content-type="json")
+  if (typeof value === 'object' && value !== null) {
+    const doc = value as { type?: string; content?: unknown[] }
+    // TipTap docs have { type: 'doc', content: [...] }
+    if (Array.isArray(doc.content)) {
+      // Empty doc has content: [{ type: 'paragraph' }] with no text
+      // Check if there's meaningful content
+      return doc.content.length > 0 && doc.content.some((node) => {
+        const n = node as { type?: string; content?: unknown[]; attrs?: unknown }
+        // Paragraph with no content/text is empty
+        if (n.type === 'paragraph' && (!n.content || n.content.length === 0)) {
+          return false
+        }
+        return true
+      })
+    }
+    return false
+  }
+
+  // Handle string values (JSON stringified content)
   if (typeof value !== 'string') return false
   const trimmed = value.trim()
   if (!trimmed) return false
+
   // Check if it's block editor JSON with no content
   if (trimmed.startsWith('{')) {
     try {
@@ -589,7 +700,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               :highlight="!!(error && !getFieldValue(field, narrowLocaleTab))"
               class="w-full"
               size="sm"
-              @update:model-value="updateFieldValue(field, $event, narrowLocaleTab)"
+              @update:model-value="updateFieldWithTransform(field, $event, narrowLocaleTab)"
+              @blur="handleFieldBlur(field, narrowLocaleTab)"
             />
           </div>
         </div>
@@ -722,7 +834,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 :highlight="!!(error && !getFieldValue(field, primaryEditingLocale))"
                 class="w-full"
                 size="sm"
-                @update:model-value="updateFieldValue(field, $event, primaryEditingLocale)"
+                @update:model-value="updateFieldWithTransform(field, $event, primaryEditingLocale)"
+                @blur="handleFieldBlur(field, primaryEditingLocale)"
               />
             </div>
           </div>
@@ -851,7 +964,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 :placeholder="getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : ''"
                 class="w-full"
                 size="sm"
-                @update:model-value="updateFieldValue(field, $event, secondaryEditingLocale)"
+                @update:model-value="updateFieldWithTransform(field, $event, secondaryEditingLocale)"
+                @blur="handleFieldBlur(field, secondaryEditingLocale)"
               />
 
             </div>
@@ -971,7 +1085,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
             :highlight="!!(error && editingLocale === 'en' && !getFieldValue(field, editingLocale))"
             class="w-full"
             size="lg"
-            @update:model-value="updateFieldValue(field, $event)"
+            @update:model-value="updateFieldWithTransform(field, $event)"
+            @blur="handleFieldBlur(field)"
           />
 
           <!-- Show source reference when other locales have content -->
@@ -1032,7 +1147,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
             :highlight="!!(error && editingLocale === 'en' && !getFieldValue('', editingLocale))"
             class="w-full"
             size="lg"
-            @update:model-value="updateFieldValue('', $event)"
+            @update:model-value="updateFieldWithTransform('', $event)"
+            @blur="handleFieldBlur('')"
           />
         </UFormField>
 
