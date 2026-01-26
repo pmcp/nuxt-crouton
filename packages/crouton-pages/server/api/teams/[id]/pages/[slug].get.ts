@@ -94,7 +94,8 @@ export default defineEventHandler(async (event) => {
           .then((rows: any[]) => rows[0])
 
         // Second try: search in translations JSON for locale-specific slug
-        if (!page && locale !== 'en') {
+        // This is needed when base slug is null but translations have the slug
+        if (!page) {
           page = await database
             .select()
             .from(pagesSchema.pagesPages)

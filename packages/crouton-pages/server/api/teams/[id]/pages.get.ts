@@ -10,6 +10,7 @@
  * Query params:
  * - navigation=true: Only return pages with showInNavigation=true
  * - visibility: Filter by visibility (public, members, hidden)
+ * - locale: Locale for translated title/slug (e.g., 'en', 'nl', 'fr')
  */
 import { eq, and, or, asc, inArray } from 'drizzle-orm'
 
@@ -26,6 +27,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const navigationOnly = query.navigation === 'true'
   const visibilityFilter = query.visibility as string | undefined
+  const locale = query.locale as string | undefined
 
   try {
     // Import schema - using dynamic import since layer structure
@@ -109,7 +111,7 @@ export default defineEventHandler(async (event) => {
         conditions.push(eq(pagesSchema.pagesPages.visibility, 'public'))
       }
 
-      const pages = await database
+      const rawPages = await database
         .select({
           id: pagesSchema.pagesPages.id,
           title: pagesSchema.pagesPages.title,
@@ -121,7 +123,8 @@ export default defineEventHandler(async (event) => {
           parentId: pagesSchema.pagesPages.parentId,
           order: pagesSchema.pagesPages.order,
           depth: pagesSchema.pagesPages.depth,
-          path: pagesSchema.pagesPages.path
+          path: pagesSchema.pagesPages.path,
+          translations: pagesSchema.pagesPages.translations
         })
         .from(pagesSchema.pagesPages)
         .where(and(...conditions))
@@ -130,11 +133,47 @@ export default defineEventHandler(async (event) => {
           asc(pagesSchema.pagesPages.order)
         )
 
+      // Resolve translated values if locale is provided
+      const pages = rawPages.map((page) => {
+        const translations = page.translations as Record<string, { title?: string; slug?: string }> | null
+        let resolvedTitle = page.title
+        let resolvedSlug = page.slug
+
+        // Try to get translated values for the requested locale
+        if (locale && translations?.[locale]) {
+          resolvedTitle = translations[locale].title || resolvedTitle
+          resolvedSlug = translations[locale].slug || resolvedSlug
+        }
+
+        // Fallback: if still null, try 'en' as default locale
+        if (!resolvedTitle && translations?.en?.title) {
+          resolvedTitle = translations.en.title
+        }
+        if (!resolvedSlug && translations?.en?.slug) {
+          resolvedSlug = translations.en.slug
+        }
+
+        return {
+          id: page.id,
+          title: resolvedTitle,
+          slug: resolvedSlug,
+          pageType: page.pageType,
+          status: page.status,
+          visibility: page.visibility,
+          showInNavigation: page.showInNavigation,
+          parentId: page.parentId,
+          order: page.order,
+          depth: page.depth,
+          path: page.path
+        }
+      })
+
       return {
         data: pages,
         meta: {
           teamId: team.id,
-          total: pages.length
+          total: pages.length,
+          locale
         }
       }
     } catch {
