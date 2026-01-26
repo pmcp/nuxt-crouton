@@ -519,12 +519,23 @@ function getBestSourceText(field: string, targetLocale: string): string | undefi
 
 // Request block editor translation (controlled mode - parent handles the API call)
 async function requestBlockTranslation(field: string, targetLocale: string) {
+  console.log('[BlockTranslation] Starting translation', { field, targetLocale })
+
   const sourceLang = findBestSourceLocale(field, targetLocale)
-  if (!sourceLang) return
+  console.log('[BlockTranslation] Source language:', sourceLang)
+  if (!sourceLang) {
+    console.log('[BlockTranslation] No source language found, aborting')
+    return
+  }
 
   const allTranslations = getAllTranslationsForField(field)
+  console.log('[BlockTranslation] All translations:', allTranslations)
   const sourceText = allTranslations[sourceLang]
-  if (!sourceText) return
+  console.log('[BlockTranslation] Source text type:', typeof sourceText, sourceText)
+  if (!sourceText) {
+    console.log('[BlockTranslation] No source text found, aborting')
+    return
+  }
 
   const translationKey = `${targetLocale}-${field}`
   isTranslating.value[translationKey] = true
@@ -534,12 +545,14 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
     let content: any
     try {
       content = typeof sourceText === 'string' ? JSON.parse(sourceText) : sourceText
-    } catch {
-      console.error('Failed to parse block content')
+      console.log('[BlockTranslation] Parsed content:', content)
+    } catch (parseErr) {
+      console.error('[BlockTranslation] Failed to parse block content:', parseErr)
       return
     }
 
-    const result = await $fetch<{ content: any, translatedCount?: number }>('/api/ai/translate-blocks', {
+    console.log('[BlockTranslation] Calling API with:', { content, sourceLang, targetLocale })
+    const result = await $fetch<{ content: any, translatedCount?: number, totalCount?: number }>('/api/ai/translate-blocks', {
       method: 'POST',
       body: {
         content,
@@ -547,9 +560,15 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
         targetLanguage: targetLocale
       }
     })
+    console.log('[BlockTranslation] API result:', result)
 
     if (result?.content) {
-      updateFieldValue(field, JSON.stringify(result.content), targetLocale)
+      const serialized = JSON.stringify(result.content)
+      console.log('[BlockTranslation] Updating field with:', { field, targetLocale, serialized })
+      updateFieldValue(field, serialized, targetLocale)
+      console.log('[BlockTranslation] Field updated successfully')
+    } else {
+      console.log('[BlockTranslation] No content in result')
     }
   } catch (err: any) {
     console.error('Block translation error:', err)

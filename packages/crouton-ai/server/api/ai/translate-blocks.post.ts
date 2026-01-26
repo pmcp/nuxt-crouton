@@ -174,10 +174,12 @@ function setValueAtPath(obj: any, path: string, value: string): void {
 }
 
 export default defineEventHandler(async (event) => {
+  console.log('[translate-blocks] Request received')
   const rawBody = await readBody(event)
   const parseResult = translateBlocksSchema.safeParse(rawBody)
 
   if (!parseResult.success) {
+    console.log('[translate-blocks] Validation failed:', parseResult.error.issues)
     throw createError({
       status: 400,
       statusText: parseResult.error.issues[0]?.message || 'Invalid request body'
@@ -185,17 +187,27 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = parseResult.data
+  console.log('[translate-blocks] Request body:', {
+    sourceLanguage: body.sourceLanguage,
+    targetLanguage: body.targetLanguage,
+    contentType: body.content?.type,
+    contentLength: body.content?.content?.length
+  })
 
   // Don't translate to same language
   if (body.sourceLanguage === body.targetLanguage) {
+    console.log('[translate-blocks] Same language, returning original')
     return { content: body.content }
   }
 
   // Extract all translatable text
   const extractions = extractTranslatableText(body.content)
+  console.log('[translate-blocks] Extractions found:', extractions.length)
+  console.log('[translate-blocks] Extractions:', extractions)
 
   if (extractions.length === 0) {
-    return { content: body.content }
+    console.log('[translate-blocks] No translatable text found, returning original')
+    return { content: body.content, translatedCount: 0, totalCount: 0 }
   }
 
   // Build translation prompt with all texts
@@ -203,6 +215,7 @@ export default defineEventHandler(async (event) => {
   const targetLang = getLanguageName(body.targetLanguage)
 
   const textsToTranslate = extractions.map((e, i) => `[${i}] ${e.text}`).join('\n')
+  console.log('[translate-blocks] Texts to translate:', textsToTranslate)
 
   const prompt = `You are a professional translator. Translate the following texts from ${sourceLang} to ${targetLang}.
 
@@ -219,6 +232,7 @@ ${targetLang} translations:`
   try {
     const ai = createAIProvider(event)
     const model = body.model || ai.getDefaultModel()
+    console.log('[translate-blocks] Using model:', model)
 
     const result = await generateText({
       model: ai.model(model),
@@ -226,6 +240,7 @@ ${targetLang} translations:`
       maxTokens: 4000,
       temperature: 0.3
     })
+    console.log('[translate-blocks] AI response:', result.text)
 
     // Parse the translations from the response
     const translations = new Map<string, string>()
@@ -242,9 +257,14 @@ ${targetLang} translations:`
         }
       }
     }
+    console.log('[translate-blocks] Parsed translations:', Object.fromEntries(translations))
 
     // Apply translations to content
     const translatedContent = applyTranslations(body.content, translations)
+    console.log('[translate-blocks] Translation complete:', {
+      translatedCount: translations.size,
+      totalCount: extractions.length
+    })
 
     return {
       content: translatedContent,
