@@ -62,7 +62,7 @@ function extractTranslatableText(content: any, path = ''): TextExtraction[] {
     return extractions
   }
 
-  // Handle block content
+  // Handle block content (root doc)
   if (content.type === 'doc' && Array.isArray(content.content)) {
     content.content.forEach((block: any, index: number) => {
       extractions.push(...extractTranslatableText(block, `content[${index}]`))
@@ -70,7 +70,23 @@ function extractTranslatableText(content: any, path = ''): TextExtraction[] {
     return extractions
   }
 
-  // Handle individual blocks
+  // Handle text nodes (the actual text content)
+  if (content.type === 'text' && content.text && typeof content.text === 'string' && content.text.trim()) {
+    extractions.push({
+      path: `${path}.text`,
+      text: content.text
+    })
+    return extractions
+  }
+
+  // Handle paragraph, heading, and other nodes with nested content
+  if (content.type && Array.isArray(content.content)) {
+    content.content.forEach((child: any, index: number) => {
+      extractions.push(...extractTranslatableText(child, `${path}.content[${index}]`))
+    })
+  }
+
+  // Handle individual blocks with attrs (heroBlock, sectionBlock, etc.)
   if (content.attrs && typeof content.attrs === 'object') {
     const attrs = content.attrs
 
