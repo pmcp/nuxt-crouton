@@ -118,7 +118,7 @@ describe('useAuth', () => {
     vi.clearAllMocks()
     mockSessionUser.value = null
     mockIsAuthenticated.value = false
-    mockIsPending.value = false
+    mockIsPendingValue.value = false  // Reset the source ref, not the computed
     mockSessionError.value = null
   })
 

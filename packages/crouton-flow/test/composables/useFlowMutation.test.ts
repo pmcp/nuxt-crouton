@@ -22,9 +22,6 @@ vi.stubGlobal('useTeamContext', () => ({
 
 vi.stubGlobal('useRoute', () => mockRoute)
 
-// Mock onUnmounted lifecycle hook
-vi.stubGlobal('onUnmounted', vi.fn())
-
 // Import after mocking
 import { useFlowMutation, useDebouncedPositionUpdate } from '../../app/composables/useFlowMutation'
 

@@ -6,9 +6,9 @@
   "exports": {
     ".": "./nuxt.config.ts",
     "./module": {
+      "types": "./dist/module.d.ts",
       "import": "./dist/module.mjs",
-      "require": "./dist/module.cjs",
-      "types": "./dist/module.d.ts"
+      "require": "./dist/module.cjs"
     },
     "./types": {
       "import": "./types/index.ts",
@@ -23,9 +23,9 @@
       "types": "./server/utils/team-auth.ts"
     },
     "./server/database/schema/auth": {
+      "types": "./dist/schema/auth.d.ts",
       "import": "./dist/schema/auth.mjs",
-      "require": "./dist/schema/auth.cjs",
-      "types": "./dist/schema/auth.d.ts"
+      "require": "./dist/schema/auth.cjs"
     },
     "./server/utils/useServerAuth": {
       "import": "./server/utils/useServerAuth.ts",
