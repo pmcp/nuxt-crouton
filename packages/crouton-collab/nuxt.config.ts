@@ -19,6 +19,12 @@ export default defineNuxtConfig({
   // Note: This is an addon layer - users must explicitly extend:
   // extends: ['@fyit/crouton-core', '@fyit/crouton-collab']
 
+  // Plugins
+  plugins: [
+    { src: join(currentDir, 'app/plugins/form-collab.client.ts'), mode: 'client' },
+    { src: join(currentDir, 'app/plugins/collection-sync.client.ts'), mode: 'client' }
+  ],
+
   // Type exports
   alias: {
     '#collab-types': join(currentDir, 'app/types/collab.ts')

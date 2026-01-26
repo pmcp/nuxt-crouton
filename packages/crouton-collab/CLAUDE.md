@@ -22,6 +22,8 @@ Real-time collaboration infrastructure for Nuxt Crouton using Yjs CRDTs. This pa
 | `app/composables/useCollabSync.ts` | High-level Yjs structure sync |
 | `app/composables/useCollabPresence.ts` | Cursor/selection presence tracking |
 | `app/composables/useCollabEditor.ts` | TipTap editor integration |
+| `app/composables/useCollectionSyncSignal.ts` | Real-time collection cache sync across clients |
+| `app/plugins/collection-sync.client.ts` | Auto-hooks mutations for cross-client refresh |
 | `app/components/CollabStatus.vue` | Connection status indicator (dot + label) |
 | `app/components/CollabPresence.vue` | Stacked user avatars with overflow |
 | `app/components/CollabCursors.vue` | Remote cursor overlay rendering |
@@ -88,7 +90,61 @@ The `type` query parameter differentiates room types:
 | `page` | TipTap editor content | `Y.XmlFragment` |
 | `flow` | Node graphs | `Y.Map` |
 | `document` | Plain text | `Y.Text` |
+| `sync` | Collection version sync | `Y.Map` |
 | `generic` | Custom | Any |
+
+## Real-Time Collection Sync
+
+When `crouton-collab` is installed, collection lists automatically stay in sync across all clients. If User A creates/updates/deletes an item, User B's list refreshes automatically.
+
+### How It Works
+
+```
+User A (mutates)                    User B (viewing list)
+      |                                    |
+      v                                    |
+useCollectionMutation                      |
+      |                                    |
+      v                                    v
+crouton:mutation hook              useCollectionSyncSignal()
+      |                                    |
+      v                                    v
+signalChange(collection)           Y.Map.observe()
+      |                                    |
+      v                                    v
+  Y.Map.set(collection, version++)  debounced refreshNuxtData()
+      |                                    |
+      v                                    v
+CollabRoom (broadcast)  ---------->  Lists auto-update
+```
+
+### Automatic Setup
+
+The plugin `collection-sync.client.ts` automatically:
+1. Detects team context from route params
+2. Connects to a team-scoped sync room: `team:{teamId}:sync`
+3. Hooks into `crouton:mutation` to signal changes
+4. Refreshes collection caches when remote changes are detected
+
+**Zero configuration required** - just install the package.
+
+### Manual Usage (Optional)
+
+For custom scenarios, use `useCollectionSyncSignal` directly:
+
+```typescript
+const { signalChange, connected, versions } = useCollectionSyncSignal({
+  teamId: computed(() => currentTeam.value?.id),
+  debounceMs: 300,
+  onCollectionChanged: async (collection, version) => {
+    // Custom refresh logic
+    await myRefreshFunction(collection)
+  }
+})
+
+// After a custom mutation
+signalChange('products')
+```
 
 ### Key Design Decisions
 
