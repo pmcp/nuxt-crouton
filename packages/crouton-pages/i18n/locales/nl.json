@@ -1,6 +1,12 @@
 {
   "pages": {
     "title": "Pagina's",
+    "search": "Zoek pagina's...",
+    "workspace": {
+      "title": "Pagina Werkruimte",
+      "emptyTitle": "Selecteer een pagina",
+      "emptyDescription": "Kies een pagina uit de zijbalk om te bewerken, of maak een nieuwe aan."
+    },
     "notFound": "Pagina niet gevonden",
     "notFoundDescription": "De pagina die je zoekt bestaat niet.",
     "backToHome": "Terug naar Home",

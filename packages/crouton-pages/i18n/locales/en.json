@@ -1,6 +1,12 @@
 {
   "pages": {
     "title": "Pages",
+    "search": "Search pages...",
+    "workspace": {
+      "title": "Pages Workspace",
+      "emptyTitle": "Select a page",
+      "emptyDescription": "Choose a page from the sidebar to edit, or create a new one."
+    },
     "notFound": "Page not found",
     "notFoundDescription": "The page you are looking for does not exist.",
     "backToHome": "Back to Home",

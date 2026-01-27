@@ -1,6 +1,12 @@
 {
   "pages": {
     "title": "Pages",
+    "search": "Rechercher des pages...",
+    "workspace": {
+      "title": "Espace de travail Pages",
+      "emptyTitle": "Sélectionnez une page",
+      "emptyDescription": "Choisissez une page dans la barre latérale pour la modifier, ou créez-en une nouvelle."
+    },
     "notFound": "Page non trouvée",
     "notFoundDescription": "La page que vous recherchez n'existe pas.",
     "backToHome": "Retour à l'accueil",
