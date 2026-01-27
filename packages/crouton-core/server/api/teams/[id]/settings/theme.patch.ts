@@ -7,7 +7,7 @@
 import { z } from 'zod'
 import { requireTeamAdmin } from '@fyit/crouton-auth/server/utils/team'
 import { useDB, eq } from '@fyit/crouton-auth/server/utils/database'
-import { teamSettings, type TeamThemeSettings } from '../../../../database/schema/teamSettings'
+import { teamSettings, type TeamThemeSettings } from '@fyit/crouton-auth/server/database/schema/auth'
 
 // Validation schema for theme settings
 const themeSettingsSchema = z.object({

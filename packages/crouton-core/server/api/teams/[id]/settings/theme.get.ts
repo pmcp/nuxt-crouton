@@ -6,7 +6,7 @@
  */
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { useDB, eq } from '@fyit/crouton-auth/server/utils/database'
-import { teamSettings } from '../../../../database/schema/teamSettings'
+import { teamSettings } from '@fyit/crouton-auth/server/database/schema/auth'
 
 export default defineEventHandler(async (event) => {
   // Verify team membership (any role can view theme)
