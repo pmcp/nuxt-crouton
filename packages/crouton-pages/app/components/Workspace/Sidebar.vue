@@ -43,7 +43,7 @@ const searchInputRef = ref<HTMLInputElement | null>(null)
 const { items: pages, pending, refresh } = await useCollectionQuery<any>('pagesPages')
 
 // Tree mutation for reordering
-const { move } = useTreeMutation('pagesPages')
+const { moveNode } = useTreeMutation('pagesPages')
 
 // Build tree structure from flat pages
 const buildTree = (items: any[], parentId: string | null = null): any[] => {
@@ -109,7 +109,7 @@ function handleSelect(page: any) {
 // Handle drag-drop reorder
 async function handleMove(id: string, newParentId: string | null, newOrder: number) {
   try {
-    await move(id, newParentId, newOrder)
+    await moveNode(id, newParentId, newOrder)
     // Refresh to get updated tree
     await refresh()
   } catch (error) {
