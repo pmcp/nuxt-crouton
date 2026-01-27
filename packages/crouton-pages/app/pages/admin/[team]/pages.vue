@@ -75,13 +75,25 @@ const visibilityConfig: Record<string, { icon: string; color: string }> = {
       </template>
 
       <template #right>
-        <UButton
-          color="primary"
-          icon="i-lucide-plus"
-          @click="openCreateForm"
-        >
-          {{ t('pages.create') || 'New Page' }}
-        </UButton>
+        <div class="flex items-center gap-2">
+          <UTooltip text="Switch to workspace view">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-layout-grid"
+              size="sm"
+              :to="`/admin/${team}/workspace`"
+            />
+          </UTooltip>
+
+          <UButton
+            color="primary"
+            icon="i-lucide-plus"
+            @click="openCreateForm"
+          >
+            {{ t('pages.create') || 'New Page' }}
+          </UButton>
+        </div>
       </template>
     </UDashboardNavbar>
 
