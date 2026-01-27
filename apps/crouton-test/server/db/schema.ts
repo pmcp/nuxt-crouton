@@ -3,6 +3,9 @@
 
 // Export auth schema from crouton-auth package
 export * from '@fyit/crouton-auth/server/database/schema/auth'
+
+// Export team settings schema from crouton-core package
+export * from '@fyit/crouton-core/server/database/schema/teamSettings'
 export { bookingsLocations } from '../../layers/bookings/collections/locations/server/database/schema'
 export { bookingsBookings } from '../../layers/bookings/collections/bookings/server/database/schema'
 export { bookingsSettings } from '../../layers/bookings/collections/settings/server/database/schema'
