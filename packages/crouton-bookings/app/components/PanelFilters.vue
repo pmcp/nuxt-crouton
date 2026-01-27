@@ -15,6 +15,8 @@ interface Props {
   hasLocationsWithCoordinates: boolean
   /** Whether to show cancelled bookings */
   showCancelled: boolean
+  /** Whether user can manage locations (admin) */
+  canManageLocations?: boolean
 }
 
 const props = defineProps<Props>()
@@ -25,6 +27,7 @@ const emit = defineEmits<{
   'update:showMap': [value: boolean]
   'update:showCalendar': [value: boolean]
   'update:showCancelled': [value: boolean]
+  'add-location': []
 }>()
 
 // Toggle location selection
@@ -107,6 +110,23 @@ function getLocationTitle(location: LocationData): string {
       </UButton>
     </div>
 
+    <!-- Empty state when no locations (admin only) -->
+    <div
+      v-if="locations.length === 0 && canManageLocations"
+      class="flex items-center gap-3 px-4 py-3 rounded-lg border border-dashed border-muted bg-muted/30"
+    >
+      <UIcon name="i-lucide-map-pin-off" class="w-5 h-5 text-muted flex-shrink-0" />
+      <span class="text-sm text-muted">No locations yet</span>
+      <UButton
+        size="xs"
+        variant="outline"
+        icon="i-lucide-plus"
+        @click="emit('add-location')"
+      >
+        Add Location
+      </UButton>
+    </div>
+
     <!-- Location filter cards (collapsible) -->
     <Transition
       enter-active-class="transition-all duration-300 ease-out"
@@ -155,6 +175,18 @@ function getLocationTitle(location: LocationData): string {
             class="w-4 h-4 text-primary ml-1 flex-shrink-0"
           />
         </button>
+
+        <!-- Add Location button (at end of location cards) -->
+        <UButton
+          v-if="canManageLocations"
+          size="xs"
+          variant="outline"
+          icon="i-lucide-plus"
+          class="self-center"
+          @click="emit('add-location')"
+        >
+          Add Location
+        </UButton>
       </div>
     </Transition>
   </div>

@@ -94,6 +94,15 @@ async function refresh() {
 // Ref for Calendar control (to sync with list scroll)
 const calendarRef = ref<{ goToDate: (date: Date) => void } | null>(null)
 
+// Crouton form and team auth for location creation
+const { open: openCroutonForm } = useCrouton()
+const { isAdmin } = useTeam()
+
+// Handle add location - open crouton slideover
+function onAddLocation() {
+  openCroutonForm('create', 'bookingsLocations', [], 'slideover')
+}
+
 // Hovered date (from calendar OR list) - used to highlight bookings/calendar days
 const hoveredDate = ref<Date | null>(null)
 
@@ -274,11 +283,13 @@ defineExpose({
       :show-calendar="showCalendar"
       :show-cancelled="filterState.showCancelled"
       :has-locations-with-coordinates="hasLocationsWithCoordinates"
+      :can-manage-locations="isAdmin"
       @update:selected-locations="filterState.locations = $event"
       @update:show-locations="showLocations = $event"
       @update:show-map="showMap = $event"
       @update:show-calendar="showCalendar = $event"
       @update:show-cancelled="filterState.showCancelled = $event"
+      @add-location="onAddLocation"
     />
 
     <!-- Map section (independent, collapsible) -->
