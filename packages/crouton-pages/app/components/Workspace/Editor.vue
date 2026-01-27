@@ -32,6 +32,11 @@ const { t } = useT()
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { locale } = useI18n()
+const collections = useCollections()
+
+// Get API path from collection config
+const collectionConfig = collections.getConfig('pagesPages')
+const apiPath = collectionConfig?.apiPath || 'pages-pages'
 
 // Component state
 const isLoading = ref(false)
@@ -149,7 +154,7 @@ watch(
         throw new Error('Team context required')
       }
 
-      const response = await $fetch<any>(`/api/teams/${teamId}/pagesPages`, {
+      const response = await $fetch<any>(`/api/teams/${teamId}/${apiPath}`, {
         method: 'GET',
         query: { ids: newId },
         credentials: 'include'
