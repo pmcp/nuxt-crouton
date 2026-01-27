@@ -324,8 +324,8 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
         </UButton>
       </div>
 
-      <!-- Slot selection (slot mode) -->
-      <div v-if="localLocationId && !isInventoryMode && allSlots.length > 0" class="flex flex-wrap gap-1.5">
+      <!-- Slot selection (slot mode) - show "All Day" even when no slots configured -->
+      <div v-if="selectedLocation && !isInventoryMode" class="flex flex-wrap gap-1.5">
         <!-- Loading state -->
         <template v-if="availabilityLoading">
           <div v-for="i in 3" :key="i" class="h-6 w-16 bg-elevated rounded animate-pulse" />
