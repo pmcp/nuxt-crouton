@@ -256,6 +256,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
               <span class="text-xs text-muted">{{ slotLabel }}</span>
             </template>
             <template v-else>
+              <!-- Show slot indicator for locations with configured slots -->
               <CroutonBookingsSlotIndicator
                 v-if="locationSlots.length > 0"
                 :slots="locationSlots"
@@ -263,6 +264,12 @@ const timelineItems = computed<TimelineItem[]>(() => {
                 :cancelled-slot-ids="isCancelled ? bookedSlotIds : []"
                 :color="locationColor"
                 size="sm"
+              />
+              <!-- Show single dot for all-day bookings on locations with no slots -->
+              <span
+                v-else-if="bookedSlotIds.includes('all-day')"
+                class="w-2 h-2 rounded-full shrink-0"
+                :style="{ backgroundColor: isCancelled ? '#ef4444' : locationColor }"
               />
               <span class="text-xs text-muted">{{ slotLabel }}</span>
             </template>
