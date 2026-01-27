@@ -2,7 +2,7 @@
 /**
  * Team Settings Page
  *
- * Team configuration settings including name, slug, and logo.
+ * Team configuration settings including name, slug, logo, and theme.
  * Only accessible by team admins/owners.
  *
  * @route /admin/[team]/team/settings
@@ -16,6 +16,23 @@ const teamSlug = computed(() => route.params.team as string)
 
 // Show delete confirmation modal
 const showDeleteModal = ref(false)
+
+// Active tab for settings sections
+const activeTab = ref('general')
+
+// Tab items for settings navigation
+const tabItems = [
+  {
+    label: t('teams.generalSettings') || 'General',
+    value: 'general',
+    icon: 'i-lucide-settings'
+  },
+  {
+    label: t('teams.themeSettings') || 'Theme',
+    value: 'theme',
+    icon: 'i-lucide-palette'
+  }
+]
 
 // Handle team deletion
 async function handleDelete() {
@@ -46,6 +63,15 @@ function handleSaved() {
     color: 'success'
   })
 }
+
+// Handle theme saved event
+function handleThemeSaved() {
+  toast.add({
+    title: t('common.saved') || 'Saved',
+    description: t('teams.themeSettingsSaved') || 'Theme settings have been updated.',
+    color: 'success'
+  })
+}
 </script>
 
 <template>
@@ -70,12 +96,29 @@ function handleSaved() {
       </NuxtLink>
     </div>
 
-    <!-- Team Settings Form -->
+    <!-- Team Settings Tabs -->
     <template v-else>
-      <TeamSettings
-        @saved="handleSaved"
-        @delete="showDeleteModal = true"
-      />
+      <!-- Tab Navigation -->
+      <div class="mb-6">
+        <UTabs
+          v-model="activeTab"
+          :items="tabItems"
+          variant="link"
+        />
+      </div>
+
+      <!-- General Settings Tab -->
+      <div v-show="activeTab === 'general'">
+        <TeamSettings
+          @saved="handleSaved"
+          @delete="showDeleteModal = true"
+        />
+      </div>
+
+      <!-- Theme Settings Tab -->
+      <div v-show="activeTab === 'theme'">
+        <TeamThemeSettings @saved="handleThemeSaved" />
+      </div>
 
       <!-- Delete Confirmation Modal -->
       <TeamDeleteConfirm

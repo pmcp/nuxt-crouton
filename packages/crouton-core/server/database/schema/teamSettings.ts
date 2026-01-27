@@ -17,6 +17,31 @@ export interface TeamAISettings {
 }
 
 /**
+ * Theme color options (Tailwind CSS colors)
+ */
+export type ThemePrimaryColor =
+  | 'red' | 'orange' | 'amber' | 'yellow' | 'lime' | 'green'
+  | 'emerald' | 'teal' | 'cyan' | 'sky' | 'blue' | 'indigo'
+  | 'violet' | 'purple' | 'fuchsia' | 'pink' | 'rose'
+
+export type ThemeNeutralColor = 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone'
+
+export type ThemeRadius = 0 | 0.125 | 0.25 | 0.375 | 0.5
+
+/**
+ * Theme settings for team visual customization
+ * Similar to Nuxt UI's theme picker
+ */
+export interface TeamThemeSettings {
+  /** Primary color for buttons, links, and accents */
+  primary?: ThemePrimaryColor
+  /** Neutral color for backgrounds, borders, and text */
+  neutral?: ThemeNeutralColor
+  /** Border radius in rem (0 = sharp corners, 0.5 = fully rounded) */
+  radius?: ThemeRadius
+}
+
+/**
  * Team settings table for translation overrides and AI configuration
  * This table stores team-specific settings that take precedence over system defaults
  */
@@ -37,6 +62,11 @@ export const teamSettings = sqliteTable('team_settings', {
    * SECURITY: This field is server-side only - never expose to client
    */
   aiSettings: text('ai_settings', { mode: 'json' }).$type<TeamAISettings>(),
+  /**
+   * Theme settings for team visual customization
+   * Safe to expose to client - no sensitive data
+   */
+  themeSettings: text('theme_settings', { mode: 'json' }).$type<TeamThemeSettings>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).$default(
     () => new Date()
   ),

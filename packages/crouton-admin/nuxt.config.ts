@@ -1,3 +1,8 @@
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
 // Development startup log (deduplicated across layer resolution)
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-admin')) {
@@ -56,6 +61,11 @@ export default defineNuxtConfig({
 
   // Compatibility
   compatibilityDate: '2024-11-01',
+
+  // Plugins
+  plugins: [
+    { src: join(currentDir, 'app/plugins/team-theme.client.ts'), mode: 'client' }
+  ],
 
   // Nitro server config
   nitro: {

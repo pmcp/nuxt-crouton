@@ -30,6 +30,10 @@
     "./server/utils/useServerAuth": {
       "import": "./server/utils/useServerAuth.ts",
       "types": "./server/utils/useServerAuth.ts"
+    },
+    "./server/utils/database": {
+      "import": "./server/utils/database.ts",
+      "types": "./server/utils/database.ts"
     }
   },
   "main": "./nuxt.config.ts",
