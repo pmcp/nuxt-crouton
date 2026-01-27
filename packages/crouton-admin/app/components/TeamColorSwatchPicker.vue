@@ -40,9 +40,10 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-// Tailwind color 500 shades for display
+// Tailwind color shades for display
+// Primary colors use 500, neutral colors use 900 (more representative of dark UI)
 const COLOR_HEX_MAP: Record<string, string> = {
-  // Primary colors
+  // Primary colors (500 shade)
   red: '#ef4444',
   orange: '#f97316',
   amber: '#f59e0b',
@@ -60,12 +61,12 @@ const COLOR_HEX_MAP: Record<string, string> = {
   fuchsia: '#d946ef',
   pink: '#ec4899',
   rose: '#f43f5e',
-  // Neutral colors
-  slate: '#64748b',
-  gray: '#6b7280',
-  zinc: '#71717a',
-  neutral: '#737373',
-  stone: '#78716c'
+  // Neutral colors (900 shade - matches dark mode backgrounds)
+  slate: '#0f172a',
+  gray: '#111827',
+  zinc: '#18181b',
+  neutral: '#171717',
+  stone: '#1c1917'
 }
 
 // Size classes for swatches

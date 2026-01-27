@@ -17,23 +17,6 @@ const teamSlug = computed(() => route.params.team as string)
 // Show delete confirmation modal
 const showDeleteModal = ref(false)
 
-// Active tab for settings sections
-const activeTab = ref('general')
-
-// Tab items for settings navigation
-const tabItems = [
-  {
-    label: t('teams.generalSettings') || 'General',
-    value: 'general',
-    icon: 'i-lucide-settings'
-  },
-  {
-    label: t('teams.themeSettings') || 'Theme',
-    value: 'theme',
-    icon: 'i-lucide-palette'
-  }
-]
-
 // Handle team deletion
 async function handleDelete() {
   try {
@@ -96,29 +79,30 @@ function handleThemeSaved() {
       </NuxtLink>
     </div>
 
-    <!-- Team Settings Tabs -->
+    <!-- Team Settings Accordion -->
     <template v-else>
-      <!-- Tab Navigation -->
-      <UTabs
-        v-model="activeTab"
-        :items="tabItems"
-        :content="false"
-        variant="link"
-        class="w-full mb-6"
-      />
+      <UAccordion
+        :items="[
+          { label: t('teams.generalSettings') || 'General', icon: 'i-lucide-settings', slot: 'general' },
+          { label: t('teams.themeSettings') || 'Theme', icon: 'i-lucide-palette', slot: 'theme' }
+        ]"
+        :default-open="['General']"
+      >
+        <template #general>
+          <div class="pt-4">
+            <TeamSettings
+              @saved="handleSaved"
+              @delete="showDeleteModal = true"
+            />
+          </div>
+        </template>
 
-      <!-- General Settings Tab -->
-      <div v-show="activeTab === 'general'">
-        <TeamSettings
-          @saved="handleSaved"
-          @delete="showDeleteModal = true"
-        />
-      </div>
-
-      <!-- Theme Settings Tab -->
-      <div v-show="activeTab === 'theme'">
-        <TeamThemeSettings @saved="handleThemeSaved" />
-      </div>
+        <template #theme>
+          <div class="pt-4">
+            <TeamThemeSettings @saved="handleThemeSaved" />
+          </div>
+        </template>
+      </UAccordion>
 
       <!-- Delete Confirmation Modal -->
       <TeamDeleteConfirm

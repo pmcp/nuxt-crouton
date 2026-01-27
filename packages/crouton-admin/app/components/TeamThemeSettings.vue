@@ -3,44 +3,22 @@
  * Team Theme Settings Component
  *
  * Form for customizing team visual appearance (primary color, neutral color, radius).
- * Only accessible to team admins and owners.
- *
- * @example
- * ```vue
- * <TeamThemeSettings @saved="onSaved" />
- * ```
  */
-import { ref, reactive, computed, watch } from 'vue'
-import { useToast } from '#imports'
 import {
   PRIMARY_COLORS,
   NEUTRAL_COLORS,
   DEFAULT_THEME,
   type TeamThemeSettings
-} from '../../composables/useTeamTheme'
-
-// These composables come from crouton-auth and crouton-i18n when used as layers
-// For standalone typecheck they won't resolve, but they work at runtime
-declare function useT(): { t: (key: string) => string | undefined }
-declare function useTeam(): { isAdmin: { value: boolean } }
-declare function useTeamTheme(): {
-  theme: { value: Required<TeamThemeSettings> }
-  isLoading: { value: boolean }
-  updateTheme: (settings: Partial<TeamThemeSettings>) => Promise<TeamThemeSettings>
-  resetTheme: () => Promise<TeamThemeSettings>
-  applyTheme: (settings: TeamThemeSettings) => void
-}
+} from '../composables/useTeamTheme'
 
 const emit = defineEmits<{
-  /** Emitted when theme settings are saved */
   saved: [settings: TeamThemeSettings]
 }>()
 
 const { t } = useT()
 const { isAdmin } = useTeam()
 const toast = useToast()
-
-const { theme, isLoading, updateTheme, resetTheme, applyTheme } = useTeamTheme()
+const { theme, isLoading, updateTheme, applyTheme } = useTeamTheme()
 
 // Local form state for live preview
 const localTheme = reactive<TeamThemeSettings>({
@@ -95,7 +73,7 @@ async function handleSave() {
     toast.add({
       title: t('common.saved') || 'Saved',
       description: 'Theme settings have been updated.',
-      color: 'success'
+      color: 'primary'
     })
 
     emit('saved', saved)
@@ -112,7 +90,7 @@ async function handleSave() {
 }
 
 // Handle reset to defaults
-async function handleReset() {
+function handleReset() {
   localTheme.primary = DEFAULT_THEME.primary
   localTheme.neutral = DEFAULT_THEME.neutral
   localTheme.radius = DEFAULT_THEME.radius
@@ -129,9 +107,7 @@ function revertChanges() {
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">
-        Theme Settings
-      </h3>
+      <h3 class="text-lg font-semibold">Theme Settings</h3>
       <p class="text-sm text-muted mt-1">
         Customize your team's visual appearance. Changes preview in real-time.
       </p>
@@ -150,29 +126,15 @@ function revertChanges() {
         <label class="text-sm font-medium text-default">Live Preview</label>
         <div class="p-4 border border-muted rounded-lg bg-muted/10 space-y-4">
           <div class="flex flex-wrap gap-2">
-            <UButton color="primary">
-              Primary Button
-            </UButton>
-            <UButton color="primary" variant="outline">
-              Outline
-            </UButton>
-            <UButton color="primary" variant="soft">
-              Soft
-            </UButton>
-            <UButton color="primary" variant="ghost">
-              Ghost
-            </UButton>
+            <UButton color="primary">Primary Button</UButton>
+            <UButton color="primary" variant="outline">Outline</UButton>
+            <UButton color="primary" variant="soft">Soft</UButton>
+            <UButton color="primary" variant="ghost">Ghost</UButton>
           </div>
           <div class="flex flex-wrap gap-2">
-            <UBadge color="primary">
-              Badge
-            </UBadge>
-            <UBadge color="primary" variant="outline">
-              Outline
-            </UBadge>
-            <UBadge color="primary" variant="soft">
-              Soft
-            </UBadge>
+            <UBadge color="primary">Badge</UBadge>
+            <UBadge color="primary" variant="outline">Outline</UBadge>
+            <UBadge color="primary" variant="soft">Soft</UBadge>
           </div>
           <div class="max-w-xs">
             <UInput placeholder="Sample input..." icon="i-lucide-search" />
