@@ -18,7 +18,7 @@ export const MODULES = {
     package: '@fyit/crouton-auth',
     schemaExport: '@fyit/crouton-auth/server/database/schema/auth',
     description: 'Authentication with Better Auth - teams, billing, passkeys, 2FA',
-    tables: ['user', 'session', 'account', 'verification', 'organization', 'member', 'invitation', 'passkey', 'twoFactor', 'subscription'],
+    tables: ['user', 'session', 'account', 'verification', 'organization', 'member', 'invitation', 'passkey', 'twoFactor', 'subscription', 'domain', 'scopedAccessToken', 'teamSettings'],
     dependencies: [],
     peerDependencies: ['better-auth', '@better-auth/passkey', '@better-auth/stripe'],
     bundled: true // Included in @fyit/crouton
