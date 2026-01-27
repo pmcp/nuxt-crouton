@@ -17,6 +17,9 @@ const teamSlug = computed(() => route.params.team as string)
 // Show delete confirmation modal
 const showDeleteModal = ref(false)
 
+// Active tab for settings sections
+const activeTab = ref('general')
+
 // Tab items for settings navigation
 const tabItems = [
   {
@@ -95,28 +98,27 @@ function handleThemeSaved() {
 
     <!-- Team Settings Tabs -->
     <template v-else>
+      <!-- Tab Navigation -->
       <UTabs
+        v-model="activeTab"
         :items="tabItems"
+        :content="false"
         variant="link"
-        class="w-full"
-      >
-        <template #content="{ item }">
-          <div class="pt-4">
-            <!-- General Settings Tab -->
-            <TeamSettings
-              v-if="item.value === 'general'"
-              @saved="handleSaved"
-              @delete="showDeleteModal = true"
-            />
+        class="w-full mb-6"
+      />
 
-            <!-- Theme Settings Tab -->
-            <TeamThemeSettings
-              v-else-if="item.value === 'theme'"
-              @saved="handleThemeSaved"
-            />
-          </div>
-        </template>
-      </UTabs>
+      <!-- General Settings Tab -->
+      <div v-show="activeTab === 'general'">
+        <TeamSettings
+          @saved="handleSaved"
+          @delete="showDeleteModal = true"
+        />
+      </div>
+
+      <!-- Theme Settings Tab -->
+      <div v-show="activeTab === 'theme'">
+        <TeamThemeSettings @saved="handleThemeSaved" />
+      </div>
 
       <!-- Delete Confirmation Modal -->
       <TeamDeleteConfirm

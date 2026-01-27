@@ -1,4 +1,11 @@
 {
+  "teams": {
+    "generalSettings": "Algemeen",
+    "themeSettings": "Thema"
+  },
+  "navigation": {
+    "backToTeam": "Terug naar Team"
+  },
   "admin": {
     "dashboard": "Dashboard",
     "users": "Gebruikers",

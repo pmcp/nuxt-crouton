@@ -32,7 +32,7 @@ export default defineNuxtConfig({
 
   // Components from the layer
   components: [
-    { path: 'app/components', pathPrefix: false }
+    { path: join(currentDir, 'app/components'), pathPrefix: false }
   ],
 
   // Auto-imports from the layer
