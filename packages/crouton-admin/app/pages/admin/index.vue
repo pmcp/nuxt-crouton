@@ -65,7 +65,10 @@ watch(isPending, async (pending) => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center">
+  <div
+    v-if="route.path === '/admin'"
+    class="min-h-screen flex items-center justify-center"
+  >
     <UIcon name="i-lucide-loader-2" class="w-8 h-8 animate-spin text-primary" />
   </div>
 </template>

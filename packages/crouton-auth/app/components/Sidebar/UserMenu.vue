@@ -45,15 +45,6 @@ const flags: Record<string, string> = {
   fr: '🇫🇷'
 }
 
-// Modal state
-const showSettingsModal = ref(false)
-const settingsTab = ref<'profile' | 'security'>('profile')
-
-function openSettings(tab: 'profile' | 'security' = 'profile') {
-  settingsTab.value = tab
-  showSettingsModal.value = true
-}
-
 // Build language submenu items
 const languageItems = computed<DropdownMenuItem[]>(() => {
   return (locales.value as Array<{ code: string, name?: string }>).map(loc => ({
@@ -66,7 +57,7 @@ const languageItems = computed<DropdownMenuItem[]>(() => {
   }))
 })
 
-// Build dropdown items - open modal instead of navigating
+// Build dropdown items - navigate to account pages
 const dropdownItems = computed<DropdownMenuItem[][]>(() => {
   return [
     [
@@ -84,12 +75,12 @@ const dropdownItems = computed<DropdownMenuItem[][]>(() => {
       {
         label: t('navigation.accountSettings') || 'Account Settings',
         icon: 'i-lucide-user',
-        onSelect: () => openSettings('profile')
+        to: '/account'
       },
       {
         label: t('account.security') || 'Security',
         icon: 'i-lucide-shield',
-        onSelect: () => openSettings('security')
+        to: '/account?tab=security'
       }
     ],
     [
@@ -201,25 +192,4 @@ const userInitials = computed(() => {
       </template>
     </UButton>
   </UDropdownMenu>
-
-  <!-- Account Settings Modal -->
-  <UModal
-    v-model:open="showSettingsModal"
-    :ui="{ width: 'sm:max-w-2xl' }"
-  >
-    <template #content="{ close }">
-      <div class="p-6 max-h-[80vh] overflow-y-auto">
-        <AccountSettings :default-tab="settingsTab" />
-        <div class="flex justify-end mt-6 pt-4 border-t border-default">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            @click="close"
-          >
-            {{ t('common.close') || 'Close' }}
-          </UButton>
-        </div>
-      </div>
-    </template>
-  </UModal>
 </template>

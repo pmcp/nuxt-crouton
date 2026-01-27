@@ -16,13 +16,13 @@
  * @example
  * ```vue
  * <script setup>
- * const { teamId, teamSlug, buildDashboardUrl } = useTeamContext()
+ * const { teamId, teamSlug, buildAdminUrl } = useTeamContext()
  *
  * // Use in API calls
  * const { data } = await useFetch(`/api/teams/${teamId.value}/bookings`)
  *
- * // Build dashboard URLs
- * const settingsUrl = buildDashboardUrl('/settings')
+ * // Build admin URLs
+ * const settingsUrl = buildAdminUrl('/settings')
  * </script>
  * ```
  */
@@ -98,12 +98,12 @@ export function useTeamContext() {
   const useTeamInUrl = computed(() => true)
 
   /**
-   * Check if current route is a team-scoped dashboard route
+   * Check if current route is a team-scoped admin route
    *
-   * Dashboard routes should always have team param in URL
+   * Admin routes should always have team param in URL
    */
   const isTeamRoute = computed(() => {
-    if (!route.path.startsWith('/dashboard')) return false
+    if (!route.path.startsWith('/admin')) return false
     return !!route.params.team
   })
 
@@ -129,25 +129,36 @@ export function useTeamContext() {
   })
 
   /**
-   * Build a dashboard URL with proper team context
+   * Build an admin URL with proper team context
    *
    * @example
-   * buildDashboardUrl('/bookings') // multi-tenant: '/dashboard/acme/bookings'
-   * buildDashboardUrl('/bookings') // single-tenant: '/dashboard/bookings'
+   * buildAdminUrl('/bookings') // '/admin/acme/bookings'
+   *
+   * @deprecated Use buildAdminUrl instead
    */
   function buildDashboardUrl(path: string, teamSlugOverride?: string): string {
+    return buildAdminUrl(path, teamSlugOverride)
+  }
+
+  /**
+   * Build an admin URL with proper team context
+   *
+   * @example
+   * buildAdminUrl('/bookings') // '/admin/acme/bookings'
+   */
+  function buildAdminUrl(path: string, teamSlugOverride?: string): string {
     const cleanPath = path.startsWith('/') ? path : `/${path}`
 
     if (useTeamInUrl.value) {
       const slug = teamSlugOverride ?? teamSlug.value
       if (slug) {
-        return `/dashboard/${slug}${cleanPath}`
+        return `/admin/${slug}${cleanPath}`
       }
       // No slug available - log warning but proceed
-      console.warn('[@crouton/auth] buildDashboardUrl: No team slug available in multi-tenant mode')
+      console.warn('[@crouton/auth] buildAdminUrl: No team slug available in multi-tenant mode')
     }
 
-    return `/dashboard${cleanPath}`
+    return `/admin${cleanPath}`
   }
 
   /**
@@ -231,16 +242,16 @@ export function useTeamContext() {
       }
     } else {
       // No team in URL - check if we should add one
-      const isDashboardRoute = route.path.startsWith('/dashboard')
+      const isAdminRoute = route.path.startsWith('/admin')
 
-      if (isDashboardRoute && activeOrganization.value) {
-        // Dashboard route should have team in URL
-        const pathWithoutDashboard = route.path.replace(/^\/dashboard\/?/, '')
+      if (isAdminRoute && activeOrganization.value) {
+        // Admin route should have team in URL
+        const pathWithoutAdmin = route.path.replace(/^\/admin\/?/, '')
         return {
           teamId: activeOrganization.value.id,
           teamSlug: activeOrganization.value.slug,
           needsRedirect: true,
-          redirectTo: `/dashboard/${activeOrganization.value.slug}${pathWithoutDashboard ? `/${pathWithoutDashboard}` : ''}`
+          redirectTo: `/admin/${activeOrganization.value.slug}${pathWithoutAdmin ? `/${pathWithoutAdmin}` : ''}`
         }
       }
 
@@ -254,12 +265,12 @@ export function useTeamContext() {
   }
 
   /**
-   * Navigate to a team-scoped route
+   * Navigate to a team-scoped admin route
    *
    * Convenience method that builds the URL and navigates
    */
   async function navigateToTeamRoute(path: string, teamSlugOverride?: string): Promise<void> {
-    const url = buildDashboardUrl(path, teamSlugOverride)
+    const url = buildAdminUrl(path, teamSlugOverride)
     await navigateTo(url)
   }
 
@@ -289,7 +300,8 @@ export function useTeamContext() {
     error: teamState.error,
 
     // URL builders
-    buildDashboardUrl,
+    buildAdminUrl,
+    buildDashboardUrl, // @deprecated - use buildAdminUrl
     buildApiUrl,
 
     // Actions

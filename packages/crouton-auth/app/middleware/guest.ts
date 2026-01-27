@@ -2,7 +2,7 @@
  * Guest Middleware
  *
  * Protects routes that should only be accessible to unauthenticated users.
- * Redirects authenticated users to the dashboard.
+ * Redirects authenticated users to the admin.
  *
  * @example
  * ```vue
@@ -31,7 +31,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (isAuthenticated.value) {
     // Check for redirect query param (e.g., from login page)
     const redirectQuery = to.query.redirect as string | undefined
-    const defaultRedirect = redirects?.authenticated ?? '/dashboard'
+    const defaultRedirect = redirects?.authenticated ?? '/admin'
 
     const redirectPath = redirectQuery || defaultRedirect
 
