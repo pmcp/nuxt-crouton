@@ -175,6 +175,26 @@ Located in `server/database/schema/auth.ts`:
 - `invitation` - Pending invitations
 - `passkey` - WebAuthn credentials
 - `twoFactor` - 2FA settings
+- `teamSettings` - Team-specific settings (translations, AI keys, theme)
+
+### Team Settings Table
+
+The `teamSettings` table stores team-level configuration:
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `translations` | JSON | Team-specific translation overrides by locale |
+| `aiSettings` | JSON | AI API keys (Anthropic, OpenAI) - **server-only** |
+| `themeSettings` | JSON | Visual theme (primary color, neutral color, radius) |
+
+```typescript
+// Theme settings type
+interface TeamThemeSettings {
+  primary?: 'red' | 'orange' | ... | 'rose'  // Tailwind colors
+  neutral?: 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone'
+  radius?: 0 | 0.125 | 0.25 | 0.375 | 0.5  // rem
+}
+```
 
 ## CLI Commands
 
