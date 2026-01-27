@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * Workspace Sidebar - Page Tree with Search
+ * Workspace Sidebar - Page Tree with Search and Drag-Drop
  *
- * Shows a hierarchical tree of pages with search filtering.
- * Emits events when pages are selected or when create is clicked.
+ * Shows a hierarchical tree of pages with search filtering and drag-to-reorder.
+ * Uses CroutonTreeView for full drag-drop support.
  *
  * @example
  * <CroutonPagesWorkspaceSidebar
@@ -30,7 +30,6 @@ const emit = defineEmits<{
 
 const { t } = useT()
 const { locale } = useI18n()
-const { getPageType } = usePageTypes()
 const { getSlugForLocale } = useLocalizedSlug()
 
 // Resolve card component for tree rendering
@@ -38,9 +37,13 @@ const CroutonPagesCard = resolveComponent('CroutonPagesCard') as Component
 
 // Search state
 const searchQuery = ref('')
+const searchInputRef = ref<HTMLInputElement | null>(null)
 
 // Fetch pages data
-const { items: pages, pending } = await useCollectionQuery<any>('pagesPages')
+const { items: pages, pending, refresh } = await useCollectionQuery<any>('pagesPages')
+
+// Tree mutation for reordering
+const { move } = useTreeMutation('pagesPages')
 
 // Build tree structure from flat pages
 const buildTree = (items: any[], parentId: string | null = null): any[] => {
@@ -79,7 +82,7 @@ const filteredPages = computed(() => {
 
 // Tree structure for display
 const pageTree = computed(() => {
-  // When searching, show flat list
+  // When searching, show flat list (no hierarchy)
   if (searchQuery.value.trim()) {
     return filteredPages.value.map((page: any) => ({
       ...page,
@@ -89,17 +92,29 @@ const pageTree = computed(() => {
   return buildTree(filteredPages.value)
 })
 
-// Status config for visual indicators
-const statusConfig: Record<string, { dotColor: string }> = {
-  draft: { dotColor: 'bg-warning' },
-  published: { dotColor: 'bg-success' },
-  archived: { dotColor: 'bg-error' }
+// Hierarchy config for tree - enable nesting
+const hierarchyConfig = {
+  enabled: true,
+  allowNesting: true,
+  parentField: 'parentId',
+  orderField: 'order'
 }
 
-// Handle page selection
+// Handle page selection from tree
 function handleSelect(page: any) {
   emit('update:modelValue', page.id)
   emit('select', page)
+}
+
+// Handle drag-drop reorder
+async function handleMove(id: string, newParentId: string | null, newOrder: number) {
+  try {
+    await move(id, newParentId, newOrder)
+    // Refresh to get updated tree
+    await refresh()
+  } catch (error) {
+    console.error('Failed to move page:', error)
+  }
 }
 
 // Handle create button
@@ -107,9 +122,6 @@ function handleCreate() {
   emit('update:modelValue', null)
   emit('create')
 }
-
-// Check if a page is selected
-const isSelected = (pageId: string) => pageId === props.modelValue
 </script>
 
 <template>
@@ -132,6 +144,7 @@ const isSelected = (pageId: string) => pageId === props.modelValue
     <!-- Search -->
     <div class="px-3 py-2 border-b border-default">
       <UInput
+        ref="searchInputRef"
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('pages.search') || 'Search pages...'"
@@ -141,7 +154,7 @@ const isSelected = (pageId: string) => pageId === props.modelValue
     </div>
 
     <!-- Tree/List -->
-    <div class="flex-1 overflow-auto">
+    <div class="flex-1 overflow-auto px-2">
       <!-- Loading -->
       <div v-if="pending" class="p-3 space-y-2">
         <USkeleton class="h-8 w-full" />
@@ -170,18 +183,17 @@ const isSelected = (pageId: string) => pageId === props.modelValue
         </UButton>
       </div>
 
-      <!-- Page tree -->
-      <nav v-else class="py-2">
-        <CroutonPagesWorkspaceSidebarItem
-          v-for="page in pageTree"
-          :key="page.id"
-          :page="page"
-          :depth="0"
-          :selected-id="modelValue"
-          :is-searching="!!searchQuery.trim()"
-          @select="handleSelect"
-        />
-      </nav>
+      <!-- Page tree with drag-drop -->
+      <CroutonTreeView
+        v-else
+        :items="pageTree"
+        collection="pagesPages"
+        :hierarchy="hierarchyConfig"
+        :card-component="CroutonPagesCard"
+        label-key="title"
+        @select="handleSelect"
+        @move="handleMove"
+      />
     </div>
   </div>
 </template>
