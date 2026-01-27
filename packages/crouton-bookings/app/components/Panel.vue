@@ -103,6 +103,14 @@ function onAddLocation() {
   openCroutonForm('create', 'bookingsLocations', [], 'slideover')
 }
 
+// Listen for location mutations to refresh the list
+const nuxtApp = useNuxtApp()
+nuxtApp.hook('crouton:mutation', async (event: { operation: string; collection: string }) => {
+  if (event.collection === 'bookingsLocations' && event.operation === 'create') {
+    await refresh()
+  }
+})
+
 // Hovered date (from calendar OR list) - used to highlight bookings/calendar days
 const hoveredDate = ref<Date | null>(null)
 
