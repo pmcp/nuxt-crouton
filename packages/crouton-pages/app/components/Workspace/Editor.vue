@@ -16,16 +16,23 @@
 interface Props {
   /** Page ID to edit (null for create mode) */
   pageId?: string | null
+  /** Show a close button in the header (used by InlineEditor) */
+  showClose?: boolean
+  /** Override the i18n input layout ('tabs' for narrow panels, 'side-by-side' for wide) */
+  i18nLayout?: 'tabs' | 'side-by-side'
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  pageId: null
+  pageId: null,
+  showClose: false,
+  i18nLayout: 'side-by-side'
 })
 
 const emit = defineEmits<{
   save: [page: any]
   delete: [id: string]
   cancel: []
+  close: []
 }>()
 
 const { t } = useT()
@@ -411,6 +418,9 @@ const fieldComponents = computed(() => {
 const fieldOptions = {
   slug: { transform: 'slug' as const }
 }
+
+// Expose state for parent components (e.g., InlineEditor live preview)
+defineExpose({ state })
 </script>
 
 <template>
@@ -634,6 +644,16 @@ const fieldOptions = {
           >
             {{ action === 'create' ? 'Create' : 'Save' }}
           </UButton>
+
+          <!-- Close button (shown in inline editor context) -->
+          <UButton
+            v-if="showClose"
+            variant="ghost"
+            color="neutral"
+            icon="i-lucide-x"
+            size="xs"
+            @click="emit('close')"
+          />
         </UFieldGroup>
       </div>
 
@@ -643,7 +663,7 @@ const fieldOptions = {
           v-if="contentReady"
           v-model="state.translations"
           :fields="translatableFields"
-          layout="side-by-side"
+          :layout="i18nLayout"
           show-ai-translate
           field-type="page"
           :field-components="fieldComponents"

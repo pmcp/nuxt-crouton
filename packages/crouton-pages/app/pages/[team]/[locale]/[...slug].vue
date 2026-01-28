@@ -14,6 +14,11 @@
  * - default: Normal scrollable content with padding
  * - full-height: Fixed viewport height, content fills remaining space
  * - full-screen: No padding, full viewport
+ *
+ * Inline editing:
+ * - Admins see a floating edit button (FAB) at bottom-right
+ * - Clicking it opens a side-by-side editor via the public layout
+ * - Live preview updates as the admin edits translations
  */
 definePageMeta({
   layout: 'public'
@@ -93,7 +98,7 @@ const apiUrl = computed(() => {
 })
 
 // Fetch page by team and slug, passing current locale for translated slug lookup
-const { data: pageResponse, status, error } = await useFetch(apiUrl, {
+const { data: pageResponse, status, error, refresh } = await useFetch(apiUrl, {
   query: { locale: urlLocale.value },
   watch: [team, slug, urlLocale],
   transform: (data: any) => data
@@ -150,6 +155,53 @@ watchEffect(() => {
   }
 })
 
+// --- Inline editing ---
+
+// Admin detection (useTeam may not be available if auth package not installed)
+let isAdmin = ref(false)
+try {
+  const teamComposable = useTeam()
+  isAdmin = teamComposable.isAdmin
+} catch {
+  // Auth package not installed or useTeam unavailable
+}
+
+// Shared editing state with layout
+const isEditing = useState<boolean>('pageEditing', () => false)
+const editingPageId = useState<string | null>('editingPageId', () => null)
+
+// Shared translations from the editor for live preview
+const editingTranslations = useState<Record<string, any> | null>('editingTranslations', () => null)
+
+// Compute the page data to render — uses editor translations for live preview when editing
+const previewPage = computed(() => {
+  if (isEditing.value && editingTranslations.value && page.value) {
+    return { ...page.value, translations: editingTranslations.value }
+  }
+  return page.value
+})
+
+function startEditing() {
+  if (!page.value?.id) return
+  editingPageId.value = page.value.id
+  isEditing.value = true
+}
+
+// Refresh page data after save
+watch(isEditing, async (editing, wasEditing) => {
+  if (!editing && wasEditing) {
+    // Editor was closed — refresh page data to pick up saved changes
+    await refresh()
+  }
+})
+
+// Clean up editing state on unmount
+onBeforeUnmount(() => {
+  isEditing.value = false
+  editingPageId.value = null
+  editingTranslations.value = null
+})
+
 // SEO meta
 useSeoMeta({
   title: () => page.value?.seoTitle || page.value?.title || 'Page',
@@ -204,7 +256,7 @@ useHead({
 
     <!-- Page content -->
     <template v-else-if="page">
-      <CroutonPagesRenderer :page="page" />
+      <CroutonPagesRenderer :page="previewPage" />
     </template>
 
     <!-- Error / Not found -->
@@ -219,5 +271,25 @@ useHead({
         </UButton>
       </div>
     </template>
+
+    <!-- Floating edit button (FAB) — admin only, hidden when editing -->
+    <ClientOnly>
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 scale-90"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-90"
+      >
+        <button
+          v-if="isAdmin && !isEditing && page?.id"
+          class="fixed bottom-6 right-6 z-40 flex items-center justify-center size-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer"
+          @click="startEditing"
+        >
+          <UIcon name="i-lucide-pencil" class="size-5" />
+        </button>
+      </Transition>
+    </ClientOnly>
   </div>
 </template>
