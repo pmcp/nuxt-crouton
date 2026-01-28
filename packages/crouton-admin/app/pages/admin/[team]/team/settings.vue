@@ -47,14 +47,6 @@ function handleSaved() {
   })
 }
 
-// Handle theme saved event
-function handleThemeSaved() {
-  toast.add({
-    title: t('common.saved') || 'Saved',
-    description: t('teams.themeSettingsSaved') || 'Theme settings have been updated.',
-    color: 'success'
-  })
-}
 </script>
 
 <template>
@@ -99,7 +91,7 @@ function handleThemeSaved() {
 
         <template #theme>
           <div class="pt-4">
-            <TeamThemeSettings @saved="handleThemeSaved" />
+            <TeamThemeSettings />
           </div>
         </template>
       </UAccordion>
