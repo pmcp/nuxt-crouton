@@ -5,6 +5,11 @@
  * Renders an embedded collection in read-only mode using CroutonCollection.
  * Uses stateless mode to provide clean public view without admin actions.
  * Supports table, list, grid, and cards layouts.
+ *
+ * NOTE: This component must NOT use top-level await (no async setup).
+ * It is rendered via dynamic <component :is> inside BlockContent.vue
+ * which has no <Suspense> boundary. Using await would cause the
+ * component to silently fail to render.
  */
 import type { CollectionBlockAttrs } from '../../../types/blocks'
 
@@ -32,17 +37,48 @@ const pageSize = computed(() => {
 // Map layout value
 const layout = computed(() => props.attrs.layout || 'table')
 
-// Fetch collection data
-const { items, pending } = props.attrs.collection
-  ? await useCollectionQuery(props.attrs.collection, {
-      pagination: {
-        currentPage: 1,
-        pageSize: pageSize.value,
-        sortBy: 'createdAt',
-        sortDirection: 'desc'
-      }
-    })
-  : { items: ref([]), pending: ref(false) }
+// Reactive collection data - fetches when collection name changes
+const items = ref<any[]>([])
+const pending = ref(false)
+const fetchError = ref<any>(null)
+
+// Watch collection name and re-fetch when it changes
+watch(
+  () => props.attrs.collection,
+  async (collectionName) => {
+    if (!collectionName) {
+      items.value = []
+      pending.value = false
+      return
+    }
+
+    pending.value = true
+    fetchError.value = null
+
+    try {
+      const result = await useCollectionQuery(collectionName, {
+        query: computed(() => ({
+          pageSize: pageSize.value,
+          sortBy: 'createdAt',
+          sortDirection: 'desc'
+        }))
+      })
+      items.value = result.items.value || []
+
+      // Keep items in sync with future reactive updates from the query
+      watch(result.items, (newItems) => {
+        items.value = newItems || []
+      })
+    } catch (e) {
+      console.error('[CollectionBlock] Failed to fetch collection:', e)
+      fetchError.value = e
+      items.value = []
+    } finally {
+      pending.value = false
+    }
+  },
+  { immediate: true }
+)
 
 // Generate basic columns from data (if available) for table layout
 // This provides a fallback when no explicit columns are configured

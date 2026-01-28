@@ -106,7 +106,7 @@ function isParagraph(type: string): boolean {
   <div class="block-content">
 
     <template v-if="renderableBlocks.length > 0">
-      <template v-for="(block, index) in renderableBlocks" :key="index">
+      <template v-for="(block, index) in renderableBlocks" :key="(block as any).attrs?.blockId || `${block.type}-${index}`">
         <!-- Custom block components -->
         <component
           :is="getBlockComponent(block.type)"
