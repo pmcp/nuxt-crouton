@@ -792,7 +792,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
         <!-- LEFT COLUMN: Primary locale (selectable) -->
         <div class="flex flex-col min-h-0">
           <!-- Column header with dropdown -->
-          <div class="flex items-center gap-2 h-7 mb-3 border-b border-default">
+          <div class="flex items-center gap-2 h-7 mb-3">
             <USelect
               v-model="primaryEditingLocale"
               :items="allLocaleOptions"
@@ -926,7 +926,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
         <!-- RIGHT COLUMN: Secondary locale (selectable) -->
         <div class="flex flex-col min-h-0">
           <!-- Column header - matches height of left column -->
-          <div class="flex items-center gap-2 h-7 mb-3 border-b border-default">
+          <div class="flex items-center gap-2 h-7 mb-3">
             <USelect
               v-model="secondaryEditingLocale"
               :items="allLocaleOptions"

@@ -83,54 +83,52 @@ const showInMenuLabel = computed(() =>
 </script>
 
 <template>
-  <!-- Tree Layout: Compact inline display with status dots and visibility icons -->
+  <!-- Tree Layout: Two-line display -->
   <div
     v-if="layout === 'tree'"
-    class="flex items-center gap-2 flex-1 min-w-0"
+    :class="[
+      'flex items-center gap-2 flex-1 min-w-0 py-0.5',
+      !item.showInNavigation && 'opacity-60'
+    ]"
   >
-    <!-- Page type icon with tooltip -->
+    <!-- Page type icon -->
     <UTooltip :text="pageTypeInfo?.name || 'Regular Page'">
       <UIcon
         :name="pageTypeInfo?.icon || 'i-lucide-file'"
-        class="size-4 shrink-0 text-muted"
+        class="size-4 text-muted shrink-0"
       />
     </UTooltip>
 
-    <!-- Title and slug -->
+    <!-- Title and slug stacked -->
     <div class="flex-1 min-w-0">
-      <span class="text-sm font-medium truncate block">
+      <div class="text-sm font-medium truncate">
         {{ localizedTitle }}
-      </span>
-      <span class="text-xs text-muted truncate block">
+      </div>
+      <div class="text-xs text-muted truncate">
         /{{ localizedSlug }}
-      </span>
+      </div>
     </div>
 
-    <!-- Right side: indicators grouped -->
-    <div class="flex items-center gap-2 shrink-0">
-      <!-- Relative timestamp -->
-      <span class="text-xs text-muted tabular-nums">
-        {{ timeAgo }}
-      </span>
+    <!-- Icons on the right -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <!-- Hidden from menu indicator (first) -->
+      <UTooltip v-if="!item.showInNavigation" text="Hidden from navigation">
+        <UIcon
+          name="i-lucide-eye-off"
+          class="size-3.5 text-muted"
+        />
+      </UTooltip>
 
       <!-- Status dot -->
       <UTooltip :text="statusStyle.label">
-        <span :class="['block size-2.5 rounded-full', statusStyle.dotColor]" />
+        <span :class="['block size-2 rounded-full', statusStyle.dotColor]" />
       </UTooltip>
 
       <!-- Visibility icon -->
       <UTooltip :text="visibilityStyle.label">
         <UIcon
           :name="visibilityStyle.icon"
-          class="size-4 text-muted"
-        />
-      </UTooltip>
-
-      <!-- Show in menu icon -->
-      <UTooltip :text="showInMenuLabel">
-        <UIcon
-          name="i-lucide-menu"
-          :class="['size-4', item.showInNavigation ? 'text-muted' : 'opacity-30']"
+          class="size-3.5 text-muted"
         />
       </UTooltip>
 

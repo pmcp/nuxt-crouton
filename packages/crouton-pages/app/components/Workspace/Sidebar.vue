@@ -122,27 +122,22 @@ function handleCreate() {
   emit('update:modelValue', null)
   emit('create')
 }
+
+// Focus search input (exposed for keyboard shortcuts)
+function focusSearch() {
+  searchInputRef.value?.inputRef?.el?.focus()
+}
+
+// Expose methods for parent component
+defineExpose({
+  focusSearch
+})
 </script>
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- Header with title and create button -->
-    <div class="flex items-center justify-between px-3 py-2 border-b border-default">
-      <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-file-text" class="size-4 text-muted" />
-        <span class="font-medium text-sm">{{ t('pages.title') || 'Pages' }}</span>
-      </div>
-      <UButton
-        icon="i-lucide-plus"
-        size="xs"
-        color="primary"
-        variant="ghost"
-        @click="handleCreate"
-      />
-    </div>
-
     <!-- Search -->
-    <div class="px-3 py-2 border-b border-default">
+    <div class="px-3 py-2">
       <UInput
         ref="searchInputRef"
         v-model="searchQuery"
@@ -191,6 +186,7 @@ function handleCreate() {
         :hierarchy="hierarchyConfig"
         :card-component="CroutonPagesCard"
         label-key="title"
+        hide-actions
         @select="handleSelect"
         @move="handleMove"
       />

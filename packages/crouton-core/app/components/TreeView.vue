@@ -18,6 +18,8 @@ interface Props {
   columnId?: string
   /** Show collaboration presence badges on tree nodes */
   showCollabPresence?: boolean | CollabPresenceConfig
+  /** Hide the actions dropdown menu on tree nodes */
+  hideActions?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -26,7 +28,8 @@ const props = withDefaults(defineProps<Props>(), {
   labelKey: 'name',
   cardComponent: null,
   columnId: '',
-  showCollabPresence: false
+  showCollabPresence: false,
+  hideActions: false
 })
 
 const emit = defineEmits<{
@@ -176,6 +179,7 @@ onMounted(async () => {
           :column-id="columnId"
           :allow-nesting="hierarchy.allowNesting !== false"
           :show-collab-presence="showCollabPresence"
+          :hide-actions="hideActions"
           @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
           @select="emit('select', $event)"
         />

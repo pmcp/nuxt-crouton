@@ -2,12 +2,13 @@
 /**
  * Pages Workspace - Finder-style Page Editor
  *
- * A split-view workspace for managing pages:
- * - Left sidebar: Page tree with search
+ * A split-view workspace for managing pages using UDashboardPanel:
+ * - Left panel: Resizable page tree with search
  * - Right panel: Inline page editor
  *
  * URL state is preserved via query param: ?page=<pageId>
  */
+import { breakpointsTailwind, onKeyStroke } from '@vueuse/core'
 
 definePageMeta({
   layout: 'admin',
@@ -95,51 +96,112 @@ function handleCancel() {
 
 // Show editor when we have a selection or in create mode
 const showEditor = computed(() => mode.value === 'create' || (mode.value === 'edit' && selectedPageId.value))
+
+// Mobile handling
+const breakpoints = useBreakpoints(breakpointsTailwind)
+const isMobile = breakpoints.smaller('lg')
+
+const isEditorPanelOpen = computed({
+  get() {
+    return showEditor.value
+  },
+  set(value: boolean) {
+    if (!value) {
+      selectedPageId.value = null
+      mode.value = 'view'
+    }
+  }
+})
+
+// Sidebar ref for keyboard shortcuts
+const sidebarRef = ref<{ focusSearch: () => void } | null>(null)
+
+// Keyboard shortcuts
+// N - Create new page (only when not in an input)
+onKeyStroke('n', (e) => {
+  const target = e.target as HTMLElement
+  const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+  if (!isInput && !showEditor.value) {
+    e.preventDefault()
+    handleCreate()
+  }
+})
+
+// / - Focus search (only when not in an input)
+onKeyStroke('/', (e) => {
+  const target = e.target as HTMLElement
+  const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+  if (!isInput) {
+    e.preventDefault()
+    sidebarRef.value?.focusSearch()
+  }
+})
 </script>
 
 <template>
-  <UDashboardPanel grow>
-    <UDashboardNavbar :title="t('pages.workspace.title') || 'Pages Workspace'">
+  <!-- Panel 1: Resizable sidebar with page tree -->
+  <UDashboardPanel
+    id="pages-sidebar"
+    :default-size="25"
+    :min-size="15"
+    :max-size="40"
+    resizable
+  >
+    <UDashboardNavbar :title="t('pages.workspace.title') || 'Pages'">
       <template #leading>
-        <UIcon name="i-lucide-layout-grid" class="size-5" />
+        <UDashboardSidebarCollapse />
       </template>
 
       <template #right>
-        <UTooltip text="Switch to list view">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-lucide-list"
-            size="sm"
-            :to="`/admin/${route.params.team}/pages`"
-          />
-        </UTooltip>
+        <UButton
+          color="primary"
+          variant="ghost"
+          icon="i-lucide-plus"
+          size="sm"
+          @click="handleCreate"
+        />
       </template>
     </UDashboardNavbar>
 
-    <CroutonPagesWorkspaceLayout class="flex-1">
-      <template #sidebar>
-        <CroutonPagesWorkspaceSidebar
-          v-model="selectedPageId"
-          @select="handleSelectPage"
-          @create="handleCreate"
-        />
-      </template>
+    <CroutonPagesWorkspaceSidebar
+      ref="sidebarRef"
+      v-model="selectedPageId"
+      @select="handleSelectPage"
+      @create="handleCreate"
+    />
+  </UDashboardPanel>
 
-      <!-- Editor or empty state -->
+  <!-- Panel 2: Editor (desktop) -->
+  <UDashboardPanel id="pages-editor" class="hidden lg:flex">
+    <template v-if="showEditor">
       <CroutonPagesWorkspaceEditor
-        v-if="showEditor"
         :key="selectedPageId || 'new'"
         :page-id="selectedPageId"
         @save="handleSave"
         @delete="handleDelete"
         @cancel="handleCancel"
       />
+    </template>
 
-      <CroutonPagesWorkspaceEmptyState
-        v-else
-        @create="handleCreate"
-      />
-    </CroutonPagesWorkspaceLayout>
+    <CroutonPagesWorkspaceEmptyState
+      v-else
+      @create="handleCreate"
+    />
   </UDashboardPanel>
+
+  <!-- Mobile: Slideover for editor -->
+  <ClientOnly>
+    <USlideover v-if="isMobile" v-model:open="isEditorPanelOpen" side="right">
+      <template #content>
+        <CroutonPagesWorkspaceEditor
+          v-if="showEditor"
+          :key="selectedPageId || 'new'"
+          :page-id="selectedPageId"
+          @save="handleSave"
+          @delete="handleDelete"
+          @cancel="handleCancel"
+        />
+      </template>
+    </USlideover>
+  </ClientOnly>
 </template>

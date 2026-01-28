@@ -23,6 +23,8 @@ interface Props {
   allowNesting?: boolean
   /** Show collaboration presence badges */
   showCollabPresence?: boolean | CollabPresenceConfig
+  /** Hide the actions dropdown menu */
+  hideActions?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -32,7 +34,8 @@ const props = withDefaults(defineProps<Props>(), {
   cardComponent: null,
   columnId: '',
   allowNesting: true,
-  showCollabPresence: false
+  showCollabPresence: false,
+  hideActions: false
 })
 
 const emit = defineEmits<{
@@ -416,7 +419,7 @@ onBeforeUnmount(() => {
       />
 
       <!-- Actions dropdown -->
-      <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+      <div v-if="!hideActions" class="opacity-0 group-hover:opacity-100 transition-opacity">
         <UDropdownMenu
           :items="getItemActions(item)"
           :content="{ align: 'end' }"
@@ -455,6 +458,7 @@ onBeforeUnmount(() => {
         :column-id="columnId"
         :allow-nesting="allowNesting"
         :show-collab-presence="showCollabPresence"
+        :hide-actions="hideActions"
         @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
         @select="emit('select', $event)"
       />
