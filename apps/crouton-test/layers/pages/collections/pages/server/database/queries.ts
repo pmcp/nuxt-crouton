@@ -294,15 +294,78 @@ export async function updatePositionPagesPage(
   }
 
   const oldPath = current.path
+  const oldParentId = current.parentId
 
-  // Update the item itself
+  // Reorder siblings in the target parent so order values are sequential.
+  // 1. Get all siblings in the target parent (excluding the moved item)
+  const targetParentCondition = newParentId
+    ? eq(tables.pagesPages.parentId, newParentId)
+    : sql`${tables.pagesPages.parentId} IS NULL`
+
+  const siblings = await (db as any)
+    .select({ id: tables.pagesPages.id, order: tables.pagesPages.order })
+    .from(tables.pagesPages)
+    .where(
+      and(
+        eq(tables.pagesPages.teamId, teamId),
+        targetParentCondition,
+        sql`${tables.pagesPages.id} != ${id}`
+      )
+    )
+    .orderBy(tables.pagesPages.order) as Array<{ id: string; order: number }>
+
+  // 2. Insert the moved item at the requested position
+  const clampedOrder = Math.max(0, Math.min(newOrder, siblings.length))
+  siblings.splice(clampedOrder, 0, { id, order: clampedOrder })
+
+  // 3. Assign sequential order values to all siblings
+  for (let i = 0; i < siblings.length; i++) {
+    if (siblings[i]!.id === id) continue // skip moved item, updated below
+    if (siblings[i]!.order !== i) {
+      await (db as any)
+        .update(tables.pagesPages)
+        .set({ order: i })
+        .where(eq(tables.pagesPages.id, siblings[i]!.id))
+    }
+  }
+
+  // 4. If the moved item left a gap in the old parent, reorder those siblings too
+  if (oldParentId !== newParentId) {
+    const oldParentCondition = oldParentId
+      ? eq(tables.pagesPages.parentId, oldParentId)
+      : sql`${tables.pagesPages.parentId} IS NULL`
+
+    const oldSiblings = await (db as any)
+      .select({ id: tables.pagesPages.id, order: tables.pagesPages.order })
+      .from(tables.pagesPages)
+      .where(
+        and(
+          eq(tables.pagesPages.teamId, teamId),
+          oldParentCondition,
+          sql`${tables.pagesPages.id} != ${id}`
+        )
+      )
+      .orderBy(tables.pagesPages.order) as Array<{ id: string; order: number }>
+
+    for (let i = 0; i < oldSiblings.length; i++) {
+      if (oldSiblings[i]!.order !== i) {
+        await (db as any)
+          .update(tables.pagesPages)
+          .set({ order: i })
+          .where(eq(tables.pagesPages.id, oldSiblings[i]!.id))
+      }
+    }
+  }
+
+  // 5. Update the moved item itself
+  const movedOrder = clampedOrder
   const [updated] = await (db as any)
     .update(tables.pagesPages)
     .set({
       parentId: newParentId,
       path: newPath,
       depth: newDepth,
-      order: newOrder
+      order: movedOrder
     })
     .where(
       and(
