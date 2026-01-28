@@ -62,6 +62,14 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     transform: (data: any) => data?.data || data || []
   })
 
+  // Refresh navigation when pages collection is mutated (reorder, move, create, update, delete)
+  const nuxtApp = useNuxtApp()
+  nuxtApp.hook('crouton:mutation' as any, (event: any) => {
+    if (event?.collection === 'pagesPages') {
+      refresh()
+    }
+  })
+
   // Build hierarchical navigation tree
   const navigation = computed<NavigationItem[]>(() => {
     if (!pages.value || !Array.isArray(pages.value)) return []
@@ -115,7 +123,7 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
 
     // Sort by order at each level
     const sortByOrder = (items: NavigationItem[]) => {
-      items.sort((a, b) => a.order - b.order)
+      items.sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))
       items.forEach(item => {
         if (item.children?.length) {
           sortByOrder(item.children)

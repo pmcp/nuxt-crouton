@@ -50,7 +50,7 @@ const buildTree = (items: any[], parentId: string | null = null): any[] => {
   if (!items) return []
   return items
     .filter((item: any) => item.parentId === parentId)
-    .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+    .sort((a: any, b: any) => (a.order || 0) - (b.order || 0) || (a.id || '').localeCompare(b.id || ''))
     .map((item: any) => ({
       ...item,
       children: buildTree(items, item.id)

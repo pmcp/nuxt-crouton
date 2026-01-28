@@ -132,7 +132,7 @@ function buildTree(items: any[]): TreeNode[] {
 
   // Sort by order at each level
   const sortByOrder = (nodes: TreeNode[]) => {
-    nodes.sort((a, b) => a.order - b.order)
+    nodes.sort((a, b) => a.order - b.order || (a.id || '').localeCompare(b.id || ''))
     nodes.forEach(n => sortByOrder(n.children))
   }
   sortByOrder(roots)

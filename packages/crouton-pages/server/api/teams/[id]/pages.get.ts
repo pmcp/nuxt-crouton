@@ -130,7 +130,8 @@ export default defineEventHandler(async (event) => {
         .where(and(...conditions))
         .orderBy(
           asc(pagesSchema.pagesPages.depth),
-          asc(pagesSchema.pagesPages.order)
+          asc(pagesSchema.pagesPages.order),
+          asc(pagesSchema.pagesPages.id)
         )
 
       // Resolve translated values if locale is provided

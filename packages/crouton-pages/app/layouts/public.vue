@@ -11,11 +11,11 @@
  * - full-screen: No padding, full viewport (for landing pages)
  *
  * Inline editing:
+ * - A floating pages tree panel slides in from the left for page navigation.
  * - A floating editor card slides in from the right, below the nav.
- * - The left edge has a drag handle to resize the panel wider/narrower.
- * - When the panel is wide enough to overlap page content, the content
- *   smoothly slides left to make room.
- * - On mobile the editor opens as a slideover instead.
+ * - Both panels have drag handles to resize wider/narrower.
+ * - Main content padding adjusts on both sides to avoid overlap.
+ * - On mobile the editor opens as a slideover instead (no tree panel).
  */
 import { useMediaQuery } from '@vueuse/core'
 
@@ -29,15 +29,25 @@ const editingPageId = useState<string | null>('editingPageId', () => null)
 // Responsive: use slideover on mobile
 const isDesktop = useMediaQuery('(min-width: 1024px)')
 
-// --- Resizable editor panel ---
+// --- Shared panel constants ---
+const PANEL_GAP = 16 // gap from viewport edge (left-4 / right-4)
+const PANEL_TOP = 80 // top-20 = 5rem
+const PANEL_BOTTOM = 16 // bottom-4
+
+// --- Resizable editor panel (right) ---
 const EDITOR_MIN_WIDTH = 360
 const EDITOR_DEFAULT_WIDTH = 480
-const EDITOR_RIGHT_GAP = 16 // right-4 = 1rem = 16px
-const EDITOR_TOP_GAP = 80 // top-20 = 5rem = 80px
-const EDITOR_BOTTOM_GAP = 16 // bottom-4
 
 const editorWidth = ref(EDITOR_DEFAULT_WIDTH)
 const isDragging = ref(false)
+
+// --- Resizable tree panel (left) ---
+const TREE_MIN_WIDTH = 200
+const TREE_MAX_WIDTH = 400
+const TREE_DEFAULT_WIDTH = 280
+
+const treeWidth = ref(TREE_DEFAULT_WIDTH)
+const isTreeDragging = ref(false)
 
 // Clamp editor width to viewport bounds
 function clampWidth(w: number): number {
@@ -70,19 +80,56 @@ function onDragStart(e: PointerEvent) {
   document.addEventListener('pointerup', onUp)
 }
 
+// Clamp tree width
+function clampTreeWidth(w: number): number {
+  return Math.max(TREE_MIN_WIDTH, Math.min(w, TREE_MAX_WIDTH))
+}
+
+// Drag handle logic for tree panel (right edge — dragging right = wider)
+function onTreeDragStart(e: PointerEvent) {
+  e.preventDefault()
+  isTreeDragging.value = true
+  const startX = e.clientX
+  const startWidth = treeWidth.value
+
+  const onMove = (ev: PointerEvent) => {
+    const delta = ev.clientX - startX
+    treeWidth.value = clampTreeWidth(startWidth + delta)
+  }
+
+  const onUp = () => {
+    isTreeDragging.value = false
+    document.removeEventListener('pointermove', onMove)
+    document.removeEventListener('pointerup', onUp)
+  }
+
+  document.addEventListener('pointermove', onMove)
+  document.addEventListener('pointerup', onUp)
+}
+
+// Handle tree page selection
+function onTreeSelect(page: any) {
+  editingPageId.value = page?.id ?? null
+}
+
 // Compute how much right padding the main content needs so it doesn't
 // sit underneath the editor panel. Only applies when editing on desktop.
 const contentPaddingRight = computed(() => {
   if (!isEditing.value || !isDesktop.value) return 0
-  // The editor occupies editorWidth + EDITOR_RIGHT_GAP from the right edge.
-  // Add a small gap (24px) between content and editor.
-  return editorWidth.value + EDITOR_RIGHT_GAP + 24
+  return editorWidth.value + PANEL_GAP + 24
 })
 
-// Reset editor width when closing
+// Compute how much left padding the main content needs for the tree panel.
+const contentPaddingLeft = computed(() => {
+  if (!isEditing.value || !isDesktop.value) return 0
+  return treeWidth.value + PANEL_GAP + 24
+})
+
+// Reset panel widths when closing
 watch(isEditing, (editing) => {
   if (!editing) {
     editorWidth.value = EDITOR_DEFAULT_WIDTH
+    treeWidth.value = TREE_DEFAULT_WIDTH
   }
 })
 
@@ -146,12 +193,16 @@ const mainClasses = computed(() => {
   }
 })
 
-// Dynamic inline style for main content: adds right padding when editor is open
+// Dynamic inline style for main content: adds padding when panels are open
 const mainStyle = computed(() => {
+  const style: Record<string, string> = {}
   if (contentPaddingRight.value > 0) {
-    return { paddingRight: `${contentPaddingRight.value}px` }
+    style.paddingRight = `${contentPaddingRight.value}px`
   }
-  return {}
+  if (contentPaddingLeft.value > 0) {
+    style.paddingLeft = `${contentPaddingLeft.value}px`
+  }
+  return style
 })
 
 // Handle editor save
@@ -192,7 +243,52 @@ const slideoverOpen = computed({
       <slot />
     </main>
 
-    <!-- Desktop: Floating resizable editor card -->
+    <!-- Desktop: Floating pages tree panel (left) -->
+    <ClientOnly>
+      <Transition
+        enter-active-class="transition-transform duration-300 ease-out"
+        enter-from-class="-translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-active-class="transition-transform duration-200 ease-in"
+        leave-from-class="translate-x-0"
+        leave-to-class="-translate-x-full"
+      >
+        <UCard
+          v-if="isEditing && isDesktop"
+          variant="outline"
+          class="fixed z-30 shadow-2xl overflow-hidden !p-0"
+          :ui="{ root: 'flex flex-col', body: 'flex-1 min-h-0 !p-0' }"
+          :style="{
+            top: `${PANEL_TOP}px`,
+            left: `${PANEL_GAP}px`,
+            bottom: `${PANEL_BOTTOM}px`,
+            width: `${treeWidth}px`
+          }"
+        >
+          <!-- Drag handle (right edge) -->
+          <div
+            class="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-10 group flex items-center"
+            @pointerdown="onTreeDragStart"
+          >
+            <div
+              class="w-1 h-12 rounded-full mx-auto transition-colors"
+              :class="isTreeDragging ? 'bg-primary' : 'bg-muted/40 group-hover:bg-muted'"
+            />
+          </div>
+
+          <!-- Tree content -->
+          <div class="flex-1 min-w-0 min-h-0 overflow-y-auto">
+            <CroutonPagesWorkspaceSidebar
+              :model-value="editingPageId"
+              @update:model-value="editingPageId = $event"
+              @select="onTreeSelect"
+            />
+          </div>
+        </UCard>
+      </Transition>
+    </ClientOnly>
+
+    <!-- Desktop: Floating resizable editor card (right) -->
     <ClientOnly>
       <Transition
         enter-active-class="transition-transform duration-300 ease-out"
@@ -208,9 +304,9 @@ const slideoverOpen = computed({
           class="fixed z-30 shadow-2xl overflow-hidden !p-0"
           :ui="{ root: 'flex flex-col', body: 'flex-1 min-h-0 !p-0' }"
           :style="{
-            top: `${EDITOR_TOP_GAP}px`,
-            right: `${EDITOR_RIGHT_GAP}px`,
-            bottom: `${EDITOR_BOTTOM_GAP}px`,
+            top: `${PANEL_TOP}px`,
+            right: `${PANEL_GAP}px`,
+            bottom: `${PANEL_BOTTOM}px`,
             width: `${editorWidth}px`
           }"
         >
@@ -238,9 +334,9 @@ const slideoverOpen = computed({
       </Transition>
     </ClientOnly>
 
-    <!-- Disable text selection while dragging -->
+    <!-- Disable text selection while dragging either panel -->
     <Teleport to="body">
-      <div v-if="isDragging" class="fixed inset-0 z-50 cursor-col-resize" />
+      <div v-if="isDragging || isTreeDragging" class="fixed inset-0 z-50 cursor-col-resize" />
     </Teleport>
 
     <!-- Mobile: Editor as slideover -->
