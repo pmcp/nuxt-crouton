@@ -61,12 +61,12 @@ const COLOR_HEX_MAP: Record<string, string> = {
   fuchsia: '#d946ef',
   pink: '#ec4899',
   rose: '#f43f5e',
-  // Neutral colors (900 shade - matches dark mode backgrounds)
-  slate: '#0f172a',
-  gray: '#111827',
-  zinc: '#18181b',
-  neutral: '#171717',
-  stone: '#1c1917'
+  // Neutral colors (500 shade - visible in both light/dark modes)
+  slate: '#64748b',
+  gray: '#6b7280',
+  zinc: '#71717a',
+  neutral: '#737373',
+  stone: '#78716c'
 }
 
 // Size classes for swatches

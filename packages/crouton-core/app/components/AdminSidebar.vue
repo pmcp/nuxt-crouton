@@ -161,6 +161,7 @@ const teamItem = computed<NavigationMenuItem | null>(() => {
   if (!teamParam) return null
 
   const teamPath = `/admin/${teamParam}/team`
+  const translationsPath = `/admin/${teamParam}/translations`
   return {
     label: t('navigation.team') || 'Team',
     icon: 'i-lucide-users',
@@ -179,28 +180,18 @@ const teamItem = computed<NavigationMenuItem | null>(() => {
         active: route.path === `${teamPath}/invitations` || route.path === `${teamPath}/invitations/`
       },
       {
-        label: t('teams.teamSettings') || 'Settings',
+        label: t('teams.teamSettings') || 'Team Settings',
         icon: 'i-lucide-settings',
         to: `${teamPath}/settings`,
         active: route.path === `${teamPath}/settings` || route.path === `${teamPath}/settings/`
+      },
+      {
+        label: t('navigation.translations') || 'Translations',
+        icon: 'i-lucide-languages',
+        to: translationsPath,
+        active: route.path === translationsPath || route.path.startsWith(`${translationsPath}/`)
       }
     ]
-  }
-})
-
-// Translations item - standalone nav item for i18n management
-const translationsItem = computed<NavigationMenuItem | null>(() => {
-  if (props.context === 'super') return null
-
-  const teamParam = teamSlugRef.value || teamIdRef.value || ''
-  if (!teamParam) return null
-
-  const translationsPath = `/admin/${teamParam}/translations`
-  return {
-    label: t('navigation.translations') || 'Translations',
-    icon: 'i-lucide-languages',
-    to: translationsPath,
-    active: route.path === translationsPath || route.path.startsWith(`${translationsPath}/`)
   }
 })
 
@@ -261,22 +252,17 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     mainItems.push(...superAdminItems.value)
   }
 
-  // 3. For team admin: Team group (Members, Invitations, Settings)
+  // 3. For team admin: Team group (Members, Invitations, Settings, Translations)
   if (teamItem.value) {
     mainItems.push(teamItem.value)
   }
 
-  // 4. Translations (standalone item)
-  if (translationsItem.value) {
-    mainItems.push(translationsItem.value)
-  }
-
-  // 5. Collections group (registered crouton collections)
+  // 4. Collections group (registered crouton collections)
   if (collectionsItem.value) {
     mainItems.push(collectionsItem.value)
   }
 
-  // 6. App groups (Bookings, etc.) - each app gets its own group
+  // 5. App groups (Bookings, etc.) - each app gets its own group
   mainItems.push(...appGroups.value)
 
   // No bottom items - everything is in the main navigation now
