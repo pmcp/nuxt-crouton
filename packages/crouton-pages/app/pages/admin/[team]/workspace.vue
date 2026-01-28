@@ -18,8 +18,6 @@ definePageMeta({
 const { t } = useT()
 const route = useRoute()
 const router = useRouter()
-const crouton = useCrouton()
-
 // Selected page ID from URL or state
 const selectedPageId = ref<string | null>(null)
 
@@ -67,23 +65,10 @@ function handleSave(savedPage: any) {
   // Tree will auto-refresh via query invalidation
 }
 
-// Handle delete
-async function handleDelete(pageId: string) {
-  // Open delete confirmation using standard Crouton flow
-  crouton.open('delete', 'pagesPages', [pageId])
-
-  // Watch for close and refresh
-  const unwatch = watch(
-    () => crouton.showCrouton.value,
-    (show) => {
-      if (!show) {
-        // Clear selection after delete
-        selectedPageId.value = null
-        mode.value = 'view'
-        unwatch()
-      }
-    }
-  )
+// Handle delete — editor already performed the deletion, just clean up UI
+function handleDelete() {
+  selectedPageId.value = null
+  mode.value = 'view'
 }
 
 // Handle cancel (go back to view mode)

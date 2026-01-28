@@ -391,11 +391,27 @@ async function handleSubmit() {
   }
 }
 
-// Delete handler
+// Delete handler — two-click confirm pattern
+const confirmingDelete = ref(false)
+let deleteResetTimer: ReturnType<typeof setTimeout> | null = null
+
 function handleDelete() {
-  if (state.value.id) {
-    emit('delete', state.value.id)
+  if (!state.value.id) return
+
+  if (!confirmingDelete.value) {
+    confirmingDelete.value = true
+    deleteResetTimer = setTimeout(() => {
+      confirmingDelete.value = false
+    }, 3000)
+    return
   }
+
+  // Second click — actually delete
+  if (deleteResetTimer) clearTimeout(deleteResetTimer)
+  confirmingDelete.value = false
+  deleteItems([state.value.id]).then(() => {
+    emit('delete', state.value.id!)
+  })
 }
 
 // Translatable fields
@@ -458,7 +474,7 @@ defineExpose({ state })
       @submit="handleSubmit"
     >
       <!-- Header Bar -->
-      <div class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-default bg-elevated/30">
+       <div class="flex flex-wrap items-center gap-3 min-h-12 px-4 py-2 border-b border-default bg-elevated/30">
         <!-- Status, Page Type, Visibility -->
         <UFieldGroup>
           <!-- Status -->
@@ -623,38 +639,40 @@ defineExpose({ state })
 
         <div class="flex-1" />
 
-        <!-- Delete & Save -->
-        <UFieldGroup>
-          <UButton
-            v-if="action === 'update' && state.id"
-            color="error"
-            variant="ghost"
-            icon="i-lucide-trash-2"
-            size="xs"
-            @click="handleDelete"
-          />
+        <!-- Delete (two-click confirm) -->
+        <UButton
+          v-if="action === 'update' && state.id"
+          color="error"
+          :variant="confirmingDelete ? 'soft' : 'ghost'"
+          :icon="confirmingDelete ? undefined : 'i-lucide-trash-2'"
+          size="xs"
+          @click="handleDelete"
+          @blur="confirmingDelete = false"
+        >
+          <template v-if="confirmingDelete">Delete?</template>
+        </UButton>
 
-          <UButton
-            type="submit"
-            variant="soft"
-            color="primary"
-            size="xs"
-            icon="i-lucide-save"
-            :loading="isSaving"
-          >
-            {{ action === 'create' ? 'Create' : 'Save' }}
-          </UButton>
+        <!-- Save -->
+        <UButton
+          type="submit"
+          variant="soft"
+          color="primary"
+          size="xs"
+          icon="i-lucide-save"
+          :loading="isSaving"
+        >
+          {{ action === 'create' ? 'Create' : 'Save' }}
+        </UButton>
 
-          <!-- Close button (shown in inline editor context) -->
-          <UButton
-            v-if="showClose"
-            variant="ghost"
-            color="neutral"
-            icon="i-lucide-x"
-            size="xs"
-            @click="emit('close')"
-          />
-        </UFieldGroup>
+        <!-- Close button (shown in inline editor context) -->
+        <UButton
+          v-if="showClose"
+          variant="ghost"
+          color="neutral"
+          icon="i-lucide-x"
+          size="xs"
+          @click="emit('close')"
+        />
       </div>
 
       <!-- Content -->
