@@ -39,6 +39,7 @@ const emit = defineEmits<{
   move: [id: string, newParentId: string | null, newOrder: number, targetColumnId: string | null]
   select: [item: TreeNode]
   create: [parentId: string | null]
+  createSibling: [siblingId: string]
 }>()
 
 const rootRef = ref<HTMLElement | null>(null)
@@ -188,6 +189,7 @@ onMounted(async () => {
           @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
           @select="emit('select', $event)"
           @create="emit('create', $event)"
+          @create-sibling="emit('createSibling', $event)"
         />
       </div>
 
@@ -222,14 +224,15 @@ onMounted(async () => {
 <style>
 /* SortableJS dynamic classes - must be global (not scoped) */
 
-/* Ghost = placeholder showing where item will drop */
+/* Ghost = thin line indicator showing where item will drop */
 .tree-ghost {
-  opacity: 0.5;
-  border-radius: 0.375rem;
-  background-color: color-mix(in oklch, var(--ui-primary) 10%, transparent);
+  opacity: 1;
+  border-radius: 1px;
+  background-color: var(--ui-primary);
   margin: 0;
   padding: 0;
-  max-height: 2.5rem;
+  max-height: 2px;
+  min-height: 2px;
   overflow: hidden;
 }
 

@@ -39,6 +39,10 @@ const CroutonPagesCard = resolveComponent('CroutonPagesCard') as Component
 const searchQuery = ref('')
 const searchInputRef = ref<HTMLInputElement | null>(null)
 
+// Draft toggle and archived section state
+const showDrafts = ref(false)
+const archivedExpanded = ref(false)
+
 // Fetch pages data
 const { items: pages, pending, refresh } = await useCollectionQuery<any>('pagesPages')
 
@@ -66,18 +70,43 @@ const getLocalizedTitle = (page: any): string => {
     || 'Untitled'
 }
 
-// Filter pages by search query
+// Filter pages for the main tree (excludes archived, optionally excludes drafts)
 const filteredPages = computed(() => {
-  if (!pages.value || !searchQuery.value.trim()) {
-    return pages.value || []
+  if (!pages.value) return []
+
+  let result = pages.value.filter((page: any) => {
+    // Always exclude archived from main tree
+    if (page.status === 'archived') return false
+    // Exclude drafts unless toggle is on
+    if (!showDrafts.value && page.status === 'draft') return false
+    return true
+  })
+
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter((page: any) => {
+      const title = getLocalizedTitle(page).toLowerCase()
+      const slug = getSlugForLocale(page, locale.value).toLowerCase()
+      return title.includes(query) || slug.includes(query)
+    })
   }
 
-  const query = searchQuery.value.toLowerCase()
-  return pages.value.filter((page: any) => {
-    const title = getLocalizedTitle(page).toLowerCase()
-    const slug = getSlugForLocale(page, locale.value).toLowerCase()
-    return title.includes(query) || slug.includes(query)
-  })
+  return result
+})
+
+// Archived pages (separate flat list)
+const archivedPages = computed(() => {
+  if (!pages.value) return []
+  let archived = pages.value.filter((p: any) => p.status === 'archived')
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    archived = archived.filter((p: any) => {
+      const title = getLocalizedTitle(p).toLowerCase()
+      const slug = getSlugForLocale(p, locale.value).toLowerCase()
+      return title.includes(query) || slug.includes(query)
+    })
+  }
+  return archived
 })
 
 // Tree structure for display
@@ -123,9 +152,16 @@ function handleCreate(parentId?: string | null) {
   emit('create', parentId ?? null)
 }
 
-// Handle tree add button (create child page)
+// Handle tree add child page
 function handleTreeCreate(parentId: string | null) {
   handleCreate(parentId)
+}
+
+// Handle tree add sibling page (create below the given page)
+function handleTreeCreateSibling(siblingId: string) {
+  // Find the sibling page to get its parentId
+  const sibling = pages.value?.find((p: any) => p.id === siblingId)
+  handleCreate(sibling?.parentId ?? null)
 }
 
 // Focus search input (exposed for keyboard shortcuts)
@@ -141,15 +177,21 @@ defineExpose({
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- Search (min-h matches editor header bar) -->
-    <div class="flex items-center min-h-12 px-4 py-2 border-b border-default bg-elevated/30">
+    <!-- Search + Draft toggle (min-h matches editor header bar) -->
+    <div class="flex items-center gap-2 min-h-12 px-4 py-2 border-b border-default bg-elevated/30">
       <UInput
         ref="searchInputRef"
         v-model="searchQuery"
         icon="i-lucide-search"
         :placeholder="t('pages.search') || 'Search pages...'"
         size="sm"
-        class="w-full"
+        class="flex-1"
+      />
+      <USwitch
+        v-model="showDrafts"
+        size="xs"
+        label="Drafts"
+        :ui="{ label: 'text-xs text-muted' }"
       />
     </div>
 
@@ -196,7 +238,43 @@ defineExpose({
         @select="handleSelect"
         @move="handleMove"
         @create="handleTreeCreate"
+        @create-sibling="handleTreeCreateSibling"
       />
+
+      <!-- Archived section -->
+      <div v-if="archivedPages.length" class="border-t border-default mt-2">
+        <button
+          class="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted hover:text-default transition-colors"
+          @click="archivedExpanded = !archivedExpanded"
+        >
+          <UIcon
+            name="i-lucide-chevron-right"
+            class="size-4 shrink-0 transition-transform duration-200"
+            :class="archivedExpanded && 'rotate-90'"
+          />
+          <UIcon name="i-lucide-archive" class="size-4 shrink-0" />
+          <span class="flex-1 text-left">Archived</span>
+          <UBadge size="sm" color="neutral" variant="subtle">
+            {{ archivedPages.length }}
+          </UBadge>
+        </button>
+
+        <div v-if="archivedExpanded" class="pb-2">
+          <div
+            v-for="page in archivedPages"
+            :key="page.id"
+            class="px-2 py-1 rounded-md hover:bg-elevated cursor-pointer transition-colors"
+            @click="handleSelect(page)"
+          >
+            <component
+              :is="CroutonPagesCard"
+              :item="page"
+              layout="tree"
+              collection="pagesPages"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

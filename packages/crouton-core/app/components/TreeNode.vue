@@ -45,6 +45,7 @@ const emit = defineEmits<{
   move: [id: string, newParentId: string | null, newOrder: number, targetColumnId: string | null]
   select: [item: TreeNodeType]
   create: [parentId: string | null]
+  createSibling: [siblingId: string]
 }>()
 
 // Refs
@@ -437,17 +438,36 @@ onBeforeUnmount(() => {
           />
         </UDropdownMenu>
       </div>
-    </div>
 
-    <!-- Hover add button (matches bookings calendar pattern) -->
-    <button
-      v-if="showAddButton"
-      type="button"
-      class="flex items-center justify-center h-6 rounded-lg bg-neutral-700 opacity-0 cursor-pointer transition-all duration-200 ease-out group-hover/node:opacity-100 hover:bg-neutral-600 active:scale-[0.98]"
-      @click.stop="emit('create', item.id)"
-    >
-      <UIcon name="i-lucide-plus" class="size-3.5 text-neutral-300" />
-    </button>
+      <!-- Inline add dropdown (replaces full-width bar) -->
+      <div v-if="showAddButton" class="opacity-0 group-hover:opacity-100 transition-opacity">
+        <UDropdownMenu
+          :items="[
+            [
+              {
+                label: 'Add child page',
+                icon: 'i-lucide-corner-down-right',
+                onSelect: () => emit('create', item.id)
+              },
+              {
+                label: 'Add page below',
+                icon: 'i-lucide-arrow-down',
+                onSelect: () => emit('createSibling', item.id)
+              }
+            ]
+          ]"
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            icon="i-lucide-plus"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            @click.stop
+          />
+        </UDropdownMenu>
+      </div>
+    </div>
 
     <!-- Children container (SortableJS target) -->
     <div
@@ -477,6 +497,7 @@ onBeforeUnmount(() => {
         @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
         @select="emit('select', $event)"
         @create="emit('create', $event)"
+        @create-sibling="emit('createSibling', $event)"
       />
     </div>
   </div>
