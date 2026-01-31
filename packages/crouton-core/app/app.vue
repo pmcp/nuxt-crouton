@@ -1,8 +1,10 @@
 <template>
   <UApp>
-    <NuxtLayout>
-      <NuxtPage />
-      <CroutonForm />
-    </NuxtLayout>
+    <div class="bg-default" data-vaul-drawer-wrapper>
+      <NuxtLayout>
+        <NuxtPage />
+        <CroutonForm />
+      </NuxtLayout>
+    </div>
   </UApp>
 </template>

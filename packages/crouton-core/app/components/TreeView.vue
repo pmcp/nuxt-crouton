@@ -20,6 +20,8 @@ interface Props {
   showCollabPresence?: boolean | CollabPresenceConfig
   /** Hide the actions dropdown menu on tree nodes */
   hideActions?: boolean
+  /** Show a hover "+" add button below each node */
+  showAddButton?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,12 +31,14 @@ const props = withDefaults(defineProps<Props>(), {
   cardComponent: null,
   columnId: '',
   showCollabPresence: false,
-  hideActions: false
+  hideActions: false,
+  showAddButton: false
 })
 
 const emit = defineEmits<{
   move: [id: string, newParentId: string | null, newOrder: number, targetColumnId: string | null]
   select: [item: TreeNode]
+  create: [parentId: string | null]
 }>()
 
 const rootRef = ref<HTMLElement | null>(null)
@@ -180,8 +184,10 @@ onMounted(async () => {
           :allow-nesting="hierarchy.allowNesting !== false"
           :show-collab-presence="showCollabPresence"
           :hide-actions="hideActions"
+          :show-add-button="showAddButton"
           @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
           @select="emit('select', $event)"
+          @create="emit('create', $event)"
         />
       </div>
 

@@ -25,6 +25,8 @@ interface Props {
   showCollabPresence?: boolean | CollabPresenceConfig
   /** Hide the actions dropdown menu */
   hideActions?: boolean
+  /** Show a hover "+" add button below each node */
+  showAddButton?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -35,12 +37,14 @@ const props = withDefaults(defineProps<Props>(), {
   columnId: '',
   allowNesting: true,
   showCollabPresence: false,
-  hideActions: false
+  hideActions: false,
+  showAddButton: false
 })
 
 const emit = defineEmits<{
   move: [id: string, newParentId: string | null, newOrder: number, targetColumnId: string | null]
   select: [item: TreeNodeType]
+  create: [parentId: string | null]
 }>()
 
 // Refs
@@ -333,7 +337,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="tree-node"
+    class="tree-node group/node"
     :data-id="item.id"
     :data-path="item.path"
     :data-depth="depth"
@@ -435,6 +439,16 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <!-- Hover add button (matches bookings calendar pattern) -->
+    <button
+      v-if="showAddButton"
+      type="button"
+      class="flex items-center justify-center h-6 rounded-lg bg-neutral-700 opacity-0 cursor-pointer transition-all duration-200 ease-out group-hover/node:opacity-100 hover:bg-neutral-600 active:scale-[0.98]"
+      @click.stop="emit('create', item.id)"
+    >
+      <UIcon name="i-lucide-plus" class="size-3.5 text-neutral-300" />
+    </button>
+
     <!-- Children container (SortableJS target) -->
     <div
       v-if="showChildren"
@@ -459,8 +473,10 @@ onBeforeUnmount(() => {
         :allow-nesting="allowNesting"
         :show-collab-presence="showCollabPresence"
         :hide-actions="hideActions"
+        :show-add-button="showAddButton"
         @move="(id: string, parentId: string | null, order: number, targetCol: string | null) => emit('move', id, parentId, order, targetCol)"
         @select="emit('select', $event)"
+        @create="emit('create', $event)"
       />
     </div>
   </div>
