@@ -84,14 +84,29 @@ function handleDiscard() {
 }
 
 // Build tree structure from flat pages
-const buildTree = (items: any[], parentId: string | null = null): any[] => {
+// When scoped is true, items whose parent is not in the set are treated as roots
+const buildTree = (items: any[], parentId: string | null = null, scoped = false): any[] => {
   if (!items) return []
+  const ids = scoped ? new Set(items.map((i: any) => i.id)) : null
+  const roots = scoped
+    ? items.filter((item: any) => !item.parentId || !ids!.has(item.parentId))
+    : items.filter((item: any) => item.parentId === parentId)
+
+  return roots
+    .sort((a: any, b: any) => (a.order || 0) - (b.order || 0) || (a.id || '').localeCompare(b.id || ''))
+    .map((item: any) => ({
+      ...item,
+      children: buildChildren(items, item.id)
+    }))
+}
+
+const buildChildren = (items: any[], parentId: string): any[] => {
   return items
     .filter((item: any) => item.parentId === parentId)
     .sort((a: any, b: any) => (a.order || 0) - (b.order || 0) || (a.id || '').localeCompare(b.id || ''))
     .map((item: any) => ({
       ...item,
-      children: buildTree(items, item.id)
+      children: buildChildren(items, item.id)
     }))
 }
 
@@ -131,7 +146,7 @@ const filteredPages = computed(() => {
   return result
 })
 
-// Pages hidden from navigation (separate flat list)
+// Pages hidden from navigation
 const hiddenPages = computed(() => {
   if (!pages.value) return []
   let hidden = pages.value.filter((p: any) => p.showInNavigation === false && p.status !== 'archived')
@@ -146,7 +161,15 @@ const hiddenPages = computed(() => {
   return hidden
 })
 
-// Archived pages (separate flat list)
+// Hidden pages as a tree (parents outside the set become roots)
+const hiddenTree = computed(() => {
+  if (searchQuery.value.trim()) {
+    return hiddenPages.value.map((p: any) => ({ ...p, children: [] }))
+  }
+  return buildTree(hiddenPages.value, null, true)
+})
+
+// Archived pages
 const archivedPages = computed(() => {
   if (!pages.value) return []
   let archived = pages.value.filter((p: any) => p.status === 'archived')
@@ -159,6 +182,14 @@ const archivedPages = computed(() => {
     })
   }
   return archived
+})
+
+// Archived pages as a tree (parents outside the set become roots)
+const archivedTree = computed(() => {
+  if (searchQuery.value.trim()) {
+    return archivedPages.value.map((p: any) => ({ ...p, children: [] }))
+  }
+  return buildTree(archivedPages.value, null, true)
 })
 
 // Tree structure for display
@@ -375,20 +406,16 @@ defineExpose({
         </UBadge>
       </button>
 
-      <div v-if="hiddenExpanded" class="overflow-auto max-h-48 px-2 pb-2">
-        <div
-          v-for="page in hiddenPages"
-          :key="page.id"
-          class="px-2 py-1 rounded-md hover:bg-elevated cursor-pointer transition-colors"
-          @click="handleSelect(page)"
-        >
-          <component
-            :is="CroutonPagesCard"
-            :item="page"
-            layout="tree"
-            collection="pagesPages"
-          />
-        </div>
+      <div v-if="hiddenExpanded" class="overflow-auto max-h-64 px-2 pb-2">
+        <CroutonTreeView
+          :items="hiddenTree"
+          collection="pagesPages"
+          :hierarchy="hierarchyConfig"
+          :card-component="CroutonPagesCard"
+          label-key="title"
+          hide-actions
+          @select="handleSelect"
+        />
       </div>
     </div>
 
@@ -410,20 +437,16 @@ defineExpose({
         </UBadge>
       </button>
 
-      <div v-if="archivedExpanded" class="overflow-auto max-h-48 px-2 pb-2">
-        <div
-          v-for="page in archivedPages"
-          :key="page.id"
-          class="px-2 py-1 rounded-md hover:bg-elevated cursor-pointer transition-colors"
-          @click="handleSelect(page)"
-        >
-          <component
-            :is="CroutonPagesCard"
-            :item="page"
-            layout="tree"
-            collection="pagesPages"
-          />
-        </div>
+      <div v-if="archivedExpanded" class="overflow-auto max-h-64 px-2 pb-2">
+        <CroutonTreeView
+          :items="archivedTree"
+          collection="pagesPages"
+          :hierarchy="hierarchyConfig"
+          :card-component="CroutonPagesCard"
+          label-key="title"
+          hide-actions
+          @select="handleSelect"
+        />
       </div>
     </div>
   </div>
