@@ -121,6 +121,9 @@ const editingLocale = ref(locale.value)
 // Layout mode (defaults to tabs for backwards compatibility)
 const layoutMode = computed(() => props.layout ?? 'tabs')
 
+// User-togglable column count for side-by-side mode (true = 2 columns, false = 1 column)
+const showDualColumns = ref(true)
+
 // For side-by-side mode: track both locales (both selectable)
 const allLocaleCodes = computed(() =>
   locales.value.map(l => typeof l === 'string' ? l : l.code)
@@ -788,7 +791,26 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
       </div>
 
       <!-- WIDE: Side-by-side columns (lg+ screens) -->
-      <div class="hidden lg:grid grid-cols-2 gap-6 h-full min-h-0">
+      <div class="hidden lg:flex lg:flex-col gap-4 h-full min-h-0">
+        <!-- Column toggle -->
+        <div class="flex items-center justify-end gap-1">
+          <UButton
+            :variant="!showDualColumns ? 'solid' : 'ghost'"
+            color="neutral"
+            icon="i-lucide-square"
+            size="xs"
+            @click="showDualColumns = false"
+          />
+          <UButton
+            :variant="showDualColumns ? 'solid' : 'ghost'"
+            color="neutral"
+            icon="i-lucide-columns-2"
+            size="xs"
+            @click="showDualColumns = true"
+          />
+        </div>
+
+        <div :class="['grid gap-6 flex-1 min-h-0', showDualColumns ? 'grid-cols-2' : 'grid-cols-1']">
         <!-- LEFT COLUMN: Primary locale (selectable) -->
         <div class="flex flex-col min-h-0">
           <!-- Column header with locale tabs -->
@@ -935,7 +957,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
         </div>
 
         <!-- RIGHT COLUMN: Secondary locale (selectable) -->
-        <div class="flex flex-col min-h-0">
+        <div v-if="showDualColumns" class="flex flex-col min-h-0">
           <!-- Column header with locale tabs -->
           <div class="flex items-center justify-between mb-3">
             <UFieldGroup class="w-full">
@@ -1077,6 +1099,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
 
             </div>
           </div>
+        </div>
         </div>
       </div>
     </template>

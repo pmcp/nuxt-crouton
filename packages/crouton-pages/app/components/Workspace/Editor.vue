@@ -436,6 +436,44 @@ const fieldOptions = {
   slug: { transform: 'slug' as const }
 }
 
+// Preview drawer state
+const showPreview = ref(false)
+
+// Build a preview page object from current form state
+const previewPage = computed(() => {
+  const translations = { ...state.value.translations } as Record<string, { title?: string; slug?: string; content?: string }>
+
+  // In collab mode, pull live content from Yjs fragments
+  if (collabLocalizedContent && isRegularPage.value) {
+    const activeFragments = collabLocalizedContent.getActiveFragments?.() || []
+    for (const { locale: loc } of activeFragments) {
+      const contentJson = collabLocalizedContent.getContentJson(loc)
+      if (!translations[loc]) {
+        translations[loc] = {}
+      }
+      translations[loc] = {
+        ...translations[loc],
+        content: JSON.stringify(contentJson)
+      }
+    }
+  }
+
+  return {
+    id: state.value.id || 'preview',
+    teamId: '',
+    title: '',
+    slug: '',
+    pageType: state.value.pageType,
+    config: state.value.config,
+    status: state.value.status,
+    visibility: state.value.visibility,
+    showInNavigation: state.value.showInNavigation,
+    parentId: state.value.parentId,
+    order: state.value.order || 0,
+    translations
+  }
+})
+
 // Expose state for parent components (e.g., InlineEditor live preview)
 defineExpose({ state })
 </script>
@@ -640,6 +678,17 @@ defineExpose({ state })
 
         <div class="flex-1" />
 
+        <!-- Preview -->
+        <UTooltip :text="state.status === 'draft' ? 'Preview Draft' : 'Preview Page'" :delay-duration="0">
+          <UButton
+            variant="ghost"
+            color="neutral"
+            icon="i-lucide-eye"
+            size="xs"
+            @click="showPreview = true"
+          />
+        </UTooltip>
+
         <!-- Delete (two-click confirm) -->
         <UButton
           v-if="action === 'update' && state.id"
@@ -713,5 +762,44 @@ defineExpose({ state })
         </template>
       </div>
     </UForm>
+
+    <!-- Preview Slideover -->
+    <USlideover v-model:open="showPreview" :ui="{ content: 'w-full sm:max-w-2xl lg:max-w-4xl' }">
+      <template #content="{ close }">
+        <div class="flex flex-col h-full">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-4 py-3 border-b border-default">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-eye" class="size-4 text-muted" />
+              <span class="text-sm font-medium">
+                {{ state.status === 'draft' ? 'Draft Preview' : 'Page Preview' }}
+              </span>
+              <UBadge
+                v-if="state.status === 'draft'"
+                color="warning"
+                variant="subtle"
+                size="xs"
+              >
+                Draft
+              </UBadge>
+            </div>
+            <UButton
+              variant="ghost"
+              color="neutral"
+              icon="i-lucide-x"
+              size="xs"
+              @click="close"
+            />
+          </div>
+
+          <!-- Rendered page content -->
+          <div class="flex-1 overflow-auto">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <CroutonPagesRenderer :page="previewPage" />
+            </div>
+          </div>
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>
