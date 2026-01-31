@@ -20,25 +20,24 @@
  * />
  */
 
+import { useMediaQuery } from '@vueuse/core'
+
 interface Props {
   pageId: string
-  /** Current panel width in pixels — used to switch i18n layout */
-  panelWidth?: number
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  panelWidth: 480
-})
+defineProps<Props>()
 
 const emit = defineEmits<{
   close: []
   save: [page: any]
+  delete: [id: string]
 }>()
 
-// Switch to tabs layout when the panel is too narrow for side-by-side
-const SIDE_BY_SIDE_THRESHOLD = 600
+// Switch to side-by-side layout on wide screens
+const isWide = useMediaQuery('(min-width: 768px)')
 const i18nLayout = computed<'tabs' | 'side-by-side'>(() =>
-  props.panelWidth < SIDE_BY_SIDE_THRESHOLD ? 'tabs' : 'side-by-side'
+  isWide.value ? 'side-by-side' : 'tabs'
 )
 
 // Shared state for live preview — the page route reads this
@@ -62,6 +61,11 @@ function handleSave(page: any) {
   emit('save', page)
 }
 
+function handleDelete(id: string) {
+  editingTranslations.value = null
+  emit('delete', id)
+}
+
 function handleClose() {
   editingTranslations.value = null
   emit('close')
@@ -80,6 +84,7 @@ onBeforeUnmount(() => {
       :i18n-layout="i18nLayout"
       show-close
       @save="handleSave"
+      @delete="handleDelete"
       @cancel="handleClose"
       @close="handleClose"
     />

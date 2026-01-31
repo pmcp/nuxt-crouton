@@ -49,9 +49,8 @@ function handleEditorClose() {
   editingPageId.value = null
 }
 
-// Handle editor delete — editor already performed the deletion, just clean up
+// Handle editor delete — clear selection but keep drawer open
 function handleEditorDelete() {
-  isEditing.value = false
   editingPageId.value = null
 }
 

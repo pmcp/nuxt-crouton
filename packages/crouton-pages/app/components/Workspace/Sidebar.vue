@@ -24,7 +24,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'update:modelValue': [id: string | null]
-  'create': []
+  'create': [parentId?: string | null]
   'select': [page: any]
 }>()
 
@@ -118,9 +118,14 @@ async function handleMove(id: string, newParentId: string | null, newOrder: numb
 }
 
 // Handle create button
-function handleCreate() {
+function handleCreate(parentId?: string | null) {
   emit('update:modelValue', null)
-  emit('create')
+  emit('create', parentId ?? null)
+}
+
+// Handle tree add button (create child page)
+function handleTreeCreate(parentId: string | null) {
+  handleCreate(parentId)
 }
 
 // Focus search input (exposed for keyboard shortcuts)
@@ -136,8 +141,8 @@ defineExpose({
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- Search -->
-    <div class="px-3 py-2">
+    <!-- Search (min-h matches editor header bar) -->
+    <div class="flex items-center min-h-12 px-4 py-2 border-b border-default bg-elevated/30">
       <UInput
         ref="searchInputRef"
         v-model="searchQuery"
@@ -187,8 +192,10 @@ defineExpose({
         :card-component="CroutonPagesCard"
         label-key="title"
         hide-actions
+        show-add-button
         @select="handleSelect"
         @move="handleMove"
+        @create="handleTreeCreate"
       />
     </div>
   </div>

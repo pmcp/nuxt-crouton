@@ -407,10 +407,11 @@ function handleDelete() {
   }
 
   // Second click — actually delete
+  const id = state.value.id
   if (deleteResetTimer) clearTimeout(deleteResetTimer)
   confirmingDelete.value = false
-  deleteItems([state.value.id]).then(() => {
-    emit('delete', state.value.id!)
+  deleteItems([id]).then(() => {
+    emit('delete', id)
   })
 }
 
