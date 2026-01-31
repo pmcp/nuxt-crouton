@@ -187,12 +187,15 @@ defineExpose({
         size="sm"
         class="flex-1"
       />
-      <USwitch
-        v-model="showDrafts"
+      <UButton
         size="xs"
-        label="Drafts"
-        :ui="{ label: 'text-xs text-muted' }"
-      />
+        :color="showDrafts ? 'primary' : 'neutral'"
+        :variant="showDrafts ? 'subtle' : 'ghost'"
+        icon="i-lucide-file-pen-line"
+        @click="showDrafts = !showDrafts"
+      >
+        Drafts
+      </UButton>
     </div>
 
     <!-- Tree/List -->
