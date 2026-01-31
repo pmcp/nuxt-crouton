@@ -60,6 +60,28 @@ const { items: pages, pending, refresh } = await useCollectionQuery<any>('pagesP
 // Tree mutation for reordering
 const { moveNode } = useTreeMutation('pagesPages')
 
+// Reorder mode
+const reorderMode = useReorderMode()
+
+function toggleReorderMode() {
+  if (reorderMode.isActive.value) {
+    reorderMode.deactivate()
+  } else if (!pending.value && pages.value) {
+    reorderMode.activate(pages.value)
+  }
+}
+
+async function handlePublish() {
+  await reorderMode.publish(async (id, parentId, order) => {
+    await moveNode(id, parentId, order)
+  })
+  await refresh()
+}
+
+function handleDiscard() {
+  reorderMode.discard()
+}
+
 // Build tree structure from flat pages
 const buildTree = (items: any[], parentId: string | null = null): any[] => {
   if (!items) return []
@@ -83,9 +105,10 @@ const getLocalizedTitle = (page: any): string => {
 
 // Filter pages for the main tree (excludes archived, optionally excludes drafts)
 const filteredPages = computed(() => {
-  if (!pages.value) return []
+  const source = reorderMode.isActive.value ? reorderMode.localPages.value : pages.value
+  if (!source) return []
 
-  let result = pages.value.filter((page: any) => {
+  let result = source.filter((page: any) => {
     // Always exclude archived from main tree
     if (page.status === 'archived') return false
     // Exclude drafts unless toggle is on
@@ -124,8 +147,8 @@ const archivedPages = computed(() => {
 const pageTree = computed(() => {
   let items = filteredPages.value
 
-  // Inject ghost page if active
-  if (ghostPage.value) {
+  // Inject ghost page if active (skip in reorder mode)
+  if (ghostPage.value && !reorderMode.isActive.value) {
     items = [...items, ghostPage.value]
   }
 
@@ -155,6 +178,12 @@ function handleSelect(page: any) {
 
 // Handle drag-drop reorder
 async function handleMove(id: string, newParentId: string | null, newOrder: number) {
+  // In reorder mode, apply locally without API calls
+  if (reorderMode.isActive.value) {
+    reorderMode.applyLocalMove(id, newParentId, newOrder)
+    return
+  }
+
   try {
     await moveNode(id, newParentId, newOrder)
     // Refresh to get updated tree
@@ -217,6 +246,14 @@ defineExpose({
       >
         Drafts
       </UButton>
+      <UButton
+        size="xs"
+        :color="reorderMode.isActive.value ? 'primary' : 'neutral'"
+        :variant="reorderMode.isActive.value ? 'subtle' : 'ghost'"
+        icon="i-lucide-arrow-up-down"
+        :disabled="pending"
+        @click="toggleReorderMode"
+      />
     </div>
 
     <!-- Tree/List -->
@@ -266,6 +303,41 @@ defineExpose({
       />
 
     </div>
+
+    <!-- Reorder mode floating action bar -->
+    <Transition
+      enter-active-class="transition-all duration-200 ease-out"
+      leave-active-class="transition-all duration-150 ease-in"
+      enter-from-class="translate-y-2 opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-2 opacity-0"
+    >
+      <div
+        v-if="reorderMode.isActive.value && reorderMode.hasChanges.value"
+        class="shrink-0 border-t border-default bg-elevated/80 backdrop-blur px-4 py-2 flex items-center gap-2"
+      >
+        <span class="text-sm text-muted flex-1">
+          {{ reorderMode.changeCount.value }} {{ reorderMode.changeCount.value === 1 ? 'change' : 'changes' }}
+        </span>
+        <UButton
+          size="xs"
+          color="neutral"
+          variant="ghost"
+          @click="handleDiscard"
+        >
+          Discard
+        </UButton>
+        <UButton
+          size="xs"
+          color="primary"
+          :loading="reorderMode.publishing.value"
+          @click="handlePublish"
+        >
+          Publish
+        </UButton>
+      </div>
+    </Transition>
 
     <!-- Archived section (pinned to bottom) -->
     <div v-if="archivedPages.length" class="border-t border-default shrink-0">
