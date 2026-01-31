@@ -347,7 +347,7 @@ onBeforeUnmount(() => {
     <!-- Node content row -->
     <div
       class="tree-node-content group relative flex items-center gap-2 min-h-9 py-1.5 px-2 rounded-lg cursor-pointer overflow-hidden transition-colors hover:bg-white/5"
-      :class="[wasSaved(item.id) ? 'tree-node-saved' : '']"
+      :class="[]"
       @click="emit('select', item)"
     >
       <!-- Drag handle -->
@@ -504,25 +504,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Save animation - sweep effect when item is saved */
-.tree-node-saved::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in oklch, var(--ui-success) 25%, transparent) 50%,
-    transparent 100%
-  );
-  animation: sweep 0.8s ease-out forwards;
-}
-
-@keyframes sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); opacity: 0; }
-}
-
 /* Child count pulse animation */
 .count-pulse {
   animation: count-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;

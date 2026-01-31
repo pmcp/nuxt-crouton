@@ -24,6 +24,9 @@ const selectedPageId = ref<string | null>(null)
 // Mode: 'view' | 'create' | 'edit'
 const mode = ref<'view' | 'create' | 'edit'>('view')
 
+// Parent ID for new pages (set when creating from tree context)
+const createParentId = ref<string | null>(null)
+
 // Initialize from URL query
 onMounted(() => {
   const pageId = route.query.page as string | undefined
@@ -50,9 +53,10 @@ function handleSelectPage(page: any) {
   mode.value = 'edit'
 }
 
-// Handle create button
-function handleCreate() {
+// Handle create button (optionally with a parent ID from tree context)
+function handleCreate(parentId?: string | null) {
   selectedPageId.value = null
+  createParentId.value = parentId ?? null
   mode.value = 'create'
 }
 
@@ -162,6 +166,7 @@ onKeyStroke('/', (e) => {
       <CroutonPagesWorkspaceEditor
         :key="selectedPageId || 'new'"
         :page-id="selectedPageId"
+        :default-parent-id="mode === 'create' ? createParentId : null"
         @save="handleSave"
         @delete="handleDelete"
         @cancel="handleCancel"
@@ -182,6 +187,7 @@ onKeyStroke('/', (e) => {
           v-if="showEditor"
           :key="selectedPageId || 'new'"
           :page-id="selectedPageId"
+          :default-parent-id="mode === 'create' ? createParentId : null"
           @save="handleSave"
           @delete="handleDelete"
           @cancel="handleCancel"

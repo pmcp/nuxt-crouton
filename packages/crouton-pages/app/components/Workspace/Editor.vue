@@ -16,6 +16,8 @@
 interface Props {
   /** Page ID to edit (null for create mode) */
   pageId?: string | null
+  /** Default parent ID for new pages (pre-fills parentId in create mode) */
+  defaultParentId?: string | null
   /** Show a close button in the header (used by InlineEditor) */
   showClose?: boolean
   /** Override the i18n input layout ('tabs' for narrow panels, 'side-by-side' for wide) */
@@ -24,6 +26,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   pageId: null,
+  defaultParentId: null,
   showClose: false,
   i18nLayout: 'side-by-side'
 })
@@ -141,8 +144,8 @@ watch(
   () => props.pageId,
   async (newId) => {
     if (!newId) {
-      // Create mode - reset to defaults
-      state.value = { ...defaultValue }
+      // Create mode - reset to defaults, pre-fill parentId if provided
+      state.value = { ...defaultValue, parentId: props.defaultParentId ?? null }
       contentReady.value = true
       loadError.value = null
       return
