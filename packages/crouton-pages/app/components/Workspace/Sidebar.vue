@@ -125,8 +125,6 @@ const filteredPages = computed(() => {
   let result = source.filter((page: any) => {
     // Always exclude archived from main tree
     if (page.status === 'archived') return false
-    // Exclude pages hidden from navigation
-    if (page.showInNavigation === false) return false
     // Exclude drafts unless toggle is on
     if (!showDrafts.value && page.status === 'draft') return false
     return true
@@ -142,33 +140,6 @@ const filteredPages = computed(() => {
   }
 
   return result
-})
-
-// Pages hidden from navigation
-const hiddenPages = computed(() => {
-  if (!pages.value) return []
-  let hidden = pages.value.filter((p: any) => p.showInNavigation === false && p.status !== 'archived')
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    hidden = hidden.filter((p: any) => {
-      const title = getLocalizedTitle(p).toLowerCase()
-      const slug = getSlugForLocale(p, locale.value).toLowerCase()
-      return title.includes(query) || slug.includes(query)
-    })
-  }
-  return hidden
-})
-
-// Hidden pages as a tree (parents outside the set become roots)
-const hiddenTree = computed(() => {
-  let items = hiddenPages.value
-  if (ghostSection.value === 'hidden') {
-    items = [...items, ghostPage.value!]
-  }
-  if (searchQuery.value.trim()) {
-    return items.map((p: any) => ({ ...p, children: [] }))
-  }
-  return buildTree(items, null, true)
 })
 
 // Archived pages
@@ -189,8 +160,11 @@ const archivedPages = computed(() => {
 // Archived pages as a tree (parents outside the set become roots)
 const archivedTree = computed(() => {
   let items = archivedPages.value
-  if (ghostSection.value === 'archived') {
-    items = [...items, ghostPage.value!]
+  if (ghostPage.value && !reorderMode.isActive.value) {
+    const parent = pages.value?.find((p: any) => p.id === ghostPage.value!.parentId)
+    if (parent?.status === 'archived') {
+      items = [...items, ghostPage.value!]
+    }
   }
   if (searchQuery.value.trim()) {
     return items.map((p: any) => ({ ...p, children: [] }))
@@ -200,47 +174,28 @@ const archivedTree = computed(() => {
 
 // Bottom sections accordion items (only shown when they have content)
 const bottomSections = computed(() => {
-  const sections = []
-  if (hiddenPages.value.length) {
-    sections.push({
-      label: 'Hidden',
-      icon: 'i-lucide-eye-off',
-      value: 'hidden',
-      slot: 'hidden' as const,
-      _count: hiddenPages.value.length
-    })
-  }
-  if (archivedPages.value.length) {
-    sections.push({
-      label: 'Archived',
-      icon: 'i-lucide-archive',
-      value: 'archived',
-      slot: 'archived' as const,
-      _count: archivedPages.value.length
-    })
-  }
-  return sections
-})
-
-// Determine which section the ghost page belongs to based on its parent
-const ghostSection = computed<'main' | 'hidden' | 'archived' | null>(() => {
-  if (!ghostPage.value || reorderMode.isActive.value) return null
-  const parentId = ghostPage.value.parentId
-  if (!parentId) return 'main'
-  const parent = pages.value?.find((p: any) => p.id === parentId)
-  if (!parent) return 'main'
-  if (parent.status === 'archived') return 'archived'
-  if (parent.showInNavigation === false) return 'hidden'
-  return 'main'
+  if (!archivedPages.value.length) return []
+  return [{
+    label: 'Archived',
+    icon: 'i-lucide-archive',
+    value: 'archived',
+    slot: 'archived' as const,
+    _count: archivedPages.value.length
+  }]
 })
 
 // Tree structure for display
 const pageTree = computed(() => {
   let items = filteredPages.value
 
-  // Inject ghost page if it belongs to the main tree
-  if (ghostSection.value === 'main') {
-    items = [...items, ghostPage.value!]
+  // Inject ghost page if active (skip in reorder mode, skip if parent is archived)
+  if (ghostPage.value && !reorderMode.isActive.value) {
+    const parent = ghostPage.value.parentId
+      ? pages.value?.find((p: any) => p.id === ghostPage.value!.parentId)
+      : null
+    if (!parent || parent.status !== 'archived') {
+      items = [...items, ghostPage.value]
+    }
   }
 
   // When searching, show flat list (no hierarchy)
@@ -446,24 +401,6 @@ defineExpose({
         <UBadge size="sm" color="neutral" variant="subtle">
           {{ item._count }}
         </UBadge>
-      </template>
-
-      <template #hidden-body>
-        <div class="overflow-auto max-h-64">
-          <CroutonTreeView
-            :items="hiddenTree"
-            collection="pagesPages"
-            :hierarchy="hierarchyConfig"
-            :card-component="CroutonPagesCard"
-            label-key="title"
-            hide-actions
-            show-add-button
-            @select="handleSelect"
-            @move="handleMove"
-            @create="handleTreeCreate"
-            @create-sibling="handleTreeCreateSibling"
-          />
-        </div>
       </template>
 
       <template #archived-body>
