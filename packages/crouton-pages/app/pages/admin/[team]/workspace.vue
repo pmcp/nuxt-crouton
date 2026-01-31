@@ -27,6 +27,9 @@ const mode = ref<'view' | 'create' | 'edit'>('view')
 // Parent ID for new pages (set when creating from tree context)
 const createParentId = ref<string | null>(null)
 
+// Stable key for editor — only changes on explicit page switch or new create, NOT on save
+const editorSessionKey = ref(0)
+
 // Initialize from URL query
 onMounted(() => {
   const pageId = route.query.page as string | undefined
@@ -51,6 +54,7 @@ watch(selectedPageId, (newId) => {
 function handleSelectPage(page: any) {
   selectedPageId.value = page.id
   mode.value = 'edit'
+  editorSessionKey.value++
 }
 
 // Handle create button (optionally with a parent ID from tree context)
@@ -58,6 +62,7 @@ function handleCreate(parentId?: string | null) {
   selectedPageId.value = null
   createParentId.value = parentId ?? null
   mode.value = 'create'
+  editorSessionKey.value++
 }
 
 // Handle save - refresh tree and update selection
@@ -164,7 +169,7 @@ onKeyStroke('/', (e) => {
   <UDashboardPanel id="pages-editor" class="hidden lg:flex">
     <template v-if="showEditor">
       <CroutonPagesWorkspaceEditor
-        :key="selectedPageId || 'new'"
+        :key="editorSessionKey"
         :page-id="selectedPageId"
         :default-parent-id="mode === 'create' ? createParentId : null"
         @save="handleSave"
@@ -185,7 +190,7 @@ onKeyStroke('/', (e) => {
       <template #content>
         <CroutonPagesWorkspaceEditor
           v-if="showEditor"
-          :key="selectedPageId || 'new'"
+          :key="editorSessionKey"
           :page-id="selectedPageId"
           :default-parent-id="mode === 'create' ? createParentId : null"
           @save="handleSave"
