@@ -791,20 +791,31 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
       <div class="hidden lg:grid grid-cols-2 gap-6 h-full min-h-0">
         <!-- LEFT COLUMN: Primary locale (selectable) -->
         <div class="flex flex-col min-h-0">
-          <!-- Column header with dropdown -->
-          <div class="flex items-center gap-2 h-7 mb-3">
-            <USelect
-              v-model="primaryEditingLocale"
-              :items="allLocaleOptions"
-              value-key="value"
-              size="xs"
-              class="flex-1"
-            />
-            <UIcon
-              v-if="isLocaleComplete(primaryEditingLocale)"
-              name="i-lucide-check-circle"
-              class="text-green-500 size-3.5"
-            />
+          <!-- Column header with locale tabs -->
+          <div class="flex items-center justify-between mb-3">
+            <UFieldGroup class="w-full">
+              <UButton
+                v-for="loc in allLocaleOptions"
+                :key="loc.value"
+                :variant="primaryEditingLocale === loc.value ? 'solid' : 'outline'"
+                size="sm"
+                class="w-full"
+                @click="primaryEditingLocale = loc.value"
+              >
+                <span class="flex items-center gap-2">
+                  {{ loc.value.toUpperCase() }}
+                  <span
+                    v-if="loc.value === 'en'"
+                    class="text-red-500"
+                  >*</span>
+                  <UIcon
+                    v-if="isLocaleComplete(loc.value)"
+                    name="i-lucide-check-circle"
+                    class="text-green-500"
+                  />
+                </span>
+              </UButton>
+            </UFieldGroup>
           </div>
 
           <!-- Primary locale fields -->
@@ -925,20 +936,31 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
 
         <!-- RIGHT COLUMN: Secondary locale (selectable) -->
         <div class="flex flex-col min-h-0">
-          <!-- Column header - matches height of left column -->
-          <div class="flex items-center gap-2 h-7 mb-3">
-            <USelect
-              v-model="secondaryEditingLocale"
-              :items="allLocaleOptions"
-              value-key="value"
-              size="xs"
-              class="flex-1"
-            />
-            <UIcon
-              v-if="isLocaleComplete(secondaryEditingLocale)"
-              name="i-lucide-check-circle"
-              class="text-green-500 size-3.5"
-            />
+          <!-- Column header with locale tabs -->
+          <div class="flex items-center justify-between mb-3">
+            <UFieldGroup class="w-full">
+              <UButton
+                v-for="loc in allLocaleOptions"
+                :key="loc.value"
+                :variant="secondaryEditingLocale === loc.value ? 'solid' : 'outline'"
+                size="sm"
+                class="w-full"
+                @click="secondaryEditingLocale = loc.value"
+              >
+                <span class="flex items-center gap-2">
+                  {{ loc.value.toUpperCase() }}
+                  <span
+                    v-if="loc.value === 'en'"
+                    class="text-red-500"
+                  >*</span>
+                  <UIcon
+                    v-if="isLocaleComplete(loc.value)"
+                    name="i-lucide-check-circle"
+                    class="text-green-500"
+                  />
+                </span>
+              </UButton>
+            </UFieldGroup>
           </div>
 
           <!-- Secondary locale fields -->
