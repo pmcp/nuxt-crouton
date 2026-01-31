@@ -224,16 +224,28 @@ onMounted(async () => {
 <style>
 /* SortableJS dynamic classes - must be global (not scoped) */
 
-/* Ghost = thin line indicator showing where item will drop */
+/* Ghost = card-style placeholder showing where item will drop */
 .tree-ghost {
-  opacity: 1;
-  border-radius: 1px;
-  background-color: var(--ui-primary);
+  opacity: 0.5;
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-bg-elevated);
+  border: 1px solid var(--ui-border);
   margin: 0;
   padding: 0;
-  max-height: 2px;
-  min-height: 2px;
-  overflow: hidden;
+}
+
+/* Hide children inside the ghost so only the node row shows */
+.tree-ghost .tree-children,
+.tree-ghost .tree-node {
+  display: none;
+}
+
+/* Remove inner content styling so it doesn't double up with the ghost card */
+.tree-ghost > .tree-node-content {
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
 }
 
 /* Drag = the element being dragged (follows cursor) */
