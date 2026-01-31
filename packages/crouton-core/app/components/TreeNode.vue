@@ -150,6 +150,29 @@ function getStatusColor(status: string): 'primary' | 'warning' | 'error' | 'info
   return statusColors[status?.toLowerCase()] || 'neutral'
 }
 
+function getAddActions(item: TreeNodeType) {
+  return [
+    [
+      {
+        label: 'Add child page',
+        icon: 'i-lucide-corner-down-right',
+        onSelect: () => {
+          console.log('[TreeNode] Add child page, parentId:', item.id)
+          emit('create', item.id)
+        }
+      },
+      {
+        label: 'Add page below',
+        icon: 'i-lucide-arrow-down',
+        onSelect: () => {
+          console.log('[TreeNode] Add page below, siblingId:', item.id)
+          emit('createSibling', item.id)
+        }
+      }
+    ]
+  ]
+}
+
 function getItemActions(item: TreeNodeType) {
   return [
     [
@@ -442,21 +465,9 @@ onBeforeUnmount(() => {
       <!-- Inline add dropdown (replaces full-width bar) -->
       <div v-if="showAddButton" class="opacity-0 group-hover:opacity-100 transition-opacity">
         <UDropdownMenu
-          :items="[
-            [
-              {
-                label: 'Add child page',
-                icon: 'i-lucide-corner-down-right',
-                onSelect: () => emit('create', item.id)
-              },
-              {
-                label: 'Add page below',
-                icon: 'i-lucide-arrow-down',
-                onSelect: () => emit('createSibling', item.id)
-              }
-            ]
-          ]"
+          :items="getAddActions(item)"
           :content="{ align: 'end' }"
+          :modal="false"
         >
           <UButton
             icon="i-lucide-plus"

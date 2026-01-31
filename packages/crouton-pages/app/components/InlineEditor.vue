@@ -23,10 +23,15 @@
 import { useMediaQuery } from '@vueuse/core'
 
 interface Props {
-  pageId: string
+  pageId?: string | null
+  /** Default parent ID for new pages (pre-fills parentId in create mode) */
+  defaultParentId?: string | null
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+  pageId: null,
+  defaultParentId: null
+})
 
 const emit = defineEmits<{
   close: []
@@ -81,6 +86,7 @@ onBeforeUnmount(() => {
     <CroutonPagesWorkspaceEditor
       ref="editorRef"
       :page-id="pageId"
+      :default-parent-id="defaultParentId"
       :i18n-layout="i18nLayout"
       show-close
       @save="handleSave"

@@ -30,28 +30,40 @@ const isDesktop = useMediaQuery('(min-width: 1024px)')
 // Handle tree page selection
 function onTreeSelect(page: any) {
   editingPageId.value = page?.id ?? null
+  isCreating.value = false
 }
 
-// Handle create from sidebar tree (clear editing to enter create mode)
-function onTreeCreate() {
+// Create mode state
+const isCreating = ref(false)
+const createParentId = ref<string | null>(null)
+
+// Handle create from sidebar tree
+function onTreeCreate(parentId?: string | null) {
+  console.log('[Layout] onTreeCreate, parentId:', parentId)
   editingPageId.value = null
+  createParentId.value = parentId ?? null
+  isCreating.value = true
 }
 
-// Handle editor save
-function handleEditorSave() {
-  isEditing.value = false
-  editingPageId.value = null
+// Handle editor save — stay in drawer, switch to editing the saved page
+function handleEditorSave(page: any) {
+  isCreating.value = false
+  if (page?.id) {
+    editingPageId.value = page.id
+  }
 }
 
 // Handle editor close
 function handleEditorClose() {
   isEditing.value = false
   editingPageId.value = null
+  isCreating.value = false
 }
 
 // Handle editor delete — clear selection but keep drawer open
 function handleEditorDelete() {
   editingPageId.value = null
+  isCreating.value = false
 }
 
 // Drawer open state wrapping isEditing
@@ -159,8 +171,9 @@ const mainClasses = computed(() => {
           <!-- Editor -->
           <div class="flex-1 min-w-0 overflow-y-auto">
             <CroutonPagesInlineEditor
-              v-if="editingPageId"
+              v-if="editingPageId || isCreating"
               :page-id="editingPageId"
+              :default-parent-id="isCreating ? createParentId : null"
               @save="handleEditorSave"
               @delete="handleEditorDelete"
               @close="handleEditorClose"

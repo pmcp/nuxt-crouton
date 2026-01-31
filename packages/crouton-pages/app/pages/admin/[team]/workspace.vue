@@ -59,10 +59,12 @@ function handleSelectPage(page: any) {
 
 // Handle create button (optionally with a parent ID from tree context)
 function handleCreate(parentId?: string | null) {
+  console.log('[Workspace] handleCreate, parentId:', parentId, 'current mode:', mode.value)
   selectedPageId.value = null
   createParentId.value = parentId ?? null
   mode.value = 'create'
   editorSessionKey.value++
+  console.log('[Workspace] after: mode:', mode.value, 'showEditor:', showEditor.value, 'key:', editorSessionKey.value)
 }
 
 // Handle save - refresh tree and update selection
