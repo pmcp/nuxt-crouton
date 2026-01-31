@@ -244,38 +244,39 @@ defineExpose({
         @create-sibling="handleTreeCreateSibling"
       />
 
-      <!-- Archived section -->
-      <div v-if="archivedPages.length" class="border-t border-default mt-2">
-        <button
-          class="flex items-center gap-2 w-full px-2 py-2 text-sm text-muted hover:text-default transition-colors"
-          @click="archivedExpanded = !archivedExpanded"
-        >
-          <UIcon
-            name="i-lucide-chevron-right"
-            class="size-4 shrink-0 transition-transform duration-200"
-            :class="archivedExpanded && 'rotate-90'"
-          />
-          <UIcon name="i-lucide-archive" class="size-4 shrink-0" />
-          <span class="flex-1 text-left">Archived</span>
-          <UBadge size="sm" color="neutral" variant="subtle">
-            {{ archivedPages.length }}
-          </UBadge>
-        </button>
+    </div>
 
-        <div v-if="archivedExpanded" class="pb-2">
-          <div
-            v-for="page in archivedPages"
-            :key="page.id"
-            class="px-2 py-1 rounded-md hover:bg-elevated cursor-pointer transition-colors"
-            @click="handleSelect(page)"
-          >
-            <component
-              :is="CroutonPagesCard"
-              :item="page"
-              layout="tree"
-              collection="pagesPages"
-            />
-          </div>
+    <!-- Archived section (pinned to bottom) -->
+    <div v-if="archivedPages.length" class="border-t border-default shrink-0">
+      <button
+        class="flex items-center gap-2 w-full px-4 py-2 text-sm text-muted hover:text-default transition-colors"
+        @click="archivedExpanded = !archivedExpanded"
+      >
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="size-4 shrink-0 transition-transform duration-200"
+          :class="archivedExpanded && 'rotate-90'"
+        />
+        <UIcon name="i-lucide-archive" class="size-4 shrink-0" />
+        <span class="flex-1 text-left">Archived</span>
+        <UBadge size="sm" color="neutral" variant="subtle">
+          {{ archivedPages.length }}
+        </UBadge>
+      </button>
+
+      <div v-if="archivedExpanded" class="overflow-auto max-h-48 px-2 pb-2">
+        <div
+          v-for="page in archivedPages"
+          :key="page.id"
+          class="px-2 py-1 rounded-md hover:bg-elevated cursor-pointer transition-colors"
+          @click="handleSelect(page)"
+        >
+          <component
+            :is="CroutonPagesCard"
+            :item="page"
+            layout="tree"
+            collection="pagesPages"
+          />
         </div>
       </div>
     </div>
