@@ -39,10 +39,8 @@ const CroutonPagesCard = resolveComponent('CroutonPagesCard') as Component
 const searchQuery = ref('')
 const searchInputRef = ref<HTMLInputElement | null>(null)
 
-// Draft toggle and collapsible section state
+// Draft toggle
 const showDrafts = ref(true)
-const hiddenExpanded = ref(false)
-const archivedExpanded = ref(false)
 
 // Ghost page state from shared composable
 const { ghost: ghostPage } = useGhostPage()
@@ -163,10 +161,14 @@ const hiddenPages = computed(() => {
 
 // Hidden pages as a tree (parents outside the set become roots)
 const hiddenTree = computed(() => {
-  if (searchQuery.value.trim()) {
-    return hiddenPages.value.map((p: any) => ({ ...p, children: [] }))
+  let items = hiddenPages.value
+  if (ghostSection.value === 'hidden') {
+    items = [...items, ghostPage.value!]
   }
-  return buildTree(hiddenPages.value, null, true)
+  if (searchQuery.value.trim()) {
+    return items.map((p: any) => ({ ...p, children: [] }))
+  }
+  return buildTree(items, null, true)
 })
 
 // Archived pages
@@ -186,19 +188,59 @@ const archivedPages = computed(() => {
 
 // Archived pages as a tree (parents outside the set become roots)
 const archivedTree = computed(() => {
-  if (searchQuery.value.trim()) {
-    return archivedPages.value.map((p: any) => ({ ...p, children: [] }))
+  let items = archivedPages.value
+  if (ghostSection.value === 'archived') {
+    items = [...items, ghostPage.value!]
   }
-  return buildTree(archivedPages.value, null, true)
+  if (searchQuery.value.trim()) {
+    return items.map((p: any) => ({ ...p, children: [] }))
+  }
+  return buildTree(items, null, true)
+})
+
+// Bottom sections accordion items (only shown when they have content)
+const bottomSections = computed(() => {
+  const sections = []
+  if (hiddenPages.value.length) {
+    sections.push({
+      label: 'Hidden',
+      icon: 'i-lucide-eye-off',
+      value: 'hidden',
+      slot: 'hidden' as const,
+      _count: hiddenPages.value.length
+    })
+  }
+  if (archivedPages.value.length) {
+    sections.push({
+      label: 'Archived',
+      icon: 'i-lucide-archive',
+      value: 'archived',
+      slot: 'archived' as const,
+      _count: archivedPages.value.length
+    })
+  }
+  return sections
+})
+
+// Determine which section the ghost page belongs to based on its parent
+const ghostSection = computed<'main' | 'hidden' | 'archived' | null>(() => {
+  if (!ghostPage.value || reorderMode.isActive.value) return null
+  const parentId = ghostPage.value.parentId
+  if (!parentId) return 'main'
+  const parent = pages.value?.find((p: any) => p.id === parentId)
+  if (!parent) return 'main'
+  if (parent.status === 'archived') return 'archived'
+  if (parent.showInNavigation === false) return 'hidden'
+  return 'main'
 })
 
 // Tree structure for display
 const pageTree = computed(() => {
   let items = filteredPages.value
 
-  // Inject ghost page if active (skip in reorder mode)
-  if (ghostPage.value && !reorderMode.isActive.value) {
-    items = [...items, ghostPage.value]
+  // Inject ghost page if it belongs to the main tree
+  if (ghostSection.value === 'main') {
+    items = [...items, ghostPage.value!]
   }
 
   // When searching, show flat list (no hierarchy)
@@ -388,66 +430,59 @@ defineExpose({
       </div>
     </Transition>
 
-    <!-- Hidden from nav section -->
-    <div v-if="hiddenPages.length" class="border-t border-default shrink-0">
-      <button
-        class="flex items-center gap-2 w-full px-4 py-2 text-sm text-muted hover:text-default transition-colors"
-        @click="hiddenExpanded = !hiddenExpanded"
-      >
-        <UIcon
-          name="i-lucide-chevron-right"
-          class="size-4 shrink-0 transition-transform duration-200"
-          :class="hiddenExpanded && 'rotate-90'"
-        />
-        <UIcon name="i-lucide-eye-off" class="size-4 shrink-0" />
-        <span class="flex-1 text-left">Hidden</span>
+    <!-- Hidden / Archived sections -->
+    <UAccordion
+      v-if="bottomSections.length"
+      type="multiple"
+      :items="bottomSections"
+      :ui="{
+        root: 'border-t border-default shrink-0',
+        trigger: 'px-4 py-2 text-sm text-muted hover:text-default',
+        content: 'px-2 pb-2',
+        leadingIcon: 'size-4',
+      }"
+    >
+      <template #trailing="{ item }">
         <UBadge size="sm" color="neutral" variant="subtle">
-          {{ hiddenPages.length }}
+          {{ item._count }}
         </UBadge>
-      </button>
+      </template>
 
-      <div v-if="hiddenExpanded" class="overflow-auto max-h-64 px-2 pb-2">
-        <CroutonTreeView
-          :items="hiddenTree"
-          collection="pagesPages"
-          :hierarchy="hierarchyConfig"
-          :card-component="CroutonPagesCard"
-          label-key="title"
-          hide-actions
-          @select="handleSelect"
-        />
-      </div>
-    </div>
+      <template #hidden-body>
+        <div class="overflow-auto max-h-64">
+          <CroutonTreeView
+            :items="hiddenTree"
+            collection="pagesPages"
+            :hierarchy="hierarchyConfig"
+            :card-component="CroutonPagesCard"
+            label-key="title"
+            hide-actions
+            show-add-button
+            @select="handleSelect"
+            @move="handleMove"
+            @create="handleTreeCreate"
+            @create-sibling="handleTreeCreateSibling"
+          />
+        </div>
+      </template>
 
-    <!-- Archived section (pinned to bottom) -->
-    <div v-if="archivedPages.length" class="border-t border-default shrink-0">
-      <button
-        class="flex items-center gap-2 w-full px-4 py-2 text-sm text-muted hover:text-default transition-colors"
-        @click="archivedExpanded = !archivedExpanded"
-      >
-        <UIcon
-          name="i-lucide-chevron-right"
-          class="size-4 shrink-0 transition-transform duration-200"
-          :class="archivedExpanded && 'rotate-90'"
-        />
-        <UIcon name="i-lucide-archive" class="size-4 shrink-0" />
-        <span class="flex-1 text-left">Archived</span>
-        <UBadge size="sm" color="neutral" variant="subtle">
-          {{ archivedPages.length }}
-        </UBadge>
-      </button>
-
-      <div v-if="archivedExpanded" class="overflow-auto max-h-64 px-2 pb-2">
-        <CroutonTreeView
-          :items="archivedTree"
-          collection="pagesPages"
-          :hierarchy="hierarchyConfig"
-          :card-component="CroutonPagesCard"
-          label-key="title"
-          hide-actions
-          @select="handleSelect"
-        />
-      </div>
-    </div>
+      <template #archived-body>
+        <div class="overflow-auto max-h-64">
+          <CroutonTreeView
+            :items="archivedTree"
+            collection="pagesPages"
+            :hierarchy="hierarchyConfig"
+            :card-component="CroutonPagesCard"
+            label-key="title"
+            hide-actions
+            show-add-button
+            @select="handleSelect"
+            @move="handleMove"
+            @create="handleTreeCreate"
+            @create-sibling="handleTreeCreateSibling"
+          />
+        </div>
+      </template>
+    </UAccordion>
   </div>
 </template>

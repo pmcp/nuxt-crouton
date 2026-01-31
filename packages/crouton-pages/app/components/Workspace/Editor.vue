@@ -716,7 +716,7 @@ defineExpose({ state })
         <!-- Cancel (create mode) -->
         <UButton
           v-if="action === 'create'"
-          color="neutral"
+          color="error"
           variant="ghost"
           icon="i-lucide-x"
           size="xs"
