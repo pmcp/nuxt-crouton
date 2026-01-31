@@ -30,6 +30,9 @@ const createParentId = ref<string | null>(null)
 // Stable key for editor — only changes on explicit page switch or new create, NOT on save
 const editorSessionKey = ref(0)
 
+// Ghost page state for sidebar tree
+const { setGhost, clearGhost } = useGhostPage()
+
 // Initialize from URL query
 onMounted(() => {
   const pageId = route.query.page as string | undefined
@@ -59,16 +62,20 @@ function handleSelectPage(page: any) {
 
 // Handle create button (optionally with a parent ID from tree context)
 function handleCreate(parentId?: string | null) {
-  console.log('[Workspace] handleCreate, parentId:', parentId, 'current mode:', mode.value)
+  // Guard against PointerEvent being passed from @click handlers
+  const resolvedParentId = (parentId && typeof parentId === 'string') ? parentId : null
+  console.log('[Workspace] handleCreate, parentId:', resolvedParentId, 'current mode:', mode.value)
   selectedPageId.value = null
-  createParentId.value = parentId ?? null
+  createParentId.value = resolvedParentId
   mode.value = 'create'
   editorSessionKey.value++
+  setGhost(resolvedParentId)
   console.log('[Workspace] after: mode:', mode.value, 'showEditor:', showEditor.value, 'key:', editorSessionKey.value)
 }
 
 // Handle save - refresh tree and update selection
 function handleSave(savedPage: any) {
+  clearGhost()
   if (savedPage?.id) {
     selectedPageId.value = savedPage.id
     mode.value = 'edit'
@@ -84,6 +91,7 @@ function handleDelete() {
 
 // Handle cancel (go back to view mode)
 function handleCancel() {
+  clearGhost()
   if (mode.value === 'create') {
     mode.value = 'view'
     selectedPageId.value = null

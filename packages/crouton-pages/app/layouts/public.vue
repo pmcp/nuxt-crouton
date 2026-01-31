@@ -37,17 +37,24 @@ function onTreeSelect(page: any) {
 const isCreating = ref(false)
 const createParentId = ref<string | null>(null)
 
+// Ghost page state for sidebar tree
+const { setGhost, clearGhost } = useGhostPage()
+
 // Handle create from sidebar tree
 function onTreeCreate(parentId?: string | null) {
-  console.log('[Layout] onTreeCreate, parentId:', parentId)
+  // Guard against PointerEvent being passed from @click handlers
+  const resolvedParentId = (parentId && typeof parentId === 'string') ? parentId : null
+  console.log('[Layout] onTreeCreate, parentId:', resolvedParentId)
   editingPageId.value = null
-  createParentId.value = parentId ?? null
+  createParentId.value = resolvedParentId
   isCreating.value = true
+  setGhost(resolvedParentId)
 }
 
 // Handle editor save — stay in drawer, switch to editing the saved page
 function handleEditorSave(page: any) {
   isCreating.value = false
+  clearGhost()
   if (page?.id) {
     editingPageId.value = page.id
   }
@@ -58,6 +65,14 @@ function handleEditorClose() {
   isEditing.value = false
   editingPageId.value = null
   isCreating.value = false
+  clearGhost()
+}
+
+// Handle editor cancel — stay in drawer, clear creation state
+function handleEditorCancel() {
+  editingPageId.value = null
+  isCreating.value = false
+  clearGhost()
 }
 
 // Handle editor delete — clear selection but keep drawer open
@@ -175,6 +190,7 @@ const mainClasses = computed(() => {
               :page-id="editingPageId"
               :default-parent-id="isCreating ? createParentId : null"
               @save="handleEditorSave"
+              @cancel="handleEditorCancel"
               @delete="handleEditorDelete"
               @close="handleEditorClose"
             />

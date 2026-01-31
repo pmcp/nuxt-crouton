@@ -43,6 +43,17 @@ const searchInputRef = ref<HTMLInputElement | null>(null)
 const showDrafts = ref(true)
 const archivedExpanded = ref(false)
 
+// Ghost page state from shared composable
+const { ghost: ghostPage } = useGhostPage()
+
+// Auto-expand parent when ghost page is a child node
+const treeDrag = useTreeDrag()
+watch(ghostPage, (ghost) => {
+  if (ghost?.parentId) {
+    treeDrag.setExpanded(ghost.parentId, true)
+  }
+})
+
 // Fetch pages data
 const { items: pages, pending, refresh } = await useCollectionQuery<any>('pagesPages')
 
@@ -111,14 +122,21 @@ const archivedPages = computed(() => {
 
 // Tree structure for display
 const pageTree = computed(() => {
+  let items = filteredPages.value
+
+  // Inject ghost page if active
+  if (ghostPage.value) {
+    items = [...items, ghostPage.value]
+  }
+
   // When searching, show flat list (no hierarchy)
   if (searchQuery.value.trim()) {
-    return filteredPages.value.map((page: any) => ({
+    return items.map((page: any) => ({
       ...page,
       children: []
     }))
   }
-  return buildTree(filteredPages.value)
+  return buildTree(items)
 })
 
 // Hierarchy config for tree - enable nesting

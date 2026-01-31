@@ -136,6 +136,27 @@ const defaultValue = {
 // Form state
 const state = ref<typeof defaultValue & { id?: string | null }>({ ...defaultValue })
 
+// Sync title/slug to ghost page in sidebar during creation
+const { updateGhost } = useGhostPage()
+watch(
+  () => {
+    const t = state.value.translations as Record<string, { title?: string, slug?: string }> | undefined
+    if (!t) return null
+    // Use current locale, fall back to first available
+    const localeData = t[locale.value] || Object.values(t)[0]
+    return { title: localeData?.title, slug: localeData?.slug }
+  },
+  (val) => {
+    if (action.value === 'create' && val) {
+      updateGhost({
+        title: val.title || 'New page...',
+        slug: val.slug || ''
+      })
+    }
+  },
+  { deep: true }
+)
+
 // Track content ready state
 const contentReady = ref(action.value === 'create')
 
@@ -692,7 +713,19 @@ defineExpose({ state })
           />
         </UTooltip>
 
-        <!-- Delete (two-click confirm) -->
+        <!-- Cancel (create mode) -->
+        <UButton
+          v-if="action === 'create'"
+          color="neutral"
+          variant="ghost"
+          icon="i-lucide-x"
+          size="xs"
+          @click="emit('cancel')"
+        >
+          Cancel
+        </UButton>
+
+        <!-- Delete (two-click confirm, edit mode) -->
         <UButton
           v-if="action === 'update' && state.id"
           color="error"

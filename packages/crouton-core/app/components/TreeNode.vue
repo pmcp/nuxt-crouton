@@ -53,6 +53,7 @@ const childrenRef = ref<HTMLElement | null>(null)
 let sortableInstance: SortableType | null = null
 
 // Computed
+const isGhost = computed(() => !!(props.item as any)._ghost)
 const isExpanded = computed(() => treeDrag.isExpanded(props.item.id))
 const isBeingDragged = computed(() => treeDrag.isDragging(props.item.id))
 const isDropTarget = computed(() => treeDrag.isDropTarget(props.item.id))
@@ -365,7 +366,7 @@ onBeforeUnmount(() => {
     :data-id="item.id"
     :data-path="item.path"
     :data-depth="depth"
-    :class="{ 'opacity-50': isBeingDragged }"
+    :class="{ 'opacity-50': isBeingDragged, 'opacity-50 animate-pulse pointer-events-none': isGhost }"
   >
     <!-- Node content row -->
     <div
@@ -375,6 +376,7 @@ onBeforeUnmount(() => {
     >
       <!-- Drag handle -->
       <div
+        v-if="!isGhost"
         class="drag-handle cursor-grab opacity-40 group-hover:opacity-100 transition-opacity"
         @click.stop
       >
@@ -447,7 +449,7 @@ onBeforeUnmount(() => {
       />
 
       <!-- Actions dropdown -->
-      <div v-if="!hideActions" class="opacity-0 group-hover:opacity-100 transition-opacity">
+      <div v-if="!hideActions && !isGhost" class="opacity-0 group-hover:opacity-100 transition-opacity">
         <UDropdownMenu
           :items="getItemActions(item)"
           :content="{ align: 'end' }"
@@ -463,7 +465,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Inline add dropdown (replaces full-width bar) -->
-      <div v-if="showAddButton" class="opacity-0 group-hover:opacity-100 transition-opacity">
+      <div v-if="showAddButton && !isGhost" class="opacity-0 group-hover:opacity-100 transition-opacity">
         <UDropdownMenu
           :items="getAddActions(item)"
           :content="{ align: 'end' }"

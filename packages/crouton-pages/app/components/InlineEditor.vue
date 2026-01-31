@@ -35,6 +35,7 @@ withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   close: []
+  cancel: []
   save: [page: any]
   delete: [id: string]
 }>()
@@ -71,6 +72,11 @@ function handleDelete(id: string) {
   emit('delete', id)
 }
 
+function handleCancel() {
+  editingTranslations.value = null
+  emit('cancel')
+}
+
 function handleClose() {
   editingTranslations.value = null
   emit('close')
@@ -91,7 +97,7 @@ onBeforeUnmount(() => {
       show-close
       @save="handleSave"
       @delete="handleDelete"
-      @cancel="handleClose"
+      @cancel="handleCancel"
       @close="handleClose"
     />
   </div>
