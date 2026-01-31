@@ -39,8 +39,9 @@ const CroutonPagesCard = resolveComponent('CroutonPagesCard') as Component
 const searchQuery = ref('')
 const searchInputRef = ref<HTMLInputElement | null>(null)
 
-// Draft toggle and archived section state
+// Draft toggle and collapsible section state
 const showDrafts = ref(true)
+const hiddenExpanded = ref(false)
 const archivedExpanded = ref(false)
 
 // Ghost page state from shared composable
@@ -111,6 +112,8 @@ const filteredPages = computed(() => {
   let result = source.filter((page: any) => {
     // Always exclude archived from main tree
     if (page.status === 'archived') return false
+    // Exclude pages hidden from navigation
+    if (page.showInNavigation === false) return false
     // Exclude drafts unless toggle is on
     if (!showDrafts.value && page.status === 'draft') return false
     return true
@@ -126,6 +129,21 @@ const filteredPages = computed(() => {
   }
 
   return result
+})
+
+// Pages hidden from navigation (separate flat list)
+const hiddenPages = computed(() => {
+  if (!pages.value) return []
+  let hidden = pages.value.filter((p: any) => p.showInNavigation === false && p.status !== 'archived')
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    hidden = hidden.filter((p: any) => {
+      const title = getLocalizedTitle(p).toLowerCase()
+      const slug = getSlugForLocale(p, locale.value).toLowerCase()
+      return title.includes(query) || slug.includes(query)
+    })
+  }
+  return hidden
 })
 
 // Archived pages (separate flat list)
@@ -338,6 +356,41 @@ defineExpose({
         </UButton>
       </div>
     </Transition>
+
+    <!-- Hidden from nav section -->
+    <div v-if="hiddenPages.length" class="border-t border-default shrink-0">
+      <button
+        class="flex items-center gap-2 w-full px-4 py-2 text-sm text-muted hover:text-default transition-colors"
+        @click="hiddenExpanded = !hiddenExpanded"
+      >
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="size-4 shrink-0 transition-transform duration-200"
+          :class="hiddenExpanded && 'rotate-90'"
+        />
+        <UIcon name="i-lucide-eye-off" class="size-4 shrink-0" />
+        <span class="flex-1 text-left">Hidden</span>
+        <UBadge size="sm" color="neutral" variant="subtle">
+          {{ hiddenPages.length }}
+        </UBadge>
+      </button>
+
+      <div v-if="hiddenExpanded" class="overflow-auto max-h-48 px-2 pb-2">
+        <div
+          v-for="page in hiddenPages"
+          :key="page.id"
+          class="px-2 py-1 rounded-md hover:bg-elevated cursor-pointer transition-colors"
+          @click="handleSelect(page)"
+        >
+          <component
+            :is="CroutonPagesCard"
+            :item="page"
+            layout="tree"
+            collection="pagesPages"
+          />
+        </div>
+      </div>
+    </div>
 
     <!-- Archived section (pinned to bottom) -->
     <div v-if="archivedPages.length" class="border-t border-default shrink-0">
