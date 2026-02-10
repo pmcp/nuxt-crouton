@@ -45,13 +45,16 @@ export function useT() {
   // Get team slug from useTeamContext() - handles both useTeam() and route.params.team fallback
   const teamSlugFromRoute = computed(() => teamSlug.value ?? undefined)
 
+  // Reserved prefixes that should NOT be treated as team slugs
+  const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
+
   // Cache for team translations to avoid repeated API calls
   const teamTranslations = useState<Record<string, any>>('teamTranslations', () => ({}))
   const teamTranslationsLoaded = useState<boolean>('teamTranslationsLoaded', () => false)
 
   // Load team translations if not already loaded
   const loadTeamTranslations = async () => {
-    if (!teamSlugFromRoute.value || teamTranslationsLoaded.value) {
+    if (!teamSlugFromRoute.value || reservedPrefixes.includes(teamSlugFromRoute.value) || teamTranslationsLoaded.value) {
       return
     }
 

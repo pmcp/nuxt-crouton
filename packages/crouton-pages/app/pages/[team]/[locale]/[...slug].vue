@@ -29,20 +29,10 @@ const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayo
 
 const route = useRoute()
 
-// Reserved prefixes that should NOT be treated as team slugs
-// These routes are handled by other packages (auth, admin, etc.)
-const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-const teamParam = route.params.team as string
-
-if (reservedPrefixes.includes(teamParam)) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: 'Page Not Found'
-  })
-}
-
 // Get translation function with fallback for SSR edge cases
 // Wrap in try-catch to handle cases where the composable fails during SSR
+// IMPORTANT: Must be defined before the reserved prefix guard, otherwise
+// SSR will crash with "$setup.t is not a function" when the guard throws
 let t: (key: string, options?: any) => string = (key: string) => `[${key}]`
 try {
   const useTranslation = useT()
@@ -54,6 +44,18 @@ try {
   if (import.meta.dev) {
     console.warn('[crouton-pages] useT() failed, using fallback:', error)
   }
+}
+
+// Reserved prefixes that should NOT be treated as team slugs
+// These routes are handled by other packages (auth, admin, etc.)
+const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
+const teamParam = route.params.team as string
+
+if (reservedPrefixes.includes(teamParam)) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Page Not Found'
+  })
 }
 const { getPageType } = usePageTypes()
 const { isCustomDomain, hideTeamInUrl } = useDomainContext()

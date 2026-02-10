@@ -52,9 +52,12 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     return (route.params.team as string) || null
   })
 
+  // Reserved prefixes that should NOT be treated as team slugs
+  const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
+
   // Fetch published pages for the team with locale for translated titles/slugs
   const { data: pages, pending: isLoading, refresh } = useFetch(() => {
-    if (!team.value) return null
+    if (!team.value || reservedPrefixes.includes(team.value)) return null
     return `/api/teams/${team.value}/pages`
   }, {
     params: { locale },
@@ -108,6 +111,8 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     })
 
     // Second pass: build tree
+    // If a page has a parentId but that parent isn't in the nav set,
+    // exclude the child (parent was hidden from navigation)
     items.forEach(item => {
       const current = itemMap.get(item.id)!
       const parentId = (item as any).parentId
@@ -116,9 +121,10 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
         const parent = itemMap.get(parentId)!
         if (!parent.children) parent.children = []
         parent.children.push(current)
-      } else {
+      } else if (!parentId || !parentId.trim()) {
         rootItems.push(current)
       }
+      // else: parentId is set but parent not in nav — exclude this child
     })
 
     // Sort by order at each level

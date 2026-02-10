@@ -190,7 +190,7 @@ export default defineEventHandler(async (event) => {
       }
     }
   } catch (error: any) {
-    if (error.status) {
+    if (error.statusCode) {
       throw error
     }
     console.error('[crouton-pages] Error fetching pages:', error)

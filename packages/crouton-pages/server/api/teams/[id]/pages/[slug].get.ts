@@ -162,7 +162,7 @@ export default defineEventHandler(async (event) => {
             })
           }
         } catch (authError: any) {
-          if (authError.status) throw authError
+          if (authError.statusCode) throw authError
           // Auth not available, deny access
           throw createError({
             status: 401,
@@ -209,7 +209,7 @@ export default defineEventHandler(async (event) => {
         }
       }
     } catch (error: any) {
-      if (error.status) throw error
+      if (error.statusCode) throw error
       // pagesPages table doesn't exist or schema import failed
       throw createError({
         status: 404,
@@ -217,7 +217,7 @@ export default defineEventHandler(async (event) => {
       })
     }
   } catch (error: any) {
-    if (error.status) throw error
+    if (error.statusCode) throw error
     console.error('[crouton-pages] Error fetching page:', error)
     throw createError({
       status: 500,
