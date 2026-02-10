@@ -42,7 +42,17 @@ export default defineAppConfig({
       // Settings routes
       settingsRoutes: [],
       // Page types for CMS integration
-      pageTypes: []
+      pageTypes: [
+        {
+          id: 'triage-feed',
+          name: 'Triage Feed',
+          description: 'Discussion triage activity feed with pipeline configuration',
+          icon: 'i-lucide-activity',
+          component: 'CroutonTriagePanel',
+          category: 'admin',
+          preferredLayout: 'full-height'
+        }
+      ]
     }
   }
 })
