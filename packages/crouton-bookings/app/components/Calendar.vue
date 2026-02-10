@@ -20,6 +20,10 @@ interface Props {
   highlightedDate?: Date | null
   /** Date currently being used for booking creation */
   creatingAtDate?: Date | null
+  /** Function to check if a date is unavailable by schedule rules */
+  isDateUnavailable?: ((date: Date) => boolean) | null
+  /** Function to get blocked reason for tooltip */
+  getBlockedReason?: ((date: Date) => string | null) | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,6 +34,8 @@ const props = withDefaults(defineProps<Props>(), {
   filters: () => ({ statuses: [], locations: [], showCancelled: false }),
   highlightedDate: null,
   creatingAtDate: null,
+  isDateUnavailable: null,
+  getBlockedReason: null,
 })
 
 const emit = defineEmits<{
@@ -337,6 +343,16 @@ function isCreatingDate(date: Date): boolean {
   )
 }
 
+// Check if a date is unavailable by schedule rules
+function isDayUnavailable(date: Date): boolean {
+  return props.isDateUnavailable?.(date) ?? false
+}
+
+// Get blocked reason for tooltip
+function getDayBlockedReason(date: Date): string | null {
+  return props.getBlockedReason?.(date) ?? null
+}
+
 // Compute max indicators across all days for uniform row height
 const maxIndicatorCount = computed(() => {
   let max = 0
@@ -392,6 +408,7 @@ const monthCellHeight = computed(() => {
       size="md"
       :highlighted-date="highlightedDate"
       :creating-at-date="creatingAtDate"
+      :is-date-disabled="isDateUnavailable ? isDayUnavailable : undefined"
       @hover="onWeekHover"
       @day-click="onWeekDayClick"
     >
@@ -433,26 +450,31 @@ const monthCellHeight = computed(() => {
             class="group relative w-full flex flex-col items-center justify-start pt-1 pb-1 cursor-pointer rounded-md transition-all duration-200"
             :style="{ minHeight: `${monthCellHeight}px` }"
             :class="[
-              isCreatingDate(day.toDate(getLocalTimeZone()))
-                ? 'bg-elevated shadow-md'
-                : isDayHighlighted(day.toDate(getLocalTimeZone()))
-                  ? 'bg-elevated shadow-sm'
-                  : 'hover:bg-elevated/80',
-              hasBookings(day.toDate(getLocalTimeZone()))
+              isDayUnavailable(day.toDate(getLocalTimeZone()))
+                ? 'opacity-40 bg-muted/10'
+                : isCreatingDate(day.toDate(getLocalTimeZone()))
+                  ? 'bg-elevated shadow-md'
+                  : isDayHighlighted(day.toDate(getLocalTimeZone()))
+                    ? 'bg-elevated shadow-sm'
+                    : 'hover:bg-elevated/80',
+              hasBookings(day.toDate(getLocalTimeZone())) && !isDayUnavailable(day.toDate(getLocalTimeZone()))
                 ? 'bg-muted/30'
                 : '',
             ]"
+            :title="getDayBlockedReason(day.toDate(getLocalTimeZone())) || undefined"
             @click="emit('hover', day.toDate(getLocalTimeZone()))"
           >
             <!-- Day number -->
             <span
               class="text-xs font-medium transition-colors"
               :class="[
-                isDayHighlighted(day.toDate(getLocalTimeZone()))
-                  ? 'text-primary'
-                  : hasBookings(day.toDate(getLocalTimeZone()))
-                    ? 'text-default'
-                    : 'text-muted',
+                isDayUnavailable(day.toDate(getLocalTimeZone()))
+                  ? 'text-muted line-through'
+                  : isDayHighlighted(day.toDate(getLocalTimeZone()))
+                    ? 'text-primary'
+                    : hasBookings(day.toDate(getLocalTimeZone()))
+                      ? 'text-default'
+                      : 'text-muted',
               ]"
             >
               {{ day.day }}

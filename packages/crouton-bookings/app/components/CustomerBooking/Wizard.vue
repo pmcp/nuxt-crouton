@@ -17,7 +17,15 @@ const {
   selectSlot,
   submitBooking,
   reset,
+  isDateUnavailable,
+  getRuleBlockedSlotIds,
 } = useCustomerBooking()
+
+// Disabled slot IDs for the selected date (from schedule rules)
+const disabledSlotIds = computed(() => {
+  if (!bookingState.date) return []
+  return getRuleBlockedSlotIds(bookingState.date)
+})
 
 const router = useRouter()
 const stepper = useTemplateRef('stepper')
@@ -173,6 +181,7 @@ const stepperOrientation = computed(() => isMobile.value ? 'vertical' : 'horizon
             <div class="flex justify-center">
               <CroutonCalendar
                 :date="bookingState.date"
+                :is-date-disabled="(date: Date) => isDateUnavailable(date)"
                 @update:date="handleDateSelect"
               />
             </div>
@@ -189,6 +198,7 @@ const stepperOrientation = computed(() => isMobile.value ? 'vertical' : 'horizon
             <CustomerBookingSlotPicker
               :slots="selectedLocation?.slots"
               :selected-slot-id="bookingState.slot"
+              :disabled-slot-ids="disabledSlotIds"
               @select="handleSlotSelect"
             />
           </div>

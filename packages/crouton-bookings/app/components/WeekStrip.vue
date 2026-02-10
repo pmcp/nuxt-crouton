@@ -11,6 +11,8 @@ interface Props {
   highlightedDate?: Date | null
   /** Date currently being used for booking creation */
   creatingAtDate?: Date | null
+  /** Function to check if a date is disabled by schedule rules */
+  isDateDisabled?: ((date: Date) => boolean) | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -20,6 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
   variant: 'default',
   highlightedDate: null,
   creatingAtDate: null,
+  isDateDisabled: null,
 })
 
 const emit = defineEmits<{
@@ -131,6 +134,10 @@ function isCreatingDate(day: { jsDate: Date }): boolean {
   )
 }
 
+function isDayDisabled(day: { jsDate: Date }): boolean {
+  return props.isDateDisabled?.(day.jsDate) ?? false
+}
+
 function onDayClick(day: { date: DateValue, jsDate: Date }) {
   // Click navigates to the day in the list
   emit('hover', day.jsDate)
@@ -207,9 +214,12 @@ const sizeClasses = computed(() => {
       <div
         v-for="day in weekDays"
         :key="day.date.toString()"
-        class="group relative flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1 hover:bg-elevated"
+        class="group relative flex flex-col items-center cursor-pointer rounded-lg transition-all duration-150 px-1"
         :class="[
           sizeClasses.cell,
+          isDayDisabled(day)
+            ? 'opacity-40'
+            : 'hover:bg-elevated',
           isCreatingDate(day)
             ? 'bg-elevated shadow-md'
             : isHighlighted(day) && 'bg-elevated shadow-sm',
@@ -226,7 +236,9 @@ const sizeClasses = computed(() => {
           :class="[
             'font-medium transition-colors',
             sizeClasses.day,
-            isToday(day) ? 'text-primary' : 'text-default',
+            isDayDisabled(day)
+              ? 'text-muted line-through'
+              : isToday(day) ? 'text-primary' : 'text-default',
           ]"
         >
           {{ day.day }}

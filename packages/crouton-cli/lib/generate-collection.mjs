@@ -1573,6 +1573,23 @@ async function main() {
         }
       }
 
+      // Auto-merge package manifest collections for enabled features
+      if (config.features && !process.argv.includes('--no-auto-merge')) {
+        const { mergeManifestCollections } = await import('./utils/manifest-merge.mjs')
+        const mergeResult = await mergeManifestCollections(config)
+        if (mergeResult.merged > 0) {
+          console.log('\n' + '═'.repeat(60))
+          console.log('  PACKAGE COLLECTIONS (auto-merged)')
+          console.log('═'.repeat(60))
+          mergeResult.collections.forEach(c =>
+            console.log(`  + ${c.layer}/${c.name} (from @fyit/crouton-${c.feature})`)
+          )
+          if (mergeResult.skipped.length > 0) {
+            console.log(`\n  Already in config: ${mergeResult.skipped.join(', ')}`)
+          }
+        }
+      }
+
       // Handle both config formats
       if (config.collections && config.targets) {
         // Enhanced config format with collections array

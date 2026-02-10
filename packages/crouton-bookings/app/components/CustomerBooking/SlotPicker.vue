@@ -10,10 +10,13 @@ interface Props {
   selectedSlotId: string | null
   /** Location color to use for slot indicators */
   color?: string
+  /** Slot IDs disabled by schedule rules (distinct from demand-booked) */
+  disabledSlotIds?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  color: '#3b82f6'
+  color: '#3b82f6',
+  disabledSlotIds: () => [],
 })
 
 const emit = defineEmits<{
@@ -46,6 +49,16 @@ function getSlotLabel(slot: SlotItem): string {
 function isSelected(slot: SlotItem): boolean {
   return props.selectedSlotId === slot.id
 }
+
+function isRuleDisabled(slot: SlotItem): boolean {
+  return props.disabledSlotIds.includes(slot.id)
+}
+
+function handleClick(slot: SlotItem) {
+  if (!isRuleDisabled(slot)) {
+    emit('select', slot.id)
+  }
+}
 </script>
 
 <template>
@@ -61,18 +74,23 @@ function isSelected(slot: SlotItem): boolean {
       <UButton
         v-for="slot in normalizedSlots"
         :key="slot.id"
-        :variant="isSelected(slot) ? 'soft' : 'outline'"
-        :color="isSelected(slot) ? 'primary' : 'neutral'"
+        :variant="isRuleDisabled(slot) ? 'ghost' : isSelected(slot) ? 'soft' : 'outline'"
+        :color="isRuleDisabled(slot) ? 'neutral' : isSelected(slot) ? 'primary' : 'neutral'"
+        :disabled="isRuleDisabled(slot)"
         class="p-4 h-auto flex-col"
-        @click="emit('select', slot.id)"
+        :class="isRuleDisabled(slot) && 'opacity-40 cursor-not-allowed'"
+        @click="handleClick(slot)"
       >
         <div
-          v-if="color"
+          v-if="color && !isRuleDisabled(slot)"
           class="w-3 h-3 rounded-full mb-2"
           :style="{ backgroundColor: color }"
         />
         <span class="block text-sm">
           {{ getSlotLabel(slot) }}
+        </span>
+        <span v-if="isRuleDisabled(slot)" class="block text-xs text-muted mt-1">
+          Unavailable
         </span>
       </UButton>
     </div>
