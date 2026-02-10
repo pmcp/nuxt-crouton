@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 import type { Flow, FlowInput, FlowOutput } from '#layers/triage/types'
-import FlowPipelineVisual from '#layers/triage/app/components/flows/FlowPipelineVisual.vue'
+import FlowPipelineVisual from './FlowPipelineVisual.vue'
 
 // Resolve UI components for use in render functions
 const UBadge = resolveComponent('UBadge')
