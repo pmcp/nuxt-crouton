@@ -315,7 +315,7 @@ export const setupIntegrationMocks = (authClientOptions: MockAuthClientOptions =
   vi.stubGlobal('navigateTo', vi.fn())
   vi.stubGlobal('useRoute', () => ({
     params: {},
-    path: '/dashboard',
+    path: '/',
     query: {}
   }))
   vi.stubGlobal('useRouter', () => ({
@@ -377,11 +377,11 @@ export const setupIntegrationMocks = (authClientOptions: MockAuthClientOptions =
     },
     ui: {
       redirects: {
-        afterLogin: '/dashboard',
+        afterLogin: '/',
         afterLogout: '/',
-        afterRegister: '/dashboard',
+        afterRegister: '/',
         unauthenticated: '/auth/login',
-        authenticated: '/dashboard'
+        authenticated: '/'
       }
     }
   }))

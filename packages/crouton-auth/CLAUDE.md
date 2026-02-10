@@ -113,7 +113,7 @@ import {
 | Middleware | Purpose |
 |------------|---------|
 | `auth` | Requires authentication (redirect to login) |
-| `guest` | Requires NO authentication (redirect to dashboard) |
+| `guest` | Requires NO authentication (redirect to home) |
 | `team-context.global` | Sets team context from route params |
 
 ## Configuration

@@ -175,11 +175,11 @@ describe('useAuthConfig', () => {
       }))
 
       const redirects = useAuthRedirects()
-      expect(redirects.afterLogin).toBe('/dashboard')
+      expect(redirects.afterLogin).toBe('/')
       expect(redirects.afterLogout).toBe('/')
-      expect(redirects.afterRegister).toBe('/dashboard')
+      expect(redirects.afterRegister).toBe('/')
       expect(redirects.unauthenticated).toBe('/auth/login')
-      expect(redirects.authenticated).toBe('/dashboard')
+      expect(redirects.authenticated).toBe('/')
     })
 
     it('should use defaults for missing redirect values', () => {

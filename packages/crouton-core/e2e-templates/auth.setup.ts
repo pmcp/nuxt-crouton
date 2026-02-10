@@ -43,7 +43,7 @@ setup('authenticate', async ({ page }) => {
 
   // Wait for result
   try {
-    await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 15000 })
+    await page.waitForURL(url => !url.pathname.startsWith('/auth/'), { timeout: 15000 })
     console.log('Login successful')
   } catch {
     // Check for error - user might not exist
@@ -63,8 +63,8 @@ setup('authenticate', async ({ page }) => {
     await createTeam(page)
   }
 
-  // Verify we're on dashboard
-  await expect(page).toHaveURL(/\/dashboard/)
+  // Verify we've left auth pages
+  expect(page.url()).not.toContain('/auth/')
   console.log('Authentication complete!')
 
   // Save auth state
@@ -101,7 +101,7 @@ async function registerUser(page: any) {
   await registerButton.click()
 
   // Wait for redirect
-  await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 15000 })
+  await page.waitForURL(url => !url.pathname.startsWith('/auth/'), { timeout: 15000 })
 }
 
 async function createTeam(page: any) {
@@ -115,6 +115,6 @@ async function createTeam(page: any) {
     const createButton = page.getByRole('button', { name: /create|continue|next/i })
     await createButton.click()
 
-    await page.waitForURL(/\/dashboard/, { timeout: 15000 })
+    await page.waitForURL(url => !url.pathname.startsWith('/onboarding'), { timeout: 15000 })
   }
 }

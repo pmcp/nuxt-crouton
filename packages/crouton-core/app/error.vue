@@ -170,14 +170,6 @@ useSeoMeta({
             >
               {{ t('navigation.home') }}
             </UButton>
-            <UButton
-              variant="link"
-              color="neutral"
-              to="/dashboard"
-              size="sm"
-            >
-              {{ t('navigation.dashboard') }}
-            </UButton>
           </div>
         </div>
       </UContainer>

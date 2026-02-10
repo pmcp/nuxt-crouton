@@ -61,9 +61,9 @@ export default defineNuxtConfig({
           ui: {
             theme: 'default' as const,
             redirects: {
-              afterLogin: '/dashboard',
+              afterLogin: '/',
               afterLogout: '/',
-              afterRegister: '/dashboard'
+              afterRegister: '/'
             }
           }
         }

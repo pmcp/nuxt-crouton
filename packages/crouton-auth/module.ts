@@ -50,11 +50,11 @@ const defaults: CroutonAuthConfig = {
   ui: {
     theme: 'default',
     redirects: {
-      afterLogin: '/dashboard',
+      afterLogin: '/',
       afterLogout: '/',
-      afterRegister: '/dashboard',
+      afterRegister: '/',
       unauthenticated: '/auth/login',
-      authenticated: '/dashboard'
+      authenticated: '/'
     },
     showRememberMe: true,
     showSocialLogin: true,

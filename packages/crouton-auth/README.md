@@ -253,11 +253,11 @@ interface CroutonAuthConfig {
   ui?: {
     theme?: 'default' | 'minimal'
     redirects?: {
-      afterLogin?: string             // Default: '/dashboard'
+      afterLogin?: string             // Default: '/'
       afterLogout?: string            // Default: '/'
-      afterRegister?: string          // Default: '/dashboard'
+      afterRegister?: string          // Default: '/'
       unauthenticated?: string        // Default: '/auth/login'
-      authenticated?: string          // Default: '/dashboard'
+      authenticated?: string          // Default: '/'
     }
     showRememberMe?: boolean          // Default: true
     showSocialLogin?: boolean         // Default: true
@@ -349,7 +349,7 @@ const credentials = ref({ email: '', password: '' })
 async function handleLogin() {
   try {
     await login(credentials.value)
-    navigateTo('/dashboard')
+    navigateTo('/')
   } catch (e) {
     // error.value is automatically set
   }
@@ -763,7 +763,7 @@ definePageMeta({
 
 ### `guest` Middleware
 
-Requires NO authentication. Redirects to dashboard if authenticated.
+Requires NO authentication. Redirects to home if authenticated.
 
 ```vue
 <script setup lang="ts">

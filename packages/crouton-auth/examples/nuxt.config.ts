@@ -244,9 +244,9 @@ export default defineNuxtConfig({
 
     ui: {
       redirects: {
-        afterLogin: '/dashboard',
+        afterLogin: '/',
         afterLogout: '/',
-        afterRegister: '/dashboard'
+        afterRegister: '/'
       }
     }
   }

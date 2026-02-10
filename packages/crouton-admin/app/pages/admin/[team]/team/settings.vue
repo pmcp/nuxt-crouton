@@ -26,8 +26,8 @@ async function handleDelete() {
       description: t('teams.teamDeletedDescription'),
       color: 'success'
     })
-    // Redirect to dashboard root (will need to select new team)
-    await navigateTo('/dashboard')
+    // Redirect to home (will need to select new team)
+    await navigateTo('/')
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('errors.generic')
     toast.add({

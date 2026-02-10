@@ -18,6 +18,7 @@ const router = useRouter()
 const toast = useToast()
 
 const { user, loggedIn } = useAuth()
+const redirects = useAuthRedirects()
 
 // Get token from query params
 const token = computed(() => route.query.token as string | undefined)
@@ -115,9 +116,9 @@ async function resendVerification() {
   }
 }
 
-// Navigate to dashboard
+// Navigate to authenticated redirect
 function goToDashboard() {
-  router.push('/dashboard')
+  router.push(redirects.authenticated)
 }
 
 // Navigate to login
@@ -241,7 +242,7 @@ function goToLogin() {
           Resend verification email
         </UButton>
 
-        <NuxtLink to="/dashboard">
+        <NuxtLink :to="redirects.authenticated">
           <UButton
             color="neutral"
             variant="outline"

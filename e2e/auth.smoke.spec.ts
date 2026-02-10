@@ -89,12 +89,12 @@ test.describe('Auth Smoke Tests', () => {
       }
     }
 
-    // Verify we're logged in (either dashboard or onboarding page)
+    // Verify we're logged in (no longer on auth page)
     const url = page.url()
-    expect(url.includes('/dashboard') || url.includes('/onboarding')).toBeTruthy()
+    expect(url).not.toContain('/auth/')
   })
 
-  test('dashboard is accessible after login', async ({ page }) => {
+  test('app is accessible after login', async ({ page }) => {
     // Login first
     await page.goto('/auth/login')
     await waitForReady(page)
@@ -109,7 +109,7 @@ test.describe('Auth Smoke Tests', () => {
     await submitButton.click()
 
     try {
-      await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 15000 })
+      await page.waitForURL(url => !url.pathname.startsWith('/auth/'), { timeout: 15000 })
     } catch {
       test.skip()
     }
@@ -121,14 +121,14 @@ test.describe('Auth Smoke Tests', () => {
         await teamInput.fill('E2E Test Team')
         const createButton = page.getByRole('button', { name: /create|continue|next/i })
         await createButton.click()
-        await page.waitForURL(/\/dashboard/, { timeout: 15000 })
+        await page.waitForURL(url => !url.pathname.startsWith('/onboarding'), { timeout: 15000 })
       }
     }
 
-    // Verify dashboard elements
+    // Verify app content
     await waitForReady(page)
 
-    // Should have some dashboard content (sidebar, main content, etc.)
+    // Should have some app content (sidebar, main content, etc.)
     const hasContent = await page.locator('nav, aside, main, [data-slot="sidebar"]').first().isVisible({ timeout: 10000 }).catch(() => false)
     expect(hasContent).toBeTruthy()
   })
@@ -148,7 +148,7 @@ test.describe('Auth Smoke Tests', () => {
     await submitButton.click()
 
     try {
-      await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 15000 })
+      await page.waitForURL(url => !url.pathname.startsWith('/auth/'), { timeout: 15000 })
     } catch {
       test.skip()
     }
@@ -160,7 +160,7 @@ test.describe('Auth Smoke Tests', () => {
         await teamInput.fill('E2E Test Team')
         const createButton = page.getByRole('button', { name: /create|continue|next/i })
         await createButton.click()
-        await page.waitForURL(/\/dashboard/, { timeout: 15000 })
+        await page.waitForURL(url => !url.pathname.startsWith('/onboarding'), { timeout: 15000 })
       }
     }
 
@@ -199,8 +199,8 @@ test.describe('Auth Smoke Tests', () => {
     // Clear any existing cookies/storage
     await page.context().clearCookies()
 
-    // Try to access dashboard directly
-    await page.goto('/dashboard')
+    // Try to access a protected route directly
+    await page.goto('/admin')
     await waitForReady(page)
 
     // Should be redirected to login

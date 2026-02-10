@@ -18,6 +18,7 @@ const router = useRouter()
 const toast = useToast()
 
 const { hasMagicLink } = useAuth()
+const redirects = useAuthRedirects()
 
 // Get token from query params
 const token = computed(() => route.query.token as string | undefined)
@@ -59,9 +60,9 @@ async function verifyMagicLink() {
       color: 'success'
     })
 
-    // Redirect to dashboard after short delay
+    // Redirect after short delay
     setTimeout(() => {
-      router.push('/dashboard')
+      router.push(redirects.afterLogin)
     }, 1500)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Magic link verification failed'

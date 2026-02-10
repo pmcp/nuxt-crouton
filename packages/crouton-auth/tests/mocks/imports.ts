@@ -31,11 +31,11 @@ export const useAuthConfig = () => ({
   },
   ui: {
     redirects: {
-      afterLogin: '/dashboard',
+      afterLogin: '/',
       afterLogout: '/',
-      afterRegister: '/dashboard',
+      afterRegister: '/',
       unauthenticated: '/auth/login',
-      authenticated: '/dashboard'
+      authenticated: '/'
     }
   }
 })
