@@ -30,6 +30,13 @@ export function useCustomerBooking() {
   // Selected location object (for accessing slots)
   const selectedLocation = ref<LocationData | null>(null)
 
+  // Schedule rules (open days, slot schedule, blocked dates)
+  const {
+    isDateUnavailable,
+    getRuleBlockedSlotIds,
+    getBlockedReason,
+  } = useScheduleRules(selectedLocation)
+
   // Fetch allowed locations
   const teamId = computed(() => route.params.team as string)
 
@@ -203,6 +210,11 @@ export function useCustomerBooking() {
     isComplete,
     isInventoryMode,
     teamId,
+
+    // Schedule rules
+    isDateUnavailable,
+    getRuleBlockedSlotIds,
+    getBlockedReason,
 
     // Actions
     nextStep,

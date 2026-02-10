@@ -1,4 +1,5 @@
 import type { DateValue } from '@internationalized/date'
+import type { BlockedDateItem, SlotSchedule } from '../types/booking'
 
 export interface SlotOption {
   id: string
@@ -24,6 +25,10 @@ export interface LocationWithInventory {
   inventoryMode?: boolean
   quantity?: number
   slots?: SlotOption[] | string | null
+  // Schedule rule fields
+  openDays?: number[] | string | null
+  slotSchedule?: SlotSchedule | string | null
+  blockedDates?: BlockedDateItem[] | string | null
 }
 
 const ALL_DAY_SLOT: SlotOption = {
@@ -42,6 +47,14 @@ export function useBookingAvailability(
   const { currentTeam } = useTeam()
   const loading = ref(false)
   const availabilityData = ref<AvailabilityData>({})
+
+  // Schedule rules (open days, slot schedule, blocked dates)
+  const {
+    isDateUnavailable,
+    isSlotAvailableByRules,
+    getBlockedReason,
+    getRuleBlockedSlotIds,
+  } = useScheduleRules(location)
 
   // Parse slots from location (handles string or array)
   const locationSlots = computed<SlotOption[]>(() => {
@@ -173,21 +186,28 @@ export function useBookingAvailability(
   function getAvailableSlotsForDate(date: Date | DateValue): SlotOption[] {
     if (isInventoryMode.value) return []
 
+    // If date is completely unavailable by rules, no slots available
+    if (isDateUnavailable(date)) return []
+
     const bookedSlots = getBookedSlotsForDate(date)
+    const ruleBlockedSlots = getRuleBlockedSlotIds(date)
 
     // If "all-day" is booked, no slots available
     if (bookedSlots.includes('all-day')) {
       return []
     }
 
-    // If ANY slot is booked, "all-day" is not available
-    const hasAnyBooking = bookedSlots.length > 0
+    // If ANY slot is booked or rule-blocked, "all-day" is not available
+    const hasAnyBooking = bookedSlots.length > 0 || ruleBlockedSlots.length > 0
 
     return allSlots.value.filter(slot => {
+      // Remove rule-blocked slots
+      if (ruleBlockedSlots.includes(slot.id)) return false
+
       // Remove already booked slots
       if (bookedSlots.includes(slot.id)) return false
 
-      // Remove "all-day" if any slot is booked
+      // Remove "all-day" if any slot is booked or rule-blocked
       if (slot.id === 'all-day' && hasAnyBooking) return false
 
       return true
@@ -224,6 +244,11 @@ export function useBookingAvailability(
     hasBookingsOnDate,
     isDateFullyBooked,
     normalizeToDateKey,
+
+    // Schedule rules
+    isDateUnavailable,
+    getBlockedReason,
+    getRuleBlockedSlotIds,
 
     // Constants
     ALL_DAY_SLOT

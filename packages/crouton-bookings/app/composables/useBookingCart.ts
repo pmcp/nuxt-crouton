@@ -134,6 +134,15 @@ export function useBookingCart() {
     return locations.value.find(l => l.id === formState.locationId) || null
   })
 
+  // Schedule rules (open days, slot schedule, blocked dates)
+  const selectedLocationRef = computed(() => selectedLocation.value ?? null)
+  const {
+    isDateUnavailable,
+    isSlotAvailableByRules,
+    getBlockedReason,
+    getRuleBlockedSlotIds,
+  } = useScheduleRules(selectedLocationRef)
+
   // Check if selected location is in inventory mode
   const isInventoryMode = computed(() => selectedLocation.value?.inventoryMode ?? false)
 
@@ -274,6 +283,11 @@ export function useBookingCart() {
   function isSlotDisabled(slotId: string): boolean {
     if (!formState.date || isInventoryMode.value) return true
 
+    // Check schedule rules first
+    if (!isSlotAvailableByRules(slotId, formState.date)) {
+      return true
+    }
+
     // If "all-day" is booked, all slots are disabled
     if (bookedSlotIds.value.includes('all-day')) {
       return true
@@ -284,8 +298,9 @@ export function useBookingCart() {
       return true
     }
 
-    // If any slot is booked, "all-day" is disabled
-    if (slotId === 'all-day' && bookedSlotIds.value.length > 0) {
+    // If any slot is booked or rule-blocked, "all-day" is disabled
+    const ruleBlocked = getRuleBlockedSlotIds(formState.date)
+    if (slotId === 'all-day' && (bookedSlotIds.value.length > 0 || ruleBlocked.length > 0)) {
       return true
     }
 
@@ -359,6 +374,9 @@ export function useBookingCart() {
   const canAddToCart = computed(() => {
     // Must have location and date
     if (!formState.locationId || !formState.date) return false
+
+    // Check schedule rules - date must be available
+    if (isDateUnavailable(formState.date)) return false
 
     if (isInventoryMode.value) {
       // Inventory mode: just need location + date + availability
@@ -619,6 +637,11 @@ export function useBookingCart() {
     getBookedSlotLabelsForDate,
     getBookedSlotsForDate,
     getInventoryAvailability,
+
+    // Schedule rules
+    isDateUnavailable,
+    getBlockedReason,
+    getRuleBlockedSlotIds,
 
     // My Bookings
     myBookings,
