@@ -1,0 +1,88 @@
+<script setup lang="ts">
+interface Props {
+  modelValue?: number[] | string | null
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: null,
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: number[]]
+}>()
+
+const days = [
+  { value: 1, label: 'Mon' },
+  { value: 2, label: 'Tue' },
+  { value: 3, label: 'Wed' },
+  { value: 4, label: 'Thu' },
+  { value: 5, label: 'Fri' },
+  { value: 6, label: 'Sat' },
+  { value: 0, label: 'Sun' },
+]
+
+// Parse modelValue (handles string from DB)
+const selectedDays = computed<number[]>(() => {
+  if (!props.modelValue) return []
+  if (Array.isArray(props.modelValue)) return props.modelValue
+  if (typeof props.modelValue === 'string') {
+    try {
+      const parsed = JSON.parse(props.modelValue)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+})
+
+const allOpen = computed(() => selectedDays.value.length === 0)
+
+function toggleDay(dayValue: number) {
+  const current = [...selectedDays.value]
+  const index = current.indexOf(dayValue)
+  if (index === -1) {
+    current.push(dayValue)
+  } else {
+    current.splice(index, 1)
+  }
+  emit('update:modelValue', current)
+}
+
+function isDaySelected(dayValue: number): boolean {
+  // If empty (all open), all are selected
+  if (allOpen.value) return true
+  return selectedDays.value.includes(dayValue)
+}
+
+function clearAll() {
+  emit('update:modelValue', [])
+}
+</script>
+
+<template>
+  <div class="space-y-2">
+    <div class="flex gap-1.5 flex-wrap">
+      <UButton
+        v-for="day in days"
+        :key="day.value"
+        size="sm"
+        :variant="isDaySelected(day.value) && !allOpen ? 'soft' : allOpen ? 'outline' : 'ghost'"
+        :color="isDaySelected(day.value) && !allOpen ? 'primary' : 'neutral'"
+        class="min-w-[3rem]"
+        @click="toggleDay(day.value)"
+      >
+        {{ day.label }}
+      </UButton>
+    </div>
+    <p v-if="allOpen" class="text-xs text-muted">
+      No days selected — location is open every day.
+    </p>
+    <p v-else class="text-xs text-muted">
+      Open {{ selectedDays.length }} day{{ selectedDays.length === 1 ? '' : 's' }} per week.
+      <button type="button" class="text-primary hover:underline" @click="clearAll">
+        Reset to all days
+      </button>
+    </p>
+  </div>
+</template>
