@@ -79,6 +79,29 @@
       "next": "Volgende",
       "back": "Terug",
       "confirm": "Boeking Bevestigen"
+    },
+    "schedule": {
+      "openDays": "Open Dagen",
+      "openDaysHint": "Geen dagen geselecteerd — locatie is elke dag open.",
+      "openDaysCount": "Open {count} dag(en) per week.",
+      "resetAllDays": "Reset naar alle dagen",
+      "slotSchedule": "Slotrooster",
+      "slotScheduleEmpty": "Voeg eerst tijdslots toe om per-slot roosters te configureren.",
+      "slotScheduleHint": "Geen per-slot rooster ingesteld — alle slots volgen de open dagen.",
+      "slotScheduleActive": "Aangepast rooster actief voor {count} slot(s).",
+      "resetSchedule": "Alles resetten",
+      "blockedDates": "Geblokkeerde Datums",
+      "addBlockedPeriod": "Geblokkeerde Periode Toevoegen",
+      "startDate": "Startdatum",
+      "endDate": "Einddatum",
+      "reason": "Reden",
+      "reasonPlaceholder": "Feestdag, Onderhoud...",
+      "blockEntireDay": "Hele dag blokkeren",
+      "blockSpecificSlots": "Alleen specifieke slots blokkeren",
+      "selectSlotsToBlock": "Selecteer welke slots geblokkeerd moeten worden tijdens deze periode.",
+      "closed": "Gesloten",
+      "blocked": "Geblokkeerd",
+      "unavailable": "Niet beschikbaar"
     }
   }
 }

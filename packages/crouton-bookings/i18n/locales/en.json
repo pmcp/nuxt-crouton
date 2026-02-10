@@ -79,6 +79,29 @@
       "next": "Next",
       "back": "Back",
       "confirm": "Confirm Booking"
+    },
+    "schedule": {
+      "openDays": "Open Days",
+      "openDaysHint": "No days selected — location is open every day.",
+      "openDaysCount": "Open {count} day(s) per week.",
+      "resetAllDays": "Reset to all days",
+      "slotSchedule": "Slot Schedule",
+      "slotScheduleEmpty": "Add time slots first to configure per-slot schedules.",
+      "slotScheduleHint": "No per-slot schedule set — all slots follow the open days.",
+      "slotScheduleActive": "Custom schedule active for {count} slot(s).",
+      "resetSchedule": "Reset all",
+      "blockedDates": "Blocked Dates",
+      "addBlockedPeriod": "Add Blocked Period",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "reason": "Reason",
+      "reasonPlaceholder": "Holiday, Maintenance...",
+      "blockEntireDay": "Block entire day",
+      "blockSpecificSlots": "Block specific slots only",
+      "selectSlotsToBlock": "Select which slots to block during this period.",
+      "closed": "Closed",
+      "blocked": "Blocked",
+      "unavailable": "Unavailable"
     }
   }
 }

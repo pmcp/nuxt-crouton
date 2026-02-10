@@ -79,6 +79,29 @@
       "next": "Suivant",
       "back": "Retour",
       "confirm": "Confirmer la Réservation"
+    },
+    "schedule": {
+      "openDays": "Jours d'ouverture",
+      "openDaysHint": "Aucun jour sélectionné — le lieu est ouvert tous les jours.",
+      "openDaysCount": "Ouvert {count} jour(s) par semaine.",
+      "resetAllDays": "Réinitialiser à tous les jours",
+      "slotSchedule": "Planning des créneaux",
+      "slotScheduleEmpty": "Ajoutez d'abord des créneaux pour configurer les plannings par créneau.",
+      "slotScheduleHint": "Aucun planning par créneau défini — tous les créneaux suivent les jours d'ouverture.",
+      "slotScheduleActive": "Planning personnalisé actif pour {count} créneau(x).",
+      "resetSchedule": "Tout réinitialiser",
+      "blockedDates": "Dates bloquées",
+      "addBlockedPeriod": "Ajouter une période bloquée",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "reason": "Raison",
+      "reasonPlaceholder": "Vacances, Maintenance...",
+      "blockEntireDay": "Bloquer toute la journée",
+      "blockSpecificSlots": "Bloquer certains créneaux uniquement",
+      "selectSlotsToBlock": "Sélectionnez les créneaux à bloquer pendant cette période.",
+      "closed": "Fermé",
+      "blocked": "Bloqué",
+      "unavailable": "Indisponible"
     }
   }
 }
