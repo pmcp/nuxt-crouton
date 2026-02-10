@@ -1,5 +1,5 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, asc, inArray, sql, isNull } from 'drizzle-orm'
+import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { PagesPage, NewPagesPage } from '../../types'
@@ -120,21 +120,6 @@ export async function getPagesPagesByIds(teamId: string, pageIds: string[]) {
   return pages
 }
 
-export async function getNextOrderPagesPage(teamId: string, parentId: string | null) {
-  const db = useDB()
-
-  const condition = parentId
-    ? and(eq(tables.pagesPages.teamId, teamId), eq(tables.pagesPages.parentId, parentId))
-    : and(eq(tables.pagesPages.teamId, teamId), isNull(tables.pagesPages.parentId))
-
-  const [result] = await (db as any)
-    .select({ maxOrder: sql<number>`COALESCE(MAX("order"), -1)` })
-    .from(tables.pagesPages)
-    .where(condition)
-
-  return (result?.maxOrder ?? -1) + 1
-}
-
 export async function createPagesPage(data: NewPagesPage) {
   const db = useDB()
 
@@ -171,8 +156,8 @@ export async function updatePagesPage(
 
   if (!page) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'PagesPage not found or unauthorized'
+      status: 404,
+      statusText: 'PagesPage not found or unauthorized'
     })
   }
 
@@ -199,8 +184,8 @@ export async function deletePagesPage(
 
   if (!deleted) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'PagesPage not found or unauthorized'
+      status: 404,
+      statusText: 'PagesPage not found or unauthorized'
     })
   }
 
@@ -251,8 +236,8 @@ export async function updatePositionPagesPage(
 
   if (!current) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'PagesPage not found'
+      status: 404,
+      statusText: 'PagesPage not found'
     })
   }
 
@@ -273,16 +258,16 @@ export async function updatePositionPagesPage(
 
     if (!parent) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Parent PagesPage not found'
+        status: 400,
+        statusText: 'Parent PagesPage not found'
       })
     }
 
     // Prevent moving item to its own descendant
     if (parent.path.startsWith(current.path)) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Cannot move item to its own descendant'
+        status: 400,
+        statusText: 'Cannot move item to its own descendant'
       })
     }
 
@@ -294,78 +279,15 @@ export async function updatePositionPagesPage(
   }
 
   const oldPath = current.path
-  const oldParentId = current.parentId
 
-  // Reorder siblings in the target parent so order values are sequential.
-  // 1. Get all siblings in the target parent (excluding the moved item)
-  const targetParentCondition = newParentId
-    ? eq(tables.pagesPages.parentId, newParentId)
-    : sql`${tables.pagesPages.parentId} IS NULL`
-
-  const siblings = await (db as any)
-    .select({ id: tables.pagesPages.id, order: tables.pagesPages.order })
-    .from(tables.pagesPages)
-    .where(
-      and(
-        eq(tables.pagesPages.teamId, teamId),
-        targetParentCondition,
-        sql`${tables.pagesPages.id} != ${id}`
-      )
-    )
-    .orderBy(tables.pagesPages.order) as Array<{ id: string; order: number }>
-
-  // 2. Insert the moved item at the requested position
-  const clampedOrder = Math.max(0, Math.min(newOrder, siblings.length))
-  siblings.splice(clampedOrder, 0, { id, order: clampedOrder })
-
-  // 3. Assign sequential order values to all siblings
-  for (let i = 0; i < siblings.length; i++) {
-    if (siblings[i]!.id === id) continue // skip moved item, updated below
-    if (siblings[i]!.order !== i) {
-      await (db as any)
-        .update(tables.pagesPages)
-        .set({ order: i })
-        .where(eq(tables.pagesPages.id, siblings[i]!.id))
-    }
-  }
-
-  // 4. If the moved item left a gap in the old parent, reorder those siblings too
-  if (oldParentId !== newParentId) {
-    const oldParentCondition = oldParentId
-      ? eq(tables.pagesPages.parentId, oldParentId)
-      : sql`${tables.pagesPages.parentId} IS NULL`
-
-    const oldSiblings = await (db as any)
-      .select({ id: tables.pagesPages.id, order: tables.pagesPages.order })
-      .from(tables.pagesPages)
-      .where(
-        and(
-          eq(tables.pagesPages.teamId, teamId),
-          oldParentCondition,
-          sql`${tables.pagesPages.id} != ${id}`
-        )
-      )
-      .orderBy(tables.pagesPages.order) as Array<{ id: string; order: number }>
-
-    for (let i = 0; i < oldSiblings.length; i++) {
-      if (oldSiblings[i]!.order !== i) {
-        await (db as any)
-          .update(tables.pagesPages)
-          .set({ order: i })
-          .where(eq(tables.pagesPages.id, oldSiblings[i]!.id))
-      }
-    }
-  }
-
-  // 5. Update the moved item itself
-  const movedOrder = clampedOrder
+  // Update the item itself
   const [updated] = await (db as any)
     .update(tables.pagesPages)
     .set({
       parentId: newParentId,
       path: newPath,
       depth: newDepth,
-      order: movedOrder
+      order: newOrder
     })
     .where(
       and(

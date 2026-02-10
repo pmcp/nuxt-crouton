@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-01-20
+ * @generated 2026-02-10
  *
  * ## AI Context
  * - Main interface: PagesPage

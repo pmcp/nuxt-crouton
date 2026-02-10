@@ -180,8 +180,8 @@ export async function updateBookingsSetting(
 
   if (!setting) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'BookingsSetting not found or unauthorized'
+      status: 404,
+      statusText: 'BookingsSetting not found or unauthorized'
     })
   }
 
@@ -208,8 +208,8 @@ export async function deleteBookingsSetting(
 
   if (!deleted) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'BookingsSetting not found or unauthorized'
+      status: 404,
+      statusText: 'BookingsSetting not found or unauthorized'
     })
   }
 

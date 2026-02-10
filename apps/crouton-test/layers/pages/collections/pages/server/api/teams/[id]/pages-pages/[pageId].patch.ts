@@ -7,7 +7,7 @@ import type { PagesPage } from '../../../../../types'
 export default defineEventHandler(async (event) => {
   const { pageId } = getRouterParams(event)
   if (!pageId) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing page ID' })
+    throw createError({ status: 400, statusText: 'Missing page ID' })
   }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 

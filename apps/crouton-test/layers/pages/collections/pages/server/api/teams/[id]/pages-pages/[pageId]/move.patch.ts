@@ -6,7 +6,7 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 export default defineEventHandler(async (event) => {
   const { pageId } = getRouterParams(event)
   if (!pageId) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing page ID' })
+    throw createError({ status: 400, statusText: 'Missing page ID' })
   }
   const { team } = await resolveTeamAndCheckMembership(event)
 
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
 
   // Validate input
   if (body.order === undefined || typeof body.order !== 'number') {
-    throw createError({ statusCode: 400, statusMessage: 'order is required and must be a number' })
+    throw createError({ status: 400, statusText: 'order is required and must be a number' })
   }
 
   // parentId can be null (move to root) or a valid ID

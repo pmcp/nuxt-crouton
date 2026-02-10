@@ -1,6 +1,6 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { createPagesPage, getPagesPagesByIds, getNextOrderPagesPage } from '../../../../database/queries'
+import { createPagesPage, getPagesPagesByIds } from '../../../../database/queries'
 import { nanoid } from 'nanoid'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
@@ -27,10 +27,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Always calculate next order for new pages - append to end of siblings
-  // The frontend sends order: 0 by default, but for CREATE we want proper ordering
-  const order = await getNextOrderPagesPage(team.id, dataWithoutId.parentId || null)
-
   // Convert date string to Date object
   if (dataWithoutId.publishedAt) {
     dataWithoutId.publishedAt = new Date(dataWithoutId.publishedAt)
@@ -40,7 +36,6 @@ export default defineEventHandler(async (event) => {
     id: recordId,
     path,
     depth,
-    order,
     teamId: team.id,
     owner: user.id,
     createdBy: user.id,
