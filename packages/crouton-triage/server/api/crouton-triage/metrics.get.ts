@@ -15,8 +15,8 @@
  * (e.g., API key, IP whitelist, or internal network only)
  */
 
-import { metricsCollector } from '../utils/metrics'
-import { logger } from '../utils/logger'
+import { metricsCollector } from '../../utils/metrics'
+import { logger } from '../../utils/logger'
 
 /**
  * Metrics response format

@@ -1,5 +1,5 @@
 // Generator for database queries
-import { toKebabCase } from '../utils/helpers.mjs'
+import { toKebabCase, pascal } from '../utils/helpers.mjs'
 
 // Helper to generate tree-specific queries when hierarchy is enabled
 function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, camelCasePlural, singular) {
@@ -338,9 +338,8 @@ export function generateQueries(data, config = null) {
 `
     } else {
       // Local layer collection - import from sibling directory
-      // Use kebab-case for folder path (folders are created as kebab-case plural)
-      // e.g., emailTemplates -> email-templates
-      schemaImports += `import * as ${collection}Schema from '../../../${toKebabCase(collection)}/server/database/schema'
+      // Folder names are lowercased plural (e.g., flowInputs -> flowinputs)
+      schemaImports += `import * as ${collection}Schema from '../../../${collection.toLowerCase()}/server/database/schema'
 `
     }
   })
@@ -366,7 +365,7 @@ export function generateQueries(data, config = null) {
       // e.g., app + emailTemplates -> appEmailTemplates
       const refTableName = ref.isExternal
         ? collectionIdentifier
-        : `${layerCamelCase}${collectionIdentifier.charAt(0).toUpperCase() + collectionIdentifier.slice(1)}`
+        : `${layerCamelCase}${pascal(collectionIdentifier)}`
 
       if (ref.isUserReference) {
         // Special user reference handling
@@ -456,14 +455,12 @@ export function generateQueries(data, config = null) {
     Object.entries(refsByCollection).forEach(([collection, refs]) => {
       const ref = refsByCollection[collection][0] // Get reference metadata
       const collectionIdentifier = collection
-      // Convert collection to lowercase first to match folder/export naming
-      const lowercaseCollection = collectionIdentifier.toLowerCase()
       const tableReference = ref.isExternal
         ? collectionIdentifier
-        : `${collectionIdentifier}Schema.${layerCamelCase}${lowercaseCollection.charAt(0).toUpperCase() + lowercaseCollection.slice(1)}`
+        : `${collectionIdentifier}Schema.${layerCamelCase}${pascal(collectionIdentifier)}`
 
-      // Use consistent PascalCase variable naming based on lowercase collection
-      const collectionVarName = lowercaseCollection.charAt(0).toUpperCase() + lowercaseCollection.slice(1)
+      // Use consistent PascalCase variable naming
+      const collectionVarName = pascal(collectionIdentifier)
 
       // Build the ID collection logic for all fields referencing this collection
       const idCollectionCode = refs.map(ref => `

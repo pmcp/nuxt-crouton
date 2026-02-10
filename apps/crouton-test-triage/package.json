@@ -1,0 +1,20 @@
+{
+  "name": "crouton-test-triage",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@fyit/crouton": "workspace:*",
+    "@libsql/client": "^0.15.0",
+    "drizzle-orm": "^0.45.0",
+    "nuxt": "^4.3"
+  },
+  "devDependencies": {
+    "@fyit/crouton-cli": "workspace:*",
+    "drizzle-kit": "^0.31.0"
+  }
+}

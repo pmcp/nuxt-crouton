@@ -125,6 +125,16 @@ CroutonTriage
 
 ## Configuration
 
+### App Requirements
+
+Apps using this package must enable KV storage for Slack OAuth state:
+
+```typescript
+hub: { db: 'sqlite', kv: true }
+```
+
+### Nuxt Config
+
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
@@ -133,6 +143,8 @@ export default defineNuxtConfig({
     '@fyit/crouton-triage',
     './layers/triage'  // Generated collections (MUST be last)
   ],
+
+  hub: { db: 'sqlite', kv: true },
 
   runtimeConfig: {
     croutonTriage: {

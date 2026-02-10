@@ -18,7 +18,7 @@
  * - 207 Multi-Status: System is degraded (some services down)
  */
 
-import { logger } from '../utils/logger'
+import { logger } from '../../utils/logger'
 
 /**
  * Service health status

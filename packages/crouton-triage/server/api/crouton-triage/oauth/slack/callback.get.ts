@@ -173,7 +173,7 @@ export default defineEventHandler(async (event) => {
     const { getAllTriageFlowInputs, createTriageFlowInput } = await import(
       '~~/layers/triage/collections/flowinputs/server/database/queries'
     )
-    const { SYSTEM_USER_ID } = await import('../../utils/constants')
+    const { SYSTEM_USER_ID } = await import('../../../../utils/constants')
 
     // Determine which flow to add the input to
     let flowId: string

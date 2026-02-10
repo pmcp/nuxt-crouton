@@ -53,7 +53,6 @@ import { fetchResendEmail, transformToMailgunFormat } from '../../../utils/resen
 import { rateLimit, RateLimitPresets } from '../../../utils/rateLimit'
 import { classifyFigmaEmail } from '../../../utils/emailClassifier'
 import { createTriageInboxMessage } from '~~/layers/triage/collections/inboxmessages/server/database/queries'
-import { findFlowInputByEmailAddress } from '~~/layers/triage/collections/flowinputs/server/database/queries'
 import { SYSTEM_USER_ID } from '../../../utils/constants'
 
 /**
