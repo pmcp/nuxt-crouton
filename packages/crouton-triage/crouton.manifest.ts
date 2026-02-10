@@ -1,12 +1,12 @@
 import type { PackageManifest } from '@fyit/crouton-schema-designer/types'
 import discussionSchema from './schemas/discussion.json'
 import flowSchema from './schemas/flow.json'
-import flowInputSchema from './schemas/flow-input.json'
-import flowOutputSchema from './schemas/flow-output.json'
+import inputSchema from './schemas/input.json'
+import outputSchema from './schemas/output.json'
 import taskSchema from './schemas/task.json'
 import jobSchema from './schemas/job.json'
-import userMappingSchema from './schemas/user-mapping.json'
-import inboxMessageSchema from './schemas/inbox-message.json'
+import userSchema from './schemas/user.json'
+import messageSchema from './schemas/message.json'
 
 const manifest: PackageManifest = {
   id: 'crouton-triage',
@@ -43,18 +43,18 @@ const manifest: PackageManifest = {
       schemaPath: './schemas/flow.json'
     },
     {
-      name: 'flowinput',
-      tableName: 'triageFlowinputs',
+      name: 'input',
+      tableName: 'triageInputs',
       description: 'Input sources connected to flows (Slack workspace, Figma project, email endpoint).',
-      schema: flowInputSchema,
-      schemaPath: './schemas/flow-input.json'
+      schema: inputSchema,
+      schemaPath: './schemas/input.json'
     },
     {
-      name: 'flowoutput',
-      tableName: 'triageFlowoutputs',
+      name: 'output',
+      tableName: 'triageOutputs',
       description: 'Output destinations for flows with domain-based routing (Notion databases, GitHub, Linear).',
-      schema: flowOutputSchema,
-      schemaPath: './schemas/flow-output.json'
+      schema: outputSchema,
+      schemaPath: './schemas/output.json'
     },
     {
       name: 'task',
@@ -71,18 +71,18 @@ const manifest: PackageManifest = {
       schemaPath: './schemas/job.json'
     },
     {
-      name: 'usermapping',
-      tableName: 'triageUsermappings',
+      name: 'user',
+      tableName: 'triageUsers',
       description: 'Cross-platform user identity mappings (Slack/Figma user → Notion user).',
-      schema: userMappingSchema,
-      schemaPath: './schemas/user-mapping.json'
+      schema: userSchema,
+      schemaPath: './schemas/user.json'
     },
     {
-      name: 'inboxmessage',
-      tableName: 'triageInboxmessages',
+      name: 'message',
+      tableName: 'triageMessages',
       description: 'Email inbox for forwarded messages with classification and routing.',
-      schema: inboxMessageSchema,
-      schemaPath: './schemas/inbox-message.json'
+      schema: messageSchema,
+      schemaPath: './schemas/message.json'
     }
   ],
 
@@ -148,7 +148,6 @@ const manifest: PackageManifest = {
       'useTriagePromptPreview'
     ],
     components: [
-      { name: 'CroutonTriageFlowBuilder', description: 'Flow configuration wizard', props: ['flowId', 'teamId'] },
       { name: 'CroutonTriageFlowList', description: 'Flow listing with status indicators', props: ['teamId'] },
       { name: 'CroutonTriageFlowPipelineVisual', description: 'Visual pipeline diagram', props: ['flow', 'inputs', 'outputs'] },
       { name: 'CroutonTriageInputManager', description: 'Manage flow input sources', props: ['flowId'] },

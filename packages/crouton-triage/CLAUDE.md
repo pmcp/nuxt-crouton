@@ -18,7 +18,6 @@ Discussion-to-task triage system for Nuxt applications. Receives discussions fro
 | `app/composables/useTriageSlackUsers.ts` | Fetch Slack workspace users |
 | `app/composables/useTriageFieldMapping.ts` | Notion field mapping configuration |
 | `app/composables/useTriagePromptPreview.ts` | AI prompt preview and testing |
-| `app/components/flows/FlowBuilder.vue` | Multi-step flow configuration wizard |
 | `app/components/flows/FlowList.vue` | Flow list with create/edit actions |
 | `app/components/flows/InputManager.vue` | Manage flow inputs (sources) |
 | `app/components/flows/OutputManager.vue` | Manage flow outputs (Notion targets) |
@@ -57,7 +56,6 @@ Source (Slack/Figma/Email)
 ```
 CroutonTriage
 ├── flows/
-│   ├── FlowBuilder.vue      - Multi-step flow configuration
 │   ├── FlowList.vue          - Flow listing and management
 │   ├── FlowPipelineVisual.vue - Visual pipeline diagram
 │   ├── InputManager.vue      - Source input configuration
@@ -203,12 +201,12 @@ Package expects tables prefixed with `triage`:
 |--------|------------|
 | discussion.json | `triageDiscussions` |
 | flow.json | `triageFlows` |
-| flow-input.json | `triageFlowinputs` |
-| flow-output.json | `triageFlowoutputs` |
+| input.json | `triageInputs` |
+| output.json | `triageOutputs` |
 | task.json | `triageTasks` |
 | job.json | `triageJobs` |
-| user-mapping.json | `triageUsermappings` |
-| inbox-message.json | `triageInboxmessages` |
+| user.json | `triageUsers` |
+| message.json | `triageMessages` |
 
 ## i18n Keys
 
