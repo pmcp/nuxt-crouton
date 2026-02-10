@@ -14,7 +14,7 @@ const teamSlug = computed(() => route.params.team as string)
 
 <template>
   <div class="h-full p-4">
-    <CroutonTriageFlowList
+    <CroutonTriageFlowsFlowList
       v-if="currentTeam?.id"
       :team-id="currentTeam.id"
       :team-slug="teamSlug"
