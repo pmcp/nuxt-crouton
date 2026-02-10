@@ -6,7 +6,7 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 export default defineEventHandler(async (event) => {
   const { locationId } = getRouterParams(event)
   if (!locationId) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing location ID' })
+    throw createError({ status: 400, statusText: 'Missing location ID' })
   }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 

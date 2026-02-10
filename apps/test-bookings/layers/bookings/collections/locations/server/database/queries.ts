@@ -55,6 +55,30 @@ export async function getAllBookingsLocations(teamId: string) {
       if (item.slots === null || item.slots === undefined) {
         item.slots = []
       }
+      // Parse slotSchedule from JSON string
+      if (typeof item.slotSchedule === 'string') {
+        try {
+          item.slotSchedule = JSON.parse(item.slotSchedule)
+        } catch (e) {
+          console.error('Error parsing slotSchedule:', e)
+          item.slotSchedule = null
+        }
+      }
+      if (item.slotSchedule === null || item.slotSchedule === undefined) {
+        item.slotSchedule = null
+      }
+      // Parse blockedDates from JSON string
+      if (typeof item.blockedDates === 'string') {
+        try {
+          item.blockedDates = JSON.parse(item.blockedDates)
+        } catch (e) {
+          console.error('Error parsing blockedDates:', e)
+          item.blockedDates = []
+        }
+      }
+      if (item.blockedDates === null || item.blockedDates === undefined) {
+        item.blockedDates = []
+      }
   })
 
   return locations
@@ -115,6 +139,30 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
       if (item.slots === null || item.slots === undefined) {
         item.slots = []
       }
+      // Parse slotSchedule from JSON string
+      if (typeof item.slotSchedule === 'string') {
+        try {
+          item.slotSchedule = JSON.parse(item.slotSchedule)
+        } catch (e) {
+          console.error('Error parsing slotSchedule:', e)
+          item.slotSchedule = null
+        }
+      }
+      if (item.slotSchedule === null || item.slotSchedule === undefined) {
+        item.slotSchedule = null
+      }
+      // Parse blockedDates from JSON string
+      if (typeof item.blockedDates === 'string') {
+        try {
+          item.blockedDates = JSON.parse(item.blockedDates)
+        } catch (e) {
+          console.error('Error parsing blockedDates:', e)
+          item.blockedDates = []
+        }
+      }
+      if (item.blockedDates === null || item.blockedDates === undefined) {
+        item.blockedDates = []
+      }
   })
 
   return locations
@@ -156,8 +204,8 @@ export async function updateBookingsLocation(
 
   if (!location) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'BookingsLocation not found or unauthorized'
+      status: 404,
+      statusText: 'BookingsLocation not found or unauthorized'
     })
   }
 
@@ -184,8 +232,8 @@ export async function deleteBookingsLocation(
 
   if (!deleted) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'BookingsLocation not found or unauthorized'
+      status: 404,
+      statusText: 'BookingsLocation not found or unauthorized'
     })
   }
 

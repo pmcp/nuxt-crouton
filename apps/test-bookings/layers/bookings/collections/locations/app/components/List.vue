@@ -2,14 +2,14 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2026-01-18
+  @generated 2026-02-10
 
   ## AI Context
   - List component for locations collection
   - Collection name: bookingsLocations
   - API endpoint: /api/teams/[id]/bookings-locations
   - Columns composable: useBookingsLocations()
-  - Column fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
+  - Column fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, openDays, slotSchedule, blockedDates, inventoryMode, quantity
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -62,11 +62,28 @@
       </div>
       <span v-else class="text-gray-400">—</span>
     </template>
+    <template #openDays-cell="{ row }">
+      <div v-if="row.original.openDays && row.original.openDays.length > 0" class="flex flex-wrap gap-1">
+        <UBadge
+          v-for="(item, idx) in row.original.openDays"
+          :key="idx"
+          color="neutral"
+          variant="subtle"
+          size="md"
+        >
+          {{ item }}
+        </UBadge>
+      </div>
+      <span v-else class="text-gray-400">—</span>
+    </template>
     <template #inventoryMode-cell="{ row }">
       <CroutonBoolean :value="row.original.inventoryMode" />
     </template>
     <template #slots-cell="{ row }">
       <BookingsLocationsSlotCardMini :value="row.original.slots" />
+    </template>
+    <template #blockedDates-cell="{ row }">
+      <BookingsLocationsBlockedDateCardMini :value="row.original.blockedDates" />
     </template>
     <template #content-cell="{ row }">
       <CroutonEditorPreview :content="t(row.original, 'content')" />

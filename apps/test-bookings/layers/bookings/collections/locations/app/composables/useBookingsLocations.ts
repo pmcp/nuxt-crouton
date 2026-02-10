@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2026-01-18
+ * @generated 2026-02-10
  *
  * ## AI Context
  * - Composable: useBookingsLocations
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/bookings-locations
  * - Form component: BookingsLocationsForm
  * - List component: BookingsLocationsList
- * - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
+ * - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, openDays, slotSchedule, blockedDates, inventoryMode, quantity
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -45,6 +45,9 @@ export const bookingsLocationSchema = z.object({
   location: z.string().optional(),
   allowedMemberIds: z.array(z.string()).optional(),
   slots: z.array(bookingsLocationsSlotItemSchema).optional(),
+  openDays: z.array(z.string()).optional(),
+  slotSchedule: z.record(z.string(), z.any()).optional(),
+  blockedDates: z.array(z.any()).optional(),
   inventoryMode: z.boolean().optional(),
   quantity: z.number().optional(),
   title: z.string().optional(),
@@ -77,6 +80,9 @@ export const bookingsLocationsColumns = [
   { accessorKey: 'content', header: 'Content' },
   { accessorKey: 'allowedMemberIds', header: 'AllowedMemberIds' },
   { accessorKey: 'slots', header: 'Slots' },
+  { accessorKey: 'openDays', header: 'OpenDays' },
+  { accessorKey: 'slotSchedule', header: 'SlotSchedule' },
+  { accessorKey: 'blockedDates', header: 'BlockedDates' },
   { accessorKey: 'inventoryMode', header: 'InventoryMode' },
   { accessorKey: 'quantity', header: 'Quantity' },
   { accessorKey: 'translations', header: 'Translations' }
@@ -98,6 +104,9 @@ const _bookingsLocationsConfig = {
     content: '',
     allowedMemberIds: [],
     slots: [],
+    openDays: [],
+    slotSchedule: {},
+    blockedDates: [],
     inventoryMode: false,
     quantity: 0,
     translations: {}
@@ -105,6 +114,7 @@ const _bookingsLocationsConfig = {
   columns: bookingsLocationsColumns,
   dependentFieldComponents: {
     slots: 'BookingsLocationsSlotSelect',
+    blockedDates: 'BookingsLocationsBlockedDateSelect',
     quantity: 'BookingsLocationsQuantitySelect'
   },
   sortable: {

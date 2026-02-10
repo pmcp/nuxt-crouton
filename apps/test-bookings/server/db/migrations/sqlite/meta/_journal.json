@@ -57,6 +57,13 @@
       "when": 1768472761231,
       "tag": "0007_tricky_screwball",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1770745824114,
+      "tag": "0008_good_tag",
+      "breakpoints": true
     }
   ]
 }
