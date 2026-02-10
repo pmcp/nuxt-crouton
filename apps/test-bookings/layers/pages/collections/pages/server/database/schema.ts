@@ -23,10 +23,6 @@ export const pagesPages = sqliteTable('pages_pages', {
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
 
-  // Hierarchy fields for tree structure
-  parentId: text('parentId'),
-  path: text('path').notNull().$default(() => '/'),
-  depth: integer('depth').notNull().$default(() => 0),
   order: integer('order').notNull().$default(() => 0),
   title: text('title').notNull(),
   slug: text('slug').notNull().unique(),

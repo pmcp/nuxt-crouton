@@ -10,14 +10,14 @@ export default defineEventHandler(async (event) => {
 
   // Validate input - expect array of { id, order }
   if (!Array.isArray(body.updates)) {
-    throw createError({ statusCode: 400, statusMessage: 'updates must be an array' })
+    throw createError({ status: 400, statusText: 'updates must be an array' })
   }
 
   for (const update of body.updates) {
     if (!update.id || typeof update.order !== 'number') {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Each update must have id and order (number)'
+        status: 400,
+        statusText: 'Each update must have id and order (number)'
       })
     }
   }

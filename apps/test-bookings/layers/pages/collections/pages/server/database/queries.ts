@@ -1,5 +1,5 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm'
+import { eq, and, desc, asc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { PagesPage, NewPagesPage } from '../../types'
@@ -39,7 +39,7 @@ export async function getAllPagesPages(teamId: string) {
     .leftJoin(createdByUser, eq(tables.pagesPages.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.pagesPages.updatedBy, updatedByUser.id))
     .where(eq(tables.pagesPages.teamId, teamId))
-    .orderBy(desc(tables.pagesPages.createdAt))
+    .orderBy(asc(tables.pagesPages.order), desc(tables.pagesPages.createdAt))
 
   // Post-query processing for JSON fields (repeater/json types)
   pages.forEach((item: any) => {
@@ -111,7 +111,7 @@ export async function getPagesPagesByIds(teamId: string, pageIds: string[]) {
         inArray(tables.pagesPages.id, pageIds)
       )
     )
-    .orderBy(desc(tables.pagesPages.createdAt))
+    .orderBy(asc(tables.pagesPages.order), desc(tables.pagesPages.createdAt))
 
   // Post-query processing for JSON fields (repeater/json types)
   pages.forEach((item: any) => {
@@ -180,8 +180,8 @@ export async function updatePagesPage(
 
   if (!page) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'PagesPage not found or unauthorized'
+      status: 404,
+      statusText: 'PagesPage not found or unauthorized'
     })
   }
 
@@ -208,212 +208,15 @@ export async function deletePagesPage(
 
   if (!deleted) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'PagesPage not found or unauthorized'
+      status: 404,
+      statusText: 'PagesPage not found or unauthorized'
     })
   }
 
   return { success: true }
 }
 
-// Tree hierarchy queries (auto-generated when hierarchy: true)
-// Type: PagesPage with hierarchy fields
-
-interface TreeItem {
-  id: string
-  path: string
-  depth: number
-  order: number
-  [key: string]: any
-}
-
-export async function getTreeDataPagesPages(teamId: string) {
-  const db = useDB()
-
-  const pages = await (db as any)
-    .select()
-    .from(tables.pagesPages)
-    .where(eq(tables.pagesPages.teamId, teamId))
-    .orderBy(tables.pagesPages.path, tables.pagesPages.order)
-
-  return pages as TreeItem[]
-}
-
-export async function updatePositionPagesPage(
-  teamId: string,
-  id: string,
-  newParentId: string | null,
-  newOrder: number
-) {
-  const db = useDB()
-
-  // Get the current item to find its path
-  const [current] = await (db as any)
-    .select()
-    .from(tables.pagesPages)
-    .where(
-      and(
-        eq(tables.pagesPages.id, id),
-        eq(tables.pagesPages.teamId, teamId)
-      )
-    ) as TreeItem[]
-
-  if (!current) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: 'PagesPage not found'
-    })
-  }
-
-  // Calculate new path and depth
-  let newPath: string
-  let newDepth: number
-
-  if (newParentId) {
-    const [parent] = await (db as any)
-      .select()
-      .from(tables.pagesPages)
-      .where(
-        and(
-          eq(tables.pagesPages.id, newParentId),
-          eq(tables.pagesPages.teamId, teamId)
-        )
-      ) as TreeItem[]
-
-    if (!parent) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Parent PagesPage not found'
-      })
-    }
-
-    // Prevent moving item to its own descendant
-    if (parent.path.startsWith(current.path)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Cannot move item to its own descendant'
-      })
-    }
-
-    newPath = `${parent.path}${id}/`
-    newDepth = parent.depth + 1
-  } else {
-    newPath = `/${id}/`
-    newDepth = 0
-  }
-
-  const oldPath = current.path
-  const oldParentId = current.parentId
-
-  // Reorder siblings in the target parent so order values are sequential.
-  // 1. Get all siblings in the target parent (excluding the moved item)
-  const targetParentCondition = newParentId
-    ? eq(tables.pagesPages.parentId, newParentId)
-    : sql`${tables.pagesPages.parentId} IS NULL`
-
-  const siblings = await (db as any)
-    .select({ id: tables.pagesPages.id, order: tables.pagesPages.order })
-    .from(tables.pagesPages)
-    .where(
-      and(
-        eq(tables.pagesPages.teamId, teamId),
-        targetParentCondition,
-        sql`${tables.pagesPages.id} != ${id}`
-      )
-    )
-    .orderBy(tables.pagesPages.order) as Array<{ id: string; order: number }>
-
-  // 2. Insert the moved item at the requested position
-  const clampedOrder = Math.max(0, Math.min(newOrder, siblings.length))
-  siblings.splice(clampedOrder, 0, { id, order: clampedOrder })
-
-  // 3. Assign sequential order values to all siblings
-  for (let i = 0; i < siblings.length; i++) {
-    if (siblings[i]!.id === id) continue // skip moved item, updated below
-    if (siblings[i]!.order !== i) {
-      await (db as any)
-        .update(tables.pagesPages)
-        .set({ order: i })
-        .where(eq(tables.pagesPages.id, siblings[i]!.id))
-    }
-  }
-
-  // 4. If the moved item left a gap in the old parent, reorder those siblings too
-  if (oldParentId !== newParentId) {
-    const oldParentCondition = oldParentId
-      ? eq(tables.pagesPages.parentId, oldParentId)
-      : sql`${tables.pagesPages.parentId} IS NULL`
-
-    const oldSiblings = await (db as any)
-      .select({ id: tables.pagesPages.id, order: tables.pagesPages.order })
-      .from(tables.pagesPages)
-      .where(
-        and(
-          eq(tables.pagesPages.teamId, teamId),
-          oldParentCondition,
-          sql`${tables.pagesPages.id} != ${id}`
-        )
-      )
-      .orderBy(tables.pagesPages.order) as Array<{ id: string; order: number }>
-
-    for (let i = 0; i < oldSiblings.length; i++) {
-      if (oldSiblings[i]!.order !== i) {
-        await (db as any)
-          .update(tables.pagesPages)
-          .set({ order: i })
-          .where(eq(tables.pagesPages.id, oldSiblings[i]!.id))
-      }
-    }
-  }
-
-  // 5. Update the moved item itself
-  const movedOrder = clampedOrder
-  const [updated] = await (db as any)
-    .update(tables.pagesPages)
-    .set({
-      parentId: newParentId,
-      path: newPath,
-      depth: newDepth,
-      order: movedOrder
-    })
-    .where(
-      and(
-        eq(tables.pagesPages.id, id),
-        eq(tables.pagesPages.teamId, teamId)
-      )
-    )
-    .returning()
-
-  // Update all descendants' paths if the path changed
-  if (oldPath !== newPath) {
-    // Get all descendants
-    const descendants = await (db as any)
-      .select()
-      .from(tables.pagesPages)
-      .where(
-        and(
-          eq(tables.pagesPages.teamId, teamId),
-          sql`${tables.pagesPages.path} LIKE ${oldPath + '%'} AND ${tables.pagesPages.id} != ${id}`
-        )
-      ) as TreeItem[]
-
-    // Update each descendant's path and depth
-    for (const descendant of descendants) {
-      const descendantNewPath = descendant.path.replace(oldPath, newPath)
-      const depthDiff = newDepth - current.depth
-
-      await (db as any)
-        .update(tables.pagesPages)
-        .set({
-          path: descendantNewPath,
-          depth: descendant.depth + depthDiff
-        })
-        .where(eq(tables.pagesPages.id, descendant.id))
-    }
-  }
-
-  return updated
-}
+// Sortable reorder queries (auto-generated when sortable: true)
 
 export async function reorderSiblingsPagesPages(
   teamId: string,
@@ -421,24 +224,20 @@ export async function reorderSiblingsPagesPages(
 ) {
   const db = useDB()
 
-  const results = []
-
-  for (const update of updates) {
-    const [updated] = await (db as any)
-      .update(tables.pagesPages)
-      .set({ order: update.order })
-      .where(
-        and(
-          eq(tables.pagesPages.id, update.id),
-          eq(tables.pagesPages.teamId, teamId)
+  const results = await Promise.all(
+    updates.map(({ id, order }) =>
+      (db as any)
+        .update(tables.pagesPages)
+        .set({ order })
+        .where(
+          and(
+            eq(tables.pagesPages.id, id),
+            eq(tables.pagesPages.teamId, teamId)
+          )
         )
-      )
-      .returning()
+        .returning()
+    )
+  )
 
-    if (updated) {
-      results.push(updated)
-    }
-  }
-
-  return results
+  return { success: true, updated: results.flat().length }
 }
