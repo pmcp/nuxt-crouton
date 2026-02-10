@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2026-01-20
+ * @generated 2026-02-10
  *
  * ## AI Context
  * - Main interface: BookingsLocation
  * - Form data type: BookingsLocationFormData
  * - New item type: NewBookingsLocation
  * - Form props: BookingsLocationFormProps
- * - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
+ * - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, openDays, slotSchedule, blockedDates, inventoryMode, quantity
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -36,6 +36,9 @@ export interface BookingsLocation {
   content?: string
   allowedMemberIds?: string[]
   slots?: any[]
+  openDays?: string[]
+  slotSchedule?: Record<string, any>
+  blockedDates?: any[]
   inventoryMode?: boolean
   quantity?: number
   translations?: Record<string, { title?: string; street?: string; zip?: string; city?: string; content?: string }>

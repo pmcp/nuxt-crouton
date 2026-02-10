@@ -86,6 +86,38 @@
       "help": "Only used in slot mode. Hidden when inventory mode is enabled."
     }
   },
+  "openDays": {
+    "type": "array",
+    "meta": {
+      "label": "Open Days",
+      "area": "main",
+      "group": "scheduling",
+      "component": "OpenDaysPicker",
+      "help": "Days of the week this location is open. Empty means every day."
+    }
+  },
+  "slotSchedule": {
+    "type": "json",
+    "meta": {
+      "label": "Slot Schedule",
+      "area": "main",
+      "group": "scheduling",
+      "component": "ScheduleGrid",
+      "help": "Per-slot day-of-week availability. Empty means all slots follow open days."
+    }
+  },
+  "blockedDates": {
+    "type": "repeater",
+    "meta": {
+      "label": "Blocked Dates",
+      "repeaterComponent": "BlockedDateInput",
+      "addLabel": "Add Blocked Period",
+      "sortable": false,
+      "area": "main",
+      "group": "scheduling",
+      "help": "Date ranges when the location is closed (holidays, maintenance, etc.)"
+    }
+  },
   "inventoryMode": {
     "type": "boolean",
     "meta": {

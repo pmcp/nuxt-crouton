@@ -7,7 +7,7 @@ import type { BookingsLocation } from '../../../../../types'
 export default defineEventHandler(async (event) => {
   const { locationId } = getRouterParams(event)
   if (!locationId) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing location ID' })
+    throw createError({ status: 400, statusText: 'Missing location ID' })
   }
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
@@ -37,6 +37,9 @@ export default defineEventHandler(async (event) => {
     content: body.content,
     allowedMemberIds: body.allowedMemberIds,
     slots: body.slots,
+    openDays: body.openDays,
+    slotSchedule: body.slotSchedule,
+    blockedDates: body.blockedDates,
     inventoryMode: body.inventoryMode,
     quantity: body.quantity,
     translations: body.translations

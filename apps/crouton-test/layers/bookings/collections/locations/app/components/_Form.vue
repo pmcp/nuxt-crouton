@@ -2,14 +2,14 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2026-01-20
+  @generated 2026-02-10
 
   ## AI Context
   - Form component for locations collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/bookings-locations
   - Zod schema: useBookingsLocations() composable
-  - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, inventoryMode, quantity
+  - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, openDays, slotSchedule, blockedDates, inventoryMode, quantity
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -47,6 +47,47 @@
             add-label="Add Time Slot"
             :sortable="true"
           />
+        </UFormField>
+        <UFormField label="Open Days" name="openDays" class="not-last:pb-4">
+          <CroutonBookingsOpenDaysPicker v-model="state.openDays" />
+        </UFormField>
+        <UFormField v-if="!state.inventoryMode" label="Slot Schedule" name="slotSchedule" class="not-last:pb-4">
+          <CroutonBookingsScheduleGrid v-model="state.slotSchedule" :slots="state.slots" />
+        </UFormField>
+        <UFormField label="Blocked Dates" name="blockedDates" class="not-last:pb-4">
+          <div class="space-y-2 mb-3">
+            <div v-for="(item, index) in (state.blockedDates || [])" :key="item.id || index">
+              <div class="flex justify-end mb-1">
+                <UButton
+                  type="button"
+                  color="error"
+                  variant="ghost"
+                  size="xs"
+                  icon="i-lucide-x"
+                  aria-label="Remove blocked period"
+                  @click="removeBlockedDate(index)"
+                />
+              </div>
+              <CroutonBookingsBlockedDateInput
+                :model-value="item"
+                :slots="state.slots"
+                :inventory-mode="state.inventoryMode"
+                @update:model-value="(val) => updateBlockedDate(index, val)"
+              />
+            </div>
+          </div>
+          <UButton
+            type="button"
+            color="primary"
+            variant="outline"
+            block
+            @click="addBlockedDate"
+          >
+            <template #leading>
+              <UIcon name="i-lucide-plus" />
+            </template>
+            Add Blocked Period
+          </UButton>
         </UFormField>
       </div>
 
@@ -124,6 +165,7 @@
 </template>
 
 <script setup lang="ts">
+import { nanoid } from 'nanoid'
 import type { BookingsLocationFormProps, BookingsLocationFormData } from '../../types'
 import useBookingsLocations from '../composables/useBookingsLocations'
 
@@ -147,6 +189,27 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   : { ...defaultValue }
 
 const state = ref<BookingsLocationFormData & { id?: string | null }>(initialValues)
+
+// Blocked dates helpers
+const addBlockedDate = () => {
+  if (!state.value.blockedDates) state.value.blockedDates = []
+  state.value.blockedDates = [
+    ...state.value.blockedDates,
+    { id: nanoid(), startDate: '', endDate: '', reason: '', blockedSlots: [] }
+  ]
+}
+
+const removeBlockedDate = (index: number) => {
+  if (!state.value.blockedDates) return
+  state.value.blockedDates = state.value.blockedDates.filter((_: any, i: number) => i !== index)
+}
+
+const updateBlockedDate = (index: number, val: any) => {
+  if (!state.value.blockedDates) return
+  const newItems = [...state.value.blockedDates]
+  newItems[index] = val
+  state.value.blockedDates = newItems
+}
 
 const handleSubmit = async () => {
   try {
