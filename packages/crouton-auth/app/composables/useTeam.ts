@@ -300,6 +300,12 @@ export function useTeam() {
         throw new Error('No data returned from create team')
       }
 
+      // Set the newly created org as active so the session cookie reflects it
+      // before any navigation happens (prevents hydration mismatch)
+      await authClient.organization.setActive({
+        organizationId: result.data.id
+      })
+
       return mapOrganizationToTeam(result.data)
     } catch (e: unknown) {
       const message = extractErrorMessage(e, 'Failed to create team')

@@ -13,11 +13,10 @@ definePageMeta({
 })
 
 const { t } = useT()
-const router = useRouter()
 
 function onTeamCreated(team: Team) {
-  // Navigate to the new team's dashboard
-  router.push(`/dashboard/${team.slug}`)
+  // Force full page load so SSR picks up the fresh session with active org
+  navigateTo(`/admin/${team.slug}`, { external: true })
 }
 </script>
 

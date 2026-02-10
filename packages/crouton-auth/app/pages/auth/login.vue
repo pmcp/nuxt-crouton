@@ -14,7 +14,6 @@ definePageMeta({
 
 const { t } = useT()
 const route = useRoute()
-const router = useRouter()
 const toast = useToast()
 
 const {
@@ -144,7 +143,7 @@ async function onSubmit(event: FormSubmitEvent<{ email: string, password?: strin
       password: event.data.password!,
       rememberMe: event.data.rememberMe || false
     })
-    await router.push(redirectTo.value)
+    await navigateTo(redirectTo.value, { external: true })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Login failed'
     formError.value = message
@@ -177,7 +176,7 @@ async function handlePasskey() {
   formError.value = null
   try {
     await loginWithPasskey()
-    await router.push(redirectTo.value)
+    await navigateTo(redirectTo.value, { external: true })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Passkey login failed'
     formError.value = message

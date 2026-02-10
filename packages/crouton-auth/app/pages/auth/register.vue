@@ -13,7 +13,6 @@ definePageMeta({
 })
 
 const { t } = useT()
-const router = useRouter()
 const toast = useToast()
 
 const {
@@ -137,7 +136,7 @@ async function onSubmit(event: FormSubmitEvent<{ name: string, email: string, pa
       description: 'Welcome! Your account has been created.',
       color: 'success'
     })
-    await router.push(redirects.afterRegister)
+    await navigateTo(redirects.afterRegister, { external: true })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Registration failed'
     formError.value = message
