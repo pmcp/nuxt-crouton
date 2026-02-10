@@ -52,7 +52,7 @@ import { processDiscussion } from '../../../services/processor'
 import { fetchResendEmail, transformToMailgunFormat } from '../../../utils/resendEmail'
 import { rateLimit, RateLimitPresets } from '../../../utils/rateLimit'
 import { classifyFigmaEmail } from '../../../utils/emailClassifier'
-import { createTriageInboxMessage } from '~~/layers/triage/collections/inboxmessages/server/database/queries'
+import { createTriageMessage } from '~~/layers/triage/collections/messages/server/database/queries'
 import { SYSTEM_USER_ID } from '../../../utils/constants'
 
 /**
@@ -339,7 +339,7 @@ export default defineEventHandler(async (event) => {
 
       // Store in inbox
       try {
-        const inboxMessage = await createTriageInboxMessage({
+        const inboxMessage = await createTriageMessage({
           configId,
           messageType: classification.messageType,
           from: resendEmail.from,

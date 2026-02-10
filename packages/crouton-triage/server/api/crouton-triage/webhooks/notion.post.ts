@@ -108,7 +108,7 @@ export default defineEventHandler(async (event) => {
     const db = useDB()
     const { triageTasks } = await import('~~/layers/triage/collections/tasks/server/database/schema')
     const { triageDiscussions } = await import('~~/layers/triage/collections/discussions/server/database/schema')
-    const { triageFlowinputs } = await import('~~/layers/triage/collections/flowinputs/server/database/schema')
+    const { triageInputs } = await import('~~/layers/triage/collections/inputs/server/database/schema')
 
     const task = await db
       .select()
@@ -165,8 +165,8 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     const flowInput = await db
       .select()
-      .from(triageFlowinputs)
-      .where(eq(triageFlowinputs.id, discussion.flowInputId))
+      .from(triageInputs)
+      .where(eq(triageInputs.id, discussion.flowInputId))
       .limit(1)
       .get()
 

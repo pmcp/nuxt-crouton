@@ -4,7 +4,7 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { TriageJob, NewTriageJob } from '../../types'
 import * as discussionsSchema from '../../../discussions/server/database/schema'
-import * as flowInputsSchema from '../../../flowinputs/server/database/schema'
+import * as inputsSchema from '../../../inputs/server/database/schema'
 import { user } from '~~/server/db/schema'
 
 export async function getAllTriageJobs(teamId: string) {
@@ -18,7 +18,7 @@ export async function getAllTriageJobs(teamId: string) {
     .select({
       ...tables.triageJobs,
       discussionIdData: discussionsSchema.triageDiscussions,
-      flowInputIdData: flowInputsSchema.triageFlowInputs,
+      flowInputIdData: inputsSchema.triageInputs,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -40,7 +40,7 @@ export async function getAllTriageJobs(teamId: string) {
     } as any)
     .from(tables.triageJobs)
     .leftJoin(discussionsSchema.triageDiscussions, eq(tables.triageJobs.discussionId, discussionsSchema.triageDiscussions.id))
-    .leftJoin(flowInputsSchema.triageFlowInputs, eq(tables.triageJobs.flowInputId, flowInputsSchema.triageFlowInputs.id))
+    .leftJoin(inputsSchema.triageInputs, eq(tables.triageJobs.flowInputId, inputsSchema.triageInputs.id))
     .leftJoin(ownerUser, eq(tables.triageJobs.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.triageJobs.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.triageJobs.updatedBy, updatedByUser.id))
@@ -77,7 +77,7 @@ export async function getTriageJobsByIds(teamId: string, jobIds: string[]) {
     .select({
       ...tables.triageJobs,
       discussionIdData: discussionsSchema.triageDiscussions,
-      flowInputIdData: flowInputsSchema.triageFlowInputs,
+      flowInputIdData: inputsSchema.triageInputs,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -99,7 +99,7 @@ export async function getTriageJobsByIds(teamId: string, jobIds: string[]) {
     } as any)
     .from(tables.triageJobs)
     .leftJoin(discussionsSchema.triageDiscussions, eq(tables.triageJobs.discussionId, discussionsSchema.triageDiscussions.id))
-    .leftJoin(flowInputsSchema.triageFlowInputs, eq(tables.triageJobs.flowInputId, flowInputsSchema.triageFlowInputs.id))
+    .leftJoin(inputsSchema.triageInputs, eq(tables.triageJobs.flowInputId, inputsSchema.triageInputs.id))
     .leftJoin(ownerUser, eq(tables.triageJobs.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.triageJobs.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.triageJobs.updatedBy, updatedByUser.id))

@@ -11,7 +11,7 @@
 <template>
   <div class="h-full">
     <CroutonCollectionViewer
-      collection-name="triageUserMappings"
+      collection-name="triageUsers"
       default-layout="table"
     />
   </div>

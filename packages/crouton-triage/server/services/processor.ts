@@ -153,14 +153,14 @@ async function storeDiscoveredUsers(
   }
 
   const { createTriageUserMapping } = await import(
-    '~~/layers/triage/collections/usermappings/server/database/queries'
+    '~~/layers/triage/collections/users/server/database/queries'
   )
 
   // Get existing mappings to avoid duplicates
-  const { getAllTriageUserMappings } = await import(
-    '~~/layers/triage/collections/usermappings/server/database/queries'
+  const { getAllTriageUsers } = await import(
+    '~~/layers/triage/collections/users/server/database/queries'
   )
-  const existingMappings = await getAllTriageUserMappings(teamId)
+  const existingMappings = await getAllTriageUsers(teamId)
 
   // Debug: log what we got
   logger.debug('Existing mappings for duplicate check', {
@@ -367,23 +367,23 @@ async function loadFlow(
   const db = useDB()
 
   // Import schemas
-  const { triageFlowinputs } = await import(
-    '~~/layers/triage/collections/flowinputs/server/database/schema'
+  const { triageInputs } = await import(
+    '~~/layers/triage/collections/inputs/server/database/schema'
   )
   const { triageFlows } = await import(
     '~~/layers/triage/collections/flows/server/database/schema'
   )
-  const { triageFlowoutputs } = await import(
-    '~~/layers/triage/collections/flowoutputs/server/database/schema'
+  const { triageOutputs } = await import(
+    '~~/layers/triage/collections/outputs/server/database/schema'
   )
 
   // Query all active inputs of this source type
   const inputs = await db
     .select()
-    .from(triageFlowinputs)
+    .from(triageInputs)
     .where(and(
-      eq(triageFlowinputs.sourceType, sourceType),
-      eq(triageFlowinputs.active, true),
+      eq(triageInputs.sourceType, sourceType),
+      eq(triageInputs.active, true),
     ))
     .all()
 
@@ -450,20 +450,20 @@ async function loadFlow(
   // Load all inputs for this flow
   const allInputs = await db
     .select()
-    .from(triageFlowinputs)
+    .from(triageInputs)
     .where(and(
-      eq(triageFlowinputs.flowId, flow.id),
-      eq(triageFlowinputs.active, true),
+      eq(triageInputs.flowId, flow.id),
+      eq(triageInputs.active, true),
     ))
     .all()
 
   // Load all outputs for this flow
   const outputs = await db
     .select()
-    .from(triageFlowoutputs)
+    .from(triageOutputs)
     .where(and(
-      eq(triageFlowoutputs.flowId, flow.id),
-      eq(triageFlowoutputs.active, true),
+      eq(triageOutputs.flowId, flow.id),
+      eq(triageOutputs.active, true),
     ))
     .all()
 
@@ -860,8 +860,8 @@ async function buildThread(
   // Build handle map for Figma (only if we have user mappings)
   if (userMappings && parsed.sourceType === 'figma' && teamId) {
     try {
-      const { getAllTriageUserMappings } = await import('~~/layers/triage/collections/usermappings/server/database/queries')
-      const allUserMappings = await getAllTriageUserMappings(teamId)
+      const { getAllTriageUsers } = await import('~~/layers/triage/collections/users/server/database/queries')
+      const allUserMappings = await getAllTriageUsers(teamId)
 
       for (const mapping of allUserMappings) {
         if (mapping.sourceType === 'figma' && mapping.active && mapping.sourceUserName) {
@@ -1251,10 +1251,10 @@ export async function processDiscussion(
     }
 
     try {
-      const { getAllTriageUserMappings } = await import(
-        '~~/layers/triage/collections/usermappings/server/database/queries'
+      const { getAllTriageUsers } = await import(
+        '~~/layers/triage/collections/users/server/database/queries'
       )
-      const allUserMappings = await getAllTriageUserMappings(actualTeamId)
+      const allUserMappings = await getAllTriageUsers(actualTeamId)
 
       const userIdToMentionMap = new Map<string, { name: string; notionId: string }>()
 

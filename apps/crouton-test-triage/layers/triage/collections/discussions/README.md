@@ -15,7 +15,7 @@
 
 ## Features
 
-- References: flowInputId → flowInputs, syncJobId → jobs
+- References: flowInputId → inputs, syncJobId → jobs
 
 ## File Structure
 
@@ -49,7 +49,7 @@ collections/discussions/
 | sourceType | string | Yes |
 | sourceThreadId | string | Yes |
 | sourceUrl | string | Yes |
-| flowInputId | string (→ flowInputs) | Yes |
+| flowInputId | string (→ inputs) | Yes |
 | title | string | Yes |
 | content | text | Yes |
 | authorHandle | string | Yes |

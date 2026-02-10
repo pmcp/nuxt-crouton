@@ -281,7 +281,7 @@ const { currentTeam } = useTeam()
 const toast = useToast()
 
 // Data fetching
-const { items: messages, pending, refresh } = await useCollectionQuery('triageInboxMessages')
+const { items: messages, pending, refresh } = await useCollectionQuery('triageMessages')
 const { mutate } = useCroutonMutate()
 
 // Filter state
@@ -491,7 +491,7 @@ function openEmailModal(message: any) {
 async function markAsRead(message: any) {
   markingAsRead.value = true
   try {
-    await mutate('update', 'triageInboxMessages', {
+    await mutate('update', 'triageMessages', {
       id: message.id,
       read: true
     })

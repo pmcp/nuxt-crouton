@@ -106,7 +106,7 @@
         <UFormField label="FlowInputId" name="flowInputId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.flowInputId"
-            collection="triageFlowInputs"
+            collection="triageInputs"
             label="FlowInputId"
           />
         </UFormField>

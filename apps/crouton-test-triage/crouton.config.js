@@ -1,13 +1,13 @@
 export default {
   collections: [
     { name: 'flows', fieldsFile: './schemas/flow.json' },
-    { name: 'flowInputs', fieldsFile: './schemas/flow-input.json' },
-    { name: 'flowOutputs', fieldsFile: './schemas/flow-output.json' },
+    { name: 'inputs', fieldsFile: './schemas/input.json' },
+    { name: 'outputs', fieldsFile: './schemas/output.json' },
     { name: 'discussions', fieldsFile: './schemas/discussion.json' },
     { name: 'tasks', fieldsFile: './schemas/task.json' },
     { name: 'jobs', fieldsFile: './schemas/job.json' },
-    { name: 'userMappings', fieldsFile: './schemas/user-mapping.json' },
-    { name: 'inboxMessages', fieldsFile: './schemas/inbox-message.json' }
+    { name: 'users', fieldsFile: './schemas/user.json' },
+    { name: 'messages', fieldsFile: './schemas/message.json' }
   ],
 
   targets: [
@@ -15,13 +15,13 @@ export default {
       layer: 'triage',
       collections: [
         'flows',
-        'flowInputs',
-        'flowOutputs',
+        'inputs',
+        'outputs',
         'discussions',
         'tasks',
         'jobs',
-        'userMappings',
-        'inboxMessages'
+        'users',
+        'messages'
       ]
     }
   ],

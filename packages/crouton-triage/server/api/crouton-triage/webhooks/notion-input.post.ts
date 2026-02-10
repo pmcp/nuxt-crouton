@@ -333,8 +333,8 @@ export default defineEventHandler(async (event) => {
 
     // Try to find a flow input for this Notion workspace
     const db = useDB()
-    const { triageFlowinputs } = await import(
-      '~~/layers/triage/collections/flowinputs/server/database/schema'
+    const { triageInputs } = await import(
+      '~~/layers/triage/collections/inputs/server/database/schema'
     )
     const { triageFlows } = await import(
       '~~/layers/triage/collections/flows/server/database/schema'
@@ -344,10 +344,10 @@ export default defineEventHandler(async (event) => {
     // Query for Notion inputs
     const inputs = await db
       .select()
-      .from(triageFlowinputs)
+      .from(triageInputs)
       .where(and(
-        eq(triageFlowinputs.sourceType, 'notion'),
-        eq(triageFlowinputs.active, true),
+        eq(triageInputs.sourceType, 'notion'),
+        eq(triageInputs.active, true),
       ))
       .all()
 
@@ -482,12 +482,12 @@ export default defineEventHandler(async (event) => {
       }
 
       await db
-        .update(triageFlowinputs)
+        .update(triageInputs)
         .set({
           sourceMetadata: updatedMetadata,
           updatedAt: new Date(),
         })
-        .where(eq(triageFlowinputs.id, matchedInput.id))
+        .where(eq(triageInputs.id, matchedInput.id))
 
       // Update local reference for this request
       matchedInput.sourceMetadata = updatedMetadata

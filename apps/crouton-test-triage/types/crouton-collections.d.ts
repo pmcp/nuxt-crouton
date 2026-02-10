@@ -14,23 +14,23 @@
  *
  * ## Registered Collections
  * - triageDiscussions: TriageDiscussion
- * - triageFlowinputs: TriageFlowinput
- * - triageFlowoutputs: TriageFlowoutput
  * - triageFlows: TriageFlow
- * - triageInboxmessages: TriageInboxmessage
+ * - triageInputs: TriageInput
  * - triageJobs: TriageJob
+ * - triageMessages: TriageMessage
+ * - triageOutputs: TriageOutput
  * - triageTasks: TriageTask
- * - triageUsermappings: TriageUsermapping
+ * - triageUsers: TriageUser
  */
 
 import type { TriageDiscussion, TriageDiscussionFormData, NewTriageDiscussion } from './layers/triage/collections/discussions/types'
-import type { TriageFlowinput, TriageFlowinputFormData, NewTriageFlowinput } from './layers/triage/collections/flowinputs/types'
-import type { TriageFlowoutput, TriageFlowoutputFormData, NewTriageFlowoutput } from './layers/triage/collections/flowoutputs/types'
 import type { TriageFlow, TriageFlowFormData, NewTriageFlow } from './layers/triage/collections/flows/types'
-import type { TriageInboxmessage, TriageInboxmessageFormData, NewTriageInboxmessage } from './layers/triage/collections/inboxmessages/types'
+import type { TriageInput, TriageInputFormData, NewTriageInput } from './layers/triage/collections/inputs/types'
 import type { TriageJob, TriageJobFormData, NewTriageJob } from './layers/triage/collections/jobs/types'
+import type { TriageMessage, TriageMessageFormData, NewTriageMessage } from './layers/triage/collections/messages/types'
+import type { TriageOutput, TriageOutputFormData, NewTriageOutput } from './layers/triage/collections/outputs/types'
 import type { TriageTask, TriageTaskFormData, NewTriageTask } from './layers/triage/collections/tasks/types'
-import type { TriageUsermapping, TriageUsermappingFormData, NewTriageUsermapping } from './layers/triage/collections/usermappings/types'
+import type { TriageUser, TriageUserFormData, NewTriageUser } from './layers/triage/collections/users/types'
 
 declare module '#crouton/types' {
   interface CollectionTypeMap {
@@ -39,40 +39,40 @@ declare module '#crouton/types' {
       FormData: TriageDiscussionFormData
       NewItem: NewTriageDiscussion
     }
-    triageFlowinputs: {
-      Item: TriageFlowinput
-      FormData: TriageFlowinputFormData
-      NewItem: NewTriageFlowinput
-    }
-    triageFlowoutputs: {
-      Item: TriageFlowoutput
-      FormData: TriageFlowoutputFormData
-      NewItem: NewTriageFlowoutput
-    }
     triageFlows: {
       Item: TriageFlow
       FormData: TriageFlowFormData
       NewItem: NewTriageFlow
     }
-    triageInboxmessages: {
-      Item: TriageInboxmessage
-      FormData: TriageInboxmessageFormData
-      NewItem: NewTriageInboxmessage
+    triageInputs: {
+      Item: TriageInput
+      FormData: TriageInputFormData
+      NewItem: NewTriageInput
     }
     triageJobs: {
       Item: TriageJob
       FormData: TriageJobFormData
       NewItem: NewTriageJob
     }
+    triageMessages: {
+      Item: TriageMessage
+      FormData: TriageMessageFormData
+      NewItem: NewTriageMessage
+    }
+    triageOutputs: {
+      Item: TriageOutput
+      FormData: TriageOutputFormData
+      NewItem: NewTriageOutput
+    }
     triageTasks: {
       Item: TriageTask
       FormData: TriageTaskFormData
       NewItem: NewTriageTask
     }
-    triageUsermappings: {
-      Item: TriageUsermapping
-      FormData: TriageUsermappingFormData
-      NewItem: NewTriageUsermapping
+    triageUsers: {
+      Item: TriageUser
+      FormData: TriageUserFormData
+      NewItem: NewTriageUser
     }
   }
 }

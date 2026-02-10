@@ -170,8 +170,8 @@ export default defineEventHandler(async (event) => {
     const { getAllTriageFlows, createTriageFlow, getTriageFlowById } = await import(
       '~~/layers/triage/collections/flows/server/database/queries'
     )
-    const { getAllTriageFlowInputs, createTriageFlowInput } = await import(
-      '~~/layers/triage/collections/flowinputs/server/database/queries'
+    const { getAllTriageInputs, createTriageInput } = await import(
+      '~~/layers/triage/collections/inputs/server/database/queries'
     )
     const { SYSTEM_USER_ID } = await import('../../../../utils/constants')
 
@@ -244,7 +244,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check if this Slack workspace is already connected (by slackTeamId)
-    const allInputs = await getAllTriageFlowInputs(teamId)
+    const allInputs = await getAllTriageInputs(teamId)
     const existingInputs = allInputs?.filter(input => input.flowId === flowId) || []
     const duplicateInput = existingInputs.find(input =>
       input.sourceType === 'slack' &&
@@ -272,7 +272,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create new Slack input
-    const newInput = await createTriageFlowInput({
+    const newInput = await createTriageInput({
       flowId,
       sourceType: 'slack',
       name: slackTeamName,

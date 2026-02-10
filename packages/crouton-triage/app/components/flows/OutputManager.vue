@@ -382,7 +382,7 @@ async function saveNewOutput() {
       if (newOutput.isDefault) {
         for (const output of outputs.value) {
           if (output.isDefault) {
-            await $fetch(`/api/teams/${props.teamId}/triage-flowoutputs/${output.id}`, {
+            await $fetch(`/api/teams/${props.teamId}/triage-outputs/${output.id}`, {
               method: 'PATCH',
               body: { isDefault: false },
             })
@@ -390,7 +390,7 @@ async function saveNewOutput() {
         }
       }
 
-      const response = await $fetch(`/api/teams/${props.teamId}/triage-flowoutputs`, {
+      const response = await $fetch(`/api/teams/${props.teamId}/triage-outputs`, {
         method: 'POST',
         body: newOutput,
       })
@@ -500,7 +500,7 @@ async function updateOutput() {
       if (updatedOutput.isDefault && !editingOutput.value.isDefault) {
         for (const output of outputs.value) {
           if (output.isDefault && output.id !== updatedOutput.id) {
-            await $fetch(`/api/teams/${props.teamId}/triage-flowoutputs/${output.id}`, {
+            await $fetch(`/api/teams/${props.teamId}/triage-outputs/${output.id}`, {
               method: 'PATCH',
               body: { isDefault: false },
             })
@@ -508,7 +508,7 @@ async function updateOutput() {
         }
       }
 
-      const response = await $fetch(`/api/teams/${props.teamId}/triage-flowoutputs/${editingOutput.value.id}`, {
+      const response = await $fetch(`/api/teams/${props.teamId}/triage-outputs/${editingOutput.value.id}`, {
         method: 'PATCH',
         body: updatedOutput,
       })
@@ -575,7 +575,7 @@ async function deleteOutput() {
 
     // If in edit mode, delete via API
     if (props.editMode) {
-      await $fetch(`/api/teams/${props.teamId}/triage-flowoutputs/${deletingOutput.value.id}`, {
+      await $fetch(`/api/teams/${props.teamId}/triage-outputs/${deletingOutput.value.id}`, {
         method: 'DELETE',
       })
 
@@ -615,7 +615,7 @@ async function toggleActive(output: FlowOutput) {
 
     // If in edit mode, update via API
     if (props.editMode) {
-      await $fetch(`/api/teams/${props.teamId}/triage-flowoutputs/${output.id}`, {
+      await $fetch(`/api/teams/${props.teamId}/triage-outputs/${output.id}`, {
         method: 'PATCH',
         body: { active: updatedOutput.active },
       })

@@ -141,7 +141,7 @@ const { openOAuthPopup, waitingForOAuth } = useTriageOAuth({
     if (props.editMode) {
       console.log('[InputManager] Edit mode detected, refetching inputs...')
       try {
-        const response = await $fetch<FlowInput[]>(`/api/teams/${props.teamId}/triage-flowinputs`)
+        const response = await $fetch<FlowInput[]>(`/api/teams/${props.teamId}/triage-inputs`)
         // Filter inputs for this flow
         const flowInputs = response.filter(input => input.flowId === props.flowId)
 
@@ -256,7 +256,7 @@ async function saveNewInput() {
 
     // If in edit mode, save to API
     if (props.editMode) {
-      const response = await $fetch(`/api/teams/${props.teamId}/triage-flowinputs`, {
+      const response = await $fetch(`/api/teams/${props.teamId}/triage-inputs`, {
         method: 'POST',
         body: newInput,
       })
@@ -326,7 +326,7 @@ async function updateInput() {
 
     // If in edit mode, update via API
     if (props.editMode) {
-      const response = await $fetch(`/api/teams/${props.teamId}/triage-flowinputs/${editingInput.value.id}`, {
+      const response = await $fetch(`/api/teams/${props.teamId}/triage-inputs/${editingInput.value.id}`, {
         method: 'PATCH',
         body: updatedInput,
       })
@@ -387,7 +387,7 @@ async function deleteInput() {
   try {
     // If in edit mode, delete via API
     if (props.editMode) {
-      await $fetch(`/api/teams/${props.teamId}/triage-flowinputs/${deletingInput.value.id}`, {
+      await $fetch(`/api/teams/${props.teamId}/triage-inputs/${deletingInput.value.id}`, {
         method: 'DELETE',
       })
 

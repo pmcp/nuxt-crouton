@@ -77,7 +77,7 @@ const editingNotionUserId = ref<string | null>(null)
 async function fetchExistingMappings() {
   loadingMappings.value = true
   try {
-    const response = await $fetch<any[]>(`/api/teams/${props.teamId}/triage-usermappings`)
+    const response = await $fetch<any[]>(`/api/teams/${props.teamId}/triage-users`)
     // Filter by sourceType and sourceWorkspaceId
     existingMappings.value = response.filter(m =>
       m.sourceType === 'slack' && m.sourceWorkspaceId === props.workspaceId
@@ -160,7 +160,7 @@ async function saveMatches() {
 
   try {
     for (const match of matches.value) {
-      await $fetch(`/api/teams/${props.teamId}/triage-usermappings`, {
+      await $fetch(`/api/teams/${props.teamId}/triage-users`, {
         method: 'POST',
         body: {
           sourceType: 'slack',
@@ -206,7 +206,7 @@ async function saveMatches() {
 // Delete existing mapping
 async function deleteMapping(mapping: any) {
   try {
-    await $fetch(`/api/teams/${props.teamId}/triage-usermappings/${mapping.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/triage-users/${mapping.id}`, {
       method: 'DELETE'
     })
 
@@ -246,7 +246,7 @@ async function saveEditedMapping() {
   const notionUser = notionUsers.value.find(u => u.id === editingNotionUserId.value)
 
   try {
-    await $fetch(`/api/teams/${props.teamId}/triage-usermappings/${editingMapping.value.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/triage-users/${editingMapping.value.id}`, {
       method: 'PATCH',
       body: {
         notionUserId: editingNotionUserId.value,

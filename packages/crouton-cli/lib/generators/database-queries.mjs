@@ -432,7 +432,7 @@ export function generateQueries(data, config = null) {
 
     jsonFieldProcessing = `
   // Post-query processing for JSON fields (repeater/json types)
-  ${plural}.forEach((item: any) => {${fieldParsers}
+  ${camelCasePlural}.forEach((item: any) => {${fieldParsers}
   })
 `
   }
@@ -464,7 +464,7 @@ export function generateQueries(data, config = null) {
 
       // Build the ID collection logic for all fields referencing this collection
       const idCollectionCode = refs.map(ref => `
-    ${plural}.forEach(item => {
+    ${camelCasePlural}.forEach(item => {
         if (item.${ref.fieldName}) {
           try {
             const ids = typeof item.${ref.fieldName} === 'string'
@@ -506,14 +506,14 @@ export function generateQueries(data, config = null) {
         .from(${tableReference})
         .where(inArray(${tableReference}.id, Array.from(all${collectionVarName}Ids)))
 
-      ${plural}.forEach(item => {${mappingCode}
+      ${camelCasePlural}.forEach(item => {${mappingCode}
       })
     }`)
     })
 
     postQueryProcessing = `
   // Post-query processing for array references
-  if (${plural}.length > 0) {${processingBlocks.join('')}
+  if (${camelCasePlural}.length > 0) {${processingBlocks.join('')}
   }
 `
   }

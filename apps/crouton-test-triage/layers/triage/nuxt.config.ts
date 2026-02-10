@@ -14,12 +14,12 @@ export default defineNuxtConfig({
   },
   extends: [
     './collections/flows',
-    './collections/flowinputs',
-    './collections/flowoutputs',
+    './collections/inputs',
+    './collections/outputs',
     './collections/discussions',
     './collections/tasks',
     './collections/jobs',
-    './collections/usermappings',
-    './collections/inboxmessages'
+    './collections/users',
+    './collections/messages'
   ]
 })

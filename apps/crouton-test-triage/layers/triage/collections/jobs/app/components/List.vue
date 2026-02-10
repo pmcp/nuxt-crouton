@@ -47,7 +47,7 @@
       <CroutonItemCardMini
         v-if="row.original.flowInputId"
         :id="row.original.flowInputId"
-        collection="triageFlowInputs"
+        collection="triageInputs"
       />
     </template>
     <template #taskIds-cell="{ row }">

@@ -15,7 +15,7 @@
 
 ## Features
 
-- References: discussionId → discussions, flowInputId → flowInputs
+- References: discussionId → discussions, flowInputId → inputs
 
 ## File Structure
 
@@ -47,7 +47,7 @@ collections/jobs/
 |-------|------|----------|
 | id | string (primary key) | Auto |
 | discussionId | string (→ discussions) | Yes |
-| flowInputId | string (→ flowInputs) | Yes |
+| flowInputId | string (→ inputs) | Yes |
 | status | string | Yes |
 | stage | string | No |
 | attempts | number | Yes |

@@ -37,8 +37,8 @@ const fetchData = async () => {
     // Fetch all data in parallel
     const [flowsResponse, inputsResponse, outputsResponse] = await Promise.all([
       $fetch<Flow[]>(`/api/teams/${props.teamId}/triage-flows`),
-      $fetch<FlowInput[]>(`/api/teams/${props.teamId}/triage-flowinputs`),
-      $fetch<FlowOutput[]>(`/api/teams/${props.teamId}/triage-flowoutputs`)
+      $fetch<FlowInput[]>(`/api/teams/${props.teamId}/triage-inputs`),
+      $fetch<FlowOutput[]>(`/api/teams/${props.teamId}/triage-outputs`)
     ])
 
     flows.value = flowsResponse

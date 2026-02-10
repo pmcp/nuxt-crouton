@@ -57,7 +57,7 @@ const editingMappingId = ref<string | null>(null)
 async function fetchExistingMappings() {
   loadingMappings.value = true
   try {
-    const response = await $fetch<any[]>(`/api/teams/${props.teamId}/triage-usermappings`)
+    const response = await $fetch<any[]>(`/api/teams/${props.teamId}/triage-users`)
 
     // Filter by sourceType and sourceWorkspaceId
     const allMappings = response.filter(m =>
@@ -95,7 +95,7 @@ async function saveDiscoveredMapping(mapping: any, notionUserId: string) {
   const notionUser = notionUsers.value.find(u => u.id === notionUserId)
 
   try {
-    await $fetch(`/api/teams/${props.teamId}/triage-usermappings/${mapping.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/triage-users/${mapping.id}`, {
       method: 'PATCH',
       body: {
         notionUserId,
@@ -169,7 +169,7 @@ async function addManualMapping() {
   try {
     if (isEditing) {
       // Update existing mapping
-      await $fetch(`/api/teams/${props.teamId}/triage-usermappings/${editingMappingId.value}`, {
+      await $fetch(`/api/teams/${props.teamId}/triage-users/${editingMappingId.value}`, {
         method: 'PATCH',
         body: {
           sourceUserId: manualForm.sourceUserId || manualForm.sourceUserEmail,
@@ -190,7 +190,7 @@ async function addManualMapping() {
       })
     } else {
       // Create new mapping
-      await $fetch(`/api/teams/${props.teamId}/triage-usermappings`, {
+      await $fetch(`/api/teams/${props.teamId}/triage-users`, {
         method: 'POST',
         body: {
           sourceType: 'figma',
@@ -237,7 +237,7 @@ async function addManualMapping() {
 // Delete mapping
 async function deleteMapping(mapping: any) {
   try {
-    await $fetch(`/api/teams/${props.teamId}/triage-usermappings/${mapping.id}`, {
+    await $fetch(`/api/teams/${props.teamId}/triage-users/${mapping.id}`, {
       method: 'DELETE'
     })
 

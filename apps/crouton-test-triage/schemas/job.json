@@ -12,7 +12,7 @@
   },
   "flowInputId": {
     "type": "string",
-    "refTarget": "flowInputs",
+    "refTarget": "inputs",
     "meta": {
       "required": true,
       "label": "Flow Input",
