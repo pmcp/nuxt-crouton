@@ -43,6 +43,16 @@ export interface SlotItem {
   }
 }
 
+export interface BlockedDateItem {
+  id: string
+  startDate: string // YYYY-MM-DD
+  endDate: string // YYYY-MM-DD (inclusive)
+  reason?: string // "Holiday", "Maintenance"
+  blockedSlots?: string[] // empty = entire day; populated = only those slots
+}
+
+export type SlotSchedule = Record<string, number[]>
+
 export interface LocationData {
   id: string
   teamId?: string
@@ -56,6 +66,10 @@ export interface LocationData {
   content?: string | null
   allowedMemberIds?: string | string[] | null
   slots?: SlotItem[] | string | null
+  // Schedule rule fields
+  openDays?: number[] | string | null
+  slotSchedule?: SlotSchedule | string | null
+  blockedDates?: BlockedDateItem[] | string | null
   // Inventory mode fields
   inventoryMode?: boolean
   quantity?: number
