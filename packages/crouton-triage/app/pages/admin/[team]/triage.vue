@@ -1,0 +1,84 @@
+<script setup lang="ts">
+/**
+ * Triage Section Parent Layout
+ *
+ * Provides horizontal tab navigation for all triage admin pages.
+ * Child routes render in the body via <NuxtPage />.
+ *
+ * @route /admin/[team]/triage
+ */
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'admin'
+})
+
+const route = useRoute()
+const { t } = useT()
+const teamSlug = computed(() => route.params.team as string)
+
+// Tab navigation items
+const tabs = computed(() => [
+  [
+    {
+      label: t('triage.admin.overview') || 'Overview',
+      icon: 'i-lucide-activity',
+      to: `/admin/${teamSlug.value}/triage`,
+      exact: true
+    },
+    {
+      label: t('triage.admin.flows') || 'Flows',
+      icon: 'i-lucide-workflow',
+      to: `/admin/${teamSlug.value}/triage/flows`
+    },
+    {
+      label: t('triage.admin.discussions') || 'Discussions',
+      icon: 'i-lucide-message-square',
+      to: `/admin/${teamSlug.value}/triage/discussions`
+    },
+    {
+      label: t('triage.admin.tasks') || 'Tasks',
+      icon: 'i-lucide-check-square',
+      to: `/admin/${teamSlug.value}/triage/tasks`
+    },
+    {
+      label: t('triage.admin.jobs') || 'Jobs',
+      icon: 'i-lucide-activity',
+      to: `/admin/${teamSlug.value}/triage/jobs`
+    },
+    {
+      label: t('triage.admin.userMappings') || 'User Mappings',
+      icon: 'i-lucide-users',
+      to: `/admin/${teamSlug.value}/triage/user-mappings`
+    },
+    {
+      label: t('triage.admin.inbox') || 'Inbox',
+      icon: 'i-lucide-inbox',
+      to: `/admin/${teamSlug.value}/triage/inbox`
+    }
+  ]
+])
+</script>
+
+<template>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="t('triage.admin.sectionTitle') || 'Triage'">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+      </UDashboardNavbar>
+
+      <UNavigationMenu
+        :items="tabs"
+        orientation="horizontal"
+        highlight
+        highlight-color="primary"
+        class="border-b border-default px-4"
+      />
+    </template>
+
+    <template #body>
+      <NuxtPage />
+    </template>
+  </UDashboardPanel>
+</template>

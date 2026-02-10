@@ -9,6 +9,11 @@ export default defineAppConfig({
       // Admin routes (appear in /admin/[team]/ sidebar)
       adminRoutes: [
         {
+          path: '/triage',
+          label: 'triage.admin.overview',
+          icon: 'i-lucide-activity'
+        },
+        {
           path: '/triage/flows',
           label: 'triage.admin.flows',
           icon: 'i-lucide-workflow'

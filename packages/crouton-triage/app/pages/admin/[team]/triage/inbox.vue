@@ -1,18 +1,5 @@
 <template>
-  <UContainer class="py-6">
-    <h1 class="text-2xl font-bold mb-6">Email Inbox</h1>
-    <!-- Back Button -->
-    <div class="mb-4">
-      <NuxtLink
-        :to="`/admin/${currentTeam?.slug}/triage`"
-        class="hover:underline inline-flex items-center gap-1 text-sm text-muted-foreground"
-      >
-        <UIcon name="i-lucide-arrow-left" class="w-4 h-4" />
-        Back to Dashboard
-      </NuxtLink>
-    </div>
-
-    <div class="space-y-6">
+  <div class="p-4 space-y-6">
       <!-- Message Type Statistics -->
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <UCard>
@@ -286,15 +273,10 @@
         </div>
       </template>
     </UModal>
-  </UContainer>
+  </div>
 </template>
 
 <script setup lang="ts">
-// Disable SSR for this page to avoid race conditions with auth middleware
-definePageMeta({
-  ssr: false
-})
-
 // Team context
 const { currentTeam } = useTeam()
 const toast = useToast()

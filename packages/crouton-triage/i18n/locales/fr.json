@@ -1,6 +1,8 @@
 {
   "triage": {
     "admin": {
+      "sectionTitle": "Triage",
+      "overview": "Aperçu",
       "flows": "Flux",
       "discussions": "Discussions",
       "tasks": "Tâches",

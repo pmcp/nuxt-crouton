@@ -1,48 +1,30 @@
-<template>
-  <UContainer class="py-6">
-    <h1 class="text-2xl font-bold mb-6">Create Flow</h1>
-    <div class="mb-6">
-      <NuxtLink
-        :to="`/admin/${currentTeam?.slug}/triage/flows`"
-        class="hover:underline inline-flex items-center gap-1 text-sm text-muted-foreground"
-      >
-        <UIcon name="i-lucide-arrow-left" class="w-4 h-4" />
-        Back to Flows
-      </NuxtLink>
-    </div>
+<script setup lang="ts">
+/**
+ * Create Flow Page
+ *
+ * Multi-step flow builder for creating a new triage flow.
+ *
+ * @route /admin/[team]/triage/flows/create
+ */
+import FlowBuilder from '#layers/triage/app/components/flows/FlowBuilder.vue'
 
+const { currentTeam } = useTeam()
+const router = useRouter()
+
+function handleFlowSaved(flowId: string) {
+  router.push(`/admin/${currentTeam.value?.slug}/triage/flows`)
+}
+</script>
+
+<template>
+  <div class="h-full p-4">
     <FlowBuilder
       v-if="currentTeam?.id"
       :team-id="currentTeam.id"
       @saved="handleFlowSaved"
     />
-    <div v-else class="text-center text-muted-foreground">
-      Loading...
+    <div v-else class="flex items-center justify-center py-12">
+      <UIcon name="i-lucide-loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
     </div>
-  </UContainer>
+  </div>
 </template>
-
-<script setup lang="ts">
-console.log('[CREATE PAGE] Component loading...')
-
-import FlowBuilder from '#layers/triage/app/components/flows/FlowBuilder.vue'
-
-console.log('[CREATE PAGE] FlowBuilder imported')
-
-const { currentTeam } = useTeam()
-const router = useRouter()
-
-console.log('[CREATE PAGE] Current team:', currentTeam.value)
-
-definePageMeta({
-  middleware: 'auth'
-})
-
-function handleFlowSaved(flowId: string) {
-  console.log('[CREATE PAGE] Flow saved:', flowId)
-  // Navigate back to flows list after successful save
-  router.push(`/admin/${currentTeam.value?.slug}/triage/flows`)
-}
-
-console.log('[CREATE PAGE] Setup complete')
-</script>
