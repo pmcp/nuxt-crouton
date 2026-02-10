@@ -1308,11 +1308,9 @@ ${translationsFieldSchema}
   if (!noDb) {
     await createDatabaseTable({ name: collection, layer, fields, force })
 
-    // If translations are enabled, export the i18n schema
-    if (hasTranslations) {
-      console.log(`↻ Setting up translations support...`)
-      await exportI18nSchema(force)
-    }
+    // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
+    console.log(`↻ Ensuring translations_ui table...`)
+    await exportI18nSchema(force)
   }
 
   // Update collection registry
@@ -1686,13 +1684,10 @@ async function main() {
             }
           }
 
-          // Export i18n schema if any collection uses translations
-          if (hasAnyTranslations) {
-            console.log(`\n↻ Setting up translations support...`)
-            await exportI18nSchema(config.flags?.force || false)
-            // Always register the translationsUi collection regardless of schema export method
-            await registerTranslationsUiCollection()
-          }
+          // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
+          console.log(`\n↻ Ensuring translations_ui table...`)
+          await exportI18nSchema(config.flags?.force || false)
+          await registerTranslationsUiCollection()
 
           // Run database migration once for all collections
           console.log(`\nRunning database migration...`)
@@ -1818,13 +1813,10 @@ async function main() {
             }
           }
 
-          // Export i18n schema if any collection uses translations
-          if (hasAnyTranslations) {
-            console.log(`\n↻ Setting up translations support...`)
-            await exportI18nSchema(config.flags?.force || false)
-            // Always register the translationsUi collection regardless of schema export method
-            await registerTranslationsUiCollection()
-          }
+          // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
+          console.log(`\n↻ Ensuring translations_ui table...`)
+          await exportI18nSchema(config.flags?.force || false)
+          await registerTranslationsUiCollection()
 
           // Run database migration once for all collections
           console.log(`\nRunning database migration...`)

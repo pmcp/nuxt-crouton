@@ -11,3 +11,4 @@ export { triageTasks } from '../../layers/triage/collections/tasks/server/databa
 export { triageJobs } from '../../layers/triage/collections/jobs/server/database/schema'
 export { triageUserMappings } from '../../layers/triage/collections/usermappings/server/database/schema'
 export { triageInboxMessages } from '../../layers/triage/collections/inboxmessages/server/database/schema'
+export * from './translations-ui'

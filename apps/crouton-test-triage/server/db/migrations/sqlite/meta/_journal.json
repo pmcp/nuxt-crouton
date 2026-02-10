@@ -8,6 +8,13 @@
       "when": 1770759844698,
       "tag": "0000_lovely_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1770763228704,
+      "tag": "0001_tricky_exodus",
+      "breakpoints": true
     }
   ]
 }

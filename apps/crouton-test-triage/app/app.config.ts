@@ -6,9 +6,11 @@ import { triageTasksConfig } from '../layers/triage/collections/tasks/app/compos
 import { triageJobsConfig } from '../layers/triage/collections/jobs/app/composables/useTriageJobs'
 import { triageUserMappingsConfig } from '../layers/triage/collections/usermappings/app/composables/useTriageUserMappings'
 import { triageInboxMessagesConfig } from '../layers/triage/collections/inboxmessages/app/composables/useTriageInboxMessages'
+import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
 
 export default defineAppConfig({
   croutonCollections: {
+    translationsUi: translationsUiConfig,
     triageInboxMessages: triageInboxMessagesConfig,
     triageUserMappings: triageUserMappingsConfig,
     triageJobs: triageJobsConfig,
