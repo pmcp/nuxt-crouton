@@ -190,7 +190,6 @@
           </div>
         </UCard>
       </div>
-    </div>
 
     <!-- Email View Modal -->
     <UModal v-model:open="isModalOpen">
