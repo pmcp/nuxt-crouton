@@ -106,6 +106,7 @@ program
   .option('--hierarchy', 'Enable hierarchy support (parentId, path, depth, order)')
   .option('--seed', 'Generate seed data file using drizzle-seed')
   .option('--count <number>', 'Number of seed records (default: 25)', '25')
+  .option('--no-auto-merge', 'Skip auto-merging package collections from manifests')
   .option('-c, --config <path>', 'Use config file instead of CLI args')
   .action(async (layer, collection, options) => {
     // If no layer/collection provided, auto-detect config file
@@ -140,6 +141,9 @@ program
         }
         if (options.dryRun) {
           args.push('--dry-run')
+        }
+        if (options.autoMerge === false) {
+          args.push('--no-auto-merge')
         }
         spinner.stop()
         process.argv = ['node', 'generate-collection.mjs', ...args]
@@ -206,6 +210,9 @@ program
       if (options.seed) {
         args.push('--seed')
         args.push(`--count=${options.count || '25'}`)
+      }
+      if (options.autoMerge === false) {
+        args.push('--no-auto-merge')
       }
 
       spinner.stop()
