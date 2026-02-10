@@ -3,11 +3,14 @@ import type { Flow, FlowInput, FlowOutput } from '#layers/triage/types'
 
 interface Props {
   flow: Flow | null
-  inputs: FlowInput[]
-  outputs: FlowOutput[]
+  inputs?: FlowInput[]
+  outputs?: FlowOutput[]
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  inputs: () => [],
+  outputs: () => [],
+})
 
 const emit = defineEmits<{
   'edit:source': [input: FlowInput]
