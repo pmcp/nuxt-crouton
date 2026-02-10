@@ -24,7 +24,14 @@ const {
   loading
 } = useAuth()
 
+const route = useRoute()
 const redirects = useAuthRedirects()
+
+// Get redirect URL from query or use configured afterRegister redirect
+const redirectTo = computed(() => {
+  const redirect = route.query.redirect as string | undefined
+  return redirect || redirects.afterRegister
+})
 
 // Error state
 const formError = ref<string | null>(null)
@@ -136,7 +143,7 @@ async function onSubmit(event: FormSubmitEvent<{ name: string, email: string, pa
       description: 'Welcome! Your account has been created.',
       color: 'success'
     })
-    await navigateTo(redirects.afterRegister, { external: true })
+    await navigateTo(redirectTo.value, { external: true })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Registration failed'
     formError.value = message

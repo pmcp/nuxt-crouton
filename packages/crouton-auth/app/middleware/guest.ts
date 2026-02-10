@@ -31,7 +31,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (isAuthenticated.value) {
     // Check for redirect query param (e.g., from login page)
     const redirectQuery = to.query.redirect as string | undefined
-    const defaultRedirect = redirects?.authenticated ?? '/admin'
+    const defaultRedirect = redirects?.authenticated ?? '/'
 
     const redirectPath = redirectQuery || defaultRedirect
 

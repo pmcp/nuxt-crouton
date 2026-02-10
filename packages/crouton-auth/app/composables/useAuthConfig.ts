@@ -117,10 +117,10 @@ export function useIsMultiTenant(): boolean {
 export function useAuthRedirects() {
   const config = useAuthConfig()
   return {
-    afterLogin: config?.ui?.redirects?.afterLogin ?? '/dashboard',
+    afterLogin: config?.ui?.redirects?.afterLogin ?? '/',
     afterLogout: config?.ui?.redirects?.afterLogout ?? '/',
-    afterRegister: config?.ui?.redirects?.afterRegister ?? '/dashboard',
+    afterRegister: config?.ui?.redirects?.afterRegister ?? '/',
     unauthenticated: config?.ui?.redirects?.unauthenticated ?? '/auth/login',
-    authenticated: config?.ui?.redirects?.authenticated ?? '/dashboard'
+    authenticated: config?.ui?.redirects?.authenticated ?? '/'
   }
 }

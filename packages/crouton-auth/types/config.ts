@@ -310,15 +310,15 @@ export interface TeamRole {
  * Redirect URLs configuration
  */
 export interface RedirectConfig {
-  /** Redirect after successful login (default: '/dashboard') */
+  /** Redirect after successful login (default: '/') */
   afterLogin?: string
   /** Redirect after logout (default: '/') */
   afterLogout?: string
-  /** Redirect after registration (default: '/dashboard') */
+  /** Redirect after registration (default: '/') */
   afterRegister?: string
   /** Redirect for unauthenticated users (default: '/auth/login') */
   unauthenticated?: string
-  /** Redirect for already authenticated users on auth pages (default: '/dashboard') */
+  /** Redirect for already authenticated users on auth pages (default: '/') */
   authenticated?: string
   /** Redirect when user has no teams in multi-tenant mode (default: '/onboarding/create-team') */
   noTeams?: string
