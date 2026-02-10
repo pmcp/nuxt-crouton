@@ -76,7 +76,7 @@ async function handleDelete() {
     // Navigate to another team or home
     const nextTeam = teams.value[0]
     if (nextTeam) {
-      await navigateTo(`/dashboard/${nextTeam.slug}`)
+      await navigateTo(`/${nextTeam.slug}`)
     } else {
       await navigateTo('/')
     }

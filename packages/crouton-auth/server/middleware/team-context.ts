@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
     let teamSlug: string | null = null
 
     // Unified resolution: URL param first, then session's active org
-    // Check URL params: /api/teams/[id]/... or /dashboard/[team]/...
+    // Check URL params: /api/teams/[id]/... or /[team]/...
     const urlTeamParam = getRouterParam(event, 'id') ?? getRouterParam(event, 'team')
 
     if (urlTeamParam) {

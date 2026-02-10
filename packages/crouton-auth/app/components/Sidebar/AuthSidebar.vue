@@ -80,8 +80,8 @@ const defaultNavItems = computed<NavigationMenuItem[][]>(() => {
     {
       label: isAdminContext.value ? t('navigation.admin') : t('navigation.dashboard'),
       icon: 'i-lucide-layout-dashboard',
-      to: baseUrl || (isAdminContext.value ? '/admin' : '/dashboard'),
-      active: route.path === baseUrl || route.path === '/dashboard' || route.path === '/admin'
+      to: baseUrl || (isAdminContext.value ? '/admin' : '/'),
+      active: route.path === baseUrl || route.path === '/' || route.path === '/admin'
     }
   ]
 

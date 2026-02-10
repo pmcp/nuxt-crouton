@@ -59,10 +59,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!isAuthenticated.value) {
     clearTeamContext()
 
-    // If trying to access dashboard without auth, let the auth middleware handle it
-    if (to.path.startsWith('/dashboard')) {
-      return
-    }
     return
   }
 
@@ -118,7 +114,6 @@ async function resolveTeamContext(
   const { teams, switchTeamBySlug } = useTeam()
 
   const urlTeamParam = to.params.team as string | undefined
-  const isDashboardRoute = to.path.startsWith('/dashboard')
 
   // Ensure teams are loaded - fetch from API if nanostore is empty
   let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
@@ -177,64 +172,8 @@ async function resolveTeamContext(
       teamSlug: targetTeam.slug,
       needsRedirect: false
     }
-  } else if (isDashboardRoute && activeOrganization.value) {
-    // Dashboard route without team in URL - add team to URL
-    const pathWithoutDashboard = to.path.replace(/^\/dashboard\/?/, '')
-    return {
-      teamId: activeOrganization.value.id,
-      teamSlug: activeOrganization.value.slug,
-      needsRedirect: true,
-      redirectTo: `/dashboard/${activeOrganization.value.slug}${pathWithoutDashboard ? `/${pathWithoutDashboard}` : ''}`
-    }
-  } else if (isDashboardRoute && !activeOrganization.value) {
-    // Dashboard route but NO active org - check if user has any teams
-    // Teams might not be loaded yet from nanostore, so fetch them explicitly
-    // Use a minimal type that works with both Team[] and raw API response
-    let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
-    if (userTeams.length === 0) {
-      // Try fetching teams directly from the API (client-side only)
-      try {
-        const authClient = useAuthClientSafe()
-        if (authClient?.organization?.list) {
-          const result = await authClient.organization.list()
-          if (result.data && result.data.length > 0) {
-            userTeams = result.data
-          }
-        }
-      } catch (e) {
-        console.error('[@crouton/auth] Failed to fetch teams:', e)
-      }
-    }
-
-    if (userTeams.length === 0) {
-      // No teams at all - redirect to create team page
-      const noTeamsRedirect = config?.ui?.redirects?.noTeams ?? '/onboarding/create-team'
-      return {
-        teamId: null,
-        teamSlug: null,
-        needsRedirect: true,
-        redirectTo: noTeamsRedirect
-      }
-    }
-    // Has teams but no active - switch to first team and redirect
-    const firstTeam = userTeams[0]
-    if (!firstTeam) {
-      // This shouldn't happen if we got here, but handle it gracefully
-      return { teamId: null, teamSlug: null, needsRedirect: false }
-    }
-    try {
-      await switchTeamBySlug(firstTeam.slug)
-    } catch (e) {
-      console.error('[@crouton/auth] Failed to switch to first team:', e)
-    }
-    return {
-      teamId: firstTeam.id,
-      teamSlug: firstTeam.slug,
-      needsRedirect: true,
-      redirectTo: `/dashboard/${firstTeam.slug}`
-    }
   } else {
-    // Non-dashboard route
+    // No team in URL - use active organization from session if available
     return {
       teamId: activeOrganization.value?.id ?? null,
       teamSlug: activeOrganization.value?.slug ?? null,

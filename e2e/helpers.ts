@@ -44,13 +44,13 @@ export async function navigateToCollection(page: Page, collectionName: string) {
 
   // Try direct URL navigation
   const currentUrl = page.url()
-  const teamMatch = currentUrl.match(/\/dashboard\/([^/]+)/)
+  const teamMatch = currentUrl.match(/\/admin\/([^/]+)/)
   const teamSlug = teamMatch?.[1] || ''
 
   if (teamSlug) {
-    await page.goto(`/dashboard/${teamSlug}/${collectionName}`)
+    await page.goto(`/admin/${teamSlug}/${collectionName}`)
   } else {
-    await page.goto(`/dashboard/${collectionName}`)
+    await page.goto(`/${collectionName}`)
   }
 
   await waitForReady(page)
@@ -194,6 +194,6 @@ export async function deleteItem(page: Page): Promise<boolean> {
  */
 export function getTeamSlug(page: Page): string | null {
   const url = page.url()
-  const match = url.match(/\/dashboard\/([^/]+)/)
+  const match = url.match(/\/admin\/([^/]+)/)
   return match?.[1] || null
 }

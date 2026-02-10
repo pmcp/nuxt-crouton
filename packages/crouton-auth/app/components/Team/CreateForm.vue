@@ -165,7 +165,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     >
       <template #hint>
         <span class="text-xs text-muted">
-          {{ t('teams.urlSlugHintPrefix') }} /dashboard/<strong>{{ state.slug || t('teams.yourSlug') }}</strong>
+          {{ t('teams.urlSlugHintPrefix') }} /<strong>{{ state.slug || t('teams.yourSlug') }}</strong>
         </span>
       </template>
       <UInput

@@ -16,7 +16,7 @@ const { t } = useT()
 
 function onTeamCreated(team: Team) {
   // Force full page load so SSR picks up the fresh session with active org
-  navigateTo(`/admin/${team.slug}`, { external: true })
+  navigateTo(`/${team.slug}`, { external: true })
 }
 </script>
 

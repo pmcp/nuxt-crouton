@@ -182,7 +182,7 @@ function resetForm() {
             {{ state.name || t('teams.teamName') }}
           </p>
           <p class="text-sm text-muted">
-            /dashboard/{{ state.slug || 'your-slug' }}
+            /{{ state.slug || 'your-slug' }}
           </p>
         </div>
       </div>

@@ -130,12 +130,12 @@ if ($croutonAuth.hasTeamContext()) {
 ### Multi-Tenant Mode
 
 - Users can belong to multiple teams
-- Team ID comes from URL (`/dashboard/:team/...`) or session
+- Team ID comes from URL (`/:team/...`) or session
 - Team switcher is visible
 - Collections are scoped to URL team
 
 ```typescript
-// URL: /dashboard/acme-corp/bookings
+// URL: /acme-corp/bookings
 const { teamId } = useTeamContext()
 console.log(teamId.value) // 'team-abc123' (ID, not slug)
 ```
@@ -148,7 +148,7 @@ console.log(teamId.value) // 'team-abc123' (ID, not slug)
 - Team switcher hidden
 
 ```typescript
-// URL: /dashboard/bookings
+// URL: /bookings
 const { teamId } = useTeamContext()
 console.log(teamId.value) // 'default' or configured defaultTeamId
 ```
@@ -161,7 +161,7 @@ console.log(teamId.value) // 'default' or configured defaultTeamId
 - Team management hidden
 
 ```typescript
-// URL: /dashboard/bookings
+// URL: /bookings
 const { teamId } = useTeamContext()
 console.log(teamId.value) // 'personal-abc12345' (user's personal workspace)
 ```

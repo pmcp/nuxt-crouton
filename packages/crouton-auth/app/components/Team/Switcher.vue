@@ -22,7 +22,7 @@ interface Props {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   /** Hide search input for small lists */
   searchable?: boolean
-  /** Route prefix for navigation after team switch (default: /dashboard) */
+  /** Route prefix for navigation after team switch (default: '') */
   routePrefix?: string
 }
 
@@ -30,7 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
   showCreate: true,
   size: 'md',
   searchable: false,
-  routePrefix: '/dashboard'
+  routePrefix: ''
 })
 
 const emit = defineEmits<{

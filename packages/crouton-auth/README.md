@@ -128,7 +128,7 @@ croutonAuth: {
 }
 ```
 
-**URL Structure**: `/dashboard/[team-slug]/...`
+**URL Structure**: `/[team-slug]/...`
 
 ### Single-Tenant
 
@@ -142,7 +142,7 @@ croutonAuth: {
 }
 ```
 
-**URL Structure**: `/dashboard/...` (team auto-resolved)
+**URL Structure**: `/[team-slug]/...` (team auto-resolved)
 
 ### Personal
 
@@ -154,7 +154,7 @@ croutonAuth: {
 }
 ```
 
-**URL Structure**: `/dashboard/...` (personal team auto-created)
+**URL Structure**: `/[team-slug]/...` (personal team auto-created)
 
 ---
 
@@ -503,11 +503,11 @@ const {
 
 ```vue
 <script setup lang="ts">
-const { buildDashboardUrl, buildApiUrl, teamId } = useTeamContext()
+const { buildAdminUrl, buildApiUrl, teamId } = useTeamContext()
 
-// Multi-tenant: /dashboard/acme/settings
-// Single-tenant: /dashboard/settings
-const settingsUrl = buildDashboardUrl('/settings')
+// Multi-tenant: /admin/acme/settings
+// Single-tenant: /admin/settings
+const settingsUrl = buildAdminUrl('/settings')
 
 // Fetch team-scoped data
 const { data } = await useFetch(buildApiUrl('/bookings'))
@@ -564,7 +564,7 @@ const { plans, isPro, checkout, loading } = useBilling()
 
 async function handleUpgrade(planId: string) {
   await checkout(planId, {
-    successUrl: '/dashboard?upgraded=true',
+    successUrl: '/?upgraded=true',
     cancelUrl: '/pricing'
   })
 }
