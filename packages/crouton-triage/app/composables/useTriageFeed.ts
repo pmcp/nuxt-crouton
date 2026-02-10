@@ -20,13 +20,13 @@ export interface FeedItem {
   discussionId: string
 }
 
-export function useTriageFeed(options?: { limit?: number }) {
+export async function useTriageFeed(options?: { limit?: number }) {
   const { currentTeam } = useTeam()
 
   // Fetch discussions, jobs, and tasks
-  const { items: discussions, pending: discussionsPending, refresh: refreshDiscussions } = useCollectionQuery('triageDiscussions')
-  const { items: jobs, pending: jobsPending, refresh: refreshJobs } = useCollectionQuery('triageJobs')
-  const { items: tasks, pending: tasksPending, refresh: refreshTasks } = useCollectionQuery('triageTasks')
+  const { items: discussions, pending: discussionsPending, refresh: refreshDiscussions } = await useCollectionQuery('triageDiscussions')
+  const { items: jobs, pending: jobsPending, refresh: refreshJobs } = await useCollectionQuery('triageJobs')
+  const { items: tasks, pending: tasksPending, refresh: refreshTasks } = await useCollectionQuery('triageTasks')
 
   const loading = computed(() => discussionsPending.value || jobsPending.value || tasksPending.value)
 

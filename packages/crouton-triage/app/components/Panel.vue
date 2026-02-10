@@ -23,9 +23,9 @@ const { currentTeam } = useTeam()
 const toast = useToast()
 
 // Data fetching
-const { items: flows, pending: flowsPending, refresh: refreshFlows } = useCollectionQuery('triageFlows')
-const { items: inputs, pending: inputsPending, refresh: refreshInputs } = useCollectionQuery('triageFlowinputs')
-const { items: outputs, pending: outputsPending, refresh: refreshOutputs } = useCollectionQuery('triageFlowoutputs')
+const { items: flows, pending: flowsPending, refresh: refreshFlows } = await useCollectionQuery('triageFlows')
+const { items: inputs, pending: inputsPending, refresh: refreshInputs } = await useCollectionQuery('triageFlowInputs')
+const { items: outputs, pending: outputsPending, refresh: refreshOutputs } = await useCollectionQuery('triageFlowOutputs')
 
 // Use first active flow (most common: one flow per team)
 const flow = computed<Flow | null>(() => {
@@ -45,7 +45,7 @@ const flowOutputs = computed<FlowOutput[]>(() => {
 })
 
 // Feed data
-const { feedItems, loading: feedLoading, refresh: refreshFeed } = useTriageFeed({ limit: props.limit })
+const { feedItems, loading: feedLoading, refresh: refreshFeed } = await useTriageFeed({ limit: props.limit })
 
 const loading = computed(() => flowsPending.value || inputsPending.value || outputsPending.value || feedLoading.value)
 
@@ -83,7 +83,7 @@ async function refreshAll() {
 // Listen for mutations to auto-refresh
 const nuxtApp = useNuxtApp()
 nuxtApp.hook('crouton:mutation', async (event: { operation: string; collection: string }) => {
-  const triageCollections = ['triageFlows', 'triageFlowinputs', 'triageFlowoutputs', 'triageDiscussions', 'triageJobs', 'triageTasks']
+  const triageCollections = ['triageFlows', 'triageFlowInputs', 'triageFlowOutputs', 'triageDiscussions', 'triageJobs', 'triageTasks']
   if (triageCollections.includes(event.collection)) {
     await refreshAll()
   }
