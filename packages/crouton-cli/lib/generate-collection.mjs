@@ -1536,6 +1536,11 @@ async function main() {
       // Store the config directory for resolving relative paths
       config._configDir = path.dirname(configPath)
 
+      // Merge CLI flags into config.flags (CLI flags override config file)
+      if (!config.flags) config.flags = {}
+      if (process.argv.includes('--force')) config.flags.force = true
+      if (process.argv.includes('--dry-run')) config.flags.dryRun = true
+
       // Parse --only flag for single-collection generation
       const onlyArg = process.argv.find(arg => arg.startsWith('--only='))
       const onlyCollection = onlyArg ? onlyArg.split('=')[1] : null
