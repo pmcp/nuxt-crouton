@@ -1,0 +1,12 @@
+{
+  "triage": {
+    "admin": {
+      "flows": "Flux",
+      "discussions": "Discussions",
+      "tasks": "Tâches",
+      "jobs": "Jobs",
+      "userMappings": "Correspondances utilisateurs",
+      "inbox": "Boîte de réception"
+    }
+  }
+}
