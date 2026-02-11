@@ -20,7 +20,6 @@ function makeOutput(overrides: Partial<FlowOutput> = {}): FlowOutput {
     id: 'output-1',
     flowId: 'flow-1',
     outputType: 'notion',
-    name: 'Default Output',
     isDefault: false,
     outputConfig: {},
     active: true,
@@ -48,7 +47,7 @@ describe('routeTaskToOutputs', () => {
   })
 
   it('routes to default when task has no domain', () => {
-    const defaultOutput = makeOutput({ id: 'default', isDefault: true, name: 'Default' })
+    const defaultOutput = makeOutput({ id: 'default', isDefault: true })
     const outputs = [defaultOutput]
     const task = makeTask({ domain: undefined })
 
@@ -58,7 +57,7 @@ describe('routeTaskToOutputs', () => {
   })
 
   it('routes to default when task domain is null', () => {
-    const defaultOutput = makeOutput({ id: 'default', isDefault: true, name: 'Default' })
+    const defaultOutput = makeOutput({ id: 'default', isDefault: true })
     const outputs = [defaultOutput]
     const task = makeTask({ domain: null })
 
@@ -68,8 +67,8 @@ describe('routeTaskToOutputs', () => {
   })
 
   it('routes to matching domain output', () => {
-    const defaultOutput = makeOutput({ id: 'default', isDefault: true, name: 'Default' })
-    const designOutput = makeOutput({ id: 'design', name: 'Design Board', domainFilter: ['design'] })
+    const defaultOutput = makeOutput({ id: 'default', isDefault: true })
+    const designOutput = makeOutput({ id: 'design', domainFilter: ['design'] })
     const outputs = [defaultOutput, designOutput]
     const task = makeTask({ domain: 'design' })
 
@@ -79,9 +78,9 @@ describe('routeTaskToOutputs', () => {
   })
 
   it('routes to multiple matching outputs', () => {
-    const defaultOutput = makeOutput({ id: 'default', isDefault: true, name: 'Default' })
-    const output1 = makeOutput({ id: 'out1', name: 'Frontend Board', domainFilter: ['frontend', 'design'] })
-    const output2 = makeOutput({ id: 'out2', name: 'Design Board', domainFilter: ['design'] })
+    const defaultOutput = makeOutput({ id: 'default', isDefault: true })
+    const output1 = makeOutput({ id: 'out1', domainFilter: ['frontend', 'design'] })
+    const output2 = makeOutput({ id: 'out2', domainFilter: ['design'] })
     const outputs = [defaultOutput, output1, output2]
     const task = makeTask({ domain: 'design' })
 
@@ -92,8 +91,8 @@ describe('routeTaskToOutputs', () => {
   })
 
   it('routes to default when domain does not match any output', () => {
-    const defaultOutput = makeOutput({ id: 'default', isDefault: true, name: 'Default' })
-    const designOutput = makeOutput({ id: 'design', name: 'Design', domainFilter: ['design'] })
+    const defaultOutput = makeOutput({ id: 'default', isDefault: true })
+    const designOutput = makeOutput({ id: 'design', domainFilter: ['design'] })
     const outputs = [defaultOutput, designOutput]
     const task = makeTask({ domain: 'backend' })
 
@@ -103,7 +102,7 @@ describe('routeTaskToOutputs', () => {
   })
 
   it('skips outputs with empty domainFilter array', () => {
-    const defaultOutput = makeOutput({ id: 'default', isDefault: true, name: 'Default', domainFilter: [] })
+    const defaultOutput = makeOutput({ id: 'default', isDefault: true, domainFilter: [] })
     const outputs = [defaultOutput]
     const task = makeTask({ domain: 'design' })
 
@@ -114,7 +113,7 @@ describe('routeTaskToOutputs', () => {
   })
 
   it('skips outputs with undefined domainFilter', () => {
-    const defaultOutput = makeOutput({ id: 'default', isDefault: true, name: 'Default', domainFilter: undefined })
+    const defaultOutput = makeOutput({ id: 'default', isDefault: true, domainFilter: undefined })
     const outputs = [defaultOutput]
     const task = makeTask({ domain: 'frontend' })
 

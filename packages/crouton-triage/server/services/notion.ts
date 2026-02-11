@@ -157,7 +157,7 @@ export async function createNotionConfigFromOutput(
 
   logger.debug('Created Notion config from output', {
     outputId: output.id,
-    outputName: output.name,
+    outputType: output.outputType,
     databaseId: notionConfig.databaseId,
     hasFieldMapping: !!notionConfig.fieldMapping,
     resolvedViaAccount: !!output.accountId,

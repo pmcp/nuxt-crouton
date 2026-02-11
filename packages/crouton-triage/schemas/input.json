@@ -20,17 +20,6 @@
       "group": "basic"
     }
   },
-  "name": {
-    "type": "string",
-    "meta": {
-      "required": true,
-      "maxLength": 200,
-      "label": "Input Name",
-      "description": "User-friendly name (e.g., 'Design Team Slack')",
-      "area": "main",
-      "group": "basic"
-    }
-  },
   "apiToken": {
     "type": "string",
     "meta": {

@@ -631,7 +631,7 @@ defineExpose({ refresh: refreshAll })
       :api-token="activeMapInput.apiToken"
       :notion-token="getNotionTokenFromOutputs() || ''"
       :team-id="currentTeam?.id || ''"
-      :input-name="activeMapInput.name"
+      :input-name="activeMapInput.sourceType.charAt(0).toUpperCase() + activeMapInput.sourceType.slice(1)"
       @saved="refreshMappings"
     />
 

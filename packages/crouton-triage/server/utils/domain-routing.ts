@@ -50,7 +50,7 @@ export function routeTaskToOutputs(
   if (!task.domain) {
     logger.info('Task has no domain, routing to default output', {
       defaultOutputId: defaultOutput.id,
-      defaultOutputName: defaultOutput.name,
+      defaultOutputType: defaultOutput.outputType,
     })
     return [defaultOutput]
   }
@@ -69,7 +69,7 @@ export function routeTaskToOutputs(
       logger.debug('Task domain matches output', {
         taskDomain: task.domain,
         outputId: output.id,
-        outputName: output.name,
+        outputType: output.outputType,
         domainFilter: output.domainFilter,
       })
     }
@@ -82,7 +82,7 @@ export function routeTaskToOutputs(
     logger.info('Task routed to matching domain outputs', {
       taskDomain: task.domain,
       matchCount: matchingOutputs.length,
-      outputNames: matchingOutputs.map(o => o.name),
+      outputTypes: matchingOutputs.map(o => o.outputType),
     })
     return matchingOutputs
   }
@@ -91,7 +91,7 @@ export function routeTaskToOutputs(
   logger.info('Task domain did not match any output, routing to default', {
     taskDomain: task.domain,
     defaultOutputId: defaultOutput.id,
-    defaultOutputName: defaultOutput.name,
+    defaultOutputType: defaultOutput.outputType,
   })
 
   return [defaultOutput]

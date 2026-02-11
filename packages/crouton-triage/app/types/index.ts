@@ -348,8 +348,6 @@ export interface FlowInput {
   flowId: string
   /** Source type (e.g., 'slack', 'figma', 'email') */
   sourceType: string
-  /** Display name for this input */
-  name: string
   /** Source API token/key (legacy — prefer accountId) */
   apiToken?: string
   /** Connected account ID for centralized token resolution */
@@ -386,8 +384,6 @@ export interface FlowOutput {
   flowId: string
   /** Output type (e.g., 'notion', 'github', 'linear') */
   outputType: string
-  /** Display name for this output */
-  name: string
   /** Domain filter - tasks matching these domains will be routed here */
   domainFilter?: string[]
   /** Whether this is the default output (for tasks with no/null domain) */

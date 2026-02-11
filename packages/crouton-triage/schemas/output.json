@@ -20,17 +20,6 @@
       "group": "basic"
     }
   },
-  "name": {
-    "type": "string",
-    "meta": {
-      "required": true,
-      "maxLength": 200,
-      "label": "Output Name",
-      "description": "User-friendly name (e.g., 'Design Tasks DB')",
-      "area": "main",
-      "group": "basic"
-    }
-  },
   "domainFilter": {
     "type": "array",
     "meta": {

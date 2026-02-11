@@ -1403,8 +1403,8 @@ export async function processDiscussion(
           apiToken: resolvedInputToken || flowData.matchedInput.sourceMetadata?.notionToken || '',
           sourceMetadata: {
             ...flowData.matchedInput.sourceMetadata,
-            // Use input name as botHandle for Figma (the bot account name)
-            botHandle: flowData.matchedInput.sourceMetadata?.botHandle || flowData.matchedInput.name,
+            // Use sourceMetadata botHandle for Figma (the bot account name)
+            botHandle: flowData.matchedInput.sourceMetadata?.botHandle || flowData.matchedInput.sourceType,
           },
         } as AdapterConfig
       : config!
@@ -1741,7 +1741,7 @@ export async function processDiscussion(
             taskIndex,
             taskDomain: task.domain,
             matchedOutputCount: matchedOutputs.length,
-            outputNames: matchedOutputs.map(o => o.name),
+            outputTypes: matchedOutputs.map(o => o.outputType),
           })
 
           // Create task in all matched outputs
@@ -1765,7 +1765,7 @@ export async function processDiscussion(
 
               logger.info('Creating task in output', {
                 outputId: output.id,
-                outputName: output.name,
+                outputType: output.outputType,
                 taskTitle: task.title,
               })
 
@@ -1784,14 +1784,14 @@ export async function processDiscussion(
 
               logger.info('Task created successfully in output', {
                 outputId: output.id,
-                outputName: output.name,
+                outputType: output.outputType,
                 notionTaskId: result.id,
               })
             }
             catch (error) {
               logger.error('Failed to create task in output', error, {
                 outputId: output.id,
-                outputName: output.name,
+                outputType: output.outputType,
                 taskTitle: task.title,
               })
               // Continue with other outputs even if one fails

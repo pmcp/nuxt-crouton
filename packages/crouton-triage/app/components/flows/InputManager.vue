@@ -83,7 +83,6 @@ const toast = useToast()
 const slackWorkspace = ref('')
 
 const inputFormState = ref({
-  name: '',
   sourceType: 'slack',
   apiToken: '',
   accountId: undefined as string | undefined,
@@ -98,7 +97,6 @@ const inputFormState = ref({
 // ============================================================================
 
 const slackInputSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters'),
   apiToken: z.string().min(1, 'OAuth is required for Slack inputs'),
   sourceMetadata: z.object({
     slackTeamId: z.string().min(1, 'Slack Team ID is required'),
@@ -107,7 +105,6 @@ const slackInputSchema = z.object({
 })
 
 const figmaInputSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters'),
   emailSlug: z.string()
     .min(3, 'Email slug must be at least 3 characters')
     .regex(/^[a-z0-9-]+$/, 'Email slug must be lowercase alphanumeric with hyphens'),
@@ -115,7 +112,6 @@ const figmaInputSchema = z.object({
 })
 
 const emailInputSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters'),
   emailSlug: z.string()
     .min(3, 'Email slug must be at least 3 characters')
     .regex(/^[a-z0-9-]+$/, 'Email slug must be lowercase alphanumeric with hyphens'),
@@ -213,7 +209,6 @@ function openEditModal(input: FlowInput) {
 
   // Populate form with input data
   inputFormState.value = {
-    name: input.name,
     sourceType: input.sourceType,
     apiToken: input.apiToken || '',
     accountId: input.accountId,
@@ -239,7 +234,6 @@ function openDeleteDialog(input: FlowInput) {
  */
 function resetForm() {
   inputFormState.value = {
-    name: '',
     sourceType: 'slack',
     apiToken: '',
     accountId: undefined,
@@ -265,7 +259,6 @@ async function saveNewInput() {
       id: `temp-${Date.now()}`, // Temporary ID, will be replaced by DB
       flowId: props.flowId,
       sourceType: selectedInputType.value,
-      name: validatedData.name,
       apiToken: inputFormState.value.apiToken || undefined,
       accountId: inputFormState.value.accountId,
       emailAddress: inputFormState.value.emailAddress || undefined,
@@ -287,7 +280,7 @@ async function saveNewInput() {
 
       toast.add({
         title: 'Input Added',
-        description: `${validatedData.name} has been added successfully.`,
+        description: `${selectedInputType.value.charAt(0).toUpperCase() + selectedInputType.value.slice(1)} input has been added successfully.`,
         color: 'success',
       })
     } else {
@@ -337,7 +330,6 @@ async function updateInput() {
     // Update input object
     const updatedInput: FlowInput = {
       ...editingInput.value,
-      name: validatedData.name,
       apiToken: inputFormState.value.apiToken || undefined,
       accountId: inputFormState.value.accountId,
       emailAddress: inputFormState.value.emailAddress || undefined,
@@ -361,7 +353,7 @@ async function updateInput() {
 
       toast.add({
         title: 'Input Updated',
-        description: `${validatedData.name} has been updated successfully.`,
+        description: `${selectedInputType.value.charAt(0).toUpperCase() + selectedInputType.value.slice(1)} input has been updated successfully.`,
         color: 'success',
       })
     } else {
@@ -415,7 +407,7 @@ async function deleteInput() {
 
       toast.add({
         title: 'Input Deleted',
-        description: `${deletingInput.value.name} has been deleted successfully.`,
+        description: `${deletingInput.value.sourceType.charAt(0).toUpperCase() + deletingInput.value.sourceType.slice(1)} input has been deleted successfully.`,
         color: 'success',
       })
     }
@@ -604,16 +596,13 @@ watch(isEditModalOpen, (open) => {
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-2">
-                <h4 class="font-semibold">{{ input.name }}</h4>
+                <h4 class="font-semibold">{{ input.sourceType.charAt(0).toUpperCase() + input.sourceType.slice(1) }}</h4>
                 <UBadge
                   :label="getInputStatus(input).label"
                   :color="getInputStatus(input).color"
                   size="xs"
                 />
               </div>
-              <p class="text-sm text-gray-500 mt-1">
-                {{ input.sourceType.charAt(0).toUpperCase() + input.sourceType.slice(1) }}
-              </p>
             </div>
 
             <!-- Actions -->
@@ -691,15 +680,6 @@ watch(isEditModalOpen, (open) => {
             class="space-y-4"
             @submit="saveNewInput"
           >
-            <!-- Name Field -->
-            <UFormField label="Name" name="name" required>
-              <UInput
-                v-model="inputFormState.name"
-                placeholder="e.g., Product Team Slack"
-                class="w-full"
-              />
-            </UFormField>
-
             <!-- Slack-specific fields -->
             <template v-if="selectedInputType === 'slack'">
               <!-- Connected Account Picker -->
@@ -810,15 +790,6 @@ watch(isEditModalOpen, (open) => {
             class="space-y-4"
             @submit="updateInput"
           >
-            <!-- Name Field -->
-            <UFormField label="Name" name="name" required>
-              <UInput
-                v-model="inputFormState.name"
-                placeholder="e.g., Product Team Slack"
-                class="w-full"
-              />
-            </UFormField>
-
             <!-- Slack-specific fields -->
             <template v-if="selectedInputType === 'slack'">
               <!-- Connected Account Picker -->
@@ -919,7 +890,7 @@ watch(isEditModalOpen, (open) => {
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-2">Delete Input</h3>
           <p class="text-gray-600 mb-6">
-            Are you sure you want to delete <strong>{{ deletingInput?.name }}</strong>?
+            Are you sure you want to delete this <strong>{{ deletingInput?.sourceType }}</strong> input?
             This action cannot be undone.
           </p>
 

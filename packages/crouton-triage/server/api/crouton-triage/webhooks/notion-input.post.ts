@@ -414,7 +414,7 @@ export default defineEventHandler(async (event) => {
         matchedFlow = inputsWithTokens[0].flow
         logger.info('[Notion Webhook] Matched input by unambiguous fallback (single input with token)', {
           inputId: matchedInput.id,
-          inputName: matchedInput.name,
+          inputSourceType: matchedInput.sourceType,
         })
       } else if (inputsWithTokens.length > 1) {
         // Multiple inputs found - try to match by integration_id if stored
@@ -436,8 +436,8 @@ export default defineEventHandler(async (event) => {
             workspaceId,
             integrationId,
             inputCount: inputsWithTokens.length,
-            inputNames: inputsWithTokens.map(i => i.input.name),
-            selectedInput: inputsWithTokens[0].input.name,
+            inputIds: inputsWithTokens.map(i => i.input.id),
+            selectedInput: inputsWithTokens[0].input.id,
           })
           matchedInput = inputsWithTokens[0].input
           matchedFlow = inputsWithTokens[0].flow
