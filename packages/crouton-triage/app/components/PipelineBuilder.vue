@@ -203,9 +203,16 @@ function getDomainColor(domain: string): string {
 </script>
 
 <template>
-  <div class="flex items-center justify-center gap-2 py-4 flex-wrap">
-    <!-- Sources group -->
-    <div class="flex items-center gap-1">
+  <div class="flex items-center py-1 w-full">
+    <!-- Sources (right-aligned, + on far left) -->
+    <div class="flex-1 flex items-center justify-end gap-1">
+      <!-- Add source -->
+      <UDropdownMenu :items="sourceTypeItems">
+        <button class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-110 cursor-pointer">
+          <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+        </button>
+      </UDropdownMenu>
+
       <!-- Existing source icons -->
       <UPopover
         v-for="input in allInputs"
@@ -246,21 +253,12 @@ function getDomainColor(domain: string): string {
           </div>
         </template>
       </UPopover>
-
-      <!-- Add source "+" with type selection dropdown -->
-      <UDropdownMenu :items="sourceTypeItems">
-        <button
-          class="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
-        >
-          <UIcon name="i-lucide-plus" class="w-4 h-4 text-muted-foreground" />
-        </button>
-      </UDropdownMenu>
     </div>
 
-    <!-- Arrow separator -->
+    <!-- AI (fixed center) -->
+    <div class="flex items-center gap-3 flex-shrink-0 px-3">
     <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
 
-    <!-- AI brain icon -->
     <UPopover mode="hover" arrow :ui="{ content: 'w-64' }">
       <UChip :color="isAiConfigured ? 'success' : 'error'" size="sm" inset>
         <button
@@ -300,11 +298,11 @@ function getDomainColor(domain: string): string {
       </template>
     </UPopover>
 
-    <!-- Arrow separator -->
     <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+    </div>
 
-    <!-- Outputs group -->
-    <div class="flex items-center gap-1">
+    <!-- Outputs (left-aligned) -->
+    <div class="flex-1 flex items-center gap-1">
       <!-- Existing output icons -->
       <UPopover
         v-for="output in allOutputs"
@@ -358,12 +356,10 @@ function getDomainColor(domain: string): string {
         </template>
       </UPopover>
 
-      <!-- Add output "+" with type selection dropdown -->
+      <!-- Add output -->
       <UDropdownMenu :items="outputTypeItems">
-        <button
-          class="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
-        >
-          <UIcon name="i-lucide-plus" class="w-4 h-4 text-muted-foreground" />
+        <button class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-110 cursor-pointer">
+          <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
         </button>
       </UDropdownMenu>
     </div>

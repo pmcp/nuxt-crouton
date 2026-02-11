@@ -152,25 +152,51 @@ async function handleRetry(discussionId: string) {
   }
 }
 
-// Delete flow with confirmation
-const flowToDelete = ref<Flow | null>(null)
-const showDeleteConfirm = ref(false)
+// Toggle flow active state
+const togglingFlow = ref<string | null>(null)
+
+async function toggleFlowActive(flow: Flow) {
+  if (!currentTeam.value?.id) return
+  togglingFlow.value = flow.id
+  try {
+    await $fetch(`/api/teams/${currentTeam.value.id}/triage-flows/${flow.id}`, {
+      method: 'PATCH',
+      body: { active: !flow.active },
+    })
+    await refreshFlows()
+  } catch (error: any) {
+    toast.add({
+      title: 'Failed to update flow',
+      description: error.data?.message || error.message || 'Something went wrong.',
+      color: 'error',
+    })
+  } finally {
+    togglingFlow.value = null
+  }
+}
+
+// Delete flow — two-step inline confirm
+const confirmingDeleteId = ref<string | null>(null)
 const deleting = ref(false)
 
 function confirmDeleteFlow(flow: Flow) {
-  flowToDelete.value = flow
-  showDeleteConfirm.value = true
+  if (confirmingDeleteId.value === flow.id) {
+    // Second click — actually delete
+    handleDeleteFlow(flow)
+  } else {
+    // First click — show "Delete?" state
+    confirmingDeleteId.value = flow.id
+  }
 }
 
-async function handleDeleteFlow() {
-  if (!flowToDelete.value || !currentTeam.value?.id) return
+async function handleDeleteFlow(flow: Flow) {
+  if (!currentTeam.value?.id) return
   deleting.value = true
   try {
-    await $fetch(`/api/teams/${currentTeam.value.id}/triage-flows/${flowToDelete.value.id}`, {
+    await $fetch(`/api/teams/${currentTeam.value.id}/triage-flows/${flow.id}`, {
       method: 'DELETE',
     })
-    showDeleteConfirm.value = false
-    flowToDelete.value = null
+    confirmingDeleteId.value = null
     await refreshAll()
   } catch (error: any) {
     toast.add({
@@ -182,6 +208,19 @@ async function handleDeleteFlow() {
     deleting.value = false
   }
 }
+
+// Reset confirm state when clicking elsewhere
+function resetDeleteConfirm() {
+  confirmingDeleteId.value = null
+}
+
+onMounted(() => {
+  document.addEventListener('click', resetDeleteConfirm)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', resetDeleteConfirm)
+})
 
 // Handle config changes
 function onInputsChange() {
@@ -200,48 +239,31 @@ defineExpose({ refresh: refreshAll })
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h2 v-if="title" class="text-lg font-semibold">{{ title }}</h2>
-      <UButton
-        icon="i-lucide-refresh-cw"
-        color="neutral"
-        variant="ghost"
-        size="sm"
-        :loading="loading"
-        @click="refreshAll"
-      />
-    </div>
-
+  <div class="flex flex-col h-full">
     <!-- Flow list -->
-    <div v-if="hasFlows || creatingFlow" class="flex flex-col gap-2">
-      <!-- Add flow button -->
-      <button
-        class="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center gap-2 text-sm text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer"
-        :disabled="creatingFlow"
-        @click="handleCreateFlow"
-      >
-        <UIcon v-if="creatingFlow" name="i-lucide-loader-2" class="w-4 h-4 animate-spin" />
-        <UIcon v-else name="i-lucide-plus" class="w-4 h-4" />
-        New Flow
-      </button>
+    <div v-if="hasFlows || creatingFlow" class="flex flex-col gap-3 py-2">
+      <!-- New flow button (centered on AI column) -->
+      <div class="flex items-center">
+        <div class="flex-1" />
+        <div class="flex items-center justify-center flex-shrink-0 px-3">
+          <button
+            class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-110 cursor-pointer"
+            :disabled="creatingFlow"
+            @click="handleCreateFlow"
+          >
+            <UIcon v-if="creatingFlow" name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" />
+            <UIcon v-else name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+        <div class="flex-1" />
+      </div>
 
-      <!-- Pipeline builder per flow -->
       <div
         v-for="flow in allFlows"
         :key="flow.id"
-        class="group border rounded-xl p-3 bg-muted/20 transition-all relative"
-        :class="flow.active ? 'border-primary/30' : 'border-default'"
+        class="group relative"
       >
-        <UButton
-          icon="i-lucide-trash-2"
-          color="error"
-          variant="ghost"
-          size="xs"
-          class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-          @click="confirmDeleteFlow(flow)"
-        />
+        <!-- Pipeline (full width, AI centered) -->
         <CroutonTriagePipelineBuilder
           :flow="flow"
           :inputs="getFlowInputs(flow.id)"
@@ -252,50 +274,87 @@ defineExpose({ refresh: refreshAll })
           @add:source="(type: 'slack' | 'figma' | 'email') => handleAddSource(flow, type)"
           @add:output="(type: 'notion' | 'github' | 'linear') => handleAddOutput(flow, type)"
         />
+
+        <!-- Controls (absolute right, no layout impact) -->
+        <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          <!-- Delete (fades in on row hover, left of active) -->
+          <button
+            class="h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all cursor-pointer"
+            :class="[
+              confirmingDeleteId === flow.id
+                ? 'bg-red-500/20 text-red-500 px-2.5 gap-1 opacity-100'
+                : 'w-7 bg-gray-500/10 text-gray-400 hover:!bg-red-500/20 hover:!text-red-500 hover:!opacity-100 opacity-0 group-hover:opacity-50 pointer-events-none group-hover:pointer-events-auto'
+            ]"
+            @click.stop="confirmDeleteFlow(flow)"
+          >
+            <UIcon v-if="deleting && confirmingDeleteId === flow.id" name="i-lucide-loader-2" class="w-3.5 h-3.5 animate-spin" />
+            <template v-else-if="confirmingDeleteId === flow.id">
+              <span class="text-xs font-medium">Delete?</span>
+            </template>
+            <UIcon v-else name="i-lucide-trash-2" class="w-3.5 h-3.5" />
+          </button>
+
+          <!-- Active: small dot by default, full button on row hover -->
+          <button
+            class="w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer"
+            :class="flow.active
+              ? 'group-hover:bg-green-500/20 group-hover:text-green-500'
+              : 'group-hover:bg-muted group-hover:text-muted-foreground'"
+            :disabled="togglingFlow === flow.id"
+            @click="toggleFlowActive(flow)"
+          >
+            <!-- Dot (default) -->
+            <div
+              class="w-2 h-2 rounded-full transition-opacity group-hover:hidden"
+              :class="flow.active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'"
+            />
+            <!-- Icon (hover) -->
+            <UIcon v-if="togglingFlow === flow.id" name="i-lucide-loader-2" class="w-3.5 h-3.5 animate-spin hidden group-hover:block" />
+            <UIcon v-else-if="flow.active" name="i-lucide-zap" class="w-3.5 h-3.5 hidden group-hover:block" />
+            <UIcon v-else name="i-lucide-pause" class="w-3.5 h-3.5 hidden group-hover:block" />
+          </button>
+        </div>
       </div>
+
     </div>
 
-    <!-- Empty state when no flows exist -->
+    <!-- Empty state -->
     <div
       v-if="!hasFlows && !flowsPending && !creatingFlow"
       class="text-center py-8"
     >
-      <div class="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
-        <UIcon name="i-lucide-funnel" class="w-8 h-8 text-muted-foreground" />
+      <div class="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+        <UIcon name="i-lucide-funnel" class="w-6 h-6 text-muted-foreground" />
       </div>
-      <h3 class="text-base font-semibold mb-2">No flow configured</h3>
-      <p class="text-sm text-muted-foreground max-w-md mx-auto mb-4">
-        Create a triage flow to start receiving and processing discussions from Slack, Figma, or email.
-      </p>
+      <p class="text-sm text-muted-foreground mb-3">No flows yet</p>
       <UButton
         color="primary"
+        variant="ghost"
+        size="sm"
         icon="i-lucide-plus"
         :loading="creatingFlow"
         @click="handleCreateFlow"
       >
-        Create Flow
+        New Flow
       </UButton>
     </div>
 
     <!-- Activity Feed -->
     <template v-if="hasFlows">
-      <USeparator label="Recent Activity" />
+      <USeparator label="Recent Activity" class="mt-2" />
 
-      <!-- Loading skeleton -->
-      <div v-if="feedLoading && feedItems.length === 0" class="space-y-3">
-        <div v-for="i in 3" :key="i" class="animate-pulse p-3 space-y-2">
+      <div v-if="feedLoading && feedItems.length === 0" class="space-y-3 mt-2">
+        <div v-for="i in 3" :key="i" class="animate-pulse p-2 space-y-2">
           <div class="flex items-center gap-3">
             <div class="w-5 h-5 bg-muted rounded" />
             <div class="h-4 bg-muted rounded w-1/3" />
             <div class="h-3 bg-muted rounded w-16 ml-auto" />
           </div>
           <div class="h-3 bg-muted rounded w-2/3 ml-8" />
-          <div class="h-3 bg-muted rounded w-1/4 ml-8" />
         </div>
       </div>
 
-      <!-- Feed items -->
-      <div v-else-if="feedItems.length > 0" class="flex-1 min-h-0 overflow-y-auto -mx-1">
+      <div v-else-if="feedItems.length > 0" class="flex-1 min-h-0 overflow-y-auto mt-2">
         <CroutonTriageFeedItem
           v-for="item in feedItems"
           :key="item.id"
@@ -304,11 +363,7 @@ defineExpose({ refresh: refreshAll })
         />
       </div>
 
-      <!-- Empty feed -->
-      <div v-else class="text-center py-8">
-        <div class="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
-          <UIcon name="i-lucide-inbox" class="w-6 h-6 text-muted-foreground" />
-        </div>
+      <div v-else class="text-center py-6">
         <p class="text-sm text-muted-foreground">{{ emptyMessage }}</p>
       </div>
     </template>
@@ -353,33 +408,5 @@ defineExpose({ refresh: refreshAll })
       />
     </div>
 
-    <!-- Delete flow confirmation -->
-    <UModal v-model:open="showDeleteConfirm">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold mb-2">Delete Flow</h3>
-          <p class="text-sm text-muted-foreground mb-6">
-            This will delete the flow and all its connected sources and outputs. This action cannot be undone.
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton
-              color="neutral"
-              variant="ghost"
-              :disabled="deleting"
-              @click="showDeleteConfirm = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              color="error"
-              :loading="deleting"
-              @click="handleDeleteFlow"
-            >
-              Delete
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
   </div>
 </template>
