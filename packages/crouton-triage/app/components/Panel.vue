@@ -22,13 +22,14 @@ const props = withDefaults(defineProps<Props>(), {
 const { currentTeam } = useTeam()
 const toast = useToast()
 const creatingFlow = ref(false)
+const pendingFlowId = ref<string | null>(null)
 
-// Create a new empty flow instantly
+// Create a new flow and immediately open AI config
 async function handleCreateFlow() {
   if (!currentTeam.value?.id || creatingFlow.value) return
   creatingFlow.value = true
   try {
-    await $fetch(`/api/teams/${currentTeam.value.id}/triage-flows`, {
+    const flow = await $fetch<Flow>(`/api/teams/${currentTeam.value.id}/triage-flows`, {
       method: 'POST',
       body: {
         name: 'Untitled Flow',
@@ -38,6 +39,10 @@ async function handleCreateFlow() {
       },
     })
     await refreshFlows()
+    // Store as pending and open AI config
+    pendingFlowId.value = flow.id
+    activeFlow.value = flow
+    showAiConfig.value = true
   } catch (error: any) {
     toast.add({
       title: 'Failed to create flow',
@@ -46,6 +51,21 @@ async function handleCreateFlow() {
     })
   } finally {
     creatingFlow.value = false
+  }
+}
+
+// Delete a pending flow that was dismissed without saving
+async function deletePendingFlow() {
+  const flowId = pendingFlowId.value
+  if (!flowId || !currentTeam.value?.id) return
+  pendingFlowId.value = null
+  try {
+    await $fetch(`/api/teams/${currentTeam.value.id}/triage-flows/${flowId}`, {
+      method: 'DELETE',
+    })
+    await refreshFlows()
+  } catch {
+    // Silent fail — flow was temporary anyway
   }
 }
 
@@ -295,8 +315,16 @@ function onOutputsChange() {
 }
 
 function onAiSaved() {
+  pendingFlowId.value = null
   refreshFlows()
 }
+
+// If AI config is dismissed (closed without saving) and flow is still pending, delete it
+watch(showAiConfig, (open) => {
+  if (!open && pendingFlowId.value) {
+    deletePendingFlow()
+  }
+})
 
 defineExpose({ refresh: refreshAll })
 </script>
@@ -306,22 +334,32 @@ defineExpose({ refresh: refreshAll })
     <!-- Flow list -->
     <div v-if="hasFlows || creatingFlow" class="flex flex-col gap-2">
       <!-- New flow button (centered on AI column) -->
-      <div class="flex items-center py-1">
-        <div class="flex-1" />
-        <div class="flex items-center justify-center flex-shrink-0 px-3">
-          <button
-            class="group/add h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-105 cursor-pointer w-10 hover:w-auto hover:px-3 hover:gap-1.5"
-            :disabled="creatingFlow"
-            @click="handleCreateFlow"
-          >
-            <UIcon v-if="creatingFlow" name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" />
-            <template v-else>
-              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400 group-hover/add:hidden" />
-              <span class="hidden group-hover/add:inline text-xs font-medium text-gray-500 whitespace-nowrap">add new flow</span>
-            </template>
-          </button>
+      <div class="group/add flex items-center justify-center py-1 cursor-pointer" @click="handleCreateFlow">
+        <!-- Default: single + circle -->
+        <div v-if="creatingFlow" class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center">
+          <UIcon name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" />
         </div>
-        <div class="flex-1" />
+        <template v-else>
+          <div class="flex items-center justify-center group-hover/add:hidden">
+            <div class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all">
+              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+            </div>
+          </div>
+          <!-- Hover: full-size pipeline preview matching PipelineBuilder -->
+          <div class="hidden group-hover/add:flex items-center gap-2">
+            <div class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center">
+              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+            </div>
+            <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" />
+            <div class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center">
+              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+            </div>
+            <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" />
+            <div class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center">
+              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+            </div>
+          </div>
+        </template>
       </div>
 
       <div
@@ -345,7 +383,7 @@ defineExpose({ refresh: refreshAll })
         <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <!-- Delete: icon → "delete" on hover → "sure" on click -->
           <button
-            class="group/del h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all cursor-pointer opacity-0 group-hover:opacity-50 pointer-events-none group-hover:pointer-events-auto"
+            class="group/del relative h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all cursor-pointer opacity-0 group-hover:opacity-50 pointer-events-none group-hover:pointer-events-auto before:content-[''] before:absolute before:-left-4 before:top-0 before:w-4 before:h-full"
             :class="[
               confirmingDeleteId === flow.id
                 ? '!opacity-100 bg-red-500/20 text-red-500 px-2.5'
