@@ -59,11 +59,12 @@ export async function resolveAccountToken(
   accountId: string,
   teamId: string,
 ): Promise<string> {
-  const { getTriageAccountById } = await import(
+  const { getTriageAccountsByIds } = await import(
     '~~/layers/triage/collections/accounts/server/database/queries'
   )
 
-  const account = await getTriageAccountById(accountId, teamId)
+  const accounts = await getTriageAccountsByIds(teamId, [accountId])
+  const account = accounts[0]
 
   if (!account) {
     throw new Error(`Connected account ${accountId} not found for team ${teamId}`)

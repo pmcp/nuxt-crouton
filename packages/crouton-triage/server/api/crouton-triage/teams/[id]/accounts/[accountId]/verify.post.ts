@@ -18,12 +18,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { getTriageAccountById, updateTriageAccount } = await import(
+  const { getTriageAccountsByIds, updateTriageAccount } = await import(
     '~~/layers/triage/collections/accounts/server/database/queries'
   )
   const { SYSTEM_USER_ID } = await import('../../../../../../utils/constants')
 
-  const account = await getTriageAccountById(accountId, teamId)
+  const accounts = await getTriageAccountsByIds(teamId, [accountId])
+  const account = accounts[0]
   if (!account) {
     throw createError({
       status: 404,
