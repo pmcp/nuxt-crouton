@@ -450,7 +450,7 @@ onMounted(initialize)
 
             <!-- Notion user picker -->
             <div class="flex-1">
-              <TriageUsermappingsNotionUserPicker
+              <CroutonTriageUsermappingsNotionUserPicker
                 :notion-token="notionToken"
                 :team-id="teamId"
                 placeholder="Select Notion user..."
@@ -495,7 +495,7 @@ onMounted(initialize)
 
           <!-- Notion user picker -->
           <div class="flex-1">
-            <TriageUsermappingsNotionUserPicker
+            <CroutonTriageUsermappingsNotionUserPicker
               v-model="editingNotionUserId"
               :notion-token="notionToken"
               :team-id="teamId"
@@ -520,7 +520,7 @@ onMounted(initialize)
       <!-- Existing Mappings -->
       <div v-if="existingMappings.length > 0" class="space-y-3">
         <h5 class="font-medium">Existing Mappings ({{ existingMappings.length }})</h5>
-        <TriageUsermappingsUserMappingTable
+        <CroutonTriageUsermappingsUserMappingTable
           :mappings="existingMappings"
           :loading="loadingMappings"
           compact

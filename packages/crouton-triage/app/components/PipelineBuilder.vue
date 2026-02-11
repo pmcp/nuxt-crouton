@@ -69,7 +69,8 @@ const outputTypeItems = [[
 function isOutputConfigured(output: FlowOutput): boolean {
   if (output.outputType === 'notion') {
     const config = output.outputConfig as Record<string, any> | undefined
-    return !!(config?.notionToken && config?.databaseId)
+    const hasToken = !!(config?.notionToken || output.accountId)
+    return !!(hasToken && config?.databaseId)
   }
   return output.active
 }
@@ -219,7 +220,7 @@ function getOutputMissing(output: FlowOutput): string[] {
   const missing: string[] = []
   if (output.outputType === 'notion') {
     const config = output.outputConfig as Record<string, any> | undefined
-    if (!config?.notionToken) missing.push('Add Notion token')
+    if (!config?.notionToken && !output.accountId) missing.push('Add Notion token')
     if (!config?.databaseId) missing.push('Select database')
   }
   return missing
