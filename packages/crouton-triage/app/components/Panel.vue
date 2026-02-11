@@ -231,7 +231,7 @@ function getSourceIcon(sourceType: string): string {
 
 const sourceMenuItems = computed(() => [
   uniqueSources.value.map(input => ({
-    label: input.name || input.sourceType,
+    label: input.sourceType.charAt(0).toUpperCase() + input.sourceType.slice(1),
     icon: getSourceIcon(input.sourceType),
     onSelect: () => openUserMappings(input),
   }))

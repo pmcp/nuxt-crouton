@@ -134,13 +134,13 @@ function getOutputBg(outputType: string): string {
 
 function getInputStatusLabel(input: FlowInput): string {
   if (input.sourceType === 'slack') {
-    return input.apiToken ? 'Connected' : 'Not connected'
+    return (input.apiToken || input.accountId) ? 'Connected' : 'Not connected'
   }
   return input.active ? 'Active' : 'Inactive'
 }
 
 function isInputConnected(input: FlowInput): boolean {
-  if (input.sourceType === 'slack') return !!input.apiToken
+  if (input.sourceType === 'slack') return !!(input.apiToken || input.accountId)
   return input.active
 }
 
@@ -202,7 +202,7 @@ const personalityInfo = computed(() => {
 // Missing items helpers
 function getInputMissing(input: FlowInput): string[] {
   const missing: string[] = []
-  if (input.sourceType === 'slack' && !input.apiToken) missing.push('Connect Slack workspace')
+  if (input.sourceType === 'slack' && !input.apiToken && !input.accountId) missing.push('Connect Slack workspace')
   if (input.sourceType === 'email' && !input.emailSlug) missing.push('Set email address')
   if (input.sourceType === 'figma' && !input.emailAddress) missing.push('Set Figma email webhook')
   return missing
@@ -284,7 +284,7 @@ function getDomainDotColor(domain: string): string {
         <template #content>
           <div class="p-3 space-y-2">
             <div class="flex items-center justify-between">
-              <span class="font-semibold text-sm">{{ input.name }}</span>
+              <span class="font-semibold text-sm">{{ input.sourceType.charAt(0).toUpperCase() + input.sourceType.slice(1) }}</span>
               <div
                 class="w-2 h-2 rounded-full flex-shrink-0"
                 :class="isInputConnected(input) ? 'bg-green-500' : 'bg-red-500'"
@@ -423,7 +423,7 @@ function getDomainDotColor(domain: string): string {
         <template #content>
           <div class="p-3 space-y-2">
             <div class="flex items-center justify-between">
-              <span class="font-semibold text-sm">{{ output.name }}</span>
+              <span class="font-semibold text-sm">{{ output.outputType.charAt(0).toUpperCase() + output.outputType.slice(1) }}</span>
               <div class="flex items-center gap-1.5">
                 <UBadge v-if="output.isDefault" size="xs" color="primary" variant="subtle">Default</UBadge>
                 <div
