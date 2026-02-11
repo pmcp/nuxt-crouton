@@ -26,6 +26,9 @@ const pendingFlowId = ref<string | null>(null)
 const addExpanded = ref(false)
 const addSourceDropOpen = ref(false)
 const addOutputDropOpen = ref(false)
+const showAiConfig = ref(false)
+const addSourceType = ref<'slack' | 'figma' | 'email' | null>(null)
+const addOutputType = ref<'notion' | 'github' | 'linear' | null>(null)
 
 let addCollapseTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -241,15 +244,10 @@ const loading = computed(() => flowsPending.value || inputsPending.value || outp
 
 // Active flow for config slideovers/modals (set when user interacts with a specific flow)
 const activeFlow = ref<Flow | null>(null)
-const showAiConfig = ref(false)
 
 // Track which specific input/output to edit (opens edit modal directly)
 const editSourceInput = ref<FlowInput | null>(null)
 const editOutputItem = ref<FlowOutput | null>(null)
-
-// Track which type was selected from the "+" dropdown (opens add modal directly)
-const addSourceType = ref<'slack' | 'figma' | 'email' | null>(null)
-const addOutputType = ref<'notion' | 'github' | 'linear' | null>(null)
 
 // Pipeline builder event handlers (scoped to a flow)
 function handleEditSource(flow: Flow, input: FlowInput) {
