@@ -39,6 +39,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useT()
+ const { useTimeAgo } = await import('@vueuse/core')
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { locale } = useI18n()
@@ -432,6 +433,14 @@ async function handleSubmit() {
       savedPage = await update(state.value.id, submitData)
     }
 
+    // Refresh metadata locally after update
+    if (action.value === 'update') {
+      const currentUser = getCurrentUser()
+      const s = state.value as any
+      s.updatedAt = Date.now()
+      s.updatedByUser = { name: currentUser.name }
+    }
+
     emit('save', savedPage || submitData)
   } catch (error) {
     console.error('Form submission failed:', error)
@@ -487,6 +496,13 @@ const fieldOptions = {
 
 // Preview drawer state
 const showPreview = ref(false)
+
+// Metadata: created/updated info
+const createdTimeAgo = useTimeAgo(() => (state.value as any).createdAt)
+const updatedTimeAgo = useTimeAgo(() => (state.value as any).updatedAt)
+const createdByName = computed(() => (state.value as any).createdByUser?.name || (state.value as any).createdByUser?.email)
+const updatedByName = computed(() => (state.value as any).updatedByUser?.name || (state.value as any).updatedByUser?.email)
+const hasMetadata = computed(() => action.value === 'update' && ((state.value as any).createdAt || (state.value as any).updatedAt))
 
 // Build a preview page object from current form state
 const previewPage = computed(() => {
@@ -799,7 +815,24 @@ defineExpose({ state })
           :field-options="fieldOptions"
           :collab="collabForI18n"
           class="h-full"
-        />
+        >
+          <template v-if="hasMetadata" #header>
+            <div class="flex items-center gap-3 text-xs text-muted">
+              <span v-if="createdByName" class="flex items-center gap-1">
+                <UIcon name="i-lucide-user-plus" class="size-3" />
+                {{ createdByName }} {{ createdTimeAgo }}
+              </span>
+              <span v-if="updatedByName && updatedByName !== createdByName" class="flex items-center gap-1">
+                <UIcon name="i-lucide-pencil" class="size-3" />
+                {{ updatedByName }} {{ updatedTimeAgo }}
+              </span>
+              <span v-else-if="(state as any).updatedAt && (state as any).updatedAt !== (state as any).createdAt" class="flex items-center gap-1">
+                <UIcon name="i-lucide-pencil" class="size-3" />
+                Updated {{ updatedTimeAgo }}
+              </span>
+            </div>
+          </template>
+        </CroutonI18nInput>
         <div v-else class="h-full flex items-center justify-center">
           <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
         </div>
