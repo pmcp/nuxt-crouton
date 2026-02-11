@@ -41,11 +41,6 @@ const tabs = computed(() => [
       to: `/admin/${teamSlug.value}/triage/jobs`
     },
     {
-      label: t('triage.admin.userMappings') || 'User Mappings',
-      icon: 'i-lucide-users',
-      to: `/admin/${teamSlug.value}/triage/user-mappings`
-    },
-    {
       label: t('triage.admin.inbox') || 'Inbox',
       icon: 'i-lucide-inbox',
       to: `/admin/${teamSlug.value}/triage/inbox`

@@ -54,10 +54,12 @@ const [
   { items: flows, pending: flowsPending, refresh: refreshFlows },
   { items: inputs, pending: inputsPending, refresh: refreshInputs },
   { items: outputs, pending: outputsPending, refresh: refreshOutputs },
+  { items: userMappings, refresh: refreshMappings },
 ] = await Promise.all([
   useCollectionQuery('triageFlows'),
   useCollectionQuery('triageInputs'),
   useCollectionQuery('triageOutputs'),
+  useCollectionQuery('triageUsers'),
 ])
 
 // All flows (newest first — query already orders by desc createdAt)
@@ -72,6 +74,63 @@ function getFlowInputs(flowId: string): FlowInput[] {
 function getFlowOutputs(flowId: string): FlowOutput[] {
   return ((outputs.value || []) as FlowOutput[]).filter(o => o.flowId === flowId)
 }
+
+// User mapping stats (team-global, not per-flow)
+const uniqueSources = computed(() => {
+  const seen = new Map<string, FlowInput>()
+  for (const input of (inputs.value || []) as FlowInput[]) {
+    const wsId = getWorkspaceId(input)
+    const key = `${input.sourceType}:${wsId}`
+    if (!seen.has(key)) seen.set(key, input)
+  }
+  return [...seen.values()]
+})
+
+const activeMappingCount = computed(() =>
+  ((userMappings.value || []) as any[]).filter(m => m.active).length
+)
+
+function getWorkspaceId(input: FlowInput): string {
+  return input.sourceMetadata?.slackTeamId
+    || input.emailSlug
+    || input.sourceMetadata?.workspaceId
+    || input.id
+}
+
+function getNotionTokenFromOutputs(): string | null {
+  const allOutputs = (outputs.value || []) as FlowOutput[]
+  const notionOutput = allOutputs.find(o =>
+    o.outputType === 'notion' && (o.outputConfig as any)?.notionToken
+  )
+  return (notionOutput?.outputConfig as any)?.notionToken || null
+}
+
+// User mapping drawer
+const showUserMappingDrawer = ref(false)
+const activeMapInput = ref<FlowInput | null>(null)
+
+function openUserMappings(input: FlowInput) {
+  activeMapInput.value = input
+  showUserMappingDrawer.value = true
+}
+
+function getSourceIcon(sourceType: string): string {
+  const icons: Record<string, string> = {
+    slack: 'i-lucide-slack',
+    figma: 'i-lucide-figma',
+    notion: 'i-simple-icons-notion',
+    email: 'i-lucide-mail',
+  }
+  return icons[sourceType] || 'i-lucide-inbox'
+}
+
+const sourceMenuItems = computed(() => [
+  uniqueSources.value.map(input => ({
+    label: input.name || input.sourceType,
+    icon: getSourceIcon(input.sourceType),
+    onSelect: () => openUserMappings(input),
+  }))
+])
 
 // Feed data
 const { feedItems, loading: feedLoading, refresh: refreshFeed } = await useTriageFeed({ limit: props.limit })
@@ -118,13 +177,13 @@ function handleAddOutput(flow: Flow, type: 'notion' | 'github' | 'linear') {
 
 // Refresh all data
 async function refreshAll() {
-  await Promise.all([refreshFlows(), refreshInputs(), refreshOutputs(), refreshFeed()])
+  await Promise.all([refreshFlows(), refreshInputs(), refreshOutputs(), refreshFeed(), refreshMappings()])
 }
 
 // Listen for mutations to auto-refresh
 const nuxtApp = useNuxtApp()
 nuxtApp.hook('crouton:mutation', async (event: { operation: string; collection: string }) => {
-  const triageCollections = ['triageFlows', 'triageInputs', 'triageOutputs', 'triageDiscussions', 'triageJobs', 'triageTasks']
+  const triageCollections = ['triageFlows', 'triageInputs', 'triageOutputs', 'triageDiscussions', 'triageJobs', 'triageTasks', 'triageUsers']
   if (triageCollections.includes(event.collection)) {
     await refreshAll()
   }
@@ -340,6 +399,46 @@ defineExpose({ refresh: refreshAll })
         New Flow
       </UButton>
     </div>
+
+    <!-- User Mappings Summary -->
+    <div v-if="hasFlows && uniqueSources.length > 0" class="flex items-center gap-2 px-1 py-2">
+      <UIcon name="i-lucide-users" class="w-4 h-4 text-muted shrink-0" />
+      <span class="text-sm text-muted">
+        {{ activeMappingCount }} user{{ activeMappingCount !== 1 ? 's' : '' }} mapped
+        across {{ uniqueSources.length }} source{{ uniqueSources.length !== 1 ? 's' : '' }}
+      </span>
+
+      <!-- Single source: direct button -->
+      <UButton
+        v-if="uniqueSources.length === 1"
+        size="xs"
+        variant="link"
+        color="primary"
+        @click="openUserMappings(uniqueSources[0])"
+      >
+        Manage
+      </UButton>
+
+      <!-- Multiple sources: dropdown -->
+      <UDropdownMenu v-else :items="sourceMenuItems">
+        <UButton size="xs" variant="link" color="primary">
+          Manage
+        </UButton>
+      </UDropdownMenu>
+    </div>
+
+    <!-- User Mapping Drawer -->
+    <TriageUsermappingsUserMappingDrawer
+      v-if="activeMapInput"
+      v-model:open="showUserMappingDrawer"
+      :source-type="(activeMapInput.sourceType as 'slack' | 'figma' | 'notion')"
+      :source-workspace-id="getWorkspaceId(activeMapInput)"
+      :api-token="activeMapInput.apiToken"
+      :notion-token="getNotionTokenFromOutputs() || ''"
+      :team-id="currentTeam?.id || ''"
+      :input-name="activeMapInput.name"
+      @saved="refreshMappings"
+    />
 
     <!-- Activity Feed -->
     <template v-if="hasFlows">
