@@ -91,6 +91,11 @@ const domainOptions = computed(() =>
   props.availableDomains.length > 0 ? props.availableDomains : DEFAULT_DOMAINS
 )
 
+function isAllDomainsSelected(filter: string[]): boolean {
+  return filter.length >= domainOptions.value.length
+    && domainOptions.value.every(d => filter.includes(d))
+}
+
 /**
  * Toggle a domain in the output's domain filter
  */
@@ -449,7 +454,7 @@ async function saveNewOutput() {
       id: `temp-${Date.now()}`, // Temporary ID, will be replaced by DB
       flowId: props.flowId,
       outputType: selectedOutputType.value,
-      domainFilter: outputFormState.value.domainFilter.length > 0
+      domainFilter: outputFormState.value.domainFilter.length > 0 && !isAllDomainsSelected(outputFormState.value.domainFilter)
         ? outputFormState.value.domainFilter
         : undefined,
       isDefault: outputFormState.value.isDefault,
@@ -564,7 +569,7 @@ async function updateOutput() {
     // Update output object
     const updatedOutput: FlowOutput = {
       ...editingOutput.value,
-      domainFilter: outputFormState.value.domainFilter.length > 0
+      domainFilter: outputFormState.value.domainFilter.length > 0 && !isAllDomainsSelected(outputFormState.value.domainFilter)
         ? outputFormState.value.domainFilter
         : undefined,
       isDefault: outputFormState.value.isDefault,

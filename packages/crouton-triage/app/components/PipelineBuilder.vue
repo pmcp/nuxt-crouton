@@ -408,9 +408,9 @@ function getDomainDotColor(domain: string): string {
             :name="getOutputIcon(output.outputType)"
             :class="['w-5 h-5', isOutputConfigured(output) ? getOutputColor(output.outputType) : 'text-gray-400']"
           />
-          <!-- Domain dots -->
+          <!-- Domain dots (hidden when all domains selected = no filter) -->
           <div
-            v-if="output.domainFilter?.length"
+            v-if="output.domainFilter?.length && output.domainFilter.length < 6"
             class="absolute -bottom-0.5 flex gap-0.5"
           >
             <span
