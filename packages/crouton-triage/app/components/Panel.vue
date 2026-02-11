@@ -60,29 +60,26 @@ const [
   useCollectionQuery('triageOutputs'),
 ])
 
-// Use first active flow (most common: one flow per team)
-const flow = computed<Flow | null>(() => {
-  const allFlows = flows.value || []
-  return (allFlows.find((f: any) => f.active) as Flow | undefined) ?? (allFlows[0] as Flow | undefined) ?? null
-})
+// All flows (newest first — query already orders by desc createdAt)
+const allFlows = computed<Flow[]>(() => (flows.value || []) as Flow[])
+const hasFlows = computed(() => allFlows.value.length > 0)
 
-// Inputs/outputs for the active flow
-const flowInputs = computed<FlowInput[]>(() => {
-  if (!flow.value) return []
-  return ((inputs.value || []) as FlowInput[]).filter(i => i.flowId === flow.value!.id)
-})
+// Helpers to get inputs/outputs per flow
+function getFlowInputs(flowId: string): FlowInput[] {
+  return ((inputs.value || []) as FlowInput[]).filter(i => i.flowId === flowId)
+}
 
-const flowOutputs = computed<FlowOutput[]>(() => {
-  if (!flow.value) return []
-  return ((outputs.value || []) as FlowOutput[]).filter(o => o.flowId === flow.value!.id)
-})
+function getFlowOutputs(flowId: string): FlowOutput[] {
+  return ((outputs.value || []) as FlowOutput[]).filter(o => o.flowId === flowId)
+}
 
 // Feed data
 const { feedItems, loading: feedLoading, refresh: refreshFeed } = await useTriageFeed({ limit: props.limit })
 
 const loading = computed(() => flowsPending.value || inputsPending.value || outputsPending.value || feedLoading.value)
 
-// Slideover states
+// Active flow for config slideovers/modals (set when user interacts with a specific flow)
+const activeFlow = ref<Flow | null>(null)
 const showAiConfig = ref(false)
 
 // Track which specific input/output to edit (opens edit modal directly)
@@ -93,24 +90,29 @@ const editOutputItem = ref<FlowOutput | null>(null)
 const addSourceType = ref<'slack' | 'figma' | 'email' | null>(null)
 const addOutputType = ref<'notion' | 'github' | 'linear' | null>(null)
 
-// Pipeline builder event handlers
-function handleEditSource(input: FlowInput) {
+// Pipeline builder event handlers (scoped to a flow)
+function handleEditSource(flow: Flow, input: FlowInput) {
+  activeFlow.value = flow
   editSourceInput.value = input
 }
 
-function handleEditAi() {
+function handleEditAi(flow: Flow) {
+  activeFlow.value = flow
   showAiConfig.value = true
 }
 
-function handleEditOutput(output: FlowOutput) {
+function handleEditOutput(flow: Flow, output: FlowOutput) {
+  activeFlow.value = flow
   editOutputItem.value = output
 }
 
-function handleAddSource(type: 'slack' | 'figma' | 'email') {
+function handleAddSource(flow: Flow, type: 'slack' | 'figma' | 'email') {
+  activeFlow.value = flow
   addSourceType.value = type
 }
 
-function handleAddOutput(type: 'notion' | 'github' | 'linear') {
+function handleAddOutput(flow: Flow, type: 'notion' | 'github' | 'linear') {
+  activeFlow.value = flow
   addOutputType.value = type
 }
 
@@ -150,6 +152,37 @@ async function handleRetry(discussionId: string) {
   }
 }
 
+// Delete flow with confirmation
+const flowToDelete = ref<Flow | null>(null)
+const showDeleteConfirm = ref(false)
+const deleting = ref(false)
+
+function confirmDeleteFlow(flow: Flow) {
+  flowToDelete.value = flow
+  showDeleteConfirm.value = true
+}
+
+async function handleDeleteFlow() {
+  if (!flowToDelete.value || !currentTeam.value?.id) return
+  deleting.value = true
+  try {
+    await $fetch(`/api/teams/${currentTeam.value.id}/triage-flows/${flowToDelete.value.id}`, {
+      method: 'DELETE',
+    })
+    showDeleteConfirm.value = false
+    flowToDelete.value = null
+    await refreshAll()
+  } catch (error: any) {
+    toast.add({
+      title: 'Failed to delete flow',
+      description: error.data?.message || error.message || 'Something went wrong.',
+      color: 'error',
+    })
+  } finally {
+    deleting.value = false
+  }
+}
+
 // Handle config changes
 function onInputsChange() {
   refreshInputs()
@@ -171,42 +204,60 @@ defineExpose({ refresh: refreshAll })
     <!-- Header -->
     <div class="flex items-center justify-between">
       <h2 v-if="title" class="text-lg font-semibold">{{ title }}</h2>
-      <div class="flex items-center gap-1">
+      <UButton
+        icon="i-lucide-refresh-cw"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        :loading="loading"
+        @click="refreshAll"
+      />
+    </div>
+
+    <!-- Flow list -->
+    <div v-if="hasFlows || creatingFlow" class="flex flex-col gap-2">
+      <!-- Add flow button -->
+      <button
+        class="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center gap-2 text-sm text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer"
+        :disabled="creatingFlow"
+        @click="handleCreateFlow"
+      >
+        <UIcon v-if="creatingFlow" name="i-lucide-loader-2" class="w-4 h-4 animate-spin" />
+        <UIcon v-else name="i-lucide-plus" class="w-4 h-4" />
+        New Flow
+      </button>
+
+      <!-- Pipeline builder per flow -->
+      <div
+        v-for="flow in allFlows"
+        :key="flow.id"
+        class="group border rounded-xl p-3 bg-muted/20 transition-all relative"
+        :class="flow.active ? 'border-primary/30' : 'border-default'"
+      >
         <UButton
-          icon="i-lucide-plus"
-          color="neutral"
+          icon="i-lucide-trash-2"
+          color="error"
           variant="ghost"
-          size="sm"
-          :loading="creatingFlow"
-          @click="handleCreateFlow"
+          size="xs"
+          class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          @click="confirmDeleteFlow(flow)"
         />
-        <UButton
-          icon="i-lucide-refresh-cw"
-          color="neutral"
-          variant="ghost"
-          size="sm"
-          :loading="loading"
-          @click="refreshAll"
+        <CroutonTriagePipelineBuilder
+          :flow="flow"
+          :inputs="getFlowInputs(flow.id)"
+          :outputs="getFlowOutputs(flow.id)"
+          @edit:source="(input: FlowInput) => handleEditSource(flow, input)"
+          @edit:ai="() => handleEditAi(flow)"
+          @edit:output="(output: FlowOutput) => handleEditOutput(flow, output)"
+          @add:source="(type: 'slack' | 'figma' | 'email') => handleAddSource(flow, type)"
+          @add:output="(type: 'notion' | 'github' | 'linear') => handleAddOutput(flow, type)"
         />
       </div>
     </div>
 
-    <!-- Pipeline Builder (only when a flow exists) -->
-    <CroutonTriagePipelineBuilder
-      v-if="flow"
-      :flow="flow"
-      :inputs="flowInputs"
-      :outputs="flowOutputs"
-      @edit:source="handleEditSource"
-      @edit:ai="handleEditAi"
-      @edit:output="handleEditOutput"
-      @add:source="handleAddSource"
-      @add:output="handleAddOutput"
-    />
-
-    <!-- Empty state when no flow exists -->
+    <!-- Empty state when no flows exist -->
     <div
-      v-if="!flow && !flowsPending"
+      v-if="!hasFlows && !flowsPending && !creatingFlow"
       class="text-center py-8"
     >
       <div class="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
@@ -227,7 +278,7 @@ defineExpose({ refresh: refreshAll })
     </div>
 
     <!-- Activity Feed -->
-    <template v-if="flow">
+    <template v-if="hasFlows">
       <USeparator label="Recent Activity" />
 
       <!-- Loading skeleton -->
@@ -262,21 +313,21 @@ defineExpose({ refresh: refreshAll })
       </div>
     </template>
 
-    <!-- AI Config Slideover -->
+    <!-- AI Config Slideover (scoped to active flow) -->
     <CroutonTriageAiConfig
-      v-if="flow"
+      v-if="activeFlow"
       v-model="showAiConfig"
-      :flow="flow"
+      :flow="activeFlow"
       :team-id="currentTeam?.id || ''"
       @save="onAiSaved"
     />
 
-    <!-- Direct modals for inputs (add + edit) -->
-    <div v-if="flow && (addSourceType || editSourceInput)" class="hidden">
+    <!-- Direct modals for inputs (add + edit, scoped to active flow) -->
+    <div v-if="activeFlow && (addSourceType || editSourceInput)" class="hidden">
       <CroutonTriageFlowsInputManager
-        :flow-id="flow.id"
+        :flow-id="activeFlow.id"
         :team-id="currentTeam?.id || ''"
-        :model-value="flowInputs"
+        :model-value="getFlowInputs(activeFlow.id)"
         :auto-add-type="addSourceType"
         :auto-edit-input="editSourceInput"
         edit-mode
@@ -286,13 +337,13 @@ defineExpose({ refresh: refreshAll })
       />
     </div>
 
-    <!-- Direct modals for outputs (add + edit) -->
-    <div v-if="flow && (addOutputType || editOutputItem)" class="hidden">
+    <!-- Direct modals for outputs (add + edit, scoped to active flow) -->
+    <div v-if="activeFlow && (addOutputType || editOutputItem)" class="hidden">
       <CroutonTriageFlowsOutputManager
-        :flow-id="flow.id"
+        :flow-id="activeFlow.id"
         :team-id="currentTeam?.id || ''"
-        :available-domains="flow.availableDomains || []"
-        :model-value="flowOutputs"
+        :available-domains="activeFlow.availableDomains || []"
+        :model-value="getFlowOutputs(activeFlow.id)"
         :auto-add-type="addOutputType"
         :auto-edit-output="editOutputItem"
         edit-mode
@@ -301,5 +352,34 @@ defineExpose({ refresh: refreshAll })
         @auto-edit-closed="editOutputItem = null"
       />
     </div>
+
+    <!-- Delete flow confirmation -->
+    <UModal v-model:open="showDeleteConfirm">
+      <template #content>
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-2">Delete Flow</h3>
+          <p class="text-sm text-muted-foreground mb-6">
+            This will delete the flow and all its connected sources and outputs. This action cannot be undone.
+          </p>
+          <div class="flex justify-end gap-2">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              :disabled="deleting"
+              @click="showDeleteConfirm = false"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              color="error"
+              :loading="deleting"
+              @click="handleDeleteFlow"
+            >
+              Delete
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
