@@ -148,11 +148,13 @@ const [
   { items: inputs, pending: inputsPending, refresh: refreshInputs },
   { items: outputs, pending: outputsPending, refresh: refreshOutputs },
   { items: userMappings, refresh: refreshMappings },
+  { items: connectedAccounts, refresh: refreshAccounts },
 ] = await Promise.all([
   useCollectionQuery('triageFlows'),
   useCollectionQuery('triageInputs'),
   useCollectionQuery('triageOutputs'),
   useCollectionQuery('triageUsers'),
+  useCollectionQuery('triageAccounts'),
 ])
 
 // All flows (newest first — query already orders by desc createdAt)
@@ -201,6 +203,9 @@ function getNotionTokenFromOutputs(): string | null {
   )
   return (notionOutput?.outputConfig as any)?.notionToken || null
 }
+
+// Account manager
+const showAccountManager = ref(false)
 
 // User mapping drawer
 const showUserMappingDrawer = ref(false)
@@ -274,13 +279,13 @@ function handleAddOutput(flow: Flow, type: 'notion' | 'github' | 'linear') {
 
 // Refresh all data
 async function refreshAll() {
-  await Promise.all([refreshFlows(), refreshInputs(), refreshOutputs(), refreshFeed(), refreshMappings()])
+  await Promise.all([refreshFlows(), refreshInputs(), refreshOutputs(), refreshFeed(), refreshMappings(), refreshAccounts()])
 }
 
 // Listen for mutations to auto-refresh
 const nuxtApp = useNuxtApp()
 nuxtApp.hook('crouton:mutation', async (event: { operation: string; collection: string }) => {
-  const triageCollections = ['triageFlows', 'triageInputs', 'triageOutputs', 'triageDiscussions', 'triageJobs', 'triageTasks', 'triageUsers']
+  const triageCollections = ['triageFlows', 'triageInputs', 'triageOutputs', 'triageDiscussions', 'triageJobs', 'triageTasks', 'triageUsers', 'triageAccounts']
   if (triageCollections.includes(event.collection)) {
     await refreshAll()
   }
@@ -589,6 +594,35 @@ defineExpose({ refresh: refreshAll })
         </UButton>
       </UDropdownMenu>
     </div>
+
+    <!-- Connected Accounts Summary -->
+    <div v-if="hasFlows && connectedAccounts && (connectedAccounts as any[]).length > 0" class="flex items-center gap-2 px-1 py-2">
+      <UIcon name="i-heroicons-link" class="w-4 h-4 text-muted shrink-0" />
+      <span class="text-sm text-muted">
+        {{ (connectedAccounts as any[]).length }} account{{ (connectedAccounts as any[]).length !== 1 ? 's' : '' }} connected
+      </span>
+      <UButton
+        size="xs"
+        variant="link"
+        color="primary"
+        @click="showAccountManager = true"
+      >
+        Manage
+      </UButton>
+    </div>
+
+    <!-- Account Manager Slideover -->
+    <USlideover v-model:open="showAccountManager">
+      <template #content="{ close }">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold">Connected Accounts</h2>
+            <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="close" />
+          </div>
+          <CroutonTriageFlowsAccountManager :team-id="currentTeam?.id || ''" />
+        </div>
+      </template>
+    </USlideover>
 
     <!-- User Mapping Drawer -->
     <CroutonTriageUsermappingsUserMappingDrawer

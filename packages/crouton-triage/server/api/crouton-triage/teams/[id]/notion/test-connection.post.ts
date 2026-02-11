@@ -29,14 +29,32 @@
 import { z } from 'zod'
 
 const requestSchema = z.object({
-  notionToken: z.string().min(1, 'Notion token is required')
+  notionToken: z.string().optional(),
+  accountId: z.string().optional(),
 })
 
 export default defineEventHandler(async (event) => {
   try {
     // 1. Validate request
     const body = await readBody(event)
-    const { notionToken } = requestSchema.parse(body)
+    const parsed = requestSchema.parse(body)
+    let notionToken = parsed.notionToken
+
+    // Resolve token from account if accountId provided
+    if (parsed.accountId && !notionToken) {
+      const teamId = getRouterParam(event, 'id')
+      if (teamId) {
+        const { resolveAccountToken } = await import('../../../../../utils/tokenResolver')
+        notionToken = await resolveAccountToken(parsed.accountId, teamId)
+      }
+    }
+
+    if (!notionToken) {
+      throw createError({
+        statusCode: 422,
+        statusMessage: 'Missing required parameter: notionToken or accountId',
+      })
+    }
 
     // 2. Call Notion API to verify token
     const response = await $fetch('https://api.notion.com/v1/users/me', {

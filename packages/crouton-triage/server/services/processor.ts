@@ -1201,6 +1201,22 @@ export async function processDiscussion(
     }
 
     // ============================================================================
+    // RESOLVE INPUT TOKEN (once, used for all adapter calls)
+    // ============================================================================
+    let resolvedInputToken = ''
+    if (flowData) {
+      try {
+        const { resolveInputToken } = await import('../utils/tokenResolver')
+        resolvedInputToken = await resolveInputToken(flowData.matchedInput, flowData.flow.teamId)
+      } catch (error) {
+        logger.warn('Failed to resolve input token from account, falling back to inline', { error })
+        resolvedInputToken = flowData.matchedInput.apiToken || ''
+      }
+    } else if (config) {
+      resolvedInputToken = config.apiToken || ''
+    }
+
+    // ============================================================================
     // STAGE 2.25: Add Initial Status Reaction (after config is loaded)
     // ============================================================================
     // Now that we have the config/flow, add the "eyes" reaction to show bot is processing
@@ -1209,7 +1225,7 @@ export async function processDiscussion(
           id: flowData.matchedInput.id,
           teamId: flowData.flow.teamId,
           sourceType: flowData.matchedInput.sourceType,
-          apiToken: flowData.matchedInput.apiToken || '',
+          apiToken: resolvedInputToken,
           sourceMetadata: flowData.matchedInput.sourceMetadata,
         } as AdapterConfig
       : config
@@ -1384,7 +1400,7 @@ export async function processDiscussion(
           id: flowData.matchedInput.id,
           teamId: flowData.flow.teamId,
           sourceType: flowData.matchedInput.sourceType,
-          apiToken: flowData.matchedInput.apiToken || flowData.matchedInput.sourceMetadata?.notionToken || '',
+          apiToken: resolvedInputToken || flowData.matchedInput.sourceMetadata?.notionToken || '',
           sourceMetadata: {
             ...flowData.matchedInput.sourceMetadata,
             // Use input name as botHandle for Figma (the bot account name)
@@ -1574,7 +1590,7 @@ export async function processDiscussion(
             id: flowData.matchedInput.id,
             teamId: flowData.flow.teamId,
             sourceType: flowData.matchedInput.sourceType,
-            apiToken: flowData.matchedInput.apiToken || '',
+            apiToken: resolvedInputToken,
             sourceMetadata: flowData.matchedInput.sourceMetadata,
           } as AdapterConfig
         : config!
@@ -1740,10 +1756,11 @@ export async function processDiscussion(
 
             try {
               // Extract Notion config from output
-              const { config: notionConfig, fieldMapping } = createNotionConfigFromOutput(
+              const { config: notionConfig, fieldMapping } = await createNotionConfigFromOutput(
                 output,
                 parsed.sourceType,
                 parsed.sourceUrl,
+                actualTeamId,
               )
 
               logger.info('Creating task in output', {

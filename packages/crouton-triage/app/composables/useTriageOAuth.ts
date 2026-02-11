@@ -25,6 +25,8 @@ import type { Ref } from 'vue'
 export interface OAuthCredentials {
   apiToken: string
   sourceMetadata: Record<string, any>
+  /** Connected account ID (when OAuth creates/updates an account) */
+  accountId?: string
 }
 
 export interface OAuthConfig {

@@ -170,10 +170,74 @@ export default defineEventHandler(async (event) => {
     const { getAllTriageFlows, createTriageFlow, getTriageFlowById } = await import(
       '~~/layers/triage/collections/flows/server/database/queries'
     )
-    const { getAllTriageInputs, createTriageInput } = await import(
+    const { getAllTriageInputs, createTriageInput, updateTriageInput } = await import(
       '~~/layers/triage/collections/inputs/server/database/queries'
     )
+    const { getAllTriageAccounts, createTriageAccount, updateTriageAccount } = await import(
+      '~~/layers/triage/collections/accounts/server/database/queries'
+    )
     const { SYSTEM_USER_ID } = await import('../../../../utils/constants')
+
+    // ============================================================================
+    // CREATE OR UPDATE CONNECTED ACCOUNT
+    // ============================================================================
+    // Check if an account already exists for this Slack workspace + team
+    const allAccounts = await getAllTriageAccounts(teamId)
+    const existingAccount = allAccounts?.find(
+      (a: any) => a.provider === 'slack' && a.providerAccountId === slackTeamId
+    )
+
+    let accountId: string
+
+    if (existingAccount) {
+      // Re-auth: update the existing account's token
+      const encryptedToken = await encryptSecret(accessToken)
+      const tokenHint = maskSecret(accessToken)
+
+      await updateTriageAccount(existingAccount.id, teamId, SYSTEM_USER_ID, {
+        accessToken: encryptedToken,
+        accessTokenHint: tokenHint,
+        scopes: tokenData.scope || '',
+        status: 'connected',
+        lastVerifiedAt: new Date(),
+        providerMetadata: {
+          ...(existingAccount.providerMetadata || {}),
+          slackTeamName,
+          botUserId: tokenData.bot_user_id || '',
+        },
+      })
+
+      accountId = existingAccount.id
+      logger.info('[OAuth] Updated existing account', { accountId, slackTeamId })
+    } else {
+      // New account
+      const encryptedToken = await encryptSecret(accessToken)
+      const tokenHint = maskSecret(accessToken)
+
+      const newAccount = await createTriageAccount({
+        provider: 'slack',
+        label: slackTeamName,
+        providerAccountId: slackTeamId,
+        accessToken: encryptedToken,
+        accessTokenHint: tokenHint,
+        refreshToken: null,
+        tokenExpiresAt: null,
+        scopes: tokenData.scope || '',
+        providerMetadata: {
+          slackTeamName,
+          botUserId: tokenData.bot_user_id || '',
+        },
+        status: 'connected',
+        lastVerifiedAt: new Date(),
+        teamId,
+        owner: SYSTEM_USER_ID,
+        createdBy: SYSTEM_USER_ID,
+        updatedBy: SYSTEM_USER_ID,
+      })
+
+      accountId = newAccount.id
+      logger.info('[OAuth] Created new account', { accountId, slackTeamId })
+    }
 
     // Determine which flow to add the input to
     let flowId: string
@@ -252,17 +316,30 @@ export default defineEventHandler(async (event) => {
     )
 
     if (duplicateInput) {
-      logger.warn('[OAuth] Slack workspace already connected to this flow', {
-        flowId,
-        slackTeamId,
-        inputId: duplicateInput.id,
-      })
+      // Auto-migrate: if the input has an inline apiToken but no accountId, migrate it
+      if (duplicateInput.apiToken && !duplicateInput.accountId) {
+        logger.info('[OAuth] Auto-migrating duplicate input to use accountId', {
+          inputId: duplicateInput.id,
+          accountId,
+        })
+        await updateTriageInput(duplicateInput.id, teamId, SYSTEM_USER_ID, {
+          accountId,
+          apiToken: null, // Clear inline token
+        })
+      } else if (!duplicateInput.accountId) {
+        // Link to account even if no inline token
+        await updateTriageInput(duplicateInput.id, teamId, SYSTEM_USER_ID, {
+          accountId,
+        })
+      }
 
       // Redirect to success with warning
       const successUrl = new URL('/oauth/success', baseUrl)
       successUrl.searchParams.set('provider', 'slack')
       successUrl.searchParams.set('status', 'already-connected')
       successUrl.searchParams.set('flow_id', flowId)
+      successUrl.searchParams.set('input_id', duplicateInput.id)
+      successUrl.searchParams.set('account_id', accountId)
       successUrl.searchParams.set('team_name', slackTeamName)
       if (openerOrigin) {
         successUrl.searchParams.set('opener_origin', openerOrigin)
@@ -271,12 +348,13 @@ export default defineEventHandler(async (event) => {
       return sendRedirect(event, successUrl.toString(), 302)
     }
 
-    // Create new Slack input
+    // Create new Slack input — references account by ID instead of storing inline token
     const newInput = await createTriageInput({
       flowId,
       sourceType: 'slack',
       name: slackTeamName,
-      apiToken: accessToken,
+      apiToken: null, // No inline token — uses accountId
+      accountId,
       webhookUrl: null, // Generated by Slack Events API
       webhookSecret: null,
       emailAddress: null,
@@ -307,6 +385,7 @@ export default defineEventHandler(async (event) => {
     successUrl.searchParams.set('status', 'success')
     successUrl.searchParams.set('flow_id', flowId)
     successUrl.searchParams.set('input_id', newInput.id)
+    successUrl.searchParams.set('account_id', accountId)
     successUrl.searchParams.set('team_name', slackTeamName)
     successUrl.searchParams.set('is_new_flow', isNewFlow.toString())
     if (openerOrigin) {

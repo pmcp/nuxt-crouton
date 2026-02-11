@@ -117,19 +117,38 @@ function getNotionApiKey(apiKey?: string): string {
  * @returns NotionTaskConfig ready for task creation
  * @throws Error if output is not Notion type or missing required config
  */
-export function createNotionConfigFromOutput(
+export async function createNotionConfigFromOutput(
   output: FlowOutput,
   sourceType: string,
   sourceUrl: string,
-): { config: NotionTaskConfig; fieldMapping?: Record<string, any> } {
+  teamId?: string,
+): Promise<{ config: NotionTaskConfig; fieldMapping?: Record<string, any> }> {
   if (output.outputType !== 'notion') {
     throw new Error(`Output ${output.id} is not a Notion output (type: ${output.outputType})`)
   }
 
   const notionConfig = output.outputConfig as NotionOutputConfig
 
-  if (!notionConfig.notionToken) {
-    throw new Error(`Output ${output.id} missing notionToken in outputConfig`)
+  // Resolve token: prefer connected account, fall back to inline
+  let notionToken: string | undefined
+  if (output.accountId && teamId) {
+    try {
+      const { resolveOutputToken } = await import('../utils/tokenResolver')
+      notionToken = await resolveOutputToken(output, teamId)
+    } catch (error) {
+      logger.warn('Failed to resolve output token from account, falling back to inline', {
+        outputId: output.id,
+        accountId: output.accountId,
+        error,
+      })
+      notionToken = notionConfig.notionToken
+    }
+  } else {
+    notionToken = notionConfig.notionToken
+  }
+
+  if (!notionToken) {
+    throw new Error(`Output ${output.id} missing notionToken — no account or inline token configured`)
   }
 
   if (!notionConfig.databaseId) {
@@ -141,12 +160,13 @@ export function createNotionConfigFromOutput(
     outputName: output.name,
     databaseId: notionConfig.databaseId,
     hasFieldMapping: !!notionConfig.fieldMapping,
+    resolvedViaAccount: !!output.accountId,
   })
 
   return {
     config: {
       databaseId: notionConfig.databaseId,
-      apiKey: notionConfig.notionToken,
+      apiKey: notionToken,
       sourceType,
       sourceUrl,
     },

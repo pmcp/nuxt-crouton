@@ -86,6 +86,7 @@ const inputFormState = ref({
   name: '',
   sourceType: 'slack',
   apiToken: '',
+  accountId: undefined as string | undefined,
   emailAddress: '',
   emailSlug: '',
   sourceMetadata: {} as Record<string, any>,
@@ -215,6 +216,7 @@ function openEditModal(input: FlowInput) {
     name: input.name,
     sourceType: input.sourceType,
     apiToken: input.apiToken || '',
+    accountId: input.accountId,
     emailAddress: input.emailAddress || '',
     emailSlug: input.emailSlug || '',
     sourceMetadata: input.sourceMetadata || {},
@@ -240,6 +242,7 @@ function resetForm() {
     name: '',
     sourceType: 'slack',
     apiToken: '',
+    accountId: undefined,
     emailAddress: '',
     emailSlug: '',
     sourceMetadata: {},
@@ -264,6 +267,7 @@ async function saveNewInput() {
       sourceType: selectedInputType.value,
       name: validatedData.name,
       apiToken: inputFormState.value.apiToken || undefined,
+      accountId: inputFormState.value.accountId,
       emailAddress: inputFormState.value.emailAddress || undefined,
       emailSlug: inputFormState.value.emailSlug || undefined,
       sourceMetadata: inputFormState.value.sourceMetadata,
@@ -335,6 +339,7 @@ async function updateInput() {
       ...editingInput.value,
       name: validatedData.name,
       apiToken: inputFormState.value.apiToken || undefined,
+      accountId: inputFormState.value.accountId,
       emailAddress: inputFormState.value.emailAddress || undefined,
       emailSlug: inputFormState.value.emailSlug || undefined,
       sourceMetadata: inputFormState.value.sourceMetadata,
@@ -484,9 +489,9 @@ function getInputStatus(input: FlowInput): { label: string; color: string } {
   }
 
   if (input.sourceType === 'slack') {
-    const hasOAuth = !!input.apiToken && !!input.sourceMetadata?.slackTeamId
-    return hasOAuth
-      ? { label: 'OAuth Connected', color: 'green' }
+    const hasConnection = (!!input.apiToken || !!input.accountId) && !!input.sourceMetadata?.slackTeamId
+    return hasConnection
+      ? { label: input.accountId ? 'Account Connected' : 'OAuth Connected', color: 'green' }
       : { label: 'Not Connected', color: 'orange' }
   }
 
@@ -697,43 +702,57 @@ watch(isEditModalOpen, (open) => {
 
             <!-- Slack-specific fields -->
             <template v-if="selectedInputType === 'slack'">
-              <UFormField label="Slack Workspace" name="slackWorkspace">
-                <UInput
-                  v-model="slackWorkspace"
-                  placeholder="e.g., myteam or myteam.slack.com"
-                  class="w-full"
+              <!-- Connected Account Picker -->
+              <UFormField label="Connected Account" name="accountId">
+                <CroutonTriageFlowsAccountPicker
+                  v-model="inputFormState.accountId"
+                  provider="slack"
+                  :team-id="teamId"
+                  placeholder="Select Slack account or connect new..."
+                  @connect-new="openOAuthPopup"
                 />
-                <template #help>
-                  Optional. Enter your workspace name to ensure the correct workspace is selected during OAuth.
-                </template>
               </UFormField>
 
-              <UFormField label="OAuth Connection" name="apiToken" required>
-                <div class="space-y-2">
-                  <UButton
-                    label="Connect with Slack"
-                    icon="i-heroicons-chat-bubble-left-right"
-                    color="primary"
-                    :loading="waitingForOAuth"
-                    @click="openOAuthPopup"
+              <!-- Show OAuth only if no account selected -->
+              <template v-if="!inputFormState.accountId">
+                <UFormField label="Slack Workspace" name="slackWorkspace">
+                  <UInput
+                    v-model="slackWorkspace"
+                    placeholder="e.g., myteam or myteam.slack.com"
+                    class="w-full"
                   />
+                  <template #help>
+                    Optional. Enter your workspace name to ensure the correct workspace is selected during OAuth.
+                  </template>
+                </UFormField>
 
-                  <UAlert
-                    v-if="inputFormState.sourceMetadata.slackWorkspaceName"
-                    :title="`Connected to ${inputFormState.sourceMetadata.slackWorkspaceName}`"
-                    color="green"
-                    variant="soft"
-                  />
+                <UFormField label="OAuth Connection" name="apiToken">
+                  <div class="space-y-2">
+                    <UButton
+                      label="Connect with Slack"
+                      icon="i-heroicons-chat-bubble-left-right"
+                      color="primary"
+                      :loading="waitingForOAuth"
+                      @click="openOAuthPopup"
+                    />
 
-                  <UAlert
-                    v-else
-                    title="OAuth Required"
-                    description="Click the button above to connect your Slack workspace."
-                    color="blue"
-                    variant="soft"
-                  />
-                </div>
-              </UFormField>
+                    <UAlert
+                      v-if="inputFormState.sourceMetadata.slackWorkspaceName"
+                      :title="`Connected to ${inputFormState.sourceMetadata.slackWorkspaceName}`"
+                      color="green"
+                      variant="soft"
+                    />
+
+                    <UAlert
+                      v-else
+                      title="OAuth Required"
+                      description="Click the button above to connect your Slack workspace, or select an existing account."
+                      color="blue"
+                      variant="soft"
+                    />
+                  </div>
+                </UFormField>
+              </template>
             </template>
 
             <!-- Figma/Email-specific fields -->
@@ -802,35 +821,49 @@ watch(isEditModalOpen, (open) => {
 
             <!-- Slack-specific fields -->
             <template v-if="selectedInputType === 'slack'">
-              <UFormField label="Slack Workspace" name="slackWorkspace">
-                <UInput
-                  v-model="slackWorkspace"
-                  placeholder="e.g., myteam or myteam.slack.com"
-                  class="w-full"
+              <!-- Connected Account Picker -->
+              <UFormField label="Connected Account" name="accountId">
+                <CroutonTriageFlowsAccountPicker
+                  v-model="inputFormState.accountId"
+                  provider="slack"
+                  :team-id="teamId"
+                  placeholder="Select Slack account..."
+                  @connect-new="openOAuthPopup"
                 />
-                <template #help>
-                  Optional. Enter your workspace name to ensure the correct workspace is selected during OAuth.
-                </template>
               </UFormField>
 
-              <UFormField label="OAuth Connection" name="apiToken">
-                <div class="space-y-2">
-                  <UButton
-                    label="Reconnect with Slack"
-                    icon="i-heroicons-chat-bubble-left-right"
-                    color="primary"
-                    :loading="waitingForOAuth"
-                    @click="openOAuthPopup"
+              <!-- Show OAuth/reconnect only if no account selected -->
+              <template v-if="!inputFormState.accountId">
+                <UFormField label="Slack Workspace" name="slackWorkspace">
+                  <UInput
+                    v-model="slackWorkspace"
+                    placeholder="e.g., myteam or myteam.slack.com"
+                    class="w-full"
                   />
+                  <template #help>
+                    Optional. Enter your workspace name to ensure the correct workspace is selected during OAuth.
+                  </template>
+                </UFormField>
 
-                  <UAlert
-                    v-if="inputFormState.sourceMetadata.slackWorkspaceName"
-                    :title="`Connected to ${inputFormState.sourceMetadata.slackWorkspaceName}`"
-                    color="green"
-                    variant="soft"
-                  />
-                </div>
-              </UFormField>
+                <UFormField label="OAuth Connection" name="apiToken">
+                  <div class="space-y-2">
+                    <UButton
+                      label="Reconnect with Slack"
+                      icon="i-heroicons-chat-bubble-left-right"
+                      color="primary"
+                      :loading="waitingForOAuth"
+                      @click="openOAuthPopup"
+                    />
+
+                    <UAlert
+                      v-if="inputFormState.sourceMetadata.slackWorkspaceName"
+                      :title="`Connected to ${inputFormState.sourceMetadata.slackWorkspaceName}`"
+                      color="green"
+                      variant="soft"
+                    />
+                  </div>
+                </UFormField>
+              </template>
             </template>
 
             <!-- Figma/Email-specific fields -->

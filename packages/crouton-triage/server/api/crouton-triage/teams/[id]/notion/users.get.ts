@@ -15,21 +15,29 @@ export default defineEventHandler(async (event) => {
   try {
     // Get parameters from query
     const query = getQuery(event)
-    const notionToken = query.notionToken as string
+    let notionToken = query.notionToken as string
     const teamId = query.teamId as string
-
-    // Validate required parameters
-    if (!notionToken) {
-      throw createError({
-        statusCode: 422,
-        statusMessage: 'Missing required parameter: notionToken'
-      })
-    }
+    const accountId = query.accountId as string
 
     if (!teamId) {
       throw createError({
         statusCode: 422,
         statusMessage: 'Missing required parameter: teamId'
+      })
+    }
+
+    // Resolve token from account if accountId provided
+    if (accountId && !notionToken) {
+      const routeTeamId = getRouterParam(event, 'id') || teamId
+      const { resolveAccountToken } = await import('../../../../../utils/tokenResolver')
+      notionToken = await resolveAccountToken(accountId, routeTeamId)
+    }
+
+    // Validate required parameters
+    if (!notionToken) {
+      throw createError({
+        statusCode: 422,
+        statusMessage: 'Missing required parameter: notionToken or accountId'
       })
     }
 

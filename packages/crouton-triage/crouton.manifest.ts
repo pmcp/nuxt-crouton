@@ -7,6 +7,7 @@ import taskSchema from './schemas/task.json'
 import jobSchema from './schemas/job.json'
 import userSchema from './schemas/user.json'
 import messageSchema from './schemas/message.json'
+import accountSchema from './schemas/account.json'
 
 const manifest: PackageManifest = {
   id: 'crouton-triage',
@@ -83,6 +84,13 @@ const manifest: PackageManifest = {
       description: 'Email inbox for forwarded messages with classification and routing.',
       schema: messageSchema,
       schemaPath: './schemas/message.json'
+    },
+    {
+      name: 'account',
+      tableName: 'triageAccounts',
+      description: 'Connected third-party accounts (Slack, Notion, etc.) with encrypted tokens for team-wide reuse.',
+      schema: accountSchema,
+      schemaPath: './schemas/account.json'
     }
   ],
 
@@ -145,7 +153,8 @@ const manifest: PackageManifest = {
       'useTriageNotionUsers',
       'useTriageSlackUsers',
       'useTriageFieldMapping',
-      'useTriagePromptPreview'
+      'useTriagePromptPreview',
+      'useTriageAccounts'
     ],
     components: [
       { name: 'CroutonTriageFlowList', description: 'Flow listing with status indicators', props: ['teamId'] },
@@ -171,6 +180,8 @@ const manifest: PackageManifest = {
       '/api/crouton-triage/teams/[id]/ai/suggest-icons',
       '/api/crouton-triage/oauth/slack/install',
       '/api/crouton-triage/oauth/slack/callback',
+      '/api/crouton-triage/teams/[id]/accounts/[accountId]/verify',
+      '/api/crouton-triage/teams/[id]/accounts/connect',
       '/api/crouton-triage/health',
       '/api/crouton-triage/metrics'
     ]

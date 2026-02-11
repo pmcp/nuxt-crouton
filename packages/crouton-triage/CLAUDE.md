@@ -9,8 +9,9 @@ Discussion-to-task triage system for Nuxt applications. Receives discussions fro
 | File | Purpose |
 |------|---------|
 | `nuxt.config.ts` | Layer configuration, component registration, i18n setup |
-| `crouton.manifest.ts` | Defines 8 collections with `triage` table prefix |
+| `crouton.manifest.ts` | Defines 9 collections with `triage` table prefix |
 | `app/types/index.ts` | Core types: Flow, FlowInput, FlowOutput, ParsedDiscussion, AdapterConfig, etc. |
+| `app/composables/useTriageAccounts.ts` | Connected accounts CRUD (team-scoped) |
 | `app/composables/useTriageOAuth.ts` | OAuth flow for Slack integration |
 | `app/composables/useTriageAutoMatch.ts` | Auto-match users across platforms |
 | `app/composables/useTriageNotionSchema.ts` | Fetch Notion database schema |
@@ -22,6 +23,7 @@ Discussion-to-task triage system for Nuxt applications. Receives discussions fro
 | `app/components/flows/InputManager.vue` | Manage flow inputs (sources) |
 | `app/components/flows/OutputManager.vue` | Manage flow outputs (Notion targets) |
 | `app/components/usermappings/` | User mapping discovery and management |
+| `server/utils/tokenResolver.ts` | Centralized token resolution from connected accounts |
 | `server/adapters/` | Source adapters: Slack, Figma, Notion |
 | `server/services/processor.ts` | Main processing pipeline (~2100 lines) |
 | `server/services/ai.ts` | Claude AI analysis (summarization, task detection) |
@@ -98,6 +100,8 @@ CroutonTriage
 | `/api/crouton-triage/teams/[id]/slack/users` | GET | List Slack users |
 | `/api/crouton-triage/teams/[id]/user-mappings/bulk-import` | POST | Bulk import user mappings |
 | `/api/crouton-triage/teams/[id]/ai/suggest-icons` | POST | AI icon suggestions |
+| `/api/crouton-triage/teams/[id]/accounts/connect` | POST | Manually connect account (paste token) |
+| `/api/crouton-triage/teams/[id]/accounts/[accountId]/verify` | POST | Verify connected account token |
 
 **OAuth:**
 
@@ -207,6 +211,7 @@ Package expects tables prefixed with `triage`:
 | job.json | `triageJobs` |
 | user.json | `triageUsers` |
 | message.json | `triageMessages` |
+| account.json | `triageAccounts` |
 
 ## i18n Keys
 

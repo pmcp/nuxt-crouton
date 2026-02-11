@@ -113,6 +113,8 @@ const outputFormState = ref({
   domainFilter: [] as string[],
   isDefault: false,
   active: true,
+  // Account reference
+  accountId: undefined as string | undefined,
   // Notion-specific
   notionToken: '',
   databaseId: '',
@@ -127,7 +129,7 @@ const {
   schema: notionSchema,
   loading: schemaLoading,
   error: schemaError,
-  fetchSchema
+  fetchNotionSchema: fetchSchema
 } = useTriageNotionSchema()
 
 const {
@@ -174,17 +176,23 @@ function getMappedProperty(aiField: string): string | null {
  * Fetch Notion schema and auto-map fields
  */
 async function fetchNotionSchemaAndMap() {
-  if (!outputFormState.value.notionToken || !outputFormState.value.databaseId) {
+  const hasToken = outputFormState.value.notionToken || outputFormState.value.accountId
+  if (!hasToken || !outputFormState.value.databaseId) {
     toast.add({
       title: 'Missing Information',
-      description: 'Please enter Notion token and database ID first.',
+      description: 'Please connect a Notion account (or enter token) and database ID first.',
       color: 'warning',
     })
     return
   }
 
   try {
-    await fetchSchema(outputFormState.value.notionToken, outputFormState.value.databaseId)
+    await fetchSchema({
+      notionToken: outputFormState.value.notionToken || undefined,
+      accountId: outputFormState.value.accountId,
+      databaseId: outputFormState.value.databaseId,
+      teamId: props.teamId,
+    })
 
     if (notionSchema.value) {
       // Auto-map fields
@@ -300,6 +308,7 @@ function openEditModal(output: FlowOutput) {
     domainFilter: output.domainFilter?.length ? output.domainFilter : [...domainOptions.value],
     isDefault: output.isDefault,
     active: output.active,
+    accountId: output.accountId,
     notionToken: (output.outputConfig as NotionOutputConfig)?.notionToken || '',
     databaseId: (output.outputConfig as NotionOutputConfig)?.databaseId || '',
     fieldMapping: (output.outputConfig as NotionOutputConfig)?.fieldMapping || {},
@@ -326,6 +335,7 @@ function resetForm() {
     domainFilter: [...domainOptions.value],
     isDefault: false,
     active: true,
+    accountId: undefined,
     notionToken: '',
     databaseId: '',
     fieldMapping: {},
@@ -397,6 +407,7 @@ async function saveNewOutput() {
         : undefined,
       isDefault: outputFormState.value.isDefault,
       outputConfig,
+      accountId: outputFormState.value.accountId,
       active: true,
     }
 
@@ -518,6 +529,7 @@ async function updateOutput() {
         : undefined,
       isDefault: outputFormState.value.isDefault,
       outputConfig,
+      accountId: outputFormState.value.accountId,
       active: outputFormState.value.active,
     }
 
@@ -927,7 +939,22 @@ watch(isEditModalOpen, (open) => {
             <div v-if="selectedOutputType === 'notion'" class="space-y-4 pt-4 border-t">
               <h4 class="font-semibold text-sm">Notion Configuration</h4>
 
-              <UFormField label="Notion API Token" name="notionToken" required>
+              <!-- Connected Account Picker -->
+              <UFormField label="Connected Account" name="accountId">
+                <CroutonTriageFlowsAccountPicker
+                  v-model="outputFormState.accountId"
+                  provider="notion"
+                  :team-id="teamId"
+                  placeholder="Select Notion account..."
+                  @connect-new="() => {}"
+                />
+                <template #help>
+                  Use a connected account or paste a token below.
+                </template>
+              </UFormField>
+
+              <!-- Show inline token only if no account selected -->
+              <UFormField v-if="!outputFormState.accountId" label="Notion API Token" name="notionToken" required>
                 <UInput
                   v-model="outputFormState.notionToken"
                   type="password"
@@ -1134,7 +1161,22 @@ watch(isEditModalOpen, (open) => {
             <div v-if="selectedOutputType === 'notion'" class="space-y-4 pt-4 border-t">
               <h4 class="font-semibold text-sm">Notion Configuration</h4>
 
-              <UFormField label="Notion API Token" name="notionToken" required>
+              <!-- Connected Account Picker -->
+              <UFormField label="Connected Account" name="accountId">
+                <CroutonTriageFlowsAccountPicker
+                  v-model="outputFormState.accountId"
+                  provider="notion"
+                  :team-id="teamId"
+                  placeholder="Select Notion account..."
+                  @connect-new="() => {}"
+                />
+                <template #help>
+                  Use a connected account or paste a token below.
+                </template>
+              </UFormField>
+
+              <!-- Show inline token only if no account selected -->
+              <UFormField v-if="!outputFormState.accountId" label="Notion API Token" name="notionToken" required>
                 <UInput
                   v-model="outputFormState.notionToken"
                   type="password"

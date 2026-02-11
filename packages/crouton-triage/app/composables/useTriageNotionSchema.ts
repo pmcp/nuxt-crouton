@@ -33,8 +33,10 @@ export interface NotionSchema {
 
 export interface FetchSchemaOptions {
   databaseId: string
-  notionToken: string
+  notionToken?: string
   teamId: string
+  /** Connected account ID (alternative to notionToken) */
+  accountId?: string
 }
 
 // Create singleton refs outside the composable function
@@ -48,10 +50,10 @@ export function useTriageNotionSchema() {
    * Fetch Notion database schema
    */
   async function fetchNotionSchema(options: FetchSchemaOptions): Promise<NotionSchema | null> {
-    const { databaseId, notionToken, teamId } = options
+    const { databaseId, notionToken, teamId, accountId } = options
 
-    if (!databaseId || !notionToken || !teamId) {
-      schemaFetchError.value = 'Please provide Notion Database ID, Integration Token, and Team ID'
+    if (!databaseId || (!notionToken && !accountId) || !teamId) {
+      schemaFetchError.value = 'Please provide Notion Database ID, a token or connected account, and Team ID'
       return null
     }
 
@@ -59,10 +61,15 @@ export function useTriageNotionSchema() {
     schemaFetchError.value = null
 
     try {
+      const queryParams: Record<string, string> = {}
+      if (accountId) {
+        queryParams.accountId = accountId
+      } else if (notionToken) {
+        queryParams.notionToken = notionToken
+      }
+
       const response = await $fetch<any>(`/api/crouton-triage/teams/${teamId}/notion/schema/${databaseId}`, {
-        query: {
-          notionToken
-        }
+        query: queryParams
       })
 
       if (response.success) {

@@ -42,21 +42,29 @@ export default defineEventHandler(async (event) => {
   try {
     // Get parameters from query
     const query = getQuery(event)
-    const slackToken = query.slackToken as string
+    let slackToken = query.slackToken as string
     const teamId = query.teamId as string
-
-    // Validate required parameters
-    if (!slackToken) {
-      throw createError({
-        statusCode: 422,
-        statusMessage: 'Missing required parameter: slackToken'
-      })
-    }
+    const accountId = query.accountId as string
 
     if (!teamId) {
       throw createError({
         statusCode: 422,
         statusMessage: 'Missing required parameter: teamId'
+      })
+    }
+
+    // Resolve token from account if accountId provided
+    if (accountId && !slackToken) {
+      const routeTeamId = getRouterParam(event, 'id') || teamId
+      const { resolveAccountToken } = await import('../../../../../utils/tokenResolver')
+      slackToken = await resolveAccountToken(accountId, routeTeamId)
+    }
+
+    // Validate required parameters
+    if (!slackToken) {
+      throw createError({
+        statusCode: 422,
+        statusMessage: 'Missing required parameter: slackToken or accountId'
       })
     }
 

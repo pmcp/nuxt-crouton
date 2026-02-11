@@ -59,6 +59,16 @@
       "group": "config"
     }
   },
+  "accountId": {
+    "type": "string",
+    "refTarget": "accounts",
+    "meta": {
+      "label": "Connected Account",
+      "description": "Reference to a connected account for token resolution (optional, falls back to inline outputConfig.notionToken)",
+      "area": "sidebar",
+      "group": "credentials"
+    }
+  },
   "active": {
     "type": "boolean",
     "meta": {

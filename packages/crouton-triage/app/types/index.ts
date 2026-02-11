@@ -9,6 +9,57 @@
  */
 export type SourceType = 'figma' | 'slack' | 'notion'
 
+// ============================================================================
+// CONNECTED ACCOUNT TYPES
+// ============================================================================
+
+/**
+ * Supported account providers
+ */
+export type AccountProvider = 'slack' | 'notion' | 'figma' | 'github' | 'linear'
+
+/**
+ * Account connection status
+ */
+export type AccountStatus = 'connected' | 'expired' | 'revoked' | 'error'
+
+/**
+ * Connected third-party account with encrypted tokens
+ */
+export interface ConnectedAccount {
+  /** Account record ID */
+  id: string
+  /** Team ID this account belongs to */
+  teamId: string
+  /** Account provider */
+  provider: AccountProvider
+  /** User-friendly label */
+  label: string
+  /** Provider-specific account ID (Slack team ID, Notion workspace ID) for dedup */
+  providerAccountId: string
+  /** Encrypted access token (stored via encryptSecret()) */
+  accessToken: string
+  /** Masked token hint for display (via maskSecret()) */
+  accessTokenHint?: string
+  /** Encrypted refresh token (optional) */
+  refreshToken?: string
+  /** Token expiration date (optional) */
+  tokenExpiresAt?: Date
+  /** OAuth scopes granted */
+  scopes?: string
+  /** Provider-specific metadata (workspace name, bot user ID, etc.) */
+  providerMetadata?: Record<string, any>
+  /** Connection status */
+  status: AccountStatus
+  /** Last successful verification timestamp */
+  lastVerifiedAt?: Date
+  /** Creation metadata */
+  createdAt?: Date
+  createdBy?: string
+  updatedAt?: Date
+  updatedBy?: string
+}
+
 /**
  * A single message in a discussion thread
  */
@@ -299,8 +350,10 @@ export interface FlowInput {
   sourceType: string
   /** Display name for this input */
   name: string
-  /** Source API token/key */
+  /** Source API token/key (legacy — prefer accountId) */
   apiToken?: string
+  /** Connected account ID for centralized token resolution */
+  accountId?: string
   /** Webhook URL for receiving events */
   webhookUrl?: string
   /** Webhook secret for validation */
@@ -341,6 +394,8 @@ export interface FlowOutput {
   isDefault: boolean
   /** Output-specific configuration (API keys, database IDs, field mappings, etc.) */
   outputConfig: Record<string, any>
+  /** Connected account ID for centralized token resolution */
+  accountId?: string
   /** Whether this output is active */
   active: boolean
   /** Creation metadata */
