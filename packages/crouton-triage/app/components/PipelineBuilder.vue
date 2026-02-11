@@ -221,26 +221,24 @@ function getDomainColor(domain: string): string {
         arrow
         :ui="{ content: 'w-64' }"
       >
-        <UChip :color="isInputConnected(input) ? 'success' : 'error'" size="sm" inset>
-          <button
-            class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-            :class="isInputConnected(input) ? getSourceBg(input.sourceType) : 'bg-gray-500/10 opacity-50'"
-          >
-            <UIcon
-              :name="getSourceIcon(input.sourceType)"
-              :class="['w-5 h-5', isInputConnected(input) ? getSourceColor(input.sourceType) : 'text-gray-400']"
-            />
-          </button>
-        </UChip>
+        <button
+          class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+          :class="isInputConnected(input) ? getSourceBg(input.sourceType) : 'bg-gray-500/10 opacity-50'"
+        >
+          <UIcon
+            :name="getSourceIcon(input.sourceType)"
+            :class="['w-5 h-5', isInputConnected(input) ? getSourceColor(input.sourceType) : 'text-gray-400']"
+          />
+        </button>
 
         <template #content>
           <div class="p-3 space-y-2">
             <div class="flex items-center justify-between">
               <span class="font-semibold text-sm">{{ input.name }}</span>
-              <div class="flex items-center gap-1.5">
-                <UChip :color="isInputConnected(input) ? 'success' : 'error'" standalone inset />
-                <span class="text-xs text-muted-foreground">{{ getInputStatusLabel(input) }}</span>
-              </div>
+              <div
+                class="w-2 h-2 rounded-full flex-shrink-0"
+                :class="isInputConnected(input) ? 'bg-green-500' : 'bg-red-500'"
+              />
             </div>
             <p v-if="getWorkspaceName(input)" class="text-xs text-muted-foreground">
               {{ getWorkspaceName(input) }}
@@ -257,15 +255,16 @@ function getDomainColor(domain: string): string {
 
     <!-- AI (fixed center) -->
     <div class="flex items-center gap-3 flex-shrink-0 px-3">
-    <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+    <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 opacity-30 flex-shrink-0" />
 
     <UPopover mode="hover" arrow :ui="{ content: 'w-64' }">
-      <UChip :color="isAiConfigured ? 'success' : 'error'" size="sm" inset>
         <button
           class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           :class="isAiConfigured ? 'bg-violet-500/10' : 'bg-gray-500/10 opacity-50'"
         >
+          <span v-if="flow?.personalityIcon" class="text-lg leading-none">{{ flow.personalityIcon }}</span>
           <UIcon
+            v-else
             name="i-lucide-brain"
             :class="[
               'w-5 h-5',
@@ -273,14 +272,15 @@ function getDomainColor(domain: string): string {
             ]"
           />
         </button>
-      </UChip>
 
       <template #content>
         <div class="p-3 space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-semibold text-sm">AI Analysis</span>
-            <UChip :color="isAiConfigured ? 'success' : 'error'" standalone inset />
-            <span class="text-xs text-muted-foreground">{{ getAiStatusLabel() }}</span>
+            <div
+              class="w-2 h-2 rounded-full flex-shrink-0"
+              :class="isAiConfigured ? 'bg-green-500' : 'bg-red-500'"
+            />
           </div>
           <div v-if="flow" class="space-y-1 text-xs text-muted-foreground">
             <p>Preset: {{ getPresetLabel() }}</p>
@@ -298,7 +298,7 @@ function getDomainColor(domain: string): string {
       </template>
     </UPopover>
 
-    <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+    <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 opacity-30 flex-shrink-0" />
     </div>
 
     <!-- Outputs (left-aligned) -->
@@ -311,34 +311,38 @@ function getDomainColor(domain: string): string {
         arrow
         :ui="{ content: 'w-64' }"
       >
-        <UChip :color="isOutputConfigured(output) ? 'success' : 'error'" size="sm" inset>
-          <button
-            class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer relative"
-            :class="isOutputConfigured(output) ? getOutputBg(output.outputType) : 'bg-gray-500/10 opacity-50'"
+        <button
+          class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer relative"
+          :class="isOutputConfigured(output) ? getOutputBg(output.outputType) : 'bg-gray-500/10 opacity-50'"
+        >
+          <UIcon
+            :name="getOutputIcon(output.outputType)"
+            :class="['w-5 h-5', isOutputConfigured(output) ? getOutputColor(output.outputType) : 'text-gray-400']"
+          />
+          <!-- Domain dots -->
+          <div
+            v-if="output.domainFilter?.length"
+            class="absolute -bottom-0.5 flex gap-0.5"
           >
-            <UIcon
-              :name="getOutputIcon(output.outputType)"
-              :class="['w-5 h-5', isOutputConfigured(output) ? getOutputColor(output.outputType) : 'text-gray-400']"
+            <span
+              v-for="domain in output.domainFilter.slice(0, 3)"
+              :key="domain"
+              :class="['w-1 h-1 rounded-full', getDomainColor(domain).replace('text-', 'bg-')]"
             />
-            <!-- Domain dots -->
-            <div
-              v-if="output.domainFilter?.length"
-              class="absolute -bottom-0.5 flex gap-0.5"
-            >
-              <span
-                v-for="domain in output.domainFilter.slice(0, 3)"
-                :key="domain"
-                :class="['w-1 h-1 rounded-full', getDomainColor(domain).replace('text-', 'bg-')]"
-              />
-            </div>
-          </button>
-        </UChip>
+          </div>
+        </button>
 
         <template #content>
           <div class="p-3 space-y-2">
             <div class="flex items-center justify-between">
               <span class="font-semibold text-sm">{{ output.name }}</span>
-              <UBadge v-if="output.isDefault" size="xs" color="primary" variant="subtle">Default</UBadge>
+              <div class="flex items-center gap-1.5">
+                <UBadge v-if="output.isDefault" size="xs" color="primary" variant="subtle">Default</UBadge>
+                <div
+                  class="w-2 h-2 rounded-full flex-shrink-0"
+                  :class="isOutputConfigured(output) ? 'bg-green-500' : 'bg-red-500'"
+                />
+              </div>
             </div>
             <div class="space-y-1 text-xs text-muted-foreground">
               <p>Type: {{ output.outputType }}</p>

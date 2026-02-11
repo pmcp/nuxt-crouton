@@ -241,9 +241,9 @@ defineExpose({ refresh: refreshAll })
 <template>
   <div class="flex flex-col h-full">
     <!-- Flow list -->
-    <div v-if="hasFlows || creatingFlow" class="flex flex-col gap-3 py-2">
+    <div v-if="hasFlows || creatingFlow" class="flex flex-col gap-2">
       <!-- New flow button (centered on AI column) -->
-      <div class="flex items-center">
+      <div class="flex items-center py-1">
         <div class="flex-1" />
         <div class="flex items-center justify-center flex-shrink-0 px-3">
           <button
@@ -295,24 +295,26 @@ defineExpose({ refresh: refreshAll })
           </button>
 
           <!-- Active: small dot by default, full button on row hover -->
-          <button
-            class="w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer"
-            :class="flow.active
-              ? 'group-hover:bg-green-500/20 group-hover:text-green-500'
-              : 'group-hover:bg-muted group-hover:text-muted-foreground'"
-            :disabled="togglingFlow === flow.id"
-            @click="toggleFlowActive(flow)"
-          >
-            <!-- Dot (default) -->
-            <div
-              class="w-2 h-2 rounded-full transition-opacity group-hover:hidden"
-              :class="flow.active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'"
-            />
-            <!-- Icon (hover) -->
-            <UIcon v-if="togglingFlow === flow.id" name="i-lucide-loader-2" class="w-3.5 h-3.5 animate-spin hidden group-hover:block" />
-            <UIcon v-else-if="flow.active" name="i-lucide-zap" class="w-3.5 h-3.5 hidden group-hover:block" />
-            <UIcon v-else name="i-lucide-pause" class="w-3.5 h-3.5 hidden group-hover:block" />
-          </button>
+          <UTooltip :text="flow.active ? 'Active — click to pause' : 'Paused — click to activate'">
+            <button
+              class="w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer"
+              :class="flow.active
+                ? 'group-hover:bg-green-500/20 group-hover:text-green-500'
+                : 'group-hover:bg-gray-500/10 group-hover:text-gray-400'"
+              :disabled="togglingFlow === flow.id"
+              @click="toggleFlowActive(flow)"
+            >
+              <!-- Dot (default) -->
+              <div
+                class="w-2 h-2 rounded-full transition-opacity group-hover:hidden"
+                :class="flow.active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'"
+              />
+              <!-- Icon (hover) -->
+              <UIcon v-if="togglingFlow === flow.id" name="i-lucide-loader-2" class="w-3.5 h-3.5 animate-spin hidden group-hover:block" />
+              <UIcon v-else-if="flow.active" name="i-lucide-zap" class="w-3.5 h-3.5 hidden group-hover:block" />
+              <UIcon v-else name="i-lucide-pause" class="w-3.5 h-3.5 hidden group-hover:block" />
+            </button>
+          </UTooltip>
         </div>
       </div>
 
