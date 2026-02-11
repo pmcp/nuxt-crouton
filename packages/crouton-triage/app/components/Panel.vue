@@ -76,9 +76,13 @@ function getFlowOutputs(flowId: string): FlowOutput[] {
 }
 
 // User mapping stats (team-global, not per-flow)
+// Only source types that support user mapping discovery
+const mappableSourceTypes = new Set(['slack', 'figma', 'notion'])
+
 const uniqueSources = computed(() => {
   const seen = new Map<string, FlowInput>()
   for (const input of (inputs.value || []) as FlowInput[]) {
+    if (!mappableSourceTypes.has(input.sourceType)) continue
     const wsId = getWorkspaceId(input)
     const key = `${input.sourceType}:${wsId}`
     if (!seen.has(key)) seen.set(key, input)
@@ -442,7 +446,7 @@ defineExpose({ refresh: refreshAll })
 
     <!-- Activity Feed -->
     <template v-if="hasFlows">
-      <USeparator label="Recent Activity" class="mt-2" />
+      <USeparator label="Recent Activity" class="mt-6" />
 
       <div v-if="feedLoading && feedItems.length === 0" class="space-y-3 mt-2">
         <div v-for="i in 3" :key="i" class="animate-pulse p-2 space-y-2">
