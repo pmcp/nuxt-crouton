@@ -13,12 +13,21 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody<Partial<RakimFlow>>(event)
 
+  // Encrypt API key and generate hint server-side when a new key is provided
+  let anthropicApiKey: string | undefined
+  let anthropicApiKeyHint: string | undefined
+  if (body.anthropicApiKey) {
+    anthropicApiKey = await encryptSecret(body.anthropicApiKey)
+    anthropicApiKeyHint = maskSecret(body.anthropicApiKey)
+  }
+
   return await updateRakimFlow(flowId, team.id, user.id, {
     name: body.name,
     description: body.description,
     availableDomains: body.availableDomains,
     aiEnabled: body.aiEnabled,
-    anthropicApiKey: body.anthropicApiKey,
+    ...(anthropicApiKey && { anthropicApiKey }),
+    ...(anthropicApiKeyHint && { anthropicApiKeyHint }),
     aiSummaryPrompt: body.aiSummaryPrompt,
     aiTaskPrompt: body.aiTaskPrompt,
     active: body.active,

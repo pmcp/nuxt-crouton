@@ -13,13 +13,21 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody<Partial<TriageFlow>>(event)
 
+  // Encrypt API key and generate hint server-side when a new key is provided
+  let anthropicApiKey: string | undefined
+  let anthropicApiKeyHint: string | undefined
+  if (body.anthropicApiKey) {
+    anthropicApiKey = await encryptSecret(body.anthropicApiKey)
+    anthropicApiKeyHint = maskSecret(body.anthropicApiKey)
+  }
+
   return await updateTriageFlow(flowId, team.id, user.id, {
     name: body.name,
     description: body.description,
     availableDomains: body.availableDomains,
     aiEnabled: body.aiEnabled,
-    anthropicApiKey: body.anthropicApiKey,
-    anthropicApiKeyHint: body.anthropicApiKeyHint,
+    ...(anthropicApiKey && { anthropicApiKey }),
+    ...(anthropicApiKeyHint && { anthropicApiKeyHint }),
     aiSummaryPrompt: body.aiSummaryPrompt,
     aiTaskPrompt: body.aiTaskPrompt,
     replyPersonality: body.replyPersonality,
