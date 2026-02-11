@@ -297,7 +297,7 @@ function openEditModal(output: FlowOutput) {
   outputFormState.value = {
     name: output.name,
     outputType: output.outputType,
-    domainFilter: output.domainFilter || [],
+    domainFilter: output.domainFilter?.length ? output.domainFilter : [...domainOptions.value],
     isDefault: output.isDefault,
     active: output.active,
     notionToken: (output.outputConfig as NotionOutputConfig)?.notionToken || '',
@@ -909,21 +909,9 @@ watch(isEditModalOpen, (open) => {
             <UFormField
               label="Domain Filter"
               name="domainFilter"
-              help="Select which domains should route to this output. Leave empty to accept all domains."
+              help="Deselect domains to exclude them from this output."
             >
-              <div class="flex flex-wrap items-center gap-1.5">
-                <UBadge
-                  v-for="domain in domainOptions"
-                  :key="domain"
-                  size="md"
-                  :color="outputFormState.domainFilter.includes(domain) ? 'primary' : 'neutral'"
-                  :variant="outputFormState.domainFilter.includes(domain) ? 'solid' : 'subtle'"
-                  class="cursor-pointer select-none transition-colors"
-                  @click="toggleDomain(domain)"
-                >
-                  {{ domain }}
-                </UBadge>
-              </div>
+              <CroutonTriageSharedDomainPicker v-model="outputFormState.domainFilter" />
             </UFormField>
 
             <!-- Default Output -->
@@ -1119,21 +1107,9 @@ watch(isEditModalOpen, (open) => {
             <UFormField
               label="Domain Filter"
               name="domainFilter"
-              help="Select which domains should route to this output. Leave empty to accept all domains."
+              help="Deselect domains to exclude them from this output."
             >
-              <div class="flex flex-wrap items-center gap-1.5">
-                <UBadge
-                  v-for="domain in domainOptions"
-                  :key="domain"
-                  size="md"
-                  :color="outputFormState.domainFilter.includes(domain) ? 'primary' : 'neutral'"
-                  :variant="outputFormState.domainFilter.includes(domain) ? 'solid' : 'subtle'"
-                  class="cursor-pointer select-none transition-colors"
-                  @click="toggleDomain(domain)"
-                >
-                  {{ domain }}
-                </UBadge>
-              </div>
+              <CroutonTriageSharedDomainPicker v-model="outputFormState.domainFilter" />
             </UFormField>
 
             <!-- Default Output -->

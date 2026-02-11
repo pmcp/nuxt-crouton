@@ -152,7 +152,7 @@ const selectedPersonality = ref((() => {
 
 const isCustomPersonality = computed(() => selectedPersonality.value === 'custom')
 
-// Sync personality selection to formState + icon
+// Sync personality selection to formState + icon (immediate so default preset icon is set)
 watch(selectedPersonality, (val) => {
   const preset = personalityPresets.find(p => p.value === val)
   if (val === 'custom') {
@@ -168,7 +168,7 @@ watch(selectedPersonality, (val) => {
   if (preset && val !== 'custom') {
     formState.value.personalityIcon = preset.icon
   }
-})
+}, { immediate: true })
 
 watch(customPersonalityPrompt, (val) => {
   if (isCustomPersonality.value) {
@@ -474,30 +474,10 @@ async function handleSave() {
 
         <!-- Domains -->
         <UFormField label="Domains" help="AI routes tasks to outputs matching these domains.">
-          <div class="flex flex-wrap items-center gap-1.5">
-            <UBadge
-              v-for="domain in formState.availableDomains"
-              :key="domain"
-              size="md"
-              color="neutral"
-              variant="subtle"
-              class="group/chip cursor-default"
-            >
-              {{ domain }}
-              <button
-                class="ml-0.5 opacity-0 group-hover/chip:opacity-100 transition-opacity cursor-pointer"
-                @click="removeDomain(domain)"
-              >
-                <UIcon name="i-lucide-x" class="w-3 h-3" />
-              </button>
-            </UBadge>
-            <input
-              v-model="newDomain"
-              class="text-sm bg-transparent outline-none min-w-[80px] flex-1 placeholder:text-muted-foreground/50"
-              placeholder="Add domain..."
-              @keydown.enter.prevent="addDomain"
-            />
-          </div>
+          <CroutonTriageSharedDomainPicker
+            v-model="formState.availableDomains"
+            creatable
+          />
         </UFormField>
 
         <!-- Save button -->
