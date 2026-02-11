@@ -370,6 +370,19 @@ CREATE TABLE `subscription` (
 CREATE INDEX `subscription_reference_idx` ON `subscription` (`referenceId`);--> statement-breakpoint
 CREATE INDEX `subscription_stripe_idx` ON `subscription` (`stripeSubscriptionId`);--> statement-breakpoint
 CREATE INDEX `subscription_status_idx` ON `subscription` (`status`);--> statement-breakpoint
+CREATE TABLE `team_settings` (
+	`id` text PRIMARY KEY NOT NULL,
+	`team_id` text NOT NULL,
+	`translations` text,
+	`ai_settings` text,
+	`theme_settings` text,
+	`created_at` integer,
+	`updated_at` integer,
+	FOREIGN KEY (`team_id`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `team_settings_team_id_unique` ON `team_settings` (`team_id`);--> statement-breakpoint
+CREATE INDEX `team_settings_team_idx` ON `team_settings` (`team_id`);--> statement-breakpoint
 CREATE TABLE `twoFactor` (
 	`id` text PRIMARY KEY NOT NULL,
 	`userId` text NOT NULL,
