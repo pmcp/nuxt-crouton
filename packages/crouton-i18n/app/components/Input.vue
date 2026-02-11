@@ -690,7 +690,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               </label>
               <!-- AI Translate button - uses stub (renders nothing) if crouton-ai not extended -->
               <AITranslateButton
-                v-if="showAiTranslate && !isBlockEditorField(field)"
+                v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, narrowLocaleTab)"
                 :source-text="getBestSourceText(field, narrowLocaleTab)"
                 :source-language="findBestSourceLocale(field, narrowLocaleTab)"
                 :target-language="narrowLocaleTab"
@@ -704,9 +704,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               />
               <!-- Block editor translation (controlled mode) -->
               <AITranslateButton
-                v-if="showAiTranslate && isBlockEditorField(field)"
+                v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, narrowLocaleTab)"
                 :loading="isFieldTranslating(field, narrowLocaleTab)"
-                :disabled="!hasSourceContent(field, narrowLocaleTab)"
                 :tooltip="getTranslateTooltip(field, narrowLocaleTab)"
                 size="2xs"
                 icon-only
@@ -830,10 +829,9 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                     v-if="loc.value === 'en'"
                     class="text-red-500"
                   >*</span>
-                  <UIcon
+                  <span
                     v-if="isLocaleComplete(loc.value)"
-                    name="i-lucide-check-circle"
-                    class="text-green-500"
+                    class="size-2 rounded-full bg-green-500"
                   />
                 </span>
               </UButton>
@@ -856,7 +854,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 </label>
                 <!-- AI Translate button for primary locale -->
                 <AITranslateButton
-                  v-if="showAiTranslate && !isBlockEditorField(field)"
+                  v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, primaryEditingLocale)"
                   :source-text="getBestSourceText(field, primaryEditingLocale)"
                   :source-language="findBestSourceLocale(field, primaryEditingLocale)"
                   :target-language="primaryEditingLocale"
@@ -870,9 +868,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 />
                 <!-- Block editor translation for primary locale -->
                 <AITranslateButton
-                  v-if="showAiTranslate && isBlockEditorField(field)"
+                  v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, primaryEditingLocale)"
                   :loading="isFieldTranslating(field, primaryEditingLocale)"
-                  :disabled="!hasSourceContent(field, primaryEditingLocale)"
                   :tooltip="getTranslateTooltip(field, primaryEditingLocale)"
                   size="2xs"
                   icon-only
@@ -975,10 +972,9 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                     v-if="loc.value === 'en'"
                     class="text-red-500"
                   >*</span>
-                  <UIcon
+                  <span
                     v-if="isLocaleComplete(loc.value)"
-                    name="i-lucide-check-circle"
-                    class="text-green-500"
+                    class="size-2 rounded-full bg-green-500"
                   />
                 </span>
               </UButton>
@@ -1001,7 +997,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 </label>
                 <!-- AI Translate button - uses stub (renders nothing) if crouton-ai not extended -->
                 <AITranslateButton
-                  v-if="showAiTranslate && !isBlockEditorField(field)"
+                  v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, secondaryEditingLocale)"
                   :source-text="getBestSourceText(field, secondaryEditingLocale)"
                   :source-language="findBestSourceLocale(field, secondaryEditingLocale)"
                   :target-language="secondaryEditingLocale"
@@ -1015,9 +1011,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 />
                 <!-- Block editor translation (controlled mode) -->
                 <AITranslateButton
-                  v-if="showAiTranslate && isBlockEditorField(field)"
+                  v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, secondaryEditingLocale)"
                   :loading="isFieldTranslating(field, secondaryEditingLocale)"
-                  :disabled="!hasSourceContent(field, secondaryEditingLocale)"
                   :tooltip="getTranslateTooltip(field, secondaryEditingLocale)"
                   size="2xs"
                   icon-only
@@ -1125,10 +1120,9 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                 v-if="(typeof loc === 'string' ? loc : loc.code) === 'en'"
                 class="text-red-500"
               >*</span>
-              <UIcon
+              <span
                 v-if="translationStatus.find(s => s.locale === (typeof loc === 'string' ? loc : loc.code))?.complete"
-                name="i-lucide-check-circle"
-                class="text-green-500"
+                class="size-2 rounded-full bg-green-500"
               />
             </span>
           </UButton>

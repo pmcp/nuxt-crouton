@@ -293,6 +293,7 @@ async function doTranslation() {
         :size="size || 'xs'"
         variant="ghost"
         color="neutral"
+        class="opacity-40 hover:opacity-100 transition-opacity"
         :loading="isLoading"
         :disabled="!canTranslate"
         @click="handleClick"
@@ -313,7 +314,7 @@ async function doTranslation() {
           variant="ghost"
           color="neutral"
           :disabled="!canTranslate"
-          class="relative"
+          class="relative opacity-40 hover:opacity-100 transition-opacity"
         >
           <!-- Indicator when not all contexts selected -->
           <span
