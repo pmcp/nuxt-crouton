@@ -121,6 +121,9 @@ const outputFormState = ref({
   fieldMapping: {} as Record<string, any>,
 })
 
+// Show inline token field (when user clicks "Connect new account" or no account selected)
+const showInlineNotionToken = ref(false)
+
 // ============================================================================
 // NOTION SCHEMA FETCHING
 // ============================================================================
@@ -226,8 +229,12 @@ async function fetchNotionSchemaAndMap() {
 
 const notionOutputSchema = z.object({
   name: z.string().optional(),
-  notionToken: z.string().min(1, 'Notion token is required'),
+  accountId: z.string().optional(),
+  notionToken: z.string().optional(),
   databaseId: z.string().min(1, 'Database ID is required'),
+}).refine(data => data.accountId || (data.notionToken && data.notionToken.length > 0), {
+  message: 'Either select a connected account or provide a Notion token',
+  path: ['notionToken'],
 })
 
 const githubOutputSchema = z.object({
@@ -342,6 +349,7 @@ function resetForm() {
   }
   editingOutput.value = null
   notionSchema.value = null
+  showInlineNotionToken.value = false
 }
 
 // ============================================================================
@@ -946,21 +954,21 @@ watch(isEditModalOpen, (open) => {
                   provider="notion"
                   :team-id="teamId"
                   placeholder="Select Notion account..."
-                  @connect-new="() => {}"
+                  @connect-new="showInlineNotionToken = true"
                 />
-                <template #help>
-                  Use a connected account or paste a token below.
-                </template>
               </UFormField>
 
-              <!-- Show inline token only if no account selected -->
-              <UFormField v-if="!outputFormState.accountId" label="Notion API Token" name="notionToken" required>
+              <!-- Inline token: shown when no account selected -->
+              <UFormField v-if="!outputFormState.accountId" label="Notion API Token" name="notionToken">
                 <UInput
                   v-model="outputFormState.notionToken"
                   type="password"
                   placeholder="secret_..."
                   class="w-full"
                 />
+                <template #help>
+                  Or select a connected account above.
+                </template>
               </UFormField>
 
               <UFormField label="Database ID" name="databaseId" required>
@@ -1168,21 +1176,21 @@ watch(isEditModalOpen, (open) => {
                   provider="notion"
                   :team-id="teamId"
                   placeholder="Select Notion account..."
-                  @connect-new="() => {}"
+                  @connect-new="showInlineNotionToken = true"
                 />
-                <template #help>
-                  Use a connected account or paste a token below.
-                </template>
               </UFormField>
 
-              <!-- Show inline token only if no account selected -->
-              <UFormField v-if="!outputFormState.accountId" label="Notion API Token" name="notionToken" required>
+              <!-- Inline token: shown when no account selected -->
+              <UFormField v-if="!outputFormState.accountId" label="Notion API Token" name="notionToken">
                 <UInput
                   v-model="outputFormState.notionToken"
                   type="password"
                   placeholder="secret_..."
                   class="w-full"
                 />
+                <template #help>
+                  Or select a connected account above.
+                </template>
               </UFormField>
 
               <UFormField label="Database ID" name="databaseId" required>

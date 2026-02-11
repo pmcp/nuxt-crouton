@@ -1,21 +1,10 @@
 <script setup lang="ts">
 import type { ConnectedAccount, AccountProvider } from '~/layers/triage/types'
 
-/**
- * AccountPicker - Dropdown to select a connected account
- *
- * Shows available accounts for a given provider with status badges.
- * Includes a "Connect new" action at the bottom.
- */
-
 interface Props {
-  /** Selected account ID */
   modelValue?: string
-  /** Filter by provider */
   provider: AccountProvider
-  /** Team ID */
   teamId: string
-  /** Placeholder text */
   placeholder?: string
 }
 
@@ -31,7 +20,6 @@ const emit = defineEmits<{
 
 const { accounts, fetchAccounts } = useTriageConnectedAccounts(props.teamId)
 
-// Fetch accounts on mount
 onMounted(() => {
   fetchAccounts()
 })
@@ -44,11 +32,13 @@ const selectedAccount = computed(() =>
   accounts.value.find(a => a.id === props.modelValue),
 )
 
+const hasAccounts = computed(() => filteredAccounts.value.length > 0)
+
 function getStatusColor(status: string): string {
   switch (status) {
     case 'connected': return 'success'
     case 'expired': return 'warning'
-    case 'revoked': return 'error'
+    case 'revoked':
     case 'error': return 'error'
     default: return 'neutral'
   }
@@ -62,16 +52,15 @@ function clearSelection() {
   emit('update:modelValue', undefined)
 }
 
-// Refresh accounts when teamId changes
 watch(() => props.teamId, () => {
   fetchAccounts()
 })
 </script>
 
 <template>
-  <div class="space-y-2">
+  <div class="space-y-1.5">
     <!-- Selected account display -->
-    <div v-if="selectedAccount" class="flex items-center gap-2 p-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+    <div v-if="selectedAccount" class="flex items-center gap-2 p-2 rounded-md border border-(--ui-border-accented) bg-(--ui-bg-muted)">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">
           <span class="text-sm font-medium truncate">{{ selectedAccount.label }}</span>
@@ -83,22 +72,22 @@ watch(() => props.teamId, () => {
             {{ selectedAccount.status }}
           </UBadge>
         </div>
-        <p v-if="selectedAccount.accessTokenHint" class="text-xs text-gray-500 font-mono truncate">
+        <p v-if="selectedAccount.accessTokenHint" class="text-xs text-(--ui-text-muted) font-mono truncate">
           {{ selectedAccount.accessTokenHint }}
         </p>
       </div>
       <UButton
         icon="i-heroicons-x-mark"
-        color="gray"
+        color="neutral"
         variant="ghost"
         size="xs"
         @click="clearSelection"
       />
     </div>
 
-    <!-- Account selector dropdown -->
+    <!-- Account selector dropdown (only if there are accounts to pick from) -->
     <UDropdownMenu
-      v-if="!selectedAccount"
+      v-else-if="hasAccounts"
       :items="[
         filteredAccounts.map(account => ({
           label: account.label,
@@ -116,16 +105,23 @@ watch(() => props.teamId, () => {
       <UButton
         :label="placeholder"
         icon="i-heroicons-link"
-        color="gray"
+        color="neutral"
         variant="outline"
         class="w-full justify-start"
         trailing-icon="i-heroicons-chevron-down"
       />
     </UDropdownMenu>
 
-    <!-- No accounts hint -->
-    <p v-if="filteredAccounts.length === 0 && !selectedAccount" class="text-xs text-gray-500">
-      No {{ provider }} accounts connected yet.
-    </p>
+    <!-- No accounts — show connect button -->
+    <div v-else>
+      <UButton
+        label="Connect new account"
+        icon="i-heroicons-plus"
+        color="neutral"
+        variant="outline"
+        size="sm"
+        @click="emit('connect-new')"
+      />
+    </div>
   </div>
 </template>
