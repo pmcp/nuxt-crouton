@@ -87,9 +87,21 @@ const DEFAULT_DOMAINS = ['design', 'frontend', 'backend', 'product', 'infrastruc
 /**
  * Use flow's configured domains, falling back to defaults if none configured
  */
-const availableDomains = computed(() =>
+const domainOptions = computed(() =>
   props.availableDomains.length > 0 ? props.availableDomains : DEFAULT_DOMAINS
 )
+
+/**
+ * Toggle a domain in the output's domain filter
+ */
+function toggleDomain(domain: string) {
+  const idx = outputFormState.value.domainFilter.indexOf(domain)
+  if (idx >= 0) {
+    outputFormState.value.domainFilter.splice(idx, 1)
+  } else {
+    outputFormState.value.domainFilter.push(domain)
+  }
+}
 
 // ============================================================================
 // OUTPUT FORM STATE
@@ -311,7 +323,7 @@ function resetForm() {
   outputFormState.value = {
     name: '',
     outputType: selectedOutputType.value,
-    domainFilter: [],
+    domainFilter: [...domainOptions.value],
     isDefault: false,
     active: true,
     notionToken: '',
@@ -899,13 +911,19 @@ watch(isEditModalOpen, (open) => {
               name="domainFilter"
               help="Select which domains should route to this output. Leave empty to accept all domains."
             >
-              <USelectMenu
-                v-model="outputFormState.domainFilter"
-                :options="availableDomains"
-                multiple
-                placeholder="Select domains..."
-                class="w-full"
-              />
+              <div class="flex flex-wrap items-center gap-1.5">
+                <UBadge
+                  v-for="domain in domainOptions"
+                  :key="domain"
+                  size="md"
+                  :color="outputFormState.domainFilter.includes(domain) ? 'primary' : 'neutral'"
+                  :variant="outputFormState.domainFilter.includes(domain) ? 'solid' : 'subtle'"
+                  class="cursor-pointer select-none transition-colors"
+                  @click="toggleDomain(domain)"
+                >
+                  {{ domain }}
+                </UBadge>
+              </div>
             </UFormField>
 
             <!-- Default Output -->
@@ -961,20 +979,20 @@ watch(isEditModalOpen, (open) => {
                 <UFormField label="Priority Field" name="priority">
                   <USelectMenu
                     :model-value="getMappedProperty('priority')"
-                    :options="Object.keys(notionSchema.properties || {})"
+                    :items="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
                     class="w-full"
                     @update:model-value="updateFieldMapping('priority', $event)"
                   >
-                    <template #option="{ option }">
+                    <template #item="{ item }">
                       <div class="flex items-center gap-2">
-                        <span>{{ option }}</span>
+                        <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[option]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
                           size="xs"
                           variant="subtle"
                         >
-                          {{ notionSchema.properties[option]?.type }}
+                          {{ notionSchema.properties[item]?.type }}
                         </UBadge>
                       </div>
                     </template>
@@ -985,20 +1003,20 @@ watch(isEditModalOpen, (open) => {
                 <UFormField label="Type Field" name="type">
                   <USelectMenu
                     :model-value="getMappedProperty('type')"
-                    :options="Object.keys(notionSchema.properties || {})"
+                    :items="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
                     class="w-full"
                     @update:model-value="updateFieldMapping('type', $event)"
                   >
-                    <template #option="{ option }">
+                    <template #item="{ item }">
                       <div class="flex items-center gap-2">
-                        <span>{{ option }}</span>
+                        <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[option]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
                           size="xs"
                           variant="subtle"
                         >
-                          {{ notionSchema.properties[option]?.type }}
+                          {{ notionSchema.properties[item]?.type }}
                         </UBadge>
                       </div>
                     </template>
@@ -1009,20 +1027,20 @@ watch(isEditModalOpen, (open) => {
                 <UFormField label="Assignee Field" name="assignee">
                   <USelectMenu
                     :model-value="getMappedProperty('assignee')"
-                    :options="Object.keys(notionSchema.properties || {})"
+                    :items="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
                     class="w-full"
                     @update:model-value="updateFieldMapping('assignee', $event)"
                   >
-                    <template #option="{ option }">
+                    <template #item="{ item }">
                       <div class="flex items-center gap-2">
-                        <span>{{ option }}</span>
+                        <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[option]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
                           size="xs"
                           variant="subtle"
                         >
-                          {{ notionSchema.properties[option]?.type }}
+                          {{ notionSchema.properties[item]?.type }}
                         </UBadge>
                       </div>
                     </template>
@@ -1103,13 +1121,19 @@ watch(isEditModalOpen, (open) => {
               name="domainFilter"
               help="Select which domains should route to this output. Leave empty to accept all domains."
             >
-              <USelectMenu
-                v-model="outputFormState.domainFilter"
-                :options="availableDomains"
-                multiple
-                placeholder="Select domains..."
-                class="w-full"
-              />
+              <div class="flex flex-wrap items-center gap-1.5">
+                <UBadge
+                  v-for="domain in domainOptions"
+                  :key="domain"
+                  size="md"
+                  :color="outputFormState.domainFilter.includes(domain) ? 'primary' : 'neutral'"
+                  :variant="outputFormState.domainFilter.includes(domain) ? 'solid' : 'subtle'"
+                  class="cursor-pointer select-none transition-colors"
+                  @click="toggleDomain(domain)"
+                >
+                  {{ domain }}
+                </UBadge>
+              </div>
             </UFormField>
 
             <!-- Default Output -->
@@ -1174,20 +1198,20 @@ watch(isEditModalOpen, (open) => {
                 <UFormField label="Priority Field" name="priority">
                   <USelectMenu
                     :model-value="getMappedProperty('priority')"
-                    :options="Object.keys(notionSchema.properties || {})"
+                    :items="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
                     class="w-full"
                     @update:model-value="updateFieldMapping('priority', $event)"
                   >
-                    <template #option="{ option }">
+                    <template #item="{ item }">
                       <div class="flex items-center gap-2">
-                        <span>{{ option }}</span>
+                        <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[option]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
                           size="xs"
                           variant="subtle"
                         >
-                          {{ notionSchema.properties[option]?.type }}
+                          {{ notionSchema.properties[item]?.type }}
                         </UBadge>
                       </div>
                     </template>
@@ -1198,20 +1222,20 @@ watch(isEditModalOpen, (open) => {
                 <UFormField label="Type Field" name="type">
                   <USelectMenu
                     :model-value="getMappedProperty('type')"
-                    :options="Object.keys(notionSchema.properties || {})"
+                    :items="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
                     class="w-full"
                     @update:model-value="updateFieldMapping('type', $event)"
                   >
-                    <template #option="{ option }">
+                    <template #item="{ item }">
                       <div class="flex items-center gap-2">
-                        <span>{{ option }}</span>
+                        <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[option]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
                           size="xs"
                           variant="subtle"
                         >
-                          {{ notionSchema.properties[option]?.type }}
+                          {{ notionSchema.properties[item]?.type }}
                         </UBadge>
                       </div>
                     </template>
@@ -1222,20 +1246,20 @@ watch(isEditModalOpen, (open) => {
                 <UFormField label="Assignee Field" name="assignee">
                   <USelectMenu
                     :model-value="getMappedProperty('assignee')"
-                    :options="Object.keys(notionSchema.properties || {})"
+                    :items="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
                     class="w-full"
                     @update:model-value="updateFieldMapping('assignee', $event)"
                   >
-                    <template #option="{ option }">
+                    <template #item="{ item }">
                       <div class="flex items-center gap-2">
-                        <span>{{ option }}</span>
+                        <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[option]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
                           size="xs"
                           variant="subtle"
                         >
-                          {{ notionSchema.properties[option]?.type }}
+                          {{ notionSchema.properties[item]?.type }}
                         </UBadge>
                       </div>
                     </template>
