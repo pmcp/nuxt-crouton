@@ -1,5 +1,5 @@
 <template>
-  <UModal v-model="isOpen">
+  <UModal v-model:open="isOpen">
     <template #content="{ close }">
       <div class="p-6 max-h-[85vh] overflow-y-auto">
         <!-- Header -->
