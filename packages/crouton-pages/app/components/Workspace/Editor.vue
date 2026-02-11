@@ -197,6 +197,18 @@ watch(
       }
 
       state.value = { ...defaultValue, ...pageData }
+
+      // Reconstruct translations from root-level fields when API returns flat data
+      if (!pageData.translations || Object.keys(pageData.translations).length === 0) {
+        state.value.translations = {
+          [locale.value || 'en']: {
+            title: pageData.title || '',
+            slug: pageData.slug || '',
+            content: pageData.content || ''
+          }
+        }
+      }
+
       contentReady.value = false
 
       // Initialize collab content if available
@@ -393,8 +405,16 @@ async function handleSubmit() {
       }
     }
 
+    // Flatten primary locale's translations to root-level fields for the API
+    // The database has flat title/slug/content columns — no translations column
+    const primaryLocale = Object.keys(translations)[0] || 'en'
+    const primary = translations[primaryLocale] || {}
+
     const submitData = {
       ...state.value,
+      title: primary.title || state.value.title,
+      slug: primary.slug || state.value.slug,
+      content: isRegularPage.value ? (primary.content || state.value.content) : state.value.content,
       translations,
       config: !isRegularPage.value ? state.value.config : null
     }

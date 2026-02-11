@@ -126,6 +126,21 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 
 const state = ref<typeof defaultValue & { id?: string | null }>(initialValues)
 
+// Reconstruct translations from root-level fields when API returns flat data
+if (props.action === 'update' && props.activeItem?.id) {
+  const item = props.activeItem
+  if (!item.translations || Object.keys(item.translations).length === 0) {
+    const { locale } = useI18n()
+    state.value.translations = {
+      [locale.value || 'en']: {
+        title: item.title || '',
+        slug: item.slug || '',
+        content: item.content || ''
+      }
+    }
+  }
+}
+
 // Track when collab content has been loaded (prevents race condition with Yjs sync)
 // Start as true for create action, false for update (will be set true after content loads)
 const contentReady = ref(props.action === 'create')
@@ -347,12 +362,18 @@ async function handleSubmit() {
       }
     }
 
+    // Flatten primary locale's translations to root-level fields for the API
+    // The database has flat title/slug/content columns — no translations column
+    const primaryLocale = Object.keys(translations)[0] || 'en'
+    const primary = translations[primaryLocale] || {}
+
     const submitData = {
       ...state.value,
+      title: primary.title || state.value.title,
+      slug: primary.slug || state.value.slug,
+      content: isRegularPage.value ? (primary.content || state.value.content) : state.value.content,
       translations,
-      // Config only used for app pages (non-regular)
       config: !isRegularPage.value ? state.value.config : null
-      // Note: content is stored in translations.{locale}.content, not at root level
     }
 
     if (props.action === 'create') {

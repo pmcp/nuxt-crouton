@@ -99,7 +99,7 @@ function handleCancel() {
 }
 
 // Show editor when we have a selection or in create mode
-const showEditor = computed(() => mode.value === 'create' || (mode.value === 'edit' && selectedPageId.value))
+const showEditor = computed(() => mode.value === 'create' || (mode.value === 'edit' && !!selectedPageId.value))
 
 // Mobile handling
 const breakpoints = useBreakpoints(breakpointsTailwind)
