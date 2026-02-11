@@ -16,14 +16,63 @@ const emit = defineEmits<{
   'edit:source': [input: FlowInput]
   'edit:ai': []
   'edit:output': [output: FlowOutput]
-  'add:source': []
-  'add:output': []
+  'add:source': [sourceType: 'slack' | 'figma' | 'email']
+  'add:output': [outputType: 'notion' | 'github' | 'linear']
 }>()
 
-// Filter to active items only
-const activeInputs = computed(() => props.inputs.filter(i => i.active))
-const activeOutputs = computed(() => props.outputs.filter(o => o.active))
+// Show all inputs/outputs (not just active) for visual pipeline
+const allInputs = computed(() => props.inputs)
+const allOutputs = computed(() => props.outputs)
 const hasFlow = computed(() => !!props.flow)
+
+// Source type dropdown items
+const sourceTypeItems = [[
+  {
+    label: 'Slack',
+    icon: 'i-lucide-slack',
+    onSelect: () => emit('add:source', 'slack'),
+  },
+  {
+    label: 'Figma',
+    icon: 'i-lucide-figma',
+    onSelect: () => emit('add:source', 'figma'),
+  },
+  {
+    label: 'Email',
+    icon: 'i-lucide-mail',
+    onSelect: () => emit('add:source', 'email'),
+  },
+]]
+
+// Output type dropdown items
+const outputTypeItems = [[
+  {
+    label: 'Notion',
+    icon: 'i-simple-icons-notion',
+    onSelect: () => emit('add:output', 'notion'),
+  },
+  {
+    label: 'GitHub',
+    icon: 'i-lucide-github',
+    disabled: true,
+    onSelect: () => emit('add:output', 'github'),
+  },
+  {
+    label: 'Linear',
+    icon: 'i-simple-icons-linear',
+    disabled: true,
+    onSelect: () => emit('add:output', 'linear'),
+  },
+]]
+
+// Check if output is configured (has required config)
+function isOutputConfigured(output: FlowOutput): boolean {
+  if (output.outputType === 'notion') {
+    const config = output.outputConfig as Record<string, any> | undefined
+    return !!(config?.notionToken && config?.databaseId)
+  }
+  return output.active
+}
 
 // Source icon mapping (from FlowPipelineVisual)
 function getSourceIcon(sourceType: string): string {
@@ -153,17 +202,19 @@ function getDomainColor(domain: string): string {
     <div class="flex items-center gap-1">
       <!-- Existing source icons -->
       <UPopover
-        v-for="input in activeInputs"
+        v-for="input in allInputs"
         :key="input.id"
+        mode="hover"
+        arrow
         :ui="{ content: 'w-64' }"
       >
         <button
           class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-          :class="getSourceBg(input.sourceType)"
+          :class="isInputConnected(input) ? getSourceBg(input.sourceType) : 'bg-gray-500/10 opacity-50'"
         >
           <UIcon
             :name="getSourceIcon(input.sourceType)"
-            :class="['w-5 h-5', getSourceColor(input.sourceType)]"
+            :class="['w-5 h-5', isInputConnected(input) ? getSourceColor(input.sourceType) : 'text-gray-400']"
           />
         </button>
 
@@ -186,29 +237,26 @@ function getDomainColor(domain: string): string {
               <UButton size="xs" variant="outline" color="neutral" @click="emit('edit:source', input)">
                 Edit
               </UButton>
-              <UButton size="xs" variant="outline" color="neutral" @click="emit('add:source')">
-                + Add Source
-              </UButton>
             </div>
           </div>
         </template>
       </UPopover>
 
-      <!-- Empty/add source placeholder -->
-      <button
-        v-if="activeInputs.length === 0"
-        class="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
-        @click="emit('add:source')"
-      >
-        <UIcon name="i-lucide-plus" class="w-4 h-4 text-muted-foreground" />
-      </button>
+      <!-- Add source "+" with type selection dropdown -->
+      <UDropdownMenu :items="sourceTypeItems">
+        <button
+          class="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
+        >
+          <UIcon name="i-lucide-plus" class="w-4 h-4 text-muted-foreground" />
+        </button>
+      </UDropdownMenu>
     </div>
 
     <!-- Arrow separator -->
     <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
 
     <!-- AI brain icon -->
-    <UPopover :ui="{ content: 'w-64' }">
+    <UPopover mode="hover" arrow :ui="{ content: 'w-64' }">
       <button
         class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
         :class="flow?.aiEnabled ? 'bg-violet-500/10' : 'bg-gray-500/10'"
@@ -257,17 +305,19 @@ function getDomainColor(domain: string): string {
     <div class="flex items-center gap-1">
       <!-- Existing output icons -->
       <UPopover
-        v-for="output in activeOutputs"
+        v-for="output in allOutputs"
         :key="output.id"
+        mode="hover"
+        arrow
         :ui="{ content: 'w-64' }"
       >
         <button
           class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer relative"
-          :class="getOutputBg(output.outputType)"
+          :class="isOutputConfigured(output) ? getOutputBg(output.outputType) : 'bg-gray-500/10 opacity-50'"
         >
           <UIcon
             :name="getOutputIcon(output.outputType)"
-            :class="['w-5 h-5', getOutputColor(output.outputType)]"
+            :class="['w-5 h-5', isOutputConfigured(output) ? getOutputColor(output.outputType) : 'text-gray-400']"
           />
           <!-- Domain dots -->
           <div
@@ -304,22 +354,19 @@ function getDomainColor(domain: string): string {
               <UButton size="xs" variant="outline" color="neutral" @click="emit('edit:output', output)">
                 Edit
               </UButton>
-              <UButton size="xs" variant="outline" color="neutral" @click="emit('add:output')">
-                + Add Output
-              </UButton>
             </div>
           </div>
         </template>
       </UPopover>
 
-      <!-- Empty/add output placeholder -->
-      <button
-        v-if="activeOutputs.length === 0"
-        class="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
-        @click="emit('add:output')"
-      >
-        <UIcon name="i-lucide-plus" class="w-4 h-4 text-muted-foreground" />
-      </button>
+      <!-- Add output "+" with type selection dropdown -->
+      <UDropdownMenu :items="outputTypeItems">
+        <button
+          class="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
+        >
+          <UIcon name="i-lucide-plus" class="w-4 h-4 text-muted-foreground" />
+        </button>
+      </UDropdownMenu>
     </div>
   </div>
 </template>
