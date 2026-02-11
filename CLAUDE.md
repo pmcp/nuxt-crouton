@@ -154,28 +154,25 @@ Step 4: Update Progress Tracker
 ├─ Update phase progress percentage
 └─ Add notes/learnings in Daily Log section
 
-Step 5: Git Commit (MANDATORY)
-├─ Stage ONLY files related to current task (git add <specific-files>)
-├─ NEVER use "git add ." - always stage specific files
-├─ Commit with conventional format
-├─ Push if appropriate
-└─ See commit format below
+Step 5: Git Commit (MANDATORY — use /commit skill)
+├─ ALWAYS invoke the /commit skill for ALL commits
+├─ The skill handles file selection, grouping, messages, and amending
+├─ NEVER commit directly with git — always go through /commit
+├─ See .claude/skills/commit.md for full rules
 ```
 
 ### Conventional Commit Format
 
-Use this format for ALL commits:
+The `/commit` skill enforces this automatically. For reference:
 
 ```bash
-<type>: <description> (Task X.Y)
+<type>(<scope>): <description>
 
 [optional body with details]
-
-[optional footer with breaking changes]
 ```
 
 **Types:**
-- `feat:` - New feature (Tasks 1.5, 2.1, 3.1, etc.)
+- `feat:` - New feature
 - `fix:` - Bug fix
 - `refactor:` - Code refactoring (no functionality change)
 - `docs:` - Documentation only
@@ -278,19 +275,9 @@ npx nuxt typecheck
 # Step 4: Update tracker
 # (Edit PROGRESS_TRACKER.md - mark complete, update stats)
 
-# Step 5: Commit (stage only task-related files)
-git add layers/discussion/ docs/PROGRESS_TRACKER.md
-git commit -m "feat: generate discussion layer (Task 1.5)
-
-Generated ~100 files for 4 collections:
-- discussions (with embedded threadData)
-- sourceConfigs
-- syncJobs
-- tasks
-
-All files generated in layers/discussion/"
-
-git push
+# Step 5: Use /commit skill
+# The skill will analyze changes, filter to session-relevant files,
+# propose grouping and message, then commit after approval.
 ```
 
 ### Multi-Agent Continuity
@@ -313,12 +300,12 @@ git push
 
 ### Critical Reminders
 
-- ✅ **NEVER skip the commit step** - Every task = One commit
+- ✅ **ALWAYS use `/commit` skill for ALL commits** - Never run `git commit` directly
 - ✅ **ALWAYS run typecheck** after code changes
 - ✅ **ALWAYS update PROGRESS_TRACKER.md** before committing
 - ✅ **ALWAYS use TodoWrite** to track the 5 steps
 - ✅ **ALWAYS read PROGRESS_TRACKER.md** when starting
-- ✅ **ONLY stage task-related files** - Use `git add <specific-files>`, never `git add .`
+- ✅ **ONLY commit session-relevant files** - The /commit skill handles this automatically
 - ❌ **NEVER batch multiple tasks** in one commit (unless explicitly told)
 - ❌ **NEVER commit without updating tracker** first
 - ❌ **NEVER use `git add .`** - always specify exact files changed for the task
