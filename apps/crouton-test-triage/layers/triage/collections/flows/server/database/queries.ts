@@ -5,6 +5,27 @@ import * as tables from './schema'
 import type { TriageFlow, NewTriageFlow } from '../../types'
 import { user } from '~~/server/db/schema'
 
+// Select fields for GET responses — excludes anthropicApiKey (encrypted secret)
+const triageFlowPublicSelect = {
+  id: tables.triageFlows.id,
+  teamId: tables.triageFlows.teamId,
+  owner: tables.triageFlows.owner,
+  order: tables.triageFlows.order,
+  name: tables.triageFlows.name,
+  description: tables.triageFlows.description,
+  availableDomains: tables.triageFlows.availableDomains,
+  aiEnabled: tables.triageFlows.aiEnabled,
+  anthropicApiKeyHint: tables.triageFlows.anthropicApiKeyHint,
+  aiSummaryPrompt: tables.triageFlows.aiSummaryPrompt,
+  aiTaskPrompt: tables.triageFlows.aiTaskPrompt,
+  active: tables.triageFlows.active,
+  onboardingComplete: tables.triageFlows.onboardingComplete,
+  createdAt: tables.triageFlows.createdAt,
+  updatedAt: tables.triageFlows.updatedAt,
+  createdBy: tables.triageFlows.createdBy,
+  updatedBy: tables.triageFlows.updatedBy,
+}
+
 export async function getAllTriageFlows(teamId: string) {
   const db = useDB()
 
@@ -14,7 +35,7 @@ export async function getAllTriageFlows(teamId: string) {
 
   const flows = await (db as any)
     .select({
-      ...tables.triageFlows,
+      ...triageFlowPublicSelect,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -53,7 +74,7 @@ export async function getTriageFlowsByIds(teamId: string, flowIds: string[]) {
 
   const flows = await (db as any)
     .select({
-      ...tables.triageFlows,
+      ...triageFlowPublicSelect,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -86,6 +107,25 @@ export async function getTriageFlowsByIds(teamId: string, flowIds: string[]) {
     .orderBy(desc(tables.triageFlows.createdAt))
 
   return flows
+}
+
+/** Server-only: get the encrypted API key for a flow (never expose to client) */
+export async function getTriageFlowEncryptedKey(flowId: string, teamId: string) {
+  const db = useDB()
+
+  const [flow] = await (db as any)
+    .select({
+      anthropicApiKey: tables.triageFlows.anthropicApiKey,
+    })
+    .from(tables.triageFlows)
+    .where(
+      and(
+        eq(tables.triageFlows.id, flowId),
+        eq(tables.triageFlows.teamId, teamId),
+      ),
+    )
+
+  return flow?.anthropicApiKey as string | null
 }
 
 export async function createTriageFlow(data: NewTriageFlow) {

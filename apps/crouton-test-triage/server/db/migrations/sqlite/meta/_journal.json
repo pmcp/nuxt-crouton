@@ -8,6 +8,13 @@
       "when": 1770765797959,
       "tag": "0000_gifted_butterfly",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1739289600000,
+      "tag": "0001_add_api_key_hint",
+      "breakpoints": true
     }
   ]
 }

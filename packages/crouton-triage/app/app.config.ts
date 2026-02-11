@@ -14,11 +14,6 @@ export default defineAppConfig({
           icon: 'i-lucide-activity'
         },
         {
-          path: '/triage/flows',
-          label: 'triage.admin.flows',
-          icon: 'i-lucide-workflow'
-        },
-        {
           path: '/triage/discussions',
           label: 'triage.admin.discussions',
           icon: 'i-lucide-message-square'

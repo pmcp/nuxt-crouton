@@ -269,7 +269,7 @@ async function retryJob(job: any) {
           <UButton
             color="primary"
             icon="i-lucide-settings"
-            :to="`/admin/${currentTeam?.slug}/triage/flows`"
+            :to="`/admin/${currentTeam?.slug}/triage`"
             aria-label="Configure integrations"
           >
             Configure Integrations

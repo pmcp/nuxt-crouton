@@ -261,8 +261,10 @@ export interface Flow {
   availableDomains?: string[]
   /** Whether AI analysis is enabled */
   aiEnabled: boolean
-  /** Optional Anthropic API key override */
+  /** Optional Anthropic API key override (encrypted at rest, never returned to client) */
   anthropicApiKey?: string
+  /** Masked hint for display (e.g., "sk-ant-...7xkQ") */
+  anthropicApiKeyHint?: string
   /** AI summary prompt override */
   aiSummaryPrompt?: string
   /** AI task detection prompt override */

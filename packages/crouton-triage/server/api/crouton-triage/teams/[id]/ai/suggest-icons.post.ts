@@ -11,8 +11,8 @@ import { z } from 'zod'
 
 const requestSchema = z.object({
   description: z.string().min(1).max(500),
-  // Optional API key override (uses runtime config if not provided)
-  anthropicApiKey: z.string().optional(),
+  // Flow ID to load the encrypted API key from DB
+  flowId: z.string().optional(),
 })
 
 interface IconSuggestion {
@@ -52,15 +52,30 @@ const LUCIDE_PERSONALITY_ICONS = [
 
 export default defineEventHandler(async (event): Promise<SuggestIconsResponse> => {
   const body = await readValidatedBody(event, requestSchema.parse)
+  const teamId = getRouterParam(event, 'id')
 
-  // Get API key from body or runtime config
+  // Resolve API key: flow-level encrypted key → server runtime config
   const config = useRuntimeConfig()
-  const apiKey = body.anthropicApiKey || config.anthropicApiKey
+  let apiKey = config.anthropicApiKey as string | undefined
+
+  if (body.flowId && teamId) {
+    try {
+      const { getTriageFlowEncryptedKey } = await import(
+        '~~/layers/triage/collections/flows/server/database/queries'
+      )
+      const encryptedKey = await getTriageFlowEncryptedKey(body.flowId, teamId)
+      if (encryptedKey) {
+        apiKey = await decryptSecret(encryptedKey)
+      }
+    } catch {
+      // Fall through to server key
+    }
+  }
 
   if (!apiKey) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Anthropic API key required',
+      status: 400,
+      statusText: 'Anthropic API key required',
     })
   }
 

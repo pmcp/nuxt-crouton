@@ -25,10 +25,9 @@ const saving = ref(false)
 // Default domains for new flows
 const DEFAULT_DOMAINS = ['design', 'frontend', 'backend', 'product', 'infrastructure', 'docs']
 
-// Form state initialized from flow
+// Form state initialized from flow (anthropicApiKey is never returned from server)
 const formState = ref({
   aiEnabled: props.flow?.aiEnabled ?? true,
-  anthropicApiKey: props.flow?.anthropicApiKey || '',
   aiSummaryPrompt: props.flow?.aiSummaryPrompt || '',
   aiTaskPrompt: props.flow?.aiTaskPrompt || '',
   replyPersonality: props.flow?.replyPersonality || '',
@@ -36,18 +35,27 @@ const formState = ref({
   availableDomains: props.flow?.availableDomains || [...DEFAULT_DOMAINS],
 })
 
+// API key management — key is encrypted at rest, we only show the hint
+const hasExistingKey = ref(!!props.flow?.anthropicApiKeyHint)
+const apiKeyHint = ref(props.flow?.anthropicApiKeyHint || '')
+const isChangingKey = ref(false)
+const newApiKey = ref('')
+
 // Sync form when flow changes
 watch(() => props.flow, (flow) => {
   if (flow) {
     formState.value = {
       aiEnabled: flow.aiEnabled ?? true,
-      anthropicApiKey: flow.anthropicApiKey || '',
       aiSummaryPrompt: flow.aiSummaryPrompt || '',
       aiTaskPrompt: flow.aiTaskPrompt || '',
       replyPersonality: flow.replyPersonality || '',
       personalityIcon: flow.personalityIcon || '',
       availableDomains: flow.availableDomains || [...DEFAULT_DOMAINS],
     }
+    hasExistingKey.value = !!flow.anthropicApiKeyHint
+    apiKeyHint.value = flow.anthropicApiKeyHint || ''
+    isChangingKey.value = false
+    newApiKey.value = ''
     selectedPreset.value = detectPresetFromPrompts(flow.aiSummaryPrompt, flow.aiTaskPrompt)
     // Sync personality ref
     const rp = flow.replyPersonality
@@ -203,7 +211,7 @@ async function suggestIcons() {
         method: 'POST',
         body: {
           description: customPersonalityPrompt.value,
-          anthropicApiKey: formState.value.anthropicApiKey,
+          flowId: props.flow?.id,
         },
       }
     )
@@ -230,7 +238,8 @@ async function handleSave() {
       method: 'PATCH',
       body: {
         aiEnabled: formState.value.aiEnabled,
-        anthropicApiKey: formState.value.anthropicApiKey || undefined,
+        // Only send API key when user is setting a new one
+        ...(newApiKey.value && { anthropicApiKey: newApiKey.value }),
         aiSummaryPrompt: formState.value.aiSummaryPrompt || undefined,
         aiTaskPrompt: formState.value.aiTaskPrompt || undefined,
         replyPersonality: formState.value.replyPersonality || undefined,
@@ -238,6 +247,13 @@ async function handleSave() {
         availableDomains: formState.value.availableDomains,
       },
     })
+
+    // Reset key input state after successful save
+    if (newApiKey.value) {
+      hasExistingKey.value = true
+      isChangingKey.value = false
+      newApiKey.value = ''
+    }
 
     emit('save', formState.value)
     isOpen.value = false
@@ -273,14 +289,31 @@ async function handleSave() {
           </div>
 
           <template v-if="formState.aiEnabled">
-            <!-- API Key (optional) -->
-            <UFormField label="Anthropic API Key" help="Optional. Uses server key if not provided.">
-              <UInput
-                v-model="formState.anthropicApiKey"
-                type="password"
-                placeholder="sk-ant-..."
-                class="w-full"
-              />
+            <!-- API Key (optional, encrypted at rest) -->
+            <UFormField label="Anthropic API Key" help="Optional. Uses server key if not provided. Encrypted at rest.">
+              <div v-if="hasExistingKey && !isChangingKey" class="flex items-center gap-2">
+                <code class="text-xs bg-muted px-2 py-1 rounded font-mono">{{ apiKeyHint }}</code>
+                <UButton size="xs" variant="outline" color="neutral" @click="isChangingKey = true">
+                  Change
+                </UButton>
+              </div>
+              <div v-else class="space-y-2">
+                <UInput
+                  v-model="newApiKey"
+                  type="password"
+                  placeholder="sk-ant-..."
+                  class="w-full"
+                />
+                <UButton
+                  v-if="hasExistingKey"
+                  size="xs"
+                  variant="ghost"
+                  color="neutral"
+                  @click="isChangingKey = false; newApiKey = ''"
+                >
+                  Cancel
+                </UButton>
+              </div>
             </UFormField>
 
             <USeparator />

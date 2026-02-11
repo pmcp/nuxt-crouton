@@ -1592,7 +1592,10 @@ export async function processDiscussion(
         // Build bootstrap response message with personality
         const userCount = bootstrapResult.mentionedUsers.length
         const replyPersonality = flowData?.flow.replyPersonality || null
-        const anthropicApiKey = flowData?.flow.anthropicApiKey || config?.anthropicApiKey
+        const encryptedBootstrapKey = flowData?.flow.anthropicApiKey
+        const anthropicApiKey = encryptedBootstrapKey
+          ? await decryptSecret(encryptedBootstrapKey)
+          : config?.anthropicApiKey
         const personalityIcon = flowData?.flow.personalityIcon || undefined
         const bootstrapMessage = await generateBootstrapMessage(userCount, replyPersonality, anthropicApiKey, personalityIcon)
 
@@ -1888,7 +1891,10 @@ export async function processDiscussion(
 
       // Build confirmation message with personality
       const replyPersonality = flowData?.flow.replyPersonality || null
-      const anthropicApiKey = flowData?.flow.anthropicApiKey || config?.anthropicApiKey
+      const encryptedConfirmKey = flowData?.flow.anthropicApiKey
+      const anthropicApiKey = encryptedConfirmKey
+        ? await decryptSecret(encryptedConfirmKey)
+        : config?.anthropicApiKey
       const personalityIcon = flowData?.flow.personalityIcon || undefined
       const confirmationMessage = await generateReplyMessage(notionTasks, replyPersonality, anthropicApiKey, personalityIcon)
 

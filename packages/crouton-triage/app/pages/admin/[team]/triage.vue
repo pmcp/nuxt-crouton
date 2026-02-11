@@ -26,11 +26,6 @@ const tabs = computed(() => [
       exact: true
     },
     {
-      label: t('triage.admin.flows') || 'Flows',
-      icon: 'i-lucide-workflow',
-      to: `/admin/${teamSlug.value}/triage/flows`
-    },
-    {
       label: t('triage.admin.discussions') || 'Discussions',
       icon: 'i-lucide-message-square',
       to: `/admin/${teamSlug.value}/triage/discussions`

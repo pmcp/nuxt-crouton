@@ -21,6 +21,33 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { currentTeam } = useTeam()
 const toast = useToast()
+const creatingFlow = ref(false)
+
+// Create a new empty flow instantly
+async function handleCreateFlow() {
+  if (!currentTeam.value?.id || creatingFlow.value) return
+  creatingFlow.value = true
+  try {
+    await $fetch(`/api/teams/${currentTeam.value.id}/triage-flows`, {
+      method: 'POST',
+      body: {
+        name: 'Untitled Flow',
+        active: false,
+        onboardingComplete: false,
+        aiEnabled: true,
+      },
+    })
+    await refreshFlows()
+  } catch (error: any) {
+    toast.add({
+      title: 'Failed to create flow',
+      description: error.data?.message || error.message || 'Something went wrong.',
+      color: 'error',
+    })
+  } finally {
+    creatingFlow.value = false
+  }
+}
 
 // Data fetching (all at once to preserve Nuxt async context)
 const [
@@ -144,14 +171,24 @@ defineExpose({ refresh: refreshAll })
     <!-- Header -->
     <div class="flex items-center justify-between">
       <h2 v-if="title" class="text-lg font-semibold">{{ title }}</h2>
-      <UButton
-        icon="i-lucide-refresh-cw"
-        color="neutral"
-        variant="ghost"
-        size="sm"
-        :loading="loading"
-        @click="refreshAll"
-      />
+      <div class="flex items-center gap-1">
+        <UButton
+          icon="i-lucide-plus"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :loading="creatingFlow"
+          @click="handleCreateFlow"
+        />
+        <UButton
+          icon="i-lucide-refresh-cw"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :loading="loading"
+          @click="refreshAll"
+        />
+      </div>
     </div>
 
     <!-- Pipeline Builder (only when a flow exists) -->
@@ -182,7 +219,8 @@ defineExpose({ refresh: refreshAll })
       <UButton
         color="primary"
         icon="i-lucide-plus"
-        :to="`/admin/${currentTeam?.slug}/triage/flows/create`"
+        :loading="creatingFlow"
+        @click="handleCreateFlow"
       >
         Create Flow
       </UButton>

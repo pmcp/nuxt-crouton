@@ -44,6 +44,11 @@ export default defineNuxtConfig({
 
   modules: ['@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo'],
 
+  // Runtime config for server-side secrets
+  runtimeConfig: {
+    encryptionKey: '', // NUXT_ENCRYPTION_KEY - base64-encoded 32-byte key for AES-256-GCM
+  },
+
   // NuxtHub configuration for database, KV, blob storage
   // Apps can override with different providers (postgresql, mysql) or resource IDs
   hub: {

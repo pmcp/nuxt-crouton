@@ -1,0 +1,1 @@
+ALTER TABLE `triage_flows` ADD `anthropicApiKeyHint` text;

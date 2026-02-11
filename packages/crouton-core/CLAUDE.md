@@ -45,6 +45,7 @@ export default defineNuxtConfig({
 
 | File | Purpose |
 |------|---------|
+| `server/utils/encryption.ts` | AES-256-GCM encryption for storing third-party secrets at rest |
 | `app/composables/useCrouton.ts` | Modal/slideover state management (nested up to 5 levels) |
 | `app/composables/useCollectionQuery.ts` | Async data fetching with query-based caching |
 | `app/composables/useCollectionMutation.ts` | Create/update/delete with auto cache invalidation |
@@ -66,6 +67,32 @@ useCollectionMutation() → CRUD operations (auto-refresh cache)
 useCollections()      → Config registry (componentMap, apiPath, references)
 useCroutonShortcuts() → Keyboard shortcuts (create, save, close, delete, search)
 useTeamContext()      → Team ID/slug from route params (client-side)
+```
+
+## Encryption Utility (server/utils/encryption.ts)
+
+Reusable AES-256-GCM encryption for storing third-party secrets (API keys, tokens) at rest. Auto-imported by all layers via Nitro.
+
+**Functions:**
+- `encryptSecret(plaintext)` → `"base64iv:base64ciphertext"`
+- `decryptSecret(encrypted)` → plaintext
+- `maskSecret(value, prefixChars?, suffixChars?)` → `"sk-ant-...7xkQ"`
+- `isEncryptedSecret(value)` → boolean
+
+**Setup:** Set `NUXT_ENCRYPTION_KEY` env var (generate with `openssl rand -base64 32`).
+
+**Usage pattern:**
+```typescript
+// On save (e.g., PATCH endpoint)
+const encrypted = await encryptSecret(body.apiKey)
+const hint = maskSecret(body.apiKey)
+// Store both encrypted + hint in DB
+
+// On use (e.g., making API calls)
+const plaintext = await decryptSecret(row.apiKey)
+
+// On read (GET endpoints)
+// Return hint only, never the encrypted value
 ```
 
 ## Team Authentication

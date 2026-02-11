@@ -32,6 +32,7 @@ export interface TriageFlow {
   availableDomains?: string[]
   aiEnabled: boolean
   anthropicApiKey?: string
+  anthropicApiKeyHint?: string
   aiSummaryPrompt?: string
   aiTaskPrompt?: string
   active: boolean

@@ -29,6 +29,7 @@ export const triageFlows = sqliteTable('triage_flows', {
   availableDomains: jsonColumn('availableDomains').$default(() => (null)),
   aiEnabled: integer('aiEnabled', { mode: 'boolean' }).notNull().$default(() => false),
   anthropicApiKey: text('anthropicApiKey'),
+  anthropicApiKeyHint: text('anthropicApiKeyHint'),
   aiSummaryPrompt: text('aiSummaryPrompt'),
   aiTaskPrompt: text('aiTaskPrompt'),
   active: integer('active', { mode: 'boolean' }).notNull().$default(() => false),
