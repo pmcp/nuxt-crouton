@@ -1,3 +1,10 @@
+---
+name: audit
+description: Audit packages for documentation completeness, detect drift between code and docs, and maintain documentation quality across the monorepo. Use when checking package docs, running audits, or reviewing documentation health.
+argument-hint: "[package-name | --all | --docs-health]"
+allowed-tools: Bash, Read, Grep, Glob
+---
+
 # Package Audit Skill
 
 Audit packages for documentation completeness, detect drift, and maintain docs quality.
@@ -25,7 +32,7 @@ Audit packages for documentation completeness, detect drift, and maintain docs q
 ### When in Doubt
 
 ```
-⚠️ I found a potential issue, but I might be wrong:
+I found a potential issue, but I might be wrong:
 
 CLAUDE.md says: "CroutonEditor accepts 5 props"
 I found in source: 7 props defined
@@ -41,15 +48,6 @@ What would you like to do?
 3. Skip - the docs are correct as-is
 4. Add a TODO comment for later review
 ```
-
-## Triggers
-
-Use this skill when the user mentions:
-- "audit package"
-- "check documentation"
-- "review package docs"
-- "documentation health"
-- "/audit"
 
 ## Prerequisites
 
@@ -111,13 +109,13 @@ Format results clearly:
 - Types: 2
 
 **Documentation Status**
-- CLAUDE.md: ✅ 95% coverage
-- README.md: ✅ exists
-- apps/docs: ⚠️ may need update
+- CLAUDE.md: 95% coverage
+- README.md: exists
+- apps/docs: may need update
 
 **Issues**
-1. ⚠️ CroutonEditorToolbar not documented in CLAUDE.md
-2. ⚠️ Package reference "@friendlyinternet/..." is outdated
+1. CroutonEditorToolbar not documented in CLAUDE.md
+2. Package reference "@friendlyinternet/..." is outdated
 ```
 
 ### Step 3: Offer Fixes
@@ -139,8 +137,7 @@ If user approves:
    - Add section to CLAUDE.md following existing format
 
 2. **For outdated references:**
-   - Find and replace `@fyit/crouton-*` → `@fyit/crouton-*`
-   - Find and replace `@fyit/crouton-*` → `@fyit/crouton-*`
+   - Find and replace old package names with current ones
 
 ### Step 5: Verify
 
@@ -174,9 +171,9 @@ pnpm crouton-ci audit --all --json
 **Packages Analyzed**: 21
 
 **By Coverage**
-- ✅ 90%+: 8 packages
-- ⚠️ 70-89%: 10 packages
-- ❌ <70%: 3 packages
+- 90%+: 8 packages
+- 70-89%: 10 packages
+- <70%: 3 packages
 
 **Packages Needing Attention**
 1. crouton-maps (45%) - missing 3 components
@@ -218,10 +215,10 @@ For each file, check:
 ## /docs Health Check
 
 **upcoming/** (6 files)
-- ✅ PLAN-package-rename-fyit.md — Active
-- ⚠️ PLAN-keyboard-shortcuts.md — Likely done
+- PLAN-package-rename-fyit.md — Active
+- PLAN-keyboard-shortcuts.md — Likely done
   → useCroutonShortcuts exists
-- ❓ PLAN-playground.md — Unknown
+- PLAN-playground.md — Unknown
 
 **Suggestions**
 - Move 2 files to completed/
@@ -247,9 +244,6 @@ If crouton-ci is not available, use these patterns:
 ```bash
 # Find all Vue components
 find packages/<pkg>/app/components -name "*.vue" 2>/dev/null
-
-# For each, extract name from filename
-# Simple.vue in crouton-editor → CroutonEditorSimple
 ```
 
 ### Extract Composables
@@ -266,88 +260,8 @@ find packages/<pkg>/app/composables -name "use*.ts" 2>/dev/null
 grep -l "ComponentName" packages/<pkg>/CLAUDE.md
 ```
 
-### Find Outdated References
-
-```bash
-# Search for old package names
-grep -r "@friendlyinternet" packages/<pkg>/
-```
-
 ## Related Files
 
 - Plan: `docs/active/PLAN-crouton-ci.md`
 - CLI Package: `packages/crouton-ci/` (when built)
-- Existing sync-check: `.claude/commands/sync-check.md` (to be replaced)
-
-## Examples
-
-### Example 1: Quick Audit
-
-```
-User: /audit crouton-i18n
-
-Claude: Auditing crouton-i18n...
-
-**Exports Found**
-- Components: 4 (LocaleSwitcher, LanguagePicker, TranslationEditor, TranslationStatus)
-- Composables: 3 (useT, useTranslations, useLocale)
-- Server Utils: 2 (getTranslations, setTranslation)
-
-**Documentation Status**
-- CLAUDE.md: ✅ 100% coverage
-- README.md: ✅ exists
-
-No issues found. Documentation is up to date.
-```
-
-### Example 2: Package with Issues
-
-```
-User: /audit crouton-maps
-
-Claude: Auditing crouton-maps...
-
-**Issues Found**
-
-1. ❌ Missing CLAUDE.md sections:
-   - CroutonMapPicker component
-   - CroutonAddressInput component
-   - useMapbox composable
-
-2. ⚠️ README.md missing
-
-3. ⚠️ Outdated reference in nuxt.config.ts:
-   - Line 5: "@fyit/crouton-maps"
-
-Coverage: 40% (2/5 exports documented)
-
-Would you like me to:
-1. Add missing components to CLAUDE.md
-2. Create README.md scaffold
-3. Fix package reference
-4. All of the above
-```
-
-### Example 3: Docs Health
-
-```
-User: /audit --docs-health
-
-Claude: Checking /docs folder health...
-
-**Likely Complete** (recommend moving to completed/)
-- PLAN-keyboard-shortcuts.md
-  → useCroutonShortcuts found in crouton-core
-- generator-options-select-brief.md
-  → optionsSelect documented in crouton.md skill
-
-**Active**
-- PLAN-package-rename-fyit.md (Phase 0 complete)
-- block-editor-debugging-brief.md (JSON mode issue)
-
-**Needs Triage**
-- PLAN-playground.md — Last updated 32 days ago
-- crouton-add-command-brief.md — Is `crouton add` implemented?
-
-Would you like me to help determine the status of the unknown files?
-```
+- Existing sync-check: `.claude/commands/sync-check.md`

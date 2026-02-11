@@ -1,12 +1,12 @@
+---
+name: commit
+description: Smart, granular git commits following monorepo conventions. Analyzes changes, filters to session-relevant files, groups by intent, and uses conventional commit format. Use when committing code changes.
+allowed-tools: Bash, Read, Grep, Glob
+---
+
 # Commit Skill
 
 Smart, granular commits following this project's conventions.
-
-## Triggers
-
-Use this skill when the user mentions:
-- "commit", "git commit"
-- "/commit"
 
 ## Rules
 
@@ -68,7 +68,7 @@ Group 3: "chore(root): update eslint config"
   - eslint.config.mjs
 ```
 
-### Step 3: Present the plan to the user
+### Step 4: Present the plan to the user
 
 Before committing anything, show:
 
@@ -86,13 +86,13 @@ Proceed?
 
 Wait for user approval. If the user wants to adjust grouping or messages, do so.
 
-### Step 4: Execute commits sequentially
+### Step 5: Execute commits sequentially
 
 For each group:
 1. `git add <specific-files>`
 2. `git commit` with the message (use HEREDOC format, no Co-Authored-By)
 
-### Step 5: Confirm
+### Step 6: Confirm
 
 Show `git log --oneline -N` (where N = number of commits made) to confirm.
 
