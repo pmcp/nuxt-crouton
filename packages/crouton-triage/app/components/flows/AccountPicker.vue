@@ -55,6 +55,8 @@ function clearSelection() {
 watch(() => props.teamId, () => {
   fetchAccounts()
 })
+
+defineExpose({ fetchAccounts })
 </script>
 
 <template>

@@ -108,7 +108,6 @@ function toggleDomain(domain: string) {
 // ============================================================================
 
 const outputFormState = ref({
-  name: '',
   outputType: 'notion',
   domainFilter: [] as string[],
   isDefault: false,
@@ -121,8 +120,67 @@ const outputFormState = ref({
   fieldMapping: {} as Record<string, any>,
 })
 
-// Show inline token field (when user clicks "Connect new account" or no account selected)
-const showInlineNotionToken = ref(false)
+// Connect account modal
+const showConnectAccountModal = ref(false)
+const connectAccountForm = ref({ label: '', token: '' })
+const connectingAccount = ref(false)
+const accountPickerRef = ref<{ fetchAccounts: () => Promise<void> } | null>(null)
+
+const { createManualAccount: createAccount } = useTriageConnectedAccounts(props.teamId)
+
+/**
+ * Open modal to connect a new Notion account
+ */
+function openConnectAccountModal() {
+  connectAccountForm.value = { label: '', token: '' }
+  showConnectAccountModal.value = true
+}
+
+/**
+ * Create a new connected account and auto-select it
+ */
+async function handleConnectAccount() {
+  if (!connectAccountForm.value.label || !connectAccountForm.value.token) {
+    toast.add({
+      title: 'Missing Fields',
+      description: 'Please enter a label and API token.',
+      color: 'warning',
+    })
+    return
+  }
+
+  connectingAccount.value = true
+  try {
+    const result = await createAccount({
+      provider: 'notion',
+      label: connectAccountForm.value.label,
+      token: connectAccountForm.value.token,
+    })
+
+    // Refresh AccountPicker's account list
+    await accountPickerRef.value?.fetchAccounts()
+
+    if (result?.account?.id) {
+      outputFormState.value.accountId = result.account.id
+    }
+
+    toast.add({
+      title: 'Account Connected',
+      description: `${connectAccountForm.value.label} has been added.`,
+      color: 'success',
+    })
+
+    showConnectAccountModal.value = false
+  } catch (err: any) {
+    toast.add({
+      title: 'Connection Failed',
+      description: err.message || 'Failed to connect account.',
+      color: 'error',
+    })
+  } finally {
+    connectingAccount.value = false
+  }
+}
 
 // ============================================================================
 // NOTION SCHEMA FETCHING
@@ -202,11 +260,6 @@ async function fetchNotionSchemaAndMap() {
       const mappedFields = autoMapFields(notionSchema.value)
       outputFormState.value.fieldMapping = mappedFields
 
-      // Auto-fill name from database title if not already set
-      if (!outputFormState.value.name && notionSchema.value.databaseTitle) {
-        outputFormState.value.name = notionSchema.value.databaseTitle
-      }
-
       toast.add({
         title: 'Schema Fetched',
         description: 'Fields have been auto-mapped. Review and adjust as needed.',
@@ -228,7 +281,6 @@ async function fetchNotionSchemaAndMap() {
 // ============================================================================
 
 const notionOutputSchema = z.object({
-  name: z.string().optional(),
   accountId: z.string().optional(),
   notionToken: z.string().optional(),
   databaseId: z.string().min(1, 'Database ID is required'),
@@ -237,13 +289,9 @@ const notionOutputSchema = z.object({
   path: ['notionToken'],
 })
 
-const githubOutputSchema = z.object({
-  name: z.string().optional(),
-})
+const githubOutputSchema = z.object({})
 
-const linearOutputSchema = z.object({
-  name: z.string().optional(),
-})
+const linearOutputSchema = z.object({})
 
 const outputSchema = computed(() => {
   switch (selectedOutputType.value) {
@@ -310,7 +358,6 @@ function openEditModal(output: FlowOutput) {
 
   // Populate form with existing data
   outputFormState.value = {
-    name: output.name,
     outputType: output.outputType,
     domainFilter: output.domainFilter?.length ? output.domainFilter : [...domainOptions.value],
     isDefault: output.isDefault,
@@ -337,7 +384,6 @@ function openDeleteDialog(output: FlowOutput) {
  */
 function resetForm() {
   outputFormState.value = {
-    name: '',
     outputType: selectedOutputType.value,
     domainFilter: [...domainOptions.value],
     isDefault: false,
@@ -349,7 +395,6 @@ function resetForm() {
   }
   editingOutput.value = null
   notionSchema.value = null
-  showInlineNotionToken.value = false
 }
 
 // ============================================================================
@@ -399,17 +444,11 @@ async function saveNewOutput() {
     }
     // Future: Add GitHub, Linear configs
 
-    // Generate name if not provided
-    const outputName = validatedData.name
-      || notionSchema.value?.databaseTitle
-      || `${selectedOutputType.value} output`
-
     // Create new output object
     const newOutput: FlowOutput = {
       id: `temp-${Date.now()}`, // Temporary ID, will be replaced by DB
       flowId: props.flowId,
       outputType: selectedOutputType.value,
-      name: outputName,
       domainFilter: outputFormState.value.domainFilter.length > 0
         ? outputFormState.value.domainFilter
         : undefined,
@@ -463,7 +502,7 @@ async function saveNewOutput() {
 
       toast.add({
         title: 'Output Added',
-        description: `${validatedData.name} has been added successfully.`,
+        description: `${selectedOutputType.value.charAt(0).toUpperCase() + selectedOutputType.value.slice(1)} output has been added successfully.`,
         color: 'success',
       })
     } else {
@@ -522,16 +561,9 @@ async function updateOutput() {
     }
     // Future: Add GitHub, Linear configs
 
-    // Generate name if not provided
-    const outputName = validatedData.name
-      || notionSchema.value?.databaseTitle
-      || editingOutput.value.name
-      || `${selectedOutputType.value} output`
-
     // Update output object
     const updatedOutput: FlowOutput = {
       ...editingOutput.value,
-      name: outputName,
       domainFilter: outputFormState.value.domainFilter.length > 0
         ? outputFormState.value.domainFilter
         : undefined,
@@ -588,7 +620,7 @@ async function updateOutput() {
 
       toast.add({
         title: 'Output Updated',
-        description: `${validatedData.name} has been updated successfully.`,
+        description: `${selectedOutputType.value.charAt(0).toUpperCase() + selectedOutputType.value.slice(1)} output has been updated successfully.`,
         color: 'success',
       })
     } else {
@@ -649,7 +681,7 @@ async function deleteOutput() {
 
       toast.add({
         title: 'Output Deleted',
-        description: `${deletingOutput.value.name} has been deleted.`,
+        description: `${deletingOutput.value.outputType.charAt(0).toUpperCase() + deletingOutput.value.outputType.slice(1)} output has been deleted.`,
         color: 'success',
       })
     }
@@ -854,7 +886,7 @@ watch(isEditModalOpen, (open) => {
               </UBadge>
             </div>
 
-            <h4 class="font-semibold">{{ output.name }}</h4>
+            <h4 class="font-semibold">{{ output.outputType.charAt(0).toUpperCase() + output.outputType.slice(1) }}</h4>
 
             <div class="mt-2 space-y-1 text-sm text-gray-600">
               <div class="flex items-center gap-1">
@@ -916,15 +948,6 @@ watch(isEditModalOpen, (open) => {
           </h3>
 
           <div class="space-y-4">
-            <!-- Basic Info -->
-            <UFormField label="Output Name" name="name" help="Auto-filled from Notion database name if left empty.">
-              <UInput
-                v-model="outputFormState.name"
-                placeholder="Auto-generated from Notion"
-                class="w-full"
-              />
-            </UFormField>
-
             <!-- Domain Filter -->
             <UFormField
               label="Domain Filter"
@@ -950,11 +973,12 @@ watch(isEditModalOpen, (open) => {
               <!-- Connected Account Picker -->
               <UFormField label="Connected Account" name="accountId">
                 <CroutonTriageFlowsAccountPicker
+                  ref="accountPickerRef"
                   v-model="outputFormState.accountId"
                   provider="notion"
                   :team-id="teamId"
                   placeholder="Select Notion account..."
-                  @connect-new="showInlineNotionToken = true"
+                  @connect-new="openConnectAccountModal"
                 />
               </UFormField>
 
@@ -1129,15 +1153,6 @@ watch(isEditModalOpen, (open) => {
           </h3>
 
           <div class="space-y-4">
-            <!-- Basic Info -->
-            <UFormField label="Output Name" name="name" help="Auto-filled from Notion database name if left empty.">
-              <UInput
-                v-model="outputFormState.name"
-                placeholder="Auto-generated from Notion"
-                class="w-full"
-              />
-            </UFormField>
-
             <!-- Domain Filter -->
             <UFormField
               label="Domain Filter"
@@ -1172,11 +1187,12 @@ watch(isEditModalOpen, (open) => {
               <!-- Connected Account Picker -->
               <UFormField label="Connected Account" name="accountId">
                 <CroutonTriageFlowsAccountPicker
+                  ref="accountPickerRef"
                   v-model="outputFormState.accountId"
                   provider="notion"
                   :team-id="teamId"
                   placeholder="Select Notion account..."
-                  @connect-new="showInlineNotionToken = true"
+                  @connect-new="openConnectAccountModal"
                 />
               </UFormField>
 
@@ -1322,6 +1338,52 @@ watch(isEditModalOpen, (open) => {
       </template>
     </UModal>
 
+    <!-- Connect Account Modal -->
+    <UModal v-model:open="showConnectAccountModal">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            Connect Notion Account
+          </h3>
+
+          <div class="space-y-4">
+            <UFormField label="Label" name="label" required>
+              <UInput
+                v-model="connectAccountForm.label"
+                placeholder="e.g., Design Team Notion"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField label="API Token" name="token" required>
+              <UInput
+                v-model="connectAccountForm.token"
+                type="password"
+                placeholder="secret_... or ntn_..."
+                class="w-full"
+              />
+              <template #help>
+                Paste your Notion integration token. It will be encrypted at rest.
+              </template>
+            </UFormField>
+          </div>
+
+          <div class="flex justify-end gap-2 mt-6">
+            <UButton color="gray" variant="ghost" @click="close">
+              Cancel
+            </UButton>
+            <UButton
+              color="primary"
+              :loading="connectingAccount"
+              @click="handleConnectAccount"
+            >
+              Connect
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
+
     <!-- Delete Confirmation Dialog -->
     <UModal v-model:open="isDeleteDialogOpen">
       <template #content="{ close }">
@@ -1331,7 +1393,7 @@ watch(isEditModalOpen, (open) => {
             <div>
               <h3 class="text-lg font-semibold">Delete Output</h3>
               <p class="text-sm text-gray-600 mt-1">
-                Are you sure you want to delete "{{ deletingOutput?.name }}"?
+                Are you sure you want to delete this {{ deletingOutput?.outputType }} output?
                 This action cannot be undone.
               </p>
             </div>
