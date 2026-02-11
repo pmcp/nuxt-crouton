@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/triage-outputs
   - Zod schema: useTriageOutputs() composable
-  - Fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, active
+  - Fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, accountId, active
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -91,6 +91,16 @@
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="IsDefault" name="isDefault" class="not-last:pb-4">
           <UCheckbox v-model="state.isDefault" />
+        </UFormField>
+      </div>
+
+      <div class="flex flex-col gap-4 p-1">
+        <UFormField label="AccountId" name="accountId" class="not-last:pb-4">
+          <CroutonFormReferenceSelect
+            v-model="state.accountId"
+            collection="triageAccounts"
+            label="AccountId"
+          />
         </UFormField>
       </div>
 

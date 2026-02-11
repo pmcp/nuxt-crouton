@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
     emailAddress: body.emailAddress,
     emailSlug: body.emailSlug,
     sourceMetadata: body.sourceMetadata,
+    accountId: body.accountId,
     active: body.active
   })
 })

@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/triage-inputs
  * - Form component: TriageInputsForm
  * - List component: TriageInputsList
- * - Fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, active
+ * - Fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -36,6 +36,7 @@ export const triageInputSchema = z.object({
   emailAddress: z.string().optional(),
   emailSlug: z.string().optional(),
   sourceMetadata: z.record(z.string(), z.any()).optional(),
+  accountId: z.string().optional(),
   active: z.boolean()
 })
 
@@ -49,6 +50,7 @@ export const triageInputsColumns = [
   { accessorKey: 'emailAddress', header: 'EmailAddress' },
   { accessorKey: 'emailSlug', header: 'EmailSlug' },
   { accessorKey: 'sourceMetadata', header: 'SourceMetadata' },
+  { accessorKey: 'accountId', header: 'AccountId' },
   { accessorKey: 'active', header: 'Active' }
 ]
 
@@ -68,6 +70,7 @@ const _triageInputsConfig = {
     emailAddress: '',
     emailSlug: '',
     sourceMetadata: {},
+    accountId: '',
     active: false
   },
   columns: triageInputsColumns,

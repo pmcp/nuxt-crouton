@@ -30,6 +30,7 @@ export const triageOutputs = sqliteTable('triage_outputs', {
   domainFilter: jsonColumn('domainFilter').$default(() => (null)),
   isDefault: integer('isDefault', { mode: 'boolean' }).$default(() => false),
   outputConfig: jsonColumn('outputConfig').$default(() => ({})),
+  accountId: text('accountId'),
   active: integer('active', { mode: 'boolean' }).notNull().$default(() => true),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),

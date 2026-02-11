@@ -14,6 +14,7 @@
  *
  * ## Registered Collections
  * - pagesPages: PagesPage
+ * - triageAccounts: TriageAccount
  * - triageDiscussions: TriageDiscussion
  * - triageFlows: TriageFlow
  * - triageInputs: TriageInput
@@ -25,6 +26,7 @@
  */
 
 import type { PagesPage, PagesPageFormData, NewPagesPage } from './layers/pages/collections/pages/types'
+import type { TriageAccount, TriageAccountFormData, NewTriageAccount } from './layers/triage/collections/accounts/types'
 import type { TriageDiscussion, TriageDiscussionFormData, NewTriageDiscussion } from './layers/triage/collections/discussions/types'
 import type { TriageFlow, TriageFlowFormData, NewTriageFlow } from './layers/triage/collections/flows/types'
 import type { TriageInput, TriageInputFormData, NewTriageInput } from './layers/triage/collections/inputs/types'
@@ -40,6 +42,11 @@ declare module '#crouton/types' {
       Item: PagesPage
       FormData: PagesPageFormData
       NewItem: NewPagesPage
+    }
+    triageAccounts: {
+      Item: TriageAccount
+      FormData: TriageAccountFormData
+      NewItem: NewTriageAccount
     }
     triageDiscussions: {
       Item: TriageDiscussion

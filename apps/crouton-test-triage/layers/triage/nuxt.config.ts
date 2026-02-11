@@ -20,6 +20,7 @@ export default defineNuxtConfig({
     './collections/tasks',
     './collections/jobs',
     './collections/users',
-    './collections/messages'
+    './collections/messages',
+    './collections/accounts'
   ]
 })

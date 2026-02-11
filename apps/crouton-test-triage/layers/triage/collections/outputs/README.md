@@ -15,7 +15,7 @@
 
 ## Features
 
-- References: flowId → flows
+- References: flowId → flows, accountId → accounts
 
 ## File Structure
 
@@ -52,6 +52,7 @@ collections/outputs/
 | domainFilter | array | No |
 | isDefault | boolean | No |
 | outputConfig | json | No |
+| accountId | string (→ accounts) | No |
 | active | boolean | Yes |
 | createdAt | timestamp | Auto |
 | updatedAt | timestamp | Auto |

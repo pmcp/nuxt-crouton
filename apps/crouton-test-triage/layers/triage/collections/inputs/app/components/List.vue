@@ -9,7 +9,7 @@
   - Collection name: triageInputs
   - API endpoint: /api/teams/[id]/triage-inputs
   - Columns composable: useTriageInputs()
-  - Column fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, active
+  - Column fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -41,6 +41,13 @@
         v-if="row.original.flowId"
         :id="row.original.flowId"
         collection="triageFlows"
+      />
+    </template>
+    <template #accountId-cell="{ row }">
+      <CroutonItemCardMini
+        v-if="row.original.accountId"
+        :id="row.original.accountId"
+        collection="triageAccounts"
       />
     </template>
     <template #active-cell="{ row }">

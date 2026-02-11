@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
     domainFilter: body.domainFilter,
     isDefault: body.isDefault,
     outputConfig: body.outputConfig,
+    accountId: body.accountId,
     active: body.active
   })
 })

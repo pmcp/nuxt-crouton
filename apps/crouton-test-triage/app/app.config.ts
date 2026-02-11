@@ -8,9 +8,11 @@ import { triageUsersConfig } from '../layers/triage/collections/users/app/compos
 import { triageMessagesConfig } from '../layers/triage/collections/messages/app/composables/useTriageMessages'
 import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
 import { pagesPagesConfig } from '../layers/pages/collections/pages/app/composables/usePagesPages'
+import { triageAccountsConfig } from '../layers/triage/collections/accounts/app/composables/useTriageAccounts'
 
 export default defineAppConfig({
   croutonCollections: {
+    triageAccounts: triageAccountsConfig,
     pagesPages: pagesPagesConfig,
     translationsUi: translationsUiConfig,
     triageMessages: triageMessagesConfig,

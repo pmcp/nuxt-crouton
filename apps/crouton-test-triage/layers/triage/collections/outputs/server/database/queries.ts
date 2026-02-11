@@ -4,6 +4,7 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { TriageOutput, NewTriageOutput } from '../../types'
 import * as flowsSchema from '../../../flows/server/database/schema'
+import * as accountsSchema from '../../../accounts/server/database/schema'
 import { user } from '~~/server/db/schema'
 
 export async function getAllTriageOutputs(teamId: string) {
@@ -17,6 +18,7 @@ export async function getAllTriageOutputs(teamId: string) {
     .select({
       ...tables.triageOutputs,
       flowIdData: flowsSchema.triageFlows,
+      accountIdData: accountsSchema.triageAccounts,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -38,6 +40,7 @@ export async function getAllTriageOutputs(teamId: string) {
     } as any)
     .from(tables.triageOutputs)
     .leftJoin(flowsSchema.triageFlows, eq(tables.triageOutputs.flowId, flowsSchema.triageFlows.id))
+    .leftJoin(accountsSchema.triageAccounts, eq(tables.triageOutputs.accountId, accountsSchema.triageAccounts.id))
     .leftJoin(ownerUser, eq(tables.triageOutputs.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.triageOutputs.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.triageOutputs.updatedBy, updatedByUser.id))
@@ -74,6 +77,7 @@ export async function getTriageOutputsByIds(teamId: string, outputIds: string[])
     .select({
       ...tables.triageOutputs,
       flowIdData: flowsSchema.triageFlows,
+      accountIdData: accountsSchema.triageAccounts,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -95,6 +99,7 @@ export async function getTriageOutputsByIds(teamId: string, outputIds: string[])
     } as any)
     .from(tables.triageOutputs)
     .leftJoin(flowsSchema.triageFlows, eq(tables.triageOutputs.flowId, flowsSchema.triageFlows.id))
+    .leftJoin(accountsSchema.triageAccounts, eq(tables.triageOutputs.accountId, accountsSchema.triageAccounts.id))
     .leftJoin(ownerUser, eq(tables.triageOutputs.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.triageOutputs.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.triageOutputs.updatedBy, updatedByUser.id))

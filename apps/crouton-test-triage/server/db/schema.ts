@@ -13,3 +13,4 @@ export { triageUsers } from '../../layers/triage/collections/users/server/databa
 export { triageMessages } from '../../layers/triage/collections/messages/server/database/schema'
 export * from './translations-ui'
 export { pagesPages } from '../../layers/pages/collections/pages/server/database/schema'
+export { triageAccounts } from '../../layers/triage/collections/accounts/server/database/schema'

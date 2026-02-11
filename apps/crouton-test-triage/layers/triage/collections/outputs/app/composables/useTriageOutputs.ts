@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/triage-outputs
  * - Form component: TriageOutputsForm
  * - List component: TriageOutputsList
- * - Fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, active
+ * - Fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, accountId, active
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -33,6 +33,7 @@ export const triageOutputSchema = z.object({
   domainFilter: z.array(z.string()).optional(),
   isDefault: z.boolean().optional(),
   outputConfig: z.record(z.string(), z.any()).optional(),
+  accountId: z.string().optional(),
   active: z.boolean()
 })
 
@@ -43,6 +44,7 @@ export const triageOutputsColumns = [
   { accessorKey: 'domainFilter', header: 'DomainFilter' },
   { accessorKey: 'isDefault', header: 'IsDefault' },
   { accessorKey: 'outputConfig', header: 'OutputConfig' },
+  { accessorKey: 'accountId', header: 'AccountId' },
   { accessorKey: 'active', header: 'Active' }
 ]
 
@@ -59,6 +61,7 @@ const _triageOutputsConfig = {
     domainFilter: [],
     isDefault: false,
     outputConfig: {},
+    accountId: '',
     active: false
   },
   columns: triageOutputsColumns,

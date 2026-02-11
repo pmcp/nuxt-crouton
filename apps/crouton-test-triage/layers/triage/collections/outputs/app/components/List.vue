@@ -9,7 +9,7 @@
   - Collection name: triageOutputs
   - API endpoint: /api/teams/[id]/triage-outputs
   - Columns composable: useTriageOutputs()
-  - Column fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, active
+  - Column fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, accountId, active
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -41,6 +41,13 @@
         v-if="row.original.flowId"
         :id="row.original.flowId"
         collection="triageFlows"
+      />
+    </template>
+    <template #accountId-cell="{ row }">
+      <CroutonItemCardMini
+        v-if="row.original.accountId"
+        :id="row.original.accountId"
+        collection="triageAccounts"
       />
     </template>
     <template #domainFilter-cell="{ row }">
