@@ -82,7 +82,7 @@ const sourceTypeIcon = computed(() => {
 
 
         <!-- Slack Discovery -->
-        <TriageUsermappingsSlackUserDiscovery
+        <CroutonTriageUsermappingsSlackUserDiscovery
           v-if="sourceType === 'slack'"
           :workspace-id="sourceWorkspaceId"
           :api-token="apiToken || ''"
@@ -92,7 +92,7 @@ const sourceTypeIcon = computed(() => {
         />
 
         <!-- Figma Discovery -->
-        <TriageUsermappingsFigmaUserDiscovery
+        <CroutonTriageUsermappingsFigmaUserDiscovery
           v-else-if="sourceType === 'figma'"
           :workspace-id="sourceWorkspaceId"
           :notion-token="notionToken"
@@ -101,7 +101,7 @@ const sourceTypeIcon = computed(() => {
         />
 
         <!-- Notion Discovery -->
-        <TriageUsermappingsNotionUserDiscovery
+        <CroutonTriageUsermappingsNotionUserDiscovery
           v-else-if="sourceType === 'notion'"
           :workspace-id="sourceWorkspaceId"
           :notion-token="notionToken"
