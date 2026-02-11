@@ -285,7 +285,8 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
           color="neutral"
           :ui="{
             link: 'px-2 py-1',
-            linkLeadingIcon: 'hidden'
+            linkLeadingIcon: 'hidden',
+            childLinkLabel: 'whitespace-nowrap'
           }"
         />
       </div>
