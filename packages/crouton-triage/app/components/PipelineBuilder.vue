@@ -189,6 +189,32 @@ function getPersonalityLabel(): string {
   return labels[p] || p
 }
 
+// Missing items helpers
+function getInputMissing(input: FlowInput): string[] {
+  const missing: string[] = []
+  if (input.sourceType === 'slack' && !input.apiToken) missing.push('Connect Slack workspace')
+  if (input.sourceType === 'email' && !input.emailSlug) missing.push('Set email address')
+  if (input.sourceType === 'figma' && !input.emailAddress) missing.push('Set Figma email webhook')
+  return missing
+}
+
+function getAiMissing(): string[] {
+  const missing: string[] = []
+  if (!props.flow?.aiEnabled) missing.push('Enable AI analysis')
+  if (!props.flow?.anthropicApiKey) missing.push('Add API key')
+  return missing
+}
+
+function getOutputMissing(output: FlowOutput): string[] {
+  const missing: string[] = []
+  if (output.outputType === 'notion') {
+    const config = output.outputConfig as Record<string, any> | undefined
+    if (!config?.notionToken) missing.push('Add Notion token')
+    if (!config?.databaseId) missing.push('Select database')
+  }
+  return missing
+}
+
 function getDomainColor(domain: string): string {
   const colors: Record<string, string> = {
     design: 'text-purple-500',
@@ -243,6 +269,12 @@ function getDomainColor(domain: string): string {
             <p v-if="getWorkspaceName(input)" class="text-xs text-muted-foreground">
               {{ getWorkspaceName(input) }}
             </p>
+            <div v-if="getInputMissing(input).length" class="space-y-1">
+              <p v-for="item in getInputMissing(input)" :key="item" class="text-xs text-red-500 flex items-center gap-1">
+                <UIcon name="i-lucide-circle-alert" class="w-3 h-3 flex-shrink-0" />
+                {{ item }}
+              </p>
+            </div>
             <div class="flex gap-2 pt-1">
               <UButton size="xs" variant="outline" color="neutral" @click="emit('edit:source', input)">
                 Edit
@@ -282,7 +314,13 @@ function getDomainColor(domain: string): string {
               :class="isAiConfigured ? 'bg-green-500' : 'bg-red-500'"
             />
           </div>
-          <div v-if="flow" class="space-y-1 text-xs text-muted-foreground">
+          <div v-if="getAiMissing().length" class="space-y-1">
+            <p v-for="item in getAiMissing()" :key="item" class="text-xs text-red-500 flex items-center gap-1">
+              <UIcon name="i-lucide-circle-alert" class="w-3 h-3 flex-shrink-0" />
+              {{ item }}
+            </p>
+          </div>
+          <div v-else-if="flow" class="space-y-1 text-xs text-muted-foreground">
             <p>Preset: {{ getPresetLabel() }}</p>
             <p>Personality: {{ getPersonalityLabel() }}</p>
             <p v-if="flow.availableDomains?.length">
@@ -344,7 +382,13 @@ function getDomainColor(domain: string): string {
                 />
               </div>
             </div>
-            <div class="space-y-1 text-xs text-muted-foreground">
+            <div v-if="getOutputMissing(output).length" class="space-y-1">
+              <p v-for="item in getOutputMissing(output)" :key="item" class="text-xs text-red-500 flex items-center gap-1">
+                <UIcon name="i-lucide-circle-alert" class="w-3 h-3 flex-shrink-0" />
+                {{ item }}
+              </p>
+            </div>
+            <div v-else class="space-y-1 text-xs text-muted-foreground">
               <p>Type: {{ output.outputType }}</p>
               <p v-if="output.domainFilter?.length">
                 Domains: {{ output.domainFilter.join(', ') }}
