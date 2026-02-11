@@ -76,7 +76,8 @@ export function generateSchema(data, dialect, config = null) {
       if (dialect === 'sqlite') {
       // SQLite specific schema
         if (field.type === 'boolean') {
-          return `  ${field.name}: integer('${field.name}', { mode: 'boolean' })${nullable}${unique}.$default(() => false)`
+          const boolDefault = field.meta?.default === true ? 'true' : 'false'
+          return `  ${field.name}: integer('${field.name}', { mode: 'boolean' })${nullable}${unique}.$default(() => ${boolDefault})`
         } else if (field.type === 'number' || field.type === 'decimal') {
           return `  ${field.name}: ${field.type === 'decimal' ? 'real' : 'integer'}('${field.name}')${nullable}${unique}`
         } else if (field.type === 'date') {
@@ -92,7 +93,8 @@ export function generateSchema(data, dialect, config = null) {
       } else {
       // PostgreSQL specific schema
         if (field.type === 'boolean') {
-          return `  ${field.name}: boolean('${field.name}')${nullable}${unique}.$default(() => false)`
+          const boolDefault = field.meta?.default === true ? 'true' : 'false'
+          return `  ${field.name}: boolean('${field.name}')${nullable}${unique}.$default(() => ${boolDefault})`
         } else if (field.type === 'number') {
           return `  ${field.name}: integer('${field.name}')${nullable}${unique}`
         } else if (field.type === 'decimal') {
