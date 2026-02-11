@@ -242,7 +242,7 @@ async function handleSave() {
 </script>
 
 <template>
-  <USlideover v-model="isOpen" :ui="{ width: 'max-w-lg' }">
+  <USlideover v-model:open="isOpen" :ui="{ width: 'max-w-lg' }">
     <template #content="{ close }">
       <div class="p-6 h-full overflow-y-auto">
         <div class="flex items-center justify-between mb-6">

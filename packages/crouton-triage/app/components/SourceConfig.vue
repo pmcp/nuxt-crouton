@@ -33,7 +33,7 @@ function onInputsChange(inputs: FlowInput[]) {
 </script>
 
 <template>
-  <USlideover v-model="isOpen">
+  <USlideover v-model:open="isOpen">
     <template #content="{ close }">
       <div class="p-6 h-full overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
