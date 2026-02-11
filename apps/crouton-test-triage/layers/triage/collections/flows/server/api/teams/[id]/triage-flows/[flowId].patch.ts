@@ -13,20 +13,13 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody<Partial<TriageFlow>>(event)
 
-  // Encrypt the API key if a new one is provided
-  let anthropicApiKey: string | undefined
-  let anthropicApiKeyHint: string | undefined
-  if (body.anthropicApiKey) {
-    anthropicApiKey = await encryptSecret(body.anthropicApiKey)
-    anthropicApiKeyHint = maskSecret(body.anthropicApiKey)
-  }
-
   return await updateTriageFlow(flowId, team.id, user.id, {
     name: body.name,
     description: body.description,
     availableDomains: body.availableDomains,
     aiEnabled: body.aiEnabled,
-    ...(anthropicApiKey && { anthropicApiKey, anthropicApiKeyHint }),
+    anthropicApiKey: body.anthropicApiKey,
+    anthropicApiKeyHint: body.anthropicApiKeyHint,
     aiSummaryPrompt: body.aiSummaryPrompt,
     aiTaskPrompt: body.aiTaskPrompt,
     replyPersonality: body.replyPersonality,

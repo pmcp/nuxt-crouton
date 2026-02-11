@@ -22,6 +22,20 @@
       "when": 1770821152249,
       "tag": "0002_rapid_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1770835703670,
+      "tag": "0003_steep_vector",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1770836471801,
+      "tag": "0004_fluffy_sugar_man",
+      "breakpoints": true
     }
   ]
 }

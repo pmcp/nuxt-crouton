@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection flows
  * @layer triage
- * @generated 2026-02-10
+ * @generated 2026-02-11
  *
  * ## AI Context
  * - Composable: useTriageFlows
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/triage-flows
  * - Form component: TriageFlowsForm
  * - List component: TriageFlowsList
- * - Fields: name, description, availableDomains, aiEnabled, anthropicApiKey, aiSummaryPrompt, aiTaskPrompt, active, onboardingComplete
+ * - Fields: name, description, availableDomains, aiEnabled, anthropicApiKey, anthropicApiKeyHint, aiSummaryPrompt, aiTaskPrompt, replyPersonality, personalityIcon, active, onboardingComplete
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -32,8 +32,11 @@ export const triageFlowSchema = z.object({
   availableDomains: z.array(z.string()).optional(),
   aiEnabled: z.boolean(),
   anthropicApiKey: z.string().optional(),
+  anthropicApiKeyHint: z.string().optional(),
   aiSummaryPrompt: z.string().optional(),
   aiTaskPrompt: z.string().optional(),
+  replyPersonality: z.string().optional(),
+  personalityIcon: z.string().optional(),
   active: z.boolean(),
   onboardingComplete: z.boolean()
 })
@@ -44,8 +47,11 @@ export const triageFlowsColumns = [
   { accessorKey: 'availableDomains', header: 'AvailableDomains' },
   { accessorKey: 'aiEnabled', header: 'AiEnabled' },
   { accessorKey: 'anthropicApiKey', header: 'AnthropicApiKey' },
+  { accessorKey: 'anthropicApiKeyHint', header: 'AnthropicApiKeyHint' },
   { accessorKey: 'aiSummaryPrompt', header: 'AiSummaryPrompt' },
   { accessorKey: 'aiTaskPrompt', header: 'AiTaskPrompt' },
+  { accessorKey: 'replyPersonality', header: 'ReplyPersonality' },
+  { accessorKey: 'personalityIcon', header: 'PersonalityIcon' },
   { accessorKey: 'active', header: 'Active' },
   { accessorKey: 'onboardingComplete', header: 'OnboardingComplete' }
 ]
@@ -62,8 +68,11 @@ const _triageFlowsConfig = {
     availableDomains: [],
     aiEnabled: false,
     anthropicApiKey: '',
+    anthropicApiKeyHint: '',
     aiSummaryPrompt: '',
     aiTaskPrompt: '',
+    replyPersonality: '',
+    personalityIcon: '',
     active: false,
     onboardingComplete: false
   },

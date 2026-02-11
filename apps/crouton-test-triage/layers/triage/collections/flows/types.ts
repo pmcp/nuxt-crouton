@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection flows
  * @layer triage
- * @generated 2026-02-10
+ * @generated 2026-02-11
  *
  * ## AI Context
  * - Main interface: TriageFlow
  * - Form data type: TriageFlowFormData
  * - New item type: NewTriageFlow
  * - Form props: TriageFlowFormProps
- * - Fields: name, description, availableDomains, aiEnabled, anthropicApiKey, aiSummaryPrompt, aiTaskPrompt, active, onboardingComplete
+ * - Fields: name, description, availableDomains, aiEnabled, anthropicApiKey, anthropicApiKeyHint, aiSummaryPrompt, aiTaskPrompt, replyPersonality, personalityIcon, active, onboardingComplete
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches

@@ -2,14 +2,14 @@
   @crouton-generated
   @collection flows
   @layer triage
-  @generated 2026-02-10
+  @generated 2026-02-11
 
   ## AI Context
   - List component for flows collection
   - Collection name: triageFlows
   - API endpoint: /api/teams/[id]/triage-flows
   - Columns composable: useTriageFlows()
-  - Column fields: name, description, availableDomains, aiEnabled, anthropicApiKey, aiSummaryPrompt, aiTaskPrompt, active, onboardingComplete
+  - Column fields: name, description, availableDomains, aiEnabled, anthropicApiKey, anthropicApiKeyHint, aiSummaryPrompt, aiTaskPrompt, replyPersonality, personalityIcon, active, onboardingComplete
 
   ## Common Modifications
   - Add column: Update columns array in composable

@@ -30,7 +30,7 @@ export const triageOutputs = sqliteTable('triage_outputs', {
   domainFilter: jsonColumn('domainFilter').$default(() => (null)),
   isDefault: integer('isDefault', { mode: 'boolean' }).$default(() => false),
   outputConfig: jsonColumn('outputConfig').$default(() => ({})),
-  active: integer('active', { mode: 'boolean' }).notNull().$default(() => false),
+  active: integer('active', { mode: 'boolean' }).notNull().$default(() => true),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

@@ -2,7 +2,7 @@
   @crouton-generated
   @collection outputs
   @layer triage
-  @generated 2026-02-10
+  @generated 2026-02-11
 
   ## AI Context
   - List component for outputs collection

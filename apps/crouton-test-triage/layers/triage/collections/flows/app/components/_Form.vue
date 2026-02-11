@@ -2,14 +2,14 @@
   @crouton-generated
   @collection flows
   @layer triage
-  @generated 2026-02-10
+  @generated 2026-02-11
 
   ## AI Context
   - Form component for flows collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/triage-flows
   - Zod schema: useTriageFlows() composable
-  - Fields: name, description, availableDomains, aiEnabled, anthropicApiKey, aiSummaryPrompt, aiTaskPrompt, active, onboardingComplete
+  - Fields: name, description, availableDomains, aiEnabled, anthropicApiKey, anthropicApiKeyHint, aiSummaryPrompt, aiTaskPrompt, replyPersonality, personalityIcon, active, onboardingComplete
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -75,6 +75,12 @@
         <UFormField label="AiTaskPrompt" name="aiTaskPrompt" class="not-last:pb-4">
           <UTextarea v-model="state.aiTaskPrompt" class="w-full" size="xl" />
         </UFormField>
+        <UFormField label="ReplyPersonality" name="replyPersonality" class="not-last:pb-4">
+          <UInput v-model="state.replyPersonality" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField label="PersonalityIcon" name="personalityIcon" class="not-last:pb-4">
+          <UInput v-model="state.personalityIcon" class="w-full" size="xl" />
+        </UFormField>
       </div>
       </template>
 
@@ -84,6 +90,12 @@
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="AiEnabled" name="aiEnabled" class="not-last:pb-4">
           <UCheckbox v-model="state.aiEnabled" />
+        </UFormField>
+      </div>
+
+      <div class="flex flex-col gap-4 p-1">
+        <UFormField label="AnthropicApiKeyHint" name="anthropicApiKeyHint" class="not-last:pb-4">
+          <UInput v-model="state.anthropicApiKeyHint" class="w-full" size="xl" />
         </UFormField>
       </div>
 
@@ -142,7 +154,9 @@ const fieldToGroup: Record<string, string> = {
   'availableDomains': 'routing',
   'anthropicApiKey': 'credentials',
   'aiSummaryPrompt': 'ai',
-  'aiTaskPrompt': 'ai'
+  'aiTaskPrompt': 'ai',
+  'replyPersonality': 'ai',
+  'personalityIcon': 'ai'
 }
 
 // Track validation errors for tab indicators

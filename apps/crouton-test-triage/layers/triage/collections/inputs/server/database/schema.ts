@@ -33,7 +33,7 @@ export const triageInputs = sqliteTable('triage_inputs', {
   emailAddress: text('emailAddress'),
   emailSlug: text('emailSlug'),
   sourceMetadata: jsonColumn('sourceMetadata').$default(() => ({})),
-  active: integer('active', { mode: 'boolean' }).notNull().$default(() => false),
+  active: integer('active', { mode: 'boolean' }).notNull().$default(() => true),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
