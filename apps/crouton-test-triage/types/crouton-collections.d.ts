@@ -13,6 +13,7 @@
  * knows the return type is BlogPost[] without requiring explicit generics.
  *
  * ## Registered Collections
+ * - pagesPages: PagesPage
  * - triageDiscussions: TriageDiscussion
  * - triageFlows: TriageFlow
  * - triageInputs: TriageInput
@@ -23,6 +24,7 @@
  * - triageUsers: TriageUser
  */
 
+import type { PagesPage, PagesPageFormData, NewPagesPage } from './layers/pages/collections/pages/types'
 import type { TriageDiscussion, TriageDiscussionFormData, NewTriageDiscussion } from './layers/triage/collections/discussions/types'
 import type { TriageFlow, TriageFlowFormData, NewTriageFlow } from './layers/triage/collections/flows/types'
 import type { TriageInput, TriageInputFormData, NewTriageInput } from './layers/triage/collections/inputs/types'
@@ -34,6 +36,11 @@ import type { TriageUser, TriageUserFormData, NewTriageUser } from './layers/tri
 
 declare module '#crouton/types' {
   interface CollectionTypeMap {
+    pagesPages: {
+      Item: PagesPage
+      FormData: PagesPageFormData
+      NewItem: NewPagesPage
+    }
     triageDiscussions: {
       Item: TriageDiscussion
       FormData: TriageDiscussionFormData

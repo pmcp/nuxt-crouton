@@ -12,3 +12,4 @@ export { triageJobs } from '../../layers/triage/collections/jobs/server/database
 export { triageUsers } from '../../layers/triage/collections/users/server/database/schema'
 export { triageMessages } from '../../layers/triage/collections/messages/server/database/schema'
 export * from './translations-ui'
+export { pagesPages } from '../../layers/pages/collections/pages/server/database/schema'

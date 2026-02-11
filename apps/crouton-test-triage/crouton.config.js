@@ -7,7 +7,20 @@ export default {
     { name: 'tasks', fieldsFile: './schemas/task.json' },
     { name: 'jobs', fieldsFile: './schemas/job.json' },
     { name: 'users', fieldsFile: './schemas/user.json' },
-    { name: 'messages', fieldsFile: './schemas/message.json' }
+    { name: 'messages', fieldsFile: './schemas/message.json' },
+    {
+      name: 'pages',
+      fieldsFile: './schemas/pages.json',
+      formComponent: 'CroutonPagesForm',
+      sortable: true,
+      hierarchy: {
+        enabled: true,
+        parentField: 'parentId',
+        orderField: 'order',
+        pathField: 'path',
+        depthField: 'depth'
+      }
+    }
   ],
 
   targets: [
@@ -23,7 +36,8 @@ export default {
         'users',
         'messages'
       ]
-    }
+    },
+    { layer: 'pages', collections: ['pages'] }
   ],
 
   dialect: 'sqlite',

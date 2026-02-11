@@ -7,9 +7,11 @@ import { triageJobsConfig } from '../layers/triage/collections/jobs/app/composab
 import { triageUsersConfig } from '../layers/triage/collections/users/app/composables/useTriageUsers'
 import { triageMessagesConfig } from '../layers/triage/collections/messages/app/composables/useTriageMessages'
 import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
+import { pagesPagesConfig } from '../layers/pages/collections/pages/app/composables/usePagesPages'
 
 export default defineAppConfig({
   croutonCollections: {
+    pagesPages: pagesPagesConfig,
     translationsUi: translationsUiConfig,
     triageMessages: triageMessagesConfig,
     triageUsers: triageUsersConfig,

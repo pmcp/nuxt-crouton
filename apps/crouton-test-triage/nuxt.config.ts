@@ -6,9 +6,12 @@ export default defineNuxtConfig({
   extends: [
     '@fyit/crouton-core',
     '@fyit/crouton-ai',
+    '@fyit/crouton-editor',
+    '@fyit/crouton-pages',
     '@fyit/crouton-triage',
-    // Local generated layer must come last
-    './layers/triage'
+    // Local generated layers must come last
+    './layers/triage',
+    './layers/pages'
   ],
 
   modules: [

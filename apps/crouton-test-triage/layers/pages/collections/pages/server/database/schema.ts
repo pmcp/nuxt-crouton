@@ -17,26 +17,29 @@ const jsonColumn = customType<any>({
   },
 })
 
-export const triageUsers = sqliteTable('triage_users', {
+export const pagesPages = sqliteTable('pages_pages', {
   id: text('id').primaryKey().$default(() => nanoid()),
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
 
+  // Hierarchy fields for tree structure
+  parentId: text('parentId'),
+  path: text('path').notNull().$default(() => '/'),
+  depth: integer('depth').notNull().$default(() => 0),
   order: integer('order').notNull().$default(() => 0),
-  sourceType: text('sourceType').notNull(),
-  sourceWorkspaceId: text('sourceWorkspaceId').notNull(),
-  sourceUserId: text('sourceUserId').notNull(),
-  sourceUserEmail: text('sourceUserEmail'),
-  sourceUserName: text('sourceUserName'),
-  notionUserId: text('notionUserId').notNull(),
-  notionUserName: text('notionUserName'),
-  notionUserEmail: text('notionUserEmail'),
-  mappingType: text('mappingType').notNull(),
-  confidence: integer('confidence'),
-  active: integer('active', { mode: 'boolean' }).notNull().$default(() => true),
-  lastSyncedAt: text('lastSyncedAt'),
-  metadata: jsonColumn('metadata').$default(() => ({})),
+  title: text('title'),
+  slug: text('slug').unique(),
+  pageType: text('pageType').notNull(),
+  content: text('content'),
+  config: jsonColumn('config').$default(() => ({})),
+  status: text('status').notNull(),
+  visibility: text('visibility').notNull(),
+  publishedAt: integer('publishedAt', { mode: 'timestamp' }).$default(() => new Date()),
+  showInNavigation: integer('showInNavigation', { mode: 'boolean' }).$default(() => true),
+  layout: text('layout'),
+  seoTitle: text('seoTitle'),
+  seoDescription: text('seoDescription'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
