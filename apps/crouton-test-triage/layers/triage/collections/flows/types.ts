@@ -35,6 +35,8 @@ export interface TriageFlow {
   anthropicApiKeyHint?: string
   aiSummaryPrompt?: string
   aiTaskPrompt?: string
+  replyPersonality?: string
+  personalityIcon?: string
   active: boolean
   onboardingComplete: boolean
   createdAt: Date

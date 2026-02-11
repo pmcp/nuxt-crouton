@@ -67,6 +67,24 @@
       "group": "ai"
     }
   },
+  "replyPersonality": {
+    "type": "string",
+    "meta": {
+      "label": "Reply Personality",
+      "description": "Preset key (e.g., 'friendly') or 'custom:...' for custom AI prompt",
+      "area": "main",
+      "group": "ai"
+    }
+  },
+  "personalityIcon": {
+    "type": "string",
+    "meta": {
+      "label": "Personality Icon",
+      "description": "Emoji or icon identifier for the personality",
+      "area": "main",
+      "group": "ai"
+    }
+  },
   "active": {
     "type": "boolean",
     "meta": {

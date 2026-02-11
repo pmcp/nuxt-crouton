@@ -29,6 +29,8 @@ export default defineEventHandler(async (event) => {
     ...(anthropicApiKey && { anthropicApiKey, anthropicApiKeyHint }),
     aiSummaryPrompt: body.aiSummaryPrompt,
     aiTaskPrompt: body.aiTaskPrompt,
+    replyPersonality: body.replyPersonality,
+    personalityIcon: body.personalityIcon,
     active: body.active,
     onboardingComplete: body.onboardingComplete
   })

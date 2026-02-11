@@ -474,23 +474,26 @@ async function handleSave() {
 
         <!-- Domains -->
         <UFormField label="Domains" help="AI routes tasks to outputs matching these domains.">
-          <div class="flex flex-wrap gap-1.5">
-            <span
+          <div class="flex flex-wrap items-center gap-1.5">
+            <UBadge
               v-for="domain in formState.availableDomains"
               :key="domain"
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50 text-xs text-muted-foreground group/chip"
+              size="md"
+              color="neutral"
+              variant="subtle"
+              class="group/chip cursor-default"
             >
               {{ domain }}
               <button
-                class="opacity-0 group-hover/chip:opacity-100 transition-opacity cursor-pointer"
+                class="ml-0.5 opacity-0 group-hover/chip:opacity-100 transition-opacity cursor-pointer"
                 @click="removeDomain(domain)"
               >
                 <UIcon name="i-lucide-x" class="w-3 h-3" />
               </button>
-            </span>
+            </UBadge>
             <input
               v-model="newDomain"
-              class="text-xs bg-transparent outline-none min-w-[80px] flex-1 placeholder:text-muted-foreground/50"
+              class="text-sm bg-transparent outline-none min-w-[80px] flex-1 placeholder:text-muted-foreground/50"
               placeholder="Add domain..."
               @keydown.enter.prevent="addDomain"
             />

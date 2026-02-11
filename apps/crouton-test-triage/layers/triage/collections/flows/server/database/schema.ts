@@ -32,6 +32,8 @@ export const triageFlows = sqliteTable('triage_flows', {
   anthropicApiKeyHint: text('anthropicApiKeyHint'),
   aiSummaryPrompt: text('aiSummaryPrompt'),
   aiTaskPrompt: text('aiTaskPrompt'),
+  replyPersonality: text('replyPersonality'),
+  personalityIcon: text('personalityIcon'),
   active: integer('active', { mode: 'boolean' }).notNull().$default(() => false),
   onboardingComplete: integer('onboardingComplete', { mode: 'boolean' }).notNull().$default(() => false),
 

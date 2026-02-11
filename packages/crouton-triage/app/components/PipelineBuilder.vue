@@ -90,7 +90,7 @@ function getSourceColor(sourceType: string): string {
     slack: 'text-[#4A154B] dark:text-[#E01E5A]',
     figma: 'text-[#F24E1E]',
     notion: 'text-gray-900 dark:text-white',
-    email: 'text-blue-500',
+    email: 'text-white',
   }
   return colors[sourceType] || 'text-gray-500'
 }
@@ -100,7 +100,7 @@ function getSourceBg(sourceType: string): string {
     slack: 'bg-[#4A154B]/10 dark:bg-[#E01E5A]/10',
     figma: 'bg-[#F24E1E]/10',
     notion: 'bg-gray-900/10 dark:bg-white/10',
-    email: 'bg-blue-500/10',
+    email: 'bg-white/10',
   }
   return colors[sourceType] || 'bg-gray-500/10'
 }

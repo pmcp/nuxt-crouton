@@ -18,6 +18,8 @@ const triageFlowPublicSelect = {
   anthropicApiKeyHint: tables.triageFlows.anthropicApiKeyHint,
   aiSummaryPrompt: tables.triageFlows.aiSummaryPrompt,
   aiTaskPrompt: tables.triageFlows.aiTaskPrompt,
+  replyPersonality: tables.triageFlows.replyPersonality,
+  personalityIcon: tables.triageFlows.personalityIcon,
   active: tables.triageFlows.active,
   onboardingComplete: tables.triageFlows.onboardingComplete,
   createdAt: tables.triageFlows.createdAt,
