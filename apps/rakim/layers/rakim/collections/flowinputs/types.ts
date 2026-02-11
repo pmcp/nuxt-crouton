@@ -7,7 +7,6 @@ export interface RakimFlowInput {
   owner: string
   flowId: string
   sourceType: string
-  name: string
   apiToken?: string
   webhookUrl?: string
   webhookSecret?: string

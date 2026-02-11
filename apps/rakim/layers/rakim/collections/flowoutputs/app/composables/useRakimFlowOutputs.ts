@@ -3,7 +3,6 @@ import { z } from 'zod'
 export const rakimFlowOutputSchema = z.object({
   flowId: z.string().min(1, 'flowId is required'),
   outputType: z.string().min(1, 'outputType is required'),
-  name: z.string().min(1, 'name is required'),
   domainFilter: z.array(z.string()).optional(),
   isDefault: z.boolean().optional(),
   outputConfig: z.record(z.any()).optional(),
@@ -13,7 +12,6 @@ export const rakimFlowOutputSchema = z.object({
 export const rakimFlowOutputsColumns = [
   { accessorKey: 'flowId', header: 'FlowId' },
   { accessorKey: 'outputType', header: 'OutputType' },
-  { accessorKey: 'name', header: 'Name' },
   { accessorKey: 'domainFilter', header: 'DomainFilter' },
   { accessorKey: 'isDefault', header: 'IsDefault' },
   { accessorKey: 'outputConfig', header: 'OutputConfig' },
@@ -29,7 +27,6 @@ export const rakimFlowOutputsConfig = {
   defaultValues: {
     flowId: '',
     outputType: '',
-    name: '',
     domainFilter: [],
     isDefault: false,
     outputConfig: {},

@@ -21,9 +21,6 @@
         <UFormField label="OutputType" name="outputType" class="not-last:pb-4">
           <UInput v-model="state.outputType" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Name" name="name" class="not-last:pb-4">
-          <UInput v-model="state.name" class="w-full" size="xl" />
-        </UFormField>
       </div>
 
       <div v-show="!tabs || activeSection === 'routing'" class="flex flex-col gap-4 p-1">
@@ -115,7 +112,6 @@ const activeSection = ref('basic')
 // Map field names to their tab groups for error tracking
 const fieldToGroup: Record<string, string> = {
   'outputType': 'basic',
-  'name': 'basic',
   'domainFilter': 'routing',
   'outputConfig': 'config'
 }

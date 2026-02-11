@@ -24,7 +24,6 @@ export const rakimFlowinputs = sqliteTable('rakim_flowinputs', {
   owner: text('owner').notNull(),
   flowId: text('flowId').notNull(),
   sourceType: text('sourceType').notNull(),
-  name: text('name').notNull(),
   apiToken: text('apiToken'),
   webhookUrl: text('webhookUrl'),
   webhookSecret: text('webhookSecret'),

@@ -3,7 +3,6 @@ import { z } from 'zod'
 export const rakimFlowInputSchema = z.object({
   flowId: z.string().min(1, 'flowId is required'),
   sourceType: z.string().min(1, 'sourceType is required'),
-  name: z.string().min(1, 'name is required'),
   apiToken: z.string().optional(),
   webhookUrl: z.string().optional(),
   webhookSecret: z.string().optional(),
@@ -16,7 +15,6 @@ export const rakimFlowInputSchema = z.object({
 export const rakimFlowInputsColumns = [
   { accessorKey: 'flowId', header: 'FlowId' },
   { accessorKey: 'sourceType', header: 'SourceType' },
-  { accessorKey: 'name', header: 'Name' },
   { accessorKey: 'apiToken', header: 'ApiToken' },
   { accessorKey: 'webhookUrl', header: 'WebhookUrl' },
   { accessorKey: 'webhookSecret', header: 'WebhookSecret' },
@@ -35,7 +33,6 @@ export const rakimFlowInputsConfig = {
   defaultValues: {
     flowId: '',
     sourceType: '',
-    name: '',
     apiToken: '',
     webhookUrl: '',
     webhookSecret: '',

@@ -7,7 +7,6 @@ export interface RakimFlowOutput {
   owner: string
   flowId: string
   outputType: string
-  name: string
   domainFilter?: string[]
   isDefault?: boolean
   outputConfig?: Record<string, any>

@@ -15,7 +15,6 @@ export default defineEventHandler(async (event) => {
   return await updateRakimFlowOutput(flowoutputId, team.id, user.id, {
     flowId: body.flowId,
     outputType: body.outputType,
-    name: body.name,
     domainFilter: body.domainFilter,
     isDefault: body.isDefault,
     outputConfig: body.outputConfig,
