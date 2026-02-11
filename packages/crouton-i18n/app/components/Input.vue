@@ -671,6 +671,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
           v-model="narrowLocaleTab"
           :items="narrowLocaleTabs"
           :content="false"
+          color="neutral"
+          variant="link"
           class="mb-3"
         />
 
@@ -791,8 +793,11 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
 
       <!-- WIDE: Side-by-side columns (lg+ screens) -->
       <div class="hidden lg:flex lg:flex-col gap-4 h-full min-h-0">
-        <!-- Column toggle -->
-        <div class="flex items-center justify-end gap-1">
+        <!-- Header row: slot + column toggle -->
+        <div class="flex items-center gap-2">
+          <div class="flex-1 min-w-0">
+            <slot name="header" />
+          </div>
           <UButton
             :variant="!showDualColumns ? 'solid' : 'ghost'"
             color="neutral"
@@ -818,7 +823,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               <UButton
                 v-for="loc in allLocaleOptions"
                 :key="loc.value"
-                :variant="primaryEditingLocale === loc.value ? 'solid' : 'outline'"
+                :variant="primaryEditingLocale === loc.value ? 'soft' : 'outline'"
+                color="neutral"
                 size="sm"
                 class="w-full"
                 @click="primaryEditingLocale = loc.value"
@@ -961,7 +967,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               <UButton
                 v-for="loc in allLocaleOptions"
                 :key="loc.value"
-                :variant="secondaryEditingLocale === loc.value ? 'solid' : 'outline'"
+                :variant="secondaryEditingLocale === loc.value ? 'soft' : 'outline'"
+                color="neutral"
                 size="sm"
                 class="w-full"
                 @click="secondaryEditingLocale = loc.value"
@@ -1109,7 +1116,8 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
           <UButton
             v-for="loc in locales"
             :key="typeof loc === 'string' ? loc : loc.code"
-            :variant="editingLocale === (typeof loc === 'string' ? loc : loc.code) ? 'solid' : 'outline'"
+            :variant="editingLocale === (typeof loc === 'string' ? loc : loc.code) ? 'soft' : 'outline'"
+            color="neutral"
             size="sm"
             class="w-full"
             @click="editingLocale = typeof loc === 'string' ? loc : loc.code"

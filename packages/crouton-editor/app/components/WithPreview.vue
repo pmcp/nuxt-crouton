@@ -1,6 +1,6 @@
 <template>
   <div class="w-full">
-    <UTabs v-model="activeTab" :items="tabItems" class="w-full">
+    <UTabs v-model="activeTab" :items="tabItems" :ui="{ indicator: 'bg-primary/10', trigger: 'data-[state=active]:text-primary' }" class="w-full">
       <template #content="{ item }">
         <!-- Editor Tab -->
         <div v-if="item.value === 'editor'" class="pt-4">

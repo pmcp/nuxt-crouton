@@ -234,7 +234,7 @@ defineExpose({
 <template>
   <div class="block-editor-with-preview w-full h-full flex flex-col">
     <!-- Tab buttons only -->
-    <UTabs v-model="activeTab" :items="tabItems" :content="false" />
+    <UTabs v-model="activeTab" :items="tabItems" :content="false" :ui="{ indicator: 'bg-primary/10', trigger: 'data-[state=active]:text-primary' }" />
 
     <!-- Editor Tab -->
     <div
