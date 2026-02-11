@@ -310,12 +310,15 @@ defineExpose({ refresh: refreshAll })
         <div class="flex-1" />
         <div class="flex items-center justify-center flex-shrink-0 px-3">
           <button
-            class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-110 cursor-pointer"
+            class="group/add h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-105 cursor-pointer w-10 hover:w-auto hover:px-3 hover:gap-1.5"
             :disabled="creatingFlow"
             @click="handleCreateFlow"
           >
             <UIcon v-if="creatingFlow" name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" />
-            <UIcon v-else name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+            <template v-else>
+              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400 group-hover/add:hidden" />
+              <span class="hidden group-hover/add:inline text-xs font-medium text-gray-500 whitespace-nowrap">add new flow</span>
+            </template>
           </button>
         </div>
         <div class="flex-1" />

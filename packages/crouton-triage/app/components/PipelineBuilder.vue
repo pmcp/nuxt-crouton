@@ -256,8 +256,9 @@ function getDomainDotColor(domain: string): string {
     <div class="flex-1 flex items-center justify-end gap-1">
       <!-- Add source -->
       <UDropdownMenu :items="sourceTypeItems">
-        <button class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-110 cursor-pointer">
-          <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+        <button class="group/add h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-105 cursor-pointer w-10 hover:w-auto hover:px-3 hover:gap-1.5">
+          <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400 group-hover/add:hidden" />
+          <span class="hidden group-hover/add:inline text-xs font-medium text-gray-500 whitespace-nowrap">add input</span>
         </button>
       </UDropdownMenu>
 
@@ -310,7 +311,7 @@ function getDomainDotColor(domain: string): string {
 
     <!-- AI (fixed center) -->
     <div class="flex items-center gap-3 flex-shrink-0 px-3">
-    <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 opacity-30 flex-shrink-0" />
+    <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" />
 
     <UPopover mode="hover" arrow :ui="{ content: 'w-72' }">
         <button
@@ -384,7 +385,7 @@ function getDomainDotColor(domain: string): string {
       </template>
     </UPopover>
 
-    <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 opacity-30 flex-shrink-0" />
+    <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" />
     </div>
 
     <!-- Outputs (left-aligned) -->
@@ -455,8 +456,9 @@ function getDomainDotColor(domain: string): string {
 
       <!-- Add output -->
       <UDropdownMenu :items="outputTypeItems">
-        <button class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-110 cursor-pointer">
-          <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
+        <button class="group/add h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-105 cursor-pointer w-10 hover:w-auto hover:px-3 hover:gap-1.5">
+          <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400 group-hover/add:hidden" />
+          <span class="hidden group-hover/add:inline text-xs font-medium text-gray-500 whitespace-nowrap">add output</span>
         </button>
       </UDropdownMenu>
     </div>
