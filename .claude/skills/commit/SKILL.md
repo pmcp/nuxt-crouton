@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Grep, Glob
 
 # Commit Skill
 
-Smart, granular commits following this project's conventions.
+Smart, auto-committing workflow following this project's conventions. **Does not ask for confirmation** — analyzes, groups, commits, and reports.
 
 ## Rules
 
@@ -15,6 +15,7 @@ Smart, granular commits following this project's conventions.
 3. **NEVER commit unrelated changes together** — split into multiple commits if needed
 4. **ALWAYS analyze changes before committing** — understand what changed and why
 5. **ONLY commit files that were changed during this conversation** — if the working tree has pre-existing dirty files that were NOT part of the current task, leave them alone. Compare `git status` against what you actually touched in this session. When in doubt, ask the user.
+6. **DO NOT ask for confirmation** — commit directly after analysis. The user invoked `/commit` as an explicit action.
 
 ## Workflow
 
@@ -37,11 +38,9 @@ From the full `git status` output, identify ONLY files that were created or modi
 - Files changed by unrelated work or previous sessions → exclude
 - If unsure → ask the user
 
-List the excluded files explicitly so the user knows they're being left alone:
+Briefly note excluded files:
 ```
-Skipping N file(s) not related to this session:
-  - .gitignore (pre-existing change)
-  - pnpm-lock.yaml (pre-existing change)
+Skipping N pre-existing file(s)
 ```
 
 ### Step 3: Group changes by intent
@@ -55,46 +54,17 @@ Categorize the **relevant** files into logical groups. Each group = one commit.
 - Test files go with the code they test, not in a separate commit
 - Migration files go with their schema changes
 
-**Example groupings:**
-```
-Group 1: "feat(crouton-core): add useTeamMembers composable"
-  - packages/crouton-core/app/composables/useTeamMembers.ts
-  - packages/crouton-core/app/components/TeamMemberList.vue
-
-Group 2: "fix(crouton-auth): resolve token refresh race condition"
-  - packages/crouton-auth/server/utils/auth.ts
-
-Group 3: "chore(root): update eslint config"
-  - eslint.config.mjs
-```
-
-### Step 4: Present the plan to the user
-
-Before committing anything, show:
-
-```
-I'd like to make N commit(s):
-
-1. feat(crouton-core): add useTeamMembers composable
-   Files: composables/useTeamMembers.ts, components/TeamMemberList.vue
-
-2. fix(crouton-auth): resolve token refresh race condition
-   Files: server/utils/auth.ts
-
-Proceed?
-```
-
-Wait for user approval. If the user wants to adjust grouping or messages, do so.
-
-### Step 5: Execute commits sequentially
+### Step 4: Execute commits sequentially
 
 For each group:
 1. `git add <specific-files>`
 2. `git commit` with the message (use HEREDOC format, no Co-Authored-By)
 
-### Step 6: Confirm
+**Do not wait for approval.** Commit immediately.
 
-Show `git log --oneline -N` (where N = number of commits made) to confirm.
+### Step 5: Confirm
+
+Show `git log --oneline -N` (where N = number of commits made) to confirm what was committed.
 
 ## Commit Message Format
 
@@ -178,18 +148,6 @@ If the new changes logically belong with a recent commit (e.g., a follow-up fix 
 - The previous commit has already been pushed to a shared branch
 - You're unsure — ask the user
 
-**How to propose it:**
-```
-The changes to server/utils/auth.ts look like a follow-up to your last commit:
-  "fix(crouton-auth): handle expired tokens"
-
-Options:
-1. Amend into that commit (recommended — keeps history clean)
-2. Create a separate commit
-```
-
-Wait for user approval before amending.
-
 **To amend:**
 ```bash
 git add <specific-files>
@@ -208,10 +166,7 @@ EOF
 If `git status` shows no changes, tell the user — don't create an empty commit.
 
 ### Already-staged files
-If files are already staged (`git diff --cached`), include them in the analysis. Ask the user if the staging is intentional or if they want to restage.
-
-### Untracked files
-Ask about untracked files — they might be intentional new files or accidental artifacts. Never auto-add untracked files without confirming.
+If files are already staged (`git diff --cached`), include them in the analysis.
 
 ### Sensitive files
 Never commit: `.env`, `credentials.json`, `*.key`, `*.pem`, `.secret*`, `node_modules/`. Warn the user if these appear in the changeset.
