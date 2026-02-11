@@ -22,6 +22,47 @@
  * @see https://api.slack.com/methods/oauth.v2.access
  */
 
+import { kv } from 'hub:kv'
+
+/**
+ * Return an HTML page that sends OAuth result back to the opener via postMessage,
+ * then closes the popup. If no opener, shows a simple success/error message.
+ */
+function oauthResultHtml(data: {
+  type: 'oauth-success' | 'oauth-error'
+  credentials?: Record<string, any>
+  error?: string
+  openerOrigin?: string
+  provider: string
+  status: string
+  teamName?: string
+}) {
+  const message = JSON.stringify({
+    type: data.type,
+    credentials: data.credentials,
+    error: data.error,
+    provider: data.provider,
+    status: data.status,
+  })
+  const origin = data.openerOrigin || '*'
+  const title = data.type === 'oauth-success'
+    ? `${data.teamName || data.provider} connected successfully!`
+    : `Connection failed: ${data.error || 'Unknown error'}`
+
+  return `<!DOCTYPE html>
+<html><head><title>OAuth - ${data.provider}</title></head>
+<body>
+<p>${title}</p>
+<p>You can close this window.</p>
+<script>
+  if (window.opener) {
+    window.opener.postMessage(${message}, '${origin}');
+    window.close();
+  }
+</script>
+</body></html>`
+}
+
 /**
  * Slack oauth.v2.access response structure
  */
@@ -79,7 +120,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Verify state token (CSRF protection) using NuxtHub KV
-    const stateData = await hubKV().get<{ teamId: string; flowId?: string; openerOrigin?: string; createdAt: number }>(`oauth:state:${state}`)
+    const stateData = await kv.get<{ teamId: string; flowId?: string; openerOrigin?: string; createdAt: number }>(`oauth:state:${state}`)
 
     if (!stateData) {
       logger.error('[OAuth] Invalid or expired state token')
@@ -93,7 +134,7 @@ export default defineEventHandler(async (event) => {
     const { teamId, flowId: requestedFlowId, openerOrigin } = stateData
 
     // Delete state token (single use) from KV
-    await hubKV().del(`oauth:state:${state}`)
+    await kv.del(`oauth:state:${state}`)
 
     // Get environment variables
     const config = useRuntimeConfig(event)
@@ -333,19 +374,16 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      // Redirect to success with warning
-      const successUrl = new URL('/oauth/success', baseUrl)
-      successUrl.searchParams.set('provider', 'slack')
-      successUrl.searchParams.set('status', 'already-connected')
-      successUrl.searchParams.set('flow_id', flowId)
-      successUrl.searchParams.set('input_id', duplicateInput.id)
-      successUrl.searchParams.set('account_id', accountId)
-      successUrl.searchParams.set('team_name', slackTeamName)
-      if (openerOrigin) {
-        successUrl.searchParams.set('opener_origin', openerOrigin)
-      }
-
-      return sendRedirect(event, successUrl.toString(), 302)
+      // Return success page (postMessage to opener popup)
+      setResponseHeader(event, 'content-type', 'text/html')
+      return oauthResultHtml({
+        type: 'oauth-success',
+        credentials: { accountId, flowId, inputId: duplicateInput.id },
+        openerOrigin,
+        provider: 'slack',
+        status: 'already-connected',
+        teamName: slackTeamName,
+      })
     }
 
     // Create new Slack input — references account by ID instead of storing inline token
@@ -379,20 +417,16 @@ export default defineEventHandler(async (event) => {
       isNewFlow,
     })
 
-    // Redirect to success page
-    const successUrl = new URL('/oauth/success', baseUrl)
-    successUrl.searchParams.set('provider', 'slack')
-    successUrl.searchParams.set('status', 'success')
-    successUrl.searchParams.set('flow_id', flowId)
-    successUrl.searchParams.set('input_id', newInput.id)
-    successUrl.searchParams.set('account_id', accountId)
-    successUrl.searchParams.set('team_name', slackTeamName)
-    successUrl.searchParams.set('is_new_flow', isNewFlow.toString())
-    if (openerOrigin) {
-      successUrl.searchParams.set('opener_origin', openerOrigin)
-    }
-
-    return sendRedirect(event, successUrl.toString(), 302)
+    // Return success page (postMessage to opener popup)
+    setResponseHeader(event, 'content-type', 'text/html')
+    return oauthResultHtml({
+      type: 'oauth-success',
+      credentials: { accountId, flowId, inputId: newInput.id },
+      openerOrigin,
+      provider: 'slack',
+      status: 'success',
+      teamName: slackTeamName,
+    })
   }
   catch (error) {
     logger.error('[OAuth] Callback handler failed:', error)

@@ -24,5 +24,11 @@ export default defineNuxtConfig({
     }
   },
 
-  hub: { db: 'sqlite', kv: true }
+  hub: { db: 'sqlite', kv: true },
+
+  vite: {
+    server: {
+      allowedHosts: ['.trycloudflare.com']
+    }
+  }
 })
