@@ -29,7 +29,7 @@ const emit = defineEmits<{
   'connect-new': []
 }>()
 
-const { accounts, fetchAccounts } = useTriageAccounts(props.teamId)
+const { accounts, fetchAccounts } = useTriageConnectedAccounts(props.teamId)
 
 // Fetch accounts on mount
 onMounted(() => {

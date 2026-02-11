@@ -11,7 +11,7 @@ Discussion-to-task triage system for Nuxt applications. Receives discussions fro
 | `nuxt.config.ts` | Layer configuration, component registration, i18n setup |
 | `crouton.manifest.ts` | Defines 9 collections with `triage` table prefix |
 | `app/types/index.ts` | Core types: Flow, FlowInput, FlowOutput, ParsedDiscussion, AdapterConfig, etc. |
-| `app/composables/useTriageAccounts.ts` | Connected accounts CRUD (team-scoped) |
+| `app/composables/useTriageConnectedAccounts.ts` | Connected accounts CRUD (team-scoped) |
 | `app/composables/useTriageOAuth.ts` | OAuth flow for Slack integration |
 | `app/composables/useTriageAutoMatch.ts` | Auto-match users across platforms |
 | `app/composables/useTriageNotionSchema.ts` | Fetch Notion database schema |

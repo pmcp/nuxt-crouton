@@ -23,7 +23,7 @@ const {
   verifyAccount,
   deleteAccount,
   createManualAccount,
-} = useTriageAccounts(props.teamId)
+} = useTriageConnectedAccounts(props.teamId)
 
 // Fetch on mount
 onMounted(() => {

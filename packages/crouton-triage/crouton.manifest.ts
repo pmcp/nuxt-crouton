@@ -154,7 +154,7 @@ const manifest: PackageManifest = {
       'useTriageSlackUsers',
       'useTriageFieldMapping',
       'useTriagePromptPreview',
-      'useTriageAccounts'
+      'useTriageConnectedAccounts'
     ],
     components: [
       { name: 'CroutonTriageFlowList', description: 'Flow listing with status indicators', props: ['teamId'] },

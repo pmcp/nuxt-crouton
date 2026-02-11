@@ -6,7 +6,7 @@
  *
  * @example
  * ```ts
- * const { accounts, fetchAccounts, verifyAccount, createManualAccount } = useTriageAccounts(teamId)
+ * const { accounts, fetchAccounts, verifyAccount, createManualAccount } = useTriageConnectedAccounts(teamId)
  *
  * await fetchAccounts()
  * const slackAccounts = getAccountsByProvider('slack')
@@ -15,7 +15,7 @@
 
 import type { ConnectedAccount, AccountProvider } from '~/layers/triage/types'
 
-export function useTriageAccounts(teamId: string | Ref<string>) {
+export function useTriageConnectedAccounts(teamId: string | Ref<string>) {
   const resolvedTeamId = computed(() => isRef(teamId) ? teamId.value : teamId)
 
   const accounts = ref<ConnectedAccount[]>([])
@@ -38,7 +38,7 @@ export function useTriageAccounts(teamId: string | Ref<string>) {
       accounts.value = response || []
     } catch (err: any) {
       error.value = err.data?.statusMessage || err.message || 'Failed to fetch accounts'
-      console.error('[useTriageAccounts] fetchAccounts failed:', err)
+      console.error('[useTriageConnectedAccounts] fetchAccounts failed:', err)
     } finally {
       loading.value = false
     }
@@ -77,7 +77,7 @@ export function useTriageAccounts(teamId: string | Ref<string>) {
 
       return result
     } catch (err: any) {
-      console.error('[useTriageAccounts] verifyAccount failed:', err)
+      console.error('[useTriageConnectedAccounts] verifyAccount failed:', err)
       return {
         success: false,
         status: 'error',
@@ -112,7 +112,7 @@ export function useTriageAccounts(teamId: string | Ref<string>) {
 
       return result
     } catch (err: any) {
-      console.error('[useTriageAccounts] createManualAccount failed:', err)
+      console.error('[useTriageConnectedAccounts] createManualAccount failed:', err)
       throw err
     }
   }
@@ -132,7 +132,7 @@ export function useTriageAccounts(teamId: string | Ref<string>) {
       // Remove from local state
       accounts.value = accounts.value.filter(a => a.id !== accountId)
     } catch (err: any) {
-      console.error('[useTriageAccounts] deleteAccount failed:', err)
+      console.error('[useTriageConnectedAccounts] deleteAccount failed:', err)
       throw err
     }
   }
