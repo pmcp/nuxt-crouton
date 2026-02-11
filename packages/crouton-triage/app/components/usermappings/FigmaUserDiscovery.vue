@@ -19,8 +19,10 @@ interface NotionUser {
 interface Props {
   /** Figma workspace ID (email slug) */
   workspaceId: string
-  /** Notion token */
-  notionToken: string
+  /** Notion token (legacy — prefer notionAccountId) */
+  notionToken?: string
+  /** Connected account ID for Notion token resolution */
+  notionAccountId?: string
   /** Team ID */
   teamId: string
 }
@@ -77,7 +79,11 @@ async function fetchExistingMappings() {
 // Initialize
 async function initialize() {
   await Promise.all([
-    fetchNotionUsers({ notionToken: props.notionToken, teamId: props.teamId }),
+    fetchNotionUsers({
+      notionToken: props.notionToken,
+      accountId: props.notionAccountId,
+      teamId: props.teamId,
+    }),
     fetchExistingMappings()
   ])
 }
@@ -377,6 +383,7 @@ onMounted(initialize)
           <div class="flex-1">
             <CroutonTriageUsermappingsNotionUserPicker
               :notion-token="notionToken"
+              :notion-account-id="notionAccountId"
               :team-id="teamId"
               placeholder="Select Notion user..."
               size="sm"
@@ -449,6 +456,7 @@ onMounted(initialize)
             <CroutonTriageUsermappingsNotionUserPicker
               v-model="manualForm.notionUserId"
               :notion-token="notionToken"
+              :notion-account-id="notionAccountId"
               :team-id="teamId"
             />
           </UFormField>

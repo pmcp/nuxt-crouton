@@ -40,10 +40,14 @@ interface UserMatch {
 interface Props {
   /** Slack workspace ID */
   workspaceId: string
-  /** Slack bot token */
-  apiToken: string
-  /** Notion token */
-  notionToken: string
+  /** Slack bot token (legacy — prefer slackAccountId) */
+  apiToken?: string
+  /** Connected account ID for Slack token resolution */
+  slackAccountId?: string
+  /** Notion token (legacy — prefer notionAccountId) */
+  notionToken?: string
+  /** Connected account ID for Notion token resolution */
+  notionAccountId?: string
   /** Team ID */
   teamId: string
 }
@@ -92,8 +96,16 @@ async function fetchExistingMappings() {
 // Initialize - fetch all data
 async function initialize() {
   await Promise.all([
-    fetchSlackUsers({ slackToken: props.apiToken, teamId: props.workspaceId }),
-    fetchNotionUsers({ notionToken: props.notionToken, teamId: props.teamId }),
+    fetchSlackUsers({
+      slackToken: props.apiToken,
+      accountId: props.slackAccountId,
+      teamId: props.teamId,
+    }),
+    fetchNotionUsers({
+      notionToken: props.notionToken,
+      accountId: props.notionAccountId,
+      teamId: props.teamId,
+    }),
     fetchExistingMappings()
   ])
 }
@@ -452,6 +464,7 @@ onMounted(initialize)
             <div class="flex-1">
               <CroutonTriageUsermappingsNotionUserPicker
                 :notion-token="notionToken"
+                :notion-account-id="notionAccountId"
                 :team-id="teamId"
                 placeholder="Select Notion user..."
                 size="sm"
@@ -498,6 +511,7 @@ onMounted(initialize)
             <CroutonTriageUsermappingsNotionUserPicker
               v-model="editingNotionUserId"
               :notion-token="notionToken"
+              :notion-account-id="notionAccountId"
               :team-id="teamId"
               placeholder="Select Notion user..."
             />

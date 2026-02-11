@@ -28,7 +28,8 @@ export interface SlackUser {
 }
 
 export interface FetchSlackUsersOptions {
-  slackToken: string
+  slackToken?: string
+  accountId?: string
   teamId: string
 }
 
@@ -41,10 +42,10 @@ export function useTriageSlackUsers() {
    * Fetch Slack workspace users
    */
   async function fetchSlackUsers(options: FetchSlackUsersOptions): Promise<SlackUser[]> {
-    const { slackToken, teamId } = options
+    const { slackToken, accountId, teamId } = options
 
-    if (!slackToken || !teamId) {
-      error.value = 'Please provide both Slack token and team ID'
+    if ((!slackToken && !accountId) || !teamId) {
+      error.value = 'Please provide a Slack token or account ID, and team ID'
       return []
     }
 
@@ -52,14 +53,16 @@ export function useTriageSlackUsers() {
     error.value = null
 
     try {
+      const query: Record<string, string> = {}
+      if (accountId) query.accountId = accountId
+      else if (slackToken) query.slackToken = slackToken
+
       const response = await $fetch<{
         success: boolean
         users: SlackUser[]
         total: number
       }>(`/api/crouton-triage/teams/${teamId}/slack/users`, {
-        query: {
-          slackToken,
-        }
+        query,
       })
 
       if (response.success) {

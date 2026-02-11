@@ -13,10 +13,14 @@ interface Props {
   sourceType: 'slack' | 'figma' | 'notion'
   /** Workspace ID for the source */
   sourceWorkspaceId: string
-  /** Source API token (for Slack) */
+  /** Source API token for Slack (legacy — prefer sourceAccountId) */
   apiToken?: string
-  /** Notion token for user fetching */
-  notionToken: string
+  /** Connected account ID for source (Slack) token resolution */
+  sourceAccountId?: string
+  /** Notion token for user fetching (legacy — prefer notionAccountId) */
+  notionToken?: string
+  /** Connected account ID for Notion token resolution */
+  notionAccountId?: string
   /** Team ID for API context */
   teamId: string
   /** Display name for the input */
@@ -85,8 +89,10 @@ const sourceTypeIcon = computed(() => {
         <CroutonTriageUsermappingsSlackUserDiscovery
           v-if="sourceType === 'slack'"
           :workspace-id="sourceWorkspaceId"
-          :api-token="apiToken || ''"
+          :api-token="apiToken"
+          :slack-account-id="sourceAccountId"
           :notion-token="notionToken"
+          :notion-account-id="notionAccountId"
           :team-id="teamId"
           @saved="handleSaved"
         />
@@ -96,6 +102,7 @@ const sourceTypeIcon = computed(() => {
           v-else-if="sourceType === 'figma'"
           :workspace-id="sourceWorkspaceId"
           :notion-token="notionToken"
+          :notion-account-id="notionAccountId"
           :team-id="teamId"
           @saved="handleSaved"
         />
@@ -105,6 +112,7 @@ const sourceTypeIcon = computed(() => {
           v-else-if="sourceType === 'notion'"
           :workspace-id="sourceWorkspaceId"
           :notion-token="notionToken"
+          :notion-account-id="notionAccountId"
           :team-id="teamId"
           @saved="handleSaved"
         />

@@ -27,7 +27,8 @@ export interface NotionUser {
 }
 
 export interface FetchNotionUsersOptions {
-  notionToken: string
+  notionToken?: string
+  accountId?: string
   teamId: string
   includeBots?: boolean
 }
@@ -41,10 +42,10 @@ export function useTriageNotionUsers() {
    * Fetch Notion workspace users
    */
   async function fetchNotionUsers(options: FetchNotionUsersOptions): Promise<NotionUser[]> {
-    const { notionToken, teamId, includeBots = false } = options
+    const { notionToken, accountId, teamId, includeBots = false } = options
 
-    if (!notionToken || !teamId) {
-      error.value = 'Please provide both Notion token and team ID'
+    if ((!notionToken && !accountId) || !teamId) {
+      error.value = 'Please provide a Notion token or account ID, and team ID'
       return []
     }
 
@@ -52,15 +53,16 @@ export function useTriageNotionUsers() {
     error.value = null
 
     try {
+      const query: Record<string, string> = { includeBots: includeBots.toString() }
+      if (accountId) query.accountId = accountId
+      else if (notionToken) query.notionToken = notionToken
+
       const response = await $fetch<{
         success: boolean
         users: NotionUser[]
         total: number
       }>(`/api/crouton-triage/teams/${teamId}/notion/users`, {
-        query: {
-          notionToken,
-          includeBots: includeBots.toString()
-        }
+        query,
       })
 
       if (response.success) {

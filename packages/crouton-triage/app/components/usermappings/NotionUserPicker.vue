@@ -15,8 +15,10 @@ interface NotionUser {
 }
 
 interface Props {
-  /** Notion API token */
-  notionToken: string
+  /** Notion API token (legacy — prefer notionAccountId) */
+  notionToken?: string
+  /** Connected account ID for Notion token resolution */
+  notionAccountId?: string
   /** Team ID for API context */
   teamId: string
   /** Selected user ID */
@@ -46,12 +48,16 @@ const { fetchNotionUsers, users, loading, error } = useTriageNotionUsers()
 // Track if we've fetched users
 const hasFetched = ref(false)
 
-// Fetch users when token/teamId change or on mount
+// Fetch users when token/accountId/teamId change or on mount
 watch(
-  () => [props.notionToken, props.teamId],
-  async ([token, team]) => {
-    if (token && team) {
-      await fetchNotionUsers({ notionToken: token as string, teamId: team as string })
+  () => [props.notionToken, props.notionAccountId, props.teamId],
+  async ([token, accountId, team]) => {
+    if ((token || accountId) && team) {
+      await fetchNotionUsers({
+        notionToken: token as string | undefined,
+        accountId: accountId as string | undefined,
+        teamId: team as string,
+      })
       hasFetched.value = true
     }
   },

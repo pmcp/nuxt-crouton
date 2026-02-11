@@ -207,6 +207,14 @@ function getNotionTokenFromOutputs(): string | null {
   return (notionOutput?.outputConfig as any)?.notionToken || null
 }
 
+function getNotionAccountIdFromOutputs(): string | null {
+  const allOutputs = (outputs.value || []) as FlowOutput[]
+  const notionOutput = allOutputs.find(o =>
+    o.outputType === 'notion' && o.accountId
+  )
+  return notionOutput?.accountId || null
+}
+
 // Account manager
 const showAccountManager = ref(false)
 
@@ -629,7 +637,9 @@ defineExpose({ refresh: refreshAll })
       :source-type="(activeMapInput.sourceType as 'slack' | 'figma' | 'notion')"
       :source-workspace-id="getWorkspaceId(activeMapInput)"
       :api-token="activeMapInput.apiToken"
-      :notion-token="getNotionTokenFromOutputs() || ''"
+      :source-account-id="activeMapInput.accountId"
+      :notion-token="getNotionTokenFromOutputs() || undefined"
+      :notion-account-id="getNotionAccountIdFromOutputs() || undefined"
       :team-id="currentTeam?.id || ''"
       :input-name="activeMapInput.sourceType.charAt(0).toUpperCase() + activeMapInput.sourceType.slice(1)"
       @saved="refreshMappings"

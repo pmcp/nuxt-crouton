@@ -34,8 +34,10 @@ interface UserMatch {
 interface Props {
   /** Notion workspace ID (auto-captured from webhook) */
   workspaceId: string
-  /** Notion token for fetching users */
-  notionToken: string
+  /** Notion token for fetching users (legacy — prefer notionAccountId) */
+  notionToken?: string
+  /** Connected account ID for Notion token resolution */
+  notionAccountId?: string
   /** Team ID */
   teamId: string
 }
@@ -98,7 +100,11 @@ async function fetchExistingMappings() {
 // Initialize - fetch all data
 async function initialize() {
   await Promise.all([
-    fetchNotionUsers({ notionToken: props.notionToken, teamId: props.teamId }),
+    fetchNotionUsers({
+      notionToken: props.notionToken,
+      accountId: props.notionAccountId,
+      teamId: props.teamId,
+    }),
     fetchExistingMappings()
   ])
 }
@@ -467,6 +473,7 @@ onMounted(initialize)
             <div class="flex-1">
               <CroutonTriageUsermappingsNotionUserPicker
                 :notion-token="notionToken"
+                :notion-account-id="notionAccountId"
                 :team-id="teamId"
                 placeholder="Select target user..."
                 size="sm"
@@ -508,6 +515,7 @@ onMounted(initialize)
                 <CroutonTriageUsermappingsNotionUserPicker
                   v-model="editingNotionUserId"
                   :notion-token="notionToken"
+                  :notion-account-id="notionAccountId"
                   :team-id="teamId"
                 />
               </UFormField>
