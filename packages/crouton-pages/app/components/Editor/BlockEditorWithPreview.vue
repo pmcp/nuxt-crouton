@@ -87,9 +87,21 @@ const emit = defineEmits<{
 // Empty TipTap document - must have at least one paragraph node
 const emptyDoc: TipTapDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 
-// Helper to normalize content
+// Helper to normalize content — parse JSON strings into TipTap doc objects
 function normalizeContent(value: string | TipTapDoc | null | undefined): string | TipTapDoc {
   if (value) {
+    // Parse JSON strings (content stored as stringified TipTap JSON in DB)
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value)
+        if (parsed && typeof parsed === 'object' && parsed.type === 'doc') {
+          return (!parsed.content || parsed.content.length === 0) ? emptyDoc : parsed
+        }
+      } catch {
+        // Not JSON — return as-is (plain text or HTML)
+      }
+      return value
+    }
     if (typeof value === 'object') {
       const doc = value as TipTapDoc
       if (!doc.content || doc.content.length === 0) {

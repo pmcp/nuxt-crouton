@@ -44,6 +44,18 @@ const emptyDoc: TipTapDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 const content = computed({
   get: () => {
     if (props.modelValue) {
+      // Parse JSON strings (content stored as stringified TipTap JSON in DB)
+      if (typeof props.modelValue === 'string') {
+        try {
+          const parsed = JSON.parse(props.modelValue)
+          if (parsed && typeof parsed === 'object' && parsed.type === 'doc') {
+            return (!parsed.content || parsed.content.length === 0) ? emptyDoc : parsed
+          }
+        } catch {
+          // Not JSON — return as-is (plain text or HTML)
+        }
+        return props.modelValue
+      }
       // Ensure JSON docs have at least one node (TipTap requirement)
       if (typeof props.modelValue === 'object') {
         const doc = props.modelValue as TipTapDoc

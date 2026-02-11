@@ -360,6 +360,10 @@ async function handleSubmit() {
           slug: slugify(data.title)
         }
       }
+      // Block editor emits TipTap JSON objects — stringify for the text column
+      if (data?.content && typeof data.content === 'object') {
+        translations[locale] = { ...translations[locale], content: JSON.stringify(data.content) }
+      }
     }
 
     // Flatten primary locale's translations to root-level fields for the API
@@ -367,11 +371,12 @@ async function handleSubmit() {
     const primaryLocale = Object.keys(translations)[0] || 'en'
     const primary = translations[primaryLocale] || {}
 
+    const rawContent = isRegularPage.value ? (primary.content || state.value.content) : state.value.content
     const submitData = {
       ...state.value,
       title: primary.title || state.value.title,
       slug: primary.slug || state.value.slug,
-      content: isRegularPage.value ? (primary.content || state.value.content) : state.value.content,
+      content: rawContent && typeof rawContent === 'object' ? JSON.stringify(rawContent) : rawContent,
       translations,
       config: !isRegularPage.value ? state.value.config : null
     }
