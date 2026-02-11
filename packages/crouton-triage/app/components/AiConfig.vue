@@ -58,6 +58,11 @@ watch(() => props.flow, (flow) => {
     // Sync personality ref
     const rp = flow.replyPersonality
     selectedPersonality.value = !rp ? 'professional' : rp.startsWith('custom:') ? 'custom' : rp
+    // Ensure personality icon is set from preset (watcher won't fire if value didn't change)
+    const preset = personalityPresets.find(p => p.value === selectedPersonality.value)
+    if (preset && selectedPersonality.value !== 'custom') {
+      formState.value.personalityIcon = preset.icon
+    }
   }
 }, { deep: true })
 

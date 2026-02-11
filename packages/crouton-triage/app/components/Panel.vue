@@ -23,10 +23,46 @@ const { currentTeam } = useTeam()
 const toast = useToast()
 const creatingFlow = ref(false)
 const pendingFlowId = ref<string | null>(null)
+const addExpanded = ref(false)
+const addSourceDropOpen = ref(false)
+const addOutputDropOpen = ref(false)
 
-// Create a new flow and immediately open AI config
-async function handleCreateFlow() {
-  if (!currentTeam.value?.id || creatingFlow.value) return
+let addCollapseTimer: ReturnType<typeof setTimeout> | null = null
+
+function cancelAddCollapse() {
+  if (addCollapseTimer) { clearTimeout(addCollapseTimer); addCollapseTimer = null }
+}
+
+const addBusy = computed(() =>
+  creatingFlow.value || addSourceDropOpen.value || addOutputDropOpen.value
+  || showAiConfig.value || !!addSourceType.value || !!addOutputType.value
+)
+
+function scheduleAddCollapse() {
+  cancelAddCollapse()
+  addCollapseTimer = setTimeout(() => {
+    if (!addBusy.value) {
+      addExpanded.value = false
+    }
+    addCollapseTimer = null
+  }, 300)
+}
+
+function onAddMouseEnter() { cancelAddCollapse(); addExpanded.value = true }
+function onAddMouseLeave() { scheduleAddCollapse() }
+
+// Keep expanded while busy; schedule collapse when everything closes.
+watch(addBusy, (busy) => {
+  if (busy) {
+    cancelAddCollapse()
+  } else {
+    scheduleAddCollapse()
+  }
+})
+
+// Shared flow creation — returns the created flow or null on error
+async function createFlow(): Promise<Flow | null> {
+  if (!currentTeam.value?.id || creatingFlow.value) return null
   creatingFlow.value = true
   try {
     const flow = await $fetch<Flow>(`/api/teams/${currentTeam.value.id}/triage-flows`, {
@@ -39,19 +75,43 @@ async function handleCreateFlow() {
       },
     })
     await refreshFlows()
-    // Store as pending and open AI config
-    pendingFlowId.value = flow.id
-    activeFlow.value = flow
-    showAiConfig.value = true
+    return flow
   } catch (error: any) {
     toast.add({
       title: 'Failed to create flow',
       description: error.data?.message || error.message || 'Something went wrong.',
       color: 'error',
     })
+    return null
   } finally {
     creatingFlow.value = false
   }
+}
+
+// All three paths use pendingFlowId — dismissed without saving = flow deleted
+
+async function handleCreateFlowWithAi() {
+  const flow = await createFlow()
+  if (!flow) return
+  pendingFlowId.value = flow.id
+  activeFlow.value = flow
+  showAiConfig.value = true
+}
+
+async function handleCreateFlowWithSource(type: 'slack' | 'figma' | 'email') {
+  const flow = await createFlow()
+  if (!flow) return
+  pendingFlowId.value = flow.id
+  activeFlow.value = flow
+  addSourceType.value = type
+}
+
+async function handleCreateFlowWithOutput(type: 'notion' | 'github' | 'linear') {
+  const flow = await createFlow()
+  if (!flow) return
+  pendingFlowId.value = flow.id
+  activeFlow.value = flow
+  addOutputType.value = type
 }
 
 // Delete a pending flow that was dismissed without saving
@@ -68,6 +128,19 @@ async function deletePendingFlow() {
     // Silent fail — flow was temporary anyway
   }
 }
+
+// Dropdown items for add-flow source/output type pickers
+const addFlowSourceItems = [[
+  { label: 'Slack', icon: 'i-lucide-slack', onSelect: () => handleCreateFlowWithSource('slack') },
+  { label: 'Figma', icon: 'i-lucide-figma', onSelect: () => handleCreateFlowWithSource('figma') },
+  { label: 'Email', icon: 'i-lucide-mail', onSelect: () => handleCreateFlowWithSource('email') },
+]]
+
+const addFlowOutputItems = [[
+  { label: 'Notion', icon: 'i-simple-icons-notion', onSelect: () => handleCreateFlowWithOutput('notion') },
+  { label: 'GitHub', icon: 'i-lucide-github', disabled: true, onSelect: () => handleCreateFlowWithOutput('github') },
+  { label: 'Linear', icon: 'i-simple-icons-linear', disabled: true, onSelect: () => handleCreateFlowWithOutput('linear') },
+]]
 
 // Data fetching (all at once to preserve Nuxt async context)
 const [
@@ -305,18 +378,31 @@ onUnmounted(() => {
   document.removeEventListener('click', resetDeleteConfirm)
 })
 
-// Handle config changes
+// Handle config changes — saving commits the pending flow
 function onInputsChange() {
+  pendingFlowId.value = null
   refreshInputs()
 }
 
 function onOutputsChange() {
+  pendingFlowId.value = null
   refreshOutputs()
 }
 
 function onAiSaved() {
   pendingFlowId.value = null
   refreshFlows()
+}
+
+// When add-source/output modal closes, delete pending flow if nothing was saved
+function onAutoAddSourceClosed() {
+  addSourceType.value = null
+  if (pendingFlowId.value) deletePendingFlow()
+}
+
+function onAutoAddOutputClosed() {
+  addOutputType.value = null
+  if (pendingFlowId.value) deletePendingFlow()
 }
 
 // If AI config is dismissed (closed without saving) and flow is still pending, delete it
@@ -333,33 +419,61 @@ defineExpose({ refresh: refreshAll })
   <div class="flex flex-col h-full">
     <!-- Flow list -->
     <div v-if="hasFlows || creatingFlow" class="flex flex-col gap-2">
-      <!-- New flow button (centered on AI column) -->
-      <div class="group/add flex items-center justify-center py-1 cursor-pointer" @click="handleCreateFlow">
-        <!-- Default: single + circle -->
-        <div v-if="creatingFlow" class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center">
-          <UIcon name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" />
+      <!-- New flow button — side nodes slide out from center on hover, each clickable -->
+      <div
+        class="flex items-center justify-center py-1"
+        @mouseenter="onAddMouseEnter"
+        @mouseleave="onAddMouseLeave"
+      >
+        <div class="flex items-center transition-all duration-300 ease-out" :class="addExpanded ? 'gap-3' : 'gap-0'">
+          <!-- Left node: source picker -->
+          <UDropdownMenu v-model:open="addSourceDropOpen" :items="addFlowSourceItems">
+            <button
+              class="group/src h-10 rounded-xl bg-gray-500/10 flex items-center justify-center flex-shrink-0 transition-all duration-300 ease-out cursor-pointer hover:!opacity-100 hover:!scale-105"
+              :class="addExpanded ? 'w-10 opacity-50 hover:w-auto hover:px-3 hover:gap-1.5' : 'w-0 opacity-0 overflow-hidden'"
+            >
+              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400 group-hover/src:hidden" />
+              <span class="hidden group-hover/src:inline text-xs font-medium text-gray-500 whitespace-nowrap">add input</span>
+            </button>
+          </UDropdownMenu>
+          <!-- Left arrow -->
+          <div
+            class="overflow-hidden transition-all duration-300 ease-out flex-shrink-0"
+            :class="addExpanded ? 'w-4 opacity-100' : 'w-0 opacity-0'"
+          >
+            <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600" />
+          </div>
+          <!-- Center node: AI config -->
+          <button
+            class="group/ai w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center flex-shrink-0 transition-all duration-300 cursor-pointer hover:!opacity-100 hover:!scale-105 hover:w-auto hover:px-3 hover:gap-1.5"
+            @click="handleCreateFlowWithAi"
+          >
+            <template v-if="creatingFlow">
+              <UIcon name="i-lucide-loader-2" class="w-5 h-5 text-gray-400 animate-spin" />
+            </template>
+            <template v-else>
+              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400 group-hover/ai:hidden" />
+              <span class="hidden group-hover/ai:inline text-xs font-medium text-gray-500 whitespace-nowrap">add flow</span>
+            </template>
+          </button>
+          <!-- Right arrow -->
+          <div
+            class="overflow-hidden transition-all duration-300 ease-out flex-shrink-0"
+            :class="addExpanded ? 'w-4 opacity-100' : 'w-0 opacity-0'"
+          >
+            <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600" />
+          </div>
+          <!-- Right node: output picker -->
+          <UDropdownMenu v-model:open="addOutputDropOpen" :items="addFlowOutputItems">
+            <button
+              class="group/out h-10 rounded-xl bg-gray-500/10 flex items-center justify-center flex-shrink-0 transition-all duration-300 ease-out cursor-pointer hover:!opacity-100 hover:!scale-105"
+              :class="addExpanded ? 'w-10 opacity-50 hover:w-auto hover:px-3 hover:gap-1.5' : 'w-0 opacity-0 overflow-hidden'"
+            >
+              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400 group-hover/out:hidden" />
+              <span class="hidden group-hover/out:inline text-xs font-medium text-gray-500 whitespace-nowrap">add output</span>
+            </button>
+          </UDropdownMenu>
         </div>
-        <template v-else>
-          <div class="flex items-center justify-center group-hover/add:hidden">
-            <div class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all">
-              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
-            </div>
-          </div>
-          <!-- Hover: full-size pipeline preview matching PipelineBuilder -->
-          <div class="hidden group-hover/add:flex items-center gap-2">
-            <div class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center">
-              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
-            </div>
-            <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" />
-            <div class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center">
-              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
-            </div>
-            <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" />
-            <div class="w-10 h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center">
-              <UIcon name="i-lucide-plus" class="w-5 h-5 text-gray-400" />
-            </div>
-          </div>
-        </template>
       </div>
 
       <div
@@ -443,7 +557,7 @@ defineExpose({ refresh: refreshAll })
         size="sm"
         icon="i-lucide-plus"
         :loading="creatingFlow"
-        @click="handleCreateFlow"
+        @click="handleCreateFlowWithAi"
       >
         New Flow
       </UButton>
@@ -477,7 +591,7 @@ defineExpose({ refresh: refreshAll })
     </div>
 
     <!-- User Mapping Drawer -->
-    <TriageUsermappingsUserMappingDrawer
+    <CroutonTriageUsermappingsUserMappingDrawer
       v-if="activeMapInput"
       v-model:open="showUserMappingDrawer"
       :source-type="(activeMapInput.sourceType as 'slack' | 'figma' | 'notion')"
@@ -537,7 +651,7 @@ defineExpose({ refresh: refreshAll })
         :auto-edit-input="editSourceInput"
         edit-mode
         @change="onInputsChange"
-        @auto-add-closed="addSourceType = null"
+        @auto-add-closed="onAutoAddSourceClosed"
         @auto-edit-closed="editSourceInput = null"
       />
     </div>
@@ -553,7 +667,7 @@ defineExpose({ refresh: refreshAll })
         :auto-edit-output="editOutputItem"
         edit-mode
         @change="onOutputsChange"
-        @auto-add-closed="addOutputType = null"
+        @auto-add-closed="onAutoAddOutputClosed"
         @auto-edit-closed="editOutputItem = null"
       />
     </div>

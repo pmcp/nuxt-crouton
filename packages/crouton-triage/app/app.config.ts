@@ -29,11 +29,6 @@ export default defineAppConfig({
           icon: 'i-lucide-activity'
         },
         {
-          path: '/triage/user-mappings',
-          label: 'triage.admin.userMappings',
-          icon: 'i-lucide-users'
-        },
-        {
           path: '/triage/inbox',
           label: 'triage.admin.inbox',
           icon: 'i-lucide-inbox'
