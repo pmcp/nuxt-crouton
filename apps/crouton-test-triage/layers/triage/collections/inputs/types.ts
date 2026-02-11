@@ -9,7 +9,7 @@
  * - Form data type: TriageInputFormData
  * - New item type: NewTriageInput
  * - Form props: TriageInputFormProps
- * - Fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
+ * - Fields: flowId, sourceType, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -29,7 +29,6 @@ export interface TriageInput {
   owner: string
   flowId: string
   sourceType: string
-  name: string
   apiToken?: string
   webhookUrl?: string
   webhookSecret?: string

@@ -9,7 +9,7 @@
  * - Form data type: TriageOutputFormData
  * - New item type: NewTriageOutput
  * - Form props: TriageOutputFormProps
- * - Fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, accountId, active
+ * - Fields: flowId, outputType, domainFilter, isDefault, outputConfig, accountId, active
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -29,7 +29,6 @@ export interface TriageOutput {
   owner: string
   flowId: string
   outputType: string
-  name: string
   domainFilter?: string[]
   isDefault?: boolean
   outputConfig?: Record<string, any>

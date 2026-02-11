@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/triage-inputs
   - Zod schema: useTriageInputs() composable
-  - Fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
+  - Fields: flowId, sourceType, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -43,9 +43,6 @@
       <div v-show="!tabs || activeSection === 'basic'" class="flex flex-col gap-4 p-1">
         <UFormField label="SourceType" name="sourceType" class="not-last:pb-4">
           <UInput v-model="state.sourceType" class="w-full" size="xl" />
-        </UFormField>
-        <UFormField label="Name" name="name" class="not-last:pb-4">
-          <UInput v-model="state.name" class="w-full" size="xl" />
         </UFormField>
       </div>
 
@@ -157,7 +154,6 @@ const activeSection = ref('basic')
 // Map field names to their tab groups for error tracking
 const fieldToGroup: Record<string, string> = {
   'sourceType': 'basic',
-  'name': 'basic',
   'apiToken': 'credentials',
   'webhookUrl': 'webhook',
   'webhookSecret': 'webhook',

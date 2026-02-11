@@ -26,7 +26,6 @@ export const triageInputs = sqliteTable('triage_inputs', {
   order: integer('order').notNull().$default(() => 0),
   flowId: text('flowId').notNull(),
   sourceType: text('sourceType').notNull(),
-  name: text('name').notNull(),
   apiToken: text('apiToken'),
   webhookUrl: text('webhookUrl'),
   webhookSecret: text('webhookSecret'),

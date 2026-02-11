@@ -26,7 +26,6 @@ export const triageOutputs = sqliteTable('triage_outputs', {
   order: integer('order').notNull().$default(() => 0),
   flowId: text('flowId').notNull(),
   outputType: text('outputType').notNull(),
-  name: text('name').notNull(),
   domainFilter: jsonColumn('domainFilter').$default(() => (null)),
   isDefault: integer('isDefault', { mode: 'boolean' }).$default(() => false),
   outputConfig: jsonColumn('outputConfig').$default(() => ({})),

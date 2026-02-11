@@ -16,7 +16,6 @@ export default defineEventHandler(async (event) => {
   return await updateTriageInput(inputId, team.id, user.id, {
     flowId: body.flowId,
     sourceType: body.sourceType,
-    name: body.name,
     apiToken: body.apiToken,
     webhookUrl: body.webhookUrl,
     webhookSecret: body.webhookSecret,
