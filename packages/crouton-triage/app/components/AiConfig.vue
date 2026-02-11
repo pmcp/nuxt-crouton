@@ -299,7 +299,7 @@ async function handleSave() {
               Change
             </button>
           </div>
-          <UFormField v-else label="Anthropic API Key" help="Optional. Uses server key if not set. Encrypted at rest.">
+          <UFormField v-else label="Anthropic API Key" help="Optional. If not provided, the server-configured NUXT_CROUTON_TRIAGE_ANTHROPIC_API_KEY will be used instead. Per-flow keys are encrypted before being stored in the database and are never returned to the client — only a masked hint (e.g. sk-ant-...xyz) is shown.">
             <div class="flex gap-2">
               <UInput
                 v-model="newApiKey"
