@@ -37,16 +37,29 @@ interface Props {
    * Whether the component is in edit mode (vs create mode in wizard)
    */
   editMode?: boolean
+
+  /**
+   * When set, auto-opens the add modal for this source type
+   */
+  autoAddType?: 'slack' | 'figma' | 'email' | null
+
+  /**
+   * When set, auto-opens the edit modal for this specific input
+   */
+  autoEditInput?: FlowInput | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: () => [],
   editMode: false,
+  autoEditInput: null,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: FlowInput[]]
   'change': [value: FlowInput[]]
+  'auto-add-closed': []
+  'auto-edit-closed': []
 }>()
 
 // ============================================================================
@@ -494,6 +507,33 @@ function getWorkspaceName(input: FlowInput): string | null {
 watch(() => props.modelValue, (newValue) => {
   inputs.value = [...newValue]
 }, { deep: true })
+
+// Auto-open add modal when autoAddType is set
+watch(() => props.autoAddType, (type) => {
+  if (type) {
+    openAddModal(type)
+  }
+}, { immediate: true })
+
+// Auto-open edit modal when autoEditInput is set
+watch(() => props.autoEditInput, (input) => {
+  if (input) {
+    openEditModal(input)
+  }
+}, { immediate: true })
+
+// Notify parent when auto-opened modal closes
+watch(isAddModalOpen, (open) => {
+  if (!open && props.autoAddType) {
+    emit('auto-add-closed')
+  }
+})
+
+watch(isEditModalOpen, (open) => {
+  if (!open && props.autoEditInput) {
+    emit('auto-edit-closed')
+  }
+})
 </script>
 
 <template>
@@ -513,17 +553,17 @@ watch(() => props.modelValue, (newValue) => {
           [{
             label: 'Slack (OAuth)',
             icon: 'i-heroicons-chat-bubble-left-right',
-            click: () => openAddModal('slack')
+            onSelect: () => openAddModal('slack')
           }],
           [{
             label: 'Figma (Email)',
             icon: 'i-heroicons-envelope',
-            click: () => openAddModal('figma')
+            onSelect: () => openAddModal('figma')
           }],
           [{
             label: 'Generic Email',
             icon: 'i-heroicons-envelope',
-            click: () => openAddModal('email')
+            onSelect: () => openAddModal('email')
           }]
         ]"
       >
@@ -629,7 +669,7 @@ watch(() => props.modelValue, (newValue) => {
     </div>
 
     <!-- Add Input Modal -->
-    <UModal v-model="isAddModalOpen">
+    <UModal v-model:open="isAddModalOpen">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">
@@ -647,6 +687,7 @@ watch(() => props.modelValue, (newValue) => {
               <UInput
                 v-model="inputFormState.name"
                 placeholder="e.g., Product Team Slack"
+                class="w-full"
               />
             </UFormField>
 
@@ -687,6 +728,7 @@ watch(() => props.modelValue, (newValue) => {
                   v-model="inputFormState.emailSlug"
                   placeholder="e.g., figma-comments"
                   help="Lowercase alphanumeric with hyphens"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -696,6 +738,7 @@ watch(() => props.modelValue, (newValue) => {
                   type="email"
                   placeholder="e.g., figma-comments@triage.app"
                   help="This will be generated based on your slug"
+                  class="w-full"
                 />
               </UFormField>
             </template>
@@ -720,7 +763,7 @@ watch(() => props.modelValue, (newValue) => {
     </UModal>
 
     <!-- Edit Input Modal -->
-    <UModal v-model="isEditModalOpen">
+    <UModal v-model:open="isEditModalOpen">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">
@@ -738,6 +781,7 @@ watch(() => props.modelValue, (newValue) => {
               <UInput
                 v-model="inputFormState.name"
                 placeholder="e.g., Product Team Slack"
+                class="w-full"
               />
             </UFormField>
 
@@ -769,6 +813,7 @@ watch(() => props.modelValue, (newValue) => {
                 <UInput
                   v-model="inputFormState.emailSlug"
                   placeholder="e.g., figma-comments"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -777,6 +822,7 @@ watch(() => props.modelValue, (newValue) => {
                   v-model="inputFormState.emailAddress"
                   type="email"
                   placeholder="e.g., figma-comments@triage.app"
+                  class="w-full"
                 />
               </UFormField>
             </template>
@@ -809,7 +855,7 @@ watch(() => props.modelValue, (newValue) => {
     </UModal>
 
     <!-- Delete Confirmation Dialog -->
-    <UModal v-model="isDeleteDialogOpen">
+    <UModal v-model:open="isDeleteDialogOpen">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-2">Delete Input</h3>

@@ -56,29 +56,35 @@ const { feedItems, loading: feedLoading, refresh: refreshFeed } = await useTriag
 const loading = computed(() => flowsPending.value || inputsPending.value || outputsPending.value || feedLoading.value)
 
 // Slideover states
-const showSourceConfig = ref(false)
-const showOutputConfig = ref(false)
 const showAiConfig = ref(false)
 
+// Track which specific input/output to edit (opens edit modal directly)
+const editSourceInput = ref<FlowInput | null>(null)
+const editOutputItem = ref<FlowOutput | null>(null)
+
+// Track which type was selected from the "+" dropdown (opens add modal directly)
+const addSourceType = ref<'slack' | 'figma' | 'email' | null>(null)
+const addOutputType = ref<'notion' | 'github' | 'linear' | null>(null)
+
 // Pipeline builder event handlers
-function handleEditSource(_input: FlowInput) {
-  showSourceConfig.value = true
+function handleEditSource(input: FlowInput) {
+  editSourceInput.value = input
 }
 
 function handleEditAi() {
   showAiConfig.value = true
 }
 
-function handleEditOutput(_output: FlowOutput) {
-  showOutputConfig.value = true
+function handleEditOutput(output: FlowOutput) {
+  editOutputItem.value = output
 }
 
-function handleAddSource() {
-  showSourceConfig.value = true
+function handleAddSource(type: 'slack' | 'figma' | 'email') {
+  addSourceType.value = type
 }
 
-function handleAddOutput() {
-  showOutputConfig.value = true
+function handleAddOutput(type: 'notion' | 'github' | 'linear') {
+  addOutputType.value = type
 }
 
 // Refresh all data
@@ -218,26 +224,7 @@ defineExpose({ refresh: refreshAll })
       </div>
     </template>
 
-    <!-- Config Slideovers -->
-    <CroutonTriageSourceConfig
-      v-if="flow"
-      v-model="showSourceConfig"
-      :flow-id="flow.id"
-      :team-id="currentTeam?.id || ''"
-      :inputs="flowInputs"
-      @change="onInputsChange"
-    />
-
-    <CroutonTriageOutputConfig
-      v-if="flow"
-      v-model="showOutputConfig"
-      :flow-id="flow.id"
-      :team-id="currentTeam?.id || ''"
-      :available-domains="flow.availableDomains || []"
-      :outputs="flowOutputs"
-      @change="onOutputsChange"
-    />
-
+    <!-- AI Config Slideover -->
     <CroutonTriageAiConfig
       v-if="flow"
       v-model="showAiConfig"
@@ -245,5 +232,36 @@ defineExpose({ refresh: refreshAll })
       :team-id="currentTeam?.id || ''"
       @save="onAiSaved"
     />
+
+    <!-- Direct modals for inputs (add + edit) -->
+    <div v-if="flow && (addSourceType || editSourceInput)" class="hidden">
+      <CroutonTriageFlowsInputManager
+        :flow-id="flow.id"
+        :team-id="currentTeam?.id || ''"
+        :model-value="flowInputs"
+        :auto-add-type="addSourceType"
+        :auto-edit-input="editSourceInput"
+        edit-mode
+        @change="onInputsChange"
+        @auto-add-closed="addSourceType = null"
+        @auto-edit-closed="editSourceInput = null"
+      />
+    </div>
+
+    <!-- Direct modals for outputs (add + edit) -->
+    <div v-if="flow && (addOutputType || editOutputItem)" class="hidden">
+      <CroutonTriageFlowsOutputManager
+        :flow-id="flow.id"
+        :team-id="currentTeam?.id || ''"
+        :available-domains="flow.availableDomains || []"
+        :model-value="flowOutputs"
+        :auto-add-type="addOutputType"
+        :auto-edit-output="editOutputItem"
+        edit-mode
+        @change="onOutputsChange"
+        @auto-add-closed="addOutputType = null"
+        @auto-edit-closed="editOutputItem = null"
+      />
+    </div>
   </div>
 </template>

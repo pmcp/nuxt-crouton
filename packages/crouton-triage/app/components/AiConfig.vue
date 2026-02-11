@@ -49,6 +49,9 @@ watch(() => props.flow, (flow) => {
       availableDomains: flow.availableDomains || [...DEFAULT_DOMAINS],
     }
     selectedPreset.value = detectPresetFromPrompts(flow.aiSummaryPrompt, flow.aiTaskPrompt)
+    // Sync personality ref
+    const rp = flow.replyPersonality
+    selectedPersonality.value = !rp ? '' : rp.startsWith('custom:') ? 'custom' : rp
   }
 }, { deep: true })
 
@@ -110,6 +113,12 @@ const personalityPresets = [
   { value: 'custom', label: 'Custom...', description: 'Write your own AI prompt' },
 ]
 
+// Memoize items to avoid re-creating objects on every render
+const personalityItems = personalityPresets.map(p => ({
+  label: `${p.label} — ${p.description}`,
+  value: p.value,
+}))
+
 // Custom personality
 const customPersonalityPrompt = ref(
   props.flow?.replyPersonality?.startsWith('custom:')
@@ -117,26 +126,28 @@ const customPersonalityPrompt = ref(
     : ''
 )
 
-const selectedPersonality = computed({
-  get: () => {
-    const rp = formState.value.replyPersonality
-    if (!rp) return ''
-    if (rp.startsWith('custom:')) return 'custom'
-    return rp
-  },
-  set: (val) => {
-    if (val === 'custom') {
-      formState.value.replyPersonality = customPersonalityPrompt.value
-        ? `custom:${customPersonalityPrompt.value}`
-        : 'custom'
-    } else {
-      formState.value.replyPersonality = val
-    }
-  },
+const selectedPersonality = ref((() => {
+  const rp = props.flow?.replyPersonality
+  if (!rp) return ''
+  if (rp.startsWith('custom:')) return 'custom'
+  return rp
+})())
+
+const isCustomPersonality = computed(() => selectedPersonality.value === 'custom')
+
+// Sync personality selection to formState
+watch(selectedPersonality, (val) => {
+  if (val === 'custom') {
+    formState.value.replyPersonality = customPersonalityPrompt.value
+      ? `custom:${customPersonalityPrompt.value}`
+      : 'custom'
+  } else {
+    formState.value.replyPersonality = val
+  }
 })
 
 watch(customPersonalityPrompt, (val) => {
-  if (selectedPersonality.value === 'custom') {
+  if (isCustomPersonality.value) {
     formState.value.replyPersonality = val ? `custom:${val}` : 'custom'
   }
 })
@@ -242,23 +253,11 @@ async function handleSave() {
 </script>
 
 <template>
-  <USlideover v-model:open="isOpen" :ui="{ width: 'max-w-lg' }">
-    <template #content="{ close }">
-      <div class="p-6 h-full overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold">AI Configuration</h3>
-          <UButton
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="close"
-          />
-        </div>
-
-        <div class="space-y-6">
-          <!-- AI Toggle -->
-          <div class="flex items-center justify-between">
+  <CroutonTriageConfigPanel v-model="isOpen" title="AI Configuration" mode="modal">
+    <template #default="{ close }">
+      <div class="space-y-6">
+        <!-- AI Toggle -->
+        <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-medium">AI Analysis</p>
               <p class="text-xs text-muted-foreground">Enable AI-powered summarization and task detection</p>
@@ -273,6 +272,7 @@ async function handleSave() {
                 v-model="formState.anthropicApiKey"
                 type="password"
                 placeholder="sk-ant-..."
+                class="w-full"
               />
             </UFormField>
 
@@ -300,6 +300,7 @@ async function handleSave() {
                 v-model="formState.aiSummaryPrompt"
                 :rows="3"
                 placeholder="Focus on..."
+                class="w-full"
               />
             </UFormField>
 
@@ -308,6 +309,7 @@ async function handleSave() {
                 v-model="formState.aiTaskPrompt"
                 :rows="3"
                 placeholder="Extract..."
+                class="w-full"
               />
             </UFormField>
 
@@ -331,18 +333,19 @@ async function handleSave() {
             <UFormField label="Reply Personality" help="How the AI responds in source threads.">
               <div class="space-y-2">
                 <USelectMenu
-                  :model-value="selectedPersonality"
-                  :items="personalityPresets.map(p => ({ label: `${p.label} — ${p.description}`, value: p.value }))"
+                  v-model="selectedPersonality"
+                  :items="personalityItems"
                   value-key="value"
-                  @update:model-value="selectedPersonality = $event"
+                  class="w-full"
                 />
 
                 <!-- Custom personality prompt -->
-                <template v-if="selectedPersonality === 'custom'">
+                <template v-if="isCustomPersonality">
                   <UTextarea
                     v-model="customPersonalityPrompt"
                     :rows="2"
                     placeholder="Describe the personality..."
+                    class="w-full"
                   />
 
                   <!-- Icon suggestions -->
@@ -404,6 +407,7 @@ async function handleSave() {
                     v-model="newDomain"
                     size="sm"
                     placeholder="Add domain..."
+                    class="flex-1"
                     @keydown.enter.prevent="addDomain"
                   />
                   <UButton size="sm" variant="outline" color="neutral" @click="addDomain">Add</UButton>
@@ -412,13 +416,12 @@ async function handleSave() {
             </UFormField>
           </template>
 
-          <!-- Save button -->
-          <div class="flex justify-end gap-2 pt-4 border-t">
-            <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
-            <UButton color="primary" :loading="saving" @click="handleSave">Save Settings</UButton>
-          </div>
+        <!-- Save button -->
+        <div class="flex justify-end gap-2 pt-4 border-t">
+          <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
+          <UButton color="primary" :loading="saving" @click="handleSave">Save Settings</UButton>
         </div>
       </div>
     </template>
-  </USlideover>
+  </CroutonTriageConfigPanel>
 </template>

@@ -34,30 +34,15 @@ function onOutputsChange(outputs: FlowOutput[]) {
 </script>
 
 <template>
-  <USlideover v-model:open="isOpen">
-    <template #content="{ close }">
-      <div class="p-6 h-full overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold">Output Destinations</h3>
-          <UButton
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="close"
-          />
-        </div>
-
-        <CroutonTriageFlowsOutputManager
-          :flow-id="flowId"
-          :team-id="teamId"
-          :available-domains="availableDomains"
-          :model-value="localOutputs"
-          edit-mode
-          @update:model-value="onOutputsChange"
-          @change="onOutputsChange"
-        />
-      </div>
-    </template>
-  </USlideover>
+  <CroutonTriageConfigPanel v-model="isOpen" title="Output Destinations">
+    <CroutonTriageFlowsOutputManager
+      :flow-id="flowId"
+      :team-id="teamId"
+      :available-domains="availableDomains"
+      :model-value="localOutputs"
+      edit-mode
+      @update:model-value="onOutputsChange"
+      @change="onOutputsChange"
+    />
+  </CroutonTriageConfigPanel>
 </template>

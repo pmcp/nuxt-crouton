@@ -43,16 +43,29 @@ interface Props {
    * Whether the component is in edit mode (vs create mode in wizard)
    */
   editMode?: boolean
+
+  /**
+   * When set, auto-opens the add modal for this output type
+   */
+  autoAddType?: 'notion' | 'github' | 'linear' | null
+
+  /**
+   * When set, auto-opens the edit modal for this specific output
+   */
+  autoEditOutput?: FlowOutput | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: () => [],
   editMode: false,
+  autoEditOutput: null,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: FlowOutput[]]
   'change': [value: FlowOutput[]]
+  'auto-add-closed': []
+  'auto-edit-closed': []
 }>()
 
 // ============================================================================
@@ -214,18 +227,18 @@ const outputTypeOptions = [
   {
     label: 'Notion',
     icon: 'i-heroicons-document-text',
-    click: () => openAddModal('notion'),
+    onSelect: () => openAddModal('notion'),
   },
   {
     label: 'GitHub',
     icon: 'i-lucide-github',
-    click: () => openAddModal('github'),
+    onSelect: () => openAddModal('github'),
     disabled: true, // Future feature
   },
   {
     label: 'Linear',
     icon: 'i-simple-icons-linear',
-    click: () => openAddModal('linear'),
+    onSelect: () => openAddModal('linear'),
     disabled: true, // Future feature
   },
 ]
@@ -694,6 +707,33 @@ function formatDomainFilter(domainFilter?: string[]): string {
 watch(() => props.modelValue, (newValue) => {
   outputs.value = [...newValue]
 }, { deep: true })
+
+// Auto-open add modal when autoAddType is set
+watch(() => props.autoAddType, (type) => {
+  if (type) {
+    openAddModal(type)
+  }
+}, { immediate: true })
+
+// Auto-open edit modal when autoEditOutput is set
+watch(() => props.autoEditOutput, (output) => {
+  if (output) {
+    openEditModal(output)
+  }
+}, { immediate: true })
+
+// Notify parent when auto-opened modal closes
+watch(isAddModalOpen, (open) => {
+  if (!open && props.autoAddType) {
+    emit('auto-add-closed')
+  }
+})
+
+watch(isEditModalOpen, (open) => {
+  if (!open && props.autoEditOutput) {
+    emit('auto-edit-closed')
+  }
+})
 </script>
 
 <template>
@@ -813,7 +853,7 @@ watch(() => props.modelValue, (newValue) => {
     />
 
     <!-- Add Output Modal -->
-    <UModal v-model="isAddModalOpen">
+    <UModal v-model:open="isAddModalOpen">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">
@@ -826,6 +866,7 @@ watch(() => props.modelValue, (newValue) => {
               <UInput
                 v-model="outputFormState.name"
                 placeholder="e.g., Design Tasks DB"
+                class="w-full"
               />
             </UFormField>
 
@@ -840,6 +881,7 @@ watch(() => props.modelValue, (newValue) => {
                 :options="availableDomains"
                 multiple
                 placeholder="Select domains..."
+                class="w-full"
               />
             </UFormField>
 
@@ -861,6 +903,7 @@ watch(() => props.modelValue, (newValue) => {
                   v-model="outputFormState.notionToken"
                   type="password"
                   placeholder="secret_..."
+                  class="w-full"
                 />
               </UFormField>
 
@@ -868,6 +911,7 @@ watch(() => props.modelValue, (newValue) => {
                 <UInput
                   v-model="outputFormState.databaseId"
                   placeholder="32 character ID (no dashes)"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -896,6 +940,7 @@ watch(() => props.modelValue, (newValue) => {
                     :model-value="getMappedProperty('priority')"
                     :options="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
+                    class="w-full"
                     @update:model-value="updateFieldMapping('priority', $event)"
                   >
                     <template #option="{ option }">
@@ -919,6 +964,7 @@ watch(() => props.modelValue, (newValue) => {
                     :model-value="getMappedProperty('type')"
                     :options="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
+                    class="w-full"
                     @update:model-value="updateFieldMapping('type', $event)"
                   >
                     <template #option="{ option }">
@@ -942,6 +988,7 @@ watch(() => props.modelValue, (newValue) => {
                     :model-value="getMappedProperty('assignee')"
                     :options="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
+                    class="w-full"
                     @update:model-value="updateFieldMapping('assignee', $event)"
                   >
                     <template #option="{ option }">
@@ -1010,7 +1057,7 @@ watch(() => props.modelValue, (newValue) => {
     </UModal>
 
     <!-- Edit Output Modal -->
-    <UModal v-model="isEditModalOpen">
+    <UModal v-model:open="isEditModalOpen">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">
@@ -1023,6 +1070,7 @@ watch(() => props.modelValue, (newValue) => {
               <UInput
                 v-model="outputFormState.name"
                 placeholder="e.g., Design Tasks DB"
+                class="w-full"
               />
             </UFormField>
 
@@ -1037,6 +1085,7 @@ watch(() => props.modelValue, (newValue) => {
                 :options="availableDomains"
                 multiple
                 placeholder="Select domains..."
+                class="w-full"
               />
             </UFormField>
 
@@ -1067,6 +1116,7 @@ watch(() => props.modelValue, (newValue) => {
                   v-model="outputFormState.notionToken"
                   type="password"
                   placeholder="secret_..."
+                  class="w-full"
                 />
               </UFormField>
 
@@ -1074,6 +1124,7 @@ watch(() => props.modelValue, (newValue) => {
                 <UInput
                   v-model="outputFormState.databaseId"
                   placeholder="32 character ID (no dashes)"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -1102,6 +1153,7 @@ watch(() => props.modelValue, (newValue) => {
                     :model-value="getMappedProperty('priority')"
                     :options="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
+                    class="w-full"
                     @update:model-value="updateFieldMapping('priority', $event)"
                   >
                     <template #option="{ option }">
@@ -1125,6 +1177,7 @@ watch(() => props.modelValue, (newValue) => {
                     :model-value="getMappedProperty('type')"
                     :options="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
+                    class="w-full"
                     @update:model-value="updateFieldMapping('type', $event)"
                   >
                     <template #option="{ option }">
@@ -1148,6 +1201,7 @@ watch(() => props.modelValue, (newValue) => {
                     :model-value="getMappedProperty('assignee')"
                     :options="Object.keys(notionSchema.properties || {})"
                     placeholder="Select property..."
+                    class="w-full"
                     @update:model-value="updateFieldMapping('assignee', $event)"
                   >
                     <template #option="{ option }">
@@ -1196,7 +1250,7 @@ watch(() => props.modelValue, (newValue) => {
     </UModal>
 
     <!-- Delete Confirmation Dialog -->
-    <UModal v-model="isDeleteDialogOpen">
+    <UModal v-model:open="isDeleteDialogOpen">
       <template #content="{ close }">
         <div class="p-6">
           <div class="flex items-start gap-3 mb-4">
