@@ -132,7 +132,7 @@ export default defineEventHandler(async (event) => {
     })
 
     // Build redirect URI (must match what's configured in Slack app settings)
-    const redirectUri = `${baseUrl}/api/oauth/slack/callback`
+    const redirectUri = `${baseUrl}/api/crouton-triage/oauth/slack/callback`
 
     // Build Slack authorization URL
     // If a workspace name is provided, use it as subdomain to pre-select that workspace

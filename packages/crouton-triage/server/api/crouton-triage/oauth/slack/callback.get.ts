@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Build redirect URI (must match install.get.ts)
-    const redirectUri = `${baseUrl}/api/oauth/slack/callback`
+    const redirectUri = `${baseUrl}/api/crouton-triage/oauth/slack/callback`
 
     logger.debug('[OAuth] Exchanging code for access token', {
       teamId,
