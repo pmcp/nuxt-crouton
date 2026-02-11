@@ -372,7 +372,8 @@ async function handleSave() {
                   :rows="2"
                   placeholder="Focus on..."
                   size="sm"
-                  class="w-full text-muted-foreground"
+                  :ui="{ base: 'text-dimmed' }"
+                  class="w-full"
                 />
               </UFormField>
               <UFormField label="Task detection prompt">
@@ -381,7 +382,8 @@ async function handleSave() {
                   :rows="2"
                   placeholder="Extract..."
                   size="sm"
-                  class="w-full text-muted-foreground"
+                  :ui="{ base: 'text-dimmed' }"
+                  class="w-full"
                 />
               </UFormField>
             </template>
