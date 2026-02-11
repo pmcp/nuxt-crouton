@@ -39,6 +39,42 @@ import { kv } from 'hub:kv'
  * - users:read: List workspace members for user mapping
  * - users:read.email: Get member emails for auto-matching with Notion users
  */
+/**
+ * Parse Slack workspace input into a hostname for the OAuth URL.
+ *
+ * Accepts:
+ * - Full URL: "https://myteam.slack.com" → "myteam.slack.com"
+ * - Domain: "myteam.slack.com" → "myteam.slack.com"
+ * - Subdomain only: "myteam" → "myteam.slack.com"
+ * - Team ID: "T12345" → "slack.com" (team IDs are passed via query param instead)
+ * - undefined/empty → "slack.com" (default)
+ */
+function parseSlackWorkspace(input?: string): string {
+  if (!input?.trim()) return 'slack.com'
+
+  const value = input.trim()
+
+  // Team ID (T-prefixed) — handled via `team` query param, use default host
+  if (value.match(/^T[A-Z0-9]+$/)) return 'slack.com'
+
+  // Full URL — extract hostname
+  if (value.includes('://')) {
+    try {
+      const url = new URL(value)
+      return url.hostname
+    }
+    catch {
+      return 'slack.com'
+    }
+  }
+
+  // Already a domain (contains .slack.com)
+  if (value.includes('.slack.com')) return value
+
+  // Plain workspace name — append .slack.com
+  return `${value}.slack.com`
+}
+
 const SLACK_SCOPES = [
   'channels:history',
   'channels:read',
@@ -73,11 +109,12 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get team ID, flow ID, and opener origin from query params
+    // Get team ID, flow ID, Slack workspace, and opener origin from query params
     const query = getQuery(event)
     const teamId = (query.teamId as string) || (query.team_id as string) || 'default'
     const flowId = query.flowId as string | undefined
     const openerOrigin = query.openerOrigin as string | undefined
+    const slackTeam = query.slackTeam as string | undefined
 
     // Generate secure random state token (32 bytes = 256 bits)
     const state = randomBytes(32).toString('hex')
@@ -98,14 +135,18 @@ export default defineEventHandler(async (event) => {
     const redirectUri = `${baseUrl}/api/oauth/slack/callback`
 
     // Build Slack authorization URL
-    const slackAuthUrl = new URL('https://slack.com/oauth/v2/authorize')
+    // If a workspace name is provided, use it as subdomain to pre-select that workspace
+    const slackHost = parseSlackWorkspace(slackTeam)
+    const slackAuthUrl = new URL(`https://${slackHost}/oauth/v2/authorize`)
     slackAuthUrl.searchParams.set('client_id', clientId)
     slackAuthUrl.searchParams.set('scope', SLACK_SCOPES)
     slackAuthUrl.searchParams.set('state', state)
     slackAuthUrl.searchParams.set('redirect_uri', redirectUri)
 
-    // Optional: Add user scopes if needed (for actions on behalf of users)
-    // slackAuthUrl.searchParams.set('user_scope', 'users:read')
+    // If slackTeam looks like a team ID (T-prefixed), also pass as team param
+    if (slackTeam?.match(/^T[A-Z0-9]+$/)) {
+      slackAuthUrl.searchParams.set('team', slackTeam)
+    }
 
     console.log('[OAuth] Initiating Slack OAuth flow', {
       teamId,

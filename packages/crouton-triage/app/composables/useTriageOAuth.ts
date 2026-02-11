@@ -40,6 +40,13 @@ export interface OAuthConfig {
   flowId?: string | Ref<string | undefined>
 
   /**
+   * Slack workspace name or team ID to pre-select during OAuth
+   * Accepts: workspace subdomain (e.g. "myteam"), full URL ("myteam.slack.com"), or team ID ("T12345")
+   * Can be a ref for reactive updates
+   */
+  slackTeam?: string | Ref<string | undefined>
+
+  /**
    * Callback when OAuth succeeds
    */
   onSuccess?: (credentials: OAuthCredentials) => void
@@ -57,12 +64,18 @@ export interface OAuthConfig {
 }
 
 export function useTriageOAuth(config: OAuthConfig) {
-  const { teamId, flowId: flowIdInput, onSuccess, onError, provider = 'slack' } = config
+  const { teamId, flowId: flowIdInput, slackTeam: slackTeamInput, onSuccess, onError, provider = 'slack' } = config
 
   // Support both static and reactive flowId
   const flowId = computed(() => {
     if (flowIdInput === undefined) return undefined
     return isRef(flowIdInput) ? flowIdInput.value : flowIdInput
+  })
+
+  // Support both static and reactive slackTeam
+  const slackTeam = computed(() => {
+    if (slackTeamInput === undefined) return undefined
+    return isRef(slackTeamInput) ? slackTeamInput.value : slackTeamInput
   })
 
   const waitingForOAuth = ref(false)
@@ -77,6 +90,9 @@ export function useTriageOAuth(config: OAuthConfig) {
     url.searchParams.set('teamId', teamId)
     if (flowId.value) {
       url.searchParams.set('flowId', flowId.value)
+    }
+    if (slackTeam.value) {
+      url.searchParams.set('slackTeam', slackTeam.value)
     }
     // Pass opener origin so success page knows where to postMessage
     url.searchParams.set('openerOrigin', window.location.origin)

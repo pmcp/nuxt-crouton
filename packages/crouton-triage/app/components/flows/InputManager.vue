@@ -80,6 +80,8 @@ const toast = useToast()
 // INPUT FORM STATE
 // ============================================================================
 
+const slackWorkspace = ref('')
+
 const inputFormState = ref({
   name: '',
   sourceType: 'slack',
@@ -132,6 +134,7 @@ const inputSchema = computed(() => {
 const { openOAuthPopup, waitingForOAuth } = useTriageOAuth({
   teamId: props.teamId,
   flowId: props.flowId, // Pass flowId so OAuth adds input to this specific flow
+  slackTeam: slackWorkspace, // Pass workspace name to pre-select during OAuth
   provider: 'slack',
   onSuccess: async (credentials) => {
     console.log('[InputManager] OAuth success:', credentials)
@@ -242,6 +245,7 @@ function resetForm() {
     sourceMetadata: {},
     active: true,
   }
+  slackWorkspace.value = ''
   editingInput.value = null
 }
 
@@ -693,6 +697,17 @@ watch(isEditModalOpen, (open) => {
 
             <!-- Slack-specific fields -->
             <template v-if="selectedInputType === 'slack'">
+              <UFormField label="Slack Workspace" name="slackWorkspace">
+                <UInput
+                  v-model="slackWorkspace"
+                  placeholder="e.g., myteam or myteam.slack.com"
+                  class="w-full"
+                />
+                <template #help>
+                  Optional. Enter your workspace name to ensure the correct workspace is selected during OAuth.
+                </template>
+              </UFormField>
+
               <UFormField label="OAuth Connection" name="apiToken" required>
                 <div class="space-y-2">
                   <UButton
@@ -787,6 +802,17 @@ watch(isEditModalOpen, (open) => {
 
             <!-- Slack-specific fields -->
             <template v-if="selectedInputType === 'slack'">
+              <UFormField label="Slack Workspace" name="slackWorkspace">
+                <UInput
+                  v-model="slackWorkspace"
+                  placeholder="e.g., myteam or myteam.slack.com"
+                  class="w-full"
+                />
+                <template #help>
+                  Optional. Enter your workspace name to ensure the correct workspace is selected during OAuth.
+                </template>
+              </UFormField>
+
               <UFormField label="OAuth Connection" name="apiToken">
                 <div class="space-y-2">
                   <UButton
