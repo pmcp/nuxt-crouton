@@ -152,39 +152,52 @@ function getWorkspaceName(input: FlowInput): string | null {
   return null
 }
 
-// AI is properly configured when enabled AND has an API key
+// AI is properly configured when enabled AND has an API key (use hint since key is never returned)
 const isAiConfigured = computed(() => {
-  return !!props.flow?.aiEnabled && !!props.flow?.anthropicApiKey
+  return !!props.flow?.aiEnabled && !!props.flow?.anthropicApiKeyHint
 })
 
 // AI status helpers
 function getAiStatusLabel(): string {
   if (!props.flow) return 'Not configured'
   if (!props.flow.aiEnabled) return 'Disabled'
-  if (!props.flow.anthropicApiKey) return 'Missing API key'
+  if (!props.flow.anthropicApiKeyHint) return 'Missing API key'
   return 'Enabled'
 }
 
-function getPresetLabel(): string {
-  if (!props.flow?.aiSummaryPrompt && !props.flow?.aiTaskPrompt) return 'Default'
-  const combined = `${props.flow.aiSummaryPrompt || ''} ${props.flow.aiTaskPrompt || ''}`
-  if (/technical|implementation/i.test(combined)) return 'Technical'
-  if (/user needs|business value|product/i.test(combined)) return 'Product'
-  if (/visual design|user experience/i.test(combined)) return 'Design'
-  return 'Custom'
+// Preset info (label, icon, description)
+const presetMap: Record<string, { label: string, icon: string, description: string }> = {
+  default: { label: 'Balanced', icon: 'i-lucide-scale', description: 'General-purpose analysis' },
+  technical: { label: 'Technical', icon: 'i-lucide-code', description: 'Implementation & architecture' },
+  product: { label: 'Product', icon: 'i-lucide-lightbulb', description: 'User needs & business value' },
+  design: { label: 'Design', icon: 'i-lucide-palette', description: 'Visual design & UX' },
+  custom: { label: 'Custom', icon: 'i-lucide-pencil', description: 'Custom prompts' },
 }
 
-function getPersonalityLabel(): string {
-  const p = props.flow?.replyPersonality
-  if (!p) return 'Default'
-  if (p.startsWith('custom:')) return 'Custom'
-  const labels: Record<string, string> = {
-    professional: 'Professional',
-    friendly: 'Friendly',
-    concise: 'Concise',
-  }
-  return labels[p] || p
+function getPresetKey(): string {
+  if (!props.flow?.aiSummaryPrompt && !props.flow?.aiTaskPrompt) return 'default'
+  const combined = `${props.flow.aiSummaryPrompt || ''} ${props.flow.aiTaskPrompt || ''}`
+  if (/technical|implementation/i.test(combined)) return 'technical'
+  if (/user needs|business value|product/i.test(combined)) return 'product'
+  if (/visual design|user experience/i.test(combined)) return 'design'
+  return 'custom'
 }
+
+const presetInfo = computed(() => presetMap[getPresetKey()] || presetMap.default)
+
+// Personality info (label, icon, description)
+const personalityMap: Record<string, { label: string, icon: string, description: string }> = {
+  professional: { label: 'Professional', icon: '💼', description: 'Formal, clear, minimal' },
+  friendly: { label: 'Friendly', icon: '👋', description: 'Warm, encouraging' },
+  concise: { label: 'Concise', icon: '⚡', description: 'Ultra-brief' },
+}
+
+const personalityInfo = computed(() => {
+  const p = props.flow?.replyPersonality
+  if (!p) return personalityMap.professional
+  if (p.startsWith('custom:')) return { label: 'Custom', icon: '✏️', description: p.replace(/^custom:/, '').slice(0, 60) + (p.length > 67 ? '...' : '') }
+  return personalityMap[p] || { label: p, icon: '🤖', description: '' }
+})
 
 // Missing items helpers
 function getInputMissing(input: FlowInput): string[] {
@@ -198,7 +211,7 @@ function getInputMissing(input: FlowInput): string[] {
 function getAiMissing(): string[] {
   const missing: string[] = []
   if (!props.flow?.aiEnabled) missing.push('Enable AI analysis')
-  if (!props.flow?.anthropicApiKey) missing.push('Add API key')
+  if (!props.flow?.anthropicApiKeyHint) missing.push('Add API key')
   return missing
 }
 
@@ -222,6 +235,18 @@ function getDomainColor(domain: string): string {
     docs: 'text-cyan-500',
   }
   return colors[domain.toLowerCase()] || 'text-gray-400'
+}
+
+function getDomainDotColor(domain: string): string {
+  const colors: Record<string, string> = {
+    design: 'bg-purple-500',
+    frontend: 'bg-blue-500',
+    backend: 'bg-green-500',
+    product: 'bg-orange-500',
+    infrastructure: 'bg-amber-700',
+    docs: 'bg-cyan-500',
+  }
+  return colors[domain.toLowerCase()] || 'bg-gray-400'
 }
 </script>
 
@@ -287,7 +312,7 @@ function getDomainColor(domain: string): string {
     <div class="flex items-center gap-3 flex-shrink-0 px-3">
     <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-300 dark:text-gray-600 opacity-30 flex-shrink-0" />
 
-    <UPopover mode="hover" arrow :ui="{ content: 'w-64' }">
+    <UPopover mode="hover" arrow :ui="{ content: 'w-72' }">
         <button
           class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           :class="isAiConfigured ? 'bg-violet-500/10' : 'bg-gray-500/10 opacity-50'"
@@ -305,7 +330,7 @@ function getDomainColor(domain: string): string {
         </button>
 
       <template #content>
-        <div class="p-3 space-y-2">
+        <div class="p-3 space-y-3">
           <div class="flex items-center justify-between">
             <span class="font-semibold text-sm">AI Analysis</span>
             <div
@@ -319,14 +344,38 @@ function getDomainColor(domain: string): string {
               {{ item }}
             </p>
           </div>
-          <div v-else-if="flow" class="space-y-1 text-xs text-muted-foreground">
-            <p>Preset: {{ getPresetLabel() }}</p>
-            <p>Personality: {{ getPersonalityLabel() }}</p>
-            <p v-if="flow.availableDomains?.length">
-              Domains: {{ flow.availableDomains.join(', ') }}
-            </p>
+          <div v-else-if="flow" class="space-y-2.5">
+            <!-- Analysis Focus -->
+            <div class="flex items-center gap-2">
+              <UIcon :name="presetInfo.icon" class="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+              <div class="min-w-0">
+                <p class="text-xs font-medium">{{ presetInfo.label }}</p>
+                <p class="text-[11px] text-muted-foreground truncate">{{ presetInfo.description }}</p>
+              </div>
+            </div>
+            <!-- Personality -->
+            <div class="flex items-center gap-2">
+              <span class="text-sm leading-none flex-shrink-0 w-3.5 text-center">{{ personalityInfo.icon }}</span>
+              <div class="min-w-0">
+                <p class="text-xs font-medium">{{ personalityInfo.label }}</p>
+                <p class="text-[11px] text-muted-foreground truncate">{{ personalityInfo.description }}</p>
+              </div>
+            </div>
+            <!-- Domains -->
+            <div v-if="flow.availableDomains?.length">
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="domain in flow.availableDomains"
+                  :key="domain"
+                  class="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full bg-gray-500/10"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :class="getDomainDotColor(domain)" />
+                  {{ domain }}
+                </span>
+              </div>
+            </div>
           </div>
-          <div class="pt-1">
+          <div class="pt-0.5">
             <UButton size="xs" variant="outline" color="neutral" @click="emit('edit:ai')">
               Edit
             </UButton>
@@ -365,7 +414,7 @@ function getDomainColor(domain: string): string {
             <span
               v-for="domain in output.domainFilter.slice(0, 3)"
               :key="domain"
-              :class="['w-1 h-1 rounded-full', getDomainColor(domain).replace('text-', 'bg-')]"
+              :class="['w-1 h-1 rounded-full', getDomainDotColor(domain)]"
             />
           </div>
         </button>
