@@ -142,8 +142,9 @@ defineExpose({ refresh: refreshAll })
       />
     </div>
 
-    <!-- Pipeline Builder -->
+    <!-- Pipeline Builder (only when a flow exists) -->
     <CroutonTriagePipelineBuilder
+      v-if="flow"
       :flow="flow"
       :inputs="flowInputs"
       :outputs="flowOutputs"
