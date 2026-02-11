@@ -490,10 +490,34 @@ defineExpose({ refresh: refreshAll })
       <div
         v-for="flow in allFlows"
         :key="flow.id"
-        class="group relative"
+        class="group flex items-center justify-center gap-1"
       >
+        <!-- Activate/Pause (left, next to inputs) -->
+        <button
+          class="group/act h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all cursor-pointer"
+          :class="flow.active
+            ? 'w-7 hover:w-auto hover:px-2.5 group-hover:bg-green-500/20 group-hover:text-green-500'
+            : 'w-7 hover:w-auto hover:px-2.5 group-hover:bg-gray-500/10 group-hover:text-gray-400'"
+          :disabled="togglingFlow === flow.id"
+          @click="toggleFlowActive(flow)"
+        >
+          <!-- Dot (default, no row hover) -->
+          <div
+            class="w-2 h-2 rounded-full transition-opacity group-hover:hidden"
+            :class="flow.active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'"
+          />
+          <!-- Row hover: icon, replaced by text on button hover -->
+          <UIcon v-if="togglingFlow === flow.id" name="i-lucide-loader-2" class="w-3.5 h-3.5 animate-spin hidden group-hover:block group-hover/act:!hidden" />
+          <UIcon v-else-if="flow.active" name="i-lucide-zap" class="w-3.5 h-3.5 hidden group-hover:block group-hover/act:!hidden" />
+          <UIcon v-else name="i-lucide-pause" class="w-3.5 h-3.5 hidden group-hover:block group-hover/act:!hidden" />
+          <span class="hidden group-hover/act:!inline text-xs font-medium whitespace-nowrap">
+            {{ togglingFlow === flow.id ? '...' : flow.active ? 'pause' : 'activate' }}
+          </span>
+        </button>
+
         <!-- Pipeline (full width, AI centered) -->
         <CroutonTriagePipelineBuilder
+          class=""
           :flow="flow"
           :inputs="getFlowInputs(flow.id)"
           :outputs="getFlowOutputs(flow.id)"
@@ -504,51 +528,25 @@ defineExpose({ refresh: refreshAll })
           @add:output="(type: 'notion' | 'github' | 'linear') => handleAddOutput(flow, type)"
         />
 
-        <!-- Controls (absolute right, no layout impact) -->
-        <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          <!-- Delete: icon → "delete" on hover → "sure" on click -->
-          <button
-            class="group/del relative h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all cursor-pointer opacity-0 group-hover:opacity-50 pointer-events-none group-hover:pointer-events-auto before:content-[''] before:absolute before:-left-4 before:top-0 before:w-4 before:h-full"
-            :class="[
-              confirmingDeleteId === flow.id
-                ? '!opacity-100 bg-red-500/20 text-red-500 px-2.5'
-                : 'w-7 hover:!w-auto hover:!px-2.5 bg-gray-500/10 text-gray-400 hover:!bg-red-500/20 hover:!text-red-500 hover:!opacity-100'
-            ]"
-            @click.stop="confirmDeleteFlow(flow)"
-          >
-            <UIcon v-if="deleting && confirmingDeleteId === flow.id" name="i-lucide-loader-2" class="w-3.5 h-3.5 animate-spin" />
-            <template v-else-if="confirmingDeleteId === flow.id">
-              <span class="text-xs font-medium whitespace-nowrap">sure</span>
-            </template>
-            <template v-else>
-              <UIcon name="i-lucide-trash-2" class="w-3.5 h-3.5 group-hover/del:hidden" />
-              <span class="hidden group-hover/del:inline text-xs font-medium whitespace-nowrap">delete</span>
-            </template>
-          </button>
-
-          <!-- Active/Pause: dot → text on button hover -->
-          <button
-            class="group/act h-7 rounded-full flex items-center justify-center transition-all cursor-pointer"
-            :class="flow.active
-              ? 'w-7 hover:w-auto hover:px-2.5 group-hover:bg-green-500/20 group-hover:text-green-500'
-              : 'w-7 hover:w-auto hover:px-2.5 group-hover:bg-gray-500/10 group-hover:text-gray-400'"
-            :disabled="togglingFlow === flow.id"
-            @click="toggleFlowActive(flow)"
-          >
-            <!-- Dot (default, no row hover) -->
-            <div
-              class="w-2 h-2 rounded-full transition-opacity group-hover:hidden"
-              :class="flow.active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'"
-            />
-            <!-- Row hover: icon, replaced by text on button hover -->
-            <UIcon v-if="togglingFlow === flow.id" name="i-lucide-loader-2" class="w-3.5 h-3.5 animate-spin hidden group-hover:block group-hover/act:!hidden" />
-            <UIcon v-else-if="flow.active" name="i-lucide-zap" class="w-3.5 h-3.5 hidden group-hover:block group-hover/act:!hidden" />
-            <UIcon v-else name="i-lucide-pause" class="w-3.5 h-3.5 hidden group-hover:block group-hover/act:!hidden" />
-            <span class="hidden group-hover/act:!inline text-xs font-medium whitespace-nowrap">
-              {{ togglingFlow === flow.id ? '...' : flow.active ? 'pause' : 'activate' }}
-            </span>
-          </button>
-        </div>
+        <!-- Delete (right, next to outputs) -->
+        <button
+          class="group/del relative h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all cursor-pointer opacity-0 group-hover:opacity-50 pointer-events-none group-hover:pointer-events-auto"
+          :class="[
+            confirmingDeleteId === flow.id
+              ? '!opacity-100 bg-red-500/20 text-red-500 px-2.5'
+              : 'w-7 hover:!w-auto hover:!px-2.5 bg-gray-500/10 text-gray-400 hover:!bg-red-500/20 hover:!text-red-500 hover:!opacity-100'
+          ]"
+          @click.stop="confirmDeleteFlow(flow)"
+        >
+          <UIcon v-if="deleting && confirmingDeleteId === flow.id" name="i-lucide-loader-2" class="w-3.5 h-3.5 animate-spin" />
+          <template v-else-if="confirmingDeleteId === flow.id">
+            <span class="text-xs font-medium whitespace-nowrap">sure</span>
+          </template>
+          <template v-else>
+            <UIcon name="i-lucide-trash-2" class="w-3.5 h-3.5 group-hover/del:hidden" />
+            <span class="hidden group-hover/del:inline text-xs font-medium whitespace-nowrap">delete</span>
+          </template>
+        </button>
       </div>
 
     </div>

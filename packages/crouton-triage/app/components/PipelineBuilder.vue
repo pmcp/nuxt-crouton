@@ -252,9 +252,9 @@ function getDomainDotColor(domain: string): string {
 </script>
 
 <template>
-  <div class="flex items-center py-1 w-full">
-    <!-- Sources (right-aligned, + on far left) -->
-    <div class="flex-1 flex items-center justify-end gap-1">
+  <div class="flex items-center py-1">
+    <!-- Sources -->
+    <div class="flex items-center gap-1">
       <!-- Add source -->
       <UDropdownMenu :items="sourceTypeItems">
         <button class="group/add h-10 rounded-xl bg-gray-500/10 opacity-50 flex items-center justify-center transition-all hover:opacity-100 hover:scale-105 cursor-pointer w-10 hover:w-auto hover:px-3 hover:gap-1.5">
@@ -389,8 +389,8 @@ function getDomainDotColor(domain: string): string {
     <UIcon name="i-lucide-arrow-right" class="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" />
     </div>
 
-    <!-- Outputs (left-aligned) -->
-    <div class="flex-1 flex items-center gap-1">
+    <!-- Outputs -->
+    <div class="flex items-center gap-1">
       <!-- Existing output icons -->
       <UPopover
         v-for="output in allOutputs"
