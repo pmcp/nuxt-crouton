@@ -51,7 +51,7 @@ watch(() => props.flow, (flow) => {
     selectedPreset.value = detectPresetFromPrompts(flow.aiSummaryPrompt, flow.aiTaskPrompt)
     // Sync personality ref
     const rp = flow.replyPersonality
-    selectedPersonality.value = !rp ? '' : rp.startsWith('custom:') ? 'custom' : rp
+    selectedPersonality.value = !rp ? 'professional' : rp.startsWith('custom:') ? 'custom' : rp
   }
 }, { deep: true })
 
@@ -104,7 +104,7 @@ watch(selectedPreset, (preset) => {
 
 // Reply personality presets
 const personalityPresets = [
-  { value: '', label: 'Professional (default)', description: 'Formal, clear, minimal' },
+  { value: 'professional', label: 'Professional (default)', description: 'Formal, clear, minimal' },
   { value: 'friendly', label: 'Friendly', description: 'Warm, encouraging' },
   { value: 'concise', label: 'Concise', description: 'Ultra-brief' },
   { value: 'pirate', label: 'Pirate', description: 'Arrr!' },
@@ -112,6 +112,16 @@ const personalityPresets = [
   { value: 'zen', label: 'Zen', description: 'Calm, mindful' },
   { value: 'custom', label: 'Custom...', description: 'Write your own AI prompt' },
 ]
+
+// Example responses for each personality
+const personalityExamples: Record<string, string> = {
+  professional: 'I\'ve created a task for the login page redesign. Priority is set to high with 3 action items identified.',
+  friendly: 'Hey team! 🎉 I\'ve turned this into a task — looks like a great idea! I spotted 3 action items we can tackle.',
+  concise: 'Task created. 3 items. High priority.',
+  pirate: 'Arrr! I\'ve charted a course for this task, cap\'n! Three treasures to plunder, marked as high priority! ⚓',
+  robot: 'TASK_CREATED: login_redesign | PRIORITY: HIGH | ACTION_ITEMS: 3 | STATUS: AWAITING_ASSIGNMENT',
+  zen: 'Like a river finding its path, this discussion has revealed 3 tasks. I\'ve placed them gently into your board, prioritized with care.',
+}
 
 // Memoize items to avoid re-creating objects on every render
 const personalityItems = personalityPresets.map(p => ({
@@ -128,7 +138,7 @@ const customPersonalityPrompt = ref(
 
 const selectedPersonality = ref((() => {
   const rp = props.flow?.replyPersonality
-  if (!rp) return ''
+  if (!rp) return 'professional'
   if (rp.startsWith('custom:')) return 'custom'
   return rp
 })())
@@ -141,6 +151,8 @@ watch(selectedPersonality, (val) => {
     formState.value.replyPersonality = customPersonalityPrompt.value
       ? `custom:${customPersonalityPrompt.value}`
       : 'custom'
+  } else if (val === 'professional') {
+    formState.value.replyPersonality = ''
   } else {
     formState.value.replyPersonality = val
   }
@@ -153,18 +165,13 @@ watch(customPersonalityPrompt, (val) => {
 })
 
 // Domain management
-const newDomain = ref('')
+const domainItems = computed(() => formState.value.availableDomains)
 
-function addDomain() {
-  const domain = newDomain.value.toLowerCase().trim()
+function onCreateDomain(item: string) {
+  const domain = item.toLowerCase().trim()
   if (domain && !formState.value.availableDomains.includes(domain)) {
     formState.value.availableDomains.push(domain)
-    newDomain.value = ''
   }
-}
-
-function removeDomain(domain: string) {
-  formState.value.availableDomains = formState.value.availableDomains.filter(d => d !== domain)
 }
 
 // Prompt preview
@@ -339,6 +346,11 @@ async function handleSave() {
                   class="w-full"
                 />
 
+                <!-- Example response -->
+                <div v-if="personalityExamples[selectedPersonality]" class="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground italic">
+                  <span class="not-italic font-medium text-foreground/70">Example:</span> "{{ personalityExamples[selectedPersonality] }}"
+                </div>
+
                 <!-- Custom personality prompt -->
                 <template v-if="isCustomPersonality">
                   <UTextarea
@@ -387,32 +399,16 @@ async function handleSave() {
             <USeparator />
 
             <!-- Available Domains -->
-            <UFormField label="Available Domains" help="Domains the AI can route tasks to.">
-              <div class="space-y-2">
-                <div class="flex flex-wrap gap-1.5">
-                  <UBadge
-                    v-for="domain in formState.availableDomains"
-                    :key="domain"
-                    color="neutral"
-                    variant="subtle"
-                    class="cursor-pointer"
-                    @click="removeDomain(domain)"
-                  >
-                    {{ domain }}
-                    <UIcon name="i-lucide-x" class="w-3 h-3 ml-1" />
-                  </UBadge>
-                </div>
-                <div class="flex gap-2">
-                  <UInput
-                    v-model="newDomain"
-                    size="sm"
-                    placeholder="Add domain..."
-                    class="flex-1"
-                    @keydown.enter.prevent="addDomain"
-                  />
-                  <UButton size="sm" variant="outline" color="neutral" @click="addDomain">Add</UButton>
-                </div>
-              </div>
+            <UFormField label="Available Domains" help="Domains the AI can route tasks to. Type to add new ones.">
+              <USelectMenu
+                v-model="formState.availableDomains"
+                :items="domainItems"
+                multiple
+                create-item="always"
+                placeholder="Select or create domains..."
+                class="w-full"
+                @create="onCreateDomain"
+              />
             </UFormField>
           </template>
 
