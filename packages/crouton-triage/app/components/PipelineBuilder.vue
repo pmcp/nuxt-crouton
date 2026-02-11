@@ -182,9 +182,6 @@ function getPersonalityLabel(): string {
     professional: 'Professional',
     friendly: 'Friendly',
     concise: 'Concise',
-    pirate: 'Pirate',
-    robot: 'Robot',
-    zen: 'Zen',
   }
   return labels[p] || p
 }
@@ -250,6 +247,7 @@ function getDomainColor(domain: string): string {
         <button
           class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           :class="isInputConnected(input) ? getSourceBg(input.sourceType) : 'bg-gray-500/10 opacity-50'"
+          @click="emit('edit:source', input)"
         >
           <UIcon
             :name="getSourceIcon(input.sourceType)"
@@ -293,6 +291,7 @@ function getDomainColor(domain: string): string {
         <button
           class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
           :class="isAiConfigured ? 'bg-violet-500/10' : 'bg-gray-500/10 opacity-50'"
+          @click="emit('edit:ai')"
         >
           <span v-if="flow?.personalityIcon" class="text-lg leading-none">{{ flow.personalityIcon }}</span>
           <UIcon
@@ -329,7 +328,7 @@ function getDomainColor(domain: string): string {
           </div>
           <div class="pt-1">
             <UButton size="xs" variant="outline" color="neutral" @click="emit('edit:ai')">
-              Configure
+              Edit
             </UButton>
           </div>
         </div>
@@ -352,6 +351,7 @@ function getDomainColor(domain: string): string {
         <button
           class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer relative"
           :class="isOutputConfigured(output) ? getOutputBg(output.outputType) : 'bg-gray-500/10 opacity-50'"
+          @click="emit('edit:output', output)"
         >
           <UIcon
             :name="getOutputIcon(output.outputType)"

@@ -27,7 +27,6 @@ const DEFAULT_DOMAINS = ['design', 'frontend', 'backend', 'product', 'infrastruc
 
 // Form state initialized from flow (anthropicApiKey is never returned from server)
 const formState = ref({
-  aiEnabled: props.flow?.aiEnabled ?? true,
   aiSummaryPrompt: props.flow?.aiSummaryPrompt || '',
   aiTaskPrompt: props.flow?.aiTaskPrompt || '',
   replyPersonality: props.flow?.replyPersonality || '',
@@ -45,7 +44,6 @@ const newApiKey = ref('')
 watch(() => props.flow, (flow) => {
   if (flow) {
     formState.value = {
-      aiEnabled: flow.aiEnabled ?? true,
       aiSummaryPrompt: flow.aiSummaryPrompt || '',
       aiTaskPrompt: flow.aiTaskPrompt || '',
       replyPersonality: flow.replyPersonality || '',
@@ -65,22 +63,35 @@ watch(() => props.flow, (flow) => {
 
 // Prompt presets
 const promptPresets = [
-  { label: 'Default (Balanced)', value: 'default', summaryPrompt: '', taskPrompt: '' },
   {
-    label: 'Technical Focus',
+    label: 'Balanced',
+    value: 'default',
+    icon: 'i-lucide-scale',
+    description: 'General-purpose analysis',
+    summaryPrompt: '',
+    taskPrompt: '',
+  },
+  {
+    label: 'Technical',
     value: 'technical',
+    icon: 'i-lucide-code',
+    description: 'Implementation details & architecture',
     summaryPrompt: 'Focus on technical details, implementation specifics, and architectural considerations.',
     taskPrompt: 'Extract highly specific technical tasks with clear acceptance criteria.',
   },
   {
-    label: 'Product Focus',
+    label: 'Product',
     value: 'product',
+    icon: 'i-lucide-lightbulb',
+    description: 'User needs & business value',
     summaryPrompt: 'Focus on user needs, business value, and product strategy.',
     taskPrompt: 'Extract user stories and product requirements with clear value propositions.',
   },
   {
-    label: 'Design Focus',
+    label: 'Design',
     value: 'design',
+    icon: 'i-lucide-palette',
+    description: 'Visual design & user experience',
     summaryPrompt: 'Focus on visual design, user experience, and interface patterns.',
     taskPrompt: 'Extract design tasks with specific deliverables and design system references.',
   },
@@ -94,48 +105,36 @@ function detectPresetFromPrompts(summaryPrompt?: string, taskPrompt?: string): s
       return preset.value
     }
   }
-  return 'default'
+  return 'custom'
 }
 
 const selectedPreset = ref(detectPresetFromPrompts(props.flow?.aiSummaryPrompt, props.flow?.aiTaskPrompt))
 
+// Standalone toggle — not tied to preset selection
+const showCustomPrompts = ref(selectedPreset.value === 'custom')
+
 watch(selectedPreset, (preset) => {
   const selected = promptPresets.find(p => p.value === preset)
-  if (selected && preset !== 'default') {
+  if (selected) {
     formState.value.aiSummaryPrompt = selected.summaryPrompt
     formState.value.aiTaskPrompt = selected.taskPrompt
-  } else if (preset === 'default') {
-    formState.value.aiSummaryPrompt = ''
-    formState.value.aiTaskPrompt = ''
   }
 })
 
 // Reply personality presets
 const personalityPresets = [
-  { value: 'professional', label: 'Professional (default)', description: 'Formal, clear, minimal' },
-  { value: 'friendly', label: 'Friendly', description: 'Warm, encouraging' },
-  { value: 'concise', label: 'Concise', description: 'Ultra-brief' },
-  { value: 'pirate', label: 'Pirate', description: 'Arrr!' },
-  { value: 'robot', label: 'Robot', description: 'Beep boop' },
-  { value: 'zen', label: 'Zen', description: 'Calm, mindful' },
-  { value: 'custom', label: 'Custom...', description: 'Write your own AI prompt' },
+  { value: 'professional', label: 'Professional', icon: '💼', description: 'Formal, clear, minimal' },
+  { value: 'friendly', label: 'Friendly', icon: '👋', description: 'Warm, encouraging' },
+  { value: 'concise', label: 'Concise', icon: '⚡', description: 'Ultra-brief' },
+  { value: 'custom', label: 'Custom', icon: '✏️', description: 'Write your own' },
 ]
 
 // Example responses for each personality
 const personalityExamples: Record<string, string> = {
   professional: 'I\'ve created a task for the login page redesign. Priority is set to high with 3 action items identified.',
-  friendly: 'Hey team! 🎉 I\'ve turned this into a task — looks like a great idea! I spotted 3 action items we can tackle.',
+  friendly: 'Hey team! I\'ve turned this into a task — looks like a great idea! I spotted 3 action items we can tackle.',
   concise: 'Task created. 3 items. High priority.',
-  pirate: 'Arrr! I\'ve charted a course for this task, cap\'n! Three treasures to plunder, marked as high priority! ⚓',
-  robot: 'TASK_CREATED: login_redesign | PRIORITY: HIGH | ACTION_ITEMS: 3 | STATUS: AWAITING_ASSIGNMENT',
-  zen: 'Like a river finding its path, this discussion has revealed 3 tasks. I\'ve placed them gently into your board, prioritized with care.',
 }
-
-// Memoize items to avoid re-creating objects on every render
-const personalityItems = personalityPresets.map(p => ({
-  label: `${p.label} — ${p.description}`,
-  value: p.value,
-}))
 
 // Custom personality
 const customPersonalityPrompt = ref(
@@ -153,8 +152,9 @@ const selectedPersonality = ref((() => {
 
 const isCustomPersonality = computed(() => selectedPersonality.value === 'custom')
 
-// Sync personality selection to formState
+// Sync personality selection to formState + icon
 watch(selectedPersonality, (val) => {
+  const preset = personalityPresets.find(p => p.value === val)
   if (val === 'custom') {
     formState.value.replyPersonality = customPersonalityPrompt.value
       ? `custom:${customPersonalityPrompt.value}`
@@ -163,6 +163,10 @@ watch(selectedPersonality, (val) => {
     formState.value.replyPersonality = ''
   } else {
     formState.value.replyPersonality = val
+  }
+  // Set the personality icon from the preset emoji (unless custom)
+  if (preset && val !== 'custom') {
+    formState.value.personalityIcon = preset.icon
   }
 })
 
@@ -173,22 +177,19 @@ watch(customPersonalityPrompt, (val) => {
 })
 
 // Domain management
-const domainItems = computed(() => formState.value.availableDomains)
+const newDomain = ref('')
 
-function onCreateDomain(item: string) {
-  const domain = item.toLowerCase().trim()
+function addDomain() {
+  const domain = newDomain.value.toLowerCase().trim()
   if (domain && !formState.value.availableDomains.includes(domain)) {
     formState.value.availableDomains.push(domain)
   }
+  newDomain.value = ''
 }
 
-// Prompt preview
-const { buildPreview } = useTriagePromptPreview()
-const showPreview = ref(false)
-const promptPreview = computed(() => buildPreview(
-  formState.value.aiSummaryPrompt,
-  formState.value.aiTaskPrompt
-))
+function removeDomain(domain: string) {
+  formState.value.availableDomains = formState.value.availableDomains.filter(d => d !== domain)
+}
 
 // Icon suggestions
 interface IconSuggestion {
@@ -227,6 +228,14 @@ async function suggestIcons() {
   }
 }
 
+// Prompt preview
+const { buildPreview } = useTriagePromptPreview()
+const showPreview = ref(false)
+const promptPreview = computed(() => buildPreview(
+  formState.value.aiSummaryPrompt,
+  formState.value.aiTaskPrompt
+))
+
 // Save handler
 async function handleSave() {
   if (!props.flow?.id) return
@@ -237,7 +246,7 @@ async function handleSave() {
     await $fetch(`/api/teams/${currentTeam.value?.id}/triage-flows/${props.flow.id}`, {
       method: 'PATCH',
       body: {
-        aiEnabled: formState.value.aiEnabled,
+        aiEnabled: true,
         // Only send API key when user is setting a new one
         ...(newApiKey.value && { anthropicApiKey: newApiKey.value }),
         aiSummaryPrompt: formState.value.aiSummaryPrompt || undefined,
@@ -278,177 +287,218 @@ async function handleSave() {
 <template>
   <CroutonTriageConfigPanel v-model="isOpen" title="AI Configuration" mode="modal">
     <template #default="{ close }">
-      <div class="space-y-6">
-        <!-- AI Toggle -->
-        <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium">AI Analysis</p>
-              <p class="text-xs text-muted-foreground">Enable AI-powered summarization and task detection</p>
+      <div class="space-y-8">
+        <!-- API Key -->
+        <div>
+          <div v-if="hasExistingKey && !isChangingKey" class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-2 h-2 rounded-full bg-green-500" />
+              <code class="text-xs text-muted-foreground font-mono">{{ apiKeyHint }}</code>
             </div>
-            <USwitch v-model="formState.aiEnabled" />
+            <button class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer" @click="isChangingKey = true">
+              Change
+            </button>
           </div>
-
-          <template v-if="formState.aiEnabled">
-            <!-- API Key (optional, encrypted at rest) -->
-            <UFormField label="Anthropic API Key" help="Optional. Uses server key if not provided. Encrypted at rest.">
-              <div v-if="hasExistingKey && !isChangingKey" class="flex items-center gap-2">
-                <code class="text-xs bg-muted px-2 py-1 rounded font-mono">{{ apiKeyHint }}</code>
-                <UButton size="xs" variant="outline" color="neutral" @click="isChangingKey = true">
-                  Change
-                </UButton>
-              </div>
-              <div v-else class="space-y-2">
-                <UInput
-                  v-model="newApiKey"
-                  type="password"
-                  placeholder="sk-ant-..."
-                  class="w-full"
-                />
-                <UButton
-                  v-if="hasExistingKey"
-                  size="xs"
-                  variant="ghost"
-                  color="neutral"
-                  @click="isChangingKey = false; newApiKey = ''"
-                >
-                  Cancel
-                </UButton>
-              </div>
-            </UFormField>
-
-            <USeparator />
-
-            <!-- Prompt Preset -->
-            <UFormField label="Prompt Preset">
-              <div class="grid grid-cols-2 gap-2">
-                <UButton
-                  v-for="preset in promptPresets"
-                  :key="preset.value"
-                  :color="selectedPreset === preset.value ? 'primary' : 'neutral'"
-                  :variant="selectedPreset === preset.value ? 'solid' : 'outline'"
-                  size="sm"
-                  @click="selectedPreset = preset.value"
-                >
-                  {{ preset.label }}
-                </UButton>
-              </div>
-            </UFormField>
-
-            <!-- Custom Prompts -->
-            <UFormField label="Summary Prompt" help="Custom instructions for how AI should summarize discussions.">
-              <UTextarea
-                v-model="formState.aiSummaryPrompt"
-                :rows="3"
-                placeholder="Focus on..."
-                class="w-full"
+          <UFormField v-else label="Anthropic API Key" help="Optional. Uses server key if not set. Encrypted at rest.">
+            <div class="flex gap-2">
+              <UInput
+                v-model="newApiKey"
+                type="password"
+                placeholder="sk-ant-..."
+                size="sm"
+                class="flex-1"
               />
-            </UFormField>
+              <UButton
+                v-if="hasExistingKey"
+                size="sm"
+                variant="ghost"
+                color="neutral"
+                @click="isChangingKey = false; newApiKey = ''"
+              >
+                Cancel
+              </UButton>
+            </div>
+          </UFormField>
+        </div>
 
-            <UFormField label="Task Detection Prompt" help="Custom instructions for how AI should detect tasks.">
-              <UTextarea
-                v-model="formState.aiTaskPrompt"
-                :rows="3"
-                placeholder="Extract..."
-                class="w-full"
-              />
-            </UFormField>
+        <USeparator />
 
-            <!-- Prompt Preview -->
-            <div>
+        <!-- Analysis Preset -->
+        <UFormField label="Analysis Focus">
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-1.5">
+              <button
+                v-for="preset in promptPresets"
+                :key="preset.value"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-all cursor-pointer"
+                :class="selectedPreset === preset.value
+                  ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted'"
+                @click="selectedPreset = preset.value"
+              >
+                <UIcon :name="preset.icon" class="w-4 h-4 flex-shrink-0" />
+                <div class="min-w-0">
+                  <div class="font-medium text-xs">{{ preset.label }}</div>
+                  <div class="text-[11px] opacity-70 truncate">{{ preset.description }}</div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Toggle buttons -->
+            <div class="flex gap-1">
               <UButton
                 size="xs"
-                variant="outline"
-                color="neutral"
-                icon="i-lucide-eye"
+                variant="soft"
+                :color="showCustomPrompts ? 'primary' : 'neutral'"
+                @click="showCustomPrompts = !showCustomPrompts"
+              >
+                Customize
+              </UButton>
+              <UButton
+                size="xs"
+                variant="soft"
+                :color="showPreview ? 'primary' : 'neutral'"
                 @click="showPreview = !showPreview"
               >
-                {{ showPreview ? 'Hide' : 'Preview' }} Prompt
+                Preview
               </UButton>
-              <pre v-if="showPreview" class="mt-2 p-3 text-xs bg-muted rounded-lg overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">{{ promptPreview }}</pre>
             </div>
 
-            <USeparator />
-
-            <!-- Reply Personality -->
-            <UFormField label="Reply Personality" help="How the AI responds in source threads.">
-              <div class="space-y-2">
-                <USelectMenu
-                  v-model="selectedPersonality"
-                  :items="personalityItems"
-                  value-key="value"
-                  class="w-full"
+            <!-- Custom prompts (only when custom preset) -->
+            <template v-if="showCustomPrompts">
+              <UFormField label="Summary prompt">
+                <UTextarea
+                  v-model="formState.aiSummaryPrompt"
+                  :rows="2"
+                  placeholder="Focus on..."
+                  size="sm"
+                  class="w-full text-muted-foreground"
                 />
+              </UFormField>
+              <UFormField label="Task detection prompt">
+                <UTextarea
+                  v-model="formState.aiTaskPrompt"
+                  :rows="2"
+                  placeholder="Extract..."
+                  size="sm"
+                  class="w-full text-muted-foreground"
+                />
+              </UFormField>
+            </template>
 
-                <!-- Example response -->
-                <div v-if="personalityExamples[selectedPersonality]" class="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground italic">
-                  <span class="not-italic font-medium text-foreground/70">Example:</span> "{{ personalityExamples[selectedPersonality] }}"
-                </div>
-
-                <!-- Custom personality prompt -->
-                <template v-if="isCustomPersonality">
-                  <UTextarea
-                    v-model="customPersonalityPrompt"
-                    :rows="2"
-                    placeholder="Describe the personality..."
-                    class="w-full"
-                  />
-
-                  <!-- Icon suggestions -->
-                  <div class="flex items-center gap-2">
-                    <UButton
-                      size="xs"
-                      variant="outline"
-                      color="neutral"
-                      :loading="loadingIcons"
-                      @click="suggestIcons"
-                    >
-                      Suggest Icon
-                    </UButton>
-                    <span
-                      v-if="formState.personalityIcon"
-                      class="text-lg cursor-pointer"
-                      @click="formState.personalityIcon = ''"
-                    >
-                      {{ formState.personalityIcon }}
-                    </span>
-                  </div>
-
-                  <div v-if="iconSuggestions.length" class="flex gap-2">
-                    <button
-                      v-for="suggestion in iconSuggestions"
-                      :key="suggestion.icon"
-                      class="text-xl p-1 rounded hover:bg-muted transition-colors cursor-pointer"
-                      :class="{ 'ring-2 ring-primary': formState.personalityIcon === suggestion.icon }"
-                      :title="suggestion.label"
-                      @click="formState.personalityIcon = suggestion.icon"
-                    >
-                      {{ suggestion.icon }}
-                    </button>
-                  </div>
-                </template>
+            <div v-if="showPreview" class="space-y-2">
+              <div>
+                <p class="text-[11px] text-muted-foreground/70 mb-1">Summary prompt <span class="opacity-60">(~{{ promptPreview.summaryTokenEstimate }} tokens)</span></p>
+                <pre class="p-3 text-xs bg-muted/50 rounded-lg max-h-32 overflow-y-auto whitespace-pre-wrap text-muted-foreground leading-relaxed">{{ promptPreview.summaryPrompt }}</pre>
               </div>
-            </UFormField>
+              <div>
+                <p class="text-[11px] text-muted-foreground/70 mb-1">Task prompt <span class="opacity-60">(~{{ promptPreview.taskTokenEstimate }} tokens)</span></p>
+                <pre class="p-3 text-xs bg-muted/50 rounded-lg max-h-32 overflow-y-auto whitespace-pre-wrap text-muted-foreground leading-relaxed">{{ promptPreview.taskPrompt }}</pre>
+              </div>
+            </div>
+          </div>
+        </UFormField>
 
-            <USeparator />
+        <USeparator />
 
-            <!-- Available Domains -->
-            <UFormField label="Available Domains" help="Domains the AI can route tasks to. Type to add new ones.">
-              <USelectMenu
-                v-model="formState.availableDomains"
-                :items="domainItems"
-                multiple
-                create-item="always"
-                placeholder="Select or create domains..."
+        <!-- Reply Personality -->
+        <UFormField label="Reply Personality">
+          <div class="space-y-3">
+            <div class="grid grid-cols-4 gap-1.5">
+              <button
+                v-for="p in personalityPresets"
+                :key="p.value"
+                class="flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-center transition-all cursor-pointer"
+                :class="selectedPersonality === p.value
+                  ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted'"
+                @click="selectedPersonality = p.value"
+              >
+                <span class="text-base leading-none">{{ p.icon }}</span>
+                <span class="text-[11px] font-medium">{{ p.label }}</span>
+              </button>
+            </div>
+
+            <!-- Example response -->
+            <div v-if="personalityExamples[selectedPersonality]" class="rounded-lg bg-muted/30 px-3 py-2 text-xs text-muted-foreground italic">
+              "{{ personalityExamples[selectedPersonality] }}"
+            </div>
+
+            <!-- Custom personality -->
+            <template v-if="isCustomPersonality">
+              <UTextarea
+                v-model="customPersonalityPrompt"
+                :rows="2"
+                placeholder="Describe the personality..."
+                size="sm"
                 class="w-full"
-                @create="onCreateDomain"
               />
-            </UFormField>
-          </template>
+
+              <!-- Icon suggestions -->
+              <div class="flex items-center gap-2">
+                <button
+                  class="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  :class="{ 'opacity-50 pointer-events-none': loadingIcons }"
+                  @click="suggestIcons"
+                >
+                  {{ loadingIcons ? 'Suggesting...' : 'Suggest icon' }}
+                </button>
+                <span
+                  v-if="formState.personalityIcon"
+                  class="text-lg cursor-pointer hover:opacity-50 transition-opacity"
+                  @click="formState.personalityIcon = ''"
+                >
+                  {{ formState.personalityIcon }}
+                </span>
+              </div>
+
+              <div v-if="iconSuggestions.length" class="flex gap-1.5">
+                <button
+                  v-for="suggestion in iconSuggestions"
+                  :key="suggestion.icon"
+                  class="text-xl p-1.5 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                  :class="{ 'ring-2 ring-primary bg-primary/10': formState.personalityIcon === suggestion.icon }"
+                  :title="suggestion.label"
+                  @click="formState.personalityIcon = suggestion.icon"
+                >
+                  {{ suggestion.icon }}
+                </button>
+              </div>
+            </template>
+          </div>
+        </UFormField>
+
+        <USeparator />
+
+        <!-- Domains -->
+        <UFormField label="Domains" help="AI routes tasks to outputs matching these domains.">
+          <div class="flex flex-wrap gap-1.5">
+            <span
+              v-for="domain in formState.availableDomains"
+              :key="domain"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50 text-xs text-muted-foreground group/chip"
+            >
+              {{ domain }}
+              <button
+                class="opacity-0 group-hover/chip:opacity-100 transition-opacity cursor-pointer"
+                @click="removeDomain(domain)"
+              >
+                <UIcon name="i-lucide-x" class="w-3 h-3" />
+              </button>
+            </span>
+            <input
+              v-model="newDomain"
+              class="text-xs bg-transparent outline-none min-w-[80px] flex-1 placeholder:text-muted-foreground/50"
+              placeholder="Add domain..."
+              @keydown.enter.prevent="addDomain"
+            />
+          </div>
+        </UFormField>
 
         <!-- Save button -->
-        <div class="flex justify-end gap-2 pt-4 border-t">
-          <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
-          <UButton color="primary" :loading="saving" @click="handleSave">Save Settings</UButton>
+        <div class="flex justify-end gap-2 pt-3 border-t border-muted/50">
+          <UButton color="neutral" variant="ghost" size="sm" @click="close">Cancel</UButton>
+          <UButton color="primary" size="sm" :loading="saving" @click="handleSave">Save</UButton>
         </div>
       </div>
     </template>
