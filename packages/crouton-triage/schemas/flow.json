@@ -49,6 +49,15 @@
       "group": "credentials"
     }
   },
+  "anthropicApiKeyHint": {
+    "type": "string",
+    "meta": {
+      "label": "API Key Hint",
+      "description": "Masked display hint for the stored API key (e.g., 'sk-ant-...7xkQ')",
+      "area": "sidebar",
+      "group": "credentials"
+    }
+  },
   "aiSummaryPrompt": {
     "type": "text",
     "meta": {

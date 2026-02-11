@@ -82,6 +82,15 @@ const deletingOutput = ref<FlowOutput | null>(null)
 
 const toast = useToast()
 
+const DEFAULT_DOMAINS = ['design', 'frontend', 'backend', 'product', 'infrastructure', 'docs']
+
+/**
+ * Use flow's configured domains, falling back to defaults if none configured
+ */
+const availableDomains = computed(() =>
+  props.availableDomains.length > 0 ? props.availableDomains : DEFAULT_DOMAINS
+)
+
 // ============================================================================
 // OUTPUT FORM STATE
 // ============================================================================
@@ -170,6 +179,11 @@ async function fetchNotionSchemaAndMap() {
       const mappedFields = autoMapFields(notionSchema.value)
       outputFormState.value.fieldMapping = mappedFields
 
+      // Auto-fill name from database title if not already set
+      if (!outputFormState.value.name && notionSchema.value.databaseTitle) {
+        outputFormState.value.name = notionSchema.value.databaseTitle
+      }
+
       toast.add({
         title: 'Schema Fetched',
         description: 'Fields have been auto-mapped. Review and adjust as needed.',
@@ -191,19 +205,17 @@ async function fetchNotionSchemaAndMap() {
 // ============================================================================
 
 const notionOutputSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters'),
+  name: z.string().optional(),
   notionToken: z.string().min(1, 'Notion token is required'),
   databaseId: z.string().min(1, 'Database ID is required'),
 })
 
 const githubOutputSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters'),
-  // Future: GitHub-specific validation
+  name: z.string().optional(),
 })
 
 const linearOutputSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters'),
-  // Future: Linear-specific validation
+  name: z.string().optional(),
 })
 
 const outputSchema = computed(() => {
@@ -357,12 +369,17 @@ async function saveNewOutput() {
     }
     // Future: Add GitHub, Linear configs
 
+    // Generate name if not provided
+    const outputName = validatedData.name
+      || notionSchema.value?.databaseTitle
+      || `${selectedOutputType.value} output`
+
     // Create new output object
     const newOutput: FlowOutput = {
       id: `temp-${Date.now()}`, // Temporary ID, will be replaced by DB
       flowId: props.flowId,
       outputType: selectedOutputType.value,
-      name: validatedData.name,
+      name: outputName,
       domainFilter: outputFormState.value.domainFilter.length > 0
         ? outputFormState.value.domainFilter
         : undefined,
@@ -474,10 +491,16 @@ async function updateOutput() {
     }
     // Future: Add GitHub, Linear configs
 
+    // Generate name if not provided
+    const outputName = validatedData.name
+      || notionSchema.value?.databaseTitle
+      || editingOutput.value.name
+      || `${selectedOutputType.value} output`
+
     // Update output object
     const updatedOutput: FlowOutput = {
       ...editingOutput.value,
-      name: validatedData.name,
+      name: outputName,
       domainFilter: outputFormState.value.domainFilter.length > 0
         ? outputFormState.value.domainFilter
         : undefined,
@@ -862,10 +885,10 @@ watch(isEditModalOpen, (open) => {
 
           <div class="space-y-4">
             <!-- Basic Info -->
-            <UFormField label="Output Name" name="name" required>
+            <UFormField label="Output Name" name="name" help="Auto-filled from Notion database name if left empty.">
               <UInput
                 v-model="outputFormState.name"
-                placeholder="e.g., Design Tasks DB"
+                placeholder="Auto-generated from Notion"
                 class="w-full"
               />
             </UFormField>
@@ -890,7 +913,7 @@ watch(isEditModalOpen, (open) => {
               <UCheckbox
                 v-model="outputFormState.isDefault"
                 label="Set as default output"
-                help="Default output receives tasks with no domain or no matching filter"
+                help="The default output is the fallback destination. Tasks that don't match any domain filter, or tasks with no detected domain, will be routed here. Only one output can be the default."
               />
             </UFormField>
 
@@ -1066,10 +1089,10 @@ watch(isEditModalOpen, (open) => {
 
           <div class="space-y-4">
             <!-- Basic Info -->
-            <UFormField label="Output Name" name="name" required>
+            <UFormField label="Output Name" name="name" help="Auto-filled from Notion database name if left empty.">
               <UInput
                 v-model="outputFormState.name"
-                placeholder="e.g., Design Tasks DB"
+                placeholder="Auto-generated from Notion"
                 class="w-full"
               />
             </UFormField>
@@ -1094,7 +1117,7 @@ watch(isEditModalOpen, (open) => {
               <UCheckbox
                 v-model="outputFormState.isDefault"
                 label="Set as default output"
-                help="Default output receives tasks with no domain or no matching filter"
+                help="The default output is the fallback destination. Tasks that don't match any domain filter, or tasks with no detected domain, will be routed here. Only one output can be the default."
               />
             </UFormField>
 
