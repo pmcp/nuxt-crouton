@@ -23,10 +23,16 @@ export interface FeedItem {
 export async function useTriageFeed(options?: { limit?: number }) {
   const { currentTeam } = useTeam()
 
-  // Fetch discussions, jobs, and tasks
-  const { items: discussions, pending: discussionsPending, refresh: refreshDiscussions } = await useCollectionQuery('triageDiscussions')
-  const { items: jobs, pending: jobsPending, refresh: refreshJobs } = await useCollectionQuery('triageJobs')
-  const { items: tasks, pending: tasksPending, refresh: refreshTasks } = await useCollectionQuery('triageTasks')
+  // Fetch discussions, jobs, and tasks (all at once to preserve Nuxt async context)
+  const [
+    { items: discussions, pending: discussionsPending, refresh: refreshDiscussions },
+    { items: jobs, pending: jobsPending, refresh: refreshJobs },
+    { items: tasks, pending: tasksPending, refresh: refreshTasks },
+  ] = await Promise.all([
+    useCollectionQuery('triageDiscussions'),
+    useCollectionQuery('triageJobs'),
+    useCollectionQuery('triageTasks'),
+  ])
 
   const loading = computed(() => discussionsPending.value || jobsPending.value || tasksPending.value)
 

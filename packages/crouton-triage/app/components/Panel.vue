@@ -22,10 +22,16 @@ const props = withDefaults(defineProps<Props>(), {
 const { currentTeam } = useTeam()
 const toast = useToast()
 
-// Data fetching
-const { items: flows, pending: flowsPending, refresh: refreshFlows } = await useCollectionQuery('triageFlows')
-const { items: inputs, pending: inputsPending, refresh: refreshInputs } = await useCollectionQuery('triageInputs')
-const { items: outputs, pending: outputsPending, refresh: refreshOutputs } = await useCollectionQuery('triageOutputs')
+// Data fetching (all at once to preserve Nuxt async context)
+const [
+  { items: flows, pending: flowsPending, refresh: refreshFlows },
+  { items: inputs, pending: inputsPending, refresh: refreshInputs },
+  { items: outputs, pending: outputsPending, refresh: refreshOutputs },
+] = await Promise.all([
+  useCollectionQuery('triageFlows'),
+  useCollectionQuery('triageInputs'),
+  useCollectionQuery('triageOutputs'),
+])
 
 // Use first active flow (most common: one flow per team)
 const flow = computed<Flow | null>(() => {

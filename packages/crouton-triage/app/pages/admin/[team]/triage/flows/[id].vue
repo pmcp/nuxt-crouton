@@ -48,11 +48,19 @@ async function loadFlowData() {
     loading.value = true
     error.value = null
 
-    const [flowResponse, inputsResponse, outputsResponse] = await Promise.all([
-      $fetch<Flow>(`/api/teams/${currentTeam.value.id}/triage-flows/${flowId.value}`),
+    const [flowsResponse, inputsResponse, outputsResponse] = await Promise.all([
+      $fetch<Flow[]>(`/api/teams/${currentTeam.value.id}/triage-flows`, {
+        query: { ids: flowId.value },
+      }),
       $fetch<FlowInput[]>(`/api/teams/${currentTeam.value.id}/triage-inputs`),
       $fetch<FlowOutput[]>(`/api/teams/${currentTeam.value.id}/triage-outputs`),
     ])
+
+    const flowResponse = flowsResponse[0]
+    if (!flowResponse) {
+      error.value = 'Flow not found'
+      return
+    }
 
     flow.value = flowResponse
     inputs.value = inputsResponse.filter(input => input.flowId === flowId.value)
