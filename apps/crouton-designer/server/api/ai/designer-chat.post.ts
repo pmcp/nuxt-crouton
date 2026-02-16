@@ -1,5 +1,7 @@
 import { streamText, tool } from 'ai'
-import { z } from 'zod'
+// Use zod/v3 compat layer — the AI SDK's tool() relies on zod-to-json-schema
+// which doesn't support Zod 4, producing empty schemas that Anthropic rejects
+import { z } from 'zod/v3'
 
 const fieldTypeEnum = z.enum([
   'string', 'text', 'number', 'decimal', 'boolean',
@@ -143,5 +145,13 @@ export default defineEventHandler(async (event) => {
     maxSteps: 5
   })
 
-  return result.toDataStreamResponse()
+  return result.toDataStreamResponse({
+    getErrorMessage: (error) => {
+      if (error instanceof Error) {
+        console.error('[designer-chat] AI error:', error.message)
+        return error.message
+      }
+      return 'An unknown error occurred'
+    }
+  })
 })
