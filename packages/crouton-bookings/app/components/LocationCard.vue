@@ -46,72 +46,52 @@ const title = computed(() => {
 </script>
 
 <template>
-  <UCard
-    variant="outline"
-    :ui="{
-      root: [
-        'group cursor-pointer transition-all duration-200',
-        selected
-          ? 'ring-1 ring-primary/30 border-primary bg-primary/5'
-          : 'hover:border-muted hover:bg-elevated',
-      ].join(' '),
-      body: 'p-2.5',
-    }"
+  <UButton
+    size="xs"
+    :color="selected ? 'primary' : 'neutral'"
+    :variant="selected ? 'soft' : 'outline'"
+    class="group relative"
     @click="emit('click')"
   >
-    <div class="relative flex items-start gap-2.5">
-      <!-- Color bar -->
-      <div
-        class="absolute left-0 top-0 bottom-0 w-1 rounded-full transition-opacity"
-        :style="{ backgroundColor: location.color || '#3b82f6' }"
-        :class="selected ? 'opacity-100' : 'opacity-50 group-hover:opacity-75'"
+    <!-- Color bar -->
+    <div
+      class="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full transition-opacity"
+      :style="{ backgroundColor: location.color || '#3b82f6' }"
+      :class="selected ? 'opacity-100' : 'opacity-50 group-hover:opacity-75'"
+    />
+
+    <span class="truncate">{{ title }}</span>
+
+    <span v-if="location.city" class="text-muted truncate font-normal">
+      {{ location.city }}
+    </span>
+
+    <UBadge
+      v-if="slotCount > 0 || location.inventoryMode"
+      size="xs"
+      color="neutral"
+      variant="subtle"
+      class="flex-shrink-0"
+    >
+      {{ location.inventoryMode ? `×${location.quantity || 0}` : slotCount }}
+    </UBadge>
+
+    <UIcon
+      v-if="selected"
+      name="i-lucide-check"
+      class="w-3.5 h-3.5"
+    />
+
+    <!-- Edit button: collapsed to 0 width, expands on hover -->
+    <div
+      v-if="editable"
+      class="overflow-hidden max-w-0 group-hover:max-w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out"
+      @click.stop
+    >
+      <CroutonItemButtonsMini
+        update
+        @update="emit('edit', location)"
       />
-
-      <!-- Content -->
-      <div class="flex-1 min-w-0 ml-2.5">
-        <!-- Title row -->
-        <div class="flex items-center gap-1.5">
-          <span
-            class="text-sm font-medium truncate"
-            :class="selected ? 'text-primary' : 'text-default'"
-          >
-            {{ title }}
-          </span>
-
-          <!-- Slot count badge -->
-          <UBadge
-            v-if="slotCount > 0 || location.inventoryMode"
-            size="xs"
-            color="neutral"
-            variant="subtle"
-            class="flex-shrink-0"
-          >
-            {{ location.inventoryMode ? `×${location.quantity || 0}` : slotCount }}
-          </UBadge>
-        </div>
-
-        <!-- City -->
-        <span v-if="location.city" class="text-xs text-muted truncate block">
-          {{ location.city }}
-        </span>
-      </div>
-
-      <!-- Right side: edit button + selection check -->
-      <div class="flex items-center gap-1 flex-shrink-0">
-        <CroutonItemButtonsMini
-          v-if="editable"
-          update
-          class="opacity-0 group-hover:opacity-100 transition-opacity"
-          @update="emit('edit', location)"
-          @click.stop
-        />
-
-        <UIcon
-          v-if="selected"
-          name="i-lucide-check"
-          class="w-4 h-4 text-primary"
-        />
-      </div>
     </div>
-  </UCard>
+  </UButton>
 </template>
