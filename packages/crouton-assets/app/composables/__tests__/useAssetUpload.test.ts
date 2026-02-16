@@ -54,6 +54,13 @@ describe('useAssetUpload', () => {
       type: 'image/png'
     })
 
+    const mockUploadResponse = {
+      pathname: 'uploads/test-image-abc123.png',
+      contentType: 'image/png',
+      size: 12,
+      filename: 'test-image.png'
+    }
+
     const mockAssetResponse: UploadAssetResult = {
       id: 'asset-123',
       pathname: 'uploads/test-image-abc123.png',
@@ -65,7 +72,7 @@ describe('useAssetUpload', () => {
 
     it('uploads file to blob storage first', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/test-image-abc123.png') // blob upload
+        .mockResolvedValueOnce(mockUploadResponse) // blob upload
         .mockResolvedValueOnce(mockAssetResponse) // asset record
 
       const { uploadAsset } = useAssetUpload()
@@ -79,7 +86,7 @@ describe('useAssetUpload', () => {
 
     it('creates asset record after blob upload', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/test-image-abc123.png')
+        .mockResolvedValueOnce(mockUploadResponse)
         .mockResolvedValueOnce(mockAssetResponse)
 
       const { uploadAsset } = useAssetUpload()
@@ -99,7 +106,7 @@ describe('useAssetUpload', () => {
 
     it('uses custom filename from metadata', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/custom-abc123.png')
+        .mockResolvedValueOnce({ ...mockUploadResponse, pathname: 'uploads/custom-abc123.png' })
         .mockResolvedValueOnce(mockAssetResponse)
 
       const { uploadAsset } = useAssetUpload()
@@ -115,7 +122,7 @@ describe('useAssetUpload', () => {
 
     it('uses custom collection name', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/test-image-abc123.png')
+        .mockResolvedValueOnce(mockUploadResponse)
         .mockResolvedValueOnce(mockAssetResponse)
 
       const { uploadAsset } = useAssetUpload()
@@ -126,7 +133,7 @@ describe('useAssetUpload', () => {
 
     it('returns the created asset record', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/test-image-abc123.png')
+        .mockResolvedValueOnce(mockUploadResponse)
         .mockResolvedValueOnce(mockAssetResponse)
 
       const { uploadAsset } = useAssetUpload()
@@ -141,7 +148,7 @@ describe('useAssetUpload', () => {
       mockFetch.mockImplementation(async () => {
         // Capture uploading state during the call
         return new Promise(resolve => {
-          setTimeout(() => resolve('pathname'), 10)
+          setTimeout(() => resolve(mockUploadResponse), 10)
         })
       })
 
@@ -161,7 +168,7 @@ describe('useAssetUpload', () => {
 
     it('sets uploading to false after successful upload', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/test-image-abc123.png')
+        .mockResolvedValueOnce(mockUploadResponse)
         .mockResolvedValueOnce(mockAssetResponse)
 
       const { uploadAsset, uploading } = useAssetUpload()
@@ -173,7 +180,7 @@ describe('useAssetUpload', () => {
     it('throws error when team context not available', async () => {
       mockTeamId = null
 
-      mockFetch.mockResolvedValueOnce('uploads/test-image-abc123.png')
+      mockFetch.mockResolvedValueOnce(mockUploadResponse)
 
       const { uploadAsset } = useAssetUpload()
 
@@ -222,7 +229,7 @@ describe('useAssetUpload', () => {
 
       // Second upload succeeds
       mockFetch
-        .mockResolvedValueOnce('uploads/test-image.png')
+        .mockResolvedValueOnce(mockUploadResponse)
         .mockResolvedValueOnce(mockAssetResponse)
 
       await uploadAsset(mockFile)
@@ -232,7 +239,7 @@ describe('useAssetUpload', () => {
 
     it('defaults alt to empty string when not provided', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/test-image-abc123.png')
+        .mockResolvedValueOnce(mockUploadResponse)
         .mockResolvedValueOnce(mockAssetResponse)
 
       const { uploadAsset } = useAssetUpload()
@@ -248,7 +255,7 @@ describe('useAssetUpload', () => {
 
     it('includes uploadedAt date in asset record', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/test-image-abc123.png')
+        .mockResolvedValueOnce(mockUploadResponse)
         .mockResolvedValueOnce(mockAssetResponse)
 
       const { uploadAsset } = useAssetUpload()
@@ -279,9 +286,9 @@ describe('useAssetUpload', () => {
     it('uploads multiple files in parallel', async () => {
       // Each file needs blob upload + asset record
       mockFetch
-        .mockResolvedValueOnce('uploads/image1.png')
-        .mockResolvedValueOnce('uploads/image2.png')
-        .mockResolvedValueOnce('uploads/image3.png')
+        .mockResolvedValueOnce({ pathname: 'uploads/image1.png', contentType: 'image/png', size: 8, filename: 'image1.png' })
+        .mockResolvedValueOnce({ pathname: 'uploads/image2.png', contentType: 'image/png', size: 8, filename: 'image2.png' })
+        .mockResolvedValueOnce({ pathname: 'uploads/image3.png', contentType: 'image/png', size: 8, filename: 'image3.png' })
         .mockResolvedValueOnce(mockAssetResponses[0])
         .mockResolvedValueOnce(mockAssetResponses[1])
         .mockResolvedValueOnce(mockAssetResponses[2])
@@ -296,7 +303,7 @@ describe('useAssetUpload', () => {
       // Mock based on URL pattern since parallel execution order is unpredictable
       mockFetch.mockImplementation(async (url: string) => {
         if (url === '/api/upload-image') {
-          return 'uploads/image.png'
+          return { pathname: 'uploads/image.png', contentType: 'image/png', size: 8, filename: 'image.png' }
         }
         if (url.includes('/api/teams/')) {
           return { id: 'asset-id', pathname: 'uploads/image.png', filename: 'image.png', contentType: 'image/png', size: 8 }
@@ -316,9 +323,9 @@ describe('useAssetUpload', () => {
 
     it('applies metadata to all files', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/image1.png')
+        .mockResolvedValueOnce({ pathname: 'uploads/image1.png', contentType: 'image/png', size: 8, filename: 'image1.png' })
         .mockResolvedValueOnce(mockAssetResponses[0])
-        .mockResolvedValueOnce('uploads/image2.png')
+        .mockResolvedValueOnce({ pathname: 'uploads/image2.png', contentType: 'image/png', size: 8, filename: 'image2.png' })
         .mockResolvedValueOnce(mockAssetResponses[1])
 
       const { uploadAssets } = useAssetUpload()
@@ -336,7 +343,7 @@ describe('useAssetUpload', () => {
 
     it('uses custom collection for all files', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/image1.png')
+        .mockResolvedValueOnce({ pathname: 'uploads/image1.png', contentType: 'image/png', size: 8, filename: 'image1.png' })
         .mockResolvedValueOnce(mockAssetResponses[0])
 
       const { uploadAssets } = useAssetUpload()
@@ -355,7 +362,7 @@ describe('useAssetUpload', () => {
 
     it('rejects if any upload fails', async () => {
       mockFetch
-        .mockResolvedValueOnce('uploads/image1.png')
+        .mockResolvedValueOnce({ pathname: 'uploads/image1.png', contentType: 'image/png', size: 8, filename: 'image1.png' })
         .mockResolvedValueOnce(mockAssetResponses[0])
         .mockRejectedValueOnce(new Error('Upload failed'))
 
