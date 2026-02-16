@@ -64,7 +64,7 @@ export default defineNuxtConfig({
 
   // Plugins
   plugins: [
-    { src: join(currentDir, 'app/plugins/team-theme.client.ts'), mode: 'client' }
+    join(currentDir, 'app/plugins/team-theme.ts')
   ],
 
   // Nitro server config

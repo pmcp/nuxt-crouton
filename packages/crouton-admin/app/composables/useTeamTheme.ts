@@ -14,7 +14,7 @@
  * ```
  */
 import { ref, computed, watch, readonly } from 'vue'
-import { useRoute, updateAppConfig, useAsyncData } from '#imports'
+import { useRoute, useAppConfig, useAsyncData } from '#imports'
 
 /**
  * Primary color options (Tailwind CSS colors)
@@ -119,20 +119,21 @@ export function useTeamTheme() {
   // Loading state
   const isLoading = computed(() => status.value === 'pending' || status.value === 'idle')
 
-  // Apply theme to Nuxt UI via updateAppConfig
+  // Capture reactive app config during setup (when Nuxt context is available).
+  // This avoids calling updateAppConfig() in async watcher callbacks where the
+  // Nuxt instance is no longer on the call stack.
+  const appConfig = useAppConfig() as { ui?: { colors?: Record<string, string> } }
+
+  // Apply theme to Nuxt UI by mutating the reactive app config directly
   function applyTheme(settings: TeamThemeSettings) {
     const primary = settings.primary ?? DEFAULT_THEME.primary
     const neutral = settings.neutral ?? DEFAULT_THEME.neutral
     const radius = settings.radius ?? DEFAULT_THEME.radius
 
-    updateAppConfig({
-      ui: {
-        colors: {
-          primary,
-          neutral
-        }
-      }
-    })
+    if (!appConfig.ui) (appConfig as any).ui = {}
+    if (!appConfig.ui!.colors) appConfig.ui!.colors = {}
+    appConfig.ui!.colors!.primary = primary
+    appConfig.ui!.colors!.neutral = neutral
 
     if (import.meta.client) {
       document.documentElement.style.setProperty('--ui-radius', `${radius}rem`)
