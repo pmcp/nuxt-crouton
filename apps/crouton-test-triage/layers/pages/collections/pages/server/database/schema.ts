@@ -40,6 +40,7 @@ export const pagesPages = sqliteTable('pages_pages', {
   layout: text('layout'),
   seoTitle: text('seoTitle'),
   seoDescription: text('seoDescription'),
+  translations: jsonColumn('translations'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
