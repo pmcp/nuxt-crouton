@@ -509,6 +509,40 @@ program
     }
   })
 
+// Scaffold app command - create a complete app directory with boilerplate
+program
+  .command('scaffold-app <name>')
+  .description('Create a new crouton app with all boilerplate files')
+  .option('--features <list>', 'Comma-separated feature names (e.g., bookings,pages,editor)', '')
+  .option('--theme <name>', 'Theme to wire into extends (e.g., ko)')
+  .option('-d, --dialect <type>', 'Database dialect (sqlite or pg)', 'sqlite')
+  .option('--no-cf', 'Skip Cloudflare-specific config (wrangler.toml, CF stubs)')
+  .option('--dry-run', 'Preview what will be generated without writing files')
+  .action(async (name, options) => {
+    try {
+      const scaffoldPath = join(__dirname, '..', 'lib', 'scaffold-app.mjs')
+      const { scaffoldApp } = await import(scaffoldPath)
+
+      const features = options.features
+        ? options.features.split(',').map(f => f.trim()).filter(Boolean)
+        : []
+
+      await scaffoldApp(name, {
+        features,
+        theme: options.theme,
+        dialect: options.dialect,
+        cf: options.cf,
+        dryRun: options.dryRun
+      })
+    } catch (error) {
+      console.error(chalk.red('Scaffold failed:'), error.message)
+      if (process.env.DEBUG) {
+        console.error(error.stack)
+      }
+      process.exit(1)
+    }
+  })
+
 // Seed translations command - import JSON locale files to database
 program
   .command('seed-translations')
