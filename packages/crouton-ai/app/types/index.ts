@@ -41,6 +41,18 @@ export interface AIModel {
 }
 
 /**
+ * A tool invocation extracted from an AI message
+ */
+export interface AIToolCall {
+  /** Tool call ID */
+  toolCallId: string
+  /** Name of the tool that was called */
+  toolName: string
+  /** Arguments passed to the tool */
+  args: Record<string, unknown>
+}
+
+/**
  * Options for the useChat composable
  */
 export interface AIChatOptions {
@@ -64,6 +76,10 @@ export interface AIChatOptions {
   headers?: Record<string, string> | Headers
   /** Credentials mode for fetch requests */
   credentials?: 'omit' | 'same-origin' | 'include'
+  /** Maximum number of sequential LLM calls (steps) for tool use. Default: 1 */
+  maxSteps?: number
+  /** Callback when the AI invokes a tool (client-side handling). Return a result to feed back to the AI */
+  onToolCall?: (params: { toolCall: AIToolCall }) => void | Promise<unknown> | unknown
   /** Callback when a message is complete */
   onFinish?: (message: AIMessage) => void
   /** Callback when an error occurs */

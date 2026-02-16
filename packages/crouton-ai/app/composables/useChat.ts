@@ -15,7 +15,7 @@
 import { useChat as useAISDKChat } from '@ai-sdk/vue'
 import { computed, toRaw } from 'vue'
 import { useRuntimeConfig } from '#imports'
-import type { AIChatOptions, AIMessage } from '../types'
+import type { AIChatOptions, AIMessage, AIToolCall } from '../types'
 
 /**
  * Composable for AI-powered chat functionality
@@ -51,6 +51,8 @@ export function useChat(options: AIChatOptions = {}) {
     },
     headers: options.headers,
     credentials: options.credentials,
+    maxSteps: options.maxSteps,
+    onToolCall: options.onToolCall as any,
     onFinish: (message) => {
       // Convert to our AIMessage type
       const aiMessage: AIMessage = {
@@ -86,6 +88,26 @@ export function useChat(options: AIChatOptions = {}) {
     }))
   })
 
+  // Extract tool invocations from the latest assistant message
+  const toolCalls = computed<AIToolCall[]>(() => {
+    const raw = chat.messages.value
+    const calls: AIToolCall[] = []
+    for (const msg of raw) {
+      if (msg.role !== 'assistant' || !msg.parts) continue
+      for (const part of msg.parts) {
+        if (part.type === 'tool-invocation') {
+          const inv = part as { toolInvocation: { toolCallId: string, toolName: string, args: Record<string, unknown> } }
+          calls.push({
+            toolCallId: inv.toolInvocation.toolCallId,
+            toolName: inv.toolInvocation.toolName,
+            args: inv.toolInvocation.args
+          })
+        }
+      }
+    }
+    return calls
+  })
+
   return {
     // Core AI SDK returns (compatible types)
     messages,
@@ -101,6 +123,10 @@ export function useChat(options: AIChatOptions = {}) {
     data: chat.data,
     setData: chat.setData,
     id: chat.id,
+
+    // Tool support
+    rawMessages: chat.messages,
+    toolCalls,
 
     // Crouton helpers
     clearMessages: () => chat.setMessages([]),
@@ -119,4 +145,4 @@ export function useChat(options: AIChatOptions = {}) {
 }
 
 // Re-export types for convenience
-export type { AIChatOptions, AIMessage } from '../types'
+export type { AIChatOptions, AIMessage, AIToolCall } from '../types'
