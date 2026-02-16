@@ -3,7 +3,7 @@ export default defineAppConfig({
   croutonApps: {
     pages: {
       id: 'pages',
-      name: 'Pages',
+      name: 'pages.title',
       icon: 'i-lucide-file-text',
       // Admin routes (appear in /admin/[team]/ sidebar)
       adminRoutes: [

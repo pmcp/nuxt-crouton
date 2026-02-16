@@ -3,7 +3,7 @@ export default defineAppConfig({
   croutonApps: {
     bookings: {
       id: 'bookings',
-      name: 'Bookings',
+      name: 'bookings.title',
       icon: 'i-lucide-calendar',
       // User-facing routes (appear in /dashboard/[team]/ sidebar)
       dashboardRoutes: [

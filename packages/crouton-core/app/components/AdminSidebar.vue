@@ -9,18 +9,12 @@ const TeamSwitcherComponent = shallowRef<ReturnType<typeof resolveComponent> | n
 const hasUserMenu = ref(false)
 const UserMenuComponent = shallowRef<ReturnType<typeof resolveComponent> | null>(null)
 
-// Check if team switcher should be shown (for team admin only)
-const runtimeConfig = useRuntimeConfig()
-const showSwitcher = computed(() => runtimeConfig.public.crouton?.auth?.teams?.showSwitcher !== false)
-
 onMounted(() => {
-  // Resolve TeamSwitcher
-  if (showSwitcher.value) {
-    const teamSwitcher = resolveComponent('TeamSwitcher')
-    if (typeof teamSwitcher !== 'string') {
-      TeamSwitcherComponent.value = teamSwitcher
-      hasTeamSwitcher.value = true
-    }
+  // Resolve TeamSwitcher (always resolve — the component handles showSwitcher:false internally)
+  const teamSwitcher = resolveComponent('TeamSwitcher')
+  if (typeof teamSwitcher !== 'string') {
+    TeamSwitcherComponent.value = teamSwitcher
+    hasTeamSwitcher.value = true
   }
 
   // Resolve UserMenu (SidebarUserMenu)
@@ -117,7 +111,7 @@ const appGroups = computed<NavigationMenuItem[]>(() => {
     } else {
       // Multi-item apps get a group header
       groups.push({
-        label: app.name,
+        label: t(app.name),
         icon: app.icon,
         defaultOpen: true,
         children: routeItems

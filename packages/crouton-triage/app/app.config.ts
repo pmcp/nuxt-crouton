@@ -3,7 +3,7 @@ export default defineAppConfig({
   croutonApps: {
     triage: {
       id: 'triage',
-      name: 'Triage',
+      name: 'triage.admin.sectionTitle',
       icon: 'i-lucide-funnel',
       dashboardRoutes: [],
       // Admin routes (appear in /admin/[team]/ sidebar)
