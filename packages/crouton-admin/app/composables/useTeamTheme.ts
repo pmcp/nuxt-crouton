@@ -14,7 +14,7 @@
  * ```
  */
 import { ref, computed, watch, readonly } from 'vue'
-import { useRoute, useAppConfig, useAsyncData } from '#imports'
+import { useRoute, updateAppConfig } from '#imports'
 
 /**
  * Primary color options (Tailwind CSS colors)
@@ -82,59 +82,86 @@ export function useTeamTheme() {
 
   // Get team ID from route params
   const teamId = computed(() => {
+    // Check common param names: id, team, teamId
     return (route.params.id as string)
       || (route.params.team as string)
       || (route.params.teamId as string)
       || null
   })
 
-  // Fetch theme via useAsyncData (SSR-compatible, shared across instances)
-  const { data: themeData, status, error, refresh: refreshFetch } = useAsyncData<TeamThemeSettings>(
-    'team-theme',
-    async () => {
-      if (!teamId.value) return {} as TeamThemeSettings
-      return $fetch<TeamThemeSettings>(`/api/teams/${teamId.value}/settings/theme-public`)
-    },
-    { watch: [teamId], default: () => ({} as TeamThemeSettings) }
-  )
+  // If no team context, resolve gate immediately
+  if (!teamId.value) {
+    resolveGate('team-theme')
+  }
 
-  // Resolve gate when fetch completes, or immediately if no team context
-  watch(status, (newStatus) => {
-    if (newStatus === 'success' || newStatus === 'error') {
+  // Fetch team theme settings
+  const themeData = ref<TeamThemeSettings>({})
+  const status = ref<'idle' | 'pending' | 'success' | 'error'>('idle')
+  const error = ref<Error | null>(null)
+
+  // Fetch function
+  async function fetchTheme() {
+    if (!teamId.value) return
+
+    status.value = 'pending'
+    error.value = null
+
+    try {
+      const data = await $fetch<TeamThemeSettings>(
+        `/api/teams/${teamId.value}/settings/theme`
+      )
+      themeData.value = data ?? {}
+      status.value = 'success'
+    } catch (e) {
+      error.value = e instanceof Error ? e : new Error('Failed to fetch theme')
+      status.value = 'error'
+    } finally {
+      // Resolve gate on success or error — never block the app for a theme failure
+      resolveGate('team-theme')
+    }
+  }
+
+  // Refresh function
+  async function refresh() {
+    await fetchTheme()
+  }
+
+  // Watch for team changes and fetch
+  watch(teamId, () => {
+    if (teamId.value) {
+      fetchTheme()
+    } else {
       resolveGate('team-theme')
     }
   }, { immediate: true })
 
-  watch(teamId, (newId) => {
-    if (!newId) resolveGate('team-theme')
-  }, { immediate: true })
-
   // Computed theme with defaults
   const theme = computed<Required<TeamThemeSettings>>(() => ({
-    primary: themeData.value?.primary ?? DEFAULT_THEME.primary,
-    neutral: themeData.value?.neutral ?? DEFAULT_THEME.neutral,
-    radius: themeData.value?.radius ?? DEFAULT_THEME.radius
+    primary: themeData.value.primary ?? DEFAULT_THEME.primary,
+    neutral: themeData.value.neutral ?? DEFAULT_THEME.neutral,
+    radius: themeData.value.radius ?? DEFAULT_THEME.radius
   }))
 
   // Loading state
   const isLoading = computed(() => status.value === 'pending' || status.value === 'idle')
 
-  // Capture reactive app config during setup (when Nuxt context is available).
-  // This avoids calling updateAppConfig() in async watcher callbacks where the
-  // Nuxt instance is no longer on the call stack.
-  const appConfig = useAppConfig() as { ui?: { colors?: Record<string, string> } }
-
-  // Apply theme to Nuxt UI by mutating the reactive app config directly
+  // Apply theme to Nuxt UI via updateAppConfig
   function applyTheme(settings: TeamThemeSettings) {
     const primary = settings.primary ?? DEFAULT_THEME.primary
     const neutral = settings.neutral ?? DEFAULT_THEME.neutral
     const radius = settings.radius ?? DEFAULT_THEME.radius
 
-    if (!appConfig.ui) (appConfig as any).ui = {}
-    if (!appConfig.ui!.colors) appConfig.ui!.colors = {}
-    appConfig.ui!.colors!.primary = primary
-    appConfig.ui!.colors!.neutral = neutral
+    // Update Nuxt UI colors via app config
+    updateAppConfig({
+      ui: {
+        colors: {
+          primary,
+          neutral
+        }
+      }
+    })
 
+    // Apply radius via CSS custom property
     if (import.meta.client) {
       document.documentElement.style.setProperty('--ui-radius', `${radius}rem`)
     }
@@ -145,12 +172,7 @@ export function useTeamTheme() {
     applyTheme(newTheme)
   }, { immediate: true })
 
-  // Refresh function
-  async function refresh() {
-    await refreshFetch()
-  }
-
-  // Update theme (for admin UI) — uses authenticated PATCH endpoint
+  // Update theme (for admin UI)
   async function updateTheme(settings: Partial<TeamThemeSettings>) {
     if (!teamId.value) {
       throw new Error('No team context available')
@@ -164,6 +186,7 @@ export function useTeamTheme() {
       }
     )
 
+    // Refresh the cached data
     await refresh()
 
     return response
