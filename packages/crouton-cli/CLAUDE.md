@@ -253,6 +253,8 @@ Repeater fields can support per-item translations using `translatableProperties`
 | boolean | `z.boolean()` | `boolean` | `false` |
 | date | `z.date()` | `Date \| null` | `null` |
 | json | `z.record(z.any())` | `Record<string, any>` | `{}` |
+| image | `z.string()` | `string` | `''` |
+| file | `z.string()` | `string` | `''` |
 | repeater | `z.array(z.any())` or typed¹ | `any[]` or typed¹ | `[]` |
 | array | `z.array(z.string())` | `string[]` | `[]` |
 
@@ -435,6 +437,11 @@ When modifying the generator, **always check if examples need updating**:
 2. Update Zod schema in `lib/generators/composable.mjs`
 3. Update form component in `lib/generators/form-component.mjs`
 4. Add Drizzle type in `lib/utils/dialects.mjs`
+
+### Image and File Field Types
+- `image` → renders `<CroutonAssetsPicker v-model="..." :crop="true" />` in forms, stores `VARCHAR(255)` (asset ID)
+- `file` → renders `<CroutonAssetsPicker v-model="..." />` in forms (no crop), stores `VARCHAR(255)` (asset ID)
+- Both are auto-detected by `asset-detector.mjs` as asset references (like `refTarget: "assets"`)
 
 ### Add new CLI option
 1. Add option to `bin/crouton-generate.js` using Commander

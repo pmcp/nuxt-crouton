@@ -60,6 +60,14 @@ export default defineNuxtConfig({
 | `app/components/ImportButton.vue` | Ready-to-use import button with file picker |
 | `app/components/ImportPreviewModal.vue` | Multi-step import preview with mapping, validation, and progress |
 | `app/composables/useTeamContext.ts` | Team context access (teamId, teamSlug from route or auth) |
+| `app/composables/useImageCrop.ts` | Cropperjs v2 composable for image cropping |
+| `app/components/ImageCropper.vue` | Reusable image crop modal with rotate/zoom/aspect ratio |
+| `app/components/ImageUpload.vue` | File picker with optional crop support |
+| `app/components/UsersAvatarUpload.vue` | Avatar upload with 1:1 circular crop |
+| `app/components/DropZone.vue` | Drag-and-drop file upload zone (VueUse) |
+| `server/api/upload-image.post.ts` | Authenticated file upload to blob storage |
+| `server/api/upload-image.delete.ts` | Authenticated file deletion from blob storage |
+| `server/routes/images/[pathname].get.ts` | Image serving with cache headers |
 
 ## Architecture
 

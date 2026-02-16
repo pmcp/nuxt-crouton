@@ -2,16 +2,16 @@
 
 ## Package Purpose
 
-Centralized asset management for Nuxt Crouton. Provides picker/uploader components and composables for a full-featured media library with team-based ownership and metadata tracking.
+Centralized asset management for Nuxt Crouton. Provides picker/uploader components and composables for a full-featured media library with team-based ownership, metadata tracking, and multi-file-type support.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `app/components/Picker.vue` | Browse/select existing assets |
-| `app/components/Uploader.vue` | Upload with metadata form |
-| `app/composables/useAssetUpload.ts` | Programmatic upload helper |
-| `assets-schema.json` | Reference schema for generation |
+| `app/components/Picker.vue` | Browse/select assets with type filtering (images, docs, video, audio) |
+| `app/components/Uploader.vue` | Upload with optional crop step and metadata form |
+| `app/composables/useAssetUpload.ts` | Programmatic upload/delete helper with progress tracking |
+| `assets-schema.json` | Reference schema (includes category, width, height fields) |
 
 ## Architecture
 
@@ -106,6 +106,9 @@ Components auto-import with `CroutonAssets` prefix:
   pathname: string        // Blob storage path
   contentType: string     // MIME type
   size: number            // Bytes
+  category: string        // 'image' | 'video' | 'audio' | 'document' | 'other'
+  width: number           // Image width in px (0 for non-images)
+  height: number          // Image height in px (0 for non-images)
   alt: string             // Alt text (translatable)
   uploadedAt: Date
 }

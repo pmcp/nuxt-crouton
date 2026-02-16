@@ -25,6 +25,7 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `app/components/Form.vue` | Page creation/editing form |
 | `app/types/blocks.ts` | Block type definitions |
 | `app/utils/block-registry.ts` | Block definitions and schemas |
+| `app/components/Blocks/Properties/ImageEditor.vue` | Image property editor for block panel (upload, URL, preview) |
 | `app/utils/content-detector.ts` | JSON vs HTML content detection |
 | `app/editor/extensions/page-blocks.ts` | TipTap extensions bundle |
 | `app/pages/[team]/[...slug].vue` | Public page catch-all route |
@@ -248,6 +249,14 @@ const {
   getDefaults         // Get default attrs
 } = usePageBlocks()
 ```
+
+### Image Properties in Blocks
+
+Block properties with `type: 'image'` are rendered with `ImageEditor.vue`, which provides:
+- Image preview with edit/delete overlay buttons
+- Upload via `CroutonImageUpload` (auto-uploads to `/api/upload-image`)
+- Direct URL input mode
+- Emits image URL string via `v-model`
 
 ### Adding Custom Blocks
 

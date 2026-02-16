@@ -63,6 +63,22 @@ Full-featured wrapper around Nuxt UI's `UEditor` component.
 | `enableTranslationAI` | `boolean` | `false` | Enable AI translation button |
 | `translationContext` | `TranslationContext` | - | Context for AI translation |
 | `onTranslationAccept` | `(text: string) => void` | - | Callback when translation is accepted |
+| `enableImageUpload` | `boolean` | `false` | Enable image upload (toolbar button, paste, drag-drop) |
+
+**Image Upload:**
+
+```vue
+<CroutonEditorSimple
+  v-model="content"
+  enable-image-upload
+/>
+```
+
+When `enableImageUpload` is `true`:
+- Toolbar shows an "Insert Image" button
+- Paste handler: intercepts pasted images, uploads via `/api/upload-image`, inserts `<img>`
+- Drop handler: intercepts dropped image files, uploads and inserts
+- Upload indicator shown in toolbar during upload
 
 **AI Translation:**
 
@@ -317,6 +333,7 @@ interface EditorVariableGroup {
 - Multiple toolbar layouts (fixed, bubble, floating)
 - Markdown native support
 - Image handling
+- **Image upload** (toolbar, paste, drag-drop) via `enableImageUpload` prop
 - Code blocks with syntax highlighting
 - **Live preview with interpolation** - NEW
 
