@@ -15,6 +15,7 @@ import {
   hierarchyData,
   sortableData,
   dependentFieldsData,
+  displayConfigData,
   minimalConfig
 } from '../../fixtures/sample-data.mjs'
 
@@ -115,6 +116,52 @@ describe('generateComposable', () => {
       const result = generateComposable(dependentFieldsData, minimalConfig)
       expect(result).toContain('dependentFieldComponents: {')
       expect(result).toContain("items: 'ShopProductsItemSelect'")
+    })
+  })
+
+  describe('display config', () => {
+    it('includes display config when provided', () => {
+      const result = generateComposable(displayConfigData, minimalConfig)
+      expect(result).toContain('display: {"title":"name","image":"photo","badge":"active","description":"description"}')
+    })
+
+    it('omits display config when not provided', () => {
+      const result = generateComposable(basicComposableData, minimalConfig)
+      expect(result).not.toContain('display:')
+    })
+  })
+
+  describe('fields metadata', () => {
+    it('includes runtime fields array with name, type, label', () => {
+      const result = generateComposable(basicComposableData, minimalConfig)
+      expect(result).toContain('fields: [')
+      expect(result).toContain('"name": "name"')
+      expect(result).toContain('"type": "string"')
+      expect(result).toContain('"label": "Name"')
+    })
+
+    it('includes area when present in field meta', () => {
+      const result = generateComposable(displayConfigData, minimalConfig)
+      expect(result).toContain('"area": "main"')
+      expect(result).toContain('"area": "sidebar"')
+    })
+
+    it('includes displayAs when present in field meta', () => {
+      const result = generateComposable(displayConfigData, minimalConfig)
+      expect(result).toContain('"displayAs": "badge"')
+    })
+
+    it('excludes id field from runtime fields', () => {
+      const dataWithId = {
+        ...basicComposableData,
+        fields: [
+          { name: 'id', type: 'string', meta: { primaryKey: true } },
+          ...basicComposableData.fields
+        ]
+      }
+      const result = generateComposable(dataWithId, minimalConfig)
+      // Should not have a field entry for 'id'
+      expect(result).not.toMatch(/"name": "id"/)
     })
   })
 })

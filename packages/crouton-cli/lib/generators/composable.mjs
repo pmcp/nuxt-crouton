@@ -97,7 +97,7 @@ function generateAIHeader(data, apiPath) {
 }
 
 export function generateComposable(data, config = {}) {
-  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields, hierarchy, sortable } = data
+  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields, hierarchy, sortable, display } = data
   // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
   const prefixedSingular = `${layerCamelCase}${pascalCase}`
   const prefixedPlural = `${layerCamelCase}${pascalCasePlural}`
@@ -147,6 +147,26 @@ export function generateComposable(data, config = {}) {
   }`
     : ''
 
+  // Generate display config if provided
+  const displayConfigCode = display
+    ? `,\n  display: ${JSON.stringify(display)}`
+    : ''
+
+  // Generate runtime field metadata array for display components
+  const runtimeFields = fields
+    .filter(f => f.name !== 'id')
+    .map((f) => {
+      const entry = {
+        name: f.name,
+        type: f.type,
+        label: f.meta?.label || f.name.charAt(0).toUpperCase() + f.name.slice(1)
+      }
+      if (f.meta?.area) entry.area = f.meta.area
+      if (f.meta?.displayAs) entry.displayAs = f.meta.displayAs
+      return entry
+    })
+  const fieldsMetaCode = `,\n  fields: ${JSON.stringify(runtimeFields, null, 4).replace(/\n/g, '\n  ')}`
+
   // Generate AI context header
   const aiHeader = generateAIHeader(data, apiPath)
 
@@ -183,7 +203,7 @@ const _${prefixedPlural}Config = {
   defaultValues: {
     ${data.fieldsDefault}
   },
-  columns: ${prefixedPlural}Columns${dependentFieldComponentsCode}${hierarchyConfigCode}${sortableConfigCode},
+  columns: ${prefixedPlural}Columns${dependentFieldComponentsCode}${hierarchyConfigCode}${sortableConfigCode}${displayConfigCode}${fieldsMetaCode},
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

@@ -55,6 +55,28 @@ const _shopProductsConfig = {
     active: false
   },
   columns: shopProductsColumns,
+  fields: [
+      {
+          "name": "name",
+          "type": "string",
+          "label": "Name"
+      },
+      {
+          "name": "description",
+          "type": "text",
+          "label": "Description"
+      },
+      {
+          "name": "price",
+          "type": "decimal",
+          "label": "Price"
+      },
+      {
+          "name": "active",
+          "type": "boolean",
+          "label": "Active"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

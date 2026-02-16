@@ -1079,7 +1079,8 @@ ${translationsFieldSchema}
     hierarchy, // Pass hierarchy config to generators
     sortable, // Pass sortable config to generators
     collab, // Pass collab config to generators (enables presence indicators)
-    collectionConfig // Pass collection config for formComponent option
+    collectionConfig, // Pass collection config for formComponent option
+    display: collectionConfig?.display || null // Display config: title, subtitle, image, badge, description
   }
 
   if (dryRun) {

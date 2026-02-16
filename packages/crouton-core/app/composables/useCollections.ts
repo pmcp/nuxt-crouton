@@ -1,6 +1,29 @@
 // Define a type for collection names (will be extended by user's registry)
 type CollectionName = string
 
+/** Display config: maps display roles to field names */
+interface DisplayConfig {
+  /** Primary identifier field name */
+  title?: string
+  /** Secondary context field name */
+  subtitle?: string
+  /** Visual identifier field name (image/asset type) */
+  image?: string
+  /** Status/category indicator field name */
+  badge?: string
+  /** Summary text field name */
+  description?: string
+}
+
+/** Lightweight runtime field metadata for display components */
+interface RuntimeFieldMeta {
+  name: string
+  type: string
+  label: string
+  area?: 'main' | 'sidebar' | 'meta'
+  displayAs?: string
+}
+
 // Type for config map entries supplied via app.config.ts
 interface CollectionConfig {
   name?: string
@@ -73,6 +96,16 @@ interface CollectionConfig {
     label?: string
     order?: number
   }
+  /**
+   * Display config: maps display roles (title, image, badge, etc.) to field names.
+   * Used by useDisplayConfig() and display components (Card, Detail, CardMini).
+   */
+  display?: DisplayConfig
+  /**
+   * Runtime field metadata for display components.
+   * Lightweight projection of schema fields: name, type, label, area, displayAs.
+   */
+  fields?: RuntimeFieldMeta[]
   [key: string]: any
 }
 

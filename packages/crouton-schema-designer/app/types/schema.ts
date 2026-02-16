@@ -45,6 +45,19 @@ export interface SchemaField {
   fromPackage?: string       // Package ID this field came from (e.g., 'crouton-bookings')
 }
 
+export interface DisplayConfig {
+  /** Primary identifier field name */
+  title?: string
+  /** Secondary context field name */
+  subtitle?: string
+  /** Visual identifier field name (image/asset type) */
+  image?: string
+  /** Status/category indicator field name */
+  badge?: string
+  /** Summary text field name */
+  description?: string
+}
+
 export interface CollectionOptions {
   hierarchy: boolean
   sortable: boolean
@@ -62,6 +75,7 @@ export interface CollectionSchema {
   collectionName: string       // Collection name (e.g., 'products', 'orders')
   fields: SchemaField[]
   options: CollectionOptions
+  display?: DisplayConfig      // Display config: which fields map to title, image, badge, etc.
   cardTemplate?: string        // Custom Card.vue template code
   // Package integration - collections imported from packages
   fromPackage?: string         // Package ID this collection came from (e.g., 'crouton-bookings')

@@ -156,6 +156,26 @@ export const dependentFieldsData = {
   ]
 }
 
+/**
+ * Data object with display config
+ */
+export const displayConfigData = {
+  ...basicComposableData,
+  display: {
+    title: 'name',
+    image: 'photo',
+    badge: 'active',
+    description: 'description'
+  },
+  fields: [
+    { name: 'name', type: 'string', meta: { required: true, label: 'Name', area: 'main' } },
+    { name: 'description', type: 'text', meta: { label: 'Description', area: 'main' } },
+    { name: 'photo', type: 'image', meta: { label: 'Photo', area: 'main' } },
+    { name: 'price', type: 'decimal', meta: { label: 'Price', area: 'sidebar' } },
+    { name: 'active', type: 'boolean', meta: { label: 'Active', area: 'sidebar', displayAs: 'badge' } }
+  ]
+}
+
 // ============ Config Objects ============
 
 /**
