@@ -82,6 +82,13 @@
     <template #slots-cell="{ row }">
       <BookingsLocationsSlotCardMini :value="row.original.slots" />
     </template>
+    <template #slotSchedule-cell="{ row }">
+      <CroutonBookingsScheduleGrid
+        :model-value="row.original.slotSchedule"
+        :slots="row.original.slots"
+        readonly
+      />
+    </template>
     <template #blockedDates-cell="{ row }">
       <BookingsLocationsBlockedDateCardMini :value="row.original.blockedDates" />
     </template>

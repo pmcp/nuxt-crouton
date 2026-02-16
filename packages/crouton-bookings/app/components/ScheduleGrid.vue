@@ -4,11 +4,13 @@ import type { SlotItem, SlotSchedule } from '../types/booking'
 interface Props {
   modelValue?: SlotSchedule | string | null
   slots?: SlotItem[] | string | null
+  readonly?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: null,
   slots: null,
+  readonly: false,
 })
 
 const emit = defineEmits<{
@@ -53,6 +55,9 @@ const schedule = computed<SlotSchedule>(() => {
   return props.modelValue
 })
 
+const ALL_DAY_KEY = '_allDay'
+
+const hasSlots = computed(() => parsedSlots.value.length > 0)
 const hasSchedule = computed(() => Object.keys(schedule.value).length > 0)
 
 function isActive(slotId: string, dayValue: number): boolean {
@@ -93,18 +98,14 @@ function clearSchedule() {
 </script>
 
 <template>
-  <div v-if="parsedSlots.length === 0" class="text-sm text-muted">
-    Add time slots first to configure per-slot schedules.
-  </div>
-
-  <div v-else class="space-y-3">
-    <!-- Grid: rows = slots, columns = days -->
+  <div class="space-y-3">
+    <!-- Grid: rows = slots (or single all-day row), columns = days -->
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr>
             <th class="text-left pr-3 pb-2 text-muted font-medium text-xs">
-              Slot
+              {{ hasSlots ? 'Slot' : '' }}
             </th>
             <th
               v-for="day in days"
@@ -116,7 +117,8 @@ function clearSchedule() {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="slot in parsedSlots" :key="slot.id">
+          <!-- Per-slot rows when slots exist -->
+          <tr v-if="hasSlots" v-for="slot in parsedSlots" :key="slot.id">
             <td class="pr-3 py-1 text-default text-xs truncate max-w-[8rem]">
               {{ getSlotLabel(slot) }}
             </td>
@@ -125,7 +127,19 @@ function clearSchedule() {
               :key="day.value"
               class="text-center px-1 py-1"
             >
+              <div
+                v-if="readonly"
+                class="w-6 h-6 rounded inline-flex items-center justify-center"
+                :class="isActive(slot.id, day.value)
+                  ? 'bg-primary/20'
+                  : 'bg-muted/20'"
+              >
+                <span v-if="isActive(slot.id, day.value)" class="text-primary text-xs">
+                  &#10003;
+                </span>
+              </div>
               <button
+                v-else
                 type="button"
                 class="w-6 h-6 rounded transition-colors"
                 :class="isActive(slot.id, day.value)
@@ -139,18 +153,59 @@ function clearSchedule() {
               </button>
             </td>
           </tr>
+          <!-- Single all-day row when no slots -->
+          <tr v-else>
+            <td class="pr-3 py-1 text-default text-xs">
+              All day
+            </td>
+            <td
+              v-for="day in days"
+              :key="day.value"
+              class="text-center px-1 py-1"
+            >
+              <div
+                v-if="readonly"
+                class="w-6 h-6 rounded inline-flex items-center justify-center"
+                :class="isActive(ALL_DAY_KEY, day.value)
+                  ? 'bg-primary/20'
+                  : 'bg-muted/20'"
+              >
+                <span v-if="isActive(ALL_DAY_KEY, day.value)" class="text-primary text-xs">
+                  &#10003;
+                </span>
+              </div>
+              <button
+                v-else
+                type="button"
+                class="w-6 h-6 rounded transition-colors"
+                :class="isActive(ALL_DAY_KEY, day.value)
+                  ? 'bg-primary/20 hover:bg-primary/30'
+                  : 'bg-muted/20 hover:bg-muted/30'"
+                @click="toggle(ALL_DAY_KEY, day.value)"
+              >
+                <span v-if="isActive(ALL_DAY_KEY, day.value)" class="text-primary text-xs">
+                  &#10003;
+                </span>
+              </button>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <p v-if="!hasSchedule" class="text-xs text-muted">
-      No per-slot schedule set — all slots follow the open days.
-    </p>
-    <p v-else class="text-xs text-muted">
-      Custom schedule active for {{ Object.keys(schedule).length }} slot{{ Object.keys(schedule).length === 1 ? '' : 's' }}.
-      <button type="button" class="text-primary hover:underline" @click="clearSchedule">
-        Reset all
-      </button>
-    </p>
+    <template v-if="!readonly">
+      <p v-if="!hasSchedule" class="text-xs text-muted">
+        {{ hasSlots ? 'No per-slot schedule set — all slots follow the open days.' : 'All days available — toggle days to mark them as unavailable.' }}
+      </p>
+      <p v-else class="text-xs text-muted">
+        {{ hasSlots
+          ? `Custom schedule active for ${Object.keys(schedule).length} slot${Object.keys(schedule).length === 1 ? '' : 's'}.`
+          : `${days.length - (schedule[ALL_DAY_KEY]?.length ?? days.length)} day${days.length - (schedule[ALL_DAY_KEY]?.length ?? days.length) === 1 ? '' : 's'} blocked.`
+        }}
+        <button type="button" class="text-primary hover:underline" @click="clearSchedule">
+          Reset all
+        </button>
+      </p>
+    </template>
   </div>
 </template>
