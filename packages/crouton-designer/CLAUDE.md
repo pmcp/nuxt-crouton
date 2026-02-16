@@ -2,7 +2,7 @@
 
 ## Package Purpose
 
-AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase wizard (Intake → Collection Design → Review & Generate) where users describe their app via AI chat and the system generates a complete Crouton collection schema as a downloadable ZIP.
+AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase wizard (Intake → Collection Design → Seed Data → Review & Generate) where users describe their app via AI chat and the system generates a complete Crouton collection schema with seed data as a downloadable ZIP.
 
 ## Key Files
 
@@ -15,6 +15,7 @@ AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase 
 | `app/components/CollectionEditor.vue` | Phase 2 collection/field CRUD UI |
 | `app/components/FieldList.vue` | Sortable field list within a collection |
 | `app/components/FieldRow.vue` | Single field editor row |
+| `app/components/SeedDataPanel.vue` | Phase 3 seed data display with tabs per collection |
 | `app/components/ReviewPanel.vue` | Phase 5 review, validation, and ZIP download |
 | `app/components/ValidationChecklist.vue` | Schema validation display |
 | `app/components/GenerationSummary.vue` | Summary of what will be generated |
@@ -22,6 +23,7 @@ AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase 
 | `app/composables/useCollectionEditor.ts` | Collection/field CRUD state management |
 | `app/composables/useIntakePrompt.ts` | Builds Phase 1 AI system prompt |
 | `app/composables/useCollectionDesignPrompt.ts` | Builds Phase 2 AI system prompt with tool definitions |
+| `app/composables/useSeedDataPrompt.ts` | Builds Phase 3 AI system prompt for seed data generation |
 | `app/composables/useSchemaValidation.ts` | Schema validation rules (errors + warnings) |
 | `app/composables/useSchemaExport.ts` | Converts editor state to Crouton JSON schemas |
 | `app/composables/useSchemaDownload.ts` | ZIP generation with fflate |
@@ -36,29 +38,33 @@ AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase 
 ### Phase System
 
 ```
-Phase 1: Intake          Phase 2: Collections       Phase 5: Review
-─────────────────        ──────────────────────      ───────────────────
-Chat + Summary Card      Chat + Collection Editor    Validation + ZIP
-AI sets config via       AI creates/edits via        User downloads schemas
-set_app_config tool      create/update/delete tools
+Phase 1: Intake          Phase 2: Collections       Phase 3: Seed Data      Phase 5: Review
+─────────────────        ──────────────────────      ──────────────────      ───────────────────
+Chat + Summary Card      Chat + Collection Editor    Chat + SeedDataPanel    Validation + ZIP
+AI sets config via       AI creates/edits via        AI generates sample     User downloads schemas
+set_app_config tool      create/update/delete tools  data via set_seed_data  + seed data
 ```
 
 - Phases are stored on the `DesignerProject` record in the DB
 - Chat messages are persisted per-phase and restored on navigation
 - Backward navigation (to Phase 1) shows a warning modal
+- Backward navigation from Phase 3+ to Phase 2 clears seed data (with confirmation)
 
 ### AI Integration
 
 - Uses `useChat()` from `@fyit/crouton-ai` with `maxSteps: 5`
 - Phase 1: Single tool (`set_app_config`) to update ProjectConfig
 - Phase 2: Collection/field CRUD tools (`create_collection`, `add_field`, etc.)
+- Phase 3: Single tool (`set_seed_data`) to replace seed data per collection
 - Tool calls are handled in `onToolCall` callback, executed against `useCollectionEditor`
 - On Phase 2 entry with no collections, auto-sends a proposal request
+- On Phase 3 entry with no seed data, auto-sends a generation request
 
 ### Persistence
 
 - Projects stored via `/api/designer-projects` REST endpoints (from crouton-core)
 - Config auto-saves with 800ms debounce
+- Seed data auto-saves with 800ms debounce (stored as JSON on project record)
 - Chat messages saved on phase transitions
 - Phase state persisted to DB
 
@@ -81,9 +87,14 @@ export default defineNuxtConfig({
 ## Common Tasks
 
 ### Add a new AI tool for Phase 2
-1. Define the tool schema in `useCollectionDesignPrompt.ts`
+1. Define the tool schema in `designer-chat.post.ts` under `getPhase2Tools()`
 2. Add handler in `onToolCall` in `[id].vue`
 3. Add corresponding method to `useCollectionEditor.ts` if needed
+
+### Add a new AI tool for Phase 3 (Seed Data)
+1. Define the tool schema in `designer-chat.post.ts` under `getPhase3Tools()`
+2. Add handler in `onToolCall` in `[id].vue`
+3. Update `useSeedDataPrompt.ts` if the prompt needs to reference the new tool
 
 ### Add a new intake config field
 1. Add to `ProjectConfig` type in `app/types/schema.ts`
@@ -112,6 +123,7 @@ All components auto-import with `Designer` prefix:
 - `ChatPanel.vue` → `<DesignerChatPanel />`
 - `CollectionEditor.vue` → `<DesignerCollectionEditor />`
 - `IntakeSummaryCard.vue` → `<DesignerIntakeSummaryCard />`
+- `SeedDataPanel.vue` → `<DesignerSeedDataPanel />`
 - `ReviewPanel.vue` → `<DesignerReviewPanel />`
 - `TwoPanelLayout.vue` → `<DesignerTwoPanelLayout />`
 
