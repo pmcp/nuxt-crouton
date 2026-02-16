@@ -29,11 +29,11 @@ import { z } from 'zod'
 export const bookingsLocationSchema = z.object({
   color: z.string().optional(),
   location: z.string().optional(),
-  allowedMemberIds: z.array(z.string()).optional(),
-  slots: z.array(z.any()).optional(),
-  openDays: z.array(z.string()).optional(),
-  slotSchedule: z.record(z.string(), z.any()).optional(),
-  blockedDates: z.array(z.any()).optional(),
+  allowedMemberIds: z.array(z.string()).nullish(),
+  slots: z.array(z.any()).nullish(),
+  openDays: z.array(z.string()).nullish(),
+  slotSchedule: z.record(z.string(), z.any()).nullish(),
+  blockedDates: z.array(z.any()).nullish(),
   inventoryMode: z.boolean().optional(),
   quantity: z.number().optional(),
   title: z.string().optional(),
@@ -44,16 +44,13 @@ export const bookingsLocationSchema = z.object({
   translations: z.record(
     z.string(),
     z.object({
-      title: z.string().min(1, 'Title is required'),
+      title: z.string().optional(),
       street: z.string().optional(),
       zip: z.string().optional(),
       city: z.string().optional(),
       content: z.string().optional()
     })
-  ).refine(
-    (translations) => translations.en && translations.en.title,
-    { message: 'English translations for title are required' }
-  )
+  ).optional().default({})
 })
 
 export const bookingsLocationsColumns = [
