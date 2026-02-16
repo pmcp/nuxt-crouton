@@ -11,6 +11,9 @@ const props = defineProps<{
 // This prevents SSR hydration mismatches where the function gets stringified
 const { item, pending, error, refresh } = await useCollectionItem(props.collection, computed(() => props.id))
 
+// Display config for smart rendering
+const display = useDisplayConfig(props.collection)
+
 // Convert collection name to expected component name
 // 'bookingsLocations' → 'BookingsLocationsCardMini'
 // 'users' → 'UsersCardMini'
@@ -52,24 +55,37 @@ const getTranslatedField = (entity: any, field: string): string | null => {
   return null
 }
 
-// Determine best display label: title > name > label (with translation support) > id
+// Determine best display label using display config, then fallback
 const displayLabel = computed(() => {
   if (!item.value) return null
 
-  // Try title (with translations)
+  // Use display config title field first
+  if (display.title) {
+    const value = getTranslatedField(item.value, display.title)
+    if (value) return value
+  }
+
+  // Fallback: try common fields (with translations)
   const title = getTranslatedField(item.value, 'title')
   if (title) return title
-
-  // Try name (with translations)
   const name = getTranslatedField(item.value, 'name')
   if (name) return name
-
-  // Try label (with translations)
   const label = getTranslatedField(item.value, 'label')
   if (label) return label
 
-  // Fallback to ID
   return props.id
+})
+
+// Image from display config (for avatar/thumbnail)
+const imageUrl = computed(() => {
+  if (!display.image || !item.value) return null
+  return item.value[display.image] || null
+})
+
+// Badge from display config
+const badgeValue = computed(() => {
+  if (!display.badge || !item.value) return null
+  return item.value[display.badge] ? String(item.value[display.badge]) : null
 })
 </script>
 
@@ -86,7 +102,7 @@ const displayLabel = computed(() => {
     :refresh="refresh"
   />
 
-  <!-- Default fallback rendering -->
+  <!-- Display-aware rendering -->
   <div
     v-else
     class="group relative"
@@ -95,14 +111,29 @@ const displayLabel = computed(() => {
       color="neutral"
       variant="subtle"
       size="lg"
-      class="relative z-10"
-      :ui="{ base: 'w-full font-medium inline-flex items-center center text-center justify-center' }"
+      :ui="{ base: 'font-medium inline-flex items-center gap-1.5' }"
     >
       <USkeleton
         v-if="pending"
-        class="h-4 w-full"
+        class="h-4 w-16"
       />
-      <span v-else-if="item">{{ displayLabel }}</span>
+      <template v-else-if="item">
+        <!-- Avatar/thumbnail from display config -->
+        <UAvatar
+          v-if="imageUrl"
+          :src="imageUrl"
+          :alt="displayLabel || ''"
+          size="2xs"
+        />
+        <span>{{ displayLabel }}</span>
+        <!-- Inline badge from display config -->
+        <span
+          v-if="badgeValue"
+          class="text-[10px] opacity-60"
+        >
+          {{ badgeValue }}
+        </span>
+      </template>
       <span
         v-else-if="error"
         class="text-red-500"

@@ -38,10 +38,16 @@ const props = defineProps({
 // Get component mapping from test composable
 const { componentMap } = useCollections()
 
+// Track whether the resolved component is the generic CroutonDetail
+const isGenericDetail = ref(false)
+
 const currentComponent = computed(() => {
   if (!props.collection) return null
 
+  isGenericDetail.value = false
+
   // If action is 'view', try to resolve a Detail component by convention
+  // Resolution chain: {Name}Detail → CroutonDetail (generic fallback) → Form
   if (props.action === 'view') {
     const formComponentName = componentMap[props.collection]
     if (formComponentName) {
@@ -50,14 +56,25 @@ const currentComponent = computed(() => {
       const detailComponentName = formComponentName.replace(/Form$/, 'Detail')
 
       try {
-        // Try to resolve the Detail component
+        // Try to resolve the per-collection Detail component
         const detailComponent = resolveComponent(detailComponentName)
         // If it exists (not a string), use it
         if (typeof detailComponent !== 'string') {
           return detailComponent
         }
       } catch {
-        // Detail component doesn't exist, will fall through to Form
+        // Detail component doesn't exist, try generic fallback
+      }
+
+      // Try CroutonDetail generic fallback (if collection has field metadata)
+      try {
+        const genericDetail = resolveComponent('CroutonDetail')
+        if (typeof genericDetail !== 'string') {
+          isGenericDetail.value = true
+          return genericDetail
+        }
+      } catch {
+        // Generic detail not available, fall through to Form
       }
     }
   }
@@ -79,6 +96,15 @@ const mode = computed(() => {
 
 // Combine all props to pass through to the dynamic component
 const componentProps = computed(() => {
+  // CroutonDetail expects { item, collection } instead of form-oriented props
+  if (isGenericDetail.value) {
+    return {
+      item: props.activeItem,
+      collection: props.collection,
+      ...useAttrs()
+    }
+  }
+
   const baseProps = {
     collection: props.collection,
     loading: props.loading,
