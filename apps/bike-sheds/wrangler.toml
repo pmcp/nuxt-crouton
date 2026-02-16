@@ -11,12 +11,14 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "bike-sheds-db"
-database_id = "TODO_REPLACE_WITH_D1_DATABASE_ID"
+database_id = "d6b32a81-a73a-42f5-bb2a-780199105197"
+migrations_dir = "server/db/migrations/sqlite"
 
 # KV Namespace binding
+# Created via: npx wrangler kv namespace create bike-sheds-kv
 [[kv_namespaces]]
 binding = "KV"
-id = "TODO_REPLACE_WITH_KV_NAMESPACE_ID"
+id = "957645fde2ed4115a510391f36c257b6"
 
 # Environment variables (set in Cloudflare dashboard or via wrangler secret)
 # [vars]

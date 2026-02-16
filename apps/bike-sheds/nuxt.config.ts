@@ -44,13 +44,15 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'cloudflare-pages',
     // Stub passkey-related packages (incompatible with CF Workers)
+    // and papaparse (CJS-only, breaks Rollup, only used client-side for CSV import/export)
     alias: {
       '@better-auth/passkey/client': resolve(cfStubs, 'client'),
       '@better-auth/passkey': cfStubs,
       'tsyringe': cfStubs,
       'reflect-metadata': cfStubs,
       '@peculiar/x509': cfStubs,
-      '@simplewebauthn/server': cfStubs
+      '@simplewebauthn/server': cfStubs,
+      'papaparse': cfStubs
     }
   }
 })
