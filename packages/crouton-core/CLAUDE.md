@@ -52,21 +52,26 @@ export default defineNuxtConfig({
 | `app/composables/useCollections.ts` | Collection config registry from `app.config.croutonCollections` |
 | `app/composables/useCroutonShortcuts.ts` | Keyboard shortcuts for CRUD operations |
 | `app/composables/useCollectionExport.ts` | CSV/JSON export for collection data |
+| `app/composables/useCollectionImport.ts` | CSV/JSON import with column mapping, validation, and batched POST |
 | `app/components/Collection.vue` | Multi-layout display (table, list, grid, tree, kanban) |
 | `app/components/Form.vue` | Main CRUD form handler with nested modal support |
 | `app/components/ShortcutHint.vue` | Visual keyboard shortcut badges (`<kbd>` elements) |
 | `app/components/ExportButton.vue` | Ready-to-use export dropdown button |
+| `app/components/ImportButton.vue` | Ready-to-use import button with file picker |
+| `app/components/ImportPreviewModal.vue` | Multi-step import preview with mapping, validation, and progress |
 | `app/composables/useTeamContext.ts` | Team context access (teamId, teamSlug from route or auth) |
 
 ## Architecture
 
 ```
-useCrouton()          → Modal state (open/close/nesting)
-useCollectionQuery()  → Data fetching (SSR-safe, cached)
+useCrouton()            → Modal state (open/close/nesting)
+useCollectionQuery()    → Data fetching (SSR-safe, cached)
 useCollectionMutation() → CRUD operations (auto-refresh cache)
-useCollections()      → Config registry (componentMap, apiPath, references)
-useCroutonShortcuts() → Keyboard shortcuts (create, save, close, delete, search)
-useTeamContext()      → Team ID/slug from route params (client-side)
+useCollectionExport()   → CSV/JSON export (client-side generation + download)
+useCollectionImport()   → CSV/JSON import (parse, map columns, validate, batch POST)
+useCollections()        → Config registry (componentMap, apiPath, references)
+useCroutonShortcuts()   → Keyboard shortcuts (create, save, close, delete, search)
+useTeamContext()        → Team ID/slug from route params (client-side)
 ```
 
 ## Encryption Utility (server/utils/encryption.ts)
