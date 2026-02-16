@@ -116,6 +116,12 @@
 
       <template #sidebar>
       <div class="flex flex-col gap-4 p-1">
+        <CroutonBookingsAvailabilityPreview
+          :open-days="state.openDays"
+          :slot-schedule="state.slotSchedule"
+          :blocked-dates="state.blockedDates"
+          :slots="state.slots"
+        />
       </div>
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Color" name="color" class="not-last:pb-4">
