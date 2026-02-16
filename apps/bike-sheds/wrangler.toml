@@ -1,0 +1,23 @@
+# Cloudflare Pages configuration for bike-sheds
+# Deploy with: npx wrangler pages deploy dist/
+
+name = "bike-sheds"
+compatibility_date = "2024-09-02"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# D1 Database binding
+# Created via: npx wrangler d1 create bike-sheds-db
+[[d1_databases]]
+binding = "DB"
+database_name = "bike-sheds-db"
+database_id = "TODO_REPLACE_WITH_D1_DATABASE_ID"
+
+# KV Namespace binding
+[[kv_namespaces]]
+binding = "KV"
+id = "TODO_REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Environment variables (set in Cloudflare dashboard or via wrangler secret)
+# [vars]
+# NUXT_PUBLIC_SITE_URL = "https://bike-sheds.pages.dev"
