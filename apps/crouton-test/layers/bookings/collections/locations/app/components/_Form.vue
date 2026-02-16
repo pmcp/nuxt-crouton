@@ -149,7 +149,7 @@
           <UFormField label="Blocked Dates" name="blockedDates">
             <CroutonFormRepeater
               v-model="state.blockedDates"
-              component-name="BookingsLocationsBlockedDateInput"
+              component-name="CroutonBookingsBlockedDateInput"
               add-label="Add Blocked Period"
               :sortable="false"
             />

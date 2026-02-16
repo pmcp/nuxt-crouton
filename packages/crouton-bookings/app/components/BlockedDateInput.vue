@@ -16,6 +16,63 @@ const emit = defineEmits<{
   'update:modelValue': [value: BlockedDateItem]
 }>()
 
+// Convert YYYY-MM-DD string to Date
+function toDate(dateStr: string | undefined): Date | null {
+  if (!dateStr) return null
+  const d = new Date(dateStr + 'T00:00:00')
+  return isNaN(d.getTime()) ? null : d
+}
+
+// Convert Date to YYYY-MM-DD string
+function toDateString(date: Date | null): string {
+  if (!date) return ''
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+// Format date for display
+function formatDate(dateStr: string | undefined): string {
+  const d = toDate(dateStr)
+  if (!d) return ''
+  return d.toLocaleDateString(undefined, { dateStyle: 'medium' })
+}
+
+// Display label for the date range button
+const displayLabel = computed(() => {
+  const start = props.modelValue.startDate
+  const end = props.modelValue.endDate
+  if (start && end) {
+    if (start === end) return formatDate(start)
+    return `${formatDate(start)} – ${formatDate(end)}`
+  }
+  if (start) return formatDate(start)
+  return null
+})
+
+// Calendar range dates (CroutonCalendar uses Date objects)
+const startDate = computed(() => toDate(props.modelValue.startDate))
+const endDate = computed(() => toDate(props.modelValue.endDate))
+
+function onUpdateStartDate(date: Date | null) {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    startDate: toDateString(date),
+  })
+}
+
+function onUpdateEndDate(date: Date | null) {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    endDate: toDateString(date),
+  })
+}
+
+function update(field: keyof BlockedDateItem, value: unknown) {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    [field]: value,
+  })
+}
+
 // Parse slots
 const parsedSlots = computed<SlotItem[]>(() => {
   if (!props.slots) return []
@@ -34,17 +91,9 @@ const showSlotRestriction = ref(
   (props.modelValue.blockedSlots?.length ?? 0) > 0,
 )
 
-function update(field: keyof BlockedDateItem, value: unknown) {
-  emit('update:modelValue', {
-    ...props.modelValue,
-    [field]: value,
-  })
-}
-
 function toggleSlotRestriction() {
   showSlotRestriction.value = !showSlotRestriction.value
   if (!showSlotRestriction.value) {
-    // Clear slot restriction (block entire day)
     update('blockedSlots', [])
   }
 }
@@ -70,23 +119,35 @@ function getSlotLabel(slot: SlotItem): string {
 </script>
 
 <template>
-  <div class="space-y-3 p-3 rounded-lg bg-elevated ring ring-default">
-    <!-- Date range -->
-    <div class="flex gap-3 items-end flex-wrap">
-      <UFormField label="Start Date" class="flex-1 min-w-[140px]">
-        <UInput
-          type="date"
-          :model-value="modelValue.startDate"
-          @update:model-value="update('startDate', $event)"
-        />
+  <div class="space-y-3">
+    <!-- Date range picker + Reason -->
+    <div class="flex gap-3 items-start flex-wrap">
+      <UFormField label="Date Range" class="flex-1 min-w-[200px]">
+        <UPopover>
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-calendar"
+            class="w-full justify-start"
+          >
+            <span v-if="displayLabel">{{ displayLabel }}</span>
+            <span v-else class="text-muted">Pick a date range</span>
+          </UButton>
+
+          <template #content>
+            <CroutonCalendar
+              range
+              :start-date="startDate"
+              :end-date="endDate"
+              :number-of-months="2"
+              class="p-2"
+              @update:start-date="onUpdateStartDate"
+              @update:end-date="onUpdateEndDate"
+            />
+          </template>
+        </UPopover>
       </UFormField>
-      <UFormField label="End Date" class="flex-1 min-w-[140px]">
-        <UInput
-          type="date"
-          :model-value="modelValue.endDate"
-          @update:model-value="update('endDate', $event)"
-        />
-      </UFormField>
+
       <UFormField label="Reason" class="flex-1 min-w-[140px]">
         <UInput
           :model-value="modelValue.reason || ''"
