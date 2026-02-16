@@ -14,7 +14,7 @@
  * ```
  */
 import { ref, computed, watch, readonly } from 'vue'
-import { useRoute, updateAppConfig, useFetch } from '#imports'
+import { useRoute, updateAppConfig, useAsyncData } from '#imports'
 
 /**
  * Primary color options (Tailwind CSS colors)
@@ -88,34 +88,26 @@ export function useTeamTheme() {
       || null
   })
 
-  // If no team context, resolve gate immediately
-  if (!teamId.value) {
-    resolveGate('team-theme')
-  }
-
-  // Use useFetch with the public endpoint for SSR support
-  const { data: themeData, status, error, refresh: refreshFetch } = useFetch<TeamThemeSettings>(
-    () => teamId.value ? `/api/teams/${teamId.value}/settings/theme-public` : '',
-    {
-      watch: [teamId],
-      default: () => ({}),
-      immediate: !!teamId.value
-    }
+  // Fetch theme via useAsyncData (SSR-compatible, shared across instances)
+  const { data: themeData, status, error, refresh: refreshFetch } = useAsyncData<TeamThemeSettings>(
+    'team-theme',
+    async () => {
+      if (!teamId.value) return {} as TeamThemeSettings
+      return $fetch<TeamThemeSettings>(`/api/teams/${teamId.value}/settings/theme-public`)
+    },
+    { watch: [teamId], default: () => ({} as TeamThemeSettings) }
   )
 
-  // Resolve gate when fetch completes (success or error)
+  // Resolve gate when fetch completes, or immediately if no team context
   watch(status, (newStatus) => {
     if (newStatus === 'success' || newStatus === 'error') {
       resolveGate('team-theme')
     }
   }, { immediate: true })
 
-  // Also resolve if teamId becomes null (navigating away from team context)
   watch(teamId, (newId) => {
-    if (!newId) {
-      resolveGate('team-theme')
-    }
-  })
+    if (!newId) resolveGate('team-theme')
+  }, { immediate: true })
 
   // Computed theme with defaults
   const theme = computed<Required<TeamThemeSettings>>(() => ({
