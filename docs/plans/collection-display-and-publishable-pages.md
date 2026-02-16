@@ -104,7 +104,7 @@ Both schema formats (array and object) should support a top-level `display` key:
 | `badge` | Status/category indicator | Card, CardMini |
 | `description` | Summary text | Card (grid), Detail |
 
-**All fields are optional.** If `title` is not specified, fall back to heuristic: look for fields named `title`, `name`, `label`, then first string field.
+**All fields are optional.** Missing fields are auto-inferred at runtime by `useDisplayConfig()` (see 1.4).
 
 **File to modify**: Schema type definitions in `packages/crouton-cli/` (wherever the schema interface is defined).
 
@@ -153,9 +153,50 @@ This is a lightweight projection of the schema — just enough for display compo
 
 **File to modify**: Same generator template as 1.2.
 
-### 1.4 Make display config accessible via `useCollections()`
+### 1.4 Build `useDisplayConfig()` with auto-inference
 
-The `useCollections()` composable (from `app.config.ts`) should expose display config so core components can access it by collection name without importing per-collection composables.
+**File**: New composable in `packages/crouton-core/app/composables/useDisplayConfig.ts`
+
+A composable that resolves display config for any collection — merging explicit config with inferred defaults for missing fields. This is the single entry point all display components use.
+
+```typescript
+export function useDisplayConfig(collectionName: string) {
+  const collections = useCollections()
+  const config = collections[collectionName]
+
+  // Explicit display config (from schema)
+  const explicit = config?.display ?? {}
+
+  // Auto-infer missing fields from field metadata
+  const fields = config?.fields ?? []
+  const inferred = {
+    title: findField(fields, ['title', 'name', 'label']) ?? firstFieldOfType(fields, 'string'),
+    subtitle: findField(fields, ['subtitle', 'description', 'summary']),
+    image: firstFieldOfType(fields, ['image', 'asset']),
+    badge: findField(fields, ['status', 'state', 'category']) ?? firstFieldWithDisplayAs(fields, 'badge'),
+    description: findField(fields, ['description', 'summary', 'excerpt']),
+  }
+
+  // Explicit overrides inferred
+  return { ...inferred, ...stripUndefined(explicit) }
+}
+```
+
+**Inference rules** (applied only when the explicit `display` config omits a field):
+
+| Display key | Inference strategy |
+|-------------|-------------------|
+| `title` | Field named `title`, `name`, or `label` → first string field |
+| `subtitle` | Field named `subtitle`, `description`, or `summary` (only if not already used as `title`) |
+| `image` | First field of type `image` or `asset` |
+| `badge` | Field named `status`, `state`, or `category` → first field with `displayAs: 'badge'` |
+| `description` | Field named `description`, `summary`, or `excerpt` (only if not already used as `subtitle`) |
+
+This means **every existing collection gets reasonable display behavior on day one** without touching any schema files. Collections with explicit `display` config get exact control.
+
+### 1.5 Ensure display + fields are in `useCollections()`
+
+The `useCollections()` composable (from `app.config.ts`) should expose display config and field metadata so `useDisplayConfig()` and core components can access them by collection name.
 
 This happens naturally since the generated config is registered in `app.config.ts` under `croutonCollections.{name}` — just ensure `display` and `fields` are included in that registration.
 
@@ -165,23 +206,16 @@ This happens naturally since the generated config is registered in `app.config.t
 
 **Goal**: Every collection gets a Detail.vue (completing the List/Form/Detail triad), and core provides smart fallback components for Card/CardMini.
 
-### 2.1 Detail.vue and Card.vue per collection
+### 2.1 Detail.vue and Card.vue per collection (AI generation — deferred)
 
-Detail and Card components are **presentational** — how you display a bike is different from how you display a team member. There are two paths to creating them:
+> **Decision**: The CLI template generator for Detail.vue (previously "Path B") is **deferred**. The `CroutonDetail` generic fallback (2.2) covers the baseline for all collections at runtime. The AI generation path via the schema designer is the real goal for custom, domain-aware Detail/Card components — but it depends on [Schema Designer v2, Phase 4](./schema-designer-v2.md).
 
-#### Path A: AI generation via Schema Designer (primary)
-
-See [Schema Designer v2 plan](./schema-designer-v2.md), Phase 4.
-
-The schema designer already has full domain context — it understands the collection's purpose, field relationships, and has realistic seed data. In Phase 4 of that plan, a three-panel layout (chat + code editor + live preview) lets the AI generate domain-aware Detail.vue and Card.vue components:
+Detail and Card components are **presentational** — how you display a bike is different from how you display a team member. The schema designer (when ready) will generate domain-aware components:
 
 - AI knows "bikes" should show the photo as a hero, specs in a grid, description as prose
 - AI knows "team members" should show an avatar circle, role as a badge, contact info grouped
 - User can edit the AI output directly — changes sync via Yjs
-- AI can react to manual edits and suggest improvements
-- Seed data from Phase 3 powers the live preview
-
-The AI operates within guardrails: Nuxt UI components, Composition API, crouton display components (CroutonItemCardMini, CroutonDate, etc.). It produces code the developer owns.
+- Seed data powers the live preview
 
 Output lands in the collection folder:
 
@@ -189,46 +223,15 @@ Output lands in the collection folder:
 layers/[layer]/collections/[collection]/app/components/
 ├── List.vue      ← template-generated (already exists)
 ├── Form.vue      ← template-generated (already exists)
-├── Detail.vue    ← AI-generated (NEW)
-└── Card.vue      ← AI-generated (NEW, optional)
+├── Detail.vue    ← AI-generated (future)
+└── Card.vue      ← AI-generated (future, optional)
 ```
 
-#### Path B: CLI template fallback
-
-For collections created outside the schema designer (manual JSON schemas, quick scaffolding), the CLI can generate a basic Detail.vue using a template generator — same pattern as `form-component.mjs` and `list-component.mjs`.
-
-This produces a functional but generic layout based on display config and field areas:
-
-```
-┌──────────────────────────────────────┐
-│ [display.image → hero banner]         │
-├──────────────────────┬───────────────┤
-│                      │               │
-│  area: "main"        │ area: "sidebar│
-│  fields rendered     │ fields        │
-│  in order            │ rendered      │
-│                      │               │
-├──────────────────────┴───────────────┤
-│ area: "meta" (collapsed/secondary)   │
-└──────────────────────────────────────┘
-```
-
-Less intelligent than AI output, but better than no Detail at all.
-
-#### Why both paths?
-
-| | AI (Schema Designer) | Template (CLI) |
-|---|---|---|
-| **Domain awareness** | High — understands what the data means | None — maps field types to render components |
-| **Layout quality** | Custom per collection | Same layout for all collections |
-| **When to use** | New apps, greenfield projects | Quick scaffolding, existing schemas, no AI needed |
-| **User effort** | Interactive (chat + edit + preview) | Zero (runs with `crouton generate`) |
-
-Both produce a file the developer owns and can modify freely. Both feed into the same resolution chain.
+Until AI generation is available, `CroutonDetail` (2.2) serves as the generic fallback and `CroutonDefaultCard` (2.3) handles card rendering — both powered by display config and field metadata from Phase 1.
 
 #### Field type rendering (v1 — keep it simple)
 
-Both paths handle these field types:
+Display components handle these field types:
 
 | Field type | Renders as |
 |-----------|------------|
@@ -241,7 +244,7 @@ Both paths handle these field types:
 | `multi-reference` | Row of `CroutonItemCardMini` cards |
 | `options` | Badge |
 
-**Deferred to later** (not v1): `text`/`editor` (prose HTML rendering), `repeater` (recursive sub-items), `json` (collapsed viewer). The AI path may handle these earlier since it can reason about rendering — but the template path defers them.
+**Deferred to later** (not v1): `text`/`editor` (prose HTML rendering), `repeater` (recursive sub-items), `json` (collapsed viewer). The AI path may handle these earlier since it can reason about rendering.
 
 ### 2.2 Build `CroutonDetail` (generic fallback)
 
@@ -327,11 +330,11 @@ After this phase, the resolution chain becomes:
 ```
 Card:     {CollectionName}Card (AI-generated or manual) → CroutonDefaultCard (now display-aware)
 CardMini: {CollectionName}CardMini (manual)              → CroutonItemCardMini (now display-aware)
-Detail:   {CollectionName}Detail (AI or template)        → CroutonDetail (generic fallback) → Form.vue (last resort)
+Detail:   {CollectionName}Detail (AI or manual)          → CroutonDetail (generic fallback) → Form.vue (last resort)
 ```
 
-- **Detail**: AI-generated (schema designer) or template-generated (CLI). `CroutonDetail` catches collections without either.
-- **Card**: AI-generated if using schema designer, otherwise `CroutonDefaultCard` uses display config. Good enough without generation.
+- **Detail**: `CroutonDetail` handles all collections by default using display config + field metadata. AI-generated Detail.vue (future, via schema designer) or manual overrides take priority when present.
+- **Card**: `CroutonDefaultCard` uses display config — good enough without generation. AI-generated Card.vue is optional.
 - **CardMini**: Not generated — improved core component handles it well with display config.
 
 ---
@@ -425,7 +428,9 @@ const detailComponent = resolveCustomOrDefault(collectionName)
 </template>
 ```
 
-Resolution: tries `{CollectionName}Detail` first, falls back to `CroutonDetail` (from Phase 2).
+**Resolution**: tries `{CollectionName}Detail` first, falls back to `CroutonDetail` (from Phase 2).
+
+**Orphaned references**: When the referenced collection item is deleted or inaccessible (404/403), the renderer shows a graceful "item unavailable" placeholder. The page stays published with its title and SEO intact — only the collection content is missing. This avoids cascading deletes and keeps pages/collections independently managed.
 
 ### 3.4 Add `collection` field to `CroutonPageType` type
 
@@ -495,11 +500,11 @@ Phase 1: Display Config (foundation — everything else depends on this)
   1.1  Schema display section
   1.2  Generated composable includes display
   1.3  Field metadata at runtime
-  1.4  Accessible via useCollections()
+  1.4  Build useDisplayConfig() with auto-inference
+  1.5  Ensure display + fields are in useCollections()
 
 Phase 2: Display Components (uses display config)
-  2.1a CLI template generator for Detail.vue (baseline — works without AI)
-  2.1b AI generation for Detail.vue + Card.vue in schema designer (see schema-designer-v2.md Phase 4)
+  2.1  [DEFERRED] AI generation for Detail.vue + Card.vue (depends on schema-designer-v2 Phase 4)
   2.2  Build CroutonDetail generic fallback in crouton-core
   2.3  Improve DefaultCard with display config
   2.4  Improve ItemCardMini with display config
@@ -508,16 +513,16 @@ Phase 2: Display Components (uses display config)
 Phase 3: Publishable Collections (uses Detail + page types)
   3.1  Schema publishable flag
   3.2  Generator creates page type registration
-  3.3  Build CollectionPageRenderer
+  3.3  Build CollectionPageRenderer (with orphaned reference handling)
   3.4  Add collection field to CroutonPageType
   3.5  Wire FormReferenceSelect into page form (uses existing CRUD helpers)
   3.6  Auto-populate page title
 ```
 
-**Recommended build order for Phase 2**: Start with 2.2 (generic fallback) + 2.3/2.4 (card improvements) since these are runtime components needed regardless. Then 2.1a (CLI template) for quick generation. Then 2.1b (AI generation) as the schema designer evolves — this is the higher-value path but depends on schema designer v2 progress.
+**Build order for Phase 2**: 2.2 (generic fallback) first — this gives every collection a Detail view immediately. Then 2.3/2.4 (card improvements) in parallel. 2.5 wires up the resolution chain. AI generation (2.1) arrives later when the schema designer is ready.
 
 Each phase is independently useful and progressive:
-- **Phase 1 alone**: Better runtime metadata, enables future improvements
+- **Phase 1 alone**: Better runtime metadata, auto-inferred display config for all existing collections
 - **Phase 1 + 2**: Every collection gets List + Form + Detail — full CRUD view triad. Smart Card/CardMini for free. No pages needed.
 - **Phase 1 + 2 + 3**: Collections can be published as pages. The page system adds URLs, SEO, status. Collections don't change.
 
@@ -528,25 +533,27 @@ Each phase is independently useful and progressive:
 ### New files
 | File | Package | Purpose |
 |------|---------|---------|
-| `detail-component.mjs` (generator) | crouton-cli | Template-generates Detail.vue per collection (Path B) |
-| `Detail.vue` (per collection) | generated output | Per-collection detail view — AI or template generated |
-| `Card.vue` (per collection) | generated output | Per-collection card — AI generated only (optional) |
+| `composables/useDisplayConfig.ts` | crouton-core | Resolves display config with auto-inference heuristic |
 | `components/Detail.vue` | crouton-core | Generic fallback detail renderer |
 | `components/CollectionPageRenderer.vue` | crouton-pages | Bridge between page record and collection item |
+
+### New files (deferred — depends on schema-designer-v2)
+| File | Package | Purpose |
+|------|---------|---------|
+| `Detail.vue` (per collection) | generated output | Per-collection detail view — AI generated |
+| `Card.vue` (per collection) | generated output | Per-collection card — AI generated (optional) |
 | AI component generation UI | schema-designer | Phase 4 of schema designer — see schema-designer-v2.md |
 
 ### Modified files
 | File | Package | Change |
 |------|---------|--------|
 | Schema type definitions | crouton-cli | Add `display` and `publishable` to schema interface |
-| `generate-collection.mjs` | crouton-cli | Call new detail generator alongside form/list |
 | Composable generator template | crouton-cli | Output `display` and `fields` in config |
 | `app.config.ts` generator template | crouton-cli | Register page type when publishable |
-| `DefaultCard.vue` | crouton-core | Use display config for smart rendering |
-| `ItemCardMini.vue` | crouton-core | Use display config for avatar + label |
+| `DefaultCard.vue` | crouton-core | Use `useDisplayConfig()` for smart rendering |
+| `ItemCardMini.vue` | crouton-core | Use `useDisplayConfig()` for avatar + label |
 | `types/app.ts` | crouton-core | Add `collection` to `CroutonPageType` |
 | `Workspace/Editor.vue` | crouton-pages | Wire `FormReferenceSelect` when page type has collection |
-| `create-app.post.ts` | schema-designer | Place AI-generated Detail/Card files during app creation |
 
 ### No changes needed
 | File | Why |
@@ -565,14 +572,16 @@ Each phase is independently useful and progressive:
 
 2. **No fields added to collection tables** — publishing metadata (slug, SEO, status) lives on the page record. Collections stay pure domain data.
 
-3. **Two paths to Detail.vue, with generic fallback** — the schema designer uses AI to generate domain-aware Detail.vue and Card.vue (understanding what the data means). The CLI provides a template-based generator for quick scaffolding without AI. Both produce files the developer owns. `CroutonDetail` in core serves as the generic fallback for collections without either. See [Schema Designer v2 plan](./schema-designer-v2.md) for the AI path.
+3. **Generic fallback first, AI generation later** — `CroutonDetail` in crouton-core serves as the baseline for all collections, powered by display config and field metadata. AI-generated Detail.vue and Card.vue (via schema designer, deferred) will produce domain-aware components when ready. The CLI template generator is **not needed** — the generic fallback covers the baseline, and AI generation is the real goal for custom components. See [Schema Designer v2 plan](./schema-designer-v2.md) for the AI path.
 
 4. **`display` config is declarative, not prescriptive** — it says "this field is the title" not "render this field as an h1 in blue". Components decide how to render.
 
 5. **Reuse existing CRUD helpers** — the item picker in the page form uses `CroutonFormReferenceSelect` (already built), `useCrouton()` for nested forms (already built), and auto-selection after creation (already built). No new picker infrastructure needed.
 
-6. **Page owns the URL, collection owns the data** — a bike exists independently of any page. Deleting a page doesn't delete the bike. Multiple pages can reference the same bike.
+6. **Page owns the URL, collection owns the data** — a bike exists independently of any page. Deleting a page doesn't delete the bike. Multiple pages can reference the same bike. If a referenced item is deleted, the page shows an "item unavailable" placeholder — no cascading deletes.
 
-7. **V1 field rendering is simple** — Detail.vue handles the common field types well (string, number, boolean, date, image, reference, options). Complex types (editor/prose, repeater, json) are deferred for the template path — the AI path may handle them earlier since it can reason about rendering.
+7. **Auto-inference for existing collections** — `useDisplayConfig()` infers title/image/badge from field names and types, so every existing collection gets display behavior on day one without schema changes. Explicit `display` config overrides the heuristics.
 
-8. **Schema designer and CLI are complementary, not competing** — the schema designer (AI) produces higher-quality Detail/Card because it understands the domain. The CLI (template) produces functional Detail because it knows the field types. Both output the same file structure. The schema designer is the primary path for new apps; the CLI is the fallback for everything else.
+8. **V1 field rendering is simple** — Display components handle the common field types well (string, number, boolean, date, image, reference, options). Complex types (editor/prose, repeater, json) are deferred — the AI path may handle them earlier since it can reason about rendering.
+
+9. **Ship full field metadata, optimize later** — The full `fields` array ships in the collection config. For even large collections (30+ fields), this is small JSON (<2KB). Optimization (lazy-loading or filtering to display-relevant fields) only if it becomes a real problem.
