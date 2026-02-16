@@ -191,6 +191,12 @@ function buildTrustedOrigins(baseURL: string): string[] {
   try {
     const url = new URL(baseURL)
     origins.add(url.origin)
+
+    // For Cloudflare Pages, add wildcard to cover preview deployment URLs
+    // e.g., https://bike-sheds.pages.dev → https://*.bike-sheds.pages.dev
+    if (url.hostname.endsWith('.pages.dev')) {
+      origins.add(`https://*.${url.hostname}`)
+    }
   } catch {
     // If baseURL is invalid, just add it as-is
     origins.add(baseURL)
