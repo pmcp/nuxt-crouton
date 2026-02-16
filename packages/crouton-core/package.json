@@ -64,6 +64,7 @@
     "@vueuse/core": "^13.3.0",
     "@vueuse/integrations": "^13.3.0",
     "@vueuse/nuxt": "^13.3.0",
+    "cropperjs": "^2.1.0",
     "papaparse": "^5.5.3",
     "sortablejs": "^1.15.6"
   },

@@ -26,11 +26,39 @@
         class="h-full w-full object-cover"
       >
     </button>
+
+    <!-- Crop Modal -->
+    <UModal v-model="showCropper">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            Crop Image
+          </h3>
+          <CroutonImageCropper
+            v-if="pendingFile"
+            :file="pendingFile"
+            :aspect-ratio="cropAspectRatio"
+            :circular="cropCircular"
+            @confirm="handleCropConfirm($event, close)"
+            @cancel="handleCropCancel(close)"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useFileDialog, useObjectUrl } from '@vueuse/core'
+import type { AspectRatioPreset } from '../composables/useImageCrop'
+
+interface Props {
+  crop?: boolean | { aspectRatio?: number | AspectRatioPreset, circular?: boolean }
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  crop: false
+})
 
 const model = defineModel<string | undefined>()
 
@@ -43,14 +71,51 @@ const emit = defineEmits<{
   'file-selected': [file: File | null]
 }>()
 
+const showCropper = ref(false)
+const pendingFile = ref<File | null>(null)
+
+const cropEnabled = computed(() => !!props.crop)
+const cropAspectRatio = computed(() => {
+  if (typeof props.crop === 'object' && props.crop.aspectRatio) {
+    return props.crop.aspectRatio
+  }
+  return undefined
+})
+const cropCircular = computed(() => {
+  if (typeof props.crop === 'object') {
+    return props.crop.circular || false
+  }
+  return false
+})
+
 onChange(() => {
   const file = files.value?.[0]
-  if (file) {
+  if (!file) return
+
+  if (cropEnabled.value) {
+    pendingFile.value = file
+    showCropper.value = true
+  } else {
     const objectUrl = useObjectUrl(file)
     model.value = objectUrl.value
     emit('file-selected', file)
   }
 })
+
+const handleCropConfirm = (croppedFile: File, close: () => void) => {
+  const objectUrl = useObjectUrl(croppedFile)
+  model.value = objectUrl.value
+  emit('file-selected', croppedFile)
+  pendingFile.value = null
+  close()
+  showCropper.value = false
+}
+
+const handleCropCancel = (close: () => void) => {
+  pendingFile.value = null
+  close()
+  showCropper.value = false
+}
 
 const removeImage = () => {
   model.value = undefined

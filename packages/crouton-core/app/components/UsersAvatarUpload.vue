@@ -24,6 +24,25 @@
       size="xs"
       @click="removeImage"
     />
+
+    <!-- Crop Modal for avatars (1:1 circular) -->
+    <UModal v-model="showCropper">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            Crop Avatar
+          </h3>
+          <CroutonImageCropper
+            v-if="pendingFile"
+            :file="pendingFile"
+            aspect-ratio="1:1"
+            circular
+            @confirm="handleCropConfirm($event, close)"
+            @cancel="handleCropCancel(close)"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -50,14 +69,31 @@ const emit = defineEmits<{
   'file-selected': [file: File | null]
 }>()
 
+const showCropper = ref(false)
+const pendingFile = ref<File | null>(null)
+
 onChange(() => {
   const file = files.value?.[0]
   if (file) {
-    const objectUrl = useObjectUrl(file)
-    model.value = objectUrl.value
-    emit('file-selected', file)
+    pendingFile.value = file
+    showCropper.value = true
   }
 })
+
+const handleCropConfirm = (croppedFile: File, close: () => void) => {
+  const objectUrl = useObjectUrl(croppedFile)
+  model.value = objectUrl.value
+  emit('file-selected', croppedFile)
+  pendingFile.value = null
+  close()
+  showCropper.value = false
+}
+
+const handleCropCancel = (close: () => void) => {
+  pendingFile.value = null
+  close()
+  showCropper.value = false
+}
 
 const removeImage = () => {
   model.value = ''
