@@ -121,6 +121,16 @@ export const META_PROPERTIES = [
 ] as const
 
 export function useFieldTypes() {
+  const { t } = useT()
+
+  const translatedFieldTypes = computed<FieldTypeConfig[]>(() =>
+    FIELD_TYPES.map(ft => ({
+      ...ft,
+      label: t(`designer.fieldTypes.${ft.type}`),
+      description: t(`designer.fieldTypes.${ft.type}Description`)
+    }))
+  )
+
   function getFieldType(type: FieldType): FieldTypeConfig | undefined {
     return FIELD_TYPES.find(ft => ft.type === type)
   }
@@ -129,10 +139,16 @@ export function useFieldTypes() {
     return getFieldType(type)?.icon || 'i-lucide-circle'
   }
 
+  function getTranslatedFieldType(type: FieldType): FieldTypeConfig | undefined {
+    return translatedFieldTypes.value.find(ft => ft.type === type)
+  }
+
   return {
     FIELD_TYPES,
     META_PROPERTIES,
+    translatedFieldTypes,
     getFieldType,
-    getFieldIcon
+    getFieldIcon,
+    getTranslatedFieldType
   }
 }

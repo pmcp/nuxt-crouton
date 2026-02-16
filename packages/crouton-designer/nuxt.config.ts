@@ -33,6 +33,14 @@ export default defineNuxtConfig({
     dirs: [join(currentDir, 'app/composables')]
   },
 
+  // i18n configuration - translations auto-merge when this layer is extended
+  i18n: {
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' }
+    ],
+    langDir: '../i18n/locales'
+  },
+
   compatibilityDate: '2025-01-01',
 
   nitro: {

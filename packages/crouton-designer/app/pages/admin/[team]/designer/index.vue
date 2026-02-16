@@ -10,6 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const teamSlug = computed(() => route.params.team as string)
 const { buildApiUrl } = useTeamContext()
+const { t } = useT()
 
 // Load all projects
 const { data: projects, status, refresh } = await useFetch<DesignerProject[]>(
@@ -42,10 +43,10 @@ async function confirmDelete() {
 
 function phaseLabel(phase: string) {
   switch (phase) {
-    case '1': return 'Intake'
-    case '2': return 'Collection Design'
-    case '5': return 'Review'
-    default: return 'Unknown'
+    case '1': return t('designer.phases.intake')
+    case '2': return t('designer.phases.collections')
+    case '5': return t('designer.phases.review')
+    default: return t('designer.phases.unknown')
   }
 }
 
@@ -62,14 +63,14 @@ function phaseColor(phase: string) {
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="Schema Designer">
+      <UDashboardNavbar :title="t('designer.schemaDesigner')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
         <template #trailing>
           <UButton
             icon="i-lucide-plus"
-            label="New Project"
+            :label="t('designer.newProject')"
             :to="`/admin/${teamSlug}/designer/new`"
           />
         </template>
@@ -90,11 +91,11 @@ function phaseColor(phase: string) {
         >
           <UIcon name="i-lucide-layout-grid" class="size-12 mx-auto mb-3 text-[var(--ui-text-muted)] opacity-50" />
           <p class="text-[var(--ui-text-muted)]">
-            No projects yet.
+            {{ t('designer.noProjects') }}
           </p>
           <UButton
             class="mt-4"
-            label="Create your first project"
+            :label="t('designer.createFirstProject')"
             variant="outline"
             :to="`/admin/${teamSlug}/designer/new`"
           />
@@ -110,7 +111,7 @@ function phaseColor(phase: string) {
           >
             <div class="flex-1 min-w-0">
               <h3 class="font-medium truncate">
-                {{ project.name || 'Untitled Project' }}
+                {{ project.name || t('designer.untitledProject') }}
               </h3>
               <div class="flex items-center gap-3 mt-1 text-xs text-[var(--ui-text-muted)]">
                 <span>Updated {{ new Date(project.updatedAt).toLocaleDateString() }}</span>
@@ -137,14 +138,14 @@ function phaseColor(phase: string) {
           <template #content="{ close }">
             <div class="p-6">
               <h3 class="text-lg font-semibold mb-2">
-                Delete Project?
+                {{ t('designer.deleteProject') }}
               </h3>
               <p class="text-sm text-[var(--ui-text-muted)] mb-6">
-                This will permanently delete "{{ deleteTarget?.name || 'Untitled' }}" and all its collections and fields.
+                {{ t('designer.deleteProjectConfirm', { params: { name: deleteTarget?.name || t('designer.untitledProject') } }) }}
               </p>
               <div class="flex justify-end gap-2">
-                <UButton color="neutral" variant="ghost" label="Cancel" @click="close" />
-                <UButton color="error" label="Delete" @click="confirmDelete" />
+                <UButton color="neutral" variant="ghost" :label="t('common.cancel')" @click="close" />
+                <UButton color="error" :label="t('common.delete')" @click="confirmDelete" />
               </div>
             </div>
           </template>

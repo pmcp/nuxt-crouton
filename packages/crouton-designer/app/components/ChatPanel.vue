@@ -13,6 +13,7 @@ const emit = defineEmits<{
 
 const input = ref('')
 const messagesContainer = ref<HTMLElement>()
+const { t } = useT()
 
 function handleSend() {
   const text = input.value.trim()
@@ -52,7 +53,7 @@ watch(() => props.messages.length, () => {
         <div class="text-center">
           <UIcon name="i-lucide-sparkles" class="size-8 mx-auto mb-2 opacity-50" />
           <p class="text-sm">
-            Describe your app and I'll help configure it.
+            {{ t('designer.chat.emptyState') }}
           </p>
         </div>
       </div>
@@ -90,7 +91,7 @@ watch(() => props.messages.length, () => {
     <!-- Error display -->
     <div v-if="error" class="mx-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-sm flex items-center gap-2 text-red-700 dark:text-red-400">
       <UIcon name="i-lucide-alert-circle" class="size-4 shrink-0" />
-      <span>AI response failed. Try sending your message again.</span>
+      <span>{{ t('designer.chat.error') }}</span>
     </div>
 
     <!-- Input area -->
@@ -100,7 +101,7 @@ watch(() => props.messages.length, () => {
           v-model="input"
           :rows="1"
           autoresize
-          placeholder="Describe your app..."
+          :placeholder="t('designer.chat.placeholder')"
           class="flex-1"
           :disabled="isLoading"
           @keydown="handleKeydown"

@@ -17,6 +17,7 @@ const { buildApiUrl } = useTeamContext()
 const { buildSystemPrompt: buildIntakePrompt } = useIntakePrompt()
 const { buildSystemPrompt: buildCollectionPrompt } = useCollectionDesignPrompt()
 const toast = useToast()
+const { t } = useT()
 
 // ------- Project state -------
 const projectConfig = ref<ProjectConfig>({
@@ -216,8 +217,8 @@ const { messages, input, isLoading, status, error, append, clearMessages, toolCa
   onError: (err) => {
     console.error('Chat error:', err)
     toast.add({
-      title: 'AI Error',
-      description: 'Something went wrong. Try again or edit manually.',
+      title: t('designer.ai.errorTitle'),
+      description: t('designer.ai.errorMessage'),
       color: 'error'
     })
   }
@@ -307,29 +308,29 @@ function cancelBackward() {
 }
 
 // ------- Phase navigation -------
-const phases: StepperItem[] = [
+const phases = computed<StepperItem[]>(() => [
   {
     slot: 'intake' as const,
-    title: 'Intake',
-    description: 'Describe your app',
+    title: t('designer.phases.intake'),
+    description: t('designer.phases.intakeDescription'),
     icon: 'i-lucide-message-circle',
     value: '1'
   },
   {
     slot: 'collections' as const,
-    title: 'Collections',
-    description: 'Design your data model',
+    title: t('designer.phases.collections'),
+    description: t('designer.phases.collectionsDescription'),
     icon: 'i-lucide-database',
     value: '2'
   },
   {
     slot: 'review' as const,
-    title: 'Review & Generate',
-    description: 'Validate and export',
+    title: t('designer.phases.review'),
+    description: t('designer.phases.reviewDescription'),
     icon: 'i-lucide-rocket',
     value: '5'
   }
-]
+])
 
 const canContinue = computed(() => !!(projectConfig.value.name && projectConfig.value.appType))
 
@@ -453,11 +454,11 @@ async function continueToReview() {
                   <USeparator class="mb-6" />
                   <div class="flex items-center justify-between">
                     <p v-if="!canContinue" class="text-sm text-[var(--ui-text-muted)]">
-                      Set an app name and type to continue.
+                      {{ t('designer.project.setNameAndType') }}
                     </p>
                     <div v-else />
                     <UButton
-                      label="Continue to Collection Design"
+                      :label="t('designer.project.continueToCollections')"
                       icon="i-lucide-arrow-right"
                       trailing
                       :disabled="!canContinue"
@@ -491,7 +492,7 @@ async function continueToReview() {
                   <USeparator class="mb-4" />
                   <div class="flex items-center justify-end">
                     <UButton
-                      label="Continue to Review"
+                      :label="t('designer.project.continueToReview')"
                       icon="i-lucide-arrow-right"
                       trailing
                       @click="continueToReview"
@@ -519,17 +520,15 @@ async function continueToReview() {
               <div class="flex items-center gap-3 mb-4">
                 <UIcon name="i-lucide-alert-triangle" class="size-5 text-[var(--ui-color-warning-500)]" />
                 <h3 class="text-lg font-semibold">
-                  Go back to Intake?
+                  {{ t('designer.project.goBackToIntake') }}
                 </h3>
               </div>
               <p class="text-sm text-[var(--ui-text-muted)] mb-6">
-                Your collections will be preserved, but changing app configuration
-                (e.g., switching from multi-tenant to single-tenant) may require
-                manual schema adjustments.
+                {{ t('designer.project.goBackWarning') }}
               </p>
               <div class="flex justify-end gap-2">
-                <UButton color="neutral" variant="ghost" label="Cancel" @click="cancelBackward" />
-                <UButton color="warning" label="Go Back" @click="confirmBackward" />
+                <UButton color="neutral" variant="ghost" :label="t('common.cancel')" @click="cancelBackward" />
+                <UButton color="warning" :label="t('designer.project.goBack')" @click="confirmBackward" />
               </div>
             </div>
           </template>

@@ -12,6 +12,7 @@ const emit = defineEmits<{
 }>()
 
 const { buildApiUrl } = useTeamContext()
+const { t } = useT()
 
 // Load collections + fields for this project
 const collections = ref<CollectionWithFields[]>([])
@@ -110,7 +111,7 @@ function handleNavigateToCollection(_collectionId: string) {
 
       <!-- Artifacts -->
       <div class="space-y-3">
-        <h3 class="text-base font-semibold">Generated Files</h3>
+        <h3 class="text-base font-semibold">{{ t('designer.review.generatedFiles') }}</h3>
         <div class="space-y-1">
           <div
             v-for="artifact in artifacts"
@@ -128,7 +129,7 @@ function handleNavigateToCollection(_collectionId: string) {
             />
           </div>
           <p v-if="artifacts.length === 0" class="text-sm text-[var(--ui-text-muted)] italic px-1">
-            No collections to export.
+            {{ t('designer.review.noCollections') }}
           </p>
         </div>
       </div>
@@ -138,7 +139,7 @@ function handleNavigateToCollection(_collectionId: string) {
       <!-- Generate button -->
       <div class="space-y-4">
         <UButton
-          label="Download Schemas"
+          :label="t('designer.review.downloadSchemas')"
           icon="i-lucide-download"
           size="lg"
           block
@@ -147,7 +148,7 @@ function handleNavigateToCollection(_collectionId: string) {
         />
 
         <p v-if="hasErrors" class="text-xs text-[var(--ui-color-error-500)] text-center">
-          Fix validation errors before generating.
+          {{ t('designer.review.fixValidationErrors') }}
         </p>
       </div>
 
@@ -155,11 +156,11 @@ function handleNavigateToCollection(_collectionId: string) {
       <div v-if="hasDownloaded" class="space-y-3 rounded-lg border border-[var(--ui-border)] p-4">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-check-circle" class="size-5 text-[var(--ui-color-success-500)]" />
-          <span class="text-sm font-medium">Schemas downloaded</span>
+          <span class="text-sm font-medium">{{ t('designer.review.schemasDownloaded') }}</span>
         </div>
 
         <p class="text-sm text-[var(--ui-text-muted)]">
-          Extract the ZIP into your project directory, then run these commands:
+          {{ t('designer.review.extractInstructions') }}
         </p>
 
         <div class="relative">
@@ -175,7 +176,7 @@ function handleNavigateToCollection(_collectionId: string) {
         </div>
 
         <p class="text-xs text-[var(--ui-text-muted)]">
-          The CLI will generate collections, APIs, components, and database migrations in your Nuxt project.
+          {{ t('designer.review.cliHelp') }}
         </p>
       </div>
     </template>

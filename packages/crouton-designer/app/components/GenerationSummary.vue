@@ -8,6 +8,7 @@ const props = defineProps<{
 }>()
 
 const { getFieldIcon } = useFieldTypes()
+const { t } = useT()
 
 const totalFields = computed(() =>
   props.collections.reduce((sum, col) => sum + col.fields.length, 0)
@@ -27,52 +28,52 @@ function toggleCollection(id: string) {
   expandedCollections.value = new Set(expandedCollections.value)
 }
 
-const displayRoleLabels: Record<string, { label: string, icon: string }> = {
-  title: { label: 'Title', icon: 'i-lucide-heading' },
-  subtitle: { label: 'Subtitle', icon: 'i-lucide-text' },
-  image: { label: 'Image', icon: 'i-lucide-image' },
-  badge: { label: 'Badge', icon: 'i-lucide-tag' },
-  description: { label: 'Description', icon: 'i-lucide-align-left' }
-}
+const displayRoleLabels = computed<Record<string, { label: string, icon: string }>>(() => ({
+  title: { label: t('designer.displayRoles.title'), icon: 'i-lucide-heading' },
+  subtitle: { label: t('designer.displayRoles.subtitle'), icon: 'i-lucide-text' },
+  image: { label: t('designer.displayRoles.image'), icon: 'i-lucide-image' },
+  badge: { label: t('designer.displayRoles.badge'), icon: 'i-lucide-tag' },
+  description: { label: t('designer.displayRoles.description'), icon: 'i-lucide-align-left' }
+}))
 
-const appTypeLabels: Record<string, string> = {
-  'saas': 'SaaS',
-  'cms': 'CMS',
-  'internal-tool': 'Internal Tool',
-  'marketplace': 'Marketplace',
-  'social': 'Social',
-  'ecommerce': 'E-Commerce',
-  'other': 'Other'
-}
+const appTypeLabels = computed<Record<string, string>>(() => ({
+  'saas': t('designer.appTypes.saas'),
+  'cms': t('designer.appTypes.cms'),
+  'internal-tool': t('designer.appTypes.internal-tool'),
+  'marketplace': t('designer.appTypes.marketplace'),
+  'social': t('designer.appTypes.social'),
+  'ecommerce': t('designer.appTypes.ecommerce'),
+  'other': t('designer.appTypes.other')
+}))
 </script>
 
 <template>
   <div class="space-y-6">
-    <h3 class="text-base font-semibold">Summary</h3>
+    <h3 class="text-base font-semibold">{{ t('designer.summary.title') }}</h3>
 
     <!-- Stats grid -->
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <div class="rounded-lg border border-[var(--ui-border)] px-4 py-3">
-        <p class="text-xs text-[var(--ui-text-muted)]">App Name</p>
+        <p class="text-xs text-[var(--ui-text-muted)]">{{ t('designer.summary.appName') }}</p>
         <p class="text-sm font-medium mt-0.5 truncate">{{ config.name || '—' }}</p>
       </div>
       <div class="rounded-lg border border-[var(--ui-border)] px-4 py-3">
-        <p class="text-xs text-[var(--ui-text-muted)]">App Type</p>
+        <p class="text-xs text-[var(--ui-text-muted)]">{{ t('designer.summary.appType') }}</p>
         <p class="text-sm font-medium mt-0.5">{{ appTypeLabels[config.appType || ''] || config.appType || '—' }}</p>
       </div>
       <div class="rounded-lg border border-[var(--ui-border)] px-4 py-3">
-        <p class="text-xs text-[var(--ui-text-muted)]">Collections</p>
+        <p class="text-xs text-[var(--ui-text-muted)]">{{ t('designer.summary.collections') }}</p>
         <p class="text-sm font-medium mt-0.5">{{ collections.length }}</p>
       </div>
       <div class="rounded-lg border border-[var(--ui-border)] px-4 py-3">
-        <p class="text-xs text-[var(--ui-text-muted)]">Total Fields</p>
+        <p class="text-xs text-[var(--ui-text-muted)]">{{ t('designer.summary.totalFields') }}</p>
         <p class="text-sm font-medium mt-0.5">{{ totalFields }}</p>
       </div>
     </div>
 
     <!-- Packages -->
     <div v-if="config.packages && config.packages.length > 0">
-      <p class="text-xs text-[var(--ui-text-muted)] mb-2">Packages</p>
+      <p class="text-xs text-[var(--ui-text-muted)] mb-2">{{ t('designer.summary.packages') }}</p>
       <div class="flex flex-wrap gap-1.5">
         <UBadge
           v-for="pkg in config.packages"
@@ -87,7 +88,7 @@ const appTypeLabels: Record<string, string> = {
 
     <!-- Collections list -->
     <div>
-      <p class="text-xs text-[var(--ui-text-muted)] mb-2">Collections</p>
+      <p class="text-xs text-[var(--ui-text-muted)] mb-2">{{ t('designer.summary.collections') }}</p>
       <div class="space-y-1">
         <div
           v-for="col in collections"
@@ -102,7 +103,7 @@ const appTypeLabels: Record<string, string> = {
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-database" class="size-4 text-[var(--ui-text-muted)]" />
               <span class="text-sm font-medium">{{ col.name }}</span>
-              <UBadge variant="subtle" color="neutral" size="xs" :label="`${col.fields.length} fields`" />
+              <UBadge variant="subtle" color="neutral" size="xs" :label="t('designer.summary.fieldCount', { params: { count: col.fields.length } })" />
             </div>
             <UIcon
               name="i-lucide-chevron-down"
@@ -138,19 +139,19 @@ const appTypeLabels: Record<string, string> = {
               <UIcon :name="getFieldIcon(field.type as FieldType)" class="size-3.5 text-[var(--ui-text-muted)]" />
               <span>{{ field.name }}</span>
               <span class="text-xs text-[var(--ui-text-muted)]">{{ field.type }}</span>
-              <UBadge v-if="field.meta?.required" color="warning" variant="subtle" size="xs" label="required" />
+              <UBadge v-if="field.meta?.required" color="warning" variant="subtle" size="xs" :label="t('designer.summary.requiredBadge')" />
               <span v-if="field.refTarget" class="text-xs text-[var(--ui-text-muted)]">
                 &rarr; {{ field.refTarget }}
               </span>
             </div>
             <p v-if="col.fields.length === 0" class="text-xs text-[var(--ui-text-muted)] italic">
-              No fields defined
+              {{ t('designer.summary.noFields') }}
             </p>
           </div>
         </div>
 
         <p v-if="collections.length === 0" class="text-sm text-[var(--ui-text-muted)] italic px-1">
-          No collections defined yet.
+          {{ t('designer.summary.noCollections') }}
         </p>
       </div>
     </div>

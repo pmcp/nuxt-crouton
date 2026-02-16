@@ -9,33 +9,35 @@ const emit = defineEmits<{
   'update:config': [config: Partial<ProjectConfig>]
 }>()
 
+const { t } = useT()
+
 // Track which field is being edited
 const editingField = ref<string | null>(null)
 const editValue = ref('')
 
-const appTypeOptions = [
-  { label: 'SaaS', value: 'saas' },
-  { label: 'CMS', value: 'cms' },
-  { label: 'Internal Tool', value: 'internal-tool' },
-  { label: 'Marketplace', value: 'marketplace' },
-  { label: 'Social', value: 'social' },
-  { label: 'E-commerce', value: 'ecommerce' },
-  { label: 'Other', value: 'other' }
-]
+const appTypeOptions = computed(() => [
+  { label: t('designer.appTypes.saas'), value: 'saas' },
+  { label: t('designer.appTypes.cms'), value: 'cms' },
+  { label: t('designer.appTypes.internal-tool'), value: 'internal-tool' },
+  { label: t('designer.appTypes.marketplace'), value: 'marketplace' },
+  { label: t('designer.appTypes.social'), value: 'social' },
+  { label: t('designer.appTypes.ecommerce'), value: 'ecommerce' },
+  { label: t('designer.appTypes.other'), value: 'other' }
+])
 
-const authTypeOptions = [
-  { label: 'Email & Password', value: 'email-password' },
-  { label: 'OAuth', value: 'oauth' },
-  { label: 'Both', value: 'both' }
-]
+const authTypeOptions = computed(() => [
+  { label: t('designer.authTypes.email-password'), value: 'email-password' },
+  { label: t('designer.authTypes.oauth'), value: 'oauth' },
+  { label: t('designer.authTypes.both'), value: 'both' }
+])
 
-const availablePackages = [
-  { label: 'Editor (Rich Text)', value: 'crouton-editor' },
-  { label: 'Internationalization', value: 'crouton-i18n' },
-  { label: 'Flow (Graph)', value: 'crouton-flow' },
-  { label: 'Assets', value: 'crouton-assets' },
-  { label: 'Bookings', value: 'crouton-bookings' }
-]
+const availablePackages = computed(() => [
+  { label: t('designer.packageLabels.crouton-editor'), value: 'crouton-editor' },
+  { label: t('designer.packageLabels.crouton-i18n'), value: 'crouton-i18n' },
+  { label: t('designer.packageLabels.crouton-flow'), value: 'crouton-flow' },
+  { label: t('designer.packageLabels.crouton-assets'), value: 'crouton-assets' },
+  { label: t('designer.packageLabels.crouton-bookings'), value: 'crouton-bookings' }
+])
 
 function startEdit(field: string, currentValue: string) {
   editingField.value = field
@@ -87,23 +89,23 @@ interface ConfigField {
   type: 'text' | 'select' | 'toggle' | 'tags'
 }
 
-const fields: ConfigField[] = [
-  { key: 'name', label: 'App Name', icon: 'i-lucide-app-window', type: 'text' },
-  { key: 'description', label: 'Description', icon: 'i-lucide-file-text', type: 'text' },
-  { key: 'appType', label: 'App Type', icon: 'i-lucide-layout-grid', type: 'select' },
-  { key: 'authType', label: 'Authentication', icon: 'i-lucide-shield', type: 'select' },
-  { key: 'multiTenant', label: 'Multi-tenant', icon: 'i-lucide-building-2', type: 'toggle' },
-  { key: 'defaultLocale', label: 'Default Locale', icon: 'i-lucide-globe', type: 'text' }
-]
+const fields = computed<ConfigField[]>(() => [
+  { key: 'name', label: t('designer.intake.appName'), icon: 'i-lucide-app-window', type: 'text' },
+  { key: 'description', label: t('designer.intake.description'), icon: 'i-lucide-file-text', type: 'text' },
+  { key: 'appType', label: t('designer.intake.appType'), icon: 'i-lucide-layout-grid', type: 'select' },
+  { key: 'authType', label: t('designer.intake.authentication'), icon: 'i-lucide-shield', type: 'select' },
+  { key: 'multiTenant', label: t('designer.intake.multiTenant'), icon: 'i-lucide-building-2', type: 'toggle' },
+  { key: 'defaultLocale', label: t('designer.intake.defaultLocale'), icon: 'i-lucide-globe', type: 'text' }
+])
 </script>
 
 <template>
   <div class="p-6">
     <h3 class="text-lg font-semibold mb-1">
-      App Configuration
+      {{ t('designer.intake.appConfiguration') }}
     </h3>
     <p class="text-sm text-[var(--ui-text-muted)] mb-6">
-      Click any field to edit. The AI will also fill these in as you chat.
+      {{ t('designer.intake.clickToEdit') }}
     </p>
 
     <div class="space-y-4">
@@ -124,7 +126,7 @@ const fields: ConfigField[] = [
               {{ (config as any)[field.key] }}
             </span>
             <span v-else class="text-sm text-[var(--ui-text-muted)] italic">
-              Not set
+              {{ t('designer.intake.notSet') }}
             </span>
             <UIcon
               name="i-lucide-pencil"
@@ -152,7 +154,7 @@ const fields: ConfigField[] = [
             :model-value="(config as any)[field.key]"
             :items="field.key === 'appType' ? appTypeOptions : authTypeOptions"
             value-key="value"
-            placeholder="Not set"
+            :placeholder="t('designer.intake.notSet')"
             size="sm"
             class="w-full"
             @update:model-value="(v: string) => updateSelect(field.key, v)"
@@ -173,7 +175,7 @@ const fields: ConfigField[] = [
             />
           </div>
           <p class="text-xs text-[var(--ui-text-muted)] mt-0.5">
-            Support multiple teams/organizations
+            {{ t('designer.intake.supportMultipleTeams') }}
           </p>
         </div>
       </template>
@@ -182,7 +184,7 @@ const fields: ConfigField[] = [
       <div>
         <label class="text-xs font-medium text-[var(--ui-text-muted)] mb-1 flex items-center gap-1.5">
           <UIcon name="i-lucide-languages" class="size-3.5" />
-          Languages
+          {{ t('designer.intake.languages') }}
         </label>
         <div class="flex flex-wrap gap-1.5 mt-1">
           <UBadge
@@ -194,7 +196,7 @@ const fields: ConfigField[] = [
             {{ lang }}
           </UBadge>
           <span v-if="!config.languages?.length" class="text-sm text-[var(--ui-text-muted)] italic px-1">
-            Not set
+            {{ t('designer.intake.notSet') }}
           </span>
         </div>
       </div>
@@ -203,7 +205,7 @@ const fields: ConfigField[] = [
       <div>
         <label class="text-xs font-medium text-[var(--ui-text-muted)] mb-2 flex items-center gap-1.5">
           <UIcon name="i-lucide-package" class="size-3.5" />
-          Packages
+          {{ t('designer.intake.packages') }}
         </label>
         <div class="grid grid-cols-2 gap-2 mt-1">
           <button
@@ -235,7 +237,7 @@ const fields: ConfigField[] = [
           :class="config.name && config.appType ? 'text-green-500' : 'text-[var(--ui-text-muted)]'"
         />
         <span :class="config.name && config.appType ? 'text-green-600' : 'text-[var(--ui-text-muted)]'">
-          {{ config.name && config.appType ? 'Ready to continue' : 'Set app name and type to continue' }}
+          {{ config.name && config.appType ? t('designer.intake.readyToContinue') : t('designer.intake.setNameTypeToContinue') }}
         </span>
       </div>
     </div>

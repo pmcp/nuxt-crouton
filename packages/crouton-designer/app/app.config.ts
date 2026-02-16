@@ -2,12 +2,12 @@ export default defineAppConfig({
   croutonApps: {
     designer: {
       id: 'designer',
-      name: 'Schema Designer',
+      name: 'designer.name',
       icon: 'i-lucide-layout-grid',
       adminRoutes: [
         {
           path: '/designer',
-          label: 'Schema Designer',
+          label: 'designer.schemaDesigner',
           icon: 'i-lucide-layout-grid'
         }
       ],

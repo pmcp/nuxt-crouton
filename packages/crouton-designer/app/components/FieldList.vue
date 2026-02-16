@@ -16,6 +16,8 @@ const emit = defineEmits<{
   reorder: [fieldIds: string[]]
 }>()
 
+const { t } = useT()
+
 const sortableFields = shallowRef([...props.fields])
 const fieldListRef = useTemplateRef<HTMLElement>('fieldList')
 
@@ -61,13 +63,13 @@ useSortable(fieldListRef, sortableFields, {
 
     <!-- Empty state -->
     <div v-if="fields.length === 0" class="py-3 text-center text-sm text-[var(--ui-text-muted)]">
-      No fields yet. Add one below.
+      {{ t('designer.fields.noFields') }}
     </div>
 
     <!-- Add field button -->
     <div class="pt-2">
       <UButton
-        label="Add Field"
+        :label="t('designer.fields.addField')"
         icon="i-lucide-plus"
         variant="ghost"
         size="xs"

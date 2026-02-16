@@ -12,7 +12,8 @@ const emit = defineEmits<{
   delete: []
 }>()
 
-const { getFieldIcon, FIELD_TYPES } = useFieldTypes()
+const { getFieldIcon, translatedFieldTypes } = useFieldTypes()
+const { t } = useT()
 
 // --- State ---
 const expanded = ref(false)
@@ -24,7 +25,7 @@ const meta = computed(() => props.field.meta || {})
 const isRequired = computed(() => meta.value.required === true)
 const isUnique = computed(() => meta.value.unique === true)
 const fieldIcon = computed(() => getFieldIcon(props.field.type as FieldType))
-const fieldTypeLabel = computed(() => FIELD_TYPES.find(ft => ft.type === props.field.type)?.label || props.field.type)
+const fieldTypeLabel = computed(() => translatedFieldTypes.value.find(ft => ft.type === props.field.type)?.label || props.field.type)
 const isReference = computed(() => props.field.type === 'reference')
 
 const refTargetName = computed(() => {
@@ -50,11 +51,11 @@ const dependsOnCollectionFields = computed(() => {
   return col?.fields || []
 })
 
-const areaOptions = [
-  { label: 'Main', value: 'main' },
-  { label: 'Sidebar', value: 'sidebar' },
-  { label: 'Meta', value: 'meta' }
-]
+const areaOptions = computed(() => [
+  { label: t('designer.fields.areaMain'), value: 'main' },
+  { label: t('designer.fields.areaSidebar'), value: 'sidebar' },
+  { label: t('designer.fields.areaMeta'), value: 'meta' }
+])
 
 // --- Methods ---
 function updateMeta(key: string, value: any) {
@@ -149,7 +150,7 @@ const hasExpandableMeta = computed(() => {
 
       <!-- Field type dropdown -->
       <UDropdownMenu
-        :items="FIELD_TYPES.map(ft => ({
+        :items="translatedFieldTypes.map(ft => ({
           label: ft.label,
           icon: ft.icon,
           onSelect: () => handleTypeChange(ft.type)
@@ -174,7 +175,7 @@ const hasExpandableMeta = computed(() => {
         }))"
       >
         <UButton
-          :label="refTargetName || 'Select target...'"
+          :label="refTargetName || t('designer.fields.selectTarget')"
           variant="outline"
           color="neutral"
           size="xs"
@@ -183,7 +184,7 @@ const hasExpandableMeta = computed(() => {
       </UDropdownMenu>
 
       <!-- Inline badges -->
-      <UTooltip :text="isRequired ? 'Click to make optional' : 'Click to make required'">
+      <UTooltip :text="isRequired ? t('designer.fields.clickToMakeOptional') : t('designer.fields.clickToMakeRequired')">
         <button class="shrink-0" @click="updateMeta('required', !isRequired)">
           <UBadge
             :color="isRequired ? 'primary' : 'neutral'"
@@ -195,7 +196,7 @@ const hasExpandableMeta = computed(() => {
         </button>
       </UTooltip>
 
-      <UTooltip v-if="isUnique" text="Unique constraint">
+      <UTooltip v-if="isUnique" :text="t('designer.fields.uniqueConstraint')">
         <UBadge variant="subtle" color="warning" size="xs">uniq</UBadge>
       </UTooltip>
 
@@ -215,16 +216,16 @@ const hasExpandableMeta = computed(() => {
       <!-- Tier 1: Inline meta (always visible when expanded) -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Label</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.label') }}</label>
           <UInput
             :model-value="meta.label || ''"
             size="xs"
-            placeholder="Display label"
+            :placeholder="t('designer.fields.displayLabel')"
             @update:model-value="updateMeta('label', $event)"
           />
         </div>
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Area</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.area') }}</label>
           <USelectMenu
             :model-value="meta.area || 'main'"
             :items="areaOptions"
@@ -242,7 +243,7 @@ const hasExpandableMeta = computed(() => {
             size="xs"
             @update:model-value="updateMeta('required', $event)"
           />
-          Required
+          {{ t('designer.fields.required') }}
         </label>
         <label class="flex items-center gap-2 text-xs">
           <USwitch
@@ -250,7 +251,7 @@ const hasExpandableMeta = computed(() => {
             size="xs"
             @update:model-value="updateMeta('unique', $event)"
           />
-          Unique
+          {{ t('designer.fields.unique') }}
         </label>
         <label v-if="['string', 'text'].includes(field.type)" class="flex items-center gap-2 text-xs">
           <USwitch
@@ -258,14 +259,14 @@ const hasExpandableMeta = computed(() => {
             size="xs"
             @update:model-value="updateMeta('translatable', $event)"
           />
-          Translatable
+          {{ t('designer.fields.translatable') }}
         </label>
       </div>
 
       <!-- Tier 2: Type-specific meta -->
       <div v-if="field.type === 'string'" class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Max Length</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.maxLength') }}</label>
           <UInput
             :model-value="meta.maxLength || ''"
             type="number"
@@ -275,22 +276,22 @@ const hasExpandableMeta = computed(() => {
           />
         </div>
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Default</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.default') }}</label>
           <UInput
             :model-value="meta.default || ''"
             size="xs"
-            placeholder="Default value"
+            :placeholder="t('designer.fields.defaultValue')"
             @update:model-value="updateMeta('default', $event)"
           />
         </div>
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Display As</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.displayAs') }}</label>
           <USelectMenu
             :model-value="meta.displayAs || ''"
             :items="[
-              { label: 'Default', value: '' },
-              { label: 'Options Select', value: 'optionsSelect' },
-              { label: 'Button Group', value: 'slotButtonGroup' }
+              { label: t('designer.fields.displayDefault'), value: '' },
+              { label: t('designer.fields.displayOptionsSelect'), value: 'optionsSelect' },
+              { label: t('designer.fields.displayButtonGroup'), value: 'slotButtonGroup' }
             ]"
             value-key="value"
             size="xs"
@@ -298,11 +299,11 @@ const hasExpandableMeta = computed(() => {
           />
         </div>
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Group</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.group') }}</label>
           <UInput
             :model-value="meta.group || ''"
             size="xs"
-            placeholder="Field group name"
+            :placeholder="t('designer.fields.fieldGroupName')"
             @update:model-value="updateMeta('group', $event || undefined)"
           />
         </div>
@@ -310,11 +311,11 @@ const hasExpandableMeta = computed(() => {
 
       <!-- Options (for string fields with displayAs) -->
       <div v-if="field.type === 'string' && (meta.displayAs === 'optionsSelect' || meta.displayAs === 'slotButtonGroup' || (meta.options && meta.options.length > 0))">
-        <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Options (comma-separated)</label>
+        <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.optionsCommaSeparated') }}</label>
         <UInput
           :model-value="(meta.options || []).join(', ')"
           size="xs"
-          placeholder="option1, option2, option3"
+          :placeholder="t('designer.fields.optionsPlaceholder')"
           @update:model-value="updateMeta('options', $event ? $event.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined)"
         />
       </div>
@@ -322,17 +323,17 @@ const hasExpandableMeta = computed(() => {
       <!-- Dynamic options from collection -->
       <div v-if="field.type === 'string'" class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Options Collection</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.optionsCollection') }}</label>
           <USelectMenu
             :model-value="meta.optionsCollection || ''"
-            :items="[{ label: '(none)', value: '' }, ...collections.map(c => ({ label: c.name, value: c.name }))]"
+            :items="[{ label: t('designer.fields.none'), value: '' }, ...collections.map(c => ({ label: c.name, value: c.name }))]"
             value-key="value"
             size="xs"
             @update:model-value="updateMeta('optionsCollection', $event || undefined)"
           />
         </div>
         <div v-if="meta.optionsCollection">
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Options Field</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.optionsField') }}</label>
           <USelectMenu
             :model-value="meta.optionsField || ''"
             :items="(collections.find(c => c.name === meta.optionsCollection)?.fields || []).map(f => ({ label: f.name, value: f.name }))"
@@ -351,37 +352,37 @@ const hasExpandableMeta = computed(() => {
             size="xs"
             @update:model-value="updateMeta('readOnly', $event)"
           />
-          Read Only
+          {{ t('designer.fields.readOnly') }}
         </label>
       </div>
 
       <!-- Dependent field configuration -->
       <div v-if="['array', 'string', 'reference'].includes(field.type)" class="space-y-3">
-        <USeparator label="Depends On" />
+        <USeparator :label="t('designer.fields.dependsOn')" />
 
         <div class="grid grid-cols-3 gap-3">
           <div>
-            <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Parent Field</label>
+            <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.parentField') }}</label>
             <USelectMenu
               :model-value="meta.dependsOn || ''"
-              :items="[{ label: '(none)', value: '' }, ...siblingFields.map(f => ({ label: f.name, value: f.name }))]"
+              :items="[{ label: t('designer.fields.none'), value: '' }, ...siblingFields.map(f => ({ label: f.name, value: f.name }))]"
               value-key="value"
               size="xs"
               @update:model-value="updateMeta('dependsOn', $event || undefined)"
             />
           </div>
           <div>
-            <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Source Collection</label>
+            <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.sourceCollection') }}</label>
             <USelectMenu
               :model-value="meta.dependsOnCollection || ''"
-              :items="[{ label: '(none)', value: '' }, ...collections.map(c => ({ label: c.name, value: c.name }))]"
+              :items="[{ label: t('designer.fields.none'), value: '' }, ...collections.map(c => ({ label: c.name, value: c.name }))]"
               value-key="value"
               size="xs"
               @update:model-value="updateMeta('dependsOnCollection', $event || undefined)"
             />
           </div>
           <div v-if="meta.dependsOnCollection">
-            <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Source Field</label>
+            <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.sourceField') }}</label>
             <USelectMenu
               :model-value="meta.dependsOnField || ''"
               :items="dependsOnCollectionFields.map(f => ({ label: f.name, value: f.name }))"
@@ -396,21 +397,21 @@ const hasExpandableMeta = computed(() => {
       <!-- Number/Integer/Decimal specific -->
       <div v-if="['number', 'integer', 'decimal'].includes(field.type)" class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Default</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.default') }}</label>
           <UInput
             :model-value="meta.default ?? ''"
             type="number"
             size="xs"
-            placeholder="Default value"
+            :placeholder="t('designer.fields.defaultValue')"
             @update:model-value="updateMeta('default', $event !== '' ? Number($event) : undefined)"
           />
         </div>
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Group</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.group') }}</label>
           <UInput
             :model-value="meta.group || ''"
             size="xs"
-            placeholder="Field group name"
+            :placeholder="t('designer.fields.fieldGroupName')"
             @update:model-value="updateMeta('group', $event || undefined)"
           />
         </div>
@@ -419,13 +420,13 @@ const hasExpandableMeta = computed(() => {
       <!-- Boolean specific -->
       <div v-if="field.type === 'boolean'" class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Default</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.default') }}</label>
           <USelectMenu
             :model-value="meta.default === true ? 'true' : meta.default === false ? 'false' : ''"
             :items="[
-              { label: '(none)', value: '' },
-              { label: 'True', value: 'true' },
-              { label: 'False', value: 'false' }
+              { label: t('designer.fields.none'), value: '' },
+              { label: t('designer.fields.true'), value: 'true' },
+              { label: t('designer.fields.false'), value: 'false' }
             ]"
             value-key="value"
             size="xs"
@@ -437,20 +438,20 @@ const hasExpandableMeta = computed(() => {
       <!-- Text specific -->
       <div v-if="field.type === 'text'" class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Default</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.default') }}</label>
           <UInput
             :model-value="meta.default || ''"
             size="xs"
-            placeholder="Default value"
+            :placeholder="t('designer.fields.defaultValue')"
             @update:model-value="updateMeta('default', $event || undefined)"
           />
         </div>
         <div>
-          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">Group</label>
+          <label class="text-xs text-[var(--ui-text-muted)] mb-1 block">{{ t('designer.fields.group') }}</label>
           <UInput
             :model-value="meta.group || ''"
             size="xs"
-            placeholder="Field group name"
+            :placeholder="t('designer.fields.fieldGroupName')"
             @update:model-value="updateMeta('group', $event || undefined)"
           />
         </div>

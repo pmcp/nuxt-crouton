@@ -8,6 +8,7 @@ const props = defineProps<{
 
 const editor = useCollectionEditor(toRef(props, 'projectId'))
 const { collectionsWithFields, loading } = editor
+const { t } = useT()
 
 // Validation
 const { issues, errors, warnings, getCollectionIssues, getFieldIssues } = useSchemaValidation(collectionsWithFields)
@@ -107,16 +108,16 @@ defineExpose({ editor })
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <h3 class="text-lg font-semibold">Collections</h3>
+        <h3 class="text-lg font-semibold">{{ t('designer.collections.title') }}</h3>
         <UBadge v-if="errors.length > 0" color="error" variant="subtle" size="xs">
-          {{ errors.length }} {{ errors.length === 1 ? 'issue' : 'issues' }}
+          {{ errors.length }} {{ errors.length === 1 ? t('designer.collections.issue') : t('designer.collections.issues') }}
         </UBadge>
         <UBadge v-else-if="warnings.length > 0" color="warning" variant="subtle" size="xs">
-          {{ warnings.length }} {{ warnings.length === 1 ? 'warning' : 'warnings' }}
+          {{ warnings.length }} {{ warnings.length === 1 ? t('designer.collections.warning') : t('designer.collections.warnings') }}
         </UBadge>
       </div>
       <UButton
-        label="Add Collection"
+        :label="t('designer.collections.addCollection')"
         icon="i-lucide-plus"
         size="sm"
         @click="handleAddCollection"
@@ -144,8 +145,8 @@ defineExpose({ editor })
     <!-- Empty state -->
     <div v-else-if="collectionsWithFields.length === 0" class="text-center py-12 text-[var(--ui-text-muted)]">
       <UIcon name="i-lucide-database" class="size-12 mx-auto mb-3 opacity-50" />
-      <p>No collections yet.</p>
-      <p class="text-sm mt-1">Add a collection or let the AI propose a data model.</p>
+      <p>{{ t('designer.collections.noCollections') }}</p>
+      <p class="text-sm mt-1">{{ t('designer.collections.noCollectionsHint') }}</p>
     </div>
 
     <!-- Accordion -->
@@ -169,7 +170,7 @@ defineExpose({ editor })
             variant="subtle"
             color="neutral"
             size="xs"
-            :label="`${getFieldCount(item.value as string)} fields`"
+            :label="t('designer.collections.fieldCount', { params: { count: getFieldCount(item.value as string) } })"
           />
           <UButton
             icon="i-lucide-pencil"

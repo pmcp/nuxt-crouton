@@ -14,6 +14,8 @@ const emit = defineEmits<{
   'navigate-to': [collectionId: string]
 }>()
 
+const { t } = useT()
+
 // Resolve collection name from ID
 function collectionName(id: string): string {
   return props.collections.find(c => c.id === id)?.name || id
@@ -49,34 +51,34 @@ const allPassed = computed(() => props.issues.length === 0)
 <template>
   <div class="space-y-4">
     <div class="flex items-center gap-3">
-      <h3 class="text-base font-semibold">Validation</h3>
+      <h3 class="text-base font-semibold">{{ t('designer.validation.title') }}</h3>
       <UBadge
         v-if="allPassed"
         color="success"
         variant="subtle"
         size="xs"
-        label="All checks passed"
+        :label="t('designer.validation.allChecksPassed')"
       />
       <UBadge
         v-else-if="hasErrors"
         color="error"
         variant="subtle"
         size="xs"
-        :label="`${errors.length} error${errors.length !== 1 ? 's' : ''}`"
+        :label="`${errors.length} ${errors.length !== 1 ? t('designer.validation.errors') : t('designer.validation.error')}`"
       />
       <UBadge
         v-if="warnings.length > 0"
         color="warning"
         variant="subtle"
         size="xs"
-        :label="`${warnings.length} warning${warnings.length !== 1 ? 's' : ''}`"
+        :label="`${warnings.length} ${warnings.length !== 1 ? t('designer.validation.warnings') : t('designer.validation.warning')}`"
       />
     </div>
 
     <!-- All passed state -->
     <div v-if="allPassed" class="flex items-center gap-2 text-sm text-[var(--ui-color-success-500)] bg-[var(--ui-color-success-50)] rounded-lg px-4 py-3">
       <UIcon name="i-lucide-check-circle" class="size-5 shrink-0" />
-      <span>Schema is valid and ready for generation.</span>
+      <span>{{ t('designer.validation.schemaValid') }}</span>
     </div>
 
     <!-- Global issues (e.g. circular references) -->
