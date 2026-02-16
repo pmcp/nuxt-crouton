@@ -404,17 +404,13 @@ async function continueToReview() {
         </DesignerTwoPanelLayout>
       </template>
 
-      <!-- Phase 5: Review & Generate (placeholder) -->
+      <!-- Phase 5: Review & Generate -->
       <template #review>
-        <div class="py-6">
-          <div class="text-center text-[var(--ui-text-muted)]">
-            <UIcon name="i-lucide-rocket" class="size-12 mx-auto mb-3 opacity-50" />
-            <p>Phase 5: Review & Generate</p>
-            <p class="text-sm mt-1">
-              Validate your schema and export.
-            </p>
-          </div>
-        </div>
+        <DesignerReviewPanel
+          :project-id="projectId"
+          :config="projectConfig"
+          @back-to-collections="currentPhase = '2'"
+        />
       </template>
     </UStepper>
   </div>
