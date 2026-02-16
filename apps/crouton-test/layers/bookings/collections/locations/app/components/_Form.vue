@@ -97,6 +97,24 @@
 
           <USeparator />
 
+          <!-- Access Control -->
+          <fieldset class="flex flex-col gap-4">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Access Control</legend>
+            <p class="text-sm text-gray-500 -mt-1">Restrict which members can book this location. Leave empty to allow all team members.</p>
+            <UFormField label="Allowed Member IDs" name="allowedMemberIds">
+              <UTextarea
+                :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
+                @update:model-value="(val: string) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
+                class="w-full"
+                :rows="6"
+                placeholder="Enter one member ID per line"
+              />
+            </UFormField>
+          </fieldset>
+        </div>
+
+        <!-- Bookings -->
+        <div v-show="activeSection === 'bookings'" class="flex flex-col gap-6 p-1">
           <!-- Booking Rules -->
           <fieldset class="flex flex-col gap-4">
             <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Booking Rules</legend>
@@ -114,24 +132,10 @@
 
           <USeparator />
 
-          <!-- Access Control -->
+          <!-- Scheduling -->
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Access Control</legend>
-            <p class="text-sm text-gray-500 -mt-1">Restrict which members can book this location. Leave empty to allow all team members.</p>
-            <UFormField label="Allowed Member IDs" name="allowedMemberIds">
-              <UTextarea
-                :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
-                @update:model-value="(val: string) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
-                class="w-full"
-                :rows="6"
-                placeholder="Enter one member ID per line"
-              />
-            </UFormField>
-          </fieldset>
-        </div>
-
-        <!-- Scheduling -->
-        <div v-show="activeSection === 'scheduling'" class="flex flex-col gap-4 p-1">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Scheduling</legend>
+            <p class="text-sm text-gray-500 -mt-1">Define when this location is available for bookings.</p>
           <UFormField v-if="!state.inventoryMode" label="Slots" name="slots">
             <CroutonFormRepeater
               v-model="state.slots"
@@ -154,6 +158,7 @@
               :sortable="false"
             />
           </UFormField>
+          </fieldset>
         </div>
 
         <!-- Content -->
@@ -208,7 +213,7 @@ const { defaultValue, schema, collection } = useBookingsLocations()
 // Form layout configuration
 const navigationItems = [
   { label: 'Settings', value: 'settings', icon: 'i-lucide-settings' },
-  { label: 'Scheduling', value: 'scheduling', icon: 'i-lucide-calendar' },
+  { label: 'Bookings', value: 'bookings', icon: 'i-lucide-calendar' },
   { label: 'Content', value: 'content', icon: 'i-lucide-globe' }
 ]
 
@@ -224,14 +229,14 @@ const fieldToGroup: Record<string, string> = {
   'city': 'settings',
   'content': 'settings',
   'location': 'settings',
-  'inventoryMode': 'settings',
-  'quantity': 'settings',
-  'maxBookingsPerMonth': 'settings',
   'allowedMemberIds': 'settings',
-  'slots': 'scheduling',
-  'openDays': 'scheduling',
-  'slotSchedule': 'scheduling',
-  'blockedDates': 'scheduling',
+  'inventoryMode': 'bookings',
+  'quantity': 'bookings',
+  'maxBookingsPerMonth': 'bookings',
+  'slots': 'bookings',
+  'openDays': 'bookings',
+  'slotSchedule': 'bookings',
+  'blockedDates': 'bookings',
   'translations': 'content'
 }
 
