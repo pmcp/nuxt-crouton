@@ -10,6 +10,10 @@ export default {
   },
 
   // Collections to generate (used by CLI)
+  flags: {
+    useMaps: true
+  },
+
   collections: [
     {
       name: 'locations',

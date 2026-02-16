@@ -38,7 +38,7 @@ export const pagesPages = sqliteTable('pages_pages', {
   status: text('status').notNull(),
   visibility: text('visibility').notNull(),
   publishedAt: integer('publishedAt', { mode: 'timestamp' }).$default(() => new Date()),
-  showInNavigation: integer('showInNavigation', { mode: 'boolean' }).$default(() => false),
+  showInNavigation: integer('showInNavigation', { mode: 'boolean' }).$default(() => true),
   layout: text('layout'),
   seoTitle: text('seoTitle'),
   seoDescription: text('seoDescription'),

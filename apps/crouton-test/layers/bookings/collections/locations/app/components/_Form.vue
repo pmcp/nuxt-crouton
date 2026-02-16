@@ -40,39 +40,99 @@
   >
     <CroutonFormLayout :tabs="tabs" :navigation-items="navigationItems" :tab-errors="tabErrorCounts" v-model="activeSection">
       <template #main="{ activeSection }">
-        <!-- General -->
-        <div v-show="activeSection === 'general'" class="flex flex-col gap-4 p-1">
-          <UFormField label="Title" name="title">
-            <UInput v-model="state.title" class="w-full" />
-          </UFormField>
-          <UFormField label="Color" name="color">
-            <UColorPicker v-model="state.color" />
-          </UFormField>
-          <UFormField label="Street" name="street">
-            <UInput v-model="state.street" class="w-full" />
-          </UFormField>
-          <div class="grid grid-cols-2 gap-4">
-            <UFormField label="ZIP Code" name="zip">
-              <UInput v-model="state.zip" class="w-full" />
+        <!-- Settings -->
+        <div v-show="activeSection === 'settings'" class="flex flex-col gap-6 p-1">
+          <!-- Location Details -->
+          <fieldset class="flex flex-col gap-4">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Location Details</legend>
+            <p class="text-sm text-gray-500 -mt-1">Display color for this location.</p>
+            <UFormField label="Color" name="color">
+              <CroutonFormColorPicker v-model="state.color" />
             </UFormField>
-            <UFormField label="City" name="city">
-              <UInput v-model="state.city" class="w-full" />
+          </fieldset>
+
+          <USeparator />
+
+          <!-- Address & Map -->
+          <fieldset class="flex flex-col gap-4">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Address</legend>
+            <p class="text-sm text-gray-500 -mt-1">Physical address and map pin. The map updates automatically as you type.</p>
+            <UFormField label="Street" name="street">
+              <UInput v-model="state.street" class="w-full" />
             </UFormField>
-          </div>
-          <UFormField label="Content" name="content">
-            <CroutonEditorSimple v-model="state.content" />
-          </UFormField>
+            <div class="grid grid-cols-2 gap-4">
+              <UFormField label="ZIP Code" name="zip">
+                <UInput v-model="state.zip" class="w-full" />
+              </UFormField>
+              <UFormField label="City" name="city">
+                <UInput v-model="state.city" class="w-full" />
+              </UFormField>
+            </div>
+            <UFormField label="Location Map" name="location">
+              <CroutonMapsMap
+                :center="mapCenter"
+                :zoom="14"
+                height="400px"
+                class="rounded-lg border"
+                :fly-to-on-center-change="true"
+                @load="handleMapLoad"
+              >
+                <template #default="{ map }">
+                  <CroutonMapsMarker
+                    v-if="mapCenter[0] !== 0 || mapCenter[1] !== 0"
+                    :map="map"
+                    :position="mapCenter"
+                    :color="markerColor"
+                    :options="{ draggable: true }"
+                    :animate-transitions="true"
+                    @dragEnd="handleMarkerDragEnd"
+                  />
+                </template>
+              </CroutonMapsMap>
+              <p v-if="geocoding" class="text-sm text-gray-500 mt-2">
+                Geocoding address...
+              </p>
+            </UFormField>
+          </fieldset>
+
+          <USeparator />
+
+          <!-- Booking Rules -->
+          <fieldset class="flex flex-col gap-4">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Booking Rules</legend>
+            <p class="text-sm text-gray-500 -mt-1">Control how bookings work at this location.</p>
+            <UFormField label="Inventory Mode" name="inventoryMode" help="Enable to use quantity-based availability instead of time slots.">
+              <USwitch v-model="state.inventoryMode" />
+            </UFormField>
+            <UFormField v-show="state.inventoryMode" label="Available Units" name="quantity" help="Number of units available for booking at the same time.">
+              <UInputNumber v-model="state.quantity" class="w-full" />
+            </UFormField>
+            <UFormField label="Max Bookings Per Month" name="maxBookingsPerMonth" help="Limit how many bookings a single user can make per calendar month. Leave empty for unlimited.">
+              <UInputNumber v-model="state.maxBookingsPerMonth" class="w-full" :min="0" placeholder="Unlimited" />
+            </UFormField>
+          </fieldset>
+
+          <USeparator />
+
+          <!-- Access Control -->
+          <fieldset class="flex flex-col gap-4">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Access Control</legend>
+            <p class="text-sm text-gray-500 -mt-1">Restrict which members can book this location. Leave empty to allow all team members.</p>
+            <UFormField label="Allowed Member IDs" name="allowedMemberIds">
+              <UTextarea
+                :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
+                @update:model-value="(val: string) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
+                class="w-full"
+                :rows="6"
+                placeholder="Enter one member ID per line"
+              />
+            </UFormField>
+          </fieldset>
         </div>
 
         <!-- Scheduling -->
         <div v-show="activeSection === 'scheduling'" class="flex flex-col gap-4 p-1">
-          <CroutonBookingsAvailabilityPreview
-            :open-days="state.openDays"
-            :slot-schedule="state.slotSchedule"
-            :blocked-dates="state.blockedDates"
-            :slots="state.slots"
-          />
-          <UFormField label="Slots" name="slots">
+          <UFormField v-if="!state.inventoryMode" label="Slots" name="slots">
             <CroutonFormRepeater
               v-model="state.slots"
               component-name="BookingsLocationsSlotInput"
@@ -96,57 +156,8 @@
           </UFormField>
         </div>
 
-        <!-- Settings -->
-        <div v-show="activeSection === 'settings'" class="flex flex-col gap-4 p-1">
-          <UFormField label="Inventory Mode" name="inventoryMode">
-            <USwitch v-model="state.inventoryMode" />
-          </UFormField>
-          <UFormField v-show="state.inventoryMode" label="Available Units" name="quantity">
-            <UInputNumber v-model="state.quantity" class="w-full" />
-          </UFormField>
-          <UFormField label="Max Bookings Per Month" name="maxBookingsPerMonth" help="Maximum bookings a user can make per calendar month. Empty = unlimited.">
-            <UInputNumber v-model="state.maxBookingsPerMonth" class="w-full" :min="0" placeholder="Unlimited" />
-          </UFormField>
-          <UFormField label="Allowed Member IDs" name="allowedMemberIds">
-            <UTextarea
-              :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
-              @update:model-value="(val: string) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
-              class="w-full"
-              :rows="6"
-              placeholder="Enter one value per line"
-            />
-            <p class="text-sm text-gray-500 mt-1">Enter one value per line</p>
-          </UFormField>
-          <!-- MapBox Map Display -->
-          <UFormField label="Location Map" name="location">
-            <CroutonMapsMap
-              :center="mapCenter"
-              :zoom="14"
-              height="400px"
-              class="rounded-lg border"
-              :fly-to-on-center-change="true"
-              @load="handleMapLoad"
-            >
-              <template #default="{ map }">
-                <CroutonMapsMarker
-                  v-if="mapCenter[0] !== 0 || mapCenter[1] !== 0"
-                  :map="map"
-                  :position="mapCenter"
-                  :color="markerColor"
-                  :options="{ draggable: true }"
-                  :animate-transitions="true"
-                  @dragEnd="handleMarkerDragEnd"
-                />
-              </template>
-            </CroutonMapsMap>
-            <p v-if="geocoding" class="text-sm text-gray-500 mt-2">
-              Geocoding address...
-            </p>
-          </UFormField>
-        </div>
-
-        <!-- Translations -->
-        <div v-show="activeSection === 'translations'" class="flex flex-col gap-4 p-1">
+        <!-- Content -->
+        <div v-show="activeSection === 'content'" class="flex flex-col gap-4 p-1">
           <CroutonI18nInput
             v-model="state.translations"
             :fields="['title', 'street', 'zip', 'city', 'content']"
@@ -196,33 +207,32 @@ const { defaultValue, schema, collection } = useBookingsLocations()
 
 // Form layout configuration
 const navigationItems = [
-  { label: 'General', value: 'general', icon: 'i-lucide-info' },
-  { label: 'Scheduling', value: 'scheduling', icon: 'i-lucide-calendar' },
   { label: 'Settings', value: 'settings', icon: 'i-lucide-settings' },
-  { label: 'Translations', value: 'translations', icon: 'i-lucide-globe' }
+  { label: 'Scheduling', value: 'scheduling', icon: 'i-lucide-calendar' },
+  { label: 'Content', value: 'content', icon: 'i-lucide-globe' }
 ]
 
 const tabs = ref(true)
-const activeSection = ref('general')
+const activeSection = ref('settings')
 
 // Map field names to their tab groups for error tracking
 const fieldToGroup: Record<string, string> = {
-  'title': 'general',
-  'color': 'general',
-  'street': 'general',
-  'zip': 'general',
-  'city': 'general',
-  'content': 'general',
-  'slots': 'scheduling',
-  'openDays': 'scheduling',
-  'slotSchedule': 'scheduling',
-  'blockedDates': 'scheduling',
+  'title': 'settings',
+  'color': 'settings',
+  'street': 'settings',
+  'zip': 'settings',
+  'city': 'settings',
+  'content': 'settings',
+  'location': 'settings',
   'inventoryMode': 'settings',
   'quantity': 'settings',
   'maxBookingsPerMonth': 'settings',
   'allowedMemberIds': 'settings',
-  'location': 'settings',
-  'translations': 'translations'
+  'slots': 'scheduling',
+  'openDays': 'scheduling',
+  'slotSchedule': 'scheduling',
+  'blockedDates': 'scheduling',
+  'translations': 'content'
 }
 
 // Track validation errors for tab indicators
@@ -240,7 +250,7 @@ const tabErrorCounts = computed(() => {
   const counts: Record<string, number> = {}
 
   validationErrors.value.forEach((error) => {
-    const tabName = fieldToGroup[error.name] || 'general'
+    const tabName = fieldToGroup[error.name] || 'settings'
     counts[tabName] = (counts[tabName] || 0) + 1
   })
 

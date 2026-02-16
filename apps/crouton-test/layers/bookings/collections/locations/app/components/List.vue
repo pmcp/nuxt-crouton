@@ -2,7 +2,7 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2026-02-10
+  @generated 2026-02-16
 
   ## AI Context
   - List component for locations collection
@@ -81,13 +81,6 @@
     </template>
     <template #slots-cell="{ row }">
       <BookingsLocationsSlotCardMini :value="row.original.slots" />
-    </template>
-    <template #slotSchedule-cell="{ row }">
-      <CroutonBookingsScheduleGrid
-        :model-value="row.original.slotSchedule"
-        :slots="row.original.slots"
-        readonly
-      />
     </template>
     <template #blockedDates-cell="{ row }">
       <BookingsLocationsBlockedDateCardMini :value="row.original.blockedDates" />

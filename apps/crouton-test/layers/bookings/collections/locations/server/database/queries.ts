@@ -79,42 +79,6 @@ export async function getAllBookingsLocations(teamId: string) {
       if (item.blockedDates === null || item.blockedDates === undefined) {
         item.blockedDates = []
       }
-      // Parse allowedMemberIds from JSON string
-      if (typeof item.allowedMemberIds === 'string') {
-        try {
-          item.allowedMemberIds = JSON.parse(item.allowedMemberIds)
-        } catch (e) {
-          console.error('Error parsing allowedMemberIds:', e)
-          item.allowedMemberIds = []
-        }
-      }
-      if (item.allowedMemberIds === null || item.allowedMemberIds === undefined) {
-        item.allowedMemberIds = []
-      }
-      // Parse openDays from JSON string
-      if (typeof item.openDays === 'string') {
-        try {
-          item.openDays = JSON.parse(item.openDays)
-        } catch (e) {
-          console.error('Error parsing openDays:', e)
-          item.openDays = []
-        }
-      }
-      if (item.openDays === null || item.openDays === undefined) {
-        item.openDays = []
-      }
-      // Parse translations from JSON string
-      if (typeof item.translations === 'string') {
-        try {
-          item.translations = JSON.parse(item.translations)
-        } catch (e) {
-          console.error('Error parsing translations:', e)
-          item.translations = {}
-        }
-      }
-      if (item.translations === null || item.translations === undefined) {
-        item.translations = {}
-      }
   })
 
   return locations
@@ -198,42 +162,6 @@ export async function getBookingsLocationsByIds(teamId: string, locationIds: str
       }
       if (item.blockedDates === null || item.blockedDates === undefined) {
         item.blockedDates = []
-      }
-      // Parse allowedMemberIds from JSON string
-      if (typeof item.allowedMemberIds === 'string') {
-        try {
-          item.allowedMemberIds = JSON.parse(item.allowedMemberIds)
-        } catch (e) {
-          console.error('Error parsing allowedMemberIds:', e)
-          item.allowedMemberIds = []
-        }
-      }
-      if (item.allowedMemberIds === null || item.allowedMemberIds === undefined) {
-        item.allowedMemberIds = []
-      }
-      // Parse openDays from JSON string
-      if (typeof item.openDays === 'string') {
-        try {
-          item.openDays = JSON.parse(item.openDays)
-        } catch (e) {
-          console.error('Error parsing openDays:', e)
-          item.openDays = []
-        }
-      }
-      if (item.openDays === null || item.openDays === undefined) {
-        item.openDays = []
-      }
-      // Parse translations from JSON string
-      if (typeof item.translations === 'string') {
-        try {
-          item.translations = JSON.parse(item.translations)
-        } catch (e) {
-          console.error('Error parsing translations:', e)
-          item.translations = {}
-        }
-      }
-      if (item.translations === null || item.translations === undefined) {
-        item.translations = {}
       }
   })
 

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2026-02-10
+ * @generated 2026-02-16
  *
  * ## AI Context
  * - Main interface: BookingsLocation
