@@ -58,9 +58,8 @@ export function handleValidateSchema(input: ValidateSchemaInput): ValidationResu
 
   // Validate each field
   for (const [fieldName, field] of Object.entries(schema)) {
-    // Skip auto-generated fields that shouldn't be in schema
+    // Silently skip auto-generated fields
     if (['teamId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'].includes(fieldName)) {
-      warnings.push(`Field "${fieldName}" is auto-generated and will be ignored`)
       continue
     }
 

@@ -71,7 +71,7 @@ export function handleDesignSchema(input: DesignSchemaInput): DesignSchemaResult
 ## Guidelines
 
 1. **Field Types**: Use appropriate types from the reference below
-2. **Primary Key**: The 'id' field is always auto-generated with primaryKey: true
+2. **Auto-Generated Fields**: Do NOT include id, teamId, createdAt, updatedAt, createdBy, or updatedBy — these are added automatically
 3. **Required Fields**: Add "meta.required: true" for mandatory fields
 4. **String Constraints**: Add "meta.maxLength" for string fields
 5. **Decimal Precision**: Use "meta.precision" and "meta.scale" for prices/currency

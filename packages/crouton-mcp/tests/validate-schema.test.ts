@@ -86,8 +86,8 @@ describe('handleValidateSchema', () => {
     })
   })
 
-  describe('auto-generated field warnings', () => {
-    it('should warn about auto-generated fields', () => {
+  describe('auto-generated field handling', () => {
+    it('should silently skip auto-generated fields', () => {
       const result = handleValidateSchema({
         schema: {
           name: { type: 'string' },
@@ -97,8 +97,9 @@ describe('handleValidateSchema', () => {
       })
 
       expect(result.valid).toBe(true)
-      expect(result.warnings.some(w => w.includes('teamId') && w.includes('auto-generated'))).toBe(true)
-      expect(result.warnings.some(w => w.includes('createdAt') && w.includes('auto-generated'))).toBe(true)
+      // Auto-generated fields should be silently skipped, not warned about
+      expect(result.warnings.some(w => w.includes('teamId'))).toBe(false)
+      expect(result.warnings.some(w => w.includes('createdAt'))).toBe(false)
     })
 
     it('should warn about hierarchy fields when hierarchy option enabled', () => {
