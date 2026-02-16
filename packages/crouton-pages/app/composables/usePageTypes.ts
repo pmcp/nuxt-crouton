@@ -18,6 +18,10 @@ export interface AggregatedPageType extends CroutonPageType {
  * Page types are pre-built page templates/components that apps provide.
  * Admins can create pages of these types in the page management UI.
  *
+ * Also derives page types from publishable collections (collections with
+ * `publishable: true` in their config). These use CroutonCollectionPageRenderer
+ * as the component and link to the collection via the `collection` field.
+ *
  * @example
  * ```typescript
  * const { pageTypes, getPageType, pageTypesByCategory } = usePageTypes()
@@ -34,10 +38,12 @@ export interface AggregatedPageType extends CroutonPageType {
  */
 export function usePageTypes() {
   const { appsList } = useCroutonApps()
+  const collections = useCollections()
 
   /**
    * All page types from all registered apps, flattened into a single array.
    * Each page type is augmented with app context (appId, appName, fullId).
+   * Also includes auto-derived page types from publishable collections.
    */
   const pageTypes = computed<AggregatedPageType[]>(() => {
     const types: AggregatedPageType[] = []
@@ -54,6 +60,32 @@ export function usePageTypes() {
           fullId: `${app.id}:${pageType.id}`
         })
       }
+    }
+
+    // Derive page types from publishable collections
+    for (const [collectionName, config] of Object.entries(collections.configs)) {
+      if (!config?.publishable) continue
+
+      const layer = config.layer || 'app'
+      const displayName = config.displayName || config.name || collectionName
+      // Convert camelCase collection name to readable label (e.g., "storeBikes" -> "Bike Page")
+      const singularName = displayName.replace(/([A-Z])/g, ' $1').trim()
+      const fullId = `${layer}:${collectionName}-detail`
+
+      // Skip if a manually registered page type already exists with this ID
+      if (types.some(t => t.fullId === fullId)) continue
+
+      types.push({
+        id: `${collectionName}-detail`,
+        name: `${singularName} Page`,
+        component: 'CroutonPagesCollectionPageRenderer',
+        icon: 'i-lucide-file-text',
+        category: 'collections',
+        collection: collectionName,
+        appId: layer,
+        appName: layer.charAt(0).toUpperCase() + layer.slice(1),
+        fullId
+      })
     }
 
     return types

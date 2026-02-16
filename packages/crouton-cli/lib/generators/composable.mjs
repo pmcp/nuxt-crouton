@@ -97,7 +97,7 @@ function generateAIHeader(data, apiPath) {
 }
 
 export function generateComposable(data, config = {}) {
-  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields, hierarchy, sortable, display } = data
+  const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields, hierarchy, sortable, display, publishable } = data
   // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
   const prefixedSingular = `${layerCamelCase}${pascalCase}`
   const prefixedPlural = `${layerCamelCase}${pascalCasePlural}`
@@ -152,6 +152,11 @@ export function generateComposable(data, config = {}) {
     ? `,\n  display: ${JSON.stringify(display)}`
     : ''
 
+  // Generate publishable flag if enabled
+  const publishableConfigCode = publishable
+    ? `,\n  publishable: true`
+    : ''
+
   // Generate runtime field metadata array for display components
   const runtimeFields = fields
     .filter(f => f.name !== 'id')
@@ -203,7 +208,7 @@ const _${prefixedPlural}Config = {
   defaultValues: {
     ${data.fieldsDefault}
   },
-  columns: ${prefixedPlural}Columns${dependentFieldComponentsCode}${hierarchyConfigCode}${sortableConfigCode}${displayConfigCode}${fieldsMetaCode},
+  columns: ${prefixedPlural}Columns${dependentFieldComponentsCode}${hierarchyConfigCode}${sortableConfigCode}${displayConfigCode}${publishableConfigCode}${fieldsMetaCode},
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

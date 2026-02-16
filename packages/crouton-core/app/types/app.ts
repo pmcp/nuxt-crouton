@@ -195,6 +195,14 @@ export interface CroutonPageType {
    * @default 'default'
    */
   preferredLayout?: 'default' | 'full-height' | 'full-screen'
+
+  /**
+   * Links this page type to a collection for publishable collections.
+   * When set, the page form shows a collection item picker and the
+   * renderer fetches and displays the selected collection item.
+   * @example 'shopBikes', 'blogPosts'
+   */
+  collection?: string
 }
 
 /**

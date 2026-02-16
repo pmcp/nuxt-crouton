@@ -1080,7 +1080,8 @@ ${translationsFieldSchema}
     sortable, // Pass sortable config to generators
     collab, // Pass collab config to generators (enables presence indicators)
     collectionConfig, // Pass collection config for formComponent option
-    display: collectionConfig?.display || null // Display config: title, subtitle, image, badge, description
+    display: collectionConfig?.display || null, // Display config: title, subtitle, image, badge, description
+    publishable: collectionConfig?.publishable || false // Publishable flag: registers as page type
   }
 
   if (dryRun) {

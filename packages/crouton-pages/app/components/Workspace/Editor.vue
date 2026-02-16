@@ -260,6 +260,66 @@ const isRegularPage = computed(() =>
   state.value.pageType === 'pages:regular' || state.value.pageType === 'regular'
 )
 
+// Collection page type detection
+const isCollectionPage = computed(() => !!selectedPageType.value?.collection)
+const collectionPageName = computed(() => selectedPageType.value?.collection || '')
+
+// Selected collection item ID (stored in page config)
+const collectionItemId = computed({
+  get: () => (state.value.config as any)?.itemId || null,
+  set: (val: string | null) => {
+    state.value.config = { ...state.value.config, itemId: val }
+  }
+})
+
+// Determine label key for the collection item picker using display config
+const collectionLabelKey = computed(() => {
+  if (!collectionPageName.value) return 'title'
+  const config = collections.getConfig(collectionPageName.value)
+  return config?.display?.title || 'title'
+})
+
+// Auto-populate page title when a collection item is selected
+const { getTeamId: getTeamIdForItem } = useTeamContext()
+const { data: selectedCollectionItem } = await useFetch<Record<string, any>>(() => {
+  if (!isCollectionPage.value || !collectionItemId.value) return null as any
+  const teamId = getTeamIdForItem()
+  const config = collections.getConfig(collectionPageName.value)
+  if (!teamId || !config?.apiPath) return null as any
+  return `/api/teams/${teamId}/${config.apiPath}?ids=${collectionItemId.value}`
+}, {
+  transform: (response: any) => {
+    const items = response?.items || response
+    if (Array.isArray(items)) return items[0] || null
+    return items
+  },
+  watch: [collectionItemId, collectionPageName]
+})
+
+// When a collection item is selected, auto-populate page title + slug
+watch(selectedCollectionItem, (item: Record<string, any> | null) => {
+  if (!item || !isCollectionPage.value) return
+
+  const config = collections.getConfig(collectionPageName.value)
+  const titleField = config?.display?.title || 'title'
+  const itemTitle = item[titleField] || item.name || item.title
+
+  if (itemTitle) {
+    const translations = { ...state.value.translations } as Record<string, { title?: string; slug?: string }>
+    const currentLocale = locale.value || 'en'
+
+    // Only auto-populate if title is empty
+    if (!translations[currentLocale]) {
+      translations[currentLocale] = {}
+    }
+    if (!translations[currentLocale].title) {
+      translations[currentLocale].title = itemTitle
+      translations[currentLocale].slug = slugify(itemTitle)
+      state.value.translations = translations
+    }
+  }
+})
+
 // Page type options
 const pageTypeDropdownItems = computed(() => [
   pageTypes.value.map(type => ({
@@ -870,8 +930,24 @@ defineExpose({ state })
           <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
         </div>
 
+        <!-- Collection item picker for publishable collection pages -->
+        <template v-if="isCollectionPage">
+          <USeparator label="Collection Item" class="my-6" />
+          <UFormField
+            :label="`Select ${selectedPageType?.name || 'Item'}`"
+            name="config.itemId"
+          >
+            <CroutonFormReferenceSelect
+              v-model="collectionItemId"
+              :collection="collectionPageName"
+              :label="selectedPageType?.name"
+              :label-key="collectionLabelKey"
+            />
+          </UFormField>
+        </template>
+
         <!-- Config fields for app pages -->
-        <template v-if="!isRegularPage && selectedPageType?.configSchema?.length">
+        <template v-if="!isRegularPage && !isCollectionPage && selectedPageType?.configSchema?.length">
           <USeparator label="Page Settings" class="my-6" />
           <div class="space-y-4">
             <div v-for="field in selectedPageType.configSchema" :key="field.name" class="text-sm text-muted">
@@ -880,7 +956,7 @@ defineExpose({ state })
           </div>
         </template>
 
-        <template v-else-if="!isRegularPage && !selectedPageType?.configSchema?.length">
+        <template v-else-if="!isRegularPage && !isCollectionPage && !selectedPageType?.configSchema?.length">
           <div class="p-4 bg-muted/30 rounded-lg text-center text-sm text-muted mt-6">
             <UIcon name="i-lucide-info" class="size-5 mb-2" />
             <p>This page type has no additional configuration.</p>

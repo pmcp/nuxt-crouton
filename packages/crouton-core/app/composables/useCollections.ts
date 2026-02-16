@@ -106,6 +106,11 @@ interface CollectionConfig {
    * Lightweight projection of schema fields: name, type, label, area, displayAs.
    */
   fields?: RuntimeFieldMeta[]
+  /**
+   * When true, this collection is publishable — it auto-registers as a page type
+   * in crouton-pages, allowing collection items to be published as standalone pages.
+   */
+  publishable?: boolean
   [key: string]: any
 }
 
