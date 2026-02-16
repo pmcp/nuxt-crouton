@@ -108,11 +108,12 @@ See the [Deployment Guide](/docs/guides/deployment) for detailed instructions on
    wrangler login
    ```
 
-2. **Create Resources**
+2. **Create Resources** (use app-specific names to avoid collisions)
    ```bash
-   wrangler d1 create {app-name}-db
-   wrangler kv:namespace create KV
+   npx wrangler d1 create {app-name}-db
+   npx wrangler kv namespace create {app-name}-kv
    ```
+   > **Important**: Each app needs its own KV namespace. Never share a generic "KV" across apps.
 
 3. **Configure wrangler.toml**
    ```toml

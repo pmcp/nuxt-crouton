@@ -133,12 +133,18 @@ After generation, wire up:
    npx wrangler d1 create {app-name}-db
    ```
 
-2. Create KV namespace:
+2. Create KV namespace (**use app-specific name, not generic "KV"**):
    ```bash
-   npx wrangler kv:namespace create KV
+   npx wrangler kv namespace create {app-name}-kv
    ```
+   > **Important**: Each app must have its own KV namespace to avoid key collisions. Never share a single "KV" namespace across apps.
 
-3. Update `wrangler.toml` with the IDs from the output above.
+3. Update `wrangler.toml` with the IDs from the output above. Note the KV binding must be `"KV"` (what your app code references), even though the namespace name is app-specific:
+   ```toml
+   [[kv_namespaces]]
+   binding = "KV"
+   id = "your-app-specific-kv-namespace-id"
+   ```
 
 ## Step 6: Deploy
 
@@ -175,6 +181,8 @@ After generation, wire up:
 | `hub: { database: true }` | `Cannot resolve entry module .nuxt/hub/db/schema.entry.ts` | Use `hub: { db: 'sqlite' }` instead |
 | D1 not found | `D1_ERROR: no such table` | Run `db:migrate:prod` before first deploy |
 | KV not bound | Runtime error accessing KV | Check wrangler.toml KV namespace ID |
+| KV key collisions | Apps overwrite each other's KV data | Use app-specific KV namespace names (e.g., `{app-name}-kv`), never share a generic "KV" |
+| Wrangler v4 CLI syntax | `kv:namespace create` fails with "Unknown arguments" | Use spaces: `npx wrangler kv namespace create` |
 | Bundle size | Build fails with size limit | Disable unused modules (ogImage, AI, etc.) |
 
 ## Launch Log
