@@ -7,7 +7,7 @@ import type { MapConfig } from '../types'
  * Usage:
  * const { accessToken, style } = useMapConfig()
  */
-export function useMapConfig(): MapConfig {
+export function useMapConfig(): MapConfig & { isConfigured: boolean } {
   const config = useRuntimeConfig()
 
   // Safely access the mapbox config
@@ -29,21 +29,22 @@ export function useMapConfig(): MapConfig {
   const accessToken = mapboxConfig?.accessToken
 
   if (!accessToken) {
-    throw new Error(
-      '[nuxt-crouton-maps] Mapbox access token not found in public config. '
-      + 'Add it to your nuxt.config.ts:\n\n'
-      + 'runtimeConfig: {\n'
-      + '  public: {\n'
-      + '    mapbox: {\n'
-      + '      accessToken: process.env.MAPBOX_TOKEN\n'
-      + '    }\n'
-      + '  }\n'
-      + '}\n\n'
-      + 'And set MAPBOX_TOKEN in your .env file.'
+    console.warn(
+      '[nuxt-crouton-maps] Mapbox access token not found. '
+      + 'Map features will be disabled. Add to nuxt.config.ts:\n\n'
+      + 'runtimeConfig: { public: { mapbox: { accessToken: process.env.MAPBOX_TOKEN } } }'
     )
+    return {
+      isConfigured: false,
+      accessToken: '',
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: undefined,
+      zoom: 12
+    }
   }
 
   return {
+    isConfigured: true,
     accessToken,
     style: mapboxConfig?.style || 'mapbox://styles/mapbox/streets-v12',
     center: mapboxConfig?.center,

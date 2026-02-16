@@ -33,6 +33,8 @@ export function useGeocode() {
    * Forward geocoding: Convert address to coordinates
    */
   const geocode = async (query: string): Promise<GeocodeResult | null> => {
+    if (!config.isConfigured) return null
+
     try {
       loading.value = true
       error.value = null
@@ -69,6 +71,8 @@ export function useGeocode() {
    * Reverse geocoding: Convert coordinates to address
    */
   const reverseGeocode = async (coordinates: [number, number]): Promise<GeocodeResult | null> => {
+    if (!config.isConfigured) return null
+
     try {
       loading.value = true
       error.value = null

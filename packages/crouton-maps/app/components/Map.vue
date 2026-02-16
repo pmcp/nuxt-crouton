@@ -118,8 +118,21 @@ defineExpose({
     :class="props.class"
   >
     <ClientOnly>
+      <!-- Show placeholder when Mapbox is not configured -->
+      <div
+        v-if="!config.isConfigured"
+        class="flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-gray-500 dark:text-gray-400"
+        :style="{ height: props.height, width: props.width }"
+      >
+        <div class="text-center p-4">
+          <div class="i-lucide-map-pin-off h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p>Map unavailable — set MAPBOX_TOKEN in .env</p>
+        </div>
+      </div>
+
       <!-- Nuxt-Mapbox map component -->
       <MapboxMap
+        v-else
         :map-id="props.id"
         :options="mapOptions"
         :style="{ height: props.height, width: props.width }"
