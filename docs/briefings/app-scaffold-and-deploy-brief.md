@@ -1,7 +1,7 @@
 # Briefing: App Scaffold CLI + Deploy Automation
 
 **Date**: 2026-02-16
-**Updated**: 2026-02-16 (post-analysis of existing CLI capabilities)
+**Updated**: 2026-02-16 (post-analysis + design decisions)
 **Context**: First production app (bike-sheds) was manually scaffolded and deployed to CF Pages. Process took ~15min with several pain points. Goal: automate this for future apps.
 
 ## Problem
@@ -132,11 +132,14 @@ crouton scaffold-app bike-sheds --features=bookings,pages,editor,maps
 
 **Flags**:
 - `--features=<list>` — comma-separated feature names validated against module registry
+- `--theme=<name>` — wire theme into extends array (e.g., `--theme=ko`)
 - `--dialect=<sqlite|pg>` — database dialect (default: sqlite)
 - `--no-cf` — skip Cloudflare-specific config (wrangler.toml, CF stubs, CF preset)
 - `--dry-run` — preview without writing
 
-**Template approach**: Use a `templates/app/` directory in crouton-cli with simple string interpolation (EJS or template literals). Templates are editable without touching generator logic.
+**Template approach**: Use a `templates/app/` directory in crouton-cli with template literals and a simple `render(template, vars)` function. Zero new dependencies — templates are editable without touching generator logic.
+
+**Testing**: Smoke test — generate into a temp dir, run `npx nuxt prepare`, assert exit code 0. Catches real breakage without snapshot maintenance overhead.
 
 ### 2. `crouton deploy <name>` (or deploy script)
 
@@ -148,7 +151,7 @@ crouton deploy bike-sheds
 ```
 
 **What it does**:
-1. Check wrangler auth (`npx wrangler whoami`)
+1. Check wrangler auth (`npx wrangler whoami`) — if not authenticated, print "Run `wrangler login` first" and exit
 2. Create CF Pages project (`npx wrangler pages project create <name>`)
 3. Create D1 database (`npx wrangler d1 create <name>-db`)
 4. Create KV namespace (`npx wrangler kv namespace create <name>-kv`)
@@ -185,13 +188,15 @@ These should be addressed regardless of the scaffold command:
 2. **Duplicate config keys** — check for existing `croutonCollections` before appending in `generate-collection.mjs`. Confirmed still present.
 3. ~~**Dependency pre-flight**~~ — `module-detector.mjs` already performs 4-level checks. May need tuning for specific edge cases (e.g., translatable fields implying i18n need) but the system exists.
 
-## Future Consideration: `crouton doctor <name>`
+## `crouton doctor <name>` (Promoted to P1b)
 
-Validates an existing app's setup — checks for missing deps, stale wrangler config, placeholder IDs, missing locale files, etc. Useful for both new scaffolds and existing apps like bike-sheds. Low effort (~50 LOC), high diagnostic value.
+Validates an existing app's setup — checks for missing deps, stale wrangler config, placeholder IDs, missing locale files, etc. Critical safety net for AI-generated apps (designer/MCP), not just manual scaffolds. Low effort (~50 LOC), high diagnostic value.
+
+**Why P1b**: With AI generating apps and collections, `doctor` catches whatever the AI gets wrong before deploy. Acts as validation layer for both `scaffold-app` output and designer-generated projects.
 
 ## Designer Sync Action Item
 
-The designer's `useIntakePrompt.ts` hardcodes 5 packages. It should consume `module-registry.mjs` (or a shared JSON export) so both CLI and designer use the same source of truth. Currently listed in designer:
+The designer's `useIntakePrompt.ts` hardcodes 5 packages. **Decision**: Extract registry data to a shared JSON file that both CLI and designer import natively. This is the cleanest single-source-of-truth approach — no build step, both consumers can import JSON directly. Currently listed in designer:
 
 - crouton-editor, crouton-i18n, crouton-flow, crouton-assets, crouton-bookings
 
@@ -203,20 +208,31 @@ Missing from designer (available in registry):
 
 | Task | Size | Notes |
 |------|------|-------|
-| `scaffold-app` command | **Small-Medium** (~150 LOC) | Simpler than originally estimated — reuses module-registry, framework-packages, module-detector |
-| `deploy` script | Small (shell script, ~80 LOC) | Start as `scripts/deploy-app.sh` |
+| `scaffold-app` command | **Small-Medium** (~150 LOC) | Template literals (zero deps), reuses module-registry/framework-packages/module-detector, smoke test validation |
+| `crouton doctor` | Small (~50 LOC) | Safety net for AI-generated apps, validates scaffold output and existing apps |
+| `deploy` script | Small (shell script, ~80 LOC) | Start as `scripts/deploy-app.sh`, fail-with-message on missing auth |
 | Generator locale fix | Small (~20 LOC) | In nuxt-config generator |
 | Generator duplicate key fix | Small (~10 LOC) | In `generate-collection.mjs` |
 | ~~Dep pre-flight improvement~~ | **Already exists** | `module-detector.mjs` — tune if needed |
-| Designer registry sync | Small (~30 LOC) | Import from module-registry instead of hardcoding |
-| `crouton doctor` (future) | Small (~50 LOC) | Validates existing app setup |
+| Designer registry sync | Small (~60 LOC) | Shared JSON file consumed by both CLI and designer (revised from 30 LOC) |
 
 ## Priority
 
 | Priority | Task | Why |
 |----------|------|-----|
 | **P0** | Generator fixes (locale files, duplicate keys) | Quick wins, fix real bugs, ~30 LOC total |
-| **P1** | `scaffold-app` command | Biggest time saver, reuses existing infra |
+| **P1a** | `scaffold-app` command | Biggest time saver, reuses existing infra |
+| **P1b** | `crouton doctor` | Safety net for AI-generated apps — catches what AI gets wrong before deploy |
 | **P2** | Deploy script (shell first) | Start simple, promote to CLI later |
-| **P3** | Designer registry sync | Prevents drift, low effort |
-| **P4** | `crouton doctor` | Nice-to-have diagnostic tool |
+| **P3** | Designer registry sync (shared JSON) | Prevents drift, single source of truth for CLI + designer |
+
+## Design Decisions Log
+
+| # | Decision | Rationale |
+|---|----------|-----------|
+| 1 | **Smoke test** for scaffold validation (no snapshots) | Catches real breakage (`npx nuxt prepare` exit code), zero maintenance overhead |
+| 2 | **Template literals** with `render(template, vars)` | Zero new deps, consistent with existing `.mjs` codebase, templates are just config files |
+| 3 | **Fail-with-message** on missing wrangler auth | Predictable in both local and CI, no surprise browser popups |
+| 4 | **Shared JSON file** for designer registry sync | Both CLI (`.mjs`) and designer (`.ts` composable) can import JSON natively, no build step |
+| 5 | **`--theme` flag** implemented in v1 | ~10 lines, `framework-packages.mjs` already resolves extends, themes package exists |
+| 6 | **`doctor` promoted to P1b** | AI generates apps — doctor is the safety net that catches AI mistakes before deploy |
