@@ -111,21 +111,27 @@ export default defineEventHandler(async (event) => {
         conditions.push(eq(pagesSchema.pagesPages.visibility, 'public'))
       }
 
+      // Build select fields — translations column is optional (depends on generated schema)
+      const hasTranslations = 'translations' in pagesSchema.pagesPages
+      const selectFields: Record<string, any> = {
+        id: pagesSchema.pagesPages.id,
+        title: pagesSchema.pagesPages.title,
+        slug: pagesSchema.pagesPages.slug,
+        pageType: pagesSchema.pagesPages.pageType,
+        status: pagesSchema.pagesPages.status,
+        visibility: pagesSchema.pagesPages.visibility,
+        showInNavigation: pagesSchema.pagesPages.showInNavigation,
+        parentId: pagesSchema.pagesPages.parentId,
+        order: pagesSchema.pagesPages.order,
+        depth: pagesSchema.pagesPages.depth,
+        path: pagesSchema.pagesPages.path
+      }
+      if (hasTranslations) {
+        selectFields.translations = (pagesSchema.pagesPages as any).translations
+      }
+
       const rawPages = await database
-        .select({
-          id: pagesSchema.pagesPages.id,
-          title: pagesSchema.pagesPages.title,
-          slug: pagesSchema.pagesPages.slug,
-          pageType: pagesSchema.pagesPages.pageType,
-          status: pagesSchema.pagesPages.status,
-          visibility: pagesSchema.pagesPages.visibility,
-          showInNavigation: pagesSchema.pagesPages.showInNavigation,
-          parentId: pagesSchema.pagesPages.parentId,
-          order: pagesSchema.pagesPages.order,
-          depth: pagesSchema.pagesPages.depth,
-          path: pagesSchema.pagesPages.path,
-          translations: pagesSchema.pagesPages.translations
-        })
+        .select(selectFields)
         .from(pagesSchema.pagesPages)
         .where(and(...conditions))
         .orderBy(
@@ -134,24 +140,27 @@ export default defineEventHandler(async (event) => {
           asc(pagesSchema.pagesPages.id)
         )
 
-      // Resolve translated values if locale is provided
-      const pages = rawPages.map((page) => {
-        const translations = page.translations as Record<string, { title?: string; slug?: string }> | null
+      // Resolve translated values if locale is provided and translations column exists
+      const pages = rawPages.map((page: any) => {
         let resolvedTitle = page.title
         let resolvedSlug = page.slug
 
-        // Try to get translated values for the requested locale
-        if (locale && translations?.[locale]) {
-          resolvedTitle = translations[locale].title || resolvedTitle
-          resolvedSlug = translations[locale].slug || resolvedSlug
-        }
+        if (hasTranslations && page.translations) {
+          const translations = page.translations as Record<string, { title?: string; slug?: string }> | null
 
-        // Fallback: if still null, try 'en' as default locale
-        if (!resolvedTitle && translations?.en?.title) {
-          resolvedTitle = translations.en.title
-        }
-        if (!resolvedSlug && translations?.en?.slug) {
-          resolvedSlug = translations.en.slug
+          // Try to get translated values for the requested locale
+          if (locale && translations?.[locale]) {
+            resolvedTitle = translations[locale].title || resolvedTitle
+            resolvedSlug = translations[locale].slug || resolvedSlug
+          }
+
+          // Fallback: if still null, try 'en' as default locale
+          if (!resolvedTitle && translations?.en?.title) {
+            resolvedTitle = translations.en.title
+          }
+          if (!resolvedSlug && translations?.en?.slug) {
+            resolvedSlug = translations.en.slug
+          }
         }
 
         return {

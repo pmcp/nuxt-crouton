@@ -1,13 +1,4 @@
 export default defineAppConfig({
-  // Register the pages form component for the pagesPages collection
-  // This allows the standard Crouton form flow to use our custom form
-  // Consuming apps can override by setting their own componentName
-  croutonCollections: {
-    pagesPages: {
-      componentName: 'CroutonPagesForm'
-    }
-  },
-
   // App auto-discovery registration for crouton-pages
   croutonApps: {
     pages: {
@@ -17,7 +8,7 @@ export default defineAppConfig({
       // Admin routes (appear in /admin/[team]/ sidebar)
       adminRoutes: [
         {
-          path: '/pages',
+          path: '/workspace',
           label: 'pages.admin.pages',
           icon: 'i-lucide-file-text'
         }
