@@ -78,7 +78,7 @@ const sidebarAccordionItems = [{
       <!-- Grid Container (only when sidebar exists) -->
       <div :class="hasSidebar ? '@container grid grid-cols-1 @lg:grid-cols-3 gap-6' : 'flex flex-col flex-1 min-h-0'">
         <!-- Main Area -->
-        <div :class="hasSidebar ? '@lg:col-span-2 space-y-6' : 'flex-1 flex flex-col min-h-0'">
+        <div :class="hasSidebar ? '@lg:col-span-2 space-y-6' : 'flex-1 flex flex-col gap-6 min-h-0'">
           <!-- Tab Navigation (optional) -->
 
           <UTabs
@@ -124,7 +124,7 @@ const sidebarAccordionItems = [{
       </div>
     </div>
     <!-- Footer Slot -->
-    <div v-if="$slots.footer">
+    <div v-if="$slots.footer" class="pt-6">
       <slot name="footer" />
     </div>
   </div>

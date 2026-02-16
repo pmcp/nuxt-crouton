@@ -659,7 +659,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col gap-4 h-full">
     <!-- ============================================= -->
     <!-- SIDE-BY-SIDE LAYOUT (with tabs on narrow)    -->
     <!-- ============================================= -->
@@ -1140,7 +1140,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
       <!-- Multi-field mode: show inputs for each field -->
       <div
         v-if="isMultiField"
-        class="space-y-3"
+        class="space-y-4"
       >
         <UFormField
           v-for="field in fields"
