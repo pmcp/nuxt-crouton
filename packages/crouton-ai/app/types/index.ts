@@ -2,6 +2,8 @@
  * Core types for @fyit/crouton-ai
  */
 
+import type { Ref, ComputedRef } from 'vue'
+
 /**
  * Represents a single message in an AI conversation
  */
@@ -70,8 +72,8 @@ export interface AIChatOptions {
   initialMessages?: AIMessage[]
   /** Initial input value */
   initialInput?: string
-  /** Additional body parameters to send with each request */
-  body?: Record<string, unknown>
+  /** Additional body parameters to send with each request. Supports reactive refs/computed for dynamic values. */
+  body?: Record<string, unknown> | Ref<Record<string, unknown>> | ComputedRef<Record<string, unknown>>
   /** Additional headers to send with each request */
   headers?: Record<string, string> | Headers
   /** Credentials mode for fetch requests */

@@ -125,7 +125,7 @@ const { messages, input, isLoading, status, error, append, clearMessages, toolCa
   body: computed(() => ({
     system: systemPrompt.value,
     phase: currentPhase.value
-  })) as any,
+  })),
   onToolCall: async ({ toolCall }) => {
     try {
     // Phase 1 tools
@@ -144,7 +144,8 @@ const { messages, input, isLoading, status, error, append, clearMessages, toolCa
     if (toolCall.toolName === 'create_collection') {
       const collection = await editor.createCollection({
         name: args.name,
-        description: args.description
+        description: args.description,
+        display: args.display
       })
       // Create initial fields if provided
       if (args.fields?.length) {
@@ -164,7 +165,8 @@ const { messages, input, isLoading, status, error, append, clearMessages, toolCa
     if (toolCall.toolName === 'update_collection') {
       await editor.updateCollection(args.collectionId, {
         name: args.name,
-        description: args.description
+        description: args.description,
+        display: args.display
       })
       return { success: true }
     }

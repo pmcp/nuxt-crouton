@@ -13,7 +13,7 @@
  */
 
 import { useChat as useAISDKChat } from '@ai-sdk/vue'
-import { computed, toRaw } from 'vue'
+import { computed, isRef, toRaw, unref } from 'vue'
 import { useRuntimeConfig } from '#imports'
 import type { AIChatOptions, AIMessage, AIToolCall } from '../types'
 
@@ -37,18 +37,26 @@ export function useChat(options: AIChatOptions = {}) {
     // nuxt-crouton not installed, continue without team context
   }
 
+  // Build a reactive merged body that properly unwraps refs/computed
+  // @ai-sdk/vue's useChat calls unref() on body at request time,
+  // so passing a computed ref preserves reactivity
+  const mergedBody = computed(() => {
+    const extra = isRef(options.body) ? unref(options.body) : (options.body || {})
+    return {
+      teamId,
+      provider: options.provider || defaults.defaultProvider,
+      model: options.model || defaults.defaultModel,
+      ...(extra as Record<string, unknown>)
+    }
+  })
+
   // Initialize AI SDK chat
   const chat = useAISDKChat({
     api: options.api || '/api/ai/chat',
     id: options.id,
     initialMessages: options.initialMessages,
     initialInput: options.initialInput,
-    body: {
-      teamId,
-      provider: options.provider || defaults.defaultProvider,
-      model: options.model || defaults.defaultModel,
-      ...(options.body || {})
-    },
+    body: mergedBody,
     headers: options.headers,
     credentials: options.credentials,
     maxSteps: options.maxSteps,
