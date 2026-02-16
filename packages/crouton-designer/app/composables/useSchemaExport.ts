@@ -1,4 +1,4 @@
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
+import type { CollectionWithFields } from './useCollectionEditor'
 
 export interface SchemaFile {
   /** Collection name (used as filename: `{name}.json`) */

@@ -10,6 +10,8 @@ if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-designe
 }
 
 export default defineNuxtConfig({
+  extends: ['@fyit/crouton-ai'],
+
   $meta: {
     name: '@crouton/designer',
     version: '0.1.0'
@@ -20,8 +22,8 @@ export default defineNuxtConfig({
   components: {
     dirs: [
       {
-        path: join(currentDir, 'app/components/Designer'),
-        prefix: 'CroutonDesigner',
+        path: join(currentDir, 'app/components'),
+        prefix: 'Designer',
         global: true
       }
     ]
@@ -29,16 +31,6 @@ export default defineNuxtConfig({
 
   imports: {
     dirs: [join(currentDir, 'app/composables')]
-  },
-
-  runtimeConfig: {
-    public: {
-      crouton: {
-        designer: {
-          routePrefix: '/designer'
-        }
-      }
-    }
   },
 
   compatibilityDate: '2025-01-01',

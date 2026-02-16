@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AccordionItem } from '@nuxt/ui'
-import type { DesignerField } from '~~/layers/designer/collections/fields/types'
+import type { DesignerField } from '../types/schema'
 
 const props = defineProps<{
   projectId: string

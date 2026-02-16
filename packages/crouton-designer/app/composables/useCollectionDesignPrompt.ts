@@ -1,5 +1,5 @@
-import type { ProjectConfig } from '@fyit/crouton-designer/types'
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
+import type { ProjectConfig } from '../types/schema'
+import type { CollectionWithFields } from './useCollectionEditor'
 
 /**
  * Builds the system prompt for Phase 2 (Collection Design)

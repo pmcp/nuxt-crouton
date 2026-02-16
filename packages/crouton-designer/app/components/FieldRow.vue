@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { DesignerField } from '~~/layers/designer/collections/fields/types'
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
-import type { FieldType } from '@fyit/crouton-designer/types'
+import type { DesignerField, FieldType } from '../types/schema'
+import type { CollectionWithFields } from '../composables/useCollectionEditor'
 
 const props = defineProps<{
   field: DesignerField

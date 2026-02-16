@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { ValidationIssue } from '~/composables/useSchemaValidation'
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
+import type { ValidationIssue } from '../composables/useSchemaValidation'
+import type { CollectionWithFields } from '../composables/useCollectionEditor'
 
 const props = defineProps<{
   collections: CollectionWithFields[]

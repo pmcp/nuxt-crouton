@@ -8,7 +8,6 @@ export default defineNuxtConfig({
 
   extends: [
     '@fyit/crouton-core',
-    '@fyit/crouton-ai',
     '@fyit/crouton-designer',
     './layers/designer'
   ],
@@ -17,6 +16,15 @@ export default defineNuxtConfig({
 
   hub: {
     db: 'sqlite'
+  },
+
+  // Auto-create a personal workspace so team-scoped APIs work immediately
+  croutonAuth: {
+    teams: {
+      autoCreateOnSignup: true,
+      showSwitcher: false,
+      showManagement: false
+    }
   },
 
   css: ['~/assets/css/main.css'],

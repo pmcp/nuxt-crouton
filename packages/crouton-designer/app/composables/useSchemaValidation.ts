@@ -1,4 +1,4 @@
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
+import type { CollectionWithFields } from './useCollectionEditor'
 
 export interface ValidationIssue {
   type: 'error' | 'warning'

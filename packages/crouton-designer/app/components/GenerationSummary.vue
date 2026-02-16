@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { ProjectConfig } from '@fyit/crouton-designer/types'
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
+import type { ProjectConfig, FieldType } from '../types/schema'
+import type { CollectionWithFields } from '../composables/useCollectionEditor'
 
 const props = defineProps<{
   config: ProjectConfig
@@ -111,7 +111,7 @@ const appTypeLabels: Record<string, string> = {
               :key="field.id"
               class="flex items-center gap-2 text-sm py-1"
             >
-              <UIcon :name="getFieldIcon(field.type as any)" class="size-3.5 text-[var(--ui-text-muted)]" />
+              <UIcon :name="getFieldIcon(field.type as FieldType)" class="size-3.5 text-[var(--ui-text-muted)]" />
               <span>{{ field.name }}</span>
               <span class="text-xs text-[var(--ui-text-muted)]">{{ field.type }}</span>
               <UBadge v-if="field.meta?.required" color="warning" variant="subtle" size="xs" label="required" />

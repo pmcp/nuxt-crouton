@@ -87,7 +87,7 @@ watch(() => props.messages.length, () => {
       </div>
     </div>
 
-    <!-- Error display (A5.4) -->
+    <!-- Error display -->
     <div v-if="error" class="mx-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-sm flex items-center gap-2 text-red-700 dark:text-red-400">
       <UIcon name="i-lucide-alert-circle" class="size-4 shrink-0" />
       <span>AI response failed. Try sending your message again.</span>

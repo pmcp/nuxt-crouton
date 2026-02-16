@@ -3,7 +3,7 @@ definePageMeta({
   middleware: ['auth']
 })
 
-navigateTo('/designer', { redirectCode: 301 })
+navigateTo('/admin', { redirectCode: 301 })
 </script>
 
 <template>

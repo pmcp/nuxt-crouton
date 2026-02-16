@@ -1,6 +1,6 @@
 import { zipSync, strToU8 } from 'fflate'
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
-import type { ProjectConfig } from '@fyit/crouton-designer/types'
+import type { CollectionWithFields } from './useCollectionEditor'
+import type { ProjectConfig } from '../types/schema'
 
 export interface ArtifactFile {
   filename: string

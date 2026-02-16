@@ -1,4 +1,4 @@
-import type { ProjectConfig } from '@fyit/crouton-designer/types'
+import type { ProjectConfig } from '../types/schema'
 
 /**
  * Builds the system prompt for Phase 1 (Intake)

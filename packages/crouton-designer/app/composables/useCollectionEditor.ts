@@ -1,5 +1,4 @@
-import type { DesignerCollection } from '~~/layers/designer/collections/collections/types'
-import type { DesignerField } from '~~/layers/designer/collections/fields/types'
+import type { DesignerCollection, DesignerField } from '../types/schema'
 
 export interface CollectionWithFields extends DesignerCollection {
   fields: DesignerField[]

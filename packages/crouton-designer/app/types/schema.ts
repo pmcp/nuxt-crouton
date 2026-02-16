@@ -104,3 +104,59 @@ export interface PhaseMessages {
   1?: Array<{ id: string, role: 'user' | 'assistant' | 'system', content: string, createdAt?: string }>
   2?: Array<{ id: string, role: 'user' | 'assistant' | 'system', content: string, createdAt?: string }>
 }
+
+/**
+ * Runtime types matching crouton-generated collection shapes.
+ * These mirror the generated layer types so the package doesn't depend
+ * on the app's local generated layer.
+ */
+
+export interface DesignerProject {
+  id: string
+  teamId: string
+  owner: string
+  name: string
+  currentPhase: string
+  config?: Record<string, any>
+  messages?: Record<string, any>
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+  updatedBy: string
+  optimisticId?: string
+  optimisticAction?: 'create' | 'update' | 'delete'
+}
+
+export interface DesignerCollection {
+  id: string
+  teamId: string
+  owner: string
+  projectId: string
+  name: string
+  description?: string
+  sortOrder?: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+  updatedBy: string
+  optimisticId?: string
+  optimisticAction?: 'create' | 'update' | 'delete'
+}
+
+export interface DesignerField {
+  id: string
+  teamId: string
+  owner: string
+  collectionId: string
+  name: string
+  type: string
+  meta?: Record<string, any>
+  refTarget?: string
+  sortOrder?: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+  updatedBy: string
+  optimisticId?: string
+  optimisticAction?: 'create' | 'update' | 'delete'
+}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProjectConfig, AppType, AuthType } from '@fyit/crouton-designer/types'
+import type { ProjectConfig } from '../types/schema'
 
 const props = defineProps<{
   config: ProjectConfig
@@ -78,14 +78,6 @@ function togglePackage(pkg: string) {
     ? current.filter((p: string) => p !== pkg)
     : [...current, pkg]
   emit('update:config', { packages: updated })
-}
-
-function getAppTypeLabel(value?: string) {
-  return appTypeOptions.find(o => o.value === value)?.label || ''
-}
-
-function getAuthTypeLabel(value?: string) {
-  return authTypeOptions.find(o => o.value === value)?.label || ''
 }
 
 interface ConfigField {

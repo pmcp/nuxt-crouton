@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import type { StepperItem } from '@nuxt/ui'
-import type { ProjectConfig } from '@fyit/crouton-designer/types'
-import type { DesignerProject } from '~~/layers/designer/collections/projects/types'
+import type { ProjectConfig, DesignerProject } from '../../../../types/schema'
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'designer'
+  layout: 'admin'
 })
 
 const route = useRoute()
 const router = useRouter()
+const teamSlug = computed(() => route.params.team as string)
 const projectId = computed(() => route.params.id as string)
 const isNewProject = computed(() => projectId.value === 'new')
 
@@ -34,7 +34,7 @@ const currentPhase = ref<string>('1')
 const chatCollapsed = ref(false)
 const projectRecord = ref<DesignerProject | null>(null)
 
-// ------- Backward navigation (A5.1) -------
+// ------- Backward navigation -------
 const showBackwardWarning = ref(false)
 const pendingPhaseChange = ref<string | null>(null)
 
@@ -79,7 +79,7 @@ async function ensureProject(): Promise<string> {
   })
   projectRecord.value = result
   if (isNewProject.value) {
-    router.replace(`/designer/${result.id}`)
+    router.replace(`/admin/${teamSlug.value}/designer/${result.id}`)
   }
   return result.id
 }
@@ -229,7 +229,7 @@ function handleChatSend(text: string) {
   })
 }
 
-// ------- Chat message persistence (A5.3) -------
+// ------- Chat message persistence -------
 async function saveChatMessages() {
   if (!projectRecord.value?.id || messages.value.length === 0) return
   const stored: Record<string, any> = { ...(projectRecord.value.messages || {}) }
@@ -263,12 +263,12 @@ async function persistPhase(phase: string) {
   })
 }
 
-// Restore chat for loaded project (A5.3)
+// Restore chat for loaded project
 if (projectRecord.value?.currentPhase) {
   restoreChatMessages(projectRecord.value.currentPhase)
 }
 
-// ------- Phase navigation handler (A5.1) -------
+// ------- Phase navigation handler -------
 async function handlePhaseChange(val: string | number | undefined) {
   const newPhase = String(val)
   const current = currentPhase.value
@@ -347,7 +347,7 @@ async function continueToCollections() {
   triggerInitialProposal()
 }
 
-// --- Auto-generate initial proposal on Phase 2 entry (A3.10) ---
+// --- Auto-generate initial proposal on Phase 2 entry ---
 const proposalTriggered = ref(false)
 
 function triggerInitialProposal() {
@@ -404,132 +404,135 @@ async function continueToReview() {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <UButton
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          color="neutral"
-          to="/designer"
-        />
-        <h1 class="text-xl font-semibold">
-          {{ projectConfig.name || 'New Project' }}
-        </h1>
-      </div>
-    </div>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="projectConfig.name || 'New Project'">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+          <UButton
+            icon="i-lucide-arrow-left"
+            variant="ghost"
+            color="neutral"
+            :to="`/admin/${teamSlug}/designer`"
+          />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-    <!-- Phase stepper -->
-    <UStepper
-      :model-value="currentPhase"
-      :items="phases"
-      :linear="false"
-      class="mb-6"
-      @update:model-value="handlePhaseChange"
-    >
-      <!-- Phase 1: Intake -->
-      <template #intake>
-        <DesignerTwoPanelLayout v-model:chat-collapsed="chatCollapsed">
-          <template #chat>
-            <DesignerChatPanel
-              :messages="messages"
-              :is-loading="isLoading"
-              :error="error"
-              @send="handleChatSend"
-            />
-          </template>
-          <template #content>
-            <DesignerIntakeSummaryCard
-              :config="projectConfig"
-              @update:config="updateConfig"
-            />
-
-            <!-- Transition button -->
-            <div class="px-6 pb-6">
-              <USeparator class="mb-6" />
-              <div class="flex items-center justify-between">
-                <p v-if="!canContinue" class="text-sm text-[var(--ui-text-muted)]">
-                  Set an app name and type to continue.
-                </p>
-                <div v-else />
-                <UButton
-                  label="Continue to Collection Design"
-                  icon="i-lucide-arrow-right"
-                  trailing
-                  :disabled="!canContinue"
-                  @click="continueToCollections"
+    <template #body>
+      <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Phase stepper -->
+        <UStepper
+          :model-value="currentPhase"
+          :items="phases"
+          :linear="false"
+          class="mb-6"
+          @update:model-value="handlePhaseChange"
+        >
+          <!-- Phase 1: Intake -->
+          <template #intake>
+            <DesignerTwoPanelLayout v-model:chat-collapsed="chatCollapsed">
+              <template #chat>
+                <DesignerChatPanel
+                  :messages="messages"
+                  :is-loading="isLoading"
+                  :error="error"
+                  @send="handleChatSend"
                 />
-              </div>
-            </div>
-          </template>
-        </DesignerTwoPanelLayout>
-      </template>
+              </template>
+              <template #content>
+                <DesignerIntakeSummaryCard
+                  :config="projectConfig"
+                  @update:config="updateConfig"
+                />
 
-      <!-- Phase 2: Collection Design -->
-      <template #collections>
-        <DesignerTwoPanelLayout v-model:chat-collapsed="chatCollapsed">
-          <template #chat>
-            <DesignerChatPanel
-              :messages="messages"
-              :is-loading="isLoading"
-              :error="error"
-              @send="handleChatSend"
-            />
+                <!-- Transition button -->
+                <div class="px-6 pb-6">
+                  <USeparator class="mb-6" />
+                  <div class="flex items-center justify-between">
+                    <p v-if="!canContinue" class="text-sm text-[var(--ui-text-muted)]">
+                      Set an app name and type to continue.
+                    </p>
+                    <div v-else />
+                    <UButton
+                      label="Continue to Collection Design"
+                      icon="i-lucide-arrow-right"
+                      trailing
+                      :disabled="!canContinue"
+                      @click="continueToCollections"
+                    />
+                  </div>
+                </div>
+              </template>
+            </DesignerTwoPanelLayout>
           </template>
-          <template #content>
-            <DesignerCollectionEditor
-              ref="collectionEditorRef"
+
+          <!-- Phase 2: Collection Design -->
+          <template #collections>
+            <DesignerTwoPanelLayout v-model:chat-collapsed="chatCollapsed">
+              <template #chat>
+                <DesignerChatPanel
+                  :messages="messages"
+                  :is-loading="isLoading"
+                  :error="error"
+                  @send="handleChatSend"
+                />
+              </template>
+              <template #content>
+                <DesignerCollectionEditor
+                  ref="collectionEditorRef"
+                  :project-id="projectId"
+                />
+
+                <!-- Transition button -->
+                <div class="px-4 pb-4">
+                  <USeparator class="mb-4" />
+                  <div class="flex items-center justify-end">
+                    <UButton
+                      label="Continue to Review"
+                      icon="i-lucide-arrow-right"
+                      trailing
+                      @click="continueToReview"
+                    />
+                  </div>
+                </div>
+              </template>
+            </DesignerTwoPanelLayout>
+          </template>
+
+          <!-- Phase 5: Review & Generate -->
+          <template #review>
+            <DesignerReviewPanel
               :project-id="projectId"
+              :config="projectConfig"
+              @back-to-collections="handlePhaseChange('2')"
             />
+          </template>
+        </UStepper>
 
-            <!-- Transition button -->
-            <div class="px-4 pb-4">
-              <USeparator class="mb-4" />
-              <div class="flex items-center justify-end">
-                <UButton
-                  label="Continue to Review"
-                  icon="i-lucide-arrow-right"
-                  trailing
-                  @click="continueToReview"
-                />
+        <!-- Backward navigation warning -->
+        <UModal v-model="showBackwardWarning">
+          <template #content>
+            <div class="p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <UIcon name="i-lucide-alert-triangle" class="size-5 text-[var(--ui-color-warning-500)]" />
+                <h3 class="text-lg font-semibold">
+                  Go back to Intake?
+                </h3>
+              </div>
+              <p class="text-sm text-[var(--ui-text-muted)] mb-6">
+                Your collections will be preserved, but changing app configuration
+                (e.g., switching from multi-tenant to single-tenant) may require
+                manual schema adjustments.
+              </p>
+              <div class="flex justify-end gap-2">
+                <UButton color="neutral" variant="ghost" label="Cancel" @click="cancelBackward" />
+                <UButton color="warning" label="Go Back" @click="confirmBackward" />
               </div>
             </div>
           </template>
-        </DesignerTwoPanelLayout>
-      </template>
-
-      <!-- Phase 5: Review & Generate -->
-      <template #review>
-        <DesignerReviewPanel
-          :project-id="projectId"
-          :config="projectConfig"
-          @back-to-collections="handlePhaseChange('2')"
-        />
-      </template>
-    </UStepper>
-
-    <!-- Backward navigation warning (A5.1) -->
-    <UModal v-model="showBackwardWarning">
-      <template #content>
-        <div class="p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <UIcon name="i-lucide-alert-triangle" class="size-5 text-[var(--ui-color-warning-500)]" />
-            <h3 class="text-lg font-semibold">
-              Go back to Intake?
-            </h3>
-          </div>
-          <p class="text-sm text-[var(--ui-text-muted)] mb-6">
-            Your collections will be preserved, but changing app configuration
-            (e.g., switching from multi-tenant to single-tenant) may require
-            manual schema adjustments.
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton color="neutral" variant="ghost" label="Cancel" @click="cancelBackward" />
-            <UButton color="warning" label="Go Back" @click="confirmBackward" />
-          </div>
-        </div>
-      </template>
-    </UModal>
-  </div>
+        </UModal>
+      </div>
+    </template>
+  </UDashboardPanel>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useSortable } from '@vueuse/integrations/useSortable'
-import type { DesignerField } from '~~/layers/designer/collections/fields/types'
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
+import type { DesignerField } from '../types/schema'
+import type { CollectionWithFields } from '../composables/useCollectionEditor'
 
 const props = defineProps<{
   fields: DesignerField[]

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { ProjectConfig } from '@fyit/crouton-designer/types'
-import type { CollectionWithFields } from '~/composables/useCollectionEditor'
+import type { ProjectConfig } from '../types/schema'
+import type { CollectionWithFields } from '../composables/useCollectionEditor'
 
 const props = defineProps<{
   projectId: string
