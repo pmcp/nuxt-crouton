@@ -219,6 +219,12 @@ function handleEdit() {
                     {{ field.type === 'decimal' ? Number(item[field.name]).toLocaleString(undefined, { minimumFractionDigits: 2 }) : Number(item[field.name]).toLocaleString() }}
                   </span>
 
+                  <!-- Editor / Prose (rich HTML content) -->
+                  <CroutonEditorPreview
+                    v-else-if="(field.type === 'editor' || field.type === 'prose') && item[field.name]"
+                    :content="item[field.name]"
+                  />
+
                   <!-- Text (longer string content) -->
                   <p
                     v-else-if="field.type === 'text' && item[field.name]"
@@ -313,6 +319,12 @@ function handleEdit() {
                   >
                     {{ field.type === 'decimal' ? Number(item[field.name]).toLocaleString(undefined, { minimumFractionDigits: 2 }) : Number(item[field.name]).toLocaleString() }}
                   </span>
+
+                  <!-- Editor / Prose (rich HTML content) -->
+                  <CroutonEditorPreview
+                    v-else-if="(field.type === 'editor' || field.type === 'prose') && item[field.name]"
+                    :content="item[field.name]"
+                  />
 
                   <!-- String / Text -->
                   <span
