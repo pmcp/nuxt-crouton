@@ -213,7 +213,7 @@ function getBookingsForDate(date: Date): Booking[] {
   return bookingsByDate.value.get(key) || []
 }
 
-// Get indicators data for a specific date (grouped by location)
+// Get indicators data for a specific date (all locations, showing open slots)
 function getIndicatorsForDate(date: Date): Array<{
   locationId: string
   locationTitle: string
@@ -224,9 +224,8 @@ function getIndicatorsForDate(date: Date): Array<{
   bookings: Booking[]
 }> {
   const dayBookings = getBookingsForDate(date)
-  if (dayBookings.length === 0) return []
 
-  // Group by location
+  // Group bookings by location
   const byLocation = new Map<string, Booking[]>()
   for (const booking of dayBookings) {
     const locId = booking.location
@@ -236,7 +235,12 @@ function getIndicatorsForDate(date: Date): Array<{
     byLocation.get(locId)!.push(booking)
   }
 
-  // Build indicators for each location
+  // Determine which locations to show (respect location filter)
+  const visibleLocations = props.filters.locations.length > 0
+    ? props.locations.filter(l => props.filters.locations.includes(l.id))
+    : props.locations
+
+  // Build indicators for ALL visible locations (not just those with bookings)
   const indicators: Array<{
     locationId: string
     locationTitle: string
@@ -247,17 +251,16 @@ function getIndicatorsForDate(date: Date): Array<{
     bookings: Booking[]
   }> = []
 
-  for (const [locationId, locationBookings] of byLocation) {
-    // Find location data
-    const location = props.locations.find(l => l.id === locationId)
-      || locationBookings[0]?.locationData
+  for (const location of visibleLocations) {
+    const locationSlots = parseLocationSlots(location)
+    // Skip locations with no slots defined
+    if (locationSlots.length === 0) continue
 
-    if (!location) continue
+    const locationBookings = byLocation.get(location.id) || []
 
     // Get all slot IDs booked for this location on this day
     const bookedSlotIds: string[] = []
     const cancelledSlotIds: string[] = []
-    const locationSlots = parseLocationSlots(location)
 
     for (const booking of locationBookings) {
       const slotIds = parseSlotIds(booking.slot)
@@ -284,22 +287,15 @@ function getIndicatorsForDate(date: Date): Array<{
     const uniqueCancelledSlotIds = [...new Set(cancelledSlotIds)]
 
     indicators.push({
-      locationId,
+      locationId: location.id,
       locationTitle: getLocationTitle(location),
       color: location.color || '#3b82f6',
-      slots: parseLocationSlots(location),
+      slots: locationSlots,
       bookedSlotIds: uniqueBookedSlotIds,
       cancelledSlotIds: uniqueCancelledSlotIds,
       bookings: locationBookings,
     })
   }
-
-  // Sort indicators by location index to ensure consistent ordering across days
-  indicators.sort((a, b) => {
-    const indexA = props.locations.findIndex(l => l.id === a.locationId)
-    const indexB = props.locations.findIndex(l => l.id === b.locationId)
-    return indexA - indexB
-  })
 
   return indicators
 }
@@ -354,14 +350,12 @@ function getDayBlockedReason(date: Date): string | null {
 }
 
 // Compute max indicators across all days for uniform row height
+// Since we now show all locations on every day, this is the count of visible locations with slots
 const maxIndicatorCount = computed(() => {
-  let max = 0
-  for (const [, bookings] of bookingsByDate.value) {
-    // Count unique locations for this date
-    const locations = new Set(bookings.map(b => b.location))
-    max = Math.max(max, locations.size)
-  }
-  return max
+  const visibleLocations = props.filters.locations.length > 0
+    ? props.locations.filter(l => props.filters.locations.includes(l.id))
+    : props.locations
+  return visibleLocations.filter(l => parseLocationSlots(l).length > 0).length
 })
 
 // Calculate cell height based on max indicators
