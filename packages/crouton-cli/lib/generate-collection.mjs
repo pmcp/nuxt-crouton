@@ -224,8 +224,8 @@ async function registerTranslationsUiCollection() {
       return true
     }
 
-    // Check if already registered
-    if (content.includes('translationsUi:') || content.includes('translationsUiConfig')) {
+    // Check if already registered (only check the config entry, not the import)
+    if (content.includes('translationsUi:')) {
       console.log(`✓ translationsUi collection already registered in app.config.ts`)
       return false
     }
@@ -244,7 +244,7 @@ async function registerTranslationsUiCollection() {
     // Insert entry into croutonCollections
     const entryLine = `    ${collectionKey}: ${configName},`
     const collectionsBlockRegex = /croutonCollections:\s*\{\s*\n/
-    const hasCroutonCollections = content.includes('croutonCollections')
+    const hasCroutonCollections = /croutonCollections\s*:/.test(content)
 
     if (!hasCroutonCollections) {
       // No croutonCollections block yet, add one
@@ -514,7 +514,7 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
     // Insert new entry into croutonCollections
     const entryLine = `    ${collectionKey}: ${configExportName},`
     const collectionsBlockRegex = /croutonCollections:\s*\{\s*\n/
-    const hasCroutonCollections = content.includes('croutonCollections')
+    const hasCroutonCollections = /croutonCollections\s*:/.test(content)
 
     if (!hasCroutonCollections) {
       // No croutonCollections block yet, add one
@@ -681,9 +681,11 @@ export default defineNuxtConfig({
         config = config.replace(extendsMatch[0], `extends: [\n${updatedExtends}\n  ]`)
       }
 
-      // REMOVED: Don't add i18n config to local layers
-      // Local layers inherit i18n from the main config
-      // Having separate i18n configs per layer causes module conflicts
+      // Add i18n config block when translations are enabled and not already present
+      if (hasTranslations && !config.includes('i18n:')) {
+        config = await addI18nConfigToLayer(configPath, config)
+        needsUpdate = true
+      }
 
       if (needsUpdate) {
         await fsp.writeFile(configPath, config)
@@ -1698,9 +1700,9 @@ async function main() {
           }
 
           // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
+          // Note: exportI18nSchema() already calls registerTranslationsUiCollection() internally
           console.log(`\n↻ Ensuring translations_ui table...`)
           await exportI18nSchema(config.flags?.force || false)
-          await registerTranslationsUiCollection()
 
           // Run database migration once for all collections
           console.log(`\nRunning database migration...`)
@@ -1827,9 +1829,9 @@ async function main() {
           }
 
           // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
+          // Note: exportI18nSchema() already calls registerTranslationsUiCollection() internally
           console.log(`\n↻ Ensuring translations_ui table...`)
           await exportI18nSchema(config.flags?.force || false)
-          await registerTranslationsUiCollection()
 
           // Run database migration once for all collections
           console.log(`\nRunning database migration...`)
