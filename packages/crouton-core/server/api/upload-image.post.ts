@@ -1,22 +1,36 @@
-// NuxtHub blob utilities - auto-imported when using @nuxthub/core
-declare function ensureBlob(blob: Blob, options: { maxSize: string, types: string[] }): void
-declare function hubBlob(): { put: (name: string, blob: Blob, options?: { addRandomSuffix?: boolean }) => Promise<{ pathname: string }> }
-
 export default defineEventHandler(async (event) => {
-  const form = await readFormData(event)
-  const image = form.get('image')
+  // Auth check - require authenticated user
+  const session = await requireAuth(event)
 
-  if (!(image instanceof Blob)) {
+  // Get upload constraints from runtime config
+  const config = useRuntimeConfig(event)
+  const uploadConfig = config.public?.croutonUpload || {}
+  const maxSize = uploadConfig.maxSize || '10MB'
+  const allowedTypes = uploadConfig.allowedTypes || [
+    // Images
+    'image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml', 'image/avif',
+    // Documents
+    'application/pdf',
+    // Video
+    'video/mp4', 'video/webm',
+    // Audio
+    'audio/mpeg', 'audio/wav', 'audio/ogg'
+  ]
+
+  const form = await readFormData(event)
+  const file = form.get('image') || form.get('file')
+
+  if (!(file instanceof Blob)) {
     throw createError({
       status: 400,
-      statusText: 'Image is required and must be a valid file'
+      statusText: 'File is required and must be a valid file'
     })
   }
 
   try {
-    ensureBlob(image, {
-      maxSize: '1MB',
-      types: ['image/png', 'image/jpeg', 'image/webp']
+    ensureBlob(file, {
+      maxSize,
+      types: allowedTypes
     })
   } catch (error: unknown) {
     throw createError({
@@ -26,10 +40,15 @@ export default defineEventHandler(async (event) => {
   }
 
   // File extends Blob and has a name property; use it if available, otherwise generate one
-  const fileName = (image as File).name || `upload-${Date.now()}.${image.type.split('/')[1] || 'bin'}`
-  const file = await hubBlob().put(fileName, image, {
+  const fileName = (file as File).name || `upload-${Date.now()}.${file.type.split('/')[1] || 'bin'}`
+  const blob = await hubBlob().put(fileName, file, {
     addRandomSuffix: true
   })
 
-  return file.pathname
+  return {
+    pathname: blob.pathname,
+    contentType: file.type,
+    size: file.size,
+    filename: fileName
+  }
 })
