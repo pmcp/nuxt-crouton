@@ -286,7 +286,7 @@ useHead({
       >
         <button
           v-if="isAdmin && !isEditing && page?.id"
-          class="fixed bottom-6 right-6 z-40 flex items-center justify-center size-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer"
+          class="fixed bottom-6 right-6 z-40 flex items-center justify-center size-12 rounded-full bg-muted/80 backdrop-blur-sm text-muted-foreground border border-default shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer"
           @click="startEditing"
         >
           <UIcon name="i-lucide-pencil" class="size-5" />

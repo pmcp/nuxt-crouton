@@ -276,7 +276,7 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
     </template>
 
     <!-- Desktop layout -->
-    <div v-else-if="isDesktop" class="relative flex items-center justify-center">
+    <div v-else-if="isDesktop" class="relative flex items-center" :class="showPageNav ? 'justify-center' : 'justify-end'">
       <!-- Center pill: Page navigation (hidden when ≤1 page) -->
       <div v-if="showPageNav" :class="[pillClass, 'px-4']">
         <UNavigationMenu
@@ -292,7 +292,7 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
       </div>
 
       <!-- Right pill: User menu + language + dark mode (pinned right) -->
-      <div :class="[pillClass, 'px-2 py-1 absolute right-0']">
+      <div :class="[pillClass, 'px-2 py-1', showPageNav && 'absolute right-0']">
         <ClientOnly>
           <!-- Authenticated: Avatar dropdown -->
           <UDropdownMenu
@@ -365,7 +365,7 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
     </div>
 
     <!-- Mobile layout -->
-    <div v-else class="relative flex items-center justify-center">
+    <div v-else class="relative flex items-center" :class="showPageNav ? 'justify-center' : 'justify-end'">
       <!-- Center pill: Hamburger + drawer (hidden when ≤1 page) -->
       <div v-if="showPageNav" :class="[pillClass, 'px-2 py-1']">
         <UDrawer v-model:open="drawerOpen" direction="left" :ui="{ content: 'w-72' }">
@@ -408,7 +408,7 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
         </UDrawer>
       </div>
       <!-- Right pill: User + language + dark mode (pinned right) -->
-      <div :class="[pillClass, 'px-2 py-1 absolute right-0']">
+      <div :class="[pillClass, 'px-2 py-1', showPageNav && 'absolute right-0']">
         <ClientOnly>
           <!-- Authenticated: Avatar dropdown -->
           <UDropdownMenu
