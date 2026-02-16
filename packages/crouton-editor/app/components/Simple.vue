@@ -37,6 +37,8 @@ interface Props {
   translationContext?: TranslationContext
   /** Callback when translation is accepted */
   onTranslationAccept?: (text: string) => void
+  /** Enable image upload in toolbar (requires blob storage) */
+  enableImageUpload?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -44,7 +46,8 @@ const props = withDefaults(defineProps<Props>(), {
   editable: true,
   showToolbar: true,
   showBubbleToolbar: true,
-  enableTranslationAI: false
+  enableTranslationAI: false,
+  enableImageUpload: false
 })
 
 const emit = defineEmits<{
@@ -62,6 +65,7 @@ const model = computed({
 // Track the editor instance for translation commands
 const editorInstance = ref<Editor | null>(null)
 const isTranslating = ref(false)
+const isUploadingImage = ref(false)
 
 // Build extensions list with optional TranslationAI
 const allExtensions = computed(() => {
@@ -130,9 +134,116 @@ async function translateSelectedText() {
   }
 }
 
-// Store editor instance on create
+// Image upload handler
+async function handleImageUpload() {
+  if (!editorInstance.value) return
+
+  // Create file input and trigger it
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.onchange = async () => {
+    const file = input.files?.[0]
+    if (!file) return
+
+    isUploadingImage.value = true
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const result = await $fetch<{ pathname: string }>('/api/upload-image', {
+        method: 'POST',
+        body: formData
+      })
+
+      // Insert image into editor
+      editorInstance.value
+        ?.chain()
+        .focus()
+        .setImage({ src: `/images/${result.pathname}`, alt: file.name })
+        .run()
+    } catch (err) {
+      console.error('Image upload failed:', err)
+    } finally {
+      isUploadingImage.value = false
+    }
+  }
+  input.click()
+}
+
+// Handle paste/drop image upload
 function handleEditorCreate(event: { editor: Editor }) {
   editorInstance.value = event.editor
+
+  if (props.enableImageUpload) {
+    // Handle paste events for images
+    event.editor.view.dom.addEventListener('paste', async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault()
+          const file = item.getAsFile()
+          if (!file) continue
+
+          isUploadingImage.value = true
+          try {
+            const formData = new FormData()
+            formData.append('file', file)
+
+            const result = await $fetch<{ pathname: string }>('/api/upload-image', {
+              method: 'POST',
+              body: formData
+            })
+
+            event.editor
+              .chain()
+              .focus()
+              .setImage({ src: `/images/${result.pathname}`, alt: file.name })
+              .run()
+          } catch (err) {
+            console.error('Image paste upload failed:', err)
+          } finally {
+            isUploadingImage.value = false
+          }
+          break
+        }
+      }
+    })
+
+    // Handle drop events for images
+    event.editor.view.dom.addEventListener('drop', async (e: DragEvent) => {
+      const files = e.dataTransfer?.files
+      if (!files?.length) return
+
+      const imageFile = Array.from(files).find(f => f.type.startsWith('image/'))
+      if (!imageFile) return
+
+      e.preventDefault()
+      isUploadingImage.value = true
+      try {
+        const formData = new FormData()
+        formData.append('file', imageFile)
+
+        const result = await $fetch<{ pathname: string }>('/api/upload-image', {
+          method: 'POST',
+          body: formData
+        })
+
+        event.editor
+          .chain()
+          .focus()
+          .setImage({ src: `/images/${result.pathname}`, alt: imageFile.name })
+          .run()
+      } catch (err) {
+        console.error('Image drop upload failed:', err)
+      } finally {
+        isUploadingImage.value = false
+      }
+    })
+  }
+
   emit('create', event)
 }
 
@@ -182,9 +293,20 @@ const baseToolbarItems: EditorToolbarItem[][] = [
   ]
 ]
 
-// Computed toolbar items with optional AI translation button
+// Computed toolbar items with optional image upload and AI translation buttons
 const toolbarItems = computed<EditorToolbarItem[][]>(() => {
   const items = [...baseToolbarItems]
+
+  // Add image upload button
+  if (props.enableImageUpload) {
+    items.push([
+      {
+        icon: 'i-lucide-image-plus',
+        tooltip: { text: 'Insert Image' },
+        onClick: handleImageUpload
+      } as EditorToolbarItem
+    ])
+  }
 
   // Add AI translation button when enabled and context is provided
   if (props.enableTranslationAI && props.translationContext) {
@@ -263,11 +385,11 @@ const bubbleToolbarItems: EditorToolbarItem[][] = [
       :items="toolbarItems"
       class="border-b border-default px-2 py-1.5 flex-shrink-0"
     >
-      <!-- Loading indicator when translating -->
-      <template v-if="isTranslating" #append>
+      <!-- Loading indicator when translating or uploading -->
+      <template v-if="isTranslating || isUploadingImage" #append>
         <div class="flex items-center gap-2 text-xs text-gray-500 ml-2">
           <UIcon name="i-lucide-loader-2" class="animate-spin" />
-          <span>Translating...</span>
+          <span>{{ isTranslating ? 'Translating...' : 'Uploading image...' }}</span>
         </div>
       </template>
     </UEditorToolbar>

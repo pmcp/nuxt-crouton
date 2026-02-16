@@ -174,25 +174,17 @@ function onDelete() {
             </UInput>
           </UFormField>
 
-          <!-- Image URL -->
+          <!-- Image Editor -->
           <UFormField
             v-else-if="field.type === 'image'"
             :label="field.label"
             :name="field.name"
             :description="field.description"
           >
-            <UInput
-              :model-value="localAttrs[field.name] as string || ''"
-              placeholder="https://..."
-              class="w-full"
+            <CroutonPagesBlocksPropertiesImageEditor
+              :model-value="(localAttrs[field.name] as string) || ''"
               @update:model-value="onFieldChange(field.name, $event)"
             />
-            <img
-              v-if="localAttrs[field.name]"
-              :src="localAttrs[field.name] as string"
-              alt="Preview"
-              class="mt-2 rounded-lg max-h-32 object-cover"
-            >
           </UFormField>
 
           <!-- Links Editor -->
