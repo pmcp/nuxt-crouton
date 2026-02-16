@@ -103,8 +103,10 @@ export function generateFormComponent(data, config = {}) {
   const hasDateFields = regularFields.some(field => field.type === 'date')
 
   // Detect address fields for map/geocoding functionality (only if useMaps flag is enabled)
+  // Use ALL fields (including translatable) for detection since address fields like street/city are often translatable
   const useMaps = config?.flags?.useMaps === true
-  const addressDetection = useMaps ? detectAddressFields(regularFields) : { hasAddress: false, addressFields: [], coordinateFields: [], hasCoordinates: false }
+  const allNonIdFields = fields.filter(f => f.name !== 'id' && !hierarchyFields.includes(f.name))
+  const addressDetection = useMaps ? detectAddressFields(allNonIdFields) : { hasAddress: false, addressFields: [], coordinateFields: [], hasCoordinates: false }
   const { hasAddress, addressFields, coordinateFields, hasCoordinates } = addressDetection
   const coordinateFieldName = hasAddress && hasCoordinates ? getCoordinateFieldName(coordinateFields) : null
   const shouldGenerateMap = useMaps && hasAddress && coordinateFieldName
@@ -419,6 +421,17 @@ export function generateFormComponent(data, config = {}) {
   const mainGroups = groupFieldsByGroup(mainFields)
   const sidebarGroups = groupFieldsByGroup(sidebarFields)
 
+  // Ensure coordinate field's group exists for map injection even if the coordinate field was filtered out
+  if (shouldGenerateMap && coordinateFieldName) {
+    const coordField = fields.find(f => f.name === coordinateFieldName)
+    const coordGroup = coordField?.meta?.group || ''
+    const coordArea = coordField?.meta?.area || 'main'
+    const targetGroups = coordArea === 'sidebar' ? sidebarGroups : mainGroups
+    if (!targetGroups.has(coordGroup)) {
+      targetGroups.set(coordGroup, [])
+    }
+  }
+
   // Determine if we should use tabs (multiple main groups)
   const useTabs = mainGroups.size > 1
   // Sidebar is shown if there are sidebar fields OR if hierarchy is enabled (for parent picker)
@@ -438,8 +451,12 @@ export function generateFormComponent(data, config = {}) {
     const groupValue = groupName || 'general'
     const fieldsMarkup = groupFields.map(generateFieldMarkup).join('\n')
 
-    // Inject map section if this is the "address" group and we have shouldGenerateMap
-    const mapInjection = (groupName === 'address' && shouldGenerateMap) ? mapSection : ''
+    // Inject map section into the appropriate group:
+    // - "address" group (when address fields are regular/non-translatable)
+    // - The coordinate field's group (e.g. "map") when address fields are translatable
+    const coordinateFieldGroup = shouldGenerateMap ? fields.find(f => f.name === coordinateFieldName)?.meta?.group : null
+    const isMapGroup = shouldGenerateMap && (groupName === 'address' || (coordinateFieldGroup && groupName === coordinateFieldGroup))
+    const mapInjection = isMapGroup ? mapSection : ''
 
     const conditionalWrapper = showConditionally
       ? `      <div v-show="!tabs || activeSection === '${groupValue}'" class="flex flex-col gap-4 p-1">\n`
