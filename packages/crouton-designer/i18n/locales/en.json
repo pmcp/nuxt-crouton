@@ -13,6 +13,8 @@
       "intakeDescription": "Describe your app",
       "collections": "Collections",
       "collectionsDescription": "Design your data model",
+      "seedData": "Seed Data",
+      "seedDataDescription": "Generate sample data",
       "review": "Review & Generate",
       "reviewDescription": "Validate and export",
       "unknown": "Unknown"
@@ -213,10 +215,21 @@
     "project": {
       "setNameAndType": "Set an app name and type to continue.",
       "continueToCollections": "Continue to Collection Design",
+      "continueToSeedData": "Continue to Seed Data",
       "continueToReview": "Continue to Review",
       "goBackToIntake": "Go back to Intake?",
       "goBackWarning": "Your collections will be preserved, but changing app configuration (e.g., switching from multi-tenant to single-tenant) may require manual schema adjustments.",
-      "goBack": "Go Back"
+      "goBack": "Go Back",
+      "goBackToCollections": "Go back to Collections?",
+      "goBackToCollectionsWarning": "Going back to Collection Design will clear all generated seed data. Your collections will not be affected.",
+      "clearSeedData": "Clear Seed Data & Go Back"
+    },
+    "seedData": {
+      "noCollections": "No collections to generate seed data for.",
+      "noData": "No seed data yet. The AI will generate it automatically.",
+      "entryCount": "{count} entries",
+      "regenerate": "Regenerate",
+      "generating": "Generating seed data..."
     },
     "ai": {
       "errorTitle": "AI Error",

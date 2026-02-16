@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProjectConfig } from '../types/schema'
+import type { ProjectConfig, SeedDataMap, DesignerProject } from '../types/schema'
 import type { CollectionWithFields } from '../composables/useCollectionEditor'
 
 const props = defineProps<{
@@ -14,16 +14,18 @@ const emit = defineEmits<{
 const { buildApiUrl } = useTeamContext()
 const { t } = useT()
 
-// Load collections + fields for this project
+// Load collections + fields + seed data for this project
 const collections = ref<CollectionWithFields[]>([])
+const seedData = ref<SeedDataMap>({})
 const loading = ref(true)
 
 async function loadCollections() {
   loading.value = true
   try {
-    const [allCollections, allFields] = await Promise.all([
+    const [allCollections, allFields, projectRecords] = await Promise.all([
       $fetch<any[]>(buildApiUrl('/designer-collections')),
-      $fetch<any[]>(buildApiUrl('/designer-fields'))
+      $fetch<any[]>(buildApiUrl('/designer-fields')),
+      $fetch<DesignerProject[]>(buildApiUrl(`/designer-projects?ids=${props.projectId}`))
     ])
     const projectCollections = allCollections.filter(c => c.projectId === props.projectId)
     const collectionIds = new Set(projectCollections.map(c => c.id))
@@ -41,6 +43,12 @@ async function loadCollections() {
       ...col,
       fields: fieldsByCollection.get(col.id) || []
     }))
+
+    // Load seed data from project record
+    const project = projectRecords?.[0]
+    if (project?.seedData && typeof project.seedData === 'object') {
+      seedData.value = project.seedData as SeedDataMap
+    }
   }
   finally {
     loading.value = false
@@ -54,7 +62,7 @@ const { issues, errors, warnings, hasErrors } = useSchemaValidation(collections)
 
 // Schema download
 const configRef = computed(() => props.config)
-const { artifacts, cliCommand, downloadZip } = useSchemaDownload(collections, configRef)
+const { artifacts, cliCommand, downloadZip } = useSchemaDownload(collections, configRef, seedData)
 
 // Track download state
 const hasDownloaded = ref(false)

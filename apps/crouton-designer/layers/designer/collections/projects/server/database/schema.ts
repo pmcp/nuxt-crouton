@@ -28,6 +28,7 @@ export const designerProjects = sqliteTable('designer_projects', {
   currentPhase: text('currentPhase').notNull(),
   config: jsonColumn('config').$default(() => ({})),
   messages: jsonColumn('messages').$default(() => ({})),
+  seedData: jsonColumn('seedData').$default(() => ({})),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

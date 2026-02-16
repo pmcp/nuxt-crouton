@@ -95,7 +95,7 @@ export interface ProjectConfig {
 /**
  * Designer phase identifiers
  */
-export type DesignerPhase = 1 | 2 | 5
+export type DesignerPhase = 1 | 2 | 3 | 5
 
 /**
  * Chat messages stored per phase
@@ -103,7 +103,18 @@ export type DesignerPhase = 1 | 2 | 5
 export interface PhaseMessages {
   1?: Array<{ id: string, role: 'user' | 'assistant' | 'system', content: string, createdAt?: string }>
   2?: Array<{ id: string, role: 'user' | 'assistant' | 'system', content: string, createdAt?: string }>
+  3?: Array<{ id: string, role: 'user' | 'assistant' | 'system', content: string, createdAt?: string }>
 }
+
+/**
+ * A single seed data entry — has a synthetic _id for cross-referencing
+ */
+export type SeedEntry = Record<string, any> & { _id: string }
+
+/**
+ * Seed data keyed by collection name
+ */
+export type SeedDataMap = Record<string, SeedEntry[]>
 
 /**
  * Runtime types matching crouton-generated collection shapes.
@@ -119,6 +130,7 @@ export interface DesignerProject {
   currentPhase: string
   config?: Record<string, any>
   messages?: Record<string, any>
+  seedData?: SeedDataMap
   createdAt: Date
   updatedAt: Date
   createdBy: string

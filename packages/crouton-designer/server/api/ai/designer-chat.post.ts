@@ -58,6 +58,20 @@ const displayConfigSchema = z.object({
   description: z.string().optional().describe('Field name for summary text')
 }).optional().describe('Display config — which fields serve which display roles')
 
+// Phase 3 tools
+function getPhase3Tools() {
+  return {
+    set_seed_data: tool({
+      description: 'Replace the full seed dataset for a single collection. Call this once per collection. Entries should have a synthetic _id field for cross-referencing between collections.',
+      parameters: z.object({
+        collectionName: z.string().describe('The collection name to set seed data for'),
+        entries: z.array(z.record(z.any())).describe('Array of seed data entries. Each must include an _id string field for cross-referencing.')
+      }),
+      execute: async (args) => ({ success: true, action: 'set_seed_data', ...args })
+    })
+  }
+}
+
 // Phase 2 tools
 function getPhase2Tools() {
   return {
@@ -145,7 +159,7 @@ export default defineEventHandler(async (event) => {
   const ai = createAIProvider(event)
   const modelId = model || ai.getDefaultModel()
 
-  const tools = phase === '2' ? getPhase2Tools() : getPhase1Tools()
+  const tools = phase === '3' ? getPhase3Tools() : phase === '2' ? getPhase2Tools() : getPhase1Tools()
 
   const result = streamText({
     model: ai.model(modelId),
