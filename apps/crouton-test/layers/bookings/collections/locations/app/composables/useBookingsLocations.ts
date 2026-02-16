@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2026-02-10
+ * @generated 2026-02-16
  *
  * ## AI Context
  * - Composable: useBookingsLocations
@@ -29,13 +29,14 @@ import { z } from 'zod'
 export const bookingsLocationSchema = z.object({
   color: z.string().optional(),
   location: z.string().optional(),
-  allowedMemberIds: z.array(z.string()).nullish(),
-  slots: z.array(z.any()).nullish(),
-  openDays: z.array(z.string()).nullish(),
-  slotSchedule: z.record(z.string(), z.any()).nullish(),
-  blockedDates: z.array(z.any()).nullish(),
+  allowedMemberIds: z.array(z.string()).optional(),
+  slots: z.array(z.any()).optional(),
+  openDays: z.array(z.string()).optional(),
+  slotSchedule: z.record(z.string(), z.any()).optional(),
+  blockedDates: z.array(z.any()).optional(),
   inventoryMode: z.boolean().optional(),
   quantity: z.number().optional(),
+  maxBookingsPerMonth: z.number().nullish(),
   title: z.string().optional(),
   street: z.string().optional(),
   zip: z.string().optional(),
@@ -44,13 +45,16 @@ export const bookingsLocationSchema = z.object({
   translations: z.record(
     z.string(),
     z.object({
-      title: z.string().optional(),
+      title: z.string().min(1, 'Title is required'),
       street: z.string().optional(),
       zip: z.string().optional(),
       city: z.string().optional(),
       content: z.string().optional()
     })
-  ).optional().default({})
+  ).refine(
+    (translations) => translations.en && translations.en.title,
+    { message: 'English translations for title are required' }
+  )
 })
 
 export const bookingsLocationsColumns = [
@@ -92,6 +96,7 @@ const _bookingsLocationsConfig = {
     blockedDates: [],
     inventoryMode: false,
     quantity: 0,
+    maxBookingsPerMonth: null,
     translations: {}
   },
   columns: bookingsLocationsColumns,

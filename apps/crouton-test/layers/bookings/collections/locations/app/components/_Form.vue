@@ -2,14 +2,14 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2026-02-10
+  @generated 2026-02-16
 
   ## AI Context
   - Form component for locations collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/bookings-locations
   - Zod schema: useBookingsLocations() composable
-  - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, openDays, slotSchedule, blockedDates, inventoryMode, quantity
+  - Fields: title, color, street, zip, city, location, content, allowedMemberIds, slots, openDays, slotSchedule, blockedDates, inventoryMode, quantity, maxBookingsPerMonth
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -36,134 +36,151 @@
     :schema="schema"
     :state="state"
     @submit="handleSubmit"
+    @error="handleValidationError"
   >
-    <CroutonFormLayout>
-      <template #main>
-      <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Slots" name="slots" class="not-last:pb-4">
-          <CroutonFormRepeater
-            v-model="state.slots"
-            component-name="BookingsLocationsSlotInput"
-            add-label="Add Time Slot"
-            :sortable="true"
-          />
-        </UFormField>
-        <UFormField label="Open Days" name="openDays" class="not-last:pb-4">
-          <CroutonBookingsOpenDaysPicker v-model="state.openDays" />
-        </UFormField>
-        <UFormField v-if="!state.inventoryMode" label="Slot Schedule" name="slotSchedule" class="not-last:pb-4">
-          <CroutonBookingsScheduleGrid v-model="state.slotSchedule" :slots="state.slots" />
-        </UFormField>
-        <UFormField label="Blocked Dates" name="blockedDates" class="not-last:pb-4">
-          <div class="space-y-2 mb-3">
-            <div v-for="(item, index) in (state.blockedDates || [])" :key="item.id || index">
-              <div class="flex justify-end mb-1">
-                <UButton
-                  type="button"
-                  color="error"
-                  variant="ghost"
-                  size="xs"
-                  icon="i-lucide-x"
-                  aria-label="Remove blocked period"
-                  @click="removeBlockedDate(index)"
-                />
-              </div>
-              <CroutonBookingsBlockedDateInput
-                :model-value="item"
-                :slots="state.slots"
-                :inventory-mode="state.inventoryMode"
-                @update:model-value="(val) => updateBlockedDate(index, val)"
-              />
-            </div>
+    <CroutonFormLayout :tabs="tabs" :navigation-items="navigationItems" :tab-errors="tabErrorCounts" v-model="activeSection">
+      <template #main="{ activeSection }">
+        <!-- General -->
+        <div v-show="activeSection === 'general'" class="flex flex-col gap-4 p-1">
+          <UFormField label="Title" name="title">
+            <UInput v-model="state.title" class="w-full" />
+          </UFormField>
+          <UFormField label="Color" name="color">
+            <UColorPicker v-model="state.color" />
+          </UFormField>
+          <UFormField label="Street" name="street">
+            <UInput v-model="state.street" class="w-full" />
+          </UFormField>
+          <div class="grid grid-cols-2 gap-4">
+            <UFormField label="ZIP Code" name="zip">
+              <UInput v-model="state.zip" class="w-full" />
+            </UFormField>
+            <UFormField label="City" name="city">
+              <UInput v-model="state.city" class="w-full" />
+            </UFormField>
           </div>
-          <UButton
-            type="button"
-            color="primary"
-            variant="outline"
-            block
-            @click="addBlockedDate"
-          >
-            <template #leading>
-              <UIcon name="i-lucide-plus" />
-            </template>
-            Add Blocked Period
-          </UButton>
-        </UFormField>
-      </div>
+          <UFormField label="Content" name="content">
+            <CroutonEditorSimple v-model="state.content" />
+          </UFormField>
+        </div>
 
-      <div>
-
-
-      <CroutonI18nInput
-        v-model="state.translations"
-        :fields="['title', 'street', 'zip', 'city', 'content']"
-        :default-values="{
-          title: state.title || '',
-          street: state.street || '',
-          zip: state.zip || '',
-          city: state.city || '',
-          content: state.content || ''
-        }"
-        :field-components="{
-          content: 'CroutonEditorSimple'
-        }"
-        show-ai-translate
-        field-type="locations"
-        label="Translations"
-      />
-      </div>
-      </template>
-
-      <template #sidebar>
-      <div class="flex flex-col gap-4 p-1">
-        <CroutonBookingsAvailabilityPreview
-          :open-days="state.openDays"
-          :slot-schedule="state.slotSchedule"
-          :blocked-dates="state.blockedDates"
-          :slots="state.slots"
-        />
-      </div>
-      <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Color" name="color" class="not-last:pb-4">
-          <UColorPicker v-model="state.color" />
-        </UFormField>
-      </div>
-
-      <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Location" name="location" class="not-last:pb-4">
-          <UTextarea v-model="state.location" class="w-full" size="xl" />
-        </UFormField>
-      </div>
-
-      <div class="flex flex-col gap-4 p-1">
-        <UFormField label="AllowedMemberIds" name="allowedMemberIds" class="not-last:pb-4">
-          <UTextarea
-            :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
-            @update:model-value="(val) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
-            class="w-full"
-            :rows="6"
-            placeholder="Enter one value per line"
+        <!-- Scheduling -->
+        <div v-show="activeSection === 'scheduling'" class="flex flex-col gap-4 p-1">
+          <CroutonBookingsAvailabilityPreview
+            :open-days="state.openDays"
+            :slot-schedule="state.slotSchedule"
+            :blocked-dates="state.blockedDates"
+            :slots="state.slots"
           />
-          <p class="text-sm text-gray-500 mt-1">Enter one value per line</p>
-        </UFormField>
-      </div>
+          <UFormField label="Slots" name="slots">
+            <CroutonFormRepeater
+              v-model="state.slots"
+              component-name="BookingsLocationsSlotInput"
+              add-label="Add Time Slot"
+              :sortable="true"
+            />
+          </UFormField>
+          <UFormField label="Open Days" name="openDays">
+            <CroutonBookingsOpenDaysPicker v-model="state.openDays" />
+          </UFormField>
+          <UFormField v-if="!state.inventoryMode" label="Slot Schedule" name="slotSchedule">
+            <CroutonBookingsScheduleGrid v-model="state.slotSchedule" :slots="state.slots" />
+          </UFormField>
+          <UFormField label="Blocked Dates" name="blockedDates">
+            <CroutonFormRepeater
+              v-model="state.blockedDates"
+              component-name="BookingsLocationsBlockedDateInput"
+              add-label="Add Blocked Period"
+              :sortable="false"
+            />
+          </UFormField>
+        </div>
 
-      <div class="flex flex-col gap-4 p-1">
-        <UFormField label="InventoryMode" name="inventoryMode" class="not-last:pb-4">
-          <UCheckbox v-model="state.inventoryMode" />
-        </UFormField>
-        <UFormField label="Quantity" name="quantity" class="not-last:pb-4">
-          <UInputNumber v-model="state.quantity" class="w-full" />
-        </UFormField>
-      </div>
+        <!-- Settings -->
+        <div v-show="activeSection === 'settings'" class="flex flex-col gap-4 p-1">
+          <UFormField label="Inventory Mode" name="inventoryMode">
+            <USwitch v-model="state.inventoryMode" />
+          </UFormField>
+          <UFormField v-show="state.inventoryMode" label="Available Units" name="quantity">
+            <UInputNumber v-model="state.quantity" class="w-full" />
+          </UFormField>
+          <UFormField label="Max Bookings Per Month" name="maxBookingsPerMonth" help="Maximum bookings a user can make per calendar month. Empty = unlimited.">
+            <UInputNumber v-model="state.maxBookingsPerMonth" class="w-full" :min="0" placeholder="Unlimited" />
+          </UFormField>
+          <UFormField label="Allowed Member IDs" name="allowedMemberIds">
+            <UTextarea
+              :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
+              @update:model-value="(val: string) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
+              class="w-full"
+              :rows="6"
+              placeholder="Enter one value per line"
+            />
+            <p class="text-sm text-gray-500 mt-1">Enter one value per line</p>
+          </UFormField>
+          <!-- MapBox Map Display -->
+          <UFormField label="Location Map" name="location">
+            <CroutonMapsMap
+              :center="mapCenter"
+              :zoom="14"
+              height="400px"
+              class="rounded-lg border"
+              :fly-to-on-center-change="true"
+              @load="handleMapLoad"
+            >
+              <template #default="{ map }">
+                <CroutonMapsMarker
+                  v-if="mapCenter[0] !== 0 || mapCenter[1] !== 0"
+                  :map="map"
+                  :position="mapCenter"
+                  :color="markerColor"
+                  :options="{ draggable: true }"
+                  :animate-transitions="true"
+                  @dragEnd="handleMarkerDragEnd"
+                />
+              </template>
+            </CroutonMapsMap>
+            <p v-if="geocoding" class="text-sm text-gray-500 mt-2">
+              Geocoding address...
+            </p>
+          </UFormField>
+        </div>
+
+        <!-- Translations -->
+        <div v-show="activeSection === 'translations'" class="flex flex-col gap-4 p-1">
+          <CroutonI18nInput
+            v-model="state.translations"
+            :fields="['title', 'street', 'zip', 'city', 'content']"
+            :default-values="{
+              title: state.title || '',
+              street: state.street || '',
+              zip: state.zip || '',
+              city: state.city || '',
+              content: state.content || ''
+            }"
+            :field-components="{
+              content: 'CroutonEditorSimple'
+            }"
+            show-ai-translate
+            field-type="locations"
+            label="Translations"
+          />
+        </div>
       </template>
 
       <template #footer>
+        <CroutonValidationErrorSummary
+          v-if="validationErrors.length > 0"
+          :tab-errors="tabErrorCounts"
+          :navigation-items="navigationItems"
+          @switch-tab="switchToTab"
+        />
+
         <CroutonFormActionButton
           :action="action"
           :collection="collection"
           :items="items"
           :loading="loading"
+          :has-validation-errors="validationErrors.length > 0"
         />
       </template>
     </CroutonFormLayout>
@@ -171,7 +188,6 @@
 </template>
 
 <script setup lang="ts">
-import { nanoid } from 'nanoid'
 import type { BookingsLocationFormProps, BookingsLocationFormData } from '../../types'
 import useBookingsLocations from '../composables/useBookingsLocations'
 
@@ -179,9 +195,62 @@ const props = defineProps<BookingsLocationFormProps>()
 const { defaultValue, schema, collection } = useBookingsLocations()
 
 // Form layout configuration
-const tabs = ref(false)
+const navigationItems = [
+  { label: 'General', value: 'general', icon: 'i-lucide-info' },
+  { label: 'Scheduling', value: 'scheduling', icon: 'i-lucide-calendar' },
+  { label: 'Settings', value: 'settings', icon: 'i-lucide-settings' },
+  { label: 'Translations', value: 'translations', icon: 'i-lucide-globe' }
+]
 
+const tabs = ref(true)
+const activeSection = ref('general')
 
+// Map field names to their tab groups for error tracking
+const fieldToGroup: Record<string, string> = {
+  'title': 'general',
+  'color': 'general',
+  'street': 'general',
+  'zip': 'general',
+  'city': 'general',
+  'content': 'general',
+  'slots': 'scheduling',
+  'openDays': 'scheduling',
+  'slotSchedule': 'scheduling',
+  'blockedDates': 'scheduling',
+  'inventoryMode': 'settings',
+  'quantity': 'settings',
+  'maxBookingsPerMonth': 'settings',
+  'allowedMemberIds': 'settings',
+  'location': 'settings',
+  'translations': 'translations'
+}
+
+// Track validation errors for tab indicators
+const validationErrors = ref<Array<{ name: string; message: string }>>([])
+
+// Handle form validation errors
+const handleValidationError = (event: any) => {
+  if (event?.errors) {
+    validationErrors.value = event.errors
+  }
+}
+
+// Compute errors per tab
+const tabErrorCounts = computed(() => {
+  const counts: Record<string, number> = {}
+
+  validationErrors.value.forEach((error) => {
+    const tabName = fieldToGroup[error.name] || 'general'
+    counts[tabName] = (counts[tabName] || 0) + 1
+  })
+
+  return counts
+})
+
+// Switch to a specific tab (for clicking error links)
+const switchToTab = (tabValue: string) => {
+  activeSection.value = tabValue
+}
 
 // Use new mutation composable for data operations
 const { create, update, deleteItems } = useCollectionMutation(collection)
@@ -196,25 +265,83 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 
 const state = ref<BookingsLocationFormData & { id?: string | null }>(initialValues)
 
-// Blocked dates helpers
-const addBlockedDate = () => {
-  if (!state.value.blockedDates) state.value.blockedDates = []
-  state.value.blockedDates = [
-    ...state.value.blockedDates,
-    { id: nanoid(), startDate: '', endDate: '', reason: '', blockedSlots: [] }
-  ]
+// Map & Geocoding functionality
+const { geocode, loading: geocoding } = useGeocode()
+
+// Parse existing coordinates from location field (handle both array and string formats)
+const parseCoordinates = (value: any): [number, number] | null => {
+  if (!value) return null
+  if (Array.isArray(value) && value.length === 2) {
+    return [Number(value[0]), Number(value[1])]
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed) && parsed.length === 2) {
+        return [Number(parsed[0]), Number(parsed[1])]
+      }
+    } catch {
+      return null
+    }
+  }
+  return null
 }
 
-const removeBlockedDate = (index: number) => {
-  if (!state.value.blockedDates) return
-  state.value.blockedDates = state.value.blockedDates.filter((_: any, i: number) => i !== index)
+const initialCoordinates = parseCoordinates(state.value.location)
+const mapCenter = ref<[number, number]>(initialCoordinates || [0, 0])
+const mapInstance = ref<any>(null)
+
+const markerColor = useMarkerColor()
+
+// Store map instance when loaded
+const handleMapLoad = (map: any) => {
+  mapInstance.value = map
 }
 
-const updateBlockedDate = (index: number, val: any) => {
-  if (!state.value.blockedDates) return
-  const newItems = [...state.value.blockedDates]
-  newItems[index] = val
-  state.value.blockedDates = newItems
+// Auto-geocode when address fields change
+watchDebounced(
+  () => [state.value.street, state.value.zip, state.value.city],
+  async () => {
+    if (canGeocode.value) {
+      await handleGeocode()
+    }
+  },
+  { debounce: 1000, maxWait: 3000 }
+)
+
+// Check if we have enough address data to geocode
+const canGeocode = computed(() => {
+  return !!state.value.street || !!state.value.zip
+})
+
+// Handle geocoding of address fields
+const handleGeocode = async () => {
+  try {
+    // Build address query from all address fields
+    const addressParts: string[] = []
+    if (state.value.street) addressParts.push(state.value.street as string)
+    if (state.value.zip) addressParts.push(state.value.zip as string)
+    if (state.value.city) addressParts.push(state.value.city as string)
+
+    const addressQuery = addressParts.join(', ')
+    if (!addressQuery.trim()) return
+
+    const result = await geocode(addressQuery)
+    if (result) {
+      mapCenter.value = result.coordinates
+
+      // Update the coordinate field in the form state (store as JSON string)
+      state.value.location = JSON.stringify(result.coordinates)
+    }
+  } catch (error) {
+    console.error('Geocoding failed:', error)
+  }
+}
+
+// Handle marker drag to update coordinates
+const handleMarkerDragEnd = (position: { lng: number; lat: number }) => {
+  mapCenter.value = [position.lng, position.lat]
+  state.value.location = JSON.stringify([position.lng, position.lat])
 }
 
 const handleSubmit = async () => {
@@ -227,12 +354,13 @@ const handleSubmit = async () => {
       await deleteItems(props.items)
     }
 
+    // Clear validation errors on successful submission
+    validationErrors.value = []
+
     close()
 
   } catch (error) {
     console.error('Form submission failed:', error)
-    // You can add toast notification here if available
-    // toast.add({ title: 'Error', description: 'Failed to submit form', color: 'red' })
   }
 }
 </script>
