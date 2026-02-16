@@ -14,7 +14,7 @@
  * ```
  */
 import { ref, computed, watch, readonly } from 'vue'
-import { useRoute, updateAppConfig } from '#imports'
+import { updateAppConfig } from '#imports'
 
 /**
  * Primary color options (Tailwind CSS colors)
@@ -74,20 +74,14 @@ export const DEFAULT_THEME: Required<TeamThemeSettings> = {
 }
 
 export function useTeamTheme() {
-  const route = useRoute()
   const { registerGate, resolveGate } = useAppReady()
 
   // Register readiness gate
   registerGate('team-theme')
 
-  // Get team ID from route params
-  const teamId = computed(() => {
-    // Check common param names: id, team, teamId
-    return (route.params.id as string)
-      || (route.params.team as string)
-      || (route.params.teamId as string)
-      || null
-  })
+  // Use useTeamContext for proper team resolution
+  // (avoids false positives from [id] params that aren't team IDs)
+  const { teamId } = useTeamContext()
 
   // If no team context, resolve gate immediately
   if (!teamId.value) {

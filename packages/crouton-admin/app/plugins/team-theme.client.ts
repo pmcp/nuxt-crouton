@@ -10,12 +10,9 @@ export default defineNuxtPlugin({
   name: 'team-theme',
   enforce: 'post', // Run after other plugins
   setup() {
-    const route = useRoute()
-
-    // Only initialize if we have a team context in the route
-    const hasTeamContext = computed(() => {
-      return !!(route.params.id || route.params.team || route.params.teamId)
-    })
+    // Use useTeamContext to properly resolve team identity
+    // (avoids false positives from [id] params that aren't team IDs)
+    const { hasTeamContext } = useTeamContext()
 
     // Watch for team context and initialize theme
     watch(hasTeamContext, (hasContext) => {
