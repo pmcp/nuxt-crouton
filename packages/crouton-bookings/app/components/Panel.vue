@@ -103,10 +103,15 @@ function onAddLocation() {
   openCroutonForm('create', 'bookingsLocations', [], 'slideover')
 }
 
+// Handle edit location - open crouton update slideover
+function onEditLocation(location: LocationData) {
+  openCroutonForm('update', 'bookingsLocations', [location.id], 'slideover')
+}
+
 // Listen for location mutations to refresh the list
 const nuxtApp = useNuxtApp()
 nuxtApp.hook('crouton:mutation', async (event: { operation: string; collection: string }) => {
-  if (event.collection === 'bookingsLocations' && event.operation === 'create') {
+  if (event.collection === 'bookingsLocations' && (event.operation === 'create' || event.operation === 'update')) {
     await refresh()
   }
 })
@@ -298,6 +303,7 @@ defineExpose({
       @update:show-calendar="showCalendar = $event"
       @update:show-cancelled="filterState.showCancelled = $event"
       @add-location="onAddLocation"
+      @edit-location="onEditLocation"
     />
 
     <!-- Map section (independent, collapsible) -->

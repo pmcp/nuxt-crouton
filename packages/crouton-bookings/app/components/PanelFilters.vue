@@ -28,6 +28,7 @@ const emit = defineEmits<{
   'update:showCalendar': [value: boolean]
   'update:showCancelled': [value: boolean]
   'add-location': []
+  'edit-location': [location: LocationData]
 }>()
 
 // Toggle location selection
@@ -47,16 +48,6 @@ function isLocationSelected(locationId: string): boolean {
   return props.selectedLocations.includes(locationId)
 }
 
-// Get localized location title with fallbacks
-function getLocationTitle(location: LocationData): string {
-  const { locale } = useI18n()
-  const translations = location.translations as Record<string, { title?: string }> | undefined
-
-  return translations?.[locale.value]?.title
-    || translations?.en?.title
-    || location.title
-    || 'Untitled'
-}
 </script>
 
 <template>
@@ -137,44 +128,15 @@ function getLocationTitle(location: LocationData): string {
       leave-to-class="opacity-0 max-h-0"
     >
       <div v-if="showLocations && locations && locations.length > 0" class="flex flex-wrap gap-2 overflow-hidden">
-        <button
+        <CroutonBookingsLocationCard
           v-for="location in locations"
           :key="location.id"
-          class="group relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200"
-          :class="[
-            isLocationSelected(location.id)
-              ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-              : 'border-default bg-default hover:border-muted hover:bg-elevated',
-          ]"
+          :location="location"
+          :selected="isLocationSelected(location.id)"
+          :editable="canManageLocations"
           @click="toggleLocation(location.id)"
-        >
-          <!-- Color indicator bar -->
-          <div
-            class="absolute left-0 top-2 bottom-2 w-1 rounded-full transition-opacity"
-            :style="{ backgroundColor: location.color || '#3b82f6' }"
-            :class="isLocationSelected(location.id) ? 'opacity-100' : 'opacity-50 group-hover:opacity-75'"
-          />
-
-          <!-- Location info -->
-          <div class="flex flex-col items-start min-w-0 ml-2">
-            <span
-              class="text-sm font-medium truncate max-w-[120px]"
-              :class="isLocationSelected(location.id) ? 'text-primary' : 'text-default'"
-            >
-              {{ getLocationTitle(location) }}
-            </span>
-            <span v-if="location.city" class="text-xs text-muted truncate max-w-[120px]">
-              {{ location.city }}
-            </span>
-          </div>
-
-          <!-- Selection indicator -->
-          <UIcon
-            v-if="isLocationSelected(location.id)"
-            name="i-lucide-check"
-            class="w-4 h-4 text-primary ml-1 flex-shrink-0"
-          />
-        </button>
+          @edit="emit('edit-location', $event)"
+        />
 
         <!-- Add Location button (at end of location cards) -->
         <UButton
