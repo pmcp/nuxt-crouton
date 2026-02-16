@@ -14,7 +14,8 @@ const projectId = computed(() => route.params.id as string)
 const isNewProject = computed(() => projectId.value === 'new')
 
 const { buildApiUrl } = useTeamContext()
-const { buildSystemPrompt } = useIntakePrompt()
+const { buildSystemPrompt: buildIntakePrompt } = useIntakePrompt()
+const { buildSystemPrompt: buildCollectionPrompt } = useCollectionDesignPrompt()
 
 // ------- Project state -------
 const projectConfig = ref<ProjectConfig>({
@@ -31,6 +32,9 @@ const projectConfig = ref<ProjectConfig>({
 const currentPhase = ref<string>('1')
 const chatCollapsed = ref(false)
 const projectRecord = ref<DesignerProject | null>(null)
+
+// ------- Collection editor (Phase 2) -------
+const collectionEditorRef = ref<{ editor: ReturnType<typeof useCollectionEditor> } | null>(null)
 
 // ------- Load project from DB -------
 const { data: projectData, status: projectStatus } = await useFetch<DesignerProject[]>(
@@ -69,7 +73,6 @@ async function ensureProject(): Promise<string> {
     }
   })
   projectRecord.value = result
-  // Update URL without creating a new history entry
   if (isNewProject.value) {
     router.replace(`/designer/${result.id}`)
   }
@@ -102,20 +105,101 @@ function updateConfig(partial: Partial<ProjectConfig>) {
 }
 
 // ------- AI Chat -------
-const systemPrompt = computed(() => buildSystemPrompt(projectConfig.value))
+const systemPrompt = computed(() => {
+  if (currentPhase.value === '2') {
+    const editor = collectionEditorRef.value?.editor
+    const collections = toValue(editor?.collectionsWithFields) || []
+    return buildCollectionPrompt(projectConfig.value, collections)
+  }
+  return buildIntakePrompt(projectConfig.value)
+})
 
 const { messages, input, isLoading, status, error, append, clearMessages, toolCalls } = useChat({
   api: '/api/ai/designer-chat',
-  maxSteps: 2,
+  maxSteps: 5,
   body: computed(() => ({
-    system: systemPrompt.value
+    system: systemPrompt.value,
+    phase: currentPhase.value
   })) as any,
-  onToolCall: ({ toolCall }) => {
+  onToolCall: async ({ toolCall }) => {
+    // Phase 1 tools
     if (toolCall.toolName === 'set_app_config') {
       const args = toolCall.args as Partial<ProjectConfig>
       updateConfig(args)
       return { success: true, config: args }
     }
+
+    // Phase 2 tools
+    const editor = collectionEditorRef.value?.editor
+    if (!editor) return { success: false, error: 'Editor not ready' }
+
+    const args = toolCall.args as Record<string, any>
+
+    if (toolCall.toolName === 'create_collection') {
+      const collection = await editor.createCollection({
+        name: args.name,
+        description: args.description
+      })
+      // Create initial fields if provided
+      if (args.fields?.length) {
+        for (const field of args.fields) {
+          await editor.addField({
+            collectionId: collection.id,
+            name: field.name,
+            type: field.type,
+            meta: field.meta,
+            refTarget: field.refTarget
+          })
+        }
+      }
+      return { success: true, collectionId: collection.id, name: args.name }
+    }
+
+    if (toolCall.toolName === 'update_collection') {
+      await editor.updateCollection(args.collectionId, {
+        name: args.name,
+        description: args.description
+      })
+      return { success: true }
+    }
+
+    if (toolCall.toolName === 'delete_collection') {
+      await editor.deleteCollection(args.collectionId)
+      return { success: true }
+    }
+
+    if (toolCall.toolName === 'add_field') {
+      const field = await editor.addField({
+        collectionId: args.collectionId,
+        name: args.name,
+        type: args.type,
+        meta: args.meta,
+        refTarget: args.refTarget
+      })
+      return { success: true, fieldId: field.id }
+    }
+
+    if (toolCall.toolName === 'update_field') {
+      await editor.updateField(args.fieldId, {
+        name: args.name,
+        type: args.type,
+        meta: args.meta,
+        refTarget: args.refTarget
+      })
+      return { success: true }
+    }
+
+    if (toolCall.toolName === 'delete_field') {
+      await editor.deleteField(args.fieldId)
+      return { success: true }
+    }
+
+    if (toolCall.toolName === 'reorder_fields') {
+      await editor.reorderFields(args.collectionId, args.fieldIds)
+      return { success: true }
+    }
+
+    return { success: false, error: `Unknown tool: ${toolCall.toolName}` }
   },
   onError: (err) => {
     console.error('Chat error:', err)
@@ -159,7 +243,6 @@ const canContinue = computed(() => !!(projectConfig.value.name && projectConfig.
 
 async function continueToCollections() {
   const id = await ensureProject()
-  // Save current state with phase update
   await $fetch(buildApiUrl(`/designer-projects/${id}`), {
     method: 'PATCH',
     body: {
@@ -168,6 +251,62 @@ async function continueToCollections() {
     }
   })
   currentPhase.value = '2'
+  clearMessages()
+  // Auto-generate initial proposal after editor loads
+  triggerInitialProposal()
+}
+
+// --- Auto-generate initial proposal on Phase 2 entry (A3.10) ---
+const proposalTriggered = ref(false)
+
+function triggerInitialProposal() {
+  // Wait for editor to be ready, then send automatic AI message
+  const stop = watch(
+    () => collectionEditorRef.value?.editor,
+    (editor) => {
+      if (!editor || proposalTriggered.value) return
+      // Only propose if no collections exist yet
+      nextTick(async () => {
+        await editor.fetchAll()
+        if (toValue(editor.collections).length === 0 && !proposalTriggered.value) {
+          proposalTriggered.value = true
+          append({
+            id: crypto.randomUUID(),
+            role: 'user',
+            content: `Based on the app configuration (${projectConfig.value.name} — ${projectConfig.value.appType}${projectConfig.value.description ? ': ' + projectConfig.value.description : ''}), propose an initial set of collections with fields. Be opinionated and create a complete, well-structured data model.`
+          })
+        }
+        stop()
+      })
+    },
+    { immediate: true }
+  )
+}
+
+// Also trigger when loading an existing project that's in Phase 2
+watch(currentPhase, (phase) => {
+  if (phase === '2' && !proposalTriggered.value) {
+    // Check if collections already exist — if so, don't propose
+    const checkEditor = watch(
+      () => toValue(collectionEditorRef.value?.editor?.collections),
+      (cols) => {
+        if (cols && cols.length > 0) {
+          proposalTriggered.value = true
+          checkEditor()
+        }
+      },
+      { immediate: true }
+    )
+  }
+}, { immediate: true })
+
+async function continueToReview() {
+  const id = await ensureProject()
+  await $fetch(buildApiUrl(`/designer-projects/${id}`), {
+    method: 'PATCH',
+    body: { currentPhase: '5' }
+  })
+  currentPhase.value = '5'
   clearMessages()
 }
 </script>
@@ -233,17 +372,36 @@ async function continueToCollections() {
         </DesignerTwoPanelLayout>
       </template>
 
-      <!-- Phase 2: Collection Design (placeholder) -->
+      <!-- Phase 2: Collection Design -->
       <template #collections>
-        <div class="py-6">
-          <div class="text-center text-[var(--ui-text-muted)]">
-            <UIcon name="i-lucide-database" class="size-12 mx-auto mb-3 opacity-50" />
-            <p>Phase 2: Collection Design</p>
-            <p class="text-sm mt-1">
-              Design your data model with AI assistance.
-            </p>
-          </div>
-        </div>
+        <DesignerTwoPanelLayout v-model:chat-collapsed="chatCollapsed">
+          <template #chat>
+            <DesignerChatPanel
+              :messages="messages"
+              :is-loading="isLoading"
+              @send="handleChatSend"
+            />
+          </template>
+          <template #content>
+            <DesignerCollectionEditor
+              ref="collectionEditorRef"
+              :project-id="projectId"
+            />
+
+            <!-- Transition button -->
+            <div class="px-4 pb-4">
+              <USeparator class="mb-4" />
+              <div class="flex items-center justify-end">
+                <UButton
+                  label="Continue to Review"
+                  icon="i-lucide-arrow-right"
+                  trailing
+                  @click="continueToReview"
+                />
+              </div>
+            </div>
+          </template>
+        </DesignerTwoPanelLayout>
       </template>
 
       <!-- Phase 5: Review & Generate (placeholder) -->
