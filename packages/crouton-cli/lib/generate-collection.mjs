@@ -244,15 +244,20 @@ async function registerTranslationsUiCollection() {
     // Insert entry into croutonCollections
     const entryLine = `    ${collectionKey}: ${configName},`
     const collectionsBlockRegex = /croutonCollections:\s*\{\s*\n/
+    const hasCroutonCollections = content.includes('croutonCollections')
 
-    if (!collectionsBlockRegex.test(content)) {
+    if (!hasCroutonCollections) {
       // No croutonCollections block yet, add one
       content = content.replace(
         'defineAppConfig({',
         `defineAppConfig({\n  croutonCollections: {\n${entryLine}\n  },`
       )
-    } else {
+    } else if (collectionsBlockRegex.test(content)) {
+      // Standard format, insert into existing block
       content = content.replace(collectionsBlockRegex, match => `${match}${entryLine}\n`)
+    } else {
+      // croutonCollections exists but in non-standard format, insert after opening brace
+      content = content.replace(/croutonCollections:\s*\{/, match => `${match}\n${entryLine}`)
     }
 
     await fsp.writeFile(registryPath, content)
@@ -509,15 +514,20 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
     // Insert new entry into croutonCollections
     const entryLine = `    ${collectionKey}: ${configExportName},`
     const collectionsBlockRegex = /croutonCollections:\s*\{\s*\n/
+    const hasCroutonCollections = content.includes('croutonCollections')
 
-    if (!collectionsBlockRegex.test(content)) {
+    if (!hasCroutonCollections) {
       // No croutonCollections block yet, add one
       content = content.replace(
         'defineAppConfig({',
         `defineAppConfig({\n  croutonCollections: {\n${entryLine}\n  },`
       )
-    } else {
+    } else if (collectionsBlockRegex.test(content)) {
+      // Standard format, insert into existing block
       content = content.replace(collectionsBlockRegex, match => `${match}${entryLine}\n`)
+    } else {
+      // croutonCollections exists but in non-standard format, insert after opening brace
+      content = content.replace(/croutonCollections:\s*\{/, match => `${match}\n${entryLine}`)
     }
 
     // Clean up placeholder comments if present
@@ -611,7 +621,7 @@ async function updateLayerRootConfig(layer, collectionName, hasTranslations = fa
       { code: 'nl', file: 'nl.json' },
       { code: 'fr', file: 'fr.json' }
     ],
-    langDir: './locales'
+    langDir: './i18n/locales'
   }`
         : ''
 
@@ -755,7 +765,7 @@ async function addI18nConfigToLayer(configPath, config) {
       { code: 'nl', file: 'nl.json' },
       { code: 'fr', file: 'fr.json' }
     ],
-    langDir: './locales'
+    langDir: './i18n/locales'
   }`
 
   // Find the last closing brace before the final })
@@ -1297,9 +1307,10 @@ ${translationsFieldSchema}
   // Update layer root nuxt.config.ts to extend the new collection (and translations layer if needed)
   await updateLayerRootConfig(layer, collection, hasTranslations)
 
-  // REMOVED: Don't create local i18n files
-  // Translations are handled by the main i18n layer
-  // Local locale files cause path resolution issues
+  // Create i18n locale files when translations are enabled
+  if (hasTranslations) {
+    await setupLayerI18n(layer, collection)
+  }
 
   // Update root nuxt.config.ts to extend the layer
   await updateRootNuxtConfig(layer)
