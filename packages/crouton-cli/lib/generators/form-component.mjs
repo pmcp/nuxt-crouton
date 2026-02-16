@@ -285,6 +285,25 @@ export function generateFormComponent(data, config = {}) {
         </UFormField>`
     }
 
+    // Image field type - renders asset picker with crop
+    if (field.type === 'image') {
+      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+          <CroutonAssetsPicker
+            v-model="state.${field.name}"
+            :crop="true"
+          />
+        </UFormField>`
+    }
+
+    // File field type - renders asset picker without crop
+    if (field.type === 'file') {
+      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+          <CroutonAssetsPicker
+            v-model="state.${field.name}"
+          />
+        </UFormField>`
+    }
+
     // Default component selection based on field type
     if (field.type === 'text') {
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">

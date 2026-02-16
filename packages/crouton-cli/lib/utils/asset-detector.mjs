@@ -33,7 +33,14 @@ export function isAssetSchema(schema) {
  * @returns {boolean} - True if field references assets
  */
 export function referencesAssets(field, refTarget) {
-  if (!field || !refTarget) {
+  if (!field) return false
+
+  // Native image/file field types are always asset references
+  if (field.type === 'image' || field.type === 'file') {
+    return true
+  }
+
+  if (!refTarget) {
     return false
   }
 

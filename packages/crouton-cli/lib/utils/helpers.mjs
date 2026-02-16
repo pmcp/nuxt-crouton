@@ -42,7 +42,7 @@ export function toCase(str) {
 }
 
 export function mapType(t) {
-  return ['string', 'text', 'number', 'decimal', 'boolean', 'date', 'json', 'repeater', 'array'].includes(t) ? t : 'string'
+  return ['string', 'text', 'number', 'decimal', 'boolean', 'date', 'json', 'repeater', 'array', 'image', 'file'].includes(t) ? t : 'string'
 }
 
 /**
@@ -153,5 +153,19 @@ export const typeMapping = {
     zod: 'z.array(z.string())',
     default: '[]',
     tsType: 'string[]'
+  },
+  image: {
+    db: 'VARCHAR(255)',
+    drizzle: 'text',
+    zod: 'z.string()',
+    default: '\'\'',
+    tsType: 'string'
+  },
+  file: {
+    db: 'VARCHAR(255)',
+    drizzle: 'text',
+    zod: 'z.string()',
+    default: '\'\'',
+    tsType: 'string'
   }
 }

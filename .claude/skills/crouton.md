@@ -105,6 +105,8 @@ Use this skill when the user mentions:
 | list of items, repeater | `repeater` | `"items": { "type": "repeater" }` |
 | translatable list | `repeater` | See Translatable Repeater section below |
 | tags, string list | `array` | `"tags": { "type": "array" }` |
+| image, photo, picture | `image` | `"coverImage": { "type": "image" }` |
+| file, attachment, document | `file` | `"attachment": { "type": "file" }` |
 
 ### Common Field Meta Options
 
