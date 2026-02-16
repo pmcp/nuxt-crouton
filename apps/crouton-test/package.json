@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-mcp-toolkit": "workspace:*",
     "@libsql/client": "^0.15.0",
     "drizzle-orm": "^0.45.0",
     "nuxt": "^4.3"

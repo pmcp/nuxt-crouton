@@ -1,0 +1,80 @@
+{
+  "name": "@fyit/crouton-mcp-toolkit",
+  "version": "0.1.0",
+  "description": "MCP Toolkit integration for Crouton - expose collections to AI assistants via Model Context Protocol",
+  "type": "module",
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./module": {
+      "types": "./dist/module.d.ts",
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs"
+    },
+    "./types": {
+      "import": "./types/index.ts",
+      "types": "./types/index.ts"
+    }
+  },
+  "main": "./nuxt.config.ts",
+  "files": [
+    "dist",
+    "server",
+    "types",
+    "nuxt.config.ts",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev:prepare": "nuxi prepare",
+    "typecheck": "nuxt typecheck",
+    "prepublishOnly": "pnpm run build",
+    "release": "pnpm run build && npm publish --access public"
+  },
+  "dependencies": {
+    "defu": "^6.1.4"
+  },
+  "devDependencies": {
+    "@nuxt/kit": "^3.14.0",
+    "@nuxt/schema": "^3.14.0",
+    "@nuxtjs/mcp-toolkit": "^0.6.0",
+    "nuxt": "^3.14.0",
+    "typescript": "^5.7.0",
+    "unbuild": "^2.0.0",
+    "vue": "^3.5.25",
+    "zod": "^3.24.0"
+  },
+  "peerDependencies": {
+    "@nuxtjs/mcp-toolkit": "^0.6.0",
+    "nuxt": "^3.14.0 || ^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-mcp-toolkit"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "nuxt-layer",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "llm",
+    "crud",
+    "collections"
+  ],
+  "author": "FYIT",
+  "license": "MIT"
+}

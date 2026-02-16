@@ -191,6 +191,12 @@ export interface CroutonOptions {
   pages?: boolean
 
   /**
+   * MCP Toolkit - expose collections to AI assistants via Model Context Protocol
+   * @default false
+   */
+  mcpToolkit?: boolean
+
+  /**
    * Nuxt DevTools integration
    * @default true in development, false in production
    */

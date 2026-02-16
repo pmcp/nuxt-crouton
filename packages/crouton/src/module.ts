@@ -61,6 +61,7 @@ function getRequiredLayers(features: CroutonOptions): string[] {
   if (features.events) layers.push('@fyit/crouton-events')
   if (features.collab) layers.push('@fyit/crouton-collab')
   if (features.pages) layers.push('@fyit/crouton-pages')
+  if (features.mcpToolkit) layers.push('@fyit/crouton-mcp-toolkit')
 
   // Mini-apps
   if (features.bookings) layers.push('@fyit/crouton-bookings')
@@ -98,6 +99,7 @@ export default defineNuxtModule<CroutonOptions>({
     events: false,
     collab: false,
     pages: false,
+    mcpToolkit: false,
     devtools: undefined, // Auto-detect based on dev mode
 
     // Mini-apps (disabled by default)
@@ -169,6 +171,7 @@ export default defineNuxtModule<CroutonOptions>({
         mergedOptions.events && 'events',
         mergedOptions.collab && 'collab',
         mergedOptions.pages && 'pages',
+        mergedOptions.mcpToolkit && 'mcp-toolkit',
         (mergedOptions.devtools ?? nuxt.options.dev) && 'devtools',
         mergedOptions.bookings && 'bookings',
         mergedOptions.sales && 'sales'

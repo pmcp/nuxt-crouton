@@ -14,6 +14,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-maps',        // Maps (used by bookings PanelMap)
     '@fyit/crouton-pages',
     '@fyit/crouton-bookings',
+    '@fyit/crouton-mcp-toolkit',  // MCP: expose collections to AI assistants
     // Local layers must come last to override framework defaults
     './layers/bookings',
     './layers/pages'
