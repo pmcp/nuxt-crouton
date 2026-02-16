@@ -44,6 +44,7 @@ Venues, resources, or bookable items.
 | `address` | text | No | Physical address (for venues) |
 | `inventoryMode` | boolean | No | True for inventory-based, false for slot-based |
 | `quantity` | number | No | Total quantity (inventory mode only) |
+| `maxBookingsPerMonth` | number | No | Max bookings per user per calendar month (null = unlimited) |
 | `slots` | json/array | No | Available time slots (slot mode only) |
 | `slotGroups` | json | No | Grouped time slots with colors |
 | `accessControl` | select | No | Who can book (public, members, team) |

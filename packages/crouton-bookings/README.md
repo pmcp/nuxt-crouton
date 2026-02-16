@@ -215,6 +215,7 @@ The package provides these API endpoints:
 | `/api/crouton-bookings/teams/[id]/customer-bookings` | GET | Get user's bookings |
 | `/api/crouton-bookings/teams/[id]/customer-bookings-batch` | POST | Submit cart (batch booking) |
 | `/api/crouton-bookings/teams/[id]/customer-locations` | GET | Get locations accessible to user |
+| `/api/crouton-bookings/teams/[id]/monthly-booking-count` | GET | Get user's monthly booking count for a location |
 | `/api/crouton-bookings/teams/[id]/bookings/[bookingId]/resend-email` | POST | Resend booking email (if email enabled) |
 
 ## i18n

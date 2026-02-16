@@ -124,6 +124,7 @@ const manifest: PackageManifest = {
       '/api/crouton-bookings/teams/[teamId]/customer-bookings',
       '/api/crouton-bookings/teams/[teamId]/customer-bookings-batch',
       '/api/crouton-bookings/teams/[teamId]/customer-locations',
+      '/api/crouton-bookings/teams/[teamId]/monthly-booking-count',
       '/api/crouton-bookings/teams/[teamId]/bookings/[bookingId]',
       '/api/crouton-bookings/teams/[teamId]/bookings/[bookingId]/resend-email'
     ]
