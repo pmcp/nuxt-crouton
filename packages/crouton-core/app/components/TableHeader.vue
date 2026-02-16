@@ -8,6 +8,12 @@
     <template #right>
       <slot name="extraButtons" />
 
+      <CroutonImportButton
+        v-if="importButton && collection"
+        :collection="collection"
+        @import-complete="$emit('import-complete')"
+      />
+
       <CroutonExportButton
         v-if="exportButton && rows?.length"
         :collection="collection"
@@ -44,6 +50,10 @@ const props = defineProps({
     default: false
   },
   exportButton: {
+    type: Boolean,
+    default: true
+  },
+  importButton: {
     type: Boolean,
     default: true
   },
