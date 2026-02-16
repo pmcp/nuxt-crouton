@@ -575,7 +575,7 @@ Meta properties are split into three tiers for the accordion editor:
 | A4.1 | Build validation checklist component | Runs all deterministic checks from A3.9. Displays as a list with green checkmarks / red X indicators. Shows specific error messages with links to the affected collection/field |
 | A4.2 | Build generation summary view | Shows: app name, app type, number of collections, total fields, selected packages. Expandable list of collections with their fields |
 | A4.3 | Implement schema JSON export | Converts DB state (Projects + Collections + Fields) into the JSON format expected by `crouton-cli`. One `.json` file per collection |
-| A4.4 | Implement schema export + download | Export schemas as a downloadable ZIP (JSON files per collection). The developer runs `crouton generate` locally with the downloaded schemas. This avoids the Cloudflare Workers limitation (no shell exec). Display download link + copy-pasteable CLI command. Future: direct CLI invocation via a local dev companion |
+| A4.4 | Implement schema export + download | Export schemas as a downloadable ZIP (JSON files per collection). The developer runs `crouton generate` locally with the downloaded schemas. This avoids the Cloudflare Workers limitation (no shell exec). Display download link + copy-pasteable CLI command. Future: direct CLI invocation via a local dev companion. **Artifact status tracking**: each generated file should show status (`new`, `pending`, `written`, `error`) so the user can see what will be created before downloading |
 | A4.5 | Add "Generate" button | Disabled if critical validation errors exist. On click: export schemas → download ZIP + show CLI instructions. Includes copy-pasteable `crouton generate --from ./schemas/` command |
 
 **Deps:** A1 + A3 complete.
@@ -660,3 +660,4 @@ A4.5 ───┤── A5.2 (project list) ───┤── A5.6 (typecheck) 
 - Mobile-optimized layout
 - Collaborative editing
 - Export to GitHub / download as zip
+- Import existing project via filesystem scanning (archived from crouton-studio — scanner could parse existing `types.ts` files to pre-populate collections)
