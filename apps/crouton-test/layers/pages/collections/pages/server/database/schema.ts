@@ -42,6 +42,8 @@ export const pagesPages = sqliteTable('pages_pages', {
   layout: text('layout'),
   seoTitle: text('seoTitle'),
   seoDescription: text('seoDescription'),
+  ogImage: text('ogImage'),
+  robots: text('robots').$default(() => 'index'),
   // Note: No indexes on translations - measure performance first
   // Add indexes only if queries exceed 50ms with real data
   translations: jsonColumn('translations').$type<{

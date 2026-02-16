@@ -133,6 +133,27 @@ export default defineCroutonManifest({
           maxLength: 160,
           area: 'meta',
           description: 'Meta description for search engines'
+        },
+        {
+          name: 'ogImage',
+          type: 'string',
+          label: 'Social Image',
+          maxLength: 500,
+          area: 'meta',
+          description: 'Image shown when page is shared on social media'
+        },
+        {
+          name: 'robots',
+          type: 'string',
+          label: 'Search Engine Indexing',
+          default: 'index',
+          maxLength: 50,
+          area: 'meta',
+          options: [
+            { value: 'index', label: 'Allow indexing' },
+            { value: 'noindex', label: 'No indexing' }
+          ],
+          description: 'Controls whether search engines index this page'
         }
       ]
     }

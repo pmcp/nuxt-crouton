@@ -296,16 +296,18 @@ const { data: selectedCollectionItem } = await useFetch<Record<string, any>>(() 
   watch: [collectionItemId, collectionPageName]
 })
 
-// When a collection item is selected, auto-populate page title + slug
+// When a collection item is selected, auto-populate page title, slug, and SEO fields
 watch(selectedCollectionItem, (item: Record<string, any> | null) => {
   if (!item || !isCollectionPage.value) return
 
   const config = collections.getConfig(collectionPageName.value)
   const titleField = config?.display?.title || 'title'
+  const descriptionField = config?.display?.description
+  const imageField = config?.display?.image
   const itemTitle = item[titleField] || item.name || item.title
 
   if (itemTitle) {
-    const translations = { ...state.value.translations } as Record<string, { title?: string; slug?: string }>
+    const translations = { ...state.value.translations } as Record<string, { title?: string; slug?: string; seoTitle?: string; seoDescription?: string }>
     const currentLocale = locale.value || 'en'
 
     // Only auto-populate if title is empty
@@ -315,7 +317,18 @@ watch(selectedCollectionItem, (item: Record<string, any> | null) => {
     if (!translations[currentLocale].title) {
       translations[currentLocale].title = itemTitle
       translations[currentLocale].slug = slugify(itemTitle)
+      // Auto-fill SEO title from item title
+      translations[currentLocale].seoTitle = itemTitle
+      // Auto-fill SEO description from display.description field
+      if (descriptionField && item[descriptionField]) {
+        translations[currentLocale].seoDescription = String(item[descriptionField]).slice(0, 160)
+      }
       state.value.translations = translations
+    }
+
+    // Auto-fill ogImage from display.image field
+    if (imageField && item[imageField] && !state.value.ogImage) {
+      state.value.ogImage = item[imageField]
     }
   }
 })
