@@ -18,6 +18,7 @@
     "@fyit/crouton-core": "workspace:*",
     "@fyit/crouton-designer": "workspace:*",
     "@iconify-json/lucide": "^1.2.74",
+    "@libsql/client": "^0.17.0",
     "drizzle-orm": "^0.38.4",
     "fflate": "^0.8.2",
     "nuxt": "^4.2.2"
