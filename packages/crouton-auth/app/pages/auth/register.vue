@@ -20,8 +20,7 @@ const {
   loginWithOAuth,
   hasPassword,
   hasOAuth,
-  oauthProviders,
-  loading
+  oauthProviders
 } = useAuth()
 
 const route = useRoute()
@@ -35,6 +34,9 @@ const redirectTo = computed(() => {
 
 // Error state
 const formError = ref<string | null>(null)
+
+// Local submitting state
+const submitting = ref(false)
 
 // Minimum password length
 const minPasswordLength = 8
@@ -97,7 +99,7 @@ const providers = computed<ButtonProps[]>(() => {
 // Submit button config
 const submitButton = computed(() => ({
   label: t('auth.createAccount'),
-  loading: loading.value,
+  loading: submitting.value,
   block: true
 }))
 
@@ -131,6 +133,7 @@ function validate(state: Record<string, unknown>) {
 // Handle form submission
 async function onSubmit(event: FormSubmitEvent<{ name: string, email: string, password: string, confirmPassword: string }>) {
   formError.value = null
+  submitting.value = true
 
   try {
     await register({
@@ -143,8 +146,10 @@ async function onSubmit(event: FormSubmitEvent<{ name: string, email: string, pa
       description: 'Welcome! Your account has been created.',
       color: 'success'
     })
+    // Keep submitting=true during navigation (page will unmount)
     await navigateTo(redirectTo.value, { external: true })
   } catch (e: unknown) {
+    submitting.value = false
     const message = e instanceof Error ? e.message : 'Registration failed'
     formError.value = message
     toast.add({
@@ -180,7 +185,7 @@ async function handleOAuth(provider: string) {
       :providers="providers"
       :submit="submitButton"
       :validate="validate"
-      :loading="loading"
+      :disabled="submitting"
       :title="t('auth.createYourAccount')"
       icon="i-lucide-user-plus"
       :separator="providers.length > 0 ? 'or' : undefined"

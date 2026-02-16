@@ -18,10 +18,13 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 
-const { resetPassword, loading } = useAuth()
+const { resetPassword } = useAuth()
 
 // Error state
 const formError = ref<string | null>(null)
+
+// Local submitting state
+const submitting = ref(false)
 
 // Get token from query params
 const token = computed(() => route.query.token as string | undefined)
@@ -50,7 +53,7 @@ const fields = computed<AuthFormField[]>(() => [{
 // Submit button config
 const submitButton = computed(() => ({
   label: t('auth.resetPassword'),
-  loading: loading.value,
+  loading: submitting.value,
   block: true
 }))
 
@@ -74,8 +77,10 @@ function validate(state: Record<string, unknown>) {
 // Handle form submission
 async function onSubmit(event: FormSubmitEvent<{ password: string, confirmPassword: string }>) {
   formError.value = null
+  submitting.value = true
 
   if (!token.value) {
+    submitting.value = false
     toast.add({
       title: 'Invalid link',
       description: 'The reset link is invalid or has expired.',
@@ -100,6 +105,8 @@ async function onSubmit(event: FormSubmitEvent<{ password: string, confirmPasswo
       description: message,
       color: 'error'
     })
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -172,7 +179,7 @@ function goToLogin() {
       :fields="fields"
       :submit="submitButton"
       :validate="validate"
-      :loading="loading"
+      :disabled="submitting"
       :title="t('auth.setNewPassword')"
       icon="i-lucide-lock"
       @submit="onSubmit"

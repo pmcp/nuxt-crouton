@@ -26,7 +26,6 @@ const {
   hasPasskeys,
   hasMagicLink,
   oauthProviders,
-  loading,
   isWebAuthnSupported
 } = useAuth()
 
@@ -34,6 +33,9 @@ const redirects = useAuthRedirects()
 
 // Error state
 const formError = ref<string | null>(null)
+
+// Local submitting state (stays true for entire submit + navigate flow)
+const submitting = ref(false)
 
 // Magic link mode
 const showMagicLink = ref(false)
@@ -124,16 +126,18 @@ const providers = computed<ButtonProps[]>(() => {
 // Submit button config
 const submitButton = computed(() => ({
   label: showMagicLink.value ? t('auth.sendMagicLink') : t('auth.signIn'),
-  loading: loading.value,
+  loading: submitting.value,
   block: true
 }))
 
 // Handle form submission
 async function onSubmit(event: FormSubmitEvent<{ email: string, password?: string, rememberMe?: boolean }>) {
   formError.value = null
+  submitting.value = true
 
   if (showMagicLink.value) {
     await handleMagicLink(event.data.email)
+    submitting.value = false
     return
   }
 
@@ -143,8 +147,10 @@ async function onSubmit(event: FormSubmitEvent<{ email: string, password?: strin
       password: event.data.password!,
       rememberMe: event.data.rememberMe || false
     })
+    // Keep submitting=true during navigation (page will unmount)
     await navigateTo(redirectTo.value, { external: true })
   } catch (e: unknown) {
+    submitting.value = false
     const message = e instanceof Error ? e.message : 'Login failed'
     formError.value = message
     toast.add({
@@ -263,7 +269,7 @@ function toggleMagicLink() {
         :fields="loginFields"
         :providers="hasPassword ? providers : []"
         :submit="submitButton"
-        :loading="loading"
+        :disabled="submitting"
         :title="showMagicLink ? t('auth.signInWithMagicLink') : t('auth.welcomeBack')"
         :icon="showMagicLink ? 'i-lucide-wand-2' : 'i-lucide-lock'"
         :separator="hasPassword && providers.length > 0 ? 'or' : undefined"

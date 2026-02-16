@@ -15,11 +15,14 @@ definePageMeta({
 const { t } = useT()
 const toast = useToast()
 
-const { forgotPassword, loading } = useAuth()
+const { forgotPassword } = useAuth()
 
 // Track if email was sent
 const emailSent = ref(false)
 const sentEmail = ref('')
+
+// Local submitting state
+const submitting = ref(false)
 
 // Form fields
 const fields = computed<AuthFormField[]>(() => [{
@@ -33,12 +36,13 @@ const fields = computed<AuthFormField[]>(() => [{
 // Submit button config
 const submitButton = computed(() => ({
   label: t('auth.sendResetLink'),
-  loading: loading.value,
+  loading: submitting.value,
   block: true
 }))
 
 // Handle form submission
 async function onSubmit(event: FormSubmitEvent<{ email: string }>) {
+  submitting.value = true
   try {
     await forgotPassword(event.data.email)
     emailSent.value = true
@@ -58,6 +62,8 @@ async function onSubmit(event: FormSubmitEvent<{ email: string }>) {
       description: 'If an account exists with this email, you will receive a reset link.',
       color: 'success'
     })
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -116,7 +122,7 @@ function handleReset() {
       v-else
       :fields="fields"
       :submit="submitButton"
-      :loading="loading"
+      :disabled="submitting"
       :title="t('auth.resetYourPassword')"
       icon="i-lucide-key-round"
       @submit="onSubmit"

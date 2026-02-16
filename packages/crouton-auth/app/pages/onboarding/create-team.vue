@@ -14,7 +14,11 @@ definePageMeta({
 
 const { t } = useT()
 
+const navigating = ref(false)
+
 function onTeamCreated(team: Team) {
+  // Show loading during navigation
+  navigating.value = true
   // Force full page load so SSR picks up the fresh session with active org
   // Navigate to admin since the team has no public pages yet
   navigateTo(`/admin/${team.slug}`, { external: true })
@@ -40,7 +44,7 @@ function onTeamCreated(team: Team) {
         </div>
       </template>
 
-      <TeamCreateForm @success="onTeamCreated" />
+      <TeamCreateForm :loading="navigating" @success="onTeamCreated" />
     </UCard>
   </div>
 </template>
