@@ -124,7 +124,7 @@ const sidebarAccordionItems = [{
       </div>
     </div>
     <!-- Footer Slot -->
-    <div v-if="$slots.footer" class="pt-6">
+    <div v-if="$slots.footer" class="py-6">
       <slot name="footer" />
     </div>
   </div>
