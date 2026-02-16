@@ -24,16 +24,6 @@ function getLocationTitle(location: LocationData): string {
     || 'Untitled'
 }
 
-// Color mode for dark theme map
-const colorMode = useColorMode()
-
-// Map style based on color mode
-const mapStyle = computed(() => {
-  return colorMode.value === 'dark'
-    ? 'mapbox://styles/mapbox/dark-v11'
-    : 'mapbox://styles/mapbox/streets-v12'
-})
-
 // Parse GeoJSON coordinates from location data
 function parseLocationCoordinates(location: LocationData): [number, number] | null {
   if (!location.location) return null
@@ -95,7 +85,6 @@ function onMarkerClick(locationId: string) {
     <CroutonMapsMap
       :center="mapCenter"
       :zoom="12"
-      :style="mapStyle"
       height="250px"
       fly-to-on-center-change
     >

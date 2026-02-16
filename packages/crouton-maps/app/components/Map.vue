@@ -38,6 +38,19 @@ const emit = defineEmits<{
 // Get map config
 const config = useMapConfig()
 
+// Dark mode detection — auto-switch map style
+const colorMode = useColorMode()
+const autoStyle = computed(() => {
+  // If explicit style prop is set, use it as-is
+  if (props.style) return props.style
+  // If config has a style, use it
+  if (config.style) return config.style
+  // Auto-detect dark mode
+  return colorMode.value === 'dark'
+    ? 'mapbox://styles/mapbox/dark-v11'
+    : 'mapbox://styles/mapbox/streets-v12'
+})
+
 // Map state
 const mapInstance = ref<any>(null)
 const isLoaded = ref(false)
@@ -45,7 +58,7 @@ const error = ref<string | null>(null)
 
 // Compute map options for MapboxMap component
 const mapOptions = computed(() => ({
-  style: props.style || config.style || 'mapbox://styles/mapbox/streets-v12',
+  style: autoStyle.value,
   center: props.center || config.center || [-122.4194, 37.7749],
   zoom: props.zoom || config.zoom || 12
 }))
@@ -77,6 +90,13 @@ useMapbox(props.id, (map) => {
 const defaultEasing = (t: number): number => {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 }
+
+// Watch for style changes (e.g. dark mode toggle) and update the map
+watch(autoStyle, (newStyle) => {
+  if (mapInstance.value && isLoaded.value) {
+    mapInstance.value.setStyle(newStyle)
+  }
+})
 
 // Watch for center changes and optionally animate with flyTo
 watch(() => props.center, (newCenter, oldCenter) => {
@@ -254,6 +274,11 @@ defineExpose({
   z-index: 1000;
 }
 
+:root.dark .crouton-map-loading,
+:root.dark .crouton-map-error {
+  background: rgba(0, 0, 0, 0.9);
+}
+
 .crouton-map-error-content {
   text-align: center;
   padding: 1rem;
@@ -265,6 +290,10 @@ defineExpose({
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.9);
+}
+
+:root.dark .crouton-map-fallback {
+  background: rgba(0, 0, 0, 0.9);
 }
 </style>
 
