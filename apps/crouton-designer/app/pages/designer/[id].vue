@@ -16,6 +16,7 @@ const isNewProject = computed(() => projectId.value === 'new')
 const { buildApiUrl } = useTeamContext()
 const { buildSystemPrompt: buildIntakePrompt } = useIntakePrompt()
 const { buildSystemPrompt: buildCollectionPrompt } = useCollectionDesignPrompt()
+const toast = useToast()
 
 // ------- Project state -------
 const projectConfig = ref<ProjectConfig>({
@@ -32,6 +33,10 @@ const projectConfig = ref<ProjectConfig>({
 const currentPhase = ref<string>('1')
 const chatCollapsed = ref(false)
 const projectRecord = ref<DesignerProject | null>(null)
+
+// ------- Backward navigation (A5.1) -------
+const showBackwardWarning = ref(false)
+const pendingPhaseChange = ref<string | null>(null)
 
 // ------- Collection editor (Phase 2) -------
 const collectionEditorRef = ref<{ editor: ReturnType<typeof useCollectionEditor> } | null>(null)
@@ -122,6 +127,7 @@ const { messages, input, isLoading, status, error, append, clearMessages, toolCa
     phase: currentPhase.value
   })) as any,
   onToolCall: async ({ toolCall }) => {
+    try {
     // Phase 1 tools
     if (toolCall.toolName === 'set_app_config') {
       const args = toolCall.args as Partial<ProjectConfig>
@@ -200,9 +206,18 @@ const { messages, input, isLoading, status, error, append, clearMessages, toolCa
     }
 
     return { success: false, error: `Unknown tool: ${toolCall.toolName}` }
+    } catch (err) {
+      console.error(`Tool call failed (${toolCall.toolName}):`, err)
+      return { success: false, error: `Tool call failed: ${(err as Error).message}` }
+    }
   },
   onError: (err) => {
     console.error('Chat error:', err)
+    toast.add({
+      title: 'AI Error',
+      description: 'Something went wrong. Try again or edit manually.',
+      color: 'error'
+    })
   }
 })
 
@@ -212,6 +227,81 @@ function handleChatSend(text: string) {
     role: 'user',
     content: text
   })
+}
+
+// ------- Chat message persistence (A5.3) -------
+async function saveChatMessages() {
+  if (!projectRecord.value?.id || messages.value.length === 0) return
+  const stored: Record<string, any> = { ...(projectRecord.value.messages || {}) }
+  stored[currentPhase.value] = messages.value.map(m => ({
+    id: m.id,
+    role: m.role,
+    content: m.content
+  }))
+  await $fetch(buildApiUrl(`/designer-projects/${projectRecord.value.id}`), {
+    method: 'PATCH',
+    body: { messages: stored }
+  })
+  projectRecord.value.messages = stored
+}
+
+function restoreChatMessages(phase: string) {
+  clearMessages()
+  const stored = projectRecord.value?.messages?.[phase]
+  if (Array.isArray(stored) && stored.length > 0) {
+    for (const msg of stored) {
+      messages.value.push(msg)
+    }
+  }
+}
+
+async function persistPhase(phase: string) {
+  if (!projectRecord.value?.id) return
+  await $fetch(buildApiUrl(`/designer-projects/${projectRecord.value.id}`), {
+    method: 'PATCH',
+    body: { currentPhase: phase }
+  })
+}
+
+// Restore chat for loaded project (A5.3)
+if (projectRecord.value?.currentPhase) {
+  restoreChatMessages(projectRecord.value.currentPhase)
+}
+
+// ------- Phase navigation handler (A5.1) -------
+async function handlePhaseChange(val: string | number | undefined) {
+  const newPhase = String(val)
+  const current = currentPhase.value
+  if (newPhase === current) return
+
+  // Going to Phase 1 from any later phase: warn about config changes
+  if (newPhase === '1' && current !== '1') {
+    await saveChatMessages()
+    showBackwardWarning.value = true
+    pendingPhaseChange.value = newPhase
+    return
+  }
+
+  // Any other navigation (5→2, or forward via stepper click)
+  await saveChatMessages()
+  currentPhase.value = newPhase
+  restoreChatMessages(newPhase)
+  await persistPhase(newPhase)
+}
+
+function confirmBackward() {
+  if (pendingPhaseChange.value) {
+    currentPhase.value = pendingPhaseChange.value
+    restoreChatMessages(pendingPhaseChange.value)
+    persistPhase(pendingPhaseChange.value)
+  }
+  showBackwardWarning.value = false
+  pendingPhaseChange.value = null
+}
+
+function cancelBackward() {
+  showBackwardWarning.value = false
+  pendingPhaseChange.value = null
 }
 
 // ------- Phase navigation -------
@@ -242,6 +332,7 @@ const phases: StepperItem[] = [
 const canContinue = computed(() => !!(projectConfig.value.name && projectConfig.value.appType))
 
 async function continueToCollections() {
+  await saveChatMessages()
   const id = await ensureProject()
   await $fetch(buildApiUrl(`/designer-projects/${id}`), {
     method: 'PATCH',
@@ -301,6 +392,7 @@ watch(currentPhase, (phase) => {
 }, { immediate: true })
 
 async function continueToReview() {
+  await saveChatMessages()
   const id = await ensureProject()
   await $fetch(buildApiUrl(`/designer-projects/${id}`), {
     method: 'PATCH',
@@ -330,10 +422,11 @@ async function continueToReview() {
 
     <!-- Phase stepper -->
     <UStepper
-      v-model="currentPhase"
+      :model-value="currentPhase"
       :items="phases"
       :linear="false"
       class="mb-6"
+      @update:model-value="handlePhaseChange"
     >
       <!-- Phase 1: Intake -->
       <template #intake>
@@ -342,6 +435,7 @@ async function continueToReview() {
             <DesignerChatPanel
               :messages="messages"
               :is-loading="isLoading"
+              :error="error"
               @send="handleChatSend"
             />
           </template>
@@ -379,6 +473,7 @@ async function continueToReview() {
             <DesignerChatPanel
               :messages="messages"
               :is-loading="isLoading"
+              :error="error"
               @send="handleChatSend"
             />
           </template>
@@ -409,9 +504,32 @@ async function continueToReview() {
         <DesignerReviewPanel
           :project-id="projectId"
           :config="projectConfig"
-          @back-to-collections="currentPhase = '2'"
+          @back-to-collections="handlePhaseChange('2')"
         />
       </template>
     </UStepper>
+
+    <!-- Backward navigation warning (A5.1) -->
+    <UModal v-model="showBackwardWarning">
+      <template #content>
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <UIcon name="i-lucide-alert-triangle" class="size-5 text-[var(--ui-color-warning-500)]" />
+            <h3 class="text-lg font-semibold">
+              Go back to Intake?
+            </h3>
+          </div>
+          <p class="text-sm text-[var(--ui-text-muted)] mb-6">
+            Your collections will be preserved, but changing app configuration
+            (e.g., switching from multi-tenant to single-tenant) may require
+            manual schema adjustments.
+          </p>
+          <div class="flex justify-end gap-2">
+            <UButton color="neutral" variant="ghost" label="Cancel" @click="cancelBackward" />
+            <UButton color="warning" label="Go Back" @click="confirmBackward" />
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
