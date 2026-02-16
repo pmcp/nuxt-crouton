@@ -377,6 +377,10 @@
     "teamDeletedDescription": "The team has been permanently deleted.",
     "settingsSaved": "Team settings have been saved."
   },
+  "import": {
+    "csv": "Import CSV",
+    "json": "Import JSON"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "home": "Home",

@@ -377,6 +377,10 @@
     "teamDeletedDescription": "Het team is permanent verwijderd.",
     "settingsSaved": "Teaminstellingen zijn opgeslagen."
   },
+  "import": {
+    "csv": "CSV importeren",
+    "json": "JSON importeren"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "home": "Home",

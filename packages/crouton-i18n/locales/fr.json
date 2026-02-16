@@ -376,6 +376,10 @@
     "teamDeletedDescription": "L'équipe a été supprimée définitivement.",
     "settingsSaved": "Les paramètres de l'équipe ont été enregistrés."
   },
+  "import": {
+    "csv": "Importer CSV",
+    "json": "Importer JSON"
+  },
   "navigation": {
     "dashboard": "Tableau de bord",
     "home": "Accueil",
