@@ -16,9 +16,21 @@ export default defineNuxtConfig({
     name: 'crouton-assets'
   },
 
-  // Note: This is an addon layer - users must explicitly extend both:
-  // extends: ['@fyit/crouton-core', '@fyit/crouton-assets']
-  // And ensure NuxtHub blob storage is enabled: hub: { blob: true }
+  // Enable blob storage for asset uploads
+  // NuxtHub will merge this with the app's hub config
+  hub: {
+    blob: true
+  },
+
+  // Upload defaults (can be overridden in app nuxt.config.ts)
+  runtimeConfig: {
+    public: {
+      croutonUpload: {
+        maxSize: '10MB',
+        allowedTypes: [] // Empty = use server defaults (all common types)
+      }
+    }
+  },
 
   // Component configuration
   components: {

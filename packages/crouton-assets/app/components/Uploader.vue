@@ -1,14 +1,38 @@
 <template>
   <div class="space-y-4">
-    <!-- File Upload -->
+    <!-- Step 1: File Upload -->
     <CroutonImageUpload
+      v-if="!showCropStep"
       v-model="previewUrl"
+      :crop="false"
       @file-selected="handleFileSelected"
     />
 
-    <!-- Metadata Form -->
+    <!-- Step 2: Optional Crop -->
+    <div v-if="showCropStep && pendingFile">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-medium">
+          Crop Image
+        </h4>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          label="Skip crop"
+          @click="skipCrop"
+        />
+      </div>
+      <CroutonImageCropper
+        :file="pendingFile"
+        :aspect-ratio="cropAspectRatio"
+        @confirm="handleCropConfirm"
+        @cancel="handleCropCancel"
+      />
+    </div>
+
+    <!-- Step 3: Metadata Form -->
     <div
-      v-if="selectedFile"
+      v-if="selectedFile && !showCropStep"
       class="space-y-3"
     >
       <UFormField
@@ -41,30 +65,75 @@
 </template>
 
 <script setup lang="ts">
+type AspectRatioPreset = 'free' | '1:1' | '16:9' | '4:3' | '3:2'
+
 const props = defineProps<{
   collection?: string
+  crop?: boolean | { aspectRatio?: number | AspectRatioPreset }
 }>()
 
 const emit = defineEmits<{
   uploaded: [assetId: string]
 }>()
 
-const { getTeamId } = useTeamContext()
+const { uploadAsset, uploading } = useAssetUpload()
 
 const selectedFile = ref<File | null>(null)
+const pendingFile = ref<File | null>(null)
 const previewUrl = ref<string>()
-const uploading = ref(false)
-const metadata = ref({
-  alt: ''
+const showCropStep = ref(false)
+const metadata = ref({ alt: '' })
+
+const cropEnabled = computed(() => {
+  if (!props.crop) return false
+  return true
 })
 
-const collectionName = props.collection || 'assets'
+const cropAspectRatio = computed(() => {
+  if (typeof props.crop === 'object' && props.crop.aspectRatio) {
+    return props.crop.aspectRatio
+  }
+  return undefined
+})
+
+const isImageFile = (file: File) => file.type.startsWith('image/')
 
 const handleFileSelected = (file: File | null) => {
-  selectedFile.value = file
-  if (file) {
+  if (!file) {
+    selectedFile.value = null
+    pendingFile.value = null
+    return
+  }
+
+  if (cropEnabled.value && isImageFile(file)) {
+    pendingFile.value = file
+    showCropStep.value = true
+  } else {
+    selectedFile.value = file
     metadata.value.alt = ''
   }
+}
+
+const handleCropConfirm = (croppedFile: File) => {
+  selectedFile.value = croppedFile
+  pendingFile.value = null
+  showCropStep.value = false
+  metadata.value.alt = ''
+}
+
+const handleCropCancel = () => {
+  pendingFile.value = null
+  showCropStep.value = false
+  previewUrl.value = undefined
+}
+
+const skipCrop = () => {
+  if (pendingFile.value) {
+    selectedFile.value = pendingFile.value
+  }
+  pendingFile.value = null
+  showCropStep.value = false
+  metadata.value.alt = ''
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -78,35 +147,14 @@ const formatFileSize = (bytes: number): string => {
 const handleUpload = async () => {
   if (!selectedFile.value) return
 
-  uploading.value = true
   try {
-    // Step 1: Upload file to blob storage
-    const formData = new FormData()
-    formData.append('image', selectedFile.value)
+    const asset = await uploadAsset(
+      selectedFile.value,
+      { alt: metadata.value.alt },
+      props.collection || 'assets'
+    )
 
-    const pathname = await $fetch('/api/upload-image', {
-      method: 'POST',
-      body: formData
-    })
-
-    // Step 2: Create asset record in database
-    const teamId = getTeamId()
-    if (!teamId) {
-      throw new Error('Team context not available')
-    }
-    const asset = await $fetch(`/api/teams/${teamId}/${collectionName}`, {
-      method: 'POST',
-      body: {
-        filename: selectedFile.value.name,
-        pathname,
-        contentType: selectedFile.value.type,
-        size: selectedFile.value.size,
-        alt: metadata.value.alt || '',
-        uploadedAt: new Date()
-      }
-    })
-
-    // Reset and emit success
+    // Reset state
     selectedFile.value = null
     previewUrl.value = undefined
     metadata.value.alt = ''
@@ -114,9 +162,6 @@ const handleUpload = async () => {
     emit('uploaded', asset.id)
   } catch (error) {
     console.error('Upload failed:', error)
-    // TODO: Show toast notification
-  } finally {
-    uploading.value = false
   }
 }
 </script>

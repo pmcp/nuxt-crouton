@@ -3,6 +3,13 @@ export interface AssetMetadata {
   filename?: string
 }
 
+export interface UploadResponse {
+  pathname: string
+  contentType: string
+  size: number
+  filename: string
+}
+
 export interface UploadAssetResult {
   id: string
   pathname: string
@@ -16,6 +23,7 @@ export const useAssetUpload = () => {
   const { getTeamId } = useTeamContext()
   const uploading = ref(false)
   const error = ref<Error | null>(null)
+  const progress = ref(0)
 
   /**
    * Upload a file to blob storage and create an asset record
@@ -31,16 +39,19 @@ export const useAssetUpload = () => {
   ): Promise<UploadAssetResult> => {
     uploading.value = true
     error.value = null
+    progress.value = 0
 
     try {
       // Step 1: Upload file to blob storage
       const formData = new FormData()
-      formData.append('image', file)
+      formData.append('file', file)
 
-      const pathname = await $fetch<string>('/api/upload-image', {
+      const uploadResult = await $fetch<UploadResponse>('/api/upload-image', {
         method: 'POST',
         body: formData
       })
+
+      progress.value = 50
 
       // Step 2: Create asset record in database
       const teamId = getTeamId()
@@ -52,13 +63,15 @@ export const useAssetUpload = () => {
         method: 'POST',
         body: {
           filename: metadata.filename || file.name,
-          pathname,
-          contentType: file.type,
-          size: file.size,
+          pathname: uploadResult.pathname,
+          contentType: uploadResult.contentType,
+          size: uploadResult.size,
           alt: metadata.alt || '',
           uploadedAt: new Date()
         }
       })
+
+      progress.value = 100
 
       return asset
     } catch (err) {
@@ -85,10 +98,23 @@ export const useAssetUpload = () => {
     return Promise.all(uploads)
   }
 
+  /**
+   * Delete a file from blob storage
+   * @param pathname - The blob pathname to delete
+   */
+  const deleteAssetFile = async (pathname: string): Promise<void> => {
+    await $fetch('/api/upload-image', {
+      method: 'DELETE',
+      body: { pathname }
+    })
+  }
+
   return {
     uploadAsset,
     uploadAssets,
+    deleteAssetFile,
     uploading: readonly(uploading),
-    error: readonly(error)
+    error: readonly(error),
+    progress: readonly(progress)
   }
 }

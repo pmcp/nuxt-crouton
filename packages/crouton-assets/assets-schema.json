@@ -53,6 +53,29 @@
       "area": "sidebar"
     }
   },
+  "category": {
+    "type": "string",
+    "meta": {
+      "label": "Category",
+      "area": "sidebar",
+      "options": ["image", "video", "audio", "document", "other"],
+      "displayAs": "optionsSelect"
+    }
+  },
+  "width": {
+    "type": "number",
+    "meta": {
+      "label": "Width (px)",
+      "area": "sidebar"
+    }
+  },
+  "height": {
+    "type": "number",
+    "meta": {
+      "label": "Height (px)",
+      "area": "sidebar"
+    }
+  },
   "alt": {
     "type": "string",
     "meta": {

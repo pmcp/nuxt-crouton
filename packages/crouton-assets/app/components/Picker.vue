@@ -1,12 +1,18 @@
 <template>
   <div class="space-y-4">
-    <!-- Search and Upload -->
+    <!-- Search, Filter and Upload -->
     <div class="flex items-center gap-2">
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
         placeholder="Search assets..."
         class="flex-1"
+      />
+      <USelect
+        v-model="typeFilter"
+        :items="typeFilterOptions"
+        class="w-32"
+        size="md"
       />
       <UButton
         icon="i-lucide-upload"
@@ -40,17 +46,23 @@
         @click="selectAsset(asset.id)"
       >
         <div class="aspect-square bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <!-- Image preview -->
           <img
-            v-if="asset.pathname"
+            v-if="isImage(asset.contentType) && asset.pathname"
             :src="`/images/${asset.pathname}`"
             :alt="asset.alt || asset.filename"
             class="w-full h-full object-cover"
           >
-          <UIcon
-            v-else
-            name="i-lucide-file"
-            class="w-8 h-8 text-gray-400"
-          />
+          <!-- File type icon for non-images -->
+          <div v-else class="flex flex-col items-center gap-1">
+            <UIcon
+              :name="getFileIcon(asset.contentType)"
+              class="w-8 h-8 text-gray-400"
+            />
+            <span class="text-xs text-gray-400 uppercase">
+              {{ getFileExtension(asset.filename) }}
+            </span>
+          </div>
         </div>
         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 text-xs truncate opacity-0 group-hover:opacity-100 transition-opacity">
           {{ asset.filename }}
@@ -97,26 +109,80 @@
 <script setup lang="ts">
 const props = defineProps<{
   collection?: string
+  crop?: boolean | { aspectRatio?: number }
 }>()
 
 const modelValue = defineModel<string>()
 const showUploader = ref(false)
 const searchQuery = ref('')
+const typeFilter = ref('all')
+
+const typeFilterOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Images', value: 'image' },
+  { label: 'Documents', value: 'document' },
+  { label: 'Video', value: 'video' },
+  { label: 'Audio', value: 'audio' }
+]
 
 // Fetch assets from the generated collection API
 const collectionName = props.collection || 'assets'
 const { data: assets, pending, refresh } = await useFetch(`/api/teams/${useRoute().params.team}/${collectionName}`)
 
-// Filter assets based on search
+const isImage = (contentType?: string) => contentType?.startsWith('image/')
+const isVideo = (contentType?: string) => contentType?.startsWith('video/')
+const isAudio = (contentType?: string) => contentType?.startsWith('audio/')
+const isDocument = (contentType?: string) =>
+  contentType === 'application/pdf'
+  || contentType?.includes('word')
+  || contentType?.includes('spreadsheet')
+  || contentType?.includes('presentation')
+
+const getFileCategory = (contentType?: string): string => {
+  if (isImage(contentType)) return 'image'
+  if (isVideo(contentType)) return 'video'
+  if (isAudio(contentType)) return 'audio'
+  if (isDocument(contentType)) return 'document'
+  return 'other'
+}
+
+const getFileIcon = (contentType?: string): string => {
+  if (isImage(contentType)) return 'i-lucide-image'
+  if (isVideo(contentType)) return 'i-lucide-video'
+  if (isAudio(contentType)) return 'i-lucide-music'
+  if (contentType === 'application/pdf') return 'i-lucide-file-text'
+  return 'i-lucide-file'
+}
+
+const getFileExtension = (filename?: string): string => {
+  if (!filename) return ''
+  const parts = filename.split('.')
+  return parts.length > 1 ? parts.pop()! : ''
+}
+
+// Filter assets based on search and type
 const filteredAssets = computed(() => {
   if (!assets.value) return []
-  if (!searchQuery.value) return assets.value
 
-  const query = searchQuery.value.toLowerCase()
-  return assets.value.filter((asset: any) =>
-    asset.filename?.toLowerCase().includes(query)
-    || asset.alt?.toLowerCase().includes(query)
-  )
+  let result = assets.value as any[]
+
+  // Type filter
+  if (typeFilter.value !== 'all') {
+    result = result.filter((asset: any) =>
+      getFileCategory(asset.contentType) === typeFilter.value
+    )
+  }
+
+  // Search filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter((asset: any) =>
+      asset.filename?.toLowerCase().includes(query)
+      || asset.alt?.toLowerCase().includes(query)
+    )
+  }
+
+  return result
 })
 
 const selectAsset = (id: string) => {
