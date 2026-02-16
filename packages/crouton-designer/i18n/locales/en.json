@@ -197,6 +197,8 @@
     "chat": {
       "emptyState": "Describe your app and I'll help configure it.",
       "error": "AI response failed. Try sending your message again.",
+      "retry": "Retry",
+      "aiFallback": "AI is currently unavailable. You can configure your app manually using the form below.",
       "placeholder": "Describe your app..."
     },
     "review": {

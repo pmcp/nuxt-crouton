@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   send: [message: string]
+  retry: []
 }>()
 
 const input = ref('')
@@ -88,10 +89,18 @@ watch(() => props.messages.length, () => {
       </div>
     </div>
 
-    <!-- Error display -->
+    <!-- Error display with retry -->
     <div v-if="error" class="mx-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-sm flex items-center gap-2 text-red-700 dark:text-red-400">
       <UIcon name="i-lucide-alert-circle" class="size-4 shrink-0" />
-      <span>{{ t('designer.chat.error') }}</span>
+      <span class="flex-1">{{ t('designer.chat.error') }}</span>
+      <UButton
+        size="xs"
+        color="error"
+        variant="soft"
+        icon="i-lucide-refresh-cw"
+        :label="t('designer.chat.retry')"
+        @click="emit('retry')"
+      />
     </div>
 
     <!-- Input area -->
