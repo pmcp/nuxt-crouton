@@ -131,7 +131,9 @@ const defaultValue = {
   layout: 'default',
   parentId: null,
   order: 0,
-  translations: {}
+  translations: {},
+  ogImage: '',
+  robots: 'index'
 }
 
 // Form state
@@ -205,6 +207,8 @@ watch(
           [locale.value || 'en']: {
             title: pageData.title || '',
             slug: pageData.slug || '',
+            seoTitle: pageData.seoTitle || '',
+            seoDescription: pageData.seoDescription || '',
             content: pageData.content || ''
           }
         }
@@ -300,6 +304,12 @@ const layoutOptions = [
   { value: 'default', label: t('pages.layout.default') || 'Default (Scrollable)' },
   { value: 'full-height', label: t('pages.layout.fullHeight') || 'Full Height (Fixed)' },
   { value: 'full-screen', label: t('pages.layout.fullScreen') || 'Full Screen (No Padding)' }
+]
+
+// Robots options for SEO
+const robotsOptions = [
+  { value: 'index', label: t('pages.robots.index') || 'Allow indexing' },
+  { value: 'noindex', label: t('pages.robots.noindex') || 'No indexing' }
 ]
 
 // Parent page options
@@ -420,6 +430,8 @@ async function handleSubmit() {
       ...state.value,
       title: primary.title || state.value.title,
       slug: primary.slug || state.value.slug,
+      seoTitle: primary.seoTitle || '',
+      seoDescription: primary.seoDescription || '',
       content: rawContent && typeof rawContent === 'object' ? JSON.stringify(rawContent) : rawContent,
       translations,
       config: !isRegularPage.value ? state.value.config : null
@@ -476,9 +488,9 @@ function handleDelete() {
 // Translatable fields
 const translatableFields = computed(() => {
   if (isRegularPage.value) {
-    return ['title', 'slug', 'content']
+    return ['title', 'slug', 'seoTitle', 'seoDescription', 'content']
   }
-  return ['title', 'slug']
+  return ['title', 'slug', 'seoTitle', 'seoDescription']
 })
 
 // Field components
@@ -731,6 +743,27 @@ defineExpose({ state })
                       value-key="value"
                       :loading="pagesPending"
                       placeholder="None"
+                      size="sm"
+                      class="w-full"
+                    />
+                  </UFormField>
+
+                  <USeparator class="my-3" />
+                  <div class="text-sm font-medium text-default mb-3">SEO</div>
+
+                  <UFormField :label="t('pages.fields.ogImage') || 'Social Image'" name="ogImage">
+                    <CroutonImageUpload
+                      v-model="state.ogImage"
+                      size="sm"
+                      accept="image/*"
+                    />
+                  </UFormField>
+
+                  <UFormField :label="t('pages.fields.robots') || 'Search Indexing'" name="robots">
+                    <USelect
+                      v-model="state.robots"
+                      :items="robotsOptions"
+                      value-key="value"
                       size="sm"
                       class="w-full"
                     />

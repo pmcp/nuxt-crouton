@@ -52,8 +52,14 @@
       "showInNavigation": "Afficher dans la navigation",
       "seoTitle": "Titre SEO",
       "seoDescription": "Description SEO",
+      "ogImage": "Image sociale",
+      "robots": "Indexation",
       "layout": "Mise en page",
       "parent": "Page parente"
+    },
+    "robots": {
+      "index": "Autoriser l'indexation",
+      "noindex": "Pas d'indexation"
     }
   },
   "common": {

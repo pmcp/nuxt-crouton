@@ -55,7 +55,10 @@ export default defineNuxtConfig({
         debug: false,
         // Redirect old /dashboard/[team] URLs to /[team] (pages-based)
         // Enable this when migrating from dashboard to pages
-        redirectDashboard: false
+        redirectDashboard: false,
+        // Base URL for absolute SEO URLs (Open Graph, canonical, hreflang)
+        // Set via NUXT_PUBLIC_CROUTON_PAGES_SITE_URL env var
+        siteUrl: ''
       }
     }
   },

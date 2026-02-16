@@ -204,10 +204,33 @@ onBeforeUnmount(() => {
   editingTranslations.value = null
 })
 
-// SEO meta
-useSeoMeta({
-  title: () => page.value?.seoTitle || page.value?.title || 'Page',
-  description: () => page.value?.seoDescription || ''
+// Site URL for absolute Open Graph URLs
+const { croutonPages } = useRuntimeConfig().public as { croutonPages: { siteUrl: string } }
+const siteUrl = croutonPages.siteUrl || ''
+
+function toAbsoluteUrl(url: string | undefined | null, base: string): string | undefined {
+  if (!url) return undefined
+  if (url.startsWith('http')) return url
+  return `${base}${url}`
+}
+
+// SEO meta (server-only — crawlers read SSR HTML)
+useServerSeoMeta({
+  title: page.value?.seoTitle || page.value?.title || 'Page',
+  description: page.value?.seoDescription || undefined,
+  // Open Graph
+  ogTitle: page.value?.seoTitle || page.value?.title || 'Page',
+  ogDescription: page.value?.seoDescription || undefined,
+  ogImage: toAbsoluteUrl(page.value?.ogImage, siteUrl),
+  ogUrl: `${siteUrl}/${team.value}/${urlLocale.value}/${page.value?.slug || ''}`,
+  ogType: 'website',
+  // Twitter Card
+  twitterCard: page.value?.ogImage ? 'summary_large_image' : 'summary',
+  twitterTitle: page.value?.seoTitle || page.value?.title || 'Page',
+  twitterDescription: page.value?.seoDescription || undefined,
+  twitterImage: toAbsoluteUrl(page.value?.ogImage, siteUrl),
+  // Robots
+  robots: page.value?.robots === 'noindex' ? 'noindex, nofollow' : undefined
 })
 
 // Build hreflang links for SEO
@@ -229,7 +252,7 @@ const alternateLinks = computed(() => {
     return {
       rel: 'alternate',
       hreflang: loc.code,
-      href: `/${team.value}/${loc.code}/${translatedSlug}`
+      href: `${siteUrl}/${team.value}/${loc.code}/${translatedSlug}`
     }
   })
 })
@@ -238,10 +261,10 @@ const alternateLinks = computed(() => {
 useHead({
   title: () => page.value?.title || 'Page',
   link: () => [
-    // Canonical URL: /team/locale/slug
+    // Canonical URL (absolute)
     {
       rel: 'canonical',
-      href: `/${team.value}/${urlLocale.value}/${page.value?.slug || ''}`
+      href: `${siteUrl}/${team.value}/${urlLocale.value}/${page.value?.slug || ''}`
     },
     // hreflang alternatives
     ...alternateLinks.value

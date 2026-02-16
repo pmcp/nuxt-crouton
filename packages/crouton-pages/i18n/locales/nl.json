@@ -52,8 +52,14 @@
       "showInNavigation": "Tonen in Navigatie",
       "seoTitle": "SEO Titel",
       "seoDescription": "SEO Beschrijving",
+      "ogImage": "Sociale afbeelding",
+      "robots": "Zoekindex",
       "layout": "Layout",
       "parent": "Bovenliggende Pagina"
+    },
+    "robots": {
+      "index": "Indexering toestaan",
+      "noindex": "Geen indexering"
     }
   },
   "common": {

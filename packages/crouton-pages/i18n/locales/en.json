@@ -52,8 +52,14 @@
       "showInNavigation": "Show in Navigation",
       "seoTitle": "SEO Title",
       "seoDescription": "SEO Description",
+      "ogImage": "Social Image",
+      "robots": "Search Indexing",
       "layout": "Layout",
       "parent": "Parent Page"
+    },
+    "robots": {
+      "index": "Allow indexing",
+      "noindex": "No indexing"
     }
   },
   "common": {
