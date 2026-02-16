@@ -13,6 +13,10 @@
 import type { CroutonAuthConfig } from '../../types/config'
 
 export default defineNitroPlugin(async () => {
+  // Deduplicate across layer resolution
+  if ((globalThis as Record<string, boolean>).__croutonTeamPluginLogged) return
+  (globalThis as Record<string, boolean>).__croutonTeamPluginLogged = true
+
   const config = useRuntimeConfig().public.crouton?.auth as CroutonAuthConfig | undefined
   const teams = config?.teams
 
