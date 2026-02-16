@@ -50,6 +50,14 @@ function getPhase1Tools() {
   }
 }
 
+const displayConfigSchema = z.object({
+  title: z.string().optional().describe('Field name used as the primary display title'),
+  subtitle: z.string().optional().describe('Field name for secondary context'),
+  image: z.string().optional().describe('Field name for the visual identifier (image/file type)'),
+  badge: z.string().optional().describe('Field name for status/category badge'),
+  description: z.string().optional().describe('Field name for summary text')
+}).optional().describe('Display config — which fields serve which display roles')
+
 // Phase 2 tools
 function getPhase2Tools() {
   return {
@@ -58,6 +66,7 @@ function getPhase2Tools() {
       parameters: z.object({
         name: z.string().describe('Collection name (e.g. "Tasks", "Projects")'),
         description: z.string().optional().describe('Description of what this collection stores'),
+        display: displayConfigSchema,
         fields: z.array(z.object({
           name: z.string().describe('Field name in camelCase'),
           type: fieldTypeEnum.describe('Field type'),
@@ -69,11 +78,12 @@ function getPhase2Tools() {
     }),
 
     update_collection: tool({
-      description: 'Rename or update a collection\'s description.',
+      description: 'Rename or update a collection\'s description or display config.',
       parameters: z.object({
         collectionId: z.string().describe('The collection ID to update'),
         name: z.string().optional().describe('New collection name'),
-        description: z.string().optional().describe('New description')
+        description: z.string().optional().describe('New description'),
+        display: displayConfigSchema
       }),
       execute: async (args) => ({ success: true, action: 'update_collection', ...args })
     }),

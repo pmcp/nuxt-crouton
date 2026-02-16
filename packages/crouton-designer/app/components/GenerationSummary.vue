@@ -27,6 +27,14 @@ function toggleCollection(id: string) {
   expandedCollections.value = new Set(expandedCollections.value)
 }
 
+const displayRoleLabels: Record<string, { label: string, icon: string }> = {
+  title: { label: 'Title', icon: 'i-lucide-heading' },
+  subtitle: { label: 'Subtitle', icon: 'i-lucide-text' },
+  image: { label: 'Image', icon: 'i-lucide-image' },
+  badge: { label: 'Badge', icon: 'i-lucide-tag' },
+  description: { label: 'Description', icon: 'i-lucide-align-left' }
+}
+
 const appTypeLabels: Record<string, string> = {
   'saas': 'SaaS',
   'cms': 'CMS',
@@ -106,6 +114,22 @@ const appTypeLabels: Record<string, string> = {
           <!-- Expanded fields -->
           <div v-if="expandedCollections.has(col.id)" class="border-t border-[var(--ui-border)] px-4 py-2 space-y-1">
             <p v-if="col.description" class="text-xs text-[var(--ui-text-muted)] mb-2">{{ col.description }}</p>
+
+            <!-- Display config -->
+            <div v-if="col.display && Object.values(col.display).some(Boolean)" class="flex flex-wrap gap-1.5 mb-2">
+              <template v-for="(fieldName, role) in col.display" :key="role">
+                <UBadge
+                  v-if="fieldName"
+                  variant="subtle"
+                  color="primary"
+                  size="xs"
+                >
+                  <UIcon :name="displayRoleLabels[role]?.icon || 'i-lucide-tag'" class="size-3 mr-1" />
+                  {{ displayRoleLabels[role]?.label || role }}: {{ fieldName }}
+                </UBadge>
+              </template>
+            </div>
+
             <div
               v-for="field in col.fields"
               :key="field.id"

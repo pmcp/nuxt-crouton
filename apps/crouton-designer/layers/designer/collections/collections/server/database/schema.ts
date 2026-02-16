@@ -27,6 +27,7 @@ export const designerCollections = sqliteTable('designer_collections', {
   projectId: text('projectId').notNull(),
   name: text('name').notNull(),
   description: text('description'),
+  display: jsonColumn('display'),
   sortOrder: text('sortOrder'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),

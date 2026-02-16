@@ -22,12 +22,15 @@ export function useCollectionDesignPrompt() {
   function buildCollectionsContext(collections: CollectionWithFields[]): string {
     if (collections.length === 0) return '  (no collections yet)'
     return collections.map(col => {
+      const displayLine = col.display
+        ? `    display: ${JSON.stringify(col.display)}`
+        : '    display: (not set)'
       const fieldLines = col.fields.map(f => {
         const meta = f.meta ? ` meta: ${JSON.stringify(f.meta)}` : ''
         const ref = f.refTarget ? ` → ${f.refTarget}` : ''
         return `    - ${f.name}: ${f.type}${ref}${meta} (id: ${f.id})`
       }).join('\n')
-      return `  ${col.name} (id: ${col.id}):\n${fieldLines || '    (no fields)'}`
+      return `  ${col.name} (id: ${col.id}):\n${displayLine}\n${fieldLines || '    (no fields)'}`
     }).join('\n')
   }
 
@@ -69,8 +72,20 @@ ${buildMetaTable()}
 ## Current Collections
 ${buildCollectionsContext(collections)}
 
+## Display Config
+Every collection MUST have a \`display\` mapping that identifies which fields serve display roles.
+Set this via the \`display\` parameter when calling \`create_collection\`. The mapping keys are:
+- \`title\`: Primary identifier field (required — fall back to first string field named title/name/label)
+- \`subtitle\`: Secondary context field (optional)
+- \`image\`: Visual identifier field — only use image/file type fields (optional)
+- \`badge\`: Status/category indicator field — use fields with options or displayAs:badge (optional)
+- \`description\`: Summary text field (optional)
+
+Values are field names (camelCase). Only reference fields that exist in the collection.
+You know the domain — set this automatically, don't ask the user.
+
 ## Rules
-1. ALWAYS use tool calls to create/modify/delete collections and fields. Never just describe changes — execute them.
+1. ALWAYS use tool calls to create/modify/delete collections and fields. Always include display config when creating collections.
 2. Be opinionated: propose complete, well-structured schemas. Don't ask "do you want X?" — propose X and let the user modify.
 3. Every collection should have an \`id\` field (type: uuid, meta: { primaryKey: true }) and \`name\` or \`title\` field as the first fields.
 4. Use \`reference\` type for relationships. Set \`refTarget\` to the target collection name.

@@ -1,4 +1,4 @@
-import type { DesignerCollection, DesignerField } from '../types/schema'
+import type { DesignerCollection, DesignerField, DisplayConfig } from '../types/schema'
 
 export interface CollectionWithFields extends DesignerCollection {
   fields: DesignerField[]
@@ -50,7 +50,7 @@ export function useCollectionEditor(projectId: Ref<string>) {
 
   // --- Collection CRUD ---
 
-  async function createCollection(data: { name: string, description?: string }) {
+  async function createCollection(data: { name: string, description?: string, display?: DisplayConfig }) {
     const result = await $fetch<DesignerCollection>(buildApiUrl('/designer-collections'), {
       method: 'POST',
       body: { ...data, projectId: projectId.value }
@@ -59,7 +59,7 @@ export function useCollectionEditor(projectId: Ref<string>) {
     return result
   }
 
-  async function updateCollection(id: string, updates: { name?: string, description?: string }) {
+  async function updateCollection(id: string, updates: { name?: string, description?: string, display?: DisplayConfig }) {
     const result = await $fetch<DesignerCollection>(buildApiUrl(`/designer-collections/${id}`), {
       method: 'PATCH',
       body: updates

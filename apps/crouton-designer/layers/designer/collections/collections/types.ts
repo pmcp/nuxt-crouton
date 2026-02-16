@@ -23,6 +23,14 @@
 import type { z } from 'zod'
 import type { designerCollectionSchema } from './app/composables/useDesignerCollections'
 
+export interface DisplayConfig {
+  title?: string
+  subtitle?: string
+  image?: string
+  badge?: string
+  description?: string
+}
+
 export interface DesignerCollection {
   id: string
   teamId: string
@@ -30,6 +38,7 @@ export interface DesignerCollection {
   projectId: string
   name: string
   description?: string
+  display?: DisplayConfig
   sortOrder?: string
   createdAt: Date
   updatedAt: Date

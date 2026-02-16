@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
     projectId: body.projectId,
     name: body.name,
     description: body.description,
+    display: body.display,
     sortOrder: body.sortOrder
   })
 })

@@ -16,11 +16,16 @@ export function useSchemaDownload(
 
   // Build artifact list with status
   const artifacts = computed<ArtifactFile[]>(() => {
-    return schemaFiles.value.map(file => ({
-      filename: `schemas/${file.name}.json`,
-      content: JSON.stringify(file.schema, null, 2),
-      status: 'ready' as const
-    }))
+    return schemaFiles.value.map(file => {
+      const output = file.display
+        ? { display: file.display, fields: file.schema }
+        : file.schema
+      return {
+        filename: `schemas/${file.name}.json`,
+        content: JSON.stringify(output, null, 2),
+        status: 'ready' as const
+      }
+    })
   })
 
   // CLI command to show after download

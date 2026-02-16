@@ -1,8 +1,11 @@
 import type { CollectionWithFields } from './useCollectionEditor'
+import type { DisplayConfig } from '../types/schema'
 
 export interface SchemaFile {
   /** Collection name (used as filename: `{name}.json`) */
   name: string
+  /** Display config mapping fields to display roles */
+  display?: DisplayConfig
   /** The JSON schema object in crouton-cli format */
   schema: Record<string, SchemaFieldExport>
 }
@@ -64,6 +67,7 @@ export function useSchemaExport(collections: Ref<CollectionWithFields[]>) {
 
       return {
         name: col.name,
+        display: col.display || undefined,
         schema
       }
     })
@@ -72,10 +76,20 @@ export function useSchemaExport(collections: Ref<CollectionWithFields[]>) {
   /**
    * Get the JSON string for a single collection schema
    */
+  function buildSchemaOutput(file: SchemaFile): object {
+    if (file.display) {
+      return { display: file.display, fields: file.schema }
+    }
+    return file.schema
+  }
+
+  /**
+   * Get the JSON string for a single collection schema
+   */
   function getSchemaJson(collectionName: string): string | null {
     const file = schemaFiles.value.find(f => f.name === collectionName)
     if (!file) return null
-    return JSON.stringify(file.schema, null, 2)
+    return JSON.stringify(buildSchemaOutput(file), null, 2)
   }
 
   /**
@@ -84,7 +98,7 @@ export function useSchemaExport(collections: Ref<CollectionWithFields[]>) {
   function getAllSchemasAsJson(): Map<string, string> {
     const result = new Map<string, string>()
     for (const file of schemaFiles.value) {
-      result.set(`${file.name}.json`, JSON.stringify(file.schema, null, 2))
+      result.set(`${file.name}.json`, JSON.stringify(buildSchemaOutput(file), null, 2))
     }
     return result
   }

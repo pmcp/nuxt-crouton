@@ -1,0 +1,1 @@
+ALTER TABLE `designer_collections` ADD `display` text;
