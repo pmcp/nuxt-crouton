@@ -1,0 +1,74 @@
+{
+  "name": "@fyit/crouton-designer",
+  "version": "0.1.0",
+  "description": "AI-guided schema designer for Nuxt Crouton applications",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./nuxt.config.ts"
+    },
+    "./types": {
+      "import": "./app/types/index.ts",
+      "types": "./app/types/index.ts"
+    }
+  },
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "server",
+    "nuxt.config.ts"
+  ],
+  "scripts": {
+    "dev": "nuxi dev playground",
+    "dev:prepare": "nuxi prepare",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@vueuse/nuxt": "^12.0.0"
+  },
+  "devDependencies": {
+    "@nuxt/kit": "^3.14.0",
+    "@nuxt/schema": "^3.14.0",
+    "@nuxthub/core": "^0.8.0",
+    "nuxt": "^4.2.2",
+    "typescript": "^5.7.0",
+    "vue": "^3.5.25"
+  },
+  "peerDependencies": {
+    "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-ai": "workspace:*",
+    "@nuxt/ui": "^4.0.0",
+    "@nuxthub/core": ">=0.8.0",
+    "nuxt": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nuxt/ui": {
+      "optional": true
+    },
+    "@fyit/crouton-ai": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-designer"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "schema-designer",
+    "ai",
+    "crud",
+    "collection"
+  ],
+  "author": "FYIT",
+  "license": "MIT"
+}
