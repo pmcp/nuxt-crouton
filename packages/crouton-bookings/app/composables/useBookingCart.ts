@@ -143,6 +143,61 @@ export function useBookingCart() {
     getRuleBlockedSlotIds,
   } = useScheduleRules(selectedLocationRef)
 
+  // Monthly booking limit
+  const monthlyBookingLimit = computed(() => selectedLocation.value?.maxBookingsPerMonth ?? null)
+  const monthlyBookingCount = ref<number>(0)
+  const monthlyBookingCountLoading = ref(false)
+
+  // Get YYYY-MM key for a date
+  function getMonthKey(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  }
+
+  // Count cart items for current location + selected date's month
+  const cartCountForLocationMonth = computed(() => {
+    if (!formState.locationId || !formState.date) return 0
+    const targetMonth = getMonthKey(formState.date)
+    return cart.value.filter((item) => {
+      const itemDate = new Date(item.date)
+      return item.locationId === formState.locationId
+        && getMonthKey(itemDate) === targetMonth
+    }).length
+  })
+
+  // Remaining bookings for the month (null if no limit)
+  const monthlyBookingRemaining = computed(() => {
+    if (!monthlyBookingLimit.value) return null
+    return Math.max(0, monthlyBookingLimit.value - monthlyBookingCount.value - cartCountForLocationMonth.value)
+  })
+
+  // Fetch monthly booking count from API
+  async function fetchMonthlyBookingCount() {
+    if (!formState.locationId || !teamId.value || !monthlyBookingLimit.value) {
+      monthlyBookingCount.value = 0
+      return
+    }
+
+    const month = formState.date ? getMonthKey(formState.date) : undefined
+
+    monthlyBookingCountLoading.value = true
+    try {
+      const data = await $fetch<{ count: number }>(`/api/crouton-bookings/teams/${teamId.value}/monthly-booking-count`, {
+        query: {
+          locationId: formState.locationId,
+          ...(month && { month }),
+        },
+      })
+      monthlyBookingCount.value = data.count
+    }
+    catch (error) {
+      console.error('Failed to fetch monthly booking count:', error)
+      monthlyBookingCount.value = 0
+    }
+    finally {
+      monthlyBookingCountLoading.value = false
+    }
+  }
+
   // Check if selected location is in inventory mode
   const isInventoryMode = computed(() => selectedLocation.value?.inventoryMode ?? false)
 
@@ -358,6 +413,15 @@ export function useBookingCart() {
     return bookedIds.map(id => getSlotLabel(id))
   }
 
+  // Fetch monthly booking count when location or month changes
+  watch(
+    [() => formState.locationId, () => formState.date ? getMonthKey(formState.date) : null, monthlyBookingLimit],
+    () => {
+      fetchMonthlyBookingCount()
+    },
+    { immediate: true },
+  )
+
   // Fetch availability when location or editing state changes
   watch([() => formState.locationId, () => formState.editingBookingId], () => {
     availabilityData.value = {}
@@ -389,6 +453,9 @@ export function useBookingCart() {
 
     // If groups are enabled, require a group selection
     if (enableGroups.value && !formState.groupId) return false
+
+    // Check monthly booking limit
+    if (monthlyBookingRemaining.value !== null && monthlyBookingRemaining.value <= 0) return false
 
     return true
   })
@@ -616,6 +683,10 @@ export function useBookingCart() {
     // Mode detection
     isInventoryMode,
     inventoryQuantity,
+
+    // Monthly booking limit
+    monthlyBookingLimit,
+    monthlyBookingRemaining,
 
     // Settings (groups)
     enableGroups,

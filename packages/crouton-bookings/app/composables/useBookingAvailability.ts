@@ -24,6 +24,7 @@ export interface LocationWithInventory {
   id: string
   inventoryMode?: boolean
   quantity?: number
+  maxBookingsPerMonth?: number | null
   slots?: SlotOption[] | string | null
   // Schedule rule fields
   openDays?: number[] | string | null

@@ -138,5 +138,14 @@
       "dependsOn": "inventoryMode",
       "help": "Number of items available for booking per day (e.g., 5 bikes, 10 kayaks)"
     }
+  },
+  "maxBookingsPerMonth": {
+    "type": "number",
+    "meta": {
+      "label": "Max Bookings Per Month",
+      "area": "sidebar",
+      "group": "limits",
+      "help": "Maximum bookings a user can make per calendar month. Empty = unlimited."
+    }
   }
 }

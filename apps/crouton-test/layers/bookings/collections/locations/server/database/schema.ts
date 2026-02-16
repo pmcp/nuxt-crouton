@@ -40,6 +40,7 @@ export const bookingsLocations = sqliteTable('bookings_locations', {
   blockedDates: jsonColumn('blockedDates').$default(() => (null)),
   inventoryMode: integer('inventoryMode', { mode: 'boolean' }).$default(() => false),
   quantity: integer('quantity'),
+  maxBookingsPerMonth: integer('maxBookingsPerMonth'),
   // Note: No indexes on translations - measure performance first
   // Add indexes only if queries exceed 50ms with real data
   translations: jsonColumn('translations').$type<{

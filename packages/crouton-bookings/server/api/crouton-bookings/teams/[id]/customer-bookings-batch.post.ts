@@ -16,8 +16,10 @@
  *   emailsSent?: number
  * }
  */
+import { eq, and, gte, lte } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
+import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
 import { isBookingEmailEnabled } from '../../../../utils/booking-emails'
 import {
   triggerBookingCreatedEmail,
@@ -61,6 +63,81 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // --- Monthly booking limit enforcement ---
+  // Collect unique (locationId, month) pairs from the cart items
+  const locationMonthPairs = new Map<string, Set<string>>()
+  for (const item of body.bookings) {
+    const itemDate = new Date(item.date)
+    const monthKey = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`
+    if (!locationMonthPairs.has(item.locationId)) {
+      locationMonthPairs.set(item.locationId, new Set())
+    }
+    locationMonthPairs.get(item.locationId)!.add(monthKey)
+  }
+
+  const db = useDB()
+
+  // Check limits for each location
+  const locationIds = [...locationMonthPairs.keys()]
+  if (locationIds.length > 0) {
+    const locations = await db
+      .select({
+        id: bookingsLocations.id,
+        title: bookingsLocations.title,
+        maxBookingsPerMonth: bookingsLocations.maxBookingsPerMonth,
+      })
+      .from(bookingsLocations)
+      .where(
+        and(
+          eq(bookingsLocations.teamId, team.id),
+        ),
+      )
+
+    const locationMap = new Map(locations.map(l => [l.id, l]))
+
+    for (const [locationId, months] of locationMonthPairs) {
+      const location = locationMap.get(locationId)
+      if (!location?.maxBookingsPerMonth) continue
+
+      const limit = location.maxBookingsPerMonth
+
+      for (const monthKey of months) {
+        const [year, month] = monthKey.split('-').map(Number)
+        const monthStart = new Date(year!, month! - 1, 1)
+        const monthEnd = new Date(year!, month!, 0, 23, 59, 59, 999)
+
+        // Count existing active bookings for this user/location/month
+        const existingBookings = await db
+          .select({ id: bookingsBookings.id })
+          .from(bookingsBookings)
+          .where(
+            and(
+              eq(bookingsBookings.location, locationId),
+              eq(bookingsBookings.createdBy, user.id),
+              eq(bookingsBookings.status, 'active'),
+              gte(bookingsBookings.date, monthStart),
+              lte(bookingsBookings.date, monthEnd),
+            ),
+          )
+
+        // Count how many new items in this batch target the same location/month
+        const newCount = body.bookings.filter((item) => {
+          const d = new Date(item.date)
+          const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+          return item.locationId === locationId && m === monthKey
+        }).length
+
+        if (existingBookings.length + newCount > limit) {
+          const remaining = Math.max(0, limit - existingBookings.length)
+          throw createError({
+            status: 400,
+            statusText: `Monthly booking limit reached for "${location.title}". Limit: ${limit} per month, existing: ${existingBookings.length}, trying to add: ${newCount}. You can add ${remaining} more.`,
+          })
+        }
+      }
+    }
+  }
+
   // Transform cart items to database records
   const bookingsToInsert = body.bookings.flatMap((item) => {
     // For inventory mode, create multiple bookings based on quantity
@@ -91,8 +168,6 @@ export default defineEventHandler(async (event) => {
       updatedBy: user.id,
     }]
   })
-
-  const db = useDB()
 
   try {
     // Insert all bookings in a single transaction
