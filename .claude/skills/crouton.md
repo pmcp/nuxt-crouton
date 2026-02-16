@@ -245,7 +245,8 @@ export default {
     { name: '{collection}', fieldsFile: './schemas/{collection}.json' },
     { name: 'products', fieldsFile: './schemas/products.json', seed: true },  // with seed data
     { name: 'categories', fieldsFile: './schemas/categories.json', seed: { count: 50 } },
-    { name: 'bookings', fieldsFile: './schemas/bookings.json', collab: true }  // collab presence
+    { name: 'bookings', fieldsFile: './schemas/bookings.json', collab: true },  // collab presence
+    { name: 'bikes', fieldsFile: './schemas/bikes.json', publishable: true }   // auto-registers as page type
   ],
   dialect: 'sqlite',  // or 'pg' for PostgreSQL
   seed: {

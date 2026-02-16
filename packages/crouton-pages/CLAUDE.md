@@ -14,11 +14,12 @@ CMS-like page management system for Nuxt Crouton. Provides:
 
 | File | Purpose |
 |------|---------|
-| `app/composables/usePageTypes.ts` | Aggregate page types from all registered apps |
+| `app/composables/usePageTypes.ts` | Aggregate page types from apps + publishable collections |
 | `app/composables/useDomainContext.ts` | Custom domain detection and context |
 | `app/composables/useNavigation.ts` | Build navigation from published pages |
 | `app/composables/usePageBlocks.ts` | Block manipulation utilities |
 | `app/components/Renderer.vue` | `CroutonPagesRenderer` - Renders page based on type |
+| `app/components/CollectionPageRenderer.vue` | `CroutonPagesCollectionPageRenderer` - Bridge for publishable collection pages |
 | `app/components/RegularContent.vue` | `CroutonPagesRegularContent` - Rich text content display |
 | `app/components/BlockContent.vue` | `CroutonPagesBlockContent` - Block-based content display |
 | `app/components/Editor/BlockEditor.vue` | Block-based page editor |
@@ -60,7 +61,9 @@ Public: /[team]/[...slug].vue
 CroutonPagesRenderer
     │
     ├── pageType === 'core:regular' → CroutonPagesRegularContent
-    └── pageType === 'bookings:calendar' → CroutonBookingsCalendar
+    ├── pageType === 'bookings:calendar' → CroutonBookingsCalendar
+    └── pageType === '{layer}:{col}-detail' → CroutonPagesCollectionPageRenderer
+                                                  └── Fetches item → resolves {Name}Detail or CroutonDetail
 ```
 
 ## Package + Generated Layer Workflow
@@ -170,16 +173,28 @@ export default defineAppConfig({
 })
 ```
 
+## Publishable Collections
+
+Collections with `publishable: true` in their config auto-register as page types at runtime. No manual `croutonApps` registration needed.
+
+**How it works:**
+1. `usePageTypes()` scans `croutonCollections` for entries with `publishable: true`
+2. For each, it creates a synthetic page type using `CroutonPagesCollectionPageRenderer`
+3. The renderer fetches the collection item and resolves `{Name}Detail` or `CroutonDetail`
+4. The page form shows a `CroutonFormReferenceSelect` item picker and auto-populates the title
+
+**Example:** A collection `shopBikes` with `publishable: true` creates page type `shop:shopBikes-detail`.
+
 ## usePageTypes() Composable
 
 ```typescript
 const {
-  pageTypes,           // All aggregated page types
+  pageTypes,           // All aggregated page types (apps + publishable collections)
   pageTypesByApp,      // Grouped by source app
   pageTypesByCategory, // Grouped by category
   getPageType,         // Get by fullId (e.g., 'bookings:calendar')
   hasPageType,         // Check if exists
-  getDefaultPageType   // Returns 'core:regular'
+  getDefaultPageType   // Returns 'pages:regular'
 } = usePageTypes()
 ```
 
@@ -270,6 +285,7 @@ Block properties with `type: 'image'` are rendered with `ImageEditor.vue`, which
 
 Components auto-import with `CroutonPages` prefix:
 - `Renderer.vue` → `<CroutonPagesRenderer />`
+- `CollectionPageRenderer.vue` → `<CroutonPagesCollectionPageRenderer />`
 - `RegularContent.vue` → `<CroutonPagesRegularContent />`
 - `BlockContent.vue` → `<CroutonPagesBlockContent />`
 - `Editor/BlockEditor.vue` → `<CroutonPagesEditorBlockEditor />`

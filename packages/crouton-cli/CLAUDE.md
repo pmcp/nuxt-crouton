@@ -377,6 +377,7 @@ features: {
 | `collab` | boolean | Enable real-time presence indicators |
 | `translatable` | boolean | Mark all string fields as translatable |
 | `formComponent` | string | Use a custom form component instead of generating Form.vue |
+| `publishable` | boolean | Auto-register as page type in crouton-pages (requires crouton-pages) |
 
 ### formComponent Option
 

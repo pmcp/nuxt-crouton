@@ -115,6 +115,15 @@ export default {
       seed: { count: 50 } // Generate seed file with 50 records
     },
 
+    // Publishable collection (auto-registers as page type in crouton-pages)
+    // Requires: features.pages enabled and @fyit/crouton-pages installed
+    // Items can be published as standalone pages with URLs, SEO, and status
+    {
+      name: 'bikes',
+      fieldsFile: './schemas/bikes.json',
+      publishable: true
+    },
+
     // Simple collections (no seed)
     {
       name: 'orders',

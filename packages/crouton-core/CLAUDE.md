@@ -53,8 +53,12 @@ export default defineNuxtConfig({
 | `app/composables/useCroutonShortcuts.ts` | Keyboard shortcuts for CRUD operations |
 | `app/composables/useCollectionExport.ts` | CSV/JSON export for collection data |
 | `app/composables/useCollectionImport.ts` | CSV/JSON import with column mapping, validation, and batched POST |
+| `app/composables/useDisplayConfig.ts` | Resolves display config (title/subtitle/image/badge/description) with auto-inference |
 | `app/components/Collection.vue` | Multi-layout display (table, list, grid, tree, kanban) |
 | `app/components/Form.vue` | Main CRUD form handler with nested modal support |
+| `app/components/Detail.vue` | `CroutonDetail` — Generic detail view using display config and runtime field metadata |
+| `app/components/DefaultCard.vue` | `CroutonDefaultCard` — Display-aware card (title/image/badge from display config) |
+| `app/components/ItemCardMini.vue` | `CroutonItemCardMini` — Display-aware mini card for references and lists |
 | `app/components/ShortcutHint.vue` | Visual keyboard shortcut badges (`<kbd>` elements) |
 | `app/components/ExportButton.vue` | Ready-to-use export dropdown button |
 | `app/components/ImportButton.vue` | Ready-to-use import button with file picker |
@@ -77,7 +81,8 @@ useCollectionQuery()    → Data fetching (SSR-safe, cached)
 useCollectionMutation() → CRUD operations (auto-refresh cache)
 useCollectionExport()   → CSV/JSON export (client-side generation + download)
 useCollectionImport()   → CSV/JSON import (parse, map columns, validate, batch POST)
-useCollections()        → Config registry (componentMap, apiPath, references)
+useCollections()        → Config registry (componentMap, apiPath, references, display, publishable)
+useDisplayConfig()      → Resolves display roles (title/subtitle/image/badge) from config + auto-inference
 useCroutonShortcuts()   → Keyboard shortcuts (create, save, close, delete, search)
 useTeamContext()        → Team ID/slug from route params (client-side)
 ```
@@ -133,7 +138,9 @@ export default defineAppConfig({
       layer: 'shop',
       apiPath: '/api/teams/{teamId}/products',
       references: { categoryId: 'categories' }, // Auto-refresh on mutation
-      dependentFieldComponents: { slots: 'SlotPicker' }
+      dependentFieldComponents: { slots: 'SlotPicker' },
+      display: { title: 'name', subtitle: 'category', image: 'coverImage', badge: 'status' },
+      publishable: true // Auto-registers as page type in crouton-pages
     }
   }
 })
