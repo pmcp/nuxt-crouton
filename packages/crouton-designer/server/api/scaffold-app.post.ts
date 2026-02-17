@@ -1,6 +1,11 @@
 import { execSync } from 'node:child_process'
 import { writeFile, mkdir, access } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
+import { createJiti } from 'jiti'
+
+// Use jiti for CLI imports — the CLI package has .mjs files that import .ts
+// files transitively, which Node's native ESM loader can't handle.
+const jiti = createJiti(import.meta.url, { interopDefault: true })
 
 interface ScaffoldRequest {
   appName: string
@@ -65,7 +70,7 @@ export default defineEventHandler(async (event) => {
     .filter(p => !['auth', 'admin', 'i18n', 'core'].includes(p)) // bundled
 
   try {
-    const { scaffoldApp } = await import('@fyit/crouton-cli/lib/scaffold-app')
+    const { scaffoldApp } = await jiti.import('@fyit/crouton-cli/lib/scaffold-app') as any
     const result = await scaffoldApp(body.appName, {
       features,
       dialect: 'sqlite',
@@ -129,7 +134,7 @@ export default defineEventHandler(async (event) => {
 
   // Step 4: Generate crouton.config.js with collections + targets
   try {
-    const { buildCroutonConfig } = await import('@fyit/crouton-cli/lib/utils/config-builder')
+    const { buildCroutonConfig } = await jiti.import('@fyit/crouton-cli/lib/utils/config-builder') as any
     const configContent = buildCroutonConfig({
       appName: body.appName,
       packages: body.config.packages,
@@ -175,7 +180,7 @@ export default defineEventHandler(async (event) => {
 
   // Step 7: Run doctor to validate (direct import)
   try {
-    const { doctor } = await import('@fyit/crouton-cli/lib/doctor')
+    const { doctor } = await jiti.import('@fyit/crouton-cli/lib/doctor') as any
     const result = await doctor(appDir)
     steps.doctor = { success: true, checks: result.checks }
   }

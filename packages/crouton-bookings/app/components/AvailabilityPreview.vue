@@ -27,7 +27,7 @@ const { isDateUnavailable, getBlockedReason } = useScheduleRules(locationRef)
       :get-blocked-reason="getBlockedReason"
       :bookings="[]"
       :locations="[]"
-      default-view="month"
+      view="month"
     />
   </div>
 </template>

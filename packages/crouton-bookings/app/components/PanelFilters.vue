@@ -17,9 +17,14 @@ interface Props {
   showCancelled: boolean
   /** Whether user can manage locations (admin) */
   canManageLocations?: boolean
+  /** Current calendar view mode */
+  calendarView?: 'week' | 'month'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  canManageLocations: false,
+  calendarView: 'week',
+})
 
 const emit = defineEmits<{
   'update:selectedLocations': [value: string[]]
@@ -27,6 +32,8 @@ const emit = defineEmits<{
   'update:showMap': [value: boolean]
   'update:showCalendar': [value: boolean]
   'update:showCancelled': [value: boolean]
+  'update:calendarView': [value: 'week' | 'month']
+  'go-to-today': []
   'add-location': []
   'edit-location': [location: LocationData]
 }>()
@@ -48,57 +55,95 @@ function isLocationSelected(locationId: string): boolean {
   return props.selectedLocations.includes(locationId)
 }
 
+const pillClass = 'flex items-center gap-1 bg-muted/60 backdrop-blur-sm rounded-full border border-default px-1 py-1'
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
-    <!-- Toggle controls row -->
-    <div class="flex items-center gap-2 flex-wrap">
-      <!-- Show calendar toggle -->
-      <UButton
-        size="xs"
-        :color="showCalendar ? 'primary' : 'neutral'"
-        :variant="showCalendar ? 'solid' : 'ghost'"
-        icon="i-lucide-calendar"
-        @click="emit('update:showCalendar', !showCalendar)"
-      >
-        Calendar
-      </UButton>
+    <!-- Combined pill: section toggles + view controls -->
+    <div class="flex justify-center">
+      <div :class="pillClass">
+        <!-- Section toggles -->
+        <UButton
+          size="xs"
+          :color="showCalendar ? 'primary' : 'neutral'"
+          :variant="showCalendar ? 'solid' : 'ghost'"
+          icon="i-lucide-calendar"
+          class="rounded-full"
+          @click="emit('update:showCalendar', !showCalendar)"
+        >
+          Calendar
+        </UButton>
 
-      <!-- Show locations toggle -->
-      <UButton
-        v-if="locations && locations.length > 0"
-        size="xs"
-        :color="showLocations ? 'primary' : 'neutral'"
-        :variant="showLocations ? 'solid' : 'ghost'"
-        icon="i-lucide-map-pin"
-        @click="emit('update:showLocations', !showLocations)"
-      >
-        Locations
-      </UButton>
+        <UButton
+          v-if="locations && locations.length > 0"
+          size="xs"
+          :color="showLocations ? 'primary' : 'neutral'"
+          :variant="showLocations ? 'solid' : 'ghost'"
+          icon="i-lucide-map-pin"
+          class="rounded-full"
+          @click="emit('update:showLocations', !showLocations)"
+        >
+          Locations
+        </UButton>
 
-      <!-- Show map toggle -->
-      <UButton
-        v-if="hasLocationsWithCoordinates"
-        size="xs"
-        :color="showMap ? 'primary' : 'neutral'"
-        :variant="showMap ? 'solid' : 'ghost'"
-        icon="i-lucide-map"
-        @click="emit('update:showMap', !showMap)"
-      >
-        Map
-      </UButton>
+        <UButton
+          v-if="hasLocationsWithCoordinates"
+          size="xs"
+          :color="showMap ? 'primary' : 'neutral'"
+          :variant="showMap ? 'solid' : 'ghost'"
+          icon="i-lucide-map"
+          class="rounded-full"
+          @click="emit('update:showMap', !showMap)"
+        >
+          Map
+        </UButton>
 
-      <!-- Show cancelled toggle -->
-      <UButton
-        size="xs"
-        :color="showCancelled ? 'error' : 'neutral'"
-        :variant="showCancelled ? 'solid' : 'ghost'"
-        icon="i-lucide-x-circle"
-        @click="emit('update:showCancelled', !showCancelled)"
-      >
-        Cancelled
-      </UButton>
+        <UButton
+          size="xs"
+          :color="showCancelled ? 'error' : 'neutral'"
+          :variant="showCancelled ? 'solid' : 'ghost'"
+          icon="i-lucide-x-circle"
+          class="rounded-full"
+          @click="emit('update:showCancelled', !showCancelled)"
+        >
+          Cancelled
+        </UButton>
+
+        <!-- Separator -->
+        <USeparator orientation="vertical" class="h-5 mx-1" />
+
+        <!-- View controls -->
+        <UButton
+          size="xs"
+          color="neutral"
+          variant="ghost"
+          class="rounded-full"
+          @click="emit('go-to-today')"
+        >
+          Today
+        </UButton>
+
+        <UButton
+          size="xs"
+          :color="calendarView === 'week' ? 'primary' : 'neutral'"
+          :variant="calendarView === 'week' ? 'solid' : 'ghost'"
+          class="rounded-full"
+          @click="emit('update:calendarView', 'week')"
+        >
+          Week
+        </UButton>
+
+        <UButton
+          size="xs"
+          :color="calendarView === 'month' ? 'primary' : 'neutral'"
+          :variant="calendarView === 'month' ? 'solid' : 'ghost'"
+          class="rounded-full"
+          @click="emit('update:calendarView', 'month')"
+        >
+          Month
+        </UButton>
+      </div>
     </div>
 
     <!-- Empty state when no locations (admin only) -->

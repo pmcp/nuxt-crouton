@@ -13,7 +13,8 @@ interface Props {
   bookings?: Booking[]
   locations?: LocationData[]
   settings?: SettingsData | null
-  defaultView?: 'week' | 'month'
+  /** Current view mode, controlled by parent */
+  view?: 'week' | 'month'
   /** Filter state for status and location filters */
   filters?: FilterState
   /** Date to highlight (from external hover, e.g., list item hover) */
@@ -30,7 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   bookings: () => [],
   locations: () => [],
   settings: null,
-  defaultView: 'week',
+  view: 'week',
   filters: () => ({ statuses: [], locations: [], showCancelled: false }),
   highlightedDate: null,
   creatingAtDate: null,
@@ -42,6 +43,7 @@ const emit = defineEmits<{
   'hover': [value: Date | null]
   'dayClick': [value: Date]
   'update:filters': [value: FilterState]
+  'update:view': [value: 'week' | 'month']
   'hoverBooking': [bookingId: string | null]
 }>()
 
@@ -84,22 +86,14 @@ function goToToday() {
   emit('hover', jsDate)
 }
 
-// Handle tab change - "today" triggers navigation, others change view
-function onTabChange(value: string) {
-  if (value === 'today') {
-    goToToday()
-  } else {
-    currentView.value = value as 'week' | 'month'
-  }
-}
-
 // Expose methods for parent control
 defineExpose({
   goToDate,
+  goToToday,
 })
 
-// View toggle state
-const currentView = ref<'week' | 'month'>(props.defaultView)
+// View is controlled by parent via v-model:view
+const currentView = computed(() => props.view)
 
 // For month view: track focused month (no selection)
 const monthFocusDate = ref(new CalendarDate(
@@ -460,29 +454,6 @@ const monthCellHeight = computed(() => {
 
 <template>
   <div class="flex flex-col gap-3">
-    <!-- View toggle (Today | Week / Month) -->
-    <div class="flex justify-end items-baseline gap-1">
-      <UButton
-        variant="ghost"
-        color="neutral"
-        size="lg"
-        class="rounded-lg"
-        :ui="{ base: 'text-xs' }"
-        @click="goToToday"
-      >
-        Today
-      </UButton>
-      <UTabs
-        v-model="currentView"
-        :items="[
-          { label: 'Week', value: 'week' },
-          { label: 'Month', value: 'month' },
-        ]"
-        size="xs"
-        :ui="{ trigger: 'cursor-pointer' }"
-      />
-    </div>
-
     <!-- Week View -->
     <CroutonBookingsWeekStrip
       v-if="currentView === 'week'"

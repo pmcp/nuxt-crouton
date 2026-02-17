@@ -92,7 +92,7 @@ async function refresh() {
 }
 
 // Ref for Calendar control (to sync with list scroll)
-const calendarRef = ref<{ goToDate: (date: Date) => void } | null>(null)
+const calendarRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void } | null>(null)
 
 // Crouton form and team auth for location creation
 const { open: openCroutonForm } = useCrouton()
@@ -139,6 +139,14 @@ const filterState = ref<FilterState>({
 const showCalendar = ref(true)
 const showLocations = ref(false)
 const showMap = ref(false)
+
+// Calendar view mode (lifted from Calendar component)
+const calendarView = ref<'week' | 'month'>('week')
+
+// Handle go-to-today from pill controls
+function onGoToToday() {
+  calendarRef.value?.goToToday()
+}
 
 // Parse GeoJSON coordinates from location data
 function parseLocationCoordinates(location: LocationData): [number, number] | null {
@@ -304,11 +312,14 @@ defineExpose({
       :show-cancelled="filterState.showCancelled"
       :has-locations-with-coordinates="hasLocationsWithCoordinates"
       :can-manage-locations="effectiveIsAdmin"
+      :calendar-view="calendarView"
       @update:selected-locations="filterState.locations = $event"
       @update:show-locations="showLocations = $event"
       @update:show-map="showMap = $event"
       @update:show-calendar="showCalendar = $event"
       @update:show-cancelled="filterState.showCancelled = $event"
+      @update:calendar-view="calendarView = $event"
+      @go-to-today="onGoToToday"
       @add-location="onAddLocation"
       @edit-location="onEditLocation"
     />
@@ -346,6 +357,7 @@ defineExpose({
         :bookings="resolvedBookings"
         :locations="resolvedLocations"
         :settings="resolvedSettings"
+        :view="calendarView"
         :highlighted-date="hoveredDate"
         :creating-at-date="creatingAtDate"
         @hover="onCalendarHover"
