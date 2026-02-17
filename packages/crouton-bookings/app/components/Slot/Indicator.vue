@@ -79,10 +79,9 @@ function isCancelled(slotId: string): boolean {
   return props.cancelledSlotIds?.includes(slotId) || false
 }
 
-// Three-state opacity: full (1.0), partial (0.45), empty (0.15)
+// Two-state opacity: fully booked (1.0) or available/partial (0.15)
 function getSlotOpacity(slotId: string): number {
   if (isBooked(slotId)) return 1
-  if (isPartial(slotId)) return 0.45
   return 0.15
 }
 
