@@ -2,7 +2,7 @@
 import { join, resolve } from 'node:path'
 import fs from 'fs-extra'
 import chalk from 'chalk'
-import { MODULES } from './module-registry.mjs'
+import { loadModules } from './module-registry.mjs'
 
 /**
  * Run all doctor checks against an app directory.
@@ -24,7 +24,7 @@ export async function doctor(appDir) {
   const pkg = await loadJson(join(appDir, 'package.json'))
 
   // 1. Missing dependencies vs crouton.config features
-  checks.push(...checkFeatureDeps(config, pkg))
+  checks.push(...await checkFeatureDeps(config, pkg))
 
   // 2. Stale wrangler.toml placeholder IDs
   checks.push(...await checkWranglerIds(appDir))
@@ -70,7 +70,7 @@ async function loadConfig(appDir) {
 
 // ─── Check 1: Feature dependencies ───────────────────────────────
 
-function checkFeatureDeps(config, pkg) {
+async function checkFeatureDeps(config, pkg) {
   const results = []
 
   if (!config) {
@@ -82,6 +82,7 @@ function checkFeatureDeps(config, pkg) {
     return results
   }
 
+  const MODULES = await loadModules()
   const allDeps = { ...pkg.dependencies, ...pkg.devDependencies }
   const features = config.features || {}
 

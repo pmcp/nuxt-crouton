@@ -1,39 +1,38 @@
 // Module registry for `crouton add` command
 // Maps short aliases to full package information
-// Source of truth: module-registry.json (shared with crouton-designer)
+// Source of truth: crouton.manifest.ts files (via manifest-loader)
 
-import { createRequire } from 'node:module'
+import { loadModuleRegistryMap } from './utils/manifest-bridge.mjs'
 
-const require = createRequire(import.meta.url)
+// Lazily loaded registry (populated on first access)
+let _modules = null
 
 /**
- * @typedef {Object} CroutonModule
- * @property {string} package - Full npm package name
- * @property {string|null} schemaExport - Import path for schema export (null if no database tables)
- * @property {string} description - Human-readable description
- * @property {string[]} [tables] - Database tables created by this module
- * @property {string[]} [dependencies] - Other modules that must be installed first
- * @property {string[]} [peerDependencies] - Optional peer dependencies to check
- * @property {boolean} [bundled] - Whether this module is bundled in @fyit/crouton
- * @property {string|null} [aiHint] - When AI should suggest this package (null = don't suggest)
+ * Load MODULES from manifests (async, cached).
+ * @returns {Promise<Record<string, object>>}
  */
-
-/** @type {Record<string, CroutonModule>} */
-export const MODULES = require('./module-registry.json')
+export async function loadModules() {
+  if (!_modules) {
+    _modules = await loadModuleRegistryMap()
+  }
+  return _modules
+}
 
 /**
  * Get module info by alias or package name
  * @param {string} name - Module alias (e.g., 'bookings') or full package name
- * @returns {CroutonModule|undefined}
+ * @returns {Promise<object|undefined>}
  */
-export function getModule(name) {
+export async function getModule(name) {
+  const modules = await loadModules()
+
   // Direct alias match
-  if (MODULES[name]) {
-    return MODULES[name]
+  if (modules[name]) {
+    return modules[name]
   }
 
   // Search by package name
-  for (const [alias, module] of Object.entries(MODULES)) {
+  for (const [alias, module] of Object.entries(modules)) {
     if (module.package === name) {
       return { ...module, alias }
     }
@@ -45,10 +44,11 @@ export function getModule(name) {
 /**
  * Get module alias from package name
  * @param {string} packageName - Full package name
- * @returns {string|undefined}
+ * @returns {Promise<string|undefined>}
  */
-export function getModuleAlias(packageName) {
-  for (const [alias, module] of Object.entries(MODULES)) {
+export async function getModuleAlias(packageName) {
+  const modules = await loadModules()
+  for (const [alias, module] of Object.entries(modules)) {
     if (module.package === packageName) {
       return alias
     }
@@ -58,14 +58,15 @@ export function getModuleAlias(packageName) {
 
 /**
  * List all available modules
- * @returns {Array<{alias: string, package: string, description: string, hasSchema: boolean, bundled: boolean}>}
+ * @returns {Promise<Array<{alias: string, package: string, description: string, hasSchema: boolean, bundled: boolean}>>}
  */
-export function listModules() {
-  return Object.entries(MODULES).map(([alias, module]) => ({
+export async function listModules() {
+  const modules = await loadModules()
+  return Object.entries(modules).map(([alias, module]) => ({
     alias,
     package: module.package,
     description: module.description,
-    hasSchema: !!module.schemaExport,
+    hasSchema: !!module.hasSchema,
     bundled: !!module.bundled
   }))
 }

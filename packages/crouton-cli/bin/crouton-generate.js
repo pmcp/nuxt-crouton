@@ -304,7 +304,7 @@ program
       if (options.list || !items || items.length === 0) {
         const addModulePath = join(__dirname, '..', 'lib', 'add-module.mjs')
         const { listAvailableModules } = await import(addModulePath)
-        listAvailableModules()
+        await listAvailableModules()
         return
       }
 
@@ -317,7 +317,7 @@ program
       const features = []
 
       for (const item of items) {
-        if (getModule(item)) {
+        if (await getModule(item)) {
           modules.push(item)
         } else if (item === 'events') {
           features.push(item)

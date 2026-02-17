@@ -8,7 +8,8 @@ import { promisify } from 'node:util'
 import { loadConfig } from 'c12'
 
 // Import utilities
-import { toCase, toSnakeCase, mapType, typeMapping } from './utils/helpers.mjs'
+import { toCase, toSnakeCase, mapType } from './utils/helpers.mjs'
+import { loadTypeMapping } from './utils/manifest-bridge.mjs'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
 import { syncFrameworkPackages } from './utils/update-nuxt-config.mjs'
@@ -90,7 +91,7 @@ function parseArgs() {
   return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, hierarchy, seed, seedCount }
 }
 
-async function loadFields(p) {
+async function loadFields(p, typeMapping) {
   // If path is relative and doesn't exist, check in schemas directory
   if (!path.isAbsolute(p) && !await fsp.access(p).then(() => true).catch(() => false)) {
     const schemasPath = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'schemas', p)
@@ -101,6 +102,8 @@ async function loadFields(p) {
   const raw = await fsp.readFile(p, 'utf8')
   const obj = JSON.parse(raw)
 
+  const validTypes = new Set(Object.keys(typeMapping))
+
   // Convert to array for easier processing
   return Object.entries(obj).map(([name, meta]) => {
     const fieldMeta = meta?.meta || {}
@@ -109,15 +112,16 @@ async function loadFields(p) {
       fieldMeta.area = 'main'
     }
 
+    const resolvedType = mapType(meta?.type, validTypes)
     return {
       name,
-      type: mapType(meta?.type),
+      type: resolvedType,
       meta: fieldMeta,
       refTarget: meta?.refTarget,
       refScope: meta?.refScope,
-      zod: typeMapping[mapType(meta?.type)]?.zod || 'z.string()',
-      default: typeMapping[mapType(meta?.type)]?.default || '\'\'',
-      tsType: typeMapping[mapType(meta?.type)]?.tsType || 'string'
+      zod: typeMapping[resolvedType]?.zod || 'z.string()',
+      default: typeMapping[resolvedType]?.default || '\'\'',
+      tsType: typeMapping[resolvedType]?.tsType || 'string'
     }
   })
 }
@@ -1018,8 +1022,9 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
               return `${f.name}: ${baseZod}`
             }
           } else {
-            // Optional fields
-            return `${f.name}: ${baseZod}.optional()`
+            // Optional fields — use .nullish() for nullable fields (allows null + undefined)
+            const suffix = f.meta?.nullable ? '.nullish()' : '.optional()'
+            return `${f.name}: ${baseZod}${suffix}`
           }
         })
 
@@ -1558,6 +1563,9 @@ async function validateConfig(config) {
 
 async function main() {
   try {
+    // Load type mapping from manifests (single source of truth)
+    const typeMapping = await loadTypeMapping()
+
     // Check if being called with config file
     if (process.argv[2] === '--config') {
       // Load config using c12 (supports .ts/.js/.mjs/.cjs, auto-discovery, env overrides)
@@ -1682,7 +1690,7 @@ async function main() {
             const resolvedFieldsFile = config._configDir && !path.isAbsolute(collectionConfig.fieldsFile)
               ? path.resolve(config._configDir, collectionConfig.fieldsFile)
               : collectionConfig.fieldsFile
-            const fields = await loadFields(resolvedFieldsFile)
+            const fields = await loadFields(resolvedFieldsFile, typeMapping)
 
             // Check if this collection has translations
             // Generate files but skip database creation (we'll do it in batch at the end)
@@ -1809,7 +1817,7 @@ async function main() {
         console.log(`Next step: Restart your Nuxt dev server\n`)
       } else if (config.targets && config.schemaPath) {
         // Original simple config format
-        const fields = await loadFields(config.schemaPath)
+        const fields = await loadFields(config.schemaPath, typeMapping)
 
         // Track all collections for batch db:generate
         const allCollections = []
@@ -1998,7 +2006,7 @@ async function main() {
       // Load and validate the schema content
       let fields
       try {
-        fields = await loadFields(args.fieldsFile)
+        fields = await loadFields(args.fieldsFile, typeMapping)
         console.log(`✓ Loaded ${fields.length} fields from schema`)
       } catch (error) {
         console.error(`\n❌ Error loading schema: ${error.message}\n`)

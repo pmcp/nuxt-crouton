@@ -2,7 +2,7 @@
 import { join } from 'node:path'
 import fs from 'fs-extra'
 import chalk from 'chalk'
-import { MODULES } from './module-registry.mjs'
+import { loadModules } from './module-registry.mjs'
 import { getFrameworkPackages } from './utils/framework-packages.mjs'
 
 // ─── Template helpers ─────────────────────────────────────────────
@@ -10,13 +10,15 @@ import { getFrameworkPackages } from './utils/framework-packages.mjs'
 /**
  * Resolve features list against module registry, validating each one
  * and resolving transitive dependencies.
+ * @param {string[]} featureNames
+ * @param {Record<string, object>} modules - Loaded module registry map
  */
-function resolveFeatures(featureNames) {
+function resolveFeatures(featureNames, modules) {
   const resolved = new Set()
   const errors = []
 
   for (const name of featureNames) {
-    const mod = MODULES[name]
+    const mod = modules[name]
     if (!mod) {
       errors.push(name)
       continue
@@ -31,7 +33,7 @@ function resolveFeatures(featureNames) {
   }
 
   if (errors.length > 0) {
-    const available = Object.keys(MODULES).join(', ')
+    const available = Object.keys(modules).join(', ')
     throw new Error(
       `Unknown feature(s): ${errors.join(', ')}\nAvailable: ${available}`
     )
@@ -44,7 +46,11 @@ function resolveFeatures(featureNames) {
  * Build workspace dependencies for package.json based on resolved features.
  * Bundled modules (auth, i18n, admin) are included via @fyit/crouton-core.
  */
-function buildDependencies(features) {
+/**
+ * @param {string[]} features
+ * @param {Record<string, object>} modules - Loaded module registry map
+ */
+function buildDependencies(features, modules) {
   const deps = {
     '@fyit/crouton': 'workspace:*',
     '@fyit/crouton-core': 'workspace:*',
@@ -56,7 +62,7 @@ function buildDependencies(features) {
   }
 
   for (const name of features) {
-    const mod = MODULES[name]
+    const mod = modules[name]
     if (mod && !mod.bundled) {
       deps[mod.package] = 'workspace:*'
     }
@@ -69,10 +75,14 @@ function buildDependencies(features) {
  * Build the features object for crouton.config.js
  * Only include non-bundled features that were explicitly requested.
  */
-function buildFeaturesConfig(features) {
+/**
+ * @param {string[]} features
+ * @param {Record<string, object>} modules - Loaded module registry map
+ */
+function buildFeaturesConfig(features, modules) {
   const config = {}
   for (const name of features) {
-    const mod = MODULES[name]
+    const mod = modules[name]
     if (mod && !mod.bundled) {
       config[name] = true
     }
@@ -83,7 +93,7 @@ function buildFeaturesConfig(features) {
 // ─── File templates ───────────────────────────────────────────────
 
 function tmplPackageJson(vars) {
-  const deps = buildDependencies(vars.features)
+  const deps = buildDependencies(vars.features, vars.modules)
   const devDeps = {
     '@fyit/crouton-cli': 'workspace:*',
     'drizzle-kit': '^0.31.0'
@@ -186,7 +196,7 @@ ${nitroBlock}
 }
 
 function tmplCroutonConfig(vars) {
-  const featuresConfig = buildFeaturesConfig(vars.features)
+  const featuresConfig = buildFeaturesConfig(vars.features, vars.modules)
   const featuresStr = Object.entries(featuresConfig)
     .map(([k, v]) => `    ${k}: ${v}`)
     .join(',\n')
@@ -454,8 +464,11 @@ export async function scaffoldApp(name, options = {}) {
     throw new Error(`Invalid app name "${name}". Use lowercase letters, numbers, and hyphens.`)
   }
 
+  // Load module registry from manifests
+  const modules = await loadModules()
+
   // Resolve features and their dependencies
-  const features = resolveFeatures(featureNames)
+  const features = resolveFeatures(featureNames, modules)
 
   // Build extends array via framework-packages.mjs
   const featuresConfig = {}
@@ -479,7 +492,7 @@ export async function scaffoldApp(name, options = {}) {
     frameworkPackages.splice(coreIdx + 1, 0, '@fyit/crouton-i18n')
   }
 
-  const vars = { name, features, extends: frameworkPackages, theme, dialect, cf }
+  const vars = { name, features, extends: frameworkPackages, theme, dialect, cf, modules }
 
   // Build file list
   const files = [

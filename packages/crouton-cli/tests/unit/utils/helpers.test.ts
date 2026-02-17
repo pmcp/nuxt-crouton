@@ -4,8 +4,7 @@ import {
   toSnakeCase,
   toCase,
   mapType,
-  getSeedGenerator,
-  typeMapping
+  getSeedGenerator
 } from '../../../lib/utils/helpers.mjs'
 import { seedTestFields } from '../../fixtures/sample-data.mjs'
 
@@ -92,7 +91,7 @@ describe('toCase', () => {
 })
 
 describe('mapType', () => {
-  it('returns valid type unchanged', () => {
+  it('returns valid type unchanged (fallback mode)', () => {
     expect(mapType('string')).toBe('string')
     expect(mapType('text')).toBe('text')
     expect(mapType('number')).toBe('number')
@@ -104,10 +103,18 @@ describe('mapType', () => {
     expect(mapType('array')).toBe('array')
   })
 
-  it('returns string for unknown types', () => {
+  it('returns string for unknown types (fallback mode)', () => {
     expect(mapType('unknown')).toBe('string')
     expect(mapType('invalid')).toBe('string')
     expect(mapType('')).toBe('string')
+  })
+
+  it('validates against provided validTypes set', () => {
+    const validTypes = new Set(['string', 'number', 'custom'])
+    expect(mapType('string', validTypes)).toBe('string')
+    expect(mapType('custom', validTypes)).toBe('custom')
+    expect(mapType('boolean', validTypes)).toBe('string') // not in validTypes
+    expect(mapType('unknown', validTypes)).toBe('string')
   })
 })
 
@@ -170,47 +177,6 @@ describe('getSeedGenerator', () => {
   })
 })
 
-describe('typeMapping', () => {
-  it('has correct structure for all types', () => {
-    const expectedTypes = ['string', 'text', 'number', 'decimal', 'boolean', 'date', 'json', 'repeater', 'array']
-
-    expectedTypes.forEach(type => {
-      expect(typeMapping[type]).toBeDefined()
-      expect(typeMapping[type]).toHaveProperty('db')
-      expect(typeMapping[type]).toHaveProperty('drizzle')
-      expect(typeMapping[type]).toHaveProperty('zod')
-      expect(typeMapping[type]).toHaveProperty('default')
-      expect(typeMapping[type]).toHaveProperty('tsType')
-    })
-  })
-
-  it('has correct values for string type', () => {
-    expect(typeMapping.string).toEqual({
-      db: 'VARCHAR(255)',
-      drizzle: 'text',
-      zod: 'z.string()',
-      default: "''",
-      tsType: 'string'
-    })
-  })
-
-  it('has correct values for boolean type', () => {
-    expect(typeMapping.boolean).toEqual({
-      db: 'BOOLEAN',
-      drizzle: 'boolean',
-      zod: 'z.boolean()',
-      default: 'false',
-      tsType: 'boolean'
-    })
-  })
-
-  it('has correct values for date type', () => {
-    expect(typeMapping.date).toEqual({
-      db: 'TIMESTAMP',
-      drizzle: 'timestamp',
-      zod: 'z.date()',
-      default: 'null',
-      tsType: 'Date | null'
-    })
-  })
-})
+// typeMapping has been removed from helpers.mjs — it now lives in
+// crouton-core/crouton.manifest.ts and is loaded via manifest-bridge.mjs.
+// See tests/unit/utils/manifest-loader.test.ts for type mapping tests.

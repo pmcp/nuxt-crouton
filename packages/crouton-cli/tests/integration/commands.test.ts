@@ -369,12 +369,10 @@ describe('scaffold-app command', () => {
   })
 
   it('includes feature modules when specified', async () => {
-    const scaffoldDir2 = join(tmpDir, 'scaffold-features')
-    await mkdir(scaffoldDir2, { recursive: true })
-
+    // Must run from within monorepo so manifest discovery finds package manifests
     const result = await runCLI(
       ['scaffold-app', 'feature-app', '--features', 'bookings,editor', '--dry-run'],
-      { cwd: scaffoldDir2 }
+      { cwd: PKG_ROOT }
     )
 
     expect(result.exitCode).toBe(0)

@@ -7,7 +7,7 @@ import fs from 'fs-extra'
 import chalk from 'chalk'
 import ora from 'ora'
 
-import { MODULES, getModule, listModules } from './module-registry.mjs'
+import { loadModules, getModule, listModules } from './module-registry.mjs'
 import { detectPackageManager, getInstallCommand } from './utils/detect-package-manager.mjs'
 import { addToNuxtConfigExtends, isInNuxtConfigExtends } from './utils/update-nuxt-config.mjs'
 import { addSchemaExport, getSchemaPath } from './utils/update-schema-index.mjs'
@@ -50,7 +50,7 @@ async function checkDependencies(dependencies, cwd = process.cwd()) {
   const installed = []
 
   for (const dep of dependencies) {
-    const module = getModule(dep)
+    const module = await getModule(dep)
     if (!module) continue
 
     if (await isPackageInstalled(module.package, cwd)) {
@@ -74,9 +74,9 @@ export async function addModule(moduleName, options = {}) {
   const cwd = process.cwd()
 
   // Get module info
-  const module = getModule(moduleName)
+  const module = await getModule(moduleName)
   if (!module) {
-    const available = listModules().map(m => m.alias).join(', ')
+    const available = (await listModules()).map(m => m.alias).join(', ')
     return {
       success: false,
       message: `Unknown module: ${moduleName}\nAvailable modules: ${available}`
@@ -309,12 +309,12 @@ export async function addModules(moduleNames, options = {}) {
 /**
  * List all available modules
  */
-export function listAvailableModules() {
+export async function listAvailableModules() {
   console.log(chalk.bold.cyan('\n╔══════════════════════════════════════════════════╗'))
   console.log(chalk.bold.cyan('║          Available Crouton Modules               ║'))
   console.log(chalk.bold.cyan('╚══════════════════════════════════════════════════╝\n'))
 
-  const modules = listModules()
+  const modules = await listModules()
 
   for (const mod of modules) {
     const schemaIcon = mod.hasSchema ? chalk.green('●') : chalk.gray('○')

@@ -41,7 +41,17 @@ export function toCase(str) {
   }
 }
 
-export function mapType(t) {
+/**
+ * Validate and normalize a field type against a set of known types.
+ * @param {string} t - Field type string
+ * @param {Set<string>} [validTypes] - Set of valid type names (from manifest-loader)
+ * @returns {string} Validated type name, falls back to 'string'
+ */
+export function mapType(t, validTypes) {
+  if (validTypes) {
+    return validTypes.has(t) ? t : 'string'
+  }
+  // Fallback for callers that don't pass validTypes (backward compat during migration)
   return ['string', 'text', 'number', 'decimal', 'boolean', 'date', 'json', 'repeater', 'array', 'image', 'file'].includes(t) ? t : 'string'
 }
 
@@ -90,82 +100,5 @@ export function getSeedGenerator(field) {
   return typeMap[type] || 'f.loremIpsum({ sentencesCount: 1 })'
 }
 
-export const typeMapping = {
-  string: {
-    db: 'VARCHAR(255)',
-    drizzle: 'text',
-    zod: 'z.string()',
-    default: '\'\'',
-    tsType: 'string'
-  },
-  text: {
-    db: 'TEXT',
-    drizzle: 'text',
-    zod: 'z.string()',
-    default: '\'\'',
-    tsType: 'string'
-  },
-  number: {
-    db: 'INTEGER',
-    drizzle: 'integer',
-    zod: 'z.number()',
-    default: '0',
-    tsType: 'number'
-  },
-  decimal: {
-    db: 'DECIMAL(10,2)',
-    drizzle: 'decimal',
-    zod: 'z.number()',
-    default: '0',
-    tsType: 'number'
-  },
-  boolean: {
-    db: 'BOOLEAN',
-    drizzle: 'boolean',
-    zod: 'z.boolean()',
-    default: 'false',
-    tsType: 'boolean'
-  },
-  date: {
-    db: 'TIMESTAMP',
-    drizzle: 'timestamp',
-    zod: 'z.date()',
-    default: 'null',
-    tsType: 'Date | null'
-  },
-  json: {
-    db: 'JSON',
-    drizzle: 'json',
-    zod: 'z.record(z.string(), z.any())',
-    default: '{}',
-    tsType: 'Record<string, any>'
-  },
-  repeater: {
-    db: 'JSON',
-    drizzle: 'json',
-    zod: 'z.array(z.any())',
-    default: '[]',
-    tsType: 'any[]'
-  },
-  array: {
-    db: 'TEXT',
-    drizzle: 'text',
-    zod: 'z.array(z.string())',
-    default: '[]',
-    tsType: 'string[]'
-  },
-  image: {
-    db: 'VARCHAR(255)',
-    drizzle: 'text',
-    zod: 'z.string()',
-    default: '\'\'',
-    tsType: 'string'
-  },
-  file: {
-    db: 'VARCHAR(255)',
-    drizzle: 'text',
-    zod: 'z.string()',
-    default: '\'\'',
-    tsType: 'string'
-  }
-}
+// typeMapping has been removed — use loadTypeMapping() from manifest-bridge.mjs
+// The canonical type definitions now live in crouton-core/crouton.manifest.ts
