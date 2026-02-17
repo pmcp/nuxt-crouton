@@ -5,6 +5,7 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
+import { loadConfig } from 'c12'
 
 // Import utilities
 import { toCase, toSnakeCase, mapType, typeMapping } from './utils/helpers.mjs'
@@ -1559,24 +1560,29 @@ async function main() {
   try {
     // Check if being called with config file
     if (process.argv[2] === '--config') {
-      // Load config mode
-      const configPath = path.resolve(process.argv[3] || './migrate.config.js')
+      // Load config using c12 (supports .ts/.js/.mjs/.cjs, auto-discovery, env overrides)
+      const explicitPath = process.argv[3]
+      const { config } = await loadConfig({
+        name: 'crouton',
+        cwd: process.cwd(),
+        configFile: explicitPath || undefined,
+        defaults: {
+          dialect: 'sqlite',
+          features: {},
+          flags: {}
+        }
+      })
 
-      // First check if config file exists
-      try {
-        await fsp.access(configPath)
-      } catch {
-        console.error(`\n❌ Config file not found: ${configPath}\n`)
+      if (!config || (Object.keys(config).length === 0)) {
+        console.error(`\n❌ Config file not found\n`)
         process.exit(1)
       }
 
-      // Convert path to file URL for proper ES module import
-      const { pathToFileURL } = await import('node:url')
-      const configUrl = pathToFileURL(configPath).href
-      const config = (await import(configUrl)).default
-
-      // Store the config directory for resolving relative paths
-      config._configDir = path.dirname(configPath)
+      // Store config file directory for downstream path resolution (fieldsFile in collections)
+      // c12 stores the resolved file path in config._configFile
+      config._configDir = config._configFile
+        ? path.dirname(config._configFile)
+        : process.cwd()
 
       // Merge CLI flags into config.flags (CLI flags override config file)
       if (!config.flags) config.flags = {}
