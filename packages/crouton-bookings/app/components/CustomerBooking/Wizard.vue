@@ -21,6 +21,7 @@ const {
   getRuleBlockedSlotIds,
   getBookedSlotsForDate,
   getSlotRemainingForDate,
+  isSlotBookedByUser,
 } = useCustomerBooking()
 
 // Disabled slot IDs for the selected date (from schedule rules)
@@ -52,6 +53,23 @@ const slotRemaining = computed<Record<string, number>>(() => {
     result[slot.id] = getSlotRemainingForDate(bookingState.date, slot.id)
   }
   return result
+})
+
+// Slot IDs already booked by the current user for the selected date+location
+const userBookedSlotIds = computed<string[]>(() => {
+  if (!bookingState.date || !selectedLocation.value?.slots) return []
+
+  let slots: Array<{ id: string }> = []
+  const raw = selectedLocation.value.slots
+  if (typeof raw === 'string') {
+    try { slots = JSON.parse(raw) } catch { slots = [] }
+  } else if (Array.isArray(raw)) {
+    slots = raw
+  }
+
+  return slots
+    .filter(slot => isSlotBookedByUser(bookingState.date, slot.id))
+    .map(slot => slot.id)
 })
 
 const router = useRouter()
@@ -228,6 +246,7 @@ const stepperOrientation = computed(() => isMobile.value ? 'vertical' : 'horizon
               :disabled-slot-ids="disabledSlotIds"
               :slot-remaining="slotRemaining"
               :booked-slot-ids="bookedSlotIds"
+              :user-booked-slot-ids="userBookedSlotIds"
               @select="handleSlotSelect"
             />
           </div>

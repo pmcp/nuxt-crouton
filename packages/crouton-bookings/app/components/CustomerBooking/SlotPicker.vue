@@ -17,6 +17,8 @@ interface Props {
   slotRemaining?: Record<string, number>
   /** Slot IDs that have at least one booking (for capacity display) */
   bookedSlotIds?: string[]
+  /** Slot IDs the current user has already booked (prevents double-booking) */
+  userBookedSlotIds?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -24,6 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabledSlotIds: () => [],
   slotRemaining: () => ({}),
   bookedSlotIds: () => [],
+  userBookedSlotIds: () => [],
 })
 
 const emit = defineEmits<{
@@ -67,8 +70,12 @@ function isAtCapacity(slot: SlotItem): boolean {
   return remaining <= 0
 }
 
+function isBookedByUser(slot: SlotItem): boolean {
+  return props.userBookedSlotIds.includes(slot.id)
+}
+
 function isDisabled(slot: SlotItem): boolean {
-  return isRuleDisabled(slot) || isAtCapacity(slot)
+  return isRuleDisabled(slot) || isAtCapacity(slot) || isBookedByUser(slot)
 }
 
 function hasMultiCapacity(slot: SlotItem): boolean {
@@ -120,6 +127,9 @@ function handleClick(slot: SlotItem) {
         </span>
         <span v-if="isRuleDisabled(slot)" class="block text-xs text-muted mt-1">
           Unavailable
+        </span>
+        <span v-else-if="isBookedByUser(slot)" class="block text-xs text-muted mt-1">
+          Already booked
         </span>
         <span v-else-if="getRemainingLabel(slot)" class="block text-xs mt-1" :class="isAtCapacity(slot) ? 'text-muted' : 'text-primary'">
           {{ getRemainingLabel(slot) }}
