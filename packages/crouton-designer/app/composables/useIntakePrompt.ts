@@ -1,4 +1,11 @@
 import type { ProjectConfig } from '../types/schema'
+import moduleRegistry from '../../../crouton-cli/lib/module-registry.json'
+
+// Build the AI-facing package list from the shared registry
+const availablePackages = Object.entries(moduleRegistry)
+  .filter(([_, mod]) => mod.aiHint)
+  .map(([alias, mod]) => `- **crouton-${alias}**: ${mod.description} (${mod.aiHint})`)
+  .join('\n')
 
 /**
  * Builds the system prompt for Phase 1 (Intake)
@@ -24,11 +31,7 @@ Extract the following configuration from the conversation:
 - **packages**: Optional Crouton packages to include
 
 ## Available Crouton Packages
-- **crouton-editor**: Rich text editing with TipTap (use when app has content/articles/posts)
-- **crouton-i18n**: Multi-language support (use when languages > 1)
-- **crouton-flow**: Visual graph/workflow builder (use when app has workflows, pipelines, or visual graphs)
-- **crouton-assets**: File and image management (use when app has media uploads)
-- **crouton-bookings**: Booking/scheduling system (use when app involves appointments or reservations)
+${availablePackages}
 
 ## Rules
 1. ALWAYS use the set_app_config tool when you learn something about the app. Don't just talk about it — call the tool.

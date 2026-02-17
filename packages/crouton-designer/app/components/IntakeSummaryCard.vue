@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ProjectConfig } from '../types/schema'
+import moduleRegistry from '../../../crouton-cli/lib/module-registry.json'
 
 const props = defineProps<{
   config: ProjectConfig
@@ -31,13 +32,15 @@ const authTypeOptions = computed(() => [
   { label: t('designer.authTypes.both'), value: 'both' }
 ])
 
-const availablePackages = computed(() => [
-  { label: t('designer.packageLabels.crouton-editor'), value: 'crouton-editor' },
-  { label: t('designer.packageLabels.crouton-i18n'), value: 'crouton-i18n' },
-  { label: t('designer.packageLabels.crouton-flow'), value: 'crouton-flow' },
-  { label: t('designer.packageLabels.crouton-assets'), value: 'crouton-assets' },
-  { label: t('designer.packageLabels.crouton-bookings'), value: 'crouton-bookings' }
-])
+// Build package list from shared registry (only packages with AI hints)
+const availablePackages = computed(() =>
+  Object.entries(moduleRegistry)
+    .filter(([_, mod]) => mod.aiHint)
+    .map(([alias, _mod]) => ({
+      label: t(`designer.packageLabels.crouton-${alias}`, _mod.description),
+      value: `crouton-${alias}`
+    }))
+)
 
 function startEdit(field: string, currentValue: string) {
   editingField.value = field

@@ -178,7 +178,13 @@
       "crouton-i18n": "Internationalization",
       "crouton-flow": "Flow (Graph)",
       "crouton-assets": "Assets",
-      "crouton-bookings": "Bookings"
+      "crouton-bookings": "Bookings",
+      "crouton-pages": "Pages (CMS)",
+      "crouton-maps": "Maps",
+      "crouton-ai": "AI Integration",
+      "crouton-email": "Email",
+      "crouton-events": "Event Tracking",
+      "crouton-collab": "Collaboration"
     },
     "intake": {
       "appConfiguration": "App Configuration",

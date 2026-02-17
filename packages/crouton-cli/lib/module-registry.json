@@ -1,0 +1,162 @@
+{
+  "auth": {
+    "package": "@fyit/crouton-auth",
+    "schemaExport": "@fyit/crouton-auth/server/database/schema/auth",
+    "description": "Authentication with Better Auth - teams, billing, passkeys, 2FA",
+    "tables": ["user", "session", "account", "verification", "organization", "member", "invitation", "passkey", "twoFactor", "subscription", "domain", "scopedAccessToken", "teamSettings"],
+    "dependencies": [],
+    "peerDependencies": ["better-auth", "@better-auth/passkey", "@better-auth/stripe"],
+    "bundled": true,
+    "aiHint": null
+  },
+  "i18n": {
+    "package": "@fyit/crouton-i18n",
+    "schemaExport": "@fyit/crouton-i18n/server/database/schema",
+    "description": "Multi-language support with database-backed translations",
+    "tables": ["translationsUi"],
+    "dependencies": ["auth"],
+    "peerDependencies": ["@nuxtjs/i18n"],
+    "bundled": true,
+    "aiHint": null
+  },
+  "admin": {
+    "package": "@fyit/crouton-admin",
+    "schemaExport": null,
+    "description": "Admin dashboard components",
+    "tables": [],
+    "dependencies": ["auth"],
+    "peerDependencies": [],
+    "bundled": true,
+    "aiHint": null
+  },
+  "bookings": {
+    "package": "@fyit/crouton-bookings",
+    "schemaExport": null,
+    "description": "Booking system - slots and inventory-based reservations",
+    "tables": [],
+    "dependencies": ["auth"],
+    "peerDependencies": ["@nuxtjs/i18n", "@internationalized/date", "@vueuse/core"],
+    "bundled": false,
+    "aiHint": "use when app involves appointments, reservations, or scheduling"
+  },
+  "editor": {
+    "package": "@fyit/crouton-editor",
+    "schemaExport": null,
+    "description": "Rich text editor - TipTap-based with slash commands",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": ["@nuxt/ui"],
+    "bundled": false,
+    "aiHint": "use when app has content/articles/posts/rich text"
+  },
+  "assets": {
+    "package": "@fyit/crouton-assets",
+    "schemaExport": null,
+    "description": "Asset management - media library with NuxtHub blob storage",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": ["@nuxthub/core", "@vueuse/core"],
+    "bundled": false,
+    "aiHint": "use when app has media uploads or file management"
+  },
+  "events": {
+    "package": "@fyit/crouton-events",
+    "schemaExport": null,
+    "description": "Event tracking - audit trail for all CRUD operations",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": ["@nuxt/ui"],
+    "bundled": false,
+    "aiHint": "use when app needs audit trail or event tracking"
+  },
+  "flow": {
+    "package": "@fyit/crouton-flow",
+    "schemaExport": null,
+    "description": "Vue Flow integration - interactive node graphs",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": ["@vue-flow/core"],
+    "bundled": false,
+    "aiHint": "use when app has workflows, pipelines, or visual graphs"
+  },
+  "email": {
+    "package": "@fyit/crouton-email",
+    "schemaExport": null,
+    "description": "Email integration with Vue Email and Resend",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": [],
+    "bundled": false,
+    "aiHint": "use when app sends transactional or marketing emails"
+  },
+  "maps": {
+    "package": "@fyit/crouton-maps",
+    "schemaExport": null,
+    "description": "Map integration with Mapbox",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": [],
+    "bundled": false,
+    "aiHint": "use when app has location features or map displays"
+  },
+  "ai": {
+    "package": "@fyit/crouton-ai",
+    "schemaExport": null,
+    "description": "AI integration with Anthropic Claude",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": [],
+    "bundled": false,
+    "aiHint": "use when app has AI/LLM features or chat"
+  },
+  "devtools": {
+    "package": "@fyit/crouton-devtools",
+    "schemaExport": null,
+    "description": "Nuxt Devtools integration for Crouton",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": [],
+    "bundled": false,
+    "aiHint": null
+  },
+  "collab": {
+    "package": "@fyit/crouton-collab",
+    "schemaExport": null,
+    "description": "Real-time collaboration with Yjs CRDTs",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": ["yjs", "y-protocols"],
+    "bundled": false,
+    "aiHint": "use when app needs real-time collaboration"
+  },
+  "pages": {
+    "package": "@fyit/crouton-pages",
+    "schemaExport": null,
+    "description": "Page builder with TipTap editor",
+    "tables": [],
+    "dependencies": ["editor"],
+    "peerDependencies": [],
+    "bundled": false,
+    "aiHint": "use when app has CMS pages or landing pages"
+  },
+  "themes": {
+    "package": "@fyit/crouton-themes",
+    "schemaExport": null,
+    "description": "Swappable UI themes for Nuxt UI",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": ["@nuxt/ui"],
+    "bundled": false,
+    "aiHint": null
+  },
+  "schema-designer": {
+    "package": "@fyit/crouton-schema-designer",
+    "schemaExport": null,
+    "description": "Visual schema editor for collection generation",
+    "tables": [],
+    "dependencies": [],
+    "peerDependencies": ["@nuxt/ui"],
+    "bundled": false,
+    "aiHint": null
+  }
+}
