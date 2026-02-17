@@ -257,49 +257,34 @@ program
 
 // Init command - creates example schema
 program
-  .command('init')
-  .description('Create an example schema file')
-  .option('-o, --output <path>', 'Output path for schema', './crouton-schema.json')
-  .action(async (options) => {
-    const exampleSchema = {
-      id: {
-        type: 'string',
-        meta: {
-          primaryKey: true
-        }
-      },
-      name: {
-        type: 'string',
-        meta: {
-          required: true,
-          maxLength: 255
-        }
-      },
-      description: {
-        type: 'text'
-      },
-      price: {
-        type: 'decimal',
-        meta: {
-          precision: 10,
-          scale: 2
-        }
-      },
-      inStock: {
-        type: 'boolean'
-      },
-      createdAt: {
-        type: 'date'
-      }
-    }
-
+  .command('init <name>')
+  .description('Create a new crouton app end-to-end (scaffold → generate → doctor → summary)')
+  .option('--features <list>', 'Comma-separated feature names (e.g., bookings,pages,editor)', '')
+  .option('--theme <name>', 'Theme to wire into extends (e.g., ko)')
+  .option('-d, --dialect <type>', 'Database dialect (sqlite or pg)', 'sqlite')
+  .option('--no-cf', 'Skip Cloudflare-specific config (wrangler.toml, CF stubs)')
+  .option('--dry-run', 'Preview what will be generated without writing files')
+  .action(async (name, options) => {
     try {
-      await fs.writeJSON(options.output, exampleSchema, { spaces: 2 })
-      console.log(chalk.green(`✓ Created example schema at ${options.output}`))
-      console.log(chalk.gray('\nNow you can generate a collection:'))
-      console.log(chalk.cyan(`  crouton-generate shop products --fields-file=${options.output}`))
+      const initPath = join(__dirname, '..', 'lib', 'init-app.mjs')
+      const { initApp } = await import(initPath)
+
+      const features = options.features
+        ? options.features.split(',').map(f => f.trim()).filter(Boolean)
+        : []
+
+      await initApp(name, {
+        features,
+        theme: options.theme,
+        dialect: options.dialect,
+        cf: options.cf,
+        dryRun: options.dryRun
+      })
     } catch (error) {
-      console.error(chalk.red('Failed to create schema file:'), error.message)
+      console.error(chalk.red('Init failed:'), error.message)
+      if (process.env.DEBUG) {
+        console.error(error.stack)
+      }
       process.exit(1)
     }
   })

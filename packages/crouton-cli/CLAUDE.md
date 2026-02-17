@@ -12,7 +12,7 @@ crouton config [path] [--only name]          # Generate from config file
 crouton add <modules...>                     # Add Crouton modules to project
 crouton add --list                           # List available modules
 crouton install                              # Install required modules
-crouton init [-o path]                       # Create example schema
+crouton init <name> [options]                 # Full pipeline: scaffold → generate → doctor
 crouton rollback <layer> <collection>        # Remove collection
 crouton rollback-interactive                 # Interactive removal UI
 crouton seed-translations                    # Seed i18n data
@@ -87,6 +87,38 @@ and SSR errors like `$setup.t is not a function`.
 5. **Generates** migrations with `npx nuxt db:generate` (if applicable)
 6. **Applies** migrations with `npx nuxt db:migrate` (if applicable)
 
+## Init Command (Full Pipeline)
+
+Single entry point to go from nothing to a working app:
+
+```bash
+# Create app with default settings
+crouton init my-app
+
+# With features and theme
+crouton init my-app --features bookings,pages,editor --theme ko
+
+# Preview without writing
+crouton init my-app --dry-run
+```
+
+### Init Options
+
+| Option | Description |
+|--------|-------------|
+| `--features <list>` | Comma-separated features (e.g., `bookings,pages,editor`) |
+| `--theme <name>` | Theme to wire into extends (e.g., `ko`) |
+| `-d, --dialect <type>` | `sqlite` or `pg` (default: sqlite) |
+| `--no-cf` | Skip Cloudflare-specific config |
+| `--dry-run` | Preview without writing files |
+
+### What `crouton init` Does
+
+1. **scaffold-app** — Creates the app skeleton (nuxt.config, package.json, schemas/, etc.)
+2. **generate** — Generates collections from `crouton.config.js` (if collections are defined)
+3. **doctor** — Validates everything is wired correctly
+4. **Summary** — Prints next steps (dev server, deploy)
+
 ## Key Options
 
 | Option | Description |
@@ -106,6 +138,7 @@ and SSR errors like `$setup.t is not a function`.
 |------|---------|
 | `bin/crouton-generate.js` | CLI entry point (Commander.js) |
 | `lib/generate-collection.mjs` | Main orchestrator (~74KB) |
+| `lib/init-app.mjs` | Init pipeline (scaffold → generate → doctor) |
 | `lib/generators/*.mjs` | Template generators (14 files) |
 | `lib/module-registry.mjs` | Module definitions for `crouton add` |
 | `lib/add-module.mjs` | Module installation implementation |
