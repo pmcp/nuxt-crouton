@@ -119,8 +119,17 @@
           <fieldset class="flex flex-col gap-4">
             <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Booking Rules</legend>
             <p class="text-sm text-gray-500 -mt-1">Control how bookings work at this location.</p>
-            <UFormField label="Inventory Mode" name="inventoryMode" help="Enable to use quantity-based availability instead of time slots.">
-              <USwitch v-model="state.inventoryMode" />
+            <UFormField label="Booking Mode" name="inventoryMode">
+              <URadioGroup
+                :model-value="state.inventoryMode ? 'inventory' : 'slots'"
+                orientation="horizontal"
+                variant="card"
+                :items="[
+                  { label: 'Time Slots', description: 'Courts, rooms, appointments', value: 'slots' },
+                  { label: 'Inventory', description: 'Equipment, rentals, pools', value: 'inventory' },
+                ]"
+                @update:model-value="(v: string) => state.inventoryMode = v === 'inventory'"
+              />
             </UFormField>
             <UFormField v-show="state.inventoryMode" label="Available Units" name="quantity" help="Number of units available for booking at the same time.">
               <UInputNumber v-model="state.quantity" class="w-full" />
