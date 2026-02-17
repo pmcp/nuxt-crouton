@@ -693,6 +693,21 @@ export default defineNuxtConfig({
       } else {
         console.log(`✓ ${layer} layer root config already properly configured`)
       }
+
+      // Ensure i18n locale files exist when i18n config is present
+      if (hasTranslations) {
+        const i18nLocalesPath = path.join(layerPath, 'i18n', 'locales')
+        await fsp.mkdir(i18nLocalesPath, { recursive: true })
+        for (const locale of ['en', 'nl', 'fr']) {
+          const localePath = path.join(i18nLocalesPath, `${locale}.json`)
+          try {
+            await fsp.access(localePath)
+          } catch {
+            await fsp.writeFile(localePath, '{}', 'utf-8')
+            console.log(`  ✓ Created empty ${locale}.json locale file`)
+          }
+        }
+      }
     }
   } catch (error) {
     console.error(`! Could not update ${layer} layer root nuxt.config.ts:`, error.message)
