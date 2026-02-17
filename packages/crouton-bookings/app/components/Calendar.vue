@@ -213,16 +213,33 @@ function getBookingsForDate(date: Date): Booking[] {
   return bookingsByDate.value.get(key) || []
 }
 
-// Get indicators data for a specific date (all locations, showing open slots)
-function getIndicatorsForDate(date: Date): Array<{
+// Per-slot status for capacity-aware indicators
+interface SlotStatus {
+  id: string
+  label: string
+  bookedCount: number
+  cancelledCount: number
+  capacity: number
+  isFull: boolean
+}
+
+interface IndicatorData {
   locationId: string
   locationTitle: string
   color: string
   slots: SlotItem[]
   bookedSlotIds: string[]
+  partialSlotIds: string[]
   cancelledSlotIds: string[]
   bookings: Booking[]
-}> {
+  slotStatuses: SlotStatus[]
+  isInventoryMode: boolean
+  inventoryQuantity: number
+  inventoryBookedCount: number
+}
+
+// Get indicators data for a specific date (all locations, capacity-aware)
+function getIndicatorsForDate(date: Date): IndicatorData[] {
   const dayBookings = getBookingsForDate(date)
 
   // Group bookings by location
@@ -240,62 +257,83 @@ function getIndicatorsForDate(date: Date): Array<{
     ? props.locations.filter(l => props.filters.locations.includes(l.id))
     : props.locations
 
-  // Build indicators for ALL visible locations (not just those with bookings)
-  const indicators: Array<{
-    locationId: string
-    locationTitle: string
-    color: string
-    slots: SlotItem[]
-    bookedSlotIds: string[]
-    cancelledSlotIds: string[]
-    bookings: Booking[]
-  }> = []
+  const indicators: IndicatorData[] = []
 
   for (const location of visibleLocations) {
-    const locationSlots = parseLocationSlots(location)
-    // Locations with no slots get a single all-day slot so they still appear on the calendar
+    const isInventoryMode = !!location.inventoryMode
+    // Inventory mode ignores named slots — treat as single all-day unit
+    const locationSlots = isInventoryMode ? [] : parseLocationSlots(location)
     const effectiveSlots = locationSlots.length > 0
       ? locationSlots
       : [{ id: 'all-day', label: 'All Day' }]
 
     const locationBookings = byLocation.get(location.id) || []
 
-    // Get all slot IDs booked for this location on this day
+    // For inventory mode, capacity is the location quantity
+    const inventoryQuantity = location.quantity ?? 1
+
+    // Build per-slot statuses with capacity awareness
+    const slotStatuses: SlotStatus[] = []
     const bookedSlotIds: string[] = []
+    const partialSlotIds: string[] = []
     const cancelledSlotIds: string[] = []
 
-    for (const booking of locationBookings) {
-      const slotIds = parseSlotIds(booking.slot)
-      const isCancelled = booking.status === 'cancelled'
+    for (const slot of effectiveSlots) {
+      // For inventory mode, capacity comes from location quantity
+      const capacity = isInventoryMode ? inventoryQuantity : (slot.capacity ?? 1)
 
-      // If "all-day" is booked, treat all slots as booked
-      if (slotIds.includes('all-day')) {
-        const allSlotIds = effectiveSlots.map(s => s.id)
-        bookedSlotIds.push(...allSlotIds)
-        if (isCancelled) {
-          cancelledSlotIds.push(...allSlotIds)
+      let activeCount = 0
+      let cancelledCount = 0
+
+      for (const booking of locationBookings) {
+        const slotIds = parseSlotIds(booking.slot)
+        const matchesSlot = slotIds.includes(slot.id) || slotIds.includes('all-day')
+        if (!matchesSlot) continue
+
+        if (booking.status === 'cancelled') {
+          cancelledCount++
+        } else {
+          activeCount++
         }
       }
-      else {
-        bookedSlotIds.push(...slotIds)
-        if (isCancelled) {
-          cancelledSlotIds.push(...slotIds)
-        }
+
+      const isFull = activeCount >= capacity
+
+      slotStatuses.push({
+        id: slot.id,
+        label: slot.label || slot.id,
+        bookedCount: activeCount,
+        cancelledCount,
+        capacity,
+        isFull,
+      })
+
+      if (isFull) {
+        bookedSlotIds.push(slot.id)
+      } else if (activeCount > 0) {
+        partialSlotIds.push(slot.id)
+      }
+
+      if (cancelledCount > 0) {
+        cancelledSlotIds.push(slot.id)
       }
     }
 
-    // Get unique slot IDs
-    const uniqueBookedSlotIds = [...new Set(bookedSlotIds)]
-    const uniqueCancelledSlotIds = [...new Set(cancelledSlotIds)]
+    const totalActiveBookings = locationBookings.filter(b => b.status !== 'cancelled').length
 
     indicators.push({
       locationId: location.id,
       locationTitle: getLocationTitle(location),
       color: location.color || '#3b82f6',
       slots: effectiveSlots,
-      bookedSlotIds: uniqueBookedSlotIds,
-      cancelledSlotIds: uniqueCancelledSlotIds,
+      bookedSlotIds,
+      partialSlotIds,
+      cancelledSlotIds,
       bookings: locationBookings,
+      slotStatuses,
+      isInventoryMode,
+      inventoryQuantity,
+      inventoryBookedCount: totalActiveBookings,
     })
   }
 
@@ -368,11 +406,32 @@ const maxSlotCount = computed(() => {
     : props.locations
   let max = 0
   for (const location of visibleLocations) {
-    const slots = parseLocationSlots(location)
-    if (slots.length > max) max = slots.length
+    // Inventory mode locations have a single all-day slot (count as 1)
+    const slotCount = location.inventoryMode ? 1 : Math.max(parseLocationSlots(location).length, 1)
+    if (slotCount > max) max = slotCount
   }
   return max
 })
+
+// Look up full location data by ID
+function getLocationById(locationId: string): LocationData | undefined {
+  return props.locations.find(l => l.id === locationId)
+}
+
+// Get localized address string for a location
+function getLocationAddress(locationId: string): string | null {
+  const location = getLocationById(locationId)
+  if (!location) return null
+  const { locale } = useI18n()
+  const translations = location.translations as Record<string, { street?: string, zip?: string, city?: string }> | undefined
+
+  const street = translations?.[locale.value]?.street || translations?.en?.street || location.street
+  const zip = translations?.[locale.value]?.zip || translations?.en?.zip || location.zip
+  const city = translations?.[locale.value]?.city || translations?.en?.city || location.city
+
+  const parts = [street, [zip, city].filter(Boolean).join(' ')].filter(Boolean)
+  return parts.length > 0 ? parts.join(', ') : null
+}
 
 // Calculate cell height based on max indicators
 // Base height: 20px (day number) + padding
@@ -424,10 +483,17 @@ const monthCellHeight = computed(() => {
     >
       <template #day="{ jsDate }">
         <div class="flex flex-col gap-1 mt-1 min-h-[12px] w-fit mx-auto">
-          <template v-for="indicator in getIndicatorsForDate(jsDate)" :key="indicator.locationId">
+          <UPopover
+            v-for="indicator in getIndicatorsForDate(jsDate)"
+            :key="indicator.locationId"
+            mode="hover"
+            :open-delay="300"
+            :close-delay="100"
+          >
             <CroutonBookingsSlotIndicator
               :slots="indicator.slots"
               :booked-slot-ids="indicator.bookedSlotIds"
+              :partial-slot-ids="indicator.partialSlotIds"
               :cancelled-slot-ids="indicator.cancelledSlotIds"
               :bookings="indicator.bookings"
               :color="indicator.color"
@@ -435,7 +501,45 @@ const monthCellHeight = computed(() => {
               :variant="indicator.slots.length >= maxSlotCount ? 'dots' : 'bars'"
               @hover-booking="(id) => emit('hoverBooking', id)"
             />
-          </template>
+            <template #content>
+              <div class="p-3 min-w-44 max-w-60">
+                <div class="flex items-center gap-2">
+                  <span class="size-2.5 rounded-full shrink-0" :style="{ backgroundColor: indicator.color }" />
+                  <span class="text-sm font-medium text-highlighted truncate">{{ indicator.locationTitle }}</span>
+                </div>
+                <p v-if="getLocationAddress(indicator.locationId)" class="text-xs text-muted mt-1">
+                  {{ getLocationAddress(indicator.locationId) }}
+                </p>
+
+                <!-- Inventory mode summary -->
+                <div v-if="indicator.isInventoryMode" class="mt-2 flex items-center justify-between text-xs">
+                  <span class="text-muted">Units</span>
+                  <span class="tabular-nums" :class="indicator.inventoryBookedCount >= indicator.inventoryQuantity ? 'text-red-400' : 'text-dimmed'">
+                    {{ indicator.inventoryBookedCount }} / {{ indicator.inventoryQuantity }}
+                  </span>
+                </div>
+
+                <!-- Slot mode: per-slot breakdown -->
+                <div v-else-if="indicator.slotStatuses.length > 1 || indicator.slotStatuses[0]?.capacity > 1" class="mt-2 flex flex-col gap-0.5">
+                  <div
+                    v-for="slot in indicator.slotStatuses"
+                    :key="slot.id"
+                    class="flex items-center justify-between gap-3 text-xs"
+                  >
+                    <span class="text-muted truncate">{{ slot.label }}</span>
+                    <span class="shrink-0 tabular-nums" :class="slot.isFull ? 'text-red-400' : 'text-dimmed'">
+                      {{ slot.bookedCount }} / {{ slot.capacity }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Simple count for single all-day slot with capacity 1 -->
+                <p v-else class="text-xs text-dimmed mt-1">
+                  {{ indicator.bookings.length > 0 ? `${indicator.bookings.length} booking${indicator.bookings.length > 1 ? 's' : ''}` : 'No bookings' }}
+                </p>
+              </div>
+            </template>
+          </UPopover>
         </div>
       </template>
     </CroutonBookingsWeekStrip>
@@ -493,10 +597,17 @@ const monthCellHeight = computed(() => {
 
             <!-- Slot indicators (all locations) -->
             <div class="flex flex-col gap-1 mt-0.5 w-fit mx-auto">
-              <template v-for="indicator in getIndicatorsForDate(day.toDate(getLocalTimeZone()))" :key="indicator.locationId">
+              <UPopover
+                v-for="indicator in getIndicatorsForDate(day.toDate(getLocalTimeZone()))"
+                :key="indicator.locationId"
+                mode="hover"
+                :open-delay="300"
+                :close-delay="100"
+              >
                 <CroutonBookingsSlotIndicator
                   :slots="indicator.slots"
                   :booked-slot-ids="indicator.bookedSlotIds"
+                  :partial-slot-ids="indicator.partialSlotIds"
                   :cancelled-slot-ids="indicator.cancelledSlotIds"
                   :bookings="indicator.bookings"
                   :color="indicator.color"
@@ -504,7 +615,45 @@ const monthCellHeight = computed(() => {
                   :variant="indicator.slots.length >= maxSlotCount ? 'dots' : 'bars'"
                   @hover-booking="(id) => emit('hoverBooking', id)"
                 />
-              </template>
+                <template #content>
+                  <div class="p-3 min-w-44 max-w-60">
+                    <div class="flex items-center gap-2">
+                      <span class="size-2.5 rounded-full shrink-0" :style="{ backgroundColor: indicator.color }" />
+                      <span class="text-sm font-medium text-highlighted truncate">{{ indicator.locationTitle }}</span>
+                    </div>
+                    <p v-if="getLocationAddress(indicator.locationId)" class="text-xs text-muted mt-1">
+                      {{ getLocationAddress(indicator.locationId) }}
+                    </p>
+
+                    <!-- Inventory mode summary -->
+                    <div v-if="indicator.isInventoryMode" class="mt-2 flex items-center justify-between text-xs">
+                      <span class="text-muted">Units</span>
+                      <span class="tabular-nums" :class="indicator.inventoryBookedCount >= indicator.inventoryQuantity ? 'text-red-400' : 'text-dimmed'">
+                        {{ indicator.inventoryBookedCount }} / {{ indicator.inventoryQuantity }}
+                      </span>
+                    </div>
+
+                    <!-- Slot mode: per-slot breakdown -->
+                    <div v-else-if="indicator.slotStatuses.length > 1 || indicator.slotStatuses[0]?.capacity > 1" class="mt-2 flex flex-col gap-0.5">
+                      <div
+                        v-for="slot in indicator.slotStatuses"
+                        :key="slot.id"
+                        class="flex items-center justify-between gap-3 text-xs"
+                      >
+                        <span class="text-muted truncate">{{ slot.label }}</span>
+                        <span class="shrink-0 tabular-nums" :class="slot.isFull ? 'text-red-400' : 'text-dimmed'">
+                          {{ slot.bookedCount }} / {{ slot.capacity }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Simple count for single all-day slot with capacity 1 -->
+                    <p v-else class="text-xs text-dimmed mt-1">
+                      {{ indicator.bookings.length > 0 ? `${indicator.bookings.length} booking${indicator.bookings.length > 1 ? 's' : ''}` : 'No bookings' }}
+                    </p>
+                  </div>
+                </template>
+              </UPopover>
             </div>
 
             <!-- Add booking tab (slides down from under the date block on hover) -->
