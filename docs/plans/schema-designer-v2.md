@@ -21,7 +21,7 @@ The Schema Designer is an AI-guided application that helps developers scaffold f
 | Create App scaffold (replaces ZIP) | **Complete** ✅ | Server-side `POST /api/scaffold-app` |
 | Phase B — Visual Graph | Not started | CroutonFlow graph visualization only remaining item |
 | Phase C — Detail View Design | Not started | AI-generated Vue components + preview |
-| Phase D — Ecosystem Polish | Not started | Package manifests, templates, undo/redo |
+| Phase D — Ecosystem Polish | Not started | Templates, undo/redo. Manifests moved to `cli-and-manifests.md` |
 
 **Key deviation from original plan:** Phase 5's output mechanism changed from downloadable ZIP to a server-side Create App flow. The designer runs in local dev (not Cloudflare Workers), so the server endpoint can invoke the CLI directly — no download step needed.
 
