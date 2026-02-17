@@ -21,7 +21,7 @@
 | `8f80a870` | Feb 17 | Created `config-builder.mjs` (config file **builder**) + CLI subpath exports | Phase 1: New file survives c12 migration — c12 replaces config **loading**, not config **building**. Subpath exports are needed for manifest loader too |
 | `2543fadf` | Feb 17 | Extracted module registry to shared `module-registry.json` | Phase 2.2d done; created transitional JSON that Phase 2+3 deletes |
 | `f21ebaed` | Feb 17 | Deleted `crouton-schema-designer` package (old v1) | Phase 3.8 N/A; **broke 5 manifest type imports** (phantom, non-blocking) |
-| `808eba07` | Feb 16 | Added `image`/`file` field types to CLI | Partial Phase 1.4 (CLI only, not MCP/designer). MCP still has only 9 types |
+| `808eba07` | Feb 16 | Added `image`/`file` field types to CLI | Partial Phase 1.2 (CLI only, not MCP/designer). MCP still has only 9 types |
 | `5e670f51` | Feb 17 | Fixed AI generating auto-generated fields | Workaround for Phase 3.3 (hardcoded, not manifest-driven) |
 | `78d5df9c` | Feb 17 | MCP silently skips auto-generated fields | Workaround for Phase 3.7 (hardcoded, not manifest-sourced) |
 | `8e9b0f76` | Feb 17 | Fixed i18n locale + duplicate croutonCollections (5th attempt) | Evidence for Phase 5: CLI needs characterization tests — this bug was fixed 5 times across sessions (`53507978`, `d0e43558`, `9711d5fe`, `1d1db963`, `8e9b0f76`) |
@@ -55,7 +55,7 @@ Completing Phase 2+3 of this plan effectively delivers the manifest foundation t
 | # | Decision | Answer | Rationale |
 |---|----------|--------|-----------|
 | 1 | Migration strategy | **Big bang** — Create all 16+ manifests in one phase, then delete `module-registry.json` | No fallback/transitional layer needed |
-| 2 | Field type aliases | `integer` → alias for `number`, `datetime` → alias for `date`, `uuid` → **dropped** | 11 canonical types + 2 aliases. `uuid` is just a `string` in SQLite |
+| 2 | Field type aliases | `integer` → alias for `number`, `datetime` → alias for `date`, `uuid` → **dropped** | 12 canonical types + 2 aliases. `uuid` is just a `string` in SQLite |
 | 3 | Broken manifest imports | Fix in Phase 1 when the new type lands | Phantom imports, don't affect builds |
 | 4 | `crouton-schema-designer` | Deleted (old v1), no longer in plan scope | New designer is `crouton-designer` |
 | 5 | Manifest format | **`.ts` with jiti** — Manifests are TypeScript files loaded via `jiti` at runtime | Opens door to progressive CLI `.mjs` → `.ts` migration |
@@ -115,7 +115,7 @@ The nuxt-crouton monorepo has ~18 packages but 4 parallel, disconnected systems 
 
 | Data | Locations | Status |
 |------|-----------|--------|
-| Field types (base) | CLI `helpers.mjs` (11), MCP `field-types.ts` (9), designer `useFieldTypes.ts` (15), `designer-chat.post.ts` (14) | OUT OF SYNC |
+| Field types (base) | CLI `helpers.mjs` (12), MCP `field-types.ts` (9), designer `useFieldTypes.ts` (15), `designer-chat.post.ts` (14) | OUT OF SYNC |
 | Auto-generated fields | CLI generators, designer `useCollectionDesignPrompt.ts`, MCP `validate-schema.ts` | Inconsistent lists |
 | Reserved field names | designer `useSchemaValidation.ts`, CLI validators, MCP validator | Different sets |
 | Reserved collection names | designer `useSchemaValidation.ts` only | Not shared |
@@ -327,7 +327,7 @@ export function defineCroutonManifest(manifest: CroutonManifest): CroutonManifes
 
 **New file**: `packages/crouton-core/crouton.manifest.ts`
 
-This is the canonical declaration of the 10 base field types (+ 2 aliases) and auto-generated fields:
+This is the canonical declaration of the 12 base field types (+ 2 aliases) and auto-generated fields:
 
 ```typescript
 import type { CroutonManifest } from './shared/manifest'
@@ -352,6 +352,8 @@ const manifest: CroutonManifest = {
     repeater:  { label: 'Repeater',  icon: 'i-lucide-layers',       description: 'Repeatable items array',           db: 'JSON',            drizzle: 'json',      zod: 'z.array(z.any())',      tsType: 'any[]',               defaultValue: '[]',    component: 'CroutonFormRepeater' },
     array:     { label: 'Array',     icon: 'i-lucide-list',         description: 'String array',                     db: 'TEXT',            drizzle: 'text',      zod: 'z.array(z.string())',   tsType: 'string[]',            defaultValue: '[]',    component: 'UTextarea' },
     reference: { label: 'Reference', icon: 'i-lucide-link',         description: 'Reference to another collection',  db: 'VARCHAR(255)',    drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'CroutonFormReferenceSelect' },
+    image:     { label: 'Image',     icon: 'i-lucide-image',        description: 'Image upload',                     db: 'VARCHAR(255)',    drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'CroutonImageUpload' },
+    file:      { label: 'File',      icon: 'i-lucide-paperclip',    description: 'File upload',                      db: 'VARCHAR(255)',    drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'CroutonImageUpload' },
   },
 
   autoGeneratedFields: [
@@ -386,35 +388,11 @@ const manifest: CroutonManifest = {
 export default manifest
 ```
 
-**Note on aliases**: `number` has alias `['integer']`, `date` has alias `['datetime']`. The manifest loader resolves aliases transparently — consumers see 10 canonical types. `uuid` is dropped (not a distinct storage type).
+**Note on aliases**: `number` has alias `['integer']`, `date` has alias `['datetime']`. The manifest loader resolves aliases transparently — consumers see 12 canonical types. `uuid` is dropped (not a distinct storage type).
 
-### 1.3 Create crouton-assets manifest (image + file field types)
+### 1.3 ~~Create crouton-assets manifest (image + file field types)~~ → Moved to Phase 2
 
-**New file**: `packages/crouton-assets/crouton.manifest.ts`
-
-```typescript
-import type { CroutonManifest } from '@fyit/crouton-core/shared/manifest'
-
-const manifest: CroutonManifest = {
-  id: 'crouton-assets',
-  name: 'Media Library',
-  description: 'Image and file upload with cropping, drag-drop, and CDN caching',
-  icon: 'i-lucide-image',
-  version: '1.0.0',
-  category: 'addon',
-  dependencies: ['crouton-core'],
-
-  // Component CroutonAssetsPicker lives in crouton-core; this package contributes the field type definitions
-  fieldTypes: {
-    image: { label: 'Image', icon: 'i-lucide-image',     description: 'Image upload', db: 'VARCHAR(255)', drizzle: 'text', zod: 'z.string()', tsType: 'string', defaultValue: "''", component: 'CroutonAssetsPicker' },
-    file:  { label: 'File',  icon: 'i-lucide-paperclip', description: 'File upload',  db: 'VARCHAR(255)', drizzle: 'text', zod: 'z.string()', tsType: 'string', defaultValue: "''", component: 'CroutonAssetsPicker' },
-  },
-
-  aiHint: 'When user needs image uploads, file attachments, or media management',
-}
-
-export default manifest
-```
+**Removed from Phase 1**: `image` and `file` field types now live in `crouton-core/crouton.manifest.ts` (task 1.2) since core already has the upload API endpoint (`upload-image.post.ts`) and components (`ImageUpload.vue`, `ImageCropper.vue`, `DropZone.vue`). The `crouton-assets` manifest is created in Phase 2.4 as a thin addon manifest (enhanced picker/gallery UX, no field type contributions).
 
 ### 1.4 Add unjs foundation packages to CLI
 
@@ -453,18 +431,16 @@ const { config } = await loadConfig({
 ### Phase 1 Files Changed
 
 - **Create**: `packages/crouton-core/shared/manifest.ts` (type definitions + `defineCroutonManifest()` helper)
-- **Create**: `packages/crouton-core/crouton.manifest.ts` (10 base field types + 2 aliases, reserved names)
-- **Create**: `packages/crouton-assets/crouton.manifest.ts` (image/file field types)
+- **Create**: `packages/crouton-core/crouton.manifest.ts` (12 base field types + 2 aliases, reserved names)
 - **Edit**: `packages/crouton-core/package.json` (add subpath export for `./shared/manifest`)
 - **Edit**: `packages/crouton-cli/package.json` (add `jiti`, `c12`, `defu`, `pathe`, `pkg-types`)
 - **Edit**: `packages/crouton-cli/lib/generate-collection.mjs` (replace inline config loading with c12)
 
 ### Phase 1 Checklist
 
-- [ ] Create `packages/crouton-core/shared/manifest.ts` with types + `defineCroutonManifest()`
-- [ ] Add subpath export `./shared/manifest` to `packages/crouton-core/package.json`
-- [ ] Create `packages/crouton-core/crouton.manifest.ts` (10 field types + 2 aliases)
-- [ ] Create `packages/crouton-assets/crouton.manifest.ts` (image + file)
+- [x] Create `packages/crouton-core/shared/manifest.ts` with types + `defineCroutonManifest()`
+- [x] Add subpath export `./shared/manifest` to `packages/crouton-core/package.json`
+- [x] Create `packages/crouton-core/crouton.manifest.ts` (12 field types + 2 aliases)
 - [ ] Add `jiti`, `c12`, `defu`, `pathe`, `pkg-types` to `packages/crouton-cli/package.json`
 - [ ] Replace config loading in `generate-collection.mjs` with c12
 - [ ] Use `pathe` for path operations in new files
@@ -563,6 +539,7 @@ Data source for each: the corresponding entry in `module-registry.json`.
 - `packages/crouton-collab/crouton.manifest.ts`
 - `packages/crouton-designer/crouton.manifest.ts`
 - `packages/crouton-mcp-toolkit/crouton.manifest.ts`
+- `packages/crouton-assets/crouton.manifest.ts` — thin manifest (no field types — image/file are in crouton-core); declares enhanced picker/gallery components
 - `packages/crouton-themes/crouton.manifest.ts` — thin manifest (no field types); declares theme components (KoLed, KoKnob, KoPanel)
 - `packages/crouton-devtools/crouton.manifest.ts` — thin manifest (no field types); benefits from manifest awareness for inspection panel
 
@@ -1063,8 +1040,7 @@ pnpm crouton rollback shop products       # cleanup
 | File | Current Role | What Changes | Phase |
 |------|-------------|-------------|-------|
 | `packages/crouton-core/shared/manifest.ts` | *(new)* | Manifest type + `defineCroutonManifest()` | 1 |
-| `packages/crouton-core/crouton.manifest.ts` | *(new)* | Base field types + reserved names | 1 |
-| `packages/crouton-assets/crouton.manifest.ts` | *(new)* | image/file field types | 1 |
+| `packages/crouton-core/crouton.manifest.ts` | *(new)* | 12 base field types (incl. image/file) + reserved names | 1 |
 | `packages/crouton-cli/lib/utils/manifest-loader.ts` | *(new)* | Discovery, registry, alias resolution | 2 |
 | `packages/crouton-cli/lib/utils/helpers.mjs` | Hardcoded typeMapping | Remove typeMapping, import from loader, consola | 2 |
 | `packages/crouton-cli/lib/utils/manifest-merge.mjs` | Hardcoded PACKAGE_MANIFESTS | Remove hardcoded data, consola | 2 |
@@ -1097,14 +1073,14 @@ pnpm crouton rollback shop products       # cleanup
 |-------|--------|--------|-----------|-------------|-----|
 | Phase 0 | Small | CLI safety net — characterization tests for all 11 commands | — | — | PR 0 (parallelizable with PR 1) |
 | Phase 1 | Medium | Foundation — types + core manifest + unjs base | jiti, c12, defu, pathe, pkg-types | — | PR 1 |
-| Phase 2+3 | Large | CLI reads manifests, all packages get manifests, JSON deleted, consumers migrated, app.config injection, consola in touched files | consola | — (chalk/ora kept temporarily) | PR 2 (atomic) |
+| Phase 2+3 | Large | CLI reads manifests, all packages get manifests (incl. crouton-assets), JSON deleted, consumers migrated, app.config injection, consola in touched files | consola | — (chalk/ora kept temporarily) | PR 2 (atomic) |
 | Phase 4 | Small | Unified module reads manifests + getCroutonLayers() | — | — | PR 3 |
 | Phase 5 | Medium | CLI framework rewrite + full dep cleanup (tests already exist from Phase 0) | citty, @clack/prompts | commander, chalk, ora, inquirer, fs-extra (all 5 removed) | PR 4 |
 | Future | Ongoing | Progressive `.mjs` → `.ts` migration | (unbuild, later) | — | Opportunistic |
 
 **Ship order**: Phase 0 + Phase 1 (parallel) → Phase 2+3 (atomic) → Phase 4 (whenever) → Phase 5 (after manifests land) → Future (opportunistic)
 
-**Total files**: ~1 created (Phase 0) + ~6 created (Phase 1) + ~15 created + ~13 edited (Phase 2+3) + ~2 edited (Phase 4) + ~15 edited (Phase 5) = **~52 files**
+**Total files**: ~1 created (Phase 0) + ~5 created (Phase 1) + ~16 created + ~13 edited (Phase 2+3) + ~2 edited (Phase 4) + ~15 edited (Phase 5) = **~52 files**
 
 **Total dep changes**: +8 unjs deps, -5 legacy deps. Net result: CLI uses the same stack as Nuxt itself.
 
