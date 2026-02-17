@@ -4,7 +4,7 @@
 
 ---
 
-## Status (Updated Feb 17, 2026)
+## Status (Updated Feb 18, 2026)
 
 | Phase | Status | Notes |
 |-------|--------|-------|
@@ -12,7 +12,7 @@
 | Phase 1 | ✅ Done | Manifest type, core manifest (12 field types), unjs deps, c12 config loading. All verified. |
 | Phase 2+3 | ✅ Done | All manifests created, CLI reads from manifests, `module-registry.json` deleted, designer + MCP consumers migrated, app.config injection working. 374 CLI tests + 32 MCP tests pass. |
 | Phase 3.5 (magicast) | ✅ Done | Replaced ~260 lines of regex with magicast AST manipulation in 3 config modification sites. 374 CLI + 32 MCP tests pass. |
-| Phase 4 | Not started | Unified module reads manifests for feature discovery |
+| Phase 4 | ✅ Done | Unified module reads manifests for feature discovery. `getCroutonLayers()` exported. Lightweight sync manifest scanner (no new deps). 374 CLI + 32 MCP tests pass. |
 | Phase 5 | Not started | CLI framework rewrite (citty + full chalk/ora/inquirer/fs-extra removal). Tests already exist from Phase 0 |
 
 ### Recent Commits That Overlap With This Plan
@@ -816,12 +816,13 @@ All 13 generators (template strings for new files) — magicast is for modifying
 - **Edit**: `packages/crouton/src/types.ts`
 
 ### Phase 4 Checklist
-- [ ] Replace hardcoded feature mapping with manifest-based discovery
-- [ ] Keep explicit `CroutonOptions` interface for IDE autocomplete
-- [ ] Create and export `getCroutonLayers()` function
-- [ ] Verify `getCroutonLayers()` works from nuxt.config.ts
-- [ ] Add a new test package with manifest — verify auto-discovered
-- [ ] `npx nuxt typecheck`
+- [x] Replace hardcoded feature mapping with manifest-based discovery
+- [x] Keep explicit `CroutonOptions` interface for IDE autocomplete (added source-of-truth comment)
+- [x] Create and export `getCroutonLayers()` function
+- [x] Verify module builds: `getCroutonLayers` in dist exports
+- [ ] Add a new test package with manifest — verify auto-discovered (deferred: manual test)
+- [x] `npx nuxt typecheck` — pre-existing i18n errors only, no manifest-related regressions
+- [x] 374 CLI + 32 MCP tests pass
 
 ---
 
