@@ -1,7 +1,7 @@
 // scaffold-app.mjs — Generate a complete crouton app scaffold
 import { join } from 'node:path'
-import fs from 'fs-extra'
-import chalk from 'chalk'
+import { access, mkdir, writeFile } from 'node:fs/promises'
+import consola from 'consola'
 import { loadModules } from './module-registry.mjs'
 import { getFrameworkPackages } from './utils/framework-packages.mjs'
 
@@ -522,46 +522,46 @@ export async function scaffoldApp(name, options = {}) {
 
   // Dry run — just print what would be created
   if (dryRun) {
-    console.log(chalk.cyan(`\n  Scaffold preview for ${chalk.bold(name)}\n`))
-    console.log(chalk.gray(`  Directory: ${appDir}/\n`))
-    console.log(chalk.gray('  Features:'), features.length > 0 ? features.join(', ') : '(none)')
-    console.log(chalk.gray('  Extends:'), frameworkPackages.join(', '))
-    console.log(chalk.gray('  Dialect:'), dialect)
-    console.log(chalk.gray('  Cloudflare:'), cf ? 'yes' : 'no')
-    if (theme) console.log(chalk.gray('  Theme:'), theme)
+    consola.info(`\n  Scaffold preview for ${name}\n`)
+    console.log(`  Directory: ${appDir}/\n`)
+    console.log('  Features:', features.length > 0 ? features.join(', ') : '(none)')
+    console.log('  Extends:', frameworkPackages.join(', '))
+    console.log('  Dialect:', dialect)
+    console.log('  Cloudflare:', cf ? 'yes' : 'no')
+    if (theme) console.log('  Theme:', theme)
     console.log()
     for (const file of files) {
-      console.log(chalk.green('  + ') + file.path)
+      console.log('  + ' + file.path)
     }
-    console.log(chalk.gray(`\n  ${files.length} files would be created.\n`))
+    console.log(`\n  ${files.length} files would be created.\n`)
     return { files, appDir }
   }
 
   // Check if directory already exists
-  if (await fs.pathExists(appDir)) {
+  if (await access(appDir).then(() => true).catch(() => false)) {
     throw new Error(`Directory "${appDir}" already exists. Remove it first or choose a different name.`)
   }
 
   // Write all files
-  console.log(chalk.cyan(`\n  Scaffolding ${chalk.bold(name)}...\n`))
+  consola.info(`\n  Scaffolding ${name}...\n`)
 
   for (const file of files) {
     const filePath = join(appDir, file.path)
-    await fs.ensureDir(join(filePath, '..'))
-    await fs.writeFile(filePath, file.content, 'utf-8')
-    console.log(chalk.green('  + ') + file.path)
+    await mkdir(join(filePath, '..'), { recursive: true })
+    await writeFile(filePath, file.content)
+    consola.success('  + ' + file.path)
   }
 
   // Print next steps
-  console.log(chalk.cyan(`\n  Done! ${files.length} files created in ${appDir}/\n`))
-  console.log(chalk.yellow('  Next steps:\n'))
-  console.log(chalk.gray('  1.'), `cd ${appDir}`)
-  console.log(chalk.gray('  2.'), 'pnpm install')
-  console.log(chalk.gray('  3.'), 'Add your schemas to schemas/ directory')
-  console.log(chalk.gray('  4.'), 'Update crouton.config.js with collections')
-  console.log(chalk.gray('  5.'), 'crouton generate')
+  consola.info(`\n  Done! ${files.length} files created in ${appDir}/\n`)
+  consola.warn('  Next steps:\n')
+  console.log('  1.', `cd ${appDir}`)
+  console.log('  2.', 'pnpm install')
+  console.log('  3.', 'Add your schemas to schemas/ directory')
+  console.log('  4.', 'Update crouton.config.js with collections')
+  console.log('  5.', 'crouton generate')
   if (cf) {
-    console.log(chalk.gray('  6.'), 'Update wrangler.toml with real D1/KV IDs')
+    console.log('  6.', 'Update wrangler.toml with real D1/KV IDs')
   }
   console.log()
 

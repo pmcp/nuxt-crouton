@@ -5,10 +5,7 @@
   "type": "module",
   "bin": {
     "crouton": "./bin/crouton-generate.js",
-    "crouton-generate": "./bin/crouton-generate.js",
-    "crouton-rollback": "./lib/rollback-collection.mjs",
-    "crouton-rollback-bulk": "./lib/rollback-bulk.mjs",
-    "crouton-rollback-interactive": "./lib/rollback-interactive.mjs"
+    "crouton-generate": "./bin/crouton-generate.js"
   },
   "exports": {
     ".": "./bin/crouton-generate.js",
@@ -53,17 +50,14 @@
     "access": "public"
   },
   "dependencies": {
+    "@clack/prompts": "^1.0.1",
     "c12": "^3.0.0",
-    "chalk": "^5.3.0",
+    "citty": "^0.2.1",
     "consola": "^3.4.0",
-    "commander": "^11.1.0",
     "defu": "^6.1.0",
     "drizzle-seed": "^0.3.1",
-    "magicast": "^0.3.5",
-    "fs-extra": "^11.2.0",
-    "inquirer": "^9.2.12",
     "jiti": "^2.6.0",
-    "ora": "^8.0.1",
+    "magicast": "^0.3.5",
     "pathe": "^2.0.0",
     "pkg-types": "^2.0.0"
   },

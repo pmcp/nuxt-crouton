@@ -3,7 +3,7 @@
 
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import chalk from 'chalk'
+import consola from 'consola'
 
 // Import utilities
 import { toCase } from './utils/helpers.mjs'
@@ -22,7 +22,7 @@ async function getAllCollectionsInLayer(layer) {
       .filter(entry => entry.isDirectory())
       .map(entry => entry.name)
   } catch (error) {
-    console.error(chalk.red(`Error reading layer collections: ${error.message}`))
+    consola.error(`Error reading layer collections: ${error.message}`)
     return []
   }
 }
@@ -40,60 +40,60 @@ async function getAllLayers() {
       .filter(entry => entry.isDirectory())
       .map(entry => entry.name)
   } catch (error) {
-    console.error(chalk.red(`Error reading layers: ${error.message}`))
+    consola.error(`Error reading layers: ${error.message}`)
     return []
   }
 }
 
 export async function rollbackLayer({ layer, dryRun = false, keepFiles = false, force = false }) {
-  console.log(chalk.bold('\n═'.repeat(60)))
-  console.log(chalk.bold(`  LAYER ROLLBACK: ${layer}`))
-  console.log(chalk.bold('═'.repeat(60)) + '\n')
+  console.log('\n' + '═'.repeat(60))
+  console.log(`  LAYER ROLLBACK: ${layer}`)
+  console.log('═'.repeat(60) + '\n')
 
   // Get all collections in this layer
   const collections = await getAllCollectionsInLayer(layer)
 
   if (collections.length === 0) {
-    console.log(chalk.red(`✗ No collections found in layer "${layer}"`))
+    consola.error(`No collections found in layer "${layer}"`)
     return false
   }
 
-  console.log(chalk.cyan(`Found ${collections.length} collections in layer "${layer}":`))
-  collections.forEach(col => console.log(chalk.gray(`  • ${col}`)))
+  consola.info(`Found ${collections.length} collections in layer "${layer}":`)
+  collections.forEach(col => console.log(`  • ${col}`))
 
   // Show what will be removed
-  console.log('\n' + chalk.bold('─'.repeat(60)))
-  console.log(chalk.bold('  IMPACT ASSESSMENT'))
-  console.log(chalk.bold('─'.repeat(60)) + '\n')
+  console.log('\n' + '─'.repeat(60))
+  console.log('  IMPACT ASSESSMENT')
+  console.log('─'.repeat(60) + '\n')
 
-  console.log(chalk.yellow(`This will remove:`))
-  console.log(chalk.gray(`  • ${collections.length} collections`))
+  consola.warn(`This will remove:`)
+  console.log(`  • ${collections.length} collections`)
   if (!keepFiles) {
-    console.log(chalk.gray(`  • All collection files in layers/${layer}/collections/`))
+    console.log(`  • All collection files in layers/${layer}/collections/`)
   }
-  console.log(chalk.gray(`  • Schema index exports for all collections`))
-  console.log(chalk.gray(`  • app.config.ts entries for all collections`))
-  console.log(chalk.gray(`  • Layer "${layer}" from root nuxt.config.ts`))
+  console.log(`  • Schema index exports for all collections`)
+  console.log(`  • app.config.ts entries for all collections`)
+  console.log(`  • Layer "${layer}" from root nuxt.config.ts`)
 
   // Confirmation prompt (unless force or dry-run)
   if (!force && !dryRun) {
-    console.log('\n' + chalk.red(chalk.bold('⚠️  WARNING: This will remove ALL collections in this layer!')))
-    console.log(chalk.yellow('Run with --dry-run to preview changes first'))
-    console.log(chalk.gray('\nPress Ctrl+C to cancel, or wait 5 seconds to continue...'))
+    consola.error('⚠️  WARNING: This will remove ALL collections in this layer!')
+    consola.warn('Run with --dry-run to preview changes first')
+    console.log('\nPress Ctrl+C to cancel, or wait 5 seconds to continue...')
 
     await new Promise(resolve => setTimeout(resolve, 5000))
   }
 
-  console.log('\n' + chalk.bold('─'.repeat(60)))
-  console.log(chalk.bold('  EXECUTING BULK ROLLBACK'))
-  console.log(chalk.bold('─'.repeat(60)) + '\n')
+  console.log('\n' + '─'.repeat(60))
+  console.log('  EXECUTING BULK ROLLBACK')
+  console.log('─'.repeat(60) + '\n')
 
   let totalChangesMade = false
 
   // Rollback each collection
   for (let i = 0; i < collections.length; i++) {
     const collection = collections[i]
-    console.log(chalk.bold(`\n[${i + 1}/${collections.length}] ${collection}`))
+    console.log(`\n[${i + 1}/${collections.length}] ${collection}`)
 
     const changesMade = await rollbackCollection({
       layer,
@@ -105,38 +105,38 @@ export async function rollbackLayer({ layer, dryRun = false, keepFiles = false, 
 
     if (changesMade) {
       totalChangesMade = true
-      console.log(chalk.green(`  ✓ Rolled back ${collection}`))
+      consola.success(`Rolled back ${collection}`)
     } else {
-      console.log(chalk.gray(`  ! No changes for ${collection}`))
+      console.log(`  ! No changes for ${collection}`)
     }
   }
 
   // Remove layer from root config
-  console.log(chalk.bold('\n─'.repeat(60)))
-  console.log(chalk.bold('  CLEANING ROOT CONFIG'))
-  console.log(chalk.bold('─'.repeat(60)) + '\n')
+  console.log('\n' + '─'.repeat(60))
+  console.log('  CLEANING ROOT CONFIG')
+  console.log('─'.repeat(60) + '\n')
 
   if (await cleanRootNuxtConfig(layer, dryRun, true)) {
     totalChangesMade = true
   }
 
   // Summary
-  console.log('\n' + chalk.bold('═'.repeat(60)))
+  console.log('\n' + '═'.repeat(60))
   if (dryRun) {
-    console.log(chalk.bold('  DRY RUN COMPLETE'))
-    console.log(chalk.bold('═'.repeat(60)) + '\n')
-    console.log(chalk.yellow('No changes were made. Run without --dry-run to execute.'))
+    console.log('  DRY RUN COMPLETE')
+    console.log('═'.repeat(60) + '\n')
+    consola.warn('No changes were made. Run without --dry-run to execute.')
   } else {
-    console.log(chalk.bold('  BULK ROLLBACK COMPLETE'))
-    console.log(chalk.bold('═'.repeat(60)) + '\n')
+    console.log('  BULK ROLLBACK COMPLETE')
+    console.log('═'.repeat(60) + '\n')
 
     if (totalChangesMade) {
-      console.log(chalk.green(`✓ Successfully rolled back ${collections.length} collections from layer "${layer}"`))
-      console.log(chalk.yellow('\n⚠️  Next steps:'))
-      console.log(chalk.gray('  1. Run: pnpm db:generate (to update database schema)'))
-      console.log(chalk.gray('  2. Restart your Nuxt dev server'))
+      consola.success(`Successfully rolled back ${collections.length} collections from layer "${layer}"`)
+      consola.warn('\n⚠️  Next steps:')
+      console.log('  1. Run: pnpm db:generate (to update database schema)')
+      console.log('  2. Restart your Nuxt dev server')
     } else {
-      console.log(chalk.yellow('! No changes were made'))
+      consola.warn('No changes were made')
     }
   }
 
@@ -145,17 +145,17 @@ export async function rollbackLayer({ layer, dryRun = false, keepFiles = false, 
 }
 
 export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles = false, force = false }) {
-  console.log(chalk.bold('\n═'.repeat(60)))
-  console.log(chalk.bold('  CONFIG-BASED ROLLBACK'))
-  console.log(chalk.bold('═'.repeat(60)) + '\n')
+  console.log('\n' + '═'.repeat(60))
+  console.log('  CONFIG-BASED ROLLBACK')
+  console.log('═'.repeat(60) + '\n')
 
-  console.log(chalk.cyan(`Config file: ${configPath}`))
+  consola.info(`Config file: ${configPath}`)
 
   // Load config file
   const resolvedPath = path.resolve(configPath)
 
   if (!await fileExists(resolvedPath)) {
-    console.log(chalk.red(`\n✗ Config file not found: ${configPath}`))
+    consola.error(`\nConfig file not found: ${configPath}`)
     process.exit(1)
   }
 
@@ -163,12 +163,12 @@ export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles
   try {
     config = (await import(resolvedPath)).default
   } catch (error) {
-    console.log(chalk.red(`\n✗ Error loading config: ${error.message}`))
+    consola.error(`\nError loading config: ${error.message}`)
     process.exit(1)
   }
 
   if (!config || !config.targets) {
-    console.log(chalk.red(`\n✗ Invalid config: missing targets`))
+    consola.error(`\nInvalid config: missing targets`)
     process.exit(1)
   }
 
@@ -183,43 +183,43 @@ export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles
     totalCollections += target.collections.length
   }
 
-  console.log(chalk.green(`\n✓ Found ${config.targets.length} layers, ${totalCollections} collections`))
+  consola.success(`Found ${config.targets.length} layers, ${totalCollections} collections`)
 
   // Show what will be removed
-  console.log('\n' + chalk.bold('─'.repeat(60)))
-  console.log(chalk.bold('  COLLECTIONS TO ROLLBACK'))
-  console.log(chalk.bold('─'.repeat(60)) + '\n')
+  console.log('\n' + '─'.repeat(60))
+  console.log('  COLLECTIONS TO ROLLBACK')
+  console.log('─'.repeat(60) + '\n')
 
   for (const [layer, collections] of Object.entries(layerCollectionMap)) {
-    console.log(chalk.cyan(`${layer}:`))
-    collections.forEach(col => console.log(chalk.gray(`  • ${col}`)))
+    consola.info(`${layer}:`)
+    collections.forEach(col => console.log(`  • ${col}`))
   }
 
-  console.log('\n' + chalk.bold('─'.repeat(60)))
-  console.log(chalk.bold('  IMPACT ASSESSMENT'))
-  console.log(chalk.bold('─'.repeat(60)) + '\n')
+  console.log('\n' + '─'.repeat(60))
+  console.log('  IMPACT ASSESSMENT')
+  console.log('─'.repeat(60) + '\n')
 
-  console.log(chalk.yellow(`This will remove:`))
-  console.log(chalk.gray(`  • ${totalCollections} collections across ${config.targets.length} layers`))
+  consola.warn(`This will remove:`)
+  console.log(`  • ${totalCollections} collections across ${config.targets.length} layers`)
   if (!keepFiles) {
-    console.log(chalk.gray(`  • All collection files`))
+    console.log(`  • All collection files`)
   }
-  console.log(chalk.gray(`  • All schema index exports`))
-  console.log(chalk.gray(`  • All app.config.ts entries`))
-  console.log(chalk.gray(`  • All affected layers from root nuxt.config.ts`))
+  console.log(`  • All schema index exports`)
+  console.log(`  • All app.config.ts entries`)
+  console.log(`  • All affected layers from root nuxt.config.ts`)
 
   // Confirmation prompt (unless force or dry-run)
   if (!force && !dryRun) {
-    console.log('\n' + chalk.red(chalk.bold('⚠️  WARNING: This will remove ALL collections defined in this config!')))
-    console.log(chalk.yellow('Run with --dry-run to preview changes first'))
-    console.log(chalk.gray('\nPress Ctrl+C to cancel, or wait 5 seconds to continue...'))
+    consola.error('⚠️  WARNING: This will remove ALL collections defined in this config!')
+    consola.warn('Run with --dry-run to preview changes first')
+    console.log('\nPress Ctrl+C to cancel, or wait 5 seconds to continue...')
 
     await new Promise(resolve => setTimeout(resolve, 5000))
   }
 
-  console.log('\n' + chalk.bold('─'.repeat(60)))
-  console.log(chalk.bold('  EXECUTING CONFIG-BASED ROLLBACK'))
-  console.log(chalk.bold('─'.repeat(60)) + '\n')
+  console.log('\n' + '─'.repeat(60))
+  console.log('  EXECUTING CONFIG-BASED ROLLBACK')
+  console.log('─'.repeat(60) + '\n')
 
   let totalChangesMade = false
   let processedCount = 0
@@ -228,13 +228,13 @@ export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles
   for (const target of config.targets) {
     if (!target.layer || !target.collections) continue
 
-    console.log(chalk.bold(`\n${'═'.repeat(60)}`))
-    console.log(chalk.bold(`  LAYER: ${target.layer}`))
-    console.log(chalk.bold('═'.repeat(60)))
+    console.log(`\n${'═'.repeat(60)}`)
+    console.log(`  LAYER: ${target.layer}`)
+    console.log('═'.repeat(60))
 
     for (const collection of target.collections) {
       processedCount++
-      console.log(chalk.bold(`\n[${processedCount}/${totalCollections}] ${target.layer}/${collection}`))
+      console.log(`\n[${processedCount}/${totalCollections}] ${target.layer}/${collection}`)
 
       const changesMade = await rollbackCollection({
         layer: target.layer,
@@ -246,34 +246,34 @@ export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles
 
       if (changesMade) {
         totalChangesMade = true
-        console.log(chalk.green(`  ✓ Rolled back ${collection}`))
+        consola.success(`Rolled back ${collection}`)
       } else {
-        console.log(chalk.gray(`  ! No changes for ${collection}`))
+        console.log(`  ! No changes for ${collection}`)
       }
     }
 
     // Clean up layer from root config
-    console.log(chalk.bold('\n  Checking root config...'))
+    console.log('\n  Checking root config...')
     await cleanRootNuxtConfig(target.layer, dryRun, true)
   }
 
   // Summary
-  console.log('\n' + chalk.bold('═'.repeat(60)))
+  console.log('\n' + '═'.repeat(60))
   if (dryRun) {
-    console.log(chalk.bold('  DRY RUN COMPLETE'))
-    console.log(chalk.bold('═'.repeat(60)) + '\n')
-    console.log(chalk.yellow('No changes were made. Run without --dry-run to execute.'))
+    console.log('  DRY RUN COMPLETE')
+    console.log('═'.repeat(60) + '\n')
+    consola.warn('No changes were made. Run without --dry-run to execute.')
   } else {
-    console.log(chalk.bold('  CONFIG-BASED ROLLBACK COMPLETE'))
-    console.log(chalk.bold('═'.repeat(60)) + '\n')
+    console.log('  CONFIG-BASED ROLLBACK COMPLETE')
+    console.log('═'.repeat(60) + '\n')
 
     if (totalChangesMade) {
-      console.log(chalk.green(`✓ Successfully rolled back ${totalCollections} collections`))
-      console.log(chalk.yellow('\n⚠️  Next steps:'))
-      console.log(chalk.gray('  1. Run: pnpm db:generate (to update database schema)'))
-      console.log(chalk.gray('  2. Restart your Nuxt dev server'))
+      consola.success(`Successfully rolled back ${totalCollections} collections`)
+      consola.warn('\n⚠️  Next steps:')
+      console.log('  1. Run: pnpm db:generate (to update database schema)')
+      console.log('  2. Restart your Nuxt dev server')
     } else {
-      console.log(chalk.yellow('! No changes were made'))
+      consola.warn('No changes were made')
     }
   }
 
@@ -282,40 +282,40 @@ export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles
 }
 
 export async function rollbackMultiple({ layer, collections, dryRun = false, keepFiles = false, force = false }) {
-  console.log(chalk.bold('\n═'.repeat(60)))
-  console.log(chalk.bold(`  MULTIPLE COLLECTION ROLLBACK`))
-  console.log(chalk.bold('═'.repeat(60)) + '\n')
+  console.log('\n' + '═'.repeat(60))
+  console.log('  MULTIPLE COLLECTION ROLLBACK')
+  console.log('═'.repeat(60) + '\n')
 
-  console.log(chalk.cyan(`Layer: ${layer}`))
-  console.log(chalk.cyan(`Collections: ${collections.join(', ')}`))
+  consola.info(`Layer: ${layer}`)
+  consola.info(`Collections: ${collections.join(', ')}`)
 
   // Show what will be removed
-  console.log('\n' + chalk.bold('─'.repeat(60)))
-  console.log(chalk.bold('  IMPACT ASSESSMENT'))
-  console.log(chalk.bold('─'.repeat(60)) + '\n')
+  console.log('\n' + '─'.repeat(60))
+  console.log('  IMPACT ASSESSMENT')
+  console.log('─'.repeat(60) + '\n')
 
-  console.log(chalk.yellow(`This will remove ${collections.length} collections:`))
-  collections.forEach(col => console.log(chalk.gray(`  • ${col}`)))
+  consola.warn(`This will remove ${collections.length} collections:`)
+  collections.forEach(col => console.log(`  • ${col}`))
 
   // Confirmation prompt (unless force or dry-run)
   if (!force && !dryRun) {
-    console.log('\n' + chalk.red(chalk.bold('⚠️  WARNING: This will remove multiple collections!')))
-    console.log(chalk.yellow('Run with --dry-run to preview changes first'))
-    console.log(chalk.gray('\nPress Ctrl+C to cancel, or wait 3 seconds to continue...'))
+    consola.error('⚠️  WARNING: This will remove multiple collections!')
+    consola.warn('Run with --dry-run to preview changes first')
+    console.log('\nPress Ctrl+C to cancel, or wait 3 seconds to continue...')
 
     await new Promise(resolve => setTimeout(resolve, 3000))
   }
 
-  console.log('\n' + chalk.bold('─'.repeat(60)))
-  console.log(chalk.bold('  EXECUTING ROLLBACK'))
-  console.log(chalk.bold('─'.repeat(60)) + '\n')
+  console.log('\n' + '─'.repeat(60))
+  console.log('  EXECUTING ROLLBACK')
+  console.log('─'.repeat(60) + '\n')
 
   let totalChangesMade = false
 
   // Rollback each collection
   for (let i = 0; i < collections.length; i++) {
     const collection = collections[i]
-    console.log(chalk.bold(`\n[${i + 1}/${collections.length}] ${collection}`))
+    console.log(`\n[${i + 1}/${collections.length}] ${collection}`)
 
     const changesMade = await rollbackCollection({
       layer,
@@ -327,9 +327,9 @@ export async function rollbackMultiple({ layer, collections, dryRun = false, kee
 
     if (changesMade) {
       totalChangesMade = true
-      console.log(chalk.green(`  ✓ Rolled back ${collection}`))
+      consola.success(`Rolled back ${collection}`)
     } else {
-      console.log(chalk.gray(`  ! No changes for ${collection}`))
+      console.log(`  ! No changes for ${collection}`)
     }
   }
 
@@ -338,30 +338,30 @@ export async function rollbackMultiple({ layer, collections, dryRun = false, kee
   if (await fileExists(layerCollectionsPath)) {
     const remainingCollections = await getAllCollectionsInLayer(layer)
     if (remainingCollections.length === 0) {
-      console.log(chalk.bold('\n─'.repeat(60)))
-      console.log(chalk.bold('  CLEANING ROOT CONFIG'))
-      console.log(chalk.bold('─'.repeat(60)) + '\n')
+      console.log('\n' + '─'.repeat(60))
+      console.log('  CLEANING ROOT CONFIG')
+      console.log('─'.repeat(60) + '\n')
       await cleanRootNuxtConfig(layer, dryRun, true)
     }
   }
 
   // Summary
-  console.log('\n' + chalk.bold('═'.repeat(60)))
+  console.log('\n' + '═'.repeat(60))
   if (dryRun) {
-    console.log(chalk.bold('  DRY RUN COMPLETE'))
-    console.log(chalk.bold('═'.repeat(60)) + '\n')
-    console.log(chalk.yellow('No changes were made. Run without --dry-run to execute.'))
+    console.log('  DRY RUN COMPLETE')
+    console.log('═'.repeat(60) + '\n')
+    consola.warn('No changes were made. Run without --dry-run to execute.')
   } else {
-    console.log(chalk.bold('  ROLLBACK COMPLETE'))
-    console.log(chalk.bold('═'.repeat(60)) + '\n')
+    console.log('  ROLLBACK COMPLETE')
+    console.log('═'.repeat(60) + '\n')
 
     if (totalChangesMade) {
-      console.log(chalk.green(`✓ Successfully rolled back ${collections.length} collections`))
-      console.log(chalk.yellow('\n⚠️  Next steps:'))
-      console.log(chalk.gray('  1. Run: pnpm db:generate (to update database schema)'))
-      console.log(chalk.gray('  2. Restart your Nuxt dev server'))
+      consola.success(`Successfully rolled back ${collections.length} collections`)
+      consola.warn('\n⚠️  Next steps:')
+      console.log('  1. Run: pnpm db:generate (to update database schema)')
+      console.log('  2. Restart your Nuxt dev server')
     } else {
-      console.log(chalk.yellow('! No changes were made'))
+      consola.warn('No changes were made')
     }
   }
 
@@ -441,7 +441,7 @@ async function main() {
       break
 
     default:
-      console.log(chalk.red('Invalid mode'))
+      consola.error('Invalid mode')
       process.exit(1)
   }
 }
@@ -449,7 +449,7 @@ async function main() {
 // Only run main if this is the entry point
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
-    console.error(chalk.red('\n✗ Fatal error:'), error.message)
+    consola.error(`\nFatal error: ${error.message}`)
     process.exit(1)
   })
 }

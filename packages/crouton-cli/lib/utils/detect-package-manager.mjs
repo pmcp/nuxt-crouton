@@ -1,6 +1,6 @@
 // Detect the package manager used in the current project
 
-import fs from 'fs-extra'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
@@ -10,21 +10,21 @@ import { join } from 'node:path'
  */
 export function detectPackageManager(cwd = process.cwd()) {
   // Check for lock files in order of preference
-  if (fs.existsSync(join(cwd, 'pnpm-lock.yaml'))) {
+  if (existsSync(join(cwd, 'pnpm-lock.yaml'))) {
     return 'pnpm'
   }
 
-  if (fs.existsSync(join(cwd, 'yarn.lock'))) {
+  if (existsSync(join(cwd, 'yarn.lock'))) {
     return 'yarn'
   }
 
-  if (fs.existsSync(join(cwd, 'package-lock.json'))) {
+  if (existsSync(join(cwd, 'package-lock.json'))) {
     return 'npm'
   }
 
   // Check for packageManager field in package.json
   try {
-    const packageJson = fs.readJsonSync(join(cwd, 'package.json'))
+    const packageJson = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8'))
     if (packageJson.packageManager) {
       if (packageJson.packageManager.startsWith('pnpm')) return 'pnpm'
       if (packageJson.packageManager.startsWith('yarn')) return 'yarn'

@@ -1,7 +1,7 @@
 // doctor.mjs — Validate an existing crouton app directory
 import { join, resolve } from 'node:path'
-import fs from 'fs-extra'
-import chalk from 'chalk'
+import { access, readFile } from 'node:fs/promises'
+import consola from 'consola'
 import { loadModules } from './module-registry.mjs'
 
 /**
@@ -13,7 +13,7 @@ export async function doctor(appDir) {
   const checks = []
 
   // Ensure the directory exists
-  if (!await fs.pathExists(appDir)) {
+  if (!await pathExists(appDir)) {
     return { ok: false, checks: [{ name: 'directory', status: 'fail', message: `Directory not found: ${appDir}` }] }
   }
 
@@ -44,9 +44,19 @@ export async function doctor(appDir) {
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
+async function pathExists(p) {
+  try {
+    await access(p)
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function loadJson(filePath) {
   try {
-    return await fs.readJson(filePath)
+    const content = await readFile(filePath, 'utf-8')
+    return JSON.parse(content)
   } catch {
     return null
   }
@@ -56,7 +66,7 @@ async function loadConfig(appDir) {
   const extensions = ['.js', '.mjs', '.cjs']
   for (const ext of extensions) {
     const configPath = resolve(appDir, `crouton.config${ext}`)
-    if (await fs.pathExists(configPath)) {
+    if (await pathExists(configPath)) {
       try {
         const mod = await import(`file://${configPath}`)
         return mod.default || mod
@@ -124,12 +134,12 @@ async function checkWranglerIds(appDir) {
   const results = []
   const wranglerPath = join(appDir, 'wrangler.toml')
 
-  if (!await fs.pathExists(wranglerPath)) {
+  if (!await pathExists(wranglerPath)) {
     // No wrangler.toml is fine (--no-cf apps)
     return results
   }
 
-  const content = await fs.readFile(wranglerPath, 'utf-8')
+  const content = await readFile(wranglerPath, 'utf-8')
 
   if (content.includes('TODO_REPLACE_WITH_REAL_ID')) {
     const count = (content.match(/TODO_REPLACE_WITH_REAL_ID/g) || []).length
@@ -153,11 +163,11 @@ async function checkLocaleFiles(appDir, config) {
 
   for (const target of targets) {
     const layerDir = join(appDir, 'layers', target.layer)
-    if (!await fs.pathExists(layerDir)) continue
+    if (!await pathExists(layerDir)) continue
 
     // Check for i18n/locales directory
     const localesDir = join(layerDir, 'i18n', 'locales')
-    if (!await fs.pathExists(localesDir)) {
+    if (!await pathExists(localesDir)) {
       results.push({
         name: 'locales',
         status: 'warn',
@@ -179,9 +189,9 @@ async function checkCfStubs(appDir) {
   const results = []
   const nuxtConfigPath = join(appDir, 'nuxt.config.ts')
 
-  if (!await fs.pathExists(nuxtConfigPath)) return results
+  if (!await pathExists(nuxtConfigPath)) return results
 
-  const content = await fs.readFile(nuxtConfigPath, 'utf-8')
+  const content = await readFile(nuxtConfigPath, 'utf-8')
 
   // Only check stubs if Cloudflare preset is configured
   if (!content.includes('cloudflare-pages')) return results
@@ -191,8 +201,8 @@ async function checkCfStubs(appDir) {
   const clientStub = join(stubsDir, 'client.ts')
 
   const missing = []
-  if (!await fs.pathExists(indexStub)) missing.push('index.ts')
-  if (!await fs.pathExists(clientStub)) missing.push('client.ts')
+  if (!await pathExists(indexStub)) missing.push('index.ts')
+  if (!await pathExists(clientStub)) missing.push('client.ts')
 
   if (missing.length > 0) {
     results.push({
@@ -213,12 +223,12 @@ async function checkSchemaExports(appDir) {
   const results = []
   const schemaPath = join(appDir, 'server', 'db', 'schema.ts')
 
-  if (!await fs.pathExists(schemaPath)) {
+  if (!await pathExists(schemaPath)) {
     results.push({ name: 'schema', status: 'fail', message: 'server/db/schema.ts not found' })
     return results
   }
 
-  const content = await fs.readFile(schemaPath, 'utf-8')
+  const content = await readFile(schemaPath, 'utf-8')
 
   // Check for auth schema export
   if (!content.includes('crouton-auth/server/database/schema/auth')) {
@@ -240,12 +250,18 @@ async function checkSchemaExports(appDir) {
 // ─── Reporter ─────────────────────────────────────────────────────
 
 export function printReport(result) {
-  const icons = { pass: chalk.green('✓'), warn: chalk.yellow('⚠'), fail: chalk.red('✗') }
+  const icons = { pass: '✓', warn: '⚠', fail: '✗' }
 
-  console.log(chalk.cyan('\n  Crouton Doctor\n'))
+  console.log('\n  Crouton Doctor\n')
 
   for (const check of result.checks) {
-    console.log(`  ${icons[check.status]}  ${check.message}`)
+    if (check.status === 'pass') {
+      consola.success(`${check.message}`)
+    } else if (check.status === 'warn') {
+      consola.warn(`${check.message}`)
+    } else {
+      consola.error(`${check.message}`)
+    }
   }
 
   const fails = result.checks.filter(c => c.status === 'fail').length
@@ -253,11 +269,11 @@ export function printReport(result) {
 
   console.log()
   if (fails > 0) {
-    console.log(chalk.red(`  ${fails} issue(s) found.`))
+    consola.error(`${fails} issue(s) found.`)
   } else if (warns > 0) {
-    console.log(chalk.yellow(`  ${warns} warning(s), no critical issues.`))
+    consola.warn(`${warns} warning(s), no critical issues.`)
   } else {
-    console.log(chalk.green('  All checks passed!'))
+    consola.success('All checks passed!')
   }
   console.log()
 }

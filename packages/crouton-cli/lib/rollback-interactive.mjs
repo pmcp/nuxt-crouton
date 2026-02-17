@@ -3,8 +3,8 @@
 
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import chalk from 'chalk'
-import inquirer from 'inquirer'
+import * as p from '@clack/prompts'
+import consola from 'consola'
 
 // Import utilities
 import { fileExists } from './rollback-collection.mjs'
@@ -23,7 +23,7 @@ async function getAllCollectionsInLayer(layer) {
       .filter(entry => entry.isDirectory())
       .map(entry => entry.name)
   } catch (error) {
-    console.error(chalk.red(`Error reading layer collections: ${error.message}`))
+    consola.error(`Error reading layer collections: ${error.message}`)
     return []
   }
 }
@@ -50,7 +50,7 @@ async function getAllLayers() {
 
     return layers
   } catch (error) {
-    console.error(chalk.red(`Error reading layers: ${error.message}`))
+    consola.error(`Error reading layers: ${error.message}`)
     return []
   }
 }
@@ -64,80 +64,72 @@ async function getLayerStats(layer) {
   }
 }
 
+function handleCancel(value) {
+  if (p.isCancel(value)) {
+    p.cancel('Rollback cancelled.')
+    process.exit(0)
+  }
+  return value
+}
+
 export async function interactiveRollback({ dryRun = false, keepFiles = false }) {
-  console.log(chalk.bold('\n═'.repeat(60)))
-  console.log(chalk.bold('  INTERACTIVE ROLLBACK'))
-  console.log(chalk.bold('═'.repeat(60)) + '\n')
+  p.intro('Interactive Rollback')
 
   // Get all layers
   const layers = await getAllLayers()
 
   if (layers.length === 0) {
-    console.log(chalk.red('✗ No layers with collections found'))
+    consola.error('No layers with collections found')
     process.exit(1)
   }
 
   // Get stats for each layer
   const layerStats = await Promise.all(layers.map(getLayerStats))
 
-  console.log(chalk.cyan(`Found ${layers.length} layers:\n`))
+  consola.info(`Found ${layers.length} layers:`)
   layerStats.forEach((stat) => {
-    console.log(chalk.gray(`  • ${stat.layer} (${stat.collectionsCount} collections)`))
+    console.log(`  - ${stat.layer} (${stat.collectionsCount} collections)`)
   })
 
-  console.log()
-
   // Ask user to select rollback mode
-  const { mode } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'mode',
-      message: 'What would you like to rollback?',
-      choices: [
-        { name: 'Entire layer (all collections)', value: 'layer' },
-        { name: 'Specific collections', value: 'collections' },
-        { name: 'Cancel', value: 'cancel' }
-      ]
-    }
-  ])
+  const mode = handleCancel(await p.select({
+    message: 'What would you like to rollback?',
+    options: [
+      { label: 'Entire layer (all collections)', value: 'layer' },
+      { label: 'Specific collections', value: 'collections' },
+      { label: 'Cancel', value: 'cancel' }
+    ]
+  }))
 
   if (mode === 'cancel') {
-    console.log(chalk.yellow('\n✓ Cancelled'))
+    p.cancel('Rollback cancelled.')
     process.exit(0)
   }
 
   if (mode === 'layer') {
     // Layer mode: Select which layer
-    const { selectedLayer } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'selectedLayer',
-        message: 'Which layer would you like to rollback?',
-        choices: layerStats.map(stat => ({
-          name: `${stat.layer} (${stat.collectionsCount} collections)`,
-          value: stat.layer
-        }))
-      }
-    ])
+    const selectedLayer = handleCancel(await p.select({
+      message: 'Which layer would you like to rollback?',
+      options: layerStats.map(stat => ({
+        label: `${stat.layer} (${stat.collectionsCount} collections)`,
+        value: stat.layer
+      }))
+    }))
 
     const stat = layerStats.find(s => s.layer === selectedLayer)
 
     // Show collections in this layer
-    console.log(chalk.cyan(`\nCollections in "${selectedLayer}":`))
-    stat.collections.forEach(col => console.log(chalk.gray(`  • ${col}`)))
+    consola.info(`Collections in "${selectedLayer}":`)
+    stat.collections.forEach(col => console.log(`  - ${col}`))
 
     // Confirm
-    const { confirm } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'confirm',
-        message: chalk.red(`Are you sure you want to remove ALL ${stat.collectionsCount} collections from layer "${selectedLayer}"?`),
-        default: false
-      }
-    ])
+    const confirm = handleCancel(await p.confirm({
+      message: `Remove ALL ${stat.collectionsCount} collections from layer "${selectedLayer}"?`,
+      initialValue: false
+    }))
 
     if (!confirm) {
-      console.log(chalk.yellow('\n✓ Cancelled'))
+      p.cancel('Rollback cancelled.')
       process.exit(0)
     }
 
@@ -150,65 +142,48 @@ export async function interactiveRollback({ dryRun = false, keepFiles = false })
     })
   } else if (mode === 'collections') {
     // Collections mode: Select layer first
-    const { selectedLayer } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'selectedLayer',
-        message: 'Which layer contains the collections?',
-        choices: layerStats.map(stat => ({
-          name: `${stat.layer} (${stat.collectionsCount} collections)`,
-          value: stat.layer
-        }))
-      }
-    ])
+    const selectedLayer = handleCancel(await p.select({
+      message: 'Which layer contains the collections?',
+      options: layerStats.map(stat => ({
+        label: `${stat.layer} (${stat.collectionsCount} collections)`,
+        value: stat.layer
+      }))
+    }))
 
     const stat = layerStats.find(s => s.layer === selectedLayer)
 
     if (stat.collections.length === 0) {
-      console.log(chalk.red('\n✗ No collections found in this layer'))
+      consola.error('No collections found in this layer')
       process.exit(1)
     }
 
-    // Select collections
-    const { selectedCollections } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedCollections',
-        message: 'Select collections to rollback (space to select, enter to confirm):',
-        choices: stat.collections.map(col => ({
-          name: col,
-          value: col
-        })),
-        validate: (answer) => {
-          if (answer.length === 0) {
-            return 'You must select at least one collection'
-          }
-          return true
-        }
-      }
-    ])
+    // Select collections (multiselect)
+    const selectedCollections = handleCancel(await p.multiselect({
+      message: 'Select collections to rollback:',
+      options: stat.collections.map(col => ({
+        label: col,
+        value: col
+      })),
+      required: true
+    }))
 
     if (selectedCollections.length === 0) {
-      console.log(chalk.yellow('\n✓ Cancelled'))
+      p.cancel('Rollback cancelled.')
       process.exit(0)
     }
 
     // Show impact
-    console.log(chalk.cyan(`\nSelected ${selectedCollections.length} collections:`))
-    selectedCollections.forEach(col => console.log(chalk.gray(`  • ${col}`)))
+    consola.info(`Selected ${selectedCollections.length} collections:`)
+    selectedCollections.forEach(col => console.log(`  - ${col}`))
 
     // Confirm
-    const { confirm } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'confirm',
-        message: chalk.red(`Are you sure you want to remove these ${selectedCollections.length} collections?`),
-        default: false
-      }
-    ])
+    const confirm = handleCancel(await p.confirm({
+      message: `Remove these ${selectedCollections.length} collections?`,
+      initialValue: false
+    }))
 
     if (!confirm) {
-      console.log(chalk.yellow('\n✓ Cancelled'))
+      p.cancel('Rollback cancelled.')
       process.exit(0)
     }
 
@@ -221,6 +196,8 @@ export async function interactiveRollback({ dryRun = false, keepFiles = false })
       force: true // Skip additional confirmation since we already confirmed
     })
   }
+
+  p.outro('Done.')
 }
 
 function parseArgs() {
@@ -241,7 +218,7 @@ async function main() {
 // Only run main if this is the entry point
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
-    console.error(chalk.red('\n✗ Fatal error:'), error.message)
+    consola.error('Fatal error:', error.message)
     process.exit(1)
   })
 }

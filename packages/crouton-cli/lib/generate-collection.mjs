@@ -50,48 +50,7 @@ async function fileExists(filePath) {
   }
 }
 
-function parseArgs() {
-  const a = process.argv.slice(2)
-  const pos = a.filter(x => !x.startsWith('--'))
-  const layerFlag = a.find(x => x.startsWith('--layer='))
-
-  let layer, collection
-  if (pos.length >= 2 && !layerFlag) {
-    layer = pos[0]
-    collection = pos[1]
-  } else {
-    collection = pos[0]
-    layer = layerFlag ? layerFlag.split('=')[1] : null
-  }
-
-  // Parse fields-file option (supports both --fields-file <path> and --fields-file=<path>)
-  let fieldsFile = null
-  const idxFile = a.indexOf('--fields-file')
-  if (idxFile !== -1 && a[idxFile + 1]) {
-    fieldsFile = a[idxFile + 1]
-  } else {
-    const fieldsFileFlag = a.find(x => x.startsWith('--fields-file='))
-    if (fieldsFileFlag) {
-      fieldsFile = fieldsFileFlag.split('=')[1]
-    }
-  }
-  const dialect = (a.find(x => x.startsWith('--dialect=')) || '').split('=')[1] || 'pg'
-  const autoRelations = a.includes('--auto-relations')
-  const dryRun = a.includes('--dry-run')
-  const noDb = a.includes('--no-db')
-  const force = a.includes('--force')
-  const noTranslations = a.includes('--no-translations')
-  const hierarchy = a.includes('--hierarchy')
-  const seed = a.includes('--seed')
-  const seedCount = Number.parseInt((a.find(x => x.startsWith('--count=')) || '--count=25').split('=')[1], 10) || 25
-
-  if (!layer || !collection) {
-    console.log('Usage: node scripts/generate-collection.next.mjs <layer> <collection> [--fields-file <path>] [--dialect=pg|sqlite] [--auto-relations] [--dry-run] [--no-db] [--force] [--no-translations] [--hierarchy] [--seed] [--count=<number>]')
-    process.exit(1)
-  }
-
-  return { layer, collection, fieldsFile, dialect, autoRelations, dryRun, noDb, force, noTranslations, hierarchy, seed, seedCount }
-}
+// parseArgs() removed in Phase 5 — args now passed as options from citty entry point
 
 async function loadFields(p, typeMapping) {
   // If path is relative and doesn't exist, check in schemas directory
@@ -1452,49 +1411,51 @@ async function validateConfig(config) {
   }
 }
 
-async function main() {
+/**
+ * Run config-based generation.
+ * @param {Object} options
+ * @param {string} [options.configPath] - Explicit config file path (auto-detected if omitted)
+ * @param {boolean} [options.force] - Force generation despite missing deps
+ * @param {boolean} [options.dryRun] - Preview without writing files
+ * @param {string} [options.only] - Generate only a specific collection
+ * @param {boolean} [options.noAutoMerge] - Skip auto-merging package collections
+ */
+export async function runConfig(options = {}) {
   try {
-    // Load type mapping from manifests (single source of truth)
     const typeMapping = await loadTypeMapping()
 
-    // Check if being called with config file
-    if (process.argv[2] === '--config') {
-      // Load config using c12 (supports .ts/.js/.mjs/.cjs, auto-discovery, env overrides)
-      const explicitPath = process.argv[3]
-      const { config } = await loadConfig({
-        name: 'crouton',
-        cwd: process.cwd(),
-        configFile: explicitPath || undefined,
-        defaults: {
-          dialect: 'sqlite',
-          features: {},
-          flags: {}
-        }
-      })
-
-      if (!config || (Object.keys(config).length === 0)) {
-        console.error(`\n❌ Config file not found\n`)
-        process.exit(1)
+    const { config } = await loadConfig({
+      name: 'crouton',
+      cwd: process.cwd(),
+      configFile: options.configPath || undefined,
+      defaults: {
+        dialect: 'sqlite',
+        features: {},
+        flags: {}
       }
+    })
 
-      // Store config file directory for downstream path resolution (fieldsFile in collections)
-      // c12 stores the resolved file path in config._configFile
-      config._configDir = config._configFile
-        ? path.dirname(config._configFile)
-        : process.cwd()
+    if (!config || (Object.keys(config).length === 0)) {
+      console.error(`\n❌ Config file not found\n`)
+      process.exit(1)
+    }
 
-      // Merge CLI flags into config.flags (CLI flags override config file)
-      if (!config.flags) config.flags = {}
-      if (process.argv.includes('--force')) config.flags.force = true
-      if (process.argv.includes('--dry-run')) config.flags.dryRun = true
+    // Store config file directory for downstream path resolution (fieldsFile in collections)
+    config._configDir = config._configFile
+      ? path.dirname(config._configFile)
+      : process.cwd()
 
-      // Parse --only flag for single-collection generation
-      const onlyArg = process.argv.find(arg => arg.startsWith('--only='))
-      const onlyCollection = onlyArg ? onlyArg.split('=')[1] : null
-      if (onlyCollection) {
-        console.log(`\n📌 Generating only: ${onlyCollection}\n`)
-      }
-      config._onlyCollection = onlyCollection
+    // Merge CLI flags into config.flags (CLI flags override config file)
+    if (!config.flags) config.flags = {}
+    if (options.force) config.flags.force = true
+    if (options.dryRun) config.flags.dryRun = true
+
+    // Single-collection filter
+    const onlyCollection = options.only || null
+    if (onlyCollection) {
+      console.log(`\n📌 Generating only: ${onlyCollection}\n`)
+    }
+    config._onlyCollection = onlyCollection
 
       // Validate configuration before proceeding
       const validation = await validateConfig(config)
@@ -1521,7 +1482,7 @@ async function main() {
       }
 
       // Auto-merge package manifest collections for enabled features
-      if (config.features && !process.argv.includes('--no-auto-merge')) {
+      if (config.features && !options.noAutoMerge) {
         const { mergeManifestCollections } = await import('./utils/manifest-merge.mjs')
         const mergeResult = await mergeManifestCollections(config)
         if (mergeResult.merged > 0) {
@@ -1842,90 +1803,6 @@ async function main() {
         console.error('  2. schemaPath and targets[] (simple format)')
         process.exit(1)
       }
-    } else {
-      // Direct CLI mode
-      const args = parseArgs()
-
-      // Validate CLI arguments
-      console.log('\n📋 Validating CLI arguments...\n')
-
-      // Check schema file exists
-      const schemaPath = path.resolve(args.fieldsFile)
-      try {
-        await fsp.access(schemaPath)
-        console.log(`✓ Schema file found: ${args.fieldsFile}`)
-      } catch {
-        console.error(`\n❌ Schema file not found: ${args.fieldsFile}\n`)
-        process.exit(1)
-      }
-
-      // Check for write permissions
-      try {
-        await fsp.access(process.cwd(), fsp.constants.W_OK)
-        console.log(`✓ Write permissions verified`)
-      } catch {
-        console.error(`\n❌ No write permissions in current directory\n`)
-        process.exit(1)
-      }
-
-      // Check dependencies unless force flag
-      if (!args.force) {
-        const dependencies = await detectRequiredDependencies()
-
-        if (dependencies.missing.length > 0) {
-          console.log('\n⚠️  Missing dependencies detected:')
-          displayMissingDependencies(dependencies)
-
-          if (!args.force) {
-            console.log('\nUse --force to skip this check or run:')
-            console.log('  crouton-generate install\n')
-          }
-        }
-      }
-
-      console.log(`\n📦 Will generate:`)
-      console.log(`  Layer: ${args.layer}`)
-      console.log(`  Collection: ${args.collection}`)
-      console.log(`  Dialect: ${args.dialect}`)
-
-      if (args.dryRun) {
-        console.log('\n🔍 DRY RUN MODE - No files will be created')
-      }
-
-      console.log('\n' + '─'.repeat(60) + '\n')
-
-      // Load and validate the schema content
-      let fields
-      try {
-        fields = await loadFields(args.fieldsFile, typeMapping)
-        console.log(`✓ Loaded ${fields.length} fields from schema`)
-      } catch (error) {
-        console.error(`\n❌ Error loading schema: ${error.message}\n`)
-        process.exit(1)
-      }
-
-      // Proceed with generation
-      await writeScaffold({ ...args, fields })
-
-      // Generate type registry for type-safe CRUD composables
-      if (!args.dryRun) {
-        console.log(`\n${'═'.repeat(60)}`)
-        console.log(`  TYPE REGISTRY`)
-        console.log(`${'═'.repeat(60)}\n`)
-
-        try {
-          const registryResult = await generateCollectionTypesRegistry(process.cwd())
-          console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
-          console.log(`  → ${registryResult.outputPath}`)
-        } catch (error) {
-          console.log(`⚠ Could not generate type registry: ${error.message}`)
-        }
-
-        console.log(`\n${'═'.repeat(60)}`)
-        console.log(`  ALL DONE!`)
-        console.log(`${'═'.repeat(60)}\n`)
-        console.log(`Next step: Restart your Nuxt dev server\n`)
-      }
     }
   } catch (error) {
     console.error('Error:', error.message)
@@ -1933,5 +1810,122 @@ async function main() {
   }
 }
 
-// Use top-level await so dynamic imports wait for completion
-await main()
+/**
+ * Run single-collection generation with explicit args.
+ * @param {Object} options
+ * @param {string} options.layer - Target layer name
+ * @param {string} options.collection - Collection name
+ * @param {string} options.fieldsFile - Path to JSON schema file
+ * @param {string} [options.dialect='sqlite'] - Database dialect
+ * @param {boolean} [options.autoRelations] - Add relation stubs
+ * @param {boolean} [options.dryRun] - Preview without writing
+ * @param {boolean} [options.noDb] - Skip database table creation
+ * @param {boolean} [options.force] - Force generation
+ * @param {boolean} [options.noTranslations] - Skip translation fields
+ * @param {boolean} [options.hierarchy] - Enable hierarchy support
+ * @param {boolean} [options.seed] - Generate seed data
+ * @param {number} [options.seedCount=25] - Number of seed records
+ */
+export async function runGenerate(options = {}) {
+  try {
+    const typeMapping = await loadTypeMapping()
+    const args = {
+      layer: options.layer,
+      collection: options.collection,
+      fieldsFile: options.fieldsFile,
+      dialect: options.dialect || 'sqlite',
+      autoRelations: options.autoRelations || false,
+      dryRun: options.dryRun || false,
+      noDb: options.noDb || false,
+      force: options.force || false,
+      noTranslations: options.noTranslations || false,
+      hierarchy: options.hierarchy || false,
+      seed: options.seed || false,
+      seedCount: options.seedCount || 25
+    }
+
+    // Validate CLI arguments
+    console.log('\n📋 Validating CLI arguments...\n')
+
+    // Check schema file exists
+    const schemaPath = path.resolve(args.fieldsFile)
+    try {
+      await fsp.access(schemaPath)
+      console.log(`✓ Schema file found: ${args.fieldsFile}`)
+    } catch {
+      console.error(`\n❌ Schema file not found: ${args.fieldsFile}\n`)
+      process.exit(1)
+    }
+
+    // Check for write permissions
+    try {
+      await fsp.access(process.cwd(), fsp.constants.W_OK)
+      console.log(`✓ Write permissions verified`)
+    } catch {
+      console.error(`\n❌ No write permissions in current directory\n`)
+      process.exit(1)
+    }
+
+    // Check dependencies unless force flag
+    if (!args.force) {
+      const dependencies = await detectRequiredDependencies()
+
+      if (dependencies.missing.length > 0) {
+        console.log('\n⚠️  Missing dependencies detected:')
+        displayMissingDependencies(dependencies)
+
+        if (!args.force) {
+          console.log('\nUse --force to skip this check or run:')
+          console.log('  crouton install\n')
+        }
+      }
+    }
+
+    console.log(`\n📦 Will generate:`)
+    console.log(`  Layer: ${args.layer}`)
+    console.log(`  Collection: ${args.collection}`)
+    console.log(`  Dialect: ${args.dialect}`)
+
+    if (args.dryRun) {
+      console.log('\n🔍 DRY RUN MODE - No files will be created')
+    }
+
+    console.log('\n' + '─'.repeat(60) + '\n')
+
+    // Load and validate the schema content
+    let fields
+    try {
+      fields = await loadFields(args.fieldsFile, typeMapping)
+      console.log(`✓ Loaded ${fields.length} fields from schema`)
+    } catch (error) {
+      console.error(`\n❌ Error loading schema: ${error.message}\n`)
+      process.exit(1)
+    }
+
+    // Proceed with generation
+    await writeScaffold({ ...args, fields })
+
+    // Generate type registry for type-safe CRUD composables
+    if (!args.dryRun) {
+      console.log(`\n${'═'.repeat(60)}`)
+      console.log(`  TYPE REGISTRY`)
+      console.log(`${'═'.repeat(60)}\n`)
+
+      try {
+        const registryResult = await generateCollectionTypesRegistry(process.cwd())
+        console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
+        console.log(`  → ${registryResult.outputPath}`)
+      } catch (error) {
+        console.log(`⚠ Could not generate type registry: ${error.message}`)
+      }
+
+      console.log(`\n${'═'.repeat(60)}`)
+      console.log(`  ALL DONE!`)
+      console.log(`${'═'.repeat(60)}\n`)
+      console.log(`Next step: Restart your Nuxt dev server\n`)
+    }
+  } catch (error) {
+    console.error('Error:', error.message)
+    process.exit(1)
+  }
+}

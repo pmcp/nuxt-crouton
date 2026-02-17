@@ -3,9 +3,8 @@
 
 import { execSync, spawnSync } from 'node:child_process'
 import { join } from 'node:path'
-import fs from 'fs-extra'
-import chalk from 'chalk'
-import ora from 'ora'
+import { readFile } from 'node:fs/promises'
+import consola from 'consola'
 
 import { loadModules, getModule, listModules } from './module-registry.mjs'
 import { detectPackageManager, getInstallCommand } from './utils/detect-package-manager.mjs'
@@ -28,7 +27,7 @@ import { addSchemaExport, getSchemaPath } from './utils/update-schema-index.mjs'
  */
 async function isPackageInstalled(packageName, cwd = process.cwd()) {
   try {
-    const packageJson = await fs.readJson(join(cwd, 'package.json'))
+    const packageJson = JSON.parse(await readFile(join(cwd, 'package.json'), 'utf-8'))
     const deps = {
       ...packageJson.dependencies,
       ...packageJson.devDependencies
@@ -86,12 +85,12 @@ export async function addModule(moduleName, options = {}) {
   const packageName = module.package
 
   console.log()
-  console.log(chalk.cyan(`📦 Adding ${chalk.bold(moduleName)} (${packageName})`))
-  console.log(chalk.gray(`   ${module.description}`))
+  consola.info(`📦 Adding ${moduleName} (${packageName})`)
+  console.log(`   ${module.description}`)
   console.log()
 
   if (dryRun) {
-    console.log(chalk.yellow('   [DRY RUN] The following actions would be performed:'))
+    consola.warn('   [DRY RUN] The following actions would be performed:')
   }
 
   // Check if already installed
@@ -99,8 +98,8 @@ export async function addModule(moduleName, options = {}) {
   if (alreadyInstalled && !force) {
     const alreadyInConfig = await isInNuxtConfigExtends(join(cwd, 'nuxt.config.ts'), packageName)
     if (alreadyInConfig) {
-      console.log(chalk.yellow(`   ⚠️  ${packageName} is already installed and configured`))
-      console.log(chalk.gray('   Use --force to reinstall'))
+      consola.warn(`   ⚠️  ${packageName} is already installed and configured`)
+      console.log('   Use --force to reinstall')
       return { success: true, message: 'Already installed' }
     }
   }
@@ -109,8 +108,8 @@ export async function addModule(moduleName, options = {}) {
   if (module.dependencies && module.dependencies.length > 0) {
     const { missing } = await checkDependencies(module.dependencies, cwd)
     if (missing.length > 0) {
-      console.log(chalk.red(`   ❌ Missing required dependencies: ${missing.join(', ')}`))
-      console.log(chalk.yellow(`   Run: crouton add ${missing.join(' ')} ${moduleName}`))
+      consola.error(`   ❌ Missing required dependencies: ${missing.join(', ')}`)
+      consola.warn(`   Run: crouton add ${missing.join(' ')} ${moduleName}`)
       return {
         success: false,
         message: `Missing dependencies: ${missing.join(', ')}`
@@ -124,37 +123,37 @@ export async function addModule(moduleName, options = {}) {
     const installCmd = getInstallCommand(pm, packageName)
 
     if (dryRun) {
-      console.log(chalk.gray(`   • Would run: ${installCmd}`))
+      console.log(`   • Would run: ${installCmd}`)
     } else {
-      const spinner = ora(`Installing ${packageName}...`).start()
+      consola.start(`Installing ${packageName}...`)
       try {
         execSync(installCmd, { cwd, stdio: 'pipe' })
-        spinner.succeed(`Installed ${packageName}`)
+        consola.success(`Installed ${packageName}`)
       } catch (error) {
-        spinner.fail(`Failed to install ${packageName}`)
-        console.error(chalk.red(`   ${error.message}`))
+        consola.error(`Failed to install ${packageName}`)
+        console.error(`   ${error.message}`)
         return { success: false, message: 'Installation failed' }
       }
     }
   } else {
-    console.log(chalk.gray('   • Skipping package installation'))
+    console.log('   • Skipping package installation')
   }
 
   // Step 2: Update nuxt.config.ts
   const configPath = join(cwd, 'nuxt.config.ts')
   if (dryRun) {
-    console.log(chalk.gray(`   • Would add '${packageName}' to extends in nuxt.config.ts`))
+    console.log(`   • Would add '${packageName}' to extends in nuxt.config.ts`)
   } else {
-    const spinner = ora('Updating nuxt.config.ts...').start()
+    consola.start('Updating nuxt.config.ts...')
     const result = await addToNuxtConfigExtends(configPath, packageName)
 
     if (result.added) {
-      spinner.succeed('Updated nuxt.config.ts')
+      consola.success('Updated nuxt.config.ts')
     } else if (result.reason === 'already in config') {
-      spinner.succeed('Already in nuxt.config.ts')
+      consola.success('Already in nuxt.config.ts')
     } else {
-      spinner.fail(`Could not update nuxt.config.ts: ${result.reason}`)
-      console.log(chalk.yellow(`   Please manually add '${packageName}' to extends array`))
+      consola.error(`Could not update nuxt.config.ts: ${result.reason}`)
+      consola.warn(`   Please manually add '${packageName}' to extends array`)
     }
   }
 
@@ -163,21 +162,21 @@ export async function addModule(moduleName, options = {}) {
     const schemaPath = await getSchemaPath(cwd)
 
     if (dryRun) {
-      console.log(chalk.gray(`   • Would add schema export to ${schemaPath}`))
+      console.log(`   • Would add schema export to ${schemaPath}`)
     } else {
-      const spinner = ora('Updating schema index...').start()
+      consola.start('Updating schema index...')
       const result = await addSchemaExport(schemaPath, module.schemaExport)
 
       if (result.added) {
         if (result.created) {
-          spinner.succeed(`Created ${schemaPath} with schema export`)
+          consola.success(`Created ${schemaPath} with schema export`)
         } else {
-          spinner.succeed('Added schema export')
+          consola.success('Added schema export')
         }
       } else if (result.reason === 'already exported') {
-        spinner.succeed('Schema already exported')
+        consola.success('Schema already exported')
       } else {
-        spinner.fail(`Could not update schema: ${result.reason}`)
+        consola.error(`Could not update schema: ${result.reason}`)
       }
     }
   }
@@ -185,11 +184,11 @@ export async function addModule(moduleName, options = {}) {
   // Step 4: Generate & apply migrations (if module has tables)
   if (!skipMigrations && module.schemaExport && module.tables && module.tables.length > 0) {
     if (dryRun) {
-      console.log(chalk.gray('   • Would run: npx nuxt db:generate'))
-      console.log(chalk.gray('   • Would run: npx nuxt db:migrate'))
+      console.log('   • Would run: npx nuxt db:generate')
+      console.log('   • Would run: npx nuxt db:migrate')
     } else {
       // Generate migrations
-      const genSpinner = ora('Generating migrations...').start()
+      consola.start('Generating migrations...')
       try {
         const genResult = spawnSync('npx', ['nuxt', 'db:generate'], {
           cwd,
@@ -198,20 +197,20 @@ export async function addModule(moduleName, options = {}) {
         })
 
         if (genResult.status !== 0) {
-          genSpinner.warn('Migration generation may have issues')
+          consola.warn('Migration generation may have issues')
           if (genResult.stderr) {
-            console.log(chalk.gray(`   ${genResult.stderr.trim()}`))
+            console.log(`   ${genResult.stderr.trim()}`)
           }
         } else {
-          genSpinner.succeed('Generated migrations')
+          consola.success('Generated migrations')
         }
       } catch (error) {
-        genSpinner.warn('Could not generate migrations')
-        console.log(chalk.gray(`   ${error.message}`))
+        consola.warn('Could not generate migrations')
+        console.log(`   ${error.message}`)
       }
 
       // Apply migrations
-      const migrateSpinner = ora('Applying migrations...').start()
+      consola.start('Applying migrations...')
       try {
         const migrateResult = spawnSync('npx', ['nuxt', 'db:migrate'], {
           cwd,
@@ -220,45 +219,45 @@ export async function addModule(moduleName, options = {}) {
         })
 
         if (migrateResult.status !== 0) {
-          migrateSpinner.warn('Migration application may have issues')
+          consola.warn('Migration application may have issues')
           if (migrateResult.stderr) {
-            console.log(chalk.gray(`   ${migrateResult.stderr.trim()}`))
+            console.log(`   ${migrateResult.stderr.trim()}`)
           }
         } else {
-          migrateSpinner.succeed('Applied migrations')
+          consola.success('Applied migrations')
         }
       } catch (error) {
-        migrateSpinner.warn('Could not apply migrations')
-        console.log(chalk.gray(`   ${error.message}`))
+        consola.warn('Could not apply migrations')
+        console.log(`   ${error.message}`)
       }
     }
   } else if (module.schemaExport) {
-    console.log(chalk.gray('   • Skipping migrations (use npx nuxt db:generate && npx nuxt db:migrate when ready)'))
+    console.log('   • Skipping migrations (use npx nuxt db:generate && npx nuxt db:migrate when ready)')
   }
 
   // Success message
   console.log()
-  console.log(chalk.green(`✅ ${chalk.bold(moduleName)} module added successfully!`))
+  consola.success(`✅ ${moduleName} module added successfully!`)
 
   if (module.tables && module.tables.length > 0) {
-    console.log(chalk.gray(`   Tables: ${module.tables.join(', ')}`))
+    console.log(`   Tables: ${module.tables.join(', ')}`)
   }
 
   console.log()
-  console.log(chalk.cyan('Next steps:'))
-  console.log(chalk.gray('  1. Restart your dev server: pnpm dev'))
+  consola.info('Next steps:')
+  console.log('  1. Restart your dev server: pnpm dev')
 
   // Module-specific hints
   if (moduleName === 'auth') {
-    console.log(chalk.gray('  2. Set BETTER_AUTH_SECRET and BETTER_AUTH_URL in .env'))
-    console.log(chalk.gray('  3. Configure OAuth providers if needed'))
+    console.log('  2. Set BETTER_AUTH_SECRET and BETTER_AUTH_URL in .env')
+    console.log('  3. Configure OAuth providers if needed')
   } else if (moduleName === 'i18n') {
-    console.log(chalk.gray('  2. Configure locales in nuxt.config.ts'))
+    console.log('  2. Configure locales in nuxt.config.ts')
   } else if (moduleName === 'bookings') {
-    console.log(chalk.gray('  2. Generate booking collections with crouton config'))
+    console.log('  2. Generate booking collections with crouton config')
   } else if (moduleName === 'assets') {
-    console.log(chalk.gray('  2. Enable hub.blob in nuxt.config.ts'))
-    console.log(chalk.gray('  3. Generate assets collection with crouton config'))
+    console.log('  2. Enable hub.blob in nuxt.config.ts')
+    console.log('  3. Generate assets collection with crouton config')
   }
 
   return { success: true, message: 'Module added successfully' }
@@ -271,9 +270,9 @@ export async function addModule(moduleName, options = {}) {
  * @returns {Promise<{success: boolean, results: Array<{module: string, success: boolean, message: string}>}>}
  */
 export async function addModules(moduleNames, options = {}) {
-  console.log(chalk.bold.cyan('\n╔══════════════════════════════════════════════════╗'))
-  console.log(chalk.bold.cyan('║          Crouton Module Installer                ║'))
-  console.log(chalk.bold.cyan('╚══════════════════════════════════════════════════╝'))
+  console.log('\n╔══════════════════════════════════════════════════╗')
+  console.log('║          Crouton Module Installer                ║')
+  console.log('╚══════════════════════════════════════════════════╝')
 
   const results = []
   let allSuccess = true
@@ -292,12 +291,12 @@ export async function addModules(moduleNames, options = {}) {
   }
 
   // Summary
-  console.log(chalk.bold.cyan('\n══════════════════════════════════════════════════'))
-  console.log(chalk.bold.cyan(' Summary'))
-  console.log(chalk.bold.cyan('══════════════════════════════════════════════════'))
+  console.log('\n══════════════════════════════════════════════════')
+  console.log(' Summary')
+  console.log('══════════════════════════════════════════════════')
 
   for (const result of results) {
-    const icon = result.success ? chalk.green('✓') : chalk.red('✗')
+    const icon = result.success ? '✓' : '✗'
     console.log(`  ${icon} ${result.module}: ${result.message}`)
   }
 
@@ -310,24 +309,24 @@ export async function addModules(moduleNames, options = {}) {
  * List all available modules
  */
 export async function listAvailableModules() {
-  console.log(chalk.bold.cyan('\n╔══════════════════════════════════════════════════╗'))
-  console.log(chalk.bold.cyan('║          Available Crouton Modules               ║'))
-  console.log(chalk.bold.cyan('╚══════════════════════════════════════════════════╝\n'))
+  console.log('\n╔══════════════════════════════════════════════════╗')
+  console.log('║          Available Crouton Modules               ║')
+  console.log('╚══════════════════════════════════════════════════╝\n')
 
   const modules = await listModules()
 
   for (const mod of modules) {
-    const schemaIcon = mod.hasSchema ? chalk.green('●') : chalk.gray('○')
-    console.log(`  ${schemaIcon} ${chalk.cyan(mod.alias.padEnd(12))} ${chalk.gray(mod.description)}`)
+    const schemaIcon = mod.hasSchema ? '●' : '○'
+    console.log(`  ${schemaIcon} ${mod.alias.padEnd(12)} ${mod.description}`)
   }
 
   console.log()
-  console.log(chalk.gray('  ● = Has database schema'))
-  console.log(chalk.gray('  ○ = No database tables'))
+  console.log('  ● = Has database schema')
+  console.log('  ○ = No database tables')
   console.log()
-  console.log(chalk.cyan('Usage:'))
-  console.log(chalk.gray('  crouton add auth'))
-  console.log(chalk.gray('  crouton add bookings i18n'))
-  console.log(chalk.gray('  crouton add bookings --skip-migrations'))
+  consola.info('Usage:')
+  console.log('  crouton add auth')
+  console.log('  crouton add bookings i18n')
+  console.log('  crouton add bookings --skip-migrations')
   console.log()
 }

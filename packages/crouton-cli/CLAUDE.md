@@ -136,7 +136,7 @@ crouton init my-app --dry-run
 
 | File | Purpose |
 |------|---------|
-| `bin/crouton-generate.js` | CLI entry point (Commander.js) |
+| `bin/crouton-generate.js` | CLI entry point (citty with 11 subcommands) |
 | `lib/generate-collection.mjs` | Main orchestrator (~74KB) |
 | `lib/init-app.mjs` | Init pipeline (scaffold → generate → doctor) |
 | `lib/generators/*.mjs` | Template generators (14 files) |
@@ -535,7 +535,7 @@ You only need to add the core package to your `nuxt.config.ts` extends array.
 
 - **Extends**: None (standalone CLI)
 - **Works with**: `@fyit/crouton`
-- **Dev deps**: commander, chalk, inquirer, ora, fs-extra
+- **CLI deps**: citty (CLI framework), @clack/prompts (interactive prompts), consola (logging), c12 (config loading), magicast (AST config modification)
 
 ## Testing
 

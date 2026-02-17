@@ -16,7 +16,7 @@
 
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import chalk from 'chalk'
+import consola from 'consola'
 
 // Packages that are auto-included when extending nuxt-crouton
 const AUTO_INCLUDES = {
@@ -61,7 +61,7 @@ async function parseNuxtConfigExtends(appDir) {
     // Match extends array - handles multi-line arrays
     const extendsMatch = content.match(/extends\s*:\s*\[([\s\S]*?)\]/)
     if (!extendsMatch) {
-      console.log(chalk.yellow(`  No extends array found in ${configPath}`))
+      consola.warn(`  No extends array found in ${configPath}`)
       return []
     }
 
@@ -78,9 +78,9 @@ async function parseNuxtConfigExtends(appDir) {
     return packages
   } catch (error) {
     if (error.code === 'ENOENT') {
-      console.log(chalk.yellow(`  No nuxt.config.ts found in ${appDir}`))
+      consola.warn(`  No nuxt.config.ts found in ${appDir}`)
     } else {
-      console.log(chalk.red(`  Error reading config: ${error.message}`))
+      consola.error(`  Error reading config: ${error.message}`)
     }
     return []
   }
@@ -108,7 +108,7 @@ function packageNameToDir(packageName) {
  * Get all package directories that should be included based on app config
  */
 async function getPackagesFromAppConfig(appDir) {
-  console.log(chalk.cyan(`\nReading app config from ${appDir}...`))
+  consola.info(`\nReading app config from ${appDir}...`)
 
   const extends_ = await parseNuxtConfigExtends(appDir)
   if (extends_.length === 0) {
@@ -131,9 +131,9 @@ async function getPackagesFromAppConfig(appDir) {
     }
   }
 
-  console.log(chalk.green(`✓ Found ${packageDirs.size} packages to seed from:`))
+  consola.success(`Found ${packageDirs.size} packages to seed from:`)
   for (const dir of packageDirs) {
-    console.log(chalk.gray(`    ${dir}`))
+    console.log(`    ${dir}`)
   }
 
   return packageDirs
@@ -202,7 +202,7 @@ async function findLocaleFiles(specificLayer = null, allowedPackages = null) {
   }
 
   if (localeFiles.length === 0) {
-    console.log(chalk.yellow('No locale files found in layers/ or packages/'))
+    consola.warn('No locale files found in layers/ or packages/')
   }
 
   return localeFiles
@@ -254,21 +254,21 @@ function groupTranslationsByKey(localeFiles, translations) {
 async function seedTranslations(translations, options) {
   const { team, dryRun, force, apiUrl } = options
 
-  console.log(chalk.cyan(`\nSeeding ${translations.length} translations...`))
+  consola.info(`\nSeeding ${translations.length} translations...`)
 
   if (dryRun) {
-    console.log(chalk.yellow('\n[DRY RUN] Would seed the following translations:\n'))
+    consola.warn('\n[DRY RUN] Would seed the following translations:\n')
 
     for (const t of translations.slice(0, 20)) {
-      console.log(chalk.gray(`  ${t.keyPath}`))
+      console.log(`  ${t.keyPath}`)
       for (const [locale, value] of Object.entries(t.values)) {
         const displayValue = value.length > 50 ? value.substring(0, 47) + '...' : value
-        console.log(chalk.gray(`    ${locale}: ${displayValue}`))
+        console.log(`    ${locale}: ${displayValue}`)
       }
     }
 
     if (translations.length > 20) {
-      console.log(chalk.gray(`  ... and ${translations.length - 20} more`))
+      console.log(`  ... and ${translations.length - 20} more`)
     }
 
     return { success: 0, skipped: 0, errors: 0 }
@@ -306,25 +306,25 @@ async function seedTranslations(translations, options) {
 
       if (response.ok) {
         success++
-        process.stdout.write(chalk.green('.'))
+        process.stdout.write('.')
       } else if (response.status === 409 || response.status === 400) {
         // Already exists
         if (force) {
           // Try to update instead
           // TODO: Implement PATCH for updates
           skipped++
-          process.stdout.write(chalk.yellow('s'))
+          process.stdout.write('.')
         } else {
           skipped++
-          process.stdout.write(chalk.yellow('s'))
+          process.stdout.write('.')
         }
       } else {
         errors++
-        process.stdout.write(chalk.red('x'))
+        process.stdout.write('.')
       }
     } catch (error) {
       errors++
-      process.stdout.write(chalk.red('x'))
+      process.stdout.write('.')
     }
   }
 
@@ -370,14 +370,14 @@ export async function seedTranslationsFromJson(options = {}) {
 
   if (config.help) {
     console.log(`
-${chalk.bold('crouton-generate seed-translations')}
+crouton-generate seed-translations
 
 Seed translations from JSON locale files into the translations_ui database.
 
-${chalk.bold('Usage:')}
+Usage:
   crouton-generate seed-translations [options]
 
-${chalk.bold('Options:')}
+Options:
   --app <path>       App directory to read nuxt.config.ts from (recommended)
   --layer <name>     Seed from specific layer/package only (default: all)
   --team <id>        Team ID/slug to seed to (default: system)
@@ -387,13 +387,13 @@ ${chalk.bold('Options:')}
   --sql              Output SQL statements instead of using API
   -h, --help         Show this help message
 
-${chalk.bold('Search Paths:')}
+Search Paths:
   - layers/*/i18n/locales/*.json
   - layers/*/locales/*.json
   - packages/*/i18n/locales/*.json
   - packages/*/locales/*.json
 
-${chalk.bold('Examples:')}
+Examples:
   # Seed only packages used by your app (recommended)
   crouton-generate seed-translations --app apps/test-bookings
 
@@ -406,44 +406,44 @@ ${chalk.bold('Examples:')}
   # Output SQL for manual insertion
   crouton-generate seed-translations --sql > seed.sql
 
-${chalk.bold('Note:')}
+Note:
   The dev server must be running for API seeding to work.
   Use --app to only seed translations from packages your app actually uses.
 `)
     return
   }
 
-  console.log(chalk.bold('\n📦 Crouton Translation Seeder\n'))
-  console.log(chalk.gray(`  App: ${config.app || '(all packages)'}`))
-  console.log(chalk.gray(`  Layer: ${config.layer || 'all'}`))
-  console.log(chalk.gray(`  Team: ${config.team}`))
-  console.log(chalk.gray(`  Mode: ${config.dryRun ? 'dry-run' : 'seed'}`))
+  console.log('\n📦 Crouton Translation Seeder\n')
+  console.log(`  App: ${config.app || '(all packages)'}`)
+  console.log(`  Layer: ${config.layer || 'all'}`)
+  console.log(`  Team: ${config.team}`)
+  console.log(`  Mode: ${config.dryRun ? 'dry-run' : 'seed'}`)
 
   // Get allowed packages from app config (if --app specified)
   let allowedPackages = null
   if (config.app) {
     allowedPackages = await getPackagesFromAppConfig(config.app)
     if (!allowedPackages || allowedPackages.size === 0) {
-      console.log(chalk.yellow('\nCould not determine packages from app config, falling back to all packages'))
+      consola.warn('\nCould not determine packages from app config, falling back to all packages')
       allowedPackages = null
     }
   }
 
   // Find locale files
-  console.log(chalk.cyan('\nScanning for locale files...'))
+  consola.info('\nScanning for locale files...')
   const localeFiles = await findLocaleFiles(config.layer, allowedPackages)
 
   if (localeFiles.length === 0) {
-    console.log(chalk.yellow('\nNo locale files found'))
-    console.log(chalk.gray('Searched: layers/*/i18n/locales/, layers/*/locales/'))
-    console.log(chalk.gray('          packages/*/i18n/locales/, packages/*/locales/'))
+    consola.warn('\nNo locale files found')
+    console.log('Searched: layers/*/i18n/locales/, layers/*/locales/')
+    console.log('          packages/*/i18n/locales/, packages/*/locales/')
     return
   }
 
-  console.log(chalk.green(`✓ Found ${localeFiles.length} locale file(s)`))
+  consola.success(`Found ${localeFiles.length} locale file(s)`)
 
   // Parse locale files
-  console.log(chalk.cyan('\nParsing translations...'))
+  consola.info('\nParsing translations...')
   const translations = []
 
   for (const file of localeFiles) {
@@ -460,21 +460,21 @@ ${chalk.bold('Note:')}
       })
 
       const prefix = file.type === 'package' ? 'pkg:' : ''
-      console.log(chalk.gray(`  ${prefix}${file.layer}/${file.locale}.json: ${items.length} keys`))
+      console.log(`  ${prefix}${file.layer}/${file.locale}.json: ${items.length} keys`)
     } catch (error) {
-      console.error(chalk.red(`  Error parsing ${file.path}: ${error.message}`))
+      consola.error(`  Error parsing ${file.path}: ${error.message}`)
     }
   }
 
   // Group by key
   const grouped = groupTranslationsByKey(localeFiles, translations)
-  console.log(chalk.green(`✓ ${grouped.length} unique translation keys\n`))
+  consola.success(`${grouped.length} unique translation keys\n`)
 
   // Check if --sql flag is set
-  if (process.argv.includes('--sql')) {
+  if (config.sql || process.argv.includes('--sql')) {
     const sql = generateSqlStatements(grouped, config.team === 'system' ? null : config.team)
-    console.log(chalk.cyan('-- SQL Statements for translations_ui table'))
-    console.log(chalk.cyan('-- Run these in your SQLite database\n'))
+    consola.info('-- SQL Statements for translations_ui table')
+    consola.info('-- Run these in your SQLite database\n')
     console.log(sql.join('\n\n'))
     return
   }
@@ -483,18 +483,18 @@ ${chalk.bold('Note:')}
   const result = await seedTranslations(grouped, config)
 
   // Summary
-  console.log(chalk.bold('Summary:'))
-  console.log(chalk.green(`  ✓ Success: ${result.success}`))
+  console.log('Summary:')
+  consola.success(`  Success: ${result.success}`)
   if (result.skipped > 0) {
-    console.log(chalk.yellow(`  ⊘ Skipped: ${result.skipped} (already exist)`))
+    consola.warn(`  Skipped: ${result.skipped} (already exist)`)
   }
   if (result.errors > 0) {
-    console.log(chalk.red(`  ✗ Errors: ${result.errors}`))
+    consola.error(`  Errors: ${result.errors}`)
   }
 
   if (result.errors > 0) {
-    console.log(chalk.yellow('\nTip: Make sure your dev server is running at ' + config.apiUrl))
-    console.log(chalk.gray('Or use --sql flag to generate SQL statements for direct insertion.'))
+    consola.warn('\nTip: Make sure your dev server is running at ' + config.apiUrl)
+    console.log('Or use --sql flag to generate SQL statements for direct insertion.')
   }
 }
 
