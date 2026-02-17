@@ -1,4 +1,4 @@
-# Schema Designer v2 — Full Plan
+# Schema Designer v2 — Plan & Status
 
 ## Overview
 
@@ -12,24 +12,40 @@ The Schema Designer is an AI-guided application that helps developers scaffold f
 
 ---
 
+## Current Status (Feb 2026)
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase A — Foundation | **Complete** ✅ | All 33 tasks done |
+| Phase 3 — Seed Data (from Phase B) | **Complete** ✅ | Pulled forward from Phase B scope |
+| Create App scaffold (replaces ZIP) | **Complete** ✅ | Server-side `POST /api/scaffold-app` |
+| Phase B — Visual Graph | Not started | CroutonFlow graph visualization only remaining item |
+| Phase C — Detail View Design | Not started | AI-generated Vue components + preview |
+| Phase D — Ecosystem Polish | Not started | Package manifests, templates, undo/redo |
+
+**Key deviation from original plan:** Phase 5's output mechanism changed from downloadable ZIP to a server-side Create App flow. The designer runs in local dev (not Cloudflare Workers), so the server endpoint can invoke the CLI directly — no download step needed.
+
+---
+
 ## Decisions Log
 
-Decisions made during planning (Feb 2026):
+Decisions made during planning and implementation (Feb 2026):
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Phase A collection UI | **Accordion list** (no CroutonFlow graph) | Eliminates biggest scope risk. Graph moves to Phase B+ |
 | Persistence | **NuxtHub SQLite** (Cloudflare) | Dogfooding crouton-core. Cloud-native from the start |
-| Backward navigation | **Preserve + warn** for Phase 2→1, **cascade delete** for Phase 3+→2 | Collections survive intake changes (user reconciles). Downstream generated data (seeds, views) cascade-deletes when schema changes |
+| Backward navigation | **Preserve + warn** for Phase 2→1, **cascade delete** for Phase 3+→2 | Collections survive intake changes (user reconciles). Downstream generated data (seeds) cascade-deletes when schema changes |
 | Preview tech (Phase C) | **Nuxt UI components directly** | Much lighter than WebContainers |
 | Chat interface | **Existing crouton-ai** (`useChat()`) | Streaming + tool use ready. No new infrastructure |
 | Auth | **crouton-auth** (auto-included via core) | Zero auth work for the designer |
-| Output | **Schema JSONs as downloadable ZIP** | Developer runs CLI locally (Cloudflare has no shell). Future: local dev companion for auto-run |
+| Output | **Server-side Create App scaffold** | `POST /api/scaffold-app` runs CLI scaffold, writes schemas + seed data, installs deps, runs doctor. Originally planned as ZIP download — changed because designer runs locally with shell access |
 | Deployment | **Standalone app** (`apps/crouton-designer/`) | Independent release cycle |
 | Existing v1 schema-designer | **Replace** — fresh start, borrow ideas | Clean architecture, reuse AI prompts + types + parsers |
 | Relationships | **As field types** (`type: 'reference'`) | Simpler mental model, matches CLI. No separate Relationships table |
 | AI in Phase A | **Yes, from day one** | Core differentiator. Manual editing works alongside |
 | Target user | **Solo dev (you)** | Skip onboarding polish, optimize for power and speed |
+| Seed data storage | **JSON on project record** (not separate collection) | Simpler than a SeedEntries collection. Seed data is ephemeral and tied to the project |
 
 ---
 
@@ -39,7 +55,7 @@ Decisions made during planning (Feb 2026):
 
 | Location | Purpose |
 |----------|---------|
-| `packages/crouton-designer/` | Reusable logic: schema editing components, AI prompts, types, composables |
+| `packages/crouton-designer/` | Reusable logic: schema editing components, AI prompts, types, composables, server endpoints |
 | `apps/crouton-designer/` | Thin app shell extending the package + crouton-auth + crouton-ai |
 
 This means the designer could eventually be embedded into other Crouton apps.
@@ -48,55 +64,57 @@ This means the designer could eventually be embedded into other Crouton apps.
 
 The Schema Designer's state is stored in its own Crouton collections:
 
-**Phase A (3 collections):**
-
 | Collection | Purpose |
 |------------|---------|
-| **Projects** | The app being designed (name, config, current phase, selected packages) |
-| **Collections** | Entities the user defines (name, description, belongs to project) |
-| **Fields** | Individual fields (name, type, meta, collection FK). Relations are fields with `type: 'reference'` pointing to a target collection |
+| **Projects** | The app being designed (name, config JSON, currentPhase, messages JSON per phase, seedData JSON) |
+| **Collections** | Entities the user defines (name, description, display config, belongs to project) |
+| **Fields** | Individual fields (name, type, meta JSON, refTarget, sortOrder, collection FK). Relations are fields with `type: 'reference'` pointing to a target collection |
 
-**Later phases add:**
+Seed data is stored as a JSON column on the Projects record (not a separate collection). This is simpler and sufficient since seed data is ephemeral and regenerated frequently.
+
+**Future phases may add:**
 
 | Collection | Phase | Purpose |
 |------------|-------|---------|
-| **SeedEntries** | B | Generated sample data per collection |
 | **DetailViews** | C | Generated Vue template code per collection |
-
-**Why this matters:**
-- Persistence and resumability for free (it's a database)
-- Dependency tracking via relational queries
-- Templates become possible later (pre-filled projects for "SaaS starter", "Blog + CMS", etc.)
 
 ### AI Architecture
 
 **Model:** Claude via the existing `crouton-ai` package (`useChat()` + `createAIProvider()`).
 
 **Output format:**
-- Phases 1–2: Structured JSON via Claude tool use. The AI "calls tools" like `create_collection`, `add_field`, `update_field`, `delete_collection`, `delete_field` with typed parameters. The app consumes the structured data directly.
+- Phases 1–3: Structured JSON via Claude tool use. The AI "calls tools" like `create_collection`, `add_field`, `update_field`, `delete_collection`, `delete_field`, `set_seed_data` with typed parameters. The app consumes the structured data directly.
 - All phases: The AI also returns a conversational message alongside the structured payload.
+
+**AI tools implemented (9 total):**
+
+| Phase | Tool | Parameters | Effect |
+|-------|------|-----------|--------|
+| 1 | `set_app_config` | `{ name, description, appType, ... }` | Updates project config (partial merge) |
+| 2 | `create_collection` | `{ name, description, fields[] }` | Creates collection with optional initial fields |
+| 2 | `update_collection` | `{ collectionId, name?, description? }` | Renames or updates a collection |
+| 2 | `delete_collection` | `{ collectionId }` | Removes collection + cascade-deletes fields |
+| 2 | `add_field` | `{ collectionId, name, type, meta?, refTarget? }` | Adds a field to a collection |
+| 2 | `update_field` | `{ fieldId, name?, type?, meta?, refTarget? }` | Modifies an existing field |
+| 2 | `delete_field` | `{ fieldId }` | Removes a field |
+| 2 | `reorder_fields` | `{ collectionId, fieldIds[] }` | Sets field display order |
+| 3 | `set_seed_data` | `{ collectionName, entries[] }` | Replaces seed data for a collection |
 
 **Context management — scoped calls per phase:**
 - Each AI call gets a system prompt with the current app state (pulled from the database as JSON) plus only the conversation history for the current phase.
 - When the user moves to a new phase, conversation resets, but state carries over from the database.
 - This prevents token bloat from Phase 1 iterations filling up Phase 2's context.
 
-**Reusable from v1:**
-- System prompt structure from `useSchemaAI()` (field type reference, meta properties, package context, examples)
-- Streaming JSON parser from `useStreamingSchemaParser()` (incremental field extraction, deduplication)
-- Field type registry from `useFieldTypes()` (icons, defaults, meta properties)
-- Type definitions (`SchemaField`, `CollectionSchema`, field meta types)
-
 **Package suggestions:**
 - AI-driven, not rule-based. The package catalog is included in the AI context.
-- Deferred to Phase D for full manifest system. In Phase A, suggestions come from existing documentation.
+- Deferred to Phase D for full manifest system. Currently, suggestions come from existing documentation.
 - Suggestions are quiet — small inline indicators, not toasts or modals.
 
 ---
 
-## User Flow
+## User Flow (Implemented)
 
-### Phase 1 — Intake
+### Phase 1 — Intake ✅
 
 **Purpose:** Establish foundational decisions that affect everything downstream.
 
@@ -114,17 +132,12 @@ The Schema Designer's state is stored in its own Crouton collections:
 - Two-panel layout: chat on the left (1/3), summary card on the right (2/3)
 - Summary card fills in as decisions are made
 - Summary card is directly editable — click to change any value without going back through chat
+- Config auto-saves with 800ms debounce
 
 **AI behavior:**
 - Returns structured JSON via tool use (`set_app_config`) alongside conversational messages
 - Extracts as much as possible from the initial description, asks only about gaps
 - Opinionated defaults where sensible (e.g., assumes English as default language unless told otherwise)
-
-**AI tools (Phase 1):**
-
-| Tool | Parameters | Effect |
-|------|-----------|--------|
-| `set_app_config` | `{ name, description, appType, multiTenant, authType, languages, defaultLocale, packages }` | Updates project config. Partial updates merge with existing values |
 
 **Transition:** Explicit. AI suggests moving on, user confirms via a "Continue to Collection Design" button. Progress indicator at the top updates.
 
@@ -132,14 +145,14 @@ The Schema Designer's state is stored in its own Crouton collections:
 
 ---
 
-### Phase 2 — Collection Design
+### Phase 2 — Collection Design ✅
 
 **Purpose:** Define the data model — entities, fields, and relationships.
 
 **Interaction model:** The AI proposes a full starter data model based on the app description from Phase 1. The user sculpts it from there — removing, adding, renaming, restructuring.
 
 **Initial proposal:**
-When entering Phase 2, the AI generates a complete set of suggested collections based on the app config. For example, "project management tool" → Projects, Tasks, Users, Labels, Comments. This is presented all at once for the user to react to.
+When entering Phase 2 with no collections, the AI auto-sends a proposal request and generates a complete set of suggested collections based on the app config. This is presented all at once for the user to react to.
 
 **What the user sees:**
 - Two-panel layout: chat on the left (1/3), accordion collection editor on the right (2/3)
@@ -167,38 +180,20 @@ When entering Phase 2, the AI generates a complete set of suggested collections 
 
 **Continuous validation:**
 - Validation runs on every change (deterministic, not AI)
-- Red indicators on invalid states: duplicate field names, missing relation targets, reserved names
+- Red indicators on invalid states: duplicate field names, missing relation targets, reserved names, empty collections
 - Issues shown inline on the accordion, not as blocking dialogs
 
-**AI behavior:**
-- Returns structured JSON via tool use (full CRUD — see tools table below)
-- Opinionated — suggests complete schemas, not individual fields
-- Follows up on ambiguity ("Should tasks have priorities? Deadlines? Subtasks?")
-- Suggests packages quietly when patterns match (rich text field → editor package, nested slugs → pages package)
-
-**AI tools (Phase 2):**
-
-| Tool | Parameters | Effect |
-|------|-----------|--------|
-| `create_collection` | `{ name, description, fields[] }` | Creates a new collection with optional initial fields |
-| `update_collection` | `{ collectionId, name?, description? }` | Renames or updates a collection |
-| `delete_collection` | `{ collectionId }` | Removes collection + cascade-deletes its fields |
-| `add_field` | `{ collectionId, name, type, meta?, refTarget? }` | Adds a field to a collection |
-| `update_field` | `{ fieldId, name?, type?, meta?, refTarget? }` | Modifies an existing field |
-| `delete_field` | `{ fieldId }` | Removes a field |
-| `reorder_fields` | `{ collectionId, fieldIds[] }` | Sets field display order |
-
-**Transition:** Explicit. User confirms they're done with collections, moves to Phase 3 (or Phase 5 in Phase A).
+**Transition:** Explicit. User confirms they're done with collections, moves to Phase 3.
 
 **Output:** Collections and Fields stored in the database.
 
 ---
 
-### Phase 3 — Seed Data (Phase B)
+### Phase 3 — Seed Data ✅
 
-**Purpose:** Generate realistic sample data to validate the schema before investing in detail views.
+**Purpose:** Generate realistic sample data to validate the schema before generating the app.
 
-**Interaction model:** AI generates contextually appropriate seed data automatically. User iterates via chat — not inline editing.
+**Interaction model:** AI generates contextually appropriate seed data automatically on phase entry. User iterates via chat — not inline editing.
 
 **What the AI generates:**
 - Data that matches the app context (project management tool → real-ish project names and task descriptions, not lorem ipsum)
@@ -208,8 +203,9 @@ When entering Phase 2, the AI generates a complete set of suggested collections 
 **What the user sees:**
 - Two-panel layout: chat on the left (1/3), Nuxt UI tables on the right (2/3)
 - One table per collection, switchable via tabs
-- Tables are sortable and filterable (read-only, no inline editing)
+- Tables are read-only with truncated cell values (max 60 chars)
 - A "Regenerate" button per collection
+- Entry count badges on tabs
 
 **Chat-guided iteration:**
 - "Make some tasks overdue"
@@ -218,82 +214,56 @@ When entering Phase 2, the AI generates a complete set of suggested collections 
 - "The priorities should include 'critical'"
 
 **AI behavior:**
-- Returns structured JSON via tool use (`generate_seed_data`) with full entry arrays
+- Returns structured JSON via tool use (`set_seed_data`) with full entry arrays
 - Regenerates the full dataset for a collection on each request (not patching individual rows)
+- Auto-generates on Phase 3 entry if no seed data exists
 
-**Transition:** Explicit. User confirms seed data looks right, moves to Phase 4.
+**Seed data persistence:** Stored as JSON on the project record, auto-saves with 800ms debounce.
 
-**Output:** SeedEntries stored in the database per collection.
+**Transition:** Explicit. User confirms seed data looks right, moves to Phase 5.
 
----
-
-### Phase 4 — Detail View Design (Phase C)
-
-**Purpose:** Design how individual items look when viewed — the detail/show page for each collection.
-
-**Interaction model:** AI generates Vue components using Nuxt UI, rendered as a live preview. Chat for iteration.
-
-**How it works:**
-1. AI generates a detail view Vue component based on the collection's fields, types, and seed data
-2. The component is rendered using Nuxt UI components directly (no WebContainers)
-3. Seed data is injected as props
-4. The preview renders on the right panel
-5. When the AI regenerates the component (in response to chat), the preview updates
-
-**What the user sees:**
-- Two-panel layout: chat on the left (1/3), live preview on the right (2/3)
-- A "View Code" toggle to see the generated Vue component source
-- Tabs to switch between collections
-- The preview uses real Nuxt UI components — consistent and professional
-
-**AI behavior:**
-- Generates full Vue SFC code as text (not structured JSON)
-- Smart about layout: images prominent, titles large, metadata in sidebar, related items in their own section
-- Uses only Nuxt UI components — keeps output consistent
-- Responds to change requests by regenerating the full component
-
-**Chat interactions:**
-- "Move the image to full-width at the top"
-- "Put the metadata in a sidebar"
-- "Add a section for related tasks"
-- "Make all detail views use the same sidebar layout"
-
-**Transition:** Explicit. User confirms detail views, moves to Phase 5.
-
-**Output:** DetailViews stored in the database per collection (Vue SFC source code).
+**Output:** Seed data stored on the Projects record as JSON.
 
 ---
 
-### Phase 5 — Review & Generation
+### Phase 5 — Review & Create App ✅
 
-**Purpose:** Final review and deterministic validation before code generation.
+**Purpose:** Final review, deterministic validation, and app creation.
 
 **Deterministic validation pass (not AI):**
 - Every reference target exists as a collection
 - No duplicate field names within a collection
-- Slug fields have corresponding title/name fields
-- Required fields have sensible defaults or form coverage
-- No reserved field names conflicting with Crouton internals
-- Collection names don't conflict with Nuxt route conventions
+- No duplicate collection names
+- No reserved field names conflicting with Crouton internals (id, teamId, createdAt, etc.)
+- No reserved collection names conflicting with Nuxt conventions (api, pages, components, etc.)
+- Empty collections flagged as warnings
 
-**Phase A (simplified):** Validation checklist + "Generate" button. No AI review, no expandable summary.
+**What the user sees:**
+- Single-panel view (no chat)
+- Generation summary: app name, app type, collection count, field count, selected packages
+- Validation checklist with green checkmarks / red X indicators
+- Artifact preview grouped by category (config, app, server, schema, seed) with file counts
+- "Create App" button (disabled if critical validation errors exist)
 
-**Phase D (full):** AI qualitative review, expandable sections, jump-back-to-any-phase navigation.
+**Create App flow:**
+1. User clicks "Create App"
+2. Client POSTs to `/api/scaffold-app` with app name, config, schemas, seed data
+3. Server runs 7 steps:
+   - **scaffold** — `pnpm crouton scaffold-app {appName}` with features + dialect flags
+   - **schemas** — writes collection JSON schemas to `schemas/` directory
+   - **seedData** — writes seed data files to `schemas/{collection}.seed.json`
+   - **config** — generates `crouton.config.js` with collections + targets
+   - **install** — `pnpm install` from monorepo root
+   - **generate** — `pnpm crouton config ./crouton.config.js`
+   - **doctor** — `pnpm crouton doctor .` to validate
+4. Step results shown in UI with success/failure per step
+5. On success: shows app directory path, copy-pasteable `pnpm dev` and deploy commands
 
-**What the user sees (Phase A):**
-- Single-panel view
-- Validation checklist with green/red indicators
-- List of collections with field counts
-- Selected packages summary
-- A clear "Generate" button
-
-**After generation:**
-- Schema JSONs are produced for each collection and packaged as a downloadable ZIP
-- Developer downloads the ZIP, extracts schemas into their project, and runs `crouton generate --from ./schemas/`
-- CLI generates the full Crouton app locally (where shell access and filesystem are available)
-- Schema Designer's job is done
-
-> **Why download instead of auto-run?** The designer runs on Cloudflare Workers (NuxtHub), which has no shell access or filesystem. The CLI needs to run in the developer's local environment where it can write files, run migrations, and access the project structure. A future "local dev companion" could bridge this gap.
+**Error handling:**
+- If scaffold step fails, returns early (no further steps)
+- Doctor warnings are non-fatal
+- Step errors displayed with error message
+- Server validates app name format and checks for duplicate app directories
 
 ---
 
@@ -306,21 +276,47 @@ When entering Phase 2, the AI generates a complete set of suggested collections 
 | 1 — Intake | Two-panel | Chat | Editable summary card |
 | 2 — Collections | Two-panel | Chat | Accordion collection editor |
 | 3 — Seed Data | Two-panel | Chat | Nuxt UI tables (read-only) |
-| 4 — Detail Views | Two-panel | Chat | Nuxt UI component preview |
-| 5 — Review | Single-panel | — | Validation + Generate button |
+| 5 — Review & Create | Single-panel | — | Validation + artifact preview + Create App |
 
 ### Navigation
 
-- Progress indicator at the top showing current phase (1–5, or 1–2–5 in Phase A)
+- Progress indicator at the top showing current phase (1 → 2 → 3 → 5)
 - Phases are clickable — user can navigate back to any completed phase
-- Going back from Phase 3+→2 triggers **cascade delete** of downstream generated data (seeds, views) with confirmation
-- Going back from Phase 2→1 **preserves** collections but shows a warning that config changes may require schema adjustments
+- Going back from Phase 3+ → Phase 2 triggers **cascade delete** of seed data with confirmation
+- Going back from Phase 2 → Phase 1 **preserves** collections but shows a warning that config changes may require schema adjustments
 - Transitions between phases are always explicit (user clicks "Continue")
 
 ### Responsiveness
 
 - Chat panel collapsible in all phases for more visual space
-- Tab-based alternative for smaller screens
+
+---
+
+## Integration Features (Implemented) ✅
+
+### Backward Navigation
+- Phase 2 → Phase 1: Warning modal, collections preserved
+- Phase 3+ → Phase 2: Warning modal, seed data cascade-deleted with confirmation
+
+### Project List
+- `/admin/[team]/designer/` — all projects sorted by update date
+- Shows project name, update date, current phase badge
+- Click to resume, delete with confirmation, "New Project" button
+
+### Chat Persistence
+- Messages stored as `messages[phase]` JSON on project record
+- Restored on phase entry
+- Previous phases retain history when moving forward
+
+### AI Error Handling
+- Retry button in ChatPanel
+- Phase 1 shows amber fallback banner pointing to manual form
+- Malformed tool calls caught, logged, ignored (don't crash)
+- Tool call errors return context for AI to self-correct
+
+### Resumability
+- Close browser → reopen → click project → lands on correct phase with all data
+- Config, currentPhase, chat messages, seed data all restored
 
 ---
 
@@ -337,7 +333,7 @@ The graph-based collection visualization is deferred. When built, it requires th
 | Dagre re-layout on change | Re-layout when collections are added/removed |
 | Field type indicators | Visual icons or badges for field types inside nodes |
 
-Phase A uses the accordion list UI instead. The graph becomes an optional "visual mode" toggle in a later phase.
+The accordion list is the current UI. The graph becomes an optional "visual mode" toggle in a later phase.
 
 ---
 
@@ -355,44 +351,18 @@ In the meantime, package suggestions use existing CLAUDE.md documentation and pa
 
 ---
 
-## Build Phases
+## Remaining Build Phases
 
-### Phase A — Foundation (Ship First)
+### Phase B — Visual Graph (Partially Complete)
 
-**Goal:** End-to-end flow from app description to generated Crouton app.
+**Goal:** Graph visualization as alternative collection editor.
 
-**Scope:**
-- `packages/crouton-designer/` package + `apps/crouton-designer/` app
-- Extends `crouton-auth` (auth for free) + `crouton-ai` (chat + AI for free)
-- 3 Crouton collections for state: Projects, Collections, Fields
-- Phase 1: Chat intake with editable summary card
-- Phase 2: Chat + accordion collection editor with inline editing + AI full CRUD via tool use
-- Phase 5 (simplified): Validation checklist + generate schemas + run CLI
-- AI integration: structured tool use via `useChat()`, scoped system prompts per phase
-- Explicit phase transitions with progress indicator (Phase 1 → 2 → 5)
-- Continuous validation in Phase 2
-- Cascade delete on backward navigation
+**Done:**
+- ✅ Phase 3 seed data (pulled forward, implemented alongside Phase A)
 
-**Reused from v1:**
-- System prompt structure (field types, meta properties, package context, examples)
-- Streaming JSON parser (incremental extraction, deduplication)
-- Field type registry (icons, defaults)
-- Type definitions (SchemaField, CollectionSchema, FieldMeta)
-
-**Not included:** CroutonFlow graph, seed data, detail view design, package manifests, undo/redo, templates, onboarding polish.
-
-**Why this is enough:** You can describe your app, design collections with AI assistance via an accordion editor, and generate a full Crouton app. That's the core value proposition.
-
-### Phase B — Visual Graph + Seed Data
-
-**Goal:** Graph visualization and schema validation with realistic data.
-
-**Scope:**
+**Remaining:**
 - CroutonFlow graph as optional "visual mode" toggle alongside accordion
 - CroutonFlow enhancements (SchemaNode, edge labels, Dagre layout)
-- Phase 3: AI-generated seed data with chat-guided iteration
-- Nuxt UI table display per collection
-- Seed data passed to CLI for generation
 
 ### Phase C — Detail View Design
 
@@ -414,7 +384,6 @@ In the meantime, package suggestions use existing CLAUDE.md documentation and pa
 - Cross-phase impact detection (dependency graph queries + AI-suggested fixes)
 - Project templates (pre-filled state for common app types)
 - Navigation between phases with downstream impact awareness
-- Collapsible panels, responsive layout improvements
 - Undo/redo via state snapshots
 
 ---
@@ -428,7 +397,7 @@ This plan produces the **tooling** that generates Detail/Card components. The [C
 | Detail.vue | AI generates domain-aware component (Phase C) | `CroutonDetail` provides generic fallback |
 | Card.vue | AI generates domain-aware component (Phase C) | `CroutonDefaultCard` uses display config |
 | display config | AI populates based on schema understanding (Phase 2) | Runtime components consume it |
-| Seed data | AI generates realistic samples (Phase B) | Not involved |
+| Seed data | AI generates realistic samples (Phase 3) ✅ | Not involved |
 | Publishable pages | Package suggestion: "want crouton-pages?" (Phase 2) | Runtime bridge between pages and collections |
 
 The schema designer is the **authoring** path. The collection display system is the **runtime** path. Both work independently — collections created without the schema designer still get generic display via `CroutonDetail` and display config.
@@ -444,28 +413,28 @@ The schema designer is the **authoring** path. The collection display system is 
 | AI context | Scoped calls per phase, state from DB | Prevents token bloat, keeps context focused |
 | AI package | `crouton-ai` with `useChat()` + `createAIProvider()` | Already built, streaming + multi-provider ready |
 | Auth | `crouton-auth` (auto-included) | Better Auth with teams, OAuth, passkeys — zero work |
+| App creation | Server-side scaffold via `POST /api/scaffold-app` | Designer runs locally with shell access. No download step needed |
 | Preview rendering | Nuxt UI components directly (Phase C) | Lighter than WebContainers, broader browser support |
-| Collection visualization | Accordion list (Phase A), CroutonFlow graph (Phase B+) | Ship fast, add graph when core loop is proven |
+| Collection visualization | Accordion list (current), CroutonFlow graph (Phase B+) | Ship fast, add graph when core loop is proven |
 | Relationships | Reference field type pointing to target collection | Matches CLI model, simpler than separate Relationships table |
 | Phase transitions | Explicit (user clicks "Continue") | Clear user control and progress awareness |
-| Backward navigation | Preserve + warn (2→1), cascade delete (3+→2) | Collections survive config edits; generated data (seeds/views) cascades on schema change |
+| Backward navigation | Preserve + warn (2→1), cascade delete (3+→2) | Collections survive config edits; seed data cascades on schema change |
 | Package suggestions | AI-driven from catalog, deferred until Phase D | Scales with ecosystem, needs real usage data to design manifests |
 | Editing model | Accordion as primary, chat as power tool | Faster for corrections, chat for complex/bulk operations |
 | Validation | Continuous in Phase 2, deterministic in Phase 5 | Catch errors early, confirm before generation |
-| Existing v1 code | Replace package, borrow AI prompts + types + parsers | Clean architecture with proven internals |
+| Seed data storage | JSON on project record | Simpler than separate collection. Seed data is ephemeral |
 | Target user | Solo dev (power user) | Skip polish, optimize for speed |
 
 ---
 
 ## Risks & Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| AI returns malformed tool calls | UI crash or data corruption | Validate all tool call params with Zod before processing. Log + ignore invalid calls, show "AI made an unexpected suggestion — try rephrasing" toast |
-| Claude rate limits or downtime | Phase 1 intake blocked (chat-dependent) | Phase 1: add manual form fallback (UForm with all config fields). Phase 2: accordion works fully without AI. Show connection status indicator |
-| Token bloat from large schemas | AI quality degrades in Phase 2 | Already mitigated: scoped context per phase + state from DB. Additional: truncate field meta in context, only include full meta for the actively-discussed collection |
-| Streaming breaks mid-response | Partial tool calls, incomplete UI state | Reuse v1's streaming parser which handles partial JSON. On disconnect: keep partial state, let user retry |
-| Developer expects auto-generation (not download) | Confusion at Phase 5 | Clear UX: "Download schemas" button with instructions. Show copy-pasteable CLI command. Explain why in a tooltip |
+| Risk | Impact | Mitigation | Status |
+|------|--------|------------|--------|
+| AI returns malformed tool calls | UI crash or data corruption | Validate tool call params before processing. Log + ignore invalid calls | ✅ Implemented |
+| Claude rate limits or downtime | Phase 1 intake blocked | Phase 1: manual form fallback. Phase 2: accordion works without AI | ✅ Implemented |
+| Token bloat from large schemas | AI quality degrades | Scoped context per phase + state from DB | ✅ Implemented |
+| Streaming breaks mid-response | Partial tool calls, incomplete UI state | Keep partial state, let user retry via ChatPanel retry button | ✅ Implemented |
 
 ---
 
@@ -511,153 +480,15 @@ Meta properties are split into three tiers for the accordion editor:
 
 ---
 
-## Phase A — Detailed Task Breakdown
-
-### Prerequisites
-
-- [x] ~~Verify `crouton-ai` has tool use support via Vercel AI SDK~~ — Confirmed: AI SDK v4.3.19, `streamText()` supports `tools` param. The `crouton-ai` wrapper (`useChat()`) doesn't pass `tools` through yet — extend the wrapper as part of A2.3/A3.6
-- [x] ~~Verify `crouton-cli` can be invoked programmatically~~ — Resolved: CLI runs locally. Designer exports schema JSONs as downloadable ZIP
-
-### A1: Project Scaffolding
-
-**Tasks:**
-
-| # | Task | Acceptance Criteria |
-|---|------|-------------------|
-| A1.1 | Create `packages/crouton-designer/` package | `nuxt.config.ts`, `package.json` with correct deps. Extends nothing (it's the reusable package) |
-| A1.2 | Create `apps/crouton-designer/` app shell | Extends `crouton-designer`, `crouton-auth`, `crouton-ai`. Runs with `pnpm dev`. Has NuxtHub config (`hub: { db: 'sqlite' }`) |
-| A1.3 | Define Crouton collections for state | 3 schema JSONs: `projects` (includes `currentPhase` integer + `messages` JSON for per-phase chat history + `config` JSON for app settings), `collections`, `fields`. Generate with `pnpm crouton generate`. Run migrations |
-| A1.4 | Create base layout with phase navigation | Top progress bar showing phases (1 → 2 → 5). Phase indicator is clickable. Wrap in auth (must be logged in) |
-
-**Deps:** None — this is the foundation.
-
-### A2: Phase 1 — Intake
-
-**Tasks:**
-
-| # | Task | Acceptance Criteria |
-|---|------|-------------------|
-| A2.1 | Build two-panel layout (chat left 1/3, summary right 2/3) | Responsive. Chat panel collapsible. Uses Nuxt UI components |
-| A2.2 | Integrate chat panel with `crouton-ai` `useChat()` | Messages stream in real-time. System prompt includes Phase 1 context. Conversation stored in component state (not DB — resets on phase change) |
-| A2.3 | Define `set_app_config` AI tool | Tool schema with typed parameters (name, description, appType, multiTenant, authType, languages, defaultLocale, packages). AI can call it, app receives structured data |
-| A2.4 | Build editable summary card | Displays app config fields. Each field is click-to-edit (inline UInput/USelect). Changes sync to Projects collection in DB. AI tool calls also update the card |
-| A2.5 | Build system prompt for Phase 1 | Includes: role definition, what to extract, opinionated defaults, available app types, available packages, output format. Includes current project state from DB |
-| A2.6 | Add "Continue to Collection Design" transition | Button appears when minimum config is set (name + appType). Saves project state, resets chat, navigates to Phase 2 |
-
-**Deps:** A1 complete.
-
-### A3: Phase 2 — Collection Design
-
-**Tasks:**
-
-| # | Task | Acceptance Criteria |
-|---|------|-------------------|
-| A3.1 | Build accordion collection editor component | Expandable accordion per collection. Shows collection name, field count badge, expand to see fields. "Add Collection" button at top |
-| A3.2 | Build field list inside accordion | Each field shows: icon (from field type), name (editable inline), type (dropdown), required badge, reference target link. "Add Field" button at bottom. Delete button per field |
-| A3.3 | Build field type dropdown | Lists all Crouton field types with icons. For `reference` type, shows secondary dropdown to pick target collection. Uses `useFieldTypes()` registry (ported from v1) |
-| A3.4 | Build inline field editing | Click field name → inline UInput. Click field type → dropdown. Toggle required. **Inline meta** (always visible): `required`, `unique`, `label`, `area` (main/sidebar/meta). **Expandable meta panel** (click "more" chevron): `maxLength`, `default`, `translatable`, `group`, `displayAs`, `options`/`optionsCollection`. **Reference-specific**: `refTarget` dropdown (always visible for reference type), `readOnly`, `dependsOn` chain. **Omitted from UI** (AI-only or advanced): `component`, `primaryKey`, `precision`/`scale`, `repeater properties` — these are set via chat |
-| A3.5 | Implement drag-to-reorder fields | Within a collection accordion. Updates field order in DB. Visual drag handle |
-| A3.6 | Define Phase 2 AI tools | 7 tools: `create_collection`, `update_collection`, `delete_collection`, `add_field`, `update_field`, `delete_field`, `reorder_fields`. Each with typed parameters. App processes tool calls and updates DB + UI |
-| A3.7 | Build system prompt for Phase 2 | Includes: role, field type reference table, meta properties, current collections state (from DB as JSON), instructions for opinionated proposals, package suggestion hints. Reuse structure from v1's `useSchemaAI()` |
-| A3.8 | Wire AI tool calls to accordion UI | When AI calls `create_collection`, accordion animates open with new collection. When AI calls `add_field`, field appears with highlight animation. Deletions show briefly then remove. Borrow animation tracking from v1 |
-| A3.9 | Implement continuous validation | Deterministic checks on every change: duplicate field names, missing reference targets, reserved names, empty collections. Show red indicators inline on affected fields/collections |
-| A3.10 | Auto-generate initial proposal on Phase 2 entry | On entering Phase 2, send an automatic AI message: "Based on the app config, propose an initial set of collections." AI responds with tool calls that populate the accordion |
-| A3.11 | Add "Continue to Review" transition | Button always visible. Validation warnings shown but not blocking. Saves state, resets chat, navigates to Phase 5 |
-
-**Deps:** A1 + A2 complete (needs project config from Phase 1).
-
-### A4: Phase 5 — Validation & Generation
-
-**Tasks:**
-
-| # | Task | Acceptance Criteria |
-|---|------|-------------------|
-| A4.1 | Build validation checklist component | Runs all deterministic checks from A3.9. Displays as a list with green checkmarks / red X indicators. Shows specific error messages with links to the affected collection/field |
-| A4.2 | Build generation summary view | Shows: app name, app type, number of collections, total fields, selected packages. Expandable list of collections with their fields |
-| A4.3 | Implement schema JSON export | Converts DB state (Projects + Collections + Fields) into the JSON format expected by `crouton-cli`. One `.json` file per collection |
-| A4.4 | Implement schema export + download | Export schemas as a downloadable ZIP (JSON files per collection). The developer runs `crouton generate` locally with the downloaded schemas. This avoids the Cloudflare Workers limitation (no shell exec). Display download link + copy-pasteable CLI command. Future: direct CLI invocation via a local dev companion. **Artifact status tracking**: each generated file should show status (`new`, `pending`, `written`, `error`) so the user can see what will be created before downloading |
-| A4.5 | Add "Generate" button | Disabled if critical validation errors exist. On click: export schemas → download ZIP + show CLI instructions. Includes copy-pasteable `crouton generate --from ./schemas/` command |
-
-**Deps:** A1 + A3 complete.
-
-### A5: Integration & Polish
-
-**Tasks:**
-
-| # | Task | Acceptance Criteria |
-|---|------|-------------------|
-| A5.1 | Wire backward navigation with preserve/warn | Phase 5 → Phase 2: no action needed (editing collections directly). Phase 2 → Phase 1: preserve all collections, show warning banner that config changes (e.g., switching from multi-tenant to single-tenant) may require manual schema adjustments. No cascade delete in Phase A (only applies to Phase B+ generated data like seeds/views) |
-| A5.2 | Add project list page | List all projects for the current user. Click to resume. Delete project button. "New Project" button |
-| A5.3 | Persist chat messages per phase | Store Phase 1 and Phase 2 chat history in a `messages` JSON column on the Projects collection (one array per phase). Chat is restored when user navigates back to a previous phase. On forward transition, new phase starts with empty chat but previous phases retain their history |
-| A5.4 | Add AI error handling and fallback UX | Retry button on failed AI calls. Error toast with "try again" action. Phase 1: manual form fallback if AI is unavailable (pre-filled UForm with all config fields). Phase 2: accordion works fully without AI (direct manipulation is the primary surface). Graceful handling of malformed tool calls (log + ignore, don't crash) |
-| A5.5 | Test resumability (close browser, reopen project) | Open a project, progress to Phase 2 with collections, close the browser. Reopen → project list → click project → lands on correct phase with all state intact. Chat history restored for the current phase |
-| A5.6 | Run typecheck and fix errors | `npx nuxt typecheck` passes with zero errors |
-| A5.7 | Manual end-to-end test | Create a project → describe an app → design 3+ collections with the AI → validate → generate → download ZIP → run CLI locally → verify output is correct |
-
-**Deps:** A1–A4 complete.
-
-### Task Dependency Graph
-
-Tasks connected with `║` can run in parallel. Tasks connected with `──` are sequential.
-
-```
-A1: Scaffolding (sequential)
-A1.1 ── A1.2 ── A1.3 ── A1.4
-
-A2: Phase 1 (partially parallel)
-         ┌── A2.1 (layout) ──┐
-A1.4 ──┤                      ├── A2.5 (system prompt) ── A2.6 (transition)
-         ├── A2.2 (chat) ─────┤
-         ├── A2.3 (AI tool) ──┤
-         └── A2.4 (summary) ──┘
-         ║ parallel group ║
-
-A3: Phase 2 (two parallel tracks, then merge)
-         ┌── A3.1 ── A3.2 ── A3.3 ── A3.4 ── A3.5 ──┐
-A2.6 ──┤                                               ├── A3.10 ── A3.11
-         └── A3.6 ── A3.7 ─────────────────────────────┘
-         ║  UI track  ║          ║  AI track  ║
-                              A3.8 (wire) needs both tracks
-                              A3.9 (validation) needs UI track
-
-A4: Phase 5 (partially parallel)
-          ┌── A4.1 (validation UI) ──┐
-A3.11 ──┤                            ├── A4.5 (generate button)
-          ├── A4.2 (summary view) ───┤
-          └── A4.3 (JSON export) ── A4.4 (download ZIP) ──┘
-          ║ parallel group ║
-
-A5: Integration (mostly parallel after A4)
-          ┌── A5.1 (backward nav) ──┐
-A4.5 ───┤── A5.2 (project list) ───┤── A5.6 (typecheck) ── A5.7 (e2e test)
-          ├── A5.3 (chat persist) ──┤
-          ├── A5.4 (AI errors) ─────┤
-          └── A5.5 (resumability) ──┘
-          ║ parallel group ║
-```
-
-### Estimated Task Count
-
-| Section | Tasks | Scope |
-|---------|-------|-------|
-| A1: Scaffolding | 4 | Package + app + collections + layout |
-| A2: Phase 1 | 6 | Chat + summary card + AI tools |
-| A3: Phase 2 | 11 | Accordion editor + AI tools + validation |
-| A4: Phase 5 | 5 | Validation + export + download |
-| A5: Integration | 7 | AI errors + resumability + project list + testing |
-| **Total** | **33** | |
-
-### What's Explicitly Out of Scope for Phase A
+## What's Explicitly Out of Scope (Not Yet Built)
 
 - CroutonFlow graph visualization (Phase B)
-- Seed data generation (Phase B)
-- Detail view design (Phase C)
-- Nuxt UI component preview (Phase C)
+- Detail view design + Nuxt UI preview (Phase C)
 - Package manifest system (Phase D)
 - Undo/redo (Phase D)
 - Project templates (Phase D)
 - Onboarding / tutorial flow
 - Mobile-optimized layout
 - Collaborative editing
-- Export to GitHub / download as zip
-- Import existing project via filesystem scanning (archived from crouton-studio — scanner could parse existing `types.ts` files to pre-populate collections)
+- Export to GitHub
+- Import existing project via filesystem scanning
