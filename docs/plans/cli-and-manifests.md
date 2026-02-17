@@ -8,10 +8,11 @@
 
 | Phase | Status | Notes |
 |-------|--------|-------|
+| Phase 0 | Not started | CLI characterization tests for all 11 commands. No deps on other phases — can start immediately, parallelizable with Phase 1 |
 | Phase 1 | Not started | Canonical manifest type + core field types + unjs foundation (jiti, c12, defu, pathe, pkg-types) |
-| Phase 2+3 | ~15% done | Atomic PR. `module-registry.mjs` converted; `module-registry.json` is live intermediate. consola logging in touched files |
+| Phase 2+3 | ~15% done | Atomic PR. `module-registry.mjs` converted; `module-registry.json` is live intermediate. consola logging in touched files. Includes app.config manifest injection |
 | Phase 4 | Not started | Unified module reads manifests for feature discovery |
-| Phase 5 | Not started | CLI framework rewrite (citty + full chalk/ora/inquirer/fs-extra removal). Test-first |
+| Phase 5 | Not started | CLI framework rewrite (citty + full chalk/ora/inquirer/fs-extra removal). Tests already exist from Phase 0 |
 
 ### Recent Commits That Overlap With This Plan
 
@@ -73,17 +74,27 @@ Completing Phase 2+3 of this plan effectively delivers the manifest foundation t
 | 13 | c12 config loading | **Full discovery** (like nuxt.config) | Auto-discover `.ts`/`.js`/`.mjs`/`.cjs`, env overrides, layer merging — same DX as Nuxt |
 | 14 | chalk/ora cleanup | **Full cleanup in Phase 5** | All remaining chalk/ora imports migrated in Phase 5, deps removed entirely. Clean break |
 | 15 | inquirer scope | **Only `rollback-interactive.mjs`** | Audit shows only 1 file imports inquirer (not 3 as originally estimated) |
-| 16 | Test strategy | **Test-first, both phases** | Phase A: characterization tests for all 11 current commands. Phase B: citty-specific tests replace them |
+| 16 | Test strategy | **Test-first, extracted as Phase 0** | Characterization tests ship as standalone Phase 0 (parallelizable with Phase 1). Citty-specific tests replace them in Phase 5 |
 | 17 | Test coverage | **All 11 CLI commands** | generate, config, install, init, add, rollback, rollback-bulk, rollback-interactive, doctor, scaffold-app, seed-translations |
 | 18 | Wave 1 timing | **Bundle with manifest Phase 1** | Deps only become useful when `.ts` manifests exist to load |
 | 19 | config-builder.mjs coexistence | **Keep `buildCroutonConfig()`** — c12 replaces config loading, not config building | They're different concerns: c12 reads existing config files, `buildCroutonConfig()` generates new config file content for the designer scaffold endpoint |
+
+### Review Decisions (Feb 17, 2026)
+
+| # | Decision | Answer | Rationale |
+|---|----------|--------|-----------|
+| 20 | Phase 2+3 atomic PR reviewability | **Granular commits** — each commit leaves app working, `git bisect`-friendly | Solo dev, private monorepo. JSON deletion commit must include `useIntakePrompt.ts` migration |
+| 21 | Browser delivery mechanism for Phase 3 | **app.config injection in Phase 2+3** (task 2.6) — crouton-core's Nuxt module injects merged registry | Phase 3 consumers need data before Phase 4. ~20 lines in module hook. Phase 4 remains focused on unified module's feature mapping |
+| 22 | Manifest boilerplate | **Full `CroutonManifest` type for all** — no minimal variant | All optional fields already use `?`. Thin manifests just omit them |
+| 23 | Phase 0 extraction | **Characterization tests as standalone Phase 0** — parallelizable with Phase 1 | Prevents AI agent regressions immediately. Reduces Phase 5 scope. 5x i18n bug was caused by distributed agent work without test coverage |
+| 24 | Rollback strategy | **None needed** — big bang without fallback | Solo dev, private monorepo, greenfield. Fix-forward is faster than maintaining transitional layers |
 
 ### Known Issues (Pre-existing)
 
 - All 5 existing `crouton.manifest.ts` files import from deleted `@fyit/crouton-schema-designer/types` (broken phantom imports)
 - `crouton-pages/crouton.manifest.ts` imports `defineCroutonManifest` from `@fyit/crouton-cli` (doesn't exist — will import from `@fyit/crouton-core/shared/manifest` instead)
 - MCP `field-types.ts` has only 9 types (missing `image`/`file` added to CLI in `808eba07`)
-- CLI i18n locale / duplicate croutonCollections bug was fixed 5 times across sessions — evidence that characterization tests (Phase 5) are overdue
+- CLI i18n locale / duplicate croutonCollections bug was fixed 5 times across sessions — addressed by Phase 0 characterization tests
 
 ---
 
@@ -136,6 +147,44 @@ The nuxt-crouton monorepo has ~18 packages but 4 parallel, disconnected systems 
 | Interactive prompts | **@clack/prompts** | Beautiful CLI prompts (powers `nuxi init`) | Phase 5 |
 
 **Dependency delta**: Remove 5 bespoke deps, add 8 unjs deps. The unjs deps are already transitive dependencies of Nuxt, so this adds near-zero weight in monorepo context.
+
+---
+
+## Phase 0: CLI Characterization Tests (Standalone PR)
+
+**Objective**: Write tests for all 11 CLI commands against the current Commander-based implementation. These protect against regressions during both manifest migration and the later CLI rewrite. Directly addresses the 5x i18n bug caused by AI agents re-introducing issues across sessions without test coverage.
+
+**PR**: Ships independently. No dependencies on any other phase — can start immediately, parallelizable with Phase 1.
+
+**Why extracted from Phase 5**: Previously bundled with the CLI framework rewrite, but these tests document *current* behavior and have independent value. Starting early means every subsequent phase has a safety net.
+
+**Test file**: `packages/crouton-cli/__tests__/commands.test.mjs`
+
+**Commands to test**:
+1. `generate` — generates collection files (test with `--dry-run`)
+2. `config` — loads and displays config
+3. `install` — installs required modules
+4. `init` — full pipeline (scaffold → generate → doctor)
+5. `add` — adds modules/features
+6. `rollback` — removes a single collection
+7. `rollback-bulk` — removes multiple collections or entire layer
+8. `rollback-interactive` — interactive removal UI
+9. `doctor` — validates existing app
+10. `scaffold-app` — creates boilerplate structure
+11. `seed-translations` — imports i18n JSON to database
+
+**Test pattern**: Run each command as a subprocess, assert on exit code and stdout patterns. Use temp directories for file generation tests.
+
+### Phase 0 Files Changed
+
+- **Create**: `packages/crouton-cli/__tests__/commands.test.mjs`
+
+### Phase 0 Checklist
+
+- [ ] Create `packages/crouton-cli/__tests__/commands.test.mjs`
+- [ ] Write characterization tests for all 11 commands
+- [ ] Verify all tests pass against current Commander-based CLI
+- [ ] Commit: `test(crouton-cli): add characterization tests for all 11 commands`
 
 ---
 
@@ -355,6 +404,7 @@ const manifest: CroutonManifest = {
   category: 'addon',
   dependencies: ['crouton-core'],
 
+  // Component CroutonAssetsPicker lives in crouton-core; this package contributes the field type definitions
   fieldTypes: {
     image: { label: 'Image', icon: 'i-lucide-image',     description: 'Image upload', db: 'VARCHAR(255)', drizzle: 'text', zod: 'z.string()', tsType: 'string', defaultValue: "''", component: 'CroutonAssetsPicker' },
     file:  { label: 'File',  icon: 'i-lucide-paperclip', description: 'File upload',  db: 'VARCHAR(255)', drizzle: 'text', zod: 'z.string()', tsType: 'string', defaultValue: "''", component: 'CroutonAssetsPicker' },
@@ -544,6 +594,32 @@ Replace chalk + ora in files modified by manifest work (2.2 above). Do NOT migra
 - `lib/scaffold-app.mjs`
 - `lib/seed-translations.mjs`
 
+#### 2.6 Add manifest injection to crouton-core's Nuxt module
+
+**Edit**: `packages/crouton-core/src/module.ts` (or equivalent Nuxt module hook)
+
+At build time, discover all manifests and inject the merged registry into `app.config`. This is what Phase 3 consumers read from via `useAppConfig()`.
+
+```typescript
+// In crouton-core's Nuxt module setup
+const manifests = await discoverManifests(options.rootDir)
+const fieldTypeRegistry = getFieldTypeRegistry(manifests)
+const autoGeneratedFields = getAutoGeneratedFields(manifests)
+const reservedFieldNames = getReservedFieldNames(manifests)
+const reservedCollectionNames = getReservedCollectionNames(manifests)
+
+// Inject into app.config so composables can access via useAppConfig()
+nuxt.options.appConfig.crouton = defu(nuxt.options.appConfig.crouton || {}, {
+  fieldTypes: fieldTypeRegistry,
+  autoGeneratedFields,
+  reservedFieldNames,
+  reservedCollectionNames,
+  modules: getModuleRegistry(manifests)
+})
+```
+
+**Why here (not Phase 4)**: Phase 3 designer composables need manifest data at runtime via `useAppConfig()`. Phase 4 is about the *unified module's* feature-to-package mapping — a different concern. This is ~20 lines in crouton-core's module.
+
 ### Phase 3: Designer + MCP Consumer Migration
 
 #### 3.1 Designer: useFieldTypes.ts reads from manifests
@@ -551,7 +627,7 @@ Replace chalk + ora in files modified by manifest work (2.2 above). Do NOT migra
 **Edit**: `packages/crouton-designer/app/composables/useFieldTypes.ts`
 - Remove hardcoded `FIELD_TYPES` array (15 types including uuid/datetime/integer)
 - Remove hardcoded `META_PROPERTIES` array
-- Import the merged field type registry from manifests (via server endpoint or build-time import)
+- Read merged field type registry from `useAppConfig().crouton.fieldTypes` (injected by task 2.6)
 - Keep the Vue-reactive wrapper (`translatedFieldTypes`, `getFieldIcon`, etc.)
 - `uuid` type is dropped; `integer` and `datetime` resolve to `number`/`date` via aliases
 
@@ -609,6 +685,7 @@ Replace chalk + ora in files modified by manifest work (2.2 above). Do NOT migra
 - **Delete**: `packages/crouton-cli/lib/module-registry.json`
 - **Edit**: 5 existing `crouton.manifest.ts` files (fix broken imports, migrate type)
 - **Create**: ~13 new `crouton.manifest.ts` files for remaining packages (including themes + devtools)
+- **Edit**: `packages/crouton-core/src/module.ts` (manifest injection into app.config — task 2.6)
 
 **Phase 3:**
 - **Edit**: `packages/crouton-designer/app/composables/useFieldTypes.ts`
@@ -644,9 +721,13 @@ Replace chalk + ora in files modified by manifest work (2.2 above). Do NOT migra
 - [ ] Replace chalk + ora in `module-registry.mjs` with consola
 - [ ] Keep `chalk` and `ora` in package.json (still used by ~10 untouched files until Phase 5)
 
+**app.config manifest injection (task 2.6):**
+- [ ] Add manifest discovery + injection to crouton-core's Nuxt module (~20 lines)
+- [ ] Verify `useAppConfig().crouton.fieldTypes` returns merged registry in designer app
+
 **Designer consumer migration:**
-- [ ] `useFieldTypes.ts` — remove hardcoded types, read from manifests
-- [ ] `useSchemaValidation.ts` — remove hardcoded reserved names, read from manifests
+- [ ] `useFieldTypes.ts` — remove hardcoded types, read from `useAppConfig().crouton.fieldTypes`
+- [ ] `useSchemaValidation.ts` — remove hardcoded reserved names, read from `useAppConfig().crouton`
 - [ ] `useCollectionDesignPrompt.ts` — remove hardcoded auto-generated fields
 - [ ] `useIntakePrompt.ts` — replace JSON import with manifest loader
 - [ ] `designer-chat.post.ts` — derive `fieldTypeEnum` from manifests
@@ -713,30 +794,7 @@ Replace chalk + ora in files modified by manifest work (2.2 above). Do NOT migra
 
 **Objective**: Replace Commander with citty, remove all remaining chalk/ora/inquirer/fs-extra, consolidate process.argv parsing. This is the largest change — do it as a dedicated PR, not mixed with manifest work.
 
-**Approach**: Test-first. Before rewriting anything, write characterization tests for all 11 current commands. Then rewrite and verify tests still pass. Finally, replace characterization tests with citty-specific tests.
-
-**Why this is urgent**: The i18n locale / duplicate croutonCollections bug was fixed 5 times across sessions (commits `53507978`, `d0e43558`, `9711d5fe`, `1d1db963`, `8e9b0f76`). Characterization tests would have caught regressions immediately.
-
-### 5.0 Characterization tests (BEFORE rewriting)
-
-Write tests for all 11 CLI commands against the **current** Commander-based implementation. These act as a safety net during the rewrite.
-
-**Test file**: `packages/crouton-cli/__tests__/commands.test.mjs`
-
-**Commands to test**:
-1. `generate` — generates collection files (test with `--dry-run`)
-2. `config` — loads and displays config
-3. `install` — installs required modules
-4. `init` — full pipeline (scaffold → generate → doctor)
-5. `add` — adds modules/features
-6. `rollback` — removes a single collection
-7. `rollback-bulk` — removes multiple collections or entire layer
-8. `rollback-interactive` — interactive removal UI
-9. `doctor` — validates existing app
-10. `scaffold-app` — creates boilerplate structure
-11. `seed-translations` — imports i18n JSON to database
-
-**Test pattern**: Run each command as a subprocess, assert on exit code and stdout patterns. Use temp directories for file generation tests.
+**Prerequisite**: Phase 0 (characterization tests) must be complete. The tests act as a safety net — rewrite commands and verify tests still pass.
 
 ### 5.1 Replace Commander with citty
 
@@ -860,16 +918,12 @@ Migrate ALL remaining chalk/ora imports to consola (~10 files listed in Phase 2+
 - **Edit**: ~10 files (remaining chalk/ora → consola)
 - **Edit**: Any files using `fs-extra` (→ Node built-ins + pkg-types)
 - **Edit**: `packages/crouton-cli/package.json` (add citty, @clack/prompts; remove commander, chalk, ora, inquirer, fs-extra)
-- **Create**: `packages/crouton-cli/__tests__/commands.test.mjs`
 
 ### Phase 5 Checklist
 
-**Phase A: Characterization tests (before rewrite)**
-- [ ] Create `packages/crouton-cli/__tests__/commands.test.mjs`
-- [ ] Write characterization tests for all 11 commands
-- [ ] Verify all tests pass against current Commander-based CLI
+**Prerequisite**: Phase 0 characterization tests passing.
 
-**Phase B: Rewrite + full cleanup**
+**Rewrite + full cleanup:**
 - [ ] Add `citty` and `@clack/prompts` to package.json
 - [ ] Rewrite `bin/crouton-generate.js` with citty
 - [ ] Rewrite each command as `defineCommand()`
@@ -879,11 +933,11 @@ Migrate ALL remaining chalk/ora imports to consola (~10 files listed in Phase 2+
 - [ ] Replace fs-extra with Node built-ins + pkg-types in all files
 - [ ] Migrate ALL remaining chalk/ora imports to consola (~10 files)
 - [ ] Remove `commander`, `chalk`, `ora`, `inquirer`, `fs-extra` from package.json
-- [ ] Verify characterization tests still pass
+- [ ] Verify Phase 0 characterization tests still pass
 - [ ] Verify all 11 commands work: `generate`, `config`, `install`, `init`, `add`, `rollback`, `rollback-bulk`, `rollback-interactive`, `doctor`, `scaffold-app`, `seed-translations`
 - [ ] Verify: `--help` auto-generated by citty
 
-**Phase C: Replace tests**
+**Replace tests:**
 - [ ] Replace characterization (subprocess) tests with citty-specific unit tests
 - [ ] Test `defineCommand()` handlers directly (no subprocess)
 
@@ -1041,15 +1095,16 @@ pnpm crouton rollback shop products       # cleanup
 
 | Phase | Effort | Impact | Deps Added | Deps Removed | PR |
 |-------|--------|--------|-----------|-------------|-----|
+| Phase 0 | Small | CLI safety net — characterization tests for all 11 commands | — | — | PR 0 (parallelizable with PR 1) |
 | Phase 1 | Medium | Foundation — types + core manifest + unjs base | jiti, c12, defu, pathe, pkg-types | — | PR 1 |
-| Phase 2+3 | Large | CLI reads manifests, all packages get manifests, JSON deleted, consumers migrated, consola in touched files | consola | — (chalk/ora kept temporarily) | PR 2 (atomic) |
+| Phase 2+3 | Large | CLI reads manifests, all packages get manifests, JSON deleted, consumers migrated, app.config injection, consola in touched files | consola | — (chalk/ora kept temporarily) | PR 2 (atomic) |
 | Phase 4 | Small | Unified module reads manifests + getCroutonLayers() | — | — | PR 3 |
-| Phase 5 | Large | CLI framework rewrite, test-first, full dep cleanup | citty, @clack/prompts | commander, chalk, ora, inquirer, fs-extra (all 5 removed) | PR 4 (test-first) |
+| Phase 5 | Medium | CLI framework rewrite + full dep cleanup (tests already exist from Phase 0) | citty, @clack/prompts | commander, chalk, ora, inquirer, fs-extra (all 5 removed) | PR 4 |
 | Future | Ongoing | Progressive `.mjs` → `.ts` migration | (unbuild, later) | — | Opportunistic |
 
-**Ship order**: Phase 1 → Phase 2+3 (atomic) → Phase 4 (whenever) → Phase 5 (test-first, after manifests land) → Future (opportunistic)
+**Ship order**: Phase 0 + Phase 1 (parallel) → Phase 2+3 (atomic) → Phase 4 (whenever) → Phase 5 (after manifests land) → Future (opportunistic)
 
-**Total files**: ~6 created (Phase 1) + ~14 created + ~12 edited (Phase 2+3) + ~2 edited (Phase 4) + ~15 edited (Phase 5) = **~49 files**
+**Total files**: ~1 created (Phase 0) + ~6 created (Phase 1) + ~15 created + ~13 edited (Phase 2+3) + ~2 edited (Phase 4) + ~15 edited (Phase 5) = **~52 files**
 
 **Total dep changes**: +8 unjs deps, -5 legacy deps. Net result: CLI uses the same stack as Nuxt itself.
 
@@ -1057,7 +1112,7 @@ pnpm crouton rollback shop products       # cleanup
 
 | This Plan | Enables | In Plan |
 |-----------|---------|---------|
+| Phase 0 (characterization tests) | Prevents regressions across all subsequent phases + AI agent sessions | Internal quality |
 | Phase 1 (manifest type) | Designer Phase D: package manifest schema | `schema-designer-v2.md` |
 | Phase 2 (all manifests) | Designer Phase D: AI-driven package suggestions | `schema-designer-v2.md` |
 | Phase 3 (consumer migration) | Designer Phase D: cross-phase impact detection | `schema-designer-v2.md` |
-| Phase 5 (characterization tests) | Prevents regressions like the 5x i18n fix | Internal quality |
