@@ -84,7 +84,7 @@ These packages are required for the manifest loader anyway. Add them first.
 #### 1.1 Add jiti
 
 **Why now**: Manifest loader needs to import `.ts` manifest files from `.mjs` CLI code.
-**Files touched**: New `lib/utils/manifest-loader.mjs`
+**Files touched**: New `lib/utils/manifest-loader.ts`
 **Pattern**:
 ```javascript
 import { createJiti } from 'jiti'
@@ -95,7 +95,7 @@ const manifest = await jiti.import('./crouton.manifest.ts')
 #### 1.2 Add c12 (full discovery mode)
 
 **Why now**: Manifest loader needs to discover project config. Replace the manual extension scanning in `config-builder.mjs`.
-**Files touched**: `lib/utils/config-builder.mjs`, new `lib/utils/manifest-loader.mjs`
+**Files touched**: `lib/utils/config-builder.mjs`, new `lib/utils/manifest-loader.ts`
 **Discovery mode**: Full c12 discovery (like nuxt.config) — auto-discovers `.ts`/`.js`/`.mjs`/`.cjs`, supports `CROUTON_*` environment overrides, and layer merging.
 **Pattern**:
 ```javascript
@@ -117,7 +117,7 @@ const { config } = await loadConfig({
 #### 1.3 Add defu
 
 **Why now**: Config merging (manifest defaults + user overrides).
-**Files touched**: `lib/utils/config-builder.mjs`, `lib/utils/manifest-loader.mjs`
+**Files touched**: `lib/utils/config-builder.mjs`, `lib/utils/manifest-loader.ts`
 **Pattern**:
 ```javascript
 import { defu } from 'defu'
@@ -127,7 +127,7 @@ const config = defu(userConfig, manifestDefaults)
 #### 1.4 Add pathe + pkg-types
 
 **Why now**: Manifest discovery scans directories and reads package.json files.
-**Files touched**: New `lib/utils/manifest-loader.mjs`
+**Files touched**: New `lib/utils/manifest-loader.ts`
 **Pattern**:
 ```javascript
 import { resolve, join } from 'pathe'
@@ -376,7 +376,7 @@ With jiti already in place, the CLI can progressively migrate from `.mjs` to `.t
 **Priority order** (most-touched files first):
 1. `lib/utils/helpers.mjs` → `.ts`
 2. `lib/utils/config-builder.mjs` → `.ts`
-3. `lib/utils/manifest-loader.mjs` → already `.mjs` but could be `.ts`
+3. ~~`lib/utils/manifest-loader.ts`~~ — already `.ts` from the start (Decision 10 in manifest plan)
 4. `lib/utils/manifest-merge.mjs` → `.ts`
 5. `lib/generate-collection.mjs` → `.ts`
 6. Generator files (13 files) → `.ts` when modified

@@ -1,23 +1,48 @@
 # Plan: Manifest-Driven Package Architecture
 
-## Status (Feb 2026)
+## Status (Updated Feb 17, 2026)
 
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Phase 1 | Not started | Canonical manifest type + core field types |
-| Phase 2 | Not started | CLI integration + all packages get manifests |
-| Phase 3 | Not started | Designer + MCP consumer migration |
+| Phase 2 | ~15% done | `module-registry.mjs` converted; `module-registry.json` is live intermediate |
+| Phase 3 | ~10% done | `useIntakePrompt.ts` reads from registry JSON; schema-designer deleted |
 | Phase 4 | Not started | Unified module (optional) |
 
-**Prerequisites done:**
-- `scaffold-app` CLI command — complete (`df36e4e7`)
-- `crouton doctor` CLI command — complete (`9b9d0f37`)
-- Deploy script — complete (`4c94a6d8`)
-- Designer Create App flow — complete (`ab8d2c33`)
+### Recent Commits That Overlap With This Plan
 
-**Supersedes:** The "Designer registry sync" task (P3 from the app-scaffold briefing) is fully covered by Phase 3.5 of this plan. The current interim solution (`useIntakePrompt.ts` imports from `module-registry.json`) works as a bridge until Phase 3.
+| Commit | Date | What it did | Impact on plan |
+|--------|------|-------------|----------------|
+| `2543fadf` | Feb 17 | Extracted module registry to shared `module-registry.json` | Phase 2.2d done; created transitional JSON |
+| `f21ebaed` | Feb 17 | Deleted `crouton-schema-designer` package | Phase 3.8 N/A; **broke 5 manifest type imports** |
+| `808eba07` | Feb 16 | Added `image`/`file` field types to CLI | Partial Phase 1.4 (CLI only, not MCP/designer) |
+| `5e670f51` | Feb 17 | Fixed AI generating auto-generated fields | Workaround for Phase 3.3 (hardcoded, not manifest-driven) |
+| `78d5df9c` | Feb 17 | MCP silently skips auto-generated fields | Workaround for Phase 3.7 (hardcoded, not manifest-sourced) |
 
-**Independent prerequisite (not part of this plan):** Two generator bugs (missing i18n locale files, duplicate `croutonCollections` key) should be fixed before this work begins — they're in `generate-collection.mjs` and don't interact with manifest changes.
+### Decisions Made
+
+1. **Migration strategy: Big bang** — Create all 16+ manifests in one phase, then delete `module-registry.json`. No fallback/transitional layer.
+2. **Field type aliases (greenfield)**:
+   - `integer` → alias for `number` (same SQLite INTEGER, same component)
+   - `datetime` → alias for `date` (same TIMESTAMP, same component)
+   - `uuid` → **dropped** (just a `string` in SQLite; `id` is auto-generated)
+   - Result: **11 canonical types + 2 aliases** in core manifest
+3. **Broken manifest imports** — Fix in Phase 1 when the new type lands (phantom imports, don't affect builds)
+4. **`crouton-schema-designer`** — Deleted, no longer in plan scope. Phase 3.8 removed entirely.
+5. **Manifest format: `.ts` with jiti** — Manifests are TypeScript files. CLI uses `jiti` to import them at runtime. Opens the door to progressively migrate CLI from `.mjs` to `.ts`. jiti is already a Nuxt transitive dependency.
+6. **Browser delivery: App config injection** — A Nuxt module reads manifests at build time and injects field types/metadata into `app.config`. Composables access via `useAppConfig()`. No server endpoint needed. Manifests rarely change so rebuild-on-change is acceptable.
+7. **Ship strategy: Atomic Phase 2+3** — All of Phase 2 and Phase 3 ship as one PR. Phase 1 ships independently first. Phase 4 ships whenever convenient.
+8. **Scope: Include crouton-themes + crouton-devtools** — Every package gets a manifest for completeness. Both are thin (~15 lines, no field types). Devtools benefits from manifest awareness for its inspection panel.
+9. **`defineCroutonManifest()` in crouton-core** — Lives alongside the `CroutonManifest` type, not in crouton-cli. Avoids every package needing a CLI dev dependency for a one-line identity function.
+10. **Manifest loader written in TypeScript** — `manifest-loader.ts` (not `.mjs`). jiti is already landing in the same wave (CLI unjs modernization Wave 1), so no reason to write the most critical new file without type safety.
+11. **Alias resolution via flat map** — `getFieldTypeRegistry()` returns entries for both canonical names and aliases (e.g., both `number` and `integer`). Aliases point to the same `FieldTypeDefinition` object. Consumers never need to resolve aliases themselves — important for AI consumers (MCP, designer chat) where `integer` may appear in natural language.
+12. **Interleave with CLI unjs modernization** — Not sequential. Wave 1 (jiti, c12, defu, pathe, pkg-types) ships with Manifest Phase 1-2. Wave 2 (consola) ships with Manifest Phase 2+3. See `cli-unjs-modernization.md`.
+
+### Known Issues (Pre-existing)
+
+- All 5 existing `crouton.manifest.ts` files import from deleted `@fyit/crouton-schema-designer/types` (broken phantom imports)
+- `crouton-pages/crouton.manifest.ts` imports `defineCroutonManifest` from `@fyit/crouton-cli` (doesn't exist — will import from `@fyit/crouton-core/shared/manifest` instead)
+- MCP `field-types.ts` has only 9 types (missing `image`/`file` added to CLI in `808eba07`)
 
 ---
 
@@ -25,12 +50,10 @@
 
 The nuxt-crouton monorepo has ~18 packages but 4 parallel, disconnected systems describing them:
 
-1. **`crouton.manifest.ts` files** — 5 packages have them, 2 incompatible formats
+1. **`crouton.manifest.ts` files** — 5 packages have them, all with broken type imports
 2. **`app/app.config.ts`** — runtime UI registration (sidebar routes, page types)
-3. **CLI hardcoded JSON** — `module-registry.json`, `manifest-merge.mjs` with embedded data
+3. **CLI sources** — `module-registry.json` (16 entries), `helpers.mjs` typeMapping, `manifest-merge.mjs` hardcoded data
 4. **Unified module** — `crouton/src/module.ts` with hardcoded feature-to-package mapping
-
-Field types are duplicated in 5 places, reserved field names in 4+, component mappings in 3. The schema designer v2 (Phase A complete) is the primary consumer — its Phase D explicitly deferred manifests until real requirements emerged from building the designer. Those requirements are now clear.
 
 **Goal**: Make `crouton.manifest.ts` the single source of truth for package metadata. Every consumer (CLI, MCP, designer, unified module) reads from manifests instead of maintaining hardcoded copies.
 
@@ -40,53 +63,28 @@ Field types are duplicated in 5 places, reserved field names in 4+, component ma
 
 | Data | Locations | Status |
 |------|-----------|--------|
-| Field types (base) | CLI `helpers.mjs`, MCP `field-types.ts`, designer `useFieldTypes.ts`, schema-designer `useFieldTypes.ts`, `designer-chat.post.ts` | OUT OF SYNC (MCP missing image/file) |
+| Field types (base) | CLI `helpers.mjs` (11), MCP `field-types.ts` (9), designer `useFieldTypes.ts` (15), `designer-chat.post.ts` (14) | OUT OF SYNC |
 | Auto-generated fields | CLI generators, designer `useCollectionDesignPrompt.ts`, MCP `validate-schema.ts` | Inconsistent lists |
 | Reserved field names | designer `useSchemaValidation.ts`, CLI validators, MCP validator | Different sets |
 | Reserved collection names | designer `useSchemaValidation.ts` only | Not shared |
-| Package registry | `module-registry.json`, 5x `crouton.manifest.ts`, `manifest-merge.mjs` hardcoded | 3 parallel sources |
+| Package registry | `module-registry.json` (16), 5x `crouton.manifest.ts`, `manifest-merge.mjs` (2) | 3 parallel sources |
 | Feature-to-package mapping | `crouton/src/module.ts` lines 43-71 | Hardcoded, no manifest awareness |
 
-### Key Files to Understand
+### Key Files
 
-| File | What it contains | Lines of interest |
-|------|-----------------|-------------------|
-| `packages/crouton-cli/lib/utils/helpers.mjs` | Canonical `typeMapping` (11 types), `mapType()` | Lines 44-46, 93-171 |
-| `packages/crouton-mcp/src/utils/field-types.ts` | Duplicate `FIELD_TYPES` (9 types, missing image/file) | Lines 14-78 |
-| `packages/crouton-designer/app/composables/useFieldTypes.ts` | UI field types (15 types with icons, labels) | Lines 3-121 |
-| `packages/crouton-designer/app/composables/useSchemaValidation.ts` | Hardcoded `RESERVED_NAMES` (10), `RESERVED_COLLECTION_NAMES` (12) | Lines 11-16 |
-| `packages/crouton-designer/app/composables/useCollectionDesignPrompt.ts` | Hardcoded auto-generated field list | Line 89 |
-| `packages/crouton-designer/app/composables/useIntakePrompt.ts` | Imports from `module-registry.json` (cross-package) | Line 2 |
-| `packages/crouton-designer/server/api/ai/designer-chat.post.ts` | Hardcoded `fieldTypeEnum` for AI tools | Lines 6-11 |
-| `packages/crouton-cli/lib/module-registry.json` | 16 module entries with description, deps, aiHint | Full file |
-| `packages/crouton-cli/lib/utils/manifest-merge.mjs` | Hardcoded `PACKAGE_MANIFESTS` (only bookings + sales) | Lines 22-50 |
-| `packages/crouton/src/module.ts` | Hardcoded `getRequiredLayers()` (18 features) | Lines 43-71 |
-| `packages/crouton/src/types.ts` | `CroutonOptions` with 18 boolean feature flags | Full file |
-| `packages/crouton-pages/crouton.manifest.ts` | Imports phantom `defineCroutonManifest` (doesn't exist) | Import line |
-| `packages/crouton-schema-designer/server/utils/package-registry.ts` | Hardcoded `WORKSPACE_PACKAGES` (only 2 of 18 packages) | Top of file |
-
-### Existing Manifest Audit
-
-| Package | Has manifest? | Format | Notes |
-|---------|--------------|--------|-------|
-| crouton-bookings | Yes | `PackageManifest` (phantom import) | Has collections, config, extension points |
-| crouton-sales | Yes | `PackageManifest` (phantom import) | Has collections, config |
-| crouton-triage | Yes | `PackageManifest` (phantom import) | Has collections |
-| crouton-maps | Yes | `PackageManifest` (phantom import) | Has collections, config |
-| crouton-pages | Yes | `defineCroutonManifest()` (different format) | Incompatible structure |
-| crouton-core | No | — | Should declare base field types |
-| crouton-assets | No | — | Should declare image/file field types |
-| crouton-auth | No | — | In module-registry.json only |
-| crouton-admin | No | — | In module-registry.json only |
-| crouton-i18n | No | — | In module-registry.json only |
-| crouton-editor | No | — | In module-registry.json only |
-| crouton-ai | No | — | In module-registry.json only |
-| crouton-flow | No | — | In module-registry.json only |
-| crouton-email | No | — | In module-registry.json only |
-| crouton-events | No | — | In module-registry.json only |
-| crouton-collab | No | — | In module-registry.json only |
-| crouton-designer | No | — | Not in any registry |
-| crouton-mcp-toolkit | No | — | Not in any registry |
+| File | What it contains | Current state |
+|------|-----------------|---------------|
+| `packages/crouton-cli/lib/utils/helpers.mjs` | Hardcoded `typeMapping` (11 types), `mapType()` | Unchanged — needs manifest migration |
+| `packages/crouton-mcp/src/utils/field-types.ts` | Hardcoded `FIELD_TYPES` (9 types, missing image/file) | OUT OF SYNC with CLI |
+| `packages/crouton-designer/app/composables/useFieldTypes.ts` | Hardcoded field types (15 types with icons, labels) | Has 3 extra types (uuid, datetime, integer) |
+| `packages/crouton-designer/app/composables/useSchemaValidation.ts` | Hardcoded `RESERVED_NAMES` (10), `RESERVED_COLLECTION_NAMES` (12) | Unchanged |
+| `packages/crouton-designer/app/composables/useCollectionDesignPrompt.ts` | Hardcoded auto-generated field list | Has workaround fix from `5e670f51` |
+| `packages/crouton-designer/app/composables/useIntakePrompt.ts` | Imports from `module-registry.json` | Converted in `2543fadf` — reads JSON dynamically |
+| `packages/crouton-designer/server/api/ai/designer-chat.post.ts` | Hardcoded `fieldTypeEnum` (14 types) | Unchanged |
+| `packages/crouton-cli/lib/module-registry.json` | 16 module entries | **LIVE** — designer depends on this |
+| `packages/crouton-cli/lib/module-registry.mjs` | Reads from JSON, exposes `getModule()` etc. | Converted in `2543fadf` |
+| `packages/crouton-cli/lib/utils/manifest-merge.mjs` | Hardcoded `PACKAGE_MANIFESTS` (only bookings + sales) | Unchanged |
+| `packages/crouton/src/module.ts` | Hardcoded `getRequiredLayers()` (21 features) | Unchanged |
 
 ---
 
@@ -110,12 +108,12 @@ export interface CroutonManifest {
   version: string
 
   // Classification
-  category: 'core' | 'addon' | 'miniapp'  // bundled core, optional addon, or full mini-app
+  category: 'core' | 'addon' | 'miniapp'
   bundled?: boolean                 // Included in @fyit/crouton by default
 
   // Layer
   layer?: {
-    name: string                    // Layer name (table prefix)
+    name: string
     editable: boolean
     reason?: string
   }
@@ -123,7 +121,7 @@ export interface CroutonManifest {
   // Dependencies
   dependencies?: string[]           // Other crouton package IDs required
 
-  // Field type contributions (NEW - the key addition)
+  // Field type contributions
   fieldTypes?: Record<string, FieldTypeDefinition>
 
   // Auto-generated fields (only crouton-core declares this)
@@ -148,7 +146,7 @@ export interface CroutonManifest {
   }
 
   // AI hints (migrated from module-registry.json)
-  aiHint?: string                   // When AI should suggest this package
+  aiHint?: string
 }
 
 export interface FieldTypeDefinition {
@@ -160,10 +158,10 @@ export interface FieldTypeDefinition {
   zod: string                       // e.g., 'z.string()'
   tsType: string                    // e.g., 'string'
   defaultValue: string              // e.g., "''"
-  component?: string                // Default form component: 'UInput'
-  previewComponent?: string         // Preview component (if different)
-  aliases?: string[]                // e.g., integer is alias for number
-  meta?: Record<string, unknown>    // Default meta properties
+  component?: string                // Default form component
+  previewComponent?: string
+  aliases?: string[]                // e.g., ['integer'] on number
+  meta?: Record<string, unknown>
 }
 
 export interface ManifestCollection {
@@ -171,9 +169,9 @@ export interface ManifestCollection {
   tableName?: string
   description: string
   schema?: Record<string, ManifestSchemaField>
-  schemaPath?: string               // Relative path to JSON file
+  schemaPath?: string
   optional?: boolean
-  condition?: string                // e.g., 'config.email.enabled'
+  condition?: string
   hierarchy?: boolean | { parentField: string; orderField: string }
 }
 
@@ -205,21 +203,10 @@ export interface ManifestComponent {
 }
 ```
 
-**Subpath export** in `packages/crouton-core/package.json`:
-```json
-"exports": {
-  "./shared/manifest": "./shared/manifest.ts"
-}
-```
+**Also in this file**, add the `defineCroutonManifest()` helper (identity function with runtime validation):
 
-### 1.2 Create `defineCroutonManifest()` helper in crouton-cli
-
-**New file**: `packages/crouton-cli/lib/utils/define-manifest.mjs`
-
-Simple identity function with optional runtime validation. This makes the phantom import from crouton-pages actually work.
-
-```javascript
-export function defineCroutonManifest(manifest) {
+```typescript
+export function defineCroutonManifest(manifest: CroutonManifest): CroutonManifest {
   if (!manifest.id || !manifest.name) {
     throw new Error(`Manifest must have id and name`)
   }
@@ -227,19 +214,22 @@ export function defineCroutonManifest(manifest) {
 }
 ```
 
-**Export from CLI package.json**:
+**Subpath export** in `packages/crouton-core/package.json`:
 ```json
 "exports": {
-  ".": "./bin/crouton-generate.js",
-  "./define-manifest": "./lib/utils/define-manifest.mjs"
+  "./shared/manifest": "./shared/manifest.ts"
 }
 ```
+
+### 1.2 ~~Create `defineCroutonManifest()` helper in crouton-cli~~ (Moved to 1.1)
+
+`defineCroutonManifest()` now lives in `crouton-core/shared/manifest.ts` alongside the type. This keeps the manifest contract in one package — every package already depends on crouton-core, so no new dependency needed. Fixes the phantom import in crouton-pages (which was importing from `@fyit/crouton-cli`).
 
 ### 1.3 Create crouton-core manifest (base field types + reserved names)
 
 **New file**: `packages/crouton-core/crouton.manifest.ts`
 
-This is the canonical declaration of base field types and auto-generated fields:
+This is the canonical declaration of the 10 base field types (+ 2 aliases) and auto-generated fields:
 
 ```typescript
 import type { CroutonManifest } from './shared/manifest'
@@ -254,16 +244,16 @@ const manifest: CroutonManifest = {
   bundled: true,
 
   fieldTypes: {
-    string:   { label: 'String',   icon: 'i-lucide-type',         description: 'Short text (VARCHAR 255)',      db: 'VARCHAR(255)',    drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'UInput' },
-    text:     { label: 'Text',     icon: 'i-lucide-file-text',    description: 'Long text content',             db: 'TEXT',            drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'UTextarea' },
-    number:   { label: 'Number',   icon: 'i-lucide-hash',         description: 'Integer value',                 db: 'INTEGER',         drizzle: 'integer',   zod: 'z.number()',            tsType: 'number',              defaultValue: '0',     component: 'UInputNumber', aliases: ['integer'] },
-    decimal:  { label: 'Decimal',  icon: 'i-lucide-percent',      description: 'Decimal number (10,2)',         db: 'DECIMAL(10,2)',   drizzle: 'decimal',   zod: 'z.number()',            tsType: 'number',              defaultValue: '0',     component: 'UInputNumber', meta: { precision: 10, scale: 2 } },
-    boolean:  { label: 'Boolean',  icon: 'i-lucide-toggle-left',  description: 'True/false toggle',             db: 'BOOLEAN',         drizzle: 'boolean',   zod: 'z.boolean()',           tsType: 'boolean',             defaultValue: 'false', component: 'UCheckbox' },
-    date:     { label: 'Date',     icon: 'i-lucide-calendar',     description: 'Date/timestamp',                db: 'TIMESTAMP',       drizzle: 'timestamp', zod: 'z.date()',              tsType: 'Date | null',         defaultValue: 'null',  component: 'CroutonCalendar', aliases: ['datetime'] },
-    json:     { label: 'JSON',     icon: 'i-lucide-braces',       description: 'JSON object',                   db: 'JSON',            drizzle: 'json',      zod: 'z.record(z.any())',     tsType: 'Record<string, any>', defaultValue: '{}',    component: 'UTextarea' },
-    repeater: { label: 'Repeater', icon: 'i-lucide-layers',       description: 'Repeatable items array',        db: 'JSON',            drizzle: 'json',      zod: 'z.array(z.any())',      tsType: 'any[]',               defaultValue: '[]',    component: 'CroutonFormRepeater' },
-    array:    { label: 'Array',    icon: 'i-lucide-list',         description: 'String array',                  db: 'TEXT',            drizzle: 'text',      zod: 'z.array(z.string())',   tsType: 'string[]',            defaultValue: '[]',    component: 'UTextarea' },
-    reference:{ label: 'Reference',icon: 'i-lucide-link',         description: 'Reference to another collection',db: 'VARCHAR(255)',   drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'CroutonFormReferenceSelect' },
+    string:    { label: 'String',    icon: 'i-lucide-type',         description: 'Short text (VARCHAR 255)',         db: 'VARCHAR(255)',    drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'UInput' },
+    text:      { label: 'Text',      icon: 'i-lucide-file-text',    description: 'Long text content',                db: 'TEXT',            drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'UTextarea' },
+    number:    { label: 'Number',    icon: 'i-lucide-hash',         description: 'Integer value',                    db: 'INTEGER',         drizzle: 'integer',   zod: 'z.number()',            tsType: 'number',              defaultValue: '0',     component: 'UInputNumber', aliases: ['integer'] },
+    decimal:   { label: 'Decimal',   icon: 'i-lucide-percent',      description: 'Decimal number (10,2)',            db: 'DECIMAL(10,2)',   drizzle: 'decimal',   zod: 'z.number()',            tsType: 'number',              defaultValue: '0',     component: 'UInputNumber', meta: { precision: 10, scale: 2 } },
+    boolean:   { label: 'Boolean',   icon: 'i-lucide-toggle-left',  description: 'True/false toggle',                db: 'BOOLEAN',         drizzle: 'boolean',   zod: 'z.boolean()',           tsType: 'boolean',             defaultValue: 'false', component: 'UCheckbox' },
+    date:      { label: 'Date',      icon: 'i-lucide-calendar',     description: 'Date/timestamp',                   db: 'TIMESTAMP',       drizzle: 'timestamp', zod: 'z.date()',              tsType: 'Date | null',         defaultValue: 'null',  component: 'CroutonCalendar', aliases: ['datetime'] },
+    json:      { label: 'JSON',      icon: 'i-lucide-braces',       description: 'JSON object',                      db: 'JSON',            drizzle: 'json',      zod: 'z.record(z.any())',     tsType: 'Record<string, any>', defaultValue: '{}',    component: 'UTextarea' },
+    repeater:  { label: 'Repeater',  icon: 'i-lucide-layers',       description: 'Repeatable items array',           db: 'JSON',            drizzle: 'json',      zod: 'z.array(z.any())',      tsType: 'any[]',               defaultValue: '[]',    component: 'CroutonFormRepeater' },
+    array:     { label: 'Array',     icon: 'i-lucide-list',         description: 'String array',                     db: 'TEXT',            drizzle: 'text',      zod: 'z.array(z.string())',   tsType: 'string[]',            defaultValue: '[]',    component: 'UTextarea' },
+    reference: { label: 'Reference', icon: 'i-lucide-link',         description: 'Reference to another collection',  db: 'VARCHAR(255)',    drizzle: 'text',      zod: 'z.string()',            tsType: 'string',              defaultValue: "''",    component: 'CroutonFormReferenceSelect' },
   },
 
   autoGeneratedFields: [
@@ -298,11 +288,15 @@ const manifest: CroutonManifest = {
 export default manifest
 ```
 
+**Note on aliases**: `number` has alias `['integer']`, `date` has alias `['datetime']`. The manifest loader resolves aliases transparently — consumers see 10 canonical types. `uuid` is dropped (not a distinct storage type).
+
 ### 1.4 Create crouton-assets manifest (image + file field types)
 
 **New file**: `packages/crouton-assets/crouton.manifest.ts`
 
 ```typescript
+import type { CroutonManifest } from '@fyit/crouton-core/shared/manifest'
+
 const manifest: CroutonManifest = {
   id: 'crouton-assets',
   name: 'Media Library',
@@ -319,41 +313,48 @@ const manifest: CroutonManifest = {
 
   aiHint: 'When user needs image uploads, file attachments, or media management',
 }
+
+export default manifest
 ```
 
 ### Files changed in Phase 1
-- **Create**: `packages/crouton-core/shared/manifest.ts` (type definitions)
-- **Create**: `packages/crouton-core/crouton.manifest.ts` (base field types, reserved names)
+- **Create**: `packages/crouton-core/shared/manifest.ts` (type definitions + `defineCroutonManifest()` helper)
+- **Create**: `packages/crouton-core/crouton.manifest.ts` (10 base field types + 2 aliases, reserved names)
 - **Create**: `packages/crouton-assets/crouton.manifest.ts` (image/file field types)
-- **Create**: `packages/crouton-cli/lib/utils/define-manifest.mjs` (helper function)
-- **Edit**: `packages/crouton-core/package.json` (add subpath export)
-- **Edit**: `packages/crouton-cli/package.json` (add export for define-manifest)
+- **Edit**: `packages/crouton-core/package.json` (add subpath export for `./shared/manifest`)
 
 ---
 
-## Phase 2: Manifest Discovery + CLI Integration
+## Phase 2: Manifest Discovery + CLI Integration (Big Bang)
 
-**Objective**: CLI reads manifests instead of hardcoded JSON.
+**Objective**: CLI reads manifests instead of hardcoded JSON. All packages get manifests in one pass. `module-registry.json` is deleted.
+
+**Strategy**: Big bang — create all manifests, wire up the loader, then delete the JSON. No transitional fallback.
 
 ### 2.1 Create manifest loader utility
 
-**New file**: `packages/crouton-cli/lib/utils/manifest-loader.mjs`
+**New file**: `packages/crouton-cli/lib/utils/manifest-loader.ts`
 
-Scans installed packages for `crouton.manifest.ts` files using `jiti` (already used by schema-designer's package-registry.ts). Falls back to reading from `node_modules/` or workspace paths.
+Written in TypeScript from the start — jiti is already landing in the same wave (CLI unjs modernization Wave 1), and this is the most critical new file in the plan. No reason to lose type safety.
+
+Scans installed packages for `crouton.manifest.ts` files using `jiti`.
 
 Discovery order:
 1. Scan `packages/crouton-*/crouton.manifest.ts` (monorepo dev)
 2. Scan `node_modules/@fyit/crouton-*/crouton.manifest.ts` (installed deps)
 3. Merge all manifests into a unified registry
+4. Resolve aliases into flat map (see below)
 
 Key functions:
-```javascript
-export function discoverManifests(rootDir)        // -> CroutonManifest[]
-export function getFieldTypeRegistry(manifests)    // -> merged Record<string, FieldTypeDefinition>
-export function getAutoGeneratedFields(manifests)  // -> string[]
-export function getReservedFieldNames(manifests)   // -> string[]
-export function getModuleRegistry(manifests)       // -> same shape as current module-registry.json (backward compat)
+```typescript
+export function discoverManifests(rootDir: string): Promise<CroutonManifest[]>
+export function getFieldTypeRegistry(manifests: CroutonManifest[]): Record<string, FieldTypeDefinition>
+export function getAutoGeneratedFields(manifests: CroutonManifest[]): string[]
+export function getReservedFieldNames(manifests: CroutonManifest[]): string[]
+export function getModuleRegistry(manifests: CroutonManifest[]): ModuleRegistryEntry[]  // backward compat shape
 ```
+
+**Alias resolution**: `getFieldTypeRegistry()` returns a flat map where aliases are expanded into separate entries pointing to the same `FieldTypeDefinition` object. For example, if `number` has `aliases: ['integer']`, the returned map contains both `number` and `integer` keys referencing the same definition. Consumers never need to resolve aliases — important for AI consumers (MCP, designer chat) where `integer` may appear in natural language.
 
 ### 2.2 Replace CLI hardcoded sources
 
@@ -371,25 +372,27 @@ export function getModuleRegistry(manifests)       // -> same shape as current m
 
 **Delete**: `packages/crouton-cli/lib/module-registry.json`
 - All data migrated into per-package manifests
-- Replace with `getModuleRegistry()` call from manifest-loader for any legacy consumers
+- **Currently live** — designer `useIntakePrompt.ts` reads it. Must update designer (Phase 3.5) in same pass.
 
-**Edit**: `packages/crouton-cli/lib/module-registry.mjs`
+**Edit**: `packages/crouton-cli/lib/module-registry.mjs` *(already partially converted)*
 - Change from JSON import to manifest-loader import
 - `getModule()`, `listModules()` backed by manifest discovery
 
 ### 2.3 Migrate existing manifests to unified format
 
-Update all 5 existing manifests to use the `CroutonManifest` type from crouton-core:
+Update all 5 existing manifests to use the `CroutonManifest` type from crouton-core. This also fixes the broken imports from deleted `crouton-schema-designer`.
 
-- `packages/crouton-bookings/crouton.manifest.ts` — migrate from phantom `PackageManifest` type, add `aiHint` from module-registry.json
+- `packages/crouton-bookings/crouton.manifest.ts` — change import to `@fyit/crouton-core/shared/manifest`, add `aiHint` + `category`
 - `packages/crouton-sales/crouton.manifest.ts` — same
 - `packages/crouton-triage/crouton.manifest.ts` — same
 - `packages/crouton-maps/crouton.manifest.ts` — same
-- `packages/crouton-pages/crouton.manifest.ts` — migrate from `defineCroutonManifest()` format to unified type (keep using `defineCroutonManifest()` but with new type)
+- `packages/crouton-pages/crouton.manifest.ts` — rewrite to `CroutonManifest` type, use `defineCroutonManifest()` from `@fyit/crouton-core/shared/manifest`
 
 ### 2.4 Add manifests to remaining packages
 
-Create `crouton.manifest.ts` for packages that currently only exist in `module-registry.json`. These are minimal — identity + aiHint + dependencies:
+Create `crouton.manifest.ts` for packages currently only in `module-registry.json`. Minimal: identity + aiHint + dependencies.
+
+Data source for each: the corresponding entry in `module-registry.json`.
 
 - `packages/crouton-auth/crouton.manifest.ts`
 - `packages/crouton-admin/crouton.manifest.ts`
@@ -402,17 +405,17 @@ Create `crouton.manifest.ts` for packages that currently only exist in `module-r
 - `packages/crouton-collab/crouton.manifest.ts`
 - `packages/crouton-designer/crouton.manifest.ts`
 - `packages/crouton-mcp-toolkit/crouton.manifest.ts`
-
-Data source: `module-registry.json` entries (description, dependencies, bundled, aiHint, tables).
+- `packages/crouton-themes/crouton.manifest.ts` — thin manifest (no field types); declares theme components (KoLed, KoKnob, KoPanel)
+- `packages/crouton-devtools/crouton.manifest.ts` — thin manifest (no field types); benefits from manifest awareness for inspection panel
 
 ### Files changed in Phase 2
-- **Create**: `packages/crouton-cli/lib/utils/manifest-loader.mjs`
+- **Create**: `packages/crouton-cli/lib/utils/manifest-loader.ts`
 - **Edit**: `packages/crouton-cli/lib/utils/helpers.mjs` (remove typeMapping, import from loader)
 - **Edit**: `packages/crouton-cli/lib/utils/manifest-merge.mjs` (remove hardcoded data)
-- **Edit**: `packages/crouton-cli/lib/module-registry.mjs` (read from manifests)
+- **Edit**: `packages/crouton-cli/lib/module-registry.mjs` (read from manifests instead of JSON)
 - **Delete**: `packages/crouton-cli/lib/module-registry.json`
-- **Edit**: 5 existing `crouton.manifest.ts` files (migrate type import)
-- **Create**: ~11 new `crouton.manifest.ts` files for remaining packages
+- **Edit**: 5 existing `crouton.manifest.ts` files (fix broken imports, migrate type)
+- **Create**: ~13 new `crouton.manifest.ts` files for remaining packages (including themes + devtools)
 
 ---
 
@@ -420,16 +423,16 @@ Data source: `module-registry.json` entries (description, dependencies, bundled,
 
 **Objective**: Designer and MCP read from manifests instead of local hardcoded data.
 
+**Note**: Phase 3.5 (useIntakePrompt) must ship in the same pass as Phase 2's JSON deletion since it's a live dependency.
+
 ### 3.1 Designer: useFieldTypes.ts reads from manifests
 
 **Edit**: `packages/crouton-designer/app/composables/useFieldTypes.ts`
-- Remove hardcoded `FIELD_TYPES` array (lines 3-109)
-- Remove hardcoded `META_PROPERTIES` array (lines 111-121)
-- Import the merged field type registry (via a new composable or server API that aggregates manifests)
+- Remove hardcoded `FIELD_TYPES` array (15 types including uuid/datetime/integer)
+- Remove hardcoded `META_PROPERTIES` array
+- Import the merged field type registry from manifests (via server endpoint or build-time import)
 - Keep the Vue-reactive wrapper (`translatedFieldTypes`, `getFieldIcon`, etc.)
-- Add i18n label/description lookups as before
-
-Implementation approach: The designer extends crouton-core, so it can import the core manifest at build time. For dynamic package discovery (when features change), provide a server endpoint `/api/designer/field-types` that runs manifest discovery and returns the merged registry. The composable can `useFetch` this, or import statically from discovered manifests at build time.
+- `uuid` type is dropped; `integer` and `datetime` resolve to `number`/`date` via aliases
 
 ### 3.2 Designer: useSchemaValidation.ts reads from manifests
 
@@ -441,49 +444,38 @@ Implementation approach: The designer extends crouton-core, so it can import the
 ### 3.3 Designer: useCollectionDesignPrompt.ts uses manifest data
 
 **Edit**: `packages/crouton-designer/app/composables/useCollectionDesignPrompt.ts`
-- Line 89 hardcodes auto-generated fields: `id, teamId, createdAt, updatedAt, createdBy, updatedBy`
-- Replace with import from crouton-core manifest `autoGeneratedFields`
+- Replace hardcoded auto-generated field list with import from crouton-core manifest `autoGeneratedFields`
+- Replaces the workaround fix from commit `5e670f51`
 
 ### 3.4 Designer: designer-chat.post.ts derives fieldTypeEnum from manifests
 
 **Edit**: `packages/crouton-designer/server/api/ai/designer-chat.post.ts`
 - Remove hardcoded `fieldTypeEnum = z.enum([...])` (lines 6-11)
-- Derive from manifest field type registry at request time
+- Derive from manifest field type registry at request time (all canonical types + aliases)
 - This ensures AI tools always accept the same types that validation accepts
 
-### 3.5 Designer: useIntakePrompt.ts reads from manifests instead of module-registry.json
+### 3.5 Designer: useIntakePrompt.ts reads from manifests
 
 **Edit**: `packages/crouton-designer/app/composables/useIntakePrompt.ts`
-- Line 2: `import moduleRegistry from '../../../crouton-cli/lib/module-registry.json'`
-- Replace with manifest-based registry (either imported statically from discovered manifests or via server endpoint)
+- Currently: `import moduleRegistry from '../../../crouton-cli/lib/module-registry.json'`
+- Replace with manifest-based registry (import from manifest loader or server endpoint)
 - Shape stays the same: `description` and `aiHint` per package
+- **MUST ship with Phase 2** (same commit/PR) since JSON deletion breaks this import
 
-### 3.6 MCP: field-types.ts imports from CLI/manifests
+### 3.6 MCP: field-types.ts imports from manifests
 
 **Edit**: `packages/crouton-mcp/src/utils/field-types.ts`
-- Remove entire hardcoded `FIELD_TYPES` object (lines 14-78)
+- Remove entire hardcoded `FIELD_TYPES` object (9 types — currently missing `image`/`file`)
 - Import from CLI's manifest loader: `getFieldTypeRegistry()`
-- `isValidFieldType()` and `getFieldTypeReference()` now derive from manifest data
+- `isValidFieldType()` and `getFieldTypeReference()` derive from manifest data
+- Fixes the out-of-sync issue where MCP was missing image/file types
 
 ### 3.7 MCP: validate-schema.ts uses manifest reserved fields
 
 **Edit**: `packages/crouton-mcp/src/tools/validate-schema.ts`
-- Remove hardcoded auto-generated field list (line 62)
+- Remove hardcoded auto-generated field list
 - Import from manifest loader: `getAutoGeneratedFields()`
-
-### 3.8 Schema-designer (v1): migrate if still used
-
-**Edit**: `packages/crouton-schema-designer/app/composables/useFieldTypes.ts`
-- Remove hardcoded field types (13 types)
-- Import from crouton-core manifest
-- Keep `META_PROPERTIES` (or also derive from manifest if added)
-
-**Edit**: `packages/crouton-schema-designer/server/utils/package-registry.ts`
-- Remove hardcoded `WORKSPACE_PACKAGES = ['crouton-bookings', 'crouton-sales']`
-- Replace with manifest discovery
-
-**Delete**: `packages/crouton-schema-designer/app/types/package-manifest.ts`
-- Type now lives in `packages/crouton-core/shared/manifest.ts`
+- Replaces the workaround fix from commit `78d5df9c`
 
 ### Files changed in Phase 3
 - **Edit**: `packages/crouton-designer/app/composables/useFieldTypes.ts`
@@ -493,9 +485,6 @@ Implementation approach: The designer extends crouton-core, so it can import the
 - **Edit**: `packages/crouton-designer/server/api/ai/designer-chat.post.ts`
 - **Edit**: `packages/crouton-mcp/src/utils/field-types.ts`
 - **Edit**: `packages/crouton-mcp/src/tools/validate-schema.ts`
-- **Edit**: `packages/crouton-schema-designer/app/composables/useFieldTypes.ts`
-- **Edit**: `packages/crouton-schema-designer/server/utils/package-registry.ts`
-- **Delete**: `packages/crouton-schema-designer/app/types/package-manifest.ts`
 
 ---
 
@@ -506,19 +495,19 @@ Implementation approach: The designer extends crouton-core, so it can import the
 ### 4.1 Module reads manifests for feature discovery
 
 **Edit**: `packages/crouton/src/module.ts`
-- `getRequiredLayers()` currently has hardcoded feature-to-package mapping (lines 43-71)
+- `getRequiredLayers()` currently has hardcoded feature-to-package mapping (21 features)
 - Replace with: scan manifests, build mapping from `manifest.id` to `@fyit/${manifest.id}`
 - Use `manifest.category` and `manifest.bundled` to determine defaults
 
 **Edit**: `packages/crouton/src/types.ts`
 - `CroutonOptions` currently hardcodes 18 boolean flags
-- Could be derived from manifest discovery, but keep explicit interface for IDE autocomplete
+- Keep explicit interface for IDE autocomplete
 - Add comment linking to manifest as source of truth
 
 ### 4.2 Create getCroutonLayers() (currently phantom)
 
 **New export in**: `packages/crouton/src/module.ts`
-- This function is referenced in CLAUDE.md and CLI utils but doesn't exist
+- Referenced in CLAUDE.md and CLI utils but doesn't exist
 - Reads `crouton.config.js` features section
 - Returns array of `@fyit/crouton-*` package names based on enabled features
 - Uses manifest discovery to map feature IDs to package names
@@ -531,9 +520,7 @@ Implementation approach: The designer extends crouton-core, so it can import the
 
 ## app.config.ts Integration
 
-Package `app.config.ts` files currently duplicate identity data (id, name, icon) from manifests — and sometimes diverge (bookings has `i-heroicons-calendar` in manifest but `i-lucide-calendar` in app.config).
-
-**Approach**: Packages import identity from their own manifest. Routes and page types remain local.
+Package `app.config.ts` files currently duplicate identity data (id, name, icon) from manifests. After manifests land, packages import identity from their own manifest:
 
 ```typescript
 // packages/crouton-bookings/app/app.config.ts
@@ -553,9 +540,7 @@ export default defineAppConfig({
 })
 ```
 
-For scaffolded apps, the CLI generates `app.config.ts` from manifest data when running `crouton scaffold-app`.
-
-**`useCroutonApps()` composable** — continues reading from `app.config.croutonApps`, no changes needed.
+Routes and page types remain local (UX choices that can't be schema-derived).
 
 ---
 
@@ -566,35 +551,19 @@ For scaffolded apps, the CLI generates `app.config.ts` from manifest data when r
 
 ---
 
-## Migration Path for Existing Manifests
-
-| Package | Current Format | Action |
-|---------|---------------|--------|
-| crouton-bookings | `PackageManifest` from phantom import | Change import to `@fyit/crouton-core/shared/manifest`, add `aiHint` + `category` |
-| crouton-sales | `PackageManifest` from phantom import | Same as above |
-| crouton-triage | `PackageManifest` from phantom import | Same as above |
-| crouton-maps | `PackageManifest` from phantom import | Same as above, add `fieldTypes` if applicable |
-| crouton-pages | `defineCroutonManifest()` (different format) | Rewrite to `CroutonManifest` type, keep `defineCroutonManifest()` wrapper |
-
-All existing manifest data (collections, configuration, extensionPoints, provides) carries over — the type is a superset.
-
----
-
 ## Verification Strategy
 
 ### After Phase 1
 - `npx nuxt typecheck` in `apps/crouton-designer` — manifest types resolve
 - Import `packages/crouton-core/shared/manifest.ts` from CLI — compiles
 
-### After Phase 2
+### After Phase 2 + 3 (ship together due to JSON deletion)
 - Run `pnpm crouton doctor .` in test app — CLI reads manifests successfully
 - Run `pnpm crouton config ./crouton.config.js` in test app — generation still works
 - Verify: `module-registry.json` deleted, no import errors
-
-### After Phase 3
 - Start designer app (`pnpm dev` in `apps/crouton-designer`)
-- Create new project, verify AI suggests all packages (not just 2)
-- In Phase 2, verify field type dropdown shows `image` and `file`
+- Create new project, verify AI suggests all packages
+- Verify field type dropdown shows `image` and `file`
 - Create collection with `image` field, verify validation passes
 - Run MCP inspector: `validate_schema` accepts `image` and `file` types
 - `npx nuxt typecheck` in all modified packages
@@ -610,8 +579,9 @@ All existing manifest data (collections, configuration, extensionPoints, provide
 | Phase | Effort | Impact | Packages Touched |
 |-------|--------|--------|------------------|
 | Phase 1 | Medium | Foundation — types + core manifest | crouton-core, crouton-cli, crouton-assets |
-| Phase 2 | Large | CLI reads manifests, all packages get manifests | crouton-cli + ~16 packages |
-| Phase 3 | Medium | Consumers migrate, duplicates deleted | crouton-designer, crouton-mcp, crouton-schema-designer |
+| Phase 2+3 | Large | CLI reads manifests, all packages get manifests, JSON deleted, consumers migrated | crouton-cli + ~18 packages + crouton-designer + crouton-mcp |
 | Phase 4 | Small | Unified module + getCroutonLayers() | crouton (unified module) |
 
-Phases 1-3 are the core work. Phase 4 is optional cleanup that can follow later.
+**Ship order**: Phase 1 ships independently → Phase 2+3 ships as one atomic PR → Phase 4 ships whenever convenient.
+
+**Total files**: ~6 created (Phase 1) + ~14 created + ~12 edited (Phase 2+3) + ~2 edited (Phase 4) = **~34 files**.
