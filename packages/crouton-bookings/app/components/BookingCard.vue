@@ -58,6 +58,17 @@ const locationSlots = computed<SlotItem[]>(() => {
   return parseLocationSlots(props.booking.locationData)
 })
 
+// Only the slots this booking actually covers (for display on the card)
+const bookedSlots = computed<SlotItem[]>(() => {
+  const ids = bookedSlotIds.value
+  if (ids.length === 0) return []
+  // If "all-day", show a single synthetic slot
+  if (ids.includes('all-day')) {
+    return [{ id: 'all-day', label: 'all-day' }]
+  }
+  return locationSlots.value.filter(s => ids.includes(s.id))
+})
+
 // Get booked slot labels for display
 const slotLabel = computed(() => {
   const slotIds = bookedSlotIds.value
@@ -266,21 +277,15 @@ const timelineItems = computed<TimelineItem[]>(() => {
               </span>
             </template>
             <template v-else>
-              <!-- Show slot indicator for locations with configured slots -->
+              <!-- Show slot indicator for booked slots only -->
               <CroutonBookingsSlotIndicator
-                v-if="locationSlots.length > 0"
-                :slots="locationSlots"
+                v-if="bookedSlots.length > 0"
+                :slots="bookedSlots"
                 :booked-slot-ids="bookedSlotIds"
                 :cancelled-slot-ids="isCancelled ? bookedSlotIds : []"
                 :color="locationColor"
                 size="sm"
                 variant="dots"
-              />
-              <!-- Show single dot for all-day bookings on locations with no slots -->
-              <span
-                v-else-if="bookedSlotIds.includes('all-day')"
-                class="w-2 h-2 rounded-full shrink-0"
-                :style="{ backgroundColor: isCancelled ? '#ef4444' : locationColor }"
               />
               <span class="text-xs text-muted">{{ slotLabel }}</span>
             </template>

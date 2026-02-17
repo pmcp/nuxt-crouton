@@ -4,6 +4,7 @@ import type { Booking } from '../../types/booking'
 interface SlotItem {
   id: string
   label?: string
+  color?: string
 }
 
 interface Props {
@@ -87,8 +88,11 @@ function getSlotOpacity(slotId: string): number {
 
 function getSlotColor(slotId: string): string {
   if (isCancelled(slotId) && isBooked(slotId)) return props.cancelledColor
-  if (isBooked(slotId)) return props.bookedColor || props.color
-  return props.color
+  // Use per-slot color if available, then bookedColor override, then location color
+  const slot = props.slots.find(s => s.id === slotId)
+  const slotColor = slot?.color || props.color
+  if (isBooked(slotId)) return props.bookedColor || slotColor
+  return slotColor
 }
 
 // Get booking for a specific slot
