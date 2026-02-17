@@ -27,7 +27,6 @@ AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase 
 | `app/composables/useSchemaValidation.ts` | Schema validation rules (errors + warnings) |
 | `app/composables/useSchemaExport.ts` | Converts editor state to Crouton JSON schemas |
 | `app/composables/useAppScaffold.ts` | Orchestrates Create App flow — artifact preview, POST to scaffold endpoint, step results |
-| `app/composables/useSchemaDownload.ts` | Legacy ZIP download fallback (fflate) |
 | `app/composables/useFieldTypes.ts` | Field type definitions and metadata |
 | `app/types/schema.ts` | ProjectConfig, DesignerProject, and related types |
 | `server/api/scaffold-app.post.ts` | Server endpoint — runs CLI scaffold, writes schemas/seed, installs deps, runs doctor |
@@ -118,13 +117,12 @@ export default defineNuxtConfig({
 
 ### Modify the review/export format
 1. Edit `useSchemaExport.ts` for JSON schema changes
-2. Edit `useSchemaDownload.ts` for legacy ZIP structure changes (fallback only; primary flow uses `useAppScaffold`)
 
 ## Dependencies
 
 - **Extends**: `@fyit/crouton-ai` (AI chat, streaming, provider factory)
 - **Peer**: `@fyit/crouton-core` (DB, team context, API utilities), `@nuxt/ui ^4.0.0`, `nuxt ^4.0.0`
-- **Runtime**: `fflate` (ZIP compression, legacy fallback), `@vueuse/nuxt`
+- **Runtime**: `@vueuse/nuxt`
 - **Server**: Node built-ins (`child_process`, `fs/promises`, `path`) — no additional deps
 
 ## Component Naming
