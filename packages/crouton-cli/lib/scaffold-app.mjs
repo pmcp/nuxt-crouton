@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { access, mkdir, writeFile } from 'node:fs/promises'
 import consola from 'consola'
 import { loadModules } from './module-registry.mjs'
-import { getFrameworkPackages } from './utils/framework-packages.mjs'
+import { getFrameworkPackages } from './utils/framework-packages.ts'
 
 // ─── Template helpers ─────────────────────────────────────────────
 

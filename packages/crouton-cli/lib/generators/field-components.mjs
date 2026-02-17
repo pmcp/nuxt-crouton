@@ -1,5 +1,5 @@
 // Generator for Field component folder (Input.vue, Select.vue, CardMini.vue)
-import { toCase } from '../utils/helpers.mjs'
+import { toCase } from '../utils/helpers.ts'
 
 /**
  * Generate field-specific components for dependent field rendering

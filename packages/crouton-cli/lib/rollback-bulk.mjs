@@ -6,7 +6,7 @@ import path from 'node:path'
 import consola from 'consola'
 
 // Import utilities
-import { toCase } from './utils/helpers.mjs'
+import { toCase } from './utils/helpers.ts'
 import { rollbackCollection, fileExists, cleanRootNuxtConfig } from './rollback-collection.mjs'
 
 async function getAllCollectionsInLayer(layer) {

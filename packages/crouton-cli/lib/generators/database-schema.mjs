@@ -1,5 +1,5 @@
 // Generator for Drizzle schema
-import { toSnakeCase } from '../utils/helpers.mjs'
+import { toSnakeCase } from '../utils/helpers.ts'
 
 export function generateSchema(data, dialect, config = null) {
   const { plural, layer, layerPascalCase, singular, hierarchy, pascalCasePlural } = data

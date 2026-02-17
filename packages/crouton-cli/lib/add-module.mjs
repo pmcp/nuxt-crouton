@@ -7,9 +7,9 @@ import { readFile } from 'node:fs/promises'
 import consola from 'consola'
 
 import { loadModules, getModule, listModules } from './module-registry.mjs'
-import { detectPackageManager, getInstallCommand } from './utils/detect-package-manager.mjs'
-import { addToNuxtConfigExtends, isInNuxtConfigExtends } from './utils/update-nuxt-config.mjs'
-import { addSchemaExport, getSchemaPath } from './utils/update-schema-index.mjs'
+import { detectPackageManager, getInstallCommand } from './utils/detect-package-manager.ts'
+import { addToNuxtConfigExtends, isInNuxtConfigExtends } from './utils/update-nuxt-config.ts'
+import { addSchemaExport, getSchemaPath } from './utils/update-schema-index.ts'
 
 /**
  * @typedef {Object} AddModuleOptions

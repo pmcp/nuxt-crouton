@@ -1,5 +1,5 @@
 // Generator for seed data file using drizzle-seed
-import { getSeedGenerator, pascal } from '../utils/helpers.mjs'
+import { getSeedGenerator, pascal } from '../utils/helpers.ts'
 
 /**
  * Generate a seed file for a collection using drizzle-seed

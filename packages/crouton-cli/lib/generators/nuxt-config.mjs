@@ -1,5 +1,5 @@
 // Generator for nuxt.config.ts
-import { PATH_CONFIG } from '../utils/paths.mjs'
+import { PATH_CONFIG } from '../utils/paths.ts'
 
 export function generateNuxtConfig(data) {
   const { pascalCasePlural, layerPascalCase, layer, plural } = data

@@ -5,7 +5,7 @@ import {
   toCase,
   mapType,
   getSeedGenerator
-} from '../../../lib/utils/helpers.mjs'
+} from '../../../lib/utils/helpers.ts'
 import { seedTestFields } from '../../fixtures/sample-data.mjs'
 
 describe('pascal', () => {

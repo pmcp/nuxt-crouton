@@ -19,6 +19,13 @@ import { existsSync, readdirSync } from 'node:fs'
 // Re-export types for consumers
 export type { CroutonManifest, FieldTypeDefinition }
 
+/** AI-facing summary of what a package provides */
+export interface ModuleAIContext {
+  collections?: Array<{ name: string, description: string }>
+  composables?: string[]
+  components?: string[]
+}
+
 /** Module registry entry shape (backward compat with module-registry.json) */
 export interface ModuleRegistryEntry {
   alias: string
@@ -29,6 +36,7 @@ export interface ModuleRegistryEntry {
   aiHint: string | null
   dependencies: string[]
   category: 'core' | 'addon' | 'miniapp'
+  ai?: ModuleAIContext
 }
 
 // Cache to avoid repeated filesystem scanning
@@ -221,6 +229,17 @@ export function getModuleRegistry(
 ): ModuleRegistryEntry[] {
   return manifests.map((m) => {
     const alias = m.id.replace(/^crouton-/, '')
+
+    // Build AI-facing context from manifest data
+    const hasAIData = m.collections?.length || m.provides?.composables?.length || m.provides?.components?.length
+    const ai: ModuleAIContext | undefined = hasAIData
+      ? {
+          collections: m.collections?.filter(c => !c.optional).map(c => ({ name: c.name, description: c.description })),
+          composables: m.provides?.composables,
+          components: m.provides?.components?.map(c => c.name),
+        }
+      : undefined
+
     return {
       alias,
       package: `@fyit/${m.id}`,
@@ -230,6 +249,7 @@ export function getModuleRegistry(
       aiHint: m.aiHint ?? null,
       dependencies: m.dependencies ?? [],
       category: m.category,
+      ai,
     }
   })
 }
@@ -248,7 +268,7 @@ export function getModuleRegistryMap(
 }
 
 /**
- * Build a type mapping compatible with helpers.mjs typeMapping shape.
+ * Build a type mapping compatible with helpers.ts typeMapping shape.
  * Used by generate-collection.mjs during code generation.
  */
 export function getTypeMapping(

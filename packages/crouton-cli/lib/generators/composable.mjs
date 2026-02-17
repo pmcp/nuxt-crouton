@@ -1,5 +1,5 @@
 // Generator for use[Collection].ts composable
-import { toCase } from '../utils/helpers.mjs'
+import { toCase } from '../utils/helpers.ts'
 
 /**
  * Generate Zod schema for a repeater item with optional translatable properties

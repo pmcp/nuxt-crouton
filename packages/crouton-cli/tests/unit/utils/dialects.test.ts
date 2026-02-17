@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DIALECTS } from '../../../lib/utils/dialects.mjs'
+import { DIALECTS } from '../../../lib/utils/dialects.ts'
 
 describe('DIALECTS', () => {
   describe('pg', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { PATH_CONFIG, getImportPath } from '../../../lib/utils/paths.mjs'
+import { PATH_CONFIG, getImportPath } from '../../../lib/utils/paths.ts'
 
 describe('PATH_CONFIG', () => {
   describe('patterns', () => {

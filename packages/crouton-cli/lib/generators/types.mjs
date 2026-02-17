@@ -1,5 +1,5 @@
 // Generator for TypeScript types
-import { toCase } from '../utils/helpers.mjs'
+import { toCase } from '../utils/helpers.ts'
 
 /**
  * Generate AI context header for types files

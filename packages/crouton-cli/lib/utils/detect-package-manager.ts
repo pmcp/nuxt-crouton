@@ -1,0 +1,56 @@
+// Detect the package manager used in the current project
+
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+type PackageManager = 'pnpm' | 'yarn' | 'npm'
+
+/**
+ * Detect which package manager is being used
+ */
+export function detectPackageManager(cwd = process.cwd()): PackageManager {
+  // Check for lock files in order of preference
+  if (existsSync(join(cwd, 'pnpm-lock.yaml'))) {
+    return 'pnpm'
+  }
+
+  if (existsSync(join(cwd, 'yarn.lock'))) {
+    return 'yarn'
+  }
+
+  if (existsSync(join(cwd, 'package-lock.json'))) {
+    return 'npm'
+  }
+
+  // Check for packageManager field in package.json
+  try {
+    const packageJson = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8'))
+    if (packageJson.packageManager) {
+      if (packageJson.packageManager.startsWith('pnpm')) return 'pnpm'
+      if (packageJson.packageManager.startsWith('yarn')) return 'yarn'
+      if (packageJson.packageManager.startsWith('npm')) return 'npm'
+    }
+  } catch {
+    // Ignore errors reading package.json
+  }
+
+  // Default to pnpm (preferred in this ecosystem)
+  return 'pnpm'
+}
+
+/**
+ * Get the install command for a package manager
+ */
+export function getInstallCommand(pm: PackageManager, packageName: string, options: { dev?: boolean } = {}): string {
+  const { dev = false } = options
+
+  switch (pm) {
+    case 'pnpm':
+      return `pnpm add ${dev ? '-D ' : ''}${packageName}`
+    case 'yarn':
+      return `yarn add ${dev ? '-D ' : ''}${packageName}`
+    case 'npm':
+    default:
+      return `npm install ${dev ? '--save-dev ' : ''}${packageName}`
+  }
+}

@@ -12,7 +12,7 @@
     "./lib/scaffold-app": "./lib/scaffold-app.mjs",
     "./lib/doctor": "./lib/doctor.mjs",
     "./lib/init-app": "./lib/init-app.mjs",
-    "./lib/utils/config-builder": "./lib/utils/config-builder.mjs",
+    "./lib/utils/config-builder": "./lib/utils/config-builder.ts",
     "./lib/utils/manifest-loader": "./lib/utils/manifest-loader.ts",
     "./*": "./*"
   },

@@ -4,7 +4,7 @@ import {
   referencesAssets,
   getAssetType,
   getAssetComponent
-} from '../../../lib/utils/asset-detector.mjs'
+} from '../../../lib/utils/asset-detector.ts'
 
 describe('isAssetSchema', () => {
   it('returns true for schema with filename and pathname', () => {

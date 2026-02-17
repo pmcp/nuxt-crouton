@@ -8,13 +8,13 @@ import { promisify } from 'node:util'
 import { loadConfig } from 'c12'
 
 // Import utilities
-import { toCase, toSnakeCase, mapType } from './utils/helpers.mjs'
-import { loadTypeMapping } from './utils/manifest-bridge.mjs'
-import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
-import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
-import { syncFrameworkPackages } from './utils/update-nuxt-config.mjs'
-import { addNamedSchemaExport } from './utils/update-schema-index.mjs'
-import { registerTranslationsUiCollection } from './utils/update-app-config.mjs'
+import { toCase, toSnakeCase, mapType } from './utils/helpers.ts'
+import { loadTypeMapping } from './utils/manifest-bridge.ts'
+import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.ts'
+import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.ts'
+import { syncFrameworkPackages } from './utils/update-nuxt-config.ts'
+import { addNamedSchemaExport } from './utils/update-schema-index.ts'
+import { registerTranslationsUiCollection } from './utils/update-app-config.ts'
 
 // Import generators
 import { generateFormComponent } from './generators/form-component.mjs'
@@ -1483,7 +1483,7 @@ export async function runConfig(options = {}) {
 
       // Auto-merge package manifest collections for enabled features
       if (config.features && !options.noAutoMerge) {
-        const { mergeManifestCollections } = await import('./utils/manifest-merge.mjs')
+        const { mergeManifestCollections } = await import('./utils/manifest-merge.ts')
         const mergeResult = await mergeManifestCollections(config)
         if (mergeResult.merged > 0) {
           console.log('\n' + '═'.repeat(60))

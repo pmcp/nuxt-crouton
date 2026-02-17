@@ -1,7 +1,7 @@
 // Generator for _Form.vue component
-import { toCase } from '../utils/helpers.mjs'
-import { referencesAssets, getAssetComponent } from '../utils/asset-detector.mjs'
-import { detectAddressFields, getCoordinateFieldName } from '../utils/address-detector.mjs'
+import { toCase } from '../utils/helpers.ts'
+import { referencesAssets, getAssetComponent } from '../utils/asset-detector.ts'
+import { detectAddressFields, getCoordinateFieldName } from '../utils/address-detector.ts'
 
 /**
  * Generate AI context header for _Form.vue components

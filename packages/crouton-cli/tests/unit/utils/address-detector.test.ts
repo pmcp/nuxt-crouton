@@ -5,7 +5,7 @@ import {
   detectAddressFields,
   getCoordinateFieldName,
   buildAddressQuery
-} from '../../../lib/utils/address-detector.mjs'
+} from '../../../lib/utils/address-detector.ts'
 
 describe('isAddressField', () => {
   describe('street variations', () => {

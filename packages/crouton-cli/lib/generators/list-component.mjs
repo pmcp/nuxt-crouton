@@ -1,5 +1,5 @@
 // Generator for List.vue component
-import { toCase } from '../utils/helpers.mjs'
+import { toCase } from '../utils/helpers.ts'
 
 /**
  * Generate AI context header for List.vue components

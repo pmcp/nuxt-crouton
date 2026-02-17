@@ -142,7 +142,7 @@ crouton init my-app --dry-run
 | `lib/generators/*.mjs` | Template generators (14 files) |
 | `lib/module-registry.mjs` | Module definitions for `crouton add` |
 | `lib/add-module.mjs` | Module installation implementation |
-| `lib/utils/helpers.mjs` | Case conversion, type mapping |
+| `lib/utils/helpers.ts` | Case conversion, type mapping |
 | `lib/utils/dialects.mjs` | PostgreSQL/SQLite configs |
 | `lib/utils/detect-package-manager.mjs` | Detect pnpm/yarn/npm |
 | `lib/utils/update-nuxt-config.mjs` | Update nuxt.config.ts extends |

@@ -6,10 +6,10 @@ import path from 'node:path'
 import consola from 'consola'
 
 // Import utilities
-import { toCase } from './utils/helpers.mjs'
-import { removeFromNuxtConfigExtends } from './utils/update-nuxt-config.mjs'
-import { removeSchemaExport } from './utils/update-schema-index.mjs'
-import { removeFromAppConfig } from './utils/update-app-config.mjs'
+import { toCase } from './utils/helpers.ts'
+import { removeFromNuxtConfigExtends } from './utils/update-nuxt-config.ts'
+import { removeSchemaExport } from './utils/update-schema-index.ts'
+import { removeFromAppConfig } from './utils/update-app-config.ts'
 
 export async function fileExists(filepath) {
   try {

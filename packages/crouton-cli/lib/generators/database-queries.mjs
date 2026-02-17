@@ -1,5 +1,5 @@
 // Generator for database queries
-import { toKebabCase, pascal } from '../utils/helpers.mjs'
+import { toKebabCase, pascal } from '../utils/helpers.ts'
 
 // Helper to generate tree-specific queries when hierarchy is enabled
 function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, camelCasePlural, singular) {

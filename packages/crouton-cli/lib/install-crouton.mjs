@@ -5,7 +5,7 @@ import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 import fsp from 'node:fs/promises'
 import readline from 'node:readline'
-import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
+import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.ts'
 
 const execAsync = promisify(exec)
 
