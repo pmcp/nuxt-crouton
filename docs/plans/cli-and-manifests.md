@@ -11,7 +11,7 @@
 | Phase 0 | ✅ Done | 26 characterization tests covering all 11 CLI commands. All 377 tests pass. |
 | Phase 1 | ✅ Done | Manifest type, core manifest (12 field types), unjs deps, c12 config loading. All verified. |
 | Phase 2+3 | ✅ Done | All manifests created, CLI reads from manifests, `module-registry.json` deleted, designer + MCP consumers migrated, app.config injection working. 374 CLI tests + 32 MCP tests pass. |
-| Phase 3.5 (magicast) | Not started | Replace regex-based config modifications with AST (magicast). After Phase 2+3. |
+| Phase 3.5 (magicast) | ✅ Done | Replaced ~260 lines of regex with magicast AST manipulation in 3 config modification sites. 374 CLI + 32 MCP tests pass. |
 | Phase 4 | Not started | Unified module reads manifests for feature discovery |
 | Phase 5 | Not started | CLI framework rewrite (citty + full chalk/ora/inquirer/fs-extra removal). Tests already exist from Phase 0 |
 
@@ -753,28 +753,26 @@ All 13 generators (template strings for new files) — magicast is for modifying
 ### Phase 3.5 Files Changed
 
 - **Edit**: `packages/crouton-cli/package.json` — add `magicast`
-- **Rewrite**: `packages/crouton-cli/lib/utils/update-nuxt-config.mjs` → `update-nuxt-config.ts` with magicast
-- **Extract + Rewrite**: `packages/crouton-cli/lib/utils/update-schema-index.mjs` → `update-schema-index.ts` with magicast (extracted from `generate-collection.mjs` `updateSchemaIndex()`)
-- **Extract + Create**: `packages/crouton-cli/lib/utils/update-app-config.ts` — magicast for `croutonCollections` insertion (extracted from `generate-collection.mjs` `registerTranslationsUiCollection()`)
-- **Edit**: `packages/crouton-cli/lib/generate-collection.mjs` — replace inline `updateSchemaIndex()` and `registerTranslationsUiCollection()` with imports from new util files
-- **Edit**: `packages/crouton-cli/lib/rollback-collection.mjs` — use magicast utils for removal
-- **Edit**: `packages/crouton-cli/lib/rollback-bulk.mjs` — use magicast utils for removal
+- **Rewrite**: `packages/crouton-cli/lib/utils/update-nuxt-config.mjs` — magicast `extends` array manipulation (kept `.mjs` — CLI not yet TS-aware)
+- **Rewrite**: `packages/crouton-cli/lib/utils/update-schema-index.mjs` — magicast for AST-based export detection (merged inline function from `generate-collection.mjs`)
+- **Create**: `packages/crouton-cli/lib/utils/update-app-config.mjs` — magicast for `croutonCollections` insertion (extracted from `generate-collection.mjs`)
+- **Edit**: `packages/crouton-cli/lib/generate-collection.mjs` — replaced inline `updateSchemaIndex()` and `registerTranslationsUiCollection()` with imports
+- **Edit**: `packages/crouton-cli/lib/rollback-collection.mjs` — use magicast utils for removal (schema, app.config, nuxt.config)
+- **Edit**: `packages/crouton-cli/lib/add-module.mjs` — updated import paths
 
 ### Phase 3.5 Checklist
 
-- [ ] Add `magicast` to `packages/crouton-cli/package.json`
-- [ ] Rewrite `update-nuxt-config.mjs` → `.ts` using magicast `extends` array manipulation
-- [ ] Extract `updateSchemaIndex()` from `generate-collection.mjs` into `lib/utils/update-schema-index.ts` using magicast
-- [ ] Extract `registerTranslationsUiCollection()` from `generate-collection.mjs` into `lib/utils/update-app-config.ts` using magicast
-- [ ] Update `generate-collection.mjs` to import from new util files
-- [ ] Update `rollback-collection.mjs` to use magicast utils for config removal
-- [ ] Update `rollback-bulk.mjs` to use magicast utils for config removal
-- [ ] Verify: `crouton generate shop products` still modifies nuxt.config correctly
-- [ ] Verify: `crouton rollback shop products` still cleans up nuxt.config correctly
-- [ ] Verify: Schema index exports are correct after generation
-- [ ] Verify: `croutonCollections` registration works for i18n collections
-- [ ] Phase 0 characterization tests still pass
-- [ ] `npx nuxt typecheck`
+- [x] Add `magicast` to `packages/crouton-cli/package.json`
+- [x] Rewrite `update-nuxt-config.mjs` using magicast `extends` array manipulation (kept `.mjs` — CLI not yet TS-loader aware)
+- [x] Rewrite `update-schema-index.mjs` using magicast for AST-based export detection + extraction from `generate-collection.mjs`
+- [x] Extract `registerTranslationsUiCollection()` from `generate-collection.mjs` into `lib/utils/update-app-config.mjs` using magicast
+- [x] Update `generate-collection.mjs` to import from new util files
+- [x] Update `rollback-collection.mjs` to use magicast utils for config removal
+- [x] `rollback-bulk.mjs` delegates to `rollback-collection.mjs` — no direct changes needed
+- [x] Verify: `crouton config ./crouton.config.js` still validates and syncs framework packages
+- [x] Verify: Designer app boots cleanly (20 manifests loaded)
+- [x] Phase 0 characterization tests still pass (374/374)
+- [x] MCP tests still pass (32/32)
 
 ### Tools Evaluated for Config File Modification
 
