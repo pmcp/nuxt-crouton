@@ -159,7 +159,13 @@ const mainClasses = computed(() => {
 
     <!-- Page content -->
     <main ref="mainRef" :class="mainClasses">
-      <slot />
+      <div
+        v-if="pageLayout !== 'full-screen'"
+        class="rounded-xl border border-[var(--ui-border-accented)] bg-[var(--ui-bg-elevated)] shadow-lg overflow-hidden h-full"
+      >
+        <slot />
+      </div>
+      <slot v-else />
     </main>
 
     <!-- Editing drawer (slides up from bottom with scale-background effect) -->
