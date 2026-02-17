@@ -1,9 +1,9 @@
 /**
  * Team Theme Composable
  *
- * Fetches and applies team-specific theme settings (primary color, neutral color, radius).
- * Uses Nuxt's updateAppConfig to apply theme changes at runtime.
- * Integrates with useAppReady to prevent FOUC by gating app readiness until theme loads.
+ * Provides reactive access to the team theme and methods to update it.
+ * The theme is initially fetched by the team-theme plugin (during SSR).
+ * This composable reads from the shared useState and handles live updates.
  *
  * @example
  * ```typescript
@@ -13,7 +13,7 @@
  * await updateTheme({ primary: 'blue', neutral: 'slate', radius: 0.25 })
  * ```
  */
-import { ref, computed, watch, readonly } from 'vue'
+import { computed, watch, readonly } from 'vue'
 import { updateAppConfig } from '#imports'
 
 /**
@@ -74,60 +74,10 @@ export const DEFAULT_THEME: Required<TeamThemeSettings> = {
 }
 
 export function useTeamTheme() {
-  const { registerGate, resolveGate } = useAppReady()
-
-  // Register readiness gate
-  registerGate('team-theme')
-
-  // Use useTeamContext for proper team resolution
-  // (avoids false positives from [id] params that aren't team IDs)
   const { teamId } = useTeamContext()
 
-  // If no team context, resolve gate immediately
-  if (!teamId.value) {
-    resolveGate('team-theme')
-  }
-
-  // Fetch team theme settings
-  const themeData = ref<TeamThemeSettings>({})
-  const status = ref<'idle' | 'pending' | 'success' | 'error'>('idle')
-  const error = ref<Error | null>(null)
-
-  // Fetch function
-  async function fetchTheme() {
-    if (!teamId.value) return
-
-    status.value = 'pending'
-    error.value = null
-
-    try {
-      const data = await $fetch<TeamThemeSettings>(
-        `/api/teams/${teamId.value}/settings/theme`
-      )
-      themeData.value = data ?? {}
-      status.value = 'success'
-    } catch (e) {
-      error.value = e instanceof Error ? e : new Error('Failed to fetch theme')
-      status.value = 'error'
-    } finally {
-      // Resolve gate on success or error — never block the app for a theme failure
-      resolveGate('team-theme')
-    }
-  }
-
-  // Refresh function
-  async function refresh() {
-    await fetchTheme()
-  }
-
-  // Watch for team changes and fetch
-  watch(teamId, () => {
-    if (teamId.value) {
-      fetchTheme()
-    } else {
-      resolveGate('team-theme')
-    }
-  }, { immediate: true })
+  // Shared state with the plugin (populated during SSR)
+  const themeData = useState<TeamThemeSettings>('team-theme-data', () => ({}))
 
   // Computed theme with defaults
   const theme = computed<Required<TeamThemeSettings>>(() => ({
@@ -137,7 +87,7 @@ export function useTeamTheme() {
   }))
 
   // Loading state
-  const isLoading = computed(() => status.value === 'pending' || status.value === 'idle')
+  const isLoading = computed(() => !themeData.value.primary)
 
   // Apply theme to Nuxt UI via updateAppConfig
   function applyTheme(settings: TeamThemeSettings) {
@@ -145,7 +95,6 @@ export function useTeamTheme() {
     const neutral = settings.neutral ?? DEFAULT_THEME.neutral
     const radius = settings.radius ?? DEFAULT_THEME.radius
 
-    // Update Nuxt UI colors via app config
     updateAppConfig({
       ui: {
         colors: {
@@ -155,16 +104,29 @@ export function useTeamTheme() {
       }
     })
 
-    // Apply radius via CSS custom property
     if (import.meta.client) {
       document.documentElement.style.setProperty('--ui-radius', `${radius}rem`)
     }
   }
 
-  // Watch for theme changes and apply them
+  // Watch for live theme changes (e.g. admin editing theme settings)
   watch(theme, (newTheme) => {
     applyTheme(newTheme)
-  }, { immediate: true })
+  })
+
+  // Refresh theme from API
+  async function refresh() {
+    if (!teamId.value) return
+    try {
+      const data = await $fetch<TeamThemeSettings>(
+        `/api/teams/${teamId.value}/settings/theme`
+      )
+      themeData.value = data ?? {}
+      applyTheme(theme.value)
+    } catch {
+      // Refresh failed, keep current theme
+    }
+  }
 
   // Update theme (for admin UI)
   async function updateTheme(settings: Partial<TeamThemeSettings>) {
@@ -180,9 +142,7 @@ export function useTeamTheme() {
       }
     )
 
-    // Refresh the cached data
     await refresh()
-
     return response
   }
 
@@ -196,13 +156,9 @@ export function useTeamTheme() {
   }
 
   return {
-    // State
     theme: readonly(theme),
     isLoading,
-    error,
     teamId,
-
-    // Actions
     updateTheme,
     resetTheme,
     refresh,
