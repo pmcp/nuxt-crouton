@@ -16,6 +16,7 @@
     "./lib/doctor": "./lib/doctor.mjs",
     "./lib/init-app": "./lib/init-app.mjs",
     "./lib/utils/config-builder": "./lib/utils/config-builder.mjs",
+    "./lib/utils/manifest-loader": "./lib/utils/manifest-loader.ts",
     "./*": "./*"
   },
   "files": [
