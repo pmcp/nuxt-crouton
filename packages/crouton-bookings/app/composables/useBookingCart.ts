@@ -319,10 +319,11 @@ export function useBookingCart() {
     }
   }
 
-  // All slots including "All Day" prepended (for slot mode only)
+  // All slots for slot mode — "All Day" only when no named slots exist
   const allSlots = computed<SlotItem[]>(() => {
     if (!selectedLocation.value || isInventoryMode.value) return []
-    return [ALL_DAY_SLOT, ...rawSlots.value]
+    if (rawSlots.value.length > 0) return rawSlots.value
+    return [ALL_DAY_SLOT]
   })
 
   // Get all booked slot IDs for the selected date (from API + cart, with duplicates for capacity counting)

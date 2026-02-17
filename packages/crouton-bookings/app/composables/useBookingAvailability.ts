@@ -79,10 +79,11 @@ export function useBookingAvailability(
   // Total quantity for inventory mode
   const inventoryQuantity = computed(() => location.value?.quantity ?? 0)
 
-  // All slots including "All Day" prepended (for slot mode only)
+  // All slots for slot mode — "All Day" only when no named slots exist
   const allSlots = computed<SlotOption[]>(() => {
     if (isInventoryMode.value) return []
-    return [ALL_DAY_SLOT, ...locationSlots.value]
+    if (locationSlots.value.length > 0) return locationSlots.value
+    return [ALL_DAY_SLOT]
   })
 
   // Fetch availability for a date range
