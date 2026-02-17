@@ -72,7 +72,7 @@ export default defineNuxtConfig({
 
 | Tool | Input | Description |
 |------|-------|-------------|
-| `list_collections` | (none) | Lists all collections with fields, apiPath, defaults |
+| `list_app_collections` | (none) | Lists all collections with fields, apiPath, defaults |
 | `list_items` | collection, teamId, locale?, page?, pageSize? | Paginated list |
 | `get_item` | collection, teamId, itemId | Single item by ID |
 | `create_item` | collection, teamId, data | Create new item |
