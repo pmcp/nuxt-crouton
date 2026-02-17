@@ -1,11 +1,13 @@
-import type { PackageManifest } from '@fyit/crouton-schema-designer/types'
+import { defineCroutonManifest } from '@fyit/crouton-core/shared/manifest'
 
-const manifest: PackageManifest = {
+export default defineCroutonManifest({
   id: 'crouton-maps',
   name: 'Maps',
   description: 'Mapbox GL JS integration with map components, markers, geocoding, and style presets. Used by crouton-bookings for location maps.',
   icon: 'i-lucide-map',
   version: '0.1.0',
+  category: 'addon',
+  aiHint: 'use when app has location features or map displays',
 
   layer: {
     name: 'maps',
@@ -62,6 +64,4 @@ const manifest: PackageManifest = {
     ],
     apiRoutes: []
   }
-}
-
-export default manifest
+})

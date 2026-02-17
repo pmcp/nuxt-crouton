@@ -1,16 +1,18 @@
-import type { PackageManifest } from '@fyit/crouton-schema-designer/types'
+import { defineCroutonManifest } from '@fyit/crouton-core/shared/manifest'
 import bookingSchema from './schemas/booking.json'
 import locationSchema from './schemas/location.json'
 import settingsSchema from './schemas/settings.json'
 import emailTemplateSchema from './schemas/email-template.json'
 import emailLogSchema from './schemas/email-log.json'
 
-const manifest: PackageManifest = {
+export default defineCroutonManifest({
   id: 'crouton-bookings',
   name: 'Booking System',
   description: 'Slot-based and inventory booking with optional email notifications. Perfect for courts, rooms, appointments, equipment rentals, and more.',
   icon: 'i-heroicons-calendar',
   version: '1.0.0',
+  category: 'miniapp',
+  aiHint: 'use when app involves appointments, reservations, or scheduling',
 
   layer: {
     name: 'bookings',
@@ -129,6 +131,4 @@ const manifest: PackageManifest = {
       '/api/crouton-bookings/teams/[teamId]/bookings/[bookingId]/resend-email'
     ]
   }
-}
-
-export default manifest
+})

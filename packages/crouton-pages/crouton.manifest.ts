@@ -1,161 +1,52 @@
-/**
- * Crouton Manifest for Pages Package
- *
- * Defines the pages collection schema for the CMS-like page system.
- * Generate with: pnpm crouton generate
- */
-import { defineCroutonManifest } from '@fyit/crouton-cli'
+import { defineCroutonManifest } from '@fyit/crouton-core/shared/manifest'
 
 export default defineCroutonManifest({
-  layer: 'pages',
+  id: 'crouton-pages',
+  name: 'Pages',
+  description: 'CMS-like page management with page types from app packages, tree/sortable layout, public rendering, and custom domain support.',
+  icon: 'i-lucide-file-text',
+  version: '1.0.0',
+  category: 'addon',
+  aiHint: 'use when app has CMS pages or landing pages',
+
+  layer: {
+    name: 'pages',
+    editable: false,
+    reason: 'Table names are prefixed with "pages" (e.g., pagesPages). This cannot be changed.',
+  },
+
+  dependencies: [
+    '@fyit/crouton',
+    '@fyit/crouton-editor',
+  ],
+
   collections: [
     {
       name: 'pages',
-      label: 'Pages',
-      icon: 'i-lucide-file-text',
+      tableName: 'pagesPages',
       description: 'CMS pages with support for page types from app packages',
+      schemaPath: './schemas/pages.json',
+      hierarchy: { parentField: 'parentId', orderField: 'order' },
+    },
+  ],
 
-      // Enable hierarchy for tree structure with drag-drop ordering
-      hierarchy: {
-        enabled: true,
-        parentField: 'parentId',
-        orderField: 'order',
-        pathField: 'path',
-        depthField: 'depth'
-      },
-
-      fields: [
-        // Page identity
-        {
-          name: 'title',
-          type: 'string',
-          label: 'Title',
-          required: true,
-          maxLength: 200,
-          area: 'main'
-        },
-        {
-          name: 'slug',
-          type: 'string',
-          label: 'URL Slug',
-          required: true,
-          maxLength: 200,
-          unique: true,
-          area: 'main',
-          description: 'URL-friendly identifier (e.g., "about-us")'
-        },
-
-        // Page type system
-        {
-          name: 'pageType',
-          type: 'string',
-          label: 'Page Type',
-          required: true,
-          default: 'core:regular',
-          maxLength: 100,
-          area: 'meta',
-          description: 'Format: appId:pageTypeId (e.g., "bookings:calendar")'
-        },
-        {
-          name: 'content',
-          type: 'text',
-          label: 'Content',
-          area: 'main',
-          component: 'CroutonEditorSimple',
-          description: 'Rich text content for regular pages'
-        },
-        {
-          name: 'config',
-          type: 'json',
-          label: 'Page Configuration',
-          area: 'meta',
-          description: 'Type-specific settings for app pages'
-        },
-
-        // Publishing
-        {
-          name: 'status',
-          type: 'string',
-          label: 'Status',
-          required: true,
-          default: 'draft',
-          maxLength: 20,
-          area: 'sidebar',
-          options: [
-            { value: 'draft', label: 'Draft' },
-            { value: 'published', label: 'Published' },
-            { value: 'archived', label: 'Archived' }
-          ]
-        },
-        {
-          name: 'visibility',
-          type: 'string',
-          label: 'Visibility',
-          required: true,
-          default: 'public',
-          maxLength: 20,
-          area: 'sidebar',
-          options: [
-            { value: 'public', label: 'Public' },
-            { value: 'members', label: 'Members Only' },
-            { value: 'hidden', label: 'Hidden (Direct Link)' }
-          ]
-        },
-        {
-          name: 'publishedAt',
-          type: 'date',
-          label: 'Published At',
-          area: 'sidebar'
-        },
-
-        // Navigation
-        {
-          name: 'showInNavigation',
-          type: 'boolean',
-          label: 'Show in Navigation',
-          default: true,
-          area: 'sidebar'
-        },
-
-        // SEO
-        {
-          name: 'seoTitle',
-          type: 'string',
-          label: 'SEO Title',
-          maxLength: 60,
-          area: 'meta',
-          description: 'Override page title for search engines'
-        },
-        {
-          name: 'seoDescription',
-          type: 'string',
-          label: 'SEO Description',
-          maxLength: 160,
-          area: 'meta',
-          description: 'Meta description for search engines'
-        },
-        {
-          name: 'ogImage',
-          type: 'string',
-          label: 'Social Image',
-          maxLength: 500,
-          area: 'meta',
-          description: 'Image shown when page is shared on social media'
-        },
-        {
-          name: 'robots',
-          type: 'string',
-          label: 'Search Engine Indexing',
-          default: 'index',
-          maxLength: 50,
-          area: 'meta',
-          options: [
-            { value: 'index', label: 'Allow indexing' },
-            { value: 'noindex', label: 'No indexing' }
-          ],
-          description: 'Controls whether search engines index this page'
-        }
-      ]
-    }
-  ]
+  provides: {
+    composables: [
+      'usePageTypes',
+      'useDomainContext',
+      'useNavigation',
+      'usePageBlocks',
+    ],
+    components: [
+      { name: 'CroutonPagesRenderer', description: 'Renders page based on type', props: ['page'] },
+      { name: 'CroutonPagesForm', description: 'Page creation/editing form', props: ['collection'] },
+      { name: 'CroutonPagesRegularContent', description: 'Rich text content display', props: ['content'] },
+      { name: 'CroutonPagesBlockContent', description: 'Block-based content display', props: ['content'] },
+      { name: 'CroutonPagesEditorBlockEditor', description: 'Block-based page editor', props: ['modelValue'] },
+    ],
+    apiRoutes: [
+      '/api/teams/[id]/pages',
+      '/api/teams/[id]/pages/[slug]',
+    ],
+  },
 })

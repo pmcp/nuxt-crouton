@@ -1,4 +1,4 @@
-import type { PackageManifest } from '@fyit/crouton-schema-designer/types'
+import { defineCroutonManifest } from '@fyit/crouton-core/shared/manifest'
 import eventsSchema from './schemas/events.json'
 import productsSchema from './schemas/products.json'
 import categoriesSchema from './schemas/categories.json'
@@ -10,12 +10,14 @@ import eventSettingsSchema from './schemas/eventSettings.json'
 import printersSchema from './schemas/printers.json'
 import printQueuesSchema from './schemas/printQueues.json'
 
-const manifest: PackageManifest = {
+export default defineCroutonManifest({
   id: 'crouton-sales',
   name: 'Point of Sale',
   description: 'Event-based POS system for pop-up events, markets, and temporary retail. Includes products, categories, orders, and optional thermal receipt printing.',
   icon: 'i-heroicons-shopping-cart',
   version: '1.0.0',
+  category: 'miniapp',
+  aiHint: 'use when app needs point of sale, product catalog, or order management',
 
   layer: {
     name: 'sales',
@@ -158,6 +160,4 @@ const manifest: PackageManifest = {
       '/api/crouton-sales/events/[eventId]/helper-auth'
     ]
   }
-}
-
-export default manifest
+})

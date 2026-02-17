@@ -1,4 +1,4 @@
-import type { PackageManifest } from '@fyit/crouton-schema-designer/types'
+import { defineCroutonManifest } from '@fyit/crouton-core/shared/manifest'
 import discussionSchema from './schemas/discussion.json'
 import flowSchema from './schemas/flow.json'
 import inputSchema from './schemas/input.json'
@@ -9,12 +9,14 @@ import userSchema from './schemas/user.json'
 import messageSchema from './schemas/message.json'
 import accountSchema from './schemas/account.json'
 
-const manifest: PackageManifest = {
+export default defineCroutonManifest({
   id: 'crouton-triage',
   name: 'Discussion Triage',
   description: 'AI-powered discussion-to-task triage system with multi-source adapters (Slack, Figma, Notion), domain routing, and automated task creation.',
   icon: 'i-heroicons-funnel',
   version: '1.0.0',
+  category: 'miniapp',
+  aiHint: 'use when app needs discussion triage, task detection, or multi-source ingestion',
 
   layer: {
     name: 'triage',
@@ -186,6 +188,4 @@ const manifest: PackageManifest = {
       '/api/crouton-triage/metrics'
     ]
   }
-}
-
-export default manifest
+})
