@@ -491,10 +491,13 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
       // File doesn't exist, create it with initial content
       console.log(`↻ Creating app.config.ts with crouton collections`)
       content = `${importStatement}\n\nexport default defineAppConfig({\n  croutonCollections: {\n    ${collectionKey}: ${configExportName},\n  }\n})\n`
+      await fsp.writeFile(registryPath, content)
+      console.log(`✓ Created app.config.ts with "${collectionKey}" entry`)
+      return
     }
 
     // Dedup: skip entirely if this collection is already registered
-    if (fileExists && content.includes(`${collectionKey}:`)) {
+    if (content.includes(`${collectionKey}:`)) {
       console.log(`✓ Collection "${collectionKey}" already in registry`)
       return
     }
@@ -694,7 +697,7 @@ export default defineNuxtConfig({
       }
 
       // Ensure i18n locale files exist when i18n config is present
-      if (hasTranslations) {
+      if (hasTranslations || config.includes('i18n:')) {
         const i18nLocalesPath = path.join(layerPath, 'i18n', 'locales')
         await fsp.mkdir(i18nLocalesPath, { recursive: true })
         for (const locale of ['en', 'nl', 'fr']) {
@@ -798,6 +801,18 @@ async function addI18nConfigToLayer(configPath, config) {
     } else {
       // No comma, add one
       config = config.slice(0, insertPos) + ',' + i18nConfig + config.slice(insertPos)
+    }
+  }
+
+  // Create corresponding locale files so the app doesn't error on startup
+  const layerDir = path.dirname(configPath)
+  const localesDir = path.join(layerDir, 'i18n', 'locales')
+  await fsp.mkdir(localesDir, { recursive: true })
+  for (const locale of ['en', 'nl', 'fr']) {
+    const localePath = path.join(localesDir, `${locale}.json`)
+    if (!await fileExists(localePath)) {
+      await fsp.writeFile(localePath, '{}', 'utf-8')
+      console.log(`  ✓ Created empty ${locale}.json locale file`)
     }
   }
 
