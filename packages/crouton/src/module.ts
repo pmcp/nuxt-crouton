@@ -1,9 +1,139 @@
 import { defineNuxtModule, createResolver, resolvePath } from '@nuxt/kit'
-import { readFileSync, existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
+import { resolve, join, dirname } from 'node:path'
 import type { CroutonOptions, CroutonConfig } from './types'
 
 export type { CroutonOptions, CroutonConfig }
+
+// ---------------------------------------------------------------------------
+// Manifest metadata scanner (sync, lightweight — no jiti needed)
+// Source of truth: each package's crouton.manifest.ts
+// ---------------------------------------------------------------------------
+
+interface ManifestMeta {
+  id: string
+  bundled: boolean
+  category: 'core' | 'addon' | 'miniapp'
+}
+
+/**
+ * Extract id, bundled, and category from a manifest file using regex.
+ * Avoids full TS evaluation — only reads the fields we need.
+ */
+function scanManifestMeta(filePath: string): ManifestMeta | null {
+  try {
+    const content = readFileSync(filePath, 'utf-8')
+    const idMatch = content.match(/id:\s*['"]([^'"]+)['"]/)
+    if (!idMatch) return null
+
+    const categoryMatch = content.match(/category:\s*['"](\w+)['"]/)
+
+    return {
+      id: idMatch[1],
+      bundled: /bundled:\s*true/.test(content),
+      category: (categoryMatch?.[1] as ManifestMeta['category']) || 'addon',
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Discover manifest metadata from all crouton packages.
+ * Scans monorepo packages/ dir and node_modules/@fyit/.
+ */
+function discoverManifestsMeta(rootDir: string): ManifestMeta[] {
+  const metas: ManifestMeta[] = []
+  const seen = new Set<string>()
+
+  // Strategy 1: Monorepo packages/crouton-*/crouton.manifest.ts
+  let dir = resolve(rootDir)
+  while (dir !== dirname(dir)) {
+    if (existsSync(join(dir, 'pnpm-workspace.yaml'))) {
+      const packagesDir = join(dir, 'packages')
+      if (existsSync(packagesDir)) {
+        for (const entry of readdirSync(packagesDir, { withFileTypes: true })) {
+          if (entry.isDirectory() && entry.name.startsWith('crouton-')) {
+            const manifestPath = join(packagesDir, entry.name, 'crouton.manifest.ts')
+            if (existsSync(manifestPath)) {
+              const meta = scanManifestMeta(manifestPath)
+              if (meta && !seen.has(meta.id)) {
+                seen.add(meta.id)
+                metas.push(meta)
+              }
+            }
+          }
+        }
+      }
+      break
+    }
+    dir = dirname(dir)
+  }
+
+  // Strategy 2: node_modules/@fyit/crouton-*/crouton.manifest.ts
+  const nmDir = join(rootDir, 'node_modules', '@fyit')
+  if (existsSync(nmDir)) {
+    for (const entry of readdirSync(nmDir, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name.startsWith('crouton-')) {
+        const manifestPath = join(nmDir, entry.name, 'crouton.manifest.ts')
+        if (existsSync(manifestPath)) {
+          const meta = scanManifestMeta(manifestPath)
+          if (meta && !seen.has(meta.id)) {
+            seen.add(meta.id)
+            metas.push(meta)
+          }
+        }
+      }
+    }
+  }
+
+  return metas
+}
+
+// ---------------------------------------------------------------------------
+// Feature key ↔ package ID mapping
+// ---------------------------------------------------------------------------
+
+/** Convert manifest ID to CroutonOptions feature key: 'crouton-mcp-toolkit' → 'mcpToolkit' */
+function manifestIdToFeatureKey(id: string): string {
+  return id.replace(/^crouton-/, '').replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
+}
+
+// ---------------------------------------------------------------------------
+// Layer list builder (shared by getRequiredLayers + getCroutonLayers)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the list of @fyit/crouton-* layer packages to include.
+ *
+ * - `crouton-core` is always included.
+ * - Bundled packages (manifest.bundled: true) are included unless explicitly disabled.
+ * - Non-bundled packages are included only when explicitly enabled.
+ */
+function buildLayerList(features: CroutonOptions, manifests: ManifestMeta[]): string[] {
+  const layers: string[] = ['@fyit/crouton-core']
+
+  for (const m of manifests) {
+    if (m.id === 'crouton-core') continue
+
+    const featureKey = manifestIdToFeatureKey(m.id)
+    const featureValue = (features as Record<string, unknown>)[featureKey]
+
+    if (m.bundled) {
+      // Bundled packages: included unless explicitly set to false
+      if (featureValue !== false) layers.push(`@fyit/${m.id}`)
+    } else if (featureValue) {
+      // Optional packages: included only when truthy
+      layers.push(`@fyit/${m.id}`)
+    }
+  }
+
+  return layers
+}
+
+// ---------------------------------------------------------------------------
+// Config loading
+// ---------------------------------------------------------------------------
 
 /**
  * Load crouton.config.js synchronously (for use in nuxt.config.ts extends)
@@ -36,38 +166,46 @@ function loadCroutonConfig(): CroutonConfig | null {
   return null
 }
 
+// ---------------------------------------------------------------------------
+// Exported: getCroutonLayers()
+// ---------------------------------------------------------------------------
+
 /**
- * Internal helper to compute required layers based on features.
- * Used for validation warnings only.
+ * Resolve enabled features to an array of @fyit/crouton-* package names.
+ *
+ * Reads `crouton.config.{js,ts}` and discovers package manifests to determine
+ * which layers to include. Pass `overrides` to enable/disable features beyond
+ * what the config file specifies.
+ *
+ * @example
+ * // nuxt.config.ts
+ * import { getCroutonLayers } from '@fyit/crouton'
+ * export default defineNuxtConfig({
+ *   extends: [...getCroutonLayers(), './layers/shop'],
+ * })
+ *
+ * @example
+ * // With inline overrides (no config file needed)
+ * extends: getCroutonLayers({ editor: true, pages: true })
+ */
+export function getCroutonLayers(overrides?: Partial<CroutonOptions>): string[] {
+  const config = loadCroutonConfig()
+  const features: CroutonOptions = { ...config?.features, ...overrides }
+  const manifests = discoverManifestsMeta(process.cwd())
+  return buildLayerList(features, manifests)
+}
+
+// ---------------------------------------------------------------------------
+// Internal: getRequiredLayers (validation warnings)
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute required layers based on enabled features.
+ * Uses manifest discovery — no hardcoded feature-to-package mapping.
  */
 function getRequiredLayers(features: CroutonOptions): string[] {
-  const layers: string[] = []
-
-  // Always include core
-  layers.push('@fyit/crouton-core')
-
-  // Core add-ons (enabled by default)
-  if (features.auth !== false) layers.push('@fyit/crouton-auth')
-  if (features.admin !== false) layers.push('@fyit/crouton-admin')
-  if (features.i18n !== false) layers.push('@fyit/crouton-i18n')
-
-  // Optional add-ons
-  if (features.editor) layers.push('@fyit/crouton-editor')
-  if (features.flow) layers.push('@fyit/crouton-flow')
-  if (features.assets) layers.push('@fyit/crouton-assets')
-  if (features.maps) layers.push('@fyit/crouton-maps')
-  if (features.ai) layers.push('@fyit/crouton-ai')
-  if (features.email) layers.push('@fyit/crouton-email')
-  if (features.events) layers.push('@fyit/crouton-events')
-  if (features.collab) layers.push('@fyit/crouton-collab')
-  if (features.pages) layers.push('@fyit/crouton-pages')
-  if (features.mcpToolkit) layers.push('@fyit/crouton-mcp-toolkit')
-
-  // Mini-apps
-  if (features.bookings) layers.push('@fyit/crouton-bookings')
-  if (features.sales) layers.push('@fyit/crouton-sales')
-
-  return layers
+  const manifests = discoverManifestsMeta(process.cwd())
+  return buildLayerList(features, manifests)
 }
 
 export default defineNuxtModule<CroutonOptions>({
@@ -155,27 +293,27 @@ export default defineNuxtModule<CroutonOptions>({
       console.warn(`                  Or run 'crouton config' to sync automatically.`)
     }
 
-    // Log enabled features in development
+    // Log enabled features in development (derived from manifests)
     if (nuxt.options.dev) {
-      const enabledFeatures = [
-        'core',
-        mergedOptions.auth !== false && 'auth',
-        mergedOptions.admin !== false && 'admin',
-        mergedOptions.i18n !== false && 'i18n',
-        mergedOptions.editor && 'editor',
-        mergedOptions.flow && 'flow',
-        mergedOptions.assets && 'assets',
-        mergedOptions.maps && 'maps',
-        mergedOptions.ai && 'ai',
-        mergedOptions.email && 'email',
-        mergedOptions.events && 'events',
-        mergedOptions.collab && 'collab',
-        mergedOptions.pages && 'pages',
-        mergedOptions.mcpToolkit && 'mcp-toolkit',
-        (mergedOptions.devtools ?? nuxt.options.dev) && 'devtools',
-        mergedOptions.bookings && 'bookings',
-        mergedOptions.sales && 'sales'
-      ].filter(Boolean)
+      const manifests = discoverManifestsMeta(process.cwd())
+      const enabledFeatures = ['core']
+
+      for (const m of manifests) {
+        if (m.id === 'crouton-core') continue
+        const featureKey = manifestIdToFeatureKey(m.id)
+        const featureValue = (mergedOptions as Record<string, unknown>)[featureKey]
+
+        if (m.bundled && featureValue !== false) {
+          enabledFeatures.push(featureKey)
+        } else if (featureValue) {
+          enabledFeatures.push(featureKey)
+        }
+      }
+
+      // Devtools: auto-detect in dev mode when not explicitly configured
+      if (mergedOptions.devtools === undefined && nuxt.options.dev) {
+        if (!enabledFeatures.includes('devtools')) enabledFeatures.push('devtools')
+      }
 
       console.log(`🍞 crouton ✓ Enabled features: ${enabledFeatures.join(', ')}`)
       if (fileConfig) {

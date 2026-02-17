@@ -91,7 +91,14 @@ export interface CroutonConfig {
 }
 
 /**
- * Feature options for enabling/disabling Crouton packages
+ * Feature options for enabling/disabling Crouton packages.
+ *
+ * Source of truth for available features: each package's `crouton.manifest.ts`.
+ * The feature key is derived from the manifest ID (kebab → camelCase):
+ *   'crouton-mcp-toolkit' → mcpToolkit
+ *
+ * This explicit interface is kept for IDE autocomplete and documentation.
+ * The runtime mapping in module.ts is driven by manifest discovery.
  */
 export interface CroutonOptions {
   /**
