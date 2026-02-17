@@ -11,6 +11,7 @@
 | Phase 0 | ✅ Done | 26 characterization tests covering all 11 CLI commands. All 377 tests pass. |
 | Phase 1 | ✅ Done | Manifest type, core manifest (12 field types), unjs deps, c12 config loading. All verified. |
 | Phase 2+3 | ~15% done | Atomic PR. `module-registry.mjs` converted; `module-registry.json` is live intermediate. consola logging in touched files. Includes app.config manifest injection |
+| Phase 3.5 (magicast) | Not started | Replace regex-based config modifications with AST (magicast). After Phase 2+3. |
 | Phase 4 | Not started | Unified module reads manifests for feature discovery |
 | Phase 5 | Not started | CLI framework rewrite (citty + full chalk/ora/inquirer/fs-extra removal). Tests already exist from Phase 0 |
 
@@ -88,6 +89,7 @@ Completing Phase 2+3 of this plan effectively delivers the manifest foundation t
 | 22 | Manifest boilerplate | **Full `CroutonManifest` type for all** — no minimal variant | All optional fields already use `?`. Thin manifests just omit them |
 | 23 | Phase 0 extraction | **Characterization tests as standalone Phase 0** — parallelizable with Phase 1 | Prevents AI agent regressions immediately. Reduces Phase 5 scope. 5x i18n bug was caused by distributed agent work without test coverage |
 | 24 | Rollback strategy | **None needed** — big bang without fallback | Solo dev, private monorepo, greenfield. Fix-forward is faster than maintaining transitional layers |
+| 25 | Config file modification tool | **magicast** (unjs) | Replaces ~260 lines of fragile regex in 3 config modification sites. Built on recast + babel, preserves formatting. Has built-in `addNuxtModule` helper. oxc (too low-level, no write-back API), Vite+ (dev toolchain, not code modification), knitwork (code generation strings, useful in Phase 5 but not for config modification) were evaluated and ruled out. |
 
 ### Known Issues (Pre-existing)
 
@@ -455,7 +457,7 @@ const { config } = await loadConfig({
 
 **Objective**: CLI reads manifests instead of hardcoded JSON. All packages get manifests in one pass. `module-registry.json` is deleted. Designer and MCP read from manifests. consola logging in all touched files.
 
-**Strategy**: Big bang — create all manifests, wire up the loader, migrate consumers, then delete the JSON. No transitional fallback. Phase 2 and Phase 3 must ship as one atomic PR because Phase 3.5 (designer's `useIntakePrompt.ts`) depends on `module-registry.json` which Phase 2 deletes.
+**Strategy**: Big bang — create all manifests, wire up the loader, migrate consumers, then delete the JSON. No transitional fallback. Phase 2 and Phase 3 must ship as one atomic PR because task 3.5 (designer's `useIntakePrompt.ts`) depends on `module-registry.json` which Phase 2 deletes.
 
 ### Phase 2: Manifest Discovery + CLI Integration
 
@@ -505,7 +507,7 @@ export function getModuleRegistry(manifests: CroutonManifest[]): ModuleRegistryE
 
 **Delete**: `packages/crouton-cli/lib/module-registry.json`
 - All data migrated into per-package manifests
-- **Currently live** — designer `useIntakePrompt.ts` reads it. Must update designer (Phase 3.5) in same pass.
+- **Currently live** — designer `useIntakePrompt.ts` reads it. Must update designer (task 3.5) in same pass.
 
 **Edit**: `packages/crouton-cli/lib/module-registry.mjs` *(already partially converted)*
 - Change from JSON import to manifest-loader import
@@ -724,6 +726,63 @@ nuxt.options.appConfig.crouton = defu(nuxt.options.appConfig.crouton || {}, {
 - [ ] Run MCP inspector: `validate_schema` accepts `image` and `file` types
 - [ ] `npx nuxt typecheck` in all modified packages
 - [ ] CLI output has colors, spinners, success/error messages (consola working)
+
+---
+
+## Phase 3.5: Replace Regex Config Modification with magicast (After Phase 2+3)
+
+**Objective**: Replace ~260 lines of fragile regex-based config file modifications across 3 sites with AST-based manipulation using [magicast](https://github.com/unjs/magicast). magicast is built on recast + babel, preserves formatting, and has built-in helpers like `addNuxtModule`.
+
+**PR**: Ships independently after Phase 2+3.
+
+**Why**: The 3 config modification sites use regex to parse and modify JavaScript/TypeScript files. This is fragile — edge cases in formatting, comments, or complex expressions break the regex. magicast provides a JSON-like API for reading and modifying JS/TS ASTs with format preservation.
+
+### What it replaces (3 sites)
+
+| Site | File | Current LOC | What it does | magicast approach |
+|------|------|-------------|-------------|-------------------|
+| 1 | `lib/utils/update-nuxt-config.mjs` | ~120 lines | Regex to add/remove entries in `extends` array | ~10 lines with `mod.exports.default.$args` navigation |
+| 2 | `generate-collection.mjs` `updateSchemaIndex()` | ~60 lines | String append for schema exports | magicast export helpers with dedup |
+| 3 | `generate-collection.mjs` `registerTranslationsUiCollection()` | ~80 lines | Regex to insert into `croutonCollections` object | magicast nested object navigation |
+
+### What stays as-is
+
+All 13 generators (template strings for new files) — magicast is for modifying existing files, template strings are the right tool for generating new files.
+
+### Phase 3.5 Files Changed
+
+- **Edit**: `packages/crouton-cli/package.json` — add `magicast`
+- **Rewrite**: `packages/crouton-cli/lib/utils/update-nuxt-config.mjs` → `update-nuxt-config.ts` with magicast
+- **Extract + Rewrite**: `packages/crouton-cli/lib/utils/update-schema-index.mjs` → `update-schema-index.ts` with magicast (extracted from `generate-collection.mjs` `updateSchemaIndex()`)
+- **Extract + Create**: `packages/crouton-cli/lib/utils/update-app-config.ts` — magicast for `croutonCollections` insertion (extracted from `generate-collection.mjs` `registerTranslationsUiCollection()`)
+- **Edit**: `packages/crouton-cli/lib/generate-collection.mjs` — replace inline `updateSchemaIndex()` and `registerTranslationsUiCollection()` with imports from new util files
+- **Edit**: `packages/crouton-cli/lib/rollback-collection.mjs` — use magicast utils for removal
+- **Edit**: `packages/crouton-cli/lib/rollback-bulk.mjs` — use magicast utils for removal
+
+### Phase 3.5 Checklist
+
+- [ ] Add `magicast` to `packages/crouton-cli/package.json`
+- [ ] Rewrite `update-nuxt-config.mjs` → `.ts` using magicast `extends` array manipulation
+- [ ] Extract `updateSchemaIndex()` from `generate-collection.mjs` into `lib/utils/update-schema-index.ts` using magicast
+- [ ] Extract `registerTranslationsUiCollection()` from `generate-collection.mjs` into `lib/utils/update-app-config.ts` using magicast
+- [ ] Update `generate-collection.mjs` to import from new util files
+- [ ] Update `rollback-collection.mjs` to use magicast utils for config removal
+- [ ] Update `rollback-bulk.mjs` to use magicast utils for config removal
+- [ ] Verify: `crouton generate shop products` still modifies nuxt.config correctly
+- [ ] Verify: `crouton rollback shop products` still cleans up nuxt.config correctly
+- [ ] Verify: Schema index exports are correct after generation
+- [ ] Verify: `croutonCollections` registration works for i18n collections
+- [ ] Phase 0 characterization tests still pass
+- [ ] `npx nuxt typecheck`
+
+### Tools Evaluated for Config File Modification
+
+| Tool | Verdict | Rationale |
+|------|---------|-----------|
+| **magicast** (unjs) | Selected | AST-based with JSON-like API, format-preserving, built-in `addNuxtModule` helper. Replaces ~260 lines of regex |
+| **oxc** | Rejected | Rust-based low-level parser/transformer. No high-level config modification API, no format-preserving write-back |
+| **Vite+** | Not relevant | Dev toolchain (bundler + test runner + linter), not a code modification library |
+| **knitwork** (unjs) | Deferred to Phase 5 | Safe JS string generation utilities. Useful for template generators but not for modifying existing files |
 
 ---
 
@@ -1047,7 +1106,7 @@ pnpm crouton rollback shop products       # cleanup
 | `packages/crouton-cli/lib/module-registry.mjs` | Module lookup from JSON | Read from manifests, consola | 2 |
 | `packages/crouton-cli/lib/module-registry.json` | 16 module entries | **Deleted** | 2 |
 | `packages/crouton-cli/lib/utils/config-builder.mjs` | Build config file content | **Untouched** — different concern from c12 | — |
-| `packages/crouton-cli/lib/generate-collection.mjs` | Main orchestrator (~80KB) | Phase 1: c12 config loading. Phase 2+3: consola. Phase 5: typed args | 1, 2, 5 |
+| `packages/crouton-cli/lib/generate-collection.mjs` | Main orchestrator (~80KB) | Phase 1: c12 config loading. Phase 2+3: consola. Phase 3.5: extract config modification to utils. Phase 5: typed args | 1, 2, 3.5, 5 |
 | `packages/crouton-cli/lib/utils/paths.mjs` | PATH_CONFIG template system | Use pathe for joins/resolves | 1 |
 | `packages/crouton-cli/lib/utils/detect-package-manager.mjs` | Lock file scanning | Could use pkg-types | 5 |
 | `packages/crouton-cli/bin/crouton-generate.js` | Entry point, Commander setup | Rewrite with citty | 5 |
@@ -1064,6 +1123,9 @@ pnpm crouton rollback shop products       # cleanup
 | `packages/crouton-mcp/src/utils/field-types.ts` | Hardcoded 9 types | Import from manifest loader | 3 |
 | `packages/crouton-mcp/src/tools/validate-schema.ts` | Hardcoded auto-gen fields | Import from manifest loader | 3 |
 | `packages/crouton/src/module.ts` | Hardcoded feature mapping | Read from manifests | 4 |
+| `packages/crouton-cli/lib/utils/update-nuxt-config.mjs` | Regex-based extends array modification | Rewrite → `.ts` with magicast | 3.5 |
+| `packages/crouton-cli/lib/utils/update-schema-index.mjs` | String append for schema exports | Rewrite → `.ts` with magicast | 3.5 |
+| `packages/crouton-cli/lib/utils/update-app-config.ts` | *(new, extracted)* | magicast for croutonCollections insertion | 3.5 |
 
 ---
 
@@ -1074,15 +1136,16 @@ pnpm crouton rollback shop products       # cleanup
 | Phase 0 | Small | CLI safety net — characterization tests for all 11 commands | — | — | PR 0 (parallelizable with PR 1) |
 | Phase 1 | Medium | Foundation — types + core manifest + unjs base | jiti, c12, defu, pathe, pkg-types | — | PR 1 |
 | Phase 2+3 | Large | CLI reads manifests, all packages get manifests (incl. crouton-assets), JSON deleted, consumers migrated, app.config injection, consola in touched files | consola | — (chalk/ora kept temporarily) | PR 2 (atomic) |
+| Phase 3.5 | Small | Replace regex config modification with magicast AST | magicast | — | PR 2.5 (after Phase 2+3) |
 | Phase 4 | Small | Unified module reads manifests + getCroutonLayers() | — | — | PR 3 |
-| Phase 5 | Medium | CLI framework rewrite + full dep cleanup (tests already exist from Phase 0) | citty, @clack/prompts | commander, chalk, ora, inquirer, fs-extra (all 5 removed) | PR 4 |
+| Phase 5 | Medium | CLI framework rewrite + full dep cleanup (tests already exist from Phase 0). Consider knitwork for template string generation. | citty, @clack/prompts | commander, chalk, ora, inquirer, fs-extra (all 5 removed) | PR 4 |
 | Future | Ongoing | Progressive `.mjs` → `.ts` migration | (unbuild, later) | — | Opportunistic |
 
-**Ship order**: Phase 0 + Phase 1 (parallel) → Phase 2+3 (atomic) → Phase 4 (whenever) → Phase 5 (after manifests land) → Future (opportunistic)
+**Ship order**: Phase 0 + Phase 1 (parallel) → Phase 2+3 (atomic) → Phase 3.5 (magicast) → Phase 4 (whenever) → Phase 5 (after manifests land) → Future (opportunistic)
 
-**Total files**: ~1 created (Phase 0) + ~5 created (Phase 1) + ~16 created + ~13 edited (Phase 2+3) + ~2 edited (Phase 4) + ~15 edited (Phase 5) = **~52 files**
+**Total files**: ~1 created (Phase 0) + ~5 created (Phase 1) + ~16 created + ~13 edited (Phase 2+3) + ~3 created + ~4 edited (Phase 3.5) + ~2 edited (Phase 4) + ~15 edited (Phase 5) = **~59 files**
 
-**Total dep changes**: +8 unjs deps, -5 legacy deps. Net result: CLI uses the same stack as Nuxt itself.
+**Total dep changes**: +9 unjs deps (incl. magicast), -5 legacy deps. Net result: CLI uses the same stack as Nuxt itself.
 
 ### Cross-Plan Dependencies
 
