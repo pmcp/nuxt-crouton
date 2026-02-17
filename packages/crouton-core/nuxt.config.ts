@@ -42,7 +42,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-admin'
   ],
 
-  modules: ['@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo'],
+  modules: ['@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo', join(currentDir, 'modules/manifest-injection')],
 
   // Runtime config for server-side secrets
   runtimeConfig: {
