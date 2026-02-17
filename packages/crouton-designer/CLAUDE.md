@@ -2,7 +2,7 @@
 
 ## Package Purpose
 
-AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase wizard (Intake → Collection Design → Seed Data → Review & Generate) where users describe their app via AI chat and the system generates a complete Crouton collection schema with seed data as a downloadable ZIP.
+AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase wizard (Intake → Collection Design → Seed Data → Review & Create) where users describe their app via AI chat and the system generates a complete Crouton collection schema with seed data, then scaffolds a full Nuxt app via a server-side endpoint.
 
 ## Key Files
 
@@ -16,7 +16,7 @@ AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase 
 | `app/components/FieldList.vue` | Sortable field list within a collection |
 | `app/components/FieldRow.vue` | Single field editor row |
 | `app/components/SeedDataPanel.vue` | Phase 3 seed data display with tabs per collection |
-| `app/components/ReviewPanel.vue` | Phase 5 review, validation, and ZIP download |
+| `app/components/ReviewPanel.vue` | Phase 5 review, validation, and Create App trigger |
 | `app/components/ValidationChecklist.vue` | Schema validation display |
 | `app/components/GenerationSummary.vue` | Summary of what will be generated |
 | `app/components/TwoPanelLayout.vue` | Collapsible chat + content layout |
@@ -26,9 +26,11 @@ AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase 
 | `app/composables/useSeedDataPrompt.ts` | Builds Phase 3 AI system prompt for seed data generation |
 | `app/composables/useSchemaValidation.ts` | Schema validation rules (errors + warnings) |
 | `app/composables/useSchemaExport.ts` | Converts editor state to Crouton JSON schemas |
-| `app/composables/useSchemaDownload.ts` | ZIP generation with fflate |
+| `app/composables/useAppScaffold.ts` | Orchestrates Create App flow — artifact preview, POST to scaffold endpoint, step results |
+| `app/composables/useSchemaDownload.ts` | Legacy ZIP download fallback (fflate) |
 | `app/composables/useFieldTypes.ts` | Field type definitions and metadata |
 | `app/types/schema.ts` | ProjectConfig, DesignerProject, and related types |
+| `server/api/scaffold-app.post.ts` | Server endpoint — runs CLI scaffold, writes schemas/seed, installs deps, runs doctor |
 | `server/api/ai/designer-chat.post.ts` | AI chat endpoint (streams via Vercel AI SDK) |
 | `i18n/locales/en.json` | All UI strings |
 | `nuxt.config.ts` | Layer config — extends crouton-ai, registers components with `Designer` prefix |
@@ -38,11 +40,12 @@ AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase 
 ### Phase System
 
 ```
-Phase 1: Intake          Phase 2: Collections       Phase 3: Seed Data      Phase 5: Review
-─────────────────        ──────────────────────      ──────────────────      ───────────────────
-Chat + Summary Card      Chat + Collection Editor    Chat + SeedDataPanel    Validation + ZIP
-AI sets config via       AI creates/edits via        AI generates sample     User downloads schemas
-set_app_config tool      create/update/delete tools  data via set_seed_data  + seed data
+Phase 1: Intake          Phase 2: Collections       Phase 3: Seed Data      Phase 5: Review & Create
+─────────────────        ──────────────────────      ──────────────────      ──────────────────────────
+Chat + Summary Card      Chat + Collection Editor    Chat + SeedDataPanel    Validation + Create App
+AI sets config via       AI creates/edits via        AI generates sample     POST /api/scaffold-app →
+set_app_config tool      create/update/delete tools  data via set_seed_data  CLI scaffold + schemas +
+                                                                             seed + install + doctor
 ```
 
 - Phases are stored on the `DesignerProject` record in the DB
@@ -107,15 +110,22 @@ export default defineNuxtConfig({
 1. Add check in `useSchemaValidation.ts`
 2. Add i18n key for the message in `en.json` under `designer.validation`
 
+### Modify the scaffold/create flow
+1. `server/api/scaffold-app.post.ts` — server-side orchestration (CLI scaffold, file writes, install, doctor)
+2. `app/composables/useAppScaffold.ts` — client-side state (artifact preview, POST call, step result display)
+3. `app/components/ReviewPanel.vue` — UI consuming `useAppScaffold`
+4. The flow: ReviewPanel calls `createApp()` → composable POSTs to `/api/scaffold-app` → server runs CLI steps → returns step results → composable updates status → ReviewPanel shows results
+
 ### Modify the review/export format
 1. Edit `useSchemaExport.ts` for JSON schema changes
-2. Edit `useSchemaDownload.ts` for ZIP structure changes
+2. Edit `useSchemaDownload.ts` for legacy ZIP structure changes (fallback only; primary flow uses `useAppScaffold`)
 
 ## Dependencies
 
 - **Extends**: `@fyit/crouton-ai` (AI chat, streaming, provider factory)
 - **Peer**: `@fyit/crouton-core` (DB, team context, API utilities), `@nuxt/ui ^4.0.0`, `nuxt ^4.0.0`
-- **Runtime**: `fflate` (ZIP compression), `@vueuse/nuxt`
+- **Runtime**: `fflate` (ZIP compression, legacy fallback), `@vueuse/nuxt`
+- **Server**: Node built-ins (`child_process`, `fs/promises`, `path`) — no additional deps
 
 ## Component Naming
 
