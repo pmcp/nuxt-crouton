@@ -70,7 +70,6 @@
     "zod": "^3.0.0"
   },
   "devDependencies": {
-    "@fyit/crouton-schema-designer": "workspace:*",
     "unbuild": "^3.6.1"
   }
 }

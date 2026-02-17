@@ -12,7 +12,6 @@
   "dependencies": {
     "@fyit/crouton-core": "workspace:*",
     "@fyit/crouton-ai": "workspace:*",
-    "@fyit/crouton-schema-designer": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "nanoid": "^5.1.6"
   },

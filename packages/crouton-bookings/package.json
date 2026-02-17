@@ -72,7 +72,6 @@
     }
   },
   "devDependencies": {
-    "@fyit/crouton-schema-designer": "workspace:*",
     "unbuild": "^3.6.1"
   }
 }
