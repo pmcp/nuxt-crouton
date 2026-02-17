@@ -13,6 +13,8 @@ import { loadTypeMapping } from './utils/manifest-bridge.mjs'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.mjs'
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.mjs'
 import { syncFrameworkPackages } from './utils/update-nuxt-config.mjs'
+import { addNamedSchemaExport } from './utils/update-schema-index.mjs'
+import { registerTranslationsUiCollection } from './utils/update-app-config.mjs'
 
 // Import generators
 import { generateFormComponent } from './generators/form-component.mjs'
@@ -133,146 +135,35 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
   const schemaIndexPath = path.resolve('server', 'db', 'schema.ts')
 
   // Generate the export name (layer-prefixed)
-  // Convert layer to camelCase to ensure valid JavaScript identifier
   const layerCamelCase = layer
     .split(/[-_]/)
     .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
-  // Use pascalCasePlural which properly handles hyphens (e.g., email-templates -> EmailTemplates)
   const exportName = `${layerCamelCase}${cases.pascalCasePlural}`
+  const importPath = `../../layers/${layer}/collections/${cases.plural}/server/database/schema`
 
   try {
-    // Ensure directory exists
-    await fsp.mkdir(path.dirname(schemaIndexPath), { recursive: true })
+    const result = await addNamedSchemaExport(schemaIndexPath, exportName, importPath, force)
 
-    // Check if file exists, if not create initial file with auth schema
-    let content
-    try {
-      content = await fsp.readFile(schemaIndexPath, 'utf-8')
-    } catch (readError) {
-      if (readError.code === 'ENOENT') {
-        // File doesn't exist, create initial file with auth schema export
-        console.log('↻ Creating initial schema index file...')
-        content = `// Database schema exports
-// This file is auto-managed by crouton-generate
-
-// Export auth schema from crouton-auth package
-export * from '@fyit/crouton-auth/server/database/schema/auth'
-`
-        await fsp.writeFile(schemaIndexPath, content)
-        console.log('✓ Created server/db/schema.ts with auth schema')
-      } else {
-        throw readError
+    if (!result.added) {
+      if (result.reason === 'already exported') {
+        console.log(`✓ Schema index already contains ${exportName} export`)
+        return true
+      }
+      if (result.reason?.startsWith('conflicting')) {
+        console.error(`⚠️  Warning: ${result.reason}`)
+        console.error(`   Use --force to override or choose a different name.`)
+        return false
       }
     }
 
-    // Check for existing conflicts
-    const baseTableRegex = new RegExp(`export.*\\b${cases.plural}\\b.*from`, 'g')
-    const existingExport = content.match(baseTableRegex)
-
-    if (existingExport && !force) {
-      console.error(`⚠️  Warning: Found existing export for "${cases.plural}" in schema index`)
-      console.error(`   This might cause conflicts. Use --force to override or choose a different name.`)
-      console.error(`   Existing export: ${existingExport[0]}`)
-      return false
+    if (result.created) {
+      console.log('✓ Created server/db/schema.ts with auth schema')
     }
-
-    // Check if this specific export already exists
-    const specificExportRegex = new RegExp(`export\\s*{[^}]*${exportName}[^}]*}\\s*from\\s*['"].*${layer}/collections/${cases.plural}`, 'g')
-    if (content.match(specificExportRegex)) {
-      console.log(`✓ Schema index already contains ${exportName} export`)
-      return true
-    }
-
-    // Add named export for the new collection schema
-    // Use relative path from server/db/schema.ts to the collection's schema
-    const exportLine = `export { ${exportName} } from '../../layers/${layer}/collections/${cases.plural}/server/database/schema'`
-
-    // Add the new export at the end of the file
-    content = content.trim() + '\n' + exportLine + '\n'
-
-    await fsp.writeFile(schemaIndexPath, content)
     console.log(`✓ Updated schema index with ${exportName} export`)
     return true
   } catch (error) {
     console.error(`! Could not update schema index:`, error.message)
-    return false
-  }
-}
-
-// Register translationsUi collection in app.config.ts
-async function registerTranslationsUiCollection() {
-  // Check if app/ directory exists (Nuxt 4 default structure)
-  const appDirExists = await fsp.stat(path.resolve('app')).then(() => true).catch(() => false)
-  const registryPath = appDirExists
-    ? path.resolve('app/app.config.ts')
-    : path.resolve('app.config.ts')
-
-  const importStatement = `import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'`
-  const collectionKey = 'translationsUi'
-  const configName = 'translationsUiConfig'
-
-  try {
-    let content
-    let fileExists = false
-
-    // Try to read existing file
-    try {
-      content = await fsp.readFile(registryPath, 'utf8')
-      fileExists = true
-    } catch {
-      // File doesn't exist, create it with initial content
-      console.log(`↻ Creating app.config.ts with translationsUi collection`)
-      content = `${importStatement}\n\nexport default defineAppConfig({\n  croutonCollections: {\n    ${collectionKey}: ${configName},\n  }\n})\n`
-      await fsp.writeFile(registryPath, content)
-      console.log(`✓ Created app.config.ts with translationsUi collection`)
-      return true
-    }
-
-    // Check if already registered (only check the config entry, not the import)
-    if (content.includes('translationsUi:')) {
-      console.log(`✓ translationsUi collection already registered in app.config.ts`)
-      return false
-    }
-
-    // Ensure import is present
-    if (!content.includes(importStatement)) {
-      const importBlockMatch = content.match(/^(?:import[^\n]*\n)*/)
-      if (importBlockMatch && importBlockMatch[0]) {
-        const existingImports = importBlockMatch[0]
-        content = content.replace(existingImports, `${existingImports}${importStatement}\n`)
-      } else {
-        content = `${importStatement}\n\n${content}`
-      }
-    }
-
-    // Insert entry into croutonCollections
-    const entryLine = `    ${collectionKey}: ${configName},`
-    const collectionsBlockRegex = /croutonCollections:\s*\{\s*\n/
-    const hasCroutonCollections = /croutonCollections\s*:/.test(content)
-
-    if (!hasCroutonCollections) {
-      // No croutonCollections block yet, add one
-      content = content.replace(
-        'defineAppConfig({',
-        `defineAppConfig({\n  croutonCollections: {\n${entryLine}\n  },`
-      )
-    } else if (collectionsBlockRegex.test(content)) {
-      // Standard format, insert into existing block
-      content = content.replace(collectionsBlockRegex, match => `${match}${entryLine}\n`)
-    } else {
-      // croutonCollections exists but in non-standard format, insert after opening brace
-      content = content.replace(/croutonCollections:\s*\{/, match => `${match}\n${entryLine}`)
-    }
-
-    await fsp.writeFile(registryPath, content)
-    console.log(`✓ Registered translationsUi collection in app.config.ts`)
-    return true
-  } catch (error) {
-    console.error(`! Could not register translationsUi collection:`, error.message)
-    console.log(`  Please manually add to app.config.ts:`)
-    console.log(`    import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'`)
-    console.log(`    croutonCollections: { translationsUi: translationsUiConfig }`)
     return false
   }
 }

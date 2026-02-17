@@ -7,6 +7,9 @@ import chalk from 'chalk'
 
 // Import utilities
 import { toCase } from './utils/helpers.mjs'
+import { removeFromNuxtConfigExtends } from './utils/update-nuxt-config.mjs'
+import { removeSchemaExport } from './utils/update-schema-index.mjs'
+import { removeFromAppConfig } from './utils/update-app-config.mjs'
 
 export async function fileExists(filepath) {
   try {
@@ -53,23 +56,15 @@ export async function cleanSchemaIndex(collectionName, layer, dryRun) {
 
   try {
     const cases = toCase(collectionName)
-    const content = await fsp.readFile(schemaIndexPath, 'utf-8')
-
-    // Convert layer to camelCase for export name
     const layerCamelCase = layer
       .split(/[-_]/)
       .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
       .join('')
-    // Use pascalCasePlural which properly handles hyphens (e.g., email-templates -> EmailTemplates)
     const exportName = `${layerCamelCase}${cases.pascalCasePlural}`
+    const pattern = `${layer}/collections/${cases.plural}`
 
-    // Remove the export line
-    const exportPattern = new RegExp(
-      `export\\s*{[^}]*${exportName}[^}]*}\\s*from\\s*['"][^'"]*${layer}/collections/${cases.plural}[^'"]*['"]\\s*\n?`,
-      'g'
-    )
-
-    if (!content.match(exportPattern)) {
+    const content = await fsp.readFile(schemaIndexPath, 'utf-8')
+    if (!content.includes(pattern)) {
       console.log(chalk.gray(`  ! Export "${exportName}" not found in schema index`))
       return false
     }
@@ -79,10 +74,14 @@ export async function cleanSchemaIndex(collectionName, layer, dryRun) {
       return true
     }
 
-    const updatedContent = content.replace(exportPattern, '')
-    await fsp.writeFile(schemaIndexPath, updatedContent)
-    console.log(chalk.green(`  ✓ Removed export "${exportName}" from schema index`))
-    return true
+    const result = await removeSchemaExport(schemaIndexPath, pattern)
+    if (result.removed) {
+      console.log(chalk.green(`  ✓ Removed export "${exportName}" from schema index`))
+      return true
+    }
+
+    console.log(chalk.gray(`  ! Export "${exportName}" not found: ${result.reason}`))
+    return false
   } catch (error) {
     console.error(chalk.red(`  ✗ Error cleaning schema index: ${error.message}`))
     return false
@@ -104,14 +103,6 @@ export async function cleanAppConfig(collectionName, layer, dryRun) {
   }
 
   try {
-    let content = await fsp.readFile(registryPath, 'utf-8')
-
-    // Convert layer to PascalCase for export name
-    const layerPascalCase = layer
-      .split(/[-_]/)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('')
-    // Convert layer to camelCase for collection key
     const layerCamelCase = layer
       .split(/[-_]/)
       .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
@@ -120,7 +111,7 @@ export async function cleanAppConfig(collectionName, layer, dryRun) {
     const collectionKey = `${layerCamelCase}${cases.pascalCasePlural}`
     const configExportName = `${layerCamelCase}${cases.pascalCasePlural}Config`
 
-    // Check if the collection exists in the registry
+    const content = await fsp.readFile(registryPath, 'utf-8')
     if (!content.includes(collectionKey)) {
       console.log(chalk.gray(`  ! Collection "${collectionKey}" not found in app.config.ts`))
       return false
@@ -132,29 +123,14 @@ export async function cleanAppConfig(collectionName, layer, dryRun) {
       return true
     }
 
-    // Remove the import statement
-    const importPattern = new RegExp(
-      `import\\s*{[^}]*${configExportName}[^}]*}\\s*from\\s*['"][^'"]*['"]\\s*\n?`,
-      'g'
-    )
-    content = content.replace(importPattern, '')
+    const result = await removeFromAppConfig(registryPath, collectionKey, configExportName)
+    if (result.removed) {
+      console.log(chalk.green(`  ✓ Removed "${collectionKey}" from app.config.ts`))
+      return true
+    }
 
-    // Remove the collection entry from croutonCollections
-    const entryPattern = new RegExp(
-      `\\s*${collectionKey}:\\s*${configExportName},?\\s*\n?`,
-      'g'
-    )
-    content = content.replace(entryPattern, '\n')
-
-    // Clean up empty croutonCollections object if it exists
-    content = content.replace(/croutonCollections:\s*\{\s*\}/g, '')
-
-    // Clean up extra blank lines
-    content = content.replace(/\n{3,}/g, '\n\n')
-
-    await fsp.writeFile(registryPath, content)
-    console.log(chalk.green(`  ✓ Removed "${collectionKey}" from app.config.ts`))
-    return true
+    console.log(chalk.gray(`  ! Could not remove "${collectionKey}": ${result.reason}`))
+    return false
   } catch (error) {
     console.error(chalk.red(`  ✗ Error cleaning app.config.ts: ${error.message}`))
     return false
@@ -171,8 +147,8 @@ export async function cleanLayerRootConfig(layer, collectionName, dryRun) {
   }
 
   try {
-    let content = await fsp.readFile(configPath, 'utf-8')
-    const collectionPath = `'./collections/${cases.plural}'`
+    const content = await fsp.readFile(configPath, 'utf-8')
+    const collectionPath = `./collections/${cases.plural}`
 
     if (!content.includes(collectionPath)) {
       console.log(chalk.gray(`  ! Collection not found in layer config`))
@@ -180,36 +156,17 @@ export async function cleanLayerRootConfig(layer, collectionName, dryRun) {
     }
 
     if (dryRun) {
-      console.log(chalk.yellow(`  [DRY RUN] Would remove "${collectionPath}" from layer config`))
+      console.log(chalk.yellow(`  [DRY RUN] Would remove "'${collectionPath}'" from layer config`))
       return true
     }
 
-    // Remove the collection from extends array
-    const extendsMatch = content.match(/extends:\s*\[([\s\S]*?)\]/)
-    if (extendsMatch) {
-      const currentExtends = extendsMatch[1]
-      const lines = currentExtends.split('\n')
-        .map(line => line.trim())
-        .filter(line => line && !line.includes(collectionPath))
-
-      if (lines.length === 0) {
-        // If no more collections, keep empty extends array
-        content = content.replace(/extends:\s*\[[^\]]*\]/, 'extends: [\n  ]')
-      } else {
-        // Format remaining entries
-        const formattedLines = lines.map((line, index) => {
-          const cleanLine = line.replace(/,+$/, '')
-          return index < lines.length - 1 ? `    ${cleanLine},` : `    ${cleanLine}`
-        })
-        const updatedExtends = formattedLines.join('\n')
-        content = content.replace(extendsMatch[0], `extends: [\n${updatedExtends}\n  ]`)
-      }
-
-      await fsp.writeFile(configPath, content)
+    const result = await removeFromNuxtConfigExtends(configPath, collectionPath)
+    if (result.removed) {
       console.log(chalk.green(`  ✓ Removed collection from layer config`))
       return true
     }
 
+    console.log(chalk.gray(`  ! Could not remove from layer config: ${result.reason}`))
     return false
   } catch (error) {
     console.error(chalk.red(`  ✗ Error cleaning layer config: ${error.message}`))
@@ -226,8 +183,8 @@ export async function cleanRootNuxtConfig(layer, dryRun, forceRemove = false) {
   }
 
   try {
-    let content = await fsp.readFile(rootConfigPath, 'utf-8')
-    const layerPath = `'./layers/${layer}'`
+    const content = await fsp.readFile(rootConfigPath, 'utf-8')
+    const layerPath = `./layers/${layer}`
 
     if (!content.includes(layerPath)) {
       console.log(chalk.gray(`  ! Layer "${layer}" not in root config`))
@@ -256,26 +213,13 @@ export async function cleanRootNuxtConfig(layer, dryRun, forceRemove = false) {
       return true
     }
 
-    // Remove the layer from extends array
-    const extendsMatch = content.match(/extends:\s*\[([\s\S]*?)\]/)
-    if (extendsMatch) {
-      const currentExtends = extendsMatch[1]
-      const lines = currentExtends.split('\n')
-        .map(line => line.trim().replace(/,?\s*$/, ''))
-        .filter(line => line && !line.includes(layerPath))
-
-      const formattedLines = lines.map((line, index) => {
-        return index < lines.length - 1 ? `    ${line},` : `    ${line}`
-      })
-
-      const updatedExtends = formattedLines.join('\n')
-      content = content.replace(extendsMatch[0], `extends: [\n${updatedExtends}\n  ]`)
-
-      await fsp.writeFile(rootConfigPath, content)
+    const result = await removeFromNuxtConfigExtends(rootConfigPath, layerPath)
+    if (result.removed) {
       console.log(chalk.green(`  ✓ Removed layer "${layer}" from root config`))
       return true
     }
 
+    console.log(chalk.gray(`  ! Could not remove layer: ${result.reason}`))
     return false
   } catch (error) {
     console.error(chalk.red(`  ✗ Error cleaning root config: ${error.message}`))
