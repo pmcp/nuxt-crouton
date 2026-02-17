@@ -359,16 +359,26 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
         </template>
       </div>
 
-      <!-- Inventory mode info -->
-      <div v-if="localLocationId && isInventoryMode && inventoryInfo" class="flex items-center gap-2 text-sm">
-        <UIcon
-          :name="inventoryInfo.available ? 'i-lucide-check-circle' : 'i-lucide-x-circle'"
-          :class="inventoryInfo.available ? 'text-success' : 'text-error'"
-          class="size-4"
+      <!-- Inventory mode: quantity selector + availability -->
+      <div v-if="localLocationId && isInventoryMode && inventoryInfo" class="flex items-center gap-3">
+        <UInputNumber
+          v-model="formState.quantity"
+          :min="1"
+          :max="inventoryInfo.remaining"
+          :disabled="!inventoryInfo.available"
+          size="xs"
+          :ui="{ root: 'w-28' }"
         />
-        <span :class="inventoryInfo.available ? 'text-success' : 'text-error'">
-          {{ inventoryInfo.remaining }} / {{ inventoryInfo.total }} available
-        </span>
+        <div class="flex items-center gap-1.5 text-sm">
+          <UIcon
+            :name="inventoryInfo.available ? 'i-lucide-check-circle' : 'i-lucide-x-circle'"
+            :class="inventoryInfo.available ? 'text-success' : 'text-error'"
+            class="size-4"
+          />
+          <span :class="inventoryInfo.available ? 'text-success' : 'text-error'">
+            {{ inventoryInfo.remaining }} / {{ inventoryInfo.total }} available
+          </span>
+        </div>
       </div>
 
       <!-- Cancel booking confirmation -->

@@ -71,7 +71,8 @@ export default defineEventHandler(async (event) => {
   const bookings = await db
     .select({
       date: bookingsBookings.date,
-      slot: bookingsBookings.slot
+      slot: bookingsBookings.slot,
+      quantity: bookingsBookings.quantity,
     })
     .from(bookingsBookings)
     .where(and(...conditions))
@@ -112,7 +113,7 @@ export default defineEventHandler(async (event) => {
     }
 
     availabilityData[dateKey].bookedSlots.push(...slotIds)
-    availabilityData[dateKey].bookedCount++
+    availabilityData[dateKey].bookedCount += (booking.quantity ?? 1)
   }
 
   return availabilityData

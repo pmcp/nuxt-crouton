@@ -32,6 +32,10 @@ const { parseSlotIds, parseLocationSlots, getSlotLabel } = useBookingSlots()
 const { getGroupLabel } = useBookingOptions()
 const { isEmailEnabled } = useBookingEmail()
 
+// Preview mode - injected from admin page, defaults to false
+const previewMode = inject<Ref<boolean>>('bookings-preview-mode', ref(false))
+const showAdminFeatures = computed(() => !previewMode.value)
+
 // Get localized location title with fallbacks
 function getLocationTitle(locationData: Booking['locationData']): string {
   if (!locationData) return 'Unknown Location'
@@ -210,8 +214,9 @@ const timelineItems = computed<TimelineItem[]>(() => {
 
     <!-- Main layout: responsive flex with space-between on desktop -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 relative">
-      <!-- Slide-out action menu -->
+      <!-- Slide-out action menu (admin only) -->
       <div
+          v-if="showAdminFeatures"
           class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center px-2 bg-elevated/95  transition-transform duration-200 ease-out z-10"
           :class="isHovered ? 'translate-x-0' : 'translate-x-full'"
       >
@@ -256,7 +261,9 @@ const timelineItems = computed<TimelineItem[]>(() => {
                 class="size-2 rounded-full shrink-0"
                 :style="{ backgroundColor: isCancelled ? '#ef4444' : locationColor }"
               />
-              <span class="text-xs text-muted">{{ slotLabel }}</span>
+              <span class="text-xs tabular-nums" :class="isCancelled ? 'text-red-400' : 'text-muted'">
+                {{ booking.quantity ?? 1 }} / {{ booking.locationData?.quantity || '?' }}
+              </span>
             </template>
             <template v-else>
               <!-- Show slot indicator for locations with configured slots -->
@@ -305,9 +312,9 @@ const timelineItems = computed<TimelineItem[]>(() => {
         </div>
       </div>
 
-      <!-- Email timeline (desktop only) -->
+      <!-- Email timeline (desktop only, admin only) -->
       <div
-          v-if="isEmailEnabled && timelineItems.length > 0"
+          v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0"
           class="hidden md:flex items-center gap-4 pr-14 transition-transform"
           :class="isHovered ? 'translate-x-0' : 'translate-x-10'"
       >
@@ -334,8 +341,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
       </div>
     </div>
 
-    <!-- Mobile email panel -->
-    <div v-if="isEmailEnabled && timelineItems.length > 0" class="md:hidden mt-4 pt-3 border-t border-muted/20 relative">
+    <!-- Mobile email panel (admin only) -->
+    <div v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0" class="md:hidden mt-4 pt-3 border-t border-muted/20 relative">
       <!-- Trigger button -->
       <UButton
         variant="ghost"

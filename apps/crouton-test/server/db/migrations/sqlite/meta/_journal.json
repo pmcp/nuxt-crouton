@@ -64,6 +64,13 @@
       "when": 1771281542100,
       "tag": "0008_useful_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1771354760033,
+      "tag": "0009_lyrical_ironclad",
+      "breakpoints": true
     }
   ]
 }

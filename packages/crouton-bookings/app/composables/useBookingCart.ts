@@ -89,12 +89,14 @@ export function useBookingCart() {
     date: Date | null
     slotId: string | null
     groupId: string | null
+    quantity: number
     editingBookingId: string | null
   }>('croutonBookingFormState', () => ({
     locationId: null,
     date: null,
     slotId: null,
     groupId: null,
+    quantity: 1,
     editingBookingId: null,
   }))
 
@@ -108,6 +110,8 @@ export function useBookingCart() {
     set slotId(v: string | null) { formStateRef.value.slotId = v },
     get groupId() { return formStateRef.value.groupId },
     set groupId(v: string | null) { formStateRef.value.groupId = v },
+    get quantity() { return formStateRef.value.quantity },
+    set quantity(v: number) { formStateRef.value.quantity = v },
     get editingBookingId() { return formStateRef.value.editingBookingId },
     set editingBookingId(v: string | null) { formStateRef.value.editingBookingId = v },
   })
@@ -153,15 +157,17 @@ export function useBookingCart() {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
   }
 
-  // Count cart items for current location + selected date's month
+  // Count cart items for current location + selected date's month (sums quantities for inventory mode)
   const cartCountForLocationMonth = computed(() => {
     if (!formState.locationId || !formState.date) return 0
     const targetMonth = getMonthKey(formState.date)
-    return cart.value.filter((item) => {
-      const itemDate = new Date(item.date)
-      return item.locationId === formState.locationId
-        && getMonthKey(itemDate) === targetMonth
-    }).length
+    return cart.value
+      .filter((item) => {
+        const itemDate = new Date(item.date)
+        return item.locationId === formState.locationId
+          && getMonthKey(itemDate) === targetMonth
+      })
+      .reduce((sum, item) => sum + (item.quantity ?? 1), 0)
   })
 
   // Remaining bookings for the month (null if no limit)
@@ -296,11 +302,13 @@ export function useBookingCart() {
   function getCartBookedCountForDate(date: Date): number {
     if (!formState.locationId) return 0
 
-    return cart.value.filter(item =>
-      item.locationId === formState.locationId
-      && item.isInventoryMode
-      && isSameDay(new Date(item.date), date),
-    ).length
+    return cart.value
+      .filter(item =>
+        item.locationId === formState.locationId
+        && item.isInventoryMode
+        && isSameDay(new Date(item.date), date),
+      )
+      .reduce((sum, item) => sum + (item.quantity ?? 1), 0)
   }
 
   // Get inventory availability for a date
@@ -468,9 +476,9 @@ export function useBookingCart() {
     if (isDateUnavailable(formState.date)) return false
 
     if (isInventoryMode.value) {
-      // Inventory mode: just need location + date + availability
-      const { available } = getInventoryAvailability(formState.date)
-      if (!available) return false
+      // Inventory mode: need location + date + enough availability for requested quantity
+      const { remaining } = getInventoryAvailability(formState.date)
+      if (remaining < formState.quantity) return false
     } else {
       // Slot mode: need location + date + slot
       if (!formState.slotId) return false
@@ -538,6 +546,7 @@ export function useBookingCart() {
       groupId: formState.groupId,
       groupLabel: getGroupLabel(formState.groupId),
       isInventoryMode: isInventoryMode.value,
+      quantity: isInventoryMode.value ? formState.quantity : undefined,
     }
 
     // Add slot-specific info for slot mode
@@ -555,6 +564,7 @@ export function useBookingCart() {
     // Reset form for next booking
     formState.slotId = null
     formState.groupId = null
+    formState.quantity = 1
 
     // Trigger pulse animation on cart button
     cartPulse.value++
@@ -632,6 +642,7 @@ export function useBookingCart() {
     formState.date = null
     formState.slotId = null
     formState.groupId = null
+    formState.quantity = 1
   }
 
   // Cancel a booking (set status to 'cancelled')

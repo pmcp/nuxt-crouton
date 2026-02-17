@@ -286,6 +286,17 @@ function getIndicatorsForDate(date: Date): IndicatorData[] {
       let cancelledCount = 0
 
       for (const booking of locationBookings) {
+        // Inventory mode: slot is null, all bookings match; sum quantity
+        if (isInventoryMode) {
+          const qty = booking.quantity ?? 1
+          if (booking.status === 'cancelled') {
+            cancelledCount += qty
+          } else {
+            activeCount += qty
+          }
+          continue
+        }
+
         const slotIds = parseSlotIds(booking.slot)
         const matchesSlot = slotIds.includes(slot.id) || slotIds.includes('all-day')
         if (!matchesSlot) continue
@@ -319,7 +330,9 @@ function getIndicatorsForDate(date: Date): IndicatorData[] {
       }
     }
 
-    const totalActiveBookings = locationBookings.filter(b => b.status !== 'cancelled').length
+    const totalActiveBookings = locationBookings
+      .filter(b => b.status !== 'cancelled')
+      .reduce((sum, b) => sum + (b.quantity ?? 1), 0)
 
     indicators.push({
       locationId: location.id,

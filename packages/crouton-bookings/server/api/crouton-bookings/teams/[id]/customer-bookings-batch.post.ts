@@ -16,7 +16,7 @@
  *   emailsSent?: number
  * }
  */
-import { eq, and, gte, lte } from 'drizzle-orm'
+import { eq, and, gte, lte, sum } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
@@ -106,9 +106,9 @@ export default defineEventHandler(async (event) => {
         const monthStart = new Date(year!, month! - 1, 1)
         const monthEnd = new Date(year!, month!, 0, 23, 59, 59, 999)
 
-        // Count existing active bookings for this user/location/month
-        const existingBookings = await db
-          .select({ id: bookingsBookings.id })
+        // Sum existing active booking quantities for this user/location/month
+        const existingResult = await db
+          .select({ total: sum(bookingsBookings.quantity) })
           .from(bookingsBookings)
           .where(
             and(
@@ -120,54 +120,41 @@ export default defineEventHandler(async (event) => {
             ),
           )
 
-        // Count how many new items in this batch target the same location/month
-        const newCount = body.bookings.filter((item) => {
-          const d = new Date(item.date)
-          const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-          return item.locationId === locationId && m === monthKey
-        }).length
+        const existingCount = Number(existingResult[0]?.total) || 0
 
-        if (existingBookings.length + newCount > limit) {
-          const remaining = Math.max(0, limit - existingBookings.length)
+        // Sum quantities of new items in this batch targeting the same location/month
+        const newCount = body.bookings
+          .filter((item) => {
+            const d = new Date(item.date)
+            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            return item.locationId === locationId && m === monthKey
+          })
+          .reduce((acc, item) => acc + (item.quantity ?? 1), 0)
+
+        if (existingCount + newCount > limit) {
+          const remaining = Math.max(0, limit - existingCount)
           throw createError({
             status: 400,
-            statusText: `Monthly booking limit reached for "${location.title}". Limit: ${limit} per month, existing: ${existingBookings.length}, trying to add: ${newCount}. You can add ${remaining} more.`,
+            statusText: `Monthly booking limit reached for "${location.title}". Limit: ${limit} per month, existing: ${existingCount}, trying to add: ${newCount}. You can add ${remaining} more.`,
           })
         }
       }
     }
   }
 
-  // Transform cart items to database records
-  const bookingsToInsert = body.bookings.flatMap((item) => {
-    // For inventory mode, create multiple bookings based on quantity
-    if (item.isInventoryMode && item.quantity && item.quantity > 1) {
-      return Array.from({ length: item.quantity }, () => ({
-        teamId: team.id,
-        owner: user.id,
-        location: item.locationId,
-        date: new Date(item.date),
-        slot: null, // No slot for inventory mode
-        group: item.groupId || null,
-        status: 'active',
-        createdBy: user.id,
-        updatedBy: user.id,
-      }))
-    }
-
-    // Slot mode or single inventory item
-    return [{
-      teamId: team.id,
-      owner: user.id,
-      location: item.locationId,
-      date: new Date(item.date),
-      slot: item.slotId ? [item.slotId] : null, // Array for JSON column
-      group: item.groupId || null,
-      status: 'active',
-      createdBy: user.id,
-      updatedBy: user.id,
-    }]
-  })
+  // Transform cart items to database records (one row per cart item, quantity stored on the row)
+  const bookingsToInsert = body.bookings.map((item) => ({
+    teamId: team.id,
+    owner: user.id,
+    location: item.locationId,
+    date: new Date(item.date),
+    slot: item.slotId && item.slotId !== 'inventory' ? [item.slotId] : null, // Array for JSON column
+    quantity: item.isInventoryMode ? (item.quantity ?? 1) : 1,
+    group: item.groupId || null,
+    status: 'active',
+    createdBy: user.id,
+    updatedBy: user.id,
+  }))
 
   try {
     // Insert all bookings in a single transaction

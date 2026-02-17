@@ -137,6 +137,7 @@ export interface Booking {
   location: string // locationId
   date: string | Date
   slot: string // JSON-encoded array: '["slot-1"]'
+  quantity?: number
   group?: string | null
   status: string
   owner?: string | null
