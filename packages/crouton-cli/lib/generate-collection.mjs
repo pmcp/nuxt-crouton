@@ -493,8 +493,14 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
       content = `${importStatement}\n\nexport default defineAppConfig({\n  croutonCollections: {\n    ${collectionKey}: ${configExportName},\n  }\n})\n`
     }
 
-    // Ensure import is present
-    if (!content.includes(importStatement)) {
+    // Dedup: skip entirely if this collection is already registered
+    if (fileExists && content.includes(`${collectionKey}:`)) {
+      console.log(`✓ Collection "${collectionKey}" already in registry`)
+      return
+    }
+
+    // Ensure import is present (check export name to handle path variations)
+    if (!content.includes(configExportName)) {
       const importBlockMatch = content.match(/^(?:import[^\n]*\n)*/)
       if (importBlockMatch && importBlockMatch[0]) {
         const existingImports = importBlockMatch[0]
@@ -502,13 +508,6 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
       } else {
         content = `${importStatement}\n\n${content}`
       }
-    }
-
-    // Check if entry already exists
-    if (content.includes(`${collectionKey}:`)) {
-      console.log(`⚠️  Collection "${collectionKey}" already in registry`)
-      await fsp.writeFile(registryPath, content)
-      return
     }
 
     // Insert new entry into croutonCollections
