@@ -33,6 +33,8 @@ const {
   selectedLocation,
   allSlots,
   isSlotDisabled,
+  getSlotRemaining,
+  getSlotCapacity,
   canAddToCart,
   addToCart,
   submitAll,
@@ -344,6 +346,9 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
           >
             <span :class="{ 'line-through': isSlotDisabled(slot.id) }">
               {{ slot.label || slot.id }}
+            </span>
+            <span v-if="getSlotCapacity(slot.id) > 1 && !isSlotDisabled(slot.id)" class="text-xs opacity-60 ml-0.5">
+              ({{ getSlotRemaining(slot.id) }} left)
             </span>
             <UIcon
               v-if="isSlotDisabled(slot.id)"

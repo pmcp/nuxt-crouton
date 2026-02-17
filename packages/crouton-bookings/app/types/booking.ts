@@ -38,6 +38,7 @@ export interface SlotItem {
   label?: string
   value?: string
   color?: string
+  capacity?: number
   translations?: {
     label?: Record<string, string>
   }

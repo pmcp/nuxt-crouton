@@ -325,14 +325,34 @@ export function useBookingCart() {
     return [ALL_DAY_SLOT, ...rawSlots.value]
   })
 
-  // Get booked slot IDs for the selected date (from API + cart)
+  // Get all booked slot IDs for the selected date (from API + cart, with duplicates for capacity counting)
   const bookedSlotIds = computed<string[]>(() => {
     if (!formState.date || isInventoryMode.value) return []
 
     const apiBooked = getApiBookedSlotsForDate(formState.date)
     const cartBooked = getCartBookedSlotsForDate(formState.date)
-    return [...new Set([...apiBooked, ...cartBooked])]
+    // Keep duplicates — needed for capacity counting
+    return [...apiBooked, ...cartBooked]
   })
+
+  // Get the capacity for a slot from rawSlots
+  function getSlotCapacity(slotId: string): number {
+    if (slotId === 'all-day') return 1
+    const slot = rawSlots.value.find(s => s.id === slotId)
+    return slot?.capacity ?? 1
+  }
+
+  // Count how many times a slot appears in the booked list
+  function getSlotBookedCount(slotId: string): number {
+    return bookedSlotIds.value.filter(id => id === slotId).length
+  }
+
+  // Get remaining capacity for a slot on the selected date
+  function getSlotRemaining(slotId: string): number {
+    const capacity = getSlotCapacity(slotId)
+    const bookedCount = getSlotBookedCount(slotId)
+    return Math.max(0, capacity - bookedCount)
+  }
 
   // Check if a slot is disabled (slot mode only)
   function isSlotDisabled(slotId: string): boolean {
@@ -348,8 +368,8 @@ export function useBookingCart() {
       return true
     }
 
-    // If this slot is booked, it's disabled
-    if (bookedSlotIds.value.includes(slotId)) {
+    // Capacity-aware: slot is full when booked count >= capacity
+    if (getSlotRemaining(slotId) <= 0) {
       return true
     }
 
@@ -371,10 +391,11 @@ export function useBookingCart() {
   // === Calendar availability helpers ===
 
   // Get all booked slots for a date (API + cart combined) - slot mode
+  // Keeps duplicates for capacity counting
   function getBookedSlotsForDate(date: Date): string[] {
     const apiBooked = getApiBookedSlotsForDate(date)
     const cartBooked = getCartBookedSlotsForDate(date)
-    return [...new Set([...apiBooked, ...cartBooked])]
+    return [...apiBooked, ...cartBooked]
   }
 
   // Check if a date has any bookings
@@ -400,11 +421,14 @@ export function useBookingCart() {
       return true
     }
 
-    // If all individual slots are booked, it's fully booked
-    const individualSlots = rawSlots.value.map(s => s.id)
-    if (individualSlots.length === 0) return false
+    // Capacity-aware: all individual slots are full when booked count >= capacity
+    if (rawSlots.value.length === 0) return false
 
-    return individualSlots.every(slotId => bookedSlots.includes(slotId))
+    return rawSlots.value.every((slot) => {
+      const capacity = slot.capacity ?? 1
+      const bookedCount = bookedSlots.filter(id => id === slot.id).length
+      return bookedCount >= capacity
+    })
   }
 
   // Get booked slot labels for tooltip display (slot mode)
@@ -701,6 +725,8 @@ export function useBookingCart() {
     availableSlots,
     rawSlots,
     isSlotDisabled,
+    getSlotRemaining,
+    getSlotCapacity,
 
     // Calendar availability helpers
     hasBookingsOnDate,

@@ -4,6 +4,7 @@ import type { BlockedDateItem, SlotSchedule } from '../types/booking'
 export interface SlotOption {
   id: string
   label: string
+  capacity?: number
 }
 
 export interface AvailabilityData {
@@ -120,9 +121,25 @@ export function useBookingAvailability(
   }
 
   // Get booked slots for a specific date (slot mode)
+  // NOTE: The API returns duplicate slot IDs (one per booking), so this array
+  // may contain the same slotId multiple times when capacity > 1
   function getBookedSlotsForDate(date: Date | DateValue): string[] {
     const dateKey = normalizeToDateKey(date)
     return availabilityData.value[dateKey]?.bookedSlots || []
+  }
+
+  // Count how many times a slot is booked on a date (for capacity checking)
+  function getSlotBookedCountForDate(date: Date | DateValue, slotId: string): number {
+    const bookedSlots = getBookedSlotsForDate(date)
+    return bookedSlots.filter(id => id === slotId).length
+  }
+
+  // Get remaining capacity for a slot on a date
+  function getSlotRemainingForDate(date: Date | DateValue, slotId: string): number {
+    const slot = allSlots.value.find(s => s.id === slotId)
+    const capacity = slot?.capacity ?? 1
+    const bookedCount = getSlotBookedCountForDate(date, slotId)
+    return Math.max(0, capacity - bookedCount)
   }
 
   // Get booked count for a specific date (inventory mode)
@@ -168,7 +185,7 @@ export function useBookingAvailability(
       return remaining === 0
     }
 
-    // Slot mode: existing logic
+    // Slot mode: capacity-aware logic
     const bookedSlots = getBookedSlotsForDate(date)
 
     // If "all-day" is booked, the date is fully booked
@@ -176,11 +193,15 @@ export function useBookingAvailability(
       return true
     }
 
-    // If all individual slots (excluding all-day) are booked, it's fully booked
-    const individualSlots = locationSlots.value.map(s => s.id)
+    // All individual slots are full when booked count >= capacity for each
+    const individualSlots = locationSlots.value
     if (individualSlots.length === 0) return false
 
-    return individualSlots.every(slotId => bookedSlots.includes(slotId))
+    return individualSlots.every((slot) => {
+      const capacity = slot.capacity ?? 1
+      const bookedCount = bookedSlots.filter(id => id === slot.id).length
+      return bookedCount >= capacity
+    })
   }
 
   // Get available slots for a specific date (slot mode only)
@@ -205,8 +226,10 @@ export function useBookingAvailability(
       // Remove rule-blocked slots
       if (ruleBlockedSlots.includes(slot.id)) return false
 
-      // Remove already booked slots
-      if (bookedSlots.includes(slot.id)) return false
+      // Capacity-aware: slot is full when booked count >= capacity
+      const capacity = slot.capacity ?? 1
+      const bookedCount = bookedSlots.filter(id => id === slot.id).length
+      if (bookedCount >= capacity) return false
 
       // Remove "all-day" if any slot is booked or rule-blocked
       if (slot.id === 'all-day' && hasAnyBooking) return false
@@ -234,6 +257,8 @@ export function useBookingAvailability(
     locationSlots,
     fetchAvailability,
     getBookedSlotsForDate,
+    getSlotBookedCountForDate,
+    getSlotRemainingForDate,
     getBookedSlotLabelsForDate,
     getAvailableSlotsForDate,
 

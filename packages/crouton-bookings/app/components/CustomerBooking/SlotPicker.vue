@@ -3,6 +3,7 @@ interface SlotItem {
   id: string
   label?: string
   value?: string
+  capacity?: number
 }
 
 interface Props {
@@ -12,11 +13,17 @@ interface Props {
   color?: string
   /** Slot IDs disabled by schedule rules (distinct from demand-booked) */
   disabledSlotIds?: string[]
+  /** Remaining capacity per slot ID (from availability data) */
+  slotRemaining?: Record<string, number>
+  /** Slot IDs that have at least one booking (for capacity display) */
+  bookedSlotIds?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   color: '#3b82f6',
   disabledSlotIds: () => [],
+  slotRemaining: () => ({}),
+  bookedSlotIds: () => [],
 })
 
 const emit = defineEmits<{
@@ -54,8 +61,30 @@ function isRuleDisabled(slot: SlotItem): boolean {
   return props.disabledSlotIds.includes(slot.id)
 }
 
+function isAtCapacity(slot: SlotItem): boolean {
+  const remaining = props.slotRemaining[slot.id]
+  if (remaining === undefined) return false
+  return remaining <= 0
+}
+
+function isDisabled(slot: SlotItem): boolean {
+  return isRuleDisabled(slot) || isAtCapacity(slot)
+}
+
+function hasMultiCapacity(slot: SlotItem): boolean {
+  return (slot.capacity ?? 1) > 1
+}
+
+function getRemainingLabel(slot: SlotItem): string | null {
+  if (!hasMultiCapacity(slot)) return null
+  const remaining = props.slotRemaining[slot.id]
+  if (remaining === undefined) return null
+  if (remaining <= 0) return 'Full'
+  return `${remaining} left`
+}
+
 function handleClick(slot: SlotItem) {
-  if (!isRuleDisabled(slot)) {
+  if (!isDisabled(slot)) {
     emit('select', slot.id)
   }
 }
@@ -74,15 +103,15 @@ function handleClick(slot: SlotItem) {
       <UButton
         v-for="slot in normalizedSlots"
         :key="slot.id"
-        :variant="isRuleDisabled(slot) ? 'ghost' : isSelected(slot) ? 'soft' : 'outline'"
-        :color="isRuleDisabled(slot) ? 'neutral' : isSelected(slot) ? 'primary' : 'neutral'"
-        :disabled="isRuleDisabled(slot)"
+        :variant="isDisabled(slot) ? 'ghost' : isSelected(slot) ? 'soft' : 'outline'"
+        :color="isDisabled(slot) ? 'neutral' : isSelected(slot) ? 'primary' : 'neutral'"
+        :disabled="isDisabled(slot)"
         class="p-4 h-auto flex-col"
-        :class="isRuleDisabled(slot) && 'opacity-40 cursor-not-allowed'"
+        :class="isDisabled(slot) && 'opacity-40 cursor-not-allowed'"
         @click="handleClick(slot)"
       >
         <div
-          v-if="color && !isRuleDisabled(slot)"
+          v-if="color && !isDisabled(slot)"
           class="w-3 h-3 rounded-full mb-2"
           :style="{ backgroundColor: color }"
         />
@@ -91,6 +120,9 @@ function handleClick(slot: SlotItem) {
         </span>
         <span v-if="isRuleDisabled(slot)" class="block text-xs text-muted mt-1">
           Unavailable
+        </span>
+        <span v-else-if="getRemainingLabel(slot)" class="block text-xs mt-1" :class="isAtCapacity(slot) ? 'text-muted' : 'text-primary'">
+          {{ getRemainingLabel(slot) }}
         </span>
       </UButton>
     </div>

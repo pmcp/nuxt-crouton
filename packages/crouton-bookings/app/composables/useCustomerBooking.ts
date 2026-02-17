@@ -37,6 +37,15 @@ export function useCustomerBooking() {
     getBlockedReason,
   } = useScheduleRules(selectedLocation)
 
+  // Availability data (for capacity checking)
+  const locationIdRef = computed(() => bookingState.locationId)
+  const {
+    fetchAvailability,
+    getBookedSlotsForDate,
+    getSlotRemainingForDate,
+    loading: availabilityLoading,
+  } = useBookingAvailability(locationIdRef, selectedLocation)
+
   // Fetch allowed locations
   const teamId = computed(() => route.params.team as string)
 
@@ -96,6 +105,13 @@ export function useCustomerBooking() {
       bookingState.quantity = 1
       // Update selected location object
       selectedLocation.value = allowedLocations.value?.find(l => l.id === newId) || null
+      // Fetch 3 months of availability for the new location
+      if (newId) {
+        const now = new Date()
+        const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        const endDate = new Date(now.getFullYear(), now.getMonth() + 3, 0)
+        fetchAvailability(startDate, endDate)
+      }
     }
   })
 
@@ -215,6 +231,11 @@ export function useCustomerBooking() {
     isDateUnavailable,
     getRuleBlockedSlotIds,
     getBlockedReason,
+
+    // Availability
+    availabilityLoading,
+    getBookedSlotsForDate,
+    getSlotRemainingForDate,
 
     // Actions
     nextStep,

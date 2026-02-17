@@ -19,12 +19,39 @@ const {
   reset,
   isDateUnavailable,
   getRuleBlockedSlotIds,
+  getBookedSlotsForDate,
+  getSlotRemainingForDate,
 } = useCustomerBooking()
 
 // Disabled slot IDs for the selected date (from schedule rules)
 const disabledSlotIds = computed(() => {
   if (!bookingState.date) return []
   return getRuleBlockedSlotIds(bookingState.date)
+})
+
+// Booked slot IDs for the selected date (for capacity display)
+const bookedSlotIds = computed(() => {
+  if (!bookingState.date) return []
+  return getBookedSlotsForDate(bookingState.date)
+})
+
+// Remaining capacity per slot for the selected date
+const slotRemaining = computed<Record<string, number>>(() => {
+  if (!bookingState.date || !selectedLocation.value?.slots) return {}
+
+  let slots: Array<{ id: string; capacity?: number }> = []
+  const raw = selectedLocation.value.slots
+  if (typeof raw === 'string') {
+    try { slots = JSON.parse(raw) } catch { slots = [] }
+  } else if (Array.isArray(raw)) {
+    slots = raw
+  }
+
+  const result: Record<string, number> = {}
+  for (const slot of slots) {
+    result[slot.id] = getSlotRemainingForDate(bookingState.date, slot.id)
+  }
+  return result
 })
 
 const router = useRouter()
@@ -199,6 +226,8 @@ const stepperOrientation = computed(() => isMobile.value ? 'vertical' : 'horizon
               :slots="selectedLocation?.slots"
               :selected-slot-id="bookingState.slot"
               :disabled-slot-ids="disabledSlotIds"
+              :slot-remaining="slotRemaining"
+              :booked-slot-ids="bookedSlotIds"
               @select="handleSlotSelect"
             />
           </div>
