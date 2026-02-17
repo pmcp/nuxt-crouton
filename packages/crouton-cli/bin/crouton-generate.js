@@ -509,6 +509,31 @@ program
     }
   })
 
+// Doctor command - validate an existing app
+program
+  .command('doctor [dir]')
+  .description('Validate an existing crouton app (checks deps, wrangler, stubs, schema)')
+  .action(async (dir) => {
+    try {
+      const doctorPath = join(__dirname, '..', 'lib', 'doctor.mjs')
+      const { doctor, printReport } = await import(doctorPath)
+
+      const appDir = dir || process.cwd()
+      const result = await doctor(appDir)
+      printReport(result)
+
+      if (!result.ok) {
+        process.exit(1)
+      }
+    } catch (error) {
+      console.error(chalk.red('Doctor failed:'), error.message)
+      if (process.env.DEBUG) {
+        console.error(error.stack)
+      }
+      process.exit(1)
+    }
+  })
+
 // Scaffold app command - create a complete app directory with boilerplate
 program
   .command('scaffold-app <name>')
