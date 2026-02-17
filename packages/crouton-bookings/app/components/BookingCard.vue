@@ -252,7 +252,10 @@ const timelineItems = computed<TimelineItem[]>(() => {
           <!-- Slot indicator + time + group -->
           <div class="flex items-center gap-2 flex-wrap">
             <template v-if="isInventoryMode">
-              <UIcon name="i-lucide-box" class="size-3 text-primary" />
+              <span
+                class="size-2 rounded-full shrink-0"
+                :style="{ backgroundColor: isCancelled ? '#ef4444' : locationColor }"
+              />
               <span class="text-xs text-muted">{{ slotLabel }}</span>
             </template>
             <template v-else>
@@ -264,6 +267,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
                 :cancelled-slot-ids="isCancelled ? bookedSlotIds : []"
                 :color="locationColor"
                 size="sm"
+                variant="dots"
               />
               <!-- Show single dot for all-day bookings on locations with no slots -->
               <span

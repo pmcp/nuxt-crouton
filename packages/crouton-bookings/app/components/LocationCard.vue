@@ -48,9 +48,13 @@ const title = computed(() => {
 <template>
   <UButton
     size="xs"
-    :color="selected ? 'primary' : 'neutral'"
+    color="neutral"
     :variant="selected ? 'soft' : 'outline'"
     class="group relative"
+    :style="selected ? {
+      backgroundColor: (location.color || '#3b82f6') + '20',
+      borderColor: (location.color || '#3b82f6') + '40',
+    } : undefined"
     @click="emit('click')"
   >
     <!-- Color bar -->

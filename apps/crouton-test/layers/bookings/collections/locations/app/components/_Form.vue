@@ -125,8 +125,8 @@
                 orientation="horizontal"
                 variant="card"
                 :items="[
-                  { label: 'Time Slots', description: 'Courts, rooms, appointments', value: 'slots' },
-                  { label: 'Inventory', description: 'Equipment, rentals, pools', value: 'inventory' },
+                  { label: 'Time Slots', description: 'Book specific named time slots per day', value: 'slots' },
+                  { label: 'Inventory', description: 'Book from a pool of available units', value: 'inventory' },
                 ]"
                 @update:model-value="(v: string) => state.inventoryMode = v === 'inventory'"
               />
