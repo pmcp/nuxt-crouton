@@ -6,6 +6,7 @@
   "main": "./nuxt.config.ts",
   "exports": {
     ".": "./nuxt.config.ts",
+    "./shared/manifest": "./shared/manifest.ts",
     "./app/composables/*": {
       "types": "./dist/app/composables/*.d.ts",
       "import": "./dist/app/composables/*.mjs"
@@ -27,6 +28,7 @@
   "files": [
     "app",
     "server",
+    "shared",
     "registry",
     "dist",
     "nuxt.config.ts",
