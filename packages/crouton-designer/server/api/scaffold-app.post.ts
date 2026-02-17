@@ -61,7 +61,8 @@ export default defineEventHandler(async (event) => {
 
   // Step 1: Run scaffold-app (direct import — same code path as crouton init)
   const features = (body.config.packages || [])
-    .filter(p => !['auth', 'admin', 'i18n'].includes(p)) // bundled
+    .map(p => p.replace(/^crouton-/, ''))
+    .filter(p => !['auth', 'admin', 'i18n', 'core'].includes(p)) // bundled
 
   try {
     const { scaffoldApp } = await import('@fyit/crouton-cli/lib/scaffold-app')

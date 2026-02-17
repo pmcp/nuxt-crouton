@@ -38,8 +38,8 @@ const availablePackages = computed(() =>
   croutonModules
     .filter(mod => mod.aiHint)
     .map(mod => ({
-      label: t(`designer.packageLabels.crouton-${mod.alias}`, mod.description),
-      value: `crouton-${mod.alias}`
+      label: t(`designer.packageLabels.${mod.alias}`, mod.description),
+      value: mod.alias
     }))
 )
 

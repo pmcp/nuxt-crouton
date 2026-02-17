@@ -66,7 +66,7 @@ function getPhase1Tools() {
         authType: z.enum(['email-password', 'oauth', 'both']).optional().describe('Authentication method'),
         languages: z.array(z.string()).optional().describe('Supported languages as ISO codes (e.g. ["en", "nl", "fr"])'),
         defaultLocale: z.string().optional().describe('Default language ISO code'),
-        packages: z.array(z.string()).optional().describe('Crouton packages to include (e.g. ["crouton-editor", "crouton-i18n"])')
+        packages: z.array(z.string()).optional().describe('Crouton packages to include (e.g. ["editor", "bookings"])')
       }),
       execute: async (args) => ({ success: true, ...args })
     })

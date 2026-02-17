@@ -1,17 +1,40 @@
 import type { ProjectConfig } from '../types/schema'
 
+interface ModuleAIContext {
+  collections?: Array<{ name: string, description: string }>
+  composables?: string[]
+  components?: string[]
+}
+
+interface ModuleEntry {
+  alias: string
+  description: string
+  aiHint: string | null
+  ai?: ModuleAIContext
+}
+
 /**
  * Builds the system prompt for Phase 1 (Intake)
  */
 export function useIntakePrompt() {
   const appConfig = useAppConfig()
   const crouton = appConfig.crouton as any ?? {}
-  const modules = (crouton.modules ?? []) as Array<{ alias: string, description: string, aiHint: string | null }>
+  const modules = (crouton.modules ?? []) as ModuleEntry[]
 
   // Build the AI-facing package list from the manifest-injected module registry
   const availablePackages = modules
     .filter(mod => mod.aiHint)
-    .map(mod => `- **crouton-${mod.alias}**: ${mod.description} (${mod.aiHint})`)
+    .map((mod) => {
+      let line = `- **${mod.alias}**: ${mod.description}`
+      if (mod.ai?.collections?.length) {
+        line += `\n  Built-in collections: ${mod.ai.collections.map(c => c.name).join(', ')}`
+      }
+      if (mod.ai?.composables?.length) {
+        line += `\n  Composables: ${mod.ai.composables.length} available`
+      }
+      line += `\n  Use when: ${mod.aiHint}`
+      return line
+    })
     .join('\n')
 
   function buildSystemPrompt(currentConfig: ProjectConfig): string {
@@ -44,6 +67,7 @@ ${availablePackages}
 5. Be concise. One short paragraph plus one or two focused questions per response.
 6. Suggest packages only when the user's description clearly warrants them.
 7. When the user has provided name + appType + description, suggest they're ready to move on to collection design.
+8. When suggesting packages, use the bare alias (e.g. \`bookings\` not \`crouton-bookings\`).
 
 ## Current App Configuration
 ${configSummary || '  (empty — nothing configured yet)'}
