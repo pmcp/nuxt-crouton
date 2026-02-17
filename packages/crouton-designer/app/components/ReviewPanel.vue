@@ -60,24 +60,31 @@ onMounted(loadCollections)
 // Validation
 const { issues, errors, warnings, hasErrors } = useSchemaValidation(collections)
 
-// Schema download
+// App scaffold
 const configRef = computed(() => props.config)
-const { artifacts, cliCommand, downloadZip } = useSchemaDownload(collections, configRef, seedData)
+const { appName, artifactsByCategory, status, result, error, createApp } = useAppScaffold(collections, configRef, seedData)
 
-// Track download state
-const hasDownloaded = ref(false)
-const copied = ref(false)
+// Category display order
+const categoryOrder = ['config', 'app', 'server', 'schema', 'seed'] as const
 
-function handleGenerate() {
-  downloadZip()
-  hasDownloaded.value = true
+// Step label map
+const stepLabels: Record<string, string> = {
+  scaffold: 'designer.review.stepScaffold',
+  schemas: 'designer.review.stepSchemas',
+  seedData: 'designer.review.stepSeedData',
+  config: 'designer.review.stepConfig',
+  install: 'designer.review.stepInstall',
+  generate: 'designer.review.stepGenerate',
+  doctor: 'designer.review.stepDoctor'
 }
 
-async function copyCommand() {
+const copied = ref<string | null>(null)
+
+async function copyText(text: string, key: string) {
   try {
-    await navigator.clipboard.writeText(cliCommand.value)
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 2000)
+    await navigator.clipboard.writeText(text)
+    copied.value = key
+    setTimeout(() => { copied.value = null }, 2000)
   }
   catch {
     // Fallback — select text
@@ -117,42 +124,44 @@ function handleNavigateToCollection(_collectionId: string) {
 
       <USeparator />
 
-      <!-- Artifacts -->
-      <div class="space-y-3">
+      <!-- Artifacts grouped by category -->
+      <div class="space-y-4">
         <h3 class="text-base font-semibold">{{ t('designer.review.generatedFiles') }}</h3>
-        <div class="space-y-1">
-          <div
-            v-for="artifact in artifacts"
-            :key="artifact.filename"
-            class="flex items-center gap-2 text-sm px-3 py-2 rounded-md bg-[var(--ui-bg-elevated)]"
-          >
-            <UIcon name="i-lucide-file-json" class="size-4 text-[var(--ui-text-muted)]" />
-            <span class="font-mono text-xs">{{ artifact.filename }}</span>
-            <UBadge
-              :color="artifact.status === 'ready' ? 'success' : 'warning'"
-              variant="subtle"
-              size="xs"
-              :label="artifact.status"
-              class="ml-auto"
-            />
-          </div>
-          <p v-if="artifacts.length === 0" class="text-sm text-[var(--ui-text-muted)] italic px-1">
-            {{ t('designer.review.noCollections') }}
-          </p>
+
+        <div v-if="Object.keys(artifactsByCategory).length === 0" class="text-sm text-[var(--ui-text-muted)] italic px-1">
+          {{ t('designer.review.noCollections') }}
+        </div>
+
+        <div v-for="category in categoryOrder" :key="category" class="space-y-1">
+          <template v-if="artifactsByCategory[category]">
+            <div class="flex items-center gap-2 text-sm font-medium text-[var(--ui-text-muted)] px-1 pt-2">
+              <UIcon :name="artifactsByCategory[category].icon" class="size-4" />
+              <span>{{ t(`designer.review.artifactCategories.${category}`) }}</span>
+              <UBadge variant="subtle" color="neutral" size="xs" :label="String(artifactsByCategory[category].artifacts.length)" />
+            </div>
+            <div
+              v-for="artifact in artifactsByCategory[category].artifacts"
+              :key="artifact.filename"
+              class="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-[var(--ui-bg-elevated)]"
+            >
+              <span class="font-mono text-xs text-[var(--ui-text-dimmed)]">{{ artifact.filename }}</span>
+            </div>
+          </template>
         </div>
       </div>
 
       <USeparator />
 
-      <!-- Generate button -->
+      <!-- Create App button -->
       <div class="space-y-4">
         <UButton
-          :label="t('designer.review.downloadSchemas')"
-          icon="i-lucide-download"
+          :label="status === 'creating' ? t('designer.review.creating') : t('designer.review.createApp')"
+          :icon="status === 'creating' ? 'i-lucide-loader-2' : 'i-lucide-rocket'"
+          :class="{ 'animate-pulse': status === 'creating' }"
           size="lg"
           block
-          :disabled="hasErrors || artifacts.length === 0"
-          @click="handleGenerate"
+          :disabled="hasErrors || !appName || Object.keys(artifactsByCategory).length === 0 || status === 'creating'"
+          @click="() => { createApp() }"
         />
 
         <p v-if="hasErrors" class="text-xs text-[var(--ui-color-error-500)] text-center">
@@ -160,32 +169,86 @@ function handleNavigateToCollection(_collectionId: string) {
         </p>
       </div>
 
-      <!-- Post-download instructions -->
-      <div v-if="hasDownloaded" class="space-y-3 rounded-lg border border-[var(--ui-border)] p-4">
+      <!-- Error state -->
+      <div v-if="status === 'error' && error" class="rounded-lg border border-[var(--ui-color-error-500)] p-4 space-y-2">
         <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-check-circle" class="size-5 text-[var(--ui-color-success-500)]" />
-          <span class="text-sm font-medium">{{ t('designer.review.schemasDownloaded') }}</span>
+          <UIcon name="i-lucide-circle-x" class="size-5 text-[var(--ui-color-error-500)]" />
+          <span class="text-sm font-medium">{{ t('designer.review.createFailed') }}</span>
         </div>
+        <p class="text-xs text-[var(--ui-text-muted)] font-mono">{{ error }}</p>
+      </div>
 
-        <p class="text-sm text-[var(--ui-text-muted)]">
-          {{ t('designer.review.extractInstructions') }}
-        </p>
-
-        <div class="relative">
-          <pre class="bg-[var(--ui-bg-elevated)] rounded-md p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap">{{ cliCommand }}</pre>
-          <UButton
-            :icon="copied ? 'i-lucide-check' : 'i-lucide-copy'"
-            variant="ghost"
-            color="neutral"
-            size="xs"
-            class="absolute top-2 right-2"
-            @click="copyCommand"
+      <!-- Post-creation success -->
+      <div v-if="status === 'done' && result" class="space-y-4 rounded-lg border border-[var(--ui-border)] p-4">
+        <!-- Header -->
+        <div class="flex items-center gap-2">
+          <UIcon
+            :name="result.success ? 'i-lucide-check-circle' : 'i-lucide-alert-triangle'"
+            :class="result.success ? 'text-[var(--ui-color-success-500)]' : 'text-[var(--ui-color-warning-500)]'"
+            class="size-5"
           />
+          <span class="text-sm font-medium">
+            {{ result.success ? t('designer.review.appCreated') : t('designer.review.createFailed') }}
+          </span>
         </div>
 
-        <p class="text-xs text-[var(--ui-text-muted)]">
-          {{ t('designer.review.cliHelp') }}
-        </p>
+        <!-- Step results -->
+        <div class="space-y-1">
+          <div
+            v-for="(step, stepName) in result.steps"
+            :key="stepName"
+            class="flex items-center gap-2 text-sm px-2 py-1"
+          >
+            <UIcon
+              :name="step.success ? 'i-lucide-check' : 'i-lucide-x'"
+              :class="step.success ? 'text-[var(--ui-color-success-500)]' : 'text-[var(--ui-color-error-500)]'"
+              class="size-3.5"
+            />
+            <span>{{ t(stepLabels[stepName as string] || stepName as string) }}</span>
+            <span v-if="step.files?.length" class="text-xs text-[var(--ui-text-muted)]">
+              ({{ step.files.length }} files)
+            </span>
+            <span v-if="!step.success && step.error" class="text-xs text-[var(--ui-color-error-500)] truncate ml-auto max-w-[50%]">
+              {{ step.error }}
+            </span>
+          </div>
+        </div>
+
+        <!-- App directory -->
+        <div v-if="result.success" class="space-y-3 pt-2">
+          <div>
+            <p class="text-xs text-[var(--ui-text-muted)] mb-1">{{ t('designer.review.appDirectory') }}</p>
+            <code class="text-sm font-mono bg-[var(--ui-bg-elevated)] px-2 py-1 rounded">{{ result.appDir }}</code>
+          </div>
+
+          <!-- Dev command -->
+          <div class="relative">
+            <p class="text-xs text-[var(--ui-text-muted)] mb-1">{{ t('designer.review.runDev') }}</p>
+            <pre class="bg-[var(--ui-bg-elevated)] rounded-md p-3 text-xs font-mono">cd {{ result.appDir }} && pnpm dev</pre>
+            <UButton
+              :icon="copied === 'dev' ? 'i-lucide-check' : 'i-lucide-copy'"
+              variant="ghost"
+              color="neutral"
+              size="xs"
+              class="absolute top-6 right-2"
+              @click="copyText(`cd ${result.appDir} && pnpm dev`, 'dev')"
+            />
+          </div>
+
+          <!-- Deploy command -->
+          <div class="relative">
+            <p class="text-xs text-[var(--ui-text-muted)] mb-1">{{ t('designer.review.deployInstructions') }}</p>
+            <pre class="bg-[var(--ui-bg-elevated)] rounded-md p-3 text-xs font-mono">./scripts/deploy-app.sh {{ result.appDir }}</pre>
+            <UButton
+              :icon="copied === 'deploy' ? 'i-lucide-check' : 'i-lucide-copy'"
+              variant="ghost"
+              color="neutral"
+              size="xs"
+              class="absolute top-6 right-2"
+              @click="copyText(`./scripts/deploy-app.sh ${result.appDir}`, 'deploy')"
+            />
+          </div>
+        </div>
       </div>
     </template>
   </div>

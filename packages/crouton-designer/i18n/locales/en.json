@@ -210,7 +210,29 @@
       "fixValidationErrors": "Fix validation errors before generating.",
       "schemasDownloaded": "Schemas downloaded",
       "extractInstructions": "Extract the ZIP into your project directory, then run these commands:",
-      "cliHelp": "The CLI will generate collections, APIs, components, and database migrations in your Nuxt project."
+      "cliHelp": "The CLI will generate collections, APIs, components, and database migrations in your Nuxt project.",
+      "createApp": "Create App",
+      "creating": "Creating app...",
+      "appCreated": "App created successfully",
+      "appDirectory": "Your app is at:",
+      "runDev": "Start development server:",
+      "deployInstructions": "To deploy to Cloudflare (from monorepo root):",
+      "stepScaffold": "Scaffold files",
+      "stepSchemas": "Schema files",
+      "stepSeedData": "Seed data files",
+      "stepConfig": "Crouton config",
+      "stepInstall": "Install dependencies",
+      "stepGenerate": "Generate collections",
+      "stepDoctor": "Doctor validation",
+      "appExists": "An app with this name already exists.",
+      "createFailed": "App creation failed. Check the details below.",
+      "artifactCategories": {
+        "config": "Configuration",
+        "app": "Application",
+        "server": "Server",
+        "schema": "Schemas",
+        "seed": "Seed Data"
+      }
     },
     "project": {
       "setNameAndType": "Set an app name and type to continue.",
