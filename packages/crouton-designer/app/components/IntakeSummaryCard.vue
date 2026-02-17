@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { ProjectConfig } from '../types/schema'
-import moduleRegistry from '../../../crouton-cli/lib/module-registry.json'
 
 const props = defineProps<{
   config: ProjectConfig
@@ -11,6 +10,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useT()
+const appConfig = useAppConfig()
+const croutonModules = ((appConfig.crouton as any)?.modules ?? []) as Array<{ alias: string, description: string, aiHint: string | null }>
 
 // Track which field is being edited
 const editingField = ref<string | null>(null)
@@ -32,13 +33,13 @@ const authTypeOptions = computed(() => [
   { label: t('designer.authTypes.both'), value: 'both' }
 ])
 
-// Build package list from shared registry (only packages with AI hints)
+// Build package list from manifest-injected module registry (only packages with AI hints)
 const availablePackages = computed(() =>
-  Object.entries(moduleRegistry)
-    .filter(([_, mod]) => mod.aiHint)
-    .map(([alias, _mod]) => ({
-      label: t(`designer.packageLabels.crouton-${alias}`, _mod.description),
-      value: `crouton-${alias}`
+  croutonModules
+    .filter(mod => mod.aiHint)
+    .map(mod => ({
+      label: t(`designer.packageLabels.crouton-${mod.alias}`, mod.description),
+      value: `crouton-${mod.alias}`
     }))
 )
 

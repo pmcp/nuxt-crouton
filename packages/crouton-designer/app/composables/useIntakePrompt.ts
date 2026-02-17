@@ -1,16 +1,19 @@
 import type { ProjectConfig } from '../types/schema'
-import moduleRegistry from '../../../crouton-cli/lib/module-registry.json'
-
-// Build the AI-facing package list from the shared registry
-const availablePackages = Object.entries(moduleRegistry)
-  .filter(([_, mod]) => mod.aiHint)
-  .map(([alias, mod]) => `- **crouton-${alias}**: ${mod.description} (${mod.aiHint})`)
-  .join('\n')
 
 /**
  * Builds the system prompt for Phase 1 (Intake)
  */
 export function useIntakePrompt() {
+  const appConfig = useAppConfig()
+  const crouton = appConfig.crouton as any ?? {}
+  const modules = (crouton.modules ?? []) as Array<{ alias: string, description: string, aiHint: string | null }>
+
+  // Build the AI-facing package list from the manifest-injected module registry
+  const availablePackages = modules
+    .filter(mod => mod.aiHint)
+    .map(mod => `- **crouton-${mod.alias}**: ${mod.description} (${mod.aiHint})`)
+    .join('\n')
+
   function buildSystemPrompt(currentConfig: ProjectConfig): string {
     const configSummary = Object.entries(currentConfig)
       .filter(([_, v]) => v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0))

@@ -40,7 +40,7 @@ import {
   initSchemaInputSchema
 } from './tools/index.js'
 
-import { FIELD_TYPES, getFieldTypeReference } from './utils/field-types.js'
+import { FIELD_TYPES, getFieldTypeReference, loadFieldTypes } from './utils/field-types.js'
 
 // Create MCP server
 const server = new McpServer({
@@ -257,6 +257,9 @@ server.resource('crouton://schema-template', 'Schema Template', async () => {
 
 // Start server
 async function main(): Promise<void> {
+  // Load field types from package manifests before accepting connections
+  await loadFieldTypes()
+
   const transport = new StdioServerTransport()
   await server.connect(transport)
   console.error('Crouton MCP Server started')

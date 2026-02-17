@@ -3,12 +3,35 @@ import { streamText, tool } from 'ai'
 // which doesn't support Zod 4, producing empty schemas that Anthropic rejects
 import { z } from 'zod/v3'
 
-const fieldTypeEnum = z.enum([
-  'string', 'text', 'number', 'decimal', 'boolean',
-  'date', 'datetime', 'uuid', 'integer',
-  'json', 'repeater', 'array', 'reference',
-  'image', 'file'
-])
+// Derive valid field types from manifest registry (injected into appConfig by crouton-core)
+function getFieldTypeEnum() {
+  const appConfig = useAppConfig()
+  const fieldTypes = (appConfig.crouton as any)?.fieldTypes as Record<string, any> ?? {}
+
+  // Collect all valid type names: canonical types + their aliases
+  const allTypes: string[] = []
+  for (const [name, def] of Object.entries(fieldTypes)) {
+    allTypes.push(name)
+    if (def.aliases) {
+      for (const alias of def.aliases as string[]) {
+        if (!allTypes.includes(alias)) allTypes.push(alias)
+      }
+    }
+  }
+
+  // Fallback if manifests not loaded
+  if (allTypes.length === 0) {
+    return z.enum([
+      'string', 'text', 'number', 'decimal', 'boolean',
+      'date', 'json', 'repeater', 'array', 'reference',
+      'image', 'file',
+    ])
+  }
+
+  return z.enum(allTypes as [string, ...string[]])
+}
+
+const fieldTypeEnum = getFieldTypeEnum()
 
 const fieldMetaSchema = z.object({
   required: z.boolean().optional(),

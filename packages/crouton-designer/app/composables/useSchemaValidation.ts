@@ -8,17 +8,23 @@ export interface ValidationIssue {
   code: string
 }
 
-const RESERVED_NAMES = new Set([
-  'id', 'teamId', 'owner', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy',
-  'order', 'optimisticId', 'optimisticAction'
-])
-
-const RESERVED_COLLECTION_NAMES = new Set([
-  'api', 'server', 'app', 'pages', 'components', 'composables', 'layouts',
-  'middleware', 'plugins', 'assets', 'public', 'node_modules'
-])
-
 export function useSchemaValidation(collections: Ref<CollectionWithFields[]>) {
+  const appConfig = useAppConfig()
+  const crouton = appConfig.crouton as any ?? {}
+
+  const RESERVED_NAMES = new Set<string>(
+    crouton.reservedFieldNames ?? [
+      'id', 'teamId', 'owner', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy',
+      'order', 'optimisticId', 'optimisticAction',
+    ]
+  )
+
+  const RESERVED_COLLECTION_NAMES = new Set<string>(
+    crouton.reservedCollectionNames ?? [
+      'api', 'server', 'app', 'pages', 'components', 'composables', 'layouts',
+      'middleware', 'plugins', 'assets', 'public', 'node_modules',
+    ]
+  )
   const { t } = useT()
 
   const issues = computed<ValidationIssue[]>(() => {

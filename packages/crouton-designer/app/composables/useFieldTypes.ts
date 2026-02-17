@@ -1,113 +1,5 @@
 import type { FieldTypeConfig, FieldType } from '../types/schema'
 
-export const FIELD_TYPES: FieldTypeConfig[] = [
-  {
-    type: 'uuid',
-    label: 'UUID',
-    icon: 'i-lucide-key',
-    description: 'Unique identifier',
-    defaultMeta: { primaryKey: true }
-  },
-  {
-    type: 'string',
-    label: 'String',
-    icon: 'i-lucide-type',
-    description: 'Short text (VARCHAR 255)',
-    defaultMeta: {}
-  },
-  {
-    type: 'text',
-    label: 'Text',
-    icon: 'i-lucide-file-text',
-    description: 'Long text content',
-    defaultMeta: {}
-  },
-  {
-    type: 'number',
-    label: 'Number',
-    icon: 'i-lucide-hash',
-    description: 'Integer value',
-    defaultMeta: {}
-  },
-  {
-    type: 'decimal',
-    label: 'Decimal',
-    icon: 'i-lucide-percent',
-    description: 'Decimal number (10,2)',
-    defaultMeta: { precision: 10, scale: 2 }
-  },
-  {
-    type: 'boolean',
-    label: 'Boolean',
-    icon: 'i-lucide-toggle-left',
-    description: 'True/false toggle',
-    defaultMeta: { default: false }
-  },
-  {
-    type: 'date',
-    label: 'Date',
-    icon: 'i-lucide-calendar',
-    description: 'Date only',
-    defaultMeta: {}
-  },
-  {
-    type: 'datetime',
-    label: 'DateTime',
-    icon: 'i-lucide-calendar-clock',
-    description: 'Date and time',
-    defaultMeta: {}
-  },
-  {
-    type: 'integer',
-    label: 'Integer',
-    icon: 'i-lucide-binary',
-    description: 'Whole number',
-    defaultMeta: {}
-  },
-  {
-    type: 'json',
-    label: 'JSON',
-    icon: 'i-lucide-braces',
-    description: 'JSON object',
-    defaultMeta: {}
-  },
-  {
-    type: 'repeater',
-    label: 'Repeater',
-    icon: 'i-lucide-layers',
-    description: 'Repeatable items array',
-    defaultMeta: {}
-  },
-  {
-    type: 'array',
-    label: 'Array',
-    icon: 'i-lucide-list',
-    description: 'String array',
-    defaultMeta: {}
-  },
-  {
-    type: 'reference',
-    label: 'Reference',
-    icon: 'i-lucide-link',
-    description: 'Reference to another collection',
-    defaultMeta: {}
-  },
-  {
-    type: 'image',
-    label: 'Image',
-    icon: 'i-lucide-image',
-    description: 'Image upload',
-    defaultMeta: {}
-  },
-  {
-    type: 'file',
-    label: 'File',
-    icon: 'i-lucide-paperclip',
-    description: 'File upload',
-    defaultMeta: {}
-  }
-]
-
 export const META_PROPERTIES = [
   { key: 'required', type: 'boolean', label: 'Required', description: 'Field must have a value' },
   { key: 'unique', type: 'boolean', label: 'Unique', description: 'Enforce unique values' },
@@ -122,6 +14,30 @@ export const META_PROPERTIES = [
 
 export function useFieldTypes() {
   const { t } = useT()
+  const appConfig = useAppConfig()
+
+  // Build FIELD_TYPES from manifest registry injected into appConfig
+  const fieldTypesMap = (appConfig.crouton as any)?.fieldTypes as Record<string, any> ?? {}
+
+  // Build the array, including alias entries with their alias name as the type
+  const FIELD_TYPES: FieldTypeConfig[] = []
+  const seen = new Set<string>()
+
+  for (const [name, def] of Object.entries(fieldTypesMap)) {
+    if (seen.has(name)) continue
+    seen.add(name)
+
+    const defaultMeta: Record<string, unknown> = {}
+    if (def.meta) Object.assign(defaultMeta, def.meta)
+
+    FIELD_TYPES.push({
+      type: name as FieldType,
+      label: def.label,
+      icon: def.icon,
+      description: def.description,
+      defaultMeta,
+    })
+  }
 
   const translatedFieldTypes = computed<FieldTypeConfig[]>(() =>
     FIELD_TYPES.map(ft => ({
