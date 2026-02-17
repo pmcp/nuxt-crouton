@@ -98,6 +98,12 @@ const calendarRef = ref<{ goToDate: (date: Date) => void } | null>(null)
 const { open: openCroutonForm } = useCrouton()
 const { isAdmin } = useTeam()
 
+// Preview mode - injected from admin page, defaults to false
+const previewMode = inject<Ref<boolean>>('bookings-preview-mode', ref(false))
+
+// Effective admin state - false when preview mode is active
+const effectiveIsAdmin = computed(() => isAdmin.value && !previewMode.value)
+
 // Handle add location - open crouton slideover
 function onAddLocation() {
   openCroutonForm('create', 'bookingsLocations', [], 'slideover')
@@ -225,8 +231,9 @@ function onCalendarHover(date: Date | null) {
   hoveredDate.value = date
 }
 
-// Handle calendar day click - start inline creation at that date
+// Handle calendar day click - start inline creation at that date (disabled in preview mode)
 function onCalendarDayClick(date: Date) {
+  if (previewMode.value) return
   creatingAtDate.value = date
   hoveredDate.value = null // Clear hover highlight when starting to create
 }
@@ -296,7 +303,7 @@ defineExpose({
       :show-calendar="showCalendar"
       :show-cancelled="filterState.showCancelled"
       :has-locations-with-coordinates="hasLocationsWithCoordinates"
-      :can-manage-locations="isAdmin"
+      :can-manage-locations="effectiveIsAdmin"
       @update:selected-locations="filterState.locations = $event"
       @update:show-locations="showLocations = $event"
       @update:show-map="showMap = $event"
