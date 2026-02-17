@@ -60,8 +60,11 @@ CroutonBooking
 
 ### Booking Modes
 
-1. **Slot Mode** (default): Fixed time slots like `["09:00", "10:00", "11:00"]`
-2. **Inventory Mode**: Quantity-based like `{ quantity: 20 }`
+1. **Slot Mode** (default): Named time slots with optional per-slot capacity
+   - Each slot has `{ id, label, capacity? }` — capacity defaults to 1
+   - `capacity: 4` means 4 people can book the same slot on the same date
+   - UI shows "X left" / "Full" badges when capacity > 1
+2. **Inventory Mode**: Quantity-based like `{ quantity: 20 }` — no named slots
 
 ## Configuration
 

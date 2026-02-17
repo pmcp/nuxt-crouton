@@ -83,7 +83,11 @@
       "sortable": true,
       "area": "main",
       "group": "scheduling",
-      "help": "Only used in slot mode. Hidden when inventory mode is enabled."
+      "help": "Only used in slot mode. Hidden when inventory mode is enabled.",
+      "properties": {
+        "label": { "type": "string", "required": true, "label": "Slot Name" },
+        "capacity": { "type": "number", "label": "Capacity", "default": 1 }
+      }
     }
   },
   "openDays": {
