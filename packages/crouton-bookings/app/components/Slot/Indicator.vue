@@ -20,6 +20,8 @@ interface Props {
   /** Color for cancelled slots */
   cancelledColor?: string
   size?: 'xs' | 'sm' | 'md' | 'lg'
+  /** 'dots' = fixed-size circles, 'bars' = flex-grow to fill width */
+  variant?: 'dots' | 'bars'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,6 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
   bookedColor: undefined,
   cancelledColor: '#ef4444',
   size: 'md',
+  variant: 'bars',
 })
 
 const emit = defineEmits<{
@@ -39,18 +42,25 @@ const emit = defineEmits<{
 
 const { parseSlotIds } = useBookingSlots()
 
-const sizeClasses = {
-  xs: 'w-1.5 h-1.5',
-  sm: 'w-2 h-2',
-  md: 'w-3 h-3',
-  lg: 'w-4 h-4',
+const dotSizeClasses = {
+  xs: 'size-1.5',
+  sm: 'size-2',
+  md: 'size-3',
+  lg: 'size-4',
+}
+
+const barHeightClasses = {
+  xs: 'h-1.5',
+  sm: 'h-2',
+  md: 'h-2.5',
+  lg: 'h-3',
 }
 
 const gapClasses = {
-  xs: 'gap-1',
-  sm: 'gap-1.5',
-  md: 'gap-2',
-  lg: 'gap-2',
+  xs: 'gap-[2px]',
+  sm: 'gap-[3px]',
+  md: 'gap-1',
+  lg: 'gap-1.5',
 }
 
 function isBooked(slotId: string): boolean {
@@ -94,15 +104,24 @@ function getUnfilledColor(): string {
 </script>
 
 <template>
-  <div class="flex items-center justify-center" :class="gapClasses[size]">
+  <div
+    class="flex"
+    :class="[
+      gapClasses[size],
+      variant === 'bars' ? 'w-full' : 'justify-center',
+    ]"
+  >
     <div
       v-for="slot in slots"
       :key="slot.id"
       class="rounded-full transition-colors"
-      :class="[sizeClasses[size], isBooked(slot.id) ? 'cursor-pointer' : '']"
+      :class="[
+        variant === 'dots' ? dotSizeClasses[size] : ['flex-1', barHeightClasses[size]],
+        isBooked(slot.id) ? 'cursor-pointer' : '',
+      ]"
       :style="{
         backgroundColor: isBooked(slot.id) ? getBookedSlotColor(slot.id) : getUnfilledColor(),
-        opacity: isBooked(slot.id) ? 1 : 0.25,
+        opacity: isBooked(slot.id) ? 1 : 0.15,
       }"
       :title="slot.label"
       @mouseenter="isBooked(slot.id) && onSlotHover(slot.id)"

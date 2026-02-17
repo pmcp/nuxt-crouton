@@ -253,8 +253,10 @@ function getIndicatorsForDate(date: Date): Array<{
 
   for (const location of visibleLocations) {
     const locationSlots = parseLocationSlots(location)
-    // Skip locations with no slots defined
-    if (locationSlots.length === 0) continue
+    // Locations with no slots get a single all-day slot so they still appear on the calendar
+    const effectiveSlots = locationSlots.length > 0
+      ? locationSlots
+      : [{ id: 'all-day', label: 'All Day' }]
 
     const locationBookings = byLocation.get(location.id) || []
 
@@ -268,7 +270,7 @@ function getIndicatorsForDate(date: Date): Array<{
 
       // If "all-day" is booked, treat all slots as booked
       if (slotIds.includes('all-day')) {
-        const allSlotIds = locationSlots.map(s => s.id)
+        const allSlotIds = effectiveSlots.map(s => s.id)
         bookedSlotIds.push(...allSlotIds)
         if (isCancelled) {
           cancelledSlotIds.push(...allSlotIds)
@@ -290,7 +292,7 @@ function getIndicatorsForDate(date: Date): Array<{
       locationId: location.id,
       locationTitle: getLocationTitle(location),
       color: location.color || '#3b82f6',
-      slots: locationSlots,
+      slots: effectiveSlots,
       bookedSlotIds: uniqueBookedSlotIds,
       cancelledSlotIds: uniqueCancelledSlotIds,
       bookings: locationBookings,
@@ -355,7 +357,21 @@ const maxIndicatorCount = computed(() => {
   const visibleLocations = props.filters.locations.length > 0
     ? props.locations.filter(l => props.filters.locations.includes(l.id))
     : props.locations
-  return visibleLocations.filter(l => parseLocationSlots(l).length > 0).length
+  return visibleLocations.length
+})
+
+// The location with the most slots renders as dots (fixed size) to define the width.
+// All other locations render as bars that stretch to fill the same width.
+const maxSlotCount = computed(() => {
+  const visibleLocations = props.filters.locations.length > 0
+    ? props.locations.filter(l => props.filters.locations.includes(l.id))
+    : props.locations
+  let max = 0
+  for (const location of visibleLocations) {
+    const slots = parseLocationSlots(location)
+    if (slots.length > max) max = slots.length
+  }
+  return max
 })
 
 // Calculate cell height based on max indicators
@@ -407,7 +423,7 @@ const monthCellHeight = computed(() => {
       @day-click="onWeekDayClick"
     >
       <template #day="{ jsDate }">
-        <div class="flex flex-col gap-0.5 mt-1 min-h-[12px]">
+        <div class="flex flex-col gap-1 mt-1 min-h-[12px] w-fit mx-auto">
           <template v-for="indicator in getIndicatorsForDate(jsDate)" :key="indicator.locationId">
             <CroutonBookingsSlotIndicator
               :slots="indicator.slots"
@@ -415,7 +431,8 @@ const monthCellHeight = computed(() => {
               :cancelled-slot-ids="indicator.cancelledSlotIds"
               :bookings="indicator.bookings"
               :color="indicator.color"
-              size="xs"
+              size="sm"
+              :variant="indicator.slots.length >= maxSlotCount ? 'dots' : 'bars'"
               @hover-booking="(id) => emit('hoverBooking', id)"
             />
           </template>
@@ -475,7 +492,7 @@ const monthCellHeight = computed(() => {
             </span>
 
             <!-- Slot indicators (all locations) -->
-            <div class="flex flex-col items-center gap-0.5 mt-0.5 w-full">
+            <div class="flex flex-col gap-1 mt-0.5 w-fit mx-auto">
               <template v-for="indicator in getIndicatorsForDate(day.toDate(getLocalTimeZone()))" :key="indicator.locationId">
                 <CroutonBookingsSlotIndicator
                   :slots="indicator.slots"
@@ -484,6 +501,7 @@ const monthCellHeight = computed(() => {
                   :bookings="indicator.bookings"
                   :color="indicator.color"
                   size="xs"
+                  :variant="indicator.slots.length >= maxSlotCount ? 'dots' : 'bars'"
                   @hover-booking="(id) => emit('hoverBooking', id)"
                 />
               </template>
