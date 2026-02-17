@@ -89,26 +89,29 @@
   "openDays": {
     "type": "array",
     "meta": {
+      "nullable": true,
       "label": "Open Days",
       "area": "main",
       "group": "scheduling",
       "component": "OpenDaysPicker",
-      "help": "Days of the week this location is open. Empty means every day."
+      "help": "Days of the week this location is open. Empty/null means every day."
     }
   },
   "slotSchedule": {
     "type": "json",
     "meta": {
+      "nullable": true,
       "label": "Slot Schedule",
       "area": "main",
       "group": "scheduling",
       "component": "ScheduleGrid",
-      "help": "Per-slot day-of-week availability. Empty means all slots follow open days."
+      "help": "Per-slot day-of-week availability. Null means all slots follow open days."
     }
   },
   "blockedDates": {
     "type": "repeater",
     "meta": {
+      "nullable": true,
       "label": "Blocked Dates",
       "repeaterComponent": "BlockedDateInput",
       "addLabel": "Add Blocked Period",
