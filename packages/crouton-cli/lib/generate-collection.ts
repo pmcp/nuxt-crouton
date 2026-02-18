@@ -582,6 +582,149 @@ async function addI18nConfigToLayer(configPath: string, config: string): Promise
   return config
 }
 
+function buildGeneratorData(params: {
+  layer: string
+  collection: string
+  fields: Field[]
+  hierarchy: { enabled: boolean; parentField?: string; orderField?: string; pathField?: string; depthField?: string }
+  sortable: { enabled: boolean; orderField?: string }
+  collab: { enabled: boolean }
+  config: Record<string, any> | null
+  collectionConfig: Record<string, any> | null
+}) {
+  const { layer, collection, fields, hierarchy, sortable, collab, config, collectionConfig } = params
+  const cases = toCase(collection)
+  const layerPascalCase = layer
+    .split(/[-_]/)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
+  const layerCamelCase = layer
+    .split(/[-_]/)
+    .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
+
+  const fieldsSchema = (() => {
+    const translatableFieldNames = config?.translations?.collections?.[cases.plural] || []
+    const regularFieldsSchema = fields
+      .filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name))
+      .map((f) => {
+        const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
+        const hasRepeaterProperties = f.type === 'repeater' && (f.meta?.translatableProperties || f.meta?.properties)
+        let baseZod = isDependentField ? 'z.array(z.string())' : f.zod
+        if (hasRepeaterProperties) {
+          const { pascalCase: fieldPascalCase } = toCase(f.name)
+          const itemSchemaName = `${layerCamelCase}${cases.pascalCasePlural}${fieldPascalCase}ItemSchema`
+          baseZod = `z.array(${itemSchemaName})`
+        }
+        if (f.meta?.required) {
+          if (isDependentField) {
+            return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
+          } else if (f.type === 'date') {
+            return `${f.name}: z.date({ required_error: '${f.name} is required' })`
+          } else if (f.type === 'string' || f.type === 'text') {
+            return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
+          } else if (f.type === 'number' || f.type === 'decimal') {
+            return `${f.name}: ${baseZod}`
+          } else if (f.type === 'boolean') {
+            return `${f.name}: ${baseZod}`
+          } else if (f.type === 'json') {
+            return `${f.name}: ${baseZod}`
+          } else if (f.type === 'repeater') {
+            return `${f.name}: ${baseZod}`
+          } else {
+            return `${f.name}: ${baseZod}`
+          }
+        } else {
+          const suffix = f.meta?.nullable ? '.nullish()' : '.optional()'
+          return `${f.name}: ${baseZod}${suffix}`
+        }
+      })
+    const translatableFieldsSchema = fields
+      .filter(f => translatableFieldNames.includes(f.name))
+      .map(f => `${f.name}: ${f.zod}.optional()`)
+    let allFieldsSchema = [...regularFieldsSchema, ...translatableFieldsSchema].join(',\n  ')
+    if (hierarchy?.enabled) {
+      const hierarchySchemaField = `parentId: z.string().nullable().optional()`
+      allFieldsSchema = allFieldsSchema ? `${allFieldsSchema},\n  ${hierarchySchemaField}` : hierarchySchemaField
+    }
+    if (translatableFieldNames.length > 0) {
+      const translatableFields = fields.filter(f => translatableFieldNames.includes(f.name))
+      const requiredTranslatableFields = translatableFields.filter(f => f.meta?.required)
+      const translationsFieldSchema = translatableFields.map((f) => {
+        if (f.meta?.required) {
+          return `      ${f.name}: z.string().min(1, '${f.name.charAt(0).toUpperCase() + f.name.slice(1)} is required')`
+        } else {
+          return `      ${f.name}: z.string().optional()`
+        }
+      }).join(',\n')
+      const requiredFieldsCheck = requiredTranslatableFields.length > 0
+        ? `.refine(
+    (translations) => translations.en && ${requiredTranslatableFields.map(f => `translations.en.${f.name}`).join(' && ')},
+    { message: 'English translations for ${requiredTranslatableFields.map(f => f.name).join(', ')} are required' }
+  )`
+        : ''
+      return `${allFieldsSchema},\n  translations: z.record(
+    z.string(),
+    z.object({
+${translationsFieldSchema}
+    })
+  )${requiredFieldsCheck}`
+    }
+    return allFieldsSchema
+  })()
+
+  const fieldsDefault = (() => {
+    let fieldDefaults = fields.filter(f => f.name !== 'id').map((f) => {
+      const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
+      if (isDependentField) {
+        return `${f.name}: null`
+      }
+      return `${f.name}: ${f.default}`
+    }).join(',\n    ')
+    if (hierarchy?.enabled) {
+      fieldDefaults = fieldDefaults ? `${fieldDefaults},\n    parentId: null` : 'parentId: null'
+    }
+    const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
+    return hasTranslations ? `${fieldDefaults},\n    translations: {}` : fieldDefaults
+  })()
+
+  const fieldsColumns = (() => {
+    const baseColumns = fields.map(f =>
+      `{ accessorKey: '${f.name}', header: '${f.name.charAt(0).toUpperCase() + f.name.slice(1)}' }`
+    ).join(',\n  ')
+    const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
+    const translationsColumn = hasTranslations
+      ? ',\n  { accessorKey: \'translations\', header: \'Translations\' }'
+      : ''
+    return baseColumns + translationsColumn
+  })()
+
+  const fieldsTypes = fields.filter(f => f.name !== 'id').map((f) => {
+    const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
+    const tsType = isDependentField ? 'string[] | null' : f.tsType
+    return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
+  }).join('\n  ')
+
+  return {
+    ...cases,
+    originalCollectionName: collection,
+    layer,
+    layerPascalCase,
+    layerCamelCase,
+    fields,
+    fieldsSchema,
+    fieldsDefault,
+    fieldsColumns,
+    fieldsTypes,
+    hierarchy,
+    sortable,
+    collab,
+    collectionConfig,
+    display: collectionConfig?.display || null,
+    publishable: collectionConfig?.publishable || false
+  }
+}
+
 async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false, seed = false, seedCount = 25 }: WriteScaffoldOptions): Promise<void> {
   const cases = toCase(collection)
   const base = path.resolve('layers', layer, 'collections', cases.plural)
@@ -709,175 +852,8 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   }
 
   // Prepare data for all generators
-  // Convert layer name to PascalCase (handle hyphens and underscores)
-  const layerPascalCase = layer
-    .split(/[-_]/)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('')
-  // Convert layer name to camelCase for collection keys
-  const layerCamelCase = layer
-    .split(/[-_]/)
-    .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
-    .join('')
-  const data = {
-    ...cases,
-    originalCollectionName: collection, // Preserve original collection name before toCase processing
-    layer,
-    layerPascalCase,
-    layerCamelCase, // camelCase version for collection names (e.g., "knowledge-base" -> "knowledgeBase")
-    fields,
-    fieldsSchema: (() => {
-      // Get list of translatable field names for this collection
-      const translatableFieldNames = config?.translations?.collections?.[cases.plural] || []
-
-      // Generate schema for non-translatable fields
-      const regularFieldsSchema = fields
-        .filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name))
-        .map((f) => {
-          // Check if this is a collection-dependent field (should be treated as array)
-          // Only fields with dependsOnCollection or slotButtonGroup displayAs should be arrays
-          // Simple dependsOn (for UI visibility) should keep their original type
-          const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
-
-          // Check if this is a repeater with typed properties
-          const hasRepeaterProperties = f.type === 'repeater' && (f.meta?.translatableProperties || f.meta?.properties)
-
-          // Override Zod schema for dependent fields to use array
-          let baseZod = isDependentField ? 'z.array(z.string())' : f.zod
-
-          // For repeaters with properties, use the generated item schema
-          if (hasRepeaterProperties) {
-            const { pascalCase: fieldPascalCase } = toCase(f.name)
-            const itemSchemaName = `${layerCamelCase}${cases.pascalCasePlural}${fieldPascalCase}ItemSchema`
-            baseZod = `z.array(${itemSchemaName})`
-          }
-
-          if (f.meta?.required) {
-            // Handle different types appropriately for required fields
-            if (isDependentField) {
-              // Dependent fields use array and need non-empty validation
-              return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
-            } else if (f.type === 'date') {
-              // Dates use required_error parameter, not .min()
-              return `${f.name}: z.date({ required_error: '${f.name} is required' })`
-            } else if (f.type === 'string' || f.type === 'text') {
-              // Strings/text can use .min(1) to ensure non-empty
-              return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
-            } else if (f.type === 'number' || f.type === 'decimal') {
-              // Numbers are required but don't enforce a minimum value
-              return `${f.name}: ${baseZod}`
-            } else if (f.type === 'boolean') {
-              // Booleans are just required (true or false)
-              return `${f.name}: ${baseZod}`
-            } else if (f.type === 'json') {
-              // JSON objects are required
-              return `${f.name}: ${baseZod}`
-            } else if (f.type === 'repeater') {
-              // Repeater arrays are required
-              return `${f.name}: ${baseZod}`
-            } else {
-              // Default: just use the base zod validator
-              return `${f.name}: ${baseZod}`
-            }
-          } else {
-            // Optional fields — use .nullish() for nullable fields (allows null + undefined)
-            const suffix = f.meta?.nullable ? '.nullish()' : '.optional()'
-            return `${f.name}: ${baseZod}${suffix}`
-          }
-        })
-
-      // Generate schema for translatable fields (make them optional at root)
-      const translatableFieldsSchema = fields
-        .filter(f => translatableFieldNames.includes(f.name))
-        .map(f => `${f.name}: ${f.zod}.optional()`)
-
-      // Combine all field schemas
-      let allFieldsSchema = [...regularFieldsSchema, ...translatableFieldsSchema].join(',\n  ')
-
-      // Add hierarchy field to schema if enabled
-      if (hierarchy?.enabled) {
-        const hierarchySchemaField = `parentId: z.string().nullable().optional()`
-        allFieldsSchema = allFieldsSchema ? `${allFieldsSchema},\n  ${hierarchySchemaField}` : hierarchySchemaField
-      }
-
-      // Add translations validation if there are translatable fields
-      if (translatableFieldNames.length > 0) {
-        const translatableFields = fields.filter(f => translatableFieldNames.includes(f.name))
-        const requiredTranslatableFields = translatableFields.filter(f => f.meta?.required)
-
-        const translationsFieldSchema = translatableFields.map((f) => {
-          if (f.meta?.required) {
-            return `      ${f.name}: z.string().min(1, '${f.name.charAt(0).toUpperCase() + f.name.slice(1)} is required')`
-          } else {
-            return `      ${f.name}: z.string().optional()`
-          }
-        }).join(',\n')
-
-        const requiredFieldsCheck = requiredTranslatableFields.length > 0
-          ? `.refine(
-    (translations) => translations.en && ${requiredTranslatableFields.map(f => `translations.en.${f.name}`).join(' && ')},
-    { message: 'English translations for ${requiredTranslatableFields.map(f => f.name).join(', ')} are required' }
-  )`
-          : ''
-
-        return `${allFieldsSchema},\n  translations: z.record(
-    z.string(),
-    z.object({
-${translationsFieldSchema}
-    })
-  )${requiredFieldsCheck}`
-      }
-
-      return allFieldsSchema
-    })(),
-    fieldsDefault: (() => {
-      let fieldDefaults = fields.filter(f => f.name !== 'id').map((f) => {
-        // Check if this is a collection-dependent field (should default to null, not empty string)
-        // Only fields with dependsOnCollection or slotButtonGroup displayAs should default to null
-        // Simple dependsOn (for UI visibility) should use their normal defaults
-        const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
-        if (isDependentField) {
-          return `${f.name}: null`
-        }
-        return `${f.name}: ${f.default}`
-      }).join(',\n    ')
-
-      // Add hierarchy field default if enabled
-      if (hierarchy?.enabled) {
-        fieldDefaults = fieldDefaults ? `${fieldDefaults},\n    parentId: null` : 'parentId: null'
-      }
-
-      const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
-      return hasTranslations ? `${fieldDefaults},\n    translations: {}` : fieldDefaults
-    })(),
-    fieldsColumns: (() => {
-      const baseColumns = fields.map(f =>
-        `{ accessorKey: '${f.name}', header: '${f.name.charAt(0).toUpperCase() + f.name.slice(1)}' }`
-      ).join(',\n  ')
-
-      // Check if translations are enabled for this collection
-      const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
-      const translationsColumn = hasTranslations
-        ? ',\n  { accessorKey: \'translations\', header: \'Translations\' }'
-        : ''
-
-      return baseColumns + translationsColumn
-    })(),
-    fieldsTypes: fields.filter(f => f.name !== 'id').map((f) => {
-      // Check if this is a collection-dependent field (should be string[] | null)
-      // Only fields with dependsOnCollection or slotButtonGroup displayAs should use array type
-      // Simple dependsOn (for UI visibility) should use their normal type
-      const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
-      const tsType = isDependentField ? 'string[] | null' : f.tsType
-      return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
-    }).join('\n  '),
-    hierarchy, // Pass hierarchy config to generators
-    sortable, // Pass sortable config to generators
-    collab, // Pass collab config to generators (enables presence indicators)
-    collectionConfig, // Pass collection config for formComponent option
-    display: collectionConfig?.display || null, // Display config: title, subtitle, image, badge, description
-    publishable: collectionConfig?.publishable || false // Publishable flag: registers as page type
-  }
+  const data = buildGeneratorData({ layer, collection, fields, hierarchy, sortable, collab, config, collectionConfig })
+  const { layerPascalCase, layerCamelCase } = data
 
   if (dryRun) {
     const apiPath = `${layer}-${cases.plural}`
