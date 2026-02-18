@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ProjectConfig, SeedDataMap, DesignerProject } from '../types/schema'
 import type { CollectionWithFields } from '../composables/useCollectionEditor'
+import { isExtensionCollectionName, makeExtensionCollectionName } from '../composables/useCollectionEditor'
+import type { PackageCollectionEntry } from '../composables/useCollectionEditor'
 
 const props = defineProps<{
   projectId: string
@@ -19,6 +21,20 @@ const collections = ref<CollectionWithFields[]>([])
 const seedData = ref<SeedDataMap>({})
 const loading = ref(true)
 
+// All project collections (including __ext:) for package collection building
+const allProjectCollections = ref<any[]>([])
+const allProjectFields = ref<any[]>([])
+
+const fieldsByColMap = computed(() => {
+  const map = new Map<string, any[]>()
+  for (const field of allProjectFields.value) {
+    const existing = map.get(field.collectionId) || []
+    existing.push(field)
+    map.set(field.collectionId, existing)
+  }
+  return map
+})
+
 async function loadCollections() {
   loading.value = true
   try {
@@ -31,18 +47,17 @@ async function loadCollections() {
     const collectionIds = new Set(projectCollections.map(c => c.id))
     const projectFields = allFields.filter(f => collectionIds.has(f.collectionId))
 
-    // Build CollectionWithFields
-    const fieldsByCollection = new Map<string, any[]>()
-    for (const field of projectFields) {
-      const existing = fieldsByCollection.get(field.collectionId) || []
-      existing.push(field)
-      fieldsByCollection.set(field.collectionId, existing)
-    }
+    // Store all project data (including __ext: rows) for package collection building
+    allProjectCollections.value = projectCollections
+    allProjectFields.value = projectFields
 
-    collections.value = projectCollections.map(col => ({
-      ...col,
-      fields: fieldsByCollection.get(col.id) || []
-    }))
+    // User collections: exclude __ext: shadow collections
+    collections.value = projectCollections
+      .filter(c => !isExtensionCollectionName(c.name))
+      .map(col => ({
+        ...col,
+        fields: fieldsByColMap.value.get(col.id) || []
+      }))
 
     // Load seed data from project record
     const project = projectRecords?.[0]
@@ -57,13 +72,43 @@ async function loadCollections() {
 
 onMounted(loadCollections)
 
+// Build package collection entries from the module registry + loaded __ext: data
+const appConfig = useAppConfig()
+const allModules = ((appConfig.crouton as any)?.modules ?? []) as any[]
+
+const packageCollectionsForExport = computed<PackageCollectionEntry[]>(() => {
+  const entries: PackageCollectionEntry[] = []
+  for (const alias of props.config.packages ?? []) {
+    const mod = allModules.find((m: any) => m.alias === alias)
+    if (!mod?.ai?.collections?.length) continue
+
+    for (const col of mod.ai.collections) {
+      const extColName = makeExtensionCollectionName(alias, col.name)
+      const extCol = allProjectCollections.value.find((c: any) => c.name === extColName)
+
+      entries.push({
+        id: `pkg:${alias}:${col.name}`,
+        name: col.name,
+        description: col.description,
+        packageAlias: alias,
+        layerName: mod.layer?.name ?? alias,
+        manifestSchema: col.schema as Record<string, any> | undefined,
+        extensionPoints: (mod.extensionPoints ?? []).filter((ep: any) => ep.collection === col.name),
+        extensionFields: extCol ? (fieldsByColMap.value.get(extCol.id) ?? []) : [],
+        extensionCollectionId: extCol?.id,
+      })
+    }
+  }
+  return entries
+})
+
 // Validation
 const { issues, errors, warnings, hasErrors } = useSchemaValidation(collections)
 
 // App scaffold
 const toast = useToast()
 const configRef = computed(() => props.config)
-const { appName, effectiveFolderName, folderNameValid, folderOverride, conflictError, artifactsByCategory, status, result, error, createApp } = useAppScaffold(collections, configRef, seedData)
+const { appName, effectiveFolderName, folderNameValid, folderOverride, conflictError, artifactsByCategory, status, result, error, createApp } = useAppScaffold(collections, configRef, seedData, packageCollectionsForExport)
 
 watch(conflictError, (val) => {
   if (val) {
