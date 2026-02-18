@@ -8,7 +8,10 @@ Centralized asset management for Nuxt Crouton. Provides picker/uploader componen
 
 | File | Purpose |
 |------|---------|
-| `app/components/Picker.vue` | Browse/select assets with type filtering (images, docs, video, audio) |
+| `app/components/Picker.vue` | Compact trigger button → UModal browser for selecting assets in forms |
+| `app/components/Library.vue` | Full media browser using CroutonCollection (search, grid, CRUD for free) |
+| `app/components/Card.vue` | Media card for CroutonCollection grid (image/icon, edit/delete) |
+| `app/components/AssetTile.vue` | Selection tile for Picker modal (selected state, checkmark) |
 | `app/components/Uploader.vue` | Upload with optional crop step and metadata form |
 | `app/composables/useAssetUpload.ts` | Programmatic upload/delete helper with progress tracking |
 | `assets-schema.json` | Reference schema (includes category, width, height fields) |
@@ -94,6 +97,9 @@ crouton-generate core assets \
 Components auto-import with `CroutonAssets` prefix:
 - `Picker.vue` → `<CroutonAssetsPicker />`
 - `Uploader.vue` → `<CroutonAssetsUploader />`
+- `Library.vue` → `<CroutonAssetsLibrary />`
+- `Card.vue` → `<CroutonAssetsCard />` (used by CroutonCollection grid via `:card-component`)
+- `AssetTile.vue` → `<CroutonAssetsAssetTile />` (used by Picker modal)
 
 ## Asset Schema
 

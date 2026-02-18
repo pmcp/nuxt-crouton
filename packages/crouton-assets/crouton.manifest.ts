@@ -12,7 +12,7 @@ export default defineCroutonManifest({
   provides: {
     components: [
       { name: 'CroutonAssetsPicker', description: 'Asset picker with gallery', props: ['modelValue', 'crop'] },
-      { name: 'CroutonAssetsLibrary', description: 'Media library browser', props: ['teamId'] },
+      { name: 'CroutonAssetsLibrary', description: 'Media library browser', props: ['collection'] },
     ],
   },
 })

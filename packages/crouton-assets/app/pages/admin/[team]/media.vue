@@ -3,8 +3,6 @@ definePageMeta({
   layout: 'admin',
   middleware: ['auth', 'team-admin']
 })
-
-const { teamId } = useTeamContext()
 </script>
 
 <template>
@@ -15,6 +13,6 @@ const { teamId } = useTeamContext()
       </template>
     </UDashboardNavbar>
 
-    <CroutonAssetsLibrary :team-id="teamId" />
+    <CroutonAssetsLibrary />
   </UDashboardPanel>
 </template>
