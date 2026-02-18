@@ -176,23 +176,33 @@ function getPhase2Tools() {
   }
 }
 
+// Max messages to include in history — older messages are dropped to prevent token overflow
+const MAX_HISTORY_MESSAGES = 30
+
 export default defineEventHandler(async (event) => {
   const { messages, system, provider, model, phase } = await readBody(event)
 
   const ai = createAIProvider(event)
   const modelId = model || ai.getDefaultModel()
 
-  // Provide all tools from all phases — the system prompt guides usage per phase
-  const tools = {
-    ...getPhase1Tools(),
-    ...getPhase2Tools(),
-    ...getPhase3Tools()
-  }
+  // Only provide phase-relevant tools to minimize token usage
+  const tools = phase === '1'
+    ? getPhase1Tools()
+    : phase === '3'
+      ? getPhase3Tools()
+      : phase === '5'
+        ? {}
+        : getPhase2Tools()
+
+  // Trim message history to prevent token overflow from accumulated phase history
+  const trimmedMessages = Array.isArray(messages) && messages.length > MAX_HISTORY_MESSAGES
+    ? messages.slice(-MAX_HISTORY_MESSAGES)
+    : messages
 
   const result = streamText({
     model: ai.model(modelId),
     system,
-    messages,
+    messages: trimmedMessages,
     tools,
     maxSteps: 5
   })
