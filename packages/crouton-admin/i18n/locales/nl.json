@@ -4,7 +4,8 @@
     "themeSettings": "Thema"
   },
   "navigation": {
-    "backToTeam": "Terug naar Team"
+    "backToTeam": "Terug naar Team",
+    "viewSite": "Bekijk Site"
   },
   "admin": {
     "dashboard": "Dashboard",
