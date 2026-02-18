@@ -14,10 +14,19 @@ const rl = readline.createInterface({
   output: process.stdout
 })
 
-const question = query => new Promise(resolve => rl.question(query, resolve))
+const question = (query: string): Promise<string> => new Promise(resolve => rl.question(query, resolve))
+
+interface LayerInfo {
+  name: string
+  description: string
+  requiresBase?: boolean
+  required: string[]
+  features: string[]
+  extends?: string
+}
 
 // Available layers
-const LAYERS = {
+const LAYERS: Record<string, LayerInfo> = {
   '@fyit/crouton': {
     name: '@fyit/crouton',
     description: 'Base Crouton layer with essential components (always required)',
@@ -57,7 +66,7 @@ const LAYERS = {
   }
 }
 
-async function checkInstalled(packageName) {
+async function checkInstalled(packageName: string): Promise<boolean> {
   try {
     const packageJson = JSON.parse(await fsp.readFile('package.json', 'utf-8'))
     const deps = { ...packageJson.dependencies, ...packageJson.devDependencies }
@@ -67,7 +76,7 @@ async function checkInstalled(packageName) {
   }
 }
 
-async function checkExtended(layerName) {
+async function checkExtended(layerName: string): Promise<boolean> {
   try {
     const nuxtConfig = await fsp.readFile('nuxt.config.ts', 'utf-8')
     const extendsMatch = nuxtConfig.match(/extends:\s*\[([\s\S]*?)\]/)
@@ -80,7 +89,7 @@ async function checkExtended(layerName) {
   }
 }
 
-async function installPackage(packageName, isDev = false) {
+async function installPackage(packageName: string, isDev: boolean = false): Promise<boolean> {
   console.log(`\n📦 Installing ${packageName}...`)
   const cmd = `pnpm add ${isDev ? '-D' : ''} ${packageName}`
 
@@ -97,7 +106,7 @@ async function installPackage(packageName, isDev = false) {
   }
 }
 
-async function addToNuxtConfig(layerName) {
+async function addToNuxtConfig(layerName: string): Promise<boolean> {
   try {
     const configPath = 'nuxt.config.ts'
     let content = await fsp.readFile(configPath, 'utf-8')
@@ -145,7 +154,7 @@ async function addToNuxtConfig(layerName) {
   }
 }
 
-async function main() {
+async function main(): Promise<void> {
   console.log('╔══════════════════════════════════════════════════╗')
   console.log('║         FYIT Crouton Layer Installer            ║')
   console.log('╚══════════════════════════════════════════════════╝')

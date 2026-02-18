@@ -354,7 +354,7 @@ export default defineEventHandler(async (event) => {
 // File Generation
 // ============================================================================
 
-async function createLayerFiles(basePath) {
+async function createLayerFiles(basePath: string): Promise<string[]> {
   const files = [
     { path: 'nuxt.config.ts', content: templates.nuxtConfig },
     { path: 'types.ts', content: templates.types },
@@ -379,7 +379,7 @@ async function createLayerFiles(basePath) {
 // Config Updates
 // ============================================================================
 
-async function updateNuxtConfig(projectRoot) {
+async function updateNuxtConfig(projectRoot: string): Promise<boolean> {
   const configPath = path.join(projectRoot, 'nuxt.config.ts')
 
   if (!await access(configPath).then(() => true).catch(() => false)) {
@@ -419,7 +419,7 @@ async function updateNuxtConfig(projectRoot) {
   return false
 }
 
-async function updateSchemaIndex(projectRoot) {
+async function updateSchemaIndex(projectRoot: string): Promise<boolean> {
   const schemaIndexPath = path.join(projectRoot, 'server/database/schema/index.ts')
 
   if (!await access(schemaIndexPath).then(() => true).catch(() => false)) {
@@ -448,7 +448,7 @@ async function updateSchemaIndex(projectRoot) {
 // Main Function
 // ============================================================================
 
-export async function addEvents(options = {}) {
+export async function addEvents(options: { dryRun?: boolean; force?: boolean } = {}): Promise<void> {
   const { dryRun = false, force = false } = options
   const projectRoot = process.cwd()
   const layerFullPath = path.join(projectRoot, LAYER_PATH)
@@ -500,7 +500,7 @@ export async function addEvents(options = {}) {
     } else {
       consola.info('nuxt.config.ts unchanged')
     }
-  } catch (error) {
+  } catch (error: any) {
     consola.error('Failed to update nuxt.config.ts')
     console.error(error.message)
   }
@@ -514,7 +514,7 @@ export async function addEvents(options = {}) {
     } else {
       consola.info('schema/index.ts unchanged')
     }
-  } catch (error) {
+  } catch (error: any) {
     consola.error('Failed to update schema index')
     console.error(error.message)
   }
@@ -539,7 +539,7 @@ if (process.argv[1].includes('add-events')) {
   const dryRun = args.includes('--dry-run')
   const force = args.includes('--force')
 
-  addEvents({ dryRun, force }).catch((error) => {
+  addEvents({ dryRun, force }).catch((error: any) => {
     consola.error('Error:', error.message)
     process.exit(1)
   })

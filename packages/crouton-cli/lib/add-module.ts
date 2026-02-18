@@ -6,26 +6,22 @@ import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import consola from 'consola'
 
-import { loadModules, getModule, listModules } from './module-registry.mjs'
+import { loadModules, getModule, listModules } from './module-registry.ts'
 import { detectPackageManager, getInstallCommand } from './utils/detect-package-manager.ts'
 import { addToNuxtConfigExtends, isInNuxtConfigExtends } from './utils/update-nuxt-config.ts'
 import { addSchemaExport, getSchemaPath } from './utils/update-schema-index.ts'
 
-/**
- * @typedef {Object} AddModuleOptions
- * @property {boolean} [skipInstall] - Skip package installation
- * @property {boolean} [skipMigrations] - Skip running migrations
- * @property {boolean} [dryRun] - Preview what would be done
- * @property {boolean} [force] - Force reinstall even if already installed
- */
+interface AddModuleOptions {
+  skipInstall?: boolean
+  skipMigrations?: boolean
+  dryRun?: boolean
+  force?: boolean
+}
 
 /**
  * Check if a package is installed
- * @param {string} packageName - Package name
- * @param {string} [cwd] - Working directory
- * @returns {Promise<boolean>}
  */
-async function isPackageInstalled(packageName, cwd = process.cwd()) {
+async function isPackageInstalled(packageName: string, cwd: string = process.cwd()): Promise<boolean> {
   try {
     const packageJson = JSON.parse(await readFile(join(cwd, 'package.json'), 'utf-8'))
     const deps = {
@@ -40,13 +36,10 @@ async function isPackageInstalled(packageName, cwd = process.cwd()) {
 
 /**
  * Check if required dependencies are installed
- * @param {string[]} dependencies - Module aliases to check
- * @param {string} [cwd] - Working directory
- * @returns {Promise<{missing: string[], installed: string[]}>}
  */
-async function checkDependencies(dependencies, cwd = process.cwd()) {
-  const missing = []
-  const installed = []
+async function checkDependencies(dependencies: string[], cwd: string = process.cwd()): Promise<{ missing: string[]; installed: string[] }> {
+  const missing: string[] = []
+  const installed: string[] = []
 
   for (const dep of dependencies) {
     const module = await getModule(dep)
@@ -64,11 +57,8 @@ async function checkDependencies(dependencies, cwd = process.cwd()) {
 
 /**
  * Add a single module to the project
- * @param {string} moduleName - Module alias or package name
- * @param {AddModuleOptions} [options] - Options
- * @returns {Promise<{success: boolean, message: string}>}
  */
-export async function addModule(moduleName, options = {}) {
+export async function addModule(moduleName: string, options: AddModuleOptions = {}): Promise<{ success: boolean; message: string }> {
   const { skipInstall, skipMigrations, dryRun, force } = options
   const cwd = process.cwd()
 
@@ -265,16 +255,13 @@ export async function addModule(moduleName, options = {}) {
 
 /**
  * Add multiple modules to the project
- * @param {string[]} moduleNames - Module aliases or package names
- * @param {AddModuleOptions} [options] - Options
- * @returns {Promise<{success: boolean, results: Array<{module: string, success: boolean, message: string}>}>}
  */
-export async function addModules(moduleNames, options = {}) {
+export async function addModules(moduleNames: string[], options: AddModuleOptions = {}): Promise<{ success: boolean; results: Array<{ module: string; success: boolean; message: string }> }> {
   console.log('\n╔══════════════════════════════════════════════════╗')
   console.log('║          Crouton Module Installer                ║')
   console.log('╚══════════════════════════════════════════════════╝')
 
-  const results = []
+  const results: Array<{ module: string; success: boolean; message: string }> = []
   let allSuccess = true
 
   for (const moduleName of moduleNames) {
@@ -308,7 +295,7 @@ export async function addModules(moduleNames, options = {}) {
 /**
  * List all available modules
  */
-export async function listAvailableModules() {
+export async function listAvailableModules(): Promise<void> {
   console.log('\n╔══════════════════════════════════════════════════╗')
   console.log('║          Available Crouton Modules               ║')
   console.log('╚══════════════════════════════════════════════════╝\n')

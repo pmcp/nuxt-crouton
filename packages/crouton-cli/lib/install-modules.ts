@@ -13,12 +13,19 @@ const rl = readline.createInterface({
   output: process.stdout
 })
 
-const question = query => new Promise(resolve => rl.question(query, resolve))
+const question = (query: string): Promise<string> => new Promise(resolve => rl.question(query, resolve))
+
+interface ModuleInfo {
+  name: string
+  description: string
+  required: string[]
+  features: string[]
+}
 
 // Available modules
 // NOTE: This file is deprecated. Use `crouton add <module>` instead.
 // Keeping for backwards compatibility.
-const MODULES = {
+const MODULES: Record<string, ModuleInfo> = {
   '@fyit/crouton-i18n': {
     name: '@fyit/crouton-i18n',
     description: 'Translations support for multi-language fields',
@@ -44,7 +51,7 @@ const MODULES = {
   }
 }
 
-async function checkInstalled(moduleName) {
+async function checkInstalled(moduleName: string): Promise<boolean> {
   try {
     const packageJson = JSON.parse(await fsp.readFile('package.json', 'utf-8'))
     const deps = { ...packageJson.dependencies, ...packageJson.devDependencies }
@@ -54,7 +61,7 @@ async function checkInstalled(moduleName) {
   }
 }
 
-async function checkConfigured(moduleName) {
+async function checkConfigured(moduleName: string): Promise<boolean> {
   try {
     const nuxtConfig = await fsp.readFile('nuxt.config.ts', 'utf-8')
     return nuxtConfig.includes(moduleName)
@@ -63,7 +70,7 @@ async function checkConfigured(moduleName) {
   }
 }
 
-async function installModule(moduleName, isDev = false) {
+async function installModule(moduleName: string, isDev: boolean = false): Promise<boolean> {
   console.log(`\n📦 Installing ${moduleName}...`)
   const cmd = `pnpm add ${isDev ? '-D' : ''} ${moduleName}`
 
@@ -80,7 +87,7 @@ async function installModule(moduleName, isDev = false) {
   }
 }
 
-async function addToNuxtConfig(moduleName) {
+async function addToNuxtConfig(moduleName: string): Promise<boolean> {
   try {
     const configPath = 'nuxt.config.ts'
     let content = await fsp.readFile(configPath, 'utf-8')
@@ -119,7 +126,7 @@ async function addToNuxtConfig(moduleName) {
   }
 }
 
-async function installDependencies(deps) {
+async function installDependencies(deps: string[]): Promise<boolean> {
   if (deps.length === 0) return true
 
   console.log(`\n📦 Installing dependencies: ${deps.join(', ')}`)
@@ -135,7 +142,7 @@ async function installDependencies(deps) {
   }
 }
 
-async function main() {
+async function main(): Promise<void> {
   console.log('╔══════════════════════════════════════════════════╗')
   console.log('║       FYIT Scaffolder Module Installer          ║')
   console.log('╚══════════════════════════════════════════════════╝')
@@ -204,7 +211,7 @@ async function main() {
   console.log('\nNext steps:')
   console.log('1. Restart your Nuxt dev server')
   console.log('2. Run your scaffolder to generate collections:')
-  console.log('   node Scaffolder/scripts/generate-collection.mjs <layer> <collection> --fields-file <path>')
+  console.log('   node Scaffolder/scripts/generate-collection.ts <layer> <collection> --fields-file <path>')
 
   rl.close()
 }

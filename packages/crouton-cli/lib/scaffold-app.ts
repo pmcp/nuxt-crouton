@@ -1,8 +1,8 @@
-// scaffold-app.mjs — Generate a complete crouton app scaffold
+// scaffold-app.ts — Generate a complete crouton app scaffold
 import { join } from 'node:path'
 import { access, mkdir, writeFile } from 'node:fs/promises'
 import consola from 'consola'
-import { loadModules } from './module-registry.mjs'
+import { loadModules } from './module-registry.ts'
 import { getFrameworkPackages } from './utils/framework-packages.ts'
 
 // ─── Template helpers ─────────────────────────────────────────────
@@ -10,12 +10,10 @@ import { getFrameworkPackages } from './utils/framework-packages.ts'
 /**
  * Resolve features list against module registry, validating each one
  * and resolving transitive dependencies.
- * @param {string[]} featureNames
- * @param {Record<string, object>} modules - Loaded module registry map
  */
-function resolveFeatures(featureNames, modules) {
-  const resolved = new Set()
-  const errors = []
+function resolveFeatures(featureNames: string[], modules: Record<string, any>): string[] {
+  const resolved = new Set<string>()
+  const errors: string[] = []
 
   for (const name of featureNames) {
     const mod = modules[name]
@@ -46,12 +44,8 @@ function resolveFeatures(featureNames, modules) {
  * Build workspace dependencies for package.json based on resolved features.
  * Bundled modules (auth, i18n, admin) are included via @fyit/crouton-core.
  */
-/**
- * @param {string[]} features
- * @param {Record<string, object>} modules - Loaded module registry map
- */
-function buildDependencies(features, modules) {
-  const deps = {
+function buildDependencies(features: string[], modules: Record<string, any>): Record<string, string> {
+  const deps: Record<string, string> = {
     '@fyit/crouton': 'workspace:*',
     '@fyit/crouton-core': 'workspace:*',
     '@libsql/client': '^0.17.0',
@@ -75,12 +69,8 @@ function buildDependencies(features, modules) {
  * Build the features object for crouton.config.js
  * Only include non-bundled features that were explicitly requested.
  */
-/**
- * @param {string[]} features
- * @param {Record<string, object>} modules - Loaded module registry map
- */
-function buildFeaturesConfig(features, modules) {
-  const config = {}
+function buildFeaturesConfig(features: string[], modules: Record<string, any>): Record<string, boolean> {
+  const config: Record<string, boolean> = {}
   for (const name of features) {
     const mod = modules[name]
     if (mod && !mod.bundled) {
@@ -90,9 +80,26 @@ function buildFeaturesConfig(features, modules) {
   return config
 }
 
+// ─── Types ───────────────────────────────────────────────────────
+
+interface ScaffoldVars {
+  name: string
+  features: string[]
+  extends: string[]
+  theme?: string
+  dialect: string
+  cf: boolean
+  modules: Record<string, any>
+}
+
+interface ScaffoldFile {
+  path: string
+  content: string
+}
+
 // ─── File templates ───────────────────────────────────────────────
 
-function tmplPackageJson(vars) {
+function tmplPackageJson(vars: ScaffoldVars): string {
   const deps = buildDependencies(vars.features, vars.modules)
   const devDeps = {
     '@fyit/crouton-cli': 'workspace:*',
@@ -128,7 +135,7 @@ function tmplPackageJson(vars) {
   }, null, 2) + '\n'
 }
 
-function tmplNuxtConfig(vars) {
+function tmplNuxtConfig(vars: ScaffoldVars): string {
   const extendsArr = vars.extends.map(p => `    '${p}'`).join(',\n')
 
   // Build nitro alias block for CF stubs
@@ -195,7 +202,7 @@ ${nitroBlock}
 `
 }
 
-function tmplCroutonConfig(vars) {
+function tmplCroutonConfig(vars: ScaffoldVars): string {
   const featuresConfig = buildFeaturesConfig(vars.features, vars.modules)
   const featuresStr = Object.entries(featuresConfig)
     .map(([k, v]) => `    ${k}: ${v}`)
@@ -225,7 +232,7 @@ ${featuresStr ? featuresStr + '\n' : ''}  },
 `
 }
 
-function tmplWranglerToml(vars) {
+function tmplWranglerToml(vars: ScaffoldVars): string {
   return `# Cloudflare Pages configuration for ${vars.name}
 # Deploy with: npx wrangler pages deploy dist/
 
@@ -254,7 +261,7 @@ id = "TODO_REPLACE_WITH_REAL_ID"
 `
 }
 
-function tmplAppVue() {
+function tmplAppVue(): string {
   return `<template>
   <UApp>
     <NuxtRouteAnnouncer />
@@ -266,7 +273,7 @@ function tmplAppVue() {
 `
 }
 
-function tmplEnvExample() {
+function tmplEnvExample(): string {
   return `# Authentication (required)
 BETTER_AUTH_SECRET=your-secret-at-least-32-characters-long
 BETTER_AUTH_URL=http://localhost:3000
@@ -286,7 +293,7 @@ BETTER_AUTH_URL=http://localhost:3000
 `
 }
 
-function tmplGitignore() {
+function tmplGitignore(): string {
   return `# Nuxt dev/build outputs
 .output
 .data
@@ -315,7 +322,7 @@ logs
 `
 }
 
-function tmplAppConfig() {
+function tmplAppConfig(): string {
   return `import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
 
 export default defineAppConfig({
@@ -326,7 +333,7 @@ export default defineAppConfig({
 `
 }
 
-function tmplMainCss() {
+function tmplMainCss(): string {
   return `@import "tailwindcss";
 @import "@nuxt/ui";
 
@@ -335,7 +342,7 @@ function tmplMainCss() {
 `
 }
 
-function tmplSchemaTs() {
+function tmplSchemaTs(): string {
   return `// Database schema exports
 // This file is auto-managed by crouton-generate
 
@@ -345,7 +352,7 @@ export * from './translations-ui'
 `
 }
 
-function tmplTranslationsUi(vars) {
+function tmplTranslationsUi(vars: ScaffoldVars): string {
   if (vars.dialect === 'pg') {
     return `import { nanoid } from 'nanoid'
 import { pgTable, text, boolean, timestamp, unique } from 'drizzle-orm/pg-core'
@@ -395,7 +402,7 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
 `
 }
 
-function tmplCfStubsIndex() {
+function tmplCfStubsIndex(): string {
   return `// Empty stubs for Cloudflare Workers incompatible packages
 // These packages are used by passkeys which are disabled for CF deployments
 export default {}
@@ -422,7 +429,7 @@ export const verifyAuthenticationResponse = () => Promise.resolve({ verified: fa
 `
 }
 
-function tmplCfStubsClient() {
+function tmplCfStubsClient(): string {
   return `// Empty stub for Cloudflare Workers incompatible packages
 export default {}
 export const client = {}
@@ -439,17 +446,10 @@ export const passkeyClient = () => ({
 
 // ─── Main scaffold function ──────────────────────────────────────
 
-/**
- * @param {string} name - App name (kebab-case)
- * @param {Object} options
- * @param {string[]} options.features - Feature names
- * @param {string} [options.theme] - Theme name
- * @param {string} [options.dialect='sqlite'] - Database dialect
- * @param {boolean} [options.cf=true] - Include Cloudflare config
- * @param {boolean} [options.dryRun=false] - Preview without writing
- * @param {string} [options.outDir] - Override output directory (default: apps/<name>)
- */
-export async function scaffoldApp(name, options = {}) {
+export async function scaffoldApp(
+  name: string,
+  options: { features?: string[]; theme?: string; dialect?: string; cf?: boolean; dryRun?: boolean; outDir?: string } = {}
+): Promise<{ files: ScaffoldFile[]; appDir: string }> {
   const {
     features: featureNames = [],
     theme,
@@ -470,8 +470,8 @@ export async function scaffoldApp(name, options = {}) {
   // Resolve features and their dependencies
   const features = resolveFeatures(featureNames, modules)
 
-  // Build extends array via framework-packages.mjs
-  const featuresConfig = {}
+  // Build extends array via framework-packages.ts
+  const featuresConfig: Record<string, boolean> = {}
   for (const f of features) {
     featuresConfig[f] = true
   }
@@ -483,7 +483,7 @@ export async function scaffoldApp(name, options = {}) {
   }
 
   // Add i18n to extends (it's bundled but bike-sheds adds it explicitly for i18n features)
-  // Actually, framework-packages.mjs doesn't add bundled packages, which is correct.
+  // Actually, framework-packages.ts doesn't add bundled packages, which is correct.
   // But bike-sheds adds @fyit/crouton-i18n explicitly. Let's match that pattern
   // since i18n is always needed for translations-ui.
   if (!frameworkPackages.includes('@fyit/crouton-i18n')) {
@@ -492,10 +492,10 @@ export async function scaffoldApp(name, options = {}) {
     frameworkPackages.splice(coreIdx + 1, 0, '@fyit/crouton-i18n')
   }
 
-  const vars = { name, features, extends: frameworkPackages, theme, dialect, cf, modules }
+  const vars: ScaffoldVars = { name, features, extends: frameworkPackages, theme, dialect, cf, modules }
 
   // Build file list
-  const files = [
+  const files: ScaffoldFile[] = [
     { path: 'package.json', content: tmplPackageJson(vars) },
     { path: 'nuxt.config.ts', content: tmplNuxtConfig(vars) },
     { path: 'crouton.config.js', content: tmplCroutonConfig(vars) },

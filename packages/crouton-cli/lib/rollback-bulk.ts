@@ -7,9 +7,9 @@ import consola from 'consola'
 
 // Import utilities
 import { toCase } from './utils/helpers.ts'
-import { rollbackCollection, fileExists, cleanRootNuxtConfig } from './rollback-collection.mjs'
+import { rollbackCollection, fileExists, cleanRootNuxtConfig } from './rollback-collection.ts'
 
-async function getAllCollectionsInLayer(layer) {
+async function getAllCollectionsInLayer(layer: string): Promise<string[]> {
   const layerCollectionsPath = path.resolve('layers', layer, 'collections')
 
   if (!await fileExists(layerCollectionsPath)) {
@@ -27,7 +27,7 @@ async function getAllCollectionsInLayer(layer) {
   }
 }
 
-async function getAllLayers() {
+async function getAllLayers(): Promise<string[]> {
   const layersPath = path.resolve('layers')
 
   if (!await fileExists(layersPath)) {
@@ -45,7 +45,7 @@ async function getAllLayers() {
   }
 }
 
-export async function rollbackLayer({ layer, dryRun = false, keepFiles = false, force = false }) {
+export async function rollbackLayer({ layer, dryRun = false, keepFiles = false, force = false }: { layer: string; dryRun?: boolean; keepFiles?: boolean; force?: boolean }): Promise<boolean> {
   console.log('\n' + '═'.repeat(60))
   console.log(`  LAYER ROLLBACK: ${layer}`)
   console.log('═'.repeat(60) + '\n')
@@ -144,7 +144,7 @@ export async function rollbackLayer({ layer, dryRun = false, keepFiles = false, 
   return totalChangesMade
 }
 
-export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles = false, force = false }) {
+export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles = false, force = false }: { configPath: string; dryRun?: boolean; keepFiles?: boolean; force?: boolean }): Promise<boolean> {
   console.log('\n' + '═'.repeat(60))
   console.log('  CONFIG-BASED ROLLBACK')
   console.log('═'.repeat(60) + '\n')
@@ -159,7 +159,7 @@ export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles
     process.exit(1)
   }
 
-  let config
+  let config: Record<string, any>
   try {
     config = (await import(resolvedPath)).default
   } catch (error) {
@@ -174,7 +174,7 @@ export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles
 
   // Count total collections
   let totalCollections = 0
-  const layerCollectionMap = {}
+  const layerCollectionMap: Record<string, string[]> = {}
 
   for (const target of config.targets) {
     if (!target.layer || !target.collections) continue
@@ -281,7 +281,7 @@ export async function rollbackFromConfig({ configPath, dryRun = false, keepFiles
   return totalChangesMade
 }
 
-export async function rollbackMultiple({ layer, collections, dryRun = false, keepFiles = false, force = false }) {
+export async function rollbackMultiple({ layer, collections, dryRun = false, keepFiles = false, force = false }: { layer: string; collections: string[]; dryRun?: boolean; keepFiles?: boolean; force?: boolean }): Promise<boolean> {
   console.log('\n' + '═'.repeat(60))
   console.log('  MULTIPLE COLLECTION ROLLBACK')
   console.log('═'.repeat(60) + '\n')
@@ -369,7 +369,12 @@ export async function rollbackMultiple({ layer, collections, dryRun = false, kee
   return totalChangesMade
 }
 
-function parseArgs() {
+type BulkArgs =
+  | { mode: 'config'; configPath: string; dryRun: boolean; keepFiles: boolean; force: boolean }
+  | { mode: 'layer'; layer: string; dryRun: boolean; keepFiles: boolean; force: boolean }
+  | { mode: 'multiple'; layer: string; collections: string[]; dryRun: boolean; keepFiles: boolean; force: boolean }
+
+function parseArgs(): BulkArgs {
   const a = process.argv.slice(2)
 
   const dryRun = a.includes('--dry-run')
@@ -424,7 +429,7 @@ function parseArgs() {
   process.exit(1)
 }
 
-async function main() {
+async function main(): Promise<void> {
   const args = parseArgs()
 
   switch (args.mode) {

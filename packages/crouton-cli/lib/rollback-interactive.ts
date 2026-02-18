@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// rollback-interactive.mjs — Interactive UI for selecting collections to rollback
+// rollback-interactive.ts — Interactive UI for selecting collections to rollback
 
 import fsp from 'node:fs/promises'
 import path from 'node:path'
@@ -7,10 +7,10 @@ import * as p from '@clack/prompts'
 import consola from 'consola'
 
 // Import utilities
-import { fileExists } from './rollback-collection.mjs'
-import { rollbackLayer, rollbackMultiple } from './rollback-bulk.mjs'
+import { fileExists } from './rollback-collection.ts'
+import { rollbackLayer, rollbackMultiple } from './rollback-bulk.ts'
 
-async function getAllCollectionsInLayer(layer) {
+async function getAllCollectionsInLayer(layer: string): Promise<string[]> {
   const layerCollectionsPath = path.resolve('layers', layer, 'collections')
 
   if (!await fileExists(layerCollectionsPath)) {
@@ -28,7 +28,7 @@ async function getAllCollectionsInLayer(layer) {
   }
 }
 
-async function getAllLayers() {
+async function getAllLayers(): Promise<string[]> {
   const layersPath = path.resolve('layers')
 
   if (!await fileExists(layersPath)) {
@@ -55,7 +55,13 @@ async function getAllLayers() {
   }
 }
 
-async function getLayerStats(layer) {
+interface LayerStats {
+  layer: string
+  collectionsCount: number
+  collections: string[]
+}
+
+async function getLayerStats(layer: string): Promise<LayerStats> {
   const collections = await getAllCollectionsInLayer(layer)
   return {
     layer,
@@ -64,15 +70,15 @@ async function getLayerStats(layer) {
   }
 }
 
-function handleCancel(value) {
+function handleCancel<T>(value: T | symbol): T {
   if (p.isCancel(value)) {
     p.cancel('Rollback cancelled.')
     process.exit(0)
   }
-  return value
+  return value as T
 }
 
-export async function interactiveRollback({ dryRun = false, keepFiles = false }) {
+export async function interactiveRollback({ dryRun = false, keepFiles = false }: { dryRun?: boolean; keepFiles?: boolean }): Promise<void> {
   p.intro('Interactive Rollback')
 
   // Get all layers
@@ -200,7 +206,7 @@ export async function interactiveRollback({ dryRun = false, keepFiles = false })
   p.outro('Done.')
 }
 
-function parseArgs() {
+function parseArgs(): { dryRun: boolean; keepFiles: boolean } {
   const a = process.argv.slice(2)
 
   const dryRun = a.includes('--dry-run')
@@ -209,7 +215,7 @@ function parseArgs() {
   return { dryRun, keepFiles }
 }
 
-async function main() {
+async function main(): Promise<void> {
   const args = parseArgs()
 
   await interactiveRollback(args)

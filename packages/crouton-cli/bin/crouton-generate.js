@@ -48,7 +48,7 @@ const generate = defineCommand({
   async run({ args }) {
     // If --config is provided, delegate to config mode
     if (args.config) {
-      const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.mjs'))
+      const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.ts'))
       await runConfig({
         configPath: args.config,
         force: args.force,
@@ -62,7 +62,7 @@ const generate = defineCommand({
     if (!args.layer && !args.collection) {
       const configPath = detectConfigFile()
       if (configPath) {
-        const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.mjs'))
+        const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.ts'))
         await runConfig({
           configPath,
           force: args.force,
@@ -86,7 +86,7 @@ const generate = defineCommand({
       process.exit(1)
     }
 
-    const { runGenerate } = await import(join(__dirname, '..', 'lib', 'generate-collection.mjs'))
+    const { runGenerate } = await import(join(__dirname, '..', 'lib', 'generate-collection.ts'))
     await runGenerate({
       layer: args.layer,
       collection: args.collection,
@@ -122,7 +122,7 @@ const configCmd = defineCommand({
       if (!configPath) configPath = './crouton.config.js'
     }
 
-    const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.mjs'))
+    const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.ts'))
     await runConfig({
       configPath,
       force: args.force,
@@ -139,14 +139,14 @@ const installCmd = defineCommand({
   meta: { name: 'install', description: 'Install required Nuxt modules' },
   args: {},
   async run() {
-    const installModulesPath = join(__dirname, '..', 'lib', 'install-modules.mjs')
+    const installModulesPath = join(__dirname, '..', 'lib', 'install-modules.ts')
     if (!existsSync(installModulesPath)) {
       consola.error('Install script not found')
       console.log('Please install modules manually:')
       console.log('  pnpm add @fyit/crouton')
       process.exit(1)
     }
-    // install-modules.mjs is self-executing on import
+    // install-modules.ts is self-executing on import
     await import(installModulesPath)
   }
 })
@@ -164,7 +164,7 @@ const initCmd = defineCommand({
     dryRun: { type: 'boolean', description: 'Preview what will be generated without writing files' },
   },
   async run({ args }) {
-    const initPath = join(__dirname, '..', 'lib', 'init-app.mjs')
+    const initPath = join(__dirname, '..', 'lib', 'init-app.ts')
     const { initApp } = await import(initPath)
 
     const features = args.features
@@ -198,14 +198,14 @@ const addCmd = defineCommand({
 
     // Handle --list flag or no items
     if (args.list || items.length === 0) {
-      const addModulePath = join(__dirname, '..', 'lib', 'add-module.mjs')
+      const addModulePath = join(__dirname, '..', 'lib', 'add-module.ts')
       const { listAvailableModules } = await import(addModulePath)
       await listAvailableModules()
       return
     }
 
     // Import module registry to check if items are modules
-    const registryPath = join(__dirname, '..', 'lib', 'module-registry.mjs')
+    const registryPath = join(__dirname, '..', 'lib', 'module-registry.ts')
     const { getModule } = await import(registryPath)
 
     // Separate modules from features
@@ -224,7 +224,7 @@ const addCmd = defineCommand({
 
     // Add modules if any
     if (modules.length > 0) {
-      const addModulePath = join(__dirname, '..', 'lib', 'add-module.mjs')
+      const addModulePath = join(__dirname, '..', 'lib', 'add-module.ts')
       const { addModules } = await import(addModulePath)
 
       const result = await addModules(modules, {
@@ -242,7 +242,7 @@ const addCmd = defineCommand({
     // Add features if any
     for (const feature of features) {
       if (feature === 'events') {
-        const addEventsPath = join(__dirname, '..', 'lib', 'add-events.mjs')
+        const addEventsPath = join(__dirname, '..', 'lib', 'add-events.ts')
         if (!existsSync(addEventsPath)) {
           consola.error('add-events script not found. Please ensure the package is properly installed.')
           process.exit(1)
@@ -267,7 +267,7 @@ const rollbackCmd = defineCommand({
   },
   async run({ args }) {
     const { rollbackCollection, checkForCollectionFiles } = await import(
-      join(__dirname, '..', 'lib', 'rollback-collection.mjs')
+      join(__dirname, '..', 'lib', 'rollback-collection.ts')
     )
 
     const { exists } = await checkForCollectionFiles(args.layer, args.collection)
@@ -307,7 +307,7 @@ const rollbackBulkCmd = defineCommand({
     }
 
     const { rollbackLayer, rollbackFromConfig } = await import(
-      join(__dirname, '..', 'lib', 'rollback-bulk.mjs')
+      join(__dirname, '..', 'lib', 'rollback-bulk.ts')
     )
 
     if (args.layer) {
@@ -338,7 +338,7 @@ const rollbackInteractiveCmd = defineCommand({
   },
   async run({ args }) {
     const { interactiveRollback } = await import(
-      join(__dirname, '..', 'lib', 'rollback-interactive.mjs')
+      join(__dirname, '..', 'lib', 'rollback-interactive.ts')
     )
     await interactiveRollback({ dryRun: args.dryRun, keepFiles: args.keepFiles })
   }
@@ -352,7 +352,7 @@ const doctorCmd = defineCommand({
     dir: { type: 'positional', description: 'App directory to check', required: false },
   },
   async run({ args }) {
-    const doctorPath = join(__dirname, '..', 'lib', 'doctor.mjs')
+    const doctorPath = join(__dirname, '..', 'lib', 'doctor.ts')
     const { doctor, printReport } = await import(doctorPath)
 
     const appDir = args.dir || process.cwd()
@@ -378,7 +378,7 @@ const scaffoldAppCmd = defineCommand({
     dryRun: { type: 'boolean', description: 'Preview what will be generated without writing files' },
   },
   async run({ args }) {
-    const scaffoldPath = join(__dirname, '..', 'lib', 'scaffold-app.mjs')
+    const scaffoldPath = join(__dirname, '..', 'lib', 'scaffold-app.ts')
     const { scaffoldApp } = await import(scaffoldPath)
 
     const features = args.features
@@ -408,7 +408,7 @@ const seedTranslationsCmd = defineCommand({
     sql: { type: 'boolean', description: 'Output SQL statements instead of using API' },
   },
   async run({ args }) {
-    const seedPath = join(__dirname, '..', 'lib', 'seed-translations.mjs')
+    const seedPath = join(__dirname, '..', 'lib', 'seed-translations.ts')
     if (!existsSync(seedPath)) {
       consola.error('Seed translations script not found. Please ensure the package is properly installed.')
       process.exit(1)

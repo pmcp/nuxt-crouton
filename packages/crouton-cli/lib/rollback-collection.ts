@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// rollback-collection.mjs — Safely rollback generated collections
+// rollback-collection.ts — Safely rollback generated collections
 
 import fsp from 'node:fs/promises'
 import path from 'node:path'
@@ -11,7 +11,7 @@ import { removeFromNuxtConfigExtends } from './utils/update-nuxt-config.ts'
 import { removeSchemaExport } from './utils/update-schema-index.ts'
 import { removeFromAppConfig } from './utils/update-app-config.ts'
 
-export async function fileExists(filepath) {
+export async function fileExists(filepath: string): Promise<boolean> {
   try {
     await fsp.access(filepath)
     return true
@@ -20,7 +20,7 @@ export async function fileExists(filepath) {
   }
 }
 
-export async function removeDirectory(dirPath, dryRun) {
+export async function removeDirectory(dirPath: string, dryRun: boolean): Promise<boolean> {
   if (await fileExists(dirPath)) {
     if (dryRun) {
       consola.warn(`  [DRY RUN] Would remove: ${dirPath}`)
@@ -33,7 +33,7 @@ export async function removeDirectory(dirPath, dryRun) {
   return false
 }
 
-export async function removeFile(filePath, dryRun) {
+export async function removeFile(filePath: string, dryRun: boolean): Promise<boolean> {
   if (await fileExists(filePath)) {
     if (dryRun) {
       consola.warn(`  [DRY RUN] Would remove: ${filePath}`)
@@ -46,7 +46,7 @@ export async function removeFile(filePath, dryRun) {
   return false
 }
 
-export async function cleanSchemaIndex(collectionName, layer, dryRun) {
+export async function cleanSchemaIndex(collectionName: string, layer: string, dryRun: boolean): Promise<boolean> {
   const schemaIndexPath = path.resolve('server', 'database', 'schema', 'index.ts')
 
   if (!await fileExists(schemaIndexPath)) {
@@ -88,7 +88,7 @@ export async function cleanSchemaIndex(collectionName, layer, dryRun) {
   }
 }
 
-export async function cleanAppConfig(collectionName, layer, dryRun) {
+export async function cleanAppConfig(collectionName: string, layer: string, dryRun: boolean): Promise<boolean> {
   const cases = toCase(collectionName)
 
   // Check both possible locations for app.config.ts
@@ -137,7 +137,7 @@ export async function cleanAppConfig(collectionName, layer, dryRun) {
   }
 }
 
-export async function cleanLayerRootConfig(layer, collectionName, dryRun) {
+export async function cleanLayerRootConfig(layer: string, collectionName: string, dryRun: boolean): Promise<boolean> {
   const cases = toCase(collectionName)
   const configPath = path.resolve('layers', layer, 'nuxt.config.ts')
 
@@ -174,7 +174,7 @@ export async function cleanLayerRootConfig(layer, collectionName, dryRun) {
   }
 }
 
-export async function cleanRootNuxtConfig(layer, dryRun, forceRemove = false) {
+export async function cleanRootNuxtConfig(layer: string, dryRun: boolean, forceRemove: boolean = false): Promise<boolean> {
   const rootConfigPath = path.resolve('nuxt.config.ts')
 
   if (!await fileExists(rootConfigPath)) {
@@ -227,7 +227,7 @@ export async function cleanRootNuxtConfig(layer, dryRun, forceRemove = false) {
   }
 }
 
-export async function checkForCollectionFiles(layer, collection) {
+export async function checkForCollectionFiles(layer: string, collection: string): Promise<{ exists: boolean; files: string[] }> {
   const cases = toCase(collection)
   const base = path.resolve('layers', layer, 'collections', cases.plural)
 
@@ -236,7 +236,7 @@ export async function checkForCollectionFiles(layer, collection) {
     return { exists: false, files: [] }
   }
 
-  const files = []
+  const files: string[] = []
 
   // Check for key files
   const keyPaths = [
@@ -255,7 +255,7 @@ export async function checkForCollectionFiles(layer, collection) {
   return { exists: true, files }
 }
 
-export async function rollbackCollection({ layer, collection, dryRun = false, keepFiles = false, silent = false }) {
+export async function rollbackCollection({ layer, collection, dryRun = false, keepFiles = false, silent = false }: { layer: string; collection: string; dryRun?: boolean; keepFiles?: boolean; silent?: boolean }): Promise<boolean> {
   const cases = toCase(collection)
   let changesMade = false
 
@@ -310,11 +310,11 @@ export async function rollbackCollection({ layer, collection, dryRun = false, ke
   return changesMade
 }
 
-function parseArgs() {
+function parseArgs(): { layer: string; collection: string; dryRun: boolean; keepFiles: boolean; force: boolean } {
   const a = process.argv.slice(2)
   const pos = a.filter(x => !x.startsWith('--'))
 
-  let layer, collection
+  let layer: string | null, collection: string | undefined
   if (pos.length >= 2) {
     layer = pos[0]
     collection = pos[1]
@@ -340,7 +340,7 @@ function parseArgs() {
   return { layer, collection, dryRun, keepFiles, force }
 }
 
-async function main() {
+async function main(): Promise<void> {
   const args = parseArgs()
   const cases = toCase(args.collection)
 

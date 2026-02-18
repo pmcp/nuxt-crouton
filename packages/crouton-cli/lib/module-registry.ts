@@ -5,13 +5,12 @@
 import { loadModuleRegistryMap } from './utils/manifest-bridge.ts'
 
 // Lazily loaded registry (populated on first access)
-let _modules = null
+let _modules: Record<string, Record<string, any>> | null = null
 
 /**
  * Load MODULES from manifests (async, cached).
- * @returns {Promise<Record<string, object>>}
  */
-export async function loadModules() {
+export async function loadModules(): Promise<Record<string, Record<string, any>>> {
   if (!_modules) {
     _modules = await loadModuleRegistryMap()
   }
@@ -20,10 +19,8 @@ export async function loadModules() {
 
 /**
  * Get module info by alias or package name
- * @param {string} name - Module alias (e.g., 'bookings') or full package name
- * @returns {Promise<object|undefined>}
  */
-export async function getModule(name) {
+export async function getModule(name: string): Promise<Record<string, any> | undefined> {
   const modules = await loadModules()
 
   // Direct alias match
@@ -43,10 +40,8 @@ export async function getModule(name) {
 
 /**
  * Get module alias from package name
- * @param {string} packageName - Full package name
- * @returns {Promise<string|undefined>}
  */
-export async function getModuleAlias(packageName) {
+export async function getModuleAlias(packageName: string): Promise<string | undefined> {
   const modules = await loadModules()
   for (const [alias, module] of Object.entries(modules)) {
     if (module.package === packageName) {
@@ -56,11 +51,18 @@ export async function getModuleAlias(packageName) {
   return undefined
 }
 
+interface ModuleListEntry {
+  alias: string
+  package: string
+  description: string
+  hasSchema: boolean
+  bundled: boolean
+}
+
 /**
  * List all available modules
- * @returns {Promise<Array<{alias: string, package: string, description: string, hasSchema: boolean, bundled: boolean}>>}
  */
-export async function listModules() {
+export async function listModules(): Promise<ModuleListEntry[]> {
   const modules = await loadModules()
   return Object.entries(modules).map(([alias, module]) => ({
     alias,

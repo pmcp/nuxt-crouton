@@ -18,16 +18,59 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import consola from 'consola'
 
+interface SeedTranslationsConfig {
+  app: string | null
+  layer: string | null
+  team: string
+  dryRun: boolean
+  force: boolean
+  apiUrl: string
+  help: boolean
+  sql?: boolean
+}
+
+interface LocaleFile {
+  layer: string
+  type: string
+  locale: string
+  path: string
+}
+
+interface TranslationItem {
+  keyPath: string
+  value: string
+}
+
+interface ParsedTranslation {
+  layer: string
+  type: string
+  locale: string
+  items: TranslationItem[]
+}
+
+interface GroupedTranslation {
+  layer: string
+  keyPath: string
+  category: string
+  values: Record<string, string>
+}
+
+interface SeedResult {
+  success: number
+  skipped: number
+  errors: number
+}
+
 // Packages that are auto-included when extending nuxt-crouton
-const AUTO_INCLUDES = {
+const AUTO_INCLUDES: Record<string, string[]> = {
   'nuxt-crouton': ['nuxt-crouton-i18n', 'nuxt-crouton-auth', 'nuxt-crouton-admin']
 }
 
 // Parse command line arguments
-function parseArgs() {
+function parseArgs(): SeedTranslationsConfig {
   const args = process.argv.slice(2)
 
-  const getArg = (name) => {
+  const getArg = (name: string): string | null => {
     const flag = args.find(a => a.startsWith(`--${name}=`))
     if (flag) return flag.split('=')[1]
     const idx = args.indexOf(`--${name}`)
@@ -52,7 +95,7 @@ function parseArgs() {
  * Parse nuxt.config.ts to extract the extends array
  * Uses simple regex parsing to avoid requiring TypeScript compilation
  */
-async function parseNuxtConfigExtends(appDir) {
+async function parseNuxtConfigExtends(appDir: string): Promise<string[]> {
   const configPath = path.join(appDir, 'nuxt.config.ts')
 
   try {
@@ -67,7 +110,7 @@ async function parseNuxtConfigExtends(appDir) {
 
     // Extract string values from the array
     const arrayContent = extendsMatch[1]
-    const packages = []
+    const packages: string[] = []
 
     // Match quoted strings (both single and double quotes)
     const stringMatches = arrayContent.matchAll(/['"]([^'"]+)['"]/g)
@@ -91,7 +134,7 @@ async function parseNuxtConfigExtends(appDir) {
  * @fyit/crouton -> crouton
  * @fyit/crouton-bookings -> crouton-bookings
  */
-function packageNameToDir(packageName) {
+function packageNameToDir(packageName: string): string | null {
   // Handle scoped packages: @scope/name -> name
   if (packageName.startsWith('@')) {
     const parts = packageName.split('/')
@@ -107,7 +150,7 @@ function packageNameToDir(packageName) {
 /**
  * Get all package directories that should be included based on app config
  */
-async function getPackagesFromAppConfig(appDir) {
+async function getPackagesFromAppConfig(appDir: string): Promise<Set<string> | null> {
   consola.info(`\nReading app config from ${appDir}...`)
 
   const extends_ = await parseNuxtConfigExtends(appDir)
@@ -115,7 +158,7 @@ async function getPackagesFromAppConfig(appDir) {
     return null // Fall back to scanning all packages
   }
 
-  const packageDirs = new Set()
+  const packageDirs = new Set<string>()
 
   for (const pkg of extends_) {
     const dirName = packageNameToDir(pkg)
@@ -140,8 +183,8 @@ async function getPackagesFromAppConfig(appDir) {
 }
 
 // Find all locale files in layers and packages
-async function findLocaleFiles(specificLayer = null, allowedPackages = null) {
-  const localeFiles = []
+async function findLocaleFiles(specificLayer: string | null = null, allowedPackages: Set<string> | null = null): Promise<LocaleFile[]> {
+  const localeFiles: LocaleFile[] = []
 
   // Search paths: layers/ (app-specific) and packages/ (monorepo)
   const searchRoots = [
@@ -209,8 +252,8 @@ async function findLocaleFiles(specificLayer = null, allowedPackages = null) {
 }
 
 // Flatten nested JSON object into dot-notation keys
-function flattenTranslations(obj, prefix = '') {
-  const result = []
+function flattenTranslations(obj: Record<string, any>, prefix: string = ''): TranslationItem[] {
+  const result: TranslationItem[] = []
 
   for (const [key, value] of Object.entries(obj)) {
     const fullKey = prefix ? `${prefix}.${key}` : key
@@ -227,8 +270,8 @@ function flattenTranslations(obj, prefix = '') {
 }
 
 // Group translations by key across locales
-function groupTranslationsByKey(localeFiles, translations) {
-  const grouped = new Map()
+function groupTranslationsByKey(localeFiles: LocaleFile[], translations: ParsedTranslation[]): GroupedTranslation[] {
+  const grouped = new Map<string, GroupedTranslation>()
 
   for (const { layer, locale, items } of translations) {
     for (const { keyPath, value } of items) {
@@ -251,7 +294,7 @@ function groupTranslationsByKey(localeFiles, translations) {
 }
 
 // Seed translations to database via API
-async function seedTranslations(translations, options) {
+async function seedTranslations(translations: GroupedTranslation[], options: { team: string; dryRun: boolean; force: boolean; apiUrl: string }): Promise<SeedResult> {
   const { team, dryRun, force, apiUrl } = options
 
   consola.info(`\nSeeding ${translations.length} translations...`)
@@ -334,8 +377,8 @@ async function seedTranslations(translations, options) {
 }
 
 // Generate SQL INSERT statements for manual seeding
-function generateSqlStatements(translations, teamId = null) {
-  const statements = []
+function generateSqlStatements(translations: GroupedTranslation[], teamId: string | null = null): string[] {
+  const statements: string[] = []
 
   for (const t of translations) {
     const valuesJson = JSON.stringify(t.values).replace(/'/g, '\'\'')
@@ -365,8 +408,8 @@ VALUES (
 }
 
 // Main function
-export async function seedTranslationsFromJson(options = {}) {
-  const config = { ...parseArgs(), ...options }
+export async function seedTranslationsFromJson(options: Partial<SeedTranslationsConfig> = {}): Promise<void> {
+  const config: SeedTranslationsConfig = { ...parseArgs(), ...options }
 
   if (config.help) {
     console.log(`
@@ -420,7 +463,7 @@ Note:
   console.log(`  Mode: ${config.dryRun ? 'dry-run' : 'seed'}`)
 
   // Get allowed packages from app config (if --app specified)
-  let allowedPackages = null
+  let allowedPackages: Set<string> | null = null
   if (config.app) {
     allowedPackages = await getPackagesFromAppConfig(config.app)
     if (!allowedPackages || allowedPackages.size === 0) {
@@ -444,7 +487,7 @@ Note:
 
   // Parse locale files
   consola.info('\nParsing translations...')
-  const translations = []
+  const translations: ParsedTranslation[] = []
 
   for (const file of localeFiles) {
     try {

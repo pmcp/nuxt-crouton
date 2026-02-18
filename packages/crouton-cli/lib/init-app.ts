@@ -1,20 +1,21 @@
-// init-app.mjs — Orchestrate the full app creation pipeline:
+// init-app.ts — Orchestrate the full app creation pipeline:
 // scaffold-app → generate → doctor → summary
 import { join } from 'node:path'
 import { access } from 'node:fs/promises'
 import consola from 'consola'
 
+interface InitAppOptions {
+  features?: string[]
+  theme?: string
+  dialect?: string
+  cf?: boolean
+  dryRun?: boolean
+}
+
 /**
- * Run the full init pipeline: scaffold → generate → doctor → summary.
- * @param {string} name - App name (lowercase, hyphens allowed)
- * @param {object} options
- * @param {string[]} [options.features] - Feature names (e.g., ['bookings', 'pages'])
- * @param {string} [options.theme] - Theme name (e.g., 'ko')
- * @param {string} [options.dialect] - 'sqlite' or 'pg' (default: 'sqlite')
- * @param {boolean} [options.cf] - Include Cloudflare config (default: true)
- * @param {boolean} [options.dryRun] - Preview without writing files
+ * Run the full init pipeline: scaffold -> generate -> doctor -> summary.
  */
-export async function initApp(name, options = {}) {
+export async function initApp(name: string, options: InitAppOptions = {}): Promise<void> {
   const { features = [], theme, dialect = 'sqlite', cf = true, dryRun = false } = options
 
   console.log(`\n  crouton init — creating ${name}\n`)
@@ -23,7 +24,7 @@ export async function initApp(name, options = {}) {
   console.log('  Step 1/3 — Scaffolding app...\n')
   let appDir
   try {
-    const { scaffoldApp } = await import('./scaffold-app.mjs')
+    const { scaffoldApp } = await import('./scaffold-app.ts')
     const result = await scaffoldApp(name, { features, theme, dialect, cf, dryRun })
     appDir = result.appDir
   } catch (error) {
@@ -43,7 +44,7 @@ export async function initApp(name, options = {}) {
   if (hasConfig) {
     consola.start('Step 2/3 — Generating collections from config...')
     try {
-      const { runConfig } = await import('./generate-collection.mjs')
+      const { runConfig } = await import('./generate-collection.ts')
       await runConfig({ configPath })
       consola.success('Step 2/3 — Collections generated')
     } catch (error) {
@@ -56,7 +57,7 @@ export async function initApp(name, options = {}) {
   // ── Step 3: doctor ────────────────────────────────────────────────────
   consola.start('Step 3/3 — Running doctor checks...')
   try {
-    const { doctor, printReport } = await import('./doctor.mjs')
+    const { doctor, printReport } = await import('./doctor.ts')
     const result = await doctor(appDir)
     consola.success('Step 3/3 — Doctor complete')
     printReport(result)
@@ -68,7 +69,7 @@ export async function initApp(name, options = {}) {
   printSummary(name, appDir, cf)
 }
 
-function printSummary(name, appDir, cf) {
+function printSummary(name: string, appDir: string, cf: boolean): void {
   console.log('  ─────────────────────────────────────')
   console.log(`  ${name} is ready!\n`)
   console.log('  Next steps:\n')

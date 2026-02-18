@@ -1,16 +1,25 @@
-// doctor.mjs — Validate an existing crouton app directory
+// doctor.ts — Validate an existing crouton app directory
 import { join, resolve } from 'node:path'
 import { access, readFile } from 'node:fs/promises'
 import consola from 'consola'
-import { loadModules } from './module-registry.mjs'
+import { loadModules } from './module-registry.ts'
+
+interface DoctorCheck {
+  name: string
+  status: 'pass' | 'warn' | 'fail'
+  message: string
+}
+
+interface DoctorResult {
+  ok: boolean
+  checks: DoctorCheck[]
+}
 
 /**
  * Run all doctor checks against an app directory.
- * @param {string} appDir - Path to the app directory
- * @returns {{ ok: boolean, checks: Array<{ name: string, status: 'pass'|'warn'|'fail', message: string }> }}
  */
-export async function doctor(appDir) {
-  const checks = []
+export async function doctor(appDir: string): Promise<DoctorResult> {
+  const checks: DoctorCheck[] = []
 
   // Ensure the directory exists
   if (!await pathExists(appDir)) {
@@ -44,7 +53,7 @@ export async function doctor(appDir) {
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
-async function pathExists(p) {
+async function pathExists(p: string): Promise<boolean> {
   try {
     await access(p)
     return true
@@ -53,7 +62,7 @@ async function pathExists(p) {
   }
 }
 
-async function loadJson(filePath) {
+async function loadJson(filePath: string): Promise<Record<string, any> | null> {
   try {
     const content = await readFile(filePath, 'utf-8')
     return JSON.parse(content)
@@ -62,7 +71,7 @@ async function loadJson(filePath) {
   }
 }
 
-async function loadConfig(appDir) {
+async function loadConfig(appDir: string): Promise<Record<string, any> | null> {
   const extensions = ['.js', '.mjs', '.cjs']
   for (const ext of extensions) {
     const configPath = resolve(appDir, `crouton.config${ext}`)
@@ -80,8 +89,8 @@ async function loadConfig(appDir) {
 
 // ─── Check 1: Feature dependencies ───────────────────────────────
 
-async function checkFeatureDeps(config, pkg) {
-  const results = []
+async function checkFeatureDeps(config: Record<string, any> | null, pkg: Record<string, any> | null): Promise<DoctorCheck[]> {
+  const results: DoctorCheck[] = []
 
   if (!config) {
     results.push({ name: 'config', status: 'warn', message: 'No crouton.config found — skipping feature dependency check' })
@@ -130,8 +139,8 @@ async function checkFeatureDeps(config, pkg) {
 
 // ─── Check 2: Wrangler placeholder IDs ───────────────────────────
 
-async function checkWranglerIds(appDir) {
-  const results = []
+async function checkWranglerIds(appDir: string): Promise<DoctorCheck[]> {
+  const results: DoctorCheck[] = []
   const wranglerPath = join(appDir, 'wrangler.toml')
 
   if (!await pathExists(wranglerPath)) {
@@ -157,8 +166,8 @@ async function checkWranglerIds(appDir) {
 
 // ─── Check 3: Missing locale files ───────────────────────────────
 
-async function checkLocaleFiles(appDir, config) {
-  const results = []
+async function checkLocaleFiles(appDir: string, config: Record<string, any> | null): Promise<DoctorCheck[]> {
+  const results: DoctorCheck[] = []
   const targets = config?.targets || []
 
   for (const target of targets) {
@@ -185,8 +194,8 @@ async function checkLocaleFiles(appDir, config) {
 
 // ─── Check 4: CF stubs ───────────────────────────────────────────
 
-async function checkCfStubs(appDir) {
-  const results = []
+async function checkCfStubs(appDir: string): Promise<DoctorCheck[]> {
+  const results: DoctorCheck[] = []
   const nuxtConfigPath = join(appDir, 'nuxt.config.ts')
 
   if (!await pathExists(nuxtConfigPath)) return results
@@ -219,8 +228,8 @@ async function checkCfStubs(appDir) {
 
 // ─── Check 5: Schema exports ─────────────────────────────────────
 
-async function checkSchemaExports(appDir) {
-  const results = []
+async function checkSchemaExports(appDir: string): Promise<DoctorCheck[]> {
+  const results: DoctorCheck[] = []
   const schemaPath = join(appDir, 'server', 'db', 'schema.ts')
 
   if (!await pathExists(schemaPath)) {
@@ -249,7 +258,7 @@ async function checkSchemaExports(appDir) {
 
 // ─── Reporter ─────────────────────────────────────────────────────
 
-export function printReport(result) {
+export function printReport(result: DoctorResult): void {
   const icons = { pass: '✓', warn: '⚠', fail: '✗' }
 
   console.log('\n  Crouton Doctor\n')

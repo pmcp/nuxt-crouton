@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// generate-collection.next.mjs — Complete collection generator with modular architecture
+// generate-collection.ts — Complete collection generator with modular architecture
 
 import fsp from 'node:fs/promises'
 import path from 'node:path'
@@ -40,8 +40,73 @@ import { generateCollectionTypesRegistry } from './generators/collection-types-r
 
 const execAsync = promisify(exec)
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface Field {
+  name: string
+  type: string
+  meta: Record<string, any>
+  refTarget?: string
+  refScope?: string
+  zod: string
+  default: string
+  tsType: string
+}
+
+interface WriteScaffoldOptions {
+  layer: string
+  collection: string
+  fields: Field[]
+  dialect: string
+  autoRelations: boolean
+  dryRun: boolean
+  noDb: boolean
+  force?: boolean
+  noTranslations?: boolean
+  config?: Record<string, any> | null
+  collectionConfig?: Record<string, any> | null
+  hierarchy?: boolean
+  seed?: boolean
+  seedCount?: number
+}
+
+interface ValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+interface RunConfigOptions {
+  configPath?: string
+  force?: boolean
+  dryRun?: boolean
+  only?: string
+  noAutoMerge?: boolean
+}
+
+interface RunGenerateOptions {
+  layer?: string
+  collection?: string
+  fieldsFile?: string
+  dialect?: string
+  autoRelations?: boolean
+  dryRun?: boolean
+  noDb?: boolean
+  force?: boolean
+  noTranslations?: boolean
+  hierarchy?: boolean
+  seed?: boolean
+  seedCount?: number
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 // Helper function to check if file exists
-async function fileExists(filePath) {
+async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fsp.access(filePath)
     return true
@@ -52,7 +117,7 @@ async function fileExists(filePath) {
 
 // parseArgs() removed in Phase 5 — args now passed as options from citty entry point
 
-async function loadFields(p, typeMapping) {
+async function loadFields(p: string, typeMapping: Record<string, any>): Promise<Field[]> {
   // If path is relative and doesn't exist, check in schemas directory
   if (!path.isAbsolute(p) && !await fsp.access(p).then(() => true).catch(() => false)) {
     const schemasPath = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'schemas', p)
@@ -61,13 +126,13 @@ async function loadFields(p, typeMapping) {
     }
   }
   const raw = await fsp.readFile(p, 'utf8')
-  const obj = JSON.parse(raw)
+  const obj: Record<string, Record<string, any>> = JSON.parse(raw)
 
   const validTypes = new Set(Object.keys(typeMapping))
 
   // Convert to array for easier processing
   return Object.entries(obj).map(([name, meta]) => {
-    const fieldMeta = meta?.meta || {}
+    const fieldMeta = meta?.meta || {} as Record<string, any>
     // Set default area if not specified
     if (!fieldMeta.area) {
       fieldMeta.area = 'main'
@@ -89,7 +154,7 @@ async function loadFields(p, typeMapping) {
 
 // Update the main schema index to export the new collection schema
 // NuxtHub v0.10+ expects schema at server/db/schema.ts
-async function updateSchemaIndex(collectionName, layer, force = false) {
+async function updateSchemaIndex(collectionName: string, layer: string, force: boolean = false): Promise<boolean> {
   const cases = toCase(collectionName)
   const schemaIndexPath = path.resolve('server', 'db', 'schema.ts')
 
@@ -121,14 +186,14 @@ async function updateSchemaIndex(collectionName, layer, force = false) {
     }
     console.log(`✓ Updated schema index with ${exportName} export`)
     return true
-  } catch (error) {
+  } catch (error: any) {
     console.error(`! Could not update schema index:`, error.message)
     return false
   }
 }
 
 // Export i18n schema when translations are enabled
-async function exportI18nSchema(force = false) {
+async function exportI18nSchema(force: boolean = false): Promise<boolean> {
   const schemaDir = path.resolve('server', 'db')
   const schemaIndexPath = path.join(schemaDir, 'schema.ts')
   const translationsSchemaPath = path.join(schemaDir, 'translations-ui.ts')
@@ -218,7 +283,7 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
       await registerTranslationsUiCollection()
 
       return true
-    } catch (execError) {
+    } catch (execError: any) {
       if (execError.message.includes('timed out')) {
         console.error(`✗ Migration generation timed out after 30 seconds`)
       } else {
@@ -231,14 +296,14 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
 
       return true // Still return true since schema export succeeded
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`! Could not export i18n schema:`, error.message)
     return false
   }
 }
 
 // Create database table using Drizzle
-async function createDatabaseTable(config) {
+async function createDatabaseTable(config: { name: string; layer: string; fields?: Field[]; force?: boolean }): Promise<boolean> {
   const { name, layer, force = false } = config
   const cases = toCase(name)
 
@@ -292,7 +357,7 @@ async function createDatabaseTable(config) {
       console.log(`! Migration generated. The table will be created when you restart the dev server.`)
 
       return true
-    } catch (execError) {
+    } catch (execError: any) {
       if (execError.message.includes('timed out')) {
         console.error(`✗ Database migration timed out after 30 seconds`)
         console.error(`  This usually means there's a conflict or error in the schema`)
@@ -303,7 +368,7 @@ async function createDatabaseTable(config) {
       console.log(`! You can manually run: npx nuxt db generate`)
       return false
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`✗ Failed to create database table:`, error.message)
     console.log(`! You may need to create the table manually with: npx nuxt db generate`)
     return false
@@ -311,7 +376,14 @@ async function createDatabaseTable(config) {
 }
 
 // Update collection registry with new collection
-async function updateRegistry({ layer, collection, collectionKey, configExportName, layerPascalCase, pascalCasePlural }) {
+async function updateRegistry({ layer, collection, collectionKey, configExportName, layerPascalCase, pascalCasePlural }: {
+  layer: string
+  collection: string
+  collectionKey: string
+  configExportName: string
+  layerPascalCase: string
+  pascalCasePlural: string
+}): Promise<void> {
   // Check if app/ directory exists (Nuxt 4 default structure)
   const appDirExists = await fsp.stat(path.resolve('app')).then(() => true).catch(() => false)
   const registryPath = appDirExists
@@ -392,14 +464,14 @@ async function updateRegistry({ layer, collection, collectionKey, configExportNa
 
     await fsp.writeFile(registryPath, content)
     console.log(`✓ ${fileExists ? 'Updated' : 'Created'} app.config.ts with "${collectionKey}" entry`)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to update registry:', error)
     // Don't fail the entire generation if registry update fails
   }
 }
 
 // Update root nuxt.config.ts to extend the layer
-async function updateRootNuxtConfig(layer) {
+async function updateRootNuxtConfig(layer: string): Promise<void> {
   const rootConfigPath = path.resolve('nuxt.config.ts')
 
   try {
@@ -445,14 +517,14 @@ async function updateRootNuxtConfig(layer) {
       console.error(`! Could not find extends array in root nuxt.config.ts`)
       console.log(`  Please manually add './layers/${layer}' to the extends array`)
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`! Could not update root nuxt.config.ts:`, error.message)
     console.log(`  Please manually add './layers/${layer}' to the extends array`)
   }
 }
 
 // Update or create layer root nuxt.config.ts
-async function updateLayerRootConfig(layer, collectionName, hasTranslations = false) {
+async function updateLayerRootConfig(layer: string, collectionName: string, hasTranslations: boolean = false): Promise<void> {
   const cases = toCase(collectionName)
   const layerPath = path.resolve('layers', layer)
   const configPath = path.join(layerPath, 'nuxt.config.ts')
@@ -566,14 +638,14 @@ export default defineNuxtConfig({
         }
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`! Could not update ${layer} layer root nuxt.config.ts:`, error.message)
     console.log(`  Please manually add './collections/${cases.plural}' to the extends array`)
   }
 }
 
 // Setup i18n folder structure and locale files for a layer
-async function setupLayerI18n(layer, collectionName) {
+async function setupLayerI18n(layer: string, collectionName: string): Promise<boolean> {
   const layerPath = path.resolve('layers', layer)
   const i18nPath = path.join(layerPath, 'i18n', 'locales')
   const cases = toCase(collectionName)
@@ -618,14 +690,14 @@ async function setupLayerI18n(layer, collectionName) {
 
     console.log(`✓ Created i18n locale files in layers/${layer}/i18n/locales/`)
     return true
-  } catch (error) {
+  } catch (error: any) {
     console.error(`! Could not setup i18n for layer ${layer}:`, error.message)
     return false
   }
 }
 
 // Add i18n config block to an existing nuxt.config.ts
-async function addI18nConfigToLayer(configPath, config) {
+async function addI18nConfigToLayer(configPath: string, config: string): Promise<string> {
   // Check if i18n config already exists
   if (config.includes('i18n:')) {
     return config // Already has i18n config
@@ -674,7 +746,7 @@ async function addI18nConfigToLayer(configPath, config) {
   return config
 }
 
-async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false, seed = false, seedCount = 25 }) {
+async function writeScaffold({ layer, collection, fields, dialect, autoRelations, dryRun, noDb, force = false, noTranslations = false, config = null, collectionConfig = null, hierarchy: hierarchyFlag = false, seed = false, seedCount = 25 }: WriteScaffoldOptions): Promise<void> {
   const cases = toCase(collection)
   const base = path.resolve('layers', layer, 'collections', cases.plural)
 
@@ -1229,7 +1301,7 @@ ${translationsFieldSchema}
 }
 
 // Validate config before starting generation
-async function validateConfig(config) {
+async function validateConfig(config: Record<string, any> | null): Promise<ValidationResult> {
   const errors = []
   const warnings = []
 
@@ -1413,14 +1485,8 @@ async function validateConfig(config) {
 
 /**
  * Run config-based generation.
- * @param {Object} options
- * @param {string} [options.configPath] - Explicit config file path (auto-detected if omitted)
- * @param {boolean} [options.force] - Force generation despite missing deps
- * @param {boolean} [options.dryRun] - Preview without writing files
- * @param {string} [options.only] - Generate only a specific collection
- * @param {boolean} [options.noAutoMerge] - Skip auto-merging package collections
  */
-export async function runConfig(options = {}) {
+export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
   try {
     const typeMapping = await loadTypeMapping()
 
@@ -1617,7 +1683,7 @@ export async function runConfig(options = {}) {
               console.error(`⚠ Warnings:`, stderr)
             }
             console.log(`\n✓ Database migration generated successfully`)
-          } catch (execError) {
+          } catch (execError: any) {
             if (execError.message.includes('timed out')) {
               console.error(`\n✗ Database migration timed out after 30 seconds`)
               console.error(`  Check server/db/schema.ts for conflicts`)
@@ -1658,7 +1724,7 @@ export async function runConfig(options = {}) {
             const registryResult = await generateCollectionTypesRegistry(process.cwd())
             console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
             console.log(`  → ${registryResult.outputPath}`)
-          } catch (error) {
+          } catch (error: any) {
             console.log(`⚠ Could not generate type registry: ${error.message}`)
           }
         }
@@ -1746,7 +1812,7 @@ export async function runConfig(options = {}) {
               console.error(`⚠ Warnings:`, stderr)
             }
             console.log(`\n✓ Database migration generated successfully`)
-          } catch (execError) {
+          } catch (execError: any) {
             if (execError.message.includes('timed out')) {
               console.error(`\n✗ Database migration timed out after 30 seconds`)
               console.error(`  Check server/db/schema.ts for conflicts`)
@@ -1787,7 +1853,7 @@ export async function runConfig(options = {}) {
             const registryResult = await generateCollectionTypesRegistry(process.cwd())
             console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
             console.log(`  → ${registryResult.outputPath}`)
-          } catch (error) {
+          } catch (error: any) {
             console.log(`⚠ Could not generate type registry: ${error.message}`)
           }
         }
@@ -1804,7 +1870,7 @@ export async function runConfig(options = {}) {
         process.exit(1)
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error:', error.message)
     process.exit(1)
   }
@@ -1812,21 +1878,8 @@ export async function runConfig(options = {}) {
 
 /**
  * Run single-collection generation with explicit args.
- * @param {Object} options
- * @param {string} options.layer - Target layer name
- * @param {string} options.collection - Collection name
- * @param {string} options.fieldsFile - Path to JSON schema file
- * @param {string} [options.dialect='sqlite'] - Database dialect
- * @param {boolean} [options.autoRelations] - Add relation stubs
- * @param {boolean} [options.dryRun] - Preview without writing
- * @param {boolean} [options.noDb] - Skip database table creation
- * @param {boolean} [options.force] - Force generation
- * @param {boolean} [options.noTranslations] - Skip translation fields
- * @param {boolean} [options.hierarchy] - Enable hierarchy support
- * @param {boolean} [options.seed] - Generate seed data
- * @param {number} [options.seedCount=25] - Number of seed records
  */
-export async function runGenerate(options = {}) {
+export async function runGenerate(options: RunGenerateOptions = {}): Promise<void> {
   try {
     const typeMapping = await loadTypeMapping()
     const args = {
@@ -1897,7 +1950,7 @@ export async function runGenerate(options = {}) {
     try {
       fields = await loadFields(args.fieldsFile, typeMapping)
       console.log(`✓ Loaded ${fields.length} fields from schema`)
-    } catch (error) {
+    } catch (error: any) {
       console.error(`\n❌ Error loading schema: ${error.message}\n`)
       process.exit(1)
     }
@@ -1915,7 +1968,7 @@ export async function runGenerate(options = {}) {
         const registryResult = await generateCollectionTypesRegistry(process.cwd())
         console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
         console.log(`  → ${registryResult.outputPath}`)
-      } catch (error) {
+      } catch (error: any) {
         console.log(`⚠ Could not generate type registry: ${error.message}`)
       }
 
@@ -1924,7 +1977,7 @@ export async function runGenerate(options = {}) {
       console.log(`${'═'.repeat(60)}\n`)
       console.log(`Next step: Restart your Nuxt dev server\n`)
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error:', error.message)
     process.exit(1)
   }
