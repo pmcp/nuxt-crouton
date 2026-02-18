@@ -203,6 +203,15 @@ importers:
       '@fyit/crouton':
         specifier: workspace:*
         version: link:../../packages/crouton
+      '@fyit/crouton-assets':
+        specifier: workspace:*
+        version: link:../../packages/crouton-assets
+      '@fyit/crouton-charts':
+        specifier: workspace:*
+        version: link:../../packages/crouton-charts
+      '@fyit/crouton-flow':
+        specifier: workspace:*
+        version: link:../../packages/crouton-flow
       '@fyit/crouton-mcp-toolkit':
         specifier: workspace:*
         version: link:../../packages/crouton-mcp-toolkit

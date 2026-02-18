@@ -8,9 +8,12 @@ export default defineNuxtConfig({
   // DO NOT add them separately - it causes duplicate layer loading and SSR errors.
   extends: [
     '@fyit/crouton-core',        // Core (includes auth, admin, i18n)
+    '@fyit/crouton-assets',      // Asset management (picker, uploader)
     '@fyit/crouton-ai',
     '@fyit/crouton-editor',
+    '@fyit/crouton-charts',      // Chart visualizations
     '@fyit/crouton-collab',      // Collaboration (Yjs-based real-time editing)
+    '@fyit/crouton-flow',        // Graph/DAG visualization
     '@fyit/crouton-maps',        // Maps (used by bookings PanelMap)
     '@fyit/crouton-pages',
     '@fyit/crouton-bookings',

@@ -9,10 +9,13 @@
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-assets": "workspace:*",
+    "@fyit/crouton-charts": "workspace:*",
+    "@fyit/crouton-flow": "workspace:*",
     "@fyit/crouton-mcp-toolkit": "workspace:*",
     "@libsql/client": "^0.15.0",
     "drizzle-orm": "^0.45.0",
-    "nuxt": "^4.3"
+    "nuxt": "^4.3.1"
   },
   "devDependencies": {
     "@fyit/crouton-cli": "workspace:*",
