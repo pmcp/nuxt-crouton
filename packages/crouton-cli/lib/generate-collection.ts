@@ -1335,6 +1335,108 @@ async function validateConfig(config: Record<string, any> | null): Promise<Valid
   }
 }
 
+interface PostGenerationOptions {
+  allCollections: Array<{ name: string; layer: string; fields: Field[] }>
+  config: Record<string, any>
+  dryRun: boolean
+  noDb: boolean
+  force: boolean
+}
+
+async function runPostGeneration(opts: PostGenerationOptions): Promise<void> {
+  const { allCollections, config, dryRun, noDb, force } = opts
+
+  // Update schema index for all collections and run migration once (unless disabled)
+  if (!noDb && !dryRun && allCollections.length > 0) {
+    console.log(`\n${'═'.repeat(60)}`)
+    console.log(`  DATABASE SETUP`)
+    console.log(`${'═'.repeat(60)}\n`)
+    console.log(`Updating schema index for ${allCollections.length} collections...`)
+
+    // Update schema index for each collection
+    for (const col of allCollections) {
+      const { exportName: colExportName, importPath: colImportPath, schemaIndexPath: colSchemaIndexPath } = buildSchemaExportNames(col.name, col.layer)
+      const colSchemaResult = await addNamedSchemaExport(colSchemaIndexPath, colExportName, colImportPath, force)
+      if (!colSchemaResult.added && colSchemaResult.reason !== 'already exported') {
+        console.error(`  ✗ Failed to update schema index for ${col.name}: ${colSchemaResult.reason}`)
+      }
+    }
+
+    // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
+    // Note: exportI18nSchema() already calls registerTranslationsUiCollection() internally
+    console.log(`\n↻ Ensuring translations_ui table...`)
+    await exportI18nSchema(force)
+
+    // Run database migration once for all collections
+    console.log(`\nRunning database migration...`)
+    console.log(`Command: npx nuxt db generate (30s timeout)`)
+
+    try {
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Command timed out after 30 seconds')), 30000)
+      })
+
+      const { stdout, stderr } = await Promise.race([
+        execAsync('npx nuxt db generate'),
+        timeoutPromise
+      ])
+
+      if (stderr && !stderr.includes('Warning')) {
+        console.error(`⚠ Warnings:`, stderr)
+      }
+      console.log(`\n✓ Database migration generated successfully`)
+    } catch (execError: any) {
+      if (execError.message.includes('timed out')) {
+        console.error(`\n✗ Database migration timed out after 30 seconds`)
+        console.error(`  Check server/db/schema.ts for conflicts`)
+      } else {
+        console.error(`\n✗ Failed to run database migration:`, execError.message)
+      }
+      console.log(`\nManual command: npx nuxt db generate\n`)
+    }
+  }
+
+  // Setup CSS @source directive for Tailwind
+  console.log(`\n${'═'.repeat(60)}`)
+  console.log(`  TAILWIND CSS SETUP`)
+  console.log(`${'═'.repeat(60)}\n`)
+
+  const cssResult = await setupCroutonCssSource(process.cwd())
+
+  if (cssResult.success) {
+    if (cssResult.action === 'created') {
+      console.log(`✓ Created CSS file with @source directive`)
+    } else if (cssResult.action === 'updated') {
+      console.log(`✓ Added @source directive to existing CSS`)
+    } else {
+      console.log(`✓ CSS @source directive already configured`)
+    }
+  } else {
+    console.log(`\n⚠️  Could not automatically setup CSS @source directive`)
+    displayManualCssSetupInstructions()
+  }
+
+  // Generate type registry for type-safe CRUD composables
+  if (!dryRun) {
+    console.log(`\n${'═'.repeat(60)}`)
+    console.log(`  TYPE REGISTRY`)
+    console.log(`${'═'.repeat(60)}\n`)
+
+    try {
+      const registryResult = await generateCollectionTypesRegistry(process.cwd())
+      console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
+      console.log(`  → ${registryResult.outputPath}`)
+    } catch (error: any) {
+      console.log(`⚠ Could not generate type registry: ${error.message}`)
+    }
+  }
+
+  console.log(`\n${'═'.repeat(60)}`)
+  console.log(`  ALL DONE!`)
+  console.log(`${'═'.repeat(60)}\n`)
+  console.log(`Next step: Restart your Nuxt dev server\n`)
+}
+
 /**
  * Run config-based generation.
  */
@@ -1490,95 +1592,13 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
           }
         }
 
-        // Update schema index for all collections and run migration once (unless disabled)
-        if (!config.flags?.noDb && !config.flags?.dryRun && allCollections.length > 0) {
-          console.log(`\n${'═'.repeat(60)}`)
-          console.log(`  DATABASE SETUP`)
-          console.log(`${'═'.repeat(60)}\n`)
-          console.log(`Updating schema index for ${allCollections.length} collections...`)
-
-          // Update schema index for each collection
-          for (const col of allCollections) {
-            const { exportName: colExportName, importPath: colImportPath, schemaIndexPath: colSchemaIndexPath } = buildSchemaExportNames(col.name, col.layer)
-            const colSchemaResult = await addNamedSchemaExport(colSchemaIndexPath, colExportName, colImportPath, config.flags?.force || false)
-            if (!colSchemaResult.added && colSchemaResult.reason !== 'already exported') {
-              console.error(`  ✗ Failed to update schema index for ${col.name}: ${colSchemaResult.reason}`)
-            }
-          }
-
-          // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
-          // Note: exportI18nSchema() already calls registerTranslationsUiCollection() internally
-          console.log(`\n↻ Ensuring translations_ui table...`)
-          await exportI18nSchema(config.flags?.force || false)
-
-          // Run database migration once for all collections
-          console.log(`\nRunning database migration...`)
-          console.log(`Command: npx nuxt db generate (30s timeout)`)
-
-          try {
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Command timed out after 30 seconds')), 30000)
-            })
-
-            const { stdout, stderr } = await Promise.race([
-              execAsync('npx nuxt db generate'),
-              timeoutPromise
-            ])
-
-            if (stderr && !stderr.includes('Warning')) {
-              console.error(`⚠ Warnings:`, stderr)
-            }
-            console.log(`\n✓ Database migration generated successfully`)
-          } catch (execError: any) {
-            if (execError.message.includes('timed out')) {
-              console.error(`\n✗ Database migration timed out after 30 seconds`)
-              console.error(`  Check server/db/schema.ts for conflicts`)
-            } else {
-              console.error(`\n✗ Failed to run database migration:`, execError.message)
-            }
-            console.log(`\nManual command: npx nuxt db generate\n`)
-          }
-        }
-
-        // Setup CSS @source directive for Tailwind
-        console.log(`\n${'═'.repeat(60)}`)
-        console.log(`  TAILWIND CSS SETUP`)
-        console.log(`${'═'.repeat(60)}\n`)
-
-        const cssResult = await setupCroutonCssSource(process.cwd())
-
-        if (cssResult.success) {
-          if (cssResult.action === 'created') {
-            console.log(`✓ Created CSS file with @source directive`)
-          } else if (cssResult.action === 'updated') {
-            console.log(`✓ Added @source directive to existing CSS`)
-          } else {
-            console.log(`✓ CSS @source directive already configured`)
-          }
-        } else {
-          console.log(`\n⚠️  Could not automatically setup CSS @source directive`)
-          displayManualCssSetupInstructions()
-        }
-
-        // Generate type registry for type-safe CRUD composables
-        if (!config.flags?.dryRun) {
-          console.log(`\n${'═'.repeat(60)}`)
-          console.log(`  TYPE REGISTRY`)
-          console.log(`${'═'.repeat(60)}\n`)
-
-          try {
-            const registryResult = await generateCollectionTypesRegistry(process.cwd())
-            console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
-            console.log(`  → ${registryResult.outputPath}`)
-          } catch (error: any) {
-            console.log(`⚠ Could not generate type registry: ${error.message}`)
-          }
-        }
-
-        console.log(`\n${'═'.repeat(60)}`)
-        console.log(`  ALL DONE!`)
-        console.log(`${'═'.repeat(60)}\n`)
-        console.log(`Next step: Restart your Nuxt dev server\n`)
+        await runPostGeneration({
+          allCollections,
+          config,
+          dryRun: config.flags?.dryRun || false,
+          noDb: config.flags?.noDb || false,
+          force: config.flags?.force || false,
+        })
       } else if (config.targets && config.schemaPath) {
         // Original simple config format
         const fields = await loadFields(config.schemaPath, typeMapping)
@@ -1613,95 +1633,13 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
           }
         }
 
-        // Update schema index for all collections and run migration once (unless disabled)
-        if (!config.flags?.noDb && !config.flags?.dryRun && allCollections.length > 0) {
-          console.log(`\n${'═'.repeat(60)}`)
-          console.log(`  DATABASE SETUP`)
-          console.log(`${'═'.repeat(60)}\n`)
-          console.log(`Updating schema index for ${allCollections.length} collections...`)
-
-          // Update schema index for each collection
-          for (const col of allCollections) {
-            const { exportName: colExportName, importPath: colImportPath, schemaIndexPath: colSchemaIndexPath } = buildSchemaExportNames(col.name, col.layer)
-            const colSchemaResult = await addNamedSchemaExport(colSchemaIndexPath, colExportName, colImportPath, config.flags?.force || false)
-            if (!colSchemaResult.added && colSchemaResult.reason !== 'already exported') {
-              console.error(`  ✗ Failed to update schema index for ${col.name}: ${colSchemaResult.reason}`)
-            }
-          }
-
-          // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
-          // Note: exportI18nSchema() already calls registerTranslationsUiCollection() internally
-          console.log(`\n↻ Ensuring translations_ui table...`)
-          await exportI18nSchema(config.flags?.force || false)
-
-          // Run database migration once for all collections
-          console.log(`\nRunning database migration...`)
-          console.log(`Command: npx nuxt db generate (30s timeout)`)
-
-          try {
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Command timed out after 30 seconds')), 30000)
-            })
-
-            const { stdout, stderr } = await Promise.race([
-              execAsync('npx nuxt db generate'),
-              timeoutPromise
-            ])
-
-            if (stderr && !stderr.includes('Warning')) {
-              console.error(`⚠ Warnings:`, stderr)
-            }
-            console.log(`\n✓ Database migration generated successfully`)
-          } catch (execError: any) {
-            if (execError.message.includes('timed out')) {
-              console.error(`\n✗ Database migration timed out after 30 seconds`)
-              console.error(`  Check server/db/schema.ts for conflicts`)
-            } else {
-              console.error(`\n✗ Failed to run database migration:`, execError.message)
-            }
-            console.log(`\nManual command: npx nuxt db generate\n`)
-          }
-        }
-
-        // Setup CSS @source directive for Tailwind
-        console.log(`\n${'═'.repeat(60)}`)
-        console.log(`  TAILWIND CSS SETUP`)
-        console.log(`${'═'.repeat(60)}\n`)
-
-        const cssResult2 = await setupCroutonCssSource(process.cwd())
-
-        if (cssResult2.success) {
-          if (cssResult2.action === 'created') {
-            console.log(`✓ Created CSS file with @source directive`)
-          } else if (cssResult2.action === 'updated') {
-            console.log(`✓ Added @source directive to existing CSS`)
-          } else {
-            console.log(`✓ CSS @source directive already configured`)
-          }
-        } else {
-          console.log(`\n⚠️  Could not automatically setup CSS @source directive`)
-          displayManualCssSetupInstructions()
-        }
-
-        // Generate type registry for type-safe CRUD composables
-        if (!config.flags?.dryRun) {
-          console.log(`\n${'═'.repeat(60)}`)
-          console.log(`  TYPE REGISTRY`)
-          console.log(`${'═'.repeat(60)}\n`)
-
-          try {
-            const registryResult = await generateCollectionTypesRegistry(process.cwd())
-            console.log(`✓ Generated type registry with ${registryResult.collectionsCount} collection(s)`)
-            console.log(`  → ${registryResult.outputPath}`)
-          } catch (error: any) {
-            console.log(`⚠ Could not generate type registry: ${error.message}`)
-          }
-        }
-
-        console.log(`\n${'═'.repeat(60)}`)
-        console.log(`  ALL DONE!`)
-        console.log(`${'═'.repeat(60)}\n`)
-        console.log(`Next step: Restart your Nuxt dev server\n`)
+        await runPostGeneration({
+          allCollections,
+          config,
+          dryRun: config.flags?.dryRun || false,
+          noDb: config.flags?.noDb || false,
+          force: config.flags?.force || false,
+        })
       } else {
         console.error('Error: Invalid config file')
         console.error('Config must have either:')
