@@ -11,6 +11,7 @@ import { teamSettings, type TeamThemeSettings } from '@fyit/crouton-auth/server/
 
 // Validation schema for theme settings
 const themeSettingsSchema = z.object({
+  preset: z.enum(['custom', 'blackandwhite', 'ko']).optional(),
   primary: z.enum([
     'red', 'orange', 'amber', 'yellow', 'lime', 'green',
     'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo',
