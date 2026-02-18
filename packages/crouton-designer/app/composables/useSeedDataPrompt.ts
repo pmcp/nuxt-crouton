@@ -5,13 +5,17 @@ import type { CollectionWithFields } from './useCollectionEditor'
  * Builds the system prompt for Phase 3 (Seed Data Generation)
  */
 export function useSeedDataPrompt() {
+  // Seed data only needs options (for selects) and refTarget (for cross-refs).
+  // All other meta (label, area, displayAs, group, etc.) is irrelevant to JSON generation.
   function buildCollectionsSchema(collections: CollectionWithFields[]): string {
     if (collections.length === 0) return '  (no collections)'
     return collections.map(col => {
       const fieldLines = col.fields.map(f => {
-        const meta = f.meta ? ` meta: ${JSON.stringify(f.meta)}` : ''
         const ref = f.refTarget ? ` → ${f.refTarget}` : ''
-        return `    - ${f.name}: ${f.type}${ref}${meta}`
+        const options = (f.meta as any)?.options?.length
+          ? ` [${(f.meta as any).options.join('|')}]`
+          : ''
+        return `    - ${f.name}: ${f.type}${ref}${options}`
       }).join('\n')
       return `  ${col.name}:\n${fieldLines || '    (no fields)'}`
     }).join('\n')
@@ -28,17 +32,32 @@ export function useSeedDataPrompt() {
   function buildSystemPrompt(
     config: ProjectConfig,
     collections: CollectionWithFields[],
-    currentSeedData: SeedDataMap
+    currentSeedData: SeedDataMap,
+    hasPriorContext = false
   ): string {
     const collectionNames = collections.map(c => c.name).join(', ')
 
-    return `You are a senior full-stack developer generating realistic seed data for a Nuxt Crouton application. You are in Phase 3: Seed Data Generation.
+    const rulesSection = hasPriorContext
+      ? `## Rules (full rules were in turn 1 — key reminders)
+- Use \`set_seed_data\` tool once per collection. Every entry needs an \`_id\` field.
+- Reference fields (→ target) must use valid \`_id\` values from that collection.
+- Use realistic data; for fields with [options] use only listed values.
+- On edits, only call \`set_seed_data\` for changed collections.`
+      : `## Rules
+1. ALWAYS use the \`set_seed_data\` tool to provide seed data. Call it once per collection.
+2. Generate 5-10 contextually appropriate entries per collection unless the user requests more or fewer.
+3. Every entry MUST include an \`_id\` field (e.g., "user-1", "task-3") for cross-referencing between collections.
+4. Reference fields (those with → target) MUST point to valid \`_id\` values from the target collection.
+5. Generate data that feels REAL and domain-appropriate — no "lorem ipsum", no "test user 1". Use realistic names, emails, dates, statuses, etc.
+6. Respect field types: string→text, text→paragraphs, number/decimal→numbers, boolean→mix, date/datetime→ISO strings, reference→valid _id, image→"https://picsum.photos/seed/{name}/400/300", json/repeater→structured objects.
+7. Create meaningful relationships between collections.
+8. Include variety: different statuses, dates spread over time, varying content lengths.
+9. When asked to modify, update ONLY affected collection(s) with the full replacement dataset.
+10. After generating, briefly summarize and offer to adjust.`
 
-## App Context
-- Name: ${config.name || 'unnamed'}
-- Type: ${config.appType || 'unknown'}
-- Description: ${config.description || 'none'}
-- Languages: ${config.languages?.join(', ') || 'en'}
+    return `You are generating realistic seed data for a Nuxt Crouton app. Phase 3: Seed Data.
+
+## App: ${config.name || 'unnamed'} (${config.appType || 'unknown'})${config.description ? ` — ${config.description}` : ''}
 
 ## Collection Schemas
 ${buildCollectionsSchema(collections)}
@@ -46,37 +65,10 @@ ${buildCollectionsSchema(collections)}
 ## Current Seed Data
 ${buildCurrentSeedData(currentSeedData)}
 
-## Rules
-1. ALWAYS use the \`set_seed_data\` tool to provide seed data. Call it once per collection.
-2. Generate 5-10 contextually appropriate entries per collection unless the user requests more or fewer.
-3. Every entry MUST include an \`_id\` field (e.g., "user-1", "task-3") for cross-referencing between collections.
-4. Reference fields (those with → target) MUST point to valid \`_id\` values from the target collection.
-5. Generate data that feels REAL and domain-appropriate — no "lorem ipsum", no "test user 1". Use realistic names, emails, dates, statuses, etc.
-6. Respect field types and constraints:
-   - \`string\`: realistic text values
-   - \`text\`: longer paragraphs when appropriate
-   - \`number\`/\`integer\`/\`decimal\`: sensible numeric values
-   - \`boolean\`: mix of true/false
-   - \`date\`/\`datetime\`: realistic ISO date strings, mix of past/present/future
-   - \`reference\`: valid \`_id\` from the target collection
-   - \`select\`/fields with \`options\` meta: use values from the options list
-   - \`image\`: use placeholder URLs like "https://picsum.photos/seed/{name}/400/300"
-   - \`json\`/\`repeater\`: structured objects matching the field's properties
-7. Create meaningful relationships — e.g., if there are users and tasks, assign tasks to specific users.
-8. Include variety: different statuses, dates spread over time, varying content lengths.
-9. When the user asks to modify seed data (e.g., "make some tasks overdue", "give me 20 users"), update ONLY the affected collection(s) by calling \`set_seed_data\` with the full replacement dataset.
-10. After generating, briefly summarize what you created and offer to adjust.
+${rulesSection}
 
-## Available Collections
-${collectionNames}
-
-## Tool Usage
-- Use \`set_seed_data\` with \`collectionName\` and \`entries\` array.
-- Call it once per collection when generating initial data.
-- When iterating, only call it for collections that changed.
-
-## Output Format
-Call the \`set_seed_data\` tool for each collection, then provide a brief conversational summary.`
+## Tool
+\`set_seed_data(collectionName, entries[])\` — call once per collection, only for changed ones on edits.`
   }
 
   return { buildSystemPrompt }
