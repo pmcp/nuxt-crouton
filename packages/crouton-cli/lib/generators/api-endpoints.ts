@@ -47,6 +47,9 @@ export function generatePostEndpoint(data: Record<string, any>, config: Record<s
   const pathField = data.hierarchy?.pathField || 'path'
   const depthField = data.hierarchy?.depthField || 'depth'
 
+  // Check if schema has a userId field (uploader tracking — auto-populated from auth)
+  const hasUserIdField = fields.some(f => f.name === 'userId')
+
   // Check if there are any date fields
   const dateFields = fields.filter(f => f.type === 'date')
   const hasDateFields = dateFields.length > 0
@@ -94,14 +97,14 @@ import { nanoid } from 'nanoid'`
     id: recordId,
     ${pathField},
     ${depthField},
-    teamId: team.id,
+    teamId: team.id,${hasUserIdField ? '\n    userId: user.id,' : ''}
     owner: user.id,
     createdBy: user.id,
     updatedBy: user.id
   })`
     : `return await create${prefixedPascalCase}({
     ...dataWithoutId,
-    teamId: team.id,
+    teamId: team.id,${hasUserIdField ? '\n    userId: user.id,' : ''}
     owner: user.id,
     createdBy: user.id,
     updatedBy: user.id

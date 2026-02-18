@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
   return await createBookingsAsset({
     ...dataWithoutId,
     teamId: team.id,
+    userId: user.id,
     owner: user.id,
     createdBy: user.id,
     updatedBy: user.id
