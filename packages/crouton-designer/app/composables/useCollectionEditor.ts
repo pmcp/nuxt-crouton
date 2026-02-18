@@ -40,6 +40,10 @@ export interface PackageCollectionEntry {
   description?: string
   /** Package alias, e.g. 'bookings' */
   packageAlias: string
+  /** Layer name for this collection (from package manifest layer.name, fallback to alias) */
+  layerName: string
+  /** Fields from the package manifest (read-only, not editable by users) */
+  manifestSchema: Record<string, any> | undefined
   /** Extension points defined by the package for this collection */
   extensionPoints: PackageExtensionPoint[]
   /** User-added extension fields stored in the DB */
@@ -49,13 +53,14 @@ export interface PackageCollectionEntry {
 }
 
 interface ModuleAIContext {
-  collections?: Array<{ name: string; description: string }>
+  collections?: Array<{ name: string; description: string; schema?: Record<string, any> }>
 }
 
 interface ModuleEntry {
   alias: string
   description: string
   extensionPoints?: PackageExtensionPoint[]
+  layer?: { name: string }
   ai?: ModuleAIContext
 }
 
@@ -117,6 +122,8 @@ export function useCollectionEditor(projectId: Ref<string>, packages?: Ref<strin
           name: col.name,
           description: col.description,
           packageAlias: alias,
+          layerName: mod.layer?.name ?? alias,
+          manifestSchema: col.schema as Record<string, any> | undefined,
           extensionPoints: (mod.extensionPoints ?? []).filter(ep => ep.collection === col.name),
           extensionFields: extDBCol ? (fieldsByCollection.value.get(extDBCol.id) ?? []) : [],
           extensionCollectionId: extDBCol?.id,
@@ -147,7 +154,7 @@ export function useCollectionEditor(projectId: Ref<string>, packages?: Ref<strin
 
   // --- Collection CRUD ---
 
-  async function createCollection(data: { name: string, description?: string, display?: DisplayConfig }) {
+  async function createCollection(data: { name: string, description?: string, display?: DisplayConfig, publishable?: boolean }) {
     const result = await $fetch<DesignerCollection>(buildApiUrl('/designer-collections'), {
       method: 'POST',
       body: { ...data, projectId: projectId.value }
@@ -156,7 +163,7 @@ export function useCollectionEditor(projectId: Ref<string>, packages?: Ref<strin
     return result
   }
 
-  async function updateCollection(id: string, updates: { name?: string, description?: string, display?: DisplayConfig }) {
+  async function updateCollection(id: string, updates: { name?: string, description?: string, display?: DisplayConfig, publishable?: boolean }) {
     const result = await $fetch<DesignerCollection>(buildApiUrl(`/designer-collections/${id}`), {
       method: 'PATCH',
       body: updates

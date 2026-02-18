@@ -269,6 +269,16 @@ defineExpose({ editor })
               {{ issue.message }}
             </div>
 
+            <!-- Publishable toggle -->
+            <div class="flex items-center gap-2 px-2 py-1.5">
+              <USwitch
+                :model-value="collectionsWithFields.find(c => c.id === item.value)?.publishable ?? false"
+                size="xs"
+                @update:model-value="(val) => editor.updateCollection(item.value as string, { publishable: val })"
+              />
+              <span class="text-xs text-[var(--ui-text-muted)]">{{ t('designer.collections.publishable') }}</span>
+            </div>
+
             <!-- Field list with drag-to-reorder -->
             <DesignerFieldList
               :fields="getFields(item.value as string)"
@@ -343,6 +353,26 @@ defineExpose({ editor })
                 {{ pkg.description }}
               </p>
 
+              <!-- Manifest fields (read-only) -->
+              <template v-if="pkg.manifestSchema && Object.keys(pkg.manifestSchema).length > 0">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-1.5 px-1 pb-0.5">
+                    <UIcon name="i-lucide-lock" class="size-3 text-[var(--ui-text-muted)]" />
+                    <span class="text-xs font-medium text-[var(--ui-text-muted)]">{{ t('designer.packageCollections.packageFields') }}</span>
+                  </div>
+                  <div
+                    v-for="(fieldDef, fieldName) in pkg.manifestSchema"
+                    :key="fieldName"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--ui-bg-elevated)] opacity-70"
+                  >
+                    <UIcon name="i-lucide-lock" class="size-3 shrink-0 text-[var(--ui-text-dimmed)]" />
+                    <span class="text-xs font-mono font-medium text-[var(--ui-text)]">{{ fieldName }}</span>
+                    <UBadge variant="subtle" color="neutral" size="xs" :label="fieldDef.type" />
+                    <span class="text-xs text-[var(--ui-text-dimmed)] ml-auto italic">{{ t('designer.packageCollections.fromPackage') }}</span>
+                  </div>
+                </div>
+              </template>
+
               <!-- Extension points section -->
               <template v-if="pkg.extensionPoints.length > 0">
                 <div class="space-y-2">
@@ -403,7 +433,7 @@ defineExpose({ editor })
 
               <!-- No extension points -->
               <p
-                v-else
+                v-else-if="!pkg.manifestSchema || Object.keys(pkg.manifestSchema).length === 0"
                 class="text-xs text-[var(--ui-text-muted)] italic px-2"
               >
                 {{ t('designer.packageCollections.noExtensionPoints') }}

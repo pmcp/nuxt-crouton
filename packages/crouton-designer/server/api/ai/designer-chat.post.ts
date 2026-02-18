@@ -104,6 +104,7 @@ function getPhase2Tools() {
         name: z.string().describe('Collection name (e.g. "Tasks", "Projects")'),
         description: z.string().optional().describe('Description of what this collection stores'),
         display: displayConfigSchema,
+        publishable: z.boolean().optional().describe('When true, this collection auto-registers as a page type in crouton-pages, allowing items to be published as standalone public pages with their own URL and SEO. Only set when the app uses the pages package.'),
         fields: z.array(z.object({
           name: z.string().describe('Field name in camelCase'),
           type: fieldTypeEnum.describe('Field type'),
@@ -115,12 +116,13 @@ function getPhase2Tools() {
     }),
 
     update_collection: tool({
-      description: 'Rename or update a collection\'s description or display config.',
+      description: 'Rename or update a collection\'s description, display config, or publishable flag.',
       parameters: z.object({
         collectionId: z.string().describe('The collection ID to update'),
         name: z.string().optional().describe('New collection name'),
         description: z.string().optional().describe('New description'),
-        display: displayConfigSchema
+        display: displayConfigSchema,
+        publishable: z.boolean().optional().describe('When true, this collection auto-registers as a page type in crouton-pages, allowing items to be published as standalone public pages with their own URL and SEO. Only set when the app uses the pages package.')
       }),
       execute: async (args) => ({ success: true, action: 'update_collection', ...args })
     }),

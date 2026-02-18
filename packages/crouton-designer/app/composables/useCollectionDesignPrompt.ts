@@ -170,6 +170,7 @@ If you include any of these, they will be silently removed.
 8. Keep responses concise. After tool calls, briefly explain what you did and ask if adjustments are needed.
 9. When proposing initial collections, create 3-6 collections that cover the core domain. Include relationships.
 10. Suggest relevant Crouton packages inline when patterns match (e.g., rich text content → crouton-editor).
+${config.packages?.includes('pages') ? '11. When the app uses crouton-pages: set `publishable: true` on collections whose items should have their own public URLs (e.g., blog posts, products, events). This auto-registers them as page types so editors can link items to pages with SEO and slug.' : ''}
 
 ## Tool Usage
 - Use \`create_collection\` with initial fields to propose complete collections efficiently.

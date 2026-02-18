@@ -163,6 +163,7 @@ export interface DesignerCollection {
   description?: string
   display?: DisplayConfig
   sortOrder?: string
+  publishable?: boolean
   createdAt: Date
   updatedAt: Date
   createdBy: string

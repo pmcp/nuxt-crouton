@@ -15,6 +15,8 @@ interface ScaffoldRequest {
   }
   schemas: Record<string, string>
   seedData?: Record<string, Array<Record<string, any>>>
+  packageCollections?: Array<{ name: string; layerName: string }>
+  publishableCollections?: string[]
 }
 
 interface StepResult {
@@ -139,7 +141,9 @@ export default defineEventHandler(async (event) => {
       appName: body.appName,
       packages: body.config.packages,
       schemas: body.schemas,
-      seedData: body.seedData
+      seedData: body.seedData,
+      packageCollections: body.packageCollections,
+      publishableCollections: body.publishableCollections
     })
     await writeFile(join(appDir, 'crouton.config.js'), configContent, 'utf-8')
     steps.config = { success: true }

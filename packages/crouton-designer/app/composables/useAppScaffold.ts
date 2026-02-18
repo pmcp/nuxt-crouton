@@ -1,4 +1,4 @@
-import type { CollectionWithFields } from './useCollectionEditor'
+import type { CollectionWithFields, PackageCollectionEntry } from './useCollectionEditor'
 import type { ProjectConfig, SeedDataMap } from '../types/schema'
 
 export interface ScaffoldArtifact {
@@ -32,7 +32,8 @@ const CATEGORY_ICONS: Record<ScaffoldArtifact['category'], string> = {
 export function useAppScaffold(
   collections: Ref<CollectionWithFields[]>,
   config: Ref<ProjectConfig>,
-  seedData?: Ref<SeedDataMap>
+  seedData?: Ref<SeedDataMap>,
+  packageCollections?: Ref<PackageCollectionEntry[]>
 ) {
   const { schemaFiles, getAllSchemasAsJson } = useSchemaExport(collections)
 
@@ -80,12 +81,22 @@ export function useAppScaffold(
       { filename: 'server/utils/_cf-stubs/client.ts', category: 'server' }
     )
 
-    // Schema files (one per collection)
+    // Schema files (one per user collection)
     for (const file of schemaFiles.value) {
       items.push({
         filename: `schemas/${file.name}.json`,
         category: 'schema'
       })
+    }
+
+    // Package collection schema files (manifest fields + extension fields)
+    if (packageCollections?.value) {
+      for (const pkg of packageCollections.value) {
+        items.push({
+          filename: `schemas/${pkg.name}.json`,
+          category: 'schema'
+        })
+      }
     }
 
     // Seed data files
@@ -133,11 +144,17 @@ export function useAppScaffold(
     conflictError.value = false
 
     try {
-      // Build schemas map
+      // Build schemas map — user collections + package collections
       const schemas: Record<string, string> = {}
+      // User collection schemas
       const allSchemas = getAllSchemasAsJson()
       for (const [filename, content] of allSchemas) {
-        // filename is "collectionName.json", strip .json for key
+        const name = filename.replace(/\.json$/, '')
+        schemas[name] = content
+      }
+      // Package collection schemas (manifest fields + extension fields merged)
+      const pkgSchemas = getPackageSchemasAsJson(packageCollections?.value ?? [])
+      for (const [filename, content] of pkgSchemas) {
         const name = filename.replace(/\.json$/, '')
         schemas[name] = content
       }
@@ -153,6 +170,17 @@ export function useAppScaffold(
         }
       }
 
+      // Package collection layer info for config builder (name + layerName)
+      const pkgColsForConfig = (packageCollections?.value ?? []).map(pkg => ({
+        name: pkg.name,
+        layerName: pkg.layerName,
+      }))
+
+      // Publishable collection names for config builder
+      const publishableCollections = schemaFiles.value
+        .filter(f => f.publishable)
+        .map(f => f.name)
+
       const response = await $fetch<ScaffoldResult>('/api/scaffold-app', {
         method: 'POST',
         body: {
@@ -162,7 +190,9 @@ export function useAppScaffold(
             packages: config.value.packages
           },
           schemas,
-          seedData: cleanSeedData
+          seedData: cleanSeedData,
+          packageCollections: pkgColsForConfig,
+          publishableCollections: publishableCollections.length ? publishableCollections : undefined
         }
       })
 

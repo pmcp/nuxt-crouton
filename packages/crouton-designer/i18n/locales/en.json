@@ -28,7 +28,8 @@
       "issues": "issues",
       "warning": "warning",
       "warnings": "warnings",
-      "fieldCount": "{count} fields"
+      "fieldCount": "{count} fields",
+      "publishable": "Publishable page (requires crouton-pages)"
     },
     "packageCollections": {
       "title": "Package Collections",
@@ -41,7 +42,9 @@
       "allFieldsAdded": "All allowed custom fields have been added",
       "customFieldCount": "{count} custom fields",
       "noExtensionPoints": "This collection cannot be extended",
-      "noCollections": "Selected packages don't provide any collections."
+      "noCollections": "Selected packages don't provide any collections.",
+      "packageFields": "Package fields (read-only)",
+      "fromPackage": "from package"
     },
     "fields": {
       "noFields": "No fields yet. Add one below.",

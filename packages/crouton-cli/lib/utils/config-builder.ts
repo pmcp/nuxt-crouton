@@ -7,6 +7,10 @@ interface ConfigBuilderOptions {
   schemas?: Record<string, unknown>
   seedData?: Record<string, unknown[]>
   dialect?: string
+  /** Package collections with their target layer names (separate from user collections) */
+  packageCollections?: Array<{ name: string; layerName: string }>
+  /** Collection names that should have publishable: true in the generated config */
+  publishableCollections?: string[]
 }
 
 /**
@@ -19,6 +23,8 @@ export function buildCroutonConfig(options: ConfigBuilderOptions): string {
     schemas = {},
     seedData = {},
     dialect = 'sqlite',
+    packageCollections = [],
+    publishableCollections = [],
   } = options
 
   // Build features object (non-bundled only)
@@ -37,6 +43,8 @@ export function buildCroutonConfig(options: ConfigBuilderOptions): string {
   // Build collections array from schemas
   const collectionNames = Object.keys(schemas)
 
+  const publishableSet = new Set(publishableCollections)
+
   const collectionsStr = collectionNames.map((name) => {
     const opts = [
       `name: '${name}'`,
@@ -48,11 +56,32 @@ export function buildCroutonConfig(options: ConfigBuilderOptions): string {
       opts.push('seed: true')
     }
 
+    // Add publishable flag if collection is publishable
+    if (publishableSet.has(name)) {
+      opts.push('publishable: true')
+    }
+
     return `    { ${opts.join(', ')} }`
   }).join(',\n')
 
-  // Build targets — group all collections into a single layer named after the app
-  const targetsStr = `    { layer: '${appName}', collections: [${collectionNames.map(n => `'${n}'`).join(', ')}] }`
+  // Build targets — package collections go to their own layers; user collections go to the app layer
+  const pkgColNames = new Set(packageCollections.map(p => p.name))
+  const userCollectionNames = collectionNames.filter(n => !pkgColNames.has(n))
+
+  // Group package collections by their layer name
+  const layerMap = new Map<string, string[]>()
+  for (const pkg of packageCollections) {
+    const existing = layerMap.get(pkg.layerName) ?? []
+    layerMap.set(pkg.layerName, [...existing, pkg.name])
+  }
+  // User collections in the app layer (only if there are any)
+  if (userCollectionNames.length > 0) {
+    layerMap.set(appName, userCollectionNames)
+  }
+
+  const targetsStr = [...layerMap.entries()]
+    .map(([layer, cols]) => `    { layer: '${layer}', collections: [${cols.map(n => `'${n}'`).join(', ')}] }`)
+    .join(',\n')
 
   return `export default {
   // Feature flags - which crouton packages to enable
