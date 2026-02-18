@@ -43,6 +43,17 @@
       "creatable": true
     }
   },
+  "quantity": {
+    "type": "number",
+    "meta": {
+      "required": true,
+      "label": "Quantity",
+      "default": 1,
+      "area": "sidebar",
+      "group": "bookingDetails",
+      "help": "Number of units being booked (1 for slot mode, N for inventory mode)"
+    }
+  },
   "status": {
     "type": "string",
     "meta": {
