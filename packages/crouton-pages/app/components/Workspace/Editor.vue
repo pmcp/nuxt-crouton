@@ -652,6 +652,15 @@ const fieldOptions = {
   slug: { transform: 'slug' as const }
 }
 
+// Field groups for collapsible sections in the i18n input
+const fieldGroups = computed(() => ({
+  title: 'Info',
+  slug: 'Info',
+  seoTitle: 'Extra',
+  seoDescription: 'Extra',
+  content: 'Content',
+}))
+
 // Preview drawer state
 const showPreview = ref(false)
 
@@ -1040,7 +1049,7 @@ defineExpose({ state })
       </div>
 
       <!-- Content -->
-      <div class="flex-1 min-h-0 overflow-auto p-4">
+      <div class="flex-1 min-h-0 overflow-hidden p-4">
         <CroutonI18nInput
           v-if="contentReady"
           :key="contentKey"
@@ -1051,6 +1060,8 @@ defineExpose({ state })
           field-type="page"
           :field-components="fieldComponents"
           :field-options="fieldOptions"
+          :field-groups="fieldGroups"
+          :default-open-groups="['Info', 'Content']"
           :collab="collabForI18n"
           class="h-full"
         >

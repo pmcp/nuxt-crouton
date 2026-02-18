@@ -90,6 +90,18 @@ const props = defineProps<{
    * E.g., { slug: { transform: 'slug' } }
    */
   fieldOptions?: Record<string, FieldOptions>
+  /**
+   * Group fields into collapsible sections.
+   * Maps field name → group label.
+   * E.g., { title: 'Info', slug: 'Info', content: 'Content', seoTitle: 'Extra', seoDescription: 'Extra' }
+   * Groups containing block editors expand to fill available height.
+   */
+  fieldGroups?: Record<string, string>
+  /**
+   * Which groups start open. Defaults to all groups open.
+   * Only relevant when fieldGroups is set.
+   */
+  defaultOpenGroups?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -554,6 +566,47 @@ function isBlockEditorField(field: string): boolean {
          component === 'CroutonPagesEditorBlockEditorWithPreview'
 }
 
+// ─── Field Groups ────────────────────────────────────────────────────────────
+
+// Ordered groups derived from fieldGroups prop
+const computedFieldGroups = computed(() => {
+  if (!props.fieldGroups) return null
+  const groups: { name: string; fields: string[] }[] = []
+  const groupMap = new Map<string, string[]>()
+  for (const field of props.fields) {
+    const groupName = props.fieldGroups[field] || 'Other'
+    if (!groupMap.has(groupName)) {
+      const groupFields: string[] = []
+      groupMap.set(groupName, groupFields)
+      groups.push({ name: groupName, fields: groupFields })
+    }
+    groupMap.get(groupName)!.push(field)
+  }
+  return groups
+})
+
+// Open/closed state for each group
+const openGroupsState = ref<Record<string, boolean>>({})
+
+// Initialize group open state on mount and when groups change
+watchEffect(() => {
+  if (!computedFieldGroups.value) return
+  for (const group of computedFieldGroups.value) {
+    if (!(group.name in openGroupsState.value)) {
+      openGroupsState.value[group.name] = props.defaultOpenGroups
+        ? props.defaultOpenGroups.includes(group.name)
+        : true
+    }
+  }
+})
+
+// A group "fills height" if it contains a block editor field
+function groupHasBlockEditor(fields: string[]): boolean {
+  return fields.some(f => isBlockEditorField(f))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Check if ANY other locale has content for a field (to enable translation)
 function hasSourceContent(field: string, targetLocale?: string): boolean {
   const target = targetLocale || editingLocale.value
@@ -677,7 +730,117 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
         />
 
         <!-- Fields for active locale -->
-        <div class="flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto">
+        <!-- GROUPED: Collapsible sections when fieldGroups prop is provided -->
+        <template v-if="computedFieldGroups">
+          <div class="flex-1 flex flex-col min-h-0">
+            <template v-for="group in computedFieldGroups" :key="`narrow-group-${group.name}`">
+              <div v-if="groupHasBlockEditor(group.fields)" class="flex-1 flex flex-col min-h-[200px] mt-3 first:mt-0">
+                <button
+                  class="flex items-center justify-between w-full py-1.5 text-xs font-medium text-muted uppercase tracking-wide hover:text-foreground transition-colors shrink-0"
+                  @click="openGroupsState[group.name] = !openGroupsState[group.name]"
+                >
+                  {{ group.name }}
+                  <UIcon :name="openGroupsState[group.name] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+                </button>
+                <div v-if="openGroupsState[group.name]" class="flex-1 flex flex-col gap-1 min-h-0 pt-2">
+                  <div v-for="field in group.fields" :key="`narrow-g-${field}`" class="flex-1 flex flex-col gap-1 min-h-0">
+                    <div v-if="group.fields.length > 1 || showAiTranslate" class="flex items-center justify-between h-5 shrink-0">
+                      <label v-if="group.fields.length > 1" class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
+                      <AITranslateButton
+                        v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, narrowLocaleTab)"
+                        :loading="isFieldTranslating(field, narrowLocaleTab)"
+                        :tooltip="getTranslateTooltip(field, narrowLocaleTab)"
+                        size="2xs"
+                        icon-only
+                        is-block-editor
+                        @click="confirmBlockTranslation(field, narrowLocaleTab)"
+                      />
+                    </div>
+                    <div v-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditorWithPreview'" class="flex-1 min-h-0">
+                      <CroutonPagesEditorBlockEditorWithPreview
+                        :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
+                        :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
+                        :collab-provider="collab?.connection"
+                        :collab-user="collab?.user"
+                        :editable="!isFieldTranslating(field, narrowLocaleTab)"
+                        placeholder="Type / to insert a block..."
+                        @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
+                      />
+                    </div>
+                    <div v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditor'" class="flex-1 min-h-0 border rounded-md overflow-hidden border-default">
+                      <CroutonPagesEditorBlockEditor
+                        :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
+                        :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
+                        :collab-provider="collab?.connection"
+                        :collab-user="collab?.user"
+                        :editable="!isFieldTranslating(field, narrowLocaleTab)"
+                        placeholder="Type / to insert a block..."
+                        @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="shrink-0 mt-3 first:mt-0">
+                <button
+                  class="flex items-center justify-between w-full py-1.5 text-xs font-medium text-muted uppercase tracking-wide hover:text-foreground transition-colors"
+                  @click="openGroupsState[group.name] = !openGroupsState[group.name]"
+                >
+                  {{ group.name }}
+                  <UIcon :name="openGroupsState[group.name] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+                </button>
+                <div v-if="openGroupsState[group.name]" class="flex flex-col gap-2 pb-2">
+                  <div v-for="field in group.fields" :key="`narrow-g-${field}`" class="flex flex-col gap-1">
+                    <div class="flex items-center justify-between h-5">
+                      <label class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
+                      <AITranslateButton
+                        v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, narrowLocaleTab)"
+                        :source-text="getBestSourceText(field, narrowLocaleTab)"
+                        :source-language="findBestSourceLocale(field, narrowLocaleTab)"
+                        :target-language="narrowLocaleTab"
+                        :field-type="fieldType || field"
+                        :existing-translations="getAllTranslationsForField(field)"
+                        :target-has-content="hasTargetContent(field, narrowLocaleTab)"
+                        :available-translations="getAllTranslationsForField(field)"
+                        size="2xs"
+                        icon-only
+                        @translate="(text) => updateFieldValue(field, text, narrowLocaleTab)"
+                      />
+                    </div>
+                    <div v-if="getFieldComponent(field) === 'CroutonEditorSimple'" class="flex-1 border rounded-md overflow-hidden border-default">
+                      <div class="h-full min-h-[200px]">
+                        <CroutonEditorSimple :model-value="getFieldValue(field, narrowLocaleTab)" @update:model-value="updateFieldValue(field, $event, narrowLocaleTab)" />
+                      </div>
+                    </div>
+                    <UTextarea
+                      v-else-if="getFieldComponent(field) === 'UTextarea'"
+                      :model-value="getFieldValue(field, narrowLocaleTab)"
+                      :placeholder="narrowLocaleTab !== primaryEditingLocale && getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : (defaultValues?.[field] || '')"
+                      :color="error && !getFieldValue(field, narrowLocaleTab) ? 'error' : 'primary'"
+                      :highlight="!!(error && !getFieldValue(field, narrowLocaleTab))"
+                      class="w-full"
+                      size="sm"
+                      @update:model-value="updateFieldValue(field, $event, narrowLocaleTab)"
+                    />
+                    <UInput
+                      v-else
+                      :model-value="getFieldValue(field, narrowLocaleTab)"
+                      :placeholder="narrowLocaleTab !== primaryEditingLocale && getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : (defaultValues?.[field] || '')"
+                      :color="error && !getFieldValue(field, narrowLocaleTab) ? 'error' : 'primary'"
+                      :highlight="!!(error && !getFieldValue(field, narrowLocaleTab))"
+                      class="w-full"
+                      size="sm"
+                      @update:model-value="updateFieldWithTransform(field, $event, narrowLocaleTab)"
+                      @blur="handleFieldBlur(field, narrowLocaleTab)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+        <!-- FLAT: Original ungrouped layout -->
+        <div v-else class="flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto">
           <div
             v-for="field in fields"
             :key="`narrow-${field}`"
@@ -845,7 +1008,121 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
           </div>
 
           <!-- Primary locale fields -->
-          <div class="flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto">
+          <!-- GROUPED: Collapsible sections when fieldGroups prop is provided -->
+          <template v-if="computedFieldGroups">
+            <div class="flex-1 flex flex-col min-h-0">
+              <template v-for="group in computedFieldGroups" :key="`primary-group-${group.name}`">
+                <!-- Block editor group: fills remaining height -->
+                <div v-if="groupHasBlockEditor(group.fields)" class="flex-1 flex flex-col min-h-[200px] mt-3 first:mt-0">
+                  <button
+                    type="button"
+                  class="flex items-center justify-between w-full py-1.5 text-xs font-semibold text-muted/70 uppercase tracking-widest hover:text-muted transition-colors shrink-0 border-b border-default/50"
+                    @click="openGroupsState[group.name] = !openGroupsState[group.name]"
+                  >
+                    {{ group.name }}
+                    <UIcon :name="openGroupsState[group.name] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+                  </button>
+                  <div v-if="openGroupsState[group.name]" class="flex-1 flex flex-col gap-1 min-h-0 pt-2">
+                    <div v-for="field in group.fields" :key="`primary-g-${field}`" class="flex-1 flex flex-col gap-1 min-h-0">
+                      <div v-if="group.fields.length > 1 || showAiTranslate" class="flex items-center justify-between h-5 shrink-0">
+                        <label v-if="group.fields.length > 1" class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
+                        <AITranslateButton
+                          v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, primaryEditingLocale)"
+                          :loading="isFieldTranslating(field, primaryEditingLocale)"
+                          :tooltip="getTranslateTooltip(field, primaryEditingLocale)"
+                          size="2xs"
+                          icon-only
+                          is-block-editor
+                          @click="confirmBlockTranslation(field, primaryEditingLocale)"
+                        />
+                      </div>
+                      <div v-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditorWithPreview'" class="flex-1 min-h-0">
+                        <CroutonPagesEditorBlockEditorWithPreview
+                          :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
+                          :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
+                          :collab-provider="collab?.connection"
+                          :collab-user="collab?.user"
+                          :editable="!isFieldTranslating(field, primaryEditingLocale)"
+                          placeholder="Type / to insert a block..."
+                          @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
+                        />
+                      </div>
+                      <div v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditor'" class="flex-1 min-h-0 border rounded-md overflow-hidden border-default">
+                        <CroutonPagesEditorBlockEditor
+                          :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
+                          :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
+                          :collab-provider="collab?.connection"
+                          :collab-user="collab?.user"
+                          :editable="!isFieldTranslating(field, primaryEditingLocale)"
+                          placeholder="Type / to insert a block..."
+                          @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Regular fields group: collapsible, shrink-0 -->
+                <div v-else class="shrink-0 mt-3 first:mt-0">
+                  <button
+                    type="button"
+                  class="flex items-center justify-between w-full py-1.5 text-xs font-semibold text-muted/70 uppercase tracking-widest hover:text-muted transition-colors border-b border-default/50"
+                    @click="openGroupsState[group.name] = !openGroupsState[group.name]"
+                  >
+                    {{ group.name }}
+                    <UIcon :name="openGroupsState[group.name] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+                  </button>
+                  <div v-if="openGroupsState[group.name]" class="flex flex-col gap-2 pt-2 pb-1">
+                    <div v-for="field in group.fields" :key="`primary-g-${field}`" class="flex flex-col gap-1">
+                      <div class="flex items-center justify-between h-5">
+                        <label class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
+                        <AITranslateButton
+                          v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, primaryEditingLocale)"
+                          :source-text="getBestSourceText(field, primaryEditingLocale)"
+                          :source-language="findBestSourceLocale(field, primaryEditingLocale)"
+                          :target-language="primaryEditingLocale"
+                          :field-type="fieldType || field"
+                          :existing-translations="getAllTranslationsForField(field)"
+                          :target-has-content="hasTargetContent(field, primaryEditingLocale)"
+                          :available-translations="getAllTranslationsForField(field)"
+                          size="2xs"
+                          icon-only
+                          @translate="(text) => updateFieldValue(field, text, primaryEditingLocale)"
+                        />
+                      </div>
+                      <div v-if="getFieldComponent(field) === 'CroutonEditorSimple'" class="flex-1 border rounded-md overflow-hidden border-default">
+                        <div class="h-full min-h-[200px]">
+                          <CroutonEditorSimple :model-value="getFieldValue(field, primaryEditingLocale)" @update:model-value="updateFieldValue(field, $event, primaryEditingLocale)" />
+                        </div>
+                      </div>
+                      <UTextarea
+                        v-else-if="getFieldComponent(field) === 'UTextarea'"
+                        :model-value="getFieldValue(field, primaryEditingLocale)"
+                        :placeholder="defaultValues?.[field] || ''"
+                        :color="error && !getFieldValue(field, primaryEditingLocale) ? 'error' : 'primary'"
+                        :highlight="!!(error && !getFieldValue(field, primaryEditingLocale))"
+                        class="w-full"
+                        size="sm"
+                        @update:model-value="updateFieldValue(field, $event, primaryEditingLocale)"
+                      />
+                      <UInput
+                        v-else
+                        :model-value="getFieldValue(field, primaryEditingLocale)"
+                        :placeholder="defaultValues?.[field] || ''"
+                        :color="error && !getFieldValue(field, primaryEditingLocale) ? 'error' : 'primary'"
+                        :highlight="!!(error && !getFieldValue(field, primaryEditingLocale))"
+                        class="w-full"
+                        size="sm"
+                        @update:model-value="updateFieldWithTransform(field, $event, primaryEditingLocale)"
+                        @blur="handleFieldBlur(field, primaryEditingLocale)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+          <!-- FLAT: Original ungrouped layout -->
+          <div v-else class="flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto">
             <div
               v-for="field in fields"
               :key="`primary-${field}`"
@@ -989,7 +1266,120 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
           </div>
 
           <!-- Secondary locale fields -->
-          <div class="flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto">
+          <!-- GROUPED: Collapsible sections when fieldGroups prop is provided -->
+          <template v-if="computedFieldGroups">
+            <div class="flex-1 flex flex-col min-h-0">
+              <template v-for="group in computedFieldGroups" :key="`secondary-group-${group.name}`">
+                <!-- Block editor group: fills remaining height -->
+                <div v-if="groupHasBlockEditor(group.fields)" class="flex-1 flex flex-col min-h-[200px] mt-3 first:mt-0">
+                  <button
+                    type="button"
+                  class="flex items-center justify-between w-full py-1.5 text-xs font-semibold text-muted/70 uppercase tracking-widest hover:text-muted transition-colors shrink-0 border-b border-default/50"
+                    @click="openGroupsState[group.name] = !openGroupsState[group.name]"
+                  >
+                    {{ group.name }}
+                    <UIcon :name="openGroupsState[group.name] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+                  </button>
+                  <div v-if="openGroupsState[group.name]" class="flex-1 flex flex-col gap-1 min-h-0 pt-2">
+                    <div v-for="field in group.fields" :key="`secondary-g-${field}`" class="flex-1 flex flex-col gap-1 min-h-0">
+                      <div v-if="group.fields.length > 1 || showAiTranslate" class="flex items-center justify-between h-5 shrink-0">
+                        <label v-if="group.fields.length > 1" class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
+                        <AITranslateButton
+                          v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, secondaryEditingLocale)"
+                          :loading="isFieldTranslating(field, secondaryEditingLocale)"
+                          :tooltip="getTranslateTooltip(field, secondaryEditingLocale)"
+                          size="2xs"
+                          icon-only
+                          is-block-editor
+                          @click="confirmBlockTranslation(field, secondaryEditingLocale)"
+                        />
+                      </div>
+                      <div v-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditorWithPreview'" class="flex-1 min-h-0">
+                        <CroutonPagesEditorBlockEditorWithPreview
+                          :key="`${field}-${secondaryEditingLocale}-${blockEditorRefreshKey}`"
+                          :ref="(el: any) => { if (el) secondaryEditorRefs[field] = el }"
+                          :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
+                          :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
+                          :collab-provider="collab?.connection"
+                          :collab-user="collab?.user"
+                          :editable="!isFieldTranslating(field, secondaryEditingLocale)"
+                          :default-tab="isSameLocale ? 'preview' : 'editor'"
+                          placeholder="Type / to insert a block..."
+                          @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
+                        />
+                      </div>
+                      <div v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditor'" class="flex-1 min-h-0 border rounded-md overflow-hidden border-default">
+                        <CroutonPagesEditorBlockEditor
+                          :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
+                          :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
+                          :collab-provider="collab?.connection"
+                          :collab-user="collab?.user"
+                          :editable="!isFieldTranslating(field, secondaryEditingLocale)"
+                          placeholder="Type / to insert a block..."
+                          @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Regular fields group: collapsible, shrink-0 -->
+                <div v-else class="shrink-0 mt-3 first:mt-0">
+                  <button
+                    type="button"
+                  class="flex items-center justify-between w-full py-1.5 text-xs font-semibold text-muted/70 uppercase tracking-widest hover:text-muted transition-colors border-b border-default/50"
+                    @click="openGroupsState[group.name] = !openGroupsState[group.name]"
+                  >
+                    {{ group.name }}
+                    <UIcon :name="openGroupsState[group.name] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+                  </button>
+                  <div v-if="openGroupsState[group.name]" class="flex flex-col gap-2 pt-2 pb-1">
+                    <div v-for="field in group.fields" :key="`secondary-g-${field}`" class="flex flex-col gap-1">
+                      <div class="flex items-center justify-between h-5">
+                        <label class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
+                        <AITranslateButton
+                          v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, secondaryEditingLocale)"
+                          :source-text="getBestSourceText(field, secondaryEditingLocale)"
+                          :source-language="findBestSourceLocale(field, secondaryEditingLocale)"
+                          :target-language="secondaryEditingLocale"
+                          :field-type="fieldType || field"
+                          :existing-translations="getAllTranslationsForField(field)"
+                          :target-has-content="hasTargetContent(field, secondaryEditingLocale)"
+                          :available-translations="getAllTranslationsForField(field)"
+                          size="2xs"
+                          icon-only
+                          @translate="(text) => updateFieldValue(field, text, secondaryEditingLocale)"
+                        />
+                      </div>
+                      <div v-if="getFieldComponent(field) === 'CroutonEditorSimple'" class="flex-1 border rounded-md overflow-hidden border-default">
+                        <div class="h-full min-h-[200px]">
+                          <CroutonEditorSimple :model-value="getFieldValue(field, secondaryEditingLocale)" @update:model-value="updateFieldValue(field, $event, secondaryEditingLocale)" />
+                        </div>
+                      </div>
+                      <UTextarea
+                        v-else-if="getFieldComponent(field) === 'UTextarea'"
+                        :model-value="getFieldValue(field, secondaryEditingLocale)"
+                        :placeholder="getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : ''"
+                        class="w-full"
+                        size="sm"
+                        @update:model-value="updateFieldValue(field, $event, secondaryEditingLocale)"
+                      />
+                      <UInput
+                        v-else
+                        :model-value="getFieldValue(field, secondaryEditingLocale)"
+                        :placeholder="getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : ''"
+                        class="w-full"
+                        size="sm"
+                        @update:model-value="updateFieldWithTransform(field, $event, secondaryEditingLocale)"
+                        @blur="handleFieldBlur(field, secondaryEditingLocale)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+          <!-- FLAT: Original ungrouped layout -->
+          <div v-else class="flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto">
             <div
               v-for="field in fields"
               :key="`secondary-${field}`"
