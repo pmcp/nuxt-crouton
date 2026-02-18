@@ -1,17 +1,74 @@
-import type { DesignerCollection, DesignerField, DisplayConfig } from '../types/schema'
+import type { DesignerCollection, DesignerField, DisplayConfig, PackageExtensionPoint } from '../types/schema'
+
+// --- Extension collection naming convention ---
+// Extension fields for package collections are stored as real DB collections
+// with names matching this prefix pattern: __ext:{packageAlias}:{collectionName}
+
+export const EXT_COL_PREFIX = '__ext:'
+
+export function isExtensionCollectionName(name: string): boolean {
+  return name.startsWith(EXT_COL_PREFIX)
+}
+
+export function parseExtensionCollectionName(name: string): { packageAlias: string; targetCollection: string } | null {
+  if (!name.startsWith(EXT_COL_PREFIX)) return null
+  const rest = name.slice(EXT_COL_PREFIX.length)
+  const colonIdx = rest.indexOf(':')
+  if (colonIdx === -1) return null
+  return {
+    packageAlias: rest.slice(0, colonIdx),
+    targetCollection: rest.slice(colonIdx + 1),
+  }
+}
+
+export function makeExtensionCollectionName(packageAlias: string, targetCollection: string): string {
+  return `${EXT_COL_PREFIX}${packageAlias}:${targetCollection}`
+}
+
+// --- Types ---
 
 export interface CollectionWithFields extends DesignerCollection {
   fields: DesignerField[]
 }
 
-export function useCollectionEditor(projectId: Ref<string>) {
+/** A package-provided collection (virtual — not stored in DB as a user collection) */
+export interface PackageCollectionEntry {
+  /** Synthetic ID, e.g. 'pkg:bookings:booking' */
+  id: string
+  /** Collection name from the package manifest */
+  name: string
+  description?: string
+  /** Package alias, e.g. 'bookings' */
+  packageAlias: string
+  /** Extension points defined by the package for this collection */
+  extensionPoints: PackageExtensionPoint[]
+  /** User-added extension fields stored in the DB */
+  extensionFields: DesignerField[]
+  /** Real DB collection ID that holds extension fields (undefined if none added yet) */
+  extensionCollectionId: string | undefined
+}
+
+interface ModuleAIContext {
+  collections?: Array<{ name: string; description: string }>
+}
+
+interface ModuleEntry {
+  alias: string
+  description: string
+  extensionPoints?: PackageExtensionPoint[]
+  ai?: ModuleAIContext
+}
+
+export function useCollectionEditor(projectId: Ref<string>, packages?: Ref<string[]>) {
   const { buildApiUrl } = useTeamContext()
+  const appConfig = useAppConfig()
+  const allModules = ((appConfig.crouton as any)?.modules ?? []) as ModuleEntry[]
 
   const collections = ref<DesignerCollection[]>([])
   const fields = ref<DesignerField[]>([])
   const loading = ref(false)
 
-  // Fields grouped by collection
+  // Fields grouped by collection ID
   const fieldsByCollection = computed(() => {
     const map = new Map<string, DesignerField[]>()
     for (const field of fields.value) {
@@ -22,13 +79,53 @@ export function useCollectionEditor(projectId: Ref<string>) {
     return map
   })
 
-  // Collections enriched with their fields
+  // Extension collections (DB rows used to store user-added package extension fields)
+  const extensionCollectionsFromDB = computed(() =>
+    collections.value.filter(c => isExtensionCollectionName(c.name))
+  )
+
+  // User collections (normal, editable — excludes extension containers)
+  const userCollections = computed(() =>
+    collections.value.filter(c => !isExtensionCollectionName(c.name))
+  )
+
+  // User collections enriched with their fields (used by AI prompt, seed data, validation)
   const collectionsWithFields = computed<CollectionWithFields[]>(() =>
-    collections.value.map(col => ({
+    userCollections.value.map(col => ({
       ...col,
       fields: fieldsByCollection.value.get(col.id) || []
     }))
   )
+
+  // Package virtual collections — derived from manifest + selected packages
+  const packageCollections = computed<PackageCollectionEntry[]>(() => {
+    const selectedAliases = packages?.value ?? []
+    if (!selectedAliases.length) return []
+
+    const entries: PackageCollectionEntry[] = []
+
+    for (const alias of selectedAliases) {
+      const mod = allModules.find(m => m.alias === alias)
+      if (!mod?.ai?.collections?.length) continue
+
+      for (const col of mod.ai.collections) {
+        const extColName = makeExtensionCollectionName(alias, col.name)
+        const extDBCol = extensionCollectionsFromDB.value.find(c => c.name === extColName)
+
+        entries.push({
+          id: `pkg:${alias}:${col.name}`,
+          name: col.name,
+          description: col.description,
+          packageAlias: alias,
+          extensionPoints: (mod.extensionPoints ?? []).filter(ep => ep.collection === col.name),
+          extensionFields: extDBCol ? (fieldsByCollection.value.get(extDBCol.id) ?? []) : [],
+          extensionCollectionId: extDBCol?.id,
+        })
+      }
+    }
+
+    return entries
+  })
 
   // --- Fetch ---
 
@@ -71,7 +168,6 @@ export function useCollectionEditor(projectId: Ref<string>) {
   async function deleteCollection(id: string) {
     await $fetch(buildApiUrl(`/designer-collections/${id}`), { method: 'DELETE' })
     collections.value = collections.value.filter(c => c.id !== id)
-    // Also remove fields belonging to this collection
     fields.value = fields.value.filter(f => f.collectionId !== id)
   }
 
@@ -105,10 +201,42 @@ export function useCollectionEditor(projectId: Ref<string>) {
       updateField(id, { sortOrder: String(index) })
     )
     await Promise.all(updates)
-    // Reorder local state
     const reordered = fieldIds.map(id => fields.value.find(f => f.id === id)).filter(Boolean) as DesignerField[]
     const otherFields = fields.value.filter(f => f.collectionId !== collectionId)
     fields.value = [...otherFields, ...reordered]
+  }
+
+  // --- Extension field helpers ---
+
+  /** Ensure a DB collection container exists for package extension fields. Returns the collection ID. */
+  async function ensureExtensionCollection(packageAlias: string, targetCollection: string): Promise<string> {
+    const extColName = makeExtensionCollectionName(packageAlias, targetCollection)
+    const existing = collections.value.find(c => c.name === extColName)
+    if (existing) return existing.id
+
+    const result = await $fetch<DesignerCollection>(buildApiUrl('/designer-collections'), {
+      method: 'POST',
+      body: { name: extColName, projectId: projectId.value }
+    })
+    collections.value = [...collections.value, result]
+    return result.id
+  }
+
+  /** Add a field to a package collection's extension point. */
+  async function addExtensionField(
+    packageAlias: string,
+    targetCollection: string,
+    data: { name: string; type: string; meta?: Record<string, any> }
+  ) {
+    const collectionId = await ensureExtensionCollection(packageAlias, targetCollection)
+    const existingCount = fieldsByCollection.value.get(collectionId)?.length ?? 0
+    return addField({
+      collectionId,
+      name: data.name,
+      type: data.type,
+      meta: data.meta,
+      sortOrder: String(existingCount),
+    })
   }
 
   return {
@@ -116,6 +244,7 @@ export function useCollectionEditor(projectId: Ref<string>) {
     fields: readonly(fields),
     fieldsByCollection,
     collectionsWithFields,
+    packageCollections,
     loading: readonly(loading),
     fetchAll,
     createCollection,
@@ -125,6 +254,7 @@ export function useCollectionEditor(projectId: Ref<string>) {
     updateField,
     deleteField,
     reorderFields,
+    addExtensionField,
     // Expose mutable refs for AI tool call integration
     _collections: collections,
     _fields: fields

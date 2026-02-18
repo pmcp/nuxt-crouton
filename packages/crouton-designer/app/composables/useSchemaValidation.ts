@@ -8,7 +8,10 @@ export interface ValidationIssue {
   code: string
 }
 
-export function useSchemaValidation(collections: Ref<CollectionWithFields[]>) {
+export function useSchemaValidation(
+  collections: Ref<CollectionWithFields[]>,
+  additionalCollectionNames?: Ref<string[]>
+) {
   const appConfig = useAppConfig()
   const crouton = appConfig.crouton as any ?? {}
 
@@ -107,7 +110,7 @@ export function useSchemaValidation(collections: Ref<CollectionWithFields[]>) {
         if (field.type === 'reference' && field.refTarget) {
           const targetExists = collections.value.some(
             c => c.name === field.refTarget || c.id === field.refTarget
-          )
+          ) || (additionalCollectionNames?.value ?? []).includes(field.refTarget)
           if (!targetExists) {
             result.push({
               type: 'error',

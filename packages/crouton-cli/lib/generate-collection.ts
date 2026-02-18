@@ -12,9 +12,9 @@ import { toCase, toSnakeCase, mapType } from './utils/helpers.ts'
 import { loadTypeMapping } from './utils/manifest-bridge.ts'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.ts'
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.ts'
-import { syncFrameworkPackages } from './utils/update-nuxt-config.ts'
-import { addNamedSchemaExport } from './utils/update-schema-index.ts'
-import { registerTranslationsUiCollection } from './utils/update-app-config.ts'
+import { syncFrameworkPackages, addToNuxtConfigExtends } from './utils/update-nuxt-config.ts'
+import { addNamedSchemaExport, addSchemaExport } from './utils/update-schema-index.ts'
+import { registerTranslationsUiCollection, addToAppConfig, resolveAppConfigPath } from './utils/update-app-config.ts'
 
 // Import generators
 import { generateFormComponent } from './generators/form-component.ts'
@@ -152,43 +152,17 @@ async function loadFields(p: string, typeMapping: Record<string, any>): Promise<
   })
 }
 
-// Update the main schema index to export the new collection schema
-// NuxtHub v0.10+ expects schema at server/db/schema.ts
-async function updateSchemaIndex(collectionName: string, layer: string, force: boolean = false): Promise<boolean> {
+// Build the schema export names for a collection (layer-prefixed)
+function buildSchemaExportNames(collectionName: string, layer: string) {
   const cases = toCase(collectionName)
-  const schemaIndexPath = path.resolve('server', 'db', 'schema.ts')
-
-  // Generate the export name (layer-prefixed)
   const layerCamelCase = layer
     .split(/[-_]/)
     .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
-  const exportName = `${layerCamelCase}${cases.pascalCasePlural}`
-  const importPath = `../../layers/${layer}/collections/${cases.plural}/server/database/schema`
-
-  try {
-    const result = await addNamedSchemaExport(schemaIndexPath, exportName, importPath, force)
-
-    if (!result.added) {
-      if (result.reason === 'already exported') {
-        console.log(`✓ Schema index already contains ${exportName} export`)
-        return true
-      }
-      if (result.reason?.startsWith('conflicting')) {
-        console.error(`⚠️  Warning: ${result.reason}`)
-        console.error(`   Use --force to override or choose a different name.`)
-        return false
-      }
-    }
-
-    if (result.created) {
-      console.log('✓ Created server/db/schema.ts with auth schema')
-    }
-    console.log(`✓ Updated schema index with ${exportName} export`)
-    return true
-  } catch (error: any) {
-    console.error(`! Could not update schema index:`, error.message)
-    return false
+  return {
+    exportName: `${layerCamelCase}${cases.pascalCasePlural}`,
+    importPath: `../../layers/${layer}/collections/${cases.plural}/server/database/schema`,
+    schemaIndexPath: path.resolve('server', 'db', 'schema.ts')
   }
 }
 
@@ -244,20 +218,15 @@ export type NewTranslationsUi = typeof translationsUi.$inferInsert
     console.log(`✓ Created translations-ui.ts schema file`)
 
     // Update schema index to export from local file
-    let content = await fsp.readFile(schemaIndexPath, 'utf-8')
-
-    const exportLine = `export * from './translations-ui'`
-
-    // Check if already exported
-    if (content.includes('translations-ui')) {
-      console.log(`✓ Schema index already exports translations-ui`)
-      return false
+    const schemaResult = await addSchemaExport(schemaIndexPath, './translations-ui')
+    if (!schemaResult.added) {
+      if (schemaResult.reason === 'already exported') {
+        console.log(`✓ Schema index already exports translations-ui`)
+        return false
+      }
+    } else {
+      console.log(`✓ Added translations-ui to schema index`)
     }
-
-    // Add the export
-    content = content.trim() + '\n' + exportLine + '\n'
-    await fsp.writeFile(schemaIndexPath, content)
-    console.log(`✓ Added translations-ui to schema index`)
 
     // Generate migration for the new table
     console.log(`↻ Generating migration for translations_ui table...`)
@@ -320,9 +289,15 @@ async function createDatabaseTable(config: { name: string; layer: string; fields
 
     // First, update the schema index to include the new collection
     console.log(`↻ Updating schema index...`)
-    const schemaUpdated = await updateSchemaIndex(name, layer, force)
+    const { exportName, importPath: schemaImportPath, schemaIndexPath } = buildSchemaExportNames(name, layer)
+    const schemaResult = await addNamedSchemaExport(schemaIndexPath, exportName, schemaImportPath, force)
+    const schemaUpdated = schemaResult.added || schemaResult.reason === 'already exported'
 
     if (!schemaUpdated) {
+      if (schemaResult.reason?.startsWith('conflicting')) {
+        console.error(`⚠️  Warning: ${schemaResult.reason}`)
+        console.error(`   Use --force to override or choose a different name.`)
+      }
       console.error(`✗ Schema index update failed due to conflicts`)
       console.error(`  Skipping database migration to avoid errors`)
       console.error(`  You can:`)
@@ -330,6 +305,15 @@ async function createDatabaseTable(config: { name: string; layer: string; fields
       console.error(`  2. Manually resolve the conflict in server/db/schema.ts`)
       console.error(`  3. Choose a different collection name`)
       return false
+    }
+
+    if (schemaResult.created) {
+      console.log('✓ Created server/db/schema.ts with auth schema')
+    }
+    if (schemaResult.added) {
+      console.log(`✓ Updated schema index with ${exportName} export`)
+    } else {
+      console.log(`✓ Schema index already contains ${exportName} export`)
     }
 
     // Run db:generate to sync with database (with timeout)
@@ -372,154 +356,6 @@ async function createDatabaseTable(config: { name: string; layer: string; fields
     console.error(`✗ Failed to create database table:`, error.message)
     console.log(`! You may need to create the table manually with: npx nuxt db generate`)
     return false
-  }
-}
-
-// Update collection registry with new collection
-async function updateRegistry({ layer, collection, collectionKey, configExportName, layerPascalCase, pascalCasePlural }: {
-  layer: string
-  collection: string
-  collectionKey: string
-  configExportName: string
-  layerPascalCase: string
-  pascalCasePlural: string
-}): Promise<void> {
-  // Check if app/ directory exists (Nuxt 4 default structure)
-  const appDirExists = await fsp.stat(path.resolve('app')).then(() => true).catch(() => false)
-  const registryPath = appDirExists
-    ? path.resolve('app/app.config.ts')
-    : path.resolve('app.config.ts')
-
-  // Determine the path to the generated composable config
-  const composablePath = path.resolve(
-    'layers',
-    layer,
-    'collections',
-    collection,
-    'app',
-    'composables',
-    `use${layerPascalCase}${pascalCasePlural}.ts`
-  )
-
-  const relativeImport = path.relative(path.dirname(registryPath), composablePath).replace(/\\/g, '/')
-  const importPath = relativeImport.startsWith('.') ? relativeImport : `./${relativeImport}`
-  const importPathWithoutExtension = importPath.replace(/(\.ts|\.mts|\.cts|\.js|\.mjs|\.cjs)$/, '')
-  const importStatement = `import { ${configExportName} } from '${importPathWithoutExtension}'`
-
-  try {
-    let content
-    let fileExists = false
-
-    // Try to read existing file
-    try {
-      content = await fsp.readFile(registryPath, 'utf8')
-      fileExists = true
-    } catch {
-      // File doesn't exist, create it with initial content
-      console.log(`↻ Creating app.config.ts with crouton collections`)
-      content = `${importStatement}\n\nexport default defineAppConfig({\n  croutonCollections: {\n    ${collectionKey}: ${configExportName},\n  }\n})\n`
-      await fsp.writeFile(registryPath, content)
-      console.log(`✓ Created app.config.ts with "${collectionKey}" entry`)
-      return
-    }
-
-    // Dedup: skip entirely if this collection is already registered
-    if (content.includes(`${collectionKey}:`)) {
-      console.log(`✓ Collection "${collectionKey}" already in registry`)
-      return
-    }
-
-    // Ensure import is present (check export name to handle path variations)
-    if (!content.includes(configExportName)) {
-      const importBlockMatch = content.match(/^(?:import[^\n]*\n)*/)
-      if (importBlockMatch && importBlockMatch[0]) {
-        const existingImports = importBlockMatch[0]
-        content = content.replace(existingImports, `${existingImports}${importStatement}\n`)
-      } else {
-        content = `${importStatement}\n\n${content}`
-      }
-    }
-
-    // Insert new entry into croutonCollections
-    const entryLine = `    ${collectionKey}: ${configExportName},`
-    const collectionsBlockRegex = /croutonCollections:\s*\{\s*\n/
-    const hasCroutonCollections = /croutonCollections\s*:/.test(content)
-
-    if (!hasCroutonCollections) {
-      // No croutonCollections block yet, add one
-      content = content.replace(
-        'defineAppConfig({',
-        `defineAppConfig({\n  croutonCollections: {\n${entryLine}\n  },`
-      )
-    } else if (collectionsBlockRegex.test(content)) {
-      // Standard format, insert into existing block
-      content = content.replace(collectionsBlockRegex, match => `${match}${entryLine}\n`)
-    } else {
-      // croutonCollections exists but in non-standard format, insert after opening brace
-      content = content.replace(/croutonCollections:\s*\{/, match => `${match}\n${entryLine}`)
-    }
-
-    // Clean up placeholder comments if present
-    content = content.replace(/\s*\/\/\s*Collections will be added here by the generator\s*/g, '')
-
-    await fsp.writeFile(registryPath, content)
-    console.log(`✓ ${fileExists ? 'Updated' : 'Created'} app.config.ts with "${collectionKey}" entry`)
-  } catch (error: any) {
-    console.error('Failed to update registry:', error)
-    // Don't fail the entire generation if registry update fails
-  }
-}
-
-// Update root nuxt.config.ts to extend the layer
-async function updateRootNuxtConfig(layer: string): Promise<void> {
-  const rootConfigPath = path.resolve('nuxt.config.ts')
-
-  try {
-    let config = await fsp.readFile(rootConfigPath, 'utf-8')
-
-    // Find the extends array
-    const extendsMatch = config.match(/extends:\s*\[([\s\S]*?)\]/)
-    if (extendsMatch) {
-      const currentExtends = extendsMatch[1]
-      const layerPath = `'./layers/${layer}'`
-
-      // Check if layer is already in extends
-      if (!currentExtends.includes(layerPath)) {
-        // Parse existing entries
-        const lines = currentExtends.split('\n')
-          .map(line => line.trim().replace(/,?\s*$/, '')) // Remove trailing commas first
-          .filter(line => line && line !== ',' && !line.startsWith('//')) // Filter empty lines, standalone commas, and comments
-
-        // Deduplicate entries (normalize quotes and check for duplicates)
-        const normalizedLines = [...new Set(lines.map(l => l.replace(/['"]/g, '\'')))]
-
-        // Only add if not already present (normalized check)
-        if (!normalizedLines.includes(layerPath)) {
-          normalizedLines.push(layerPath)
-        }
-
-        // Add proper indentation and commas
-        const formattedLines = normalizedLines.map((line, index) => {
-          const trimmedLine = line.trim()
-          const indentedLine = `    ${trimmedLine}`
-          return index < normalizedLines.length - 1 ? indentedLine + ',' : indentedLine
-        })
-
-        const updatedExtends = formattedLines.join('\n')
-        config = config.replace(extendsMatch[0], `extends: [\n${updatedExtends}\n  ]`)
-
-        await fsp.writeFile(rootConfigPath, config)
-        console.log(`✓ Updated root nuxt.config.ts to extend layer '${layer}'`)
-      } else {
-        console.log(`✓ Root nuxt.config.ts already extends layer '${layer}'`)
-      }
-    } else {
-      console.error(`! Could not find extends array in root nuxt.config.ts`)
-      console.log(`  Please manually add './layers/${layer}' to the extends array`)
-    }
-  } catch (error: any) {
-    console.error(`! Could not update root nuxt.config.ts:`, error.message)
-    console.log(`  Please manually add './layers/${layer}' to the extends array`)
   }
 }
 
@@ -1274,7 +1110,16 @@ ${translationsFieldSchema}
   }
 
   // Update root nuxt.config.ts to extend the layer
-  await updateRootNuxtConfig(layer)
+  const rootConfigPath = path.resolve('nuxt.config.ts')
+  const nuxtResult = await addToNuxtConfigExtends(rootConfigPath, `./layers/${layer}`)
+  if (nuxtResult.added) {
+    console.log(`✓ Updated root nuxt.config.ts to extend layer '${layer}'`)
+  } else if (nuxtResult.reason === 'already in config') {
+    console.log(`✓ Root nuxt.config.ts already extends layer '${layer}'`)
+  } else {
+    console.error(`! Could not update root nuxt.config.ts: ${nuxtResult.reason}`)
+    console.log(`  Please manually add './layers/${layer}' to the extends array`)
+  }
 
   // Create database table if requested
   if (!noDb) {
@@ -1288,14 +1133,21 @@ ${translationsFieldSchema}
   // Update collection registry
   const collectionKey = `${layerCamelCase}${cases.pascalCasePlural}`
   const configExportName = `${layerCamelCase}${cases.pascalCasePlural}Config`
-  await updateRegistry({
-    layer,
-    collection: cases.plural,
-    collectionKey,
-    configExportName,
-    layerPascalCase,
-    pascalCasePlural: cases.pascalCasePlural
-  })
+  const registryPath = await resolveAppConfigPath()
+  const composablePath = path.resolve('layers', layer, 'collections', cases.plural, 'app', 'composables', `use${layerPascalCase}${cases.pascalCasePlural}.ts`)
+  const rel = path.relative(path.dirname(registryPath), composablePath).replace(/\\/g, '/')
+  const importSource = (rel.startsWith('.') ? rel : `./${rel}`).replace(/(\.ts|\.mts|\.cts|\.js|\.mjs|\.cjs)$/, '')
+  const registryResult = await addToAppConfig(registryPath, collectionKey, configExportName, importSource)
+  if (registryResult.created) {
+    console.log(`↻ Creating app.config.ts with crouton collections`)
+    console.log(`✓ Created app.config.ts with "${collectionKey}" entry`)
+  } else if (registryResult.added) {
+    console.log(`✓ Updated app.config.ts with "${collectionKey}" entry`)
+  } else if (registryResult.reason === 'already registered') {
+    console.log(`✓ Collection "${collectionKey}" already in registry`)
+  } else {
+    console.error(`Failed to update registry: ${registryResult.reason}`)
+  }
 
   console.log(`\n✓ Successfully generated collection '${cases.plural}' in layer '${layer}'`)
 }
@@ -1580,7 +1432,6 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
 
         // Track all collections for batch db:generate
         const allCollections = []
-        let hasAnyTranslations = false
 
         // Process each target
         for (const target of config.targets) {
@@ -1636,12 +1487,6 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
             })
 
             allCollections.push({ name: collectionName, layer: target.layer, fields })
-
-            // Check if this collection has translations (AFTER writeScaffold populates config.translations)
-            const hasTranslations = config?.translations?.collections?.[collectionName]?.length > 0
-            if (hasTranslations) {
-              hasAnyTranslations = true
-            }
           }
         }
 
@@ -1654,9 +1499,10 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
 
           // Update schema index for each collection
           for (const col of allCollections) {
-            const schemaUpdated = await updateSchemaIndex(col.name, col.layer, config.flags?.force || false)
-            if (!schemaUpdated) {
-              console.error(`  ✗ Failed to update schema index for ${col.name}`)
+            const { exportName: colExportName, importPath: colImportPath, schemaIndexPath: colSchemaIndexPath } = buildSchemaExportNames(col.name, col.layer)
+            const colSchemaResult = await addNamedSchemaExport(colSchemaIndexPath, colExportName, colImportPath, config.flags?.force || false)
+            if (!colSchemaResult.added && colSchemaResult.reason !== 'already exported') {
+              console.error(`  ✗ Failed to update schema index for ${col.name}: ${colSchemaResult.reason}`)
             }
           }
 
@@ -1739,7 +1585,6 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
 
         // Track all collections for batch db:generate
         const allCollections = []
-        let hasAnyTranslations = false
 
         // Process each target
         for (const target of config.targets) {
@@ -1765,12 +1610,6 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
             })
 
             allCollections.push({ name: collection, layer: target.layer, fields })
-
-            // Check if this collection has translations (AFTER writeScaffold populates config.translations)
-            const hasTranslations = config?.translations?.collections?.[collection]?.length > 0
-            if (hasTranslations) {
-              hasAnyTranslations = true
-            }
           }
         }
 
@@ -1783,9 +1622,10 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
 
           // Update schema index for each collection
           for (const col of allCollections) {
-            const schemaUpdated = await updateSchemaIndex(col.name, col.layer, config.flags?.force || false)
-            if (!schemaUpdated) {
-              console.error(`  ✗ Failed to update schema index for ${col.name}`)
+            const { exportName: colExportName, importPath: colImportPath, schemaIndexPath: colSchemaIndexPath } = buildSchemaExportNames(col.name, col.layer)
+            const colSchemaResult = await addNamedSchemaExport(colSchemaIndexPath, colExportName, colImportPath, config.flags?.force || false)
+            if (!colSchemaResult.added && colSchemaResult.reason !== 'already exported') {
+              console.error(`  ✗ Failed to update schema index for ${col.name}: ${colSchemaResult.reason}`)
             }
           }
 

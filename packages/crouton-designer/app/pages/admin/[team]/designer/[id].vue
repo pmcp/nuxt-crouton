@@ -696,6 +696,7 @@ async function continueToReview() {
                 <DesignerCollectionEditor
                   ref="collectionEditorRef"
                   :project-id="projectId"
+                  :project-config="projectConfig"
                 />
 
                 <!-- Transition button -->

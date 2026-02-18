@@ -7,6 +7,7 @@ const props = defineProps<{
   fields: DesignerField[]
   collections: CollectionWithFields[]
   collectionId: string
+  hideAddButton?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -67,7 +68,7 @@ useSortable(fieldListRef, sortableFields, {
     </div>
 
     <!-- Add field button -->
-    <div class="pt-2">
+    <div v-if="!hideAddButton" class="pt-2">
       <UButton
         :label="t('designer.fields.addField')"
         icon="i-lucide-plus"

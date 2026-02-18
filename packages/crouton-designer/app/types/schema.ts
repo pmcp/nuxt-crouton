@@ -1,3 +1,9 @@
+export interface PackageExtensionPoint {
+  collection: string
+  allowedFields: string[]
+  description: string
+}
+
 export type FieldType =
   | 'string'
   | 'text'

@@ -1,17 +1,30 @@
 <script setup lang="ts">
 import type { AccordionItem } from '@nuxt/ui'
-import type { DesignerField } from '../types/schema'
+import type { DesignerField, ProjectConfig } from '../types/schema'
+import type { PackageCollectionEntry } from '../composables/useCollectionEditor'
 
 const props = defineProps<{
   projectId: string
+  projectConfig?: ProjectConfig
 }>()
 
-const editor = useCollectionEditor(toRef(props, 'projectId'))
-const { collectionsWithFields, loading } = editor
+const packages = computed(() => props.projectConfig?.packages ?? [])
+const editor = useCollectionEditor(toRef(props, 'projectId'), packages)
+const { collectionsWithFields, packageCollections, loading } = editor
 const { t } = useT()
 
-// Validation
-const { issues, errors, warnings, getCollectionIssues, getFieldIssues } = useSchemaValidation(collectionsWithFields)
+// Package collection names for reference validation (references to package collections are valid)
+const packageCollectionNames = computed(() => packageCollections.value.map(p => p.name))
+
+// Resolve a human-readable package label (falls back to alias if no i18n key)
+function getPackageLabel(alias: string): string {
+  const key = `designer.packageLabels.${alias}`
+  // Check if key exists before translating to avoid returning the key as the value
+  try { const v = t(key); return v !== key ? v : alias } catch { return alias }
+}
+
+// Validation (user collections only, but knows about package collection names for ref checks)
+const { issues, errors, warnings, getCollectionIssues, getFieldIssues } = useSchemaValidation(collectionsWithFields, packageCollectionNames)
 
 // Provide editor to child components
 provide('collectionEditor', editor)
@@ -19,7 +32,8 @@ provide('collectionEditor', editor)
 // Initialize on mount
 onMounted(() => editor.fetchAll())
 
-// Accordion items derived from collections
+// --- User collection accordion ---
+
 const accordionItems = computed<AccordionItem[]>(() =>
   collectionsWithFields.value.map(col => {
     const colIssues = getCollectionIssues(col.id)
@@ -33,10 +47,22 @@ const accordionItems = computed<AccordionItem[]>(() =>
   })
 )
 
-// Track expanded accordion items
 const expandedItems = ref<string[]>([])
 
-// Inline editing for collection name
+// --- Package collection accordion ---
+
+const expandedPackageItems = ref<string[]>([])
+
+const packageAccordionItems = computed<AccordionItem[]>(() =>
+  packageCollections.value.map(pkg => ({
+    label: pkg.name,
+    value: pkg.id,
+    icon: 'i-lucide-package',
+  }))
+)
+
+// --- Inline editing for collection name ---
+
 const editingCollectionId = ref<string | null>(null)
 const editCollectionName = ref('')
 
@@ -63,13 +89,13 @@ function getFields(collectionId: string): DesignerField[] {
   return editor.fieldsByCollection.value.get(collectionId) || []
 }
 
-// Add new collection
+// --- User collection actions ---
+
 async function handleAddCollection() {
   const result = await editor.createCollection({ name: 'NewCollection' })
   expandedItems.value = [...expandedItems.value, result.id]
 }
 
-// Add field to a collection
 async function handleAddField(collectionId: string) {
   await editor.addField({
     collectionId,
@@ -79,24 +105,50 @@ async function handleAddField(collectionId: string) {
   })
 }
 
-// Delete a collection
 async function handleDeleteCollection(collectionId: string) {
   await editor.deleteCollection(collectionId)
 }
 
-// Delete a field
 async function handleDeleteField(fieldId: string) {
   await editor.deleteField(fieldId)
 }
 
-// Update field
 async function handleUpdateField(fieldId: string, updates: { name?: string, type?: string, meta?: Record<string, any>, refTarget?: string }) {
   await editor.updateField(fieldId, updates)
 }
 
-// Reorder fields
 async function handleReorderFields(collectionId: string, fieldIds: string[]) {
   await editor.reorderFields(collectionId, fieldIds)
+}
+
+// --- Extension field actions ---
+
+function getAvailableExtensionFieldNames(pkg: PackageCollectionEntry): string[] {
+  if (!pkg.extensionPoints.length) return []
+  const usedNames = new Set(pkg.extensionFields.map(f => f.name))
+  // Collect all allowed names across all extension points for this collection
+  const allowed = pkg.extensionPoints.flatMap(ep => ep.allowedFields)
+  return [...new Set(allowed)].filter(name => !usedNames.has(name))
+}
+
+async function handleAddExtensionField(pkg: PackageCollectionEntry, fieldName: string) {
+  await editor.addExtensionField(pkg.packageAlias, pkg.name, {
+    name: fieldName,
+    type: 'string',
+  })
+}
+
+async function handleDeleteExtensionField(fieldId: string) {
+  await editor.deleteField(fieldId)
+}
+
+async function handleUpdateExtensionField(fieldId: string, updates: { name?: string, type?: string, meta?: Record<string, any>, refTarget?: string }) {
+  await editor.updateField(fieldId, updates)
+}
+
+async function handleReorderExtensionFields(pkg: PackageCollectionEntry, fieldIds: string[]) {
+  if (!pkg.extensionCollectionId) return
+  await editor.reorderFields(pkg.extensionCollectionId, fieldIds)
 }
 
 // Expose editor for parent to use (AI tool wiring)
@@ -141,91 +193,225 @@ defineExpose({ editor })
       <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-[var(--ui-text-muted)]" />
     </div>
 
-    <!-- Empty state -->
-    <div v-else-if="collectionsWithFields.length === 0" class="text-center py-12 text-[var(--ui-text-muted)]">
-      <UIcon name="i-lucide-database" class="size-12 mx-auto mb-3 opacity-50" />
-      <p>{{ t('designer.collections.noCollections') }}</p>
-      <p class="text-sm mt-1">{{ t('designer.collections.noCollectionsHint') }}</p>
-    </div>
+    <template v-else>
+      <!-- Empty state (no user collections and no package collections) -->
+      <div
+        v-if="collectionsWithFields.length === 0 && packageCollections.length === 0"
+        class="text-center py-12 text-[var(--ui-text-muted)]"
+      >
+        <UIcon name="i-lucide-database" class="size-12 mx-auto mb-3 opacity-50" />
+        <p>{{ t('designer.collections.noCollections') }}</p>
+        <p class="text-sm mt-1">{{ t('designer.collections.noCollectionsHint') }}</p>
+      </div>
 
-    <!-- Accordion -->
-    <UAccordion
-      v-else
-      v-model="expandedItems"
-      type="multiple"
-      :items="accordionItems"
-    >
-      <template #trailing="{ item }">
-        <div class="flex items-center gap-2">
-          <!-- Collection-level validation indicator -->
-          <UTooltip
-            v-if="getCollectionIssues(item.value as string).some(i => i.type === 'error')"
-            :text="getCollectionIssues(item.value as string).filter(i => i.type === 'error').map(i => i.message).join(', ')"
-          >
-            <UIcon name="i-lucide-alert-circle" class="size-4 text-[var(--ui-color-error-500)]" />
-          </UTooltip>
+      <!-- User collections accordion -->
+      <UAccordion
+        v-if="collectionsWithFields.length > 0"
+        v-model="expandedItems"
+        type="multiple"
+        :items="accordionItems"
+      >
+        <template #trailing="{ item }">
+          <div class="flex items-center gap-2">
+            <UTooltip
+              v-if="getCollectionIssues(item.value as string).some(i => i.type === 'error')"
+              :text="getCollectionIssues(item.value as string).filter(i => i.type === 'error').map(i => i.message).join(', ')"
+            >
+              <UIcon name="i-lucide-alert-circle" class="size-4 text-[var(--ui-color-error-500)]" />
+            </UTooltip>
 
-          <UBadge
-            variant="subtle"
-            color="neutral"
-            size="xs"
-            :label="t('designer.collections.fieldCount', { params: { count: getFieldCount(item.value as string) } })"
-          />
-          <UButton
-            icon="i-lucide-pencil"
-            variant="ghost"
-            color="neutral"
-            size="xs"
-            @click.stop="startEditCollectionName(item.value as string)"
-          />
-          <UButton
-            icon="i-lucide-trash-2"
-            variant="ghost"
-            color="error"
-            size="xs"
-            @click.stop="handleDeleteCollection(item.value as string)"
-          />
-        </div>
-      </template>
-
-      <template #body="{ item }">
-        <div class="space-y-1">
-          <!-- Inline collection name editor -->
-          <div v-if="editingCollectionId === item.value" class="flex items-center gap-2 px-2 py-1.5 mb-2">
-            <UInput
-              v-model="editCollectionName"
+            <UBadge
+              variant="subtle"
+              color="neutral"
               size="xs"
-              class="flex-1 font-semibold"
-              autofocus
-              @keydown.enter="saveCollectionName(item.value as string)"
-              @keydown.escape="editingCollectionId = null"
-              @blur="saveCollectionName(item.value as string)"
+              :label="t('designer.collections.fieldCount', { params: { count: getFieldCount(item.value as string) } })"
+            />
+            <UButton
+              icon="i-lucide-pencil"
+              variant="ghost"
+              color="neutral"
+              size="xs"
+              @click.stop="startEditCollectionName(item.value as string)"
+            />
+            <UButton
+              icon="i-lucide-trash-2"
+              variant="ghost"
+              color="error"
+              size="xs"
+              @click.stop="handleDeleteCollection(item.value as string)"
             />
           </div>
+        </template>
 
-          <!-- Collection-level validation issues -->
-          <div
-            v-for="issue in getCollectionIssues(item.value as string).filter(i => !i.fieldId)"
-            :key="issue.code"
-            class="flex items-center gap-2 text-xs px-2 py-1"
-            :class="issue.type === 'error' ? 'text-[var(--ui-color-error-500)]' : 'text-[var(--ui-color-warning-500)]'"
-          >
-            <UIcon :name="issue.type === 'error' ? 'i-lucide-alert-circle' : 'i-lucide-alert-triangle'" class="size-3 shrink-0" />
-            {{ issue.message }}
+        <template #body="{ item }">
+          <div class="space-y-1">
+            <!-- Inline collection name editor -->
+            <div v-if="editingCollectionId === item.value" class="flex items-center gap-2 px-2 py-1.5 mb-2">
+              <UInput
+                v-model="editCollectionName"
+                size="xs"
+                class="flex-1 font-semibold"
+                autofocus
+                @keydown.enter="saveCollectionName(item.value as string)"
+                @keydown.escape="editingCollectionId = null"
+                @blur="saveCollectionName(item.value as string)"
+              />
+            </div>
+
+            <!-- Collection-level validation issues -->
+            <div
+              v-for="issue in getCollectionIssues(item.value as string).filter(i => !i.fieldId)"
+              :key="issue.code"
+              class="flex items-center gap-2 text-xs px-2 py-1"
+              :class="issue.type === 'error' ? 'text-[var(--ui-color-error-500)]' : 'text-[var(--ui-color-warning-500)]'"
+            >
+              <UIcon :name="issue.type === 'error' ? 'i-lucide-alert-circle' : 'i-lucide-alert-triangle'" class="size-3 shrink-0" />
+              {{ issue.message }}
+            </div>
+
+            <!-- Field list with drag-to-reorder -->
+            <DesignerFieldList
+              :fields="getFields(item.value as string)"
+              :collections="collectionsWithFields"
+              :collection-id="item.value as string"
+              @update-field="handleUpdateField"
+              @delete-field="handleDeleteField"
+              @add-field="handleAddField(item.value as string)"
+              @reorder="(fieldIds) => handleReorderFields(item.value as string, fieldIds)"
+            />
           </div>
+        </template>
+      </UAccordion>
 
-          <!-- Field list with drag-to-reorder -->
-          <DesignerFieldList
-            :fields="getFields(item.value as string)"
-            :collections="collectionsWithFields"
-            :collection-id="item.value as string"
-            @update-field="handleUpdateField"
-            @delete-field="handleDeleteField"
-            @add-field="handleAddField(item.value as string)"
-            @reorder="(fieldIds) => handleReorderFields(item.value as string, fieldIds)"
-          />
+      <!-- Package collections section -->
+      <template v-if="packageCollections.length > 0">
+        <USeparator
+          v-if="collectionsWithFields.length > 0"
+          class="my-2"
+        />
+
+        <div class="flex items-center gap-2 px-1">
+          <UIcon name="i-lucide-package" class="size-4 text-[var(--ui-text-muted)] shrink-0" />
+          <span class="text-sm font-medium text-[var(--ui-text-muted)]">{{ t('designer.packageCollections.title') }}</span>
         </div>
+
+        <UAccordion
+          v-model="expandedPackageItems"
+          type="multiple"
+          :items="packageAccordionItems"
+        >
+          <template #trailing="{ item }">
+            <div
+              v-for="pkg in packageCollections.filter(p => p.id === item.value)"
+              :key="pkg.id"
+              class="flex items-center gap-2"
+            >
+              <!-- Package source badge -->
+              <UBadge
+                variant="subtle"
+                color="primary"
+                size="xs"
+                :label="getPackageLabel(pkg.packageAlias)"
+              />
+
+              <!-- Custom field count (if any) -->
+              <UBadge
+                v-if="pkg.extensionFields.length"
+                variant="subtle"
+                color="neutral"
+                size="xs"
+                :label="`+${pkg.extensionFields.length}`"
+              />
+
+              <!-- Lock icon -->
+              <UTooltip
+                :text="t('designer.packageCollections.lockHint', { params: { package: getPackageLabel(pkg.packageAlias) } })"
+              >
+                <UIcon name="i-lucide-lock" class="size-3.5 text-[var(--ui-text-muted)]" />
+              </UTooltip>
+            </div>
+          </template>
+
+          <template #body="{ item }">
+            <div
+              v-for="pkg in packageCollections.filter(p => p.id === item.value)"
+              :key="pkg.id"
+              class="space-y-3"
+            >
+              <!-- Package collection description -->
+              <p v-if="pkg.description" class="text-xs text-[var(--ui-text-muted)] px-2">
+                {{ pkg.description }}
+              </p>
+
+              <!-- Extension points section -->
+              <template v-if="pkg.extensionPoints.length > 0">
+                <div class="space-y-2">
+                  <!-- Section header -->
+                  <div class="flex items-center justify-between px-1">
+                    <div class="flex items-center gap-1.5">
+                      <UIcon name="i-lucide-plus-circle" class="size-3.5 text-[var(--ui-text-muted)]" />
+                      <span class="text-xs font-medium text-[var(--ui-text-muted)]">{{ t('designer.packageCollections.customFields') }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Extension hint -->
+                  <p class="text-xs text-[var(--ui-text-muted)] px-2">
+                    {{ pkg.extensionPoints[0]?.description }}
+                  </p>
+
+                  <!-- Existing extension fields -->
+                  <DesignerFieldList
+                    v-if="pkg.extensionFields.length > 0"
+                    :fields="pkg.extensionFields"
+                    :collections="collectionsWithFields"
+                    :collection-id="pkg.extensionCollectionId ?? ''"
+                    :hide-add-button="true"
+                    @update-field="handleUpdateExtensionField"
+                    @delete-field="handleDeleteExtensionField"
+                    @add-field="() => {}"
+                    @reorder="(fieldIds) => handleReorderExtensionFields(pkg, fieldIds)"
+                  />
+
+                  <!-- Add custom field chips -->
+                  <div class="px-2">
+                    <template v-if="getAvailableExtensionFieldNames(pkg).length > 0">
+                      <p class="text-xs text-[var(--ui-text-muted)] mb-1.5">
+                        {{ t('designer.packageCollections.allowedFieldsHint') }}
+                      </p>
+                      <div class="flex flex-wrap gap-1.5">
+                        <UButton
+                          v-for="fieldName in getAvailableExtensionFieldNames(pkg)"
+                          :key="fieldName"
+                          :label="fieldName"
+                          icon="i-lucide-plus"
+                          variant="outline"
+                          color="neutral"
+                          size="xs"
+                          @click="handleAddExtensionField(pkg, fieldName)"
+                        />
+                      </div>
+                    </template>
+                    <p
+                      v-else-if="pkg.extensionFields.length > 0"
+                      class="text-xs text-[var(--ui-text-muted)] italic"
+                    >
+                      {{ t('designer.packageCollections.allFieldsAdded') }}
+                    </p>
+                  </div>
+                </div>
+              </template>
+
+              <!-- No extension points -->
+              <p
+                v-else
+                class="text-xs text-[var(--ui-text-muted)] italic px-2"
+              >
+                {{ t('designer.packageCollections.noExtensionPoints') }}
+              </p>
+            </div>
+          </template>
+        </UAccordion>
       </template>
-    </UAccordion>
+    </template>
   </div>
 </template>
