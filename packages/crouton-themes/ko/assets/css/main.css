@@ -62,10 +62,20 @@
 }
 
 /* ============================================
+   DATA-THEME AMBIENT STYLES
+   Applied when [data-theme="ko"] is set on <html>.
+   Activated automatically by the runtime theme switcher.
+   ============================================ */
+
+[data-theme="ko"] {
+  background-color: var(--ko-surface-light);
+  font-family: 'ko-tech', sans-serif;
+}
+
+/* ============================================
    BASE STYLES
    Note: Body/background styling should be handled by the app,
-   not the theme. Use utility classes like .ko-surface or
-   bg-[var(--ko-surface-light)] in your app's layout.
+   or use [data-theme="ko"] above for automatic activation.
    ============================================ */
 
 /* ============================================

@@ -509,7 +509,7 @@ export type ThemeNeutralColor = 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone'
 export type ThemeRadius = 0 | 0.125 | 0.25 | 0.375 | 0.5
 
 /** Named theme presets */
-export type ThemePreset = 'custom' | 'blackandwhite'
+export type ThemePreset = 'custom' | 'blackandwhite' | 'ko'
 
 /**
  * Theme settings for team visual customization

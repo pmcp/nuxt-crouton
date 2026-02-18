@@ -40,7 +40,7 @@ export type ThemeRadius = 0 | 0.125 | 0.25 | 0.375 | 0.5
 /**
  * Named theme presets
  */
-export type ThemePreset = 'custom' | 'blackandwhite'
+export type ThemePreset = 'custom' | 'blackandwhite' | 'ko'
 
 /**
  * Team theme settings
@@ -100,11 +100,14 @@ export const DEFAULT_THEME: Required<TeamThemeSettings> = {
 /**
  * Nuxt UI v4 structural defaults.
  * Applied when switching to 'custom' to undo any preset overrides.
+ * Must explicitly cover every key that any preset touches.
  */
 const NUXT_UI_STRUCTURAL_DEFAULTS = {
   theme: { defaultVariants: { size: 'md' } },
+  button: { defaultVariants: { variant: 'solid' } },
   input: { defaultVariants: { variant: 'outline' } },
   select: { defaultVariants: { variant: 'outline' } },
+  card: { defaultVariants: { variant: 'outline' } },
   alert: { defaultVariants: { variant: 'soft' } },
   textarea: { defaultVariants: { variant: 'outline' } }
 }
@@ -130,10 +133,67 @@ export const THEME_PRESETS: Record<ThemePreset, ThemePresetConfig> = {
     ui: {
       colors: { primary: 'neutral', neutral: 'neutral' },
       theme: { defaultVariants: { size: 'sm' } },
+      button: { defaultVariants: { variant: 'solid' } },
       input: { defaultVariants: { variant: 'subtle' } },
       select: { defaultVariants: { variant: 'subtle' } },
+      card: { defaultVariants: { variant: 'outline' } },
       alert: { defaultVariants: { variant: 'subtle' } },
       textarea: { defaultVariants: { variant: 'subtle' } }
+    }
+  },
+
+  ko: {
+    label: 'KO',
+    description: 'Hardware-inspired with tactile bezels and orange accents',
+    previewPrimary: '#FA5F28', // ko-accent-orange
+    previewNeutral: '#78716c', // stone-500
+    ui: {
+      colors: { primary: 'orange', neutral: 'stone' },
+      theme: { defaultVariants: { size: 'md' } },
+      button: {
+        defaultVariants: { variant: 'ko' },
+        variants: {
+          variant: {
+            ko: '',
+            'ko-solid': '',
+            'ko-outline': '',
+            'ko-soft': '',
+            'ko-ghost': '',
+            'ko-link': ''
+          }
+        },
+        compoundVariants: [
+          { color: 'primary', variant: 'ko', class: 'ko-bezel ko-bezel--orange' },
+          { color: 'neutral', variant: 'ko', class: 'ko-bezel ko-bezel--dark' },
+          { color: 'error', variant: 'ko', class: 'ko-bezel ko-bezel--red' },
+          { color: 'secondary', variant: 'ko', class: 'ko-bezel ko-bezel--pink' },
+          { color: 'info', variant: 'ko', class: 'ko-bezel ko-bezel--blue' },
+          { variant: 'ko', class: 'ko-bezel' },
+          { variant: 'ko-solid', color: 'primary', class: 'ko-bezel ko-bezel--orange' },
+          { variant: 'ko-solid', color: 'neutral', class: 'ko-bezel ko-bezel--dark' },
+          { variant: 'ko-solid', class: 'ko-bezel' },
+          { variant: 'ko-outline', color: 'primary', class: 'ko-outline ko-outline--orange' },
+          { variant: 'ko-outline', color: 'neutral', class: 'ko-outline ko-outline--dark' },
+          { variant: 'ko-outline', class: 'ko-outline' },
+          { variant: 'ko-soft', color: 'primary', class: 'ko-soft ko-soft--orange' },
+          { variant: 'ko-soft', color: 'neutral', class: 'ko-soft ko-soft--dark' },
+          { variant: 'ko-soft', class: 'ko-soft' },
+          { variant: 'ko-ghost', color: 'primary', class: 'ko-ghost ko-ghost--orange' },
+          { variant: 'ko-ghost', color: 'neutral', class: 'ko-ghost ko-ghost--dark' },
+          { variant: 'ko-ghost', class: 'ko-ghost' },
+          { variant: 'ko-link', color: 'primary', class: 'ko-link ko-link--orange' },
+          { variant: 'ko-link', color: 'neutral', class: 'ko-link ko-link--dark' },
+          { variant: 'ko-link', class: 'ko-link' }
+        ]
+      },
+      input: {
+        defaultVariants: { variant: 'ko' },
+        variants: { variant: { ko: { root: 'ko-input', base: 'ko-input-base' } } }
+      },
+      card: {
+        defaultVariants: { variant: 'ko' },
+        variants: { variant: { ko: { root: 'ko-card', header: 'ko-card-header', body: 'ko-card-body', footer: 'ko-card-footer' } } }
+      }
     }
   }
 }
@@ -162,6 +222,13 @@ export function applyThemeSettings(settings: TeamThemeSettings) {
 
   if (import.meta.client) {
     document.documentElement.style.setProperty('--ui-radius', `${radius}rem`)
+    // Set data-theme for ambient CSS (e.g. background colors, global font overrides)
+    if (preset === 'custom') {
+      document.documentElement.removeAttribute('data-theme')
+    }
+    else {
+      document.documentElement.dataset.theme = preset
+    }
   }
 }
 
