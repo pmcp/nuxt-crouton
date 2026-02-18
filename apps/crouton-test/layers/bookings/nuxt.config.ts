@@ -15,6 +15,7 @@ export default defineNuxtConfig({
   extends: [
     './collections/locations',
     './collections/bookings',
-    './collections/settings'
+    './collections/settings',
+    './collections/assets'
   ]
 })

@@ -8,3 +8,4 @@ export { bookingsBookings } from '../../layers/bookings/collections/bookings/ser
 export { bookingsSettings } from '../../layers/bookings/collections/settings/server/database/schema'
 export { pagesPages } from '../../layers/pages/collections/pages/server/database/schema'
 export * from './translations-ui'
+export { bookingsAssets } from '../../layers/bookings/collections/assets/server/database/schema'

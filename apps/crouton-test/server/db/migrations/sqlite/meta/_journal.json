@@ -71,6 +71,13 @@
       "when": 1771354760033,
       "tag": "0009_lyrical_ironclad",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1771442566879,
+      "tag": "0010_windy_excalibur",
+      "breakpoints": true
     }
   ]
 }

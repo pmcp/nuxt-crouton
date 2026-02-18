@@ -4,6 +4,8 @@ import { bookingsSettingsConfig } from '../layers/bookings/collections/settings/
 import { pagesPagesConfig } from '../layers/pages/collections/pages/app/composables/usePagesPages'
 import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
 
+import {bookingsAssetsConfig} from '../layers/bookings/collections/assets/app/composables/useBookingsAssets';
+
 export default defineAppConfig({
   croutonCollections: {
     translationsUi: translationsUiConfig,
@@ -11,5 +13,6 @@ export default defineAppConfig({
     bookingsSettings: bookingsSettingsConfig,
     bookingsBookings: bookingsBookingsConfig,
     bookingsLocations: bookingsLocationsConfig,
+    bookingsAssets: bookingsAssetsConfig
   }
 })
