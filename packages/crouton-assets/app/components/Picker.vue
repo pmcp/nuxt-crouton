@@ -129,8 +129,9 @@ const typeFilterOptions = [
 ]
 
 // Fetch assets from the generated collection API
-const appConfig = useAppConfig()
-const collectionName = props.collection || (appConfig.croutonAssets as any)?.collection || 'assets'
+// Apps register their assets collection under the 'assets' key in croutonCollections
+const { getConfig } = useCollections()
+const collectionName = props.collection || getConfig('assets')?.apiPath || 'assets'
 const { data: assets, pending, refresh } = await useFetch(`/api/teams/${useRoute().params.team}/${collectionName}`)
 
 const isImage = (contentType?: string) => contentType?.startsWith('image/')

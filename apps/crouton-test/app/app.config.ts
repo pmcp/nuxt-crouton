@@ -13,6 +13,7 @@ export default defineAppConfig({
     bookingsSettings: bookingsSettingsConfig,
     bookingsBookings: bookingsBookingsConfig,
     bookingsLocations: bookingsLocationsConfig,
-    bookingsAssets: bookingsAssetsConfig
+    bookingsAssets: bookingsAssetsConfig,
+    assets: bookingsAssetsConfig  // canonical key used by CroutonAssetsPicker/Uploader
   }
 })

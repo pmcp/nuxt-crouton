@@ -21,6 +21,7 @@ export interface UploadAssetResult {
 
 export const useAssetUpload = () => {
   const { getTeamId } = useTeamContext()
+  const { getConfig } = useCollections()
   const uploading = ref(false)
   const error = ref<Error | null>(null)
   const progress = ref(0)
@@ -35,8 +36,9 @@ export const useAssetUpload = () => {
   const uploadAsset = async (
     file: File,
     metadata: AssetMetadata = {},
-    collection: string = 'assets'
+    collection?: string
   ): Promise<UploadAssetResult> => {
+    const resolvedCollection = collection || getConfig('assets')?.apiPath || 'assets'
     uploading.value = true
     error.value = null
     progress.value = 0
@@ -59,7 +61,7 @@ export const useAssetUpload = () => {
         throw new Error('Team context not available')
       }
 
-      const asset = await $fetch<UploadAssetResult>(`/api/teams/${teamId}/${collection}`, {
+      const asset = await $fetch<UploadAssetResult>(`/api/teams/${teamId}/${resolvedCollection}`, {
         method: 'POST',
         body: {
           filename: metadata.filename || file.name,
@@ -92,7 +94,7 @@ export const useAssetUpload = () => {
   const uploadAssets = async (
     files: File[],
     metadata: AssetMetadata = {},
-    collection: string = 'assets'
+    collection?: string
   ): Promise<UploadAssetResult[]> => {
     const uploads = files.map(file => uploadAsset(file, metadata, collection))
     return Promise.all(uploads)
