@@ -52,7 +52,8 @@ export default defineNuxtConfig({
   // NuxtHub configuration for database, KV, blob storage
   // Apps can override with different providers (postgresql, mysql) or resource IDs
   hub: {
-    db: 'sqlite' // Uses D1 on Cloudflare, local SQLite in dev
+    db: 'sqlite', // Uses D1 on Cloudflare, local SQLite in dev
+    blob: true // Required for ensureBlob auto-import and hubBlob() in upload endpoint
   },
 
   // Vite configuration to prevent duplicate module instances
