@@ -93,13 +93,13 @@
     </div>
 
     <!-- Upload Modal -->
-    <UModal v-model="showUploader">
+    <UModal v-model:open="showUploader">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">
             Upload New Asset
           </h3>
-          <CroutonAssetsUploader @uploaded="handleUploaded(close)" />
+          <CroutonAssetsUploader :collection="collectionName" @uploaded="handleUploaded(close)" />
         </div>
       </template>
     </UModal>

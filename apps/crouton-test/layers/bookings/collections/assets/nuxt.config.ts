@@ -7,11 +7,6 @@ export default defineNuxtConfig({
   $meta: {
     name: 'bookings-assets',
   },
-  appConfig: {
-    croutonAssets: {
-      collection: 'bookings-assets'
-    }
-  },
   components: {
     dirs: [
       {
