@@ -1,0 +1,25 @@
+# Cloudflare Pages configuration for bookings-app
+# Deploy with: npx wrangler pages deploy dist/
+
+name = "bookings-app"
+compatibility_date = "2024-09-02"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# D1 Database binding
+# Create with: npx wrangler d1 create bookings-app-db
+[[d1_databases]]
+binding = "DB"
+database_name = "bookings-app-db"
+database_id = "TODO_REPLACE_WITH_REAL_ID"
+migrations_dir = "server/db/migrations/sqlite"
+
+# KV Namespace binding
+# Create with: npx wrangler kv namespace create bookings-app-kv
+[[kv_namespaces]]
+binding = "KV"
+id = "TODO_REPLACE_WITH_REAL_ID"
+
+# Environment variables (set in Cloudflare dashboard or via wrangler secret)
+# [vars]
+# NUXT_PUBLIC_SITE_URL = "https://bookings-app.pages.dev"

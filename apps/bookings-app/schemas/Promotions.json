@@ -1,0 +1,109 @@
+{
+  "display": {
+    "title": "name",
+    "subtitle": "type",
+    "badge": "status",
+    "description": "description"
+  },
+  "fields": {
+    "code": {
+      "type": "string",
+      "meta": {
+        "unique": true,
+        "label": "Promo Code",
+        "area": "main"
+      }
+    },
+    "startDate": {
+      "type": "date",
+      "meta": {
+        "required": true,
+        "label": "Start Date",
+        "area": "sidebar"
+      }
+    },
+    "endDate": {
+      "type": "date",
+      "meta": {
+        "required": true,
+        "label": "End Date",
+        "area": "sidebar"
+      }
+    },
+    "usageLimit": {
+      "type": "integer",
+      "meta": {
+        "label": "Usage Limit",
+        "area": "sidebar"
+      }
+    },
+    "usageCount": {
+      "type": "integer",
+      "meta": {
+        "label": "Times Used",
+        "area": "sidebar",
+        "default": 0,
+        "readOnly": true
+      }
+    },
+    "applicableServices": {
+      "type": "array",
+      "meta": {
+        "label": "Applicable Services",
+        "area": "sidebar"
+      }
+    },
+    "status": {
+      "type": "string",
+      "meta": {
+        "label": "Status",
+        "area": "meta",
+        "default": "active",
+        "displayAs": "badge",
+        "options": [
+          "active",
+          "inactive",
+          "expired",
+          "draft"
+        ]
+      }
+    },
+    "name": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Promotion Name",
+        "area": "main"
+      }
+    },
+    "description": {
+      "type": "text",
+      "meta": {
+        "label": "Description",
+        "area": "main"
+      }
+    },
+    "type": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Discount Type",
+        "area": "main",
+        "options": [
+          "percentage",
+          "fixed-amount",
+          "buy-one-get-one",
+          "package-deal"
+        ]
+      }
+    },
+    "value": {
+      "type": "decimal",
+      "meta": {
+        "required": true,
+        "label": "Discount Value",
+        "area": "main"
+      }
+    }
+  }
+}

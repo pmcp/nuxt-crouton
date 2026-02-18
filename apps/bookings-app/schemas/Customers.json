@@ -1,0 +1,79 @@
+{
+  "display": {
+    "title": "name",
+    "subtitle": "email",
+    "badge": "status",
+    "description": "notes"
+  },
+  "fields": {
+    "name": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Full Name",
+        "area": "main"
+      }
+    },
+    "email": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "unique": true,
+        "label": "Email Address",
+        "area": "main"
+      }
+    },
+    "phone": {
+      "type": "string",
+      "meta": {
+        "label": "Phone Number",
+        "area": "main"
+      }
+    },
+    "dateOfBirth": {
+      "type": "date",
+      "meta": {
+        "label": "Date of Birth",
+        "area": "sidebar"
+      }
+    },
+    "preferences": {
+      "type": "json",
+      "meta": {
+        "label": "Booking Preferences",
+        "area": "sidebar"
+      }
+    },
+    "notes": {
+      "type": "text",
+      "meta": {
+        "label": "Customer Notes",
+        "area": "sidebar"
+      }
+    },
+    "status": {
+      "type": "string",
+      "meta": {
+        "label": "Status",
+        "area": "meta",
+        "default": "active",
+        "displayAs": "badge",
+        "options": [
+          "active",
+          "inactive",
+          "vip",
+          "blocked"
+        ]
+      }
+    },
+    "totalBookings": {
+      "type": "integer",
+      "meta": {
+        "label": "Total Bookings",
+        "area": "meta",
+        "default": 0,
+        "readOnly": true
+      }
+    }
+  }
+}

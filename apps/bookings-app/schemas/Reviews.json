@@ -1,0 +1,91 @@
+{
+  "display": {
+    "title": "title",
+    "subtitle": "customerName",
+    "badge": "rating",
+    "description": "comment"
+  },
+  "fields": {
+    "title": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Review Title",
+        "area": "main"
+      }
+    },
+    "customer": {
+      "type": "reference",
+      "meta": {
+        "required": true,
+        "label": "Customer",
+        "area": "main"
+      },
+      "refTarget": "Customers"
+    },
+    "customerName": {
+      "type": "string",
+      "meta": {
+        "label": "Customer Name",
+        "area": "main",
+        "readOnly": true
+      }
+    },
+    "service": {
+      "type": "reference",
+      "meta": {
+        "label": "Service",
+        "area": "main"
+      },
+      "refTarget": "Services"
+    },
+    "staff": {
+      "type": "reference",
+      "meta": {
+        "label": "Staff Member",
+        "area": "main"
+      },
+      "refTarget": "Staff"
+    },
+    "rating": {
+      "type": "integer",
+      "meta": {
+        "required": true,
+        "label": "Rating (1-5)",
+        "area": "main",
+        "displayAs": "badge"
+      }
+    },
+    "comment": {
+      "type": "text",
+      "meta": {
+        "label": "Review Comment",
+        "area": "main"
+      }
+    },
+    "reviewDate": {
+      "type": "date",
+      "meta": {
+        "required": true,
+        "label": "Review Date",
+        "area": "sidebar",
+        "default": "today"
+      }
+    },
+    "isPublic": {
+      "type": "boolean",
+      "meta": {
+        "label": "Public Review",
+        "area": "sidebar",
+        "default": true
+      }
+    },
+    "response": {
+      "type": "text",
+      "meta": {
+        "label": "Management Response",
+        "area": "sidebar"
+      }
+    }
+  }
+}
