@@ -10,5 +10,5 @@ export default eventHandler(async (event) => {
     'CDN-Cache-Control': 'public, max-age=31536000, immutable'
   })
 
-  return hubBlob().serve(event, pathname)
+  return blob.serve(event, pathname)
 })

@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    await hubBlob().del(pathname)
+    await blob.delete(pathname)
     return { success: true, pathname }
   } catch (error: unknown) {
     throw createError({

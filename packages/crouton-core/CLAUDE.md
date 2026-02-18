@@ -236,24 +236,32 @@ const { formatShortcut } = useCroutonShortcuts({
 The core package includes `@nuxthub/core` with sensible defaults:
 
 ```typescript
-// Default hub config (can be overridden in your app)
+// Minimum hub config in apps — blob: true comes from crouton-core layer
 hub: {
   db: 'sqlite'  // Uses D1 on Cloudflare, local SQLite in dev
 }
 ```
 
-**Override in your app** to use different providers or add features:
+**NuxtHub 0.10+ blob API** (multi-vendor rewrite — `hubBlob()` was removed):
+```typescript
+// In server routes, blob and ensureBlob are auto-imported from hub:blob
+await blob.put(pathname, file, { addRandomSuffix: true })
+await blob.serve(event, pathname)
+await blob.delete(pathname)
+ensureBlob(file, { maxSize: '10MB', types: ['image/png'] })
+```
+
+**Override in your app** to use different providers:
 
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
   extends: ['@fyit/crouton'],
 
-  // Override or extend hub config
   hub: {
     db: 'postgresql',  // Use PostgreSQL instead
-    kv: true,          // Enable KV storage
-    blob: true         // Enable blob storage
+    kv: true,
+    blob: true
   }
 })
 ```

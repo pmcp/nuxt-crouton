@@ -42,7 +42,12 @@ export default defineNuxtConfig({
     '@fyit/crouton-admin'
   ],
 
-  modules: ['@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo', join(currentDir, 'modules/manifest-injection')],
+  modules: [
+    // Must be before @nuxthub/core — sets hub.blob = true as a default so apps
+    // that only declare hub: { db: 'sqlite' } still get blob storage enabled.
+    join(currentDir, 'modules/ensure-hub-blob'),
+    '@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo', join(currentDir, 'modules/manifest-injection')
+  ],
 
   // Runtime config for server-side secrets
   runtimeConfig: {

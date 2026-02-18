@@ -41,12 +41,17 @@ export default defineEventHandler(async (event) => {
 
   // File extends Blob and has a name property; use it if available, otherwise generate one
   const fileName = (file as File).name || `upload-${Date.now()}.${file.type.split('/')[1] || 'bin'}`
-  const blob = await hubBlob().put(fileName, file, {
+  const blobObject = await blob.put(fileName, file, {
     addRandomSuffix: true
+  }).catch((err: unknown) => {
+    throw createError({
+      status: 500,
+      statusText: `Blob storage error: ${(err as Error).message ?? String(err)}`
+    })
   })
 
   return {
-    pathname: blob.pathname,
+    pathname: blobObject.pathname,
     contentType: file.type,
     size: file.size,
     filename: fileName
