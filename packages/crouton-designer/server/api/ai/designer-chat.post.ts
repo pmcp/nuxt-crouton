@@ -182,7 +182,12 @@ export default defineEventHandler(async (event) => {
   const ai = createAIProvider(event)
   const modelId = model || ai.getDefaultModel()
 
-  const tools = phase === '3' ? getPhase3Tools() : phase === '2' ? getPhase2Tools() : getPhase1Tools()
+  // Provide all tools from all phases — the system prompt guides usage per phase
+  const tools = {
+    ...getPhase1Tools(),
+    ...getPhase2Tools(),
+    ...getPhase3Tools()
+  }
 
   const result = streamText({
     model: ai.model(modelId),

@@ -98,12 +98,13 @@ export interface ProjectConfig {
 export type DesignerPhase = 1 | 2 | 3 | 5
 
 /**
- * Chat messages stored per phase
+ * A single chat message stored in the designer project
  */
-export interface PhaseMessages {
-  1?: Array<{ id: string, role: 'user' | 'assistant' | 'system', content: string, createdAt?: string }>
-  2?: Array<{ id: string, role: 'user' | 'assistant' | 'system', content: string, createdAt?: string }>
-  3?: Array<{ id: string, role: 'user' | 'assistant' | 'system', content: string, createdAt?: string }>
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  createdAt?: string
 }
 
 /**

@@ -19,11 +19,11 @@ AI-guided schema designer for Nuxt Crouton applications. Provides a multi-phase 
 | `app/components/ReviewPanel.vue` | Phase 5 review, validation, and Create App trigger |
 | `app/components/ValidationChecklist.vue` | Schema validation display |
 | `app/components/GenerationSummary.vue` | Summary of what will be generated |
-| `app/components/TwoPanelLayout.vue` | Collapsible chat + content layout |
 | `app/composables/useCollectionEditor.ts` | Collection/field CRUD state management |
 | `app/composables/useIntakePrompt.ts` | Builds Phase 1 AI system prompt |
 | `app/composables/useCollectionDesignPrompt.ts` | Builds Phase 2 AI system prompt with tool definitions |
 | `app/composables/useSeedDataPrompt.ts` | Builds Phase 3 AI system prompt for seed data generation |
+| `app/composables/useReviewPrompt.ts` | Builds Phase 5 AI system prompt for review |
 | `app/composables/useSchemaValidation.ts` | Schema validation rules (errors + warnings) |
 | `app/composables/useSchemaExport.ts` | Converts editor state to Crouton JSON schemas |
 | `app/composables/useAppScaffold.ts` | Orchestrates Create App flow — artifact preview, POST to scaffold endpoint, step results |
@@ -48,16 +48,16 @@ set_app_config tool      create/update/delete tools  data via set_seed_data  CLI
 ```
 
 - Phases are stored on the `DesignerProject` record in the DB
-- Chat messages are persisted per-phase and restored on navigation
+- **Continuous AI session**: Chat messages persist across all phases as a flat array (not segmented per-phase)
+- Phase transition markers (system messages) are inserted when navigating between phases
 - Backward navigation (to Phase 1) shows a warning modal
 - Backward navigation from Phase 3+ to Phase 2 clears seed data (with confirmation)
+- Layout: persistent collapsible chat panel on left, stepper+content on right
 
 ### AI Integration
 
 - Uses `useChat()` from `@fyit/crouton-ai` with `maxSteps: 5`
-- Phase 1: Single tool (`set_app_config`) to update ProjectConfig
-- Phase 2: Collection/field CRUD tools (`create_collection`, `add_field`, etc.)
-- Phase 3: Single tool (`set_seed_data`) to replace seed data per collection
+- **All tools from all phases are provided simultaneously** — the system prompt guides usage per phase
 - Tool calls are handled in `onToolCall` callback, executed against `useCollectionEditor`
 - On Phase 2 entry with no collections, auto-sends a proposal request
 - On Phase 3 entry with no seed data, auto-sends a generation request
@@ -67,7 +67,7 @@ set_app_config tool      create/update/delete tools  data via set_seed_data  CLI
 - Projects stored via `/api/designer-projects` REST endpoints (from crouton-core)
 - Config auto-saves with 800ms debounce
 - Seed data auto-saves with 800ms debounce (stored as JSON on project record)
-- Chat messages saved on phase transitions
+- Chat messages auto-save with 1200ms debounce (flat array on project record)
 - Phase state persisted to DB
 
 ### Error Handling
@@ -133,7 +133,6 @@ All components auto-import with `Designer` prefix:
 - `IntakeSummaryCard.vue` → `<DesignerIntakeSummaryCard />`
 - `SeedDataPanel.vue` → `<DesignerSeedDataPanel />`
 - `ReviewPanel.vue` → `<DesignerReviewPanel />`
-- `TwoPanelLayout.vue` → `<DesignerTwoPanelLayout />`
 
 ## Testing
 
