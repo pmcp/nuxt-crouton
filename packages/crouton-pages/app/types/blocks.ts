@@ -88,6 +88,7 @@ export interface HeroBlockAttrs {
   reverse?: boolean
   links?: BlockLink[]
   image?: string
+  imageAlt?: string
 }
 
 export interface SectionBlockAttrs {
@@ -148,10 +149,12 @@ export interface TwoColumnBlockAttrs {
   leftTitle?: string
   leftDescription?: string
   leftImage?: string
+  leftImageAlt?: string
   leftLinks?: BlockLink[]
   rightTitle?: string
   rightDescription?: string
   rightImage?: string
+  rightImageAlt?: string
   rightLinks?: BlockLink[]
 }
 

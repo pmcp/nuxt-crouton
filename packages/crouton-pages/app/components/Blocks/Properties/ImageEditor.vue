@@ -1,9 +1,11 @@
 <script setup lang="ts">
 /**
  * Image property editor for block editor.
- * Three modes: browse assets, upload new, paste URL.
+ * Three modes: browse assets (if crouton-assets installed), upload new, paste URL.
  * Follows LinksEditor.vue pattern with modelValue + update:modelValue.
+ * Emits update:alt when an asset with alt text is picked from the library.
  */
+import { resolveComponent } from 'vue'
 
 interface Props {
   modelValue: string
@@ -13,9 +15,15 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  'update:alt': [value: string]
 }>()
 
-const mode = ref<'preview' | 'url' | 'upload'>('preview')
+// Detect if crouton-assets Picker is available (optional dependency)
+const AssetsPicker = resolveComponent('CroutonAssetsPicker')
+const hasAssetsPicker = typeof AssetsPicker !== 'string'
+
+type Mode = 'preview' | 'url' | 'upload' | 'browse'
+const mode = ref<Mode>(hasAssetsPicker && !props.modelValue ? 'browse' : 'preview')
 const urlInput = ref(props.modelValue || '')
 
 // Sync local URL with props
@@ -33,13 +41,12 @@ function setUrl() {
 function removeImage() {
   emit('update:modelValue', '')
   urlInput.value = ''
-  mode.value = 'preview'
+  mode.value = hasAssetsPicker ? 'browse' : 'preview'
 }
 
 function handleFileSelected(file: File | null) {
   if (!file) return
 
-  // Upload via the upload endpoint
   const formData = new FormData()
   formData.append('file', file)
 
@@ -54,6 +61,16 @@ function handleFileSelected(file: File | null) {
   }).catch((err) => {
     console.error('Image upload failed:', err)
   })
+}
+
+function handleAssetSelected(asset: Record<string, any>) {
+  const url = `/images/${asset.pathname}`
+  emit('update:modelValue', url)
+  urlInput.value = url
+  if (asset.alt) {
+    emit('update:alt', asset.alt)
+  }
+  mode.value = 'preview'
 }
 </script>
 
@@ -86,7 +103,7 @@ function handleFileSelected(file: File | null) {
       </div>
     </div>
 
-    <!-- No Image State -->
+    <!-- No Image State — Browse tab shown first if available -->
     <div v-if="!hasImage && mode === 'preview'" class="flex flex-col gap-2">
       <div class="flex items-center justify-center h-32 rounded-lg border-2 border-dashed border-default bg-neutral-50 dark:bg-neutral-900">
         <div class="text-center">
@@ -97,6 +114,16 @@ function handleFileSelected(file: File | null) {
         </div>
       </div>
       <div class="flex gap-2">
+        <UButton
+          v-if="hasAssetsPicker"
+          icon="i-lucide-folder-open"
+          label="Browse"
+          variant="soft"
+          color="neutral"
+          size="xs"
+          class="flex-1"
+          @click="mode = 'browse'"
+        />
         <UButton
           icon="i-lucide-link"
           label="Paste URL"
@@ -114,6 +141,47 @@ function handleFileSelected(file: File | null) {
           size="xs"
           class="flex-1"
           @click="mode = 'upload'"
+        />
+      </div>
+    </div>
+
+    <!-- Browse Library Mode -->
+    <div v-if="mode === 'browse' && hasAssetsPicker" class="space-y-2">
+      <Suspense>
+        <component
+          :is="AssetsPicker"
+          @select="handleAssetSelected"
+        />
+        <template #fallback>
+          <div class="h-32 flex items-center justify-center text-sm text-muted">
+            Loading library...
+          </div>
+        </template>
+      </Suspense>
+      <div class="flex gap-2 pt-1">
+        <UButton
+          icon="i-lucide-upload"
+          label="Upload instead"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          @click="mode = 'upload'"
+        />
+        <UButton
+          icon="i-lucide-link"
+          label="Paste URL"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          @click="mode = 'url'"
+        />
+        <UButton
+          v-if="hasImage"
+          label="Cancel"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          @click="mode = 'preview'"
         />
       </div>
     </div>
@@ -142,9 +210,19 @@ function handleFileSelected(file: File | null) {
           variant="ghost"
           color="neutral"
           size="xs"
-          @click="mode = 'preview'"
+          @click="mode = hasImage ? 'preview' : (hasAssetsPicker ? 'browse' : 'preview')"
         />
         <UButton
+          v-if="hasAssetsPicker"
+          icon="i-lucide-folder-open"
+          label="Browse library"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          @click="mode = 'browse'"
+        />
+        <UButton
+          v-else
           icon="i-lucide-upload"
           label="Upload instead"
           variant="ghost"
@@ -160,13 +238,24 @@ function handleFileSelected(file: File | null) {
       <CroutonImageUpload
         @file-selected="handleFileSelected"
       />
-      <UButton
-        label="Cancel"
-        variant="ghost"
-        color="neutral"
-        size="xs"
-        @click="mode = 'preview'"
-      />
+      <div class="flex gap-2">
+        <UButton
+          label="Cancel"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          @click="mode = hasImage ? 'preview' : (hasAssetsPicker ? 'browse' : 'preview')"
+        />
+        <UButton
+          v-if="hasAssetsPicker"
+          icon="i-lucide-folder-open"
+          label="Browse library"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          @click="mode = 'browse'"
+        />
+      </div>
     </div>
   </div>
 </template>

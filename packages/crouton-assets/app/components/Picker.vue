@@ -43,7 +43,7 @@
         type="button"
         class="relative group rounded-lg overflow-hidden border-2 transition-all"
         :class="modelValue === asset.id ? 'border-primary-500 ring-2 ring-primary-500' : 'border-gray-200 dark:border-gray-700 hover:border-primary-300'"
-        @click="selectAsset(asset.id)"
+        @click="selectAsset(asset)"
       >
         <div class="aspect-square bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
           <!-- Image preview -->
@@ -113,6 +113,9 @@ const props = defineProps<{
 }>()
 
 const modelValue = defineModel<string>()
+const emit = defineEmits<{
+  select: [asset: Record<string, any>]
+}>()
 const showUploader = ref(false)
 const searchQuery = ref('')
 const typeFilter = ref('all')
@@ -185,8 +188,9 @@ const filteredAssets = computed(() => {
   return result
 })
 
-const selectAsset = (id: string) => {
-  modelValue.value = id
+const selectAsset = (asset: Record<string, any>) => {
+  modelValue.value = asset.id
+  emit('select', asset)
 }
 
 const handleUploaded = async (close: () => void) => {

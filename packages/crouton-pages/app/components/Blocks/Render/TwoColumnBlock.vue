@@ -53,7 +53,7 @@ const rightButtons = computed(() =>
           v-if="attrs.leftImage"
           :src="attrs.leftImage"
           class="w-full rounded-xl object-cover"
-          alt=""
+          :alt="attrs.leftImageAlt || ''"
         />
         <h3 v-if="attrs.leftTitle" class="text-xl sm:text-2xl font-bold">
           {{ attrs.leftTitle }}
@@ -76,7 +76,7 @@ const rightButtons = computed(() =>
           v-if="attrs.rightImage"
           :src="attrs.rightImage"
           class="w-full rounded-xl object-cover"
-          alt=""
+          :alt="attrs.rightImageAlt || ''"
         />
         <h3 v-if="attrs.rightTitle" class="text-xl sm:text-2xl font-bold">
           {{ attrs.rightTitle }}

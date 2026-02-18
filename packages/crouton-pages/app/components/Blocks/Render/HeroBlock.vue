@@ -38,7 +38,7 @@ const buttonLinks = computed(() => {
     <template v-if="attrs.image" #default>
       <img
         :src="attrs.image"
-        :alt="attrs.title"
+        :alt="attrs.imageAlt || attrs.title"
         class="rounded-lg shadow-xl"
       >
     </template>
