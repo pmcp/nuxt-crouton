@@ -44,6 +44,7 @@ const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { locale } = useI18n()
 const collections = useCollections()
+const { teamSlug: teamSlugRef } = useTeamContext()
 
 // Get API path from collection config
 const collectionConfig = collections.getConfig('pagesPages')
@@ -280,21 +281,38 @@ const collectionLabelKey = computed(() => {
 })
 
 // Auto-populate page title when a collection item is selected
+// Note: using watch + $fetch instead of useFetch to avoid Nuxt 4 behavior where
+// returning null from a useFetch URL function fetches "null" as a relative URL
+// (e.g. /admin/team/null), causing a spurious 404 on initial mount.
 const { getTeamId: getTeamIdForItem } = useTeamContext()
-const { data: selectedCollectionItem } = await useFetch<Record<string, any>>(() => {
-  if (!isCollectionPage.value || !collectionItemId.value) return null as any
-  const teamId = getTeamIdForItem()
-  const config = collections.getConfig(collectionPageName.value)
-  if (!teamId || !config?.apiPath) return null as any
-  return `/api/teams/${teamId}/${config.apiPath}?ids=${collectionItemId.value}`
-}, {
-  transform: (response: any) => {
-    const items = response?.items || response
-    if (Array.isArray(items)) return items[0] || null
-    return items
+const selectedCollectionItem = ref<Record<string, any> | null>(null)
+
+watch(
+  [isCollectionPage, collectionItemId, collectionPageName],
+  async ([isCollection, itemId, colName]) => {
+    if (!isCollection || !itemId) {
+      selectedCollectionItem.value = null
+      return
+    }
+    const teamId = getTeamIdForItem()
+    const config = collections.getConfig(colName)
+    if (!teamId || !config?.apiPath) {
+      selectedCollectionItem.value = null
+      return
+    }
+    try {
+      const response = await $fetch<any>(`/api/teams/${teamId}/${config.apiPath}`, {
+        query: { ids: itemId },
+        credentials: 'include'
+      })
+      const items = response?.items || response
+      selectedCollectionItem.value = Array.isArray(items) ? (items[0] || null) : items
+    } catch {
+      selectedCollectionItem.value = null
+    }
   },
-  watch: [collectionItemId, collectionPageName]
-})
+  { immediate: false }
+)
 
 // When a collection item is selected, auto-populate page title, slug, and SEO fields
 watch(selectedCollectionItem, (item: Record<string, any> | null) => {
@@ -624,6 +642,17 @@ const previewPage = computed(() => {
   }
 })
 
+// Build public URL for the current page (used by "Open in public" button)
+const publicUrl = computed(() => {
+  const teamSlug = teamSlugRef.value
+  if (!teamSlug || action.value === 'create') return null
+  const translations = state.value.translations as Record<string, { slug?: string }> | undefined
+  const slug = translations?.[locale.value]?.slug
+    || (translations ? Object.values(translations)[0]?.slug : null)
+  if (!slug && slug !== '') return null
+  return slug ? `/${teamSlug}/${slug}` : `/${teamSlug}/`
+})
+
 // Expose state for parent components (e.g., InlineEditor live preview)
 defineExpose({ state })
 </script>
@@ -857,6 +886,18 @@ defineExpose({ state })
             icon="i-lucide-eye"
             size="xs"
             @click="showPreview = true"
+          />
+        </UTooltip>
+
+        <!-- Open in public -->
+        <UTooltip v-if="publicUrl" text="Open in Public" :delay-duration="0">
+          <UButton
+            :to="publicUrl"
+            target="_blank"
+            variant="ghost"
+            color="neutral"
+            icon="i-lucide-external-link"
+            size="xs"
           />
         </UTooltip>
 
