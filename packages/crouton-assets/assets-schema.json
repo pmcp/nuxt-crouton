@@ -7,7 +7,6 @@
   },
   "teamId": {
     "type": "string",
-    "refTarget": "organisations",
     "meta": {
       "required": true,
       "label": "Team/Organisation",
@@ -16,7 +15,6 @@
   },
   "userId": {
     "type": "string",
-    "refTarget": "users",
     "meta": {
       "required": true,
       "label": "Uploaded By",
@@ -92,7 +90,6 @@
   },
   "updatedBy": {
     "type": "string",
-    "refTarget": "users",
     "meta": {
       "label": "Updated By",
       "area": "meta"

@@ -3,8 +3,7 @@ import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { BookingsAsset, NewBookingsAsset } from '../../types'
-import * as organisationsSchema from '../../../organisations/server/database/schema'
-import * as usersSchema from '../../../users/server/database/schema'
+import { user } from '~~/server/db/schema'
 
 export async function getAllBookingsAssets(teamId: string) {
   const db = useDB()
@@ -16,9 +15,6 @@ export async function getAllBookingsAssets(teamId: string) {
   const assets = await (db as any)
     .select({
       ...tables.bookingsAssets,
-      teamIdData: organisationsSchema.bookingsOrganisations,
-      userIdData: usersSchema.bookingsUsers,
-      updatedByData: usersSchema.bookingsUsers,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -39,9 +35,6 @@ export async function getAllBookingsAssets(teamId: string) {
       }
     } as any)
     .from(tables.bookingsAssets)
-    .leftJoin(organisationsSchema.bookingsOrganisations, eq(tables.bookingsAssets.teamId, organisationsSchema.bookingsOrganisations.id))
-    .leftJoin(usersSchema.bookingsUsers, eq(tables.bookingsAssets.userId, usersSchema.bookingsUsers.id))
-    .leftJoin(usersSchema.bookingsUsers, eq(tables.bookingsAssets.updatedBy, usersSchema.bookingsUsers.id))
     .leftJoin(ownerUser, eq(tables.bookingsAssets.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.bookingsAssets.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.bookingsAssets.updatedBy, updatedByUser.id))
@@ -61,9 +54,6 @@ export async function getBookingsAssetsByIds(teamId: string, assetIds: string[])
   const assets = await (db as any)
     .select({
       ...tables.bookingsAssets,
-      teamIdData: organisationsSchema.bookingsOrganisations,
-      userIdData: usersSchema.bookingsUsers,
-      updatedByData: usersSchema.bookingsUsers,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -84,9 +74,6 @@ export async function getBookingsAssetsByIds(teamId: string, assetIds: string[])
       }
     } as any)
     .from(tables.bookingsAssets)
-    .leftJoin(organisationsSchema.bookingsOrganisations, eq(tables.bookingsAssets.teamId, organisationsSchema.bookingsOrganisations.id))
-    .leftJoin(usersSchema.bookingsUsers, eq(tables.bookingsAssets.userId, usersSchema.bookingsUsers.id))
-    .leftJoin(usersSchema.bookingsUsers, eq(tables.bookingsAssets.updatedBy, usersSchema.bookingsUsers.id))
     .leftJoin(ownerUser, eq(tables.bookingsAssets.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.bookingsAssets.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.bookingsAssets.updatedBy, updatedByUser.id))
