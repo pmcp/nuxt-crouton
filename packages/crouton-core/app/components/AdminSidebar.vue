@@ -232,6 +232,26 @@ const superAdminItems = computed<NavigationMenuItem[]>(() => {
   ]
 })
 
+// View Site link (bottom of sidebar)
+const viewSiteItem = computed<NavigationMenuItem | null>(() => {
+  if (props.context === 'super') {
+    return {
+      label: t('navigation.viewSite') || 'View Site',
+      icon: 'i-lucide-external-link',
+      to: '/',
+      target: '_blank'
+    }
+  }
+  const teamParam = teamSlugRef.value || teamIdRef.value || ''
+  if (!teamParam) return null
+  return {
+    label: t('navigation.viewSite') || 'View Site',
+    icon: 'i-lucide-external-link',
+    to: `/${teamParam}`,
+    target: '_blank'
+  }
+})
+
 // Navigation items - structured by domain/app
 const navItems = computed<NavigationMenuItem[][]>(() => {
   const mainItems: NavigationMenuItem[] = []
@@ -259,8 +279,13 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
   // 5. App groups (Bookings, etc.) - each app gets its own group
   mainItems.push(...appGroups.value)
 
-  // No bottom items - everything is in the main navigation now
-  return [mainItems, []]
+  // Bottom items: View Site link
+  const bottomItems: NavigationMenuItem[] = []
+  if (viewSiteItem.value) {
+    bottomItems.push(viewSiteItem.value)
+  }
+
+  return [mainItems, bottomItems]
 })
 </script>
 

@@ -35,12 +35,16 @@ interface PageRecord {
 interface Props {
   /** The page record to render */
   page: PageRecord
+  /** Override locale for preview purposes (defaults to current i18n locale) */
+  locale?: string
 }
 
 const props = defineProps<Props>()
 
-const { locale } = useI18n()
+const { locale: i18nLocale } = useI18n()
 const { getPageType } = usePageTypes()
+
+const effectiveLocale = computed(() => props.locale || i18nLocale.value)
 
 /**
  * Get localized content with fallback to English
@@ -52,8 +56,8 @@ const localizedContent = computed(() => {
     return props.page.content
   }
 
-  // Try current locale first, then English fallback
-  const localeData = translations[locale.value] || translations.en
+  // Try effective locale first, then English fallback
+  const localeData = translations[effectiveLocale.value] || translations.en
   return localeData?.content || props.page.content
 })
 

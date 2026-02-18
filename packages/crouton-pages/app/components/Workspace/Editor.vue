@@ -600,6 +600,23 @@ const fieldOptions = {
 // Preview drawer state
 const showPreview = ref(false)
 
+// Preview locale (for language selector in preview panel)
+const previewLocale = ref(locale.value)
+
+// Reset preview locale to current editor locale when preview opens
+watch(showPreview, (open) => {
+  if (open) previewLocale.value = locale.value
+})
+
+// Locales that actually have content (for the language selector)
+const availablePreviewLocales = computed(() => {
+  const translations = state.value.translations as Record<string, { title?: string; content?: string }> | undefined
+  if (!translations) return [locale.value]
+  return Object.entries(translations)
+    .filter(([, data]) => data?.title || data?.content)
+    .map(([loc]) => loc)
+})
+
 // Metadata: created/updated info
 const createdTimeAgo = useTimeAgo(() => (state.value as any).createdAt)
 const updatedTimeAgo = useTimeAgo(() => (state.value as any).updatedAt)
@@ -643,6 +660,7 @@ const previewPage = computed(() => {
 })
 
 // Build public URL for the current page (used by "Open in public" button)
+// Uses locale-prefixed format directly to avoid relying on the redirect route
 const publicUrl = computed(() => {
   const teamSlug = teamSlugRef.value
   if (!teamSlug || action.value === 'create') return null
@@ -650,7 +668,8 @@ const publicUrl = computed(() => {
   const slug = translations?.[locale.value]?.slug
     || (translations ? Object.values(translations)[0]?.slug : null)
   if (!slug && slug !== '') return null
-  return slug ? `/${teamSlug}/${slug}` : `/${teamSlug}/`
+  const loc = locale.value || 'en'
+  return slug ? `/${teamSlug}/${loc}/${slug}` : `/${teamSlug}/${loc}/`
 })
 
 // Expose state for parent components (e.g., InlineEditor live preview)
@@ -890,9 +909,14 @@ defineExpose({ state })
         </UTooltip>
 
         <!-- Open in public -->
-        <UTooltip v-if="publicUrl" text="Open in Public" :delay-duration="0">
+        <UTooltip
+          v-if="publicUrl"
+          :text="state.status === 'published' ? 'Open in Public' : 'Publish page to open publicly'"
+          :delay-duration="0"
+        >
           <UButton
-            :to="publicUrl"
+            :to="state.status === 'published' ? publicUrl : undefined"
+            :disabled="state.status !== 'published'"
             target="_blank"
             variant="ghost"
             color="neutral"
@@ -1040,19 +1064,37 @@ defineExpose({ state })
                 Draft
               </UBadge>
             </div>
-            <UButton
-              variant="ghost"
-              color="neutral"
-              icon="i-lucide-x"
-              size="xs"
-              @click="close"
-            />
+
+            <div class="flex items-center gap-2">
+              <!-- Language selector (shown when multiple locales have content) -->
+              <div v-if="availablePreviewLocales.length > 1" class="flex items-center gap-1">
+                <UButton
+                  v-for="loc in availablePreviewLocales"
+                  :key="loc"
+                  size="xs"
+                  :color="previewLocale === loc ? 'primary' : 'neutral'"
+                  :variant="previewLocale === loc ? 'soft' : 'ghost'"
+                  class="uppercase font-mono"
+                  @click="previewLocale = loc"
+                >
+                  {{ loc }}
+                </UButton>
+              </div>
+
+              <UButton
+                variant="ghost"
+                color="neutral"
+                icon="i-lucide-x"
+                size="xs"
+                @click="close"
+              />
+            </div>
           </div>
 
           <!-- Rendered page content -->
           <div class="flex-1 overflow-auto">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <CroutonPagesRenderer :page="previewPage" />
+              <CroutonPagesRenderer :page="previewPage" :locale="previewLocale" />
             </div>
           </div>
         </div>
