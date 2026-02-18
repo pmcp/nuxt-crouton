@@ -55,6 +55,27 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const loadError = ref<string | null>(null)
 
+// AI page generator
+const showAiGenerator = ref(false)
+
+async function applyAiContent(content: string) {
+  const currentLocale = locale.value || 'en'
+  const translations = state.value.translations as Record<string, Record<string, unknown>> | undefined
+  if (!translations) {
+    (state.value as any).translations = { [currentLocale]: { content } }
+  }
+  else if (!translations[currentLocale]) {
+    translations[currentLocale] = { content }
+  }
+  else {
+    translations[currentLocale].content = content
+  }
+  // Force re-mount of the content editor with new content
+  contentReady.value = false
+  await nextTick()
+  contentReady.value = true
+}
+
 // Form action mode
 const action = computed<'create' | 'update'>(() =>
   props.pageId ? 'update' : 'create'
@@ -897,6 +918,17 @@ defineExpose({ state })
 
         <div class="flex-1" />
 
+        <!-- AI page generator (regular pages only) -->
+        <UTooltip v-if="isRegularPage" text="Generate page with AI" :delay-duration="0">
+          <UButton
+            variant="ghost"
+            color="primary"
+            icon="i-lucide-sparkles"
+            size="xs"
+            @click="showAiGenerator = true"
+          />
+        </UTooltip>
+
         <!-- Preview -->
         <UTooltip :text="state.status === 'draft' ? 'Preview Draft' : 'Preview Page'" :delay-duration="0">
           <UButton
@@ -1100,5 +1132,11 @@ defineExpose({ state })
         </div>
       </template>
     </USlideover>
+
+    <!-- AI Page Generator Modal -->
+    <CroutonPagesAiPageGenerator
+      v-model="showAiGenerator"
+      @apply="applyAiContent"
+    />
   </div>
 </template>
