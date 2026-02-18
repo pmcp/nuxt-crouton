@@ -50,7 +50,7 @@
   "devDependencies": {
     "@nuxt/devtools": "^1.6.4",
     "@nuxt/ui": "^4.3.0",
-    "nuxt": "^4.0.0",
+    "nuxt": "^4.3.1",
     "unbuild": "^3.6.1"
   },
   "peerDependencies": {

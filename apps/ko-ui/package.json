@@ -14,7 +14,7 @@
     "@fyit/crouton-themes": "workspace:*",
     "@iconify-json/lucide": "^1.2.74",
     "@nuxt/ui": "^4.2.1",
-    "nuxt": "^4.2.2"
+    "nuxt": "^4.3.1"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.10.0",

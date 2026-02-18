@@ -15,17 +15,17 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-editor": "workspace:*",
+    "@fyit/crouton-flow": "workspace:*",
+    "@fyit/crouton-i18n": "workspace:*",
     "@iconify-json/lucide": "^1.2.74",
     "@iconify-json/simple-icons": "^1.2.59",
     "@nuxt/ui": "^4.2.1",
     "@nuxthub/core": "^0.10.3",
-    "@fyit/crouton-core": "workspace:*",
-    "@fyit/crouton-auth": "workspace:*",
-    "@fyit/crouton-i18n": "workspace:*",
-    "@fyit/crouton-editor": "workspace:*",
-    "@fyit/crouton-flow": "workspace:*",
     "drizzle-orm": "^0.38.4",
-    "nuxt": "^4.2.2"
+    "nuxt": "^4.3.1"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.10.0",

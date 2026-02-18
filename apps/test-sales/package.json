@@ -11,14 +11,14 @@
     "crouton": "crouton"
   },
   "dependencies": {
-    "@fyit/crouton-core": "workspace:*",
     "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-core": "workspace:*",
     "@fyit/crouton-sales": "workspace:*",
     "@libsql/client": "^0.15.0",
     "@nuxt/ui": "^4.0.0",
     "@nuxthub/core": "^0.10.0",
     "drizzle-orm": "^0.45.0",
-    "nuxt": "^4.2.2",
+    "nuxt": "^4.3.1",
     "vue": "^3.5.25",
     "vue-router": "^4.6.4"
   },

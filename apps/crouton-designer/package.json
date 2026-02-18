@@ -21,7 +21,7 @@
     "@libsql/client": "^0.17.0",
     "drizzle-orm": "^0.38.4",
     "fflate": "^0.8.2",
-    "nuxt": "^4.2.2"
+    "nuxt": "^4.3.1"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.10.0",
