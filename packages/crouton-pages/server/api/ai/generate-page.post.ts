@@ -57,25 +57,105 @@ Return ONLY a valid JSON object — no markdown fences, no explanation, nothing 
 - reverse: alternate true/false across sections for visual variety
 - ctaBlock: typically the last or second-to-last block before footer`
 
+// Block private/internal addresses to prevent SSRF
+function isBlockedUrl(url: URL): boolean {
+  const host = url.hostname.toLowerCase()
+  return (
+    host === 'localhost'
+    || host.startsWith('127.')
+    || host.startsWith('10.')
+    || host.startsWith('192.168.')
+    || host.startsWith('172.')
+    || host === '0.0.0.0'
+    || host.endsWith('.local')
+    || host.endsWith('.internal')
+  )
+}
+
+// Extract meaningful text from HTML without external dependencies
+function extractPageContent(html: string): string {
+  // Remove scripts, styles, nav, footer, and other noise
+  let clean = html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+    .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+    .replace(/<header[\s\S]*?<\/header>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+
+  const lines: string[] = []
+
+  // Title
+  const titleMatch = clean.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
+  if (titleMatch) lines.push(`Title: ${titleMatch[1].trim()}`)
+
+  // Meta description
+  const metaMatch = clean.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
+    || clean.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)
+  if (metaMatch) lines.push(`Meta description: ${metaMatch[1].trim()}`)
+
+  // Headings
+  const headingMatches = clean.matchAll(/<h([1-4])[^>]*>([\s\S]*?)<\/h\1>/gi)
+  for (const match of headingMatches) {
+    const text = match[2].replace(/<[^>]+>/g, '').trim()
+    if (text) lines.push(`H${match[1]}: ${text}`)
+  }
+
+  // Paragraphs (first 10)
+  const paraMatches = [...clean.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].slice(0, 10)
+  for (const match of paraMatches) {
+    const text = match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    if (text.length > 20) lines.push(text)
+  }
+
+  return lines.join('\n').slice(0, 3000)
+}
+
+async function fetchPageContent(url: string): Promise<string | null> {
+  try {
+    const parsed = new URL(url)
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null
+    if (isBlockedUrl(parsed)) return null
+
+    const response = await fetch(parsed.href, {
+      signal: AbortSignal.timeout(8000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CroutonBot/1.0)' }
+    })
+
+    if (!response.ok) return null
+
+    const html = await response.text()
+    return extractPageContent(html)
+  }
+  catch {
+    return null
+  }
+}
+
 export default defineEventHandler(async (event) => {
-  const { brief } = await readBody<{ brief: string }>(event)
+  const { brief, url } = await readBody<{ brief: string, url?: string }>(event)
 
   if (!brief?.trim()) {
     throw createError({ status: 400, statusText: 'Brief is required' })
   }
 
+  // Fetch reference page if URL provided (failure is non-fatal)
+  let referenceContent: string | null = null
+  if (url?.trim()) {
+    referenceContent = await fetchPageContent(url.trim())
+  }
+
   const ai = createAIProvider(event)
   const modelId = ai.getDefaultModel()
+
+  const userMessage = referenceContent
+    ? `Create a page for: ${brief.trim()}\n\n---\nFor inspiration, here is the content extracted from ${url}:\n\n${referenceContent}\n\nUse the structure, tone, and messaging as inspiration — but write fresh copy adapted to the brief.`
+    : `Create a page for: ${brief.trim()}`
 
   const { text } = await generateText({
     model: ai.model(modelId),
     system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: `Create a page for: ${brief.trim()}`
-      }
-    ]
+    messages: [{ role: 'user', content: userMessage }]
   })
 
   // Strip markdown fences if the model added them anyway

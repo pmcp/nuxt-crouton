@@ -6,6 +6,7 @@ const emit = defineEmits<{
 }>()
 
 const brief = ref('')
+const url = ref('')
 const isGenerating = ref(false)
 const error = ref<string | null>(null)
 
@@ -23,13 +24,17 @@ async function generate() {
   error.value = null
 
   try {
+    const body: Record<string, string> = { brief: brief.value.trim() }
+    if (url.value.trim()) body.url = url.value.trim()
+
     const result = await $fetch<{ content: string }>('/api/ai/generate-page', {
       method: 'POST',
-      body: { brief: brief.value.trim() }
+      body
     })
     emit('apply', result.content)
     isOpen.value = false
     brief.value = ''
+    url.value = ''
   }
   catch (err: any) {
     error.value = err?.data?.statusText || err?.message || 'Generation failed. Try a more specific description.'
@@ -96,6 +101,20 @@ watch(isOpen, (open) => {
           <p class="text-xs text-muted">
             <UKbd size="xs">⌘ Enter</UKbd> to generate
           </p>
+        </div>
+
+        <!-- URL inspiration (optional) -->
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-medium text-muted">
+            Reference URL <span class="font-normal opacity-60">(optional)</span>
+          </label>
+          <UInput
+            v-model="url"
+            placeholder="https://example.com — AI will use the page structure as inspiration"
+            icon="i-lucide-link"
+            :disabled="isGenerating"
+            type="url"
+          />
         </div>
 
         <!-- Example prompts -->

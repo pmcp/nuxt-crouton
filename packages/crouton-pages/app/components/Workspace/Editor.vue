@@ -57,9 +57,24 @@ const loadError = ref<string | null>(null)
 
 // AI page generator
 const showAiGenerator = ref(false)
+// Incrementing key forces CroutonI18nInput to fully remount after AI generation
+const contentKey = ref(0)
 
 async function applyAiContent(content: string) {
   const currentLocale = locale.value || 'en'
+
+  // Path 1: collab is connected — inject into Yjs directly so the editor syncs
+  if (collabForI18n.value?.setContentJson) {
+    try {
+      const parsed = JSON.parse(content)
+      collabForI18n.value.setContentJson(currentLocale, parsed, true)
+    }
+    catch {
+      // Fall through to state-based path
+    }
+  }
+
+  // Path 2: always update state.translations so the value persists on save
   const translations = state.value.translations as Record<string, Record<string, unknown>> | undefined
   if (!translations) {
     (state.value as any).translations = { [currentLocale]: { content } }
@@ -70,9 +85,11 @@ async function applyAiContent(content: string) {
   else {
     translations[currentLocale].content = content
   }
-  // Force re-mount of the content editor with new content
+
+  // Force a full remount of CroutonI18nInput so TipTap reinitialises from state
   contentReady.value = false
   await nextTick()
+  contentKey.value++
   contentReady.value = true
 }
 
@@ -1009,6 +1026,7 @@ defineExpose({ state })
       <div class="flex-1 min-h-0 overflow-auto p-4">
         <CroutonI18nInput
           v-if="contentReady"
+          :key="contentKey"
           v-model="state.translations"
           :fields="translatableFields"
           :layout="i18nLayout"
