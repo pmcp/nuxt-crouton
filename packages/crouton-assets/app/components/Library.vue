@@ -6,7 +6,9 @@ const props = defineProps<{
 }>()
 
 const { getConfig } = useCollections()
-const collectionName = props.collection || getConfig('assets')?.apiPath || 'assetsAssets'
+// Use the registry key ('assets' is the canonical key, per CroutonAssetsPicker convention)
+// useCollectionQuery needs the registry key, NOT the apiPath URL segment
+const collectionName = props.collection || (getConfig('assets') ? 'assets' : 'assetsAssets')
 
 const { items, pending, refresh } = await useCollectionQuery(collectionName)
 
