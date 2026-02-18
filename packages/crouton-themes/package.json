@@ -11,13 +11,16 @@
     "./minimal": "./minimal/nuxt.config.ts",
     "./minimal/*": "./minimal/*",
     "./kr11": "./kr11/nuxt.config.ts",
-    "./kr11/*": "./kr11/*"
+    "./kr11/*": "./kr11/*",
+    "./nuxtcharts": "./nuxtcharts/nuxt.config.ts",
+    "./nuxtcharts/*": "./nuxtcharts/*"
   },
   "files": [
     "themes",
     "ko",
     "minimal",
-    "kr11"
+    "kr11",
+    "nuxtcharts"
   ],
   "keywords": [
     "nuxt",
