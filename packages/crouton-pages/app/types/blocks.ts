@@ -18,6 +18,8 @@ export type BlockType =
   | 'separatorBlock'
   | 'richTextBlock'
   | 'collectionBlock'
+  | 'faqBlock'
+  | 'twoColumnBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -127,6 +129,31 @@ export interface RichTextBlockAttrs {
 
 export type CollectionLayout = 'table' | 'list' | 'grid' | 'cards'
 
+export interface FaqItem {
+  question: string
+  answer: string
+}
+
+export interface FaqBlockAttrs {
+  headline?: string
+  title?: string
+  description?: string
+  items: FaqItem[]
+  allowMultiple?: boolean
+}
+
+export interface TwoColumnBlockAttrs {
+  split?: '1/2' | '1/3' | '2/3'
+  leftTitle?: string
+  leftDescription?: string
+  leftImage?: string
+  leftLinks?: BlockLink[]
+  rightTitle?: string
+  rightDescription?: string
+  rightImage?: string
+  rightLinks?: BlockLink[]
+}
+
 export interface CollectionBlockAttrs {
   /** Collection name from registry (e.g., 'blogPosts', 'products') */
   collection: string
@@ -152,6 +179,8 @@ export type BlockAttrs =
   | SeparatorBlockAttrs
   | RichTextBlockAttrs
   | CollectionBlockAttrs
+  | FaqBlockAttrs
+  | TwoColumnBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -190,6 +219,14 @@ export interface CollectionBlock extends PageBlock<CollectionBlockAttrs> {
   type: 'collectionBlock'
 }
 
+export interface FaqBlock extends PageBlock<FaqBlockAttrs> {
+  type: 'faqBlock'
+}
+
+export interface TwoColumnBlock extends PageBlock<TwoColumnBlockAttrs> {
+  type: 'twoColumnBlock'
+}
+
 // ============================================================================
 // Document Type
 // ============================================================================
@@ -208,14 +245,14 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
   name: string
   description: string
   icon: string
-  category: 'hero' | 'content' | 'cta' | 'layout'
+  category: 'hero' | 'content' | 'cta' | 'layout' | 'faq'
   defaultAttrs: T
   schema: BlockPropertySchema[]
 }
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'collection'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'collection' | 'faq-items'
   label: string
   description?: string
   required?: boolean
@@ -270,4 +307,12 @@ export function isRichTextBlock(block: PageBlock): block is RichTextBlock {
 
 export function isCollectionBlock(block: PageBlock): block is CollectionBlock {
   return block.type === 'collectionBlock'
+}
+
+export function isFaqBlock(block: PageBlock): block is FaqBlock {
+  return block.type === 'faqBlock'
+}
+
+export function isTwoColumnBlock(block: PageBlock): block is TwoColumnBlock {
+  return block.type === 'twoColumnBlock'
 }

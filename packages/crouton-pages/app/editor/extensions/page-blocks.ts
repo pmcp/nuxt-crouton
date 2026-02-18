@@ -12,6 +12,8 @@ import { CTABlock } from './cta-block'
 import { CardGridBlock } from './card-grid-block'
 import { SeparatorBlock } from './separator-block'
 import { CollectionBlock } from './collection-block'
+import { FaqBlock } from './faq-block'
+import { TwoColumnBlock } from './two-column-block'
 import { BlockCommands } from './block-commands'
 
 export interface PageBlocksOptions {
@@ -25,6 +27,8 @@ export interface PageBlocksOptions {
     cardGrid?: boolean
     separator?: boolean
     collection?: boolean
+    faq?: boolean
+    twoColumn?: boolean
   }
   /**
    * Enable slash commands for block insertion
@@ -47,7 +51,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         cta: true,
         cardGrid: true,
         separator: true,
-        collection: true
+        collection: true,
+        faq: true,
+        twoColumn: true
       },
       enableSlashCommands: true,
       suggestionOptions: {}
@@ -77,6 +83,12 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.collection !== false) {
       extensions.push(CollectionBlock)
     }
+    if (blocks?.faq !== false) {
+      extensions.push(FaqBlock)
+    }
+    if (blocks?.twoColumn !== false) {
+      extensions.push(TwoColumnBlock)
+    }
 
     // Add slash commands if enabled
     if (enableSlashCommands) {
@@ -96,6 +108,8 @@ export { CTABlock } from './cta-block'
 export { CardGridBlock } from './card-grid-block'
 export { SeparatorBlock } from './separator-block'
 export { CollectionBlock } from './collection-block'
+export { FaqBlock } from './faq-block'
+export { TwoColumnBlock } from './two-column-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 
 // Export types
@@ -105,6 +119,8 @@ export type { CTABlockOptions } from './cta-block'
 export type { CardGridBlockOptions } from './card-grid-block'
 export type { SeparatorBlockOptions } from './separator-block'
 export type { CollectionBlockOptions } from './collection-block'
+export type { FaqBlockOptions } from './faq-block'
+export type { TwoColumnBlockOptions } from './two-column-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks

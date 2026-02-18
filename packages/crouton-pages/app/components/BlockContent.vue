@@ -36,7 +36,9 @@ const blockComponents: Record<string, string> = {
   cardGridBlock: 'CroutonPagesBlocksRenderCardGridBlock',
   separatorBlock: 'CroutonPagesBlocksRenderSeparatorBlock',
   richTextBlock: 'CroutonPagesBlocksRenderRichTextBlock',
-  collectionBlock: 'CroutonPagesBlocksRenderCollectionBlock'
+  collectionBlock: 'CroutonPagesBlocksRenderCollectionBlock',
+  faqBlock: 'CroutonPagesBlocksRenderFaqBlock',
+  twoColumnBlock: 'CroutonPagesBlocksRenderTwoColumnBlock'
 }
 
 // Get component name for a block type

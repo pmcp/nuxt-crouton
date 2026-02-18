@@ -15,6 +15,8 @@ import type {
   SeparatorBlockAttrs,
   RichTextBlockAttrs,
   CollectionBlockAttrs,
+  FaqBlockAttrs,
+  TwoColumnBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -375,6 +377,86 @@ export const collectionBlockDefinition: BlockDefinition<CollectionBlockAttrs> = 
 // Registry
 // ============================================================================
 
+export const faqBlockDefinition: BlockDefinition<FaqBlockAttrs> = {
+  type: 'faqBlock',
+  name: 'FAQ',
+  description: 'A collapsible FAQ accordion',
+  icon: 'i-lucide-help-circle',
+  category: 'content',
+  defaultAttrs: {
+    items: [
+      { question: 'What is this?', answer: 'A great question — add your answer here.' },
+      { question: 'How does it work?', answer: 'Describe how it works here.' }
+    ],
+    allowMultiple: false
+  },
+  schema: [
+    {
+      name: 'headline',
+      type: 'text',
+      label: 'Headline',
+      description: 'Small text above the title'
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title'
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      label: 'Description'
+    },
+    {
+      name: 'allowMultiple',
+      type: 'switch',
+      label: 'Allow multiple open',
+      description: 'Let users expand more than one item at a time'
+    },
+    {
+      name: 'items',
+      type: 'faq-items',
+      label: 'Questions'
+    }
+  ]
+}
+
+export const twoColumnBlockDefinition: BlockDefinition<TwoColumnBlockAttrs> = {
+  type: 'twoColumnBlock',
+  name: 'Two Columns',
+  description: 'Side-by-side two-column layout',
+  icon: 'i-lucide-columns-2',
+  category: 'layout',
+  defaultAttrs: {
+    split: '1/2',
+    leftTitle: 'Left column',
+    leftDescription: 'Add content for the left side.',
+    rightTitle: 'Right column',
+    rightDescription: 'Add content for the right side.'
+  },
+  schema: [
+    {
+      name: 'split',
+      type: 'select',
+      label: 'Column split',
+      options: [
+        { label: 'Equal (50/50)', value: '1/2' },
+        { label: 'Left narrow (33/67)', value: '1/3' },
+        { label: 'Left wide (67/33)', value: '2/3' }
+      ],
+      defaultValue: '1/2'
+    },
+    { name: 'leftTitle', type: 'text', label: 'Left: Title' },
+    { name: 'leftDescription', type: 'textarea', label: 'Left: Description' },
+    { name: 'leftImage', type: 'image', label: 'Left: Image' },
+    { name: 'leftLinks', type: 'links', label: 'Left: Buttons' },
+    { name: 'rightTitle', type: 'text', label: 'Right: Title' },
+    { name: 'rightDescription', type: 'textarea', label: 'Right: Description' },
+    { name: 'rightImage', type: 'image', label: 'Right: Image' },
+    { name: 'rightLinks', type: 'links', label: 'Right: Buttons' }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -382,7 +464,9 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   cardGridBlock: cardGridBlockDefinition,
   separatorBlock: separatorBlockDefinition,
   richTextBlock: richTextBlockDefinition,
-  collectionBlock: collectionBlockDefinition
+  collectionBlock: collectionBlockDefinition,
+  faqBlock: faqBlockDefinition,
+  twoColumnBlock: twoColumnBlockDefinition
 }
 
 // ============================================================================

@@ -238,6 +238,19 @@ function onDelete() {
               @update:model-value="onFieldChange(field.name, $event)"
             />
           </UFormField>
+
+          <!-- FAQ Items Editor -->
+          <UFormField
+            v-else-if="field.type === 'faq-items'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesFaqItemsEditor
+              :model-value="(localAttrs[field.name] as any[]) || []"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
         </template>
       </div>
 

@@ -59,6 +59,12 @@ export function getBlockCommandItems(query: string): BlockCommandItem[] {
         case 'collectionBlock':
           editor.chain().focus().insertCollectionBlock().run()
           break
+        case 'faqBlock':
+          editor.chain().focus().insertFaqBlock().run()
+          break
+        case 'twoColumnBlock':
+          editor.chain().focus().insertTwoColumnBlock().run()
+          break
         default:
           console.warn(`Unknown block type: ${item.type}`)
       }
