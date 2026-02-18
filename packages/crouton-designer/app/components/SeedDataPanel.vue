@@ -54,6 +54,24 @@ function formatCell(value: any): string {
   const str = String(value)
   return str.length > 60 ? str.slice(0, 57) + '...' : str
 }
+
+// UTable-compatible columns and rows
+const tableColumns = computed(() =>
+  columns.value.map(col => ({
+    accessorKey: col.key,
+    header: col.label
+  }))
+)
+
+const tableRows = computed(() =>
+  rows.value.map(row => {
+    const formatted: Record<string, string> = {}
+    for (const col of columns.value) {
+      formatted[col.key] = formatCell(row[col.key])
+    }
+    return formatted
+  })
+)
 </script>
 
 <template>
@@ -104,38 +122,11 @@ function formatCell(value: any): string {
             />
           </div>
 
-          <div class="overflow-x-auto rounded-md border border-[var(--ui-border)]">
-            <table class="w-full text-xs">
-              <thead>
-                <tr class="bg-[var(--ui-bg-elevated)]">
-                  <th
-                    v-for="col in columns"
-                    :key="col.key"
-                    class="px-3 py-2 text-left font-medium text-[var(--ui-text-muted)] whitespace-nowrap"
-                    :class="{ 'text-[var(--ui-text-dimmed)]': col.key === '_id' }"
-                  >
-                    {{ col.label }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(row, idx) in rows"
-                  :key="row._id || idx"
-                  class="border-t border-[var(--ui-border)]"
-                >
-                  <td
-                    v-for="col in columns"
-                    :key="col.key"
-                    class="px-3 py-2 whitespace-nowrap"
-                    :class="{ 'text-[var(--ui-text-dimmed)] font-mono': col.key === '_id' }"
-                  >
-                    {{ formatCell(row[col.key]) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <UTable
+            :data="tableRows"
+            :columns="tableColumns"
+            class="text-xs"
+          />
         </div>
       </div>
     </template>

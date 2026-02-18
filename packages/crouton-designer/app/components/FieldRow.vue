@@ -114,8 +114,12 @@ const hasExpandableMeta = computed(() => {
     <!-- Compact row -->
     <div class="flex items-center gap-2 px-2 py-1.5 group">
       <!-- Expand chevron -->
-      <button
-        class="shrink-0 text-[var(--ui-text-muted)] hover:text-[var(--ui-text)] transition-colors"
+      <UButton
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        :aria-expanded="expanded"
+        class="shrink-0"
         @click="expanded = !expanded"
       >
         <UIcon
@@ -123,29 +127,34 @@ const hasExpandableMeta = computed(() => {
           class="size-3.5 transition-transform"
           :class="{ 'rotate-90': expanded }"
         />
-      </button>
+      </UButton>
 
       <!-- Field type icon -->
       <UIcon :name="fieldIcon" class="size-4 shrink-0 text-[var(--ui-text-muted)]" />
 
       <!-- Field name (click to edit) -->
       <div class="flex-1 min-w-0">
-        <input
+        <UInput
           v-if="editingName"
           v-model="editName"
           :data-field-name="field.id"
-          class="w-full bg-transparent text-sm font-mono border border-[var(--ui-border-accented)] rounded px-1.5 py-0.5 outline-none focus:border-[var(--ui-color-primary-500)]"
+          size="xs"
+          class="font-mono"
+          autofocus
           @blur="saveName"
           @keydown.enter="saveName"
           @keydown.escape="cancelEditName"
-        >
-        <button
+        />
+        <UButton
           v-else
-          class="text-sm font-mono truncate text-left cursor-text hover:underline"
+          variant="link"
+          color="neutral"
+          size="xs"
+          class="font-mono truncate text-left"
           @click="startEditName"
         >
           {{ field.name }}
-        </button>
+        </UButton>
       </div>
 
       <!-- Field type dropdown -->

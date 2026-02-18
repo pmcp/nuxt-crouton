@@ -126,15 +126,14 @@ defineExpose({ editor })
 
     <!-- Validation issues banner -->
     <div v-if="issues.filter(i => !i.collectionId).length > 0" class="space-y-1">
-      <div
+      <UAlert
         v-for="issue in issues.filter(i => !i.collectionId)"
         :key="issue.code + issue.message"
-        class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-md"
-        :class="issue.type === 'error' ? 'bg-[var(--ui-color-error-50)] text-[var(--ui-color-error-500)]' : 'bg-[var(--ui-color-warning-50)] text-[var(--ui-color-warning-500)]'"
-      >
-        <UIcon :name="issue.type === 'error' ? 'i-lucide-alert-circle' : 'i-lucide-alert-triangle'" class="size-3.5 shrink-0" />
-        {{ issue.message }}
-      </div>
+        :color="issue.type === 'error' ? 'error' : 'warning'"
+        variant="subtle"
+        :icon="issue.type === 'error' ? 'i-lucide-alert-circle' : 'i-lucide-alert-triangle'"
+        :description="issue.message"
+      />
     </div>
 
     <!-- Loading state -->
@@ -193,13 +192,15 @@ defineExpose({ editor })
         <div class="space-y-1">
           <!-- Inline collection name editor -->
           <div v-if="editingCollectionId === item.value" class="flex items-center gap-2 px-2 py-1.5 mb-2">
-            <input
+            <UInput
               v-model="editCollectionName"
-              class="flex-1 bg-transparent text-sm font-semibold border border-[var(--ui-border-accented)] rounded px-2 py-1 outline-none focus:border-[var(--ui-color-primary-500)]"
+              size="xs"
+              class="flex-1 font-semibold"
+              autofocus
               @keydown.enter="saveCollectionName(item.value as string)"
               @keydown.escape="editingCollectionId = null"
               @blur="saveCollectionName(item.value as string)"
-            >
+            />
           </div>
 
           <!-- Collection-level validation issues -->

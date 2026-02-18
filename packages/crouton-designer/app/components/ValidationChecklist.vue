@@ -76,51 +76,45 @@ const allPassed = computed(() => props.issues.length === 0)
     </div>
 
     <!-- All passed state -->
-    <div v-if="allPassed" class="flex items-center gap-2 text-sm text-[var(--ui-color-success-500)] bg-[var(--ui-color-success-50)] rounded-lg px-4 py-3">
-      <UIcon name="i-lucide-check-circle" class="size-5 shrink-0" />
-      <span>{{ t('designer.validation.schemaValid') }}</span>
-    </div>
+    <UAlert
+      v-if="allPassed"
+      color="success"
+      variant="subtle"
+      icon="i-lucide-check-circle"
+      :description="t('designer.validation.schemaValid')"
+    />
 
     <!-- Global issues (e.g. circular references) -->
     <div v-if="globalIssues.length > 0" class="space-y-1.5">
-      <div
+      <UAlert
         v-for="issue in globalIssues"
         :key="issue.code + issue.message"
-        class="flex items-center gap-2 text-sm px-3 py-2 rounded-md"
-        :class="issue.type === 'error'
-          ? 'bg-[var(--ui-color-error-50)] text-[var(--ui-color-error-500)]'
-          : 'bg-[var(--ui-color-warning-50)] text-[var(--ui-color-warning-500)]'"
-      >
-        <UIcon
-          :name="issue.type === 'error' ? 'i-lucide-x-circle' : 'i-lucide-alert-triangle'"
-          class="size-4 shrink-0"
-        />
-        <span>{{ issue.message }}</span>
-      </div>
+        :color="issue.type === 'error' ? 'error' : 'warning'"
+        variant="subtle"
+        :icon="issue.type === 'error' ? 'i-lucide-x-circle' : 'i-lucide-alert-triangle'"
+        :description="issue.message"
+      />
     </div>
 
     <!-- Per-collection issues -->
     <div v-for="group in collectionGroups" :key="group.collectionId" class="space-y-1.5">
-      <button
-        class="text-xs font-medium text-[var(--ui-text-muted)] hover:text-[var(--ui-text)] transition-colors cursor-pointer"
+      <UButton
+        variant="link"
+        color="neutral"
+        size="xs"
+        class="text-xs font-medium"
         @click="emit('navigate-to', group.collectionId)"
       >
         {{ collectionName(group.collectionId) }}
-      </button>
-      <div
+      </UButton>
+      <UAlert
         v-for="issue in group.issues"
         :key="issue.code + (issue.fieldId || '') + issue.message"
-        class="flex items-center gap-2 text-sm px-3 py-2 rounded-md"
-        :class="issue.type === 'error'
-          ? 'bg-[var(--ui-color-error-50)] text-[var(--ui-color-error-500)]'
-          : 'bg-[var(--ui-color-warning-50)] text-[var(--ui-color-warning-500)]'"
-      >
-        <UIcon
-          :name="issue.type === 'error' ? 'i-lucide-x-circle' : 'i-lucide-alert-triangle'"
-          class="size-4 shrink-0"
-        />
-        <span>{{ issue.message }}</span>
-      </div>
+        :color="issue.type === 'error' ? 'error' : 'warning'"
+        variant="subtle"
+        :icon="issue.type === 'error' ? 'i-lucide-x-circle' : 'i-lucide-alert-triangle'"
+        :description="issue.message"
+      />
     </div>
   </div>
 </template>

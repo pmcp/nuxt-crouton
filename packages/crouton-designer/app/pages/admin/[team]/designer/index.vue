@@ -80,8 +80,8 @@ function phaseColor(phase: string) {
     <template #body>
       <div class="max-w-4xl mx-auto px-4 py-8">
         <!-- Loading -->
-        <div v-if="status === 'pending'" class="flex justify-center py-16">
-          <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-[var(--ui-text-muted)]" />
+        <div v-if="status === 'pending'" class="space-y-3">
+          <USkeleton v-for="i in 3" :key="i" class="h-20 w-full rounded-lg" />
         </div>
 
         <!-- Empty state -->
@@ -103,18 +103,18 @@ function phaseColor(phase: string) {
 
         <!-- Project list -->
         <div v-else class="space-y-3">
-          <div
+          <NuxtLink
             v-for="project in sortedProjects"
             :key="project.id"
-            class="flex items-center gap-4 p-4 rounded-lg border border-[var(--ui-border)] hover:bg-[var(--ui-bg-elevated)] cursor-pointer transition-colors"
-            @click="router.push(`/admin/${teamSlug}/designer/${project.id}`)"
+            :to="`/admin/${teamSlug}/designer/${project.id}`"
+            class="flex items-center gap-4 p-4 rounded-lg border border-[var(--ui-border)] hover:bg-[var(--ui-bg-elevated)] transition-colors"
           >
             <div class="flex-1 min-w-0">
               <h3 class="font-medium truncate">
                 {{ project.name || t('designer.untitledProject') }}
               </h3>
               <div class="flex items-center gap-3 mt-1 text-xs text-[var(--ui-text-muted)]">
-                <span>Updated {{ new Date(project.updatedAt).toLocaleDateString() }}</span>
+                <span>{{ useTimeAgo(project.updatedAt).value }}</span>
               </div>
             </div>
             <UBadge
@@ -128,9 +128,9 @@ function phaseColor(phase: string) {
               variant="ghost"
               color="neutral"
               size="sm"
-              @click.stop="deleteTarget = project"
+              @click.prevent="deleteTarget = project"
             />
-          </div>
+          </NuxtLink>
         </div>
 
         <!-- Delete confirmation modal -->

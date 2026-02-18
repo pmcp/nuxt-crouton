@@ -41,7 +41,7 @@ watch(() => props.messages.length, () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-full" role="log" aria-live="polite">
     <!-- Messages area -->
     <div
       ref="messagesContainer"
@@ -59,23 +59,35 @@ watch(() => props.messages.length, () => {
         </div>
       </div>
 
-      <div
-        v-for="msg in messages"
-        :key="msg.id"
-        class="flex"
-        :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
-      >
+      <template v-for="msg in messages" :key="msg.id">
+        <!-- System messages rendered as centered phase dividers -->
         <div
-          class="max-w-[85%] rounded-lg px-3 py-2 text-sm"
-          :class="msg.role === 'user'
-            ? 'bg-[var(--ui-color-primary-500)] text-white'
-            : 'bg-[var(--ui-bg-elevated)]'"
+          v-if="msg.role === 'system'"
+          class="flex items-center gap-3 py-1"
         >
-          <div class="whitespace-pre-wrap">
-            {{ msg.content }}
+          <div class="flex-1 border-t border-[var(--ui-border)]" />
+          <span class="text-xs text-[var(--ui-text-muted)] whitespace-nowrap">{{ msg.content.replace(/^---\s*|\s*---$/g, '') }}</span>
+          <div class="flex-1 border-t border-[var(--ui-border)]" />
+        </div>
+
+        <!-- User/assistant messages -->
+        <div
+          v-else
+          class="flex"
+          :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
+        >
+          <div
+            class="max-w-[85%] rounded-lg px-3 py-2 text-sm"
+            :class="msg.role === 'user'
+              ? 'bg-[var(--ui-color-primary-500)] text-white'
+              : 'bg-[var(--ui-bg-elevated)]'"
+          >
+            <div class="whitespace-pre-wrap">
+              {{ msg.content }}
+            </div>
           </div>
         </div>
-      </div>
+      </template>
 
       <!-- Loading indicator -->
       <div v-if="isLoading" class="flex justify-start">
@@ -90,18 +102,25 @@ watch(() => props.messages.length, () => {
     </div>
 
     <!-- Error display with retry -->
-    <div v-if="error" class="mx-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-sm flex items-center gap-2 text-red-700 dark:text-red-400">
-      <UIcon name="i-lucide-alert-circle" class="size-4 shrink-0" />
-      <span class="flex-1">{{ t('designer.chat.error') }}</span>
-      <UButton
-        size="xs"
-        color="error"
-        variant="soft"
-        icon="i-lucide-refresh-cw"
-        :label="t('designer.chat.retry')"
-        @click="emit('retry')"
-      />
-    </div>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-alert-circle"
+      :description="t('designer.chat.error')"
+      class="mx-3"
+    >
+      <template #actions>
+        <UButton
+          size="xs"
+          color="error"
+          variant="soft"
+          icon="i-lucide-refresh-cw"
+          :label="t('designer.chat.retry')"
+          @click="emit('retry')"
+        />
+      </template>
+    </UAlert>
 
     <!-- Input area -->
     <div class="border-t border-[var(--ui-border)] p-3">

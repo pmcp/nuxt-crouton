@@ -212,22 +212,13 @@ const fields = computed<ConfigField[]>(() => [
           {{ t('designer.intake.packages') }}
         </label>
         <div class="grid grid-cols-2 gap-2 mt-1">
-          <button
+          <UCheckbox
             v-for="pkg in availablePackages"
             :key="pkg.value"
-            class="flex items-center gap-2 px-3 py-2 rounded-md border text-sm text-left transition-colors"
-            :class="(config.packages || []).includes(pkg.value)
-              ? 'border-[var(--ui-color-primary-500)] bg-[var(--ui-color-primary-50)]'
-              : 'border-[var(--ui-border)] hover:border-[var(--ui-border-hover)]'"
-            @click="togglePackage(pkg.value)"
-          >
-            <UIcon
-              :name="(config.packages || []).includes(pkg.value) ? 'i-lucide-check-square' : 'i-lucide-square'"
-              class="size-4 shrink-0"
-              :class="(config.packages || []).includes(pkg.value) ? 'text-[var(--ui-color-primary-500)]' : 'text-[var(--ui-text-muted)]'"
-            />
-            {{ pkg.label }}
-          </button>
+            :label="pkg.label"
+            :model-value="(config.packages || []).includes(pkg.value)"
+            @update:model-value="togglePackage(pkg.value)"
+          />
         </div>
       </div>
     </div>
@@ -238,9 +229,9 @@ const fields = computed<ConfigField[]>(() => [
         <UIcon
           :name="config.name && config.appType ? 'i-lucide-check-circle' : 'i-lucide-circle'"
           class="size-4"
-          :class="config.name && config.appType ? 'text-green-500' : 'text-[var(--ui-text-muted)]'"
+          :class="config.name && config.appType ? 'text-[var(--ui-color-success-500)]' : 'text-[var(--ui-text-muted)]'"
         />
-        <span :class="config.name && config.appType ? 'text-green-600' : 'text-[var(--ui-text-muted)]'">
+        <span :class="config.name && config.appType ? 'text-[var(--ui-color-success-500)]' : 'text-[var(--ui-text-muted)]'">
           {{ config.name && config.appType ? t('designer.intake.readyToContinue') : t('designer.intake.setNameTypeToContinue') }}
         </span>
       </div>

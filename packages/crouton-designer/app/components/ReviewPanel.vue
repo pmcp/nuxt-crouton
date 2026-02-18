@@ -78,17 +78,13 @@ const stepLabels: Record<string, string> = {
   doctor: 'designer.review.stepDoctor'
 }
 
-const copied = ref<string | null>(null)
+const { copy, copied: clipboardCopied } = useClipboard()
+const copiedKey = ref<string | null>(null)
 
 async function copyText(text: string, key: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    copied.value = key
-    setTimeout(() => { copied.value = null }, 2000)
-  }
-  catch {
-    // Fallback — select text
-  }
+  await copy(text)
+  copiedKey.value = key
+  setTimeout(() => { copiedKey.value = null }, 2000)
 }
 
 function handleNavigateToCollection(_collectionId: string) {
@@ -156,8 +152,8 @@ function handleNavigateToCollection(_collectionId: string) {
       <div class="space-y-4">
         <UButton
           :label="status === 'creating' ? t('designer.review.creating') : t('designer.review.createApp')"
-          :icon="status === 'creating' ? 'i-lucide-loader-2' : 'i-lucide-rocket'"
-          :class="{ 'animate-pulse': status === 'creating' }"
+          icon="i-lucide-rocket"
+          :loading="status === 'creating'"
           size="lg"
           block
           :disabled="hasErrors || !appName || Object.keys(artifactsByCategory).length === 0 || status === 'creating'"
@@ -170,13 +166,14 @@ function handleNavigateToCollection(_collectionId: string) {
       </div>
 
       <!-- Error state -->
-      <div v-if="status === 'error' && error" class="rounded-lg border border-[var(--ui-color-error-500)] p-4 space-y-2">
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-circle-x" class="size-5 text-[var(--ui-color-error-500)]" />
-          <span class="text-sm font-medium">{{ t('designer.review.createFailed') }}</span>
-        </div>
-        <p class="text-xs text-[var(--ui-text-muted)] font-mono">{{ error }}</p>
-      </div>
+      <UAlert
+        v-if="status === 'error' && error"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-circle-x"
+        :title="t('designer.review.createFailed')"
+        :description="error"
+      />
 
       <!-- Post-creation success -->
       <div v-if="status === 'done' && result" class="space-y-4 rounded-lg border border-[var(--ui-border)] p-4">
@@ -226,7 +223,7 @@ function handleNavigateToCollection(_collectionId: string) {
             <p class="text-xs text-[var(--ui-text-muted)] mb-1">{{ t('designer.review.runDev') }}</p>
             <pre class="bg-[var(--ui-bg-elevated)] rounded-md p-3 text-xs font-mono">cd {{ result.appDir }} && pnpm dev</pre>
             <UButton
-              :icon="copied === 'dev' ? 'i-lucide-check' : 'i-lucide-copy'"
+              :icon="copiedKey === 'dev' ? 'i-lucide-check' : 'i-lucide-copy'"
               variant="ghost"
               color="neutral"
               size="xs"
@@ -240,7 +237,7 @@ function handleNavigateToCollection(_collectionId: string) {
             <p class="text-xs text-[var(--ui-text-muted)] mb-1">{{ t('designer.review.deployInstructions') }}</p>
             <pre class="bg-[var(--ui-bg-elevated)] rounded-md p-3 text-xs font-mono">./scripts/deploy-app.sh {{ result.appDir }}</pre>
             <UButton
-              :icon="copied === 'deploy' ? 'i-lucide-check' : 'i-lucide-copy'"
+              :icon="copiedKey === 'deploy' ? 'i-lucide-check' : 'i-lucide-copy'"
               variant="ghost"
               color="neutral"
               size="xs"
