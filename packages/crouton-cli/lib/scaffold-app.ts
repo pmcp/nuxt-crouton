@@ -1,4 +1,5 @@
 // scaffold-app.ts — Generate a complete crouton app scaffold
+import { randomBytes } from 'node:crypto'
 import { join } from 'node:path'
 import { access, mkdir, writeFile } from 'node:fs/promises'
 import consola from 'consola'
@@ -294,6 +295,26 @@ BETTER_AUTH_URL=http://localhost:3000
 `
 }
 
+function tmplEnv(secret: string): string {
+  return `# Authentication (required)
+BETTER_AUTH_SECRET=${secret}
+BETTER_AUTH_URL=http://localhost:3000
+
+# OAuth (optional)
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=
+# GITHUB_CLIENT_ID=
+# GITHUB_CLIENT_SECRET=
+
+# Email (optional)
+# NUXT_RESEND_API_KEY=
+# NUXT_EMAIL_FROM=noreply@yourdomain.com
+
+# AI (optional)
+# NUXT_ANTHROPIC_API_KEY=
+`
+}
+
 function tmplGitignore(): string {
   return `# Nuxt dev/build outputs
 .output
@@ -494,6 +515,7 @@ export async function scaffoldApp(
   }
 
   const vars: ScaffoldVars = { name, features, extends: frameworkPackages, theme, dialect, cf, modules }
+  const authSecret = randomBytes(32).toString('hex')
 
   // Build file list
   const files: ScaffoldFile[] = [
@@ -501,6 +523,7 @@ export async function scaffoldApp(
     { path: 'nuxt.config.ts', content: tmplNuxtConfig(vars) },
     { path: 'crouton.config.js', content: tmplCroutonConfig(vars) },
     { path: 'app.vue', content: tmplAppVue() },
+    { path: '.env', content: tmplEnv(authSecret) },
     { path: '.env.example', content: tmplEnvExample() },
     { path: '.gitignore', content: tmplGitignore() },
     { path: 'app/app.config.ts', content: tmplAppConfig() },
