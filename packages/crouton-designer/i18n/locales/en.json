@@ -39,7 +39,7 @@
       "addCustomField": "Add Custom Field",
       "allowedFieldsHint": "Allowed field names:",
       "allFieldsAdded": "All allowed custom fields have been added",
-      "customFieldCount": "{count} custom {count, plural, one {field} other {fields}}",
+      "customFieldCount": "{count} custom fields",
       "noExtensionPoints": "This collection cannot be extended",
       "noCollections": "Selected packages don't provide any collections."
     },
