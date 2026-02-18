@@ -202,7 +202,8 @@
       "events": "Event Tracking",
       "collab": "Collaboration",
       "sales": "Point of Sale",
-      "triage": "Discussion Triage"
+      "triage": "Discussion Triage",
+      "charts": "Charts & Visualizations"
     },
     "intake": {
       "appConfiguration": "App Configuration",
