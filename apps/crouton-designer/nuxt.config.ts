@@ -14,10 +14,6 @@ export default defineNuxtConfig({
 
   modules: ['@nuxthub/core', '@nuxt/ui', '@nuxt/eslint'],
 
-  hub: {
-    db: 'sqlite'
-  },
-
   // Auto-create a personal workspace so team-scoped APIs work immediately
   croutonAuth: {
     teams: {

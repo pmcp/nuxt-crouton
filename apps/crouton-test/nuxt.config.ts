@@ -34,5 +34,4 @@ export default defineNuxtConfig({
     }
   },
 
-  hub: { db: 'sqlite' }
 })

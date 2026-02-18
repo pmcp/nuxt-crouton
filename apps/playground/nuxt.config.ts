@@ -22,11 +22,6 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  // NuxtHub for SQLite database
-  hub: {
-    database: true
-  },
-
   routeRules: {
     '/': { prerender: true }
   },

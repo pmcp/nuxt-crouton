@@ -9,6 +9,5 @@ export default defineNuxtConfig({
     '@fyit/crouton-sales',
     './layers/sales'
   ],
-  modules: ['@nuxthub/core', '@nuxt/ui'],
-  hub: { db: 'sqlite' }
+  modules: ['@nuxthub/core', '@nuxt/ui']
 })

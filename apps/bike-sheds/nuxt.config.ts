@@ -20,10 +20,7 @@ export default defineNuxtConfig({
     './layers/bookings',
     './layers/pages'
   ],
-  hub: {
-    db: 'sqlite',
-    kv: true
-  },
+  hub: { kv: true },
 
   // Crouton email support
   croutonEmail: {
