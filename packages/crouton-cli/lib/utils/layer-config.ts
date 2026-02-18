@@ -40,7 +40,7 @@ export async function updateLayerRootConfig(layer: string, collectionName: strin
       { code: 'nl', file: 'nl.json' },
       { code: 'fr', file: 'fr.json' }
     ],
-    langDir: './i18n/locales'
+    langDir: './locales'
   }`
         : ''
 
@@ -201,7 +201,7 @@ export async function addI18nConfigToLayer(configPath: string, config: string): 
       { code: 'nl', file: 'nl.json' },
       { code: 'fr', file: 'fr.json' }
     ],
-    langDir: './i18n/locales'
+    langDir: './locales'
   }`
 
   // Find the last closing brace before the final })
