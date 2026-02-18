@@ -20,6 +20,7 @@ export type BlockType =
   | 'collectionBlock'
   | 'faqBlock'
   | 'twoColumnBlock'
+  | 'chartBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -167,6 +168,25 @@ export interface CollectionBlockAttrs {
   showPagination?: boolean
 }
 
+export type ChartType = 'bar' | 'line' | 'area' | 'donut'
+
+export interface ChartBlockAttrs {
+  /** Collection name from registry (e.g., 'monthlySales') */
+  collection: string
+  /** Chart type to render */
+  chartType: ChartType
+  /** Field to use as X axis. Auto-resolved from display.title if empty. */
+  xField?: string
+  /** Comma-separated field names for Y axis values. Auto-detected if empty. */
+  yFields?: string
+  /** Optional title above the chart */
+  title?: string
+  /** Chart height in pixels */
+  height?: number
+  /** Stack series (bar/area charts) */
+  stacked?: boolean
+}
+
 // ============================================================================
 // Block Type Union
 // ============================================================================
@@ -181,6 +201,7 @@ export type BlockAttrs =
   | CollectionBlockAttrs
   | FaqBlockAttrs
   | TwoColumnBlockAttrs
+  | ChartBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -225,6 +246,10 @@ export interface FaqBlock extends PageBlock<FaqBlockAttrs> {
 
 export interface TwoColumnBlock extends PageBlock<TwoColumnBlockAttrs> {
   type: 'twoColumnBlock'
+}
+
+export interface ChartBlock extends PageBlock<ChartBlockAttrs> {
+  type: 'chartBlock'
 }
 
 // ============================================================================
@@ -315,4 +340,8 @@ export function isFaqBlock(block: PageBlock): block is FaqBlock {
 
 export function isTwoColumnBlock(block: PageBlock): block is TwoColumnBlock {
   return block.type === 'twoColumnBlock'
+}
+
+export function isChartBlock(block: PageBlock): block is ChartBlock {
+  return block.type === 'chartBlock'
 }

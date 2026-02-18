@@ -17,6 +17,7 @@ import type {
   CollectionBlockAttrs,
   FaqBlockAttrs,
   TwoColumnBlockAttrs,
+  ChartBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -457,6 +458,77 @@ export const twoColumnBlockDefinition: BlockDefinition<TwoColumnBlockAttrs> = {
   ]
 }
 
+export const chartBlockDefinition: BlockDefinition<ChartBlockAttrs> = {
+  type: 'chartBlock',
+  name: 'Chart',
+  description: 'Embed a collection as a chart (bar, line, area, donut)',
+  icon: 'i-lucide-chart-bar',
+  category: 'content',
+  defaultAttrs: {
+    collection: '',
+    chartType: 'bar',
+    height: 300,
+    stacked: false
+  },
+  schema: [
+    {
+      name: 'collection',
+      type: 'collection',
+      label: 'Collection',
+      required: true,
+      description: 'Select a collection to visualize'
+    },
+    {
+      name: 'chartType',
+      type: 'select',
+      label: 'Chart Type',
+      options: [
+        { label: 'Bar', value: 'bar' },
+        { label: 'Line', value: 'line' },
+        { label: 'Area', value: 'area' },
+        { label: 'Donut', value: 'donut' }
+      ],
+      defaultValue: 'bar'
+    },
+    {
+      name: 'yFields',
+      type: 'text',
+      label: 'Y-axis fields',
+      description: 'Comma-separated field names. Leave empty to auto-detect numeric fields.'
+    },
+    {
+      name: 'xField',
+      type: 'text',
+      label: 'X-axis field',
+      description: 'Field for the X axis. Auto-resolved from collection title field if empty.'
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+      description: 'Optional heading above the chart'
+    },
+    {
+      name: 'height',
+      type: 'select',
+      label: 'Height',
+      options: [
+        { label: '200px', value: '200' },
+        { label: '300px', value: '300' },
+        { label: '400px', value: '400' },
+        { label: '500px', value: '500' }
+      ],
+      defaultValue: '300'
+    },
+    {
+      name: 'stacked',
+      type: 'switch',
+      label: 'Stacked',
+      description: 'Stack series (bar and area charts only)'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -466,7 +538,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   richTextBlock: richTextBlockDefinition,
   collectionBlock: collectionBlockDefinition,
   faqBlock: faqBlockDefinition,
-  twoColumnBlock: twoColumnBlockDefinition
+  twoColumnBlock: twoColumnBlockDefinition,
+  chartBlock: chartBlockDefinition
 }
 
 // ============================================================================

@@ -14,6 +14,7 @@ import { SeparatorBlock } from './separator-block'
 import { CollectionBlock } from './collection-block'
 import { FaqBlock } from './faq-block'
 import { TwoColumnBlock } from './two-column-block'
+import { ChartBlock } from './chart-block'
 import { BlockCommands } from './block-commands'
 
 export interface PageBlocksOptions {
@@ -29,6 +30,7 @@ export interface PageBlocksOptions {
     collection?: boolean
     faq?: boolean
     twoColumn?: boolean
+    chart?: boolean
   }
   /**
    * Enable slash commands for block insertion
@@ -53,7 +55,8 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         separator: true,
         collection: true,
         faq: true,
-        twoColumn: true
+        twoColumn: true,
+        chart: true
       },
       enableSlashCommands: true,
       suggestionOptions: {}
@@ -89,6 +92,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.twoColumn !== false) {
       extensions.push(TwoColumnBlock)
     }
+    if (blocks?.chart !== false) {
+      extensions.push(ChartBlock)
+    }
 
     // Add slash commands if enabled
     if (enableSlashCommands) {
@@ -110,6 +116,7 @@ export { SeparatorBlock } from './separator-block'
 export { CollectionBlock } from './collection-block'
 export { FaqBlock } from './faq-block'
 export { TwoColumnBlock } from './two-column-block'
+export { ChartBlock } from './chart-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 
 // Export types
@@ -121,6 +128,7 @@ export type { SeparatorBlockOptions } from './separator-block'
 export type { CollectionBlockOptions } from './collection-block'
 export type { FaqBlockOptions } from './faq-block'
 export type { TwoColumnBlockOptions } from './two-column-block'
+export type { ChartBlockOptions } from './chart-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks
