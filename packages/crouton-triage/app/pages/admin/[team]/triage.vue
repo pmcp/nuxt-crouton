@@ -68,7 +68,9 @@ const tabs = computed(() => [
     </template>
 
     <template #body>
-      <NuxtPage />
+      <div class="max-w-5xl mx-auto w-full">
+        <NuxtPage />
+      </div>
     </template>
   </UDashboardPanel>
 </template>
