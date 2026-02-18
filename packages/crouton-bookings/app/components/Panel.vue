@@ -301,73 +301,77 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full min-h-0 overflow-hidden">
-    <!-- Filter controls -->
-    <CroutonBookingsPanelFilters
-      :locations="resolvedLocations"
-      :selected-locations="filterState.locations"
-      :show-locations="showLocations"
-      :show-map="showMap"
-      :show-calendar="showCalendar"
-      :show-cancelled="filterState.showCancelled"
-      :has-locations-with-coordinates="hasLocationsWithCoordinates"
-      :can-manage-locations="effectiveIsAdmin"
-      :calendar-view="calendarView"
-      @update:selected-locations="filterState.locations = $event"
-      @update:show-locations="showLocations = $event"
-      @update:show-map="showMap = $event"
-      @update:show-calendar="showCalendar = $event"
-      @update:show-cancelled="filterState.showCancelled = $event"
-      @update:calendar-view="calendarView = $event"
-      @go-to-today="onGoToToday"
-      @add-location="onAddLocation"
-      @edit-location="onEditLocation"
-    />
+  <UCard class="h-full" :ui="{ root: 'flex flex-col', body: 'p-0 sm:p-2 flex-1 min-h-0' }">
+    <template #header>
+      <div class="flex flex-col gap-4">
+        <!-- Filter controls -->
+        <CroutonBookingsPanelFilters
+          :locations="resolvedLocations"
+          :selected-locations="filterState.locations"
+          :show-locations="showLocations"
+          :show-map="showMap"
+          :show-calendar="showCalendar"
+          :show-cancelled="filterState.showCancelled"
+          :has-locations-with-coordinates="hasLocationsWithCoordinates"
+          :can-manage-locations="effectiveIsAdmin"
+          :calendar-view="calendarView"
+          @update:selected-locations="filterState.locations = $event"
+          @update:show-locations="showLocations = $event"
+          @update:show-map="showMap = $event"
+          @update:show-calendar="showCalendar = $event"
+          @update:show-cancelled="filterState.showCancelled = $event"
+          @update:calendar-view="calendarView = $event"
+          @go-to-today="onGoToToday"
+          @add-location="onAddLocation"
+          @edit-location="onEditLocation"
+        />
 
-    <!-- Map section (independent, collapsible) -->
-    <Transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 max-h-0"
-      enter-to-class="opacity-100 max-h-[300px]"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="opacity-100 max-h-[300px]"
-      leave-to-class="opacity-0 max-h-0"
-    >
-      <CroutonBookingsPanelMap
-        v-if="showMap && hasLocationsWithCoordinates"
-        :locations="resolvedLocations"
-        :selected-locations="filterState.locations"
-        @toggle-location="toggleLocation"
-      />
-    </Transition>
+        <!-- Map section (independent, collapsible) -->
+        <Transition
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="opacity-0 max-h-0"
+          enter-to-class="opacity-100 max-h-[300px]"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 max-h-[300px]"
+          leave-to-class="opacity-0 max-h-0"
+        >
+          <CroutonBookingsPanelMap
+            v-if="showMap && hasLocationsWithCoordinates"
+            :locations="resolvedLocations"
+            :selected-locations="filterState.locations"
+            @toggle-location="toggleLocation"
+          />
+        </Transition>
 
-    <!-- Calendar section (collapsible) -->
-    <Transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 max-h-0"
-      enter-to-class="opacity-100 max-h-[500px]"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="opacity-100 max-h-[500px]"
-      leave-to-class="opacity-0 max-h-0"
-    >
-      <CroutonBookingsCalendar
-        v-if="showCalendar"
-        ref="calendarRef"
-        v-model:filters="filterState"
-        :bookings="resolvedBookings"
-        :locations="resolvedLocations"
-        :settings="resolvedSettings"
-        :view="calendarView"
-        :highlighted-date="hoveredDate"
-        :creating-at-date="creatingAtDate"
-        @hover="onCalendarHover"
-        @day-click="onCalendarDayClick"
-        @hover-booking="(id) => hoveredBookingId = id"
-      />
-    </Transition>
+        <!-- Calendar section (collapsible) -->
+        <Transition
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="opacity-0 max-h-0"
+          enter-to-class="opacity-100 max-h-[500px]"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 max-h-[500px]"
+          leave-to-class="opacity-0 max-h-0"
+        >
+          <CroutonBookingsCalendar
+            v-if="showCalendar"
+            ref="calendarRef"
+            v-model:filters="filterState"
+            :bookings="resolvedBookings"
+            :locations="resolvedLocations"
+            :settings="resolvedSettings"
+            :view="calendarView"
+            :highlighted-date="hoveredDate"
+            :creating-at-date="creatingAtDate"
+            @hover="onCalendarHover"
+            @day-click="onCalendarDayClick"
+            @hover-booking="(id) => hoveredBookingId = id"
+          />
+        </Transition>
+      </div>
+    </template>
 
     <!-- List section -->
-    <div class="flex-1 min-h-0 overflow-y-auto">
+    <UScrollArea class="h-full px-4 pb-4">
       <CroutonBookingsList
         :bookings="filteredBookings"
         :loading="resolvedLoading"
@@ -386,6 +390,6 @@ defineExpose({
         @updated="onBookingUpdated"
         @email-sent="onEmailSent"
       />
-    </div>
-  </div>
+    </UScrollArea>
+  </UCard>
 </template>

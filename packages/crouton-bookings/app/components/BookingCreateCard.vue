@@ -69,6 +69,26 @@ function getLocationTitle(location: LocationData): string {
     || 'Untitled'
 }
 
+// Get localized location content/description
+function getLocationContent(location: LocationData): string | null {
+  const translations = location.translations as Record<string, { content?: string }> | undefined
+
+  return translations?.[locale.value]?.content
+    || translations?.en?.content
+    || location.content
+    || null
+}
+
+// Get location address line
+function getLocationAddress(location: LocationData): string | null {
+  const translations = location.translations as Record<string, { street?: string; city?: string }> | undefined
+  const street = translations?.[locale.value]?.street || translations?.en?.street || location.street
+  const city = translations?.[locale.value]?.city || translations?.en?.city || location.city
+
+  if (!street && !city) return null
+  return [street, city].filter(Boolean).join(', ')
+}
+
 // Local state - initialize from booking if in edit mode
 const localLocationId = ref<string | null>(props.booking?.location ?? null)
 const localSlotId = ref<string | null>(getFirstSlotId(props.booking?.slot))
@@ -270,12 +290,12 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
   <UCard
     variant="outline"
     :ui="{
-      root: 'bg-elevated shadow-md',
-      body: 'p-3',
+      root: 'bg-default shadow-md',
+      header: 'px-3 py-2 sm:px-3',
+      body: 'p-0 sm:p-0',
     }"
   >
-    <div class="flex flex-col gap-3">
-      <!-- Header with date and close -->
+    <template #header>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon :name="isEditMode ? 'i-lucide-pencil' : 'i-lucide-calendar-plus'" class="size-4 text-primary" />
@@ -289,160 +309,176 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
           @click="handleCancel"
         />
       </div>
+    </template>
 
-      <!-- Location selection -->
-      <div class="flex flex-wrap gap-1.5">
-        <UButton
-          v-for="location in locations"
-          :key="location.id"
-          size="xs"
-          :variant="localLocationId === location.id ? 'solid' : 'soft'"
-          :color="localLocationId === location.id ? 'primary' : 'neutral'"
-          :disabled="!isLocationEnabled(location.id)"
-          :class="{ 'opacity-40': !isLocationEnabled(location.id) }"
-          @click="localLocationId = location.id"
-        >
-          <template #leading>
+    <!-- Body: locations sidebar + content -->
+    <div class="flex min-h-0">
+        <!-- Location sidebar -->
+        <div class="w-36 shrink-0 border-r border-default flex flex-col gap-0.5 px-1 py-4">
+          <UButton
+            v-for="location in locations"
+            :key="location.id"
+            size="sm"
+            :variant="localLocationId === location.id ? 'soft' : 'ghost'"
+            :color="localLocationId === location.id ? 'primary' : 'neutral'"
+            :disabled="!isLocationEnabled(location.id)"
+            block
+            class="justify-start"
+            :class="!isLocationEnabled(location.id) && 'opacity-40'"
+            @click="localLocationId = location.id"
+          >
             <span
-              class="w-2 h-2 rounded-full"
+              class="w-2 h-2 rounded-full shrink-0"
               :style="{ backgroundColor: isLocationEnabled(location.id) ? (location.color || '#3b82f6') : '#9ca3af' }"
             />
-          </template>
-          {{ getLocationTitle(location) }}
-        </UButton>
-      </div>
-
-      <!-- Group selection (when groups are enabled) -->
-      <div v-if="enableGroups && groupOptions.length > 0" class="flex flex-wrap gap-1.5">
-        <UButton
-          v-for="group in groupOptions"
-          :key="group.id"
-          size="xs"
-          :variant="localGroupId === group.id ? 'solid' : 'soft'"
-          :color="localGroupId === group.id ? 'primary' : 'neutral'"
-          @click="localGroupId = group.id"
-        >
-          {{ group.label }}
-        </UButton>
-      </div>
-
-      <!-- Slot selection (slot mode) - show "All Day" even when no slots configured -->
-      <div v-if="selectedLocation && !isInventoryMode" class="flex flex-wrap gap-1.5">
-        <!-- Loading state -->
-        <template v-if="availabilityLoading">
-          <div v-for="i in 3" :key="i" class="h-6 w-16 bg-elevated rounded animate-pulse" />
-        </template>
-
-        <!-- Slots -->
-        <template v-else>
-          <UButton
-            v-for="slot in allSlots"
-            :key="slot.id"
-            size="xs"
-            :variant="localSlotId === slot.id ? 'solid' : 'soft'"
-            :color="localSlotId === slot.id ? 'primary' : (isSlotDisabled(slot.id) ? 'error' : 'neutral')"
-            :disabled="isSlotDisabled(slot.id)"
-            @click="localSlotId = slot.id"
-          >
-            <span :class="{ 'line-through': isSlotDisabled(slot.id) }">
-              {{ slot.label || slot.id }}
-            </span>
-            <span v-if="getSlotCapacity(slot.id) > 1 && !isSlotDisabled(slot.id)" class="text-xs opacity-60 ml-0.5">
-              ({{ getSlotRemaining(slot.id) }} left)
-            </span>
-            <UIcon
-              v-if="isSlotDisabled(slot.id)"
-              name="i-lucide-ban"
-              class="size-3 ml-0.5"
-            />
+            <span class="truncate">{{ getLocationTitle(location) }}</span>
           </UButton>
-        </template>
-      </div>
-
-      <!-- Inventory mode: quantity selector + availability -->
-      <div v-if="localLocationId && isInventoryMode && inventoryInfo" class="flex items-center gap-3">
-        <UInputNumber
-          v-model="formState.quantity"
-          :min="1"
-          :max="inventoryInfo.remaining"
-          :disabled="!inventoryInfo.available"
-          size="xs"
-          :ui="{ root: 'w-28' }"
-        />
-        <div class="flex items-center gap-1.5 text-sm">
-          <UIcon
-            :name="inventoryInfo.available ? 'i-lucide-check-circle' : 'i-lucide-x-circle'"
-            :class="inventoryInfo.available ? 'text-success' : 'text-error'"
-            class="size-4"
-          />
-          <span :class="inventoryInfo.available ? 'text-success' : 'text-error'">
-            {{ inventoryInfo.remaining }} / {{ inventoryInfo.total }} available
-          </span>
         </div>
-      </div>
 
-      <!-- Cancel booking confirmation -->
-      <div v-if="isEditMode && showCancelConfirm" class="bg-error/10 rounded-lg px-3 py-2">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-xs text-muted">Cancel this booking?</span>
-          <div class="flex items-center gap-2">
+        <!-- Right content -->
+        <div class="flex-1 p-4 flex flex-col gap-4">
+          <!-- Location info + prompt -->
+          <div v-if="selectedLocation" class="flex flex-col gap-2">
+            <span v-if="getLocationAddress(selectedLocation)" class="text-xs text-muted flex items-center gap-1">
+              <UIcon name="i-lucide-map-pin" class="size-3 shrink-0" />
+              {{ getLocationAddress(selectedLocation) }}
+            </span>
+            <span class="text-sm font-medium text-default">
+              {{ isInventoryMode ? 'How many do you need?' : 'Pick a time slot' }}
+            </span>
+          </div>
+
+          <!-- Group selection (when groups are enabled) -->
+          <div v-if="enableGroups && groupOptions.length > 0" class="flex flex-wrap gap-1.5">
             <UButton
-              variant="ghost"
-              color="neutral"
+              v-for="group in groupOptions"
+              :key="group.id"
               size="xs"
-              @click="showCancelConfirm = false"
+              :variant="localGroupId === group.id ? 'solid' : 'soft'"
+              :color="localGroupId === group.id ? 'primary' : 'neutral'"
+              @click="localGroupId = group.id"
             >
-              Keep
+              {{ group.label }}
             </UButton>
-            <UButton
+          </div>
+
+          <!-- Slot selection (slot mode) -->
+          <div v-if="selectedLocation && !isInventoryMode" class="flex flex-wrap gap-1.5">
+            <!-- Loading state -->
+            <template v-if="availabilityLoading">
+              <div v-for="i in 3" :key="i" class="h-6 w-16 bg-elevated rounded animate-pulse" />
+            </template>
+
+            <!-- Slots -->
+            <template v-else>
+              <UButton
+                v-for="slot in allSlots"
+                :key="slot.id"
+                size="sm"
+                :variant="localSlotId === slot.id ? 'solid' : 'soft'"
+                :color="localSlotId === slot.id ? 'primary' : (isSlotDisabled(slot.id) ? 'error' : 'neutral')"
+                :disabled="isSlotDisabled(slot.id)"
+                @click="localSlotId = slot.id"
+              >
+                <span :class="{ 'line-through': isSlotDisabled(slot.id) }">
+                  {{ slot.label || slot.id }}
+                </span>
+                <span v-if="getSlotCapacity(slot.id) > 1 && !isSlotDisabled(slot.id)" class="text-xs opacity-60 ml-0.5">
+                  ({{ getSlotRemaining(slot.id) }} left)
+                </span>
+                <UIcon
+                  v-if="isSlotDisabled(slot.id)"
+                  name="i-lucide-ban"
+                  class="size-3 ml-0.5"
+                />
+              </UButton>
+            </template>
+          </div>
+
+          <!-- Inventory mode: quantity selector + availability -->
+          <div v-if="localLocationId && isInventoryMode && inventoryInfo" class="flex items-center gap-3">
+            <UInputNumber
+              v-model="formState.quantity"
+              :min="1"
+              :max="inventoryInfo.remaining"
+              :disabled="!inventoryInfo.available"
               variant="soft"
-              color="error"
-              size="xs"
-              :loading="isCancelling"
-              @click="handleCancelBooking"
-            >
-              Cancel Booking
-            </UButton>
+              size="sm"
+              :ui="{ root: 'w-28' }"
+            />
+            <span class="text-sm text-muted">
+              of {{ inventoryInfo.remaining }} available
+            </span>
+          </div>
+
+          <!-- No location selected -->
+          <div v-if="!localLocationId" class="text-sm text-muted py-2">
+            Select a location
+          </div>
+
+          <!-- Cancel booking confirmation -->
+          <div v-if="isEditMode && showCancelConfirm" class="bg-error/10 rounded-lg px-3 py-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs text-muted">Cancel this booking?</span>
+              <div class="flex items-center gap-2">
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  @click="showCancelConfirm = false"
+                >
+                  Keep
+                </UButton>
+                <UButton
+                  variant="soft"
+                  color="error"
+                  size="xs"
+                  :loading="isCancelling"
+                  @click="handleCancelBooking"
+                >
+                  Cancel Booking
+                </UButton>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-between gap-2 mt-auto">
+            <!-- Cancel booking button (only in edit mode, not already cancelled) -->
+            <div>
+              <UButton
+                v-if="isEditMode && !isAlreadyCancelled && !showCancelConfirm"
+                color="error"
+                variant="ghost"
+                size="xs"
+                icon="i-lucide-x-circle"
+                @click="showCancelConfirm = true"
+              >
+                Cancel Booking
+              </UButton>
+            </div>
+
+            <div class="flex gap-2">
+              <UButton
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                @click="handleCancel"
+              >
+                {{ isEditMode ? 'Close' : 'Cancel' }}
+              </UButton>
+              <UButton
+                color="primary"
+                size="xs"
+                :disabled="!canSubmit || isSubmitting || isUpdating || isAlreadyCancelled"
+                :loading="isSubmitting || isUpdating"
+                @click="handleSubmit"
+              >
+                {{ isEditMode ? 'Save' : 'Create' }}
+              </UButton>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Actions -->
-      <div class="flex justify-between gap-2">
-        <!-- Cancel booking button (only in edit mode, not already cancelled) -->
-        <div>
-          <UButton
-            v-if="isEditMode && !isAlreadyCancelled && !showCancelConfirm"
-            color="error"
-            variant="ghost"
-            size="xs"
-            icon="i-lucide-x-circle"
-            @click="showCancelConfirm = true"
-          >
-            Cancel Booking
-          </UButton>
-        </div>
-
-        <div class="flex gap-2">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            @click="handleCancel"
-          >
-            {{ isEditMode ? 'Close' : 'Cancel' }}
-          </UButton>
-          <UButton
-            color="primary"
-            size="xs"
-            :disabled="!canSubmit || isSubmitting || isUpdating || isAlreadyCancelled"
-            :loading="isSubmitting || isUpdating"
-            @click="handleSubmit"
-          >
-            {{ isEditMode ? 'Save' : 'Create' }}
-          </UButton>
-        </div>
-      </div>
-    </div>
   </UCard>
 </template>

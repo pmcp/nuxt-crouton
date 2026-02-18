@@ -221,7 +221,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
     @mouseleave="isHovered = false"
   >
     <!-- Main layout: responsive flex with space-between on desktop -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 relative">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 relative overflow-hidden">
       <!-- Edit button: absolute on the right, slides in on hover (original style) -->
       <div
         v-if="showAdminFeatures"
@@ -249,7 +249,6 @@ const timelineItems = computed<TimelineItem[]>(() => {
             :date="booking.date"
             :variant="isCancelled ? 'error' : 'primary'"
             :highlighted="highlighted"
-            :highlight-color="locationColor"
           />
         </button>
 

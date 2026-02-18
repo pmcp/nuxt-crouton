@@ -25,13 +25,6 @@ const parsed = computed(() => {
   }
 })
 
-// Compute highlight style for custom color
-const highlightStyle = computed(() => {
-  if (props.highlighted && props.highlightColor) {
-    return { backgroundColor: props.highlightColor }
-  }
-  return undefined
-})
 </script>
 
 <template>
@@ -43,12 +36,10 @@ const highlightStyle = computed(() => {
         'bg-error/10 text-error': props.variant === 'error',
         'bg-muted text-muted': props.variant === 'muted',
         'bg-elevated': props.variant === 'elevated',
-        'bg-primary text-neutral-900': props.highlighted && !props.highlightColor,
-        'text-neutral-900': props.highlighted && props.highlightColor,
+        'ring-2 ring-primary bg-primary/10': props.highlighted,
         'bg-elevated text-muted': props.variant === 'primary' && !props.highlighted
       }
     ]"
-    :style="highlightStyle"
   >
     <span class="text-[9px] font-medium uppercase tracking-wide">{{ parsed.weekday }}</span>
     <span class="text-2xl font-bold leading-tight">{{ parsed.day }}</span>

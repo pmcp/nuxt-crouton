@@ -644,7 +644,7 @@ const monthCellHeight = computed(() => {
             <button
               v-if="!isCreatingDate(day.toDate(getLocalTimeZone()))"
               type="button"
-              class="absolute bottom-0 left-0 right-0 translate-y-0 flex items-center justify-center h-4 bg-neutral-700 rounded-b-md opacity-0 cursor-pointer transition-all duration-200 ease-out group-hover:translate-y-1 group-hover:opacity-100 hover:bg-neutral-600 active:scale-[0.98] z-10"
+              class="absolute bottom-0 left-0 right-0 translate-y-0 flex items-center justify-center h-4 bg-primary rounded-b-md opacity-0 cursor-pointer transition-all duration-200 ease-out group-hover:translate-y-1 group-hover:opacity-100 hover:bg-primary/80 active:scale-[0.98] z-10"
               @click.stop="emit('dayClick', day.toDate(getLocalTimeZone()))"
             >
               <UIcon name="i-lucide-plus" class="size-2.5 text-neutral-300" />

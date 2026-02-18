@@ -55,21 +55,19 @@ function isLocationSelected(locationId: string): boolean {
   return props.selectedLocations.includes(locationId)
 }
 
-const pillClass = 'flex items-center gap-1 bg-muted/60 backdrop-blur-sm rounded-full border border-default px-1 py-1'
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
-    <!-- Combined pill: section toggles + view controls -->
-    <div class="flex justify-center">
-      <div :class="pillClass">
+    <!-- Section toggles + view controls -->
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-1">
         <!-- Section toggles -->
         <UButton
-          size="xs"
+          size="sm"
           :color="showCalendar ? 'primary' : 'neutral'"
-          :variant="showCalendar ? 'solid' : 'ghost'"
+          variant="soft"
           icon="i-lucide-calendar"
-          class="rounded-full"
           @click="emit('update:showCalendar', !showCalendar)"
         >
           Calendar
@@ -77,68 +75,65 @@ const pillClass = 'flex items-center gap-1 bg-muted/60 backdrop-blur-sm rounded-
 
         <UButton
           v-if="locations && locations.length > 0"
-          size="xs"
-          :color="showLocations ? 'primary' : 'neutral'"
-          :variant="showLocations ? 'solid' : 'ghost'"
+          size="sm"
+          :color="showLocations || selectedLocations.length > 0 ? 'primary' : 'neutral'"
+          variant="soft"
           icon="i-lucide-map-pin"
-          class="rounded-full"
           @click="emit('update:showLocations', !showLocations)"
         >
           Locations
+          <UBadge v-if="!showLocations && selectedLocations.length > 0" size="xs" color="primary" variant="solid" class="ml-0.5">
+            {{ selectedLocations.length }}
+          </UBadge>
         </UButton>
 
         <UButton
           v-if="hasLocationsWithCoordinates"
-          size="xs"
+          size="sm"
           :color="showMap ? 'primary' : 'neutral'"
-          :variant="showMap ? 'solid' : 'ghost'"
+          variant="soft"
           icon="i-lucide-map"
-          class="rounded-full"
           @click="emit('update:showMap', !showMap)"
         >
           Map
         </UButton>
 
         <UButton
-          size="xs"
+          size="sm"
           :color="showCancelled ? 'error' : 'neutral'"
-          :variant="showCancelled ? 'solid' : 'ghost'"
+          variant="soft"
           icon="i-lucide-x-circle"
-          class="rounded-full"
           @click="emit('update:showCancelled', !showCancelled)"
         >
           Cancelled
         </UButton>
 
-        <!-- Separator -->
-        <USeparator orientation="vertical" class="h-5 mx-1" />
+      </div>
 
-        <!-- View controls -->
+      <!-- View controls (only visible when calendar is shown) -->
+      <div v-if="showCalendar" class="flex items-center gap-1">
         <UButton
-          size="xs"
+          size="sm"
           color="neutral"
-          variant="ghost"
-          class="rounded-full"
+          variant="soft"
           @click="emit('go-to-today')"
         >
           Today
         </UButton>
 
         <UButton
-          size="xs"
+          size="sm"
           :color="calendarView === 'week' ? 'primary' : 'neutral'"
-          :variant="calendarView === 'week' ? 'solid' : 'ghost'"
-          class="rounded-full"
+          variant="soft"
           @click="emit('update:calendarView', 'week')"
         >
           Week
         </UButton>
 
         <UButton
-          size="xs"
+          size="sm"
           :color="calendarView === 'month' ? 'primary' : 'neutral'"
-          :variant="calendarView === 'month' ? 'solid' : 'ghost'"
-          class="rounded-full"
+          variant="soft"
           @click="emit('update:calendarView', 'month')"
         >
           Month
@@ -186,7 +181,7 @@ const pillClass = 'flex items-center gap-1 bg-muted/60 backdrop-blur-sm rounded-
         <!-- Add Location button (at end of location cards) -->
         <UButton
           v-if="canManageLocations"
-          size="xs"
+          size="sm"
           variant="outline"
           icon="i-lucide-plus"
           class="self-center"
