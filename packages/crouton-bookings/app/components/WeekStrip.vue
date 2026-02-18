@@ -7,8 +7,8 @@ interface Props {
   weekStartsOn?: 0 | 1 // 0 = Sunday, 1 = Monday
   size?: 'sm' | 'md' | 'lg'
   variant?: 'default' | 'beams' | 'bars'
-  /** Date to highlight (from external hover) */
-  highlightedDate?: Date | null
+  /** Dates to highlight (selected dates from click multi-select) */
+  selectedDates?: Date[]
   /** Date currently being used for booking creation */
   creatingAtDate?: Date | null
   /** Function to check if a date is disabled by schedule rules */
@@ -20,14 +20,14 @@ const props = withDefaults(defineProps<Props>(), {
   weekStartsOn: 1, // Monday default
   size: 'md',
   variant: 'default',
-  highlightedDate: null,
+  selectedDates: () => [],
   creatingAtDate: null,
   isDateDisabled: null,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: Date | null]
-  'hover': [value: Date | null]
+  'select': [value: Date | null]
   'dayClick': [value: Date]
 }>()
 
@@ -113,11 +113,10 @@ function isToday(day: { date: DateValue }): boolean {
 }
 
 function isHighlighted(day: { jsDate: Date }): boolean {
-  if (!props.highlightedDate) return false
-  return (
-    day.jsDate.getFullYear() === props.highlightedDate.getFullYear()
-    && day.jsDate.getMonth() === props.highlightedDate.getMonth()
-    && day.jsDate.getDate() === props.highlightedDate.getDate()
+  return props.selectedDates.some(d =>
+    day.jsDate.getFullYear() === d.getFullYear()
+    && day.jsDate.getMonth() === d.getMonth()
+    && day.jsDate.getDate() === d.getDate(),
   )
 }
 
@@ -139,8 +138,8 @@ function isDayDisabled(day: { jsDate: Date }): boolean {
 }
 
 function onDayClick(day: { date: DateValue, jsDate: Date }) {
-  // Click navigates to the day in the list
-  emit('hover', day.jsDate)
+  // Click toggles date selection
+  emit('select', day.jsDate)
 }
 
 function onAddClick(event: Event, day: { date: DateValue, jsDate: Date }) {

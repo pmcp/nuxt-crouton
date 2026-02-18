@@ -17,8 +17,8 @@ interface Props {
   view?: 'week' | 'month'
   /** Filter state for status and location filters */
   filters?: FilterState
-  /** Date to highlight (from external hover, e.g., list item hover) */
-  highlightedDate?: Date | null
+  /** Dates to highlight (selected dates from click multi-select) */
+  selectedDates?: Date[]
   /** Date currently being used for booking creation */
   creatingAtDate?: Date | null
   /** Function to check if a date is unavailable by schedule rules */
@@ -33,14 +33,14 @@ const props = withDefaults(defineProps<Props>(), {
   settings: null,
   view: 'week',
   filters: () => ({ statuses: [], locations: [], showCancelled: false }),
-  highlightedDate: null,
+  selectedDates: () => [],
   creatingAtDate: null,
   isDateUnavailable: null,
   getBlockedReason: null,
 })
 
 const emit = defineEmits<{
-  'hover': [value: Date | null]
+  'select': [value: Date | null]
   'dayClick': [value: Date]
   'update:filters': [value: FilterState]
   'update:view': [value: 'week' | 'month']
@@ -82,8 +82,8 @@ function goToToday() {
   const todayDate = today(getLocalTimeZone())
   const jsDate = todayDate.toDate(getLocalTimeZone())
   goToDate(jsDate)
-  // Also highlight today as if it was clicked
-  emit('hover', jsDate)
+  // Also select today as if it was clicked
+  emit('select', jsDate)
 }
 
 // Expose methods for parent control
@@ -347,9 +347,10 @@ function getIndicatorsForDate(date: Date): IndicatorData[] {
   return indicators
 }
 
-// Handle week strip hover
-function onWeekHover(date: Date | null) {
-  emit('hover', date)
+// Handle week strip select (day click) - only if date has bookings
+function onWeekSelect(date: Date | null) {
+  if (!date || !hasBookings(date)) return
+  emit('select', date)
 }
 
 // Handle week strip click (for booking creation)
@@ -363,13 +364,12 @@ function hasBookings(date: Date): boolean {
   return bookingsByDate.value.has(key)
 }
 
-// Check if a date is highlighted (for month view)
+// Check if a date is highlighted (selected) for month view
 function isDayHighlighted(date: Date): boolean {
-  if (!props.highlightedDate) return false
-  return (
-    date.getFullYear() === props.highlightedDate.getFullYear()
-    && date.getMonth() === props.highlightedDate.getMonth()
-    && date.getDate() === props.highlightedDate.getDate()
+  return props.selectedDates.some(d =>
+    date.getFullYear() === d.getFullYear()
+    && date.getMonth() === d.getMonth()
+    && date.getDate() === d.getDate(),
   )
 }
 
@@ -459,10 +459,10 @@ const monthCellHeight = computed(() => {
       v-if="currentView === 'week'"
       ref="weekStripRef"
       size="md"
-      :highlighted-date="highlightedDate"
+      :selected-dates="selectedDates"
       :creating-at-date="creatingAtDate"
       :is-date-disabled="isDateUnavailable ? isDayUnavailable : undefined"
-      @hover="onWeekHover"
+      @select="onWeekSelect"
       @day-click="onWeekDayClick"
     >
       <template #day="{ jsDate }">
@@ -546,7 +546,7 @@ const monthCellHeight = computed(() => {
       >
         <template #day="{ day }">
           <div
-            class="group relative w-full flex flex-col items-center justify-start pt-1 pb-1 cursor-pointer rounded-md transition-all duration-200"
+            class="group relative w-full flex flex-col items-center justify-start pt-1 pb-1 rounded-md transition-all duration-200"
             :style="{ minHeight: `${monthCellHeight}px` }"
             :class="[
               isDayUnavailable(day.toDate(getLocalTimeZone()))
@@ -557,11 +557,11 @@ const monthCellHeight = computed(() => {
                     ? 'bg-elevated shadow-sm'
                     : 'hover:bg-elevated/80',
               hasBookings(day.toDate(getLocalTimeZone())) && !isDayUnavailable(day.toDate(getLocalTimeZone()))
-                ? 'bg-muted/30'
+                ? 'bg-muted/30 cursor-pointer'
                 : '',
             ]"
             :title="getDayBlockedReason(day.toDate(getLocalTimeZone())) || undefined"
-            @click="emit('hover', day.toDate(getLocalTimeZone()))"
+            @click="hasBookings(day.toDate(getLocalTimeZone())) && emit('select', day.toDate(getLocalTimeZone()))"
           >
             <!-- Day number -->
             <span

@@ -122,8 +122,8 @@ nuxtApp.hook('crouton:mutation', async (event: { operation: string; collection: 
   }
 })
 
-// Hovered date (from calendar OR list) - used to highlight bookings/calendar days
-const hoveredDate = ref<Date | null>(null)
+// Selected dates (from calendar clicks) - toggle multi-select to highlight bookings
+const selectedDates = ref<Date[]>([])
 
 // Hovered booking ID (from calendar indicator hover) - used to highlight specific booking in list
 const hoveredBookingId = ref<string | null>(null)
@@ -234,16 +234,28 @@ const filteredBookings = computed(() => {
   return result
 })
 
-// Handle calendar hover - scroll to date and highlight
-function onCalendarHover(date: Date | null) {
-  hoveredDate.value = date
+// Helper to compare dates by day
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate()
 }
 
-// Handle calendar day click - start inline creation at that date (disabled in preview mode)
+// Handle calendar day select - toggle date in multi-select array
+function onCalendarSelect(date: Date | null) {
+  if (!date) return
+  const idx = selectedDates.value.findIndex(d => isSameDay(d, date))
+  if (idx !== -1) {
+    selectedDates.value.splice(idx, 1)
+  } else {
+    selectedDates.value.push(date)
+  }
+}
+
+// Handle calendar day click (+ button) - start inline creation at that date (disabled in preview mode)
 function onCalendarDayClick(date: Date) {
   if (previewMode.value) return
   creatingAtDate.value = date
-  hoveredDate.value = null // Clear hover highlight when starting to create
 }
 
 // Handle booking created - refresh the list and scroll to new booking
@@ -287,10 +299,10 @@ function onTopVisibleDateChange(date: Date) {
   calendarRef.value?.goToDate(date)
 }
 
-// Handle click on booking date - navigate calendar and highlight
+// Handle click on booking date - navigate calendar and toggle selection
 function onDateClick(date: Date) {
   calendarRef.value?.goToDate(date)
-  hoveredDate.value = date
+  onCalendarSelect(date)
 }
 
 // Expose methods for external control
@@ -308,6 +320,7 @@ defineExpose({
         <CroutonBookingsPanelFilters
           :locations="resolvedLocations"
           :selected-locations="filterState.locations"
+          :selected-dates-count="selectedDates.length"
           :show-locations="showLocations"
           :show-map="showMap"
           :show-calendar="showCalendar"
@@ -360,9 +373,9 @@ defineExpose({
             :locations="resolvedLocations"
             :settings="resolvedSettings"
             :view="calendarView"
-            :highlighted-date="hoveredDate"
+            :selected-dates="selectedDates"
             :creating-at-date="creatingAtDate"
-            @hover="onCalendarHover"
+            @select="onCalendarSelect"
             @day-click="onCalendarDayClick"
             @hover-booking="(id) => hoveredBookingId = id"
           />
@@ -377,7 +390,7 @@ defineExpose({
         :loading="resolvedLoading"
         :error="resolvedError"
         :has-active-filters="hasActiveFilters"
-        :highlighted-date="hoveredDate"
+        :selected-dates="selectedDates"
         :highlighted-booking-id="hoveredBookingId"
         :creating-at-date="creatingAtDate"
         :scroll-to-date="scrollToDate"

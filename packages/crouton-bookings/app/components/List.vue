@@ -13,8 +13,8 @@ interface Props {
   emptyMessage?: string
   /** Whether filters are active (changes empty state message) */
   hasActiveFilters?: boolean
-  /** Date to highlight (from calendar hover) */
-  highlightedDate?: Date | null
+  /** Dates to highlight (from calendar multi-select) */
+  selectedDates?: Date[]
   /** Specific booking ID to highlight (from calendar indicator hover) */
   highlightedBookingId?: string | null
   /** Date where inline creation card should appear */
@@ -31,7 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   error: undefined,
   emptyMessage: 'Your bookings will appear here',
   hasActiveFilters: false,
-  highlightedDate: null,
+  selectedDates: () => [],
   highlightedBookingId: null,
   creatingAtDate: null,
   scrollToDate: null,
@@ -416,16 +416,17 @@ function onBookingDateClick(date: Date) {
 // Flag to temporarily disable highlight scroll during creation scroll
 const isScrollingToCreated = ref(false)
 
-// Watch for highlighted date changes and scroll
+// Watch for selected dates changes and scroll to the latest one
 watch(
-  () => props.highlightedDate,
-  (newDate) => {
+  () => props.selectedDates,
+  (dates) => {
     // Skip if we're scrolling to a newly created booking
     if (isScrollingToCreated.value) return
-    if (!newDate) return
+    if (!dates || dates.length === 0) return
 
-    // Only scroll if there are bookings on the exact date (not nearest)
-    const targetKey = formatDateKey(newDate)
+    // Scroll to the most recently added date (last in array)
+    const latestDate = dates[dates.length - 1]
+    const targetKey = formatDateKey(latestDate)
     if (!allDateKeys.value.includes(targetKey)) return
 
     const element = dateElementRefs.value.get(targetKey)
@@ -436,6 +437,7 @@ watch(
       })
     }
   },
+  { deep: true },
 )
 
 // Watch for scrollToDate changes (after booking creation)
@@ -473,13 +475,13 @@ function isHighlighted(booking: Booking): boolean {
     return booking.id === props.highlightedBookingId
   }
 
-  // Fall back to date-based highlight (from calendar day hover)
-  if (!props.highlightedDate) return false
+  // Fall back to date-based highlight (from calendar day selection)
+  if (!props.selectedDates || props.selectedDates.length === 0) return false
   const bookingDate = new Date(booking.date)
-  return (
-    bookingDate.getFullYear() === props.highlightedDate.getFullYear()
-    && bookingDate.getMonth() === props.highlightedDate.getMonth()
-    && bookingDate.getDate() === props.highlightedDate.getDate()
+  return props.selectedDates.some(d =>
+    bookingDate.getFullYear() === d.getFullYear()
+    && bookingDate.getMonth() === d.getMonth()
+    && bookingDate.getDate() === d.getDate(),
   )
 }
 

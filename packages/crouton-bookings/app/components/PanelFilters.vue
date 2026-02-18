@@ -13,6 +13,8 @@ interface Props {
   showCalendar: boolean
   /** Whether there are locations with coordinates (for map toggle) */
   hasLocationsWithCoordinates: boolean
+  /** Number of selected dates in calendar */
+  selectedDatesCount?: number
   /** Whether to show cancelled bookings */
   showCancelled: boolean
   /** Whether user can manage locations (admin) */
@@ -24,6 +26,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   canManageLocations: false,
   calendarView: 'week',
+  selectedDatesCount: 0,
 })
 
 const emit = defineEmits<{
@@ -65,12 +68,15 @@ function isLocationSelected(locationId: string): boolean {
         <!-- Section toggles -->
         <UButton
           size="sm"
-          :color="showCalendar ? 'primary' : 'neutral'"
+          :color="showCalendar || selectedDatesCount > 0 ? 'primary' : 'neutral'"
           variant="soft"
           icon="i-lucide-calendar"
           @click="emit('update:showCalendar', !showCalendar)"
         >
           Calendar
+          <UBadge v-if="!showCalendar && selectedDatesCount > 0" size="xs" color="primary" variant="solid" class="ml-0.5">
+            {{ selectedDatesCount }}
+          </UBadge>
         </UButton>
 
         <UButton
