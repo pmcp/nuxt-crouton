@@ -300,11 +300,12 @@ defineExpose({
     <USlideover
       v-model:open="isPropertyPanelOpen"
       title="Edit Block"
-      :ui="{ content: 'max-w-sm' }"
+      :ui="{ content: 'max-w-md' }"
     >
       <template #body>
         <CroutonPagesEditorBlockPropertyPanel
           v-if="selectedNode"
+          :key="`block-panel-${selectedNode.pos}`"
           :node="selectedNode.node"
           @update="updateBlockAttrs"
           @delete="deleteBlock"

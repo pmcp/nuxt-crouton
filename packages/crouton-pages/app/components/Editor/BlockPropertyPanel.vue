@@ -46,6 +46,14 @@ watch(() => props.node, (node, oldNode) => {
   }
 }, { immediate: true })
 
+// Live preview - reflects localAttrs in real-time (before Done)
+const previewDoc = computed(() => ({
+  type: 'doc',
+  content: [{ type: blockType.value, attrs: localAttrs.value }]
+}))
+
+const showPreview = ref(true)
+
 // Handle field change - LOCAL ONLY, no emit
 // This is the key to preventing feedback loops
 function onFieldChange(fieldName: string, value: unknown) {
@@ -87,6 +95,26 @@ function onDelete() {
         size="sm"
         @click="emit('close')"
       />
+    </div>
+
+    <!-- Live Block Preview -->
+    <div class="border-b border-default">
+      <button
+        class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/30 transition-colors"
+        type="button"
+        @click="showPreview = !showPreview"
+      >
+        <span class="flex items-center gap-2 text-muted">
+          <UIcon name="i-lucide-eye" class="size-3.5" />
+          Live Preview
+        </span>
+        <UIcon :name="showPreview ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5 text-muted" />
+      </button>
+      <div v-if="showPreview" class="relative overflow-hidden bg-muted/10" style="height: 200px;">
+        <div style="transform: scale(0.33); transform-origin: top left; width: 303%; pointer-events: none;">
+          <CroutonPagesBlockContent :content="previewDoc" class="p-4" />
+        </div>
+      </div>
     </div>
 
     <!-- Content -->
