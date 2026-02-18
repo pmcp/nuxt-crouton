@@ -29,22 +29,10 @@ const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayo
 
 const route = useRoute()
 
-// Get translation function with fallback for SSR edge cases
-// Wrap in try-catch to handle cases where the composable fails during SSR
 // IMPORTANT: Must be defined before the reserved prefix guard, otherwise
-// SSR will crash with "$setup.t is not a function" when the guard throws
-let t: (key: string, options?: any) => string = (key: string) => `[${key}]`
-try {
-  const useTranslation = useT()
-  if (typeof useTranslation?.t === 'function') {
-    t = useTranslation.t
-  }
-} catch (error) {
-  // useT failed during SSR - use fallback
-  if (import.meta.dev) {
-    console.warn('[crouton-pages] useT() failed, using fallback:', error)
-  }
-}
+// SSR will crash with "$setup.t is not a function" when the guard throws.
+// useT() has its own internal error handling and never throws — safe to call directly.
+const { t } = useT()
 
 // Reserved prefixes that should NOT be treated as team slugs
 // These routes are handled by other packages (auth, admin, etc.)
