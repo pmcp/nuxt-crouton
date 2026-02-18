@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createJiti } from 'jiti'
 import { defineCommand, runMain } from 'citty'
 import consola from 'consola'
 import { resolve, join, dirname } from 'node:path'
@@ -9,6 +10,17 @@ import { readFile } from 'node:fs/promises'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+
+// Use jiti to load TypeScript files with proper ESM named exports
+const jiti = createJiti(import.meta.url)
+async function tsImport(specifier) {
+  const mod = await jiti.import(specifier)
+  // Handle CJS default-export interop: if only `default` key, unwrap it
+  if (mod && typeof mod === 'object' && 'default' in mod && Object.keys(mod).length === 1) {
+    return mod.default
+  }
+  return mod
+}
 
 // Read version from package.json
 const pkgPath = join(__dirname, '..', 'package.json')
@@ -48,7 +60,7 @@ const generate = defineCommand({
   async run({ args }) {
     // If --config is provided, delegate to config mode
     if (args.config) {
-      const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.ts'))
+      const { runConfig } = await tsImport(join(__dirname, '..', 'lib', 'generate-collection.ts'))
       await runConfig({
         configPath: args.config,
         force: args.force,
@@ -62,7 +74,7 @@ const generate = defineCommand({
     if (!args.layer && !args.collection) {
       const configPath = detectConfigFile()
       if (configPath) {
-        const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.ts'))
+        const { runConfig } = await tsImport(join(__dirname, '..', 'lib', 'generate-collection.ts'))
         await runConfig({
           configPath,
           force: args.force,
@@ -86,7 +98,7 @@ const generate = defineCommand({
       process.exit(1)
     }
 
-    const { runGenerate } = await import(join(__dirname, '..', 'lib', 'generate-collection.ts'))
+    const { runGenerate } = await tsImport(join(__dirname, '..', 'lib', 'generate-collection.ts'))
     await runGenerate({
       layer: args.layer,
       collection: args.collection,
@@ -122,7 +134,7 @@ const configCmd = defineCommand({
       if (!configPath) configPath = './crouton.config.js'
     }
 
-    const { runConfig } = await import(join(__dirname, '..', 'lib', 'generate-collection.ts'))
+    const { runConfig } = await tsImport(join(__dirname, '..', 'lib', 'generate-collection.ts'))
     await runConfig({
       configPath,
       force: args.force,
@@ -147,7 +159,7 @@ const installCmd = defineCommand({
       process.exit(1)
     }
     // install-modules.ts is self-executing on import
-    await import(installModulesPath)
+    await tsImport(installModulesPath)
   }
 })
 
@@ -165,7 +177,7 @@ const initCmd = defineCommand({
   },
   async run({ args }) {
     const initPath = join(__dirname, '..', 'lib', 'init-app.ts')
-    const { initApp } = await import(initPath)
+    const { initApp } = await tsImport(initPath)
 
     const features = args.features
       ? args.features.split(',').map(f => f.trim()).filter(Boolean)
@@ -199,14 +211,14 @@ const addCmd = defineCommand({
     // Handle --list flag or no items
     if (args.list || items.length === 0) {
       const addModulePath = join(__dirname, '..', 'lib', 'add-module.ts')
-      const { listAvailableModules } = await import(addModulePath)
+      const { listAvailableModules } = await tsImport(addModulePath)
       await listAvailableModules()
       return
     }
 
     // Import module registry to check if items are modules
     const registryPath = join(__dirname, '..', 'lib', 'module-registry.ts')
-    const { getModule } = await import(registryPath)
+    const { getModule } = await tsImport(registryPath)
 
     // Separate modules from features
     const modules = []
@@ -225,7 +237,7 @@ const addCmd = defineCommand({
     // Add modules if any
     if (modules.length > 0) {
       const addModulePath = join(__dirname, '..', 'lib', 'add-module.ts')
-      const { addModules } = await import(addModulePath)
+      const { addModules } = await tsImport(addModulePath)
 
       const result = await addModules(modules, {
         skipInstall: args.skipInstall,
@@ -247,7 +259,7 @@ const addCmd = defineCommand({
           consola.error('add-events script not found. Please ensure the package is properly installed.')
           process.exit(1)
         }
-        const { addEvents } = await import(addEventsPath)
+        const { addEvents } = await tsImport(addEventsPath)
         await addEvents({ dryRun: args.dryRun, force: args.force })
       }
     }
@@ -266,7 +278,7 @@ const rollbackCmd = defineCommand({
     force: { type: 'boolean', description: 'Skip confirmation prompts' },
   },
   async run({ args }) {
-    const { rollbackCollection, checkForCollectionFiles } = await import(
+    const { rollbackCollection, checkForCollectionFiles } = await tsImport(
       join(__dirname, '..', 'lib', 'rollback-collection.ts')
     )
 
@@ -306,7 +318,7 @@ const rollbackBulkCmd = defineCommand({
       process.exit(1)
     }
 
-    const { rollbackLayer, rollbackFromConfig } = await import(
+    const { rollbackLayer, rollbackFromConfig } = await tsImport(
       join(__dirname, '..', 'lib', 'rollback-bulk.ts')
     )
 
@@ -337,7 +349,7 @@ const rollbackInteractiveCmd = defineCommand({
     keepFiles: { type: 'boolean', description: 'Keep generated files, only clean configs' },
   },
   async run({ args }) {
-    const { interactiveRollback } = await import(
+    const { interactiveRollback } = await tsImport(
       join(__dirname, '..', 'lib', 'rollback-interactive.ts')
     )
     await interactiveRollback({ dryRun: args.dryRun, keepFiles: args.keepFiles })
@@ -353,7 +365,7 @@ const doctorCmd = defineCommand({
   },
   async run({ args }) {
     const doctorPath = join(__dirname, '..', 'lib', 'doctor.ts')
-    const { doctor, printReport } = await import(doctorPath)
+    const { doctor, printReport } = await tsImport(doctorPath)
 
     const appDir = args.dir || process.cwd()
     const result = await doctor(appDir)
@@ -379,7 +391,7 @@ const scaffoldAppCmd = defineCommand({
   },
   async run({ args }) {
     const scaffoldPath = join(__dirname, '..', 'lib', 'scaffold-app.ts')
-    const { scaffoldApp } = await import(scaffoldPath)
+    const { scaffoldApp } = await tsImport(scaffoldPath)
 
     const features = args.features
       ? args.features.split(',').map(f => f.trim()).filter(Boolean)
@@ -414,7 +426,7 @@ const seedTranslationsCmd = defineCommand({
       process.exit(1)
     }
 
-    const { seedTranslationsFromJson } = await import(seedPath)
+    const { seedTranslationsFromJson } = await tsImport(seedPath)
     await seedTranslationsFromJson({
       layer: args.layer,
       team: args.team,

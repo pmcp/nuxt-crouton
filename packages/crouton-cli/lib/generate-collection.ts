@@ -1869,7 +1869,6 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
         console.error('  2. schemaPath and targets[] (simple format)')
         process.exit(1)
       }
-    }
   } catch (error: any) {
     console.error('Error:', error.message)
     process.exit(1)
