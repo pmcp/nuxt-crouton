@@ -216,31 +216,29 @@ const timelineItems = computed<TimelineItem[]>(() => {
         highlighted ? 'bg-elevated shadow-sm' : ''
       ],
       body: 'p-0 sm:p-0',
-      footer: 'sm:px-0 p-0'
     }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-
-
     <!-- Main layout: responsive flex with space-between on desktop -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 relative">
-      <!-- Slide-out action menu (admin only) -->
+      <!-- Edit button: absolute on the right, slides in on hover (original style) -->
       <div
-          v-if="showAdminFeatures"
-          class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center px-2 bg-elevated/95  transition-transform duration-200 ease-out z-10"
-          :class="isHovered ? 'translate-x-0' : 'translate-x-full'"
+        v-if="showAdminFeatures"
+        class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center px-2 bg-elevated/95 transition-transform duration-200 ease-out z-10"
+        :class="isHovered ? 'translate-x-0' : 'translate-x-full'"
       >
         <UButton
-            variant="ghost"
-            color="neutral"
-            size="xs"
-            icon="i-lucide-pencil"
-            @click="emit('edit', booking)"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          icon="i-lucide-pencil"
+          @click="emit('edit', booking)"
         />
       </div>
+
       <!-- Left side: Date badge + Info -->
-      <div class="p-2 flex gap-3 flex-1 min-w-0 md:flex-initial">
+      <div class="p-2 flex gap-3 flex-1 min-w-0">
         <!-- Date badge (clickable to navigate calendar) -->
         <button
           type="button"
@@ -301,27 +299,49 @@ const timelineItems = computed<TimelineItem[]>(() => {
             </UBadge>
           </div>
 
-          <!-- User info -->
-          <div v-if="bookerUser" class="flex items-center gap-1 text-xs text-muted">
-            <UPopover>
-              <span class="cursor-pointer hover:text-default transition-colors">{{ bookerUser.name }}</span>
-              <template #content>
-                <div class="p-3 space-y-1 text-sm">
-                  <div class="font-medium">{{ bookerUser.name }}</div>
-                  <div v-if="bookerUser.email" class="text-muted text-xs">{{ bookerUser.email }}</div>
-                </div>
-              </template>
-            </UPopover>
-            <span v-if="booking.createdAt" class="whitespace-nowrap">on {{ createdDateText }}</span>
+          <!-- User info + Activity button row -->
+          <div class="flex items-center gap-1 text-xs text-muted">
+            <!-- User name + date (left) -->
+            <template v-if="bookerUser">
+              <UPopover>
+                <span class="cursor-pointer hover:text-default transition-colors">{{ bookerUser.name }}</span>
+                <template #content>
+                  <div class="p-3 space-y-1 text-sm">
+                    <div class="font-medium">{{ bookerUser.name }}</div>
+                    <div v-if="bookerUser.email" class="text-muted text-xs">{{ bookerUser.email }}</div>
+                  </div>
+                </template>
+              </UPopover>
+              <span v-if="booking.createdAt" class="whitespace-nowrap">on {{ createdDateText }}</span>
+            </template>
+
+            <!-- Activity button: far right, moves left on hover as edit slides in -->
+            <UButton
+              v-if="showAdminFeatures"
+              variant="ghost"
+              color="neutral"
+              size="xs"
+              class="ml-auto shrink-0 transition-transform duration-200 ease-out text-muted hover:text-default"
+              :class="isHovered ? '-translate-x-9' : 'translate-x-0'"
+              @click.stop="isTimelineOpen = !isTimelineOpen"
+            >
+              <UIcon name="i-lucide-history" class="size-3.5" />
+              <span>Activity</span>
+              <UIcon
+                name="i-lucide-chevron-down"
+                class="size-3 ml-1 transition-transform duration-200"
+                :class="isTimelineOpen ? 'rotate-180' : ''"
+              />
+            </UButton>
           </div>
         </div>
       </div>
 
       <!-- Email timeline (desktop only, admin only) -->
       <div
-          v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0"
-          class="hidden md:flex items-center gap-4 pr-14 transition-transform"
-          :class="isHovered ? 'translate-x-0' : 'translate-x-10'"
+        v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0"
+        class="hidden md:flex items-center gap-4 pr-14 transition-transform"
+        :class="isHovered ? 'translate-x-0' : 'translate-x-10'"
       >
         <UTooltip
           v-for="item in timelineItems"
@@ -391,39 +411,14 @@ const timelineItems = computed<TimelineItem[]>(() => {
       </div>
     </div>
 
-    <!-- Activity Timeline Section -->
-    <template #footer>
-
-      <UCollapsible v-model:open="isTimelineOpen" class="flex flex-col gap-2 w-full">
-        <UButton
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            class="text-muted hover:text-default w-full justify-start rounded-none"
-        >
-          <UIcon name="i-lucide-history" class="size-4" />
-          <span>Activity</span>
-          <UIcon
-              name="i-lucide-chevron-down"
-              class="size-3 ml-auto transition-transform duration-200"
-              :class="isTimelineOpen ? 'rotate-180' : ''"
-
-          />
-        </UButton>
-
-        <template #content>
-          <!-- Collapsible timeline content -->
-          <div class="px-2">
-            <CroutonBookingsActivityTimeline :booking="booking" />
-          </div>
-        </template>
-      </UCollapsible>
-
-
-
-
-
-
-    </template>
+    <!-- Activity slide-out content -->
+    <div
+      class="overflow-hidden transition-all duration-300 ease-out"
+      :class="isTimelineOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'"
+    >
+      <div class="border-t border-default/40 px-3 py-3">
+        <CroutonBookingsActivityTimeline :booking="booking" />
+      </div>
+    </div>
   </UCard>
 </template>
