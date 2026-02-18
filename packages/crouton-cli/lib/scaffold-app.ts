@@ -48,6 +48,7 @@ function buildDependencies(features: string[], modules: Record<string, any>): Re
   const deps: Record<string, string> = {
     '@fyit/crouton': 'workspace:*',
     '@fyit/crouton-core': 'workspace:*',
+    '@fyit/crouton-i18n': 'workspace:*',
     '@libsql/client': '^0.17.0',
     'drizzle-orm': '^0.45.1',
     'nuxt': '^4.2.2',

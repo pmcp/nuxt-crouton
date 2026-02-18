@@ -21,7 +21,7 @@ export type { CroutonManifest, FieldTypeDefinition }
 
 /** AI-facing summary of what a package provides */
 export interface ModuleAIContext {
-  collections?: Array<{ name: string, description: string }>
+  collections?: Array<{ name: string, description: string, schema?: Record<string, unknown> }>
   composables?: string[]
   components?: string[]
 }
@@ -237,7 +237,7 @@ export function getModuleRegistry(
     const hasAIData = m.collections?.length || m.provides?.composables?.length || m.provides?.components?.length
     const ai: ModuleAIContext | undefined = hasAIData
       ? {
-          collections: m.collections?.filter(c => !c.optional).map(c => ({ name: c.name, description: c.description })),
+          collections: m.collections?.filter(c => !c.optional).map(c => ({ name: c.name, description: c.description, schema: c.schema })),
           composables: m.provides?.composables,
           components: m.provides?.components?.map(c => c.name),
         }
