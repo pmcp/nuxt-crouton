@@ -1,0 +1,146 @@
+import { computed, toValue, watch, ref } from 'vue'
+import type { MaybeRef } from 'vue'
+
+export interface ChartCategory {
+  name: string
+  color: string
+}
+
+export interface UseCollectionChartOptions {
+  xField?: string
+  yFields?: string[]
+  limit?: number
+}
+
+// Fixed color palette cycling across yFields
+const COLOR_PALETTE = [
+  '#3b82f6', // blue
+  '#10b981', // emerald
+  '#f59e0b', // amber
+  '#ef4444', // red
+  '#8b5cf6'  // violet
+]
+
+export function useCollectionChart(
+  collectionKey: MaybeRef<string>,
+  options?: MaybeRef<UseCollectionChartOptions>
+) {
+  const { getConfig } = useCollections()
+  const { teamId } = useTeamContext()
+
+  const chartData = ref<Record<string, unknown>[]>([])
+  const pending = ref(false)
+  const error = ref<unknown>(null)
+  const detectedYFields = ref<string[]>([])
+
+  const resolvedCollection = computed(() => toValue(collectionKey))
+  const resolvedOptions = computed(() => toValue(options) ?? {})
+
+  const collectionConfig = computed(() => {
+    const key = resolvedCollection.value
+    if (!key) return null
+    return getConfig(key)
+  })
+
+  const resolvedXField = computed(() => {
+    if (resolvedOptions.value.xField) return resolvedOptions.value.xField
+    // Fall back to display.title field from collection config
+    return (collectionConfig.value as any)?.display?.title || 'id'
+  })
+
+  async function fetchAndTransform() {
+    const collKey = resolvedCollection.value
+    if (!collKey || !collectionConfig.value) {
+      chartData.value = []
+      return
+    }
+
+    const config = collectionConfig.value as any
+    const apiPath = config.apiPath || `/api/teams/${toValue(teamId)}/${collKey}`
+    const limit = resolvedOptions.value.limit || 100
+
+    pending.value = true
+    error.value = null
+
+    try {
+      const response = await $fetch<{ items: Record<string, unknown>[] }>(apiPath, {
+        query: { pageSize: limit }
+      })
+
+      const items = response?.items || []
+      if (!items.length) {
+        chartData.value = []
+        detectedYFields.value = []
+        return
+      }
+
+      // Auto-detect numeric fields from first row if yFields not provided
+      const configuredYFields = resolvedOptions.value.yFields
+      let activeYFields: string[]
+
+      if (configuredYFields && configuredYFields.length > 0) {
+        activeYFields = configuredYFields
+      } else {
+        const skipFields = ['id', 'teamId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy']
+        const firstRow = items[0]
+        activeYFields = Object.keys(firstRow).filter(key => {
+          if (skipFields.includes(key)) return false
+          if (key === resolvedXField.value) return false
+          const val = firstRow[key]
+          return typeof val === 'number' || (typeof val === 'string' && !isNaN(Number(val)) && val.trim() !== '')
+        })
+        detectedYFields.value = activeYFields
+      }
+
+      // Transform: map each row to { [xField]: value, ...yFields }
+      const xField = resolvedXField.value
+      chartData.value = items.map(row => {
+        const point: Record<string, unknown> = {
+          [xField]: row[xField]
+        }
+        for (const field of activeYFields) {
+          const val = row[field]
+          point[field] = typeof val === 'number' ? val : (val !== undefined && val !== null ? Number(val) : 0)
+        }
+        return point
+      })
+    } catch (err) {
+      console.error('[useCollectionChart] Failed to fetch collection data:', err)
+      error.value = err
+      chartData.value = []
+    } finally {
+      pending.value = false
+    }
+  }
+
+  const categories = computed<ChartCategory[]>(() => {
+    const configuredYFields = resolvedOptions.value.yFields
+    const fields = (configuredYFields && configuredYFields.length > 0)
+      ? configuredYFields
+      : detectedYFields.value
+
+    return fields.map((field, index) => ({
+      name: field,
+      color: COLOR_PALETTE[index % COLOR_PALETTE.length]!
+    }))
+  })
+
+  watch(
+    [resolvedCollection, resolvedOptions],
+    () => fetchAndTransform(),
+    { immediate: true, deep: true }
+  )
+
+  function refresh() {
+    return fetchAndTransform()
+  }
+
+  return {
+    chartData,
+    categories,
+    pending,
+    error,
+    refresh,
+    detectedYFields
+  }
+}

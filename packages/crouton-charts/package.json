@@ -1,0 +1,56 @@
+{
+  "name": "@fyit/crouton-charts",
+  "version": "0.1.0",
+  "description": "Chart visualizations for nuxt-crouton - collection-driven charts powered by nuxt-charts",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "exports": {
+    ".": "./nuxt.config.ts"
+  },
+  "files": [
+    "app",
+    "nuxt.config.ts",
+    "crouton.manifest.ts"
+  ],
+  "scripts": {
+    "typecheck": "npx nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "nuxt-charts": "latest"
+  },
+  "peerDependencies": {
+    "@fyit/crouton-core": "workspace:*",
+    "nuxt": "^3.0.0 || ^4.0.0",
+    "@nuxt/ui": "^3.0.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.8",
+    "happy-dom": "^15.11.7",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "charts",
+    "visualization",
+    "analytics",
+    "crouton"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-charts"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}
