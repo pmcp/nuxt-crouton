@@ -16,7 +16,7 @@ const projectRoot = join(__dirname, '..')
 // Source of truth: Generator field types
 const generatorHelpersPath = join(
   projectRoot,
-  'packages/crouton-cli/lib/utils/helpers.mjs'
+  'packages/crouton-cli/lib/utils/helpers.ts'
 )
 
 // MCP server field types
