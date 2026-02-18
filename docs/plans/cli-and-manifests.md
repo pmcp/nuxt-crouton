@@ -185,14 +185,14 @@ The nuxt-crouton monorepo has ~18 packages but 4 parallel, disconnected systems 
 
 ### Phase 0 Checklist
 
-- [x] Create `packages/crouton-cli/tests/integration/commands.test.ts`
+- [x] Creasorrysorryte `packages/crouton-cli/tests/integration/commands.test.ts`
 - [x] Write characterization tests for all 11 commands (26 tests)
 - [x] Verify all tests pass against current Commander-based CLI (377/377)
 - [x] Commit: `test(crouton-cli): add Phase 0 characterization tests for all 11 CLI commands`
 
 ---
 
-## Phase 1: Canonical Manifest Type + Core Field Types + unjs Foundation
+## Phase 1: Canonical Manifest Type + Coycan ire Field Types + unjs Foundation
 
 **Objective**: Define the manifest schema, declare base field types in one place, and land the unjs packages needed for manifest loading.
 
@@ -949,9 +949,9 @@ Migrate ALL remaining chalk/ora imports to consola (~10 files listed in Phase 2+
 
 ### Phase 5 Files Changed
 - **Rewrite**: `bin/crouton-generate.js` (citty entry point)
-- **Edit**: `lib/generate-collection.mjs` (typed args, remove parseArgs)
-- **Edit**: `lib/rollback-interactive.mjs` (inquirer → @clack/prompts)
-- **Edit**: ~10 files (remaining chalk/ora → consola)
+- **Edit**: `lib/generate-collection.ts` (typed args, remove parseArgs)
+- **Edit**: `lib/rollback-interactive.ts` (inquirer → @clack/prompts)
+- **Edit**: ~10 files (remaining chalk/ora → consola, all migrated `.mjs` → `.ts`)
 - **Edit**: Any files using `fs-extra` (→ Node built-ins + pkg-types)
 - **Edit**: `packages/crouton-cli/package.json` (add citty, @clack/prompts; remove commander, chalk, ora, inquirer, fs-extra)
 
@@ -980,19 +980,11 @@ Migrate ALL remaining chalk/ora imports to consola (~10 files listed in Phase 2+
 
 ---
 
-## Future: TypeScript Migration (Opportunistic)
+## ~~Future: TypeScript Migration~~ ✅ Complete
 
-With jiti already in place (Phase 1), the CLI can progressively migrate from `.mjs` to `.ts`. This is opportunistic — rename files as they're touched for other reasons.
+All `lib/` files have been migrated from `.mjs` to `.ts` as part of the Phase 5 CLI framework rewrite. Only `bin/crouton-generate.js` remains as `.js` (citty entry point).
 
-**Priority order** (most-touched files first):
-1. `lib/utils/helpers.mjs` → `.ts`
-2. ~~`lib/utils/config-builder.mjs`~~ — stays `.mjs` for now (just created in `8f80a870`, config building is simple)
-3. ~~`lib/utils/manifest-loader.ts`~~ — already `.ts` from the start (Decision 10)
-4. `lib/utils/manifest-merge.mjs` → `.ts`
-5. `lib/generate-collection.mjs` → `.ts`
-6. Generator files (13 files) → `.ts` when modified
-
-**Build consideration**: Once enough files are `.ts`, consider adding `unbuild` for a proper build step. Until then, jiti handles the `.ts` → runtime bridge.
+**Migrated files**: All commands (`lib/*.ts`), all utils (`lib/utils/*.ts`), all generators (`lib/generators/*.ts`). jiti handles the `.ts` → runtime bridge.
 
 ---
 
@@ -1023,10 +1015,10 @@ Routes and page types remain local (UX choices that can't be schema-derived).
 ---
 
 ## What Does NOT Change
-- **CLI generators** (`form-component.mjs`, `database-schema.mjs`, etc.) — they read from `typeMapping`, which now comes from manifests via the loader
-- **`getSeedGenerator()` in helpers.mjs** — name-based heuristics stay in CLI (not manifest data)
+- **CLI generators** (`form-component.ts`, `database-schema.ts`, etc.) — they read from `typeMapping`, which now comes from manifests via the loader
+- **`getSeedGenerator()` in helpers.ts** — name-based heuristics stay in CLI (not manifest data)
 - **Existing JSON schema files** (`schemas/*.json`) — these define user collections, not package metadata
-- **`config-builder.mjs`** — generates config file content for designer scaffold. Different concern from c12 config loading
+- **`config-builder.ts`** — generates config file content for designer scaffold. Different concern from c12 config loading
 - **`drizzle-seed`** — no unjs equivalent, stays as-is
 
 ---
@@ -1102,20 +1094,20 @@ pnpm crouton rollback shop products       # cleanup
 | `packages/crouton-core/shared/manifest.ts` | *(new)* | Manifest type + `defineCroutonManifest()` | 1 |
 | `packages/crouton-core/crouton.manifest.ts` | *(new)* | 12 base field types (incl. image/file) + reserved names | 1 |
 | `packages/crouton-cli/lib/utils/manifest-loader.ts` | *(new)* | Discovery, registry, alias resolution | 2 |
-| `packages/crouton-cli/lib/utils/helpers.mjs` | Hardcoded typeMapping | Remove typeMapping, import from loader, consola | 2 |
-| `packages/crouton-cli/lib/utils/manifest-merge.mjs` | Hardcoded PACKAGE_MANIFESTS | Remove hardcoded data, consola | 2 |
-| `packages/crouton-cli/lib/module-registry.mjs` | Module lookup from JSON | Read from manifests, consola | 2 |
+| `packages/crouton-cli/lib/utils/helpers.ts` | Hardcoded typeMapping | Remove typeMapping, import from loader, consola | 2 |
+| `packages/crouton-cli/lib/utils/manifest-merge.ts` | Hardcoded PACKAGE_MANIFESTS | Remove hardcoded data, consola | 2 |
+| `packages/crouton-cli/lib/module-registry.ts` | Module lookup from JSON | Read from manifests, consola | 2 |
 | `packages/crouton-cli/lib/module-registry.json` | 16 module entries | **Deleted** | 2 |
-| `packages/crouton-cli/lib/utils/config-builder.mjs` | Build config file content | **Untouched** — different concern from c12 | — |
-| `packages/crouton-cli/lib/generate-collection.mjs` | Main orchestrator (~80KB) | Phase 1: c12 config loading. Phase 2+3: consola. Phase 3.5: extract config modification to utils. Phase 5: typed args | 1, 2, 3.5, 5 |
-| `packages/crouton-cli/lib/utils/paths.mjs` | PATH_CONFIG template system | Use pathe for joins/resolves | 1 |
-| `packages/crouton-cli/lib/utils/detect-package-manager.mjs` | Lock file scanning | Could use pkg-types | 5 |
-| `packages/crouton-cli/bin/crouton-generate.js` | Entry point, Commander setup | Rewrite with citty | 5 |
-| `packages/crouton-cli/lib/rollback-interactive.mjs` | Interactive rollback | Replace inquirer with @clack/prompts | 5 |
-| `packages/crouton-cli/lib/init-app.mjs` | Scaffold pipeline | consola + @clack/prompts | 5 |
-| `packages/crouton-cli/lib/scaffold-app.mjs` | App boilerplate | consola + @clack/prompts | 5 |
-| `packages/crouton-cli/lib/add-module.mjs` | Module installer | consola | 5 |
-| `packages/crouton-cli/lib/generators/*.mjs` | 13 code generators | consola (Phase 5). `.ts` migration (Future) | 5, Future |
+| `packages/crouton-cli/lib/utils/config-builder.ts` | Build config file content | **Untouched** — different concern from c12 | — |
+| `packages/crouton-cli/lib/generate-collection.ts` | Main orchestrator (~80KB) | Phase 1: c12 config loading. Phase 2+3: consola. Phase 3.5: extract config modification to utils. Phase 5: typed args | 1, 2, 3.5, 5 |
+| `packages/crouton-cli/lib/utils/paths.ts` | PATH_CONFIG template system | Use pathe for joins/resolves | 1 |
+| `packages/crouton-cli/lib/utils/detect-package-manager.ts` | Lock file scanning | Could use pkg-types | 5 |
+| `packages/crouton-cli/bin/crouton-generate.js` | Entry point, citty setup | Rewrite with citty | 5 |
+| `packages/crouton-cli/lib/rollback-interactive.ts` | Interactive rollback | Replace inquirer with @clack/prompts | 5 |
+| `packages/crouton-cli/lib/init-app.ts` | Scaffold pipeline | consola + @clack/prompts | 5 |
+| `packages/crouton-cli/lib/scaffold-app.ts` | App boilerplate | consola + @clack/prompts | 5 |
+| `packages/crouton-cli/lib/add-module.ts` | Module installer | consola | 5 |
+| `packages/crouton-cli/lib/generators/*.ts` | 13 code generators | consola (Phase 5). All now `.ts` | 5 |
 | `packages/crouton-designer/app/composables/useFieldTypes.ts` | Hardcoded 15 types | Read from manifests | 3 |
 | `packages/crouton-designer/app/composables/useSchemaValidation.ts` | Hardcoded reserved names | Read from manifests | 3 |
 | `packages/crouton-designer/app/composables/useCollectionDesignPrompt.ts` | Hardcoded auto-gen fields | Read from manifests | 3 |
@@ -1124,8 +1116,8 @@ pnpm crouton rollback shop products       # cleanup
 | `packages/crouton-mcp/src/utils/field-types.ts` | Hardcoded 9 types | Import from manifest loader | 3 |
 | `packages/crouton-mcp/src/tools/validate-schema.ts` | Hardcoded auto-gen fields | Import from manifest loader | 3 |
 | `packages/crouton/src/module.ts` | Hardcoded feature mapping | Read from manifests | 4 |
-| `packages/crouton-cli/lib/utils/update-nuxt-config.mjs` | Regex-based extends array modification | Rewrite → `.ts` with magicast | 3.5 |
-| `packages/crouton-cli/lib/utils/update-schema-index.mjs` | String append for schema exports | Rewrite → `.ts` with magicast | 3.5 |
+| `packages/crouton-cli/lib/utils/update-nuxt-config.ts` | Regex-based extends array modification | Rewrite with magicast | 3.5 |
+| `packages/crouton-cli/lib/utils/update-schema-index.ts` | String append for schema exports | Rewrite with magicast | 3.5 |
 | `packages/crouton-cli/lib/utils/update-app-config.ts` | *(new, extracted)* | magicast for croutonCollections insertion | 3.5 |
 
 ---
@@ -1140,7 +1132,7 @@ pnpm crouton rollback shop products       # cleanup
 | Phase 3.5 | Small | Replace regex config modification with magicast AST | magicast | — | PR 2.5 (after Phase 2+3) |
 | Phase 4 | Small | Unified module reads manifests + getCroutonLayers() | — | — | PR 3 |
 | Phase 5 | Medium | CLI framework rewrite + full dep cleanup (tests already exist from Phase 0). Consider knitwork for template string generation. | citty, @clack/prompts | commander, chalk, ora, inquirer, fs-extra (all 5 removed) | PR 4 |
-| Future | Ongoing | Progressive `.mjs` → `.ts` migration | (unbuild, later) | — | Opportunistic |
+| Future | ✅ Done | All `lib/` files migrated `.mjs` → `.ts` | — | — | Completed with Phase 5 |
 
 **Ship order**: Phase 0 + Phase 1 (parallel) → Phase 2+3 (atomic) → Phase 3.5 (magicast) → Phase 4 (whenever) → Phase 5 (after manifests land) → Future (opportunistic)
 

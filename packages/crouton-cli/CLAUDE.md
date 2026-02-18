@@ -137,31 +137,31 @@ crouton init my-app --dry-run
 | File | Purpose |
 |------|---------|
 | `bin/crouton-generate.js` | CLI entry point (citty with 11 subcommands) |
-| `lib/generate-collection.mjs` | Main orchestrator (~74KB) |
-| `lib/init-app.mjs` | Init pipeline (scaffold → generate → doctor) |
-| `lib/generators/*.mjs` | Template generators (14 files) |
-| `lib/module-registry.mjs` | Module definitions for `crouton add` |
-| `lib/add-module.mjs` | Module installation implementation |
+| `lib/generate-collection.ts` | Main orchestrator (~74KB) |
+| `lib/init-app.ts` | Init pipeline (scaffold → generate → doctor) |
+| `lib/generators/*.ts` | Template generators (14 files) |
+| `lib/module-registry.ts` | Module definitions for `crouton add` |
+| `lib/add-module.ts` | Module installation implementation |
 | `lib/utils/helpers.ts` | Case conversion, type mapping |
-| `lib/utils/dialects.mjs` | PostgreSQL/SQLite configs |
-| `lib/utils/detect-package-manager.mjs` | Detect pnpm/yarn/npm |
-| `lib/utils/update-nuxt-config.mjs` | Update nuxt.config.ts extends |
-| `lib/utils/update-schema-index.mjs` | Update schema exports |
+| `lib/utils/dialects.ts` | PostgreSQL/SQLite configs |
+| `lib/utils/detect-package-manager.ts` | Detect pnpm/yarn/npm |
+| `lib/utils/update-nuxt-config.ts` | Update nuxt.config.ts extends |
+| `lib/utils/update-schema-index.ts` | Update schema exports |
 
 ## Generators Structure
 
 ```
 lib/generators/
-├── form-component.mjs      → Form.vue (Zod validation)
-├── list-component.mjs      → List.vue (data table)
-├── composable.mjs          → use[Collection].ts
-├── api-endpoints.mjs       → GET/POST/PATCH/DELETE
-├── database-schema.mjs     → Drizzle schema
-├── database-queries.mjs    → Query functions
-├── seed-data.mjs           → seed.ts (drizzle-seed data)
-├── types.mjs               → TypeScript interfaces
-├── nuxt-config.mjs         → Layer config
-└── field-components.mjs    → Dependent field components
+├── form-component.ts      → Form.vue (Zod validation)
+├── list-component.ts      → List.vue (data table)
+├── composable.ts          → use[Collection].ts
+├── api-endpoints.ts       → GET/POST/PATCH/DELETE
+├── database-schema.ts     → Drizzle schema
+├── database-queries.ts    → Query functions
+├── seed-data.ts           → seed.ts (drizzle-seed data)
+├── types.ts               → TypeScript interfaces
+├── nuxt-config.ts         → Layer config
+└── field-components.ts    → Dependent field components
 ```
 
 ## Schema Format
@@ -462,30 +462,30 @@ When modifying the generator, **always check if examples need updating**:
 4. Changing defaults → Update documented defaults
 
 ### Add a new generator template
-1. Create `lib/generators/{name}.mjs`
+1. Create `lib/generators/{name}.ts`
 2. Export async function that returns file content string
-3. Import in `lib/generate-collection.mjs`
+3. Import in `lib/generate-collection.ts`
 4. Call generator in appropriate step
 
 ### Add a new field type
-1. Add type mapping in `lib/utils/helpers.mjs` (getTypeMapping function)
-2. Update Zod schema in `lib/generators/composable.mjs`
-3. Update form component in `lib/generators/form-component.mjs`
-4. Add Drizzle type in `lib/utils/dialects.mjs`
+1. Add type mapping in `lib/utils/helpers.ts` (getTypeMapping function)
+2. Update Zod schema in `lib/generators/composable.ts`
+3. Update form component in `lib/generators/form-component.ts`
+4. Add Drizzle type in `lib/utils/dialects.ts`
 
 ### Image and File Field Types
 - `image` → renders `<CroutonAssetsPicker v-model="..." :crop="true" />` in forms, stores `VARCHAR(255)` (asset ID)
 - `file` → renders `<CroutonAssetsPicker v-model="..." />` in forms (no crop), stores `VARCHAR(255)` (asset ID)
-- Both are auto-detected by `asset-detector.mjs` as asset references (like `refTarget: "assets"`)
+- Both are auto-detected by `asset-detector.ts` as asset references (like `refTarget: "assets"`)
 
 ### Add new CLI option
 1. Add option to `bin/crouton-generate.js` using Commander
 2. Pass to `generateCollection()` in flags object
-3. Handle in `lib/generate-collection.mjs`
+3. Handle in `lib/generate-collection.ts`
 
 ### Debug generation
 1. Use `--dry-run` to preview output
-2. Check `lib/generate-collection.mjs` for step order
+2. Check `lib/generate-collection.ts` for step order
 3. Individual generators are isolated - test in isolation
 
 ## Naming Conventions
@@ -560,9 +560,9 @@ npx nuxt typecheck
 
 | File | Tests |
 |------|-------|
-| `lib/utils/helpers.mjs` | Case conversion, type mapping, seed generators |
-| `lib/generators/types.mjs` | TypeScript type generation (snapshot) |
-| `lib/generators/composable.mjs` | Composable generation (snapshot) |
+| `lib/utils/helpers.ts` | Case conversion, type mapping, seed generators |
+| `lib/generators/types.ts` | TypeScript type generation (snapshot) |
+| `lib/generators/composable.ts` | Composable generation (snapshot) |
 
 ## Seed Data Generation
 
@@ -662,7 +662,7 @@ For non-internal changes:
   - [ ] Add new flags/options with comments
   - [ ] Update defaults if changed
 
-- [ ] **FormPreview.vue** (if form-component.mjs changed)
+- [ ] **FormPreview.vue** (if form-component.ts changed)
   - [ ] Field type to component mapping
   - [ ] Form layout structure (CroutonFormLayout slots)
   - [ ] Default values for field types
@@ -708,11 +708,11 @@ After completing updates, verify everything is in sync:
 
 **Option 2: Run the CI validation script**
 ```bash
-node scripts/validate-field-types-sync.mjs
+node scripts/validate-field-types-sync.ts
 ```
 
 These tools will:
-1. Extract field types from `lib/utils/helpers.mjs`
+1. Extract field types from `lib/utils/helpers.ts`
 2. Compare with MCP server field types
 3. Compare with Claude skill field types
 4. Report any mismatches with fix instructions
@@ -746,6 +746,6 @@ See `.claude/hooks/README.md` for more options.
 - [ ] External docs checked
 
 ### Verification
-- [ ] `/sync-check` command passed (or `node scripts/validate-field-types-sync.mjs`)
+- [ ] `/sync-check` command passed (or `node scripts/validate-field-types-sync.ts`)
 - [ ] `npx nuxt typecheck` passed
 ```
