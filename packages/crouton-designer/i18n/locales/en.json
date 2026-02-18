@@ -230,7 +230,11 @@
       "stepInstall": "Install dependencies",
       "stepGenerate": "Generate collections",
       "stepDoctor": "Doctor validation",
-      "appExists": "An app with this name already exists.",
+      "appExists": "Folder already exists",
+      "appExistsToastDesc": "An app folder \"{name}\" already exists. Enter a new folder name below to continue.",
+      "folderName": "Folder name",
+      "folderNameHint": "apps/<name>/",
+      "folderNameDesc": "Must start with a letter, lowercase letters, numbers, and hyphens only.",
       "createFailed": "App creation failed. Check the details below.",
       "artifactCategories": {
         "config": "Configuration",

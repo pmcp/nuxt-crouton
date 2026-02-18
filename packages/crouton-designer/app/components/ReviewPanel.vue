@@ -61,8 +61,21 @@ onMounted(loadCollections)
 const { issues, errors, warnings, hasErrors } = useSchemaValidation(collections)
 
 // App scaffold
+const toast = useToast()
 const configRef = computed(() => props.config)
-const { appName, artifactsByCategory, status, result, error, createApp } = useAppScaffold(collections, configRef, seedData)
+const { appName, effectiveFolderName, folderNameValid, folderOverride, conflictError, artifactsByCategory, status, result, error, createApp } = useAppScaffold(collections, configRef, seedData)
+
+watch(conflictError, (val) => {
+  if (val) {
+    toast.add({
+      title: t('designer.review.appExists'),
+      description: t('designer.review.appExistsToastDesc', { name: appName.value }),
+      color: 'warning',
+      icon: 'i-lucide-folder-x',
+      duration: 6000
+    })
+  }
+})
 
 // Category display order
 const categoryOrder = ['config', 'app', 'server', 'schema', 'seed'] as const
@@ -150,13 +163,33 @@ function handleNavigateToCollection(_collectionId: string) {
 
       <!-- Create App button -->
       <div class="space-y-4">
+        <!-- Folder rename input (shown on 409 conflict) -->
+        <div v-if="conflictError" class="space-y-2 rounded-lg border border-[var(--ui-color-warning-300)] bg-[var(--ui-color-warning-50)] dark:bg-[var(--ui-color-warning-950)] dark:border-[var(--ui-color-warning-700)] p-4">
+          <div class="flex items-center gap-2 text-sm font-medium text-[var(--ui-color-warning-700)] dark:text-[var(--ui-color-warning-300)] mb-3">
+            <UIcon name="i-lucide-folder-x" class="size-4 shrink-0" />
+            <span>{{ t('designer.review.appExists') }}</span>
+          </div>
+          <UFormField
+            :label="t('designer.review.folderName')"
+            :hint="t('designer.review.folderNameHint')"
+            :error="folderOverride && !folderNameValid ? t('designer.review.folderNameDesc') : undefined"
+          >
+            <UInput
+              v-model="folderOverride"
+              :placeholder="appName"
+              icon="i-lucide-folder"
+              class="font-mono"
+            />
+          </UFormField>
+        </div>
+
         <UButton
           :label="status === 'creating' ? t('designer.review.creating') : t('designer.review.createApp')"
           icon="i-lucide-rocket"
           :loading="status === 'creating'"
           size="lg"
           block
-          :disabled="hasErrors || !appName || Object.keys(artifactsByCategory).length === 0 || status === 'creating'"
+          :disabled="hasErrors || !effectiveFolderName || !folderNameValid || Object.keys(artifactsByCategory).length === 0 || status === 'creating'"
           @click="() => { createApp() }"
         />
 
@@ -165,7 +198,7 @@ function handleNavigateToCollection(_collectionId: string) {
         </p>
       </div>
 
-      <!-- Error state -->
+      <!-- Error state (non-conflict errors only) -->
       <UAlert
         v-if="status === 'error' && error"
         color="error"

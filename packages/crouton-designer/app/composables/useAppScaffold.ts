@@ -6,7 +6,7 @@ export interface ScaffoldArtifact {
   category: 'config' | 'app' | 'server' | 'schema' | 'seed'
 }
 
-export type ScaffoldStatus = 'idle' | 'creating' | 'done' | 'error'
+export type ScaffoldStatus = 'idle' | 'creating' | 'done' | 'error' | 'conflict'
 
 export interface ScaffoldStepResult {
   success: boolean
@@ -39,6 +39,10 @@ export function useAppScaffold(
   const status = ref<ScaffoldStatus>('idle')
   const result = ref<ScaffoldResult | null>(null)
   const error = ref<string | null>(null)
+  const conflictError = ref(false)
+
+  // User-overridable folder name (separate from config display name)
+  const folderOverride = ref('')
 
   // Compute app name from config (kebab-case)
   const appName = computed(() => {
@@ -116,12 +120,17 @@ export function useAppScaffold(
     return groups
   })
 
+  // Effective folder name: user override or computed from config name
+  const effectiveFolderName = computed(() => folderOverride.value || appName.value)
+  const folderNameValid = computed(() => /^[a-z][a-z0-9-]*$/.test(effectiveFolderName.value))
+
   async function createApp(): Promise<ScaffoldResult | null> {
-    if (!appName.value) return null
+    if (!effectiveFolderName.value) return null
 
     status.value = 'creating'
     error.value = null
     result.value = null
+    conflictError.value = false
 
     try {
       // Build schemas map
@@ -147,7 +156,7 @@ export function useAppScaffold(
       const response = await $fetch<ScaffoldResult>('/api/scaffold-app', {
         method: 'POST',
         body: {
-          appName: appName.value,
+          appName: effectiveFolderName.value,
           config: {
             name: config.value.name,
             packages: config.value.packages
@@ -172,14 +181,30 @@ export function useAppScaffold(
       return response
     }
     catch (err: any) {
-      status.value = 'error'
-      error.value = err.data?.statusText || err.message || 'Failed to create app'
+      const httpStatus = err.statusCode || err.status
+      if (httpStatus === 409) {
+        conflictError.value = true
+        status.value = 'conflict'
+        // Pre-fill folder override with a suggested rename if not already overriding
+        if (!folderOverride.value) {
+          folderOverride.value = `${appName.value}-2`
+        }
+        error.value = err.data?.statusText || err.message || 'App already exists'
+      }
+      else {
+        status.value = 'error'
+        error.value = err.data?.statusText || err.message || 'Failed to create app'
+      }
       return null
     }
   }
 
   return {
     appName,
+    effectiveFolderName,
+    folderNameValid,
+    folderOverride,
+    conflictError,
     artifacts,
     artifactsByCategory,
     status,
