@@ -39,11 +39,29 @@
         label="Alt Text"
         name="alt"
       >
-        <UInput
-          v-model="metadata.alt"
-          placeholder="Describe the image for accessibility"
-          size="lg"
-        />
+        <div class="flex gap-2">
+          <UInput
+            v-model="metadata.alt"
+            placeholder="Describe the image for accessibility"
+            size="lg"
+            class="flex-1"
+          />
+          <UTooltip
+            v-if="isImageFile(selectedFile!)"
+            text="Generate alt text with AI"
+            :delay-duration="0"
+          >
+            <UButton
+              :loading="generatingAlt"
+              :disabled="generatingAlt"
+              variant="ghost"
+              color="primary"
+              icon="i-lucide-sparkles"
+              size="lg"
+              @click="generateAltText"
+            />
+          </UTooltip>
+        </div>
       </UFormField>
 
       <div class="text-sm text-gray-500 space-y-1">
@@ -83,6 +101,36 @@ const pendingFile = ref<File | null>(null)
 const previewUrl = ref<string>()
 const showCropStep = ref(false)
 const metadata = ref({ alt: '' })
+const generatingAlt = ref(false)
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+const generateAltText = async () => {
+  if (!selectedFile.value || !isImageFile(selectedFile.value)) return
+
+  generatingAlt.value = true
+  try {
+    const image = await fileToBase64(selectedFile.value)
+    const { alt } = await $fetch<{ alt: string }>('/api/assets/generate-alt-text', {
+      method: 'POST',
+      body: { image, mimeType: selectedFile.value.type }
+    })
+    metadata.value.alt = alt
+  }
+  catch (error) {
+    console.error('Failed to generate alt text:', error)
+  }
+  finally {
+    generatingAlt.value = false
+  }
+}
 
 const cropEnabled = computed(() => {
   if (!props.crop) return false
