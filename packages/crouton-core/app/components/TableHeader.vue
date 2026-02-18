@@ -35,6 +35,7 @@
 
 <script setup>
 const { open } = useCrouton()
+const { getConfig } = useCollections()
 
 const props = defineProps({
   title: {
@@ -74,6 +75,7 @@ const getVariant = (base) => {
 }
 
 const handleCreate = () => {
-  open('create', props.collection)
+  const container = getConfig(props.collection)?.container ?? 'slideover'
+  open('create', props.collection, [], container)
 }
 </script>

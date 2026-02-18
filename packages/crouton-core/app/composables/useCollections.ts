@@ -29,6 +29,8 @@ interface CollectionConfig {
   name?: string
   layer?: string
   componentName?: string
+  /** Container type for create/update forms. Defaults to 'slideover'. */
+  container?: 'slideover' | 'modal' | 'dialog'
   apiPath?: string
   displayName?: string
   defaultPagination?: {
