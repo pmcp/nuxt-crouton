@@ -113,7 +113,10 @@ function getInsertCommand(type: string): string {
     ctaBlock: 'insertCTABlock',
     cardGridBlock: 'insertCardGridBlock',
     separatorBlock: 'insertSeparatorBlock',
-    collectionBlock: 'insertCollectionBlock'
+    collectionBlock: 'insertCollectionBlock',
+    faqBlock: 'insertFaqBlock',
+    twoColumnBlock: 'insertTwoColumnBlock',
+    chartBlock: 'insertChartBlock'
   }
   return commands[type] || type
 }
