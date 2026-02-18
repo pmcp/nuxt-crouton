@@ -12,15 +12,15 @@
     "./minimal/*": "./minimal/*",
     "./kr11": "./kr11/nuxt.config.ts",
     "./kr11/*": "./kr11/*",
-    "./nuxtcharts": "./nuxtcharts/nuxt.config.ts",
-    "./nuxtcharts/*": "./nuxtcharts/*"
+    "./blackandwhite": "./blackandwhite/nuxt.config.ts",
+    "./blackandwhite/*": "./blackandwhite/*"
   },
   "files": [
     "themes",
     "ko",
     "minimal",
     "kr11",
-    "nuxtcharts"
+    "blackandwhite"
   ],
   "keywords": [
     "nuxt",
