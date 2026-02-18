@@ -317,11 +317,14 @@ function updateBlockAttrs(attrs: Record<string, unknown>) {
       }
     }
 
-    // Create transaction and update attributes
-    const { tr } = state
-    view.dispatch(
-      tr.setNodeMarkup(actualPos, undefined, { ...node.attrs, ...attrs })
-    )
+    // Use TipTap's chain for reliable NodeView updates
+    // setNodeSelection ensures the block is selected, updateAttributes applies the change
+    editorInstance.value
+      .chain()
+      .setNodeSelection(actualPos)
+      .updateAttributes(expectedType, attrs)
+      .run()
+
     // Update selectedNode with the correct position
     selectedNode.value = { pos: actualPos, node }
   } catch (error) {
