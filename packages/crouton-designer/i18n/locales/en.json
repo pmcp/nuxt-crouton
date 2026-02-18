@@ -197,7 +197,9 @@
       "ai": "AI Integration",
       "email": "Email",
       "events": "Event Tracking",
-      "collab": "Collaboration"
+      "collab": "Collaboration",
+      "sales": "Point of Sale",
+      "triage": "Discussion Triage"
     },
     "intake": {
       "appConfiguration": "App Configuration",
