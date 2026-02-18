@@ -104,24 +104,26 @@ ${blocks.join('\n\n')}
     }).join('\n')
   }
 
+  function buildCompactFieldTypeRef(): string {
+    const types = FIELD_TYPES.map(ft => ft.type).join(', ')
+    const metaKeys = 'required, unique, label, area(main|sidebar|meta), maxLength, translatable, group, displayAs, options[], optionsCollection, optionsField, readOnly, primaryKey, dependsOn, component, properties'
+    return `## Field Types (turn 1 of this session had the full reference)
+Available: ${types}
+
+## Meta Properties (key names only)
+${metaKeys}`
+  }
+
   function buildSystemPrompt(
     config: ProjectConfig,
-    collections: CollectionWithFields[]
+    collections: CollectionWithFields[],
+    hasPriorContext = false
   ): string {
     const fieldTypes = FIELD_TYPES.map(ft => ft.type).join(', ')
 
-    return `You are a senior full-stack developer helping design data collections for a Nuxt Crouton application. You are in Phase 2: Collection Design.
-
-## App Context
-- Name: ${config.name || 'unnamed'}
-- Type: ${config.appType || 'unknown'}
-- Description: ${config.description || 'none'}
-- Multi-tenant: ${config.multiTenant ?? 'unknown'}
-- Auth: ${config.authType || 'unknown'}
-- Languages: ${config.languages?.join(', ') || 'en'}
-- Packages: ${config.packages?.join(', ') || 'none'}
-${buildPackageCollectionsContext(config)}
-## Available Field Types
+    const fieldTypeSection = hasPriorContext
+      ? buildCompactFieldTypeRef()
+      : `## Available Field Types
 | Type | Label | Description |
 |------|-------|-------------|
 ${buildFieldTypeTable()}
@@ -137,7 +139,20 @@ ${buildMetaTable()}
 - \`readOnly\`: boolean — for reference fields, prevents editing
 - \`dependsOn\` / \`dependsOnCollection\` / \`dependsOnField\`: field dependency chain
 - \`component\`: string — custom Vue component name
-- \`properties\`: object — nested fields for repeater type
+- \`properties\`: object — nested fields for repeater type`
+
+    return `You are a senior full-stack developer helping design data collections for a Nuxt Crouton application. You are in Phase 2: Collection Design.
+
+## App Context
+- Name: ${config.name || 'unnamed'}
+- Type: ${config.appType || 'unknown'}
+- Description: ${config.description || 'none'}
+- Multi-tenant: ${config.multiTenant ?? 'unknown'}
+- Auth: ${config.authType || 'unknown'}
+- Languages: ${config.languages?.join(', ') || 'en'}
+- Packages: ${config.packages?.join(', ') || 'none'}
+${buildPackageCollectionsContext(config)}
+${fieldTypeSection}
 
 ## Current Collections
 ${buildCollectionsContext(collections)}

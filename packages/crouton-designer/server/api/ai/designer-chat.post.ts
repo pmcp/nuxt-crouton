@@ -181,11 +181,31 @@ function getPhase2Tools() {
 // Max messages to include in history — older messages are dropped to prevent token overflow
 const MAX_HISTORY_MESSAGES = 30
 
+// Per-phase maxSteps: Phase 1 is simple extraction (2), Phase 2 needs multi-collection proposals (5),
+// Phase 3 generates one tool call per collection (generous cap at 8), Phase 5 is prose only (1)
+const MAX_STEPS_BY_PHASE: Record<string, number> = {
+  '1': 2,
+  '2': 5,
+  '3': 8,
+  '5': 1
+}
+
+// Return a cheaper/faster model for phases that don't need heavy reasoning
+function getFastModel(defaultModel: string): string {
+  if (defaultModel.startsWith('claude')) return 'claude-haiku-4-5-20251001'
+  if (defaultModel.startsWith('gpt') || defaultModel.startsWith('o1') || defaultModel.startsWith('o3')) return 'gpt-4o-mini'
+  return defaultModel
+}
+
+const FAST_PHASES = new Set(['1', '3', '5'])
+
 export default defineEventHandler(async (event) => {
   const { messages, system, provider, model, phase } = await readBody(event)
 
   const ai = createAIProvider(event)
-  const modelId = model || ai.getDefaultModel()
+  const defaultModel = ai.getDefaultModel()
+  // Use fast model for simple phases unless the caller explicitly specifies a model
+  const modelId = model || (FAST_PHASES.has(phase) ? getFastModel(defaultModel) : defaultModel)
 
   // Only provide phase-relevant tools to minimize token usage
   const tools = phase === '1'
@@ -201,12 +221,14 @@ export default defineEventHandler(async (event) => {
     ? messages.slice(-MAX_HISTORY_MESSAGES)
     : messages
 
+  const maxSteps = MAX_STEPS_BY_PHASE[phase as string] ?? 5
+
   const result = streamText({
     model: ai.model(modelId),
     system,
     messages: trimmedMessages,
     tools,
-    maxSteps: 5
+    maxSteps
   })
 
   return result.toDataStreamResponse({
