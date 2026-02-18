@@ -783,13 +783,14 @@ defineExpose({ state })
             :items="statusDropdownItems"
             :content="{ align: 'start' }"
           >
-            <UButton variant="ghost" color="neutral" size="xs" class="px-2">
+            <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
               <span
                 :class="[
                   'block size-3 rounded-full',
                   `bg-${statusConfig[state.status]?.color || 'warning'}`
                 ]"
               />
+              <span class="hidden lg:inline">{{ statusConfig[state.status]?.label }}</span>
             </UButton>
 
             <template #draft="{ item }">
@@ -818,11 +819,12 @@ defineExpose({ state })
             :items="pageTypeDropdownItems"
             :content="{ align: 'start' }"
           >
-            <UButton variant="ghost" color="neutral" size="xs" class="px-2">
+            <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
               <UIcon
                 :name="selectedPageType?.icon || 'i-lucide-file'"
                 class="size-4"
               />
+              <span class="hidden lg:inline">{{ selectedPageType?.name || 'Page' }}</span>
             </UButton>
 
             <template #item="{ item }">
@@ -833,11 +835,12 @@ defineExpose({ state })
             </template>
           </UDropdownMenu>
           <UPopover v-else>
-            <UButton variant="ghost" color="neutral" size="xs" class="px-2">
+            <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
               <UIcon
                 :name="selectedPageType?.icon || 'i-lucide-file'"
                 class="size-4"
               />
+              <span class="hidden lg:inline">{{ selectedPageType?.name || 'Page' }}</span>
             </UButton>
             <template #content>
               <div class="p-3 text-sm">
@@ -854,11 +857,12 @@ defineExpose({ state })
             :items="visibilityDropdownItems"
             :content="{ align: 'start' }"
           >
-            <UButton variant="ghost" color="neutral" size="xs" class="px-2">
+            <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
               <UIcon
                 :name="visibilityConfig[state.visibility]?.icon || 'i-lucide-globe'"
                 class="size-4 text-muted"
               />
+              <span class="hidden lg:inline">{{ visibilityConfig[state.visibility]?.label }}</span>
             </UButton>
 
             <template #public="{ item }">
@@ -894,6 +898,9 @@ defineExpose({ state })
                 name="i-lucide-menu"
                 :class="['size-4', state.showInNavigation ? 'text-muted' : 'opacity-30']"
               />
+              <span :class="['hidden lg:inline', state.showInNavigation ? '' : 'opacity-30']">
+                {{ state.showInNavigation ? 'In Menu' : 'No Menu' }}
+              </span>
             </UButton>
           </UTooltip>
 
@@ -905,7 +912,9 @@ defineExpose({ state })
                 color="neutral"
                 icon="i-lucide-settings"
                 size="xs"
-              />
+              >
+                <span class="hidden lg:inline">Settings</span>
+              </UButton>
               <template #content>
                 <div class="p-4 w-72 space-y-4">
                   <div class="text-sm font-medium text-default mb-3">Page Settings</div>
@@ -961,91 +970,99 @@ defineExpose({ state })
 
         <div class="flex-1" />
 
-        <!-- AI page generator (regular pages only) -->
-        <UTooltip v-if="isRegularPage" text="Generate page with AI" :delay-duration="0">
+        <UFieldGroup>
+          <!-- AI page generator (regular pages only) -->
+          <UTooltip v-if="isRegularPage" text="Generate page with AI" :delay-duration="0">
+            <UButton
+              variant="ghost"
+              color="primary"
+              icon="i-lucide-sparkles"
+              size="xs"
+              @click="showAiGenerator = true"
+            >
+              <span class="hidden lg:inline">Generate</span>
+            </UButton>
+          </UTooltip>
+
+          <!-- Preview -->
+          <UTooltip :text="state.status === 'draft' ? 'Preview Draft' : 'Preview Page'" :delay-duration="0">
+            <UButton
+              variant="ghost"
+              color="neutral"
+              icon="i-lucide-eye"
+              size="xs"
+              @click="showPreview = true"
+            >
+              <span class="hidden lg:inline">Preview</span>
+            </UButton>
+          </UTooltip>
+
+          <!-- Open in public -->
+          <UTooltip
+            v-if="publicUrl"
+            :text="state.status === 'published' ? 'Open in Public' : 'Publish page to open publicly'"
+            :delay-duration="0"
+          >
+            <UButton
+              :to="state.status === 'published' ? publicUrl : undefined"
+              :disabled="state.status !== 'published'"
+              target="_blank"
+              variant="ghost"
+              color="neutral"
+              icon="i-lucide-external-link"
+              size="xs"
+            >
+              <span class="hidden lg:inline">Open</span>
+            </UButton>
+          </UTooltip>
+
+          <!-- Cancel (create mode) -->
           <UButton
+            v-if="action === 'create'"
+            color="error"
             variant="ghost"
+            icon="i-lucide-x"
+            size="xs"
+            @click="emit('cancel')"
+          >
+            Cancel
+          </UButton>
+
+          <!-- Delete (two-click confirm, edit mode) -->
+          <UButton
+            v-if="action === 'update' && state.id"
+            color="error"
+            :variant="confirmingDelete ? 'soft' : 'ghost'"
+            :icon="confirmingDelete ? undefined : 'i-lucide-trash-2'"
+            size="xs"
+            @click="handleDelete"
+            @blur="confirmingDelete = false"
+          >
+            <template v-if="confirmingDelete">Delete?</template>
+          </UButton>
+
+          <!-- Save -->
+          <UButton
+            type="submit"
+            variant="soft"
             color="primary"
-            icon="i-lucide-sparkles"
             size="xs"
-            @click="showAiGenerator = true"
-          />
-        </UTooltip>
+            icon="i-lucide-save"
+            :loading="isSaving"
+          >
+            {{ action === 'create' ? 'Create' : 'Save' }}
+          </UButton>
 
-        <!-- Preview -->
-        <UTooltip :text="state.status === 'draft' ? 'Preview Draft' : 'Preview Page'" :delay-duration="0">
+          <!-- Close button (shown in inline editor context) -->
           <UButton
+            v-if="showClose"
             variant="ghost"
             color="neutral"
-            icon="i-lucide-eye"
+            icon="i-lucide-x"
             size="xs"
-            @click="showPreview = true"
+            @click="emit('close')"
           />
-        </UTooltip>
-
-        <!-- Open in public -->
-        <UTooltip
-          v-if="publicUrl"
-          :text="state.status === 'published' ? 'Open in Public' : 'Publish page to open publicly'"
-          :delay-duration="0"
-        >
-          <UButton
-            :to="state.status === 'published' ? publicUrl : undefined"
-            :disabled="state.status !== 'published'"
-            target="_blank"
-            variant="ghost"
-            color="neutral"
-            icon="i-lucide-external-link"
-            size="xs"
-          />
-        </UTooltip>
-
-        <!-- Cancel (create mode) -->
-        <UButton
-          v-if="action === 'create'"
-          color="error"
-          variant="ghost"
-          icon="i-lucide-x"
-          size="xs"
-          @click="emit('cancel')"
-        >
-          Cancel
-        </UButton>
-
-        <!-- Delete (two-click confirm, edit mode) -->
-        <UButton
-          v-if="action === 'update' && state.id"
-          color="error"
-          :variant="confirmingDelete ? 'soft' : 'ghost'"
-          :icon="confirmingDelete ? undefined : 'i-lucide-trash-2'"
-          size="xs"
-          @click="handleDelete"
-          @blur="confirmingDelete = false"
-        >
-          <template v-if="confirmingDelete">Delete?</template>
-        </UButton>
-
-        <!-- Save -->
-        <UButton
-          type="submit"
-          variant="soft"
-          color="primary"
-          size="xs"
-          icon="i-lucide-save"
-          :loading="isSaving"
-        >
-          {{ action === 'create' ? 'Create' : 'Save' }}
-        </UButton>
-
-        <!-- Close button (shown in inline editor context) -->
-        <UButton
-          v-if="showClose"
-          variant="ghost"
-          color="neutral"
-          icon="i-lucide-x"
-          size="xs"
-          @click="emit('close')"
-        />
+        </UFieldGroup>
       </div>
 
       <!-- Content -->
