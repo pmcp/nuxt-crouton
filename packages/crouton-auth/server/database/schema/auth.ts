@@ -508,11 +508,16 @@ export type ThemeNeutralColor = 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone'
 
 export type ThemeRadius = 0 | 0.125 | 0.25 | 0.375 | 0.5
 
+/** Named theme presets */
+export type ThemePreset = 'custom' | 'blackandwhite'
+
 /**
  * Theme settings for team visual customization
  * Similar to Nuxt UI's theme picker
  */
 export interface TeamThemeSettings {
+  /** Named preset — when set, overrides individual color/variant settings */
+  preset?: ThemePreset
   /** Primary color for buttons, links, and accents */
   primary?: ThemePrimaryColor
   /** Neutral color for backgrounds, borders, and text */

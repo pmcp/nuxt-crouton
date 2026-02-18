@@ -6,6 +6,7 @@
  * On client hydration, applies the already-fetched theme immediately.
  */
 import type { TeamThemeSettings } from '../composables/useTeamTheme'
+import { applyThemeSettings } from '../composables/useTeamTheme'
 
 export default defineNuxtPlugin({
   name: 'team-theme',
@@ -16,32 +17,22 @@ export default defineNuxtPlugin({
 
     // Shared state — SSR result is serialized and hydrated on client
     const themeState = useState<TeamThemeSettings>('team-theme-data', () => ({}))
+    // Flag prevents re-fetching on client when SSR already populated the state
+    const themeFetched = useState<boolean>('team-theme-fetched', () => false)
 
-    // Only fetch if not already populated (client gets hydrated SSR value)
-    if (!themeState.value.primary) {
+    if (!themeFetched.value) {
       try {
         const data = await $fetch<TeamThemeSettings>(
           `/api/teams/${teamId.value}/settings/theme`
         )
         themeState.value = data ?? {}
-      } catch {
+      }
+      catch {
         // Theme fetch failed, use defaults
       }
+      themeFetched.value = true
     }
 
-    // Apply theme to Nuxt UI
-    const primary = themeState.value.primary || 'emerald'
-    const neutral = themeState.value.neutral || 'slate'
-    const radius = themeState.value.radius ?? 0.25
-
-    updateAppConfig({
-      ui: {
-        colors: { primary, neutral }
-      }
-    })
-
-    if (import.meta.client) {
-      document.documentElement.style.setProperty('--ui-radius', `${radius}rem`)
-    }
+    applyThemeSettings(themeState.value)
   }
 })

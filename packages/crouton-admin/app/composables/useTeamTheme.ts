@@ -9,8 +9,11 @@
  * ```typescript
  * const { theme, isLoading, updateTheme, refresh } = useTeamTheme()
  *
- * // Update theme (admin only)
- * await updateTheme({ primary: 'blue', neutral: 'slate', radius: 0.25 })
+ * // Apply a preset (admin only)
+ * await updateTheme({ preset: 'blackandwhite' })
+ *
+ * // Apply custom colors (admin only)
+ * await updateTheme({ preset: 'custom', primary: 'blue', neutral: 'slate', radius: 0.25 })
  * ```
  */
 import { computed, watch, readonly } from 'vue'
@@ -35,12 +38,32 @@ export type ThemeNeutralColor = 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone'
 export type ThemeRadius = 0 | 0.125 | 0.25 | 0.375 | 0.5
 
 /**
+ * Named theme presets
+ */
+export type ThemePreset = 'custom' | 'blackandwhite'
+
+/**
  * Team theme settings
  */
 export interface TeamThemeSettings {
+  preset?: ThemePreset
   primary?: ThemePrimaryColor
   neutral?: ThemeNeutralColor
   radius?: ThemeRadius
+}
+
+/**
+ * Preset configuration — visual metadata + what gets applied to Nuxt UI
+ */
+export interface ThemePresetConfig {
+  label: string
+  description: string
+  /** Hex color for the primary preview swatch */
+  previewPrimary: string
+  /** Hex color for the neutral preview swatch */
+  previewNeutral: string
+  /** Config passed to updateAppConfig({ ui: ... }) */
+  ui: Record<string, unknown>
 }
 
 /**
@@ -68,9 +91,78 @@ export const RADIUS_OPTIONS: ThemeRadius[] = [0, 0.125, 0.25, 0.375, 0.5]
  * Default theme values
  */
 export const DEFAULT_THEME: Required<TeamThemeSettings> = {
+  preset: 'custom',
   primary: 'emerald',
   neutral: 'slate',
   radius: 0.25
+}
+
+/**
+ * Nuxt UI v4 structural defaults.
+ * Applied when switching to 'custom' to undo any preset overrides.
+ */
+const NUXT_UI_STRUCTURAL_DEFAULTS = {
+  theme: { defaultVariants: { size: 'md' } },
+  input: { defaultVariants: { variant: 'outline' } },
+  select: { defaultVariants: { variant: 'outline' } },
+  alert: { defaultVariants: { variant: 'soft' } },
+  textarea: { defaultVariants: { variant: 'outline' } }
+}
+
+/**
+ * Named theme presets with their Nuxt UI configurations.
+ * Each preset fully declares the keys it touches so switching between
+ * presets always produces correct results.
+ */
+export const THEME_PRESETS: Record<ThemePreset, ThemePresetConfig> = {
+  custom: {
+    label: 'Custom',
+    description: 'Choose your own colors and radius',
+    previewPrimary: '#10b981', // emerald-500
+    previewNeutral: '#64748b', // slate-500
+    ui: {} // handled via individual color/radius settings
+  },
+  blackandwhite: {
+    label: 'Black & White',
+    description: 'Compact, monochrome dashboard with subtle form variants',
+    previewPrimary: '#171717', // neutral-900
+    previewNeutral: '#737373', // neutral-500
+    ui: {
+      colors: { primary: 'neutral', neutral: 'neutral' },
+      theme: { defaultVariants: { size: 'sm' } },
+      input: { defaultVariants: { variant: 'subtle' } },
+      select: { defaultVariants: { variant: 'subtle' } },
+      alert: { defaultVariants: { variant: 'subtle' } },
+      textarea: { defaultVariants: { variant: 'subtle' } }
+    }
+  }
+}
+
+/**
+ * Apply theme settings to Nuxt UI via updateAppConfig.
+ * Exported as a standalone function so the plugin can use it too.
+ */
+export function applyThemeSettings(settings: TeamThemeSettings) {
+  const preset = settings.preset ?? 'custom'
+  const radius = settings.radius ?? DEFAULT_THEME.radius
+
+  if (preset !== 'custom') {
+    updateAppConfig({ ui: THEME_PRESETS[preset].ui })
+  }
+  else {
+    const primary = settings.primary ?? DEFAULT_THEME.primary
+    const neutral = settings.neutral ?? DEFAULT_THEME.neutral
+    updateAppConfig({
+      ui: {
+        ...NUXT_UI_STRUCTURAL_DEFAULTS,
+        colors: { primary, neutral }
+      }
+    })
+  }
+
+  if (import.meta.client) {
+    document.documentElement.style.setProperty('--ui-radius', `${radius}rem`)
+  }
 }
 
 export function useTeamTheme() {
@@ -78,40 +170,22 @@ export function useTeamTheme() {
 
   // Shared state with the plugin (populated during SSR)
   const themeData = useState<TeamThemeSettings>('team-theme-data', () => ({}))
+  // Tracks whether the initial fetch has completed (avoids re-fetch on hydration)
+  const themeFetched = useState<boolean>('team-theme-fetched', () => false)
 
-  // Computed theme with defaults
+  // Computed theme with defaults applied
   const theme = computed<Required<TeamThemeSettings>>(() => ({
+    preset: themeData.value.preset ?? DEFAULT_THEME.preset,
     primary: themeData.value.primary ?? DEFAULT_THEME.primary,
     neutral: themeData.value.neutral ?? DEFAULT_THEME.neutral,
     radius: themeData.value.radius ?? DEFAULT_THEME.radius
   }))
 
-  // Loading state
-  const isLoading = computed(() => !themeData.value.primary)
-
-  // Apply theme to Nuxt UI via updateAppConfig
-  function applyTheme(settings: TeamThemeSettings) {
-    const primary = settings.primary ?? DEFAULT_THEME.primary
-    const neutral = settings.neutral ?? DEFAULT_THEME.neutral
-    const radius = settings.radius ?? DEFAULT_THEME.radius
-
-    updateAppConfig({
-      ui: {
-        colors: {
-          primary,
-          neutral
-        }
-      }
-    })
-
-    if (import.meta.client) {
-      document.documentElement.style.setProperty('--ui-radius', `${radius}rem`)
-    }
-  }
+  const isLoading = computed(() => !themeFetched.value)
 
   // Watch for live theme changes (e.g. admin editing theme settings)
   watch(theme, (newTheme) => {
-    applyTheme(newTheme)
+    applyThemeSettings(newTheme)
   })
 
   // Refresh theme from API
@@ -122,9 +196,11 @@ export function useTeamTheme() {
         `/api/teams/${teamId.value}/settings/theme`
       )
       themeData.value = data ?? {}
-      applyTheme(theme.value)
-    } catch {
-      // Refresh failed, keep current theme
+      themeFetched.value = true
+      applyThemeSettings(theme.value)
+    }
+    catch {
+      themeFetched.value = true
     }
   }
 
@@ -149,6 +225,7 @@ export function useTeamTheme() {
   // Reset to defaults
   async function resetTheme() {
     return updateTheme({
+      preset: DEFAULT_THEME.preset,
       primary: DEFAULT_THEME.primary,
       neutral: DEFAULT_THEME.neutral,
       radius: DEFAULT_THEME.radius
@@ -162,6 +239,7 @@ export function useTeamTheme() {
     updateTheme,
     resetTheme,
     refresh,
-    applyTheme
+    /** Apply theme settings immediately (for live preview) */
+    applyTheme: applyThemeSettings
   }
 }

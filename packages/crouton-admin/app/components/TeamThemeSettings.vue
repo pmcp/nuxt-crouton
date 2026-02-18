@@ -2,12 +2,15 @@
 /**
  * Team Theme Settings Component
  *
- * Form for customizing team visual appearance (primary color, neutral color, radius).
+ * Form for customizing team visual appearance.
+ * Supports named presets (e.g. Black & White) or fully custom color/radius.
  */
 import {
   PRIMARY_COLORS,
   NEUTRAL_COLORS,
   DEFAULT_THEME,
+  THEME_PRESETS,
+  type ThemePreset,
   type TeamThemeSettings
 } from '../composables/useTeamTheme'
 
@@ -22,6 +25,7 @@ const { theme, isLoading, updateTheme, applyTheme } = useTeamTheme()
 
 // Local form state for live preview
 const localTheme = reactive<TeamThemeSettings>({
+  preset: undefined,
   primary: undefined,
   neutral: undefined,
   radius: undefined
@@ -29,27 +33,39 @@ const localTheme = reactive<TeamThemeSettings>({
 
 // Sync local state with fetched theme
 watch(theme, (newTheme) => {
+  localTheme.preset = newTheme.preset
   localTheme.primary = newTheme.primary
   localTheme.neutral = newTheme.neutral
   localTheme.radius = newTheme.radius
 }, { immediate: true })
 
-// Track if form has changes
+// Track if form has unsaved changes
 const hasChanges = computed(() => {
   return (
-    localTheme.primary !== theme.value.primary
+    localTheme.preset !== theme.value.preset
+    || localTheme.primary !== theme.value.primary
     || localTheme.neutral !== theme.value.neutral
     || localTheme.radius !== theme.value.radius
   )
 })
 
+// Whether the current selection is custom (no named preset)
+const isCustom = computed(() =>
+  !localTheme.preset || localTheme.preset === 'custom'
+)
+
 // Saving state
 const isSaving = ref(false)
 
-// Apply live preview when local theme changes
+// Apply live preview whenever local theme changes
 watch(localTheme, (newTheme) => {
   applyTheme(newTheme)
 }, { deep: true })
+
+// Select a preset
+function selectPreset(preset: ThemePreset) {
+  localTheme.preset = preset
+}
 
 // Handle save
 async function handleSave() {
@@ -65,6 +81,7 @@ async function handleSave() {
   isSaving.value = true
   try {
     const saved = await updateTheme({
+      preset: localTheme.preset,
       primary: localTheme.primary,
       neutral: localTheme.neutral,
       radius: localTheme.radius
@@ -77,37 +94,45 @@ async function handleSave() {
     })
 
     emit('saved', saved)
-  } catch (e: unknown) {
+  }
+  catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to save theme settings'
     toast.add({
       title: t('common.error') || 'Error',
       description: message,
       color: 'error'
     })
-  } finally {
+  }
+  finally {
     isSaving.value = false
   }
 }
 
 // Handle reset to defaults
 function handleReset() {
+  localTheme.preset = DEFAULT_THEME.preset
   localTheme.primary = DEFAULT_THEME.primary
   localTheme.neutral = DEFAULT_THEME.neutral
   localTheme.radius = DEFAULT_THEME.radius
 }
 
-// Revert to saved values
+// Revert to last saved values
 function revertChanges() {
+  localTheme.preset = theme.value.preset
   localTheme.primary = theme.value.primary
   localTheme.neutral = theme.value.neutral
   localTheme.radius = theme.value.radius
 }
+
+const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THEME_PRESETS)[ThemePreset]][]
 </script>
 
 <template>
   <div class="space-y-6">
     <div>
-      <h3 class="text-lg font-semibold">Theme Settings</h3>
+      <h3 class="text-lg font-semibold">
+        Theme Settings
+      </h3>
       <p class="text-sm text-muted mt-1">
         Customize your team's visual appearance. Changes preview in real-time.
       </p>
@@ -116,55 +141,138 @@ function revertChanges() {
     <USeparator />
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center py-8">
-      <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
+    <div
+      v-if="isLoading"
+      class="flex items-center justify-center py-8"
+    >
+      <UIcon
+        name="i-lucide-loader-2"
+        class="size-6 animate-spin text-muted"
+      />
     </div>
 
     <template v-else>
-      <!-- Live Preview Section -->
+      <!-- Preset Picker -->
+      <div class="space-y-3">
+        <label class="text-sm font-medium text-default">Theme Preset</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            v-for="[key, preset] in presetEntries"
+            :key="key"
+            type="button"
+            :disabled="!isAdmin || isSaving"
+            class="relative flex items-center gap-3 p-3 rounded-lg border text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="(localTheme.preset === key) || (key === 'custom' && !localTheme.preset)
+              ? 'border-primary bg-primary/5'
+              : 'border-muted hover:border-default hover:bg-elevated/50'"
+            @click="selectPreset(key)"
+          >
+            <!-- Two-dot color preview -->
+            <div class="flex shrink-0 gap-1">
+              <span
+                class="size-5 rounded-full ring-1 ring-black/10 dark:ring-white/10"
+                :style="{ background: preset.previewPrimary }"
+              />
+              <span
+                class="size-5 rounded-full ring-1 ring-black/10 dark:ring-white/10"
+                :style="{ background: preset.previewNeutral }"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium text-default">
+                {{ preset.label }}
+              </div>
+              <div class="text-xs text-muted truncate">
+                {{ preset.description }}
+              </div>
+            </div>
+            <UIcon
+              v-if="(localTheme.preset === key) || (key === 'custom' && !localTheme.preset)"
+              name="i-lucide-check-circle"
+              class="absolute top-2 right-2 size-4 text-primary shrink-0"
+            />
+          </button>
+        </div>
+      </div>
+
+      <!-- Individual pickers (only when custom) -->
+      <template v-if="isCustom">
+        <USeparator />
+
+        <TeamColorSwatchPicker
+          v-model="localTheme.primary"
+          :colors="PRIMARY_COLORS"
+          label="Primary Color"
+          :disabled="!isAdmin || isSaving"
+        />
+
+        <TeamColorSwatchPicker
+          v-model="localTheme.neutral"
+          :colors="NEUTRAL_COLORS"
+          label="Neutral Color"
+          :disabled="!isAdmin || isSaving"
+        />
+
+        <TeamRadiusPicker
+          v-model="localTheme.radius"
+          :disabled="!isAdmin || isSaving"
+        />
+      </template>
+
+      <USeparator />
+
+      <!-- Live Preview -->
       <div class="space-y-3">
         <label class="text-sm font-medium text-default">Live Preview</label>
         <div class="p-4 border border-muted rounded-lg bg-muted/10 space-y-4">
           <div class="flex flex-wrap gap-2">
-            <UButton color="primary">Primary Button</UButton>
-            <UButton color="primary" variant="outline">Outline</UButton>
-            <UButton color="primary" variant="soft">Soft</UButton>
-            <UButton color="primary" variant="ghost">Ghost</UButton>
+            <UButton color="primary">
+              Primary Button
+            </UButton>
+            <UButton
+              color="primary"
+              variant="outline"
+            >
+              Outline
+            </UButton>
+            <UButton
+              color="primary"
+              variant="soft"
+            >
+              Soft
+            </UButton>
+            <UButton
+              color="primary"
+              variant="ghost"
+            >
+              Ghost
+            </UButton>
           </div>
           <div class="flex flex-wrap gap-2">
-            <UBadge color="primary">Badge</UBadge>
-            <UBadge color="primary" variant="outline">Outline</UBadge>
-            <UBadge color="primary" variant="soft">Soft</UBadge>
+            <UBadge color="primary">
+              Badge
+            </UBadge>
+            <UBadge
+              color="primary"
+              variant="outline"
+            >
+              Outline
+            </UBadge>
+            <UBadge
+              color="primary"
+              variant="soft"
+            >
+              Soft
+            </UBadge>
           </div>
           <div class="max-w-xs">
-            <UInput placeholder="Sample input..." icon="i-lucide-search" />
+            <UInput
+              placeholder="Sample input..."
+              icon="i-lucide-search"
+            />
           </div>
         </div>
       </div>
-
-      <USeparator />
-
-      <!-- Primary Color Picker -->
-      <TeamColorSwatchPicker
-        v-model="localTheme.primary"
-        :colors="PRIMARY_COLORS"
-        label="Primary Color"
-        :disabled="!isAdmin || isSaving"
-      />
-
-      <!-- Neutral Color Picker -->
-      <TeamColorSwatchPicker
-        v-model="localTheme.neutral"
-        :colors="NEUTRAL_COLORS"
-        label="Neutral Color"
-        :disabled="!isAdmin || isSaving"
-      />
-
-      <!-- Border Radius Picker -->
-      <TeamRadiusPicker
-        v-model="localTheme.radius"
-        :disabled="!isAdmin || isSaving"
-      />
 
       <USeparator />
 
