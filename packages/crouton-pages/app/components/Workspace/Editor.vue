@@ -42,7 +42,15 @@ const { t } = useT()
  const { useTimeAgo } = await import('@vueuse/core')
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
-const { locale } = useI18n()
+const { locale, locales } = useI18n()
+
+// Locale options for the AI generator
+const availableLocales = computed(() =>
+  (locales.value as Array<{ code: string, name: string }>).map(l => ({
+    code: l.code,
+    name: l.name
+  }))
+)
 const collections = useCollections()
 const { teamSlug: teamSlugRef } = useTeamContext()
 
@@ -60,30 +68,39 @@ const showAiGenerator = ref(false)
 // Incrementing key forces CroutonI18nInput to fully remount after AI generation
 const contentKey = ref(0)
 
-async function applyAiContent(content: string) {
-  const currentLocale = locale.value || 'en'
-
-  // Path 1: collab is connected — inject into Yjs directly so the editor syncs
-  if (collabForI18n.value?.setContentJson) {
-    try {
-      const parsed = JSON.parse(content)
-      collabForI18n.value.setContentJson(currentLocale, parsed, true)
+async function applyAiContent(results: Array<{
+  locale: string
+  content: string
+  seoTitle: string
+  seoDescription: string
+}>) {
+  for (const { locale: localeCode, content, seoTitle, seoDescription } of results) {
+    // Path 1: collab is connected — inject into Yjs directly so the editor syncs
+    if (collabForI18n.value?.setContentJson) {
+      try {
+        const parsed = JSON.parse(content)
+        collabForI18n.value.setContentJson(localeCode, parsed, true)
+      }
+      catch {
+        // Fall through to state-based path
+      }
     }
-    catch {
-      // Fall through to state-based path
-    }
-  }
 
-  // Path 2: always update state.translations so the value persists on save
-  const translations = state.value.translations as Record<string, Record<string, unknown>> | undefined
-  if (!translations) {
-    (state.value as any).translations = { [currentLocale]: { content } }
-  }
-  else if (!translations[currentLocale]) {
-    translations[currentLocale] = { content }
-  }
-  else {
-    translations[currentLocale].content = content
+    // Path 2: always update state.translations so the value persists on save
+    const translations = state.value.translations as Record<string, Record<string, unknown>> | undefined
+    if (!translations) {
+      (state.value as any).translations = {
+        [localeCode]: { content, seoTitle, seoDescription }
+      }
+    }
+    else if (!translations[localeCode]) {
+      translations[localeCode] = { content, seoTitle, seoDescription }
+    }
+    else {
+      translations[localeCode].content = content
+      if (seoTitle) translations[localeCode].seoTitle = seoTitle
+      if (seoDescription) translations[localeCode].seoDescription = seoDescription
+    }
   }
 
   // Force a full remount of CroutonI18nInput so TipTap reinitialises from state
@@ -1154,6 +1171,8 @@ defineExpose({ state })
     <!-- AI Page Generator Modal -->
     <CroutonPagesAiPageGenerator
       v-model="showAiGenerator"
+      :available-locales="availableLocales"
+      :current-locale="locale"
       @apply="applyAiContent"
     />
   </div>

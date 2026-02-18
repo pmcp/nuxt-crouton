@@ -1,8 +1,13 @@
 import { generateText } from 'ai'
 
-const SYSTEM_PROMPT = `You are a web page content generator for a modern website CMS.
-Generate a complete, compelling page structure based on the user's brief.
+function buildSystemPrompt(language?: string): string {
+  const languageInstruction = language
+    ? `\n## Language\nAll copy — headings, descriptions, button labels, SEO fields — MUST be written in ${language}. Do not use any other language.\n`
+    : ''
 
+  return `You are a web page content generator for a modern website CMS.
+Generate a complete, compelling page structure based on the user's brief.
+${languageInstruction}
 ## Available Block Types
 
 ### heroBlock
@@ -41,21 +46,28 @@ Use Lucide icons: i-lucide-star, i-lucide-zap, i-lucide-shield, i-lucide-code, i
 
 Return ONLY a valid JSON object — no markdown fences, no explanation, nothing else:
 {
-  "type": "doc",
-  "content": [
-    { "type": "heroBlock", "attrs": { ... } },
-    { "type": "sectionBlock", "attrs": { ... } }
-  ]
+  "seoTitle": "Concise page title for search engines (50–60 chars)",
+  "seoDescription": "Compelling meta description (140–160 chars)",
+  "blocks": {
+    "type": "doc",
+    "content": [
+      { "type": "heroBlock", "attrs": { ... } },
+      { "type": "sectionBlock", "attrs": { ... } }
+    ]
+  }
 }
 
 ## Rules
-- Always start with a heroBlock
+- Always start blocks with a heroBlock
 - Include 3–5 blocks total, in a logical page flow
 - Copy should be specific, compelling, and relevant to the brief
 - Use placeholder links: to="#" or to="/contact"
 - Orientation: prefer "vertical" for hero, "horizontal" for feature sections
 - reverse: alternate true/false across sections for visual variety
-- ctaBlock: typically the last or second-to-last block before footer`
+- ctaBlock: typically the last or second-to-last block before footer
+- seoTitle: should match the hero title but optimised for search (no brand suffix needed)
+- seoDescription: should summarise the page value proposition clearly`
+}
 
 // Block private/internal addresses to prevent SSRF
 function isBlockedUrl(url: URL): boolean {
@@ -74,7 +86,6 @@ function isBlockedUrl(url: URL): boolean {
 
 // Extract meaningful text from HTML without external dependencies
 function extractPageContent(html: string): string {
-  // Remove scripts, styles, nav, footer, and other noise
   let clean = html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -85,23 +96,19 @@ function extractPageContent(html: string): string {
 
   const lines: string[] = []
 
-  // Title
   const titleMatch = clean.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
   if (titleMatch) lines.push(`Title: ${titleMatch[1].trim()}`)
 
-  // Meta description
   const metaMatch = clean.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
     || clean.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)
   if (metaMatch) lines.push(`Meta description: ${metaMatch[1].trim()}`)
 
-  // Headings
   const headingMatches = clean.matchAll(/<h([1-4])[^>]*>([\s\S]*?)<\/h\1>/gi)
   for (const match of headingMatches) {
     const text = match[2].replace(/<[^>]+>/g, '').trim()
     if (text) lines.push(`H${match[1]}: ${text}`)
   }
 
-  // Paragraphs (first 10)
   const paraMatches = [...clean.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].slice(0, 10)
   for (const match of paraMatches) {
     const text = match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
@@ -121,11 +128,8 @@ async function fetchPageContent(url: string): Promise<string | null> {
       signal: AbortSignal.timeout(8000),
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CroutonBot/1.0)' }
     })
-
     if (!response.ok) return null
-
-    const html = await response.text()
-    return extractPageContent(html)
+    return extractPageContent(await response.text())
   }
   catch {
     return null
@@ -133,13 +137,16 @@ async function fetchPageContent(url: string): Promise<string | null> {
 }
 
 export default defineEventHandler(async (event) => {
-  const { brief, url } = await readBody<{ brief: string, url?: string }>(event)
+  const { brief, url, language } = await readBody<{
+    brief: string
+    url?: string
+    language?: string
+  }>(event)
 
   if (!brief?.trim()) {
     throw createError({ status: 400, statusText: 'Brief is required' })
   }
 
-  // Fetch reference page if URL provided (failure is non-fatal)
   let referenceContent: string | null = null
   if (url?.trim()) {
     referenceContent = await fetchPageContent(url.trim())
@@ -154,19 +161,30 @@ export default defineEventHandler(async (event) => {
 
   const { text } = await generateText({
     model: ai.model(modelId),
-    system: SYSTEM_PROMPT,
+    system: buildSystemPrompt(language),
     messages: [{ role: 'user', content: userMessage }]
   })
 
-  // Strip markdown fences if the model added them anyway
   const cleaned = text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
 
   try {
     const parsed = JSON.parse(cleaned)
-    if (parsed.type !== 'doc' || !Array.isArray(parsed.content)) {
-      throw new Error('Invalid page structure returned')
+
+    // Support both new format { seoTitle, seoDescription, blocks } and legacy { type:'doc', content }
+    if (parsed.blocks?.type === 'doc' && Array.isArray(parsed.blocks.content)) {
+      return {
+        content: JSON.stringify(parsed.blocks),
+        seoTitle: parsed.seoTitle || '',
+        seoDescription: parsed.seoDescription || ''
+      }
     }
-    return { content: JSON.stringify(parsed) }
+
+    // Legacy fallback (blocks at root level)
+    if (parsed.type === 'doc' && Array.isArray(parsed.content)) {
+      return { content: JSON.stringify(parsed), seoTitle: '', seoDescription: '' }
+    }
+
+    throw new Error('Invalid page structure returned')
   }
   catch {
     throw createError({
