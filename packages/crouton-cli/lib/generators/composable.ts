@@ -5,7 +5,7 @@ import { toCase } from '../utils/helpers.ts'
  * Generate Zod schema for a repeater item with optional translatable properties
  * When meta.translatableProperties is present, includes translations validation
  */
-function generateRepeaterItemSchema(field, layerCamelCase, pascalCasePlural) {
+function generateRepeaterItemSchema(field: Record<string, any>, layerCamelCase: string, pascalCasePlural: string): { name: string; code: string } {
   const { pascalCase: fieldPascalCase, camelCase: fieldCamelCase } = toCase(field.name)
   const schemaName = `${layerCamelCase}${pascalCasePlural}${fieldPascalCase}ItemSchema`
 
@@ -45,7 +45,7 @@ function generateRepeaterItemSchema(field, layerCamelCase, pascalCasePlural) {
 /**
  * Map property type to Zod schema
  */
-function mapPropertyToZod(propDef) {
+function mapPropertyToZod(propDef: Record<string, any>): string {
   const type = propDef.type || 'string'
   const zodMap = {
     string: 'z.string()',
@@ -63,7 +63,7 @@ function mapPropertyToZod(propDef) {
 /**
  * Generate AI context header for composable files
  */
-function generateAIHeader(data, apiPath) {
+function generateAIHeader(data: Record<string, any>, apiPath: string): string {
   const { singular, plural, layerPascalCase, layerCamelCase, pascalCasePlural, layer, fields } = data
   const fieldNames = fields.map(f => f.name).join(', ')
   // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
@@ -96,7 +96,7 @@ function generateAIHeader(data, apiPath) {
 `
 }
 
-export function generateComposable(data, config = {}) {
+export function generateComposable(data: Record<string, any>, config: Record<string, any> = {}): string {
   const { singular, plural, pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields, hierarchy, sortable, display, publishable } = data
   // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
   const prefixedSingular = `${layerCamelCase}${pascalCase}`

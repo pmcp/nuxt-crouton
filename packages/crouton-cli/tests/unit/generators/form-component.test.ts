@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
-import { generateFormComponent } from '../../../lib/generators/form-component.mjs'
+import { generateFormComponent } from '../../../lib/generators/form-component.ts'
 import {
   formComponentData,
   formWithHierarchyData,

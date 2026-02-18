@@ -6,7 +6,7 @@ import {
   generateDeleteEndpoint,
   generateMoveEndpoint,
   generateReorderEndpoint
-} from '../../../lib/generators/api-endpoints.mjs'
+} from '../../../lib/generators/api-endpoints.ts'
 import {
   apiEndpointData,
   apiWithHierarchyData,

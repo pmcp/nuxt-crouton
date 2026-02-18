@@ -17,10 +17,10 @@ import { addNamedSchemaExport } from './utils/update-schema-index.ts'
 import { registerTranslationsUiCollection } from './utils/update-app-config.ts'
 
 // Import generators
-import { generateFormComponent } from './generators/form-component.mjs'
-import { generateListComponent } from './generators/list-component.mjs'
-import { generateComposable } from './generators/composable.mjs'
-import { generateCollectionReadme } from './generators/collection-readme.mjs'
+import { generateFormComponent } from './generators/form-component.ts'
+import { generateListComponent } from './generators/list-component.ts'
+import { generateComposable } from './generators/composable.ts'
+import { generateCollectionReadme } from './generators/collection-readme.ts'
 import {
   generateGetEndpoint,
   generatePostEndpoint,
@@ -28,15 +28,15 @@ import {
   generateDeleteEndpoint,
   generateMoveEndpoint,
   generateReorderEndpoint
-} from './generators/api-endpoints.mjs'
-import { generateQueries } from './generators/database-queries.mjs'
-import { generateSchema } from './generators/database-schema.mjs'
-import { generateTypes } from './generators/types.mjs'
-import { generateNuxtConfig } from './generators/nuxt-config.mjs'
-import { generateRepeaterItemComponent } from './generators/repeater-item-component.mjs'
-import { generateFieldComponents } from './generators/field-components.mjs'
-import { generateSeedFile } from './generators/seed-data.mjs'
-import { generateCollectionTypesRegistry } from './generators/collection-types-registry.mjs'
+} from './generators/api-endpoints.ts'
+import { generateQueries } from './generators/database-queries.ts'
+import { generateSchema } from './generators/database-schema.ts'
+import { generateTypes } from './generators/types.ts'
+import { generateNuxtConfig } from './generators/nuxt-config.ts'
+import { generateRepeaterItemComponent } from './generators/repeater-item-component.ts'
+import { generateFieldComponents } from './generators/field-components.ts'
+import { generateSeedFile } from './generators/seed-data.ts'
+import { generateCollectionTypesRegistry } from './generators/collection-types-registry.ts'
 
 const execAsync = promisify(exec)
 

@@ -1,7 +1,7 @@
 // Generator for collection-level README.md files
 // Provides AI-friendly documentation for each generated collection
 
-export function generateCollectionReadme(data, config = {}) {
+export function generateCollectionReadme(data: Record<string, any>, config: Record<string, any> = {}): string {
   const {
     singular,
     plural,

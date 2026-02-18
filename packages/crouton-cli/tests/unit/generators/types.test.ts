@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
-import { generateTypes } from '../../../lib/generators/types.mjs'
+import { generateTypes } from '../../../lib/generators/types.ts'
 import {
   basicTypesData,
   minimalConfig,

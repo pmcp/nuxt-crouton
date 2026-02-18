@@ -2,7 +2,7 @@
 import { toKebabCase, pascal } from '../utils/helpers.ts'
 
 // Helper to generate tree-specific queries when hierarchy is enabled
-function generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, camelCasePlural, singular) {
+function generateTreeQueries(data: Record<string, any>, tableName: string, prefixedPascalCase: string, prefixedPascalCasePlural: string, camelCasePlural: string): string {
   const hierarchy = data.hierarchy
   if (!hierarchy || !hierarchy.enabled) {
     return ''
@@ -186,7 +186,7 @@ export async function reorderSiblings${prefixedPascalCasePlural}(
 }
 
 // Helper to generate reorder-only queries when sortable is enabled (without full hierarchy)
-function generateSortableQueries(data, tableName, prefixedPascalCasePlural) {
+function generateSortableQueries(data: Record<string, any>, tableName: string, prefixedPascalCasePlural: string): string {
   const sortable = data.sortable
   if (!sortable || !sortable.enabled) {
     return ''
@@ -225,7 +225,7 @@ export async function reorderSiblings${prefixedPascalCasePlural}(
 
 // Helper to detect JSON/repeater fields that need post-query parsing
 // These fields are stored as JSON strings in SQLite but need to be parsed arrays/objects
-function detectJsonFields(data) {
+function detectJsonFields(data: Record<string, any>): { fieldName: string; fieldType: string; defaultValue: string }[] {
   const jsonFields = []
 
   if (data.fields) {
@@ -245,7 +245,7 @@ function detectJsonFields(data) {
 }
 
 // Helper to detect reference fields that need LEFT JOINs or post-query processing
-function detectReferenceFields(data, config) {
+function detectReferenceFields(data: Record<string, any>, config: Record<string, any> | null): { singleReferences: Record<string, any>[]; arrayReferences: Record<string, any>[] } {
   const singleReferences = [] // For leftJoin
   const arrayReferences = [] // For post-query processing
 
@@ -302,7 +302,7 @@ function detectReferenceFields(data, config) {
   return { singleReferences, arrayReferences }
 }
 
-export function generateQueries(data, config = null) {
+export function generateQueries(data: Record<string, any>, config: Record<string, any> | null = null): string {
   console.log('[database-queries.mjs] Running LATEST VERSION with array reference post-processing support')
   const { singular, camelCase, camelCasePlural, plural, pascalCase, pascalCasePlural, layer, layerPascalCase } = data
   // Use layer-prefixed table name to match schema export

@@ -2,7 +2,7 @@
  * Generator for repeater item component placeholder
  * Creates a working Vue component with TODO comments for customization
  */
-export function generateRepeaterItemComponent(componentName) {
+export function generateRepeaterItemComponent(componentName: string): string {
   return `<script setup lang="ts">
 import { nanoid } from 'nanoid'
 

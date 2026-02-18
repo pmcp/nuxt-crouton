@@ -6,7 +6,7 @@ import { detectAddressFields, getCoordinateFieldName } from '../utils/address-de
 /**
  * Generate AI context header for _Form.vue components
  */
-function generateAIHeader(data, apiPath) {
+function generateAIHeader(data: Record<string, any>, apiPath: string): string {
   const { plural, layer, layerPascalCase, pascalCasePlural, fields } = data
   const fieldNames = fields.filter(f => f.name !== 'id').map(f => f.name).join(', ')
 
@@ -37,7 +37,7 @@ function generateAIHeader(data, apiPath) {
 }
 
 // Helper: Group fields by their group meta value
-function groupFieldsByGroup(fields) {
+function groupFieldsByGroup(fields: Record<string, any>[]): Map<string | null, Record<string, any>[]> {
   const grouped = new Map()
   fields.forEach((field) => {
     const group = field.meta?.group || null
@@ -50,7 +50,7 @@ function groupFieldsByGroup(fields) {
 }
 
 // Helper: Convert 'seoSettings' to 'SEO Settings'
-function humanizeGroupName(groupName) {
+function humanizeGroupName(groupName: string | null): string {
   if (!groupName) return 'General'
   return groupName
     .replace(/([A-Z])/g, ' $1')
@@ -60,14 +60,14 @@ function humanizeGroupName(groupName) {
 
 // Helper: Convert snake_case or kebab-case to human-readable label
 // e.g., 'booking_created' → 'Booking Created'
-function formatOptionLabel(value) {
+function formatOptionLabel(value: unknown): string {
   if (typeof value !== 'string') return String(value)
   return value
     .replace(/[-_]/g, ' ')
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
-export function generateFormComponent(data, config = {}) {
+export function generateFormComponent(data: Record<string, any>, config: Record<string, any> = {}): string {
   const { pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, fields, singular, plural, layer, hierarchy } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`

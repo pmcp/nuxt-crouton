@@ -1,7 +1,7 @@
 // Generator for nuxt.config.ts
 import { PATH_CONFIG } from '../utils/paths.ts'
 
-export function generateNuxtConfig(data) {
+export function generateNuxtConfig(data: Record<string, any>): string {
   const { pascalCasePlural, layerPascalCase, layer, plural } = data
 
   // Generate the layer name for this collection

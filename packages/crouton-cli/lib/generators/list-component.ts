@@ -4,11 +4,11 @@ import { toCase } from '../utils/helpers.ts'
 /**
  * Generate AI context header for List.vue components
  */
-function generateAIHeader(data, apiPath) {
+function generateAIHeader(data: Record<string, any>, apiPath: string): string {
   const { plural, layer, layerPascalCase, layerCamelCase, pascalCasePlural, fields } = data
   // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")
   const prefixedCamelCasePlural = `${layerCamelCase}${pascalCasePlural}`
-  const columnFields = fields.filter(f => f.name !== 'id').map(f => f.name).join(', ')
+  const columnFields = fields.filter((f: any) => f.name !== 'id').map((f: any) => f.name).join(', ')
 
   return `<!--
   @crouton-generated
@@ -36,7 +36,7 @@ function generateAIHeader(data, apiPath) {
 `
 }
 
-export function generateListComponent(data, config = {}) {
+export function generateListComponent(data: Record<string, any>, config: Record<string, any> = {}): string {
   const { plural, camelCasePlural, pascalCasePlural, layerPascalCase, layerCamelCase, layer, fields } = data
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
   // Use layerCamelCase for proper camelCase collection names (e.g., "knowledge-base" -> "knowledgeBase")

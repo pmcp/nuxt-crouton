@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
-import { generateComposable } from '../../../lib/generators/composable.mjs'
+import { generateComposable } from '../../../lib/generators/composable.ts'
 
 // Mock date to prevent snapshot failures due to @generated timestamp
 beforeAll(() => {

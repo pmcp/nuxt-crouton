@@ -7,7 +7,7 @@ import { getSeedGenerator, pascal } from '../utils/helpers.ts'
  * @param {object} config - Configuration options
  * @returns {string} - Generated seed file content
  */
-export function generateSeedFile(data, config = {}) {
+export function generateSeedFile(data: Record<string, any>, config: Record<string, any> = {}): string {
   const { plural, layer, fields, hierarchy } = data
   const seedCount = config.seedCount || 25
   const teamId = config.teamId || 'seed-team'

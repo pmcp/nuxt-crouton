@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
-import { generateSchema } from '../../../lib/generators/database-schema.mjs'
+import { generateSchema } from '../../../lib/generators/database-schema.ts'
 import {
   schemaData,
   schemaWithHierarchyData,

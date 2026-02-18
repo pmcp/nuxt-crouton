@@ -13,7 +13,7 @@ import path from 'node:path'
 /**
  * Check if a path exists
  */
-async function fileExists(filePath) {
+async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fsp.access(filePath)
     return true
@@ -25,7 +25,7 @@ async function fileExists(filePath) {
 /**
  * Get all layers that have collections
  */
-async function getAllLayers(basePath = '.') {
+async function getAllLayers(basePath: string = '.'): Promise<string[]> {
   const layersPath = path.resolve(basePath, 'layers')
 
   if (!await fileExists(layersPath)) {
@@ -50,7 +50,7 @@ async function getAllLayers(basePath = '.') {
 /**
  * Get all collections in a layer
  */
-async function getCollectionsInLayer(layer, basePath = '.') {
+async function getCollectionsInLayer(layer: string, basePath: string = '.'): Promise<string[]> {
   const collectionsPath = path.resolve(basePath, 'layers', layer, 'collections')
 
   if (!await fileExists(collectionsPath)) {
@@ -66,7 +66,7 @@ async function getCollectionsInLayer(layer, basePath = '.') {
 /**
  * Convert a string to PascalCase
  */
-function toPascalCase(str) {
+function toPascalCase(str: string): string {
   return str
     .split(/[-_\s]+/)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -76,7 +76,7 @@ function toPascalCase(str) {
 /**
  * Convert a string to camelCase
  */
-function toCamelCase(str) {
+function toCamelCase(str: string): string {
   const pascal = toPascalCase(str)
   return pascal.charAt(0).toLowerCase() + pascal.slice(1)
 }
@@ -84,7 +84,7 @@ function toCamelCase(str) {
 /**
  * Get singular form (simple heuristic)
  */
-function toSingular(plural) {
+function toSingular(plural: string): string {
   if (plural.endsWith('ies')) {
     return plural.slice(0, -3) + 'y'
   }
@@ -100,7 +100,7 @@ function toSingular(plural) {
 /**
  * Discover all collections and their type information
  */
-export async function discoverCollections(basePath = '.') {
+export async function discoverCollections(basePath: string = '.'): Promise<Record<string, any>[]> {
   const layers = await getAllLayers(basePath)
   const collections = []
 
@@ -149,7 +149,7 @@ export async function discoverCollections(basePath = '.') {
 /**
  * Generate the type registry declaration file content
  */
-export function generateTypeRegistry(collections) {
+export function generateTypeRegistry(collections: Record<string, any>[]): string {
   if (collections.length === 0) {
     return `/**
  * @crouton-generated
@@ -212,7 +212,7 @@ export {}
 /**
  * Main function to generate the type registry file
  */
-export async function generateCollectionTypesRegistry(basePath = '.', outputPath = null) {
+export async function generateCollectionTypesRegistry(basePath: string = '.', outputPath: string | null = null): Promise<{ outputPath: string; collectionsCount: number; collections: Record<string, any>[] }> {
   const collections = await discoverCollections(basePath)
 
   const content = generateTypeRegistry(collections)

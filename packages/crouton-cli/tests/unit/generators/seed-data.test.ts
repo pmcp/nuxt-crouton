@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
-import { generateSeedFile } from '../../../lib/generators/seed-data.mjs'
+import { generateSeedFile } from '../../../lib/generators/seed-data.ts'
 import {
   seedData,
   seedWithHierarchyData,

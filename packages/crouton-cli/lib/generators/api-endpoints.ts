@@ -1,6 +1,6 @@
 // API endpoint generators using @crouton/auth for team authentication
 
-export function generateGetEndpoint(data, config = null) {
+export function generateGetEndpoint(data: Record<string, any>, config: Record<string, any> | null = null): string {
   const { pascalCase, pascalCasePlural, layerPascalCase, plural, singular, layer } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
 })`
 }
 
-export function generatePostEndpoint(data, config = null) {
+export function generatePostEndpoint(data: Record<string, any>, config: Record<string, any> | null = null): string {
   const { singular, pascalCase, pascalCasePlural, layerPascalCase, layer, plural, fields } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
@@ -124,7 +124,7 @@ ${dateConversions}  ${createCall}
 })`
 }
 
-export function generatePatchEndpoint(data, config = null) {
+export function generatePatchEndpoint(data: Record<string, any>, config: Record<string, any> | null = null): string {
   const { singular, camelCase, pascalCase, pascalCasePlural, layerPascalCase, fields, plural, layer } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
@@ -188,7 +188,7 @@ ${fieldSelection}
 })`
 }
 
-export function generateDeleteEndpoint(data, config = null) {
+export function generateDeleteEndpoint(data: Record<string, any>, config: Record<string, any> | null = null): string {
   const { singular, camelCase, pascalCase, layerPascalCase, layer, plural } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
 
@@ -212,7 +212,7 @@ export default defineEventHandler(async (event) => {
 
 // Generate move endpoint for hierarchy-enabled collections
 // Creates [id]/move.patch.ts - moves an item to a new parent and position
-export function generateMoveEndpoint(data, config = null) {
+export function generateMoveEndpoint(data: Record<string, any>, config: Record<string, any> | null = null): string {
   const { singular, camelCase, pascalCase, layerPascalCase } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
 
@@ -246,7 +246,7 @@ export default defineEventHandler(async (event) => {
 
 // Generate reorder endpoint for hierarchy-enabled or sortable collections
 // Creates reorder.patch.ts - bulk updates order for siblings within same parent
-export function generateReorderEndpoint(data, config = null) {
+export function generateReorderEndpoint(data: Record<string, any>, config: Record<string, any> | null = null): string {
   const { pascalCase, pascalCasePlural, layerPascalCase } = data
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`
 

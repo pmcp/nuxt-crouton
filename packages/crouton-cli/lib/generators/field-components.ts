@@ -8,7 +8,7 @@ import { toCase } from '../utils/helpers.ts'
  * @param {string|object} fieldOrName - Field name string or field object
  * @param {object} collectionData - Collection data with layer info
  */
-export function generateFieldComponents(fieldOrName, collectionData) {
+export function generateFieldComponents(fieldOrName: string | Record<string, any>, collectionData: Record<string, any>): { input: string; select: string; cardMini: string } {
   // Support both old signature (fieldName string) and new signature (field object)
   const field = typeof fieldOrName === 'object' ? fieldOrName : { name: fieldOrName }
   const fieldName = field.name
@@ -30,7 +30,7 @@ export function generateFieldComponents(fieldOrName, collectionData) {
 /**
  * Generate Input.vue - for editing a single item (used as repeater item component)
  */
-function generateInputComponent(fieldName, fieldPascalCase, collectionData) {
+function generateInputComponent(fieldName: string, fieldPascalCase: string, collectionData: Record<string, any>): string {
   const { layerPascalCase, pascalCasePlural } = collectionData
 
   return `<script setup lang="ts">
@@ -73,7 +73,7 @@ if (model.value && !model.value.id) {
  * - Fallback placeholder showing English value
  * - Non-translatable fields only shown in English locale
  */
-function generateTranslatableInputComponent(field, fieldPascalCase, collectionData) {
+function generateTranslatableInputComponent(field: Record<string, any>, fieldPascalCase: string, collectionData: Record<string, any>): string {
   const { layerPascalCase, pascalCasePlural, layerCamelCase } = collectionData
   const interfaceName = `${layerPascalCase}${pascalCasePlural}${fieldPascalCase}Item`
 
@@ -232,7 +232,7 @@ ${englishFormFields.join('\n\n')}
 /**
  * Generate form field markup for a translatable property
  */
-function generateTranslatableFormField(propName, label, propDef, isRequired) {
+function generateTranslatableFormField(propName: string, label: string, propDef: Record<string, any>, isRequired: boolean): string {
   const inputType = propDef.type === 'text' ? 'UTextarea' : 'UInput'
   const placeholder = propDef.placeholder || `Enter ${label.toLowerCase()}`
 
@@ -263,7 +263,7 @@ function generateTranslatableFormField(propName, label, propDef, isRequired) {
 /**
  * Generate form field markup for a non-translatable property
  */
-function generateNonTranslatableFormField(propName, label, propDef, isRequired) {
+function generateNonTranslatableFormField(propName: string, label: string, propDef: Record<string, any>, isRequired: boolean): string {
   const inputType = getInputTypeForProperty(propDef.type)
   const placeholder = propDef.placeholder || `Enter ${label.toLowerCase()}`
 
@@ -286,7 +286,7 @@ function generateNonTranslatableFormField(propName, label, propDef, isRequired) 
 /**
  * Get appropriate input component for property type
  */
-function getInputTypeForProperty(type) {
+function getInputTypeForProperty(type: string): string {
   const inputMap = {
     string: 'UInput',
     text: 'UTextarea',
@@ -300,7 +300,7 @@ function getInputTypeForProperty(type) {
 /**
  * Map property type to TypeScript type
  */
-function mapPropertyTypeToTS(type) {
+function mapPropertyTypeToTS(type: string): string {
   const typeMap = {
     string: 'string',
     text: 'string',
@@ -317,7 +317,7 @@ function mapPropertyTypeToTS(type) {
 /**
  * Capitalize first letter of a string
  */
-function capitalizeFirst(str) {
+function capitalizeFirst(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
@@ -326,7 +326,7 @@ function capitalizeFirst(str) {
  * Supports both single and multiple selection with array-based values
  * Uses CroutonFormDependentSelectOption for card-based rendering
  */
-function generateSelectComponent(fieldName, fieldPascalCase, collectionData) {
+function generateSelectComponent(fieldName: string, fieldPascalCase: string, collectionData: Record<string, any>): string {
   const { layerPascalCase, layerCamelCase, pascalCasePlural } = collectionData
   // Build the dependent collection name for component resolution
   const dependentCollection = `${layerCamelCase}${pascalCasePlural}`
@@ -408,7 +408,7 @@ const localValue = computed({
  * Generate CardMini.vue - for displaying the field in tables/lists
  * Handles both source collection (array of objects) and target collection (resolved objects)
  */
-function generateCardMiniComponent(fieldName, fieldPascalCase, collectionData) {
+function generateCardMiniComponent(fieldName: string, fieldPascalCase: string, collectionData: Record<string, any>): string {
   return `<template>
   <div class="text-sm">
     <template v-if="normalizedValue.length > 0">

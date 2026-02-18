@@ -4,7 +4,7 @@ import { toCase } from '../utils/helpers.ts'
 /**
  * Generate AI context header for types files
  */
-function generateAIHeader(data) {
+function generateAIHeader(data: Record<string, any>): string {
   const { plural, layer, layerPascalCase, pascalCase, pascalCasePlural, fields } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const fieldNames = fields.map(f => f.name).join(', ')
@@ -38,7 +38,7 @@ function generateAIHeader(data) {
  * Generate item interface for a translatable repeater field
  * When meta.translatableProperties is present, generates interface with translations support
  */
-function generateRepeaterItemInterface(field, layerPascalCase, pascalCasePlural) {
+function generateRepeaterItemInterface(field: Record<string, any>, layerPascalCase: string, pascalCasePlural: string): string {
   const { pascalCase: fieldPascalCase } = toCase(field.name)
   const interfaceName = `${layerPascalCase}${pascalCasePlural}${fieldPascalCase}Item`
 
@@ -72,7 +72,7 @@ ${propertyLines.join('\n')}
 /**
  * Map property type to TypeScript type
  */
-function mapPropertyType(type) {
+function mapPropertyType(type: string): string {
   const typeMap = {
     string: 'string',
     text: 'string',
@@ -86,7 +86,7 @@ function mapPropertyType(type) {
   return typeMap[type] || 'string'
 }
 
-export function generateTypes(data, config = null) {
+export function generateTypes(data: Record<string, any>, config: Record<string, any> | null = null): string {
   const { pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, singular, layer, plural, fields } = data
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
   const prefixedPascalCasePlural = `${layerPascalCase}${pascalCasePlural}`

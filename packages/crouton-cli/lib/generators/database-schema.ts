@@ -1,7 +1,7 @@
 // Generator for Drizzle schema
 import { toSnakeCase } from '../utils/helpers.ts'
 
-export function generateSchema(data, dialect, config = null) {
+export function generateSchema(data: Record<string, any>, dialect: string, config: Record<string, any> | null = null): string {
   const { plural, layer, layerPascalCase, singular, hierarchy, pascalCasePlural } = data
 
   // Get original collection name from data (before toCase processing)
