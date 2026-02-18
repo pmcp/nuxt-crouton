@@ -10,6 +10,9 @@ interface ModuleAIContext {
 interface ModuleEntry {
   alias: string
   description: string
+  layer?: { name: string; reason?: string }
+  extensionPoints?: Array<{ collection: string; allowedFields: string[]; description: string }>
+  configuration?: Record<string, { type: string; label: string; description?: string; default: unknown }>
   ai?: ModuleAIContext
 }
 
@@ -39,16 +42,51 @@ export function useCollectionDesignPrompt() {
 
   function buildPackageCollectionsContext(config: ProjectConfig): string {
     if (!config.packages?.length) return ''
-    const lines: string[] = []
+    const blocks: string[] = []
+
     for (const pkgAlias of config.packages) {
       const mod = allModules.find(m => m.alias === pkgAlias)
-      if (mod?.ai?.collections?.length) {
-        const colls = mod.ai.collections.map(c => `${c.name} (${c.description})`).join(', ')
-        lines.push(`- **${mod.alias}**: ${colls}`)
+      if (!mod) continue
+
+      const pkgLines: string[] = [`### \`${mod.alias}\` package`]
+
+      if (mod.ai?.collections?.length) {
+        pkgLines.push('Built-in collections (already exist — **do not recreate**):')
+        for (const col of mod.ai.collections) {
+          pkgLines.push(`- \`${col.name}\`: ${col.description}`)
+        }
       }
+
+      if (mod.extensionPoints?.length) {
+        pkgLines.push('Extension points (add custom fields here instead of a new collection):')
+        for (const ep of mod.extensionPoints) {
+          pkgLines.push(`- \`${ep.collection}\` — ${ep.description} (allowed fields: ${ep.allowedFields.join(', ')})`)
+        }
+      }
+
+      if (mod.configuration && Object.keys(mod.configuration).length) {
+        const opts = Object.entries(mod.configuration)
+          .map(([k, v]) => `\`${k}\` (${v.label}${v.description ? `: ${v.description}` : ''})`)
+          .join(', ')
+        pkgLines.push(`Package config options: ${opts}`)
+      }
+
+      if (mod.ai?.composables?.length) {
+        pkgLines.push(`Provides composables: ${mod.ai.composables.slice(0, 5).join(', ')}${mod.ai.composables.length > 5 ? ` +${mod.ai.composables.length - 5} more` : ''}`)
+      }
+
+      blocks.push(pkgLines.join('\n'))
     }
-    if (lines.length === 0) return ''
-    return `\n## Package-Provided Collections (DO NOT RECREATE)\nThese packages already provide the following collections. Do NOT create collections for these — they are built-in. Create custom collections that complement them.\n${lines.join('\n')}\n`
+
+    if (blocks.length === 0) return ''
+
+    return `\n## Selected Package Capabilities (DO NOT RECREATE THESE COLLECTIONS)
+The user has selected these packages. Each package already ships with its own collections, APIs, and UI.
+Your job is to design **custom collections that complement the packages** — not duplicate what they provide.
+If the user needs functionality already covered by a package (e.g. page management, bookings), tell them — don't create a redundant collection.
+
+${blocks.join('\n\n')}
+`
   }
 
   function buildCollectionsContext(collections: CollectionWithFields[]): string {

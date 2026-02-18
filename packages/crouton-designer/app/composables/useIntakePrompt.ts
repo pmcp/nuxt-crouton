@@ -11,6 +11,7 @@ interface ModuleEntry {
   description: string
   aiHint: string | null
   ai?: ModuleAIContext
+  extensionPoints?: Array<{ collection: string; allowedFields: string[]; description: string }>
 }
 
 /**
@@ -27,10 +28,10 @@ export function useIntakePrompt() {
     .map((mod) => {
       let line = `- **${mod.alias}**: ${mod.description}`
       if (mod.ai?.collections?.length) {
-        line += `\n  Built-in collections: ${mod.ai.collections.map(c => c.name).join(', ')}`
+        line += `\n  Built-in collections: ${mod.ai.collections.map(c => c.name).join(', ')} (already provided — no need to create these)`
       }
-      if (mod.ai?.composables?.length) {
-        line += `\n  Composables: ${mod.ai.composables.length} available`
+      if (mod.extensionPoints?.length) {
+        line += `\n  Extensible: ${mod.extensionPoints.map(ep => ep.collection).join(', ')}`
       }
       line += `\n  Use when: ${mod.aiHint}`
       return line

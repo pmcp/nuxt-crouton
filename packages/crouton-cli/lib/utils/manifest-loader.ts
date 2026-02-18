@@ -36,6 +36,9 @@ export interface ModuleRegistryEntry {
   aiHint: string | null
   dependencies: string[]
   category: 'core' | 'addon' | 'miniapp'
+  layer?: { name: string; reason?: string }
+  extensionPoints?: Array<{ collection: string; allowedFields: string[]; description: string }>
+  configuration?: Record<string, { type: string; label: string; description?: string; default: unknown }>
   ai?: ModuleAIContext
 }
 
@@ -249,6 +252,9 @@ export function getModuleRegistry(
       aiHint: m.aiHint ?? null,
       dependencies: m.dependencies ?? [],
       category: m.category,
+      layer: m.layer ? { name: m.layer.name, reason: m.layer.reason } : undefined,
+      extensionPoints: m.extensionPoints,
+      configuration: m.configuration,
       ai,
     }
   })
