@@ -3,172 +3,23 @@
  * UserMenu Component
  *
  * User avatar with dropdown menu for account actions.
- * Opens settings in a modal to keep user in context.
  * Displayed in the sidebar footer.
+ * Menu items are shared via useUserMenuItems() with CroutonPagesNav.
  *
  * @example
  * ```vue
  * <SidebarUserMenu :collapsed="collapsed" />
  * ```
  */
-import type { DropdownMenuItem } from '@nuxt/ui'
 
 interface Props {
   /** Whether the sidebar is collapsed */
   collapsed?: boolean
-  /**
-   * Additional items to inject into the preferences group (language/dark mode section).
-   * Use this to add theme switching or other preference items from external layers.
-   *
-   * @example
-   * ```vue
-   * <!-- script setup: const { themeMenuItem } = useThemeMenuItems() -->
-   * <SidebarUserMenu :preference-items="[themeMenuItem]" />
-   * ```
-   */
-  preferenceItems?: DropdownMenuItem[]
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
-const { t } = useT()
-const { user, logout, loading } = useAuth()
-
-const router = useRouter()
-const toast = useToast()
-
-// i18n
-const { locale, setLocale, locales } = useI18n()
-
-// Dark mode
-const colorMode = useColorMode()
-const isDark = computed({
-  get: () => colorMode.value === 'dark',
-  set: (value: boolean) => {
-    colorMode.preference = value ? 'dark' : 'light'
-  }
-})
-
-// Language flags
-const flags: Record<string, string> = {
-  en: '🇬🇧',
-  nl: '🇳🇱',
-  fr: '🇫🇷'
-}
-
-// Build language submenu items
-// Read theme menu items from shared state key set by crouton-themes plugin.
-// Defaults to [] when the themes layer is not active — no items, no UI change.
-// The key is a plain string constant so no cross-package import is needed.
-const themePreferenceItems = useState<DropdownMenuItem[]>('crouton:themePreferenceItems', () => [])
-
-// Whether the current user may switch global themes.
-// Written by the team-theme plugin (crouton-admin); defaults true when not present.
-const allowUserThemes = useState<boolean>('crouton:allowUserThemes', () => true)
-const { isAdmin } = useTeam()
-const canSwitchTheme = computed(() => allowUserThemes.value || isAdmin.value)
-
-const languageItems = computed<DropdownMenuItem[]>(() => {
-  return (locales.value as Array<{ code: string, name?: string }>).map(loc => ({
-    label: `${flags[loc.code] || '🌐'} ${loc.name || loc.code.toUpperCase()}`,
-    onSelect: async (e: Event) => {
-      e.preventDefault()
-      await setLocale(loc.code)
-    },
-    active: locale.value === loc.code
-  }))
-})
-
-// Build dropdown items - navigate to account pages
-const dropdownItems = computed<DropdownMenuItem[][]>(() => {
-  const preferenceGroup: DropdownMenuItem[] = [
-    {
-      label: t('forms.language') || 'Language',
-      icon: 'i-lucide-globe',
-      children: languageItems.value
-    },
-    {
-      label: 'Dark Mode',
-      icon: isDark.value ? 'i-lucide-moon' : 'i-lucide-sun',
-      type: 'checkbox',
-      checked: isDark.value,
-      onUpdateChecked: (checked: boolean) => {
-        isDark.value = checked
-      },
-      onSelect: (e: Event) => {
-        e.preventDefault()
-      }
-    },
-    // Theme items injected by crouton-themes plugin (only when allowed and themes active)
-    ...(canSwitchTheme.value ? themePreferenceItems.value : []),
-    // Additional items from parent component
-    ...(props.preferenceItems ?? [])
-  ]
-
-  return [
-    [
-      {
-        label: user.value?.name || 'User',
-        avatar: {
-          src: user.value?.image ?? undefined,
-          alt: user.value?.name ?? 'User',
-          text: userInitials.value
-        },
-        type: 'label'
-      }
-    ],
-    [
-      {
-        label: t('navigation.accountSettings') || 'Account Settings',
-        icon: 'i-lucide-user',
-        to: '/account'
-      },
-      {
-        label: t('account.security') || 'Security',
-        icon: 'i-lucide-shield',
-        to: '/account?tab=security'
-      }
-    ],
-    preferenceGroup,
-    [
-      {
-        label: t('auth.signOut') || 'Sign Out',
-        icon: 'i-lucide-log-out',
-        color: 'error',
-        onSelect: handleLogout
-      }
-    ]
-  ]
-})
-
-async function handleLogout() {
-  try {
-    await logout()
-    toast.add({
-      title: t('auth.signOut') || 'Signed out',
-      description: t('success.saved') || 'You have been signed out successfully.',
-      color: 'success'
-    })
-    await router.push('/auth/login')
-  } catch (error: unknown) {
-    toast.add({
-      title: t('errors.generic') || 'Error',
-      description: error instanceof Error ? error.message : 'Failed to sign out',
-      color: 'error'
-    })
-  }
-}
-
-// User initials for avatar fallback
-const userInitials = computed(() => {
-  if (!user.value?.name) return '?'
-  return user.value.name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-})
+const { user, loading, userInitials, dropdownItems } = useUserMenuItems()
 </script>
 
 <template>

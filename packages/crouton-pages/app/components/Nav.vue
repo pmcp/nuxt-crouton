@@ -18,16 +18,13 @@ import { useMediaQuery } from '@vueuse/core'
  */
 
 const { navigation, isLoading, isActive } = useNavigation()
-const { user, logout } = useAuth()
+const { user, userInitials, dropdownItems: userDropdownItems } = useUserMenuItems()
 const { currentTeam, isAdmin } = useTeam()
 const { teamSlug: teamSlugRef, teamId: teamIdRef } = useTeamContext()
 const { appsList, getAppAllRoutes } = useCroutonApps()
 const { adminCollections } = useCroutonCollectionsNav()
 const colorMode = useColorMode()
-const router = useRouter()
-const toast = useToast()
 const { t } = useT()
-const { locale, setLocale, locales } = useI18n()
 
 // Responsive breakpoint
 const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -64,103 +61,9 @@ const menuItems = computed<NavigationMenuItem[]>(() => {
 // Show left pill only when more than 1 page
 const showPageNav = computed(() => menuItems.value.length > 1)
 
-// Dark mode
-const isDark = computed({
-  get: () => colorMode.value === 'dark',
-  set: (value: boolean) => {
-    colorMode.preference = value ? 'dark' : 'light'
-  }
-})
-
 const toggleColorMode = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
-
-// User initials for avatar fallback
-const userInitials = computed(() => {
-  if (!user.value?.name) return '?'
-  return user.value.name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-})
-
-// Language flags
-const flags: Record<string, string> = {
-  en: '🇬🇧',
-  nl: '🇳🇱',
-  fr: '🇫🇷'
-}
-
-// Language submenu items
-const languageItems = computed<DropdownMenuItem[]>(() => {
-  return (locales.value as Array<{ code: string, name?: string }>).map(loc => ({
-    label: `${flags[loc.code] || '🌐'} ${loc.name || loc.code.toUpperCase()}`,
-    onSelect: async (e: Event) => {
-      e.preventDefault()
-      await setLocale(loc.code)
-    },
-    active: locale.value === loc.code
-  }))
-})
-
-// User dropdown menu items
-const userDropdownItems = computed<DropdownMenuItem[][]>(() => {
-  return [
-    [
-      {
-        label: user.value?.name || 'User',
-        avatar: {
-          src: user.value?.image ?? undefined,
-          alt: user.value?.name ?? 'User',
-          text: userInitials.value
-        },
-        type: 'label'
-      }
-    ],
-    [
-      {
-        label: t('navigation.accountSettings') || 'Account Settings',
-        icon: 'i-lucide-user',
-        to: '/account'
-      },
-      {
-        label: t('account.security') || 'Security',
-        icon: 'i-lucide-shield',
-        to: '/account?tab=security'
-      }
-    ],
-    [
-      {
-        label: t('forms.language') || 'Language',
-        icon: 'i-lucide-globe',
-        children: languageItems.value
-      },
-      {
-        label: 'Dark Mode',
-        icon: isDark.value ? 'i-lucide-moon' : 'i-lucide-sun',
-        type: 'checkbox',
-        checked: isDark.value,
-        onUpdateChecked: (checked: boolean) => {
-          isDark.value = checked
-        },
-        onSelect: (e: Event) => {
-          e.preventDefault()
-        }
-      }
-    ],
-    [
-      {
-        label: t('auth.signOut') || 'Sign Out',
-        icon: 'i-lucide-log-out',
-        color: 'error',
-        onSelect: handleLogout
-      }
-    ]
-  ]
-})
 
 // Admin dropdown menu items — mirrors AdminSidebar logic dynamically
 const adminPrefix = computed(() => {
@@ -234,24 +137,6 @@ const adminDropdownItems = computed<DropdownMenuItem[][]>(() => {
 
   return groups
 })
-
-async function handleLogout() {
-  try {
-    await logout()
-    toast.add({
-      title: t('auth.signOut') || 'Signed out',
-      description: t('success.saved') || 'You have been signed out successfully.',
-      color: 'success'
-    })
-    await router.push('/auth/login')
-  } catch (error: unknown) {
-    toast.add({
-      title: t('errors.generic') || 'Error',
-      description: error instanceof Error ? error.message : 'Failed to sign out',
-      color: 'error'
-    })
-  }
-}
 
 // Shared pill styles
 const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-full border border-default shadow-lg shadow-neutral-950/5'
