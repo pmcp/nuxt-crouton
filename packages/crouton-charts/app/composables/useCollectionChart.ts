@@ -10,6 +10,8 @@ export interface UseCollectionChartOptions {
   xField?: string
   yFields?: string[]
   limit?: number
+  /** Direct API path override. Supports {teamId} placeholder. Bypasses collection registry. */
+  apiPath?: string
 }
 
 // Fixed color palette cycling across yFields
@@ -37,6 +39,8 @@ export function useCollectionChart(
   const resolvedOptions = computed(() => toValue(options) ?? {})
 
   const collectionConfig = computed(() => {
+    // Skip collection lookup when apiPath is provided directly
+    if (resolvedOptions.value.apiPath) return null
     const key = resolvedCollection.value
     if (!key) return null
     return getConfig(key)
@@ -50,13 +54,20 @@ export function useCollectionChart(
 
   async function fetchAndTransform() {
     const collKey = resolvedCollection.value
-    if (!collKey || !collectionConfig.value) {
+    const directApiPath = resolvedOptions.value.apiPath
+
+    // Need either a direct apiPath or a valid collection + config
+    if (!directApiPath && (!collKey || !collectionConfig.value)) {
       chartData.value = []
       return
     }
 
     const config = collectionConfig.value as any
-    const apiPath = config.apiPath || `/api/teams/${toValue(teamId)}/${collKey}`
+    const rawApiPath = directApiPath
+      || config?.apiPath
+      || `/api/teams/${toValue(teamId)}/${collKey}`
+    // Interpolate {teamId} placeholder for preset-style paths
+    const apiPath = rawApiPath.replace('{teamId}', String(toValue(teamId)))
     const limit = resolvedOptions.value.limit || 100
 
     pending.value = true

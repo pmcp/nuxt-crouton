@@ -11,7 +11,9 @@ import { computed } from 'vue'
 
 interface Props {
   /** Collection key (e.g. 'blogPosts', 'products') */
-  collection: string
+  collection?: string
+  /** Direct API path override. Supports {teamId} placeholder. Takes priority over collection. */
+  apiPath?: string
   /** Chart type to render */
   type?: 'bar' | 'line' | 'area' | 'donut'
   /** Field to use as X axis. Auto-resolved from collection display.title if not set. */
@@ -29,6 +31,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  collection: '',
   type: 'bar',
   height: 300,
   stacked: false,
@@ -42,10 +45,11 @@ const yFieldsArray = computed(() => {
 })
 
 const { chartData, categories, pending, error } = useCollectionChart(
-  computed(() => props.collection),
+  computed(() => props.collection || ''),
   computed(() => ({
     xField: props.xField,
     yFields: yFieldsArray.value,
+    apiPath: props.apiPath,
     limit: 100
   }))
 )
