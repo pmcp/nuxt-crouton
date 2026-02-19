@@ -57,6 +57,11 @@ const flags: Record<string, string> = {
 }
 
 // Build language submenu items
+// Read theme menu items from shared state key set by crouton-themes plugin.
+// Defaults to [] when the themes layer is not active — no items, no UI change.
+// The key is a plain string constant so no cross-package import is needed.
+const themePreferenceItems = useState<DropdownMenuItem[]>('crouton:themePreferenceItems', () => [])
+
 const languageItems = computed<DropdownMenuItem[]>(() => {
   return (locales.value as Array<{ code: string, name?: string }>).map(loc => ({
     label: `${flags[loc.code] || '🌐'} ${loc.name || loc.code.toUpperCase()}`,
@@ -88,6 +93,9 @@ const dropdownItems = computed<DropdownMenuItem[][]>(() => {
         e.preventDefault()
       }
     },
+    // Theme items injected by crouton-themes plugin (empty when themes not active)
+    ...themePreferenceItems.value,
+    // Additional items from parent component
     ...(props.preferenceItems ?? [])
   ]
 

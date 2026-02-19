@@ -10,6 +10,7 @@
   "dependencies": {
     "@fyit/crouton": "workspace:*",
     "@fyit/crouton-assets": "workspace:*",
+    "@fyit/crouton-themes": "workspace:*",
     "@fyit/crouton-charts": "workspace:*",
     "@fyit/crouton-flow": "workspace:*",
     "@fyit/crouton-mcp-toolkit": "workspace:*",

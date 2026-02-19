@@ -1,23 +1,23 @@
 // Theme Provider Plugin
-// Runs client-side only. Provides theme state and menu items via Vue's inject
-// system so other layers (crouton-auth) can consume them without a hard
-// cross-package dependency.
+// Runs client-side only. Writes theme menu items into a shared Nuxt useState key
+// so other layers (crouton-auth) can read them without a hard cross-package dependency.
 //
-// Consuming layers inject using these keys:
-//   'crouton:themePreferenceItems' → ComputedRef<DropdownMenuItem[]>
-//   'crouton:hasThemes'            → true (presence check)
+// Consuming layers read:
+//   useState('crouton:themePreferenceItems', () => [])
+//
+// On the server this state is [] (dropdown is closed so no hydration mismatch).
+// On the client the plugin populates it reactively before the app mounts.
 
 import type { DropdownMenuItem } from '@nuxt/ui'
 
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(() => {
   const { themeMenuItem } = useThemeMenuItems()
 
-  // Provide theme items as a computed so consumers stay reactive
-  nuxtApp.vueApp.provide(
-    'crouton:themePreferenceItems',
-    computed<DropdownMenuItem[]>(() => [themeMenuItem.value])
-  )
+  // Shared state key — readable by any layer without importing from crouton-themes
+  const sharedItems = useState<DropdownMenuItem[]>('crouton:themePreferenceItems', () => [])
 
-  // Simple boolean flag so consumers can check theme layer is active
-  nuxtApp.vueApp.provide('crouton:hasThemes', true)
+  // Keep in sync as the active theme changes (updates the `active` flag on items)
+  watchEffect(() => {
+    sharedItems.value = [themeMenuItem.value]
+  })
 })

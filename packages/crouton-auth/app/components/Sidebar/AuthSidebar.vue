@@ -17,9 +17,8 @@
  * <AuthSidebar :navigation-items="navItems" />
  * ```
  */
-import { inject, resolveComponent } from 'vue'
-import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
-import type { ComputedRef } from 'vue'
+import { resolveComponent } from 'vue'
+import type { NavigationMenuItem } from '@nuxt/ui'
 
 interface Props {
   /** Navigation menu items */
@@ -42,12 +41,9 @@ const props = withDefaults(defineProps<Props>(), {
   collapsedIcon: 'i-lucide-layout-dashboard'
 })
 
-// Theme integration (zero hard dependency on crouton-themes)
-// When crouton-themes/themes is active, its plugin provides these via Vue inject.
-const injectedThemeItems = inject<ComputedRef<DropdownMenuItem[]>>('crouton:themePreferenceItems')
-const themePreferenceItems = computed<DropdownMenuItem[]>(() => injectedThemeItems?.value ?? [])
 // ThemeCompactPicker is globally registered by crouton-themes when active.
 // resolveComponent returns the string name when not found — we check for that.
+// UserMenu reads theme items directly from shared state set by the themes plugin.
 const themeCompactPicker = resolveComponent('ThemeCompactPicker')
 const hasThemePicker = typeof themeCompactPicker !== 'string'
 
@@ -242,11 +238,8 @@ const navItems = computed(() => props.navigationItems ?? defaultNavItems.value)
         <component :is="themeCompactPicker" size="xs" />
       </div>
 
-      <!-- User Menu (with theme submenu injected when crouton-themes is active) -->
-      <SidebarUserMenu
-        :collapsed="collapsed"
-        :preference-items="themePreferenceItems"
-      />
+      <!-- User Menu — theme items are read directly from shared state inside UserMenu -->
+      <SidebarUserMenu :collapsed="collapsed" />
     </template>
   </UDashboardSidebar>
 </template>
