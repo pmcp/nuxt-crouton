@@ -48,19 +48,20 @@ const imageUrl = computed(() =>
     : null
 )
 
-const handleEdit = () => crouton?.open('update', props.collection, [props.item.id])
+const handleEdit = () => crouton?.open('update', props.collection, [props.item.id], 'modal')
 const handleDelete = () => crouton?.open('delete', props.collection, [props.item.id])
 </script>
 
 <template>
   <!-- Grid layout -->
-  <div
+  <UCard
     v-if="layout === 'grid'"
-    class="group relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500 transition-all hover:shadow-md bg-white dark:bg-gray-900 cursor-pointer"
+    variant="outline"
+    :ui="{ root: 'group cursor-pointer hover:shadow-md transition-shadow', body: 'p-0' }"
     @click="!stateless && handleEdit()"
   >
     <!-- Thumbnail area -->
-    <div class="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center">
+    <div class="aspect-square bg-elevated overflow-hidden flex items-center justify-center rounded-t-[calc(var(--ui-radius)*1.5)]">
       <img
         v-if="imageUrl"
         :src="imageUrl"
@@ -73,9 +74,9 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
       >
         <UIcon
           :name="getFileIcon(item.contentType)"
-          class="w-10 h-10 text-gray-400"
+          class="w-10 h-10 text-muted"
         />
-        <span class="text-xs font-mono text-gray-400 uppercase">
+        <span class="text-xs font-mono text-muted uppercase">
           {{ getFileExtension(item.filename) }}
         </span>
       </div>
@@ -84,12 +85,12 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
     <!-- Filename + size -->
     <div class="px-2 py-1.5 flex items-center justify-between gap-1 min-w-0">
       <div class="min-w-0 flex-1">
-        <p class="text-xs font-medium truncate text-gray-700 dark:text-gray-300">
+        <p class="text-xs font-medium truncate text-default">
           {{ item.filename }}
         </p>
         <p
           v-if="item.size"
-          class="text-[10px] text-gray-400"
+          class="text-[10px] text-muted"
         >
           {{ formatBytes(item.size) }}
         </p>
@@ -117,7 +118,7 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
         />
       </div>
     </div>
-  </div>
+  </UCard>
 
   <!-- List layout -->
   <div
@@ -125,7 +126,7 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
     class="group flex items-center gap-3"
   >
     <!-- Thumbnail -->
-    <div class="size-10 rounded overflow-hidden shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+    <div class="size-10 rounded overflow-hidden shrink-0 bg-elevated flex items-center justify-center">
       <img
         v-if="imageUrl"
         :src="imageUrl"
@@ -135,15 +136,15 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
       <UIcon
         v-else
         :name="getFileIcon(item.contentType)"
-        class="w-5 h-5 text-gray-400"
+        class="w-5 h-5 text-muted"
       />
     </div>
 
     <div class="flex-1 min-w-0">
-      <p class="text-sm font-medium truncate text-gray-800 dark:text-gray-200">
+      <p class="text-sm font-medium truncate text-default">
         {{ item.filename }}
       </p>
-      <p class="text-xs text-gray-500 truncate">
+      <p class="text-xs text-muted truncate">
         {{ item.contentType }}
         <span v-if="item.size"> · {{ formatBytes(item.size) }}</span>
       </p>
