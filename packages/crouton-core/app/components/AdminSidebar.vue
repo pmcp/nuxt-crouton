@@ -348,6 +348,7 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
         :items="navItems[1]"
         orientation="vertical"
         class="mt-auto"
+        :external-icon="false"
       />
     </template>
 
