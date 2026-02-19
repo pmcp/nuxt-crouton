@@ -64,10 +64,10 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
   <UCard
     v-if="layout === 'grid'"
     variant="outline"
-    :ui="{ root: 'group cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg hover:ring-1 hover:ring-primary', body: 'p-0' }"
+    :ui="{ root: 'group cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/60', body: 'p-0!' }"
     @click="!stateless && handleEdit()"
   >
-    <!-- Thumbnail area -->
+    <!-- Thumbnail -->
     <div class="relative aspect-square bg-elevated overflow-hidden">
       <img
         v-if="imageUrl"
@@ -77,56 +77,49 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
       >
       <div
         v-else
-        class="w-full h-full flex flex-col items-center justify-center gap-3"
+        class="w-full h-full flex flex-col items-center justify-center gap-2"
       >
-        <div class="size-14 rounded-2xl bg-default flex items-center justify-center">
-          <UIcon
-            :name="getFileIcon(item.contentType)"
-            :class="['size-7', getIconColor(item.contentType)]"
-          />
-        </div>
-        <UBadge
-          v-if="getFileExtension(item.filename)"
-          variant="subtle"
-          color="neutral"
-          size="sm"
-          :label="getFileExtension(item.filename)"
+        <UIcon
+          :name="getFileIcon(item.contentType)"
+          :class="['size-8 opacity-60', getIconColor(item.contentType)]"
         />
+        <span
+          v-if="getFileExtension(item.filename)"
+          class="text-[10px] font-mono font-semibold text-muted uppercase tracking-wider"
+        >{{ getFileExtension(item.filename) }}</span>
       </div>
 
-      <!-- Action overlay -->
+      <!-- Action buttons overlay -->
       <div
         v-if="!stateless"
-        class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200"
+        class="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         @click.stop
       >
-        <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <UButton
-            icon="i-lucide-pencil"
-            size="xs"
-            variant="solid"
-            color="neutral"
-            class="shadow-md"
-            @click="handleEdit"
-          />
-          <UButton
-            icon="i-lucide-trash-2"
-            size="xs"
-            variant="solid"
-            color="error"
-            class="shadow-md"
-            @click="handleDelete"
-          />
-        </div>
+        <UButton
+          icon="i-lucide-pencil"
+          size="xs"
+          variant="solid"
+          color="neutral"
+          class="shadow"
+          @click="handleEdit"
+        />
+        <UButton
+          icon="i-lucide-trash-2"
+          size="xs"
+          variant="solid"
+          color="error"
+          class="shadow"
+          @click="handleDelete"
+        />
       </div>
     </div>
 
     <!-- Info strip -->
-    <div class="px-3 py-2">
-      <p class="text-xs font-medium truncate text-default leading-snug">
+    <div class="px-2 py-1.5 border-t border-default">
+      <p class="text-[11px] font-medium truncate text-default leading-tight">
         {{ item.filename }}
       </p>
-      <p class="text-[11px] text-muted mt-0.5 tabular-nums">
+      <p class="text-[10px] text-muted tabular-nums leading-tight mt-0.5">
         {{ formatBytes(item.size) }}<span v-if="item.width && item.height"> &middot; {{ item.width }}&times;{{ item.height }}</span>
       </p>
     </div>
