@@ -53,8 +53,13 @@
       v-else
       :data="filteredItems"
       :columns="columns"
-      :empty="{ icon: 'i-lucide-languages', label: 'No translations found' }"
     >
+      <template #empty>
+        <div class="flex flex-col items-center gap-2 py-6 text-gray-500 dark:text-gray-400">
+          <UIcon name="i-lucide-languages" class="w-8 h-8" />
+          <span class="text-sm">No translations found</span>
+        </div>
+      </template>
       <!-- Key Path -->
       <template #keyPath-cell="{ row }">
         <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
