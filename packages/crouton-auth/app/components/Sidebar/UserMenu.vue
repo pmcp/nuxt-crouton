@@ -16,9 +16,22 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 interface Props {
   /** Whether the sidebar is collapsed */
   collapsed?: boolean
+  /**
+   * Additional items to inject into the preferences group (language/dark mode section).
+   * Use this to add theme switching or other preference items from external layers.
+   *
+   * @example
+   * ```vue
+   * <script setup>
+   * const { themeMenuItem } = useThemeMenuItems()
+   * </script>
+   * <SidebarUserMenu :preference-items="[themeMenuItem]" />
+   * ```
+   */
+  preferenceItems?: DropdownMenuItem[]
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const { t } = useT()
 const { user, logout, loading } = useAuth()
@@ -59,6 +72,27 @@ const languageItems = computed<DropdownMenuItem[]>(() => {
 
 // Build dropdown items - navigate to account pages
 const dropdownItems = computed<DropdownMenuItem[][]>(() => {
+  const preferenceGroup: DropdownMenuItem[] = [
+    {
+      label: t('forms.language') || 'Language',
+      icon: 'i-lucide-globe',
+      children: languageItems.value
+    },
+    {
+      label: 'Dark Mode',
+      icon: isDark.value ? 'i-lucide-moon' : 'i-lucide-sun',
+      type: 'checkbox',
+      checked: isDark.value,
+      onUpdateChecked: (checked: boolean) => {
+        isDark.value = checked
+      },
+      onSelect: (e: Event) => {
+        e.preventDefault()
+      }
+    },
+    ...(props.preferenceItems ?? [])
+  ]
+
   return [
     [
       {
@@ -83,25 +117,7 @@ const dropdownItems = computed<DropdownMenuItem[][]>(() => {
         to: '/account?tab=security'
       }
     ],
-    [
-      {
-        label: t('forms.language') || 'Language',
-        icon: 'i-lucide-globe',
-        children: languageItems.value
-      },
-      {
-        label: 'Dark Mode',
-        icon: isDark.value ? 'i-lucide-moon' : 'i-lucide-sun',
-        type: 'checkbox',
-        checked: isDark.value,
-        onUpdateChecked: (checked: boolean) => {
-          isDark.value = checked
-        },
-        onSelect: (e: Event) => {
-          e.preventDefault()
-        }
-      }
-    ],
+    preferenceGroup,
     [
       {
         label: t('auth.signOut') || 'Sign Out',
