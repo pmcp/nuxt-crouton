@@ -22,9 +22,7 @@ interface Props {
    *
    * @example
    * ```vue
-   * <script setup>
-   * const { themeMenuItem } = useThemeMenuItems()
-   * </script>
+   * <!-- script setup: const { themeMenuItem } = useThemeMenuItems() -->
    * <SidebarUserMenu :preference-items="[themeMenuItem]" />
    * ```
    */
