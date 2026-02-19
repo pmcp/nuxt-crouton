@@ -174,120 +174,127 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
     </div>
 
     <template v-else>
-      <!-- Preset Picker -->
-      <div class="space-y-3">
-        <label class="text-sm font-medium text-default">Theme Preset</label>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            v-for="[key, preset] in presetEntries"
-            :key="key"
-            type="button"
-            :disabled="!isAdmin || isSaving"
-            class="relative flex items-center gap-3 p-3 rounded-lg border text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="(localTheme.preset === key) || (key === 'custom' && !localTheme.preset)
-              ? 'border-primary bg-primary/5'
-              : 'border-muted hover:border-default hover:bg-elevated/50'"
-            @click="selectPreset(key)"
-          >
-            <!-- Two-dot color preview -->
-            <div class="flex shrink-0 gap-1">
-              <span
-                class="size-5 rounded-full ring-1 ring-black/10 dark:ring-white/10"
-                :style="{ background: preset.previewPrimary }"
-              />
-              <span
-                class="size-5 rounded-full ring-1 ring-black/10 dark:ring-white/10"
-                :style="{ background: preset.previewNeutral }"
-              />
+      <!-- Two-column layout: controls left, preview right -->
+      <div class="flex gap-8 items-start">
+        <!-- Left: Selection Controls -->
+        <div class="flex-1 min-w-0 space-y-5">
+          <!-- Preset Picker (vertical) -->
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-default">Theme Preset</label>
+            <div class="flex flex-col gap-2">
+              <button
+                v-for="[key, preset] in presetEntries"
+                :key="key"
+                type="button"
+                :disabled="!isAdmin || isSaving"
+                class="relative flex items-center gap-3 p-3 rounded-lg border text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="(localTheme.preset === key) || (key === 'custom' && !localTheme.preset)
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted hover:border-default hover:bg-elevated/50'"
+                @click="selectPreset(key)"
+              >
+                <div class="flex shrink-0 gap-1">
+                  <span
+                    class="size-4 rounded-full ring-1 ring-black/10 dark:ring-white/10"
+                    :style="{ background: preset.previewPrimary }"
+                  />
+                  <span
+                    class="size-4 rounded-full ring-1 ring-black/10 dark:ring-white/10"
+                    :style="{ background: preset.previewNeutral }"
+                  />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm font-medium text-default">
+                    {{ preset.label }}
+                  </div>
+                  <div class="text-xs text-muted truncate">
+                    {{ preset.description }}
+                  </div>
+                </div>
+                <UIcon
+                  v-if="(localTheme.preset === key) || (key === 'custom' && !localTheme.preset)"
+                  name="i-lucide-check-circle"
+                  class="size-4 text-primary shrink-0"
+                />
+              </button>
             </div>
-            <div class="min-w-0 flex-1">
-              <div class="text-sm font-medium text-default">
-                {{ preset.label }}
-              </div>
-              <div class="text-xs text-muted truncate">
-                {{ preset.description }}
-              </div>
-            </div>
-            <UIcon
-              v-if="(localTheme.preset === key) || (key === 'custom' && !localTheme.preset)"
-              name="i-lucide-check-circle"
-              class="absolute top-2 right-2 size-4 text-primary shrink-0"
+          </div>
+
+          <!-- Individual pickers (only when custom) -->
+          <template v-if="isCustom">
+            <USeparator />
+
+            <TeamColorSwatchPicker
+              v-model="localTheme.primary"
+              :colors="PRIMARY_COLORS"
+              label="Primary Color"
+              :disabled="!isAdmin || isSaving"
             />
-          </button>
+
+            <TeamColorSwatchPicker
+              v-model="localTheme.neutral"
+              :colors="NEUTRAL_COLORS"
+              label="Neutral Color"
+              :disabled="!isAdmin || isSaving"
+            />
+
+            <TeamRadiusPicker
+              v-model="localTheme.radius"
+              :disabled="!isAdmin || isSaving"
+            />
+          </template>
         </div>
-      </div>
 
-      <!-- Individual pickers (only when custom) -->
-      <template v-if="isCustom">
-        <USeparator />
-
-        <TeamColorSwatchPicker
-          v-model="localTheme.primary"
-          :colors="PRIMARY_COLORS"
-          label="Primary Color"
-          :disabled="!isAdmin || isSaving"
-        />
-
-        <TeamColorSwatchPicker
-          v-model="localTheme.neutral"
-          :colors="NEUTRAL_COLORS"
-          label="Neutral Color"
-          :disabled="!isAdmin || isSaving"
-        />
-
-        <TeamRadiusPicker
-          v-model="localTheme.radius"
-          :disabled="!isAdmin || isSaving"
-        />
-      </template>
-
-      <USeparator />
-
-      <!-- Live Preview -->
-      <div class="space-y-3">
-        <label class="text-sm font-medium text-default">Live Preview</label>
-        <div class="p-4 border border-muted rounded-lg bg-muted/10 space-y-4">
-          <div class="flex flex-wrap gap-2">
-            <UButton color="primary">
-              Primary Button
-            </UButton>
-            <UButton
-              color="primary"
-              variant="outline"
-            >
-              Outline
-            </UButton>
-            <UButton
-              color="primary"
-              variant="soft"
-            >
-              Soft
-            </UButton>
-            <UButton
-              color="primary"
-              variant="ghost"
-            >
-              Ghost
-            </UButton>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <UBadge color="primary">
-              Badge
-            </UBadge>
-            <UBadge
-              color="primary"
-              variant="outline"
-            >
-              Outline
-            </UBadge>
-            <UBadge
-              color="primary"
-              variant="soft"
-            >
-              Soft
-            </UBadge>
-          </div>
-          <div class="max-w-xs">
+        <!-- Right: Live Preview -->
+        <div class="w-64 shrink-0 space-y-2 sticky top-4">
+          <label class="text-sm font-medium text-default">Live Preview</label>
+          <div class="p-4 border border-muted rounded-lg bg-muted/10 space-y-4">
+            <div class="flex flex-wrap gap-2">
+              <UButton
+                color="primary"
+                size="sm"
+              >
+                Primary
+              </UButton>
+              <UButton
+                color="primary"
+                variant="outline"
+                size="sm"
+              >
+                Outline
+              </UButton>
+              <UButton
+                color="primary"
+                variant="soft"
+                size="sm"
+              >
+                Soft
+              </UButton>
+              <UButton
+                color="primary"
+                variant="ghost"
+                size="sm"
+              >
+                Ghost
+              </UButton>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <UBadge color="primary">
+                Badge
+              </UBadge>
+              <UBadge
+                color="primary"
+                variant="outline"
+              >
+                Outline
+              </UBadge>
+              <UBadge
+                color="primary"
+                variant="soft"
+              >
+                Soft
+              </UBadge>
+            </div>
             <UInput
               placeholder="Sample input..."
               icon="i-lucide-search"
