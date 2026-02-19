@@ -9,6 +9,13 @@ export default defineNuxtConfig({
     name: 'nuxt-crouton-themes/themes'
   },
 
+  // Pull in all individual theme layers — apps only need to extend this one entry
+  extends: [
+    join(currentDir, '../ko'),
+    join(currentDir, '../minimal'),
+    join(currentDir, '../kr11')
+  ],
+
   // Register theme components globally (no prefix to match nuxt-crouton stub)
   components: {
     dirs: [
