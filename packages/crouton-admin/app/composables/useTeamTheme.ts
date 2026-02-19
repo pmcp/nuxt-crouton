@@ -50,6 +50,8 @@ export interface TeamThemeSettings {
   primary?: ThemePrimaryColor
   neutral?: ThemeNeutralColor
   radius?: ThemeRadius
+  /** Whether non-admin users can switch the global UI theme themselves. Default: true */
+  allowUserThemes?: boolean
 }
 
 /**
@@ -245,7 +247,8 @@ export function useTeamTheme() {
     preset: themeData.value.preset ?? DEFAULT_THEME.preset,
     primary: themeData.value.primary ?? DEFAULT_THEME.primary,
     neutral: themeData.value.neutral ?? DEFAULT_THEME.neutral,
-    radius: themeData.value.radius ?? DEFAULT_THEME.radius
+    radius: themeData.value.radius ?? DEFAULT_THEME.radius,
+    allowUserThemes: themeData.value.allowUserThemes ?? true
   }))
 
   const isLoading = computed(() => !themeFetched.value)

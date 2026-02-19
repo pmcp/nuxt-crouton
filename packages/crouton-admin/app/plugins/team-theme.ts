@@ -34,5 +34,10 @@ export default defineNuxtPlugin({
     }
 
     applyThemeSettings(themeState.value)
+
+    // Expose the allowUserThemes flag so crouton-auth components can read it
+    // without importing from crouton-admin. Defaults to true when not set.
+    const allowUserThemes = useState<boolean>('crouton:allowUserThemes', () => true)
+    allowUserThemes.value = themeState.value.allowUserThemes ?? true
   }
 })

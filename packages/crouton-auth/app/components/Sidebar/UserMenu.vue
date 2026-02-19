@@ -62,6 +62,12 @@ const flags: Record<string, string> = {
 // The key is a plain string constant so no cross-package import is needed.
 const themePreferenceItems = useState<DropdownMenuItem[]>('crouton:themePreferenceItems', () => [])
 
+// Whether the current user may switch global themes.
+// Written by the team-theme plugin (crouton-admin); defaults true when not present.
+const allowUserThemes = useState<boolean>('crouton:allowUserThemes', () => true)
+const { isAdmin } = useTeam()
+const canSwitchTheme = computed(() => allowUserThemes.value || isAdmin.value)
+
 const languageItems = computed<DropdownMenuItem[]>(() => {
   return (locales.value as Array<{ code: string, name?: string }>).map(loc => ({
     label: `${flags[loc.code] || '🌐'} ${loc.name || loc.code.toUpperCase()}`,
@@ -93,8 +99,8 @@ const dropdownItems = computed<DropdownMenuItem[][]>(() => {
         e.preventDefault()
       }
     },
-    // Theme items injected by crouton-themes plugin (empty when themes not active)
-    ...themePreferenceItems.value,
+    // Theme items injected by crouton-themes plugin (only when allowed and themes active)
+    ...(canSwitchTheme.value ? themePreferenceItems.value : []),
     // Additional items from parent component
     ...(props.preferenceItems ?? [])
   ]

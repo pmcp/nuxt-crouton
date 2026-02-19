@@ -50,7 +50,12 @@ const hasThemePicker = typeof themeCompactPicker !== 'string'
 const { t } = useT()
 const route = useRoute()
 const { buildDashboardUrl, teamSlug } = useTeamContext()
-const { showTeamManagement } = useTeam()
+const { showTeamManagement, isAdmin } = useTeam()
+
+// Whether users are allowed to switch global themes.
+// Written by the team-theme plugin (crouton-admin); defaults true when not present.
+const allowUserThemes = useState<boolean>('crouton:allowUserThemes', () => true)
+const canSwitchTheme = computed(() => allowUserThemes.value || isAdmin.value)
 
 // Get auto-discovered app routes
 const { dashboardRoutes, adminRoutes, settingsRoutes } = useCroutonApps()
@@ -229,9 +234,9 @@ const navItems = computed(() => props.navigationItems ?? defaultNavItems.value)
     </template>
 
     <template #footer="{ collapsed }">
-      <!-- Theme swatch strip (shown when crouton-themes is active and sidebar is expanded) -->
+      <!-- Theme swatch strip (shown when crouton-themes is active, sidebar expanded, and user is allowed) -->
       <div
-        v-if="hasThemePicker && !collapsed"
+        v-if="hasThemePicker && !collapsed && canSwitchTheme"
         class="px-3 pt-2 pb-1 flex items-center gap-2"
       >
         <span class="text-xs text-muted">Theme</span>

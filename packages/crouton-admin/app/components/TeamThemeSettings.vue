@@ -37,7 +37,8 @@ const localTheme = reactive<TeamThemeSettings>({
   preset: undefined,
   primary: undefined,
   neutral: undefined,
-  radius: undefined
+  radius: undefined,
+  allowUserThemes: true
 })
 
 // Sync local state with fetched theme
@@ -46,6 +47,7 @@ watch(theme, (newTheme) => {
   localTheme.primary = newTheme.primary
   localTheme.neutral = newTheme.neutral
   localTheme.radius = newTheme.radius
+  localTheme.allowUserThemes = newTheme.allowUserThemes
 }, { immediate: true })
 
 // Track if form has unsaved changes
@@ -55,6 +57,7 @@ const hasChanges = computed(() => {
     || localTheme.primary !== theme.value.primary
     || localTheme.neutral !== theme.value.neutral
     || localTheme.radius !== theme.value.radius
+    || localTheme.allowUserThemes !== theme.value.allowUserThemes
   )
 })
 
@@ -123,6 +126,7 @@ function handleReset() {
   localTheme.primary = DEFAULT_THEME.primary
   localTheme.neutral = DEFAULT_THEME.neutral
   localTheme.radius = DEFAULT_THEME.radius
+  localTheme.allowUserThemes = true
 }
 
 // Revert to last saved values
@@ -131,6 +135,7 @@ function revertChanges() {
   localTheme.primary = theme.value.primary
   localTheme.neutral = theme.value.neutral
   localTheme.radius = theme.value.radius
+  localTheme.allowUserThemes = theme.value.allowUserThemes
 }
 
 const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THEME_PRESETS)[ThemePreset]][]
@@ -147,20 +152,34 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
       </p>
     </div>
 
-    <!-- Global Theme Switcher (shown when @fyit/crouton-themes is active) -->
+    <!-- Global Theme section (shown when @fyit/crouton-themes is active) -->
     <div
       v-if="hasThemeSwitcher"
-      class="space-y-2"
+      class="space-y-3"
     >
-      <label class="text-sm font-medium text-default">Global Theme</label>
-      <p class="text-xs text-muted">
-        Switch between UI theme presets. Changes take effect immediately.
-      </p>
+      <div>
+        <label class="text-sm font-medium text-default">Global Theme</label>
+        <p class="text-xs text-muted mt-0.5">
+          Switch between UI theme presets. Changes take effect immediately for you.
+        </p>
+      </div>
       <component
         :is="themeSwitcher"
         mode="inline"
         size="sm"
       />
+      <div class="flex items-center justify-between pt-1">
+        <div>
+          <p class="text-sm font-medium text-default">Let users change their own theme</p>
+          <p class="text-xs text-muted">
+            When off, only admins can switch themes.
+          </p>
+        </div>
+        <USwitch
+          v-model="localTheme.allowUserThemes"
+          :disabled="!isAdmin || isSaving"
+        />
+      </div>
     </div>
 
     <USeparator />

@@ -24,7 +24,8 @@ const themeSettingsSchema = z.object({
     z.literal(0.25),
     z.literal(0.375),
     z.literal(0.5)
-  ]).optional()
+  ]).optional(),
+  allowUserThemes: z.boolean().optional()
 })
 
 export default defineEventHandler(async (event) => {
