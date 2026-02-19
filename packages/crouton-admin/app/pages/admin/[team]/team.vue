@@ -20,6 +20,11 @@ const teamSlug = computed(() => route.params.team as string)
 const tabs = computed(() => [
   [
     {
+      label: t('teams.teamSettings') || 'Settings',
+      icon: 'i-lucide-settings',
+      to: `/admin/${teamSlug.value}/team/settings`
+    },
+    {
       label: t('teams.members') || 'Members',
       icon: 'i-lucide-users',
       to: `/admin/${teamSlug.value}/team`,
@@ -31,9 +36,9 @@ const tabs = computed(() => [
       to: `/admin/${teamSlug.value}/team/invitations`
     },
     {
-      label: t('teams.teamSettings') || 'Settings',
-      icon: 'i-lucide-settings',
-      to: `/admin/${teamSlug.value}/team/settings`
+      label: t('teams.lookAndFeel') || 'Look and feel',
+      icon: 'i-lucide-palette',
+      to: `/admin/${teamSlug.value}/team/look-and-feel`
     }
   ]
 ])

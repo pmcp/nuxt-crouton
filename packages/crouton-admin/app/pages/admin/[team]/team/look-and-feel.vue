@@ -1,0 +1,41 @@
+<script setup lang="ts">
+/**
+ * Look and Feel Page
+ *
+ * Team theme and branding settings.
+ * Only accessible by team admins/owners.
+ *
+ * @route /admin/[team]/team/look-and-feel
+ */
+const route = useRoute()
+const { t } = useT()
+const { isAdmin } = useTeam()
+
+const teamSlug = computed(() => route.params.team as string)
+</script>
+
+<template>
+  <div class="p-6">
+    <!-- Not a team admin -->
+    <div
+      v-if="!isAdmin"
+      class="text-center py-8"
+    >
+      <UIcon
+        name="i-lucide-shield-alert"
+        class="size-12 mx-auto mb-4 text-muted opacity-50"
+      />
+      <h3 class="text-lg font-medium">{{ t('common.accessRestricted') || 'Access Restricted' }}</h3>
+      <p class="text-muted mt-2 max-w-md mx-auto">{{ t('teams.adminAccessRequired') || 'Admin access required' }}</p>
+      <NuxtLink :to="`/admin/${teamSlug}/team`">
+        <UButton
+          :label="t('navigation.backToTeam') || 'Back to Team'"
+          variant="outline"
+          class="mt-4"
+        />
+      </NuxtLink>
+    </div>
+
+    <TeamThemeSettings v-else />
+  </div>
+</template>

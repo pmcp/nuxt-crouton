@@ -71,30 +71,12 @@ function handleSaved() {
       </NuxtLink>
     </div>
 
-    <!-- Team Settings Accordion -->
+    <!-- Team General Settings -->
     <template v-else>
-      <UAccordion
-        :items="[
-          { label: t('teams.generalSettings') || 'General', icon: 'i-lucide-settings', slot: 'general' },
-          { label: t('teams.themeSettings') || 'Theme', icon: 'i-lucide-palette', slot: 'theme' }
-        ]"
-        :default-open="['General']"
-      >
-        <template #general>
-          <div class="pt-4">
-            <TeamSettings
-              @saved="handleSaved"
-              @delete="showDeleteModal = true"
-            />
-          </div>
-        </template>
-
-        <template #theme>
-          <div class="pt-4">
-            <TeamThemeSettings />
-          </div>
-        </template>
-      </UAccordion>
+      <TeamSettings
+        @saved="handleSaved"
+        @delete="showDeleteModal = true"
+      />
 
       <!-- Delete Confirmation Modal -->
       <TeamDeleteConfirm
