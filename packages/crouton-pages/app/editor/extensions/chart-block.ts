@@ -49,6 +49,12 @@ export const ChartBlock = Node.create<ChartBlockOptions>({
   addAttributes() {
     return {
       ...blockIdAttribute,
+      mode: {
+        default: chartBlockDefinition.defaultAttrs.mode || 'collection'
+      },
+      preset: {
+        default: undefined
+      },
       collection: {
         default: chartBlockDefinition.defaultAttrs.collection
       },

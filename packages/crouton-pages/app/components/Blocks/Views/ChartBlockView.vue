@@ -31,6 +31,24 @@ const chartTypeLabels: Record<string, string> = {
 
 const chartTypeDisplay = computed(() => chartTypeLabels[attrs.value.chartType] || 'Bar')
 
+// Read preset info from shared registry state
+const chartPresets = useState<Array<{ id: string; name: string; config: { type?: string } }>>('crouton-chart-presets', () => [])
+const resolvedPreset = computed(() => {
+  if (attrs.value.mode !== 'preset' || !attrs.value.preset) return null
+  return chartPresets.value.find(p => p.id === attrs.value.preset) || null
+})
+const isPresetMode = computed(() => attrs.value.mode === 'preset')
+const sourceLabel = computed(() => {
+  if (isPresetMode.value) return resolvedPreset.value?.name || attrs.value.preset || 'No preset'
+  return attrs.value.collection || 'No collection'
+})
+const typeLabel = computed(() => {
+  if (isPresetMode.value && resolvedPreset.value) {
+    return chartTypeLabels[resolvedPreset.value.config.type || ''] || resolvedPreset.value.config.type || 'Bar'
+  }
+  return chartTypeDisplay.value
+})
+
 const innerRef = ref<HTMLElement | null>(null)
 
 function findEditorId(): string | undefined {
@@ -101,12 +119,15 @@ function handleOpenPanel() {
 
         <!-- Preview Content -->
         <div class="bg-gray-50/50 dark:bg-gray-800/30 rounded-lg p-4 border border-gray-100 dark:border-gray-700/50">
-          <!-- Warning if no collection selected -->
-          <div v-if="!attrs.collection" class="flex items-center gap-2 text-amber-600 dark:text-amber-500">
+          <!-- Warning if nothing selected -->
+          <div
+            v-if="(isPresetMode && !attrs.preset) || (!isPresetMode && !attrs.collection)"
+            class="flex items-center gap-2 text-amber-600 dark:text-amber-500"
+          >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span class="text-sm font-medium">No collection selected</span>
+            <span class="text-sm font-medium">{{ isPresetMode ? 'No preset selected' : 'No collection selected' }}</span>
           </div>
 
           <!-- Chart info -->
@@ -124,10 +145,16 @@ function handleOpenPanel() {
                   <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
                   <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
                 </svg>
-                {{ attrs.collection }}
+                {{ sourceLabel }}
+              </span>
+              <span
+                v-if="isPresetMode"
+                class="inline-flex items-center px-2 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded text-xs"
+              >
+                preset
               </span>
               <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-xs">
-                {{ chartTypeDisplay }}
+                {{ typeLabel }}
               </span>
               <span v-if="attrs.height" class="inline-flex items-center px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-xs">
                 {{ attrs.height }}px

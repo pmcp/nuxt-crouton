@@ -121,6 +121,7 @@ function onDelete() {
     <div class="flex-1 overflow-auto p-4">
       <div v-if="blockDefinition" class="space-y-4">
         <template v-for="field in blockDefinition.schema" :key="field.name">
+          <template v-if="!field.visibleWhen || field.visibleWhen(localAttrs)">
           <!-- Text Input -->
           <UFormField
             v-if="field.type === 'text'"
@@ -280,6 +281,20 @@ function onDelete() {
               @update:model-value="onFieldChange(field.name, $event)"
             />
           </UFormField>
+
+          <!-- Chart Preset Picker -->
+          <UFormField
+            v-else-if="field.type === 'chart-preset'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesChartPresetPicker
+              :model-value="localAttrs[field.name] as string || ''"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
+          </template>
         </template>
       </div>
 

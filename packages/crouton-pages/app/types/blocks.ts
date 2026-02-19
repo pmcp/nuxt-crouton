@@ -174,7 +174,15 @@ export interface CollectionBlockAttrs {
 export type ChartType = 'bar' | 'line' | 'area' | 'donut'
 
 export interface ChartBlockAttrs {
-  /** Collection name from registry (e.g., 'monthlySales') */
+  /**
+   * Source mode.
+   * 'collection' — pick a collection from the registry (default).
+   * 'preset' — pick a named preset registered by a package (e.g., crouton-bookings).
+   */
+  mode?: 'collection' | 'preset'
+  /** Preset ID when mode === 'preset' (e.g., 'bookings:by-date') */
+  preset?: string
+  /** Collection name from registry (e.g., 'monthlySales') — used when mode === 'collection' */
   collection: string
   /** Chart type to render */
   chartType: ChartType
@@ -280,12 +288,14 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'collection' | 'faq-items'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'collection' | 'faq-items' | 'chart-preset'
   label: string
   description?: string
   required?: boolean
   options?: { label: string; value: string }[]
   defaultValue?: unknown
+  /** Conditionally show this field based on current block attrs */
+  visibleWhen?: (attrs: Record<string, unknown>) => boolean
 }
 
 // ============================================================================

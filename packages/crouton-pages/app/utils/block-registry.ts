@@ -465,6 +465,7 @@ export const chartBlockDefinition: BlockDefinition<ChartBlockAttrs> = {
   icon: 'i-lucide-chart-bar',
   category: 'content',
   defaultAttrs: {
+    mode: 'collection',
     collection: '',
     chartType: 'bar',
     height: 300,
@@ -472,11 +473,30 @@ export const chartBlockDefinition: BlockDefinition<ChartBlockAttrs> = {
   },
   schema: [
     {
+      name: 'mode',
+      type: 'select',
+      label: 'Data source',
+      options: [
+        { label: 'Collection', value: 'collection' },
+        { label: 'Preset', value: 'preset' }
+      ],
+      defaultValue: 'collection'
+    },
+    // Preset mode fields
+    {
+      name: 'preset',
+      type: 'chart-preset',
+      label: 'Chart Preset',
+      description: 'Select a pre-configured chart from an installed package',
+      visibleWhen: (attrs) => attrs.mode === 'preset'
+    },
+    // Collection mode fields
+    {
       name: 'collection',
       type: 'collection',
       label: 'Collection',
-      required: true,
-      description: 'Select a collection to visualize'
+      description: 'Select a collection to visualize',
+      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
     },
     {
       name: 'chartType',
@@ -488,25 +508,29 @@ export const chartBlockDefinition: BlockDefinition<ChartBlockAttrs> = {
         { label: 'Area', value: 'area' },
         { label: 'Donut', value: 'donut' }
       ],
-      defaultValue: 'bar'
+      defaultValue: 'bar',
+      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
     },
     {
       name: 'yFields',
       type: 'text',
       label: 'Y-axis fields',
-      description: 'Comma-separated field names. Leave empty to auto-detect numeric fields.'
+      description: 'Comma-separated field names. Leave empty to auto-detect numeric fields.',
+      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
     },
     {
       name: 'xField',
       type: 'text',
       label: 'X-axis field',
-      description: 'Field for the X axis. Auto-resolved from collection title field if empty.'
+      description: 'Field for the X axis. Auto-resolved from collection title field if empty.',
+      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
     },
+    // Shared fields (visible in both modes)
     {
       name: 'title',
       type: 'text',
       label: 'Title',
-      description: 'Optional heading above the chart'
+      description: 'Optional heading above the chart (overrides preset default)'
     },
     {
       name: 'height',
@@ -524,7 +548,8 @@ export const chartBlockDefinition: BlockDefinition<ChartBlockAttrs> = {
       name: 'stacked',
       type: 'switch',
       label: 'Stacked',
-      description: 'Stack series (bar and area charts only)'
+      description: 'Stack series (bar and area charts only)',
+      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
     }
   ]
 }
