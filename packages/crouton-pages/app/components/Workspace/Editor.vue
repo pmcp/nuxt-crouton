@@ -320,6 +320,17 @@ const isRegularPage = computed(() =>
 const isCollectionPage = computed(() => !!selectedPageType.value?.collection)
 const collectionPageName = computed(() => selectedPageType.value?.collection || '')
 
+// DEBUG: log page type resolution
+watchEffect(() => {
+  if (state.value.pageType && state.value.pageType !== 'pages:regular') {
+    console.log('[pages:debug] pageType:', state.value.pageType)
+    console.log('[pages:debug] selectedPageType:', selectedPageType.value)
+    console.log('[pages:debug] isCollectionPage:', isCollectionPage.value)
+    console.log('[pages:debug] allPageTypes:', pageTypes.value.map(t => ({ fullId: t.fullId, collection: t.collection })))
+    console.log('[pages:debug] collectionConfigs publishable:', Object.entries(collections.configs).filter(([, c]) => c?.publishable).map(([k]) => k))
+  }
+})
+
 // Selected collection item ID (stored in page config)
 const collectionItemId = computed({
   get: () => (state.value.config as any)?.itemId || null,
@@ -664,6 +675,9 @@ const fieldGroups = computed(() => ({
 // Preview drawer state
 const showPreview = ref(false)
 
+// SEO preview tab in Extra section
+const seoPreviewTab = ref<'search' | 'social'>('search')
+
 // Preview locale (for language selector in preview panel)
 const previewLocale = ref(locale.value)
 
@@ -942,26 +956,6 @@ defineExpose({ state })
                     />
                   </UFormField>
 
-                  <USeparator class="my-3" />
-                  <div class="text-sm font-medium text-default mb-3">SEO</div>
-
-                  <UFormField :label="t('pages.fields.ogImage') || 'Social Image'" name="ogImage">
-                    <CroutonImageUpload
-                      v-model="state.ogImage"
-                      size="sm"
-                      accept="image/*"
-                    />
-                  </UFormField>
-
-                  <UFormField :label="t('pages.fields.robots') || 'Search Indexing'" name="robots">
-                    <USelect
-                      v-model="state.robots"
-                      :items="robotsOptions"
-                      value-key="value"
-                      size="sm"
-                      class="w-full"
-                    />
-                  </UFormField>
                 </div>
               </template>
             </UPopover>
@@ -1066,7 +1060,7 @@ defineExpose({ state })
       </div>
 
       <!-- Content -->
-      <div class="flex-1 min-h-0 overflow-hidden p-4">
+      <div class="flex-1 min-h-0 p-4" :class="isCollectionPage ? 'overflow-auto' : 'overflow-hidden'">
         <CroutonI18nInput
           v-if="contentReady"
           :key="contentKey"
@@ -1080,8 +1074,122 @@ defineExpose({ state })
           :field-groups="fieldGroups"
           :default-open-groups="['Info', 'Content']"
           :collab="collabForI18n"
-          class="h-full"
+          :class="isCollectionPage ? 'min-h-64' : 'h-full'"
         >
+          <template #group-extra="{ locale: previewLocale }">
+            <USeparator class="mt-3 mb-2" />
+            <div class="flex flex-col gap-2">
+              <UFormField :label="t('pages.fields.ogImage') || 'Social Image'" name="ogImage">
+                <CroutonImageUpload
+                  v-model="state.ogImage"
+                  size="sm"
+                  accept="image/*"
+                />
+              </UFormField>
+              <UFormField :label="t('pages.fields.robots') || 'Search Indexing'" name="robots">
+                <USelect
+                  v-model="state.robots"
+                  :items="robotsOptions"
+                  value-key="value"
+                  size="sm"
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
+            <!-- SEO preview for narrow/mobile (hidden on wide screens where secondary column shows it) -->
+            <div class="lg:hidden mt-3 space-y-2">
+              <div class="flex rounded border border-default overflow-hidden text-xs">
+                <button
+                  type="button"
+                  :class="['flex-1 py-1 transition-colors', seoPreviewTab === 'search' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
+                  @click="seoPreviewTab = 'search'"
+                >Search</button>
+                <button
+                  type="button"
+                  :class="['flex-1 py-1 transition-colors border-l border-default', seoPreviewTab === 'social' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
+                  @click="seoPreviewTab = 'social'"
+                >Social</button>
+              </div>
+              <div v-if="seoPreviewTab === 'search'" class="rounded-lg border border-default bg-background p-3 space-y-1">
+                <div class="flex items-center gap-1.5 text-xs text-muted truncate">
+                  <UIcon name="i-lucide-globe" class="size-3 shrink-0" />
+                  <span class="truncate">{{ teamSlugRef }} › {{ previewLocale }}<template v-if="(state.translations as any)[previewLocale]?.slug"> › {{ (state.translations as any)[previewLocale]?.slug }}</template></span>
+                </div>
+                <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
+                  {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
+                </div>
+                <div class="text-xs text-muted leading-relaxed line-clamp-2">
+                  {{ (state.translations as any)[previewLocale]?.seoDescription || 'No description — add a meta description to improve SEO.' }}
+                </div>
+              </div>
+              <div v-else class="rounded-lg border border-default overflow-hidden">
+                <div class="aspect-[1200/630] bg-muted/30 overflow-hidden">
+                  <img v-if="state.ogImage" :src="state.ogImage" class="w-full h-full object-cover" alt="" />
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center gap-2 text-muted/60">
+                    <UIcon name="i-lucide-image" class="size-8" />
+                    <span class="text-xs">No social image set</span>
+                  </div>
+                </div>
+                <div class="p-2.5 bg-background border-t border-default space-y-0.5">
+                  <div class="text-xs text-muted uppercase tracking-wide">{{ teamSlugRef }}</div>
+                  <div class="text-sm font-medium leading-snug">
+                    {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
+                  </div>
+                  <div v-if="(state.translations as any)[previewLocale]?.seoDescription" class="text-xs text-muted leading-relaxed line-clamp-2">
+                    {{ (state.translations as any)[previewLocale]?.seoDescription }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template #group-extra-secondary="{ locale: previewLocale }">
+            <div class="mt-3 space-y-2">
+              <div class="flex rounded border border-default overflow-hidden text-xs">
+                <button
+                  type="button"
+                  :class="['flex-1 py-1 transition-colors', seoPreviewTab === 'search' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
+                  @click="seoPreviewTab = 'search'"
+                >Search</button>
+                <button
+                  type="button"
+                  :class="['flex-1 py-1 transition-colors border-l border-default', seoPreviewTab === 'social' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
+                  @click="seoPreviewTab = 'social'"
+                >Social</button>
+              </div>
+              <!-- Google Search Preview -->
+              <div v-if="seoPreviewTab === 'search'" class="rounded-lg border border-default bg-background p-3 space-y-1">
+                <div class="flex items-center gap-1.5 text-xs text-muted truncate">
+                  <UIcon name="i-lucide-globe" class="size-3 shrink-0" />
+                  <span class="truncate">{{ teamSlugRef }} › {{ previewLocale }}<template v-if="(state.translations as any)[previewLocale]?.slug"> › {{ (state.translations as any)[previewLocale]?.slug }}</template></span>
+                </div>
+                <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
+                  {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
+                </div>
+                <div class="text-xs text-muted leading-relaxed line-clamp-2">
+                  {{ (state.translations as any)[previewLocale]?.seoDescription || 'No description — add a meta description to improve SEO.' }}
+                </div>
+              </div>
+              <!-- OG / Social Preview -->
+              <div v-else class="rounded-lg border border-default overflow-hidden">
+                <div class="aspect-[1200/630] bg-muted/30 overflow-hidden">
+                  <img v-if="state.ogImage" :src="state.ogImage" class="w-full h-full object-cover" alt="" />
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center gap-2 text-muted/60">
+                    <UIcon name="i-lucide-image" class="size-8" />
+                    <span class="text-xs">No social image set</span>
+                  </div>
+                </div>
+                <div class="p-2.5 bg-background border-t border-default space-y-0.5">
+                  <div class="text-xs text-muted uppercase tracking-wide">{{ teamSlugRef }}</div>
+                  <div class="text-sm font-medium leading-snug">
+                    {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
+                  </div>
+                  <div v-if="(state.translations as any)[previewLocale]?.seoDescription" class="text-xs text-muted leading-relaxed line-clamp-2">
+                    {{ (state.translations as any)[previewLocale]?.seoDescription }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
           <template v-if="hasMetadata" #header>
             <div class="flex items-center gap-3 text-xs text-muted">
               <span v-if="createdByName" class="flex items-center gap-1">

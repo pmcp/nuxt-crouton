@@ -834,6 +834,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                       @blur="handleFieldBlur(field, narrowLocaleTab)"
                     />
                   </div>
+                  <slot :name="`group-${group.name.toLowerCase()}`" :locale="narrowLocaleTab" />
                 </div>
               </div>
             </template>
@@ -1116,6 +1117,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                         @blur="handleFieldBlur(field, primaryEditingLocale)"
                       />
                     </div>
+                    <slot :name="`group-${group.name.toLowerCase()}`" :locale="primaryEditingLocale" />
                   </div>
                 </div>
               </template>
@@ -1373,6 +1375,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
                         @blur="handleFieldBlur(field, secondaryEditingLocale)"
                       />
                     </div>
+                    <slot :name="`group-${group.name.toLowerCase()}-secondary`" :locale="secondaryEditingLocale" />
                   </div>
                 </div>
               </template>
