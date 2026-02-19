@@ -18,7 +18,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // import useCollections from '~/layers/test/all/composables/useCollections'
 
 const props = defineProps({
