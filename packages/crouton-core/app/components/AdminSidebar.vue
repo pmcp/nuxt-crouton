@@ -162,6 +162,12 @@ const teamItem = computed<NavigationMenuItem | null>(() => {
     defaultOpen: true,
     children: [
       {
+        label: t('teams.teamSettings') || 'Settings',
+        icon: 'i-lucide-settings',
+        to: `${teamPath}/settings`,
+        active: route.path === `${teamPath}/settings` || route.path === `${teamPath}/settings/`
+      },
+      {
         label: t('teams.members') || 'Members',
         icon: 'i-lucide-users',
         to: teamPath,
@@ -174,10 +180,10 @@ const teamItem = computed<NavigationMenuItem | null>(() => {
         active: route.path === `${teamPath}/invitations` || route.path === `${teamPath}/invitations/`
       },
       {
-        label: t('teams.teamSettings') || 'Team Settings',
-        icon: 'i-lucide-settings',
-        to: `${teamPath}/settings`,
-        active: route.path === `${teamPath}/settings` || route.path === `${teamPath}/settings/`
+        label: t('teams.lookAndFeel') || 'Look and feel',
+        icon: 'i-lucide-palette',
+        to: `${teamPath}/look-and-feel`,
+        active: route.path === `${teamPath}/look-and-feel` || route.path === `${teamPath}/look-and-feel/`
       },
       {
         label: t('navigation.translations') || 'Translations',

@@ -374,7 +374,8 @@
     "adminAccessRequired": "Vous devez être administrateur ou propriétaire de l'équipe pour accéder à cette page.",
     "teamDeleted": "Équipe supprimée",
     "teamDeletedDescription": "L'équipe a été supprimée définitivement.",
-    "settingsSaved": "Les paramètres de l'équipe ont été enregistrés."
+    "settingsSaved": "Les paramètres de l'équipe ont été enregistrés.",
+    "lookAndFeel": "Apparence"
   },
   "import": {
     "csv": "Importer CSV",

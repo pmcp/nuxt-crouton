@@ -375,7 +375,8 @@
     "adminAccessRequired": "You need to be a team admin or owner to access this page.",
     "teamDeleted": "Team Deleted",
     "teamDeletedDescription": "The team has been permanently deleted.",
-    "settingsSaved": "Team settings have been saved."
+    "settingsSaved": "Team settings have been saved.",
+    "lookAndFeel": "Look and feel"
   },
   "import": {
     "csv": "Import CSV",
