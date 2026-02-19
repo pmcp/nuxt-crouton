@@ -6,7 +6,7 @@ export default defineAppConfig({
       }
     },
     colors: {
-      primary: 'black',
+      primary: 'neutral',
       neutral: 'neutral'
     },
     container: {
@@ -21,32 +21,16 @@ export default defineAppConfig({
       }
     },
     button: {
+      // Register bw-* as valid variants and override solid/outline/soft/ghost/link
+      // to inject our CSS class names. The CSS file handles actual styling with
+      // !important to override Nuxt UI's CSS-variable-based defaults.
       variants: {
-        size: {
-          xs: {
-            base: 'px-1.5 py-0.5 text-xs gap-1',
-            trailingIcon: 'size-4'
-          },
-          sm: {
-            base: 'px-2 py-1.5 text-xs gap-1.5',
-            leadingIcon: 'size-4',
-            trailingIcon: 'size-4'
-          },
-          md: {
-            base: 'px-2.5 py-1.5 text-sm gap-1.5',
-            leadingIcon: 'size-5',
-            trailingIcon: 'size-5'
-          },
-          lg: {
-            base: 'px-2.5 py-1.5 text-sm gap-2',
-            leadingIcon: 'size-5',
-            trailingIcon: 'size-5'
-          },
-          xl: {
-            base: 'px-2.5 py-1.5 text-base gap-2.5',
-            leadingIcon: 'size-5',
-            trailingIcon: 'size-5'
-          }
+        variant: {
+          solid: 'bw-solid',
+          outline: 'bw-outline',
+          soft: 'bw-soft',
+          ghost: 'bw-ghost',
+          link: 'bw-link'
         }
       }
     },

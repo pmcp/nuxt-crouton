@@ -16,7 +16,8 @@ export default defineNuxtConfig({
 
   // Bundle theme CSS so all runtime presets work out of the box
   extends: [
-    '@fyit/crouton-themes/ko'
+    '@fyit/crouton-themes/ko',
+    '@fyit/crouton-themes/blackandwhite'
   ],
 
   // Layer metadata

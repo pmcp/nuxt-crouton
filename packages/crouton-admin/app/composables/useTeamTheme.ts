@@ -135,7 +135,22 @@ export const THEME_PRESETS: Record<ThemePreset, ThemePresetConfig> = {
     ui: {
       colors: { primary: 'neutral', neutral: 'neutral' },
       theme: { defaultVariants: { size: 'sm' } },
-      button: { defaultVariants: { variant: 'solid' } },
+      // Override button variant base classes to inject bw-* CSS classes.
+      // The blackandwhite layer bundles main.css which defines these with
+      // !important to reliably override Nuxt UI's CSS-variable-based defaults
+      // and ensure proper contrast in both light and dark modes.
+      button: {
+        defaultVariants: { variant: 'solid' },
+        variants: {
+          variant: {
+            solid: 'bw-solid',
+            outline: 'bw-outline',
+            soft: 'bw-soft',
+            ghost: 'bw-ghost',
+            link: 'bw-link'
+          }
+        }
+      },
       input: { defaultVariants: { variant: 'subtle' } },
       select: { defaultVariants: { variant: 'subtle' } },
       card: { defaultVariants: { variant: 'outline' } },
