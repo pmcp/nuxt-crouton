@@ -27,6 +27,15 @@ export default defineAppConfig({
           component: 'CroutonPagesRegularContent',
           category: 'content',
           configSchema: []
+        },
+        {
+          id: 'collection-binder',
+          name: 'Collection Binder',
+          description: 'Shows all items from a collection as sub-entries in navigation',
+          icon: 'i-lucide-layers',
+          component: 'CroutonPagesCollectionBinderRenderer',
+          category: 'collections',
+          configSchema: []
         }
       ]
     }

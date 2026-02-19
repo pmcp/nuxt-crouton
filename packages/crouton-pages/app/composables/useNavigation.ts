@@ -38,12 +38,15 @@ export interface NavigationItem {
   depth: number
   order: number
   children?: NavigationItem[]
+  /** True for virtual items generated from collection binder pages */
+  isVirtual?: boolean
 }
 
 export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const route = useRoute()
   const { locale } = useI18n()
   const { isCustomDomain, hideTeamInUrl } = useDomainContext()
+  const collections = useCollections()
 
   // Resolve team from prop, route, or domain context
   const team = computed(() => {
@@ -65,15 +68,73 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     transform: (data: any) => data?.data || data || []
   })
 
+  // Map of pageId → collection items for collection binder pages
+  const binderItemsMap = ref<Record<string, NavigationItem[]>>({})
+
   // Refresh navigation when pages collection is mutated (reorder, move, create, update, delete)
   const nuxtApp = useNuxtApp()
   nuxtApp.hook('crouton:mutation' as any, (event: any) => {
     if (event?.collection === 'pagesPages') {
       refresh()
+      binderItemsMap.value = {} // clear cached binder items on mutation
     }
   })
 
+  // When pages load, fetch collection items for any binder pages
+  watch(pages, async (newPages) => {
+    if (!newPages || !team.value) return
+
+    const binders = (newPages as any[]).filter((p: any) =>
+      p.pageType === 'pages:collection-binder' &&
+      p.config?.collection &&
+      p.status === 'published' &&
+      p.showInNavigation !== false
+    )
+
+    await Promise.all(binders.map(async (binder: any) => {
+      if (binderItemsMap.value[binder.id]) return // already loaded
+
+      const colConfig = collections.getConfig(binder.config.collection)
+      if (!colConfig?.apiPath) return
+
+      const teamPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
+      const pathPrefix = `${teamPrefix}/${locale.value}`
+      const binderPath = `${pathPrefix}/${binder.slug || ''}`.replace(/\/+$/, '') || pathPrefix
+
+      const titleField = colConfig.display?.title || 'title'
+
+      try {
+        const response = await $fetch<any>(`/api/teams/${team.value}/${colConfig.apiPath}`)
+        const rawItems: any[] = Array.isArray(response?.items) ? response.items
+          : Array.isArray(response) ? response
+          : []
+
+        binderItemsMap.value[binder.id] = rawItems.map((item: any) => {
+          // Resolve title with translation fallback
+          const directTitle = item[titleField]
+          const translatedTitle = item.translations?.[locale.value]?.[titleField]
+            || item.translations?.en?.[titleField]
+          const title = directTitle || translatedTitle || item.title || item.name || item.id
+
+          return {
+            id: `virtual-${binder.id}-${item.id}`,
+            title: String(title),
+            slug: item.id,
+            path: `${binderPath}/${item.id}`,
+            pageType: 'virtual-binder-item',
+            depth: (binder.depth || 0) + 1,
+            order: item.order ?? 0,
+            isVirtual: true
+          }
+        })
+      } catch {
+        binderItemsMap.value[binder.id] = []
+      }
+    }))
+  }, { immediate: true })
+
   // Build hierarchical navigation tree
+  // eslint-disable-next-line vue/no-side-effects-in-computed-properties -- reading binderItemsMap is safe
   const navigation = computed<NavigationItem[]>(() => {
     if (!pages.value || !Array.isArray(pages.value)) return []
 
@@ -126,6 +187,21 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       }
       // else: parentId is set but parent not in nav — exclude this child
     })
+
+    // Inject virtual binder items as children of binder pages
+    for (const [binderId, virtualChildren] of Object.entries(binderItemsMap.value)) {
+      const binderItem = itemMap.get(binderId)
+      if (!binderItem || virtualChildren.length === 0) continue
+
+      // Add virtual children (they don't already exist in the page tree)
+      if (!binderItem.children) binderItem.children = []
+      // Only add if no real page-tree children with the same IDs exist
+      for (const vChild of virtualChildren) {
+        if (!binderItem.children.some(c => c.id === vChild.id)) {
+          binderItem.children.push(vChild)
+        }
+      }
+    }
 
     // Sort by order at each level
     const sortByOrder = (items: NavigationItem[]) => {

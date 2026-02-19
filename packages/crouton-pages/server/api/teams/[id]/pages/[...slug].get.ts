@@ -1,12 +1,17 @@
 /**
- * Get Single Page by Slug
+ * Get Single Page by Slug (Catch-All)
  *
  * Returns a single page for public rendering.
- * Handles visibility checks (public vs members vs hidden).
+ * Handles single-segment slugs (regular pages) and multi-segment slugs
+ * for collection binder sub-routes (e.g. /locations/abc123).
  *
- * GET /api/teams/[id]/pages/[slug]
+ * Single-segment: finds page directly by slug.
+ * Two-segment: finds the binder page by first segment, injects second segment
+ * as `config.binderItemId` for the CollectionBinderRenderer to use.
+ *
+ * GET /api/teams/[id]/pages/[...slug]
  */
-import { eq, and, or, asc, sql } from 'drizzle-orm'
+import { eq, and, or, asc } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const teamParam = getRouterParam(event, 'id')
@@ -20,7 +25,12 @@ export default defineEventHandler(async (event) => {
   }
 
   // Handle empty slug or _home (homepage)
-  const slug = (!slugParam || slugParam === '_home') ? '' : slugParam
+  const rawSlug = (!slugParam || slugParam === '_home') ? '' : slugParam
+
+  // Split into parts — detect binder sub-routes
+  const slugParts = rawSlug ? rawSlug.split('/').filter(Boolean) : []
+  const slug = slugParts[0] || ''
+  const binderItemId = slugParts.length === 2 ? slugParts[1] : null
 
   // Get locale from query parameter (for translated slug lookup)
   const locale = getQuery(event).locale as string || 'en'
@@ -79,8 +89,7 @@ export default defineEventHandler(async (event) => {
           })
         }
       } else {
-        // Regular page: find by slug
-        // First try: exact match on base slug
+        // Find page by slug (first segment)
         page = await database
           .select()
           .from(pagesSchema.pagesPages)
@@ -93,9 +102,9 @@ export default defineEventHandler(async (event) => {
           .limit(1)
           .then((rows: any[]) => rows[0])
 
-        // Second try: search in translations JSON for locale-specific slug
-        // This is needed when base slug is null but translations have the slug
+        // If not found by base slug, search in translations JSON
         if (!page) {
+          const { sql } = await import('drizzle-orm')
           page = await database
             .select()
             .from(pagesSchema.pagesPages)
@@ -110,6 +119,14 @@ export default defineEventHandler(async (event) => {
         }
 
         if (!page) {
+          throw createError({
+            status: 404,
+            statusText: 'Page not found'
+          })
+        }
+
+        // For multi-segment slugs, verify the page is a collection binder
+        if (binderItemId && page.pageType !== 'pages:collection-binder') {
           throw createError({
             status: 404,
             statusText: 'Page not found'
@@ -130,7 +147,6 @@ export default defineEventHandler(async (event) => {
         // Hidden pages require direct link - allow access
       } else if (page.visibility === 'members') {
         // Members-only pages require authentication
-        // Try to get session
         try {
           const { getServerSession } = await import('@fyit/crouton-auth/server/utils/useServerAuth')
           const session = await getServerSession(event)
@@ -163,14 +179,12 @@ export default defineEventHandler(async (event) => {
           }
         } catch (authError: any) {
           if (authError.statusCode) throw authError
-          // Auth not available, deny access
           throw createError({
             status: 401,
             statusText: 'Authentication required'
           })
         }
       }
-      // visibility === 'public' - allow access
 
       // Resolve translations - merge translated fields over base values
       if (page.translations) {
@@ -179,23 +193,28 @@ export default defineEventHandler(async (event) => {
             ? JSON.parse(page.translations)
             : page.translations
 
-          // Use locale from query parameter (already extracted above)
           const localeTranslations = translations[locale] || translations['en'] || Object.values(translations)[0]
 
           if (localeTranslations && typeof localeTranslations === 'object') {
-            // Merge translated fields (title, slug, content, etc.) - but keep original slug for reference
             const originalSlug = page.slug
             for (const [key, value] of Object.entries(localeTranslations)) {
               if (value !== null && value !== undefined) {
                 page[key] = value
               }
             }
-            // Store original English slug for canonical URL reference
             page.baseSlug = originalSlug
           }
         } catch (e) {
           console.error('[pages] Translation parsing error:', e)
         }
+      }
+
+      // For binder sub-routes: inject binderItemId into config
+      if (binderItemId) {
+        const existingConfig = page.config
+          ? (typeof page.config === 'string' ? JSON.parse(page.config) : page.config)
+          : {}
+        page.config = { ...existingConfig, binderItemId }
       }
 
       return {
@@ -204,13 +223,11 @@ export default defineEventHandler(async (event) => {
           teamId: team.id,
           teamSlug: team.slug,
           locale,
-          // Include raw translations for hreflang generation
           translations: page.translations
         }
       }
     } catch (error: any) {
       if (error.statusCode) throw error
-      // pagesPages table doesn't exist or schema import failed
       throw createError({
         status: 404,
         statusText: 'Page not found'

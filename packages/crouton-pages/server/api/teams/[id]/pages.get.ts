@@ -111,8 +111,9 @@ export default defineEventHandler(async (event) => {
         conditions.push(eq(pagesSchema.pagesPages.visibility, 'public'))
       }
 
-      // Build select fields — translations column is optional (depends on generated schema)
+      // Build select fields — translations/config columns are optional (depends on generated schema)
       const hasTranslations = 'translations' in pagesSchema.pagesPages
+      const hasConfig = 'config' in pagesSchema.pagesPages
       const selectFields: Record<string, any> = {
         id: pagesSchema.pagesPages.id,
         title: pagesSchema.pagesPages.title,
@@ -128,6 +129,9 @@ export default defineEventHandler(async (event) => {
       }
       if (hasTranslations) {
         selectFields.translations = (pagesSchema.pagesPages as any).translations
+      }
+      if (hasConfig) {
+        selectFields.config = (pagesSchema.pagesPages as any).config
       }
 
       const rawPages = await database
@@ -163,6 +167,16 @@ export default defineEventHandler(async (event) => {
           }
         }
 
+        // Parse config if stored as JSON string
+        let config: Record<string, unknown> | null = null
+        if (page.config) {
+          try {
+            config = typeof page.config === 'string' ? JSON.parse(page.config) : page.config
+          } catch {
+            config = null
+          }
+        }
+
         return {
           id: page.id,
           title: resolvedTitle,
@@ -174,7 +188,8 @@ export default defineEventHandler(async (event) => {
           parentId: page.parentId,
           order: page.order,
           depth: page.depth,
-          path: page.path
+          path: page.path,
+          config
         }
       })
 

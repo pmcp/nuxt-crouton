@@ -39,7 +39,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useT()
- const { useTimeAgo } = await import('@vueuse/core')
+const { useTimeAgo } = await import('@vueuse/core')
+const { resolveComponent } = await import('vue')
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { locale, locales } = useI18n()
@@ -316,20 +317,47 @@ const isRegularPage = computed(() =>
   state.value.pageType === 'pages:regular' || state.value.pageType === 'regular'
 )
 
-// Collection page type detection
+// Collection page type detection (publishable item pages — e.g. bookings:bookingsLocations-detail)
 const isCollectionPage = computed(() => !!selectedPageType.value?.collection)
 const collectionPageName = computed(() => selectedPageType.value?.collection || '')
 
-// DEBUG: log page type resolution
-watchEffect(() => {
-  if (state.value.pageType && state.value.pageType !== 'pages:regular') {
-    console.log('[pages:debug] pageType:', state.value.pageType)
-    console.log('[pages:debug] selectedPageType:', selectedPageType.value)
-    console.log('[pages:debug] isCollectionPage:', isCollectionPage.value)
-    console.log('[pages:debug] allPageTypes:', pageTypes.value.map(t => ({ fullId: t.fullId, collection: t.collection })))
-    console.log('[pages:debug] collectionConfigs publishable:', Object.entries(collections.configs).filter(([, c]) => c?.publishable).map(([k]) => k))
+// Collection binder page type detection (pages:collection-binder)
+const isBinderPage = computed(() => selectedPageType.value?.fullId === 'pages:collection-binder')
+
+// Which collection the binder wraps (stored in config.collection)
+const binderCollection = computed({
+  get: () => (state.value.config as any)?.collection as string | null || null,
+  set: (val: string | null) => {
+    state.value.config = { ...state.value.config, collection: val }
   }
 })
+
+// Binder sort config
+const binderSortField = computed({
+  get: () => (state.value.config as any)?.sortField as string || '',
+  set: (val: string) => {
+    state.value.config = { ...state.value.config, sortField: val || null }
+  }
+})
+
+const binderSortOrder = computed({
+  get: () => (state.value.config as any)?.sortOrder as string || 'asc',
+  set: (val: string) => {
+    state.value.config = { ...state.value.config, sortOrder: val }
+  }
+})
+
+// Available collections for the binder picker
+const collectionOptions = computed(() =>
+  Object.keys(collections.configs).map(name => {
+    const cfg = collections.getConfig(name)
+    return {
+      value: name,
+      label: cfg?.displayName || cfg?.name || name
+    }
+  })
+)
+
 
 // Selected collection item ID (stored in page config)
 const collectionItemId = computed({
@@ -388,7 +416,14 @@ watch(selectedCollectionItem, (item: Record<string, any> | null) => {
   const titleField = config?.display?.title || 'title'
   const descriptionField = config?.display?.description
   const imageField = config?.display?.image
-  const itemTitle = item[titleField] || item.name || item.title
+  // For translatable collections the root title may be empty — fall back to translations
+  const currentLocaleCode = locale.value || 'en'
+  const itemTranslations = item.translations as Record<string, Record<string, string>> | undefined
+  const itemTitle = item[titleField]
+    || itemTranslations?.[currentLocaleCode]?.[titleField]
+    || itemTranslations?.en?.[titleField]
+    || item.name
+    || item.title
 
   if (itemTitle) {
     const translations = { ...state.value.translations } as Record<string, { title?: string; slug?: string; seoTitle?: string; seoDescription?: string }>
@@ -677,6 +712,25 @@ const showPreview = ref(false)
 
 // SEO preview tab in Extra section
 const seoPreviewTab = ref<'search' | 'social'>('search')
+
+// Detect if crouton-assets is installed (component auto-imported when package is present)
+const hasAssetsPicker = (() => {
+  try {
+    const comp = resolveComponent('CroutonAssetsPicker')
+    // resolveComponent returns the name string if the component is NOT found
+    return comp !== 'CroutonAssetsPicker'
+  } catch {
+    return false
+  }
+})()
+
+// Asset ID for the picker (not persisted — just tracks current picker selection)
+const selectedOgImageAssetId = ref<string | undefined>()
+
+function handleAssetSelect(asset: Record<string, any>) {
+  state.value.ogImage = `/images/${asset.pathname}`
+  selectedOgImageAssetId.value = asset.id
+}
 
 // Preview locale (for language selector in preview panel)
 const previewLocale = ref(locale.value)
@@ -1059,8 +1113,56 @@ defineExpose({ state })
         </UFieldGroup>
       </div>
 
+      <!-- Collection item picker — shown above the i18n input so it is always visible -->
+      <div v-if="isCollectionPage" class="px-4 pt-4 pb-2 shrink-0 border-b border-default">
+        <UFormField
+          :label="`Select ${selectedPageType?.name || 'Item'}`"
+          name="config.itemId"
+        >
+          <CroutonFormReferenceSelect
+            v-model="collectionItemId"
+            :collection="collectionPageName"
+            :label="selectedPageType?.name"
+            :label-key="collectionLabelKey"
+          />
+        </UFormField>
+      </div>
+
+      <!-- Collection binder config — pick which collection to bind + sort options -->
+      <div v-if="isBinderPage" class="px-4 pt-4 pb-3 shrink-0 border-b border-default space-y-3">
+        <UFormField label="Bind Collection" name="config.collection" help="All items from this collection will appear as sub-entries in navigation.">
+          <USelect
+            v-model="binderCollection"
+            :items="collectionOptions"
+            value-key="value"
+            placeholder="Select a collection..."
+            size="sm"
+            class="w-full"
+          />
+        </UFormField>
+        <div class="grid grid-cols-2 gap-2">
+          <UFormField label="Sort Field" name="config.sortField" help="e.g. title, order">
+            <UInput
+              v-model="binderSortField"
+              placeholder="order"
+              size="sm"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="Sort Order" name="config.sortOrder">
+            <USelect
+              v-model="binderSortOrder"
+              :items="[{ value: 'asc', label: 'Ascending' }, { value: 'desc', label: 'Descending' }]"
+              value-key="value"
+              size="sm"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
+      </div>
+
       <!-- Content -->
-      <div class="flex-1 min-h-0 p-4" :class="isCollectionPage ? 'overflow-auto' : 'overflow-hidden'">
+      <div class="flex-1 min-h-0 p-4 overflow-hidden">
         <CroutonI18nInput
           v-if="contentReady"
           :key="contentKey"
@@ -1080,7 +1182,17 @@ defineExpose({ state })
             <USeparator class="mt-3 mb-2" />
             <div class="flex flex-col gap-2">
               <UFormField :label="t('pages.fields.ogImage') || 'Social Image'" name="ogImage">
+                <Suspense v-if="hasAssetsPicker">
+                  <CroutonAssetsPicker
+                    v-model="selectedOgImageAssetId"
+                    @select="handleAssetSelect"
+                  />
+                  <template #fallback>
+                    <div class="h-20 rounded-lg border-2 border-dashed border-default animate-pulse" />
+                  </template>
+                </Suspense>
                 <CroutonImageUpload
+                  v-else
                   v-model="state.ogImage"
                   size="sm"
                   accept="image/*"
@@ -1098,6 +1210,10 @@ defineExpose({ state })
             </div>
             <!-- SEO preview for narrow/mobile (hidden on wide screens where secondary column shows it) -->
             <div class="lg:hidden mt-3 space-y-2">
+              <div class="flex items-center gap-1.5 text-xs text-muted/70 select-none">
+                <UIcon name="i-lucide-eye" class="size-3" />
+                <span>Preview</span>
+              </div>
               <div class="flex rounded border border-default overflow-hidden text-xs">
                 <button
                   type="button"
@@ -1111,15 +1227,22 @@ defineExpose({ state })
                 >Social</button>
               </div>
               <div v-if="seoPreviewTab === 'search'" class="rounded-lg border border-default bg-background p-3 space-y-1">
-                <div class="flex items-center gap-1.5 text-xs text-muted truncate">
-                  <UIcon name="i-lucide-globe" class="size-3 shrink-0" />
-                  <span class="truncate">{{ teamSlugRef }} › {{ previewLocale }}<template v-if="(state.translations as any)[previewLocale]?.slug"> › {{ (state.translations as any)[previewLocale]?.slug }}</template></span>
-                </div>
-                <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
-                  {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
-                </div>
-                <div class="text-xs text-muted leading-relaxed line-clamp-2">
-                  {{ (state.translations as any)[previewLocale]?.seoDescription || 'No description — add a meta description to improve SEO.' }}
+                <div class="flex gap-3">
+                  <div class="flex-1 space-y-1 min-w-0">
+                    <div class="flex items-center gap-1.5 text-xs text-muted truncate">
+                      <UIcon name="i-lucide-globe" class="size-3 shrink-0" />
+                      <span class="truncate">{{ teamSlugRef }} › {{ previewLocale }}<template v-if="(state.translations as any)[previewLocale]?.slug"> › {{ (state.translations as any)[previewLocale]?.slug }}</template></span>
+                    </div>
+                    <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
+                      {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
+                    </div>
+                    <div class="text-xs text-muted leading-relaxed line-clamp-2">
+                      {{ (state.translations as any)[previewLocale]?.seoDescription || 'No description — add a meta description to improve SEO.' }}
+                    </div>
+                  </div>
+                  <div v-if="state.ogImage" class="shrink-0 size-16 rounded overflow-hidden bg-muted">
+                    <img :src="state.ogImage" class="w-full h-full object-cover" alt="" />
+                  </div>
                 </div>
               </div>
               <div v-else class="rounded-lg border border-default overflow-hidden">
@@ -1144,6 +1267,10 @@ defineExpose({ state })
           </template>
           <template #group-extra-secondary="{ locale: previewLocale }">
             <div class="mt-3 space-y-2">
+              <div class="flex items-center gap-1.5 text-xs text-muted/70 select-none">
+                <UIcon name="i-lucide-eye" class="size-3" />
+                <span>Preview</span>
+              </div>
               <div class="flex rounded border border-default overflow-hidden text-xs">
                 <button
                   type="button"
@@ -1158,15 +1285,22 @@ defineExpose({ state })
               </div>
               <!-- Google Search Preview -->
               <div v-if="seoPreviewTab === 'search'" class="rounded-lg border border-default bg-background p-3 space-y-1">
-                <div class="flex items-center gap-1.5 text-xs text-muted truncate">
-                  <UIcon name="i-lucide-globe" class="size-3 shrink-0" />
-                  <span class="truncate">{{ teamSlugRef }} › {{ previewLocale }}<template v-if="(state.translations as any)[previewLocale]?.slug"> › {{ (state.translations as any)[previewLocale]?.slug }}</template></span>
-                </div>
-                <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
-                  {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
-                </div>
-                <div class="text-xs text-muted leading-relaxed line-clamp-2">
-                  {{ (state.translations as any)[previewLocale]?.seoDescription || 'No description — add a meta description to improve SEO.' }}
+                <div class="flex gap-3">
+                  <div class="flex-1 space-y-1 min-w-0">
+                    <div class="flex items-center gap-1.5 text-xs text-muted truncate">
+                      <UIcon name="i-lucide-globe" class="size-3 shrink-0" />
+                      <span class="truncate">{{ teamSlugRef }} › {{ previewLocale }}<template v-if="(state.translations as any)[previewLocale]?.slug"> › {{ (state.translations as any)[previewLocale]?.slug }}</template></span>
+                    </div>
+                    <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
+                      {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
+                    </div>
+                    <div class="text-xs text-muted leading-relaxed line-clamp-2">
+                      {{ (state.translations as any)[previewLocale]?.seoDescription || 'No description — add a meta description to improve SEO.' }}
+                    </div>
+                  </div>
+                  <div v-if="state.ogImage" class="shrink-0 size-16 rounded overflow-hidden bg-muted">
+                    <img :src="state.ogImage" class="w-full h-full object-cover" alt="" />
+                  </div>
                 </div>
               </div>
               <!-- OG / Social Preview -->
@@ -1210,22 +1344,6 @@ defineExpose({ state })
         <div v-else class="h-full flex items-center justify-center">
           <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
         </div>
-
-        <!-- Collection item picker for publishable collection pages -->
-        <template v-if="isCollectionPage">
-          <USeparator label="Collection Item" class="my-6" />
-          <UFormField
-            :label="`Select ${selectedPageType?.name || 'Item'}`"
-            name="config.itemId"
-          >
-            <CroutonFormReferenceSelect
-              v-model="collectionItemId"
-              :collection="collectionPageName"
-              :label="selectedPageType?.name"
-              :label-key="collectionLabelKey"
-            />
-          </UFormField>
-        </template>
 
         <!-- Config fields for app pages -->
         <template v-if="!isRegularPage && !isCollectionPage && selectedPageType?.configSchema?.length">
