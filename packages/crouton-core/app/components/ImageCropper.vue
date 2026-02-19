@@ -59,15 +59,15 @@ const handleConfirm = async () => {
   <div class="flex flex-col gap-4">
     <!-- Crop Area -->
     <div
-      class="relative overflow-hidden bg-neutral-100 dark:bg-neutral-900 rounded-lg"
-      :class="{ 'rounded-full aspect-square': circular }"
+      class="crop-container relative bg-neutral-100 dark:bg-neutral-900 rounded-lg overflow-hidden"
+      :class="circular ? 'rounded-full aspect-square' : ''"
     >
       <img
         v-if="objectUrl"
         ref="imageRef"
         :src="objectUrl"
         alt="Crop preview"
-        class="max-w-full block"
+        class="block"
       >
     </div>
 
@@ -148,3 +148,10 @@ const handleConfirm = async () => {
     </div>
   </div>
 </template>
+
+<style>
+.crop-container cropper-canvas {
+  width: 100% !important;
+  height: 400px !important;
+}
+</style>
