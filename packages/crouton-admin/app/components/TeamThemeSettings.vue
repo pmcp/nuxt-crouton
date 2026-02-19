@@ -8,7 +8,6 @@
  * When @fyit/crouton-themes is active, also shows the global theme switcher
  * (ko/minimal/kr11) so changes are reflected here in real-time.
  */
-import { resolveComponent } from 'vue'
 import {
   PRIMARY_COLORS,
   NEUTRAL_COLORS,
@@ -17,11 +16,6 @@ import {
   type ThemePreset,
   type TeamThemeSettings
 } from '../composables/useTeamTheme'
-
-// ThemeSwitcher is globally registered by crouton-themes when active.
-// resolveComponent returns the string name when not found — we check for that.
-const themeSwitcher = resolveComponent('ThemeSwitcher')
-const hasThemeSwitcher = typeof themeSwitcher !== 'string'
 
 const emit = defineEmits<{
   saved: [settings: TeamThemeSettings]
@@ -152,34 +146,18 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
       </p>
     </div>
 
-    <!-- Global Theme section (shown when @fyit/crouton-themes is active) -->
-    <div
-      v-if="hasThemeSwitcher"
-      class="space-y-3"
-    >
+    <!-- Allow users to switch themes -->
+    <div class="flex items-center justify-between">
       <div>
-        <label class="text-sm font-medium text-default">Global Theme</label>
+        <p class="text-sm font-medium text-default">Let users change their own theme</p>
         <p class="text-xs text-muted mt-0.5">
-          Switch between UI theme presets. Changes take effect immediately for you.
+          When off, only admins can switch themes.
         </p>
       </div>
-      <component
-        :is="themeSwitcher"
-        mode="inline"
-        size="sm"
+      <USwitch
+        v-model="localTheme.allowUserThemes"
+        :disabled="!isAdmin || isSaving"
       />
-      <div class="flex items-center justify-between pt-1">
-        <div>
-          <p class="text-sm font-medium text-default">Let users change their own theme</p>
-          <p class="text-xs text-muted">
-            When off, only admins can switch themes.
-          </p>
-        </div>
-        <USwitch
-          v-model="localTheme.allowUserThemes"
-          :disabled="!isAdmin || isSaving"
-        />
-      </div>
     </div>
 
     <USeparator />
