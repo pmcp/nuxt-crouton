@@ -29,6 +29,12 @@ interface CollectionConfig {
   name?: string
   layer?: string
   componentName?: string
+  /**
+   * Package-provided form component name. Takes priority over the generated `componentName`.
+   * Set by addon packages (e.g. crouton-assets) so the app's generated componentName
+   * doesn't override the package's custom form.
+   */
+  packageForm?: string
   /** Container type for create/update forms. Defaults to 'slideover'. */
   container?: 'slideover' | 'modal' | 'dialog'
   apiPath?: string

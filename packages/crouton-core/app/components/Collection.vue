@@ -579,7 +579,8 @@ function handleCreate() {
   if (props.stateless) {
     emit('create')
   } else {
-    crouton?.open('create', props.collection)
+    const container = getConfig(props.collection)?.container ?? 'slideover'
+    crouton?.open('create', props.collection, [], container)
   }
 }
 

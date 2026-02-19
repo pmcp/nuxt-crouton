@@ -3,7 +3,7 @@ export default defineAppConfig({
   // Apps that use the canonical 'assets' key in croutonCollections will pick this up.
   croutonCollections: {
     assets: {
-      componentName: 'CroutonAssetsForm',
+      packageForm: 'CroutonAssetsForm',
       container: 'modal'
     }
   },

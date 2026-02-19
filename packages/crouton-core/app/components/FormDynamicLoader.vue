@@ -36,7 +36,12 @@ const props = defineProps({
 })
 
 // Get component mapping from test composable
-const { componentMap } = useCollections()
+const { componentMap, getConfig } = useCollections()
+
+// packageForm takes priority: package layers set this so app-generated componentName can't override it
+const getEffectiveFormName = (collection: string) => {
+  return getConfig(collection)?.packageForm || componentMap[collection]
+}
 
 // Track whether the resolved component is the generic CroutonDetail
 const isGenericDetail = ref(false)
@@ -49,7 +54,7 @@ const currentComponent = computed(() => {
   // If action is 'view', try to resolve a Detail component by convention
   // Resolution chain: {Name}Detail → CroutonDetail (generic fallback) → Form
   if (props.action === 'view') {
-    const formComponentName = componentMap[props.collection]
+    const formComponentName = getEffectiveFormName(props.collection)
     if (formComponentName) {
       // Convention: Replace 'Form' with 'Detail' in component name
       // e.g., 'DiscubotJobsForm' -> 'DiscubotJobsDetail'
@@ -80,8 +85,9 @@ const currentComponent = computed(() => {
   }
 
   // Fall back to standard form component (for view, create, update, delete)
-  if (!componentMap[props.collection]) return null
-  return resolveComponent(componentMap[props.collection])
+  const formName = getEffectiveFormName(props.collection)
+  if (!formName) return null
+  return resolveComponent(formName)
 })
 
 // Determine mode based on route context
