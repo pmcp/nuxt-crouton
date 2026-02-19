@@ -4,7 +4,11 @@
  *
  * Form for customizing team visual appearance.
  * Supports named presets (e.g. Black & White) or fully custom color/radius.
+ *
+ * When @fyit/crouton-themes is active, also shows the global theme switcher
+ * (ko/minimal/kr11) so changes are reflected here in real-time.
  */
+import { resolveComponent } from 'vue'
 import {
   PRIMARY_COLORS,
   NEUTRAL_COLORS,
@@ -13,6 +17,11 @@ import {
   type ThemePreset,
   type TeamThemeSettings
 } from '../composables/useTeamTheme'
+
+// ThemeSwitcher is globally registered by crouton-themes when active.
+// resolveComponent returns the string name when not found — we check for that.
+const themeSwitcher = resolveComponent('ThemeSwitcher')
+const hasThemeSwitcher = typeof themeSwitcher !== 'string'
 
 const emit = defineEmits<{
   saved: [settings: TeamThemeSettings]
@@ -136,6 +145,22 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
       <p class="text-sm text-muted mt-1">
         Customize your team's visual appearance. Changes preview in real-time.
       </p>
+    </div>
+
+    <!-- Global Theme Switcher (shown when @fyit/crouton-themes is active) -->
+    <div
+      v-if="hasThemeSwitcher"
+      class="space-y-2"
+    >
+      <label class="text-sm font-medium text-default">Global Theme</label>
+      <p class="text-xs text-muted">
+        Switch between UI theme presets. Changes take effect immediately.
+      </p>
+      <component
+        :is="themeSwitcher"
+        mode="inline"
+        size="sm"
+      />
     </div>
 
     <USeparator />
