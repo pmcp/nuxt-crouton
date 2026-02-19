@@ -144,7 +144,8 @@ function resetForm() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8">
+    <!-- Header -->
     <div>
       <h3 class="text-lg font-semibold">
         {{ t('teams.teamSettings') }}
@@ -154,86 +155,101 @@ function resetForm() {
       </p>
     </div>
 
+    <!-- Team Identity Preview -->
+    <div class="flex items-center gap-4 p-4 rounded-lg bg-muted/40 border border-default">
+      <UAvatar
+        v-if="state.logo"
+        :src="state.logo"
+        :alt="state.name"
+        size="xl"
+      />
+      <div
+        v-else
+        class="flex items-center justify-center size-14 rounded-full bg-muted shrink-0"
+      >
+        <UIcon
+          name="i-lucide-building-2"
+          class="size-7 text-muted-foreground"
+        />
+      </div>
+      <div>
+        <p class="font-semibold">
+          {{ state.name || t('teams.teamName') }}
+        </p>
+        <p class="text-sm text-muted">
+          /{{ state.slug || 'your-slug' }}
+        </p>
+      </div>
+    </div>
+
     <UForm
       :validate="validate"
       :state="state"
-      class="space-y-6"
+      class="space-y-0 divide-y divide-default"
       @submit="onSubmit"
     >
-      <!-- Team Logo Preview -->
-      <div class="flex items-center gap-4">
-        <UAvatar
-          v-if="state.logo"
-          :src="state.logo"
-          :alt="state.name"
-          size="xl"
-        />
-        <div
-          v-else
-          class="flex items-center justify-center size-16 rounded-full bg-muted"
-        >
-          <UIcon
-            name="i-lucide-building-2"
-            class="size-8 text-muted-foreground"
+      <!-- Team Name -->
+      <div class="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 sm:gap-8">
+        <div>
+          <p class="font-medium text-sm">
+            {{ t('teams.teamName') }} <span class="text-error">*</span>
+          </p>
+          <p class="text-sm text-muted mt-0.5">
+            {{ t('teams.teamNamePlaceholder') }}
+          </p>
+        </div>
+        <UFormField name="name" class="flex items-start">
+          <UInput
+            v-model="state.name"
+            :placeholder="t('teams.teamNamePlaceholder')"
+            icon="i-lucide-building-2"
+            :disabled="isLoading || !isAdmin"
+            class="w-full"
           />
-        </div>
-        <div class="flex-1">
-          <p class="font-medium">
-            {{ state.name || t('teams.teamName') }}
-          </p>
-          <p class="text-sm text-muted">
-            /{{ state.slug || 'your-slug' }}
-          </p>
-        </div>
+        </UFormField>
       </div>
 
-      <USeparator />
-
-      <UFormField
-        :label="t('teams.teamName')"
-        name="name"
-        required
-      >
-        <UInput
-          v-model="state.name"
-          :placeholder="t('teams.teamNamePlaceholder')"
-          icon="i-lucide-building-2"
-          :disabled="isLoading || !isAdmin"
-        />
-      </UFormField>
-
-      <UFormField
-        :label="t('teams.urlSlug')"
-        name="slug"
-        required
-      >
-        <template #hint>
-          <span class="text-xs text-muted">
+      <!-- URL Slug -->
+      <div class="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 sm:gap-8">
+        <div>
+          <p class="font-medium text-sm">
+            {{ t('teams.urlSlug') }} <span class="text-error">*</span>
+          </p>
+          <p class="text-sm text-muted mt-0.5">
             {{ t('teams.urlSlugHint') }}
-          </span>
-        </template>
-        <UInput
-          v-model="state.slug"
-          placeholder="my-team"
-          icon="i-lucide-link"
-          :disabled="isLoading || !isAdmin"
-        />
-      </UFormField>
+          </p>
+        </div>
+        <UFormField name="slug" class="flex items-start">
+          <UInput
+            v-model="state.slug"
+            placeholder="my-team"
+            icon="i-lucide-link"
+            :disabled="isLoading || !isAdmin"
+            class="w-full"
+          />
+        </UFormField>
+      </div>
 
-      <UFormField
-        :label="t('teams.logoUrl')"
-        name="logo"
-      >
-        <template #hint>
-          <span class="text-xs text-muted">{{ t('teams.logoUrlHint') }}</span>
-        </template>
-        <UInput
-          v-model="state.logo"
-          placeholder="https://example.com/logo.png"
-          icon="i-lucide-image"
-          :disabled="isLoading || !isAdmin"
-        />
-      </UFormField>
+      <!-- Logo URL -->
+      <div class="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 sm:gap-8">
+        <div>
+          <p class="font-medium text-sm">
+            {{ t('teams.logoUrl') }}
+          </p>
+          <p class="text-sm text-muted mt-0.5">
+            {{ t('teams.logoUrlHint') }}
+          </p>
+        </div>
+        <UFormField name="logo" class="flex items-start">
+          <UInput
+            v-model="state.logo"
+            placeholder="https://example.com/logo.png"
+            icon="i-lucide-image"
+            :disabled="isLoading || !isAdmin"
+            class="w-full"
+          />
+        </UFormField>
+      </div>
 
       <!-- Error Alert -->
       <UAlert
@@ -241,9 +257,11 @@ function resetForm() {
         color="error"
         icon="i-lucide-alert-circle"
         :title="error"
+        class="mt-4"
       />
 
-      <div class="flex justify-between items-center">
+      <!-- Actions -->
+      <div class="flex justify-between items-center pt-6">
         <UButton
           v-if="isOwner"
           variant="ghost"
