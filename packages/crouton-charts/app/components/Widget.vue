@@ -6,8 +6,15 @@
  * and renders it using nuxt-charts (BarChart, LineChart, AreaChart, DonutChart).
  *
  * Auto-detects numeric fields when yFields is not provided.
+ *
+ * vue-chrts API summary:
+ *   BarChart   – yAxis: string[] (required), categories: Record<string, {name,color}>, xFormatter
+ *   AreaChart  – categories: Record<string, {name,color}>, xFormatter, stacked
+ *   LineChart  – same as AreaChart (minus hideArea)
+ *   DonutChart – data: number[], radius: number (required), categories: Record<string, {name,color}>
  */
 import { computed } from 'vue'
+import type { ChartCategory } from '../composables/useCollectionChart'
 
 interface Props {
   /** Collection key (e.g. 'blogPosts', 'products') */
@@ -54,15 +61,48 @@ const { chartData, categories, pending, error } = useCollectionChart(
   }))
 )
 
-const hasData = computed(() => chartData.value.length > 0)
+// Only show chart when there's data AND categories are configured (prevents "yAxis is required" crash)
+const hasData = computed(() => chartData.value.length > 0 && categories.value.length > 0)
 
-// xAxis key derived from the first data point's non-category keys
+// xAxisKey: the non-category field used as the X axis label source
 const xAxisKey = computed(() => {
   if (!hasData.value) return 'name'
-  const categoryNames = categories.value.map(c => c.name)
+  const categoryNames = categories.value.map((c: ChartCategory) => c.name)
   const keys = Object.keys(chartData.value[0] || {})
   return keys.find(k => !categoryNames.includes(k)) || 'name'
 })
+
+// vue-chrts expects categories as Record<string, {name, color}> (keys = field names)
+const categoriesObject = computed(() =>
+  Object.fromEntries(categories.value.map((c: ChartCategory) => [c.name, { name: c.name, color: c.color }]))
+)
+
+// yAxis field names array for BarChart
+const yAxisNames = computed(() => categories.value.map((c: ChartCategory) => c.name))
+
+// xFormatter for BarChart / AreaChart / LineChart: map array index → actual x-field value
+const xFormatter = computed(() => {
+  const xKey = xAxisKey.value
+  return (_: number, i: number) => String(chartData.value[i]?.[xKey] ?? '')
+})
+
+// DonutChart: data must be number[] (the Y values per row)
+const donutData = computed(() => {
+  const yField = categories.value[0]?.name
+  if (!yField) return []
+  return chartData.value.map((row: Record<string, unknown>) => Number(row[yField] ?? 0))
+})
+
+// DonutChart: categories keyed by X-field value (the segment labels), not Y-field name
+const DONUT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+const donutCategories = computed(() =>
+  Object.fromEntries(
+    chartData.value.map((row: Record<string, unknown>, i: number) => {
+      const label = String(row[xAxisKey.value] ?? `Item ${i}`)
+      return [label, { name: label, color: DONUT_COLORS[i % DONUT_COLORS.length] }]
+    })
+  )
+)
 </script>
 
 <template>
@@ -97,23 +137,22 @@ const xAxisKey = computed(() => {
       <p class="text-sm">No data available</p>
     </div>
 
-    <!-- Donut chart -->
+    <!-- Donut chart: data must be number[], categories keyed by x-field value -->
     <DonutChart
       v-else-if="type === 'donut'"
-      :data="chartData"
-      :category="categories[0]?.name || ''"
-      :index="xAxisKey"
-      :colors="categories.map(c => c.color)"
+      :data="donutData"
+      :categories="donutCategories"
+      :radius="height / 2"
       :height="height"
     />
 
-    <!-- Bar chart -->
+    <!-- Bar chart: yAxis (required) = field name array, categories = Record for styling -->
     <BarChart
       v-else-if="type === 'bar'"
       :data="chartData"
-      :categories="categories.map(c => c.name)"
-      :index="xAxisKey"
-      :colors="categories.map(c => c.color)"
+      :y-axis="yAxisNames"
+      :categories="categoriesObject"
+      :x-formatter="xFormatter"
       :height="height"
       :stacked="stacked"
     />
@@ -122,9 +161,8 @@ const xAxisKey = computed(() => {
     <LineChart
       v-else-if="type === 'line'"
       :data="chartData"
-      :categories="categories.map(c => c.name)"
-      :index="xAxisKey"
-      :colors="categories.map(c => c.color)"
+      :categories="categoriesObject"
+      :x-formatter="xFormatter"
       :height="height"
     />
 
@@ -132,9 +170,8 @@ const xAxisKey = computed(() => {
     <AreaChart
       v-else-if="type === 'area'"
       :data="chartData"
-      :categories="categories.map(c => c.name)"
-      :index="xAxisKey"
-      :colors="categories.map(c => c.color)"
+      :categories="categoriesObject"
+      :x-formatter="xFormatter"
       :height="height"
       :stacked="stacked"
     />
