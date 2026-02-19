@@ -395,11 +395,18 @@ const blockHandlers = computed(() => {
     handlers[item.command] = {
       execute: (editor: Editor) => {
         // Try to call the registered command on the editor
-        const command = (editor.commands as any)[item.command]
+        // Primary: use the specified command name (e.g., 'insertFaqBlock')
+        let command = (editor.commands as any)[item.command]
+
+        // Fallback: if command not found, try the standard insert prefix pattern
+        // e.g., 'faqBlock' → 'insertFaqBlock' (handles stale command name mappings)
+        if (!command && item.command.endsWith('Block')) {
+          const insertCmd = 'insert' + item.command.charAt(0).toUpperCase() + item.command.slice(1)
+          command = (editor.commands as any)[insertCmd]
+        }
+
         if (command) {
           command()
-        } else {
-          console.warn(`[CroutonEditorBlocks] Command not found: ${item.command}`)
         }
         // Return a chain for compatibility with UEditor handler system
         return editor.chain().focus()
