@@ -190,9 +190,11 @@ The `teamSettings` table stores team-level configuration:
 ```typescript
 // Theme settings type
 interface TeamThemeSettings {
+  preset?: 'custom' | 'blackandwhite' | 'ko'
   primary?: 'red' | 'orange' | ... | 'rose'  // Tailwind colors
   neutral?: 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone'
   radius?: 0 | 0.125 | 0.25 | 0.375 | 0.5  // rem
+  allowUserThemes?: boolean  // false = only admins can switch themes
 }
 ```
 

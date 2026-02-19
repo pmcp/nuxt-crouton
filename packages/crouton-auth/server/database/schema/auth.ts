@@ -524,6 +524,8 @@ export interface TeamThemeSettings {
   neutral?: ThemeNeutralColor
   /** Border radius in rem (0 = sharp corners, 0.5 = fully rounded) */
   radius?: ThemeRadius
+  /** Whether non-admin users can switch themes. Defaults to true when not set. */
+  allowUserThemes?: boolean
 }
 
 /**
