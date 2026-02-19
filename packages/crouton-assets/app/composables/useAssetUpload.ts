@@ -38,7 +38,8 @@ export const useAssetUpload = () => {
     metadata: AssetMetadata = {},
     collection?: string
   ): Promise<UploadAssetResult> => {
-    const resolvedCollection = collection || getConfig('assets')?.apiPath || 'assets'
+    const collectionKey = collection || 'assets'
+    const resolvedCollection = getConfig(collectionKey)?.apiPath || collectionKey
     uploading.value = true
     error.value = null
     progress.value = 0

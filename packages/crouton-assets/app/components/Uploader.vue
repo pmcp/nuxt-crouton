@@ -199,7 +199,7 @@ const handleUpload = async () => {
     const asset = await uploadAsset(
       selectedFile.value,
       { alt: metadata.value.alt },
-      props.collection || 'assets'
+      props.collection
     )
 
     // Reset state
