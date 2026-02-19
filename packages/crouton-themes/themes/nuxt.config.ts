@@ -22,5 +22,8 @@ export default defineNuxtConfig({
   // Auto-import composables
   imports: {
     dirs: [join(currentDir, 'composables')]
-  }
+  },
+
+  // Plugin that provides theme state via inject for cross-layer communication
+  plugins: [join(currentDir, 'plugins/themeProvider.client')]
 })

@@ -8,12 +8,18 @@
  * Mode-aware: shows team management features only in multi-tenant mode.
  * Auto-discovers app routes via useCroutonApps().
  *
+ * Theme integration: when @fyit/crouton-themes/themes is extended, automatically
+ * shows ThemeCompactPicker in the footer and adds a theme submenu to the user menu.
+ * No configuration required — detected via Vue's provide/inject system.
+ *
  * @example
  * ```vue
  * <AuthSidebar :navigation-items="navItems" />
  * ```
  */
-import type { NavigationMenuItem } from '@nuxt/ui'
+import { inject, resolveComponent } from 'vue'
+import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
+import type { ComputedRef } from 'vue'
 
 interface Props {
   /** Navigation menu items */
@@ -35,6 +41,15 @@ const props = withDefaults(defineProps<Props>(), {
   resizable: true,
   collapsedIcon: 'i-lucide-layout-dashboard'
 })
+
+// Theme integration (zero hard dependency on crouton-themes)
+// When crouton-themes/themes is active, its plugin provides these via Vue inject.
+const injectedThemeItems = inject<ComputedRef<DropdownMenuItem[]>>('crouton:themePreferenceItems')
+const themePreferenceItems = computed<DropdownMenuItem[]>(() => injectedThemeItems?.value ?? [])
+// ThemeCompactPicker is globally registered by crouton-themes when active.
+// resolveComponent returns the string name when not found — we check for that.
+const themeCompactPicker = resolveComponent('ThemeCompactPicker')
+const hasThemePicker = typeof themeCompactPicker !== 'string'
 
 const { t } = useT()
 const route = useRoute()
@@ -218,8 +233,20 @@ const navItems = computed(() => props.navigationItems ?? defaultNavItems.value)
     </template>
 
     <template #footer="{ collapsed }">
-      <!-- User Menu -->
-      <SidebarUserMenu :collapsed="collapsed" />
+      <!-- Theme swatch strip (shown when crouton-themes is active and sidebar is expanded) -->
+      <div
+        v-if="hasThemePicker && !collapsed"
+        class="px-3 pt-2 pb-1 flex items-center gap-2"
+      >
+        <span class="text-xs text-muted">Theme</span>
+        <component :is="themeCompactPicker" size="xs" />
+      </div>
+
+      <!-- User Menu (with theme submenu injected when crouton-themes is active) -->
+      <SidebarUserMenu
+        :collapsed="collapsed"
+        :preference-items="themePreferenceItems"
+      />
     </template>
   </UDashboardSidebar>
 </template>
