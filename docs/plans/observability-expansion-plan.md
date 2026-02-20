@@ -11,10 +11,10 @@ This plan extends the existing [devtools-events-unification plan](./devtools-eve
 | Group | Done | Total | Status |
 |-------|------|-------|--------|
 | A — Quick Wins | 3 | 3 | ✅ |
-| B — Structural | 0 | 3 | 🔲 |
+| B — Structural | 1 | 3 | 🔄 |
 | C — Package Integrations | 0 | 9 | 🔲 |
 | D — DevTools Enhancements | 0 | 3 | 🔲 |
-| **Total** | **3** | **18** | 🔄 |
+| **Total** | **4** | **18** | 🔄 |
 
 ---
 
@@ -78,10 +78,10 @@ _System-level changes that unlock visibility for many packages at once._
 ---
 
 ### B2 — Add `crouton:operation` hook for non-CRUD events
-- [ ] Define `crouton:operation` hook type in crouton-core (or crouton-events)
-- [ ] Payload: `{ type: string, source: string, teamId?: string, userId?: string, metadata?: Record<string, any> }`
-- [ ] crouton-events: subscribe to `crouton:operation` and persist to a separate `crouton_operations` table (or extend `crouton_events` with a `type` discriminator)
-- [ ] crouton-devtools: subscribe to `crouton:operation` and add entries to the in-memory store
+- [x] Define `crouton:operation` hook type in crouton-core (or crouton-events)
+- [x] Payload: `{ type: string, source: string, teamId?: string, userId?: string, metadata?: Record<string, any> }`
+- [x] crouton-events: subscribe to `crouton:operation` and persist to a separate `crouton_operations` table (or extend `crouton_events` with a `type` discriminator)
+- [x] crouton-devtools: subscribe to `crouton:operation` and add entries to the in-memory store
 
 **Why:** Auth lifecycle, email sends, AI completions, webhook ingestion, print jobs — none of these are CRUD mutations but are all meaningful operational events. The current `crouton:mutation` hook shape doesn't fit them.
 
@@ -261,3 +261,4 @@ _New UI capabilities. Depends on B1 and B2._
 | 2026-02-20 | A1 complete — added `crouton:mutation` hook to all 3 i18n translation endpoints. Used `verifyTeamTranslation` return value as `beforeData` for PATCH/DELETE (no extra DB query). |
 | 2026-02-20 | A2 complete — MCP tools stamp `event.context.mutationSource = 'mcp'` and call `trackMcpMutation()` (new server utility) after each successful collection API call. Direct post to crouton-events write endpoint with `metadata: { mutationSource: 'mcp' }` and cookie forwarding, since event-listener plugin is client-side only and MCP mutations are server-side. |
 | 2026-02-20 | A3 complete — Added `crouton-events/app/app.config.ts` registering `croutonApps.events`. Replaced fragile `_layers` string-match detection in `crouton-devtools/src/module.ts` with `'events' in ((nuxt.options.appConfig as any)?.croutonApps ?? {})` — build-time equivalent of `hasApp('events')`. Group A now 3/3 ✅. |
+| 2026-02-20 | B2 complete — `CroutonOperationEvent` type + `NitroRuntimeHooks` augmentation in `crouton-core/crouton-hooks.d.ts`. New `crouton_operations` table (schema + migration). crouton-events: `server/plugins/operation-listener.ts` subscribes to hook and persists; `crouton-operations/index.get.ts` query endpoint. crouton-devtools: `systemOperationStore.ts` + hook subscription in `operationTracker.ts`. |
