@@ -9,7 +9,7 @@
  * - Form data type: PagesPageFormData
  * - New item type: NewPagesPage
  * - Form props: PagesPageFormProps
- * - Fields: name, label, icon, description, hierarchy, fields
+ * - Fields: title, slug, pageType, content, config, status, visibility, publishedAt, showInNavigation, layout, seoTitle, seoDescription, ogImage, robots
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -27,12 +27,24 @@ export interface PagesPage {
   id: string
   teamId: string
   owner: string
-  name?: string
-  label?: string
-  icon?: string
-  description?: string
-  hierarchy?: string
-  fields?: string
+  parentId?: string | null
+  path?: string
+  depth?: number
+  title: string
+  slug: string
+  pageType: string
+  content?: string
+  config?: Record<string, any>
+  status: string
+  visibility: string
+  publishedAt?: Date | null
+  showInNavigation?: boolean
+  layout?: string
+  seoTitle?: string
+  seoDescription?: string
+  ogImage?: string
+  robots?: string
+  translations?: Record<string, any>
   createdAt: Date
   updatedAt: Date
   createdBy: string

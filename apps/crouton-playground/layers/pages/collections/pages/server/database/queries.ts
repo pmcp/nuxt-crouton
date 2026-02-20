@@ -41,6 +41,27 @@ export async function getAllPagesPages(teamId: string) {
     .where(eq(tables.pagesPages.teamId, teamId))
     .orderBy(desc(tables.pagesPages.createdAt))
 
+  // Post-query processing for JSON fields (repeater/json types)
+  pages.forEach((item: any) => {
+      // Parse config from JSON string
+      if (typeof item.config === 'string') {
+        try {
+          item.config = JSON.parse(item.config)
+        } catch (e) {
+          console.error('Error parsing config:', e)
+          item.config = null
+        }
+      }
+      if (item.config === null || item.config === undefined) {
+        item.config = null
+      }
+      if (typeof item.translations === 'string') {
+        try { item.translations = JSON.parse(item.translations) }
+        catch { item.translations = {} }
+      }
+      if (!item.translations) item.translations = {}
+  })
+
   return pages
 }
 
@@ -84,6 +105,27 @@ export async function getPagesPagesByIds(teamId: string, pageIds: string[]) {
       )
     )
     .orderBy(desc(tables.pagesPages.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  pages.forEach((item: any) => {
+      // Parse config from JSON string
+      if (typeof item.config === 'string') {
+        try {
+          item.config = JSON.parse(item.config)
+        } catch (e) {
+          console.error('Error parsing config:', e)
+          item.config = null
+        }
+      }
+      if (item.config === null || item.config === undefined) {
+        item.config = null
+      }
+      if (typeof item.translations === 'string') {
+        try { item.translations = JSON.parse(item.translations) }
+        catch { item.translations = {} }
+      }
+      if (!item.translations) item.translations = {}
+  })
 
   return pages
 }
