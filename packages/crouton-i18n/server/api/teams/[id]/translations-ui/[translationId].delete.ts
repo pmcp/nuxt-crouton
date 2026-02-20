@@ -24,8 +24,22 @@ export default defineEventHandler(async (event) => {
   //   })
   // }
 
-  // Verify the translation belongs to this team
-  await verifyTeamTranslation(translationId, team.id)
+  // Verify the translation belongs to this team and capture beforeData
+  const beforeData = await verifyTeamTranslation(translationId, team.id)
 
-  return await deleteTranslation(translationId)
+  const result = await deleteTranslation(translationId)
+
+  // Emit hook for event tracking (non-blocking)
+  try {
+    await useNuxtApp().hooks.callHook('crouton:mutation', {
+      operation: 'delete',
+      collection: 'translationsUi',
+      itemId: translationId,
+      beforeData: beforeData as Record<string, unknown>
+    })
+  } catch {
+    // Non-critical: hook may not be available in all server contexts
+  }
+
+  return result
 })

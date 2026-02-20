@@ -59,7 +59,22 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    return await createTranslation(newTranslation)
+    const result = await createTranslation(newTranslation)
+
+    // Emit hook for event tracking (non-blocking)
+    try {
+      await useNuxtApp().hooks.callHook('crouton:mutation', {
+        operation: 'create',
+        collection: 'translationsUi',
+        itemId: result.id,
+        data: newTranslation as Record<string, unknown>,
+        result
+      })
+    } catch {
+      // Non-critical: hook may not be available in all server contexts
+    }
+
+    return result
   } catch (error: any) {
     if (error.message?.includes('UNIQUE constraint failed')) {
       throw createError({

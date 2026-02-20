@@ -30,8 +30,8 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  // Verify the translation belongs to this team
-  await verifyTeamTranslation(translationId, team.id)
+  // Verify the translation belongs to this team and capture beforeData
+  const beforeData = await verifyTeamTranslation(translationId, team.id)
 
   // Update translation - for teams, only allow updating values and description
   const updateData = {
@@ -40,5 +40,21 @@ export default defineEventHandler(async (event) => {
     // Don't allow teams to update category, keyPath, or isOverrideable
   }
 
-  return await updateTranslation(translationId, updateData)
+  const result = await updateTranslation(translationId, updateData)
+
+  // Emit hook for event tracking (non-blocking)
+  try {
+    await useNuxtApp().hooks.callHook('crouton:mutation', {
+      operation: 'update',
+      collection: 'translationsUi',
+      itemId: translationId,
+      updates: updateData as Record<string, unknown>,
+      result,
+      beforeData: beforeData as Record<string, unknown>
+    })
+  } catch {
+    // Non-critical: hook may not be available in all server contexts
+  }
+
+  return result
 })
