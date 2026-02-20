@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, resolvePath } from '@nuxt/kit'
+import { defineNuxtModule } from '@nuxt/kit'
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { resolve, join, dirname } from 'node:path'
 import type { CroutonOptions, CroutonConfig } from './types'
@@ -13,7 +13,6 @@ export type { CroutonOptions, CroutonConfig }
 interface ManifestMeta {
   id: string
   bundled: boolean
-  category: 'core' | 'addon' | 'miniapp'
 }
 
 /**
@@ -26,12 +25,9 @@ function scanManifestMeta(filePath: string): ManifestMeta | null {
     const idMatch = content.match(/id:\s*['"]([^'"]+)['"]/)
     if (!idMatch) return null
 
-    const categoryMatch = content.match(/category:\s*['"](\w+)['"]/)
-
     return {
       id: idMatch[1],
       bundled: /bundled:\s*true/.test(content),
-      category: (categoryMatch?.[1] as ManifestMeta['category']) || 'addon',
     }
   } catch {
     return null
@@ -246,8 +242,6 @@ export default defineNuxtModule<CroutonOptions>({
   },
 
   async setup(options, nuxt) {
-    const resolver = createResolver(import.meta.url)
-
     // Load config from crouton.config.js and merge with nuxt.config options
     const fileConfig = loadCroutonConfig()
     const mergedOptions = {
