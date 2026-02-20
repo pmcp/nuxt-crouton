@@ -1,3 +1,5 @@
+import { useNitroApp } from 'nitropack/runtime'
+
 export default defineEventHandler(async (event) => {
   // Auth check - require authenticated user
   const session = await requireAuth(event)
@@ -41,6 +43,7 @@ export default defineEventHandler(async (event) => {
 
   // File extends Blob and has a name property; use it if available, otherwise generate one
   const fileName = (file as File).name || `upload-${Date.now()}.${file.type.split('/')[1] || 'bin'}`
+  const startTime = Date.now()
   const blobObject = await blob.put(fileName, file, {
     addRandomSuffix: true
   }).catch((err: unknown) => {
@@ -49,6 +52,21 @@ export default defineEventHandler(async (event) => {
       statusText: `Blob storage error: ${(err as Error).message ?? String(err)}`
     })
   })
+  const duration = Date.now() - startTime
+
+  const nitroApp = useNitroApp()
+  nitroApp.hooks.callHook('crouton:operation', {
+    type: 'asset:uploaded',
+    source: 'crouton-assets',
+    userId: session.id,
+    metadata: {
+      filename: fileName,
+      mimeType: file.type,
+      fileSize: file.size,
+      pathname: blobObject.pathname,
+      duration,
+    },
+  }).catch(() => {})
 
   return {
     pathname: blobObject.pathname,
