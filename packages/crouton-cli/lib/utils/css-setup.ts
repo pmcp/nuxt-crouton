@@ -1,6 +1,7 @@
 // css-setup.ts - Setup Tailwind CSS @source directive for Nuxt Crouton layers
 import fsp from 'node:fs/promises'
 import path from 'node:path'
+import { fileExists } from '@fyit/crouton-core/shared/utils/fs'
 
 interface CssFile {
   path: string
@@ -31,18 +32,6 @@ const CSS_FILE_LOCATIONS = [
   'app.css',
   'main.css',
 ]
-
-/**
- * Check if a file exists
- */
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await fsp.access(filePath)
-    return true
-  } catch {
-    return false
-  }
-}
 
 /**
  * Find the main CSS file in the project

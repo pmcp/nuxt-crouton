@@ -303,7 +303,6 @@ function detectReferenceFields(data: Record<string, any>, config: Record<string,
 }
 
 export function generateQueries(data: Record<string, any>, config: Record<string, any> | null = null, currentLayer: string = '', collectionLayerMap: Map<string, string> = new Map()): string {
-  console.log('[database-queries.mjs] Running LATEST VERSION with array reference post-processing support')
   const { singular, camelCase, camelCasePlural, plural, pascalCase, pascalCasePlural, layer, layerPascalCase } = data
   // Use layer-prefixed table name to match schema export
   // Convert layer to camelCase to ensure valid JavaScript identifier

@@ -10,15 +10,9 @@ import { toCase } from './utils/helpers.ts'
 import { removeFromNuxtConfigExtends } from './utils/update-nuxt-config.ts'
 import { removeSchemaExport } from './utils/update-schema-index.ts'
 import { removeFromAppConfig } from './utils/update-app-config.ts'
+import { fileExists } from '@fyit/crouton-core/shared/utils/fs'
 
-export async function fileExists(filepath: string): Promise<boolean> {
-  try {
-    await fsp.access(filepath)
-    return true
-  } catch {
-    return false
-  }
-}
+export { fileExists }
 
 export async function removeDirectory(dirPath: string, dryRun: boolean): Promise<boolean> {
   if (await fileExists(dirPath)) {

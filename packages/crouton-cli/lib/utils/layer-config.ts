@@ -3,15 +3,7 @@
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { toCase } from './helpers.ts'
-
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await fsp.access(filePath)
-    return true
-  } catch {
-    return false
-  }
-}
+import { fileExists } from '@fyit/crouton-core/shared/utils/fs'
 
 // Update or create layer root nuxt.config.ts
 export async function updateLayerRootConfig(layer: string, collectionName: string, hasTranslations: boolean = false): Promise<void> {

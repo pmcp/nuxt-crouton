@@ -6,17 +6,9 @@ import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 import { addSchemaExport } from './update-schema-index.ts'
 import { registerTranslationsUiCollection } from './update-app-config.ts'
+import { fileExists } from '@fyit/crouton-core/shared/utils/fs'
 
 const execAsync = promisify(exec)
-
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await fsp.access(filePath)
-    return true
-  } catch {
-    return false
-  }
-}
 
 // Export i18n schema when translations are enabled
 export async function exportI18nSchema(force: boolean = false): Promise<boolean> {
