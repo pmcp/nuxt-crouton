@@ -56,6 +56,15 @@ watch(() => state.value.mode, () => {
   sentEmail.value = ''
 })
 
+// Screen reader title mapped from current mode
+const modalTitle = computed(() => {
+  switch (state.value.mode) {
+    case 'register': return t('auth.createYourAccount')
+    case 'forgot-password': return t('auth.resetYourPassword')
+    default: return t('auth.welcomeBack')
+  }
+})
+
 // Close without URL restore then navigate to redirect target
 async function handleSuccess() {
   const redirectTo = state.value.redirectTo
@@ -254,7 +263,8 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
 <template>
   <UModal
     v-model:open="isOpen"
-    :ui="{ content: 'sm:max-w-md' }"
+    :title="modalTitle"
+    :ui="{ content: 'sm:max-w-md', title: 'sr-only' }"
   >
     <template #content>
       <div class="p-6">

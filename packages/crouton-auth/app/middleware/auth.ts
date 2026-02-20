@@ -17,9 +17,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const config = useAuthConfig()
   const redirects = config?.ui?.redirects
 
-  // Skip on server - let server-side auth middleware handle it
-  if (import.meta.server) return
-
   const { isAuthenticated, isPending } = useSession()
 
   // Wait for session to load if pending
