@@ -1,5 +1,6 @@
 import * as Y from 'yjs'
-import { ref, computed, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, type Ref, type ComputedRef } from 'vue'
+import { tryOnMounted, tryOnUnmounted } from '@vueuse/core'
 import type { CollabConnectionState, CollabRoomMessage, CollabAwarenessState } from '../types/collab'
 
 export interface UseCollabConnectionOptions {
@@ -7,6 +8,11 @@ export interface UseCollabConnectionOptions {
   roomId: string | null
   /** Room type (e.g., 'page', 'flow', 'document') */
   roomType: string
+  /**
+   * Team ID for server-side membership verification.
+   * When provided, the server will reject connections from non-members.
+   */
+  teamId?: string | null
   /** Auto-connect on mount (default: true) */
   autoConnect?: boolean
 }
@@ -56,7 +62,7 @@ export interface UseCollabConnectionReturn {
  * ```
  */
 export function useCollabConnection(options: UseCollabConnectionOptions): UseCollabConnectionReturn {
-  const { roomId, roomType, autoConnect = true } = options
+  const { roomId, roomType, teamId = null, autoConnect = true } = options
 
   // Skip on SSR (check for window/document availability)
   const isServer = typeof window === 'undefined'
@@ -87,14 +93,18 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
   let intentionalDisconnect = false
 
   /**
-   * Build WebSocket URL from roomId and roomType
+   * Build WebSocket URL from roomId, roomType, and optional teamId
    */
   function buildWebSocketUrl(): string {
     if (isServer || !roomId) return ''
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.host
-    return `${protocol}//${host}/api/collab/${roomId}/ws?type=${roomType}`
+    const params = new URLSearchParams({ type: roomType })
+    if (teamId) {
+      params.set('teamId', teamId)
+    }
+    return `${protocol}//${host}/api/collab/${roomId}/ws?${params.toString()}`
   }
 
   /**
@@ -309,13 +319,13 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
   }
 
   // Lifecycle
-  onMounted(() => {
+  tryOnMounted(() => {
     if (autoConnect && roomId) {
       connect()
     }
   })
 
-  onUnmounted(() => {
+  tryOnUnmounted(() => {
     disconnect()
     ydoc.destroy()
   })

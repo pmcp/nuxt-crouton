@@ -4,11 +4,37 @@
  * This handles WebSocket connections for local development.
  * In production with Cloudflare, this route proxies to Durable Objects.
  *
- * URL pattern: /api/collab/[roomId]/ws?type=[roomType]
- * Example: /api/collab/page-123/ws?type=page
+ * URL pattern: /api/collab/[roomId]/ws?type=[roomType]&teamId=[teamId]
+ * Example: /api/collab/page-123/ws?type=page&teamId=team-456
+ *
+ * Auth: Connections without a valid session are rejected with close code 4401.
+ * Team membership is verified via resolveTeamAndCheckMembership.
  */
 import { encodeStateAsUpdate, applyUpdate } from 'yjs'
 import { getOrCreateRoom } from '../../../../utils/collabRoomStore'
+import { getServerSession } from '@fyit/crouton-auth/server/utils/useServerAuth'
+import { getMembership } from '@fyit/crouton-auth/server/utils/team'
+import type { H3Event } from 'h3'
+
+/**
+ * Build a minimal H3Event-compatible object from a Web Request.
+ * Only `headers` and basic node shim are needed for auth session/membership checks.
+ */
+function createMinimalEvent(request: Request): H3Event {
+  return {
+    __is_event__: true,
+    headers: request.headers,
+    context: {},
+    node: {
+      req: {
+        headers: Object.fromEntries(request.headers.entries()),
+        method: request.method,
+        url: request.url
+      },
+      res: {}
+    }
+  } as unknown as H3Event
+}
 
 function broadcastToPeers(
   room: ReturnType<typeof getOrCreateRoom>,
@@ -83,14 +109,38 @@ function handleJsonMessage(
 }
 
 export default defineWebSocketHandler({
-  open(peer) {
-    // Extract roomId and type from URL
+  async open(peer) {
+    // Extract roomId, type, and teamId from URL
     const url = new URL(peer.request?.url || '', 'http://localhost')
     const pathParts = url.pathname.split('/')
     // URL pattern: /api/collab/[roomId]/ws
     const collabIndex = pathParts.indexOf('collab')
     const roomId = pathParts[collabIndex + 1] || 'default'
     const roomType = url.searchParams.get('type') || 'generic'
+    const teamId = url.searchParams.get('teamId') || null
+
+    // --- Auth check: require a valid session ---
+    if (!peer.request) {
+      peer.close(4401, 'Unauthorized')
+      return
+    }
+
+    const event = createMinimalEvent(peer.request)
+    const session = await getServerSession(event)
+
+    if (!session?.user) {
+      peer.close(4401, 'Unauthorized')
+      return
+    }
+
+    // --- Team membership check ---
+    if (teamId) {
+      const membership = await getMembership(event, teamId, session.user.id)
+      if (!membership) {
+        peer.close(4403, 'Forbidden')
+        return
+      }
+    }
 
     const room = getOrCreateRoom(roomType, roomId)
     const peerWithSend = peer as unknown as { send: (data: unknown) => void }

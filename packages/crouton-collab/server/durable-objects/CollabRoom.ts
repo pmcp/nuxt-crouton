@@ -127,12 +127,46 @@ export class CollabRoom implements DurableObject {
     }
   }
 
+  /**
+   * Validate that the request carries a valid Better Auth session cookie.
+   *
+   * In the Cloudflare DO environment Better Auth is not available, so we
+   * forward the session cookie to the app's own auth API for verification.
+   * This keeps the DO auth check thin — the heavy lifting stays in the worker.
+   *
+   * Returns the user ID string on success, or null if the session is absent/invalid.
+   */
+  private async validateSession(request: Request): Promise<string | null> {
+    const cookieHeader = request.headers.get('cookie')
+    if (!cookieHeader) return null
+
+    try {
+      // Derive the app origin from the DO's own URL (same host, standard scheme)
+      const requestUrl = new URL(request.url)
+      const appOrigin = `https://${requestUrl.hostname}`
+
+      const sessionResponse = await fetch(`${appOrigin}/api/auth/get-session`, {
+        headers: {
+          cookie: cookieHeader
+        }
+      })
+
+      if (!sessionResponse.ok) return null
+
+      const data = await sessionResponse.json() as { user?: { id: string } } | null
+      return data?.user?.id ?? null
+    } catch {
+      return null
+    }
+  }
+
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url)
 
     // Extract room metadata from query params (set on first connect)
     const roomType = url.searchParams.get('type') || 'generic'
     const roomId = url.searchParams.get('roomId')
+    const teamId = url.searchParams.get('teamId')
 
     if (roomType && roomId && !this.roomId) {
       this.roomType = roomType
@@ -141,11 +175,17 @@ export class CollabRoom implements DurableObject {
     }
 
     if (url.pathname === '/ws') {
+      // --- Auth check: require a valid session before upgrading to WebSocket ---
+      const userId = await this.validateSession(request)
+      if (!userId) {
+        return new Response('Unauthorized', { status: 4401 })
+      }
+
       // WebSocket upgrade
       const pair = new WebSocketPair()
       const [client, server] = Object.values(pair)
 
-      await this.handleSession(server)
+      await this.handleSession(server, userId, teamId)
 
       return new Response(null, {
         status: 101,
@@ -163,6 +203,12 @@ export class CollabRoom implements DurableObject {
 
     if (url.pathname === '/users') {
       // HTTP endpoint to get current users (for Phase 6 global presence)
+      // Require a valid session before returning presence data
+      const userId = await this.validateSession(request)
+      if (!userId) {
+        return new Response('Unauthorized', { status: 401 })
+      }
+
       const users = Array.from(this.sessions.values())
         .filter(s => s.awarenessState)
         .map(s => s.awarenessState)
@@ -175,10 +221,10 @@ export class CollabRoom implements DurableObject {
     return new Response('Not found', { status: 404 })
   }
 
-  private async handleSession(ws: WebSocket): Promise<void> {
+  private async handleSession(ws: WebSocket, userId: string, _teamId: string | null): Promise<void> {
     ws.accept()
 
-    const session: Session = { ws }
+    const session: Session = { ws, userId }
     this.sessions.set(ws, session)
 
     // Send current state to new client

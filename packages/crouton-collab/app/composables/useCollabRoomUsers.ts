@@ -19,6 +19,12 @@ export interface UseCollabRoomUsersOptions {
   roomType?: string
 
   /**
+   * Team ID for server-side membership verification.
+   * When provided, sent as ?teamId= query param for auth checks.
+   */
+  teamId?: string | Ref<string | undefined>
+
+  /**
    * Polling interval in milliseconds
    * Default: 5000 (5 seconds)
    */
@@ -113,6 +119,11 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
     ? ref(options.roomId)
     : options.roomId as Ref<string | undefined>
 
+  // Normalize teamId to ref
+  const teamIdRef = typeof options.teamId === 'string'
+    ? ref(options.teamId)
+    : (options.teamId as Ref<string | undefined>) ?? ref(undefined)
+
   // Normalize currentUserId to ref
   const currentUserIdRef = typeof options.currentUserId === 'string'
     ? ref(options.currentUserId)
@@ -148,11 +159,13 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
 
     try {
       const url = `/api/collab/${roomId}/users`
+      const query: Record<string, string> = { type: roomType }
+      if (teamIdRef.value) {
+        query.teamId = teamIdRef.value
+      }
       const response = await $fetch<{ users: CollabAwarenessState[]; count: number }>(
         url,
-        {
-          query: { type: roomType }
-        }
+        { query }
       )
 
       users.value = response.users || []
