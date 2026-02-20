@@ -26,7 +26,6 @@
   "categoryId": {
     "type": "string",
     "refTarget": "categories",
-    "refScope": "adapter",
     "meta": { "label": "Category", "area": "sidebar" }
   },
   "attachment": {
