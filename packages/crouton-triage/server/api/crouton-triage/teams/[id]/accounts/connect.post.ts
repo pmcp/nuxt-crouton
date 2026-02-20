@@ -19,6 +19,8 @@ const bodySchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   const teamId = getRouterParam(event, 'id')
 
   if (!teamId) {

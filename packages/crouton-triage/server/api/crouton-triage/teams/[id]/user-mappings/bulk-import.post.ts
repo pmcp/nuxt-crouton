@@ -10,6 +10,8 @@
 import { bulkImportMappings } from '../../../../../services/userMapping'
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   try {
     const body = await readBody(event)
     const { teamId, mappings } = body

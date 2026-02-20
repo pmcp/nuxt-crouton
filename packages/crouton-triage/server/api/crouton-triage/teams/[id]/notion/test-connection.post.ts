@@ -34,6 +34,8 @@ const requestSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   try {
     // 1. Validate request
     const body = await readBody(event)

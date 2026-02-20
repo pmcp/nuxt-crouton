@@ -47,6 +47,8 @@ interface MetricsResponse {
  * Metrics endpoint handler
  */
 export default defineEventHandler(async (event): Promise<MetricsResponse> => {
+  await requireAuth(event)
+
   logger.info('Metrics requested')
 
   // Get all stats

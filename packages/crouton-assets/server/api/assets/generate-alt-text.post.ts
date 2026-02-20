@@ -1,6 +1,8 @@
 import { generateText } from 'ai'
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   const { image, mimeType } = await readBody<{ image: string, mimeType: string }>(event)
 
   if (!image) {

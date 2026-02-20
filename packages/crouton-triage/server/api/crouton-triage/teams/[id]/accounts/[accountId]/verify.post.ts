@@ -8,6 +8,8 @@
  */
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   const teamId = getRouterParam(event, 'id')
   const accountId = getRouterParam(event, 'accountId')
 

@@ -16,6 +16,8 @@
  * @see https://api.slack.com/events-api
  */
 
+/// <reference path="../../../crouton-hooks.d.ts" />
+
 import { getAdapter } from '../../../adapters'
 import { processDiscussion } from '../../../services/processor'
 import type { ProcessingResult } from '../../../services/processor'
@@ -32,7 +34,8 @@ export default defineEventHandler(async (event) => {
     const body = JSON.parse(rawBody || '{}')
 
     // Verify Slack HMAC-SHA256 signature (skip for url_verification challenges sent without signing)
-    const signingSecret = useRuntimeConfig().croutonTriage?.slack?.signingSecret as string | undefined
+    const runtimeConfig = useRuntimeConfig() as any
+    const signingSecret = runtimeConfig?.croutonTriage?.slack?.signingSecret as string | undefined
     if (signingSecret) {
       const headers = getHeaders(event)
       if (!verifySlackSignature(rawBody, headers, signingSecret)) {
@@ -116,6 +119,22 @@ export default defineEventHandler(async (event) => {
     }
 
     // ============================================================================
+    // EMIT WEBHOOK:RECEIVED TELEMETRY
+    // ============================================================================
+    const correlationId = event.context.correlationId
+    const contentHashRaw = rawBody.length.toString(16) + '-' + (rawBody.charCodeAt(0) || 0).toString(16)
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'webhook:received',
+      source: 'crouton-triage',
+      correlationId,
+      metadata: {
+        source: 'slack',
+        threadId: parsed.sourceThreadId,
+        contentHash: contentHashRaw,
+      },
+    }).catch(() => {})
+
+    // ============================================================================
     // PROCESS DISCUSSION
     // ============================================================================
     logger.debug('[Slack Webhook] Starting discussion processing...')
@@ -133,7 +152,6 @@ export default defineEventHandler(async (event) => {
       // Production: Process in background using waitUntil
       logger.debug('[Slack Webhook] Using background processing (waitUntil)')
 
-      const correlationId = event.context.correlationId
       cfCtx.waitUntil(
         processDiscussion(parsed, { correlationId })
           .then((result) => {

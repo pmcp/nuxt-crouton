@@ -51,6 +51,8 @@ const LUCIDE_PERSONALITY_ICONS = [
 ]
 
 export default defineEventHandler(async (event): Promise<SuggestIconsResponse> => {
+  await requireAuth(event)
+
   const body = await readValidatedBody(event, requestSchema.parse)
   const teamId = getRouterParam(event, 'id')
 

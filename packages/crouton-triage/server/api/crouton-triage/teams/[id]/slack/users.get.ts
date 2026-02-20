@@ -39,6 +39,8 @@ interface SlackApiResponse {
 }
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   try {
     // Get parameters from query
     const query = getQuery(event)

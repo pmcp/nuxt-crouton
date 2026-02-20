@@ -12,6 +12,8 @@
 const NOTION_API_VERSION = '2022-06-28'
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   try {
     // Get parameters from query
     const query = getQuery(event)

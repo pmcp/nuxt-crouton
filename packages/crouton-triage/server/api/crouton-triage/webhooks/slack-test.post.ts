@@ -4,6 +4,8 @@
  */
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   logger.debug('========== SLACK TEST ENDPOINT HIT ==========')
   logger.debug('Method:', event.method)
   logger.debug('Path:', event.path)

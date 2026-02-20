@@ -10,6 +10,8 @@
  */
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   try {
     // Get database ID from route params
     const databaseId = getRouterParam(event, 'databaseId')
