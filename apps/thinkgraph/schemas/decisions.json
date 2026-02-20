@@ -1,0 +1,11 @@
+{
+  "content": { "type": "text", "meta": { "required": true, "area": "main", "label": "Insight" } },
+  "type": { "type": "string", "meta": { "default": "insight", "area": "sidebar" } },
+  "pathType": { "type": "string", "meta": { "area": "sidebar" } },
+  "starred": { "type": "boolean", "meta": { "default": false, "area": "sidebar" } },
+  "branchName": { "type": "string", "meta": { "default": "main", "area": "sidebar" } },
+  "versionTag": { "type": "string", "meta": { "default": "v1", "area": "sidebar" } },
+  "source": { "type": "string", "meta": { "area": "meta" } },
+  "model": { "type": "string", "meta": { "area": "meta" } },
+  "parentId": { "type": "string", "meta": { "area": "meta" } }
+}

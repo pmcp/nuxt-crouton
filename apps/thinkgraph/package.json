@@ -1,0 +1,35 @@
+{
+  "name": "thinkgraph",
+  "type": "module",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "npx wrangler d1 migrations apply thinkgraph-db --local",
+    "db:migrate:prod": "npx wrangler d1 migrations apply thinkgraph-db --remote",
+    "cf:deploy": "nuxt build && npx wrangler pages deploy dist",
+    "cf:preview": "nuxt build && npx wrangler pages deploy dist --branch preview"
+  },
+  "dependencies": {
+    "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-i18n": "workspace:*",
+    "@fyit/crouton-flow": "workspace:*",
+    "@libsql/client": "^0.17.0",
+    "drizzle-orm": "^0.45.1",
+    "nanoid": "^5.1.5",
+    "nuxt": "^4.2.2",
+    "vue": "^3.5.26",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@fyit/crouton-cli": "workspace:*",
+    "drizzle-kit": "^0.31.0",
+    "wrangler": "^4.64.0"
+  }
+}

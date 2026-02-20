@@ -1,0 +1,30 @@
+# Cloudflare Pages configuration for thinkgraph
+# Deploy with: npx wrangler pages deploy dist/
+
+name = "thinkgraph"
+compatibility_date = "2024-09-02"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# D1 Database binding
+# Create with: npx wrangler d1 create thinkgraph-db
+[[d1_databases]]
+binding = "DB"
+database_name = "thinkgraph-db"
+database_id = "TODO_REPLACE_WITH_REAL_ID"
+migrations_dir = "server/db/migrations/sqlite"
+
+# KV Namespace binding
+# Create with: npx wrangler kv namespace create thinkgraph-kv
+[[kv_namespaces]]
+binding = "KV"
+id = "TODO_REPLACE_WITH_REAL_ID"
+
+# Durable Objects for real-time collaboration
+[[durable_objects.bindings]]
+name = "COLLAB_ROOMS"
+class_name = "CollabRoom"
+
+[[migrations]]
+tag = "collab-v1"
+new_classes = ["CollabRoom"]
