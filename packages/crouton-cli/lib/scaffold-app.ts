@@ -263,18 +263,6 @@ id = "TODO_REPLACE_WITH_REAL_ID"
 `
 }
 
-function tmplAppVue(): string {
-  return `<template>
-  <UApp>
-    <NuxtRouteAnnouncer />
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-  </UApp>
-</template>
-`
-}
-
 function tmplEnvExample(): string {
   return `# Authentication (required)
 BETTER_AUTH_SECRET=your-secret-at-least-32-characters-long
@@ -522,7 +510,6 @@ export async function scaffoldApp(
     { path: 'package.json', content: tmplPackageJson(vars) },
     { path: 'nuxt.config.ts', content: tmplNuxtConfig(vars) },
     { path: 'crouton.config.js', content: tmplCroutonConfig(vars) },
-    { path: 'app.vue', content: tmplAppVue() },
     { path: '.env', content: tmplEnv(authSecret) },
     { path: '.env.example', content: tmplEnvExample() },
     { path: '.gitignore', content: tmplGitignore() },
