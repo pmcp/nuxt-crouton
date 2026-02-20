@@ -38,6 +38,9 @@ const formError = ref<string | null>(null)
 // Local submitting state
 const submitting = ref(false)
 
+// Auth succeeded — show success UI during navigation gap
+const succeeded = ref(false)
+
 // Minimum password length
 const minPasswordLength = 8
 
@@ -141,12 +144,8 @@ async function onSubmit(event: FormSubmitEvent<{ name: string, email: string, pa
       email: event.data.email,
       password: event.data.password
     })
-    toast.add({
-      title: 'Account created',
-      description: 'Welcome! Your account has been created.',
-      color: 'success'
-    })
-    // Keep submitting=true during navigation (page will unmount)
+    // Show success UI during navigation gap
+    succeeded.value = true
     await navigateTo(redirectTo.value, { external: true })
   } catch (e: unknown) {
     submitting.value = false
@@ -179,117 +178,156 @@ async function handleOAuth(provider: string) {
 
 <template>
   <UPageCard>
-    <UAuthForm
-      v-if="hasPassword"
-      :fields="registerFields"
-      :providers="providers"
-      :submit="submitButton"
-      :validate="validate"
-      :disabled="submitting"
-      :title="t('auth.createYourAccount')"
-      icon="i-lucide-user-plus"
-      :separator="providers.length > 0 ? 'or' : undefined"
-      @submit="onSubmit"
+    <Transition
+      mode="out-in"
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-2"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-to-class="opacity-0 -translate-y-1"
     >
-      <template #description>
-        {{ t('auth.alreadyHaveAccount') }}
-        <ULink
-          to="/auth/login"
-          class="text-primary font-medium"
-        >
-          {{ t('auth.signIn') }}
-        </ULink>
-      </template>
-
-      <template
-        v-if="formError"
-        #validation
+      <!-- Success state — shown during navigation gap after register -->
+      <div
+        v-if="succeeded"
+        key="success"
+        class="flex flex-col items-center gap-4 py-8 text-center"
       >
-        <UAlert
-          color="error"
-          icon="i-lucide-alert-circle"
-          :title="formError"
-        />
-      </template>
-
-      <template #footer>
-        {{ t('auth.termsAgreement') }}
-        <ULink
-          to="/terms"
-          class="text-primary font-medium"
-        >
-          {{ t('auth.termsOfService') }}
-        </ULink>
-        {{ t('auth.and') }}
-        <ULink
-          to="/privacy"
-          class="text-primary font-medium"
-        >
-          {{ t('auth.privacyPolicy') }}
-        </ULink>
-      </template>
-    </UAuthForm>
-
-    <!-- OAuth only (no password auth) -->
-    <div
-      v-else-if="providers.length > 0"
-      class="space-y-6"
-    >
-      <div class="text-center">
-        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-          <UIcon
-            name="i-lucide-user-plus"
-            class="h-6 w-6 text-primary"
-          />
+        <div class="relative flex h-16 w-16 items-center justify-center">
+          <div class="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+          <div class="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <UIcon
+              name="i-lucide-user-check"
+              class="h-8 w-8 text-primary"
+            />
+          </div>
         </div>
-        <h2 class="mt-4 text-xl font-semibold text-highlighted">
-          {{ t('auth.createYourAccount') }}
-        </h2>
-        <p class="mt-2 text-muted">
-          {{ t('auth.alreadyHaveAccount') }}
-          <ULink
-            to="/auth/login"
-            class="text-primary font-medium"
+        <div>
+          <p class="font-semibold text-highlighted">
+            Account created!
+          </p>
+          <p class="mt-1 text-sm text-muted">
+            Setting up your workspace…
+          </p>
+        </div>
+      </div>
+
+      <!-- Form states -->
+      <div
+        v-else
+        key="form"
+      >
+        <UAuthForm
+          v-if="hasPassword"
+          :fields="registerFields"
+          :providers="providers"
+          :submit="submitButton"
+          :validate="validate"
+          :disabled="submitting"
+          :title="t('auth.createYourAccount')"
+          icon="i-lucide-user-plus"
+          :separator="providers.length > 0 ? 'or' : undefined"
+          @submit="onSubmit"
+        >
+          <template #description>
+            {{ t('auth.alreadyHaveAccount') }}
+            <ULink
+              to="/auth/login"
+              class="text-primary font-medium"
+            >
+              {{ t('auth.signIn') }}
+            </ULink>
+          </template>
+
+          <template
+            v-if="formError"
+            #validation
           >
-            {{ t('auth.signIn') }}
-          </ULink>
-        </p>
-      </div>
+            <UAlert
+              color="error"
+              icon="i-lucide-alert-circle"
+              :title="formError"
+            />
+          </template>
 
-      <div class="space-y-3">
-        <UButton
-          v-for="(provider, index) in providers"
-          :key="index"
-          v-bind="provider"
-          color="neutral"
-          variant="subtle"
-          block
-        />
-      </div>
+          <template #footer>
+            {{ t('auth.termsAgreement') }}
+            <ULink
+              to="/terms"
+              class="text-primary font-medium"
+            >
+              {{ t('auth.termsOfService') }}
+            </ULink>
+            {{ t('auth.and') }}
+            <ULink
+              to="/privacy"
+              class="text-primary font-medium"
+            >
+              {{ t('auth.privacyPolicy') }}
+            </ULink>
+          </template>
+        </UAuthForm>
 
-      <UAlert
-        v-if="formError"
-        color="error"
-        icon="i-lucide-alert-circle"
-        :title="formError"
-      />
-
-      <p class="text-sm text-center text-muted">
-        {{ t('auth.termsAgreement') }}
-        <ULink
-          to="/terms"
-          class="text-primary font-medium"
+        <!-- OAuth only (no password auth) -->
+        <div
+          v-else-if="providers.length > 0"
+          class="space-y-6"
         >
-          {{ t('auth.termsOfService') }}
-        </ULink>
-        {{ t('auth.and') }}
-        <ULink
-          to="/privacy"
-          class="text-primary font-medium"
-        >
-          {{ t('auth.privacyPolicy') }}
-        </ULink>
-      </p>
-    </div>
+          <div class="text-center">
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <UIcon
+                name="i-lucide-user-plus"
+                class="h-6 w-6 text-primary"
+              />
+            </div>
+            <h2 class="mt-4 text-xl font-semibold text-highlighted">
+              {{ t('auth.createYourAccount') }}
+            </h2>
+            <p class="mt-2 text-muted">
+              {{ t('auth.alreadyHaveAccount') }}
+              <ULink
+                to="/auth/login"
+                class="text-primary font-medium"
+              >
+                {{ t('auth.signIn') }}
+              </ULink>
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <UButton
+              v-for="(provider, index) in providers"
+              :key="index"
+              v-bind="provider"
+              color="neutral"
+              variant="subtle"
+              block
+            />
+          </div>
+
+          <UAlert
+            v-if="formError"
+            color="error"
+            icon="i-lucide-alert-circle"
+            :title="formError"
+          />
+
+          <p class="text-sm text-center text-muted">
+            {{ t('auth.termsAgreement') }}
+            <ULink
+              to="/terms"
+              class="text-primary font-medium"
+            >
+              {{ t('auth.termsOfService') }}
+            </ULink>
+            {{ t('auth.and') }}
+            <ULink
+              to="/privacy"
+              class="text-primary font-medium"
+            >
+              {{ t('auth.privacyPolicy') }}
+            </ULink>
+          </p>
+        </div>
+      </div>
+    </Transition>
   </UPageCard>
 </template>

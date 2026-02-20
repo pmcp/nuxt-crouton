@@ -27,11 +27,51 @@ function onTeamCreated(team: Team) {
 
 <template>
   <div class="min-h-screen flex items-center justify-center p-6 bg-default">
+    <!-- Full-screen overlay during navigation -->
+    <Transition
+      enter-active-class="transition-opacity duration-300 ease-out"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-opacity duration-200 ease-in"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="navigating"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-default"
+      >
+        <div class="flex flex-col items-center gap-5 text-center">
+          <div class="relative flex h-20 w-20 items-center justify-center">
+            <div class="absolute inset-0 animate-ping rounded-2xl bg-primary/15" />
+            <div class="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
+              <UIcon
+                name="i-lucide-building-2"
+                class="h-10 w-10 text-primary"
+              />
+            </div>
+          </div>
+          <div>
+            <p class="text-lg font-semibold text-highlighted">
+              {{ t('onboarding.settingUpWorkspace', 'Setting up your workspace') }}
+            </p>
+            <p class="mt-1 text-sm text-muted">
+              {{ t('onboarding.justAMoment', 'Just a moment…') }}
+            </p>
+          </div>
+          <UIcon
+            name="i-lucide-loader-2"
+            class="h-5 w-5 animate-spin text-muted"
+          />
+        </div>
+      </div>
+    </Transition>
+
     <UCard class="w-full max-w-md">
       <template #header>
         <div class="flex items-center gap-3">
           <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-            <UIcon name="i-lucide-building-2" class="w-5 h-5 text-primary" />
+            <UIcon
+              name="i-lucide-building-2"
+              class="w-5 h-5 text-primary"
+            />
           </div>
           <div>
             <h1 class="text-lg font-semibold">
@@ -44,7 +84,10 @@ function onTeamCreated(team: Team) {
         </div>
       </template>
 
-      <TeamCreateForm :loading="navigating" @success="onTeamCreated" />
+      <TeamCreateForm
+        :loading="navigating"
+        @success="onTeamCreated"
+      />
     </UCard>
   </div>
 </template>

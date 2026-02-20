@@ -142,9 +142,23 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
   <UForm
     :validate="validate"
     :state="state"
-    class="space-y-6"
+    class="relative space-y-6 pt-1"
     @submit="onSubmit"
   >
+    <!-- Shimmer loading bar -->
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-opacity duration-300"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="isLoading"
+        class="absolute -top-px left-0 right-0 h-[2px] overflow-hidden rounded-t-[inherit]"
+      >
+        <div class="shimmer-bar h-full bg-primary" />
+      </div>
+    </Transition>
     <UFormField
       :label="t('teams.teamName')"
       name="name"
@@ -202,3 +216,15 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     </div>
   </UForm>
 </template>
+
+<style scoped>
+.shimmer-bar {
+  width: 45%;
+  animation: shimmer-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer-slide {
+  0% { transform: translateX(-220%); }
+  100% { transform: translateX(320%); }
+}
+</style>

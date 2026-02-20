@@ -258,8 +258,18 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
   >
     <template #content>
       <div class="p-6">
+        <Transition
+          mode="out-in"
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="opacity-0 translate-x-2"
+          leave-active-class="transition-all duration-150 ease-in"
+          leave-to-class="opacity-0 -translate-x-2"
+        >
         <!-- ── Login ──────────────────────────────────────────────────── -->
-        <template v-if="state.mode === 'login'">
+        <div
+          v-if="state.mode === 'login'"
+          key="login"
+        >
           <!-- Magic link sent -->
           <div
             v-if="magicLinkSent"
@@ -400,10 +410,13 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
               />
             </div>
           </template>
-        </template>
+        </div>
 
         <!-- ── Register ──────────────────────────────────────────────── -->
-        <template v-else-if="state.mode === 'register'">
+        <div
+          v-else-if="state.mode === 'register'"
+          key="register"
+        >
           <UAuthForm
             v-if="hasPassword"
             :fields="registerFields"
@@ -499,10 +512,13 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
               :title="formError"
             />
           </div>
-        </template>
+        </div>
 
         <!-- ── Forgot password ────────────────────────────────────────── -->
-        <template v-else-if="state.mode === 'forgot-password'">
+        <div
+          v-else-if="state.mode === 'forgot-password'"
+          key="forgot"
+        >
           <!-- Email sent confirmation -->
           <div
             v-if="emailSent"
@@ -566,7 +582,8 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
               </button>
             </template>
           </UAuthForm>
-        </template>
+        </div>
+        </Transition>
       </div>
     </template>
   </UModal>
