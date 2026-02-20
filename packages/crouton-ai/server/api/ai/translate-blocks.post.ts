@@ -15,6 +15,7 @@
 import { z } from 'zod'
 import { generateText } from 'ai'
 import { defineEventHandler, readBody, createError } from 'h3'
+import { useNitroApp } from 'nitropack/runtime'
 import { createAIProvider } from '../../utils/ai'
 import { getLanguageName } from '../../../app/types/translation'
 
@@ -220,12 +221,16 @@ ${targetLang} translations:`
     const ai = createAIProvider(event)
     const model = body.model || ai.getDefaultModel()
 
+    const startTime = Date.now()
+
     const result = await generateText({
       model: ai.model(model),
       prompt,
       maxTokens: 4000,
       temperature: 0.3
     })
+
+    const duration = Date.now() - startTime
 
     // Parse the translations from the response
     const translations = new Map<string, string>()
@@ -245,6 +250,18 @@ ${targetLang} translations:`
 
     // Apply translations to content
     const translatedContent = applyTranslations(body.content, translations)
+
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'ai:translate',
+      source: 'crouton-ai',
+      metadata: {
+        sourceLanguage: body.sourceLanguage,
+        targetLanguage: body.targetLanguage,
+        blockCount: extractions.length,
+        model,
+        duration,
+      },
+    }).catch(() => {})
 
     return {
       content: translatedContent,

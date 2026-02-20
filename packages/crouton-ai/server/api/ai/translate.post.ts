@@ -17,6 +17,7 @@
 import { z } from 'zod'
 import { generateText } from 'ai'
 import { defineEventHandler, readBody, createError } from 'h3'
+import { useNitroApp } from 'nitropack/runtime'
 import { createAIProvider } from '../../utils/ai'
 import { getLanguageName } from '../../../app/types/translation'
 
@@ -100,6 +101,8 @@ export default defineEventHandler(async (event) => {
     const ai = createAIProvider(event)
     const model = body.model || ai.getDefaultModel()
 
+    const startTime = Date.now()
+
     // Generate translation (non-streaming)
     const result = await generateText({
       model: ai.model(model),
@@ -108,7 +111,20 @@ export default defineEventHandler(async (event) => {
       temperature: 0.3 // Lower temperature for more consistent translations
     })
 
+    const duration = Date.now() - startTime
     const text = result.text.trim()
+
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'ai:translate',
+      source: 'crouton-ai',
+      metadata: {
+        sourceLanguage: body.sourceLanguage,
+        targetLanguage: body.targetLanguage,
+        textLength: body.sourceText.length,
+        model,
+        duration,
+      },
+    }).catch(() => {})
 
     return {
       text,
