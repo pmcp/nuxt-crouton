@@ -10,11 +10,11 @@ This plan extends the existing [devtools-events-unification plan](./devtools-eve
 
 | Group | Done | Total | Status |
 |-------|------|-------|--------|
-| A — Quick Wins | 2 | 3 | 🔄 |
+| A — Quick Wins | 3 | 3 | ✅ |
 | B — Structural | 0 | 3 | 🔲 |
 | C — Package Integrations | 0 | 9 | 🔲 |
 | D — DevTools Enhancements | 0 | 3 | 🔲 |
-| **Total** | **2** | **18** | 🔄 |
+| **Total** | **3** | **18** | 🔄 |
 
 ---
 
@@ -55,8 +55,8 @@ await useNuxtApp().hooks.callHook('crouton:mutation', {
 ---
 
 ### A3 — crouton-devtools: fix events package detection
-- [ ] Replace string-match (`layer.cwd.includes('nuxt-crouton-events')`) with `useCroutonApps().hasApp('events')` pattern (or check against `croutonApps` registry in app config)
-- [ ] Verify `crouton-events` registers itself in `croutonApps` (check `app/app.config.ts`)
+- [x] Replace string-match (`layer.cwd.includes('nuxt-crouton-events')`) with `useCroutonApps().hasApp('events')` pattern (or check against `croutonApps` registry in app config)
+- [x] Verify `crouton-events` registers itself in `croutonApps` (check `app/app.config.ts`)
 
 **Why:** Current detection is fragile — breaks if install path changes or package is symlinked. The `hasApp()` pattern already exists in the codebase.
 
@@ -260,3 +260,4 @@ _New UI capabilities. Depends on B1 and B2._
 | 2026-02-20 | Audit completed across all 24 packages. Plan created. |
 | 2026-02-20 | A1 complete — added `crouton:mutation` hook to all 3 i18n translation endpoints. Used `verifyTeamTranslation` return value as `beforeData` for PATCH/DELETE (no extra DB query). |
 | 2026-02-20 | A2 complete — MCP tools stamp `event.context.mutationSource = 'mcp'` and call `trackMcpMutation()` (new server utility) after each successful collection API call. Direct post to crouton-events write endpoint with `metadata: { mutationSource: 'mcp' }` and cookie forwarding, since event-listener plugin is client-side only and MCP mutations are server-side. |
+| 2026-02-20 | A3 complete — Added `crouton-events/app/app.config.ts` registering `croutonApps.events`. Replaced fragile `_layers` string-match detection in `crouton-devtools/src/module.ts` with `'events' in ((nuxt.options.appConfig as any)?.croutonApps ?? {})` — build-time equivalent of `hasApp('events')`. Group A now 3/3 ✅. |
