@@ -54,6 +54,7 @@ export default defineEventHandler(async (event) => {
     .from(croutonEvents)
     .where(and(...conditions))
     .orderBy(croutonEvents.timestamp)
+    .limit(500)
 
   // Return based on format
   if (format === 'csv') {
