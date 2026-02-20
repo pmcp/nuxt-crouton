@@ -19,6 +19,7 @@ import type {
   TwoColumnBlockAttrs,
   ChartBlockAttrs,
   MapBlockAttrs,
+  EmbedBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -636,6 +637,47 @@ export const mapBlockDefinition: BlockDefinition<MapBlockAttrs> = {
   ]
 }
 
+export const embedBlockDefinition: BlockDefinition<EmbedBlockAttrs> = {
+  type: 'embedBlock',
+  name: 'Embed',
+  description: 'Embed YouTube videos, Figma files, or any URL',
+  icon: 'i-lucide-youtube',
+  category: 'content',
+  defaultAttrs: {
+    url: '',
+    provider: 'custom',
+    height: 400,
+    caption: ''
+  },
+  schema: [
+    {
+      name: 'url',
+      type: 'text',
+      label: 'URL',
+      required: true,
+      description: 'YouTube, Figma, or any embeddable URL'
+    },
+    {
+      name: 'height',
+      type: 'select',
+      label: 'Height',
+      options: [
+        { label: 'Small (300px)', value: '300' },
+        { label: 'Medium (400px)', value: '400' },
+        { label: 'Large (550px)', value: '550' },
+        { label: 'Full HD (720px)', value: '720' }
+      ],
+      defaultValue: '400'
+    },
+    {
+      name: 'caption',
+      type: 'text',
+      label: 'Caption',
+      description: 'Optional caption displayed below the embed'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -647,7 +689,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   faqBlock: faqBlockDefinition,
   twoColumnBlock: twoColumnBlockDefinition,
   chartBlock: chartBlockDefinition,
-  mapBlock: mapBlockDefinition
+  mapBlock: mapBlockDefinition,
+  embedBlock: embedBlockDefinition
 }
 
 // ============================================================================

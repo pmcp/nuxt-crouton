@@ -74,6 +74,9 @@ export function getBlockCommandItems(query: string): BlockCommandItem[] {
         case 'mapBlock':
           editor.chain().focus().insertMapBlock().run()
           break
+        case 'embedBlock':
+          editor.chain().focus().insertEmbedBlock().run()
+          break
         default:
           console.warn(`Unknown block type: ${item.type}`)
       }

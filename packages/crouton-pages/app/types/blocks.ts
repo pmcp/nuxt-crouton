@@ -22,6 +22,7 @@ export type BlockType =
   | 'twoColumnBlock'
   | 'chartBlock'
   | 'mapBlock'
+  | 'embedBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -215,6 +216,7 @@ export type BlockAttrs =
   | TwoColumnBlockAttrs
   | ChartBlockAttrs
   | MapBlockAttrs
+  | EmbedBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -284,6 +286,21 @@ export interface MapBlockAttrs {
 
 export interface MapBlock extends PageBlock<MapBlockAttrs> {
   type: 'mapBlock'
+}
+
+export interface EmbedBlockAttrs {
+  /** Raw URL entered by user */
+  url: string
+  /** Auto-detected or manually set provider */
+  provider: 'youtube' | 'figma' | 'custom'
+  /** Embed height in pixels */
+  height: number
+  /** Optional caption below the iframe */
+  caption: string
+}
+
+export interface EmbedBlock extends PageBlock<EmbedBlockAttrs> {
+  type: 'embedBlock'
 }
 
 // ============================================================================
