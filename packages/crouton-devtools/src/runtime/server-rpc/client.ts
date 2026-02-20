@@ -89,6 +89,14 @@ const HTML_CONTENT = `<!DOCTYPE html>
               <i class="fas fa-cogs mr-2"></i>
               System Ops ({{ systemOperations.length }})
             </button>
+            <button
+              @click="activeTab = 'generators'"
+              :class="{ 'tab-active': activeTab === 'generators' }"
+              class="pb-3 px-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <i class="fas fa-code-branch mr-2"></i>
+              Generators ({{ generationHistory.length }})
+            </button>
           </div>
         </div>
       </div>
@@ -1411,6 +1419,153 @@ const HTML_CONTENT = `<!DOCTYPE html>
             </div>
           </transition>
         </div>
+
+        <!-- Generators Tab (D3) -->
+        <div v-show="activeTab === 'generators'">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Generator History</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Timeline of collection generation runs via <code class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">crouton generate</code></p>
+            </div>
+            <button
+              @click="fetchGenerationHistory"
+              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              :disabled="generationHistoryLoading"
+            >
+              <i class="fas fa-sync-alt" :class="{ 'fa-spin': generationHistoryLoading }"></i>
+              Refresh
+            </button>
+          </div>
+
+          <!-- Loading -->
+          <div v-if="generationHistoryLoading" class="flex items-center justify-center py-16">
+            <div class="text-center">
+              <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary-600 mx-auto mb-4"></div>
+              <p class="text-gray-600 dark:text-gray-400">Loading generation history...</p>
+            </div>
+          </div>
+
+          <!-- Empty state: history file not found -->
+          <div v-else-if="!generationHistoryLoading && !generationHistoryFound && generationHistory.length === 0" class="text-center py-20">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <i class="fas fa-code-branch text-gray-400 dark:text-gray-500 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">No generation history yet</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-2">Run <code class="font-mono text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">crouton generate</code> to get started.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-500">History is stored in <code class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">.crouton-generation-history.json</code></p>
+          </div>
+
+          <!-- Timeline -->
+          <div v-else class="space-y-3">
+            <!-- Summary stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Total Runs</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ generationHistory.length }}</p>
+                  </div>
+                  <i class="fas fa-history text-sky-500 text-2xl"></i>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Collections</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ new Set(generationHistory.map(h => h.collection)).size }}</p>
+                  </div>
+                  <i class="fas fa-layer-group text-emerald-500 text-2xl"></i>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Layers</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ new Set(generationHistory.map(h => h.layer).filter(Boolean)).size }}</p>
+                  </div>
+                  <i class="fas fa-cubes text-orange-500 text-2xl"></i>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Latest</p>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white mt-1">{{ generationHistory[0] ? formatRelativeTime(generationHistory[0].timestamp) : '-' }}</p>
+                  </div>
+                  <i class="fas fa-clock text-violet-500 text-2xl"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- History list -->
+            <div
+              v-for="(entry, index) in generationHistory"
+              :key="entry.timestamp + index"
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all"
+            >
+              <div class="flex items-start gap-4">
+                <!-- Timeline dot -->
+                <div class="flex flex-col items-center pt-1">
+                  <div class="w-3 h-3 rounded-full bg-sky-500 flex-shrink-0"></div>
+                  <div v-if="index < generationHistory.length - 1" class="w-0.5 bg-gray-200 dark:bg-gray-700 flex-grow mt-1" style="min-height: 24px;"></div>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <!-- Collection name -->
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ entry.collection }}</span>
+
+                    <!-- Layer badge -->
+                    <span v-if="entry.layer" :class="getLayerColorClass(entry.layer)" class="px-2 py-0.5 text-xs font-medium rounded-full">
+                      {{ entry.layer }}
+                    </span>
+
+                    <!-- Generator badge -->
+                    <span :class="getGeneratorBadgeClass(entry.generator)" class="px-2 py-0.5 text-xs font-bold rounded-full uppercase">
+                      {{ entry.generator }}
+                    </span>
+
+                    <!-- Git SHA -->
+                    <code v-if="entry.gitSha" class="text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                      {{ entry.gitSha }}
+                    </code>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                    <!-- Timestamp -->
+                    <span class="flex items-center gap-1.5" :title="entry.timestamp">
+                      <i class="fas fa-clock text-xs"></i>
+                      {{ formatRelativeTime(entry.timestamp) }}
+                    </span>
+
+                    <!-- Field count -->
+                    <span class="flex items-center gap-1.5">
+                      <i class="fas fa-list text-xs"></i>
+                      {{ (entry.fields || []).length }} field{{ (entry.fields || []).length !== 1 ? 's' : '' }}
+                    </span>
+                  </div>
+
+                  <!-- Field pills -->
+                  <div v-if="entry.fields && entry.fields.length > 0" class="flex flex-wrap gap-1.5 mt-2">
+                    <span
+                      v-for="field in entry.fields"
+                      :key="field"
+                      class="px-2 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
+                    >
+                      {{ field }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Right: full timestamp -->
+                <div class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap font-mono flex-shrink-0">
+                  {{ formatShortDate(entry.timestamp) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1486,7 +1641,12 @@ const HTML_CONTENT = `<!DOCTYPE html>
 
           // Operation ↔ Event Correlation
           correlatedEvents: [],
-          correlatedEventsLoading: false
+          correlatedEventsLoading: false,
+
+          // Generation History (D3: Generators tab)
+          generationHistory: [],
+          generationHistoryLoading: false,
+          generationHistoryFound: false
         }
       },
       computed: {
@@ -2067,6 +2227,55 @@ const HTML_CONTENT = `<!DOCTYPE html>
           } finally {
             this.correlatedEventsLoading = false
           }
+        },
+
+        // Generation History (D3)
+        async fetchGenerationHistory() {
+          try {
+            this.generationHistoryLoading = true
+            const response = await fetch('/__nuxt_crouton_devtools/api/generation-history')
+            const data = await response.json()
+            this.generationHistory = data.history || []
+            this.generationHistoryFound = data.found || false
+          } catch (e) {
+            console.error('Failed to fetch generation history:', e)
+            this.generationHistory = []
+            this.generationHistoryFound = false
+          } finally {
+            this.generationHistoryLoading = false
+          }
+        },
+        getGeneratorBadgeClass(generator) {
+          const classes = {
+            'crouton-cli': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300',
+            'mcp': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
+          }
+          return classes[generator] || 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300'
+        },
+        getLayerColorClass(layer) {
+          if (!layer) return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+          const palette = [
+            'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+            'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+            'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+            'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+            'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+            'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+          ]
+          let hash = 0
+          for (let i = 0; i < layer.length; i++) hash = (hash + layer.charCodeAt(i)) % palette.length
+          return palette[hash]
+        },
+        formatRelativeTime(isoString) {
+          if (!isoString) return ''
+          const diff = Date.now() - new Date(isoString).getTime()
+          const minutes = Math.floor(diff / 60000)
+          if (minutes < 1) return 'just now'
+          if (minutes < 60) return minutes + 'm ago'
+          const hours = Math.floor(minutes / 60)
+          if (hours < 24) return hours + 'h ago'
+          const days = Math.floor(hours / 24)
+          return days + 'd ago'
         }
       },
       watch: {
@@ -2088,6 +2297,10 @@ const HTML_CONTENT = `<!DOCTYPE html>
             this.startSysOpsAutoRefresh()
           } else {
             this.stopSysOpsAutoRefresh()
+          }
+
+          if (newTab === 'generators') {
+            this.fetchGenerationHistory()
           }
         },
         selectedDataCollection() {

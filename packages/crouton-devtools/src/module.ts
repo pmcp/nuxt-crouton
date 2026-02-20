@@ -115,6 +115,12 @@ export default defineNuxtModule<ModuleOptions>({
       method: 'post'
     })
 
+    // Add generation history RPC handler (D3: Generators tab)
+    addServerHandler({
+      route: '/__nuxt_crouton_devtools/api/generation-history',
+      handler: resolver.resolve('./runtime/server-rpc/generationHistory')
+    })
+
     // Serve the static HTML client app
     addServerHandler({
       route: '/__nuxt_crouton_devtools',

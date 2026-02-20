@@ -3,7 +3,8 @@
 
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import { exec } from 'node:child_process'
+import { exec, execSync } from 'node:child_process'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { promisify } from 'node:util'
 import { loadConfig } from 'c12'
 
@@ -44,6 +45,48 @@ import { generateSeedFile } from './generators/seed-data.ts'
 import { generateCollectionTypesRegistry } from './generators/collection-types-registry.ts'
 
 const execAsync = promisify(exec)
+
+// ---------------------------------------------------------------------------
+// Generation History
+// ---------------------------------------------------------------------------
+
+interface GenerationHistoryEntry {
+  collection: string
+  fields: string[]
+  generator: string
+  timestamp: string
+  layer?: string
+  gitSha?: string
+}
+
+function recordGenerationHistory(entry: Omit<GenerationHistoryEntry, 'gitSha'>): void {
+  const historyPath = path.resolve(process.cwd(), '.crouton-generation-history.json')
+  let history: GenerationHistoryEntry[] = []
+
+  if (existsSync(historyPath)) {
+    try {
+      history = JSON.parse(readFileSync(historyPath, 'utf-8'))
+    } catch {
+      history = []
+    }
+  }
+
+  let gitSha: string | undefined
+  try {
+    gitSha = execSync('git rev-parse --short HEAD', { stdio: 'pipe' }).toString().trim()
+  } catch {
+    // Not in a git repo or git not available
+  }
+
+  history.unshift({
+    ...entry,
+    timestamp: entry.timestamp ?? new Date().toISOString(),
+    gitSha,
+  })
+
+  // Keep last 100 entries
+  writeFileSync(historyPath, JSON.stringify(history.slice(0, 100), null, 2))
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -954,6 +997,21 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     console.log(`✓ Collection "${collectionKey}" already in registry`)
   } else {
     console.error(`Failed to update registry: ${registryResult.reason}`)
+  }
+
+  // Record generation history for DevTools Generators tab
+  if (!dryRun) {
+    try {
+      recordGenerationHistory({
+        collection: cases.plural,
+        fields: fields.filter(f => f.name !== 'id').map(f => f.name),
+        generator: 'crouton-cli',
+        timestamp: new Date().toISOString(),
+        layer,
+      })
+    } catch {
+      // Non-fatal — history recording failure should not block generation
+    }
   }
 
   console.log(`\n✓ Successfully generated collection '${cases.plural}' in layer '${layer}'`)
