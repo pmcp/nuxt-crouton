@@ -1,6 +1,6 @@
 <template>
   <div v-if="products.length === 0" class="text-center text-muted py-8">
-    No products found
+    {{ t('sales.products.noProducts') }}
   </div>
   <div v-else ref="containerRef" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
     <UCard
@@ -49,7 +49,7 @@
               class="mt-3"
               @click="confirmMultiOptions(product)"
             >
-              Add to Cart
+              {{ t('sales.products.addToCart') }}
             </UButton>
           </template>
 
@@ -79,6 +79,7 @@
 
 <script setup lang="ts">
 import type { SalesProduct, ProductOption } from '../../types'
+const { t } = useT()
 
 defineProps<{
   products: SalesProduct[]

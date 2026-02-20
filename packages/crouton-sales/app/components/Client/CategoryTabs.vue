@@ -9,6 +9,7 @@
 
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
+const { t } = useT()
 import type { SalesCategory } from '../../types'
 
 const props = defineProps<{
@@ -28,7 +29,7 @@ const totalCount = computed(() =>
 const tabItems = computed<TabsItem[]>(() => {
   const items: TabsItem[] = [
     {
-      label: `All (${totalCount.value})`,
+      label: `${t('sales.categories.all')} (${totalCount.value})`,
       value: 'all',
     },
   ]

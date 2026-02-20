@@ -8,6 +8,7 @@
 
 <script lang="ts" setup>
 import type { NavigationMenuItem } from '@nuxt/ui'
+const { t } = useT()
 
 const props = defineProps<{
   /** Base path for navigation links (e.g., '/dashboard/my-team') */
@@ -23,22 +24,22 @@ const props = defineProps<{
 const navigationItems = computed<NavigationMenuItem[][]>(() => {
   const items: NavigationMenuItem[] = [
     {
-      label: 'Events',
+      label: t('sales.sidebar.events'),
       icon: 'i-lucide-calendar',
       to: `${props.basePath}/events`,
     },
     {
-      label: 'Products',
+      label: t('sales.sidebar.products'),
       icon: 'i-lucide-package',
       to: `${props.basePath}/products`,
     },
     {
-      label: 'Categories',
+      label: t('sales.sidebar.categories'),
       icon: 'i-lucide-folder',
       to: `${props.basePath}/categories`,
     },
     {
-      label: 'Locations',
+      label: t('sales.sidebar.locations'),
       icon: 'i-lucide-map-pin',
       to: `${props.basePath}/locations`,
     },
@@ -47,7 +48,7 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
   // Opt-in: Show printers if enabled
   if (props.showPrinters) {
     items.push({
-      label: 'Printers',
+      label: t('sales.sidebar.printers'),
       icon: 'i-lucide-printer',
       to: `${props.basePath}/printers`,
     })
@@ -56,14 +57,14 @@ const navigationItems = computed<NavigationMenuItem[][]>(() => {
   // Opt-in: Show helpers if enabled
   if (props.showHelpers) {
     items.push({
-      label: 'Helpers',
+      label: t('sales.sidebar.helpers'),
       icon: 'i-lucide-users',
       to: `${props.basePath}/helpers`,
     })
   }
 
   items.push({
-    label: 'Clients',
+    label: t('sales.sidebar.clients'),
     icon: 'i-lucide-user',
     to: `${props.basePath}/clients`,
   })

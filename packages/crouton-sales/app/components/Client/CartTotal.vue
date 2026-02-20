@@ -1,7 +1,7 @@
 <template>
   <div class="flex justify-between items-center">
     <div class="flex items-center gap-2">
-      <span :class="labelClass">Total</span>
+      <span :class="labelClass">{{ t('sales.cart.total') }}</span>
       <span
         v-if="count > 0"
         :key="count"
@@ -15,6 +15,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useT()
+
 const props = withDefaults(defineProps<{
   count: number
   total: number

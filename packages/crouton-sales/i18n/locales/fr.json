@@ -9,7 +9,9 @@
       "quantity": "Quantité",
       "total": "Total",
       "subtotal": "Sous-total",
-      "checkout": "Passer à la caisse"
+      "checkout": "Passer à la caisse",
+      "selectClient": "Please select a client to proceed",
+      "pay": "Pay"
     },
     "products": {
       "title": "Produits",
@@ -18,7 +20,8 @@
       "outOfStock": "Rupture de stock",
       "options": "Options",
       "remarks": "Remarques",
-      "remarksPlaceholder": "Demandes spéciales..."
+      "remarksPlaceholder": "Demandes spéciales...",
+      "addToCart": "Add to Cart"
     },
     "categories": {
       "all": "Tout",
@@ -34,7 +37,19 @@
       "customer": "Client",
       "items": "Articles",
       "status": "Statut",
-      "createdAt": "Créée le"
+      "createdAt": "Créée le",
+      "orderCreated": "Order created",
+      "submittedSuccessfully": "The order has been submitted successfully.",
+      "error": "Error",
+      "failedToCreate": "Failed to create order",
+      "autoRefresh": "Auto-refresh",
+      "processing": "Processing",
+      "client": "Client",
+      "rePrint": "Re-print",
+      "printTriggered": "Print triggered",
+      "printFailed": "Print failed",
+      "printError": "Could not trigger print for this order",
+      "noOrdersFound": "No orders found"
     },
     "events": {
       "title": "Événements",
@@ -54,15 +69,28 @@
       "location": "Lieu",
       "status": "Statut"
     },
+    "sidebar": {
+      "events": "Events",
+      "products": "Products",
+      "categories": "Categories",
+      "locations": "Locations",
+      "printers": "Printers",
+      "helpers": "Helpers",
+      "clients": "Clients"
+    },
     "client": {
       "name": "Nom",
       "email": "E-mail",
       "phone": "Téléphone",
-      "notes": "Notes"
+      "notes": "Notes",
+      "label": "Client",
+      "selectOrCreate": "Select or create client...",
+      "enterName": "Enter client name..."
     },
     "offline": {
       "title": "Hors ligne",
-      "message": "Vous êtes actuellement hors ligne. Certaines fonctionnalités peuvent être limitées."
+      "message": "Vous êtes actuellement hors ligne. Certaines fonctionnalités peuvent être limitées.",
+      "banner": "You are offline. Orders cannot be submitted."
     }
   }
 }

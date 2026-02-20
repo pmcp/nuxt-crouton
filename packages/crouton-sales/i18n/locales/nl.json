@@ -9,7 +9,9 @@
       "quantity": "Aantal",
       "total": "Totaal",
       "subtotal": "Subtotaal",
-      "checkout": "Afrekenen"
+      "checkout": "Afrekenen",
+      "selectClient": "Please select a client to proceed",
+      "pay": "Pay"
     },
     "products": {
       "title": "Producten",
@@ -18,7 +20,8 @@
       "outOfStock": "Uitverkocht",
       "options": "Opties",
       "remarks": "Opmerkingen",
-      "remarksPlaceholder": "Speciale verzoeken..."
+      "remarksPlaceholder": "Speciale verzoeken...",
+      "addToCart": "Add to Cart"
     },
     "categories": {
       "all": "Alles",
@@ -34,7 +37,19 @@
       "customer": "Klant",
       "items": "Items",
       "status": "Status",
-      "createdAt": "Aangemaakt"
+      "createdAt": "Aangemaakt",
+      "orderCreated": "Order created",
+      "submittedSuccessfully": "The order has been submitted successfully.",
+      "error": "Error",
+      "failedToCreate": "Failed to create order",
+      "autoRefresh": "Auto-refresh",
+      "processing": "Processing",
+      "client": "Client",
+      "rePrint": "Re-print",
+      "printTriggered": "Print triggered",
+      "printFailed": "Print failed",
+      "printError": "Could not trigger print for this order",
+      "noOrdersFound": "No orders found"
     },
     "events": {
       "title": "Evenementen",
@@ -54,15 +69,28 @@
       "location": "Locatie",
       "status": "Status"
     },
+    "sidebar": {
+      "events": "Events",
+      "products": "Products",
+      "categories": "Categories",
+      "locations": "Locations",
+      "printers": "Printers",
+      "helpers": "Helpers",
+      "clients": "Clients"
+    },
     "client": {
       "name": "Naam",
       "email": "E-mail",
       "phone": "Telefoon",
-      "notes": "Notities"
+      "notes": "Notities",
+      "label": "Client",
+      "selectOrCreate": "Select or create client...",
+      "enterName": "Enter client name..."
     },
     "offline": {
       "title": "Offline",
-      "message": "Je bent momenteel offline. Sommige functies kunnen beperkt zijn."
+      "message": "Je bent momenteel offline. Sommige functies kunnen beperkt zijn.",
+      "banner": "You are offline. Orders cannot be submitted."
     }
   }
 }

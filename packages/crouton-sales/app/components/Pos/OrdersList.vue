@@ -2,9 +2,9 @@
   <div class="space-y-6 p-6">
     <!-- Header with auto-refresh toggle -->
     <div class="flex items-center justify-between">
-      <h2 class="text-2xl font-semibold">Orders</h2>
+      <h2 class="text-2xl font-semibold">{{ t('sales.orders.title') }}</h2>
       <div class="flex items-center gap-3">
-        <span class="text-sm text-muted">Auto-refresh</span>
+        <span class="text-sm text-muted">{{ t('sales.orders.autoRefresh') }}</span>
         <USwitch v-model="autoRefresh" />
       </div>
     </div>
@@ -42,7 +42,7 @@
         <div class="flex gap-2 justify-end">
           <UButton
             v-if="showReprint && row.original.status === 'failed'"
-            label="Re-print"
+            :label="t('sales.orders.rePrint')"
             size="sm"
             color="warning"
             variant="soft"
@@ -56,7 +56,7 @@
 
     <!-- Empty state -->
     <div v-if="filteredOrders.length === 0 && status !== 'pending'" class="text-center py-12 text-muted">
-      No orders found
+      {{ t('sales.orders.noOrdersFound') }}
     </div>
   </div>
 </template>
@@ -84,6 +84,7 @@ const props = withDefaults(defineProps<{
 })
 
 const toast = useToast()
+const { t } = useT()
 
 // Build query based on eventId prop
 const query = computed(() => props.eventId ? { eventId: props.eventId } : undefined)
@@ -130,11 +131,11 @@ const statusCounts = computed(() => {
 })
 
 const tabItems = computed(() => [
-  { label: `All (${statusCounts.value.all})`, value: 'all' },
-  { label: `Pending (${statusCounts.value.pending})`, value: 'pending' },
-  { label: `Processing (${statusCounts.value.processing})`, value: 'processing' },
-  { label: `Completed (${statusCounts.value.completed})`, value: 'completed' },
-  { label: `Cancelled (${statusCounts.value.cancelled})`, value: 'cancelled' },
+  { label: `${t('sales.categories.all')} (${statusCounts.value.all})`, value: 'all' },
+  { label: `${t('sales.orders.pending')} (${statusCounts.value.pending})`, value: 'pending' },
+  { label: `${t('sales.orders.processing')} (${statusCounts.value.processing})`, value: 'processing' },
+  { label: `${t('sales.orders.completed')} (${statusCounts.value.completed})`, value: 'completed' },
+  { label: `${t('sales.orders.cancelled')} (${statusCounts.value.cancelled})`, value: 'cancelled' },
 ])
 
 const filteredOrders = computed(() => {
@@ -144,13 +145,13 @@ const filteredOrders = computed(() => {
 })
 
 // Table columns
-const columns: TableColumn<SalesOrder>[] = [
-  { accessorKey: 'eventOrderNumber', header: 'Order #' },
-  { accessorKey: 'clientName', header: 'Client' },
-  { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'createdAt', header: 'Created' },
+const columns = computed<TableColumn<SalesOrder>[]>(() => [
+  { accessorKey: 'eventOrderNumber', header: t('sales.orders.orderNumber') },
+  { accessorKey: 'clientName', header: t('sales.orders.client') },
+  { accessorKey: 'status', header: t('sales.orders.status') },
+  { accessorKey: 'createdAt', header: t('sales.orders.createdAt') },
   { id: 'actions', header: '' },
-]
+])
 
 // Status colors
 function getStatusColor(status: string) {
@@ -179,7 +180,7 @@ async function reprint(order: SalesOrder) {
       method: 'POST',
     })
     toast.add({
-      title: 'Print triggered',
+      title: t('sales.orders.printTriggered'),
       description: `Order #${order.eventOrderNumber} sent to print queue`,
       color: 'success',
     })
@@ -187,8 +188,8 @@ async function reprint(order: SalesOrder) {
   }
   catch (error) {
     toast.add({
-      title: 'Print failed',
-      description: 'Could not trigger print for this order',
+      title: t('sales.orders.printFailed'),
+      description: t('sales.orders.printError'),
       color: 'error',
     })
   }

@@ -2,7 +2,7 @@
   <UCard class="flex flex-col h-full" :ui="{ root: 'rounded-none', body: 'flex-1 overflow-y-auto', footer: 'space-y-4' }">
     <!-- Cart items -->
     <p v-if="items.length === 0" class="text-center text-muted py-8">
-      Cart is empty
+      {{ t('sales.cart.empty') }}
     </p>
 
     <div v-else class="space-y-2">
@@ -51,12 +51,12 @@
 
       <div v-if="clientRequired && !hasClient && items.length > 0" class="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning">
         <UIcon name="i-lucide-alert-triangle" class="text-warning shrink-0" />
-        <span class="text-sm text-warning font-medium">Please select a client to proceed</span>
+        <span class="text-sm text-warning font-medium">{{ t('sales.cart.selectClient') }}</span>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <UButton
-          label="Clear"
+          :label="t('sales.cart.clear')"
           color="neutral"
           variant="soft"
           size="lg"
@@ -65,7 +65,7 @@
           @click="$emit('clear')"
         />
         <UButton
-          label="Pay"
+          :label="t('sales.cart.pay')"
           size="lg"
           block
           :disabled="disabled || items.length === 0 || (clientRequired && !hasClient)"
@@ -78,6 +78,7 @@
 
 <script setup lang="ts">
 import type { CartItem, ProductOption } from '../../types'
+const { t } = useT()
 
 const props = defineProps<{
   items: CartItem[]

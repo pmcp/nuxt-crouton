@@ -1,13 +1,13 @@
 <template>
   <div class="space-y-2 p-3 -m-3 rounded-lg" :class="highlight ? 'border border-warning bg-warning/5' : ''">
-    <label class="text-sm font-medium text-muted">Client</label>
+    <label class="text-sm font-medium text-muted">{{ t('sales.client.label') }}</label>
 
     <!-- Reusable clients mode: dropdown with search and create -->
     <template v-if="useReusableClients">
       <USelectMenu
         v-model="selectedValue"
         :items="allItems"
-        placeholder="Select or create client..."
+        :placeholder="t('sales.client.selectOrCreate')"
         icon="i-lucide-user"
         size="lg"
         class="w-full"
@@ -21,7 +21,7 @@
     <template v-else>
       <UInput
         v-model="clientName"
-        placeholder="Enter client name..."
+        :placeholder="t('sales.client.enterName')"
         icon="i-lucide-user"
         size="lg"
         class="w-full"
@@ -32,6 +32,7 @@
 
 <script setup lang="ts">
 import type { SalesClient } from '../../types'
+const { t } = useT()
 
 const props = defineProps<{
   clients: SalesClient[]

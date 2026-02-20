@@ -66,7 +66,7 @@
           <UButton
             block
             size="lg"
-            :label="cartItems.length > 0 ? `Cart (${cartItems.length}) - $${cartTotal.toFixed(2)}` : 'Cart is empty'"
+            :label="cartItems.length > 0 ? `Cart (${cartItems.length}) - $${cartTotal.toFixed(2)}` : t('sales.cart.empty')"
             :icon="cartItems.length > 0 ? 'i-lucide-shopping-cart' : 'i-lucide-shopping-cart'"
             :color="cartItems.length > 0 ? 'primary' : 'neutral'"
             :variant="cartItems.length > 0 ? 'solid' : 'soft'"
@@ -104,6 +104,7 @@ const props = defineProps<{
 
 const isOnline = useOnline()
 const toast = useToast()
+const { t } = useT()
 
 const {
   cartItems,
@@ -208,15 +209,15 @@ async function handleCheckout() {
   try {
     await checkout()
     toast.add({
-      title: 'Order created',
-      description: 'The order has been submitted successfully.',
+      title: t('sales.orders.orderCreated'),
+      description: t('sales.orders.submittedSuccessfully'),
       color: 'green',
     })
   }
   catch (error) {
     toast.add({
-      title: 'Error',
-      description: error instanceof Error ? error.message : 'Failed to create order',
+      title: t('sales.orders.error'),
+      description: error instanceof Error ? error.message : t('sales.orders.failedToCreate'),
       color: 'red',
     })
   }
