@@ -14,8 +14,56 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 | `app/composables/useFlowSync.ts` | Flow sync (wraps useCollabSync) |
 | `app/composables/useFlowPresence.ts` | Presence UI utilities |
 | `app/types/yjs.ts` | Flow node types (uses collab types) |
+| `app/app.config.ts` | App registration (croutonApps) |
+| `server/database/schema.ts` | Drizzle schema for flow_configs table |
+| `server/database/migrations/0002_flow_configs.sql` | SQL migration for flow_configs |
+| `server/api/crouton-flow/teams/[id]/flows/` | CRUD API for flow configs |
+| `app/pages/admin/[team]/flows.vue` | Admin section parent layout |
+| `app/pages/admin/[team]/flows/index.vue` | Flow list with create modal |
+| `app/pages/admin/[team]/flows/[flowId].vue` | Full-screen canvas view |
 | `server/durable-objects/FlowRoom.ts` | **DEPRECATED** - Use CollabRoom |
 | `server/routes/api/flow/[flowId]/ws.ts` | **DEPRECATED** - Use collab endpoint |
+
+## Admin App
+
+crouton-flow registers itself as a crouton app with an admin section at `/admin/[team]/flows`.
+
+### flow_configs Table
+
+Stores saved flow configurations per team:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | TEXT | UUID primary key |
+| team_id | TEXT | Team this flow belongs to |
+| name | TEXT | Display name |
+| description | TEXT | Optional description |
+| collection | TEXT | Collection name to visualize |
+| label_field | TEXT | Field to use as node label (default: 'title') |
+| parent_field | TEXT | Field for parent relationship (default: 'parentId') |
+| position_field | TEXT | Field for node position (default: 'position') |
+| sync_enabled | INTEGER | Enable live multiplayer sync |
+
+### API Endpoints
+
+| Path | Method | Purpose |
+|------|--------|---------|
+| `/api/crouton-flow/teams/[id]/flows` | GET | List team flows |
+| `/api/crouton-flow/teams/[id]/flows` | POST | Create flow |
+| `/api/crouton-flow/teams/[id]/flows/[flowId]` | GET | Get single flow |
+| `/api/crouton-flow/teams/[id]/flows/[flowId]` | PATCH | Update flow |
+| `/api/crouton-flow/teams/[id]/flows/[flowId]` | DELETE | Delete flow |
+
+### Setup (consuming app)
+
+Run the DB migration:
+```bash
+# Local SQLite
+npx nuxt db:generate
+# Or apply directly
+npx wrangler d1 execute <DB_NAME> \
+  --file=./node_modules/@fyit/crouton-flow/server/database/migrations/0002_flow_configs.sql
+```
 
 ## Dependencies
 

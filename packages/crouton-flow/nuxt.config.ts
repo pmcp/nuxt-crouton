@@ -33,21 +33,27 @@ export default defineNuxtConfig({
     ]
   },
 
+  // Pages
+  pages: true,
+
   // Composables auto-import
   imports: {
     dirs: [join(currentDir, 'app/composables')]
   },
 
-  // Transpile Vue Flow for SSR compatibility
-  build: {
-    transpile: ['@vue-flow/core', '@vue-flow/background', '@vue-flow/controls', '@vue-flow/minimap']
-  },
-
-  // Nitro server configuration for Yjs sync
+  // Server utilities auto-import
   nitro: {
     experimental: {
       websocket: true
+    },
+    imports: {
+      dirs: [join(currentDir, 'server/utils')]
     }
+  },
+
+  // Transpile Vue Flow for SSR compatibility
+  build: {
+    transpile: ['@vue-flow/core', '@vue-flow/background', '@vue-flow/controls', '@vue-flow/minimap']
   },
 
   // Vite optimization for Vue Flow
