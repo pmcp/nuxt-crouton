@@ -7,6 +7,8 @@
   "exports": {
     ".": "./nuxt.config.ts",
     "./shared/manifest": "./shared/manifest.ts",
+    "./shared/utils/date": "./shared/utils/date.ts",
+    "./shared/utils/fs": "./shared/utils/fs.ts",
     "./app/composables/*": {
       "types": "./dist/app/composables/*.d.ts",
       "import": "./dist/app/composables/*.mjs"
