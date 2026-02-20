@@ -81,6 +81,14 @@ const HTML_CONTENT = `<!DOCTYPE html>
               <i class="fas fa-history mr-2"></i>
               Activity ({{ events.length }})
             </button>
+            <button
+              @click="activeTab = 'system-ops'"
+              :class="{ 'tab-active': activeTab === 'system-ops' }"
+              class="pb-3 px-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <i class="fas fa-cogs mr-2"></i>
+              System Ops ({{ systemOperations.length }})
+            </button>
           </div>
         </div>
       </div>
@@ -380,7 +388,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
 
           <!-- Filters -->
           <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Collection</label>
                 <select v-model="filters.collection" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
@@ -408,6 +416,22 @@ const HTML_CONTENT = `<!DOCTYPE html>
                 </select>
               </div>
             </div>
+            <!-- MCP-only toggle (D2) -->
+            <div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+              <button
+                @click="filters.mcpOnly = !filters.mcpOnly"
+                :class="filters.mcpOnly
+                  ? 'bg-violet-600 text-white border-violet-600'
+                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border rounded-lg transition-colors"
+              >
+                <span>&#x1F916;</span>
+                Show MCP Only
+              </button>
+              <span v-if="filters.mcpOnly" class="text-xs text-violet-600 dark:text-violet-400 font-medium">
+                Showing {{ filteredOperations.length }} MCP-sourced operations
+              </span>
+            </div>
           </div>
 
           <!-- Operations List -->
@@ -423,7 +447,10 @@ const HTML_CONTENT = `<!DOCTYPE html>
               :key="op.id"
               @click="viewOperationDetails(op)"
               class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer"
-              :class="{ 'border-l-4 border-l-red-500': op.status >= 400 }"
+              :class="{
+                'border-l-4 border-l-red-500': op.status >= 400,
+                'border-l-4 border-l-violet-500 bg-violet-50 dark:bg-violet-900/10': op.metadata?.mutationSource === 'mcp' && op.status < 400
+              }"
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4 flex-1">
@@ -432,6 +459,14 @@ const HTML_CONTENT = `<!DOCTYPE html>
                   </div>
                   <span :class="getOperationBadgeClass(op.operation)" class="px-3 py-1 text-xs font-bold rounded-full uppercase">
                     {{ op.operation }}
+                  </span>
+                  <!-- MCP source badge (D2) -->
+                  <span
+                    v-if="op.metadata?.mutationSource === 'mcp'"
+                    class="px-2 py-0.5 text-xs font-bold rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 flex items-center gap-1"
+                    title="MCP-initiated mutation"
+                  >
+                    <span>&#x1F916;</span> MCP
                   </span>
                   <div class="flex-1">
                     <div class="font-medium text-gray-900 dark:text-white">{{ op.collection }}</div>
@@ -498,6 +533,19 @@ const HTML_CONTENT = `<!DOCTYPE html>
                       <div>
                         <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Timestamp</span>
                         <span class="text-gray-900 dark:text-white font-mono text-sm">{{ formatFullTime(selectedOperation.timestamp) }}</span>
+                      </div>
+                      <!-- Source (D2) -->
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Source</span>
+                        <span
+                          v-if="selectedOperation.metadata?.mutationSource === 'mcp'"
+                          class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+                        >
+                          <span>&#x1F916;</span> MCP
+                        </span>
+                        <span v-else class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                          <i class="fas fa-user text-xs"></i> UI
+                        </span>
                       </div>
                     </div>
 
@@ -1124,6 +1172,245 @@ const HTML_CONTENT = `<!DOCTYPE html>
             </div>
           </transition>
         </div>
+
+        <!-- System Operations Tab (D1) -->
+        <div v-show="activeTab === 'system-ops'">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">System Operations</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Non-CRUD events: auth, admin, AI, email, webhooks and more</p>
+            </div>
+            <div class="flex gap-2">
+              <button
+                @click="fetchSystemOperations"
+                class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                :disabled="systemOpsLoading"
+              >
+                <i class="fas fa-sync-alt" :class="{ 'fa-spin': systemOpsLoading }"></i>
+                Refresh
+              </button>
+              <button
+                @click="clearAllSystemOperations"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              >
+                <i class="fas fa-trash"></i>
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats row -->
+          <div v-if="systemOpsStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Total</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ systemOpsStats.total }}</p>
+                </div>
+                <i class="fas fa-cogs text-indigo-500 text-2xl"></i>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Types</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ Object.keys(systemOpsStats.byType || {}).length }}</p>
+                </div>
+                <i class="fas fa-tags text-blue-500 text-2xl"></i>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Sources</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ Object.keys(systemOpsStats.bySource || {}).length }}</p>
+                </div>
+                <i class="fas fa-layer-group text-purple-500 text-2xl"></i>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">MCP</p>
+                  <p class="text-2xl font-bold text-violet-600">{{ systemOperations.filter(o => o.metadata && o.metadata.mutationSource === 'mcp').length }}</p>
+                </div>
+                <span class="text-2xl">&#x1F916;</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
+                <select v-model="sysOpsFilters.type" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <option value="">All Types</option>
+                  <option v-for="t in uniqueSysOpsTypes" :key="t" :value="t">{{ t }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Source Package</label>
+                <select v-model="sysOpsFilters.source" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <option value="">All Sources</option>
+                  <option v-for="s in uniqueSysOpsSources" :key="s" :value="s">{{ s }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Range</label>
+                <select v-model="sysOpsFilters.timeRange" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <option value="">All Time</option>
+                  <option value="5">Last 5 min</option>
+                  <option value="15">Last 15 min</option>
+                  <option value="60">Last hour</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-if="filteredSystemOperations.length === 0 && !systemOpsLoading" class="text-center py-16">
+            <i class="fas fa-cogs text-gray-300 dark:text-gray-600 text-6xl mb-6"></i>
+            <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-3">No system operations yet</h3>
+            <p class="text-gray-600 dark:text-gray-400">Events emitted via the <code class="font-mono text-sm bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">crouton:operation</code> hook will appear here</p>
+          </div>
+
+          <div v-else-if="systemOpsLoading" class="flex items-center justify-center py-16">
+            <div class="text-center">
+              <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary-600 mx-auto mb-4"></div>
+              <p class="text-gray-600 dark:text-gray-400">Loading system operations...</p>
+            </div>
+          </div>
+
+          <!-- Operations list -->
+          <div v-else class="space-y-2">
+            <div
+              v-for="op in filteredSystemOperations"
+              :key="op.id"
+              @click="viewSystemOperationDetails(op)"
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer"
+              :class="{
+                'border-l-4 border-l-violet-500 bg-violet-50 dark:bg-violet-900/10': op.metadata && op.metadata.mutationSource === 'mcp'
+              }"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4 flex-1">
+                  <div class="text-xs text-gray-500 dark:text-gray-400 font-mono w-20">
+                    {{ formatTime(op.timestamp) }}
+                  </div>
+                  <!-- Type badge -->
+                  <span :class="getSysOpTypeBadgeClass(op.type)" class="px-2 py-1 text-xs font-bold rounded-full uppercase whitespace-nowrap">
+                    {{ op.type }}
+                  </span>
+                  <!-- MCP badge -->
+                  <span
+                    v-if="op.metadata && op.metadata.mutationSource === 'mcp'"
+                    class="px-2 py-0.5 text-xs font-bold rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 flex items-center gap-1 whitespace-nowrap"
+                    title="MCP-initiated operation"
+                  >
+                    <span>&#x1F916;</span> MCP
+                  </span>
+                  <div class="flex-1">
+                    <div class="font-medium text-gray-900 dark:text-white">{{ op.source }}</div>
+                    <div v-if="op.teamId" class="text-sm text-gray-500 dark:text-gray-400 font-mono">team: {{ op.teamId }}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span v-if="op.userId" class="text-xs text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-user mr-1"></i>{{ op.userId }}
+                  </span>
+                  <i class="fas fa-chevron-right text-gray-400"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Operation Detail Modal -->
+          <transition name="fade">
+            <div v-if="selectedSystemOperation" @click.self="closeSystemOperationDetails" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <transition name="modal">
+                <div v-if="selectedSystemOperation" @click.stop class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto shadow-2xl">
+                  <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-start justify-between z-10">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
+                        <span v-if="selectedSystemOperation.metadata && selectedSystemOperation.metadata.mutationSource === 'mcp'" class="text-xl">&#x1F916;</span>
+                        <i v-else class="fas fa-cog text-indigo-600 dark:text-indigo-400"></i>
+                      </div>
+                      <div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">System Operation</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 font-mono">{{ selectedSystemOperation.id }}</p>
+                      </div>
+                    </div>
+                    <button
+                      @click="closeSystemOperationDetails"
+                      class="w-10 h-10 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <i class="fas fa-times text-xl"></i>
+                    </button>
+                  </div>
+
+                  <div class="p-6 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Type</span>
+                        <span :class="getSysOpTypeBadgeClass(selectedSystemOperation.type)" class="inline-block px-3 py-1 text-xs font-bold rounded-full uppercase">
+                          {{ selectedSystemOperation.type }}
+                        </span>
+                      </div>
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Source</span>
+                        <span class="text-gray-900 dark:text-white font-medium font-mono">{{ selectedSystemOperation.source }}</span>
+                      </div>
+                      <div v-if="selectedSystemOperation.teamId">
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Team ID</span>
+                        <code class="text-gray-900 dark:text-white font-mono">{{ selectedSystemOperation.teamId }}</code>
+                      </div>
+                      <div v-if="selectedSystemOperation.userId">
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">User ID</span>
+                        <code class="text-gray-900 dark:text-white font-mono">{{ selectedSystemOperation.userId }}</code>
+                      </div>
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Initiated By</span>
+                        <span
+                          v-if="selectedSystemOperation.metadata && selectedSystemOperation.metadata.mutationSource === 'mcp'"
+                          class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+                        >
+                          <span>&#x1F916;</span> MCP
+                        </span>
+                        <span v-else class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                          <i class="fas fa-user text-xs"></i> UI / API
+                        </span>
+                      </div>
+                      <div>
+                        <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Timestamp</span>
+                        <span class="text-gray-900 dark:text-white font-mono text-sm">{{ formatFullTime(selectedSystemOperation.timestamp) }}</span>
+                      </div>
+                    </div>
+
+                    <div v-if="selectedSystemOperation.metadata && Object.keys(selectedSystemOperation.metadata).length">
+                      <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Metadata</span>
+                      <pre class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-auto text-xs font-mono border border-gray-200 dark:border-gray-700 max-h-64">{{ JSON.stringify(selectedSystemOperation.metadata, null, 2) }}</pre>
+                    </div>
+
+                    <div>
+                      <span class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Full Data (JSON)</span>
+                      <pre class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-auto text-xs font-mono border border-gray-200 dark:border-gray-700">{{ JSON.stringify(selectedSystemOperation, null, 2) }}</pre>
+                    </div>
+                  </div>
+
+                  <div class="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end">
+                    <button
+                      @click="closeSystemOperationDetails"
+                      class="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </transition>
+            </div>
+          </transition>
+        </div>
       </div>
     </div>
   </div>
@@ -1152,9 +1439,22 @@ const HTML_CONTENT = `<!DOCTYPE html>
           filters: {
             collection: '',
             operation: '',
-            status: ''
+            status: '',
+            mcpOnly: false
           },
           autoRefreshInterval: null,
+
+          // System Operations (D1)
+          systemOperations: [],
+          systemOpsLoading: false,
+          systemOpsStats: null,
+          selectedSystemOperation: null,
+          sysOpsFilters: {
+            type: '',
+            source: '',
+            timeRange: ''
+          },
+          sysOpsAutoRefreshInterval: null,
 
           // API Explorer
           endpoints: [],
@@ -1219,11 +1519,42 @@ const HTML_CONTENT = `<!DOCTYPE html>
             })
           }
 
+          if (this.filters.mcpOnly) {
+            ops = ops.filter(op => op.metadata && op.metadata.mutationSource === 'mcp')
+          }
+
           return ops
         },
         uniqueCollections() {
           const collections = new Set(this.operations.map(op => op.collection))
           return Array.from(collections).sort()
+        },
+        filteredSystemOperations() {
+          let ops = this.systemOperations
+
+          if (this.sysOpsFilters.type) {
+            ops = ops.filter(op => op.type === this.sysOpsFilters.type || op.type.startsWith(this.sysOpsFilters.type + ':'))
+          }
+
+          if (this.sysOpsFilters.source) {
+            ops = ops.filter(op => op.source === this.sysOpsFilters.source)
+          }
+
+          if (this.sysOpsFilters.timeRange) {
+            const minutes = parseInt(this.sysOpsFilters.timeRange, 10)
+            const since = Date.now() - minutes * 60 * 1000
+            ops = ops.filter(op => op.timestamp >= since)
+          }
+
+          return ops
+        },
+        uniqueSysOpsTypes() {
+          const types = new Set(this.systemOperations.map(op => op.type))
+          return Array.from(types).sort()
+        },
+        uniqueSysOpsSources() {
+          const sources = new Set(this.systemOperations.map(op => op.source))
+          return Array.from(sources).sort()
         },
         filteredEndpoints() {
           if (!this.selectedEndpointCollection) return this.endpoints
@@ -1534,6 +1865,73 @@ const HTML_CONTENT = `<!DOCTYPE html>
           })
         },
 
+        // System Operations methods (D1)
+        async fetchSystemOperations() {
+          try {
+            this.systemOpsLoading = true
+            const params = new URLSearchParams()
+            if (this.sysOpsFilters.type) params.set('type', this.sysOpsFilters.type)
+            if (this.sysOpsFilters.source) params.set('source', this.sysOpsFilters.source)
+            if (this.sysOpsFilters.timeRange) {
+              const minutes = parseInt(this.sysOpsFilters.timeRange, 10)
+              params.set('since', String(Date.now() - minutes * 60 * 1000))
+            }
+
+            const response = await fetch('/__nuxt_crouton_devtools/api/system-operations?' + params.toString())
+            const data = await response.json()
+            this.systemOperations = data.data || []
+            this.systemOpsStats = data.stats || null
+          } catch (e) {
+            console.error('Failed to fetch system operations:', e)
+            this.systemOperations = []
+          } finally {
+            this.systemOpsLoading = false
+          }
+        },
+        async clearAllSystemOperations() {
+          if (!confirm('Clear all system operation history?')) return
+          try {
+            await fetch('/__nuxt_crouton_devtools/api/system-operations/clear', { method: 'POST' })
+            this.systemOperations = []
+            this.systemOpsStats = { total: 0, byType: {}, bySource: {} }
+          } catch (e) {
+            alert('Failed to clear system operations: ' + e.message)
+          }
+        },
+        viewSystemOperationDetails(op) {
+          this.selectedSystemOperation = op
+        },
+        closeSystemOperationDetails() {
+          this.selectedSystemOperation = null
+        },
+        getSysOpTypeBadgeClass(type) {
+          if (!type) return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+          const prefix = type.split(':')[0]
+          const classes = {
+            'auth': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+            'admin': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+            'ai': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
+            'email': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300',
+            'webhook': 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+            'payment': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+            'mcp': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300'
+          }
+          return classes[prefix] || 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300'
+        },
+        startSysOpsAutoRefresh() {
+          this.sysOpsAutoRefreshInterval = setInterval(() => {
+            if (this.activeTab === 'system-ops') {
+              this.fetchSystemOperations()
+            }
+          }, 3000)
+        },
+        stopSysOpsAutoRefresh() {
+          if (this.sysOpsAutoRefreshInterval) {
+            clearInterval(this.sysOpsAutoRefreshInterval)
+            this.sysOpsAutoRefreshInterval = null
+          }
+        },
+
         startAutoRefresh() {
           // Auto-refresh operations every 3 seconds when on operations tab
           this.autoRefreshInterval = setInterval(() => {
@@ -1684,6 +2082,13 @@ const HTML_CONTENT = `<!DOCTYPE html>
             this.fetchEvents()
             this.fetchEventsHealth()
           }
+
+          if (newTab === 'system-ops') {
+            this.fetchSystemOperations()
+            this.startSysOpsAutoRefresh()
+          } else {
+            this.stopSysOpsAutoRefresh()
+          }
         },
         selectedDataCollection() {
           this.iframeLoaded = false
@@ -1696,9 +2101,12 @@ const HTML_CONTENT = `<!DOCTYPE html>
         // Check if events package is available
         this.fetchEventsHealth()
         this.fetchEvents()
+        // Fetch system operations in background
+        this.fetchSystemOperations()
       },
       beforeUnmount() {
         this.stopAutoRefresh()
+        this.stopSysOpsAutoRefresh()
       }
     }).mount('#app')
   </script>

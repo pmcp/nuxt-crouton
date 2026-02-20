@@ -103,6 +103,18 @@ export default defineNuxtModule<ModuleOptions>({
       handler: resolver.resolve('./runtime/server-rpc/eventsHealth')
     })
 
+    // Add system operations RPC handlers (D1: System Ops tab)
+    addServerHandler({
+      route: '/__nuxt_crouton_devtools/api/system-operations',
+      handler: resolver.resolve('./runtime/server-rpc/systemOperations')
+    })
+
+    addServerHandler({
+      route: '/__nuxt_crouton_devtools/api/system-operations/clear',
+      handler: resolver.resolve('./runtime/server-rpc/clearSystemOperations'),
+      method: 'post'
+    })
+
     // Serve the static HTML client app
     addServerHandler({
       route: '/__nuxt_crouton_devtools',
