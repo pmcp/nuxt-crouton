@@ -1,7 +1,7 @@
 import * as Y from 'yjs'
-import { ref, computed, watch, onUnmounted, shallowRef, toValue, type Ref, type ComputedRef, type MaybeRef } from 'vue'
+import { ref, computed, watch, shallowRef, toValue, type Ref, type ComputedRef, type MaybeRef } from 'vue'
 import { useCollabConnection, type UseCollabConnectionReturn } from './useCollabConnection'
-import { useDebounceFn } from '@vueuse/core'
+import { useDebounceFn, tryOnUnmounted } from '@vueuse/core'
 
 export interface UseCollectionSyncSignalOptions {
   /**
@@ -259,7 +259,7 @@ export function useCollectionSyncSignal(
   )
 
   // Cleanup on unmount
-  onUnmounted(() => {
+  tryOnUnmounted(() => {
     disconnect()
   })
 
