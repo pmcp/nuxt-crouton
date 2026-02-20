@@ -41,11 +41,13 @@ export default defineNuxtConfig({
         global: true
       },
       // Stubs dir: registers AITranslateButton without prefix so crouton-ai can override it.
+      // priority: -1 matches the pattern used by crouton-core stubs — overridden by real packages.
       // Uses a separate directory to avoid Nuxt deduplicating same-path entries.
       {
         path: join(currentDir, 'app/stubs'),
         prefix: '',
-        global: true
+        global: true,
+        priority: -1
       }
     ]
   },

@@ -712,8 +712,9 @@ const showPreview = ref(false)
 // SEO preview tab in Extra section
 const seoPreviewTab = ref<'search' | 'social'>('search')
 
-// Detect if crouton-assets is installed (component registered globally when package is present)
-const hasAssetsPicker = !!useNuxtApp().vueApp._context.components['CroutonAssetsPicker']
+// Detect if crouton-assets is installed via its croutonApps registration (set in crouton-assets/app/app.config.ts)
+const { hasApp } = useCroutonApps()
+const hasAssetsPicker = hasApp('assets')
 
 // Asset ID for the picker (not persisted — just tracks current picker selection)
 const selectedOgImageAssetId = ref<string | undefined>()
