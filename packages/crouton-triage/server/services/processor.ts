@@ -1,3 +1,7 @@
+/// <reference path="../crouton-hooks.d.ts" />
+
+import { useNitroApp } from 'nitropack/runtime'
+
 /**
  * Processor Service - Discussion Processing Orchestration
  *
@@ -1416,12 +1420,24 @@ export async function processDiscussion(
         } as AdapterConfig
       : config!
 
+    const stageThreadStart = Date.now()
     const thread = await buildThread(parsed, threadBuildConfig, options.thread, actualTeamId, userMappings)
     logger.info('Thread built', {
       id: thread.id,
       messages: thread.replies.length + 1,
       participants: thread.participants.length,
     })
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'triage:stage:completed',
+      source: 'crouton-triage',
+      teamId: actualTeamId ?? undefined,
+      correlationId,
+      metadata: {
+        stage: 'thread-building',
+        duration: Date.now() - stageThreadStart,
+        success: true,
+      },
+    }).catch(() => {})
 
     // Update discussion metadata with correct values from thread
     // This fixes the issue where initial save had placeholder email addresses
@@ -1475,6 +1491,7 @@ export async function processDiscussion(
       stage: 'ai_analysis',
     })
 
+    const stageAiStart = Date.now()
     let aiAnalysis: AIAnalysisResult
 
     if (options.skipAI) {
@@ -1520,6 +1537,21 @@ export async function processDiscussion(
         cached: aiAnalysis.cached,
       })
     }
+
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'triage:stage:completed',
+      source: 'crouton-triage',
+      teamId: actualTeamId ?? undefined,
+      correlationId,
+      metadata: {
+        stage: 'ai-analysis',
+        duration: Date.now() - stageAiStart,
+        success: true,
+        taskCount: aiAnalysis.taskDetection.tasks.length,
+        isMultiTask: aiAnalysis.taskDetection.isMultiTask,
+        cached: aiAnalysis.cached,
+      },
+    }).catch(() => {})
 
     // ============================================================================
     // STAGE 5: Task Creation
@@ -1886,6 +1918,23 @@ export async function processDiscussion(
     }
 
     // ============================================================================
+    // STAGE 5.5: Emit task creation telemetry
+    // ============================================================================
+    if (notionTasks.length > 0) {
+      useNitroApp().hooks.callHook('crouton:operation', {
+        type: 'triage:stage:completed',
+        source: 'crouton-triage',
+        teamId: actualTeamId ?? undefined,
+        correlationId,
+        metadata: {
+          stage: 'notion-creation',
+          success: true,
+          taskCount: notionTasks.length,
+        },
+      }).catch(() => {})
+    }
+
+    // ============================================================================
     // STAGE 6: Finalization
     // ============================================================================
     await updateJobStatus(jobId, actualTeamId, {
@@ -1972,6 +2021,20 @@ export async function processDiscussion(
       taskCount: notionTasks.length,
     })
 
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'triage:discussion:processed',
+      source: 'crouton-triage',
+      teamId: actualTeamId ?? undefined,
+      correlationId,
+      metadata: {
+        totalDuration: processingTime,
+        success: true,
+        taskCount: notionTasks.length,
+        isMultiTask: aiAnalysis.taskDetection.isMultiTask,
+        sourceType: parsed.sourceType,
+      },
+    }).catch(() => {})
+
     return {
       discussionId,
       aiAnalysis,
@@ -2023,6 +2086,20 @@ export async function processDiscussion(
         // Don't fail processing if job update fails
       }
     }
+
+    // Emit failure telemetry
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'triage:discussion:processed',
+      source: 'crouton-triage',
+      teamId: actualTeamId ?? undefined,
+      correlationId,
+      metadata: {
+        totalDuration: Date.now() - startTime,
+        success: false,
+        sourceType: parsed.sourceType,
+        errorStage: error instanceof ProcessingError ? error.stage : 'unknown',
+      },
+    }).catch(() => {})
 
     // Wrap error if not already a ProcessingError
     if (error instanceof ProcessingError) {

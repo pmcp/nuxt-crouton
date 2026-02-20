@@ -13,6 +13,9 @@
  * @returns Processing result with AI analysis and created tasks
  */
 
+/// <reference path="../../../../../../crouton-hooks.d.ts" />
+
+import { useNitroApp } from 'nitropack/runtime'
 import { resolveTeamAndCheckMembership } from '#crouton/team-auth'
 import { getTriageDiscussionsByIds } from '~~/layers/triage/collections/discussions/server/database/queries'
 import { createTriageJob } from '~~/layers/triage/collections/jobs/server/database/queries'
@@ -154,6 +157,19 @@ export default defineEventHandler(async (event) => {
       options.thread = discussion.threadData as DiscussionThread
       logger.debug('[Retry Endpoint] Reusing stored thread data')
     }
+
+    // Emit retry telemetry
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'webhook:retry',
+      source: 'crouton-triage',
+      teamId: team.id,
+      correlationId: event.context.correlationId,
+      metadata: {
+        attempt: job?.id ? 1 : 0,
+        discussionId: discussion.id,
+        sourceType: discussion.sourceType,
+      },
+    }).catch(() => {})
 
     // Call processor
     const result = await processDiscussion(parsed, options)

@@ -1,3 +1,7 @@
+/// <reference path="../crouton-hooks.d.ts" />
+
+import { useNitroApp } from 'nitropack/runtime'
+
 /**
  * Notion Service - Task Creation in Notion Databases
  *
@@ -881,6 +885,16 @@ export async function createNotionTask(
   const duration = Date.now() - startTime
 
   logger.info('Task created successfully', { taskId: page.id, duration })
+
+  useNitroApp().hooks.callHook('crouton:operation', {
+    type: 'notion:page:created',
+    source: 'crouton-triage',
+    metadata: {
+      pageId: page.id as string,
+      duration,
+      sourceType: config.sourceType,
+    },
+  }).catch(() => {})
 
   return {
     id: page.id,

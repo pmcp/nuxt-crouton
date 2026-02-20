@@ -46,6 +46,9 @@
  * @see https://resend.com/docs/dashboard/webhooks/introduction
  */
 
+/// <reference path="../../../crouton-hooks.d.ts" />
+
+import { useNitroApp } from 'nitropack/runtime'
 import type { ParsedDiscussion } from '../../../../app/types'
 import { getAdapter } from '../../../adapters'
 import { processDiscussion } from '../../../services/processor'
@@ -424,6 +427,20 @@ export default defineEventHandler(async (event) => {
         },
       })
     }
+
+    // 7.5. Emit webhook:received telemetry (for comment emails)
+    const resendRawContent = resendEmail.text || resendEmail.html || ''
+    const resendContentHash = resendRawContent.length.toString(16) + '-' + (resendRawContent.charCodeAt(0) || 0).toString(16)
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'webhook:received',
+      source: 'crouton-triage',
+      correlationId: event.context.correlationId,
+      metadata: {
+        source: 'figma',
+        threadId: parsed.sourceThreadId,
+        contentHash: resendContentHash,
+      },
+    }).catch(() => {})
 
     // 8. Process the discussion through the pipeline
     try {

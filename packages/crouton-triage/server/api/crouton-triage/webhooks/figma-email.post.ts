@@ -29,6 +29,9 @@
  * @see https://documentation.mailgun.com/en/latest/api-sending.html#webhooks
  */
 
+/// <reference path="../../../crouton-hooks.d.ts" />
+
+import { useNitroApp } from 'nitropack/runtime'
 import type { ParsedDiscussion } from '../../../../app/types'
 import { getAdapter } from '../../../adapters'
 import { processDiscussion } from '../../../services/processor'
@@ -142,6 +145,20 @@ export default defineEventHandler(async (event) => {
         },
       })
     }
+
+    // 2.5. Emit webhook:received telemetry
+    const rawBodyStr = payload['body-plain'] || payload['body-html'] || payload['stripped-text'] || ''
+    const contentHashRaw = rawBodyStr.length.toString(16) + '-' + (rawBodyStr.charCodeAt(0) || 0).toString(16)
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'webhook:received',
+      source: 'crouton-triage',
+      correlationId: event.context.correlationId,
+      metadata: {
+        source: 'figma',
+        threadId: parsed.sourceThreadId,
+        contentHash: contentHashRaw,
+      },
+    }).catch(() => {})
 
     // 3. Process the discussion through the pipeline
     try {

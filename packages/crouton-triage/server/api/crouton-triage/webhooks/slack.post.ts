@@ -18,6 +18,7 @@
 
 /// <reference path="../../../crouton-hooks.d.ts" />
 
+import { useNitroApp } from 'nitropack/runtime'
 import { getAdapter } from '../../../adapters'
 import { processDiscussion } from '../../../services/processor'
 import type { ProcessingResult } from '../../../services/processor'

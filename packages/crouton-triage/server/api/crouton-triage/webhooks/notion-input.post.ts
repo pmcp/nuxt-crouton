@@ -16,6 +16,9 @@
  * @see https://developers.notion.com/reference/webhooks
  */
 
+/// <reference path="../../../crouton-hooks.d.ts" />
+
+import { useNitroApp } from 'nitropack/runtime'
 import crypto from 'node:crypto'
 import { getAdapter } from '../../../adapters'
 import { processDiscussion } from '../../../services/processor'
@@ -596,6 +599,22 @@ export default defineEventHandler(async (event) => {
     }
 
     // ============================================================================
+    // EMIT WEBHOOK:RECEIVED TELEMETRY
+    // ============================================================================
+    const notionCorrelationId = event.context.correlationId
+    const notionContentHash = rawBody.length.toString(16) + '-' + (rawBody.charCodeAt(0) || 0).toString(16)
+    useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'webhook:received',
+      source: 'crouton-triage',
+      correlationId: notionCorrelationId,
+      metadata: {
+        source: 'notion',
+        threadId: parsed.sourceThreadId,
+        contentHash: notionContentHash,
+      },
+    }).catch(() => {})
+
+    // ============================================================================
     // PROCESS DISCUSSION
     // ============================================================================
     logger.debug('[Notion Webhook] Starting discussion processing...')
@@ -608,9 +627,8 @@ export default defineEventHandler(async (event) => {
       // Production: Process in background using waitUntil
       logger.debug('[Notion Webhook] Using background processing (waitUntil)')
 
-      const correlationId = event.context.correlationId
       cfCtx.waitUntil(
-        processDiscussion(parsed, { correlationId })
+        processDiscussion(parsed, { correlationId: notionCorrelationId })
           .then((result) => {
             logger.debug('[Notion Webhook] Background processing completed:', {
               discussionId: result.discussionId,
