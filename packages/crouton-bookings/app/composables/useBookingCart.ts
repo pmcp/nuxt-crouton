@@ -1,5 +1,8 @@
 import { useLocalStorage } from '@vueuse/core'
-import type { LocationData, SlotItem, CartItem, BookingData, SettingsData } from '../types/booking'
+import type { LocationData, SlotItem, BookingData, SettingsData, CartItem } from '../types/booking'
+import { toDateKey, isSameDay } from '@fyit/crouton-core/shared/utils/date'
+import { useBookingMonthlyLimit } from './useBookingMonthlyLimit'
+import { useBookingCartStorage } from './useBookingCartStorage'
 
 interface AvailabilityData {
   [dateISO: string]: {
@@ -14,18 +17,18 @@ const ALL_DAY_SLOT: SlotItem = {
 }
 
 /**
- * Composable for managing the booking cart and customer booking flow
- * Supports both slot-based and inventory-based booking modes
+ * Composable for managing the booking cart and customer booking flow.
+ * Supports both slot-based and inventory-based booking modes.
+ *
+ * Delegates to focused sub-composables:
+ *   - useBookingCartStorage  — localStorage persistence, cart CRUD, submit/cancel/delete
+ *   - useBookingMonthlyLimit — monthly booking limit tracking per location
  */
 export function useBookingCart() {
-  const toast = useToast()
   const { currentTeam } = useTeam()
 
   // Team ID from auth context (consistent with useBookingsList)
   const teamId = computed(() => currentTeam.value?.id)
-
-  // Cart persisted in localStorage
-  const cart = useLocalStorage<CartItem[]>('crouton-booking-cart', [])
 
   // Fetch customer bookings for the "My Bookings" count and list
   const { data: myBookings, status: myBookingsStatus, refresh: refreshMyBookings } = useFetch<BookingData[]>(
@@ -60,9 +63,6 @@ export function useBookingCart() {
 
   // Expanded state (XL mode with map)
   const isExpanded = useState('croutonBookingSidebarExpanded', () => false)
-
-  // Submitting state
-  const isSubmitting = ref(false)
 
   // Cart pulse animation trigger (increments when item added)
   const cartPulse = useState('croutonBookingCartPulse', () => 0)
@@ -149,60 +149,45 @@ export function useBookingCart() {
 
   // Monthly booking limit
   const monthlyBookingLimit = computed(() => selectedLocation.value?.maxBookingsPerMonth ?? null)
-  const monthlyBookingCount = ref<number>(0)
-  const monthlyBookingCountLoading = ref(false)
 
-  // Get YYYY-MM key for a date
-  function getMonthKey(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-  }
+  // Cart persisted in localStorage — shared key with useBookingCartStorage so VueUse
+  // deduplicates them into a single reactive ref.
+  const cart = useLocalStorage<CartItem[]>('crouton-booking-cart', [])
 
-  // Count cart items for current location + selected date's month (sums quantities for inventory mode)
-  const cartCountForLocationMonth = computed(() => {
-    if (!formState.locationId || !formState.date) return 0
-    const targetMonth = getMonthKey(formState.date)
-    return cart.value
-      .filter((item) => {
-        const itemDate = new Date(item.date)
-        return item.locationId === formState.locationId
-          && getMonthKey(itemDate) === targetMonth
-      })
-      .reduce((sum, item) => sum + (item.quantity ?? 1), 0)
-  })
+  // --- Monthly limit sub-composable ---
+  const locationIdRef = computed(() => formState.locationId)
+  const selectedDateRef = computed(() => formState.date)
+  const editingBookingIdRef = computed(() => formState.editingBookingId)
 
-  // Remaining bookings for the month (null if no limit)
-  const monthlyBookingRemaining = computed(() => {
-    if (!monthlyBookingLimit.value) return null
-    return Math.max(0, monthlyBookingLimit.value - monthlyBookingCount.value - cartCountForLocationMonth.value)
-  })
+  const {
+    monthlyBookingRemaining,
+  } = useBookingMonthlyLimit(
+    teamId,
+    locationIdRef,
+    selectedDateRef,
+    monthlyBookingLimit,
+    cart,
+    editingBookingIdRef,
+  )
 
-  // Fetch monthly booking count from API
-  async function fetchMonthlyBookingCount() {
-    if (!formState.locationId || !teamId.value || !monthlyBookingLimit.value) {
-      monthlyBookingCount.value = 0
-      return
-    }
+  // --- Cart storage sub-composable ---
+  const refreshMyBookingsWrapper = async () => { await refreshMyBookings() }
 
-    const month = formState.date ? getMonthKey(formState.date) : undefined
-
-    monthlyBookingCountLoading.value = true
-    try {
-      const data = await $fetch<{ count: number }>(`/api/crouton-bookings/teams/${teamId.value}/monthly-booking-count`, {
-        query: {
-          locationId: formState.locationId,
-          ...(month && { month }),
-        },
-      })
-      monthlyBookingCount.value = data.count
-    }
-    catch (error) {
-      console.error('Failed to fetch monthly booking count:', error)
-      monthlyBookingCount.value = 0
-    }
-    finally {
-      monthlyBookingCountLoading.value = false
-    }
-  }
+  const {
+    cartCount,
+    isSubmitting,
+    removeFromCart,
+    clearCart,
+    submitAll,
+    cancelBooking,
+    deleteBooking,
+  } = useBookingCartStorage(
+    teamId,
+    refreshMyBookingsWrapper,
+    isCartOpen,
+    activeTab,
+    cartPulse,
+  )
 
   // Check if selected location is in inventory mode
   const isInventoryMode = computed(() => selectedLocation.value?.inventoryMode ?? false)
@@ -228,19 +213,6 @@ export function useBookingCart() {
 
     return Array.isArray(slots) ? slots : []
   })
-
-  // Normalize date to YYYY-MM-DD string (using local date, not UTC)
-  function normalizeToDateKey(date: Date): string {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
-  // Check if two dates are the same day
-  function isSameDay(date1: Date, date2: Date): boolean {
-    return normalizeToDateKey(date1) === normalizeToDateKey(date2)
-  }
 
   // Fetch availability for a date range
   async function fetchAvailability(startDate: Date, endDate: Date) {
@@ -275,13 +247,13 @@ export function useBookingCart() {
 
   // Get booked slots from API for a specific date (slot mode)
   function getApiBookedSlotsForDate(date: Date): string[] {
-    const dateKey = normalizeToDateKey(date)
+    const dateKey = toDateKey(date)
     return availabilityData.value[dateKey]?.bookedSlots || []
   }
 
   // Get booked count from API for a specific date (inventory mode)
   function getApiBookedCountForDate(date: Date): number {
-    const dateKey = normalizeToDateKey(date)
+    const dateKey = toDateKey(date)
     return availabilityData.value[dateKey]?.bookedCount ?? 0
   }
 
@@ -446,15 +418,6 @@ export function useBookingCart() {
     return bookedIds.map(id => getSlotLabel(id))
   }
 
-  // Fetch monthly booking count when location or month changes
-  watch(
-    [() => formState.locationId, () => formState.date ? getMonthKey(formState.date) : null, monthlyBookingLimit],
-    () => {
-      fetchMonthlyBookingCount()
-    },
-    { immediate: true },
-  )
-
   // Fetch availability when location or editing state changes
   watch([() => formState.locationId, () => formState.editingBookingId], () => {
     availabilityData.value = {}
@@ -492,9 +455,6 @@ export function useBookingCart() {
 
     return true
   })
-
-  // Cart count for badge
-  const cartCount = computed(() => cart.value.length)
 
   // Generate unique ID
   function generateId() {
@@ -570,72 +530,6 @@ export function useBookingCart() {
     cartPulse.value++
   }
 
-  // Remove item from cart
-  function removeFromCart(id: string) {
-    const index = cart.value.findIndex(item => item.id === id)
-    if (index !== -1) {
-      cart.value.splice(index, 1)
-    }
-  }
-
-  // Clear entire cart
-  function clearCart() {
-    cart.value = []
-  }
-
-  // Submit all bookings in cart
-  async function submitAll() {
-    if (cart.value.length === 0) {
-      toast.add({
-        title: 'Cart is empty',
-        description: 'Add some bookings to your cart first',
-        color: 'warning',
-      })
-      return null
-    }
-
-    isSubmitting.value = true
-
-    try {
-      const result = await $fetch(`/api/crouton-bookings/teams/${teamId.value}/customer-bookings-batch`, {
-        method: 'POST',
-        body: {
-          bookings: cart.value,
-        },
-      })
-
-      // Clear cart on success
-      clearCart()
-
-      // Refresh my bookings list
-      await refreshMyBookings()
-
-      toast.add({
-        title: 'Bookings confirmed!',
-        description: `Successfully created ${result.count} booking${result.count === 1 ? '' : 's'}`,
-        color: 'success',
-      })
-
-      // Close cart drawer and switch to my bookings tab
-      isCartOpen.value = false
-      activeTab.value = 'my-bookings'
-
-      return result
-    }
-    catch (error: any) {
-      console.error('Failed to submit bookings:', error)
-      toast.add({
-        title: 'Booking failed',
-        description: error.data?.message || 'Failed to create bookings. Please try again.',
-        color: 'error',
-      })
-      return null
-    }
-    finally {
-      isSubmitting.value = false
-    }
-  }
-
   // Reset form state
   function resetForm() {
     formState.locationId = null
@@ -643,65 +537,6 @@ export function useBookingCart() {
     formState.slotId = null
     formState.groupId = null
     formState.quantity = 1
-  }
-
-  // Cancel a booking (set status to 'cancelled')
-  async function cancelBooking(bookingId: string) {
-    try {
-      await $fetch(`/api/teams/${teamId.value}/bookings-bookings/${bookingId}`, {
-        method: 'PATCH',
-        body: {
-          status: 'cancelled',
-        },
-      })
-
-      await refreshMyBookings()
-
-      toast.add({
-        title: 'Booking cancelled',
-        description: 'Your booking has been cancelled successfully',
-        color: 'success',
-      })
-
-      return true
-    }
-    catch (error: any) {
-      console.error('Failed to cancel booking:', error)
-      toast.add({
-        title: 'Cancellation failed',
-        description: error.data?.message || 'Failed to cancel booking. Please try again.',
-        color: 'error',
-      })
-      return false
-    }
-  }
-
-  // Permanently delete a booking
-  async function deleteBooking(bookingId: string) {
-    try {
-      await $fetch(`/api/teams/${teamId.value}/bookings-bookings/${bookingId}`, {
-        method: 'DELETE',
-      })
-
-      await refreshMyBookings()
-
-      toast.add({
-        title: 'Booking deleted',
-        description: 'The booking has been permanently removed',
-        color: 'success',
-      })
-
-      return true
-    }
-    catch (error: any) {
-      console.error('Failed to delete booking:', error)
-      toast.add({
-        title: 'Delete failed',
-        description: error.data?.message || 'Failed to delete booking. Please try again.',
-        color: 'error',
-      })
-      return false
-    }
   }
 
   return {
