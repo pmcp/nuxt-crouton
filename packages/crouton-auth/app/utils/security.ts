@@ -19,6 +19,7 @@ export function isValidEmail(email: string): boolean {
 
 /**
  * Sanitize email (lowercase, trim)
+ * @public Available for consumer apps to use directly.
  */
 export function sanitizeEmail(email: string): string {
   return email.toLowerCase().trim()
@@ -123,6 +124,7 @@ export function passwordsMatch(password: string, confirmPassword: string): boole
  * - 3-50 characters
  * - Lowercase letters, numbers, hyphens
  * - Must start and end with letter or number
+ * @public Available for consumer apps to use directly.
  */
 export function isValidSlug(slug: string): boolean {
   const slugRegex = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/
@@ -131,6 +133,7 @@ export function isValidSlug(slug: string): boolean {
 
 /**
  * Generate a valid slug from text
+ * @public Available for consumer apps to use directly.
  */
 export function generateSlug(text: string): string {
   return text
@@ -145,6 +148,7 @@ export function generateSlug(text: string): string {
 
 /**
  * Validate team name
+ * @public Available for consumer apps to use directly.
  */
 export function isValidTeamName(name: string): boolean {
   return name.length >= 2 && name.length <= 100
@@ -167,6 +171,7 @@ export function sanitizeInput(input: string): string {
 
 /**
  * Sanitize URL (ensure it's safe to redirect to)
+ * @public Available for consumer apps to use directly.
  */
 export function sanitizeRedirectUrl(url: string): string {
   // Only allow relative URLs or same-origin URLs
@@ -189,6 +194,7 @@ export function sanitizeRedirectUrl(url: string): string {
 
 /**
  * Check if the app is running over HTTPS
+ * @public Available for consumer apps to use directly.
  */
 export function isSecureContext(): boolean {
   if (typeof window === 'undefined') return true // SSR

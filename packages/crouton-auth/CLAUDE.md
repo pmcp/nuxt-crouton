@@ -36,6 +36,28 @@ URLs always include `[team]` param (industry standard: Linear, Notion, Vercel, G
 | `server/utils/team.ts` | Core team resolution logic |
 | `types/config.ts` | `CroutonAuthConfig` configuration type |
 | `types/connector.ts` | `BetterAuthConnector` interface |
+| `app/utils/security.ts` | Client-side security utilities (public API for consumer apps) |
+
+## Public Utilities
+
+`app/utils/security.ts` exports client-side helpers that are part of the **public API** for consumer apps. They are not used inside the monorepo itself but are deliberately available for import.
+
+| Function | Signature | Purpose |
+|----------|-----------|---------|
+| `sanitizeEmail` | `(email: string) => string` | Lowercase + trim an email before storage or comparison |
+| `isValidSlug` | `(slug: string) => boolean` | Validate team slug (3-50 chars, lowercase, hyphens, no leading/trailing hyphens) |
+| `generateSlug` | `(text: string) => string` | Derive a valid slug from arbitrary text |
+| `isValidTeamName` | `(name: string) => boolean` | Check team name length (2-100 chars) |
+| `sanitizeRedirectUrl` | `(url: string) => string` | Allow only same-origin redirect URLs; returns `'/'` for external targets |
+| `isSecureContext` | `() => boolean` | Return `true` when running over HTTPS (or SSR); wraps `window.isSecureContext` |
+
+```typescript
+// Consumer app usage
+import { sanitizeEmail, generateSlug, isValidSlug, sanitizeRedirectUrl } from '@crouton/auth'
+
+const slug = generateSlug('My Awesome Team')  // 'my-awesome-team'
+const safeUrl = sanitizeRedirectUrl(redirectParam)  // '/' on external URLs
+```
 
 ## Composables
 

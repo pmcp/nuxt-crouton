@@ -555,6 +555,7 @@ export function useAuth() {
 
   /**
    * Update passkey name
+   * TODO: Not yet supported by Better Auth — https://github.com/better-auth/better-auth
    */
   async function updatePasskey(_id: string, _name: string): Promise<void> {
     loading.value = true
