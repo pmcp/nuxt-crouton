@@ -14,7 +14,6 @@
  *   DonutChart – data: number[], radius: number (required), categories: Record<string, {name,color}>
  */
 import { computed } from 'vue'
-import type { ChartCategory } from '../composables/useCollectionChart'
 
 interface Props {
   /** Collection key (e.g. 'blogPosts', 'products') */
@@ -67,18 +66,18 @@ const hasData = computed(() => chartData.value.length > 0 && categories.value.le
 // xAxisKey: the non-category field used as the X axis label source
 const xAxisKey = computed(() => {
   if (!hasData.value) return 'name'
-  const categoryNames = categories.value.map((c: ChartCategory) => c.name)
+  const categoryNames = categories.value.map((c) => c.name)
   const keys = Object.keys(chartData.value[0] || {})
   return keys.find(k => !categoryNames.includes(k)) || 'name'
 })
 
 // vue-chrts expects categories as Record<string, {name, color}> (keys = field names)
 const categoriesObject = computed(() =>
-  Object.fromEntries(categories.value.map((c: ChartCategory) => [c.name, { name: c.name, color: c.color }]))
+  Object.fromEntries(categories.value.map((c) => [c.name, { name: c.name, color: c.color }]))
 )
 
 // yAxis field names array for BarChart
-const yAxisNames = computed(() => categories.value.map((c: ChartCategory) => c.name))
+const yAxisNames = computed(() => categories.value.map((c) => c.name))
 
 // xFormatter for BarChart / AreaChart / LineChart: map array index → actual x-field value
 const xFormatter = computed(() => {
