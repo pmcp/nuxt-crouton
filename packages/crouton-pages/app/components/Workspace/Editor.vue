@@ -709,9 +709,6 @@ const fieldGroups = computed(() => ({
 // Preview drawer state
 const showPreview = ref(false)
 
-// SEO preview tab in Extra section
-const seoPreviewTab = ref<'search' | 'social'>('search')
-
 // Detect if crouton-assets is installed via its croutonApps registration (set in crouton-assets/app/app.config.ts)
 const { hasApp } = useCroutonApps()
 const hasAssetsPicker = hasApp('assets')
@@ -835,275 +832,41 @@ defineExpose({ state })
       @submit="handleSubmit"
     >
       <!-- Header Bar -->
-       <div class="flex flex-wrap items-center gap-3 min-h-12 px-4 py-2 border-b border-default bg-elevated/30">
-        <!-- Status, Page Type, Visibility -->
-        <UFieldGroup>
-          <!-- Status -->
-          <UDropdownMenu
-            :items="statusDropdownItems"
-            :content="{ align: 'start' }"
-          >
-            <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
-              <span
-                :class="[
-                  'block size-3 rounded-full',
-                  `bg-${statusConfig[state.status]?.color || 'warning'}`
-                ]"
-              />
-              <span class="hidden lg:inline">{{ statusConfig[state.status]?.label }}</span>
-            </UButton>
-
-            <template #draft="{ item }">
-              <span class="flex items-center gap-2">
-                <span class="block size-2.5 rounded-full bg-warning" />
-                {{ item.label }}
-              </span>
-            </template>
-            <template #published="{ item }">
-              <span class="flex items-center gap-2">
-                <span class="block size-2.5 rounded-full bg-success" />
-                {{ item.label }}
-              </span>
-            </template>
-            <template #archived="{ item }">
-              <span class="flex items-center gap-2">
-                <span class="block size-2.5 rounded-full bg-error" />
-                {{ item.label }}
-              </span>
-            </template>
-          </UDropdownMenu>
-
-          <!-- Page Type -->
-          <UDropdownMenu
-            v-if="action === 'create'"
-            :items="pageTypeDropdownItems"
-            :content="{ align: 'start' }"
-          >
-            <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
-              <UIcon
-                :name="selectedPageType?.icon || 'i-lucide-file'"
-                class="size-4"
-              />
-              <span class="hidden lg:inline">{{ selectedPageType?.name || 'Page' }}</span>
-            </UButton>
-
-            <template #item="{ item }">
-              <span class="flex items-center gap-2">
-                <UIcon :name="item.icon || 'i-lucide-file'" class="size-4 text-muted" />
-                {{ item.label }}
-              </span>
-            </template>
-          </UDropdownMenu>
-          <UPopover v-else>
-            <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
-              <UIcon
-                :name="selectedPageType?.icon || 'i-lucide-file'"
-                class="size-4"
-              />
-              <span class="hidden lg:inline">{{ selectedPageType?.name || 'Page' }}</span>
-            </UButton>
-            <template #content>
-              <div class="p-3 text-sm">
-                <div class="font-medium">{{ selectedPageType?.name || 'Regular Page' }}</div>
-                <div v-if="selectedPageType?.description" class="text-muted text-xs mt-1">
-                  {{ selectedPageType.description }}
-                </div>
-              </div>
-            </template>
-          </UPopover>
-
-          <!-- Visibility -->
-          <UDropdownMenu
-            :items="visibilityDropdownItems"
-            :content="{ align: 'start' }"
-          >
-            <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
-              <UIcon
-                :name="visibilityConfig[state.visibility]?.icon || 'i-lucide-globe'"
-                class="size-4 text-muted"
-              />
-              <span class="hidden lg:inline">{{ visibilityConfig[state.visibility]?.label }}</span>
-            </UButton>
-
-            <template #public="{ item }">
-              <span class="flex items-center gap-2">
-                <UIcon name="i-lucide-globe" class="size-4 text-muted" />
-                {{ item.label }}
-              </span>
-            </template>
-            <template #members="{ item }">
-              <span class="flex items-center gap-2">
-                <UIcon name="i-lucide-users" class="size-4 text-muted" />
-                {{ item.label }}
-              </span>
-            </template>
-            <template #hidden="{ item }">
-              <span class="flex items-center gap-2">
-                <UIcon name="i-lucide-eye-off" class="size-4 text-muted" />
-                {{ item.label }}
-              </span>
-            </template>
-          </UDropdownMenu>
-
-          <!-- Show in Navigation -->
-          <UTooltip :text="state.showInNavigation ? 'Shown in Menu' : 'Hidden from Menu'" :delay-duration="0">
-            <UButton
-              variant="ghost"
-              color="neutral"
-              size="xs"
-              class="px-2"
-              @click="state.showInNavigation = !state.showInNavigation"
-            >
-              <UIcon
-                name="i-lucide-menu"
-                :class="['size-4', state.showInNavigation ? 'text-muted' : 'opacity-30']"
-              />
-              <span :class="['hidden lg:inline', state.showInNavigation ? '' : 'opacity-30']">
-                {{ state.showInNavigation ? 'In Menu' : 'No Menu' }}
-              </span>
-            </UButton>
-          </UTooltip>
-
-          <!-- Settings -->
-          <UTooltip :text="t('pages.editor.settings')" :delay-duration="0">
-            <UPopover>
-              <UButton
-                variant="ghost"
-                color="neutral"
-                icon="i-lucide-settings"
-                size="xs"
-              >
-                <span class="hidden lg:inline">{{ t('pages.editor.settings') }}</span>
-              </UButton>
-              <template #content>
-                <div class="p-4 w-72 space-y-4">
-                  <div class="text-sm font-medium text-default mb-3">{{ t('pages.editor.pageSettings') }}</div>
-
-                  <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
-                    <USelect
-                      v-model="state.layout"
-                      :items="layoutOptions"
-                      value-key="value"
-                      size="sm"
-                      class="w-full"
-                      @update:model-value="onLayoutChange"
-                    />
-                  </UFormField>
-
-                  <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
-                    <USelect
-                      v-model="state.parentId"
-                      :items="parentOptions"
-                      value-key="value"
-                      :loading="pagesPending"
-                      placeholder="None"
-                      size="sm"
-                      class="w-full"
-                    />
-                  </UFormField>
-
-                </div>
-              </template>
-            </UPopover>
-          </UTooltip>
-        </UFieldGroup>
-
-        <div class="flex-1" />
-
-        <UFieldGroup>
-          <!-- AI page generator (regular pages only) -->
-          <UTooltip v-if="isRegularPage" text="Generate page with AI" :delay-duration="0">
-            <UButton
-              variant="ghost"
-              color="primary"
-              icon="i-lucide-sparkles"
-              size="xs"
-              @click="showAiGenerator = true"
-            >
-              <span class="hidden lg:inline">{{ t('pages.editor.generate') }}</span>
-            </UButton>
-          </UTooltip>
-
-          <!-- Preview -->
-          <UTooltip :text="state.status === 'draft' ? 'Preview Draft' : 'Preview Page'" :delay-duration="0">
-            <UButton
-              variant="ghost"
-              color="neutral"
-              icon="i-lucide-eye"
-              size="xs"
-              @click="showPreview = true"
-            >
-              <span class="hidden lg:inline">{{ t('pages.editor.preview') }}</span>
-            </UButton>
-          </UTooltip>
-
-          <!-- Open in public -->
-          <UTooltip
-            v-if="publicUrl"
-            :text="state.status === 'published' ? 'Open in Public' : 'Publish page to open publicly'"
-            :delay-duration="0"
-          >
-            <UButton
-              :to="state.status === 'published' ? publicUrl : undefined"
-              :disabled="state.status !== 'published'"
-              target="_blank"
-              variant="ghost"
-              color="neutral"
-              icon="i-lucide-external-link"
-              size="xs"
-            >
-              <span class="hidden lg:inline">Open</span>
-            </UButton>
-          </UTooltip>
-
-          <!-- Cancel (create mode) -->
-          <UButton
-            v-if="action === 'create'"
-            color="error"
-            variant="ghost"
-            icon="i-lucide-x"
-            size="xs"
-            @click="emit('cancel')"
-          >
-            Cancel
-          </UButton>
-
-          <!-- Delete (two-click confirm, edit mode) -->
-          <UButton
-            v-if="action === 'update' && state.id"
-            color="error"
-            :variant="confirmingDelete ? 'soft' : 'ghost'"
-            :icon="confirmingDelete ? undefined : 'i-lucide-trash-2'"
-            size="xs"
-            @click="handleDelete"
-            @blur="confirmingDelete = false"
-          >
-            <template v-if="confirmingDelete">Delete?</template>
-          </UButton>
-
-          <!-- Save -->
-          <UButton
-            type="submit"
-            variant="soft"
-            color="primary"
-            size="xs"
-            icon="i-lucide-save"
-            :loading="isSaving"
-          >
-            {{ action === 'create' ? 'Create' : 'Save' }}
-          </UButton>
-
-          <!-- Close button (shown in inline editor context) -->
-          <UButton
-            v-if="showClose"
-            variant="ghost"
-            color="neutral"
-            icon="i-lucide-x"
-            size="xs"
-            @click="emit('close')"
-          />
-        </UFieldGroup>
-      </div>
+      <CroutonPagesEditorToolbar
+        :action="action"
+        :status="state.status"
+        :visibility="state.visibility"
+        :show-in-navigation="state.showInNavigation"
+        :layout="state.layout"
+        :parent-id="state.parentId"
+        :confirming-delete="confirmingDelete"
+        :selected-page-type="selectedPageType"
+        :page-type-dropdown-items="pageTypeDropdownItems"
+        :status-config="statusConfig"
+        :visibility-config="visibilityConfig"
+        :status-dropdown-items="statusDropdownItems"
+        :visibility-dropdown-items="visibilityDropdownItems"
+        :layout-options="layoutOptions"
+        :parent-options="parentOptions"
+        :pages-pending="pagesPending"
+        :is-regular-page="isRegularPage"
+        :is-saving="isSaving"
+        :show-close="showClose"
+        :page-id="state.id"
+        :public-url="publicUrl"
+        @update:status="state.status = $event"
+        @update:visibility="state.visibility = $event"
+        @update:show-in-navigation="state.showInNavigation = $event"
+        @update:layout="state.layout = $event"
+        @update:parent-id="state.parentId = $event"
+        @update:confirming-delete="confirmingDelete = $event"
+        @show-ai-generator="showAiGenerator = true"
+        @show-preview="showPreview = true"
+        @layout-change="onLayoutChange"
+        @cancel="emit('cancel')"
+        @delete="handleDelete"
+        @close="emit('close')"
+      />
 
       <!-- Collection item picker — shown above the i18n input so it is always visible -->
       <div v-if="isCollectionPage" class="px-4 pt-4 pb-2 shrink-0 border-b border-default">
@@ -1201,120 +964,22 @@ defineExpose({ state })
               </UFormField>
             </div>
             <!-- SEO preview for narrow/mobile (hidden on wide screens where secondary column shows it) -->
-            <div class="lg:hidden mt-3 space-y-2">
-              <div class="flex items-center gap-1.5 text-xs text-muted/70 select-none">
-                <UIcon name="i-lucide-eye" class="size-3" />
-                <span>{{ t('pages.editor.preview') }}</span>
-              </div>
-              <div class="flex rounded border border-default overflow-hidden text-xs">
-                <button
-                  type="button"
-                  :class="['flex-1 py-1 transition-colors', seoPreviewTab === 'search' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
-                  @click="seoPreviewTab = 'search'"
-                >{{ t('pages.editor.search') }}</button>
-                <button
-                  type="button"
-                  :class="['flex-1 py-1 transition-colors border-l border-default', seoPreviewTab === 'social' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
-                  @click="seoPreviewTab = 'social'"
-                >{{ t('pages.editor.social') }}</button>
-              </div>
-              <div v-if="seoPreviewTab === 'search'" class="rounded-lg border border-default bg-background p-3 space-y-1">
-                <div class="flex gap-3">
-                  <div class="flex-1 space-y-1 min-w-0">
-                    <div class="flex items-center gap-1.5 text-xs text-muted truncate">
-                      <UIcon name="i-lucide-globe" class="size-3 shrink-0" />
-                      <span class="truncate">{{ teamSlugRef }} › {{ previewLocale }}<template v-if="(state.translations as any)[previewLocale]?.slug"> › {{ (state.translations as any)[previewLocale]?.slug }}</template></span>
-                    </div>
-                    <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
-                      {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
-                    </div>
-                    <div class="text-xs text-muted leading-relaxed line-clamp-2">
-                      {{ (state.translations as any)[previewLocale]?.seoDescription || 'No description — add a meta description to improve SEO.' }}
-                    </div>
-                  </div>
-                  <div v-if="state.ogImage" class="shrink-0 size-16 rounded overflow-hidden bg-muted">
-                    <img :src="state.ogImage" class="w-full h-full object-cover" alt="" />
-                  </div>
-                </div>
-              </div>
-              <div v-else class="rounded-lg border border-default overflow-hidden">
-                <div class="aspect-[1200/630] bg-muted/30 overflow-hidden">
-                  <img v-if="state.ogImage" :src="state.ogImage" class="w-full h-full object-cover" alt="" />
-                  <div v-else class="w-full h-full flex flex-col items-center justify-center gap-2 text-muted/60">
-                    <UIcon name="i-lucide-image" class="size-8" />
-                    <span class="text-xs">No social image set</span>
-                  </div>
-                </div>
-                <div class="p-2.5 bg-background border-t border-default space-y-0.5">
-                  <div class="text-xs text-muted uppercase tracking-wide">{{ teamSlugRef }}</div>
-                  <div class="text-sm font-medium leading-snug">
-                    {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
-                  </div>
-                  <div v-if="(state.translations as any)[previewLocale]?.seoDescription" class="text-xs text-muted leading-relaxed line-clamp-2">
-                    {{ (state.translations as any)[previewLocale]?.seoDescription }}
-                  </div>
-                </div>
-              </div>
+            <div class="lg:hidden">
+              <CroutonPagesEditorSeoPreview
+                :team-slug="teamSlugRef"
+                :translations="state.translations"
+                :og-image="state.ogImage"
+                :preview-locale="previewLocale"
+              />
             </div>
           </template>
           <template #group-extra-secondary="{ locale: previewLocale }">
-            <div class="mt-3 space-y-2">
-              <div class="flex items-center gap-1.5 text-xs text-muted/70 select-none">
-                <UIcon name="i-lucide-eye" class="size-3" />
-                <span>{{ t('pages.editor.preview') }}</span>
-              </div>
-              <div class="flex rounded border border-default overflow-hidden text-xs">
-                <button
-                  type="button"
-                  :class="['flex-1 py-1 transition-colors', seoPreviewTab === 'search' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
-                  @click="seoPreviewTab = 'search'"
-                >{{ t('pages.editor.search') }}</button>
-                <button
-                  type="button"
-                  :class="['flex-1 py-1 transition-colors border-l border-default', seoPreviewTab === 'social' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
-                  @click="seoPreviewTab = 'social'"
-                >{{ t('pages.editor.social') }}</button>
-              </div>
-              <!-- Google Search Preview -->
-              <div v-if="seoPreviewTab === 'search'" class="rounded-lg border border-default bg-background p-3 space-y-1">
-                <div class="flex gap-3">
-                  <div class="flex-1 space-y-1 min-w-0">
-                    <div class="flex items-center gap-1.5 text-xs text-muted truncate">
-                      <UIcon name="i-lucide-globe" class="size-3 shrink-0" />
-                      <span class="truncate">{{ teamSlugRef }} › {{ previewLocale }}<template v-if="(state.translations as any)[previewLocale]?.slug"> › {{ (state.translations as any)[previewLocale]?.slug }}</template></span>
-                    </div>
-                    <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
-                      {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
-                    </div>
-                    <div class="text-xs text-muted leading-relaxed line-clamp-2">
-                      {{ (state.translations as any)[previewLocale]?.seoDescription || 'No description — add a meta description to improve SEO.' }}
-                    </div>
-                  </div>
-                  <div v-if="state.ogImage" class="shrink-0 size-16 rounded overflow-hidden bg-muted">
-                    <img :src="state.ogImage" class="w-full h-full object-cover" alt="" />
-                  </div>
-                </div>
-              </div>
-              <!-- OG / Social Preview -->
-              <div v-else class="rounded-lg border border-default overflow-hidden">
-                <div class="aspect-[1200/630] bg-muted/30 overflow-hidden">
-                  <img v-if="state.ogImage" :src="state.ogImage" class="w-full h-full object-cover" alt="" />
-                  <div v-else class="w-full h-full flex flex-col items-center justify-center gap-2 text-muted/60">
-                    <UIcon name="i-lucide-image" class="size-8" />
-                    <span class="text-xs">No social image set</span>
-                  </div>
-                </div>
-                <div class="p-2.5 bg-background border-t border-default space-y-0.5">
-                  <div class="text-xs text-muted uppercase tracking-wide">{{ teamSlugRef }}</div>
-                  <div class="text-sm font-medium leading-snug">
-                    {{ (state.translations as any)[previewLocale]?.seoTitle || (state.translations as any)[previewLocale]?.title || 'Page Title' }}
-                  </div>
-                  <div v-if="(state.translations as any)[previewLocale]?.seoDescription" class="text-xs text-muted leading-relaxed line-clamp-2">
-                    {{ (state.translations as any)[previewLocale]?.seoDescription }}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <CroutonPagesEditorSeoPreview
+              :team-slug="teamSlugRef"
+              :translations="state.translations"
+              :og-image="state.ogImage"
+              :preview-locale="previewLocale"
+            />
           </template>
           <template v-if="hasMetadata" #header>
             <div class="flex items-center gap-3 text-xs text-muted">
