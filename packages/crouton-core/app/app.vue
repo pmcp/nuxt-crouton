@@ -42,6 +42,7 @@ const showContent = computed(() => isReady.value || forceShow.value)
         <NuxtLayout>
           <NuxtPage />
           <CroutonForm />
+          <AuthRouteModal />
         </NuxtLayout>
       </div>
     </div>
