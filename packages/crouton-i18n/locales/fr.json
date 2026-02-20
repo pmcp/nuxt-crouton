@@ -381,6 +381,24 @@
     "csv": "Importer CSV",
     "json": "Importer JSON"
   },
+  "admin": {
+    "translations": {
+      "title": "UI Translations",
+      "searchPlaceholder": "Search translations...",
+      "allCategories": "All categories",
+      "loadFailed": "Failed to load translations",
+      "noTranslationsFound": "No translations found",
+      "keyPath": "Key Path",
+      "systemValues": "System Values",
+      "teamOverrideValues": "Team Override Values",
+      "editOverride": "Edit/Create Override",
+      "removeOverrideTitle": "Remove Translation Override?",
+      "removeOverrideDescription": "This will permanently delete your team's custom translation and revert to using the system translation.",
+      "removeOverride": "Remove Override",
+      "replaceConfirmTitle": "Replace existing translation?",
+      "replace": "Replace"
+    }
+  },
   "navigation": {
     "dashboard": "Tableau de bord",
     "home": "Accueil",

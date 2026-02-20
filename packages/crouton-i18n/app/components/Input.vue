@@ -125,6 +125,7 @@ const fieldComponentMap = computed(() => {
 })
 
 const { locale, locales } = useI18n()
+const { t } = useT()
 const toast = useToast()
 
 // Track which locale we're editing (for tabs mode)
@@ -1712,7 +1713,7 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               <UIcon name="i-lucide-alert-triangle" class="size-5 text-primary" />
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-semibold">Replace existing translation?</h3>
+              <h3 class="text-lg font-semibold">{{ t('admin.translations.replaceConfirmTitle') }}</h3>
               <p class="text-sm text-muted mt-1">
                 The target field already has content. Translating will replace it with a new AI-generated translation.
               </p>
@@ -1724,13 +1725,13 @@ async function requestBlockTranslation(field: string, targetLocale: string) {
               variant="ghost"
               @click="cancelBlockTranslation"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton
               color="primary"
               @click="proceedWithBlockTranslation"
             >
-              Replace
+              {{ t('admin.translations.replace') }}
             </UButton>
           </div>
         </div>

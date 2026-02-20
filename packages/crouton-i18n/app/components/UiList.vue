@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-          UI Translations
+          {{ t('admin.translations.title') }}
         </h2>
         <p class="text-sm text-gray-500 dark:text-gray-400">
           System translations with team overrides
@@ -16,14 +16,14 @@
     <div class="flex gap-4">
       <UInput
         v-model="search"
-        placeholder="Search translations..."
+        :placeholder="t('admin.translations.searchPlaceholder')"
         icon="i-lucide-search"
         class="w-64"
       />
       <USelect
         v-model="categoryFilter"
         :items="categories"
-        placeholder="All categories"
+        :placeholder="t('admin.translations.allCategories')"
         class="w-48"
       />
     </div>
@@ -44,7 +44,7 @@
       v-else-if="error"
       color="red"
       icon="i-lucide-alert-circle"
-      title="Failed to load translations"
+      :title="t('admin.translations.loadFailed')"
       :description="error.message"
     />
 
@@ -57,7 +57,7 @@
       <template #empty>
         <div class="flex flex-col items-center gap-2 py-6 text-gray-500 dark:text-gray-400">
           <UIcon name="i-lucide-languages" class="w-8 h-8" />
-          <span class="text-sm">No translations found</span>
+          <span class="text-sm">{{ t('admin.translations.noTranslationsFound') }}</span>
         </div>
       </template>
       <!-- Key Path -->
@@ -136,18 +136,18 @@
       <template #content>
         <div class="p-6 space-y-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ editingItem?.hasOverride ? 'Edit Override' : 'Create Override' }}
+            {{ t('admin.translations.editOverride') }}
           </h3>
 
           <div class="space-y-1">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Key Path</label>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.translations.keyPath') }}</label>
             <code class="block text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
               {{ editingItem?.keyPath }}
             </code>
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">System Values</label>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.translations.systemValues') }}</label>
             <div
               v-if="editingItem"
               class="space-y-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3"
@@ -168,7 +168,7 @@
           <USeparator />
 
           <div class="space-y-3">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Team Override Values</label>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.translations.teamOverrideValues') }}</label>
             <div
               v-for="locale in locales"
               :key="locale"
@@ -189,7 +189,7 @@
               variant="ghost"
               @click="showModal = false"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton
               color="primary"
@@ -205,6 +205,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useT()
+
 interface TranslationWithOverride {
   keyPath: string
   category: string
@@ -249,7 +251,7 @@ const categoryFilter = ref<string | undefined>(undefined)
 const categories = computed(() => {
   if (!items.value) return []
   const cats = [...new Set(items.value.map(i => i.category))]
-  return [{ label: 'All categories', value: undefined }, ...cats.map(c => ({ label: c, value: c }))]
+  return [{ label: t('admin.translations.allCategories'), value: undefined }, ...cats.map(c => ({ label: c, value: c }))]
 })
 
 const filteredItems = computed(() => {

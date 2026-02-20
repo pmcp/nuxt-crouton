@@ -17,10 +17,10 @@
         <!-- Title -->
         <div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Remove Translation Override?
+            {{ t('admin.translations.removeOverrideTitle') }}
           </h3>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            This will permanently delete your team's custom translation and revert to using the system translation.
+            {{ t('admin.translations.removeOverrideDescription') }}
           </p>
         </div>
 
@@ -43,7 +43,7 @@
           variant="soft"
           @click="close()"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </UButton>
         <UButton
           color="error"
@@ -52,7 +52,7 @@
           icon="i-lucide-trash-2"
           @click="handleDelete"
         >
-          Remove Override
+          {{ t('admin.translations.removeOverride') }}
         </UButton>
       </div>
     </div>
@@ -122,7 +122,7 @@
           variant="soft"
           @click="close()"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </UButton>
         <UButton
           type="submit"
@@ -139,6 +139,8 @@
 
 <script setup lang="ts">
 import { translationsUiSchema, TRANSLATIONS_UI_DEFAULTS } from '../composables/useTranslationsUi'
+
+const { t } = useT()
 
 const props = defineProps<{
   action: 'create' | 'update' | 'delete'
