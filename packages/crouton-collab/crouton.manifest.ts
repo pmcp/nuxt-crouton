@@ -3,16 +3,52 @@ import { defineCroutonManifest, defineGeneratorContribution } from '@fyit/crouto
 export default defineCroutonManifest({
   id: 'crouton-collab',
   name: 'Collaboration',
-  description: 'Real-time collaboration with Yjs CRDTs',
+  description: 'Real-time collaboration with Yjs CRDTs — WebSocket rooms, presence, and cross-client collection sync',
   icon: 'i-lucide-users',
   version: '1.0.0',
   category: 'addon',
-  aiHint: 'use when app needs real-time collaboration',
+  aiHint: 'use when app needs real-time collaboration or cross-client list sync',
   dependencies: [],
 
   // Detection patterns — the 'collab: true' collection config flag triggers this package
   detects: {
     collectionConfigFlag: 'collab',
+  },
+
+  provides: {
+    composables: [
+      // Low-level WebSocket connection with exponential backoff reconnection
+      'useCollabConnection',
+      // High-level Yjs structure sync (map, array, xmlFragment, text)
+      'useCollabSync',
+      // Cursor/selection presence tracking for all users
+      'useCollabPresence',
+      // TipTap editor integration (provides Y.Doc, Y.XmlFragment, and awareness provider)
+      'useCollabEditor',
+      // Collaborative editing of localized content (one Y.XmlFragment per locale)
+      'useCollabLocalizedContent',
+      // HTTP-poll for room users (global presence in list views)
+      'useCollabRoomUsers',
+      // Real-time collection cache sync signal across clients via Y.Map
+      'useCollectionSyncSignal',
+      // Auto-establishes presence when CRUD forms open (used by form-collab plugin)
+      'useFormCollabPresence',
+    ],
+    components: [
+      { name: 'CollabStatus', description: 'Connection status indicator with colored dot and optional label', props: ['connected', 'synced', 'error', 'showLabel'] },
+      { name: 'CollabPresence', description: 'Stacked user avatars with overflow indicator (+N)', props: ['users', 'maxVisible', 'size', 'showTooltip'] },
+      { name: 'CollabCursors', description: 'Remote cursor overlay rendering for canvas/editor content', props: ['users', 'showLabels', 'offsetX', 'offsetY'] },
+      { name: 'CollabIndicator', description: 'Combined status and presence for toolbars — status dot plus user avatars', props: ['connected', 'synced', 'error', 'users', 'maxVisibleUsers'] },
+      { name: 'CollabEditingBadge', description: '"X editing" badge for collection list items via HTTP poll', props: ['roomId', 'roomType', 'currentUserId', 'pollInterval', 'showAvatars'] },
+    ],
+    apiRoutes: [
+      // WebSocket upgrade endpoint — ?type=page|flow|document|sync|generic
+      '/api/collab/[roomId]/ws',
+      // HTTP endpoint for room user list (Phase 6 global presence)
+      '/api/collab/[roomId]/users',
+      // Internal Durable Object → Nitro hook bridge (not for public use)
+      '/api/_crouton/operation',
+    ],
   },
 })
 

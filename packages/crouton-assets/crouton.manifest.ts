@@ -9,10 +9,29 @@ export default defineCroutonManifest({
   category: 'addon',
   aiHint: 'use when app has media uploads or file management',
   dependencies: [],
+
+  // Registers as 'assets' app — detectable via useCroutonApps().hasApp('assets')
+  croutonApp: {
+    id: 'assets',
+    adminRoutes: [{ path: '/media', label: 'assets.admin.media', icon: 'i-lucide-image' }],
+  },
+
   provides: {
+    composables: ['useAssetUpload'],
     components: [
-      { name: 'CroutonAssetsPicker', description: 'Asset picker with gallery', props: ['modelValue', 'crop'] },
-      { name: 'CroutonAssetsLibrary', description: 'Media library browser', props: ['collection'] },
+      { name: 'CroutonAssetsPicker', description: 'Asset picker with gallery modal for selecting from media library', props: ['modelValue', 'crop', 'collection'] },
+      { name: 'CroutonAssetsLibrary', description: 'Full media library browser using CroutonCollection', props: ['collection'] },
+      { name: 'CroutonAssetsUploader', description: 'Upload component with optional crop step and metadata form', props: ['modelValue'] },
+      { name: 'CroutonAssetsCard', description: 'Media card for CroutonCollection grid (image/icon, edit/delete)', props: ['item'] },
+      { name: 'CroutonAssetsAssetTile', description: 'Selection tile for Picker modal with selected state and checkmark', props: ['item', 'selected'] },
+      { name: 'CroutonAssetsForm', description: 'Asset create/upload form (registered as packageForm for assets collection)', props: [] },
+      { name: 'CroutonAssetsFormUpdate', description: 'Asset update/metadata edit form', props: ['item'] },
+    ],
+    apiRoutes: [
+      '/api/assets/generate-alt-text',
+    ],
+    pages: [
+      '/admin/[team]/media',
     ],
   },
 

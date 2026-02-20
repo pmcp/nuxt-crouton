@@ -3,21 +3,26 @@ import { defineCroutonManifest, defineGeneratorContribution } from '@fyit/crouto
 export default defineCroutonManifest({
   id: 'crouton-editor',
   name: 'Rich Text Editor',
-  description: 'Rich text editor - TipTap-based with slash commands',
+  description: 'Rich text editor - TipTap-based with slash commands, variables, and live preview',
   icon: 'i-lucide-pen-tool',
   version: '1.0.0',
   category: 'addon',
   aiHint: 'use when app has content/articles/posts/rich text',
   dependencies: [],
   provides: {
+    composables: ['useEditorVariables'],
     components: [
-      { name: 'CroutonEditorSimple', description: 'Simple TipTap editor', props: ['modelValue'] },
+      { name: 'CroutonEditorSimple', description: 'Full-featured TipTap editor wrapper with image upload and AI translation support', props: ['modelValue', 'placeholder', 'contentType', 'editable', 'enableImageUpload', 'enableTranslationAI'] },
+      { name: 'CroutonEditorBlocks', description: 'Block-based editor with NodeView blocks and property panel slot', props: ['modelValue', 'placeholder', 'contentType', 'editable', 'extensions', 'showToolbar'] },
+      { name: 'CroutonEditorVariables', description: 'Variable insertion menu triggered by {{ — for email templates and dynamic content', props: ['editor', 'variables', 'groups', 'char'] },
+      { name: 'CroutonEditorPreview', description: 'Live preview with variable interpolation', props: ['content', 'title', 'values', 'variables', 'mode', 'expandable'] },
+      { name: 'CroutonEditorWithPreview', description: 'Editor and preview side-by-side with responsive layout (tabs on mobile)', props: ['modelValue', 'variables', 'previewValues', 'previewTitle', 'contentType', 'editable', 'showVariableChips'] },
     ],
   },
 
   // Detection patterns — fields using Editor components trigger this package
   detects: {
-    componentPatterns: ['EditorSimple', 'EditorFull', 'Editor'],
+    componentPatterns: ['CroutonEditorSimple', 'CroutonEditorBlocks', 'EditorSimple', 'EditorFull', 'Editor'],
   },
 })
 

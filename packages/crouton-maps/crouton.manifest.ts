@@ -15,9 +15,7 @@ export default defineCroutonManifest({
     reason: 'No database tables — provides components and composables only.'
   },
 
-  dependencies: [
-    '@fyit/crouton'
-  ],
+  dependencies: [],
 
   // No collections — this is a UI/composable-only package
   collections: [],
@@ -56,12 +54,15 @@ export default defineCroutonManifest({
       'useMapboxStyles'
     ],
     components: [
-      { name: 'CroutonMapMap', description: 'Main map container with Mapbox GL JS', props: ['center', 'zoom', 'style', 'height'] },
-      { name: 'CroutonMapMarker', description: 'Map marker with optional popup', props: ['map', 'position', 'color', 'options'] },
-      { name: 'CroutonMapPopup', description: 'Map popup with custom content', props: ['map', 'position'] },
-      { name: 'CroutonMapsPreview', description: 'Location preview thumbnail with modal', props: ['location'] }
+      // Component prefix is 'CroutonMaps' — Map.vue → CroutonMapsMap, etc.
+      { name: 'CroutonMapsMap', description: 'Main map container with Mapbox GL JS — graceful placeholder when unconfigured', props: ['center', 'zoom', 'style', 'height', 'flyToOnCenterChange'] },
+      { name: 'CroutonMapsMarker', description: 'Map marker with optional popup text and drag support', props: ['map', 'position', 'color', 'options', 'popupText', 'animateTransitions'] },
+      { name: 'CroutonMapsPopup', description: 'Map popup with custom slot content', props: ['map', 'position'] },
+      { name: 'CroutonMapsPreview', description: 'Location preview thumbnail with modal — used in collection list cells', props: ['location'] }
     ],
-    apiRoutes: []
+    apiRoutes: [
+      '/api/maps/geocode',
+    ]
   },
 
   // Detection patterns — what schema fields trigger map/geocoding generation
