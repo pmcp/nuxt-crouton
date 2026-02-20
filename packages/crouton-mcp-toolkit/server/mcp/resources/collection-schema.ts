@@ -1,5 +1,3 @@
-import { z } from 'zod'
-
 export default defineMcpResource({
   uri: 'crouton://schema/{collection}',
   description: 'Detailed field information for a specific Crouton collection including types, defaults, and column definitions.',

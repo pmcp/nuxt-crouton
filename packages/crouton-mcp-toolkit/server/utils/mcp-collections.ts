@@ -7,7 +7,6 @@ export interface McpCollectionConfig {
   columns?: Array<{ accessorKey: string; header: string }>
   defaultValues?: Record<string, unknown>
   sortable?: { enabled: boolean; orderField: string }
-  schema?: unknown
 }
 
 /**
@@ -42,4 +41,23 @@ export function getMcpCollectionByName(name: string): McpCollectionConfig | unde
  */
 export function getCollectionApiPath(collection: McpCollectionConfig, teamId: string): string {
   return `/api/teams/${teamId}/${collection.apiPath}`
+}
+
+/**
+ * Map a McpCollectionConfig to the standard MCP-facing format
+ * used by both the list-collections tool and collections-registry resource.
+ */
+export function mapCollectionToMcpFormat(c: McpCollectionConfig) {
+  return {
+    name: c.name,
+    key: c.key,
+    layer: c.layer,
+    apiPath: c.apiPath,
+    fields: c.columns?.map(col => ({
+      key: col.accessorKey,
+      label: col.header
+    })) || [],
+    defaultValues: c.defaultValues || {},
+    sortable: c.sortable?.enabled || false
+  }
 }
