@@ -8,10 +8,6 @@ const props = defineProps<{
   isStreaming?: boolean
 }>()
 
-const emit = defineEmits<{
-  copy: [content: string]
-}>()
-
 const isUser = computed(() => props.message.role === 'user')
 const isSystem = computed(() => props.message.role === 'system')
 
@@ -25,7 +21,6 @@ async function handleCopy() {
   setTimeout(() => {
     copied.value = false
   }, 2000)
-  emit('copy', props.message.content)
 }
 
 // Simple markdown-like rendering for code blocks
