@@ -110,6 +110,7 @@ const isOrphaned = computed(() =>
   fetchStatus.value === 'success' && !item.value
   || fetchStatus.value === 'error'
 )
+const { t } = useT()
 </script>
 
 <template>
@@ -140,7 +141,7 @@ const isOrphaned = computed(() =>
       class="p-8 text-center"
     >
       <UIcon name="i-lucide-unlink" class="size-12 text-warning mb-4 mx-auto block" />
-      <h2 class="text-lg font-semibold mb-2">Item Unavailable</h2>
+      <h2 class="text-lg font-semibold mb-2">{{ t('pages.collection.itemUnavailable') }}</h2>
       <p class="text-muted text-sm">
         The referenced collection item may have been deleted or is no longer accessible.
       </p>

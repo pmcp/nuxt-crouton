@@ -156,6 +156,7 @@ const isLoading = computed(() => {
 const isOrphaned = computed(() =>
   isItemView.value && detailStatus.value === 'success' && !detailItem.value
 )
+const { t } = useT()
 </script>
 
 <template>
@@ -180,7 +181,7 @@ const isOrphaned = computed(() =>
       <!-- Orphaned reference -->
       <div v-if="isOrphaned" class="p-8 text-center">
         <UIcon name="i-lucide-unlink" class="size-12 text-warning mb-4 mx-auto block" />
-        <h2 class="text-lg font-semibold mb-2">Item Unavailable</h2>
+        <h2 class="text-lg font-semibold mb-2">{{ t('pages.collection.itemUnavailable') }}</h2>
         <p class="text-muted text-sm">
           This item may have been deleted or is no longer accessible.
         </p>

@@ -5,7 +5,10 @@
     "workspace": {
       "title": "Pagina Werkruimte",
       "emptyTitle": "Selecteer een pagina",
-      "emptyDescription": "Kies een pagina uit de zijbalk om te bewerken, of maak een nieuwe aan."
+      "emptyDescription": "Kies een pagina uit de zijbalk om te bewerken, of maak een nieuwe aan.",
+      "keyboardShortcuts": "Keyboard shortcuts",
+      "newPage": "New page",
+      "search": "Search"
     },
     "notFound": "Pagina niet gevonden",
     "notFoundDescription": "De pagina die je zoekt bestaat niet.",
@@ -60,6 +63,26 @@
     "robots": {
       "index": "Indexering toestaan",
       "noindex": "Geen indexering"
+    },
+    "nav": {
+      "menu": "Menu"
+    },
+    "collection": {
+      "itemUnavailable": "Item Unavailable"
+    },
+    "editor": {
+      "settings": "Settings",
+      "pageSettings": "Page Settings",
+      "generate": "Generate",
+      "preview": "Preview",
+      "search": "Search",
+      "social": "Social",
+      "yourBrief": "Your brief",
+      "examples": "Examples"
+    },
+    "blocks": {
+      "highlight": "Highlight",
+      "addCard": "Add Card"
     }
   },
   "common": {

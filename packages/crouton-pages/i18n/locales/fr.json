@@ -5,7 +5,10 @@
     "workspace": {
       "title": "Espace de travail Pages",
       "emptyTitle": "Sélectionnez une page",
-      "emptyDescription": "Choisissez une page dans la barre latérale pour la modifier, ou créez-en une nouvelle."
+      "emptyDescription": "Choisissez une page dans la barre latérale pour la modifier, ou créez-en une nouvelle.",
+      "keyboardShortcuts": "Keyboard shortcuts",
+      "newPage": "New page",
+      "search": "Search"
     },
     "notFound": "Page non trouvée",
     "notFoundDescription": "La page que vous recherchez n'existe pas.",
@@ -60,6 +63,26 @@
     "robots": {
       "index": "Autoriser l'indexation",
       "noindex": "Pas d'indexation"
+    },
+    "nav": {
+      "menu": "Menu"
+    },
+    "collection": {
+      "itemUnavailable": "Item Unavailable"
+    },
+    "editor": {
+      "settings": "Settings",
+      "pageSettings": "Page Settings",
+      "generate": "Generate",
+      "preview": "Preview",
+      "search": "Search",
+      "social": "Social",
+      "yourBrief": "Your brief",
+      "examples": "Examples"
+    },
+    "blocks": {
+      "highlight": "Highlight",
+      "addCard": "Add Card"
     }
   },
   "common": {

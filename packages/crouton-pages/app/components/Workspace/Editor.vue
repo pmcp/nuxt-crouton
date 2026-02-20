@@ -965,7 +965,7 @@ defineExpose({ state })
           </UTooltip>
 
           <!-- Settings -->
-          <UTooltip text="Settings" :delay-duration="0">
+          <UTooltip :text="t('pages.editor.settings')" :delay-duration="0">
             <UPopover>
               <UButton
                 variant="ghost"
@@ -973,11 +973,11 @@ defineExpose({ state })
                 icon="i-lucide-settings"
                 size="xs"
               >
-                <span class="hidden lg:inline">Settings</span>
+                <span class="hidden lg:inline">{{ t('pages.editor.settings') }}</span>
               </UButton>
               <template #content>
                 <div class="p-4 w-72 space-y-4">
-                  <div class="text-sm font-medium text-default mb-3">Page Settings</div>
+                  <div class="text-sm font-medium text-default mb-3">{{ t('pages.editor.pageSettings') }}</div>
 
                   <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
                     <USelect
@@ -1020,7 +1020,7 @@ defineExpose({ state })
               size="xs"
               @click="showAiGenerator = true"
             >
-              <span class="hidden lg:inline">Generate</span>
+              <span class="hidden lg:inline">{{ t('pages.editor.generate') }}</span>
             </UButton>
           </UTooltip>
 
@@ -1033,7 +1033,7 @@ defineExpose({ state })
               size="xs"
               @click="showPreview = true"
             >
-              <span class="hidden lg:inline">Preview</span>
+              <span class="hidden lg:inline">{{ t('pages.editor.preview') }}</span>
             </UButton>
           </UTooltip>
 
@@ -1204,19 +1204,19 @@ defineExpose({ state })
             <div class="lg:hidden mt-3 space-y-2">
               <div class="flex items-center gap-1.5 text-xs text-muted/70 select-none">
                 <UIcon name="i-lucide-eye" class="size-3" />
-                <span>Preview</span>
+                <span>{{ t('pages.editor.preview') }}</span>
               </div>
               <div class="flex rounded border border-default overflow-hidden text-xs">
                 <button
                   type="button"
                   :class="['flex-1 py-1 transition-colors', seoPreviewTab === 'search' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
                   @click="seoPreviewTab = 'search'"
-                >Search</button>
+                >{{ t('pages.editor.search') }}</button>
                 <button
                   type="button"
                   :class="['flex-1 py-1 transition-colors border-l border-default', seoPreviewTab === 'social' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
                   @click="seoPreviewTab = 'social'"
-                >Social</button>
+                >{{ t('pages.editor.social') }}</button>
               </div>
               <div v-if="seoPreviewTab === 'search'" class="rounded-lg border border-default bg-background p-3 space-y-1">
                 <div class="flex gap-3">
@@ -1261,19 +1261,19 @@ defineExpose({ state })
             <div class="mt-3 space-y-2">
               <div class="flex items-center gap-1.5 text-xs text-muted/70 select-none">
                 <UIcon name="i-lucide-eye" class="size-3" />
-                <span>Preview</span>
+                <span>{{ t('pages.editor.preview') }}</span>
               </div>
               <div class="flex rounded border border-default overflow-hidden text-xs">
                 <button
                   type="button"
                   :class="['flex-1 py-1 transition-colors', seoPreviewTab === 'search' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
                   @click="seoPreviewTab = 'search'"
-                >Search</button>
+                >{{ t('pages.editor.search') }}</button>
                 <button
                   type="button"
                   :class="['flex-1 py-1 transition-colors border-l border-default', seoPreviewTab === 'social' ? 'bg-elevated text-foreground font-medium' : 'text-muted hover:text-foreground']"
                   @click="seoPreviewTab = 'social'"
-                >Social</button>
+                >{{ t('pages.editor.social') }}</button>
               </div>
               <!-- Google Search Preview -->
               <div v-if="seoPreviewTab === 'search'" class="rounded-lg border border-default bg-background p-3 space-y-1">

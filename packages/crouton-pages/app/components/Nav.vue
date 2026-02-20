@@ -263,7 +263,7 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
           />
 
           <template #header>
-            <span class="text-lg font-semibold">Menu</span>
+            <span class="text-lg font-semibold">{{ t('pages.nav.menu') }}</span>
           </template>
 
           <template #body>

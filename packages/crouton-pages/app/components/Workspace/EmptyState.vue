@@ -37,10 +37,10 @@ const emit = defineEmits<{
 
       <div class="mt-8 pt-6 border-t border-default">
         <div class="text-xs text-muted space-y-2">
-          <p class="font-medium">Keyboard shortcuts</p>
+          <p class="font-medium">{{ t('pages.workspace.keyboardShortcuts') }}</p>
           <div class="flex items-center justify-center gap-4">
-            <span><kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">N</kbd> New page</span>
-            <span><kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">/</kbd> Search</span>
+            <span><kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">N</kbd> {{ t('pages.workspace.newPage') }}</span>
+            <span><kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">/</kbd> {{ t('pages.workspace.search') }}</span>
           </div>
         </div>
       </div>

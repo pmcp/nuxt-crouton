@@ -116,6 +116,8 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+const { t } = useT()
+
 const generateLabel = computed(() => {
   if (isGenerating.value) {
     return selectedLocales.value.length > 1
@@ -155,7 +157,7 @@ const generateLabel = computed(() => {
 
         <!-- Brief input -->
         <div class="flex flex-col gap-2">
-          <label class="text-xs font-medium text-muted">Your brief</label>
+          <label class="text-xs font-medium text-muted">{{ t('pages.editor.yourBrief') }}</label>
           <UTextarea
             v-model="brief"
             :rows="4"
@@ -212,7 +214,7 @@ const generateLabel = computed(() => {
 
         <!-- Example prompts -->
         <div class="flex flex-col gap-2">
-          <p class="text-xs font-medium text-muted">Examples</p>
+          <p class="text-xs font-medium text-muted">{{ t('pages.editor.examples') }}</p>
           <div class="flex flex-col gap-1.5">
             <button
               v-for="example in examples"

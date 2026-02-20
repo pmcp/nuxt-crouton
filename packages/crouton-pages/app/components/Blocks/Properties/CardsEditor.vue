@@ -61,6 +61,8 @@ function updateCard(index: number, field: keyof BlockCard, value: any) {
   emitChange()
 }
 
+const { t } = useT()
+
 // Move card up/down
 function moveCard(index: number, direction: 'up' | 'down') {
   const newIndex = direction === 'up' ? index - 1 : index + 1
@@ -158,7 +160,7 @@ function moveCard(index: number, direction: 'up' | 'down') {
 
       <!-- Highlight -->
       <div class="flex items-center justify-between">
-        <span class="text-sm text-muted">Highlight</span>
+        <span class="text-sm text-muted">{{ t('pages.blocks.highlight') }}</span>
         <div class="flex items-center gap-2">
           <USwitch
             :model-value="card.highlight || false"
@@ -187,7 +189,7 @@ function moveCard(index: number, direction: 'up' | 'down') {
       block
       @click="addCard"
     >
-      Add Card
+      {{ t('pages.blocks.addCard') }}
     </UButton>
   </div>
 </template>
