@@ -11,6 +11,7 @@ import { drizzle } from 'drizzle-orm/d1'
 import { sql, eq, and } from 'drizzle-orm'
 import { member } from '../database/schema/auth'
 import type { Team, Member, User } from '../../types'
+import { mapOrganizationToTeam } from '../../shared/utils/auth'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
 
@@ -476,34 +477,4 @@ export async function getOrganizationMembershipDirect(
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-/**
- * Map Better Auth organization response to our Team type
- */
-function mapOrganizationToTeam(org: {
-  id: string
-  name: string
-  slug: string
-  logo?: string | null
-  personal?: boolean | number | null
-  isDefault?: boolean | number | null
-  ownerId?: string | null
-  createdAt: string | Date
-}): Team {
-  // SQLite returns 0/1 for booleans, so check for truthy value
-  const isPersonal = org.personal === true || org.personal === 1
-  const isDefaultOrg = org.isDefault === true || org.isDefault === 1
-
-  return {
-    id: org.id,
-    name: org.name,
-    slug: org.slug,
-    logo: org.logo ?? null,
-    metadata: {},
-    personal: isPersonal,
-    isDefault: isDefaultOrg,
-    ownerId: org.ownerId ?? undefined,
-    createdAt: new Date(org.createdAt),
-    updatedAt: new Date(org.createdAt)
-  }
-}
+// mapOrganizationToTeam is imported from ../../shared/utils/auth

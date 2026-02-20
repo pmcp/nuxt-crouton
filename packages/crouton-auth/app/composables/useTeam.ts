@@ -21,6 +21,7 @@
  */
 import type { Team, MemberRole, Member } from '../../types'
 import { useAuthClient } from '../../types/auth-client'
+import { mapOrganizationToTeam } from '../../shared/utils/auth'
 
 export interface CreateTeamData {
   name: string
@@ -39,38 +40,6 @@ export interface UpdateTeamData {
 export interface InviteMemberData {
   email: string
   role?: MemberRole
-}
-
-/**
- * Map Better Auth organization to our Team type
- */
-function mapOrganizationToTeam(org: {
-  id: string
-  name: string
-  slug: string
-  logo?: string | null
-  metadata?: string | Record<string, unknown> | null
-  personal?: boolean | number | null
-  isDefault?: boolean | number | null
-  ownerId?: string | null
-  createdAt: string | Date
-}): Team {
-  // SQLite returns 0/1 for booleans, so check for truthy value
-  const isPersonal = org.personal === true || org.personal === 1
-  const isDefaultOrg = org.isDefault === true || org.isDefault === 1
-
-  return {
-    id: org.id,
-    name: org.name,
-    slug: org.slug,
-    logo: org.logo ?? null,
-    metadata: {},
-    personal: isPersonal,
-    isDefault: isDefaultOrg,
-    ownerId: org.ownerId ?? undefined,
-    createdAt: new Date(org.createdAt),
-    updatedAt: new Date(org.createdAt)
-  }
 }
 
 /**
