@@ -255,6 +255,7 @@ function onCalendarSelect(date: Date | null) {
 // Handle calendar day click (+ button) - start inline creation at that date (disabled in preview mode)
 function onCalendarDayClick(date: Date) {
   if (previewMode.value) return
+  if (resolvedLocations.value.length === 0) return
   creatingAtDate.value = date
 }
 
@@ -384,7 +385,7 @@ defineExpose({
     </template>
 
     <!-- List section -->
-    <UScrollArea class="h-full px-4 pb-4">
+    <UScrollArea class="h-full px-4 py-4">
       <CroutonBookingsList
         :bookings="filteredBookings"
         :loading="resolvedLoading"
