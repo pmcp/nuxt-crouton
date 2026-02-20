@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
     date: body.date ? new Date(body.date) : body.date,
     slot: body.slot,
     group: body.group,
+    quantity: body.quantity,
     status: body.status
   })
 })

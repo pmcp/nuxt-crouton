@@ -1,1 +1,0 @@
-ALTER TABLE `bookings_bookings` ADD `quantity` integer NOT NULL DEFAULT 1;

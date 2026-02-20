@@ -2,14 +2,14 @@
   @crouton-generated
   @collection bookings
   @layer bookings
-  @generated 2026-02-18
+  @generated 2026-02-20
 
   ## AI Context
   - List component for bookings collection
   - Collection name: bookingsBookings
   - API endpoint: /api/teams/[id]/bookings-bookings
   - Columns composable: useBookingsBookings()
-  - Column fields: location, date, slot, group, status
+  - Column fields: location, date, slot, group, quantity, status
 
   ## Common Modifications
   - Add column: Update columns array in composable

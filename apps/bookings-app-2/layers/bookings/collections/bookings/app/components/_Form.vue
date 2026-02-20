@@ -2,14 +2,14 @@
   @crouton-generated
   @collection bookings
   @layer bookings
-  @generated 2026-02-18
+  @generated 2026-02-20
 
   ## AI Context
   - Form component for bookings collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/bookings-bookings
   - Zod schema: useBookingsBookings() composable
-  - Fields: location, date, slot, group, status
+  - Fields: location, date, slot, group, quantity, status
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -73,6 +73,12 @@
       <template #sidebar>
       <div class="flex flex-col gap-4 p-1">
       </div>
+      <div class="flex flex-col gap-4 p-1">
+        <UFormField label="Quantity" name="quantity" class="not-last:pb-4">
+          <UInputNumber v-model="state.quantity" class="w-full" />
+        </UFormField>
+      </div>
+
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Status" name="status" class="not-last:pb-4">
           <CroutonFormOptionsSelect

@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-02-18
+ * @generated 2026-02-20
  *
  * ## AI Context
  * - Main interface: PagesPage
  * - Form data type: PagesPageFormData
  * - New item type: NewPagesPage
  * - Form props: PagesPageFormProps
- * - Fields: 
+ * - Fields: title, slug, pageType, content, config, status, visibility, publishedAt, showInNavigation, layout, seoTitle, seoDescription, ogImage, robots
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -27,7 +27,20 @@ export interface PagesPage {
   id: string
   teamId: string
   owner: string
-  
+  title: string
+  slug: string
+  pageType: string
+  content?: string
+  config?: Record<string, any>
+  status: string
+  visibility: string
+  publishedAt?: Date | null
+  showInNavigation?: boolean
+  layout?: string
+  seoTitle?: string
+  seoDescription?: string
+  ogImage?: string
+  robots?: string
   createdAt: Date
   updatedAt: Date
   createdBy: string

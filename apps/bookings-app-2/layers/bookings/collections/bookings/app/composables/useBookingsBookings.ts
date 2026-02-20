@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection bookings
  * @layer bookings
- * @generated 2026-02-18
+ * @generated 2026-02-20
  *
  * ## AI Context
  * - Composable: useBookingsBookings
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/bookings-bookings
  * - Form component: BookingsBookingsForm
  * - List component: BookingsBookingsList
- * - Fields: location, date, slot, group, status
+ * - Fields: location, date, slot, group, quantity, status
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -31,6 +31,7 @@ export const bookingsBookingSchema = z.object({
   date: z.date({ required_error: 'date is required' }),
   slot: z.array(z.string()).min(1, 'slot is required'),
   group: z.string().optional(),
+  quantity: z.number(),
   status: z.string().min(1, 'status is required')
 })
 
@@ -39,6 +40,7 @@ export const bookingsBookingsColumns = [
   { accessorKey: 'date', header: 'Date' },
   { accessorKey: 'slot', header: 'Slot' },
   { accessorKey: 'group', header: 'Group' },
+  { accessorKey: 'quantity', header: 'Quantity' },
   { accessorKey: 'status', header: 'Status' }
 ]
 
@@ -53,6 +55,7 @@ const _bookingsBookingsConfig = {
     date: null,
     slot: null,
     group: '',
+    quantity: 0,
     status: ''
   },
   columns: bookingsBookingsColumns,
@@ -85,6 +88,12 @@ const _bookingsBookingsConfig = {
           "label": "Age Group",
           "area": "main",
           "displayAs": "optionsSelect"
+      },
+      {
+          "name": "quantity",
+          "type": "number",
+          "label": "Quantity",
+          "area": "sidebar"
       },
       {
           "name": "status",

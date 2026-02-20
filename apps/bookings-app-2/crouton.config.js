@@ -10,7 +10,7 @@ export default {
     { name: 'booking', fieldsFile: './schemas/booking.json' },
     { name: 'location', fieldsFile: './schemas/location.json' },
     { name: 'settings', fieldsFile: './schemas/settings.json' },
-    { name: 'pages', fieldsFile: './schemas/pages.json' }
+    { name: 'pages', fieldsFile: './schemas/pages.json', formComponent: 'CroutonPagesForm', hierarchy: { enabled: true, parentField: 'parentId', orderField: 'order', pathField: 'path', depthField: 'depth' } }
   ],
 
   // Target layers

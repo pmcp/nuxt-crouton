@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection bookings
  * @layer bookings
- * @generated 2026-02-18
+ * @generated 2026-02-20
  *
  * ## AI Context
  * - Main interface: BookingsBooking
  * - Form data type: BookingsBookingFormData
  * - New item type: NewBookingsBooking
  * - Form props: BookingsBookingFormProps
- * - Fields: location, date, slot, group, status
+ * - Fields: location, date, slot, group, quantity, status
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -31,6 +31,7 @@ export interface BookingsBooking {
   date: Date | null
   slot: string[] | null
   group?: string
+  quantity: number
   status: string
   createdAt: Date
   updatedAt: Date

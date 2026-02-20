@@ -2,7 +2,7 @@
   @crouton-generated
   @collection locations
   @layer bookings
-  @generated 2026-02-18
+  @generated 2026-02-20
 
   ## AI Context
   - Form component for locations collection
