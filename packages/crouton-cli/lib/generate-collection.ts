@@ -872,10 +872,16 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
   try {
     const typeMapping = await loadTypeMapping()
 
+    // Resolve configPath to absolute so c12 can locate it and _configDir is always correct
+    const resolvedConfigPath = options.configPath
+      ? path.resolve(process.cwd(), options.configPath)
+      : undefined
+    const configCwd = resolvedConfigPath ? path.dirname(resolvedConfigPath) : process.cwd()
+
     const { config } = await loadConfig({
       name: 'crouton',
-      cwd: process.cwd(),
-      configFile: options.configPath || undefined,
+      cwd: configCwd,
+      configFile: resolvedConfigPath || undefined,
       defaults: {
         dialect: 'sqlite',
         features: {},
@@ -889,9 +895,10 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
     }
 
     // Store config file directory for downstream path resolution (fieldsFile in collections)
-    config._configDir = config._configFile
-      ? path.dirname(config._configFile)
-      : process.cwd()
+    // Always derived from the resolved config path, not process.cwd()
+    config._configDir = resolvedConfigPath
+      ? path.dirname(resolvedConfigPath)
+      : (config._configFile ? path.dirname(config._configFile) : process.cwd())
 
     // Merge CLI flags into config.flags (CLI flags override config file)
     if (!config.flags) config.flags = {}

@@ -1,7 +1,0 @@
-{
-  "id": { "type": "string", "meta": { "primaryKey": true } },
-  "name": { "type": "string", "meta": { "required": true } },
-  "description": { "type": "text" },
-  "icon": { "type": "string", "meta": { "maxLength": 50 } },
-  "color": { "type": "string", "meta": { "maxLength": 7 } }
-}
