@@ -47,15 +47,6 @@ export interface FieldMeta {
   translatableProperties?: string[]
 }
 
-export interface SchemaField {
-  id: string
-  name: string
-  type: FieldType
-  meta: FieldMeta
-  refTarget?: string
-  refScope?: 'local' | 'adapter'
-}
-
 export interface FieldTypeConfig {
   type: FieldType
   label: string
@@ -96,21 +87,6 @@ export interface ProjectConfig {
   languages?: string[]
   defaultLocale?: string
   packages?: string[]
-}
-
-/**
- * Designer phase identifiers
- */
-export type DesignerPhase = 1 | 2 | 3 | 5
-
-/**
- * A single chat message stored in the designer project
- */
-export interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  createdAt?: string
 }
 
 /**

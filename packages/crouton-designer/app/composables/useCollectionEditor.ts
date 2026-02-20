@@ -10,17 +10,6 @@ export function isExtensionCollectionName(name: string): boolean {
   return name.startsWith(EXT_COL_PREFIX)
 }
 
-export function parseExtensionCollectionName(name: string): { packageAlias: string; targetCollection: string } | null {
-  if (!name.startsWith(EXT_COL_PREFIX)) return null
-  const rest = name.slice(EXT_COL_PREFIX.length)
-  const colonIdx = rest.indexOf(':')
-  if (colonIdx === -1) return null
-  return {
-    packageAlias: rest.slice(0, colonIdx),
-    targetCollection: rest.slice(colonIdx + 1),
-  }
-}
-
 export function makeExtensionCollectionName(packageAlias: string, targetCollection: string): string {
   return `${EXT_COL_PREFIX}${packageAlias}:${targetCollection}`
 }
@@ -262,8 +251,5 @@ export function useCollectionEditor(projectId: Ref<string>, packages?: Ref<strin
     deleteField,
     reorderFields,
     addExtensionField,
-    // Expose mutable refs for AI tool call integration
-    _collections: collections,
-    _fields: fields
   }
 }

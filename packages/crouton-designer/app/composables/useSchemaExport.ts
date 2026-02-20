@@ -1,4 +1,4 @@
-import type { CollectionWithFields, PackageCollectionEntry } from './useCollectionEditor'
+import type { CollectionWithFields } from './useCollectionEditor'
 import type { DisplayConfig } from '../types/schema'
 
 export interface SchemaFile {
@@ -111,40 +111,4 @@ export function useSchemaExport(collections: Ref<CollectionWithFields[]>) {
     getSchemaJson,
     getAllSchemasAsJson
   }
-}
-
-/**
- * Build schema JSON for package collections.
- * Merges manifest fields (read-only base) + user extension fields on top.
- * Returns a map of `{name}.json` → JSON string.
- */
-export function getPackageSchemasAsJson(
-  packageEntries: PackageCollectionEntry[],
-): Map<string, string> {
-  const result = new Map<string, string>()
-  for (const pkg of packageEntries) {
-    const schema: Record<string, SchemaFieldExport> = {}
-
-    // 1. Manifest fields first (the package's own schema definition)
-    if (pkg.manifestSchema) {
-      for (const [name, def] of Object.entries(pkg.manifestSchema)) {
-        schema[name] = def as SchemaFieldExport
-      }
-    }
-
-    // 2. User-added extension fields layered on top
-    for (const field of pkg.extensionFields) {
-      const entry: SchemaFieldExport = { type: field.type }
-      if (field.meta && Object.keys(field.meta).length > 0) {
-        entry.meta = field.meta
-      }
-      if (field.refTarget) {
-        entry.refTarget = field.refTarget
-      }
-      schema[field.name] = entry
-    }
-
-    result.set(`${pkg.name}.json`, JSON.stringify(schema, null, 2))
-  }
-  return result
 }
