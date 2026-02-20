@@ -110,10 +110,23 @@ function isParagraph(type: string): boolean {
 
     <template v-if="renderableBlocks.length > 0">
       <template v-for="(block, index) in renderableBlocks" :key="(block as any).attrs?.blockId || `${block.type}-${index}`">
-        <!-- Custom block components -->
+        <!-- Dynamic blocks: fetch runtime data, must render client-side only -->
+        <ClientOnly
+          v-if="block.type === 'collectionBlock' || block.type === 'chartBlock'"
+        >
+          <component
+            :is="getBlockComponent(block.type)"
+            :attrs="block.attrs"
+          />
+          <template #fallback>
+            <div class="animate-pulse rounded-xl bg-muted h-40 my-8" />
+          </template>
+        </ClientOnly>
+
+        <!-- Static blocks: SSR/prerender safe, render as-is -->
         <component
+          v-else-if="getBlockComponent(block.type)"
           :is="getBlockComponent(block.type)"
-          v-if="getBlockComponent(block.type)"
           :attrs="block.attrs"
         />
 

@@ -24,6 +24,10 @@ definePageMeta({
   layout: 'public'
 })
 
+// Cache public pages for 1 hour (SWR: serve stale while regenerating in background)
+// Nuxt 4.3: payload extraction means SPA navigation also uses cached payload
+defineRouteRules({ swr: 3600 })
+
 // Share page layout with the layout component via useState (works across components)
 const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayout', () => 'default')
 
@@ -89,7 +93,7 @@ const apiUrl = computed(() => {
 
 // Fetch page by team and slug, passing current locale for translated slug lookup
 const { data: pageResponse, status, error, refresh } = await useFetch(apiUrl, {
-  query: { locale: urlLocale.value },
+  query: { locale: urlLocale },
   watch: [team, slug, urlLocale],
   transform: (data: any) => data
 })

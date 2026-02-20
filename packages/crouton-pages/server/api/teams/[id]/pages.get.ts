@@ -14,7 +14,7 @@
  */
 import { eq, and, or, asc, inArray } from 'drizzle-orm'
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(async (event) => {
   const teamParam = getRouterParam(event, 'id')
 
   if (!teamParam) {
@@ -222,5 +222,25 @@ export default defineEventHandler(async (event) => {
       status: 500,
       statusText: 'Failed to fetch pages'
     })
+  }
+}, {
+  maxAge: 60 * 5, // 5 minutes — navigation changes less often than page content
+  name: 'crouton-pages-list',
+  getKey: (event) => {
+    const teamParam = getRouterParam(event, 'id') || 'unknown'
+    const query = getQuery(event)
+    const locale = (query.locale as string) || 'en'
+    const nav = query.navigation === 'true' ? '1' : '0'
+    const visibility = (query.visibility as string) || 'public'
+    return `${teamParam}:${locale}:nav=${nav}:vis=${visibility}`
+  },
+  shouldBypassCache: async (event) => {
+    try {
+      const { getServerSession } = await import('@fyit/crouton-auth/server/utils/useServerAuth')
+      const session = await getServerSession(event)
+      return !!session?.user
+    } catch {
+      return false
+    }
   }
 })

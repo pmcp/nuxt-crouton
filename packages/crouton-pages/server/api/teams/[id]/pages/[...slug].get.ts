@@ -177,6 +177,9 @@ export default defineEventHandler(async (event) => {
               statusText: 'Access denied - not a team member'
             })
           }
+
+          // Prevent ISR/SWR from caching members-only page responses
+          setResponseHeader(event, 'Cache-Control', 'private, no-store')
         } catch (authError: any) {
           if (authError.statusCode) throw authError
           throw createError({
