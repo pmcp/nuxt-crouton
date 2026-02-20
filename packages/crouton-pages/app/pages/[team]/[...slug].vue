@@ -9,6 +9,7 @@
  * The actual page rendering happens in [team]/[locale]/[...slug].vue
  */
 const route = useRoute()
+const { teamId } = useTeamContext()
 
 // Safely get locale - may fail during unexpected SSR contexts (e.g., refreshNuxtData triggers)
 let locale = ref('en')
@@ -23,7 +24,7 @@ try {
 
 // Reserved prefixes that should NOT be treated as team slugs
 const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-const teamParam = route.params.team as string
+const teamParam = teamId.value ?? ''
 
 if (reservedPrefixes.includes(teamParam)) {
   throw createError({
@@ -33,7 +34,7 @@ if (reservedPrefixes.includes(teamParam)) {
 }
 
 // Get team and slug from route params
-const team = route.params.team as string
+const team = teamId.value ?? ''
 const slugParts = route.params.slug
 const slug = !slugParts || (Array.isArray(slugParts) && slugParts.length === 0)
   ? ''

@@ -32,6 +32,7 @@ defineRouteRules({ swr: 3600 })
 const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayout', () => 'default')
 
 const route = useRoute()
+const { teamId } = useTeamContext()
 
 // IMPORTANT: Must be defined before the reserved prefix guard, otherwise
 // SSR will crash with "$setup.t is not a function" when the guard throws.
@@ -41,7 +42,7 @@ const { t } = useT()
 // Reserved prefixes that should NOT be treated as team slugs
 // These routes are handled by other packages (auth, admin, etc.)
 const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-const teamParam = route.params.team as string
+const teamParam = teamId.value as string
 
 if (reservedPrefixes.includes(teamParam)) {
   throw createError({
@@ -56,7 +57,7 @@ const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 const { locale: i18nLocale, locales, setLocale } = useI18n()
 
 // Get team, locale, and slug from route params
-const team = computed(() => route.params.team as string)
+const team = teamId
 const urlLocale = computed(() => route.params.locale as string)
 const slug = computed(() => {
   const slugParts = route.params.slug

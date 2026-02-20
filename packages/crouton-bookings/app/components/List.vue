@@ -95,8 +95,8 @@ function handleRefresh() {
 // Email functionality
 const { resendEmail, isEmailEnabled } = useBookingEmail()
 const toast = useToast()
-const route = useRoute()
 const { locale } = useI18n()
+const { teamId: contextTeamId } = useTeamContext()
 
 // Track which booking/email type is currently being sent
 const sendingEmailState = ref<{ bookingId: string; triggerType: string } | null>(null)
@@ -106,7 +106,7 @@ async function handleResendEmail(booking: Booking, triggerType: string) {
   if (!isEmailEnabled.value) return
 
   // Use booking's teamId (more reliable than route params)
-  const teamId = booking.teamId || route.params.team as string
+  const teamId = booking.teamId || contextTeamId.value
   if (!teamId) {
     console.error('[List] No teamId available for email send')
     return

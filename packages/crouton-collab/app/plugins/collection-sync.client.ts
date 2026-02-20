@@ -62,22 +62,14 @@ export default defineNuxtPlugin((nuxtApp) => {
    * Get team ID from route or context
    */
   function getTeamIdFromContext(): string | undefined {
-    // Try route params first
-    const route = useRoute()
-    const teamParam = route.params.team
-    if (typeof teamParam === 'string' && teamParam) {
-      return teamParam
-    }
-
-    // Try useTeam composable if available (from @crouton/auth)
+    // Use useTeamContext() which resolves team ID from auth or route params
     try {
-      // @ts-expect-error - useTeam may not be available if crouton-auth not installed
-      const { currentTeam } = useTeam()
-      if (currentTeam?.value?.id) {
-        return currentTeam.value.id
+      const { teamId } = useTeamContext()
+      if (teamId.value) {
+        return teamId.value
       }
     } catch {
-      // useTeam not available, that's fine
+      // useTeamContext not available, that's fine
     }
 
     return undefined

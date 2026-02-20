@@ -47,12 +47,13 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const { locale } = useI18n()
   const { isCustomDomain, hideTeamInUrl } = useDomainContext()
   const collections = useCollections()
+  const { teamId } = useTeamContext()
 
   // Resolve team from prop, route, or domain context
   const team = computed(() => {
     const teamValue = toValue(teamSlug)
     if (teamValue) return teamValue
-    return (route.params.team as string) || null
+    return teamId.value || null
   })
 
   // Reserved prefixes that should NOT be treated as team slugs
