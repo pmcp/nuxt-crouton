@@ -175,6 +175,8 @@ function setValueAtPath(obj: any, path: string, value: string): void {
 }
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   const rawBody = await readBody(event)
   const parseResult = translateBlocksSchema.safeParse(rawBody)
 

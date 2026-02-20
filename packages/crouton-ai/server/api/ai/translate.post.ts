@@ -32,6 +32,8 @@ const translateSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   // Read and validate request body
   const rawBody = await readBody<{
     sourceText: string
