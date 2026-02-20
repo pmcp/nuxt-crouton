@@ -16,7 +16,7 @@ export async function getAllContentArticles(teamId: string) {
   const articles = await (db as any)
     .select({
       ...tables.contentArticles,
-      categoryIdData: categoriesSchema.contentCategories,
+      categoryIdData: categoriesSchema.shopCategories,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -37,7 +37,7 @@ export async function getAllContentArticles(teamId: string) {
       }
     } as any)
     .from(tables.contentArticles)
-    .leftJoin(categoriesSchema.contentCategories, eq(tables.contentArticles.categoryId, categoriesSchema.contentCategories.id))
+    .leftJoin(categoriesSchema.shopCategories, eq(tables.contentArticles.categoryId, categoriesSchema.shopCategories.id))
     .leftJoin(ownerUser, eq(tables.contentArticles.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.contentArticles.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.contentArticles.updatedBy, updatedByUser.id))
@@ -57,7 +57,7 @@ export async function getContentArticlesByIds(teamId: string, articleIds: string
   const articles = await (db as any)
     .select({
       ...tables.contentArticles,
-      categoryIdData: categoriesSchema.contentCategories,
+      categoryIdData: categoriesSchema.shopCategories,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -78,7 +78,7 @@ export async function getContentArticlesByIds(teamId: string, articleIds: string
       }
     } as any)
     .from(tables.contentArticles)
-    .leftJoin(categoriesSchema.contentCategories, eq(tables.contentArticles.categoryId, categoriesSchema.contentCategories.id))
+    .leftJoin(categoriesSchema.shopCategories, eq(tables.contentArticles.categoryId, categoriesSchema.shopCategories.id))
     .leftJoin(ownerUser, eq(tables.contentArticles.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.contentArticles.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.contentArticles.updatedBy, updatedByUser.id))
