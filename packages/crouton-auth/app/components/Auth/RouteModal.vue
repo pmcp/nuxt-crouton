@@ -253,7 +253,7 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
 
 <template>
   <UModal
-    v-model="isOpen"
+    v-model:open="isOpen"
     :ui="{ content: 'sm:max-w-md' }"
   >
     <template #content>
