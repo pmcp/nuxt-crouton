@@ -1,10 +1,15 @@
 name = "nuxt-crouton-flow"
 compatibility_date = "2024-01-01"
 
-[[durable_objects.bindings]]
-name = "FLOW_ROOMS"
-class_name = "FlowRoom"
-
-[[migrations]]
-tag = "v1"
-new_classes = ["FlowRoom"]
+# FlowRoom Durable Object has been removed. Flow sync now uses CollabRoom
+# from @fyit/crouton-collab. Configure CollabRoom in your app's wrangler.toml:
+#
+# [[durable_objects.bindings]]
+# name = "COLLAB_ROOMS"
+# class_name = "CollabRoom"
+#
+# [[migrations]]
+# tag = "collab-v1"
+# new_classes = ["CollabRoom"]
+#
+# See packages/crouton-collab/wrangler.example.toml for the full template.
