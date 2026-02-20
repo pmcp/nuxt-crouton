@@ -33,6 +33,7 @@ declare module 'nitropack' {
       source: string
       teamId?: string
       userId?: string
+      correlationId?: string
       metadata?: Record<string, any>
       timestamp?: number
     }) => void | Promise<void>

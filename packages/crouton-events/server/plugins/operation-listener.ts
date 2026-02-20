@@ -21,6 +21,7 @@ export default defineNitroPlugin((nitroApp) => {
         source: payload.source,
         teamId: payload.teamId ?? null,
         userId: payload.userId ?? null,
+        correlationId: payload.correlationId ?? null,
         metadata: payload.metadata ?? null
       })
     }

@@ -135,6 +135,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
       source: payload.source,
       teamId: payload.teamId,
       userId: payload.userId,
+      correlationId: payload.correlationId,
       metadata: payload.metadata
     })
   })

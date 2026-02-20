@@ -3,7 +3,7 @@
  *
  * The canonical declaration lives in @fyit/crouton (crouton-hooks.d.ts).
  * This file ensures the hook is recognised during standalone type-checking
- * of the crouton-ai package, which does not depend on @fyit/crouton directly.
+ * of the crouton-devtools package.
  */
 
 declare module 'nitropack' {

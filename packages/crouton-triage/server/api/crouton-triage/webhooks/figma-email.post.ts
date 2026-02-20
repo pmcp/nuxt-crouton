@@ -145,7 +145,7 @@ export default defineEventHandler(async (event) => {
 
     // 3. Process the discussion through the pipeline
     try {
-      const result = await processDiscussion(parsed)
+      const result = await processDiscussion(parsed, { correlationId: event.context.correlationId })
 
       const processingTime = Date.now() - startTime
 

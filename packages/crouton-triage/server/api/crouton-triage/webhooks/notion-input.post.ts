@@ -608,8 +608,9 @@ export default defineEventHandler(async (event) => {
       // Production: Process in background using waitUntil
       logger.debug('[Notion Webhook] Using background processing (waitUntil)')
 
+      const correlationId = event.context.correlationId
       cfCtx.waitUntil(
-        processDiscussion(parsed)
+        processDiscussion(parsed, { correlationId })
           .then((result) => {
             logger.debug('[Notion Webhook] Background processing completed:', {
               discussionId: result.discussionId,
@@ -640,7 +641,7 @@ export default defineEventHandler(async (event) => {
       let result: ProcessingResult
 
       try {
-        result = await processDiscussion(parsed)
+        result = await processDiscussion(parsed, { correlationId: event.context.correlationId })
 
         logger.debug('[Notion Webhook] Discussion processed successfully:', {
           discussionId: result.discussionId,

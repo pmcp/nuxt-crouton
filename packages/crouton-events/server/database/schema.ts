@@ -9,6 +9,7 @@ export const croutonOperations = sqliteTable('crouton_operations', {
   source: text('source').notNull(),
   teamId: text('team_id'),
   userId: text('user_id'),
+  correlationId: text('correlation_id'),
   metadata: text('metadata', { mode: 'json' }).$type<Record<string, any>>()
 })
 

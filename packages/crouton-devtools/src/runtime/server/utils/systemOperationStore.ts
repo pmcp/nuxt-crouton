@@ -12,6 +12,7 @@ export interface SystemOperation {
   source: string
   teamId?: string
   userId?: string
+  correlationId?: string
   metadata?: Record<string, any>
 }
 

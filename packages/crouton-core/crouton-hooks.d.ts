@@ -50,6 +50,7 @@ export interface CroutonOperationEvent {
   source: string
   teamId?: string
   userId?: string
+  correlationId?: string
   /** Free-form metadata specific to the operation type */
   metadata?: Record<string, any>
   /** Milliseconds since epoch — defaults to Date.now() if omitted */
@@ -59,6 +60,12 @@ export interface CroutonOperationEvent {
 declare module 'nitropack' {
   interface NitroRuntimeHooks {
     'crouton:operation': (payload: CroutonOperationEvent) => void | Promise<void>
+  }
+}
+
+declare module 'h3' {
+  interface H3EventContext {
+    correlationId?: string
   }
 }
 

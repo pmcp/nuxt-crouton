@@ -180,16 +180,8 @@ export default defineEventHandler(async (event) => {
 
     validateRequest(body)
 
-    // 2. TODO Phase 4: Authenticate user
-    // const user = await requireAuth(event)
-    // const canAccess = await checkTeamAccess(user.id, body.parsed?.teamId || body.teamId)
-    // if (!canAccess) {
-    //   throw createError({
-    //     statusCode: 403,
-    //     statusMessage: 'Forbidden',
-    //     data: { error: 'You do not have access to this team' }
-    //   })
-    // }
+    // 2. Authenticate user
+    await requireAuth(event)
 
     // 3. Process based on type
     let result
@@ -205,7 +197,10 @@ export default defineEventHandler(async (event) => {
           skipNotion: body.options?.skipNotion,
         })
 
-        result = await processDiscussion(body.parsed, body.options || {})
+        result = await processDiscussion(body.parsed, {
+          ...body.options,
+          correlationId: event.context.correlationId,
+        })
         break
       }
 

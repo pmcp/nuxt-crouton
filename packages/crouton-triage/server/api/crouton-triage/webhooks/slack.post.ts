@@ -19,6 +19,7 @@
 import { getAdapter } from '../../../adapters'
 import { processDiscussion } from '../../../services/processor'
 import type { ProcessingResult } from '../../../services/processor'
+import { verifySlackSignature } from '../../../utils/webhookSecurity'
 
 export default defineEventHandler(async (event) => {
   logger.debug('[Slack Webhook] ===== REQUEST RECEIVED =====')
@@ -26,8 +27,23 @@ export default defineEventHandler(async (event) => {
   logger.debug('[Slack Webhook] Path:', event.path)
 
   try {
-    // Read body
-    const body = await readBody(event)
+    // Read raw body first for signature verification
+    const rawBody = await readRawBody(event) || ''
+    const body = JSON.parse(rawBody || '{}')
+
+    // Verify Slack HMAC-SHA256 signature (skip for url_verification challenges sent without signing)
+    const signingSecret = useRuntimeConfig().croutonTriage?.slack?.signingSecret as string | undefined
+    if (signingSecret) {
+      const headers = getHeaders(event)
+      if (!verifySlackSignature(rawBody, headers, signingSecret)) {
+        logger.warn('[Slack Webhook] Invalid signature — request rejected')
+        throw createError({ statusCode: 401, statusMessage: 'Invalid Slack signature' })
+      }
+      logger.debug('[Slack Webhook] Signature verified')
+    }
+    else {
+      logger.warn('[Slack Webhook] SLACK_SIGNING_SECRET not configured — skipping signature verification')
+    }
     logger.debug('[Slack Webhook] Payload type:', body?.type)
 
     // ============================================================================
@@ -117,8 +133,9 @@ export default defineEventHandler(async (event) => {
       // Production: Process in background using waitUntil
       logger.debug('[Slack Webhook] Using background processing (waitUntil)')
 
+      const correlationId = event.context.correlationId
       cfCtx.waitUntil(
-        processDiscussion(parsed)
+        processDiscussion(parsed, { correlationId })
           .then((result) => {
             logger.debug('[Slack Webhook] Background processing completed:', {
               discussionId: result.discussionId,
@@ -146,7 +163,7 @@ export default defineEventHandler(async (event) => {
       let result: ProcessingResult
 
       try {
-        result = await processDiscussion(parsed)
+        result = await processDiscussion(parsed, { correlationId: event.context.correlationId })
 
         logger.debug('[Slack Webhook] Discussion processed successfully:', {
           discussionId: result.discussionId,

@@ -67,6 +67,8 @@ export interface ProcessingResult {
   processingTime: number
   /** Whether this was a multi-task discussion */
   isMultiTask: boolean
+  /** Correlation ID linking all pipeline stages for this request */
+  correlationId?: string
 }
 
 /**
@@ -1076,17 +1078,21 @@ export async function processDiscussion(
     skipAI?: boolean
     /** Skip Notion task creation (for testing) */
     skipNotion?: boolean
+    /** Correlation ID for linking all pipeline stages of a single request */
+    correlationId?: string
   } = {},
 ): Promise<ProcessingResult> {
   const startTime = Date.now()
   let discussionId: string | undefined
   let jobId: string | undefined
   let actualTeamId: string = parsed.teamId // Will be updated to config.teamId after config loads
+  const correlationId = options.correlationId
 
   logger.info('Processing discussion', {
     sourceType: parsed.sourceType,
     sourceThreadId: parsed.sourceThreadId,
     title: parsed.title,
+    correlationId,
   })
 
   // Note: Job creation moved to after config loading to get correct teamId
@@ -1144,6 +1150,7 @@ export async function processDiscussion(
           notionTasks: [],
           processingTime: 0,
           isMultiTask: false,
+          correlationId,
         }
       }
 
@@ -1657,6 +1664,7 @@ export async function processDiscussion(
         notionTasks: [], // No tasks created for bootstrap
         processingTime: Date.now() - startTime,
         isMultiTask: false,
+        correlationId,
       }
     }
 
@@ -1970,6 +1978,7 @@ export async function processDiscussion(
       notionTasks,
       processingTime,
       isMultiTask: aiAnalysis.taskDetection.isMultiTask,
+      correlationId,
     }
   }
   catch (error) {
