@@ -72,6 +72,8 @@ export default defineNuxtConfig({
 | `server/api/upload-image.post.ts` | Authenticated file upload to blob storage |
 | `server/api/upload-image.delete.ts` | Authenticated file deletion from blob storage |
 | `server/routes/images/[pathname].get.ts` | Image serving with cache headers |
+| `app/components/stubs/` | No-op stubs (`priority: -1`) for optional package components |
+| `app/composables/useCroutonApps.ts` | App registry — `hasApp('assets')` for optional package detection |
 
 ## Architecture
 
@@ -202,6 +204,33 @@ const { formatShortcut } = useCroutonShortcuts({
 ```
 
 ## Common Tasks
+
+### Add a stub for an optional package's component
+
+When a core component optionally uses a component from an addon package (e.g. `crouton-assets`, `crouton-maps`):
+
+1. Create `app/components/stubs/{ComponentName}.vue` — no-op, accepts same props/emits
+2. No nuxt.config.ts change needed — the stubs dir is already registered with `priority: -1`
+3. The addon package's real component (registered at default priority 0+) automatically overrides it
+4. For conditional rendering with a fallback, detect via `useCroutonApps().hasApp('packageId')`
+   - The addon package must register itself in `croutonApps` in its `app/app.config.ts`
+
+```vue
+<!-- stubs/CroutonFooPicker.vue -->
+<script setup lang="ts">
+defineProps<{ modelValue?: string }>()
+defineEmits<{ 'update:modelValue': [string] }>()
+</script>
+<template><!-- stub: overridden by @fyit/crouton-foo --></template>
+```
+
+```typescript
+// Consumer component
+const { hasApp } = useCroutonApps()
+const hasFoo = hasApp('foo')  // true when crouton-foo is installed
+```
+
+**Never use** `resolveComponent()` or `vueApp._context.components` for optional detection.
 
 ### Add a new composable
 1. Create file in `app/composables/use{Name}.ts`

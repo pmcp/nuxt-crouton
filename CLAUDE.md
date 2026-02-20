@@ -394,6 +394,35 @@ The `database: true` option does NOT work for local development. It causes migra
 - Database migrations (`npx nuxt db generate/migrate`)
 - Avoiding Cloudflare dependencies during local dev
 
+### Optional Cross-Package Components (Stub Pattern)
+
+**NEVER use `resolveComponent()` or `vueApp._context.components` to detect optional packages.**
+
+When a component from an optional package (e.g. `crouton-assets`, `crouton-ai`) is used conditionally, use the **priority stub system**:
+
+1. **Stub in the consuming package's stubs dir** — a no-op component with `priority: -1`
+2. **Real component in the addon package** — registers at default priority (0+), automatically overrides the stub
+3. **Detection via `useCroutonApps().hasApp('packageId')`** — when a v-if/v-else with a meaningful fallback is needed
+
+```typescript
+// ✅ CORRECT — public API, build-time, no warnings
+const { hasApp } = useCroutonApps()
+const hasAssets = hasApp('assets')
+
+// ❌ WRONG — private API, warns when absent
+const hasAssets = !!useNuxtApp().vueApp._context.components['CroutonAssetsPicker']
+
+// ❌ WRONG — Vue warns unconditionally when component not found
+const comp = resolveComponent('CroutonAssetsPicker')
+```
+
+**Where stubs live:**
+- `crouton-core/app/components/stubs/` — stubs for components from `crouton-editor`, `crouton-maps`, `crouton-collab`, `crouton-assets`
+- `crouton-i18n/app/stubs/` — stubs for components from `crouton-ai`
+- All stubs dirs use `priority: -1` in their nuxt.config.ts component dir entry
+
+**Addon packages must register in `croutonApps`** (in their `app/app.config.ts`) to be detectable via `hasApp()`.
+
 ## MANDATORY: TypeScript Checking
 **EVERY agent and Claude Code MUST run `npx nuxt typecheck` after making changes**
 - Run after creating/modifying Vue components
