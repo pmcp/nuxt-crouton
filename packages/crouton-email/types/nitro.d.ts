@@ -20,4 +20,23 @@ declare global {
   function defineNuxtConfig(config: any): any
 }
 
+/**
+ * Augment NitroRuntimeHooks with crouton:operation for standalone typecheck.
+ * The full CroutonOperationEvent type is declared in crouton-core/crouton-hooks.d.ts.
+ * This minimal augmentation allows server/utils/email.ts to call the hook
+ * without requiring crouton-core to be present in this package's tsconfig includes.
+ */
+declare module 'nitropack' {
+  interface NitroRuntimeHooks {
+    'crouton:operation': (payload: {
+      type: string
+      source: string
+      teamId?: string
+      userId?: string
+      metadata?: Record<string, any>
+      timestamp?: number
+    }) => void | Promise<void>
+  }
+}
+
 export {}

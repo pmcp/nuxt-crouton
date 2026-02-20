@@ -1,4 +1,6 @@
+/// <reference path="../crouton-hooks.d.ts" />
 import { Resend } from 'resend'
+import { useNitroApp } from 'nitropack/runtime'
 import type { SendEmailOptions, SendEmailResult } from '../../types'
 
 let resendClient: Resend | null = null
@@ -39,6 +41,10 @@ export function useEmailService() {
    * Send an email using Resend
    */
   async function send(options: SendEmailOptions): Promise<SendEmailResult> {
+    const startTime = Date.now()
+    const nitroApp = useNitroApp()
+    const recipient = Array.isArray(options.to) ? options.to[0] : options.to
+
     try {
       const client = getResendClient()
 
@@ -61,11 +67,34 @@ export function useEmailService() {
 
       if (error) {
         console.error('[crouton-email] Failed to send email:', error)
+        await nitroApp.hooks.callHook('crouton:operation', {
+          type: 'email:failed',
+          source: 'crouton-email',
+          metadata: {
+            recipient,
+            subject: options.subject,
+            status: 'failed',
+            duration: Date.now() - startTime,
+            error: error.message
+          }
+        })
         return {
           success: false,
           error: error.message
         }
       }
+
+      await nitroApp.hooks.callHook('crouton:operation', {
+        type: 'email:sent',
+        source: 'crouton-email',
+        metadata: {
+          recipient,
+          subject: options.subject,
+          status: 'sent',
+          duration: Date.now() - startTime,
+          messageId: data?.id
+        }
+      })
 
       return {
         success: true,
@@ -74,6 +103,17 @@ export function useEmailService() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       console.error('[crouton-email] Failed to send email:', message)
+      await nitroApp.hooks.callHook('crouton:operation', {
+        type: 'email:failed',
+        source: 'crouton-email',
+        metadata: {
+          recipient,
+          subject: options.subject,
+          status: 'failed',
+          duration: Date.now() - startTime,
+          error: message
+        }
+      })
       return {
         success: false,
         error: message
