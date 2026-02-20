@@ -1,0 +1,30 @@
+{
+  "author": {
+    "type": "string",
+    "meta": { "required": true, "label": "Author Name", "area": "main" }
+  },
+  "company": {
+    "type": "string",
+    "meta": { "label": "Company", "area": "main" }
+  },
+  "role": {
+    "type": "string",
+    "meta": { "label": "Role", "area": "main" }
+  },
+  "quote": {
+    "type": "text",
+    "meta": { "required": true, "label": "Quote", "area": "main" }
+  },
+  "rating": {
+    "type": "number",
+    "meta": { "label": "Rating (1-5)", "default": 5, "area": "sidebar" }
+  },
+  "featured": {
+    "type": "boolean",
+    "meta": { "label": "Featured", "default": false, "area": "sidebar" }
+  },
+  "avatar": {
+    "type": "image",
+    "meta": { "label": "Author Avatar", "area": "sidebar" }
+  }
+}

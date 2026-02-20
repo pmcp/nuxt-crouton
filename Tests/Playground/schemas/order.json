@@ -1,0 +1,39 @@
+{
+  "orderNumber": {
+    "type": "string",
+    "meta": { "required": true, "label": "Order Number", "maxLength": 50, "area": "main" }
+  },
+  "customerName": {
+    "type": "string",
+    "meta": { "required": true, "label": "Customer Name", "area": "main" }
+  },
+  "customerEmail": {
+    "type": "string",
+    "meta": { "required": true, "label": "Customer Email", "area": "main" }
+  },
+  "productId": {
+    "type": "string",
+    "refTarget": "products",
+    "meta": { "label": "Product", "area": "main" }
+  },
+  "quantity": {
+    "type": "number",
+    "meta": { "required": true, "label": "Quantity", "default": 1, "area": "main" }
+  },
+  "total": {
+    "type": "decimal",
+    "meta": { "required": true, "label": "Order Total", "area": "sidebar" }
+  },
+  "isPaid": {
+    "type": "boolean",
+    "meta": { "label": "Payment Received", "default": false, "area": "sidebar" }
+  },
+  "orderedAt": {
+    "type": "date",
+    "meta": { "label": "Order Date", "area": "sidebar" }
+  },
+  "shippingAddress": {
+    "type": "json",
+    "meta": { "label": "Shipping Address", "area": "main" }
+  }
+}

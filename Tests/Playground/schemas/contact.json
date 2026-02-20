@@ -1,0 +1,46 @@
+{
+  "name": {
+    "type": "string",
+    "meta": { "required": true, "label": "Full Name", "area": "main" }
+  },
+  "email": {
+    "type": "string",
+    "meta": { "required": true, "label": "Email", "area": "main" }
+  },
+  "phone": {
+    "type": "string",
+    "meta": { "label": "Phone", "area": "main" }
+  },
+  "website": {
+    "type": "string",
+    "meta": { "label": "Website", "area": "main" }
+  },
+  "bio": {
+    "type": "text",
+    "meta": { "label": "Bio", "area": "main" }
+  },
+  "avatar": {
+    "type": "image",
+    "meta": { "label": "Avatar", "area": "sidebar" }
+  },
+  "resume": {
+    "type": "file",
+    "meta": { "label": "Resume / CV", "area": "sidebar" }
+  },
+  "active": {
+    "type": "boolean",
+    "meta": { "label": "Active", "default": true, "area": "sidebar" }
+  },
+  "birthday": {
+    "type": "date",
+    "meta": { "label": "Birthday", "area": "sidebar" }
+  },
+  "socialLinks": {
+    "type": "json",
+    "meta": { "label": "Social Links", "area": "main" }
+  },
+  "skills": {
+    "type": "array",
+    "meta": { "label": "Skills", "area": "main" }
+  }
+}
