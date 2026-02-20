@@ -34,25 +34,7 @@ export function useThemeMenuItems() {
     }))
   }))
 
-  // Flat list of theme items (for embedding directly in a group, not as submenu)
-  const themeItems = computed<DropdownMenuItem[]>(() =>
-    themes.map(theme => ({
-      label: theme.label,
-      active: currentTheme.value === theme.name,
-      avatar: {
-        style: { backgroundColor: theme.colors[0] },
-        class: 'rounded-full',
-        alt: theme.label
-      },
-      onSelect: (e: Event) => {
-        e.preventDefault()
-        setTheme(theme.name)
-      }
-    }))
-  )
-
   return {
-    themeMenuItem,
-    themeItems
+    themeMenuItem
   }
 }

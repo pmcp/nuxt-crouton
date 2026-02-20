@@ -1,66 +1,15 @@
-import type { EditorVariable, EditorVariableGroup, EditorMentionItem } from '../types/editor'
+import type { EditorVariable } from '../types/editor'
 
 /**
  * Composable for working with editor variables
  *
  * Provides utilities for:
- * - Converting variables to mention menu format
  * - Interpolating variables in content
  * - Extracting variable names from content
  * - Getting sample values for preview
+ * - Validating variable usage in content
  */
 export function useEditorVariables() {
-  /**
-   * Convert EditorVariable[] to UEditorMentionMenu items format
-   */
-  function toMentionItems(variables: EditorVariable[]): EditorMentionItem[] {
-    return variables.map(v => ({
-      label: v.name,
-      description: v.description || v.label,
-      icon: v.icon || 'i-lucide-variable'
-    }))
-  }
-
-  /**
-   * Convert grouped variables to mention items with group labels
-   */
-  function groupedToMentionItems(groups: EditorVariableGroup[]): EditorMentionItem[][] {
-    return groups.map(group => [
-      { label: group.label, disabled: true } as EditorMentionItem,
-      ...toMentionItems(group.variables)
-    ])
-  }
-
-  /**
-   * Group flat variables by category
-   */
-  function groupByCategory(variables: EditorVariable[]): EditorVariableGroup[] {
-    const grouped = new Map<string, EditorVariable[]>()
-
-    for (const variable of variables) {
-      const category = variable.category || 'Other'
-      if (!grouped.has(category)) {
-        grouped.set(category, [])
-      }
-      grouped.get(category)!.push(variable)
-    }
-
-    return Array.from(grouped.entries()).map(([label, vars]) => ({
-      label: formatCategoryLabel(label),
-      variables: vars
-    }))
-  }
-
-  /**
-   * Format category name to display label
-   */
-  function formatCategoryLabel(category: string): string {
-    return category
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-  }
-
   /**
    * Interpolate variables in content
    *
@@ -128,42 +77,10 @@ export function useEditorVariables() {
     return used.filter(name => !defined.has(name))
   }
 
-  /**
-   * Find variables that are defined but not used in content
-   *
-   * @param content - Content to check
-   * @param variables - Available variable definitions
-   * @returns Array of unused variable definitions
-   */
-  function findUnusedVariables(content: string, variables: EditorVariable[]): EditorVariable[] {
-    const used = new Set(extractVariables(content))
-
-    return variables.filter(v => !used.has(v.name))
-  }
-
-  /**
-   * Highlight variables in HTML content for preview
-   *
-   * Wraps {{variable}} in a styled span
-   */
-  function highlightVariables(content: string, className = 'editor-variable'): string {
-    if (!content) return ''
-
-    return content.replace(
-      /\{\{\s*(\w+)\s*\}\}/g,
-      `<span class="${className}">{{$1}}</span>`
-    )
-  }
-
   return {
-    toMentionItems,
-    groupedToMentionItems,
-    groupByCategory,
     interpolate,
     extractVariables,
     getSampleValues,
-    findUndefinedVariables,
-    findUnusedVariables,
-    highlightVariables
+    findUndefinedVariables
   }
 }

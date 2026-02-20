@@ -6,7 +6,7 @@ import { THEME_UI_CONFIGS } from '../configs/themeConfigs'
 
 export type ThemeName = 'ko' | 'minimal' | 'kr11' | 'default'
 
-export type BaseVariant = 'solid' | 'outline' | 'soft' | 'ghost' | 'link'
+type BaseVariant = 'solid' | 'outline' | 'soft' | 'ghost' | 'link'
 
 export interface ThemeConfig {
   name: ThemeName
