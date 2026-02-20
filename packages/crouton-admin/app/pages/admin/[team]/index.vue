@@ -12,11 +12,9 @@ definePageMeta({
   layout: 'admin'
 })
 
-const route = useRoute()
+const { teamSlug } = useTeamContext()
 const { t } = useT()
 const { currentTeam, members, loadMembers, loading } = useTeam()
-
-const teamSlug = computed(() => route.params.team as string)
 
 // Load members on mount
 onMounted(async () => {

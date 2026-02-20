@@ -11,7 +11,6 @@ interface BookingState {
 }
 
 export function useCustomerBooking() {
-  const route = useRoute()
   const toast = useToast()
 
   // Wizard state
@@ -47,7 +46,7 @@ export function useCustomerBooking() {
   } = useBookingAvailability(locationIdRef, selectedLocation)
 
   // Fetch allowed locations
-  const teamId = computed(() => route.params.team as string)
+  const { teamId } = useTeamContext()
 
   const { data: allowedLocations, status: locationsStatus, refresh: refreshLocations } = useFetch<LocationData[]>(
     () => `/api/crouton-bookings/teams/${teamId.value}/customer-locations`,

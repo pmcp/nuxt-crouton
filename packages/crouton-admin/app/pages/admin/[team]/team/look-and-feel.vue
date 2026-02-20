@@ -7,11 +7,9 @@
  *
  * @route /admin/[team]/team/look-and-feel
  */
-const route = useRoute()
+const { teamSlug } = useTeamContext()
 const { t } = useT()
 const { isAdmin } = useTeam()
-
-const teamSlug = computed(() => route.params.team as string)
 </script>
 
 <template>

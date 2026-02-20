@@ -7,8 +7,7 @@
  *
  * @route /admin/[team]/bookings/email-logs
  */
-const route = useRoute()
-const teamId = computed(() => route.params.team as string)
+const { teamId } = useTeamContext()
 
 // Fetch email logs
 const { data: emailLogs, status, refresh } = await useFetch(

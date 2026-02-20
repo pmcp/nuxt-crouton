@@ -221,9 +221,8 @@ interface TranslationWithOverride {
   overrideUpdatedAt: Date | null
 }
 
-const route = useRoute()
+const { teamSlug } = useTeamContext()
 const toast = useToast()
-const teamSlug = computed(() => route.params.team as string)
 
 // Fetch system translations with team overrides
 const { data: items, pending, error, refresh } = await useFetch<TranslationWithOverride[]>(

@@ -7,12 +7,10 @@
  *
  * @route /admin/[team]/team/settings
  */
-const route = useRoute()
+const { teamSlug } = useTeamContext()
 const { t } = useT()
 const { currentTeam, isOwner, deleteTeam, isAdmin } = useTeam()
 const toast = useToast()
-
-const teamSlug = computed(() => route.params.team as string)
 
 // Show delete confirmation modal
 const showDeleteModal = ref(false)

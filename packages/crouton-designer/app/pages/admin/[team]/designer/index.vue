@@ -6,10 +6,8 @@ definePageMeta({
   layout: 'admin'
 })
 
-const route = useRoute()
 const router = useRouter()
-const teamSlug = computed(() => route.params.team as string)
-const { buildApiUrl } = useTeamContext()
+const { teamSlug, buildApiUrl } = useTeamContext()
 const { t } = useT()
 
 // Load all projects

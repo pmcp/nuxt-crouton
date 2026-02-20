@@ -10,7 +10,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const teamSlug = computed(() => route.params.team as string)
+const { teamSlug } = useTeamContext()
 const projectId = computed(() => route.params.id as string)
 const isNewProject = computed(() => projectId.value === 'new')
 

@@ -1,8 +1,5 @@
 <script setup lang="ts">
-const route = useRoute()
-
-// Get team ID from route
-const teamId = computed(() => route.params.team as string)
+const { teamId } = useTeamContext()
 
 // Preview / impersonation state
 const isPreview = ref(false)

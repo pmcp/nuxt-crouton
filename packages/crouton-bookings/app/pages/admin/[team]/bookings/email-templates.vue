@@ -1,6 +1,5 @@
 <script setup lang="ts">
-const route = useRoute()
-const teamId = computed(() => route.params.team as string)
+const { teamId } = useTeamContext()
 
 // Get booking email variables and preview values
 const { variables, getPreviewValues } = useBookingEmailVariables()

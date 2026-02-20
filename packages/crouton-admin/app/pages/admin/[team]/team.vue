@@ -12,9 +12,8 @@ definePageMeta({
   layout: 'admin'
 })
 
-const route = useRoute()
+const { teamSlug } = useTeamContext()
 const { t } = useT()
-const teamSlug = computed(() => route.params.team as string)
 
 // Tab navigation items
 const tabs = computed(() => [
