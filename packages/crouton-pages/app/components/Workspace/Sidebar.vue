@@ -327,7 +327,7 @@ defineExpose({
           color="primary"
           variant="soft"
           class="mt-3"
-          @click="handleCreate"
+          @click="handleCreate()"
         >
           Create first page
         </UButton>
