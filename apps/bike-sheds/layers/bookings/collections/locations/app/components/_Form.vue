@@ -49,10 +49,10 @@
           />
         </UFormField>
         <UFormField label="OpenDays" name="openDays" class="not-last:pb-4">
-          <OpenDaysPicker v-model="state.openDays" />
+          <CroutonBookingsOpenDaysPicker v-model="state.openDays" />
         </UFormField>
         <UFormField label="SlotSchedule" name="slotSchedule" class="not-last:pb-4">
-          <ScheduleGrid v-model="state.slotSchedule" />
+          <CroutonBookingsScheduleGrid v-model="state.slotSchedule" :slots="state.slots" />
         </UFormField>
         <UFormField label="BlockedDates" name="blockedDates" class="not-last:pb-4">
           <CroutonFormRepeater
