@@ -19,8 +19,21 @@ interface RateLimitEntry {
 }
 
 /**
- * In-memory store for rate limit tracking
+ * In-memory store for rate limit tracking.
  * Key format: `${identifier}:${endpoint}`
+ *
+ * On Cloudflare Workers, modules are reused across requests within the same
+ * isolate, so a plain module-level Map is shared between concurrent requests.
+ * For rate limiting this is actually acceptable — and even desirable — because:
+ *   - Entries are keyed by identifier (IP/user) + endpoint, not by request
+ *   - Cross-request sharing means the counter correctly accumulates hits from
+ *     the same IP across concurrent requests in the same isolate
+ *   - Entries expire naturally (checked on every access via resetTime)
+ *   - Workers isolates are single-threaded, so there are no race conditions
+ *
+ * The only caveat: state does NOT persist across isolate restarts or Workers
+ * instances (each edge PoP runs its own isolate). For strict global rate
+ * limiting use Cloudflare Durable Objects / KV instead.
  */
 const rateLimitStore = new Map<string, RateLimitEntry>()
 

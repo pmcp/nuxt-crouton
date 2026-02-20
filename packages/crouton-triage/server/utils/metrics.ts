@@ -69,15 +69,28 @@ interface MetricTimer {
 }
 
 /**
- * In-memory storage for metrics
- * In production, consider using Redis or a time-series database
- */
-const metrics = new Map<string, MetricDataPoint[]>()
-
-/**
  * Maximum data points to keep per operation (prevent memory bloat)
  */
 const MAX_DATA_POINTS = 1000
+
+/**
+ * In-memory storage for metrics.
+ *
+ * On Cloudflare Workers, modules are reused across requests, so a plain
+ * module-level Map would accumulate data from all concurrent requests in the
+ * same isolate. We intentionally keep a single Map here because:
+ *   - Metrics are additive/append-only (never read back to influence a request)
+ *   - Cross-request aggregation is the desired behaviour for an in-process
+ *     metrics store (seeing p95 across all recent requests is useful)
+ *   - The Map is bounded by MAX_DATA_POINTS per operation key, preventing
+ *     unbounded memory growth
+ *
+ * If strict per-request isolation is required in future, migrate to Nitro
+ * storage (useStorage) backed by KV/Durable Objects.
+ *
+ * In production, consider using Redis or a time-series database instead.
+ */
+const metrics = new Map<string, MetricDataPoint[]>()
 
 /**
  * Percentile calculation helper
