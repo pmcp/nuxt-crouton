@@ -1,4 +1,5 @@
-import { ref, computed, onMounted, onUnmounted, watch, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, onMounted, watch, type Ref, type ComputedRef } from 'vue'
+import { useIntervalFn } from '@vueuse/core'
 import type { CollabAwarenessState } from '../types/collab'
 
 // $fetch is auto-imported by Nuxt at runtime
@@ -122,7 +123,6 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
   const loading = ref(false)
   const error = ref<Error | null>(null)
   const pollingActive = ref(false)
-  let pollTimer: ReturnType<typeof setInterval> | null = null
 
   // Computed
   const otherUsers = computed(() => {
@@ -175,23 +175,24 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
     }
   }
 
+  const { pause: pauseInterval, resume: resumeInterval } = useIntervalFn(
+    () => {
+      if (roomIdRef.value) {
+        fetchUsers()
+      }
+    },
+    pollInterval,
+    { immediate: false }
+  )
+
   /**
    * Start polling
    */
   function startPolling(): void {
     if (pollingActive.value) return
-
     pollingActive.value = true
-
-    // Initial fetch
     fetchUsers()
-
-    // Set up interval
-    pollTimer = setInterval(() => {
-      if (roomIdRef.value) {
-        fetchUsers()
-      }
-    }, pollInterval)
+    resumeInterval()
   }
 
   /**
@@ -199,11 +200,7 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
    */
   function stopPolling(): void {
     pollingActive.value = false
-
-    if (pollTimer) {
-      clearInterval(pollTimer)
-      pollTimer = null
-    }
+    pauseInterval()
   }
 
   // Watch for roomId changes
@@ -224,10 +221,6 @@ export function useCollabRoomUsers(options: UseCollabRoomUsersOptions): UseColla
     if (immediate && roomIdRef.value) {
       startPolling()
     }
-  })
-
-  onUnmounted(() => {
-    stopPolling()
   })
 
   return {

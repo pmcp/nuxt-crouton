@@ -20,7 +20,8 @@
  * </script>
  * ```
  */
-import { ref, readonly, onUnmounted } from 'vue'
+import { ref, readonly } from 'vue'
+import { useIntervalFn } from '@vueuse/core'
 import type { AdminStats } from '../../types/admin'
 
 export interface UseAdminStatsOptions {
@@ -37,8 +38,6 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   const error = ref<string | null>(null)
   const stats = ref<AdminStats | null>(null)
   const lastUpdated = ref<Date | null>(null)
-
-  let refreshTimer: ReturnType<typeof setInterval> | null = null
 
   /**
    * Fetch dashboard statistics
@@ -64,38 +63,21 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
     }
   }
 
-  /**
-   * Start auto-refresh timer
-   */
-  function startAutoRefresh(): void {
-    stopAutoRefresh()
-    refreshTimer = setInterval(() => {
+  const { pause: stopAutoRefresh, resume: startAutoRefresh } = useIntervalFn(
+    () => {
       getStats().catch(() => {
         // Silently ignore errors during auto-refresh
       })
-    }, refreshInterval)
-  }
-
-  /**
-   * Stop auto-refresh timer
-   */
-  function stopAutoRefresh(): void {
-    if (refreshTimer) {
-      clearInterval(refreshTimer)
-      refreshTimer = null
-    }
-  }
+    },
+    refreshInterval,
+    { immediate: false }
+  )
 
   // Set up auto-refresh if enabled
   if (autoRefresh && import.meta.client) {
     // Initial fetch
     getStats().catch(() => {})
     startAutoRefresh()
-
-    // Clean up on unmount
-    onUnmounted(() => {
-      stopAutoRefresh()
-    })
   }
 
   return {

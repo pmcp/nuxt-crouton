@@ -14,7 +14,8 @@
  * />
  * ```
  */
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useIntervalFn } from '@vueuse/core'
 
 interface Props {
   /** Cooldown duration in seconds (default: 60) */
@@ -40,28 +41,26 @@ const emit = defineEmits<{
 const remainingSeconds = ref(props.cooldown)
 const isOnCooldown = computed(() => remainingSeconds.value > 0)
 
-// Interval reference
-let timerInterval: ReturnType<typeof setInterval> | null = null
-
-// Start countdown timer
-function startTimer() {
-  remainingSeconds.value = props.cooldown
-
-  timerInterval = setInterval(() => {
+const { pause: pauseTimer, resume: resumeTimer } = useIntervalFn(
+  () => {
     if (remainingSeconds.value > 0) {
       remainingSeconds.value--
-    } else {
-      stopTimer()
     }
-  }, 1000)
+    if (remainingSeconds.value <= 0) {
+      pauseTimer()
+    }
+  },
+  1000,
+  { immediate: false }
+)
+
+function startTimer() {
+  remainingSeconds.value = props.cooldown
+  resumeTimer()
 }
 
-// Stop countdown timer
 function stopTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval)
-    timerInterval = null
-  }
+  pauseTimer()
 }
 
 // Handle resend click
@@ -74,11 +73,6 @@ function handleResend() {
 // Start timer on mount
 onMounted(() => {
   startTimer()
-})
-
-// Cleanup on unmount
-onUnmounted(() => {
-  stopTimer()
 })
 
 // Restart timer when cooldown prop changes
