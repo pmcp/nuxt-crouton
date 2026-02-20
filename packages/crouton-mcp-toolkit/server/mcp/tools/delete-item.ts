@@ -17,10 +17,20 @@ export default defineMcpTool({
       const event = useEvent()
       await requireMcpAuth(event, teamId)
 
+      event.context.mutationSource = 'mcp'
+
       const apiPath = getCollectionApiPath(col, teamId)
       await $fetch(`${apiPath}/${itemId}`, {
         method: 'DELETE'
       })
+
+      trackMcpMutation({
+        event,
+        teamId,
+        operation: 'delete',
+        collection,
+        itemId
+      }).catch(() => {})
 
       return jsonResult({ success: true, message: `Deleted item "${itemId}" from "${collection}".` })
     }

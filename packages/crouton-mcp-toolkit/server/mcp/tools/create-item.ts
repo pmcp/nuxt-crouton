@@ -17,11 +17,22 @@ export default defineMcpTool({
       const event = useEvent()
       await requireMcpAuth(event, teamId)
 
+      event.context.mutationSource = 'mcp'
+
       const apiPath = getCollectionApiPath(col, teamId)
       const result = await $fetch(apiPath, {
         method: 'POST',
         body: data
       })
+
+      trackMcpMutation({
+        event,
+        teamId,
+        operation: 'create',
+        collection,
+        itemId: String((result as any)?.id ?? ''),
+        data: result as Record<string, any>
+      }).catch(() => {})
 
       return jsonResult(result)
     }

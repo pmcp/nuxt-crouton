@@ -18,11 +18,22 @@ export default defineMcpTool({
       const event = useEvent()
       await requireMcpAuth(event, teamId)
 
+      event.context.mutationSource = 'mcp'
+
       const apiPath = getCollectionApiPath(col, teamId)
       const result = await $fetch(`${apiPath}/${itemId}`, {
         method: 'PATCH',
         body: data
       })
+
+      trackMcpMutation({
+        event,
+        teamId,
+        operation: 'update',
+        collection,
+        itemId,
+        data
+      }).catch(() => {})
 
       return jsonResult(result)
     }
