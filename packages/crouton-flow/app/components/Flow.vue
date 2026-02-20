@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, nextTick, ref, resolveComponent, watch, markRaw } from 'vue'
+import { useThrottleFn } from '@vueuse/core'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -506,17 +507,9 @@ const {
   screenToFlowCoordinate
 } = useVueFlow()
 
-// Throttle for real-time drag sync (sync every 50ms during drag)
-let lastDragSync = 0
-const DRAG_SYNC_THROTTLE = 50
-
-// Handle node drag - sync position in real-time
-onNodeDrag((event: NodeDragEvent) => {
+// Handle node drag - sync position in real-time (throttled to 50ms)
+const syncDragPosition = useThrottleFn((event: NodeDragEvent) => {
   if (!props.draggable || !props.sync || !syncState) return
-
-  const now = Date.now()
-  if (now - lastDragSync < DRAG_SYNC_THROTTLE) return
-  lastDragSync = now
 
   const { node } = event
   const position: FlowPosition = {
@@ -526,7 +519,9 @@ onNodeDrag((event: NodeDragEvent) => {
 
   // Sync to Yjs in real-time
   syncState.updatePosition(node.id, position)
-})
+}, 50)
+
+onNodeDrag(syncDragPosition)
 
 // Handle node drag end - final position sync
 onNodeDragStop((event: NodeDragEvent) => {
@@ -599,9 +594,16 @@ const localGhostNode = ref<Node | null>(null)
 // Timeout ID for delayed ghost cleanup (used when autoCreateOnDrop is false)
 let ghostCleanupTimeout: ReturnType<typeof setTimeout> | null = null
 
-// Throttle for ghost node awareness sync
-let lastGhostSync = 0
-const GHOST_SYNC_THROTTLE = 50
+// Throttled ghost node broadcast (sync every 50ms during dragover)
+const broadcastGhostNode = useThrottleFn((position: { x: number; y: number }) => {
+  if (!props.sync || !syncState) return
+  syncState.updateGhostNode({
+    id: `ghost-${syncState.user.value?.id}`,
+    title: 'New Node',
+    collection: props.collection,
+    position: { x: Math.round(position.x), y: Math.round(position.y) }
+  })
+}, 50)
 
 /**
  * Parse drag data from dataTransfer
@@ -672,16 +674,7 @@ function handleDragOver(event: DragEvent) {
     selectable: false
   }
   // Broadcast to other users (throttled) in sync mode
-  const now = Date.now()
-  if (props.sync && syncState && now - lastGhostSync >= GHOST_SYNC_THROTTLE) {
-    lastGhostSync = now
-    syncState.updateGhostNode({
-      id: `ghost-${syncState.user.value?.id}`,
-      title: 'New Node',
-      collection: props.collection,
-      position: { x: Math.round(position.x), y: Math.round(position.y) }
-    })
-  }
+  broadcastGhostNode(position)
 }
 
 /**

@@ -1,4 +1,5 @@
 import { computed, toValue, watch, ref } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import type { MaybeRef } from 'vue'
 
 export interface ChartCategory {
@@ -136,9 +137,11 @@ export function useCollectionChart(
     }))
   })
 
+  const debouncedFetch = useDebounceFn(() => fetchAndTransform(), 300)
+
   watch(
     [resolvedCollection, resolvedOptions],
-    () => fetchAndTransform(),
+    () => debouncedFetch(),
     { immediate: true, deep: true }
   )
 

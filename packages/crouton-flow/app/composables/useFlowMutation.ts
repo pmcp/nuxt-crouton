@@ -1,4 +1,5 @@
-import { ref, readonly, onUnmounted } from 'vue'
+import { ref, readonly } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import type { XYPosition } from '@vue-flow/core'
 import type { FlowPosition } from '../types/flow'
 
@@ -138,43 +139,30 @@ export function useDebouncedPositionUpdate(
 ) {
   const { updatePosition, pending, error } = useFlowMutation(collection, positionField)
 
-  // Track pending positions
+  // Track pending positions to batch updates within the debounce window
   const pendingPositions = new Map<string, XYPosition>()
-  let timeoutId: ReturnType<typeof setTimeout> | null = null
 
-  const debouncedUpdate = (id: string, position: XYPosition) => {
-    pendingPositions.set(id, position)
+  const flushPositions = useDebounceFn(async () => {
+    const updates = Array.from(pendingPositions.entries()).map(([nodeId, pos]) => ({
+      id: nodeId,
+      position: pos
+    }))
+    pendingPositions.clear()
 
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-    }
-
-    timeoutId = setTimeout(async () => {
-      const updates = Array.from(pendingPositions.entries()).map(([nodeId, pos]) => ({
-        id: nodeId,
-        position: pos
-      }))
-      pendingPositions.clear()
-
-      if (updates.length > 0) {
-        try {
-          await Promise.all(updates.map(u => updatePosition(u.id, u.position)))
-        } catch (e) {
-          console.error('[useFlowMutation] Failed to save positions:', e)
-        }
+    if (updates.length > 0) {
+      try {
+        await Promise.all(updates.map(u => updatePosition(u.id, u.position)))
+      } catch (e) {
+        console.error('[useFlowMutation] Failed to save positions:', e)
       }
-    }, delay)
-  }
-
-  // Cleanup on unmount
-  onUnmounted(() => {
-    if (timeoutId) {
-      clearTimeout(timeoutId)
     }
-  })
+  }, delay)
 
   return {
-    debouncedUpdate,
+    debouncedUpdate: (id: string, position: XYPosition) => {
+      pendingPositions.set(id, position)
+      flushPositions()
+    },
     pending,
     error
   }
