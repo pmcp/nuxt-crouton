@@ -318,6 +318,28 @@ layers/[layer]/collections/[collection]/
 └── nuxt.config.ts
 ```
 
+## Output Location
+
+**Generated files always go to the current working directory (`cwd`), not the config file location.**
+
+This means `crouton.config.js` can live anywhere — a `Tests/` folder, a shared schemas repo, etc. — as long as you run the command from inside the target app:
+
+```bash
+# ✅ Correct — run from inside the app
+cd apps/my-app
+crouton config ../../Tests/Playground/crouton.config.js
+# → layers/ generated in apps/my-app/
+
+# ❌ Wrong — run from config location, output lands there too
+cd Tests/Playground
+crouton config
+# → layers/ generated in Tests/Playground/ (no Nuxt app here)
+```
+
+`fieldsFile` paths in the config always resolve **relative to the config file**, not cwd.
+
+`crouton init` handles this automatically — it changes cwd to the new app directory before running generation.
+
 ## Config File Format
 
 The `crouton.config.js` is a **unified configuration** that serves both:

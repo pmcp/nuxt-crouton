@@ -45,6 +45,7 @@ export async function initApp(name: string, options: InitAppOptions = {}): Promi
     consola.start('Step 2/3 — Generating collections from config...')
     try {
       const { runConfig } = await import('./generate-collection.ts')
+      process.chdir(appDir)
       await runConfig({ configPath })
       consola.success('Step 2/3 — Collections generated')
     } catch (error) {
