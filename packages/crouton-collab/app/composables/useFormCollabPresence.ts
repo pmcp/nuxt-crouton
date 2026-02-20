@@ -11,7 +11,8 @@
  * // Usually auto-initialized by plugin, but can be used manually:
  * const { activeConnections, cleanup } = useFormCollabPresence()
  */
-import { ref, watch, onUnmounted, type Ref } from 'vue'
+import { ref, watch, type Ref } from 'vue'
+import { tryOnScopeDispose } from '@vueuse/core'
 import type { CollabAwarenessState } from '../types/collab'
 import { generateUserColor } from './useCollabConnection'
 
@@ -226,10 +227,7 @@ export function useFormCollabPresence(): UseFormCollabPresenceReturn {
     // useCrouton not available - that's fine, just don't watch
   }
 
-  // Cleanup on unmount
-  onUnmounted(() => {
-    cleanup()
-  })
+  tryOnScopeDispose(cleanup)
 
   return {
     activeConnections,
