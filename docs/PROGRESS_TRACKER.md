@@ -13,10 +13,10 @@
 | Metric | Value |
 |--------|-------|
 | Total tasks | 25 |
-| Completed | 3 |
+| Completed | 11 |
 | In progress | 0 |
-| Remaining | 22 |
-| Phase | Tier 1 — Bugs |
+| Remaining | 14 |
+| Phase | Tier 2/3 — Safe deletes & in-file cleanup |
 
 ---
 
@@ -35,7 +35,7 @@
 | # | Task | Status |
 |---|------|--------|
 | T2-1 | Delete 4 orphaned devtools Vue files (`CollectionCard.vue`, `CollectionDetailModal.vue`, `index.vue`, `useCroutonCollections.ts`) | [ ] |
-| T2-2 | Delete `crouton-core/app/utils/functional.ts` (all 13 exports dead — verify no external apps import it first) | [ ] |
+| T2-2 | Delete `crouton-core/app/utils/functional.ts` (all 13 exports dead — verify no external apps import it first) | [x] ✅ |
 
 ---
 
@@ -45,13 +45,13 @@ Safe because TypeScript will immediately catch any remaining importers.
 
 | # | Package | What to remove | Status |
 |---|---------|---------------|--------|
-| T3-1 | `crouton` | `resolvePath` unused import + `resolver` unused var in `module.ts` (also `category` on `ManifestMeta`) | [ ] |
-| T3-2 | `crouton-charts` | Fix incorrect import path in `Widget.vue` (l.17) | [ ] |
-| T3-3 | `crouton-events` | Remove unused `_result` assignment in `cleanup.ts`; remove exported `useCroutonEventsHealth` (only in docs, not imported) | [ ] |
-| T3-4 | `crouton-flow` | Remove unused `applyLayoutToNew` destructure in `Flow.vue` | [ ] |
-| T3-5 | `crouton-mcp` | Remove unused `readJsonFile()` export + unused `zod` import in `cli-help.ts` | [ ] |
-| T3-6 | `crouton-mcp-toolkit` | Remove unused `zod` import in `collection-schema.ts`; remove unused `schema?` on `McpCollectionConfig`; extract shared collection-mapping logic to remove duplication | [ ] |
-| T3-7 | `crouton-assets` | Remove 2 unused props (`items?`, `loading?`) from `Form.vue` | [ ] |
+| T3-1 | `crouton` | `resolvePath` unused import + `resolver` unused var in `module.ts` (also `category` on `ManifestMeta`) | [x] ✅ |
+| T3-2 | `crouton-charts` | Fix incorrect import path in `Widget.vue` (l.17) | [x] ✅ |
+| T3-3 | `crouton-events` | Remove unused `_result` assignment in `cleanup.ts`; remove exported `useCroutonEventsHealth` (only in docs, not imported) | [x] ✅ |
+| T3-4 | `crouton-flow` | Remove unused `applyLayoutToNew` destructure in `Flow.vue` | [x] ✅ |
+| T3-5 | `crouton-mcp` | Remove unused `readJsonFile()` export + unused `zod` import in `cli-help.ts` | [x] ✅ (note: zod in cli-help.ts was actually live — only readJsonFile removed) |
+| T3-6 | `crouton-mcp-toolkit` | Remove unused `zod` import in `collection-schema.ts`; remove unused `schema?` on `McpCollectionConfig`; extract shared collection-mapping logic to remove duplication | [x] ✅ |
+| T3-7 | `crouton-assets` | Remove 2 unused props (`items?`, `loading?`) from `Form.vue` | [x] ✅ |
 
 ---
 
@@ -100,6 +100,9 @@ These were flagged but should NOT be touched without further discussion:
 - T1-1 ✅ Fixed devtools API route: client was calling `/execute-request`, server registered `/execute` — aligned client to server
 - T1-3 ✅ Removed phantom `CroutonFlowCanvas` from crouton-flow manifest — `Flow.vue` (CroutonFlow) already IS the canvas; replaced with accurate `CroutonFlow` entry describing real props
 - T1-2 ✅ Removed `useMarker` from crouton-maps — `Marker.vue` fully encapsulates all marker logic; composable was declared but never implemented or called anywhere; also removed unused `MarkerInstance` + `UseMarkerOptions` types from `types/index.ts`
+- Wave 2 complete (8 tasks) — T2-2, T3-1 through T3-7 all committed
+- T3-5 note: `zod` import in `cli-help.ts` was actually live (false positive in original report) — only `readJsonFile` removed
+- T3-6: also extracted shared `mapCollectionToMcpFormat` helper, eliminating ~50% duplication between list-collections and collections-registry
 
 ---
 
