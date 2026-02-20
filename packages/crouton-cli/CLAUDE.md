@@ -498,7 +498,7 @@ When modifying the generator, **always check if examples need updating**:
 ### Image and File Field Types
 - `image` → renders `<CroutonAssetsPicker v-model="..." :crop="true" />` in forms, stores `VARCHAR(255)` (asset ID)
 - `file` → renders `<CroutonAssetsPicker v-model="..." />` in forms (no crop), stores `VARCHAR(255)` (asset ID)
-- Both are auto-detected by `asset-detector.ts` as asset references (like `refTarget: "assets"`)
+- Both are auto-detected by the `crouton-assets` manifest `detects.fieldTypes` pattern at generation time
 
 ### Add new CLI option
 1. Add option to `bin/crouton-generate.js` using Commander
