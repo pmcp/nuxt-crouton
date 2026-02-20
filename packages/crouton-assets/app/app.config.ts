@@ -14,6 +14,8 @@ export default defineAppConfig({
       id: 'assets',
       name: 'assets.title',
       icon: 'i-lucide-image',
+      // API route prefixes for devtools operation tracking
+      apiRoutes: ['/api/assets/'],
       // Admin routes (appear in /admin/[team]/ sidebar)
       adminRoutes: [
         {

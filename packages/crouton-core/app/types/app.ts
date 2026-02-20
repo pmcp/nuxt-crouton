@@ -251,6 +251,16 @@ export interface CroutonAppConfig {
   settingsRoutes?: CroutonAppRoute[]
 
   /**
+   * API route prefixes provided by this app.
+   * Used by crouton-devtools to extend operation tracking beyond the
+   * standard `/api/crouton-collection/` prefix. Each entry is a path
+   * prefix string (e.g. '/api/crouton-bookings/'). The tracker matches
+   * incoming requests against these prefixes and groups them by app ID.
+   * @example ['/api/crouton-bookings/']
+   */
+  apiRoutes?: string[]
+
+  /**
    * Page types this app provides for CMS use.
    * These appear in the admin page creation flow, allowing admins
    * to create pages that render app-specific components.

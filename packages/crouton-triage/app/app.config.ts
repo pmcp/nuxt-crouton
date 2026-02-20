@@ -36,6 +36,10 @@ export default defineAppConfig({
       ],
       // Settings routes
       settingsRoutes: [],
+
+      // API route prefixes for devtools operation tracking
+      apiRoutes: ['/api/crouton-triage/'],
+
       // Page types for CMS integration
       pageTypes: [
         {

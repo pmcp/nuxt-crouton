@@ -20,17 +20,35 @@ export default defineNuxtModule<ModuleOptions>({
 
     const resolver = createResolver(import.meta.url)
 
-    // Detect if nuxt-crouton-events package is installed via croutonApps registry
-    // (crouton-events registers itself in app/app.config.ts under croutonApps.events)
+    // Read croutonApps registry from merged app config
     const croutonApps = (nuxt.options.appConfig as any)?.croutonApps ?? {}
+
+    // Detect if nuxt-crouton-events package is installed
+    // (crouton-events registers itself in app/app.config.ts under croutonApps.events)
     const hasEventsPackage = 'events' in croutonApps
 
-    // Store collections config and events detection in Nitro runtime config
+    // Collect API route prefixes from all croutonApps registrations.
+    // Each package declares apiRoutes in its app/app.config.ts entry so the
+    // tracker can match custom routes beyond /api/crouton-collection/*.
+    const apiRoutePrefixes: Array<{ prefix: string, routeGroup: string }> = []
+    for (const [appId, appConfig] of Object.entries(croutonApps)) {
+      const routes = (appConfig as any)?.apiRoutes
+      if (Array.isArray(routes)) {
+        for (const prefix of routes) {
+          if (typeof prefix === 'string') {
+            apiRoutePrefixes.push({ prefix, routeGroup: appId })
+          }
+        }
+      }
+    }
+
+    // Store collections config, events detection, and route prefixes in Nitro runtime config
     nuxt.options.nitro = nuxt.options.nitro || {}
     nuxt.options.nitro.runtimeConfig = nuxt.options.nitro.runtimeConfig || {}
     nuxt.options.nitro.runtimeConfig.croutonCollections = nuxt.options.appConfig?.croutonCollections || {}
     nuxt.options.nitro.runtimeConfig.croutonDevtools = {
-      hasEventsPackage
+      hasEventsPackage,
+      apiRoutePrefixes
     }
 
     // Register operation tracker via Nitro plugin hook

@@ -19,6 +19,8 @@ export interface Operation {
   metadata?: Record<string, any>
   /** Item ID for get/update/delete operations (used for event correlation) */
   itemId?: string
+  /** Package/app group that owns this route (e.g. 'collection', 'bookings', 'ai') */
+  routeGroup?: string
 }
 
 export interface OperationFilters {

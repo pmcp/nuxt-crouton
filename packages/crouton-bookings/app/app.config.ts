@@ -45,6 +45,9 @@ export default defineAppConfig({
       // Settings routes - empty (booking settings are under /bookings/ not /settings/)
       settingsRoutes: [],
 
+      // API route prefixes for devtools operation tracking
+      apiRoutes: ['/api/crouton-bookings/'],
+
       // Page types for CMS integration
       // These appear when creating pages in /admin/[team]/pages
       pageTypes: [
