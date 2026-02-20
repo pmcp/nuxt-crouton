@@ -65,6 +65,15 @@ export function getBlockCommandItems(query: string): BlockCommandItem[] {
         case 'twoColumnBlock':
           editor.chain().focus().insertTwoColumnBlock().run()
           break
+        case 'richTextBlock':
+          editor.chain().focus().insertRichTextBlock().run()
+          break
+        case 'chartBlock':
+          editor.chain().focus().insertChartBlock().run()
+          break
+        case 'mapBlock':
+          editor.chain().focus().insertMapBlock().run()
+          break
         default:
           console.warn(`Unknown block type: ${item.type}`)
       }

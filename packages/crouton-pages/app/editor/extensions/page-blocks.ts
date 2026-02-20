@@ -15,6 +15,7 @@ import { CollectionBlock } from './collection-block'
 import { FaqBlock } from './faq-block'
 import { TwoColumnBlock } from './two-column-block'
 import { ChartBlock } from './chart-block'
+import { MapBlock } from './map-block'
 import { BlockCommands } from './block-commands'
 
 export interface PageBlocksOptions {
@@ -31,6 +32,7 @@ export interface PageBlocksOptions {
     faq?: boolean
     twoColumn?: boolean
     chart?: boolean
+    map?: boolean
   }
   /**
    * Enable slash commands for block insertion
@@ -56,7 +58,8 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         collection: true,
         faq: true,
         twoColumn: true,
-        chart: true
+        chart: true,
+        map: true
       },
       enableSlashCommands: true,
       suggestionOptions: {}
@@ -95,6 +98,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.chart !== false) {
       extensions.push(ChartBlock)
     }
+    if (blocks?.map !== false) {
+      extensions.push(MapBlock)
+    }
 
     // Add slash commands if enabled
     if (enableSlashCommands) {
@@ -117,6 +123,7 @@ export { CollectionBlock } from './collection-block'
 export { FaqBlock } from './faq-block'
 export { TwoColumnBlock } from './two-column-block'
 export { ChartBlock } from './chart-block'
+export { MapBlock } from './map-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 
 // Export types
@@ -129,6 +136,7 @@ export type { CollectionBlockOptions } from './collection-block'
 export type { FaqBlockOptions } from './faq-block'
 export type { TwoColumnBlockOptions } from './two-column-block'
 export type { ChartBlockOptions } from './chart-block'
+export type { MapBlockOptions } from './map-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks

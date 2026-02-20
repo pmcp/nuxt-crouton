@@ -21,6 +21,7 @@ export type BlockType =
   | 'faqBlock'
   | 'twoColumnBlock'
   | 'chartBlock'
+  | 'mapBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -213,6 +214,7 @@ export type BlockAttrs =
   | FaqBlockAttrs
   | TwoColumnBlockAttrs
   | ChartBlockAttrs
+  | MapBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -261,6 +263,27 @@ export interface TwoColumnBlock extends PageBlock<TwoColumnBlockAttrs> {
 
 export interface ChartBlock extends PageBlock<ChartBlockAttrs> {
   type: 'chartBlock'
+}
+
+export interface MapBlockAttrs {
+  /** Display label / place name */
+  address?: string
+  /** Center latitude */
+  lat: number
+  /** Center longitude */
+  lng: number
+  /** Map zoom level */
+  zoom: number
+  /** Mapbox style preset */
+  style: string
+  /** Map height in pixels */
+  height: number
+  /** Optional popup text at center pin */
+  markerLabel?: string
+}
+
+export interface MapBlock extends PageBlock<MapBlockAttrs> {
+  type: 'mapBlock'
 }
 
 // ============================================================================

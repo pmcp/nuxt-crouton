@@ -18,6 +18,7 @@ import type {
   FaqBlockAttrs,
   TwoColumnBlockAttrs,
   ChartBlockAttrs,
+  MapBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -554,6 +555,87 @@ export const chartBlockDefinition: BlockDefinition<ChartBlockAttrs> = {
   ]
 }
 
+export const mapBlockDefinition: BlockDefinition<MapBlockAttrs> = {
+  type: 'mapBlock',
+  name: 'Map',
+  description: 'Embed an interactive map with a location pin',
+  icon: 'i-lucide-map-pin',
+  category: 'content',
+  defaultAttrs: {
+    lat: 0,
+    lng: 0,
+    zoom: 12,
+    style: 'streets',
+    height: 400
+  },
+  schema: [
+    {
+      name: 'address',
+      type: 'text',
+      label: 'Place name',
+      description: 'Display label for the location (for reference only)'
+    },
+    {
+      name: 'lat',
+      type: 'text',
+      label: 'Latitude',
+      required: true,
+      description: 'Center latitude (e.g. 37.7749)'
+    },
+    {
+      name: 'lng',
+      type: 'text',
+      label: 'Longitude',
+      required: true,
+      description: 'Center longitude (e.g. -122.4194)'
+    },
+    {
+      name: 'zoom',
+      type: 'select',
+      label: 'Zoom',
+      options: [
+        { label: 'Country (8)', value: '8' },
+        { label: 'Region (10)', value: '10' },
+        { label: 'City (12)', value: '12' },
+        { label: 'Neighbourhood (14)', value: '14' },
+        { label: 'Street (16)', value: '16' }
+      ],
+      defaultValue: '12'
+    },
+    {
+      name: 'style',
+      type: 'select',
+      label: 'Map style',
+      options: [
+        { label: 'Streets', value: 'streets' },
+        { label: 'Light', value: 'light' },
+        { label: 'Dark', value: 'dark' },
+        { label: 'Satellite', value: 'satellite' },
+        { label: 'Outdoors', value: 'outdoors' }
+      ],
+      defaultValue: 'streets'
+    },
+    {
+      name: 'height',
+      type: 'select',
+      label: 'Height',
+      options: [
+        { label: '300px', value: '300' },
+        { label: '400px', value: '400' },
+        { label: '500px', value: '500' },
+        { label: '600px', value: '600' }
+      ],
+      defaultValue: '400'
+    },
+    {
+      name: 'markerLabel',
+      type: 'text',
+      label: 'Marker popup',
+      description: 'Text shown in the popup when the pin is clicked'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -564,7 +646,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   collectionBlock: collectionBlockDefinition,
   faqBlock: faqBlockDefinition,
   twoColumnBlock: twoColumnBlockDefinition,
-  chartBlock: chartBlockDefinition
+  chartBlock: chartBlockDefinition,
+  mapBlock: mapBlockDefinition
 }
 
 // ============================================================================
