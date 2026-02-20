@@ -1166,6 +1166,7 @@ This project uses Claude Code skills, agents, and custom configurations.
 | Type | File | Purpose | Update When |
 |------|------|---------|-------------|
 | Skill | `.claude/skills/crouton.md` | Collection generation workflow | Field types, commands, workflow change |
+| Skill | `.claude/skills/i18n-audit.md` | Translation completeness audit + fix | Locale paths, package list, fix conventions change |
 | Agent | `.claude/agents/sync-checker.md` | Verifies doc sync across artifacts | Sync rules change |
 | Settings | `.claude/settings.local.json` | Project-specific permissions | New tools needed |
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | AI-powered collection generation | CLI commands, field types change |
@@ -1177,6 +1178,12 @@ This project uses Claude Code skills, agents, and custom configurations.
 - "create a collection", "generate crud", "scaffold"
 - Guides Claude through schema creation and generation
 - Contains field type reference and examples
+
+**i18n-audit.md** - Triggers when user mentions:
+- "/i18n-audit", "check translations", "audit translations", "missing translations", "hardcoded strings"
+- Runs parallel subagents to audit all packages for locale completeness, missing keys, and hardcoded text
+- Three modes: `--audit` (default), `--fix {package}`, `--fix-critical`
+- Saves reports to `docs/reports/translation-audit-report-{date}.md`
 
 ### Agents
 
