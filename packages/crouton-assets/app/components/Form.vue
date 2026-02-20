@@ -4,9 +4,7 @@ type AspectRatioPreset = 'free' | '1:1' | '16:9' | '4:3' | '3:2'
 const props = defineProps<{
   collection?: string
   action?: string
-  items?: string[]
   activeItem?: Record<string, any>
-  loading?: string
   crop?: boolean | { aspectRatio?: number | AspectRatioPreset }
 }>()
 
