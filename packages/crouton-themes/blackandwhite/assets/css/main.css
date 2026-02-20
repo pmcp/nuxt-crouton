@@ -1,40 +1,36 @@
 /* Black & White Theme
    Compact monochrome dashboard.
    Light mode: black as primary. Dark mode: white as primary.
-   Uses !important to override Nuxt UI's CSS-variable-based defaults.
+
+   Uses Nuxt UI's built-in CSS variables so dark mode adapts automatically:
+     --ui-bg-inverted  →  near-black in light mode,  #fff  in dark mode
+     --ui-text-inverted →  #fff  in light mode,  near-black  in dark mode
+     --ui-text-highlighted → near-black in light mode,  #fff  in dark mode
+     --ui-border-inverted  → near-black in light mode,  #fff  in dark mode
+
+   We still use !important to override Nuxt UI's compound-variant Tailwind
+   utilities (e.g. bg-primary, text-primary) which are not !important.
 */
 
 /* ============================================
    SOLID BUTTONS
+   Near-black bg / white text  ↔  white bg / near-black text
    ============================================ */
 
 .bw-solid {
-  background-color: #171717 !important; /* neutral-900 */
-  color: #ffffff !important;
+  background-color: var(--ui-bg-inverted) !important;
+  color: var(--ui-text-inverted) !important;
   box-shadow: none !important;
   border: none !important;
-  transition: background-color 150ms ease !important;
+  transition: opacity 150ms ease !important;
 }
 
 .bw-solid:hover {
-  background-color: #0a0a0a !important; /* neutral-950 */
+  opacity: 0.85 !important;
 }
 
 .bw-solid:active {
-  background-color: #000000 !important;
-}
-
-.dark .bw-solid {
-  background-color: #ffffff !important;
-  color: #171717 !important;
-}
-
-.dark .bw-solid:hover {
-  background-color: #f5f5f5 !important; /* neutral-100 */
-}
-
-.dark .bw-solid:active {
-  background-color: #e5e5e5 !important; /* neutral-200 */
+  opacity: 0.7 !important;
 }
 
 /* ============================================
@@ -43,25 +39,15 @@
 
 .bw-outline {
   background-color: transparent !important;
-  color: #171717 !important;
-  box-shadow: inset 0 0 0 1px #404040 !important; /* neutral-700 */
+  color: var(--ui-text-highlighted) !important;
+  box-shadow: inset 0 0 0 1px var(--ui-border-accented) !important;
   border: none !important;
-  transition: background-color 150ms ease !important;
+  transition: background-color 150ms ease, box-shadow 150ms ease !important;
 }
 
 .bw-outline:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-  box-shadow: inset 0 0 0 1px #171717 !important;
-}
-
-.dark .bw-outline {
-  color: #f5f5f5 !important; /* neutral-100 */
-  box-shadow: inset 0 0 0 1px #737373 !important; /* neutral-500 */
-}
-
-.dark .bw-outline:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: inset 0 0 0 1px #f5f5f5 !important;
+  background-color: var(--ui-bg-elevated) !important;
+  box-shadow: inset 0 0 0 1px var(--ui-border-inverted) !important;
 }
 
 /* ============================================
@@ -69,48 +55,36 @@
    ============================================ */
 
 .bw-soft {
-  background-color: #f5f5f5 !important; /* neutral-100 */
-  color: #171717 !important; /* neutral-900 */
+  background-color: var(--ui-bg-elevated) !important;
+  color: var(--ui-text-highlighted) !important;
   box-shadow: none !important;
   border: none !important;
   transition: background-color 150ms ease !important;
 }
 
 .bw-soft:hover {
-  background-color: #e5e5e5 !important; /* neutral-200 */
-}
-
-.dark .bw-soft {
-  background-color: #262626 !important; /* neutral-800 */
-  color: #f5f5f5 !important; /* neutral-100 */
-}
-
-.dark .bw-soft:hover {
-  background-color: #404040 !important; /* neutral-700 */
+  background-color: var(--ui-bg-accented) !important;
 }
 
 /* ============================================
    GHOST BUTTONS
+   Transparent bg, near-black text ↔ transparent bg, white text
    ============================================ */
 
 .bw-ghost {
   background-color: transparent !important;
-  color: #171717 !important; /* neutral-900 */
+  color: var(--ui-text-highlighted) !important;
   box-shadow: none !important;
   border: none !important;
   transition: background-color 150ms ease !important;
 }
 
 .bw-ghost:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
+  background-color: var(--ui-bg-elevated) !important;
 }
 
-.dark .bw-ghost {
-  color: #f5f5f5 !important; /* neutral-100 */
-}
-
-.dark .bw-ghost:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+.bw-ghost:active {
+  background-color: var(--ui-bg-accented) !important;
 }
 
 /* ============================================
@@ -119,22 +93,14 @@
 
 .bw-link {
   background-color: transparent !important;
-  color: #171717 !important;
+  color: var(--ui-text-highlighted) !important;
   box-shadow: none !important;
   border: none !important;
   text-decoration: underline !important;
   text-underline-offset: 2px !important;
-  transition: color 150ms ease !important;
+  transition: opacity 150ms ease !important;
 }
 
 .bw-link:hover {
-  color: #0a0a0a !important;
-}
-
-.dark .bw-link {
-  color: #f5f5f5 !important;
-}
-
-.dark .bw-link:hover {
-  color: #ffffff !important;
+  opacity: 0.75 !important;
 }
