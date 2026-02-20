@@ -43,6 +43,11 @@ export function generateListComponent(data: Record<string, any>, config: Record<
   const prefixedCamelCasePlural = `${layerCamelCase}${pascalCasePlural}`
   const apiPath = `${layer}-${plural}`
 
+  // Load list enhancements from manifest contributions (maps, editor, collab, etc.)
+  const listEnhancements = data?.listEnhancements || { cellTemplates: {}, collectionProps: [], scriptAdditions: [] }
+  // Fields with contribution cell templates must be excluded from the generic translatable-field slot
+  const contributionFieldNames = new Set(Object.keys(listEnhancements.cellTemplates || {}))
+
   // Check for translations
   const translatableFields = config?.translations?.collections?.[plural] || []
   const hasTranslations = translatableFields.length > 0
@@ -68,29 +73,15 @@ export function generateListComponent(data: Record<string, any>, config: Record<
   // Check for options fields (fields with optionsCollection - typically from settings singletons)
   const optionsFields = fields.filter(f => f.meta?.optionsCollection && f.meta?.optionsField)
 
-  // Check for editor fields (fields using nuxt-crouton-editor components)
-  const editorFields = fields.filter(f =>
-    f.meta?.component
-    && (f.meta.component === 'EditorSimple' || f.meta.component.startsWith('Editor'))
-  )
-
-  // Get field names that have special handling (editor, map, etc.) to avoid duplicate slots
-  const editorFieldNames = new Set(editorFields.map(f => f.name))
-  const mapFieldNames = new Set(fields.filter(f => f.meta?.group === 'map' || f.type === 'geojson').map(f => f.name))
-
-  // Filter translatable fields to exclude those with special component handling
+  // Filter translatable fields to exclude those with contribution cell templates (editor, map, etc.)
   const filteredTranslatableFields = translatableFields.filter(fieldName =>
-    !editorFieldNames.has(fieldName) && !mapFieldNames.has(fieldName)
+    !contributionFieldNames.has(fieldName)
   )
 
-  // Check for map/location fields (fields with group: "map" or type: "geojson")
-  const mapFields = fields.filter(f =>
-    f.meta?.group === 'map'
-    || f.type === 'geojson'
-  )
-
-  // Check for collab presence support
-  const hasCollab = data?.collab?.enabled === true
+  // Extra CroutonCollection props from contributions (e.g. :show-collab-presence)
+  const extraCollectionProps = (listEnhancements.collectionProps as string[]).length > 0
+    ? (listEnhancements.collectionProps as string[]).map((p: string) => `\n    ${p}`).join('')
+    : ''
 
   // Generate AI context header
   const aiHeader = generateAIHeader(data, apiPath)
@@ -101,8 +92,7 @@ export function generateListComponent(data: Record<string, any>, config: Record<
     collection="${prefixedCamelCasePlural}"
     :columns="columns"
     :rows="${plural} || []"
-    :loading="pending"${hasCollab ? `
-    :show-collab-presence="collabConfig"` : ''}
+    :loading="pending"${extraCollectionProps}
   >
     <template #header>
       <CroutonTableHeader
@@ -212,17 +202,7 @@ export function generateListComponent(data: Record<string, any>, config: Record<
       />
       <span v-else class="text-gray-400">—</span>
     </template>`
-    }).join('')}${editorFields.map(field => {
-      const isTranslatable = translatableFields.includes(field.name)
-      const contentAccess = isTranslatable ? `t(row.original, '${field.name}')` : `row.original.${field.name}`
-      return `
-    <template #${field.name}-cell="{ row }">
-      <CroutonEditorPreview :content="${contentAccess}" />
-    </template>`
-    }).join('')}${mapFields.map(field => `
-    <template #${field.name}-cell="{ row }">
-      <CroutonMapsPreview :location="row.original.${field.name}" />
-    </template>`).join('')}${hasTranslations
+    }).join('')}${Object.values(listEnhancements.cellTemplates as Record<string, string>).join('')}${hasTranslations
       ? `
     <template #translations-cell="{ row }">
       <CroutonI18nListCards :item="row.original" :fields="['${translatableFields.join('\', \'')}']" />
@@ -249,18 +229,6 @@ const { columns } = use${prefixedPascalCasePlural}()
 const { items: ${camelCasePlural}, pending } = await useCollectionQuery(
   '${prefixedCamelCasePlural}'
 )
-${hasCollab
-    ? `
-// Get current user for presence filtering
-const { data: session } = useSession()
-
-// Collab presence config
-const collabConfig = computed(() => ({
-  roomType: 'page',
-  currentUserId: session.value?.user?.id,
-  pollInterval: 5000
-}))
-`
-    : ''}
+${(listEnhancements.scriptAdditions as string[]).join('\n')}
 </script>`
 }

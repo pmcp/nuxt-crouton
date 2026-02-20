@@ -9,7 +9,8 @@ import { loadConfig } from 'c12'
 
 // Import utilities
 import { toCase, toSnakeCase } from './utils/helpers.ts'
-import { loadTypeMapping } from './utils/manifest-bridge.ts'
+import { loadTypeMapping, discoverManifests, getGeneratorDetectors, getGeneratorContributions } from './utils/manifest-bridge.ts'
+import type { DetectionResult, DetectedField, FormEnhancement, ListEnhancement, GeneratorContribution } from '@fyit/crouton-core/shared/manifest'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.ts'
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.ts'
 import { syncFrameworkPackages, addToNuxtConfigExtends } from './utils/update-nuxt-config.ts'
@@ -97,6 +98,187 @@ interface RunGenerateOptions {
   hierarchy?: boolean
   seed?: boolean
   seedCount?: number
+}
+
+// ---------------------------------------------------------------------------
+// Manifest-driven detection and contribution helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute detection results from manifest detectors.
+ * Replaces all hardcoded package-specific detection in generators.
+ */
+function computeDetection(
+  fields: Field[],
+  collectionConfig: Record<string, any> | null,
+  detectors: Map<string, any>,
+  layerCamelCase: string,
+): DetectionResult {
+  const allNonIdFields = fields.filter(f => f.name !== 'id')
+
+  const mapsDetector = detectors.get('crouton-maps')
+  const assetsDetector = detectors.get('crouton-assets')
+  const editorDetector = detectors.get('crouton-editor')
+  const collabDetector = detectors.get('crouton-collab')
+
+  // Maps: address fields + coordinate field
+  const addressFields = (mapsDetector?.fieldNamePatterns
+    ? allNonIdFields.filter((f: Field) =>
+      mapsDetector.fieldNamePatterns.some((p: string) => f.name.toLowerCase().includes(p.toLowerCase()))
+    )
+    : []) as unknown as DetectedField[]
+
+  const coordinateFields = (mapsDetector?.coordinatePatterns
+    ? allNonIdFields.filter((f: Field) =>
+      mapsDetector.coordinatePatterns.some((p: string) => f.name.toLowerCase().includes(p.toLowerCase()))
+    )
+    : []) as unknown as DetectedField[]
+
+  // Prefer 'location' / 'coordinates' / 'coords' as the coordinate field
+  const coordinateField: DetectedField | null = coordinateFields.find(
+    f => f.name === 'location' || f.name === 'coordinates' || f.name === 'coords'
+  ) || coordinateFields[0] || null
+
+  const hasAddress = addressFields.length > 0 && coordinateField !== null
+
+  // Assets: image/file types and asset refTargets
+  const assetFields = (assetsDetector
+    ? allNonIdFields.filter((f: Field) => {
+        if (assetsDetector.fieldTypes?.includes(f.type)) return true
+        if (f.refTarget && assetsDetector.refTargetPatterns?.some(
+          (p: string) => (f.refTarget as string).toLowerCase().includes(p.toLowerCase())
+        )) return true
+        return false
+      })
+    : []) as unknown as DetectedField[]
+
+  // Pre-compute resolvedCollection for refTarget asset fields (used by contribution)
+  for (const f of assetFields) {
+    if (f.refTarget && !f.resolvedCollection) {
+      const refCases = toCase(f.refTarget as string)
+      f.resolvedCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
+    }
+  }
+
+  // Editor: fields using Editor component patterns
+  const editorFields = (editorDetector?.componentPatterns
+    ? allNonIdFields.filter((f: Field) =>
+        f.meta?.component && editorDetector.componentPatterns.some((p: string) =>
+          (f.meta!.component as string).includes(p)
+        )
+      )
+    : []) as unknown as DetectedField[]
+
+  // Collab: collection config flag
+  const collabEnabled: boolean = collabDetector?.collectionConfigFlag
+    ? collectionConfig?.[collabDetector.collectionConfigFlag] === true
+    : false
+
+  return {
+    addressFields,
+    coordinateField,
+    hasAddress,
+    assetFields,
+    editorFields,
+    collabEnabled,
+  }
+}
+
+interface MergedFormEnhancement {
+  excludeFieldNames: string[]
+  groupInjections: Record<string, string>
+  fieldOverrides: Record<string, string>
+  scriptAdditions: string[]
+}
+
+interface MergedListEnhancement {
+  cellTemplates: Record<string, string>
+  collectionProps: string[]
+  scriptAdditions: string[]
+}
+
+/**
+ * Run all form contributions and merge their enhancements.
+ */
+function runFormContributions(
+  contributions: Array<{ packageId: string; contribution: GeneratorContribution }>,
+  data: Record<string, any>,
+  dialect: string,
+): MergedFormEnhancement {
+  const result: MergedFormEnhancement = {
+    excludeFieldNames: [],
+    groupInjections: {},
+    fieldOverrides: {},
+    scriptAdditions: [],
+  }
+
+  const ctx = {
+    fields: data.fields as DetectedField[],
+    collectionConfig: data.collectionConfig,
+    dialect: dialect as 'sqlite' | 'pg',
+    detected: data.detected as DetectionResult,
+    layerCamelCase: data.layerCamelCase as string,
+  }
+
+  for (const { contribution } of contributions) {
+    if (!contribution.enhanceForm) continue
+    const enhancement = contribution.enhanceForm(ctx)
+    if (!enhancement) continue
+
+    if (enhancement.excludeFieldNames) {
+      result.excludeFieldNames.push(...enhancement.excludeFieldNames)
+    }
+    if (enhancement.groupInjections) {
+      Object.assign(result.groupInjections, enhancement.groupInjections)
+    }
+    if (enhancement.fieldOverrides) {
+      Object.assign(result.fieldOverrides, enhancement.fieldOverrides)
+    }
+    if (enhancement.scriptCode) {
+      result.scriptAdditions.push(enhancement.scriptCode)
+    }
+  }
+
+  return result
+}
+
+/**
+ * Run all list contributions and merge their enhancements.
+ */
+function runListContributions(
+  contributions: Array<{ packageId: string; contribution: GeneratorContribution }>,
+  data: Record<string, any>,
+  translatableFields: string[],
+): MergedListEnhancement {
+  const result: MergedListEnhancement = {
+    cellTemplates: {},
+    collectionProps: [],
+    scriptAdditions: [],
+  }
+
+  const ctx = {
+    fields: data.fields as DetectedField[],
+    collectionConfig: { ...data.collectionConfig, translatableFieldNames: translatableFields },
+    detected: data.detected as DetectionResult,
+  }
+
+  for (const { contribution } of contributions) {
+    if (!contribution.enhanceList) continue
+    const enhancement = contribution.enhanceList(ctx)
+    if (!enhancement) continue
+
+    if (enhancement.cellTemplates) {
+      Object.assign(result.cellTemplates, enhancement.cellTemplates)
+    }
+    if (enhancement.collectionProps) {
+      result.collectionProps.push(enhancement.collectionProps)
+    }
+    if (enhancement.scriptCode) {
+      result.scriptAdditions.push(enhancement.scriptCode)
+    }
+  }
+
+  return result
 }
 
 // ---------------------------------------------------------------------------
@@ -477,8 +659,22 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   }
 
   // Prepare data for all generators
-  const data = buildGeneratorData({ layer, collection, fields, hierarchy, sortable, collab, config, collectionConfig })
+  // Typed as Record<string, any> so contribution results can be attached dynamically
+  const data: Record<string, any> = buildGeneratorData({ layer, collection, fields, hierarchy, sortable, collab, config, collectionConfig })
   const { layerPascalCase, layerCamelCase } = data
+
+  // ── Manifest-driven detection + contributions ──────────────────────────────
+  // Discover manifests (cached after first call) and compute detection results
+  const manifests = await discoverManifests()
+  const detectors = await getGeneratorDetectors(manifests)
+  data.detected = computeDetection(fields, collectionConfig, detectors, layerCamelCase)
+
+  // Run contribution functions and attach enhancement results to data
+  const contributions = await getGeneratorContributions(manifests)
+  const translatableFieldNames = config?.translations?.collections?.[toCase(collection).plural] || []
+  data.formEnhancements = runFormContributions(contributions, data, dialect)
+  data.listEnhancements = runListContributions(contributions, data, translatableFieldNames)
+  // ── End manifest-driven section ────────────────────────────────────────────
 
   if (dryRun) {
     const apiPath = `${layer}-${cases.plural}`

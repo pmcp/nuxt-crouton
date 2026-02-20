@@ -1,7 +1,5 @@
 // Generator for _Form.vue component
 import { toCase } from '../utils/helpers.ts'
-import { referencesAssets, getAssetComponent } from '../utils/asset-detector.ts'
-import { detectAddressFields, getCoordinateFieldName } from '../utils/address-detector.ts'
 
 /**
  * Generate AI context header for _Form.vue components
@@ -102,32 +100,28 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
   // Check if we have any date fields
   const hasDateFields = regularFields.some(field => field.type === 'date')
 
-  // Detect address fields for map/geocoding functionality (only if useMaps flag is enabled)
-  // Use ALL fields (including translatable) for detection since address fields like street/city are often translatable
-  const useMaps = config?.flags?.useMaps === true
-  const allNonIdFields = fields.filter(f => f.name !== 'id' && !hierarchyFields.includes(f.name))
-  const addressDetection = useMaps ? detectAddressFields(allNonIdFields) : { hasAddress: false, addressFields: [], coordinateFields: [], hasCoordinates: false }
-  const { hasAddress, addressFields, coordinateFields, hasCoordinates } = addressDetection
-  const coordinateFieldName = hasAddress && hasCoordinates ? getCoordinateFieldName(coordinateFields) : null
-  const shouldGenerateMap = useMaps && hasAddress && coordinateFieldName
+  // ── Contribution-driven enhancements ─────────────────────────────────────
+  // formEnhancements is populated by runFormContributions() in generate-collection.ts
+  const formEnhancements = data.formEnhancements || {
+    excludeFieldNames: [],
+    groupInjections: {},
+    fieldOverrides: {},
+    scriptAdditions: [],
+  }
+
+  // Fields excluded from normal rendering (e.g. coordinate field hidden by map contribution)
+  const excludedFieldNames = new Set<string>(formEnhancements.excludeFieldNames || [])
+
+  // ── Field display list ────────────────────────────────────────────────────
+  // Filter out fields excluded by contributions (e.g. coordinate field when map is shown)
+  const fieldsToDisplay = regularFields.filter(field => !excludedFieldNames.has(field.name))
 
   // Track fields with inline options for script generation (static USelect options)
-  const fieldsWithInlineOptions = regularFields.filter(
+  const fieldsWithInlineOptions = fieldsToDisplay.filter(
     f => f.meta?.displayAs === 'optionsSelect'
       && Array.isArray(f.meta?.options)
       && !f.meta?.optionsCollection
   )
-
-  // Generate form fields for regular (non-translatable) fields only
-  // Filter out coordinate fields if using maps (they'll be managed by the map component)
-  const fieldsToDisplay = shouldGenerateMap
-    ? regularFields.filter(field => field.name !== coordinateFieldName)
-    : regularFields
-
-  // Find the index of the last address field for proper map placement
-  const lastAddressFieldIndex = shouldGenerateMap
-    ? Math.max(...addressFields.map(af => fieldsToDisplay.findIndex(f => f.name === af.name)))
-    : -1
 
   // Helper to resolve component names (handles component aliasing)
   const resolveComponentName = (componentName) => {
@@ -143,6 +137,13 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
   }
 
   const generateFieldMarkup = (field) => {
+    // ── Contribution override takes priority ─────────────────────────────
+    const override = formEnhancements.fieldOverrides?.[field.name]
+    if (override !== undefined) {
+      // Empty string means hide the field; otherwise use the override template
+      return override
+    }
+
     const fieldName = field.name.charAt(0).toUpperCase() + field.name.slice(1)
 
     // Check if a custom component is specified in meta
@@ -238,11 +239,6 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
         resolvedCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
       }
 
-      // Auto-detect if this references an asset collection
-      // If no custom component is specified and it references assets, use AssetsPicker
-      const isAssetReference = referencesAssets(field, field.refTarget)
-      const shouldUseAssetPicker = isAssetReference && !field.meta?.component
-
       // Check if this is a read-only reference field
       if (field.meta?.readOnly) {
         return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
@@ -252,17 +248,6 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
             collection="${resolvedCollection}"
           />
           <span v-else class="text-gray-400 text-sm">Not set</span>
-        </UFormField>`
-      }
-
-      // Use asset picker if this references an asset collection
-      if (shouldUseAssetPicker) {
-        const assetComponent = getAssetComponent()
-        return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <${assetComponent}
-            v-model="state.${field.name}"
-            collection="${resolvedCollection}"
-          />
         </UFormField>`
       }
 
@@ -287,20 +272,20 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
         </UFormField>`
     }
 
-    // Image field type - renders asset picker with crop
+    // Image field type — base fallback uses CroutonImageUpload (crouton-assets contribution overrides with CroutonAssetsPicker)
     if (field.type === 'image') {
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonAssetsPicker
+          <CroutonImageUpload
             v-model="state.${field.name}"
             :crop="true"
           />
         </UFormField>`
     }
 
-    // File field type - renders asset picker without crop
+    // File field type — base fallback uses CroutonImageUpload
     if (field.type === 'file') {
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonAssetsPicker
+          <CroutonImageUpload
             v-model="state.${field.name}"
           />
         </UFormField>`
@@ -382,38 +367,6 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
         </UFormField>`
     : ''
 
-  // Generate map/geocoding section if address fields detected (define early so it can be used in formFields)
-  const mapSection = shouldGenerateMap
-    ? `
-
-       <!-- MapBox Map Display -->
-      <UFormField label="Location Map" name="${coordinateFieldName}" class="not-last:pb-4">
-        <CroutonMapsMap
-          :center="mapCenter"
-          :zoom="14"
-          height="400px"
-          class="rounded-lg border"
-          :fly-to-on-center-change="true"
-          @load="handleMapLoad"
-        >
-          <template #default="{ map }">
-            <CroutonMapsMarker
-              v-if="mapCenter[0] !== 0 || mapCenter[1] !== 0"
-              :map="map"
-              :position="mapCenter"
-              :color="markerColor"
-              :options="{ draggable: true }"
-              :animate-transitions="true"
-              @dragEnd="handleMarkerDragEnd"
-            />
-          </template>
-        </CroutonMapsMap>
-        <p v-if="geocoding" class="text-sm text-gray-500 mt-2">
-          Geocoding address...
-        </p>
-      </UFormField>`
-    : ''
-
   // Group fields by area and then by group
   const mainFields = fieldsToDisplay.filter(f => !f.meta?.area || f.meta.area === 'main')
   const sidebarFields = fieldsToDisplay.filter(f => f.meta?.area === 'sidebar')
@@ -421,14 +374,18 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
   const mainGroups = groupFieldsByGroup(mainFields)
   const sidebarGroups = groupFieldsByGroup(sidebarFields)
 
-  // Ensure coordinate field's group exists for map injection even if the coordinate field was filtered out
-  if (shouldGenerateMap && coordinateFieldName) {
-    const coordField = fields.find(f => f.name === coordinateFieldName)
-    const coordGroup = coordField?.meta?.group || ''
-    const coordArea = coordField?.meta?.area || 'main'
-    const targetGroups = coordArea === 'sidebar' ? sidebarGroups : mainGroups
-    if (!targetGroups.has(coordGroup)) {
-      targetGroups.set(coordGroup, [])
+  // Ensure groups that have contribution injections exist in the map
+  // (e.g. the coordinate field's group may be filtered out but we still need to inject the map)
+  for (const groupName of Object.keys(formEnhancements.groupInjections || {})) {
+    if (!mainGroups.has(groupName === '' ? null : groupName) && !sidebarGroups.has(groupName === '' ? null : groupName)) {
+      // Check if the excluded field that belonged to this group was main or sidebar
+      const excludedField = fields.find(f =>
+        excludedFieldNames.has(f.name) && (f.meta?.group || null) === (groupName || null)
+      )
+      const targetGroups = excludedField?.meta?.area === 'sidebar' ? sidebarGroups : mainGroups
+      if (!targetGroups.has(groupName || null)) {
+        targetGroups.set(groupName || null, [])
+      }
     }
   }
 
@@ -451,18 +408,15 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
     const groupValue = groupName || 'general'
     const fieldsMarkup = groupFields.map(generateFieldMarkup).join('\n')
 
-    // Inject map section into the appropriate group:
-    // - "address" group (when address fields are regular/non-translatable)
-    // - The coordinate field's group (e.g. "map") when address fields are translatable
-    const coordinateFieldGroup = shouldGenerateMap ? fields.find(f => f.name === coordinateFieldName)?.meta?.group : null
-    const isMapGroup = shouldGenerateMap && (groupName === 'address' || (coordinateFieldGroup && groupName === coordinateFieldGroup))
-    const mapInjection = isMapGroup ? mapSection : ''
+    // Inject contribution-provided content after this group
+    const groupKey = groupName || ''
+    const groupInjection = formEnhancements.groupInjections?.[groupKey] || ''
 
     const conditionalWrapper = showConditionally
       ? `      <div v-show="!tabs || activeSection === '${groupValue}'" class="flex flex-col gap-4 p-1">\n`
       : `      <div class="flex flex-col gap-4 p-1">\n`
 
-    return `${conditionalWrapper}${fieldsMarkup}${mapInjection}
+    return `${conditionalWrapper}${fieldsMarkup}${groupInjection}
       </div>`
   }
 
@@ -619,6 +573,9 @@ const switchToTab = (tabValue: string) => {
 }`
     : ''
 
+  // Contribution script additions (geocoding, etc.)
+  const scriptAdditions = (formEnhancements.scriptAdditions || []).join('\n')
+
   // Generate AI context header
   const apiPath = `${layer}-${plural}`
   const aiHeader = generateAIHeader(data, apiPath)
@@ -725,86 +682,7 @@ if (props.action === 'update' && props.activeItem?.id) {${regularFields
 }`
     : ''}
 
-const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)${shouldGenerateMap
-  ? `
-
-// Map & Geocoding functionality
-const { geocode, loading: geocoding } = useGeocode()
-
-// Parse existing coordinates from location field (handle both array and string formats)
-const parseCoordinates = (value: any): [number, number] | null => {
-  if (!value) return null
-  if (Array.isArray(value) && value.length === 2) {
-    return [Number(value[0]), Number(value[1])]
-  }
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value)
-      if (Array.isArray(parsed) && parsed.length === 2) {
-        return [Number(parsed[0]), Number(parsed[1])]
-      }
-    } catch {
-      return null
-    }
-  }
-  return null
-}
-
-const initialCoordinates = parseCoordinates(state.value.${coordinateFieldName})
-const mapCenter = ref<[number, number]>(initialCoordinates || [0, 0])
-const mapInstance = ref<any>(null)
-
-const markerColor = useMarkerColor()
-
-// Store map instance when loaded
-const handleMapLoad = (map: any) => {
-  mapInstance.value = map
-}
-
-// Auto-geocode when address fields change
-watchDebounced(
-  () => [${addressFields.map(f => `state.value.${f.name}`).join(', ')}],
-  async () => {
-    if (canGeocode.value) {
-      await handleGeocode()
-    }
-  },
-  { debounce: 1000, maxWait: 3000 }
-)
-
-// Check if we have enough address data to geocode
-const canGeocode = computed(() => {
-  return ${addressFields.map(f => `!!state.value.${f.name}`).slice(0, 2).join(' || ')}
-})
-
-// Handle geocoding of address fields
-const handleGeocode = async () => {
-  try {
-    // Build address query from all address fields
-    const addressParts: string[] = []
-    ${addressFields.map(f => `if (state.value.${f.name}) addressParts.push(state.value.${f.name} as string)`).join('\n    ')}
-
-    const addressQuery = addressParts.join(', ')
-    if (!addressQuery.trim()) return
-
-    const result = await geocode(addressQuery)
-    if (result) {
-      mapCenter.value = result.coordinates
-
-      // Update the coordinate field in the form state (store as JSON string)
-      state.value.${coordinateFieldName} = JSON.stringify(result.coordinates)
-    }
-  } catch (error) {
-    console.error('Geocoding failed:', error)
-  }
-}
-
-// Handle marker drag to update coordinates
-const handleMarkerDragEnd = (position: { lng: number; lat: number }) => {
-  mapCenter.value = [position.lng, position.lat]
-  state.value.${coordinateFieldName} = JSON.stringify([position.lng, position.lat])
-}`
-  : ''}
+const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)${scriptAdditions}
 
 const handleSubmit = async () => {
   try {${hasDateFields
