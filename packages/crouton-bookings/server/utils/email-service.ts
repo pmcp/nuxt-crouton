@@ -13,6 +13,7 @@
  * - Generate: email-template and email-log collections
  */
 import { eq, and } from 'drizzle-orm'
+import { useNitroApp } from 'nitropack/runtime'
 import {
   isBookingEmailEnabled,
   getBookingEmailService,
@@ -394,6 +395,7 @@ async function sendSingleEmail(options: {
  * - Building email variables from booking data
  * - Sending to customer, admin, or both based on template config
  * - Logging all send attempts
+ * - Emitting crouton:operation hooks for observability
  */
 export async function sendBookingEmails(
   options: SendBookingEmailOptions
@@ -407,6 +409,7 @@ export async function sendBookingEmails(
   }
 
   const { booking, triggerType, teamId, userId, adminEmail } = options
+  const nitroApp = useNitroApp()
 
   // Get templates for this trigger
   const templates = await getActiveTemplatesForTrigger(
@@ -472,6 +475,24 @@ export async function sendBookingEmails(
           )
         }
 
+        // Emit operation hook for observability
+        nitroApp.hooks.callHook('crouton:operation', {
+          type: result.success ? 'booking:email-sent' : 'booking:email-failed',
+          source: 'crouton-bookings',
+          teamId,
+          userId,
+          metadata: {
+            bookingId: booking.id,
+            recipient: customerEmail,
+            recipientType: 'customer',
+            template: triggerType,
+            status: result.success ? 'sent' : 'failed',
+            templateId: template.id,
+            emailLogId: logId || undefined,
+            error: result.error,
+          },
+        }).catch(() => {})
+
         results.customerResult = {
           success: result.success,
           sent: result.success,
@@ -519,6 +540,24 @@ export async function sendBookingEmails(
           result.error
         )
       }
+
+      // Emit operation hook for observability
+      nitroApp.hooks.callHook('crouton:operation', {
+        type: result.success ? 'booking:email-sent' : 'booking:email-failed',
+        source: 'crouton-bookings',
+        teamId,
+        userId,
+        metadata: {
+          bookingId: booking.id,
+          recipient: adminEmail,
+          recipientType: 'admin',
+          template: triggerType,
+          status: result.success ? 'sent' : 'failed',
+          templateId: template.id,
+          emailLogId: logId || undefined,
+          error: result.error,
+        },
+      }).catch(() => {})
 
       results.adminResult = {
         success: result.success,

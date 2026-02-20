@@ -17,6 +17,7 @@
  * }
  */
 import { eq, and, gte, lte, sum } from 'drizzle-orm'
+import { useNitroApp } from 'nitropack/runtime'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
@@ -133,6 +134,21 @@ export default defineEventHandler(async (event) => {
 
         if (existingCount + newCount > limit) {
           const remaining = Math.max(0, limit - existingCount)
+          const nitroApp = useNitroApp()
+          nitroApp.hooks.callHook('crouton:operation', {
+            type: 'booking:limit-reached',
+            source: 'crouton-bookings',
+            teamId: team.id,
+            userId: user.id,
+            metadata: {
+              locationId,
+              monthKey,
+              currentCount: existingCount,
+              limit,
+              attempted: newCount,
+              remaining,
+            },
+          }).catch(() => {})
           throw createError({
             status: 400,
             statusText: `Monthly booking limit reached for "${location.title}". Limit: ${limit} per month, existing: ${existingCount}, trying to add: ${newCount}. You can add ${remaining} more.`,
@@ -162,6 +178,25 @@ export default defineEventHandler(async (event) => {
       .insert(bookingsBookings)
       .values(bookingsToInsert)
       .returning()
+
+    const nitroApp = useNitroApp()
+
+    // Collect unique location IDs from the created bookings for the summary
+    const uniqueLocationIds = [...new Set(created.map(b => b.location))]
+
+    // Emit batch-created operation event (one summary, not one per booking)
+    nitroApp.hooks.callHook('crouton:operation', {
+      type: 'booking:batch-created',
+      source: 'crouton-bookings',
+      teamId: team.id,
+      userId: user.id,
+      metadata: {
+        count: created.length,
+        locationIds: uniqueLocationIds,
+        // Include single locationId for convenience when batch targets one location
+        locationId: uniqueLocationIds.length === 1 ? uniqueLocationIds[0] : undefined,
+      },
+    }).catch(() => {})
 
     // Trigger booking_created emails (non-blocking)
     let emailsSent = 0
