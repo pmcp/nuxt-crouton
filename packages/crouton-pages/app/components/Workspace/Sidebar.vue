@@ -242,20 +242,17 @@ async function handleMove(id: string, newParentId: string | null, newOrder: numb
 
 // Handle create button
 function handleCreate(parentId?: string | null) {
-  console.log('[Sidebar] handleCreate called, emitting create with parentId:', parentId)
   emit('update:modelValue', null)
   emit('create', parentId ?? null)
 }
 
 // Handle tree add child page
 function handleTreeCreate(parentId: string | null) {
-  console.log('[Sidebar] handleTreeCreate, parentId:', parentId)
   handleCreate(parentId)
 }
 
 // Handle tree add sibling page (create below the given page)
 function handleTreeCreateSibling(siblingId: string) {
-  console.log('[Sidebar] handleTreeCreateSibling, siblingId:', siblingId)
   // Find the sibling page to get its parentId
   const sibling = pages.value?.find((p: any) => p.id === siblingId)
   handleCreate(sibling?.parentId ?? null)

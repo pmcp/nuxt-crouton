@@ -44,7 +44,6 @@ const { setGhost, clearGhost } = useGhostPage()
 function onTreeCreate(parentId?: string | null) {
   // Guard against PointerEvent being passed from @click handlers
   const resolvedParentId = (parentId && typeof parentId === 'string') ? parentId : null
-  console.log('[Layout] onTreeCreate, parentId:', resolvedParentId)
   editingPageId.value = null
   createParentId.value = resolvedParentId
   isCreating.value = true

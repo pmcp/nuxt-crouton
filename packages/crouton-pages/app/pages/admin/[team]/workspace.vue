@@ -64,13 +64,11 @@ function handleSelectPage(page: any) {
 function handleCreate(parentId?: string | null) {
   // Guard against PointerEvent being passed from @click handlers
   const resolvedParentId = (parentId && typeof parentId === 'string') ? parentId : null
-  console.log('[Workspace] handleCreate, parentId:', resolvedParentId, 'current mode:', mode.value)
   selectedPageId.value = null
   createParentId.value = resolvedParentId
   mode.value = 'create'
   editorSessionKey.value++
   setGhost(resolvedParentId)
-  console.log('[Workspace] after: mode:', mode.value, 'showEditor:', showEditor.value, 'key:', editorSessionKey.value)
 }
 
 // Handle save - refresh tree and update selection
