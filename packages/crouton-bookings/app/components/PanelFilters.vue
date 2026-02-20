@@ -41,6 +41,8 @@ const emit = defineEmits<{
   'edit-location': [location: LocationData]
 }>()
 
+const { t } = useT()
+
 // Toggle location selection
 function toggleLocation(locationId: string) {
   const current = [...props.selectedLocations]
@@ -153,7 +155,7 @@ function isLocationSelected(locationId: string): boolean {
       class="flex items-center gap-3 px-4 py-3 rounded-lg border border-dashed border-muted bg-muted/30"
     >
       <UIcon name="i-lucide-map-pin-off" class="w-5 h-5 text-muted flex-shrink-0" />
-      <span class="text-sm text-muted">No locations yet</span>
+      <span class="text-sm text-muted">{{ t('bookings.panel.noLocations') }}</span>
       <UButton
         size="xs"
         variant="outline"

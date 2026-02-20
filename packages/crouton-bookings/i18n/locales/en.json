@@ -80,6 +80,15 @@
       "back": "Back",
       "confirm": "Confirm Booking"
     },
+    "panel": {
+      "noLocations": "No locations yet"
+    },
+    "calendar": {
+      "units": "Units"
+    },
+    "card": {
+      "activity": "Activity"
+    },
     "schedule": {
       "openDays": "Open Days",
       "openDaysHint": "No days selected — location is open every day.",

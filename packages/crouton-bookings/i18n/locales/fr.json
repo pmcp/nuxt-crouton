@@ -80,6 +80,15 @@
       "back": "Retour",
       "confirm": "Confirmer la Réservation"
     },
+    "panel": {
+      "noLocations": "No locations yet"
+    },
+    "calendar": {
+      "units": "Units"
+    },
+    "card": {
+      "activity": "Activity"
+    },
     "schedule": {
       "openDays": "Jours d'ouverture",
       "openDaysHint": "Aucun jour sélectionné — le lieu est ouvert tous les jours.",

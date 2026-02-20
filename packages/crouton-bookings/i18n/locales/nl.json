@@ -80,6 +80,15 @@
       "back": "Terug",
       "confirm": "Boeking Bevestigen"
     },
+    "panel": {
+      "noLocations": "No locations yet"
+    },
+    "calendar": {
+      "units": "Units"
+    },
+    "card": {
+      "activity": "Activity"
+    },
     "schedule": {
       "openDays": "Open Dagen",
       "openDaysHint": "Geen dagen geselecteerd — locatie is elke dag open.",

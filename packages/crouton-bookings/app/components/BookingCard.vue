@@ -27,7 +27,7 @@ const isEmailPanelOpen = ref(false)
 // Activity timeline panel state
 const isTimelineOpen = ref(false)
 
-const { t, locale } = useI18n()
+const { t, locale } = useT()
 const { parseSlotIds, parseLocationSlots, getSlotLabel } = useBookingSlots()
 const { getGroupLabel } = useBookingOptions()
 const { isEmailEnabled } = useBookingEmail()
@@ -325,7 +325,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
               @click.stop="isTimelineOpen = !isTimelineOpen"
             >
               <UIcon name="i-lucide-history" class="size-3.5" />
-              <span>Activity</span>
+              <span>{{ t('bookings.card.activity') }}</span>
               <UIcon
                 name="i-lucide-chevron-down"
                 class="size-3 ml-1 transition-transform duration-200"

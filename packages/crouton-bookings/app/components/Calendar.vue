@@ -47,6 +47,8 @@ const emit = defineEmits<{
   'hoverBooking': [bookingId: string | null]
 }>()
 
+const { t } = useT()
+
 const { parseSlotIds, parseLocationSlots } = useBookingSlots()
 
 // Get localized location title with fallbacks
@@ -497,7 +499,7 @@ const monthCellHeight = computed(() => {
 
                 <!-- Inventory mode summary -->
                 <div v-if="indicator.isInventoryMode" class="mt-2 flex items-center justify-between text-xs">
-                  <span class="text-muted">Units</span>
+                  <span class="text-muted">{{ t('bookings.calendar.units') }}</span>
                   <span class="tabular-nums" :class="indicator.inventoryBookedCount >= indicator.inventoryQuantity ? 'text-red-400' : 'text-dimmed'">
                     {{ indicator.inventoryBookedCount }} / {{ indicator.inventoryQuantity }}
                   </span>
@@ -611,7 +613,7 @@ const monthCellHeight = computed(() => {
 
                     <!-- Inventory mode summary -->
                     <div v-if="indicator.isInventoryMode" class="mt-2 flex items-center justify-between text-xs">
-                      <span class="text-muted">Units</span>
+                      <span class="text-muted">{{ t('bookings.calendar.units') }}</span>
                       <span class="tabular-nums" :class="indicator.inventoryBookedCount >= indicator.inventoryQuantity ? 'text-red-400' : 'text-dimmed'">
                         {{ indicator.inventoryBookedCount }} / {{ indicator.inventoryQuantity }}
                       </span>
