@@ -2,12 +2,12 @@ export default defineAppConfig({
   croutonApps: {
     flow: {
       id: 'flow',
-      name: 'Flow',
+      name: 'flow.name',
       icon: 'i-lucide-share-2',
       adminRoutes: [
         {
           path: '/flows',
-          label: 'Flows',
+          label: 'flow.admin.flows',
           icon: 'i-lucide-share-2'
         }
       ],
