@@ -395,7 +395,7 @@ const layoutOptions = computed(() => ({
   rankSpacing: props.flowConfig?.rankSpacing ?? 100
 }))
 
-const { applyLayout, applyLayoutToNew, needsLayout } = useFlowLayout(layoutOptions.value)
+const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
 
 // Position mutation (debounced) - only for standalone mode
 const { debouncedUpdate } = useDebouncedPositionUpdate(
