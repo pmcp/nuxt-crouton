@@ -67,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 const isDev = import.meta.dev
 const enabled = useState('devMode.enabled', () => false)
 const showModal = ref(false)
@@ -96,17 +97,13 @@ const startDetection = () => {
 
   // Initial scan
   scanForMissingTranslations()
-
-  // Add click handler for missing translations
-  document.addEventListener('click', handleClick, true)
 }
 
 const stopDetection = () => {
   if (!import.meta.client) return
 
-  // Remove body class and event listener
+  // Remove body class (listener auto-removed by VueUse on unmount)
   document.body.classList.remove('translation-dev-mode')
-  document.removeEventListener('click', handleClick, true)
 
   // Remove missing translation markers
   document.querySelectorAll('.translation-missing').forEach((el) => {
@@ -116,6 +113,7 @@ const stopDetection = () => {
 }
 
 const handleClick = (e: MouseEvent) => {
+  if (!enabled.value) return
   const target = e.target as HTMLElement
 
   // Check if clicked element or its parent has missing translation
@@ -211,6 +209,8 @@ const saveTranslation = async () => {
   }
 }
 
+
+useEventListener(document, "click", handleClick, { capture: true })
 // Lifecycle
 onMounted(() => {
   if (enabled.value) {
@@ -218,9 +218,10 @@ onMounted(() => {
   }
 })
 
-onUnmounted(() => {
-  stopDetection()
-})
+// useEventListener auto-removes click listener on component unmount
+
+
+
 </script>
 
 <style scoped>

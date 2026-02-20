@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useToggle } from '@vueuse/core'
 const props = defineProps<{
   collection?: string
   crop?: boolean | { aspectRatio?: number }
@@ -9,8 +10,8 @@ const emit = defineEmits<{
   select: [asset: Record<string, any>]
 }>()
 
-const isOpen = ref(false)
-const showUploader = ref(false)
+const [isOpen, toggleIsOpen] = useToggle(false)
+const [showUploader, toggleShowUploader] = useToggle(false)
 const searchQuery = ref('')
 const typeFilter = ref('all')
 const pendingSelection = ref<string | null>(null)

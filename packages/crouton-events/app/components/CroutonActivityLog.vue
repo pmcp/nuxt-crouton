@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useToggle } from '@vueuse/core'
 interface EventChange {
   fieldName: string
   oldValue: string | null
@@ -111,7 +112,7 @@ const availableUsers = computed(() => {
 
 // Selected event for detail modal
 const selectedEvent = ref<CroutonEvent | null>(null)
-const showDetail = ref(false)
+const [showDetail, toggleShowDetail] = useToggle(false)
 
 function handleEventClick(event: CroutonEvent) {
   selectedEvent.value = event

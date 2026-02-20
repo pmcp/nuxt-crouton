@@ -21,6 +21,7 @@
  */
 
 import type { Ref } from 'vue'
+import { useEventListener } from '@vueuse/core'
 
 export interface OAuthCredentials {
   apiToken: string
@@ -204,15 +205,8 @@ export function useTriageOAuth(config: OAuthConfig) {
     }
   }
 
-  // Setup message listener on mount
-  onMounted(() => {
-    window.addEventListener('message', handleOAuthMessage)
-  })
-
-  // Cleanup listener on unmount
-  onBeforeUnmount(() => {
-    window.removeEventListener('message', handleOAuthMessage)
-  })
+  // Register message listener - auto-removed on unmount (VueUse)
+  useEventListener(window, "message", handleOAuthMessage)
 
   return {
     /**

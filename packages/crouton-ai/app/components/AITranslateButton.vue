@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, reactive } from 'vue'
+import { useToggle } from '@vueuse/core'
 import { useToast } from '#imports'
 
 /**
@@ -96,10 +97,10 @@ const toast = useToast()
 const internalLoading = ref(false)
 
 // Confirmation modal state
-const showConfirmModal = ref(false)
+const [showConfirmModal, toggleConfirmModal] = useToggle(false)
 
 // Context selector state
-const showContextSelector = ref(false)
+const [showContextSelector, toggleContextSelector] = useToggle(false)
 const selectedContextLocales = ref<Set<string>>(new Set())
 
 // Initialize selected locales when availableTranslations changes

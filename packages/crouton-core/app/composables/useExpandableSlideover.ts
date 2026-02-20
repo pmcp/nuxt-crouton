@@ -1,4 +1,5 @@
-import { ref, computed, type Ref } from 'vue'
+import { computed } from 'vue'
+import { useToggle, useTimeoutFn } from '@vueuse/core'
 
 export interface UseExpandableSlideoverOptions {
   defaultExpanded?: boolean
@@ -13,18 +14,24 @@ export function useExpandableSlideover(options: UseExpandableSlideoverOptions = 
     closeOnExpand = false
   } = options
 
-  const isOpen = ref(false)
-  const isExpanded = ref(defaultExpanded)
+  const [isOpen, toggleOpen] = useToggle(false)
+  const [isExpanded, toggleExpanded] = useToggle(defaultExpanded)
+
+  const { start: startCloseOnExpand } = useTimeoutFn(() => {
+    isOpen.value = false
+  }, 300, { immediate: false })
+
+  const { start: startResetExpanded } = useTimeoutFn(() => {
+    isExpanded.value = defaultExpanded
+  }, 300, { immediate: false })
 
   // Toggle expand/collapse
   const toggleExpand = () => {
-    isExpanded.value = !isExpanded.value
+    toggleExpanded()
 
     // Optionally close on expand for immersive experience
     if (closeOnExpand && isExpanded.value) {
-      setTimeout(() => {
-        isOpen.value = false
-      }, 300)
+      startCloseOnExpand()
     }
   }
 
@@ -48,9 +55,7 @@ export function useExpandableSlideover(options: UseExpandableSlideoverOptions = 
   const close = () => {
     isOpen.value = false
     // Reset expanded state when closing
-    setTimeout(() => {
-      isExpanded.value = defaultExpanded
-    }, 300)
+    startResetExpanded()
   }
 
   // Get content class for sidebar mode
