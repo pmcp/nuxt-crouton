@@ -11,10 +11,10 @@ This plan extends the existing [devtools-events-unification plan](./devtools-eve
 | Group | Done | Total | Status |
 |-------|------|-------|--------|
 | A — Quick Wins | 3 | 3 | ✅ |
-| B — Structural | 1 | 3 | 🔄 |
+| B — Structural | 2 | 3 | 🔄 |
 | C — Package Integrations | 0 | 9 | 🔲 |
 | D — DevTools Enhancements | 0 | 3 | 🔲 |
-| **Total** | **4** | **18** | 🔄 |
+| **Total** | **5** | **18** | 🔄 |
 
 ---
 
@@ -66,10 +66,10 @@ await useNuxtApp().hooks.callHook('crouton:mutation', {
 _System-level changes that unlock visibility for many packages at once._
 
 ### B1 — Extend devtools operation tracker to cover manifest-declared routes
-- [ ] Read `provides.apiRoutes` (or equivalent) from each package's `crouton.manifest.ts` at module setup time
-- [ ] Store the route patterns in Nitro runtime config alongside `croutonCollections`
-- [ ] Extend `operationTracker.ts` to also match against those patterns (not just `/api/crouton-collection/*`)
-- [ ] Add `routeGroup` to the `Operation` type to distinguish `collection` | `bookings` | `ai` | `sales` | `triage` etc.
+- [x] Read `provides.apiRoutes` (or equivalent) from each package's `crouton.manifest.ts` at module setup time
+- [x] Store the route patterns in Nitro runtime config alongside `croutonCollections`
+- [x] Extend `operationTracker.ts` to also match against those patterns (not just `/api/crouton-collection/*`)
+- [x] Add `routeGroup` to the `Operation` type to distinguish `collection` | `bookings` | `ai` | `sales` | `triage` etc.
 
 **Why:** ~15 packages use custom API routes that are completely invisible to devtools. A single structural change makes them all visible.
 
@@ -261,4 +261,5 @@ _New UI capabilities. Depends on B1 and B2._
 | 2026-02-20 | A1 complete — added `crouton:mutation` hook to all 3 i18n translation endpoints. Used `verifyTeamTranslation` return value as `beforeData` for PATCH/DELETE (no extra DB query). |
 | 2026-02-20 | A2 complete — MCP tools stamp `event.context.mutationSource = 'mcp'` and call `trackMcpMutation()` (new server utility) after each successful collection API call. Direct post to crouton-events write endpoint with `metadata: { mutationSource: 'mcp' }` and cookie forwarding, since event-listener plugin is client-side only and MCP mutations are server-side. |
 | 2026-02-20 | A3 complete — Added `crouton-events/app/app.config.ts` registering `croutonApps.events`. Replaced fragile `_layers` string-match detection in `crouton-devtools/src/module.ts` with `'events' in ((nuxt.options.appConfig as any)?.croutonApps ?? {})` — build-time equivalent of `hasApp('events')`. Group A now 3/3 ✅. |
+| 2026-02-20 | B1 complete — Added `apiRoutes?: string[]` to `CroutonAppConfig`. Registered prefixes in crouton-bookings, crouton-triage, crouton-assets (existing app.config.ts) and created new registrations for crouton-sales, crouton-ai. Devtools module collects all prefixes from `croutonApps.*` at build time into `runtimeConfig.croutonDevtools.apiRoutePrefixes`. operationTracker extended: `TRACKED_PREFIXES` array + `routeGroup` on `Operation` type + `extractRouteLabel()` helper. crouton-pages skipped (prefix `/api/teams/` too broad). |
 | 2026-02-20 | B2 complete — `CroutonOperationEvent` type + `NitroRuntimeHooks` augmentation in `crouton-core/crouton-hooks.d.ts`. New `crouton_operations` table (schema + migration). crouton-events: `server/plugins/operation-listener.ts` subscribes to hook and persists; `crouton-operations/index.get.ts` query endpoint. crouton-devtools: `systemOperationStore.ts` + hook subscription in `operationTracker.ts`. |
