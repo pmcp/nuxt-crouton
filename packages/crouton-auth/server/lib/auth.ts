@@ -1,3 +1,4 @@
+/// <reference path="../crouton-hooks.d.ts" />
 /**
  * Better Auth Instance Factory
  *
@@ -17,6 +18,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { organization, twoFactor, type TwoFactorOptions } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
 import { sql } from 'drizzle-orm'
+import { useNitroApp } from 'nitropack/runtime'
 import type { BetterAuthOptions } from 'better-auth'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
 import type {
@@ -285,6 +287,15 @@ function buildDatabaseHooks(
     user: {
       create: {
         after: async (user) => {
+          // Emit operation event for new user registration
+          useNitroApp().hooks.callHook('crouton:operation', {
+            type: 'auth:user:registered',
+            source: 'crouton-auth',
+            userId: user.id,
+            metadata: { email: user.email },
+            timestamp: Date.now()
+          }).catch(() => {})
+
           // Handle default team (company app pattern)
           if (hasDefaultTeam) {
             const defaultTeamSlug = teams.defaultTeamSlug!
@@ -1061,6 +1072,16 @@ function buildOrganizationHooks(
         }
       }
 
+      // Emit operation event for team creation
+      useNitroApp().hooks.callHook('crouton:operation', {
+        type: 'auth:team:created',
+        source: 'crouton-auth',
+        teamId: ctx.organization.id,
+        userId: ctx.user.id,
+        metadata: { teamName: ctx.organization.name },
+        timestamp: Date.now()
+      }).catch(() => {})
+
       if (config.debug) {
         console.log(`[crouton/auth] Organization created:`, {
           id: ctx.organization.id,
@@ -1077,11 +1098,45 @@ function buildOrganizationHooks(
       user: { id: string, name: string, email: string }
       organization: { id: string, name: string }
     }) => {
+      // Emit operation event for member addition
+      useNitroApp().hooks.callHook('crouton:operation', {
+        type: 'auth:team:member-added',
+        source: 'crouton-auth',
+        teamId: ctx.organization.id,
+        userId: ctx.user.id,
+        metadata: { role: ctx.member.role },
+        timestamp: Date.now()
+      }).catch(() => {})
+
       if (config.debug) {
         console.log(`[crouton/auth] Member added:`, {
           userId: ctx.user.id,
           organizationId: ctx.organization.id,
           role: ctx.member.role
+        })
+      }
+    },
+
+    // After member is removed
+    afterRemoveMember: async (ctx: {
+      member: { id: string, role: string }
+      user: { id: string, name: string, email: string }
+      organization: { id: string, name: string }
+    }) => {
+      // Emit operation event for member removal
+      useNitroApp().hooks.callHook('crouton:operation', {
+        type: 'auth:team:member-removed',
+        source: 'crouton-auth',
+        teamId: ctx.organization.id,
+        userId: ctx.user.id,
+        metadata: {},
+        timestamp: Date.now()
+      }).catch(() => {})
+
+      if (config.debug) {
+        console.log(`[crouton/auth] Member removed:`, {
+          userId: ctx.user.id,
+          organizationId: ctx.organization.id
         })
       }
     },

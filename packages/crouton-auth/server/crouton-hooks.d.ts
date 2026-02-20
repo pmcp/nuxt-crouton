@@ -1,0 +1,22 @@
+/**
+ * Local type augmentation for the crouton:operation Nitro hook.
+ *
+ * The canonical declaration lives in @fyit/crouton (crouton-hooks.d.ts).
+ * This file ensures the hook is recognised during standalone type-checking
+ * of the crouton-auth package, which does not depend on @fyit/crouton directly.
+ */
+
+declare module 'nitropack' {
+  interface NitroRuntimeHooks {
+    'crouton:operation': (payload: {
+      type: string
+      source: string
+      teamId?: string
+      userId?: string
+      metadata?: Record<string, any>
+      timestamp?: number
+    }) => void | Promise<void>
+  }
+}
+
+export {}
