@@ -30,9 +30,9 @@ export function useMapConfig(): MapConfig & { isConfigured: boolean } {
 
   if (!accessToken) {
     console.warn(
-      '[nuxt-crouton-maps] Mapbox access token not found. '
-      + 'Map features will be disabled. Add to nuxt.config.ts:\n\n'
-      + 'runtimeConfig: { public: { mapbox: { accessToken: process.env.MAPBOX_TOKEN } } }'
+      '[nuxt-crouton-maps] Mapbox public browser token not found. '
+      + 'Map features will be disabled. Set MAPBOX_PUBLIC_TOKEN (or MAPBOX_TOKEN) in .env.\n'
+      + 'Use a domain-restricted browser key from https://account.mapbox.com/access-tokens/'
     )
     return {
       isConfigured: false,

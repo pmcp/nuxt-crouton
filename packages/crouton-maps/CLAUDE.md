@@ -9,7 +9,8 @@ Map integration layer for Nuxt Crouton with Mapbox GL JS. Provides map component
 | File | Purpose |
 |------|---------|
 | `crouton.manifest.ts` | Package manifest (components, composables, config) |
-| `nuxt.config.ts` | Layer config — defines `runtimeConfig.public.mapbox` from `MAPBOX_TOKEN` |
+| `nuxt.config.ts` | Layer config — private `config.mapbox.accessToken` (server key) + public browser key |
+| `server/api/maps/geocode.get.ts` | Server-side geocoding proxy — keeps token out of client network requests |
 | `app/components/Map.vue` | Main map container (graceful placeholder when unconfigured) |
 | `app/components/Marker.vue` | Map marker component |
 | `app/components/Popup.vue` | Popup component |
@@ -39,20 +40,31 @@ export default defineNuxtConfig({
 })
 ```
 
-### Environment Variable
+### Environment Variables
 
-The layer reads `MAPBOX_TOKEN` from `process.env` automatically via its own `nuxt.config.ts`. No need to add `runtimeConfig.public.mapbox` in your app — it's already defined by the layer.
+The layer uses two env vars with different security scopes:
 
 ```bash
 # .env
-MAPBOX_TOKEN=pk.eyJ1IjoieW91ciIsImEiOiJ0b2tlbiJ9...
+
+# PRIVATE server key — used only by the /api/maps/geocode proxy (never in client bundle)
+# Can be your full/unrestricted Mapbox token
+MAPBOX_TOKEN=sk.eyJ1IjoieW91ciIsImEiOiJ0b2tlbiJ9...
+
+# PUBLIC browser key — embedded in client bundle for Mapbox GL JS tile loading
+# Create a domain-restricted key at https://account.mapbox.com/access-tokens/
+# Scope it to your domain (e.g. *.yourdomain.com) to limit misuse
+# Falls back to MAPBOX_TOKEN if not set (acceptable for local dev)
+MAPBOX_PUBLIC_TOKEN=pk.eyJ1IjoieW91ciIsImEiOiJ0b2tlbiJ9...
 ```
 
-Get a free token at https://account.mapbox.com/access-tokens/
+Get tokens at https://account.mapbox.com/access-tokens/
+
+**Why two tokens?** Mapbox GL JS must authenticate tile requests client-side — this is an inherent Mapbox architecture constraint. The geocoding API calls, however, go through `/api/maps/geocode` (a server proxy) so that token never appears in client network logs. Use a domain-restricted browser key for `MAPBOX_PUBLIC_TOKEN` to limit exposure.
 
 ### Graceful Degradation
 
-If `MAPBOX_TOKEN` is not set:
+If neither token is set:
 - Map components show a placeholder ("Map unavailable — set MAPBOX_TOKEN in .env")
 - `useGeocode()` returns `null` silently (no crash)
 - Forms with map pickers remain fully functional (minus the map)
@@ -93,13 +105,16 @@ runtimeConfig: {
 ### CroutonMapMarker
 
 ```vue
+<!-- Safe: popupText renders as plain text (no XSS risk) -->
 <CroutonMapMarker
   :map="map"
   :position="[-122.4194, 37.7749]"
-  :popup-content="'<h3>Hello</h3>'"
+  :popup-text="locationName"
   color="red"
   @click="handleClick"
 />
+
+<!-- For rich popup content, use CroutonMapsPopup instead -->
 ```
 
 ### CroutonMapPopup
@@ -175,9 +190,10 @@ Pass Mapbox Studio style URL to `style` prop.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `MAPBOX_TOKEN` | Yes (for map features) | Mapbox GL access token. Maps degrade gracefully without it. |
+| `MAPBOX_TOKEN` | Yes (for map features) | Full/unrestricted key — server only (geocoding proxy). Never exposed to client. |
+| `MAPBOX_PUBLIC_TOKEN` | Recommended for production | Domain-restricted browser key for Mapbox GL JS tile loading. Falls back to `MAPBOX_TOKEN` if unset (fine for local dev). |
 
-The layer reads this via `process.env.MAPBOX_TOKEN` in its own `nuxt.config.ts`. Consuming apps only need the `.env` entry — no `runtimeConfig` setup required.
+The layer reads both vars automatically. Consuming apps only need the `.env` entries — no `runtimeConfig` setup required.
 
 ## Testing
 

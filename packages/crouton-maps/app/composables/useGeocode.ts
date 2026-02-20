@@ -1,6 +1,9 @@
 /**
  * Composable for geocoding addresses to coordinates
  *
+ * Geocoding requests are proxied through /api/maps/geocode (server-side)
+ * so the Mapbox access token is never exposed in client-side network requests.
+ *
  * Usage:
  * const { geocode, reverseGeocode, loading, error } = useGeocode()
  *
@@ -24,6 +27,17 @@ export interface GeocodeResult {
   }
 }
 
+interface MapboxFeature {
+  center: [number, number]
+  place_name: string
+  text: string
+  context?: Array<{ id: string; text: string }>
+}
+
+interface MapboxGeocodeResponse {
+  features: MapboxFeature[]
+}
+
 export function useGeocode() {
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -31,6 +45,7 @@ export function useGeocode() {
 
   /**
    * Forward geocoding: Convert address to coordinates
+   * Proxied via /api/maps/geocode to keep the Mapbox token server-side.
    */
   const geocode = async (query: string): Promise<GeocodeResult | null> => {
     if (!config.isConfigured) return null
@@ -39,9 +54,10 @@ export function useGeocode() {
       loading.value = true
       error.value = null
 
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${config.accessToken}`
-
-      const response = await $fetch<any>(url)
+      // Call our server-side proxy — token never appears in client network logs
+      const response = await $fetch<MapboxGeocodeResponse>('/api/maps/geocode', {
+        query: { q: query }
+      })
 
       if (!response.features || response.features.length === 0) {
         error.value = 'No results found'
@@ -69,6 +85,7 @@ export function useGeocode() {
 
   /**
    * Reverse geocoding: Convert coordinates to address
+   * Proxied via /api/maps/geocode to keep the Mapbox token server-side.
    */
   const reverseGeocode = async (coordinates: [number, number]): Promise<GeocodeResult | null> => {
     if (!config.isConfigured) return null
@@ -78,9 +95,11 @@ export function useGeocode() {
       error.value = null
 
       const [lng, lat] = coordinates
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${config.accessToken}`
 
-      const response = await $fetch<any>(url)
+      // Call our server-side proxy — token never appears in client network logs
+      const response = await $fetch<MapboxGeocodeResponse>('/api/maps/geocode', {
+        query: { lng, lat }
+      })
 
       if (!response.features || response.features.length === 0) {
         error.value = 'No results found'
@@ -114,7 +133,7 @@ export function useGeocode() {
 }
 
 // Helper to extract context information
-function extractContext(context?: any[]): GeocodeResult['context'] {
+function extractContext(context?: Array<{ id: string; text: string }>): GeocodeResult['context'] {
   if (!context) return undefined
 
   const result: GeocodeResult['context'] = {}

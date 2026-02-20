@@ -51,7 +51,7 @@
                 :map="map"
                 :position="coordinates"
                 :color="markerColor"
-                :popup-content="`${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}`"
+                :popup-text="`${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}`"
               />
             </template>
           </CroutonMapsMap>

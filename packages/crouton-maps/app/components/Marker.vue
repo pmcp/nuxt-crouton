@@ -10,8 +10,11 @@ interface Props {
   color?: string
   /** Marker options */
   options?: MarkerOptions
-  /** Popup HTML content */
-  popupContent?: string
+  /**
+   * Popup plain-text content (safe — rendered as text, not HTML).
+   * Use the CroutonMapsPopup component for rich/HTML popup content.
+   */
+  popupText?: string
   /** Enable smooth animation when position changes (default: true) */
   animateTransitions?: boolean
   /** Animation duration in milliseconds (default: 800) */
@@ -70,10 +73,10 @@ onMounted(() => {
       .setLngLat(props.position)
       .addTo(props.map)
 
-    // Add popup if specified
-    if (props.popupContent && mapboxgl.Popup) {
+    // Add popup if specified — use setText (not setHTML) to avoid XSS
+    if (props.popupText && mapboxgl.Popup) {
       const Popup = mapboxgl.Popup || mapboxgl.default?.Popup
-      const popup = new Popup().setHTML(props.popupContent)
+      const popup = new Popup().setText(props.popupText)
       marker.value.setPopup(popup)
     }
 
