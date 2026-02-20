@@ -47,8 +47,6 @@ export function useSession() {
 
   // Fetch session from Better Auth
   async function fetchSession(): Promise<void> {
-    if (!authClient) return
-
     if (debug) {
       console.log('[@crouton/auth] useSession: fetching session...')
     }
@@ -57,26 +55,48 @@ export function useSession() {
     errorState.value = null
 
     try {
-      const { data, error } = await authClient.getSession({
-        fetchOptions: { headers }
-      })
+      if (import.meta.server) {
+        // Server-side: authClient is not available (client-only plugin), use $fetch directly
+        const requestHeaders = headers ?? {}
+        const data = await ($fetch as (url: string, opts?: Record<string, unknown>) => Promise<{ session: unknown; user: unknown } | null>)(
+          '/api/auth/get-session',
+          { headers: requestHeaders }
+        ).catch(() => null)
 
-      if (error) {
-        if (debug) {
-          console.log('[@crouton/auth] useSession: fetch error', error)
-        }
-        errorState.value = new Error(error.message ?? 'Session error')
-        sessionState.value = null
-        userState.value = null
-      } else {
         sessionState.value = data?.session ?? null
         userState.value = data?.user ?? null
 
         if (debug) {
-          console.log('[@crouton/auth] useSession: fetched', {
+          console.log('[@crouton/auth] useSession: server fetched', {
             hasSession: !!data?.session,
-            user: data?.user?.email ?? null
+            user: (data?.user as Record<string, unknown> | null)?.email ?? null
           })
+        }
+      } else {
+        // Client-side: use Better Auth client
+        if (!authClient) return
+
+        const { data, error } = await authClient.getSession({
+          fetchOptions: { headers }
+        })
+
+        if (error) {
+          if (debug) {
+            console.log('[@crouton/auth] useSession: fetch error', error)
+          }
+          errorState.value = new Error(error.message ?? 'Session error')
+          sessionState.value = null
+          userState.value = null
+        } else {
+          sessionState.value = data?.session ?? null
+          userState.value = data?.user ?? null
+
+          if (debug) {
+            console.log('[@crouton/auth] useSession: fetched', {
+              hasSession: !!data?.session,
+              user: data?.user?.email ?? null
+            })
+          }
         }
       }
     } catch (err) {
@@ -201,7 +221,7 @@ export function useSession() {
   }
 
   // On server, try to fetch session if we have headers
-  if (import.meta.server && authClient && isPendingState.value) {
+  if (import.meta.server && isPendingState.value) {
     // Use callOnce to avoid duplicate fetches during SSR
     callOnce('crouton-auth-ssr-fetch', async () => {
       await fetchSession()

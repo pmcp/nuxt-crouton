@@ -19,10 +19,24 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { isAuthenticated, isPending } = useSession()
 
-  // Wait for session to load if pending
+  // Wait for session to fully load (watcher pattern, up to 3s)
   if (isPending.value) {
-    // Give it a moment to resolve
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise<void>((resolve) => {
+      const unwatch = watch(
+        () => isPending.value,
+        (pending) => {
+          if (!pending) {
+            unwatch()
+            resolve()
+          }
+        },
+        { immediate: true }
+      )
+      setTimeout(() => {
+        unwatch()
+        resolve()
+      }, 3000)
+    })
   }
 
   // Check authentication
