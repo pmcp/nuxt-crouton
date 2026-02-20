@@ -11,27 +11,8 @@ export { type ProductOption } from '../composables/usePosOrder'
 // Order status enum
 export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled'
 
-// Event status enum
-export type EventStatus = 'upcoming' | 'active' | 'past' | 'archived'
-
 // Print job status enum
 export type PrintStatus = 0 | 1 | 2 | 9 // 0=pending, 1=printing, 2=done, 9=error
-
-// Event type
-export interface SalesEvent {
-  id: string
-  title: string
-  slug: string
-  description?: string
-  eventType?: string
-  startDate?: string
-  endDate?: string
-  status: EventStatus
-  isCurrent?: boolean
-  helperPin?: string
-  metadata?: Record<string, unknown>
-  archivedAt?: string
-}
 
 // Category type
 export interface SalesCategory {
@@ -53,25 +34,6 @@ export interface SalesOrder {
   status: OrderStatus
   createdAt?: string
   updatedAt?: string
-}
-
-// Order item type
-export interface SalesOrderItem {
-  id: string
-  orderId: string
-  productId: string
-  quantity: number
-  unitPrice: number
-  totalPrice: number
-  remarks?: string
-  selectedOptions?: unknown
-}
-
-// Location type (prep stations)
-export interface SalesLocation {
-  id: string
-  eventId: string
-  title: string
 }
 
 // Client type
