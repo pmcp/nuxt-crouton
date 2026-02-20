@@ -19,6 +19,7 @@
 import { eq, and, gte, lte, sum } from 'drizzle-orm'
 import { useNitroApp } from 'nitropack/runtime'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import { toMonthKey, monthBounds } from '@fyit/crouton-core/shared/utils/date'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
 import { isBookingEmailEnabled } from '../../../../utils/booking-emails'
@@ -69,7 +70,7 @@ export default defineEventHandler(async (event) => {
   const locationMonthPairs = new Map<string, Set<string>>()
   for (const item of body.bookings) {
     const itemDate = new Date(item.date)
-    const monthKey = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`
+    const monthKey = toMonthKey(itemDate)
     if (!locationMonthPairs.has(item.locationId)) {
       locationMonthPairs.set(item.locationId, new Set())
     }
@@ -103,9 +104,7 @@ export default defineEventHandler(async (event) => {
       const limit = location.maxBookingsPerMonth
 
       for (const monthKey of months) {
-        const [year, month] = monthKey.split('-').map(Number)
-        const monthStart = new Date(year!, month! - 1, 1)
-        const monthEnd = new Date(year!, month!, 0, 23, 59, 59, 999)
+        const { monthStart, monthEnd } = monthBounds(monthKey)
 
         // Sum existing active booking quantities for this user/location/month
         const existingResult = await db
@@ -127,8 +126,7 @@ export default defineEventHandler(async (event) => {
         const newCount = body.bookings
           .filter((item) => {
             const d = new Date(item.date)
-            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-            return item.locationId === locationId && m === monthKey
+            return item.locationId === locationId && toMonthKey(d) === monthKey
           })
           .reduce((acc, item) => acc + (item.quantity ?? 1), 0)
 

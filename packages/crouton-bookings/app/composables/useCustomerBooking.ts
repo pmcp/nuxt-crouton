@@ -1,4 +1,5 @@
 import type { LocationData, SlotItem, BookingData } from '../types/booking'
+import { toDateKey, toDateString } from '@fyit/crouton-core/shared/utils/date'
 
 export type { LocationData, SlotItem }
 
@@ -66,11 +67,11 @@ export function useCustomerBooking() {
   // Check if the current user already has an active booking for a slot+date+location
   function isSlotBookedByUser(date: Date | null, slotId: string): boolean {
     if (!date || !bookingState.locationId || !myBookings.value) return false
-    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    const dateKey = toDateKey(date)
     return myBookings.value.some((b) => {
       if (b.status === 'cancelled') return false
       if (b.locationId !== bookingState.locationId) return false
-      const bDate = typeof b.date === 'string' ? b.date.substring(0, 10) : new Date(b.date).toISOString().substring(0, 10)
+      const bDate = toDateString(b.date)
       if (bDate !== dateKey) return false
       // Parse slot JSON: '["slot-1"]' → ['slot-1']
       try {

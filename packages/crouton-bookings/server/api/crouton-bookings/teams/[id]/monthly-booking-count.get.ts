@@ -12,6 +12,7 @@ import { eq, and, gte, lte } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
+import { monthBounds, currentMonthBounds } from '@fyit/crouton-core/shared/utils/date'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -39,13 +40,10 @@ export default defineEventHandler(async (event) => {
         statusText: 'Invalid month format. Use YYYY-MM.',
       })
     }
-    monthStart = new Date(year, month - 1, 1)
-    monthEnd = new Date(year, month, 0, 23, 59, 59, 999)
+    ;({ monthStart, monthEnd } = monthBounds(monthParam))
   }
   else {
-    const now = new Date()
-    monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+    ;({ monthStart, monthEnd } = currentMonthBounds())
   }
 
   const db = useDB()

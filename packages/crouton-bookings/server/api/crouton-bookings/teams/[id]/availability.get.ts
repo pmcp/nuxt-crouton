@@ -18,6 +18,7 @@
 import { eq, and, gte, lte, ne } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
+import { toDateKey } from '@fyit/crouton-core/shared/utils/date'
 
 export default defineEventHandler(async (event) => {
   await resolveTeamAndCheckMembership(event)
@@ -80,19 +81,11 @@ export default defineEventHandler(async (event) => {
   // Aggregate by date
   const availabilityData: Record<string, { bookedSlots: string[], bookedCount: number }> = {}
 
-  // Helper to convert date to local YYYY-MM-DD (not UTC)
-  function toLocalDateKey(date: Date): string {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
   for (const booking of bookings) {
     const bookingDate = booking.date instanceof Date
       ? booking.date
       : new Date(booking.date as string)
-    const dateKey = toLocalDateKey(bookingDate)
+    const dateKey = toDateKey(bookingDate)
 
     if (!availabilityData[dateKey]) {
       availabilityData[dateKey] = { bookedSlots: [], bookedCount: 0 }

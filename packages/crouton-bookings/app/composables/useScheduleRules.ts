@@ -1,5 +1,6 @@
 import type { DateValue } from '@internationalized/date'
 import type { BlockedDateItem, SlotSchedule, SlotItem } from '../types/booking'
+import { toDateKey as sharedToDateKey } from '@fyit/crouton-core/shared/utils/date'
 
 /** Minimal interface for schedule rule evaluation */
 interface ScheduleRuleLocation {
@@ -87,16 +88,9 @@ export function useScheduleRules(location: Ref<ScheduleRuleLocation | null | und
 
   // --- Helpers ---
 
-  /** Normalize Date or DateValue to YYYY-MM-DD key */
+  /** Normalize Date or DateValue to YYYY-MM-DD key (delegates to shared utility) */
   function toDateKey(date: Date | DateValue): string {
-    if (date instanceof Date) {
-      const y = date.getFullYear()
-      const m = String(date.getMonth() + 1).padStart(2, '0')
-      const d = String(date.getDate()).padStart(2, '0')
-      return `${y}-${m}-${d}`
-    }
-    // DateValue from @internationalized/date
-    return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+    return sharedToDateKey(date as Parameters<typeof sharedToDateKey>[0])
   }
 
   /** Get JS day-of-week (0=Sun, 6=Sat) from Date or DateValue */

@@ -1,5 +1,6 @@
 import type { DateValue } from '@internationalized/date'
 import type { BlockedDateItem, SlotSchedule } from '../types/booking'
+import { toDateKey as sharedToDateKey } from '@fyit/crouton-core/shared/utils/date'
 
 export interface SlotOption {
   id: string
@@ -111,14 +112,10 @@ export function useBookingAvailability(
     }
   }
 
-  // Helper to normalize date to YYYY-MM-DD string
+  // Normalize date to YYYY-MM-DD string (uses shared utility for consistency)
   function normalizeToDateKey(date: Date | DateValue): string {
-    if (date instanceof Date) {
-      const isoString = date.toISOString()
-      return isoString.substring(0, 10) // YYYY-MM-DD
-    }
-    // DateValue from @internationalized/date
-    return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+    // The shared helper accepts DateValueLike (year/month/day shape) — DateValue satisfies this.
+    return sharedToDateKey(date as Parameters<typeof sharedToDateKey>[0])
   }
 
   // Get booked slots for a specific date (slot mode)
