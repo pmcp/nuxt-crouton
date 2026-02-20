@@ -39,7 +39,11 @@ export class CollabRoom implements DurableObject {
   private env: Env
   private roomType: string = ''
   private roomId: string = ''
+  private teamId: string | null = null
   private persistTimeout: ReturnType<typeof setTimeout> | null = null
+  /** Tracks the last time collab:synced was emitted to debounce high-frequency saves */
+  private lastSyncEmitAt: number = 0
+  private readonly SYNC_EMIT_DEBOUNCE_MS = 30_000
 
   constructor(state: DurableObjectState, env: Env) {
     this.storage = state.storage
@@ -64,6 +68,33 @@ export class CollabRoom implements DurableObject {
     })
   }
 
+  /**
+   * Emit a crouton:operation event via the internal Nitro bridge endpoint.
+   *
+   * Durable Objects run in a Workers-isolated environment where useNitroApp()
+   * is unavailable. We POST to a Nitro endpoint on the same origin which
+   * re-emits the event into Nitro's hook system. Non-blocking — any failure
+   * is swallowed so telemetry never breaks collaboration.
+   */
+  private emitOperation(type: string, metadata: Record<string, unknown>): void {
+    const origin = this._appOrigin
+    if (!origin) return
+
+    fetch(`${origin}/api/_crouton/operation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type,
+        source: 'crouton-collab',
+        teamId: this.teamId ?? undefined,
+        metadata,
+      }),
+    }).catch(() => { /* non-blocking */ })
+  }
+
+  /** App origin derived on first fetch request, used for emitOperation calls */
+  private _appOrigin: string | null = null
+
   private async loadState(): Promise<void> {
     // Load Yjs state from DO storage (fast, local)
     const stored = await this.storage.get<Uint8Array>('yjs-state')
@@ -72,10 +103,11 @@ export class CollabRoom implements DurableObject {
     }
 
     // Load metadata
-    const meta = await this.storage.get<{ roomType: string; roomId: string }>('meta')
+    const meta = await this.storage.get<{ roomType: string; roomId: string; teamId?: string | null }>('meta')
     if (meta) {
       this.roomType = meta.roomType
       this.roomId = meta.roomId
+      this.teamId = meta.teamId ?? null
     }
   }
 
@@ -116,6 +148,18 @@ export class CollabRoom implements DurableObject {
       `).bind(this.roomType, this.roomId, state).run()
     } catch (error) {
       console.error('[CollabRoom] D1 persistence error:', error)
+    }
+
+    // Emit collab:synced — debounced to at most once per 30 seconds to avoid noise
+    const now = Date.now()
+    if (now - this.lastSyncEmitAt >= this.SYNC_EMIT_DEBOUNCE_MS) {
+      this.lastSyncEmitAt = now
+      this.emitOperation('collab:synced', {
+        roomId: this.roomId,
+        roomType: this.roomType,
+        updateSize: state.byteLength,
+        userCount: this.sessions.size,
+      })
     }
   }
 
@@ -163,6 +207,11 @@ export class CollabRoom implements DurableObject {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url)
 
+    // Capture app origin once — used for emitOperation calls
+    if (!this._appOrigin) {
+      this._appOrigin = `${url.protocol}//${url.host}`
+    }
+
     // Extract room metadata from query params (set on first connect)
     const roomType = url.searchParams.get('type') || 'generic'
     const roomId = url.searchParams.get('roomId')
@@ -171,7 +220,14 @@ export class CollabRoom implements DurableObject {
     if (roomType && roomId && !this.roomId) {
       this.roomType = roomType
       this.roomId = roomId
-      await this.storage.put('meta', { roomType, roomId })
+      this.teamId = teamId ?? null
+      await this.storage.put('meta', { roomType, roomId, teamId: teamId ?? null })
+
+      // collab:room:created — emitted exactly once when the DO first initialises for this room
+      this.emitOperation('collab:room:created', {
+        roomId,
+        roomType,
+      })
     }
 
     if (url.pathname === '/ws') {
@@ -224,8 +280,19 @@ export class CollabRoom implements DurableObject {
   private async handleSession(ws: WebSocket, userId: string, _teamId: string | null): Promise<void> {
     ws.accept()
 
+    const wasEmpty = this.sessions.size === 0
     const session: Session = { ws, userId }
     this.sessions.set(ws, session)
+
+    // collab:user:joined — only when the room transitions from idle (0 users) to active (1+ users)
+    if (wasEmpty) {
+      this.emitOperation('collab:user:joined', {
+        roomId: this.roomId,
+        roomType: this.roomType,
+        userId,
+        userCount: this.sessions.size,
+      })
+    }
 
     // Send current state to new client
     const state = Y.encodeStateAsUpdate(this.ydoc)
@@ -254,6 +321,16 @@ export class CollabRoom implements DurableObject {
 
     ws.addEventListener('close', () => {
       this.sessions.delete(ws)
+
+      // collab:user:left — only when the room transitions from active to idle (0 users)
+      if (this.sessions.size === 0) {
+        this.emitOperation('collab:user:left', {
+          roomId: this.roomId,
+          roomType: this.roomType,
+          userId: session.userId ?? userId,
+          userCount: 0,
+        })
+      }
 
       // Broadcast user left
       if (session.userId) {

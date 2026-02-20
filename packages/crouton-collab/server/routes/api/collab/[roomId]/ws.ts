@@ -1,3 +1,4 @@
+/// <reference path="../../../../../crouton-hooks.d.ts" />
 /**
  * WebSocket route for collaboration sync (Nitro experimental websocket)
  *
@@ -11,10 +12,28 @@
  * Team membership is verified via resolveTeamAndCheckMembership.
  */
 import { encodeStateAsUpdate, applyUpdate } from 'yjs'
+import { useNitroApp } from 'nitropack/runtime'
 import { getOrCreateRoom } from '../../../../utils/collabRoomStore'
 import { getServerSession } from '@fyit/crouton-auth/server/utils/useServerAuth'
 import { getMembership } from '@fyit/crouton-auth/server/utils/team'
 import type { H3Event } from 'h3'
+
+/**
+ * Emit a crouton:operation hook event from the local-dev Nitro WebSocket handler.
+ * Non-blocking — hook failures are swallowed.
+ */
+function emitCollabOperation(
+  type: string,
+  metadata: Record<string, unknown>,
+  teamId?: string | null
+): void {
+  useNitroApp().hooks.callHook('crouton:operation', {
+    type,
+    source: 'crouton-collab',
+    teamId: teamId ?? undefined,
+    metadata,
+  }).catch(() => {})
+}
 
 /**
  * Build a minimal H3Event-compatible object from a Web Request.
@@ -143,19 +162,32 @@ export default defineWebSocketHandler({
     }
 
     const room = getOrCreateRoom(roomType, roomId)
+    const wasEmpty = room.peers.size === 0
     const peerWithSend = peer as unknown as { send: (data: unknown) => void }
     room.peers.add(peerWithSend)
 
-    // Store room reference on peer (including userId for cleanup on close)
+    // collab:user:joined — only when the room transitions from idle (0 users) to active (1+ users)
+    if (wasEmpty) {
+      emitCollabOperation('collab:user:joined', {
+        roomId,
+        roomType,
+        userId: session.user.id,
+        userCount: room.peers.size,
+      }, teamId)
+    }
+
+    // Store room reference on peer (including userId and teamId for cleanup on close)
     const peerData = peer as unknown as {
       _collabRoom: typeof room
       _roomId: string
       _roomType: string
+      _teamId: string | null
       _userId: string | null
     }
     peerData._collabRoom = room
     peerData._roomId = roomId
     peerData._roomType = roomType
+    peerData._teamId = teamId
     peerData._userId = null
 
     // Send current state to new peer
@@ -255,6 +287,7 @@ export default defineWebSocketHandler({
       _collabRoom?: ReturnType<typeof getOrCreateRoom>
       _roomId?: string
       _roomType?: string
+      _teamId?: string | null
       _userId?: string | null
       _connectionCounted?: boolean
     }
@@ -274,6 +307,16 @@ export default defineWebSocketHandler({
           // User still has other connections - just decrement count
           room.userConnectionCounts.set(peerData._userId, currentCount - 1)
         }
+      }
+
+      // collab:user:left — only when the room transitions from active to idle (0 users)
+      if (room.peers.size === 0) {
+        emitCollabOperation('collab:user:left', {
+          roomId: peerData._roomId ?? '',
+          roomType: peerData._roomType ?? '',
+          userId: peerData._userId ?? '',
+          userCount: 0,
+        }, peerData._teamId)
       }
 
       // Broadcast updated awareness (user may have left)
