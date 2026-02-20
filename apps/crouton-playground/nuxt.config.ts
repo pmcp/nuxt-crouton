@@ -1,33 +1,60 @@
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
+
+// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  modules: ['@fyit/crouton'],
   css: ['~/assets/css/main.css'],
-  compatibilityDate: '2025-01-19',
+  compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-
-  // Layers - based on crouton.config.js features
-  // IMPORTANT: @fyit/crouton-core BUNDLES auth, admin, and i18n automatically.
-  // DO NOT add them separately - it causes duplicate layer loading and SSR errors.
-  extends: [// Core (includes auth, admin, i18n)
-  // Asset management (picker, uploader)
-  '@fyit/crouton-core', // Rich text editing
-  '@fyit/crouton-assets', // AI features
-  '@fyit/crouton-editor', // Chart visualizations
-  '@fyit/crouton-ai', // Collaboration (Yjs-based real-time editing)
-  '@fyit/crouton-charts', // Graph/DAG visualization
-  '@fyit/crouton-collab', // Maps
-  '@fyit/crouton-flow', // Pages management
-  '@fyit/crouton-maps', // Bookings management
-  '@fyit/crouton-pages', // Local layers must come last to override framework defaults
-  '@fyit/crouton-bookings', './layers/shop', './layers/content', './layers/people', './layers/projects', './layers/bookings', './layers/pages'],
-
-  modules: [
-    '@fyit/crouton'
+  extends: [
+    '@fyit/crouton-core',
+    '@fyit/crouton-i18n',
+    '@fyit/crouton-editor',
+    '@fyit/crouton-flow',
+    '@fyit/crouton-assets',
+    '@fyit/crouton-charts',
+    '@fyit/crouton-maps',
+    '@fyit/crouton-ai',
+    '@fyit/crouton-collab',
+    '@fyit/crouton-pages',
+    '@fyit/crouton-bookings',
+    './layers/shop',
+    './layers/content',
+    './layers/people',
+    './layers/projects',
+    './layers/bookings',
+    './layers/pages'
   ],
+  hub: {
+    db: 'sqlite',
+    kv: true
+  },
 
-  hub: { db: 'sqlite' },
+  // Disable OG Image to reduce bundle size for Cloudflare (saves ~4MB)
+  ogImage: { enabled: false },
 
+  // Disable passkeys for Cloudflare Workers (tsyringe incompatibility)
   croutonAuth: {
     methods: {
-      credentials: true
+      passkeys: false
+    }
+  },
+
+  // Cloudflare Pages deployment
+  nitro: {
+    preset: 'cloudflare-pages',
+    alias: {
+      '@better-auth/passkey/client': resolve(cfStubs, 'client'),
+      '@better-auth/passkey': cfStubs,
+      'tsyringe': cfStubs,
+      'reflect-metadata': cfStubs,
+      '@peculiar/x509': cfStubs,
+      '@simplewebauthn/server': cfStubs,
+      'papaparse': cfStubs
     }
   }
 })
