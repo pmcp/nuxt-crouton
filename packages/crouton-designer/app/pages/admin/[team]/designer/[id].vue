@@ -185,7 +185,7 @@ const systemPrompt = computed(() => {
   return buildIntakePrompt(projectConfig.value)
 })
 
-const { messages, input, isLoading, status, error, append, toolCalls, reload } = useChat({
+const { messages, rawMessages, importMessages, input, isLoading, status, error, append, toolCalls, reload } = useChat({
   api: '/api/ai/designer-chat',
   maxSteps: 5,
   body: computed(() => ({
@@ -359,19 +359,17 @@ if (projectRecord.value?.messages) {
   const stored = projectRecord.value.messages
   // Support both legacy per-phase format and new flat array
   if (Array.isArray(stored)) {
-    for (const msg of stored) {
-      messages.value.push(msg)
-    }
+    importMessages(stored)
   } else if (typeof stored === 'object') {
     // Legacy: merge all phase messages in order
+    const merged: any[] = []
     for (const phase of ['1', '2', '3', '5']) {
       const phaseMessages = (stored as Record<string, any>)[phase]
       if (Array.isArray(phaseMessages)) {
-        for (const msg of phaseMessages) {
-          messages.value.push(msg)
-        }
+        merged.push(...phaseMessages)
       }
     }
+    if (merged.length) importMessages(merged)
   }
 }
 
@@ -383,11 +381,14 @@ function insertPhaseMarker(phase: string) {
     '3': t('designer.phases.seedData'),
     '5': t('designer.phases.review')
   }
-  messages.value.push({
-    id: crypto.randomUUID(),
-    role: 'system',
-    content: `--- ${phaseLabels[phase] || `Phase ${phase}`} ---`
-  } as any)
+  rawMessages.value = [
+    ...rawMessages.value,
+    {
+      id: crypto.randomUUID(),
+      role: 'system',
+      content: `--- ${phaseLabels[phase] || `Phase ${phase}`} ---`
+    } as any
+  ]
 }
 
 async function handlePhaseChange(val: string | number | undefined) {

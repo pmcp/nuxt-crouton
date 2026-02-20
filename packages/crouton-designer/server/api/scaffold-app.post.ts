@@ -28,6 +28,8 @@ interface StepResult {
 }
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   const body = await readBody<ScaffoldRequest>(event)
 
   // Validate appName
