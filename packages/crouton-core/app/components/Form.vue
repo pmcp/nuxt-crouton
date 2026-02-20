@@ -111,7 +111,7 @@
           variant="ghost"
           color="neutral"
           size="xs"
-          :title="state.isExpanded ? 'Collapse to sidebar' : 'Expand to fullscreen'"
+          :title="state.isExpanded ? t('form.collapse') : t('form.expand')"
           @click.stop="toggleExpand(state.id)"
         />
 
@@ -121,7 +121,7 @@
           variant="ghost"
           color="neutral"
           size="xs"
-          title="Close"
+          :title="t('form.close')"
           @click.stop="handleSlideoverClose(state.id, false)"
         />
       </div>
@@ -157,6 +157,7 @@ import type { CroutonState } from '../composables/useCrouton'
 // Use the composables - destructure only needed properties
 const { croutonStates, close, closeAll, removeState } = useCrouton()
 const { collectionWithCapitalSingular } = useFormatCollections()
+const { t } = useT()
 
 // Filter states by container type
 const modalStates = computed(() =>

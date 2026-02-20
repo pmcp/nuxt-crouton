@@ -10,6 +10,8 @@ interface Props {
   sortable?: boolean
 }
 
+const { t } = useT()
+
 const props = withDefaults(defineProps<Props>(), {
   addLabel: 'Add Item',
   sortable: true
@@ -127,7 +129,7 @@ onMounted(() => {
           size="sm"
           icon="i-lucide-grip-vertical"
           class="drag-handle cursor-move"
-          aria-label="Drag to reorder"
+          :aria-label="t('form.dragToReorder')"
         />
 
         <!-- Remove button -->
@@ -137,7 +139,7 @@ onMounted(() => {
           variant="ghost"
           size="sm"
           icon="i-lucide-x"
-          aria-label="Remove item"
+          :aria-label="t('form.removeItem')"
           @click="removeItem(index)"
         />
       </div>

@@ -1,0 +1,9 @@
+{
+  "form": {
+    "collapse": "Collapse to sidebar",
+    "expand": "Expand to fullscreen",
+    "close": "Close",
+    "dragToReorder": "Drag to reorder",
+    "removeItem": "Remove item"
+  }
+}
