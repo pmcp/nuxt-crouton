@@ -4,7 +4,7 @@
  * Can be called via API endpoint or scheduled task (NuxtHub)
  */
 
-import { lt, sql } from 'drizzle-orm'
+import { lt, inArray, sql } from 'drizzle-orm'
 import { croutonEvents } from '../database/schema'
 
 interface CleanupOptions {
@@ -61,7 +61,7 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
     // Delete old events (by date)
     let deletedByDate = 0
     if (!dryRun && toDeleteByDate > 0) {
-      const _result = await db
+      await db
         .delete(croutonEvents)
         .where(lt(croutonEvents.timestamp, cutoffDate))
 
@@ -95,7 +95,7 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
 
             await db
               .delete(croutonEvents)
-              .where(sql`${croutonEvents.id} IN ${ids}`)
+              .where(inArray(croutonEvents.id, ids))
           }
 
           deletedByCount = oldestEvents.length

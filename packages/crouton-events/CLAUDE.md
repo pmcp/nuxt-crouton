@@ -9,7 +9,6 @@ Automatic event tracking and audit trail for Nuxt Crouton collections. Hooks int
 | File | Purpose |
 |------|---------|
 | `app/composables/useCroutonEvents.ts` | Query enriched events with user data |
-| `app/composables/useCroutonEventsHealth.ts` | Monitor tracking health |
 | `app/composables/useCroutonEventsExport.ts` | Export events as CSV/JSON |
 | `app/components/CroutonActivityLog.vue` | Main activity log page with stats |
 | `app/components/CroutonActivityTimeline.vue` | Timeline visualization with date groups |
@@ -101,11 +100,6 @@ const { data: enriched } = useCroutonEvents({
   pagination: { page: 1, pageSize: 50 }
 })
 
-// Health monitoring
-const { health, failureRate, isHealthy } = useCroutonEventsHealth()
-// health.value.total, health.value.failed, health.value.lastError
-// failureRate — computed % of failures
-// isHealthy — true if failureRate < 10%
 ```
 
 ## Admin UI Components
