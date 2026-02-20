@@ -81,21 +81,14 @@ export function useAppScaffold(
       { filename: 'server/utils/_cf-stubs/client.ts', category: 'server' }
     )
 
-    // Schema files (one per user collection)
+    // Schema files: user collections + package-only collections (server writes these from package)
     for (const file of schemaFiles.value) {
-      items.push({
-        filename: `schemas/${file.name}.json`,
-        category: 'schema'
-      })
+      items.push({ filename: `schemas/${file.name}.json`, category: 'schema' })
     }
-
-    // Package collection schema files (manifest fields + extension fields)
-    if (packageCollections?.value) {
-      for (const pkg of packageCollections.value) {
-        items.push({
-          filename: `schemas/${pkg.name}.json`,
-          category: 'schema'
-        })
+    const coveredSchemaNames = new Set(schemaFiles.value.map(f => f.name))
+    for (const pkg of packageCollections?.value ?? []) {
+      if (!coveredSchemaNames.has(pkg.name)) {
+        items.push({ filename: `schemas/${pkg.name}.json`, category: 'schema' })
       }
     }
 
@@ -144,17 +137,13 @@ export function useAppScaffold(
     conflictError.value = false
 
     try {
-      // Build schemas map — user collections + package collections
+      // Build schemas map — user collections only.
+      // Package collections (e.g. pages from crouton-pages) are handled automatically
+      // by the CLI's mergeManifestCollections() at generate time — including them here
+      // would create an empty/partial schema file that overrides the package's full schema.
       const schemas: Record<string, string> = {}
-      // User collection schemas
       const allSchemas = getAllSchemasAsJson()
       for (const [filename, content] of allSchemas) {
-        const name = filename.replace(/\.json$/, '')
-        schemas[name] = content
-      }
-      // Package collection schemas (manifest fields + extension fields merged)
-      const pkgSchemas = getPackageSchemasAsJson(packageCollections?.value ?? [])
-      for (const [filename, content] of pkgSchemas) {
         const name = filename.replace(/\.json$/, '')
         schemas[name] = content
       }

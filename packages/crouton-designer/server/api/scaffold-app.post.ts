@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { writeFile, mkdir, access } from 'node:fs/promises'
+import { writeFile, readFile, mkdir, access } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { createJiti } from 'jiti'
 
@@ -91,17 +91,36 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Step 2: Write schema files
+  // Step 2: Write schema files.
+  // - User-provided schemas (booking, location, etc.) are written as-is from body.schemas.
+  // - Package-only collections (e.g. pages from crouton-pages) are NOT in body.schemas
+  //   because the designer doesn't send empty package schemas. Instead we read the
+  //   package's own schema file from the monorepo and write it here.
   try {
     const schemasDir = join(appDir, 'schemas')
     await mkdir(schemasDir, { recursive: true })
     const files: string[] = []
 
+    // Write user-provided schemas (may include schemas for package-layer collections)
     for (const [name, content] of Object.entries(body.schemas)) {
       const filename = name.endsWith('.json') ? name : `${name}.json`
       await writeFile(join(schemasDir, filename), content, 'utf-8')
       files.push(`schemas/${filename}`)
     }
+
+    // For package-only collections (no user schema provided), read from the package.
+    // Convention: packages/crouton-{layerName}/schemas/{collectionName}.json
+    const coveredSchemas = new Set(Object.keys(body.schemas))
+    for (const pkg of body.packageCollections || []) {
+      if (coveredSchemas.has(pkg.name)) continue
+      const pkgSchemaPath = join(monorepoRoot, 'packages', `crouton-${pkg.layerName}`, 'schemas', `${pkg.name}.json`)
+      if (await pathExists(pkgSchemaPath)) {
+        const content = await readFile(pkgSchemaPath, 'utf-8')
+        await writeFile(join(schemasDir, `${pkg.name}.json`), content, 'utf-8')
+        files.push(`schemas/${pkg.name}.json`)
+      }
+    }
+
     steps.schemas = { success: true, files }
   }
   catch (err: any) {

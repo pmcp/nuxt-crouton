@@ -24,12 +24,28 @@ export async function loadFields(p: string, typeMapping: Record<string, any>): P
     }
   }
   const raw = await fsp.readFile(p, 'utf8')
-  const obj: Record<string, Record<string, any>> = JSON.parse(raw)
+  const obj = JSON.parse(raw) as Record<string, any>
 
   const validTypes = new Set(Object.keys(typeMapping))
 
-  // Convert to array for easier processing
-  return Object.entries(obj).map(([name, meta]) => {
+  // Detect schema format:
+  // - Array format: { name, label, fields: [...] } — used by package manifests (e.g. crouton-pages)
+  // - Keyed format: { fieldName: { type, meta: {...} } } — used by generated app schemas
+  let entries: Array<[string, Record<string, any>]>
+
+  if (Array.isArray(obj.fields)) {
+    // Array format: convert each field to [name, meta] tuple
+    entries = (obj.fields as Array<Record<string, any>>).map((field) => {
+      const { name, type, refTarget, refScope, ...rest } = field
+      // Everything except name/type/refTarget/refScope becomes meta
+      return [name as string, { type, refTarget, refScope, meta: rest }]
+    })
+  } else {
+    // Keyed format: { fieldName: { type, meta, refTarget, refScope } }
+    entries = Object.entries(obj) as Array<[string, Record<string, any>]>
+  }
+
+  return entries.map(([name, meta]) => {
     const fieldMeta = meta?.meta || {} as Record<string, any>
     // Set default area if not specified
     if (!fieldMeta.area) {

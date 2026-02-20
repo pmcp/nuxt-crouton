@@ -43,30 +43,43 @@ export function buildCroutonConfig(options: ConfigBuilderOptions): string {
   // Build collections array from schemas
   const collectionNames = Object.keys(schemas)
 
+  // Separate names: user-provided schemas vs package-only (no user schema provided)
+  const pkgColNames = new Set(packageCollections.map(p => p.name))
+  // Used for targets: user collections not associated with a package layer
+  const userCollectionNames = collectionNames.filter(n => !pkgColNames.has(n))
+
   const publishableSet = new Set(publishableCollections)
 
-  const collectionsStr = collectionNames.map((name) => {
-    const opts = [
-      `name: '${name}'`,
-      `fieldsFile: './schemas/${name}.json'`,
-    ]
+  // Extra options for known package collections that provide their own form UI
+  const PACKAGE_COLLECTION_CONFIGS: Record<string, { formComponent?: string; hierarchy?: string }> = {
+    pages: {
+      formComponent: 'CroutonPagesForm',
+      hierarchy: `{ enabled: true, parentField: 'parentId', orderField: 'order', pathField: 'path', depthField: 'depth' }`,
+    },
+  }
 
-    // Add seed option if seed data exists for this collection
-    if (seedData[name] && seedData[name].length > 0) {
-      opts.push('seed: true')
-    }
-
-    // Add publishable flag if collection is publishable
-    if (publishableSet.has(name)) {
-      opts.push('publishable: true')
-    }
-
+  // User-provided schemas (may be for collections that are also in a package layer)
+  const userEntries = collectionNames.map((name) => {
+    const opts = [`name: '${name}'`, `fieldsFile: './schemas/${name}.json'`]
+    if (seedData[name] && seedData[name].length > 0) opts.push('seed: true')
+    if (publishableSet.has(name)) opts.push('publishable: true')
     return `    { ${opts.join(', ')} }`
-  }).join(',\n')
+  })
 
-  // Build targets — package collections go to their own layers; user collections go to the app layer
-  const pkgColNames = new Set(packageCollections.map(p => p.name))
-  const userCollectionNames = collectionNames.filter(n => !pkgColNames.has(n))
+  // Package-only collections: in packageCollections but NOT in user-provided schemas.
+  // The server writes the package's own schema file for these at scaffold time.
+  const coveredSchemas = new Set(collectionNames)
+  const pkgOnlyEntries = packageCollections
+    .filter(pkg => !coveredSchemas.has(pkg.name))
+    .map(({ name, layerName }) => {
+      const opts = [`name: '${name}'`, `fieldsFile: './schemas/${name}.json'`]
+      const pkgConfig = PACKAGE_COLLECTION_CONFIGS[name] ?? PACKAGE_COLLECTION_CONFIGS[layerName] ?? {}
+      if (pkgConfig.formComponent) opts.push(`formComponent: '${pkgConfig.formComponent}'`)
+      if (pkgConfig.hierarchy) opts.push(`hierarchy: ${pkgConfig.hierarchy}`)
+      return `    { ${opts.join(', ')} }`
+    })
+
+  const collectionsStr = [...userEntries, ...pkgOnlyEntries].join(',\n')
 
   // Group package collections by their layer name
   const layerMap = new Map<string, string[]>()
