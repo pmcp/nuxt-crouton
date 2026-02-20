@@ -11,10 +11,11 @@
 | Metric | Value |
 |--------|-------|
 | Total tasks | 28 |
-| Completed | 0 |
-| In progress | 0 |
-| Remaining | 28 |
-| Phase | 1 — High priority |
+| Completed | 17 |
+| Skipped | 5 (inapplicable — see notes) |
+| In progress | 5 (agent 3 running: 2C-1,2C-3,2C-4,2C-5,2D-2) |
+| Remaining | 6 (3G group — bigger refactors) |
+| Phase | 2 — Medium priority (agent 3 pending) |
 
 ---
 
@@ -38,16 +39,16 @@ Manual `setTimeout` + null-tracking can silently leak if component unmounts befo
 
 | # | File | What to change | Status |
 |---|------|---------------|--------|
-| 1A-1 | `crouton-core/app/composables/useExpandableSlideover.ts` | Animation close delays | [ ] |
-| 1A-2 | `crouton-core/app/components/ImportPreviewModal.vue` | State reset after modal close | [ ] |
-| 1A-3 | `crouton-core/app/components/FormExpandableSlideOver.vue` | `setTimeout(() => close(), 300)` | [ ] |
-| 1A-4 | `crouton-core/app/composables/useTreeItemState.ts` | Two flash animation timeouts | [ ] |
-| 1A-5 | `crouton-core/app/composables/useTreeDrag.ts` | `expandTimeouts` dictionary | [ ] |
-| 1A-6 | `crouton-ai/app/components/Message.vue` | `setTimeout(() => { copied.value = false }, 2000)` | [ ] |
-| 1A-7 | `crouton-collab/app/composables/useCollabPresence.ts` | `setTimeout(() => sendCurrentState(), 100)` in watcher | [ ] |
-| 1A-8 | `crouton-i18n/app/components/DevModeToggle.vue` | `setTimeout(scanForMissingTranslations, 100)` | [ ] |
-| 1A-9 | `crouton-email/app/components/Email/MagicLinkSent.vue` | `setTimeout(() => { isResending.value = false }, 1000)` | [ ] |
-| 1A-10 | `crouton-flow/app/components/Flow.vue` | `ghostCleanupTimeout` with null-tracking | [ ] |
+| 1A-1 | `crouton-core/app/composables/useExpandableSlideover.ts` | Animation close delays | [x] ✅ |
+| 1A-2 | `crouton-core/app/components/ImportPreviewModal.vue` | State reset after modal close | [x] ✅ |
+| 1A-3 | `crouton-core/app/components/FormExpandableSlideOver.vue` | `setTimeout(() => close(), 300)` | [x] ✅ |
+| 1A-4 | `crouton-core/app/composables/useTreeItemState.ts` | Two flash animation timeouts | ⏭️ skipped — per-ID dynamic timers don't fit useTimeoutFn (single-timer semantics) |
+| 1A-5 | `crouton-core/app/composables/useTreeDrag.ts` | `expandTimeouts` dictionary | ⏭️ skipped — module-level per-ID dict; useTimeoutFn would require Map of composables |
+| 1A-6 | `crouton-ai/app/components/Message.vue` | `setTimeout(() => { copied.value = false }, 2000)` | [x] ✅ |
+| 1A-7 | `crouton-collab/app/composables/useCollabPresence.ts` | `setTimeout(() => sendCurrentState(), 100)` in watcher | [x] ✅ |
+| 1A-8 | `crouton-i18n/app/components/DevModeToggle.vue` | `setTimeout(scanForMissingTranslations, 100)` | [x] ✅ |
+| 1A-9 | `crouton-email/app/components/Email/MagicLinkSent.vue` | `setTimeout(() => { isResending.value = false }, 1000)` | [x] ✅ |
+| 1A-10 | `crouton-flow/app/components/Flow.vue` | `ghostCleanupTimeout` with null-tracking | [x] ✅ |
 
 **Pattern:**
 ```ts
@@ -65,9 +66,9 @@ const { start } = useTimeoutFn(() => { state.value = false }, 300)
 
 | # | File | What to change | Status |
 |---|------|---------------|--------|
-| 1B-1 | `crouton-admin/app/composables/useAdminStats.ts` | `startAutoRefresh`/`stopAutoRefresh` (~20 lines) | [ ] |
-| 1B-2 | `crouton-collab/app/composables/useCollabRoomUsers.ts` | `startPolling`/`stopPolling` (~20 lines) | [ ] |
-| 1B-3 | `crouton-email/app/components/Email/ResendButton.vue` | Manual countdown → `useCountDown` | [ ] |
+| 1B-1 | `crouton-admin/app/composables/useAdminStats.ts` | `startAutoRefresh`/`stopAutoRefresh` (~20 lines) | [x] ✅ |
+| 1B-2 | `crouton-collab/app/composables/useCollabRoomUsers.ts` | `startPolling`/`stopPolling` (~20 lines) | [x] ✅ |
+| 1B-3 | `crouton-email/app/components/Email/ResendButton.vue` | Manual countdown → `useCountDown` | [x] ✅ (useIntervalFn, useCountdown not in v14.1.0) |
 
 **Pattern:**
 ```ts
@@ -89,11 +90,11 @@ const { pause, resume } = useIntervalFn(() => fetch(), 5000, { immediate: false 
 
 | # | File | What to change | Status |
 |---|------|---------------|--------|
-| 2C-1 | `crouton-core/app/composables/useExpandableSlideover.ts` | `isExpanded` ref + manual toggle (9 lines → 1) | [ ] |
-| 2C-2 | `crouton-ai/app/components/AITranslateButton.vue` | `showConfirmModal`, `showContextSelector` | [ ] |
-| 2C-3 | `crouton-assets/app/components/Picker.vue` | `isOpen`, `showUploader` | [ ] |
-| 2C-4 | `crouton-events/app/components/CroutonActivityLog.vue` | `showDetail` | [ ] |
-| 2C-5 | `crouton-devtools/src/runtime/client/pages/index.vue` | `showDetailModal` | [ ] |
+| 2C-1 | `crouton-core/app/composables/useExpandableSlideover.ts` | `isExpanded` ref + manual toggle (9 lines → 1) | 🔄 agent 3 |
+| 2C-2 | `crouton-ai/app/components/AITranslateButton.vue` | `showConfirmModal`, `showContextSelector` | [x] ✅ |
+| 2C-3 | `crouton-assets/app/components/Picker.vue` | `isOpen`, `showUploader` | 🔄 agent 3 |
+| 2C-4 | `crouton-events/app/components/CroutonActivityLog.vue` | `showDetail` | 🔄 agent 3 |
+| 2C-5 | `crouton-devtools/src/runtime/client/pages/index.vue` | `showDetailModal` | 🔄 agent 3 |
 
 **Pattern:**
 ```ts
@@ -111,8 +112,8 @@ const [isOpen, toggleOpen] = useToggle(false)
 
 | # | File | What to change | Status |
 |---|------|---------------|--------|
-| 2D-1 | `crouton-i18n/app/components/DevModeToggle.vue` | `document.addEventListener('click', handleClick, true)` + manual remove | [ ] |
-| 2D-2 | `crouton-triage/app/composables/useTriageOAuth.ts` | `window.addEventListener('message', handler)` in lifecycle hooks | [ ] |
+| 2D-1 | `crouton-i18n/app/components/DevModeToggle.vue` | `document.addEventListener('click', handleClick, true)` + manual remove | [x] ✅ |
+| 2D-2 | `crouton-triage/app/composables/useTriageOAuth.ts` | `window.addEventListener('message', handler)` in lifecycle hooks | 🔄 agent 3 |
 
 **Pattern:**
 ```ts
@@ -130,10 +131,10 @@ useEventListener(window, 'message', handler)
 
 | # | File | What to change | Status |
 |---|------|---------------|--------|
-| 2E-1 | `crouton-flow/app/composables/useFlowMutation.ts` | Manual setTimeout debounce for position updates | [ ] |
-| 2E-2 | `crouton-flow/app/components/Flow.vue` | Manual `Date.now()` throttle for drag sync | [ ] |
-| 2E-3 | `crouton-charts/app/composables/useCollectionChart.ts` | No debounce on rapid options changes → add `useDebounceFn` | [ ] |
-| 2E-4 | `crouton-devtools/src/runtime/client/pages/index.vue` | Search filter recomputes on every keystroke → add `useDebounceFn` | [ ] |
+| 2E-1 | `crouton-flow/app/composables/useFlowMutation.ts` | Manual setTimeout debounce for position updates | [x] ✅ |
+| 2E-2 | `crouton-flow/app/components/Flow.vue` | Manual `Date.now()` throttle for drag sync | [x] ✅ |
+| 2E-3 | `crouton-charts/app/composables/useCollectionChart.ts` | No debounce on rapid options changes → add `useDebounceFn` | [x] ✅ |
+| 2E-4 | `crouton-devtools/src/runtime/client/pages/index.vue` | Search filter recomputes on every keystroke → add `useDebounceFn` | ⏭️ skipped — CDN Vue (no @vueuse/core); computed already cached |
 
 ---
 
@@ -143,10 +144,10 @@ useEventListener(window, 'message', handler)
 
 | # | File | What to change | VueUse composable | Status |
 |---|------|---------------|-------------------|--------|
-| 3F-1 | `crouton-devtools/src/runtime/client/components/CollectionDetailModal.vue` | Manual computed get/set v-model (4 lines) | `useVModel` | [ ] |
-| 3F-2 | `crouton-core/app/composables/useCroutonShortcuts.ts` | `navigator.platform` check | `useOS` | [ ] |
-| 3F-3 | `crouton-ai/app/components/AITranslateButton.vue` | `// Force reactivity` Set reassignment hack | `reactive()` Set | [ ] |
-| 3F-4 | `crouton-collab/app/composables/useFormCollabPresence.ts` | `ref(new Map())` | `useMap` | [ ] |
+| 3F-1 | `crouton-devtools/src/runtime/client/components/CollectionDetailModal.vue` | Manual computed get/set v-model (4 lines) | `useVModel` | ⏭️ skipped — file was deleted |
+| 3F-2 | `crouton-core/app/composables/useCroutonShortcuts.ts` | `navigator.platform` check | `useOS` | ⏭️ skipped — `useOS` not exported by @vueuse/core v14.1.0 |
+| 3F-3 | `crouton-ai/app/components/AITranslateButton.vue` | `// Force reactivity` Set reassignment hack | `reactive()` Set | [x] ✅ |
+| 3F-4 | `crouton-collab/app/composables/useFormCollabPresence.ts` | `ref(new Map())` | `useMap` | ⏭️ skipped — `useMap` not exported by @vueuse/core v14.1.0 |
 
 ### Group G: Bigger refactors
 
