@@ -53,7 +53,7 @@ This only works for same-layer references. Cross-layer references need an extra 
 
 **Rule of thumb:**
 - Same layer: `../../../{collection}/server/database/schema` ✅
-- Cross layer: `../../../../{target-layer}/collections/{collection}/server/database/schema` ✅
+- Cross layer: `../../../../../{target-layer}/collections/{collection}/server/database/schema` ✅
 
 **Status:** Bug in `@fyit/crouton-cli`. The generator doesn't cross-check which layer the
 `refTarget` collection belongs to when building relative import paths. Same-layer references work

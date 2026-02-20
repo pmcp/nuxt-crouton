@@ -603,7 +603,17 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     },
     {
       path: path.join(base, 'server', 'database', 'queries.ts'),
-      content: generateQueries(data, config)
+      content: generateQueries(data, config, layer, (() => {
+        const map = new Map<string, string>()
+        if (config?.targets) {
+          for (const t of config.targets) {
+            for (const c of t.collections) {
+              map.set(c.toLowerCase(), t.layer)
+            }
+          }
+        }
+        return map
+      })())
     },
     {
       path: path.join(base, 'server', 'database', 'schema.ts'),

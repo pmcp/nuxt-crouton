@@ -302,7 +302,7 @@ function detectReferenceFields(data: Record<string, any>, config: Record<string,
   return { singleReferences, arrayReferences }
 }
 
-export function generateQueries(data: Record<string, any>, config: Record<string, any> | null = null): string {
+export function generateQueries(data: Record<string, any>, config: Record<string, any> | null = null, currentLayer: string = '', collectionLayerMap: Map<string, string> = new Map()): string {
   console.log('[database-queries.mjs] Running LATEST VERSION with array reference post-processing support')
   const { singular, camelCase, camelCasePlural, plural, pascalCase, pascalCasePlural, layer, layerPascalCase } = data
   // Use layer-prefixed table name to match schema export
@@ -337,10 +337,17 @@ export function generateQueries(data: Record<string, any>, config: Record<string
       schemaImports += `import { ${schemaExportName} } from '~~/server/db/schema'
 `
     } else {
-      // Local layer collection - import from sibling directory
-      // Folder names are lowercased plural (e.g., flowInputs -> flowinputs)
-      schemaImports += `import * as ${collection}Schema from '../../../${collection.toLowerCase()}/server/database/schema'
+      // Local or cross-layer collection
+      const targetLayer = collectionLayerMap.get(collection.toLowerCase())
+      if (targetLayer && targetLayer !== currentLayer) {
+        // Cross-layer: escape 5 levels up from .../database/ to layers/, then descend into target layer
+        schemaImports += `import * as ${collection}Schema from '../../../../../${targetLayer}/collections/${collection.toLowerCase()}/server/database/schema'
 `
+      } else {
+        // Same-layer sibling (or unknown — fall back to existing behavior)
+        schemaImports += `import * as ${collection}Schema from '../../../${collection.toLowerCase()}/server/database/schema'
+`
+      }
     }
   })
 
