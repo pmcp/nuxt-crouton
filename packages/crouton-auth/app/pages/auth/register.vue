@@ -120,7 +120,7 @@ function validate(state: Record<string, unknown>) {
   if (!state.password) {
     errors.push({ name: 'password', message: t('errors.requiredField') })
   } else if ((state.password as string).length < minPasswordLength) {
-    errors.push({ name: 'password', message: t('errors.minLength', { min: minPasswordLength }) })
+    errors.push({ name: 'password', message: t('errors.minLength', { params: { min: minPasswordLength } }) })
   }
 
   if (state.password !== state.confirmPassword) {

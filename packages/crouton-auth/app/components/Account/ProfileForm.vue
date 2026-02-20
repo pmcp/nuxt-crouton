@@ -74,9 +74,9 @@ function validate(formState: Partial<typeof state>): FormError[] {
   if (!formState.name?.trim()) {
     errors.push({ name: 'name', message: t('errors.requiredField') })
   } else if (formState.name.length < 2) {
-    errors.push({ name: 'name', message: t('errors.minLength', { min: 2 }) })
+    errors.push({ name: 'name', message: t('errors.minLength', { params: { min: 2 } }) })
   } else if (formState.name.length > 100) {
-    errors.push({ name: 'name', message: t('errors.maxLength', { max: 100 }) })
+    errors.push({ name: 'name', message: t('errors.maxLength', { params: { max: 100 } }) })
   }
 
   if (formState.image && !/^https?:\/\//.test(formState.image)) {

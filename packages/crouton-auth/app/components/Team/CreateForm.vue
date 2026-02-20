@@ -71,9 +71,9 @@ function validate(formState: Partial<typeof state>): FormError[] {
   if (!formState.name?.trim()) {
     errors.push({ name: 'name', message: t('errors.requiredField') })
   } else if (formState.name.length < 2) {
-    errors.push({ name: 'name', message: t('errors.minLength', { min: 2 }) })
+    errors.push({ name: 'name', message: t('errors.minLength', { params: { min: 2 } }) })
   } else if (formState.name.length > 50) {
-    errors.push({ name: 'name', message: t('errors.maxLength', { max: 50 }) })
+    errors.push({ name: 'name', message: t('errors.maxLength', { params: { max: 50 } }) })
   }
 
   if (!formState.slug?.trim()) {
@@ -81,9 +81,9 @@ function validate(formState: Partial<typeof state>): FormError[] {
   } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(formState.slug)) {
     errors.push({ name: 'slug', message: t('teams.slugValidation') })
   } else if (formState.slug.length < 2) {
-    errors.push({ name: 'slug', message: t('errors.minLength', { min: 2 }) })
+    errors.push({ name: 'slug', message: t('errors.minLength', { params: { min: 2 } }) })
   } else if (formState.slug.length > 30) {
-    errors.push({ name: 'slug', message: t('errors.maxLength', { max: 30 }) })
+    errors.push({ name: 'slug', message: t('errors.maxLength', { params: { max: 30 } }) })
   }
 
   return errors

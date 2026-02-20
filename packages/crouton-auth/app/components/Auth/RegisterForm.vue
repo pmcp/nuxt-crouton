@@ -68,7 +68,7 @@ function validate(formState: Partial<typeof state>): FormError[] {
   if (!formState.password) {
     errors.push({ name: 'password', message: t('errors.requiredField') })
   } else if (formState.password.length < props.minPasswordLength) {
-    errors.push({ name: 'password', message: t('errors.minLength', { min: props.minPasswordLength }) })
+    errors.push({ name: 'password', message: t('errors.minLength', { params: { min: props.minPasswordLength } }) })
   }
 
   if (formState.password !== formState.confirmPassword) {

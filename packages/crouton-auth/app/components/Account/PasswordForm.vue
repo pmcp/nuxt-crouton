@@ -58,7 +58,7 @@ function validate(formState: Partial<typeof state>): FormError[] {
   if (!formState.newPassword?.trim()) {
     errors.push({ name: 'newPassword', message: t('errors.requiredField') })
   } else if (formState.newPassword.length < 8) {
-    errors.push({ name: 'newPassword', message: t('errors.minLength', { min: 8 }) })
+    errors.push({ name: 'newPassword', message: t('errors.minLength', { params: { min: 8 } }) })
   }
 
   if (!formState.confirmPassword?.trim()) {
