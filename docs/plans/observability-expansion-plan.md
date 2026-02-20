@@ -10,11 +10,11 @@ This plan extends the existing [devtools-events-unification plan](./devtools-eve
 
 | Group | Done | Total | Status |
 |-------|------|-------|--------|
-| A — Quick Wins | 1 | 3 | 🔄 |
+| A — Quick Wins | 2 | 3 | 🔄 |
 | B — Structural | 0 | 3 | 🔲 |
 | C — Package Integrations | 0 | 9 | 🔲 |
 | D — DevTools Enhancements | 0 | 3 | 🔲 |
-| **Total** | **1** | **18** | 🔄 |
+| **Total** | **2** | **18** | 🔄 |
 
 ---
 
@@ -44,9 +44,9 @@ await useNuxtApp().hooks.callHook('crouton:mutation', {
 ---
 
 ### A2 — crouton-mcp-toolkit: add source attribution to MCP tool calls
-- [ ] `server/mcp/tools/create-item.ts` — set `event.context.mutationSource = 'mcp'` before `$fetch`
-- [ ] `server/mcp/tools/update-item.ts` — same
-- [ ] `server/mcp/tools/delete-item.ts` — same
+- [x] `server/mcp/tools/create-item.ts` — set `event.context.mutationSource = 'mcp'` before `$fetch`
+- [x] `server/mcp/tools/update-item.ts` — same
+- [x] `server/mcp/tools/delete-item.ts` — same
 
 **Why:** MCP tools call the standard collection API which already fires `crouton:mutation`, but those events are indistinguishable from human UI mutations. Critical for audit trails when AI has write access.
 
@@ -259,3 +259,4 @@ _New UI capabilities. Depends on B1 and B2._
 |------|-----------|
 | 2026-02-20 | Audit completed across all 24 packages. Plan created. |
 | 2026-02-20 | A1 complete — added `crouton:mutation` hook to all 3 i18n translation endpoints. Used `verifyTeamTranslation` return value as `beforeData` for PATCH/DELETE (no extra DB query). |
+| 2026-02-20 | A2 complete — MCP tools stamp `event.context.mutationSource = 'mcp'` and call `trackMcpMutation()` (new server utility) after each successful collection API call. Direct post to crouton-events write endpoint with `metadata: { mutationSource: 'mcp' }` and cookie forwarding, since event-listener plugin is client-side only and MCP mutations are server-side. |
