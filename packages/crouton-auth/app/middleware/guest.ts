@@ -39,7 +39,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
       console.log(`[@crouton/auth] Guest middleware: authenticated, redirecting to ${redirectPath}`)
     }
 
-    return navigateTo(redirectPath)
+    // Use external: true to force a full browser navigation, not a SPA redirect.
+    // Without this, the server renders the login page (auth layout) but the client
+    // immediately redirects to the admin page (admin layout), causing a Vue hydration
+    // mismatch because the server HTML and client component tree don't match.
+    return navigateTo(redirectPath, { replace: true, external: true })
   }
 
   if (config?.debug) {
