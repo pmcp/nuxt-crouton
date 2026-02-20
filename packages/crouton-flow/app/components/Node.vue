@@ -172,67 +172,142 @@ const subtitle = computed(() => {
 </template>
 
 <style scoped>
-@reference "tailwindcss";
-
 .crouton-flow-node {
-  @apply px-4 py-2 rounded-lg border bg-white dark:bg-neutral-900;
-  @apply border-neutral-200 dark:border-neutral-700;
-  @apply shadow-sm transition-all duration-150;
-  @apply min-w-[120px] max-w-[200px];
-  @apply relative;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e5e5;
+  background-color: #fff;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 120px;
+  max-width: 200px;
+  position: relative;
+}
+
+:global(.dark) .crouton-flow-node {
+  background-color: #171717;
+  border-color: #404040;
 }
 
 .crouton-flow-node--selected {
-  @apply ring-2;
+  outline: 2px solid color-mix(in srgb, var(--color-primary-500) 20%, transparent);
+  outline-offset: 0;
   border-color: var(--color-primary-500);
-  --tw-ring-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
 }
 
 .crouton-flow-node--dragging {
-  @apply shadow-lg scale-105 cursor-grabbing;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transform: scale(1.05);
+  cursor: grabbing;
 }
 
 .crouton-flow-node__actions {
-  @apply absolute -top-2 -right-2 flex gap-1;
-  @apply z-10;
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 10;
 }
 
 .crouton-flow-node__action {
-  @apply w-6 h-6 rounded-full flex items-center justify-center;
-  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600;
-  @apply shadow-sm cursor-pointer transition-all duration-150;
-  @apply hover:scale-110;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:global(.dark) .crouton-flow-node__action {
+  background-color: #262626;
+  border-color: #525252;
+}
+
+.crouton-flow-node__action:hover {
+  transform: scale(1.1);
 }
 
 .crouton-flow-node__action--edit {
-  @apply text-blue-600 dark:text-blue-400;
-  @apply hover:bg-blue-50 dark:hover:bg-blue-900/30;
+  color: #2563eb;
+}
+
+:global(.dark) .crouton-flow-node__action--edit {
+  color: #60a5fa;
+}
+
+.crouton-flow-node__action--edit:hover {
+  background-color: #eff6ff;
+}
+
+:global(.dark) .crouton-flow-node__action--edit:hover {
+  background-color: rgb(30 58 138 / 0.3);
 }
 
 .crouton-flow-node__action--delete {
-  @apply text-red-600 dark:text-red-400;
-  @apply hover:bg-red-50 dark:hover:bg-red-900/30;
+  color: #dc2626;
+}
+
+:global(.dark) .crouton-flow-node__action--delete {
+  color: #f87171;
+}
+
+.crouton-flow-node__action--delete:hover {
+  background-color: #fef2f2;
+}
+
+:global(.dark) .crouton-flow-node__action--delete:hover {
+  background-color: rgb(127 29 29 / 0.3);
 }
 
 .crouton-flow-node__content {
-  @apply flex flex-col gap-0.5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
 }
 
 .crouton-flow-node__label {
-  @apply text-sm font-medium text-neutral-900 dark:text-neutral-100;
-  @apply truncate;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: #171717;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global(.dark) .crouton-flow-node__label {
+  color: #f5f5f5;
 }
 
 .crouton-flow-node__subtitle {
-  @apply text-xs text-neutral-500 dark:text-neutral-400;
-  @apply capitalize;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #737373;
+  text-transform: capitalize;
+}
+
+:global(.dark) .crouton-flow-node__subtitle {
+  color: #a3a3a3;
 }
 
 .crouton-flow-handle {
-  @apply w-2 h-2 rounded-full;
-  @apply bg-neutral-400 dark:bg-neutral-500;
-  @apply border border-white dark:border-neutral-800;
-  @apply transition-colors;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: #a3a3a3;
+  border: 1px solid #fff;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:global(.dark) .crouton-flow-handle {
+  background-color: #737373;
+  border-color: #262626;
 }
 
 .crouton-flow-handle:hover {
