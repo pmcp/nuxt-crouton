@@ -13,10 +13,10 @@
 | Metric | Value |
 |--------|-------|
 | Total tasks | 25 |
-| Completed | 11 |
+| Completed | 25 |
 | In progress | 0 |
-| Remaining | 14 |
-| Phase | Tier 2/3 — Safe deletes & in-file cleanup |
+| Remaining | 0 |
+| Phase | ✅ COMPLETE |
 
 ---
 
@@ -34,7 +34,7 @@
 
 | # | Task | Status |
 |---|------|--------|
-| T2-1 | Delete 4 orphaned devtools Vue files (`CollectionCard.vue`, `CollectionDetailModal.vue`, `index.vue`, `useCroutonCollections.ts`) | [ ] |
+| T2-1 | Delete 4 orphaned devtools Vue files (`CollectionCard.vue`, `CollectionDetailModal.vue`, `index.vue`, `useCroutonCollections.ts`) | [x] ✅ |
 | T2-2 | Delete `crouton-core/app/utils/functional.ts` (all 13 exports dead — verify no external apps import it first) | [x] ✅ |
 
 ---
@@ -61,19 +61,19 @@ Safe because TypeScript will immediately catch any remaining importers.
 
 | # | Package | What to remove | Status |
 |---|---------|---------------|--------|
-| T4-1 | `crouton-admin` | Delete `useAdmin.ts` barrel (zero usage); remove `AdminActivityEntry` + 2 base-only types from `types/admin.ts`; fix 2 manifest mismatches | [ ] |
-| T4-2 | `crouton-ai` | Delete `translate-blocks.post.ts` endpoint (zero callers); remove unused `copy` emit from `Message.vue` | [ ] |
-| T4-3 | `crouton-auth` | Audit `security.ts` — 6 utilities unused in monorepo; decide: document as public API or remove; mark `updatePasskey()` with `// TODO: not yet supported by Better Auth` | [ ] |
-| T4-4 | `crouton-bookings` | Remove 6 unused exports: `getSlotLabels`, `getSlot` (useBookingSlots); `getVariablesByCategory`, `getCategories`, `getSampleValues`, `formatVariable` (useBookingEmailVariables) | [ ] |
-| T4-5 | `crouton-cli` | Remove 3 unused exports from `manifest-bridge.ts`: `getCanonicalFieldTypes`, `loadGeneratorContributions`, `matchesDetector` | [ ] |
-| T4-6 | `crouton-designer` | Remove unused types (`SchemaField`, `DesignerPhase`, `ChatMessage`); remove `parseExtensionCollectionName` + `getPackageSchemasAsJson`; remove exported `_collections`/`_fields` refs | [ ] |
-| T4-7 | `crouton-editor` | Remove 5 unused functions from `useEditorVariables.ts` (`groupedToMentionItems`, `groupByCategory`, `formatCategoryLabel`, `findUnusedVariables`, `highlightVariables`); remove 4 unused types from `editor.ts` | [ ] |
-| T4-8 | `crouton-flow` | Remove `FlowConnectionStatus.vue` + `FlowPresence.vue` (auto-registered, never used); remove 7 unused type exports | [ ] |
-| T4-9 | `crouton-i18n` | Remove `isLocaleSupported` + `interpolateTranslation` from `serverTranslations.ts` (fully dead); review 3 test-only composable functions (keep if needed for tests) | [ ] |
-| T4-10 | `crouton-pages` | Remove 10 unused type guards from `blocks.ts`; remove `getContentForRenderer` + `isPageBlockContent` from `content-detector.ts`; remove 5 unused `usePageTypes()` return values | [ ] |
-| T4-11 | `crouton-sales` | Remove 7 unused type exports from `app/types/index.ts` (`OrderStatus`, `EventStatus`, `PrintStatus`, `SalesEvent`, `SalesCategory`, `SalesOrderItem`, `SalesLocation`) | [ ] |
-| T4-12 | `crouton-themes` | Remove unused `themeItems` computed; remove `BaseVariant` export; remove or wire up the orphaned `crouton:themePreferenceItems` plugin state | [ ] |
-| T4-13 | `crouton-triage` | Delete 8 legacy Zod schemas from `validation.ts`; remove `retryWithFixedDelay`, `logSecurityChecks`, `sanitizeObject`, `sanitizeString`; remove/document `startCleanup` placeholder | [ ] |
+| T4-1 | `crouton-admin` | Delete `useAdmin.ts` barrel (zero usage); remove `AdminActivityEntry` + 2 base-only types from `types/admin.ts`; fix 2 manifest mismatches | [x] ✅ |
+| T4-2 | `crouton-ai` | Delete `translate-blocks.post.ts` endpoint (zero callers); remove unused `copy` emit from `Message.vue` | [x] ✅ (note: translate-blocks.post.ts is NOT dead — called by crouton-i18n/Input.vue; only copy emit removed) |
+| T4-3 | `crouton-auth` | Audit `security.ts` — 6 utilities unused in monorepo; decide: document as public API or remove; mark `updatePasskey()` with `// TODO: not yet supported by Better Auth` | [x] ✅ (documented as public API) |
+| T4-4 | `crouton-bookings` | Remove 6 unused exports: `getSlotLabels`, `getSlot` (useBookingSlots); `getVariablesByCategory`, `getCategories`, `getSampleValues`, `formatVariable` (useBookingEmailVariables) | [x] ✅ |
+| T4-5 | `crouton-cli` | Remove 3 unused exports from `manifest-bridge.ts`: `getCanonicalFieldTypes`, `loadGeneratorContributions`, `matchesDetector` | [x] ✅ (already removed in prior session commit `52171525`) |
+| T4-6 | `crouton-designer` | Remove unused types (`SchemaField`, `DesignerPhase`, `ChatMessage`); remove `parseExtensionCollectionName` + `getPackageSchemasAsJson`; remove exported `_collections`/`_fields` refs | [x] ✅ |
+| T4-7 | `crouton-editor` | Remove 5 unused functions from `useEditorVariables.ts` (`groupedToMentionItems`, `groupByCategory`, `formatCategoryLabel`, `findUnusedVariables`, `highlightVariables`); remove 4 unused types from `editor.ts` | [x] ✅ |
+| T4-8 | `crouton-flow` | Remove `FlowConnectionStatus.vue` + `FlowPresence.vue` (auto-registered, never used); remove 7 unused type exports | [x] ✅ (components already deleted in prior session; removed 8 unused type exports from flow.ts + yjs.ts) |
+| T4-9 | `crouton-i18n` | Remove `isLocaleSupported` + `interpolateTranslation` from `serverTranslations.ts` (fully dead); review 3 test-only composable functions (keep if needed for tests) | [x] ✅ (3 utilities removed; test-only functions kept) |
+| T4-10 | `crouton-pages` | Remove 10 unused type guards from `blocks.ts`; remove `getContentForRenderer` + `isPageBlockContent` from `content-detector.ts`; remove 5 unused `usePageTypes()` return values | [x] ✅ (17 exports removed total) |
+| T4-11 | `crouton-sales` | Remove 7 unused type exports from `app/types/index.ts` (`OrderStatus`, `EventStatus`, `PrintStatus`, `SalesEvent`, `SalesCategory`, `SalesOrderItem`, `SalesLocation`) | [x] ✅ (4 of 7 removed — OrderStatus, PrintStatus, SalesCategory kept: have real importers) |
+| T4-12 | `crouton-themes` | Remove unused `themeItems` computed; remove `BaseVariant` export; remove or wire up the orphaned `crouton:themePreferenceItems` plugin state | [x] ✅ (themeItems removed, BaseVariant made file-private; plugin state kept — consumed by crouton-auth) |
+| T4-13 | `crouton-triage` | Delete 8 legacy Zod schemas from `validation.ts`; remove `retryWithFixedDelay`, `logSecurityChecks`, `sanitizeObject`, `sanitizeString`; remove/document `startCleanup` placeholder | [x] ✅ (6 schemas removed; retryWithFixedDelay, logSecurityChecks, sanitizeObject, sanitizeString removed; startCleanup documented with TTL comment) |
 
 ---
 
@@ -103,6 +103,10 @@ These were flagged but should NOT be touched without further discussion:
 - Wave 2 complete (8 tasks) — T2-2, T3-1 through T3-7 all committed
 - T3-5 note: `zod` import in `cli-help.ts` was actually live (false positive in original report) — only `readJsonFile` removed
 - T3-6: also extracted shared `mapCollectionToMcpFormat` helper, eliminating ~50% duplication between list-collections and collections-registry
+- Wave 3 complete (14 tasks) — T2-1, T4-1 through T4-13 all committed
+- 3 false positives caught by agent verification: translate-blocks.post.ts (called by crouton-i18n), crouton:themePreferenceItems (consumed by crouton-auth), T4-5 already done
+- T4-11 partial: 3 of 7 types kept (OrderStatus, PrintStatus, SalesCategory — have real importers)
+- **ALL 25 TASKS COMPLETE** 🎉
 
 ---
 
