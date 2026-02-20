@@ -179,12 +179,6 @@ export function useCollectionMutation<K extends CollectionName>(
       // Pass mutation data to refresh referenced item caches
       await invalidateCache(undefined, true, data)
 
-      toast.add({
-        title: 'Created successfully',
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
-
       return result
     } catch (error: any) {
       const errorMessage = error.data?.message || error.data || 'Creation failed'
@@ -249,12 +243,6 @@ export function useCollectionMutation<K extends CollectionName>(
       // Pass mutation data to refresh referenced item caches
       await invalidateCache(id, true, updates)
 
-      toast.add({
-        title: 'Updated successfully',
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
-
       return result
     } catch (error: any) {
       const errorMessage = error.data?.message || error.data || 'Update failed'
@@ -301,12 +289,6 @@ export function useCollectionMutation<K extends CollectionName>(
 
       // Invalidate cache to trigger refetch (includes individual item caches)
       await invalidateCache(ids)
-
-      toast.add({
-        title: `Deleted ${ids.length} item(s)`,
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
     } catch (error: any) {
       const errorMessage = error.data?.message || error.data || 'Delete failed'
 

@@ -13,8 +13,11 @@
 </script>
 
 <template>
-  <UDashboardGroup>
-    <CroutonAdminSidebar context="team" />
-    <slot />
-  </UDashboardGroup>
+  <div class="flex flex-col h-dvh">
+    <UDashboardGroup class="flex-1 min-h-0">
+      <CroutonAdminSidebar context="team" />
+      <slot />
+    </UDashboardGroup>
+    <CroutonAdminStatusBar />
+  </div>
 </template>
