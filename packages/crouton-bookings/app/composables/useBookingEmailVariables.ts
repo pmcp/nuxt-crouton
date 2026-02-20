@@ -169,32 +169,6 @@ export function useBookingEmailVariables() {
   ]
 
   /**
-   * Get variables by category
-   */
-  function getVariablesByCategory(category: string): EditorVariable[] {
-    return variables.filter(v => v.category === category)
-  }
-
-  /**
-   * Get all category names
-   */
-  function getCategories(): string[] {
-    const categories = new Set(variables.map(v => v.category).filter(Boolean))
-    return Array.from(categories) as string[]
-  }
-
-  /**
-   * Get sample values for all variables (for preview)
-   */
-  function getSampleValues(): Record<string, string> {
-    const samples: Record<string, string> = {}
-    for (const variable of variables) {
-      samples[variable.name] = variable.sample || `[${variable.label}]`
-    }
-    return samples
-  }
-
-  /**
    * Get demo preview values with realistic data
    */
   function getPreviewValues(): Record<string, string> {
@@ -215,20 +189,9 @@ export function useBookingEmailVariables() {
     }
   }
 
-  /**
-   * Format a variable for insertion
-   */
-  function formatVariable(name: string): string {
-    return `{{${name}}}`
-  }
-
   return {
     variables,
     demoData: demoBookingData,
-    getVariablesByCategory,
-    getCategories,
-    getSampleValues,
     getPreviewValues,
-    formatVariable
   }
 }

@@ -44,25 +44,9 @@ export function useBookingSlots() {
     return slot?.label || slot?.value || slotId
   }
 
-  /**
-   * Get all slot labels for booked slot IDs
-   */
-  function getSlotLabels(bookedSlotIds: string[], slots: SlotItem[]): string[] {
-    return bookedSlotIds.map(id => getSlotLabel(id, slots))
-  }
-
-  /**
-   * Get slot by ID
-   */
-  function getSlot(slotId: string, slots: SlotItem[]): SlotItem | undefined {
-    return slots.find(s => s.id === slotId)
-  }
-
   return {
     parseSlotIds,
     parseLocationSlots,
     getSlotLabel,
-    getSlotLabels,
-    getSlot,
   }
 }
