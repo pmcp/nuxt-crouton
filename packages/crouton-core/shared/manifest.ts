@@ -55,6 +55,9 @@ export interface CroutonManifest {
 
   // AI hints (migrated from module-registry.json)
   aiHint?: string
+
+  // Detection patterns — what fields/types trigger this package during generation
+  detects?: ManifestDetects
 }
 
 export interface FieldTypeDefinition {
@@ -115,4 +118,99 @@ export function defineCroutonManifest(manifest: CroutonManifest): CroutonManifes
     throw new Error(`Manifest must have id and name`)
   }
   return manifest
+}
+
+// ---------------------------------------------------------------------------
+// Detection patterns — packages declare what fields trigger them
+// ---------------------------------------------------------------------------
+
+export interface ManifestDetects {
+  /** Field name patterns that indicate this package is needed (e.g. ['street', 'city', 'zip']) */
+  fieldNamePatterns?: string[]
+  /** Coordinate field name patterns (e.g. ['location', 'lat', 'lng']) */
+  coordinatePatterns?: string[]
+  /** Field types that indicate this package is needed (e.g. ['image', 'file']) */
+  fieldTypes?: string[]
+  /** refTarget patterns that indicate an asset reference (e.g. ['asset', 'media']) */
+  refTargetPatterns?: string[]
+  /** Component name patterns in field meta that indicate this package (e.g. ['EditorSimple']) */
+  componentPatterns?: string[]
+  /** collectionConfig flag key whose value `=== true` triggers this package (e.g. 'collab') */
+  collectionConfigFlag?: string
+}
+
+// ---------------------------------------------------------------------------
+// Detection result — computed at generation time from manifest detectors
+// ---------------------------------------------------------------------------
+
+export interface DetectedField {
+  name: string
+  type: string
+  meta?: Record<string, unknown>
+  refTarget?: string
+  refScope?: string
+  resolvedCollection?: string
+  [k: string]: unknown
+}
+
+export interface DetectionResult {
+  /** Address-related fields detected by crouton-maps fieldNamePatterns */
+  addressFields: DetectedField[]
+  /** Best coordinate field for storing geocoded results */
+  coordinateField: DetectedField | null
+  /** Whether address + coordinate fields were both found (map can be generated) */
+  hasAddress: boolean
+  /** Fields detected as asset references (image/file types or asset refTargets) */
+  assetFields: DetectedField[]
+  /** Fields using editor components (e.g. EditorSimple) */
+  editorFields: DetectedField[]
+  /** Whether collab presence is enabled for this collection */
+  collabEnabled: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Generator contribution API — packages own their generation logic
+// ---------------------------------------------------------------------------
+
+export interface FormContext {
+  fields: DetectedField[]
+  collectionConfig: Record<string, unknown> | null
+  dialect: 'sqlite' | 'pg'
+  detected: DetectionResult
+  layerCamelCase: string
+}
+
+export interface FormEnhancement {
+  /** Field names to exclude from normal form rendering (e.g. coordinate field hidden by map) */
+  excludeFieldNames?: string[]
+  /** Template string to inject after a named group (groupName → template) */
+  groupInjections?: Record<string, string>
+  /** Custom field template overrides (fieldName → full UFormField template string, '' = hide) */
+  fieldOverrides?: Record<string, string>
+  /** TypeScript code to append inside <script setup> before handleSubmit */
+  scriptCode?: string
+}
+
+export interface ListContext {
+  fields: DetectedField[]
+  collectionConfig: Record<string, unknown> | null
+  detected: DetectionResult
+}
+
+export interface ListEnhancement {
+  /** Custom cell templates (fieldName → full <template #fieldName-cell="{ row }"> string) */
+  cellTemplates?: Record<string, string>
+  /** Extra props string to add to <CroutonCollection> (e.g. ':show-collab-presence="collabConfig"') */
+  collectionProps?: string
+  /** TypeScript code to append inside <script setup> */
+  scriptCode?: string
+}
+
+export interface GeneratorContribution {
+  enhanceForm?(ctx: FormContext): FormEnhancement | null
+  enhanceList?(ctx: ListContext): ListEnhancement | null
+}
+
+export function defineGeneratorContribution(c: GeneratorContribution): GeneratorContribution {
+  return c
 }

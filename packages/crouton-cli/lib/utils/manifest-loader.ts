@@ -13,11 +13,15 @@ import { readPackageJSON } from 'pkg-types'
 import type {
   CroutonManifest,
   FieldTypeDefinition,
+  ManifestDetects,
+  DetectionResult,
+  DetectedField,
+  GeneratorContribution,
 } from '@fyit/crouton-core/shared/manifest'
 import { existsSync, readdirSync } from 'node:fs'
 
 // Re-export types for consumers
-export type { CroutonManifest, FieldTypeDefinition }
+export type { CroutonManifest, FieldTypeDefinition, ManifestDetects, DetectionResult, DetectedField, GeneratorContribution }
 
 /** AI-facing summary of what a package provides */
 export interface ModuleAIContext {
@@ -45,6 +49,8 @@ export interface ModuleRegistryEntry {
 // Cache to avoid repeated filesystem scanning
 let _manifestCache: CroutonManifest[] | null = null
 let _cacheRootDir: string | null = null
+// Parallel contribution cache — populated alongside manifest cache
+let _contributionCache: Map<string, GeneratorContribution> | null = null
 
 /**
  * Discover and load all crouton.manifest.ts files.
@@ -63,10 +69,25 @@ export async function discoverManifests(rootDir?: string): Promise<CroutonManife
 
   const manifests: CroutonManifest[] = []
   const seen = new Set<string>()
+  const contributionCache = new Map<string, GeneratorContribution>()
 
   const jiti = createJiti(cwd, {
     interopDefault: true,
   })
+
+  /** Load manifest + optional generatorContribution from a module */
+  function captureModule(mod: any, manifestPath: string): void {
+    const manifest: CroutonManifest = (mod as any).default || mod
+    if (manifest?.id && !seen.has(manifest.id)) {
+      seen.add(manifest.id)
+      manifests.push(manifest)
+      // Capture generatorContribution named export if present
+      const contribution = (mod as any).generatorContribution
+      if (contribution && typeof contribution === 'object') {
+        contributionCache.set(manifest.id, contribution as GeneratorContribution)
+      }
+    }
+  }
 
   // Strategy 1: Monorepo packages/ directory
   const packagesDir = await findPackagesDir(cwd)
@@ -80,11 +101,7 @@ export async function discoverManifests(rootDir?: string): Promise<CroutonManife
       if (existsSync(manifestPath)) {
         try {
           const mod = await jiti.import(manifestPath)
-          const manifest = (mod as any).default || mod
-          if (manifest?.id && !seen.has(manifest.id)) {
-            seen.add(manifest.id)
-            manifests.push(manifest)
-          }
+          captureModule(mod, manifestPath)
         } catch (err) {
           // Skip manifests that fail to load (e.g., missing schema JSON imports)
           if (process.env.DEBUG) {
@@ -107,11 +124,7 @@ export async function discoverManifests(rootDir?: string): Promise<CroutonManife
       if (existsSync(manifestPath)) {
         try {
           const mod = await jiti.import(manifestPath)
-          const manifest = (mod as any).default || mod
-          if (manifest?.id && !seen.has(manifest.id)) {
-            seen.add(manifest.id)
-            manifests.push(manifest)
-          }
+          captureModule(mod, manifestPath)
         } catch {
           // Skip silently — installed packages may not have all deps
         }
@@ -121,6 +134,7 @@ export async function discoverManifests(rootDir?: string): Promise<CroutonManife
 
   _manifestCache = manifests
   _cacheRootDir = cwd
+  _contributionCache = contributionCache
   return manifests
 }
 
@@ -130,6 +144,7 @@ export async function discoverManifests(rootDir?: string): Promise<CroutonManife
 export function clearManifestCache(): void {
   _manifestCache = null
   _cacheRootDir = null
+  _contributionCache = null
 }
 
 /**
@@ -294,6 +309,101 @@ export function getTypeMapping(
   }
 
   return mapping
+}
+
+// ---------------------------------------------------------------------------
+// Generator detection helpers (Phase 1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a map of packageId → ManifestDetects for all manifests that declare `detects`.
+ */
+export function getGeneratorDetectors(
+  manifests: CroutonManifest[],
+): Map<string, ManifestDetects> {
+  const detectors = new Map<string, ManifestDetects>()
+  for (const m of manifests) {
+    if (m.detects) {
+      detectors.set(m.id, m.detects)
+    }
+  }
+  return detectors
+}
+
+/**
+ * Test whether a given set of fields + collectionConfig satisfies a package's detector.
+ * Returns true if ANY of the detector's conditions match.
+ */
+export function matchesDetector(
+  fields: Array<{ name: string; type: string; meta?: Record<string, unknown>; refTarget?: string }>,
+  collectionConfig: Record<string, unknown> | null,
+  detector: ManifestDetects,
+): boolean {
+  if (detector.fieldNamePatterns?.length) {
+    if (fields.some(f =>
+      detector.fieldNamePatterns!.some(p => f.name.toLowerCase().includes(p.toLowerCase())),
+    )) {
+      return true
+    }
+  }
+  if (detector.coordinatePatterns?.length) {
+    if (fields.some(f =>
+      detector.coordinatePatterns!.some(p => f.name.toLowerCase().includes(p.toLowerCase())),
+    )) {
+      return true
+    }
+  }
+  if (detector.fieldTypes?.length) {
+    if (fields.some(f => detector.fieldTypes!.includes(f.type))) {
+      return true
+    }
+  }
+  if (detector.refTargetPatterns?.length) {
+    if (fields.some(f =>
+      f.refTarget && detector.refTargetPatterns!.some(p =>
+        f.refTarget!.toLowerCase().includes(p.toLowerCase()),
+      ),
+    )) {
+      return true
+    }
+  }
+  if (detector.componentPatterns?.length) {
+    if (fields.some(f =>
+      f.meta?.component && detector.componentPatterns!.some(p =>
+        (f.meta!.component as string).includes(p),
+      ),
+    )) {
+      return true
+    }
+  }
+  if (detector.collectionConfigFlag) {
+    if (collectionConfig?.[detector.collectionConfigFlag] === true) {
+      return true
+    }
+  }
+  return false
+}
+
+// ---------------------------------------------------------------------------
+// Generator contribution helpers (Phase 2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Get all generator contributions from the loaded manifests.
+ * Requires discoverManifests() to have been called first.
+ */
+export function getGeneratorContributions(
+  manifests: CroutonManifest[],
+): Array<{ packageId: string; contribution: GeneratorContribution }> {
+  if (!_contributionCache) return []
+  const result: Array<{ packageId: string; contribution: GeneratorContribution }> = []
+  for (const m of manifests) {
+    const contribution = _contributionCache.get(m.id)
+    if (contribution) {
+      result.push({ packageId: m.id, contribution })
+    }
+  }
+  return result
 }
 
 // ---------------------------------------------------------------------------

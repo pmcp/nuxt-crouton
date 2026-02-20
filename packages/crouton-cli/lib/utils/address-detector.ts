@@ -1,6 +1,9 @@
 /**
  * Utility to detect address-related fields in schema
  * Used by form generator to auto-add map/geocoding functionality
+ *
+ * In Phase 2 these patterns live in crouton-maps/crouton.manifest.ts.
+ * These defaults remain so callers without manifest access still work.
  */
 
 interface Field {
@@ -15,8 +18,8 @@ interface AddressDetectionResult {
   hasCoordinates: boolean
 }
 
-// Common address field name patterns
-const ADDRESS_FIELD_PATTERNS = [
+// Default address field name patterns (matches crouton-maps manifest detects.fieldNamePatterns)
+export const DEFAULT_ADDRESS_FIELD_PATTERNS = [
   'street',
   'address',
   'city',
@@ -32,8 +35,8 @@ const ADDRESS_FIELD_PATTERNS = [
   'region',
 ]
 
-// Coordinate field patterns
-const COORDINATE_FIELD_PATTERNS = [
+// Default coordinate field patterns (matches crouton-maps manifest detects.coordinatePatterns)
+export const DEFAULT_COORDINATE_FIELD_PATTERNS = [
   'latitude',
   'lat',
   'longitude',
@@ -50,25 +53,30 @@ const COORDINATE_FIELD_PATTERNS = [
 /**
  * Check if a field name matches address patterns
  */
-export function isAddressField(fieldName: string): boolean {
+export function isAddressField(fieldName: string, patterns = DEFAULT_ADDRESS_FIELD_PATTERNS): boolean {
   const normalized = fieldName.toLowerCase()
-  return ADDRESS_FIELD_PATTERNS.some(pattern => normalized.includes(pattern))
+  return patterns.some(pattern => normalized.includes(pattern))
 }
 
 /**
  * Check if a field name matches coordinate patterns
  */
-export function isCoordinateField(fieldName: string): boolean {
+export function isCoordinateField(fieldName: string, patterns = DEFAULT_COORDINATE_FIELD_PATTERNS): boolean {
   const normalized = fieldName.toLowerCase()
-  return COORDINATE_FIELD_PATTERNS.some(pattern => normalized.includes(pattern))
+  return patterns.some(pattern => normalized.includes(pattern))
 }
 
 /**
- * Detect if a collection has address fields that should trigger map/geocoding
+ * Detect if a collection has address fields that should trigger map/geocoding.
+ * Accepts optional pattern arrays — falls back to defaults when not provided.
  */
-export function detectAddressFields(fields: Field[]): AddressDetectionResult {
-  const addressFields = fields.filter(f => isAddressField(f.name))
-  const coordinateFields = fields.filter(f => isCoordinateField(f.name))
+export function detectAddressFields(
+  fields: Field[],
+  patterns = DEFAULT_ADDRESS_FIELD_PATTERNS,
+  coordinatePatterns = DEFAULT_COORDINATE_FIELD_PATTERNS,
+): AddressDetectionResult {
+  const addressFields = fields.filter(f => isAddressField(f.name, patterns))
+  const coordinateFields = fields.filter(f => isCoordinateField(f.name, coordinatePatterns))
 
   return {
     hasAddress: addressFields.length > 0,

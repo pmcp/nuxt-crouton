@@ -70,6 +70,25 @@ export async function clearManifestCache() {
   return loader.clearManifestCache()
 }
 
+export async function getGeneratorDetectors(manifests: unknown[]) {
+  const loader = await getLoader()
+  return loader.getGeneratorDetectors(manifests)
+}
+
+export async function matchesDetector(
+  fields: unknown[],
+  collectionConfig: unknown,
+  detector: unknown,
+) {
+  const loader = await getLoader()
+  return loader.matchesDetector(fields, collectionConfig, detector)
+}
+
+export async function getGeneratorContributions(manifests: unknown[]) {
+  const loader = await getLoader()
+  return loader.getGeneratorContributions(manifests)
+}
+
 // ── Convenience helpers (discover + compute in one call) ──────────
 
 export async function loadTypeMapping(rootDir?: string) {
@@ -88,4 +107,10 @@ export async function loadModuleRegistry(rootDir?: string) {
   const loader = await getLoader()
   const manifests = await loader.discoverManifests(rootDir)
   return loader.getModuleRegistry(manifests)
+}
+
+export async function loadGeneratorContributions(rootDir?: string) {
+  const loader = await getLoader()
+  const manifests = await loader.discoverManifests(rootDir)
+  return loader.getGeneratorContributions(manifests)
 }
