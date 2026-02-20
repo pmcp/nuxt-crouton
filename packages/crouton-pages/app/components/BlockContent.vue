@@ -8,6 +8,23 @@
 import type { PageBlockContent, PageBlock } from '../types/blocks'
 import { parseBlockContent } from '../utils/content-detector'
 
+/**
+ * Minimal XSS sanitizer — strips <script> tags and on* event handler attributes.
+ * SSR-safe: returns the original string unchanged when running server-side.
+ */
+function sanitizeHtml(html: string): string {
+  if (typeof window === 'undefined') return html
+  const div = document.createElement('div')
+  div.innerHTML = html
+  div.querySelectorAll('script').forEach(el => el.remove())
+  div.querySelectorAll('*').forEach(el => {
+    ;[...el.attributes].forEach(attr => {
+      if (attr.name.startsWith('on')) el.removeAttribute(attr.name)
+    })
+  })
+  return div.innerHTML
+}
+
 interface Props {
   /** Raw JSON content string or parsed PageBlockContent */
   content: string | PageBlockContent | null | undefined
@@ -91,7 +108,7 @@ function paragraphToHtml(block: PageBlock): string {
     return ''
   })
 
-  return textParts.join('')
+  return sanitizeHtml(textParts.join(''))
 }
 
 // Filter blocks to render (skip only truly empty structural blocks)

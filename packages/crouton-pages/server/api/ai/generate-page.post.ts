@@ -137,6 +137,8 @@ async function fetchPageContent(url: string): Promise<string | null> {
 }
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   const { brief, url, language } = await readBody<{
     brief: string
     url?: string

@@ -7,6 +7,7 @@
  *
  * Based on: https://github.com/nuxt-ui-templates/editor
  */
+import { useEventListener } from '@vueuse/core'
 import type { EditorToolbarItem } from '@nuxt/ui'
 import type { Editor } from '@tiptap/vue-3'
 
@@ -176,8 +177,10 @@ function handleEditorCreate(event: { editor: Editor }) {
   editorInstance.value = event.editor
 
   if (props.enableImageUpload) {
-    // Handle paste events for images
-    event.editor.view.dom.addEventListener('paste', async (e: ClipboardEvent) => {
+    const editorDom = event.editor.view.dom
+
+    // useEventListener auto-removes the handler on component unmount
+    useEventListener(editorDom, 'paste', async (e: ClipboardEvent) => {
       const items = e.clipboardData?.items
       if (!items) return
 
@@ -212,8 +215,8 @@ function handleEditorCreate(event: { editor: Editor }) {
       }
     })
 
-    // Handle drop events for images
-    event.editor.view.dom.addEventListener('drop', async (e: DragEvent) => {
+    // useEventListener auto-removes the handler on component unmount
+    useEventListener(editorDom, 'drop', async (e: DragEvent) => {
       const files = e.dataTransfer?.files
       if (!files?.length) return
 

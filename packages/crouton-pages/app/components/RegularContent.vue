@@ -6,6 +6,23 @@
  * Accepts either a page object or direct content string.
  */
 
+/**
+ * Minimal XSS sanitizer — strips <script> tags and on* event handler attributes.
+ * SSR-safe: returns the original string unchanged when running server-side.
+ */
+function sanitizeHtml(html: string): string {
+  if (typeof window === 'undefined') return html
+  const div = document.createElement('div')
+  div.innerHTML = html
+  div.querySelectorAll('script').forEach(el => el.remove())
+  div.querySelectorAll('*').forEach(el => {
+    ;[...el.attributes].forEach(attr => {
+      if (attr.name.startsWith('on')) el.removeAttribute(attr.name)
+    })
+  })
+  return div.innerHTML
+}
+
 interface PageRecord {
   id: string
   title: string
@@ -20,8 +37,11 @@ interface Props {
 
 const props = defineProps<Props>()
 
-/** Resolved content - props.content takes precedence over page.content */
-const resolvedContent = computed(() => props.content || props.page?.content)
+/** Resolved and sanitized content — props.content takes precedence over page.content */
+const resolvedContent = computed(() => {
+  const raw = props.content || props.page?.content
+  return raw ? sanitizeHtml(raw) : undefined
+})
 </script>
 
 <template>
