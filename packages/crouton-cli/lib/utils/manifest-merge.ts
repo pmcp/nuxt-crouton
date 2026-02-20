@@ -40,6 +40,7 @@ interface ManifestCollection {
   schemaPath?: string
   optional?: boolean
   condition?: string
+  hierarchy?: boolean | Record<string, unknown>
 }
 
 interface Manifest {
@@ -195,6 +196,7 @@ export async function mergeManifestCollections(config: CroutonConfig): Promise<M
       config.collections.push({
         name: configName,
         fieldsFile: absSchemaPath,
+        ...(col.hierarchy ? { hierarchy: col.hierarchy } : {})
       })
 
       // Add to target's collections list
