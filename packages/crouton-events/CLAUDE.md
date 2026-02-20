@@ -17,6 +17,10 @@ Automatic event tracking and audit trail for Nuxt Crouton collections. Hooks int
 | `app/components/CroutonActivityFilters.vue` | Filter controls (collection, operation, date) |
 | `app/components/CroutonEventDetail.vue` | Event detail modal |
 | `app/components/CroutonEventChangesTable.vue` | Before/after diff table |
+| `server/database/schema.ts` | Internal Drizzle schema for crouton_events table |
+| `server/database/migrations/` | SQL migrations bundled with the package |
+| `server/api/teams/[teamId]/crouton-collection-events/index.post.ts` | Write endpoint (called by tracker) |
+| `server/api/teams/[teamId]/crouton-events/index.get.ts` | Query endpoint (called by useCroutonEvents) |
 | `server/api/teams/[teamId]/crouton-events/export.get.ts` | Export API endpoint |
 | `events-schema.json` | Event collection schema |
 
@@ -31,7 +35,7 @@ User Action → nuxt-crouton mutation → crouton:mutation hook
                                             ↓
                                     Async Tracking (non-blocking)
                                             ↓
-                                    collectionEvents table
+                                    crouton_events table
 ```
 
 ## Configuration
@@ -91,20 +95,17 @@ interface CroutonEvent {
 ## Usage
 
 ```typescript
-// Query events
-const { data: events } = await useCollectionQuery('collectionEvents', {
-  teamId: currentTeam.id,
-  filters: { collectionName: 'users', operation: 'update' }
-})
-
-// Enriched with current user data
-const { data: enriched } = await useCroutonEvents({
-  enrichUserData: true
+// Query events (direct endpoint — no generated collection needed)
+const { data: enriched } = useCroutonEvents({
+  filters: { collectionName: 'users', operation: 'update' },
+  pagination: { page: 1, pageSize: 50 }
 })
 
 // Health monitoring
-const { data: health } = useCroutonEventsHealth()
-// health.total, health.failed, health.lastError
+const { health, failureRate, isHealthy } = useCroutonEventsHealth()
+// health.value.total, health.value.failed, health.value.lastError
+// failureRate — computed % of failures
+// isHealthy — true if failureRate < 10%
 ```
 
 ## Admin UI Components
@@ -135,11 +136,11 @@ Ready-to-use components for building an activity/audit interface:
 
 ```typescript
 // Use the export composable
-const { downloadCSV, downloadJSON, exporting } = useCroutonEventsExport()
+const { exportToCSV, exportToJSON, exporting } = useCroutonEventsExport()
 
 // Download with current filters
-await downloadCSV(filters)
-await downloadJSON(filters)
+await exportToCSV({ filters })
+await exportToJSON({ filters })
 ```
 
 ## Common Tasks
