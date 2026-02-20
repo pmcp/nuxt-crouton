@@ -252,20 +252,6 @@ export interface AdminStats {
   superAdminCount: number
 }
 
-/**
- * Activity log entry
- */
-export interface AdminActivityEntry {
-  id: string
-  type: 'user_created' | 'user_banned' | 'user_unbanned' | 'user_deleted' | 'team_created' | 'impersonation_started' | 'impersonation_ended'
-  timestamp: Date
-  actorId: string
-  actorName: string
-  targetId?: string
-  targetName?: string
-  details?: Record<string, unknown>
-}
-
 // ============================================================================
 // API Response Types
 // ============================================================================

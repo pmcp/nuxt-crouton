@@ -10,7 +10,7 @@ export default defineCroutonManifest({
   bundled: true,
   dependencies: ['@fyit/crouton-auth'],
   provides: {
-    composables: ['useAdminUsers', 'useAdminTeams'],
+    composables: ['useAdminUsers', 'useAdminTeams', 'useAdminStats', 'useImpersonation'],
     components: [
       { name: 'CroutonAdminDashboard', description: 'Super admin dashboard', props: [] },
     ],
