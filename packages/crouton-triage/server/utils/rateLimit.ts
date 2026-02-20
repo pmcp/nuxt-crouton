@@ -24,23 +24,8 @@ interface RateLimitEntry {
  */
 const rateLimitStore = new Map<string, RateLimitEntry>()
 
-/**
- * Cleanup interval (every 5 minutes)
- */
-const CLEANUP_INTERVAL_MS = 5 * 60 * 1000
-
-/**
- * Cleanup interval tracking
- * Note: Cloudflare Workers don't support setInterval in global scope
- * Cleanup will happen on-demand during rate limit checks instead
- */
-let cleanupInterval: NodeJS.Timeout | null = null
-
-function startCleanup() {
-  // Note: This function is intentionally left empty for Cloudflare Workers
-  // In traditional Node.js environments, you could use setInterval here
-  // For Workers, cleanup happens on-demand during checkRateLimit()
-}
+// NOTE: intentionally empty — cleanup is handled by Cloudflare Workers KV TTL
+export function startCleanup(): void {}
 
 /**
  * Perform on-demand cleanup of expired entries
