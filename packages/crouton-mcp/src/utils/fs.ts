@@ -2,7 +2,7 @@
  * Filesystem utilities for scanning collections and layers
  */
 
-import { readdir, stat, readFile } from 'node:fs/promises'
+import { readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export interface CollectionInfo {
@@ -156,14 +156,3 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-/**
- * Read a JSON file safely
- */
-export async function readJsonFile<T>(path: string): Promise<T | null> {
-  try {
-    const content = await readFile(path, 'utf-8')
-    return JSON.parse(content) as T
-  } catch {
-    return null
-  }
-}
