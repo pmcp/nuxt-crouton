@@ -3,7 +3,7 @@ import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ProjectsTask, NewProjectsTask } from '../../types'
-import * as contactsSchema from '../../../../people/collections/contacts/server/database/schema'
+import * as contactsSchema from '../../../../../people/collections/contacts/server/database/schema'
 import { user } from '~~/server/db/schema'
 
 export async function getAllProjectsTasks(teamId: string) {

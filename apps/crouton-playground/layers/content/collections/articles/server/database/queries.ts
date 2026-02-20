@@ -3,7 +3,7 @@ import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ContentArticle, NewContentArticle } from '../../types'
-import * as categoriesSchema from '../../../../shop/collections/categories/server/database/schema'
+import * as categoriesSchema from '../../../../../shop/collections/categories/server/database/schema'
 import { user } from '~~/server/db/schema'
 
 export async function getAllContentArticles(teamId: string) {

@@ -48,8 +48,8 @@ This only works for same-layer references. Cross-layer references need an extra 
 
 | File | Wrong | Fixed |
 |------|-------|-------|
-| `layers/content/collections/articles/server/database/queries.ts` | `../../../categories/server/database/schema` | `../../../../shop/collections/categories/server/database/schema` |
-| `layers/projects/collections/tasks/server/database/queries.ts` | `../../../contacts/server/database/schema` | `../../../../people/collections/contacts/server/database/schema` |
+| `layers/content/collections/articles/server/database/queries.ts` | `../../../categories/server/database/schema` | `../../../../../shop/collections/categories/server/database/schema` |
+| `layers/projects/collections/tasks/server/database/queries.ts` | `../../../contacts/server/database/schema` | `../../../../../people/collections/contacts/server/database/schema` |
 
 **Rule of thumb:**
 - Same layer: `../../../{collection}/server/database/schema` ✅
