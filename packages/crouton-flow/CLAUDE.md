@@ -56,14 +56,20 @@ Stores saved flow configurations per team:
 
 ### Setup (consuming app)
 
+NuxtHub auto-discovers the `flow_configs` table via the package's `server/db/schema.ts`
+(which re-exports `flowConfigs`). No manual schema import needed in the app's schema file.
+
 Run the DB migration:
 ```bash
-# Local SQLite
-npx nuxt db:generate
-# Or apply directly
-npx wrangler d1 execute <DB_NAME> \
-  --file=./node_modules/@fyit/crouton-flow/server/database/migrations/0002_flow_configs.sql
+# Generate migration (NuxtHub picks up flow_configs automatically)
+npx nuxt db generate
+# Apply locally
+npx wrangler d1 execute <DB_NAME> --local \
+  --file=server/db/migrations/sqlite/<generated_migration>.sql
 ```
+
+The `server/db/schema.ts` file in this package is what NuxtHub scans to include
+`flow_configs` in migrations. It re-exports from `server/database/schema.ts`.
 
 ## Dependencies
 

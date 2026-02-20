@@ -5,10 +5,15 @@
   "type": "module",
   "main": "./nuxt.config.ts",
   "exports": {
-    ".": "./nuxt.config.ts"
+    ".": "./nuxt.config.ts",
+    "./server/database/schema": {
+      "import": "./server/database/schema.ts",
+      "types": "./server/database/schema.ts"
+    }
   },
   "files": [
     "app",
+    "server",
     "nuxt.config.ts"
   ],
   "scripts": {
