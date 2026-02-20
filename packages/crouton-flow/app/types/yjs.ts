@@ -60,11 +60,3 @@ export interface YjsGhostNode {
  * Kept for backward compatibility
  */
 export type YjsAwarenessState = CollabAwarenessState
-
-/**
- * @deprecated Use CollabConnectionState with users array instead
- * Kept for backward compatibility
- */
-export interface FlowSyncState extends CollabConnectionState {
-  users: CollabAwarenessState[]
-}
