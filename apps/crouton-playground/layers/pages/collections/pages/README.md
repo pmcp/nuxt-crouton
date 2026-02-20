@@ -42,12 +42,20 @@ collections/pages/
 | Field | Type | Required |
 |-------|------|----------|
 | id | string (primary key) | Auto |
-| name | string | No |
-| label | string | No |
-| icon | string | No |
-| description | string | No |
-| hierarchy | string | No |
-| fields | string | No |
+| title | string | Yes |
+| slug | string | Yes |
+| pageType | string | Yes |
+| content | text | No |
+| config | json | No |
+| status | string | Yes |
+| visibility | string | Yes |
+| publishedAt | date | No |
+| showInNavigation | boolean | No |
+| layout | string | No |
+| seoTitle | string | No |
+| seoDescription | string | No |
+| ogImage | string | No |
+| robots | string | No |
 | createdAt | timestamp | Auto |
 | updatedAt | timestamp | Auto |
 | createdBy | string | Auto |

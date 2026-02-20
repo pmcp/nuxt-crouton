@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/pages-pages
   - Zod schema: usePagesPages() composable
-  - Fields: name, label, icon, description, hierarchy, fields
+  - Fields: title, slug, pageType, content, config, status, visibility, publishedAt, showInNavigation, layout, seoTitle, seoDescription, ogImage, robots
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -40,23 +40,36 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Name" name="name" class="not-last:pb-4">
-          <UInput v-model="state.name" class="w-full" size="xl" />
+        <UFormField label="Title" name="title" class="not-last:pb-4">
+          <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Label" name="label" class="not-last:pb-4">
-          <UInput v-model="state.label" class="w-full" size="xl" />
+        <UFormField label="Slug" name="slug" class="not-last:pb-4">
+          <UInput v-model="state.slug" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Icon" name="icon" class="not-last:pb-4">
-          <UInput v-model="state.icon" class="w-full" size="xl" />
+        <UFormField label="Content" name="content" class="not-last:pb-4">
+          <CroutonEditorSimple v-model="state.content" />
         </UFormField>
-        <UFormField label="Description" name="description" class="not-last:pb-4">
-          <UInput v-model="state.description" class="w-full" size="xl" />
+      </div>
+      </template>
+
+      <template #sidebar>
+      <div class="flex flex-col gap-4 p-1">
+      </div>
+      <div class="flex flex-col gap-4 p-1">
+        <UFormField label="Status" name="status" class="not-last:pb-4">
+          <UInput v-model="state.status" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Hierarchy" name="hierarchy" class="not-last:pb-4">
-          <UInput v-model="state.hierarchy" class="w-full" size="xl" />
+        <UFormField label="Visibility" name="visibility" class="not-last:pb-4">
+          <UInput v-model="state.visibility" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Fields" name="fields" class="not-last:pb-4">
-          <UInput v-model="state.fields" class="w-full" size="xl" />
+        <UFormField label="PublishedAt" name="publishedAt" class="not-last:pb-4">
+          <CroutonCalendar v-model:date="state.publishedAt" />
+        </UFormField>
+        <UFormField label="ShowInNavigation" name="showInNavigation" class="not-last:pb-4">
+          <UCheckbox v-model="state.showInNavigation" />
+        </UFormField>
+        <UFormField label="Layout" name="layout" class="not-last:pb-4">
+          <UInput v-model="state.layout" class="w-full" size="xl" />
         </UFormField>
       </div>
       </template>
@@ -96,14 +109,27 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
+// Convert date strings to Date objects for date fields during editing
+if (props.action === 'update' && props.activeItem?.id) {
+  if (initialValues.publishedAt) {
+    initialValues.publishedAt = new Date(initialValues.publishedAt)
+  }
+}
+
 const state = ref<PagesPageFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {
+    // Serialize Date objects to ISO strings for API submission
+    const serializedData = { ...state.value }
+    if (serializedData.publishedAt instanceof Date) {
+      serializedData.publishedAt = serializedData.publishedAt.toISOString()
+    }
+
     if (props.action === 'create') {
-      await create(state.value)
+      await create(serializedData)
     } else if (props.action === 'update' && state.value.id) {
-      await update(state.value.id, state.value)
+      await update(state.value.id, serializedData)
     } else if (props.action === 'delete') {
       await deleteItems(props.items)
     }

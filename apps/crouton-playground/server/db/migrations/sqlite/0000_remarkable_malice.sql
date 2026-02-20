@@ -180,18 +180,27 @@ CREATE TABLE `pages_pages` (
 	`teamId` text NOT NULL,
 	`owner` text NOT NULL,
 	`order` integer NOT NULL,
-	`name` text,
-	`label` text,
-	`icon` text,
-	`description` text,
-	`hierarchy` text,
-	`fields` text,
+	`title` text NOT NULL,
+	`slug` text NOT NULL,
+	`pageType` text NOT NULL,
+	`content` text,
+	`config` text,
+	`status` text NOT NULL,
+	`visibility` text NOT NULL,
+	`publishedAt` integer,
+	`showInNavigation` integer,
+	`layout` text,
+	`seoTitle` text,
+	`seoDescription` text,
+	`ogImage` text,
+	`robots` text,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	`createdBy` text NOT NULL,
 	`updatedBy` text NOT NULL
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `pages_pages_slug_unique` ON `pages_pages` (`slug`);--> statement-breakpoint
 CREATE TABLE `passkey` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text,

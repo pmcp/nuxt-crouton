@@ -1,4 +1,6 @@
-import { shopProductsConfig } from '../layers/shop/collections/products/app/composables/useShopProducts'
+import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
+
+import {shopProductsConfig} from '../layers/shop/collections/products/app/composables/useShopProducts';
 
 import {shopCategoriesConfig} from '../layers/shop/collections/categories/app/composables/useShopCategories';
 
@@ -20,10 +22,9 @@ import {bookingsSettingsConfig} from '../layers/bookings/collections/settings/ap
 
 import {pagesPagesConfig} from '../layers/pages/collections/pages/app/composables/usePagesPages';
 
-import {translationsUiConfig} from '@fyit/crouton-i18n/app/composables/useTranslationsUi';
-
 export default defineAppConfig({
   croutonCollections: {
+    translationsUi: translationsUiConfig,
     shopProducts: shopProductsConfig,
     shopCategories: shopCategoriesConfig,
     shopOrders: shopOrdersConfig,
@@ -34,7 +35,6 @@ export default defineAppConfig({
     bookingsBookings: bookingsBookingsConfig,
     bookingsLocations: bookingsLocationsConfig,
     bookingsSettings: bookingsSettingsConfig,
-    pagesPages: pagesPagesConfig,
-    translationsUi: translationsUiConfig
+    pagesPages: pagesPagesConfig
   }
 })

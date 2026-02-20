@@ -13,6 +13,7 @@
       "label": "Status",
       "default": "todo",
       "area": "sidebar",
+      "displayAs": "optionsSelect",
       "options": ["todo", "in-progress", "done", "blocked"]
     }
   },

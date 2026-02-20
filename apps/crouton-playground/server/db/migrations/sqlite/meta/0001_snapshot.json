@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "5afe1cc4-c6f6-4f1b-ad36-3262dabb9009",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "d2d963b3-84d7-4c83-b36f-75dc026c7325",
+  "prevId": "5afe1cc4-c6f6-4f1b-ad36-3262dabb9009",
   "tables": {
     "account": {
       "name": "account",
@@ -1211,6 +1211,27 @@
           "notNull": true,
           "autoincrement": false
         },
+        "parentId": {
+          "name": "parentId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "depth": {
+          "name": "depth",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "order": {
           "name": "order",
           "type": "integer",
@@ -1311,6 +1332,13 @@
         },
         "robots": {
           "name": "robots",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "translations": {
+          "name": "translations",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

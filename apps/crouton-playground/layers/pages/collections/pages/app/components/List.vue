@@ -9,7 +9,7 @@
   - Collection name: pagesPages
   - API endpoint: /api/teams/[id]/pages-pages
   - Columns composable: usePagesPages()
-  - Column fields: name, label, icon, description, hierarchy, fields
+  - Column fields: title, slug, pageType, content, config, status, visibility, publishedAt, showInNavigation, layout, seoTitle, seoDescription, ogImage, robots
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -35,6 +35,12 @@
         :collection="'pagesPages'"
         createButton
       />
+    </template>
+    <template #publishedAt-cell="{ row }">
+      <CroutonDate :date="row.original.publishedAt"></CroutonDate>
+    </template>
+    <template #showInNavigation-cell="{ row }">
+      <CroutonBoolean :value="row.original.showInNavigation" />
     </template>
   </CroutonCollection>
 </template>

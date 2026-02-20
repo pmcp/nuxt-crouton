@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/pages-pages
  * - Form component: PagesPagesForm
  * - List component: PagesPagesList
- * - Fields: name, label, icon, description, hierarchy, fields
+ * - Fields: title, slug, pageType, content, config, status, visibility, publishedAt, showInNavigation, layout, seoTitle, seoDescription, ogImage, robots
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -27,21 +27,37 @@ import { z } from 'zod'
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const pagesPageSchema = z.object({
-  name: z.string().optional(),
-  label: z.string().optional(),
-  icon: z.string().optional(),
-  description: z.string().optional(),
-  hierarchy: z.string().optional(),
-  fields: z.string().optional()
+  title: z.string().min(1, 'title is required'),
+  slug: z.string().min(1, 'slug is required'),
+  pageType: z.string().min(1, 'pageType is required'),
+  content: z.string().optional(),
+  config: z.record(z.any()).optional(),
+  status: z.string().min(1, 'status is required'),
+  visibility: z.string().min(1, 'visibility is required'),
+  publishedAt: z.date().optional(),
+  showInNavigation: z.boolean().optional(),
+  layout: z.string().optional(),
+  seoTitle: z.string().optional(),
+  seoDescription: z.string().optional(),
+  ogImage: z.string().optional(),
+  robots: z.string().optional()
 })
 
 export const pagesPagesColumns = [
-  { accessorKey: 'name', header: 'Name' },
-  { accessorKey: 'label', header: 'Label' },
-  { accessorKey: 'icon', header: 'Icon' },
-  { accessorKey: 'description', header: 'Description' },
-  { accessorKey: 'hierarchy', header: 'Hierarchy' },
-  { accessorKey: 'fields', header: 'Fields' }
+  { accessorKey: 'title', header: 'Title' },
+  { accessorKey: 'slug', header: 'Slug' },
+  { accessorKey: 'pageType', header: 'PageType' },
+  { accessorKey: 'content', header: 'Content' },
+  { accessorKey: 'config', header: 'Config' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'visibility', header: 'Visibility' },
+  { accessorKey: 'publishedAt', header: 'PublishedAt' },
+  { accessorKey: 'showInNavigation', header: 'ShowInNavigation' },
+  { accessorKey: 'layout', header: 'Layout' },
+  { accessorKey: 'seoTitle', header: 'SeoTitle' },
+  { accessorKey: 'seoDescription', header: 'SeoDescription' },
+  { accessorKey: 'ogImage', header: 'OgImage' },
+  { accessorKey: 'robots', header: 'Robots' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -51,50 +67,106 @@ const _pagesPagesConfig = {
   apiPath: 'pages-pages',
   componentName: 'PagesPagesForm',
   defaultValues: {
-    name: '',
-    label: '',
-    icon: '',
-    description: '',
-    hierarchy: '',
-    fields: ''
+    title: '',
+    slug: '',
+    pageType: '',
+    content: '',
+    config: {},
+    status: '',
+    visibility: '',
+    publishedAt: null,
+    showInNavigation: false,
+    layout: '',
+    seoTitle: '',
+    seoDescription: '',
+    ogImage: '',
+    robots: ''
   },
   columns: pagesPagesColumns,
   fields: [
       {
-          "name": "name",
+          "name": "title",
           "type": "string",
-          "label": "Name",
+          "label": "Title",
           "area": "main"
       },
       {
-          "name": "label",
+          "name": "slug",
           "type": "string",
-          "label": "Label",
+          "label": "URL Slug",
           "area": "main"
       },
       {
-          "name": "icon",
+          "name": "pageType",
           "type": "string",
-          "label": "Icon",
+          "label": "Page Type",
+          "area": "meta"
+      },
+      {
+          "name": "content",
+          "type": "text",
+          "label": "Content",
           "area": "main"
       },
       {
-          "name": "description",
-          "type": "string",
-          "label": "Description",
-          "area": "main"
+          "name": "config",
+          "type": "json",
+          "label": "Page Configuration",
+          "area": "meta"
       },
       {
-          "name": "hierarchy",
+          "name": "status",
           "type": "string",
-          "label": "Hierarchy",
-          "area": "main"
+          "label": "Status",
+          "area": "sidebar"
       },
       {
-          "name": "fields",
+          "name": "visibility",
           "type": "string",
-          "label": "Fields",
-          "area": "main"
+          "label": "Visibility",
+          "area": "sidebar"
+      },
+      {
+          "name": "publishedAt",
+          "type": "date",
+          "label": "Published At",
+          "area": "sidebar"
+      },
+      {
+          "name": "showInNavigation",
+          "type": "boolean",
+          "label": "Show in Navigation",
+          "area": "sidebar"
+      },
+      {
+          "name": "layout",
+          "type": "string",
+          "label": "Layout",
+          "area": "sidebar"
+      },
+      {
+          "name": "seoTitle",
+          "type": "string",
+          "label": "SEO Title",
+          "area": "meta"
+      },
+      {
+          "name": "seoDescription",
+          "type": "string",
+          "label": "SEO Description",
+          "area": "meta"
+      },
+      {
+          "name": "ogImage",
+          "type": "string",
+          "label": "Social Image",
+          "area": "meta"
+      },
+      {
+          "name": "robots",
+          "type": "string",
+          "label": "Search Engine Indexing",
+          "area": "meta"
       }
   ],
 }
