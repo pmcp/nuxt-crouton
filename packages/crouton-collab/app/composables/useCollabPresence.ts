@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, watch, type Ref, type ComputedRef } from 'vue'
+import { useTimeoutFn } from '@vueuse/core'
 import type { UseCollabConnectionReturn } from './useCollabConnection'
 import { generateUserColor } from './useCollabConnection'
 import type { CollabUser, CollabAwarenessState } from '../types/collab'
@@ -222,15 +223,15 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
     }
   })
 
+  const { start: sendAfterDelay } = useTimeoutFn(sendCurrentState, 100, { immediate: false })
+
   // Watch for connection state changes - send awareness when connected
   watch(
     () => connection.connected.value,
     (connected) => {
       if (connected && user.value) {
         // Small delay to ensure WebSocket is ready
-        setTimeout(() => {
-          sendCurrentState()
-        }, 100)
+        sendAfterDelay()
       }
     },
     { immediate: false }

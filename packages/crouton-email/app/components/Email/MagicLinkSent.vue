@@ -15,6 +15,7 @@
  * ```
  */
 import { ref } from 'vue'
+import { useTimeoutFn } from '@vueuse/core'
 
 interface Props {
   /** Email address where magic link was sent */
@@ -42,15 +43,13 @@ const emit = defineEmits<{
 
 // Local state
 const isResending = ref(false)
+const { start: resetResending } = useTimeoutFn(() => { isResending.value = false }, 1000, { immediate: false })
 
 // Handle resend
 async function handleResend() {
   isResending.value = true
   emit('resend')
-  // Reset resending state after a short delay
-  setTimeout(() => {
-    isResending.value = false
-  }, 1000)
+  resetResending()
 }
 
 // Handle change email

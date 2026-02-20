@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useClipboard } from '@vueuse/core'
+import { useClipboard, useTimeoutFn } from '@vueuse/core'
 import type { AIMessage } from '../types'
 
 const props = defineProps<{
@@ -12,15 +12,14 @@ const isUser = computed(() => props.message.role === 'user')
 const isSystem = computed(() => props.message.role === 'system')
 
 // Copy functionality
-const copied = ref(false)
 const { copy } = useClipboard()
+const copied = ref(false)
+const { start: resetCopied } = useTimeoutFn(() => { copied.value = false }, 2000, { immediate: false })
 
 async function handleCopy() {
   await copy(props.message.content)
   copied.value = true
-  setTimeout(() => {
-    copied.value = false
-  }, 2000)
+  resetCopied()
 }
 
 // Simple markdown-like rendering for code blocks

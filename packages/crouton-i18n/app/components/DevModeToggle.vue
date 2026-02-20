@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
+import { useEventListener, useTimeoutFn } from '@vueuse/core'
 const isDev = import.meta.dev
 const enabled = useState('devMode.enabled', () => false)
 const showModal = ref(false)
@@ -197,7 +197,7 @@ const saveTranslation = async () => {
 
     // Refresh and re-scan
     await refreshNuxtData()
-    setTimeout(scanForMissingTranslations, 100)
+    scanAfterRefresh()
     showModal.value = false
   } catch (error) {
     console.error('Failed to save translation:', error)
@@ -209,6 +209,8 @@ const saveTranslation = async () => {
   }
 }
 
+
+const { start: scanAfterRefresh } = useTimeoutFn(scanForMissingTranslations, 100, { immediate: false })
 
 useEventListener(document, "click", handleClick, { capture: true })
 // Lifecycle

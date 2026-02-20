@@ -148,6 +148,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useTimeoutFn } from '@vueuse/core'
 
 interface Props {
   // v-model bindings
@@ -221,6 +222,9 @@ const close = () => {
   isOpen.value = false
 }
 
+// Delayed close for closeOnExpand animation
+const { start: startDelayedClose } = useTimeoutFn(close, 300, { immediate: false })
+
 // Toggle expand/collapse
 const toggleExpand = () => {
   const newExpandedState = !props.expanded
@@ -232,7 +236,7 @@ const toggleExpand = () => {
     // Optionally close on expand for immersive experience
     if (props.closeOnExpand) {
       // Small delay to show animation
-      setTimeout(() => close(), 300)
+      startDelayedClose()
     }
   } else {
     emit('collapse')

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, nextTick, ref, resolveComponent, watch, markRaw } from 'vue'
-import { useThrottleFn } from '@vueuse/core'
+import { useThrottleFn, useTimeoutFn } from '@vueuse/core'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -312,10 +312,7 @@ watch(
           syncState.clearGhostNode()
         }
         // Clear the timeout if it's still pending
-        if (ghostCleanupTimeout) {
-          clearTimeout(ghostCleanupTimeout)
-          ghostCleanupTimeout = null
-        }
+        stopGhostCleanup()
       }
     }
   }
@@ -591,8 +588,13 @@ const isDragOver = ref(false)
 // Local ghost node state (what this user is dragging)
 const localGhostNode = ref<Node | null>(null)
 
-// Timeout ID for delayed ghost cleanup (used when autoCreateOnDrop is false)
-let ghostCleanupTimeout: ReturnType<typeof setTimeout> | null = null
+// Delayed ghost cleanup (auto-cancels on unmount via useTimeoutFn)
+const { start: startGhostCleanup, stop: stopGhostCleanup } = useTimeoutFn(() => {
+  localGhostNode.value = null
+  if (props.sync && syncState) {
+    syncState.clearGhostNode()
+  }
+}, 1000, { immediate: false })
 
 // Throttled ghost node broadcast (sync every 50ms during dragover)
 const broadcastGhostNode = useThrottleFn((position: { x: number; y: number }) => {
@@ -704,10 +706,7 @@ function handleDrop(event: DragEvent) {
   isDragOver.value = false
 
   // Clear any pending ghost cleanup
-  if (ghostCleanupTimeout) {
-    clearTimeout(ghostCleanupTimeout)
-    ghostCleanupTimeout = null
-  }
+  stopGhostCleanup()
 
   if (!props.allowDrop) {
     // Not allowed - clear ghost immediately
@@ -775,13 +774,7 @@ function handleDrop(event: DragEvent) {
 
     // Clear ghost after a delay to allow real node to appear
     // This prevents visual "jump" when ghost disappears before real node appears
-    ghostCleanupTimeout = setTimeout(() => {
-      localGhostNode.value = null
-      if (props.sync && syncState) {
-        syncState.clearGhostNode()
-      }
-      ghostCleanupTimeout = null
-    }, 1000) // 1 second should be enough for most async operations
+    startGhostCleanup()
   }
 
   // Always emit the event for custom handling

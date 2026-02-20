@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ImportField, ImportColumnMapping, ImportRowValidation, ImportResult } from '../composables/useCollectionImport'
+import { useTimeoutFn } from '@vueuse/core'
 
 interface Props {
   collection: string
@@ -115,18 +116,20 @@ async function startImport() {
   }
 }
 
+const { start: startResetState } = useTimeoutFn(() => {
+  step.value = 'mapping'
+  rows.value = []
+  csvColumns.value = []
+  mappings.value = []
+  validationResults.value = []
+  importResult.value = null
+}, 300, { immediate: false })
+
 function close() {
   isOpen.value = false
   emit('close')
   // Reset state after animation
-  setTimeout(() => {
-    step.value = 'mapping'
-    rows.value = []
-    csvColumns.value = []
-    mappings.value = []
-    validationResults.value = []
-    importResult.value = null
-  }, 300)
+  startResetState()
 }
 </script>
 
