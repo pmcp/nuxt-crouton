@@ -15,6 +15,7 @@
 import type { H3Event } from 'h3'
 import { defineEventHandler, readBody, createError } from 'h3'
 import { eq } from 'drizzle-orm'
+import { useNitroApp } from 'nitropack/runtime'
 import { user, session, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
 import type { BanPayload, AdminUser } from '../../../../types/admin'
@@ -103,6 +104,15 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
     .limit(1)
 
   const updatedUser = updatedUsers[0]
+
+  try {
+    await useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'admin:user:banned',
+      source: 'crouton-admin',
+      userId: adminUser.id,
+      metadata: { targetUserId: body.userId, reason: body.reason, duration: body.duration ?? null }
+    })
+  } catch { /* non-blocking */ }
 
   return {
     id: updatedUser.id,

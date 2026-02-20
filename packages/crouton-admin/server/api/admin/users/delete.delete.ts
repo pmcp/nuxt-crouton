@@ -13,6 +13,7 @@
 import type { H3Event } from 'h3'
 import { defineEventHandler, readBody, createError } from 'h3'
 import { eq } from 'drizzle-orm'
+import { useNitroApp } from 'nitropack/runtime'
 import { user, session, account, member, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
 
@@ -96,6 +97,15 @@ export default defineEventHandler(async (event: H3Event): Promise<DeleteResponse
   await db
     .delete(user)
     .where(eq(user.id, body.userId))
+
+  try {
+    await useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'admin:user:deleted',
+      source: 'crouton-admin',
+      userId: adminUser.id,
+      metadata: { targetUserId: body.userId }
+    })
+  } catch { /* non-blocking */ }
 
   return {
     success: true,

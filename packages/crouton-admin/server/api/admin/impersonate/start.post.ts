@@ -18,6 +18,7 @@
 import type { H3Event } from 'h3'
 import { createError, readBody, defineEventHandler } from 'h3'
 import { eq } from 'drizzle-orm'
+import { useNitroApp } from 'nitropack/runtime'
 import { user, session, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
 import type { StartImpersonationPayload, ImpersonationState } from '../../../../types/admin'
@@ -123,6 +124,15 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
       updatedAt: new Date()
     })
     .where(eq(session.id, currentSession.session.id))
+
+  try {
+    await useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'admin:impersonate:start',
+      source: 'crouton-admin',
+      userId: adminUser.id,
+      metadata: { targetUserId: targetUser.id }
+    })
+  } catch { /* non-blocking */ }
 
   return {
     isImpersonating: true,

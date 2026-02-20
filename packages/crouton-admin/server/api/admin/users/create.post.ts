@@ -16,13 +16,14 @@
 import type { H3Event } from 'h3'
 import { defineEventHandler, readBody, createError } from 'h3'
 import { eq } from 'drizzle-orm'
+import { useNitroApp } from 'nitropack/runtime'
 import { user, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
 import type { CreateUserPayload, AdminUser } from '../../../../types/admin'
 
 export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => {
   // Verify super admin access
-  await requireSuperAdmin(event)
+  const { user: adminUser } = await requireSuperAdmin(event)
 
   const db = useAdminDb()
 
@@ -99,6 +100,15 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
     .limit(1)
 
   const createdUser = createdUsers[0]
+
+  try {
+    await useNitroApp().hooks.callHook('crouton:operation', {
+      type: 'admin:user:created',
+      source: 'crouton-admin',
+      userId: adminUser.id,
+      metadata: { targetUserId: createdUser.id, email: createdUser.email }
+    })
+  } catch { /* non-blocking */ }
 
   return {
     id: createdUser.id,
