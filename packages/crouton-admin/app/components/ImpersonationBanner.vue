@@ -14,13 +14,14 @@ const {
 } = useImpersonation()
 
 const toast = useToast()
+const { t } = useT()
 
 async function handleStop() {
   try {
     await stopImpersonation()
   } catch (e) {
     toast.add({
-      title: 'Failed to stop impersonation',
+      title: t('admin.impersonation.stopFailed'),
       description: e instanceof Error ? e.message : 'Unknown error',
       color: 'error'
     })
@@ -46,7 +47,7 @@ async function handleStop() {
         class="size-5"
       />
       <span class="text-sm font-medium">
-        Viewing as
+        {{ t('admin.impersonation.viewingAs') }}
         <strong>{{ impersonatedUser?.name }}</strong>
         ({{ impersonatedUser?.email }})
       </span>
@@ -58,7 +59,7 @@ async function handleStop() {
         class="ml-2 bg-amber-900 text-white hover:bg-amber-800"
         @click="handleStop"
       >
-        Stop Impersonating
+        {{ t('admin.impersonation.stop') }}
       </UButton>
     </div>
   </Transition>

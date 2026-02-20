@@ -1,11 +1,28 @@
 {
   "teams": {
     "generalSettings": "General",
-    "themeSettings": "Theme"
+    "themeSettings": "Theme",
+    "members": "Members",
+    "settings": "Settings",
+    "invitations": "Invitations",
+    "manageMembersDescription": "Manage team members and their roles",
+    "manageInvitationsDescription": "Manage pending invitations",
+    "teamSettings": "Team Settings",
+    "teamSettingsDescription": "Configure your team preferences",
+    "teamAdmin": "Team Admin",
+    "teamAdminDescription": "Administrative settings for this team",
+    "lookAndFeel": "Look & Feel",
+    "adminAccessRequired": "Admin access required"
   },
   "navigation": {
     "backToTeam": "Back to Team",
-    "viewSite": "View Site"
+    "viewSite": "View Site",
+    "team": "Team"
+  },
+  "common": {
+    "accessRestricted": "Access restricted",
+    "saved": "Saved",
+    "saveChanges": "Save changes"
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -15,7 +32,16 @@
     "superAdmin": "Super Admin",
     "teamAdmin": "Team Admin",
     "manageTeam": "Manage Team",
-    "systemSettings": "System Settings"
+    "systemSettings": "System Settings",
+    "impersonation": {
+      "viewingAs": "Viewing as",
+      "stop": "Stop Impersonating",
+      "stopFailed": "Failed to stop impersonation"
+    },
+    "superAdminDashboard": {
+      "title": "Super Admin Dashboard",
+      "description": "Manage users, teams, and monitor system activity"
+    }
   },
   "superAdmin": {
     "title": "Super Admin",

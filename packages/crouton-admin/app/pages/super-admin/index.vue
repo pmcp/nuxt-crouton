@@ -9,8 +9,10 @@ definePageMeta({
   middleware: 'super-admin'
 })
 
+const { t } = useT()
+
 useSeoMeta({
-  title: 'Super Admin Dashboard'
+  title: t('admin.superAdminDashboard.title')
 })
 </script>
 
@@ -27,10 +29,10 @@ useSeoMeta({
         </div>
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            Super Admin Dashboard
+            {{ t('admin.superAdminDashboard.title') }}
           </h1>
           <p class="text-sm text-gray-500 dark:text-gray-400">
-            Manage users, teams, and monitor system activity
+            {{ t('admin.superAdminDashboard.description') }}
           </p>
         </div>
       </div>
