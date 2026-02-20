@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, getCurrentInstance, nextTick, ref, resolveComponent, watch, markRaw } from 'vue'
+import { computed, nextTick, ref, resolveComponent, watch, markRaw } from 'vue'
 import { useThrottleFn, useTimeoutFn } from '@vueuse/core'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -781,11 +781,10 @@ function handleDrop(event: DragEvent) {
   emit('nodeDrop', dragData.item, flowPosition, dragData.collection)
 }
 
-// Try to resolve custom node component for this collection
+// Try to resolve custom node component for this collection.
+// resolveComponent returns a string (the component name) when not found in dev,
+// or throws in production. We check the return type to detect presence.
 const customNodeComponent = computed(() => {
-  const instance = getCurrentInstance()
-  if (!instance) return null
-
   // Convert collection name to PascalCase
   const pascalName = props.collection
     .split(/[-_]/)
@@ -794,18 +793,13 @@ const customNodeComponent = computed(() => {
 
   const componentName = `${pascalName}Node`
 
-  // Check if component exists in global registry
-  const appComponents = instance.appContext.components
+  // Try the standard variant first
+  const resolved = resolveComponent(componentName)
+  if (typeof resolved !== 'string') return resolved
 
-  if (appComponents[componentName]) {
-    return resolveComponent(componentName)
-  }
-
-  // Check lazy variant
-  const lazyName = `Lazy${componentName}`
-  if (appComponents[lazyName]) {
-    return resolveComponent(lazyName)
-  }
+  // Try lazy variant
+  const lazyResolved = resolveComponent(`Lazy${componentName}`)
+  if (typeof lazyResolved !== 'string') return lazyResolved
 
   // Use default CroutonFlowNode
   return null

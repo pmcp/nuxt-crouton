@@ -14,7 +14,6 @@
  * It is rendered via dynamic <component :is> inside BlockContent.vue
  * which has no <Suspense> boundary.
  */
-import { resolveComponent } from 'vue'
 import type { ChartBlockAttrs } from '../../../types/blocks'
 
 interface ChartPresetItem {
@@ -37,9 +36,9 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Graceful degradation: resolveComponent returns a string if not found
-const CroutonChartsWidget = resolveComponent('CroutonChartsWidget')
-const chartAvailable = typeof CroutonChartsWidget !== 'string'
+// Detect if crouton-charts is installed via the croutonApps registry
+const { hasApp } = useCroutonApps()
+const chartAvailable = hasApp('charts')
 
 // Read chart presets from shared state (set by useCroutonChartRegistry in crouton-charts)
 const chartPresets = useState<ChartPresetItem[]>('crouton-chart-presets', () => [])
@@ -121,9 +120,8 @@ const hasSource = computed(() => {
       description="Edit this block to select a collection."
     />
 
-    <!-- Render chart widget -->
-    <component
-      :is="CroutonChartsWidget"
+    <!-- Render chart widget (CroutonChartsWidget is globally registered by crouton-charts) -->
+    <CroutonChartsWidget
       v-else-if="hasSource"
       v-bind="effectiveProps"
     />

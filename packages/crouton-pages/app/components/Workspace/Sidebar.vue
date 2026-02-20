@@ -11,7 +11,8 @@
  *   @create="handleCreate"
  * />
  */
-import { type Component, resolveComponent } from 'vue'
+import { type Component } from 'vue'
+import CroutonPagesCardDirect from '../Card.vue'
 
 interface Props {
   /** Currently selected page ID */
@@ -32,8 +33,8 @@ const { t } = useT()
 const { locale } = useI18n()
 const { getSlugForLocale } = useLocalizedSlug()
 
-// Resolve card component for tree rendering
-const CroutonPagesCard = resolveComponent('CroutonPagesCard') as Component
+// Card component for tree rendering (always available — same package)
+const CroutonPagesCard = CroutonPagesCardDirect as Component
 
 // Search state
 const searchQuery = ref('')

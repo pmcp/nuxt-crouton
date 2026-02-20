@@ -5,8 +5,6 @@
  * Follows LinksEditor.vue pattern with modelValue + update:modelValue.
  * Emits update:alt when an asset with alt text is picked from the library.
  */
-import { resolveComponent } from 'vue'
-
 interface Props {
   modelValue: string
 }
@@ -18,9 +16,9 @@ const emit = defineEmits<{
   'update:alt': [value: string]
 }>()
 
-// Detect if crouton-assets Picker is available (optional dependency)
-const AssetsPicker = resolveComponent('CroutonAssetsPicker')
-const hasAssetsPicker = typeof AssetsPicker !== 'string'
+// Detect if crouton-assets is installed via the croutonApps registry
+const { hasApp } = useCroutonApps()
+const hasAssetsPicker = hasApp('assets')
 
 type Mode = 'preview' | 'url' | 'upload' | 'browse'
 const mode = ref<Mode>(hasAssetsPicker && !props.modelValue ? 'browse' : 'preview')
@@ -148,8 +146,7 @@ function handleAssetSelected(asset: Record<string, any>) {
     <!-- Browse Library Mode -->
     <div v-if="mode === 'browse' && hasAssetsPicker" class="space-y-2">
       <Suspense>
-        <component
-          :is="AssetsPicker"
+        <CroutonAssetsPicker
           @select="handleAssetSelected"
         />
         <template #fallback>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { resolveComponent } from 'vue'
+import CroutonAssetsCardComponent from './Card.vue'
 
 const props = defineProps<{
   collection?: string
@@ -12,7 +12,7 @@ const collectionName = props.collection || (getConfig('assets') ? 'assets' : 'as
 
 const { items } = await useCollectionQuery(collectionName)
 
-const assetCardComponent = resolveComponent('CroutonAssetsCard')
+const assetCardComponent = CroutonAssetsCardComponent
 </script>
 
 <template>
