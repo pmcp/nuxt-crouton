@@ -5,6 +5,7 @@
  */
 
 import { lt, sql } from 'drizzle-orm'
+import { croutonEvents } from '../database/schema'
 
 interface CleanupOptions {
   retentionDays?: number
@@ -40,13 +41,10 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
   console.log(`  Dry run: ${dryRun}`)
 
   try {
-    // Import the events schema
-    const { croutonEventsCroutonEvents } = await import('@@/server/database/schema')
-
     // Count total events before cleanup
     const totalBefore = await db
       .select({ count: sql<number>`count(*)` })
-      .from(croutonEventsCroutonEvents)
+      .from(croutonEvents)
       .then(rows => rows[0]?.count || 0)
 
     console.log(`  Total events before: ${totalBefore}`)
@@ -54,8 +52,8 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
     // Count events to be deleted by date
     const toDeleteByDate = await db
       .select({ count: sql<number>`count(*)` })
-      .from(croutonEventsCroutonEvents)
-      .where(lt(croutonEventsCroutonEvents.timestamp, cutoffDate))
+      .from(croutonEvents)
+      .where(lt(croutonEvents.timestamp, cutoffDate))
       .then(rows => rows[0]?.count || 0)
 
     console.log(`  Events older than ${retentionDays} days: ${toDeleteByDate}`)
@@ -64,8 +62,8 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
     let deletedByDate = 0
     if (!dryRun && toDeleteByDate > 0) {
       const _result = await db
-        .delete(croutonEventsCroutonEvents)
-        .where(lt(croutonEventsCroutonEvents.timestamp, cutoffDate))
+        .delete(croutonEvents)
+        .where(lt(croutonEvents.timestamp, cutoffDate))
 
       deletedByDate = toDeleteByDate // Drizzle doesn't return affected rows directly
       console.log(`  ✓ Deleted ${deletedByDate} events by date`)
@@ -83,9 +81,9 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
         // Delete oldest events until we're under maxEvents
         // Get IDs of oldest events to delete
         const oldestEvents = await db
-          .select({ id: croutonEventsCroutonEvents.id })
-          .from(croutonEventsCroutonEvents)
-          .orderBy(croutonEventsCroutonEvents.timestamp)
+          .select({ id: croutonEvents.id })
+          .from(croutonEvents)
+          .orderBy(croutonEvents.timestamp)
           .limit(excessCount)
 
         if (oldestEvents.length > 0) {
@@ -96,8 +94,8 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
             const ids = batch.map(e => e.id)
 
             await db
-              .delete(croutonEventsCroutonEvents)
-              .where(sql`${croutonEventsCroutonEvents.id} IN ${ids}`)
+              .delete(croutonEvents)
+              .where(sql`${croutonEvents.id} IN ${ids}`)
           }
 
           deletedByCount = oldestEvents.length
@@ -111,9 +109,9 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
 
     // Get oldest remaining event
     const oldestRemaining = await db
-      .select({ timestamp: croutonEventsCroutonEvents.timestamp })
-      .from(croutonEventsCroutonEvents)
-      .orderBy(croutonEventsCroutonEvents.timestamp)
+      .select({ timestamp: croutonEvents.timestamp })
+      .from(croutonEvents)
+      .orderBy(croutonEvents.timestamp)
       .limit(1)
       .then(rows => rows[0]?.timestamp || null)
 

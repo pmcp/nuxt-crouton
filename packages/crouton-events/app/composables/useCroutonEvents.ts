@@ -79,10 +79,9 @@ export function useCroutonEvents(options: UseCroutonEventsOptions = {}) {
     queryParams.enrichUserData = true
   }
 
-  // Use standard collection query for basic fetching
-  const { data, pending, error, refresh } = useCollectionQuery<EnrichedEvent>(
-    'croutonEvents',
-    queryParams
+  const { data, pending, error, refresh } = useFetch<EnrichedEvent[]>(
+    `/api/teams/${teamId}/crouton-events`,
+    { query: queryParams }
   )
 
   // If enrichUserData is requested, we need a custom endpoint
