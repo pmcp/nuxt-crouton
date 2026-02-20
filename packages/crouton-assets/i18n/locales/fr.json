@@ -3,6 +3,18 @@
     "title": "Médias",
     "admin": {
       "media": "Médiathèque"
+    },
+    "uploader": {
+      "cropImage": "Crop Image",
+      "skipCrop": "Skip crop",
+      "altText": "Alt Text",
+      "altTextPlaceholder": "Describe the image for accessibility",
+      "generateAltText": "Generate alt text with AI",
+      "filename": "Filename:",
+      "size": "Size:",
+      "type": "Type:",
+      "upload": "Upload Asset",
+      "uploading": "Uploading..."
     }
   }
 }

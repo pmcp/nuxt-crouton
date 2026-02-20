@@ -12,13 +12,13 @@
     <div v-if="showCropStep && pendingFile">
       <div class="flex items-center justify-between mb-3">
         <h4 class="text-sm font-medium">
-          Crop Image
+          {{ t('assets.uploader.cropImage') }}
         </h4>
         <UButton
           variant="ghost"
           color="neutral"
           size="xs"
-          label="Skip crop"
+          :label="t('assets.uploader.skipCrop')"
           @click="skipCrop"
         />
       </div>
@@ -36,19 +36,19 @@
       class="space-y-3"
     >
       <UFormField
-        label="Alt Text"
+        :label="t('assets.uploader.altText')"
         name="alt"
       >
         <div class="flex gap-2">
           <UInput
             v-model="metadata.alt"
-            placeholder="Describe the image for accessibility"
+            :placeholder="t('assets.uploader.altTextPlaceholder')"
             size="lg"
             class="flex-1"
           />
           <UTooltip
             v-if="isImageFile(selectedFile!)"
-            text="Generate alt text with AI"
+            :text="t('assets.uploader.generateAltText')"
             :delay-duration="0"
           >
             <UButton
@@ -65,9 +65,9 @@
       </UFormField>
 
       <div class="text-sm text-gray-500 space-y-1">
-        <p><strong>Filename:</strong> {{ selectedFile.name }}</p>
-        <p><strong>Size:</strong> {{ formatFileSize(selectedFile.size) }}</p>
-        <p><strong>Type:</strong> {{ selectedFile.type }}</p>
+        <p><strong>{{ t('assets.uploader.filename') }}</strong> {{ selectedFile.name }}</p>
+        <p><strong>{{ t('assets.uploader.size') }}</strong> {{ formatFileSize(selectedFile.size) }}</p>
+        <p><strong>{{ t('assets.uploader.type') }}</strong> {{ selectedFile.type }}</p>
       </div>
 
       <UButton
@@ -76,7 +76,7 @@
         block
         @click="handleUpload"
       >
-        {{ uploading ? 'Uploading...' : 'Upload Asset' }}
+        {{ uploading ? t('assets.uploader.uploading') : t('assets.uploader.upload') }}
       </UButton>
     </div>
   </div>
@@ -94,6 +94,7 @@ const emit = defineEmits<{
   uploaded: [assetId: string]
 }>()
 
+const { t } = useT()
 const { uploadAsset, uploading } = useAssetUpload()
 
 const selectedFile = ref<File | null>(null)
