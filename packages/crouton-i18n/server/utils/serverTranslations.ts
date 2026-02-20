@@ -113,29 +113,3 @@ export async function getTranslations(
 
   return result
 }
-
-/**
- * Simple template replacement for translations
- */
-export function interpolateTranslation(
-  template: string,
-  params: Record<string, any>
-): string {
-  return template.replace(/\{(\w+)\}/g, (_, key) =>
-    params[key]?.toString() || ''
-  )
-}
-
-/**
- * Get all available locales
- */
-export function getAvailableLocales(): string[] {
-  return Object.keys(systemTranslations)
-}
-
-/**
- * Check if a locale is supported
- */
-export function isLocaleSupported(locale: string): boolean {
-  return locale in systemTranslations
-}
