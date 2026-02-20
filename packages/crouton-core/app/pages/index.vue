@@ -128,50 +128,52 @@ function tryUseAuth() {
         </div>
       </div>
 
-      <!-- Actions -->
-      <div class="space-y-3">
-        <template v-if="loggedIn">
-          <!-- Logged in state -->
-          <UButton
-            to="/admin"
-            size="lg"
-            block
-          >
-            <UIcon name="i-lucide-layout-grid" />
-            Go to Admin
-          </UButton>
-          <UButton
-            v-if="isSuperAdmin"
-            to="/super-admin"
-            size="lg"
-            variant="outline"
-            block
-          >
-            <UIcon name="i-lucide-shield-check" />
-            Super Admin
-          </UButton>
-        </template>
-        <template v-else>
-          <!-- Logged out state -->
-          <UButton
-            to="/auth/login"
-            size="lg"
-            block
-          >
-            <UIcon name="i-lucide-log-in" />
-            Login
-          </UButton>
-          <UButton
-            to="/auth/register"
-            size="lg"
-            variant="outline"
-            block
-          >
-            <UIcon name="i-lucide-user-plus" />
-            Register
-          </UButton>
-        </template>
-      </div>
+      <!-- Actions: wrapped in ClientOnly to avoid SSR/client auth-state mismatch -->
+      <ClientOnly>
+        <div class="space-y-3">
+          <template v-if="loggedIn">
+            <!-- Logged in state -->
+            <UButton
+              to="/admin"
+              size="lg"
+              block
+            >
+              <UIcon name="i-lucide-layout-grid" />
+              Go to Admin
+            </UButton>
+            <UButton
+              v-if="isSuperAdmin"
+              to="/super-admin"
+              size="lg"
+              variant="outline"
+              block
+            >
+              <UIcon name="i-lucide-shield-check" />
+              Super Admin
+            </UButton>
+          </template>
+          <template v-else>
+            <!-- Logged out state -->
+            <UButton
+              to="/auth/login"
+              size="lg"
+              block
+            >
+              <UIcon name="i-lucide-log-in" />
+              Login
+            </UButton>
+            <UButton
+              to="/auth/register"
+              size="lg"
+              variant="outline"
+              block
+            >
+              <UIcon name="i-lucide-user-plus" />
+              Register
+            </UButton>
+          </template>
+        </div>
+      </ClientOnly>
 
       <!-- Footer -->
       <p class="text-center text-xs text-gray-400 dark:text-gray-500">
