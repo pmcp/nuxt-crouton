@@ -1394,7 +1394,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
             }
 
             // Send request
-            const response = await fetch('/__nuxt_crouton_devtools/api/execute-request', {
+            const response = await fetch('/__nuxt_crouton_devtools/api/execute', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
