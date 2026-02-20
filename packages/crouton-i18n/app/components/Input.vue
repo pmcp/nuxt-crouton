@@ -1,60 +1,9 @@
 <script setup lang="ts">
-import { useDebounceFn } from '@vueuse/core'
-
-// Field transform types and functions
-type FieldTransformName = 'slug' | 'lowercase' | 'uppercase' | 'trim'
-type FieldTransformFn = (value: string) => string
-
-// Slugify function for URL-safe slug generation
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-// Available field transforms
-const fieldTransforms: Record<FieldTransformName, FieldTransformFn> = {
-  slug: slugify,
-  lowercase: (v: string) => v.toLowerCase(),
-  uppercase: (v: string) => v.toUpperCase(),
-  trim: (v: string) => v.trim(),
-}
+import type { TranslationsValue, CollabConnection, FieldOptions } from '../composables/useTranslationFields'
 
 // This component handles translations for both:
 // 1. Single field: { en: "value", nl: "waarde" }
 // 2. Multiple fields: { en: { name: "...", description: "..." }, nl: { ... } }
-
-type SingleFieldValue = Record<string, string>
-type MultiFieldValue = Record<string, Record<string, string>>
-type TranslationsValue = SingleFieldValue | MultiFieldValue | null
-
-/**
- * Optional collab connection for real-time editing.
- * When provided, block editors sync via Yjs instead of form state.
- */
-interface CollabConnection {
-  /** Get Y.XmlFragment for a specific locale */
-  getXmlFragment: (locale: string) => any
-  /** Get content from Yjs XmlFragment as JSON (for reading live editor content) */
-  getContentJson?: (locale: string) => unknown
-  /** Set content from JSON (updates Yjs XmlFragment directly). Use force=true to overwrite existing content. */
-  setContentJson?: (locale: string, content: unknown, force?: boolean) => void
-  /** Get collab provider for cursor awareness */
-  connection?: { awareness?: any }
-  /** Current user info */
-  user?: { name: string; color?: string }
-}
-
-/**
- * Field options for configurable field transformations.
- */
-interface FieldOptions {
-  /** Transform to apply: preset name or custom function */
-  transform?: FieldTransformName | FieldTransformFn
-}
 
 const props = defineProps<{
   modelValue: TranslationsValue
@@ -109,607 +58,101 @@ const emit = defineEmits<{
   'update:english': [data: { field: string, value: string }]
 }>()
 
-// Get the component name to use for a specific field (returns string for template resolution)
-const getFieldComponent = (field: string) => {
-  return props.fieldComponents?.[field] || 'UInput'
-}
-
-// Create a map of field to resolved component for each field (using resolveComponent in render context)
-const fieldComponentMap = computed(() => {
-  const map: Record<string, any> = {}
-  props.fields?.forEach((field) => {
-    const componentName = getFieldComponent(field)
-    map[field] = componentName
-  })
-  return map
-})
-
-const { locale, locales } = useI18n()
+const { locales } = useI18n()
 const { t } = useT()
-const toast = useToast()
 
-// Track which locale we're editing (for tabs mode)
-const editingLocale = ref(locale.value)
+// ─── Locale layout (tabs / side-by-side, primary/secondary locales) ──────────
 
-// Layout mode (defaults to tabs for backwards compatibility)
-const layoutMode = computed(() => props.layout ?? 'tabs')
-
-// User-togglable column count for side-by-side mode (true = 2 columns, false = 1 column)
-const showDualColumns = ref(true)
-
-// For side-by-side mode: track both locales (both selectable)
-const allLocaleCodes = computed(() =>
-  locales.value.map(l => typeof l === 'string' ? l : l.code)
+const {
+  layoutMode,
+  editingLocale,
+  primaryEditingLocale,
+  secondaryEditingLocale,
+  allLocaleOptions,
+  isSameLocale,
+  showDualColumns,
+  narrowLocaleTab,
+  narrowLocaleTabs,
+  secondaryEditorRefs,
+} = useLocaleLayout(
+  locales,
+  toRef(props, 'primaryLocale'),
+  toRef(props, 'secondaryLocale'),
+  toRef(props, 'layout'),
 )
 
-// Left column locale (defaults to 'en' or first available)
-const primaryEditingLocale = ref(
-  props.primaryLocale ||
-  (allLocaleCodes.value.includes('en') ? 'en' : allLocaleCodes.value[0]) ||
-  'en'
+// ─── Translation field values (get/set, locale completeness) ─────────────────
+
+const modelValueRef = toRef(props, 'modelValue')
+const fieldsRef = toRef(props, 'fields')
+const fieldComponentsRef = toRef(props, 'fieldComponents')
+
+const {
+  isMultiField,
+  fieldComponentMap,
+  getFieldComponent,
+  isBlockEditorField,
+  getFieldValue,
+  updateFieldValue,
+  isLocaleComplete,
+  translationStatus,
+} = useTranslationFields(
+  modelValueRef,
+  fieldsRef,
+  fieldComponentsRef,
+  locales,
+  editingLocale,
+  emit,
 )
 
-// Right column locale (defaults to second available locale)
-const secondaryEditingLocale = ref(
-  props.secondaryLocale ||
-  allLocaleCodes.value.find(code => code !== primaryEditingLocale.value) ||
-  'nl'
+// ─── Field transforms (slug, uppercase, etc.) ────────────────────────────────
+
+const {
+  updateFieldWithTransform,
+  handleFieldBlur,
+} = useFieldTransforms(
+  toRef(props, 'fieldOptions'),
+  getFieldValue,
+  updateFieldValue,
+  editingLocale,
 )
 
-// Locale options for both dropdowns (all locales available)
-const allLocaleOptions = computed(() =>
-  allLocaleCodes.value
-    .map(code => ({ value: code, label: code.toUpperCase() }))
+// ─── Field groups (collapsible sections) ─────────────────────────────────────
+
+const {
+  computedFieldGroups,
+  openGroupsState,
+  groupHasBlockEditor,
+} = useFieldGroups(
+  fieldsRef,
+  toRef(props, 'fieldGroups'),
+  toRef(props, 'defaultOpenGroups'),
+  isBlockEditorField,
 )
 
-// Detect when both panels have the same language selected
-const isSameLocale = computed(() =>
-  primaryEditingLocale.value === secondaryEditingLocale.value
+// ─── AI translation ───────────────────────────────────────────────────────────
+
+const {
+  blockEditorRefreshKey,
+  showBlockTranslateConfirm,
+  getAllTranslationsForField,
+  findBestSourceLocale,
+  isFieldTranslating,
+  hasSourceContent,
+  hasTargetContent,
+  getTranslateTooltip,
+  getBestSourceText,
+  confirmBlockTranslation,
+  cancelBlockTranslation,
+  proceedWithBlockTranslation,
+} = useAiTranslation(
+  locales,
+  toRef(props, 'collab'),
+  toRef(props, 'fieldType'),
+  getFieldValue,
+  updateFieldValue,
+  isBlockEditorField,
 )
-
-// Refs to secondary column BlockEditorWithPreview instances (per field)
-const secondaryEditorRefs = ref<Record<string, any>>({})
-
-// When same locale is selected, switch secondary to preview; otherwise editor
-watch(isSameLocale, (same) => {
-  // For each field that uses BlockEditorWithPreview
-  for (const ref of Object.values(secondaryEditorRefs.value)) {
-    if (ref) {
-      if (same) {
-        ref.showPreview?.()
-      } else {
-        ref.showEditor?.()
-      }
-    }
-  }
-})
-
-// For narrow screens: tab-based locale switching (shows ALL locales)
-const narrowLocaleTab = ref(primaryEditingLocale.value)
-
-// Tab items for narrow view - show ALL available locales
-const narrowLocaleTabs = computed(() =>
-  allLocaleCodes.value.map(code => ({
-    value: code,
-    label: code.toUpperCase()
-  }))
-)
-
-// Sync narrow tab when primary locale changes
-watch(primaryEditingLocale, (primary) => {
-  // Only reset if current tab no longer exists in available locales
-  if (!allLocaleCodes.value.includes(narrowLocaleTab.value)) {
-    narrowLocaleTab.value = primary
-  }
-})
-
-// Detect if we're in multi-field mode
-const isMultiField = computed(() => props.fields && props.fields.length > 0)
-
-// Get value for a specific field and locale
-function getFieldValue(field: string, localeCode: string): string {
-  if (!props.modelValue) return ''
-
-  if (isMultiField.value) {
-    // Multi-field mode: { en: { name: "...", description: "..." } }
-    const localeData = props.modelValue[localeCode] as Record<string, string> | undefined
-    return localeData?.[field] || ''
-  } else {
-    // Single field mode: { en: "value", nl: "waarde" }
-    return (props.modelValue[localeCode] as string) || ''
-  }
-}
-
-// Update a specific field for a specific locale
-function updateFieldValue(field: string, value: string, localeCode?: string) {
-  const targetLocale = localeCode || editingLocale.value
-
-  // Emit update:english when English value changes
-  if (targetLocale === 'en') {
-    emit('update:english', { field, value })
-  }
-
-  if (isMultiField.value) {
-    // Multi-field mode
-    const updated = { ...(props.modelValue || {}) } as MultiFieldValue
-
-    if (!updated[targetLocale]) {
-      updated[targetLocale] = {}
-    }
-
-    updated[targetLocale] = {
-      ...updated[targetLocale],
-      [field]: value
-    }
-
-    emit('update:modelValue', updated)
-  } else {
-    // Single field mode (backwards compat)
-    const updated = {
-      ...(props.modelValue || {}),
-      [targetLocale]: value
-    } as SingleFieldValue
-
-    emit('update:modelValue', updated)
-  }
-}
-
-// Get the transform function for a field (if configured)
-function getFieldTransform(field: string): FieldTransformFn | undefined {
-  const options = props.fieldOptions?.[field]
-  if (!options?.transform) return undefined
-
-  if (typeof options.transform === 'function') {
-    return options.transform
-  }
-
-  return fieldTransforms[options.transform]
-}
-
-// Debounced transform application (200ms delay for smooth typing)
-const applyTransformDebounced = useDebounceFn((field: string, value: string, localeCode: string) => {
-  const transform = getFieldTransform(field)
-  if (transform) {
-    const transformed = transform(value)
-    if (transformed !== value) {
-      updateFieldValue(field, transformed, localeCode)
-    }
-  }
-}, 200)
-
-// Update field with optional debounced transform (for input events)
-function updateFieldWithTransform(field: string, value: string, localeCode?: string) {
-  const targetLocale = localeCode || editingLocale.value
-
-  // Always update immediately with raw value for responsive typing
-  updateFieldValue(field, value, targetLocale)
-
-  // Schedule debounced transform if configured
-  const transform = getFieldTransform(field)
-  if (transform) {
-    applyTransformDebounced(field, value, targetLocale)
-  }
-}
-
-// Handle blur - apply transform immediately
-function handleFieldBlur(field: string, localeCode?: string) {
-  const targetLocale = localeCode || editingLocale.value
-  const transform = getFieldTransform(field)
-  if (!transform) return
-
-  const currentValue = getFieldValue(field, targetLocale)
-  if (!currentValue) return
-
-  const transformed = transform(currentValue)
-  if (transformed !== currentValue) {
-    updateFieldValue(field, transformed, targetLocale)
-  }
-}
-
-// Check if a locale has all required fields filled
-function isLocaleComplete(localeCode: string): boolean {
-  if (!props.modelValue) return false
-
-  if (isMultiField.value) {
-    const localeData = props.modelValue[localeCode] as Record<string, unknown> | undefined
-    if (!localeData) return false
-
-    // Check if all fields have values
-    return props.fields.every((field) => {
-      const value = localeData[field]
-      if (!value) return false
-      // Handle string values (title, slug, etc.)
-      if (typeof value === 'string') return value.trim() !== ''
-      // Handle object values (block editor JSON content)
-      if (typeof value === 'object') return true
-      return !!value
-    })
-  } else {
-    const value = props.modelValue[localeCode]
-    if (!value) return false
-    if (typeof value === 'string') return value.trim() !== ''
-    return !!value
-  }
-}
-
-// Translation status for all locales
-const translationStatus = computed(() => {
-  return locales.value.map((loc) => {
-    const localeCode = typeof loc === 'string' ? loc : loc.code
-    return {
-      locale: localeCode,
-      complete: isLocaleComplete(localeCode)
-    }
-  })
-})
-
-// AI Translation support
-const isTranslating = ref<Record<string, boolean>>({})
-
-// Force re-mount key for block editors after translation
-// Incremented to force Vue to re-create the component with new content
-const blockEditorRefreshKey = ref(0)
-
-// Block editor translation confirmation state
-const pendingBlockTranslation = ref<{ field: string, locale: string } | null>(null)
-const showBlockTranslateConfirm = ref(false)
-
-// Check if target field has content (for translation confirmation)
-function hasTargetContent(field: string, targetLocale: string): boolean {
-  const value = getFieldValue(field, targetLocale)
-  return hasContent(value)
-}
-
-// Confirm block editor translation (shows confirmation if target has content)
-function confirmBlockTranslation(field: string, locale: string) {
-  if (hasTargetContent(field, locale)) {
-    pendingBlockTranslation.value = { field, locale }
-    showBlockTranslateConfirm.value = true
-  } else {
-    requestBlockTranslation(field, locale)
-  }
-}
-
-// Cancel block translation confirmation
-function cancelBlockTranslation() {
-  pendingBlockTranslation.value = null
-  showBlockTranslateConfirm.value = false
-}
-
-// Proceed with block translation after confirmation
-function proceedWithBlockTranslation() {
-  if (pendingBlockTranslation.value) {
-    const { field, locale } = pendingBlockTranslation.value
-    requestBlockTranslation(field, locale)
-  }
-  pendingBlockTranslation.value = null
-  showBlockTranslateConfirm.value = false
-}
-
-// Get all translations for a field (for AI context)
-// In collab mode for block editors, reads live content from Yjs fragments
-function getAllTranslationsForField(field: string): Record<string, string> {
-  const translations: Record<string, string> = {}
-  const isBlockField = isBlockEditorField(field)
-
-  locales.value.forEach((loc) => {
-    const localeCode = typeof loc === 'string' ? loc : loc.code
-
-    // In collab mode for block editors, read from Yjs fragment (live content)
-    if (isBlockField && props.collab?.getContentJson) {
-      const liveContent = props.collab.getContentJson(localeCode)
-      if (liveContent && typeof liveContent === 'object') {
-        translations[localeCode] = JSON.stringify(liveContent)
-      }
-    } else {
-      // Fall back to form state for non-collab or non-block fields
-      const value = getFieldValue(field, localeCode)
-      if (value) {
-        translations[localeCode] = value
-      }
-    }
-  })
-
-  return translations
-}
-
-// Request AI translation for a specific field (translates from left column to right column)
-// Check if a value has meaningful content (handles strings, JSON, and TipTapDoc objects)
-function hasContent(value: unknown): boolean {
-  if (!value) return false
-
-  // Handle object values (TipTapDoc from block editor with content-type="json")
-  if (typeof value === 'object' && value !== null) {
-    const doc = value as { type?: string; content?: unknown[] }
-    // TipTap docs have { type: 'doc', content: [...] }
-    if (Array.isArray(doc.content)) {
-      // Empty doc has content: [{ type: 'paragraph' }] with no text
-      // Check if there's meaningful content
-      return doc.content.length > 0 && doc.content.some((node) => {
-        const n = node as { type?: string; content?: unknown[]; attrs?: unknown }
-        // Paragraph with no content/text is empty
-        if (n.type === 'paragraph' && (!n.content || n.content.length === 0)) {
-          return false
-        }
-        return true
-      })
-    }
-    return false
-  }
-
-  // Handle string values (JSON stringified content)
-  if (typeof value !== 'string') return false
-  const trimmed = value.trim()
-  if (!trimmed) return false
-
-  // Check if it's block editor JSON with no content
-  if (trimmed.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(trimmed)
-      return parsed?.content?.length > 0
-    } catch {
-      return true // Not JSON, treat as text
-    }
-  }
-  return true
-}
-
-// Find the best source locale for translation (prefers EN, then any with content)
-function findBestSourceLocale(field: string, targetLocale: string): string | null {
-  const allTranslations = getAllTranslationsForField(field)
-
-  // Remove target locale from candidates and filter to those with content
-  const candidates = Object.entries(allTranslations)
-    .filter(([locale, value]) => locale !== targetLocale && hasContent(value))
-
-  if (candidates.length === 0) return null
-
-  // Prefer English if available
-  const english = candidates.find(([locale]) => locale === 'en')
-  if (english) return 'en'
-
-  // Otherwise return first available
-  return candidates[0][0]
-}
-
-async function requestTranslation(field: string, targetLocale?: string) {
-  const targetLang = targetLocale || editingLocale.value
-  const allTranslations = getAllTranslationsForField(field)
-
-  // Find best source locale
-  const sourceLang = findBestSourceLocale(field, targetLang)
-  if (!sourceLang) return
-
-  const sourceText = allTranslations[sourceLang]
-  if (!sourceText || targetLang === sourceLang) return
-
-  const translationKey = `${targetLang}-${field}`
-  isTranslating.value[translationKey] = true
-
-  try {
-    // Check if this is block content (JSON)
-    if (isBlockEditorField(field)) {
-      // Parse and translate block content
-      let content: any
-      try {
-        content = typeof sourceText === 'string' ? JSON.parse(sourceText) : sourceText
-      } catch {
-        console.error('Failed to parse block content')
-        return
-      }
-
-      const result = await $fetch<{ content: any, translatedCount?: number }>('/api/ai/translate-blocks', {
-        method: 'POST',
-        body: {
-          content,
-          sourceLanguage: sourceLang,
-          targetLanguage: targetLang
-        }
-      })
-
-      if (result?.content) {
-        updateFieldValue(field, JSON.stringify(result.content), targetLang)
-      }
-    } else {
-      // Regular text translation
-      const result = await $fetch<{ text: string, confidence?: number }>('/api/ai/translate', {
-        method: 'POST',
-        body: {
-          sourceText,
-          sourceLanguage: sourceLang,
-          targetLanguage: targetLang,
-          fieldType: props.fieldType || field,
-          existingTranslations: allTranslations
-        }
-      })
-
-      if (result?.text) {
-        updateFieldValue(field, result.text, targetLang)
-      }
-    }
-  } catch (err: any) {
-    console.error('Translation error:', err)
-
-    // Show user-friendly toast for common errors
-    const errorMessage = err?.data?.statusMessage || err?.message || 'Translation failed'
-
-    if (errorMessage.includes('API key not configured')) {
-      toast.add({
-        title: 'AI Translation Not Configured',
-        description: 'Set NUXT_OPENAI_API_KEY or NUXT_ANTHROPIC_API_KEY in your .env file',
-        icon: 'i-lucide-key',
-        color: 'warning'
-      })
-    } else {
-      toast.add({
-        title: 'Translation Failed',
-        description: errorMessage,
-        icon: 'i-lucide-alert-circle',
-        color: 'error'
-      })
-    }
-  } finally {
-    isTranslating.value[translationKey] = false
-  }
-}
-
-// Check if currently translating a specific field
-function isFieldTranslating(field: string, targetLocale?: string): boolean {
-  const targetLang = targetLocale || editingLocale.value
-  const translationKey = `${targetLang}-${field}`
-  return isTranslating.value[translationKey] || false
-}
-
-// Check if a field uses a block editor (content is JSON, not plain text)
-function isBlockEditorField(field: string): boolean {
-  const component = getFieldComponent(field)
-  return component === 'CroutonPagesEditorBlockEditor' ||
-         component === 'CroutonPagesEditorBlockEditorWithPreview'
-}
-
-// ─── Field Groups ────────────────────────────────────────────────────────────
-
-// Ordered groups derived from fieldGroups prop
-const computedFieldGroups = computed(() => {
-  if (!props.fieldGroups) return null
-  const groups: { name: string; fields: string[] }[] = []
-  const groupMap = new Map<string, string[]>()
-  for (const field of props.fields) {
-    const groupName = props.fieldGroups[field] || 'Other'
-    if (!groupMap.has(groupName)) {
-      const groupFields: string[] = []
-      groupMap.set(groupName, groupFields)
-      groups.push({ name: groupName, fields: groupFields })
-    }
-    groupMap.get(groupName)!.push(field)
-  }
-  return groups
-})
-
-// Open/closed state for each group
-const openGroupsState = ref<Record<string, boolean>>({})
-
-// Initialize group open state on mount and when groups change
-watchEffect(() => {
-  if (!computedFieldGroups.value) return
-  for (const group of computedFieldGroups.value) {
-    if (!(group.name in openGroupsState.value)) {
-      openGroupsState.value[group.name] = props.defaultOpenGroups
-        ? props.defaultOpenGroups.includes(group.name)
-        : true
-    }
-  }
-})
-
-// A group "fills height" if it contains a block editor field
-function groupHasBlockEditor(fields: string[]): boolean {
-  return fields.some(f => isBlockEditorField(f))
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Check if ANY other locale has content for a field (to enable translation)
-function hasSourceContent(field: string, targetLocale?: string): boolean {
-  const target = targetLocale || editingLocale.value
-  const sourceLang = findBestSourceLocale(field, target)
-  return sourceLang !== null
-}
-
-// Get tooltip text showing which language will be used as source
-function getTranslateTooltip(field: string, targetLocale: string): string {
-  const sourceLang = findBestSourceLocale(field, targetLocale)
-  if (!sourceLang) return 'Translate'
-  return `Translate from ${sourceLang.toUpperCase()}`
-}
-
-// Get the best source text for translation (used by AITranslateButton)
-function getBestSourceText(field: string, targetLocale: string): string | undefined {
-  const sourceLang = findBestSourceLocale(field, targetLocale)
-  if (!sourceLang) return undefined
-  const allTranslations = getAllTranslationsForField(field)
-  return allTranslations[sourceLang]
-}
-
-// Request block editor translation (controlled mode - parent handles the API call)
-async function requestBlockTranslation(field: string, targetLocale: string) {
-  const sourceLang = findBestSourceLocale(field, targetLocale)
-  if (!sourceLang) return
-
-  const allTranslations = getAllTranslationsForField(field)
-  const sourceText = allTranslations[sourceLang]
-  if (!sourceText) return
-
-  const translationKey = `${targetLocale}-${field}`
-  isTranslating.value[translationKey] = true
-
-  try {
-    // Parse and translate block content
-    let content: any
-    try {
-      content = typeof sourceText === 'string' ? JSON.parse(sourceText) : sourceText
-    } catch {
-      return
-    }
-
-    const result = await $fetch<{ content: any, translatedCount?: number, totalCount?: number }>('/api/ai/translate-blocks', {
-      method: 'POST',
-      body: {
-        content,
-        sourceLanguage: sourceLang,
-        targetLanguage: targetLocale
-      }
-    })
-
-    if (result?.content) {
-      const serialized = JSON.stringify(result.content)
-
-      // In collab mode, update Yjs XmlFragment directly for visual update
-      // Use force=true to overwrite existing content (AI translation should always apply)
-      if (props.collab?.setContentJson) {
-        props.collab.setContentJson(targetLocale, result.content, true)
-        toast.add({
-          title: 'Translation Complete',
-          description: `Translated ${result.translatedCount} text blocks.`,
-          icon: 'i-lucide-check',
-          color: 'success'
-        })
-      } else if (props.collab) {
-        // Collab mode but setContentJson not available (older API)
-        toast.add({
-          title: 'Translation Saved',
-          description: `Translated ${result.translatedCount} text blocks. Save and reload to see in editor.`,
-          icon: 'i-lucide-check',
-          color: 'success'
-        })
-      }
-
-      // Always update form state (for persisting and non-collab mode)
-      updateFieldValue(field, serialized, targetLocale)
-      // Force block editor to re-mount with new content (for non-collab mode)
-      blockEditorRefreshKey.value++
-    }
-  } catch (err: any) {
-    const errorMessage = err?.data?.statusMessage || err?.message || 'Translation failed'
-
-    if (errorMessage.includes('API key not configured') || errorMessage.includes('No AI API key')) {
-      toast.add({
-        title: 'AI Translation Not Configured',
-        description: 'Set NUXT_ANTHROPIC_API_KEY or NUXT_OPENAI_API_KEY in your .env file',
-        icon: 'i-lucide-key',
-        color: 'warning'
-      })
-    } else {
-      toast.add({
-        title: 'Translation Failed',
-        description: errorMessage,
-        icon: 'i-lucide-alert-circle',
-        color: 'error'
-      })
-    }
-  } finally {
-    isTranslating.value[translationKey] = false
-  }
-}
 </script>
 
 <template>
