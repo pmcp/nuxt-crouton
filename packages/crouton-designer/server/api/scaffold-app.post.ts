@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { writeFile, readFile, mkdir, access } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { createJiti } from 'jiti'
@@ -175,32 +175,22 @@ export default defineEventHandler(async (event) => {
 
   // Step 5: Run pnpm install from monorepo root
   try {
-    execSync('pnpm install', {
-      cwd: monorepoRoot,
-      encoding: 'utf-8',
-      timeout: 120_000,
-      stdio: ['pipe', 'pipe', 'pipe']
-    })
+    await spawnAsync('pnpm', ['install'], { cwd: monorepoRoot })
     steps.install = { success: true }
   }
   catch (err: any) {
-    steps.install = { success: false, error: err.stderr || err.message }
+    steps.install = { success: false, error: err.message }
   }
 
   // Step 6: Run crouton config to generate collections
   // Note: generate-collection.mjs uses top-level await and process.argv,
   // so it can't be cleanly imported in a server context. Keep as subprocess.
   try {
-    const output = execSync('pnpm crouton config ./crouton.config.js', {
-      cwd: appDir,
-      encoding: 'utf-8',
-      timeout: 60_000,
-      stdio: ['pipe', 'pipe', 'pipe']
-    })
+    const output = await spawnAsync('pnpm', ['crouton', 'config', './crouton.config.js'], { cwd: appDir })
     steps.generate = { success: true, output }
   }
   catch (err: any) {
-    steps.generate = { success: false, error: err.stderr || err.message }
+    steps.generate = { success: false, error: err.message }
   }
 
   // Step 7: Run doctor to validate (direct import)
@@ -224,6 +214,16 @@ export default defineEventHandler(async (event) => {
 })
 
 // ─── Helpers ──────────────────────────────────────────────────────
+
+function spawnAsync(cmd: string, args: string[], opts: { cwd: string }): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] })
+    let stdout = '', stderr = ''
+    child.stdout?.on('data', (d: Buffer) => { stdout += d })
+    child.stderr?.on('data', (d: Buffer) => { stderr += d })
+    child.on('close', code => code === 0 ? resolve(stdout) : reject(new Error(stderr || stdout)))
+  })
+}
 
 async function findMonorepoRoot(startDir: string): Promise<string | null> {
   let dir = resolve(startDir)

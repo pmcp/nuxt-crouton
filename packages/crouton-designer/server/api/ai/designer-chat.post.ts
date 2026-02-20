@@ -200,6 +200,8 @@ function getFastModel(defaultModel: string): string {
 const FAST_PHASES = new Set(['1', '3', '5'])
 
 export default defineEventHandler(async (event) => {
+  await requireAuth(event)
+
   const { messages, system, provider, model, phase } = await readBody(event)
 
   const ai = createAIProvider(event)
