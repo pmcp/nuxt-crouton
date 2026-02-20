@@ -39,7 +39,7 @@
                 {{ getTranslationForLang(lang) || tString('common.noTranslation') }}
               </p>
               <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                {{ getCharCount(lang) }} characters
+                {{ getCharCount(lang) }} {{ tString('common.characters') }}
               </div>
             </div>
           </template>

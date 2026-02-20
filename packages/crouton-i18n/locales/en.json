@@ -50,7 +50,13 @@
     "change": "Change",
     "settings": "Settings",
     "accessRestricted": "Access Restricted",
-    "error": "Error"
+    "error": "Error",
+    "fallbackToEN": "Falling back to English",
+    "noTranslation": "No translation",
+    "copy": "Copy",
+    "content": "Content",
+    "characters": "characters",
+    "words": "words"
   },
   "table": {
     "id": "ID",
@@ -126,7 +132,14 @@
     "minLength": "Must be at least {min} characters",
     "maxLength": "Must be at most {max} characters",
     "tryAgain": "Please try again",
-    "contactSupport": "Please contact support if the problem persists"
+    "contactSupport": "Please contact support if the problem persists",
+    "noTextToCopy": "No text to copy",
+    "failedToCopyText": "Failed to copy text"
+  },
+  "messages": {
+    "usingEnglishFallback": "Using English fallback",
+    "noTranslationAvailable": "No translation available",
+    "copiedToClipboard": "Copied to clipboard"
   },
   "errorPage": {
     "error": "Error",

@@ -50,7 +50,13 @@
     "change": "Wijzigen",
     "settings": "Instellingen",
     "accessRestricted": "Toegang beperkt",
-    "error": "Fout"
+    "error": "Fout",
+    "fallbackToEN": "Falling back to English",
+    "noTranslation": "No translation",
+    "copy": "Copy",
+    "content": "Content",
+    "characters": "characters",
+    "words": "words"
   },
   "table": {
     "id": "ID",
@@ -126,7 +132,14 @@
     "minLength": "Moet minimaal {min} tekens bevatten",
     "maxLength": "Mag maximaal {max} tekens bevatten",
     "tryAgain": "Probeer het opnieuw",
-    "contactSupport": "Neem contact op met support als het probleem aanhoudt"
+    "contactSupport": "Neem contact op met support als het probleem aanhoudt",
+    "noTextToCopy": "No text to copy",
+    "failedToCopyText": "Failed to copy text"
+  },
+  "messages": {
+    "usingEnglishFallback": "Using English fallback",
+    "noTranslationAvailable": "No translation available",
+    "copiedToClipboard": "Copied to clipboard"
   },
   "errorPage": {
     "error": "Fout",
