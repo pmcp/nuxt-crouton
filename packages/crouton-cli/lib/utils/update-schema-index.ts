@@ -109,6 +109,11 @@ export async function addNamedSchemaExport(schemaPath: string, exportName: strin
     content = await readFile(schemaPath, 'utf-8')
   }
 
+  // Fast path: if this exact import path is already present, never append regardless of force
+  if (content.includes(`from '${importPath}'`) || content.includes(`from "${importPath}"`)) {
+    return { added: false, reason: 'already exported' }
+  }
+
   try {
     const mod = parseModule(content)
 

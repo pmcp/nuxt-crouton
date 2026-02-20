@@ -311,6 +311,18 @@ export function generateQueries(data: Record<string, any>, config: Record<string
     .split(/[-_]/)
     .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
+
+  // Resolve target layer camelCase for a collection — uses collectionLayerMap so cross-layer
+  // refs (e.g. contacts in people layer) produce the correct table name (peopleContacts, not
+  // projectsContacts). Falls back to current layer for unresolved collections.
+  const getTargetLayerCamelCase = (collectionName: string): string => {
+    const targetLayer = collectionLayerMap.get(collectionName.toLowerCase())
+    if (!targetLayer) return layerCamelCase
+    return targetLayer
+      .split(/[-_]/)
+      .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
+      .join('')
+  }
   // Use pascalCasePlural which properly handles hyphens (e.g., email-templates -> EmailTemplates)
   const tableName = `${layerCamelCase}${pascalCasePlural}`
   const prefixedPascalCase = `${layerPascalCase}${pascalCase}`
@@ -372,7 +384,7 @@ export function generateQueries(data: Record<string, any>, config: Record<string
       // e.g., app + emailTemplates -> appEmailTemplates
       const refTableName = ref.isExternal
         ? collectionIdentifier
-        : `${layerCamelCase}${pascal(collectionIdentifier)}`
+        : `${getTargetLayerCamelCase(collectionIdentifier)}${pascal(collectionIdentifier)}`
 
       if (ref.isUserReference) {
         // Special user reference handling
@@ -464,7 +476,7 @@ export function generateQueries(data: Record<string, any>, config: Record<string
       const collectionIdentifier = collection
       const tableReference = ref.isExternal
         ? collectionIdentifier
-        : `${collectionIdentifier}Schema.${layerCamelCase}${pascal(collectionIdentifier)}`
+        : `${collectionIdentifier}Schema.${getTargetLayerCamelCase(collectionIdentifier)}${pascal(collectionIdentifier)}`
 
       // Use consistent PascalCase variable naming
       const collectionVarName = pascal(collectionIdentifier)
