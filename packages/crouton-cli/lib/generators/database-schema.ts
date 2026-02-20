@@ -130,7 +130,11 @@ const jsonColumn = customType<any>({
     if (value === null || value === undefined || value === '') {
       return null
     }
-    return JSON.parse(value as string)
+    try {
+      return JSON.parse(value as string)
+    } catch {
+      return null
+    }
   },
   toDriver(value: any): string {
     return JSON.stringify(value)
