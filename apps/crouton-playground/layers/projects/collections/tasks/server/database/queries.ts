@@ -16,7 +16,7 @@ export async function getAllProjectsTasks(teamId: string) {
   const tasks = await (db as any)
     .select({
       ...tables.projectsTasks,
-      assigneeIdData: contactsSchema.projectsContacts,
+      assigneeIdData: contactsSchema.peopleContacts,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -37,7 +37,7 @@ export async function getAllProjectsTasks(teamId: string) {
       }
     } as any)
     .from(tables.projectsTasks)
-    .leftJoin(contactsSchema.projectsContacts, eq(tables.projectsTasks.assigneeId, contactsSchema.projectsContacts.id))
+    .leftJoin(contactsSchema.peopleContacts, eq(tables.projectsTasks.assigneeId, contactsSchema.peopleContacts.id))
     .leftJoin(ownerUser, eq(tables.projectsTasks.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.projectsTasks.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.projectsTasks.updatedBy, updatedByUser.id))
@@ -73,7 +73,7 @@ export async function getProjectsTasksByIds(teamId: string, taskIds: string[]) {
   const tasks = await (db as any)
     .select({
       ...tables.projectsTasks,
-      assigneeIdData: contactsSchema.projectsContacts,
+      assigneeIdData: contactsSchema.peopleContacts,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -94,7 +94,7 @@ export async function getProjectsTasksByIds(teamId: string, taskIds: string[]) {
       }
     } as any)
     .from(tables.projectsTasks)
-    .leftJoin(contactsSchema.projectsContacts, eq(tables.projectsTasks.assigneeId, contactsSchema.projectsContacts.id))
+    .leftJoin(contactsSchema.peopleContacts, eq(tables.projectsTasks.assigneeId, contactsSchema.peopleContacts.id))
     .leftJoin(ownerUser, eq(tables.projectsTasks.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.projectsTasks.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.projectsTasks.updatedBy, updatedByUser.id))

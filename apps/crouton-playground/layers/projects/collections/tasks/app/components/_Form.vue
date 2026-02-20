@@ -62,7 +62,12 @@
       </div>
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Status" name="status" class="not-last:pb-4">
-          <UInput v-model="state.status" class="w-full" size="xl" />
+          <USelect
+            v-model="state.status"
+            :items="statusOptions"
+            class="w-full"
+            size="xl"
+          />
         </UFormField>
         <UFormField label="DueDate" name="dueDate" class="not-last:pb-4">
           <CroutonCalendar v-model:date="state.dueDate" />
@@ -104,6 +109,14 @@ const { defaultValue, schema, collection } = useProjectsTasks()
 
 // Form layout configuration
 const tabs = ref(false)
+
+// Static select options
+const statusOptions = [
+  { label: 'Todo', value: 'todo' },
+  { label: 'In Progress', value: 'in-progress' },
+  { label: 'Done', value: 'done' },
+  { label: 'Blocked', value: 'blocked' }
+]
 
 
 

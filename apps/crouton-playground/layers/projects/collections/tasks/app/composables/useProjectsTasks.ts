@@ -91,7 +91,8 @@ const _projectsTasksConfig = {
           "name": "status",
           "type": "string",
           "label": "Status",
-          "area": "sidebar"
+          "area": "sidebar",
+          "displayAs": "optionsSelect"
       },
       {
           "name": "dueDate",
