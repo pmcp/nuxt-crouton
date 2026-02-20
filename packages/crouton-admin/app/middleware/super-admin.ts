@@ -16,9 +16,6 @@
 import { defineNuxtRouteMiddleware, navigateTo, createError, useSession } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Skip on server - let server-side middleware handle it
-  if (import.meta.server) return
-
   const { data: sessionData, isPending, isAuthenticated } = useSession()
 
   // Wait for session to load if pending

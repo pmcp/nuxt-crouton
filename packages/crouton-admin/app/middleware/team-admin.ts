@@ -17,9 +17,6 @@
 import { defineNuxtRouteMiddleware, navigateTo, createError, useSession, useTeam, useNuxtApp } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Skip on server - let server-side middleware handle it
-  if (import.meta.server) return
-
   const { isPending, isAuthenticated } = useSession()
   const { teams, switchTeamBySlug } = useTeam()
   const nuxtApp = useNuxtApp()
@@ -109,8 +106,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     } catch (e: any) {
       if (e.statusCode === 403) throw e
       console.error('[@crouton/admin] Failed to check admin status:', e)
+      throw createError({ status: 401, statusText: 'Unauthorized', message: 'Could not verify admin status' })
     }
   }
 
-  // Fallback: allow access if we couldn't verify (let server handle it)
+  // Could not resolve team admin status — deny by default
+  throw createError({ status: 403, statusText: 'Forbidden', message: 'Team admin or owner access required' })
 })

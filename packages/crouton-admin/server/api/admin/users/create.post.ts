@@ -16,54 +16,9 @@
 import type { H3Event } from 'h3'
 import { defineEventHandler, readBody, createError } from 'h3'
 import { eq } from 'drizzle-orm'
-import { user, account, useAdminDb } from '../../../utils/db'
+import { user, useAdminDb } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/admin'
 import type { CreateUserPayload, AdminUser } from '../../../../types/admin'
-
-// Generate a unique ID (similar to nanoid)
-function generateId(length = 21): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  const randomValues = new Uint8Array(length)
-  crypto.getRandomValues(randomValues)
-  for (let i = 0; i < length; i++) {
-    result += chars[randomValues[i] % chars.length]
-  }
-  return result
-}
-
-// Hash password using Web Crypto API (bcrypt-like approach not available, using PBKDF2)
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const salt = crypto.getRandomValues(new Uint8Array(16))
-  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('')
-
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(password),
-    'PBKDF2',
-    false,
-    ['deriveBits']
-  )
-
-  const derivedBits = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      salt: salt,
-      iterations: 100000,
-      hash: 'SHA-256'
-    },
-    keyMaterial,
-    256
-  )
-
-  const hashHex = Array.from(new Uint8Array(derivedBits))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-
-  // Format: $pbkdf2$iterations$salt$hash
-  return `$pbkdf2$100000$${saltHex}$${hashHex}`
-}
 
 export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => {
   // Verify super admin access
@@ -109,36 +64,32 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
     })
   }
 
-  // Generate IDs
-  const userId = generateId()
-  const accountId = generateId()
-  const now = new Date()
-
-  // Hash password
-  const hashedPassword = await hashPassword(body.password)
-
-  // Create user
-  await db.insert(user).values({
-    id: userId,
-    name: body.name.trim(),
-    email: body.email.toLowerCase().trim(),
-    emailVerified: body.emailVerified ?? false,
-    superAdmin: body.superAdmin ?? false,
-    banned: false,
-    createdAt: now,
-    updatedAt: now
+  // Delegate user creation to Better Auth so it owns password hashing
+  const auth = useServerAuth(event)
+  const signUpResult = await auth.api.signUpEmail({
+    body: {
+      name: body.name.trim(),
+      email: body.email.toLowerCase().trim(),
+      password: body.password
+    }
   })
 
-  // Create credential account for password auth
-  await db.insert(account).values({
-    id: accountId,
-    userId: userId,
-    accountId: userId, // For credential provider, accountId is same as userId
-    providerId: 'credential',
-    password: hashedPassword,
-    createdAt: now,
-    updatedAt: now
-  })
+  if (!signUpResult?.user?.id) {
+    throw createError({ status: 500, message: 'Failed to create user' })
+  }
+
+  const userId = signUpResult.user.id
+
+  // Apply admin-only fields that signUpEmail doesn't accept
+  const needsUpdate = (body.emailVerified ?? false) || (body.superAdmin ?? false)
+  if (needsUpdate) {
+    await db.update(user)
+      .set({
+        emailVerified: body.emailVerified ?? false,
+        superAdmin: body.superAdmin ?? false
+      })
+      .where(eq(user.id, userId))
+  }
 
   // Fetch and return created user
   const createdUsers = await db
