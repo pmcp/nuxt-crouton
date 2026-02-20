@@ -101,24 +101,26 @@ const [showConfirmModal, toggleConfirmModal] = useToggle(false)
 
 // Context selector state
 const [showContextSelector, toggleContextSelector] = useToggle(false)
-const selectedContextLocales = ref<Set<string>>(new Set())
+const selectedContextLocales = reactive(new Set<string>())
 
 // Initialize selected locales when availableTranslations changes
 watch(() => props.availableTranslations, (translations) => {
   if (translations) {
     // Select all locales by default (except target)
-    selectedContextLocales.value = new Set(
-      Object.keys(translations).filter(locale => locale !== props.targetLanguage)
-    )
+    selectedContextLocales.clear()
+    Object.keys(translations)
+      .filter(locale => locale !== props.targetLanguage)
+      .forEach(locale => selectedContextLocales.add(locale))
   }
 }, { immediate: true })
 
 // Also update when target language changes
 watch(() => props.targetLanguage, () => {
   if (props.availableTranslations) {
-    selectedContextLocales.value = new Set(
-      Object.keys(props.availableTranslations).filter(locale => locale !== props.targetLanguage)
-    )
+    selectedContextLocales.clear()
+    Object.keys(props.availableTranslations)
+      .filter(locale => locale !== props.targetLanguage)
+      .forEach(locale => selectedContextLocales.add(locale))
   }
 })
 
@@ -136,18 +138,16 @@ const contextLocales = computed(() => {
 // Check if all contexts are selected
 const allContextsSelected = computed(() => {
   return contextLocales.value.length > 0 &&
-    selectedContextLocales.value.size === contextLocales.value.length
+    selectedContextLocales.size === contextLocales.value.length
 })
 
 // Toggle a locale in the context selection
 function toggleContextLocale(locale: string) {
-  if (selectedContextLocales.value.has(locale)) {
-    selectedContextLocales.value.delete(locale)
+  if (selectedContextLocales.has(locale)) {
+    selectedContextLocales.delete(locale)
   } else {
-    selectedContextLocales.value.add(locale)
+    selectedContextLocales.add(locale)
   }
-  // Force reactivity
-  selectedContextLocales.value = new Set(selectedContextLocales.value)
 }
 
 // Get filtered translations based on selection
@@ -155,7 +155,7 @@ function getFilteredTranslations(): Record<string, string> {
   if (!props.existingTranslations) return {}
   const filtered: Record<string, string> = {}
   for (const [locale, text] of Object.entries(props.existingTranslations)) {
-    if (selectedContextLocales.value.has(locale)) {
+    if (selectedContextLocales.has(locale)) {
       filtered[locale] = text
     }
   }
