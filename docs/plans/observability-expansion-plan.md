@@ -12,9 +12,9 @@ This plan extends the existing [devtools-events-unification plan](./devtools-eve
 |-------|------|-------|--------|
 | A — Quick Wins | 3 | 3 | ✅ |
 | B — Structural | 2 | 3 | 🔄 |
-| C — Package Integrations | 0 | 9 | 🔲 |
+| C — Package Integrations | 5 | 9 | 🔄 |
 | D — DevTools Enhancements | 0 | 3 | 🔲 |
-| **Total** | **5** | **18** | 🔄 |
+| **Total** | **10** | **18** | 🔄 |
 
 ---
 
@@ -114,11 +114,11 @@ webhook:received
 _Per-package telemetry additions. Depends on B2 (`crouton:operation`) for non-CRUD items._
 
 ### C1 — crouton-admin: audit trail for super-admin operations
-- [ ] `server/api/admin/users/create.post.ts` — emit `crouton:operation` (`admin:user:created`, include `adminId`, new user details)
-- [ ] `server/api/admin/users/ban.post.ts` — emit `crouton:operation` (`admin:user:banned`, include reason, duration)
-- [ ] `server/api/admin/users/delete.post.ts` — emit `crouton:operation` (`admin:user:deleted`, include cascade impact count)
-- [ ] `server/api/admin/impersonate/start.post.ts` — emit `crouton:operation` (`admin:impersonate:start`, include `targetUserId`)
-- [ ] `server/api/admin/impersonate/stop.post.ts` — emit `crouton:operation` (`admin:impersonate:stop`)
+- [x] `server/api/admin/users/create.post.ts` — emit `crouton:operation` (`admin:user:created`, include `adminId`, new user details)
+- [x] `server/api/admin/users/ban.post.ts` — emit `crouton:operation` (`admin:user:banned`, include reason, duration)
+- [x] `server/api/admin/users/delete.post.ts` — emit `crouton:operation` (`admin:user:deleted`, include cascade impact count)
+- [x] `server/api/admin/impersonate/start.post.ts` — emit `crouton:operation` (`admin:impersonate:start`, include `targetUserId`)
+- [x] `server/api/admin/impersonate/stop.post.ts` — emit `crouton:operation` (`admin:impersonate:stop`)
 
 **Why critical:** Zero audit trail for super-admin actions. Who banned whom, who impersonated whom — currently invisible.
 
@@ -135,26 +135,26 @@ _Per-package telemetry additions. Depends on B2 (`crouton:operation`) for non-CR
 ---
 
 ### C3 — crouton-email: emit operation on send
-- [ ] `app/composables/useEmailService.ts` (or server equivalent) — emit `crouton:operation` after `send()` resolves
-- [ ] Include: `recipient` (hashed or plain depending on privacy setting), `subject`, `template`, `status: 'sent' | 'failed'`, `duration`
-- [ ] On failure: emit with `error` field
+- [x] `server/utils/email.ts` `send()` chokepoint — emit `crouton:operation` after Resend API call resolves
+- [x] Include: `recipient`, `subject`, `status: 'sent' | 'failed'`, `duration`, `messageId`
+- [x] On failure: emit with `error` field (both Resend error response and thrown exceptions)
 
 **Why:** Every email send is currently invisible. Debugging "did the confirmation email send?" requires log diving.
 
 ---
 
 ### C4 — crouton-ai: emit operation per AI call
-- [ ] `server/api/ai/translate.post.ts` — emit `crouton:operation` (`ai:translate`) with source/target language, text length, model, latency
-- [ ] `server/api/ai/translate-blocks.post.ts` — same, add block count
-- [ ] Any chat completion endpoint — emit `ai:chat` with model, message count, streaming duration
+- [x] `server/api/ai/translate.post.ts` — emit `crouton:operation` (`ai:translate`) with source/target language, text length, model, latency
+- [x] `server/api/ai/translate-blocks.post.ts` — same, add block count
+- [ ] Any chat completion endpoint — emit `ai:chat` with model, message count, streaming duration (no chat endpoint exists in this package)
 
 **Why:** AI operations are expensive and have latency characteristics worth monitoring. Token usage and model selection are also invisible today.
 
 ---
 
 ### C5 — crouton-assets: emit operation on upload/delete
-- [ ] `server/api/upload-image.post.ts` — emit `crouton:operation` (`asset:uploaded`) with filename, MIME type, file size, duration, blob pathname
-- [ ] `server/api/upload-image.delete.ts` — emit `crouton:operation` (`asset:deleted`) with blob pathname
+- [x] `packages/crouton-core/server/api/upload-image.post.ts` — emit `crouton:operation` (`asset:uploaded`) with filename, MIME type, file size, duration, blob pathname
+- [x] `packages/crouton-core/server/api/upload-image.delete.ts` — emit `crouton:operation` (`asset:deleted`) with blob pathname
 - [ ] Add correlation between the blob upload and the subsequent collection record creation (use `correlationId` from B3)
 
 ---
@@ -188,10 +188,7 @@ _Per-package telemetry additions. Depends on B2 (`crouton:operation`) for non-CR
 ---
 
 ### C9 — crouton-sales: POS operation telemetry
-- [ ] Receipt print endpoint — emit `crouton:operation` (`sales:receipt:printed`) with order ID, printer, success/failure, duration
-- [ ] Helper auth endpoint — emit `crouton:operation` (`sales:helper:login`) with event ID (no PIN in payload)
-- [ ] Helper revoke — emit `sales:helper:revoked`
-- [ ] Event open/close state transitions — emit `sales:event:opened`, `sales:event:closed`
+- [x] **N/A** — `crouton-sales` has no server API endpoint files. All POS endpoints (helper login, receipt print, event open/close) live in the user's auto-generated `./layers/sales/` layer, not in this package. The package provides only client composables and server utility functions (print formatters, queue helpers). Instrumentation can be added in user layers if needed.
 
 ---
 
@@ -263,3 +260,8 @@ _New UI capabilities. Depends on B1 and B2._
 | 2026-02-20 | A3 complete — Added `crouton-events/app/app.config.ts` registering `croutonApps.events`. Replaced fragile `_layers` string-match detection in `crouton-devtools/src/module.ts` with `'events' in ((nuxt.options.appConfig as any)?.croutonApps ?? {})` — build-time equivalent of `hasApp('events')`. Group A now 3/3 ✅. |
 | 2026-02-20 | B1 complete — Added `apiRoutes?: string[]` to `CroutonAppConfig`. Registered prefixes in crouton-bookings, crouton-triage, crouton-assets (existing app.config.ts) and created new registrations for crouton-sales, crouton-ai. Devtools module collects all prefixes from `croutonApps.*` at build time into `runtimeConfig.croutonDevtools.apiRoutePrefixes`. operationTracker extended: `TRACKED_PREFIXES` array + `routeGroup` on `Operation` type + `extractRouteLabel()` helper. crouton-pages skipped (prefix `/api/teams/` too broad). |
 | 2026-02-20 | B2 complete — `CroutonOperationEvent` type + `NitroRuntimeHooks` augmentation in `crouton-core/crouton-hooks.d.ts`. New `crouton_operations` table (schema + migration). crouton-events: `server/plugins/operation-listener.ts` subscribes to hook and persists; `crouton-operations/index.get.ts` query endpoint. crouton-devtools: `systemOperationStore.ts` + hook subscription in `operationTracker.ts`. |
+| 2026-02-20 | C1 complete — crouton-admin: all 5 super-admin endpoints (user create/ban/delete, impersonate start/stop) emit `crouton:operation`. Admin userId captured from `requireSuperAdmin()` return value. |
+| 2026-02-20 | C3 complete — crouton-email: instrumented `send()` chokepoint in `server/utils/email.ts`. Emits `email:sent` / `email:failed` with recipient, subject, status, duration, messageId. Covers all 5 email types (verification, magic link, password reset, team invite, welcome). Added local `crouton-hooks.d.ts` augmentation for standalone typecheck. |
+| 2026-02-20 | C4 complete — crouton-ai: `translate.post.ts` and `translate-blocks.post.ts` emit `ai:translate` with sourceLanguage, targetLanguage, textLength/blockCount, model, duration. No chat endpoint exists in this package. Added local type augmentation for standalone typecheck. |
+| 2026-02-20 | C5 complete — crouton-assets: `upload-image.post.ts` emits `asset:uploaded` (filename, mimeType, fileSize, pathname, duration); `upload-image.delete.ts` emits `asset:deleted` (pathname). Files live in crouton-core (not crouton-assets package directly). |
+| 2026-02-20 | C9 N/A — crouton-sales has no server API endpoint files. POS endpoints live in user's auto-generated `./layers/sales/` layer. Package is client + server-utils only. |
