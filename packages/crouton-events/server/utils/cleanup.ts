@@ -78,13 +78,18 @@ export async function cleanupOldEvents(options: CleanupOptions = {}): Promise<Cl
       console.log(`  Events exceed max (${totalAfterDate} > ${maxEvents}), need to delete ${excessCount} more`)
 
       if (!dryRun) {
-        // Delete oldest events until we're under maxEvents
+        // Delete oldest events until we're under maxEvents.
+        // Cleanup runs in bounded batches (max 5000 per run) to avoid a full-table
+        // sort + scan on large tables which would cause DoS under load. If more than
+        // 5000 excess events exist the next scheduled cleanup run will continue.
+        const batchLimit = Math.min(excessCount, 5000)
+
         // Get IDs of oldest events to delete
         const oldestEvents = await db
           .select({ id: croutonEvents.id })
           .from(croutonEvents)
           .orderBy(croutonEvents.timestamp)
-          .limit(excessCount)
+          .limit(batchLimit)
 
         if (oldestEvents.length > 0) {
           // Delete in batches to avoid hitting query limits

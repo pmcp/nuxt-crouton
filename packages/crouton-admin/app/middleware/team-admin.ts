@@ -73,11 +73,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
   }
 
-  // Switch to the team if needed
+  // Switch to the team if needed.
+  // Only swallow 404-style errors (team not found in active session) — those are
+  // harmless because we already confirmed the user is a member above. Any other
+  // error (network failure, auth error, etc.) is unexpected and must propagate so
+  // the user is never left in a broken state with the wrong team context.
   try {
     await switchTeamBySlug(teamSlug)
-  } catch {
-    // Ignore switch errors
+  } catch (e: any) {
+    const status = e?.statusCode ?? e?.status
+    if (status !== 404) {
+      throw e
+    }
   }
 
   // Check admin status by fetching full organization with members
