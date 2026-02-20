@@ -1,0 +1,18 @@
+{
+  "name": {
+    "type": "string",
+    "meta": { "required": true, "label": "Category Name", "maxLength": 100, "area": "main" }
+  },
+  "slug": {
+    "type": "string",
+    "meta": { "label": "URL Slug", "maxLength": 100, "area": "main" }
+  },
+  "description": {
+    "type": "text",
+    "meta": { "label": "Description", "area": "main" }
+  },
+  "icon": {
+    "type": "image",
+    "meta": { "label": "Category Icon", "area": "sidebar" }
+  }
+}

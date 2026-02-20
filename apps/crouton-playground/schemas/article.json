@@ -1,0 +1,35 @@
+{
+  "title": {
+    "type": "string",
+    "meta": { "required": true, "label": "Title", "maxLength": 200, "area": "main" }
+  },
+  "slug": {
+    "type": "string",
+    "meta": { "label": "URL Slug", "area": "main" }
+  },
+  "summary": {
+    "type": "text",
+    "meta": { "label": "Summary", "area": "main" }
+  },
+  "publishedAt": {
+    "type": "date",
+    "meta": { "label": "Published At", "area": "sidebar" }
+  },
+  "featured": {
+    "type": "boolean",
+    "meta": { "label": "Featured", "default": false, "area": "sidebar" }
+  },
+  "hero": {
+    "type": "image",
+    "meta": { "label": "Hero Image", "area": "sidebar" }
+  },
+  "categoryId": {
+    "type": "string",
+    "refTarget": "categories",
+    "meta": { "label": "Category", "area": "sidebar" }
+  },
+  "attachment": {
+    "type": "file",
+    "meta": { "label": "Attachment", "area": "sidebar" }
+  }
+}
