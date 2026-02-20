@@ -27,4 +27,39 @@ declare module '#app' {
   }
 }
 
+/**
+ * Payload for the crouton:operation Nitro hook.
+ *
+ * Used for non-CRUD system events: auth lifecycle, email sends, AI calls,
+ * webhook ingestion, etc. Call via useNitroApp().hooks.callHook('crouton:operation', payload)
+ * from any server handler or Nitro plugin.
+ *
+ * Examples of type values:
+ *   auth:login, auth:logout, auth:register
+ *   auth:team:created, auth:team:member-added
+ *   admin:user:banned, admin:impersonate:start
+ *   email:sent, email:failed
+ *   ai:translate, ai:chat
+ *   asset:uploaded, asset:deleted
+ *   booking:batch-created, webhook:received
+ */
+export interface CroutonOperationEvent {
+  /** Dot-namespaced operation type, e.g. 'auth:login', 'email:sent' */
+  type: string
+  /** Package that emitted the event, e.g. 'crouton-auth', 'crouton-ai' */
+  source: string
+  teamId?: string
+  userId?: string
+  /** Free-form metadata specific to the operation type */
+  metadata?: Record<string, any>
+  /** Milliseconds since epoch — defaults to Date.now() if omitted */
+  timestamp?: number
+}
+
+declare module 'nitropack' {
+  interface NitroRuntimeHooks {
+    'crouton:operation': (payload: CroutonOperationEvent) => void | Promise<void>
+  }
+}
+
 export {}

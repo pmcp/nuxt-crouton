@@ -1,5 +1,18 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 
+export const croutonOperations = sqliteTable('crouton_operations', {
+  id: text('id').primaryKey(),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull(),
+  /** Dot-namespaced type, e.g. 'auth:login', 'email:sent' */
+  type: text('type').notNull(),
+  /** Package that emitted the event, e.g. 'crouton-auth', 'crouton-ai' */
+  source: text('source').notNull(),
+  teamId: text('team_id'),
+  userId: text('user_id'),
+  metadata: text('metadata', { mode: 'json' }).$type<Record<string, any>>()
+})
+
+
 interface EventChange {
   fieldName: string
   oldValue: string | null

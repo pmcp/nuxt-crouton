@@ -8,6 +8,7 @@
 import { defineNitroPlugin } from 'nitropack/runtime'
 import type { NitroApp } from 'nitropack'
 import { operationStore, type Operation } from '../utils/operationStore'
+import { systemOperationStore } from '../utils/systemOperationStore'
 
 /**
  * Extract collection name from API path
@@ -83,6 +84,19 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
 
   // Track request timing
   const requestTimings = new Map<string, { startTime: number, id: string, path: string, method: string, collection: string, operation: Operation['operation'], itemId?: string }>()
+
+  // Subscribe to crouton:operation for system event tracking
+  nitroApp.hooks.hook('crouton:operation', (payload) => {
+    systemOperationStore.add({
+      id: `sop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: payload.timestamp ?? Date.now(),
+      type: payload.type,
+      source: payload.source,
+      teamId: payload.teamId,
+      userId: payload.userId,
+      metadata: payload.metadata
+    })
+  })
 
   // Hook: Before request
   nitroApp.hooks.hook('request', (event) => {
