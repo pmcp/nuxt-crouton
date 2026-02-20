@@ -40,7 +40,6 @@ const emit = defineEmits<{
 
 const { t } = useT()
 const { useTimeAgo } = await import('@vueuse/core')
-const { resolveComponent } = await import('vue')
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { locale, locales } = useI18n()
@@ -713,16 +712,8 @@ const showPreview = ref(false)
 // SEO preview tab in Extra section
 const seoPreviewTab = ref<'search' | 'social'>('search')
 
-// Detect if crouton-assets is installed (component auto-imported when package is present)
-const hasAssetsPicker = (() => {
-  try {
-    const comp = resolveComponent('CroutonAssetsPicker')
-    // resolveComponent returns the name string if the component is NOT found
-    return comp !== 'CroutonAssetsPicker'
-  } catch {
-    return false
-  }
-})()
+// Detect if crouton-assets is installed (component registered globally when package is present)
+const hasAssetsPicker = !!useNuxtApp().vueApp._context.components['CroutonAssetsPicker']
 
 // Asset ID for the picker (not persisted — just tracks current picker selection)
 const selectedOgImageAssetId = ref<string | undefined>()
