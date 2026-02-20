@@ -11,11 +11,11 @@
 | Metric | Value |
 |--------|-------|
 | Total tasks | 28 |
-| Completed | 17 |
-| Skipped | 5 (inapplicable — see notes) |
-| In progress | 5 (agent 3 running: 2C-1,2C-3,2C-4,2C-5,2D-2) |
-| Remaining | 6 (3G group — bigger refactors) |
-| Phase | 2 — Medium priority (agent 3 pending) |
+| Completed | 21 |
+| Skipped | 6 (inapplicable — see notes) |
+| In progress | 0 |
+| Remaining | 6 (3G group — bigger refactors, out of scope) |
+| Phase | 2 complete — Phase 3 partially done |
 
 ---
 
@@ -90,11 +90,11 @@ const { pause, resume } = useIntervalFn(() => fetch(), 5000, { immediate: false 
 
 | # | File | What to change | Status |
 |---|------|---------------|--------|
-| 2C-1 | `crouton-core/app/composables/useExpandableSlideover.ts` | `isExpanded` ref + manual toggle (9 lines → 1) | 🔄 agent 3 |
+| 2C-1 | `crouton-core/app/composables/useExpandableSlideover.ts` | `isExpanded` ref + manual toggle (9 lines → 1) | [x] ✅ |
 | 2C-2 | `crouton-ai/app/components/AITranslateButton.vue` | `showConfirmModal`, `showContextSelector` | [x] ✅ |
-| 2C-3 | `crouton-assets/app/components/Picker.vue` | `isOpen`, `showUploader` | 🔄 agent 3 |
-| 2C-4 | `crouton-events/app/components/CroutonActivityLog.vue` | `showDetail` | 🔄 agent 3 |
-| 2C-5 | `crouton-devtools/src/runtime/client/pages/index.vue` | `showDetailModal` | 🔄 agent 3 |
+| 2C-3 | `crouton-assets/app/components/Picker.vue` | `isOpen`, `showUploader` | [x] ✅ |
+| 2C-4 | `crouton-events/app/components/CroutonActivityLog.vue` | `showDetail` | [x] ✅ |
+| 2C-5 | `crouton-devtools/src/runtime/client/pages/index.vue` | `showDetailModal` | ⏭️ skipped — file doesn't exist |
 
 **Pattern:**
 ```ts
@@ -113,7 +113,7 @@ const [isOpen, toggleOpen] = useToggle(false)
 | # | File | What to change | Status |
 |---|------|---------------|--------|
 | 2D-1 | `crouton-i18n/app/components/DevModeToggle.vue` | `document.addEventListener('click', handleClick, true)` + manual remove | [x] ✅ |
-| 2D-2 | `crouton-triage/app/composables/useTriageOAuth.ts` | `window.addEventListener('message', handler)` in lifecycle hooks | 🔄 agent 3 |
+| 2D-2 | `crouton-triage/app/composables/useTriageOAuth.ts` | `window.addEventListener('message', handler)` in lifecycle hooks | [x] ✅ |
 
 **Pattern:**
 ```ts
