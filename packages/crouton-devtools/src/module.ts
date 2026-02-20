@@ -20,11 +20,10 @@ export default defineNuxtModule<ModuleOptions>({
 
     const resolver = createResolver(import.meta.url)
 
-    // Detect if nuxt-crouton-events package is installed
-    const hasEventsPackage = nuxt.options._layers?.some(
-      (layer: any) => layer.config?.name?.includes('nuxt-crouton-events')
-        || layer.cwd?.includes('nuxt-crouton-events')
-    ) ?? false
+    // Detect if nuxt-crouton-events package is installed via croutonApps registry
+    // (crouton-events registers itself in app/app.config.ts under croutonApps.events)
+    const croutonApps = (nuxt.options.appConfig as any)?.croutonApps ?? {}
+    const hasEventsPackage = 'events' in croutonApps
 
     // Store collections config and events detection in Nitro runtime config
     nuxt.options.nitro = nuxt.options.nitro || {}
