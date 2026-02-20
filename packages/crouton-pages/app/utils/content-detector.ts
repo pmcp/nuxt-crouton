@@ -39,7 +39,7 @@ export function detectContentFormat(content: string | null | undefined): Content
 /**
  * Type guard for PageBlockContent
  */
-export function isPageBlockContent(value: unknown): value is PageBlockContent {
+function isPageBlockContent(value: unknown): value is PageBlockContent {
   if (!value || typeof value !== 'object') {
     return false
   }
@@ -129,36 +129,3 @@ export function htmlToBlockContent(html: string): PageBlockContent {
   }
 }
 
-/**
- * Get content for the appropriate renderer
- * Returns { format, content } with parsed content for blocks
- */
-export function getContentForRenderer(content: string | null | undefined): {
-  format: ContentFormat
-  blocks: PageBlockContent | null
-  html: string | null
-} {
-  const format = detectContentFormat(content)
-
-  if (format === 'blocks') {
-    return {
-      format,
-      blocks: parseBlockContent(content),
-      html: null
-    }
-  }
-
-  if (format === 'html') {
-    return {
-      format,
-      blocks: null,
-      html: content || null
-    }
-  }
-
-  return {
-    format: 'empty',
-    blocks: null,
-    html: null
-  }
-}
