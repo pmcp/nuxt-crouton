@@ -13,6 +13,7 @@
       "label": "Status",
       "default": "todo",
       "area": "sidebar",
+      "displayAs": "optionsSelect",
       "options": ["todo", "in-progress", "done", "blocked"]
     }
   },
@@ -31,6 +32,7 @@
   "assigneeId": {
     "type": "string",
     "refTarget": "contacts",
+    "refScope": "adapter",
     "meta": { "label": "Assignee", "area": "sidebar" }
   },
   "subtasks": {
