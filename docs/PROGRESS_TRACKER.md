@@ -13,8 +13,8 @@
 | Metric | Value |
 |--------|-------|
 | Total tasks | 25 |
-| Completed | 1 |
-| In progress | 2 |
+| Completed | 2 |
+| In progress | 1 |
 | Remaining | 22 |
 | Phase | Tier 1 — Bugs |
 
@@ -26,7 +26,7 @@
 |---|------|--------|
 | T1-1 | Fix `crouton-devtools` API route mismatch (`/execute` vs `/execute-request`) | [x] ✅ |
 | T1-2 | Resolve `crouton-maps` `useMarker` — implement the composable or remove from manifest + docs | [ ] |
-| T1-3 | Resolve `crouton-flow` `CroutonFlowCanvas` — implement the component or remove from manifest | [ ] |
+| T1-3 | Resolve `crouton-flow` `CroutonFlowCanvas` — implement the component or remove from manifest | [x] ✅ |
 
 ---
 
@@ -98,6 +98,7 @@ These were flagged but should NOT be touched without further discussion:
 - Created this plan and progress tracker
 - Identified 1 HIGH-severity bug (devtools route mismatch) and 2 missing implementations (maps/flow manifests)
 - T1-1 ✅ Fixed devtools API route: client was calling `/execute-request`, server registered `/execute` — aligned client to server
+- T1-3 ✅ Removed phantom `CroutonFlowCanvas` from crouton-flow manifest — `Flow.vue` (CroutonFlow) already IS the canvas; replaced with accurate `CroutonFlow` entry describing real props
 
 ---
 

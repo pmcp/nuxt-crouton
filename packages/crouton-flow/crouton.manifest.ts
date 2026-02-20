@@ -11,7 +11,7 @@ export default defineCroutonManifest({
   dependencies: [],
   provides: {
     components: [
-      { name: 'CroutonFlowCanvas', description: 'Vue Flow canvas', props: ['nodes', 'edges'] },
+      { name: 'CroutonFlow', description: 'Interactive node graph canvas', props: ['rows', 'collection', 'parentField', 'positionField', 'labelField', 'sync', 'flowId'] },
     ],
   },
 })
