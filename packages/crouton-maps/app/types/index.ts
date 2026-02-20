@@ -22,15 +22,6 @@ export interface MapInstance {
 }
 
 /**
- * Marker instance with configuration
- */
-export interface MarkerInstance {
-  marker: Marker | null
-  position: LngLatLike
-  options?: MarkerOptions
-}
-
-/**
  * Popup instance with configuration
  */
 export interface PopupInstance {
@@ -49,19 +40,6 @@ export interface UseMapOptions {
   center?: LngLatLike
   zoom?: number
   options?: Partial<MapOptions>
-}
-
-/**
- * Options for creating markers
- */
-export interface UseMarkerOptions {
-  map: Map
-  position: LngLatLike
-  options?: MarkerOptions
-  popup?: {
-    content: string
-    options?: PopupOptions
-  }
 }
 
 /**

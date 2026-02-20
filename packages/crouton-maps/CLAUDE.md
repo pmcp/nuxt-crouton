@@ -16,7 +16,6 @@ Map integration layer for Nuxt Crouton with Mapbox GL JS. Provides map component
 | `app/components/Preview.vue` | Location preview thumbnail with modal |
 | `app/composables/useMapConfig.ts` | Reads Mapbox config, returns `isConfigured` flag |
 | `app/composables/useMap.ts` | Map management |
-| `app/composables/useMarker.ts` | Marker management |
 | `app/composables/useGeocode.ts` | Geocoding (address ↔ coords), no-ops when unconfigured |
 | `app/composables/useMarkerColor.ts` | Derives marker color from CSS `--ui-primary` |
 | `app/composables/useMapboxStyles.ts` | Style presets |
@@ -116,9 +115,6 @@ runtimeConfig: {
 ```typescript
 // Map management
 const { map, isLoaded, initialize, destroy } = useMap()
-
-// Markers
-const { marker, addMarker, removeMarker, setPosition } = useMarker()
 
 // Geocoding
 const { geocode, reverseGeocode, loading, error } = useGeocode()

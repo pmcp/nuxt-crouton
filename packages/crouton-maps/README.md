@@ -283,20 +283,6 @@ await initialize({
 })
 ```
 
-### `useMarker()`
-
-Marker management composable.
-
-```typescript
-const { marker, addMarker, removeMarker, setPosition, togglePopup } = useMarker()
-
-addMarker({
-  map: mapInstance,
-  position: [-122.4194, 37.7749],
-  popup: { content: '<h3>Hello</h3>' }
-})
-```
-
 ### `useGeocode()`
 
 Geocoding composable.
@@ -402,7 +388,6 @@ All components and composables are fully typed. Import types from the package:
 import type {
   MapConfig,
   MapInstance,
-  MarkerInstance,
   GeocodeResult,
   UseMapOptions
 } from '@fyit/crouton-maps'

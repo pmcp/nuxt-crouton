@@ -13,8 +13,8 @@
 | Metric | Value |
 |--------|-------|
 | Total tasks | 25 |
-| Completed | 2 |
-| In progress | 1 |
+| Completed | 3 |
+| In progress | 0 |
 | Remaining | 22 |
 | Phase | Tier 1 — Bugs |
 
@@ -25,7 +25,7 @@
 | # | Task | Status |
 |---|------|--------|
 | T1-1 | Fix `crouton-devtools` API route mismatch (`/execute` vs `/execute-request`) | [x] ✅ |
-| T1-2 | Resolve `crouton-maps` `useMarker` — implement the composable or remove from manifest + docs | [ ] |
+| T1-2 | Resolve `crouton-maps` `useMarker` — implement the composable or remove from manifest + docs | [x] ✅ |
 | T1-3 | Resolve `crouton-flow` `CroutonFlowCanvas` — implement the component or remove from manifest | [x] ✅ |
 
 ---
@@ -99,6 +99,7 @@ These were flagged but should NOT be touched without further discussion:
 - Identified 1 HIGH-severity bug (devtools route mismatch) and 2 missing implementations (maps/flow manifests)
 - T1-1 ✅ Fixed devtools API route: client was calling `/execute-request`, server registered `/execute` — aligned client to server
 - T1-3 ✅ Removed phantom `CroutonFlowCanvas` from crouton-flow manifest — `Flow.vue` (CroutonFlow) already IS the canvas; replaced with accurate `CroutonFlow` entry describing real props
+- T1-2 ✅ Removed `useMarker` from crouton-maps — `Marker.vue` fully encapsulates all marker logic; composable was declared but never implemented or called anywhere; also removed unused `MarkerInstance` + `UseMarkerOptions` types from `types/index.ts`
 
 ---
 
