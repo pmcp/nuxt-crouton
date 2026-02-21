@@ -8,6 +8,9 @@ const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayer
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-maps')) {
   _dependencies.add('crouton-maps')
   console.log('🍞 crouton:maps ✓ Layer loaded')
+  if (!process.env.MAPBOX_TOKEN && !process.env.MAPBOX_PUBLIC_TOKEN) {
+    console.warn('🍞 crouton:maps ⚠ No MAPBOX_TOKEN or MAPBOX_PUBLIC_TOKEN set in .env — maps will show a placeholder')
+  }
 }
 
 export default defineNuxtConfig({
