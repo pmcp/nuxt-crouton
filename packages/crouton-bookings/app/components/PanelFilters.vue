@@ -71,7 +71,7 @@ function isLocationSelected(locationId: string): boolean {
         <UButton
           size="sm"
           :color="showCalendar || selectedDatesCount > 0 ? 'primary' : 'neutral'"
-          variant="soft"
+          :variant="showCalendar ? 'solid' : 'outline'"
           icon="i-lucide-calendar"
           @click="emit('update:showCalendar', !showCalendar)"
         >
@@ -85,7 +85,7 @@ function isLocationSelected(locationId: string): boolean {
           v-if="locations && locations.length > 0"
           size="sm"
           :color="showLocations || selectedLocations.length > 0 ? 'primary' : 'neutral'"
-          variant="soft"
+          :variant="showLocations ? 'solid' : 'outline'"
           icon="i-lucide-map-pin"
           @click="emit('update:showLocations', !showLocations)"
         >
@@ -99,7 +99,7 @@ function isLocationSelected(locationId: string): boolean {
           v-if="hasLocationsWithCoordinates"
           size="sm"
           :color="showMap ? 'primary' : 'neutral'"
-          variant="soft"
+          :variant="showMap ? 'solid' : 'outline'"
           icon="i-lucide-map"
           @click="emit('update:showMap', !showMap)"
         >
@@ -109,7 +109,7 @@ function isLocationSelected(locationId: string): boolean {
         <UButton
           size="sm"
           :color="showCancelled ? 'error' : 'neutral'"
-          variant="soft"
+          :variant="showCancelled ? 'solid' : 'outline'"
           icon="i-lucide-x-circle"
           @click="emit('update:showCancelled', !showCancelled)"
         >
@@ -132,7 +132,7 @@ function isLocationSelected(locationId: string): boolean {
         <UButton
           size="sm"
           :color="calendarView === 'week' ? 'primary' : 'neutral'"
-          variant="soft"
+          :variant="calendarView === 'week' ? 'solid' : 'outline'"
           @click="emit('update:calendarView', 'week')"
         >
           Week
@@ -141,7 +141,7 @@ function isLocationSelected(locationId: string): boolean {
         <UButton
           size="sm"
           :color="calendarView === 'month' ? 'primary' : 'neutral'"
-          variant="soft"
+          :variant="calendarView === 'month' ? 'solid' : 'outline'"
           @click="emit('update:calendarView', 'month')"
         >
           Month
