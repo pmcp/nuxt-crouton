@@ -14,7 +14,7 @@
  * </script>
  * ```
  */
-import { defineNuxtRouteMiddleware, navigateTo, createError, useSession, useTeam, useNuxtApp } from '#imports'
+import { defineNuxtRouteMiddleware, navigateTo, createError, useSession, useTeam, useNuxtApp, useRequestHeaders } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const { isPending, isAuthenticated } = useSession()
@@ -49,15 +49,32 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // If teams not loaded, fetch from API
   if (userTeams.length === 0) {
-    const authClient = nuxtApp.$authClient as any
-    if (authClient?.organization?.list) {
+    if (import.meta.server) {
+      // Server-side: $authClient is not available (client-only plugin), use $fetch directly
+      const requestHeaders = useRequestHeaders(['cookie'])
       try {
-        const result = await authClient.organization.list()
-        if (result.data) {
-          userTeams = result.data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const orgs = await ($fetch as any)('/api/auth/organization/list', {
+          headers: requestHeaders
+        }).catch(() => null)
+        if (orgs) {
+          userTeams = orgs
         }
       } catch (e) {
-        console.error('[@crouton/admin] Failed to fetch teams:', e)
+        console.error('[@crouton/admin] Failed to fetch teams server-side:', e)
+      }
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const authClient = nuxtApp.$authClient as any
+      if (authClient?.organization?.list) {
+        try {
+          const result = await authClient.organization.list()
+          if (result.data) {
+            userTeams = result.data
+          }
+        } catch (e) {
+          console.error('[@crouton/admin] Failed to fetch teams:', e)
+        }
       }
     }
   }
@@ -73,32 +90,37 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
   }
 
-  // Switch to the team if needed.
+  // Switch to the team if needed (client-side only — setActive is a session mutation).
   // Only swallow 404-style errors (team not found in active session) — those are
   // harmless because we already confirmed the user is a member above. Any other
   // error (network failure, auth error, etc.) is unexpected and must propagate so
   // the user is never left in a broken state with the wrong team context.
-  try {
-    await switchTeamBySlug(teamSlug)
-  } catch (e: any) {
-    const status = e?.statusCode ?? e?.status
-    if (status !== 404) {
-      throw e
+  if (import.meta.client) {
+    try {
+      await switchTeamBySlug(teamSlug)
+    } catch (e: any) {
+      const status = e?.statusCode ?? e?.status
+      if (status !== 404) {
+        throw e
+      }
     }
   }
 
   // Check admin status by fetching full organization with members
-  const authClient = nuxtApp.$authClient as any
-  if (authClient?.organization?.getFullOrganization) {
+  if (import.meta.server) {
+    // Server-side: use $fetch with request headers
+    const requestHeaders = useRequestHeaders(['cookie'])
     try {
-      const result = await authClient.organization.getFullOrganization({
-        query: { organizationId: targetTeam.id }
-      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fullOrg = await ($fetch as any)('/api/auth/organization/get-full-organization', {
+        query: { organizationId: targetTeam.id },
+        headers: requestHeaders
+      }).catch(() => null)
 
-      if (result.data?.members) {
+      if (fullOrg?.members) {
         const { user } = useSession()
         const userId = user.value?.id
-        const membership = result.data.members.find((m: any) => m.userId === userId)
+        const membership = fullOrg.members.find((m: any) => m.userId === userId)
 
         if (!membership || (membership.role !== 'owner' && membership.role !== 'admin')) {
           throw createError({
@@ -112,8 +134,39 @@ export default defineNuxtRouteMiddleware(async (to) => {
       }
     } catch (e: any) {
       if (e.statusCode === 403) throw e
-      console.error('[@crouton/admin] Failed to check admin status:', e)
+      console.error('[@crouton/admin] Failed to check admin status server-side:', e)
       throw createError({ status: 401, statusText: 'Unauthorized', message: 'Could not verify admin status' })
+    }
+  } else {
+    // Client-side: use the auth client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const authClient = nuxtApp.$authClient as any
+    if (authClient?.organization?.getFullOrganization) {
+      try {
+        const result = await authClient.organization.getFullOrganization({
+          query: { organizationId: targetTeam.id }
+        })
+
+        if (result.data?.members) {
+          const { user } = useSession()
+          const userId = user.value?.id
+          const membership = result.data.members.find((m: any) => m.userId === userId)
+
+          if (!membership || (membership.role !== 'owner' && membership.role !== 'admin')) {
+            throw createError({
+              statusCode: 403,
+              statusMessage: 'Forbidden',
+              message: 'Team admin or owner access required'
+            })
+          }
+          // User is admin/owner - allow access
+          return
+        }
+      } catch (e: any) {
+        if (e.statusCode === 403) throw e
+        console.error('[@crouton/admin] Failed to check admin status:', e)
+        throw createError({ status: 401, statusText: 'Unauthorized', message: 'Could not verify admin status' })
+      }
     }
   }
 

@@ -118,16 +118,32 @@ async function resolveTeamContext(
   // Ensure teams are loaded - fetch from API if nanostore is empty
   let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
   if (userTeams.length === 0) {
-    try {
-      const authClient = useAuthClientSafe()
-      if (authClient?.organization?.list) {
-        const result = await authClient.organization.list()
-        if (result.data && result.data.length > 0) {
-          userTeams = result.data
+    if (import.meta.server) {
+      // Server-side: $authClient is not available (client-only plugin), use $fetch directly
+      const requestHeaders = useRequestHeaders(['cookie'])
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const orgs = await ($fetch as any)('/api/auth/organization/list', {
+          headers: requestHeaders
+        }).catch(() => null)
+        if (orgs && orgs.length > 0) {
+          userTeams = orgs
         }
+      } catch (e) {
+        console.error('[@crouton/auth] Failed to fetch teams server-side:', e)
       }
-    } catch (e) {
-      console.error('[@crouton/auth] Failed to fetch teams:', e)
+    } else {
+      try {
+        const authClient = useAuthClientSafe()
+        if (authClient?.organization?.list) {
+          const result = await authClient.organization.list()
+          if (result.data && result.data.length > 0) {
+            userTeams = result.data
+          }
+        }
+      } catch (e) {
+        console.error('[@crouton/auth] Failed to fetch teams:', e)
+      }
     }
   }
 
@@ -158,8 +174,8 @@ async function resolveTeamContext(
       }
     }
 
-    // Valid team - switch session if needed
-    if (activeOrganization.value?.id !== targetTeam.id) {
+    // Valid team - switch session if needed (client-only: authClient is not available on server)
+    if (!import.meta.server && activeOrganization.value?.id !== targetTeam.id) {
       try {
         await switchTeamBySlug(urlTeamParam)
       } catch (e) {
