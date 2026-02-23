@@ -61,14 +61,19 @@ What exists today works: bookings references locations by name, email checks a r
 
 The capability system becomes necessary when a third-party package needs to reference something without knowing what's installed, or the builder UI needs to wire packages together dynamically. Until then, existing patterns are sufficient. When needed, the manifest system is the right place to add `requires` and `provides` fields. The infrastructure is ready; the abstraction can wait.
 
-### Two surfaces, one app feel
+### One app, visibility controls what's shown
 
-The public site IS the app. Auth state controls what's visible.
+There are no separate surfaces. There's one app. Blocks and pages have visibility rules:
 
-- **Public/member**: crouton-pages with block editor and page types. Logged-in users see more — "my bookings" in the nav, pre-filled forms, personal history. Auth modals handle login inline. No separate member area, no member routing. Same pages, conditional rendering. The app feels like an app, not a website with a separate portal.
-- **Admin**: Generated forms and lists, plus crouton-admin for super-admin. Works.
+- **Public** — everyone sees it (hero, schedule, contact form)
+- **Authenticated** — logged-in members see it (my bookings, my invoices, profile)
+- **Admin** — team admins see it (manage bookings, manage contacts, all invoices)
 
-Packages contribute page types and components that render differently based on auth state. No surface registry needed.
+The public site IS the app. When you log in, more pages and blocks appear. Auth modals handle login inline. No separate member portal, no separate admin app (admin routes exist but they're part of the same deployment). The app feels like an app.
+
+In the builder, users compose one app by adding blocks. Each block has a visibility level. The builder shows a preview that switches between "what the public sees," "what a member sees," and "what an admin sees" — same app, different auth state.
+
+"Contacts" in the builder maps to auth members. The builder says "All contacts" but under the hood it's a member list view.
 
 ### Standard output covers most cases
 
@@ -113,8 +118,8 @@ Over time, the designer's patterns become CLI defaults. Date + capacity → cale
 
 | What | Why |
 |---|---|
+| **Atelier builder** | Evolve crouton-designer into the block-based app builder. Template selection → block composition with visibility rules → preview → automations → scaffold. Lives inside crouton as a package. |
 | **Invoicing** | Recurring billing, membership payments. Different from POS. References members. Covers the second most common need after bookings. |
-| **Atelier pipeline** | Refactor the designer into the architect + designer two-role pipeline. Wire it to the CLI. |
 
 ## What the docs site needs
 
@@ -139,11 +144,11 @@ Success means: a small organisation can affordably get exactly what they need wi
 
 ## Priorities in order
 
-1. **CLI + hint system** — the CLI is active work. Next feature: `$list`, `$card`, `$form` hints so the designer role can add layout decisions to schemas and the CLI acts on them. This is the bridge between the architect/designer pipeline and generation.
+1. **CLI + hint system** — the CLI is active work. Next feature: `$list`, `$card`, `$form` hints so the designer role can add layout decisions to schemas and the CLI acts on them. This is the bridge between the builder and generation.
 
-2. **Docs cleanup** — scope migration, SuperSaaS removal, document all packages. The site is the first thing developers see.
+2. **Atelier builder** — evolve crouton-designer into the block-based app composer. Template → blocks with visibility → preview → automations → scaffold. See `atelier-builder-plan.md` for the implementation plan.
 
-3. **Atelier pipeline** — wire the designer into the architect + designer two-role flow, connected to the CLI. The generation flow described in `atelier-generation-flow.md`.
+3. **Docs cleanup** — scope migration, SuperSaaS removal, document all packages. The site is the first thing developers see.
 
 4. **Invoicing** — recurring billing with member references. Bookings + invoicing covers the two most common needs.
 
