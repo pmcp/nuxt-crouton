@@ -13,20 +13,22 @@
 </script>
 
 <template>
-  <div class="flex flex-col h-dvh">
-    <UDashboardGroup class="flex-1 min-h-0">
-      <CroutonAdminSidebar context="super" />
-      <UDashboardPanel>
-        <UDashboardNavbar title="Super Admin">
-          <template #leading>
-            <UDashboardSidebarCollapse />
-          </template>
-        </UDashboardNavbar>
-        <div class="flex-1 overflow-y-auto">
-          <slot />
-        </div>
-      </UDashboardPanel>
-    </UDashboardGroup>
-    <CroutonAdminStatusBar />
-  </div>
+  <UDashboardGroup>
+    <CroutonAdminSidebar context="super" />
+    <div class="flex flex-col flex-1 min-w-0 min-h-0">
+      <div class="flex flex-1 min-h-0 overflow-hidden">
+        <UDashboardPanel>
+          <UDashboardNavbar title="Super Admin">
+            <template #leading>
+              <UDashboardSidebarCollapse />
+            </template>
+          </UDashboardNavbar>
+          <div class="flex-1 overflow-y-auto">
+            <slot />
+          </div>
+        </UDashboardPanel>
+      </div>
+      <CroutonAdminStatusBar />
+    </div>
+  </UDashboardGroup>
 </template>
