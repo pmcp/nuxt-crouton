@@ -40,48 +40,13 @@ export function getBlockCommandItems(query: string): BlockCommandItem[] {
       editor.chain().focus().deleteRange(range).run()
 
       // Insert the appropriate block
-      switch (item.type) {
-        case 'heroBlock':
-          editor.chain().focus().insertHeroBlock().run()
-          break
-        case 'sectionBlock':
-          editor.chain().focus().insertSectionBlock().run()
-          break
-        case 'ctaBlock':
-          editor.chain().focus().insertCTABlock().run()
-          break
-        case 'cardGridBlock':
-          editor.chain().focus().insertCardGridBlock().run()
-          break
-        case 'separatorBlock':
-          editor.chain().focus().insertSeparatorBlock().run()
-          break
-        case 'collectionBlock':
-          editor.chain().focus().insertCollectionBlock().run()
-          break
-        case 'faqBlock':
-          editor.chain().focus().insertFaqBlock().run()
-          break
-        case 'twoColumnBlock':
-          editor.chain().focus().insertTwoColumnBlock().run()
-          break
-        case 'richTextBlock':
-          editor.chain().focus().insertRichTextBlock().run()
-          break
-        case 'chartBlock':
-          editor.chain().focus().insertChartBlock().run()
-          break
-        case 'mapBlock':
-          editor.chain().focus().insertMapBlock().run()
-          break
-        case 'collectionMapBlock':
-          editor.chain().focus().insertCollectionMapBlock().run()
-          break
-        case 'embedBlock':
-          editor.chain().focus().insertEmbedBlock().run()
-          break
-        default:
-          console.warn(`Unknown block type: ${item.type}`)
+      // Build insert command name from block type (e.g. 'heroBlock' → 'insertHeroBlock')
+      const commandName = `insert${item.type.charAt(0).toUpperCase()}${item.type.slice(1)}`
+      const chain = editor.chain().focus()
+      if (typeof (chain as any)[commandName] === 'function') {
+        ;(chain as any)[commandName]().run()
+      } else {
+        console.warn(`Unknown block command: ${commandName} for type ${item.type}`)
       }
     }
   }))

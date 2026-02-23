@@ -10,6 +10,7 @@
 // Base Types
 // ============================================================================
 
+/** Core block types built into crouton-pages. Addon blocks use string types via CroutonBlockDefinition. */
 export type BlockType =
   | 'heroBlock'
   | 'sectionBlock'
@@ -20,10 +21,8 @@ export type BlockType =
   | 'collectionBlock'
   | 'faqBlock'
   | 'twoColumnBlock'
-  | 'chartBlock'
-  | 'mapBlock'
-  | 'collectionMapBlock'
   | 'embedBlock'
+  | 'imageBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -174,32 +173,9 @@ export interface CollectionBlockAttrs {
   showPagination?: boolean
 }
 
-export type ChartType = 'bar' | 'line' | 'area' | 'donut'
-
-export interface ChartBlockAttrs {
-  /**
-   * Source mode.
-   * 'collection' — pick a collection from the registry (default).
-   * 'preset' — pick a named preset registered by a package (e.g., crouton-bookings).
-   */
-  mode?: 'collection' | 'preset'
-  /** Preset ID when mode === 'preset' (e.g., 'bookings:by-date') */
-  preset?: string
-  /** Collection name from registry (e.g., 'monthlySales') — used when mode === 'collection' */
-  collection: string
-  /** Chart type to render */
-  chartType: ChartType
-  /** Field to use as X axis. Auto-resolved from display.title if empty. */
-  xField?: string
-  /** Comma-separated field names for Y axis values. Auto-detected if empty. */
-  yFields?: string
-  /** Optional title above the chart */
-  title?: string
-  /** Chart height in pixels */
-  height?: number
-  /** Stack series (bar/area charts) */
-  stacked?: boolean
-}
+// Chart/Map block types have been moved to their respective addon packages
+// (crouton-charts, crouton-maps) and are now registered via croutonBlocks in app.config.ts.
+// Type definitions are inlined in those packages' components.
 
 // ============================================================================
 // Block Type Union
@@ -215,17 +191,16 @@ export type BlockAttrs =
   | CollectionBlockAttrs
   | FaqBlockAttrs
   | TwoColumnBlockAttrs
-  | ChartBlockAttrs
-  | MapBlockAttrs
-  | CollectionMapBlockAttrs
   | EmbedBlockAttrs
+  | ImageBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
 // ============================================================================
 
 export interface PageBlock<T extends BlockAttrs = BlockAttrs> {
-  type: BlockType
+  /** Core block type or addon block type string (e.g. 'chartBlock', 'mapBlock') */
+  type: BlockType | string
   attrs: T
 }
 
@@ -265,50 +240,22 @@ export interface TwoColumnBlock extends PageBlock<TwoColumnBlockAttrs> {
   type: 'twoColumnBlock'
 }
 
-export interface ChartBlock extends PageBlock<ChartBlockAttrs> {
-  type: 'chartBlock'
+
+export type ImageBlockWidth = 'full' | 'large' | 'medium' | 'small'
+
+export interface ImageBlockAttrs {
+  /** Image source URL */
+  src: string
+  /** Alt text for accessibility */
+  alt?: string
+  /** Optional caption below the image */
+  caption?: string
+  /** Display width: full (100%), large (80%), medium (60%), small (40%) */
+  width?: ImageBlockWidth
 }
 
-export interface CollectionMapBlockAttrs {
-  /** Collection name from registry (e.g., 'bookingsLocations') */
-  collection: string
-  /** Optional heading above the map */
-  title?: string
-  /** Map height in pixels */
-  height: number
-  /** Fallback zoom level (when no items or bounds can't be computed) */
-  zoom: number
-  /** Mapbox style preset */
-  style: string
-  /** Override coordinate field name (auto-detected if empty) */
-  coordinateField?: string
-  /** Field to use for marker popup label (uses display.title if empty) */
-  labelField?: string
-}
-
-export interface MapBlockAttrs {
-  /** Display label / place name */
-  address?: string
-  /** Center latitude */
-  lat: number
-  /** Center longitude */
-  lng: number
-  /** Map zoom level */
-  zoom: number
-  /** Mapbox style preset */
-  style: string
-  /** Map height in pixels */
-  height: number
-  /** Optional popup text at center pin */
-  markerLabel?: string
-}
-
-export interface MapBlock extends PageBlock<MapBlockAttrs> {
-  type: 'mapBlock'
-}
-
-export interface CollectionMapBlock extends PageBlock<CollectionMapBlockAttrs> {
-  type: 'collectionMapBlock'
+export interface ImageBlock extends PageBlock<ImageBlockAttrs> {
+  type: 'imageBlock'
 }
 
 export interface EmbedBlockAttrs {
@@ -344,7 +291,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
   name: string
   description: string
   icon: string
-  category: 'hero' | 'content' | 'cta' | 'layout' | 'faq'
+  category: 'hero' | 'content' | 'cta' | 'layout' | 'faq' | 'media'
   defaultAttrs: T
   schema: BlockPropertySchema[]
 }
@@ -371,7 +318,7 @@ export interface BlockEditorState {
 }
 
 export interface BlockMenuItem {
-  type: BlockType
+  type: BlockType | string
   name: string
   description: string
   icon: string

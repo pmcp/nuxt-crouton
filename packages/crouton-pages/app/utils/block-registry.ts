@@ -17,10 +17,8 @@ import type {
   CollectionBlockAttrs,
   FaqBlockAttrs,
   TwoColumnBlockAttrs,
-  ChartBlockAttrs,
-  MapBlockAttrs,
-  CollectionMapBlockAttrs,
   EmbedBlockAttrs,
+  ImageBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -461,258 +459,52 @@ export const twoColumnBlockDefinition: BlockDefinition<TwoColumnBlockAttrs> = {
   ]
 }
 
-export const chartBlockDefinition: BlockDefinition<ChartBlockAttrs> = {
-  type: 'chartBlock',
-  name: 'Chart',
-  description: 'Embed a collection as a chart (bar, line, area, donut)',
-  icon: 'i-lucide-chart-bar',
-  category: 'content',
-  defaultAttrs: {
-    mode: 'collection',
-    collection: '',
-    chartType: 'bar',
-    height: 300,
-    stacked: false
-  },
-  schema: [
-    {
-      name: 'mode',
-      type: 'select',
-      label: 'Data source',
-      options: [
-        { label: 'Collection', value: 'collection' },
-        { label: 'Preset', value: 'preset' }
-      ],
-      defaultValue: 'collection'
-    },
-    // Preset mode fields
-    {
-      name: 'preset',
-      type: 'chart-preset',
-      label: 'Chart Preset',
-      description: 'Select a pre-configured chart from an installed package',
-      visibleWhen: (attrs) => attrs.mode === 'preset'
-    },
-    // Collection mode fields
-    {
-      name: 'collection',
-      type: 'collection',
-      label: 'Collection',
-      description: 'Select a collection to visualize',
-      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
-    },
-    {
-      name: 'chartType',
-      type: 'select',
-      label: 'Chart Type',
-      options: [
-        { label: 'Bar', value: 'bar' },
-        { label: 'Line', value: 'line' },
-        { label: 'Area', value: 'area' },
-        { label: 'Donut', value: 'donut' }
-      ],
-      defaultValue: 'bar',
-      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
-    },
-    {
-      name: 'yFields',
-      type: 'text',
-      label: 'Y-axis fields',
-      description: 'Comma-separated field names. Leave empty to auto-detect numeric fields.',
-      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
-    },
-    {
-      name: 'xField',
-      type: 'text',
-      label: 'X-axis field',
-      description: 'Field for the X axis. Auto-resolved from collection title field if empty.',
-      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
-    },
-    // Shared fields (visible in both modes)
-    {
-      name: 'title',
-      type: 'text',
-      label: 'Title',
-      description: 'Optional heading above the chart (overrides preset default)'
-    },
-    {
-      name: 'height',
-      type: 'select',
-      label: 'Height',
-      options: [
-        { label: '200px', value: '200' },
-        { label: '300px', value: '300' },
-        { label: '400px', value: '400' },
-        { label: '500px', value: '500' }
-      ],
-      defaultValue: '300'
-    },
-    {
-      name: 'stacked',
-      type: 'switch',
-      label: 'Stacked',
-      description: 'Stack series (bar and area charts only)',
-      visibleWhen: (attrs) => !attrs.mode || attrs.mode === 'collection'
-    }
-  ]
-}
+// Chart, Map, and CollectionMap block definitions have been moved to their
+// respective addon packages (crouton-charts, crouton-maps) and are now
+// registered via croutonBlocks in app.config.ts.
 
-export const mapBlockDefinition: BlockDefinition<MapBlockAttrs> = {
-  type: 'mapBlock',
-  name: 'Map',
-  description: 'Embed an interactive map with a location pin',
-  icon: 'i-lucide-map-pin',
-  category: 'content',
+export const imageBlockDefinition: BlockDefinition<ImageBlockAttrs> = {
+  type: 'imageBlock',
+  name: 'Image',
+  description: 'A standalone image with optional caption',
+  icon: 'i-lucide-image',
+  category: 'media',
   defaultAttrs: {
-    lat: 0,
-    lng: 0,
-    zoom: 12,
-    style: 'streets',
-    height: 400
+    src: '',
+    alt: '',
+    caption: '',
+    width: 'full'
   },
   schema: [
     {
-      name: 'address',
-      type: 'text',
-      label: 'Place name',
-      description: 'Display label for the location (for reference only)'
+      name: 'src',
+      type: 'image',
+      label: 'Image',
+      required: true
     },
     {
-      name: 'lat',
+      name: 'alt',
       type: 'text',
-      label: 'Latitude',
-      required: true,
-      description: 'Center latitude (e.g. 37.7749)'
+      label: 'Alt Text',
+      description: 'Describe the image for accessibility'
     },
     {
-      name: 'lng',
+      name: 'caption',
       type: 'text',
-      label: 'Longitude',
-      required: true,
-      description: 'Center longitude (e.g. -122.4194)'
+      label: 'Caption',
+      description: 'Optional caption displayed below the image'
     },
     {
-      name: 'zoom',
+      name: 'width',
       type: 'select',
-      label: 'Zoom',
+      label: 'Width',
       options: [
-        { label: 'Country (8)', value: '8' },
-        { label: 'Region (10)', value: '10' },
-        { label: 'City (12)', value: '12' },
-        { label: 'Neighbourhood (14)', value: '14' },
-        { label: 'Street (16)', value: '16' }
+        { label: 'Full (100%)', value: 'full' },
+        { label: 'Large (80%)', value: 'large' },
+        { label: 'Medium (60%)', value: 'medium' },
+        { label: 'Small (40%)', value: 'small' }
       ],
-      defaultValue: '12'
-    },
-    {
-      name: 'style',
-      type: 'select',
-      label: 'Map style',
-      options: [
-        { label: 'Streets', value: 'streets' },
-        { label: 'Light', value: 'light' },
-        { label: 'Dark', value: 'dark' },
-        { label: 'Satellite', value: 'satellite' },
-        { label: 'Outdoors', value: 'outdoors' }
-      ],
-      defaultValue: 'streets'
-    },
-    {
-      name: 'height',
-      type: 'select',
-      label: 'Height',
-      options: [
-        { label: '300px', value: '300' },
-        { label: '400px', value: '400' },
-        { label: '500px', value: '500' },
-        { label: '600px', value: '600' }
-      ],
-      defaultValue: '400'
-    },
-    {
-      name: 'markerLabel',
-      type: 'text',
-      label: 'Marker popup',
-      description: 'Text shown in the popup when the pin is clicked'
-    }
-  ]
-}
-
-export const collectionMapBlockDefinition: BlockDefinition<CollectionMapBlockAttrs> = {
-  type: 'collectionMapBlock',
-  name: 'Collection Map',
-  description: 'Show collection items as markers on an interactive map',
-  icon: 'i-lucide-map',
-  category: 'content',
-  defaultAttrs: {
-    collection: '',
-    height: 400,
-    zoom: 12,
-    style: 'streets'
-  },
-  schema: [
-    {
-      name: 'collection',
-      type: 'collection',
-      label: 'Collection',
-      required: true,
-      description: 'Select a collection with location data'
-    },
-    {
-      name: 'title',
-      type: 'text',
-      label: 'Title',
-      description: 'Optional heading above the map'
-    },
-    {
-      name: 'coordinateField',
-      type: 'text',
-      label: 'Coordinate field',
-      description: 'Override the auto-detected coordinate field name'
-    },
-    {
-      name: 'labelField',
-      type: 'text',
-      label: 'Label field',
-      description: 'Field to use for marker popup (uses title field if empty)'
-    },
-    {
-      name: 'style',
-      type: 'select',
-      label: 'Map style',
-      options: [
-        { label: 'Streets', value: 'streets' },
-        { label: 'Light', value: 'light' },
-        { label: 'Dark', value: 'dark' },
-        { label: 'Satellite', value: 'satellite' },
-        { label: 'Outdoors', value: 'outdoors' }
-      ],
-      defaultValue: 'streets'
-    },
-    {
-      name: 'zoom',
-      type: 'select',
-      label: 'Fallback zoom',
-      options: [
-        { label: 'Country (8)', value: '8' },
-        { label: 'Region (10)', value: '10' },
-        { label: 'City (12)', value: '12' },
-        { label: 'Neighbourhood (14)', value: '14' },
-        { label: 'Street (16)', value: '16' }
-      ],
-      defaultValue: '12'
-    },
-    {
-      name: 'height',
-      type: 'select',
-      label: 'Height',
-      options: [
-        { label: '300px', value: '300' },
-        { label: '400px', value: '400' },
-        { label: '500px', value: '500' },
-        { label: '600px', value: '600' }
-      ],
-      defaultValue: '400'
+      defaultValue: 'full'
     }
   ]
 }
@@ -768,10 +560,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   collectionBlock: collectionBlockDefinition,
   faqBlock: faqBlockDefinition,
   twoColumnBlock: twoColumnBlockDefinition,
-  chartBlock: chartBlockDefinition,
-  mapBlock: mapBlockDefinition,
-  collectionMapBlock: collectionMapBlockDefinition,
-  embedBlock: embedBlockDefinition
+  embedBlock: embedBlockDefinition,
+  imageBlock: imageBlockDefinition
 }
 
 // ============================================================================

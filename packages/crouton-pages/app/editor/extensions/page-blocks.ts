@@ -6,6 +6,7 @@
  */
 
 import { Extension } from '@tiptap/core'
+import type { CroutonBlockDefinition } from '@fyit/crouton-core/app/types/block-definition'
 import { HeroBlock } from './hero-block'
 import { SectionBlock } from './section-block'
 import { CTABlock } from './cta-block'
@@ -14,11 +15,10 @@ import { SeparatorBlock } from './separator-block'
 import { CollectionBlock } from './collection-block'
 import { FaqBlock } from './faq-block'
 import { TwoColumnBlock } from './two-column-block'
-import { ChartBlock } from './chart-block'
-import { MapBlock } from './map-block'
-import { CollectionMapBlock } from './collection-map-block'
 import { EmbedBlock } from './embed-block'
+import { ImageBlock } from './image-block'
 import { BlockCommands } from './block-commands'
+import { createAddonBlockExtension } from './addon-block-factory'
 
 export interface PageBlocksOptions {
   /**
@@ -33,11 +33,13 @@ export interface PageBlocksOptions {
     collection?: boolean
     faq?: boolean
     twoColumn?: boolean
-    chart?: boolean
-    map?: boolean
-    collectionMap?: boolean
     embed?: boolean
+    image?: boolean
   }
+  /**
+   * Addon block definitions from external packages (registered via croutonBlocks in app.config.ts)
+   */
+  addonBlocks?: CroutonBlockDefinition[]
   /**
    * Enable slash commands for block insertion
    */
@@ -62,21 +64,20 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         collection: true,
         faq: true,
         twoColumn: true,
-        chart: true,
-        map: true,
-        collectionMap: true,
-        embed: true
+        embed: true,
+        image: true
       },
+      addonBlocks: [],
       enableSlashCommands: true,
       suggestionOptions: {}
     }
   },
 
   addExtensions() {
-    const extensions: Extension[] = []
-    const { blocks, enableSlashCommands, suggestionOptions } = this.options
+    const extensions: any[] = []
+    const { blocks, addonBlocks, enableSlashCommands, suggestionOptions } = this.options
 
-    // Add enabled block extensions
+    // Add enabled core block extensions
     if (blocks?.hero !== false) {
       extensions.push(HeroBlock)
     }
@@ -101,17 +102,18 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.twoColumn !== false) {
       extensions.push(TwoColumnBlock)
     }
-    if (blocks?.chart !== false) {
-      extensions.push(ChartBlock)
-    }
-    if (blocks?.map !== false) {
-      extensions.push(MapBlock)
-    }
-    if (blocks?.collectionMap !== false) {
-      extensions.push(CollectionMapBlock)
-    }
     if (blocks?.embed !== false) {
       extensions.push(EmbedBlock)
+    }
+    if (blocks?.image !== false) {
+      extensions.push(ImageBlock)
+    }
+
+    // Add addon block extensions (from croutonBlocks in app.config.ts)
+    if (addonBlocks?.length) {
+      for (const def of addonBlocks) {
+        extensions.push(createAddonBlockExtension(def))
+      }
     }
 
     // Add slash commands if enabled
@@ -134,11 +136,10 @@ export { SeparatorBlock } from './separator-block'
 export { CollectionBlock } from './collection-block'
 export { FaqBlock } from './faq-block'
 export { TwoColumnBlock } from './two-column-block'
-export { ChartBlock } from './chart-block'
-export { MapBlock } from './map-block'
-export { CollectionMapBlock } from './collection-map-block'
 export { EmbedBlock } from './embed-block'
+export { ImageBlock } from './image-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
+export { createAddonBlockExtension } from './addon-block-factory'
 
 // Export types
 export type { HeroBlockOptions } from './hero-block'
@@ -149,10 +150,8 @@ export type { SeparatorBlockOptions } from './separator-block'
 export type { CollectionBlockOptions } from './collection-block'
 export type { FaqBlockOptions } from './faq-block'
 export type { TwoColumnBlockOptions } from './two-column-block'
-export type { ChartBlockOptions } from './chart-block'
-export type { MapBlockOptions } from './map-block'
-export type { CollectionMapBlockOptions } from './collection-map-block'
 export type { EmbedBlockOptions } from './embed-block'
+export type { ImageBlockOptions } from './image-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks

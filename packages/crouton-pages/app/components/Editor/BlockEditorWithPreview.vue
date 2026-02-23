@@ -15,12 +15,16 @@ import { PageBlocks } from '../../editor/extensions/page-blocks'
  */
 import { getBlockMenuItems } from '../../utils/block-registry'
 
+// Get addon blocks from croutonBlocks registry (chart, map, etc.)
+const { blocksList: addonBlocks } = useCroutonBlocks()
+
 // Create extensions once per component instance, wrapped in markRaw to prevent
 // Vue's reactivity system from proxying TipTap internals
 // Note: enableSlashCommands is false because we use UEditorSuggestionMenu instead
 const pageBlockExtensions = markRaw([
   PageBlocks.configure({
-    enableSlashCommands: false
+    enableSlashCommands: false,
+    addonBlocks: addonBlocks.value
   })
 ])
 
@@ -147,10 +151,9 @@ const tabItems = [
   { label: 'Preview', value: 'preview', icon: 'i-lucide-eye' }
 ]
 
-// Block suggestion items
+// Block suggestion items — core + addon blocks
 const blockSuggestionItems = computed<BlockSuggestionItem[]>(() => {
-  const items = getBlockMenuItems()
-  return items
+  const coreItems = getBlockMenuItems()
     .filter(item => item.type !== 'richTextBlock')
     .map(item => ({
       type: item.type,
@@ -160,6 +163,17 @@ const blockSuggestionItems = computed<BlockSuggestionItem[]>(() => {
       category: getCategoryLabel(item.category),
       command: getInsertCommand(item.type)
     }))
+
+  const addonItems = addonBlocks.value.map(def => ({
+    type: def.type,
+    label: def.name,
+    description: def.description,
+    icon: def.icon,
+    category: getCategoryLabel(def.category),
+    command: `insert${def.type.charAt(0).toUpperCase()}${def.type.slice(1)}`
+  }))
+
+  return [...coreItems, ...addonItems]
 })
 
 function getCategoryLabel(category: string): string {
@@ -173,15 +187,7 @@ function getCategoryLabel(category: string): string {
 }
 
 function getInsertCommand(type: string): string {
-  const commands: Record<string, string> = {
-    heroBlock: 'insertHeroBlock',
-    sectionBlock: 'insertSectionBlock',
-    ctaBlock: 'insertCTABlock',
-    cardGridBlock: 'insertCardGridBlock',
-    separatorBlock: 'insertSeparatorBlock',
-    collectionBlock: 'insertCollectionBlock'
-  }
-  return commands[type] || type
+  return `insert${type.charAt(0).toUpperCase()}${type.slice(1)}`
 }
 
 // Editor ref

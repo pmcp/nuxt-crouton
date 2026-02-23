@@ -14,6 +14,9 @@ import type { Node } from '@tiptap/pm/model'
 import type { BlockType, BlockPropertySchema } from '../../types/blocks'
 import { getBlockDefinition } from '../../utils/block-registry'
 
+// Addon blocks from croutonBlocks registry
+const { getBlock: getAddonBlock } = useCroutonBlocks()
+
 interface Props {
   node: Node
 }
@@ -26,9 +29,32 @@ const emit = defineEmits<{
   close: []
 }>()
 
-// Get block definition and schema
+// Get block definition and schema — check core blocks first, then addon blocks
 const blockType = computed(() => props.node.type.name as BlockType)
-const blockDefinition = computed(() => getBlockDefinition(blockType.value))
+const blockDefinition = computed(() => {
+  const coreDef = getBlockDefinition(blockType.value)
+  if (coreDef) return coreDef
+  // Fall back to addon block definition
+  const addonDef = getAddonBlock(blockType.value)
+  if (addonDef) {
+    return {
+      type: addonDef.type,
+      name: addonDef.name,
+      description: addonDef.description,
+      icon: addonDef.icon,
+      category: addonDef.category,
+      defaultAttrs: addonDef.defaultAttrs,
+      schema: addonDef.schema as BlockPropertySchema[]
+    }
+  }
+  return undefined
+})
+
+// Resolve custom property component from addon block definitions
+function getAddonPropertyComponent(fieldType: string): string | null {
+  const addonDef = getAddonBlock(blockType.value)
+  return addonDef?.propertyComponents?.[fieldType] || null
+}
 
 // Local state for editing (copy of node attrs)
 // Changes are ONLY applied when user clicks "Done"
@@ -282,14 +308,15 @@ function onDelete() {
             />
           </UFormField>
 
-          <!-- Chart Preset Picker -->
+          <!-- Custom property component from addon blocks (e.g. chart-preset picker) -->
           <UFormField
-            v-else-if="field.type === 'chart-preset'"
+            v-else-if="getAddonPropertyComponent(field.type)"
             :label="field.label"
             :name="field.name"
             :description="field.description"
           >
-            <CroutonPagesBlocksPropertiesChartPresetPicker
+            <component
+              :is="getAddonPropertyComponent(field.type)!"
               :model-value="localAttrs[field.name] as string || ''"
               @update:model-value="onFieldChange(field.name, $event)"
             />

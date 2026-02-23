@@ -8,6 +8,18 @@
 import type { PageBlockContent, PageBlock } from '../types/blocks'
 import { parseBlockContent } from '../utils/content-detector'
 
+// Addon blocks — lazy access to avoid composable-outside-setup errors
+// when BlockContent is resolved during SSR module evaluation
+const croutonBlocks = computed(() => {
+  try {
+    const { getBlock, hasBlock } = useCroutonBlocks()
+    return { getBlock, hasBlock }
+  }
+  catch {
+    return { getBlock: () => undefined, hasBlock: () => false }
+  }
+})
+
 /**
  * Minimal XSS sanitizer — strips <script> tags and on* event handler attributes.
  * SSR-safe: returns the original string unchanged when running server-side.
@@ -45,7 +57,7 @@ const blocks = computed<PageBlock[]>(() => {
   return props.content.content || []
 })
 
-// Component mapping for custom blocks
+// Component mapping for core blocks
 const blockComponents: Record<string, string> = {
   heroBlock: 'CroutonPagesBlocksRenderHeroBlock',
   sectionBlock: 'CroutonPagesBlocksRenderSectionBlock',
@@ -56,15 +68,25 @@ const blockComponents: Record<string, string> = {
   collectionBlock: 'CroutonPagesBlocksRenderCollectionBlock',
   faqBlock: 'CroutonPagesBlocksRenderFaqBlock',
   twoColumnBlock: 'CroutonPagesBlocksRenderTwoColumnBlock',
-  chartBlock: 'CroutonPagesBlocksRenderChartBlock',
-  mapBlock: 'CroutonPagesBlocksRenderMapBlock',
-  collectionMapBlock: 'CroutonPagesBlocksRenderCollectionMapBlock',
-  embedBlock: 'CroutonPagesBlocksRenderEmbedBlock'
+  embedBlock: 'CroutonPagesBlocksRenderEmbedBlock',
+  imageBlock: 'CroutonPagesBlocksRenderImageBlock'
 }
 
-// Get component name for a block type
+// Get component name for a block type — checks core blocks then addon blocks
 function getBlockComponent(type: string): string | null {
-  return blockComponents[type] || null
+  if (blockComponents[type]) return blockComponents[type]
+  // Fall back to addon block renderer
+  const addonDef = getAddonBlock(type)
+  return addonDef?.components?.renderer || null
+}
+
+// Check if a block requires client-only rendering
+function isClientOnlyBlock(type: string): boolean {
+  // Core blocks that need ClientOnly
+  if (type === 'collectionBlock' || type === 'embedBlock') return true
+  // Addon blocks with clientOnly flag
+  const addonDef = getAddonBlock(type)
+  return addonDef?.clientOnly === true
 }
 
 /**
@@ -132,7 +154,7 @@ function isParagraph(type: string): boolean {
       <template v-for="(block, index) in renderableBlocks" :key="(block as any).attrs?.blockId || `${block.type}-${index}`">
         <!-- Dynamic blocks: fetch runtime data, must render client-side only -->
         <ClientOnly
-          v-if="block.type === 'collectionBlock' || block.type === 'chartBlock' || block.type === 'mapBlock' || block.type === 'collectionMapBlock' || block.type === 'embedBlock'"
+          v-if="isClientOnlyBlock(block.type)"
         >
           <component
             :is="getBlockComponent(block.type)"
@@ -149,6 +171,18 @@ function isParagraph(type: string): boolean {
           :is="getBlockComponent(block.type)"
           :attrs="block.attrs"
         />
+
+        <!-- Native TipTap image node fallback (legacy content) -->
+        <figure
+          v-else-if="block.type === 'image'"
+          class="my-8"
+        >
+          <img
+            :src="(block as any).attrs?.src"
+            :alt="(block as any).attrs?.alt || ''"
+            class="rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 max-w-full mx-auto"
+          >
+        </figure>
 
         <!-- Paragraph blocks (rendered as prose) -->
         <p
