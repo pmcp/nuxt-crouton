@@ -33,7 +33,7 @@ const emit = defineEmits<{
   saved: []
 }>()
 
-const toast = useToast()
+const notify = useNotify()
 
 // Notion users
 const { fetchNotionUsers, users: notionUsers, loading: notionLoading, error: notionError } = useTriageNotionUsers()
@@ -91,10 +91,7 @@ async function initialize() {
 // Save mapping for a discovered user
 async function saveDiscoveredMapping(mapping: any, notionUserId: string) {
   if (!notionUserId) {
-    toast.add({
-      title: 'Select a Notion user',
-      color: 'warning'
-    })
+    notify.warning('Select a Notion user')
     return
   }
 
@@ -113,21 +110,13 @@ async function saveDiscoveredMapping(mapping: any, notionUserId: string) {
       }
     })
 
-    toast.add({
-      title: 'Mapping saved',
-      description: `${mapping.sourceUserName || mapping.sourceUserId} mapped to ${notionUser?.name}`,
-      color: 'success'
-    })
+    notify.success('Mapping saved', { description: `${mapping.sourceUserName || mapping.sourceUserId} mapped to ${notionUser?.name}` })
 
     await fetchExistingMappings()
     emit('saved')
   } catch (err: any) {
     console.error('Failed to save mapping:', err)
-    toast.add({
-      title: 'Save failed',
-      description: err.message || 'Failed to save mapping',
-      color: 'error'
-    })
+    notify.error('Save failed', { description: err.message || 'Failed to save mapping' })
   }
 }
 
@@ -152,19 +141,12 @@ function cancelEdit() {
 // Add or update manual mapping
 async function addManualMapping() {
   if (!manualForm.sourceUserId && !manualForm.sourceUserEmail) {
-    toast.add({
-      title: 'Enter user info',
-      description: 'Provide at least a Figma user ID or email',
-      color: 'warning'
-    })
+    notify.warning('Enter user info', { description: 'Provide at least a Figma user ID or email' })
     return
   }
 
   if (!manualForm.notionUserId) {
-    toast.add({
-      title: 'Select Notion user',
-      color: 'warning'
-    })
+    notify.warning('Select Notion user')
     return
   }
 
@@ -190,10 +172,7 @@ async function addManualMapping() {
         }
       })
 
-      toast.add({
-        title: 'Mapping updated',
-        color: 'success'
-      })
+      notify.success('Mapping updated')
     } else {
       // Create new mapping
       await $fetch(`/api/teams/${props.teamId}/triage-users`, {
@@ -213,10 +192,7 @@ async function addManualMapping() {
         }
       })
 
-      toast.add({
-        title: 'Mapping created',
-        color: 'success'
-      })
+      notify.success('Mapping created')
     }
 
     // Reset form
@@ -230,11 +206,7 @@ async function addManualMapping() {
     emit('saved')
   } catch (err: any) {
     console.error('Failed to save mapping:', err)
-    toast.add({
-      title: isEditing ? 'Update failed' : 'Create failed',
-      description: err.message || 'Failed to save mapping',
-      color: 'error'
-    })
+    notify.error(isEditing ? 'Update failed' : 'Create failed', { description: err.message || 'Failed to save mapping' })
   } finally {
     saving.value = false
   }
@@ -247,19 +219,12 @@ async function deleteMapping(mapping: any) {
       method: 'DELETE'
     })
 
-    toast.add({
-      title: 'Mapping deleted',
-      color: 'neutral'
-    })
+    notify.info('Mapping deleted')
 
     await fetchExistingMappings()
   } catch (err: any) {
     console.error('Failed to delete mapping:', err)
-    toast.add({
-      title: 'Delete failed',
-      description: err.message || 'Failed to delete mapping',
-      color: 'error'
-    })
+    notify.error('Delete failed', { description: err.message || 'Failed to delete mapping' })
   }
 }
 
@@ -267,11 +232,7 @@ async function deleteMapping(mapping: any) {
 function copyBootstrapCommand() {
   const command = '@yourbot User Sync: @user1 @user2 @user3'
   navigator.clipboard.writeText(command)
-  toast.add({
-    title: 'Copied!',
-    description: 'Replace @yourbot with your bot\'s Figma name, then add team members',
-    color: 'success'
-  })
+  notify.success('Copied!', { description: 'Replace @yourbot with your bot\'s Figma name, then add team members' })
 }
 
 // Initialize on mount

@@ -278,7 +278,7 @@
 <script setup lang="ts">
 // Team context
 const { currentTeam } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 
 // Data fetching
 const { items: messages, pending, refresh } = await useCollectionQuery('triageMessages')
@@ -501,20 +501,12 @@ async function markAsRead(message: any) {
       selectedMessage.value.read = true
     }
 
-    toast.add({
-      title: 'Marked as read',
-      description: 'Email marked as read successfully',
-      color: 'success'
-    })
+    notify.success('Marked as read', { description: 'Email marked as read successfully' })
 
     await refresh()
   } catch (error: any) {
     console.error('Failed to mark as read:', error)
-    toast.add({
-      title: 'Failed to mark as read',
-      description: error.message || 'An error occurred',
-      color: 'error'
-    })
+    notify.error('Failed to mark as read', { description: error.message || 'An error occurred' })
   } finally {
     markingAsRead.value = false
   }

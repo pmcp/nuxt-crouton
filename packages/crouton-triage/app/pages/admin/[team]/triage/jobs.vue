@@ -10,7 +10,7 @@ import { useTimeAgo } from '@vueuse/core'
 
 const { currentTeam } = useTeam()
 const { open: openCrouton } = useCrouton()
-const toast = useToast()
+const notify = useNotify()
 
 const { items: jobs, pending, refresh: refreshJobs } = await useCollectionQuery('triageJobs')
 
@@ -82,11 +82,7 @@ function openJobDetails(job: any) {
 
 async function retryJob(job: any) {
   if (!job.discussionId) {
-    toast.add({
-      title: 'Cannot retry job',
-      description: 'No discussion ID found for this job',
-      color: 'error'
-    })
+    notify.error('Cannot retry job', { description: 'No discussion ID found for this job' })
     return
   }
 
@@ -98,11 +94,7 @@ async function retryJob(job: any) {
       body: {}
     })
 
-    toast.add({
-      title: 'Retry successful',
-      description: 'The discussion is being reprocessed',
-      color: 'success'
-    })
+    notify.success('Retry successful', { description: 'The discussion is being reprocessed' })
 
     await refreshJobs()
   } catch (error: any) {
@@ -110,11 +102,7 @@ async function retryJob(job: any) {
 
     const errorMessage = error.data?.message || error.message || 'Failed to retry job'
 
-    toast.add({
-      title: 'Retry failed',
-      description: errorMessage,
-      color: 'error'
-    })
+    notify.error('Retry failed', { description: errorMessage })
   } finally {
     retryingJobId.value = null
   }

@@ -82,7 +82,7 @@ export function useTriageOAuth(config: OAuthConfig) {
   })
 
   const waitingForOAuth = ref(false)
-  const toast = useToast()
+  const notify = useNotify()
 
   /**
    * Build OAuth install URL
@@ -140,21 +140,11 @@ export function useTriageOAuth(config: OAuthConfig) {
 
     if (popup) {
       popup.focus()
-      toast.add({
-        title: `Opening ${provider.charAt(0).toUpperCase() + provider.slice(1)} Authorization`,
-        description: 'Complete the authorization in the popup window',
-        color: 'primary',
-        timeout: 5000
-      })
+      notify.info(`Opening ${provider.charAt(0).toUpperCase() + provider.slice(1)} Authorization`, { description: 'Complete the authorization in the popup window' })
     } else {
       console.error('[OAuth Popup] Failed to open popup - check popup blocker')
       waitingForOAuth.value = false
-      toast.add({
-        title: 'Popup Blocked',
-        description: 'Please allow popups for this site and try again',
-        color: 'error',
-        timeout: 8000
-      })
+      notify.error('Popup Blocked', { description: 'Please allow popups for this site and try again' })
     }
   }
 
@@ -169,12 +159,7 @@ export function useTriageOAuth(config: OAuthConfig) {
       if (event.data.credentials) {
         console.log('[OAuth Message] OAuth succeeded, calling onSuccess handler')
 
-        toast.add({
-          title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Connected!`,
-          description: 'OAuth credentials received successfully.',
-          color: 'success',
-          timeout: 5000
-        })
+        notify.success(`${provider.charAt(0).toUpperCase() + provider.slice(1)} Connected!`, { description: 'OAuth credentials received successfully.' })
 
         // Call success handler if provided
         if (onSuccess) {
@@ -189,12 +174,7 @@ export function useTriageOAuth(config: OAuthConfig) {
     if (event.data?.type === 'oauth-error') {
       console.error('[OAuth Message] OAuth failed:', event.data.error)
 
-      toast.add({
-        title: 'OAuth Failed',
-        description: event.data.error || 'Authorization failed. Please try again.',
-        color: 'error',
-        timeout: 8000
-      })
+      notify.error('OAuth Failed', { description: event.data.error || 'Authorization failed. Please try again.' })
 
       // Call error handler if provided
       if (onError) {

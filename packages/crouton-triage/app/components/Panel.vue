@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { currentTeam } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 const creatingFlow = ref(false)
 const pendingFlowId = ref<string | null>(null)
 const addExpanded = ref(false)
@@ -80,11 +80,7 @@ async function createFlow(): Promise<Flow | null> {
     await refreshFlows()
     return flow
   } catch (error: any) {
-    toast.add({
-      title: 'Failed to create flow',
-      description: error.data?.message || error.message || 'Something went wrong.',
-      color: 'error',
-    })
+    notify.error('Failed to create flow', { description: error.data?.message || error.message || 'Something went wrong.' })
     return null
   } finally {
     creatingFlow.value = false
@@ -304,18 +300,10 @@ async function handleRetry(discussionId: string) {
       method: 'POST',
       body: {},
     })
-    toast.add({
-      title: 'Retry started',
-      description: 'The discussion is being reprocessed.',
-      color: 'success',
-    })
+    notify.success('Retry started', { description: 'The discussion is being reprocessed.' })
     await refreshFeed()
   } catch (error: any) {
-    toast.add({
-      title: 'Retry failed',
-      description: error.data?.message || error.message || 'Failed to retry.',
-      color: 'error',
-    })
+    notify.error('Retry failed', { description: error.data?.message || error.message || 'Failed to retry.' })
   }
 }
 
@@ -332,11 +320,7 @@ async function toggleFlowActive(flow: Flow) {
     })
     await refreshFlows()
   } catch (error: any) {
-    toast.add({
-      title: 'Failed to update flow',
-      description: error.data?.message || error.message || 'Something went wrong.',
-      color: 'error',
-    })
+    notify.error('Failed to update flow', { description: error.data?.message || error.message || 'Something went wrong.' })
   } finally {
     togglingFlow.value = null
   }
@@ -366,11 +350,7 @@ async function handleDeleteFlow(flow: Flow) {
     confirmingDeleteId.value = null
     await refreshAll()
   } catch (error: any) {
-    toast.add({
-      title: 'Failed to delete flow',
-      description: error.data?.message || error.message || 'Something went wrong.',
-      color: 'error',
-    })
+    notify.error('Failed to delete flow', { description: error.data?.message || error.message || 'Something went wrong.' })
   } finally {
     deleting.value = false
   }

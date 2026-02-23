@@ -74,7 +74,7 @@ const selectedInputType = ref<'slack' | 'figma' | 'email'>('slack')
 const editingInput = ref<FlowInput | null>(null)
 const deletingInput = ref<FlowInput | null>(null)
 
-const toast = useToast()
+const notify = useNotify()
 
 // ============================================================================
 // INPUT FORM STATE
@@ -143,11 +143,7 @@ const { openOAuthPopup, waitingForOAuth } = useTriageOAuth({
       ...credentials.sourceMetadata,
     }
 
-    toast.add({
-      title: 'Slack Connected',
-      description: 'OAuth credentials received successfully.',
-      color: 'success',
-    })
+    notify.success('Slack Connected', { description: 'OAuth credentials received successfully.' })
 
     // If in edit mode, the OAuth callback already created the input in the database
     // We need to refetch the inputs to show it in the UI
@@ -168,21 +164,13 @@ const { openOAuthPopup, waitingForOAuth } = useTriageOAuth({
         console.log('[InputManager] Refetched inputs:', flowInputs.length, 'inputs for flow', props.flowId)
       } catch (error: any) {
         console.error('[InputManager] Failed to refetch inputs:', error)
-        toast.add({
-          title: 'Refresh Failed',
-          description: 'Failed to refresh inputs list. Please reload the page.',
-          color: 'warning',
-        })
+        notify.warning('Refresh Failed', { description: 'Failed to refresh inputs list. Please reload the page.' })
       }
     }
   },
   onError: (error) => {
     console.error('[InputManager] OAuth error:', error)
-    toast.add({
-      title: 'OAuth Failed',
-      description: error.message || 'Failed to connect Slack. Please try again.',
-      color: 'error',
-    })
+    notify.error('OAuth Failed', { description: error.message || 'Failed to connect Slack. Please try again.' })
   },
 })
 
@@ -278,11 +266,7 @@ async function saveNewInput() {
       // Use server response
       inputs.value.push(response as FlowInput)
 
-      toast.add({
-        title: 'Input Added',
-        description: `${selectedInputType.value.charAt(0).toUpperCase() + selectedInputType.value.slice(1)} input has been added successfully.`,
-        color: 'success',
-      })
+      notify.success('Input Added', { description: `${selectedInputType.value.charAt(0).toUpperCase() + selectedInputType.value.slice(1)} input has been added successfully.` })
     } else {
       // In wizard mode, just add to local array
       inputs.value.push(newInput)
@@ -302,17 +286,9 @@ async function saveNewInput() {
     if (error.issues) {
       // Zod validation errors
       const errorMessages = error.issues.map((issue: any) => issue.message).join(', ')
-      toast.add({
-        title: 'Validation Error',
-        description: errorMessages,
-        color: 'error',
-      })
+      notify.error('Validation Error', { description: errorMessages })
     } else {
-      toast.add({
-        title: 'Save Failed',
-        description: error.message || 'Failed to save input. Please try again.',
-        color: 'error',
-      })
+      notify.error('Save Failed', { description: error.message || 'Failed to save input. Please try again.' })
     }
   }
 }
@@ -351,11 +327,7 @@ async function updateInput() {
         inputs.value[index] = response as FlowInput
       }
 
-      toast.add({
-        title: 'Input Updated',
-        description: `${selectedInputType.value.charAt(0).toUpperCase() + selectedInputType.value.slice(1)} input has been updated successfully.`,
-        color: 'success',
-      })
+      notify.success('Input Updated', { description: `${selectedInputType.value.charAt(0).toUpperCase() + selectedInputType.value.slice(1)} input has been updated successfully.` })
     } else {
       // In wizard mode, just update local array
       const index = inputs.value.findIndex(i => i.id === editingInput.value!.id)
@@ -377,17 +349,9 @@ async function updateInput() {
     // Show validation errors or API errors
     if (error.issues) {
       const errorMessages = error.issues.map((issue: any) => issue.message).join(', ')
-      toast.add({
-        title: 'Validation Error',
-        description: errorMessages,
-        color: 'error',
-      })
+      notify.error('Validation Error', { description: errorMessages })
     } else {
-      toast.add({
-        title: 'Update Failed',
-        description: error.message || 'Failed to update input. Please try again.',
-        color: 'error',
-      })
+      notify.error('Update Failed', { description: error.message || 'Failed to update input. Please try again.' })
     }
   }
 }
@@ -405,11 +369,7 @@ async function deleteInput() {
         method: 'DELETE',
       })
 
-      toast.add({
-        title: 'Input Deleted',
-        description: `${deletingInput.value.sourceType.charAt(0).toUpperCase() + deletingInput.value.sourceType.slice(1)} input has been deleted successfully.`,
-        color: 'success',
-      })
+      notify.success('Input Deleted', { description: `${deletingInput.value.sourceType.charAt(0).toUpperCase() + deletingInput.value.sourceType.slice(1)} input has been deleted successfully.` })
     }
 
     // Remove from local array
@@ -424,11 +384,7 @@ async function deleteInput() {
     deletingInput.value = null
   } catch (error: any) {
     console.error('[InputManager] Failed to delete input:', error)
-    toast.add({
-      title: 'Delete Failed',
-      description: error.message || 'Failed to delete input. Please try again.',
-      color: 'error',
-    })
+    notify.error('Delete Failed', { description: error.message || 'Failed to delete input. Please try again.' })
   }
 }
 
@@ -457,18 +413,10 @@ async function copyWebhookUrl(input: FlowInput) {
 
   try {
     await navigator.clipboard.writeText(input.webhookUrl)
-    toast.add({
-      title: 'Copied!',
-      description: 'Webhook URL copied to clipboard.',
-      color: 'success',
-    })
+    notify.success('Copied!', { description: 'Webhook URL copied to clipboard.' })
   } catch (error) {
     console.error('[InputManager] Failed to copy webhook URL:', error)
-    toast.add({
-      title: 'Copy Failed',
-      description: 'Failed to copy webhook URL. Please copy manually.',
-      color: 'error',
-    })
+    notify.error('Copy Failed', { description: 'Failed to copy webhook URL. Please copy manually.' })
   }
 }
 

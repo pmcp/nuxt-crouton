@@ -15,7 +15,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const toast = useToast()
+const notify = useNotify()
 const {
   accounts,
   loading,
@@ -77,17 +77,9 @@ async function handleVerify(account: ConnectedAccount) {
   try {
     const result = await verifyAccount(account.id)
     if (result?.success) {
-      toast.add({
-        title: 'Account Verified',
-        description: `${account.label} is connected and working.`,
-        color: 'success',
-      })
+      notify.success('Account Verified', { description: `${account.label} is connected and working.` })
     } else {
-      toast.add({
-        title: 'Verification Failed',
-        description: result?.error || `${account.label} token is no longer valid.`,
-        color: 'warning',
-      })
+      notify.warning('Verification Failed', { description: result?.error || `${account.label} token is no longer valid.` })
     }
   } finally {
     verifyingId.value = null
@@ -98,17 +90,9 @@ async function handleDelete(account: ConnectedAccount) {
   deletingId.value = account.id
   try {
     await deleteAccount(account.id)
-    toast.add({
-      title: 'Account Removed',
-      description: `${account.label} has been disconnected.`,
-      color: 'success',
-    })
+    notify.success('Account Removed', { description: `${account.label} has been disconnected.` })
   } catch (err: any) {
-    toast.add({
-      title: 'Delete Failed',
-      description: err.message || 'Failed to remove account.',
-      color: 'error',
-    })
+    notify.error('Delete Failed', { description: err.message || 'Failed to remove account.' })
   } finally {
     deletingId.value = null
   }
@@ -122,11 +106,7 @@ function openConnectModal(provider: AccountProvider) {
 
 async function handleManualConnect() {
   if (!connectForm.value.label || !connectForm.value.token) {
-    toast.add({
-      title: 'Missing Fields',
-      description: 'Please enter a label and token.',
-      color: 'warning',
-    })
+    notify.warning('Missing Fields', { description: 'Please enter a label and token.' })
     return
   }
 
@@ -137,19 +117,11 @@ async function handleManualConnect() {
       token: connectForm.value.token,
     })
 
-    toast.add({
-      title: 'Account Connected',
-      description: `${connectForm.value.label} has been added.`,
-      color: 'success',
-    })
+    notify.success('Account Connected', { description: `${connectForm.value.label} has been added.` })
 
     showConnectModal.value = false
   } catch (err: any) {
-    toast.add({
-      title: 'Connection Failed',
-      description: err.message || 'Failed to connect account.',
-      color: 'error',
-    })
+    notify.error('Connection Failed', { description: err.message || 'Failed to connect account.' })
   }
 }
 

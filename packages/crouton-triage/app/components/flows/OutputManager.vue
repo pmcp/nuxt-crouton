@@ -80,7 +80,7 @@ const selectedOutputType = ref<'notion' | 'github' | 'linear'>('notion')
 const editingOutput = ref<FlowOutput | null>(null)
 const deletingOutput = ref<FlowOutput | null>(null)
 
-const toast = useToast()
+const notify = useNotify()
 
 const DEFAULT_DOMAINS = ['design', 'frontend', 'backend', 'product', 'infrastructure', 'docs']
 
@@ -146,11 +146,7 @@ function openConnectAccountModal() {
  */
 async function handleConnectAccount() {
   if (!connectAccountForm.value.label || !connectAccountForm.value.token) {
-    toast.add({
-      title: 'Missing Fields',
-      description: 'Please enter a label and API token.',
-      color: 'warning',
-    })
+    notify.warning('Missing Fields', { description: 'Please enter a label and API token.' })
     return
   }
 
@@ -169,19 +165,11 @@ async function handleConnectAccount() {
       outputFormState.value.accountId = result.account.id
     }
 
-    toast.add({
-      title: 'Account Connected',
-      description: `${connectAccountForm.value.label} has been added.`,
-      color: 'success',
-    })
+    notify.success('Account Connected', { description: `${connectAccountForm.value.label} has been added.` })
 
     showConnectAccountModal.value = false
   } catch (err: any) {
-    toast.add({
-      title: 'Connection Failed',
-      description: err.message || 'Failed to connect account.',
-      color: 'error',
-    })
+    notify.error('Connection Failed', { description: err.message || 'Failed to connect account.' })
   } finally {
     connectingAccount.value = false
   }
@@ -244,11 +232,7 @@ function getMappedProperty(aiField: string): string | null {
 async function fetchNotionSchemaAndMap() {
   const hasToken = outputFormState.value.notionToken || outputFormState.value.accountId
   if (!hasToken || !outputFormState.value.databaseId) {
-    toast.add({
-      title: 'Missing Information',
-      description: 'Please connect a Notion account (or enter token) and database ID first.',
-      color: 'warning',
-    })
+    notify.warning('Missing Information', { description: 'Please connect a Notion account (or enter token) and database ID first.' })
     return
   }
 
@@ -265,19 +249,11 @@ async function fetchNotionSchemaAndMap() {
       const mappedFields = autoMapFields(notionSchema.value)
       outputFormState.value.fieldMapping = mappedFields
 
-      toast.add({
-        title: 'Schema Fetched',
-        description: 'Fields have been auto-mapped. Review and adjust as needed.',
-        color: 'success',
-      })
+      notify.success('Schema Fetched', { description: 'Fields have been auto-mapped. Review and adjust as needed.' })
     }
   } catch (error: any) {
     console.error('[OutputManager] Failed to fetch schema:', error)
-    toast.add({
-      title: 'Schema Fetch Failed',
-      description: error.message || 'Failed to fetch Notion schema.',
-      color: 'error',
-    })
+    notify.error('Schema Fetch Failed', { description: error.message || 'Failed to fetch Notion schema.' })
   }
 }
 
@@ -473,11 +449,7 @@ async function saveNewOutput() {
     // Validate default constraint
     const validation = validateDefaultOutput(updatedOutputs)
     if (!validation.valid) {
-      toast.add({
-        title: 'Validation Error',
-        description: validation.message,
-        color: 'error',
-      })
+      notify.error('Validation Error', { description: validation.message })
       return
     }
 
@@ -505,11 +477,7 @@ async function saveNewOutput() {
         o.id === newOutput.id ? (response as FlowOutput) : o
       )
 
-      toast.add({
-        title: 'Output Added',
-        description: `${selectedOutputType.value.charAt(0).toUpperCase() + selectedOutputType.value.slice(1)} output has been added successfully.`,
-        color: 'success',
-      })
+      notify.success('Output Added', { description: `${selectedOutputType.value.charAt(0).toUpperCase() + selectedOutputType.value.slice(1)} output has been added successfully.` })
     } else {
       // In wizard mode, just add to local array
       outputs.value = updatedOutputs
@@ -529,17 +497,9 @@ async function saveNewOutput() {
     if (error.issues) {
       // Zod validation errors
       const errorMessages = error.issues.map((issue: any) => issue.message).join(', ')
-      toast.add({
-        title: 'Validation Error',
-        description: errorMessages,
-        color: 'error',
-      })
+      notify.error('Validation Error', { description: errorMessages })
     } else {
-      toast.add({
-        title: 'Save Failed',
-        description: error.message || 'Failed to save output. Please try again.',
-        color: 'error',
-      })
+      notify.error('Save Failed', { description: error.message || 'Failed to save output. Please try again.' })
     }
   }
 }
@@ -591,11 +551,7 @@ async function updateOutput() {
     // Validate default constraint
     const validation = validateDefaultOutput(updatedOutputs)
     if (!validation.valid) {
-      toast.add({
-        title: 'Validation Error',
-        description: validation.message,
-        color: 'error',
-      })
+      notify.error('Validation Error', { description: validation.message })
       return
     }
 
@@ -623,11 +579,7 @@ async function updateOutput() {
         o.id === editingOutput.value!.id ? (response as FlowOutput) : o
       )
 
-      toast.add({
-        title: 'Output Updated',
-        description: `${selectedOutputType.value.charAt(0).toUpperCase() + selectedOutputType.value.slice(1)} output has been updated successfully.`,
-        color: 'success',
-      })
+      notify.success('Output Updated', { description: `${selectedOutputType.value.charAt(0).toUpperCase() + selectedOutputType.value.slice(1)} output has been updated successfully.` })
     } else {
       // In wizard mode, just update local array
       outputs.value = updatedOutputs
@@ -646,17 +598,9 @@ async function updateOutput() {
     // Show validation errors or API errors
     if (error.issues) {
       const errorMessages = error.issues.map((issue: any) => issue.message).join(', ')
-      toast.add({
-        title: 'Validation Error',
-        description: errorMessages,
-        color: 'error',
-      })
+      notify.error('Validation Error', { description: errorMessages })
     } else {
-      toast.add({
-        title: 'Update Failed',
-        description: error.message || 'Failed to update output. Please try again.',
-        color: 'error',
-      })
+      notify.error('Update Failed', { description: error.message || 'Failed to update output. Please try again.' })
     }
   }
 }
@@ -670,11 +614,7 @@ async function deleteOutput() {
   try {
     // Check if deleting the default output
     if (deletingOutput.value.isDefault && outputs.value.length > 1) {
-      toast.add({
-        title: 'Cannot Delete',
-        description: 'Cannot delete the default output. Set another output as default first.',
-        color: 'error',
-      })
+      notify.error('Cannot Delete', { description: 'Cannot delete the default output. Set another output as default first.' })
       return
     }
 
@@ -684,11 +624,7 @@ async function deleteOutput() {
         method: 'DELETE',
       })
 
-      toast.add({
-        title: 'Output Deleted',
-        description: `${deletingOutput.value.outputType.charAt(0).toUpperCase() + deletingOutput.value.outputType.slice(1)} output has been deleted.`,
-        color: 'success',
-      })
+      notify.success('Output Deleted', { description: `${deletingOutput.value.outputType.charAt(0).toUpperCase() + deletingOutput.value.outputType.slice(1)} output has been deleted.` })
     }
 
     // Remove from local array
@@ -703,11 +639,7 @@ async function deleteOutput() {
     deletingOutput.value = null
   } catch (error: any) {
     console.error('[OutputManager] Failed to delete output:', error)
-    toast.add({
-      title: 'Delete Failed',
-      description: error.message || 'Failed to delete output. Please try again.',
-      color: 'error',
-    })
+    notify.error('Delete Failed', { description: error.message || 'Failed to delete output. Please try again.' })
   }
 }
 
@@ -737,11 +669,7 @@ async function toggleActive(output: FlowOutput) {
     emit('change', outputs.value)
   } catch (error: any) {
     console.error('[OutputManager] Failed to toggle active status:', error)
-    toast.add({
-      title: 'Update Failed',
-      description: 'Failed to update output status.',
-      color: 'error',
-    })
+    notify.error('Update Failed', { description: 'Failed to update output status.' })
   }
 }
 

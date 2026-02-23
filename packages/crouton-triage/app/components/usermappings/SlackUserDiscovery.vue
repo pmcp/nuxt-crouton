@@ -58,7 +58,7 @@ const emit = defineEmits<{
   saved: []
 }>()
 
-const toast = useToast()
+const notify = useNotify()
 
 // Composables
 const { fetchSlackUsers, users: slackUsers, loading: slackLoading, error: slackError } = useTriageSlackUsers()
@@ -113,11 +113,7 @@ async function initialize() {
 // Run auto-match
 function runAutoMatch() {
   if (slackUsers.value.length === 0 || notionUsers.value.length === 0) {
-    toast.add({
-      title: 'Cannot auto-match',
-      description: 'Need both Slack and Notion users loaded',
-      color: 'warning'
-    })
+    notify.warning('Cannot auto-match', { description: 'Need both Slack and Notion users loaded' })
     return
   }
 
@@ -136,11 +132,7 @@ function runAutoMatch() {
 
   const result = autoMatchByEmail(sourceUsers, notionUsers.value)
 
-  toast.add({
-    title: 'Auto-match complete',
-    description: `Matched ${result.matched.length} users, ${result.unmatched.length} remaining`,
-    color: 'success'
-  })
+  notify.success('Auto-match complete', { description: `Matched ${result.matched.length} users, ${result.unmatched.length} remaining` })
 }
 
 // Handle manual match selection
@@ -159,11 +151,7 @@ function handleManualMatch(sourceUser: SourceUser, notionUserId: string | null) 
 // Save all matches to database
 async function saveMatches() {
   if (matches.value.length === 0) {
-    toast.add({
-      title: 'No matches to save',
-      description: 'Match some users first',
-      color: 'warning'
-    })
+    notify.warning('No matches to save', { description: 'Match some users first' })
     return
   }
 
@@ -191,11 +179,7 @@ async function saveMatches() {
       savedCount++
     }
 
-    toast.add({
-      title: 'Mappings saved',
-      description: `Saved ${savedCount} user mappings`,
-      color: 'success'
-    })
+    notify.success('Mappings saved', { description: `Saved ${savedCount} user mappings` })
 
     // Refresh existing mappings and clear matches
     await fetchExistingMappings()
@@ -205,11 +189,7 @@ async function saveMatches() {
     emit('saved')
   } catch (err: any) {
     console.error('Failed to save mappings:', err)
-    toast.add({
-      title: 'Save failed',
-      description: err.message || 'Failed to save user mappings',
-      color: 'error'
-    })
+    notify.error('Save failed', { description: err.message || 'Failed to save user mappings' })
   } finally {
     saving.value = false
   }
@@ -222,19 +202,12 @@ async function deleteMapping(mapping: any) {
       method: 'DELETE'
     })
 
-    toast.add({
-      title: 'Mapping deleted',
-      color: 'neutral'
-    })
+    notify.info('Mapping deleted')
 
     await fetchExistingMappings()
   } catch (err: any) {
     console.error('Failed to delete mapping:', err)
-    toast.add({
-      title: 'Delete failed',
-      description: err.message || 'Failed to delete mapping',
-      color: 'error'
-    })
+    notify.error('Delete failed', { description: err.message || 'Failed to delete mapping' })
   }
 }
 
@@ -270,10 +243,7 @@ async function saveEditedMapping() {
       }
     })
 
-    toast.add({
-      title: 'Mapping updated',
-      color: 'success'
-    })
+    notify.success('Mapping updated')
 
     editingMapping.value = null
     editingNotionUserId.value = null
@@ -281,11 +251,7 @@ async function saveEditedMapping() {
     emit('saved')
   } catch (err: any) {
     console.error('Failed to update mapping:', err)
-    toast.add({
-      title: 'Update failed',
-      description: err.message || 'Failed to update mapping',
-      color: 'error'
-    })
+    notify.error('Update failed', { description: err.message || 'Failed to update mapping' })
   } finally {
     saving.value = false
   }

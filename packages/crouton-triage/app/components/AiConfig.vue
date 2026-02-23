@@ -19,7 +19,7 @@ const isOpen = computed({
   set: (val) => emit('update:modelValue', val),
 })
 
-const toast = useToast()
+const notify = useNotify()
 const saving = ref(false)
 
 // Default domains for new flows
@@ -272,17 +272,9 @@ async function handleSave() {
     emit('save', formState.value)
     isOpen.value = false
 
-    toast.add({
-      title: 'AI Settings Saved',
-      description: 'AI configuration updated successfully.',
-      color: 'success',
-    })
+    notify.success('AI Settings Saved', { description: 'AI configuration updated successfully.' })
   } catch (error: any) {
-    toast.add({
-      title: 'Save Failed',
-      description: error.message || 'Failed to save AI settings.',
-      color: 'error',
-    })
+    notify.error('Save Failed', { description: error.message || 'Failed to save AI settings.' })
   } finally {
     saving.value = false
   }

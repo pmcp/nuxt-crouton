@@ -12,7 +12,7 @@ const emit = defineEmits<{
   retry: [discussionId: string]
 }>()
 
-const toast = useToast()
+const notify = useNotify()
 const retrying = ref(false)
 const expanded = ref(false)
 
