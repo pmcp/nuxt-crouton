@@ -85,9 +85,7 @@ The architect figures out the data model:
 ```json
 {
   "event": { "type": "string", "refTarget": "events", "meta": { "required": true, "label": "Event", "area": "main", "group": "registration" } },
-  "member": { "type": "string", "refTarget": "members", "meta": { "label": "Member", "area": "main", "group": "registration" } },
-  "guestName": { "type": "string", "meta": { "label": "Guest Name", "area": "main", "group": "guest" } },
-  "guestEmail": { "type": "string", "meta": { "label": "Guest Email", "area": "main", "group": "guest" } },
+  "member": { "type": "string", "refTarget": "members", "meta": { "required": true, "label": "Member", "area": "main", "group": "registration" } },
   "status": { "type": "string", "meta": { "required": true, "default": "registered", "label": "Status", "area": "sidebar" } },
   "paid": { "type": "boolean", "meta": { "label": "Paid", "default": false, "area": "sidebar" } },
   "notes": { "type": "text", "meta": { "label": "Notes", "area": "main" } }
@@ -159,7 +157,7 @@ Two strings added. The CLI does the rest.
 
 **Registrations** — nobody navigates to "create a registration." They register for an event. The designer writes:
 
-- **Registrations/Form.vue** — Embedded in event detail. Member → one click. Guest → name + email. Fee → payment step.
+- **Registrations/Form.vue** — Embedded in event detail. Logged-in member → one click. Not logged in → auth modal first. Fee → payment step.
 - **Registrations/List.vue** — Attendee list with check-in toggles. Also works as standalone admin table.
 
 Detail and card for registrations get standard CLI output — rarely used directly.
