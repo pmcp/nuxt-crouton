@@ -113,7 +113,8 @@ Implementation: automations are config entries that the generated app's event li
 3. **Build the template data** — `packages/crouton-designer/app/data/templates.ts`. JSON definitions for yoga, sports club, charity, blank.
 4. **Template selection page** — New Vue component replacing Phase 1. Pick a template → populates blocks + identity.
 5. **Block composition page** — New Vue component. Add/remove/reorder blocks. Filter by visibility tab (public/auth/admin). Show which packages are auto-enabled.
-6. **"Something else" flow** — When user adds a custom block: name + description → stored as custom block. AI processes it later.
+6. **Block detail view** — Clicking a block card opens a detail panel showing: collection settings, field types, seed data configuration. This is the manual editing UX — users can inspect and tweak what each block produces without AI.
+7. **"Something else" flow** — When user adds a custom block: name + description → stored as custom block. AI processes it later.
 7. **Wire to existing schema export** — Blocks → required collections → schema files. The `useSchemaExport` composable gets an input adapter that converts block selections to collection definitions.
 
 **Outcome**: The user can pick a template, add/remove blocks, see which packages are enabled. No AI chat needed for standard blocks. Custom blocks get queued for AI.
@@ -142,16 +143,11 @@ Implementation: automations are config entries that the generated app's event li
 
 **Outcome**: User can add custom blocks that get AI-designed schemas. Standard blocks skip AI entirely.
 
-### Phase D: Automations
+### Phase D: Automations (DEFERRED)
 
-**Goal**: Expose automation toggles.
+> Parked for now. The automation concept (event-driven rules tied to active packages) is valid but not needed for the initial builder. Revisit once A–C and E are shipped.
 
-1. **Automation registry** — Predefined automations with trigger/action/required packages.
-2. **Automation config UI** — Toggle switches, filtered by active packages.
-3. **Export automations to config** — Automations become entries in the generated app's event listener config.
-4. **"Describe an automation" (stretch)** — AI interprets custom automation descriptions.
-
-**Outcome**: User can toggle common automations on/off. Custom automations are a stretch goal.
+~~**Goal**: Expose automation toggles.~~
 
 ### Phase E: Scaffold integration
 
@@ -159,9 +155,8 @@ Implementation: automations are config entries that the generated app's event li
 
 1. **Block-to-schema mapper** — Convert selected blocks → required collections → schema JSON files. Package-provided collections come from manifests. Custom block collections come from AI.
 2. **Hint injection** — Add $list, $card, $form hints to schemas based on block definitions. This requires the CLI hint system to be working (Priority #1 in strategy).
-3. **Automation config injection** — Write automation config into the generated app.
-4. **Visibility config** — Generate route middleware or page metadata that encodes visibility rules.
-5. **Reuse existing scaffold** — The `scaffold-app.post.ts` endpoint stays. It receives richer input (schemas with hints, automation config, visibility metadata) but the 7-step process is the same.
+3. **Visibility config** — Generate route middleware or page metadata that encodes visibility rules.
+4. **Reuse existing scaffold** — The `scaffold-app.post.ts` endpoint stays. It receives richer input (schemas with hints, visibility metadata) but the 7-step process is the same.
 
 **Outcome**: "Build this app" button generates a working Nuxt app with the right packages, schemas, hints, automations, and visibility rules.
 
@@ -190,15 +185,15 @@ The AI chat stays but changes role: it's the handler for custom blocks and a hel
 ```
 Priority #1: CLI hint system (active work)
     ↓
-Phase A: Block registry + templates (foundation)
+Phase A: Block registry + templates + block detail view (foundation)
     ↓
 Phase B: Preview
     ↓
 Phase C: Custom blocks + AI
     ↓
-Phase D: Automations
-    ↓
 Phase E: Scaffold integration
+
+(Phase D: Automations — deferred)
 ```
 
 Phases A and B are independent of the AI pipeline. They can ship as a purely visual, non-AI builder that works with standard blocks. Phases C-E add AI and wire to generation. This means the builder is useful before the full pipeline is complete.
