@@ -11,7 +11,7 @@ export function useAiTranslation(
   updateFieldValue: (field: string, value: string, localeCode?: string) => void,
   isBlockEditorField: (field: string) => boolean,
 ) {
-  const toast = useToast()
+  const notify = useNotify()
 
   // Per-field-locale translation loading state
   const isTranslating = ref<Record<string, boolean>>({})
@@ -130,18 +130,14 @@ export function useAiTranslation(
 
   function showTranslationError(errorMessage: string) {
     if (errorMessage.includes('API key not configured') || errorMessage.includes('No AI API key')) {
-      toast.add({
-        title: 'AI Translation Not Configured',
+      notify.warning('AI Translation Not Configured', {
         description: 'Set NUXT_ANTHROPIC_API_KEY or NUXT_OPENAI_API_KEY in your .env file',
         icon: 'i-lucide-key',
-        color: 'warning',
       })
     } else {
-      toast.add({
-        title: 'Translation Failed',
+      notify.error('Translation Failed', {
         description: errorMessage,
         icon: 'i-lucide-alert-circle',
-        color: 'error',
       })
     }
   }
@@ -200,18 +196,14 @@ export function useAiTranslation(
       const errorMessage = err?.data?.statusMessage || err?.message || 'Translation failed'
 
       if (errorMessage.includes('API key not configured')) {
-        toast.add({
-          title: 'AI Translation Not Configured',
+        notify.warning('AI Translation Not Configured', {
           description: 'Set NUXT_OPENAI_API_KEY or NUXT_ANTHROPIC_API_KEY in your .env file',
           icon: 'i-lucide-key',
-          color: 'warning',
         })
       } else {
-        toast.add({
-          title: 'Translation Failed',
+        notify.error('Translation Failed', {
           description: errorMessage,
           icon: 'i-lucide-alert-circle',
-          color: 'error',
         })
       }
     } finally {
@@ -248,18 +240,14 @@ export function useAiTranslation(
 
         if (collab.value?.setContentJson) {
           collab.value.setContentJson(targetLocale, result.content, true)
-          toast.add({
-            title: 'Translation Complete',
+          notify.success('Translation Complete', {
             description: `Translated ${result.translatedCount} text blocks.`,
             icon: 'i-lucide-check',
-            color: 'success',
           })
         } else if (collab.value) {
-          toast.add({
-            title: 'Translation Saved',
+          notify.success('Translation Saved', {
             description: `Translated ${result.translatedCount} text blocks. Save and reload to see in editor.`,
             icon: 'i-lucide-check',
-            color: 'success',
           })
         }
 

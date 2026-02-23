@@ -140,7 +140,7 @@ const props = withDefaults(defineProps<Props>(), {
 const modalOpen = ref(false)
 const selectedLang = ref<string | null>(null)
 const { copy } = useClipboard()
-const toast = useToast()
+const notify = useNotify()
 const { locales } = useI18n()
 const { tString } = useT()
 
@@ -213,24 +213,15 @@ const openModal = (lang: string) => {
 
 const copyToClipboard = async (text: string) => {
   if (!text) {
-    toast.add({
-      title: tString('errors.noTextToCopy'),
-      color: 'error'
-    })
+    notify.error(tString('errors.noTextToCopy'))
     return
   }
 
   try {
     await copy(text)
-    toast.add({
-      title: tString('messages.copiedToClipboard'),
-      color: 'success'
-    })
+    notify.success(tString('messages.copiedToClipboard'))
   } catch (error) {
-    toast.add({
-      title: tString('errors.failedToCopyText'),
-      color: 'error'
-    })
+    notify.error(tString('errors.failedToCopyText'))
   }
 }
 </script>

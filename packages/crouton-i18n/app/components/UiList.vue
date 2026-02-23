@@ -222,7 +222,7 @@ interface TranslationWithOverride {
 }
 
 const { teamSlug } = useTeamContext()
-const toast = useToast()
+const notify = useNotify()
 
 // Fetch system translations with team overrides
 const { data: items, pending, error, refresh } = await useFetch<TranslationWithOverride[]>(
@@ -284,7 +284,7 @@ async function saveOverride() {
   )
 
   if (Object.keys(values).length === 0) {
-    toast.add({ title: 'At least one translation value is required', color: 'warning' })
+    notify.warning('At least one translation value is required')
     return
   }
 
@@ -295,7 +295,7 @@ async function saveOverride() {
         method: 'PATCH',
         body: { values }
       })
-      toast.add({ title: 'Override updated', color: 'success' })
+      notify.success('Override updated')
     } else {
       // Create new override
       await $fetch(`/api/teams/${teamSlug.value}/translations-ui`, {
@@ -307,14 +307,14 @@ async function saveOverride() {
           values
         }
       })
-      toast.add({ title: 'Override created', color: 'success' })
+      notify.success('Override created')
     }
 
     showModal.value = false
     await refresh()
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to save override'
-    toast.add({ title: errorMessage, color: 'error' })
+    notify.error(errorMessage)
   }
 }
 
@@ -325,11 +325,11 @@ async function deleteOverride(item: TranslationWithOverride) {
     await $fetch(`/api/teams/${teamSlug.value}/translations-ui/${item.overrideId}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Override removed', color: 'success' })
+    notify.success('Override removed')
     await refresh()
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to delete override'
-    toast.add({ title: errorMessage, color: 'error' })
+    notify.error(errorMessage)
   }
 }
 </script>

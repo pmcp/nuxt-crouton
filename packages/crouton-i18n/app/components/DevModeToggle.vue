@@ -75,7 +75,7 @@ const modalKey = ref('')
 const modalTranslation = ref('')
 const { locale } = useI18n()
 const { currentTeam } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 
 const currentLocale = computed(() => locale.value)
 
@@ -189,11 +189,7 @@ const saveTranslation = async () => {
       })
     }
 
-    toast.add({
-      title: 'Translation Added',
-      description: `Added translation for "${modalKey.value}"`,
-      color: 'success'
-    })
+    notify.success('Translation Added', { description: `Added translation for "${modalKey.value}"` })
 
     // Refresh and re-scan
     await refreshNuxtData()
@@ -201,11 +197,7 @@ const saveTranslation = async () => {
     showModal.value = false
   } catch (error) {
     console.error('Failed to save translation:', error)
-    toast.add({
-      title: 'Error',
-      description: 'Failed to save translation',
-      color: 'error'
-    })
+    notify.error('Error', { description: 'Failed to save translation' })
   }
 }
 
