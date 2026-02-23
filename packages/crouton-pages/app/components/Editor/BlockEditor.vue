@@ -9,6 +9,11 @@ import { markRaw } from 'vue'
 import { PageBlocks } from '../../editor/extensions/page-blocks'
 import { getBlockMenuItems } from '../../utils/block-registry'
 
+// Detect optional packages to hide unavailable block types
+const { hasApp } = useCroutonApps()
+const hasCharts = hasApp('charts')
+const hasMaps = hasApp('maps')
+
 // Block suggestion item interface (matches CroutonEditorBlocks prop)
 interface BlockSuggestionItem {
   type: string
@@ -71,18 +76,26 @@ const content = computed({
 })
 
 // Page block extensions - markRaw prevents Vue reactivity from interfering with TipTap
+// Disable extensions for packages that aren't installed
 const pageBlockExtensions = markRaw([
   PageBlocks.configure({
-    enableSlashCommands: false // We use CroutonEditorBlocks suggestion menu instead
+    enableSlashCommands: false, // We use CroutonEditorBlocks suggestion menu instead
+    blocks: {
+      chart: hasCharts,
+      map: hasMaps
+    }
   })
 ])
 
 // Convert block menu items to suggestion items for CroutonEditorBlocks
+// Filter out blocks whose optional packages aren't installed
 const blockSuggestionItems = computed<BlockSuggestionItem[]>(() => {
   const items = getBlockMenuItems()
 
   return items
     .filter(item => item.type !== 'richTextBlock') // Exclude rich text (it's just regular text)
+    .filter(item => item.type !== 'chartBlock' || hasCharts)
+    .filter(item => item.type !== 'mapBlock' || hasMaps)
     .map(item => ({
       type: item.type,
       label: item.name,
