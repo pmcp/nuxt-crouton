@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crouton Package Capabilities Map</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface-2: #1a1a26;
+    --surface-3: #22222e;
+    --border: #2a2a3a;
+    --border-hover: #3a3a5a;
+    --text: #e4e4ef;
+    --text-dim: #8888a0;
+    --text-muted: #55556a;
+    --accent: #7c6af0;
+    --accent-dim: #5a4bc0;
+    --green: #4ade80;
+    --green-dim: #166534;
+    --blue: #60a5fa;
+    --blue-dim: #1e3a5f;
+    --orange: #fb923c;
+    --orange-dim: #5c3a1a;
+    --pink: #f472b6;
+    --pink-dim: #5c1a3a;
+    --cyan: #22d3ee;
+    --cyan-dim: #0a3a4a;
+    --yellow: #facc15;
+    --yellow-dim: #4a3a0a;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    padding: 48px 32px 32px;
+    text-align: center;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--text), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header p {
+    color: var(--text-dim);
+    margin-top: 8px;
+    font-size: 0.95rem;
+  }
+
+  /* Navigation tabs */
+  .nav {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 24px 32px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    padding-bottom: 16px;
+  }
+  .nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .nav button:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+  }
+  .nav button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* Sections */
+  .section {
+    display: none;
+    padding: 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease;
+  }
+  .section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .section-desc {
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+  }
+
+  /* ─── SECTION 1: Three Block Systems ─── */
+  .block-systems {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .block-systems { grid-template-columns: 1fr; }
+  }
+
+  .system-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .system-card:hover { border-color: var(--border-hover); }
+  .system-card .glow {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .system-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .system-card .subtitle {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+  .system-card .field {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+  .system-card .field:last-child { border-bottom: none; }
+  .system-card .field-label { color: var(--text-dim); }
+  .system-card .field-value { color: var(--text); font-weight: 500; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-blue { background: var(--blue-dim); color: var(--blue); }
+  .badge-pink { background: var(--pink-dim); color: var(--pink); }
+  .badge-orange { background: var(--orange-dim); color: var(--orange); }
+  .badge-cyan { background: var(--cyan-dim); color: var(--cyan); }
+  .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
+
+  /* ─── SECTION 2: Package Explorer ─── */
+  .packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px;
+  }
+  @media (max-width: 500px) {
+    .packages-grid { grid-template-columns: 1fr; }
+  }
+
+  .pkg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .pkg-card:hover { border-color: var(--border-hover); }
+  .pkg-card.expanded { border-color: var(--accent-dim); }
+
+  .pkg-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pkg-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .pkg-info { flex: 1; }
+  .pkg-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .pkg-desc {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+  }
+  .pkg-chevron {
+    color: var(--text-muted);
+    transition: transform 0.2s;
+    font-size: 1.2rem;
+  }
+  .pkg-card.expanded .pkg-chevron { transform: rotate(180deg); }
+
+  .pkg-badges {
+    padding: 0 20px 12px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .pkg-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .pkg-card.expanded .pkg-body {
+    max-height: 800px;
+  }
+  .pkg-body-inner {
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .provides-section {
+    margin-top: 14px;
+  }
+  .provides-section h4 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .provides-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .provides-item {
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* ─── SECTION 3: Pipeline Flow ─── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .pipeline-step {
+    display: flex;
+    gap: 24px;
+    position: relative;
+  }
+
+  .pipeline-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 48px;
+    flex-shrink: 0;
+  }
+  .pipeline-dot {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    position: relative;
+    z-index: 2;
+  }
+  .pipeline-line {
+    width: 2px;
+    flex: 1;
+    min-height: 24px;
+    background: var(--border);
+  }
+
+  .pipeline-content {
+    flex: 1;
+    padding-bottom: 32px;
+  }
+  .pipeline-content h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .pipeline-content .role-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+  .pipeline-content p {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+
+  .pipeline-outputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  .pipeline-output {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 0.82rem;
+  }
+  .pipeline-output .output-label {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .pipeline-output .output-value {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+  }
+
+  /* ─── SECTION 4: Registration Flow ─── */
+  .flow-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .flow-level {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    position: relative;
+  }
+  .flow-level + .flow-arrow {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+  }
+  .flow-level h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .flow-level .flow-when {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+  .flow-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .flow-item {
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+  }
+  .flow-item strong {
+    display: block;
+    font-size: 0.78rem;
+    margin-bottom: 2px;
+  }
+  .flow-item span {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+
+  /* ─── SECTION 5: Summary Matrix ─── */
+  .matrix-container {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .matrix th {
+    background: var(--surface-2);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+  }
+  .matrix td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .matrix tr:last-child td { border-bottom: none; }
+  .matrix tr:hover td { background: var(--surface); }
+  .matrix .pkg-col {
+    font-weight: 600;
+    white-space: nowrap;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+  }
+  .matrix .items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .matrix .item {
+    background: var(--surface-3);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    white-space: nowrap;
+  }
+  .matrix .empty { color: var(--text-muted); font-style: italic; }
+
+  /* Color coding for packages */
+  .color-core { border-left: 3px solid var(--accent); }
+  .color-pages { border-left: 3px solid var(--green); }
+  .color-bookings { border-left: 3px solid var(--orange); }
+  .color-charts { border-left: 3px solid var(--cyan); }
+  .color-maps { border-left: 3px solid var(--blue); }
+  .color-auth { border-left: 3px solid var(--pink); }
+  .color-atelier { border-left: 3px solid var(--yellow); }
+
+  .icon-core { background: #7c6af020; color: var(--accent); }
+  .icon-pages { background: #4ade8020; color: var(--green); }
+  .icon-bookings { background: #fb923c20; color: var(--orange); }
+  .icon-charts { background: #22d3ee20; color: var(--cyan); }
+  .icon-maps { background: #60a5fa20; color: var(--blue); }
+  .icon-auth { background: #f472b620; color: var(--pink); }
+  .icon-atelier { background: #facc1520; color: var(--yellow); }
+
+  .dot-accent { border-color: var(--accent); }
+  .dot-green { border-color: var(--green); }
+  .dot-orange { border-color: var(--orange); }
+  .dot-cyan { border-color: var(--cyan); }
+  .dot-blue { border-color: var(--blue); }
+
+  .color-generated { border-left: 3px solid #a78bfa; }
+  .icon-generated { background: #a78bfa20; color: #a78bfa; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Crouton Package Capabilities</h1>
+  <p>What packages provide, and where it becomes available</p>
+</div>
+
+<nav class="nav">
+  <button class="active" onclick="showSection('systems')">Three Block Systems</button>
+  <button onclick="showSection('packages')">Package Explorer</button>
+  <button onclick="showSection('pipeline')">AI Pipeline</button>
+  <button onclick="showSection('flow')">Registration Flow</button>
+  <button onclick="showSection('matrix')">Summary Matrix</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 1: Three Block Systems              -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="systems" class="section active">
+  <h2 class="section-title">Three Block Systems</h2>
+  <p class="section-desc">Crouton has three distinct "block" concepts. They serve different purposes at different levels of the stack.</p>
+
+  <div class="block-systems">
+
+    <div class="system-card color-atelier">
+      <div class="glow" style="background: linear-gradient(90deg, var(--yellow), transparent)"></div>
+      <h3><span class="badge badge-yellow">Composition</span> Atelier Blocks</h3>
+      <p class="subtitle">App-level capabilities on a kanban canvas</p>
+      <div class="field"><span class="field-label">Purpose</span><span class="field-value">Compose which features the app has</span></div>
+      <div class="field"><span class="field-label">Examples</span><span class="field-value">schedule, hero, my-bookings, signup</span></div>
+      <div class="field"><span class="field-label">Defined in</span><span class="field-value">crouton-atelier/data/blocks.ts</span></div>
+      <div class="field"><span class="field-label">Registered via</span><span class="field-value">Static data (manifest Phase B)</span></div>
+      <div class="field"><span class="field-label">Accessed via</span><span class="field-value">useBlockRegistry()</span></div>
+      <div class="field"><span class="field-label">Created by</span><span class="field-value">User in Atelier UI</span></div>
+      <div class="field"><span class="field-label">Output</span><span class="field-value">AppComposition (Yjs Y.Map)</span></div>
+    </div>
+
+    <div class="system-card color-pages">
+      <div class="glow" style="background: linear-gradient(90deg, var(--green), transparent)"></div>
+      <h3><span class="badge badge-green">Content</span> Editor Blocks</h3>
+      <p class="subtitle">TipTap nodes in the page content editor</p>
+      <div class="field"><span class="field-label">Purpose</span><span class="field-value">Compose what a page contains</span></div>
+      <div class="field"><span class="field-label">Examples</span><span class="field-value">heroBlock, chartBlock, collectionBlock</span></div>
+      <div class="field"><span class="field-label">Defined in</span><span class="field-value">crouton-core/types/block-def.ts</span></div>
+      <div class="field"><span class="field-label">Registered via</span><span class="field-value">app.config.ts &rarr; croutonBlocks</span></div>
+      <div class="field"><span class="field-label">Accessed via</span><span class="field-value">useCroutonBlocks()</span></div>
+      <div class="field"><span class="field-label">Created by</span><span class="field-value">User in page editor (or Editor AI)</span></div>
+      <div class="field"><span class="field-label">Output</span><span class="field-value">TipTap JSON in page content</span></div>
+    </div>
+
+    <div class="system-card color-auth">
+      <div class="glow" style="background: linear-gradient(90deg, var(--pink), transparent)"></div>
+      <h3><span class="badge badge-pink">Routing</span> Page Types</h3>
+      <p class="subtitle">CMS page components in the page tree</p>
+      <div class="field"><span class="field-label">Purpose</span><span class="field-value">Route a page to its renderer</span></div>
+      <div class="field"><span class="field-label">Examples</span><span class="field-value">regular, booking, collection-detail</span></div>
+      <div class="field"><span class="field-label">Defined in</span><span class="field-value">crouton-core/types/app.ts</span></div>
+      <div class="field"><span class="field-label">Registered via</span><span class="field-value">app.config.ts &rarr; croutonApps.pageTypes</span></div>
+      <div class="field"><span class="field-label">Accessed via</span><span class="field-value">usePageTypes()</span></div>
+      <div class="field"><span class="field-label">Created by</span><span class="field-value">Admin in page tree</span></div>
+      <div class="field"><span class="field-label">Output</span><span class="field-value">Page record in DB with pageType</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 2: Package Explorer                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="packages" class="section">
+  <h2 class="section-title">Package Explorer</h2>
+  <p class="section-desc">Click a package to see what it provides &mdash; collections, blocks, components, composables, routes.</p>
+
+  <div class="packages-grid" id="packagesGrid"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 3: AI Pipeline                      -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="pipeline" class="section">
+  <h2 class="section-title">AI Generation Pipeline</h2>
+  <p class="section-desc">Four AI roles + CLI, sequential. Each step's output feeds the next. The result is a generated layer indistinguishable from a real package.</p>
+
+  <div class="pipeline">
+
+    <div class="pipeline-step">
+      <div class="pipeline-marker">
+        <div class="pipeline-dot dot-accent">&#x1f3d7;</div>
+        <div class="pipeline-line"></div>
+      </div>
+      <div class="pipeline-content">
+        <h3>Architect</h3>
+        <span class="role-tag" style="color: var(--accent);">AI ROLE 1 &mdash; DATA MODEL</span>
+        <p>Talks to the user, understands the domain, designs the data model. Has full project context: what collections exist, what packages are installed, what relationships are in play.</p>
+        <div class="pipeline-outputs">
+          <div class="pipeline-output"><div class="output-label">Schemas</div><div class="output-value">events.json, rooms.json, memberships.json, registrations.json</div></div>
+          <div class="pipeline-output"><div class="output-label">Seed data</div><div class="output-value">seed/events.json, seed/rooms.json</div></div>
+          <div class="pipeline-output"><div class="output-label">Project context</div><div class="output-value">collections, packages, relationships</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipeline-marker">
+        <div class="pipeline-dot dot-green">&#x1f3a8;</div>
+        <div class="pipeline-line"></div>
+      </div>
+      <div class="pipeline-content">
+        <h3>Designer</h3>
+        <span class="role-tag" style="color: var(--green);">AI ROLE 2 &mdash; COMPONENTS</span>
+        <p>Reads schemas. Decides how each collection should present itself. Adds hints for standard output or writes custom Vue components when the domain demands it.</p>
+        <div class="pipeline-outputs">
+          <div class="pipeline-output"><div class="output-label">Hints</div><div class="output-value">rooms: $list=grid, $card=image-top<br>memberships: $list=table</div></div>
+          <div class="pipeline-output"><div class="output-label">Custom components</div><div class="output-value">Events/List.vue (calendar)<br>Events/Card.vue (rich)<br>Events/Detail.vue<br>Events/Form.vue</div></div>
+          <div class="pipeline-output"><div class="output-label">Embedded views</div><div class="output-value">Registrations/Form.vue<br>Registrations/List.vue</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipeline-marker">
+        <div class="pipeline-dot dot-orange">&#x2699;</div>
+        <div class="pipeline-line"></div>
+      </div>
+      <div class="pipeline-content">
+        <h3>CLI</h3>
+        <span class="role-tag" style="color: var(--orange);">CODE GENERATION &mdash; INFRASTRUCTURE</span>
+        <p>Reads schemas with hints. Generates everything the Designer didn't touch: composables, types, API routes, database schema, standard components.</p>
+        <div class="pipeline-outputs">
+          <div class="pipeline-output"><div class="output-label">Composables</div><div class="output-value">useEventsEvents()<br>useEventsRooms()<br>useEventsMemberships()</div></div>
+          <div class="pipeline-output"><div class="output-label">Server</div><div class="output-value">API routes (CRUD)<br>Database schema (Drizzle)<br>Migrations</div></div>
+          <div class="pipeline-output"><div class="output-label">Standard components</div><div class="output-value">Rooms/List.vue (hint: grid)<br>Rooms/Card.vue (hint: image-top)<br>Memberships/List.vue (hint: table)<br>+ all Form.vue, Detail.vue</div></div>
+          <div class="pipeline-output"><div class="output-label">Types</div><div class="output-value">TypeScript definitions<br>Zod schemas<br>Collection metadata</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipeline-marker">
+        <div class="pipeline-dot dot-cyan">&#x1f4ca;</div>
+        <div class="pipeline-line"></div>
+      </div>
+      <div class="pipeline-content">
+        <h3>Analyst</h3>
+        <span class="role-tag" style="color: var(--cyan);">AI ROLE 3 &mdash; DATA INSIGHT</span>
+        <p>Bridges domain data with visualization packages. Reads collection schemas + available addons (charts, maps). Creates meaningful, pre-configured visualizations. Only runs when visualization packages are present.</p>
+        <div class="pipeline-outputs">
+          <div class="pipeline-output"><div class="output-label">Chart presets (if crouton-charts)</div><div class="output-value">Booking Trends (monthly count)<br>Revenue by Location (grouped bar)<br>Popular Timeslots (heatmap)<br>Membership Growth (area)<br>Active Members (donut)</div></div>
+          <div class="pipeline-output"><div class="output-label">Map configs (if crouton-maps)</div><div class="output-value">All Locations (collection map)</div></div>
+          <div class="pipeline-output"><div class="output-label">Registration</div><div class="output-value">Registered as editor blocks in<br>generated layer's app.config.ts<br>&rarr; available in page editor / menu</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipeline-marker">
+        <div class="pipeline-dot dot-blue">&#x1f4d0;</div>
+        <div class="pipeline-line" style="background: transparent;"></div>
+      </div>
+      <div class="pipeline-content">
+        <h3>Editor</h3>
+        <span class="role-tag" style="color: var(--blue);">AI ROLE 4 &mdash; PAGE LAYOUT</span>
+        <p>Composes pages from all available pieces: built-in editor blocks, Designer components, CLI standard components, and Analyst visualizations. Arranges them into page layouts per visibility level.</p>
+        <div class="pipeline-outputs">
+          <div class="pipeline-output"><div class="output-label">Public landing</div><div class="output-value">heroBlock &rarr; collectionBlock (events, calendar) &rarr; collectionBlock (rooms, grid) &rarr; collectionMapBlock (locations) &rarr; ctaBlock (signup)</div></div>
+          <div class="pipeline-output"><div class="output-label">Member dashboard</div><div class="output-value">collectionBlock (my-bookings, list) &rarr; collectionBlock (events, card-row)</div></div>
+          <div class="pipeline-output"><div class="output-label">Admin overview</div><div class="output-value">chartBlock (Booking Trends) &larr; Analyst<br>chartBlock (Revenue by Location) &larr; Analyst<br>collectionBlock (bookings, table)<br>collectionBlock (members, table)</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 4: Registration Flow                -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="flow" class="section">
+  <h2 class="section-title">Registration &amp; Discovery Flow</h2>
+  <p class="section-desc">How capabilities travel from package source to runtime availability.</p>
+
+  <div class="flow-diagram">
+
+    <div class="flow-level">
+      <h3>1. Package Source</h3>
+      <div class="flow-when">Author time</div>
+      <div class="flow-items">
+        <div class="flow-item"><strong>crouton.manifest.ts</strong><span>Declares capabilities: editorBlocks, collections, composables, components, fieldTypes</span></div>
+        <div class="flow-item"><strong>app/app.config.ts</strong><span>Registers runtime definitions: croutonApps, croutonBlocks (full CroutonBlockDefinition)</span></div>
+        <div class="flow-item"><strong>nuxt.config.ts</strong><span>Layer dependencies, component dirs, auto-imports</span></div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">&darr;</div>
+
+    <div class="flow-level">
+      <h3>2. Nuxt Build</h3>
+      <div class="flow-when">Build time &mdash; deep merge</div>
+      <div class="flow-items">
+        <div class="flow-item"><strong>Layer merge</strong><span>All nuxt.config.ts merged into one config</span></div>
+        <div class="flow-item"><strong>App config merge</strong><span>All app.config.ts deep-merged: croutonApps + croutonBlocks combined</span></div>
+        <div class="flow-item"><strong>Auto-import scan</strong><span>Components, composables discovered from all layers</span></div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">&darr;</div>
+
+    <div class="flow-level">
+      <h3>3. Runtime Composables</h3>
+      <div class="flow-when">Runtime &mdash; useAppConfig()</div>
+      <div class="flow-items">
+        <div class="flow-item"><strong>useCroutonApps()</strong><span>hasApp(), adminRoutes, dashboardRoutes, pageTypes</span></div>
+        <div class="flow-item"><strong>useCroutonBlocks()</strong><span>hasBlock(), getBlock(), blocksList</span></div>
+        <div class="flow-item"><strong>usePageTypes()</strong><span>Aggregates page types from all apps</span></div>
+        <div class="flow-item"><strong>useCollections()</strong><span>Collection metadata from generated layers</span></div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">&darr;</div>
+
+    <div class="flow-level">
+      <h3>4. UI Consumers</h3>
+      <div class="flow-when">Runtime &mdash; components read composables</div>
+      <div class="flow-items">
+        <div class="flow-item"><strong>Page editor</strong><span>Discovers editor blocks &rarr; creates TipTap extensions dynamically &rarr; / menu</span></div>
+        <div class="flow-item"><strong>Sidebar navigation</strong><span>Reads adminRoutes + dashboardRoutes from croutonApps</span></div>
+        <div class="flow-item"><strong>Page tree</strong><span>Shows available page types from all packages</span></div>
+        <div class="flow-item"><strong>Public renderer</strong><span>Looks up pageType &rarr; renders component. Reads TipTap JSON &rarr; renders blocks.</span></div>
+        <div class="flow-item"><strong>Atelier canvas</strong><span>Reads block registry &rarr; kanban with blocks &rarr; scaffold</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 5: Summary Matrix                   -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="matrix" class="section">
+  <h2 class="section-title">Summary Matrix</h2>
+  <p class="section-desc">Everything at a glance. What each package contributes to each system.</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background: var(--accent)"></div> core</div>
+    <div class="legend-item"><div class="legend-dot" style="background: var(--green)"></div> pages</div>
+    <div class="legend-item"><div class="legend-dot" style="background: var(--orange)"></div> bookings</div>
+    <div class="legend-item"><div class="legend-dot" style="background: var(--cyan)"></div> charts</div>
+    <div class="legend-item"><div class="legend-dot" style="background: var(--blue)"></div> maps</div>
+    <div class="legend-item"><div class="legend-dot" style="background: var(--pink)"></div> auth</div>
+    <div class="legend-item"><div class="legend-dot" style="background: var(--yellow)"></div> atelier</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #a78bfa"></div> generated layer</div>
+  </div>
+
+  <div class="matrix-container">
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Collections</th>
+          <th>Editor Blocks</th>
+          <th>Analyst Blocks</th>
+          <th>Atelier Blocks</th>
+          <th>Page Types</th>
+          <th>Admin Routes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pkg-col" style="color: var(--accent)">crouton-core</td>
+          <td><span class="empty">(field types)</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+        </tr>
+        <tr>
+          <td class="pkg-col" style="color: var(--green)">crouton-pages</td>
+          <td><div class="items"><span class="item">pages</span></div></td>
+          <td><div class="items"><span class="item">heroBlock</span><span class="item">sectionBlock</span><span class="item">ctaBlock</span><span class="item">cardGridBlock</span><span class="item">separatorBlock</span><span class="item">richTextBlock</span><span class="item">collectionBlock</span><span class="item">faqBlock</span><span class="item">twoColumnBlock</span><span class="item">imageBlock</span><span class="item">embedBlock</span></div></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><div class="items"><span class="item">hero</span><span class="item">text-page</span><span class="item">blog</span></div></td>
+          <td><div class="items"><span class="item">regular</span><span class="item">collection-binder</span></div></td>
+          <td><div class="items"><span class="item">/workspace</span></div></td>
+        </tr>
+        <tr>
+          <td class="pkg-col" style="color: var(--orange)">crouton-bookings</td>
+          <td><div class="items"><span class="item">booking</span><span class="item">location</span><span class="item">settings</span></div></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><div class="items"><span class="item">schedule</span><span class="item">book-now</span><span class="item">my-bookings</span><span class="item">manage-bookings</span><span class="item">manage-locations</span></div></td>
+          <td><div class="items"><span class="item">booking</span></div></td>
+          <td><div class="items"><span class="item">/bookings</span><span class="item">/locations</span><span class="item">/settings</span></div></td>
+        </tr>
+        <tr>
+          <td class="pkg-col" style="color: var(--cyan)">crouton-charts</td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><div class="items"><span class="item">chartBlock</span> <span class="empty">(generic capability)</span></div></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+        </tr>
+        <tr>
+          <td class="pkg-col" style="color: var(--blue)">crouton-maps</td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><div class="items"><span class="item">mapBlock</span><span class="item">collectionMapBlock</span> <span class="empty">(generic)</span></div></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+        </tr>
+        <tr>
+          <td class="pkg-col" style="color: var(--pink)">crouton-auth</td>
+          <td><div class="items"><span class="item">user</span><span class="item">member</span><span class="item">session</span><span class="item">organization</span><span class="item">invitation</span></div></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><div class="items"><span class="item">signup</span><span class="item">manage-contacts</span></div></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><div class="items"><span class="item">/members</span></div></td>
+        </tr>
+        <tr>
+          <td class="pkg-col" style="color: var(--yellow)">crouton-atelier</td>
+          <td><div class="items"><span class="item">atelierProject</span></div></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><span class="empty">(hosts registry)</span></td>
+          <td><span class="empty">&mdash;</span></td>
+          <td><div class="items"><span class="item">/atelier</span></div></td>
+        </tr>
+        <tr style="border-top: 2px solid var(--border-hover);">
+          <td class="pkg-col" style="color: #a78bfa">Generated layer<br><span style="font-weight: 400; font-size: 0.68rem; color: var(--text-muted)">(e.g. fundraiser)</span></td>
+          <td><div class="items"><span class="item">drinks</span><span class="item">sales</span><span class="item">transactions</span></div></td>
+          <td><div class="items"><span class="item">drinksGrid</span><span class="item">salesTable</span></div></td>
+          <td><div class="items"><span class="item">salesTrends</span><span class="item">revenueByDrink</span><span class="item">topSellers</span><span class="item">allVenuesMap</span></div></td>
+          <td><span class="empty">(custom if needed)</span></td>
+          <td><div class="items"><span class="item">drinks-catalog</span></div></td>
+          <td><div class="items"><span class="item">/drinks</span><span class="item">/sales</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Navigation
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'))
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+  event.target.classList.add('active')
+}
+
+// Package data
+const packages = [
+  {
+    id: 'core', name: 'crouton-core', icon: '\u2b22', color: 'core',
+    desc: 'Foundation. Shared types, components, composables.',
+    badges: [{ label: 'core', class: 'badge-orange' }],
+    provides: {
+      'Field Types': ['string', 'text', 'number', 'decimal', 'boolean', 'date', 'json', 'repeater', 'array', 'reference', 'image', 'file'],
+      'Components': ['CroutonCollection', 'CroutonDetail', 'CroutonFormLayout', 'CroutonDefaultCard', 'CroutonKanbanColumn', 'CroutonFormExpandableSlideOver'],
+      'Composables': ['useCroutonApps()', 'useCroutonBlocks()', 'useCollections()', 'useDisplayConfig()', 'useCrouton()'],
+      'Stubs (priority -1)': ['CroutonAssetsPicker', 'CroutonEditorField', 'CroutonMapsPreview', 'CroutonCollabPresence']
+    }
+  },
+  {
+    id: 'pages', name: 'crouton-pages', icon: '\ud83d\udcc4', color: 'pages',
+    desc: 'Public surface. Page tree, block editor, page types.',
+    badges: [{ label: 'addon', class: 'badge-green' }, { label: '11 editor blocks', class: 'badge-green' }, { label: '2 page types', class: 'badge-pink' }],
+    provides: {
+      'Collections': ['pages (hierarchy)'],
+      'Editor Blocks': ['heroBlock', 'sectionBlock', 'ctaBlock', 'cardGridBlock', 'separatorBlock', 'richTextBlock', 'collectionBlock', 'faqBlock', 'twoColumnBlock', 'imageBlock', 'embedBlock'],
+      'Page Types': ['regular', 'collection-binder'],
+      'Atelier Blocks': ['hero', 'text-page', 'blog'],
+      'Admin Routes': ['/workspace'],
+      'Consumes from others': ['croutonBlocks.* (addon editor blocks)', 'croutonApps.*.pageTypes']
+    }
+  },
+  {
+    id: 'bookings', name: 'crouton-bookings', icon: '\ud83d\udcc5', color: 'bookings',
+    desc: 'Scheduling domain. Bookings, locations, calendar.',
+    badges: [{ label: 'miniapp', class: 'badge-orange' }, { label: '5 atelier blocks', class: 'badge-yellow' }, { label: '1 page type', class: 'badge-pink' }],
+    provides: {
+      'Collections': ['booking', 'location', 'settings', 'emailtemplate (conditional)', 'emaillog (conditional)'],
+      'Components': ['CroutonBookingCalendar', 'CroutonBookingList', 'CroutonBookingPanel', 'CroutonBookingCustomerBookingWizard', 'CroutonBookingCart'],
+      'Page Types': ['booking (calendar page)'],
+      'Atelier Blocks': ['schedule (public)', 'book-now (public)', 'my-bookings (member)', 'manage-bookings (admin)', 'manage-locations (admin)'],
+      'Admin Routes': ['/bookings', '/bookings/locations', '/bookings/settings', '/bookings/email-templates']
+    }
+  },
+  {
+    id: 'charts', name: 'crouton-charts', icon: '\ud83d\udcca', color: 'charts',
+    desc: 'Data visualisation. Chart editor block for any collection.',
+    badges: [{ label: 'addon', class: 'badge-cyan' }, { label: '1 editor block', class: 'badge-green' }],
+    provides: {
+      'Editor Blocks': ['chartBlock'],
+      'Components': ['CroutonChartsWidget', 'CroutonChartsBlocksChartBlockView', 'CroutonChartsBlocksChartBlockRender', 'CroutonChartsBlocksChartPresetPicker'],
+      'Composables': ['useCollectionChart()'],
+      'Registers': ['croutonApps.charts', 'croutonBlocks.chartBlock']
+    }
+  },
+  {
+    id: 'maps', name: 'crouton-maps', icon: '\ud83d\uddfa\ufe0f', color: 'maps',
+    desc: 'Geolocation. Map blocks, geocoding, field detection.',
+    badges: [{ label: 'addon', class: 'badge-blue' }, { label: '2 editor blocks', class: 'badge-green' }],
+    provides: {
+      'Editor Blocks': ['mapBlock', 'collectionMapBlock'],
+      'Components': ['CroutonMapsMap', 'CroutonMapsMarker', 'CroutonMapsPopup', 'CroutonMapsPreview'],
+      'Composables': ['useMap()', 'useGeocode()', 'useMapConfig()'],
+      'Field Detection': ['address fields \u2192 map preview', 'lat/lng fields \u2192 coordinate picker'],
+      'Registers': ['croutonApps.maps', 'croutonBlocks.mapBlock', 'croutonBlocks.collectionMapBlock']
+    }
+  },
+  {
+    id: 'auth', name: 'crouton-auth', icon: '\ud83d\udd10', color: 'auth',
+    desc: 'Identity. Users, teams, members, scoped access.',
+    badges: [{ label: 'core', class: 'badge-pink' }, { label: '2 atelier blocks', class: 'badge-yellow' }],
+    provides: {
+      'Collections': ['user', 'session', 'account', 'organization', 'member', 'invitation', 'scopedAccessToken', 'teamSettings'],
+      'Atelier Blocks': ['signup (public)', 'manage-contacts (admin)'],
+      'Composables': ['useAuth()', 'useTeamContext()'],
+      'Admin Routes': ['/members']
+    }
+  },
+  {
+    id: 'atelier', name: 'crouton-atelier', icon: '\ud83c\udfa8', color: 'atelier',
+    desc: 'App composer. Templates, blocks, scaffold.',
+    badges: [{ label: 'addon', class: 'badge-yellow' }, { label: 'hosts block registry', class: 'badge-yellow' }],
+    provides: {
+      'Collections': ['atelierProject'],
+      'Block Registry': ['schedule', 'book-now', 'my-bookings', 'manage-bookings', 'manage-locations', 'hero', 'text-page', 'blog', 'signup', 'manage-contacts'],
+      'Templates': ['yoga-studio', 'sports-club', 'charity', 'blank'],
+      'Composables': ['useBlockRegistry()', 'useAppComposition()', 'useAtelierSync()', 'useAtelierScaffold()'],
+      'Admin Routes': ['/atelier']
+    }
+  },
+  {
+    id: 'generated', name: 'Generated Layer', icon: '\u2728', color: 'generated',
+    desc: 'AI pipeline output. Same registration as a package.',
+    badges: [{ label: 'generated', class: 'badge-orange' }, { label: 'first-class citizen', class: 'badge-green' }],
+    provides: {
+      'Example: Fundraiser drinks': ['drinks', 'sales', 'transactions'],
+      'Components (Designer + CLI)': ['Drinks/List.vue', 'Drinks/Detail.vue', 'Drinks/Form.vue', 'Drinks/Card.vue', 'Sales/List.vue', 'Sales/Form.vue'],
+      'Editor Blocks (collection views)': ['drinksGrid', 'salesTable', 'transactionsTable'],
+      'Analyst Blocks (if charts installed)': ['salesTrends (line)', 'revenueByDrink (bar)', 'topSellers (donut)', 'hourlyRevenue (area)'],
+      'Analyst Blocks (if maps installed)': ['allVenuesMap (collection map)'],
+      'Pages (Editor AI)': ['Public: hero + drinks grid + CTA', 'Admin: sales trends chart + revenue chart + sales table'],
+      'Registers via': ['app.config.ts \u2192 croutonApps + croutonBlocks (same pattern as npm packages)']
+    }
+  }
+]
+
+// Render packages
+const grid = document.getElementById('packagesGrid')
+packages.forEach(pkg => {
+  const card = document.createElement('div')
+  card.className = `pkg-card`
+  card.onclick = () => card.classList.toggle('expanded')
+
+  let badgesHtml = pkg.badges.map(b => `<span class="badge ${b.class}">${b.label}</span>`).join('')
+
+  let providesHtml = ''
+  for (const [section, items] of Object.entries(pkg.provides)) {
+    providesHtml += `
+      <div class="provides-section">
+        <h4>${section}</h4>
+        <div class="provides-list">
+          ${items.map(i => `<span class="provides-item">${i}</span>`).join('')}
+        </div>
+      </div>
+    `
+  }
+
+  card.innerHTML = `
+    <div class="pkg-header">
+      <div class="pkg-icon icon-${pkg.color}">${pkg.icon}</div>
+      <div class="pkg-info">
+        <div class="pkg-name">${pkg.name}</div>
+        <div class="pkg-desc">${pkg.desc}</div>
+      </div>
+      <div class="pkg-chevron">\u25be</div>
+    </div>
+    <div class="pkg-badges">${badgesHtml}</div>
+    <div class="pkg-body">
+      <div class="pkg-body-inner">
+        ${providesHtml}
+      </div>
+    </div>
+  `
+  grid.appendChild(card)
+})
+</script>
+
+</body>
+</html>
