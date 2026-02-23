@@ -170,9 +170,9 @@ Implementation: automations are config entries that the generated app's event li
 | Phase 4: (skipped) | Preview |
 | Phase 5: Review + scaffold | Automations + scaffold |
 
-The existing composables (`useCollectionEditor`, `useSchemaValidation`, `useSchemaExport`, `useAppScaffold`) stay. They become internal plumbing that the block system calls, not user-facing phases.
+The Atelier is a **standalone package** (`crouton-atelier`) extending `crouton-core` directly — not crouton-designer. The designer's AI/phase infrastructure is too coupled to reuse. When Phase E lands, the scaffold endpoint can be called via `$fetch` or shared utilities (`useSchemaExport`, `useFieldTypes`) extracted to crouton-core.
 
-The AI chat stays but changes role: it's the handler for custom blocks and a help assistant, not the primary design interface.
+The designer package remains available for AI-first workflows. Atelier is the visual-first alternative.
 
 ## Dependencies
 
