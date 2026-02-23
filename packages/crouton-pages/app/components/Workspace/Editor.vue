@@ -622,12 +622,8 @@ async function handleSubmit() {
       (t) => t?.title && t.title.trim().length > 0
     )
     if (!hasTitle) {
-      const toast = useToast()
-      toast.add({
-        title: 'Title required',
-        description: 'Please enter a title for at least one language',
-        color: 'error'
-      })
+      const notify = useNotify()
+      notify.error('Title required', { description: 'Please enter a title for at least one language' })
       return
     }
 
