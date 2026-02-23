@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atelier — Apps for small organisations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <meta name="color-scheme" content="light only">
+  <style>
+    :root {
+      color-scheme: light only;
+      --bg: #FAF7F2;
+      --fg: #1A1714;
+      --muted: #8C8478;
+      --accent: #C45D3E;
+      --accent-dim: #E8A08C;
+      --green: #7A8F72;
+      --green-dim: #C3D1BE;
+      --surface: #FFFFFF;
+      --surface-raised: #F5F2ED;
+      --border: rgba(140, 132, 120, 0.1);
+      --border-mid: rgba(140, 132, 120, 0.16);
+      --border-strong: rgba(140, 132, 120, 0.3);
+      --shadow: rgba(26, 23, 20, 0.06);
+      --shadow-lg: rgba(26, 23, 20, 0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { background: #FAF7F2 !important; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--accent-dim); color: var(--fg); }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      padding: 1rem 2rem;
+      backdrop-filter: blur(20px);
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--fg); text-decoration: none; letter-spacing: -0.02em; }
+    .logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 2rem; align-items: center; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.9rem; font-weight: 450; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--fg); }
+    .nav-cta { background: var(--fg); color: var(--bg) !important; padding: 0.5rem 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem !important; font-weight: 500 !important; transition: opacity 0.2s; }
+    .nav-cta:hover { opacity: 0.85; color: var(--bg) !important; }
+
+    /* ── Hero ── */
+    .hero { padding: 10rem 2rem 6rem; max-width: 1100px; margin: 0 auto; }
+    .hero-label { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 500; color: var(--green); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.5rem; opacity: 0; animation: fadeUp 0.6s ease forwards; }
+    .hero-label::before { content: ''; width: 8px; height: 8px; background: var(--green); border-radius: 50%; }
+    .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.8rem, 6vw, 4.5rem); line-height: 1.08; letter-spacing: -0.025em; max-width: 700px; opacity: 0; animation: fadeUp 0.6s ease 0.1s forwards; }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero-sub { font-size: 1.15rem; color: var(--muted); max-width: 520px; margin-top: 1.5rem; line-height: 1.65; opacity: 0; animation: fadeUp 0.6s ease 0.2s forwards; }
+    .hero-actions { display: flex; gap: 1rem; margin-top: 2.5rem; opacity: 0; animation: fadeUp 0.6s ease 0.3s forwards; }
+
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.75rem; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 500; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; font-family: inherit; }
+    .btn-primary { background: var(--fg); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-secondary { background: transparent; color: var(--fg); border: 1.5px solid var(--border-strong); }
+    .btn-secondary:hover { border-color: var(--fg); }
+    .btn-arrow { transition: transform 0.2s; }
+    .btn:hover .btn-arrow { transform: translateX(3px); }
+
+    /* ── Demo ── */
+    .demo-section { padding: 2rem 2rem 6rem; max-width: 1100px; margin: 0 auto; }
+    .demo-window { background: var(--surface); border-radius: 16px; box-shadow: 0 1px 3px var(--shadow), 0 12px 40px var(--shadow-lg); overflow: hidden; border: 1px solid var(--border-mid); }
+    .demo-bar { display: flex; align-items: center; gap: 6px; padding: 14px 18px; background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+    .demo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border-strong); }
+    .demo-content { display: grid; grid-template-columns: 280px 1fr; min-height: 420px; }
+    .demo-sidebar { padding: 1.5rem; border-right: 1px solid var(--border); background: var(--surface-raised); }
+    .demo-sidebar-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.75rem; font-weight: 600; }
+
+    .demo-chat { display: flex; flex-direction: column; gap: 0.75rem; }
+    .chat-msg { padding: 0.7rem 0.9rem; border-radius: 10px; font-size: 0.82rem; line-height: 1.5; max-width: 95%; animation: fadeIn 0.4s ease forwards; opacity: 0; }
+    .chat-user { background: var(--border-mid); color: var(--fg); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-ai { background: var(--accent); color: #fff; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .chat-msg:nth-child(1) { animation-delay: 0.5s; }
+    .chat-msg:nth-child(2) { animation-delay: 1.2s; }
+    .chat-msg:nth-child(3) { animation-delay: 2s; }
+    .chat-msg:nth-child(4) { animation-delay: 2.8s; }
+
+    .demo-main { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .demo-main-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
+
+    .schema-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; flex: 1; }
+    .schema-card { background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; opacity: 0; animation: scaleIn 0.4s ease forwards; }
+    .schema-card:nth-child(1) { animation-delay: 1.6s; }
+    .schema-card:nth-child(2) { animation-delay: 1.8s; }
+    .schema-card:nth-child(3) { animation-delay: 2.0s; }
+    .schema-card:nth-child(4) { animation-delay: 2.2s; }
+
+    .schema-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; margin-bottom: 0.6rem; background: var(--border); }
+    .schema-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .schema-card p { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+    .schema-fields { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.5rem; }
+    .schema-field { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; padding: 2px 6px; background: var(--border); border-radius: 4px; color: var(--muted); }
+
+    /* ── Sections ── */
+    section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+    .section-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 600; margin-bottom: 0.75rem; }
+    .section-title { font-family: 'DM Serif Display', serif; font-size: clamp(1.8rem, 3.5vw, 2.5rem); letter-spacing: -0.02em; line-height: 1.15; max-width: 600px; }
+    .section-desc { color: var(--muted); font-size: 1.05rem; max-width: 540px; margin-top: 1rem; line-height: 1.65; }
+
+    /* ── How it works ── */
+    .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3.5rem; }
+    .how-card { position: relative; }
+    .how-number { font-family: 'DM Serif Display', serif; font-size: 3rem; color: var(--border-strong); line-height: 1; margin-bottom: 0.75rem; }
+    .how-card h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .how-card p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+    .how-detail { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--green); margin-top: 0.75rem; padding: 0.6rem 0.8rem; background: color-mix(in srgb, var(--green) 8%, transparent); border-radius: var(--radius-sm); border-left: 2px solid var(--green-dim); }
+
+    /* ── Packages ── */
+    .packages-section { background: var(--surface); margin: 0; max-width: none; padding: 6rem 2rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .packages-inner { max-width: 1100px; margin: 0 auto; }
+    .packages-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-top: 3rem; }
+    .pkg { padding: 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface-raised); transition: all 0.2s; }
+    .pkg:hover { border-color: var(--border-strong); }
+    .pkg-icon { font-size: 1.3rem; margin-bottom: 0.6rem; }
+    .pkg h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .pkg p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .pkg-tag { display: inline-block; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; margin-top: 0.6rem; font-weight: 600; }
+    .pkg-tag.stable { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+    .pkg-tag.beta { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+
+    /* ── Example ── */
+    .example-block { margin-top: 3.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+    .example-text h3 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem; letter-spacing: -0.01em; }
+    .example-text p { color: var(--muted); font-size: 0.95rem; line-height: 1.65; margin-bottom: 1rem; }
+
+    .example-output { background: var(--surface); border-radius: var(--radius); box-shadow: 0 1px 3px var(--shadow), 0 8px 24px var(--shadow); overflow: hidden; border: 1px solid var(--border-mid); }
+    .example-output-bar { padding: 0.6rem 1rem; background: var(--surface-raised); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+    .example-output-bar span { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+
+    .example-tree { padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; line-height: 1.8; color: var(--muted); }
+    .example-tree .folder { color: var(--fg); font-weight: 500; }
+    .example-tree .designer { color: var(--accent); }
+    .example-tree .cli { color: var(--green); }
+    .example-tree .indent { padding-left: 1.2rem; }
+    .example-tree .indent2 { padding-left: 2.4rem; }
+
+    /* ── For devs ── */
+    .dev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 3rem; }
+    .dev-card { padding: 1.5rem; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
+    .dev-card h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .dev-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.55; }
+
+    /* ── Pricing ── */
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 3rem; max-width: 700px; }
+    .price-card { padding: 2rem; border-radius: var(--radius); border: 1.5px solid var(--border-mid); background: var(--surface); }
+    .price-card.featured { border-color: var(--accent); box-shadow: 0 4px 20px var(--shadow-lg); }
+    .price-tag { font-family: 'DM Serif Display', serif; font-size: 2rem; letter-spacing: -0.02em; }
+    .price-tag small { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--muted); font-weight: 400; }
+    .price-label { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .price-desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5; }
+    .price-features { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .price-features li { font-size: 0.82rem; color: var(--muted); padding-left: 1.25rem; position: relative; }
+    .price-features li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: 600; }
+    .btn-price { width: 100%; justify-content: center; font-size: 0.88rem; }
+
+    /* ── Footer ── */
+    footer { padding: 4rem 2rem; max-width: 1100px; margin: 0 auto; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .footer-left { font-size: 0.82rem; color: var(--muted); }
+    .footer-left a { color: var(--fg); text-decoration: none; }
+    .footer-links { display: flex; gap: 1.5rem; list-style: none; }
+    .footer-links a { font-size: 0.82rem; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--fg); }
+
+    .divider { max-width: 1100px; margin: 0 auto; height: 1px; background: var(--border); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero { padding: 8rem 1.5rem 4rem; }
+      .demo-content { grid-template-columns: 1fr; }
+      .demo-sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+      .how-grid { grid-template-columns: 1fr; }
+      .example-block { grid-template-columns: 1fr; }
+      .dev-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .packages-grid { grid-template-columns: 1fr 1fr; }
+      section { padding: 4rem 1.5rem; }
+      .packages-section { padding: 4rem 1.5rem; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a href="#" class="logo">Atelier<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#packages">Packages</a></li>
+      <li><a href="#developers">Developers</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#" class="nav-cta">Get started</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-label">Built on Nuxt</div>
+  <h1>Apps for small organisations, <em>built fast</em></h1>
+  <p class="hero-sub">Describe what your organisation needs. Atelier designs the data model, generates a real Nuxt app, and deploys it. Everything connects by default.</p>
+  <div class="hero-actions">
+    <a href="#" class="btn btn-primary">Start building <span class="btn-arrow">&rarr;</span></a>
+    <a href="#" class="btn btn-secondary">View on GitHub</a>
+  </div>
+</div>
+
+<div class="demo-section">
+  <div class="demo-window">
+    <div class="demo-bar">
+      <div class="demo-dot"></div>
+      <div class="demo-dot"></div>
+      <div class="demo-dot"></div>
+    </div>
+    <div class="demo-content">
+      <div class="demo-sidebar">
+        <div class="demo-sidebar-title">Architect</div>
+        <div class="demo-chat">
+          <div class="chat-msg chat-user">We're a community center. We run events, have rooms to book, and want to track memberships.</div>
+          <div class="chat-msg chat-ai">I'll set up four collections: events, registrations, rooms, and memberships. Members are handled through auth — anyone who registers becomes a member automatically.</div>
+          <div class="chat-msg chat-user">Events need a calendar view. And people should sign up from the event page, not a separate form.</div>
+          <div class="chat-msg chat-ai">Got it. I'll have the designer build a calendar for events and an embedded registration flow. Rooms and memberships will use standard layouts.</div>
+        </div>
+      </div>
+      <div class="demo-main">
+        <div class="demo-main-title">Generated collections</div>
+        <div class="schema-cards">
+          <div class="schema-card">
+            <div class="schema-icon">📅</div>
+            <h4>Events</h4>
+            <p>Calendar view, custom cards</p>
+            <div class="schema-fields">
+              <span class="schema-field">title</span>
+              <span class="schema-field">date</span>
+              <span class="schema-field">room</span>
+              <span class="schema-field">capacity</span>
+              <span class="schema-field">fee</span>
+            </div>
+          </div>
+          <div class="schema-card">
+            <div class="schema-icon">✋</div>
+            <h4>Registrations</h4>
+            <p>Embedded in event detail</p>
+            <div class="schema-fields">
+              <span class="schema-field">event</span>
+              <span class="schema-field">member</span>
+              <span class="schema-field">status</span>
+              <span class="schema-field">paid</span>
+            </div>
+          </div>
+          <div class="schema-card">
+            <div class="schema-icon">🏠</div>
+            <h4>Rooms</h4>
+            <p>Grid layout with photos</p>
+            <div class="schema-fields">
+              <span class="schema-field">name</span>
+              <span class="schema-field">capacity</span>
+              <span class="schema-field">amenities</span>
+              <span class="schema-field">rate</span>
+            </div>
+          </div>
+          <div class="schema-card">
+            <div class="schema-icon">🎫</div>
+            <h4>Memberships</h4>
+            <p>Table with status filters</p>
+            <div class="schema-fields">
+              <span class="schema-field">member</span>
+              <span class="schema-field">tier</span>
+              <span class="schema-field">dates</span>
+              <span class="schema-field">status</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="how">
+  <div class="section-label">How it works</div>
+  <h2 class="section-title">Describe your organisation. Get a working app.</h2>
+  <p class="section-desc">Two AI roles turn a conversation into a deployed application. You own the code — every file, every component, every database table.</p>
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-number">01</div>
+      <h3>Architect</h3>
+      <p>You describe what your organisation does. The architect asks questions, understands your domain, and designs the data model — collections, fields, relationships, example data.</p>
+      <div class="how-detail">Outputs: schemas + seed data as JSON files</div>
+    </div>
+    <div class="how-card">
+      <div class="how-number">02</div>
+      <h3>Designer</h3>
+      <p>The designer reads each schema and decides how it should look. Simple collections get layout hints. Complex ones — like an event calendar with registration — get custom Vue components.</p>
+      <div class="how-detail">Outputs: layout hints on schemas or custom .vue files</div>
+    </div>
+    <div class="how-card">
+      <div class="how-number">03</div>
+      <h3>Generate &amp; deploy</h3>
+      <p>The CLI generates everything the designer didn't: composables, types, API routes, database schema, and standard components. One click to deploy on Cloudflare's edge.</p>
+      <div class="how-detail">Outputs: full Nuxt app in a Git repo you own</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="section-label">Real output</div>
+  <h2 class="section-title">The designer knows when to get creative</h2>
+  <p class="section-desc">Most collections work great with standard layouts. But when the domain demands it, the designer writes custom components.</p>
+  <div class="example-block">
+    <div class="example-text">
+      <h3>Standard and custom, same folder</h3>
+      <p>Rooms are simple — a grid of cards with photos. The CLI generates that from a two-word hint. Events need a calendar, custom cards with spots-remaining badges, and an embedded registration flow. The designer writes those as real Vue components.</p>
+      <p>The app doesn't know which path produced which file. You can customise any of them.</p>
+    </div>
+    <div class="example-output">
+      <div class="example-output-bar">
+        <span>layers/center/</span>
+      </div>
+      <div class="example-tree">
+        <div class="folder">components/</div>
+        <div class="indent folder">Events/</div>
+        <div class="indent2"><span class="designer">List.vue</span> &larr; designer: calendar</div>
+        <div class="indent2"><span class="designer">Form.vue</span> &larr; designer: availability</div>
+        <div class="indent2"><span class="designer">Detail.vue</span> &larr; designer: event page</div>
+        <div class="indent2"><span class="designer">Card.vue</span> &larr; designer: rich card</div>
+        <div class="indent folder">Rooms/</div>
+        <div class="indent2"><span class="cli">List.vue</span> &larr; cli: grid</div>
+        <div class="indent2"><span class="cli">Form.vue</span> &larr; cli: standard</div>
+        <div class="indent2"><span class="cli">Detail.vue</span> &larr; cli: standard</div>
+        <div class="indent2"><span class="cli">Card.vue</span> &larr; cli: image-top</div>
+        <div class="folder" style="margin-top: 0.4rem">composables/ &nbsp;<span class="cli">all CLI</span></div>
+        <div class="folder">server/ &nbsp;<span class="cli">all CLI</span></div>
+        <div class="folder">types/ &nbsp;<span class="cli">all CLI</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section class="packages-section" id="packages">
+  <div class="packages-inner">
+    <div class="section-label">Packages</div>
+    <h2 class="section-title">Toggle features on. Everything connects.</h2>
+    <p class="section-desc">Each package works alone. Any combination works together. Add bookings and it knows about your members. Add email and bookings sends confirmations.</p>
+    <div class="packages-grid">
+      <div class="pkg">
+        <div class="pkg-icon">🔐</div>
+        <h4>Auth</h4>
+        <p>Teams, members, roles, magic links. Every person in your system — staff or customer — is a member.</p>
+        <span class="pkg-tag stable">Stable</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">📅</div>
+        <h4>Bookings</h4>
+        <p>Appointments, reservations, time slots. Capacity management and calendar views.</p>
+        <span class="pkg-tag stable">Stable</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">📧</div>
+        <h4>Email</h4>
+        <p>Transactional email with templates. Confirmation emails, reminders, notifications.</p>
+        <span class="pkg-tag stable">Stable</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">📄</div>
+        <h4>Pages</h4>
+        <p>Public-facing site with block editor. Collections auto-become page types.</p>
+        <span class="pkg-tag stable">Stable</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">🌍</div>
+        <h4>i18n</h4>
+        <p>Multi-language support. Per-field translations with locale switcher.</p>
+        <span class="pkg-tag stable">Stable</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">🤖</div>
+        <h4>AI</h4>
+        <p>Multi-provider chat and completion. Powers the architect and designer.</p>
+        <span class="pkg-tag stable">Stable</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">🗺️</div>
+        <h4>Maps</h4>
+        <p>Location fields, geocoding, interactive maps. Address autocomplete.</p>
+        <span class="pkg-tag beta">Beta</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">💰</div>
+        <h4>Sales</h4>
+        <p>Point-of-sale for events and walk-ins. Cash and card tracking.</p>
+        <span class="pkg-tag beta">Beta</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">🖼️</div>
+        <h4>Assets</h4>
+        <p>Media library with blob storage. Visual picker for forms.</p>
+        <span class="pkg-tag stable">Stable</span>
+      </div>
+      <div class="pkg">
+        <div class="pkg-icon">📝</div>
+        <h4>Editor</h4>
+        <p>Rich text editing with Tiptap. For descriptions, blog posts, content.</p>
+        <span class="pkg-tag stable">Stable</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="developers">
+  <div class="section-label">For developers</div>
+  <h2 class="section-title">Real code. Standard Nuxt. No lock-in.</h2>
+  <p class="section-desc">Atelier generates a standard Nuxt project. Every file is yours to read, edit, and deploy however you want.</p>
+  <div class="dev-grid">
+    <div class="dev-card">
+      <h4>Generate &rarr; Customise &rarr; Own</h4>
+      <p>Generated code lives in your project. Edit it freely, regenerate when needed, or keep it as-is forever. Like Rails scaffolding for Nuxt.</p>
+    </div>
+    <div class="dev-card">
+      <h4>Domain-driven layers</h4>
+      <p>Organise collections by domain — layers/center/, layers/shop/, layers/blog/. Each layer is self-contained and reusable across projects.</p>
+    </div>
+    <div class="dev-card">
+      <h4>Drizzle + SQLite + Cloudflare</h4>
+      <p>Drizzle ORM for type-safe database access. SQLite on Cloudflare D1 for production. Zero config, zero ops, global edge deployment.</p>
+    </div>
+    <div class="dev-card">
+      <h4>Build for your clients</h4>
+      <p>Spin up a client app in minutes, hand it over. Every project follows the same architecture, so maintenance is predictable.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="pricing">
+  <div class="section-label">Pricing</div>
+  <h2 class="section-title">Free to build. Cheap to run.</h2>
+  <p class="section-desc">The framework is open source. Pay only if you want us to handle deployment and AI.</p>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-label">Open Source</div>
+      <div class="price-tag">Free</div>
+      <p class="price-desc">Self-host everything. Full control.</p>
+      <ul class="price-features">
+        <li>Full framework and CLI</li>
+        <li>All packages</li>
+        <li>Deploy anywhere</li>
+        <li>Community support</li>
+      </ul>
+      <a href="#" class="btn btn-secondary btn-price">View on GitHub</a>
+    </div>
+    <div class="price-card featured">
+      <div class="price-label">Hosted</div>
+      <div class="price-tag">&euro;5 <small>/month</small></div>
+      <p class="price-desc">We handle infrastructure. You use the app.</p>
+      <ul class="price-features">
+        <li>Everything in Open Source</li>
+        <li>AI architect + designer</li>
+        <li>One-click deploy to edge</li>
+        <li>Custom domain</li>
+        <li>Managed database</li>
+        <li>Automatic updates</li>
+      </ul>
+      <a href="#" class="btn btn-primary btn-price">Get started <span class="btn-arrow">&rarr;</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">
+    <a href="#" class="logo" style="font-size: 1.1rem;">Atelier<span>.</span></a>
+    &nbsp;&nbsp; Open source by FYIT
+  </div>
+  <ul class="footer-links">
+    <li><a href="#">Documentation</a></li>
+    <li><a href="#">GitHub</a></li>
+    <li><a href="#">Packages</a></li>
+  </ul>
+</footer>
+
+</body>
+</html>
