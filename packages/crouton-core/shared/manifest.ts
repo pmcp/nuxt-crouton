@@ -51,6 +51,8 @@ export interface CroutonManifest {
     composables?: string[]
     components?: ManifestComponent[]
     apiRoutes?: string[]
+    /** Page editor blocks (TipTap nodes) this package contributes */
+    editorBlocks?: ManifestEditorBlock[]
   }
 
   // AI hints (migrated from module-registry.json)
@@ -111,6 +113,19 @@ export interface ManifestComponent {
   name: string
   description: string
   props?: string[]
+}
+
+export interface ManifestEditorBlock {
+  /** TipTap node name (e.g. 'chartBlock') */
+  type: string
+  /** Display name (e.g. 'Chart') */
+  name: string
+  /** Short description for the slash menu */
+  description: string
+  /** Lucide icon class (e.g. 'i-lucide-chart-bar') */
+  icon: string
+  /** Category for grouping in the slash menu */
+  category: string
 }
 
 export function defineCroutonManifest(manifest: CroutonManifest): CroutonManifest {

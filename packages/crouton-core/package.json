@@ -9,6 +9,7 @@
     "./shared/manifest": "./shared/manifest.ts",
     "./shared/utils/date": "./shared/utils/date.ts",
     "./shared/utils/fs": "./shared/utils/fs.ts",
+    "./app/types/block-definition": "./app/types/block-definition.ts",
     "./app/composables/*": {
       "types": "./dist/app/composables/*.d.ts",
       "import": "./dist/app/composables/*.mjs"
