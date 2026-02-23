@@ -739,9 +739,10 @@ const fieldGroups = computed(() => ({
 // Preview drawer state
 const showPreview = ref(false)
 
-// Detect if crouton-assets is installed via its croutonApps registration (set in crouton-assets/app/app.config.ts)
+// Detect optional packages via croutonApps registration
 const { hasApp } = useCroutonApps()
 const hasAssetsPicker = hasApp('assets')
+const hasAI = hasApp('ai')
 
 // Asset ID for the picker (not persisted — just tracks current picker selection)
 const selectedOgImageAssetId = ref<string | undefined>()
@@ -954,7 +955,7 @@ defineExpose({ state })
           v-model="state.translations"
           :fields="translatableFields"
           :layout="i18nLayout"
-          show-ai-translate
+          :show-ai-translate="hasAI"
           field-type="page"
           :field-components="fieldComponents"
           :field-options="fieldOptions"
@@ -1109,8 +1110,9 @@ defineExpose({ state })
       </template>
     </USlideover>
 
-    <!-- AI Page Generator Modal -->
-    <CroutonPagesAiPageGenerator
+    <!-- AI Page Generator Modal (only when crouton-ai is installed) -->
+    <AIPageGenerator
+      v-if="hasAI"
       v-model="showAiGenerator"
       :available-locales="availableLocales"
       :current-locale="locale"

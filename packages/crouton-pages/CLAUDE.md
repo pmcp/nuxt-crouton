@@ -33,6 +33,7 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `server/middleware/01-domain-resolver.ts` | Resolves custom domains to teams |
 | `server/api/teams/[id]/pages.get.ts` | Get published pages for navigation |
 | `server/api/teams/[id]/pages/[slug].get.ts` | Get single page by slug |
+| `app/stubs/AIPageGenerator.vue` | Stub for AI page generator (real impl in crouton-ai) |
 | `nuxt.config.ts` | Layer configuration |
 
 ## Architecture

@@ -18,6 +18,8 @@ AI integration layer for Nuxt applications using Vercel AI SDK. Provides composa
 | `server/utils/ai.ts` | Server-side provider factory |
 | `server/utils/providers/index.ts` | Provider registry and helpers |
 | `server/api/ai/translate.post.ts` | Translation API endpoint |
+| `server/api/ai/generate-page.post.ts` | AI page generation endpoint |
+| `app/components/AIPageGenerator.vue` | AI page generator modal (overrides stub in crouton-pages) |
 | `app/types/index.ts` | All TypeScript types |
 | `app/types/translation.ts` | Translation-specific types |
 | `app/editor/extensions/translation-ai.ts` | TipTap extension for translation |
@@ -134,6 +136,10 @@ All components auto-import with `AI` prefix:
 - `Chatbox.vue` → `<AIChatbox />`
 - `Message.vue` → `<AIMessage />`
 - `Input.vue` → `<AIInput />`
+
+Components registered without prefix (override stubs in other packages):
+- `AITranslateButton.vue` → `<AITranslateButton />` (overrides stub in crouton-i18n)
+- `AIPageGenerator.vue` → `<AIPageGenerator />` (overrides stub in crouton-pages)
 
 ## AI Translation
 

@@ -34,6 +34,13 @@ export default defineNuxtConfig({
         pattern: 'AITranslateButton.vue',
         prefix: '',
         global: true
+      },
+      // AIPageGenerator without prefix - overrides the stub from crouton-pages
+      {
+        path: join(currentDir, 'app/components'),
+        pattern: 'AIPageGenerator.vue',
+        prefix: '',
+        global: true
       }
     ]
   },
