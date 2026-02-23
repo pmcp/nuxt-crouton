@@ -2,7 +2,7 @@
   @crouton-generated
   @collection pages
   @layer pages
-  @generated 2026-02-20
+  @generated 2026-02-23
 
   ## AI Context
   - Form component for pages collection
@@ -44,7 +44,7 @@
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Slug" name="slug" class="not-last:pb-4">
-          <UInput v-model="state.slug" class="w-full" size="xl" />
+          <UInput v-model="state.slug" class="w-full" size="xl" @input="slugManuallyEdited = true" />
         </UFormField>
         <UFormField label="Content" name="content" class="not-last:pb-4">
           <CroutonEditorSimple v-model="state.content" />
@@ -54,6 +54,15 @@
 
       <template #sidebar>
       <div class="flex flex-col gap-4 p-1">
+
+        <UFormField label="Parent" name="parentId" class="not-last:pb-4">
+          <CroutonFormParentSelect
+            v-model="state.parentId"
+            collection="pagesPages"
+            :current-id="state.id"
+            label="Parent"
+          />
+        </UFormField>
       </div>
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Status" name="status" class="not-last:pb-4">
@@ -89,6 +98,8 @@
 <script setup lang="ts">
 import type { PagesPageFormProps, PagesPageFormData } from '../../types'
 import usePagesPages from '../composables/usePagesPages'
+import { slugify } from '@fyit/crouton-core/app/utils/slugify'
+import { watchDebounced } from '@vueuse/core'
 
 const props = defineProps<PagesPageFormProps>()
 const { defaultValue, schema, collection } = usePagesPages()
@@ -96,7 +107,8 @@ const { defaultValue, schema, collection } = usePagesPages()
 // Form layout configuration
 const tabs = ref(false)
 
-
+// Track whether slug was manually edited
+const slugManuallyEdited = ref(false)
 
 // Use new mutation composable for data operations
 const { create, update, deleteItems } = useCollectionMutation(collection)
@@ -105,9 +117,16 @@ const { create, update, deleteItems } = useCollectionMutation(collection)
 const { close, loading } = useCrouton()
 
 // Initialize form state with proper values (no watch needed!)
+// Hierarchy defaults for new items (parentId, path, depth, order)
+const hierarchyDefaults = {
+  parentId: null,
+  path: '/',
+  depth: 0,
+  order: 0
+}
 const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
-  : { ...defaultValue }
+  : { ...defaultValue, ...hierarchyDefaults }
 
 // Convert date strings to Date objects for date fields during editing
 if (props.action === 'update' && props.activeItem?.id) {
@@ -117,6 +136,19 @@ if (props.action === 'update' && props.activeItem?.id) {
 }
 
 const state = ref<PagesPageFormData & { id?: string | null }>(initialValues)
+
+// Auto-generate slug from title (only on create, only if slug not manually edited)
+if (props.action === 'create') {
+  watchDebounced(
+    () => state.value.title,
+    (title) => {
+      if (!slugManuallyEdited.value && title) {
+        state.value.slug = slugify(title)
+      }
+    },
+    { debounce: 300 }
+  )
+}
 
 const handleSubmit = async () => {
   try {

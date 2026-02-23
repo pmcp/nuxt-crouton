@@ -355,3 +355,20 @@ export async function reorderSiblingsPagesPages(
 
   return results
 }
+
+export async function findUniqueSlugPagesPages(
+  teamId: string,
+  baseSlug: string,
+  excludeId?: string
+): Promise<string> {
+  const db = useDB()
+  return findUniqueSlug(
+    db,
+    tables.pagesPages,
+    tables.pagesPages.slug,
+    tables.pagesPages.teamId,
+    baseSlug,
+    teamId,
+    excludeId
+  )
+}

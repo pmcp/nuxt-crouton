@@ -1,6 +1,7 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { createPagesPage } from '../../../../database/queries'
+import { createPagesPage, getPagesPagesByIds, findUniqueSlugPagesPages } from '../../../../database/queries'
+import { nanoid } from 'nanoid'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
@@ -8,18 +9,58 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  // Exclude id field to let the database generate it
+  // Exclude id field (we generate it for path calculation)
   const { id, ...dataWithoutId } = body
+
+  // Generate ID upfront for correct path calculation
+  const recordId = nanoid()
+
+  // Auto-generate slug from title if empty/missing
+  if (!dataWithoutId.slug && dataWithoutId.title) {
+    dataWithoutId.slug = slugify(dataWithoutId.title)
+  }
+
+  // Deduplicate slug within the team
+  if (dataWithoutId.slug) {
+    dataWithoutId.slug = await findUniqueSlugPagesPages(team.id, dataWithoutId.slug)
+  }
+
+  // Calculate path based on parentId
+  let path = `/${recordId}/`
+  let depth = 0
+
+  if (dataWithoutId.parentId) {
+    const [parent] = await getPagesPagesByIds(team.id, [dataWithoutId.parentId])
+    if (parent) {
+      path = `${parent.path}${recordId}/`
+      depth = (parent.depth || 0) + 1
+    }
+  }
 
   // Convert date string to Date object
   if (dataWithoutId.publishedAt) {
     dataWithoutId.publishedAt = new Date(dataWithoutId.publishedAt)
   }
-  return await createPagesPage({
-    ...dataWithoutId,
-    teamId: team.id,
-    owner: user.id,
-    createdBy: user.id,
-    updatedBy: user.id
-  })
+
+  try {
+    return await createPagesPage({
+      ...dataWithoutId,
+      id: recordId,
+      path,
+      depth,
+      teamId: team.id,
+      owner: user.id,
+      createdBy: user.id,
+      updatedBy: user.id
+    })
+  }
+  catch (error: any) {
+    if (error?.message?.includes('UNIQUE constraint failed') && error.message.includes('slug')) {
+      throw createError({
+        status: 409,
+        statusText: 'A page with this slug already exists'
+      })
+    }
+    throw error
+  }
 })
