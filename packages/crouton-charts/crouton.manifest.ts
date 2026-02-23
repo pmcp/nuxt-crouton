@@ -20,5 +20,8 @@ export default defineCroutonManifest({
     composables: [
       { name: 'useCollectionChart', description: 'Fetch and transform collection data for charting' },
     ],
+    editorBlocks: [
+      { type: 'chartBlock', name: 'Chart', description: 'Embed a collection as a chart (bar, line, area, donut)', icon: 'i-lucide-chart-bar', category: 'data' }
+    ],
   },
 })

@@ -62,7 +62,11 @@ export default defineCroutonManifest({
     ],
     apiRoutes: [
       '/api/maps/geocode',
-    ]
+    ],
+    editorBlocks: [
+      { type: 'mapBlock', name: 'Map', description: 'Embed an interactive map with a location pin', icon: 'i-lucide-map-pin', category: 'content' },
+      { type: 'collectionMapBlock', name: 'Collection Map', description: 'Show collection items as markers on an interactive map', icon: 'i-lucide-map', category: 'content' }
+    ],
   },
 
   // Detection patterns — what schema fields trigger map/geocoding generation
