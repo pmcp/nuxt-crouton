@@ -73,7 +73,7 @@ The user describes something that doesn't exist in the registry. The AI (Designe
 - Hints or custom Vue components
 - The block gets added to the app's local block registry
 
-This is where the Architect/Designer pipeline from `atelier-generation-flow.md` lives — not as a separate system, but as the handler for "Something else" blocks.
+This is where the Architect/Designer/Analyst/Editor pipeline from `atelier-generation-flow.md` lives — not as a separate system, but as the handler for "Something else" blocks.
 
 ### Visibility
 
@@ -130,18 +130,41 @@ Implementation: automations are config entries that the generated app's event li
 
 **Outcome**: User can see what their app looks like before generating it.
 
-### Phase C: Custom blocks + AI
+### Phase C: Custom blocks + AI (Architect + Designer)
 
 **Goal**: Handle "Something else" blocks via the Architect/Designer pipeline.
 
-1. **Custom block AI prompt** — When the user describes a custom block, the AI:
+1. **Custom block AI prompt** — When the user describes a custom block, the Architect:
    - Determines if it needs new collections or can reuse existing
    - Produces schemas for new collections
-   - Adds hints ($list, $card) or flags for custom component generation
 2. **Integrate with existing collection design** — Custom block schemas feed into `useCollectionEditor` (the Phase 2 infrastructure stays, it just gets invoked differently)
-3. **Designer pass** — After schemas are ready, a second AI call adds presentation hints. This is the Designer role from `atelier-generation-flow.md`, invoked only for custom blocks.
+3. **Designer pass** — After schemas are ready, the Designer adds presentation hints ($list, $card) or flags for custom component generation. Invoked only for custom blocks.
 
-**Outcome**: User can add custom blocks that get AI-designed schemas. Standard blocks skip AI entirely.
+**Outcome**: User can add custom blocks that get AI-designed schemas and components. Standard blocks skip AI entirely.
+
+### Phase C.5: Visualizations + AI (Analyst)
+
+**Goal**: Create meaningful data visualizations from domain collections + available packages.
+
+1. **Analyst context** — The Analyst receives: collection schemas (field shapes, relationships), available visualization packages (crouton-charts, crouton-maps).
+2. **Chart presets** — If crouton-charts is installed, create chart configurations: time series from date fields, distributions from status/category fields, aggregations from numeric + grouping fields.
+3. **Map configs** — If crouton-maps is installed, create collection map configurations for collections with address/coordinate fields.
+4. **Registration** — Generated chart presets and map configs are registered as editor blocks in the generated layer's app.config, available to the page editor and the Editor AI.
+
+**Outcome**: The app ships with meaningful, domain-specific visualizations. An admin page can show "Booking Trends" and "Revenue by Location" instead of a generic empty chart.
+
+### Phase C.6: Page composition + AI (Editor)
+
+**Goal**: Generate page layouts from selected blocks + Analyst visualizations.
+
+1. **Editor context** — The Editor receives: app composition (selected blocks + visibility), available editor blocks (from manifests + Analyst output), collection view styles (from Designer hints + CLI defaults).
+2. **Page composition** — The Editor outputs TipTap JSON per page:
+   - Public landing: hero → visual collection blocks → CTA
+   - Member dashboard: personal data → discovery
+   - Admin overview: Analyst charts → data tables
+3. **User editing** — Generated pages load in the `crouton-pages` editor. The user can rearrange, add, or remove blocks. The Editor gives them a good starting point, not a locked layout.
+
+**Outcome**: Generated apps ship with composed pages, not blank canvases. The user edits from a designed starting point.
 
 ### Phase D: Automations (DEFERRED)
 
@@ -151,14 +174,17 @@ Implementation: automations are config entries that the generated app's event li
 
 ### Phase E: Scaffold integration
 
-**Goal**: Wire blocks → schemas → CLI → deployed app.
+**Goal**: Wire blocks → schemas → CLI → deployed app. Generated layers are first-class packages.
 
 1. **Block-to-schema mapper** — Convert selected blocks → required collections → schema JSON files. Package-provided collections come from manifests. Custom block collections come from AI.
 2. **Hint injection** — Add $list, $card, $form hints to schemas based on block definitions. This requires the CLI hint system to be working (Priority #1 in strategy).
 3. **Visibility config** — Generate route middleware or page metadata that encodes visibility rules.
-4. **Reuse existing scaffold** — The `scaffold-app.post.ts` endpoint stays. It receives richer input (schemas with hints, visibility metadata) but the 7-step process is the same.
+4. **app.config generation** — The pipeline generates `layers/[domain]/app/app.config.ts` that registers everything: `croutonApps` (admin routes, page types), `croutonBlocks` (collection views, chart presets from Analyst, map configs). Generated layers register the same way packages do — the page editor, sidebar, and page tree discover them identically.
+5. **Analyst pass** — If visualization packages are present (charts, maps), the Analyst creates pre-configured editor blocks from the generated collections and registers them in `app.config.ts`.
+6. **Editor pass** — The Editor composes TipTap page content from all available blocks (built-in + Analyst-generated) and writes page records.
+7. **Reuse existing scaffold** — The `scaffold-app.post.ts` endpoint stays. It receives richer input (schemas with hints, visibility metadata, app.config registration) but the core process is the same.
 
-**Outcome**: "Build this app" button generates a working Nuxt app with the right packages, schemas, hints, automations, and visibility rules.
+**Outcome**: "Build this app" button generates a working Nuxt app where generated domains are indistinguishable from installed packages. Collection views, charts, and maps are available as editor blocks. Pages are pre-composed, not blank.
 
 ## What changes in the designer package
 
@@ -189,11 +215,15 @@ Phase A: Block registry + templates + block detail view (foundation)
     ↓
 Phase B: Preview
     ↓
-Phase C: Custom blocks + AI
+Phase C: Custom blocks + AI (Architect + Designer)
+    ↓
+Phase C.5: Visualizations + AI (Analyst)
+    ↓
+Phase C.6: Page composition + AI (Editor)
     ↓
 Phase E: Scaffold integration
 
 (Phase D: Automations — deferred)
 ```
 
-Phases A and B are independent of the AI pipeline. They can ship as a purely visual, non-AI builder that works with standard blocks. Phases C-E add AI and wire to generation. This means the builder is useful before the full pipeline is complete.
+Phases A and B are independent of the AI pipeline. They can ship as a purely visual, non-AI builder that works with standard blocks. Phases C, C.5, and C.6 add the four AI roles (Architect designs data, Designer creates components, Analyst creates visualizations, Editor composes pages). Phase E wires to generation. This means the builder is useful before the full pipeline is complete.

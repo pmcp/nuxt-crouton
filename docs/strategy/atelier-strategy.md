@@ -14,27 +14,31 @@ Atelier is not a separate product. It's what nuxt-crouton becomes when the audie
 
 Today, a developer uses nuxt-crouton to build an app for a community center. Tomorrow, Atelier is the product where that community center describes what they need and gets a working app — or where the developer builds it faster because the framework handles more.
 
-The core loop stays the same: schema defines shape → AI designs the model → CLI generates code → packages extend functionality. What changes is who initiates it and how much is automated.
+The core loop stays the same: schema defines shape → Architect designs the model → Designer creates the components → CLI generates code → Analyst creates visualizations → Editor composes the pages → packages extend functionality. What changes is who initiates it and how much is automated.
 
 ## Two audiences
 
 **Developers** use nuxt-crouton as a framework. They write schemas, run the CLI, extend packages, customise generated code. The docs site at nuxt-crouton.dev serves them. This audience exists today.
 
-**Organisations** use Atelier as a product. They describe what they need, two AI roles design and present it, and they get a working app. They don't see schemas or CLI commands. This audience is the goal but doesn't exist yet.
+**Organisations** use Atelier as a product. They describe what they need, four AI roles design, analyse, build, and compose it, and they get a working app. They don't see schemas or CLI commands. This audience is the goal but doesn't exist yet.
 
 Both audiences use the same underlying system. The difference is the interface layer on top.
 
 ## The generation pipeline
 
-Two AI roles turn a conversation into a deployed application:
+Four AI roles turn a conversation into a deployed application:
 
 **Architect** — talks to the user, understands the domain, designs the data model. Outputs JSON schemas and seed data. Has full project context: what collections exist, what packages are installed, what relationships are in play.
 
-**Designer** — reads the schemas and decides how each collection should present itself. Two modes: adds simple layout hints (`$list`, `$form`, `$card`) for the CLI to interpret, or writes custom Vue components when the domain demands it (calendars, embedded flows, domain-specific interactions). Has the same project context.
+**Designer** — reads the schemas and decides how each collection should present itself. Component-level decisions. Two modes: adds simple layout hints (`$list`, `$form`, `$card`) for the CLI to interpret, or writes custom Vue components when the domain demands it (calendars, embedded flows, domain-specific interactions). Has the same project context.
 
-**CLI** — reads the schemas (with hints) and generates everything the designer didn't touch: composables, types, API routes, database schema, standard components.
+**Analyst** — reads the schemas and the available visualization packages (charts, maps) and creates meaningful data visualizations. Bridges domain data with addon capabilities. Outputs pre-configured editor blocks: chart presets ("Booking Trends", "Revenue by Location"), map configurations ("All Locations"), dashboard widgets. These become available as editor blocks that the Editor can place on pages. Only runs when visualization packages are present.
 
-The pipeline is sequential: architect outputs files → designer reads and augments them → CLI generates the rest. One script orchestrating two AI calls and a CLI command. No orchestration framework needed.
+**Editor** — composes pages from the available components. Page-level decisions. Knows what editor blocks are available (from package manifests + Analyst output), what collection view styles exist (from Designer hints + CLI output), and what visibility context each page serves (public landing vs. member dashboard vs. admin panel). Outputs TipTap JSON — the actual page content that `crouton-pages` renders and the user can later edit.
+
+**CLI** — reads the schemas (with hints) and generates everything the Designer didn't touch: composables, types, API routes, database schema, standard components.
+
+The pipeline is sequential: Architect outputs schemas → Designer creates/hints components → CLI generates the rest → Analyst creates visualizations from the data + available packages → Editor composes pages from all available pieces. One script orchestrating four AI calls and a CLI command. No orchestration framework needed.
 
 See `atelier-generation-flow.md` for the full technical spec with examples.
 
@@ -75,11 +79,27 @@ In the builder, users compose one app by adding blocks. Each block has a visibil
 
 "Contacts" in the builder maps to auth members. The builder says "All contacts" but under the hood it's a member list view.
 
+### Generated layers are packages
+
+A generated layer is indistinguishable from a real package at runtime. Whether the domain came from `crouton-bookings` (an npm package) or was generated from scratch by the AI pipeline (a layer in `layers/fundraiser/`), both produce the same artifacts:
+
+- **Components**: List.vue, Detail.vue, Form.vue, Card.vue per collection
+- **app.config.ts**: registers editor blocks (collection views, chart presets, map configs), admin routes, page types
+- **Composables**: typed CRUD composables per collection
+- **Server**: API routes, database schema, migrations
+- **Types**: TypeScript definitions, Zod schemas
+
+The generation pipeline produces all of this. The Architect creates the schema. The Designer creates the components (or hints for the CLI). The CLI generates infrastructure. The Analyst creates chart presets and map configs. The Editor composes pages. The generated layer's `app.config.ts` registers everything — collection views as editor blocks, Analyst visualizations as chart presets, admin routes — so the page editor discovers them the same way it discovers blocks from `crouton-charts` or `crouton-maps`.
+
+No manifest file is needed for generated layers. The `app.config.ts` registration is the runtime equivalent. Manifests are for packages that ship as npm modules and need build-time discovery. Generated layers are already part of the app — they register directly.
+
+This is principles 4 and 12 in action: "Generate → Customise → Own" and "Everything lands in layers."
+
 ### Standard output covers most cases
 
-Most collections work fine with standard table + form + detail output. The designer only gets involved when a generic layout would feel wrong — calendars for time-based data, embedded forms for child records, domain-specific interactions like check-in lists.
+Most collections work fine with standard table + form + detail output. The Designer only gets involved when a generic layout would feel wrong — calendars for time-based data, embedded forms for child records, domain-specific interactions like check-in lists.
 
-Over time, the designer's patterns become CLI defaults. Date + capacity → calendar. Image + name → grid. Child record never browsed standalone → embed in parent. The feedback loop is manual for now (developer observes patterns across projects, updates CLI), with a door open for automation when project volume justifies it.
+Over time, the Designer's patterns become CLI defaults. Date + capacity → calendar. Image + name → grid. Child record never browsed standalone → embed in parent. The feedback loop is manual for now (developer observes patterns across projects, updates CLI), with a door open for automation when project volume justifies it.
 
 ## Package strategy
 
@@ -92,7 +112,7 @@ Over time, the designer's patterns become CLI defaults. Date + capacity → cale
 | **crouton-bookings** | Most complete domain package. Proves the framework for real use cases. |
 | **crouton-pages** | Public surface. Block editor. Page types. |
 | **crouton-email** | Transactional email. Used by bookings, auth, future packages. |
-| **crouton-designer** | AI pipeline backend. Being refactored into architect + designer roles. |
+| **crouton-designer** | AI pipeline backend. Being refactored into architect + designer + analyst + editor roles. |
 | **crouton-cli** | Code generation engine. The core value of the framework. |
 | **crouton-i18n** | Multi-language. Table stakes for European small orgs. |
 | **crouton-ai** | Multi-provider AI. Powers architect, designer, translation. |
