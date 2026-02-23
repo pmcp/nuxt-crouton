@@ -1,17 +1,17 @@
-import { useLocalStorage } from '@vueuse/core'
 import type { CartItem } from '../types/booking'
 
 /**
  * Composable for cart persistence and CRUD actions.
  *
  * Responsible for:
- *   - Persisting cart items in localStorage
  *   - Adding / removing / clearing items
  *   - Submitting all items to the batch API
  *   - Cancelling and deleting individual bookings via the API
  *
  * Does NOT contain availability or pricing logic — those live in their own
  * composables and are composed into useBookingCart.
+ *
+ * The cart ref is passed in from useBookingCart to ensure a single shared ref.
  */
 export function useBookingCartStorage(
   teamId: Ref<string | undefined>,
@@ -19,11 +19,9 @@ export function useBookingCartStorage(
   isCartOpen: Ref<boolean>,
   activeTab: Ref<string>,
   cartPulse: Ref<number>,
+  cart: Ref<CartItem[]>,
 ) {
   const notify = useNotify()
-
-  // Cart persisted in localStorage
-  const cart = useLocalStorage<CartItem[]>('crouton-booking-cart', [])
 
   // Submitting state
   const isSubmitting = ref(false)

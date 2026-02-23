@@ -150,8 +150,7 @@ export function useBookingCart() {
   // Monthly booking limit
   const monthlyBookingLimit = computed(() => selectedLocation.value?.maxBookingsPerMonth ?? null)
 
-  // Cart persisted in localStorage — shared key with useBookingCartStorage so VueUse
-  // deduplicates them into a single reactive ref.
+  // Cart persisted in localStorage — single ref passed to useBookingCartStorage
   const cart = useLocalStorage<CartItem[]>('crouton-booking-cart', [])
 
   // --- Monthly limit sub-composable ---
@@ -187,6 +186,7 @@ export function useBookingCart() {
     isCartOpen,
     activeTab,
     cartPulse,
+    cart,
   )
 
   // Check if selected location is in inventory mode
