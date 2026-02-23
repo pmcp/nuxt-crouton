@@ -404,6 +404,7 @@ const bubbleToolbarItems: EditorToolbarItem[][] = [
       :items="bubbleToolbarItems"
       layout="bubble"
       :should-show="({ view, state }: any) => {
+        if (!view.docView) return false
         const { selection } = state
         return view.hasFocus() && !selection.empty
       }"
