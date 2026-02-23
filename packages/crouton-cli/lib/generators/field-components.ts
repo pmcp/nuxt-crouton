@@ -21,7 +21,7 @@ export function generateFieldComponents(fieldOrName: string | Record<string, any
   return {
     input: hasTranslatableProperties
       ? generateTranslatableInputComponent(field, fieldPascalCase, collectionData)
-      : generateInputComponent(fieldName, fieldPascalCase, collectionData),
+      : generateInputComponent(field, fieldPascalCase, collectionData),
     select: generateSelectComponent(fieldName, fieldPascalCase, collectionData),
     cardMini: generateCardMiniComponent(fieldName, fieldPascalCase, collectionData)
   }
@@ -29,22 +29,88 @@ export function generateFieldComponents(fieldOrName: string | Record<string, any
 
 /**
  * Generate Input.vue - for editing a single item (used as repeater item component)
+ * When meta.properties is defined, generates typed interface and proper form fields.
+ * Otherwise falls back to a simple label-only stub.
  */
-function generateInputComponent(fieldName: string, fieldPascalCase: string, collectionData: Record<string, any>): string {
+function generateInputComponent(field: Record<string, any>, fieldPascalCase: string, collectionData: Record<string, any>): string {
   const { layerPascalCase, pascalCasePlural } = collectionData
+  const interfaceName = `${layerPascalCase}${pascalCasePlural}${fieldPascalCase}Item`
+  const properties = field.meta?.properties || {}
+  const hasProperties = Object.keys(properties).length > 0
+
+  // Generate interface fields from schema properties
+  const interfaceFields = ['id: string']
+  if (hasProperties) {
+    for (const [propName, propDef] of Object.entries(properties)) {
+      const tsType = mapPropertyTypeToTS((propDef as any).type)
+      const optional = (propDef as any).required !== true ? '?' : ''
+      interfaceFields.push(`${propName}${optional}: ${tsType}`)
+    }
+  } else {
+    interfaceFields.push('label?: string', 'value?: string')
+  }
+
+  // Generate template form fields
+  const formFields = []
+  if (hasProperties) {
+    for (const [propName, propDef] of Object.entries(properties)) {
+      const def = propDef as any
+      const label = def.label || capitalizeFirst(propName)
+      const inputInfo = getInputInfoForProperty(def.type)
+
+      if (inputInfo.component === 'UInputNumber') {
+        const minAttr = def.min != null ? ` :min="${def.min}"` : ''
+        const placeholder = def.default != null ? ` placeholder="${def.default}"` : ''
+        formFields.push(`      <UFormField class="w-24">
+        <UInputNumber
+          v-model="model.${propName}"
+          size="xl"${minAttr}${placeholder}
+        />
+      </UFormField>`)
+      } else if (inputInfo.component === 'USwitch') {
+        formFields.push(`      <UFormField>
+        <USwitch v-model="model.${propName}" />
+        <span class="text-sm ml-2">${label}</span>
+      </UFormField>`)
+      } else if (inputInfo.component === 'UTextarea') {
+        formFields.push(`      <UFormField class="flex-1">
+        <UTextarea
+          v-model="model.${propName}"
+          class="w-full"
+          size="xl"
+          placeholder="Enter ${label.toLowerCase()}"
+        />
+      </UFormField>`)
+      } else {
+        formFields.push(`      <UFormField class="flex-1">
+        <UInput
+          v-model="model.${propName}"
+          class="w-full"
+          size="xl"
+          placeholder="Enter ${label.toLowerCase()}"
+        />
+      </UFormField>`)
+      }
+    }
+  } else {
+    formFields.push(`      <UFormField class="flex-1">
+        <UInput
+          v-model="model.label"
+          class="w-full"
+          size="xl"
+          placeholder="Enter label"
+        />
+      </UFormField>`)
+  }
 
   return `<script setup lang="ts">
 import { nanoid } from 'nanoid'
 
-// TODO: Define your item interface
-interface ${layerPascalCase}${pascalCasePlural}${fieldPascalCase}Item {
-  id: string
-  label?: string
-  value?: string
-  // Add your fields here
+interface ${interfaceName} {
+  ${interfaceFields.join('\n  ')}
 }
 
-const model = defineModel<${layerPascalCase}${pascalCasePlural}${fieldPascalCase}Item>()
+const model = defineModel<${interfaceName}>()
 
 // Ensure stable ID on first creation
 if (model.value && !model.value.id) {
@@ -53,14 +119,9 @@ if (model.value && !model.value.id) {
 </script>
 
 <template>
-  <UFormField>
-    <UInput
-      v-model="model.label"
-      class="w-full"
-      size="xl"
-      placeholder="Enter label"
-    />
-  </UFormField>
+  <div class="flex items-center gap-2 w-full">
+${formFields.join('\n')}
+  </div>
 </template>
 `
 }
@@ -284,17 +345,32 @@ function generateNonTranslatableFormField(propName: string, label: string, propD
 }
 
 /**
- * Get appropriate input component for property type
+ * Get appropriate input component for property type (legacy, used by translatable generator)
  */
 function getInputTypeForProperty(type: string): string {
-  const inputMap = {
+  const inputMap: Record<string, string> = {
     string: 'UInput',
     text: 'UTextarea',
-    number: 'UInput type="number"',
+    number: 'UInputNumber',
     boolean: 'USwitch',
     date: 'UInput type="date"'
   }
   return inputMap[type] || 'UInput'
+}
+
+/**
+ * Get component name for property type (clean, no inline attrs)
+ */
+function getInputInfoForProperty(type: string): { component: string } {
+  const map: Record<string, string> = {
+    string: 'UInput',
+    text: 'UTextarea',
+    number: 'UInputNumber',
+    decimal: 'UInputNumber',
+    boolean: 'USwitch',
+    date: 'UInput'
+  }
+  return { component: map[type] || 'UInput' }
 }
 
 /**
