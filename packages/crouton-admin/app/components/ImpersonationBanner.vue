@@ -13,18 +13,14 @@ const {
   stopImpersonation
 } = useImpersonation()
 
-const toast = useToast()
+const notify = useNotify()
 const { t } = useT()
 
 async function handleStop() {
   try {
     await stopImpersonation()
   } catch (e) {
-    toast.add({
-      title: t('admin.impersonation.stopFailed'),
-      description: e instanceof Error ? e.message : 'Unknown error',
-      color: 'error'
-    })
+    notify.error(t('admin.impersonation.stopFailed'), { description: e instanceof Error ? e.message : 'Unknown error' })
   }
 }
 </script>

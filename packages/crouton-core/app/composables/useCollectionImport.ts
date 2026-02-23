@@ -116,7 +116,7 @@ export function useCollectionImport(collection: string): UseCollectionImportRetu
   const isImporting = ref(false)
   const progress = ref(0)
   const route = useRoute()
-  const toast = useToast()
+  const notify = useNotify()
   const collections = useCollections()
   const { getTeamId } = useTeamContext()
 
@@ -318,21 +318,15 @@ export function useCollectionImport(collection: string): UseCollectionImportRetu
 
       result.success = result.failed === 0
 
-      toast.add({
-        title: `Import complete`,
-        description: `${result.created} created${result.failed > 0 ? `, ${result.failed} failed` : ''}`,
-        icon: result.failed > 0 ? 'i-lucide-alert-triangle' : 'i-lucide-check',
-        color: result.failed > 0 ? 'warning' : 'primary'
-      })
+      if (result.failed > 0) {
+        notify.warning('Import complete', { description: `${result.created} created, ${result.failed} failed` })
+      } else {
+        notify.success('Import complete', { description: `${result.created} created` })
+      }
 
       return result
     } catch (error: any) {
-      toast.add({
-        title: 'Import failed',
-        description: error.message || 'An unexpected error occurred',
-        icon: 'i-lucide-octagon-alert',
-        color: 'error'
-      })
+      notify.error('Import failed', { description: error.message || 'An unexpected error occurred' })
       throw error
     } finally {
       isImporting.value = false

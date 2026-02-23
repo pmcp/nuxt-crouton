@@ -37,7 +37,7 @@ function generateCorrelationId(): string {
  */
 export function useTreeMutation(collection: string) {
   const route = useRoute()
-  const toast = useToast()
+  const notify = useNotify()
   const collections = useCollections()
   const config = collections.getConfig(collection)
   const { getTeamId } = useTeamContext()
@@ -179,12 +179,7 @@ export function useTreeMutation(collection: string) {
 
       const errorMessage = error.data?.message || error.data || 'Move failed'
 
-      toast.add({
-        title: 'Move failed',
-        description: errorMessage,
-        icon: 'i-lucide-octagon-alert',
-        color: 'error'
-      })
+      notify.error('Move failed', { description: errorMessage })
 
       throw error
     } finally {
@@ -232,12 +227,7 @@ export function useTreeMutation(collection: string) {
     } catch (error: any) {
       const errorMessage = error.data?.message || error.data || 'Reorder failed'
 
-      toast.add({
-        title: 'Reorder failed',
-        description: errorMessage,
-        icon: 'i-lucide-octagon-alert',
-        color: 'error'
-      })
+      notify.error('Reorder failed', { description: errorMessage })
 
       throw error
     } finally {

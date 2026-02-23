@@ -160,7 +160,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | null | undefined]
 }>()
 
-const toast = useToast()
+const notify = useNotify()
 const { locale } = useI18n()
 
 // Fetch settings data using existing nuxt-crouton composable
@@ -301,18 +301,10 @@ const createOption = async () => {
     createModalOpen.value = false
     newOption.value = { label: '', value: '' }
 
-    toast.add({
-      title: 'Option created',
-      description: `"${optionToAdd.label}" has been added`,
-      color: 'success'
-    })
+    notify.success('Option created', { description: `"${optionToAdd.label}" has been added` })
   } catch (err: any) {
     console.error('Failed to create option:', err)
-    toast.add({
-      title: 'Error',
-      description: err.message || 'Failed to create option',
-      color: 'error'
-    })
+    notify.error('Error', { description: err.message || 'Failed to create option' })
   } finally {
     creating.value = false
   }

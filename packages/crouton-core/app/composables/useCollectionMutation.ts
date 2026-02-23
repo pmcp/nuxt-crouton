@@ -55,7 +55,7 @@ export function useCollectionMutation<K extends CollectionName>(
   collection: K
 ): CollectionMutationReturn<K> {
   const route = useRoute()
-  const toast = useToast()
+  const notify = useNotify()
   const collections = useCollections()
   const config = collections.getConfig(collection)
   const { getTeamId } = useTeamContext()
@@ -183,12 +183,7 @@ export function useCollectionMutation<K extends CollectionName>(
     } catch (error: any) {
       const errorMessage = error.data?.message || error.data || 'Creation failed'
 
-      toast.add({
-        title: 'Creation failed',
-        description: errorMessage,
-        icon: 'i-lucide-octagon-alert',
-        color: 'primary'
-      })
+      notify.error('Creation failed', { description: errorMessage })
 
       throw error
     }
@@ -247,12 +242,7 @@ export function useCollectionMutation<K extends CollectionName>(
     } catch (error: any) {
       const errorMessage = error.data?.message || error.data || 'Update failed'
 
-      toast.add({
-        title: 'Update failed',
-        description: errorMessage,
-        icon: 'i-lucide-octagon-alert',
-        color: 'primary'
-      })
+      notify.error('Update failed', { description: errorMessage })
 
       throw error
     }
@@ -292,12 +282,7 @@ export function useCollectionMutation<K extends CollectionName>(
     } catch (error: any) {
       const errorMessage = error.data?.message || error.data || 'Delete failed'
 
-      toast.add({
-        title: 'Delete failed',
-        description: errorMessage,
-        icon: 'i-lucide-octagon-alert',
-        color: 'primary'
-      })
+      notify.error('Delete failed', { description: errorMessage })
 
       throw error
     }

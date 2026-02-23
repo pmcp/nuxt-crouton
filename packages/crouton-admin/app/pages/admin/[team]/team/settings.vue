@@ -10,7 +10,7 @@
 const { teamSlug } = useTeamContext()
 const { t } = useT()
 const { currentTeam, isOwner, deleteTeam, isAdmin } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 
 // Show delete confirmation modal
 const showDeleteModal = ref(false)
@@ -19,30 +19,18 @@ const showDeleteModal = ref(false)
 async function handleDelete() {
   try {
     await deleteTeam()
-    toast.add({
-      title: t('teams.teamDeleted'),
-      description: t('teams.teamDeletedDescription'),
-      color: 'success'
-    })
+    notify.success(t('teams.teamDeleted'), { description: t('teams.teamDeletedDescription') })
     // Redirect to home (will need to select new team)
     await navigateTo('/')
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('errors.generic')
-    toast.add({
-      title: t('common.error'),
-      description: message,
-      color: 'error'
-    })
+    notify.error(t('common.error'), { description: message })
   }
 }
 
 // Handle saved event from TeamSettings component
 function handleSaved() {
-  toast.add({
-    title: t('common.saved'),
-    description: t('teams.settingsSaved'),
-    color: 'success'
-  })
+  notify.success(t('common.saved'), { description: t('teams.settingsSaved') })
 }
 
 </script>

@@ -76,13 +76,8 @@ export default function () {
 
     // Check if we've reached maximum depth
     if (croutonStates.value.length >= MAX_DEPTH) {
-      const toast = useToast()
-      toast.add({
-        title: 'Maximum depth reached',
-        description: 'Cannot open more than 5 nested forms',
-        icon: 'i-lucide-octagon-alert',
-        color: 'primary'
-      })
+      const notify = useNotify()
+      notify.warning('Maximum depth reached', { description: 'Cannot open more than 5 nested forms' })
       return
     }
 
@@ -160,13 +155,8 @@ export default function () {
         }
         return
       } catch (error) {
-        const toast = useToast()
-        toast.add({
-          title: 'Uh oh! Something went wrong.',
-          description: String(error),
-          icon: 'i-lucide-octagon-alert',
-          color: 'primary'
-        })
+        const notify = useNotify()
+        notify.error('Uh oh! Something went wrong.', { description: String(error) })
         croutonStates.value.pop()
         return
       }

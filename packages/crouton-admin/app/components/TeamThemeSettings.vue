@@ -23,7 +23,7 @@ const emit = defineEmits<{
 
 const { t } = useT()
 const { isAdmin } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 const { theme, isLoading, updateTheme, applyTheme } = useTeamTheme()
 
 // Local form state for live preview
@@ -76,11 +76,7 @@ function selectPreset(preset: ThemePreset) {
 // Handle save
 async function handleSave() {
   if (!isAdmin.value) {
-    toast.add({
-      title: 'Permission denied',
-      description: 'Only team admins can update theme settings.',
-      color: 'error'
-    })
+    notify.error('Permission denied', { description: 'Only team admins can update theme settings.' })
     return
   }
 
@@ -93,21 +89,13 @@ async function handleSave() {
       radius: localTheme.radius
     })
 
-    toast.add({
-      title: t('common.saved') || 'Saved',
-      description: 'Theme settings have been updated.',
-      color: 'primary'
-    })
+    notify.success('Theme settings saved', { icon: 'i-lucide-palette' })
 
     emit('saved', saved)
   }
   catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to save theme settings'
-    toast.add({
-      title: t('common.error') || 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error(t('common.error') || 'Error', { description: message })
   }
   finally {
     isSaving.value = false

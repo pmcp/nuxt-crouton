@@ -15,12 +15,8 @@ export default function () {
     if (activeToast.value) return vibrateToast()
     activeToast.value = true
     if (type === 'error') {
-      const toast = useToast()
-      toast.add({
-        title: message,
-        description: description || undefined,
-        color: 'error'
-      })
+      const notify = useNotify()
+      notify.error(message, { description: description || undefined })
     }
     toastVibration.value = false
   }

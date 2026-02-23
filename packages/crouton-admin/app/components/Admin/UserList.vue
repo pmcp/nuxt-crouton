@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
   pageSize: 20
 })
 
-const toast = useToast()
+const notify = useNotify()
 const {
   users,
   total,
@@ -105,11 +105,7 @@ async function handleImpersonate(user: AdminUserListItem) {
   try {
     await startImpersonation(user.id)
   } catch (e) {
-    toast.add({
-      title: t('superAdmin.users.impersonationFailed'),
-      description: e instanceof Error ? e.message : t('errors.generic'),
-      color: 'error'
-    })
+    notify.error(t('superAdmin.users.impersonationFailed'), { description: e instanceof Error ? e.message : t('errors.generic') })
   }
 }
 
@@ -119,19 +115,11 @@ async function confirmBan(payload: { reason: string, duration: number | null }) 
   actionLoading.value = true
   try {
     await banUser(selectedUser.value.id, payload)
-    toast.add({
-      title: t('superAdmin.users.userBanned'),
-      description: t('superAdmin.users.userBannedDescription', { name: selectedUser.value.name }),
-      color: 'success'
-    })
+    notify.success(t('superAdmin.users.userBanned'), { description: t('superAdmin.users.userBannedDescription', { name: selectedUser.value.name }) })
     showBanModal.value = false
     selectedUser.value = null
   } catch (e) {
-    toast.add({
-      title: t('superAdmin.users.failedToBan'),
-      description: e instanceof Error ? e.message : t('errors.generic'),
-      color: 'error'
-    })
+    notify.error(t('superAdmin.users.failedToBan'), { description: e instanceof Error ? e.message : t('errors.generic') })
   } finally {
     actionLoading.value = false
   }
@@ -143,18 +131,10 @@ async function confirmUnban() {
   actionLoading.value = true
   try {
     await unbanUser(selectedUser.value.id)
-    toast.add({
-      title: t('superAdmin.users.userUnbanned'),
-      description: t('superAdmin.users.userUnbannedDescription', { name: selectedUser.value.name }),
-      color: 'success'
-    })
+    notify.success(t('superAdmin.users.userUnbanned'), { description: t('superAdmin.users.userUnbannedDescription', { name: selectedUser.value.name }) })
     selectedUser.value = null
   } catch (e) {
-    toast.add({
-      title: t('superAdmin.users.failedToUnban'),
-      description: e instanceof Error ? e.message : t('errors.generic'),
-      color: 'error'
-    })
+    notify.error(t('superAdmin.users.failedToUnban'), { description: e instanceof Error ? e.message : t('errors.generic') })
   } finally {
     actionLoading.value = false
   }
@@ -166,19 +146,11 @@ async function confirmDelete() {
   actionLoading.value = true
   try {
     await deleteUser(selectedUser.value.id)
-    toast.add({
-      title: t('superAdmin.users.userDeleted'),
-      description: t('superAdmin.users.userDeletedDescription', { name: selectedUser.value.name }),
-      color: 'success'
-    })
+    notify.success(t('superAdmin.users.userDeleted'), { description: t('superAdmin.users.userDeletedDescription', { name: selectedUser.value.name }) })
     showDeleteModal.value = false
     selectedUser.value = null
   } catch (e) {
-    toast.add({
-      title: t('superAdmin.users.failedToDelete'),
-      description: e instanceof Error ? e.message : t('errors.generic'),
-      color: 'error'
-    })
+    notify.error(t('superAdmin.users.failedToDelete'), { description: e instanceof Error ? e.message : t('errors.generic') })
   } finally {
     actionLoading.value = false
   }
@@ -188,19 +160,11 @@ async function handleCreateUser(payload: CreateUserPayload) {
   actionLoading.value = true
   try {
     await createUser(payload)
-    toast.add({
-      title: t('superAdmin.users.userCreated'),
-      description: t('superAdmin.users.userCreatedDescription', { name: payload.name }),
-      color: 'success'
-    })
+    notify.success(t('superAdmin.users.userCreated'), { description: t('superAdmin.users.userCreatedDescription', { name: payload.name }) })
     showCreateModal.value = false
     loadUsers(1)
   } catch (e) {
-    toast.add({
-      title: t('superAdmin.users.failedToCreate'),
-      description: e instanceof Error ? e.message : t('errors.generic'),
-      color: 'error'
-    })
+    notify.error(t('superAdmin.users.failedToCreate'), { description: e instanceof Error ? e.message : t('errors.generic') })
   } finally {
     actionLoading.value = false
   }
