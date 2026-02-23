@@ -37,7 +37,7 @@ const emit = defineEmits<{
 }>()
 
 const { createTeam, canCreateTeam } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 
 // Form state
 const state = reactive({
@@ -98,11 +98,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
   emit('submit', { name: event.data.name, slug: event.data.slug })
 
   if (!canCreateTeam.value) {
-    toast.add({
-      title: t('teams.cannotCreateTeam'),
-      description: t('teams.maxTeamsReached'),
-      color: 'error'
-    })
+    notify.error(t('teams.cannotCreateTeam'), { description: t('teams.maxTeamsReached') })
     return
   }
 
@@ -113,11 +109,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
       slug: event.data.slug
     })
 
-    toast.add({
-      title: t('teams.teamCreated'),
-      description: t('teams.teamCreatedDescription', { name: team.name }),
-      color: 'success'
-    })
+    notify.success(t('teams.teamCreated'), { description: t('teams.teamCreatedDescription', { name: team.name }) })
 
     emit('success', team)
 
@@ -127,11 +119,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     autoSlug.value = true
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('teams.failedToCreateTeam')
-    toast.add({
-      title: t('errors.generic'),
-      description: message,
-      color: 'error'
-    })
+    notify.error(t('errors.generic'), { description: message })
   } finally {
     internalLoading.value = false
   }

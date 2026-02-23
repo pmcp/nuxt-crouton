@@ -40,7 +40,7 @@ const {
 } = useTeam()
 
 const { user } = useSession()
-const toast = useToast()
+const notify = useNotify()
 
 // Local loading state
 const loadingMemberId = ref<string | null>(null)
@@ -63,19 +63,11 @@ async function handleRoleChange(memberId: string, role: MemberRole) {
     const member = members.value.find(m => m.id === memberId)
     if (member) {
       await updateMemberRole(member.userId, role)
-      toast.add({
-        title: t('teams.roleUpdated'),
-        description: t('teams.roleUpdatedDescription'),
-        color: 'success'
-      })
+      notify.success(t('teams.roleUpdated'), { description: t('teams.roleUpdatedDescription') })
     }
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('teams.failedToUpdateRole')
-    toast.add({
-      title: t('errors.generic'),
-      description: message,
-      color: 'error'
-    })
+    notify.error(t('errors.generic'), { description: message })
   } finally {
     loadingMemberId.value = null
   }
@@ -89,19 +81,11 @@ async function handleRemove(memberId: string) {
     const member = members.value.find(m => m.id === memberId)
     if (member) {
       await removeMember(member.userId)
-      toast.add({
-        title: t('teams.memberRemoved'),
-        description: t('teams.memberRemovedDescription'),
-        color: 'success'
-      })
+      notify.success(t('teams.memberRemoved'), { description: t('teams.memberRemovedDescription') })
     }
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('teams.failedToRemoveMember')
-    toast.add({
-      title: t('errors.generic'),
-      description: message,
-      color: 'error'
-    })
+    notify.error(t('errors.generic'), { description: message })
   } finally {
     loadingMemberId.value = null
   }

@@ -34,7 +34,7 @@ const emit = defineEmits<{
 
 const { t } = useT()
 const { currentTeam, updateTeam, isOwner, isAdmin } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 
 // Form state (populated from current team)
 const state = reactive({
@@ -98,11 +98,7 @@ const isLoading = computed(() => props.loading || internalLoading.value)
 // Handle form submission
 async function onSubmit(event: FormSubmitEvent<typeof state>) {
   if (!isAdmin.value) {
-    toast.add({
-      title: 'Permission denied',
-      description: 'Only team owners and admins can update settings.',
-      color: 'error'
-    })
+    notify.error('Permission denied', { description: 'Only team owners and admins can update settings.' })
     return
   }
 
@@ -114,20 +110,12 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
       logo: event.data.logo || undefined
     })
 
-    toast.add({
-      title: 'Settings saved',
-      description: 'Team settings have been updated.',
-      color: 'success'
-    })
+    notify.success('Settings saved', { description: 'Team settings have been updated.' })
 
     emit('saved', team)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to save settings'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     internalLoading.value = false
   }

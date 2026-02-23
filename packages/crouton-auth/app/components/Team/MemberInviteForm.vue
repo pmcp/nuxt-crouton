@@ -37,7 +37,7 @@ const emit = defineEmits<{
 }>()
 
 const { inviteMember, canInviteMembers, isOwner } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 
 // Form state
 const state = reactive({
@@ -94,11 +94,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
   emit('submit', { email: event.data.email, role: event.data.role })
 
   if (!canInviteMembers.value) {
-    toast.add({
-      title: 'Permission denied',
-      description: 'You do not have permission to invite members.',
-      color: 'error'
-    })
+    notify.error('Permission denied', { description: 'You do not have permission to invite members.' })
     return
   }
 
@@ -109,11 +105,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
       role: event.data.role
     })
 
-    toast.add({
-      title: 'Invitation sent',
-      description: `Invitation has been sent to ${event.data.email}.`,
-      color: 'success'
-    })
+    notify.success('Invitation sent', { description: `Invitation has been sent to ${event.data.email}.` })
 
     emit('success', event.data.email, event.data.role)
 
@@ -122,11 +114,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     state.role = 'member'
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to send invitation'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     internalLoading.value = false
   }

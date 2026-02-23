@@ -15,7 +15,7 @@ export function useUserMenuItems() {
   const { user, logout, loading } = useAuth()
   const { isAdmin } = useTeam()
   const router = useRouter()
-  const toast = useToast()
+  const notify = useNotify()
   const { locale, setLocale, locales } = useI18n()
   const colorMode = useColorMode()
 
@@ -62,18 +62,10 @@ export function useUserMenuItems() {
   async function handleLogout() {
     try {
       await logout()
-      toast.add({
-        title: t('auth.signOut') || 'Signed out',
-        description: t('success.saved') || 'You have been signed out successfully.',
-        color: 'success'
-      })
+      notify.success(t('auth.signOut') || 'Signed out', { description: t('success.saved') || 'You have been signed out successfully.' })
       await router.push('/auth/login')
     } catch (error: unknown) {
-      toast.add({
-        title: t('errors.generic') || 'Error',
-        description: error instanceof Error ? error.message : 'Failed to sign out',
-        color: 'error'
-      })
+      notify.error(t('errors.generic') || 'Error', { description: error instanceof Error ? error.message : 'Failed to sign out' })
     }
   }
 

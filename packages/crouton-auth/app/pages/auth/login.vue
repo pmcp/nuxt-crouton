@@ -14,7 +14,7 @@ definePageMeta({
 
 const { t } = useT()
 const route = useRoute()
-const toast = useToast()
+const notify = useNotify()
 
 const {
   login,
@@ -157,11 +157,7 @@ async function onSubmit(event: FormSubmitEvent<{ email: string, password?: strin
     submitting.value = false
     const message = e instanceof Error ? e.message : 'Login failed'
     formError.value = message
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -173,11 +169,7 @@ async function handleOAuth(provider: string) {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'OAuth login failed'
     formError.value = message
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -191,11 +183,7 @@ async function handlePasskey() {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Passkey login failed'
     formError.value = message
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -205,19 +193,11 @@ async function handleMagicLink(email: string) {
     await loginWithMagicLink(email)
     magicLinkSent.value = true
     magicLinkEmail.value = email
-    toast.add({
-      title: 'Check your email',
-      description: 'We sent you a magic link to sign in.',
-      color: 'success'
-    })
+    notify.success('Check your email', { description: 'We sent you a magic link to sign in.' })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Magic link failed'
     formError.value = message
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   }
 }
 

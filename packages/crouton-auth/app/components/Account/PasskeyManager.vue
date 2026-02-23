@@ -29,7 +29,7 @@ const {
   deletePasskey,
   isWebAuthnSupported
 } = useAuth()
-const toast = useToast()
+const notify = useNotify()
 
 // Passkeys list
 const passkeys = ref<PasskeyInfo[]>([])
@@ -57,11 +57,7 @@ async function loadPasskeys() {
     passkeys.value = await listPasskeys()
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('account.passkey.failedToLoadPasskeys')
-    toast.add({
-      title: t('errors.generic'),
-      description: message,
-      color: 'error'
-    })
+    notify.error(t('errors.generic'), { description: message })
   } finally {
     listLoading.value = false
   }
@@ -75,21 +71,13 @@ async function handleAddPasskey() {
       name: t('account.passkey.defaultName', { number: passkeys.value.length + 1 })
     })
 
-    toast.add({
-      title: t('account.passkey.passkeyAdded'),
-      description: t('account.passkey.passkeyAddedDescription'),
-      color: 'success'
-    })
+    notify.success(t('account.passkey.passkeyAdded'), { description: t('account.passkey.passkeyAddedDescription') })
 
     // Reload list
     await loadPasskeys()
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('account.passkey.failedToAddPasskey')
-    toast.add({
-      title: t('errors.generic'),
-      description: message,
-      color: 'error'
-    })
+    notify.error(t('errors.generic'), { description: message })
   } finally {
     addLoading.value = false
   }
@@ -101,21 +89,13 @@ async function handleDeletePasskey(id: string) {
   try {
     await deletePasskey(id)
 
-    toast.add({
-      title: t('account.passkey.passkeyRemoved'),
-      description: t('account.passkey.passkeyRemovedDescription'),
-      color: 'success'
-    })
+    notify.success(t('account.passkey.passkeyRemoved'), { description: t('account.passkey.passkeyRemovedDescription') })
 
     // Remove from local list
     passkeys.value = passkeys.value.filter(p => p.id !== id)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('account.passkey.failedToDeletePasskey')
-    toast.add({
-      title: t('errors.generic'),
-      description: message,
-      color: 'error'
-    })
+    notify.error(t('errors.generic'), { description: message })
   } finally {
     deleteLoading.value = null
   }

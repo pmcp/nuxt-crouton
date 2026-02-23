@@ -15,7 +15,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const notify = useNotify()
 
 const { user, loggedIn } = useAuth()
 const redirects = useAuthRedirects()
@@ -56,19 +56,11 @@ async function verifyEmail() {
     }
 
     verified.value = true
-    toast.add({
-      title: 'Email verified',
-      description: 'Your email has been verified successfully.',
-      color: 'success'
-    })
+    notify.success('Email verified', { description: 'Your email has been verified successfully.' })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Verification failed'
     verifyError.value = message
-    toast.add({
-      title: 'Verification failed',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Verification failed', { description: message })
   } finally {
     verifying.value = false
   }
@@ -77,11 +69,7 @@ async function verifyEmail() {
 // Resend verification email
 async function resendVerification() {
   if (!user.value?.email) {
-    toast.add({
-      title: 'Error',
-      description: 'Please sign in first to resend verification.',
-      color: 'error'
-    })
+    notify.error('Error', { description: 'Please sign in first to resend verification.' })
     return
   }
 
@@ -99,18 +87,10 @@ async function resendVerification() {
     }
 
     resent.value = true
-    toast.add({
-      title: 'Email sent',
-      description: 'Verification email has been sent to your inbox.',
-      color: 'success'
-    })
+    notify.success('Email sent', { description: 'Verification email has been sent to your inbox.' })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to send verification email'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     resending.value = false
   }

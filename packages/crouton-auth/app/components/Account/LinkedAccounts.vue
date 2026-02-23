@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t } = useT()
 const { hasOAuth, oauthProviders, loginWithOAuth } = useAuth()
-const toast = useToast()
+const notify = useNotify()
 
 // Get auth client
 function useAuthClient() {
@@ -92,11 +92,7 @@ async function loadAccounts() {
     }))
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to load accounts'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     listLoading.value = false
   }
@@ -117,11 +113,7 @@ async function handleLink(provider: string) {
     // This will redirect, so no need to handle success
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to link account'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
     linkLoading.value = null
   }
 }
@@ -138,21 +130,13 @@ async function handleUnlink(provider: string) {
       throw new Error(result.error.message ?? 'Failed to unlink account')
     }
 
-    toast.add({
-      title: 'Account unlinked',
-      description: `Your ${getProviderInfo(provider).name} account has been disconnected.`,
-      color: 'success'
-    })
+    notify.success('Account unlinked', { description: `Your ${getProviderInfo(provider).name} account has been disconnected.` })
 
     // Remove from local list
     accounts.value = accounts.value.filter(a => a.provider !== provider)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to unlink account'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     unlinkLoading.value = null
   }

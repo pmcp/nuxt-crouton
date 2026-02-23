@@ -31,7 +31,7 @@ const emit = defineEmits<{
 }>()
 
 const { user, refreshSession } = useAuth()
-const toast = useToast()
+const notify = useNotify()
 
 // Get auth client for update operations
 function useAuthClient() {
@@ -105,20 +105,12 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
 
     await refreshSession()
 
-    toast.add({
-      title: t('account.profileUpdated'),
-      description: 'Your profile has been saved.',
-      color: 'success'
-    })
+    notify.success(t('account.profileUpdated'), { description: 'Your profile has been saved.' })
 
     emit('saved')
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to update profile'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     internalLoading.value = false
   }

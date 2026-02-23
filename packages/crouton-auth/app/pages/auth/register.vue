@@ -13,7 +13,7 @@ definePageMeta({
 })
 
 const { t } = useT()
-const toast = useToast()
+const notify = useNotify()
 
 const {
   register,
@@ -151,11 +151,7 @@ async function onSubmit(event: FormSubmitEvent<{ name: string, email: string, pa
     submitting.value = false
     const message = e instanceof Error ? e.message : 'Registration failed'
     formError.value = message
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -167,11 +163,7 @@ async function handleOAuth(provider: string) {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'OAuth registration failed'
     formError.value = message
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   }
 }
 </script>

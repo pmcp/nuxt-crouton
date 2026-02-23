@@ -15,7 +15,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const notify = useNotify()
 
 const { hasMagicLink } = useAuth()
 const redirects = useAuthRedirects()
@@ -54,11 +54,7 @@ async function verifyMagicLink() {
     }
 
     verified.value = true
-    toast.add({
-      title: 'Signed in',
-      description: 'You have been signed in successfully.',
-      color: 'success'
-    })
+    notify.success('Signed in', { description: 'You have been signed in successfully.' })
 
     // Redirect after short delay
     setTimeout(() => {
@@ -67,11 +63,7 @@ async function verifyMagicLink() {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Magic link verification failed'
     verifyError.value = message
-    toast.add({
-      title: 'Sign in failed',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Sign in failed', { description: message })
   } finally {
     verifying.value = false
   }

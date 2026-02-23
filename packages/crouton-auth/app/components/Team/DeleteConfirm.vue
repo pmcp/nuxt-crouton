@@ -33,7 +33,7 @@ const emit = defineEmits<{
 
 const { t } = useT()
 const { currentTeam, deleteTeam, isOwner, teams } = useTeam()
-const toast = useToast()
+const notify = useNotify()
 
 // Confirmation input
 const confirmText = ref('')
@@ -63,11 +63,7 @@ async function handleDelete() {
   try {
     await deleteTeam()
 
-    toast.add({
-      title: 'Team deleted',
-      description: 'The team has been permanently deleted.',
-      color: 'success'
-    })
+    notify.success('Team deleted', { description: 'The team has been permanently deleted.' })
 
     confirmText.value = ''
     emit('update:open', false)
@@ -82,11 +78,7 @@ async function handleDelete() {
     }
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to delete team'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     internalLoading.value = false
   }

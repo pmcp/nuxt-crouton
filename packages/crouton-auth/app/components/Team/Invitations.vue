@@ -49,7 +49,7 @@ const {
   loading: teamLoading
 } = useTeam()
 
-const toast = useToast()
+const notify = useNotify()
 
 // State
 const invitations = ref<InvitationData[]>([])
@@ -81,20 +81,12 @@ async function handleCancel(invitationId: string) {
   loadingInvitationId.value = invitationId
   try {
     await cancelInvitation(invitationId)
-    toast.add({
-      title: 'Invitation cancelled',
-      description: 'The invitation has been cancelled.',
-      color: 'success'
-    })
+    notify.success('Invitation cancelled', { description: 'The invitation has been cancelled.' })
     // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to cancel invitation'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     loadingInvitationId.value = null
   }
@@ -105,20 +97,12 @@ async function handleAccept(invitationId: string) {
   loadingInvitationId.value = invitationId
   try {
     await acceptInvitation(invitationId)
-    toast.add({
-      title: 'Invitation accepted',
-      description: 'You have joined the team.',
-      color: 'success'
-    })
+    notify.success('Invitation accepted', { description: 'You have joined the team.' })
     // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to accept invitation'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     loadingInvitationId.value = null
   }
@@ -129,20 +113,12 @@ async function handleReject(invitationId: string) {
   loadingInvitationId.value = invitationId
   try {
     await rejectInvitation(invitationId)
-    toast.add({
-      title: 'Invitation declined',
-      description: 'The invitation has been declined.',
-      color: 'info'
-    })
+    notify.info('Invitation declined', { description: 'The invitation has been declined.' })
     // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to decline invitation'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     loadingInvitationId.value = null
   }

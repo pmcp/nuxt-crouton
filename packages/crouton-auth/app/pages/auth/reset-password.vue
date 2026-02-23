@@ -16,7 +16,7 @@ definePageMeta({
 const { t } = useT()
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const notify = useNotify()
 
 const { resetPassword } = useAuth()
 
@@ -81,30 +81,18 @@ async function onSubmit(event: FormSubmitEvent<{ password: string, confirmPasswo
 
   if (!token.value) {
     submitting.value = false
-    toast.add({
-      title: 'Invalid link',
-      description: 'The reset link is invalid or has expired.',
-      color: 'error'
-    })
+    notify.error('Invalid link', { description: 'The reset link is invalid or has expired.' })
     return
   }
 
   try {
     await resetPassword(token.value, event.data.password)
     resetSuccess.value = true
-    toast.add({
-      title: 'Password reset',
-      description: 'Your password has been reset successfully.',
-      color: 'success'
-    })
+    notify.success('Password reset', { description: 'Your password has been reset successfully.' })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Password reset failed'
     formError.value = message
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     submitting.value = false
   }

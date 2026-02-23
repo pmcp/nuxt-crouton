@@ -13,7 +13,7 @@ definePageMeta({
 })
 
 const { t } = useT()
-const toast = useToast()
+const notify = useNotify()
 
 const { forgotPassword } = useAuth()
 
@@ -47,21 +47,13 @@ async function onSubmit(event: FormSubmitEvent<{ email: string }>) {
     await forgotPassword(event.data.email)
     emailSent.value = true
     sentEmail.value = event.data.email
-    toast.add({
-      title: 'Email sent',
-      description: 'Check your inbox for a password reset link.',
-      color: 'success'
-    })
+    notify.success('Email sent', { description: 'Check your inbox for a password reset link.' })
   } catch {
     // Don't reveal if email exists or not for security
     // Still show success message
     emailSent.value = true
     sentEmail.value = event.data.email
-    toast.add({
-      title: 'Email sent',
-      description: 'If an account exists with this email, you will receive a reset link.',
-      color: 'success'
-    })
+    notify.success('Email sent', { description: 'If an account exists with this email, you will receive a reset link.' })
   } finally {
     submitting.value = false
   }

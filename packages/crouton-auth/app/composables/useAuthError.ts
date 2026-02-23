@@ -46,7 +46,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
   const errorMessage = computed(() => error.value?.toUserMessage() ?? null)
   const errorCode = computed(() => error.value?.code ?? null)
 
-  const toast = useToast()
+  const notify = useNotify()
 
   /**
    * Clear the current error
@@ -71,11 +71,8 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
 
     // Show toast notification
     if (toastOptions?.show ?? showToast) {
-      toast.add({
-        id: `auth-error-${Date.now()}`,
-        title: 'Error',
+      notify.error('Error', {
         description: authError.toUserMessage(),
-        color: 'error',
         icon: 'i-heroicons-exclamation-circle',
         duration: toastOptions?.duration ?? toastDuration
       })

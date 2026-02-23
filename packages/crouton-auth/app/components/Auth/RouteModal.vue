@@ -12,7 +12,7 @@
 import type { FormSubmitEvent, AuthFormField, ButtonProps } from '@nuxt/ui'
 
 const { t } = useT()
-const toast = useToast()
+const notify = useNotify()
 const authModal = useAuthModal()
 const { state } = authModal
 
@@ -108,7 +108,7 @@ async function handleOAuth(provider: string) {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'OAuth login failed'
     formError.value = message
-    toast.add({ title: 'Error', description: message, color: 'error' })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -120,7 +120,7 @@ async function handlePasskey() {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Passkey login failed'
     formError.value = message
-    toast.add({ title: 'Error', description: message, color: 'error' })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -164,7 +164,7 @@ async function onLoginSubmit(event: FormSubmitEvent<{ email: string, password?: 
     submitting.value = false
     const message = e instanceof Error ? e.message : 'Login failed'
     formError.value = message
-    toast.add({ title: 'Error', description: message, color: 'error' })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -173,11 +173,11 @@ async function handleMagicLink(email: string) {
     await loginWithMagicLink(email)
     magicLinkSent.value = true
     magicLinkEmail.value = email
-    toast.add({ title: 'Check your email', description: 'We sent you a magic link to sign in.', color: 'success' })
+    notify.success('Check your email', { description: 'We sent you a magic link to sign in.' })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Magic link failed'
     formError.value = message
-    toast.add({ title: 'Error', description: message, color: 'error' })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -217,13 +217,13 @@ async function onRegisterSubmit(event: FormSubmitEvent<{ name: string, email: st
   submitting.value = true
   try {
     await register({ name: event.data.name, email: event.data.email, password: event.data.password })
-    toast.add({ title: 'Account created', description: 'Welcome! Your account has been created.', color: 'success' })
+    notify.success('Account created', { description: 'Welcome! Your account has been created.' })
     await handleSuccess()
   } catch (e: unknown) {
     submitting.value = false
     const message = e instanceof Error ? e.message : 'Registration failed'
     formError.value = message
-    toast.add({ title: 'Error', description: message, color: 'error' })
+    notify.error('Error', { description: message })
   }
 }
 
@@ -248,12 +248,12 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
     await forgotPassword(event.data.email)
     emailSent.value = true
     sentEmail.value = event.data.email
-    toast.add({ title: 'Email sent', description: 'Check your inbox for a password reset link.', color: 'success' })
+    notify.success('Email sent', { description: 'Check your inbox for a password reset link.' })
   } catch {
     // Don't reveal if email exists — always show success
     emailSent.value = true
     sentEmail.value = event.data.email
-    toast.add({ title: 'Email sent', description: 'If an account exists with this email, you will receive a reset link.', color: 'success' })
+    notify.success('Email sent', { description: 'If an account exists with this email, you will receive a reset link.' })
   } finally {
     submitting.value = false
   }

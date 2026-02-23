@@ -26,7 +26,7 @@ const emit = defineEmits<{
 
 const { t } = useT()
 const { user, logout } = useAuth()
-const toast = useToast()
+const notify = useNotify()
 
 // Get auth client
 function useAuthClient() {
@@ -66,11 +66,7 @@ async function handleDelete() {
       throw new Error(result.error.message ?? 'Failed to delete account')
     }
 
-    toast.add({
-      title: 'Account deleted',
-      description: 'Your account has been permanently deleted.',
-      color: 'success'
-    })
+    notify.success('Account deleted', { description: 'Your account has been permanently deleted.' })
 
     // Sign out and redirect
     await logout()
@@ -78,11 +74,7 @@ async function handleDelete() {
     await navigateTo('/')
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to delete account'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     deleteLoading.value = false
   }

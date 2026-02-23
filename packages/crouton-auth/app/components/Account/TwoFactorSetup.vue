@@ -40,7 +40,7 @@ function extractSecretFromUri(uri: string): string {
     return ''
   }
 }
-const toast = useToast()
+const notify = useNotify()
 
 // States
 const status = ref<TwoFactorStatus>({
@@ -112,11 +112,7 @@ async function handlePasswordSubmit() {
     setupStep.value = 'qr'
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to enable 2FA'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     setupLoading.value = false
   }
@@ -125,11 +121,7 @@ async function handlePasswordSubmit() {
 // Handle TOTP verification
 async function handleVerifySubmit() {
   if (!verifyCode.value || verifyCode.value.length !== 6) {
-    toast.add({
-      title: 'Invalid code',
-      description: 'Please enter a 6-digit code',
-      color: 'error'
-    })
+    notify.error('Invalid code', { description: 'Please enter a 6-digit code' })
     return
   }
 
@@ -144,11 +136,7 @@ async function handleVerifySubmit() {
     setupStep.value = 'backup'
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Invalid code'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     setupLoading.value = false
   }
@@ -158,11 +146,7 @@ async function handleVerifySubmit() {
 async function completeSetup() {
   showSetupModal.value = false
   await loadStatus()
-  toast.add({
-    title: '2FA enabled',
-    description: 'Two-factor authentication is now active.',
-    color: 'success'
-  })
+  notify.success('2FA enabled', { description: 'Two-factor authentication is now active.' })
 }
 
 // Disable 2FA
@@ -180,18 +164,10 @@ async function handleDisable() {
     disablePassword.value = ''
     await loadStatus()
 
-    toast.add({
-      title: '2FA disabled',
-      description: 'Two-factor authentication has been turned off.',
-      color: 'success'
-    })
+    notify.success('2FA disabled', { description: 'Two-factor authentication has been turned off.' })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to disable 2FA'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     disableLoading.value = false
   }
@@ -212,11 +188,7 @@ async function handleViewBackupCodes() {
     viewedBackupCodes.value = await generateBackupCodes(backupPassword.value)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to generate backup codes'
-    toast.add({
-      title: 'Error',
-      description: message,
-      color: 'error'
-    })
+    notify.error('Error', { description: message })
   } finally {
     viewCodesLoading.value = false
   }
@@ -226,11 +198,7 @@ async function handleViewBackupCodes() {
 async function copyBackupCodes(codes: string[]) {
   const text = codes.join('\n')
   await navigator.clipboard.writeText(text)
-  toast.add({
-    title: 'Copied',
-    description: 'Backup codes copied to clipboard',
-    color: 'success'
-  })
+  notify.success('Copied', { description: 'Backup codes copied to clipboard' })
 }
 </script>
 
