@@ -84,6 +84,9 @@ importers:
       '@fyit/crouton':
         specifier: workspace:*
         version: link:../../packages/crouton
+      '@fyit/crouton-assets':
+        specifier: workspace:*
+        version: link:../../packages/crouton-assets
       '@fyit/crouton-bookings':
         specifier: workspace:*
         version: link:../../packages/crouton-bookings
