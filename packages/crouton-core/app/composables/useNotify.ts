@@ -24,14 +24,14 @@ export function useNotify() {
     const defaults = LEVEL_DEFAULTS[level]
 
     const useStatusBar = target === 'statusbar'
-      || (target === 'auto' && (level === 'success' || level === 'info') && statusBarActive.value)
+      || (target === 'auto' && (level === 'success' || level === 'info' || level === 'warning') && statusBarActive.value)
 
     if (useStatusBar) {
       const { addMessage } = useAdminStatusBar()
       addMessage({
         text: title,
         icon: icon || defaults.icon,
-        type: level === 'error' ? 'error' : 'success',
+        type: level === 'error' ? 'error' : level === 'warning' ? 'warning' : 'success',
         collection,
         operation,
       })
