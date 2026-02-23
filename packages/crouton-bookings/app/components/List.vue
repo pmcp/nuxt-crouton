@@ -94,7 +94,7 @@ function handleRefresh() {
 
 // Email functionality
 const { resendEmail, isEmailEnabled } = useBookingEmail()
-const toast = useToast()
+const notify = useNotify()
 const { locale } = useI18n()
 const { teamId: contextTeamId } = useTeamContext()
 
@@ -118,30 +118,18 @@ async function handleResendEmail(booking: Booking, triggerType: string) {
     const result = await resendEmail(teamId, booking.id, triggerType as any)
 
     if (result.success) {
-      toast.add({
-        title: 'Email sent',
-        description: 'Confirmation email has been resent successfully',
-        color: 'success',
-      })
+      notify.success('Email sent', { description: 'Confirmation email has been resent successfully' })
       // Refresh the list to update email stats
       handleRefresh()
       // Emit so parent can refresh if using external data
       emit('emailSent')
     }
     else {
-      toast.add({
-        title: 'Failed to send email',
-        description: result.error || 'An error occurred',
-        color: 'error',
-      })
+      notify.error('Failed to send email', { description: result.error || 'An error occurred' })
     }
   }
   catch (error: any) {
-    toast.add({
-      title: 'Failed to send email',
-      description: error.message || 'An error occurred',
-      color: 'error',
-    })
+    notify.error('Failed to send email', { description: error.message || 'An error occurred' })
   }
   finally {
     sendingEmailState.value = null

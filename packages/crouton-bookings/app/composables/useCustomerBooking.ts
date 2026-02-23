@@ -12,7 +12,7 @@ interface BookingState {
 }
 
 export function useCustomerBooking() {
-  const toast = useToast()
+  const notify = useNotify()
 
   // Wizard state
   const currentStep = ref(0)
@@ -168,11 +168,7 @@ export function useCustomerBooking() {
   // Submit booking
   async function submitBooking() {
     if (!isComplete.value) {
-      toast.add({
-        title: 'Incomplete booking',
-        description: 'Please complete all steps before submitting',
-        color: 'error',
-      })
+      notify.error('Incomplete booking', { description: 'Please complete all steps before submitting' })
       return null
     }
 
@@ -200,22 +196,14 @@ export function useCustomerBooking() {
 
       isSuccess.value = true
 
-      toast.add({
-        title: 'Booking created',
-        description: 'Your booking has been submitted successfully',
-        color: 'success',
-      })
+      notify.success('Booking created', { description: 'Your booking has been submitted successfully' })
 
       return result
     }
     catch (error: unknown) {
       console.error('Failed to create booking:', error)
       const errorData = error as { data?: { message?: string } }
-      toast.add({
-        title: 'Booking failed',
-        description: errorData.data?.message || 'Failed to create booking. Please try again.',
-        color: 'error',
-      })
+      notify.error('Booking failed', { description: errorData.data?.message || 'Failed to create booking. Please try again.' })
       return null
     }
     finally {

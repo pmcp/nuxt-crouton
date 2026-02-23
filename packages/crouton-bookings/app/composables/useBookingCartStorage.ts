@@ -20,7 +20,7 @@ export function useBookingCartStorage(
   activeTab: Ref<string>,
   cartPulse: Ref<number>,
 ) {
-  const toast = useToast()
+  const notify = useNotify()
 
   // Cart persisted in localStorage
   const cart = useLocalStorage<CartItem[]>('crouton-booking-cart', [])
@@ -47,11 +47,7 @@ export function useBookingCartStorage(
   // Submit all bookings in cart
   async function submitAll() {
     if (cart.value.length === 0) {
-      toast.add({
-        title: 'Cart is empty',
-        description: 'Add some bookings to your cart first',
-        color: 'warning',
-      })
+      notify.warning('Cart is empty', { description: 'Add some bookings to your cart first' })
       return null
     }
 
@@ -71,11 +67,7 @@ export function useBookingCartStorage(
       // Refresh my bookings list
       await refreshMyBookings()
 
-      toast.add({
-        title: 'Bookings confirmed!',
-        description: `Successfully created ${result.count} booking${result.count === 1 ? '' : 's'}`,
-        color: 'success',
-      })
+      notify.success('Bookings confirmed!', { description: `Successfully created ${result.count} booking${result.count === 1 ? '' : 's'}` })
 
       // Close cart drawer and switch to my bookings tab
       isCartOpen.value = false
@@ -85,11 +77,7 @@ export function useBookingCartStorage(
     }
     catch (error: any) {
       console.error('Failed to submit bookings:', error)
-      toast.add({
-        title: 'Booking failed',
-        description: error.data?.message || 'Failed to create bookings. Please try again.',
-        color: 'error',
-      })
+      notify.error('Booking failed', { description: error.data?.message || 'Failed to create bookings. Please try again.' })
       return null
     }
     finally {
@@ -109,21 +97,13 @@ export function useBookingCartStorage(
 
       await refreshMyBookings()
 
-      toast.add({
-        title: 'Booking cancelled',
-        description: 'Your booking has been cancelled successfully',
-        color: 'success',
-      })
+      notify.success('Booking cancelled', { description: 'Your booking has been cancelled successfully' })
 
       return true
     }
     catch (error: any) {
       console.error('Failed to cancel booking:', error)
-      toast.add({
-        title: 'Cancellation failed',
-        description: error.data?.message || 'Failed to cancel booking. Please try again.',
-        color: 'error',
-      })
+      notify.error('Cancellation failed', { description: error.data?.message || 'Failed to cancel booking. Please try again.' })
       return false
     }
   }
@@ -137,21 +117,13 @@ export function useBookingCartStorage(
 
       await refreshMyBookings()
 
-      toast.add({
-        title: 'Booking deleted',
-        description: 'The booking has been permanently removed',
-        color: 'success',
-      })
+      notify.success('Booking deleted', { description: 'The booking has been permanently removed' })
 
       return true
     }
     catch (error: any) {
       console.error('Failed to delete booking:', error)
-      toast.add({
-        title: 'Delete failed',
-        description: error.data?.message || 'Failed to delete booking. Please try again.',
-        color: 'error',
-      })
+      notify.error('Delete failed', { description: error.data?.message || 'Failed to delete booking. Please try again.' })
       return false
     }
   }
