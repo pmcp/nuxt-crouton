@@ -103,7 +103,7 @@ const props = defineProps<{
 }>()
 
 const isOnline = useOnline()
-const toast = useToast()
+const notify = useNotify()
 const { t } = useT()
 
 const {
@@ -208,18 +208,10 @@ const filteredProducts = computed(() => {
 async function handleCheckout() {
   try {
     await checkout()
-    toast.add({
-      title: t('sales.orders.orderCreated'),
-      description: t('sales.orders.submittedSuccessfully'),
-      color: 'green',
-    })
+    notify.success(t('sales.orders.orderCreated'), { description: t('sales.orders.submittedSuccessfully') })
   }
   catch (error) {
-    toast.add({
-      title: t('sales.orders.error'),
-      description: error instanceof Error ? error.message : t('sales.orders.failedToCreate'),
-      color: 'red',
-    })
+    notify.error(t('sales.orders.error'), { description: error instanceof Error ? error.message : t('sales.orders.failedToCreate') })
   }
 }
 </script>

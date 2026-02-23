@@ -83,7 +83,7 @@ const props = withDefaults(defineProps<{
   refreshInterval: 10000,
 })
 
-const toast = useToast()
+const notify = useNotify()
 const { t } = useT()
 
 // Build query based on eventId prop
@@ -179,19 +179,11 @@ async function reprint(order: SalesOrder) {
     await $fetch(`${props.printApiBasePath}/${order.eventId}/orders/${order.id}/print`, {
       method: 'POST',
     })
-    toast.add({
-      title: t('sales.orders.printTriggered'),
-      description: `Order #${order.eventOrderNumber} sent to print queue`,
-      color: 'success',
-    })
+    notify.success(t('sales.orders.printTriggered'), { description: `Order #${order.eventOrderNumber} sent to print queue` })
     refresh()
   }
   catch (error) {
-    toast.add({
-      title: t('sales.orders.printFailed'),
-      description: t('sales.orders.printError'),
-      color: 'error',
-    })
+    notify.error(t('sales.orders.printFailed'), { description: t('sales.orders.printError') })
   }
   finally {
     reprintingId.value = null

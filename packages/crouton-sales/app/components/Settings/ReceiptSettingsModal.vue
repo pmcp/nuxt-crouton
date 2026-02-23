@@ -106,7 +106,7 @@ const emit = defineEmits<{
   'saved': []
 }>()
 
-const toast = useToast()
+const notify = useNotify()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -142,21 +142,13 @@ async function save() {
       method: 'PUT',
       body: settings.value,
     })
-    toast.add({
-      title: 'Settings Saved',
-      description: 'Receipt text settings have been updated.',
-      color: 'success',
-    })
+    notify.success('Settings Saved', { description: 'Receipt text settings have been updated.' })
     emit('saved')
     close()
   }
   catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to save settings.'
-    toast.add({
-      title: 'Error',
-      description: errorMessage,
-      color: 'error',
-    })
+    notify.error('Error', { description: errorMessage })
   }
   finally {
     saving.value = false

@@ -172,7 +172,7 @@ const emit = defineEmits<{
   'test-print': [printer: SalesPrinter]
 }>()
 
-const toast = useToast()
+const notify = useNotify()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -192,20 +192,12 @@ async function testPrint() {
       `${props.testPrintApiBase}/${props.printer.id}/test`,
       { method: 'POST' },
     )
-    toast.add({
-      title: 'Test Print Queued',
-      description: 'A test print job has been sent to the printer.',
-      color: 'success',
-    })
+    notify.success('Test Print Queued', { description: 'A test print job has been sent to the printer.' })
     emit('test-print', props.printer)
   }
   catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to send test print.'
-    toast.add({
-      title: 'Error',
-      description: errorMessage,
-      color: 'error',
-    })
+    notify.error('Error', { description: errorMessage })
   }
   finally {
     testPrinting.value = false
