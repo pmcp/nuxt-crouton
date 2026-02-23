@@ -1,5 +1,10 @@
 <script setup lang="ts">
+const route = useRoute()
 const { teamId } = useTeamContext()
+
+// Use route param directly for stable SSR/client URL (avoids hydration mismatch
+// caused by useTeamContext returning UUID on server vs slug on client)
+const teamParam = computed(() => route.params.team as string)
 
 // Preview / impersonation state
 const isPreview = ref(false)
@@ -8,10 +13,9 @@ provide('bookings-preview-mode', isPreview)
 
 // Admin data: all team bookings with email details
 const { data: adminBookings, pending: adminBookingsPending, refresh: refreshAdminBookings } = await useFetch(
-  () => teamId.value ? `/api/crouton-bookings/teams/${teamId.value}/admin-bookings` : null,
+  () => `/api/crouton-bookings/teams/${teamParam.value}/admin-bookings`,
   {
     default: () => [],
-    watch: [teamId],
   }
 )
 
