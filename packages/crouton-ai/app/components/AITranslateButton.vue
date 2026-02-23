@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, reactive } from 'vue'
 import { useToggle } from '@vueuse/core'
-import { useToast } from '#imports'
+import { useNotify } from '#imports'
 
 /**
  * AI Translate Button
@@ -91,7 +91,7 @@ const emit = defineEmits<{
   error: [error: Error]
 }>()
 
-const toast = useToast()
+const notify = useNotify()
 
 // Internal loading state for simple mode
 const internalLoading = ref(false)
@@ -263,18 +263,14 @@ async function doTranslation() {
     const errorMessage = err?.data?.statusMessage || err?.message || 'Translation failed'
 
     if (errorMessage.includes('API key not configured') || errorMessage.includes('No AI API key')) {
-      toast.add({
-        title: 'AI Translation Not Configured',
+      notify.warning('AI Translation Not Configured', {
         description: 'Set NUXT_ANTHROPIC_API_KEY or NUXT_OPENAI_API_KEY in your .env file',
-        icon: 'i-lucide-key',
-        color: 'warning'
+        icon: 'i-lucide-key'
       })
     } else {
-      toast.add({
-        title: 'Translation Failed',
+      notify.error('Translation Failed', {
         description: errorMessage,
-        icon: 'i-lucide-alert-circle',
-        color: 'error'
+        icon: 'i-lucide-alert-circle'
       })
     }
 

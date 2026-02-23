@@ -19,7 +19,7 @@ const { buildSystemPrompt: buildIntakePrompt } = useIntakePrompt()
 const { buildSystemPrompt: buildCollectionPrompt } = useCollectionDesignPrompt()
 const { buildSystemPrompt: buildSeedDataPrompt } = useSeedDataPrompt()
 const { buildSystemPrompt: buildReviewPrompt } = useReviewPrompt()
-const toast = useToast()
+const notify = useNotify()
 const { t } = useT()
 
 // ------- Project state -------
@@ -300,11 +300,7 @@ const { messages, rawMessages, importMessages, input, isLoading, status, error, 
   },
   onError: (err) => {
     console.error('Chat error:', err)
-    toast.add({
-      title: t('designer.ai.errorTitle'),
-      description: t('designer.ai.errorMessage'),
-      color: 'error'
-    })
+    notify.error(t('designer.ai.errorTitle'), { description: t('designer.ai.errorMessage') })
   }
 })
 

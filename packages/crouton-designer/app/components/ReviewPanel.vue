@@ -106,19 +106,13 @@ const packageCollectionsForExport = computed<PackageCollectionEntry[]>(() => {
 const { issues, errors, warnings, hasErrors } = useSchemaValidation(collections)
 
 // App scaffold
-const toast = useToast()
+const notify = useNotify()
 const configRef = computed(() => props.config)
 const { appName, effectiveFolderName, folderNameValid, folderOverride, conflictError, artifactsByCategory, status, result, error, createApp } = useAppScaffold(collections, configRef, seedData, packageCollectionsForExport)
 
 watch(conflictError, (val) => {
   if (val) {
-    toast.add({
-      title: t('designer.review.appExists'),
-      description: t('designer.review.appExistsToastDesc', { name: appName.value }),
-      color: 'warning',
-      icon: 'i-lucide-folder-x',
-      duration: 6000
-    })
+    notify.warning(t('designer.review.appExists'), { description: t('designer.review.appExistsToastDesc', { name: appName.value }), icon: 'i-lucide-folder-x' })
   }
 })
 
