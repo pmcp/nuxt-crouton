@@ -7,7 +7,7 @@
 export default defineNuxtPlugin((nuxtApp) => {
   const { track } = useCroutonEventTracker()
   const config = useRuntimeConfig()
-  const toast = useToast()
+  const notify = useNotify()
 
   // Health tracking state
   const health = useState('crouton-events-health', () => ({
@@ -51,13 +51,11 @@ export default defineNuxtPlugin((nuxtApp) => {
         console.error('[CroutonEvents] Tracking failed:', err)
       }
 
-      // Development mode: Show visible toast
+      // Development mode: Show visible warning
       if (import.meta.dev) {
-        toast.add({
-          title: 'Event tracking failed',
+        notify.warning('Event tracking failed', {
           description: err.message || 'Failed to track event',
-          color: 'orange',
-          icon: 'i-heroicons-exclamation-triangle'
+          target: 'toast',
         })
       }
       // Production mode: Silent (already logged to console)

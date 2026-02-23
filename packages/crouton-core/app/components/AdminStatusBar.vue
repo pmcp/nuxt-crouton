@@ -7,16 +7,28 @@ onUnmounted(() => { statusBarActive.value = false })
 </script>
 
 <template>
-  <div class="h-7 shrink-0 bg-default border-t border-default flex items-center px-4 gap-2 text-xs text-muted overflow-hidden">
+  <div
+    class="h-7 shrink-0 border-t flex items-center px-4 gap-2 text-sm overflow-hidden transition-colors duration-300"
+    :class="currentMessage
+      ? currentMessage.type === 'error'
+        ? 'bg-error/8 border-error/20 text-error'
+        : currentMessage.type === 'warning'
+          ? 'bg-warning/8 border-warning/20 text-warning'
+          : 'bg-primary/8 border-primary/20 text-primary'
+      : 'bg-default border-default text-muted'"
+  >
     <TransitionGroup name="ticker" tag="div" class="relative flex items-center gap-2 min-w-0 flex-1 h-full overflow-hidden">
       <div
         v-if="currentMessage"
         :key="currentMessage.id"
         class="absolute inset-0 flex items-center gap-2"
       >
-        <UIcon :name="currentMessage.icon" class="size-3 shrink-0 text-primary" />
+        <UIcon
+          :name="currentMessage.icon"
+          class="size-3 shrink-0"
+        />
         <span class="truncate">{{ currentMessage.text }}</span>
-        <span v-if="currentMessage.collection" class="text-dimmed ml-auto shrink-0">
+        <span v-if="currentMessage.collection" class="opacity-50 ml-auto shrink-0">
           {{ currentMessage.collection }} · {{ currentMessage.operation }}
         </span>
       </div>

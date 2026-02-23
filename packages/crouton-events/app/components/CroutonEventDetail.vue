@@ -76,24 +76,16 @@ const relativeTime = computed(() => {
 })
 
 // Copy event ID
-const toast = useToast()
+const notify = useNotify()
 
 function copyEventId() {
   navigator.clipboard.writeText(props.event.id)
-  toast.add({
-    title: 'Copied',
-    description: 'Event ID copied to clipboard',
-    color: 'success'
-  })
+  notify.info('Event ID copied to clipboard', { target: 'toast' })
 }
 
 function copyItemId() {
   navigator.clipboard.writeText(props.event.itemId)
-  toast.add({
-    title: 'Copied',
-    description: 'Item ID copied to clipboard',
-    color: 'success'
-  })
+  notify.info('Item ID copied to clipboard', { target: 'toast' })
 }
 </script>
 
