@@ -14,8 +14,17 @@ export type ContentFormat = 'blocks' | 'html' | 'empty'
 /**
  * Detect the format of page content
  */
-export function detectContentFormat(content: string | null | undefined): ContentFormat {
-  if (!content || content.trim() === '') {
+export function detectContentFormat(content: unknown): ContentFormat {
+  if (!content) {
+    return 'empty'
+  }
+
+  // Already-parsed object (e.g., from JSON column or reactive state)
+  if (typeof content === 'object') {
+    return isPageBlockContent(content) ? 'blocks' : 'empty'
+  }
+
+  if (typeof content !== 'string' || content.trim() === '') {
     return 'empty'
   }
 
@@ -71,8 +80,15 @@ function isPageBlockContent(value: unknown): value is PageBlockContent {
  * Parse content as blocks
  * Returns null if content is not valid block format
  */
-export function parseBlockContent(content: string | null | undefined): PageBlockContent | null {
+export function parseBlockContent(content: unknown): PageBlockContent | null {
   if (!content) return null
+
+  // Already-parsed object
+  if (typeof content === 'object') {
+    return isPageBlockContent(content) ? content : null
+  }
+
+  if (typeof content !== 'string') return null
 
   try {
     const parsed = JSON.parse(content.trim())
