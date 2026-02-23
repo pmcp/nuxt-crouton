@@ -31,7 +31,11 @@ export default defineNuxtConfig({
   ],
   hub: {
     db: 'sqlite',
-    kv: true
+    kv: true,
+    // cloudflare-pages preset causes NuxtHub to select the cloudflare-r2 blob driver,
+    // which requires a wrangler R2 binding even in `nuxt dev`. Force the local fs
+    // driver during development; production builds get cloudflare-r2 automatically.
+    blob: process.env.NODE_ENV === 'production' ? true : { driver: 'fs', dir: '.data/blob' }
   },
 
   // Disable OG Image to reduce bundle size for Cloudflare (saves ~4MB)

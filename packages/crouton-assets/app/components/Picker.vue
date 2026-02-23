@@ -17,7 +17,7 @@ const typeFilter = ref('all')
 const pendingSelection = ref<string | null>(null)
 
 const { getConfig } = useCollections()
-const collectionName = props.collection || getConfig('assets')?.apiPath || 'assets-assets'
+const collectionName = props.collection || getConfig('assets')?.apiPath || 'assets'
 
 const { data: assets, pending, refresh } = await useFetch(
   () => `/api/teams/${useRoute().params.team}/${collectionName}`
