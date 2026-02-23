@@ -99,7 +99,7 @@ const isUpdating = ref(false)
 
 // Track if we're cancelling the booking
 const isCancelling = ref(false)
-const showCancelConfirm = ref(false)
+const confirmingCancel = ref(false)
 
 // Track if we're in initial edit mode setup (to prevent clearing slot)
 const isInitialEditSetup = ref(!!props.booking)
@@ -256,11 +256,22 @@ function isLocationEnabled(locationId: string): boolean {
 // Handle cancel - clear editing state
 function handleCancel() {
   formState.editingBookingId = null
+  confirmingCancel.value = false
   emit('cancel')
 }
 
-// Handle cancel booking (change status to cancelled)
-async function handleCancelBooking() {
+// Handle cancel booking — two-click inline confirm (like triage delete)
+function confirmCancelBooking() {
+  if (confirmingCancel.value) {
+    // Second click — actually cancel
+    doCancelBooking()
+  } else {
+    // First click — show "sure?" state
+    confirmingCancel.value = true
+  }
+}
+
+async function doCancelBooking() {
   if (!props.booking || !teamId.value) return
 
   isCancelling.value = true
@@ -271,9 +282,8 @@ async function handleCancelBooking() {
         status: 'cancelled',
       },
     })
-    // Clear editing state
     formState.editingBookingId = null
-    showCancelConfirm.value = false
+    confirmingCancel.value = false
     emit('cancelled')
   } catch (error) {
     console.error('Failed to cancel booking:', error)
@@ -416,67 +426,38 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
             Select a location
           </div>
 
-          <!-- Cancel booking confirmation -->
-          <div v-if="isEditMode && showCancelConfirm" class="bg-error/10 rounded-lg px-3 py-2">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs text-muted">Cancel this booking?</span>
-              <div class="flex items-center gap-2">
-                <UButton
-                  variant="ghost"
-                  color="neutral"
-                  size="xs"
-                  @click="showCancelConfirm = false"
-                >
-                  Keep
-                </UButton>
-                <UButton
-                  variant="soft"
-                  color="error"
-                  size="xs"
-                  :loading="isCancelling"
-                  @click="handleCancelBooking"
-                >
-                  Cancel Booking
-                </UButton>
-              </div>
-            </div>
-          </div>
-
           <!-- Actions -->
-          <div class="flex justify-between gap-2 mt-auto">
-            <!-- Cancel booking button (only in edit mode, not already cancelled) -->
-            <div>
-              <UButton
-                v-if="isEditMode && !isAlreadyCancelled && !showCancelConfirm"
-                color="error"
-                variant="ghost"
-                size="xs"
-                icon="i-lucide-x-circle"
-                @click="showCancelConfirm = true"
-              >
-                Cancel Booking
-              </UButton>
-            </div>
+          <div class="flex items-center justify-end gap-2 mt-auto">
+            <!-- Cancel booking (two-click confirm) -->
+            <button
+              v-if="isEditMode && !isAlreadyCancelled"
+              class="h-7 rounded-md flex items-center gap-1.5 justify-center shrink-0 transition-all cursor-pointer"
+              :class="[
+                confirmingCancel
+                  ? 'bg-red-500/20 text-red-500 px-2.5'
+                  : 'px-2.5 text-red-400/60 hover:bg-red-500/20 hover:text-red-500'
+              ]"
+              @click.stop="confirmCancelBooking"
+            >
+              <UIcon v-if="isCancelling && confirmingCancel" name="i-lucide-loader-2" class="size-3.5 animate-spin" />
+              <template v-else-if="confirmingCancel">
+                <span class="text-xs font-medium whitespace-nowrap">sure?</span>
+              </template>
+              <template v-else>
+                <UIcon name="i-lucide-x-circle" class="size-3.5" />
+                <span class="text-xs font-medium">Cancel</span>
+              </template>
+            </button>
 
-            <div class="flex gap-2">
-              <UButton
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                @click="handleCancel"
-              >
-                {{ isEditMode ? 'Close' : 'Cancel' }}
-              </UButton>
-              <UButton
-                color="primary"
-                size="xs"
-                :disabled="!canSubmit || isSubmitting || isUpdating || isAlreadyCancelled"
-                :loading="isSubmitting || isUpdating"
-                @click="handleSubmit"
-              >
-                {{ isEditMode ? 'Save' : 'Create' }}
-              </UButton>
-            </div>
+            <UButton
+              color="primary"
+              size="xs"
+              :disabled="!canSubmit || isSubmitting || isUpdating || isAlreadyCancelled"
+              :loading="isSubmitting || isUpdating"
+              @click="handleSubmit"
+            >
+              {{ isEditMode ? 'Save' : 'Create' }}
+            </UButton>
           </div>
         </div>
       </div>
