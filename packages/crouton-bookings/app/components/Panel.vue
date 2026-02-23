@@ -97,6 +97,8 @@ const calendarRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void 
 // Crouton form and team auth for location creation
 const { open: openCroutonForm } = useCrouton()
 const { isAdmin } = useTeam()
+const notify = useNotify()
+const { parseSlotIds } = useBookingSlots()
 
 // Preview mode - injected from admin page, defaults to false
 const previewMode = inject<Ref<boolean>>('bookings-preview-mode', ref(false))
@@ -252,10 +254,68 @@ function onCalendarSelect(date: Date | null) {
   }
 }
 
+// Check if all locations are fully booked for a given date
+function isDayFullyBookedAllLocations(date: Date): boolean {
+  const locations = resolvedLocations.value
+  if (locations.length === 0) return false
+
+  const dateStr = date.toISOString().split('T')[0]
+
+  // Get non-cancelled bookings for this date
+  const dateBookings = resolvedBookings.value.filter((b) => {
+    const bookingDate = new Date(b.date).toISOString().split('T')[0]
+    return bookingDate === dateStr && b.status !== 'cancelled'
+  })
+
+  return locations.every((location) => {
+    const locationBookings = dateBookings.filter(b => b.location === location.id)
+
+    if (location.inventoryMode) {
+      const quantity = location.quantity ?? 0
+      return locationBookings.length >= quantity
+    }
+
+    // Slot mode: parse location slots
+    let slots: { id: string; capacity?: number }[] = []
+    if (location.slots) {
+      if (typeof location.slots === 'string') {
+        try { slots = JSON.parse(location.slots) }
+        catch { slots = [] }
+      }
+      else if (Array.isArray(location.slots)) {
+        slots = location.slots
+      }
+    }
+
+    // No named slots → single "all-day" slot with capacity 1
+    if (slots.length === 0) {
+      return locationBookings.length >= 1
+    }
+
+    // Check each slot's capacity
+    return slots.every((slot) => {
+      const capacity = slot.capacity ?? 1
+      const bookedCount = locationBookings.filter((b) => {
+        const ids = parseSlotIds(b.slot)
+        return ids.includes(slot.id)
+      }).length
+      return bookedCount >= capacity
+    })
+  })
+}
+
 // Handle calendar day click (+ button) - start inline creation at that date (disabled in preview mode)
 function onCalendarDayClick(date: Date) {
   if (previewMode.value) return
   if (resolvedLocations.value.length === 0) return
+
+  if (isDayFullyBookedAllLocations(date)) {
+    notify.warning('All slots taken', {
+      description: 'All time slots across all locations are fully booked for this day.',
+    })
+    return
+  }
+
   creatingAtDate.value = date
 }
 
