@@ -39,7 +39,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useT()
-const { useTimeAgo } = await import('@vueuse/core')
+const { useTimeAgo, watchDebounced } = await import('@vueuse/core')
 const { pageTypes, getPageType } = usePageTypes()
 const { create, update, deleteItems } = useCollectionMutation('pagesPages')
 const { locale, locales } = useI18n()
@@ -215,6 +215,40 @@ watch(
   },
   { deep: true }
 )
+
+// Auto-fill slug from title while typing (create mode only)
+// Tracks last auto-generated slug per locale so manual edits are respected
+const lastAutoSlug = reactive<Record<string, string>>({})
+
+if (!props.pageId) {
+  watchDebounced(
+    () => {
+      const t = state.value.translations as Record<string, { title?: string }> | undefined
+      if (!t) return {} as Record<string, string>
+      return Object.fromEntries(
+        Object.entries(t).map(([loc, data]) => [loc, data?.title || ''])
+      )
+    },
+    (titles: Record<string, string>) => {
+      const translations = state.value.translations as Record<string, Record<string, unknown>>
+      if (!translations) return
+
+      for (const [loc, title] of Object.entries(titles)) {
+        if (!title) continue
+        const currentSlug = (translations[loc]?.slug as string) || ''
+        const wasAutoFilled = currentSlug === '' || currentSlug === lastAutoSlug[loc]
+
+        if (wasAutoFilled) {
+          const newSlug = slugify(title)
+          if (!translations[loc]) translations[loc] = {}
+          translations[loc].slug = newSlug
+          lastAutoSlug[loc] = newSlug
+        }
+      }
+    },
+    { debounce: 300, deep: true }
+  )
+}
 
 // Track content ready state
 const contentReady = ref(action.value === 'create')
