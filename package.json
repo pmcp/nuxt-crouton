@@ -66,6 +66,7 @@
       "@nuxt/devtools": "^3.0.0",
       "@nuxt/devtools-kit": "^3.0.0",
       "unimport": "4.1.1",
+      "youch": "4.1.0-beta.13",
       "zod": "4.2.1"
     },
     "onlyBuiltDependencies": [
