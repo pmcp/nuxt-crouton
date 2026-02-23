@@ -2,7 +2,7 @@ interface StatusMessage {
   id: string
   text: string
   icon: string
-  type: 'success' | 'error'
+  type: 'success' | 'warning' | 'error'
   timestamp: number
   collection?: string
   operation?: string
@@ -10,9 +10,11 @@ interface StatusMessage {
 
 const EXPIRE_MS = 4000
 
+// Module-scoped flag — not useState, which leaks SSR→client and skips client registration
+let hookRegistered = false
+
 export function useAdminStatusBar() {
   const messages = useState<StatusMessage[]>('crouton-status-bar-messages', () => [])
-  const listenerRegistered = useState<boolean>('crouton-status-bar-listener', () => false)
 
   const currentMessage = computed<StatusMessage | undefined>(() => messages.value[0])
 
@@ -25,9 +27,9 @@ export function useAdminStatusBar() {
     }, EXPIRE_MS)
   }
 
-  // Register listener once (singleton pattern via useState)
-  if (!listenerRegistered.value) {
-    listenerRegistered.value = true
+  // Register listener once per JS runtime (SSR and client each get their own)
+  if (!hookRegistered) {
+    hookRegistered = true
 
     const nuxtApp = useNuxtApp()
     nuxtApp.hook('crouton:mutation', ({ operation, collection, itemIds }: { operation: string; collection: string; itemIds?: string[] }) => {
