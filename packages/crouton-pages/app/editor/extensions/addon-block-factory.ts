@@ -71,6 +71,10 @@ export function createAddonBlockExtension(def: CroutonBlockDefinition): Node {
 
     draggable: true,
 
+    addStorage() {
+      return { blockDefinition: def }
+    },
+
     addAttributes() {
       return buildAttributes(def.tiptap.attributes)
     },

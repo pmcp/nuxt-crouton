@@ -8,17 +8,8 @@
 import type { PageBlockContent, PageBlock } from '../types/blocks'
 import { parseBlockContent } from '../utils/content-detector'
 
-// Addon blocks — lazy access to avoid composable-outside-setup errors
-// when BlockContent is resolved during SSR module evaluation
-const croutonBlocks = computed(() => {
-  try {
-    const { getBlock, hasBlock } = useCroutonBlocks()
-    return { getBlock, hasBlock }
-  }
-  catch {
-    return { getBlock: () => undefined, hasBlock: () => false }
-  }
-})
+// Addon blocks from croutonBlocks registry
+const { getBlock: getAddonBlock } = useCroutonBlocks()
 
 /**
  * Minimal XSS sanitizer — strips <script> tags and on* event handler attributes.

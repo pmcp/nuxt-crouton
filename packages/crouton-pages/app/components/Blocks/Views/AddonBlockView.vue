@@ -3,7 +3,7 @@
  * Addon Block Editor View
  *
  * Generic NodeView wrapper for addon blocks (chart, map, etc.).
- * Looks up the block definition from useCroutonBlocks() by node type name
+ * Reads the block definition from TipTap extension storage (set by addon-block-factory)
  * and renders the addon package's editor view component.
  *
  * Falls back to a placeholder if the definition or component is not found.
@@ -13,18 +13,26 @@
  */
 import { computed, ref, resolveComponent } from 'vue'
 import { NodeViewWrapper } from '@tiptap/vue-3'
+import type { CroutonBlockDefinition } from '@fyit/crouton-core/app/types/block-definition'
 
 const props = defineProps<{
-  node: { type: { name: string }; attrs: Record<string, unknown> }
+  node: { type: { name: string; storage?: { blockDefinition?: CroutonBlockDefinition } }; attrs: Record<string, unknown> }
+  editor: any
   selected: boolean
   updateAttributes: (attrs: Record<string, unknown>) => void
   deleteNode: () => void
   getPos: () => number
 }>()
 
-// Look up the block definition from the crouton blocks registry
-const { getBlock } = useCroutonBlocks()
-const blockDef = computed(() => getBlock(props.node.type.name))
+// Read block definition from TipTap extension storage (set by addon-block-factory)
+const blockDef = computed(() => {
+  // Try extension storage first (set by createAddonBlockExtension)
+  const storageDef = props.editor?.extensionManager?.extensions
+    ?.find((ext: any) => ext.name === props.node.type.name)?.storage?.blockDefinition
+  if (storageDef) return storageDef as CroutonBlockDefinition
+  // Fallback: read from node type storage
+  return props.node.type.storage?.blockDefinition || null
+})
 
 // Resolve the editor view component from the addon package
 const editorViewComponent = computed(() => {

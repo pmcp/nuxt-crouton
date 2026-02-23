@@ -1,5 +1,7 @@
 # Atelier Phase B: Manifest-Driven Block Registration
 
+> **Status: IMPLEMENTED** — Page editor blocks (chartBlock, mapBlock, collectionMapBlock) are now manifest-driven. See commits `b5fa0976..215733d8` on main.
+
 ## Context
 
 The atelier build plan calls for **Phase B: Migrate block declarations to CroutonManifest**, discovered automatically via manifest-loader. This document covers the first implementation of manifest-driven blocks, starting with the **page editor blocks** (TipTap nodes like `chartBlock`, `mapBlock`).
