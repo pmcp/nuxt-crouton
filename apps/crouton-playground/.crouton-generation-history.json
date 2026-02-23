@@ -1,0 +1,25 @@
+[
+  {
+    "collection": "pages",
+    "fields": [
+      "title",
+      "slug",
+      "pageType",
+      "content",
+      "config",
+      "status",
+      "visibility",
+      "publishedAt",
+      "showInNavigation",
+      "layout",
+      "seoTitle",
+      "seoDescription",
+      "ogImage",
+      "robots"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-02-23T12:42:45.036Z",
+    "layer": "pages",
+    "gitSha": "3e5ffd0c"
+  }
+]
