@@ -16,10 +16,16 @@
   <UDashboardGroup>
     <CroutonAdminSidebar context="team" />
     <div class="flex flex-col flex-1 min-w-0 min-h-0">
-      <div class="flex flex-1 min-h-0 overflow-hidden">
+      <div class="admin-panels flex flex-1 min-h-0 overflow-hidden">
         <slot />
       </div>
       <CroutonAdminStatusBar />
     </div>
   </UDashboardGroup>
 </template>
+
+<style scoped>
+.admin-panels :deep([data-ui="DashboardPanel"]) {
+  min-height: 0;
+}
+</style>
