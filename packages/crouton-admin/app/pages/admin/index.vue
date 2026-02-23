@@ -13,6 +13,7 @@ const { teams, switchTeamBySlug } = useTeam()
 const { isPending } = useSession()
 const route = useRoute()
 const nuxtApp = useNuxtApp()
+const requestHeaders = useRequestHeaders(['cookie'])
 const hasRedirected = ref(false)
 
 async function fetchAndRedirect() {
@@ -25,17 +26,32 @@ async function fetchAndRedirect() {
   // First check if teams are already loaded in nanostore
   let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
 
-  // If not, fetch directly from Better Auth API
+  // If not, fetch teams from API
   if (userTeams.length === 0) {
-    const authClient = nuxtApp.$authClient as any
-    if (authClient?.organization?.list) {
+    if (import.meta.server) {
+      // SSR: authClient is not available, use $fetch with cookies
       try {
-        const result = await authClient.organization.list()
-        if (result.data && result.data.length > 0) {
-          userTeams = result.data
+        const orgs = await $fetch<Array<{ id: string; slug: string; name: string }>>('/api/auth/organization/list', {
+          headers: requestHeaders
+        }).catch(() => null)
+        if (orgs && orgs.length > 0) {
+          userTeams = orgs
         }
       } catch (e) {
-        console.error('[@crouton/admin] Failed to fetch teams:', e)
+        console.error('[@crouton/admin] Failed to fetch teams server-side:', e)
+      }
+    } else {
+      // Client: use Better Auth client
+      const authClient = nuxtApp.$authClient as any
+      if (authClient?.organization?.list) {
+        try {
+          const result = await authClient.organization.list()
+          if (result.data && result.data.length > 0) {
+            userTeams = result.data
+          }
+        } catch (e) {
+          console.error('[@crouton/admin] Failed to fetch teams:', e)
+        }
       }
     }
   }

@@ -13,8 +13,14 @@ definePageMeta({
 })
 
 const { t } = useT()
+const { logout } = useAuth()
 
 const navigating = ref(false)
+
+async function onCancel() {
+  await logout()
+  navigateTo('/auth/login')
+}
 
 function onTeamCreated(team: Team) {
   // Show loading during navigation
@@ -87,6 +93,7 @@ function onTeamCreated(team: Team) {
       <TeamCreateForm
         :loading="navigating"
         @success="onTeamCreated"
+        @cancel="onCancel"
       />
     </UCard>
   </div>
