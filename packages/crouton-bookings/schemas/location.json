@@ -51,8 +51,8 @@
     "type": "text",
     "meta": {
       "label": "Coordinates (GeoJSON)",
-      "area": "sidebar",
-      "group": "map"
+      "area": "main",
+      "group": "address"
     }
   },
   "content": {

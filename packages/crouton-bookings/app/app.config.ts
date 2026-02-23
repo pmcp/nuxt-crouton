@@ -1,4 +1,10 @@
 export default defineAppConfig({
+  // Package-provided form for bookings locations (overrides CLI-generated _Form.vue)
+  croutonCollections: {
+    bookingsLocations: {
+      packageForm: 'CroutonBookingsLocationForm'
+    }
+  },
   // App auto-discovery registration for crouton-bookings
   croutonApps: {
     bookings: {
