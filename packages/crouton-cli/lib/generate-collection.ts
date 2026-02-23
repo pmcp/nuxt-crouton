@@ -713,7 +713,14 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   data.detected = computeDetection(fields, collectionConfig, detectors, layerCamelCase)
 
   // Run contribution functions and attach enhancement results to data
-  const contributions = await getGeneratorContributions(manifests)
+  // Only include contributions from packages the app actually uses (via config.features)
+  // Core packages (core, auth, admin, i18n) are always active; addons need explicit feature flags
+  const allContributions = await getGeneratorContributions(manifests)
+  const enabledFeatures = new Set(Object.keys(config?.features || {}))
+  const corePackages = new Set(['crouton-core', 'crouton-auth', 'crouton-admin', 'crouton-i18n', 'crouton-bookings', 'crouton-pages'])
+  const contributions = allContributions.filter(({ packageId }) =>
+    corePackages.has(packageId) || enabledFeatures.has(packageId.replace(/^crouton-/, ''))
+  )
   const translatableFieldNames = config?.translations?.collections?.[toCase(collection).plural] || []
   data.formEnhancements = runFormContributions(contributions, data, dialect)
   data.listEnhancements = runListContributions(contributions, data, translatableFieldNames)
