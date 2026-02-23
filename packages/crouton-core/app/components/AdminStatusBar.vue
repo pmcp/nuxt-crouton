@@ -1,9 +1,25 @@
 <script setup lang="ts">
-const { currentMessage } = useAdminStatusBar()
+const { currentMessage, lastMessage } = useAdminStatusBar()
 const statusBarActive = useState<boolean>('crouton-status-bar-active', () => false)
 
 onMounted(() => { statusBarActive.value = true })
 onUnmounted(() => { statusBarActive.value = false })
+
+// Relative time for the last message (updates every 10s)
+const now = ref(Date.now())
+let timer: ReturnType<typeof setInterval> | null = null
+onMounted(() => { timer = setInterval(() => { now.value = Date.now() }, 10_000) })
+onUnmounted(() => { if (timer) clearInterval(timer) })
+
+function timeAgo(ts: number): string {
+  const diff = Math.floor((now.value - ts) / 1000)
+  if (diff < 10) return 'just now'
+  if (diff < 60) return `${diff}s ago`
+  const mins = Math.floor(diff / 60)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  return `${hrs}h ago`
+}
 </script>
 
 <template>
@@ -21,19 +37,22 @@ onUnmounted(() => { statusBarActive.value = false })
       <div
         v-if="currentMessage"
         :key="currentMessage.id"
-        class="absolute inset-0 flex items-center gap-2"
+        class="absolute inset-0 flex items-center justify-center gap-2"
       >
         <UIcon
           :name="currentMessage.icon"
           class="size-3 shrink-0"
         />
         <span class="truncate">{{ currentMessage.text }}</span>
-        <span v-if="currentMessage.collection" class="opacity-50 ml-auto shrink-0">
-          {{ currentMessage.collection }} · {{ currentMessage.operation }}
-        </span>
       </div>
-      <div v-else key="idle" class="absolute inset-0 flex items-center gap-1.5">
-        <span class="text-dimmed">Ready</span>
+      <div v-else key="idle" class="absolute inset-0 flex items-center justify-center gap-1.5">
+        <template v-if="lastMessage">
+          <UIcon :name="lastMessage.icon" class="size-3 shrink-0 opacity-40" />
+          <span class="opacity-60">{{ lastMessage.text }}</span>
+          <span class="opacity-30">&middot;</span>
+          <span class="opacity-30">{{ timeAgo(lastMessage.timestamp) }}</span>
+        </template>
+        <span v-else class="text-dimmed">Ready</span>
       </div>
     </TransitionGroup>
   </div>

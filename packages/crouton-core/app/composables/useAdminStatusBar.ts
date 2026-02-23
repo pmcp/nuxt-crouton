@@ -15,12 +15,15 @@ let hookRegistered = false
 
 export function useAdminStatusBar() {
   const messages = useState<StatusMessage[]>('crouton-status-bar-messages', () => [])
+  const lastMessage = useState<StatusMessage | null>('crouton-status-bar-last', () => null)
 
   const currentMessage = computed<StatusMessage | undefined>(() => messages.value[0])
 
   const addMessage = (msg: Omit<StatusMessage, 'id' | 'timestamp'>) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-    messages.value = [{ ...msg, id, timestamp: Date.now() }, ...messages.value]
+    const full = { ...msg, id, timestamp: Date.now() }
+    messages.value = [full, ...messages.value]
+    lastMessage.value = full
 
     setTimeout(() => {
       messages.value = messages.value.filter((m: StatusMessage) => m.id !== id)
@@ -57,5 +60,5 @@ export function useAdminStatusBar() {
     })
   }
 
-  return { messages, currentMessage, addMessage }
+  return { messages, currentMessage, lastMessage, addMessage }
 }
