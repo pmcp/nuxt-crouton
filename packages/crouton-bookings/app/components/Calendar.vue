@@ -538,6 +538,8 @@ const monthCellHeight = computed(() => {
         :week-starts-on="1"
         :ui="{
           root: 'w-full',
+          header: 'flex items-center justify-center gap-1',
+          heading: 'text-center font-medium truncate mx-0',
           body: 'p-1',
           grid: 'w-full',
           headCell: 'text-center text-xs',
