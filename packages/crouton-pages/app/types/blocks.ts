@@ -22,6 +22,7 @@ export type BlockType =
   | 'twoColumnBlock'
   | 'chartBlock'
   | 'mapBlock'
+  | 'collectionMapBlock'
   | 'embedBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
@@ -216,6 +217,7 @@ export type BlockAttrs =
   | TwoColumnBlockAttrs
   | ChartBlockAttrs
   | MapBlockAttrs
+  | CollectionMapBlockAttrs
   | EmbedBlockAttrs
 
 // ============================================================================
@@ -267,6 +269,23 @@ export interface ChartBlock extends PageBlock<ChartBlockAttrs> {
   type: 'chartBlock'
 }
 
+export interface CollectionMapBlockAttrs {
+  /** Collection name from registry (e.g., 'bookingsLocations') */
+  collection: string
+  /** Optional heading above the map */
+  title?: string
+  /** Map height in pixels */
+  height: number
+  /** Fallback zoom level (when no items or bounds can't be computed) */
+  zoom: number
+  /** Mapbox style preset */
+  style: string
+  /** Override coordinate field name (auto-detected if empty) */
+  coordinateField?: string
+  /** Field to use for marker popup label (uses display.title if empty) */
+  labelField?: string
+}
+
 export interface MapBlockAttrs {
   /** Display label / place name */
   address?: string
@@ -286,6 +305,10 @@ export interface MapBlockAttrs {
 
 export interface MapBlock extends PageBlock<MapBlockAttrs> {
   type: 'mapBlock'
+}
+
+export interface CollectionMapBlock extends PageBlock<CollectionMapBlockAttrs> {
+  type: 'collectionMapBlock'
 }
 
 export interface EmbedBlockAttrs {

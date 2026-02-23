@@ -58,6 +58,7 @@ const blockComponents: Record<string, string> = {
   twoColumnBlock: 'CroutonPagesBlocksRenderTwoColumnBlock',
   chartBlock: 'CroutonPagesBlocksRenderChartBlock',
   mapBlock: 'CroutonPagesBlocksRenderMapBlock',
+  collectionMapBlock: 'CroutonPagesBlocksRenderCollectionMapBlock',
   embedBlock: 'CroutonPagesBlocksRenderEmbedBlock'
 }
 
@@ -131,7 +132,7 @@ function isParagraph(type: string): boolean {
       <template v-for="(block, index) in renderableBlocks" :key="(block as any).attrs?.blockId || `${block.type}-${index}`">
         <!-- Dynamic blocks: fetch runtime data, must render client-side only -->
         <ClientOnly
-          v-if="block.type === 'collectionBlock' || block.type === 'chartBlock' || block.type === 'mapBlock' || block.type === 'embedBlock'"
+          v-if="block.type === 'collectionBlock' || block.type === 'chartBlock' || block.type === 'mapBlock' || block.type === 'collectionMapBlock' || block.type === 'embedBlock'"
         >
           <component
             :is="getBlockComponent(block.type)"

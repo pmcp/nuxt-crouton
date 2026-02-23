@@ -19,6 +19,7 @@ import type {
   TwoColumnBlockAttrs,
   ChartBlockAttrs,
   MapBlockAttrs,
+  CollectionMapBlockAttrs,
   EmbedBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
@@ -637,6 +638,85 @@ export const mapBlockDefinition: BlockDefinition<MapBlockAttrs> = {
   ]
 }
 
+export const collectionMapBlockDefinition: BlockDefinition<CollectionMapBlockAttrs> = {
+  type: 'collectionMapBlock',
+  name: 'Collection Map',
+  description: 'Show collection items as markers on an interactive map',
+  icon: 'i-lucide-map',
+  category: 'content',
+  defaultAttrs: {
+    collection: '',
+    height: 400,
+    zoom: 12,
+    style: 'streets'
+  },
+  schema: [
+    {
+      name: 'collection',
+      type: 'collection',
+      label: 'Collection',
+      required: true,
+      description: 'Select a collection with location data'
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+      description: 'Optional heading above the map'
+    },
+    {
+      name: 'coordinateField',
+      type: 'text',
+      label: 'Coordinate field',
+      description: 'Override the auto-detected coordinate field name'
+    },
+    {
+      name: 'labelField',
+      type: 'text',
+      label: 'Label field',
+      description: 'Field to use for marker popup (uses title field if empty)'
+    },
+    {
+      name: 'style',
+      type: 'select',
+      label: 'Map style',
+      options: [
+        { label: 'Streets', value: 'streets' },
+        { label: 'Light', value: 'light' },
+        { label: 'Dark', value: 'dark' },
+        { label: 'Satellite', value: 'satellite' },
+        { label: 'Outdoors', value: 'outdoors' }
+      ],
+      defaultValue: 'streets'
+    },
+    {
+      name: 'zoom',
+      type: 'select',
+      label: 'Fallback zoom',
+      options: [
+        { label: 'Country (8)', value: '8' },
+        { label: 'Region (10)', value: '10' },
+        { label: 'City (12)', value: '12' },
+        { label: 'Neighbourhood (14)', value: '14' },
+        { label: 'Street (16)', value: '16' }
+      ],
+      defaultValue: '12'
+    },
+    {
+      name: 'height',
+      type: 'select',
+      label: 'Height',
+      options: [
+        { label: '300px', value: '300' },
+        { label: '400px', value: '400' },
+        { label: '500px', value: '500' },
+        { label: '600px', value: '600' }
+      ],
+      defaultValue: '400'
+    }
+  ]
+}
+
 export const embedBlockDefinition: BlockDefinition<EmbedBlockAttrs> = {
   type: 'embedBlock',
   name: 'Embed',
@@ -690,6 +770,7 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   twoColumnBlock: twoColumnBlockDefinition,
   chartBlock: chartBlockDefinition,
   mapBlock: mapBlockDefinition,
+  collectionMapBlock: collectionMapBlockDefinition,
   embedBlock: embedBlockDefinition
 }
 

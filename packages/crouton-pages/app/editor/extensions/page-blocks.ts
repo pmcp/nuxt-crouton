@@ -16,6 +16,7 @@ import { FaqBlock } from './faq-block'
 import { TwoColumnBlock } from './two-column-block'
 import { ChartBlock } from './chart-block'
 import { MapBlock } from './map-block'
+import { CollectionMapBlock } from './collection-map-block'
 import { EmbedBlock } from './embed-block'
 import { BlockCommands } from './block-commands'
 
@@ -34,6 +35,7 @@ export interface PageBlocksOptions {
     twoColumn?: boolean
     chart?: boolean
     map?: boolean
+    collectionMap?: boolean
     embed?: boolean
   }
   /**
@@ -62,6 +64,7 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         twoColumn: true,
         chart: true,
         map: true,
+        collectionMap: true,
         embed: true
       },
       enableSlashCommands: true,
@@ -104,6 +107,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.map !== false) {
       extensions.push(MapBlock)
     }
+    if (blocks?.collectionMap !== false) {
+      extensions.push(CollectionMapBlock)
+    }
     if (blocks?.embed !== false) {
       extensions.push(EmbedBlock)
     }
@@ -130,6 +136,7 @@ export { FaqBlock } from './faq-block'
 export { TwoColumnBlock } from './two-column-block'
 export { ChartBlock } from './chart-block'
 export { MapBlock } from './map-block'
+export { CollectionMapBlock } from './collection-map-block'
 export { EmbedBlock } from './embed-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 
@@ -144,6 +151,7 @@ export type { FaqBlockOptions } from './faq-block'
 export type { TwoColumnBlockOptions } from './two-column-block'
 export type { ChartBlockOptions } from './chart-block'
 export type { MapBlockOptions } from './map-block'
+export type { CollectionMapBlockOptions } from './collection-map-block'
 export type { EmbedBlockOptions } from './embed-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
