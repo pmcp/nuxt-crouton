@@ -273,4 +273,15 @@ const headingClasses: Record<number, string> = {
 .block-content > * + * {
   margin-top: 0;
 }
+
+/* Highlight mark — themed with Nuxt UI primary color */
+.block-content :deep(mark) {
+  background-color: color-mix(in srgb, var(--ui-primary) 15%, transparent);
+  color: inherit;
+  padding: 0.05em 0.3em;
+  border-radius: 0.25em;
+  border-bottom: 2px solid color-mix(in srgb, var(--ui-primary) 40%, transparent);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
 </style>
