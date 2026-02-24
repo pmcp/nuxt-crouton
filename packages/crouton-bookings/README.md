@@ -80,11 +80,6 @@ All components are prefixed with `CroutonBooking`:
 - `CroutonBookingBookingSidebarForm` - Booking form
 - `CroutonBookingBookingSidebarCart` - Shopping cart
 - `CroutonBookingBookingSidebarMyBookings` - User's bookings list
-- `CroutonBookingCustomerBookingWizard` - Full-page booking wizard
-- `CroutonBookingCustomerBookingLocationCard` - Location selection card
-- `CroutonBookingCustomerBookingSlotPicker` - Time slot picker
-- `CroutonBookingCustomerBookingConfirmation` - Booking confirmation
-
 ### Admin
 - `CroutonBookingAdminCalendar` - Admin booking calendar
 - `CroutonBookingAdminSlotSelect` - Slot selection for admin
@@ -119,24 +114,6 @@ const {
   checkout,
   isSubmitting
 } = useBookingCart({ teamId: 'team-123' })
-```
-
-### useCustomerBooking
-
-Complete customer booking flow.
-
-```typescript
-const {
-  locations,
-  selectedLocation,
-  selectedDate,
-  cart,
-  bookings,
-  setLocation,
-  setDate,
-  addToCart,
-  checkout
-} = useCustomerBooking({ teamId: 'team-123' })
 ```
 
 ### useBookingsSettings

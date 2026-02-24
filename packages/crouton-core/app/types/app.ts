@@ -154,7 +154,7 @@ export interface CroutonPageType {
   /**
    * The Vue component name to render for this page type.
    * Must be a globally registered component from the app package.
-   * @example 'CroutonBookingsCalendar', 'CroutonBookingsCustomerBookingWizard'
+   * @example 'CroutonBookingsCalendar', 'CroutonBookingsPanel'
    */
   component: string
 

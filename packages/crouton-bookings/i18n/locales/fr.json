@@ -71,15 +71,6 @@
       "sendCancellation": "Envoyer l'Annulation",
       "sendFollowUp": "Envoyer un Suivi"
     },
-    "wizard": {
-      "selectLocation": "Sélectionner le Lieu",
-      "selectDate": "Sélectionner la Date",
-      "selectSlot": "Sélectionner le Créneau",
-      "confirmation": "Confirmation",
-      "next": "Suivant",
-      "back": "Retour",
-      "confirm": "Confirmer la Réservation"
-    },
     "panel": {
       "noLocations": "No locations yet"
     },

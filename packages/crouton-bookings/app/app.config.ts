@@ -3,12 +3,11 @@ import type { CroutonBlockDefinition } from '@fyit/crouton-core/app/types/block-
 const bookingBlockDefinition: CroutonBlockDefinition = {
   type: 'bookingBlock',
   name: 'Booking',
-  description: 'Embed a booking panel or step-by-step wizard',
+  description: 'Embed a booking panel',
   icon: 'i-lucide-calendar-check',
   category: 'customer',
   clientOnly: true,
   defaultAttrs: {
-    mode: 'panel',
     title: '',
     emptyMessage: ''
   },
@@ -17,18 +16,6 @@ const bookingBlockDefinition: CroutonBlockDefinition = {
     renderer: 'CroutonBookingsBlocksBookingBlockRender'
   },
   schema: [
-    {
-      name: 'mode',
-      type: 'select',
-      label: 'Display mode',
-      required: true,
-      description: 'Panel shows a calendar sidebar; Wizard guides customers step-by-step',
-      options: [
-        { label: 'Panel', value: 'panel' },
-        { label: 'Wizard', value: 'wizard' }
-      ],
-      defaultValue: 'panel'
-    },
     {
       name: 'title',
       type: 'text',
@@ -39,14 +26,12 @@ const bookingBlockDefinition: CroutonBlockDefinition = {
       name: 'emptyMessage',
       type: 'text',
       label: 'Empty message',
-      description: 'Message shown when no bookings exist (panel mode only)',
-      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'panel'
+      description: 'Message shown when no bookings exist'
     }
   ],
   tiptap: {
     parseHTMLTag: 'div[data-type="booking-block"]',
     attributes: {
-      mode: { default: 'panel' },
       title: { default: '' },
       emptyMessage: { default: '' }
     }

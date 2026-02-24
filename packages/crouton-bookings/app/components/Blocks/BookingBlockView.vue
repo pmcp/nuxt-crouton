@@ -3,7 +3,7 @@
  * Booking Block Editor View
  *
  * NodeView component for rendering booking blocks in the editor.
- * Shows mode badge, visual placeholder, and edit controls.
+ * Shows visual placeholder and edit controls.
  *
  * Note: Uses explicit imports because this component is loaded
  * via VueNodeViewRenderer which bypasses Nuxt auto-imports.
@@ -12,7 +12,6 @@ import { computed, ref } from 'vue'
 import { NodeViewWrapper } from '@tiptap/vue-3'
 
 interface BookingBlockAttrs {
-  mode: 'panel' | 'wizard'
   title?: string
   emptyMessage?: string
 }
@@ -26,12 +25,6 @@ const props = defineProps<{
 }>()
 
 const attrs = computed(() => props.node.attrs)
-const modeLabel = computed(() => attrs.value.mode === 'wizard' ? 'Wizard' : 'Panel')
-const modeDescription = computed(() =>
-  attrs.value.mode === 'wizard'
-    ? 'Step-by-step booking flow: location, date, time, confirm'
-    : 'Calendar sidebar with booking list and filters'
-)
 
 const innerRef = ref<HTMLElement | null>(null)
 
@@ -106,48 +99,8 @@ function handleOpenPanel() {
             {{ attrs.title }}
           </h3>
 
-          <!-- Mode badge + description -->
-          <div class="flex items-center gap-2 mb-3">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-              <svg v-if="attrs.mode === 'wizard'" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                <polyline points="14 2 14 8 20 8" />
-                <path d="m9 15 2 2 4-4" />
-              </svg>
-              <svg v-else class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              {{ modeLabel }}
-            </span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">{{ modeDescription }}</span>
-          </div>
-
-          <!-- Visual placeholder: Wizard -->
-          <div v-if="attrs.mode === 'wizard'" class="flex items-center gap-2">
-            <template v-for="(step, i) in ['Location', 'Date', 'Time', 'Confirm']" :key="step">
-              <div class="flex items-center gap-1.5">
-                <div
-                  class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
-                  :class="i === 0
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
-                >
-                  {{ i + 1 }}
-                </div>
-                <span class="text-[11px] text-gray-500 dark:text-gray-400 hidden sm:inline">{{ step }}</span>
-              </div>
-              <div
-                v-if="i < 3"
-                class="flex-1 h-px bg-gray-200 dark:bg-gray-700 min-w-[12px]"
-              />
-            </template>
-          </div>
-
-          <!-- Visual placeholder: Panel -->
-          <div v-else class="flex gap-3">
+          <!-- Panel preview -->
+          <div class="flex gap-3">
             <!-- Mini calendar grid -->
             <div class="grid grid-cols-7 gap-px w-28 shrink-0">
               <div

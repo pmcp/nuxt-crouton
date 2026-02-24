@@ -71,15 +71,6 @@
       "sendCancellation": "Annulering Verzenden",
       "sendFollowUp": "Follow-up Verzenden"
     },
-    "wizard": {
-      "selectLocation": "Selecteer Locatie",
-      "selectDate": "Selecteer Datum",
-      "selectSlot": "Selecteer Tijdslot",
-      "confirmation": "Bevestiging",
-      "next": "Volgende",
-      "back": "Terug",
-      "confirm": "Boeking Bevestigen"
-    },
     "panel": {
       "noLocations": "No locations yet"
     },

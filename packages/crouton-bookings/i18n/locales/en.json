@@ -71,15 +71,6 @@
       "sendCancellation": "Send Cancellation",
       "sendFollowUp": "Send Follow-Up"
     },
-    "wizard": {
-      "selectLocation": "Select Location",
-      "selectDate": "Select Date",
-      "selectSlot": "Select Time Slot",
-      "confirmation": "Confirmation",
-      "next": "Next",
-      "back": "Back",
-      "confirm": "Confirm Booking"
-    },
     "panel": {
       "noLocations": "No locations yet"
     },

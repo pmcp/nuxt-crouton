@@ -11,12 +11,10 @@ Booking system layer for Nuxt applications that provides both slot-based booking
 | `nuxt.config.ts` | Layer configuration, component registration, i18n setup |
 | `app/composables/useBookingAvailability.ts` | Check slot/inventory availability |
 | `app/composables/useBookingCart.ts` | Shopping cart for bookings |
-| `app/composables/useCustomerBooking.ts` | Complete customer booking flow |
 | `app/composables/useBookingsSettings.ts` | Team booking settings |
 | `app/composables/useBookingEmail.ts` | Email functionality (opt-in) |
 | `app/composables/useBookingEmailVariables.ts` | Email template variables + demo data for previews |
 | `app/pages/dashboard/[team]/settings/email-templates.vue` | Email template management page |
-| `app/components/CustomerBooking/` | Full-page booking wizard |
 | `app/types/booking.ts` | TypeScript type definitions |
 | `server/api/crouton-bookings/` | API endpoints |
 | `server/utils/booking-emails.ts` | Email utilities |
@@ -28,11 +26,6 @@ Booking system layer for Nuxt applications that provides both slot-based booking
 
 ```
 CroutonBooking
-├── CustomerBooking/
-│   ├── Wizard.vue      - Full-page wizard
-│   ├── LocationCard.vue - Location selection
-│   ├── SlotPicker.vue  - Time slot picker
-│   └── Confirmation.vue - Booking confirmation
 ├── Slot/
 │   └── Indicator.vue   - Visual slot indicator
 ├── Panel.vue           - Main booking sidebar

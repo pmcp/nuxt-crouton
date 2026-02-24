@@ -103,7 +103,6 @@ export default defineCroutonManifest({
     composables: [
       'useBookingAvailability',
       'useBookingCart',
-      'useCustomerBooking',
       'useBookingEmail',
       'useBookingEmailVariables',
       'useBookingsList',
@@ -117,7 +116,6 @@ export default defineCroutonManifest({
       { name: 'CroutonBookingWeekStrip', description: 'Week date navigation strip', props: ['modelValue', 'startDate'] },
       { name: 'CroutonBookingList', description: 'Bookings list with filters', props: ['teamId', 'filters'] },
       { name: 'CroutonBookingCard', description: 'Individual booking display card', props: ['booking'] },
-      { name: 'CroutonBookingCustomerBookingWizard', description: 'Full multi-step booking wizard', props: ['teamId', 'locations'] },
       { name: 'CroutonBookingSlotIndicator', description: 'Visual slot availability indicator', props: ['slots', 'bookings'] },
       { name: 'CroutonBookingDateBadge', description: 'Date display badge', props: ['date', 'format'] }
     ],
