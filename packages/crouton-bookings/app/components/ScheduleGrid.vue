@@ -118,7 +118,8 @@ function clearSchedule() {
         </thead>
         <tbody>
           <!-- Per-slot rows when slots exist -->
-          <tr v-if="hasSlots" v-for="slot in parsedSlots" :key="slot.id">
+          <template v-if="hasSlots">
+          <tr v-for="slot in parsedSlots" :key="slot.id">
             <td class="pr-3 py-1 text-default text-xs truncate max-w-[8rem]">
               {{ getSlotLabel(slot) }}
             </td>
@@ -153,6 +154,7 @@ function clearSchedule() {
               </button>
             </td>
           </tr>
+          </template>
           <!-- Single all-day row when no slots -->
           <tr v-else>
             <td class="pr-3 py-1 text-default text-xs">
