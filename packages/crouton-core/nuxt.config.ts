@@ -46,7 +46,7 @@ export default defineNuxtConfig({
     // Must be before @nuxthub/core — sets hub.blob = true as a default so apps
     // that only declare hub: { db: 'sqlite' } still get blob storage enabled.
     join(currentDir, 'modules/ensure-hub-blob'),
-    '@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', '@nuxtjs/seo', join(currentDir, 'modules/manifest-injection')
+    '@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '@nuxt/image', join(currentDir, 'modules/ipx-blob'), '@nuxtjs/seo', join(currentDir, 'modules/manifest-injection')
   ],
 
   // Runtime config for server-side secrets
@@ -60,6 +60,7 @@ export default defineNuxtConfig({
     db: 'sqlite', // Uses D1 on Cloudflare, local SQLite in dev
     blob: true // Required for ensureBlob auto-import and hubBlob() in upload endpoint
   },
+
 
   // Vite configuration to prevent duplicate module instances
   // This is critical for Yjs and ProseMirror which check constructor identity
