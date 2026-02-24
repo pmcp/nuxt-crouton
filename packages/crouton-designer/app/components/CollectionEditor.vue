@@ -26,6 +26,24 @@ function getPackageLabel(alias: string): string {
 // Validation (user collections only, but knows about package collection names for ref checks)
 const { issues, errors, warnings, getCollectionIssues, getFieldIssues } = useSchemaValidation(collectionsWithFields, packageCollectionNames)
 
+// Pre-filtered issues: global issues not tied to any collection
+const globalIssues = computed(() => issues.value.filter(i => !i.collectionId))
+
+// Collection-level issues (no field) for a given collection
+function getCollectionLevelIssues(collectionId: string) {
+  return getCollectionIssues(collectionId).filter(i => !i.fieldId)
+}
+
+// Find the package collection entry matching an accordion item
+function getPackageCollection(itemValue: string) {
+  return packageCollections.value.find(p => p.id === itemValue)
+}
+
+// Return matching package collections as array (for v-for in scoped slots)
+function getPackageCollectionList(itemValue: string) {
+  return packageCollections.value.filter(p => p.id === itemValue)
+}
+
 // Provide editor to child components
 provide('collectionEditor', editor)
 
@@ -177,9 +195,9 @@ defineExpose({ editor })
     </div>
 
     <!-- Validation issues banner -->
-    <div v-if="issues.filter(i => !i.collectionId).length > 0" class="space-y-1">
+    <div v-if="globalIssues.length > 0" class="space-y-1">
       <UAlert
-        v-for="issue in issues.filter(i => !i.collectionId)"
+        v-for="issue in globalIssues"
         :key="issue.code + issue.message"
         :color="issue.type === 'error' ? 'error' : 'warning'"
         variant="subtle"
@@ -260,7 +278,7 @@ defineExpose({ editor })
 
             <!-- Collection-level validation issues -->
             <div
-              v-for="issue in getCollectionIssues(item.value as string).filter(i => !i.fieldId)"
+              v-for="issue in getCollectionLevelIssues(item.value as string)"
               :key="issue.code"
               class="flex items-center gap-2 text-xs px-2 py-1"
               :class="issue.type === 'error' ? 'text-[var(--ui-color-error-500)]' : 'text-[var(--ui-color-warning-500)]'"
@@ -312,7 +330,7 @@ defineExpose({ editor })
         >
           <template #trailing="{ item }">
             <div
-              v-for="pkg in packageCollections.filter(p => p.id === item.value)"
+              v-for="pkg in getPackageCollectionList(item.value as string)"
               :key="pkg.id"
               class="flex items-center gap-2"
             >
@@ -344,7 +362,7 @@ defineExpose({ editor })
 
           <template #body="{ item }">
             <div
-              v-for="pkg in packageCollections.filter(p => p.id === item.value)"
+              v-for="pkg in getPackageCollectionList(item.value as string)"
               :key="pkg.id"
               class="space-y-3"
             >
