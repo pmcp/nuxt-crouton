@@ -100,10 +100,10 @@ function handleOpenPanel() {
               <!-- Icon-based logo -->
               <span
                 v-if="item.type === 'icon' || (!item.type && item.value?.startsWith('i-'))"
-                class="text-gray-400 text-2xl relative"
+                class="relative"
                 :title="item.link ? `${item.value} → ${item.link}` : item.value"
               >
-                {{ item.value.replace('i-simple-icons-', '').replace('i-lucide-', '') }}
+                <UIcon :name="item.value" class="size-8 text-gray-400" />
                 <span v-if="item.link" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary" />
               </span>
               <!-- Image-based logo -->
