@@ -31,10 +31,10 @@ nuxt-crouton-assets (this package)
 ├── assets-schema.json          # Schema template
 
 Your Project (generated)
-├── layers/core/collections/assets/
-│   ├── API endpoints
+├── layers/crouton/collections/assets/
+│   ├── API endpoints (crouton-assets)
 │   ├── Form.vue, List.vue
-│   └── useCoreAssets()
+│   └── useCroutonAssets()
 ```
 
 ## Setup
@@ -55,7 +55,7 @@ export default defineNuxtConfig({
 ## Generate Assets Collection
 
 ```bash
-crouton-generate core assets \
+crouton-generate crouton assets \
   --fields-file=node_modules/@fyit/crouton-assets/assets-schema.json \
   --dialect=sqlite
 ```

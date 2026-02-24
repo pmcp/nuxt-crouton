@@ -38,7 +38,7 @@ export const useAssetUpload = () => {
     metadata: AssetMetadata = {},
     collection?: string
   ): Promise<UploadAssetResult> => {
-    const collectionKey = collection || 'assets'
+    const collectionKey = collection || 'croutonAssets'
     const resolvedCollection = getConfig(collectionKey)?.apiPath || collectionKey
     uploading.value = true
     error.value = null
