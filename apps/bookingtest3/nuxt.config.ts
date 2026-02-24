@@ -19,7 +19,8 @@ export default defineNuxtConfig({
     './layers/bookings',
     './layers/pages',
     './layers/bookingtest3',
-    '@fyit/crouton-maps'
+    '@fyit/crouton-maps',
+    './layers/crouton'
   ],
   hub: {
     blob: true,

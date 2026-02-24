@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1771593987234,
+      "tag": "0000_marvelous_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1771964921245,
+      "tag": "0001_wide_krista_starr",
+      "breakpoints": true
+    }
+  ]
+}
