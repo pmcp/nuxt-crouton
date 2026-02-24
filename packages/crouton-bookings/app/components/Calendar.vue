@@ -48,12 +48,12 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useT()
+const { locale } = useI18n()
 
 const { parseSlotIds, parseLocationSlots } = useBookingSlots()
 
 // Get localized location title with fallbacks
 function getLocationTitle(location: LocationData): string {
-  const { locale } = useI18n()
   const translations = location.translations as Record<string, { title?: string }> | undefined
 
   return translations?.[locale.value]?.title
@@ -444,7 +444,6 @@ function getLocationById(locationId: string): LocationData | undefined {
 function getLocationAddress(locationId: string): string | null {
   const location = getLocationById(locationId)
   if (!location) return null
-  const { locale } = useI18n()
   const translations = location.translations as Record<string, { street?: string, zip?: string, city?: string }> | undefined
 
   const street = translations?.[locale.value]?.street || translations?.en?.street || location.street
