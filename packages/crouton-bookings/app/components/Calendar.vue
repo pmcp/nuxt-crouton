@@ -397,6 +397,19 @@ function isDayUnavailable(date: Date): boolean {
 function getDayBlockedReason(date: Date): string | null {
   return props.getBlockedReason?.(date) ?? null
 }
+// Check if a date is fully booked across all visible locations
+function isDayFullyBooked(date: Date): boolean {
+  const indicators = getIndicatorsForDate(date)
+  if (indicators.length === 0) return false
+
+  return indicators.every((indicator) => {
+    if (indicator.isInventoryMode) {
+      return indicator.inventoryBookedCount >= indicator.inventoryQuantity
+    }
+    // All slots must be full
+    return indicator.slotStatuses.length > 0 && indicator.slotStatuses.every(s => s.isFull)
+  })
+}
 
 // Compute max indicators across all days for uniform row height
 // Since we now show all locations on every day, this is the count of visible locations with slots
@@ -464,6 +477,7 @@ const monthCellHeight = computed(() => {
       :selected-dates="selectedDates"
       :creating-at-date="creatingAtDate"
       :is-date-disabled="isDateUnavailable ? isDayUnavailable : undefined"
+      :is-day-fully-booked="isDayFullyBooked"
       @select="onWeekSelect"
       @day-click="onWeekDayClick"
     >
@@ -648,10 +662,18 @@ const monthCellHeight = computed(() => {
             <button
               v-if="!isCreatingDate(day.toDate(getLocalTimeZone()))"
               type="button"
-              class="absolute bottom-0 left-0 right-0 translate-y-0 flex items-center justify-center h-4 bg-primary rounded-b-md opacity-0 cursor-pointer transition-all duration-200 ease-out group-hover:translate-y-1 group-hover:opacity-100 hover:bg-primary/80 active:scale-[0.98] z-10"
-              @click.stop="emit('dayClick', day.toDate(getLocalTimeZone()))"
+              :disabled="isDayFullyBooked(day.toDate(getLocalTimeZone()))"
+              class="absolute bottom-0 left-0 right-0 translate-y-0 flex items-center justify-center h-4 rounded-b-md opacity-0 transition-all duration-200 ease-out group-hover:translate-y-1 group-hover:opacity-100 z-10"
+              :class="isDayFullyBooked(day.toDate(getLocalTimeZone()))
+                ? 'bg-neutral-700 cursor-default'
+                : 'bg-primary cursor-pointer hover:bg-primary/80 active:scale-[0.98]'"
+              @click.stop="!isDayFullyBooked(day.toDate(getLocalTimeZone())) && emit('dayClick', day.toDate(getLocalTimeZone()))"
             >
-              <UIcon name="i-lucide-plus" class="size-2.5 text-neutral-300" />
+              <UIcon
+                :name="isDayFullyBooked(day.toDate(getLocalTimeZone())) ? 'i-lucide-check' : 'i-lucide-plus'"
+                class="size-2.5"
+                :class="isDayFullyBooked(day.toDate(getLocalTimeZone())) ? 'text-neutral-500' : 'text-neutral-300'"
+              />
             </button>
           </div>
         </template>
