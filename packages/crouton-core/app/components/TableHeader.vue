@@ -33,39 +33,28 @@
   </UDashboardNavbar>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const { open } = useCrouton()
 const { getConfig } = useCollections()
 
-const props = defineProps({
-  title: {
-    type: String,
-    default: ''
-  },
-  collection: {
-    type: String,
-    default: ''
-  },
-  createButton: {
-    type: Boolean,
-    default: false
-  },
-  exportButton: {
-    type: Boolean,
-    default: true
-  },
-  importButton: {
-    type: Boolean,
-    default: true
-  },
-  rows: {
-    type: Array,
-    default: () => []
-  }
+const props = withDefaults(defineProps<{
+  title?: string
+  collection?: string
+  createButton?: boolean
+  exportButton?: boolean
+  importButton?: boolean
+  rows?: any[]
+}>(), {
+  title: '',
+  collection: '',
+  createButton: false,
+  exportButton: true,
+  importButton: true,
+  rows: () => []
 })
 
 // Theme variant support
-const getVariant = (base) => {
+const getVariant = (base: string) => {
   try {
     const switcher = useThemeSwitcher?.()
     return switcher?.getVariant?.(base) ?? base

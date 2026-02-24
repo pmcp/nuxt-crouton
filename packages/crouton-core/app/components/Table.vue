@@ -59,6 +59,7 @@
         <!-- Pass all slots from parent -->
         <template
           v-for="(_, slot) of $slots"
+          :key="slot"
           #[slot]="scope"
         >
           <slot

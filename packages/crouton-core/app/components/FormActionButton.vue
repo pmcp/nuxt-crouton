@@ -20,29 +20,14 @@
   </UButton>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const { collectionWithCapitalSingular } = useFormatCollections()
 
-defineProps({
-  action: {
-    type: String,
-    required: true
-  },
-  collection: {
-    type: String,
-    required: true
-  },
-  items: {
-    type: Array,
-    default: []
-  },
-  loading: {
-    type: String,
-    default: ''
-  },
-  hasValidationErrors: {
-    type: Boolean,
-    default: false
-  }
-})
+defineProps<{
+  action: string
+  collection: string
+  items?: any[]
+  loading?: string
+  hasValidationErrors?: boolean
+}>()
 </script>

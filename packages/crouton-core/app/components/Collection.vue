@@ -29,6 +29,7 @@
     <!-- Pass through all data slots -->
     <template
       v-for="(_, slot) of $slots"
+      :key="slot"
       #[slot]="scope"
     >
       <slot
