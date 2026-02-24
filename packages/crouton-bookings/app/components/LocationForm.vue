@@ -89,14 +89,23 @@
           <fieldset class="flex flex-col gap-4">
             <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Access Control</legend>
             <p class="text-sm text-gray-500 -mt-1">Restrict which members can book this location. Leave empty to allow all team members.</p>
-            <UFormField label="Allowed Member IDs" name="allowedMemberIds">
-              <UTextarea
-                :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
-                @update:model-value="(val: string) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
+            <UFormField label="Allowed Members" name="allowedMemberIds">
+              <USelectMenu
+                v-model="state.allowedMemberIds"
+                :items="memberItems"
+                multiple
+                value-key="value"
+                :loading="membersLoading"
+                icon="i-lucide-users"
+                placeholder="All team members"
                 class="w-full"
-                :rows="6"
-                placeholder="Enter one member ID per line"
-              />
+                :filter-fields="['label', 'email']"
+              >
+                <template #item-label="{ item }">
+                  {{ item.label }}
+                  <span class="text-muted">{{ item.email }}</span>
+                </template>
+              </USelectMenu>
             </UFormField>
           </fieldset>
         </div>
@@ -142,7 +151,7 @@
             <UFormField label="Open Days" name="openDays">
               <CroutonBookingsOpenDaysPicker v-model="state.openDays" />
             </UFormField>
-            <UFormField v-if="!state.inventoryMode" label="Slot Schedule" name="slotSchedule">
+            <UFormField v-if="!state.inventoryMode && state.slots?.length" label="Slot Schedule" name="slotSchedule">
               <CroutonBookingsScheduleGrid v-model="state.slotSchedule" :slots="state.slots" />
             </UFormField>
             <UFormField label="Blocked Dates" name="blockedDates">
@@ -160,12 +169,9 @@
         <div v-show="activeSection === 'content'" class="flex flex-col gap-4 p-1">
           <CroutonI18nInput
             v-model="state.translations"
-            :fields="['title', 'street', 'zip', 'city', 'content']"
+            :fields="['title', 'content']"
             :default-values="{
               title: state.title || '',
-              street: state.street || '',
-              zip: state.zip || '',
-              city: state.city || '',
               content: state.content || ''
             }"
             :field-components="{
@@ -220,6 +226,24 @@ const { defaultValue, schema, collection } = useBookingsLocations()
 // Optional maps integration — gracefully degrades when crouton-maps is not installed
 const { hasApp } = useCroutonApps()
 const hasMaps = hasApp('maps')
+
+// Load team members for access control picker
+const { members: teamMembers, loadMembers } = useTeam()
+const membersLoading = ref(false)
+
+onMounted(async () => {
+  membersLoading.value = true
+  try { await loadMembers() } finally { membersLoading.value = false }
+})
+
+const memberItems = computed(() =>
+  teamMembers.value.map((m: any) => ({
+    label: m.user?.name || m.user?.email || 'Unknown',
+    email: m.user?.email || '',
+    value: m.userId,
+    avatar: { src: m.user?.image, alt: m.user?.name || m.user?.email || '' }
+  }))
+)
 
 // Form layout: 3 tabs
 const navigationItems = [
