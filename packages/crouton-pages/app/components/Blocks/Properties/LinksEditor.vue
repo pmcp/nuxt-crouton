@@ -160,10 +160,10 @@ function moveLink(index: number, direction: 'up' | 'down') {
       </div>
 
       <!-- Icon (optional) -->
-      <UInput
+      <CroutonIconPicker
         :model-value="link.icon || ''"
-        placeholder="Icon (e.g., i-lucide-arrow-right)"
         size="sm"
+        placeholder="Add icon"
         @update:model-value="updateLink(index, 'icon', $event)"
       />
     </div>

@@ -114,20 +114,11 @@ function moveCard(index: number, direction: 'up' | 'down') {
       </div>
 
       <!-- Icon -->
-      <UInput
+      <CroutonIconPicker
         :model-value="card.icon || ''"
-        placeholder="Icon (e.g., i-lucide-box)"
         size="sm"
         @update:model-value="updateCard(index, 'icon', $event)"
-      >
-        <template #leading>
-          <UIcon
-            v-if="card.icon"
-            :name="card.icon"
-            class="size-3"
-          />
-        </template>
-      </UInput>
+      />
 
       <!-- Title -->
       <UInput

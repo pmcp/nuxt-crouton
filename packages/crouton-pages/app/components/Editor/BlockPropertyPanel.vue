@@ -224,20 +224,11 @@ function onDelete() {
             :name="field.name"
             :description="field.description"
           >
-            <UInput
+            <CroutonIconPicker
               :model-value="localAttrs[field.name] as string || ''"
-              placeholder="i-lucide-star"
-              class="w-full"
+              size="sm"
               @update:model-value="onFieldChange(field.name, $event)"
-            >
-              <template #leading>
-                <UIcon
-                  v-if="localAttrs[field.name]"
-                  :name="localAttrs[field.name] as string"
-                  class="size-4"
-                />
-              </template>
-            </UInput>
+            />
           </UFormField>
 
           <!-- Image Editor -->

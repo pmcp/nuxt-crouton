@@ -102,20 +102,11 @@ function moveFeature(index: number, direction: 'up' | 'down') {
       </div>
 
       <!-- Icon -->
-      <UInput
+      <CroutonIconPicker
         :model-value="feature.icon || ''"
-        placeholder="Icon (e.g., i-lucide-star)"
         size="sm"
         @update:model-value="updateFeature(index, 'icon', $event)"
-      >
-        <template #leading>
-          <UIcon
-            v-if="feature.icon"
-            :name="feature.icon"
-            class="size-3"
-          />
-        </template>
-      </UInput>
+      />
 
       <!-- Title -->
       <UInput

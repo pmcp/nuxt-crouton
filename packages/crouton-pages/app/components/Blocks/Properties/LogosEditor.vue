@@ -270,21 +270,12 @@ function getImageMode(index: number): string {
           />
         </div>
 
-        <!-- Icon mode: icon name input with preview -->
-        <div v-if="isIcon(item)" class="flex items-center gap-2">
-          <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded bg-muted/50">
-            <UIcon
-              v-if="item.value"
-              :name="item.value"
-              class="size-5 text-muted"
-            />
-            <UIcon v-else name="i-lucide-at-sign" class="size-4 text-muted" />
-          </div>
-          <UInput
-            :model-value="item.value"
-            placeholder="i-simple-icons-github"
+        <!-- Icon mode: icon picker -->
+        <div v-if="isIcon(item)">
+          <CroutonIconPicker
+            :model-value="item.value || ''"
             size="sm"
-            class="flex-1"
+            :collections="['simple-icons', 'lucide']"
             @update:model-value="updateItem(index, 'value', $event)"
           />
         </div>
