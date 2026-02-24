@@ -22,6 +22,7 @@ import type {
   LogoBlockAttrs,
   VideoBlockAttrs,
   FileBlockAttrs,
+  ButtonRowBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -722,6 +723,36 @@ export const fileBlockDefinition: BlockDefinition<FileBlockAttrs> = {
   ]
 }
 
+export const buttonRowBlockDefinition: BlockDefinition<ButtonRowBlockAttrs> = {
+  type: 'buttonRowBlock',
+  name: 'Button Row',
+  description: 'A row of link and download buttons',
+  icon: 'i-lucide-rows-3',
+  category: 'cta',
+  defaultAttrs: {
+    buttons: [],
+    align: 'left'
+  },
+  schema: [
+    {
+      name: 'align',
+      type: 'select',
+      label: 'Alignment',
+      options: [
+        { label: 'Left', value: 'left' },
+        { label: 'Center', value: 'center' },
+        { label: 'Right', value: 'right' }
+      ],
+      defaultValue: 'left'
+    },
+    {
+      name: 'buttons',
+      type: 'button-row-items',
+      label: 'Buttons'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -736,7 +767,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   imageBlock: imageBlockDefinition,
   logoBlock: logoBlockDefinition,
   videoBlock: videoBlockDefinition,
-  fileBlock: fileBlockDefinition
+  fileBlock: fileBlockDefinition,
+  buttonRowBlock: buttonRowBlockDefinition
 }
 
 // ============================================================================

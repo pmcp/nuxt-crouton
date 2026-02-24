@@ -337,6 +337,19 @@ function onDelete() {
             />
           </UFormField>
 
+          <!-- Button Row Items Editor -->
+          <UFormField
+            v-else-if="field.type === 'button-row-items'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesButtonRowEditor
+              :model-value="(localAttrs[field.name] as any[]) || []"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
+
           <!-- Logos Editor -->
           <UFormField
             v-else-if="field.type === 'logos'"

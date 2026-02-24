@@ -21,6 +21,7 @@ import { ImageBlock } from './image-block'
 import { LogoBlock } from './logo-block'
 import { VideoBlock } from './video-block'
 import { FileBlock } from './file-block'
+import { ButtonRowBlock } from './button-row-block'
 import { BlockCommands } from './block-commands'
 import { createAddonBlockExtension } from './addon-block-factory'
 
@@ -42,6 +43,7 @@ export interface PageBlocksOptions {
     logo?: boolean
     video?: boolean
     file?: boolean
+    buttonRow?: boolean
   }
   /**
    * Addon block definitions from external packages (registered via croutonBlocks in app.config.ts)
@@ -75,7 +77,8 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         image: true,
         logo: true,
         video: true,
-        file: true
+        file: true,
+        buttonRow: true
       },
       addonBlocks: [],
       enableSlashCommands: true,
@@ -130,6 +133,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.file !== false) {
       extensions.push(FileBlock)
     }
+    if (blocks?.buttonRow !== false) {
+      extensions.push(ButtonRowBlock)
+    }
 
     // Add addon block extensions (from croutonBlocks in app.config.ts)
     if (addonBlocks?.length) {
@@ -163,6 +169,7 @@ export { ImageBlock } from './image-block'
 export { LogoBlock } from './logo-block'
 export { VideoBlock } from './video-block'
 export { FileBlock } from './file-block'
+export { ButtonRowBlock } from './button-row-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 export { createAddonBlockExtension } from './addon-block-factory'
 
@@ -180,6 +187,7 @@ export type { ImageBlockOptions } from './image-block'
 export type { LogoBlockOptions } from './logo-block'
 export type { VideoBlockOptions } from './video-block'
 export type { FileBlockOptions } from './file-block'
+export type { ButtonRowBlockOptions } from './button-row-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks

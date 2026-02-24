@@ -26,6 +26,7 @@ export type BlockType =
   | 'logoBlock'
   | 'videoBlock'
   | 'fileBlock'
+  | 'buttonRowBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -199,6 +200,7 @@ export type BlockAttrs =
   | LogoBlockAttrs
   | VideoBlockAttrs
   | FileBlockAttrs
+  | ButtonRowBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -349,6 +351,27 @@ export interface FileBlock extends PageBlock<FileBlockAttrs> {
   type: 'fileBlock'
 }
 
+export interface ButtonRowItem {
+  label: string
+  to?: string
+  file?: string
+  fileName?: string
+  download?: boolean
+  external?: boolean
+  color?: ButtonColor
+  variant?: ButtonVariant
+  icon?: string
+}
+
+export interface ButtonRowBlockAttrs {
+  buttons: ButtonRowItem[]
+  align?: 'left' | 'center' | 'right'
+}
+
+export interface ButtonRowBlock extends PageBlock<ButtonRowBlockAttrs> {
+  type: 'buttonRowBlock'
+}
+
 // ============================================================================
 // Document Type
 // ============================================================================
@@ -374,7 +397,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items'
   label: string
   description?: string
   required?: boolean
