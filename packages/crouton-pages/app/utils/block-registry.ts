@@ -20,6 +20,7 @@ import type {
   EmbedBlockAttrs,
   ImageBlockAttrs,
   LogoBlockAttrs,
+  VideoBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -519,6 +520,8 @@ export const logoBlockDefinition: BlockDefinition<LogoBlockAttrs> = {
   defaultAttrs: {
     title: 'Trusted by the best teams',
     marquee: false,
+    align: 'center',
+    size: 'md',
     items: [
       { value: 'i-simple-icons-github' },
       { value: 'i-simple-icons-discord' },
@@ -535,6 +538,31 @@ export const logoBlockDefinition: BlockDefinition<LogoBlockAttrs> = {
       description: 'Text displayed above the logos'
     },
     {
+      name: 'align',
+      type: 'select',
+      label: 'Alignment',
+      description: 'How logos are distributed',
+      defaultValue: 'center',
+      options: [
+        { label: 'Center', value: 'center' },
+        { label: 'Space Between', value: 'between' }
+      ]
+    },
+    {
+      name: 'size',
+      type: 'select',
+      label: 'Size',
+      description: 'Logo size',
+      defaultValue: 'md',
+      options: [
+        { label: 'XS', value: 'xs' },
+        { label: 'SM', value: 'sm' },
+        { label: 'MD', value: 'md' },
+        { label: 'LG', value: 'lg' },
+        { label: 'XL', value: 'xl' }
+      ]
+    },
+    {
       name: 'marquee',
       type: 'switch',
       label: 'Marquee',
@@ -544,6 +572,73 @@ export const logoBlockDefinition: BlockDefinition<LogoBlockAttrs> = {
       name: 'items',
       type: 'logos',
       label: 'Logos'
+    }
+  ]
+}
+
+export const videoBlockDefinition: BlockDefinition<VideoBlockAttrs> = {
+  type: 'videoBlock',
+  name: 'Video',
+  description: 'A standalone video with optional caption and playback controls',
+  icon: 'i-lucide-video',
+  category: 'media',
+  defaultAttrs: {
+    src: '',
+    caption: '',
+    width: 'full',
+    autoplay: false,
+    loop: false,
+    muted: true,
+    controls: true
+  },
+  schema: [
+    {
+      name: 'src',
+      type: 'video',
+      label: 'Video',
+      required: true
+    },
+    {
+      name: 'caption',
+      type: 'text',
+      label: 'Caption',
+      description: 'Optional caption displayed below the video'
+    },
+    {
+      name: 'width',
+      type: 'select',
+      label: 'Width',
+      options: [
+        { label: 'Full (100%)', value: 'full' },
+        { label: 'Large (80%)', value: 'large' },
+        { label: 'Medium (60%)', value: 'medium' },
+        { label: 'Small (40%)', value: 'small' }
+      ],
+      defaultValue: 'full'
+    },
+    {
+      name: 'autoplay',
+      type: 'switch',
+      label: 'Autoplay',
+      description: 'Automatically play the video on page load'
+    },
+    {
+      name: 'loop',
+      type: 'switch',
+      label: 'Loop',
+      description: 'Loop the video when it ends'
+    },
+    {
+      name: 'muted',
+      type: 'switch',
+      label: 'Muted',
+      description: 'Mute the video by default'
+    },
+    {
+      name: 'controls',
+      type: 'switch',
+      label: 'Show Controls',
+      description: 'Display video playback controls'
     }
   ]
 }
@@ -601,7 +696,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   twoColumnBlock: twoColumnBlockDefinition,
   embedBlock: embedBlockDefinition,
   imageBlock: imageBlockDefinition,
-  logoBlock: logoBlockDefinition
+  logoBlock: logoBlockDefinition,
+  videoBlock: videoBlockDefinition
 }
 
 // ============================================================================

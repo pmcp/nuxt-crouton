@@ -4,8 +4,14 @@
  *
  * Editor for managing logo items in logo blocks.
  * Each item can be an icon (icon name input) or an image (upload/browse/URL).
+ * Supports drag-to-reorder and optional link per item.
  */
 import type { LogoItem, LogoItemType } from '../../../types/blocks'
+import Sortable from 'sortablejs'
+
+interface InternalLogoItem extends LogoItem {
+  _id: string
+}
 
 interface Props {
   modelValue: LogoItem[]
@@ -21,17 +27,75 @@ const emit = defineEmits<{
 const { hasApp } = useCroutonApps()
 const hasAssetsPicker = hasApp('assets')
 
-const items = ref<LogoItem[]>([...props.modelValue])
+// Internal ID counter for stable v-for keys
+let nextId = 0
+function assignId(item: LogoItem): InternalLogoItem {
+  return { ...item, _id: `logo-${nextId++}` }
+}
+
+function stripId(item: InternalLogoItem): LogoItem {
+  const { _id, ...rest } = item
+  return rest
+}
+
+const items = ref<InternalLogoItem[]>(props.modelValue.map(assignId))
 
 // Track which image items are in upload/browse/url mode
-const imageMode = ref<Record<number, 'preview' | 'upload' | 'browse' | 'url'>>({})
+const imageMode = ref<Record<string, 'preview' | 'upload' | 'browse' | 'url'>>({})
+
+// Store previous values when switching types so toggling back preserves them
+const savedValues = ref<Record<string, { icon?: string, image?: string, imageAlt?: string }>>({})
+
+// Drag-to-reorder using Sortable.js directly
+const containerRef = ref<HTMLElement>()
+const isReordering = ref(false)
+let sortableInstance: Sortable | null = null
+
+onMounted(() => {
+  if (containerRef.value) {
+    sortableInstance = Sortable.create(containerRef.value, {
+      animation: 200,
+      handle: '.drag-handle',
+      ghostClass: 'opacity-50',
+      // Revert DOM changes — let Vue handle rendering via reactive data
+      onEnd: (event) => {
+        const { oldIndex, newIndex } = event
+        if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+
+        // Revert the DOM manipulation so Vue stays in control
+        const parent = event.from
+        const movedEl = event.item
+        if (oldIndex < newIndex) {
+          parent.insertBefore(movedEl, parent.children[oldIndex])
+        }
+        else {
+          parent.insertBefore(movedEl, parent.children[oldIndex + 1])
+        }
+
+        // Now reorder the reactive array
+        isReordering.value = true
+        const reordered = [...items.value]
+        const [moved] = reordered.splice(oldIndex, 1)
+        reordered.splice(newIndex, 0, moved)
+        items.value = reordered
+        emit('update:modelValue', reordered.map(stripId))
+        nextTick(() => { isReordering.value = false })
+      }
+    })
+  }
+})
+
+onBeforeUnmount(() => {
+  sortableInstance?.destroy()
+})
 
 watch(() => props.modelValue, (newVal) => {
-  items.value = [...newVal]
+  if (isReordering.value) return
+  items.value = newVal.map(assignId)
 }, { deep: true })
 
 function emitChange() {
-  emit('update:modelValue', [...items.value])
+  emit('update:modelValue', items.value.map(stripId))
 }
 
 /** Resolve the effective type: explicit type field, or infer from value prefix */
@@ -41,20 +105,22 @@ function resolveType(item: LogoItem): LogoItemType {
 }
 
 function addIconItem() {
-  items.value.push({ type: 'icon', value: 'i-simple-icons-github' })
+  items.value.push(assignId({ type: 'icon', value: 'i-simple-icons-github' }))
   emitChange()
 }
 
 function addImageItem() {
-  const idx = items.value.length
-  items.value.push({ type: 'image', value: '' })
-  imageMode.value[idx] = hasAssetsPicker ? 'browse' : 'upload'
+  const newItem = assignId({ type: 'image', value: '' })
+  items.value.push(newItem)
+  imageMode.value[newItem._id] = hasAssetsPicker ? 'browse' : 'upload'
   emitChange()
 }
 
 function removeItem(index: number) {
+  const id = items.value[index]._id
   items.value.splice(index, 1)
-  delete imageMode.value[index]
+  delete imageMode.value[id]
+  delete savedValues.value[id]
   emitChange()
 }
 
@@ -64,26 +130,41 @@ function updateItem(index: number, field: keyof LogoItem, value: string) {
 }
 
 function switchItemType(index: number, newType: LogoItemType) {
-  items.value[index] = {
-    type: newType,
-    value: '',
-    alt: ''
+  const current = items.value[index]
+  const id = current._id
+  const currentType = resolveType(current)
+
+  // Save current value before switching
+  if (!savedValues.value[id]) savedValues.value[id] = {}
+  if (currentType === 'icon' && current.value) {
+    savedValues.value[id].icon = current.value
   }
-  if (newType === 'image') {
-    imageMode.value[index] = hasAssetsPicker ? 'browse' : 'upload'
+  else if (currentType === 'image' && current.value) {
+    savedValues.value[id].image = current.value
+    savedValues.value[id].imageAlt = current.alt
+  }
+
+  // Restore saved value for the new type, or start empty
+  const saved = savedValues.value[id]
+  if (newType === 'icon') {
+    items.value[index] = {
+      ...current,
+      type: 'icon',
+      value: saved?.icon || '',
+      alt: ''
+    }
+    delete imageMode.value[id]
   }
   else {
-    delete imageMode.value[index]
+    const restoredValue = saved?.image || ''
+    items.value[index] = {
+      ...current,
+      type: 'image',
+      value: restoredValue,
+      alt: saved?.imageAlt || ''
+    }
+    imageMode.value[id] = restoredValue ? 'preview' : (hasAssetsPicker ? 'browse' : 'upload')
   }
-  emitChange()
-}
-
-function moveItem(index: number, direction: 'up' | 'down') {
-  const newIndex = direction === 'up' ? index - 1 : index + 1
-  if (newIndex < 0 || newIndex >= items.value.length) return
-  const temp = items.value[index]
-  items.value[index] = items.value[newIndex]
-  items.value[newIndex] = temp
   emitChange()
 }
 
@@ -94,6 +175,7 @@ function isIcon(item: LogoItem): boolean {
 // Image handling (mirrors ImageEditor.vue patterns)
 function handleFileSelected(index: number, file: File | null) {
   if (!file) return
+  const id = items.value[index]._id
   const formData = new FormData()
   formData.append('file', file)
 
@@ -103,7 +185,7 @@ function handleFileSelected(index: number, file: File | null) {
   }).then((result) => {
     const imageUrl = `/images/${result.pathname}`
     items.value[index] = { ...items.value[index], value: imageUrl }
-    imageMode.value[index] = 'preview'
+    imageMode.value[id] = 'preview'
     emitChange()
   }).catch((err) => {
     console.error('Image upload failed:', err)
@@ -111,81 +193,74 @@ function handleFileSelected(index: number, file: File | null) {
 }
 
 function handleAssetSelected(index: number, asset: Record<string, any>) {
+  const id = items.value[index]._id
   const url = `/images/${asset.pathname}`
   items.value[index] = {
     ...items.value[index],
     value: url,
     alt: asset.alt || items.value[index].alt || ''
   }
-  imageMode.value[index] = 'preview'
+  imageMode.value[id] = 'preview'
   emitChange()
 }
 
 function applyUrl(index: number, url: string) {
+  const id = items.value[index]._id
   items.value[index] = { ...items.value[index], value: url }
-  imageMode.value[index] = 'preview'
+  imageMode.value[id] = 'preview'
   emitChange()
 }
 
 function removeImage(index: number) {
+  const id = items.value[index]._id
   items.value[index] = { ...items.value[index], value: '' }
-  imageMode.value[index] = hasAssetsPicker ? 'browse' : 'upload'
+  imageMode.value[id] = hasAssetsPicker ? 'browse' : 'upload'
   emitChange()
 }
 
 function getImageMode(index: number): string {
-  if (imageMode.value[index]) return imageMode.value[index]
+  const id = items.value[index]?._id
+  if (id && imageMode.value[id]) return imageMode.value[id]
   return items.value[index]?.value ? 'preview' : (hasAssetsPicker ? 'browse' : 'upload')
 }
 </script>
 
 <template>
   <div class="logos-editor space-y-2">
-    <div
-      v-for="(item, index) in items"
-      :key="index"
-      class="p-2 border border-default rounded-lg space-y-2"
-    >
-      <!-- Item Header: type toggle + actions -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-1">
-          <!-- Type toggle buttons -->
-          <UButtonGroup size="xs">
-            <UButton
-              :color="isIcon(item) ? 'primary' : 'neutral'"
-              :variant="isIcon(item) ? 'solid' : 'ghost'"
-              icon="i-lucide-at-sign"
-              label="Icon"
-              @click="isIcon(item) ? undefined : switchItemType(index, 'icon')"
+    <div ref="containerRef" class="space-y-2">
+      <div
+        v-for="(item, index) in items"
+        :key="item._id"
+        class="p-2 border border-default rounded-lg space-y-2"
+      >
+        <!-- Item Header: drag handle + type toggle + actions -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1">
+            <!-- Drag handle -->
+            <UIcon
+              name="i-lucide-grip-vertical"
+              class="drag-handle size-4 text-muted cursor-grab active:cursor-grabbing"
             />
-            <UButton
-              :color="!isIcon(item) ? 'primary' : 'neutral'"
-              :variant="!isIcon(item) ? 'solid' : 'ghost'"
-              icon="i-lucide-image"
-              label="Image"
-              @click="!isIcon(item) ? undefined : switchItemType(index, 'image')"
-            />
-          </UButtonGroup>
-        </div>
+            <!-- Type toggle buttons -->
+            <UButtonGroup size="xs">
+              <UButton
+                :color="isIcon(item) ? 'primary' : 'neutral'"
+                :variant="isIcon(item) ? 'solid' : 'ghost'"
+                icon="i-lucide-at-sign"
+                label="Icon"
+                @click="isIcon(item) ? undefined : switchItemType(index, 'icon')"
+              />
+              <UButton
+                :color="!isIcon(item) ? 'primary' : 'neutral'"
+                :variant="!isIcon(item) ? 'solid' : 'ghost'"
+                icon="i-lucide-image"
+                label="Image"
+                @click="!isIcon(item) ? undefined : switchItemType(index, 'image')"
+              />
+            </UButtonGroup>
+          </div>
 
-        <!-- Reorder + delete -->
-        <div class="flex items-center gap-0.5">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-lucide-chevron-up"
-            size="xs"
-            :disabled="index === 0"
-            @click="moveItem(index, 'up')"
-          />
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-lucide-chevron-down"
-            size="xs"
-            :disabled="index === items.length - 1"
-            @click="moveItem(index, 'down')"
-          />
+          <!-- Delete -->
           <UButton
             color="error"
             variant="ghost"
@@ -194,146 +269,160 @@ function getImageMode(index: number): string {
             @click="removeItem(index)"
           />
         </div>
-      </div>
 
-      <!-- Icon mode: icon name input with preview -->
-      <div v-if="isIcon(item)" class="flex items-center gap-2">
-        <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded bg-muted/50">
-          <UIcon
-            v-if="item.value"
-            :name="item.value"
-            class="size-5 text-muted"
-          />
-          <UIcon v-else name="i-lucide-at-sign" class="size-4 text-muted" />
-        </div>
-        <UInput
-          :model-value="item.value"
-          placeholder="i-simple-icons-github"
-          size="sm"
-          class="flex-1"
-          @update:model-value="updateItem(index, 'value', $event)"
-        />
-      </div>
-
-      <!-- Image mode: upload / browse / URL with preview -->
-      <div v-else class="space-y-2">
-        <!-- Image Preview -->
-        <div v-if="item.value && getImageMode(index) === 'preview'" class="space-y-2">
-          <div class="relative rounded-lg overflow-hidden border border-default">
-            <img
-              :src="item.value"
-              :alt="item.alt || ''"
-              class="w-full max-h-24 object-contain bg-muted/20"
-            >
-            <div class="absolute top-1 right-1 flex gap-1">
-              <UButton
-                icon="i-lucide-pencil"
-                color="neutral"
-                variant="solid"
-                size="xs"
-                @click="imageMode[index] = 'url'"
-              />
-              <UButton
-                icon="i-lucide-trash-2"
-                color="error"
-                variant="solid"
-                size="xs"
-                @click="removeImage(index)"
-              />
-            </div>
-          </div>
-          <UInput
-            :model-value="item.alt || ''"
-            placeholder="Alt text"
-            size="xs"
-            @update:model-value="updateItem(index, 'alt', $event)"
-          />
-        </div>
-
-        <!-- No Image: action buttons -->
-        <div v-if="!item.value && getImageMode(index) === 'preview'" class="flex flex-col gap-2">
-          <div class="flex items-center justify-center h-16 rounded-lg border-2 border-dashed border-default bg-neutral-50 dark:bg-neutral-900">
-            <div class="text-center">
-              <UIcon name="i-lucide-image" class="size-5 text-neutral-400" />
-              <p class="text-xs text-neutral-500">No image</p>
-            </div>
-          </div>
-          <div class="flex gap-1">
-            <UButton
-              v-if="hasAssetsPicker"
-              icon="i-lucide-folder-open"
-              label="Browse"
-              variant="soft"
-              color="neutral"
-              size="xs"
-              class="flex-1"
-              @click="imageMode[index] = 'browse'"
+        <!-- Icon mode: icon name input with preview -->
+        <div v-if="isIcon(item)" class="flex items-center gap-2">
+          <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded bg-muted/50">
+            <UIcon
+              v-if="item.value"
+              :name="item.value"
+              class="size-5 text-muted"
             />
-            <UButton
-              icon="i-lucide-upload"
-              label="Upload"
-              variant="soft"
-              color="neutral"
-              size="xs"
-              class="flex-1"
-              @click="imageMode[index] = 'upload'"
-            />
-            <UButton
-              icon="i-lucide-link"
-              label="URL"
-              variant="soft"
-              color="neutral"
-              size="xs"
-              class="flex-1"
-              @click="imageMode[index] = 'url'"
-            />
+            <UIcon v-else name="i-lucide-at-sign" class="size-4 text-muted" />
           </div>
-        </div>
-
-        <!-- Browse Library -->
-        <div v-if="getImageMode(index) === 'browse' && hasAssetsPicker" class="space-y-2">
-          <Suspense>
-            <CroutonAssetsPicker @select="handleAssetSelected(index, $event)" />
-            <template #fallback>
-              <div class="h-16 flex items-center justify-center text-xs text-muted">Loading library...</div>
-            </template>
-          </Suspense>
-          <div class="flex gap-1">
-            <UButton icon="i-lucide-upload" label="Upload" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'upload'" />
-            <UButton icon="i-lucide-link" label="URL" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'url'" />
-            <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'preview'" />
-          </div>
-        </div>
-
-        <!-- Upload -->
-        <div v-if="getImageMode(index) === 'upload'" class="space-y-2">
-          <CroutonImageUpload @file-selected="handleFileSelected(index, $event)" />
-          <div class="flex gap-1">
-            <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" label="Browse" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'browse'" />
-            <UButton icon="i-lucide-link" label="URL" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'url'" />
-            <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'preview'" />
-          </div>
-        </div>
-
-        <!-- URL Input -->
-        <div v-if="getImageMode(index) === 'url'" class="space-y-2">
           <UInput
             :model-value="item.value"
-            placeholder="https://example.com/logo.png"
+            placeholder="i-simple-icons-github"
             size="sm"
+            class="flex-1"
             @update:model-value="updateItem(index, 'value', $event)"
-          >
-            <template #leading>
-              <UIcon name="i-lucide-link" class="size-4" />
-            </template>
-          </UInput>
-          <div class="flex gap-1">
-            <UButton label="Apply" color="primary" size="xs" @click="applyUrl(index, item.value)" />
-            <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" label="Browse" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'browse'" />
-            <UButton icon="i-lucide-upload" label="Upload" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'upload'" />
-            <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[index] = 'preview'" />
+          />
+        </div>
+
+        <!-- Image mode: upload / browse / URL with preview -->
+        <div v-else class="space-y-2">
+          <!-- Image Preview -->
+          <div v-if="item.value && getImageMode(index) === 'preview'" class="space-y-2">
+            <div class="relative rounded-lg overflow-hidden border border-default">
+              <img
+                :src="item.value"
+                :alt="item.alt || ''"
+                class="w-full max-h-24 object-contain bg-muted/20"
+              >
+              <div class="absolute top-1 right-1 flex gap-1">
+                <UButton
+                  icon="i-lucide-pencil"
+                  color="neutral"
+                  variant="solid"
+                  size="xs"
+                  @click="imageMode[item._id] = 'url'"
+                />
+                <UButton
+                  icon="i-lucide-trash-2"
+                  color="error"
+                  variant="solid"
+                  size="xs"
+                  @click="removeImage(index)"
+                />
+              </div>
+            </div>
+            <UInput
+              :model-value="item.alt || ''"
+              placeholder="Alt text"
+              size="sm"
+              class="w-full"
+              @update:model-value="updateItem(index, 'alt', $event)"
+            />
+          </div>
+
+          <!-- No Image: action buttons -->
+          <div v-if="!item.value && getImageMode(index) === 'preview'" class="flex flex-col gap-2">
+            <div class="flex items-center justify-center h-16 rounded-lg border-2 border-dashed border-default bg-neutral-50 dark:bg-neutral-900">
+              <div class="text-center">
+                <UIcon name="i-lucide-image" class="size-5 text-neutral-400" />
+                <p class="text-xs text-neutral-500">No image</p>
+              </div>
+            </div>
+            <div class="flex gap-1">
+              <UButton
+                v-if="hasAssetsPicker"
+                icon="i-lucide-folder-open"
+                label="Browse"
+                variant="soft"
+                color="neutral"
+                size="xs"
+                class="flex-1"
+                @click="imageMode[item._id] = 'browse'"
+              />
+              <UButton
+                icon="i-lucide-upload"
+                label="Upload"
+                variant="soft"
+                color="neutral"
+                size="xs"
+                class="flex-1"
+                @click="imageMode[item._id] = 'upload'"
+              />
+              <UButton
+                icon="i-lucide-link"
+                label="URL"
+                variant="soft"
+                color="neutral"
+                size="xs"
+                class="flex-1"
+                @click="imageMode[item._id] = 'url'"
+              />
+            </div>
+          </div>
+
+          <!-- Browse Library -->
+          <div v-if="getImageMode(index) === 'browse' && hasAssetsPicker" class="space-y-2">
+            <Suspense>
+              <CroutonAssetsPicker @select="handleAssetSelected(index, $event)" />
+              <template #fallback>
+                <div class="h-16 flex items-center justify-center text-xs text-muted">Loading library...</div>
+              </template>
+            </Suspense>
+            <div class="flex gap-1">
+              <UButton icon="i-lucide-upload" label="Upload" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'upload'" />
+              <UButton icon="i-lucide-link" label="URL" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'url'" />
+              <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
+            </div>
+          </div>
+
+          <!-- Upload -->
+          <div v-if="getImageMode(index) === 'upload'" class="space-y-2">
+            <CroutonImageUpload @file-selected="handleFileSelected(index, $event)" />
+            <div class="flex gap-1">
+              <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" label="Browse" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'browse'" />
+              <UButton icon="i-lucide-link" label="URL" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'url'" />
+              <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
+            </div>
+          </div>
+
+          <!-- URL Input -->
+          <div v-if="getImageMode(index) === 'url'" class="space-y-2">
+            <UInput
+              :model-value="item.value"
+              placeholder="https://example.com/logo.png"
+              size="sm"
+              @update:model-value="updateItem(index, 'value', $event)"
+            >
+              <template #leading>
+                <UIcon name="i-lucide-link" class="size-4" />
+              </template>
+            </UInput>
+            <div class="flex gap-1">
+              <UButton label="Apply" color="primary" size="xs" @click="applyUrl(index, item.value)" />
+              <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" label="Browse" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'browse'" />
+              <UButton icon="i-lucide-upload" label="Upload" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'upload'" />
+              <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
+            </div>
           </div>
         </div>
+
+        <!-- Link input (shared by both icon and image modes) -->
+        <UInput
+          :model-value="item.link || ''"
+          placeholder="https://example.com (optional link)"
+          size="sm"
+          class="w-full"
+          @update:model-value="updateItem(index, 'link', $event)"
+        >
+          <template #leading>
+            <UIcon name="i-lucide-external-link" class="size-4 text-muted" />
+          </template>
+        </UInput>
       </div>
     </div>
 

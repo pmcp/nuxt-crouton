@@ -100,25 +100,34 @@ function handleOpenPanel() {
               <!-- Icon-based logo -->
               <span
                 v-if="item.type === 'icon' || (!item.type && item.value?.startsWith('i-'))"
-                class="text-gray-400 text-2xl"
-                :title="item.value"
+                class="text-gray-400 text-2xl relative"
+                :title="item.link ? `${item.value} → ${item.link}` : item.value"
               >
                 {{ item.value.replace('i-simple-icons-', '').replace('i-lucide-', '') }}
+                <span v-if="item.link" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary" />
               </span>
               <!-- Image-based logo -->
-              <img
+              <span
                 v-else-if="item.value"
-                :src="item.value"
-                :alt="item.alt || ''"
-                class="h-6 object-contain opacity-60"
+                class="relative"
+                :title="item.link || ''"
               >
+                <img
+                  :src="item.value"
+                  :alt="item.alt || ''"
+                  class="h-6 object-contain opacity-60"
+                >
+                <span v-if="item.link" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary" />
+              </span>
             </template>
           </div>
           <div v-else class="text-center text-gray-400 text-sm py-2">
             No logos — double-click to add
           </div>
-          <div v-if="attrs.marquee" class="text-center mt-2">
-            <span class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">marquee</span>
+          <div v-if="attrs.marquee || (attrs.align && attrs.align !== 'center') || (attrs.size && attrs.size !== 'md')" class="flex items-center justify-center gap-1 mt-2">
+            <span v-if="attrs.marquee" class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">marquee</span>
+            <span v-if="attrs.align === 'between'" class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">space-between</span>
+            <span v-if="attrs.size && attrs.size !== 'md'" class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ attrs.size }}</span>
           </div>
         </div>
       </div>

@@ -24,6 +24,7 @@ export type BlockType =
   | 'embedBlock'
   | 'imageBlock'
   | 'logoBlock'
+  | 'videoBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -195,6 +196,7 @@ export type BlockAttrs =
   | EmbedBlockAttrs
   | ImageBlockAttrs
   | LogoBlockAttrs
+  | VideoBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -276,6 +278,8 @@ export interface EmbedBlock extends PageBlock<EmbedBlockAttrs> {
 }
 
 export type LogoItemType = 'icon' | 'image'
+export type LogoAlign = 'center' | 'between'
+export type LogoSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
 export interface LogoItem {
   /** Whether this item is an icon name or an image URL */
@@ -284,6 +288,8 @@ export interface LogoItem {
   value: string
   /** Alt text when value is an image URL */
   alt?: string
+  /** Optional link URL for this logo item */
+  link?: string
 }
 
 export interface LogoBlockAttrs {
@@ -291,12 +297,39 @@ export interface LogoBlockAttrs {
   title?: string
   /** Enable marquee scrolling effect */
   marquee?: boolean
+  /** Alignment of logos: center or space-between */
+  align?: LogoAlign
+  /** Size of logo items */
+  size?: LogoSize
   /** Logo items — icon names or image URLs */
   items: LogoItem[]
 }
 
 export interface LogoBlock extends PageBlock<LogoBlockAttrs> {
   type: 'logoBlock'
+}
+
+export type VideoBlockWidth = 'full' | 'large' | 'medium' | 'small'
+
+export interface VideoBlockAttrs {
+  /** Video source URL */
+  src: string
+  /** Optional caption below the video */
+  caption?: string
+  /** Display width: full (100%), large (80%), medium (60%), small (40%) */
+  width?: VideoBlockWidth
+  /** Auto-play the video on load */
+  autoplay?: boolean
+  /** Loop the video */
+  loop?: boolean
+  /** Mute the video */
+  muted?: boolean
+  /** Show video controls */
+  controls?: boolean
+}
+
+export interface VideoBlock extends PageBlock<VideoBlockAttrs> {
+  type: 'videoBlock'
 }
 
 // ============================================================================
@@ -324,7 +357,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'collection' | 'faq-items' | 'logos' | 'chart-preset'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'collection' | 'faq-items' | 'logos' | 'chart-preset'
   label: string
   description?: string
   required?: boolean

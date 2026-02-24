@@ -64,10 +64,21 @@ const localAttrs = ref<Record<string, unknown>>({})
 const editingBlockType = ref<string | null>(null)
 
 // Initialize local attrs from node only when a NEW block is selected (different type)
+// Also fills in defaultValue for schema fields missing from the node (e.g. newly added attributes)
 watch(() => props.node, (node, oldNode) => {
   // Only reset if this is a different block TYPE (not just attrs changed from external update)
   if (node.type.name !== editingBlockType.value) {
-    localAttrs.value = { ...node.attrs }
+    const attrs = { ...node.attrs }
+    // Fill in defaults for schema fields not present on the node
+    const schema = blockDefinition.value?.schema
+    if (schema) {
+      for (const field of schema) {
+        if (attrs[field.name] === undefined && field.defaultValue !== undefined) {
+          attrs[field.name] = field.defaultValue
+        }
+      }
+    }
+    localAttrs.value = attrs
     editingBlockType.value = node.type.name
   }
 }, { immediate: true })
@@ -304,6 +315,19 @@ function onDelete() {
           >
             <CroutonPagesBlocksPropertiesFaqItemsEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
+
+          <!-- Video Editor -->
+          <UFormField
+            v-else-if="field.type === 'video'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesVideoEditor
+              :model-value="(localAttrs[field.name] as string) || ''"
               @update:model-value="onFieldChange(field.name, $event)"
             />
           </UFormField>

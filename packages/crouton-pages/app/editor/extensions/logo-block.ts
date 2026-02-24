@@ -55,6 +55,12 @@ export const LogoBlock = Node.create<LogoBlockOptions>({
       marquee: {
         default: logoBlockDefinition.defaultAttrs.marquee
       },
+      align: {
+        default: logoBlockDefinition.defaultAttrs.align
+      },
+      size: {
+        default: logoBlockDefinition.defaultAttrs.size
+      },
       items: {
         default: logoBlockDefinition.defaultAttrs.items,
         parseHTML: (el) => {
@@ -62,7 +68,8 @@ export const LogoBlock = Node.create<LogoBlockOptions>({
           // Ensure backward compat: items without type get inferred
           return raw.map((item: any) => ({
             ...item,
-            type: item.type || (item.value?.startsWith('i-') ? 'icon' : 'image')
+            type: item.type || (item.value?.startsWith('i-') ? 'icon' : 'image'),
+            link: item.link || ''
           }))
         },
         renderHTML: attrs => ({ 'data-items': JSON.stringify(attrs.items) })
