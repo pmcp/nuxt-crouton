@@ -21,6 +21,7 @@ import type {
   ImageBlockAttrs,
   LogoBlockAttrs,
   VideoBlockAttrs,
+  FileBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -684,6 +685,43 @@ export const embedBlockDefinition: BlockDefinition<EmbedBlockAttrs> = {
   ]
 }
 
+export const fileBlockDefinition: BlockDefinition<FileBlockAttrs> = {
+  type: 'fileBlock',
+  name: 'File Download',
+  description: 'A downloadable file button with label',
+  icon: 'i-lucide-file-down',
+  category: 'media',
+  defaultAttrs: {
+    label: 'Download file',
+    file: '',
+    fileName: '',
+    icon: 'i-lucide-download'
+  },
+  schema: [
+    {
+      name: 'label',
+      type: 'text',
+      label: 'Button Label',
+      required: true,
+      description: 'Text shown on the download button'
+    },
+    {
+      name: 'file',
+      type: 'file',
+      label: 'File',
+      required: true,
+      description: 'Upload or link a file'
+    },
+    {
+      name: 'icon',
+      type: 'icon',
+      label: 'Icon',
+      description: 'Icon shown on the button',
+      defaultValue: 'i-lucide-download'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -697,7 +735,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   embedBlock: embedBlockDefinition,
   imageBlock: imageBlockDefinition,
   logoBlock: logoBlockDefinition,
-  videoBlock: videoBlockDefinition
+  videoBlock: videoBlockDefinition,
+  fileBlock: fileBlockDefinition
 }
 
 // ============================================================================

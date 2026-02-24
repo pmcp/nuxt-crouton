@@ -6,6 +6,7 @@
  */
 
 import { Extension } from '@tiptap/core'
+import Highlight from '@tiptap/extension-highlight'
 import type { CroutonBlockDefinition } from '@fyit/crouton-core/app/types/block-definition'
 import { HeroBlock } from './hero-block'
 import { SectionBlock } from './section-block'
@@ -18,6 +19,8 @@ import { TwoColumnBlock } from './two-column-block'
 import { EmbedBlock } from './embed-block'
 import { ImageBlock } from './image-block'
 import { LogoBlock } from './logo-block'
+import { VideoBlock } from './video-block'
+import { FileBlock } from './file-block'
 import { BlockCommands } from './block-commands'
 import { createAddonBlockExtension } from './addon-block-factory'
 
@@ -37,6 +40,8 @@ export interface PageBlocksOptions {
     embed?: boolean
     image?: boolean
     logo?: boolean
+    video?: boolean
+    file?: boolean
   }
   /**
    * Addon block definitions from external packages (registered via croutonBlocks in app.config.ts)
@@ -68,7 +73,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         twoColumn: true,
         embed: true,
         image: true,
-        logo: true
+        logo: true,
+        video: true,
+        file: true
       },
       addonBlocks: [],
       enableSlashCommands: true,
@@ -79,6 +86,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
   addExtensions() {
     const extensions: any[] = []
     const { blocks, addonBlocks, enableSlashCommands, suggestionOptions } = this.options
+
+    // Add Highlight mark extension (single-color mode)
+    extensions.push(Highlight.configure({ multicolor: false }))
 
     // Add enabled core block extensions
     if (blocks?.hero !== false) {
@@ -114,6 +124,12 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.logo !== false) {
       extensions.push(LogoBlock)
     }
+    if (blocks?.video !== false) {
+      extensions.push(VideoBlock)
+    }
+    if (blocks?.file !== false) {
+      extensions.push(FileBlock)
+    }
 
     // Add addon block extensions (from croutonBlocks in app.config.ts)
     if (addonBlocks?.length) {
@@ -145,6 +161,8 @@ export { TwoColumnBlock } from './two-column-block'
 export { EmbedBlock } from './embed-block'
 export { ImageBlock } from './image-block'
 export { LogoBlock } from './logo-block'
+export { VideoBlock } from './video-block'
+export { FileBlock } from './file-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 export { createAddonBlockExtension } from './addon-block-factory'
 
@@ -160,6 +178,8 @@ export type { TwoColumnBlockOptions } from './two-column-block'
 export type { EmbedBlockOptions } from './embed-block'
 export type { ImageBlockOptions } from './image-block'
 export type { LogoBlockOptions } from './logo-block'
+export type { VideoBlockOptions } from './video-block'
+export type { FileBlockOptions } from './file-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks

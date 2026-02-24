@@ -319,6 +319,20 @@ function onDelete() {
             />
           </UFormField>
 
+          <!-- File Editor -->
+          <UFormField
+            v-else-if="field.type === 'file'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesFileEditor
+              :model-value="(localAttrs[field.name] as string) || ''"
+              @update:model-value="onFieldChange(field.name, $event)"
+              @update:file-name="onFieldChange('fileName', $event)"
+            />
+          </UFormField>
+
           <!-- Video Editor -->
           <UFormField
             v-else-if="field.type === 'video'"

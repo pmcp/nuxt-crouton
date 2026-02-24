@@ -61,7 +61,9 @@ const blockComponents: Record<string, string> = {
   twoColumnBlock: 'CroutonPagesBlocksRenderTwoColumnBlock',
   embedBlock: 'CroutonPagesBlocksRenderEmbedBlock',
   imageBlock: 'CroutonPagesBlocksRenderImageBlock',
-  logoBlock: 'CroutonPagesBlocksRenderLogoBlock'
+  logoBlock: 'CroutonPagesBlocksRenderLogoBlock',
+  videoBlock: 'CroutonPagesBlocksRenderVideoBlock',
+  fileBlock: 'CroutonPagesBlocksRenderFileBlock'
 }
 
 // Get component name for a block type — checks core blocks then addon blocks
@@ -115,6 +117,7 @@ function paragraphToHtml(block: PageBlock): string {
           else if (mark.type === 'underline') text = `<u>${text}</u>`
           else if (mark.type === 'strike') text = `<s>${text}</s>`
           else if (mark.type === 'code') text = `<code>${text}</code>`
+          else if (mark.type === 'highlight') text = `<mark>${text}</mark>`
           else if (mark.type === 'link' && mark.attrs?.href) {
             text = `<a href="${mark.attrs.href}"${mark.attrs.target ? ` target="${mark.attrs.target}"` : ''}>${text}</a>`
           }
@@ -160,6 +163,7 @@ function headingToHtml(block: PageBlock): string {
           else if (mark.type === 'underline') text = `<u>${text}</u>`
           else if (mark.type === 'strike') text = `<s>${text}</s>`
           else if (mark.type === 'code') text = `<code>${text}</code>`
+          else if (mark.type === 'highlight') text = `<mark>${text}</mark>`
           else if (mark.type === 'link' && mark.attrs?.href) {
             text = `<a href="${mark.attrs.href}"${mark.attrs.target ? ` target="${mark.attrs.target}"` : ''}>${text}</a>`
           }

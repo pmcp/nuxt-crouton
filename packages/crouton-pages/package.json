@@ -33,9 +33,12 @@
     "access": "public"
   },
   "peerDependencies": {
-    "nuxt": "^4.0.0",
-    "@nuxt/ui": "^4.3.0",
     "@fyit/crouton-core": "workspace:*",
-    "@fyit/crouton-editor": "workspace:*"
+    "@fyit/crouton-editor": "workspace:*",
+    "@nuxt/ui": "^4.3.0",
+    "nuxt": "^4.0.0"
+  },
+  "dependencies": {
+    "@tiptap/extension-highlight": "^3.20.0"
   }
 }

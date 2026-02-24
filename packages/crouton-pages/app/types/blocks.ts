@@ -25,6 +25,7 @@ export type BlockType =
   | 'imageBlock'
   | 'logoBlock'
   | 'videoBlock'
+  | 'fileBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -197,6 +198,7 @@ export type BlockAttrs =
   | ImageBlockAttrs
   | LogoBlockAttrs
   | VideoBlockAttrs
+  | FileBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -332,6 +334,21 @@ export interface VideoBlock extends PageBlock<VideoBlockAttrs> {
   type: 'videoBlock'
 }
 
+export interface FileBlockAttrs {
+  /** Button label text (e.g., "Download Report") */
+  label: string
+  /** File URL (from upload, e.g., "/images/report.pdf") */
+  file: string
+  /** Original file name for display */
+  fileName?: string
+  /** Optional icon (default: i-lucide-download) */
+  icon?: string
+}
+
+export interface FileBlock extends PageBlock<FileBlockAttrs> {
+  type: 'fileBlock'
+}
+
 // ============================================================================
 // Document Type
 // ============================================================================
@@ -357,7 +374,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'collection' | 'faq-items' | 'logos' | 'chart-preset'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset'
   label: string
   description?: string
   required?: boolean
