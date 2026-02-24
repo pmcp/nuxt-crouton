@@ -308,6 +308,19 @@ function onDelete() {
             />
           </UFormField>
 
+          <!-- Logos Editor -->
+          <UFormField
+            v-else-if="field.type === 'logos'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesLogosEditor
+              :model-value="(localAttrs[field.name] as any[]) || []"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
+
           <!-- Custom property component from addon blocks (e.g. chart-preset picker) -->
           <UFormField
             v-else-if="getAddonPropertyComponent(field.type)"

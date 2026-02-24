@@ -23,6 +23,7 @@ export type BlockType =
   | 'twoColumnBlock'
   | 'embedBlock'
   | 'imageBlock'
+  | 'logoBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -193,6 +194,7 @@ export type BlockAttrs =
   | TwoColumnBlockAttrs
   | EmbedBlockAttrs
   | ImageBlockAttrs
+  | LogoBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -273,6 +275,30 @@ export interface EmbedBlock extends PageBlock<EmbedBlockAttrs> {
   type: 'embedBlock'
 }
 
+export type LogoItemType = 'icon' | 'image'
+
+export interface LogoItem {
+  /** Whether this item is an icon name or an image URL */
+  type?: LogoItemType
+  /** Icon name (e.g., 'i-simple-icons-github') or image URL */
+  value: string
+  /** Alt text when value is an image URL */
+  alt?: string
+}
+
+export interface LogoBlockAttrs {
+  /** Title displayed above the logos */
+  title?: string
+  /** Enable marquee scrolling effect */
+  marquee?: boolean
+  /** Logo items — icon names or image URLs */
+  items: LogoItem[]
+}
+
+export interface LogoBlock extends PageBlock<LogoBlockAttrs> {
+  type: 'logoBlock'
+}
+
 // ============================================================================
 // Document Type
 // ============================================================================
@@ -298,7 +324,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'collection' | 'faq-items' | 'chart-preset'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'collection' | 'faq-items' | 'logos' | 'chart-preset'
   label: string
   description?: string
   required?: boolean

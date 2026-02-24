@@ -19,6 +19,7 @@ import type {
   TwoColumnBlockAttrs,
   EmbedBlockAttrs,
   ImageBlockAttrs,
+  LogoBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -509,6 +510,44 @@ export const imageBlockDefinition: BlockDefinition<ImageBlockAttrs> = {
   ]
 }
 
+export const logoBlockDefinition: BlockDefinition<LogoBlockAttrs> = {
+  type: 'logoBlock',
+  name: 'Logos',
+  description: 'A row of logos or brand icons with optional marquee',
+  icon: 'i-lucide-award',
+  category: 'content',
+  defaultAttrs: {
+    title: 'Trusted by the best teams',
+    marquee: false,
+    items: [
+      { value: 'i-simple-icons-github' },
+      { value: 'i-simple-icons-discord' },
+      { value: 'i-simple-icons-x' },
+      { value: 'i-simple-icons-linkedin' },
+      { value: 'i-simple-icons-facebook' }
+    ]
+  },
+  schema: [
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+      description: 'Text displayed above the logos'
+    },
+    {
+      name: 'marquee',
+      type: 'switch',
+      label: 'Marquee',
+      description: 'Enable scrolling marquee animation'
+    },
+    {
+      name: 'items',
+      type: 'logos',
+      label: 'Logos'
+    }
+  ]
+}
+
 export const embedBlockDefinition: BlockDefinition<EmbedBlockAttrs> = {
   type: 'embedBlock',
   name: 'Embed',
@@ -561,7 +600,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   faqBlock: faqBlockDefinition,
   twoColumnBlock: twoColumnBlockDefinition,
   embedBlock: embedBlockDefinition,
-  imageBlock: imageBlockDefinition
+  imageBlock: imageBlockDefinition,
+  logoBlock: logoBlockDefinition
 }
 
 // ============================================================================

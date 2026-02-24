@@ -17,6 +17,7 @@ import { FaqBlock } from './faq-block'
 import { TwoColumnBlock } from './two-column-block'
 import { EmbedBlock } from './embed-block'
 import { ImageBlock } from './image-block'
+import { LogoBlock } from './logo-block'
 import { BlockCommands } from './block-commands'
 import { createAddonBlockExtension } from './addon-block-factory'
 
@@ -35,6 +36,7 @@ export interface PageBlocksOptions {
     twoColumn?: boolean
     embed?: boolean
     image?: boolean
+    logo?: boolean
   }
   /**
    * Addon block definitions from external packages (registered via croutonBlocks in app.config.ts)
@@ -65,7 +67,8 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         faq: true,
         twoColumn: true,
         embed: true,
-        image: true
+        image: true,
+        logo: true
       },
       addonBlocks: [],
       enableSlashCommands: true,
@@ -108,6 +111,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.image !== false) {
       extensions.push(ImageBlock)
     }
+    if (blocks?.logo !== false) {
+      extensions.push(LogoBlock)
+    }
 
     // Add addon block extensions (from croutonBlocks in app.config.ts)
     if (addonBlocks?.length) {
@@ -138,6 +144,7 @@ export { FaqBlock } from './faq-block'
 export { TwoColumnBlock } from './two-column-block'
 export { EmbedBlock } from './embed-block'
 export { ImageBlock } from './image-block'
+export { LogoBlock } from './logo-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 export { createAddonBlockExtension } from './addon-block-factory'
 
@@ -152,6 +159,7 @@ export type { FaqBlockOptions } from './faq-block'
 export type { TwoColumnBlockOptions } from './two-column-block'
 export type { EmbedBlockOptions } from './embed-block'
 export type { ImageBlockOptions } from './image-block'
+export type { LogoBlockOptions } from './logo-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks
