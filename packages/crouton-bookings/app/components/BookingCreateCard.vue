@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import type { Booking, LocationData } from '../types/booking'
 
 interface Props {
@@ -178,6 +178,52 @@ watch(
   { immediate: true },
 )
 
+// --- Auto-book: skip UI when there's only one location and one available slot ---
+const autoBookTriggered = ref(false)
+
+// Effective locations (respecting activeLocationFilter)
+const effectiveLocations = computed(() => {
+  if (!locations.value) return []
+  if (!props.activeLocationFilter || props.activeLocationFilter.length === 0) {
+    return locations.value
+  }
+  return locations.value.filter((l: LocationData) => props.activeLocationFilter!.includes(l.id))
+})
+
+watch(
+  () => availabilityLoading.value,
+  async (loading, prevLoading) => {
+    // Only trigger when availability finishes loading (true → false)
+    if (loading || prevLoading !== true) return
+    // Only for create mode, not edit
+    if (isEditMode.value || autoBookTriggered.value) return
+    // Need exactly one effective location
+    if (effectiveLocations.value.length !== 1) return
+    // Can't auto-book if groups require selection
+    if (enableGroups.value) return
+    // Inventory mode: user picks quantity, don't auto-book
+    if (isInventoryMode.value) return
+    // Check available (non-disabled) slots
+    const available = allSlots.value.filter((s: { id: string }) => !isSlotDisabled(s.id))
+
+    // No available slots — close the card, nothing to book
+    if (available.length === 0) {
+      autoBookTriggered.value = true
+      emit('cancel')
+      return
+    }
+
+    // More than one slot — user must choose
+    if (available.length !== 1) return
+
+    // Exactly one available slot — auto-book
+    autoBookTriggered.value = true
+    localSlotId.value = available[0].id
+    await nextTick()
+    handleSubmit()
+  },
+)
+
 // Get inventory info for selected date
 const inventoryInfo = computed(() => {
   if (!isInventoryMode.value) return null
@@ -300,8 +346,8 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
   <UCard
     variant="outline"
     :ui="{
-      root: 'bg-default shadow-md',
-      header: 'px-3 py-2 sm:px-3',
+      root: 'ring-2 ring-primary/40 bg-primary/5 shadow-lg shadow-primary/10',
+      header: 'px-3 py-2.5 sm:px-3 bg-primary/10',
       body: 'p-0 sm:p-0',
     }"
   >
@@ -309,7 +355,7 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon :name="isEditMode ? 'i-lucide-pencil' : 'i-lucide-calendar-plus'" class="size-4 text-primary" />
-          <span class="text-sm font-medium">{{ isEditMode ? 'Edit booking for' : 'New booking for' }} {{ formattedDate }}</span>
+          <span class="text-sm font-semibold text-primary">{{ isEditMode ? 'Edit booking for' : 'New booking for' }} {{ formattedDate }}</span>
         </div>
         <UButton
           icon="i-lucide-x"
