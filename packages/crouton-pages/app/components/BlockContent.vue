@@ -137,6 +137,59 @@ const renderableBlocks = computed(() => {
 function isParagraph(type: string): boolean {
   return type === 'paragraph'
 }
+
+// Check if block is a heading (native TipTap node)
+function isHeading(type: string): boolean {
+  return type === 'heading'
+}
+
+/**
+ * Convert heading block to HTML for rendering
+ */
+function headingToHtml(block: PageBlock): string {
+  const content = (block as any).content
+  if (!content || !Array.isArray(content)) return ''
+
+  const textParts = content.map((node: any) => {
+    if (node.type === 'text') {
+      let text = node.text || ''
+      if (node.marks) {
+        for (const mark of node.marks) {
+          if (mark.type === 'bold') text = `<strong>${text}</strong>`
+          else if (mark.type === 'italic') text = `<em>${text}</em>`
+          else if (mark.type === 'underline') text = `<u>${text}</u>`
+          else if (mark.type === 'strike') text = `<s>${text}</s>`
+          else if (mark.type === 'code') text = `<code>${text}</code>`
+          else if (mark.type === 'link' && mark.attrs?.href) {
+            text = `<a href="${mark.attrs.href}"${mark.attrs.target ? ` target="${mark.attrs.target}"` : ''}>${text}</a>`
+          }
+        }
+      }
+      return text
+    }
+    return ''
+  })
+
+  return sanitizeHtml(textParts.join(''))
+}
+
+/**
+ * Get the heading level (1-6) from block attrs, defaulting to 2
+ */
+function getHeadingLevel(block: PageBlock): number {
+  const level = (block as any).attrs?.level
+  return typeof level === 'number' && level >= 1 && level <= 6 ? level : 2
+}
+
+/** Tailwind classes per heading level */
+const headingClasses: Record<number, string> = {
+  1: 'text-4xl font-bold tracking-tight text-[var(--ui-text-highlighted)] mt-8 mb-4',
+  2: 'text-3xl font-bold tracking-tight text-[var(--ui-text-highlighted)] mt-8 mb-3',
+  3: 'text-2xl font-semibold text-[var(--ui-text-highlighted)] mt-6 mb-3',
+  4: 'text-xl font-semibold text-[var(--ui-text-highlighted)] mt-6 mb-2',
+  5: 'text-lg font-medium text-[var(--ui-text-highlighted)] mt-4 mb-2',
+  6: 'text-base font-medium text-[var(--ui-text-muted)] mt-4 mb-2'
+}
 </script>
 
 <template>
@@ -175,6 +228,14 @@ function isParagraph(type: string): boolean {
             class="rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 max-w-full mx-auto"
           >
         </figure>
+
+        <!-- Heading blocks (native TipTap heading nodes) -->
+        <component
+          v-else-if="isHeading(block.type)"
+          :is="`h${getHeadingLevel(block)}`"
+          :class="headingClasses[getHeadingLevel(block)]"
+          v-html="headingToHtml(block)"
+        />
 
         <!-- Paragraph blocks (rendered as prose) -->
         <p
