@@ -881,6 +881,7 @@ defineExpose({ state })
         :parent-options="parentOptions"
         :pages-pending="pagesPending"
         :is-regular-page="isRegularPage"
+        :has-ai="hasAI"
         :is-saving="isSaving"
         :show-close="showClose"
         :page-id="state.id"

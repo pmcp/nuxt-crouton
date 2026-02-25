@@ -105,6 +105,8 @@ interface Props {
   pagesPending: boolean
   /** Whether to show the AI generator button (regular pages only) */
   isRegularPage: boolean
+  /** Whether AI package is available */
+  hasAi?: boolean
   /** Whether the save action is in progress */
   isSaving: boolean
   /** Whether to show the X close button (used by InlineEditor) */
@@ -119,7 +121,8 @@ const props = withDefaults(defineProps<Props>(), {
   showClose: false,
   pageId: null,
   publicUrl: null,
-  selectedPageType: null
+  selectedPageType: null,
+  hasAi: false
 })
 
 const emit = defineEmits<{
@@ -318,8 +321,8 @@ const { t } = useT()
 
     <!-- Right group: AI, Preview, Open, Cancel/Delete/Save, Close -->
     <UFieldGroup>
-      <!-- AI page generator (regular pages only) -->
-      <UTooltip v-if="isRegularPage" :text="t('pages.editor.generateWithAI')" :delay-duration="0">
+      <!-- AI page generator (regular pages only, when crouton-ai is installed) -->
+      <UTooltip v-if="isRegularPage && hasAi" :text="t('pages.editor.generateWithAI')" :delay-duration="0">
         <UButton
           variant="ghost"
           color="primary"
