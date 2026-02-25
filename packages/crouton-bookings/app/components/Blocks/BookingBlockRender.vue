@@ -63,7 +63,7 @@ const loginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route
     <!-- Authenticated or public: show the booking panel -->
     <div
       v-else
-      class="bg-muted/80 backdrop-blur-sm rounded-3xl border border-default shadow-lg shadow-neutral-950/5 overflow-clip"
+      class="bg-default backdrop-blur-sm rounded-3xl border border-default shadow-lg shadow-neutral-950/5 overflow-clip"
     >
       <CroutonBookingsPanel
         :title="attrs.title || undefined"
