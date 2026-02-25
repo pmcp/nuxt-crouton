@@ -144,61 +144,64 @@ function formatTimelineDate(dateStr: string | null | undefined): string | null {
   return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }).format(date)
 }
 
-// Build timeline items from email details
+// Config for each email trigger type
+const triggerConfig: Record<string, { sentIcon: string; defaultIcon: string; labelKey: string; sentTooltipKey: string; defaultTooltipKey: string }> = {
+  booking_created: {
+    sentIcon: 'i-lucide-mail-check',
+    defaultIcon: 'i-lucide-mail',
+    labelKey: 'bookings.card.emailLabels.confirm',
+    sentTooltipKey: 'bookings.card.emailTooltips.resendConfirmation',
+    defaultTooltipKey: 'bookings.card.emailTooltips.sendConfirmation',
+  },
+  reminder_before: {
+    sentIcon: 'i-lucide-bell-ring',
+    defaultIcon: 'i-lucide-bell',
+    labelKey: 'bookings.card.emailLabels.reminder',
+    sentTooltipKey: 'bookings.card.emailTooltips.resendReminder',
+    defaultTooltipKey: 'bookings.card.emailTooltips.sendReminder',
+  },
+  follow_up_after: {
+    sentIcon: 'i-lucide-message-square-reply',
+    defaultIcon: 'i-lucide-message-square',
+    labelKey: 'bookings.card.emailLabels.followUp',
+    sentTooltipKey: 'bookings.card.emailTooltips.resendFollowUp',
+    defaultTooltipKey: 'bookings.card.emailTooltips.sendFollowUp',
+  },
+  booking_cancelled: {
+    sentIcon: 'i-lucide-mail-x',
+    defaultIcon: 'i-lucide-mail-minus',
+    labelKey: 'bookings.card.emailLabels.cancelled',
+    sentTooltipKey: 'bookings.card.emailTooltips.resendCancellation',
+    defaultTooltipKey: 'bookings.card.emailTooltips.sendCancellation',
+  },
+}
+
+// Build timeline items from email details — only shows buttons for trigger types
+// that have an active template (server only returns entries when a template or log exists)
 const timelineItems = computed<TimelineItem[]>(() => {
   const items: TimelineItem[] = []
 
-  // Confirmation email - always shown for non-cancelled bookings
-  if (!isCancelled.value) {
-    const confirmDetail = emailDetails.value.find(e => e.triggerType === 'booking_created')
+  for (const detail of emailDetails.value) {
+    const config = triggerConfig[detail.triggerType]
+    if (!config) continue
+
+    // Skip non-cancelled triggers for cancelled bookings, and vice versa
+    if (isCancelled.value && detail.triggerType !== 'booking_cancelled') continue
+    if (!isCancelled.value && detail.triggerType === 'booking_cancelled') continue
+
+    const isSent = detail.status === 'sent'
     // Use booking createdAt as fallback date for confirmation
-    const confirmDate = confirmDetail?.sentAt || (props.booking.createdAt ? String(props.booking.createdAt) : null)
-    items.push({
-      type: 'booking_created',
-      icon: confirmDetail?.status === 'sent' ? 'i-lucide-mail-check' : 'i-lucide-mail',
-      label: t('bookings.card.emailLabels.confirm'),
-      status: confirmDetail?.status || 'not_sent',
-      date: formatTimelineDate(confirmDate),
-      tooltip: confirmDetail?.status === 'sent' ? t('bookings.card.emailTooltips.resendConfirmation') : t('bookings.card.emailTooltips.sendConfirmation')
-    })
-  }
+    const dateStr = detail.triggerType === 'booking_created'
+      ? (detail.sentAt || (props.booking.createdAt ? String(props.booking.createdAt) : null))
+      : (detail.sentAt || detail.scheduledFor)
 
-  // Reminder - shown for non-cancelled bookings (shows history for past bookings)
-  if (!isCancelled.value) {
-    const reminderDetail = emailDetails.value.find(e => e.triggerType === 'reminder_before')
     items.push({
-      type: 'reminder_before',
-      icon: reminderDetail?.status === 'sent' ? 'i-lucide-bell-ring' : 'i-lucide-bell',
-      label: t('bookings.card.emailLabels.reminder'),
-      status: reminderDetail?.status || 'not_sent',
-      date: formatTimelineDate(reminderDetail?.sentAt || reminderDetail?.scheduledFor),
-      tooltip: reminderDetail?.status === 'sent' ? t('bookings.card.emailTooltips.resendReminder') : t('bookings.card.emailTooltips.sendReminder')
-    })
-  }
-
-  // Follow-up - shown for non-cancelled bookings
-  if (!isCancelled.value) {
-    const followupDetail = emailDetails.value.find(e => e.triggerType === 'follow_up_after')
-    items.push({
-      type: 'follow_up_after',
-      icon: followupDetail?.status === 'sent' ? 'i-lucide-message-square-reply' : 'i-lucide-message-square',
-      label: t('bookings.card.emailLabels.followUp'),
-      status: followupDetail?.status || 'not_sent',
-      date: formatTimelineDate(followupDetail?.sentAt || followupDetail?.scheduledFor),
-      tooltip: followupDetail?.status === 'sent' ? t('bookings.card.emailTooltips.resendFollowUp') : t('bookings.card.emailTooltips.sendFollowUp')
-    })
-  }
-
-  // Cancellation - only if cancelled
-  if (isCancelled.value) {
-    const cancelDetail = emailDetails.value.find(e => e.triggerType === 'booking_cancelled')
-    items.push({
-      type: 'booking_cancelled',
-      icon: cancelDetail?.status === 'sent' ? 'i-lucide-mail-x' : 'i-lucide-mail-minus',
-      label: t('bookings.card.emailLabels.cancelled'),
-      status: cancelDetail?.status || 'not_sent',
-      date: formatTimelineDate(cancelDetail?.sentAt),
-      tooltip: cancelDetail?.status === 'sent' ? t('bookings.card.emailTooltips.resendCancellation') : t('bookings.card.emailTooltips.sendCancellation')
+      type: detail.triggerType as EmailTriggerType,
+      icon: isSent ? config.sentIcon : config.defaultIcon,
+      label: t(config.labelKey),
+      status: detail.status as TimelineItem['status'],
+      date: formatTimelineDate(dateStr),
+      tooltip: isSent ? t(config.sentTooltipKey) : t(config.defaultTooltipKey),
     })
   }
 

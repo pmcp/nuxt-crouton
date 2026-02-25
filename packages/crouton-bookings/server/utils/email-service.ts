@@ -419,6 +419,7 @@ export async function sendBookingEmails(
   )
 
   if (templates.length === 0) {
+    console.warn(`[booking-email] No active templates found for trigger: ${triggerType} (team: ${teamId})`)
     return {
       success: true,
       errors: [`No active templates found for trigger: ${triggerType}`]
@@ -743,13 +744,8 @@ export async function getBookingEmailDetails(
         status: 'not_sent',
         scheduledFor: bookingCreatedAt ? new Date(bookingCreatedAt).toISOString() : null,
       })
-    } else {
-      results.push({
-        triggerType: 'booking_created',
-        status: 'not_sent',
-        sentAt: null,
-      })
     }
+    // No template and no log → don't include (button won't show)
 
     // Process reminder (reminder_before) - sent X days before event
     const reminderLog = logs.find(l => l.triggerType === 'reminder_before')
@@ -772,21 +768,19 @@ export async function getBookingEmailDetails(
         status: 'not_sent',
         scheduledFor: scheduledDate.toISOString(),
       })
-    } else {
+    }
+    // No template and no log → don't include
+
+    // Process cancellation (booking_cancelled) - only if log exists or template exists
+    const cancelLog = logs.find(l => l.triggerType === 'booking_cancelled')
+    const hasCancelTemplate = templates.some(t => t.triggerType === 'booking_cancelled')
+    if (cancelLog || hasCancelTemplate) {
       results.push({
-        triggerType: 'reminder_before',
-        status: 'not_sent',
-        sentAt: null,
+        triggerType: 'booking_cancelled',
+        status: cancelLog?.status as any || 'not_sent',
+        sentAt: cancelLog?.sentAt || null,
       })
     }
-
-    // Process cancellation (booking_cancelled) - sent when cancelled, no schedule
-    const cancelLog = logs.find(l => l.triggerType === 'booking_cancelled')
-    results.push({
-      triggerType: 'booking_cancelled',
-      status: cancelLog?.status as any || 'not_sent',
-      sentAt: cancelLog?.sentAt || null,
-    })
 
     // Process follow-up (follow_up_after) - sent X days after event
     const followUpLog = logs.find(l => l.triggerType === 'follow_up_after')
@@ -809,13 +803,8 @@ export async function getBookingEmailDetails(
         status: 'not_sent',
         scheduledFor: scheduledDate.toISOString(),
       })
-    } else {
-      results.push({
-        triggerType: 'follow_up_after',
-        status: 'not_sent',
-        sentAt: null,
-      })
     }
+    // No template and no log → don't include
 
     return results
   }
