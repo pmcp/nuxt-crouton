@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2026-02-20
+ * @generated 2026-02-25
  *
  * ## AI Context
  * - Composable: useBookingsLocations
@@ -35,7 +35,7 @@ export const bookingsLocationsSlotItemSchema = z.object({
 export const bookingsLocationSchema = z.object({
   color: z.string().optional(),
   location: z.string().optional(),
-  allowedMemberIds: z.array(z.string()).optional(),
+  allowedMemberIds: z.array(z.string()).nullish(),
   slots: z.array(bookingsLocationsSlotItemSchema).optional(),
   openDays: z.array(z.string()).nullish(),
   slotSchedule: z.record(z.any()).nullish(),
@@ -51,13 +51,16 @@ export const bookingsLocationSchema = z.object({
   translations: z.record(
     z.string(),
     z.object({
-      title: z.string().optional(),
+      title: z.string().min(1, 'Title is required'),
       street: z.string().optional(),
       zip: z.string().optional(),
       city: z.string().optional(),
       content: z.string().optional()
     })
-  ).optional().default({})
+  ).refine(
+    (translations) => translations.en && translations.en.title,
+    { message: 'English translations for title are required' }
+  )
 })
 
 export const bookingsLocationsColumns = [
@@ -84,7 +87,7 @@ const _bookingsLocationsConfig = {
   name: 'bookingsLocations',
   layer: 'bookings',
   apiPath: 'bookings-locations',
-  componentName: 'BookingsLocationsForm',
+  componentName: 'CroutonBookingsLocationForm',
   defaultValues: {
     title: '',
     color: '',
@@ -144,7 +147,7 @@ const _bookingsLocationsConfig = {
           "name": "location",
           "type": "text",
           "label": "Coordinates (GeoJSON)",
-          "area": "sidebar"
+          "area": "main"
       },
       {
           "name": "content",
