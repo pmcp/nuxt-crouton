@@ -31,6 +31,7 @@ interface ActivityItem {
   action: string
   icon: string
   type: 'booking' | 'email'
+  failed?: boolean
 }
 
 // Build combined timeline from booking data and email details
@@ -74,6 +75,7 @@ const activityItems = computed<ActivityItem[]>(() => {
           action: t('bookings.activity.failedToSend'),
           icon: getEmailIcon(detail.triggerType, detail.status),
           type: 'email',
+          failed: true,
         })
       }
     }
@@ -141,14 +143,14 @@ const activeValue = computed(() => {
       color="neutral"
       :ui="{
         date: 'float-end ms-1',
-        wrapper: 'pb-3',
+        wrapper: 'pb-1',
         indicator: 'bg-elevated text-muted group-data-[state=completed]:bg-elevated group-data-[state=completed]:text-muted group-data-[state=active]:bg-elevated group-data-[state=active]:text-muted',
         separator: 'bg-muted/30 group-data-[state=completed]:bg-muted/30',
       }"
     >
       <template #title="{ item }">
-        <span class="font-medium">{{ item.username }}</span>
-        <span class="font-normal text-muted">&nbsp;{{ item.action }}</span>
+        <span class="font-medium" :class="item.failed ? 'text-error' : ''">{{ item.username }}</span>
+        <span class="font-normal" :class="item.failed ? 'text-error' : 'text-muted'">&nbsp;{{ item.action }}</span>
       </template>
 
       <template #date="{ item }">
