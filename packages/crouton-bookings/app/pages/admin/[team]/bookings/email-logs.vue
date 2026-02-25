@@ -7,6 +7,7 @@
  *
  * @route /admin/[team]/bookings/email-logs
  */
+const route = useRoute()
 const { teamId } = useTeamContext()
 const { t } = useT()
 
