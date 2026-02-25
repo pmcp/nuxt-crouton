@@ -97,55 +97,23 @@ async function refresh() {
 // Ref for Calendar control (to sync with list scroll)
 const calendarRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void } | null>(null)
 
-// Refs for sticky offset measurement
-const filtersRef = ref<HTMLElement | null>(null)
-const stickyRef = ref<HTMLElement | null>(null)
-const filtersHeight = ref(0)
+// Scroll direction detection — reveals filters on scroll-up, hides on scroll-down
+const scrollingUp = ref(false)
+let lastScrollY = 0
 
-// Compute sticky top: negative offset to hide filters, but account for any
-// fixed headers above (e.g. public page nav). We measure the actual offset
-// from viewport top when the panel first renders.
-const navOffset = ref(0)
-
-const stickyTop = computed(() => {
-  const offset = navOffset.value - filtersHeight.value
-  return `${offset}px`
-})
-
-// Measure filters height for dynamic negative sticky offset
-function measureFiltersHeight() {
-  if (filtersRef.value) {
-    filtersHeight.value = filtersRef.value.offsetHeight
-  }
+function onScroll() {
+  const y = window.scrollY
+  scrollingUp.value = y < lastScrollY
+  lastScrollY = y
 }
 
-// Re-measure when filters content might change
-const filtersObserver = ref<ResizeObserver | null>(null)
-
 onMounted(() => {
-  measureFiltersHeight()
-
-  // Detect if there's a fixed/sticky header above by checking the panel's
-  // offset from the viewport top at rest. This accounts for floating navs.
-  if (stickyRef.value) {
-    const rect = stickyRef.value.getBoundingClientRect()
-    const scrollY = window.scrollY || document.documentElement.scrollTop
-    // The element's position in the document minus the scroll = its resting viewport offset
-    // We only care about positive offsets (fixed headers pushing content down)
-    const topInDoc = rect.top + scrollY
-    // If the element starts below the viewport top, there's likely a fixed nav
-    // Use the initial rect.top as the nav offset (how far from viewport top)
-    navOffset.value = Math.max(0, Math.round(rect.top))
-  }
-
-  if (filtersRef.value) {
-    filtersObserver.value = new ResizeObserver(measureFiltersHeight)
-    filtersObserver.value.observe(filtersRef.value)
-  }
+  lastScrollY = window.scrollY
+  window.addEventListener('scroll', onScroll, { passive: true })
 })
 
 onUnmounted(() => {
-  filtersObserver.value?.disconnect()
+  window.removeEventListener('scroll', onScroll)
 })
 
 // Crouton form and team auth for location creation
@@ -373,23 +341,25 @@ function onCalendarDayClick(date: Date) {
   creatingAtDate.value = date
 }
 
-// Handle booking created - refresh the list and scroll to new booking
-async function onBookingCreated() {
-  // Store the date before clearing
+// Handle booking created - close card, wait for data refresh, then scroll
+function onBookingCreated() {
   const dateToScrollTo = creatingAtDate.value
   creatingAtDate.value = null
-
-  // Emit first so parent can refresh data
   emit('created')
 
-  // Then scroll to the newly created booking
-  if (dateToScrollTo) {
-    // Wait for parent's refresh to complete and DOM to update
-    // Using setTimeout because emit() is synchronous and doesn't wait for parent's async handler
-    setTimeout(() => {
-      scrollToDate.value = dateToScrollTo
-    }, 300)
-  }
+  if (!dateToScrollTo) return
+
+  // submitAll() (running in background for auto-book) calls refreshMyBookings()
+  // which updates resolvedBookings. Wait for that data change before scrolling
+  // so the DOM is stable and the new booking element exists.
+  const stop = watch(resolvedBookings, async () => {
+    stop()
+    await nextTick()
+    scrollToDate.value = dateToScrollTo
+  })
+
+  // Safety: if no data change within 5s (e.g. API failure), clean up
+  setTimeout(() => stop(), 5000)
 }
 
 // Handle booking updated - refresh the list
@@ -428,11 +398,12 @@ defineExpose({
 </script>
 
 <template>
-  <div class="rounded-[calc(var(--ui-radius)*2)] border border-default bg-default">
-      <!-- Sticky: filters + calendar (filters scroll out with negative top) -->
-      <div ref="stickyRef" class="sticky z-20 bg-default rounded-t-[calc(var(--ui-radius)*2)]" :style="{ top: stickyTop }">
-        <!-- Filter controls (scroll up to reveal) -->
-        <div ref="filtersRef" class="px-4 pt-3 pb-2">
+  <div class="booking-panel rounded-[calc(var(--ui-radius)*2)] border border-default bg-default">
+      <!-- Sticky: filters + calendar. Negative top hides filters above viewport;
+           scrolling up reveals them. Calendar stays pinned. -->
+      <div class="sticky z-20 bg-default rounded-t-[calc(var(--ui-radius)*2)] transition-[top] duration-300" :class="scrollingUp ? 'top-0' : '-top-12'">
+        <!-- Filter controls (hidden above viewport when stuck) -->
+        <div class="px-4 pt-3 pb-2">
           <CroutonBookingsPanelFilters
             :locations="resolvedLocations"
             :selected-locations="filterState.locations"
@@ -516,3 +487,4 @@ defineExpose({
       </div>
   </div>
 </template>
+

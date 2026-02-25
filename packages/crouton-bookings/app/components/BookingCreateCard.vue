@@ -48,6 +48,8 @@ const {
   groupOptions,
 } = useBookingCart()
 
+const notify = useNotify()
+
 // For parsing slot JSON strings
 const { parseSlotIds } = useBookingSlots()
 const { locale } = useI18n()
@@ -179,7 +181,22 @@ watch(
 )
 
 // --- Auto-book: skip UI when there's only one location and one available slot ---
-const autoBookTriggered = ref(false)
+// Use useState so the flag persists across component recreation (list re-renders during submit).
+// Store the date so the flag only blocks the same date — new dates can auto-book.
+const autoBookState = useState<{ triggered: boolean, dateKey: string | null }>('croutonAutoBookState', () => ({
+  triggered: false,
+  dateKey: null,
+}))
+
+function isAutoBookBlocked(): boolean {
+  const currentKey = props.date?.toISOString().split('T')[0] ?? null
+  return autoBookState.value.triggered && autoBookState.value.dateKey === currentKey
+}
+
+function markAutoBookTriggered() {
+  const currentKey = props.date?.toISOString().split('T')[0] ?? null
+  autoBookState.value = { triggered: true, dateKey: currentKey }
+}
 
 // Effective locations (respecting activeLocationFilter)
 const effectiveLocations = computed(() => {
@@ -196,7 +213,7 @@ watch(
     // Only trigger when availability finishes loading (true → false)
     if (loading || prevLoading !== true) return
     // Only for create mode, not edit
-    if (isEditMode.value || autoBookTriggered.value) return
+    if (isEditMode.value || isAutoBookBlocked()) return
     // Need exactly one effective location
     if (effectiveLocations.value.length !== 1) return
     // Can't auto-book if groups require selection
@@ -208,7 +225,8 @@ watch(
 
     // No available slots — close the card, nothing to book
     if (available.length === 0) {
-      autoBookTriggered.value = true
+      markAutoBookTriggered()
+      notify.warning('No slots available', { description: 'All time slots are unavailable on this date' })
       emit('cancel')
       return
     }
@@ -216,11 +234,15 @@ watch(
     // More than one slot — user must choose
     if (available.length !== 1) return
 
-    // Exactly one available slot — auto-book
-    autoBookTriggered.value = true
+    // Exactly one available slot — auto-book immediately.
+    // Emit 'created' BEFORE submitAll because submitAll triggers a list re-render
+    // that destroys this component, which would prevent the emit from firing.
+    markAutoBookTriggered()
     localSlotId.value = available[0].id
     await nextTick()
-    handleSubmit()
+    addToCart()
+    emit('created')
+    submitAll()
   },
 )
 

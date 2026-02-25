@@ -157,15 +157,19 @@ export default defineEventHandler(async (event) => {
   }
 
   // Transform cart items to database records (one row per cart item, quantity stored on the row)
+  const now = new Date()
   const bookingsToInsert = body.bookings.map((item) => ({
     teamId: team.id,
     owner: user.id,
+    order: 0,
     location: item.locationId,
     date: new Date(item.date),
     slot: item.slotId && item.slotId !== 'inventory' ? [item.slotId] : null, // Array for JSON column
     quantity: item.isInventoryMode ? (item.quantity ?? 1) : 1,
     group: item.groupId || null,
     status: 'active',
+    createdAt: now,
+    updatedAt: now,
     createdBy: user.id,
     updatedBy: user.id,
   }))
@@ -266,10 +270,11 @@ export default defineEventHandler(async (event) => {
     }
   }
   catch (error: unknown) {
-    console.error('Failed to create batch bookings:', error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('Failed to create batch bookings:', msg, error)
     throw createError({
       status: 500,
-      statusText: 'Failed to create bookings',
+      statusText: `Failed to create bookings: ${msg}`,
     })
   }
 })
