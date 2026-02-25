@@ -143,7 +143,7 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
 </script>
 
 <template>
-  <div class="fixed top-4 sm:top-6 inset-x-0 z-50 px-4 sm:px-6">
+  <div class="fixed top-4 sm:top-6 inset-x-0 z-50 px-4 sm:px-6 pointer-events-none [&>*]:pointer-events-auto">
     <!-- Loading state -->
     <template v-if="isLoading">
       <div class="relative flex items-center justify-center">
@@ -292,74 +292,72 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
           </template>
         </UDrawer>
       </div>
-      <!-- Right pill: User + language + dark mode (pinned right) -->
+      <!-- Right pill: User menu (logged in) or language/dark mode (logged out) -->
       <div :class="[pillClass, 'px-2 py-1', showPageNav && 'absolute right-0']">
         <ClientOnly>
-          <!-- Authenticated: Avatar dropdown -->
-          <UDropdownMenu
-            v-if="user"
-            :items="userDropdownItems"
-            :content="{ align: 'end', side: 'bottom' }"
-            :ui="{ content: 'w-56' }"
-          >
-            <UButton
-              variant="ghost"
-              color="neutral"
-              size="sm"
-              class="rounded-full"
+          <!-- Authenticated: Avatar dropdown (contains language/dark mode inside) -->
+          <template v-if="user">
+            <UDropdownMenu
+              :items="userDropdownItems"
+              :content="{ align: 'end', side: 'bottom' }"
+              :ui="{ content: 'w-56' }"
             >
-              <template #leading>
-                <UAvatar
-                  :src="user?.image ?? undefined"
-                  :alt="user?.name ?? 'User'"
-                  :text="userInitials"
-                  size="2xs"
-                />
-              </template>
-            </UButton>
-          </UDropdownMenu>
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                class="rounded-full"
+              >
+                <template #leading>
+                  <UAvatar
+                    :src="user?.image ?? undefined"
+                    :alt="user?.name ?? 'User'"
+                    :text="userInitials"
+                    size="2xs"
+                  />
+                </template>
+              </UButton>
+            </UDropdownMenu>
 
-          <!-- Not authenticated: Login button -->
-          <UButton
-            v-else
-            to="/auth/login"
-            icon="i-lucide-log-in"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-          />
+            <!-- Admin menu -->
+            <UDropdownMenu
+              v-if="isAdmin && currentTeam?.slug"
+              :items="adminDropdownItems"
+              :content="{ align: 'end', side: 'bottom' }"
+              :ui="{ content: 'w-48' }"
+            >
+              <UButton
+                icon="i-lucide-settings"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                aria-label="Admin menu"
+              />
+            </UDropdownMenu>
+          </template>
 
-          <!-- Admin menu -->
-          <UDropdownMenu
-            v-if="user && isAdmin && currentTeam?.slug"
-            :items="adminDropdownItems"
-            :content="{ align: 'end', side: 'bottom' }"
-            :ui="{ content: 'w-48' }"
-          >
+          <!-- Not authenticated: Language + dark mode only -->
+          <template v-else>
             <UButton
-              icon="i-lucide-settings"
+              to="/auth/login"
+              icon="i-lucide-log-in"
               color="neutral"
               variant="ghost"
               size="sm"
-              aria-label="Admin menu"
             />
-          </UDropdownMenu>
-        </ClientOnly>
 
-        <USeparator orientation="vertical" class="h-5" />
+            <USeparator orientation="vertical" class="h-5" />
 
-        <!-- Language Switcher (compact) -->
-        <CroutonI18nLanguageSwitcher class="w-auto" />
+            <CroutonI18nLanguageSwitcher class="w-auto" />
 
-        <!-- Dark/Light Mode Toggle -->
-        <ClientOnly>
-          <UButton
-            :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="toggleColorMode"
-          />
+            <UButton
+              :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              @click="toggleColorMode"
+            />
+          </template>
         </ClientOnly>
       </div>
     </div>
