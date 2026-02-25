@@ -13,6 +13,7 @@
  */
 import { eq, and } from 'drizzle-orm'
 import * as authSchema from '@fyit/crouton-auth/server/database/schema/auth'
+import type { TeamSiteSettings } from '@fyit/crouton-auth/server/database/schema/auth'
 
 // Extend H3EventContext for domain resolution
 declare module 'h3' {
@@ -124,6 +125,22 @@ export default defineEventHandler(async (event) => {
 
     if (!orgRecord) {
       // Organization not found
+      return
+    }
+
+    // Check if public site is enabled for this team
+    const siteSettingsRecord = await database
+      .select({
+        siteSettings: authSchema.teamSettings.siteSettings
+      })
+      .from(authSchema.teamSettings)
+      .where(eq(authSchema.teamSettings.teamId, domainRecord.organizationId))
+      .limit(1)
+      .then((rows: Array<{ siteSettings: TeamSiteSettings | null }>) => rows[0])
+
+    const siteSettings = siteSettingsRecord?.siteSettings
+    if (siteSettings && siteSettings.publicSiteEnabled === false) {
+      // Public site is explicitly disabled — skip domain resolution
       return
     }
 

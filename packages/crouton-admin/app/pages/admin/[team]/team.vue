@@ -38,6 +38,11 @@ const tabs = computed(() => [
       label: t('teams.lookAndFeel') || 'Look and feel',
       icon: 'i-lucide-palette',
       to: `/admin/${teamSlug.value}/team/look-and-feel`
+    },
+    {
+      label: t('teams.domains.title') || 'Domains',
+      icon: 'i-lucide-globe',
+      to: `/admin/${teamSlug.value}/team/domains`
     }
   ]
 ])

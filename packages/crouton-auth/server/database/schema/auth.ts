@@ -512,6 +512,14 @@ export type ThemeRadius = 0 | 0.125 | 0.25 | 0.375 | 0.5
 export type ThemePreset = 'custom' | 'blackandwhite' | 'ko'
 
 /**
+ * Site settings for public site configuration
+ */
+export interface TeamSiteSettings {
+  /** Whether the team's public site is enabled. Defaults to true when not set. */
+  publicSiteEnabled?: boolean
+}
+
+/**
  * Theme settings for team visual customization
  * Similar to Nuxt UI's theme picker
  */
@@ -556,6 +564,11 @@ export const teamSettings = sqliteTable('team_settings', {
    * Safe to expose to client - no sensitive data
    */
   themeSettings: text('theme_settings', { mode: 'json' }).$type<TeamThemeSettings>(),
+  /**
+   * Site settings for public site configuration
+   * Safe to expose to client - no sensitive data
+   */
+  siteSettings: text('site_settings', { mode: 'json' }).$type<TeamSiteSettings>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).$default(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$onUpdate(() => new Date())
 }, table => [
