@@ -195,6 +195,30 @@ function buildUserConfig(_config: CroutonAuthConfig): BetterAuthOptions['user'] 
   return {
     changeEmail: {
       enabled: true
+    },
+    additionalFields: {
+      superAdmin: {
+        type: 'boolean',
+        required: false,
+        defaultValue: false,
+        input: false
+      },
+      banned: {
+        type: 'boolean',
+        required: false,
+        defaultValue: false,
+        input: false
+      },
+      bannedReason: {
+        type: 'string',
+        required: false,
+        input: false
+      },
+      bannedUntil: {
+        type: 'date',
+        required: false,
+        input: false
+      }
     }
   }
 }
