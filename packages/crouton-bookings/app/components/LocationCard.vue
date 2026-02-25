@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   click: []
   edit: [location: LocationData]
+  'focus-on-map': [location: LocationData]
 }>()
 
 const { locale } = useI18n()
@@ -63,6 +64,14 @@ const title = computed(() => {
       class="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full transition-opacity"
       :style="{ backgroundColor: location.color || '#3b82f6' }"
       :class="selected ? 'opacity-100' : 'opacity-50 group-hover:opacity-75'"
+    />
+
+    <!-- Location pin icon -->
+    <UIcon
+      name="i-lucide-map-pin"
+      class="w-3.5 h-3.5 flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
+      :style="{ color: location.color || '#3b82f6' }"
+      @click.stop="emit('focus-on-map', location)"
     />
 
     <span class="truncate">{{ title }}</span>

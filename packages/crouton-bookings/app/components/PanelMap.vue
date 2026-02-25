@@ -11,6 +11,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'toggle-location': [locationId: string]
+  'ready': []
 }>()
 
 // Get localized location title with fallbacks
@@ -78,6 +79,29 @@ function isLocationSelected(locationId: string): boolean {
 function onMarkerClick(locationId: string) {
   emit('toggle-location', locationId)
 }
+
+// Map instance ref for programmatic control
+const mapRef = ref<any>(null)
+
+function onMapLoad(map: any) {
+  mapRef.value = map
+  emit('ready')
+}
+
+// Fly to a specific location by ID
+function flyToLocation(locationId: string) {
+  const location = locationsWithCoordinates.value.find(l => l.id === locationId)
+  if (!location || !mapRef.value) return
+
+  mapRef.value.flyTo({
+    center: location.coordinates,
+    zoom: 15,
+    duration: 800,
+    essential: true,
+  })
+}
+
+defineExpose({ flyToLocation })
 </script>
 
 <template>
@@ -87,6 +111,7 @@ function onMarkerClick(locationId: string) {
       :zoom="12"
       height="250px"
       fly-to-on-center-change
+      @load="onMapLoad"
     >
       <template #default="{ map }">
         <CroutonMapsMarker

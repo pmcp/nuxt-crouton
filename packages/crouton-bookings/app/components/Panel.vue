@@ -102,6 +102,9 @@ async function refresh() {
 // Ref for Calendar control (to sync with list scroll)
 const calendarRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void } | null>(null)
 
+// Ref for PanelMap control (to fly to specific locations)
+const panelMapRef = ref<{ flyToLocation: (locationId: string) => void } | null>(null)
+
 // Scroll direction detection — reveals filters on scroll-up, hides on scroll-down
 const scrollingUp = ref(false)
 let lastScrollY = 0
@@ -141,6 +144,31 @@ function onAddLocation() {
 // Handle edit location - open crouton update slideover
 function onEditLocation(location: LocationData) {
   openCroutonForm('update', 'bookingsLocations', [location.id], 'slideover')
+}
+
+// Pending flyTo location ID — used when map needs to initialize first
+const pendingFlyToLocationId = ref<string | null>(null)
+
+// Handle focus-on-map — show map if not visible, then fly to the location
+async function onFocusOnMap(location: LocationData) {
+  const coords = parseLocationCoordinates(location)
+  if (!coords) return
+
+  if (!showMap.value) {
+    showMap.value = true
+    pendingFlyToLocationId.value = location.id
+    return
+  }
+
+  panelMapRef.value?.flyToLocation(location.id)
+}
+
+// Handle map ready — fly to pending location if any
+function onMapReady() {
+  if (pendingFlyToLocationId.value) {
+    panelMapRef.value?.flyToLocation(pendingFlyToLocationId.value)
+    pendingFlyToLocationId.value = null
+  }
 }
 
 // Listen for location mutations to refresh the list
@@ -429,6 +457,7 @@ defineExpose({
             @go-to-today="onGoToToday"
             @add-location="onAddLocation"
             @edit-location="onEditLocation"
+            @focus-on-map="onFocusOnMap"
           />
         </div>
 
@@ -462,9 +491,11 @@ defineExpose({
       >
         <div v-if="showMap && hasLocationsWithCoordinates" class="px-4 pt-4">
           <CroutonBookingsPanelMap
+            ref="panelMapRef"
             :locations="resolvedLocations"
             :selected-locations="filterState.locations"
             @toggle-location="toggleLocation"
+            @ready="onMapReady"
           />
         </div>
       </Transition>

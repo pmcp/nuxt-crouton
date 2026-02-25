@@ -39,6 +39,7 @@ const emit = defineEmits<{
   'go-to-today': []
   'add-location': []
   'edit-location': [location: LocationData]
+  'focus-on-map': [location: LocationData]
 }>()
 
 const { t } = useT()
@@ -66,10 +67,11 @@ function isLocationSelected(locationId: string): boolean {
   <div class="flex flex-col gap-3">
     <!-- Section toggles + view controls -->
     <div class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap">
         <!-- Section toggles -->
         <UButton
           size="sm"
+          class="shrink-0"
           :color="showCalendar || selectedDatesCount > 0 ? 'primary' : 'neutral'"
           :variant="showCalendar ? 'solid' : 'outline'"
           icon="i-lucide-calendar"
@@ -84,6 +86,7 @@ function isLocationSelected(locationId: string): boolean {
         <UButton
           v-if="locations && locations.length > 0"
           size="sm"
+          class="shrink-0"
           :color="showLocations || selectedLocations.length > 0 ? 'primary' : 'neutral'"
           :variant="showLocations ? 'solid' : 'outline'"
           icon="i-lucide-map-pin"
@@ -98,6 +101,7 @@ function isLocationSelected(locationId: string): boolean {
         <UButton
           v-if="hasLocationsWithCoordinates"
           size="sm"
+          class="shrink-0"
           :color="showMap ? 'primary' : 'neutral'"
           :variant="showMap ? 'solid' : 'outline'"
           icon="i-lucide-map"
@@ -184,6 +188,7 @@ function isLocationSelected(locationId: string): boolean {
           :editable="canManageLocations"
           @click="toggleLocation(location.id)"
           @edit="emit('edit-location', $event)"
+          @focus-on-map="emit('focus-on-map', $event)"
         />
 
         <!-- Add Location button (at end of location cards) -->
