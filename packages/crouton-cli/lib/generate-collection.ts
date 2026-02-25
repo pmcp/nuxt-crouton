@@ -14,7 +14,7 @@ import { loadTypeMapping, discoverManifests, getGeneratorDetectors, getGenerator
 import type { DetectionResult, DetectedField, FormEnhancement, ListEnhancement, GeneratorContribution } from '@fyit/crouton-core/shared/manifest'
 import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExtended } from './utils/module-detector.ts'
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.ts'
-import { syncFrameworkPackages, addToNuxtConfigExtends } from './utils/update-nuxt-config.ts'
+import { syncFrameworkPackages, addToNuxtConfigExtends, addRuntimeConfig } from './utils/update-nuxt-config.ts'
 import { addNamedSchemaExport } from './utils/update-schema-index.ts'
 import { addToAppConfig, resolveAppConfigPath } from './utils/update-app-config.ts'
 import { loadFields } from './utils/load-fields.ts'
@@ -1198,9 +1198,13 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
       }
 
       // Auto-merge package manifest collections for enabled features
+      // (may prompt interactively for manifest configuration options)
+      let promptedConfigs: import('./utils/manifest-merge.ts').PromptedConfig[] = []
       if (config.features && !options.noAutoMerge) {
         const { mergeManifestCollections } = await import('./utils/manifest-merge.ts')
         const mergeResult = await mergeManifestCollections(config)
+        promptedConfigs = mergeResult.promptedConfigs
+
         if (mergeResult.merged > 0) {
           console.log('\n' + '═'.repeat(60))
           console.log('  PACKAGE COLLECTIONS (auto-merged)')
@@ -1210,6 +1214,48 @@ export async function runConfig(options: RunConfigOptions = {}): Promise<void> {
           )
           if (mergeResult.skipped.length > 0) {
             console.log(`\n  Already in config: ${mergeResult.skipped.join(', ')}`)
+          }
+        }
+
+        // Persist prompted configs: update nuxt.config.ts runtimeConfig + crouton.config.js
+        if (promptedConfigs.length > 0 && !options.dryRun) {
+          const nuxtConfigPath = path.resolve('nuxt.config.ts')
+
+          for (const pc of promptedConfigs) {
+            // Write runtimeConfig to nuxt.config.ts
+            if (pc.runtimeConfig) {
+              const rtResult = await addRuntimeConfig(nuxtConfigPath, pc.runtimeConfig.server, pc.runtimeConfig.public)
+              if (rtResult.added) {
+                console.log(`  ✓ Added runtimeConfig for ${pc.featureKey}`)
+              }
+            }
+          }
+
+          // Persist feature config back to crouton.config.js
+          const configFilePath = config._configDir
+            ? path.resolve(config._configDir, 'crouton.config.js')
+            : path.resolve('crouton.config.js')
+
+          try {
+            const { readFile, writeFile } = await import('node:fs/promises')
+            const configContent = await readFile(configFilePath, 'utf-8')
+            let updated = configContent
+
+            for (const pc of promptedConfigs) {
+              // Replace `featureKey: true` with the config object
+              // Match patterns like `bookings: true` (with optional trailing comma)
+              const boolPattern = new RegExp(`(${pc.featureKey}\\s*:\\s*)true`, 'g')
+              const configStr = JSON.stringify(pc.configObject, null, 2)
+                .replace(/\n/g, '\n    ') // indent to match config file nesting
+              updated = updated.replace(boolPattern, `$1${configStr}`)
+            }
+
+            if (updated !== configContent) {
+              await writeFile(configFilePath, updated, 'utf-8')
+              console.log(`  ✓ Updated ${path.basename(configFilePath)} with feature configs`)
+            }
+          } catch {
+            // Config file may not exist or not be writable — non-fatal
           }
         }
       }
@@ -1443,6 +1489,19 @@ export async function runGenerate(options: RunGenerateOptions = {}): Promise<voi
         console.log(`  → ${registryResult.outputPath}`)
       } catch (error: any) {
         console.log(`⚠ Could not generate type registry: ${error.message}`)
+      }
+
+      // Print .env hints for prompted configurations
+      if (promptedConfigs.length > 0) {
+        const allHints = promptedConfigs.flatMap(pc => pc.envHints || [])
+        if (allHints.length > 0) {
+          console.log(`\n${'═'.repeat(60)}`)
+          console.log(`  ENVIRONMENT VARIABLES`)
+          console.log(`${'═'.repeat(60)}\n`)
+          console.log(`Add these to your .env file:\n`)
+          allHints.forEach(hint => console.log(`   ${hint}`))
+          console.log('')
+        }
       }
 
       console.log(`\n${'═'.repeat(60)}`)

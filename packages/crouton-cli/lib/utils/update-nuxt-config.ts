@@ -159,3 +159,65 @@ export async function syncFrameworkPackages(configPath: string, features: Record
 
   return { synced: true, packages }
 }
+
+/**
+ * Deep-merge `source` into `target`, creating nested objects as needed.
+ * Arrays and primitives are overwritten, objects are merged recursively.
+ */
+function deepMergeInto(target: any, source: Record<string, unknown>): void {
+  for (const [key, value] of Object.entries(source)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      if (!target[key] || typeof target[key] !== 'object') {
+        target[key] = {}
+      }
+      deepMergeInto(target[key], value as Record<string, unknown>)
+    } else {
+      target[key] = value
+    }
+  }
+}
+
+/**
+ * Add runtimeConfig entries to nuxt.config.ts using magicast AST manipulation.
+ *
+ * Merges `serverConfig` into `runtimeConfig` and `publicConfig` into
+ * `runtimeConfig.public` without overwriting existing entries.
+ */
+export async function addRuntimeConfig(
+  configPath: string,
+  serverConfig: Record<string, unknown>,
+  publicConfig?: Record<string, unknown>,
+): Promise<{ added: boolean; reason?: string }> {
+  if (!await pathExists(configPath)) {
+    return { added: false, reason: 'nuxt.config.ts not found' }
+  }
+
+  const code = await readFile(configPath, 'utf-8')
+
+  try {
+    const mod = parseModule(code)
+    const options = getNuxtConfigOptions(mod)
+
+    // Ensure runtimeConfig exists
+    if (!options.runtimeConfig) {
+      options.runtimeConfig = {}
+    }
+
+    // Merge server-side config
+    deepMergeInto(options.runtimeConfig, serverConfig)
+
+    // Merge public config
+    if (publicConfig) {
+      if (!options.runtimeConfig.public) {
+        options.runtimeConfig.public = {}
+      }
+      deepMergeInto(options.runtimeConfig.public, publicConfig)
+    }
+
+    const result = generateCode(mod)
+    await writeFile(configPath, result.code, 'utf-8')
+    return { added: true }
+  } catch {
+    return { added: false, reason: 'could not parse nuxt.config.ts' }
+  }
+}
