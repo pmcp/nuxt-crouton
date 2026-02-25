@@ -27,6 +27,8 @@ interface Props {
   title?: string
   /** Empty state message when no bookings */
   emptyMessage?: string
+  /** Booking scope: 'personal' shows only the user's bookings, 'team' shows all team bookings */
+  scope?: 'personal' | 'team'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -38,6 +40,7 @@ const props = withDefaults(defineProps<Props>(), {
   initialFilters: () => ({}),
   title: 'My Bookings',
   emptyMessage: 'Your bookings will appear here',
+  scope: 'personal',
 })
 
 const emit = defineEmits<{
@@ -55,7 +58,7 @@ const emit = defineEmits<{
 const useInternalData = props.bookings === undefined
 
 // Internal data fetching (only used when bookings prop not provided)
-const internalData = useInternalData ? useBookingsList() : null
+const internalData = useInternalData ? useBookingsList({ scope: props.scope }) : null
 
 // Resolved data - use props if provided, otherwise use internal data
 const resolvedBookings = computed(() => {
@@ -93,6 +96,57 @@ async function refresh() {
 
 // Ref for Calendar control (to sync with list scroll)
 const calendarRef = ref<{ goToDate: (date: Date) => void, goToToday: () => void } | null>(null)
+
+// Refs for sticky offset measurement
+const filtersRef = ref<HTMLElement | null>(null)
+const stickyRef = ref<HTMLElement | null>(null)
+const filtersHeight = ref(0)
+
+// Compute sticky top: negative offset to hide filters, but account for any
+// fixed headers above (e.g. public page nav). We measure the actual offset
+// from viewport top when the panel first renders.
+const navOffset = ref(0)
+
+const stickyTop = computed(() => {
+  const offset = navOffset.value - filtersHeight.value
+  return `${offset}px`
+})
+
+// Measure filters height for dynamic negative sticky offset
+function measureFiltersHeight() {
+  if (filtersRef.value) {
+    filtersHeight.value = filtersRef.value.offsetHeight
+  }
+}
+
+// Re-measure when filters content might change
+const filtersObserver = ref<ResizeObserver | null>(null)
+
+onMounted(() => {
+  measureFiltersHeight()
+
+  // Detect if there's a fixed/sticky header above by checking the panel's
+  // offset from the viewport top at rest. This accounts for floating navs.
+  if (stickyRef.value) {
+    const rect = stickyRef.value.getBoundingClientRect()
+    const scrollY = window.scrollY || document.documentElement.scrollTop
+    // The element's position in the document minus the scroll = its resting viewport offset
+    // We only care about positive offsets (fixed headers pushing content down)
+    const topInDoc = rect.top + scrollY
+    // If the element starts below the viewport top, there's likely a fixed nav
+    // Use the initial rect.top as the nav offset (how far from viewport top)
+    navOffset.value = Math.max(0, Math.round(rect.top))
+  }
+
+  if (filtersRef.value) {
+    filtersObserver.value = new ResizeObserver(measureFiltersHeight)
+    filtersObserver.value.observe(filtersRef.value)
+  }
+})
+
+onUnmounted(() => {
+  filtersObserver.value?.disconnect()
+})
 
 // Crouton form and team auth for location creation
 const { open: openCroutonForm } = useCrouton()
@@ -374,60 +428,37 @@ defineExpose({
 </script>
 
 <template>
-  <UCard class="h-full" :ui="{ root: 'flex flex-col', body: 'p-0 sm:p-2 flex-1 min-h-0' }">
-    <template #header>
-      <div class="flex flex-col gap-4">
-        <!-- Filter controls -->
-        <CroutonBookingsPanelFilters
-          :locations="resolvedLocations"
-          :selected-locations="filterState.locations"
-          :selected-dates-count="selectedDates.length"
-          :show-locations="showLocations"
-          :show-map="showMap"
-          :show-calendar="showCalendar"
-          :show-cancelled="filterState.showCancelled"
-          :has-locations-with-coordinates="hasLocationsWithCoordinates"
-          :can-manage-locations="effectiveIsAdmin"
-          :calendar-view="calendarView"
-          @update:selected-locations="filterState.locations = $event"
-          @update:show-locations="showLocations = $event"
-          @update:show-map="showMap = $event"
-          @update:show-calendar="showCalendar = $event"
-          @update:show-cancelled="filterState.showCancelled = $event"
-          @update:calendar-view="calendarView = $event"
-          @go-to-today="onGoToToday"
-          @add-location="onAddLocation"
-          @edit-location="onEditLocation"
-        />
-
-        <!-- Map section (independent, collapsible) -->
-        <Transition
-          enter-active-class="transition-all duration-300 ease-out"
-          enter-from-class="opacity-0 max-h-0"
-          enter-to-class="opacity-100 max-h-[300px]"
-          leave-active-class="transition-all duration-200 ease-in"
-          leave-from-class="opacity-100 max-h-[300px]"
-          leave-to-class="opacity-0 max-h-0"
-        >
-          <CroutonBookingsPanelMap
-            v-if="showMap && hasLocationsWithCoordinates"
+  <div class="rounded-[calc(var(--ui-radius)*2)] border border-default bg-default">
+      <!-- Sticky: filters + calendar (filters scroll out with negative top) -->
+      <div ref="stickyRef" class="sticky z-20 bg-default rounded-t-[calc(var(--ui-radius)*2)]" :style="{ top: stickyTop }">
+        <!-- Filter controls (scroll up to reveal) -->
+        <div ref="filtersRef" class="px-4 pt-3 pb-2">
+          <CroutonBookingsPanelFilters
             :locations="resolvedLocations"
             :selected-locations="filterState.locations"
-            @toggle-location="toggleLocation"
+            :selected-dates-count="selectedDates.length"
+            :show-locations="showLocations"
+            :show-map="showMap"
+            :show-calendar="showCalendar"
+            :show-cancelled="filterState.showCancelled"
+            :has-locations-with-coordinates="hasLocationsWithCoordinates"
+            :can-manage-locations="effectiveIsAdmin"
+            :calendar-view="calendarView"
+            @update:selected-locations="filterState.locations = $event"
+            @update:show-locations="showLocations = $event"
+            @update:show-map="showMap = $event"
+            @update:show-calendar="showCalendar = $event"
+            @update:show-cancelled="filterState.showCancelled = $event"
+            @update:calendar-view="calendarView = $event"
+            @go-to-today="onGoToToday"
+            @add-location="onAddLocation"
+            @edit-location="onEditLocation"
           />
-        </Transition>
+        </div>
 
-        <!-- Calendar section (collapsible) -->
-        <Transition
-          enter-active-class="transition-all duration-300 ease-out"
-          enter-from-class="opacity-0 max-h-0"
-          enter-to-class="opacity-100 max-h-[500px]"
-          leave-active-class="transition-all duration-200 ease-in"
-          leave-from-class="opacity-100 max-h-[500px]"
-          leave-to-class="opacity-0 max-h-0"
-        >
+        <!-- Calendar -->
+        <div v-if="showCalendar" class="border-b border-default px-2 pb-2">
           <CroutonBookingsCalendar
-            v-if="showCalendar"
             ref="calendarRef"
             v-model:filters="filterState"
             :bookings="resolvedBookings"
@@ -440,30 +471,48 @@ defineExpose({
             @day-click="onCalendarDayClick"
             @hover-booking="(id) => hoveredBookingId = id"
           />
-        </Transition>
+        </div>
+        <div v-else class="border-b border-default" />
       </div>
-    </template>
 
-    <!-- List section -->
-    <UScrollArea class="h-full px-4 py-4">
-      <CroutonBookingsList
-        :bookings="filteredBookings"
-        :loading="resolvedLoading"
-        :error="resolvedError"
-        :has-active-filters="hasActiveFilters"
-        :selected-dates="selectedDates"
-        :highlighted-booking-id="hoveredBookingId"
-        :creating-at-date="creatingAtDate"
-        :scroll-to-date="scrollToDate"
-        :active-location-filter="filterState.locations"
-        :empty-message="emptyMessage"
-        @created="onBookingCreated"
-        @cancel-create="onCancelCreate"
-        @top-visible-date-change="onTopVisibleDateChange"
-        @date-click="onDateClick"
-        @updated="onBookingUpdated"
-        @email-sent="onEmailSent"
-      />
-    </UScrollArea>
-  </UCard>
+      <!-- Map section (scrolls with content) -->
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 max-h-0"
+        enter-to-class="opacity-100 max-h-[300px]"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 max-h-[300px]"
+        leave-to-class="opacity-0 max-h-0"
+      >
+        <div v-if="showMap && hasLocationsWithCoordinates" class="px-4 pt-4">
+          <CroutonBookingsPanelMap
+            :locations="resolvedLocations"
+            :selected-locations="filterState.locations"
+            @toggle-location="toggleLocation"
+          />
+        </div>
+      </Transition>
+
+      <!-- List section -->
+      <div class="px-4 py-4">
+        <CroutonBookingsList
+          :bookings="filteredBookings"
+          :loading="resolvedLoading"
+          :error="resolvedError"
+          :has-active-filters="hasActiveFilters"
+          :selected-dates="selectedDates"
+          :highlighted-booking-id="hoveredBookingId"
+          :creating-at-date="creatingAtDate"
+          :scroll-to-date="scrollToDate"
+          :active-location-filter="filterState.locations"
+          :empty-message="emptyMessage"
+          @created="onBookingCreated"
+          @cancel-create="onCancelCreate"
+          @top-visible-date-change="onTopVisibleDateChange"
+          @date-click="onDateClick"
+          @updated="onBookingUpdated"
+          @email-sent="onEmailSent"
+        />
+      </div>
+  </div>
 </template>

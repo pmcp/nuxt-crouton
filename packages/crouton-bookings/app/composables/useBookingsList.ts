@@ -2,13 +2,17 @@ import type { Booking, LocationData, SettingsData } from '../types/booking'
 
 /**
  * Composable for fetching and managing bookings list
- * Uses the customer-bookings API endpoint
+ * Uses the customer-bookings or admin-bookings API endpoint based on scope
  */
-export function useBookingsList() {
+export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
   const { currentTeam } = useTeam()
+  const scope = options?.scope ?? 'personal'
+
+  // Choose endpoint based on scope: personal = only my bookings, team = all team bookings
+  const bookingsEndpoint = scope === 'team' ? 'admin-bookings' : 'customer-bookings'
 
   // Fetch bookings (client-only, depends on auth context)
-  // Use same key as useBookingCart to share cache
+  // Use same key as useBookingCart to share cache (scope-specific)
   const {
     data: bookingsData,
     pending: bookingsLoading,
@@ -16,10 +20,10 @@ export function useBookingsList() {
     refresh: refreshBookings,
   } = useFetch<Booking[]>(
     () => currentTeam.value?.id
-      ? `/api/crouton-bookings/teams/${currentTeam.value.id}/customer-bookings`
+      ? `/api/crouton-bookings/teams/${currentTeam.value.id}/${bookingsEndpoint}`
       : null,
     {
-      key: 'crouton-booking-sidebar-customer-bookings',
+      key: `crouton-booking-sidebar-${bookingsEndpoint}`,
       default: () => [],
       watch: [() => currentTeam.value?.id],
       server: false, // Avoid SSR hydration mismatch - team context is client-side

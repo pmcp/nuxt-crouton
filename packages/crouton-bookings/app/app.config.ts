@@ -9,7 +9,9 @@ const bookingBlockDefinition: CroutonBlockDefinition = {
   clientOnly: true,
   defaultAttrs: {
     title: '',
-    emptyMessage: ''
+    emptyMessage: '',
+    access: 'public',
+    scope: 'personal'
   },
   components: {
     editorView: 'CroutonBookingsBlocksBookingBlockView',
@@ -27,13 +29,35 @@ const bookingBlockDefinition: CroutonBlockDefinition = {
       type: 'text',
       label: 'Empty message',
       description: 'Message shown when no bookings exist'
+    },
+    {
+      name: 'access',
+      type: 'select',
+      label: 'Access',
+      description: 'Who can see this booking block',
+      options: [
+        { label: 'Everyone', value: 'public' },
+        { label: 'Members only', value: 'members' }
+      ]
+    },
+    {
+      name: 'scope',
+      type: 'select',
+      label: 'Booking scope',
+      description: 'What bookings are shown to the user',
+      options: [
+        { label: 'Personal bookings', value: 'personal' },
+        { label: 'All team bookings', value: 'team' }
+      ]
     }
   ],
   tiptap: {
     parseHTMLTag: 'div[data-type="booking-block"]',
     attributes: {
       title: { default: '' },
-      emptyMessage: { default: '' }
+      emptyMessage: { default: '' },
+      access: { default: 'public' },
+      scope: { default: 'personal' }
     }
   }
 }

@@ -72,7 +72,9 @@
       "sendFollowUp": "Follow-up Verzenden"
     },
     "panel": {
-      "noLocations": "No locations yet"
+      "noLocations": "No locations yet",
+      "membersOnly": "Log in om je boekingen te bekijken en beheren. Dit onderdeel is alleen beschikbaar voor leden.",
+      "signIn": "Inloggen"
     },
     "calendar": {
       "units": "Units"

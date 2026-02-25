@@ -72,7 +72,9 @@
       "sendFollowUp": "Envoyer un Suivi"
     },
     "panel": {
-      "noLocations": "No locations yet"
+      "noLocations": "No locations yet",
+      "membersOnly": "Connectez-vous pour consulter et gérer vos réservations. Cette section est réservée aux membres.",
+      "signIn": "Se connecter"
     },
     "calendar": {
       "units": "Units"

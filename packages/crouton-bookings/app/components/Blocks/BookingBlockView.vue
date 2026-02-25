@@ -14,6 +14,8 @@ import { NodeViewWrapper } from '@tiptap/vue-3'
 interface BookingBlockAttrs {
   title?: string
   emptyMessage?: string
+  access?: 'public' | 'members'
+  scope?: 'personal' | 'team'
 }
 
 const props = defineProps<{
@@ -60,13 +62,39 @@ function handleOpenPanel() {
       <div class="p-3">
         <!-- Block Header -->
         <div class="flex items-center justify-between mb-2">
-          <span class="inline-flex items-center gap-1 text-[10px] font-medium text-gray-400 uppercase tracking-wider">
-            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 2v4M16 2v4M3 10h18M21 8v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              <path d="m9 16 2 2 4-4" />
-            </svg>
-            Booking
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1 text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 2v4M16 2v4M3 10h18M21 8v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                <path d="m9 16 2 2 4-4" />
+              </svg>
+              Booking
+            </span>
+            <!-- Access badge -->
+            <span
+              v-if="attrs.access === 'members'"
+              class="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+            >
+              <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              Members only
+            </span>
+            <!-- Scope badge -->
+            <span
+              v-if="attrs.scope === 'team'"
+              class="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+            >
+              <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              Team view
+            </span>
+          </div>
           <!-- Action buttons -->
           <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
             <button

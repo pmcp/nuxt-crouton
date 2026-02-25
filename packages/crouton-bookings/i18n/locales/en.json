@@ -72,7 +72,9 @@
       "sendFollowUp": "Send Follow-Up"
     },
     "panel": {
-      "noLocations": "No locations yet"
+      "noLocations": "No locations yet",
+      "membersOnly": "Sign in to view and manage your bookings. This section is available to members only.",
+      "signIn": "Sign in"
     },
     "calendar": {
       "units": "Units"
