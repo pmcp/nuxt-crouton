@@ -133,8 +133,39 @@ function getTimelineOpacity(status: TimelineItem['status']): string {
   switch (status) {
     case 'sent': return 'opacity-100'
     case 'pending': return 'opacity-70'
-    case 'failed': return 'opacity-100 text-warning'
+    case 'failed': return 'opacity-100 text-error'
     default: return 'opacity-50 hover:opacity-80'
+  }
+}
+
+// Get status info for popover display
+function getStatusInfo(item: TimelineItem): { icon: string; label: string; color: string; action: string } {
+  const dateSuffix = item.date ? ` · ${item.date}` : ''
+  switch (item.status) {
+    case 'sent': return {
+      icon: 'i-lucide-circle-check',
+      label: t('bookings.card.emailStatus.sent') + dateSuffix,
+      color: '',
+      action: t('bookings.card.emailStatus.clickToResend'),
+    }
+    case 'pending': return {
+      icon: 'i-lucide-clock',
+      label: t('bookings.card.emailStatus.pending') + dateSuffix,
+      color: '',
+      action: t('bookings.card.emailStatus.clickToSend'),
+    }
+    case 'failed': return {
+      icon: 'i-lucide-triangle-alert',
+      label: t('bookings.card.emailStatus.failed'),
+      color: 'text-warning',
+      action: t('bookings.card.emailStatus.clickToRetry'),
+    }
+    default: return {
+      icon: 'i-lucide-circle-dashed',
+      label: t('bookings.card.emailStatus.notSent'),
+      color: '',
+      action: t('bookings.card.emailStatus.clickToSend'),
+    }
   }
 }
 
@@ -355,10 +386,14 @@ const timelineItems = computed<TimelineItem[]>(() => {
         class="hidden md:flex items-center gap-4 pr-14 transition-transform"
         :class="isHovered ? 'translate-x-0' : 'translate-x-10'"
       >
-        <UTooltip
+        <UPopover
           v-for="item in timelineItems"
           :key="item.type"
-          :text="item.tooltip"
+          mode="hover"
+          arrow
+          :open-delay="0"
+          :close-delay="150"
+          :content="{ side: 'top', align: 'center' }"
         >
           <button
             type="button"
@@ -374,7 +409,17 @@ const timelineItems = computed<TimelineItem[]>(() => {
             <span class="text-xs font-medium whitespace-nowrap">{{ item.label }}</span>
             <span class="text-[11px] text-muted whitespace-nowrap">{{ item.date || '—' }}</span>
           </button>
-        </UTooltip>
+
+          <template #content>
+            <div class="px-3 py-2 space-y-1.5 min-w-36">
+              <div class="flex items-center gap-1.5" :class="getStatusInfo(item).color">
+                <UIcon :name="getStatusInfo(item).icon" class="size-3.5 shrink-0" />
+                <span class="text-xs font-medium">{{ getStatusInfo(item).label }}</span>
+              </div>
+              <span class="text-[11px] text-muted block">{{ getStatusInfo(item).action }}</span>
+            </div>
+          </template>
+        </UPopover>
       </div>
     </div>
 
@@ -399,7 +444,10 @@ const timelineItems = computed<TimelineItem[]>(() => {
         >
           <UIcon :name="item.icon" class="size-5" />
           <span class="text-xs font-medium whitespace-nowrap">{{ item.label }}</span>
-          <span class="text-[11px] text-muted whitespace-nowrap">{{ item.date || '—' }}</span>
+          <div class="flex items-center gap-1" :class="getStatusInfo(item).color">
+            <UIcon :name="getStatusInfo(item).icon" class="size-2.5" />
+            <span class="text-[10px] whitespace-nowrap">{{ getStatusInfo(item).label }}</span>
+          </div>
         </button>
       </div>
     </div>
