@@ -33,7 +33,7 @@
             <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ t('bookings.locationForm.locationDetails') }}</legend>
             <p class="text-sm text-gray-500 -mt-1">{{ t('bookings.locationForm.colorHint') }}</p>
             <UFormField :label="t('bookings.locationForm.color')" name="color">
-              <UColorPicker v-model="state.color" />
+              <CroutonFormColorPicker v-model="state.color" />
             </UFormField>
           </fieldset>
 
