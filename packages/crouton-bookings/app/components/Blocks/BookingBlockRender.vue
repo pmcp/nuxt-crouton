@@ -37,7 +37,7 @@ const loginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route
     <!-- Members-only: show login prompt when not authenticated -->
     <div
       v-if="requiresLogin"
-      class="rounded-[calc(var(--ui-radius)*2)] border border-default bg-default p-8 text-center"
+      class="bg-muted/80 backdrop-blur-sm rounded-3xl border border-default shadow-lg shadow-neutral-950/5 p-8 text-center"
     >
       <div class="mx-auto max-w-sm space-y-4">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
@@ -61,11 +61,25 @@ const loginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route
     </div>
 
     <!-- Authenticated or public: show the booking panel -->
-    <CroutonBookingsPanel
+    <div
       v-else
-      :title="attrs.title || undefined"
-      :empty-message="attrs.emptyMessage || undefined"
-      :scope="attrs.scope || 'personal'"
-    />
+      class="bg-muted/80 backdrop-blur-sm rounded-3xl border border-default shadow-lg shadow-neutral-950/5 overflow-clip"
+    >
+      <CroutonBookingsPanel
+        :title="attrs.title || undefined"
+        :empty-message="attrs.emptyMessage || undefined"
+        :scope="attrs.scope || 'personal'"
+      />
+    </div>
   </div>
 </template>
+
+<style scoped>
+/* Strip Panel's own container styling — the frosted wrapper provides it */
+.booking-block :deep(.booking-panel) {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+</style>
