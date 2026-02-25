@@ -1,0 +1,21 @@
+// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { createBookingtest3Member } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+
+export default defineEventHandler(async (event) => {
+  const { team, user } = await resolveTeamAndCheckMembership(event)
+
+  const body = await readBody(event)
+
+  // Exclude id field to let the database generate it
+  const { id, ...dataWithoutId } = body
+
+  return await createBookingtest3Member({
+    ...dataWithoutId,
+    teamId: team.id,
+    owner: user.id,
+    createdBy: user.id,
+    updatedBy: user.id
+  })
+})

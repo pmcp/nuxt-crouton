@@ -1,0 +1,12 @@
+{
+  "bookings": {
+    "collections": {
+      "locations": {
+        "title": "Locations"
+      },
+      "emailtemplates": {
+        "title": "Emailtemplates"
+      }
+    }
+  }
+}

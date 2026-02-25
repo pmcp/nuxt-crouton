@@ -1,0 +1,109 @@
+{
+  "display": {
+    "title": "name",
+    "subtitle": "email",
+    "image": "avatar",
+    "badge": "status"
+  },
+  "fields": {
+    "name": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Full Name",
+        "area": "main"
+      }
+    },
+    "email": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "unique": true,
+        "label": "Email Address",
+        "area": "main"
+      }
+    },
+    "membershipNumber": {
+      "type": "string",
+      "meta": {
+        "unique": true,
+        "label": "Membership Number",
+        "area": "main"
+      }
+    },
+    "membershipType": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Membership Type",
+        "area": "main",
+        "options": [
+          "Basic",
+          "Premium",
+          "Corporate",
+          "Student"
+        ]
+      }
+    },
+    "status": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Status",
+        "area": "sidebar",
+        "default": "Active",
+        "displayAs": "badge",
+        "options": [
+          "Active",
+          "Suspended",
+          "Expired",
+          "Pending"
+        ]
+      }
+    },
+    "phone": {
+      "type": "string",
+      "meta": {
+        "label": "Phone Number",
+        "area": "main"
+      }
+    },
+    "department": {
+      "type": "reference",
+      "meta": {
+        "label": "Department",
+        "area": "sidebar"
+      },
+      "refTarget": "Departments"
+    },
+    "joinDate": {
+      "type": "date",
+      "meta": {
+        "required": true,
+        "label": "Join Date",
+        "area": "sidebar"
+      }
+    },
+    "expiryDate": {
+      "type": "date",
+      "meta": {
+        "label": "Membership Expiry",
+        "area": "sidebar"
+      }
+    },
+    "avatar": {
+      "type": "image",
+      "meta": {
+        "label": "Profile Photo",
+        "area": "sidebar"
+      }
+    },
+    "notes": {
+      "type": "text",
+      "meta": {
+        "label": "Internal Notes",
+        "area": "meta"
+      }
+    }
+  }
+}

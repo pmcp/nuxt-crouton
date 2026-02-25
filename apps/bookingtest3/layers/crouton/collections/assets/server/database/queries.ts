@@ -102,24 +102,28 @@ export async function createCroutonAsset(data: NewCroutonAsset) {
 export async function updateCroutonAsset(
   recordId: string,
   teamId: string,
-  ownerId: string,
-  updates: Partial<CroutonAsset>
+  userId: string,
+  updates: Partial<CroutonAsset>,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.croutonAssets.id, recordId),
+    eq(tables.croutonAssets.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.croutonAssets.owner, userId))
+  }
 
   const [asset] = await (db as any)
     .update(tables.croutonAssets)
     .set({
       ...updates,
-      updatedBy: ownerId
+      updatedBy: userId
     })
-    .where(
-      and(
-        eq(tables.croutonAssets.id, recordId),
-        eq(tables.croutonAssets.teamId, teamId),
-        eq(tables.croutonAssets.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!asset) {
@@ -135,19 +139,23 @@ export async function updateCroutonAsset(
 export async function deleteCroutonAsset(
   recordId: string,
   teamId: string,
-  ownerId: string
+  userId: string,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.croutonAssets.id, recordId),
+    eq(tables.croutonAssets.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.croutonAssets.owner, userId))
+  }
 
   const [deleted] = await (db as any)
     .delete(tables.croutonAssets)
-    .where(
-      and(
-        eq(tables.croutonAssets.id, recordId),
-        eq(tables.croutonAssets.teamId, teamId),
-        eq(tables.croutonAssets.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!deleted) {

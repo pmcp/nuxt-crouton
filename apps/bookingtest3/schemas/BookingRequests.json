@@ -1,0 +1,134 @@
+{
+  "display": {
+    "title": "title",
+    "subtitle": "requestedBy",
+    "badge": "status"
+  },
+  "fields": {
+    "title": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Request Title",
+        "area": "main"
+      }
+    },
+    "requestedBy": {
+      "type": "reference",
+      "meta": {
+        "required": true,
+        "label": "Requested By",
+        "area": "main"
+      },
+      "refTarget": "Members"
+    },
+    "roomType": {
+      "type": "reference",
+      "meta": {
+        "required": true,
+        "label": "Room Type",
+        "area": "main"
+      },
+      "refTarget": "RoomTypes"
+    },
+    "requestedDate": {
+      "type": "date",
+      "meta": {
+        "required": true,
+        "label": "Requested Date",
+        "area": "main"
+      }
+    },
+    "startTime": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Start Time",
+        "area": "main"
+      }
+    },
+    "endTime": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "End Time",
+        "area": "main"
+      }
+    },
+    "attendees": {
+      "type": "integer",
+      "meta": {
+        "required": true,
+        "label": "Expected Attendees",
+        "area": "main"
+      }
+    },
+    "purpose": {
+      "type": "text",
+      "meta": {
+        "required": true,
+        "label": "Purpose/Description",
+        "area": "main"
+      }
+    },
+    "equipmentNeeded": {
+      "type": "array",
+      "meta": {
+        "label": "Equipment Needed",
+        "area": "sidebar"
+      }
+    },
+    "status": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Status",
+        "area": "sidebar",
+        "default": "Pending",
+        "displayAs": "badge",
+        "options": [
+          "Pending",
+          "Approved",
+          "Rejected",
+          "Cancelled"
+        ]
+      }
+    },
+    "reviewedBy": {
+      "type": "reference",
+      "meta": {
+        "label": "Reviewed By",
+        "area": "sidebar"
+      },
+      "refTarget": "Members"
+    },
+    "reviewDate": {
+      "type": "datetime",
+      "meta": {
+        "label": "Review Date",
+        "area": "sidebar"
+      }
+    },
+    "reviewNotes": {
+      "type": "text",
+      "meta": {
+        "label": "Review Notes",
+        "area": "meta"
+      }
+    },
+    "priority": {
+      "type": "string",
+      "meta": {
+        "label": "Priority",
+        "area": "sidebar",
+        "default": "Normal",
+        "options": [
+          "Low",
+          "Normal",
+          "High",
+          "Urgent"
+        ]
+      }
+    }
+  }
+}

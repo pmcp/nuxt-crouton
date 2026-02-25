@@ -1,0 +1,62 @@
+{
+  "display": {
+    "title": "name",
+    "subtitle": "description",
+    "badge": "status"
+  },
+  "fields": {
+    "name": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Department Name",
+        "area": "main"
+      }
+    },
+    "code": {
+      "type": "string",
+      "meta": {
+        "unique": true,
+        "label": "Department Code",
+        "area": "main",
+        "maxLength": 10
+      }
+    },
+    "description": {
+      "type": "text",
+      "meta": {
+        "label": "Description",
+        "area": "main"
+      }
+    },
+    "status": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Status",
+        "area": "sidebar",
+        "default": "Active",
+        "displayAs": "badge",
+        "options": [
+          "Active",
+          "Inactive"
+        ]
+      }
+    },
+    "bookingQuota": {
+      "type": "integer",
+      "meta": {
+        "label": "Monthly Booking Quota",
+        "area": "sidebar",
+        "default": 10
+      }
+    },
+    "allowedRoomTypes": {
+      "type": "array",
+      "meta": {
+        "label": "Allowed Room Types",
+        "area": "sidebar"
+      }
+    }
+  }
+}

@@ -37,7 +37,7 @@ export const bookingsLocationSchema = z.object({
   location: z.string().optional(),
   allowedMemberIds: z.array(z.string()).nullish(),
   slots: z.array(bookingsLocationsSlotItemSchema).optional(),
-  openDays: z.array(z.string()).nullish(),
+  openDays: z.array(z.number()).nullish(),
   slotSchedule: z.record(z.any()).nullish(),
   blockedDates: z.array(z.any()).nullish(),
   inventoryMode: z.boolean().optional(),

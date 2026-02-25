@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!assetId) {
     throw createError({ status: 400, statusText: 'Missing asset ID' })
   }
-  const { team, user } = await resolveTeamAndCheckMembership(event)
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<CroutonAsset>>(event)
 
@@ -27,5 +27,5 @@ export default defineEventHandler(async (event) => {
     alt: body.alt,
     uploadedAt: body.uploadedAt ? new Date(body.uploadedAt) : body.uploadedAt,
     updatedBy: body.updatedBy
-  })
+  }, { role: membership.role })
 })

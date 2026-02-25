@@ -1,0 +1,109 @@
+{
+  "display": {
+    "title": "name",
+    "subtitle": "category",
+    "image": "image",
+    "badge": "status"
+  },
+  "fields": {
+    "name": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Equipment Name",
+        "area": "main"
+      }
+    },
+    "category": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Category",
+        "area": "main",
+        "options": [
+          "Audio/Visual",
+          "Furniture",
+          "Technology",
+          "Catering",
+          "Other"
+        ]
+      }
+    },
+    "description": {
+      "type": "text",
+      "meta": {
+        "label": "Description",
+        "area": "main"
+      }
+    },
+    "image": {
+      "type": "image",
+      "meta": {
+        "label": "Equipment Photo",
+        "area": "sidebar"
+      }
+    },
+    "serialNumber": {
+      "type": "string",
+      "meta": {
+        "unique": true,
+        "label": "Serial Number",
+        "area": "main"
+      }
+    },
+    "quantity": {
+      "type": "integer",
+      "meta": {
+        "required": true,
+        "label": "Available Quantity",
+        "area": "main",
+        "default": 1
+      }
+    },
+    "hourlyRate": {
+      "type": "decimal",
+      "meta": {
+        "label": "Hourly Rate",
+        "area": "main"
+      }
+    },
+    "requiresTraining": {
+      "type": "boolean",
+      "meta": {
+        "label": "Requires Training",
+        "area": "sidebar",
+        "default": false
+      }
+    },
+    "maintenanceDate": {
+      "type": "date",
+      "meta": {
+        "label": "Last Maintenance",
+        "area": "sidebar"
+      }
+    },
+    "status": {
+      "type": "string",
+      "meta": {
+        "required": true,
+        "label": "Status",
+        "area": "sidebar",
+        "default": "Available",
+        "displayAs": "badge",
+        "options": [
+          "Available",
+          "In Use",
+          "Maintenance",
+          "Out of Service"
+        ]
+      }
+    },
+    "notes": {
+      "type": "text",
+      "meta": {
+        "label": "Usage Notes",
+        "area": "meta"
+      }
+    }
+  }
+}

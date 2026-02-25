@@ -14,3 +14,5 @@ export { bookingtest3RoomTypes } from '../../layers/bookingtest3/collections/roo
 export { bookingtest3Departments } from '../../layers/bookingtest3/collections/departments/server/database/schema'
 export { bookingtest3Members } from '../../layers/bookingtest3/collections/members/server/database/schema'
 export { croutonAssets } from '../../layers/crouton/collections/assets/server/database/schema'
+export { bookingsEmailtemplates } from '../../layers/bookings/collections/emailtemplates/server/database/schema'
+export { bookingsEmaillogs } from '../../layers/bookings/collections/emaillogs/server/database/schema'

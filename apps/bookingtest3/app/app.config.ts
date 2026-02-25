@@ -20,6 +20,10 @@ import {bookingtest3MembersConfig} from '../layers/bookingtest3/collections/memb
 
 import {croutonAssetsConfig} from '../layers/crouton/collections/assets/app/composables/useCroutonAssets';
 
+import {bookingsEmailtemplatesConfig} from '../layers/bookings/collections/emailtemplates/app/composables/useBookingsEmailtemplates';
+
+import {bookingsEmaillogsConfig} from '../layers/bookings/collections/emaillogs/app/composables/useBookingsEmaillogs';
+
 export default defineAppConfig({
   croutonCollections: {
     translationsUi: translationsUiConfig,
@@ -32,6 +36,8 @@ export default defineAppConfig({
     bookingtest3RoomTypes: bookingtest3RoomTypesConfig,
     bookingtest3Departments: bookingtest3DepartmentsConfig,
     bookingtest3Members: bookingtest3MembersConfig,
-    croutonAssets: croutonAssetsConfig
+    croutonAssets: croutonAssetsConfig,
+    bookingsEmailtemplates: bookingsEmailtemplatesConfig,
+    bookingsEmaillogs: bookingsEmaillogsConfig
   }
 })

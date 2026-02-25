@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   if (!assetId) {
     throw createError({ status: 400, statusText: 'Missing asset ID' })
   }
-  const { team, user } = await resolveTeamAndCheckMembership(event)
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
 
-  return await deleteCroutonAsset(assetId, team.id, user.id)
+  return await deleteCroutonAsset(assetId, team.id, user.id, { role: membership.role })
 })
