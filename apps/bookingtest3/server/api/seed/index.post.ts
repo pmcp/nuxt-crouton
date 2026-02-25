@@ -548,6 +548,29 @@ export default defineEventHandler(async (event) => {
         if (type === 'reminder') daysOffset = -2
         if (type === 'retour') daysOffset = 1
 
+        // Convert old template vars to crouton-bookings format and wrap in HTML
+        function convertEmailBody(text: string): string {
+          if (!text) return ''
+          return text
+            .replace(/%NAME%/g, '{{customer_name}}')
+            .replace(/%BOOKING%/g, '{{booking_date}} - {{booking_slot}} @ {{location_name}}')
+            .split(/\n\n+/)
+            .filter(p => p.trim())
+            .map(p => `<p>${p.trim()}</p>`)
+            .join('')
+        }
+
+        const frBodyHtml = convertEmailBody(frMail.body || '')
+        const nlBodyHtml = convertEmailBody(nlMail.body || frMail.body || '')
+
+        // Map type names to readable English names
+        const typeNameMap: Record<string, string> = {
+          confirmation: 'Booking Confirmation',
+          reminder: 'Booking Reminder',
+          retour: 'Follow-up'
+        }
+        const enName = `${frParsed.data.title} - ${typeNameMap[type] || type}`
+
         await (db as any).insert(bookingsEmailtemplates).values({
           id: templateId,
           teamId: orgId,
@@ -555,28 +578,28 @@ export default defineEventHandler(async (event) => {
           order: 0,
           name: `${frParsed.data.title} - ${type}`,
           subject: frMail.subject || `${type} email`,
-          body: frMail.body || '',
+          body: frBodyHtml,
           fromEmail: frMail.from || 'info@schoolvelotek.be',
           triggerType,
-          recipientType: 'booker',
+          recipientType: 'customer',
           isActive: true,
           daysOffset,
           locationId,
           translations: {
             en: {
-              name: `${frParsed.data.title} - ${type}`,
+              name: enName,
               subject: frMail.subject || `${type} email`,
-              body: frMail.body || ''
+              body: frBodyHtml
             },
             fr: {
               name: `${frParsed.data.title} - ${type}`,
               subject: frMail.subject || `${type} email`,
-              body: frMail.body || ''
+              body: frBodyHtml
             },
             nl: {
               name: `${nlParsed.data.title || frParsed.data.title} - ${type}`,
               subject: nlMail.subject || frMail.subject || '',
-              body: nlMail.body || frMail.body || ''
+              body: nlBodyHtml
             }
           },
           createdAt: now,
@@ -739,14 +762,14 @@ export default defineEventHandler(async (event) => {
         slug: 'homepage',
         frFile: 'content/pages/homepage.fr.md',
         nlFile: 'content/pages/homepage.nl.md',
-        pageType: 'content',
+        pageType: 'core:regular',
         showInNavigation: true
       },
       {
         slug: 'contact',
         frFile: 'content/pages/contact.fr.md',
         nlFile: 'content/pages/contact.nl.md',
-        pageType: 'content',
+        pageType: 'core:regular',
         showInNavigation: true
       },
     ]
@@ -781,24 +804,6 @@ export default defineEventHandler(async (event) => {
       const frBlockContent = wrapInBlocks(frHtml)
       const nlBlockContent = wrapInBlocks(nlHtml)
 
-      const translations = {
-        en: {
-          title: frParsed.data.title || pageCfg.slug,
-          slug: pageCfg.slug,
-          content: frBlockContent
-        },
-        fr: {
-          title: frParsed.data.title || pageCfg.slug,
-          slug: pageCfg.slug,
-          content: frBlockContent
-        },
-        nl: {
-          title: nlParsed.data.title || frParsed.data.title,
-          slug: pageCfg.slug,
-          content: nlBlockContent
-        }
-      }
-
       const config: Record<string, any> = {}
       if (frParsed.data.image) {
         config.image = frParsed.data.image
@@ -816,7 +821,6 @@ export default defineEventHandler(async (event) => {
         slug: pageCfg.slug,
         pageType: pageCfg.pageType,
         content: frBlockContent,
-        translations,
         config,
         status: 'published',
         visibility: 'public',
