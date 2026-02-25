@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Booking, LocationData } from '../types/booking'
 
 interface Props {
@@ -42,7 +42,6 @@ const {
   isInventoryMode,
   getInventoryAvailability,
   availabilityLoading,
-  fetchAvailability,
   // Group support
   enableGroups,
   groupOptions,
@@ -179,72 +178,6 @@ watch(
     }
   },
   { immediate: true },
-)
-
-// --- Auto-book: skip UI when there's only one location and one available slot ---
-// Use useState so the flag persists across component recreation (list re-renders during submit).
-// Store the date so the flag only blocks the same date — new dates can auto-book.
-const autoBookState = useState<{ triggered: boolean, dateKey: string | null }>('croutonAutoBookState', () => ({
-  triggered: false,
-  dateKey: null,
-}))
-
-function isAutoBookBlocked(): boolean {
-  const currentKey = props.date?.toISOString().split('T')[0] ?? null
-  return autoBookState.value.triggered && autoBookState.value.dateKey === currentKey
-}
-
-function markAutoBookTriggered() {
-  const currentKey = props.date?.toISOString().split('T')[0] ?? null
-  autoBookState.value = { triggered: true, dateKey: currentKey }
-}
-
-// Effective locations (respecting activeLocationFilter)
-const effectiveLocations = computed(() => {
-  if (!locations.value) return []
-  if (!props.activeLocationFilter || props.activeLocationFilter.length === 0) {
-    return locations.value
-  }
-  return locations.value.filter((l: LocationData) => props.activeLocationFilter!.includes(l.id))
-})
-
-watch(
-  () => availabilityLoading.value,
-  async (loading, prevLoading) => {
-    // Only trigger when availability finishes loading (true → false)
-    if (loading || prevLoading !== true) return
-    // Only for create mode, not edit
-    if (isEditMode.value || isAutoBookBlocked()) return
-    // Need exactly one effective location
-    if (effectiveLocations.value.length !== 1) return
-    // Can't auto-book if groups require selection
-    if (enableGroups.value) return
-    // Inventory mode: user picks quantity, don't auto-book
-    if (isInventoryMode.value) return
-    // Check available (non-disabled) slots
-    const available = allSlots.value.filter((s: { id: string }) => !isSlotDisabled(s.id))
-
-    // No available slots — close the card, nothing to book
-    if (available.length === 0) {
-      markAutoBookTriggered()
-      notify.warning(t('bookings.notifications.noSlotsAvailable'), { description: t('bookings.notifications.noSlotsDescription') })
-      emit('cancel')
-      return
-    }
-
-    // More than one slot — user must choose
-    if (available.length !== 1) return
-
-    // Exactly one available slot — auto-book immediately.
-    // Emit 'created' BEFORE submitAll because submitAll triggers a list re-render
-    // that destroys this component, which would prevent the emit from firing.
-    markAutoBookTriggered()
-    localSlotId.value = available[0].id
-    await nextTick()
-    addToCart()
-    emit('created')
-    submitAll()
-  },
 )
 
 // Get inventory info for selected date
