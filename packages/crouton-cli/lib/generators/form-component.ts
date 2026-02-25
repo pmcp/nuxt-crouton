@@ -129,9 +129,9 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
     if (componentName === 'EditorSimple') {
       return 'CroutonEditorSimple'
     }
-    // Transform ColorPicker to UColorPicker for Nuxt UI 4
+    // Transform ColorPicker to CroutonFormColorPicker (popover-based picker with presets)
     if (componentName === 'ColorPicker') {
-      return 'UColorPicker'
+      return 'CroutonFormColorPicker'
     }
     return componentName
   }
