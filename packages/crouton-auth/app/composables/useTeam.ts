@@ -19,7 +19,7 @@
  * </script>
  * ```
  */
-import type { Team, MemberRole, Member } from '../../types'
+import type { Team, MemberRole, Member, MemberWithUser } from '../../types'
 import { useAuthClient } from '../../types/auth-client'
 import { mapOrganizationToTeam } from '../../shared/utils/auth'
 
@@ -57,14 +57,29 @@ function mapMember(m: {
     email: string
     image?: string | null
   }
-}): Member {
-  return {
+}): MemberWithUser | Member {
+  const base: Member = {
     id: m.id,
     organizationId: m.organizationId,
     userId: m.userId,
     role: m.role as MemberRole,
     createdAt: new Date(m.createdAt)
   }
+  if (m.user) {
+    return {
+      ...base,
+      user: {
+        id: m.user.id,
+        name: m.user.name ?? null,
+        email: m.user.email,
+        image: m.user.image ?? null,
+        emailVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    } as MemberWithUser
+  }
+  return base
 }
 
 /**
@@ -129,7 +144,7 @@ export function useTeam() {
   // Local state
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const membersData = ref<Member[]>([])
+  const membersData = ref<(MemberWithUser | Member)[]>([])
 
   // Computed: current team (active organization)
   // activeOrgData is already a Team type from useSession
