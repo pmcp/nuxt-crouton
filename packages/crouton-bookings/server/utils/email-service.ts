@@ -19,6 +19,7 @@ import {
   getBookingEmailService,
   renderBookingEmailTemplate,
   formatBookingEmailDate,
+  resolveTranslatedField,
   type BookingEmailTriggerType,
   type BookingEmailResult,
   type BookingEmailVariables,
@@ -32,6 +33,8 @@ export interface BookingEmailContext extends BookingWithEmailContext {
   teamName?: string
   teamEmail?: string
   teamPhone?: string
+  /** Pre-resolved slot label (e.g., "14:00 - 15:00" instead of raw slot ID) */
+  slotLabel?: string
 }
 
 /**
@@ -46,6 +49,8 @@ export interface SendBookingEmailOptions {
   recipientEmail?: string
   /** Admin email for 'admin' or 'both' recipient types */
   adminEmail?: string
+  /** Locale for translations and date formatting (default: 'en') */
+  locale?: string
 }
 
 /**
@@ -110,29 +115,27 @@ export async function getActiveTemplatesForTrigger(
  * Build email variables from booking context
  */
 export function buildEmailVariables(
-  booking: BookingEmailContext
+  booking: BookingEmailContext,
+  locale?: string
 ): BookingEmailVariables {
   const locationData = booking.locationData
   const ownerUser = booking.ownerUser
 
-  // Build full address from parts
+  // Build full address: prefer street+city parts, fall back to pre-built address
   let locationAddress = ''
   if (locationData) {
-    const parts = [
-      locationData.address,
-      locationData.street,
-      locationData.city
-    ].filter(Boolean)
-    locationAddress = parts.join(', ')
+    const streetCity = [locationData.street, locationData.city].filter(Boolean)
+    locationAddress = streetCity.length > 0
+      ? streetCity.join(', ')
+      : (locationData.address || '')
   }
 
   return {
     customer_name: ownerUser?.name || 'Customer',
     customer_email: ownerUser?.email || '',
-    booking_date: formatBookingEmailDate(booking.date),
-    booking_slot: Array.isArray(booking.slot)
-      ? booking.slot.join(', ')
-      : booking.slot || 'Not specified',
+    booking_date: formatBookingEmailDate(booking.date, locale),
+    booking_slot: booking.slotLabel
+      || (Array.isArray(booking.slot) ? booking.slot.join(', ') : booking.slot || 'Not specified'),
     booking_reference: booking.id,
     location_name: locationData?.name || 'Location',
     location_address: locationAddress,
@@ -156,9 +159,10 @@ export interface ExtendedEmailVariables extends BookingEmailVariables {
  * Build extended email variables with individual location fields
  */
 export function buildExtendedEmailVariables(
-  booking: BookingEmailContext
+  booking: BookingEmailContext,
+  locale?: string
 ): ExtendedEmailVariables {
-  const base = buildEmailVariables(booking)
+  const base = buildEmailVariables(booking, locale)
   const locationData = booking.locationData
 
   return {
@@ -415,7 +419,7 @@ export async function sendBookingEmails(
     }
   }
 
-  const { booking, triggerType, teamId, userId, adminEmail } = options
+  const { booking, triggerType, teamId, userId, adminEmail, locale } = options
   const nitroApp = useNitroApp()
 
   // Get templates for this trigger
@@ -433,8 +437,8 @@ export async function sendBookingEmails(
     }
   }
 
-  // Build email variables
-  const variables = buildExtendedEmailVariables(booking)
+  // Build email variables (locale-aware date formatting)
+  const variables = buildExtendedEmailVariables(booking, locale)
 
   const results: SendBookingEmailsResult = {
     success: true,
@@ -443,8 +447,13 @@ export async function sendBookingEmails(
 
   // Process each matching template
   for (const template of templates) {
+    // Resolve translated subject/body when locale is provided
+    const tr = template.translations as Record<string, Record<string, string>> | null
+    const resolvedSubject = locale ? resolveTranslatedField(template.subject, tr, 'subject', locale) : template.subject
+    const resolvedBody = locale ? resolveTranslatedField(template.body, tr, 'body', locale) : template.body
+
     const { subject, body } = renderBookingEmail(
-      { subject: template.subject, body: template.body },
+      { subject: resolvedSubject, body: resolvedBody },
       variables
     )
 
@@ -594,14 +603,16 @@ export async function triggerBookingCreatedEmail(
   booking: BookingEmailContext,
   teamId: string,
   userId: string,
-  adminEmail?: string
+  adminEmail?: string,
+  locale?: string
 ): Promise<SendBookingEmailsResult> {
   return sendBookingEmails({
     booking,
     triggerType: 'booking_created',
     teamId,
     userId,
-    adminEmail
+    adminEmail,
+    locale
   })
 }
 
@@ -614,14 +625,16 @@ export async function triggerBookingCancelledEmail(
   booking: BookingEmailContext,
   teamId: string,
   userId: string,
-  adminEmail?: string
+  adminEmail?: string,
+  locale?: string
 ): Promise<SendBookingEmailsResult> {
   return sendBookingEmails({
     booking,
     triggerType: 'booking_cancelled',
     teamId,
     userId,
-    adminEmail
+    adminEmail,
+    locale
   })
 }
 

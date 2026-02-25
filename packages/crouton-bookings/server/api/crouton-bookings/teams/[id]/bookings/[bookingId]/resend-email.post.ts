@@ -14,6 +14,8 @@ import { eq, and } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import {
   isBookingEmailEnabled,
+  resolveTranslatedField,
+  resolveSlotLabels,
   type BookingEmailTriggerType
 } from '../../../../../../utils/booking-emails'
 import {
@@ -22,7 +24,8 @@ import {
 } from '../../../../../../utils/email-service'
 
 const bodySchema = z.object({
-  triggerType: z.enum(['booking_created', 'reminder_before', 'booking_cancelled', 'follow_up_after'])
+  triggerType: z.enum(['booking_created', 'reminder_before', 'booking_cancelled', 'follow_up_after']),
+  locale: z.string().optional().default('en')
 })
 
 export default defineEventHandler(async (event) => {
@@ -47,7 +50,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { triggerType } = parsed.data
+  const { triggerType, locale } = parsed.data
   const db = useDB()
 
   // Fetch booking with location data
@@ -74,7 +77,9 @@ export default defineEventHandler(async (event) => {
           title: bookingsLocations.title,
           street: bookingsLocations.street,
           city: bookingsLocations.city,
-          content: bookingsLocations.content
+          content: bookingsLocations.content,
+          translations: bookingsLocations.translations,
+          slots: bookingsLocations.slots
         }
       })
       .from(bookingsBookings)
@@ -104,8 +109,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Build booking context for email
+  // Build booking context for email — resolve translations
   const teamMetadata = (team.metadata || {}) as Record<string, string>
+  const ld = booking.locationData as any
+  const tr = ld?.translations as Record<string, Record<string, string>> | null
+  const locationTitle = resolveTranslatedField(ld?.title, tr, 'title', locale) || 'Location'
+  const locationStreet = resolveTranslatedField(ld?.street, tr, 'street', locale)
+  const locationCity = resolveTranslatedField(ld?.city, tr, 'city', locale)
+  const locationContent = resolveTranslatedField(ld?.content, tr, 'content', locale)
+
+  // Resolve slot IDs to human-readable labels
+  const slotLabel = resolveSlotLabels(booking.slot, ld?.slots as any)
+
   const bookingContext: BookingEmailContext = {
     id: booking.id,
     teamId: booking.teamId,
@@ -113,18 +128,16 @@ export default defineEventHandler(async (event) => {
     location: booking.location,
     date: booking.date,
     slot: booking.slot,
+    slotLabel,
     status: booking.status,
-    locationData: booking.locationData
+    locationData: ld
       ? {
-          id: booking.locationData.id,
-          name: booking.locationData.title || 'Location',
-          title: booking.locationData.title || 'Location',
-          street: booking.locationData.street || '',
-          city: booking.locationData.city || '',
-          content: booking.locationData.content || '',
-          address: [booking.locationData.street, booking.locationData.city]
-            .filter(Boolean)
-            .join(', ')
+          id: ld.id,
+          name: locationTitle,
+          title: locationTitle,
+          street: locationStreet,
+          city: locationCity,
+          content: locationContent
         }
       : null,
     ownerUser: {
@@ -142,7 +155,8 @@ export default defineEventHandler(async (event) => {
     booking: bookingContext,
     triggerType: triggerType as BookingEmailTriggerType,
     teamId: team.id,
-    userId: user.id
+    userId: user.id,
+    locale
   })
 
   if (!result.success) {

@@ -22,7 +22,7 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import { toMonthKey, monthBounds } from '@fyit/crouton-core/shared/utils/date'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
-import { isBookingEmailEnabled } from '../../../../utils/booking-emails'
+import { isBookingEmailEnabled, resolveTranslatedField, resolveSlotLabels } from '../../../../utils/booking-emails'
 import {
   triggerBookingCreatedEmail,
   type BookingEmailContext
@@ -43,12 +43,15 @@ interface CartItem {
 
 interface BatchRequestBody {
   bookings: CartItem[]
+  locale?: string
 }
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<BatchRequestBody>(event)
+
+  const locale = body.locale || 'en'
 
   if (!body.bookings || !Array.isArray(body.bookings) || body.bookings.length === 0) {
     throw createError({
@@ -89,6 +92,8 @@ export default defineEventHandler(async (event) => {
           street: bookingsLocations.street,
           city: bookingsLocations.city,
           content: bookingsLocations.content,
+          translations: bookingsLocations.translations,
+          slots: bookingsLocations.slots,
           maxBookingsPerMonth: bookingsLocations.maxBookingsPerMonth,
         })
         .from(bookingsLocations)
@@ -220,9 +225,16 @@ export default defineEventHandler(async (event) => {
       const emailPromises = created.map(async (booking) => {
         const cartItem = locationMap.get(booking.location)
 
-        // Build booking context with DB location data (preferred) and cart fallback
+        // Build booking context with DB location data — resolve translations
         const dbLocation = dbLocationMap.get(booking.location)
-        const locationTitle = dbLocation?.title || cartItem?.locationTitle || 'Location'
+        const tr = dbLocation?.translations as Record<string, Record<string, string>> | null
+        const locationTitle = resolveTranslatedField(dbLocation?.title, tr, 'title', locale) || cartItem?.locationTitle || 'Location'
+        const locationStreet = resolveTranslatedField(dbLocation?.street, tr, 'street', locale)
+        const locationCity = resolveTranslatedField(dbLocation?.city, tr, 'city', locale)
+        const locationContent = resolveTranslatedField(dbLocation?.content, tr, 'content', locale)
+
+        // Resolve slot IDs to human-readable labels
+        const slotLabel = resolveSlotLabels(booking.slot, dbLocation?.slots as any)
 
         const bookingContext: BookingEmailContext = {
           id: booking.id,
@@ -231,14 +243,15 @@ export default defineEventHandler(async (event) => {
           location: booking.location,
           date: booking.date,
           slot: booking.slot,
+          slotLabel,
           status: booking.status,
           locationData: {
             id: booking.location,
             name: locationTitle,
             title: locationTitle,
-            street: dbLocation?.street || '',
-            city: dbLocation?.city || '',
-            content: dbLocation?.content || ''
+            street: locationStreet,
+            city: locationCity,
+            content: locationContent
           },
           ownerUser: {
             id: user.id,
@@ -254,7 +267,9 @@ export default defineEventHandler(async (event) => {
           const result = await triggerBookingCreatedEmail(
             bookingContext,
             team.id,
-            user.id
+            user.id,
+            undefined, // adminEmail
+            locale
           )
           return result.success ? 1 : 0
         }

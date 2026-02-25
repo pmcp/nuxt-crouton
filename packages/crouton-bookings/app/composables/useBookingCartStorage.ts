@@ -53,10 +53,12 @@ export function useBookingCartStorage(
     isSubmitting.value = true
 
     try {
+      const locale = useNuxtApp().$i18n?.locale?.value || 'en'
       const result = await $fetch<{ count: number, bookings: unknown[], success: boolean }>(`/api/crouton-bookings/teams/${teamId.value}/customer-bookings-batch`, {
         method: 'POST',
         body: {
           bookings: cart.value,
+          locale,
         },
       })
 

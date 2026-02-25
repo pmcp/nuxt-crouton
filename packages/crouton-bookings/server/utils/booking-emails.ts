@@ -8,6 +8,41 @@
  * 3. Generate email-template and email-log schemas if using template system
  */
 
+/**
+ * Resolve a translated field value from the translations JSON column.
+ * Falls back to the base column value if no translation is found.
+ */
+export function resolveTranslatedField(
+  baseValue: string | null | undefined,
+  translations: Record<string, Record<string, string>> | null | undefined,
+  field: string,
+  locale: string = 'en'
+): string {
+  return translations?.[locale]?.[field] || baseValue || ''
+}
+
+/**
+ * Resolve slot IDs to human-readable labels using the location's slots config.
+ * Falls back to the raw ID if no matching slot is found.
+ */
+export function resolveSlotLabels(
+  slotIds: string[] | null,
+  locationSlots: Array<{ id: string; label?: string }> | null | undefined
+): string {
+  if (!slotIds || slotIds.length === 0) return 'Not specified'
+
+  const slotMap = new Map(
+    (locationSlots || []).map(s => [s.id, s.label || s.id])
+  )
+
+  return slotIds
+    .map(id => {
+      if (id === 'all-day') return 'All Day'
+      return slotMap.get(id) || id
+    })
+    .join(', ')
+}
+
 export type BookingEmailTriggerType = 'booking_created' | 'reminder_before' | 'booking_cancelled' | 'follow_up_after'
 export type BookingEmailRecipientType = 'customer' | 'admin' | 'both'
 
@@ -96,12 +131,29 @@ export function renderBookingEmailTemplate(
 }
 
 /**
+ * Map a short locale code to an Intl-compatible locale string.
+ */
+function toIntlLocale(locale?: string): string {
+  if (!locale) return 'en-US'
+  const map: Record<string, string> = {
+    en: 'en-US',
+    nl: 'nl-NL',
+    fr: 'fr-FR',
+    de: 'de-DE',
+    es: 'es-ES',
+    it: 'it-IT',
+    pt: 'pt-PT',
+  }
+  return map[locale] || locale
+}
+
+/**
  * Format a booking date for display in emails
  */
-export function formatBookingEmailDate(date: Date | string | null): string {
+export function formatBookingEmailDate(date: Date | string | null, locale?: string): string {
   if (!date) return 'Not specified'
   const dateObj = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(toIntlLocale(locale), {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -114,12 +166,13 @@ export function formatBookingEmailDate(date: Date | string | null): string {
  */
 export function buildBookingEmailVariables(
   booking: BookingWithEmailContext,
-  teamName: string = 'Your Team'
+  teamName: string = 'Your Team',
+  locale?: string
 ): BookingEmailVariables {
   return {
     customer_name: booking.ownerUser?.name || 'Customer',
     customer_email: booking.ownerUser?.email || '',
-    booking_date: formatBookingEmailDate(booking.date),
+    booking_date: formatBookingEmailDate(booking.date, locale),
     booking_slot: booking.slot?.join(', ') || 'Not specified',
     booking_reference: booking.id,
     location_name: booking.locationData?.name || 'Location',
