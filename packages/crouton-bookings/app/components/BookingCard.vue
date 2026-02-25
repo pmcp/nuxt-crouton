@@ -133,7 +133,7 @@ function getTimelineOpacity(status: TimelineItem['status']): string {
   switch (status) {
     case 'sent': return 'opacity-100'
     case 'pending': return 'opacity-70'
-    case 'failed': return 'opacity-100 text-error'
+    case 'failed': return 'opacity-100 text-warning'
     default: return 'opacity-50 hover:opacity-80'
   }
 }
@@ -226,10 +226,10 @@ const timelineItems = computed<TimelineItem[]>(() => {
   >
     <!-- Main layout: responsive flex with space-between on desktop -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3 relative overflow-hidden">
-      <!-- Edit button: absolute on the right, slides in on hover (original style) -->
+      <!-- Edit button: absolute on the right, slides in on hover (desktop only) -->
       <div
         v-if="showAdminFeatures"
-        class="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center px-2 bg-elevated/95 transition-transform duration-200 ease-out z-10"
+        class="hidden md:flex absolute right-0 top-0 bottom-0 flex-col items-center justify-center px-2 bg-elevated/95 transition-transform duration-200 ease-out z-10"
         :class="isHovered ? 'translate-x-0' : 'translate-x-full'"
       >
         <UButton
@@ -241,7 +241,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
         />
       </div>
 
-      <!-- Left side: Date badge + Info -->
+      <!-- Left side: Date badge + Info + Mobile actions -->
       <div class="p-1.5 md:p-2 flex gap-2 md:gap-3 flex-1 min-w-0">
         <!-- Date badge (clickable to navigate calendar) -->
         <button
@@ -302,9 +302,8 @@ const timelineItems = computed<TimelineItem[]>(() => {
             </UBadge>
           </div>
 
-          <!-- User info + Activity button row -->
+          <!-- User info row -->
           <div class="flex items-center gap-1 text-xs text-muted">
-            <!-- User name + date (left) -->
             <template v-if="bookerUser">
               <UPopover>
                 <span class="cursor-pointer hover:text-default transition-colors">{{ bookerUser.name }}</span>
@@ -326,18 +325,27 @@ const timelineItems = computed<TimelineItem[]>(() => {
               </button>
               <span v-else-if="createdDateText" class="whitespace-nowrap">{{ t('bookings.card.on', { params: { date: createdDateText } }) }}</span>
             </template>
-
-            <!-- Mobile email icon (right-aligned) -->
-            <button
-              v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0"
-              type="button"
-              class="md:hidden ml-auto shrink-0 p-0.5 rounded transition-colors cursor-pointer"
-              :class="isEmailPanelOpen ? 'text-default' : 'text-muted hover:text-default'"
-              @click.stop="isEmailPanelOpen = !isEmailPanelOpen"
-            >
-              <UIcon name="i-lucide-mail" class="size-3.5" />
-            </button>
           </div>
+        </div>
+
+        <!-- Mobile action sidebar (right edge, full card height) -->
+        <div v-if="showAdminFeatures" class="md:hidden shrink-0 flex flex-col justify-between items-center py-0.5 border-l border-muted/20 pl-2">
+          <button
+            type="button"
+            class="p-1 rounded transition-colors cursor-pointer text-muted hover:text-default"
+            @click.stop="emit('edit', booking)"
+          >
+            <UIcon name="i-lucide-pencil" class="size-3.5" />
+          </button>
+          <button
+            v-if="isEmailEnabled && timelineItems.length > 0"
+            type="button"
+            class="p-1 rounded transition-colors cursor-pointer"
+            :class="isEmailPanelOpen ? 'text-default' : 'text-muted hover:text-default'"
+            @click.stop="isEmailPanelOpen = !isEmailPanelOpen"
+          >
+            <UIcon name="i-lucide-mail" class="size-3.5" />
+          </button>
         </div>
       </div>
 
@@ -401,7 +409,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
       class="overflow-hidden transition-all duration-300 ease-out"
       :class="isTimelineOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'"
     >
-      <div class="border-t border-default/40 px-3 py-3">
+      <div class="border-t border-default/40 px-3 py-2">
         <CroutonBookingsActivityTimeline :booking="booking" />
       </div>
     </div>
