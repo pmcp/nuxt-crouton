@@ -321,11 +321,22 @@ const timelineItems = computed<TimelineItem[]>(() => {
                 class="inline-flex items-center gap-1 whitespace-nowrap hover:text-default transition-colors cursor-pointer"
                 @click.stop="isTimelineOpen = !isTimelineOpen"
               >
-                <span>{{ t('bookings.card.on', { date: createdDateText }) }}</span>
+                <span>{{ t('bookings.card.on', { params: { date: createdDateText } }) }}</span>
                 <UIcon name="i-lucide-history" class="size-3" />
               </button>
-              <span v-else-if="createdDateText" class="whitespace-nowrap">{{ t('bookings.card.on', { date: createdDateText }) }}</span>
+              <span v-else-if="createdDateText" class="whitespace-nowrap">{{ t('bookings.card.on', { params: { date: createdDateText } }) }}</span>
             </template>
+
+            <!-- Mobile email icon (right-aligned) -->
+            <button
+              v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0"
+              type="button"
+              class="md:hidden ml-auto shrink-0 p-0.5 rounded transition-colors cursor-pointer"
+              :class="isEmailPanelOpen ? 'text-default' : 'text-muted hover:text-default'"
+              @click.stop="isEmailPanelOpen = !isEmailPanelOpen"
+            >
+              <UIcon name="i-lucide-mail" class="size-3.5" />
+            </button>
           </div>
         </div>
       </div>
@@ -359,48 +370,29 @@ const timelineItems = computed<TimelineItem[]>(() => {
       </div>
     </div>
 
-    <!-- Mobile email panel (admin only) -->
-    <div v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0" class="md:hidden mt-2 pt-2 border-t border-muted/20 relative">
-      <!-- Trigger button -->
-      <UButton
-        variant="ghost"
-        color="neutral"
-        size="sm"
-        class="text-muted hover:text-default"
-        @click="isEmailPanelOpen = !isEmailPanelOpen"
-      >
-        <UIcon name="i-lucide-mail" class="size-4" />
-        <span>{{ t('bookings.email.emails') }}</span>
-        <UIcon
-          name="i-lucide-chevron-down"
-          class="size-3 transition-transform duration-200"
-          :class="isEmailPanelOpen ? 'rotate-180' : ''"
-        />
-      </UButton>
-
-      <!-- Slide-out email buttons -->
-      <div
-        class="overflow-hidden transition-all duration-200 ease-out"
-        :class="isEmailPanelOpen ? 'max-h-28 opacity-100 mt-4' : 'max-h-0 opacity-0'"
-      >
-        <div class="flex items-center gap-4 pb-2">
-          <button
-            v-for="item in timelineItems"
-            :key="item.type"
-            type="button"
-            class="flex flex-col items-center gap-1 transition-all cursor-pointer active:scale-95"
-            :class="[
-              getTimelineOpacity(item.status),
-              sendingEmailType === item.type ? 'animate-pulse' : ''
-            ]"
-            :disabled="!!sendingEmailType"
-            @click="emit('resend-email', item.type)"
-          >
-            <UIcon :name="item.icon" class="size-5" />
-            <span class="text-xs font-medium whitespace-nowrap">{{ item.label }}</span>
-            <span class="text-[11px] text-muted whitespace-nowrap">{{ item.date || '—' }}</span>
-          </button>
-        </div>
+    <!-- Mobile email panel (admin only) — triggered by inline mail icon above -->
+    <div
+      v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0"
+      class="md:hidden overflow-hidden transition-all duration-200 ease-out"
+      :class="isEmailPanelOpen ? 'max-h-28 opacity-100' : 'max-h-0 opacity-0'"
+    >
+      <div class="flex items-center gap-4 px-2 pb-2 pt-1 border-t border-muted/20">
+        <button
+          v-for="item in timelineItems"
+          :key="item.type"
+          type="button"
+          class="flex flex-col items-center gap-1 transition-all cursor-pointer active:scale-95"
+          :class="[
+            getTimelineOpacity(item.status),
+            sendingEmailType === item.type ? 'animate-pulse' : ''
+          ]"
+          :disabled="!!sendingEmailType"
+          @click="emit('resend-email', item.type)"
+        >
+          <UIcon :name="item.icon" class="size-5" />
+          <span class="text-xs font-medium whitespace-nowrap">{{ item.label }}</span>
+          <span class="text-[11px] text-muted whitespace-nowrap">{{ item.date || '—' }}</span>
+        </button>
       </div>
     </div>
 
