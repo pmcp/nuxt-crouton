@@ -10,6 +10,7 @@ const props = withDefaults(defineProps<Props>(), {
   layout: 'list'
 })
 
+const { t } = useT()
 const isOpen = ref(false)
 
 // Code examples for each layout type
@@ -79,10 +80,10 @@ const currentExample = computed(() => codeExamples[props.layout])
         <div class="flex items-start justify-between mb-4">
           <div>
             <h3 class="text-lg font-semibold text-default">
-              Customize Card Display
+              {{ t('help.customizeCard') }}
             </h3>
             <p class="text-sm text-muted mt-1">
-              Create a custom Card.vue component for this collection
+              {{ t('help.customizeCardDescription') }}
             </p>
           </div>
           <UButton
@@ -97,7 +98,7 @@ const currentExample = computed(() => codeExamples[props.layout])
         <div class="space-y-4">
           <div>
             <p class="text-sm font-medium text-default mb-2">
-              File location:
+              {{ t('help.fileLocation') }}
             </p>
             <code class="text-xs bg-muted/30 px-2 py-1.5 rounded block overflow-x-auto">
               layers/{layer}/collections/{{ collection }}/app/components/Card.vue
@@ -124,7 +125,7 @@ const currentExample = computed(() => codeExamples[props.layout])
             variant="outline"
             @click="isOpen = false"
           >
-            Got it
+            {{ t('help.gotIt') }}
           </UButton>
         </div>
       </div>

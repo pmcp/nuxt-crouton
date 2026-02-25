@@ -15,6 +15,8 @@ import { PageBlocks } from '../../editor/extensions/page-blocks'
  */
 import { getBlockMenuItems } from '../../utils/block-registry'
 
+const { t } = useT()
+
 // Get addon blocks from croutonBlocks registry (chart, map, etc.)
 const { blocksList: addonBlocks } = useCroutonBlocks()
 
@@ -147,8 +149,8 @@ const currentScale = computed(() => isZoomedOut.value ? props.previewScale : 1)
 // Tab state
 const activeTab = ref(props.defaultTab)
 const tabItems = [
-  { label: 'Editor', value: 'editor', icon: 'i-lucide-edit-3' },
-  { label: 'Preview', value: 'preview', icon: 'i-lucide-eye' }
+  { label: t('pages.editor.tabEditor'), value: 'editor', icon: 'i-lucide-edit-3' },
+  { label: t('pages.editor.tabPreview'), value: 'preview', icon: 'i-lucide-eye' }
 ]
 
 // Block suggestion items — core + addon blocks
@@ -178,10 +180,10 @@ const blockSuggestionItems = computed<BlockSuggestionItem[]>(() => {
 
 function getCategoryLabel(category: string): string {
   const labels: Record<string, string> = {
-    hero: 'Hero',
-    content: 'Content',
-    cta: 'Call to Action',
-    layout: 'Layout'
+    hero: t('pages.blocks.categories.hero'),
+    content: t('pages.blocks.categories.content'),
+    cta: t('pages.blocks.categories.cta'),
+    layout: t('pages.blocks.categories.layout')
   }
   return labels[category] || category
 }
@@ -282,7 +284,7 @@ defineExpose({
             color="neutral"
             variant="ghost"
             size="xs"
-            :title="isZoomedOut ? 'Zoom to 100%' : `Zoom to ${Math.round(previewScale * 100)}%`"
+            :title="isZoomedOut ? t('pages.editor.zoomTo100') : t('pages.editor.zoomToPercent', { percent: Math.round(previewScale * 100) })"
             @click="isZoomedOut = !isZoomedOut"
           >
             <span class="text-xs text-muted ml-1">{{ Math.round(currentScale * 100) }}%</span>
@@ -305,7 +307,7 @@ defineExpose({
     <!-- Property Panel - Rendered at root level for proper z-index/overlay -->
     <USlideover
       v-model:open="isPropertyPanelOpen"
-      title="Edit Block"
+      :title="t('pages.editor.editBlock')"
       :ui="{ content: 'max-w-md' }"
     >
       <template #body>

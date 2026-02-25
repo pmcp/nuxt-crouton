@@ -35,6 +35,7 @@ const variantOptions = [
   { label: 'Link', value: 'link' }
 ]
 
+const { t } = useT()
 const buttons = ref<ButtonRowItem[]>([...props.modelValue])
 
 watch(() => props.modelValue, (newVal) => {
@@ -140,7 +141,7 @@ function removeFile(index: number) {
     >
       <!-- Header with move/delete -->
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium">Button {{ index + 1 }}</span>
+        <span class="text-sm font-medium">{{ t('pages.blocks.links.buttonN', { n: index + 1 }) }}</span>
         <div class="flex items-center gap-1">
           <UButton
             color="neutral"
@@ -175,7 +176,7 @@ function removeFile(index: number) {
             :color="!btn.download ? 'primary' : 'neutral'"
             :variant="!btn.download ? 'solid' : 'outline'"
             icon="i-lucide-link"
-            label="Link"
+            :label="t('pages.blocks.buttonRow.modeLink')"
             class="flex-1"
             @click="toggleDownloadMode(index, false)"
           />
@@ -183,7 +184,7 @@ function removeFile(index: number) {
             :color="btn.download ? 'primary' : 'neutral'"
             :variant="btn.download ? 'solid' : 'outline'"
             icon="i-lucide-download"
-            label="Download"
+            :label="t('pages.blocks.buttonRow.modeDownload')"
             class="flex-1"
             @click="toggleDownloadMode(index, true)"
           />
@@ -193,7 +194,7 @@ function removeFile(index: number) {
       <!-- Label -->
       <UInput
         :model-value="btn.label"
-        placeholder="Button text"
+        :placeholder="t('pages.blocks.links.buttonTextPlaceholder')"
         size="sm"
         @update:model-value="updateButton(index, 'label', $event)"
       />
@@ -217,7 +218,7 @@ function removeFile(index: number) {
             size="xs"
             @update:model-value="updateButton(index, 'external', $event)"
           />
-          <span class="text-xs text-neutral-500">Open in new tab</span>
+          <span class="text-xs text-neutral-500">{{ t('pages.blocks.buttonRow.openInNewTab') }}</span>
         </div>
       </template>
 
@@ -248,7 +249,7 @@ function removeFile(index: number) {
             :class="['size-4 text-neutral-400', { 'animate-spin': uploadingIndex === index }]"
           />
           <span class="text-[10px] text-neutral-500 mt-1">
-            {{ uploadingIndex === index ? 'Uploading...' : 'Click to upload' }}
+            {{ uploadingIndex === index ? t('pages.blocks.media.uploading') : t('pages.blocks.media.clickToUpload') }}
           </span>
           <input
             type="file"
@@ -295,7 +296,7 @@ function removeFile(index: number) {
       block
       @click="addButton"
     >
-      Add Button
+      {{ t('pages.blocks.links.addButton') }}
     </UButton>
   </div>
 </template>

@@ -5,7 +5,7 @@
       v-if="error"
       color="error"
       icon="i-lucide-alert-triangle"
-      title="Unable to load options"
+      :title="t('errors.unableToLoad')"
       :description="getErrorMessage()"
       class="mb-2"
     />
@@ -23,7 +23,7 @@
       :items="translatedOptions"
       value-key="value"
       label-key="displayLabel"
-      :placeholder="placeholder || `Select ${label}`"
+      :placeholder="placeholder || t('options.selectPlaceholder', { label })"
       :loading="pending"
       :disabled="!!error"
       size="xl"
@@ -36,7 +36,7 @@
           {{ getOptionLabel(modelValue as string) }}
         </span>
         <span v-else class="text-dimmed truncate">
-          {{ placeholder || `Select ${label}` }}
+          {{ placeholder || t('options.selectPlaceholder', { label }) }}
         </span>
       </template>
 
@@ -56,7 +56,7 @@
             block
             @click="openCreateModal"
           >
-            Create new {{ label }}
+            {{ t('options.createNew', { label }) }}
           </UButton>
         </div>
       </template>
@@ -68,7 +68,7 @@
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold">
-              Create new {{ label }}
+              {{ t('options.createNew', { label }) }}
             </h3>
             <UButton
               icon="i-lucide-x"
@@ -81,27 +81,27 @@
 
           <div class="flex flex-col gap-4">
             <UFormField
-              label="Label"
+              :label="t('options.labelField')"
               required
             >
               <UInput
                 v-model="newOption.label"
-                placeholder="Display name"
+                :placeholder="t('options.displayName')"
                 size="xl"
                 class="w-full"
                 @keyup.enter="createOption"
               />
             </UFormField>
-            <UFormField label="Value">
+            <UFormField :label="t('options.valueField')">
               <UInput
                 v-model="newOption.value"
-                :placeholder="slugifiedLabel || 'Auto-generated from label'"
+                :placeholder="slugifiedLabel || t('options.valuePlaceholder')"
                 size="xl"
                 class="w-full"
                 @keyup.enter="createOption"
               />
               <template #hint>
-                <span class="text-xs text-neutral-500">Leave empty to auto-generate from label</span>
+                <span class="text-xs text-neutral-500">{{ t('options.valueHint') }}</span>
               </template>
             </UFormField>
           </div>
@@ -112,7 +112,7 @@
               variant="outline"
               @click="createModalOpen = false"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton
               color="primary"
@@ -120,7 +120,7 @@
               :disabled="!newOption.label"
               @click="createOption"
             >
-              Create
+              {{ t('common.create') }}
             </UButton>
           </div>
         </div>
@@ -160,6 +160,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | null | undefined]
 }>()
 
+const { t } = useT()
 const notify = useNotify()
 const { locale } = useI18n()
 
@@ -184,18 +185,18 @@ const getErrorMessage = () => {
   const status = error.value.statusCode || error.value.status
 
   if (status === 404) {
-    return `Settings collection "${props.optionsCollection}" not found. Please create it first.`
+    return t('errors.notFound')
   }
 
   if (status === 403) {
-    return 'You do not have permission to view settings.'
+    return t('errors.noPermission')
   }
 
   if (status >= 500) {
-    return 'A server error occurred. Please try again later.'
+    return t('errors.serverError')
   }
 
-  return error.value.statusMessage || 'An error occurred while loading options.'
+  return error.value.statusMessage || t('errors.loadingData')
 }
 
 // Extract options from the specific field in the settings record
@@ -301,10 +302,10 @@ const createOption = async () => {
     createModalOpen.value = false
     newOption.value = { label: '', value: '' }
 
-    notify.success('Option created', { description: `"${optionToAdd.label}" has been added` })
+    notify.success(t('options.createSuccess'), { description: t('options.created', { label: optionToAdd.label }) })
   } catch (err: any) {
     console.error('Failed to create option:', err)
-    notify.error('Error', { description: err.message || 'Failed to create option' })
+    notify.error(t('errors.failedToCreateOption'), { description: err.message || t('errors.failedToCreateOption') })
   } finally {
     creating.value = false
   }

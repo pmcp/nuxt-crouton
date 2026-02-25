@@ -85,7 +85,7 @@ function moveCard(index: number, direction: 'up' | 'down') {
     >
       <!-- Header with move/delete -->
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium">Card {{ index + 1 }}</span>
+        <span class="text-sm font-medium">{{ t('pages.blocks.cards.cardN', { n: index + 1 }) }}</span>
         <div class="flex items-center gap-1">
           <UButton
             color="neutral"
@@ -123,7 +123,7 @@ function moveCard(index: number, direction: 'up' | 'down') {
       <!-- Title -->
       <UInput
         :model-value="card.title"
-        placeholder="Card title"
+        :placeholder="t('pages.blocks.cards.titlePlaceholder')"
         size="sm"
         @update:model-value="updateCard(index, 'title', $event)"
       />
@@ -131,7 +131,7 @@ function moveCard(index: number, direction: 'up' | 'down') {
       <!-- Description -->
       <UTextarea
         :model-value="card.description || ''"
-        placeholder="Card description"
+        :placeholder="t('pages.blocks.cards.descriptionPlaceholder')"
         :rows="2"
         size="sm"
         @update:model-value="updateCard(index, 'description', $event)"
@@ -140,7 +140,7 @@ function moveCard(index: number, direction: 'up' | 'down') {
       <!-- Link URL -->
       <UInput
         :model-value="card.to || ''"
-        placeholder="Link URL (optional)"
+        :placeholder="t('pages.blocks.cards.linkPlaceholder')"
         size="sm"
         @update:model-value="updateCard(index, 'to', $event)"
       >

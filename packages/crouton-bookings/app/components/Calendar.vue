@@ -59,7 +59,7 @@ function getLocationTitle(location: LocationData): string {
   return translations?.[locale.value]?.title
     || translations?.en?.title
     || location.title
-    || 'Untitled'
+    || t('bookings.untitled')
 }
 
 // Ref for WeekStrip control
@@ -261,7 +261,7 @@ function getIndicatorsForDate(date: Date): IndicatorData[] {
     const locationSlots = isInventoryMode ? [] : parseLocationSlots(location)
     const effectiveSlots = locationSlots.length > 0
       ? locationSlots
-      : [{ id: 'all-day', label: 'All Day' }]
+      : [{ id: 'all-day', label: t('bookings.allDay') }]
 
     const locationBookings = byLocation.get(location.id) || []
 
@@ -534,7 +534,7 @@ const monthCellHeight = computed(() => {
 
                 <!-- Simple count for single all-day slot with capacity 1 -->
                 <p v-else class="text-xs text-dimmed mt-1">
-                  {{ indicator.bookings.length > 0 ? `${indicator.bookings.length} booking${indicator.bookings.length > 1 ? 's' : ''}` : 'No bookings' }}
+                  {{ indicator.bookings.length > 0 ? t('bookings.calendar.bookingCount', { count: indicator.bookings.length }, indicator.bookings.length) : t('bookings.calendar.noBookings') }}
                 </p>
               </div>
             </template>
@@ -650,7 +650,7 @@ const monthCellHeight = computed(() => {
 
                     <!-- Simple count for single all-day slot with capacity 1 -->
                     <p v-else class="text-xs text-dimmed mt-1">
-                      {{ indicator.bookings.length > 0 ? `${indicator.bookings.length} booking${indicator.bookings.length > 1 ? 's' : ''}` : 'No bookings' }}
+                      {{ indicator.bookings.length > 0 ? t('bookings.calendar.bookingCount', { count: indicator.bookings.length }, indicator.bookings.length) : t('bookings.calendar.noBookings') }}
                     </p>
                   </div>
                 </template>

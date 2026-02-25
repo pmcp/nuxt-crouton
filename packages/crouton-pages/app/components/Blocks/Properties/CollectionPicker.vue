@@ -16,6 +16,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+const { t } = useT()
+
 // Get available collections from registry
 const { configs } = useCollections()
 
@@ -42,7 +44,7 @@ function onChange(value: string) {
       :model-value="modelValue"
       :items="collectionOptions"
       value-key="value"
-      placeholder="Select a collection..."
+      :placeholder="t('pages.blocks.collection.selectPlaceholder')"
       class="w-full"
       @update:model-value="onChange"
     >
@@ -55,7 +57,7 @@ function onChange(value: string) {
     </USelect>
 
     <p v-if="collectionOptions.length === 0" class="text-sm text-muted mt-2">
-      No collections found in the registry.
+      {{ t('pages.blocks.collection.noCollections') }}
     </p>
   </div>
 </template>

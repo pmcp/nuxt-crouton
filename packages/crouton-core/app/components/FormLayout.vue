@@ -52,14 +52,15 @@ const enhancedNavigationItems = computed(() => {
 })
 
 // Detect if sidebar slot is being used
+const { t } = useT()
 const slots = useSlots()
 const hasSidebar = computed(() => !!slots.sidebar)
 
 // Prepare accordion items for mobile sidebar
-const sidebarAccordionItems = [{
-  label: 'Meta settings',
+const sidebarAccordionItems = computed(() => [{
+  label: t('form.metaSettings'),
   defaultOpen: false
-}]
+}])
 </script>
 
 <template>

@@ -20,6 +20,7 @@ const props = defineProps<{
   getPos: () => number
 }>()
 
+const { t } = useT()
 const attrs = computed(() => props.node.attrs)
 
 const hasFile = computed(() => !!attrs.value.file)
@@ -123,7 +124,7 @@ function handleOpenPanel() {
               <line x1="12" y1="18" x2="12" y2="12" />
               <polyline points="9 15 12 18 15 15" />
             </svg>
-            <span class="text-sm font-medium">No file — double-click to add</span>
+            <span class="text-sm font-medium">{{ t('pages.blocks.file.noFile') }}</span>
           </div>
         </div>
       </div>

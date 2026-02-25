@@ -8,6 +8,7 @@
  * @route /admin/[team]/bookings/email-logs
  */
 const { teamId } = useTeamContext()
+const { t } = useT()
 
 // Fetch email logs
 const { data: emailLogs, status, refresh } = await useFetch(
@@ -57,12 +58,12 @@ const statusConfig: Record<string, { color: 'success' | 'warning' | 'error'; ico
 }
 
 // Trigger type labels
-const triggerLabels: Record<string, string> = {
-  booking_created: 'Confirmation',
-  reminder_before: 'Reminder',
-  booking_cancelled: 'Cancellation',
-  follow_up_after: 'Follow Up'
-}
+const triggerLabels = computed<Record<string, string>>(() => ({
+  booking_created: t('bookings.emailLogs.triggerConfirmation'),
+  reminder_before: t('bookings.emailLogs.triggerReminder'),
+  booking_cancelled: t('bookings.emailLogs.triggerCancellation'),
+  follow_up_after: t('bookings.emailLogs.triggerFollowUp')
+}))
 
 // Format date
 function formatDate(dateString: string | null) {
@@ -93,8 +94,8 @@ function viewError(error: string) {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Email Logs</h1>
-        <p class="text-muted mt-1">Track sent booking notification emails</p>
+        <h1 class="text-2xl font-bold">{{ t('bookings.emailLogs.title') }}</h1>
+        <p class="text-muted mt-1">{{ t('bookings.emailLogs.description') }}</p>
       </div>
       <UButton
         icon="i-lucide-refresh-cw"
@@ -103,7 +104,7 @@ function viewError(error: string) {
         :loading="status === 'pending'"
         @click="refresh()"
       >
-        Refresh
+        {{ t('bookings.emailLogs.refresh') }}
       </UButton>
     </div>
 
@@ -111,19 +112,19 @@ function viewError(error: string) {
     <div class="grid gap-4 sm:grid-cols-4">
       <UCard class="text-center">
         <div class="text-3xl font-bold">{{ stats.total }}</div>
-        <div class="text-sm text-muted mt-1">Total Emails</div>
+        <div class="text-sm text-muted mt-1">{{ t('bookings.emailLogs.totalEmails') }}</div>
       </UCard>
       <UCard class="text-center">
         <div class="text-3xl font-bold text-success">{{ stats.sent }}</div>
-        <div class="text-sm text-muted mt-1">Sent</div>
+        <div class="text-sm text-muted mt-1">{{ t('bookings.emailLogs.sent') }}</div>
       </UCard>
       <UCard class="text-center">
         <div class="text-3xl font-bold text-warning">{{ stats.pending }}</div>
-        <div class="text-sm text-muted mt-1">Pending</div>
+        <div class="text-sm text-muted mt-1">{{ t('bookings.emailLogs.pending') }}</div>
       </UCard>
       <UCard class="text-center">
         <div class="text-3xl font-bold text-error">{{ stats.failed }}</div>
-        <div class="text-sm text-muted mt-1">Failed</div>
+        <div class="text-sm text-muted mt-1">{{ t('bookings.emailLogs.failed') }}</div>
       </UCard>
     </div>
 
@@ -135,8 +136,8 @@ function viewError(error: string) {
     <!-- Empty state -->
     <div v-else-if="logs.length === 0" class="text-center py-12 border border-dashed border-default rounded-lg">
       <UIcon name="i-lucide-mail" class="size-12 text-muted mx-auto mb-4" />
-      <h3 class="text-lg font-medium mb-1">No Email Logs Yet</h3>
-      <p class="text-muted">Email logs will appear here once booking emails are sent.</p>
+      <h3 class="text-lg font-medium mb-1">{{ t('bookings.emailLogs.noLogs') }}</h3>
+      <p class="text-muted">{{ t('bookings.emailLogs.noLogsDescription') }}</p>
     </div>
 
     <!-- Logs Table -->
@@ -144,12 +145,12 @@ function viewError(error: string) {
       <UTable
         :data="logs"
         :columns="[
-          { accessorKey: 'status', header: 'Status' },
-          { accessorKey: 'recipientEmail', header: 'Recipient' },
-          { accessorKey: 'triggerType', header: 'Type' },
-          { accessorKey: 'sentAt', header: 'Sent At' },
-          { accessorKey: 'createdAt', header: 'Created' },
-          { accessorKey: 'error', header: 'Error' }
+          { accessorKey: 'status', header: t('bookings.emailLogs.columnStatus') },
+          { accessorKey: 'recipientEmail', header: t('bookings.emailLogs.columnRecipient') },
+          { accessorKey: 'triggerType', header: t('bookings.emailLogs.columnType') },
+          { accessorKey: 'sentAt', header: t('bookings.emailLogs.columnSentAt') },
+          { accessorKey: 'createdAt', header: t('bookings.emailLogs.columnCreated') },
+          { accessorKey: 'error', header: t('bookings.emailLogs.columnError') }
         ]"
       >
         <template #status-cell="{ row }">
@@ -187,7 +188,7 @@ function viewError(error: string) {
             icon="i-lucide-alert-circle"
             @click="viewError(row.original.error)"
           >
-            View
+            {{ t('bookings.emailLogs.view') }}
           </UButton>
           <span v-else class="text-muted">-</span>
         </template>
@@ -201,12 +202,12 @@ function viewError(error: string) {
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
           <UIcon name="i-lucide-alert-circle" class="size-5 text-error" />
-          Error Details
+          {{ t('bookings.emailLogs.errorDetails') }}
         </h3>
         <pre class="bg-error/10 text-error p-4 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap">{{ selectedError }}</pre>
         <div class="flex justify-end mt-4">
           <UButton color="neutral" variant="ghost" @click="showErrorModal = false">
-            Close
+            {{ t('bookings.emailLogs.close') }}
           </UButton>
         </div>
       </div>

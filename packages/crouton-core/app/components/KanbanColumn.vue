@@ -162,6 +162,8 @@ function getCollabRoomId(item: any): string {
   return `${props.collection}-${item.id}`
 }
 
+const { t } = useT()
+
 // Crouton for actions
 const crouton = useCrouton()
 </script>
@@ -256,7 +258,7 @@ const crouton = useCrouton()
         v-if="items.length === 0"
         class="flex items-center justify-center h-20 text-muted text-sm border-2 border-dashed border-muted/30 rounded-lg"
       >
-        Drop items here
+        {{ t('kanban.dropItemsHere') }}
       </div>
     </div>
   </div>

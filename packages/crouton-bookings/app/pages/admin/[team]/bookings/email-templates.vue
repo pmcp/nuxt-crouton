@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { teamId } = useTeamContext()
+const { t } = useT()
 
 // Get booking email variables and preview values
 const { variables, getPreviewValues } = useBookingEmailVariables()
@@ -43,7 +44,7 @@ const { data: locations } = await useFetch(
 const locationOptions = computed(() => {
   const items = Array.isArray(locations.value) ? locations.value : locations.value?.items || []
   return [
-    { label: 'All Locations', value: null },
+    { label: t('bookings.emailTemplates.allLocations'), value: null },
     ...items.map((loc: any) => ({
       label: loc.name || loc.title || loc.id,
       value: loc.id
@@ -73,32 +74,32 @@ const templatesByTrigger = computed(() => {
 })
 
 // Trigger type labels and icons
-const triggerConfig = {
+const triggerConfig = computed(() => ({
   booking_created: {
-    label: 'Booking Created',
-    description: 'Sent when a new booking is made',
+    label: t('bookings.emailTemplates.triggers.bookingCreated'),
+    description: t('bookings.emailTemplates.triggers.bookingCreatedDesc'),
     icon: 'i-lucide-calendar-plus',
     color: 'success' as const
   },
   reminder_before: {
-    label: 'Reminder Before',
-    description: 'Sent before the booking date',
+    label: t('bookings.emailTemplates.triggers.reminderBefore'),
+    description: t('bookings.emailTemplates.triggers.reminderBeforeDesc'),
     icon: 'i-lucide-bell',
     color: 'warning' as const
   },
   booking_cancelled: {
-    label: 'Booking Cancelled',
-    description: 'Sent when a booking is cancelled',
+    label: t('bookings.emailTemplates.triggers.bookingCancelled'),
+    description: t('bookings.emailTemplates.triggers.bookingCancelledDesc'),
     icon: 'i-lucide-calendar-x',
     color: 'error' as const
   },
   follow_up_after: {
-    label: 'Follow Up After',
-    description: 'Sent after the booking date',
+    label: t('bookings.emailTemplates.triggers.followUpAfter'),
+    description: t('bookings.emailTemplates.triggers.followUpAfterDesc'),
     icon: 'i-lucide-mail-check',
     color: 'info' as const
   }
-}
+}))
 
 // Form state with translations support
 const formState = ref({
@@ -244,7 +245,7 @@ async function handleSubmit() {
 
 // Delete template
 async function deleteTemplate(template: any) {
-  if (!confirm('Are you sure you want to delete this template?')) return
+  if (!confirm(t('bookings.emailTemplates.deleteConfirm'))) return
 
   try {
     await $fetch(`/api/teams/${teamId.value}/bookings-emailtemplates/${template.id}`, {
@@ -271,7 +272,7 @@ async function toggleActive(template: any) {
 
 // Get location name for display
 function getLocationName(locationId: string | null) {
-  if (!locationId) return 'All Locations'
+  if (!locationId) return t('bookings.emailTemplates.allLocations')
   const items = Array.isArray(locations.value) ? locations.value : locations.value?.items || []
   const loc = items.find((l: any) => l.id === locationId)
   return loc?.name || loc?.title || locationId
@@ -283,19 +284,19 @@ function getLocationName(locationId: string | null) {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Email Templates</h1>
-        <p class="text-muted mt-1">Configure automated email notifications for bookings</p>
+        <h1 class="text-2xl font-bold">{{ t('bookings.emailTemplates.title') }}</h1>
+        <p class="text-muted mt-1">{{ t('bookings.emailTemplates.description') }}</p>
       </div>
       <UDropdownMenu
         :items="[
-          { label: 'Booking Created', icon: 'i-lucide-calendar-plus', click: () => openCreateForm('booking_created') },
-          { label: 'Reminder Before', icon: 'i-lucide-bell', click: () => openCreateForm('reminder_before') },
-          { label: 'Booking Cancelled', icon: 'i-lucide-calendar-x', click: () => openCreateForm('booking_cancelled') },
-          { label: 'Follow Up After', icon: 'i-lucide-mail-check', click: () => openCreateForm('follow_up_after') }
+          { label: t('bookings.emailTemplates.triggers.bookingCreated'), icon: 'i-lucide-calendar-plus', click: () => openCreateForm('booking_created') },
+          { label: t('bookings.emailTemplates.triggers.reminderBefore'), icon: 'i-lucide-bell', click: () => openCreateForm('reminder_before') },
+          { label: t('bookings.emailTemplates.triggers.bookingCancelled'), icon: 'i-lucide-calendar-x', click: () => openCreateForm('booking_cancelled') },
+          { label: t('bookings.emailTemplates.triggers.followUpAfter'), icon: 'i-lucide-mail-check', click: () => openCreateForm('follow_up_after') }
         ]"
       >
         <UButton icon="i-lucide-plus" color="primary">
-          New Template
+          {{ t('bookings.emailTemplates.newTemplate') }}
         </UButton>
       </UDropdownMenu>
     </div>
@@ -350,7 +351,7 @@ function getLocationName(locationId: string | null) {
                 icon="i-lucide-plus"
                 @click="openCreateForm(triggerType)"
               >
-                Add
+                {{ t('bookings.emailTemplates.add') }}
               </UButton>
             </div>
 
@@ -369,7 +370,7 @@ function getLocationName(locationId: string | null) {
                   size="xs"
                   class="absolute top-3 right-3"
                 >
-                  Active
+                  {{ t('bookings.emailTemplates.active') }}
                 </UBadge>
                 <UBadge
                   v-else
@@ -378,11 +379,11 @@ function getLocationName(locationId: string | null) {
                   size="xs"
                   class="absolute top-3 right-3"
                 >
-                  Inactive
+                  {{ t('bookings.emailTemplates.inactive') }}
                 </UBadge>
 
                 <div class="space-y-3 pr-16">
-                  <h4 class="font-medium truncate">{{ template.name || 'Untitled' }}</h4>
+                  <h4 class="font-medium truncate">{{ template.name || t('bookings.emailTemplates.untitled') }}</h4>
                   <p class="text-sm text-muted line-clamp-1">{{ template.subject }}</p>
 
                   <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -392,7 +393,7 @@ function getLocationName(locationId: string | null) {
                     </span>
                     <span v-if="template.daysOffset" class="flex items-center gap-1">
                       <UIcon name="i-lucide-calendar" class="size-3" />
-                      {{ template.daysOffset > 0 ? '+' : '' }}{{ template.daysOffset }} days
+                      {{ template.daysOffset > 0 ? '+' : '' }}{{ template.daysOffset }} {{ t('bookings.emailTemplates.days') }}
                     </span>
                     <span class="flex items-center gap-1">
                       <UIcon name="i-lucide-map-pin" class="size-3" />
@@ -432,7 +433,7 @@ function getLocationName(locationId: string | null) {
             <!-- Empty state -->
             <div v-else class="border border-dashed border-default rounded-lg p-6 text-center">
               <UIcon name="i-lucide-mail-x" class="size-8 text-muted mx-auto mb-2" />
-              <p class="text-sm text-muted">No templates yet</p>
+              <p class="text-sm text-muted">{{ t('bookings.emailTemplates.noTemplates') }}</p>
               <UButton
                 size="sm"
                 color="neutral"
@@ -440,7 +441,7 @@ function getLocationName(locationId: string | null) {
                 class="mt-2"
                 @click="openCreateForm(triggerType)"
               >
-                Create Template
+                {{ t('bookings.emailTemplates.createTemplate') }}
               </UButton>
             </div>
           </div>
@@ -448,12 +449,12 @@ function getLocationName(locationId: string | null) {
   </div>
 
   <!-- Edit/Create Modal -->
-  <UModal v-model:open="showForm" :title="formAction === 'create' ? 'New Email Template' : 'Edit Template'">
+  <UModal v-model:open="showForm" :title="formAction === 'create' ? t('bookings.emailTemplates.newEmailTemplate') : t('bookings.emailTemplates.editTemplate')">
     <template #body>
       <UForm :state="formState" class="space-y-6" @submit="handleSubmit">
         <!-- Translation notice -->
         <div class="text-xs text-muted border-l-2 border-primary pl-3">
-          English translation is required. Other languages are optional and will fallback to English if not provided.
+          {{ t('bookings.emailTemplates.translationNotice') }}
         </div>
 
         <!-- Language tabs -->
@@ -483,7 +484,7 @@ function getLocationName(locationId: string | null) {
         </UTabs>
 
         <!-- Name (translatable) -->
-        <UFormField :label="`Template Name (${activeLocale.toUpperCase()})`" name="name" :required="activeLocale === 'en'">
+        <UFormField :label="t('bookings.emailTemplates.templateName', { locale: activeLocale.toUpperCase() })" name="name" :required="activeLocale === 'en'">
           <UInput
             v-model="nameValue"
             placeholder="e.g., Booking Confirmation"
@@ -492,7 +493,7 @@ function getLocationName(locationId: string | null) {
         </UFormField>
 
         <!-- Subject (translatable) -->
-        <UFormField :label="`Email Subject (${activeLocale.toUpperCase()})`" name="subject" :required="activeLocale === 'en'">
+        <UFormField :label="t('bookings.emailTemplates.emailSubject', { locale: activeLocale.toUpperCase() })" name="subject" :required="activeLocale === 'en'">
           <UInput
             v-model="subjectValue"
             :placeholder="subjectPlaceholder"
@@ -504,7 +505,7 @@ function getLocationName(locationId: string | null) {
         </UFormField>
 
         <!-- Body with editor (translatable) -->
-        <UFormField :label="`Email Body (${activeLocale.toUpperCase()})`" name="body" :required="activeLocale === 'en'">
+        <UFormField :label="t('bookings.emailTemplates.emailBody', { locale: activeLocale.toUpperCase() })" name="body" :required="activeLocale === 'en'">
           <CroutonEditorWithPreview
             v-model="bodyValue"
             :variables="variables"
@@ -517,7 +518,7 @@ function getLocationName(locationId: string | null) {
         <USeparator />
 
         <!-- From email -->
-        <UFormField label="From Email" name="fromEmail" required>
+        <UFormField :label="t('bookings.emailTemplates.fromEmail')" name="fromEmail" required>
           <UInput
             v-model="formState.fromEmail"
             type="email"
@@ -527,57 +528,57 @@ function getLocationName(locationId: string | null) {
         </UFormField>
 
         <!-- Trigger Type -->
-        <UFormField label="Trigger Type" name="triggerType">
+        <UFormField :label="t('bookings.emailTemplates.triggerType')" name="triggerType">
           <USelect
             v-model="formState.triggerType"
             :items="[
-              { label: 'Booking Created', value: 'booking_created' },
-              { label: 'Reminder Before', value: 'reminder_before' },
-              { label: 'Booking Cancelled', value: 'booking_cancelled' },
-              { label: 'Follow Up After', value: 'follow_up_after' }
+              { label: t('bookings.emailTemplates.triggers.bookingCreated'), value: 'booking_created' },
+              { label: t('bookings.emailTemplates.triggers.reminderBefore'), value: 'reminder_before' },
+              { label: t('bookings.emailTemplates.triggers.bookingCancelled'), value: 'booking_cancelled' },
+              { label: t('bookings.emailTemplates.triggers.followUpAfter'), value: 'follow_up_after' }
             ]"
             class="w-full"
           />
         </UFormField>
 
         <!-- Recipient -->
-        <UFormField label="Recipient" name="recipientType">
+        <UFormField :label="t('bookings.emailTemplates.recipient')" name="recipientType">
           <USelect
             v-model="formState.recipientType"
             :items="[
-              { label: 'Customer', value: 'customer' },
-              { label: 'Admin', value: 'admin' },
-              { label: 'Both', value: 'both' }
+              { label: t('bookings.emailTemplates.recipientCustomer'), value: 'customer' },
+              { label: t('bookings.emailTemplates.recipientAdmin'), value: 'admin' },
+              { label: t('bookings.emailTemplates.recipientBoth'), value: 'both' }
             ]"
             class="w-full"
           />
         </UFormField>
 
         <!-- Days Offset -->
-        <UFormField label="Days Offset" name="daysOffset">
+        <UFormField :label="t('bookings.emailTemplates.daysOffset')" name="daysOffset">
           <UInputNumber v-model="formState.daysOffset" class="w-full" />
           <template #hint>
-            <span class="text-xs text-muted">-1 = day before, 1 = day after</span>
+            <span class="text-xs text-muted">{{ t('bookings.emailTemplates.daysOffsetHint') }}</span>
           </template>
         </UFormField>
 
         <!-- Location -->
-        <UFormField label="Location" name="locationId">
+        <UFormField :label="t('bookings.emailTemplates.locationLabel')" name="locationId">
           <USelect
             v-model="formState.locationId"
             :items="locationOptions"
             class="w-full"
           />
           <template #hint>
-            <span class="text-xs text-muted">Leave empty for all locations</span>
+            <span class="text-xs text-muted">{{ t('bookings.emailTemplates.locationHint') }}</span>
           </template>
         </UFormField>
 
         <!-- Active toggle -->
-        <UFormField label="Status" name="isActive">
+        <UFormField :label="t('bookings.emailTemplates.statusLabel')" name="isActive">
           <div class="flex items-center gap-2">
             <USwitch v-model="formState.isActive" />
-            <span class="text-sm">{{ formState.isActive ? 'Active' : 'Inactive' }}</span>
+            <span class="text-sm">{{ formState.isActive ? t('bookings.emailTemplates.active') : t('bookings.emailTemplates.inactive') }}</span>
           </div>
         </UFormField>
 
@@ -588,14 +589,14 @@ function getLocationName(locationId: string | null) {
             variant="ghost"
             @click="showForm = false"
           >
-            Cancel
+            {{ t('bookings.emailTemplates.cancel') }}
           </UButton>
           <UButton
             type="submit"
             color="primary"
             :loading="submitting"
           >
-            {{ formAction === 'create' ? 'Create Template' : 'Save Changes' }}
+            {{ formAction === 'create' ? t('bookings.emailTemplates.createTemplate') : t('bookings.emailTemplates.saveChanges') }}
           </UButton>
         </div>
       </UForm>

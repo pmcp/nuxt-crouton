@@ -22,6 +22,7 @@ export function useBookingCartStorage(
   cart: Ref<CartItem[]>,
 ) {
   const notify = useNotify()
+  const { t } = useT()
 
   // Submitting state
   const isSubmitting = ref(false)
@@ -45,7 +46,7 @@ export function useBookingCartStorage(
   // Submit all bookings in cart
   async function submitAll() {
     if (cart.value.length === 0) {
-      notify.warning('Cart is empty', { description: 'Add some bookings to your cart first' })
+      notify.warning(t('bookings.notifications.cartEmpty'), { description: t('bookings.notifications.cartEmptyDescription') })
       return null
     }
 
@@ -65,7 +66,7 @@ export function useBookingCartStorage(
       // Refresh my bookings list
       await refreshMyBookings()
 
-      notify.success('Bookings confirmed!', { description: `Successfully created ${result.count} booking${result.count === 1 ? '' : 's'}` })
+      notify.success(t('bookings.notifications.bookingsConfirmed'), { description: t('bookings.notifications.bookingsConfirmedDescription', { count: result.count }, result.count) })
 
       // Close cart drawer and switch to my bookings tab
       isCartOpen.value = false
@@ -75,7 +76,7 @@ export function useBookingCartStorage(
     }
     catch (error: any) {
       console.error('Failed to submit bookings:', error)
-      notify.error('Booking failed', { description: error.data?.message || 'Failed to create bookings. Please try again.' })
+      notify.error(t('bookings.notifications.bookingFailed'), { description: error.data?.message || t('bookings.notifications.bookingFailedDescription') })
       return null
     }
     finally {
@@ -95,13 +96,13 @@ export function useBookingCartStorage(
 
       await refreshMyBookings()
 
-      notify.success('Booking cancelled', { description: 'Your booking has been cancelled successfully' })
+      notify.success(t('bookings.notifications.bookingCancelled'), { description: t('bookings.notifications.bookingCancelledDescription') })
 
       return true
     }
     catch (error: any) {
       console.error('Failed to cancel booking:', error)
-      notify.error('Cancellation failed', { description: error.data?.message || 'Failed to cancel booking. Please try again.' })
+      notify.error(t('bookings.notifications.cancellationFailed'), { description: error.data?.message || t('bookings.notifications.cancellationFailedDescription') })
       return false
     }
   }
@@ -115,13 +116,13 @@ export function useBookingCartStorage(
 
       await refreshMyBookings()
 
-      notify.success('Booking deleted', { description: 'The booking has been permanently removed' })
+      notify.success(t('bookings.notifications.bookingDeleted'), { description: t('bookings.notifications.bookingDeletedDescription') })
 
       return true
     }
     catch (error: any) {
       console.error('Failed to delete booking:', error)
-      notify.error('Delete failed', { description: error.data?.message || 'Failed to delete booking. Please try again.' })
+      notify.error(t('bookings.notifications.deleteFailed'), { description: error.data?.message || t('bookings.notifications.deleteFailedDescription') })
       return false
     }
   }

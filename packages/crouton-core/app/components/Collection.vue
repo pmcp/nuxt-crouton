@@ -56,7 +56,7 @@
             :variant="getVariant('solid')"
             @click="handleCreate"
           >
-            Create
+            {{ t('common.create') }}
           </UButton>
         </div>
       </slot>
@@ -102,10 +102,10 @@
         class="text-center text-muted p-8"
       >
         <p class="text-lg font-medium">
-          No items yet
+          {{ t('collection.noItemsYet') }}
         </p>
         <p class="text-sm mt-1">
-          Create your first {{ collection }} item to get started
+          {{ t('collection.createFirstItem', { collection }) }}
         </p>
       </div>
 
@@ -136,7 +136,7 @@
           :variant="getVariant('solid')"
           @click="handleCreate"
         >
-          Create
+          {{ t('common.create') }}
         </UButton>
       </div>
     </slot>
@@ -175,10 +175,10 @@
       class="text-center text-muted p-8"
     >
       <p class="text-lg font-medium">
-        No items yet
+        {{ t('collection.noItemsYet') }}
       </p>
       <p class="text-sm mt-1">
-        Create your first {{ collection }} item to get started
+        {{ t('collection.createFirstItem', { collection }) }}
       </p>
     </div>
 
@@ -216,7 +216,7 @@
             size="xs"
             @click="handleCreate"
           >
-            Create
+            {{ t('common.create') }}
           </UButton>
         </div>
       </slot>
@@ -239,7 +239,7 @@
           :variant="getVariant('solid')"
           @click="handleCreate"
         >
-          Create
+          {{ t('common.create') }}
         </UButton>
       </div>
     </slot>
@@ -304,6 +304,8 @@ const emit = defineEmits<{
   'kanban-select': [item: any]
   'create': []
 }>()
+
+const { t } = useT()
 
 // Card component resolution
 const { toPascalCase } = useFormatCollections()

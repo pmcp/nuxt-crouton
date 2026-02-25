@@ -38,6 +38,7 @@ function generateCorrelationId(): string {
 export function useTreeMutation(collection: string) {
   const route = useRoute()
   const notify = useNotify()
+  const { t } = useT()
   const collections = useCollections()
   const config = collections.getConfig(collection)
   const { getTeamId } = useTeamContext()
@@ -177,9 +178,9 @@ export function useTreeMutation(collection: string) {
     } catch (error: any) {
       markError(id)
 
-      const errorMessage = error.data?.message || error.data || 'Move failed'
+      const errorMessage = error.data?.message || error.data || t('mutations.moveFailed')
 
-      notify.error('Move failed', { description: errorMessage })
+      notify.error(t('mutations.moveFailed'), { description: errorMessage })
 
       throw error
     } finally {
@@ -225,9 +226,9 @@ export function useTreeMutation(collection: string) {
       // Visual feedback via row flash animation for all reordered items
       updates.forEach(update => markSaved(update.id))
     } catch (error: any) {
-      const errorMessage = error.data?.message || error.data || 'Reorder failed'
+      const errorMessage = error.data?.message || error.data || t('mutations.reorderFailed')
 
-      notify.error('Reorder failed', { description: errorMessage })
+      notify.error(t('mutations.reorderFailed'), { description: errorMessage })
 
       throw error
     } finally {

@@ -16,7 +16,7 @@ const emit = defineEmits<{
 
 const isOpen = defineModel<boolean>('open', { default: false })
 
-const { tString } = useT()
+const { t, tString } = useT()
 const {
   parseFile,
   getCollectionFields,
@@ -48,14 +48,14 @@ const fieldOptions = computed(() => {
     label: `${f.label}${f.required ? ' *' : ''}`,
     value: f.key
   }))
-  return [{ label: '— Skip —', value: '' }, ...opts]
+  return [{ label: t('import.skipColumn'), value: '' }, ...opts]
 })
 
 // Table columns for preview
 const previewColumns = computed(() => {
   const mapped = mappings.value.filter(m => m.fieldKey)
   return [
-    { key: '_status', label: 'Status' },
+    { key: '_status', label: t('import.statusColumn') },
     ...mapped.map(m => ({
       key: m.fieldKey!,
       label: fields.value.find(f => f.key === m.fieldKey)?.label || m.fieldKey!
@@ -144,7 +144,7 @@ function close() {
           </h3>
           <div class="flex items-center gap-2 text-sm text-muted">
             <span
-              v-for="(s, i) in ['Mapping', 'Preview', 'Importing', 'Complete']"
+              v-for="(s, i) in [t('import.mapping'), t('import.preview'), t('import.importing'), t('import.importComplete')]"
               :key="s"
               :class="[
                 i === ['mapping', 'preview', 'importing', 'complete'].indexOf(step)
@@ -161,7 +161,7 @@ function close() {
         <!-- Step 1: Column Mapping -->
         <div v-if="step === 'mapping'" class="space-y-4">
           <p class="text-sm text-muted">
-            Map your file columns to collection fields. Required fields are marked with *.
+            {{ t('import.mapColumnsHint') }}
           </p>
 
           <div class="space-y-2 max-h-96 overflow-y-auto">
@@ -188,18 +188,18 @@ function close() {
 
           <div class="flex justify-between items-center pt-4 border-t border-default">
             <span class="text-sm text-muted">
-              {{ rows.length }} rows found
+              {{ t('import.rowsFound', { count: rows.length }) }}
             </span>
             <div class="flex gap-2">
               <UButton variant="ghost" @click="close">
-                Cancel
+                {{ t('common.cancel') }}
               </UButton>
               <UButton
                 color="primary"
                 :disabled="!mappings.some(m => m.fieldKey)"
                 @click="goToPreview"
               >
-                Next
+                {{ t('common.next') }}
               </UButton>
             </div>
           </div>
@@ -210,15 +210,15 @@ function close() {
           <!-- Summary bar -->
           <div class="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
             <UBadge color="success" variant="subtle">
-              {{ validCount }} valid
+              {{ t('import.validCount', { count: validCount }) }}
             </UBadge>
             <UBadge v-if="invalidCount > 0" color="error" variant="subtle">
-              {{ invalidCount }} with errors
+              {{ t('import.invalidCount', { count: invalidCount }) }}
             </UBadge>
             <div v-if="invalidCount > 0" class="ml-auto">
               <label class="flex items-center gap-2 text-sm">
                 <USwitch v-model="skipInvalid" size="sm" />
-                Skip invalid rows
+                {{ t('import.skipInvalid') }}
               </label>
             </div>
           </div>
@@ -249,7 +249,7 @@ function close() {
                       variant="subtle"
                       size="xs"
                     >
-                      {{ row._status === 'valid' ? 'OK' : 'Error' }}
+                      {{ row._status === 'valid' ? t('import.statusOk') : t('import.statusError') }}
                     </UBadge>
                   </td>
                   <td
@@ -273,18 +273,18 @@ function close() {
 
           <div class="flex justify-between items-center pt-4 border-t border-default">
             <span class="text-sm text-muted">
-              Will import {{ skipInvalid ? validCount : rows.length }} rows
+              {{ t('import.willImport', { count: skipInvalid ? validCount : rows.length }) }}
             </span>
             <div class="flex gap-2">
               <UButton variant="ghost" @click="step = 'mapping'">
-                Back
+                {{ t('common.back') }}
               </UButton>
               <UButton
                 color="primary"
                 :disabled="skipInvalid ? validCount === 0 : rows.length === 0"
                 @click="startImport"
               >
-                Import
+                {{ t('common.import') }}
               </UButton>
             </div>
           </div>
@@ -295,12 +295,12 @@ function close() {
           <div class="text-center">
             <UIcon name="i-lucide-loader" class="size-8 animate-spin text-primary mx-auto mb-4" />
             <p class="text-sm text-muted">
-              Importing {{ skipInvalid ? validCount : rows.length }} rows...
+              {{ t('import.importingRows', { count: skipInvalid ? validCount : rows.length }) }}
             </p>
           </div>
           <UProgress :value="progress" />
           <p class="text-center text-xs text-muted">
-            {{ progress }}% complete
+            {{ t('import.percentComplete', { percent: progress }) }}
           </p>
         </div>
 
@@ -314,17 +314,17 @@ function close() {
                 importResult?.failed ? 'text-warning' : 'text-success'
               ]"
             />
-            <h4 class="text-lg font-semibold mb-2">Import Complete</h4>
+            <h4 class="text-lg font-semibold mb-2">{{ t('import.importComplete') }}</h4>
             <div class="space-y-1 text-sm text-muted">
-              <p>{{ importResult?.created }} items created</p>
-              <p v-if="importResult?.failed">{{ importResult.failed }} items failed</p>
-              <p v-if="invalidCount > 0 && skipInvalid">{{ invalidCount }} rows skipped (validation errors)</p>
+              <p>{{ t('import.itemsCreated', { count: importResult?.created }) }}</p>
+              <p v-if="importResult?.failed">{{ t('import.itemsFailed', { count: importResult.failed }) }}</p>
+              <p v-if="invalidCount > 0 && skipInvalid">{{ t('import.rowsSkipped', { count: invalidCount }) }}</p>
             </div>
           </div>
 
           <div class="flex justify-center pt-4">
             <UButton color="primary" @click="close">
-              Close
+              {{ t('common.close') }}
             </UButton>
           </div>
         </div>

@@ -8,7 +8,7 @@
         :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
-          <span class="italic">{{ effectiveViewTooltip || 'Preview only' }}</span>
+          <span class="italic">{{ effectiveViewTooltip || t('table.previewOnly') }}</span>
         </template>
 
         <UButton
@@ -45,7 +45,7 @@
         :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
-          <span class="italic">{{ effectiveDeleteTooltip || 'Preview only' }}</span>
+          <span class="italic">{{ effectiveDeleteTooltip || t('table.previewOnly') }}</span>
         </template>
 
         <UButton
@@ -82,7 +82,7 @@
         :popper="{ placement: 'left', arrow: false }"
       >
         <template #text>
-          <span class="italic">{{ effectiveUpdateTooltip || 'Preview only' }}</span>
+          <span class="italic">{{ effectiveUpdateTooltip || t('table.previewOnly') }}</span>
         </template>
         <UButton
           :loading="updateLoading"
@@ -111,6 +111,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useT()
+
 const props = defineProps({
   view: {
     type: Boolean,

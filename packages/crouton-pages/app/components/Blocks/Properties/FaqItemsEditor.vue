@@ -16,6 +16,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: FaqItem[]]
 }>()
 
+const { t } = useT()
 const items = ref<FaqItem[]>([...props.modelValue])
 
 watch(() => props.modelValue, (newVal) => {
@@ -89,14 +90,14 @@ function moveItem(index: number, direction: 'up' | 'down') {
 
       <UInput
         :model-value="item.question"
-        placeholder="Question"
+        :placeholder="t('pages.blocks.faq.questionPlaceholder')"
         size="sm"
         @update:model-value="updateItem(index, 'question', $event)"
       />
 
       <UTextarea
         :model-value="item.answer"
-        placeholder="Answer"
+        :placeholder="t('pages.blocks.faq.answerPlaceholder')"
         :rows="2"
         size="sm"
         @update:model-value="updateItem(index, 'answer', $event)"
@@ -111,7 +112,7 @@ function moveItem(index: number, direction: 'up' | 'down') {
       block
       @click="addItem"
     >
-      Add Question
+      {{ t('pages.blocks.faq.addQuestion') }}
     </UButton>
   </div>
 </template>

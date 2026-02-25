@@ -56,6 +56,7 @@ export function useCollectionMutation<K extends CollectionName>(
 ): CollectionMutationReturn<K> {
   const route = useRoute()
   const notify = useNotify()
+  const { t } = useT()
   const collections = useCollections()
   const config = collections.getConfig(collection)
   const { getTeamId } = useTeamContext()
@@ -181,9 +182,9 @@ export function useCollectionMutation<K extends CollectionName>(
 
       return result
     } catch (error: any) {
-      const errorMessage = error.data?.message || error.data || 'Creation failed'
+      const errorMessage = error.data?.message || error.data || t('mutations.creationFailed')
 
-      notify.error('Creation failed', { description: errorMessage })
+      notify.error(t('mutations.creationFailed'), { description: errorMessage })
 
       throw error
     }
@@ -240,9 +241,9 @@ export function useCollectionMutation<K extends CollectionName>(
 
       return result
     } catch (error: any) {
-      const errorMessage = error.data?.message || error.data || 'Update failed'
+      const errorMessage = error.data?.message || error.data || t('mutations.updateFailed')
 
-      notify.error('Update failed', { description: errorMessage })
+      notify.error(t('mutations.updateFailed'), { description: errorMessage })
 
       throw error
     }
@@ -280,9 +281,9 @@ export function useCollectionMutation<K extends CollectionName>(
       // Invalidate cache to trigger refetch (includes individual item caches)
       await invalidateCache(ids)
     } catch (error: any) {
-      const errorMessage = error.data?.message || error.data || 'Delete failed'
+      const errorMessage = error.data?.message || error.data || t('mutations.deleteFailed')
 
-      notify.error('Delete failed', { description: errorMessage })
+      notify.error(t('mutations.deleteFailed'), { description: errorMessage })
 
       throw error
     }

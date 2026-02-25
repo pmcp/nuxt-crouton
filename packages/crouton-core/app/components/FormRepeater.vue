@@ -105,7 +105,7 @@ onMounted(() => {
   <!-- Empty state -->
   <UCard v-if="items.length === 0">
     <div class="text-center text-gray-500">
-      No items yet. Click "{{ addLabel }}" to get started.
+      {{ t('repeater.emptyState', { label: addLabel }) }}
     </div>
   </UCard>
 

@@ -4,6 +4,7 @@ const props = defineProps<{
   items: string[]
 }>()
 
+const { t } = useT()
 const { close } = useCrouton()
 const { mutate } = useCroutonMutate()
 const { collectionWithCapitalSingular } = useFormatCollections()
@@ -42,10 +43,10 @@ const handleCancel = () => {
     <!-- Message -->
     <div class="text-center space-y-2">
       <h3 class="text-lg font-semibold">
-        Delete {{ itemCount }} {{ collectionName }}{{ itemCount > 1 ? 's' : '' }}?
+        {{ t('deleteConfirm.title', { count: itemCount, name: collectionName + (itemCount > 1 ? 's' : '') }) }}
       </h3>
       <p class="text-sm text-gray-500 dark:text-gray-400">
-        This action cannot be undone.
+        {{ t('deleteConfirm.cannotBeUndone') }}
       </p>
     </div>
 
@@ -57,14 +58,14 @@ const handleCancel = () => {
         :disabled="loading"
         @click="handleCancel"
       >
-        Cancel
+        {{ t('common.cancel') }}
       </UButton>
       <UButton
         color="error"
         :loading="loading"
         @click="handleDelete"
       >
-        Delete
+        {{ t('common.delete') }}
       </UButton>
     </div>
   </div>

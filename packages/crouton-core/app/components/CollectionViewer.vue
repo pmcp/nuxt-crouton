@@ -25,7 +25,7 @@
         v-if="componentError"
         class="text-red-600 p-4 bg-red-50 rounded"
       >
-        Unable to load collection component: {{ componentError }}
+        {{ t('collection.componentError', { error: componentError }) }}
       </div>
 
       <component
@@ -39,7 +39,7 @@
         v-else
         class="text-gray-500"
       >
-        Component not found for collection: {{ collectionName }}
+        {{ t('collection.componentNotFound', { collection: collectionName }) }}
       </div>
     </div>
   </div>
@@ -55,6 +55,7 @@ const props = withDefaults(defineProps<Props>(), {
   defaultLayout: 'table'
 })
 
+const { t } = useT()
 const componentError = ref<string | null>(null)
 const currentLayout = ref(props.defaultLayout)
 

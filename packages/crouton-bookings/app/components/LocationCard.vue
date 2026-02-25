@@ -18,6 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const { locale } = useI18n()
+const { t } = useT()
 
 // Parse slots count
 const slotCount = computed(() => {
@@ -41,7 +42,7 @@ const title = computed(() => {
   return translations?.[locale.value]?.title
     || translations?.en?.title
     || props.location.title
-    || 'Untitled'
+    || t('bookings.untitled')
 })
 </script>
 

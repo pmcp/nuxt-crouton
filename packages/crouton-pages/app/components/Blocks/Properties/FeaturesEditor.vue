@@ -12,6 +12,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { t } = useT()
+
 const emit = defineEmits<{
   'update:modelValue': [value: BlockFeature[]]
 }>()
@@ -73,7 +75,7 @@ function moveFeature(index: number, direction: 'up' | 'down') {
     >
       <!-- Header with move/delete -->
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium">Feature {{ index + 1 }}</span>
+        <span class="text-sm font-medium">{{ t('pages.blocks.features.featureN', { n: index + 1 }) }}</span>
         <div class="flex items-center gap-1">
           <UButton
             color="neutral"
@@ -111,7 +113,7 @@ function moveFeature(index: number, direction: 'up' | 'down') {
       <!-- Title -->
       <UInput
         :model-value="feature.title"
-        placeholder="Feature title"
+        :placeholder="t('pages.blocks.features.titlePlaceholder')"
         size="sm"
         @update:model-value="updateFeature(index, 'title', $event)"
       />
@@ -119,7 +121,7 @@ function moveFeature(index: number, direction: 'up' | 'down') {
       <!-- Description -->
       <UTextarea
         :model-value="feature.description || ''"
-        placeholder="Feature description"
+        :placeholder="t('pages.blocks.features.descriptionPlaceholder')"
         :rows="2"
         size="sm"
         @update:model-value="updateFeature(index, 'description', $event)"
@@ -135,7 +137,7 @@ function moveFeature(index: number, direction: 'up' | 'down') {
       block
       @click="addFeature"
     >
-      Add Feature
+      {{ t('pages.blocks.features.addFeature') }}
     </UButton>
   </div>
 </template>

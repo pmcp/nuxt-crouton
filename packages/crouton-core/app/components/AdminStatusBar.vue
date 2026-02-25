@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useT()
 const { currentMessage, lastMessage } = useAdminStatusBar()
 const statusBarActive = useState<boolean>('crouton-status-bar-active', () => false)
 
@@ -13,12 +14,12 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 
 function timeAgo(ts: number): string {
   const diff = Math.floor((now.value - ts) / 1000)
-  if (diff < 10) return 'just now'
-  if (diff < 60) return `${diff}s ago`
+  if (diff < 10) return t('statusBar.justNow')
+  if (diff < 60) return t('statusBar.secondsAgo', { count: diff })
   const mins = Math.floor(diff / 60)
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 60) return t('statusBar.minutesAgo', { count: mins })
   const hrs = Math.floor(mins / 60)
-  return `${hrs}h ago`
+  return t('statusBar.hoursAgo', { count: hrs })
 }
 </script>
 
@@ -52,7 +53,7 @@ function timeAgo(ts: number): string {
           <span class="opacity-30">&middot;</span>
           <span class="opacity-30">{{ timeAgo(lastMessage.timestamp) }}</span>
         </template>
-        <span v-else class="text-dimmed">Ready</span>
+        <span v-else class="text-dimmed">{{ t('statusBar.ready') }}</span>
       </div>
     </TransitionGroup>
   </div>

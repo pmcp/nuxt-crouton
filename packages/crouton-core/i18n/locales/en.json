@@ -4,6 +4,167 @@
     "expand": "Expand to fullscreen",
     "close": "Close",
     "dragToReorder": "Drag to reorder",
-    "removeItem": "Remove item"
+    "removeItem": "Remove item",
+    "metaSettings": "Meta settings",
+    "tryAgain": "Try Again",
+    "anErrorOccurred": "An error occurred"
+  },
+  "common": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "yes": "Yes",
+    "no": "No",
+    "apply": "Apply",
+    "remove": "Remove",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "import": "Import"
+  },
+  "mutations": {
+    "creationFailed": "Creation failed",
+    "updateFailed": "Update failed",
+    "deleteFailed": "Delete failed",
+    "moveFailed": "Move failed",
+    "reorderFailed": "Reorder failed"
+  },
+  "import": {
+    "complete": "Import complete",
+    "completeWithErrors": "{created} created, {failed} failed",
+    "completeSuccess": "{created} created",
+    "failed": "Import failed",
+    "unexpected": "An unexpected error occurred",
+    "requiredFieldMissing": "Required field is missing",
+    "mapping": "Mapping",
+    "preview": "Preview",
+    "importing": "Importing",
+    "importComplete": "Import Complete",
+    "mapColumnsHint": "Map your file columns to collection fields. Required fields are marked with *.",
+    "rowsFound": "{count} rows found",
+    "validCount": "{count} valid",
+    "invalidCount": "{count} with errors",
+    "skipInvalid": "Skip invalid rows",
+    "statusOk": "OK",
+    "statusError": "Error",
+    "statusColumn": "Status",
+    "skipColumn": "— Skip —",
+    "willImport": "Will import {count} rows",
+    "importingRows": "Importing {count} rows...",
+    "percentComplete": "{percent}% complete",
+    "itemsCreated": "{count} items created",
+    "itemsFailed": "{count} items failed",
+    "rowsSkipped": "{count} rows skipped (validation errors)"
+  },
+  "errors": {
+    "checkConnection": "Check your connection status.",
+    "notLoggedIn": "You are not logged in.",
+    "unableToLoad": "Unable to load options",
+    "notFound": "The data endpoint could not be found. Please check your team settings or contact support.",
+    "noPermission": "You do not have permission to view this data.",
+    "serverError": "A server error occurred. Please try again later.",
+    "loadingData": "An error occurred while loading data.",
+    "errorLoadingDetails": "Error loading details",
+    "failedToCreateOption": "Failed to create option"
+  },
+  "collection": {
+    "noItemsYet": "No items yet",
+    "createFirstItem": "Create your first {collection} item to get started",
+    "componentError": "Unable to load collection component: {error}",
+    "componentNotFound": "Component not found for collection: {collection}"
+  },
+  "detail": {
+    "details": "Details",
+    "created": "Created",
+    "updated": "Updated",
+    "noContent": "No content provided"
+  },
+  "deleteConfirm": {
+    "title": "Delete {count} {name}?",
+    "cannotBeUndone": "This action cannot be undone."
+  },
+  "kanban": {
+    "groupBy": "Group by:",
+    "noItemsToDisplay": "No items to display",
+    "addItemsOrChangeGrouping": "Add items or change the grouping field.",
+    "dropItemsHere": "Drop items here"
+  },
+  "tree": {
+    "addChild": "Add child page",
+    "addBelow": "Add page below",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "moveToRoot": "Move to root"
+  },
+  "dropzone": {
+    "idle": "Drag & drop files here",
+    "dropHere": "Drop files here"
+  },
+  "image": {
+    "cropImage": "Crop Image",
+    "cropApply": "Crop & Apply",
+    "cropAvatar": "Crop Avatar",
+    "change": "Change",
+    "upload": "Upload"
+  },
+  "repeater": {
+    "emptyState": "No items yet. Click \"{label}\" to get started.",
+    "addItem": "Add Item"
+  },
+  "validation": {
+    "fixErrors": "Please fix {count} validation error | Please fix {count} validation errors",
+    "errorCount": "{count} error | {count} errors"
+  },
+  "statusBar": {
+    "ready": "Ready",
+    "justNow": "just now",
+    "secondsAgo": "{count}s ago",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "createdNamed": "{user} created {label} \"{name}\"",
+    "created": "{user} created a {label}",
+    "savedNamed": "{user} saved \"{name}\"",
+    "saved": "{user} saved the {label}",
+    "deletedMultiple": "{user} deleted {count} {label}s",
+    "deleted": "{user} deleted a {label}",
+    "reordered": "{user} reordered {label}s",
+    "done": "Done",
+    "defaultUser": "You"
+  },
+  "reference": {
+    "selectPlaceholder": "Select {label}",
+    "createNew": "Create new {label}"
+  },
+  "options": {
+    "selectPlaceholder": "Select {label}",
+    "createNew": "Create new {label}",
+    "labelField": "Label",
+    "displayName": "Display name",
+    "valueField": "Value",
+    "valuePlaceholder": "Auto-generated from label",
+    "valueHint": "Leave empty to auto-generate from label",
+    "createSuccess": "Option created",
+    "created": "\"{label}\" has been added"
+  },
+  "dependent": {
+    "loadingOptions": "Loading options...",
+    "failedToLoadOptions": "Failed to load options",
+    "required": "{label} required",
+    "noOptions": "No options available"
+  },
+  "table": {
+    "previewOnly": "Preview only"
+  },
+  "iconPicker": {
+    "noIcons": "No icons found"
+  },
+  "help": {
+    "customizeCard": "Customize Card Display",
+    "customizeCardDescription": "Create a custom Card.vue component for this collection",
+    "fileLocation": "File location:",
+    "gotIt": "Got it"
   }
 }

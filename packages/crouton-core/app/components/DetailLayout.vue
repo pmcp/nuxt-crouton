@@ -23,7 +23,7 @@
         />
         <div>
           <h3 class="font-semibold text-error-900 dark:text-error-100 mb-1">
-            Error loading details
+            {{ t('errors.errorLoadingDetails') }}
           </h3>
           <p class="text-sm text-error-700 dark:text-error-300">
             {{ error }}
@@ -43,7 +43,7 @@
         <div class="flex-1 min-w-0">
           <slot name="header-title">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white truncate">
-              {{ title }}
+              {{ title || t('detail.details') }}
             </h2>
           </slot>
           <slot name="header-subtitle">
@@ -66,7 +66,7 @@
               variant="soft"
               @click="$emit('edit')"
             >
-              Edit
+              {{ t('common.edit') }}
             </UButton>
           </slot>
         </div>
@@ -82,7 +82,7 @@
         >
           <!-- Default content slot - collections should override this -->
           <div class="text-sm text-gray-500 dark:text-gray-400">
-            No content provided
+            {{ t('detail.noContent') }}
           </div>
         </slot>
       </div>
@@ -102,6 +102,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useT()
+
 interface Props {
   item?: any
   pending?: boolean
@@ -115,7 +117,7 @@ withDefaults(defineProps<Props>(), {
   item: null,
   pending: false,
   error: null,
-  title: 'Details',
+  title: undefined,
   subtitle: '',
   canEdit: true
 })

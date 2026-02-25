@@ -49,6 +49,7 @@ const {
 } = useBookingCart()
 
 const notify = useNotify()
+const { t } = useT()
 
 // For parsing slot JSON strings
 const { parseSlotIds } = useBookingSlots()
@@ -68,7 +69,7 @@ function getLocationTitle(location: LocationData): string {
   return translations?.[locale.value]?.title
     || translations?.en?.title
     || location.title
-    || 'Untitled'
+    || t('bookings.untitled')
 }
 
 // Get localized location content/description
@@ -226,7 +227,7 @@ watch(
     // No available slots — close the card, nothing to book
     if (available.length === 0) {
       markAutoBookTriggered()
-      notify.warning('No slots available', { description: 'All time slots are unavailable on this date' })
+      notify.warning(t('bookings.notifications.noSlotsAvailable'), { description: t('bookings.notifications.noSlotsDescription') })
       emit('cancel')
       return
     }
@@ -377,7 +378,7 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon :name="isEditMode ? 'i-lucide-pencil' : 'i-lucide-calendar-plus'" class="size-4 text-primary" />
-          <span class="text-sm font-semibold text-primary">{{ isEditMode ? 'Edit booking for' : 'New booking for' }} {{ formattedDate }}</span>
+          <span class="text-sm font-semibold text-primary">{{ isEditMode ? t('bookings.createCard.editBookingFor') : t('bookings.createCard.newBookingFor') }} {{ formattedDate }}</span>
         </div>
         <UButton
           icon="i-lucide-x"
@@ -422,7 +423,7 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
               {{ getLocationAddress(selectedLocation) }}
             </span>
             <span class="text-sm font-medium text-default">
-              {{ isInventoryMode ? 'How many do you need?' : 'Pick a time slot' }}
+              {{ isInventoryMode ? t('bookings.createCard.howMany') : t('bookings.createCard.pickTimeSlot') }}
             </span>
           </div>
 
@@ -462,7 +463,7 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
                   {{ slot.label || slot.id }}
                 </span>
                 <span v-if="getSlotCapacity(slot.id) > 1 && !isSlotDisabled(slot.id)" class="text-xs opacity-60 ml-0.5">
-                  ({{ getSlotRemaining(slot.id) }} left)
+                  ({{ getSlotRemaining(slot.id) }} {{ t('bookings.createCard.left') }})
                 </span>
                 <UIcon
                   v-if="isSlotDisabled(slot.id)"
@@ -485,13 +486,13 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
               :ui="{ root: 'w-28' }"
             />
             <span class="text-sm text-muted">
-              of {{ inventoryInfo.remaining }} available
+              {{ t('bookings.createCard.ofAvailable', { count: inventoryInfo.remaining }) }}
             </span>
           </div>
 
           <!-- No location selected -->
           <div v-if="!localLocationId" class="text-sm text-muted py-2">
-            Select a location
+            {{ t('bookings.createCard.selectLocation') }}
           </div>
 
           <!-- Actions -->
@@ -509,11 +510,11 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
             >
               <UIcon v-if="isCancelling && confirmingCancel" name="i-lucide-loader-2" class="size-3.5 animate-spin" />
               <template v-else-if="confirmingCancel">
-                <span class="text-xs font-medium whitespace-nowrap">sure?</span>
+                <span class="text-xs font-medium whitespace-nowrap">{{ t('bookings.createCard.sure') }}</span>
               </template>
               <template v-else>
                 <UIcon name="i-lucide-x-circle" class="size-3.5" />
-                <span class="text-xs font-medium">Cancel</span>
+                <span class="text-xs font-medium">{{ t('bookings.createCard.cancel') }}</span>
               </template>
             </button>
 
@@ -524,7 +525,7 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
               :loading="isSubmitting || isUpdating"
               @click="handleSubmit"
             >
-              {{ isEditMode ? 'Save' : 'Create' }}
+              {{ isEditMode ? t('bookings.createCard.save') : t('bookings.createCard.create') }}
             </UButton>
           </div>
         </div>

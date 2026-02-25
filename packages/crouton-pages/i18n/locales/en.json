@@ -18,6 +18,11 @@
     "selectType": "Select Page Type",
     "empty": "No pages yet",
     "emptyDescription": "Create your first page to get started",
+    "noContent": "This page has no content yet.",
+    "untitled": "Untitled",
+    "unknownPageType": "Unknown Page Type",
+    "unknownPageTypeDescription": "The page type \"{type}\" is not registered. The app providing this page type may not be installed.",
+    "newPagePlaceholder": "New page...",
     "admin": {
       "pages": "Pages",
       "title": "Pages",
@@ -68,7 +73,12 @@
       "menu": "Menu"
     },
     "collection": {
-      "itemUnavailable": "Item Unavailable"
+      "itemUnavailable": "Item Unavailable",
+      "noItemSelected": "No Collection Item Selected",
+      "noItemSelectedDescription": "This page is linked to a collection but no item has been selected yet.",
+      "itemUnavailableDescription": "The referenced collection item may have been deleted or is no longer accessible.",
+      "previewUnavailable": "Preview Unavailable",
+      "previewUnavailableDescription": "No detail component is available for this collection."
     },
     "editor": {
       "settings": "Settings",
@@ -78,18 +88,161 @@
       "search": "Search",
       "social": "Social",
       "yourBrief": "Your brief",
-      "examples": "Examples"
+      "examples": "Examples",
+      "editBlock": "Edit Block",
+      "livePreview": "Live Preview",
+      "unknownBlockType": "Unknown block type",
+      "deleteBlock": "Delete Block",
+      "done": "Done",
+      "pagePreview": "Page Preview",
+      "draftPreview": "Draft Preview",
+      "tabEditor": "Editor",
+      "tabPreview": "Preview",
+      "insertBlock": "Insert Block",
+      "slashHint": "Type / to insert blocks",
+      "zoomTo100": "Zoom to 100%",
+      "zoomToPercent": "Zoom to {percent}%",
+      "defaultPageType": "Page",
+      "regularPage": "Regular Page",
+      "shownInMenu": "Shown in Menu",
+      "hiddenFromMenu": "Hidden from Menu",
+      "inMenu": "In Menu",
+      "noMenu": "No Menu",
+      "noParent": "None",
+      "generateWithAI": "Generate page with AI",
+      "previewDraft": "Preview Draft",
+      "previewPage": "Preview Page",
+      "openInPublic": "Open in Public",
+      "publishToOpen": "Publish page to open publicly",
+      "open": "Open",
+      "confirmDelete": "Delete?",
+      "loadingPage": "Loading page...",
+      "selectItem": "Select {name}",
+      "updated": "Updated {time}",
+      "noConfig": "This page type has no additional configuration.",
+      "displaysComponent": "The page will display the {name} component.",
+      "configField": "Config field: {name}",
+      "binder": {
+        "bindCollection": "Bind Collection",
+        "bindCollectionHelp": "All items from this collection will appear as sub-entries in navigation.",
+        "sortField": "Sort Field",
+        "sortFieldHelp": "e.g. title, order",
+        "sortOrder": "Sort Order",
+        "selectCollection": "Select a collection..."
+      }
+    },
+    "sidebar": {
+      "drafts": "Drafts",
+      "noResults": "No pages match your search",
+      "createFirst": "Create first page",
+      "changes": "{count} change | {count} changes",
+      "discard": "Discard",
+      "publish": "Publish"
+    },
+    "seo": {
+      "pageTitle": "Page Title",
+      "noDescription": "No description — add a meta description to improve SEO.",
+      "noSocialImage": "No social image set"
+    },
+    "errors": {
+      "loadFailed": "Failed to load page",
+      "titleRequired": "Title required",
+      "titleRequiredDescription": "Please enter a title for at least one language"
     },
     "blocks": {
       "highlight": "Highlight",
-      "addCard": "Add Card"
+      "addCard": "Add Card",
+      "categories": {
+        "hero": "Hero",
+        "content": "Content",
+        "cta": "Call to Action",
+        "layout": "Layout"
+      },
+      "blockSettings": "{name} Settings",
+      "unknownBlock": "Block",
+      "collection": {
+        "noCollectionSelected": "No collection selected",
+        "itemsPerPage": "{count} items/page",
+        "selectPlaceholder": "Select a collection...",
+        "noCollections": "No collections found in the registry."
+      },
+      "embed": {
+        "noUrl": "No URL set — enter a URL in properties"
+      },
+      "file": {
+        "noFile": "No file — double-click to add",
+        "clickToUpload": "Click to upload a file"
+      },
+      "video": {
+        "noVideo": "No video — double-click to add",
+        "noVideoSet": "No video set",
+        "clickToSelect": "Click to select a video file",
+        "bunnyStream": "Bunny Stream",
+        "bunnyInstructions": "Paste your Bunny Stream embed URL. Find it in the Bunny dashboard under your video's embed settings."
+      },
+      "image": {
+        "noImage": "No image set"
+      },
+      "logos": {
+        "noLogos": "No logos — double-click to add",
+        "typeIcon": "Icon",
+        "typeImage": "Image",
+        "noImage": "No image",
+        "addIcon": "Add Icon",
+        "addImage": "Add Image"
+      },
+      "media": {
+        "browse": "Browse",
+        "pasteUrl": "Paste URL",
+        "upload": "Upload",
+        "loadingLibrary": "Loading library...",
+        "uploadInstead": "Upload instead",
+        "browseLibrary": "Browse library",
+        "uploading": "Uploading...",
+        "clickToUpload": "Click to upload"
+      },
+      "links": {
+        "buttonN": "Button {n}",
+        "buttonTextPlaceholder": "Button text",
+        "urlPlaceholder": "/page or https://...",
+        "addButton": "Add Button"
+      },
+      "faq": {
+        "questionPlaceholder": "Question",
+        "answerPlaceholder": "Answer",
+        "addQuestion": "Add Question"
+      },
+      "features": {
+        "featureN": "Feature {n}",
+        "titlePlaceholder": "Feature title",
+        "descriptionPlaceholder": "Feature description",
+        "addFeature": "Add Feature"
+      },
+      "cards": {
+        "cardN": "Card {n}",
+        "titlePlaceholder": "Card title",
+        "descriptionPlaceholder": "Card description",
+        "linkPlaceholder": "Link URL (optional)"
+      },
+      "buttonRow": {
+        "modeLink": "Link",
+        "modeDownload": "Download",
+        "openInNewTab": "Open in new tab"
+      }
     }
   },
   "common": {
     "cancel": "Cancel",
     "continue": "Continue",
     "save": "Save",
+    "create": "Create",
     "delete": "Delete",
-    "back": "Back"
+    "back": "Back",
+    "edit": "Edit",
+    "apply": "Apply",
+    "undo": "Undo",
+    "redo": "Redo",
+    "ascending": "Ascending",
+    "descending": "Descending"
   }
 }

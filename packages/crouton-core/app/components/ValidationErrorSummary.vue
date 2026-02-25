@@ -10,6 +10,7 @@ interface Props {
   navigationItems: Array<{ label: string, value: string }>
 }
 
+const { t } = useT()
 const props = defineProps<Props>()
 const emit = defineEmits<{
   'switch-tab': [tabValue: string]
@@ -43,7 +44,7 @@ const handleTabClick = (tabValue: string) => {
     v-if="errorTabs.length > 0"
     color="error"
     icon="i-lucide-triangle-alert"
-    :title="`Please fix ${totalErrors} validation ${totalErrors === 1 ? 'error' : 'errors'}`"
+    :title="t('validation.fixErrors', { count: totalErrors }, totalErrors)"
     class="mb-4"
   >
     <template #description>
@@ -63,7 +64,7 @@ const handleTabClick = (tabValue: string) => {
             {{ errorTab.tabLabel }}
           </UButton>
           <span class="text-xs text-red-600 dark:text-red-400">
-            ({{ errorTab.count }} {{ errorTab.count === 1 ? 'error' : 'errors' }})
+            ({{ t('validation.errorCount', { count: errorTab.count }, errorTab.count) }})
           </span>
         </div>
       </div>

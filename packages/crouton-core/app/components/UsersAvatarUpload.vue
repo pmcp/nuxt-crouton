@@ -11,7 +11,7 @@
       type="button"
       color="neutral"
       variant="soft"
-      :label="model ? 'Change' : 'Upload'"
+      :label="model ? t('image.change') : t('image.upload')"
       size="xs"
       @click="() => open()"
     />
@@ -20,7 +20,7 @@
       type="button"
       color="error"
       variant="soft"
-      label="Remove"
+      :label="t('common.remove')"
       size="xs"
       @click="removeImage"
     />
@@ -30,7 +30,7 @@
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">
-            Crop Avatar
+            {{ t('image.cropAvatar') }}
           </h3>
           <CroutonImageCropper
             v-if="pendingFile"
@@ -48,6 +48,8 @@
 
 <script setup lang="ts">
 import { useFileDialog, useObjectUrl } from '@vueuse/core'
+
+const { t } = useT()
 
 withDefaults(
   defineProps<{

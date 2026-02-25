@@ -20,6 +20,7 @@ const props = defineProps<{
   getPos: () => number
 }>()
 
+const { t } = useT()
 const attrs = computed(() => props.node.attrs)
 const itemCount = computed(() => attrs.value.items?.length || 0)
 
@@ -122,7 +123,7 @@ function handleOpenPanel() {
             </template>
           </div>
           <div v-else class="text-center text-gray-400 text-sm py-2">
-            No logos — double-click to add
+            {{ t('pages.blocks.logos.noLogos') }}
           </div>
           <div v-if="attrs.marquee || (attrs.align && attrs.align !== 'center') || (attrs.size && attrs.size !== 'md')" class="flex items-center justify-center gap-1 mt-2">
             <span v-if="attrs.marquee" class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">marquee</span>

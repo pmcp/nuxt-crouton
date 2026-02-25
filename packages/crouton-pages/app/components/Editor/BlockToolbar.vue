@@ -14,15 +14,17 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { t } = useT()
+
 // Get block items grouped by category
 const blocksByCategory = computed(() => getBlocksByCategory())
 
 // Category labels
 const categoryLabels: Record<string, string> = {
-  hero: 'Hero',
-  content: 'Content',
-  cta: 'Call to Action',
-  layout: 'Layout'
+  hero: t('pages.blocks.categories.hero'),
+  content: t('pages.blocks.categories.content'),
+  cta: t('pages.blocks.categories.cta'),
+  layout: t('pages.blocks.categories.layout')
 }
 
 // Insert a block
@@ -84,14 +86,14 @@ const insertMenuItems = computed(() => {
         icon="i-lucide-plus"
         size="sm"
       >
-        Insert Block
+        {{ t('pages.editor.insertBlock') }}
       </UButton>
     </UDropdownMenu>
 
     <USeparator orientation="vertical" class="h-6" />
 
     <!-- Undo/Redo -->
-    <UTooltip text="Undo">
+    <UTooltip :text="t('common.undo')">
       <UButton
         color="neutral"
         variant="ghost"
@@ -102,7 +104,7 @@ const insertMenuItems = computed(() => {
       />
     </UTooltip>
 
-    <UTooltip text="Redo">
+    <UTooltip :text="t('common.redo')">
       <UButton
         color="neutral"
         variant="ghost"
@@ -117,7 +119,7 @@ const insertMenuItems = computed(() => {
 
     <!-- Help text -->
     <span class="text-xs text-muted hidden sm:inline">
-      Type <kbd class="px-1 py-0.5 bg-muted rounded text-xs">/</kbd> to insert blocks
+      {{ t('pages.editor.slashHint') }}
     </span>
   </div>
 </template>

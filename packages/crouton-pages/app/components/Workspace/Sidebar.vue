@@ -115,7 +115,7 @@ const getLocalizedTitle = (page: any): string => {
   return translations?.[locale.value]?.title
     || translations?.en?.title
     || page.title
-    || 'Untitled'
+    || t('pages.untitled')
 }
 
 // Filter pages for the main tree (excludes archived, optionally excludes drafts)
@@ -177,7 +177,7 @@ const archivedTree = computed(() => {
 const bottomSections = computed(() => {
   if (!archivedPages.value.length) return []
   return [{
-    label: 'Archived',
+    label: t('pages.status.archived'),
     icon: 'i-lucide-archive',
     value: 'archived',
     slot: 'archived' as const,
@@ -288,7 +288,7 @@ defineExpose({
         icon="i-lucide-file-pen-line"
         @click="showDrafts = !showDrafts"
       >
-        Drafts
+        {{ t('pages.sidebar.drafts') }}
       </UButton>
       <UButton
         size="xs"
@@ -316,7 +316,7 @@ defineExpose({
       >
         <UIcon name="i-lucide-file-text" class="size-8 mb-2 opacity-50" />
         <p class="text-sm">
-          {{ searchQuery ? 'No pages match your search' : 'No pages yet' }}
+          {{ searchQuery ? t('pages.sidebar.noResults') : t('pages.empty') }}
         </p>
         <UButton
           v-if="!searchQuery"
@@ -326,7 +326,7 @@ defineExpose({
           class="mt-3"
           @click="handleCreate()"
         >
-          Create first page
+          {{ t('pages.sidebar.createFirst') }}
         </UButton>
       </div>
 
@@ -362,7 +362,7 @@ defineExpose({
         class="shrink-0 border-t border-default bg-elevated/80 backdrop-blur px-4 py-2 flex items-center gap-2"
       >
         <span class="text-sm text-muted flex-1">
-          {{ reorderMode.changeCount.value }} {{ reorderMode.changeCount.value === 1 ? 'change' : 'changes' }}
+          {{ t('pages.sidebar.changes', { count: reorderMode.changeCount.value }, reorderMode.changeCount.value) }}
         </span>
         <UButton
           size="xs"
@@ -370,7 +370,7 @@ defineExpose({
           variant="ghost"
           @click="handleDiscard"
         >
-          Discard
+          {{ t('pages.sidebar.discard') }}
         </UButton>
         <UButton
           size="xs"
@@ -378,7 +378,7 @@ defineExpose({
           :loading="reorderMode.publishing.value"
           @click="handlePublish"
         >
-          Publish
+          {{ t('pages.sidebar.publish') }}
         </UButton>
       </div>
     </Transition>

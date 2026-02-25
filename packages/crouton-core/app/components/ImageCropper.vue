@@ -12,6 +12,8 @@ const props = withDefaults(defineProps<Props>(), {
   circular: false
 })
 
+const { t } = useT()
+
 const emit = defineEmits<{
   confirm: [file: File]
   cancel: []
@@ -136,14 +138,14 @@ const handleConfirm = async () => {
         variant="ghost"
         @click="emit('cancel')"
       >
-        Cancel
+        {{ t('common.cancel') }}
       </UButton>
       <UButton
         color="primary"
         :loading="processing"
         @click="handleConfirm"
       >
-        Crop & Apply
+        {{ t('image.cropApply') }}
       </UButton>
     </div>
   </div>

@@ -8,28 +8,28 @@
         name="i-heroicons-arrow-path"
         class="animate-spin"
       />
-      Loading options...
+      {{ t('dependent.loadingOptions') }}
     </div>
 
     <div
       v-else-if="error"
       class="text-sm text-warning"
     >
-      Failed to load options
+      {{ t('dependent.failedToLoadOptions') }}
     </div>
 
     <div
       v-else-if="!dependentValue"
       class="text-sm text-neutral"
     >
-      {{ dependentLabel }} required
+      {{ t('dependent.required', { label: dependentLabel }) }}
     </div>
 
     <div
       v-else-if="!options || options.length === 0"
       class="text-sm text-neutral"
     >
-      No options available
+      {{ t('dependent.noOptions') }}
     </div>
 
     <CroutonFormDependentSelectOption
@@ -45,6 +45,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useT()
+
 interface Option {
   id: string
   [key: string]: any

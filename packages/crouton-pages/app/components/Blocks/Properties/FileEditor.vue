@@ -21,6 +21,7 @@ type Mode = 'preview' | 'upload'
 const mode = ref<Mode>(props.modelValue ? 'preview' : 'upload')
 const isUploading = ref(false)
 
+const { t } = useT()
 const hasFile = computed(() => !!props.modelValue)
 
 // Extract display name from URL path
@@ -109,7 +110,7 @@ async function handleFileUpload(event: Event) {
         <UIcon v-if="!isUploading" name="i-lucide-upload" class="size-6 text-neutral-400 mb-1" />
         <UIcon v-else name="i-lucide-loader-2" class="size-6 text-neutral-400 mb-1 animate-spin" />
         <span class="text-xs text-neutral-500">
-          {{ isUploading ? 'Uploading...' : 'Click to upload a file' }}
+          {{ isUploading ? t('pages.blocks.media.uploading') : t('pages.blocks.file.clickToUpload') }}
         </span>
         <input
           type="file"
@@ -120,7 +121,7 @@ async function handleFileUpload(event: Event) {
       </label>
       <UButton
         v-if="hasFile"
-        label="Cancel"
+        :label="t('common.cancel')"
         variant="ghost"
         color="neutral"
         size="xs"

@@ -29,6 +29,7 @@ watch(() => props.modelValue, (val) => {
   urlInput.value = val || ''
 })
 
+const { t } = useT()
 const hasImage = computed(() => !!props.modelValue)
 
 function setUrl() {
@@ -107,7 +108,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         <div class="text-center">
           <UIcon name="i-lucide-image" class="size-8 text-neutral-400 mb-2" />
           <p class="text-sm text-neutral-500">
-            No image set
+            {{ t('pages.blocks.image.noImage') }}
           </p>
         </div>
       </div>
@@ -115,7 +116,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         <UButton
           v-if="hasAssetsPicker"
           icon="i-lucide-folder-open"
-          label="Browse"
+          :label="t('pages.blocks.media.browse')"
           variant="soft"
           color="neutral"
           size="xs"
@@ -124,7 +125,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-link"
-          label="Paste URL"
+          :label="t('pages.blocks.media.pasteUrl')"
           variant="soft"
           color="neutral"
           size="xs"
@@ -133,7 +134,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-upload"
-          label="Upload"
+          :label="t('pages.blocks.media.upload')"
           variant="soft"
           color="neutral"
           size="xs"
@@ -151,14 +152,14 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <template #fallback>
           <div class="h-32 flex items-center justify-center text-sm text-muted">
-            Loading library...
+            {{ t('pages.blocks.media.loadingLibrary') }}
           </div>
         </template>
       </Suspense>
       <div class="flex gap-2 pt-1">
         <UButton
           icon="i-lucide-upload"
-          label="Upload instead"
+          :label="t('pages.blocks.media.uploadInstead')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -166,7 +167,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-link"
-          label="Paste URL"
+          :label="t('pages.blocks.media.pasteUrl')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -174,7 +175,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           v-if="hasImage"
-          label="Cancel"
+          :label="t('common.cancel')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -197,13 +198,13 @@ function handleAssetSelected(asset: Record<string, any>) {
       </UInput>
       <div class="flex gap-2">
         <UButton
-          label="Apply"
+          :label="t('common.apply')"
           color="primary"
           size="xs"
           @click="setUrl"
         />
         <UButton
-          label="Cancel"
+          :label="t('common.cancel')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -212,7 +213,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         <UButton
           v-if="hasAssetsPicker"
           icon="i-lucide-folder-open"
-          label="Browse library"
+          :label="t('pages.blocks.media.browseLibrary')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -221,7 +222,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         <UButton
           v-else
           icon="i-lucide-upload"
-          label="Upload instead"
+          :label="t('pages.blocks.media.uploadInstead')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -237,7 +238,7 @@ function handleAssetSelected(asset: Record<string, any>) {
       />
       <div class="flex gap-2">
         <UButton
-          label="Cancel"
+          :label="t('common.cancel')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -246,7 +247,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         <UButton
           v-if="hasAssetsPicker"
           icon="i-lucide-folder-open"
-          label="Browse library"
+          :label="t('pages.blocks.media.browseLibrary')"
           variant="ghost"
           color="neutral"
           size="xs"

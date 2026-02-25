@@ -6,6 +6,7 @@ import type { CollabPresenceConfig } from '../types/table'
 import type SortableType from 'sortablejs'
 import type { SortableEvent, MoveEvent } from 'sortablejs'
 
+const { t } = useT()
 const { open } = useCrouton()
 
 const treeDrag = useTreeDrag()
@@ -155,7 +156,7 @@ function getAddActions(item: TreeNodeType) {
   return [
     [
       {
-        label: 'Add child page',
+        label: t('tree.addChild'),
         icon: 'i-lucide-corner-down-right',
         onSelect: () => {
           console.log('[TreeNode] Add child page, parentId:', item.id)
@@ -163,7 +164,7 @@ function getAddActions(item: TreeNodeType) {
         }
       },
       {
-        label: 'Add page below',
+        label: t('tree.addBelow'),
         icon: 'i-lucide-arrow-down',
         onSelect: () => {
           console.log('[TreeNode] Add page below, siblingId:', item.id)
@@ -178,14 +179,14 @@ function getItemActions(item: TreeNodeType) {
   return [
     [
       {
-        label: 'Edit',
+        label: t('common.edit'),
         icon: 'i-lucide-pencil',
         onSelect: () => open('update', props.collection, [item.id])
       }
     ],
     [
       {
-        label: 'Move up',
+        label: t('tree.moveUp'),
         icon: 'i-lucide-arrow-up',
         disabled: item.order === 0,
         onSelect: () => {
@@ -196,7 +197,7 @@ function getItemActions(item: TreeNodeType) {
         }
       },
       {
-        label: 'Move down',
+        label: t('tree.moveDown'),
         icon: 'i-lucide-arrow-down',
         onSelect: () => {
           emit('move', item.id, item.parentId, item.order + 1, props.columnId || null)
@@ -205,7 +206,7 @@ function getItemActions(item: TreeNodeType) {
     ],
     [
       {
-        label: 'Move to root',
+        label: t('tree.moveToRoot'),
         icon: 'i-lucide-corner-left-up',
         disabled: !item.parentId,
         onSelect: () => {
@@ -217,7 +218,7 @@ function getItemActions(item: TreeNodeType) {
     ],
     [
       {
-        label: 'Delete',
+        label: t('common.delete'),
         icon: 'i-lucide-trash-2',
         color: 'error' as const,
         onSelect: () => open('delete', props.collection, [item.id])

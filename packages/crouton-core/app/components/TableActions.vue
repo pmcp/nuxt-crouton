@@ -8,10 +8,9 @@
       :disabled="selectedRows.length === 0"
       @click="handleDelete"
     >
-      Delete
+      {{ t('common.delete') }}
       <span v-if="selectedRows.length > 0">
         {{ selectedRows.length }}
-        <span>item<span v-if="selectedRows.length > 1">s</span></span>
       </span>
     </UButton>
 
@@ -33,7 +32,7 @@
 import { upperFirst } from 'scule'
 import type { TableActionsProps } from '../types/table'
 
-const { tString } = useT()
+const { t, tString } = useT()
 const { open } = useCrouton()
 
 const props = defineProps<TableActionsProps>()

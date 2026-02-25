@@ -11,15 +11,17 @@ const emit = defineEmits<{
   'update:modelValue': [value: number[]]
 }>()
 
-const days = [
-  { value: 1, label: 'Mon' },
-  { value: 2, label: 'Tue' },
-  { value: 3, label: 'Wed' },
-  { value: 4, label: 'Thu' },
-  { value: 5, label: 'Fri' },
-  { value: 6, label: 'Sat' },
-  { value: 0, label: 'Sun' },
-]
+const { t } = useT()
+
+const days = computed(() => [
+  { value: 1, label: t('bookings.schedule.days.mon') },
+  { value: 2, label: t('bookings.schedule.days.tue') },
+  { value: 3, label: t('bookings.schedule.days.wed') },
+  { value: 4, label: t('bookings.schedule.days.thu') },
+  { value: 5, label: t('bookings.schedule.days.fri') },
+  { value: 6, label: t('bookings.schedule.days.sat') },
+  { value: 0, label: t('bookings.schedule.days.sun') },
+])
 
 // Parse modelValue (handles string from DB)
 const selectedDays = computed<number[]>(() => {
@@ -76,12 +78,12 @@ function clearAll() {
       </UButton>
     </div>
     <p v-if="allOpen" class="text-xs text-muted">
-      No days selected — location is open every day.
+      {{ t('bookings.schedule.openDaysHint') }}
     </p>
     <p v-else class="text-xs text-muted">
-      Open {{ selectedDays.length }} day{{ selectedDays.length === 1 ? '' : 's' }} per week.
+      {{ t('bookings.schedule.openDaysCount', { count: selectedDays.length }) }}
       <button type="button" class="text-primary hover:underline" @click="clearAll">
-        Reset to all days
+        {{ t('bookings.schedule.resetAllDays') }}
       </button>
     </p>
   </div>

@@ -38,13 +38,13 @@ const showAdminFeatures = computed(() => !previewMode.value)
 
 // Get localized location title with fallbacks
 function getLocationTitle(locationData: Booking['locationData']): string {
-  if (!locationData) return 'Unknown Location'
+  if (!locationData) return t('bookings.unknownLocation')
   const translations = locationData.translations as Record<string, { title?: string }> | undefined
 
   return translations?.[locale.value]?.title
     || translations?.en?.title
     || locationData.title
-    || 'Unknown Location'
+    || t('bookings.unknownLocation')
 }
 
 // Is this booking cancelled?
@@ -156,10 +156,10 @@ const timelineItems = computed<TimelineItem[]>(() => {
     items.push({
       type: 'booking_created',
       icon: confirmDetail?.status === 'sent' ? 'i-lucide-mail-check' : 'i-lucide-mail',
-      label: 'Confirm',
+      label: t('bookings.card.emailLabels.confirm'),
       status: confirmDetail?.status || 'not_sent',
       date: formatTimelineDate(confirmDate),
-      tooltip: confirmDetail?.status === 'sent' ? 'Resend confirmation' : 'Send confirmation'
+      tooltip: confirmDetail?.status === 'sent' ? t('bookings.card.emailTooltips.resendConfirmation') : t('bookings.card.emailTooltips.sendConfirmation')
     })
   }
 
@@ -169,10 +169,10 @@ const timelineItems = computed<TimelineItem[]>(() => {
     items.push({
       type: 'reminder_before',
       icon: reminderDetail?.status === 'sent' ? 'i-lucide-bell-ring' : 'i-lucide-bell',
-      label: 'Reminder',
+      label: t('bookings.card.emailLabels.reminder'),
       status: reminderDetail?.status || 'not_sent',
       date: formatTimelineDate(reminderDetail?.sentAt || reminderDetail?.scheduledFor),
-      tooltip: reminderDetail?.status === 'sent' ? 'Resend reminder' : 'Send reminder'
+      tooltip: reminderDetail?.status === 'sent' ? t('bookings.card.emailTooltips.resendReminder') : t('bookings.card.emailTooltips.sendReminder')
     })
   }
 
@@ -182,10 +182,10 @@ const timelineItems = computed<TimelineItem[]>(() => {
     items.push({
       type: 'follow_up_after',
       icon: followupDetail?.status === 'sent' ? 'i-lucide-message-square-reply' : 'i-lucide-message-square',
-      label: 'Follow-up',
+      label: t('bookings.card.emailLabels.followUp'),
       status: followupDetail?.status || 'not_sent',
       date: formatTimelineDate(followupDetail?.sentAt || followupDetail?.scheduledFor),
-      tooltip: followupDetail?.status === 'sent' ? 'Resend follow-up' : 'Send follow-up'
+      tooltip: followupDetail?.status === 'sent' ? t('bookings.card.emailTooltips.resendFollowUp') : t('bookings.card.emailTooltips.sendFollowUp')
     })
   }
 
@@ -195,10 +195,10 @@ const timelineItems = computed<TimelineItem[]>(() => {
     items.push({
       type: 'booking_cancelled',
       icon: cancelDetail?.status === 'sent' ? 'i-lucide-mail-x' : 'i-lucide-mail-minus',
-      label: 'Cancelled',
+      label: t('bookings.card.emailLabels.cancelled'),
       status: cancelDetail?.status || 'not_sent',
       date: formatTimelineDate(cancelDetail?.sentAt),
-      tooltip: cancelDetail?.status === 'sent' ? 'Resend cancellation' : 'Send cancellation'
+      tooltip: cancelDetail?.status === 'sent' ? t('bookings.card.emailTooltips.resendCancellation') : t('bookings.card.emailTooltips.sendCancellation')
     })
   }
 
@@ -311,7 +311,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
                   </div>
                 </template>
               </UPopover>
-              <span v-if="booking.createdAt" class="whitespace-nowrap">on {{ createdDateText }}</span>
+              <span v-if="booking.createdAt" class="whitespace-nowrap">{{ t('bookings.card.on', { date: createdDateText }) }}</span>
             </template>
 
             <!-- Activity button: far right, moves left on hover as edit slides in -->
@@ -376,7 +376,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
         @click="isEmailPanelOpen = !isEmailPanelOpen"
       >
         <UIcon name="i-lucide-mail" class="size-4" />
-        <span>Emails</span>
+        <span>{{ t('bookings.email.emails') }}</span>
         <UIcon
           name="i-lucide-chevron-down"
           class="size-3 transition-transform duration-200"

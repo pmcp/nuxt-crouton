@@ -38,8 +38,8 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   error: undefined,
   initialFilters: () => ({}),
-  title: 'My Bookings',
-  emptyMessage: 'Your bookings will appear here',
+  title: undefined,
+  emptyMessage: undefined,
   scope: 'personal',
 })
 
@@ -53,6 +53,11 @@ const emit = defineEmits<{
   /** Emitted when filters change */
   'update:filters': [filters: FilterState]
 }>()
+
+const { t } = useT()
+
+// Resolved empty message with i18n default
+const resolvedEmptyMessage = computed(() => props.emptyMessage ?? t('bookings.list.defaultEmptyMessage'))
 
 // Determine if we're using internal data fetching
 const useInternalData = props.bookings === undefined
@@ -332,8 +337,8 @@ function onCalendarDayClick(date: Date) {
   if (resolvedLocations.value.length === 0) return
 
   if (isDayFullyBookedAllLocations(date)) {
-    notify.warning('All slots taken', {
-      description: 'All time slots across all locations are fully booked for this day.',
+    notify.warning(t('bookings.notifications.allSlotsTaken'), {
+      description: t('bookings.notifications.allSlotsTakenDescription'),
     })
     return
   }
@@ -476,7 +481,7 @@ defineExpose({
           :creating-at-date="creatingAtDate"
           :scroll-to-date="scrollToDate"
           :active-location-filter="filterState.locations"
-          :empty-message="emptyMessage"
+          :empty-message="resolvedEmptyMessage"
           @created="onBookingCreated"
           @cancel-create="onCancelCreate"
           @top-visible-date-change="onTopVisibleDateChange"

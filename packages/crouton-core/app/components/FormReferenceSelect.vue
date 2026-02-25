@@ -5,7 +5,7 @@
       v-if="error"
       color="error"
       icon="i-lucide-alert-triangle"
-      title="Unable to load options"
+      :title="t('errors.unableToLoad')"
       :description="getErrorMessage()"
       class="mb-2"
     />
@@ -16,7 +16,7 @@
       :items="items"
       value-key="id"
       :label-key="labelKey"
-      :placeholder="`Select ${label || collection}`"
+      :placeholder="t('reference.selectPlaceholder', { label: label || collection })"
       :loading="pending"
       :filter-fields="filterFields"
       :disabled="!!error"
@@ -34,7 +34,7 @@
           {{ (modelValue as string[]).map(id => getItemLabel(id)).join(', ') }}
         </span>
         <span v-else class="text-dimmed truncate">
-          Select {{ label || collection }}
+          {{ t('reference.selectPlaceholder', { label: label || collection }) }}
         </span>
       </template>
 
@@ -52,7 +52,7 @@
             block
             @click="handleCreate"
           >
-            Create new {{ label || collection }}
+            {{ t('reference.createNew', { label: label || collection }) }}
           </UButton>
         </div>
       </template>
@@ -85,7 +85,7 @@ const emit = defineEmits<{
 }>()
 
 const { open, close } = useCrouton()
-const { tContent } = useT()
+const { t, tContent } = useT()
 
 // Fetch items from the referenced collection (with optional query filter)
 const { items, pending, refresh, error } = await useCollectionQuery(props.collection, {
@@ -99,18 +99,18 @@ const getErrorMessage = () => {
   const status = error.value.statusCode || error.value.status
 
   if (status === 404) {
-    return 'The data endpoint could not be found. Please check your team settings or contact support.'
+    return t('errors.notFound')
   }
 
   if (status === 403) {
-    return 'You do not have permission to view this data.'
+    return t('errors.noPermission')
   }
 
   if (status >= 500) {
-    return 'A server error occurred. Please try again later.'
+    return t('errors.serverError')
   }
 
-  return error.value.statusMessage || 'An error occurred while loading data.'
+  return error.value.statusMessage || t('errors.loadingData')
 }
 
 // Computed map for reactive label lookup - uses tContent to resolve translations

@@ -10,6 +10,7 @@
  */
 import { computed, ref } from 'vue'
 import { NodeViewWrapper } from '@tiptap/vue-3'
+import { useI18n } from 'vue-i18n'
 
 interface BookingBlockAttrs {
   title?: string
@@ -27,6 +28,7 @@ const props = defineProps<{
 }>()
 
 const attrs = computed(() => props.node.attrs)
+const { t } = useI18n()
 
 const innerRef = ref<HTMLElement | null>(null)
 
@@ -68,7 +70,7 @@ function handleOpenPanel() {
                 <path d="M8 2v4M16 2v4M3 10h18M21 8v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 <path d="m9 16 2 2 4-4" />
               </svg>
-              Booking
+              {{ t('bookings.block.booking') }}
             </span>
             <!-- Access badge -->
             <span
@@ -79,7 +81,7 @@ function handleOpenPanel() {
                 <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              Members only
+              {{ t('bookings.block.membersOnly') }}
             </span>
             <!-- Scope badge -->
             <span
@@ -92,7 +94,7 @@ function handleOpenPanel() {
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-              Team view
+              {{ t('bookings.block.teamView') }}
             </span>
           </div>
           <!-- Action buttons -->
@@ -100,7 +102,7 @@ function handleOpenPanel() {
             <button
               type="button"
               class="p-1 text-gray-400 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              title="Edit block properties"
+              :title="t('bookings.block.editBlock')"
               @click.stop="handleOpenPanel"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +112,7 @@ function handleOpenPanel() {
             <button
               type="button"
               class="p-1 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              title="Delete block"
+              :title="t('bookings.block.deleteBlock')"
               @click.stop="deleteNode"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

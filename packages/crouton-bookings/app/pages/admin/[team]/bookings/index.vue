@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const { teamId } = useTeamContext()
+const { t } = useT()
 
 // Use route param directly for stable SSR/client URL (avoids hydration mismatch
 // caused by useTeamContext returning UUID on server vs slug on client)
@@ -90,10 +91,10 @@ async function handleBookingChange() {
       >
         <div class="flex items-center gap-2 text-sm font-medium">
           <UIcon name="i-lucide-eye" class="size-4" />
-          <span>Viewing as <strong>{{ impersonatedUser?.name || 'member' }}</strong></span>
+          <span>{{ t('bookings.admin.viewingAs') }} <strong>{{ impersonatedUser?.name || 'member' }}</strong></span>
         </div>
         <UButton size="xs" color="warning" variant="soft" icon="i-lucide-x" @click="exitPreview">
-          Exit
+          {{ t('bookings.admin.exit') }}
         </UButton>
       </div>
     </Transition>
@@ -115,7 +116,7 @@ async function handleBookingChange() {
           variant="ghost"
           icon="i-lucide-user-check"
         >
-          View as user
+          {{ t('bookings.admin.viewAsUser') }}
         </UButton>
       </UDropdownMenu>
     </div>
@@ -127,7 +128,7 @@ async function handleBookingChange() {
         :settings="firstSettings"
         :loading="loading"
         title=""
-        :empty-message="isPreview ? `No bookings for ${impersonatedUser?.name || 'this user'}` : 'No bookings yet for this team'"
+        :empty-message="isPreview ? t('bookings.admin.noBookingsForUser', { name: impersonatedUser?.name || 'this user' }) : t('bookings.admin.noBookingsForTeam')"
         @created="handleBookingChange"
         @updated="handleBookingChange"
       />

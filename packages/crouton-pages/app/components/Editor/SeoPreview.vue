@@ -73,10 +73,10 @@ const translationForLocale = computed(() => {
             </span>
           </div>
           <div class="text-sm font-normal leading-snug text-blue-700 dark:text-blue-400">
-            {{ translationForLocale.seoTitle || translationForLocale.title || 'Page Title' }}
+            {{ translationForLocale.seoTitle || translationForLocale.title || t('pages.seo.pageTitle') }}
           </div>
           <div class="text-xs text-muted leading-relaxed line-clamp-2">
-            {{ translationForLocale.seoDescription || 'No description — add a meta description to improve SEO.' }}
+            {{ translationForLocale.seoDescription || t('pages.seo.noDescription') }}
           </div>
         </div>
         <div v-if="ogImage" class="shrink-0 size-16 rounded overflow-hidden bg-muted">
@@ -91,13 +91,13 @@ const translationForLocale = computed(() => {
         <img v-if="ogImage" :src="ogImage" class="w-full h-full object-cover" alt="" />
         <div v-else class="w-full h-full flex flex-col items-center justify-center gap-2 text-muted/60">
           <UIcon name="i-lucide-image" class="size-8" />
-          <span class="text-xs">No social image set</span>
+          <span class="text-xs">{{ t('pages.seo.noSocialImage') }}</span>
         </div>
       </div>
       <div class="p-2.5 bg-background border-t border-default space-y-0.5">
         <div class="text-xs text-muted uppercase tracking-wide">{{ teamSlug }}</div>
         <div class="text-sm font-medium leading-snug">
-          {{ translationForLocale.seoTitle || translationForLocale.title || 'Page Title' }}
+          {{ translationForLocale.seoTitle || translationForLocale.title || t('pages.seo.pageTitle') }}
         </div>
         <div v-if="translationForLocale.seoDescription" class="text-xs text-muted leading-relaxed line-clamp-2">
           {{ translationForLocale.seoDescription }}

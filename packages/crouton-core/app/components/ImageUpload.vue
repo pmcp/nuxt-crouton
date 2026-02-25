@@ -32,7 +32,7 @@
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">
-            Crop Image
+            {{ t('image.cropImage') }}
           </h3>
           <CroutonImageCropper
             v-if="pendingFile"
@@ -51,6 +51,8 @@
 <script setup lang="ts">
 import { useFileDialog, useObjectUrl } from '@vueuse/core'
 import type { AspectRatioPreset } from '../composables/useImageCrop'
+
+const { t } = useT()
 
 interface Props {
   crop?: boolean | { aspectRatio?: number | AspectRatioPreset, circular?: boolean }

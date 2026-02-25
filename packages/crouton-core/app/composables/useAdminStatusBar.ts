@@ -72,6 +72,7 @@ function getUserFirstName(): string | undefined {
 }
 
 export function useAdminStatusBar() {
+  const { t } = useT()
   const messages = useState<StatusMessage[]>('crouton-status-bar-messages', () => [])
   const lastMessage = useState<StatusMessage | null>('crouton-status-bar-last', () => null)
 
@@ -105,27 +106,29 @@ export function useAdminStatusBar() {
       // Truncate long item names
       const shortName = itemName && itemName.length > 30 ? `${itemName.slice(0, 30)}…` : itemName
 
+      const user = userName || t('statusBar.defaultUser')
+
       if (operation === 'create') {
         text = shortName
-          ? `${userName || 'You'} created ${label} "${shortName}"`
-          : `${userName || 'You'} created a ${label}`
+          ? t('statusBar.createdNamed', { user, label, name: shortName })
+          : t('statusBar.created', { user, label })
         icon = 'i-lucide-plus'
       } else if (operation === 'update') {
         text = shortName
-          ? `${userName || 'You'} saved "${shortName}"`
-          : `${userName || 'You'} saved the ${label}`
+          ? t('statusBar.savedNamed', { user, name: shortName })
+          : t('statusBar.saved', { user, label })
         icon = 'i-lucide-check'
       } else if (operation === 'delete') {
         const count = Array.isArray(itemIds) ? itemIds.length : 1
         text = count > 1
-          ? `${userName || 'You'} deleted ${count} ${label}s`
-          : `${userName || 'You'} deleted a ${label}`
+          ? t('statusBar.deletedMultiple', { user, count, label })
+          : t('statusBar.deleted', { user, label })
         icon = 'i-lucide-trash-2'
       } else if (operation === 'move' || operation === 'reorder') {
-        text = `${userName || 'You'} reordered ${label}s`
+        text = t('statusBar.reordered', { user, label })
         icon = 'i-lucide-arrow-up-down'
       } else {
-        text = 'Done'
+        text = t('statusBar.done')
       }
 
       addMessage({ text, icon, type: 'success', collection, operation })

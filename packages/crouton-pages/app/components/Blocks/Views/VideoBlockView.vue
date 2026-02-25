@@ -20,6 +20,7 @@ const props = defineProps<{
   getPos: () => number
 }>()
 
+const { t } = useT()
 const attrs = computed(() => props.node.attrs)
 
 const hasSrc = computed(() => !!attrs.value.src)
@@ -139,7 +140,7 @@ function handleOpenPanel() {
               <polygon points="23 7 16 12 23 17 23 7" />
               <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
             </svg>
-            <span class="text-sm font-medium">No video — double-click to add</span>
+            <span class="text-sm font-medium">{{ t('pages.blocks.video.noVideo') }}</span>
           </div>
         </div>
       </div>

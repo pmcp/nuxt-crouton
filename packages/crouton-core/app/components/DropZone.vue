@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDropZone } from '@vueuse/core'
+const { t } = useT()
 
 interface Props {
   accept?: string[]
@@ -60,7 +61,7 @@ const { isOverDropZone } = useDropZone(dropZoneRef, { onDrop })
           :class="isOverDropZone ? 'text-primary-500' : 'text-neutral-400'"
         />
         <p class="text-sm" :class="isOverDropZone ? 'text-primary-600 dark:text-primary-400' : 'text-neutral-500'">
-          {{ isOverDropZone ? 'Drop files here' : 'Drag & drop files here' }}
+          {{ isOverDropZone ? t('dropzone.dropHere') : t('dropzone.idle') }}
         </p>
       </div>
     </slot>

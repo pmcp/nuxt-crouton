@@ -26,6 +26,7 @@ const emit = defineEmits<{
 // Detect if crouton-assets is installed
 const { hasApp } = useCroutonApps()
 const hasAssetsPicker = hasApp('assets')
+const { t } = useT()
 
 // Internal ID counter for stable v-for keys
 let nextId = 0
@@ -247,14 +248,14 @@ function getImageMode(index: number): string {
                 :color="isIcon(item) ? 'primary' : 'neutral'"
                 :variant="isIcon(item) ? 'solid' : 'ghost'"
                 icon="i-lucide-at-sign"
-                label="Icon"
+                :label="t('pages.blocks.logos.typeIcon')"
                 @click="isIcon(item) ? undefined : switchItemType(index, 'icon')"
               />
               <UButton
                 :color="!isIcon(item) ? 'primary' : 'neutral'"
                 :variant="!isIcon(item) ? 'solid' : 'ghost'"
                 icon="i-lucide-image"
-                label="Image"
+                :label="t('pages.blocks.logos.typeImage')"
                 @click="!isIcon(item) ? undefined : switchItemType(index, 'image')"
               />
             </UButtonGroup>
@@ -321,14 +322,14 @@ function getImageMode(index: number): string {
             <div class="flex items-center justify-center h-16 rounded-lg border-2 border-dashed border-default bg-neutral-50 dark:bg-neutral-900">
               <div class="text-center">
                 <UIcon name="i-lucide-image" class="size-5 text-neutral-400" />
-                <p class="text-xs text-neutral-500">No image</p>
+                <p class="text-xs text-neutral-500">{{ t('pages.blocks.logos.noImage') }}</p>
               </div>
             </div>
             <div class="flex gap-1">
               <UButton
                 v-if="hasAssetsPicker"
                 icon="i-lucide-folder-open"
-                label="Browse"
+                :label="t('pages.blocks.media.browse')"
                 variant="soft"
                 color="neutral"
                 size="xs"
@@ -337,7 +338,7 @@ function getImageMode(index: number): string {
               />
               <UButton
                 icon="i-lucide-upload"
-                label="Upload"
+                :label="t('pages.blocks.media.upload')"
                 variant="soft"
                 color="neutral"
                 size="xs"
@@ -361,13 +362,13 @@ function getImageMode(index: number): string {
             <Suspense>
               <CroutonAssetsPicker @select="handleAssetSelected(index, $event)" />
               <template #fallback>
-                <div class="h-16 flex items-center justify-center text-xs text-muted">Loading library...</div>
+                <div class="h-16 flex items-center justify-center text-xs text-muted">{{ t('pages.blocks.media.loadingLibrary') }}</div>
               </template>
             </Suspense>
             <div class="flex gap-1">
-              <UButton icon="i-lucide-upload" label="Upload" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'upload'" />
+              <UButton icon="i-lucide-upload" :label="t('pages.blocks.media.upload')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'upload'" />
               <UButton icon="i-lucide-link" label="URL" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'url'" />
-              <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
+              <UButton v-if="item.value" :label="t('common.cancel')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
             </div>
           </div>
 
@@ -375,9 +376,9 @@ function getImageMode(index: number): string {
           <div v-if="getImageMode(index) === 'upload'" class="space-y-2">
             <CroutonImageUpload @file-selected="handleFileSelected(index, $event)" />
             <div class="flex gap-1">
-              <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" label="Browse" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'browse'" />
+              <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" :label="t('pages.blocks.media.browse')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'browse'" />
               <UButton icon="i-lucide-link" label="URL" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'url'" />
-              <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
+              <UButton v-if="item.value" :label="t('common.cancel')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
             </div>
           </div>
 
@@ -394,10 +395,10 @@ function getImageMode(index: number): string {
               </template>
             </UInput>
             <div class="flex gap-1">
-              <UButton label="Apply" color="primary" size="xs" @click="applyUrl(index, item.value)" />
-              <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" label="Browse" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'browse'" />
-              <UButton icon="i-lucide-upload" label="Upload" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'upload'" />
-              <UButton v-if="item.value" label="Cancel" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
+              <UButton :label="t('common.apply')" color="primary" size="xs" @click="applyUrl(index, item.value)" />
+              <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" :label="t('pages.blocks.media.browse')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'browse'" />
+              <UButton icon="i-lucide-upload" :label="t('pages.blocks.media.upload')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'upload'" />
+              <UButton v-if="item.value" :label="t('common.cancel')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
             </div>
           </div>
         </div>
@@ -427,7 +428,7 @@ function getImageMode(index: number): string {
         class="flex-1"
         @click="addIconItem"
       >
-        Add Icon
+        {{ t('pages.blocks.logos.addIcon') }}
       </UButton>
       <UButton
         color="neutral"
@@ -437,7 +438,7 @@ function getImageMode(index: number): string {
         class="flex-1"
         @click="addImageItem"
       >
-        Add Image
+        {{ t('pages.blocks.logos.addImage') }}
       </UButton>
     </div>
   </div>

@@ -27,13 +27,14 @@
         :variant="getVariant('solid')"
         @click="handleCreate"
       >
-        <span>Create <span class="hidden md:inline">{{ useFormatCollections().collectionWithCapitalSingular(collection) }}</span></span>
+        <span>{{ t('common.create') }} <span class="hidden md:inline">{{ useFormatCollections().collectionWithCapitalSingular(collection) }}</span></span>
       </UButton>
     </template>
   </UDashboardNavbar>
 </template>
 
 <script setup lang="ts">
+const { t } = useT()
 const { open } = useCrouton()
 const { getConfig } = useCollections()
 

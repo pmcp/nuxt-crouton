@@ -117,6 +117,7 @@ export function useCollectionImport(collection: string): UseCollectionImportRetu
   const progress = ref(0)
   const route = useRoute()
   const notify = useNotify()
+  const { t } = useT()
   const collections = useCollections()
   const { getTeamId } = useTeamContext()
 
@@ -249,7 +250,7 @@ export function useCollectionImport(collection: string): UseCollectionImportRetu
       // Check required fields
       for (const reqField of requiredFields) {
         if (mappedData[reqField] === undefined || mappedData[reqField] === null || mappedData[reqField] === '') {
-          errors[reqField] = 'Required field is missing'
+          errors[reqField] = t('import.requiredFieldMissing')
         }
       }
 
@@ -319,14 +320,14 @@ export function useCollectionImport(collection: string): UseCollectionImportRetu
       result.success = result.failed === 0
 
       if (result.failed > 0) {
-        notify.warning('Import complete', { description: `${result.created} created, ${result.failed} failed` })
+        notify.warning(t('import.complete'), { description: t('import.completeWithErrors', { created: result.created, failed: result.failed }) })
       } else {
-        notify.success('Import complete', { description: `${result.created} created` })
+        notify.success(t('import.complete'), { description: t('import.completeSuccess', { created: result.created }) })
       }
 
       return result
     } catch (error: any) {
-      notify.error('Import failed', { description: error.message || 'An unexpected error occurred' })
+      notify.error(t('import.failed'), { description: error.message || t('import.unexpected') })
       throw error
     } finally {
       isImporting.value = false

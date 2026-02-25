@@ -208,7 +208,7 @@ watch(
   (val) => {
     if (action.value === 'create' && val) {
       updateGhost({
-        title: val.title || 'New page...',
+        title: val.title || t('pages.newPagePlaceholder'),
         slug: val.slug || ''
       })
     }
@@ -335,7 +335,7 @@ watch(
         contentReady.value = true
       }
     } catch (error: any) {
-      loadError.value = error.message || 'Failed to load page'
+      loadError.value = error.message || t('pages.errors.loadFailed')
       console.error('Failed to load page:', error)
     } finally {
       isLoading.value = false
@@ -570,7 +570,7 @@ const parentOptions = computed(() => {
       const isExcluded = excludeIds.has(page.id)
       options.push({
         value: page.id,
-        label: `${'— '.repeat(depth)}${page.title || page.slug || 'Untitled'}`,
+        label: `${'— '.repeat(depth)}${page.title || page.slug || t('pages.untitled')}`,
         disabled: isExcluded
       })
       buildOptions(page.id, depth + 1)
@@ -623,7 +623,7 @@ async function handleSubmit() {
     )
     if (!hasTitle) {
       const notify = useNotify()
-      notify.error('Title required', { description: 'Please enter a title for at least one language' })
+      notify.error(t('pages.errors.titleRequired'), { description: t('pages.errors.titleRequiredDescription') })
       return
     }
 
@@ -834,7 +834,7 @@ defineExpose({ state })
     <div v-if="isLoading" class="flex-1 flex items-center justify-center">
       <div class="text-center">
         <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-muted mb-2" />
-        <p class="text-sm text-muted">Loading page...</p>
+        <p class="text-sm text-muted">{{ t('pages.editor.loadingPage') }}</p>
       </div>
     </div>
 
@@ -850,7 +850,7 @@ defineExpose({ state })
           class="mt-3"
           @click="emit('cancel')"
         >
-          Go back
+          {{ t('common.back') }}
         </UButton>
       </div>
     </div>
@@ -902,7 +902,7 @@ defineExpose({ state })
       <!-- Collection item picker — shown above the i18n input so it is always visible -->
       <div v-if="isCollectionPage" class="px-4 pt-4 pb-2 shrink-0 border-b border-default">
         <UFormField
-          :label="`Select ${selectedPageType?.name || 'Item'}`"
+          :label="t('pages.editor.selectItem', { name: selectedPageType?.name || 'Item' })"
           name="config.itemId"
         >
           <CroutonFormReferenceSelect
@@ -916,18 +916,18 @@ defineExpose({ state })
 
       <!-- Collection binder config — pick which collection to bind + sort options -->
       <div v-if="isBinderPage" class="px-4 pt-4 pb-3 shrink-0 border-b border-default space-y-3">
-        <UFormField label="Bind Collection" name="config.collection" help="All items from this collection will appear as sub-entries in navigation.">
+        <UFormField :label="t('pages.editor.binder.bindCollection')" name="config.collection" :help="t('pages.editor.binder.bindCollectionHelp')">
           <USelect
             v-model="binderCollection"
             :items="collectionOptions"
             value-key="value"
-            placeholder="Select a collection..."
+            :placeholder="t('pages.editor.binder.selectCollection')"
             size="sm"
             class="w-full"
           />
         </UFormField>
         <div class="grid grid-cols-2 gap-2">
-          <UFormField label="Sort Field" name="config.sortField" help="e.g. title, order">
+          <UFormField :label="t('pages.editor.binder.sortField')" name="config.sortField" :help="t('pages.editor.binder.sortFieldHelp')">
             <UInput
               v-model="binderSortField"
               placeholder="order"
@@ -935,10 +935,10 @@ defineExpose({ state })
               class="w-full"
             />
           </UFormField>
-          <UFormField label="Sort Order" name="config.sortOrder">
+          <UFormField :label="t('pages.editor.binder.sortOrder')" name="config.sortOrder">
             <USelect
               v-model="binderSortOrder"
-              :items="[{ value: 'asc', label: 'Ascending' }, { value: 'desc', label: 'Descending' }]"
+              :items="[{ value: 'asc', label: t('common.ascending') }, { value: 'desc', label: t('common.descending') }]"
               value-key="value"
               size="sm"
               class="w-full"
@@ -1024,7 +1024,7 @@ defineExpose({ state })
               </span>
               <span v-else-if="(state as any).updatedAt && (state as any).updatedAt !== (state as any).createdAt" class="flex items-center gap-1">
                 <UIcon name="i-lucide-pencil" class="size-3" />
-                Updated {{ updatedTimeAgo }}
+                {{ t('pages.editor.updated', { time: updatedTimeAgo }) }}
               </span>
             </div>
           </template>
@@ -1035,10 +1035,10 @@ defineExpose({ state })
 
         <!-- Config fields for app pages -->
         <template v-if="!isRegularPage && !isCollectionPage && selectedPageType?.configSchema?.length">
-          <USeparator label="Page Settings" class="my-6" />
+          <USeparator :label="t('pages.editor.pageSettings')" class="my-6" />
           <div class="space-y-4">
             <div v-for="field in selectedPageType.configSchema" :key="field.name" class="text-sm text-muted">
-              Config field: {{ field.name }}
+              {{ t('pages.editor.configField', { name: field.name }) }}
             </div>
           </div>
         </template>
@@ -1046,8 +1046,8 @@ defineExpose({ state })
         <template v-else-if="!isRegularPage && !isCollectionPage && !selectedPageType?.configSchema?.length">
           <div class="p-4 bg-muted/30 rounded-lg text-center text-sm text-muted mt-6">
             <UIcon name="i-lucide-info" class="size-5 mb-2" />
-            <p>This page type has no additional configuration.</p>
-            <p>The page will display the {{ selectedPageType?.name }} component.</p>
+            <p>{{ t('pages.editor.noConfig') }}</p>
+            <p>{{ t('pages.editor.displaysComponent', { name: selectedPageType?.name }) }}</p>
           </div>
         </template>
       </div>
@@ -1062,7 +1062,7 @@ defineExpose({ state })
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-eye" class="size-4 text-muted" />
               <span class="text-sm font-medium">
-                {{ state.status === 'draft' ? 'Draft Preview' : 'Page Preview' }}
+                {{ state.status === 'draft' ? t('pages.editor.draftPreview') : t('pages.editor.pagePreview') }}
               </span>
               <UBadge
                 v-if="state.status === 'draft'"
@@ -1070,7 +1070,7 @@ defineExpose({ state })
                 variant="subtle"
                 size="xs"
               >
-                Draft
+                {{ t('pages.status.draft') }}
               </UBadge>
             </div>
 

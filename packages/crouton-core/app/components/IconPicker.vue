@@ -7,6 +7,8 @@
  */
 import { useDebounceFn } from '@vueuse/core'
 
+const { t } = useT()
+
 interface Props {
   modelValue?: string
   size?: 'sm' | 'md'
@@ -242,7 +244,7 @@ watch(open, (isOpen) => {
           <!-- Empty state -->
           <div v-else class="flex flex-col items-center justify-center h-[160px] text-muted">
             <UIcon name="i-lucide-search-x" class="size-6 mb-1" />
-            <span class="text-xs">No icons found</span>
+            <span class="text-xs">{{ t('iconPicker.noIcons') }}</span>
           </div>
         </div>
 
@@ -270,7 +272,7 @@ watch(open, (isOpen) => {
               :disabled="!manualInput.trim()"
               @click="applyManualInput"
             >
-              Apply
+              {{ t('common.apply') }}
             </UButton>
           </div>
         </div>

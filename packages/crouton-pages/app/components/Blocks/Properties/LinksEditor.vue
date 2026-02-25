@@ -12,6 +12,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { t } = useT()
+
 const emit = defineEmits<{
   'update:modelValue': [value: BlockLink[]]
 }>()
@@ -93,7 +95,7 @@ function moveLink(index: number, direction: 'up' | 'down') {
     >
       <!-- Header with move/delete -->
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium">Button {{ index + 1 }}</span>
+        <span class="text-sm font-medium">{{ t('pages.blocks.links.buttonN', { n: index + 1 }) }}</span>
         <div class="flex items-center gap-1">
           <UButton
             color="neutral"
@@ -124,7 +126,7 @@ function moveLink(index: number, direction: 'up' | 'down') {
       <!-- Label -->
       <UInput
         :model-value="link.label"
-        placeholder="Button text"
+        :placeholder="t('pages.blocks.links.buttonTextPlaceholder')"
         size="sm"
         @update:model-value="updateLink(index, 'label', $event)"
       />
@@ -132,7 +134,7 @@ function moveLink(index: number, direction: 'up' | 'down') {
       <!-- URL -->
       <UInput
         :model-value="link.to || ''"
-        placeholder="/page or https://..."
+        :placeholder="t('pages.blocks.links.urlPlaceholder')"
         size="sm"
         @update:model-value="updateLink(index, 'to', $event)"
       >
@@ -177,7 +179,7 @@ function moveLink(index: number, direction: 'up' | 'down') {
       block
       @click="addLink"
     >
-      Add Button
+      {{ t('pages.blocks.links.addButton') }}
     </UButton>
   </div>
 </template>

@@ -17,15 +17,17 @@ const emit = defineEmits<{
   'update:modelValue': [value: SlotSchedule]
 }>()
 
-const days = [
-  { value: 1, label: 'Mon' },
-  { value: 2, label: 'Tue' },
-  { value: 3, label: 'Wed' },
-  { value: 4, label: 'Thu' },
-  { value: 5, label: 'Fri' },
-  { value: 6, label: 'Sat' },
-  { value: 0, label: 'Sun' },
-]
+const { t } = useT()
+
+const days = computed(() => [
+  { value: 1, label: t('bookings.schedule.days.mon') },
+  { value: 2, label: t('bookings.schedule.days.tue') },
+  { value: 3, label: t('bookings.schedule.days.wed') },
+  { value: 4, label: t('bookings.schedule.days.thu') },
+  { value: 5, label: t('bookings.schedule.days.fri') },
+  { value: 6, label: t('bookings.schedule.days.sat') },
+  { value: 0, label: t('bookings.schedule.days.sun') },
+])
 
 // Parse slots
 const parsedSlots = computed<SlotItem[]>(() => {
@@ -69,7 +71,7 @@ function isActive(slotId: string, dayValue: number): boolean {
 
 function toggle(slotId: string, dayValue: number) {
   const current = { ...schedule.value }
-  const slotDays = current[slotId] ? [...current[slotId]] : days.map(d => d.value)
+  const slotDays = current[slotId] ? [...current[slotId]] : days.value.map(d => d.value)
 
   const index = slotDays.indexOf(dayValue)
   if (index === -1) {
@@ -105,7 +107,7 @@ function clearSchedule() {
         <thead>
           <tr>
             <th class="text-left pr-3 pb-2 text-muted font-medium text-xs">
-              {{ hasSlots ? 'Slot' : '' }}
+              {{ hasSlots ? t('bookings.schedule.slotColumn') : '' }}
             </th>
             <th
               v-for="day in days"
@@ -158,7 +160,7 @@ function clearSchedule() {
           <!-- Single all-day row when no slots -->
           <tr v-else>
             <td class="pr-3 py-1 text-default text-xs">
-              All day
+              {{ t('bookings.schedule.allDayRow') }}
             </td>
             <td
               v-for="day in days"
@@ -197,15 +199,15 @@ function clearSchedule() {
 
     <template v-if="!readonly">
       <p v-if="!hasSchedule" class="text-xs text-muted">
-        {{ hasSlots ? 'No per-slot schedule set — all slots follow the open days.' : 'All days available — toggle days to mark them as unavailable.' }}
+        {{ hasSlots ? t('bookings.schedule.slotScheduleHint') : t('bookings.schedule.allDaysHint') }}
       </p>
       <p v-else class="text-xs text-muted">
         {{ hasSlots
-          ? `Custom schedule active for ${Object.keys(schedule).length} slot${Object.keys(schedule).length === 1 ? '' : 's'}.`
-          : `${days.length - (schedule[ALL_DAY_KEY]?.length ?? days.length)} day${days.length - (schedule[ALL_DAY_KEY]?.length ?? days.length) === 1 ? '' : 's'} blocked.`
+          ? t('bookings.schedule.slotScheduleActive', { count: Object.keys(schedule).length })
+          : t('bookings.schedule.daysBlocked', { count: days.length - (schedule[ALL_DAY_KEY]?.length ?? days.length) })
         }}
         <button type="button" class="text-primary hover:underline" @click="clearSchedule">
-          Reset all
+          {{ t('bookings.schedule.resetSchedule') }}
         </button>
       </p>
     </template>

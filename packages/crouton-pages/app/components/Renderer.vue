@@ -43,6 +43,7 @@ const props = defineProps<Props>()
 
 const { locale: i18nLocale } = useI18n()
 const { getPageType } = usePageTypes()
+const { t } = useT()
 
 const effectiveLocale = computed(() => props.locale || i18nLocale.value)
 
@@ -134,7 +135,7 @@ const contentFormat = computed(() => {
         class="text-center py-12 text-muted"
       >
         <UIcon name="i-lucide-file-text" class="size-12 mb-4 mx-auto block" />
-        <p>This page has no content yet.</p>
+        <p>{{ t('pages.noContent') }}</p>
       </div>
     </template>
 
@@ -150,10 +151,9 @@ const contentFormat = computed(() => {
     <template v-else>
       <div class="p-8 text-center">
         <UIcon name="i-lucide-alert-triangle" class="size-12 text-warning mb-4" />
-        <h2 class="text-lg font-semibold mb-2">Unknown Page Type</h2>
+        <h2 class="text-lg font-semibold mb-2">{{ t('pages.unknownPageType') }}</h2>
         <p class="text-muted">
-          The page type "{{ page.pageType }}" is not registered.
-          The app providing this page type may not be installed.
+          {{ t('pages.unknownPageTypeDescription', { type: page.pageType }) }}
         </p>
       </div>
     </template>

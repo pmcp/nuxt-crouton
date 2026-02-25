@@ -48,6 +48,8 @@ const emit = defineEmits<{
   'update:groupField': [field: string]
 }>()
 
+const { t } = useT()
+
 // Allow dynamic group field selection
 const activeGroupField = ref(props.groupField)
 
@@ -132,7 +134,7 @@ function formatFieldLabel(field: string): string {
       v-if="showFieldSelector && fieldOptions.length > 1"
       class="flex items-center gap-3 px-4 py-2 border-b border-default shrink-0"
     >
-      <span class="text-sm text-muted">Group by:</span>
+      <span class="text-sm text-muted">{{ t('kanban.groupBy') }}</span>
       <USelectMenu
         v-model="activeGroupField"
         :items="fieldOptions"
@@ -175,10 +177,10 @@ function formatFieldLabel(field: string): string {
               class="w-12 h-12 mx-auto mb-4 opacity-50"
             />
             <p class="text-lg font-medium mb-2">
-              No items to display
+              {{ t('kanban.noItemsToDisplay') }}
             </p>
             <p class="text-sm">
-              Add items or change the grouping field.
+              {{ t('kanban.addItemsOrChangeGrouping') }}
             </p>
           </div>
         </div>

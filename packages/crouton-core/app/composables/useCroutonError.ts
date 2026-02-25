@@ -2,6 +2,7 @@
 import { promiseTimeout } from '@vueuse/core'
 
 export default function () {
+  const { t } = useT()
   const activeToast = useState('activeToasts', () => false)
   const toastVibration = useState('toastVibration', () => false)
 
@@ -25,7 +26,7 @@ export default function () {
     const isOnline = useNetwork().isOnline.value
 
     if (!isOnline) {
-      triggerErrorMessage('error', 'Check your connection status.', null, false)
+      triggerErrorMessage('error', t('errors.checkConnection'), null, false)
       return true
     }
 
@@ -33,7 +34,7 @@ export default function () {
     const loggedIn = !!userSession.user?.value
 
     if (!loggedIn) {
-      triggerErrorMessage('error', 'You are not logged in.', null, false)
+      triggerErrorMessage('error', t('errors.notLoggedIn'), null, false)
       return true
     }
 

@@ -40,7 +40,7 @@
           />
 
           <!-- Expand/Collapse button -->
-          <UTooltip :text="expanded ? 'Collapse to sidebar' : 'Expand to fullscreen'">
+          <UTooltip :text="expanded ? t('form.collapse') : t('form.expand')">
             <UButton
               :icon="expanded ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'"
               variant="ghost"
@@ -51,7 +51,7 @@
           </UTooltip>
 
           <!-- Close button -->
-          <UTooltip text="Close">
+          <UTooltip :text="t('form.close')">
             <UButton
               icon="i-lucide-x"
               variant="ghost"
@@ -88,7 +88,7 @@
           <UAlert
             color="error"
             icon="i-lucide-triangle-alert"
-            :title="error.title || 'An error occurred'"
+            :title="error.title || t('form.anErrorOccurred')"
             :description="error.description"
           />
           <div
@@ -99,14 +99,14 @@
               color="primary"
               @click="error.retry"
             >
-              Try Again
+              {{ t('form.tryAgain') }}
             </UButton>
             <UButton
               color="neutral"
               variant="outline"
               @click="close"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
           </div>
         </div>
@@ -181,6 +181,8 @@ interface Props {
   footerClass?: string
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '7xl' | 'full'
 }
+
+const { t } = useT()
 
 const props = withDefaults(defineProps<Props>(), {
   open: false,

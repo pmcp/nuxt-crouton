@@ -16,6 +16,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: BlockedDateItem]
 }>()
 
+const { t } = useT()
+
 // Convert YYYY-MM-DD string to Date
 function toDate(dateStr: string | undefined): Date | null {
   if (!dateStr) return null
@@ -122,7 +124,7 @@ function getSlotLabel(slot: SlotItem): string {
   <div class="space-y-3">
     <!-- Date range picker + Reason -->
     <div class="flex gap-3 items-start flex-wrap">
-      <UFormField label="Date Range" class="flex-1 min-w-[200px]">
+      <UFormField :label="t('bookings.schedule.dateRange')" class="flex-1 min-w-[200px]">
         <UPopover>
           <UButton
             color="neutral"
@@ -131,7 +133,7 @@ function getSlotLabel(slot: SlotItem): string {
             class="w-full justify-start"
           >
             <span v-if="displayLabel">{{ displayLabel }}</span>
-            <span v-else class="text-muted">Pick a date range</span>
+            <span v-else class="text-muted">{{ t('bookings.schedule.pickDateRange') }}</span>
           </UButton>
 
           <template #content>
@@ -148,10 +150,10 @@ function getSlotLabel(slot: SlotItem): string {
         </UPopover>
       </UFormField>
 
-      <UFormField label="Reason" class="flex-1 min-w-[140px]">
+      <UFormField :label="t('bookings.schedule.reason')" class="flex-1 min-w-[140px]">
         <UInput
           :model-value="modelValue.reason || ''"
-          placeholder="Holiday, Maintenance..."
+          :placeholder="t('bookings.schedule.reasonPlaceholder')"
           @update:model-value="update('reason', $event)"
         />
       </UFormField>
@@ -165,7 +167,7 @@ function getSlotLabel(slot: SlotItem): string {
         color="neutral"
         @click="toggleSlotRestriction"
       >
-        {{ showSlotRestriction ? 'Block entire day' : 'Block specific slots only' }}
+        {{ showSlotRestriction ? t('bookings.schedule.blockEntireDay') : t('bookings.schedule.blockSpecificSlots') }}
       </UButton>
 
       <!-- Slot selector -->
@@ -182,7 +184,7 @@ function getSlotLabel(slot: SlotItem): string {
         </UButton>
       </div>
       <p v-if="showSlotRestriction && (modelValue.blockedSlots?.length ?? 0) === 0" class="text-xs text-muted mt-1">
-        Select which slots to block during this period.
+        {{ t('bookings.schedule.selectSlotsToBlock') }}
       </p>
     </div>
   </div>

@@ -30,9 +30,9 @@
         <!-- Settings -->
         <div v-show="activeSection === 'settings'" class="flex flex-col gap-6 p-1">
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Location Details</legend>
-            <p class="text-sm text-gray-500 -mt-1">Display color for this location.</p>
-            <UFormField label="Color" name="color">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ t('bookings.locationForm.locationDetails') }}</legend>
+            <p class="text-sm text-gray-500 -mt-1">{{ t('bookings.locationForm.colorHint') }}</p>
+            <UFormField :label="t('bookings.locationForm.color')" name="color">
               <UColorPicker v-model="state.color" />
             </UFormField>
           </fieldset>
@@ -41,22 +41,22 @@
 
           <!-- Address & Map -->
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Address</legend>
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ t('bookings.locationForm.address') }}</legend>
             <p class="text-sm text-gray-500 -mt-1">
-              {{ hasMaps ? 'Physical address and map pin. The map updates automatically as you type.' : 'Physical address for this location.' }}
+              {{ hasMaps ? t('bookings.locationForm.addressHintWithMap') : t('bookings.locationForm.addressHint') }}
             </p>
-            <UFormField label="Street" name="street">
+            <UFormField :label="t('bookings.locationForm.street')" name="street">
               <UInput v-model="state.street" class="w-full" />
             </UFormField>
             <div class="grid grid-cols-2 gap-4">
-              <UFormField label="ZIP Code" name="zip">
+              <UFormField :label="t('bookings.locationForm.zipCode')" name="zip">
                 <UInput v-model="state.zip" class="w-full" />
               </UFormField>
-              <UFormField label="City" name="city">
+              <UFormField :label="t('bookings.locationForm.city')" name="city">
                 <UInput v-model="state.city" class="w-full" />
               </UFormField>
             </div>
-            <UFormField v-if="hasMaps" label="Location Map" name="location">
+            <UFormField v-if="hasMaps" :label="t('bookings.locationForm.locationMap')" name="location">
               <CroutonMapsMap
                 :center="mapCenter"
                 :zoom="14"
@@ -78,7 +78,7 @@
                 </template>
               </CroutonMapsMap>
               <p v-if="geocoding" class="text-sm text-gray-500 mt-2">
-                Geocoding address...
+                {{ t('bookings.locationForm.geocoding') }}
               </p>
             </UFormField>
           </fieldset>
@@ -87,9 +87,9 @@
 
           <!-- Access Control -->
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Access Control</legend>
-            <p class="text-sm text-gray-500 -mt-1">Restrict which members can book this location. Leave empty to allow all team members.</p>
-            <UFormField label="Allowed Members" name="allowedMemberIds">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ t('bookings.locationForm.accessControl') }}</legend>
+            <p class="text-sm text-gray-500 -mt-1">{{ t('bookings.locationForm.accessControlHint') }}</p>
+            <UFormField :label="t('bookings.locationForm.allowedMembers')" name="allowedMemberIds">
               <USelectMenu
                 v-model="state.allowedMemberIds"
                 :items="memberItems"
@@ -97,7 +97,7 @@
                 value-key="value"
                 :loading="membersLoading"
                 icon="i-lucide-users"
-                placeholder="All team members"
+                :placeholder="t('bookings.locationForm.allTeamMembers')"
                 class="w-full"
                 :filter-fields="['label', 'email']"
               >
@@ -113,34 +113,34 @@
         <!-- Bookings -->
         <div v-show="activeSection === 'bookings'" class="flex flex-col gap-6 p-1">
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Booking Rules</legend>
-            <p class="text-sm text-gray-500 -mt-1">Control how bookings work at this location.</p>
-            <UFormField label="Booking Mode" name="inventoryMode">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ t('bookings.locationForm.bookingRules') }}</legend>
+            <p class="text-sm text-gray-500 -mt-1">{{ t('bookings.locationForm.bookingRulesHint') }}</p>
+            <UFormField :label="t('bookings.locationForm.bookingMode')" name="inventoryMode">
               <URadioGroup
                 :model-value="state.inventoryMode ? 'inventory' : 'slots'"
                 orientation="horizontal"
                 variant="card"
                 :items="[
-                  { label: 'Time Slots', description: 'Book specific named time slots per day', value: 'slots' },
-                  { label: 'Inventory', description: 'Book from a pool of available units', value: 'inventory' },
+                  { label: t('bookings.locationForm.timeSlots'), description: t('bookings.locationForm.timeSlotsDescription'), value: 'slots' },
+                  { label: t('bookings.locationForm.inventory'), description: t('bookings.locationForm.inventoryDescription'), value: 'inventory' },
                 ]"
                 @update:model-value="(v: string) => state.inventoryMode = v === 'inventory'"
               />
             </UFormField>
-            <UFormField v-show="state.inventoryMode" label="Available Units" name="quantity" help="Number of units available for booking at the same time.">
+            <UFormField v-show="state.inventoryMode" :label="t('bookings.locationForm.availableUnits')" name="quantity" :help="t('bookings.locationForm.availableUnitsHelp')">
               <UInputNumber v-model="state.quantity" class="w-full" />
             </UFormField>
-            <UFormField label="Max Bookings Per Month" name="maxBookingsPerMonth" help="Limit how many bookings a single user can make per calendar month. Leave empty for unlimited.">
-              <UInputNumber v-model="state.maxBookingsPerMonth" class="w-full" :min="0" placeholder="Unlimited" />
+            <UFormField :label="t('bookings.locationForm.maxBookingsPerMonth')" name="maxBookingsPerMonth" :help="t('bookings.locationForm.maxBookingsPerMonthHelp')">
+              <UInputNumber v-model="state.maxBookingsPerMonth" class="w-full" :min="0" :placeholder="t('bookings.locationForm.unlimited')" />
             </UFormField>
           </fieldset>
 
           <USeparator />
 
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Scheduling</legend>
-            <p class="text-sm text-gray-500 -mt-1">Define when this location is available for bookings.</p>
-            <UFormField v-if="!state.inventoryMode" label="Slots" name="slots">
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ t('bookings.locationForm.scheduling') }}</legend>
+            <p class="text-sm text-gray-500 -mt-1">{{ t('bookings.locationForm.schedulingHint') }}</p>
+            <UFormField v-if="!state.inventoryMode" :label="t('bookings.locationForm.slots')" name="slots">
               <CroutonFormRepeater
                 v-model="state.slots"
                 component-name="BookingsLocationsSlotInput"
@@ -148,13 +148,13 @@
                 :sortable="true"
               />
             </UFormField>
-            <UFormField label="Open Days" name="openDays">
+            <UFormField :label="t('bookings.schedule.openDays')" name="openDays">
               <CroutonBookingsOpenDaysPicker v-model="state.openDays" />
             </UFormField>
-            <UFormField v-if="!state.inventoryMode && state.slots?.length" label="Slot Schedule" name="slotSchedule">
+            <UFormField v-if="!state.inventoryMode && state.slots?.length" :label="t('bookings.schedule.slotSchedule')" name="slotSchedule">
               <CroutonBookingsScheduleGrid v-model="state.slotSchedule" :slots="state.slots" />
             </UFormField>
-            <UFormField label="Blocked Dates" name="blockedDates">
+            <UFormField :label="t('bookings.schedule.blockedDates')" name="blockedDates">
               <CroutonFormRepeater
                 v-model="state.blockedDates"
                 component-name="CroutonBookingsBlockedDateInput"
@@ -222,6 +222,7 @@ interface LocationFormProps {
 
 const props = defineProps<LocationFormProps>()
 const { defaultValue, schema, collection } = useBookingsLocations()
+const { t } = useT()
 
 // Optional maps integration — gracefully degrades when crouton-maps is not installed
 const { hasApp } = useCroutonApps()
@@ -246,11 +247,11 @@ const memberItems = computed(() =>
 )
 
 // Form layout: 3 tabs
-const navigationItems = [
-  { label: 'Settings', value: 'settings', icon: 'i-lucide-settings' },
-  { label: 'Bookings', value: 'bookings', icon: 'i-lucide-calendar' },
-  { label: 'Content', value: 'content', icon: 'i-lucide-globe' }
-]
+const navigationItems = computed(() => [
+  { label: t('bookings.locationForm.tabSettings'), value: 'settings', icon: 'i-lucide-settings' },
+  { label: t('bookings.locationForm.tabBookings'), value: 'bookings', icon: 'i-lucide-calendar' },
+  { label: t('bookings.locationForm.tabContent'), value: 'content', icon: 'i-lucide-globe' }
+])
 
 const tabs = ref(true)
 const activeSection = ref('settings')

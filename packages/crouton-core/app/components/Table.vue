@@ -113,7 +113,7 @@
               delete
               update
               :disabled="stateless"
-              :disabled-tooltip="stateless ? 'Preview only' : ''"
+              :disabled-tooltip="stateless ? tString('table.previewOnly') : ''"
               @delete="openCrouton?.('delete', collection, [row.original.id])"
               @update="openCrouton?.('update', collection, [row.original.id])"
             />

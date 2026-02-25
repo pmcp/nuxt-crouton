@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
   bookings: undefined,
   loading: undefined,
   error: undefined,
-  emptyMessage: 'Your bookings will appear here',
+  emptyMessage: undefined,
   hasActiveFilters: false,
   selectedDates: () => [],
   highlightedBookingId: null,
@@ -95,7 +95,11 @@ function handleRefresh() {
 // Email functionality
 const { resendEmail, isEmailEnabled } = useBookingEmail()
 const notify = useNotify()
+const { t } = useT()
 const { locale } = useI18n()
+
+// Resolved empty message with i18n default
+const resolvedEmptyMessage = computed(() => props.emptyMessage ?? t('bookings.list.defaultEmptyMessage'))
 const { teamId: contextTeamId } = useTeamContext()
 
 // Track which booking/email type is currently being sent
@@ -118,18 +122,18 @@ async function handleResendEmail(booking: Booking, triggerType: string) {
     const result = await resendEmail(teamId, booking.id, triggerType as any)
 
     if (result.success) {
-      notify.success('Email sent', { description: 'Confirmation email has been resent successfully' })
+      notify.success(t('bookings.notifications.emailSent'), { description: t('bookings.notifications.emailSentDescription') })
       // Refresh the list to update email stats
       handleRefresh()
       // Emit so parent can refresh if using external data
       emit('emailSent')
     }
     else {
-      notify.error('Failed to send email', { description: result.error || 'An error occurred' })
+      notify.error(t('bookings.notifications.emailFailed'), { description: result.error || 'An error occurred' })
     }
   }
   catch (error: any) {
-    notify.error('Failed to send email', { description: error.message || 'An error occurred' })
+    notify.error(t('bookings.notifications.emailFailed'), { description: error.message || 'An error occurred' })
   }
   finally {
     sendingEmailState.value = null
@@ -537,7 +541,7 @@ watch(
     <!-- Error state -->
     <div v-else-if="resolvedError" class="bg-error/10 border border-error/20 rounded-lg p-6 text-center">
       <UIcon name="i-lucide-alert-circle" class="w-8 h-8 text-error mx-auto mb-2" />
-      <p class="text-sm text-error font-medium">Failed to load bookings</p>
+      <p class="text-sm text-error font-medium">{{ t('bookings.list.failedToLoad') }}</p>
       <p class="text-xs text-muted mt-1">{{ resolvedError.message || 'An error occurred' }}</p>
       <UButton
         v-if="listData"
@@ -547,7 +551,7 @@ watch(
         class="mt-3"
         @click="handleRefresh"
       >
-        Try Again
+        {{ t('bookings.list.tryAgain') }}
       </UButton>
     </div>
 
@@ -570,10 +574,10 @@ watch(
           class="w-12 h-12 text-muted mx-auto mb-3"
         />
         <p class="text-sm font-medium">
-          {{ hasActiveFilters ? 'No matching bookings' : 'No bookings yet' }}
+          {{ hasActiveFilters ? t('bookings.list.noMatching') : t('bookings.list.noBookings') }}
         </p>
         <p class="text-xs text-muted mt-1">
-          {{ hasActiveFilters ? 'Try adjusting your filters' : emptyMessage }}
+          {{ hasActiveFilters ? t('bookings.list.adjustFilters') : resolvedEmptyMessage }}
         </p>
       </div>
     </div>

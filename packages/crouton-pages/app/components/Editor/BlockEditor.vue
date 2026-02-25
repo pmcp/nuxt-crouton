@@ -9,6 +9,8 @@ import { markRaw } from 'vue'
 import { PageBlocks } from '../../editor/extensions/page-blocks'
 import { getBlockMenuItems } from '../../utils/block-registry'
 
+const { t } = useT()
+
 // Block suggestion item interface (matches CroutonEditorBlocks prop)
 interface BlockSuggestionItem {
   type: string
@@ -111,10 +113,10 @@ const blockSuggestionItems = computed<BlockSuggestionItem[]>(() => {
 // Map category keys to display labels
 function getCategoryLabel(category: string): string {
   const labels: Record<string, string> = {
-    hero: 'Hero',
-    content: 'Content',
-    cta: 'Call to Action',
-    layout: 'Layout'
+    hero: t('pages.blocks.categories.hero'),
+    content: t('pages.blocks.categories.content'),
+    cta: t('pages.blocks.categories.cta'),
+    layout: t('pages.blocks.categories.layout')
   }
   return labels[category] || category
 }
@@ -162,7 +164,7 @@ defineExpose({
     <template #property-panel="{ selectedNode, isOpen, close, updateAttrs, deleteBlock }">
       <USlideover
         :open="isOpen"
-        title="Edit Block"
+        :title="t('pages.editor.editBlock')"
         :ui="{ content: 'max-w-sm' }"
         @update:open="!$event && close()"
       >

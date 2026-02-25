@@ -75,7 +75,7 @@ function isLocationSelected(locationId: string): boolean {
           icon="i-lucide-calendar"
           @click="emit('update:showCalendar', !showCalendar)"
         >
-          Calendar
+          {{ t('bookings.filters.calendar') }}
           <UBadge v-if="!showCalendar && selectedDatesCount > 0" size="xs" color="primary" variant="solid" class="ml-0.5">
             {{ selectedDatesCount }}
           </UBadge>
@@ -89,7 +89,7 @@ function isLocationSelected(locationId: string): boolean {
           icon="i-lucide-map-pin"
           @click="emit('update:showLocations', !showLocations)"
         >
-          Locations
+          {{ t('bookings.filters.locations') }}
           <UBadge v-if="!showLocations && selectedLocations.length > 0" size="xs" color="primary" variant="solid" class="ml-0.5">
             {{ selectedLocations.length }}
           </UBadge>
@@ -103,7 +103,7 @@ function isLocationSelected(locationId: string): boolean {
           icon="i-lucide-map"
           @click="emit('update:showMap', !showMap)"
         >
-          Map
+          {{ t('bookings.filters.map') }}
         </UButton>
 
         <UButton
@@ -113,7 +113,7 @@ function isLocationSelected(locationId: string): boolean {
           icon="i-lucide-x-circle"
           @click="emit('update:showCancelled', !showCancelled)"
         >
-          Cancelled
+          {{ t('bookings.filters.cancelled') }}
         </UButton>
 
       </div>
@@ -126,7 +126,7 @@ function isLocationSelected(locationId: string): boolean {
           variant="soft"
           @click="emit('go-to-today')"
         >
-          Today
+          {{ t('bookings.filters.today') }}
         </UButton>
 
         <UButton
@@ -135,7 +135,7 @@ function isLocationSelected(locationId: string): boolean {
           :variant="calendarView === 'week' ? 'solid' : 'outline'"
           @click="emit('update:calendarView', 'week')"
         >
-          Week
+          {{ t('bookings.filters.week') }}
         </UButton>
 
         <UButton
@@ -144,7 +144,7 @@ function isLocationSelected(locationId: string): boolean {
           :variant="calendarView === 'month' ? 'solid' : 'outline'"
           @click="emit('update:calendarView', 'month')"
         >
-          Month
+          {{ t('bookings.filters.month') }}
         </UButton>
       </div>
     </div>
@@ -162,7 +162,7 @@ function isLocationSelected(locationId: string): boolean {
         icon="i-lucide-plus"
         @click="emit('add-location')"
       >
-        Add Location
+        {{ t('bookings.filters.addLocation') }}
       </UButton>
     </div>
 
@@ -195,7 +195,7 @@ function isLocationSelected(locationId: string): boolean {
           class="self-center"
           @click="emit('add-location')"
         >
-          Add Location
+          {{ t('bookings.filters.addLocation') }}
         </UButton>
       </div>
     </Transition>

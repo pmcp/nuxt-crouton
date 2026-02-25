@@ -14,6 +14,8 @@ import type { Node } from '@tiptap/pm/model'
 import type { BlockType, BlockPropertySchema } from '../../types/blocks'
 import { getBlockDefinition } from '../../utils/block-registry'
 
+const { t } = useT()
+
 // Addon blocks from croutonBlocks registry
 const { getBlock: getAddonBlock } = useCroutonBlocks()
 
@@ -122,7 +124,7 @@ function onDelete() {
           class="size-5 text-primary"
         />
         <h3 class="text-lg font-semibold">
-          {{ blockDefinition?.name || 'Block' }} Settings
+          {{ t('pages.blocks.blockSettings', { name: blockDefinition?.name || t('pages.blocks.unknownBlock') }) }}
         </h3>
       </div>
       <UButton
@@ -143,7 +145,7 @@ function onDelete() {
       >
         <span class="flex items-center gap-2 text-muted">
           <UIcon name="i-lucide-eye" class="size-3.5" />
-          Live Preview
+          {{ t('pages.editor.livePreview') }}
         </span>
         <UIcon :name="showPreview ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5 text-muted" />
       </button>
@@ -382,7 +384,7 @@ function onDelete() {
 
       <div v-else class="text-center text-muted py-8">
         <UIcon name="i-lucide-alert-circle" class="size-8 mb-2" />
-        <p>Unknown block type</p>
+        <p>{{ t('pages.editor.unknownBlockType') }}</p>
       </div>
     </div>
 
@@ -395,14 +397,14 @@ function onDelete() {
         size="sm"
         @click="onDelete"
       >
-        Delete Block
+        {{ t('pages.editor.deleteBlock') }}
       </UButton>
       <UButton
         color="primary"
         size="sm"
         @click="onDone"
       >
-        Done
+        {{ t('pages.editor.done') }}
       </UButton>
     </div>
   </div>

@@ -74,6 +74,7 @@ watch(() => props.modelValue, (val) => {
   urlInput.value = val || ''
 })
 
+const { t } = useT()
 const hasVideo = computed(() => !!props.modelValue)
 
 function setUrl() {
@@ -175,7 +176,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         <div class="text-center">
           <UIcon name="i-lucide-video" class="size-8 text-neutral-400 mb-2" />
           <p class="text-sm text-neutral-500">
-            No video set
+            {{ t('pages.blocks.video.noVideoSet') }}
           </p>
         </div>
       </div>
@@ -183,7 +184,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         <UButton
           v-if="hasAssetsPicker"
           icon="i-lucide-folder-open"
-          label="Browse"
+          :label="t('pages.blocks.media.browse')"
           variant="soft"
           color="neutral"
           size="xs"
@@ -192,7 +193,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-link"
-          label="Paste URL"
+          :label="t('pages.blocks.media.pasteUrl')"
           variant="soft"
           color="neutral"
           size="xs"
@@ -201,7 +202,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-upload"
-          label="Upload"
+          :label="t('pages.blocks.media.upload')"
           variant="soft"
           color="neutral"
           size="xs"
@@ -210,7 +211,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-rabbit"
-          label="Bunny"
+          :label="t('pages.blocks.video.bunnyStream')"
           variant="soft"
           color="neutral"
           size="xs"
@@ -228,14 +229,14 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <template #fallback>
           <div class="h-32 flex items-center justify-center text-sm text-muted">
-            Loading library...
+            {{ t('pages.blocks.media.loadingLibrary') }}
           </div>
         </template>
       </Suspense>
       <div class="flex gap-2 pt-1">
         <UButton
           icon="i-lucide-upload"
-          label="Upload"
+          :label="t('pages.blocks.media.upload')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -251,7 +252,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-rabbit"
-          label="Bunny"
+          :label="t('pages.blocks.video.bunnyStream')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -259,7 +260,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           v-if="hasVideo"
-          label="Cancel"
+          :label="t('common.cancel')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -282,13 +283,13 @@ function handleAssetSelected(asset: Record<string, any>) {
       </UInput>
       <div class="flex gap-2">
         <UButton
-          label="Apply"
+          :label="t('common.apply')"
           color="primary"
           size="xs"
           @click="setUrl"
         />
         <UButton
-          label="Cancel"
+          :label="t('common.cancel')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -296,7 +297,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-rabbit"
-          label="Bunny"
+          :label="t('pages.blocks.video.bunnyStream')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -318,12 +319,12 @@ function handleAssetSelected(asset: Record<string, any>) {
           :class="['size-6 text-neutral-400', { 'animate-spin': uploading }]"
         />
         <span class="text-sm text-neutral-500">
-          {{ uploading ? 'Uploading...' : 'Click to select a video file' }}
+          {{ uploading ? t('pages.blocks.media.uploading') : t('pages.blocks.video.clickToSelect') }}
         </span>
       </button>
       <div class="flex gap-2">
         <UButton
-          label="Cancel"
+          :label="t('common.cancel')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -332,7 +333,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         <UButton
           v-if="hasAssetsPicker"
           icon="i-lucide-folder-open"
-          label="Browse"
+          :label="t('pages.blocks.media.browse')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -340,7 +341,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-rabbit"
-          label="Bunny"
+          :label="t('pages.blocks.video.bunnyStream')"
           variant="ghost"
           color="neutral"
           size="xs"
@@ -353,7 +354,7 @@ function handleAssetSelected(asset: Record<string, any>) {
     <div v-if="mode === 'bunny'" class="space-y-2">
       <div class="flex items-center gap-2 text-xs text-muted mb-1">
         <UIcon name="i-lucide-rabbit" class="size-3.5" />
-        <span>Bunny Stream</span>
+        <span>{{ t('pages.blocks.video.bunnyStream') }}</span>
       </div>
       <UInput
         v-model="bunnyInput"
@@ -366,18 +367,18 @@ function handleAssetSelected(asset: Record<string, any>) {
         </template>
       </UInput>
       <p class="text-[11px] text-muted leading-tight">
-        Paste your Bunny Stream embed URL. Find it in the Bunny dashboard under your video's embed settings.
+        {{ t('pages.blocks.video.bunnyInstructions') }}
       </p>
       <div class="flex gap-2">
         <UButton
-          label="Apply"
+          :label="t('common.apply')"
           color="primary"
           size="xs"
           :disabled="!bunnyInput.trim()"
           @click="setBunnyUrl"
         />
         <UButton
-          label="Cancel"
+          :label="t('common.cancel')"
           variant="ghost"
           color="neutral"
           size="xs"

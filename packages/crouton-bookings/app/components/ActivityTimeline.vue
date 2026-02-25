@@ -8,6 +8,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t } = useT()
 
 // Get icon for email trigger type
 function getEmailIcon(triggerType: EmailTriggerType, status: string): string {
@@ -39,11 +40,11 @@ const activityItems = computed<ActivityItem[]>(() => {
 
   // 1. Booking created
   if (booking.createdAt) {
-    const createdByName = booking.createdByUser?.name || booking.ownerUser?.name || 'Someone'
+    const createdByName = booking.createdByUser?.name || booking.ownerUser?.name || t('bookings.activity.someone')
     items.push({
       date: new Date(booking.createdAt),
       username: createdByName,
-      action: 'created this booking',
+      action: t('bookings.activity.createdBooking'),
       icon: 'i-lucide-calendar-plus',
       type: 'booking',
     })
@@ -53,15 +54,15 @@ const activityItems = computed<ActivityItem[]>(() => {
   if (booking.emailDetails) {
     for (const detail of booking.emailDetails) {
       if (detail.status === 'sent' && detail.sentAt) {
-        const emailType = detail.triggerType === 'booking_created' ? 'confirmation'
-          : detail.triggerType === 'reminder_before' ? 'reminder'
-          : detail.triggerType === 'follow_up_after' ? 'follow-up'
-          : detail.triggerType === 'booking_cancelled' ? 'cancellation'
+        const emailType = detail.triggerType === 'booking_created' ? t('bookings.activity.confirmation')
+          : detail.triggerType === 'reminder_before' ? t('bookings.activity.reminder')
+          : detail.triggerType === 'follow_up_after' ? t('bookings.activity.followUp')
+          : detail.triggerType === 'booking_cancelled' ? t('bookings.activity.cancellation')
           : ''
         items.push({
           date: new Date(detail.sentAt),
           username: emailType.charAt(0).toUpperCase() + emailType.slice(1),
-          action: 'email sent',
+          action: t('bookings.activity.emailSent'),
           icon: getEmailIcon(detail.triggerType, detail.status),
           type: 'email',
         })
@@ -69,8 +70,8 @@ const activityItems = computed<ActivityItem[]>(() => {
       else if (detail.status === 'failed') {
         items.push({
           date: detail.sentAt ? new Date(detail.sentAt) : new Date(),
-          username: 'Email',
-          action: 'failed to send',
+          username: t('bookings.activity.emailLabel'),
+          action: t('bookings.activity.failedToSend'),
           icon: getEmailIcon(detail.triggerType, detail.status),
           type: 'email',
         })
@@ -83,11 +84,11 @@ const activityItems = computed<ActivityItem[]>(() => {
     const createdDate = new Date(booking.createdAt)
     const updatedDate = new Date(booking.updatedAt)
     if (updatedDate.getTime() - createdDate.getTime() > 60000) {
-      const updatedByName = booking.createdByUser?.name || 'Someone'
+      const updatedByName = booking.createdByUser?.name || t('bookings.activity.someone')
       items.push({
         date: updatedDate,
         username: updatedByName,
-        action: 'updated this booking',
+        action: t('bookings.activity.updatedBooking'),
         icon: 'i-lucide-pencil',
         type: 'booking',
       })
@@ -99,8 +100,8 @@ const activityItems = computed<ActivityItem[]>(() => {
     const cancelDate = booking.updatedAt ? new Date(booking.updatedAt) : new Date()
     items.push({
       date: cancelDate,
-      username: 'Booking',
-      action: 'was cancelled',
+      username: t('bookings.activity.bookingLabel'),
+      action: t('bookings.activity.wasCancelled'),
       icon: 'i-lucide-calendar-x',
       type: 'booking',
     })
@@ -156,6 +157,6 @@ const activeValue = computed(() => {
     </UTimeline>
   </div>
   <div v-else class="text-sm text-muted py-2">
-    No activity yet
+    {{ t('bookings.activity.noActivity') }}
   </div>
 </template>

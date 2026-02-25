@@ -21,6 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
   exclude: () => []
 })
 
+const { t } = useT()
 const { getConfig } = useCollections()
 const display = useDisplayConfig(props.collection)
 const config = getConfig(props.collection)
@@ -62,8 +63,8 @@ const sidebarFields = computed(() =>
 
 // Title from display config
 const title = computed(() => {
-  if (!display.title) return props.item.name || props.item.title || props.item.label || 'Details'
-  return props.item[display.title] || 'Details'
+  if (!display.title) return props.item.name || props.item.title || props.item.label || t('detail.details')
+  return props.item[display.title] || t('detail.details')
 })
 
 const subtitle = computed(() => {
@@ -123,7 +124,7 @@ function handleEdit() {
         variant="soft"
         @click="handleEdit"
       >
-        Edit
+        {{ t('common.edit') }}
       </UButton>
     </template>
 
@@ -160,7 +161,7 @@ function handleEdit() {
                   >
                     <CroutonBoolean :value="item[field.name]" />
                     <span class="text-sm text-default">
-                      {{ item[field.name] ? 'Yes' : 'No' }}
+                      {{ item[field.name] ? t('common.yes') : t('common.no') }}
                     </span>
                   </div>
 
@@ -274,7 +275,7 @@ function handleEdit() {
                   >
                     <CroutonBoolean :value="item[field.name]" />
                     <span class="text-sm text-default">
-                      {{ item[field.name] ? 'Yes' : 'No' }}
+                      {{ item[field.name] ? t('common.yes') : t('common.no') }}
                     </span>
                   </div>
 
@@ -355,11 +356,11 @@ function handleEdit() {
       >
         <div class="flex flex-wrap gap-6 text-sm text-muted">
           <div v-if="item.createdAt">
-            <span class="font-medium">Created</span>
+            <span class="font-medium">{{ t('detail.created') }}</span>
             <CroutonDate :date="item.createdAt" />
           </div>
           <div v-if="item.updatedAt">
-            <span class="font-medium">Updated</span>
+            <span class="font-medium">{{ t('detail.updated') }}</span>
             <CroutonDate :date="item.updatedAt" />
           </div>
         </div>

@@ -6,12 +6,15 @@
     "date": "Date",
     "slot": "Time Slot",
     "allDay": "All Day",
+    "untitled": "Untitled",
+    "unknownLocation": "Unknown Location",
     "status": {
       "active": "Active",
       "cancelled": "Cancelled",
       "booked": "Booked",
       "pending": "Pending",
-      "completed": "Completed"
+      "completed": "Completed",
+      "inactive": "Inactive"
     },
     "meta": {
       "bookedOn": "Booked on {date}",
@@ -48,7 +51,12 @@
       "overview": "Overview",
       "locations": "Locations",
       "settings": "Settings",
-      "description": "View and manage all team bookings"
+      "description": "View and manage all team bookings",
+      "viewingAs": "Viewing as",
+      "viewAsUser": "View as user",
+      "exit": "Exit",
+      "noBookingsForUser": "No bookings for {name}",
+      "noBookingsForTeam": "No bookings yet for this team"
     },
     "locations": {
       "title": "Locations",
@@ -63,13 +71,19 @@
     "list": {
       "loading": "Loading bookings...",
       "noBookings": "No bookings yet",
-      "noBookingsDescription": "You haven't made any bookings yet. Start by selecting a location and time slot."
+      "noBookingsDescription": "You haven't made any bookings yet. Start by selecting a location and time slot.",
+      "defaultEmptyMessage": "Your bookings will appear here",
+      "failedToLoad": "Failed to load bookings",
+      "tryAgain": "Try Again",
+      "noMatching": "No matching bookings",
+      "adjustFilters": "Try adjusting your filters"
     },
     "email": {
       "resendConfirmation": "Resend Confirmation",
       "sendReminder": "Send Reminder",
       "sendCancellation": "Send Cancellation",
-      "sendFollowUp": "Send Follow-Up"
+      "sendFollowUp": "Send Follow-Up",
+      "emails": "Emails"
     },
     "panel": {
       "noLocations": "No locations yet",
@@ -77,10 +91,199 @@
       "signIn": "Sign in"
     },
     "calendar": {
-      "units": "Units"
+      "units": "Units",
+      "noBookings": "No bookings",
+      "bookingCount": "{count} booking | {count} bookings"
     },
     "card": {
-      "activity": "Activity"
+      "activity": "Activity",
+      "on": "on {date}",
+      "emailLabels": {
+        "confirm": "Confirm",
+        "reminder": "Reminder",
+        "followUp": "Follow-up",
+        "cancelled": "Cancelled"
+      },
+      "emailTooltips": {
+        "resendConfirmation": "Resend confirmation",
+        "sendConfirmation": "Send confirmation",
+        "resendReminder": "Resend reminder",
+        "sendReminder": "Send reminder",
+        "resendFollowUp": "Resend follow-up",
+        "sendFollowUp": "Send follow-up",
+        "resendCancellation": "Resend cancellation",
+        "sendCancellation": "Send cancellation"
+      }
+    },
+    "createCard": {
+      "editBookingFor": "Edit booking for",
+      "newBookingFor": "New booking for",
+      "howMany": "How many do you need?",
+      "pickTimeSlot": "Pick a time slot",
+      "left": "left",
+      "ofAvailable": "of {count} available",
+      "selectLocation": "Select a location",
+      "sure": "sure?",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create"
+    },
+    "activity": {
+      "someone": "Someone",
+      "createdBooking": "created this booking",
+      "emailSent": "email sent",
+      "emailLabel": "Email",
+      "failedToSend": "failed to send",
+      "updatedBooking": "updated this booking",
+      "bookingLabel": "Booking",
+      "wasCancelled": "was cancelled",
+      "noActivity": "No activity yet",
+      "confirmation": "confirmation",
+      "reminder": "reminder",
+      "followUp": "follow-up",
+      "cancellation": "cancellation"
+    },
+    "filters": {
+      "calendar": "Calendar",
+      "locations": "Locations",
+      "map": "Map",
+      "cancelled": "Cancelled",
+      "today": "Today",
+      "week": "Week",
+      "month": "Month",
+      "addLocation": "Add Location"
+    },
+    "locationForm": {
+      "locationDetails": "Location Details",
+      "colorHint": "Display color for this location.",
+      "color": "Color",
+      "address": "Address",
+      "addressHintWithMap": "Physical address and map pin. The map updates automatically as you type.",
+      "addressHint": "Physical address for this location.",
+      "street": "Street",
+      "zipCode": "ZIP Code",
+      "city": "City",
+      "locationMap": "Location Map",
+      "geocoding": "Geocoding address...",
+      "accessControl": "Access Control",
+      "accessControlHint": "Restrict which members can book this location. Leave empty to allow all team members.",
+      "allowedMembers": "Allowed Members",
+      "allTeamMembers": "All team members",
+      "bookingRules": "Booking Rules",
+      "bookingRulesHint": "Control how bookings work at this location.",
+      "bookingMode": "Booking Mode",
+      "timeSlots": "Time Slots",
+      "timeSlotsDescription": "Book specific named time slots per day",
+      "inventory": "Inventory",
+      "inventoryDescription": "Book from a pool of available units",
+      "availableUnits": "Available Units",
+      "availableUnitsHelp": "Number of units available for booking at the same time.",
+      "maxBookingsPerMonth": "Max Bookings Per Month",
+      "maxBookingsPerMonthHelp": "Limit how many bookings a single user can make per calendar month. Leave empty for unlimited.",
+      "unlimited": "Unlimited",
+      "scheduling": "Scheduling",
+      "schedulingHint": "Define when this location is available for bookings.",
+      "slots": "Slots",
+      "tabSettings": "Settings",
+      "tabBookings": "Bookings",
+      "tabContent": "Content"
+    },
+    "emailTemplates": {
+      "title": "Email Templates",
+      "description": "Configure automated email notifications for bookings",
+      "newTemplate": "New Template",
+      "add": "Add",
+      "active": "Active",
+      "inactive": "Inactive",
+      "untitled": "Untitled",
+      "noTemplates": "No templates yet",
+      "createTemplate": "Create Template",
+      "newEmailTemplate": "New Email Template",
+      "editTemplate": "Edit Template",
+      "translationNotice": "English translation is required. Other languages are optional and will fallback to English if not provided.",
+      "templateName": "Template Name ({locale})",
+      "emailSubject": "Email Subject ({locale})",
+      "emailBody": "Email Body ({locale})",
+      "fromEmail": "From Email",
+      "triggerType": "Trigger Type",
+      "recipient": "Recipient",
+      "recipientCustomer": "Customer",
+      "recipientAdmin": "Admin",
+      "recipientBoth": "Both",
+      "daysOffset": "Days Offset",
+      "daysOffsetHint": "-1 = day before, 1 = day after",
+      "locationLabel": "Location",
+      "locationHint": "Leave empty for all locations",
+      "allLocations": "All Locations",
+      "statusLabel": "Status",
+      "saveChanges": "Save Changes",
+      "cancel": "Cancel",
+      "days": "days",
+      "deleteConfirm": "Are you sure you want to delete this template?",
+      "triggers": {
+        "bookingCreated": "Booking Created",
+        "bookingCreatedDesc": "Sent when a new booking is made",
+        "reminderBefore": "Reminder Before",
+        "reminderBeforeDesc": "Sent before the booking date",
+        "bookingCancelled": "Booking Cancelled",
+        "bookingCancelledDesc": "Sent when a booking is cancelled",
+        "followUpAfter": "Follow Up After",
+        "followUpAfterDesc": "Sent after the booking date"
+      }
+    },
+    "emailLogs": {
+      "title": "Email Logs",
+      "description": "Track sent booking notification emails",
+      "refresh": "Refresh",
+      "totalEmails": "Total Emails",
+      "sent": "Sent",
+      "pending": "Pending",
+      "failed": "Failed",
+      "noLogs": "No Email Logs Yet",
+      "noLogsDescription": "Email logs will appear here once booking emails are sent.",
+      "columnStatus": "Status",
+      "columnRecipient": "Recipient",
+      "columnType": "Type",
+      "columnSentAt": "Sent At",
+      "columnCreated": "Created",
+      "columnError": "Error",
+      "view": "View",
+      "errorDetails": "Error Details",
+      "close": "Close",
+      "triggerConfirmation": "Confirmation",
+      "triggerReminder": "Reminder",
+      "triggerCancellation": "Cancellation",
+      "triggerFollowUp": "Follow Up"
+    },
+    "notifications": {
+      "cartEmpty": "Cart is empty",
+      "cartEmptyDescription": "Add some bookings to your cart first",
+      "bookingsConfirmed": "Bookings confirmed!",
+      "bookingsConfirmedDescription": "Successfully created {count} booking | Successfully created {count} bookings",
+      "bookingFailed": "Booking failed",
+      "bookingFailedDescription": "Failed to create bookings. Please try again.",
+      "bookingCancelled": "Booking cancelled",
+      "bookingCancelledDescription": "Your booking has been cancelled successfully",
+      "cancellationFailed": "Cancellation failed",
+      "cancellationFailedDescription": "Failed to cancel booking. Please try again.",
+      "bookingDeleted": "Booking deleted",
+      "bookingDeletedDescription": "The booking has been permanently removed",
+      "deleteFailed": "Delete failed",
+      "deleteFailedDescription": "Failed to delete booking. Please try again.",
+      "noSlotsAvailable": "No slots available",
+      "noSlotsDescription": "All time slots are unavailable on this date",
+      "allSlotsTaken": "All slots taken",
+      "allSlotsTakenDescription": "All time slots across all locations are fully booked for this day.",
+      "emailSent": "Email sent",
+      "emailSentDescription": "Confirmation email has been resent successfully",
+      "emailFailed": "Failed to send email"
+    },
+    "block": {
+      "booking": "Booking",
+      "membersOnly": "Members only",
+      "teamView": "Team view",
+      "editBlock": "Edit block properties",
+      "deleteBlock": "Delete block"
     },
     "schedule": {
       "openDays": "Open Days",
@@ -91,6 +294,8 @@
       "slotScheduleEmpty": "Add time slots first to configure per-slot schedules.",
       "slotScheduleHint": "No per-slot schedule set — all slots follow the open days.",
       "slotScheduleActive": "Custom schedule active for {count} slot(s).",
+      "allDaysHint": "All days available — toggle days to mark them as unavailable.",
+      "daysBlocked": "{count} day(s) blocked.",
       "resetSchedule": "Reset all",
       "blockedDates": "Blocked Dates",
       "addBlockedPeriod": "Add Blocked Period",
@@ -103,7 +308,20 @@
       "selectSlotsToBlock": "Select which slots to block during this period.",
       "closed": "Closed",
       "blocked": "Blocked",
-      "unavailable": "Unavailable"
+      "unavailable": "Unavailable",
+      "slotColumn": "Slot",
+      "allDayRow": "All day",
+      "dateRange": "Date Range",
+      "pickDateRange": "Pick a date range",
+      "days": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
     }
   }
 }

@@ -190,7 +190,7 @@ const { t } = useT()
             :name="selectedPageType?.icon || 'i-lucide-file'"
             class="size-4"
           />
-          <span class="hidden lg:inline">{{ selectedPageType?.name || 'Page' }}</span>
+          <span class="hidden lg:inline">{{ selectedPageType?.name || t('pages.editor.defaultPageType') }}</span>
         </UButton>
 
         <template #item="{ item }">
@@ -206,11 +206,11 @@ const { t } = useT()
             :name="selectedPageType?.icon || 'i-lucide-file'"
             class="size-4"
           />
-          <span class="hidden lg:inline">{{ selectedPageType?.name || 'Page' }}</span>
+          <span class="hidden lg:inline">{{ selectedPageType?.name || t('pages.editor.defaultPageType') }}</span>
         </UButton>
         <template #content>
           <div class="p-3 text-sm">
-            <div class="font-medium">{{ selectedPageType?.name || 'Regular Page' }}</div>
+            <div class="font-medium">{{ selectedPageType?.name || t('pages.editor.regularPage') }}</div>
             <div v-if="selectedPageType?.description" class="text-muted text-xs mt-1">
               {{ selectedPageType.description }}
             </div>
@@ -252,7 +252,7 @@ const { t } = useT()
       </UDropdownMenu>
 
       <!-- Show in Navigation -->
-      <UTooltip :text="showInNavigation ? 'Shown in Menu' : 'Hidden from Menu'" :delay-duration="0">
+      <UTooltip :text="showInNavigation ? t('pages.editor.shownInMenu') : t('pages.editor.hiddenFromMenu')" :delay-duration="0">
         <UButton
           variant="ghost"
           color="neutral"
@@ -265,7 +265,7 @@ const { t } = useT()
             :class="['size-4', showInNavigation ? 'text-muted' : 'opacity-30']"
           />
           <span :class="['hidden lg:inline', showInNavigation ? '' : 'opacity-30']">
-            {{ showInNavigation ? 'In Menu' : 'No Menu' }}
+            {{ showInNavigation ? t('pages.editor.inMenu') : t('pages.editor.noMenu') }}
           </span>
         </UButton>
       </UTooltip>
@@ -319,7 +319,7 @@ const { t } = useT()
     <!-- Right group: AI, Preview, Open, Cancel/Delete/Save, Close -->
     <UFieldGroup>
       <!-- AI page generator (regular pages only) -->
-      <UTooltip v-if="isRegularPage" text="Generate page with AI" :delay-duration="0">
+      <UTooltip v-if="isRegularPage" :text="t('pages.editor.generateWithAI')" :delay-duration="0">
         <UButton
           variant="ghost"
           color="primary"
@@ -332,7 +332,7 @@ const { t } = useT()
       </UTooltip>
 
       <!-- Preview -->
-      <UTooltip :text="status === 'draft' ? 'Preview Draft' : 'Preview Page'" :delay-duration="0">
+      <UTooltip :text="status === 'draft' ? t('pages.editor.previewDraft') : t('pages.editor.previewPage')" :delay-duration="0">
         <UButton
           variant="ghost"
           color="neutral"
@@ -347,7 +347,7 @@ const { t } = useT()
       <!-- Open in public -->
       <UTooltip
         v-if="publicUrl"
-        :text="status === 'published' ? 'Open in Public' : 'Publish page to open publicly'"
+        :text="status === 'published' ? t('pages.editor.openInPublic') : t('pages.editor.publishToOpen')"
         :delay-duration="0"
       >
         <UButton
@@ -359,7 +359,7 @@ const { t } = useT()
           icon="i-lucide-external-link"
           size="xs"
         >
-          <span class="hidden lg:inline">Open</span>
+          <span class="hidden lg:inline">{{ t('pages.editor.open') }}</span>
         </UButton>
       </UTooltip>
 
@@ -372,7 +372,7 @@ const { t } = useT()
         size="xs"
         @click="emit('cancel')"
       >
-        Cancel
+        {{ t('common.cancel') }}
       </UButton>
 
       <!-- Delete (two-click confirm, edit mode) -->
@@ -385,7 +385,7 @@ const { t } = useT()
         @click="emit('delete')"
         @blur="emit('update:confirmingDelete', false)"
       >
-        <template v-if="confirmingDelete">Delete?</template>
+        <template v-if="confirmingDelete">{{ t('pages.editor.confirmDelete') }}</template>
       </UButton>
 
       <!-- Save -->
@@ -397,7 +397,7 @@ const { t } = useT()
         icon="i-lucide-save"
         :loading="isSaving"
       >
-        {{ action === 'create' ? 'Create' : 'Save' }}
+        {{ action === 'create' ? t('common.create') : t('common.save') }}
       </UButton>
 
       <!-- Close button (shown in inline editor context) -->

@@ -121,9 +121,9 @@ const { t } = useT()
       class="p-8 text-center"
     >
       <UIcon name="i-lucide-link-2-off" class="size-12 text-muted mb-4 mx-auto block" />
-      <h2 class="text-lg font-semibold mb-2">No Collection Item Selected</h2>
+      <h2 class="text-lg font-semibold mb-2">{{ t('pages.collection.noItemSelected') }}</h2>
       <p class="text-muted text-sm">
-        This page is linked to a collection but no item has been selected yet.
+        {{ t('pages.collection.noItemSelectedDescription') }}
       </p>
     </div>
 
@@ -143,7 +143,7 @@ const { t } = useT()
       <UIcon name="i-lucide-unlink" class="size-12 text-warning mb-4 mx-auto block" />
       <h2 class="text-lg font-semibold mb-2">{{ t('pages.collection.itemUnavailable') }}</h2>
       <p class="text-muted text-sm">
-        The referenced collection item may have been deleted or is no longer accessible.
+        {{ t('pages.collection.itemUnavailableDescription') }}
       </p>
     </div>
 
@@ -162,9 +162,9 @@ const { t } = useT()
       class="p-8 text-center"
     >
       <UIcon name="i-lucide-eye-off" class="size-12 text-muted mb-4 mx-auto block" />
-      <h2 class="text-lg font-semibold mb-2">Preview Unavailable</h2>
+      <h2 class="text-lg font-semibold mb-2">{{ t('pages.collection.previewUnavailable') }}</h2>
       <p class="text-muted text-sm">
-        No detail component is available for this collection.
+        {{ t('pages.collection.previewUnavailableDescription') }}
       </p>
     </div>
   </div>
