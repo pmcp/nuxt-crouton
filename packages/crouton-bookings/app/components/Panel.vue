@@ -434,9 +434,9 @@ defineExpose({
   <div class="booking-panel rounded-[calc(var(--ui-radius)*2)] border border-default bg-default">
       <!-- Sticky: filters + calendar. Negative top hides filters above viewport;
            scrolling up reveals them. Calendar stays pinned. -->
-      <div class="sticky z-20 bg-default rounded-t-[calc(var(--ui-radius)*2)] transition-[top] duration-300" :class="scrollingUp ? 'top-0' : '-top-12'">
+      <div class="sticky z-20 bg-default rounded-t-[calc(var(--ui-radius)*2)] transition-[top] duration-300 flex flex-col gap-2" :class="scrollingUp ? 'top-0' : '-top-12'">
         <!-- Filter controls (hidden above viewport when stuck) -->
-        <div class="px-4 pt-3 pb-2">
+        <div class="px-2 pt-2 pb-1.5 md:px-4 md:pt-3 md:pb-2">
           <CroutonBookingsPanelFilters
             :locations="resolvedLocations"
             :selected-locations="filterState.locations"
@@ -489,7 +489,7 @@ defineExpose({
         leave-from-class="opacity-100 max-h-[300px]"
         leave-to-class="opacity-0 max-h-0"
       >
-        <div v-if="showMap && hasLocationsWithCoordinates" class="px-4 pt-4">
+        <div v-if="showMap && hasLocationsWithCoordinates" class="px-2 pt-3 md:px-4 md:pt-4">
           <CroutonBookingsPanelMap
             ref="panelMapRef"
             :locations="resolvedLocations"
@@ -501,7 +501,7 @@ defineExpose({
       </Transition>
 
       <!-- List section -->
-      <div class="px-4 py-4">
+      <div class="px-2 py-3 md:px-4 md:py-4">
         <CroutonBookingsList
           :bookings="filteredBookings"
           :loading="resolvedLoading"

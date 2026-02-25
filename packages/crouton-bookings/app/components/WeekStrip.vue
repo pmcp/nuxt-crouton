@@ -184,7 +184,7 @@ const sizeClasses = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col">
     <!-- Header: Nav + Month Label (calendar style) -->
     <div class="flex items-center justify-center gap-1">
       <UButton
