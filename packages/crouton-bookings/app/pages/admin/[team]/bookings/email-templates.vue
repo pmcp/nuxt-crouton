@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const { teamId } = useTeamContext()
 const { t } = useT()
+const { hasApp } = useCroutonApps()
+const hasAI = hasApp('ai')
 
 // Get booking email variables and preview values
 const { variables, getPreviewValues } = useBookingEmailVariables()
@@ -270,6 +272,32 @@ async function toggleActive(template: any) {
   }
 }
 
+// AI generation
+const generating = ref(false)
+
+async function generateWithAI() {
+  generating.value = true
+  try {
+    const result = await $fetch<{ name: string; subject: string; body: string }>('/api/ai/generate-email-template', {
+      method: 'POST',
+      body: {
+        triggerType: formState.value.triggerType,
+        recipientType: formState.value.recipientType,
+        locale: activeLocale.value
+      }
+    })
+    setFieldValue('name', result.name)
+    setFieldValue('subject', result.subject)
+    setFieldValue('body', result.body)
+  }
+  catch (error) {
+    console.error('Failed to generate email template:', error)
+  }
+  finally {
+    generating.value = false
+  }
+}
+
 // Get location name for display
 function getLocationName(locationId: string | null) {
   if (!locationId) return t('bookings.emailTemplates.allLocations')
@@ -482,6 +510,21 @@ function getLocationName(locationId: string | null) {
             </span>
           </template>
         </UTabs>
+
+        <!-- AI Generate button (only when crouton-ai is installed) -->
+        <div v-if="hasAI" class="flex items-center justify-end">
+          <UButton
+            icon="i-lucide-sparkles"
+            color="primary"
+            variant="soft"
+            size="xs"
+            :loading="generating"
+            :disabled="generating"
+            @click="generateWithAI"
+          >
+            {{ t('bookings.emailTemplates.generateWithAI') }}
+          </UButton>
+        </div>
 
         <!-- Name (translatable) -->
         <UFormField :label="t('bookings.emailTemplates.templateName', { locale: activeLocale.toUpperCase() })" name="name" :required="activeLocale === 'en'">

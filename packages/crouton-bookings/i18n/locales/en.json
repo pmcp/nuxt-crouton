@@ -220,6 +220,7 @@
       "cancel": "Cancel",
       "days": "days",
       "deleteConfirm": "Are you sure you want to delete this template?",
+      "generateWithAI": "Generate with AI",
       "triggers": {
         "bookingCreated": "Booking Created",
         "bookingCreatedDesc": "Sent when a new booking is made",
