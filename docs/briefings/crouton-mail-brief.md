@@ -37,8 +37,8 @@ defineMailConfig({
   label: 'Bookings',
 
   triggers: [
-    { id: 'record_created', label: 'Booking Created' },
-    { id: 'record_cancelled', label: 'Booking Cancelled' },
+    { id: 'record_created', lifecycle: 'created', label: 'Booking Created' },
+    { id: 'record_cancelled', lifecycle: 'deleted', label: 'Booking Cancelled' },
     {
       id: 'scheduled_before',
       label: 'Reminder Before',
@@ -81,6 +81,20 @@ defineMailConfig({
     field: 'locationId',
     collection: 'locations',
     label: 'Location'
+  },
+
+  // Optional: provide records due for scheduled emails
+  // crouton-mail calls this to find records matching a scheduled trigger
+  findDueRecords: async (trigger, template) => {
+    const db = useDrizzle()
+    const targetDate = new Date()
+    targetDate.setDate(targetDate.getDate() + (trigger.direction === 'before' ? template.daysOffset : -template.daysOffset))
+
+    return db.select().from(bookings)
+      .where(and(
+        eq(bookings.date, targetDate.toISOString().slice(0, 10)),
+        eq(bookings.status, 'confirmed')
+      ))
   },
 
   // Optional: demo data for template preview
@@ -140,10 +154,14 @@ Two shared collections (app-level, not per-domain):
 | `templateId` | text | Which template was used |
 | `recipientEmail` | text | |
 | `triggerType` | text | |
+| `renderedSubject` | text | Snapshot of the rendered subject at send time |
+| `renderedBody` | text | Snapshot of the rendered body at send time |
 | `status` | text | `pending`, `sent`, `failed` |
 | `sentAt` | timestamp | |
 | `error` | text | Error message if failed |
 | `createdAt` | timestamp | |
+
+**Unique constraint**: `(recordId, templateId, triggerType)` — prevents duplicate sends for the same record+template+trigger combination. For scheduled triggers with different `daysOffset`, each template is a separate row so the constraint naturally allows multiple reminders.
 
 ## Trigger System
 
@@ -158,26 +176,23 @@ For `crouton-mail`, we add a **server-side Nitro plugin** that listens to a new 
 ```typescript
 // packages/crouton-mail/server/plugins/mail-trigger.ts
 export default defineNitroPlugin((nitroApp) => {
-  // Listen for record lifecycle events
-  nitroApp.hooks.hook('crouton:record:created', async ({ collection, record, teamId, userId }) => {
-    const config = getMailConfig(collection)
-    if (!config) return
+  // Generic lifecycle handler — matches triggers by their `lifecycle` field
+  const handleLifecycle = (lifecycle: 'created' | 'updated' | 'deleted') =>
+    async ({ collection, record, teamId, userId }: CroutonRecordEvent) => {
+      const config = getMailConfig(collection)
+      if (!config) return
 
-    const trigger = config.triggers.find(t => t.id === 'record_created')
-    if (!trigger) return
+      // Find all triggers mapped to this lifecycle event
+      const triggers = config.triggers.filter(t => t.lifecycle === lifecycle)
 
-    await processMailTrigger({ config, trigger, record, teamId, userId })
-  })
+      for (const trigger of triggers) {
+        await processMailTrigger({ config, trigger, record, teamId, userId })
+      }
+    }
 
-  nitroApp.hooks.hook('crouton:record:deleted', async ({ collection, record, teamId, userId }) => {
-    const config = getMailConfig(collection)
-    if (!config) return
-
-    const trigger = config.triggers.find(t => t.id === 'record_cancelled' || t.id === 'record_deleted')
-    if (!trigger) return
-
-    await processMailTrigger({ config, trigger, record, teamId, userId })
-  })
+  nitroApp.hooks.hook('crouton:record:created', handleLifecycle('created'))
+  nitroApp.hooks.hook('crouton:record:updated', handleLifecycle('updated'))
+  nitroApp.hooks.hook('crouton:record:deleted', handleLifecycle('deleted'))
 })
 ```
 
@@ -213,17 +228,16 @@ export default defineTask({
         const templates = await getActiveTemplates(config.collection, trigger.id)
 
         for (const template of templates) {
-          // Query records where:
-          // - dateField +/- daysOffset = today
-          // - no mailLog exists yet for this record+trigger combo
-          const records = await findRecordsDueForEmail({
-            collection: config.collection,
-            dateField: trigger.dateField,
-            direction: trigger.direction,
-            daysOffset: template.daysOffset
-          })
+          // Consumer provides findDueRecords() — crouton-mail doesn't own collection schemas
+          if (!config.findDueRecords) continue
+
+          const records = await config.findDueRecords(trigger, template)
 
           for (const record of records) {
+            // Skip if already sent (idempotency check against mailLogs)
+            const alreadySent = await hasMailLog(record.id, template.id, trigger.id)
+            if (alreadySent) continue
+
             await processMailTrigger({ config, trigger, record, teamId: record.teamId })
           }
         }
@@ -335,34 +349,32 @@ packages/crouton-mail/
 └── CLAUDE.md
 ```
 
-## Migration Path
+## Build Plan (Greenfield)
 
-Non-breaking, incremental:
+### Phase 1: Package Foundation
+1. Create `crouton-mail` package with types, config registry, fixed schema
+2. Implement `defineMailConfig()` + `getMailConfig()` registry (synchronous `Map`, populated at server init)
+3. Implement `mailTemplates` + `mailLogs` tables (fixed schema, not CLI-generated)
+4. Template CRUD server utils + API endpoints
 
-### Phase 1: Extract Core
-1. Create `crouton-mail` package with types, config registry, renderer, service
-2. Move generic parts from `crouton-bookings/server/utils/booking-emails.ts` and `email-service.ts`
-3. Move `bookingsEmailtemplates` schema → `mailTemplates` with added `collectionId`
-4. Move `bookingsEmaillogs` schema → `mailLogs` with `recordId` replacing `bookingId`
-
-### Phase 2: Wire Up Bookings
-5. Create `defineMailConfig()` in crouton-bookings with current 4 triggers + 14 variables
-6. Bookings email sending calls `crouton-mail` service instead of its own
-7. Migration script: add `collectionId: 'bookings'` to existing template/log rows
+### Phase 2: Trigger Engine
+5. Add `crouton:record:created/updated/deleted` hooks to `crouton-hooks.d.ts`
+6. Implement mail-trigger Nitro plugin (lifecycle-based matching)
+7. Implement mail-service orchestration: fetch templates → render variables → send via crouton-email → log
+8. Implement `{{variable}}` renderer with built-in + collection variables
 
 ### Phase 3: Admin UI
-8. Extract template editor components from bookings into crouton-mail
-9. Make collection picker, variable picker, trigger tabs dynamic
-10. Add mail-logs page
+9. Template management page with collection picker, trigger tabs
+10. Template editor with variable picker, locale tabs, live preview
+11. Mail logs page with filters
 
 ### Phase 4: Scheduler
-11. Implement Cloudflare cron task for scheduled triggers
-12. Replace bookings' manual reminder/follow-up logic with generic scheduler
+12. Implement Cloudflare cron task using `findDueRecords()` callback
+13. Idempotency checks via `hasMailLog()` before sending
 
-### Phase 5: Standardize Hooks
-13. Add `crouton:record:created/updated/deleted` to `crouton-hooks.d.ts`
-14. Emit from CRUD endpoints (crouton-core or generated code)
-15. crouton-mail plugin listens and auto-triggers
+### Phase 5: First Consumer
+14. Wire up `crouton-bookings` with `defineMailConfig()` (4 triggers, variables, recipients)
+15. Bookings emits `crouton:record:*` hooks from its API endpoints
 
 ## Hook System Extension
 
@@ -437,16 +449,15 @@ runtimeConfig: {
 crons = ["0 7 * * *"]
 ```
 
-## Open Design Decisions
+## Design Decisions (Resolved)
 
-1. **Should `crouton-mail` generate its own DB collections via the crouton CLI, or ship a fixed schema?**
-   Fixed schema is simpler (like crouton-events), but CLI-generated would follow the existing collection pattern.
+1. **Fixed schema** — `mailTemplates` and `mailLogs` are infrastructure tables, not domain collections. Ship them like `crouton-events`, no CLI generation.
 
-2. **Should the variable picker support nested record fields?**
-   E.g. `{{record.location.name}}` via relation traversal. Useful but adds complexity.
+2. **No nested variables** — direct field mapping + `compute()` covers all practical cases. No `{{record.location.name}}` traversal.
 
-3. **Should we support webhook triggers?**
-   E.g. "send email when Stripe payment succeeds" — external events, not just CRUD.
+3. **No webhook triggers (yet)** — consumers can call `emitMailTrigger(collection, triggerId, record)` manually for external events. No first-class webhook system until there's a real use case.
+
+4. **No scope system (yet)** — per-location template scoping deferred. Adds significant query complexity for an edge case. Can be layered on later without schema changes (`scopeValue` column is already in the schema).
 
 ## Dependencies
 
@@ -465,8 +476,8 @@ defineMailConfig({
   collection: 'registrations',
   label: 'Registrations',
   triggers: [
-    { id: 'record_created', label: 'Registration Confirmed' },
-    { id: 'record_deleted', label: 'Registration Cancelled' },
+    { id: 'registration_confirmed', lifecycle: 'created', label: 'Registration Confirmed' },
+    { id: 'registration_cancelled', lifecycle: 'deleted', label: 'Registration Cancelled' },
   ],
   variables: [
     { key: 'participant_name', field: 'name', label: 'Participant Name' },
