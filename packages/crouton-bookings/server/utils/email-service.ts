@@ -72,10 +72,10 @@ export async function getActiveTemplatesForTrigger(
   const db = useDB()
 
   try {
-    // Dynamic import with @vite-ignore to prevent build-time resolution
-    // This allows the collection to be optional
-    const schemaPath = '~~/layers/bookings/collections/emailtemplates/server/database/schema'
-    const { bookingsEmailtemplates } = await import(/* @vite-ignore */ schemaPath)
+    // Import from the centralized schema index (always exists, Vite resolves ~~ alias)
+    const schema = await import('~~/server/db/schema')
+    const bookingsEmailtemplates = (schema as any).bookingsEmailtemplates
+    if (!bookingsEmailtemplates) return []
 
     // Build conditions
     const conditions = [
@@ -184,9 +184,9 @@ export async function logEmailSend(options: {
   const db = useDB()
 
   try {
-    // Dynamic import with @vite-ignore to prevent build-time resolution
-    const schemaPath = '~~/layers/bookings/collections/emaillogs/server/database/schema'
-    const { bookingsEmaillogs } = await import(/* @vite-ignore */ schemaPath)
+    const schema = await import('~~/server/db/schema')
+    const bookingsEmaillogs = (schema as any).bookingsEmaillogs
+    if (!bookingsEmaillogs) return null
 
     const [log] = await db
       .insert(bookingsEmaillogs)
@@ -229,9 +229,9 @@ export async function updateEmailLogStatus(
   const db = useDB()
 
   try {
-    // Dynamic import with @vite-ignore to prevent build-time resolution
-    const schemaPath = '~~/layers/bookings/collections/emaillogs/server/database/schema'
-    const { bookingsEmaillogs } = await import(/* @vite-ignore */ schemaPath)
+    const schema = await import('~~/server/db/schema')
+    const bookingsEmaillogs = (schema as any).bookingsEmaillogs
+    if (!bookingsEmaillogs) return
 
     await db
       .update(bookingsEmaillogs)
@@ -632,9 +632,9 @@ export async function getBookingEmailStats(
   const db = useDB()
 
   try {
-    // Dynamic import with @vite-ignore to prevent build-time resolution
-    const schemaPath = '~~/layers/bookings/collections/emaillogs/server/database/schema'
-    const { bookingsEmaillogs } = await import(/* @vite-ignore */ schemaPath)
+    const schema = await import('~~/server/db/schema')
+    const bookingsEmaillogs = (schema as any).bookingsEmaillogs
+    if (!bookingsEmaillogs) return { total: 0, sent: 0, pending: 0, failed: 0 }
 
     const logs = await db
       .select({
@@ -691,11 +691,10 @@ export async function getBookingEmailDetails(
   const db = useDB()
 
   try {
-    // Dynamic imports with @vite-ignore to prevent build-time resolution
-    const emailLogsPath = '~~/layers/bookings/collections/emaillogs/server/database/schema'
-    const emailTemplatesPath = '~~/layers/bookings/collections/emailtemplates/server/database/schema'
-    const { bookingsEmaillogs } = await import(/* @vite-ignore */ emailLogsPath)
-    const { bookingsEmailtemplates } = await import(/* @vite-ignore */ emailTemplatesPath)
+    const schema = await import('~~/server/db/schema')
+    const bookingsEmaillogs = (schema as any).bookingsEmaillogs
+    const bookingsEmailtemplates = (schema as any).bookingsEmailtemplates
+    if (!bookingsEmaillogs || !bookingsEmailtemplates) return results
 
     // Get all email logs for this booking
     const logs = await db
