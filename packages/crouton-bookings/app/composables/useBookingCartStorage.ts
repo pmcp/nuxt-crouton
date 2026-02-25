@@ -65,14 +65,18 @@ export function useBookingCartStorage(
       // Clear cart on success
       clearCart()
 
-      // Refresh my bookings list
-      await refreshMyBookings()
-
       notify.success(t('bookings.notifications.bookingsConfirmed'), { description: t('bookings.notifications.bookingsConfirmedDescription', { count: result.count }, result.count) })
 
       // Close cart drawer and switch to my bookings tab
       isCartOpen.value = false
       activeTab.value = 'my-bookings'
+
+      // Refresh bookings list asynchronously — do NOT await.
+      // Awaiting here causes the shared useFetch cache to update before the caller
+      // can emit 'created', which restructures the booking list and destroys the
+      // BookingCreateCard component, losing the emit. Panel.vue already watches
+      // resolvedBookings for changes to handle scroll-to-new-booking.
+      refreshMyBookings().catch(() => {})
 
       return result
     }
