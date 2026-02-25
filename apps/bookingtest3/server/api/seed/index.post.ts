@@ -762,14 +762,14 @@ export default defineEventHandler(async (event) => {
         slug: 'homepage',
         frFile: 'content/pages/homepage.fr.md',
         nlFile: 'content/pages/homepage.nl.md',
-        pageType: 'core:regular',
+        pageType: 'pages:regular',
         showInNavigation: true
       },
       {
         slug: 'contact',
         frFile: 'content/pages/contact.fr.md',
         nlFile: 'content/pages/contact.nl.md',
-        pageType: 'core:regular',
+        pageType: 'pages:regular',
         showInNavigation: true
       },
     ]
@@ -782,27 +782,23 @@ export default defineEventHandler(async (event) => {
 
       const pageId = nanoid()
 
-      // Build content as TipTap block JSON
-      const frIntro = frParsed.data.intro || ''
-      const frBody = frParsed.content || ''
-      const frHtml = [frIntro, frBody].filter(Boolean).map(t => `<p>${t}</p>`).join('')
-
-      const nlIntro = nlParsed.data.intro || ''
-      const nlBody = nlParsed.content || ''
-      const nlHtml = [nlIntro, nlBody].filter(Boolean).map(t => `<p>${t}</p>`).join('')
-
-      // Wrap content in TipTap richTextBlock format for the workspace editor
-      function wrapInBlocks(html: string): string {
+      // Build content as TipTap editor-compatible JSON (paragraph nodes, not richTextBlock)
+      function textToTipTapDoc(intro: string, body: string): string {
+        const paragraphs = [intro, ...body.split(/\n\n+/)]
+          .map(p => p.trim())
+          .filter(Boolean)
+          .map(text => ({
+            type: 'paragraph',
+            content: [{ type: 'text', text }]
+          }))
         return JSON.stringify({
           type: 'doc',
-          content: [
-            { type: 'richTextBlock', attrs: { content: html } }
-          ]
+          content: paragraphs.length > 0 ? paragraphs : [{ type: 'paragraph' }]
         })
       }
 
-      const frBlockContent = wrapInBlocks(frHtml)
-      const nlBlockContent = wrapInBlocks(nlHtml)
+      const frBlockContent = textToTipTapDoc(frParsed.data.intro || '', frParsed.content || '')
+      const nlBlockContent = textToTipTapDoc(nlParsed.data.intro || '', nlParsed.content || '')
 
       const config: Record<string, any> = {}
       if (frParsed.data.image) {
