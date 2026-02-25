@@ -534,8 +534,13 @@ export default defineEventHandler(async (event) => {
         const templateId = nanoid()
         templateIdMap[`${type}-${loc.slug}`] = templateId
 
-        // Map retour -> return for triggerType
-        const triggerType = type === 'retour' ? 'return' : type
+        // Map seed types to crouton-bookings trigger types
+        const triggerTypeMap: Record<string, string> = {
+          confirmation: 'booking_created',
+          reminder: 'reminder_before',
+          retour: 'follow_up_after'
+        }
+        const triggerType = triggerTypeMap[type] || type
 
         // Determine days offset
         let daysOffset: number | null = null
@@ -663,7 +668,7 @@ export default defineEventHandler(async (event) => {
           bookingId,
           templateId: templateId || null,
           recipientEmail: email,
-          triggerType: 'confirmation',
+          triggerType: 'booking_created',
           status: 'sent',
           sentAt: sentDate.toISOString(),
           error: null,
@@ -687,7 +692,7 @@ export default defineEventHandler(async (event) => {
           bookingId,
           templateId: templateId || null,
           recipientEmail: email,
-          triggerType: 'reminder',
+          triggerType: 'reminder_before',
           status: 'sent',
           sentAt: sentDate.toISOString(),
           error: null,
@@ -711,7 +716,7 @@ export default defineEventHandler(async (event) => {
           bookingId,
           templateId: templateId || null,
           recipientEmail: email,
-          triggerType: 'return',
+          triggerType: 'follow_up_after',
           status: 'sent',
           sentAt: sentDate.toISOString(),
           error: null,
@@ -754,36 +759,49 @@ export default defineEventHandler(async (event) => {
 
       const pageId = nanoid()
 
-      // Build content: combine frontmatter intro + body
+      // Build content as TipTap block JSON
       const frIntro = frParsed.data.intro || ''
       const frBody = frParsed.content || ''
-      const frContent = [frIntro, frBody].filter(Boolean).join('\n\n')
+      const frHtml = [frIntro, frBody].filter(Boolean).map(t => `<p>${t}</p>`).join('')
 
       const nlIntro = nlParsed.data.intro || ''
       const nlBody = nlParsed.content || ''
-      const nlContent = [nlIntro, nlBody].filter(Boolean).join('\n\n')
+      const nlHtml = [nlIntro, nlBody].filter(Boolean).map(t => `<p>${t}</p>`).join('')
 
-      // Build config with translations and image
-      const config: Record<string, any> = {}
-      if (frParsed.data.image) {
-        config.image = frParsed.data.image
+      // Wrap content in TipTap richTextBlock format for the workspace editor
+      function wrapInBlocks(html: string): string {
+        return JSON.stringify({
+          type: 'doc',
+          content: [
+            { type: 'richTextBlock', attrs: { content: html } }
+          ]
+        })
       }
-      config.translations = {
+
+      const frBlockContent = wrapInBlocks(frHtml)
+      const nlBlockContent = wrapInBlocks(nlHtml)
+
+      const translations = {
         en: {
           title: frParsed.data.title || pageCfg.slug,
-          content: frContent,
-          intro: frIntro
+          slug: pageCfg.slug,
+          content: frBlockContent
         },
         fr: {
           title: frParsed.data.title || pageCfg.slug,
-          content: frContent,
-          intro: frIntro
+          slug: pageCfg.slug,
+          content: frBlockContent
         },
         nl: {
           title: nlParsed.data.title || frParsed.data.title,
-          content: nlContent,
-          intro: nlIntro
+          slug: pageCfg.slug,
+          content: nlBlockContent
         }
+      }
+
+      const config: Record<string, any> = {}
+      if (frParsed.data.image) {
+        config.image = frParsed.data.image
       }
 
       await (db as any).insert(pagesPages).values({
@@ -797,7 +815,8 @@ export default defineEventHandler(async (event) => {
         title: frParsed.data.title || pageCfg.slug,
         slug: pageCfg.slug,
         pageType: pageCfg.pageType,
-        content: frContent,
+        content: frBlockContent,
+        translations,
         config,
         status: 'published',
         visibility: 'public',
