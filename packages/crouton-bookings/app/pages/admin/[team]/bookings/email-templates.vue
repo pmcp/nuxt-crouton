@@ -317,10 +317,10 @@ function getLocationName(locationId: string | null) {
       </div>
       <UDropdownMenu
         :items="[
-          { label: t('bookings.emailTemplates.triggers.bookingCreated'), icon: 'i-lucide-calendar-plus', click: () => openCreateForm('booking_created') },
-          { label: t('bookings.emailTemplates.triggers.reminderBefore'), icon: 'i-lucide-bell', click: () => openCreateForm('reminder_before') },
-          { label: t('bookings.emailTemplates.triggers.bookingCancelled'), icon: 'i-lucide-calendar-x', click: () => openCreateForm('booking_cancelled') },
-          { label: t('bookings.emailTemplates.triggers.followUpAfter'), icon: 'i-lucide-mail-check', click: () => openCreateForm('follow_up_after') }
+          { label: t('bookings.emailTemplates.triggers.bookingCreated'), icon: 'i-lucide-calendar-plus', onSelect: () => openCreateForm('booking_created') },
+          { label: t('bookings.emailTemplates.triggers.reminderBefore'), icon: 'i-lucide-bell', onSelect: () => openCreateForm('reminder_before') },
+          { label: t('bookings.emailTemplates.triggers.bookingCancelled'), icon: 'i-lucide-calendar-x', onSelect: () => openCreateForm('booking_cancelled') },
+          { label: t('bookings.emailTemplates.triggers.followUpAfter'), icon: 'i-lucide-mail-check', onSelect: () => openCreateForm('follow_up_after') }
         ]"
       >
         <UButton icon="i-lucide-plus" color="primary">
