@@ -17,7 +17,7 @@
 import { defineNuxtRouteMiddleware, navigateTo, createError, useSession, useTeam, useNuxtApp, useRequestHeaders } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isPending, isAuthenticated } = useSession()
+  const { data: sessionData, isPending, isAuthenticated } = useSession()
   const { teams, switchTeamBySlug } = useTeam()
   const nuxtApp = useNuxtApp()
 
@@ -42,6 +42,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
       statusMessage: 'Bad Request',
       message: 'Team parameter is required'
     })
+  }
+
+  // Super admins bypass team membership checks
+  const user = sessionData.value?.user as { superAdmin?: boolean } | undefined
+  if (user?.superAdmin) {
+    // Still switch team context so the admin pages work correctly
+    if (import.meta.client) {
+      try {
+        await switchTeamBySlug(teamSlug)
+      } catch {
+        // Super admin may not be a member — that's fine, team context
+        // will be set by the page via API calls
+      }
+    }
+    return
   }
 
   // Find the team and check role from teams list (includes role)

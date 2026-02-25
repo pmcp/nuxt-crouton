@@ -2,54 +2,88 @@
 /**
  * Super Admin Teams Page
  *
- * Team oversight page with search and filters.
- * Protected by super-admin middleware.
+ * Lists all teams with links to their admin areas.
  */
 definePageMeta({
+  layout: 'super-admin',
   middleware: 'super-admin'
 })
 
-useSeoMeta({
-  title: 'View Teams - Super Admin'
+useSeoMeta({ title: 'Teams - Super Admin' })
+
+const { data, status, error } = await useFetch('/api/admin/teams', {
+  query: { pageSize: 100 }
 })
+
+const columns = [
+  { accessorKey: 'name', header: 'Team' },
+  { accessorKey: 'memberCount', header: 'Members' },
+  { accessorKey: 'createdAt', header: 'Created' },
+  { accessorKey: 'actions', header: '' }
+]
+
+function formatDate(date: string | Date) {
+  return new Date(date).toLocaleDateString()
+}
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <NuxtLink
-            to="/super-admin"
-            class="flex size-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-          >
-            <UIcon
-              name="i-heroicons-arrow-left"
-              class="size-5"
-            />
-          </NuxtLink>
-          <div class="flex items-center gap-3">
-            <div class="flex size-10 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900">
-              <UIcon
-                name="i-heroicons-building-office-2"
-                class="size-5 text-violet-600 dark:text-violet-400"
-              />
-            </div>
-            <div>
-              <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                View Teams
-              </h1>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                Browse all teams and their members
-              </p>
-            </div>
-          </div>
-        </div>
+  <div class="p-6">
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold">Teams</h1>
+        <p class="text-sm text-muted">All teams on the platform</p>
       </div>
     </div>
 
-    <!-- Team List Component -->
-    <AdminTeamList :page-size="20" />
+    <UAlert
+      v-if="error"
+      color="error"
+      icon="i-lucide-alert-circle"
+      title="Failed to load teams"
+      :description="error.message"
+      class="mb-4"
+    />
+
+    <UTable
+      :data="data?.items ?? []"
+      :columns="columns"
+      :loading="status === 'pending'"
+    >
+      <template #name-cell="{ row }">
+        <NuxtLink
+          :to="`/admin/${row.original.slug}`"
+          class="flex items-center gap-3 group"
+        >
+          <UAvatar :src="row.original.logo" :alt="row.original.name" size="sm" />
+          <div>
+            <p class="font-medium group-hover:text-primary">
+              {{ row.original.name }}
+            </p>
+            <p class="text-xs text-muted">{{ row.original.slug }}</p>
+          </div>
+        </NuxtLink>
+      </template>
+
+      <template #memberCount-cell="{ row }">
+        <UBadge variant="subtle" color="neutral">
+          {{ row.original.memberCount }} {{ row.original.memberCount === 1 ? 'member' : 'members' }}
+        </UBadge>
+      </template>
+
+      <template #createdAt-cell="{ row }">
+        <span class="text-sm text-muted">{{ formatDate(row.original.createdAt) }}</span>
+      </template>
+
+      <template #actions-cell="{ row }">
+        <UButton
+          :to="`/admin/${row.original.slug}`"
+          variant="ghost"
+          color="neutral"
+          icon="i-lucide-arrow-right"
+          size="xs"
+        />
+      </template>
+    </UTable>
   </div>
 </template>

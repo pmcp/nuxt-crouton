@@ -113,7 +113,10 @@ function formatDate(date: Date) {
       :loading="loading"
     >
       <template #name-cell="{ row }">
-        <div class="flex items-center gap-2">
+        <NuxtLink
+          :to="`/admin/${row.original.slug}`"
+          class="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
           <UAvatar
             :src="row.original.logo"
             :alt="row.original.name"
@@ -130,7 +133,11 @@ function formatDate(date: Date) {
               {{ t('superAdmin.teams.defaultTeam') }}
             </p>
           </div>
-        </div>
+          <UIcon
+            name="i-heroicons-arrow-right"
+            class="ml-auto size-4 text-gray-400"
+          />
+        </NuxtLink>
       </template>
 
       <template #slug-cell="{ row }">
