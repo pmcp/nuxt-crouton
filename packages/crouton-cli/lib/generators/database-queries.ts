@@ -602,24 +602,28 @@ export async function create${prefixedPascalCase}(data: New${prefixedPascalCase}
 export async function update${prefixedPascalCase}(
   recordId: string,
   teamId: string,
-  ownerId: string,
-  updates: Partial<${prefixedPascalCase}>
+  userId: string,
+  updates: Partial<${prefixedPascalCase}>,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.${tableName}.id, recordId),
+    eq(tables.${tableName}.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.${tableName}.owner, userId))
+  }
 
   const [${camelCase}] = await (db as any)
     .update(tables.${tableName})
     .set({
       ...updates,
-      updatedBy: ownerId
+      updatedBy: userId
     })
-    .where(
-      and(
-        eq(tables.${tableName}.id, recordId),
-        eq(tables.${tableName}.teamId, teamId),
-        eq(tables.${tableName}.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!${camelCase}) {
@@ -635,19 +639,23 @@ export async function update${prefixedPascalCase}(
 export async function delete${prefixedPascalCase}(
   recordId: string,
   teamId: string,
-  ownerId: string
+  userId: string,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.${tableName}.id, recordId),
+    eq(tables.${tableName}.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.${tableName}.owner, userId))
+  }
 
   const [deleted] = await (db as any)
     .delete(tables.${tableName})
-    .where(
-      and(
-        eq(tables.${tableName}.id, recordId),
-        eq(tables.${tableName}.teamId, teamId),
-        eq(tables.${tableName}.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!deleted) {

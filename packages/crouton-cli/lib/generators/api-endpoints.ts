@@ -165,7 +165,7 @@ export default defineEventHandler(async (event) => {
   if (!${camelCase}Id) {
     throw createError({ status: 400, statusText: 'Missing ${singular} ID' })
   }
-  const { team, user } = await resolveTeamAndCheckMembership(event)
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<${prefixedPascalCase}>>(event)${hasTranslations
     ? `
@@ -187,7 +187,7 @@ export default defineEventHandler(async (event) => {
 
   return await update${prefixedPascalCase}(${camelCase}Id, team.id, user.id, {
 ${fieldSelection}
-  })
+  }, { role: membership.role })
 })`
 }
 
@@ -207,9 +207,9 @@ export default defineEventHandler(async (event) => {
   if (!${camelCase}Id) {
     throw createError({ status: 400, statusText: 'Missing ${singular} ID' })
   }
-  const { team, user } = await resolveTeamAndCheckMembership(event)
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
 
-  return await delete${prefixedPascalCase}(${camelCase}Id, team.id, user.id)
+  return await delete${prefixedPascalCase}(${camelCase}Id, team.id, user.id, { role: membership.role })
 })`
 }
 
