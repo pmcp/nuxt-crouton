@@ -34,6 +34,10 @@ export interface BookingWithEmailContext {
   locationData?: {
     id: string
     name: string
+    title?: string
+    street?: string
+    city?: string
+    content?: string
     address?: string
   } | null
   ownerUser?: {
@@ -48,9 +52,12 @@ export interface BookingEmailVariables {
   customer_email: string
   booking_date: string
   booking_slot: string
+  booking_reference: string
   location_name: string
   location_address: string
   team_name: string
+  team_email: string
+  team_phone: string
 }
 
 export interface BookingEmailResult {
@@ -114,9 +121,12 @@ export function buildBookingEmailVariables(
     customer_email: booking.ownerUser?.email || '',
     booking_date: formatBookingEmailDate(booking.date),
     booking_slot: booking.slot?.join(', ') || 'Not specified',
+    booking_reference: booking.id,
     location_name: booking.locationData?.name || 'Location',
     location_address: booking.locationData?.address || '',
-    team_name: teamName
+    team_name: teamName,
+    team_email: '',
+    team_phone: ''
   }
 }
 

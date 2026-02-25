@@ -73,7 +73,8 @@ export default defineEventHandler(async (event) => {
           id: bookingsLocations.id,
           title: bookingsLocations.title,
           street: bookingsLocations.street,
-          city: bookingsLocations.city
+          city: bookingsLocations.city,
+          content: bookingsLocations.content
         }
       })
       .from(bookingsBookings)
@@ -104,6 +105,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Build booking context for email
+  const teamMetadata = (team.metadata || {}) as Record<string, string>
   const bookingContext: BookingEmailContext = {
     id: booking.id,
     teamId: booking.teamId,
@@ -116,6 +118,10 @@ export default defineEventHandler(async (event) => {
       ? {
           id: booking.locationData.id,
           name: booking.locationData.title || 'Location',
+          title: booking.locationData.title || 'Location',
+          street: booking.locationData.street || '',
+          city: booking.locationData.city || '',
+          content: booking.locationData.content || '',
           address: [booking.locationData.street, booking.locationData.city]
             .filter(Boolean)
             .join(', ')
@@ -126,7 +132,9 @@ export default defineEventHandler(async (event) => {
       name: user.name || 'Customer',
       email: user.email || ''
     },
-    teamName: team.name
+    teamName: team.name,
+    teamEmail: teamMetadata.email || teamMetadata.contactEmail || '',
+    teamPhone: teamMetadata.phone || teamMetadata.contactPhone || ''
   }
 
   // Send email

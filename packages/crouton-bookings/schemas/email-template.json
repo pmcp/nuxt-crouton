@@ -26,7 +26,7 @@
       "required": true,
       "translatable": true,
       "label": "Email Body",
-      "help": "Variables: {{customer_name}}, {{booking_date}}, {{booking_slot}}, {{location_title}}, {{location_street}}, {{location_city}}, {{location_address}}, {{team_name}}",
+      "help": "Variables: {{customer_name}}, {{customer_email}}, {{booking_date}}, {{booking_slot}}, {{booking_reference}}, {{location_name}}, {{location_title}}, {{location_street}}, {{location_city}}, {{location_address}}, {{location_content}}, {{team_name}}, {{team_email}}, {{team_phone}}",
       "area": "main",
       "group": "content"
     }

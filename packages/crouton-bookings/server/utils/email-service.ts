@@ -30,6 +30,8 @@ import {
  */
 export interface BookingEmailContext extends BookingWithEmailContext {
   teamName?: string
+  teamEmail?: string
+  teamPhone?: string
 }
 
 /**
@@ -118,8 +120,8 @@ export function buildEmailVariables(
   if (locationData) {
     const parts = [
       locationData.address,
-      (locationData as any).street,
-      (locationData as any).city
+      locationData.street,
+      locationData.city
     ].filter(Boolean)
     locationAddress = parts.join(', ')
   }
@@ -131,9 +133,12 @@ export function buildEmailVariables(
     booking_slot: Array.isArray(booking.slot)
       ? booking.slot.join(', ')
       : booking.slot || 'Not specified',
+    booking_reference: booking.id,
     location_name: locationData?.name || 'Location',
     location_address: locationAddress,
-    team_name: booking.teamName || 'Your Team'
+    team_name: booking.teamName || 'Your Team',
+    team_email: booking.teamEmail || '',
+    team_phone: booking.teamPhone || ''
   }
 }
 
@@ -144,6 +149,7 @@ export interface ExtendedEmailVariables extends BookingEmailVariables {
   location_title: string
   location_street: string
   location_city: string
+  location_content: string
 }
 
 /**
@@ -153,13 +159,14 @@ export function buildExtendedEmailVariables(
   booking: BookingEmailContext
 ): ExtendedEmailVariables {
   const base = buildEmailVariables(booking)
-  const locationData = booking.locationData as any
+  const locationData = booking.locationData
 
   return {
     ...base,
     location_title: locationData?.title || locationData?.name || 'Location',
     location_street: locationData?.street || '',
-    location_city: locationData?.city || ''
+    location_city: locationData?.city || '',
+    location_content: locationData?.content || ''
   }
 }
 

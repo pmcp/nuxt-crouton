@@ -79,23 +79,30 @@ export default defineEventHandler(async (event) => {
 
   const db = useDB()
 
-  // Check limits for each location
+  // Fetch all locations for this team (used for limit checking + email context)
   const locationIds = [...locationMonthPairs.keys()]
-  if (locationIds.length > 0) {
-    const locations = await db
-      .select({
-        id: bookingsLocations.id,
-        title: bookingsLocations.title,
-        maxBookingsPerMonth: bookingsLocations.maxBookingsPerMonth,
-      })
-      .from(bookingsLocations)
-      .where(
-        and(
-          eq(bookingsLocations.teamId, team.id),
-        ),
-      )
+  const allLocations = locationIds.length > 0
+    ? await db
+        .select({
+          id: bookingsLocations.id,
+          title: bookingsLocations.title,
+          street: bookingsLocations.street,
+          city: bookingsLocations.city,
+          content: bookingsLocations.content,
+          maxBookingsPerMonth: bookingsLocations.maxBookingsPerMonth,
+        })
+        .from(bookingsLocations)
+        .where(
+          and(
+            eq(bookingsLocations.teamId, team.id),
+          ),
+        )
+    : []
+  const dbLocationMap = new Map(allLocations.map(l => [l.id, l]))
 
-    const locationMap = new Map(locations.map(l => [l.id, l]))
+  // Check limits for each location
+  if (locationIds.length > 0) {
+    const locationMap = dbLocationMap
 
     for (const [locationId, months] of locationMonthPairs) {
       const location = locationMap.get(locationId)
@@ -207,12 +214,16 @@ export default defineEventHandler(async (event) => {
       const locationMap = new Map(
         body.bookings.map(item => [item.locationId, item])
       )
+      const teamMetadata = (team.metadata || {}) as Record<string, string>
 
       // Send emails in background - don't block checkout
       const emailPromises = created.map(async (booking) => {
         const cartItem = locationMap.get(booking.location)
 
-        // Build booking context with available data
+        // Build booking context with DB location data (preferred) and cart fallback
+        const dbLocation = dbLocationMap.get(booking.location)
+        const locationTitle = dbLocation?.title || cartItem?.locationTitle || 'Location'
+
         const bookingContext: BookingEmailContext = {
           id: booking.id,
           teamId: booking.teamId,
@@ -223,14 +234,20 @@ export default defineEventHandler(async (event) => {
           status: booking.status,
           locationData: {
             id: booking.location,
-            name: cartItem?.locationTitle || 'Location'
+            name: locationTitle,
+            title: locationTitle,
+            street: dbLocation?.street || '',
+            city: dbLocation?.city || '',
+            content: dbLocation?.content || ''
           },
           ownerUser: {
             id: user.id,
             name: user.name || 'Customer',
             email: user.email || ''
           },
-          teamName: team.name
+          teamName: team.name,
+          teamEmail: teamMetadata.email || teamMetadata.contactEmail || '',
+          teamPhone: teamMetadata.phone || teamMetadata.contactPhone || ''
         }
 
         try {

@@ -32,7 +32,8 @@ export const demoBookingData = {
     city: 'Amsterdam',
     postalCode: '1081 KL',
     address: 'Sportlaan 42, 1081 KL Amsterdam',
-    phone: '+31 20 123 4567'
+    phone: '+31 20 123 4567',
+    content: 'Indoor court with professional lighting and climate control. Showers and changing rooms available.'
   },
 
   // Demo team/business
@@ -140,6 +141,14 @@ export function useBookingEmailVariables() {
       icon: 'i-lucide-map',
       sample: demoBookingData.location.address
     },
+    {
+      name: 'location_content',
+      label: 'Location Content',
+      description: 'The content/description of the location',
+      category: 'location',
+      icon: 'i-lucide-file-text',
+      sample: demoBookingData.location.content
+    },
 
     // Team variables
     {
@@ -183,6 +192,7 @@ export function useBookingEmailVariables() {
       location_street: demoBookingData.location.street,
       location_city: demoBookingData.location.city,
       location_address: demoBookingData.location.address,
+      location_content: demoBookingData.location.content,
       team_name: demoBookingData.team.name,
       team_email: demoBookingData.team.email,
       team_phone: demoBookingData.team.phone
