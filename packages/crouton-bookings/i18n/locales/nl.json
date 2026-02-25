@@ -113,6 +113,17 @@
         "sendFollowUp": "Follow-up verzenden",
         "resendCancellation": "Annulering opnieuw verzenden",
         "sendCancellation": "Annulering verzenden"
+      },
+      "emailStatus": {
+        "sent": "Verzonden",
+        "sentOn": "Verzonden op {date}",
+        "pending": "Ingepland",
+        "scheduledFor": "Ingepland voor {date}",
+        "failed": "Verzenden mislukt",
+        "notSent": "Nog niet verzonden",
+        "clickToSend": "Klik om te verzenden",
+        "clickToResend": "Klik om opnieuw te verzenden",
+        "clickToRetry": "Klik om opnieuw te proberen"
       }
     },
     "createCard": {

@@ -113,6 +113,17 @@
         "sendFollowUp": "Envoyer un suivi",
         "resendCancellation": "Renvoyer l'annulation",
         "sendCancellation": "Envoyer l'annulation"
+      },
+      "emailStatus": {
+        "sent": "Envoyé",
+        "sentOn": "Envoyé le {date}",
+        "pending": "Programmé",
+        "scheduledFor": "Programmé pour le {date}",
+        "failed": "Échec de l'envoi",
+        "notSent": "Pas encore envoyé",
+        "clickToSend": "Cliquer pour envoyer",
+        "clickToResend": "Cliquer pour renvoyer",
+        "clickToRetry": "Cliquer pour réessayer"
       }
     },
     "createCard": {

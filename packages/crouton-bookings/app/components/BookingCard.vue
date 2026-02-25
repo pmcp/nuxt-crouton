@@ -157,7 +157,7 @@ function getStatusInfo(item: TimelineItem): { icon: string; label: string; color
     case 'failed': return {
       icon: 'i-lucide-triangle-alert',
       label: t('bookings.card.emailStatus.failed'),
-      color: 'text-warning',
+      color: 'text-error',
       action: t('bookings.card.emailStatus.clickToRetry'),
     }
     default: return {
