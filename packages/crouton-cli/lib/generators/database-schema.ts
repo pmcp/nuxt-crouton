@@ -64,11 +64,17 @@ export function generateSchema(data: Record<string, any>, dialect: string, confi
     ...SORTABLE_FIELDS
   ]
 
+  // Collect fields with unique constraint for composite team-scoped indexes
+  const uniqueFields: string[] = data.fields
+    .filter(field => !reservedFields.includes(field.name) && field.meta?.unique)
+    .map(field => field.name)
+
   const schemaFields = data.fields
     .filter(field => !reservedFields.includes(field.name))
     .map((field) => {
       const nullable = field.meta?.required ? '.notNull()' : ''
-      const unique = field.meta?.unique ? '.unique()' : ''
+      // unique is handled via composite (teamId, field) index, not per-column .unique()
+      const unique = ''
 
       // Check if this is a dependent field (should be stored as JSON array)
       const isDependentField = field.meta?.dependsOn || field.meta?.displayAs === 'slotButtonGroup'
@@ -119,7 +125,7 @@ export function generateSchema(data: Record<string, any>, dialect: string, confi
 
   const imports = dialect === 'sqlite'
     ? `import { nanoid } from 'nanoid'
-import { sqliteTable, text, integer, real, customType } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real, customType${uniqueFields.length > 0 ? ', uniqueIndex' : ''} } from 'drizzle-orm/sqlite-core'
 
 // Custom JSON column that handles NULL values gracefully during LEFT JOINs
 const jsonColumn = customType<any>({
@@ -140,7 +146,7 @@ const jsonColumn = customType<any>({
     return JSON.stringify(value)
   },
 })`
-    : `import { pgTable, varchar, text, integer, numeric, boolean, timestamp, jsonb, uuid } from 'drizzle-orm/pg-core'`
+    : `import { pgTable, varchar, text, integer, numeric, boolean, timestamp, jsonb, uuid${uniqueFields.length > 0 ? ', uniqueIndex' : ''} } from 'drizzle-orm/pg-core'`
 
   const tableFn = dialect === 'sqlite' ? 'sqliteTable' : 'pgTable'
 
@@ -226,9 +232,19 @@ const jsonColumn = customType<any>({
     metadataFields
   ].filter(Boolean).join(',\n')
 
+  // Generate composite unique indexes for team-scoped uniqueness
+  let uniqueIndexBlock = ''
+  if (uniqueFields.length > 0) {
+    const indexes = uniqueFields.map(fieldName => {
+      const indexName = `${snakeCaseTableName}_team_${toSnakeCase(fieldName)}_idx`
+      return `  uniqueIndex('${indexName}').on(table.teamId, table.${fieldName})`
+    }).join(',\n')
+    uniqueIndexBlock = `, (table) => [\n${indexes}\n]`
+  }
+
   return `${imports}${translationsComment}
 
 export const ${exportName} = ${tableFn}('${snakeCaseTableName}', {
 ${allFields}
-})`
+}${uniqueIndexBlock})`
 }
