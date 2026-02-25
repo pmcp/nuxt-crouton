@@ -20,6 +20,10 @@ import { useMediaQuery } from '@vueuse/core'
 // Get page layout from shared state (set by page component via useState)
 const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayout', () => 'default')
 
+// Detect single-page mode — content starts higher (in line with the right utility pill)
+const { navigation } = useNavigation()
+const isSinglePage = computed(() => !navigation.value || navigation.value.length <= 1)
+
 // Inline editing state (shared with page route via useState)
 const isEditing = useState<boolean>('pageEditing', () => false)
 const editingPageId = useState<string | null>('editingPageId', () => null)
@@ -94,6 +98,10 @@ const drawerOpen = computed({
 const containerRef = ref<HTMLElement>()
 const mainRef = ref<HTMLElement>()
 
+// Top padding: when single page (no center nav pill), content starts at same height as the utility pill
+// Nav pill is at top-4 sm:top-6, so content aligns with it instead of clearing below it
+const topPadding = computed(() => isSinglePage.value ? 'pt-4 sm:pt-6' : 'pt-20 sm:pt-24')
+
 // Apply layout classes to DOM elements
 // Needed because: 1) SSR hydration mismatch, 2) navigation between pages
 function applyLayoutClasses() {
@@ -101,11 +109,12 @@ function applyLayoutClasses() {
 
   const container = containerRef.value
   const main = mainRef.value
+  const pt = topPadding.value
 
   switch (pageLayout.value) {
     case 'full-height':
       container.className = 'bg-background h-screen flex flex-col overflow-hidden'
-      main.className = 'flex-1 overflow-hidden pt-20 sm:pt-24 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full'
+      main.className = `flex-1 overflow-hidden ${pt} px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full`
       break
     case 'full-screen':
       container.className = 'bg-background min-h-screen'
@@ -113,7 +122,7 @@ function applyLayoutClasses() {
       break
     default:
       container.className = 'bg-background min-h-screen'
-      main.className = 'max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-8'
+      main.className = `max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 ${pt} pb-8`
   }
 }
 
@@ -123,7 +132,7 @@ onMounted(() => {
 })
 
 // Watch for layout changes (handles navigation between pages)
-watch(pageLayout, () => {
+watch([pageLayout, isSinglePage], () => {
   nextTick(applyLayoutClasses)
 })
 
@@ -140,13 +149,14 @@ const containerClasses = computed(() => {
 })
 
 const mainClasses = computed(() => {
+  const pt = topPadding.value
   switch (pageLayout.value) {
     case 'full-height':
-      return 'flex-1 overflow-hidden pt-20 sm:pt-24 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full'
+      return `flex-1 overflow-hidden ${pt} px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full`
     case 'full-screen':
       return 'pt-16'
     default:
-      return 'max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-8'
+      return `max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 ${pt} pb-8`
   }
 })
 </script>
