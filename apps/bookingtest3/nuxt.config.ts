@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-assets',
     '@fyit/crouton-pages',
     '@fyit/crouton-bookings',
+    '@fyit/crouton-email',
     './layers/bookings',
     './layers/pages',
     './layers/bookingtest3',
@@ -30,6 +31,18 @@ export default defineNuxtConfig({
 
   // Disable OG Image to reduce bundle size for Cloudflare (saves ~4MB)
   ogImage: { enabled: false },
+
+  // Enable booking email notifications
+  runtimeConfig: {
+    croutonBookings: {
+      email: { enabled: true }
+    },
+    public: {
+      croutonBookings: {
+        email: { enabled: true }
+      }
+    }
+  },
 
   // Disable passkeys for Cloudflare Workers (tsyringe incompatibility)
   croutonAuth: {

@@ -26,6 +26,7 @@
     "vue-router": "^4.6.4",
     "@fyit/crouton-assets": "workspace:*",
     "@fyit/crouton-bookings": "workspace:*",
+    "@fyit/crouton-email": "workspace:*",
     "@fyit/crouton-pages": "workspace:*"
   },
   "devDependencies": {
