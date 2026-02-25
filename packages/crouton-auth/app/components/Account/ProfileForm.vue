@@ -10,6 +10,7 @@
  * ```
  */
 import type { FormSubmitEvent, FormError } from '@nuxt/ui'
+import { useAuthClient } from '../../../types/auth-client'
 
 const { t } = useT()
 
@@ -33,16 +34,12 @@ const emit = defineEmits<{
 const { user, refreshSession } = useAuth()
 const notify = useNotify()
 
-// Get auth client for update operations
-function useAuthClient() {
-  const nuxtApp = useNuxtApp()
-  return nuxtApp.$authClient as ReturnType<typeof import('better-auth/client').createAuthClient>
-}
 const authClient = useAuthClient()
 
 // Form state (populated from current user)
 const state = reactive({
   name: '',
+  email: '',
   image: ''
 })
 
@@ -52,6 +49,7 @@ watch(
   (u) => {
     if (u) {
       state.name = u.name ?? ''
+      state.email = u.email ?? ''
       state.image = u.image ?? ''
     }
   },
@@ -59,10 +57,16 @@ watch(
 )
 
 // Track if form has changes
+const emailChanged = computed(() => {
+  if (!user.value) return false
+  return state.email !== (user.value.email ?? '')
+})
+
 const hasChanges = computed(() => {
   if (!user.value) return false
   return (
     state.name !== (user.value.name ?? '')
+    || state.email !== (user.value.email ?? '')
     || state.image !== (user.value.image ?? '')
   )
 })
@@ -79,11 +83,37 @@ function validate(formState: Partial<typeof state>): FormError[] {
     errors.push({ name: 'name', message: t('errors.maxLength', { params: { max: 100 } }) })
   }
 
-  if (formState.image && !/^https?:\/\//.test(formState.image)) {
+  if (formState.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+    errors.push({ name: 'email', message: t('errors.invalidEmail') || 'Please enter a valid email address' })
+  }
+
+  if (formState.image && !/^(https?|blob):\/\//.test(formState.image)) {
     errors.push({ name: 'image', message: 'Avatar must be a valid URL' })
   }
 
   return errors
+}
+
+// Handle avatar file upload
+async function handleAvatarUpload(file: File | null) {
+  if (!file) {
+    state.image = ''
+    return
+  }
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const result = await $fetch<{ url: string }>('/api/upload-image', {
+      method: 'POST',
+      body: formData
+    })
+    if (result?.url) {
+      state.image = result.url
+    }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Failed to upload avatar'
+    notify.error('Upload failed', { description: message })
+  }
 }
 
 // Internal loading state
@@ -94,6 +124,7 @@ const isLoading = computed(() => props.loading || internalLoading.value)
 async function onSubmit(event: FormSubmitEvent<typeof state>) {
   internalLoading.value = true
   try {
+    // Update name and image
     const result = await authClient.updateUser({
       name: event.data.name,
       image: event.data.image || undefined
@@ -101,6 +132,23 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
 
     if (result.error) {
       throw new Error(result.error.message ?? 'Update failed')
+    }
+
+    // Handle email change separately (sends verification)
+    if (emailChanged.value && event.data.email) {
+      const emailResult = await authClient.changeEmail({
+        newEmail: event.data.email,
+        callbackURL: window.location.href
+      })
+
+      if (emailResult.error) {
+        throw new Error(emailResult.error.message ?? 'Email change failed')
+      }
+
+      notify.success(
+        t('account.emailChangeRequested') || 'Verification email sent',
+        { description: t('account.emailChangeDescription') || `A verification email has been sent to ${event.data.email}. Please check your inbox.` }
+      )
     }
 
     await refreshSession()
@@ -120,6 +168,7 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
 function resetForm() {
   if (user.value) {
     state.name = user.value.name ?? ''
+    state.email = user.value.email ?? ''
     state.image = user.value.image ?? ''
   }
 }
@@ -142,37 +191,33 @@ function resetForm() {
       class="space-y-6"
       @submit="onSubmit"
     >
-      <!-- Avatar Preview -->
-      <div class="flex items-center gap-4">
-        <UAvatar
-          v-if="state.image"
-          :src="state.image"
-          :alt="state.name"
-          size="xl"
-        />
-        <div
-          v-else
-          class="flex items-center justify-center size-16 rounded-full bg-muted"
-        >
-          <UIcon
-            name="i-lucide-user"
-            class="size-8 text-muted-foreground"
+      <!-- Avatar -->
+      <UFormField
+        :label="t('account.avatar') || 'Avatar'"
+        name="image"
+      >
+        <div class="flex items-center gap-4">
+          <CroutonImageUpload
+            v-model="state.image"
+            :crop="{ aspectRatio: 1, circular: true }"
+            class="size-20 !rounded-full [&_button]:!rounded-full [&_button]:!h-20"
+            @file-selected="handleAvatarUpload"
           />
+          <div class="flex-1 min-w-0">
+            <p class="font-medium truncate">
+              {{ state.name || 'Your Name' }}
+            </p>
+            <p class="text-sm text-muted truncate">
+              {{ state.email || user?.email }}
+            </p>
+          </div>
         </div>
-        <div class="flex-1">
-          <p class="font-medium">
-            {{ state.name || 'Your Name' }}
-          </p>
-          <p class="text-sm text-muted">
-            {{ user?.email }}
-          </p>
-        </div>
-      </div>
+      </UFormField>
 
       <USeparator />
 
       <UFormField
-        label="Display name"
+        :label="t('forms.name') || 'Display name'"
         name="name"
         required
         class="w-full"
@@ -187,17 +232,20 @@ function resetForm() {
       </UFormField>
 
       <UFormField
-        label="Avatar URL"
-        name="image"
+        :label="t('forms.email') || 'Email'"
+        name="email"
         class="w-full"
       >
         <template #hint>
-          <span class="text-xs text-muted">Optional. Enter a URL to your profile picture.</span>
+          <span v-if="emailChanged" class="text-xs text-amber-500">
+            {{ t('account.emailChangeHint') || 'A verification email will be sent to confirm the change.' }}
+          </span>
         </template>
         <UInput
-          v-model="state.image"
-          placeholder="https://example.com/avatar.png"
-          icon="i-lucide-image"
+          v-model="state.email"
+          type="email"
+          placeholder="you@example.com"
+          icon="i-lucide-mail"
           :disabled="isLoading"
           class="w-full"
         />

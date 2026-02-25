@@ -18,7 +18,7 @@ import { useMediaQuery } from '@vueuse/core'
  */
 
 const { navigation, isLoading, isActive } = useNavigation()
-const { user, userInitials, dropdownItems: userDropdownItems } = useUserMenuItems()
+const { user, userInitials, dropdownItems: userDropdownItems } = useUserMenuItems({ useModal: true })
 const { currentTeam, isAdmin } = useTeam()
 const { teamSlug: teamSlugRef, teamId: teamIdRef } = useTeamContext()
 const { appsList, getAppAllRoutes } = useCroutonApps()
@@ -363,5 +363,8 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
         </ClientOnly>
       </div>
     </div>
+
+    <!-- Account Settings Modal -->
+    <AccountSettingsModal />
   </div>
 </template>

@@ -110,6 +110,18 @@ export function createAuth(options: CreateAuthOptions) {
     // Email and password configuration
     emailAndPassword: buildEmailPasswordConfig(config),
 
+    // Email verification (required for changeEmail)
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }: { user: { email: string }, url: string }) => {
+        // TODO: Phase 2.x - Implement email sending
+        console.log(`[crouton/auth] Verification email for ${user.email}: ${url}`)
+      },
+      sendOnSignUp: false
+    },
+
+    // User configuration (changeEmail)
+    user: buildUserConfig(config),
+
     // OAuth/Social providers configuration
     socialProviders: buildSocialProvidersConfig(config.methods?.oauth, baseURL),
 
@@ -173,6 +185,17 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
         console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
       }
       : undefined
+  }
+}
+
+/**
+ * Build user configuration including changeEmail support
+ */
+function buildUserConfig(_config: CroutonAuthConfig): BetterAuthOptions['user'] {
+  return {
+    changeEmail: {
+      enabled: true
+    }
   }
 }
 
