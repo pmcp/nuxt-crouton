@@ -31,7 +31,7 @@ const parsed = computed(() => {
   <div
     class="shrink-0 flex flex-col items-center justify-center transition-colors duration-200"
     :class="[
-      props.size === 'sm' ? 'rounded p-1' : 'rounded-lg p-2 px-4',
+      props.size === 'sm' ? 'rounded p-1' : 'rounded-lg p-1.5 px-3 md:p-2 md:px-4',
       {
         'bg-error/10 text-error': props.variant === 'error',
         'bg-muted text-muted': props.variant === 'muted',
@@ -42,7 +42,7 @@ const parsed = computed(() => {
     ]"
   >
     <span class="text-[9px] font-medium uppercase tracking-wide">{{ parsed.weekday }}</span>
-    <span class="text-2xl font-bold leading-tight">{{ parsed.day }}</span>
+    <span class="text-xl md:text-2xl font-bold leading-tight">{{ parsed.day }}</span>
     <span class="text-[9px] font-medium uppercase tracking-wide">{{ parsed.month }}</span>
   </div>
 </template>

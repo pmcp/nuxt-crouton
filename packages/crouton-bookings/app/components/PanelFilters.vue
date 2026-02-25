@@ -112,6 +112,7 @@ function isLocationSelected(locationId: string): boolean {
 
         <UButton
           size="sm"
+          class="shrink-0"
           :color="showCancelled ? 'error' : 'neutral'"
           :variant="showCancelled ? 'solid' : 'outline'"
           icon="i-lucide-x-circle"
@@ -123,7 +124,7 @@ function isLocationSelected(locationId: string): boolean {
       </div>
 
       <!-- View controls (only visible when calendar is shown) -->
-      <div v-if="showCalendar" class="flex items-center gap-1">
+      <div v-if="showCalendar" class="flex items-center gap-1 shrink-0">
         <UButton
           size="sm"
           color="neutral"

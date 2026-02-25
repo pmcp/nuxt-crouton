@@ -586,11 +586,12 @@ watch(
     <div v-else ref="listContainerRef" class="flex flex-col gap-4">
       <div v-for="monthGroup in groupedBookingsWithCreateDate" :key="monthGroup.key" class="flex flex-col gap-2">
         <!-- Month/Year separator -->
-        <div class="flex items-center gap-2 py-1 sticky top-0 bg-default/95 backdrop-blur-sm z-10">
-          <span class="text-xs font-medium text-muted uppercase tracking-wider">
+        <div class="flex items-center gap-3 py-2">
+          <div class="h-px w-4 bg-muted/30" />
+          <span class="text-xs font-medium text-muted/60 uppercase tracking-widest">
             {{ monthGroup.label }}
           </span>
-          <div class="flex-1 h-px bg-muted/20" />
+          <div class="flex-1 h-px bg-muted/30" />
         </div>
 
         <!-- Date groups within month -->

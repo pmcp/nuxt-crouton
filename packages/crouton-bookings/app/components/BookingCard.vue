@@ -102,16 +102,17 @@ const bookerUser = computed(() => {
   return null
 })
 
-// Format date for display (e.g., "Jan 5")
-function formatShortDate(dateStr: string): string {
-  const date = new Date(dateStr)
+// Format date for display (e.g., "Jan 5") — handles string, Date, or numeric timestamp
+function formatShortDate(value: string | number | Date): string {
+  const date = typeof value === 'number' ? new Date(value * 1000) : new Date(value)
+  if (isNaN(date.getTime())) return ''
   return new Intl.DateTimeFormat(locale.value, { month: 'short', day: 'numeric' }).format(date)
 }
 
 // Format created date (e.g., "Jan 5")
 const createdDateText = computed(() => {
   if (!props.booking.createdAt) return ''
-  return formatShortDate(String(props.booking.createdAt))
+  return formatShortDate(props.booking.createdAt)
 })
 
 // Email details from API
@@ -224,7 +225,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
     @mouseleave="isHovered = false"
   >
     <!-- Main layout: responsive flex with space-between on desktop -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 relative overflow-hidden">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3 relative overflow-hidden">
       <!-- Edit button: absolute on the right, slides in on hover (original style) -->
       <div
         v-if="showAdminFeatures"
@@ -241,7 +242,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
       </div>
 
       <!-- Left side: Date badge + Info -->
-      <div class="p-2 flex gap-3 flex-1 min-w-0">
+      <div class="p-1.5 md:p-2 flex gap-2 md:gap-3 flex-1 min-w-0">
         <!-- Date badge (clickable to navigate calendar) -->
         <button
           type="button"
@@ -314,27 +315,17 @@ const timelineItems = computed<TimelineItem[]>(() => {
                   </div>
                 </template>
               </UPopover>
-              <span v-if="booking.createdAt" class="whitespace-nowrap">{{ t('bookings.card.on', { date: createdDateText }) }}</span>
+              <button
+                v-if="createdDateText && showAdminFeatures"
+                type="button"
+                class="inline-flex items-center gap-1 whitespace-nowrap hover:text-default transition-colors cursor-pointer"
+                @click.stop="isTimelineOpen = !isTimelineOpen"
+              >
+                <span>{{ t('bookings.card.on', { date: createdDateText }) }}</span>
+                <UIcon name="i-lucide-history" class="size-3" />
+              </button>
+              <span v-else-if="createdDateText" class="whitespace-nowrap">{{ t('bookings.card.on', { date: createdDateText }) }}</span>
             </template>
-
-            <!-- Activity button: far right, moves left on hover as edit slides in -->
-            <UButton
-              v-if="showAdminFeatures"
-              variant="ghost"
-              color="neutral"
-              size="xs"
-              class="ml-auto shrink-0 transition-transform duration-200 ease-out text-muted hover:text-default"
-              :class="isHovered ? '-translate-x-9' : 'translate-x-0'"
-              @click.stop="isTimelineOpen = !isTimelineOpen"
-            >
-              <UIcon name="i-lucide-history" class="size-3.5" />
-              <span>{{ t('bookings.card.activity') }}</span>
-              <UIcon
-                name="i-lucide-chevron-down"
-                class="size-3 ml-1 transition-transform duration-200"
-                :class="isTimelineOpen ? 'rotate-180' : ''"
-              />
-            </UButton>
           </div>
         </div>
       </div>
@@ -369,7 +360,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
     </div>
 
     <!-- Mobile email panel (admin only) -->
-    <div v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0" class="md:hidden mt-4 pt-3 border-t border-muted/20 relative">
+    <div v-if="showAdminFeatures && isEmailEnabled && timelineItems.length > 0" class="md:hidden mt-2 pt-2 border-t border-muted/20 relative">
       <!-- Trigger button -->
       <UButton
         variant="ghost"
@@ -392,7 +383,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
         class="overflow-hidden transition-all duration-200 ease-out"
         :class="isEmailPanelOpen ? 'max-h-28 opacity-100 mt-4' : 'max-h-0 opacity-0'"
       >
-        <div class="flex items-center gap-8 pb-2">
+        <div class="flex items-center gap-4 pb-2">
           <button
             v-for="item in timelineItems"
             :key="item.type"

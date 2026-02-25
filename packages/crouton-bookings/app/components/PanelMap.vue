@@ -105,11 +105,11 @@ defineExpose({ flyToLocation })
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-lg">
+  <div class="overflow-hidden rounded-lg h-[180px] md:h-[250px]">
     <CroutonMapsMap
       :center="mapCenter"
       :zoom="12"
-      height="250px"
+      height="100%"
       fly-to-on-center-change
       @load="onMapLoad"
     >
