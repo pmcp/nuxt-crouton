@@ -346,9 +346,10 @@ watch(
 
 // Computed values
 const selectedPageType = computed(() => getPageType(state.value.pageType))
-const isRegularPage = computed(() =>
-  state.value.pageType === 'pages:regular' || state.value.pageType === 'regular'
-)
+const isRegularPage = computed(() => {
+  const pt = state.value.pageType
+  return !pt || pt === 'regular' || pt === 'core:regular' || pt === 'pages:regular' || pt.endsWith(':regular')
+})
 
 // Collection page type detection (publishable item pages — e.g. bookings:bookingsLocations-detail)
 const isCollectionPage = computed(() => !!selectedPageType.value?.collection)
