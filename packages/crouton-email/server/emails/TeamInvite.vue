@@ -54,15 +54,15 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
       <EButton
         :href="link"
         :style="{
-          backgroundColor: '#0a0a0a',
-          borderRadius: '4px',
+          backgroundColor: primaryColor,
+          borderRadius: '6px',
           color: '#ffffff',
           fontSize: '14px',
-          fontWeight: '500',
+          fontWeight: '600',
           textDecoration: 'none',
           textAlign: 'center',
           display: 'inline-block',
-          padding: '10px 20px'
+          padding: '12px 24px'
         }"
       >
         Join {{ teamName }}

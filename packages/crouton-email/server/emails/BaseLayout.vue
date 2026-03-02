@@ -44,9 +44,21 @@ withDefaults(defineProps<Props>(), {
         :style="{
           maxWidth: '480px',
           margin: '0 auto',
-          padding: '40px 20px'
+          padding: '0 20px 40px'
         }"
       >
+        <!-- Brand accent -->
+        <EHr
+          :style="{
+            borderTop: `3px solid ${primaryColor}`,
+            borderBottom: 'none',
+            borderLeft: 'none',
+            borderRight: 'none',
+            margin: '0 0 40px',
+            width: '48px'
+          }"
+        />
+
         <!-- Logo / Brand -->
         <ESection :style="{ margin: '0 0 40px' }">
           <EImg
