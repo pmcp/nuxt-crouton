@@ -28,6 +28,7 @@ export type BlockType =
   | 'fileBlock'
   | 'buttonRowBlock'
   | 'statsBlock'
+  | 'galleryBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -209,6 +210,7 @@ export type BlockAttrs =
   | FileBlockAttrs
   | ButtonRowBlockAttrs
   | StatsBlockAttrs
+  | GalleryBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -399,6 +401,25 @@ export interface StatsBlock extends PageBlock<StatsBlockAttrs> {
   type: 'statsBlock'
 }
 
+export interface GalleryItem {
+  src: string
+  alt?: string
+}
+
+export type GalleryHeight = 'sm' | 'md' | 'lg' | 'xl'
+
+export interface GalleryBlockAttrs {
+  headline?: string
+  title?: string
+  description?: string
+  images: GalleryItem[]
+  height?: GalleryHeight
+}
+
+export interface GalleryBlock extends PageBlock<GalleryBlockAttrs> {
+  type: 'galleryBlock'
+}
+
 // ============================================================================
 // Document Type
 // ============================================================================
@@ -424,7 +445,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items' | 'stats-items'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items' | 'stats-items' | 'gallery-items'
   label: string
   description?: string
   required?: boolean

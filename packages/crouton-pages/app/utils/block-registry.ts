@@ -24,6 +24,7 @@ import type {
   FileBlockAttrs,
   ButtonRowBlockAttrs,
   StatsBlockAttrs,
+  GalleryBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -805,6 +806,53 @@ export const statsBlockDefinition: BlockDefinition<StatsBlockAttrs> = {
   ]
 }
 
+export const galleryBlockDefinition: BlockDefinition<GalleryBlockAttrs> = {
+  type: 'galleryBlock',
+  name: 'Gallery',
+  description: 'Expandable image gallery with hover effect',
+  icon: 'i-lucide-gallery-horizontal-end',
+  category: 'media',
+  defaultAttrs: {
+    images: [],
+    height: 'md'
+  },
+  schema: [
+    {
+      name: 'headline',
+      type: 'text',
+      label: 'Headline',
+      description: 'Small text above the title'
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title'
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      label: 'Description'
+    },
+    {
+      name: 'height',
+      type: 'select',
+      label: 'Height',
+      options: [
+        { label: 'Small (240px)', value: 'sm' },
+        { label: 'Medium (384px)', value: 'md' },
+        { label: 'Large (480px)', value: 'lg' },
+        { label: 'Extra Large (600px)', value: 'xl' }
+      ],
+      defaultValue: 'md'
+    },
+    {
+      name: 'images',
+      type: 'gallery-items',
+      label: 'Images'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -821,7 +869,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   videoBlock: videoBlockDefinition,
   fileBlock: fileBlockDefinition,
   buttonRowBlock: buttonRowBlockDefinition,
-  statsBlock: statsBlockDefinition
+  statsBlock: statsBlockDefinition,
+  galleryBlock: galleryBlockDefinition
 }
 
 // ============================================================================

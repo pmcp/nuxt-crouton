@@ -387,6 +387,19 @@ function onDelete() {
             />
           </UFormField>
 
+          <!-- Gallery Items Editor -->
+          <UFormField
+            v-else-if="field.type === 'gallery-items'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesGalleryEditor
+              :model-value="(localAttrs[field.name] as any[]) || []"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
+
           <!-- Stats Items Editor -->
           <UFormField
             v-else-if="field.type === 'stats-items'"
