@@ -46,6 +46,7 @@ export const pagesPages = sqliteTable('pages_pages', {
   seoDescription: text('seoDescription'),
   ogImage: text('ogImage'),
   robots: text('robots'),
+  translations: jsonColumn('translations'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

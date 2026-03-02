@@ -1,6 +1,6 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { updatePagesPage } from '../../../../database/queries'
+import { updatePagesPage, getPagesPagesByIds } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import type { PagesPage } from '../../../../../types'
 
@@ -12,6 +12,20 @@ export default defineEventHandler(async (event) => {
   const { team, user, membership } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody<Partial<PagesPage>>(event)
+
+  // Handle translation updates properly
+  if (body.translations && body.locale) {
+    const [existing] = await getPagesPagesByIds(team.id, [pageId]) as any[]
+    if (existing) {
+      body.translations = {
+        ...existing.translations,
+        [body.locale]: {
+          ...existing.translations?.[body.locale],
+          ...body.translations[body.locale]
+        }
+      }
+    }
+  }
 
   return await updatePagesPage(pageId, team.id, user.id, {
     title: body.title,
@@ -27,6 +41,7 @@ export default defineEventHandler(async (event) => {
     seoTitle: body.seoTitle,
     seoDescription: body.seoDescription,
     ogImage: body.ogImage,
-    robots: body.robots
+    robots: body.robots,
+    translations: body.translations
   }, { role: membership.role })
 })

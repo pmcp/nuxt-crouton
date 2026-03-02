@@ -41,6 +41,8 @@ export interface PagesPage {
   seoDescription?: string
   ogImage?: string
   robots?: string
+  translations?: Record<string, any>
+  locale?: string
   createdAt: Date
   updatedAt: Date
   createdBy: string

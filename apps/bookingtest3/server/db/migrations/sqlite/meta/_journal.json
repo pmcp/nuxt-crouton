@@ -29,6 +29,13 @@
       "when": 1772030174504,
       "tag": "0003_regular_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1772456106355,
+      "tag": "0004_old_mystique",
+      "breakpoints": true
     }
   ]
 }

@@ -55,6 +55,18 @@ export async function getAllPagesPages(teamId: string) {
       if (item.config === null || item.config === undefined) {
         item.config = null
       }
+      // Parse translations from JSON string
+      if (typeof item.translations === 'string') {
+        try {
+          item.translations = JSON.parse(item.translations)
+        } catch (e) {
+          console.error('Error parsing translations:', e)
+          item.translations = null
+        }
+      }
+      if (item.translations === null || item.translations === undefined) {
+        item.translations = null
+      }
   })
 
   return pages
@@ -114,6 +126,18 @@ export async function getPagesPagesByIds(teamId: string, pageIds: string[]) {
       }
       if (item.config === null || item.config === undefined) {
         item.config = null
+      }
+      // Parse translations from JSON string
+      if (typeof item.translations === 'string') {
+        try {
+          item.translations = JSON.parse(item.translations)
+        } catch (e) {
+          console.error('Error parsing translations:', e)
+          item.translations = null
+        }
+      }
+      if (item.translations === null || item.translations === undefined) {
+        item.translations = null
       }
   })
 

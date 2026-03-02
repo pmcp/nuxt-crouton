@@ -1,0 +1,1 @@
+ALTER TABLE `pages_pages` ADD `translations` text;
