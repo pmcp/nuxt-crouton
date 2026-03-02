@@ -88,14 +88,14 @@ export function useBookingCart() {
   const formStateRef = useState<{
     locationId: string | null
     date: Date | null
-    slotId: string | null
+    slotIds: string[]
     groupId: string | null
     quantity: number
     editingBookingId: string | null
   }>('croutonBookingFormState', () => ({
     locationId: null,
     date: null,
-    slotId: null,
+    slotIds: [],
     groupId: null,
     quantity: 1,
     editingBookingId: null,
@@ -107,8 +107,8 @@ export function useBookingCart() {
     set locationId(v: string | null) { formStateRef.value.locationId = v },
     get date() { return formStateRef.value.date },
     set date(v: Date | null) { formStateRef.value.date = v },
-    get slotId() { return formStateRef.value.slotId },
-    set slotId(v: string | null) { formStateRef.value.slotId = v },
+    get slotIds() { return formStateRef.value.slotIds },
+    set slotIds(v: string[]) { formStateRef.value.slotIds = v },
     get groupId() { return formStateRef.value.groupId },
     set groupId(v: string | null) { formStateRef.value.groupId = v },
     get quantity() { return formStateRef.value.quantity },
@@ -268,7 +268,7 @@ export function useBookingCart() {
         && !item.isInventoryMode
         && isSameDay(new Date(item.date), date),
       )
-      .map(item => item.slotId)
+      .flatMap(item => item.slotIds)
   }
 
   // Get booked count from cart for a specific date and location (inventory mode)
@@ -348,7 +348,7 @@ export function useBookingCart() {
     if (!formState.locationId) return false
     return cart.value.some(item =>
       item.locationId === formState.locationId
-      && item.slotId === slotId
+      && item.slotIds.includes(slotId)
       && item.groupId === groupId
       && isSameDay(new Date(item.date), date),
     )
@@ -470,9 +470,10 @@ export function useBookingCart() {
       const { remaining } = getInventoryAvailability(formState.date)
       if (remaining < formState.quantity) return false
     } else {
-      // Slot mode: need location + date + slot that isn't disabled
-      if (!formState.slotId) return false
-      if (isSlotDisabled(formState.slotId)) return false
+      // Slot mode: need location + date + at least one slot selected
+      if (formState.slotIds.length === 0) return false
+      // Check that at least one selected slot isn't disabled
+      if (formState.slotIds.every(id => isSlotDisabled(id))) return false
     }
 
     // If groups are enabled, require a group selection
@@ -518,28 +519,43 @@ export function useBookingCart() {
     }
   }
 
+  // Toggle a slot in/out of the selected slotIds array
+  function toggleSlot(slotId: string) {
+    const idx = formState.slotIds.indexOf(slotId)
+    if (idx >= 0) {
+      formState.slotIds = formState.slotIds.filter(id => id !== slotId)
+    } else {
+      formState.slotIds = [...formState.slotIds, slotId]
+    }
+  }
+
   // Add current selection to cart
   function addToCart() {
     if (!canAddToCart.value || !selectedLocation.value || !formState.date) {
       return
     }
 
+    const slotIds = isInventoryMode.value ? ['inventory'] : formState.slotIds
+    const slotLabels = isInventoryMode.value
+      ? ['Inventory Booking']
+      : formState.slotIds.map(id => getSlotLabel(id))
+
     const item: CartItem = {
       id: generateId(),
       locationId: formState.locationId!,
       locationTitle: selectedLocation.value.title,
       date: formState.date.toISOString(),
-      slotId: isInventoryMode.value ? 'inventory' : formState.slotId!,
-      slotLabel: isInventoryMode.value ? 'Inventory Booking' : getSlotLabel(formState.slotId!),
+      slotIds,
+      slotLabels,
       groupId: formState.groupId,
       groupLabel: getGroupLabel(formState.groupId),
       isInventoryMode: isInventoryMode.value,
       quantity: isInventoryMode.value ? formState.quantity : undefined,
     }
 
-    // Add slot-specific info for slot mode
-    if (!isInventoryMode.value && formState.slotId) {
-      const positionInfo = getSlotPositionInfo(formState.slotId)
+    // Add slot-specific info for slot mode (use first selected slot for position)
+    if (!isInventoryMode.value && formState.slotIds.length > 0) {
+      const positionInfo = getSlotPositionInfo(formState.slotIds[0])
       if (positionInfo) {
         item.slotColor = positionInfo.color
         item.totalSlots = positionInfo.totalSlots
@@ -550,7 +566,7 @@ export function useBookingCart() {
     cart.value.push(item)
 
     // Reset form for next booking
-    formState.slotId = null
+    formState.slotIds = []
     formState.groupId = null
     formState.quantity = 1
 
@@ -562,7 +578,7 @@ export function useBookingCart() {
   function resetForm() {
     formState.locationId = null
     formState.date = null
-    formState.slotId = null
+    formState.slotIds = []
     formState.groupId = null
     formState.quantity = 1
   }
@@ -628,6 +644,7 @@ export function useBookingCart() {
 
     // Actions
     addToCart,
+    toggleSlot,
     removeFromCart,
     clearCart,
     submitAll,

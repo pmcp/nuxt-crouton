@@ -96,8 +96,8 @@ export interface CartItem {
   locationId: string
   locationTitle: string
   date: Date | string
-  slotId: string
-  slotLabel: string
+  slotIds: string[]
+  slotLabels: string[]
   slotColor?: string
   slotPosition?: number
   totalSlots?: number

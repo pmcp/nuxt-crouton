@@ -33,8 +33,8 @@ interface CartItem {
   locationId: string
   locationTitle: string
   date: string
-  slotId?: string
-  slotLabel?: string
+  slotIds?: string[]
+  slotLabels?: string[]
   groupId?: string | null
   groupLabel?: string | null
   quantity?: number // For inventory mode
@@ -170,19 +170,21 @@ export default defineEventHandler(async (event) => {
 
   // --- Group+slot uniqueness enforcement ---
   // When groups are used, prevent the same group from booking the same slot+date+location twice
-  const groupedItems = body.bookings.filter(item => item.groupId && item.slotId && item.slotId !== 'inventory')
+  const groupedItems = body.bookings.filter(item => item.groupId && item.slotIds?.length && !item.slotIds.includes('inventory'))
   if (groupedItems.length > 0) {
     // Check for duplicates within the batch itself
     const batchKeys = new Set<string>()
     for (const item of groupedItems) {
-      const key = `${item.locationId}|${item.date}|${item.slotId}|${item.groupId}`
-      if (batchKeys.has(key)) {
-        throw createError({
-          status: 400,
-          statusText: `Duplicate group+slot in batch: ${item.groupId} already has ${item.slotId} on ${item.date}`,
-        })
+      for (const slotId of item.slotIds!) {
+        const key = `${item.locationId}|${item.date}|${slotId}|${item.groupId}`
+        if (batchKeys.has(key)) {
+          throw createError({
+            status: 400,
+            statusText: `Duplicate group+slot in batch: ${item.groupId} already has ${slotId} on ${item.date}`,
+          })
+        }
+        batchKeys.add(key)
       }
-      batchKeys.add(key)
     }
 
     // Check against existing bookings in the database
@@ -199,21 +201,23 @@ export default defineEventHandler(async (event) => {
           ),
         )
 
-      // Check if any existing booking for this group has the same slot
+      // Check if any existing booking for this group has any of the same slots
       for (const row of existing) {
-        let slotIds: string[] = []
+        let existingSlotIds: string[] = []
         if (row.slot) {
           if (typeof row.slot === 'string') {
-            try { slotIds = JSON.parse(row.slot) } catch { slotIds = [row.slot] }
+            try { existingSlotIds = JSON.parse(row.slot) } catch { existingSlotIds = [row.slot] }
           } else if (Array.isArray(row.slot)) {
-            slotIds = row.slot as string[]
+            existingSlotIds = row.slot as string[]
           }
         }
-        if (slotIds.includes(item.slotId!)) {
-          throw createError({
-            status: 409,
-            statusText: `This group already has a booking for this slot on this date`,
-          })
+        for (const slotId of item.slotIds!) {
+          if (existingSlotIds.includes(slotId)) {
+            throw createError({
+              status: 409,
+              statusText: `This group already has a booking for this slot on this date`,
+            })
+          }
         }
       }
     }
@@ -227,7 +231,7 @@ export default defineEventHandler(async (event) => {
     order: 0,
     location: item.locationId,
     date: new Date(item.date),
-    slot: item.slotId && item.slotId !== 'inventory' ? [item.slotId] : null, // Array for JSON column
+    slot: item.slotIds?.length && !item.slotIds.includes('inventory') ? item.slotIds : null, // Array for JSON column
     quantity: item.isInventoryMode ? (item.quantity ?? 1) : 1,
     group: item.groupId || null,
     status: 'active',

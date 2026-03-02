@@ -37,6 +37,7 @@ const {
   getSlotCapacity,
   canAddToCart,
   addToCart,
+  toggleSlot,
   submitAll,
   isSubmitting,
   isInventoryMode,
@@ -54,11 +55,10 @@ const { t } = useT()
 const { parseSlotIds } = useBookingSlots()
 const { locale } = useI18n()
 
-// Helper to extract first slot ID from booking slot (which is JSON string like '["09:00"]')
-function getFirstSlotId(slot: string | null | undefined): string | null {
-  if (!slot) return null
-  const parsed = parseSlotIds(slot)
-  return parsed.length > 0 ? parsed[0] : null
+// Helper to extract all slot IDs from booking slot (which is JSON string like '["matin","apres-midi"]')
+function getSlotIdsFromBooking(slot: string | null | undefined): string[] {
+  if (!slot) return []
+  return parseSlotIds(slot)
 }
 
 // Get localized location title with fallbacks
@@ -93,7 +93,7 @@ function getLocationAddress(location: LocationData): string | null {
 
 // Local state - initialize from booking if in edit mode
 const localLocationId = ref<string | null>(props.booking?.location ?? null)
-const localSlotId = ref<string | null>(getFirstSlotId(props.booking?.slot))
+const localSlotIds = ref<string[]>(getSlotIdsFromBooking(props.booking?.slot))
 const localGroupId = ref<string | null>(props.booking?.group ?? null)
 
 // Track if we're updating
@@ -113,7 +113,7 @@ const teamId = computed(() => currentTeam.value?.id)
 watch(() => props.date, (newDate) => {
   formState.date = newDate
   formState.locationId = localLocationId.value
-  formState.slotId = localSlotId.value
+  formState.slotIds = localSlotIds.value
   formState.groupId = localGroupId.value
 }, { immediate: true })
 
@@ -123,7 +123,7 @@ watch(() => props.booking, (booking) => {
     // Set editing booking ID to exclude from availability check
     formState.editingBookingId = booking.id
     localLocationId.value = booking.location
-    localSlotId.value = getFirstSlotId(booking.slot)
+    localSlotIds.value = getSlotIdsFromBooking(booking.slot)
     localGroupId.value = booking.group ?? null
   } else {
     // Clear editing state when not in edit mode
@@ -134,27 +134,28 @@ watch(() => props.booking, (booking) => {
 // Sync local location to form state
 watch(localLocationId, (v) => {
   formState.locationId = v
-  // Don't clear slot during initial edit mode setup
+  // Don't clear slots during initial edit mode setup
   if (isInitialEditSetup.value) {
     isInitialEditSetup.value = false
     return
   }
-  localSlotId.value = null
-  formState.slotId = null
+  localSlotIds.value = []
+  formState.slotIds = []
 })
 
-// Sync local slot to form state
-watch(localSlotId, (v) => {
-  formState.slotId = v
-})
+// Sync local slots to form state
+watch(localSlotIds, (v) => {
+  formState.slotIds = v
+}, { deep: true })
 
-// Sync local group to form state and clear slot if it becomes unavailable for this group
+// Sync local group to form state and remove slots that become unavailable for this group
 watch(localGroupId, (v) => {
   formState.groupId = v
-  // Clear selected slot if it's now disabled for the new group
-  if (localSlotId.value && isSlotDisabled(localSlotId.value)) {
-    localSlotId.value = null
-    formState.slotId = null
+  // Remove any selected slots that are now disabled for the new group
+  const validSlots = localSlotIds.value.filter(id => !isSlotDisabled(id))
+  if (validSlots.length !== localSlotIds.value.length) {
+    localSlotIds.value = validSlots
+    formState.slotIds = validSlots
   }
 })
 
@@ -200,7 +201,7 @@ const canSubmit = computed(() => {
   if (isInventoryMode.value) {
     return inventoryInfo.value?.available ?? false
   } else {
-    return !!localSlotId.value
+    return localSlotIds.value.length > 0
   }
 })
 
@@ -217,7 +218,7 @@ async function handleSubmit() {
         body: {
           location: localLocationId.value,
           // Slot is stored as JSON array string in DB
-          slot: localSlotId.value ? JSON.stringify([localSlotId.value]) : null,
+          slot: localSlotIds.value.length > 0 ? JSON.stringify(localSlotIds.value) : null,
           group: localGroupId.value,
           date: props.date.toISOString().split('T')[0],
         },
@@ -379,11 +380,16 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
                 v-for="slot in allSlots"
                 :key="slot.id"
                 size="sm"
-                :variant="localSlotId === slot.id ? 'solid' : 'soft'"
-                :color="localSlotId === slot.id ? 'primary' : (isSlotDisabled(slot.id) ? 'error' : 'neutral')"
+                :variant="localSlotIds.includes(slot.id) ? 'solid' : 'soft'"
+                :color="localSlotIds.includes(slot.id) ? 'primary' : (isSlotDisabled(slot.id) ? 'error' : 'neutral')"
                 :disabled="isSlotDisabled(slot.id)"
-                @click="localSlotId = slot.id"
+                @click="localSlotIds.includes(slot.id) ? localSlotIds = localSlotIds.filter(id => id !== slot.id) : localSlotIds = [...localSlotIds, slot.id]"
               >
+                <UIcon
+                  v-if="localSlotIds.includes(slot.id)"
+                  name="i-lucide-check"
+                  class="size-3"
+                />
                 <span :class="{ 'line-through': isSlotDisabled(slot.id) }">
                   {{ slot.label || slot.id }}
                 </span>
