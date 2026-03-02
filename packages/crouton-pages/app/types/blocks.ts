@@ -27,6 +27,8 @@ export type BlockType =
   | 'videoBlock'
   | 'fileBlock'
   | 'buttonRowBlock'
+  | 'statsBlock'
+  | 'liquidGlassBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -207,6 +209,8 @@ export type BlockAttrs =
   | VideoBlockAttrs
   | FileBlockAttrs
   | ButtonRowBlockAttrs
+  | StatsBlockAttrs
+  | LiquidGlassBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -374,8 +378,39 @@ export interface ButtonRowBlockAttrs {
   align?: 'left' | 'center' | 'right'
 }
 
+export interface StatItem {
+  value: number
+  label: string
+  prefix?: string
+  suffix?: string
+}
+
+export interface StatsBlockAttrs {
+  headline?: string
+  title?: string
+  description?: string
+  stats: StatItem[]
+  columns?: 2 | 3 | 4
+}
+
+export interface LiquidGlassBlockAttrs {
+  title: string
+  description?: string
+  icon?: string
+  frost?: number
+  radius?: number
+}
+
 export interface ButtonRowBlock extends PageBlock<ButtonRowBlockAttrs> {
   type: 'buttonRowBlock'
+}
+
+export interface StatsBlock extends PageBlock<StatsBlockAttrs> {
+  type: 'statsBlock'
+}
+
+export interface LiquidGlassBlock extends PageBlock<LiquidGlassBlockAttrs> {
+  type: 'liquidGlassBlock'
 }
 
 // ============================================================================
@@ -403,7 +438,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items' | 'stats-items'
   label: string
   description?: string
   required?: boolean

@@ -387,6 +387,19 @@ function onDelete() {
             />
           </UFormField>
 
+          <!-- Stats Items Editor -->
+          <UFormField
+            v-else-if="field.type === 'stats-items'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesStatsEditor
+              :model-value="(localAttrs[field.name] as any[]) || []"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
+
           <!-- Custom property component from addon blocks (e.g. chart-preset picker) -->
           <UFormField
             v-else-if="getAddonPropertyComponent(field.type)"

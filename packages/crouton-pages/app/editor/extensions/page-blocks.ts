@@ -23,6 +23,8 @@ import { LogoBlock } from './logo-block'
 import { VideoBlock } from './video-block'
 import { FileBlock } from './file-block'
 import { ButtonRowBlock } from './button-row-block'
+import { StatsBlock } from './stats-block'
+import { LiquidGlassBlock } from './liquid-glass-block'
 import { BlockCommands } from './block-commands'
 import { createAddonBlockExtension } from './addon-block-factory'
 
@@ -45,6 +47,8 @@ export interface PageBlocksOptions {
     video?: boolean
     file?: boolean
     buttonRow?: boolean
+    stats?: boolean
+    liquidGlass?: boolean
   }
   /**
    * Addon block definitions from external packages (registered via croutonBlocks in app.config.ts)
@@ -79,7 +83,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         logo: true,
         video: true,
         file: true,
-        buttonRow: true
+        buttonRow: true,
+        stats: true,
+        liquidGlass: true
       },
       addonBlocks: [],
       enableSlashCommands: true,
@@ -93,7 +99,8 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
       'heroBlock', 'sectionBlock', 'ctaBlock', 'cardGridBlock',
       'separatorBlock', 'collectionBlock', 'faqBlock', 'twoColumnBlock',
       'embedBlock', 'imageBlock', 'logoBlock', 'videoBlock',
-      'fileBlock', 'buttonRowBlock', 'richTextBlock'
+      'fileBlock', 'buttonRowBlock', 'richTextBlock',
+      'statsBlock', 'liquidGlassBlock'
     ]
 
     // Addon block types from config
@@ -157,6 +164,12 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.buttonRow !== false) {
       extensions.push(ButtonRowBlock)
     }
+    if (blocks?.stats !== false) {
+      extensions.push(StatsBlock)
+    }
+    if (blocks?.liquidGlass !== false) {
+      extensions.push(LiquidGlassBlock)
+    }
 
     // Add addon block extensions (from croutonBlocks in app.config.ts)
     if (addonBlocks?.length) {
@@ -191,6 +204,8 @@ export { LogoBlock } from './logo-block'
 export { VideoBlock } from './video-block'
 export { FileBlock } from './file-block'
 export { ButtonRowBlock } from './button-row-block'
+export { StatsBlock } from './stats-block'
+export { LiquidGlassBlock } from './liquid-glass-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 export { createAddonBlockExtension } from './addon-block-factory'
 
@@ -209,6 +224,8 @@ export type { LogoBlockOptions } from './logo-block'
 export type { VideoBlockOptions } from './video-block'
 export type { FileBlockOptions } from './file-block'
 export type { ButtonRowBlockOptions } from './button-row-block'
+export type { StatsBlockOptions } from './stats-block'
+export type { LiquidGlassBlockOptions } from './liquid-glass-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks

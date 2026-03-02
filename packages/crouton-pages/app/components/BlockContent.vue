@@ -64,7 +64,9 @@ const blockComponents: Record<string, string> = {
   logoBlock: 'CroutonPagesBlocksRenderLogoBlock',
   videoBlock: 'CroutonPagesBlocksRenderVideoBlock',
   fileBlock: 'CroutonPagesBlocksRenderFileBlock',
-  buttonRowBlock: 'CroutonPagesBlocksRenderButtonRowBlock'
+  buttonRowBlock: 'CroutonPagesBlocksRenderButtonRowBlock',
+  statsBlock: 'CroutonPagesBlocksRenderStatsBlock',
+  liquidGlassBlock: 'CroutonPagesBlocksRenderLiquidGlassBlock'
 }
 
 // Get component name for a block type — checks core blocks then addon blocks
@@ -78,7 +80,7 @@ function getBlockComponent(type: string): string | null {
 // Check if a block requires client-only rendering
 function isClientOnlyBlock(type: string): boolean {
   // Core blocks that need ClientOnly
-  if (type === 'collectionBlock' || type === 'embedBlock') return true
+  if (type === 'collectionBlock' || type === 'embedBlock' || type === 'liquidGlassBlock') return true
   // Addon blocks with clientOnly flag
   const addonDef = getAddonBlock(type)
   return addonDef?.clientOnly === true

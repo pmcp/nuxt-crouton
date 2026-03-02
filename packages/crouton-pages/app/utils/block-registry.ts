@@ -23,6 +23,8 @@ import type {
   VideoBlockAttrs,
   FileBlockAttrs,
   ButtonRowBlockAttrs,
+  StatsBlockAttrs,
+  LiquidGlassBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -754,6 +756,111 @@ export const buttonRowBlockDefinition: BlockDefinition<ButtonRowBlockAttrs> = {
   ]
 }
 
+export const statsBlockDefinition: BlockDefinition<StatsBlockAttrs> = {
+  type: 'statsBlock',
+  name: 'Stats',
+  description: 'Animated number counters with labels',
+  icon: 'i-lucide-bar-chart-3',
+  category: 'content',
+  defaultAttrs: {
+    columns: 3,
+    stats: [
+      { value: 10000, label: 'Happy Customers', suffix: '+' },
+      { value: 99.9, label: 'Uptime', suffix: '%' },
+      { value: 24, label: 'Support', suffix: '/7' }
+    ]
+  },
+  schema: [
+    {
+      name: 'headline',
+      type: 'text',
+      label: 'Headline',
+      description: 'Small text above the title'
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title'
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      label: 'Description'
+    },
+    {
+      name: 'columns',
+      type: 'select',
+      label: 'Columns',
+      options: [
+        { label: '2 Columns', value: '2' },
+        { label: '3 Columns', value: '3' },
+        { label: '4 Columns', value: '4' }
+      ],
+      defaultValue: '3'
+    },
+    {
+      name: 'stats',
+      type: 'stats-items',
+      label: 'Stats'
+    }
+  ]
+}
+
+export const liquidGlassBlockDefinition: BlockDefinition<LiquidGlassBlockAttrs> = {
+  type: 'liquidGlassBlock',
+  name: 'Glass Card',
+  description: 'Apple-style liquid glass card with frosted effect',
+  icon: 'i-lucide-sparkles',
+  category: 'content',
+  defaultAttrs: {
+    title: 'Beautiful Glass Effect',
+    description: 'Content displayed inside a liquid glass card with frosted transparency.',
+    icon: 'i-lucide-gem',
+    frost: 0.05,
+    radius: 20
+  },
+  schema: [
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+      required: true
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      label: 'Description'
+    },
+    {
+      name: 'icon',
+      type: 'icon',
+      label: 'Icon'
+    },
+    {
+      name: 'frost',
+      type: 'select',
+      label: 'Frost Intensity',
+      options: [
+        { label: 'Light', value: '0.03' },
+        { label: 'Medium', value: '0.05' },
+        { label: 'Heavy', value: '0.1' }
+      ],
+      defaultValue: '0.05'
+    },
+    {
+      name: 'radius',
+      type: 'select',
+      label: 'Corner Radius',
+      options: [
+        { label: 'Small (12px)', value: '12' },
+        { label: 'Medium (20px)', value: '20' },
+        { label: 'Large (32px)', value: '32' }
+      ],
+      defaultValue: '20'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -769,7 +876,9 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   logoBlock: logoBlockDefinition,
   videoBlock: videoBlockDefinition,
   fileBlock: fileBlockDefinition,
-  buttonRowBlock: buttonRowBlockDefinition
+  buttonRowBlock: buttonRowBlockDefinition,
+  statsBlock: statsBlockDefinition,
+  liquidGlassBlock: liquidGlassBlockDefinition
 }
 
 // ============================================================================
