@@ -28,12 +28,13 @@ export default defineNuxtPlugin(() => {
     }
 
     const redirectTo = (to.query.redirect as string) || '/'
+    const prefillEmail = (to.query.email as string) || undefined
 
     // Update visible URL without triggering navigation
     window.history.pushState(null, '', to.fullPath)
 
     // Open the auth modal
-    useAuthModal().open(mode, redirectTo, from.fullPath)
+    useAuthModal().open(mode, redirectTo, from.fullPath, prefillEmail)
 
     // Cancel the router navigation
     return false

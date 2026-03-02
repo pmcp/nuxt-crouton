@@ -12,6 +12,7 @@ interface AuthModalState {
   mode: AuthModalMode
   redirectTo: string
   previousPath: string
+  prefillEmail?: string
 }
 
 export function useAuthModal() {
@@ -22,8 +23,8 @@ export function useAuthModal() {
     previousPath: '/'
   }))
 
-  function open(mode: AuthModalMode, redirectTo: string, previousPath: string) {
-    state.value = { open: true, mode, redirectTo, previousPath }
+  function open(mode: AuthModalMode, redirectTo: string, previousPath: string, prefillEmail?: string) {
+    state.value = { open: true, mode, redirectTo, previousPath, prefillEmail }
   }
 
   /**

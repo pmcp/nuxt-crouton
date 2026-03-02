@@ -187,10 +187,19 @@ const minPasswordLength = 8
 
 const registerFields = computed<AuthFormField[]>(() => [
   { name: 'name', type: 'text', label: t('forms.fullName'), placeholder: 'John Doe', required: true },
-  { name: 'email', type: 'email', label: t('auth.email'), placeholder: 'you@example.com', required: true },
+  { name: 'email', type: 'email', label: t('auth.email'), placeholder: 'you@example.com', required: true, readonly: !!state.value.prefillEmail },
   { name: 'password', type: 'password', label: t('auth.password'), placeholder: `At least ${minPasswordLength} characters`, required: true },
   { name: 'confirmPassword', type: 'password', label: t('auth.confirmPassword'), placeholder: 'Confirm your password', required: true }
 ])
+
+const registerFormRef = useTemplateRef('registerForm')
+
+// Prefill email when the register form renders with a prefillEmail (e.g. from invitation)
+watch(registerFormRef, (ref) => {
+  if (ref?.state && state.value.prefillEmail) {
+    ref.state.email = state.value.prefillEmail
+  }
+})
 
 const registerSubmitButton = computed(() => ({
   label: t('auth.createAccount'),
@@ -429,6 +438,7 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
         >
           <UAuthForm
             v-if="hasPassword"
+            ref="registerForm"
             :fields="registerFields"
             :providers="oauthButtons"
             :submit="registerSubmitButton"

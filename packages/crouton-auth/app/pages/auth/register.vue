@@ -14,8 +14,9 @@ const authModal = useAuthModal()
 
 onMounted(async () => {
   const redirectTo = (route.query.redirect as string) || '/'
+  const email = (route.query.email as string) || undefined
   await navigateTo('/', { replace: true })
-  authModal.open('register', redirectTo, '/')
+  authModal.open('register', redirectTo, '/', email)
 })
 </script>
 
