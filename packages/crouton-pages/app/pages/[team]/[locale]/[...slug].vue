@@ -21,7 +21,18 @@
  * - Live preview updates as the admin edits translations
  */
 definePageMeta({
-  layout: 'public'
+  layout: 'public',
+  // Validate route params BEFORE setup runs. This prevents "$setup.t is not a
+  // function" SSR errors caused by throwing createError() inside async setup
+  // (the rejected promise is detected by Node before Nuxt's Suspense catches it).
+  validate: (route) => {
+    const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
+    const teamParam = route.params.team as string
+    if (reservedPrefixes.includes(teamParam)) {
+      return false
+    }
+    return true
+  }
 })
 
 // Cache public pages for 1 hour (SWR: serve stale while regenerating in background)
@@ -33,23 +44,7 @@ const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayo
 
 const route = useRoute()
 const { teamId } = useTeamContext()
-
-// IMPORTANT: Must be defined before the reserved prefix guard, otherwise
-// SSR will crash with "$setup.t is not a function" when the guard throws.
-// useT() has its own internal error handling and never throws — safe to call directly.
 const { t } = useT()
-
-// Reserved prefixes that should NOT be treated as team slugs
-// These routes are handled by other packages (auth, admin, etc.)
-const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-const teamParam = teamId.value as string
-
-if (reservedPrefixes.includes(teamParam)) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: 'Page Not Found'
-  })
-}
 const { getPageType } = usePageTypes()
 const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 
@@ -67,16 +62,12 @@ const slug = computed(() => {
   return Array.isArray(slugParts) ? slugParts.join('/') : slugParts
 })
 
-// Validate locale from URL and sync with i18n
+// Validate locale — if invalid, show 404 without throwing (avoids SSR unhandledRejection)
 const validLocales = computed(() => locales.value.map((l: { code: string }) => l.code))
 const isValidLocale = computed(() => validLocales.value.includes(urlLocale.value))
 
-// If locale is invalid, throw 404
 if (!isValidLocale.value) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: 'Page Not Found'
-  })
+  showError({ statusCode: 404, statusMessage: 'Page Not Found' })
 }
 
 // Sync URL locale with i18n locale
@@ -127,12 +118,9 @@ watch(desiredLayout, (layout) => {
   pageLayout.value = layout
 }, { immediate: true })
 
-// Handle errors
+// Handle errors — use showError instead of throw to avoid SSR unhandledRejection
 if (error.value?.statusCode === 404) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: 'Page Not Found'
-  })
+  showError({ statusCode: 404, statusMessage: 'Page Not Found' })
 }
 
 // Handle 401 - redirect to login for members-only pages
