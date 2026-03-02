@@ -16,6 +16,7 @@
       "type": "string",
       "label": "Title",
       "required": true,
+      "translatable": true,
       "maxLength": 200,
       "area": "main"
     },
@@ -24,6 +25,7 @@
       "type": "string",
       "label": "URL Slug",
       "required": true,
+      "translatable": true,
       "maxLength": 200,
       "unique": true,
       "area": "main",
@@ -43,6 +45,7 @@
       "name": "content",
       "type": "text",
       "label": "Content",
+      "translatable": true,
       "area": "main",
       "component": "CroutonEditorSimple",
       "description": "Rich text content for regular pages"
@@ -113,6 +116,7 @@
       "name": "seoTitle",
       "type": "string",
       "label": "SEO Title",
+      "translatable": true,
       "maxLength": 60,
       "area": "meta",
       "description": "Override page title for search engines"
@@ -121,6 +125,7 @@
       "name": "seoDescription",
       "type": "string",
       "label": "SEO Description",
+      "translatable": true,
       "maxLength": 160,
       "area": "meta",
       "description": "Meta description for search engines"
