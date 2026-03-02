@@ -168,6 +168,57 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // --- Group+slot uniqueness enforcement ---
+  // When groups are used, prevent the same group from booking the same slot+date+location twice
+  const groupedItems = body.bookings.filter(item => item.groupId && item.slotId && item.slotId !== 'inventory')
+  if (groupedItems.length > 0) {
+    // Check for duplicates within the batch itself
+    const batchKeys = new Set<string>()
+    for (const item of groupedItems) {
+      const key = `${item.locationId}|${item.date}|${item.slotId}|${item.groupId}`
+      if (batchKeys.has(key)) {
+        throw createError({
+          status: 400,
+          statusText: `Duplicate group+slot in batch: ${item.groupId} already has ${item.slotId} on ${item.date}`,
+        })
+      }
+      batchKeys.add(key)
+    }
+
+    // Check against existing bookings in the database
+    for (const item of groupedItems) {
+      const existing = await db
+        .select({ slot: bookingsBookings.slot })
+        .from(bookingsBookings)
+        .where(
+          and(
+            eq(bookingsBookings.location, item.locationId),
+            eq(bookingsBookings.status, 'active'),
+            eq(bookingsBookings.date, new Date(item.date)),
+            eq(bookingsBookings.group, item.groupId!),
+          ),
+        )
+
+      // Check if any existing booking for this group has the same slot
+      for (const row of existing) {
+        let slotIds: string[] = []
+        if (row.slot) {
+          if (typeof row.slot === 'string') {
+            try { slotIds = JSON.parse(row.slot) } catch { slotIds = [row.slot] }
+          } else if (Array.isArray(row.slot)) {
+            slotIds = row.slot as string[]
+          }
+        }
+        if (slotIds.includes(item.slotId!)) {
+          throw createError({
+            status: 409,
+            statusText: `This group already has a booking for this slot on this date`,
+          })
+        }
+      }
+    }
+  }
+
   // Transform cart items to database records (one row per cart item, quantity stored on the row)
   const now = new Date()
   const bookingsToInsert = body.bookings.map((item) => ({

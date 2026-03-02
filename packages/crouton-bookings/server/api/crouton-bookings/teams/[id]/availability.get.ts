@@ -74,12 +74,17 @@ export default defineEventHandler(async (event) => {
       date: bookingsBookings.date,
       slot: bookingsBookings.slot,
       quantity: bookingsBookings.quantity,
+      group: bookingsBookings.group,
     })
     .from(bookingsBookings)
     .where(and(...conditions))
 
   // Aggregate by date
-  const availabilityData: Record<string, { bookedSlots: string[], bookedCount: number }> = {}
+  const availabilityData: Record<string, {
+    bookedSlots: string[]
+    bookedCount: number
+    bookedGroupSlots?: Record<string, string[]>
+  }> = {}
 
   for (const booking of bookings) {
     const bookingDate = booking.date instanceof Date
@@ -107,6 +112,19 @@ export default defineEventHandler(async (event) => {
 
     availabilityData[dateKey].bookedSlots.push(...slotIds)
     availabilityData[dateKey].bookedCount += (booking.quantity ?? 1)
+
+    // Track which groups booked which slots (for group uniqueness checks)
+    if (booking.group) {
+      if (!availabilityData[dateKey].bookedGroupSlots) {
+        availabilityData[dateKey].bookedGroupSlots = {}
+      }
+      for (const slotId of slotIds) {
+        if (!availabilityData[dateKey].bookedGroupSlots![slotId]) {
+          availabilityData[dateKey].bookedGroupSlots![slotId] = []
+        }
+        availabilityData[dateKey].bookedGroupSlots![slotId].push(booking.group)
+      }
+    }
   }
 
   return availabilityData

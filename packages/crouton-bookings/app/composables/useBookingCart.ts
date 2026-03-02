@@ -8,6 +8,7 @@ interface AvailabilityData {
   [dateISO: string]: {
     bookedSlots: string[]
     bookedCount?: number // For inventory mode
+    bookedGroupSlots?: Record<string, string[]> // slotId → groupIds that booked it
   }
 }
 
@@ -335,6 +336,24 @@ export function useBookingCart() {
     return Math.max(0, capacity - bookedCount)
   }
 
+  // Check if a group+slot combination is already booked (API data)
+  function isGroupSlotBookedInApi(slotId: string, groupId: string, date: Date): boolean {
+    const dateKey = toDateKey(date)
+    const groupSlots = availabilityData.value[dateKey]?.bookedGroupSlots
+    return groupSlots?.[slotId]?.includes(groupId) ?? false
+  }
+
+  // Check if a group+slot combination is already in the cart
+  function isGroupSlotInCart(slotId: string, groupId: string, date: Date): boolean {
+    if (!formState.locationId) return false
+    return cart.value.some(item =>
+      item.locationId === formState.locationId
+      && item.slotId === slotId
+      && item.groupId === groupId
+      && isSameDay(new Date(item.date), date),
+    )
+  }
+
   // Check if a slot is disabled (slot mode only)
   function isSlotDisabled(slotId: string): boolean {
     if (!formState.date || isInventoryMode.value) return true
@@ -352,6 +371,14 @@ export function useBookingCart() {
     // Capacity-aware: slot is full when booked count >= capacity
     if (getSlotRemaining(slotId) <= 0) {
       return true
+    }
+
+    // When groups are enabled and a group is selected, check if this group already booked this slot
+    if (enableGroups.value && formState.groupId && formState.date) {
+      if (isGroupSlotBookedInApi(slotId, formState.groupId, formState.date)
+        || isGroupSlotInCart(slotId, formState.groupId, formState.date)) {
+        return true
+      }
     }
 
     // If any slot is booked or rule-blocked, "all-day" is disabled
@@ -443,8 +470,9 @@ export function useBookingCart() {
       const { remaining } = getInventoryAvailability(formState.date)
       if (remaining < formState.quantity) return false
     } else {
-      // Slot mode: need location + date + slot
+      // Slot mode: need location + date + slot that isn't disabled
       if (!formState.slotId) return false
+      if (isSlotDisabled(formState.slotId)) return false
     }
 
     // If groups are enabled, require a group selection

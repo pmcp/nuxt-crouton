@@ -64,6 +64,27 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
     },
   )
 
+  // When in personal scope, also fetch all team bookings for calendar indicators.
+  // This ensures the calendar shows slots taken by other users so you can't book over them.
+  let calendarBookingsData = ref<Booking[]>([])
+  let refreshCalendarBookings = async () => {}
+
+  if (scope === 'personal') {
+    const { data, refresh: refreshAll } = useFetch<Booking[]>(
+      () => currentTeam.value?.id
+        ? `/api/crouton-bookings/teams/${currentTeam.value.id}/admin-bookings`
+        : null,
+      {
+        key: 'crouton-booking-calendar-all',
+        default: () => [],
+        watch: [() => currentTeam.value?.id],
+        server: false,
+      },
+    )
+    calendarBookingsData = data
+    refreshCalendarBookings = refreshAll
+  }
+
   // Combined loading state (also loading if team not ready yet)
   const loading = computed(() => !currentTeam.value?.id || bookingsLoading.value || settingsLoading.value || locationsLoading.value)
 
@@ -90,13 +111,26 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
     })
   })
 
+  // Calendar bookings for indicators — all team bookings in personal scope, otherwise same as bookings
+  const calendarBookings = computed<Booking[]>(() => {
+    if (scope === 'personal' && calendarBookingsData.value.length > 0) {
+      return [...calendarBookingsData.value].sort((a, b) => {
+        const dateA = new Date(a.date).getTime()
+        const dateB = new Date(b.date).getTime()
+        return dateA - dateB
+      })
+    }
+    return bookings.value
+  })
+
   // Refresh all data
   async function refresh() {
-    await Promise.all([refreshBookings(), refreshSettings(), refreshLocations()])
+    await Promise.all([refreshBookings(), refreshSettings(), refreshLocations(), refreshCalendarBookings()])
   }
 
   return {
     bookings,
+    calendarBookings,
     settings,
     locations,
     loading,

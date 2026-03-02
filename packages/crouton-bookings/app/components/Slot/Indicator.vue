@@ -82,7 +82,7 @@ function isCancelled(slotId: string): boolean {
 // Two-state opacity: fully booked (1.0) or available/partial (0.15)
 function getSlotOpacity(slotId: string): number {
   if (isBooked(slotId)) return 1
-  return 0.15
+  return 0.1
 }
 
 function getSlotColor(slotId: string): string {

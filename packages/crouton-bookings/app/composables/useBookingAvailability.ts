@@ -12,6 +12,7 @@ export interface AvailabilityData {
   [dateISO: string]: {
     bookedSlots: string[]
     bookedCount?: number // For inventory mode
+    bookedGroupSlots?: Record<string, string[]> // slotId → groupIds that booked it
   }
 }
 

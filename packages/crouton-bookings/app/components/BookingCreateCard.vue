@@ -149,9 +149,14 @@ watch(localSlotId, (v) => {
   formState.slotId = v
 })
 
-// Sync local group to form state
+// Sync local group to form state and clear slot if it becomes unavailable for this group
 watch(localGroupId, (v) => {
   formState.groupId = v
+  // Clear selected slot if it's now disabled for the new group
+  if (localSlotId.value && isSlotDisabled(localSlotId.value)) {
+    localSlotId.value = null
+    formState.slotId = null
+  }
 })
 
 // Auto-select first enabled location

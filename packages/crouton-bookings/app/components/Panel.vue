@@ -70,6 +70,11 @@ const resolvedBookings = computed(() => {
   return props.bookings ?? internalData?.bookings.value ?? []
 })
 
+// Calendar bookings — all team bookings for accurate slot indicators (prevents booking over taken slots)
+const resolvedCalendarBookings = computed(() => {
+  return props.bookings ?? internalData?.calendarBookings.value ?? resolvedBookings.value
+})
+
 const resolvedLocations = computed(() => {
   return props.locations ?? internalData?.locations.value ?? []
 })
@@ -316,8 +321,8 @@ function isDayFullyBookedAllLocations(date: Date): boolean {
 
   const dateStr = date.toISOString().split('T')[0]
 
-  // Get non-cancelled bookings for this date
-  const dateBookings = resolvedBookings.value.filter((b) => {
+  // Get non-cancelled bookings for this date (use calendar bookings for accurate team-wide availability)
+  const dateBookings = resolvedCalendarBookings.value.filter((b) => {
     const bookingDate = new Date(b.date).toISOString().split('T')[0]
     return bookingDate === dateStr && b.status !== 'cancelled'
   })
@@ -466,7 +471,7 @@ defineExpose({
           <CroutonBookingsCalendar
             ref="calendarRef"
             v-model:filters="filterState"
-            :bookings="resolvedBookings"
+            :bookings="resolvedCalendarBookings"
             :locations="resolvedLocations"
             :settings="resolvedSettings"
             :view="calendarView"
