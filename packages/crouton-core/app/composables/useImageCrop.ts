@@ -33,11 +33,26 @@ export function useImageCrop(
     const el = imageRef.value
     if (!el || cropperInstance) return
 
+    // Wait for the image to fully load before initializing
+    if (!el.complete) {
+      await new Promise<void>((resolve) => {
+        el.addEventListener('load', () => resolve(), { once: true })
+        el.addEventListener('error', () => resolve(), { once: true })
+      })
+    }
+
+    // Wait for layout to stabilize (e.g., modal transition completing)
+    await new Promise<void>(resolve => requestAnimationFrame(() =>
+      requestAnimationFrame(() => resolve())
+    ))
+
+    // Guard: element or instance may have changed during async waits
+    if (!imageRef.value || cropperInstance) return
+
     const CropperClass = (await import('cropperjs')).default
 
     cropperInstance = new CropperClass(el)
 
-    // Wait for image to load, then configure selection
     const cropperImage = cropperInstance.getCropperImage()
     const cropperSelection = cropperInstance.getCropperSelection()
 
@@ -100,7 +115,11 @@ export function useImageCrop(
     const selection = cropperInstance?.getCropperSelection()
     if (!selection) return null
 
-    const canvas = await selection.$toCanvas()
+    // Output at original image resolution (capped at 1920px) instead of
+    // the visual selection box size, which is constrained by the 400px modal
+    const el = imageRef.value
+    const outputWidth = Math.min(el?.naturalWidth || 1920, 1920)
+    const canvas = await selection.$toCanvas({ width: outputWidth })
     if (!canvas) return null
 
     return new Promise((resolve) => {
