@@ -85,7 +85,8 @@ export const heroBlockDefinition: BlockDefinition<HeroBlockAttrs> = {
     {
       name: 'image',
       type: 'image',
-      label: 'Hero Image'
+      label: 'Hero Image',
+      crop: { aspectRatio: '16:9' }
     }
   ]
 }

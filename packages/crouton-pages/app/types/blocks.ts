@@ -30,6 +30,9 @@ export type BlockType =
 
 export type Orientation = 'vertical' | 'horizontal'
 
+/** Aspect ratio presets for image cropping (mirrors AspectRatioPreset from crouton-core) */
+export type BlockImageCropAspectRatio = 'free' | '1:1' | '16:9' | '4:3' | '3:2'
+
 export type ButtonColor =
   | 'primary'
   | 'secondary'
@@ -405,6 +408,8 @@ export interface BlockPropertySchema {
   defaultValue?: unknown
   /** Conditionally show this field based on current block attrs */
   visibleWhen?: (attrs: Record<string, unknown>) => boolean
+  /** Crop configuration for image fields */
+  crop?: { aspectRatio?: BlockImageCropAspectRatio; circular?: boolean }
 }
 
 // ============================================================================

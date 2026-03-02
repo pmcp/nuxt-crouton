@@ -242,6 +242,7 @@ function onDelete() {
           >
             <CroutonPagesBlocksPropertiesImageEditor
               :model-value="(localAttrs[field.name] as string) || ''"
+              :crop="field.crop"
               @update:model-value="onFieldChange(field.name, $event)"
               @update:alt="onFieldChange(field.name + 'Alt', $event)"
             />

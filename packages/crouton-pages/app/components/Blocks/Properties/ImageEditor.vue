@@ -4,9 +4,17 @@
  * Three modes: browse assets (if crouton-assets installed), upload new, paste URL.
  * Follows LinksEditor.vue pattern with modelValue + update:modelValue.
  * Emits update:alt when an asset with alt text is picked from the library.
+ *
+ * Supports optional `crop` config per field schema. When provided:
+ * - Upload mode passes crop to CroutonImageUpload (crop-on-upload)
+ * - Browse mode opens CroutonImageCropper after asset selection
+ * - Preview mode shows a crop button to re-crop existing images
  */
+import type { BlockImageCropAspectRatio } from '../../../types/blocks'
+
 interface Props {
   modelValue: string
+  crop?: { aspectRatio?: BlockImageCropAspectRatio; circular?: boolean }
 }
 
 const props = defineProps<Props>()
@@ -31,6 +39,69 @@ watch(() => props.modelValue, (val) => {
 
 const { t } = useT()
 const hasImage = computed(() => !!props.modelValue)
+
+// --- Crop state ---
+const cropModalOpen = ref(false)
+const cropFile = ref<File | null>(null)
+// Pending alt text from browse-mode asset selection (applied after crop completes)
+const pendingAlt = ref<string | null>(null)
+
+/** Fetch an image URL as a File for the cropper */
+async function fetchImageAsFile(url: string): Promise<File> {
+  const response = await fetch(url)
+  const blob = await response.blob()
+  const filename = url.split('/').pop() || 'image.jpg'
+  return new File([blob], filename, { type: blob.type })
+}
+
+/** Upload a cropped file and emit the new URL */
+async function uploadCroppedFile(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const result = await $fetch<{ pathname: string }>('/api/upload-image', {
+    method: 'POST',
+    body: formData
+  })
+  const imageUrl = `/images/${result.pathname}`
+  emit('update:modelValue', imageUrl)
+  urlInput.value = imageUrl
+  mode.value = 'preview'
+}
+
+/** Open the crop modal for an existing image (re-crop flow) */
+async function openRecrop() {
+  try {
+    cropFile.value = await fetchImageAsFile(props.modelValue)
+    cropModalOpen.value = true
+  }
+  catch (err) {
+    console.error('Failed to load image for cropping:', err)
+  }
+}
+
+/** Handle crop confirm from CroutonImageCropper */
+async function handleCropConfirm(croppedFile: File) {
+  cropModalOpen.value = false
+  cropFile.value = null
+  try {
+    await uploadCroppedFile(croppedFile)
+    // Apply pending alt text from browse-mode selection
+    if (pendingAlt.value) {
+      emit('update:alt', pendingAlt.value)
+      pendingAlt.value = null
+    }
+  }
+  catch (err) {
+    console.error('Crop upload failed:', err)
+  }
+}
+
+/** Handle crop cancel */
+function handleCropCancel() {
+  cropModalOpen.value = false
+  cropFile.value = null
+  pendingAlt.value = null
+}
 
 function setUrl() {
   emit('update:modelValue', urlInput.value)
@@ -62,8 +133,27 @@ function handleFileSelected(file: File | null) {
   })
 }
 
-function handleAssetSelected(asset: Record<string, any>) {
+async function handleAssetSelected(asset: Record<string, any>) {
   const url = `/images/${asset.pathname}`
+
+  // If crop is configured, open cropper before confirming
+  if (props.crop) {
+    try {
+      cropFile.value = await fetchImageAsFile(url)
+      pendingAlt.value = asset.alt || null
+      cropModalOpen.value = true
+    }
+    catch (err) {
+      console.error('Failed to load asset for cropping:', err)
+      // Fall through to direct assignment on error
+      emit('update:modelValue', url)
+      urlInput.value = url
+      if (asset.alt) emit('update:alt', asset.alt)
+      mode.value = 'preview'
+    }
+    return
+  }
+
   emit('update:modelValue', url)
   urlInput.value = url
   if (asset.alt) {
@@ -84,6 +174,14 @@ function handleAssetSelected(asset: Record<string, any>) {
           class="w-full max-h-48 object-cover"
         >
         <div class="absolute top-2 right-2 flex gap-1">
+          <UButton
+            v-if="crop"
+            icon="i-lucide-crop"
+            color="neutral"
+            variant="solid"
+            size="xs"
+            @click="openRecrop"
+          />
           <UButton
             icon="i-lucide-pencil"
             color="neutral"
@@ -234,6 +332,7 @@ function handleAssetSelected(asset: Record<string, any>) {
     <!-- Upload Mode -->
     <div v-if="mode === 'upload'" class="space-y-2">
       <CroutonImageUpload
+        :crop="crop ? { aspectRatio: crop.aspectRatio, circular: crop.circular } : false"
         @file-selected="handleFileSelected"
       />
       <div class="flex gap-2">
@@ -255,5 +354,24 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
       </div>
     </div>
+
+    <!-- Crop Modal (re-crop / post-browse-selection) -->
+    <UModal v-model:open="cropModalOpen">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            {{ t('image.cropImage') }}
+          </h3>
+          <CroutonImageCropper
+            v-if="cropFile"
+            :file="cropFile"
+            :aspect-ratio="crop?.aspectRatio"
+            :circular="crop?.circular"
+            @confirm="handleCropConfirm"
+            @cancel="handleCropCancel"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
