@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-02-20
+ * @generated 2026-02-23
  *
  * ## AI Context
  * - Composable: usePagesPages
@@ -40,7 +40,8 @@ export const pagesPageSchema = z.object({
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   ogImage: z.string().optional(),
-  robots: z.string().optional()
+  robots: z.string().optional(),
+  parentId: z.string().nullable().optional()
 })
 
 export const pagesPagesColumns = [
@@ -80,9 +81,17 @@ const _pagesPagesConfig = {
     seoTitle: '',
     seoDescription: '',
     ogImage: '',
-    robots: ''
+    robots: '',
+    parentId: null
   },
   columns: pagesPagesColumns,
+  hierarchy: {
+    enabled: true,
+    parentField: 'parentId',
+    pathField: 'path',
+    depthField: 'depth',
+    orderField: 'order'
+  },
   fields: [
       {
           "name": "title",

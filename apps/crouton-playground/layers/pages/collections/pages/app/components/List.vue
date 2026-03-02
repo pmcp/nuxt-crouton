@@ -2,7 +2,7 @@
   @crouton-generated
   @collection pages
   @layer pages
-  @generated 2026-02-20
+  @generated 2026-02-23
 
   ## AI Context
   - List component for pages collection
@@ -41,6 +41,9 @@
     </template>
     <template #showInNavigation-cell="{ row }">
       <CroutonBoolean :value="row.original.showInNavigation" />
+    </template>
+    <template #content-cell="{ row }">
+      <CroutonEditorPreview :content="row.original.content" />
     </template>
   </CroutonCollection>
 </template>

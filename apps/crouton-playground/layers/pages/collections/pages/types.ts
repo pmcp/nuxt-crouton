@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-02-20
+ * @generated 2026-02-23
  *
  * ## AI Context
  * - Main interface: PagesPage
@@ -27,9 +27,6 @@ export interface PagesPage {
   id: string
   teamId: string
   owner: string
-  parentId?: string | null
-  path?: string
-  depth?: number
   title: string
   slug: string
   pageType: string
@@ -44,7 +41,6 @@ export interface PagesPage {
   seoDescription?: string
   ogImage?: string
   robots?: string
-  translations?: Record<string, any>
   createdAt: Date
   updatedAt: Date
   createdBy: string
