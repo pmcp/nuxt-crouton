@@ -74,7 +74,7 @@ function handleReset() {
     <!-- Email sent confirmation -->
     <div v-if="isSent">
       <UAlert
-        color="success"
+        color="primary"
         icon="i-lucide-mail-check"
         :title="t('auth.checkYourInbox')"
         :description="t('auth.magicLinkSentDescription')"

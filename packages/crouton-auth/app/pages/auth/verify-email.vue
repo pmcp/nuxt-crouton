@@ -207,7 +207,7 @@ function goToLogin() {
       >
         <UAlert
           v-if="resent"
-          color="success"
+          color="primary"
           icon="i-lucide-mail-check"
           title="Email sent"
           :description="`Verification email sent to ${user.email}`"
