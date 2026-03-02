@@ -94,6 +94,8 @@ export interface VerificationEmailOptions {
   name?: string
   /** Custom expiry time in minutes */
   expiryMinutes?: number
+  /** Override brand name (e.g. resolved from custom domain) */
+  brandName?: string
 }
 
 /**
@@ -108,6 +110,8 @@ export interface VerificationLinkEmailOptions {
   name?: string
   /** Custom expiry time in minutes */
   expiryMinutes?: number
+  /** Override brand name (e.g. resolved from custom domain) */
+  brandName?: string
 }
 
 /**
@@ -122,6 +126,8 @@ export interface MagicLinkEmailOptions {
   name?: string
   /** Custom expiry time in minutes */
   expiryMinutes?: number
+  /** Override brand name (e.g. resolved from custom domain) */
+  brandName?: string
 }
 
 /**
@@ -136,6 +142,8 @@ export interface PasswordResetEmailOptions {
   name?: string
   /** Custom expiry time in minutes */
   expiryMinutes?: number
+  /** Override brand name (e.g. resolved from custom domain) */
+  brandName?: string
 }
 
 /**
@@ -152,6 +160,8 @@ export interface TeamInviteEmailOptions {
   teamName: string
   /** Optional role being invited to */
   role?: string
+  /** Override brand name (e.g. resolved from custom domain) */
+  brandName?: string
 }
 
 /**
@@ -164,6 +174,8 @@ export interface WelcomeEmailOptions {
   name: string
   /** Optional getting started link */
   getStartedLink?: string
+  /** Override brand name (e.g. resolved from custom domain) */
+  brandName?: string
 }
 
 /**

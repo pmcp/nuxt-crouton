@@ -27,6 +27,7 @@ export async function sendVerificationEmail(
   const config = useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
+  if (options.brandName) brandConfig.brandName = options.brandName
   const expiryMinutes = options.expiryMinutes
     || publicConfig?.verification?.codeExpiry
     || 10
@@ -56,6 +57,7 @@ export async function sendVerificationLink(
   const config = useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
+  if (options.brandName) brandConfig.brandName = options.brandName
   const expiryMinutes = options.expiryMinutes
     || publicConfig?.verification?.codeExpiry
     || 10
@@ -85,6 +87,7 @@ export async function sendMagicLink(
   const config = useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
+  if (options.brandName) brandConfig.brandName = options.brandName
   const expiryMinutes = options.expiryMinutes
     || publicConfig?.magicLink?.expiry
     || 10
@@ -114,6 +117,7 @@ export async function sendPasswordReset(
   const config = useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
+  if (options.brandName) brandConfig.brandName = options.brandName
   const expiryMinutes = options.expiryMinutes
     || publicConfig?.verification?.codeExpiry
     || 10
@@ -141,6 +145,7 @@ export async function sendTeamInvite(
   options: TeamInviteEmailOptions
 ): Promise<SendEmailResult> {
   const brandConfig = getEmailBrandConfig()
+  if (options.brandName) brandConfig.brandName = options.brandName
 
   const { html, text } = await renderEmailTemplate(TeamInviteEmail, {
     link: options.link,
@@ -166,6 +171,7 @@ export async function sendWelcome(
   options: WelcomeEmailOptions
 ): Promise<SendEmailResult> {
   const brandConfig = getEmailBrandConfig()
+  if (options.brandName) brandConfig.brandName = options.brandName
 
   const { html, text } = await renderEmailTemplate(WelcomeEmail, {
     name: options.name,
