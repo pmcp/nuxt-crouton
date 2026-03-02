@@ -50,10 +50,17 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const { teamId } = useTeamContext()
 
   // Resolve team from prop, route, or domain context
+  // Prefer route param (slug) over teamId for API calls — teamId may switch from slug
+  // to UUID after auth loads during hydration, causing useFetch payload mismatch and
+  // an empty navigation flash (or permanent loss when no setLocale retrigger occurs).
+  const routeTeam = computed(() => {
+    const param = route.params.team
+    return typeof param === 'string' ? param : null
+  })
   const team = computed(() => {
     const teamValue = toValue(teamSlug)
     if (teamValue) return teamValue
-    return teamId.value || null
+    return routeTeam.value || teamId.value || null
   })
 
   // Reserved prefixes that should NOT be treated as team slugs
