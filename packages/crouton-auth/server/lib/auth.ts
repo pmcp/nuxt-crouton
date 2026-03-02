@@ -15,7 +15,7 @@
  */
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { organization, twoFactor, type TwoFactorOptions } from 'better-auth/plugins'
+import { organization, twoFactor, magicLink, type TwoFactorOptions } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
 import { sql } from 'drizzle-orm'
 import { useNitroApp } from 'nitropack/runtime'
@@ -112,9 +112,16 @@ export function createAuth(options: CreateAuthOptions) {
 
     // Email verification (required for changeEmail)
     emailVerification: {
-      sendVerificationEmail: async ({ user, url }: { user: { email: string }, url: string }) => {
-        // TODO: Phase 2.x - Implement email sending
-        console.log(`[crouton/auth] Verification email for ${user.email}: ${url}`)
+      sendVerificationEmail: async ({ user, url }: { user: { email: string, name?: string }, url: string }) => {
+        if (config.debug) {
+          console.log(`[crouton/auth] Verification email for ${user.email}: ${url}`)
+        }
+        useNitroApp().hooks.callHook('crouton:auth:email', {
+          type: 'verification',
+          to: user.email,
+          url,
+          userName: user.name
+        }).catch(() => {})
       },
       sendOnSignUp: false
     },
@@ -167,8 +174,18 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
     return {
       enabled: true,
       autoSignIn: true,
-      // Default password requirements
-      minPasswordLength: 8
+      minPasswordLength: 8,
+      sendResetPassword: async ({ user, url }: { user: { email: string, name?: string }, url: string }) => {
+        if (config.debug) {
+          console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
+        }
+        useNitroApp().hooks.callHook('crouton:auth:email', {
+          type: 'password-reset',
+          to: user.email,
+          url,
+          userName: user.name
+        }).catch(() => {})
+      }
     }
   }
 
@@ -180,9 +197,16 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
     minPasswordLength: customConfig.minLength ?? 8,
     // Password reset
     sendResetPassword: customConfig.resetEnabled !== false
-      ? async ({ user, url }: { user: { email: string }, url: string }) => {
-        // TODO: Phase 2.x - Implement email sending
-        console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
+      ? async ({ user, url }: { user: { email: string, name?: string }, url: string }) => {
+        if (config.debug) {
+          console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
+        }
+        useNitroApp().hooks.callHook('crouton:auth:email', {
+          type: 'password-reset',
+          to: user.email,
+          url,
+          userName: user.name
+        }).catch(() => {})
       }
       : undefined
   }
@@ -636,6 +660,27 @@ function buildPlugins(
     plugins.push(twoFactor(twoFactorPluginConfig))
   }
 
+  // Conditionally add magic link plugin
+  const magicLinkConfig = config.methods?.magicLink
+  if (magicLinkConfig !== false && magicLinkConfig !== undefined) {
+    const expiresIn = (typeof magicLinkConfig === 'object' && magicLinkConfig.expiresIn)
+      ? magicLinkConfig.expiresIn
+      : 300 // 5 minutes default
+    plugins.push(magicLink({
+      expiresIn,
+      sendMagicLink: async ({ email, url }: { email: string, url: string }) => {
+        if (debug) {
+          console.log(`[crouton/auth] Magic link for ${email}: ${url}`)
+        }
+        useNitroApp().hooks.callHook('crouton:auth:email', {
+          type: 'magic-link',
+          to: email,
+          url
+        }).catch(() => {})
+      }
+    }))
+  }
+
   return plugins
 }
 
@@ -1063,7 +1108,7 @@ function buildOrganizationConfig(
     cancelPendingInvitationsOnReInvite: true,
     requireEmailVerificationOnInvitation: teamsConfig.requireEmailVerification ?? false,
 
-    // Send invitation email (placeholder - will be configured by user)
+    // Send invitation email via Nitro hook
     sendInvitationEmail: async (data: {
       id: string
       email: string
@@ -1072,17 +1117,19 @@ function buildOrganizationConfig(
       role: string
       expiresAt: Date
     }) => {
-      // Log invitation for development - production should override this
-      console.log(`[crouton/auth] Invitation sent:`, {
+      if (config.debug) {
+        console.log(`[crouton/auth] Invitation for ${data.email} to ${data.organization.name} (id: ${data.id})`)
+      }
+      useNitroApp().hooks.callHook('crouton:auth:email', {
+        type: 'invitation',
         to: data.email,
-        organization: data.organization.name,
-        invitedBy: data.inviter.user.name,
+        invitationId: data.id,
+        organizationName: data.organization.name,
+        inviterName: data.inviter.user.name,
+        inviterEmail: data.inviter.user.email,
         role: data.role,
-        expiresAt: data.expiresAt,
-        // The app should use this ID to create an accept link:
-        // e.g., `${baseUrl}/auth/accept-invitation/${data.id}`
-        invitationId: data.id
-      })
+        expiresAt: data.expiresAt
+      }).catch(() => {})
     },
 
     // Organization lifecycle hooks
