@@ -104,32 +104,7 @@ function isEmptyParagraph(block: PageBlock): boolean {
  * Convert paragraph block to HTML for rendering
  */
 function paragraphToHtml(block: PageBlock): string {
-  const content = (block as any).content
-  if (!content || !Array.isArray(content)) return ''
-
-  const textParts = content.map((node: any) => {
-    if (node.type === 'text') {
-      let text = node.text || ''
-      // Apply marks (bold, italic, etc.)
-      if (node.marks) {
-        for (const mark of node.marks) {
-          if (mark.type === 'bold') text = `<strong>${text}</strong>`
-          else if (mark.type === 'italic') text = `<em>${text}</em>`
-          else if (mark.type === 'underline') text = `<u>${text}</u>`
-          else if (mark.type === 'strike') text = `<s>${text}</s>`
-          else if (mark.type === 'code') text = `<code>${text}</code>`
-          else if (mark.type === 'highlight') text = `<mark>${text}</mark>`
-          else if (mark.type === 'link' && mark.attrs?.href) {
-            text = `<a href="${mark.attrs.href}"${mark.attrs.target ? ` target="${mark.attrs.target}"` : ''}>${text}</a>`
-          }
-        }
-      }
-      return text
-    }
-    return ''
-  })
-
-  return sanitizeHtml(textParts.join(''))
+  return sanitizeHtml(inlineContentToHtml((block as any).content))
 }
 
 // Filter blocks to render (skip only truly empty structural blocks)
@@ -147,14 +122,20 @@ function isHeading(type: string): boolean {
   return type === 'heading'
 }
 
+// Check if block is a list (native TipTap node)
+function isList(type: string): boolean {
+  return type === 'bulletList' || type === 'orderedList'
+}
+
 /**
- * Convert heading block to HTML for rendering
+ * Convert inline content (text nodes with marks) to HTML.
+ * Shared by paragraph, heading, and list item renderers.
  */
-function headingToHtml(block: PageBlock): string {
-  const content = (block as any).content
+function inlineContentToHtml(content: any[]): string {
   if (!content || !Array.isArray(content)) return ''
 
-  const textParts = content.map((node: any) => {
+  return content.map((node: any) => {
+    if (node.type === 'hardBreak') return '<br>'
     if (node.type === 'text') {
       let text = node.text || ''
       if (node.marks) {
@@ -173,9 +154,43 @@ function headingToHtml(block: PageBlock): string {
       return text
     }
     return ''
-  })
+  }).join('')
+}
 
-  return sanitizeHtml(textParts.join(''))
+/**
+ * Convert a list block (bulletList/orderedList) to HTML.
+ * Handles nested listItem > paragraph structure from TipTap.
+ */
+function listToHtml(block: PageBlock): string {
+  const tag = block.type === 'orderedList' ? 'ol' : 'ul'
+  const content = (block as any).content
+  if (!content || !Array.isArray(content)) return `<${tag}></${tag}>`
+
+  const items = content.map((listItem: any) => {
+    if (listItem.type !== 'listItem' || !listItem.content) return '<li></li>'
+
+    // Each listItem can contain paragraphs (and nested lists)
+    const innerHtml = listItem.content.map((child: any) => {
+      if (child.type === 'paragraph') {
+        return inlineContentToHtml(child.content)
+      }
+      if (child.type === 'bulletList' || child.type === 'orderedList') {
+        return listToHtml(child as PageBlock)
+      }
+      return ''
+    }).join('')
+
+    return `<li>${innerHtml}</li>`
+  }).join('')
+
+  return sanitizeHtml(`<${tag}>${items}</${tag}>`)
+}
+
+/**
+ * Convert heading block to HTML for rendering
+ */
+function headingToHtml(block: PageBlock): string {
+  return sanitizeHtml(inlineContentToHtml((block as any).content))
 }
 
 /**
@@ -262,6 +277,13 @@ const headingClasses: Record<number, string> = {
             v-html="paragraphToHtml(block)"
           />
 
+          <!-- List blocks (native TipTap bulletList/orderedList) -->
+          <div
+            v-else-if="isList(block.type)"
+            class="block-content-list prose prose-lg dark:prose-invert max-w-none my-4"
+            v-html="listToHtml(block)"
+          />
+
           <!-- Unknown block type warning -->
           <div
             v-else
@@ -307,6 +329,29 @@ const headingClasses: Record<number, string> = {
 
 .block-content > .block-size-full {
   max-width: none;
+}
+
+/* List rendering — ensure bullets/numbers and proper spacing */
+.block-content-list :deep(ul) {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.block-content-list :deep(ol) {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.block-content-list :deep(li) {
+  margin: 0.25em 0;
+  padding-left: 0.25em;
+}
+
+.block-content-list :deep(li ul),
+.block-content-list :deep(li ol) {
+  margin: 0.25em 0;
 }
 
 /* Highlight mark — themed with Nuxt UI primary color */
