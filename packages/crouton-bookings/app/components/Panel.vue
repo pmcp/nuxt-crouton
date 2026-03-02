@@ -379,11 +379,14 @@ function onCalendarDayClick(date: Date) {
   creatingAtDate.value = date
 }
 
-// Handle booking created - close card, wait for data refresh, then scroll
+// Handle booking created - refresh all data (including calendar indicators), then scroll
 function onBookingCreated() {
   const dateToScrollTo = creatingAtDate.value
   creatingAtDate.value = null
   emit('created')
+
+  // Refresh all data so calendar indicators update immediately
+  refresh()
 
   if (!dateToScrollTo) return
 

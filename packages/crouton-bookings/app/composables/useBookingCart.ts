@@ -178,7 +178,7 @@ export function useBookingCart() {
     isSubmitting,
     removeFromCart,
     clearCart,
-    submitAll,
+    submitAll: submitAllRaw,
     cancelBooking,
     deleteBooking,
   } = useBookingCartStorage(
@@ -189,6 +189,19 @@ export function useBookingCart() {
     cartPulse,
     cart,
   )
+
+  // Wrap submitAll to re-fetch availability after successful submission
+  // so the next BookingCreateCard shows correct slot availability
+  async function submitAll() {
+    const result = await submitAllRaw()
+    if (result && formState.locationId) {
+      const now = new Date()
+      const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 3, 0)
+      fetchAvailability(startDate, endDate)
+    }
+    return result
+  }
 
   // Check if selected location is in inventory mode
   const isInventoryMode = computed(() => selectedLocation.value?.inventoryMode ?? false)
