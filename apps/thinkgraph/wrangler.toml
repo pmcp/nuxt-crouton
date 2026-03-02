@@ -21,6 +21,12 @@ binding = "KV"
 id = "TODO_REPLACE_WITH_REAL_ID"
 
 # Durable Objects for real-time collaboration
+# R2 Bucket binding for blob storage (file uploads)
+# Create with: npx wrangler r2 bucket create thinkgraph-blob
+[[r2_buckets]]
+binding = "BLOB"
+bucket_name = "thinkgraph-blob"
+
 [[durable_objects.bindings]]
 name = "COLLAB_ROOMS"
 class_name = "CollabRoom"
