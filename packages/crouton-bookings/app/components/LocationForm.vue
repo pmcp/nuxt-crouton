@@ -316,7 +316,7 @@ const mapInstance = ref<any>(null)
 
 // Derive marker color from CSS --ui-primary at runtime
 const markerColor = ref('#22c55e')
-onMounted(() => {
+onMounted(async () => {
   if (!hasMaps) return
   const tempEl = document.createElement('div')
   tempEl.style.backgroundColor = 'var(--ui-primary)'
@@ -329,6 +329,11 @@ onMounted(() => {
     if (m && m.length >= 3) {
       markerColor.value = `#${((1 << 24) + (Number(m[0]) << 16) + (Number(m[1]) << 8) + Number(m[2])).toString(16).slice(1)}`
     }
+  }
+
+  // Geocode initial address if fields are populated but no stored coordinates
+  if (!initialCoordinates && (state.value.street || state.value.zip || state.value.city)) {
+    await handleGeocode()
   }
 })
 
