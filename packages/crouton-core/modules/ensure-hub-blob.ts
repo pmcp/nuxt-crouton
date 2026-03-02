@@ -1,20 +1,21 @@
+import { join } from 'node:path'
 import { defineNuxtModule } from '@nuxt/kit'
 
 /**
- * Ensures `hub.blob = true` before @nuxthub/core processes its config.
+ * Ensures `hub.blob` is configured before @nuxthub/core processes its config.
  *
  * Nuxt's layer config merging does not reliably deep-merge the `hub` object.
  * When an app declares any `hub: {}` key, NuxtHub receives blob: false (its
  * built-in default) and never registers the `hubBlob` auto-import.
  *
- * Also ensures the R2 wrangler binding is registered for dev mode.
- * NuxtHub 0.10+ only adds the R2 binding when `bucketName` is explicitly set,
- * but in dev the cloudflare-dev emulation needs it in the wrangler config
- * to create the local R2 emulation via miniflare.
+ * In dev mode with cloudflare presets, NuxtHub picks the cloudflare-r2 driver
+ * which requires a working R2 binding from miniflare. This is fragile (needs
+ * wrangler.toml R2 config, proper getPlatformProxy init, etc.). Instead, we
+ * force the `fs` driver in dev mode — files go to `.data/blob/`, same API.
  *
  * This module is listed BEFORE @nuxthub/core in crouton-core's modules array,
  * so it runs first and sets the default. Apps can still override with
- * `hub: { blob: false }` to opt out.
+ * `hub: { blob: false }` to opt out, or provide an explicit driver config.
  */
 export default defineNuxtModule({
   meta: {
@@ -22,21 +23,30 @@ export default defineNuxtModule({
   },
   setup (_options, nuxt) {
     const hub = (nuxt.options as any).hub ?? {}
-    if (hub.blob === undefined || hub.blob === null) {
-      hub.blob = true
+
+    // If blob is already configured with an explicit driver, don't override
+    if (typeof hub.blob === 'object' && 'driver' in hub.blob) {
       ;(nuxt.options as any).hub = hub
+      return
     }
 
-    // Ensure the R2 wrangler binding exists for cloudflare-dev emulation.
-    // NuxtHub 0.10+ only registers this when bucketName is set, but miniflare
-    // needs it to create the local R2 binding in dev mode.
-    if (hub.blob !== false) {
-      const cf = nuxt.options.nitro.cloudflare ||= {} as any
-      cf.wrangler ||= {}
-      cf.wrangler.r2_buckets ||= []
-      if (!cf.wrangler.r2_buckets.some((b: any) => b.binding === 'BLOB')) {
-        cf.wrangler.r2_buckets.push({ binding: 'BLOB', bucket_name: 'crouton-blob' })
+    if (hub.blob === undefined || hub.blob === null) {
+      hub.blob = true
+    }
+
+    // In dev mode with cloudflare preset, use filesystem driver instead of R2.
+    // NuxtHub 0.10+'s cloudflare-r2 driver needs a working miniflare R2 binding
+    // which is unreliable in monorepo dev. The fs driver is simpler and works
+    // identically (same blob.put/serve/delete API).
+    const preset = process.env.NITRO_PRESET || nuxt.options.nitro?.preset || ''
+    if (nuxt.options.dev && hub.blob !== false && String(preset).includes('cloudflare')) {
+      const dataDir = hub.dir || '.data'
+      hub.blob = {
+        driver: 'fs',
+        dir: join(nuxt.options.rootDir, dataDir, 'blob')
       }
     }
+
+    ;(nuxt.options as any).hub = hub
   }
 })
