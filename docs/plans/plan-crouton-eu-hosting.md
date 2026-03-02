@@ -2,9 +2,46 @@
 
 ## Summary
 
-Ship crouton with deployment templates, CLI commands, and documentation so users can self-host on EU infrastructure. Not replacing Cloudflare/Vercel — adding VPS as a documented, EU-sovereign alternative. NuxtHub v0.10 handles provider abstraction, crouton provides the deployment scaffolding and CLI tooling.
+Ship crouton with deployment templates, CLI commands, and documentation so users can self-host on EU infrastructure. Not replacing Cloudflare — adding VPS as a documented, EU-sovereign alternative. NuxtHub v0.10 handles provider abstraction (confirmed — auto-detects S3/Redis from env vars), crouton provides the deployment scaffolding and CLI tooling.
 
 **Related**: The [email refactor plan](./plan-crouton-email-refactor.md) enables EU email providers (Mailgun EU, Brevo, Scaleway) for VPS deployments.
+
+---
+
+## Codebase Alignment (verified against repo)
+
+### What already works
+- **NuxtHub v0.10 multi-vendor**: Confirmed. S3 blob (`aws4fetch`), Redis KV/cache (`ioredis`), libsql SQLite all supported. Auto-detects from env vars — no nuxt.config changes needed between Cloudflare and VPS.
+- **Database access**: Codebase already migrated to `hub:db` auto-imports (`useDB()`). Only 2 legacy `hubDatabase()` calls remain in `crouton-auth/server/utils/team.ts` — trivial fix.
+- **Schema directories**: No rename needed. Packages use `server/database/schema/`, apps aggregate via `server/db/schema.ts`. Both patterns work with NuxtHub v0.10.
+- **Generator templates**: Already emit `useDB()`, not `hubDatabase()`. No changes needed.
+- **Package scope**: `@fyit/*` throughout. No migration in progress.
+
+### What needs fixing (small)
+- `crouton-auth/server/lib/auth.ts`: `CreateAuthOptions.db` typed as `DrizzleD1Database` — change to generic drizzle type (~1 line)
+- `crouton-auth/server/utils/team.ts`: 2x `hubDatabase()` + `drizzle(d1)` calls — replace with `useDB()` (~10 lines)
+- `crouton-triage/server/services/userMapping.ts`: 2x `useDrizzle()` calls — dead code, function no longer exists (~2 lines)
+- `@nuxthub/core` peer deps: Inconsistent across packages. Should declare `peerDependencies: ">=0.10.0"` in packages that use `hub:db`. Cleanup task, not a blocker.
+
+### VPS Compatibility Matrix
+
+| Package | VPS | Cloudflare | Notes |
+|---------|-----|------------|-------|
+| crouton-core | Yes | Yes | Foundation — works everywhere |
+| crouton-auth | Yes | Yes | Passkeys work natively on VPS (no CF stubs needed) |
+| crouton-bookings | Yes | Yes | Email scheduling needs `node-server` preset |
+| crouton-email | Yes | Yes | SMTP driver only available on VPS (`node-server`) |
+| crouton-i18n | Yes | Yes | |
+| crouton-pages | Yes | Yes | |
+| crouton-assets | Yes | Yes | Blob via S3 on VPS |
+| crouton-ai | Yes | Yes | |
+| crouton-maps | Yes | Yes | |
+| crouton-collab | No | Yes | Requires Cloudflare Durable Objects |
+| crouton-flow | No | Yes | Depends on crouton-collab (uses CollabRoom DO) |
+| crouton-triage | Yes | Yes | KV via Redis on VPS |
+| crouton-admin | Yes | Yes | Already uses `hub:db` auto-import |
+
+**Collab/Flow on VPS**: Out of scope for this plan. `CollabRoom` is deeply coupled to Durable Objects (`DurableObjectStorage`, `WebSocketPair`, `state.blockConcurrencyWhile()`, D1 persistence). A y-websocket replacement is a separate project. Document as "Cloudflare-only" for now.
 
 ---
 
@@ -13,17 +50,17 @@ Ship crouton with deployment templates, CLI commands, and documentation so users
 | Layer | Provider | Location | Cost |
 |---|---|---|---|
 | Compute | Hetzner VPS (CX22: 2 vCPU, 4GB) | Germany | €3.49/mo |
-| Database | SQLite on disk | On VPS | Free |
+| Database | SQLite on disk (libsql) | On VPS | Free |
 | DB Backups | Nitro task → Hetzner Object Storage | Germany | Included |
 | Blob Storage | Hetzner Object Storage (S3-compatible) | Germany | €4.99/mo |
-| KV + Cache | Redis (Docker container on VPS) | On VPS | Free |
+| KV + Cache | Redis (on VPS) | On VPS | Free |
 | Email | Mailgun EU / Brevo / Scaleway (see [email plan](./plan-crouton-email-refactor.md)) | EU | Varies |
 | CDN | Bunny.net (optional) | Slovenia | ~€1/mo |
 | AI | Mistral API (optional) | France | Pay-as-you-go |
 | Analytics | Plausible (optional) | Estonia | Self-host or €9/mo |
 | **Total** | | **All EU** | **~€8.50/mo** |
 
-Multiple crouton apps run on a single VPS. Each gets its own domain, SQLite file, and Caddy route. They share Redis and Object Storage.
+Multiple crouton projects run on a single VPS. Each gets its own domain, SQLite file, and Caddy route. They share Redis and Object Storage.
 
 ---
 
@@ -36,11 +73,10 @@ Hetzner VPS
 │   ├── app2.example.com → :3002
 │   └── app3.example.com → :3003
 ├── Nuxt apps (node-server preset)
-│   ├── NuxtHub v0.10 (db, blob, kv, cache)
-│   ├── Nitro scheduled tasks (built-in cron)
-│   └── y-websocket (optional, for Yjs collab)
+│   ├── NuxtHub v0.10 (db, blob, kv, cache — auto-configured from env vars)
+│   └── Nitro scheduled tasks (email reminders, backups)
 ├── Redis (shared across apps)
-├── SQLite files on disk (per app)
+├── SQLite files on disk (per app, at .data/db/sqlite.db)
 └── Nitro backup task → Object Storage
 
 Hetzner Object Storage (1TB included)
@@ -48,60 +84,49 @@ Hetzner Object Storage (1TB included)
 └── SQLite backups (per app prefix)
 ```
 
-### Resolved: Docker vs Bare Node
+**Primary path: Bare Node + Caddy.** No Docker files exist in the repo. Crouton users are Nuxt devs, not DevOps people. Docker Compose is the documented advanced option.
 
-**Bare Node + Caddy is the primary path.** No Docker files exist in the repo currently. Crouton users are Nuxt devs, not DevOps people. Docker Compose with 3 services (app + Redis + Caddy) is the documented advanced option for users who want container isolation.
-
-Current codebase deploys to Cloudflare via `nuxthub deploy` (see `wrangler.toml` in `apps/crouton-playground/` and `apps/thinkgraph/`). VPS is additive.
-
-### Resolved: Litestream vs Nitro Task
-
-**Nitro scheduled task for backups.** Simpler, zero extra infrastructure, consistent with the "everything in Nuxt" philosophy. Hourly backups are sufficient for CRUD apps. Use NuxtHub's blob API (not raw `@aws-sdk/client-s3`) to stay provider-agnostic — see backup section below.
+**Backups: Nitro scheduled task.** Simpler than Litestream, zero extra infrastructure, uses NuxtHub's `blob.put()` to stay provider-agnostic.
 
 ---
 
 ## NuxtHub v0.10 Configuration
 
-`@nuxthub/core` is already a dependency — `crouton-core` extends it and configures `hub: { db: 'sqlite' }`. Blob storage is set via `blob: true` in crouton-core's layer config. The VPS config overrides the drivers:
+**Key insight**: The nuxt.config.ts doesn't change between Cloudflare and VPS. NuxtHub auto-detects drivers from environment variables. Only the `.env` file differs.
 
 ```ts
-// nuxt.config.ts (VPS override)
+// nuxt.config.ts — same for Cloudflare AND VPS
 export default defineNuxtConfig({
   hub: {
-    db: 'sqlite',
-    blob: {
-      driver: 's3',
-      bucket: process.env.S3_BUCKET,
-      endpoint: process.env.S3_ENDPOINT,
-      region: process.env.S3_REGION,
-      accessKeyId: process.env.S3_ACCESS_KEY,
-      secretAccessKey: process.env.S3_SECRET_KEY,
-    },
-    kv: {
-      driver: 'redis',
-      url: process.env.REDIS_URL,
-    },
-    cache: {
-      driver: 'redis',
-      url: process.env.REDIS_URL,
-    },
-  },
-  nitro: {
-    experimental: { tasks: true },
-    scheduledTasks: {
-      '0 * * * *': ['backup:sqlite'], // hourly backup
-    },
+    db: 'sqlite',   // Cloudflare: D1 via wrangler bindings. VPS: libsql at .data/db/sqlite.db
+    blob: true,      // Cloudflare: R2 via bindings. VPS: auto-detects S3_* env vars
+    kv: true,        // Cloudflare: KV via bindings. VPS: auto-detects REDIS_URL env var
+    cache: true,     // Cloudflare: KV via bindings. VPS: auto-detects REDIS_URL, falls back to fs
   },
 })
 ```
 
-Note: `crouton-triage` requires `hub: { kv: true }` for Slack OAuth state storage. On VPS this maps to Redis via the config above.
+```bash
+# .env (VPS only — Cloudflare uses wrangler bindings instead)
+S3_ACCESS_KEY_ID=xxx
+S3_SECRET_ACCESS_KEY=xxx
+S3_BUCKET=my-app
+S3_REGION=eu-central-1
+S3_ENDPOINT=https://fsn1.your-objectstorage.com
+REDIS_URL=redis://localhost:6379
+BETTER_AUTH_SECRET=xxx
+BETTER_AUTH_URL=https://myapp.example.com
+```
+
+**Required packages for VPS**: `pnpm add aws4fetch ioredis`
+
+Note: `crouton-core` already configures `hub: { db: 'sqlite' }` and forces `blob: true` via the `ensure-hub-blob` module. Apps only need to add `kv: true` and `cache: true` if they use those features. `crouton-triage` requires KV for Slack OAuth state storage.
 
 ---
 
 ## Deploy Paths
 
-### Path A: Bare Node + Caddy (primary — simplest)
+### Path A: Bare Node + Caddy (primary)
 
 No Docker. Just Node and Caddy on the VPS.
 
@@ -140,7 +165,7 @@ EnvironmentFile=/opt/apps/my-app/.env
 WantedBy=multi-user.target
 ```
 
-### Path B: Docker Compose (advanced — isolated)
+### Path B: Docker Compose (advanced)
 
 ```yaml
 services:
@@ -152,8 +177,8 @@ services:
       - REDIS_URL=redis://redis:6379
       - S3_ENDPOINT=${S3_ENDPOINT}
       - S3_BUCKET=${S3_BUCKET}
-      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
-      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
     volumes:
       - app-data:/app/.data
     depends_on:
@@ -198,23 +223,23 @@ EXPOSE 3000
 CMD ["node", ".output/server/index.mjs"]
 ```
 
-### Path C: Cloudflare (existing — zero-ops)
+### Path C: Cloudflare (existing)
 
-Already configured and working. Deploy via `nuxthub deploy`. `wrangler.toml` files exist in `apps/crouton-playground/` and `apps/thinkgraph/`. This stays the easiest path for users who don't need EU data sovereignty.
+Already configured and working. Deploy via `nuxthub deploy`. `wrangler.toml` files exist in all deployed apps (`crouton-playground`, `bookingtest3`, `thinkgraph`, `docs`). This stays the easiest path — no changes needed.
 
-### Path D: Fly.io (middle ground — worth documenting)
-
-Not EU-owned but has Amsterdam region, persistent volumes for SQLite, simpler than raw VPS. Fills the gap for users who want EU hosting without server management. Worth a short deploy guide.
+**Note**: Coolify is an option for users who want a UI to manage their Hetzner VPS, but it's not a supported deploy path — just a mention in the docs.
 
 ---
 
-## Multi-App on One VPS
+## Multi-Project on One VPS
 
-This is a killer feature vs Cloudflare/Vercel (per-project billing). One Hetzner CX22 runs 6-8 crouton apps for €8.50 total.
+This is a killer feature vs Cloudflare (per-project billing). One Hetzner CX22 runs 6-8 crouton projects for €8.50 total.
 
-**Decision**: Start with single-app templates. Document multi-app as an "advanced" section — same templates, just different ports.
+**Note**: This is about running *different crouton projects* on one VPS. Multi-tenancy (multiple teams/organizations) is already built into every crouton app via the `[team]` route parameter and `useTeamContext()`.
 
-Caddyfile for multi-app:
+Start with single-project templates. Document multi-project as an "advanced" section.
+
+Caddyfile for multi-project:
 ```
 app1.example.com {
     reverse_proxy localhost:3001
@@ -223,17 +248,13 @@ app1.example.com {
 app2.example.com {
     reverse_proxy localhost:3002
 }
-
-app3.example.com {
-    reverse_proxy localhost:3003
-}
 ```
 
-Each app gets its own:
+Each project gets its own:
 - Port (3001, 3002, 3003...)
-- SQLite file (`/opt/apps/app1/.data/db.sqlite3`)
+- SQLite file (`/opt/apps/app1/.data/db/sqlite.db`)
 - `.env` file
-- Systemd service or Docker container
+- Systemd service
 
 They share:
 - Redis instance
@@ -242,9 +263,22 @@ They share:
 
 ---
 
-## SQLite Backup via Nitro Task
+## Nitro Scheduled Tasks
 
-Use NuxtHub's blob API instead of raw `@aws-sdk/client-s3` — stays provider-agnostic and works on both Cloudflare and VPS:
+Two documented recipes — not shipped in crouton-core, since backup is VPS-only and email scheduling is bookings-specific. Both share the same Nitro task infrastructure.
+
+```ts
+// nuxt.config.ts — add to your app as needed
+nitro: {
+  experimental: { tasks: true },
+  scheduledTasks: {
+    '0 8 * * *': ['email:send-scheduled'],  // daily at 8am — reminders & follow-ups
+    '0 * * * *': ['backup:sqlite'],          // hourly — VPS only
+  },
+}
+```
+
+### SQLite Backup Task
 
 ```ts
 // server/tasks/backup/sqlite.ts
@@ -256,7 +290,7 @@ export default defineTask({
     description: 'Backup SQLite database to blob storage',
   },
   async run() {
-    const dbPath = '.data/db.sqlite3'
+    const dbPath = '.data/db/sqlite.db'
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const key = `backups/${timestamp}.sqlite3`
 
@@ -270,22 +304,35 @@ export default defineTask({
 })
 ```
 
-**Decision**: Ship in `crouton-core` so every app gets backups for free. Small footprint, universally useful, prevents data loss for users who forget to set it up.
+### Email Scheduling Task
 
-Configured in `nuxt.config.ts`:
+For bookings with `reminder_before` and `follow_up_after` triggers:
+
 ```ts
-nitro: {
-  experimental: { tasks: true },
-  scheduledTasks: {
-    '0 * * * *': ['backup:sqlite'], // every hour
+// server/tasks/email/send-scheduled.ts
+export default defineTask({
+  meta: {
+    name: 'email:send-scheduled',
+    description: 'Send scheduled booking reminder and follow-up emails',
   },
-}
+  async run() {
+    const db = useDB()
+    // Query bookings needing reminders (date = today + daysOffset)
+    // Query bookings needing follow-ups (date = today - daysOffset)
+    // Match against email templates with matching triggers
+    // Send via useEmailService() and log to bookingsEmaillogs
+    return { result: `Sent ${count} scheduled emails` }
+  },
+})
 ```
 
 ---
 
 ## CI/CD via GitHub Actions
 
+Existing CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, and package validation on push/PR to `main`. No deploy step exists — deployment is manual via `nuxthub deploy`.
+
+VPS deploy workflow template:
 ```yaml
 name: Deploy
 on:
@@ -321,43 +368,46 @@ jobs:
             sudo systemctl restart my-app
 ```
 
-Or with Docker:
-```yaml
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: deploy
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd /opt/apps/my-app
-            git pull
-            docker compose up -d --build
-```
-
 ---
 
 ## CLI Commands
 
-The CLI lives at `packages/nuxt-crouton-cli/`, built with **citty** + **unbuild**. No `.croutonrc` config store exists — CLI reads from `.env` and project config.
+Deploy commands live in the existing CLI at `packages/crouton-cli/` (`@fyit/crouton-cli`), built with **citty** + **@clack/prompts**. This fits naturally — the CLI already handles the full project lifecycle (`scaffold-app` → `generate` → `doctor` → now `deploy`).
 
-### Resolved: CLI approach
+**Remote execution**: System `ssh`/`rsync` via `execa`. Leverages the user's existing `~/.ssh/config`, agent forwarding, and keys. Works on macOS, Linux, and Windows 10+ (ships with OpenSSH built-in since 2018). Prerequisite: OpenSSH installed (document this).
 
-Use citty subcommands within the existing CLI. Deploy commands should save server connection details to `.croutonrc.json` (new, project-local) since SSH host/user/path are needed across multiple commands. For remote execution, use `node-ssh` (lightweight, no native deps).
+**Config storage**: `.crouton/deploy.json` (gitignored), supporting multiple environments:
+
+```json
+{
+  "defaultEnvironment": "production",
+  "environments": {
+    "production": {
+      "host": "116.203.x.x",
+      "user": "deploy",
+      "path": "/opt/apps/myapp"
+    },
+    "staging": {
+      "host": "116.203.x.x",
+      "user": "deploy",
+      "path": "/opt/apps/myapp-staging"
+    }
+  }
+}
+```
 
 ### Server setup
 ```bash
-npx crouton deploy init                # Interactive: SSH into VPS, install Caddy + Node
+npx crouton deploy init                # Interactive: SSH into VPS, install Caddy + Node + Redis
 npx crouton deploy setup <app-name>    # Create app dir, Caddyfile entry, .env, systemd service
 ```
 
 `deploy init` would:
-1. Ask for server IP and SSH key
-2. SSH in and install Node 20 + Caddy
+1. Ask for server IP (SSH key assumed from user's config)
+2. SSH in and install Node 20 + Caddy + Redis
 3. Create a deploy user
 4. Set up firewall (80, 443, 22 only)
-5. Install Redis if needed
-6. Save connection details to `.croutonrc.json`
+5. Save connection details to `.crouton/deploy.json`
 
 `deploy setup` would:
 1. Create `/opt/apps/<name>/` on the server
@@ -368,17 +418,12 @@ npx crouton deploy setup <app-name>    # Create app dir, Caddyfile entry, .env, 
 
 ### Day-to-day deployment
 ```bash
-npx crouton deploy push                # Build locally + rsync .output + restart service
-npx crouton deploy logs                # Tail remote logs via SSH
-npx crouton deploy env set KEY=VALUE   # Set env var on server
-npx crouton deploy env list            # Show current env vars
+npx crouton deploy push                    # Build locally + rsync .output + restart service
+npx crouton deploy push --env staging      # Deploy to staging
+npx crouton deploy logs                    # Tail remote logs via SSH
+npx crouton deploy env set KEY=VALUE       # Set env var on server
+npx crouton deploy env list                # Show current env vars
 ```
-
-`deploy push` would:
-1. Run `pnpm build` locally
-2. rsync `.output/` to server
-3. Restart the systemd service
-4. Tail logs briefly to confirm startup
 
 ### Database
 ```bash
@@ -397,43 +442,42 @@ npx crouton email verify-dns           # Check SPF/DKIM/DMARC records for your d
 
 ## What Crouton Ships
 
-### Resolved: Template location
-
-Deploy templates go inside the CLI package at `packages/nuxt-crouton-cli/templates/deploy/`. The CLI already has a template system for collection generation — deploy templates follow the same pattern.
-
-### Templates & Config Files
-- [ ] `Caddyfile` — reverse proxy with auto HTTPS (single-app, multi-app documented separately)
+### Templates & Config Files (in `packages/crouton-cli/templates/deploy/`)
+- [ ] `Caddyfile` — reverse proxy with auto HTTPS (single-app)
 - [ ] `Dockerfile` — multi-stage Node.js build
 - [ ] `docker-compose.yml` — app + Redis + Caddy (advanced path)
-- [ ] `.env.example` — all required environment variables (including email driver config)
+- [ ] `.env.example` — all required environment variables
 - [ ] `systemd/crouton-app.service` — systemd unit template
 - [ ] GitHub Actions workflow template
 
-### Backup Task
-- [ ] `server/tasks/backup/sqlite.ts` — hourly blob storage backup (ships in crouton-core)
+### Documented Recipes
+- [ ] `server/tasks/backup/sqlite.ts` — hourly blob storage backup (VPS only)
+- [ ] `server/tasks/email/send-scheduled.ts` — daily reminder/follow-up emails (bookings)
 - [ ] Restore utility or CLI command
 
 ### Documentation
 - [ ] Hetzner VPS deploy guide (comprehensive, step-by-step — primary)
-- [ ] Fly.io deploy guide (middle ground — Amsterdam region, simpler than VPS)
 - [ ] Cloudflare deploy guide (short, "what's different" — existing path)
 - [ ] Generic VPS guide (any provider, same templates)
-- [ ] Multi-app guide (advanced topic)
+- [ ] Multi-project guide (advanced topic)
 - [ ] Backup & restore guide
 - [ ] Email provider DNS setup guide (SPF/DKIM/DMARC per provider)
+- [ ] VPS compatibility matrix (which crouton packages work on VPS)
 
 ---
 
-## Monorepo Context (Resolved)
+## Monorepo Context
 
 | Question | Answer |
 |---|---|
-| Package scope | `@fyit/*` (e.g., `@fyit/crouton-email`, `@fyit/crouton-core`) |
-| Shared package | `packages/crouton-core/` — types, composables, hooks, team context, DB utils, NuxtHub config |
-| CLI package | `packages/nuxt-crouton-cli/` — citty + unbuild, template-based generation |
-| Config storage | None currently. CLI reads `.env`. Deploy commands will introduce `.croutonrc.json`. |
-| Existing Docker | None — no Dockerfile or docker-compose anywhere in the repo |
+| Package scope | `@fyit/*` (confirmed — uniform across all packages) |
+| Shared package | `packages/crouton-core/` — NuxtHub config, blob, encryption, CRUD, team context |
+| CLI package | `packages/crouton-cli/` — citty + @clack/prompts, lifecycle tooling |
+| Config storage | `.crouton/deploy.json` (new, gitignored, multi-environment) |
+| Existing Docker | None |
 | Existing deploy | Cloudflare via `nuxthub deploy` + `wrangler.toml` per app |
+| Existing CI | `.github/workflows/ci.yml` — lint, typecheck, tests. No deploy step. |
+| `@nuxthub/core` | Loaded via crouton-core layer. Most packages don't declare it — should add as `peerDependencies: ">=0.10.0"` |
 
 ---
 
@@ -444,63 +488,66 @@ Deploy templates go inside the CLI package at `packages/nuxt-crouton-cli/templat
 | Global edge | 300+ PoPs | Single datacenter |
 | DDoS protection | Enterprise-grade | Basic (add Bunny CDN for more) |
 | Auto-scaling | Unlimited | Manual (resize VPS) |
-| Durable Objects | Built-in | DIY (y-websocket) |
+| Real-time collab | Durable Objects (built-in) | Not supported (yet) |
 | Maintenance | Zero | You manage Node + OS updates |
 | **Data sovereignty** | **US company** | **EU only** |
 | **SQLite** | **Over network (D1)** | **On disk, zero latency** |
 | **WebSockets** | **Durable Objects (complex)** | **Native (simple)** |
 | **Cron** | **Cron Triggers + wrangler** | **Nitro scheduledTasks, just works** |
-| **Email** | **Resend only (HTTP API)** | **Any provider (HTTP + SMTP)** |
+| **Passkeys** | **Broken (needs stubs)** | **Native Node.js, just works** |
+| **Email** | **HTTP API only (Resend)** | **Any provider (HTTP + SMTP)** |
 | **Cost at low scale** | **Free tier** | **~€8.50/mo** |
-| **Multiple apps** | **Per-project billing** | **All on one VPS** |
+| **Multiple projects** | **Per-project billing** | **All on one VPS** |
 
-For EU-focused CRUD apps, VPS wins on simplicity, latency, and cost. Cloudflare wins for global distribution and zero-ops.
+For EU-focused CRUD apps, VPS wins on simplicity, latency, and cost. Cloudflare wins for global distribution, zero-ops, and real-time collaboration.
 
 ---
 
 ## Tasks
 
-### Phase 0 — Email Multi-Driver (prerequisite)
-See [email refactor plan](./plan-crouton-email-refactor.md). Must land first so VPS users can configure EU email providers.
+### Phase 0 — Prerequisites
+- [ ] Fix `DrizzleD1Database` type in `crouton-auth/server/lib/auth.ts` (~1 line)
+- [ ] Replace `hubDatabase()` calls in `crouton-auth/server/utils/team.ts` (~10 lines)
+- [ ] Fix dead `useDrizzle()` calls in `crouton-triage` (~2 lines)
+- [ ] Email multi-driver refactor (see [email plan](./plan-crouton-email-refactor.md))
 
-### Phase 1 — Templates (1 day)
+### Phase 1 — Templates
 - [ ] Create Caddyfile template (single-app)
 - [ ] Create systemd service template
-- [ ] Create Dockerfile
-- [ ] Create docker-compose.yml (advanced path)
-- [ ] Create .env.example (includes `EMAIL_DRIVER`, `EMAIL_API_KEY`, etc.)
-- [ ] Create GitHub Actions workflow template
-- [ ] Create backup Nitro task in crouton-core (using `blob.put()`)
+- [ ] Create Dockerfile + docker-compose.yml (advanced path)
+- [ ] Create .env.example with all VPS env vars
+- [ ] Create GitHub Actions deploy workflow template
+- [ ] Document backup Nitro task recipe
+- [ ] Document email scheduling Nitro task recipe
 - [ ] Test full deploy on a fresh Hetzner CX22
 
-### Phase 2 — CLI Commands (2 days)
+### Phase 2 — CLI Commands
+- [ ] Add `execa` dependency to crouton-cli
 - [ ] `crouton deploy init` — server setup wizard
 - [ ] `crouton deploy setup <app>` — per-app setup
-- [ ] `crouton deploy push` — build + rsync + restart
+- [ ] `crouton deploy push [--env]` — build + rsync + restart
 - [ ] `crouton deploy logs` — tail remote logs
-- [ ] `crouton deploy env` — manage env vars
+- [ ] `crouton deploy env set/list` — manage env vars
 - [ ] `crouton db backup` / `restore` / `download`
 - [ ] `crouton email test` / `verify-dns`
-- [ ] Introduce `.croutonrc.json` for server connection details
+- [ ] `.crouton/deploy.json` config with multi-environment support
 
-### Phase 3 — Documentation (1-2 days)
+### Phase 3 — Documentation
 - [ ] Hetzner VPS deploy guide (primary)
-- [ ] Fly.io deploy guide (middle ground)
 - [ ] Cloudflare deploy guide
 - [ ] Generic VPS guide
-- [ ] Multi-app guide
+- [ ] Multi-project guide (advanced)
 - [ ] Backup & restore guide
+- [ ] VPS compatibility matrix
+- [ ] Email provider DNS setup guide
 
-### Phase 4 — Validate (1 day)
+### Phase 4 — Validate
 - [ ] Fresh deploy following only the docs
-- [ ] Test 3+ apps on one CX22
+- [ ] Test 3+ projects on one CX22
 - [ ] Test backup + restore cycle
-- [ ] Test Nitro scheduled tasks
-- [ ] Test y-websocket alongside Nuxt app
+- [ ] Test Nitro scheduled tasks (backup + email scheduling)
 - [ ] Verify NuxtHub blob driver with Hetzner Object Storage
-- [ ] Test email with Mailgun EU on VPS
-
-**Total: ~5-6 days** (plus email refactor as Phase 0)
+- [ ] Test email with EU provider on VPS
 
 ---
 
