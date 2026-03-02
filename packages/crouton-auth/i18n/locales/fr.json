@@ -30,7 +30,11 @@
     "failedToUpdateRole": "Échec de la mise à jour du rôle",
     "memberRemoved": "Membre retiré",
     "memberRemovedDescription": "Le membre a été retiré de l'équipe.",
-    "failedToRemoveMember": "Échec du retrait du membre"
+    "failedToRemoveMember": "Échec du retrait du membre",
+    "name": "Nom",
+    "email": "E-mail",
+    "role": "Rôle",
+    "actions": "Actions"
   },
   "account": {
     "passkey": {

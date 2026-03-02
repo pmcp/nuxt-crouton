@@ -30,7 +30,11 @@
     "failedToUpdateRole": "Rol bijwerken mislukt",
     "memberRemoved": "Lid verwijderd",
     "memberRemovedDescription": "Het lid is uit het team verwijderd.",
-    "failedToRemoveMember": "Lid verwijderen mislukt"
+    "failedToRemoveMember": "Lid verwijderen mislukt",
+    "name": "Naam",
+    "email": "E-mail",
+    "role": "Rol",
+    "actions": "Acties"
   },
   "account": {
     "passkey": {

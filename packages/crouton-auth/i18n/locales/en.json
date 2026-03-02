@@ -30,7 +30,11 @@
     "failedToUpdateRole": "Failed to update role",
     "memberRemoved": "Member removed",
     "memberRemovedDescription": "Member has been removed from the team.",
-    "failedToRemoveMember": "Failed to remove member"
+    "failedToRemoveMember": "Failed to remove member",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "actions": "Actions"
   },
   "account": {
     "passkey": {

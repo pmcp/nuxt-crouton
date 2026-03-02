@@ -4,13 +4,16 @@
  *
  * Displays list of team members with management actions.
  * Includes role management and member removal.
+ * Supports grid (card) and table (list) layouts.
  *
  * @example
  * ```vue
  * <TeamMembers @invite="openInviteModal" />
  * ```
  */
-import type { MemberRole } from '../../../types'
+import { h, resolveComponent } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
+import type { MemberRole, Member, MemberWithUser } from '../../../types'
 
 interface Props {
   /** Show invite button */
@@ -41,6 +44,9 @@ const {
 
 const { user } = useSession()
 const notify = useNotify()
+
+// Layout toggle
+const layout = ref<'grid' | 'table'>('grid')
 
 // Local loading state
 const loadingMemberId = ref<string | null>(null)
@@ -100,6 +106,117 @@ const sortedMembers = computed(() => {
   }
   return [...members.value].sort((a, b) => roleOrder[a.role] - roleOrder[b.role])
 })
+
+// Table columns
+const UAvatar = resolveComponent('UAvatar')
+const UBadge = resolveComponent('UBadge')
+const USelectMenu = resolveComponent('USelectMenu')
+const UButton = resolveComponent('UButton')
+
+type MemberRow = Member | MemberWithUser
+
+const columns = computed<TableColumn<MemberRow>[]>(() => {
+  const cols: TableColumn<MemberRow>[] = [
+    {
+      id: 'name',
+      header: t('teams.name'),
+      cell: ({ row }) => {
+        const member = row.original
+        const memberUser = 'user' in member ? member.user : undefined
+        const displayName = memberUser?.name || memberUser?.email || 'Unknown'
+        const initials = (memberUser?.name || memberUser?.email || '?').slice(0, 2).toUpperCase()
+
+        const children = [
+          h(UAvatar, {
+            src: memberUser?.image,
+            text: initials,
+            size: 'sm',
+            class: 'mr-2'
+          }),
+          h('span', { class: 'font-medium' }, displayName),
+          ...(member.userId === user.value?.id
+            ? [h('span', { class: 'text-xs text-muted ml-1' }, `(${t('teams.you')})`)]
+            : [])
+        ]
+
+        return h('div', { class: 'flex items-center' }, children)
+      }
+    },
+    {
+      id: 'email',
+      header: t('teams.email'),
+      cell: ({ row }) => {
+        const member = row.original
+        const memberUser = 'user' in member ? member.user : undefined
+        return h('span', { class: 'text-sm text-muted' }, memberUser?.email || '')
+      }
+    },
+    {
+      id: 'role',
+      header: t('teams.role'),
+      cell: ({ row }) => {
+        const color = ({
+          owner: 'primary' as const,
+          admin: 'info' as const,
+          member: 'neutral' as const
+        })[row.original.role]
+        return h(UBadge, { color, variant: 'subtle', size: 'xs', class: 'capitalize' }, () => row.original.role)
+      }
+    }
+  ]
+
+  if (canManageMembers.value) {
+    cols.push({
+      id: 'actions',
+      header: t('teams.actions'),
+      meta: { class: { td: 'text-right', th: 'text-right' } },
+      cell: ({ row }) => {
+        const member = row.original
+        const isSelf = member.userId === user.value?.id
+        const isOwnerRole = member.role === 'owner'
+        const canChangeRole = !(isSelf && !isOwner.value) && !(isOwnerRole && !isOwner.value)
+        const canRemove = !isSelf && !isOwnerRole
+
+        const children = []
+
+        if (canChangeRole) {
+          children.push(h(USelectMenu, {
+            'modelValue': member.role,
+            'items': [
+              { label: t('teams.member'), value: 'member' },
+              { label: t('teams.admin'), value: 'admin' },
+              ...(isOwner.value && !isSelf ? [{ label: t('teams.owner'), value: 'owner' }] : [])
+            ],
+            'valueKey': 'value',
+            'disabled': loadingMemberId.value === member.id,
+            'size': 'sm',
+            'class': 'w-28',
+            'onUpdate:modelValue': (role: MemberRole) => handleRoleChange(member.id, role)
+          }))
+        }
+
+        if (canRemove) {
+          children.push(h(UButton, {
+            icon: 'i-lucide-user-x',
+            variant: 'ghost',
+            color: 'error',
+            size: 'sm',
+            loading: loadingMemberId.value === member.id,
+            onClick: () => handleRemove(member.id)
+          }))
+        }
+
+        if (!children.length) {
+          children.push(h('span', { class: 'text-xs text-muted' }, t('teams.noActions')))
+        }
+
+        return h('div', { class: 'flex items-center justify-end gap-2' }, children)
+      }
+    })
+  }
+
+  return cols
+})
 </script>
 
 <template>
@@ -113,13 +230,32 @@ const sortedMembers = computed(() => {
           {{ t('teams.memberCount', { count: members.length }) }}
         </p>
       </div>
-      <UButton
-        v-if="showInviteButton && canInviteMembers"
-        icon="i-lucide-user-plus"
-        @click="emit('invite')"
-      >
-        {{ t('teams.invite') }}
-      </UButton>
+      <div class="flex items-center gap-2">
+        <div class="flex items-center rounded-md border border-default">
+          <UButton
+            icon="i-lucide-layout-grid"
+            :variant="layout === 'grid' ? 'subtle' : 'ghost'"
+            :color="layout === 'grid' ? 'primary' : 'neutral'"
+            size="xs"
+            @click="layout = 'grid'"
+          />
+          <UButton
+            icon="i-lucide-list"
+            :variant="layout === 'table' ? 'subtle' : 'ghost'"
+            :color="layout === 'table' ? 'primary' : 'neutral'"
+            size="xs"
+            @click="layout = 'table'"
+          />
+        </div>
+
+        <UButton
+          v-if="showInviteButton && canInviteMembers"
+          icon="i-lucide-user-plus"
+          @click="emit('invite')"
+        >
+          {{ t('teams.invite') }}
+        </UButton>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -145,6 +281,14 @@ const sortedMembers = computed(() => {
       />
       <p>{{ t('teams.noMembersFound') }}</p>
     </div>
+
+    <!-- Members Table -->
+    <UTable
+      v-else-if="layout === 'table'"
+      :data="sortedMembers"
+      :columns="columns"
+      class="flex-1"
+    />
 
     <!-- Members Grid -->
     <div
