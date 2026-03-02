@@ -28,7 +28,6 @@ export type BlockType =
   | 'fileBlock'
   | 'buttonRowBlock'
   | 'statsBlock'
-  | 'liquidGlassBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -210,7 +209,6 @@ export type BlockAttrs =
   | FileBlockAttrs
   | ButtonRowBlockAttrs
   | StatsBlockAttrs
-  | LiquidGlassBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -393,24 +391,12 @@ export interface StatsBlockAttrs {
   columns?: 2 | 3 | 4
 }
 
-export interface LiquidGlassBlockAttrs {
-  title: string
-  description?: string
-  icon?: string
-  frost?: number
-  radius?: number
-}
-
 export interface ButtonRowBlock extends PageBlock<ButtonRowBlockAttrs> {
   type: 'buttonRowBlock'
 }
 
 export interface StatsBlock extends PageBlock<StatsBlockAttrs> {
   type: 'statsBlock'
-}
-
-export interface LiquidGlassBlock extends PageBlock<LiquidGlassBlockAttrs> {
-  type: 'liquidGlassBlock'
 }
 
 // ============================================================================
