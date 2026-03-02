@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
   // Build where conditions
   const conditions = [
     eq(bookingsBookings.location, locationId),
-    eq(bookingsBookings.status, 'active'),
+    ne(bookingsBookings.status, 'cancelled'),
     gte(bookingsBookings.date, startDate),
     lte(bookingsBookings.date, endDate),
   ]
