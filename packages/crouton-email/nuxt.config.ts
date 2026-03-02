@@ -72,6 +72,7 @@ export default defineNuxtConfig({
 
   // Nitro server config
   nitro: {
+    scanDirs: ['./server'],
     imports: {
       dirs: ['server/utils']
     },
