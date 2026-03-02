@@ -44,13 +44,25 @@ withDefaults(defineProps<Props>(), {
         :style="{
           backgroundColor: '#ffffff',
           margin: '40px auto',
-          padding: '20px 0 48px',
+          padding: '0',
           borderRadius: '8px',
-          maxWidth: '600px'
+          maxWidth: '600px',
+          border: '1px solid #e6ebf1',
+          overflow: 'hidden'
         }"
       >
+        <!-- Top accent bar -->
+        <ESection
+          :style="{
+            height: '4px',
+            backgroundColor: primaryColor,
+            margin: '0',
+            padding: '0'
+          }"
+        />
+
         <!-- Header -->
-        <ESection :style="{ padding: '0 48px' }">
+        <ESection :style="{ padding: '32px 48px 0' }">
           <EImg
             v-if="logoUrl"
             :src="logoUrl"
@@ -79,11 +91,11 @@ withDefaults(defineProps<Props>(), {
         </ESection>
 
         <!-- Footer -->
-        <ESection :style="{ padding: '0 48px' }">
+        <ESection :style="{ padding: '0 48px 32px' }">
           <EHr
             :style="{
               borderColor: '#e6ebf1',
-              margin: '32px 0'
+              margin: '32px 0 24px'
             }"
           />
           <EText
@@ -95,25 +107,22 @@ withDefaults(defineProps<Props>(), {
             }"
           >
             {{ brandName }}
-            <template v-if="appUrl">
-              &bull;
-              <a
-                :href="appUrl"
-                :style="{ color: '#8898aa', textDecoration: 'underline' }"
-              >
-                {{ appUrl.replace(/^https?:\/\//, '') }}
-              </a>
-            </template>
           </EText>
           <EText
+            v-if="appUrl"
             :style="{
               fontSize: '12px',
-              color: '#8898aa',
+              color: '#b0b8c4',
               textAlign: 'center',
-              margin: '8px 0 0'
+              margin: '4px 0 0'
             }"
           >
-            You received this email because you have an account with us.
+            <a
+              :href="appUrl"
+              :style="{ color: '#b0b8c4', textDecoration: 'none' }"
+            >
+              {{ appUrl.replace(/^https?:\/\//, '') }}
+            </a>
           </EText>
         </ESection>
       </EContainer>

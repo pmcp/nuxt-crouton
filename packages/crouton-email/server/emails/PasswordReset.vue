@@ -110,7 +110,7 @@ withDefaults(defineProps<Props>(), {
 
     <ESection
       :style="{
-        backgroundColor: '#fef3c7',
+        backgroundColor: '#f4f4f5',
         borderRadius: '6px',
         padding: '16px',
         margin: '0 0 16px'
@@ -120,7 +120,7 @@ withDefaults(defineProps<Props>(), {
         :style="{
           fontSize: '14px',
           lineHeight: '20px',
-          color: '#92400e',
+          color: '#525f7f',
           margin: '0'
         }"
       >

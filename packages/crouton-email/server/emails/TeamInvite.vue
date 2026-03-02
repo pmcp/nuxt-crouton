@@ -50,15 +50,35 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
         fontSize: '16px',
         lineHeight: '24px',
         color: '#525f7f',
-        margin: '0 0 24px'
+        margin: '0 0 8px'
       }"
     >
       <strong>{{ inviterName }}</strong> has invited you to join
-      <strong>{{ teamName }}</strong>
+    </EText>
+
+    <EText
+      :style="{
+        fontSize: '22px',
+        fontWeight: '700',
+        color: '#1a1a2e',
+        margin: '0 0 8px'
+      }"
+    >
+      {{ teamName }}
+    </EText>
+
+    <EText
+      :style="{
+        fontSize: '14px',
+        lineHeight: '20px',
+        color: '#8898aa',
+        margin: '0 0 24px'
+      }"
+    >
       <template v-if="role && role !== 'member'">
-        as {{ role === 'admin' ? 'an' : 'a' }} <strong>{{ role }}</strong>
+        as {{ role === 'admin' ? 'an' : 'a' }} {{ role }} &middot;
       </template>
-      on {{ brandName }}.
+      on {{ brandName }}
     </EText>
 
     <ESection :style="{ textAlign: 'center', margin: '0 0 24px' }">
