@@ -13,6 +13,7 @@
  * - Server: event.context.team (via server middleware)
  */
 import { useAuthClientSafe } from '../../types/auth-client'
+import { mapOrganizationToTeam } from '../../shared/utils/auth'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const config = useAuthConfig()
@@ -116,6 +117,8 @@ async function resolveTeamContext(
   const urlTeamParam = to.params.team as string | undefined
 
   // Ensure teams are loaded - fetch from API if nanostore is empty
+  // Also populate the fallback state so the team switcher can show all teams
+  const fallbackTeams = useState<Array<{ id: string; slug: string; name: string }>>('crouton-auth-fallback-teams', () => [])
   let userTeams: Array<{ id: string; slug: string; name: string }> = teams.value
   if (userTeams.length === 0) {
     if (import.meta.server) {
@@ -128,6 +131,7 @@ async function resolveTeamContext(
         }).catch(() => null)
         if (orgs && orgs.length > 0) {
           userTeams = orgs
+          fallbackTeams.value = orgs.map(mapOrganizationToTeam)
         }
       } catch (e) {
         console.error('[@crouton/auth] Failed to fetch teams server-side:', e)
@@ -139,6 +143,7 @@ async function resolveTeamContext(
           const result = await authClient.organization.list()
           if (result.data && result.data.length > 0) {
             userTeams = result.data
+            fallbackTeams.value = result.data.map(mapOrganizationToTeam)
           }
         }
       } catch (e) {
