@@ -12,11 +12,11 @@ Refactor `packages/crouton-email` to replace the Resend SDK with a multi-driver 
 
 | Layer | Status |
 |---|---|
-| Vue Email templates (`server/emails/*.vue`) — 5 templates: Verification, MagicLink, PasswordReset, TeamInvite, Welcome | ✅ No change |
+| Vue Email templates (`server/emails/*.vue`) — 6 templates: Verification, VerificationLink, MagicLink, PasswordReset, TeamInvite, Welcome | ✅ No change |
 | Client components (`EmailVerificationFlow`, `MagicLinkSent`, `ResendButton`, `EmailInput`) | ✅ No change |
-| Convenience senders in `server/utils/senders.ts` (`sendVerificationEmail`, `sendMagicLink`, `sendPasswordReset`, `sendTeamInvite`, `sendWelcome`) | ✅ No change |
+| Convenience senders in `server/utils/senders.ts` (`sendVerificationEmail`, `sendVerificationLink`, `sendMagicLink`, `sendPasswordReset`, `sendTeamInvite`, `sendWelcome`) | ✅ No change |
 | Template renderer (`server/utils/template-renderer.ts`) — `renderEmailTemplate()`, `getEmailBrandConfig()` | ✅ No change |
-| `@crouton/auth` integration — imports via `#crouton-email/server/utils/senders` layer alias | ✅ No change |
+| `@crouton/auth` integration — emits `crouton:auth:email` Nitro hooks, listened by `server/plugins/auth-email-listener.ts` | ✅ No change |
 | `crouton-bookings` integration — wraps `useEmailService()` via `getBookingEmailService()` + `CustomEmailProvider` | ✅ No change (auto-benefits) |
 | `SendEmailResult` return type (`{ success, id?, error? }`) | ✅ Preserved exactly |
 
@@ -684,7 +684,7 @@ runtimeConfig: {
 
 | Package | Integration Point | Impact |
 |---|---|---|
-| `crouton-auth` | Imports `#crouton-email/server/utils/senders` | None — senders unchanged |
+| `crouton-auth` | Emits `crouton:auth:email` Nitro hooks → `auth-email-listener.ts` dispatches to senders | None — senders unchanged |
 | `crouton-bookings` | `getBookingEmailService()` → `useEmailService().send()` | None — SendEmailResult preserved |
 | `crouton-bookings` | `CustomEmailProvider` / `registerEmailProvider()` | None — independent abstraction |
 | `crouton-triage` | `fetchResendEmail()` via raw `fetch()` to Resend receiving API | None — separate concern (inbound, not outbound) |
