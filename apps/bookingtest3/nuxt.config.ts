@@ -38,6 +38,15 @@ export default defineNuxtConfig({
       email: { enabled: true }
     },
     public: {
+      crouton: {
+        email: {
+          brand: {
+            name: 'Velotheek',
+            primaryColor: '#0F766E',
+            url: 'http://localhost:3000'
+          }
+        }
+      },
       croutonBookings: {
         email: { enabled: true }
       }
