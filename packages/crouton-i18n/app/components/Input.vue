@@ -92,6 +92,7 @@ const {
   fieldComponentMap,
   getFieldComponent,
   isBlockEditorField,
+  isRichTextField,
   getFieldValue,
   updateFieldValue,
   isLocaleComplete,
@@ -153,6 +154,16 @@ const {
   updateFieldValue,
   isBlockEditorField,
 )
+
+// Strip HTML tags for rich text field previews
+function previewText(field: string, locale: string): string {
+  const raw = getFieldValue(field, locale)
+  if (!raw) return ''
+  if (isRichTextField(field)) {
+    return raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  }
+  return raw
+}
 </script>
 
 <template>
@@ -1070,10 +1081,10 @@ const {
                 {{ findBestSourceLocale(field, editingLocale)?.toUpperCase() }} version available
               </p>
             </template>
-            <!-- For text fields, show the actual text -->
+            <!-- For text fields, show the actual text (strip HTML for rich text fields) -->
             <template v-else>
-              <p class="text-xs text-gray-500">
-                {{ findBestSourceLocale(field, editingLocale)?.toUpperCase() }}: {{ getFieldValue(field, findBestSourceLocale(field, editingLocale) || 'en') }}
+              <p class="text-xs text-gray-500 line-clamp-2">
+                {{ findBestSourceLocale(field, editingLocale)?.toUpperCase() }}: {{ previewText(field, findBestSourceLocale(field, editingLocale) || 'en') }}
               </p>
             </template>
             <!-- AI Translate button - uses stub (renders nothing) if crouton-ai not extended -->
@@ -1128,8 +1139,8 @@ const {
           v-if="hasSourceContent('', editingLocale)"
           class="flex items-center gap-2 mt-1"
         >
-          <p class="text-xs text-gray-500">
-            {{ findBestSourceLocale('', editingLocale)?.toUpperCase() }}: {{ getFieldValue('', findBestSourceLocale('', editingLocale) || 'en') }}
+          <p class="text-xs text-gray-500 line-clamp-2">
+            {{ findBestSourceLocale('', editingLocale)?.toUpperCase() }}: {{ previewText('', findBestSourceLocale('', editingLocale) || 'en') }}
           </p>
           <!-- AI Translate button - uses stub (renders nothing) if crouton-ai not extended -->
           <AITranslateButton

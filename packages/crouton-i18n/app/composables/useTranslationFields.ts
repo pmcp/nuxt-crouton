@@ -62,6 +62,12 @@ export function useTranslationFields(
     )
   }
 
+  // Check if a field uses a rich text editor (content is HTML)
+  function isRichTextField(field: string): boolean {
+    const component = getFieldComponent(field)
+    return component === 'CroutonEditorSimple'
+  }
+
   // Get value for a specific field and locale
   function getFieldValue(field: string, localeCode: string): string {
     if (!modelValue.value) return ''
@@ -149,6 +155,7 @@ export function useTranslationFields(
     fieldComponentMap,
     getFieldComponent,
     isBlockEditorField,
+    isRichTextField,
     getFieldValue,
     updateFieldValue,
     isLocaleComplete,
