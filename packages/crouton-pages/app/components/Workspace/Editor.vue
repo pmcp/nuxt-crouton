@@ -683,25 +683,10 @@ async function handleSubmit() {
   }
 }
 
-// Delete handler — two-click confirm pattern
-const confirmingDelete = ref(false)
-let deleteResetTimer: ReturnType<typeof setTimeout> | null = null
-
+// Delete handler — confirmation is handled by CroutonConfirmButton in Toolbar
 function handleDelete() {
   if (!state.value.id) return
-
-  if (!confirmingDelete.value) {
-    confirmingDelete.value = true
-    deleteResetTimer = setTimeout(() => {
-      confirmingDelete.value = false
-    }, 3000)
-    return
-  }
-
-  // Second click — actually delete
   const id = state.value.id
-  if (deleteResetTimer) clearTimeout(deleteResetTimer)
-  confirmingDelete.value = false
   deleteItems([id]).then(() => {
     emit('delete', id)
   })
@@ -871,7 +856,6 @@ defineExpose({ state })
         :show-in-navigation="state.showInNavigation"
         :layout="state.layout"
         :parent-id="state.parentId"
-        :confirming-delete="confirmingDelete"
         :selected-page-type="selectedPageType"
         :page-type-dropdown-items="pageTypeDropdownItems"
         :status-config="statusConfig"
@@ -892,7 +876,6 @@ defineExpose({ state })
         @update:show-in-navigation="state.showInNavigation = $event"
         @update:layout="state.layout = $event"
         @update:parent-id="state.parentId = $event"
-        @update:confirming-delete="confirmingDelete = $event"
         @show-ai-generator="showAiGenerator = true"
         @show-preview="showPreview = true"
         @layout-change="onLayoutChange"

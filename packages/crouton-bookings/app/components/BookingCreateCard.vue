@@ -101,7 +101,6 @@ const isUpdating = ref(false)
 
 // Track if we're cancelling the booking
 const isCancelling = ref(false)
-const confirmingCancel = ref(false)
 
 // Track if we're in initial edit mode setup (to prevent clearing slot)
 const isInitialEditSetup = ref(!!props.booking)
@@ -263,22 +262,11 @@ function isLocationEnabled(locationId: string): boolean {
 // Handle cancel - clear editing state
 function handleCancel() {
   formState.editingBookingId = null
-  confirmingCancel.value = false
   emit('cancel')
 }
 
-// Handle cancel booking — two-click inline confirm (like triage delete)
-function confirmCancelBooking() {
-  if (confirmingCancel.value) {
-    // Second click — actually cancel
-    doCancelBooking()
-  } else {
-    // First click — show "sure?" state
-    confirmingCancel.value = true
-  }
-}
-
-async function doCancelBooking() {
+// Handle cancel booking
+async function cancelBooking() {
   if (!props.booking || !teamId.value) return
 
   isCancelling.value = true
@@ -290,7 +278,6 @@ async function doCancelBooking() {
       },
     })
     formState.editingBookingId = null
-    confirmingCancel.value = false
     emit('cancelled')
   } catch (error) {
     console.error('Failed to cancel booking:', error)
@@ -436,25 +423,14 @@ const isAlreadyCancelled = computed(() => props.booking?.status === 'cancelled')
           <!-- Actions -->
           <div class="flex items-center justify-end gap-2 mt-auto">
             <!-- Cancel booking (two-click confirm) -->
-            <button
+            <CroutonConfirmButton
               v-if="isEditMode && !isAlreadyCancelled"
-              class="h-7 rounded-md flex items-center gap-1.5 justify-center shrink-0 transition-all cursor-pointer"
-              :class="[
-                confirmingCancel
-                  ? 'bg-red-500/20 text-red-500 px-2.5'
-                  : 'px-2.5 text-red-400/60 hover:bg-red-500/20 hover:text-red-500'
-              ]"
-              @click.stop="confirmCancelBooking"
-            >
-              <UIcon v-if="isCancelling && confirmingCancel" name="i-lucide-loader-2" class="size-3.5 animate-spin" />
-              <template v-else-if="confirmingCancel">
-                <span class="text-xs font-medium whitespace-nowrap">{{ t('bookings.createCard.sure') }}</span>
-              </template>
-              <template v-else>
-                <UIcon name="i-lucide-x-circle" class="size-3.5" />
-                <span class="text-xs font-medium">{{ t('bookings.createCard.cancel') }}</span>
-              </template>
-            </button>
+              :label="t('bookings.createCard.cancel')"
+              :confirm-label="t('bookings.createCard.sure')"
+              icon="i-lucide-x-circle"
+              :loading="isCancelling"
+              @confirm="cancelBooking"
+            />
 
             <UButton
               color="primary"

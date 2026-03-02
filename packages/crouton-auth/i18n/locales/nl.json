@@ -34,7 +34,9 @@
     "name": "Naam",
     "email": "E-mail",
     "role": "Rol",
-    "actions": "Acties"
+    "actions": "Acties",
+    "remove": "Verwijderen",
+    "sure": "Zeker?"
   },
   "account": {
     "passkey": {

@@ -134,9 +134,12 @@ export function useTeam() {
   // Also get activeOrgRaw which includes members array for role checking
   const { activeOrganization: sessionActiveOrg, activeOrgRaw } = useSession()
 
-  // For organizations list, still use the atom but with fallback
+  // For organizations list, use atom with API fallback
   const organizationsAtom = authClient?.useListOrganizations
   const organizationsData = computed(() => organizationsAtom?.value?.data ?? null)
+
+  // Fallback: fetch teams via API when nanostore atom doesn't auto-populate
+  const fallbackTeams = useState<Team[]>('crouton-auth-fallback-teams', () => [])
 
   // Use session's active org instead of nanostore (which doesn't auto-populate)
   const activeOrgData = computed(() => sessionActiveOrg.value)
@@ -150,11 +153,26 @@ export function useTeam() {
   // activeOrgData is already a Team type from useSession
   const currentTeam = computed<Team | null>(() => activeOrgData.value)
 
-  // Computed: all user's teams
+  // Computed: all user's teams (atom first, then fallback)
   const teams = computed<Team[]>(() => {
-    if (!organizationsData.value) return []
-    return organizationsData.value.map(mapOrganizationToTeam)
+    if (organizationsData.value && organizationsData.value.length > 0) {
+      return organizationsData.value.map(mapOrganizationToTeam)
+    }
+    return fallbackTeams.value
   })
+
+  // Fetch teams via API as fallback when nanostore atom stays pending
+  async function refreshTeams(): Promise<void> {
+    if (!import.meta.client) return
+    try {
+      const result = await authClient?.organization?.list?.()
+      if (result?.data && result.data.length > 0) {
+        fallbackTeams.value = result.data.map(mapOrganizationToTeam)
+      }
+    } catch {
+      // Silently fail — teams just won't be shown in switcher
+    }
+  }
 
   // Computed: team members (loaded separately)
   const members = computed(() => membersData.value)
@@ -437,7 +455,7 @@ export function useTeam() {
   /**
    * Remove a member from the current team
    */
-  async function removeMember(userId: string): Promise<void> {
+  async function removeMember(memberIdOrEmail: string): Promise<void> {
     loading.value = true
     error.value = null
     try {
@@ -451,7 +469,7 @@ export function useTeam() {
 
       const result = await authClient.organization.removeMember({
         organizationId: currentTeam.value.id,
-        memberIdOrEmail: userId
+        memberIdOrEmail
       })
 
       if (result.error) {
@@ -664,6 +682,7 @@ export function useTeam() {
     createTeam,
     updateTeam,
     deleteTeam,
+    refreshTeams,
 
     // Member methods
     loadMembers,

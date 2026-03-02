@@ -83,12 +83,8 @@ async function handleRoleChange(memberId: string, role: MemberRole) {
 async function handleRemove(memberId: string) {
   loadingMemberId.value = memberId
   try {
-    // Find member by ID to get userId
-    const member = members.value.find(m => m.id === memberId)
-    if (member) {
-      await removeMember(member.userId)
-      notify.success(t('teams.memberRemoved'), { description: t('teams.memberRemovedDescription') })
-    }
+    await removeMember(memberId)
+    notify.success(t('teams.memberRemoved'), { description: t('teams.memberRemovedDescription') })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('teams.failedToRemoveMember')
     notify.error(t('errors.generic'), { description: message })
@@ -196,13 +192,12 @@ const columns = computed<TableColumn<MemberRow>[]>(() => {
         }
 
         if (canRemove) {
-          children.push(h(UButton, {
+          children.push(h(resolveComponent('CroutonConfirmButton'), {
+            label: t('teams.remove'),
+            confirmLabel: t('teams.sure'),
             icon: 'i-lucide-user-x',
-            variant: 'ghost',
-            color: 'error',
-            size: 'sm',
             loading: loadingMemberId.value === member.id,
-            onClick: () => handleRemove(member.id)
+            onConfirm: () => handleRemove(member.id)
           }))
         }
 
@@ -345,14 +340,13 @@ const columns = computed<TableColumn<MemberRow>[]>(() => {
             @update:model-value="(role: MemberRole) => handleRoleChange(member.id, role)"
           />
 
-          <UButton
+          <CroutonConfirmButton
             v-if="canManageMembers && member.userId !== user?.id && member.role !== 'owner'"
+            :label="t('teams.remove')"
+            :confirm-label="t('teams.sure')"
             icon="i-lucide-user-x"
-            variant="ghost"
-            color="error"
-            size="sm"
             :loading="loadingMemberId === member.id"
-            @click="handleRemove(member.id)"
+            @confirm="handleRemove(member.id)"
           />
 
           <!-- Show placeholder if no actions available -->

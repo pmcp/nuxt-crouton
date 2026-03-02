@@ -34,7 +34,9 @@
     "name": "Nom",
     "email": "E-mail",
     "role": "Rôle",
-    "actions": "Actions"
+    "actions": "Actions",
+    "remove": "Retirer",
+    "sure": "Sûr ?"
   },
   "account": {
     "passkey": {

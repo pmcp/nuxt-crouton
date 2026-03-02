@@ -13,7 +13,6 @@
  *   v-model:show-in-navigation="state.showInNavigation"
  *   v-model:layout="state.layout"
  *   v-model:parent-id="state.parentId"
- *   v-model:confirming-delete="confirmingDelete"
  *   :action="action"
  *   :selected-page-type="selectedPageType"
  *   :page-type-dropdown-items="pageTypeDropdownItems"
@@ -83,8 +82,6 @@ interface Props {
   layout: string
   /** Current parent page ID */
   parentId: string | null
-  /** Whether delete is in confirm state */
-  confirmingDelete: boolean
   /** The resolved page type object */
   selectedPageType?: PageTypeInfo | null
   /** Dropdown items for page type selector */
@@ -131,7 +128,6 @@ const emit = defineEmits<{
   'update:showInNavigation': [value: boolean]
   'update:layout': [value: string]
   'update:parentId': [value: string | null]
-  'update:confirmingDelete': [value: boolean]
   'show-ai-generator': []
   'show-preview': []
   'layout-change': []
@@ -379,17 +375,13 @@ const { t } = useT()
       </UButton>
 
       <!-- Delete (two-click confirm, edit mode) -->
-      <UButton
+      <CroutonConfirmButton
         v-if="action === 'update' && pageId"
-        color="error"
-        :variant="confirmingDelete ? 'soft' : 'ghost'"
-        :icon="confirmingDelete ? undefined : 'i-lucide-trash-2'"
-        size="xs"
-        @click="emit('delete')"
-        @blur="emit('update:confirmingDelete', false)"
-      >
-        <template v-if="confirmingDelete">{{ t('pages.editor.confirmDelete') }}</template>
-      </UButton>
+        :label="t('common.delete')"
+        :confirm-label="t('pages.editor.confirmDelete')"
+        icon="i-lucide-trash-2"
+        @confirm="emit('delete')"
+      />
 
       <!-- Save -->
       <UButton
