@@ -1,6 +1,11 @@
 export default defineNuxtConfig({
+  modules: ['@fyit/crouton'],
+
+  css: ['~/assets/css/main.css'],
+
   extends: [
-    '@fyit/crouton',
+    '@fyit/crouton-core',
+    '@fyit/crouton-i18n',
     '@fyit/crouton-collab',
     '@fyit/crouton-atelier'
   ],

@@ -3,11 +3,13 @@ definePageMeta({
   middleware: ['auth']
 })
 
-// Redirect to team-scoped atelier
+// Redirect to team-scoped atelier or onboarding
 const { teamSlug } = useTeamContext()
 
 if (teamSlug.value) {
-  navigateTo(`/admin/${teamSlug.value}/atelier`)
+  await navigateTo(`/admin/${teamSlug.value}/atelier`, { replace: true })
+} else {
+  await navigateTo('/onboarding/create-team', { replace: true })
 }
 </script>
 
