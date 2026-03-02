@@ -48,12 +48,34 @@ export interface CroutonTargetConfig {
  * Unified crouton.config.js configuration
  * Single source of truth for both CLI generation and runtime features
  */
+/**
+ * Locale definition — either a simple code string or a full locale object
+ */
+export interface CroutonLocaleObject {
+  code: string
+  name?: string
+  file?: string
+}
+
 export interface CroutonConfig {
   /**
    * Feature flags for runtime (which packages to enable)
    * Used by 'crouton config' CLI command and the module
    */
   features?: CroutonOptions
+
+  /**
+   * Supported locales for i18n
+   * Accepts ISO codes (e.g. 'en') or objects with code/name/file.
+   * @default ['en']
+   */
+  locales?: (string | CroutonLocaleObject)[]
+
+  /**
+   * Default locale code
+   * @default 'en'
+   */
+  defaultLocale?: string
 
   /**
    * Collections to generate (used by CLI)

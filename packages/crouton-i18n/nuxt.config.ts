@@ -1,13 +1,17 @@
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
+import { getCroutonLocales, getCroutonDefaultLocale } from '@fyit/crouton'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
+const croutonLocales = getCroutonLocales()
+const croutonDefaultLocale = getCroutonDefaultLocale()
 
 // Development startup log (deduplicated across layer resolution)
 const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-i18n')) {
   _dependencies.add('crouton-i18n')
-  console.log('🍞 crouton:i18n ✓ Layer loaded (locales: en, nl, fr)')
+  console.log(`🍞 crouton:i18n ✓ Layer loaded (locales: ${croutonLocales.map(l => l.code).join(', ')})`)
 }
 
 export default defineNuxtConfig({
@@ -57,18 +61,14 @@ export default defineNuxtConfig({
     dirs: [join(currentDir, 'app/composables')]
   },
 
-  // i18n configuration
+  // i18n configuration — locales driven by crouton.config.js
   i18n: {
     bundle: {
       optimizeTranslationDirective: false
     },
-    locales: [
-      { code: 'en', name: 'English', file: 'en.json' },
-      { code: 'nl', name: 'Nederlands', file: 'nl.json' },
-      { code: 'fr', name: 'Français', file: 'fr.json' }
-    ],
+    locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })),
     langDir: '../locales', // Relative to srcDir (app/)
-    defaultLocale: 'en',
+    defaultLocale: croutonDefaultLocale,
     strategy: 'no_prefix', // Team routes handle locale manually: /team/en/page, /team/fr/page
     // Disable automatic redirects - we handle locale in public page routes only
     detectBrowserLanguage: false

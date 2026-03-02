@@ -5,8 +5,10 @@ import path from 'node:path'
 import { toCase } from './helpers.ts'
 import { fileExists } from '@fyit/crouton-core/shared/utils/fs'
 
+const DEFAULT_LOCALE_CODES = ['en']
+
 // Update or create layer root nuxt.config.ts
-export async function updateLayerRootConfig(layer: string, collectionName: string, hasTranslations: boolean = false): Promise<void> {
+export async function updateLayerRootConfig(layer: string, collectionName: string, hasTranslations: boolean = false, localeCodes: string[] = DEFAULT_LOCALE_CODES): Promise<void> {
   const cases = toCase(collectionName)
   const layerPath = path.resolve('layers', layer)
   const configPath = path.join(layerPath, 'nuxt.config.ts')
@@ -24,13 +26,12 @@ export async function updateLayerRootConfig(layer: string, collectionName: strin
       console.log(`↻ Creating ${layer} layer root nuxt.config.ts`)
 
       // Include i18n config if translations are enabled
+      const localeEntries = localeCodes.map(c => `      { code: '${c}', file: '${c}.json' }`).join(',\n')
       const i18nBlock = hasTranslations
         ? `,
   i18n: {
     locales: [
-      { code: 'en', file: 'en.json' },
-      { code: 'nl', file: 'nl.json' },
-      { code: 'fr', file: 'fr.json' }
+${localeEntries}
     ],
     langDir: './locales'
   }`
@@ -94,7 +95,7 @@ export default defineNuxtConfig({
 
       // Add i18n config block when translations are enabled and not already present
       if (hasTranslations && !config.includes('i18n:')) {
-        config = await addI18nConfigToLayer(configPath, config)
+        config = await addI18nConfigToLayer(configPath, config, localeCodes)
         needsUpdate = true
       }
 
@@ -109,7 +110,7 @@ export default defineNuxtConfig({
       if (hasTranslations || config.includes('i18n:')) {
         const i18nLocalesPath = path.join(layerPath, 'i18n', 'locales')
         await fsp.mkdir(i18nLocalesPath, { recursive: true })
-        for (const locale of ['en', 'nl', 'fr']) {
+        for (const locale of localeCodes) {
           const localePath = path.join(i18nLocalesPath, `${locale}.json`)
           try {
             await fsp.access(localePath)
@@ -127,7 +128,7 @@ export default defineNuxtConfig({
 }
 
 // Setup i18n folder structure and locale files for a layer
-export async function setupLayerI18n(layer: string, collectionName: string): Promise<boolean> {
+export async function setupLayerI18n(layer: string, collectionName: string, localeCodes: string[] = DEFAULT_LOCALE_CODES): Promise<boolean> {
   const layerPath = path.resolve('layers', layer)
   const i18nPath = path.join(layerPath, 'i18n', 'locales')
   const cases = toCase(collectionName)
@@ -137,7 +138,7 @@ export async function setupLayerI18n(layer: string, collectionName: string): Pro
     await fsp.mkdir(i18nPath, { recursive: true })
 
     // Generate locale files with collection translations template
-    const locales = ['en', 'nl', 'fr']
+    const locales = localeCodes
 
     for (const locale of locales) {
       const localePath = path.join(i18nPath, `${locale}.json`)
@@ -179,19 +180,18 @@ export async function setupLayerI18n(layer: string, collectionName: string): Pro
 }
 
 // Add i18n config block to an existing nuxt.config.ts
-export async function addI18nConfigToLayer(configPath: string, config: string): Promise<string> {
+export async function addI18nConfigToLayer(configPath: string, config: string, localeCodes: string[] = DEFAULT_LOCALE_CODES): Promise<string> {
   // Check if i18n config already exists
   if (config.includes('i18n:')) {
     return config // Already has i18n config
   }
 
   // Find the closing of defineNuxtConfig and add i18n before it
+  const localeEntries = localeCodes.map(c => `      { code: '${c}', file: '${c}.json' }`).join(',\n')
   const i18nConfig = `
   i18n: {
     locales: [
-      { code: 'en', file: 'en.json' },
-      { code: 'nl', file: 'nl.json' },
-      { code: 'fr', file: 'fr.json' }
+${localeEntries}
     ],
     langDir: './locales'
   }`
@@ -217,7 +217,7 @@ export async function addI18nConfigToLayer(configPath: string, config: string): 
   const layerDir = path.dirname(configPath)
   const localesDir = path.join(layerDir, 'i18n', 'locales')
   await fsp.mkdir(localesDir, { recursive: true })
-  for (const locale of ['en', 'nl', 'fr']) {
+  for (const locale of localeCodes) {
     const localePath = path.join(localesDir, `${locale}.json`)
     if (!await fileExists(localePath)) {
       await fsp.writeFile(localePath, '{}', 'utf-8')

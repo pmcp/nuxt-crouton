@@ -27,11 +27,11 @@ export function useLocaleLayout(
     'en',
   )
 
-  // Right column locale — for side-by-side
+  // Right column locale — for side-by-side (falls back to second available locale)
   const secondaryEditingLocale = ref(
     secondaryLocaleProp.value ||
     allLocaleCodes.value.find(code => code !== primaryEditingLocale.value) ||
-    'nl',
+    allLocaleCodes.value[1] || 'en',
   )
 
   // Locale options for dropdowns

@@ -34,99 +34,65 @@ withDefaults(defineProps<Props>(), {
   >
     <EText
       :style="{
-        fontSize: '16px',
+        fontSize: '14px',
         lineHeight: '24px',
-        color: '#525f7f',
-        margin: '0 0 16px'
-      }"
-    >
-      Hi{{ name ? ` ${name}` : '' }},
-    </EText>
-
-    <EText
-      :style="{
-        fontSize: '16px',
-        lineHeight: '24px',
-        color: '#525f7f',
+        color: '#0a0a0a',
         margin: '0 0 24px'
       }"
     >
-      We received a request to reset your password. Click the button below
-      to choose a new password:
+      Hi{{ name ? ` ${name}` : '' }},<br><br>
+      Someone requested a password reset for your account.
+      Click the link below to choose a new password.
     </EText>
 
-    <ESection :style="{ textAlign: 'center', margin: '0 0 24px' }">
+    <ESection :style="{ margin: '0 0 24px' }">
       <EButton
         :href="link"
         :style="{
-          backgroundColor: primaryColor,
-          borderRadius: '6px',
+          backgroundColor: '#0a0a0a',
+          borderRadius: '4px',
           color: '#ffffff',
-          fontSize: '16px',
-          fontWeight: '600',
+          fontSize: '14px',
+          fontWeight: '500',
           textDecoration: 'none',
           textAlign: 'center',
           display: 'inline-block',
-          padding: '12px 24px'
+          padding: '10px 20px'
         }"
       >
-        Reset Password
+        Reset password
       </EButton>
     </ESection>
 
     <EText
       :style="{
         fontSize: '14px',
-        lineHeight: '20px',
-        color: '#8898aa',
-        margin: '0 0 16px'
+        lineHeight: '24px',
+        color: '#0a0a0a',
+        margin: '0 0 24px'
       }"
     >
-      This link will expire in {{ expiryMinutes }} minutes.
-    </EText>
-
-    <EText
-      :style="{
-        fontSize: '14px',
-        lineHeight: '20px',
-        color: '#8898aa',
-        margin: '0 0 16px'
-      }"
-    >
-      If the button doesn't work, copy and paste this link into your browser:
+      Or copy this URL into your browser:<br>
+      <a
+        :href="link"
+        :style="{
+          color: primaryColor,
+          textDecoration: 'none',
+          wordBreak: 'break-all'
+        }"
+      >{{ link }}</a>
     </EText>
 
     <EText
       :style="{
         fontSize: '12px',
-        lineHeight: '16px',
-        color: '#8898aa',
-        wordBreak: 'break-all',
-        margin: '0 0 24px'
+        lineHeight: '20px',
+        color: '#a3a3a3',
+        margin: '0'
       }"
     >
-      {{ link }}
+      This link expires in {{ expiryMinutes }} minutes. If you didn't
+      request this, you can safely ignore this email.
     </EText>
-
-    <ESection
-      :style="{
-        backgroundColor: '#f4f4f5',
-        borderRadius: '6px',
-        padding: '16px',
-        margin: '0 0 16px'
-      }"
-    >
-      <EText
-        :style="{
-          fontSize: '14px',
-          lineHeight: '20px',
-          color: '#525f7f',
-          margin: '0'
-        }"
-      >
-        <strong>Security tip:</strong> If you didn't request a password reset,
-        please ignore this email. Your password will not be changed.
-      </EText>
-    </ESection>
   </BaseLayout>
 </template>

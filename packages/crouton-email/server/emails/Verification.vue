@@ -34,31 +34,18 @@ withDefaults(defineProps<Props>(), {
   >
     <EText
       :style="{
-        fontSize: '16px',
+        fontSize: '14px',
         lineHeight: '24px',
-        color: '#525f7f',
-        margin: '0 0 16px'
-      }"
-    >
-      Hi{{ name ? ` ${name}` : '' }},
-    </EText>
-
-    <EText
-      :style="{
-        fontSize: '16px',
-        lineHeight: '24px',
-        color: '#525f7f',
+        color: '#0a0a0a',
         margin: '0 0 24px'
       }"
     >
-      Please use the following verification code to complete your request:
+      Hi{{ name ? ` ${name}` : '' }},<br><br>
+      Your verification code is below.
     </EText>
 
     <ESection
       :style="{
-        backgroundColor: '#f4f4f5',
-        borderRadius: '8px',
-        padding: '24px',
         textAlign: 'center',
         margin: '0 0 24px'
       }"
@@ -68,9 +55,9 @@ withDefaults(defineProps<Props>(), {
           fontSize: '32px',
           fontWeight: '700',
           letterSpacing: '4px',
-          color: primaryColor,
-          margin: '0',
-          fontFamily: 'monospace'
+          color: '#0a0a0a',
+          margin: '16px 0',
+          fontFamily: '\'SF Mono\', \'Fira Code\', \'Fira Mono\', \'Roboto Mono\', \'Courier New\', monospace'
         }"
       >
         {{ code }}
@@ -79,25 +66,14 @@ withDefaults(defineProps<Props>(), {
 
     <EText
       :style="{
-        fontSize: '14px',
+        fontSize: '12px',
         lineHeight: '20px',
-        color: '#8898aa',
-        margin: '0 0 16px'
-      }"
-    >
-      This code will expire in {{ expiryMinutes }} minutes.
-    </EText>
-
-    <EText
-      :style="{
-        fontSize: '14px',
-        lineHeight: '20px',
-        color: '#8898aa',
+        color: '#a3a3a3',
         margin: '0'
       }"
     >
-      If you didn't request this code, you can safely ignore this email.
-      Someone might have typed your email address by mistake.
+      This code expires in {{ expiryMinutes }} minutes. If you didn't
+      request this, you can safely ignore this email.
     </EText>
   </BaseLayout>
 </template>

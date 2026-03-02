@@ -1,9 +1,9 @@
 import { defineNuxtModule } from '@nuxt/kit'
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { resolve, join, dirname } from 'node:path'
-import type { CroutonOptions, CroutonConfig } from './types'
+import type { CroutonOptions, CroutonConfig, CroutonLocaleObject } from './types'
 
-export type { CroutonOptions, CroutonConfig }
+export type { CroutonOptions, CroutonConfig, CroutonLocaleObject }
 
 // ---------------------------------------------------------------------------
 // Manifest metadata scanner (sync, lightweight — no jiti needed)
@@ -189,6 +189,80 @@ export function getCroutonLayers(overrides?: Partial<CroutonOptions>): string[] 
   const features: CroutonOptions = { ...config?.features, ...overrides }
   const manifests = discoverManifestsMeta(process.cwd())
   return buildLayerList(features, manifests)
+}
+
+// ---------------------------------------------------------------------------
+// Exported: getCroutonLocales()
+// ---------------------------------------------------------------------------
+
+/** Well-known ISO 639-1 language names */
+const KNOWN_LOCALE_NAMES: Record<string, string> = {
+  en: 'English',
+  nl: 'Nederlands',
+  fr: 'Français',
+  de: 'Deutsch',
+  es: 'Español',
+  it: 'Italiano',
+  pt: 'Português',
+  ja: '日本語',
+  ko: '한국어',
+  zh: '中文',
+  ar: 'العربية',
+  ru: 'Русский',
+  pl: 'Polski',
+  tr: 'Türkçe',
+  sv: 'Svenska',
+  da: 'Dansk',
+  nb: 'Norsk Bokmål',
+  fi: 'Suomi',
+  cs: 'Čeština',
+  uk: 'Українська',
+}
+
+const DEFAULT_LOCALES: CroutonLocaleObject[] = [
+  { code: 'en', name: 'English', file: 'en.json' },
+]
+
+/**
+ * Resolve configured locales from `crouton.config.{js,ts}`.
+ *
+ * Normalizes string codes to `{ code, name, file }` objects using a
+ * well-known language name map. Defaults to `[en, nl, fr]` when no
+ * `locales` key is present in the config.
+ *
+ * @example
+ * import { getCroutonLocales } from '@fyit/crouton'
+ * const locales = getCroutonLocales()
+ * // → [{ code: 'en', name: 'English', file: 'en.json' }, ...]
+ */
+export function getCroutonLocales(): CroutonLocaleObject[] {
+  const config = loadCroutonConfig()
+  if (!config?.locales || config.locales.length === 0) {
+    return DEFAULT_LOCALES
+  }
+
+  return config.locales.map((entry) => {
+    if (typeof entry === 'string') {
+      return {
+        code: entry,
+        name: KNOWN_LOCALE_NAMES[entry] || entry.toUpperCase(),
+        file: `${entry}.json`,
+      }
+    }
+    return {
+      code: entry.code,
+      name: entry.name || KNOWN_LOCALE_NAMES[entry.code] || entry.code.toUpperCase(),
+      file: entry.file || `${entry.code}.json`,
+    }
+  })
+}
+
+/**
+ * Get the default locale code from config, falling back to 'en'.
+ */
+export function getCroutonDefaultLocale(): string {
+  const config = loadCroutonConfig()
+  return config?.defaultLocale || 'en'
 }
 
 // ---------------------------------------------------------------------------

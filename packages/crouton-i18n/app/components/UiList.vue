@@ -240,8 +240,11 @@ const columns = [
   { accessorKey: 'actions', header: '' }
 ]
 
-// Locales for override form
-const locales = ['en', 'nl', 'fr']
+// Locales for override form (derived from i18n config)
+const { locales: i18nLocales } = useI18n()
+const locales = computed(() =>
+  i18nLocales.value.map((l: any) => typeof l === 'string' ? l : l.code)
+)
 
 // Search and filter
 const search = ref('')

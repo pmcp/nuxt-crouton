@@ -248,9 +248,9 @@ export function useT() {
     const translated = entity?.translations?.[loc]?.[field]
     if (translated) return translated
 
-    // Try fallback locales
-    const fallbacks = ['en', 'nl', 'fr']
-    for (const fallbackLoc of fallbacks) {
+    // Try fallback locales (derived from i18n config)
+    const fallbackLocales = i18n?.locales?.value?.map((l: any) => typeof l === 'string' ? l : l.code) ?? ['en']
+    for (const fallbackLoc of fallbackLocales) {
       if (fallbackLoc === loc) continue // Skip the already tried locale
       const fallbackValue = entity?.translations?.[fallbackLoc]?.[field]
       if (fallbackValue) return fallbackValue
@@ -284,10 +284,9 @@ export function useT() {
   const getAvailableLocales = (key: string): string[] => {
     const availableLocales: string[] = []
 
-    // Check system translations (simplified - you'd need to implement this)
-    const systemLocales = ['en', 'nl', 'fr'] // Your supported locales
-    systemLocales.forEach((loc) => {
-      // For now, just assume it exists if not already in availableLocales
+    // Derive available locales from i18n config
+    const configuredLocales = i18n?.locales?.value?.map((l: any) => typeof l === 'string' ? l : l.code) ?? ['en']
+    configuredLocales.forEach((loc: string) => {
       if (!availableLocales.includes(loc)) {
         availableLocales.push(loc)
       }

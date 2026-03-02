@@ -48,6 +48,19 @@ export default {
   },
 
   // ============================================================
+  // LOCALES (i18n Languages)
+  // ============================================================
+  // Supported languages for your app. Used by the i18n layer,
+  // CLI generation (locale files), and the language switcher UI.
+  //
+  // Accepts ISO 639-1 codes ('en') or objects ({ code: 'en', name: 'English' }).
+  // Common language names are auto-resolved from codes.
+  //
+  // @default ['en']
+  // locales: ['en', 'de', 'es'],
+  // defaultLocale: 'en',
+
+  // ============================================================
   // DATABASE DIALECT
   // ============================================================
   // Required: 'pg' (PostgreSQL) or 'sqlite'

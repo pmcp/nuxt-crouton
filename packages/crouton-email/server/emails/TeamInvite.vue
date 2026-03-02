@@ -36,102 +36,67 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
   >
     <EText
       :style="{
-        fontSize: '16px',
-        lineHeight: '24px',
-        color: '#525f7f',
-        margin: '0 0 16px'
-      }"
-    >
-      Hello,
-    </EText>
-
-    <EText
-      :style="{
-        fontSize: '16px',
-        lineHeight: '24px',
-        color: '#525f7f',
-        margin: '0 0 8px'
-      }"
-    >
-      <strong>{{ inviterName }}</strong> has invited you to join
-    </EText>
-
-    <EText
-      :style="{
-        fontSize: '22px',
-        fontWeight: '700',
-        color: '#1a1a2e',
-        margin: '0 0 8px'
-      }"
-    >
-      {{ teamName }}
-    </EText>
-
-    <EText
-      :style="{
         fontSize: '14px',
-        lineHeight: '20px',
-        color: '#8898aa',
+        lineHeight: '24px',
+        color: '#0a0a0a',
         margin: '0 0 24px'
       }"
     >
+      <strong>{{ inviterName }}</strong> has invited you to join
+      <strong>{{ teamName }}</strong>
       <template v-if="role && role !== 'member'">
-        as {{ role === 'admin' ? 'an' : 'a' }} {{ role }} &middot;
+        as {{ role === 'admin' ? 'an' : 'a' }} <strong>{{ role }}</strong>
       </template>
-      on {{ brandName }}
+      on {{ brandName }}.
     </EText>
 
-    <ESection :style="{ textAlign: 'center', margin: '0 0 24px' }">
+    <ESection :style="{ margin: '0 0 24px' }">
       <EButton
         :href="link"
         :style="{
-          backgroundColor: primaryColor,
-          borderRadius: '6px',
+          backgroundColor: '#0a0a0a',
+          borderRadius: '4px',
           color: '#ffffff',
-          fontSize: '16px',
-          fontWeight: '600',
+          fontSize: '14px',
+          fontWeight: '500',
           textDecoration: 'none',
           textAlign: 'center',
           display: 'inline-block',
-          padding: '12px 24px'
+          padding: '10px 20px'
         }"
       >
-        Accept Invitation
+        Join {{ teamName }}
       </EButton>
     </ESection>
 
     <EText
       :style="{
         fontSize: '14px',
-        lineHeight: '20px',
-        color: '#8898aa',
-        margin: '0 0 16px'
+        lineHeight: '24px',
+        color: '#0a0a0a',
+        margin: '0 0 24px'
       }"
     >
-      If the button doesn't work, copy and paste this link into your browser:
+      Or copy this URL into your browser:<br>
+      <a
+        :href="link"
+        :style="{
+          color: primaryColor,
+          textDecoration: 'none',
+          wordBreak: 'break-all'
+        }"
+      >{{ link }}</a>
     </EText>
 
     <EText
       :style="{
         fontSize: '12px',
-        lineHeight: '16px',
-        color: '#8898aa',
-        wordBreak: 'break-all',
-        margin: '0 0 24px'
-      }"
-    >
-      {{ link }}
-    </EText>
-
-    <EText
-      :style="{
-        fontSize: '14px',
         lineHeight: '20px',
-        color: '#8898aa',
+        color: '#a3a3a3',
         margin: '0'
       }"
     >
-      If this invitation wasn't intended for you, you can safely ignore this email.
+      If you weren't expecting this invitation, you can safely ignore this email.
     </EText>
   </BaseLayout>
 </template>

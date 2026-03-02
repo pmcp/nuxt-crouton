@@ -11,13 +11,14 @@
 </template>
 
 <script setup lang="ts">
-const { locale, setLocale } = useI18n()
+const { locale, locales, setLocale } = useI18n()
 
-const localeItems = [
-  { code: 'en', label: 'EN' },
-  { code: 'nl', label: 'NL' },
-  { code: 'fr', label: 'FR' }
-]
+const localeItems = computed(() =>
+  locales.value.map((l: any) => {
+    const code = typeof l === 'string' ? l : l.code
+    return { code, label: code.toUpperCase() }
+  })
+)
 
 const handleLocaleChange = async (newLocale: string) => {
   await setLocale(newLocale)

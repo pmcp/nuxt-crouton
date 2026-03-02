@@ -12,6 +12,8 @@ interface ScaffoldRequest {
   config: {
     name: string
     packages?: string[]
+    languages?: string[]
+    defaultLocale?: string
   }
   schemas: Record<string, string>
   seedData?: Record<string, Array<Record<string, any>>>
@@ -164,7 +166,9 @@ export default defineEventHandler(async (event) => {
       schemas: body.schemas,
       seedData: body.seedData,
       packageCollections: body.packageCollections,
-      publishableCollections: body.publishableCollections
+      publishableCollections: body.publishableCollections,
+      locales: body.config.languages,
+      defaultLocale: body.config.defaultLocale,
     })
     await writeFile(join(appDir, 'crouton.config.js'), configContent, 'utf-8')
     steps.config = { success: true }

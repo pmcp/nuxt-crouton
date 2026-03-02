@@ -36,93 +36,66 @@ withDefaults(defineProps<Props>(), {
     </EPreview>
     <EBody
       :style="{
-        backgroundColor: '#f6f9fc',
-        fontFamily: '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif'
+        backgroundColor: '#ffffff',
+        fontFamily: '-apple-system, BlinkMacSystemFont, \'Segoe UI\', \'Roboto\', \'Oxygen\', \'Ubuntu\', \'Cantarell\', \'Fira Sans\', \'Droid Sans\', \'Helvetica Neue\', sans-serif'
       }"
     >
       <EContainer
         :style="{
-          backgroundColor: '#ffffff',
-          margin: '40px auto',
-          padding: '0',
-          borderRadius: '8px',
-          maxWidth: '600px',
-          border: '1px solid #e6ebf1',
-          overflow: 'hidden'
+          maxWidth: '480px',
+          margin: '0 auto',
+          padding: '40px 20px'
         }"
       >
-        <!-- Top accent bar -->
-        <ESection
-          :style="{
-            height: '4px',
-            backgroundColor: primaryColor,
-            margin: '0',
-            padding: '0'
-          }"
-        />
-
-        <!-- Header -->
-        <ESection :style="{ padding: '32px 48px 0' }">
+        <!-- Logo / Brand -->
+        <ESection :style="{ margin: '0 0 40px' }">
           <EImg
             v-if="logoUrl"
             :src="logoUrl"
             :alt="brandName"
-            width="120"
-            height="40"
-            :style="{ margin: '0 auto 24px', display: 'block' }"
+            width="auto"
+            height="28"
+            :style="{ display: 'block' }"
           />
           <EText
             v-else
             :style="{
-              fontSize: '24px',
+              fontSize: '15px',
               fontWeight: '600',
-              color: primaryColor,
-              textAlign: 'center',
-              margin: '0 0 24px'
+              color: '#0a0a0a',
+              margin: '0',
+              lineHeight: '1'
             }"
           >
             {{ brandName }}
           </EText>
         </ESection>
 
-        <!-- Main Content -->
-        <ESection :style="{ padding: '0 48px' }">
+        <!-- Content -->
+        <ESection>
           <slot />
         </ESection>
 
         <!-- Footer -->
-        <ESection :style="{ padding: '0 48px 32px' }">
+        <ESection :style="{ margin: '48px 0 0' }">
           <EHr
             :style="{
-              borderColor: '#e6ebf1',
-              margin: '32px 0 24px'
+              borderTop: '1px solid #e5e5e5',
+              borderBottom: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              margin: '0 0 24px'
             }"
           />
           <EText
             :style="{
               fontSize: '12px',
-              color: '#8898aa',
-              textAlign: 'center',
+              lineHeight: '16px',
+              color: '#a3a3a3',
               margin: '0'
             }"
           >
             {{ brandName }}
-          </EText>
-          <EText
-            v-if="appUrl"
-            :style="{
-              fontSize: '12px',
-              color: '#b0b8c4',
-              textAlign: 'center',
-              margin: '4px 0 0'
-            }"
-          >
-            <a
-              :href="appUrl"
-              :style="{ color: '#b0b8c4', textDecoration: 'none' }"
-            >
-              {{ appUrl.replace(/^https?:\/\//, '') }}
-            </a>
           </EText>
         </ESection>
       </EContainer>

@@ -34,41 +34,52 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
   >
     <EText
       :style="{
-        fontSize: '24px',
+        fontSize: '20px',
         fontWeight: '600',
-        color: primaryColor,
-        textAlign: 'center',
-        margin: '0 0 24px'
+        color: '#18181b',
+        margin: '0 0 8px',
+        lineHeight: '28px'
       }"
     >
-      Welcome to {{ brandName }}!
+      Welcome aboard, {{ name }}
     </EText>
 
     <EText
       :style="{
-        fontSize: '16px',
+        fontSize: '15px',
         lineHeight: '24px',
-        color: '#525f7f',
-        margin: '0 0 16px'
+        color: '#52525b',
+        margin: '0 0 28px'
       }"
     >
-      Hi {{ name }},
-    </EText>
-
-    <EText
-      :style="{
-        fontSize: '16px',
-        lineHeight: '24px',
-        color: '#525f7f',
-        margin: '0 0 24px'
-      }"
-    >
-      Thank you for creating an account. We're excited to have you on board!
+      Your account is ready. Here's how to get started:
     </EText>
 
     <ESection
+      :style="{
+        backgroundColor: '#fafafa',
+        borderRadius: '8px',
+        padding: '24px',
+        margin: '0 0 28px'
+      }"
+    >
+      <EText
+        :style="{
+          fontSize: '14px',
+          lineHeight: '24px',
+          color: '#52525b',
+          margin: '0'
+        }"
+      >
+        1. Complete your profile<br>
+        2. Explore the dashboard<br>
+        3. Invite your team members
+      </EText>
+    </ESection>
+
+    <ESection
       v-if="getStartedLink"
-      :style="{ textAlign: 'center', margin: '0 0 24px' }"
+      :style="{ margin: '0 0 28px' }"
     >
       <EButton
         :href="getStartedLink"
@@ -76,60 +87,27 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
           backgroundColor: primaryColor,
           borderRadius: '6px',
           color: '#ffffff',
-          fontSize: '16px',
+          fontSize: '15px',
           fontWeight: '600',
           textDecoration: 'none',
           textAlign: 'center',
           display: 'inline-block',
-          padding: '12px 24px'
+          padding: '12px 32px'
         }"
       >
         Get Started
       </EButton>
     </ESection>
 
-    <ESection
-      :style="{
-        backgroundColor: '#f4f4f5',
-        borderRadius: '8px',
-        padding: '20px',
-        margin: '0 0 24px'
-      }"
-    >
-      <EText
-        :style="{
-          fontSize: '14px',
-          fontWeight: '600',
-          color: '#525f7f',
-          margin: '0 0 12px'
-        }"
-      >
-        Here's what you can do next:
-      </EText>
-      <EText
-        :style="{
-          fontSize: '14px',
-          lineHeight: '22px',
-          color: '#525f7f',
-          margin: '0'
-        }"
-      >
-        &bull; Complete your profile<br>
-        &bull; Explore the dashboard<br>
-        &bull; Invite your team members
-      </EText>
-    </ESection>
-
     <EText
       :style="{
-        fontSize: '14px',
+        fontSize: '13px',
         lineHeight: '20px',
-        color: '#8898aa',
+        color: '#a1a1aa',
         margin: '0'
       }"
     >
-      If you have any questions, feel free to reply to this email.
-      We're here to help!
+      Questions? Just reply to this email — we're here to help.
     </EText>
   </BaseLayout>
 </template>

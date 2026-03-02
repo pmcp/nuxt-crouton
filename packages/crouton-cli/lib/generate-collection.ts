@@ -958,12 +958,17 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   // Check if we're using translations
   const hasTranslations = config?.translations?.collections?.[cases.plural]?.length > 0
 
+  // Extract locale codes from config (default: en, nl, fr for backward compat)
+  const localeCodes: string[] = config?.locales?.length
+    ? config.locales.map((l: any) => typeof l === 'string' ? l : l.code)
+    : ['en']
+
   // Update layer root nuxt.config.ts to extend the new collection (and translations layer if needed)
-  await updateLayerRootConfig(layer, collection, hasTranslations)
+  await updateLayerRootConfig(layer, collection, hasTranslations, localeCodes)
 
   // Create i18n locale files when translations are enabled
   if (hasTranslations) {
-    await setupLayerI18n(layer, collection)
+    await setupLayerI18n(layer, collection, localeCodes)
   }
 
   // Update root nuxt.config.ts to extend the layer

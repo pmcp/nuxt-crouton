@@ -99,7 +99,6 @@
       >
         <CroutonI18nInput
           v-model="state.values"
-          :locales="['en', 'nl', 'fr']"
         />
       </UFormField>
 
