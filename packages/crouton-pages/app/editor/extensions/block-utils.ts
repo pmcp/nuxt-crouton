@@ -28,3 +28,18 @@ export const blockIdAttribute = {
     }
   }
 }
+
+/**
+ * Block size attribute definition for TipTap extensions.
+ * Controls the wrapper width when the block is rendered on the public page.
+ */
+export const blockSizeAttribute = {
+  blockSize: {
+    default: 'default',
+    parseHTML: (element: Element) => element.getAttribute('data-block-size') || 'default',
+    renderHTML: (attributes: { blockSize?: string }) => {
+      if (!attributes.blockSize || attributes.blockSize === 'default') return {}
+      return { 'data-block-size': attributes.blockSize }
+    }
+  }
+}

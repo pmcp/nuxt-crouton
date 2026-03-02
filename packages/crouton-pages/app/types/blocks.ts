@@ -30,6 +30,9 @@ export type BlockType =
 
 export type Orientation = 'vertical' | 'horizontal'
 
+/** Block size presets controlling the wrapper width on the rendered page */
+export type BlockSize = 'default' | 'narrow' | 'wide' | 'full'
+
 /** Aspect ratio presets for image cropping (mirrors AspectRatioPreset from crouton-core) */
 export type BlockImageCropAspectRatio = 'free' | '1:1' | '16:9' | '4:3' | '3:2'
 

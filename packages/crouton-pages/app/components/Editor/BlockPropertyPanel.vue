@@ -11,7 +11,7 @@
  * - Prevents feedback loops and focus stealing
  */
 import type { Node } from '@tiptap/pm/model'
-import type { BlockType, BlockPropertySchema } from '../../types/blocks'
+import type { BlockType, BlockPropertySchema, BlockSize } from '../../types/blocks'
 import { getBlockDefinition } from '../../utils/block-registry'
 
 const { t } = useT()
@@ -107,6 +107,14 @@ function onDone() {
   emit('close')
 }
 
+// Block size options (universal for all block types)
+const blockSizeOptions = [
+  { label: t('pages.blocks.sizeDefault'), value: 'default' as BlockSize },
+  { label: t('pages.blocks.sizeNarrow'), value: 'narrow' as BlockSize },
+  { label: t('pages.blocks.sizeWide'), value: 'wide' as BlockSize },
+  { label: t('pages.blocks.sizeFull'), value: 'full' as BlockSize }
+]
+
 // Handle delete
 function onDelete() {
   emit('delete')
@@ -159,6 +167,19 @@ function onDelete() {
     <!-- Content -->
     <div class="flex-1 overflow-auto p-4">
       <div v-if="blockDefinition" class="space-y-4">
+        <!-- Block Size (universal for all block types) -->
+        <UFormField :label="t('pages.blocks.blockSize')" name="blockSize">
+          <USelect
+            :model-value="(localAttrs.blockSize as string) || 'default'"
+            :items="blockSizeOptions"
+            value-key="value"
+            class="w-full"
+            @update:model-value="onFieldChange('blockSize', $event)"
+          />
+        </UFormField>
+
+        <USeparator />
+
         <template v-for="field in blockDefinition.schema" :key="field.name">
           <template v-if="!field.visibleWhen || field.visibleWhen(localAttrs)">
           <!-- Text Input -->

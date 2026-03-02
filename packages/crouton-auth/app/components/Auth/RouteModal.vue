@@ -286,10 +286,10 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
             class="space-y-6"
           >
             <div class="text-center">
-              <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+              <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                 <UIcon
                   name="i-lucide-mail-check"
-                  class="h-6 w-6 text-success"
+                  class="h-6 w-6 text-primary"
                 />
               </div>
               <h2 class="mt-4 text-xl font-semibold text-highlighted">
@@ -535,10 +535,10 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
             class="space-y-6"
           >
             <div class="text-center">
-              <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+              <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                 <UIcon
                   name="i-lucide-mail-check"
-                  class="h-6 w-6 text-success"
+                  class="h-6 w-6 text-primary"
                 />
               </div>
               <h2 class="mt-4 text-xl font-semibold text-highlighted">

@@ -5,7 +5,7 @@
  * Renders page content that is stored in block format (JSON).
  * Routes each block type to its appropriate render component.
  */
-import type { PageBlockContent, PageBlock } from '../types/blocks'
+import type { PageBlockContent, PageBlock, BlockSize } from '../types/blocks'
 import { parseBlockContent } from '../utils/content-detector'
 
 // Addon blocks from croutonBlocks registry
@@ -186,6 +186,16 @@ function getHeadingLevel(block: PageBlock): number {
   return typeof level === 'number' && level >= 1 && level <= 6 ? level : 2
 }
 
+/** Get CSS class for a block's size setting */
+function getBlockSizeClass(block: PageBlock): string | undefined {
+  const size = (block.attrs as any)?.blockSize as BlockSize | undefined
+  if (!size || size === 'default') return undefined
+  if (size === 'narrow') return 'block-size-narrow'
+  if (size === 'wide') return 'block-size-wide'
+  if (size === 'full') return 'block-size-full'
+  return undefined
+}
+
 /** Tailwind classes per heading level */
 const headingClasses: Record<number, string> = {
   1: 'text-4xl font-bold tracking-tight text-[var(--ui-text-highlighted)] mt-8 mb-4',
@@ -202,59 +212,63 @@ const headingClasses: Record<number, string> = {
 
     <template v-if="renderableBlocks.length > 0">
       <template v-for="(block, index) in renderableBlocks" :key="(block as any).attrs?.blockId || `${block.type}-${index}`">
-        <!-- Dynamic blocks: fetch runtime data, must render client-side only -->
-        <ClientOnly
-          v-if="isClientOnlyBlock(block.type)"
-        >
+        <div :class="getBlockSizeClass(block)">
+          <!-- Dynamic blocks: fetch runtime data, must render client-side only -->
+          <ClientOnly
+            v-if="isClientOnlyBlock(block.type)"
+          >
+            <component
+              :is="getBlockComponent(block.type)"
+              :attrs="block.attrs"
+              :is-first="index === 0"
+            />
+            <template #fallback>
+              <div class="animate-pulse rounded-xl bg-muted h-40 my-8" />
+            </template>
+          </ClientOnly>
+
+          <!-- Static blocks: SSR/prerender safe, render as-is -->
           <component
+            v-else-if="getBlockComponent(block.type)"
             :is="getBlockComponent(block.type)"
             :attrs="block.attrs"
+            :is-first="index === 0"
           />
-          <template #fallback>
-            <div class="animate-pulse rounded-xl bg-muted h-40 my-8" />
-          </template>
-        </ClientOnly>
 
-        <!-- Static blocks: SSR/prerender safe, render as-is -->
-        <component
-          v-else-if="getBlockComponent(block.type)"
-          :is="getBlockComponent(block.type)"
-          :attrs="block.attrs"
-        />
-
-        <!-- Native TipTap image node fallback (legacy content) -->
-        <figure
-          v-else-if="block.type === 'image'"
-          class="my-8"
-        >
-          <img
-            :src="(block as any).attrs?.src"
-            :alt="(block as any).attrs?.alt || ''"
-            class="rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 max-w-full mx-auto"
+          <!-- Native TipTap image node fallback (legacy content) -->
+          <figure
+            v-else-if="block.type === 'image'"
+            class="my-8"
           >
-        </figure>
+            <img
+              :src="(block as any).attrs?.src"
+              :alt="(block as any).attrs?.alt || ''"
+              class="rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 max-w-full mx-auto"
+            >
+          </figure>
 
-        <!-- Heading blocks (native TipTap heading nodes) -->
-        <component
-          v-else-if="isHeading(block.type)"
-          :is="`h${getHeadingLevel(block)}`"
-          :class="headingClasses[getHeadingLevel(block)]"
-          v-html="headingToHtml(block)"
-        />
+          <!-- Heading blocks (native TipTap heading nodes) -->
+          <component
+            v-else-if="isHeading(block.type)"
+            :is="`h${getHeadingLevel(block)}`"
+            :class="headingClasses[getHeadingLevel(block)]"
+            v-html="headingToHtml(block)"
+          />
 
-        <!-- Paragraph blocks (rendered as prose) -->
-        <p
-          v-else-if="isParagraph(block.type)"
-          class="prose prose-lg dark:prose-invert max-w-none"
-          v-html="paragraphToHtml(block)"
-        />
+          <!-- Paragraph blocks (rendered as prose) -->
+          <p
+            v-else-if="isParagraph(block.type)"
+            class="prose prose-lg dark:prose-invert max-w-none"
+            v-html="paragraphToHtml(block)"
+          />
 
-        <!-- Unknown block type warning -->
-        <div
-          v-else
-          class="p-4 bg-warning/10 text-warning rounded-lg my-4"
-        >
-          Unknown block type: {{ block.type }}
+          <!-- Unknown block type warning -->
+          <div
+            v-else
+            class="p-4 bg-warning/10 text-warning rounded-lg my-4"
+          >
+            Unknown block type: {{ block.type }}
+          </div>
         </div>
       </template>
     </template>
@@ -273,6 +287,24 @@ const headingClasses: Record<number, string> = {
 <style scoped>
 .block-content > * + * {
   margin-top: 0;
+}
+
+/* Block size presets — breakout from parent container */
+.block-size-narrow {
+  max-width: 36rem; /* max-w-xl */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.block-size-wide {
+  width: 100vw;
+  max-width: 64rem;
+  margin-left: calc(50% - min(32rem, 50vw));
+}
+
+.block-size-full {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
 }
 
 /* Highlight mark — themed with Nuxt UI primary color */

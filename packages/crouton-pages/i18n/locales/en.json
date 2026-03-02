@@ -160,6 +160,11 @@
       },
       "blockSettings": "{name} Settings",
       "unknownBlock": "Block",
+      "blockSize": "Block Size",
+      "sizeDefault": "Default",
+      "sizeNarrow": "Narrow",
+      "sizeWide": "Wide",
+      "sizeFull": "Full Width",
       "collection": {
         "noCollectionSelected": "No collection selected",
         "itemsPerPage": "{count} items/page",

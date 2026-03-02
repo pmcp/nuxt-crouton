@@ -8,6 +8,7 @@
 import { Extension } from '@tiptap/core'
 import Highlight from '@tiptap/extension-highlight'
 import type { CroutonBlockDefinition } from '@fyit/crouton-core/app/types/block-definition'
+import { blockSizeAttribute } from './block-utils'
 import { HeroBlock } from './hero-block'
 import { SectionBlock } from './section-block'
 import { CTABlock } from './cta-block'
@@ -84,6 +85,26 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
       enableSlashCommands: true,
       suggestionOptions: {}
     }
+  },
+
+  addGlobalAttributes() {
+    // All core block node types
+    const coreBlockTypes = [
+      'heroBlock', 'sectionBlock', 'ctaBlock', 'cardGridBlock',
+      'separatorBlock', 'collectionBlock', 'faqBlock', 'twoColumnBlock',
+      'embedBlock', 'imageBlock', 'logoBlock', 'videoBlock',
+      'fileBlock', 'buttonRowBlock', 'richTextBlock'
+    ]
+
+    // Addon block types from config
+    const addonBlockTypes = (this.options.addonBlocks || []).map(def => def.type)
+
+    return [
+      {
+        types: [...coreBlockTypes, ...addonBlockTypes],
+        attributes: blockSizeAttribute
+      }
+    ]
   },
 
   addExtensions() {
