@@ -17,7 +17,15 @@ declare module 'nitropack' {
       metadata?: Record<string, any>
       timestamp?: number
     }) => void | Promise<void>
+
+    'crouton:auth:email': (payload: CroutonAuthEmailPayload) => void | Promise<void>
   }
 }
+
+export type CroutonAuthEmailPayload =
+  | { type: 'verification', to: string, url: string, userName?: string }
+  | { type: 'password-reset', to: string, url: string, userName?: string }
+  | { type: 'invitation', to: string, invitationId: string, organizationName: string, inviterName: string, inviterEmail: string, role: string, expiresAt: Date }
+  | { type: 'magic-link', to: string, url: string }
 
 export {}

@@ -97,6 +97,20 @@ export interface VerificationEmailOptions {
 }
 
 /**
+ * Verification link email options (link-based, for Better Auth)
+ */
+export interface VerificationLinkEmailOptions {
+  /** Recipient email */
+  to: string
+  /** Verification link URL */
+  link: string
+  /** User's name (optional) */
+  name?: string
+  /** Custom expiry time in minutes */
+  expiryMinutes?: number
+}
+
+/**
  * Magic link email options
  */
 export interface MagicLinkEmailOptions {
@@ -173,6 +187,15 @@ export interface EmailTemplateBaseProps {
  */
 export interface VerificationEmailProps extends EmailTemplateBaseProps {
   code: string
+  name?: string
+  expiryMinutes: number
+}
+
+/**
+ * Verification link email template props
+ */
+export interface VerificationLinkEmailProps extends EmailTemplateBaseProps {
+  link: string
   name?: string
   expiryMinutes: number
 }

@@ -2,6 +2,7 @@ import { useEmailService } from './email'
 import { renderEmailTemplate, getEmailBrandConfig } from './template-renderer'
 import type {
   VerificationEmailOptions,
+  VerificationLinkEmailOptions,
   MagicLinkEmailOptions,
   PasswordResetEmailOptions,
   TeamInviteEmailOptions,
@@ -11,6 +12,7 @@ import type {
 
 // Import email templates
 import VerificationEmail from '../emails/Verification.vue'
+import VerificationLinkEmail from '../emails/VerificationLink.vue'
 import MagicLinkEmail from '../emails/MagicLink.vue'
 import PasswordResetEmail from '../emails/PasswordReset.vue'
 import TeamInviteEmail from '../emails/TeamInvite.vue'
@@ -40,6 +42,35 @@ export async function sendVerificationEmail(
   return useEmailService().send({
     to: options.to,
     subject: `Your verification code is ${options.code}`,
+    html,
+    text
+  })
+}
+
+/**
+ * Send a verification link email (link-based, used by Better Auth)
+ */
+export async function sendVerificationLink(
+  options: VerificationLinkEmailOptions
+): Promise<SendEmailResult> {
+  const config = useRuntimeConfig()
+  const publicConfig = (config.public as any)?.crouton?.email
+  const brandConfig = getEmailBrandConfig()
+  const expiryMinutes = options.expiryMinutes
+    || publicConfig?.verification?.codeExpiry
+    || 10
+
+  const { html, text } = await renderEmailTemplate(VerificationLinkEmail, {
+    link: options.link,
+    name: options.name,
+    expiryMinutes,
+    preview: 'Verify your email address',
+    ...brandConfig
+  })
+
+  return useEmailService().send({
+    to: options.to,
+    subject: `Verify your ${brandConfig.brandName} email`,
     html,
     text
   })
