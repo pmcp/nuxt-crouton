@@ -1,175 +1,167 @@
 # Atelier Strategy
 
-## What nuxt-crouton is
+## What nuxt-crouton Is
 
-A monorepo with 22 packages that generates full-stack Nuxt applications from JSON schemas. A CLI reads schema definitions and produces Drizzle database schemas, typed API endpoints, Vue components, composables, and TypeScript types. Packages extend the framework as Nuxt layers, discovered at build time through a manifest system. At runtime, a hook-based event system enables cross-package communication.
+A monorepo with 25 packages that generates full-stack Nuxt applications from JSON schemas. A CLI reads schema definitions and produces Drizzle database schemas, typed API endpoints, Vue components, composables, and TypeScript types. Packages extend the framework as Nuxt layers, discovered at build time through a manifest system. At runtime, deep-merged `appConfig` and a hook-based event system enable cross-package communication.
 
-The framework is production-ready for the developer workflow: define a schema, run the CLI, get a working CRUD app. The booking system, email automation, real-time collaboration, POS, and triage system all work.
+Tech stack: Nuxt, Drizzle ORM, SQLite, Better Auth, NuxtHub, Nuxt UI 4, Tailwind CSS.
 
-Tech stack: Nuxt, Drizzle ORM, SQLite, Better Auth, NuxtHub, Nuxt UI, Tailwind CSS.
-
-## What Atelier is
+## What Atelier Is
 
 Atelier is not a separate product. It's what nuxt-crouton becomes when the audience shifts from developers to the organisations they serve.
 
 Today, a developer uses nuxt-crouton to build an app for a community center. Tomorrow, Atelier is the product where that community center describes what they need and gets a working app — or where the developer builds it faster because the framework handles more.
 
-The core loop stays the same: schema defines shape → Architect designs the model → Designer creates the components → CLI generates code → Analyst creates visualizations → Editor composes the pages → packages extend functionality. What changes is who initiates it and how much is automated.
+The core loop stays the same: schema defines shape → AI roles design the model, create components, generate visualizations → CLI generates code → pages get composed → packages extend functionality. What changes is who initiates it and how much is automated.
 
-## Two audiences
+## Two Audiences
 
 **Developers** use nuxt-crouton as a framework. They write schemas, run the CLI, extend packages, customise generated code. The docs site at nuxt-crouton.dev serves them. This audience exists today.
 
-**Organisations** use Atelier as a product. They describe what they need, four AI roles design, analyse, build, and compose it, and they get a working app. They don't see schemas or CLI commands. This audience is the goal but doesn't exist yet.
+**Organisations** use Atelier as a product. They describe what they need, the generation pipeline designs, builds, and composes it, and they get a working app. They don't see schemas or CLI commands. This audience is the goal but doesn't exist yet.
 
 Both audiences use the same underlying system. The difference is the interface layer on top.
 
-## The generation pipeline
+## Principles
 
-Four AI roles turn a conversation into a deployed application:
+Use these to evaluate every feature, design decision, and priority call. If something violates a principle, it's wrong. If it serves several, it's right.
+
+1. **The user describes what, never how.** They say "I need bookings." They never configure a database, write a query, or pick a component library.
+
+2. **Everything connects by default.** Any package works alone. Any two packages work together. Adding a package never requires rewiring what's already there. Members are the connective tissue — bookings, email, invoicing, and the member area all reference the same identity through auth.
+
+3. **The framework is the product. AI is the labour.** We build the rules. AI builds to the rules. Our value is the guarantee that generated output is compatible, not that it's generated fast.
+
+4. **Generate → Customise → Own.** Every generated file belongs to the user. They can edit it, replace it, or keep it forever. The app doesn't know which files came from the CLI, the AI, or the user. Like Rails scaffolding — the scaffold gets you started, the code is yours.
+
+5. **Schema carries everything.** The JSON schema is the single source of truth — data model, field metadata, layout hints. No separate configuration layer.
+
+6. **Standard first, custom when it matters.** Most collections work fine with table + form + detail. Custom components only when the domain demands it. The test: would a user look at a generic table and think "this works" or "this doesn't feel right"?
+
+7. **Packages, not features.** Every capability ships as a package. If it can't be installed, removed, or replaced independently, it's not designed right. Removing a package makes the app simpler, never broken.
+
+8. **Opinionated for small organisations.** Community centers, clubs, charities, freelancers. A feature that makes sense for an enterprise but not for a 200-member club is a wrong feature.
+
+9. **The CLI gets smarter, everyone does less.** Every project is a data point. Date + capacity → calendar. Image + name → grid. Status field → donut chart. Public page → hero first. Patterns are manual observations now, codified as CLI defaults over time.
+
+10. **Open source framework, paid convenience.** The framework is free forever. Revenue comes from hosting, AI, and managed services. We never gate a capability behind payment — only the effort of running it yourself.
+
+11. **Everything lands in layers.** Whether the CLI generated it or AI wrote it custom, files live in the same `layers/[domain]/` structure. No new conventions, no separate systems.
+
+### Decision Filter
+
+- **Does it serve a 200-member community center?** If not, it's probably too complex.
+- **Can a non-technical person describe what they want and get it?** If they need to understand schemas, layers, or collections, the interface layer is incomplete.
+- **Does the schema carry this, or does it need a new configuration surface?** If it can't live in the schema, question whether it's needed.
+- **Is this a CLI default waiting to happen?** If the AI would make the same choice every time, it should be a CLI default instead.
+- **Can I remove this package and the app still works?** If not, the dependency is too hard.
+- **Does the generated file look like something a developer would write?** If the output needs immediate editing to be useful, the generator isn't good enough yet.
+
+## The Generation Pipeline
+
+> **Status: DESIGNED, NOT BUILT.** The pipeline is described here as the target architecture. None of the AI roles run as code yet. The Atelier UI (Phase A) works with static block data and a scaffold endpoint that calls CLI directly. The pipeline described below is Phase C work.
+
+Three AI roles and one deterministic step turn a conversation into a deployed application:
 
 **Architect** — talks to the user, understands the domain, designs the data model. Outputs JSON schemas and seed data. Has full project context: what collections exist, what packages are installed, what relationships are in play.
 
-**Designer** — reads the schemas and decides how each collection should present itself. Component-level decisions. Two modes: adds simple layout hints (`$list`, `$form`, `$card`) for the CLI to interpret, or writes custom Vue components when the domain demands it (calendars, embedded flows, domain-specific interactions). Has the same project context.
+**Designer** — reads the schemas and decides how each collection should present itself. Component-level decisions. Two modes: adds simple layout hints (`$list`, `$form`, `$card`) for the CLI to interpret, or writes custom Vue components when the domain demands it (calendars, embedded flows, domain-specific interactions).
 
-**Analyst** — reads the schemas and the available visualization packages (charts, maps) and creates meaningful data visualizations. Bridges domain data with addon capabilities. Outputs pre-configured editor blocks: chart presets ("Booking Trends", "Revenue by Location"), map configurations ("All Locations"), dashboard widgets. These become available as editor blocks that the Editor can place on pages. Only runs when visualization packages are present.
+**Visualization presets** — a deterministic function (not an AI role) that reads collection schemas and available visualization packages (charts, maps), then generates pre-configured editor blocks using field-shape heuristics: date + count → time series, status field → donut, address fields → collection map. These become available as editor blocks for the page editor and the Editor AI. Graduates to an AI role only when the heuristics prove insufficient.
 
-**Editor** — composes pages from the available components. Page-level decisions. Knows what editor blocks are available (from package manifests + Analyst output), what collection view styles exist (from Designer hints + CLI output), and what visibility context each page serves (public landing vs. member dashboard vs. admin panel). Outputs TipTap JSON — the actual page content that `crouton-pages` renders and the user can later edit.
+**Editor** — composes pages from the available components. Page-level decisions. Knows what editor blocks are available (from package manifests + visualization presets), what collection view styles exist (from Designer hints + CLI output), and what visibility context each page serves (public landing vs. member dashboard vs. admin panel). Outputs TipTap JSON — the actual page content that `crouton-pages` renders and the user can later edit.
 
 **CLI** — reads the schemas (with hints) and generates everything the Designer didn't touch: composables, types, API routes, database schema, standard components.
 
-The pipeline is sequential: Architect outputs schemas → Designer creates/hints components → CLI generates the rest → Analyst creates visualizations from the data + available packages → Editor composes pages from all available pieces. One script orchestrating four AI calls and a CLI command. No orchestration framework needed.
+The pipeline is sequential: Architect → Designer → CLI → Visualization presets → Editor. One script orchestrating AI calls and CLI commands.
 
-See `atelier-generation-flow.md` for the full technical spec with examples.
+See `atelier-plan.md` for the implementation phases.
 
-## Architecture decisions
+## Architecture Decisions
 
-### Members are contacts
+### Members Are Contacts
 
-Auth already manages users, teams, and members. A member is a user who belongs to a team with a role. When someone books an event, they become a member with a "customer" role. They don't need a password — magic links or scoped access handle login when needed.
+Auth manages users, teams, and members. A member is a user who belongs to a team with a role. When someone books an event, they become a member with a "customer" role. Magic links or scoped access handle login when needed.
 
-This means no separate contacts package. Bookings creates a member on first booking. Invoicing references the same member. Email history ties to the member. Logged-in pages show "my bookings," "my invoices" — all the same identity.
+No separate contacts package. Bookings creates a member on first booking. Invoicing references the same member. Email history ties to the member.
 
-The identity spectrum has two tiers:
+The identity spectrum:
+- **Persistent**: anonymous → member with customer role (known, can log in) → member with admin role (full access). One entity in the auth system.
+- **Ephemeral**: scoped access tokens for helpers/volunteers. No user account, no member record. Time-limited, resource-scoped. Transient by design.
 
-- **Persistent**: anonymous → member with customer role (known, can log in via magic link) → member with admin role (full access). One entity in the auth system.
-- **Ephemeral**: scoped access tokens for helpers/volunteers. No user account, no member record. A display name and a time-limited token scoped to one resource (e.g., a POS event). Designed for temporary access on shared devices. These people don't become contacts — they're transient by design.
+CRM-like features — tags, notes, activity timeline — are fields on the member profile or views over existing data (crouton-events captures every mutation).
 
-CRM-like features — tags, notes, activity timeline — are fields on the member profile or views over existing data (crouton-events already captures every mutation). Not worth a separate package.
+> **Known limitation:** This conflates auth identity with contact identity. People on a mailing list, donors who never log in, or one-time event attendees don't fit cleanly into the member model. Revisit when invoicing or contact forms reveal the gap.
 
-### Capabilities matter, but not yet
+### Capabilities: Not Yet
 
-The vision of packages relating through abstract capabilities ("contactable," "bookable") instead of hard-coded names is architecturally sound. But premature to build now.
+The vision of packages relating through abstract capabilities instead of hard-coded names is architecturally sound but premature. The manifest system is the right place to add `requires` and `provides` fields when needed. Until then, existing patterns (dynamic imports, feature detection, fallback behavior) are sufficient.
 
-What exists today works: bookings references locations by name, email checks a runtime config flag, the manifest system declares what each package provides. The bookings email integration already demonstrates the graceful degradation pattern (dynamic imports, feature detection, fallback behavior).
+### One App, Visibility Controls What's Shown
 
-The capability system becomes necessary when a third-party package needs to reference something without knowing what's installed, or the builder UI needs to wire packages together dynamically. Until then, existing patterns are sufficient. When needed, the manifest system is the right place to add `requires` and `provides` fields. The infrastructure is ready; the abstraction can wait.
-
-### One app, visibility controls what's shown
-
-There are no separate surfaces. There's one app. Blocks and pages have visibility rules:
-
+No separate surfaces. One app. Blocks and pages have visibility rules:
 - **Public** — everyone sees it (hero, schedule, contact form)
 - **Authenticated** — logged-in members see it (my bookings, my invoices, profile)
 - **Admin** — team admins see it (manage bookings, manage contacts, all invoices)
 
-The public site IS the app. When you log in, more pages and blocks appear. Auth modals handle login inline. No separate member portal, no separate admin app (admin routes exist but they're part of the same deployment). The app feels like an app.
+The public site IS the app. When you log in, more pages and blocks appear.
 
-In the builder, users compose one app by adding blocks. Each block has a visibility level. The builder shows a preview that switches between "what the public sees," "what a member sees," and "what an admin sees" — same app, different auth state.
+> **Known limitation:** Three visibility tiers. Real apps may need role-based (instructor vs. member), group-based (youth vs. seniors), or temporal access. The block system is designed around exactly three levels. Adding more requires changes to types, kanban columns, preview switcher, and scaffold output.
 
-"Contacts" in the builder maps to auth members. The builder says "All contacts" but under the hood it's a member list view.
+### Standard Output Covers Most Cases
 
-### Generated layers are packages
+Most collections work fine with standard table + form + detail. The Designer only gets involved when a generic layout would feel wrong. Over time, the Designer's patterns become CLI defaults. The feedback loop is manual for now.
 
-A generated layer is indistinguishable from a real package at runtime. Whether the domain came from `crouton-bookings` (an npm package) or was generated from scratch by the AI pipeline (a layer in `layers/fundraiser/`), both produce the same artifacts:
+## Package Strategy
 
-- **Components**: List.vue, Detail.vue, Form.vue, Card.vue per collection
-- **app.config.ts**: registers editor blocks (collection views, chart presets, map configs), admin routes, page types
-- **Composables**: typed CRUD composables per collection
-- **Server**: API routes, database schema, migrations
-- **Types**: TypeScript definitions, Zod schemas
-
-The generation pipeline produces all of this. The Architect creates the schema. The Designer creates the components (or hints for the CLI). The CLI generates infrastructure. The Analyst creates chart presets and map configs. The Editor composes pages. The generated layer's `app.config.ts` registers everything — collection views as editor blocks, Analyst visualizations as chart presets, admin routes — so the page editor discovers them the same way it discovers blocks from `crouton-charts` or `crouton-maps`.
-
-No manifest file is needed for generated layers. The `app.config.ts` registration is the runtime equivalent. Manifests are for packages that ship as npm modules and need build-time discovery. Generated layers are already part of the app — they register directly.
-
-This is principles 4 and 12 in action: "Generate → Customise → Own" and "Everything lands in layers."
-
-### Standard output covers most cases
-
-Most collections work fine with standard table + form + detail output. The Designer only gets involved when a generic layout would feel wrong — calendars for time-based data, embedded forms for child records, domain-specific interactions like check-in lists.
-
-Over time, the Designer's patterns become CLI defaults. Date + capacity → calendar. Image + name → grid. Child record never browsed standalone → embed in parent. The feedback loop is manual for now (developer observes patterns across projects, updates CLI), with a door open for automation when project volume justifies it.
-
-## Package strategy
-
-### Invest
+### Invest (Critical Path)
 
 | Package | Role |
 |---|---|
 | **crouton-core** | Foundation. Every improvement benefits every app. |
 | **crouton-auth** | Identity, teams, members, scoped access. The "contact" system. |
-| **crouton-bookings** | Most complete domain package. Proves the framework for real use cases. |
+| **crouton-bookings** | Most complete domain package. Proves the framework. |
 | **crouton-pages** | Public surface. Block editor. Page types. |
+| **crouton-collab** | Real-time sync infrastructure. Powers Atelier, page editor, flow. |
 | **crouton-email** | Transactional email. Used by bookings, auth, future packages. |
-| **crouton-designer** | AI pipeline backend. Being refactored into architect + designer + analyst + editor roles. |
 | **crouton-cli** | Code generation engine. The core value of the framework. |
 | **crouton-i18n** | Multi-language. Table stakes for European small orgs. |
-| **crouton-ai** | Multi-provider AI. Powers architect, designer, translation. |
-| **crouton-events** | Audit trail + mutation tracking. Foundation for CRM-like views. |
+| **crouton-ai** | Multi-provider AI. Powers generation pipeline. |
+| **crouton-editor** | TipTap rich text infrastructure. 5 components, variable system. |
 
 ### Maintain
 
 | Package | Status |
 |---|---|
-| **crouton-assets** | Media library. Works. |
-| **crouton-editor** | Tiptap rich text. Works. |
-| **crouton-maps** | Location fields, geocoding. Works. |
-| **crouton-sales** | Event POS. Niche but complete. |
+| **crouton-assets** | Media library. 7 components. Works. |
+| **crouton-maps** | Location fields, geocoding. 5 composables. Works. |
+| **crouton-charts** | Collection data charts. Works. |
+| **crouton-sales** | Event POS. 10 collections, 12 components. Complete. |
+| **crouton-events** | Audit trail + mutation tracking. |
 | **crouton-admin** | Super admin dashboard. Works. |
-| **crouton-collab** | Real-time collaboration. Impressive, not critical for target users. |
-| **crouton-flow** | Visual node graphs. Could become automation builder later. |
+| **crouton-flow** | Visual DAG graphs with collab. |
 | **crouton-triage** | Discussion-to-task pipeline. Niche. |
 | **crouton-mcp** | AI agent integration. Forward-looking. |
-| **crouton-themes** | Theming. Fun, not critical. |
+| **crouton-themes** | Theming (KO hardware theme). |
 | **crouton-devtools** | Developer tooling. Works. |
 
-### Build next
+### Build Next
 
 | What | Why |
 |---|---|
-| **Atelier builder** | Evolve crouton-designer into the block-based app builder. Template selection → block composition with visibility rules → preview → automations → scaffold. Lives inside crouton as a package. |
-| **Invoicing** | Recurring billing, membership payments. Different from POS. References members. Covers the second most common need after bookings. |
+| **Atelier builder** | Visual app composer. Phase A mostly complete. See `atelier-plan.md`. |
+| **Invoicing** | Recurring billing, membership payments. References members. Second most common need after bookings. |
 
-## What the docs site needs
+## The Broader Vision: Friendly Tools
 
-The docs at nuxt-crouton.dev are well-written for developers. The "Generate → Customise → Own" philosophy is clear. The gaps:
+Atelier serves a network of small organisations. One organisation's investment in building a tool makes it available to others. Patterns and components become shared across every similar organisation.
 
-- `@friendlyinternet` scope → `@fyit` throughout
-- SuperSaaS references removed
-- Package docs expanded (13 documented vs 22 actual)
-- Vision page explaining where the project is heading
-- Roadmap reflecting strategic priorities (member area, invoicing, Atelier pipeline)
-- Manifest and hook system documented (these are architectural differentiators)
+Each organisation owns their code, their data, their deployment. They benefit from the network through better CLI defaults, proven patterns, and an expanding package ecosystem.
 
-The site doesn't need a rewrite. It needs completeness.
+## Priorities
 
-## The broader vision: Friendly Tools
-
-Atelier serves a network of small organisations. One organisation's investment in building a tool makes it available to others. A community center pays for a custom events-and-registration setup; the patterns and components become available to every community center after that.
-
-This creates shared development costs while maintaining individual ownership and branding. Each organisation owns their code, their data, their deployment. They benefit from the network through better CLI defaults, proven patterns, and an expanding package ecosystem.
-
-Success means: a small organisation can affordably get exactly what they need without compromising on customisation or data ownership. No vendor lock-in, no subscription creep, no feature gaps because they're on the wrong tier.
-
-## Priorities in order
-
-1. **CLI + hint system** — the CLI is active work. Next feature: `$list`, `$card`, `$form` hints so the designer role can add layout decisions to schemas and the CLI acts on them. This is the bridge between the builder and generation.
-
-2. **Atelier builder** — evolve crouton-designer into the block-based app composer. Template → blocks with visibility → preview → automations → scaffold. See `atelier-builder-plan.md` for the implementation plan.
-
-3. **Docs cleanup** — scope migration, SuperSaaS removal, document all packages. The site is the first thing developers see.
-
-4. **Invoicing** — recurring billing with member references. Bookings + invoicing covers the two most common needs.
-
-5. **Capabilities when needed** — add `requires` and `provides` to manifests when the pipeline needs to wire packages dynamically.
+1. **CLI + hint system** — `$list`, `$card`, `$form` hints. The bridge between the builder and generation.
+2. **Atelier Phase A completion** — typecheck passing, remaining checklist items.
+3. **Run the generation pipeline once end-to-end** — validate Architect → Designer → CLI → Editor before building UI around it.
+4. **Docs cleanup** — scope migration, document all packages. The site is the first thing developers see.
+5. **Invoicing** — recurring billing with member references.
