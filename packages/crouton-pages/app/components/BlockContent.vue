@@ -289,22 +289,24 @@ const headingClasses: Record<number, string> = {
   margin-top: 0;
 }
 
-/* Block size presets — breakout from parent container */
-.block-size-narrow {
-  max-width: 36rem; /* max-w-xl */
+/* Default block constraint — comfortable reading width */
+.block-content > * {
+  max-width: 48rem;
   margin-left: auto;
   margin-right: auto;
 }
 
-.block-size-wide {
-  width: 100vw;
-  max-width: 64rem;
-  margin-left: calc(50% - min(32rem, 50vw));
+/* Block size presets */
+.block-content > .block-size-narrow {
+  max-width: 36rem;
 }
 
-.block-size-full {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
+.block-content > .block-size-wide {
+  max-width: 64rem;
+}
+
+.block-content > .block-size-full {
+  max-width: none;
 }
 
 /* Highlight mark — themed with Nuxt UI primary color */
