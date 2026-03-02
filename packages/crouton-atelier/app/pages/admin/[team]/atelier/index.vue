@@ -7,11 +7,11 @@ definePageMeta({
 })
 
 const router = useRouter()
-const { teamSlug } = useTeamContext()
+const { teamSlug, teamId } = useTeamContext()
 
 // Load projects
 const { data: projects, status, refresh } = await useFetch<AtelierProject[]>(
-  '/api/atelier/projects',
+  () => `/api/teams/${teamId.value}/atelier/projects`,
   { default: () => [] }
 )
 
@@ -25,7 +25,7 @@ const newName = ref('')
 
 async function createProject() {
   if (!newName.value.trim()) return
-  const project = await $fetch<AtelierProject>('/api/atelier/projects', {
+  const project = await $fetch<AtelierProject>(`/api/teams/${teamId.value}/atelier/projects`, {
     method: 'POST',
     body: { name: newName.value.trim() }
   })
@@ -43,7 +43,7 @@ const showDelete = computed({
 
 async function confirmDelete() {
   if (!deleteTarget.value) return
-  await $fetch(`/api/atelier/projects/${deleteTarget.value.id}`, {
+  await $fetch(`/api/teams/${teamId.value}/atelier/projects/${deleteTarget.value.id}`, {
     method: 'DELETE'
   })
   deleteTarget.value = null
@@ -126,7 +126,7 @@ function formatDate(timestamp: number) {
     </div>
 
     <!-- Create modal -->
-    <UModal v-model="showCreate">
+    <UModal v-model:open="showCreate">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">New Project</h3>
@@ -147,7 +147,7 @@ function formatDate(timestamp: number) {
     </UModal>
 
     <!-- Delete confirmation -->
-    <UModal v-model="showDelete">
+    <UModal v-model:open="showDelete">
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-2">Delete project?</h3>

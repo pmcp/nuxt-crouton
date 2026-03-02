@@ -17,8 +17,6 @@ export default defineNuxtConfig({
     version: '0.1.0'
   },
 
-  modules: ['@vueuse/nuxt'],
-
   components: {
     dirs: [
       {

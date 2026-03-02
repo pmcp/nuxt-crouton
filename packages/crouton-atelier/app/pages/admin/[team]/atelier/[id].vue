@@ -183,7 +183,7 @@ const selectedBlockIds = computed(() =>
       <AtelierFab @click="showBlockPalette = true" />
 
       <!-- Mobile: Block palette bottom sheet -->
-      <USlideover v-model="showBlockPalette" side="bottom" class="md:hidden">
+      <USlideover v-model:open="showBlockPalette" side="bottom" class="md:hidden">
         <template #content>
           <AtelierBlockPalette
             :selected-block-ids="selectedBlockIds"

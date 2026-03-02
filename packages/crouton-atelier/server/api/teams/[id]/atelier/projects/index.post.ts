@@ -1,24 +1,24 @@
-import { atelierProjects } from '../../../database/schema'
+import { atelierProjects } from '../../../../../database/schema'
 
 export default defineEventHandler(async (event) => {
-  const { teamId, userId } = await resolveTeamAndCheckMembership(event)
+  const { team, user } = await resolveTeamAndCheckMembership(event)
   const body = await readBody<{ name: string, description?: string }>(event)
 
   if (!body.name?.trim()) {
     throw createError({ status: 400, statusText: 'Name is required' })
   }
 
-  const db = useDrizzle()
+  const db = useDB()
 
   const [project] = await db
     .insert(atelierProjects)
     .values({
-      teamId,
-      owner: userId,
+      teamId: team.id,
+      owner: user.id,
       name: body.name.trim(),
       description: body.description?.trim() || null,
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: user.id,
+      updatedBy: user.id
     })
     .returning()
 

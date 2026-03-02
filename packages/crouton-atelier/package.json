@@ -4,13 +4,8 @@
   "description": "Visual app builder for Nuxt Crouton — compose apps from pre-defined blocks",
   "type": "module",
   "exports": {
-    ".": {
-      "import": "./nuxt.config.ts"
-    },
-    "./types": {
-      "import": "./app/types/index.ts",
-      "types": "./app/types/index.ts"
-    }
+    ".": "./nuxt.config.ts",
+    "./server/database/schema": "./server/database/schema.ts"
   },
   "main": "./nuxt.config.ts",
   "files": [
@@ -22,9 +17,6 @@
     "dev": "nuxi dev playground",
     "dev:prepare": "nuxi prepare",
     "typecheck": "nuxt typecheck"
-  },
-  "dependencies": {
-    "@vueuse/nuxt": "^12.0.0"
   },
   "devDependencies": {
     "@nuxt/kit": "^3.14.0",

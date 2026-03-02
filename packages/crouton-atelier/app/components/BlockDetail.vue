@@ -25,7 +25,7 @@ const fieldTypeIcons: Record<string, string> = {
 </script>
 
 <template>
-  <USlideover v-model="isOpen">
+  <USlideover v-model:open="isOpen">
     <template #content="{ close }">
       <div v-if="block" class="flex flex-col h-full">
         <!-- Header -->
