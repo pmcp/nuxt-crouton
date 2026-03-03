@@ -1,10 +1,10 @@
 ---
 title: Layout Components
 description: Container and card components for organizing content
-icon: i-heroicons-squares-2x2
+icon: i-lucide-layout-grid
 ---
 
-::callout{type="tip" icon="i-heroicons-book-open"}
+::callout{type="tip" icon="i-lucide-book-open"}
 **Query Examples**: For complete `useCollectionQuery` patterns (basic, filtering, pagination, sorting, relations), see [Querying Data](/fundamentals/querying).
 ::
 
@@ -12,7 +12,7 @@ icon: i-heroicons-squares-2x2
 
 The unified collection display component that supports multiple layout modes (table, list, grid, cards) with responsive breakpoint support. This is the recommended component for displaying collection data.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **New in v1.5.3**: CroutonCollection replaces CroutonList as the primary component for rendering collections, with enhanced features including responsive layouts, custom card components, and improved grid/cards support.
 ::
 
@@ -310,7 +310,7 @@ const props = defineProps<Props>()
 // Expected: layers/bookings/collections/bookings/app/components/Card.vue
 ```
 
-::callout{icon="i-heroicons-light-bulb" color="amber"}
+::callout{icon="i-lucide-lightbulb" color="amber"}
 If no custom card component is found, CroutonCollection displays helpful developer guidance with the expected file path and example code structure.
 ::
 
@@ -509,7 +509,7 @@ open('create', 'bookings')
 
 For a complete working example demonstrating layout switching, search/filters, custom cell renderers, and avatar groups, see this interactive demo:
 
-::callout{type="info" icon="i-heroicons-code-bracket"}
+::callout{type="info" icon="i-lucide-code"}
 **[View Full Interactive Demo →](https://stackblitz.com/edit/nuxt-crouton-bookings-collection)**
 
 Fork the demo to experiment with different configurations. The complete example includes:
@@ -559,7 +559,7 @@ const filteredBookings = computed(() => {
           <UButton
             :variant="currentLayout === 'table' ? 'solid' : 'outline'"
             @click="currentLayout = 'table'"
-            icon="i-heroicons-table-cells"
+            icon="i-lucide-table"
           />
           <!-- Grid and list buttons... -->
         </UButtonGroup>
@@ -641,11 +641,11 @@ If pagination doesn't trigger data refresh:
 
 A smart component that fetches and displays a referenced collection item with quick-edit functionality. Supports custom card components via naming convention.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Auto-registration**: This component is globally available as `CroutonItemCardMini` and automatically used in table cells for reference fields.
 ::
 
-::callout{type="info" icon="i-heroicons-arrow-right"}
+::callout{type="info" icon="i-lucide-arrow-right"}
 **Data Fetching**: This component uses `useCollectionItem` internally. See the [useCollectionItem API Reference](/api-reference/use-collection-item) for details on caching, reactivity, and error handling.
 ::
 
@@ -808,7 +808,7 @@ const props = defineProps<Props>()
 
 <template>
   <div v-if="item" class="flex items-center gap-2">
-    <UIcon name="i-heroicons-map-pin" class="text-gray-400" />
+    <UIcon name="i-lucide-map-pin" class="text-gray-400" />
     <div>
       <div class="font-medium text-sm">{{ item.title }}</div>
       <div class="text-xs text-gray-500">{{ item.city }}</div>
@@ -987,7 +987,7 @@ If edit button doesn't show on hover:
 
 A view-only layout component for displaying item details with optional edit functionality. New in v1.5.3.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **New in v1.5.3**: DetailLayout provides a standardized structure for read-only detail pages with built-in loading and error states.
 ::
 
@@ -1047,14 +1047,14 @@ Custom header action buttons:
 <template #header-actions>
   <div class="flex gap-2">
     <UButton
-      icon="i-heroicons-share"
+      icon="i-lucide-share"
       variant="soft"
       @click="handleShare"
     >
       Share
     </UButton>
     <UButton
-      icon="i-heroicons-pencil"
+      icon="i-lucide-pencil"
       color="primary"
       @click="handleEdit"
     >
@@ -1331,7 +1331,7 @@ const handleUpdate = (item: any) => {
 
 For a complete working example showing a full-featured detail page with custom header actions, multiple content sections, related item displays, and metadata footer, see this interactive demo:
 
-::callout{type="info" icon="i-heroicons-code-bracket"}
+::callout{type="info" icon="i-lucide-code"}
 **[View Full Interactive Demo →](https://stackblitz.com/edit/nuxt-crouton-job-detail)**
 
 Fork the demo to explore all CroutonDetailLayout customizations. The complete example includes:
@@ -1375,10 +1375,10 @@ const handleEdit = () => {
   >
     <template #header-actions>
       <div class="flex gap-2">
-        <UButton icon="i-heroicons-arrow-path" variant="soft" @click="refresh">
+        <UButton icon="i-lucide-refresh-cw" variant="soft" @click="refresh">
           Refresh
         </UButton>
-        <UButton icon="i-heroicons-pencil" color="primary" @click="handleEdit">
+        <UButton icon="i-lucide-pencil" color="primary" @click="handleEdit">
           Edit
         </UButton>
       </div>
@@ -1450,7 +1450,7 @@ If content area doesn't scroll:
 
 Nuxt Crouton provides a sophisticated form system that handles CRUD operations with multiple container types, dynamic component loading, validation, and complex field types.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Form Architecture**: Forms in Nuxt Crouton are managed globally via `useCrouton()` and rendered automatically in modals, slideoverslideoverslideoverstates, or dialogs. You don't manually place Form components in your templates.
 ::
 
@@ -1792,7 +1792,7 @@ Override the display field by modifying the component:
 
 Displays dependent field values by resolving ID references to full objects from a parent item's JSON array field.
 
-::callout{icon="i-heroicons-light-bulb" color="amber"}
+::callout{icon="i-lucide-lightbulb" color="amber"}
 **Use Case**: When you have a field that references options stored in another item. For example, a booking that references time slots stored in a location object.
 ::
 
@@ -1875,7 +1875,7 @@ Examples:
 - `dependentCollection: "locations"`, `dependentField: "slots"` → `LocationsSlotCardMini`
 - `dependentCollection: "events"`, `dependentField: "categories"` → `EventsCategoryCardMini`
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Singularization**: The field name is automatically singularized (e.g., "slots" → "slot")
 ::
 
@@ -2221,7 +2221,7 @@ Resolved values are displayed in:
 </template>
 ```
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Dependent Field Resolver**: This component relies on `useDependentFieldResolver` composable to fetch and resolve dependent field values from the API.
 ::
 
@@ -2412,7 +2412,7 @@ Shows `item.title` or `item.name` (in that order):
 </template>
 ```
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **User Object**: The component expects `title` OR `name` field. If both are missing, the tooltip will be empty but the avatar will still show.
 ::
 

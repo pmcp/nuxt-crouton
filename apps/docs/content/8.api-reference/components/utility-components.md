@@ -1,7 +1,7 @@
 ---
 title: Utility Components
 description: Helper components for loading states, errors, and special behaviors
-icon: i-heroicons-wrench-screwdriver
+icon: i-lucide-wrench
 ---
 
 ## Utility Components
@@ -17,7 +17,7 @@ Utility components for common UI patterns like loading states and validation fee
 
 A utility component that displays loading states during CRUD operations. Automatically responds to `useCrouton()` loading state changes and shows appropriate UI feedback.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Auto-wired**: The Loading component automatically reads from `useCrouton()` composable and requires no props. Simply include it in your templates where you want loading feedback.
 ::
 
@@ -234,7 +234,7 @@ const { loading } = useCrouton()
 
 A validation error summary component that displays form validation errors grouped by tabs/sections. Provides clickable links to navigate to error locations with error counts per section.
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Form Validation Helper**: Use this component at the top of tabbed forms to provide users with a clear overview of validation errors across all tabs.
 ::
 
@@ -420,7 +420,7 @@ const tabErrors = computed(() => {
 
 For a complete working example demonstrating a multi-step wizard with validation tracking, step navigation, and error summary, see this interactive demo:
 
-::callout{type="info" icon="i-heroicons-code-bracket"}
+::callout{type="info" icon="i-lucide-code"}
 **[View Full Interactive Demo →](https://stackblitz.com/edit/nuxt-crouton-wizard-form)**
 
 Fork the demo to explore wizard form patterns. The complete example includes:
@@ -803,7 +803,7 @@ The viewer converts collection names to component names using PascalCase:
 - `teamMembers` → `TeamMembersList`
 - `shopOrders` → `ShopOrdersList`
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Note**: The referenced list component (e.g., `ProductsList`) must be available in your components directory or auto-imported by Nuxt.
 ::
 
@@ -905,7 +905,7 @@ When in `create_open` or `update_open` state:
 </div>
 ```
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Simple Component**: This is a minimal loading indicator. For more complex loading states, consider creating custom loading components for your specific use case.
 ::
 
@@ -1164,7 +1164,7 @@ const switchToTabAndScroll = (tabValue: string) => {
 | Tab with 1 error | - | "Tab Name (1 error)" |
 | Tab with multiple | - | "Tab Name (X errors)" |
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Zero Errors**: Tabs with 0 errors are not shown in the summary. The entire component is hidden when all tabs have 0 errors.
 ::
 

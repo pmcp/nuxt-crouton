@@ -1,7 +1,7 @@
 ---
 title: Content Components
 description: Components for displaying rich text content, articles, and prose pages
-icon: i-heroicons-document-text
+icon: i-lucide-file-text
 ---
 
 Content components provide beautiful layouts for displaying rich text content from any source - the Crouton editor, Nuxt Content, external CMSs, or plain HTML strings.

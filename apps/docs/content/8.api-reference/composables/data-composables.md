@@ -1,10 +1,10 @@
 ---
 title: Data Composables
 description: Fetch and manage collection data with automatic caching and reactivity
-icon: i-heroicons-circle-stack
+icon: i-lucide-database
 ---
 
-::callout{type="tip" icon="i-heroicons-book-open"}
+::callout{type="tip" icon="i-lucide-book-open"}
 **Query Examples**: For complete `useCollectionQuery` patterns (basic, filtering, pagination, sorting, relations), see [Querying Data](/fundamentals/querying).
 ::
 
@@ -224,7 +224,7 @@ export default defineAppConfig({
 })
 ```
 
-::callout{type="tip" icon="i-heroicons-book-open"}
+::callout{type="tip" icon="i-lucide-book-open"}
 **Complete Examples**: For comprehensive `useCollectionItem` patterns including basic usage, reactive IDs, error handling, and TypeScript examples, see the [useCollectionItem API Reference](/api-reference/use-collection-item).
 ::
 
@@ -1089,7 +1089,7 @@ const formData = ref({
 
 ### Multiple External Collections
 
-::callout{icon="i-heroicons-book-open" color="blue"}
+::callout{icon="i-lucide-book-open" color="blue"}
 For complete schema definitions and examples, see the [Basic Usage](#basic-usage) section above.
 ::
 

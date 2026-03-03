@@ -1,7 +1,7 @@
 ---
 title: Generated vs Core Code
 description: Understanding the difference between generated code and core library
-icon: i-heroicons-code-bracket
+icon: i-lucide-code
 ---
 
 ## The Golden Rule

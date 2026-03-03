@@ -1,12 +1,12 @@
 ---
 title: Querying Data
 description: Fetching and displaying data in Nuxt Crouton
-icon: i-heroicons-magnifying-glass
+icon: i-lucide-search
 ---
 
 The `useCollectionQuery` composable is the primary way to fetch data in Nuxt Crouton. This guide covers the most common querying patterns.
 
-::callout{type="info" icon="i-heroicons-information-circle"}
+::callout{type="info" icon="i-lucide-info"}
 **API Reference**: For complete API details, see [useCollectionQuery composable](/api-reference/composables/query-composables).
 ::
 
@@ -139,7 +139,7 @@ const toggleSort = () => {
       :options="['name', 'price', 'createdAt']"
       placeholder="Sort by..."
     />
-    <UButton @click="toggleSort" icon="i-heroicons-arrow-up-down">
+    <UButton @click="toggleSort" icon="i-lucide-arrow-up-down">
       {{ sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending' }}
     </UButton>
   </div>

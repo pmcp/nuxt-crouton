@@ -1,7 +1,7 @@
 ---
 title: Components Reference
 description: Complete reference for all Nuxt Crouton UI components
-icon: i-heroicons-cube
+icon: i-lucide-box
 ---
 
 Nuxt Crouton provides a comprehensive set of UI components built on top of [Nuxt UI](https://ui.nuxt.com). These components are designed for rapid CRUD interface development with built-in accessibility, responsiveness, and customization options.
@@ -104,7 +104,7 @@ Click any category below to view complete documentation with props, slots, event
 ::card
 ---
 title: Form Components
-icon: i-heroicons-document-text
+icon: i-lucide-file-text
 to: /api-reference/components/form-components
 ---
 Interactive form elements with validation and dynamic behavior
@@ -113,7 +113,7 @@ Interactive form elements with validation and dynamic behavior
 ::card
 ---
 title: Table Components
-icon: i-heroicons-table-cells
+icon: i-lucide-table
 to: /api-reference/components/table-components
 ---
 Data tables with sorting, filtering, and pagination
@@ -122,7 +122,7 @@ Data tables with sorting, filtering, and pagination
 ::card
 ---
 title: Layout Components
-icon: i-heroicons-squares-2x2
+icon: i-lucide-layout-grid
 to: /api-reference/components/layout-components
 ---
 Container and card components for organizing content
@@ -131,7 +131,7 @@ Container and card components for organizing content
 ::card
 ---
 title: Modal Components
-icon: i-heroicons-window
+icon: i-lucide-app-window
 to: /api-reference/components/modal-components
 ---
 Modal, slideover, and dialog overlay interfaces
@@ -140,7 +140,7 @@ Modal, slideover, and dialog overlay interfaces
 ::card
 ---
 title: Content Components
-icon: i-heroicons-document-text
+icon: i-lucide-file-text
 to: /api-reference/components/content-components
 ---
 Rich text content, articles, and prose page layouts
@@ -149,7 +149,7 @@ Rich text content, articles, and prose page layouts
 ::card
 ---
 title: Utility Components
-icon: i-heroicons-wrench-screwdriver
+icon: i-lucide-wrench
 to: /api-reference/components/utility-components
 ---
 Loading states, errors, and helper components

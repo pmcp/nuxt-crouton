@@ -1,7 +1,7 @@
 ---
 title: Form Components
 description: Interactive form elements for data input with validation and dynamic behavior
-icon: i-heroicons-document-text
+icon: i-lucide-file-text
 ---
 
 ## CroutonForm
@@ -143,7 +143,7 @@ const cancelForm = () => {
 <template>
   <div>
     <UButton @click="createProduct">
-      <UIcon name="i-heroicons-plus" />
+      <UIcon name="i-lucide-plus" />
       Create Product
     </UButton>
   </div>
@@ -189,7 +189,7 @@ Each has independent state managed by `useCrouton()`.
 
 Dynamically resolves and loads the correct form component for a given collection. Used internally by `CroutonForm` to display collection-specific forms.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Internal Component**: You typically don't use this directly. It's used by `CroutonForm` to load generated form components.
 ::
 
@@ -360,9 +360,9 @@ Enable tabs for organizing complex forms.
 const activeSection = ref('general')
 
 const navigationItems = [
-  { label: 'General', value: 'general', icon: 'i-heroicons-information-circle' },
-  { label: 'Pricing', value: 'pricing', icon: 'i-heroicons-currency-dollar' },
-  { label: 'SEO', value: 'seo', icon: 'i-heroicons-magnifying-glass' }
+  { label: 'General', value: 'general', icon: 'i-lucide-info' },
+  { label: 'Pricing', value: 'pricing', icon: 'i-lucide-dollar-sign' },
+  { label: 'SEO', value: 'seo', icon: 'i-lucide-search' }
 ]
 </script>
 
@@ -506,7 +506,7 @@ The sidebar adapts to screen size:
 
 For a complete working example demonstrating a multi-tab product form with validation tracking, error summary, and all CroutonFormLayout features, see this interactive demo:
 
-::callout{type="info" icon="i-heroicons-code-bracket"}
+::callout{type="info" icon="i-lucide-code"}
 **[View Full Interactive Demo →](https://stackblitz.com/edit/nuxt-crouton-product-form)**
 
 Fork the demo to experiment with different configurations. The complete example includes:
@@ -528,10 +528,10 @@ const { create, update } = useCollectionMutation('products')
 const activeSection = ref('general')
 
 const navigationItems = [
-  { label: 'General', value: 'general', icon: 'i-heroicons-information-circle' },
-  { label: 'Pricing', value: 'pricing', icon: 'i-heroicons-currency-dollar' },
-  { label: 'Organization', value: 'organization', icon: 'i-heroicons-folder' },
-  { label: 'SEO', value: 'seo', icon: 'i-heroicons-magnifying-glass' }
+  { label: 'General', value: 'general', icon: 'i-lucide-info' },
+  { label: 'Pricing', value: 'pricing', icon: 'i-lucide-dollar-sign' },
+  { label: 'Organization', value: 'organization', icon: 'i-lucide-folder' },
+  { label: 'SEO', value: 'seo', icon: 'i-lucide-search' }
 ]
 
 // Map fields to their tab groups
@@ -627,7 +627,7 @@ Currently hardcoded as "Meta settings". To customize:
 
 A smart dropdown component for selecting related entities from other collections. Supports both single and multi-select modes, inline creation, and comprehensive error handling.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Component Name**: The actual component is `CroutonFormReferenceSelect` but is typically referenced as just `FormReferenceSelect` or auto-aliased as `ReferenceSelect` in generated forms.
 ::
 
@@ -1054,7 +1054,7 @@ const handleUploaded = async (close: () => void, assetId: string) => {
 
 Interactive date picker component for selecting single dates or date ranges. Wraps Nuxt UI's `<UCalendar>` with timezone-aware date handling. Part of the base `@fyit/crouton` package.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Timezone Handling**: Calendar uses `@internationalized/date` library to handle timezone conversions transparently. You can pass JavaScript `Date` objects or timestamps (numbers), and the component handles the rest.
 ::
 
@@ -1526,7 +1526,7 @@ const date = ref<Date | null>(new Date())
 
 Year calendar view component that displays all 12 months in a responsive grid. Ideal for year-at-a-glance scheduling, availability views, or selecting dates across the entire year. Part of the base `@fyit/crouton` package.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Year View**: Unlike the standard `Calendar` component which shows 1-2 months, `CalendarYear` displays all 12 months simultaneously in a responsive grid layout.
 ::
 
@@ -1636,7 +1636,7 @@ Each month is displayed in its own card with the month name header.
 
 Read-only date display component that shows both absolute and relative timestamps. Commonly used in tables, cards, and detail views. Part of the base `@fyit/crouton` package.
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Display Only**: This is NOT an input component. For date selection, use `<Calendar>`. This component is for displaying dates in a user-friendly format.
 ::
 
@@ -1819,7 +1819,7 @@ The component is commonly used with `CroutonTable` for timestamp columns:
     <!-- Override with custom slot if needed -->
     <template #createdAt-cell="{ row }">
       <div class="flex items-center gap-2">
-        <UIcon name="i-heroicons-calendar" />
+        <UIcon name="i-lucide-calendar" />
         <CroutonDate :date="row.original.createdAt" />
       </div>
     </template>
@@ -2260,15 +2260,15 @@ Data is stored as JSON arrays in the database:
 }
 ```
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Drag-to-reorder:** The repeater uses `useSortable` from @vueuse/core for smooth drag-and-drop reordering. This is enabled by default but can be disabled with `:sortable="false"`.
 ::
 
-::callout{icon="i-heroicons-light-bulb" color="amber"}
+::callout{icon="i-lucide-lightbulb" color="amber"}
 **When to use:** Use repeater fields when items are tightly coupled to their parent and don't need to be queried independently. For complex relationships or items that need their own table, use reference fields instead.
 ::
 
-::callout{icon="i-heroicons-exclamation-triangle" color="red"}
+::callout{icon="i-lucide-triangle-alert" color="red"}
 **No delete confirmation:** Clicking the remove button (×) immediately deletes the item without confirmation. This is intentional for streamlined UX but means deletions can be accidental. Consider implementing undo functionality or confirmation dialogs for critical data.
 ::
 
@@ -2581,7 +2581,7 @@ A styled submit button for form actions that shows loading states and validation
 | Has Errors | Outline variant with warning icon |
 | Delete Action | Error color (red) |
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Validation Behavior**: When `hasValidationErrors` is true, the button shows an alert icon and uses outline variant, but remains clickable to allow form validation feedback.
 ::
 
@@ -2834,7 +2834,7 @@ If no custom component is registered, falls back to `CroutonFormDependentButtonG
 
 An intermediate component that wraps `CroutonFormDependentButtonGroup` and handles loading/error states for dependent field options.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Note**: This component is typically used internally by `CroutonFormDependentFieldLoader`. You rarely need to use it directly.
 ::
 
@@ -2877,7 +2877,7 @@ The component renders different UI based on the current state:
 ```vue
 <!-- Loading -->
 <div v-if="pending">
-  <UIcon name="i-heroicons-arrow-path" class="animate-spin" />
+  <UIcon name="i-lucide-refresh-cw" class="animate-spin" />
   Loading options...
 </div>
 
@@ -3140,7 +3140,7 @@ When `expanded: true`, the slideover always uses full screen width.
 </template>
 ```
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Immersive Mode**: Set `closeOnExpand: true` to automatically close the overlay when expanding, creating a seamless transition to fullscreen.
 ::
 
@@ -3307,7 +3307,7 @@ const myDate = new Date('2024-03-15') // or Date.now()
 // Output: Date object emitted via events
 ```
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Timezone Handling**: The component uses `getLocalTimeZone()` for all conversions, ensuring dates are interpreted in the user's local timezone.
 ::
 
@@ -3422,7 +3422,7 @@ export const useCollections = () => {
 </template>
 ```
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Component Registration**: Ensure all components referenced in `componentMap` are properly registered and auto-imported.
 ::
 
@@ -3639,7 +3639,7 @@ const errorsBySection = ref({
 | Mobile (< @lg) | Full width | Accordion above main |
 | Desktop (@lg+) | 2/3 width | 1/3 right column |
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Container Queries**: Uses `@container` instead of traditional media queries for more flexible responsive behavior within any parent.
 ::
 
@@ -3825,7 +3825,7 @@ If the specified `labelKey` isn't found, the component falls back through:
 // Display order: option[labelKey] || option.title || option.name || option.id
 ```
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Collection Query**: Ensure the collection endpoint is available at `/api/collections/{collection}` and returns an array of items with `id` fields.
 ::
 
@@ -4032,7 +4032,7 @@ defineEmits<{ 'update:modelValue': [value: any] }>()
 </script>
 ```
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Auto-Import**: Components must be registered globally or available via Nuxt auto-imports. Check console for warnings if component resolution fails.
 ::
 
@@ -4235,7 +4235,7 @@ accept: 'image/*'
 // Accepts: .jpg, .jpeg, .png, .gif, .webp, etc.
 ```
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Object URLs**: The component creates blob URLs for preview. Remember to upload the actual File object to your server, not the object URL.
 ::
 

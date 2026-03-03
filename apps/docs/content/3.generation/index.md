@@ -43,7 +43,7 @@ Learn the YAML schema format for defining collections:
 ```yaml
 name: products
 description: Product catalog
-icon: i-heroicons-shopping-bag
+icon: i-lucide-shopping-bag
 fields:
   - name: title
     type: text

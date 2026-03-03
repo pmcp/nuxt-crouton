@@ -1,7 +1,7 @@
 ---
 title: Mutation Composables
 description: Create, update, and delete collection data with automatic cache invalidation
-icon: i-heroicons-pencil-square
+icon: i-lucide-pencil
 ---
 
 ## useCollectionMutation

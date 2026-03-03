@@ -1,10 +1,10 @@
 ---
 title: Table Composables
 description: Build interactive data tables with sorting, filtering, and pagination
-icon: i-heroicons-table-cells
+icon: i-lucide-table
 ---
 
-::callout{type="tip" icon="i-heroicons-book-open"}
+::callout{type="tip" icon="i-lucide-book-open"}
 **Working with Tables**: For complete table patterns and component usage, see [Table Patterns](/patterns/tables) and [Table Components API](/api-reference/components/table-components).
 ::
 

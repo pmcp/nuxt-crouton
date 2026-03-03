@@ -1,7 +1,7 @@
 ---
 title: Query Composables
 description: Fetch collection data with automatic caching and reactivity
-icon: i-heroicons-magnifying-glass
+icon: i-lucide-search
 ---
 
 ## useCollectionQuery

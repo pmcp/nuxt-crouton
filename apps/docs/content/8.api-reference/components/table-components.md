@@ -1,14 +1,14 @@
 ---
 title: Table Components
 description: Data table components with sorting, filtering, and pagination
-icon: i-heroicons-table-cells
+icon: i-lucide-table
 ---
 
 ## CroutonTable
 
 A powerful data table component with sorting, filtering, pagination, and row selection. Used internally by CroutonCollection for table layout mode.
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Note**: CroutonTable is typically used through CroutonCollection's `layout="table"` prop. Use this component directly only when you need fine-grained control over table behavior.
 ::
 
@@ -124,7 +124,7 @@ CroutonTable provides default renderers for common columns (can be hidden via `h
 
 ### Basic Usage
 
-::callout{type="tip" icon="i-heroicons-book-open"}
+::callout{type="tip" icon="i-lucide-book-open"}
 **Query Examples**: For complete `useCollectionQuery` patterns, see [Querying Data](/fundamentals/querying).
 ::
 
@@ -465,7 +465,7 @@ const columns = [
         <div class="flex items-center gap-4">
           <UButton
             @click="open('create', 'bookings')"
-            icon="i-heroicons-plus"
+            icon="i-lucide-plus"
             color="primary"
           >
             New Booking
@@ -1489,7 +1489,7 @@ The dropdown menu includes:
 </UDropdownMenu>
 ```
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Translation Keys**: The component uses `tString('table.display')` for the button label. Ensure your translation system has this key defined.
 ::
 
@@ -1626,7 +1626,7 @@ const handleSelectAll = (state: boolean | 'indeterminate') => {
 | `true` | Checkmark | Selected |
 | `'indeterminate'` | Dash/minus | Partially selected |
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **TanStack Integration**: This component is designed to work seamlessly with TanStack Table's selection state management.
 ::
 
@@ -1784,7 +1784,7 @@ Example:
 - `collection="products"` → Mobile: "Create", Desktop: "Create Product"
 - `collection="users"` → Mobile: "Create", Desktop: "Create User"
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Collection Formatting**: Uses `useFormatCollections().collectionWithCapitalSingular()` to format collection names (e.g., "products" → "Product").
 ::
 
@@ -1980,7 +1980,7 @@ The component uses these translation keys:
 - `table.of`
 - `table.results`
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Sticky Footer**: Use `mt-auto` class on parent container to keep pagination at bottom of available space.
 ::
 
@@ -2167,7 +2167,7 @@ Example debounce values:
 - `500ms` - Slower response, fewer API calls
 - `1000ms` - Very slow, minimal API calls
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Performance**: Debouncing is crucial for server-side searches to avoid excessive API calls. The default 300ms works well for most use cases.
 ::
 

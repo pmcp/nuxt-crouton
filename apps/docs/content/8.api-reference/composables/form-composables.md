@@ -1,11 +1,11 @@
 ---
 title: Form Composables
 description: Manage form state and CRUD operations with modal/slideover support
-icon: i-heroicons-document-text
+icon: i-lucide-file-text
 ---
 
 
-::callout{type="tip" icon="i-heroicons-book-open"}
+::callout{type="tip" icon="i-lucide-book-open"}
 **Working with Forms**: For complete form patterns and component usage, see [Form Patterns](/patterns/forms) and [Form Components API](/api-reference/components/form-components).
 ::
 

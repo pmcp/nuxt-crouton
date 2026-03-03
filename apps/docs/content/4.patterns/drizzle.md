@@ -1,7 +1,7 @@
 ---
 title: Manual Drizzle Setup
 description: Learn how to set up Drizzle relations for advanced querying and performance optimization
-icon: i-heroicons-cog-6-tooth
+icon: i-lucide-settings
 ---
 
 If you want [Drizzle](https://orm.drizzle.team) relations for performance, set them up manually. This is optional but recommended for apps with complex relational queries.
@@ -234,7 +234,7 @@ const product = await db.query.shopProducts.findFirst({
 - ✅ Data already cached
 - ✅ Quick prototypes
 
-::callout{type="tip" icon="i-heroicons-book-open"}
+::callout{type="tip" icon="i-lucide-book-open"}
 **Query Examples**: For complete `useCollectionQuery` patterns, see [Querying Data](/fundamentals/querying).
 ::
 

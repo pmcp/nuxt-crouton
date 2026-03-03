@@ -1,10 +1,10 @@
 ---
 title: Utility Composables
 description: Specialized helpers for translations, assets, formatting, and more
-icon: i-heroicons-wrench-screwdriver
+icon: i-lucide-wrench
 ---
 
-::callout{type="tip" icon="i-heroicons-book-open"}
+::callout{type="tip" icon="i-lucide-book-open"}
 **Query Examples**: For complete `useCollectionQuery` patterns (basic, filtering, pagination, sorting, relations), see [Querying Data](/fundamentals/querying).
 ::
 
@@ -713,7 +713,7 @@ useCroutonShortcuts({
 
 ## useEntityTranslations
 
-::callout{type="warning" icon="i-heroicons-exclamation-triangle"}
+::callout{type="warning" icon="i-lucide-triangle-alert"}
 **Package Required**: This composable is part of the `@fyit/crouton-i18n` package. It is **not available** in the core `@fyit/crouton` package. Install the i18n package to use this composable.
 ::
 
@@ -816,7 +816,7 @@ When the user switches languages, `useCollectionQuery` automatically refetches d
 
 ## useAssetUpload
 
-::callout{type="warning" icon="i-heroicons-exclamation-triangle"}
+::callout{type="warning" icon="i-lucide-triangle-alert"}
 **Package Required**: This composable is part of the `@fyit/crouton-assets` package. It is **not available** in the core `@fyit/crouton` package. Install the assets package to use this composable.
 ::
 
@@ -1541,7 +1541,7 @@ const { items } = await useCollectionQuery('shopProducts')
 
 ### Schema Customization
 
-::callout{icon="i-heroicons-book-open" color="blue"}
+::callout{icon="i-lucide-book-open" color="blue"}
 For the base userSchema definition, see the [Setup Instructions](#setup-instructions) section above.
 ::
 
@@ -2052,7 +2052,7 @@ debugErrors()
 
 ## useT
 
-::callout{type="info" icon="i-heroicons-information-circle"}
+::callout{type="info" icon="i-lucide-info"}
 **Stub vs Full Implementation**: The core `@fyit/crouton` package provides a **stub implementation** of `useT()` with English fallbacks for common UI strings. For full i18n support (database-backed translations, multiple locales, translation management UI), install `@fyit/crouton-i18n`.
 ::
 

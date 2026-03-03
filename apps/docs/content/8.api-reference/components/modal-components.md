@@ -1,7 +1,7 @@
 ---
 title: Modal Components
 description: Modal, slideover, and dialog components for overlay interfaces
-icon: i-heroicons-window
+icon: i-lucide-app-window
 ---
 
 ## CroutonButton

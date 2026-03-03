@@ -1,7 +1,7 @@
 ---
 title: Generator Commands
 description: Learn how to use Nuxt Crouton generator commands to create collections
-icon: i-heroicons-command-line
+icon: i-lucide-terminal
 ---
 
 Nuxt Crouton provides CLI commands to generate collections quickly. You can generate single collections or use a configuration file to generate multiple collections at once.
@@ -76,11 +76,11 @@ export default {
 
 ### Configuration Flags
 
-::callout{icon="i-heroicons-information-circle" color="blue"}
+::callout{icon="i-lucide-info" color="blue"}
 **Team-Scoped by Default:** All generated collections include team-based authentication. The generator automatically adds `teamId` and `userId` fields and uses `@crouton/auth/server` for authentication.
 ::
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Important:** Do NOT define `teamId` or `userId` in your schema JSON files. The generator adds them automatically, and manual definitions will cause duplicate key errors.
 ::
 
@@ -104,7 +104,7 @@ Automatically adds timestamp fields to track record creation and updates. When s
 - You're integrating with an existing database schema
 - You need different timestamp field names or behavior
 
-::callout{icon="i-heroicons-exclamation-triangle" color="amber"}
+::callout{icon="i-lucide-triangle-alert" color="amber"}
 **Important:** Do NOT define `createdAt` or `updatedAt` in your schema JSON files when this flag is enabled. The generator adds them automatically, and manual definitions will cause duplicate key errors.
 ::
 

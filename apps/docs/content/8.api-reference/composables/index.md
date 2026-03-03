@@ -1,7 +1,7 @@
 ---
 title: Composables Reference
 description: Complete reference for all Nuxt Crouton composables
-icon: i-heroicons-code-bracket
+icon: i-lucide-code
 ---
 
 Nuxt Crouton provides a comprehensive set of composables for data fetching, mutations, forms, tables, and utilities. These composables follow [Nuxt's composables conventions](https://nuxt.com/docs/guide/directory-structure/composables) and integrate seamlessly with Vue's Composition API.
@@ -73,7 +73,7 @@ Click any category below to view complete documentation with type signatures, pa
 ::card
 ---
 title: Data Composables
-icon: i-heroicons-circle-stack
+icon: i-lucide-database
 to: /api-reference/composables/data-composables
 ---
 Fetch and manage collection data with automatic caching and reactivity
@@ -82,7 +82,7 @@ Fetch and manage collection data with automatic caching and reactivity
 ::card
 ---
 title: Query Composables
-icon: i-heroicons-magnifying-glass
+icon: i-lucide-search
 to: /api-reference/composables/query-composables
 ---
 Advanced data fetching with query parameters and reactivity
@@ -91,7 +91,7 @@ Advanced data fetching with query parameters and reactivity
 ::card
 ---
 title: Mutation Composables
-icon: i-heroicons-pencil-square
+icon: i-lucide-pencil
 to: /api-reference/composables/mutation-composables
 ---
 Create, update, and delete operations with cache invalidation
@@ -100,7 +100,7 @@ Create, update, and delete operations with cache invalidation
 ::card
 ---
 title: Form Composables
-icon: i-heroicons-document-text
+icon: i-lucide-file-text
 to: /api-reference/composables/form-composables
 ---
 Manage form state and CRUD operations with modal support
@@ -109,7 +109,7 @@ Manage form state and CRUD operations with modal support
 ::card
 ---
 title: Table Composables
-icon: i-heroicons-table-cells
+icon: i-lucide-table
 to: /api-reference/composables/table-composables
 ---
 Build interactive data tables with sorting and filtering
@@ -118,7 +118,7 @@ Build interactive data tables with sorting and filtering
 ::card
 ---
 title: Utility Composables
-icon: i-heroicons-wrench-screwdriver
+icon: i-lucide-wrench
 to: /api-reference/composables/utility-composables
 ---
 Specialized helpers for translations, assets, and more
