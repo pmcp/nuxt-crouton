@@ -9,7 +9,7 @@ export default defineAppConfig({
       meta: {
         label: 'Tasks',
         description: 'Task management collection',
-        icon: 'i-heroicons-check-circle'
+        icon: 'i-lucide-check-circle'
       },
       defaultValues: {
         title: '',

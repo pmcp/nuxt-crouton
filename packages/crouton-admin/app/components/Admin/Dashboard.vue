@@ -44,39 +44,39 @@ const statCards = computed(() => {
     {
       label: t('superAdmin.stats.totalUsers'),
       value: displayStats.value.totalUsers,
-      icon: 'i-heroicons-users',
+      icon: 'i-lucide-users',
       trend: displayStats.value.newUsersToday,
       color: 'primary' as const
     },
     {
       label: t('superAdmin.stats.newThisWeek'),
       value: displayStats.value.newUsersWeek,
-      icon: 'i-heroicons-user-plus',
+      icon: 'i-lucide-user-plus',
       color: 'success' as const
     },
     {
       label: t('superAdmin.stats.bannedUsers'),
       value: displayStats.value.bannedUsers,
-      icon: 'i-heroicons-no-symbol',
+      icon: 'i-lucide-ban',
       color: displayStats.value.bannedUsers > 0 ? 'warning' as const : 'primary' as const
     },
     {
       label: t('superAdmin.stats.totalTeams'),
       value: displayStats.value.totalTeams,
-      icon: 'i-heroicons-building-office-2',
+      icon: 'i-lucide-building-2',
       trend: displayStats.value.newTeamsWeek,
       color: 'primary' as const
     },
     {
       label: t('superAdmin.stats.activeSessions'),
       value: displayStats.value.activeSessions,
-      icon: 'i-heroicons-signal',
+      icon: 'i-lucide-signal',
       color: 'success' as const
     },
     {
       label: t('superAdmin.stats.superAdmins'),
       value: displayStats.value.superAdminCount,
-      icon: 'i-heroicons-shield-check',
+      icon: 'i-lucide-shield-check',
       color: 'primary' as const
     }
   ]
@@ -86,13 +86,13 @@ const quickActions = computed(() => [
   {
     label: t('superAdmin.quickActions.manageUsers'),
     description: t('superAdmin.quickActions.manageUsersDescription'),
-    icon: 'i-heroicons-users',
+    icon: 'i-lucide-users',
     path: '/super-admin/users'
   },
   {
     label: t('superAdmin.quickActions.viewTeams'),
     description: t('superAdmin.quickActions.viewTeamsDescription'),
-    icon: 'i-heroicons-building-office-2',
+    icon: 'i-lucide-building-2',
     path: '/super-admin/teams'
   }
 ])
@@ -110,7 +110,7 @@ function handleQuickAction(path: string) {
       v-if="error"
       color="error"
       variant="soft"
-      icon="i-heroicons-exclamation-triangle"
+      icon="i-lucide-triangle-alert"
       :title="t('superAdmin.stats.failedToLoad')"
       :description="error"
     />
@@ -160,7 +160,7 @@ function handleQuickAction(path: string) {
             </p>
           </div>
           <UIcon
-            name="i-heroicons-chevron-right"
+            name="i-lucide-chevron-right"
             class="ml-auto size-5 text-gray-400 group-hover:text-primary-500"
           />
         </button>

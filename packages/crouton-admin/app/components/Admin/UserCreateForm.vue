@@ -114,7 +114,7 @@ function handleSubmit() {
         <UButton
           color="neutral"
           variant="soft"
-          icon="i-heroicons-key"
+          icon="i-lucide-key-round"
           @click="generatePassword"
         >
           Generate

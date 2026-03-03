@@ -12,7 +12,7 @@ interface Props {
   value: number | string
   /** Label describing the stat */
   label: string
-  /** Icon name from Heroicons (e.g., 'i-heroicons-users') */
+  /** Icon name from Heroicons (e.g., 'i-lucide-users') */
   icon?: string
   /** Trend value (+5, -3, etc.) */
   trend?: number
@@ -23,7 +23,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  icon: 'i-heroicons-chart-bar',
+  icon: 'i-lucide-bar-chart',
   color: 'primary',
   loading: false
 })
@@ -48,8 +48,8 @@ const trendColorClass = computed(() => {
 const trendIcon = computed(() => {
   if (!props.trend) return null
   return props.trend > 0
-    ? 'i-heroicons-arrow-trending-up'
-    : 'i-heroicons-arrow-trending-down'
+    ? 'i-lucide-trending-up'
+    : 'i-lucide-trending-down'
 })
 </script>
 

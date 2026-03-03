@@ -9,7 +9,7 @@ export default defineCroutonManifest({
   id: 'crouton-bookings',
   name: 'Booking System',
   description: 'Slot-based and inventory booking with optional email notifications. Perfect for courts, rooms, appointments, equipment rentals, and more.',
-  icon: 'i-heroicons-calendar',
+  icon: 'i-lucide-calendar',
   version: '1.0.0',
   category: 'miniapp',
   aiHint: 'use when app involves appointments, reservations, or scheduling',

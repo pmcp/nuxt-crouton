@@ -14,7 +14,7 @@ export default defineCroutonManifest({
   id: 'crouton-sales',
   name: 'Point of Sale',
   description: 'Event-based POS system for pop-up events, markets, and temporary retail. Includes products, categories, orders, and optional thermal receipt printing.',
-  icon: 'i-heroicons-shopping-cart',
+  icon: 'i-lucide-shopping-cart',
   version: '1.0.0',
   category: 'miniapp',
   aiHint: 'use when app needs point of sale, product catalog, or order management',

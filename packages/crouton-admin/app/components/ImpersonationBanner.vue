@@ -39,7 +39,7 @@ async function handleStop() {
       class="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-amber-950 shadow-md"
     >
       <UIcon
-        name="i-heroicons-eye"
+        name="i-lucide-eye"
         class="size-5"
       />
       <span class="text-sm font-medium">

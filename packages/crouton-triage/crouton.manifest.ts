@@ -13,7 +13,7 @@ export default defineCroutonManifest({
   id: 'crouton-triage',
   name: 'Discussion Triage',
   description: 'AI-powered discussion-to-task triage system with multi-source adapters (Slack, Figma, Notion), domain routing, and automated task creation.',
-  icon: 'i-heroicons-funnel',
+  icon: 'i-lucide-filter',
   version: '1.0.0',
   category: 'miniapp',
   aiHint: 'use when app needs discussion triage, task detection, or multi-source ingestion',

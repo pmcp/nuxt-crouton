@@ -49,7 +49,7 @@ function getProviderIcon(provider: string): string {
     github: 'i-lucide-github',
     linear: 'i-simple-icons-linear',
   }
-  return icons[provider] || 'i-heroicons-link'
+  return icons[provider] || 'i-lucide-link'
 }
 
 function getStatusColor(status: string): string {
@@ -146,7 +146,7 @@ const addAccountItems = [[
 
       <UDropdownMenu :items="addAccountItems">
         <UButton
-          icon="i-heroicons-plus"
+          icon="i-lucide-plus"
           label="Add Account"
           color="primary"
           size="sm"
@@ -209,7 +209,7 @@ const addAccountItems = [[
         <!-- Actions -->
         <div class="flex items-center gap-1">
           <UButton
-            icon="i-heroicons-shield-check"
+            icon="i-lucide-shield-check"
             color="gray"
             variant="ghost"
             size="xs"
@@ -218,7 +218,7 @@ const addAccountItems = [[
             @click="handleVerify(account)"
           />
           <UButton
-            icon="i-heroicons-trash"
+            icon="i-lucide-trash-2"
             color="gray"
             variant="ghost"
             size="xs"

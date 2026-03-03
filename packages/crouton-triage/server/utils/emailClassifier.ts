@@ -246,12 +246,12 @@ export function getMessageTypeDescription(messageType: FigmaEmailType): string {
  */
 export function getMessageTypeIcon(messageType: FigmaEmailType): string {
   const icons: Record<FigmaEmailType, string> = {
-    'comment': 'i-heroicons-chat-bubble-left-right',
-    'account-verification': 'i-heroicons-shield-check',
-    'password-reset': 'i-heroicons-lock-closed',
-    'invitation': 'i-heroicons-user-plus',
-    'notification': 'i-heroicons-bell',
-    'other': 'i-heroicons-envelope'
+    'comment': 'i-lucide-message-square',
+    'account-verification': 'i-lucide-shield-check',
+    'password-reset': 'i-lucide-lock',
+    'invitation': 'i-lucide-user-plus',
+    'notification': 'i-lucide-bell',
+    'other': 'i-lucide-mail'
   }
 
   return icons[messageType]

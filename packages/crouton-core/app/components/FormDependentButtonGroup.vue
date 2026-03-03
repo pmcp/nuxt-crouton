@@ -5,7 +5,7 @@
       class="flex items-center gap-2 text-sm"
     >
       <UIcon
-        name="i-heroicons-arrow-path"
+        name="i-lucide-refresh-cw"
         class="animate-spin"
       />
       {{ t('dependent.loadingOptions') }}

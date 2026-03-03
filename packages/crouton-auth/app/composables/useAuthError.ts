@@ -73,7 +73,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
     if (toastOptions?.show ?? showToast) {
       notify.error('Error', {
         description: authError.toUserMessage(),
-        icon: 'i-heroicons-exclamation-circle',
+        icon: 'i-lucide-circle-alert',
         duration: toastOptions?.duration ?? toastDuration
       })
     }

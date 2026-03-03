@@ -183,7 +183,7 @@ function formatDate(date: Date) {
         <UInput
           v-model="search"
           :placeholder="t('superAdmin.users.searchPlaceholder')"
-          icon="i-heroicons-magnifying-glass"
+          icon="i-lucide-search"
           class="max-w-xs"
         />
         <USelect
@@ -199,7 +199,7 @@ function formatDate(date: Date) {
       </div>
       <UButton
         color="primary"
-        icon="i-heroicons-plus"
+        icon="i-lucide-plus"
         @click="showCreateModal = true"
       >
         {{ t('superAdmin.users.createUser') }}
@@ -211,7 +211,7 @@ function formatDate(date: Date) {
       v-if="error"
       color="error"
       variant="soft"
-      icon="i-heroicons-exclamation-triangle"
+      icon="i-lucide-triangle-alert"
       :title="error"
     />
 
@@ -237,7 +237,7 @@ function formatDate(date: Date) {
               class="flex items-center gap-1"
             >
               <UIcon
-                name="i-heroicons-shield-check"
+                name="i-lucide-shield-check"
                 class="size-3 text-amber-500"
               />
               <span class="text-xs text-amber-600 dark:text-amber-400">{{ t('superAdmin.title') }}</span>
@@ -251,7 +251,7 @@ function formatDate(date: Date) {
           <span class="text-gray-600 dark:text-gray-400">{{ row.original.email }}</span>
           <UIcon
             v-if="row.original.emailVerified"
-            name="i-heroicons-check-badge"
+            name="i-lucide-badge-check"
             class="size-4 text-green-500"
           />
         </div>

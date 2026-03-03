@@ -47,9 +47,9 @@ const colorMap = {
 }
 
 const iconMap = {
-  error: 'i-heroicons-exclamation-circle',
-  warning: 'i-heroicons-exclamation-triangle',
-  info: 'i-heroicons-information-circle'
+  error: 'i-lucide-circle-alert',
+  warning: 'i-lucide-triangle-alert',
+  info: 'i-lucide-info'
 }
 
 // Determine if this is a network error that could benefit from retry
@@ -85,7 +85,7 @@ watch(() => props.error, () => {
     :color="colorMap[variant]"
     :icon="iconMap[variant]"
     :title="title || undefined"
-    :close-button="dismissible ? { icon: 'i-heroicons-x-mark', color: 'gray', variant: 'ghost' } : undefined"
+    :close-button="dismissible ? { icon: 'i-lucide-x', color: 'gray', variant: 'ghost' } : undefined"
     @close="handleDismiss"
   >
     <template #description>

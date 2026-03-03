@@ -581,7 +581,7 @@ defineExpose({ refresh: refreshAll })
 
     <!-- Connected Accounts Summary -->
     <div v-if="hasFlows && connectedAccounts && (connectedAccounts as any[]).length > 0" class="flex items-center gap-2 px-1 py-2">
-      <UIcon name="i-heroicons-link" class="w-4 h-4 text-muted shrink-0" />
+      <UIcon name="i-lucide-link" class="w-4 h-4 text-muted shrink-0" />
       <span class="text-sm text-muted">
         {{ (connectedAccounts as any[]).length }} account{{ (connectedAccounts as any[]).length !== 1 ? 's' : '' }} connected
       </span>
@@ -601,7 +601,7 @@ defineExpose({ refresh: refreshAll })
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-semibold">Connected Accounts</h2>
-            <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="close" />
+            <UButton icon="i-lucide-x" color="gray" variant="ghost" @click="close" />
           </div>
           <CroutonTriageFlowsAccountManager :team-id="currentTeam?.id || ''" />
         </div>

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="pending" class="flex items-center gap-2 text-sm text-gray-500">
-      <UIcon name="i-heroicons-arrow-path" class="animate-spin" />
+      <UIcon name="i-lucide-refresh-cw" class="animate-spin" />
       Loading options...
     </div>
 

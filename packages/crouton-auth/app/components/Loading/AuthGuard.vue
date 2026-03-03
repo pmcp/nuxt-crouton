@@ -112,7 +112,7 @@ const showContent = computed(() => {
       >
         <div class="flex items-center justify-center p-8">
           <UIcon
-            name="i-heroicons-arrow-path"
+            name="i-lucide-refresh-cw"
             class="w-6 h-6 animate-spin text-gray-400"
           />
         </div>
@@ -125,7 +125,7 @@ const showContent = computed(() => {
     >
       <div class="flex items-center justify-center p-8">
         <UIcon
-          name="i-heroicons-arrow-path"
+          name="i-lucide-refresh-cw"
           class="w-6 h-6 animate-spin text-gray-400"
         />
       </div>
@@ -137,7 +137,7 @@ const showContent = computed(() => {
     >
       <div class="flex flex-col items-center justify-center p-8 text-center">
         <UIcon
-          name="i-heroicons-lock-closed"
+          name="i-lucide-lock"
           class="w-12 h-12 text-gray-400 mb-4"
         />
         <p class="text-gray-600 dark:text-gray-400">

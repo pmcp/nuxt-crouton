@@ -501,24 +501,24 @@ watch(isEditModalOpen, (open) => {
         :items="[
           [{
             label: 'Slack (OAuth)',
-            icon: 'i-heroicons-chat-bubble-left-right',
+            icon: 'i-lucide-message-square',
             onSelect: () => openAddModal('slack')
           }],
           [{
             label: 'Figma (Email)',
-            icon: 'i-heroicons-envelope',
+            icon: 'i-lucide-mail',
             onSelect: () => openAddModal('figma')
           }],
           [{
             label: 'Generic Email',
-            icon: 'i-heroicons-envelope',
+            icon: 'i-lucide-mail',
             onSelect: () => openAddModal('email')
           }]
         ]"
       >
         <UButton
           label="Add Input"
-          icon="i-heroicons-plus"
+          icon="i-lucide-plus"
           color="primary"
         />
       </UDropdownMenu>
@@ -556,14 +556,14 @@ watch(isEditModalOpen, (open) => {
             <!-- Actions -->
             <div class="flex items-center gap-1">
               <UButton
-                icon="i-heroicons-pencil"
+                icon="i-lucide-pencil"
                 color="gray"
                 variant="ghost"
                 size="sm"
                 @click="openEditModal(input)"
               />
               <UButton
-                icon="i-heroicons-trash"
+                icon="i-lucide-trash-2"
                 color="gray"
                 variant="ghost"
                 size="sm"
@@ -602,7 +602,7 @@ watch(isEditModalOpen, (open) => {
                 class="flex-1"
               />
               <UButton
-                icon="i-heroicons-clipboard-document"
+                icon="i-lucide-clipboard-copy"
                 color="gray"
                 variant="ghost"
                 size="sm"
@@ -658,7 +658,7 @@ watch(isEditModalOpen, (open) => {
                   <div class="space-y-2">
                     <UButton
                       label="Connect with Slack"
-                      icon="i-heroicons-chat-bubble-left-right"
+                      icon="i-lucide-message-square"
                       color="primary"
                       :loading="waitingForOAuth"
                       @click="openOAuthPopup"
@@ -768,7 +768,7 @@ watch(isEditModalOpen, (open) => {
                   <div class="space-y-2">
                     <UButton
                       label="Reconnect with Slack"
-                      icon="i-heroicons-chat-bubble-left-right"
+                      icon="i-lucide-message-square"
                       color="primary"
                       :loading="waitingForOAuth"
                       @click="openOAuthPopup"

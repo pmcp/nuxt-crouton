@@ -1334,7 +1334,7 @@ export function getConfiguredOAuthProviders(
       providers.push({
         id: providerId,
         name: providerId.charAt(0).toUpperCase() + providerId.slice(1),
-        icon: 'i-heroicons-key',
+        icon: 'i-lucide-key-round',
         color: '#6b7280'
       })
     }

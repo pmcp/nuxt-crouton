@@ -38,7 +38,7 @@ const items = computed(() => {
   const viewActions = [
     {
       label: 'Impersonate',
-      icon: 'i-heroicons-eye',
+      icon: 'i-lucide-eye',
       click: () => emit('impersonate', props.user),
       disabled: props.user.banned || props.user.superAdmin
     }
@@ -49,14 +49,14 @@ const items = computed(() => {
     ? [
         {
           label: 'Unban User',
-          icon: 'i-heroicons-check-circle',
+          icon: 'i-lucide-check-circle',
           click: () => emit('unban', props.user)
         }
       ]
     : [
         {
           label: 'Ban User',
-          icon: 'i-heroicons-no-symbol',
+          icon: 'i-lucide-ban',
           click: () => emit('ban', props.user),
           disabled: props.user.superAdmin
         }
@@ -66,7 +66,7 @@ const items = computed(() => {
   const destructiveActions = [
     {
       label: 'Delete User',
-      icon: 'i-heroicons-trash',
+      icon: 'i-lucide-trash-2',
       click: () => emit('delete', props.user),
       disabled: props.user.superAdmin
     }
@@ -88,7 +88,7 @@ const items = computed(() => {
     <UButton
       color="neutral"
       variant="ghost"
-      icon="i-heroicons-ellipsis-vertical"
+      icon="i-lucide-ellipsis-vertical"
       :loading="loading"
       aria-label="User actions"
     />

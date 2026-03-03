@@ -82,7 +82,7 @@ function formatDate(date: Date) {
       <UInput
         v-model="search"
         :placeholder="t('superAdmin.teams.searchPlaceholder')"
-        icon="i-heroicons-magnifying-glass"
+        icon="i-lucide-search"
         class="max-w-xs"
       />
       <USelect
@@ -102,7 +102,7 @@ function formatDate(date: Date) {
       v-if="error"
       color="error"
       variant="soft"
-      icon="i-heroicons-exclamation-triangle"
+      icon="i-lucide-triangle-alert"
       :title="error"
     />
 
@@ -134,7 +134,7 @@ function formatDate(date: Date) {
             </p>
           </div>
           <UIcon
-            name="i-heroicons-arrow-right"
+            name="i-lucide-arrow-right"
             class="ml-auto size-4 text-gray-400"
           />
         </NuxtLink>
@@ -164,7 +164,7 @@ function formatDate(date: Date) {
       <template #memberCount-cell="{ row }">
         <div class="flex items-center gap-1">
           <UIcon
-            name="i-heroicons-users"
+            name="i-lucide-users"
             class="size-4 text-gray-400"
           />
           <span class="text-gray-600 dark:text-gray-400">

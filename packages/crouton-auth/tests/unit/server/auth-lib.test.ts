@@ -292,7 +292,7 @@ describe('server/lib/auth', () => {
       const providers = getConfiguredOAuthProviders(oauthConfig)
 
       expect(providers[0].id).toBe('custom')
-      expect(providers[0].icon).toBe('i-heroicons-key')
+      expect(providers[0].icon).toBe('i-lucide-key-round')
       expect(providers[0].name).toBe('Custom')
     })
   })

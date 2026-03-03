@@ -79,7 +79,7 @@ defineExpose({ fetchAccounts })
         </p>
       </div>
       <UButton
-        icon="i-heroicons-x-mark"
+        icon="i-lucide-x"
         color="neutral"
         variant="ghost"
         size="xs"
@@ -94,23 +94,23 @@ defineExpose({ fetchAccounts })
         filteredAccounts.map(account => ({
           label: account.label,
           description: account.accessTokenHint || account.providerAccountId,
-          icon: account.status === 'connected' ? 'i-heroicons-check-circle' : 'i-heroicons-exclamation-triangle',
+          icon: account.status === 'connected' ? 'i-lucide-check-circle' : 'i-lucide-triangle-alert',
           onSelect: () => selectAccount(account),
         })),
         [{
           label: 'Connect new account',
-          icon: 'i-heroicons-plus',
+          icon: 'i-lucide-plus',
           onSelect: () => emit('connect-new'),
         }],
       ]"
     >
       <UButton
         :label="placeholder"
-        icon="i-heroicons-link"
+        icon="i-lucide-link"
         color="neutral"
         variant="outline"
         class="w-full justify-start"
-        trailing-icon="i-heroicons-chevron-down"
+        trailing-icon="i-lucide-chevron-down"
       />
     </UDropdownMenu>
 
@@ -118,7 +118,7 @@ defineExpose({ fetchAccounts })
     <div v-else>
       <UButton
         label="Connect new account"
-        icon="i-heroicons-plus"
+        icon="i-lucide-plus"
         color="neutral"
         variant="outline"
         size="sm"

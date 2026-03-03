@@ -294,7 +294,7 @@ const outputSchema = computed(() => {
 const outputTypeOptions = [
   {
     label: 'Notion',
-    icon: 'i-heroicons-document-text',
+    icon: 'i-lucide-file-text',
     onSelect: () => openAddModal('notion'),
   },
   {
@@ -683,13 +683,13 @@ async function toggleActive(output: FlowOutput) {
 function getOutputTypeIcon(type: string): string {
   switch (type) {
     case 'notion':
-      return 'i-heroicons-document-text'
+      return 'i-lucide-file-text'
     case 'github':
       return 'i-lucide-github'
     case 'linear':
       return 'i-simple-icons-linear'
     default:
-      return 'i-heroicons-square-3-stack-3d'
+      return 'i-lucide-layers'
   }
 }
 
@@ -770,7 +770,7 @@ watch(isEditModalOpen, (open) => {
       <!-- Add Output Button -->
       <UDropdownMenu :items="[outputTypeOptions]">
         <UButton
-          icon="i-heroicons-plus"
+          icon="i-lucide-plus"
           color="primary"
           label="Add Output"
         />
@@ -779,7 +779,7 @@ watch(isEditModalOpen, (open) => {
 
     <!-- Outputs List -->
     <div v-if="outputs.length === 0" class="text-center py-8 text-gray-500">
-      <div class="i-heroicons-square-3-stack-3d text-4xl mb-2 mx-auto" />
+      <div class="i-lucide-layers text-4xl mb-2 mx-auto" />
       <p>No outputs configured yet.</p>
       <p class="text-sm">Add at least one output to route tasks.</p>
     </div>
@@ -823,12 +823,12 @@ watch(isEditModalOpen, (open) => {
 
             <div class="mt-2 space-y-1 text-sm text-gray-600">
               <div class="flex items-center gap-1">
-                <span class="i-heroicons-funnel" />
+                <span class="i-lucide-filter" />
                 <span>{{ formatDomainFilter(output.domainFilter) }}</span>
               </div>
 
               <div v-if="output.outputType === 'notion'" class="flex items-center gap-1">
-                <span class="i-heroicons-circle-stack" />
+                <span class="i-lucide-database" />
                 <span class="font-mono text-xs">
                   {{ (output.outputConfig as NotionOutputConfig).databaseId }}
                 </span>
@@ -844,7 +844,7 @@ watch(isEditModalOpen, (open) => {
             />
 
             <UButton
-              icon="i-heroicons-pencil"
+              icon="i-lucide-pencil"
               color="gray"
               variant="ghost"
               size="sm"
@@ -852,7 +852,7 @@ watch(isEditModalOpen, (open) => {
             />
 
             <UButton
-              icon="i-heroicons-trash"
+              icon="i-lucide-trash-2"
               color="red"
               variant="ghost"
               size="sm"
@@ -867,7 +867,7 @@ watch(isEditModalOpen, (open) => {
     <UAlert
       v-if="outputs.length > 0 && !outputs.some(o => o.isDefault)"
       color="warning"
-      icon="i-heroicons-exclamation-triangle"
+      icon="i-lucide-triangle-alert"
       title="No Default Output"
       description="At least one output must be marked as default to handle tasks with no domain match."
     />
@@ -937,7 +937,7 @@ watch(isEditModalOpen, (open) => {
               </UFormField>
 
               <UButton
-                icon="i-heroicons-arrow-path"
+                icon="i-lucide-refresh-cw"
                 :loading="schemaLoading"
                 @click="fetchNotionSchemaAndMap"
               >
@@ -947,7 +947,7 @@ watch(isEditModalOpen, (open) => {
               <UAlert
                 v-if="schemaError"
                 color="error"
-                icon="i-heroicons-exclamation-circle"
+                icon="i-lucide-circle-alert"
                 :title="schemaError"
               />
 
@@ -1028,7 +1028,7 @@ watch(isEditModalOpen, (open) => {
                 </UFormField>
 
                 <UAlert
-                  icon="i-heroicons-information-circle"
+                  icon="i-lucide-info"
                   color="blue"
                   title="User Mapping"
                   description="For people properties, configure user mappings to map Slack/Figma users to Notion users."
@@ -1040,7 +1040,7 @@ watch(isEditModalOpen, (open) => {
             <div v-if="selectedOutputType === 'github'" class="space-y-4 pt-4 border-t">
               <UAlert
                 color="info"
-                icon="i-heroicons-information-circle"
+                icon="i-lucide-info"
                 title="Coming Soon"
                 description="GitHub output configuration will be available in a future update."
               />
@@ -1050,7 +1050,7 @@ watch(isEditModalOpen, (open) => {
             <div v-if="selectedOutputType === 'linear'" class="space-y-4 pt-4 border-t">
               <UAlert
                 color="info"
-                icon="i-heroicons-information-circle"
+                icon="i-lucide-info"
                 title="Coming Soon"
                 description="Linear output configuration will be available in a future update."
               />
@@ -1151,7 +1151,7 @@ watch(isEditModalOpen, (open) => {
               </UFormField>
 
               <UButton
-                icon="i-heroicons-arrow-path"
+                icon="i-lucide-refresh-cw"
                 :loading="schemaLoading"
                 @click="fetchNotionSchemaAndMap"
               >
@@ -1161,7 +1161,7 @@ watch(isEditModalOpen, (open) => {
               <UAlert
                 v-if="schemaError"
                 color="error"
-                icon="i-heroicons-exclamation-circle"
+                icon="i-lucide-circle-alert"
                 :title="schemaError"
               />
 
@@ -1242,7 +1242,7 @@ watch(isEditModalOpen, (open) => {
                 </UFormField>
 
                 <UAlert
-                  icon="i-heroicons-information-circle"
+                  icon="i-lucide-info"
                   color="blue"
                   title="User Mapping"
                   description="For people properties, configure user mappings to map Slack/Figma users to Notion users."
@@ -1322,7 +1322,7 @@ watch(isEditModalOpen, (open) => {
       <template #content="{ close }">
         <div class="p-6">
           <div class="flex items-start gap-3 mb-4">
-            <div class="i-heroicons-exclamation-triangle text-2xl text-red-500" />
+            <div class="i-lucide-triangle-alert text-2xl text-red-500" />
             <div>
               <h3 class="text-lg font-semibold">Delete Output</h3>
               <p class="text-sm text-gray-600 mt-1">
