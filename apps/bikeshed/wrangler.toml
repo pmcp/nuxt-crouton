@@ -1,31 +1,31 @@
-# Cloudflare Pages configuration for bookingtest3
+# Cloudflare Pages configuration for bikeshed
 # Deploy with: npx wrangler pages deploy dist/
 
-name = "bookingtest3"
+name = "bikeshed"
 compatibility_date = "2024-09-02"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
 # D1 Database binding
-# Create with: npx wrangler d1 create bookingtest3-db
+# Create with: npx wrangler d1 create bikeshed-db
 [[d1_databases]]
 binding = "DB"
-database_name = "bookingtest3-db"
-database_id = "TODO_REPLACE_WITH_REAL_ID"
+database_name = "bikeshed-db"
+database_id = "6e1fe44c-516d-4f17-bf4f-0ab791fcc0d9"
 migrations_dir = "server/db/migrations/sqlite"
 
 # KV Namespace binding
-# Create with: npx wrangler kv namespace create bookingtest3-kv
+# Create with: npx wrangler kv namespace create bikeshed-kv
 [[kv_namespaces]]
 binding = "KV"
-id = "TODO_REPLACE_WITH_REAL_ID"
+id = "b052df4f80c24266b0adcc4b8e9d8a74"
 
 # R2 Bucket binding for blob storage (file uploads)
-# Create with: npx wrangler r2 bucket create bookingtest3-blob
+# Create with: npx wrangler r2 bucket create bikeshed-blob
 [[r2_buckets]]
 binding = "BLOB"
-bucket_name = "bookingtest3-blob"
+bucket_name = "bikeshed-blob"
 
 # Environment variables (set in Cloudflare dashboard or via wrangler secret)
 # [vars]
-# NUXT_PUBLIC_SITE_URL = "https://bookingtest3.pages.dev"
+# NUXT_PUBLIC_SITE_URL = "https://bikeshed.pages.dev"
