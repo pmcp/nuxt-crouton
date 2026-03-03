@@ -126,6 +126,36 @@ jobs:
       - name: Run all tests
         run: pnpm test
 
+  changeset-check:
+    name: Changeset Check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for package changes
+        id: packages-changed
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD -- 'packages/')
+          if [ -z "$CHANGED" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for changeset
+        if: steps.packages-changed.outputs.changed == 'true'
+        run: |
+          # Look for new .md files in .changeset/ (excluding README and config)
+          CHANGESETS=$(git diff --name-only origin/main...HEAD -- '.changeset/*.md' | grep -v README.md || true)
+          if [ -z "$CHANGESETS" ]; then
+            echo "::warning::No changeset found. If this PR changes published packages, run 'pnpm changeset' to add one."
+          else
+            echo "Changeset found: $CHANGESETS"
+          fi
+
   package-check:
     name: Package Validation
     runs-on: ubuntu-latest

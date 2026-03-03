@@ -38,17 +38,17 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+  <div class="min-h-screen flex items-center justify-center bg-(--ui-bg) p-4">
     <div class="max-w-2xl w-full space-y-8">
       <!-- Header -->
       <div class="text-center space-y-2">
-        <div class="flex items-center justify-center gap-2 text-primary">
+        <div class="flex items-center justify-center gap-2 text-(--ui-primary)">
           <UIcon
             name="i-lucide-croissant"
             class="size-8"
           />
         </div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 class="text-3xl font-bold text-(--ui-text-highlighted)">
           Crouton
         </h1>
       </div>
@@ -58,7 +58,7 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
         <!-- Loading state -->
         <div
           v-if="isPending"
-          class="py-12 text-center text-gray-400 dark:text-gray-500"
+          class="py-12 text-center text-(--ui-text-dimmed)"
         >
           <UIcon
             name="i-lucide-loader-2"
@@ -68,7 +68,7 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
 
         <!-- Logged in: Team cards -->
         <template v-else-if="loggedIn">
-          <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-center text-sm text-(--ui-text-muted)">
             Welcome back, {{ user?.name || user?.email }}
           </p>
 
@@ -77,7 +77,7 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
             <UCard
               v-for="team in teams"
               :key="team.id"
-              class="hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+              class="hover:bg-(--ui-bg-elevated)/50 transition-colors"
             >
               <div class="flex items-center gap-3 mb-4">
                 <UAvatar
@@ -88,18 +88,18 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
                 />
                 <div
                   v-else
-                  class="flex items-center justify-center size-10 rounded-full bg-gray-100 dark:bg-gray-800"
+                  class="flex items-center justify-center size-10 rounded-full bg-(--ui-bg-elevated)"
                 >
                   <UIcon
                     name="i-lucide-building-2"
-                    class="size-5 text-gray-400 dark:text-gray-500"
+                    class="size-5 text-(--ui-text-dimmed)"
                   />
                 </div>
                 <div class="min-w-0 flex-1">
-                  <h3 class="font-semibold text-gray-900 dark:text-white truncate">
+                  <h3 class="font-semibold text-(--ui-text-highlighted) truncate">
                     {{ team.name }}
                   </h3>
-                  <p class="text-xs text-gray-400 dark:text-gray-500 truncate">
+                  <p class="text-xs text-(--ui-text-dimmed) truncate">
                     /{{ team.slug }}
                   </p>
                 </div>
@@ -132,8 +132,8 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
               to="/onboarding/create-team"
               class="block"
             >
-              <UCard class="h-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer border-dashed">
-                <div class="flex flex-col items-center justify-center gap-2 py-4 text-gray-400 dark:text-gray-500">
+              <UCard class="h-full hover:bg-(--ui-bg-elevated)/50 transition-colors cursor-pointer border-dashed">
+                <div class="flex flex-col items-center justify-center gap-2 py-4 text-(--ui-text-dimmed)">
                   <UIcon
                     name="i-lucide-plus"
                     class="size-8"
@@ -163,7 +163,7 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
 
         <!-- Logged out: Login / Register -->
         <template v-else>
-          <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-center text-sm text-(--ui-text-muted)">
             Sign in to get started
           </p>
           <div class="space-y-3">
@@ -189,11 +189,11 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
       </ClientOnly>
 
       <!-- Footer -->
-      <p class="text-center text-xs text-gray-400 dark:text-gray-500">
+      <p class="text-center text-xs text-(--ui-text-dimmed)">
         <a
           href="https://crouton.dev"
           target="_blank"
-          class="hover:text-gray-600 dark:hover:text-gray-300"
+          class="hover:text-(--ui-text-muted)"
         >
           crouton.dev
         </a>
