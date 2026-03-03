@@ -2,16 +2,6 @@ import type { ComputedRef } from 'vue'
 import type { CollectionTypeMap, CollectionItem, CollectionFormData, CollectionName } from '#crouton/types'
 
 /**
- * Generate a unique correlation ID for mutation tracking
- * Format: crtn_{timestamp}_{random}
- */
-function generateCorrelationId(): string {
-  const timestamp = Date.now().toString(36)
-  const random = Math.random().toString(36).substring(2, 10)
-  return `crtn_${timestamp}_${random}`
-}
-
-/**
  * Return type for collection mutations
  */
 interface CollectionMutationReturn<K extends CollectionName> {

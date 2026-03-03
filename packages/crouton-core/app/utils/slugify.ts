@@ -1,19 +1,7 @@
-/**
- * URL-safe slug transformation
- * Converts text to lowercase, replaces spaces/underscores with hyphens,
- * removes special characters, and trims leading/trailing hyphens.
- *
- * @example slugify("Start Here!") // "start-here"
- * @example slugify("  Hello  World  ") // "hello-world"
- */
-export function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
+import { slugify } from '../../shared/utils/slugify'
+
+// Re-export canonical slugify from shared (available to both app and server)
+export { slugify }
 
 /**
  * Field transform functions for use with form inputs.

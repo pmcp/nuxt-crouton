@@ -1,18 +1,8 @@
 import { eq, like, and, ne } from 'drizzle-orm'
 import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 
-/**
- * Server-side URL-safe slug transformation.
- * Mirrors the client-side slugify in app/utils/slugify.ts.
- */
-export function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
+// Re-export canonical slugify from shared
+export { slugify } from '../../shared/utils/slugify'
 
 /**
  * Find a unique slug within a team by appending -1, -2, etc. if the base slug is taken.
