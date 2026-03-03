@@ -33,7 +33,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build crouton module
+        run: pnpm --filter '@fyit/crouton' build
 
       - name: Set environment variables
         run: |
