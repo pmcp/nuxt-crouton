@@ -42,7 +42,7 @@ export default defineNuxtConfig({
           brand: {
             name: 'Velotheek',
             primaryColor: '#0F766E',
-            url: 'http://localhost:3000'
+            url: '' // Set NUXT_PUBLIC_CROUTON_EMAIL_BRAND_URL in production
           }
         }
       },
