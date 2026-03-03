@@ -9,6 +9,12 @@
       "jobs": "Jobs",
       "userMappings": "Gebruikerskoppelingen",
       "inbox": "Inbox"
+    },
+    "block": {
+      "triage": "Triage",
+      "membersOnly": "Alleen leden",
+      "editBlock": "Blok bewerken",
+      "deleteBlock": "Blok verwijderen"
     }
   }
 }

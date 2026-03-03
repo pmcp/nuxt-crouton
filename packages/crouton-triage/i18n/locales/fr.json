@@ -9,6 +9,12 @@
       "jobs": "Jobs",
       "userMappings": "Correspondances utilisateurs",
       "inbox": "Boîte de réception"
+    },
+    "block": {
+      "triage": "Triage",
+      "membersOnly": "Membres uniquement",
+      "editBlock": "Modifier le bloc",
+      "deleteBlock": "Supprimer le bloc"
     }
   }
 }
