@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
-import { getCroutonLocales, getCroutonDefaultLocale } from '@fyit/crouton'
+import { getCroutonLocales, getCroutonDefaultLocale } from './config-utils'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
