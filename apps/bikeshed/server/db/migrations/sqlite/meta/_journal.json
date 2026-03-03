@@ -50,6 +50,13 @@
       "when": 1772553835445,
       "tag": "0006_moaning_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1772555928847,
+      "tag": "0007_far_bloodscream",
+      "breakpoints": true
     }
   ]
 }
