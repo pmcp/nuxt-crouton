@@ -38,6 +38,15 @@ jobs:
       - name: Build crouton module
         run: pnpm --filter '@fyit/crouton' build
 
+      - name: Prepare layer packages with tsconfig extending .nuxt
+        run: |
+          for pkg in packages/crouton-auth packages/crouton-admin packages/crouton-ai packages/crouton-email; do
+            if [ -f "$pkg/nuxt.config.ts" ]; then
+              echo "Preparing $pkg"
+              (cd "$pkg" && npx nuxt prepare)
+            fi
+          done
+
       - name: Run database migrations
         run: |
           if [ "${{ inputs.environment }}" = "production" ]; then
