@@ -17,7 +17,7 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { eq } from 'drizzle-orm'
 import { useNitroApp } from 'nitropack/runtime'
 import { user, session, useAdminDb } from '../../../utils/db'
-import { requireSuperAdmin } from '../../../utils/admin'
+import { requireSuperAdmin, resolveTargetUser } from '../../../utils/admin'
 import type { BanPayload, AdminUser } from '../../../../types/admin'
 
 export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => {
@@ -29,13 +29,6 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
   // Parse and validate body
   const body = await readBody<BanPayload>(event)
 
-  if (!body.userId?.trim()) {
-    throw createError({
-      status: 400,
-      message: 'User ID is required'
-    })
-  }
-
   if (!body.reason?.trim()) {
     throw createError({
       status: 400,
@@ -43,37 +36,8 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUser> => 
     })
   }
 
-  // Don't allow banning yourself
-  if (body.userId === adminUser.id) {
-    throw createError({
-      status: 400,
-      message: 'You cannot ban yourself'
-    })
-  }
-
-  // Check if user exists
-  const existingUsers = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, body.userId))
-    .limit(1)
-
-  if (existingUsers.length === 0) {
-    throw createError({
-      status: 404,
-      message: 'User not found'
-    })
-  }
-
-  const targetUser = existingUsers[0]
-
-  // Don't allow banning super admins (protect other admins)
-  if (targetUser.superAdmin) {
-    throw createError({
-      status: 403,
-      message: 'Cannot ban super admin users'
-    })
-  }
+  // Validate target user (checks: exists, not self, not super admin)
+  await resolveTargetUser(adminUser.id, body.userId, 'ban')
 
   // Calculate ban expiration
   const bannedUntil = body.duration

@@ -11,11 +11,11 @@
  * - userId: User ID to delete (required)
  */
 import type { H3Event } from 'h3'
-import { defineEventHandler, readBody, createError } from 'h3'
+import { defineEventHandler, readBody } from 'h3'
 import { eq } from 'drizzle-orm'
 import { useNitroApp } from 'nitropack/runtime'
 import { user, session, account, member, useAdminDb } from '../../../utils/db'
-import { requireSuperAdmin } from '../../../utils/admin'
+import { requireSuperAdmin, resolveTargetUser } from '../../../utils/admin'
 
 interface DeletePayload {
   userId: string
@@ -36,44 +36,8 @@ export default defineEventHandler(async (event: H3Event): Promise<DeleteResponse
   // Parse and validate body
   const body = await readBody<DeletePayload>(event)
 
-  if (!body.userId?.trim()) {
-    throw createError({
-      status: 400,
-      message: 'User ID is required'
-    })
-  }
-
-  // Don't allow deleting yourself
-  if (body.userId === adminUser.id) {
-    throw createError({
-      status: 400,
-      message: 'You cannot delete yourself'
-    })
-  }
-
-  // Check if user exists
-  const existingUsers = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, body.userId))
-    .limit(1)
-
-  if (existingUsers.length === 0) {
-    throw createError({
-      status: 404,
-      message: 'User not found'
-    })
-  }
-
-  const targetUser = existingUsers[0]
-
-  // Don't allow deleting super admins (protect other admins)
-  if (targetUser.superAdmin) {
-    throw createError({
-      status: 403,
-      message: 'Cannot delete super admin users'
-    })
-  }
+  // Validate target user (checks: exists, not self, not super admin)
+  await resolveTargetUser(adminUser.id, body.userId, 'delete')
 
   // Delete in order to respect foreign key constraints
   // (The schema uses onDelete: 'cascade' but we do it explicitly for clarity)

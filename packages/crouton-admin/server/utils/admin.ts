@@ -15,7 +15,9 @@
  */
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
+import { eq } from 'drizzle-orm'
 import type { AdminUser } from '../../types/admin'
+import { user as userTable, type User, useAdminDb } from './db'
 // useServerAuth is auto-imported from nuxt-crouton-auth layer
 
 /**
@@ -71,18 +73,12 @@ export async function requireSuperAdmin(event: H3Event): Promise<AdminContext> {
   const user = session.user as SessionUser
 
   // Check if user is banned
-  if (user.banned) {
-    const bannedUntil = user.bannedUntil ? new Date(user.bannedUntil) : null
-    const isPermanent = !bannedUntil
-    const isStillBanned = isPermanent || bannedUntil > new Date()
-
-    if (isStillBanned) {
-      throw createError({
-        status: 403,
-        statusText: 'Forbidden',
-        message: user.bannedReason || 'Your account has been banned'
-      })
-    }
+  if (isUserBanned(user)) {
+    throw createError({
+      status: 403,
+      statusText: 'Forbidden',
+      message: user.bannedReason || 'Your account has been banned'
+    })
   }
 
   // Check super admin status
@@ -140,4 +136,79 @@ export async function getSuperAdmin(event: H3Event): Promise<AdminUser | null> {
 export async function isSuperAdmin(event: H3Event): Promise<boolean> {
   const admin = await getSuperAdmin(event)
   return admin !== null
+}
+
+// ─── Target User Helpers ─────────────────────────────────────────────────────
+// Shared validation logic for admin actions on target users (ban, delete, impersonate).
+
+/**
+ * Resolve and validate a target user for an admin action.
+ *
+ * Performs four checks that are identical across ban/delete/impersonate endpoints:
+ * 1. userId is provided
+ * 2. Admin is not targeting themselves
+ * 3. Target user exists
+ * 4. Target user is not a super admin
+ *
+ * @param adminUserId - The admin performing the action
+ * @param targetUserId - The user being acted upon
+ * @param action - Human-readable action name for error messages (e.g. "ban", "delete", "impersonate")
+ * @returns The target user record
+ */
+export async function resolveTargetUser(
+  adminUserId: string,
+  targetUserId: string,
+  action: string
+): Promise<User> {
+  if (!targetUserId?.trim()) {
+    throw createError({
+      status: 400,
+      message: 'User ID is required'
+    })
+  }
+
+  if (targetUserId === adminUserId) {
+    throw createError({
+      status: 400,
+      message: `You cannot ${action} yourself`
+    })
+  }
+
+  const db = useAdminDb()
+  const existingUsers = await db
+    .select()
+    .from(userTable)
+    .where(eq(userTable.id, targetUserId))
+    .limit(1)
+
+  if (existingUsers.length === 0) {
+    throw createError({
+      status: 404,
+      message: 'User not found'
+    })
+  }
+
+  const targetUser = existingUsers[0]
+
+  if (targetUser.superAdmin) {
+    throw createError({
+      status: 403,
+      message: `Cannot ${action} super admin users`
+    })
+  }
+
+  return targetUser
+}
+
+/**
+ * Check if a user is currently banned (handles expiry logic).
+ * Accepts both DB User rows and session user objects.
+ *
+ * @returns true if the user is still banned
+ */
+export function isUserBanned(user: { banned?: boolean; bannedUntil?: string | Date | null }): boolean {
+  if (!user.banned) return false
+  const bannedUntil = user.bannedUntil ? new Date(user.bannedUntil) : null
+  const isPermanent = !bannedUntil
+  return isPermanent || bannedUntil! > new Date()
 }

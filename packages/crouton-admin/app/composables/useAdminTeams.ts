@@ -37,30 +37,35 @@ export function useAdminTeams() {
   const pageSize = ref(20)
   const totalPages = ref(0)
 
-  /**
-   * Fetch paginated list of teams/organizations
-   *
-   * @param filters - Optional filters for the query
-   * @returns Paginated response with teams
-   */
-  async function getTeams(filters?: TeamListFilters): Promise<PaginatedResponse<AdminTeamListItem>> {
+  /** Wrap an async operation with loading/error state management */
+  async function withLoading<T>(fn: () => Promise<T>, errorMessage: string): Promise<T> {
     loading.value = true
     error.value = null
     try {
-      const query = new URLSearchParams()
-      if (filters?.page) query.set('page', String(filters.page))
-      if (filters?.pageSize) query.set('pageSize', String(filters.pageSize))
-      if (filters?.search) query.set('search', filters.search)
-      if (filters?.personal !== undefined) query.set('personal', String(filters.personal))
-      if (filters?.sortBy) query.set('sortBy', filters.sortBy)
-      if (filters?.sortOrder) query.set('sortOrder', filters.sortOrder)
+      return await fn()
+    } catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : errorMessage
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
 
-      const queryString = query.toString()
-      const url = `/api/admin/teams${queryString ? `?${queryString}` : ''}`
+  /**
+   * Fetch paginated list of teams/organizations
+   */
+  async function getTeams(filters?: TeamListFilters): Promise<PaginatedResponse<AdminTeamListItem>> {
+    return withLoading(async () => {
+      const query: Record<string, string> = {}
+      if (filters?.page) query.page = String(filters.page)
+      if (filters?.pageSize) query.pageSize = String(filters.pageSize)
+      if (filters?.search) query.search = filters.search
+      if (filters?.personal !== undefined) query.personal = String(filters.personal)
+      if (filters?.sortBy) query.sortBy = filters.sortBy
+      if (filters?.sortOrder) query.sortOrder = filters.sortOrder
 
-      const response = await $fetch<PaginatedResponse<AdminTeamListItem>>(url)
+      const response = await $fetch<PaginatedResponse<AdminTeamListItem>>('/api/admin/teams', { query })
 
-      // Update reactive state
       teams.value = response.items
       total.value = response.total
       page.value = response.page
@@ -68,41 +73,23 @@ export function useAdminTeams() {
       totalPages.value = response.totalPages
 
       return response
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch teams'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    }, 'Failed to fetch teams')
   }
 
   /**
    * Get detailed team information by ID
-   *
-   * @param teamId - Team ID to fetch
-   * @returns Team detail with members
    */
   async function getTeam(teamId: string): Promise<AdminTeamDetail> {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await $fetch<AdminTeamDetail>(`/api/admin/teams/${teamId}`)
-      return response
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch team'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    return withLoading(
+      () => $fetch<AdminTeamDetail>(`/api/admin/teams/${teamId}`),
+      'Failed to fetch team'
+    )
   }
 
   /**
    * Get team members
    *
    * Convenience method that fetches team detail and returns just the members.
-   *
-   * @param teamId - Team ID to fetch members for
-   * @returns Array of team members
    */
   async function getTeamMembers(teamId: string): Promise<AdminTeamDetail['members']> {
     const team = await getTeam(teamId)

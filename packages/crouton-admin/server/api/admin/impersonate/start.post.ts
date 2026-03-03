@@ -19,8 +19,8 @@ import type { H3Event } from 'h3'
 import { createError, readBody, defineEventHandler } from 'h3'
 import { eq } from 'drizzle-orm'
 import { useNitroApp } from 'nitropack/runtime'
-import { user, session, useAdminDb } from '../../../utils/db'
-import { requireSuperAdmin } from '../../../utils/admin'
+import { session, useAdminDb } from '../../../utils/db'
+import { requireSuperAdmin, resolveTargetUser, isUserBanned } from '../../../utils/admin'
 import type { StartImpersonationPayload, ImpersonationState } from '../../../../types/admin'
 // useServerAuth is auto-imported from nuxt-crouton-auth layer
 
@@ -33,57 +33,15 @@ export default defineEventHandler(async (event: H3Event): Promise<ImpersonationS
   // Parse and validate body
   const body = await readBody<StartImpersonationPayload>(event)
 
-  if (!body.userId?.trim()) {
-    throw createError({
-      status: 400,
-      message: 'User ID is required'
-    })
-  }
-
-  // Don't allow impersonating yourself
-  if (body.userId === adminUser.id) {
-    throw createError({
-      status: 400,
-      message: 'You cannot impersonate yourself'
-    })
-  }
-
-  // Check if user exists
-  const targetUsers = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, body.userId))
-    .limit(1)
-
-  if (targetUsers.length === 0) {
-    throw createError({
-      status: 404,
-      message: 'User not found'
-    })
-  }
-
-  const targetUser = targetUsers[0]
-
-  // Don't allow impersonating super admins (protect other admins)
-  if (targetUser.superAdmin) {
-    throw createError({
-      status: 403,
-      message: 'Cannot impersonate super admin users'
-    })
-  }
+  // Validate target user (checks: exists, not self, not super admin)
+  const targetUser = await resolveTargetUser(adminUser.id, body.userId, 'impersonate')
 
   // Don't allow impersonating banned users
-  if (targetUser.banned) {
-    const bannedUntil = targetUser.bannedUntil ? new Date(targetUser.bannedUntil) : null
-    const isPermanent = !bannedUntil
-    const isStillBanned = isPermanent || bannedUntil > new Date()
-
-    if (isStillBanned) {
-      throw createError({
-        status: 400,
-        message: 'Cannot impersonate banned users'
-      })
-    }
+  if (isUserBanned(targetUser)) {
+    throw createError({
+      status: 400,
+      message: 'Cannot impersonate banned users'
+    })
   }
 
   // Get the current session to modify

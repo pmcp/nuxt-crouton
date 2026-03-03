@@ -42,31 +42,36 @@ export function useAdminUsers() {
   const pageSize = ref(20)
   const totalPages = ref(0)
 
-  /**
-   * Fetch paginated list of users
-   *
-   * @param filters - Optional filters for the query
-   * @returns Paginated response with users
-   */
-  async function getUsers(filters?: UserListFilters): Promise<PaginatedResponse<AdminUserListItem>> {
+  /** Wrap an async operation with loading/error state management */
+  async function withLoading<T>(fn: () => Promise<T>, errorMessage: string): Promise<T> {
     loading.value = true
     error.value = null
     try {
-      const query = new URLSearchParams()
-      if (filters?.page) query.set('page', String(filters.page))
-      if (filters?.pageSize) query.set('pageSize', String(filters.pageSize))
-      if (filters?.search) query.set('search', filters.search)
-      if (filters?.status) query.set('status', filters.status)
-      if (filters?.superAdmin !== undefined) query.set('superAdmin', String(filters.superAdmin))
-      if (filters?.sortBy) query.set('sortBy', filters.sortBy)
-      if (filters?.sortOrder) query.set('sortOrder', filters.sortOrder)
+      return await fn()
+    } catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : errorMessage
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
 
-      const queryString = query.toString()
-      const url = `/api/admin/users${queryString ? `?${queryString}` : ''}`
+  /**
+   * Fetch paginated list of users
+   */
+  async function getUsers(filters?: UserListFilters): Promise<PaginatedResponse<AdminUserListItem>> {
+    return withLoading(async () => {
+      const query: Record<string, string> = {}
+      if (filters?.page) query.page = String(filters.page)
+      if (filters?.pageSize) query.pageSize = String(filters.pageSize)
+      if (filters?.search) query.search = filters.search
+      if (filters?.status) query.status = filters.status
+      if (filters?.superAdmin !== undefined) query.superAdmin = String(filters.superAdmin)
+      if (filters?.sortBy) query.sortBy = filters.sortBy
+      if (filters?.sortOrder) query.sortOrder = filters.sortOrder
 
-      const response = await $fetch<PaginatedResponse<AdminUserListItem>>(url)
+      const response = await $fetch<PaginatedResponse<AdminUserListItem>>('/api/admin/users', { query })
 
-      // Update reactive state
       users.value = response.items
       total.value = response.total
       page.value = response.page
@@ -74,74 +79,37 @@ export function useAdminUsers() {
       totalPages.value = response.totalPages
 
       return response
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch users'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    }, 'Failed to fetch users')
   }
 
   /**
    * Get detailed user information by ID
-   *
-   * @param userId - User ID to fetch
-   * @returns User detail with memberships, sessions, and accounts
    */
   async function getUser(userId: string): Promise<AdminUserDetail> {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await $fetch<AdminUserDetail>(`/api/admin/users/${userId}`)
-      return response
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch user'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    return withLoading(
+      () => $fetch<AdminUserDetail>(`/api/admin/users/${userId}`),
+      'Failed to fetch user'
+    )
   }
 
   /**
    * Create a new user
-   *
-   * @param data - User data to create
-   * @returns Created user
    */
   async function createUser(data: CreateUserPayload): Promise<AdminUser> {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await $fetch<AdminUser>('/api/admin/users/create', {
-        method: 'POST',
-        body: data
-      })
-      return response
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to create user'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    return withLoading(
+      () => $fetch<AdminUser>('/api/admin/users/create', { method: 'POST', body: data }),
+      'Failed to create user'
+    )
   }
 
   /**
    * Ban a user
-   *
-   * @param userId - User ID to ban
-   * @param payload - Ban details (reason, duration)
-   * @returns Updated user
    */
   async function banUser(userId: string, payload: Omit<BanPayload, 'userId'>): Promise<AdminUser> {
-    loading.value = true
-    error.value = null
-    try {
+    return withLoading(async () => {
       const response = await $fetch<AdminUser>('/api/admin/users/ban', {
         method: 'POST',
-        body: {
-          userId,
-          ...payload
-        }
+        body: { userId, ...payload }
       })
 
       // Update user in local list if present
@@ -156,24 +124,14 @@ export function useAdminUsers() {
       }
 
       return response
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to ban user'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    }, 'Failed to ban user')
   }
 
   /**
    * Unban a user
-   *
-   * @param userId - User ID to unban
-   * @returns Updated user
    */
   async function unbanUser(userId: string): Promise<AdminUser> {
-    loading.value = true
-    error.value = null
-    try {
+    return withLoading(async () => {
       const response = await $fetch<AdminUser>('/api/admin/users/unban', {
         method: 'POST',
         body: { userId }
@@ -191,24 +149,14 @@ export function useAdminUsers() {
       }
 
       return response
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to unban user'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    }, 'Failed to unban user')
   }
 
   /**
    * Delete a user permanently
-   *
-   * @param userId - User ID to delete
-   * @returns Delete response
    */
   async function deleteUser(userId: string): Promise<{ success: boolean, message: string }> {
-    loading.value = true
-    error.value = null
-    try {
+    return withLoading(async () => {
       const response = await $fetch<{ success: boolean, message: string, deletedUserId: string }>('/api/admin/users/delete', {
         method: 'DELETE',
         body: { userId }
@@ -222,12 +170,7 @@ export function useAdminUsers() {
       }
 
       return response
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to delete user'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    }, 'Failed to delete user')
   }
 
   return {
