@@ -35,7 +35,46 @@
       v-if="selectedFile && !showCropStep"
       class="space-y-3"
     >
+      <!-- Multi-language alt text -->
+      <template v-if="hasMultipleLocales">
+        <UFormField
+          :label="t('assets.uploader.altText')"
+          name="alt"
+        >
+          <div class="flex items-start gap-2">
+            <div class="flex-1">
+              <CroutonI18nInput
+                v-model="metadata.translations"
+                :fields="['alt']"
+                :default-values="{ alt: metadata.alt }"
+                show-ai-translate
+                field-type="alt-text"
+                @update:english="({ value }: { field: string, value: string }) => { metadata.alt = value }"
+              />
+            </div>
+            <UTooltip
+              v-if="hasAI && isImageFile(selectedFile!)"
+              :text="t('assets.uploader.generateAltText')"
+              :delay-duration="0"
+            >
+              <UButton
+                :loading="generatingAlt"
+                :disabled="generatingAlt"
+                variant="ghost"
+                color="primary"
+                icon="i-lucide-sparkles"
+                size="lg"
+                class="mt-1"
+                @click="generateAltText"
+              />
+            </UTooltip>
+          </div>
+        </UFormField>
+      </template>
+
+      <!-- Single-language alt text -->
       <UFormField
+        v-else
         :label="t('assets.uploader.altText')"
         name="alt"
       >
@@ -99,11 +138,14 @@ const { uploadAsset, uploading } = useAssetUpload()
 const { hasApp } = useCroutonApps()
 const hasAI = hasApp('ai')
 
+const { locales } = useI18n()
+const hasMultipleLocales = computed(() => locales.value.length > 1)
+
 const selectedFile = ref<File | null>(null)
 const pendingFile = ref<File | null>(null)
 const previewUrl = ref<string>()
 const showCropStep = ref(false)
-const metadata = ref({ alt: '' })
+const metadata = ref<{ alt: string, translations: Record<string, { alt?: string }> }>({ alt: '', translations: {} })
 const generatingAlt = ref(false)
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -126,6 +168,13 @@ const generateAltText = async () => {
       body: { image, mimeType: selectedFile.value.type }
     })
     metadata.value.alt = alt
+    // Also set the English translation so CroutonI18nInput picks it up
+    if (hasMultipleLocales.value) {
+      metadata.value.translations = {
+        ...metadata.value.translations,
+        en: { ...metadata.value.translations?.en, alt },
+      }
+    }
   }
   catch (error) {
     console.error('Failed to generate alt text:', error)
@@ -161,7 +210,7 @@ const handleFileSelected = (file: File | null) => {
     showCropStep.value = true
   } else {
     selectedFile.value = file
-    metadata.value.alt = ''
+    metadata.value = { alt: '', translations: {} }
   }
 }
 
@@ -169,7 +218,7 @@ const handleCropConfirm = (croppedFile: File) => {
   selectedFile.value = croppedFile
   pendingFile.value = null
   showCropStep.value = false
-  metadata.value.alt = ''
+  metadata.value = { alt: '', translations: {} }
 }
 
 const handleCropCancel = () => {
@@ -184,7 +233,7 @@ const skipCrop = () => {
   }
   pendingFile.value = null
   showCropStep.value = false
-  metadata.value.alt = ''
+  metadata.value = { alt: '', translations: {} }
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -201,14 +250,17 @@ const handleUpload = async () => {
   try {
     const asset = await uploadAsset(
       selectedFile.value,
-      { alt: metadata.value.alt },
+      {
+        alt: metadata.value.alt,
+        ...(hasMultipleLocales.value && { translations: metadata.value.translations }),
+      },
       props.collection
     )
 
     // Reset state
     selectedFile.value = null
     previewUrl.value = undefined
-    metadata.value.alt = ''
+    metadata.value = { alt: '', translations: {} }
 
     emit('uploaded', asset.id)
   } catch (error) {

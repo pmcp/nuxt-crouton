@@ -1,6 +1,7 @@
 export interface AssetMetadata {
   alt?: string
   filename?: string
+  translations?: Record<string, { alt?: string }>
 }
 
 export interface UploadResponse {
@@ -70,6 +71,7 @@ export const useAssetUpload = () => {
           contentType: uploadResult.contentType,
           size: uploadResult.size,
           alt: metadata.alt || '',
+          ...(metadata.translations && Object.keys(metadata.translations).length > 0 && { translations: metadata.translations }),
           uploadedAt: new Date()
         }
       })

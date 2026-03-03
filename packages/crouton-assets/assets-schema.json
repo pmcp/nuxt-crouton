@@ -78,7 +78,8 @@
     "type": "string",
     "meta": {
       "label": "Alt Text (for accessibility & SEO)",
-      "area": "main"
+      "area": "main",
+      "translatable": true
     }
   },
   "uploadedAt": {

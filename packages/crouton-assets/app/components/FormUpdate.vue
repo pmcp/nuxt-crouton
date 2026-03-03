@@ -9,12 +9,18 @@ const emit = defineEmits<{ saved: [] }>()
 const { update } = useCollectionMutation(props.collection || 'assets')
 const { uploading } = useAssetUpload()
 const saving = ref(false)
-const state = ref({ alt: props.item.alt || '' })
+const state = ref({
+  alt: props.item.alt || '',
+  translations: (props.item.translations || {}) as Record<string, { alt?: string }>,
+})
 
 const isImage = props.item.contentType?.startsWith('image/')
 const generatingAlt = ref(false)
 const { hasApp } = useCroutonApps()
 const hasAI = hasApp('ai')
+
+const { locales } = useI18n()
+const hasMultipleLocales = computed(() => locales.value.length > 1)
 
 // Crop state
 const cropMode = ref(false)
@@ -52,6 +58,13 @@ const generateAltText = async () => {
       body: { image, mimeType: props.item.contentType }
     })
     state.value.alt = alt
+    // Also set the English translation so CroutonI18nInput picks it up
+    if (hasMultipleLocales.value) {
+      state.value.translations = {
+        ...state.value.translations,
+        en: { ...state.value.translations?.en, alt },
+      }
+    }
   }
   catch { /* ignore */ }
   finally { generatingAlt.value = false }
@@ -116,7 +129,11 @@ const handleRevert = async () => {
 const handleSave = async () => {
   saving.value = true
   try {
-    await update(props.item.id, { alt: state.value.alt })
+    const data: Record<string, any> = { alt: state.value.alt }
+    if (hasMultipleLocales.value && Object.keys(state.value.translations).length > 0) {
+      data.translations = state.value.translations
+    }
+    await update(props.item.id, data)
     emit('saved')
   }
   finally {
@@ -203,8 +220,41 @@ const handleSave = async () => {
 
       <!-- Form -->
       <div class="p-4 space-y-4">
+        <!-- Multi-language alt text -->
+        <template v-if="isImage && hasMultipleLocales">
+          <UFormField
+            label="Alt Text"
+            name="alt"
+            description="Describe the image for screen readers and SEO"
+          >
+            <div class="flex items-start gap-2 mt-1">
+              <div class="flex-1">
+                <CroutonI18nInput
+                  v-model="state.translations"
+                  :fields="['alt']"
+                  :default-values="{ alt: state.alt }"
+                  show-ai-translate
+                  field-type="alt-text"
+                  @update:english="({ value }: { field: string, value: string }) => { state.alt = value }"
+                />
+              </div>
+              <UTooltip v-if="hasAI" text="Generate with AI" :delay-duration="0">
+                <UButton
+                  :loading="generatingAlt"
+                  variant="ghost"
+                  color="primary"
+                  icon="i-lucide-sparkles"
+                  class="mt-1"
+                  @click="generateAltText"
+                />
+              </UTooltip>
+            </div>
+          </UFormField>
+        </template>
+
+        <!-- Single-language alt text -->
         <UFormField
-          v-if="isImage"
+          v-else-if="isImage"
           label="Alt Text"
           name="alt"
           description="Describe the image for screen readers and SEO"
