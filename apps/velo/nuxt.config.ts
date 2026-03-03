@@ -61,7 +61,6 @@ export default defineNuxtConfig({
 
   // Cloudflare Pages deployment
   nitro: {
-    preset: 'cloudflare-pages',
     alias: {
       '@better-auth/passkey/client': resolve(cfStubs, 'client'),
       '@better-auth/passkey': cfStubs,
