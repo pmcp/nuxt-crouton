@@ -53,6 +53,14 @@ vi.stubGlobal('useToast', () => ({
   add: mockToastAdd
 }))
 
+// Mock useNotify — delegates to mockToastAdd
+vi.stubGlobal('useNotify', () => ({
+  success: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, icon: options?.icon || 'i-lucide-check', color: 'success' }),
+  info: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, icon: options?.icon || 'i-lucide-info', color: 'primary' }),
+  warning: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, icon: options?.icon || 'i-lucide-alert-triangle', color: 'warning' }),
+  error: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, icon: options?.icon || 'i-lucide-octagon-alert', color: 'error' }),
+}))
+
 vi.stubGlobal('$fetch', mockFetch)
 
 vi.stubGlobal('useCroutonError', () => ({
@@ -217,8 +225,8 @@ describe('useCrouton', () => {
       expect(mockToastAdd).toHaveBeenCalledWith({
         title: 'Maximum depth reached',
         description: 'Cannot open more than 5 nested forms',
-        icon: 'i-lucide-octagon-alert',
-        color: 'primary'
+        icon: 'i-lucide-alert-triangle',
+        color: 'warning'
       })
     })
   })
@@ -340,7 +348,7 @@ describe('useCrouton', () => {
         title: 'Uh oh! Something went wrong.',
         description: 'Error: Network error',
         icon: 'i-lucide-octagon-alert',
-        color: 'primary'
+        color: 'error'
       })
       expect(croutonStates.value).toHaveLength(0)
     })

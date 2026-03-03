@@ -15,6 +15,11 @@ vi.stubGlobal('$fetch', mockFetch)
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('readonly', readonly)
 
+// Mock collections registry
+vi.stubGlobal('useCollections', () => ({
+  getConfig: (name: string) => ({ apiPath: name === 'croutonAssets' ? 'assets' : name })
+}))
+
 // Import composable after mocking
 import { useAssetUpload } from '../useAssetUpload'
 import type { UploadAssetResult } from '../useAssetUpload'

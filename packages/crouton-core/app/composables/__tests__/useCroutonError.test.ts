@@ -27,6 +27,21 @@ vi.stubGlobal('useToast', () => ({
   add: mockToastAdd
 }))
 
+// Mock useT — translation keys used by useCroutonError
+const translations: Record<string, string> = {
+  'errors.checkConnection': 'Check your connection status.',
+  'errors.notLoggedIn': 'You are not logged in.',
+}
+vi.stubGlobal('useT', () => ({ t: (key: string) => translations[key] || key }))
+
+// Mock useNotify — delegates to mockToastAdd
+vi.stubGlobal('useNotify', () => ({
+  success: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'success' }),
+  info: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'primary' }),
+  warning: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'warning' }),
+  error: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'error' }),
+}))
+
 vi.stubGlobal('useNetwork', () => ({
   isOnline: mockIsOnline
 }))

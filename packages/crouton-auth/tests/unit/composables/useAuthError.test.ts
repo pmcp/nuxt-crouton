@@ -11,9 +11,15 @@ const mockToast = {
 }
 
 // Setup global mocks
-vi.stubGlobal('useToast', () => mockToast)
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
+vi.stubGlobal('useToast', () => mockToast)
+vi.stubGlobal('useNotify', () => ({
+  success: (title: string, options?: any) => mockToast.add({ title, description: options?.description, color: 'success' }),
+  info: (title: string, options?: any) => mockToast.add({ title, description: options?.description, color: 'primary' }),
+  warning: (title: string, options?: any) => mockToast.add({ title, description: options?.description, color: 'warning' }),
+  error: (title: string, options?: any) => mockToast.add({ title, description: options?.description, color: 'error' }),
+}))
 
 describe('useAuthError', () => {
   beforeEach(() => {

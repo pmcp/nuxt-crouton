@@ -56,6 +56,43 @@ vi.stubGlobal('useToast', () => ({
   add: mockToastAdd
 }))
 
+// Mock useT — translation keys used by useCollectionMutation
+const mutationTranslations: Record<string, string> = {
+  'mutations.creationFailed': 'Creation failed',
+  'mutations.updateFailed': 'Update failed',
+  'mutations.deleteFailed': 'Delete failed',
+  'mutations.createdSuccessfully': 'Created successfully',
+  'mutations.updatedSuccessfully': 'Updated successfully',
+  'mutations.deletedCount': 'Deleted {count} item(s)',
+}
+vi.stubGlobal('useT', () => ({
+  t: (key: string, params?: any) => {
+    const template = mutationTranslations[key] || key
+    if (params?.count !== undefined) {
+      return template.replace('{count}', String(params.count))
+    }
+    return template
+  }
+}))
+
+// Mock useNotify — delegates to mockToastAdd
+vi.stubGlobal('useNotify', () => ({
+  success: (title: string, options?: any) => mockToastAdd({
+    title,
+    description: options?.description,
+    icon: options?.icon || 'i-lucide-check',
+    color: 'primary',
+  }),
+  info: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'primary' }),
+  warning: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'warning' }),
+  error: (title: string, options?: any) => mockToastAdd({
+    title,
+    description: options?.description,
+    icon: options?.icon || 'i-lucide-octagon-alert',
+    color: 'primary',
+  }),
+}))
+
 vi.stubGlobal('useNuxtApp', () => ({
   payload: { data: mockPayloadData },
   hooks: { callHook: mockCallHook }
@@ -175,16 +212,14 @@ describe('useCollectionMutation', () => {
       expect(result).toEqual(createdItem)
     })
 
-    it('shows success toast', async () => {
+    it('does not show success toast (handled by status bar)', async () => {
       const { create } = useCollectionMutation('products')
 
       await create({ name: 'Product' })
 
-      expect(mockToastAdd).toHaveBeenCalledWith({
-        title: 'Created successfully',
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
+      // Success notifications are no longer emitted as toasts
+      // They are handled by the status bar via useNotify
+      expect(mockToastAdd).not.toHaveBeenCalled()
     })
 
     it('emits crouton:mutation hook', async () => {
@@ -297,16 +332,13 @@ describe('useCollectionMutation', () => {
       expect(result).toEqual(updatedItem)
     })
 
-    it('shows success toast', async () => {
+    it('does not show success toast (handled by status bar)', async () => {
       const { update } = useCollectionMutation('products')
 
       await update('prod-1', { name: 'Updated' })
 
-      expect(mockToastAdd).toHaveBeenCalledWith({
-        title: 'Updated successfully',
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
+      // Success notifications are no longer emitted as toasts
+      expect(mockToastAdd).not.toHaveBeenCalled()
     })
 
     it('emits crouton:mutation hook with updates', async () => {
@@ -386,16 +418,13 @@ describe('useCollectionMutation', () => {
       )
     })
 
-    it('shows count in success toast', async () => {
+    it('does not show success toast for delete (handled by status bar)', async () => {
       const { deleteItems } = useCollectionMutation('products')
 
       await deleteItems(['id1', 'id2'])
 
-      expect(mockToastAdd).toHaveBeenCalledWith({
-        title: 'Deleted 2 item(s)',
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
+      // Success notifications are no longer emitted as toasts
+      expect(mockToastAdd).not.toHaveBeenCalled()
     })
 
     it('emits crouton:mutation hook with itemIds', async () => {
@@ -499,11 +528,6 @@ describe('useCollectionMutation', () => {
       await deleteItems(['single-id'])
 
       expect(mockFetch).toHaveBeenCalledTimes(1)
-      expect(mockToastAdd).toHaveBeenCalledWith({
-        title: 'Deleted 1 item(s)',
-        icon: 'i-lucide-check',
-        color: 'primary'
-      })
     })
   })
 

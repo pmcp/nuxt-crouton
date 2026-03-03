@@ -23,6 +23,21 @@ vi.stubGlobal('useToast', () => ({
   add: mockToastAdd
 }))
 
+// Mock useT — translation keys used by useTreeMutation
+const treeMutationTranslations: Record<string, string> = {
+  'mutations.moveFailed': 'Move failed',
+  'mutations.reorderFailed': 'Reorder failed',
+}
+vi.stubGlobal('useT', () => ({ t: (key: string) => treeMutationTranslations[key] || key }))
+
+// Mock useNotify — delegates to mockToastAdd
+vi.stubGlobal('useNotify', () => ({
+  success: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'success' }),
+  info: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'primary' }),
+  warning: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'warning' }),
+  error: (title: string, options?: any) => mockToastAdd({ title, description: options?.description, color: 'error' }),
+}))
+
 let mockCollectionConfig = {
   apiPath: 'pages',
   sortable: { enabled: false },
