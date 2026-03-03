@@ -101,8 +101,11 @@ jobs:
       - name: Install dependencies (skip postinstall scripts)
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build crouton module
-        run: pnpm --filter '@fyit/crouton' build
+      - name: Build layer packages
+        run: |
+          pnpm --filter '@fyit/crouton-auth' build
+          pnpm --filter '@fyit/crouton-core' build
+          pnpm --filter '@fyit/crouton' build
 
       - name: Prepare apps
         run: |
