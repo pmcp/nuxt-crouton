@@ -1,0 +1,17 @@
+# Cloudflare Pages configuration for triage
+# Deploy with: npx wrangler pages deploy dist/
+
+name = "triage"
+compatibility_date = "2024-09-02"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "triage-db"
+database_id = "69f3e81b-a0c9-4a77-9527-cb1407e91bbe"
+migrations_dir = "server/db/migrations/sqlite"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "db80d9c0c4424af4bd4c652968caf283"

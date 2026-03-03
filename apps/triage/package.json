@@ -1,0 +1,26 @@
+{
+  "name": "triage",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "cf:deploy": "nuxt build && npx wrangler pages deploy dist",
+    "cf:preview": "nuxt build && npx wrangler pages deploy dist --branch preview",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "npx wrangler d1 migrations apply triage-db --local",
+    "db:migrate:prod": "npx wrangler d1 migrations apply triage-db --remote"
+  },
+  "dependencies": {
+    "@fyit/crouton": "workspace:*",
+    "@libsql/client": "^0.15.0",
+    "drizzle-orm": "^0.45.0",
+    "nuxt": "^4.3.1"
+  },
+  "devDependencies": {
+    "@fyit/crouton-cli": "workspace:*",
+    "drizzle-kit": "^0.31.0",
+    "wrangler": "^4.64.0"
+  }
+}
