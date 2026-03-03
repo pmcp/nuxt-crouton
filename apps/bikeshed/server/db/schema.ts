@@ -12,7 +12,6 @@ export { bikeshedBookingRequests } from '../../layers/bikeshed/collections/booki
 export { bikeshedEquipments } from '../../layers/bikeshed/collections/equipments/server/database/schema'
 export { bikeshedRoomTypes } from '../../layers/bikeshed/collections/roomtypes/server/database/schema'
 export { bikeshedDepartments } from '../../layers/bikeshed/collections/departments/server/database/schema'
-export { bikeshedMembers } from '../../layers/bikeshed/collections/members/server/database/schema'
 export { croutonAssets } from '../../layers/crouton/collections/assets/server/database/schema'
 export { bookingsEmailtemplates } from '../../layers/bookings/collections/emailtemplates/server/database/schema'
 export { bookingsEmaillogs } from '../../layers/bookings/collections/emaillogs/server/database/schema'

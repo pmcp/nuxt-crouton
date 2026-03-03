@@ -16,8 +16,6 @@ import {bikeshedRoomTypesConfig} from '../layers/bikeshed/collections/roomtypes/
 
 import {bikeshedDepartmentsConfig} from '../layers/bikeshed/collections/departments/app/composables/useBikeshedDepartments';
 
-import {bikeshedMembersConfig} from '../layers/bikeshed/collections/members/app/composables/useBikeshedMembers';
-
 import {croutonAssetsConfig} from '../layers/crouton/collections/assets/app/composables/useCroutonAssets';
 
 import {bookingsEmailtemplatesConfig} from '../layers/bookings/collections/emailtemplates/app/composables/useBookingsEmailtemplates';
@@ -35,7 +33,6 @@ export default defineAppConfig({
     bikeshedEquipments: bikeshedEquipmentsConfig,
     bikeshedRoomTypes: bikeshedRoomTypesConfig,
     bikeshedDepartments: bikeshedDepartmentsConfig,
-    bikeshedMembers: bikeshedMembersConfig,
     croutonAssets: croutonAssetsConfig,
     bookingsEmailtemplates: bookingsEmailtemplatesConfig,
     bookingsEmaillogs: bookingsEmaillogsConfig
