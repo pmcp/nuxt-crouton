@@ -19,7 +19,6 @@ export default defineNuxtConfig({
     '@fyit/crouton-email',
     './layers/bookings',
     './layers/pages',
-    './layers/bikeshed',
     '@fyit/crouton-maps',
     './layers/crouton'
   ],

@@ -43,6 +43,13 @@
       "when": 1772553262048,
       "tag": "0005_furry_ozymandias",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1772553835445,
+      "tag": "0006_moaning_genesis",
+      "breakpoints": true
     }
   ]
 }

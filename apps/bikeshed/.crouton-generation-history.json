@@ -1,49 +1,5 @@
 [
   {
-    "collection": "departments",
-    "fields": [
-      "display",
-      "fields"
-    ],
-    "generator": "crouton-cli",
-    "timestamp": "2026-02-25T12:08:20.771Z",
-    "layer": "bikeshed",
-    "gitSha": "722d4102"
-  },
-  {
-    "collection": "roomtypes",
-    "fields": [
-      "display",
-      "fields"
-    ],
-    "generator": "crouton-cli",
-    "timestamp": "2026-02-25T12:08:20.753Z",
-    "layer": "bikeshed",
-    "gitSha": "722d4102"
-  },
-  {
-    "collection": "equipments",
-    "fields": [
-      "display",
-      "fields"
-    ],
-    "generator": "crouton-cli",
-    "timestamp": "2026-02-25T12:08:20.733Z",
-    "layer": "bikeshed",
-    "gitSha": "722d4102"
-  },
-  {
-    "collection": "bookingrequests",
-    "fields": [
-      "display",
-      "fields"
-    ],
-    "generator": "crouton-cli",
-    "timestamp": "2026-02-25T12:08:20.713Z",
-    "layer": "bikeshed",
-    "gitSha": "722d4102"
-  },
-  {
     "collection": "pages",
     "fields": [
       "title",
