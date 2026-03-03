@@ -1,1 +1,0 @@
-ALTER TABLE `bookings_locations` DROP COLUMN `maxBookingsPerMonth`;

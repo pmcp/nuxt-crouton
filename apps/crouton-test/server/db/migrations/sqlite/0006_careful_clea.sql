@@ -1,1 +1,0 @@
-ALTER TABLE `bookings_locations` ADD `maxBookingsPerMonth` integer;
