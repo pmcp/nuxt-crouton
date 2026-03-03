@@ -13,6 +13,11 @@
  */
 import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
+import { userProfile } from './user-profile'
+
+// Re-export user-profile schema so it's included in the built auth schema artifact
+export { userProfile, userProfileRelations } from './user-profile'
+export type { UserProfileRecord, NewUserProfileRecord } from './user-profile'
 
 // ============================================================================
 // Core Tables
@@ -352,13 +357,17 @@ export const scopedAccessToken = sqliteTable('scopedAccessToken', {
 // Relations
 // ============================================================================
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
   accounts: many(account),
   memberships: many(member),
   passkeys: many(passkey),
   twoFactors: many(twoFactor),
-  invitationsSent: many(invitation)
+  invitationsSent: many(invitation),
+  profile: one(userProfile, {
+    fields: [user.id],
+    references: [userProfile.userId],
+  }),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
