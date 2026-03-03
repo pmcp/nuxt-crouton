@@ -107,7 +107,7 @@ export function useTriageOAuth(config: OAuthConfig) {
    */
   function openOAuthPopup(event?: Event) {
     // Ensure we're on the client
-    if (!process.client) {
+    if (import.meta.server) {
       console.warn('[OAuth Popup] Cannot open popup during SSR')
       return
     }
@@ -117,10 +117,6 @@ export function useTriageOAuth(config: OAuthConfig) {
       event.preventDefault()
       event.stopPropagation()
     }
-
-    console.log('[OAuth Popup] Opening popup with URL:', oauthInstallUrl.value)
-    console.log('[OAuth Popup] Team ID:', teamId)
-    console.log('[OAuth Popup] Provider:', provider)
 
     waitingForOAuth.value = true
 
@@ -152,12 +148,9 @@ export function useTriageOAuth(config: OAuthConfig) {
    * Handle OAuth success message from popup
    */
   async function handleOAuthMessage(event: MessageEvent) {
-    console.log('[OAuth Message] Received message:', event.data)
-
     if (event.data?.type === 'oauth-success') {
       // Merge OAuth credentials
       if (event.data.credentials) {
-        console.log('[OAuth Message] OAuth succeeded, calling onSuccess handler')
 
         notify.success(`${provider.charAt(0).toUpperCase() + provider.slice(1)} Connected!`, { description: 'OAuth credentials received successfully.' })
 
@@ -172,8 +165,6 @@ export function useTriageOAuth(config: OAuthConfig) {
     }
 
     if (event.data?.type === 'oauth-error') {
-      console.error('[OAuth Message] OAuth failed:', event.data.error)
-
       notify.error('OAuth Failed', { description: event.data.error || 'Authorization failed. Please try again.' })
 
       // Call error handler if provided

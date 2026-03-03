@@ -38,8 +38,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!user?.superAdmin) {
     // Not a super admin - show forbidden error
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Forbidden',
+      status: 403,
+      statusText: 'Forbidden',
       message: 'Super admin access required'
     })
   }

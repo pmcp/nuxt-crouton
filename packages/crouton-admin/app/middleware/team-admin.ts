@@ -38,8 +38,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const teamSlug = to.params.team as string
   if (!teamSlug) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'Team parameter is required'
     })
   }
@@ -99,8 +99,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!targetTeam) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Forbidden',
+      status: 403,
+      statusText: 'Forbidden',
       message: 'You are not a member of this team'
     })
   }
@@ -139,8 +139,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
         if (!membership || (membership.role !== 'owner' && membership.role !== 'admin')) {
           throw createError({
-            statusCode: 403,
-            statusMessage: 'Forbidden',
+            status: 403,
+            statusText: 'Forbidden',
             message: 'Team admin or owner access required'
           })
         }
@@ -148,7 +148,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return
       }
     } catch (e: any) {
-      if (e.statusCode === 403) throw e
+      if (e.statusCode === 403 || e.status === 403) throw e
       console.error('[@crouton/admin] Failed to check admin status server-side:', e)
       throw createError({ status: 401, statusText: 'Unauthorized', message: 'Could not verify admin status' })
     }
@@ -169,8 +169,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
           if (!membership || (membership.role !== 'owner' && membership.role !== 'admin')) {
             throw createError({
-              statusCode: 403,
-              statusMessage: 'Forbidden',
+              status: 403,
+              statusText: 'Forbidden',
               message: 'Team admin or owner access required'
             })
           }
@@ -178,7 +178,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
           return
         }
       } catch (e: any) {
-        if (e.statusCode === 403) throw e
+        if (e.statusCode === 403 || e.status === 403) throw e
         console.error('[@crouton/admin] Failed to check admin status:', e)
         throw createError({ status: 401, statusText: 'Unauthorized', message: 'Could not verify admin status' })
       }
