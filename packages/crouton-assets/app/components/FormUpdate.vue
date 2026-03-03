@@ -13,6 +13,8 @@ const state = ref({ alt: props.item.alt || '' })
 
 const isImage = props.item.contentType?.startsWith('image/')
 const generatingAlt = ref(false)
+const { hasApp } = useCroutonApps()
+const hasAI = hasApp('ai')
 
 // Crop state
 const cropMode = ref(false)
@@ -213,7 +215,7 @@ const handleSave = async () => {
               placeholder="A person riding a bicycle on a city street…"
               class="flex-1"
             />
-            <UTooltip text="Generate with AI" :delay-duration="0">
+            <UTooltip v-if="hasAI" text="Generate with AI" :delay-duration="0">
               <UButton
                 :loading="generatingAlt"
                 variant="ghost"

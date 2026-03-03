@@ -47,7 +47,7 @@
             class="flex-1"
           />
           <UTooltip
-            v-if="isImageFile(selectedFile!)"
+            v-if="hasAI && isImageFile(selectedFile!)"
             :text="t('assets.uploader.generateAltText')"
             :delay-duration="0"
           >
@@ -96,6 +96,8 @@ const emit = defineEmits<{
 
 const { t } = useT()
 const { uploadAsset, uploading } = useAssetUpload()
+const { hasApp } = useCroutonApps()
+const hasAI = hasApp('ai')
 
 const selectedFile = ref<File | null>(null)
 const pendingFile = ref<File | null>(null)
