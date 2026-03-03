@@ -204,7 +204,8 @@ describe('generateSchema', () => {
         ]
       }
       const result = generateSchema(dataWithUnique, 'sqlite', minimalConfig as AnyConfig)
-      expect(result).toContain("email: text('email').notNull().unique()")
+      expect(result).toContain("email: text('email').notNull()")
+      expect(result).toContain("uniqueIndex('shop_products_team_email_idx').on(table.teamId, table.email)")
     })
 
     it('handles maxLength for PostgreSQL varchar', () => {

@@ -304,7 +304,7 @@ describe('rollback-interactive command', () => {
     // rollback-interactive requires a TTY for inquirer prompts,
     // so we cannot run it as a subprocess in tests.
     // Instead, verify the implementation file exists.
-    const modulePath = resolve(PKG_ROOT, 'lib', 'rollback-interactive.mjs')
+    const modulePath = resolve(PKG_ROOT, 'lib', 'rollback-interactive.ts')
     expect(existsSync(modulePath)).toBe(true)
   })
 
