@@ -44,9 +44,9 @@ jobs:
       - name: Run database migrations
         run: |
           if [ "${{ inputs.environment }}" = "production" ]; then
-            npx wrangler d1 migrations apply velo-db --remote
+            npx wrangler d1 migrations apply DB --remote
           else
-            npx wrangler d1 migrations apply velo-staging-db --remote
+            npx wrangler d1 migrations apply DB --remote --database-id dcd9dfeb-756e-4fce-967c-a7eb4d1627bd
           fi
         working-directory: apps/velo
 
