@@ -41,7 +41,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '#app': resolve(__dirname, 'tests/mocks/nuxt-app'),
-      '#imports': resolve(__dirname, 'tests/mocks/imports')
+      '#imports': resolve(__dirname, 'tests/mocks/imports'),
+      'nitropack/runtime': resolve(__dirname, 'tests/mocks/nitropack-runtime')
     }
   }
 })

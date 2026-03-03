@@ -312,6 +312,15 @@ export const setupIntegrationMocks = (authClientOptions: MockAuthClientOptions =
   vi.stubGlobal('computed', computed)
   vi.stubGlobal('reactive', reactive)
   vi.stubGlobal('readonly', readonly)
+
+  // Mock useState for composables that use it (e.g., useTeam fallback teams)
+  const useStateValues: Record<string, ReturnType<typeof ref>> = {}
+  vi.stubGlobal('useState', (key: string, init?: () => unknown) => {
+    if (!useStateValues[key]) {
+      useStateValues[key] = ref(init ? init() : null)
+    }
+    return useStateValues[key]
+  })
   vi.stubGlobal('navigateTo', vi.fn())
   vi.stubGlobal('useRoute', () => ({
     params: {},

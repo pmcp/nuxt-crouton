@@ -97,6 +97,15 @@ vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
 vi.stubGlobal('readonly', readonly)
 
+// Mock useState for fallback teams state
+const mockUseStateValues: Record<string, ReturnType<typeof ref>> = {}
+vi.stubGlobal('useState', (key: string, init?: () => unknown) => {
+  if (!mockUseStateValues[key]) {
+    mockUseStateValues[key] = ref(init ? init() : null)
+  }
+  return mockUseStateValues[key]
+})
+
 // Mock useAuthConfig
 vi.stubGlobal('useAuthConfig', () => ({
   mode: 'multi-tenant' as const,
@@ -139,6 +148,11 @@ describe('useTeam', () => {
     mockActiveOrgData.value = null
     mockSessionActiveOrg.value = null
     mockSessionUser.value = null
+
+    // Clear useState values between tests
+    Object.keys(mockUseStateValues).forEach(key => {
+      delete mockUseStateValues[key]
+    })
   })
 
   describe('state', () => {
