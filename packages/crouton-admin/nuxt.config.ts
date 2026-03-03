@@ -14,12 +14,6 @@ export default defineNuxtConfig({
   // Note: crouton-auth should be extended by the consumer before crouton-admin
   // This ensures auth composables and server utils are available
 
-  // Bundle theme CSS so all runtime presets work out of the box
-  extends: [
-    '@fyit/crouton-themes/ko',
-    '@fyit/crouton-themes/blackandwhite'
-  ],
-
   // Layer metadata
   $meta: {
     name: '@crouton/admin',
