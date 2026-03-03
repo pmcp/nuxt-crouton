@@ -1,7 +1,7 @@
-# Cloudflare Pages configuration for bikeshed
+# Cloudflare Pages configuration for velo
 # Deploy with: npx wrangler pages deploy dist/
 
-name = "bikeshed"
+name = "velo"
 compatibility_date = "2024-09-02"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
@@ -10,7 +10,7 @@ pages_build_output_dir = "dist"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "bikeshed-db"
+database_name = "velo-db"
 database_id = "6e1fe44c-516d-4f17-bf4f-0ab791fcc0d9"
 migrations_dir = "server/db/migrations/sqlite"
 
@@ -20,7 +20,7 @@ id = "b052df4f80c24266b0adcc4b8e9d8a74"
 
 [[r2_buckets]]
 binding = "BLOB"
-bucket_name = "bikeshed-blob"
+bucket_name = "velo-blob"
 
 # ─── Staging (preview branch deploys) ────────────────────────────────────────
 
@@ -28,7 +28,7 @@ bucket_name = "bikeshed-blob"
 
 [[env.preview.d1_databases]]
 binding = "DB"
-database_name = "bikeshed-staging-db"
+database_name = "velo-staging-db"
 database_id = "dcd9dfeb-756e-4fce-967c-a7eb4d1627bd"
 migrations_dir = "server/db/migrations/sqlite"
 
@@ -38,7 +38,7 @@ id = "a161b49669c246fbbabdec88598456db"
 
 [[env.preview.r2_buckets]]
 binding = "BLOB"
-bucket_name = "bikeshed-staging-blob"
+bucket_name = "velo-staging-blob"
 
 # ─── Production ──────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ bucket_name = "bikeshed-staging-blob"
 
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "bikeshed-db"
+database_name = "velo-db"
 database_id = "6e1fe44c-516d-4f17-bf4f-0ab791fcc0d9"
 migrations_dir = "server/db/migrations/sqlite"
 
@@ -56,4 +56,4 @@ id = "b052df4f80c24266b0adcc4b8e9d8a74"
 
 [[env.production.r2_buckets]]
 binding = "BLOB"
-bucket_name = "bikeshed-blob"
+bucket_name = "velo-blob"

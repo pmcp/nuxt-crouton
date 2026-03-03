@@ -18,11 +18,11 @@
  * - bookingsEmailtemplates: BookingsEmailtemplate
  * - bookingsLocations: BookingsLocation
  * - bookingsSettings: BookingsSetting
- * - bikeshedBookingrequests: BikeshedBookingrequest
- * - bikeshedDepartments: BikeshedDepartment
- * - bikeshedEquipments: BikeshedEquipment
- * - bikeshedMembers: BikeshedMember
- * - bikeshedRoomtypes: BikeshedRoomtype
+ * - veloBookingrequests: VeloBookingrequest
+ * - veloDepartments: VeloDepartment
+ * - veloEquipments: VeloEquipment
+ * - veloMembers: VeloMember
+ * - veloRoomtypes: VeloRoomtype
  * - croutonAssets: CroutonAsset
  * - pagesPages: PagesPage
  */
@@ -32,11 +32,11 @@ import type { BookingsEmaillog, BookingsEmaillogFormData, NewBookingsEmaillog } 
 import type { BookingsEmailtemplate, BookingsEmailtemplateFormData, NewBookingsEmailtemplate } from './layers/bookings/collections/emailtemplates/types'
 import type { BookingsLocation, BookingsLocationFormData, NewBookingsLocation } from './layers/bookings/collections/locations/types'
 import type { BookingsSetting, BookingsSettingFormData, NewBookingsSetting } from './layers/bookings/collections/settings/types'
-import type { BikeshedBookingrequest, BikeshedBookingrequestFormData, NewBikeshedBookingrequest } from './layers/bikeshed/collections/bookingrequests/types'
-import type { BikeshedDepartment, BikeshedDepartmentFormData, NewBikeshedDepartment } from './layers/bikeshed/collections/departments/types'
-import type { BikeshedEquipment, BikeshedEquipmentFormData, NewBikeshedEquipment } from './layers/bikeshed/collections/equipments/types'
-import type { BikeshedMember, BikeshedMemberFormData, NewBikeshedMember } from './layers/bikeshed/collections/members/types'
-import type { BikeshedRoomtype, BikeshedRoomtypeFormData, NewBikeshedRoomtype } from './layers/bikeshed/collections/roomtypes/types'
+import type { VeloBookingrequest, VeloBookingrequestFormData, NewVeloBookingrequest } from './layers/velo/collections/bookingrequests/types'
+import type { VeloDepartment, VeloDepartmentFormData, NewVeloDepartment } from './layers/velo/collections/departments/types'
+import type { VeloEquipment, VeloEquipmentFormData, NewVeloEquipment } from './layers/velo/collections/equipments/types'
+import type { VeloMember, VeloMemberFormData, NewVeloMember } from './layers/velo/collections/members/types'
+import type { VeloRoomtype, VeloRoomtypeFormData, NewVeloRoomtype } from './layers/velo/collections/roomtypes/types'
 import type { CroutonAsset, CroutonAssetFormData, NewCroutonAsset } from './layers/crouton/collections/assets/types'
 import type { PagesPage, PagesPageFormData, NewPagesPage } from './layers/pages/collections/pages/types'
 
@@ -67,30 +67,30 @@ declare module '#crouton/types' {
       FormData: BookingsSettingFormData
       NewItem: NewBookingsSetting
     }
-    bikeshedBookingrequests: {
-      Item: BikeshedBookingrequest
-      FormData: BikeshedBookingrequestFormData
-      NewItem: NewBikeshedBookingrequest
+    veloBookingrequests: {
+      Item: VeloBookingrequest
+      FormData: VeloBookingrequestFormData
+      NewItem: NewVeloBookingrequest
     }
-    bikeshedDepartments: {
-      Item: BikeshedDepartment
-      FormData: BikeshedDepartmentFormData
-      NewItem: NewBikeshedDepartment
+    veloDepartments: {
+      Item: VeloDepartment
+      FormData: VeloDepartmentFormData
+      NewItem: NewVeloDepartment
     }
-    bikeshedEquipments: {
-      Item: BikeshedEquipment
-      FormData: BikeshedEquipmentFormData
-      NewItem: NewBikeshedEquipment
+    veloEquipments: {
+      Item: VeloEquipment
+      FormData: VeloEquipmentFormData
+      NewItem: NewVeloEquipment
     }
-    bikeshedMembers: {
-      Item: BikeshedMember
-      FormData: BikeshedMemberFormData
-      NewItem: NewBikeshedMember
+    veloMembers: {
+      Item: VeloMember
+      FormData: VeloMemberFormData
+      NewItem: NewVeloMember
     }
-    bikeshedRoomtypes: {
-      Item: BikeshedRoomtype
-      FormData: BikeshedRoomtypeFormData
-      NewItem: NewBikeshedRoomtype
+    veloRoomtypes: {
+      Item: VeloRoomtype
+      FormData: VeloRoomtypeFormData
+      NewItem: NewVeloRoomtype
     }
     croutonAssets: {
       Item: CroutonAsset

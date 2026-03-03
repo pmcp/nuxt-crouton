@@ -1,5 +1,5 @@
 /**
- * Seed script for bikeshed app
+ * Seed script for velo app
  *
  * Seeds the database with data from the CSV and markdown files in seedData/.
  * Trigger via POST /api/seed
@@ -249,7 +249,7 @@ function readSeedFile(relativePath: string): string {
   // Try multiple possible roots (cwd may be monorepo root or app root)
   const candidates = [
     resolve(process.cwd(), 'seedData', relativePath),
-    resolve(process.cwd(), 'apps/bikeshed/seedData', relativePath)
+    resolve(process.cwd(), 'apps/velo/seedData', relativePath)
   ]
   for (const filePath of candidates) {
     if (existsSync(filePath)) {

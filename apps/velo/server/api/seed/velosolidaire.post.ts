@@ -246,7 +246,7 @@ function markdownToHtml(md: string): string {
 function readSeedFile(relativePath: string): string {
   const candidates = [
     resolve(process.cwd(), 'seedData/velosolidaire', relativePath),
-    resolve(process.cwd(), 'apps/bikeshed/seedData/velosolidaire', relativePath)
+    resolve(process.cwd(), 'apps/velo/seedData/velosolidaire', relativePath)
   ]
   for (const filePath of candidates) {
     if (existsSync(filePath)) {
