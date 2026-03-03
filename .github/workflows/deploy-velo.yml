@@ -38,16 +38,13 @@ jobs:
       - name: Build crouton module
         run: pnpm --filter '@fyit/crouton' build
 
-      - name: Set environment variables
+      - name: Run database migrations
         run: |
           if [ "${{ inputs.environment }}" = "production" ]; then
-            echo "DB_NAME=velo-db" >> "$GITHUB_ENV"
+            npx wrangler d1 migrations apply velo-db --env production --remote
           else
-            echo "DB_NAME=velo-staging-db" >> "$GITHUB_ENV"
+            npx wrangler d1 migrations apply velo-staging-db --env preview --remote
           fi
-
-      - name: Run database migrations
-        run: npx wrangler d1 migrations apply "$DB_NAME" --remote
         working-directory: apps/velo
 
       - name: Build
@@ -55,6 +52,7 @@ jobs:
         working-directory: apps/velo
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
+          NITRO_PRESET: 'cloudflare-pages'
 
       - name: Deploy to Cloudflare Pages
         run: |
