@@ -86,17 +86,18 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 ### 6. Code Duplication (DRY Violations)
 
 #### crouton-assets (worst offender — 4 sets of duplication)
-- [ ] `isImage/isVideo/isAudio/getFileIcon` — duplicated in `Card.vue`, `AssetTile.vue`, `Picker.vue`
-- [ ] `formatFileSize`/`formatBytes` — duplicated in `Card.vue`, `Uploader.vue`, `FormUpdate.vue`
-- [ ] `fileToBase64` — duplicated in `Uploader.vue`, `FormUpdate.vue`
-- [ ] `generateAltText` — duplicated in `Uploader.vue`, `FormUpdate.vue`
-- **Fix**: Create `utils/asset-helpers.ts` and `composables/useAltTextGenerator.ts`
+- [x] `isImage/isVideo/isAudio/getFileIcon` — ~~duplicated in `Card.vue`, `AssetTile.vue`, `Picker.vue`~~ → extracted to `app/utils/asset.ts`
+- [x] `formatFileSize`/`formatBytes` — ~~duplicated in `Card.vue`, `Uploader.vue`, `FormUpdate.vue`~~ → extracted to `app/utils/asset.ts`
+- [x] `fileToBase64` — ~~duplicated in `Uploader.vue`, `FormUpdate.vue`~~ → extracted to `app/utils/asset.ts` (also `urlToBase64` for URL variant)
+- [ ] `generateAltText` — duplicated in `Uploader.vue`, `FormUpdate.vue` (skipped — requires async composable refactor)
+- **Fix**: ~~Create `utils/asset-helpers.ts` and `composables/useAltTextGenerator.ts`~~ Created `app/utils/asset.ts`, updated all 5 components
 
 #### crouton-ai (already out of sync)
-- [ ] Provider/model registry — client vs server have different model lists
-- [ ] `detectProviderFromModel` — 3 separate implementations
-- [ ] `localeNames` — duplicated in `generate-email-template.post.ts`
-- **Fix**: Single source of truth in `shared/` directory importable by both client and server
+- [x] `detectProviderFromModel` — ~~3 separate implementations~~ → single source of truth in `shared/utils/ai-providers.ts` (also fixed missing `o3` prefix in client)
+- [x] `localeNames` — ~~duplicated in `generate-email-template.post.ts`~~ → uses shared `getLanguageName()` from `shared/utils/language-names.ts`
+- [x] `getLanguageName` cross-boundary imports — ~~server endpoints imported from `app/types/`~~ → now auto-imported from `shared/utils/`
+- [ ] Provider/model registry — client vs server have different model lists (different type shapes — `AIModel` vs `AIModelInfo` — deferred)
+- **Fix**: ~~Single source of truth in `shared/` directory~~ Created `shared/utils/ai-providers.ts` and `shared/utils/language-names.ts`
 
 #### crouton-triage
 - [ ] `calculateSimilarity` — 3 separate implementations (2 prefix-based, 1 Levenshtein)
@@ -105,11 +106,11 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: Shared utils, single function with async option flag
 
 #### crouton-events
-- [ ] `EventChange`/`CroutonEvent` interfaces — defined in 5+ files
-- [ ] `exportToCSV`/`exportToJSON` — 90% identical
-- [ ] Filter-building logic — duplicated in `index.get.ts` and `export.get.ts`
-- [ ] `parseValue`/`formatValue` — duplicated in 2 components
-- **Fix**: Shared types file, single `exportEvents(format)` function, shared filter builder
+- [x] `EventChange`/`CroutonEvent` interfaces — ~~defined in 5+ files~~ → centralized in `app/types/events.ts`
+- [x] `exportToCSV`/`exportToJSON` — ~~90% identical~~ → merged into single `exportEvents(format)` in `useCroutonEventsExport.ts`
+- [x] Filter-building logic — ~~duplicated in `index.get.ts` and `export.get.ts`~~ → extracted to `server/utils/event-filters.ts`
+- [x] `parseValue`/`formatValue` — ~~duplicated in 2 components~~ → extracted to `app/utils/event-display.ts`
+- **Fix**: ~~Shared types file, single `exportEvents(format)` function, shared filter builder~~ All done
 
 #### crouton-bookings
 - [ ] Availability logic — duplicated between `useBookingAvailability` and `useBookingCart`
@@ -145,10 +146,10 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: Import from single source
 
 #### crouton-charts
-- [ ] `ChartBlockAttrs` — duplicated in `ChartBlockView.vue` and `ChartBlockRender.vue`
-- [ ] `ChartPresetItem` — duplicated vs existing `ChartPreset` type
-- [ ] `DONUT_COLORS` — duplicated in `Widget.vue` and `useCollectionChart.ts`
-- **Fix**: Shared types and constants
+- [x] `ChartBlockAttrs` — ~~duplicated in `ChartBlockView.vue` and `ChartBlockRender.vue`~~ → extracted to `app/utils/chart-constants.ts`
+- [x] `ChartPresetItem` — ~~duplicated vs existing `ChartPreset` type~~ → replaced with canonical `ChartPreset` from registry
+- [x] `DONUT_COLORS`/`COLOR_PALETTE` — ~~duplicated in `Widget.vue` and `useCollectionChart.ts`~~ → unified as `CHART_COLOR_PALETTE` in `app/utils/chart-constants.ts`
+- **Fix**: ~~Shared types and constants~~ All done
 
 #### crouton-cli
 - [ ] `getAllCollectionsInLayer`/`getAllLayers` — duplicated in `rollback-interactive.ts` and `rollback-bulk.ts`
@@ -350,12 +351,12 @@ These patterns are correct across the entire codebase:
 4. Fix deprecated Nitro error format
 5. Remove console.log from production code
 
-### Phase 2: DRY Cleanup (Medium effort)
-6. Extract shared asset utilities
-7. Consolidate event types and export functions
-8. Extract shared chart constants and types
-9. Unify AI provider/model registry
-10. Consolidate core utils (slugify, correlationId)
+### Phase 2: DRY Cleanup (Medium effort) — COMPLETED
+6. ~~Extract shared asset utilities~~ ✅ `app/utils/asset.ts` (crouton-assets)
+7. ~~Consolidate event types and export functions~~ ✅ types + utils + filters (crouton-events)
+8. ~~Extract shared chart constants and types~~ ✅ `app/utils/chart-constants.ts` (crouton-charts)
+9. ~~Unify AI provider/model registry~~ ✅ `shared/utils/ai-providers.ts` + `language-names.ts` (crouton-ai)
+10. ~~Consolidate core utils (slugify, correlationId)~~ ✅ done in Phase 2a
 
 ### Phase 3: Architecture Improvements (Higher effort)
 11. Split `useAuth` god composable
