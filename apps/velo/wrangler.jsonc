@@ -1,0 +1,38 @@
+{
+  // Cloudflare Pages configuration for velo
+  "name": "velo",
+  "compatibility_date": "2024-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "dist",
+
+  // Production bindings
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "velo-db",
+      "database_id": "6e1fe44c-516d-4f17-bf4f-0ab791fcc0d9",
+      "migrations_dir": "server/db/migrations/sqlite"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "BLOB", "bucket_name": "velo-blob" }
+  ],
+
+  // Preview/staging environment overrides
+  // NOTE: d1_databases and r2_buckets do NOT inherit — must be specified fully
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "velo-staging-db",
+          "database_id": "dcd9dfeb-756e-4fce-967c-a7eb4d1627bd",
+          "migrations_dir": "server/db/migrations/sqlite"
+        }
+      ],
+      "r2_buckets": [
+        { "binding": "BLOB", "bucket_name": "velo-staging-blob" }
+      ]
+    }
+  }
+}

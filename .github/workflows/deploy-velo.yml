@@ -46,7 +46,7 @@ jobs:
           if [ "${{ inputs.environment }}" = "production" ]; then
             npx wrangler d1 migrations apply DB --remote
           else
-            npx wrangler d1 migrations apply DB --remote --database-id dcd9dfeb-756e-4fce-967c-a7eb4d1627bd
+            npx wrangler d1 migrations apply DB --env preview --remote
           fi
         working-directory: apps/velo
 
@@ -56,6 +56,7 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
           NITRO_PRESET: 'cloudflare-pages'
+          CLOUDFLARE_ENV: ${{ inputs.environment == 'staging' && 'preview' || '' }}
 
       - name: Deploy to Cloudflare Pages
         run: |

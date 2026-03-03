@@ -24,8 +24,7 @@ export default defineNuxtConfig({
   ],
   hub: {
     blob: true,
-    db: 'sqlite',
-    kv: true
+    db: 'sqlite'
   },
 
   // Disable OG Image to reduce bundle size for Cloudflare (saves ~4MB)
