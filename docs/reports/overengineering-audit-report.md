@@ -72,8 +72,8 @@ These use `ref()` at module scope instead of `useState()`, causing state to pers
 All of these manually manage `loading`, `error`, `data` refs around `$fetch` calls:
 
 - [ ] **crouton-admin** — `useAdminStats.ts` (only auto-refresh via `useIntervalFn` is added value)
-- [ ] **crouton-admin** — `useAdminTeams.ts` (6 methods, identical boilerplate each)
-- [ ] **crouton-admin** — `useAdminUsers.ts` (6 methods, identical boilerplate each)
+- [x] **crouton-admin** — `useAdminTeams.ts` — ~~identical boilerplate~~ → extracted `withLoading()` helper, replaced `URLSearchParams` with `$fetch` `query` option
+- [x] **crouton-admin** — `useAdminUsers.ts` — ~~identical boilerplate~~ → extracted `withLoading()` helper, replaced `URLSearchParams` with `$fetch` `query` option
 - [ ] **crouton-auth** — `useAuthCache.ts` (184 lines reimplementing Nuxt caching)
 - [ ] **crouton-core** — `useCollectionItem.ts`
 - [ ] **crouton-triage** — `useTriageConnectedAccounts.ts`
@@ -124,8 +124,8 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: Extract `toolbarDefaults.ts`, `uploadAndInsertImage()` helper, use the composable
 
 #### crouton-core
-- [ ] `slugify` — duplicated in `app/utils/slugify.ts` and `server/utils/slug.ts`
-- [ ] `generateCorrelationId` — duplicated in `useTreeMutation.ts` and `useCollectionMutation.ts`
+- [x] `slugify` — ~~duplicated in `app/utils/slugify.ts` and `server/utils/slug.ts`~~ → moved to `shared/utils/slugify.ts`, both re-export
+- [x] `generateCorrelationId` — ~~duplicated in `useTreeMutation.ts` and `useCollectionMutation.ts`~~ → extracted to `app/utils/correlationId.ts`
 - [ ] Search filtering logic — duplicated within `useTableData.ts`
 - **Fix**: Move to shared utils
 
@@ -275,7 +275,7 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
 ### 16. Miscellaneous
 
-- [ ] **crouton-admin** — `useAdminTeams.ts` and `useAdminUsers.ts` — manual URLSearchParams instead of `$fetch`'s `query` option
+- [x] **crouton-admin** — ~~`useAdminTeams.ts` and `useAdminUsers.ts` — manual URLSearchParams~~ → replaced with `$fetch`'s `query` option
 - [ ] **crouton-pages** — `reservedPrefixes` duplicated in middleware and composable
 - [ ] **crouton-sales** — `calculateItemPrice` duplicated between composable and Cart component
 - [ ] **crouton-sales** — ESC/POS buffer fix logic duplicated in `formatReceipt` and `formatTestReceipt`
