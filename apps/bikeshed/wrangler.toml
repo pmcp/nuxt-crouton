@@ -6,26 +6,54 @@ compatibility_date = "2024-09-02"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
-# D1 Database binding
-# Create with: npx wrangler d1 create bikeshed-db
+# ─── Local dev defaults (used by `wrangler pages dev`) ───────────────────────
+
 [[d1_databases]]
 binding = "DB"
 database_name = "bikeshed-db"
 database_id = "6e1fe44c-516d-4f17-bf4f-0ab791fcc0d9"
 migrations_dir = "server/db/migrations/sqlite"
 
-# KV Namespace binding
-# Create with: npx wrangler kv namespace create bikeshed-kv
 [[kv_namespaces]]
 binding = "KV"
 id = "b052df4f80c24266b0adcc4b8e9d8a74"
 
-# R2 Bucket binding for blob storage (file uploads)
-# Create with: npx wrangler r2 bucket create bikeshed-blob
 [[r2_buckets]]
 binding = "BLOB"
 bucket_name = "bikeshed-blob"
 
-# Environment variables (set in Cloudflare dashboard or via wrangler secret)
-# [vars]
-# NUXT_PUBLIC_SITE_URL = "https://bikeshed.pages.dev"
+# ─── Staging (preview branch deploys) ────────────────────────────────────────
+
+[env.preview]
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "bikeshed-staging-db"
+database_id = "dcd9dfeb-756e-4fce-967c-a7eb4d1627bd"
+migrations_dir = "server/db/migrations/sqlite"
+
+[[env.preview.kv_namespaces]]
+binding = "KV"
+id = "a161b49669c246fbbabdec88598456db"
+
+[[env.preview.r2_buckets]]
+binding = "BLOB"
+bucket_name = "bikeshed-staging-blob"
+
+# ─── Production ──────────────────────────────────────────────────────────────
+
+[env.production]
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "bikeshed-db"
+database_id = "6e1fe44c-516d-4f17-bf4f-0ab791fcc0d9"
+migrations_dir = "server/db/migrations/sqlite"
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "b052df4f80c24266b0adcc4b8e9d8a74"
+
+[[env.production.r2_buckets]]
+binding = "BLOB"
+bucket_name = "bikeshed-blob"
