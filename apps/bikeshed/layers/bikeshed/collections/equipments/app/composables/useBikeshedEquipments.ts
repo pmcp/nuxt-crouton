@@ -1,15 +1,15 @@
 /**
  * @crouton-generated
  * @collection equipments
- * @layer bookingtest3
+ * @layer bikeshed
  * @generated 2026-02-25
  *
  * ## AI Context
- * - Composable: useBookingtest3Equipments
- * - Collection name: bookingtest3Equipments
- * - API endpoint: /api/teams/[id]/bookingtest3-equipments
- * - Form component: Bookingtest3EquipmentsForm
- * - List component: Bookingtest3EquipmentsList
+ * - Composable: useBikeshedEquipments
+ * - Collection name: bikeshedEquipments
+ * - API endpoint: /api/teams/[id]/bikeshed-equipments
+ * - Form component: BikeshedEquipmentsForm
+ * - List component: BikeshedEquipmentsList
  * - Fields: display, fields
  *
  * ## Common Modifications
@@ -26,27 +26,27 @@ import { z } from 'zod'
 
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
-export const bookingtest3EquipmentSchema = z.object({
+export const bikeshedEquipmentSchema = z.object({
   display: z.string().optional(),
   fields: z.string().optional()
 })
 
-export const bookingtest3EquipmentsColumns = [
+export const bikeshedEquipmentsColumns = [
   { accessorKey: 'display', header: 'Display' },
   { accessorKey: 'fields', header: 'Fields' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
-const _bookingtest3EquipmentsConfig = {
-  name: 'bookingtest3Equipments',
-  layer: 'bookingtest3',
-  apiPath: 'bookingtest3-equipments',
-  componentName: 'Bookingtest3EquipmentsForm',
+const _bikeshedEquipmentsConfig = {
+  name: 'bikeshedEquipments',
+  layer: 'bikeshed',
+  apiPath: 'bikeshed-equipments',
+  componentName: 'BikeshedEquipmentsForm',
   defaultValues: {
     display: '',
     fields: ''
   },
-  columns: bookingtest3EquipmentsColumns,
+  columns: bikeshedEquipmentsColumns,
   fields: [
       {
           "name": "display",
@@ -64,23 +64,23 @@ const _bookingtest3EquipmentsConfig = {
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning
-Object.defineProperty(_bookingtest3EquipmentsConfig, 'schema', {
-  value: bookingtest3EquipmentSchema,
+Object.defineProperty(_bikeshedEquipmentsConfig, 'schema', {
+  value: bikeshedEquipmentSchema,
   enumerable: false,
   configurable: false,
   writable: false
 })
 
-export const bookingtest3EquipmentsConfig = _bookingtest3EquipmentsConfig as typeof _bookingtest3EquipmentsConfig & { schema: typeof bookingtest3EquipmentSchema }
+export const bikeshedEquipmentsConfig = _bikeshedEquipmentsConfig as typeof _bikeshedEquipmentsConfig & { schema: typeof bikeshedEquipmentSchema }
 
-export const useBookingtest3Equipments = () => bookingtest3EquipmentsConfig
+export const useBikeshedEquipments = () => bikeshedEquipmentsConfig
 
 // Default export for auto-import compatibility
 export default function () {
   return {
-    defaultValue: bookingtest3EquipmentsConfig.defaultValues,
-    schema: bookingtest3EquipmentSchema,
-    columns: bookingtest3EquipmentsConfig.columns,
-    collection: bookingtest3EquipmentsConfig.name
+    defaultValue: bikeshedEquipmentsConfig.defaultValues,
+    schema: bikeshedEquipmentSchema,
+    columns: bikeshedEquipmentsConfig.columns,
+    collection: bikeshedEquipmentsConfig.name
   }
 }

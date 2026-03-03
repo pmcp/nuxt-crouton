@@ -5,13 +5,13 @@ const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineNuxtConfig({
   $meta: {
-    name: 'bookingtest3-equipments',
+    name: 'bikeshed-equipments',
   },
   components: {
     dirs: [
       {
         path: join(currentDir, 'app/components'),
-        prefix: 'Bookingtest3Equipments',
+        prefix: 'BikeshedEquipments',
         global: true
       }
     ]

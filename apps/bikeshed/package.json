@@ -1,5 +1,5 @@
 {
-  "name": "bookingtest3",
+  "name": "bikeshed",
   "type": "module",
   "private": true,
   "version": "0.1.0",
@@ -12,8 +12,8 @@
     "cf:deploy": "nuxt build && npx wrangler pages deploy dist",
     "cf:preview": "nuxt build && npx wrangler pages deploy dist --branch preview",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "npx wrangler d1 migrations apply bookingtest3-db --local",
-    "db:migrate:prod": "npx wrangler d1 migrations apply bookingtest3-db --remote"
+    "db:migrate": "npx wrangler d1 migrations apply bikeshed-db --local",
+    "db:migrate:prod": "npx wrangler d1 migrations apply bikeshed-db --remote"
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",

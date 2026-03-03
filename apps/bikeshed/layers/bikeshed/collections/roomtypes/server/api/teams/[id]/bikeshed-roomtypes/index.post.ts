@@ -1,6 +1,6 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { createBookingtest3RoomType } from '../../../../database/queries'
+import { createBikeshedRoomType } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   // Exclude id field to let the database generate it
   const { id, ...dataWithoutId } = body
 
-  return await createBookingtest3RoomType({
+  return await createBikeshedRoomType({
     ...dataWithoutId,
     teamId: team.id,
     owner: user.id,

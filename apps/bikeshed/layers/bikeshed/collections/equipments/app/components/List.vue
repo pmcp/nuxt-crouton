@@ -1,14 +1,14 @@
 <!--
   @crouton-generated
   @collection equipments
-  @layer bookingtest3
+  @layer bikeshed
   @generated 2026-02-25
 
   ## AI Context
   - List component for equipments collection
-  - Collection name: bookingtest3Equipments
-  - API endpoint: /api/teams/[id]/bookingtest3-equipments
-  - Columns composable: useBookingtest3Equipments()
+  - Collection name: bikeshedEquipments
+  - API endpoint: /api/teams/[id]/bikeshed-equipments
+  - Columns composable: useBikeshedEquipments()
   - Column fields: display, fields
 
   ## Common Modifications
@@ -24,15 +24,15 @@
 <template>
   <CroutonCollection
     :layout="layout"
-    collection="bookingtest3Equipments"
+    collection="bikeshedEquipments"
     :columns="columns"
     :rows="equipments || []"
     :loading="pending"
   >
     <template #header>
       <CroutonTableHeader
-        title="Bookingtest3Equipments"
-        :collection="'bookingtest3Equipments'"
+        title="BikeshedEquipments"
+        :collection="'bikeshedEquipments'"
         createButton
       />
     </template>
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import useBookingtest3Equipments from '../composables/useBookingtest3Equipments'
+import useBikeshedEquipments from '../composables/useBikeshedEquipments'
 
 const props = withDefaults(defineProps<{
   layout?: any
@@ -48,10 +48,10 @@ const props = withDefaults(defineProps<{
   layout: 'table'
 })
 
-const { columns } = useBookingtest3Equipments()
+const { columns } = useBikeshedEquipments()
 
 const { items: equipments, pending } = await useCollectionQuery(
-  'bookingtest3Equipments'
+  'bikeshedEquipments'
 )
 
 </script>

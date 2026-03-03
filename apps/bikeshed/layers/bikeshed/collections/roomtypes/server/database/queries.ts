@@ -2,10 +2,10 @@
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
-import type { Bookingtest3RoomType, NewBookingtest3RoomType } from '../../types'
+import type { BikeshedRoomType, NewBikeshedRoomType } from '../../types'
 import { user } from '~~/server/db/schema'
 
-export async function getAllBookingtest3RoomTypes(teamId: string) {
+export async function getAllBikeshedRoomTypes(teamId: string) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -14,7 +14,7 @@ export async function getAllBookingtest3RoomTypes(teamId: string) {
 
   const roomTypes = await (db as any)
     .select({
-      ...tables.bookingtest3RoomTypes,
+      ...tables.bikeshedRoomTypes,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -34,17 +34,17 @@ export async function getAllBookingtest3RoomTypes(teamId: string) {
         image: updatedByUser.image
       }
     } as any)
-    .from(tables.bookingtest3RoomTypes)
-    .leftJoin(ownerUser, eq(tables.bookingtest3RoomTypes.owner, ownerUser.id))
-    .leftJoin(createdByUser, eq(tables.bookingtest3RoomTypes.createdBy, createdByUser.id))
-    .leftJoin(updatedByUser, eq(tables.bookingtest3RoomTypes.updatedBy, updatedByUser.id))
-    .where(eq(tables.bookingtest3RoomTypes.teamId, teamId))
-    .orderBy(desc(tables.bookingtest3RoomTypes.createdAt))
+    .from(tables.bikeshedRoomTypes)
+    .leftJoin(ownerUser, eq(tables.bikeshedRoomTypes.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.bikeshedRoomTypes.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.bikeshedRoomTypes.updatedBy, updatedByUser.id))
+    .where(eq(tables.bikeshedRoomTypes.teamId, teamId))
+    .orderBy(desc(tables.bikeshedRoomTypes.createdAt))
 
   return roomTypes
 }
 
-export async function getBookingtest3RoomTypesByIds(teamId: string, roomTypeIds: string[]) {
+export async function getBikeshedRoomTypesByIds(teamId: string, roomTypeIds: string[]) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -53,7 +53,7 @@ export async function getBookingtest3RoomTypesByIds(teamId: string, roomTypeIds:
 
   const roomTypes = await (db as any)
     .select({
-      ...tables.bookingtest3RoomTypes,
+      ...tables.bikeshedRoomTypes,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -73,52 +73,52 @@ export async function getBookingtest3RoomTypesByIds(teamId: string, roomTypeIds:
         image: updatedByUser.image
       }
     } as any)
-    .from(tables.bookingtest3RoomTypes)
-    .leftJoin(ownerUser, eq(tables.bookingtest3RoomTypes.owner, ownerUser.id))
-    .leftJoin(createdByUser, eq(tables.bookingtest3RoomTypes.createdBy, createdByUser.id))
-    .leftJoin(updatedByUser, eq(tables.bookingtest3RoomTypes.updatedBy, updatedByUser.id))
+    .from(tables.bikeshedRoomTypes)
+    .leftJoin(ownerUser, eq(tables.bikeshedRoomTypes.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.bikeshedRoomTypes.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.bikeshedRoomTypes.updatedBy, updatedByUser.id))
     .where(
       and(
-        eq(tables.bookingtest3RoomTypes.teamId, teamId),
-        inArray(tables.bookingtest3RoomTypes.id, roomTypeIds)
+        eq(tables.bikeshedRoomTypes.teamId, teamId),
+        inArray(tables.bikeshedRoomTypes.id, roomTypeIds)
       )
     )
-    .orderBy(desc(tables.bookingtest3RoomTypes.createdAt))
+    .orderBy(desc(tables.bikeshedRoomTypes.createdAt))
 
   return roomTypes
 }
 
-export async function createBookingtest3RoomType(data: NewBookingtest3RoomType) {
+export async function createBikeshedRoomType(data: NewBikeshedRoomType) {
   const db = useDB()
 
   const [roomType] = await (db as any)
-    .insert(tables.bookingtest3RoomTypes)
+    .insert(tables.bikeshedRoomTypes)
     .values(data)
     .returning()
 
   return roomType
 }
 
-export async function updateBookingtest3RoomType(
+export async function updateBikeshedRoomType(
   recordId: string,
   teamId: string,
   userId: string,
-  updates: Partial<Bookingtest3RoomType>,
+  updates: Partial<BikeshedRoomType>,
   options?: { role?: string }
 ) {
   const db = useDB()
   const isAdmin = options?.role === 'admin' || options?.role === 'owner'
 
   const conditions = [
-    eq(tables.bookingtest3RoomTypes.id, recordId),
-    eq(tables.bookingtest3RoomTypes.teamId, teamId),
+    eq(tables.bikeshedRoomTypes.id, recordId),
+    eq(tables.bikeshedRoomTypes.teamId, teamId),
   ]
   if (!isAdmin) {
-    conditions.push(eq(tables.bookingtest3RoomTypes.owner, userId))
+    conditions.push(eq(tables.bikeshedRoomTypes.owner, userId))
   }
 
   const [roomType] = await (db as any)
-    .update(tables.bookingtest3RoomTypes)
+    .update(tables.bikeshedRoomTypes)
     .set({
       ...updates,
       updatedBy: userId
@@ -129,14 +129,14 @@ export async function updateBookingtest3RoomType(
   if (!roomType) {
     throw createError({
       status: 404,
-      statusText: 'Bookingtest3RoomType not found or unauthorized'
+      statusText: 'BikeshedRoomType not found or unauthorized'
     })
   }
 
   return roomType
 }
 
-export async function deleteBookingtest3RoomType(
+export async function deleteBikeshedRoomType(
   recordId: string,
   teamId: string,
   userId: string,
@@ -146,22 +146,22 @@ export async function deleteBookingtest3RoomType(
   const isAdmin = options?.role === 'admin' || options?.role === 'owner'
 
   const conditions = [
-    eq(tables.bookingtest3RoomTypes.id, recordId),
-    eq(tables.bookingtest3RoomTypes.teamId, teamId),
+    eq(tables.bikeshedRoomTypes.id, recordId),
+    eq(tables.bikeshedRoomTypes.teamId, teamId),
   ]
   if (!isAdmin) {
-    conditions.push(eq(tables.bookingtest3RoomTypes.owner, userId))
+    conditions.push(eq(tables.bikeshedRoomTypes.owner, userId))
   }
 
   const [deleted] = await (db as any)
-    .delete(tables.bookingtest3RoomTypes)
+    .delete(tables.bikeshedRoomTypes)
     .where(and(...conditions))
     .returning()
 
   if (!deleted) {
     throw createError({
       status: 404,
-      statusText: 'Bookingtest3RoomType not found or unauthorized'
+      statusText: 'BikeshedRoomType not found or unauthorized'
     })
   }
 

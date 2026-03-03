@@ -18,11 +18,11 @@
  * - bookingsEmailtemplates: BookingsEmailtemplate
  * - bookingsLocations: BookingsLocation
  * - bookingsSettings: BookingsSetting
- * - bookingtest3Bookingrequests: Bookingtest3Bookingrequest
- * - bookingtest3Departments: Bookingtest3Department
- * - bookingtest3Equipments: Bookingtest3Equipment
- * - bookingtest3Members: Bookingtest3Member
- * - bookingtest3Roomtypes: Bookingtest3Roomtype
+ * - bikeshedBookingrequests: BikeshedBookingrequest
+ * - bikeshedDepartments: BikeshedDepartment
+ * - bikeshedEquipments: BikeshedEquipment
+ * - bikeshedMembers: BikeshedMember
+ * - bikeshedRoomtypes: BikeshedRoomtype
  * - croutonAssets: CroutonAsset
  * - pagesPages: PagesPage
  */
@@ -32,11 +32,11 @@ import type { BookingsEmaillog, BookingsEmaillogFormData, NewBookingsEmaillog } 
 import type { BookingsEmailtemplate, BookingsEmailtemplateFormData, NewBookingsEmailtemplate } from './layers/bookings/collections/emailtemplates/types'
 import type { BookingsLocation, BookingsLocationFormData, NewBookingsLocation } from './layers/bookings/collections/locations/types'
 import type { BookingsSetting, BookingsSettingFormData, NewBookingsSetting } from './layers/bookings/collections/settings/types'
-import type { Bookingtest3Bookingrequest, Bookingtest3BookingrequestFormData, NewBookingtest3Bookingrequest } from './layers/bookingtest3/collections/bookingrequests/types'
-import type { Bookingtest3Department, Bookingtest3DepartmentFormData, NewBookingtest3Department } from './layers/bookingtest3/collections/departments/types'
-import type { Bookingtest3Equipment, Bookingtest3EquipmentFormData, NewBookingtest3Equipment } from './layers/bookingtest3/collections/equipments/types'
-import type { Bookingtest3Member, Bookingtest3MemberFormData, NewBookingtest3Member } from './layers/bookingtest3/collections/members/types'
-import type { Bookingtest3Roomtype, Bookingtest3RoomtypeFormData, NewBookingtest3Roomtype } from './layers/bookingtest3/collections/roomtypes/types'
+import type { BikeshedBookingrequest, BikeshedBookingrequestFormData, NewBikeshedBookingrequest } from './layers/bikeshed/collections/bookingrequests/types'
+import type { BikeshedDepartment, BikeshedDepartmentFormData, NewBikeshedDepartment } from './layers/bikeshed/collections/departments/types'
+import type { BikeshedEquipment, BikeshedEquipmentFormData, NewBikeshedEquipment } from './layers/bikeshed/collections/equipments/types'
+import type { BikeshedMember, BikeshedMemberFormData, NewBikeshedMember } from './layers/bikeshed/collections/members/types'
+import type { BikeshedRoomtype, BikeshedRoomtypeFormData, NewBikeshedRoomtype } from './layers/bikeshed/collections/roomtypes/types'
 import type { CroutonAsset, CroutonAssetFormData, NewCroutonAsset } from './layers/crouton/collections/assets/types'
 import type { PagesPage, PagesPageFormData, NewPagesPage } from './layers/pages/collections/pages/types'
 
@@ -67,30 +67,30 @@ declare module '#crouton/types' {
       FormData: BookingsSettingFormData
       NewItem: NewBookingsSetting
     }
-    bookingtest3Bookingrequests: {
-      Item: Bookingtest3Bookingrequest
-      FormData: Bookingtest3BookingrequestFormData
-      NewItem: NewBookingtest3Bookingrequest
+    bikeshedBookingrequests: {
+      Item: BikeshedBookingrequest
+      FormData: BikeshedBookingrequestFormData
+      NewItem: NewBikeshedBookingrequest
     }
-    bookingtest3Departments: {
-      Item: Bookingtest3Department
-      FormData: Bookingtest3DepartmentFormData
-      NewItem: NewBookingtest3Department
+    bikeshedDepartments: {
+      Item: BikeshedDepartment
+      FormData: BikeshedDepartmentFormData
+      NewItem: NewBikeshedDepartment
     }
-    bookingtest3Equipments: {
-      Item: Bookingtest3Equipment
-      FormData: Bookingtest3EquipmentFormData
-      NewItem: NewBookingtest3Equipment
+    bikeshedEquipments: {
+      Item: BikeshedEquipment
+      FormData: BikeshedEquipmentFormData
+      NewItem: NewBikeshedEquipment
     }
-    bookingtest3Members: {
-      Item: Bookingtest3Member
-      FormData: Bookingtest3MemberFormData
-      NewItem: NewBookingtest3Member
+    bikeshedMembers: {
+      Item: BikeshedMember
+      FormData: BikeshedMemberFormData
+      NewItem: NewBikeshedMember
     }
-    bookingtest3Roomtypes: {
-      Item: Bookingtest3Roomtype
-      FormData: Bookingtest3RoomtypeFormData
-      NewItem: NewBookingtest3Roomtype
+    bikeshedRoomtypes: {
+      Item: BikeshedRoomtype
+      FormData: BikeshedRoomtypeFormData
+      NewItem: NewBikeshedRoomtype
     }
     croutonAssets: {
       Item: CroutonAsset

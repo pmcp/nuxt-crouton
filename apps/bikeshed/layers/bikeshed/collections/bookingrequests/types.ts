@@ -1,14 +1,14 @@
 /**
  * @crouton-generated
  * @collection bookingrequests
- * @layer bookingtest3
+ * @layer bikeshed
  * @generated 2026-02-25
  *
  * ## AI Context
- * - Main interface: Bookingtest3BookingRequest
- * - Form data type: Bookingtest3BookingRequestFormData
- * - New item type: NewBookingtest3BookingRequest
- * - Form props: Bookingtest3BookingRequestFormProps
+ * - Main interface: BikeshedBookingRequest
+ * - Form data type: BikeshedBookingRequestFormData
+ * - New item type: NewBikeshedBookingRequest
+ * - Form props: BikeshedBookingRequestFormProps
  * - Fields: display, fields
  *
  * ## Common Modifications
@@ -21,9 +21,9 @@
  */
 
 import type { z } from 'zod'
-import type { bookingtest3BookingRequestSchema } from './app/composables/useBookingtest3BookingRequests'
+import type { bikeshedBookingRequestSchema } from './app/composables/useBikeshedBookingRequests'
 
-export interface Bookingtest3BookingRequest {
+export interface BikeshedBookingRequest {
   id: string
   teamId: string
   owner: string
@@ -37,13 +37,13 @@ export interface Bookingtest3BookingRequest {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type Bookingtest3BookingRequestFormData = z.infer<typeof bookingtest3BookingRequestSchema>
-export type NewBookingtest3BookingRequest = Omit<Bookingtest3BookingRequest, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type BikeshedBookingRequestFormData = z.infer<typeof bikeshedBookingRequestSchema>
+export type NewBikeshedBookingRequest = Omit<BikeshedBookingRequest, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface Bookingtest3BookingRequestFormProps {
+export interface BikeshedBookingRequestFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: Bookingtest3BookingRequest | Record<string, never> // Bookingtest3BookingRequest for update, empty object for create
+  activeItem: BikeshedBookingRequest | Record<string, never> // BikeshedBookingRequest for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

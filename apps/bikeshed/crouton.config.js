@@ -23,7 +23,7 @@ export default {
   targets: [
     { layer: 'bookings', collections: ['booking', 'location', 'settings'] },
     { layer: 'pages', collections: ['pages'] },
-    { layer: 'bookingtest3', collections: ['BookingRequests', 'Equipment', 'RoomTypes', 'Departments', 'Members'] }
+    { layer: 'bikeshed', collections: ['BookingRequests', 'Equipment', 'RoomTypes', 'Departments', 'Members'] }
   ],
 
   dialect: 'sqlite'

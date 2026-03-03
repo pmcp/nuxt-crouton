@@ -1,14 +1,14 @@
 <!--
   @crouton-generated
   @collection roomtypes
-  @layer bookingtest3
+  @layer bikeshed
   @generated 2026-02-25
 
   ## AI Context
   - Form component for roomtypes collection
   - Handles: create, update, delete actions
-  - API endpoint: /api/teams/[id]/bookingtest3-roomtypes
-  - Zod schema: useBookingtest3RoomTypes() composable
+  - API endpoint: /api/teams/[id]/bikeshed-roomtypes
+  - Zod schema: useBikeshedRoomTypes() composable
   - Fields: display, fields
 
   ## Common Modifications
@@ -62,11 +62,11 @@
 </template>
 
 <script setup lang="ts">
-import type { Bookingtest3RoomTypeFormProps, Bookingtest3RoomTypeFormData } from '../../types'
-import useBookingtest3RoomTypes from '../composables/useBookingtest3RoomTypes'
+import type { BikeshedRoomTypeFormProps, BikeshedRoomTypeFormData } from '../../types'
+import useBikeshedRoomTypes from '../composables/useBikeshedRoomTypes'
 
-const props = defineProps<Bookingtest3RoomTypeFormProps>()
-const { defaultValue, schema, collection } = useBookingtest3RoomTypes()
+const props = defineProps<BikeshedRoomTypeFormProps>()
+const { defaultValue, schema, collection } = useBikeshedRoomTypes()
 
 // Form layout configuration
 const tabs = ref(false)
@@ -84,7 +84,7 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<Bookingtest3RoomTypeFormData & { id?: string | null }>(initialValues)
+const state = ref<BikeshedRoomTypeFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {

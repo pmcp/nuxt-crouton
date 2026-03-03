@@ -8,15 +8,15 @@ import {bookingsSettingsConfig} from '../layers/bookings/collections/settings/ap
 
 import {pagesPagesConfig} from '../layers/pages/collections/pages/app/composables/usePagesPages';
 
-import {bookingtest3BookingRequestsConfig} from '../layers/bookingtest3/collections/bookingrequests/app/composables/useBookingtest3BookingRequests';
+import {bikeshedBookingRequestsConfig} from '../layers/bikeshed/collections/bookingrequests/app/composables/useBikeshedBookingRequests';
 
-import {bookingtest3EquipmentsConfig} from '../layers/bookingtest3/collections/equipments/app/composables/useBookingtest3Equipments';
+import {bikeshedEquipmentsConfig} from '../layers/bikeshed/collections/equipments/app/composables/useBikeshedEquipments';
 
-import {bookingtest3RoomTypesConfig} from '../layers/bookingtest3/collections/roomtypes/app/composables/useBookingtest3RoomTypes';
+import {bikeshedRoomTypesConfig} from '../layers/bikeshed/collections/roomtypes/app/composables/useBikeshedRoomTypes';
 
-import {bookingtest3DepartmentsConfig} from '../layers/bookingtest3/collections/departments/app/composables/useBookingtest3Departments';
+import {bikeshedDepartmentsConfig} from '../layers/bikeshed/collections/departments/app/composables/useBikeshedDepartments';
 
-import {bookingtest3MembersConfig} from '../layers/bookingtest3/collections/members/app/composables/useBookingtest3Members';
+import {bikeshedMembersConfig} from '../layers/bikeshed/collections/members/app/composables/useBikeshedMembers';
 
 import {croutonAssetsConfig} from '../layers/crouton/collections/assets/app/composables/useCroutonAssets';
 
@@ -31,11 +31,11 @@ export default defineAppConfig({
     bookingsLocations: bookingsLocationsConfig,
     bookingsSettings: bookingsSettingsConfig,
     pagesPages: pagesPagesConfig,
-    bookingtest3BookingRequests: bookingtest3BookingRequestsConfig,
-    bookingtest3Equipments: bookingtest3EquipmentsConfig,
-    bookingtest3RoomTypes: bookingtest3RoomTypesConfig,
-    bookingtest3Departments: bookingtest3DepartmentsConfig,
-    bookingtest3Members: bookingtest3MembersConfig,
+    bikeshedBookingRequests: bikeshedBookingRequestsConfig,
+    bikeshedEquipments: bikeshedEquipmentsConfig,
+    bikeshedRoomTypes: bikeshedRoomTypesConfig,
+    bikeshedDepartments: bikeshedDepartmentsConfig,
+    bikeshedMembers: bikeshedMembersConfig,
     croutonAssets: croutonAssetsConfig,
     bookingsEmailtemplates: bookingsEmailtemplatesConfig,
     bookingsEmaillogs: bookingsEmaillogsConfig

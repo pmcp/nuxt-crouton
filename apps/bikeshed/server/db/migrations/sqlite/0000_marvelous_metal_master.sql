@@ -74,7 +74,7 @@ CREATE TABLE `bookings_settings` (
 	`updatedBy` text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `bookingtest3_bookingrequests` (
+CREATE TABLE `bikeshed_bookingrequests` (
 	`id` text PRIMARY KEY NOT NULL,
 	`teamId` text NOT NULL,
 	`owner` text NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE `bookingtest3_bookingrequests` (
 	`updatedBy` text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `bookingtest3_departments` (
+CREATE TABLE `bikeshed_departments` (
 	`id` text PRIMARY KEY NOT NULL,
 	`teamId` text NOT NULL,
 	`owner` text NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE `bookingtest3_departments` (
 	`updatedBy` text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `bookingtest3_equipments` (
+CREATE TABLE `bikeshed_equipments` (
 	`id` text PRIMARY KEY NOT NULL,
 	`teamId` text NOT NULL,
 	`owner` text NOT NULL,
@@ -113,7 +113,7 @@ CREATE TABLE `bookingtest3_equipments` (
 	`updatedBy` text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `bookingtest3_members` (
+CREATE TABLE `bikeshed_members` (
 	`id` text PRIMARY KEY NOT NULL,
 	`teamId` text NOT NULL,
 	`owner` text NOT NULL,
@@ -126,7 +126,7 @@ CREATE TABLE `bookingtest3_members` (
 	`updatedBy` text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `bookingtest3_roomtypes` (
+CREATE TABLE `bikeshed_roomtypes` (
 	`id` text PRIMARY KEY NOT NULL,
 	`teamId` text NOT NULL,
 	`owner` text NOT NULL,

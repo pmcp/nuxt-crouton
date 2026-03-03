@@ -1,15 +1,15 @@
 /**
  * @crouton-generated
  * @collection members
- * @layer bookingtest3
+ * @layer bikeshed
  * @generated 2026-02-25
  *
  * ## AI Context
- * - Composable: useBookingtest3Members
- * - Collection name: bookingtest3Members
- * - API endpoint: /api/teams/[id]/bookingtest3-members
- * - Form component: Bookingtest3MembersForm
- * - List component: Bookingtest3MembersList
+ * - Composable: useBikeshedMembers
+ * - Collection name: bikeshedMembers
+ * - API endpoint: /api/teams/[id]/bikeshed-members
+ * - Form component: BikeshedMembersForm
+ * - List component: BikeshedMembersList
  * - Fields: display, fields
  *
  * ## Common Modifications
@@ -26,27 +26,27 @@ import { z } from 'zod'
 
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
-export const bookingtest3MemberSchema = z.object({
+export const bikeshedMemberSchema = z.object({
   display: z.string().optional(),
   fields: z.string().optional()
 })
 
-export const bookingtest3MembersColumns = [
+export const bikeshedMembersColumns = [
   { accessorKey: 'display', header: 'Display' },
   { accessorKey: 'fields', header: 'Fields' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
-const _bookingtest3MembersConfig = {
-  name: 'bookingtest3Members',
-  layer: 'bookingtest3',
-  apiPath: 'bookingtest3-members',
-  componentName: 'Bookingtest3MembersForm',
+const _bikeshedMembersConfig = {
+  name: 'bikeshedMembers',
+  layer: 'bikeshed',
+  apiPath: 'bikeshed-members',
+  componentName: 'BikeshedMembersForm',
   defaultValues: {
     display: '',
     fields: ''
   },
-  columns: bookingtest3MembersColumns,
+  columns: bikeshedMembersColumns,
   fields: [
       {
           "name": "display",
@@ -64,23 +64,23 @@ const _bookingtest3MembersConfig = {
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning
-Object.defineProperty(_bookingtest3MembersConfig, 'schema', {
-  value: bookingtest3MemberSchema,
+Object.defineProperty(_bikeshedMembersConfig, 'schema', {
+  value: bikeshedMemberSchema,
   enumerable: false,
   configurable: false,
   writable: false
 })
 
-export const bookingtest3MembersConfig = _bookingtest3MembersConfig as typeof _bookingtest3MembersConfig & { schema: typeof bookingtest3MemberSchema }
+export const bikeshedMembersConfig = _bikeshedMembersConfig as typeof _bikeshedMembersConfig & { schema: typeof bikeshedMemberSchema }
 
-export const useBookingtest3Members = () => bookingtest3MembersConfig
+export const useBikeshedMembers = () => bikeshedMembersConfig
 
 // Default export for auto-import compatibility
 export default function () {
   return {
-    defaultValue: bookingtest3MembersConfig.defaultValues,
-    schema: bookingtest3MemberSchema,
-    columns: bookingtest3MembersConfig.columns,
-    collection: bookingtest3MembersConfig.name
+    defaultValue: bikeshedMembersConfig.defaultValues,
+    schema: bikeshedMemberSchema,
+    columns: bikeshedMembersConfig.columns,
+    collection: bikeshedMembersConfig.name
   }
 }

@@ -501,8 +501,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "bookingtest3_bookingrequests": {
-      "name": "bookingtest3_bookingrequests",
+    "bikeshed_bookingrequests": {
+      "name": "bikeshed_bookingrequests",
       "columns": {
         "id": {
           "name": "id",
@@ -581,8 +581,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "bookingtest3_departments": {
-      "name": "bookingtest3_departments",
+    "bikeshed_departments": {
+      "name": "bikeshed_departments",
       "columns": {
         "id": {
           "name": "id",
@@ -661,8 +661,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "bookingtest3_equipments": {
-      "name": "bookingtest3_equipments",
+    "bikeshed_equipments": {
+      "name": "bikeshed_equipments",
       "columns": {
         "id": {
           "name": "id",
@@ -741,8 +741,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "bookingtest3_members": {
-      "name": "bookingtest3_members",
+    "bikeshed_members": {
+      "name": "bikeshed_members",
       "columns": {
         "id": {
           "name": "id",
@@ -821,8 +821,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "bookingtest3_roomtypes": {
-      "name": "bookingtest3_roomtypes",
+    "bikeshed_roomtypes": {
+      "name": "bikeshed_roomtypes",
       "columns": {
         "id": {
           "name": "id",

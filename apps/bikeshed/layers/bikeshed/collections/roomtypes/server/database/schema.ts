@@ -21,7 +21,7 @@ const jsonColumn = customType<any>({
   },
 })
 
-export const bookingtest3RoomTypes = sqliteTable('bookingtest3_roomtypes', {
+export const bikeshedRoomTypes = sqliteTable('bikeshed_roomtypes', {
   id: text('id').primaryKey().$default(() => nanoid()),
 
   teamId: text('teamId').notNull(),

@@ -1,14 +1,14 @@
 /**
  * @crouton-generated
  * @collection roomtypes
- * @layer bookingtest3
+ * @layer bikeshed
  * @generated 2026-02-25
  *
  * ## AI Context
- * - Main interface: Bookingtest3RoomType
- * - Form data type: Bookingtest3RoomTypeFormData
- * - New item type: NewBookingtest3RoomType
- * - Form props: Bookingtest3RoomTypeFormProps
+ * - Main interface: BikeshedRoomType
+ * - Form data type: BikeshedRoomTypeFormData
+ * - New item type: NewBikeshedRoomType
+ * - Form props: BikeshedRoomTypeFormProps
  * - Fields: display, fields
  *
  * ## Common Modifications
@@ -21,9 +21,9 @@
  */
 
 import type { z } from 'zod'
-import type { bookingtest3RoomTypeSchema } from './app/composables/useBookingtest3RoomTypes'
+import type { bikeshedRoomTypeSchema } from './app/composables/useBikeshedRoomTypes'
 
-export interface Bookingtest3RoomType {
+export interface BikeshedRoomType {
   id: string
   teamId: string
   owner: string
@@ -37,13 +37,13 @@ export interface Bookingtest3RoomType {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type Bookingtest3RoomTypeFormData = z.infer<typeof bookingtest3RoomTypeSchema>
-export type NewBookingtest3RoomType = Omit<Bookingtest3RoomType, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type BikeshedRoomTypeFormData = z.infer<typeof bikeshedRoomTypeSchema>
+export type NewBikeshedRoomType = Omit<BikeshedRoomType, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface Bookingtest3RoomTypeFormProps {
+export interface BikeshedRoomTypeFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: Bookingtest3RoomType | Record<string, never> // Bookingtest3RoomType for update, empty object for create
+  activeItem: BikeshedRoomType | Record<string, never> // BikeshedRoomType for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

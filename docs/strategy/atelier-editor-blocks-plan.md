@@ -178,9 +178,9 @@ Once this infrastructure exists, the same pattern extends to atelier composition
 
 ## Verification
 
-1. `npx nuxt typecheck` in `apps/bookingtest3` (maps, no charts)
+1. `npx nuxt typecheck` in `apps/bikeshed` (maps, no charts)
 2. `npx nuxt typecheck` in `apps/crouton-playground` (both)
-3. Dev server bookingtest3: chart block NOT in `/` menu, map blocks present
+3. Dev server bikeshed: chart block NOT in `/` menu, map blocks present
 4. Dev server playground: chart + map blocks both present
 5. Existing pages with chart/map blocks still render
 

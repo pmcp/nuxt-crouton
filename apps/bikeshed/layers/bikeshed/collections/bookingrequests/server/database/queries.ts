@@ -2,10 +2,10 @@
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
-import type { Bookingtest3BookingRequest, NewBookingtest3BookingRequest } from '../../types'
+import type { BikeshedBookingRequest, NewBikeshedBookingRequest } from '../../types'
 import { user } from '~~/server/db/schema'
 
-export async function getAllBookingtest3BookingRequests(teamId: string) {
+export async function getAllBikeshedBookingRequests(teamId: string) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -14,7 +14,7 @@ export async function getAllBookingtest3BookingRequests(teamId: string) {
 
   const bookingRequests = await (db as any)
     .select({
-      ...tables.bookingtest3BookingRequests,
+      ...tables.bikeshedBookingRequests,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -34,17 +34,17 @@ export async function getAllBookingtest3BookingRequests(teamId: string) {
         image: updatedByUser.image
       }
     } as any)
-    .from(tables.bookingtest3BookingRequests)
-    .leftJoin(ownerUser, eq(tables.bookingtest3BookingRequests.owner, ownerUser.id))
-    .leftJoin(createdByUser, eq(tables.bookingtest3BookingRequests.createdBy, createdByUser.id))
-    .leftJoin(updatedByUser, eq(tables.bookingtest3BookingRequests.updatedBy, updatedByUser.id))
-    .where(eq(tables.bookingtest3BookingRequests.teamId, teamId))
-    .orderBy(desc(tables.bookingtest3BookingRequests.createdAt))
+    .from(tables.bikeshedBookingRequests)
+    .leftJoin(ownerUser, eq(tables.bikeshedBookingRequests.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.bikeshedBookingRequests.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.bikeshedBookingRequests.updatedBy, updatedByUser.id))
+    .where(eq(tables.bikeshedBookingRequests.teamId, teamId))
+    .orderBy(desc(tables.bikeshedBookingRequests.createdAt))
 
   return bookingRequests
 }
 
-export async function getBookingtest3BookingRequestsByIds(teamId: string, bookingRequestIds: string[]) {
+export async function getBikeshedBookingRequestsByIds(teamId: string, bookingRequestIds: string[]) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -53,7 +53,7 @@ export async function getBookingtest3BookingRequestsByIds(teamId: string, bookin
 
   const bookingRequests = await (db as any)
     .select({
-      ...tables.bookingtest3BookingRequests,
+      ...tables.bikeshedBookingRequests,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -73,52 +73,52 @@ export async function getBookingtest3BookingRequestsByIds(teamId: string, bookin
         image: updatedByUser.image
       }
     } as any)
-    .from(tables.bookingtest3BookingRequests)
-    .leftJoin(ownerUser, eq(tables.bookingtest3BookingRequests.owner, ownerUser.id))
-    .leftJoin(createdByUser, eq(tables.bookingtest3BookingRequests.createdBy, createdByUser.id))
-    .leftJoin(updatedByUser, eq(tables.bookingtest3BookingRequests.updatedBy, updatedByUser.id))
+    .from(tables.bikeshedBookingRequests)
+    .leftJoin(ownerUser, eq(tables.bikeshedBookingRequests.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.bikeshedBookingRequests.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.bikeshedBookingRequests.updatedBy, updatedByUser.id))
     .where(
       and(
-        eq(tables.bookingtest3BookingRequests.teamId, teamId),
-        inArray(tables.bookingtest3BookingRequests.id, bookingRequestIds)
+        eq(tables.bikeshedBookingRequests.teamId, teamId),
+        inArray(tables.bikeshedBookingRequests.id, bookingRequestIds)
       )
     )
-    .orderBy(desc(tables.bookingtest3BookingRequests.createdAt))
+    .orderBy(desc(tables.bikeshedBookingRequests.createdAt))
 
   return bookingRequests
 }
 
-export async function createBookingtest3BookingRequest(data: NewBookingtest3BookingRequest) {
+export async function createBikeshedBookingRequest(data: NewBikeshedBookingRequest) {
   const db = useDB()
 
   const [bookingRequest] = await (db as any)
-    .insert(tables.bookingtest3BookingRequests)
+    .insert(tables.bikeshedBookingRequests)
     .values(data)
     .returning()
 
   return bookingRequest
 }
 
-export async function updateBookingtest3BookingRequest(
+export async function updateBikeshedBookingRequest(
   recordId: string,
   teamId: string,
   userId: string,
-  updates: Partial<Bookingtest3BookingRequest>,
+  updates: Partial<BikeshedBookingRequest>,
   options?: { role?: string }
 ) {
   const db = useDB()
   const isAdmin = options?.role === 'admin' || options?.role === 'owner'
 
   const conditions = [
-    eq(tables.bookingtest3BookingRequests.id, recordId),
-    eq(tables.bookingtest3BookingRequests.teamId, teamId),
+    eq(tables.bikeshedBookingRequests.id, recordId),
+    eq(tables.bikeshedBookingRequests.teamId, teamId),
   ]
   if (!isAdmin) {
-    conditions.push(eq(tables.bookingtest3BookingRequests.owner, userId))
+    conditions.push(eq(tables.bikeshedBookingRequests.owner, userId))
   }
 
   const [bookingRequest] = await (db as any)
-    .update(tables.bookingtest3BookingRequests)
+    .update(tables.bikeshedBookingRequests)
     .set({
       ...updates,
       updatedBy: userId
@@ -129,14 +129,14 @@ export async function updateBookingtest3BookingRequest(
   if (!bookingRequest) {
     throw createError({
       status: 404,
-      statusText: 'Bookingtest3BookingRequest not found or unauthorized'
+      statusText: 'BikeshedBookingRequest not found or unauthorized'
     })
   }
 
   return bookingRequest
 }
 
-export async function deleteBookingtest3BookingRequest(
+export async function deleteBikeshedBookingRequest(
   recordId: string,
   teamId: string,
   userId: string,
@@ -146,22 +146,22 @@ export async function deleteBookingtest3BookingRequest(
   const isAdmin = options?.role === 'admin' || options?.role === 'owner'
 
   const conditions = [
-    eq(tables.bookingtest3BookingRequests.id, recordId),
-    eq(tables.bookingtest3BookingRequests.teamId, teamId),
+    eq(tables.bikeshedBookingRequests.id, recordId),
+    eq(tables.bikeshedBookingRequests.teamId, teamId),
   ]
   if (!isAdmin) {
-    conditions.push(eq(tables.bookingtest3BookingRequests.owner, userId))
+    conditions.push(eq(tables.bikeshedBookingRequests.owner, userId))
   }
 
   const [deleted] = await (db as any)
-    .delete(tables.bookingtest3BookingRequests)
+    .delete(tables.bikeshedBookingRequests)
     .where(and(...conditions))
     .returning()
 
   if (!deleted) {
     throw createError({
       status: 404,
-      statusText: 'Bookingtest3BookingRequest not found or unauthorized'
+      statusText: 'BikeshedBookingRequest not found or unauthorized'
     })
   }
 

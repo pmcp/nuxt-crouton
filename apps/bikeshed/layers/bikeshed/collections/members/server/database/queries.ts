@@ -2,10 +2,10 @@
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
-import type { Bookingtest3Member, NewBookingtest3Member } from '../../types'
+import type { BikeshedMember, NewBikeshedMember } from '../../types'
 import { user } from '~~/server/db/schema'
 
-export async function getAllBookingtest3Members(teamId: string) {
+export async function getAllBikeshedMembers(teamId: string) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -14,7 +14,7 @@ export async function getAllBookingtest3Members(teamId: string) {
 
   const members = await (db as any)
     .select({
-      ...tables.bookingtest3Members,
+      ...tables.bikeshedMembers,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -34,17 +34,17 @@ export async function getAllBookingtest3Members(teamId: string) {
         image: updatedByUser.image
       }
     } as any)
-    .from(tables.bookingtest3Members)
-    .leftJoin(ownerUser, eq(tables.bookingtest3Members.owner, ownerUser.id))
-    .leftJoin(createdByUser, eq(tables.bookingtest3Members.createdBy, createdByUser.id))
-    .leftJoin(updatedByUser, eq(tables.bookingtest3Members.updatedBy, updatedByUser.id))
-    .where(eq(tables.bookingtest3Members.teamId, teamId))
-    .orderBy(desc(tables.bookingtest3Members.createdAt))
+    .from(tables.bikeshedMembers)
+    .leftJoin(ownerUser, eq(tables.bikeshedMembers.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.bikeshedMembers.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.bikeshedMembers.updatedBy, updatedByUser.id))
+    .where(eq(tables.bikeshedMembers.teamId, teamId))
+    .orderBy(desc(tables.bikeshedMembers.createdAt))
 
   return members
 }
 
-export async function getBookingtest3MembersByIds(teamId: string, memberIds: string[]) {
+export async function getBikeshedMembersByIds(teamId: string, memberIds: string[]) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -53,7 +53,7 @@ export async function getBookingtest3MembersByIds(teamId: string, memberIds: str
 
   const members = await (db as any)
     .select({
-      ...tables.bookingtest3Members,
+      ...tables.bikeshedMembers,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -73,52 +73,52 @@ export async function getBookingtest3MembersByIds(teamId: string, memberIds: str
         image: updatedByUser.image
       }
     } as any)
-    .from(tables.bookingtest3Members)
-    .leftJoin(ownerUser, eq(tables.bookingtest3Members.owner, ownerUser.id))
-    .leftJoin(createdByUser, eq(tables.bookingtest3Members.createdBy, createdByUser.id))
-    .leftJoin(updatedByUser, eq(tables.bookingtest3Members.updatedBy, updatedByUser.id))
+    .from(tables.bikeshedMembers)
+    .leftJoin(ownerUser, eq(tables.bikeshedMembers.owner, ownerUser.id))
+    .leftJoin(createdByUser, eq(tables.bikeshedMembers.createdBy, createdByUser.id))
+    .leftJoin(updatedByUser, eq(tables.bikeshedMembers.updatedBy, updatedByUser.id))
     .where(
       and(
-        eq(tables.bookingtest3Members.teamId, teamId),
-        inArray(tables.bookingtest3Members.id, memberIds)
+        eq(tables.bikeshedMembers.teamId, teamId),
+        inArray(tables.bikeshedMembers.id, memberIds)
       )
     )
-    .orderBy(desc(tables.bookingtest3Members.createdAt))
+    .orderBy(desc(tables.bikeshedMembers.createdAt))
 
   return members
 }
 
-export async function createBookingtest3Member(data: NewBookingtest3Member) {
+export async function createBikeshedMember(data: NewBikeshedMember) {
   const db = useDB()
 
   const [member] = await (db as any)
-    .insert(tables.bookingtest3Members)
+    .insert(tables.bikeshedMembers)
     .values(data)
     .returning()
 
   return member
 }
 
-export async function updateBookingtest3Member(
+export async function updateBikeshedMember(
   recordId: string,
   teamId: string,
   userId: string,
-  updates: Partial<Bookingtest3Member>,
+  updates: Partial<BikeshedMember>,
   options?: { role?: string }
 ) {
   const db = useDB()
   const isAdmin = options?.role === 'admin' || options?.role === 'owner'
 
   const conditions = [
-    eq(tables.bookingtest3Members.id, recordId),
-    eq(tables.bookingtest3Members.teamId, teamId),
+    eq(tables.bikeshedMembers.id, recordId),
+    eq(tables.bikeshedMembers.teamId, teamId),
   ]
   if (!isAdmin) {
-    conditions.push(eq(tables.bookingtest3Members.owner, userId))
+    conditions.push(eq(tables.bikeshedMembers.owner, userId))
   }
 
   const [member] = await (db as any)
-    .update(tables.bookingtest3Members)
+    .update(tables.bikeshedMembers)
     .set({
       ...updates,
       updatedBy: userId
@@ -129,14 +129,14 @@ export async function updateBookingtest3Member(
   if (!member) {
     throw createError({
       status: 404,
-      statusText: 'Bookingtest3Member not found or unauthorized'
+      statusText: 'BikeshedMember not found or unauthorized'
     })
   }
 
   return member
 }
 
-export async function deleteBookingtest3Member(
+export async function deleteBikeshedMember(
   recordId: string,
   teamId: string,
   userId: string,
@@ -146,22 +146,22 @@ export async function deleteBookingtest3Member(
   const isAdmin = options?.role === 'admin' || options?.role === 'owner'
 
   const conditions = [
-    eq(tables.bookingtest3Members.id, recordId),
-    eq(tables.bookingtest3Members.teamId, teamId),
+    eq(tables.bikeshedMembers.id, recordId),
+    eq(tables.bikeshedMembers.teamId, teamId),
   ]
   if (!isAdmin) {
-    conditions.push(eq(tables.bookingtest3Members.owner, userId))
+    conditions.push(eq(tables.bikeshedMembers.owner, userId))
   }
 
   const [deleted] = await (db as any)
-    .delete(tables.bookingtest3Members)
+    .delete(tables.bikeshedMembers)
     .where(and(...conditions))
     .returning()
 
   if (!deleted) {
     throw createError({
       status: 404,
-      statusText: 'Bookingtest3Member not found or unauthorized'
+      statusText: 'BikeshedMember not found or unauthorized'
     })
   }
 

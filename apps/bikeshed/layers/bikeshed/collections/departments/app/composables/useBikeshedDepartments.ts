@@ -1,15 +1,15 @@
 /**
  * @crouton-generated
  * @collection departments
- * @layer bookingtest3
+ * @layer bikeshed
  * @generated 2026-02-25
  *
  * ## AI Context
- * - Composable: useBookingtest3Departments
- * - Collection name: bookingtest3Departments
- * - API endpoint: /api/teams/[id]/bookingtest3-departments
- * - Form component: Bookingtest3DepartmentsForm
- * - List component: Bookingtest3DepartmentsList
+ * - Composable: useBikeshedDepartments
+ * - Collection name: bikeshedDepartments
+ * - API endpoint: /api/teams/[id]/bikeshed-departments
+ * - Form component: BikeshedDepartmentsForm
+ * - List component: BikeshedDepartmentsList
  * - Fields: display, fields
  *
  * ## Common Modifications
@@ -26,27 +26,27 @@ import { z } from 'zod'
 
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
-export const bookingtest3DepartmentSchema = z.object({
+export const bikeshedDepartmentSchema = z.object({
   display: z.string().optional(),
   fields: z.string().optional()
 })
 
-export const bookingtest3DepartmentsColumns = [
+export const bikeshedDepartmentsColumns = [
   { accessorKey: 'display', header: 'Display' },
   { accessorKey: 'fields', header: 'Fields' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
-const _bookingtest3DepartmentsConfig = {
-  name: 'bookingtest3Departments',
-  layer: 'bookingtest3',
-  apiPath: 'bookingtest3-departments',
-  componentName: 'Bookingtest3DepartmentsForm',
+const _bikeshedDepartmentsConfig = {
+  name: 'bikeshedDepartments',
+  layer: 'bikeshed',
+  apiPath: 'bikeshed-departments',
+  componentName: 'BikeshedDepartmentsForm',
   defaultValues: {
     display: '',
     fields: ''
   },
-  columns: bookingtest3DepartmentsColumns,
+  columns: bikeshedDepartmentsColumns,
   fields: [
       {
           "name": "display",
@@ -64,23 +64,23 @@ const _bookingtest3DepartmentsConfig = {
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning
-Object.defineProperty(_bookingtest3DepartmentsConfig, 'schema', {
-  value: bookingtest3DepartmentSchema,
+Object.defineProperty(_bikeshedDepartmentsConfig, 'schema', {
+  value: bikeshedDepartmentSchema,
   enumerable: false,
   configurable: false,
   writable: false
 })
 
-export const bookingtest3DepartmentsConfig = _bookingtest3DepartmentsConfig as typeof _bookingtest3DepartmentsConfig & { schema: typeof bookingtest3DepartmentSchema }
+export const bikeshedDepartmentsConfig = _bikeshedDepartmentsConfig as typeof _bikeshedDepartmentsConfig & { schema: typeof bikeshedDepartmentSchema }
 
-export const useBookingtest3Departments = () => bookingtest3DepartmentsConfig
+export const useBikeshedDepartments = () => bikeshedDepartmentsConfig
 
 // Default export for auto-import compatibility
 export default function () {
   return {
-    defaultValue: bookingtest3DepartmentsConfig.defaultValues,
-    schema: bookingtest3DepartmentSchema,
-    columns: bookingtest3DepartmentsConfig.columns,
-    collection: bookingtest3DepartmentsConfig.name
+    defaultValue: bikeshedDepartmentsConfig.defaultValues,
+    schema: bikeshedDepartmentSchema,
+    columns: bikeshedDepartmentsConfig.columns,
+    collection: bikeshedDepartmentsConfig.name
   }
 }

@@ -225,7 +225,7 @@ CMD ["node", ".output/server/index.mjs"]
 
 ### Path C: Cloudflare (existing)
 
-Already configured and working. Deploy via `nuxthub deploy`. `wrangler.toml` files exist in all deployed apps (`crouton-playground`, `bookingtest3`, `thinkgraph`, `docs`). This stays the easiest path — no changes needed.
+Already configured and working. Deploy via `nuxthub deploy`. `wrangler.toml` files exist in all deployed apps (`crouton-playground`, `bikeshed`, `thinkgraph`, `docs`). This stays the easiest path — no changes needed.
 
 **Note**: Coolify is an option for users who want a UI to manage their Hetzner VPS, but it's not a supported deploy path — just a mention in the docs.
 

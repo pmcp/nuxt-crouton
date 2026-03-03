@@ -1,14 +1,14 @@
 /**
  * @crouton-generated
  * @collection members
- * @layer bookingtest3
+ * @layer bikeshed
  * @generated 2026-02-25
  *
  * ## AI Context
- * - Main interface: Bookingtest3Member
- * - Form data type: Bookingtest3MemberFormData
- * - New item type: NewBookingtest3Member
- * - Form props: Bookingtest3MemberFormProps
+ * - Main interface: BikeshedMember
+ * - Form data type: BikeshedMemberFormData
+ * - New item type: NewBikeshedMember
+ * - Form props: BikeshedMemberFormProps
  * - Fields: display, fields
  *
  * ## Common Modifications
@@ -21,9 +21,9 @@
  */
 
 import type { z } from 'zod'
-import type { bookingtest3MemberSchema } from './app/composables/useBookingtest3Members'
+import type { bikeshedMemberSchema } from './app/composables/useBikeshedMembers'
 
-export interface Bookingtest3Member {
+export interface BikeshedMember {
   id: string
   teamId: string
   owner: string
@@ -37,13 +37,13 @@ export interface Bookingtest3Member {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type Bookingtest3MemberFormData = z.infer<typeof bookingtest3MemberSchema>
-export type NewBookingtest3Member = Omit<Bookingtest3Member, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type BikeshedMemberFormData = z.infer<typeof bikeshedMemberSchema>
+export type NewBikeshedMember = Omit<BikeshedMember, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
 
 // Props type for the Form component
-export interface Bookingtest3MemberFormProps {
+export interface BikeshedMemberFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: Bookingtest3Member | Record<string, never> // Bookingtest3Member for update, empty object for create
+  activeItem: BikeshedMember | Record<string, never> // BikeshedMember for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'
