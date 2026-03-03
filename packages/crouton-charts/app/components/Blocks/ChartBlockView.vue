@@ -10,18 +10,7 @@
  */
 import { computed, ref } from 'vue'
 import { NodeViewWrapper } from '@tiptap/vue-3'
-
-interface ChartBlockAttrs {
-  mode?: 'collection' | 'preset'
-  preset?: string
-  collection: string
-  chartType: string
-  xField?: string
-  yFields?: string
-  title?: string
-  height?: number
-  stacked?: boolean
-}
+import type { ChartBlockAttrs } from '../../utils/chart-constants'
 
 const props = defineProps<{
   node: { attrs: ChartBlockAttrs }

@@ -7,17 +7,7 @@
  * state — no direct dependency on @fyit/crouton-charts needed.
  */
 
-interface ChartPresetItem {
-  id: string
-  name: string
-  description?: string
-  icon?: string
-  package: string
-  config: {
-    type?: string
-    [key: string]: unknown
-  }
-}
+import type { ChartPreset } from '../../composables/useCroutonChartRegistry'
 
 interface Props {
   modelValue: string
@@ -29,11 +19,11 @@ const emit = defineEmits<{
 }>()
 
 // Read from the shared registry state (written by useCroutonChartRegistry in crouton-charts)
-const presets = useState<ChartPresetItem[]>('crouton-chart-presets', () => [])
+const presets = useState<ChartPreset[]>('crouton-chart-presets', () => [])
 
 // Group presets by source package for display
 const presetsByPackage = computed(() => {
-  const groups: Record<string, ChartPresetItem[]> = {}
+  const groups: Record<string, ChartPreset[]> = {}
   for (const preset of presets.value) {
     if (!groups[preset.package]) groups[preset.package] = []
     groups[preset.package]!.push(preset)
@@ -48,7 +38,7 @@ const chartTypeIcon: Record<string, string> = {
   donut: 'i-lucide-chart-pie'
 }
 
-function getTypeIcon(config: ChartPresetItem['config']) {
+function getTypeIcon(config: ChartPreset['config']) {
   const type = config.type as string | undefined
   return (type && chartTypeIcon[type]) || 'i-lucide-chart-bar'
 }

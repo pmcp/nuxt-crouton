@@ -93,12 +93,11 @@ const donutData = computed(() => {
 })
 
 // DonutChart: categories keyed by X-field value (the segment labels), not Y-field name
-const DONUT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 const donutCategories = computed(() =>
   Object.fromEntries(
     chartData.value.map((row: Record<string, unknown>, i: number) => {
       const label = String(row[xAxisKey.value] ?? `Item ${i}`)
-      return [label, { name: label, color: DONUT_COLORS[i % DONUT_COLORS.length] }]
+      return [label, { name: label, color: CHART_COLOR_PALETTE[i % CHART_COLOR_PALETTE.length] }]
     })
   )
 )

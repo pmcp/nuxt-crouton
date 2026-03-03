@@ -12,31 +12,8 @@
  * NOTE: This component must NOT use top-level await (no async setup).
  */
 
-interface ChartBlockAttrs {
-  mode?: 'collection' | 'preset'
-  preset?: string
-  collection: string
-  chartType: string
-  xField?: string
-  yFields?: string
-  title?: string
-  height?: number | string
-  stacked?: boolean
-}
-
-interface ChartPresetItem {
-  id: string
-  config: {
-    apiPath?: string
-    collection?: string
-    type?: string
-    xField?: string
-    yFields?: string
-    title?: string
-    height?: number
-    stacked?: boolean
-  }
-}
+import type { ChartBlockAttrs } from '../../utils/chart-constants'
+import type { ChartPreset } from '../../composables/useCroutonChartRegistry'
 
 interface Props {
   attrs: ChartBlockAttrs
@@ -45,7 +22,7 @@ interface Props {
 const props = defineProps<Props>()
 
 // Read chart presets from shared state (set by useCroutonChartRegistry in crouton-charts)
-const chartPresets = useState<ChartPresetItem[]>('crouton-chart-presets', () => [])
+const chartPresets = useState<ChartPreset[]>('crouton-chart-presets', () => [])
 
 // Resolve preset when mode === 'preset'
 const resolvedPreset = computed(() => {

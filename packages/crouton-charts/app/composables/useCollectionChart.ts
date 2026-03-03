@@ -15,14 +15,7 @@ export interface UseCollectionChartOptions {
   apiPath?: string
 }
 
-// Fixed color palette cycling across yFields
-const COLOR_PALETTE = [
-  '#3b82f6', // blue
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6'  // violet
-]
+import { CHART_COLOR_PALETTE } from '../utils/chart-constants'
 
 export function useCollectionChart(
   collectionKey: MaybeRef<string>,
@@ -133,7 +126,7 @@ export function useCollectionChart(
 
     return fields.map((field, index) => ({
       name: field,
-      color: COLOR_PALETTE[index % COLOR_PALETTE.length]!
+      color: CHART_COLOR_PALETTE[index % CHART_COLOR_PALETTE.length]!
     }))
   })
 
