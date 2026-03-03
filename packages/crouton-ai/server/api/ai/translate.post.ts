@@ -19,7 +19,6 @@ import { generateText } from 'ai'
 import { defineEventHandler, readBody, createError } from 'h3'
 import { useNitroApp } from 'nitropack/runtime'
 import { createAIProvider } from '../../utils/ai'
-import { getLanguageName } from '../../../app/types/translation'
 
 const translateSchema = z.object({
   sourceText: z.string().min(1, 'Source text is required'),

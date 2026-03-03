@@ -18,8 +18,10 @@
 import { OPENAI_PROVIDER, OPENAI_MODELS } from './openai'
 import { ANTHROPIC_PROVIDER, ANTHROPIC_MODELS } from './anthropic'
 import type { AIProviderInfo, AIModelInfo, AIRuntimeConfig } from './types'
+import type { AIProviderId } from '../../shared/utils/ai-providers'
 
 // Note: Types are auto-imported from types.ts - no re-export needed
+// detectProviderFromModel is auto-imported from shared/utils/ai-providers.ts
 
 /**
  * Registry of all supported AI providers
@@ -28,11 +30,6 @@ export const AI_PROVIDERS = {
   openai: OPENAI_PROVIDER,
   anthropic: ANTHROPIC_PROVIDER
 } as const
-
-/**
- * Type for provider IDs
- */
-export type AIProviderId = keyof typeof AI_PROVIDERS
 
 /**
  * Get list of providers that have API keys configured
@@ -98,18 +95,3 @@ export function getModelById(modelId: string): AIModelInfo | undefined {
   return undefined
 }
 
-/**
- * Detect provider ID from model ID
- *
- * @param modelId - Model identifier
- * @returns Provider ID or undefined
- */
-export function detectProviderFromModel(modelId: string): AIProviderId | undefined {
-  if (modelId.startsWith('gpt') || modelId.startsWith('o1') || modelId.startsWith('o3')) {
-    return 'openai'
-  }
-  if (modelId.startsWith('claude')) {
-    return 'anthropic'
-  }
-  return undefined
-}

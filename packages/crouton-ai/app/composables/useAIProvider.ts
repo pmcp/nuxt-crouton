@@ -140,17 +140,9 @@ export function useAIProvider() {
     },
 
     /**
-     * Detect provider from model ID
+     * Detect provider from model ID (delegates to shared util)
      */
-    detectProviderFromModel: (modelId: string): string | undefined => {
-      if (modelId.startsWith('gpt') || modelId.startsWith('o1')) {
-        return 'openai'
-      }
-      if (modelId.startsWith('claude')) {
-        return 'anthropic'
-      }
-      return undefined
-    }
+    detectProviderFromModel
   }
 }
 

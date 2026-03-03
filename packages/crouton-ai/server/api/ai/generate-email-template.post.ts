@@ -1,15 +1,5 @@
 import { generateText } from 'ai'
 
-const localeNames: Record<string, string> = {
-  en: 'English',
-  nl: 'Dutch',
-  fr: 'French',
-  de: 'German',
-  es: 'Spanish',
-  it: 'Italian',
-  pt: 'Portuguese'
-}
-
 const triggerDescriptions: Record<string, string> = {
   booking_created: 'Sent immediately when a new booking is made. Tone: welcoming, confirmatory, reassuring.',
   reminder_before: 'Sent as a reminder before the booking date. Tone: helpful, friendly reminder.',
@@ -18,7 +8,7 @@ const triggerDescriptions: Record<string, string> = {
 }
 
 function buildSystemPrompt(triggerType: string, recipientType: string, locale: string): string {
-  const languageName = localeNames[locale] || locale
+  const languageName = getLanguageName(locale)
   const triggerDesc = triggerDescriptions[triggerType] || triggerDescriptions.booking_created
 
   return `You are an email template generator for a booking management system.

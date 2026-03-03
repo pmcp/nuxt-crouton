@@ -119,19 +119,15 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
     },
 
     model: (modelId: string) => {
-      // Auto-detect provider from model ID prefix
-      if (modelId.startsWith('gpt') || modelId.startsWith('o1') || modelId.startsWith('o3')) {
+      const detected = detectProviderFromModel(modelId)
+
+      if (detected === 'openai' || !detected) {
+        // Default to OpenAI for unknown models
         const provider = createAIProvider(event).openai()
         return provider(modelId)
       }
 
-      if (modelId.startsWith('claude')) {
-        const provider = createAIProvider(event).anthropic()
-        return provider(modelId)
-      }
-
-      // Default to OpenAI for unknown models
-      const provider = createAIProvider(event).openai()
+      const provider = createAIProvider(event).anthropic()
       return provider(modelId)
     },
 

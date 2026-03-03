@@ -46,27 +46,5 @@ export interface TranslationSuggestionOptions {
   onError?: (error: Error) => void
 }
 
-/**
- * Language name mapping for better AI prompts
- */
-export const LANGUAGE_NAMES: Record<string, string> = {
-  en: 'English',
-  nl: 'Dutch',
-  fr: 'French',
-  de: 'German',
-  es: 'Spanish',
-  it: 'Italian',
-  pt: 'Portuguese',
-  pl: 'Polish',
-  ru: 'Russian',
-  ja: 'Japanese',
-  ko: 'Korean',
-  zh: 'Chinese'
-}
-
-/**
- * Get full language name from locale code
- */
-export function getLanguageName(code: string): string {
-  return LANGUAGE_NAMES[code] || code.toUpperCase()
-}
+// Re-export from shared (single source of truth for both client and server)
+export { LANGUAGE_NAMES, getLanguageName } from '../../shared/utils/language-names'
