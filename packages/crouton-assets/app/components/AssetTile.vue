@@ -9,29 +9,6 @@ const emit = defineEmits<{
   click: [asset: Record<string, any>]
 }>()
 
-const isImage = (contentType?: string) => contentType?.startsWith('image/')
-const isVideo = (contentType?: string) => contentType?.startsWith('video/')
-const isAudio = (contentType?: string) => contentType?.startsWith('audio/')
-const isDocument = (contentType?: string) =>
-  contentType === 'application/pdf'
-  || contentType?.includes('word')
-  || contentType?.includes('spreadsheet')
-  || contentType?.includes('presentation')
-
-const getFileIcon = (contentType?: string): string => {
-  if (isImage(contentType)) return 'i-lucide-image'
-  if (isVideo(contentType)) return 'i-lucide-video'
-  if (isAudio(contentType)) return 'i-lucide-music'
-  if (contentType === 'application/pdf') return 'i-lucide-file-text'
-  if (isDocument(contentType)) return 'i-lucide-file-text'
-  return 'i-lucide-file'
-}
-
-const getFileExtension = (filename?: string): string => {
-  if (!filename) return ''
-  const parts = filename.split('.')
-  return parts.length > 1 ? parts.pop()! : ''
-}
 </script>
 
 <template>

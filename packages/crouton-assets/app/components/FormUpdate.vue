@@ -32,27 +32,11 @@ const originalPathname = ref<string>(props.item.pathname)
 const currentPathname = ref<string>(props.item.pathname)
 const isCropped = computed(() => currentPathname.value !== originalPathname.value)
 
-const formatFileSize = (bytes: number): string => {
-  if (!bytes) return ''
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
-}
-
-const fileToBase64 = (url: string): Promise<string> =>
-  fetch(url).then(r => r.blob()).then(b => new Promise((res, rej) => {
-    const reader = new FileReader()
-    reader.onload = () => res(reader.result as string)
-    reader.onerror = rej
-    reader.readAsDataURL(b)
-  }))
-
 const generateAltText = async () => {
   if (!isImage || !props.item.pathname) return
   generatingAlt.value = true
   try {
-    const image = await fileToBase64(`/images/${props.item.pathname}`)
+    const image = await urlToBase64(`/images/${props.item.pathname}`)
     const { alt } = await $fetch<{ alt: string }>('/api/assets/generate-alt-text', {
       method: 'POST',
       body: { image, mimeType: props.item.contentType }

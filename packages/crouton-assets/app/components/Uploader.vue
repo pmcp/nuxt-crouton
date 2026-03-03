@@ -148,15 +148,6 @@ const showCropStep = ref(false)
 const metadata = ref<{ alt: string, translations: Record<string, { alt?: string }> }>({ alt: '', translations: {} })
 const generatingAlt = ref(false)
 
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
 const generateAltText = async () => {
   if (!selectedFile.value || !isImageFile(selectedFile.value)) return
 
@@ -234,14 +225,6 @@ const skipCrop = () => {
   pendingFile.value = null
   showCropStep.value = false
   metadata.value = { alt: '', translations: {} }
-}
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
 }
 
 const handleUpload = async () => {

@@ -11,44 +11,6 @@ const props = defineProps<{
 
 const crouton = useCrouton()
 
-const isImage = (ct?: string) => ct?.startsWith('image/')
-const isVideo = (ct?: string) => ct?.startsWith('video/')
-const isAudio = (ct?: string) => ct?.startsWith('audio/')
-const isDocument = (ct?: string) =>
-  ct === 'application/pdf'
-  || ct?.includes('word')
-  || ct?.includes('spreadsheet')
-  || ct?.includes('presentation')
-
-const getFileIcon = (ct?: string) => {
-  if (isImage(ct)) return 'i-lucide-image'
-  if (isVideo(ct)) return 'i-lucide-video'
-  if (isAudio(ct)) return 'i-lucide-music'
-  if (ct === 'application/pdf') return 'i-lucide-file-text'
-  if (isDocument(ct)) return 'i-lucide-file-text'
-  return 'i-lucide-file'
-}
-
-const getIconColor = (ct?: string) => {
-  if (isVideo(ct)) return 'text-purple-400'
-  if (isAudio(ct)) return 'text-green-400'
-  if (isDocument(ct)) return 'text-orange-400'
-  return 'text-blue-400'
-}
-
-const getFileExtension = (filename?: string) => {
-  if (!filename) return ''
-  const parts = filename.split('.')
-  return parts.length > 1 ? parts.pop()!.toUpperCase() : ''
-}
-
-const formatBytes = (bytes?: number) => {
-  if (!bytes) return ''
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
 const imageUrl = computed(() =>
   isImage(props.item.contentType) && props.item.pathname
     ? `/images/${props.item.pathname}`
@@ -120,7 +82,7 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
         {{ item.filename }}
       </p>
       <p class="text-[10px] text-muted tabular-nums leading-tight mt-0.5">
-        {{ formatBytes(item.size) }}<span v-if="item.width && item.height"> &middot; {{ item.width }}&times;{{ item.height }}</span>
+        {{ formatFileSize(item.size) }}<span v-if="item.width && item.height"> &middot; {{ item.width }}&times;{{ item.height }}</span>
       </p>
     </div>
   </UCard>
@@ -151,7 +113,7 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
         {{ item.filename }}
       </p>
       <p class="text-xs text-muted truncate tabular-nums">
-        {{ item.contentType }}<span v-if="item.size"> &middot; {{ formatBytes(item.size) }}</span>
+        {{ item.contentType }}<span v-if="item.size"> &middot; {{ formatFileSize(item.size) }}</span>
       </p>
     </div>
 
