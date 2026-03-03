@@ -9,20 +9,30 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "velo-db",
+      "database_name": "bikeshed-db",
       "database_id": "6e1fe44c-516d-4f17-bf4f-0ab791fcc0d9",
       "migrations_dir": "server/db/migrations/sqlite"
     }
   ],
   "r2_buckets": [
-    { "binding": "BLOB", "bucket_name": "velo-blob" }
-  ]
+    { "binding": "BLOB", "bucket_name": "bikeshed-blob" }
+  ],
 
-  // Preview/staging bindings must be configured in Cloudflare Dashboard:
-  //   Pages > velo > Settings > Bindings > Preview
-  //   - D1: DB → bikeshed-staging-db (dcd9dfeb-756e-4fce-967c-a7eb4d1627bd)
-  //   - R2: BLOB → bikeshed-staging-blob
-  //
-  // env blocks cannot be used here because Nitro copies them into the
-  // redirected _worker.js/wrangler.json, which Wrangler 4.64+ rejects.
+  // Preview/staging environment overrides
+  // NOTE: bindings do NOT inherit — must be specified fully per env
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "bikeshed-staging-db",
+          "database_id": "dcd9dfeb-756e-4fce-967c-a7eb4d1627bd",
+          "migrations_dir": "server/db/migrations/sqlite"
+        }
+      ],
+      "r2_buckets": [
+        { "binding": "BLOB", "bucket_name": "bikeshed-staging-blob" }
+      ]
+    }
+  }
 }

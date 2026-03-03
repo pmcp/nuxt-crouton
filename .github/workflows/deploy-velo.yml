@@ -44,9 +44,9 @@ jobs:
       - name: Run database migrations
         run: |
           if [ "${{ inputs.environment }}" = "production" ]; then
-            npx wrangler d1 migrations apply velo-db --remote
+            npx wrangler d1 migrations apply DB --remote
           else
-            npx wrangler d1 migrations apply bikeshed-staging-db --database-id dcd9dfeb-756e-4fce-967c-a7eb4d1627bd --remote
+            npx wrangler d1 migrations apply DB --env preview --remote
           fi
         working-directory: apps/velo
 
@@ -56,6 +56,23 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
           NITRO_PRESET: 'cloudflare-pages'
+          CLOUDFLARE_ENV: ${{ inputs.environment == 'staging' && 'preview' || '' }}
+
+      # Workaround: Wrangler 4.64+ rejects env blocks in redirected configs.
+      # Nitro copies the full wrangler.jsonc (including env) into the generated
+      # _worker.js/wrangler.json. Strip it so deploy succeeds.
+      - name: Strip env from redirected wrangler config
+        run: |
+          CONFIG="dist/_worker.js/wrangler.json"
+          if [ -f "$CONFIG" ] && grep -q '"env"' "$CONFIG"; then
+            node -e "
+              const fs = require('fs');
+              const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
+              delete cfg.env;
+              fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
+            "
+          fi
+        working-directory: apps/velo
 
       - name: Deploy to Cloudflare Pages
         run: |
