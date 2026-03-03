@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 const { locale, locales, setLocale } = useI18n()
+const { user, updateUserLocale } = useSession()
 
 const localeItems = computed(() =>
   locales.value.map((l: any) => {
@@ -22,5 +23,9 @@ const localeItems = computed(() =>
 
 const handleLocaleChange = async (newLocale: string) => {
   await setLocale(newLocale)
+  // Persist to database if user is authenticated
+  if (user.value) {
+    updateUserLocale(newLocale)
+  }
 }
 </script>

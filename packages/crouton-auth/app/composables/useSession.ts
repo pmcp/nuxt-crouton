@@ -39,6 +39,8 @@ export function useSession() {
   const userState = useState<any>('crouton-auth-user', () => null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const activeOrgState = useState<any>('crouton-auth-active-org', () => null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userProfileState = useState<any>('crouton-auth-user-profile', () => null)
   const isPendingState = useState('crouton-auth-pending', () => true)
   const errorState = useState<Error | null>('crouton-auth-error', () => null)
 
@@ -188,6 +190,57 @@ export function useSession() {
     }
   }
 
+  // Fetch user profile (locale, timezone, etc.) — separate from session
+  async function fetchUserProfile(): Promise<void> {
+    if (!userState.value) return
+
+    try {
+      const profile = await $fetch('/api/users/me/profile', {
+        headers: headers as Record<string, string> | undefined,
+      })
+      userProfileState.value = profile
+
+      // Auto-apply saved locale on login
+      if (import.meta.client && profile && (profile as Record<string, unknown>).locale) {
+        try {
+          const { setLocale } = useI18n()
+          setLocale((profile as Record<string, unknown>).locale as string)
+        } catch {
+          // i18n not available — skip
+        }
+      }
+
+      if (debug) {
+        console.log('[@crouton/auth] useSession: fetched user profile', {
+          locale: (profile as Record<string, unknown>)?.locale ?? null,
+        })
+      }
+    } catch {
+      // Profile not found or endpoint not available — that's fine
+      userProfileState.value = null
+    }
+  }
+
+  // Update user profile fields
+  async function updateUserProfile(data: { locale?: string | null }): Promise<void> {
+    if (!userState.value) return
+
+    try {
+      const profile = await $fetch('/api/users/me/profile', {
+        method: 'PATCH',
+        body: data,
+      })
+      userProfileState.value = profile
+    } catch (err) {
+      console.warn('[@crouton/auth] useSession: failed to update user profile', err)
+    }
+  }
+
+  // Convenience: update user locale
+  async function updateUserLocale(locale: string): Promise<void> {
+    return updateUserProfile({ locale })
+  }
+
   // Set up signal listener on client (once per app lifecycle)
   if (import.meta.client && authClient && !isListening.value) {
     isListening.value = true
@@ -206,16 +259,18 @@ export function useSession() {
       }
 
       await fetchSession()
-      // Only fetch org if user is authenticated (prevents 401 console errors)
+      // Only fetch org and profile if user is authenticated (prevents 401 console errors)
       if (userState.value) {
         await fetchActiveOrg()
+        await fetchUserProfile()
       }
     })
 
-    // Initial fetch - only fetch org if session exists
+    // Initial fetch - only fetch org and profile if session exists
     fetchSession().then(() => {
       if (userState.value) {
         fetchActiveOrg()
+        fetchUserProfile()
       }
     })
   }
@@ -225,9 +280,10 @@ export function useSession() {
     // Use callOnce to avoid duplicate fetches during SSR
     callOnce('crouton-auth-ssr-fetch', async () => {
       await fetchSession()
-      // Only fetch org if user is authenticated (prevents 401 console errors)
+      // Only fetch org and profile if user is authenticated (prevents 401 console errors)
       if (userState.value) {
         await fetchActiveOrg()
+        await fetchUserProfile()
       }
     })
   }
@@ -305,6 +361,10 @@ export function useSession() {
     }
   })
 
+  const userLocale = computed<string | null>(() => {
+    return (userProfileState.value as Record<string, unknown> | null)?.locale as string | null ?? null
+  })
+
   const isPending = computed(() => isPendingState.value)
   const error = computed(() => errorState.value)
   const isAuthenticated = computed(() => !!userState.value)
@@ -334,6 +394,7 @@ export function useSession() {
     sessionState.value = null
     userState.value = null
     activeOrgState.value = null
+    userProfileState.value = null
   }
 
   // Raw active org state (includes members from getFullOrganization)
@@ -351,6 +412,9 @@ export function useSession() {
     // Raw active org with members (for role checking)
     activeOrgRaw,
 
+    // User profile
+    userLocale,
+
     // Status
     isPending,
     error,
@@ -358,6 +422,8 @@ export function useSession() {
 
     // Methods
     refresh,
-    clear
+    clear,
+    updateUserProfile,
+    updateUserLocale
   }
 }

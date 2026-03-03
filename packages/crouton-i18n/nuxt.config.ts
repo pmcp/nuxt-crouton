@@ -16,6 +16,13 @@ if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-i18n'))
 
 export default defineNuxtConfig({
 
+  // Expose supported locales to server-side (for locale validation in API endpoints)
+  runtimeConfig: {
+    croutonI18n: {
+      supportedLocales: croutonLocales.map(l => l.code),
+    },
+  },
+
   // Note: This is an addon layer - users must explicitly extend both:
   // extends: ['@fyit/crouton-core', '@fyit/crouton-i18n']
 

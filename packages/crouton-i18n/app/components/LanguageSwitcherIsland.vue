@@ -25,10 +25,19 @@
 import type { DropdownMenuItem } from '@nuxt/ui'
 
 const { locale, locales, setLocale } = useI18n()
+const { user, updateUserLocale } = useSession()
 
 const currentLocaleCode = computed(() => {
   return locale.value.toUpperCase()
 })
+
+const handleLocaleChange = async (code: string) => {
+  await setLocale(code)
+  // Persist to database if user is authenticated
+  if (user.value) {
+    updateUserLocale(code)
+  }
+}
 
 const dropdownItems = computed<DropdownMenuItem[]>(() => {
   return locales.value.map((loc) => {
@@ -38,7 +47,7 @@ const dropdownItems = computed<DropdownMenuItem[]>(() => {
     return {
       label: name,
       icon: locale.value === code ? 'i-lucide-check' : undefined,
-      onSelect: () => setLocale(code)
+      onSelect: () => handleLocaleChange(code)
     }
   })
 })
