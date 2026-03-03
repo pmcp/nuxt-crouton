@@ -6,8 +6,8 @@
     "dev": "nuxt dev",
     "build": "nuxt build",
     "preview": "nuxt preview",
-    "cf:deploy": "nuxt build && npx wrangler pages deploy dist",
-    "cf:preview": "nuxt build && npx wrangler pages deploy dist --branch preview",
+    "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
+    "cf:preview": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist --branch preview",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx wrangler d1 migrations apply triage-db --local",
     "db:migrate:prod": "npx wrangler d1 migrations apply triage-db --remote"
