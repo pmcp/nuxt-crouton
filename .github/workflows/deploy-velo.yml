@@ -61,8 +61,8 @@ jobs:
       - name: Deploy to Cloudflare Pages
         run: |
           if [ "${{ inputs.environment }}" = "production" ]; then
-            npx wrangler --cwd dist pages deploy --commit-dirty=true
+            npx wrangler pages deploy dist/ --commit-dirty=true
           else
-            npx wrangler --cwd dist pages deploy --commit-dirty=true --branch staging
+            npx wrangler pages deploy dist/ --commit-dirty=true --branch staging
           fi
         working-directory: apps/velo
