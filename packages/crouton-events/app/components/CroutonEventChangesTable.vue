@@ -1,57 +1,10 @@
 <script setup lang="ts">
-interface EventChange {
-  fieldName: string
-  oldValue: string | null
-  newValue: string | null
-}
+import type { EventChange, EventOperation } from '../types/events'
 
 const props = defineProps<{
   changes: EventChange[]
-  operation?: 'create' | 'update' | 'delete'
+  operation?: EventOperation
 }>()
-
-// Parse JSON value for display
-function parseValue(value: string | null): unknown {
-  if (value === null) return null
-  try {
-    return JSON.parse(value)
-  } catch {
-    return value
-  }
-}
-
-// Format value for display
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return '—'
-  if (typeof value === 'object') {
-    return JSON.stringify(value, null, 2)
-  }
-  if (typeof value === 'boolean') {
-    return value ? 'true' : 'false'
-  }
-  return String(value)
-}
-
-// Check if value is complex (object/array)
-function isComplex(value: unknown): boolean {
-  return typeof value === 'object' && value !== null
-}
-
-// Get display info for a change
-function getChangeDisplay(change: EventChange) {
-  const oldVal = parseValue(change.oldValue)
-  const newVal = parseValue(change.newValue)
-
-  return {
-    field: change.fieldName,
-    oldValue: formatValue(oldVal),
-    newValue: formatValue(newVal),
-    isOldComplex: isComplex(oldVal),
-    isNewComplex: isComplex(newVal),
-    hasOld: change.oldValue !== null,
-    hasNew: change.newValue !== null
-  }
-}
 </script>
 
 <template>

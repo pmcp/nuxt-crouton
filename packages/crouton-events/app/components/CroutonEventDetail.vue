@@ -1,21 +1,5 @@
 <script setup lang="ts">
-interface EventChange {
-  fieldName: string
-  oldValue: string | null
-  newValue: string | null
-}
-
-interface CroutonEvent {
-  id: string
-  timestamp: string | Date
-  operation: 'create' | 'update' | 'delete'
-  collectionName: string
-  itemId: string
-  userId: string
-  userName: string
-  changes: EventChange[]
-  metadata?: Record<string, unknown>
-}
+import type { CroutonEvent } from '../types/events'
 
 const props = defineProps<{
   modelValue: boolean

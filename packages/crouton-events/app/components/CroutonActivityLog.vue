@@ -1,30 +1,6 @@
 <script setup lang="ts">
 import { useToggle } from '@vueuse/core'
-interface EventChange {
-  fieldName: string
-  oldValue: string | null
-  newValue: string | null
-}
-
-interface CroutonEvent {
-  id: string
-  timestamp: string | Date
-  operation: 'create' | 'update' | 'delete'
-  collectionName: string
-  itemId: string
-  userId: string
-  userName: string
-  changes: EventChange[]
-  metadata?: Record<string, unknown>
-}
-
-interface FilterState {
-  collectionName?: string
-  operation?: 'create' | 'update' | 'delete' | ''
-  userId?: string
-  dateFrom?: Date
-  dateTo?: Date
-}
+import type { CroutonEvent, FilterState } from '../types/events'
 
 const props = withDefaults(defineProps<{
   /** Filter to specific collection */

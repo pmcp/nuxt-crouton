@@ -9,9 +9,10 @@
  * - CSV: Returns text/csv with headers
  * - JSON: Returns array of events
  */
-import { eq, and, gte, lte } from 'drizzle-orm'
+import { and } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { croutonEvents } from '../../../../database/schema'
+import { buildEventConditions, parseEventFilterQuery } from '../../../../utils/event-filters'
 
 export default defineEventHandler(async (event) => {
   // Authenticate and check team membership
@@ -21,32 +22,10 @@ export default defineEventHandler(async (event) => {
   // Parse query parameters
   const query = getQuery(event)
   const format = (query.format as 'csv' | 'json') || 'json'
-  const collectionName = query.collectionName as string | undefined
-  const operation = query.operation as 'create' | 'update' | 'delete' | undefined
-  const userId = query.userId as string | undefined
-  const dateFrom = query.dateFrom ? new Date(String(query.dateFrom)) : undefined
-  const dateTo = query.dateTo ? new Date(String(query.dateTo)) : undefined
+  const filters = parseEventFilterQuery(query)
 
   // Build where conditions
-  const conditions = [
-    eq(croutonEvents.teamId, team.id)
-  ]
-
-  if (collectionName) {
-    conditions.push(eq(croutonEvents.collectionName, collectionName))
-  }
-  if (operation) {
-    conditions.push(eq(croutonEvents.operation, operation))
-  }
-  if (userId) {
-    conditions.push(eq(croutonEvents.userId, userId))
-  }
-  if (dateFrom && !isNaN(dateFrom.getTime())) {
-    conditions.push(gte(croutonEvents.timestamp, dateFrom))
-  }
-  if (dateTo && !isNaN(dateTo.getTime())) {
-    conditions.push(lte(croutonEvents.timestamp, dateTo))
-  }
+  const conditions = buildEventConditions({ teamId: team.id, ...filters })
 
   // Query events
   const events = await db

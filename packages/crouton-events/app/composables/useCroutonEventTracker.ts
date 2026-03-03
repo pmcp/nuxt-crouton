@@ -2,12 +2,7 @@
  * Event tracker composable for Crouton collections
  * Provides smart diff tracking and event persistence
  */
-
-interface EventChange {
-  fieldName: string
-  oldValue: string | null
-  newValue: string | null
-}
+import type { EventChange } from '../types/events'
 
 interface TrackEventOptions {
   operation: 'create' | 'update' | 'delete'

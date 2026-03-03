@@ -2,18 +2,10 @@
  * Export composable for Crouton Events
  * Provides CSV and JSON export functionality for audit logs
  */
-
-interface EventFilters {
-  collectionName?: string
-  operation?: 'create' | 'update' | 'delete'
-  userId?: string
-  dateFrom?: Date
-  dateTo?: Date
-}
+import type { FilterState } from '../types/events'
 
 interface ExportOptions {
-  filters?: EventFilters
-  format: 'csv' | 'json'
+  filters?: FilterState
   filename?: string
 }
 
@@ -46,60 +38,34 @@ export function useCroutonEventsExport() {
   }
 
   /**
-   * Export events as CSV
+   * Build query params from filters
    */
-  async function exportToCSV(options: Omit<ExportOptions, 'format'> = {}) {
-    const teamId = getTeamId()
-    if (!teamId) {
-      throw new Error('Team context required for export')
+  function buildExportQuery(format: 'csv' | 'json', filters?: FilterState): Record<string, string> {
+    const query: Record<string, string> = { format }
+
+    if (filters?.collectionName) {
+      query.collectionName = filters.collectionName
+    }
+    if (filters?.operation) {
+      query.operation = filters.operation
+    }
+    if (filters?.userId) {
+      query.userId = filters.userId
+    }
+    if (filters?.dateFrom) {
+      query.dateFrom = filters.dateFrom.toISOString()
+    }
+    if (filters?.dateTo) {
+      query.dateTo = filters.dateTo.toISOString()
     }
 
-    exporting.value = true
-    error.value = null
-
-    try {
-      const query: Record<string, string> = {
-        format: 'csv'
-      }
-
-      if (options.filters?.collectionName) {
-        query.collectionName = options.filters.collectionName
-      }
-      if (options.filters?.operation) {
-        query.operation = options.filters.operation
-      }
-      if (options.filters?.userId) {
-        query.userId = options.filters.userId
-      }
-      if (options.filters?.dateFrom) {
-        query.dateFrom = options.filters.dateFrom.toISOString()
-      }
-      if (options.filters?.dateTo) {
-        query.dateTo = options.filters.dateTo.toISOString()
-      }
-
-      const response = await $fetch<string>(`/api/teams/${teamId}/crouton-events/export`, {
-        query,
-        credentials: 'include'
-      })
-
-      const filename = options.filename || generateFilename('csv')
-      downloadFile(response, filename, 'text/csv')
-
-      return { success: true }
-    } catch (err) {
-      error.value = err as Error
-      console.error('[CroutonEventsExport] CSV export failed:', err)
-      throw err
-    } finally {
-      exporting.value = false
-    }
+    return query
   }
 
   /**
-   * Export events as JSON
+   * Export events in the given format
    */
-  async function exportToJSON(options: Omit<ExportOptions, 'format'> = {}) {
+  async function exportEvents(format: 'csv' | 'json', options: ExportOptions = {}) {
     const teamId = getTeamId()
     if (!teamId) {
       throw new Error('Team context required for export')
@@ -109,46 +75,36 @@ export function useCroutonEventsExport() {
     error.value = null
 
     try {
-      const query: Record<string, string> = {
-        format: 'json'
-      }
-
-      if (options.filters?.collectionName) {
-        query.collectionName = options.filters.collectionName
-      }
-      if (options.filters?.operation) {
-        query.operation = options.filters.operation
-      }
-      if (options.filters?.userId) {
-        query.userId = options.filters.userId
-      }
-      if (options.filters?.dateFrom) {
-        query.dateFrom = options.filters.dateFrom.toISOString()
-      }
-      if (options.filters?.dateTo) {
-        query.dateTo = options.filters.dateTo.toISOString()
-      }
-
-      const response = await $fetch<object>(`/api/teams/${teamId}/crouton-events/export`, {
+      const query = buildExportQuery(format, options.filters)
+      const response = await $fetch(`/api/teams/${teamId}/crouton-events/export`, {
         query,
         credentials: 'include'
       })
 
-      const content = JSON.stringify(response, null, 2)
-      const filename = options.filename || generateFilename('json')
-      downloadFile(content, filename, 'application/json')
+      const content = format === 'json'
+        ? JSON.stringify(response, null, 2)
+        : response as string
+
+      const mimeType = format === 'json' ? 'application/json' : 'text/csv'
+      const filename = options.filename || generateFilename(format)
+      downloadFile(content, filename, mimeType)
 
       return { success: true }
     } catch (err) {
       error.value = err as Error
-      console.error('[CroutonEventsExport] JSON export failed:', err)
+      console.error(`[CroutonEventsExport] ${format.toUpperCase()} export failed:`, err)
       throw err
     } finally {
       exporting.value = false
     }
   }
 
+  // Keep named helpers for backwards compatibility
+  const exportToCSV = (options: ExportOptions = {}) => exportEvents('csv', options)
+  const exportToJSON = (options: ExportOptions = {}) => exportEvents('json', options)
+
   return {
+    exportEvents,
     exportToCSV,
     exportToJSON,
     exporting: readonly(exporting),

@@ -1,11 +1,5 @@
 <script setup lang="ts">
-interface FilterState {
-  collectionName?: string
-  operation?: 'create' | 'update' | 'delete' | ''
-  userId?: string
-  dateFrom?: Date
-  dateTo?: Date
-}
+import type { FilterState } from '../types/events'
 
 const props = withDefaults(defineProps<{
   modelValue: FilterState

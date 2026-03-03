@@ -1,21 +1,5 @@
 <script setup lang="ts">
-interface EventChange {
-  fieldName: string
-  oldValue: string | null
-  newValue: string | null
-}
-
-interface CroutonEvent {
-  id: string
-  timestamp: string | Date
-  operation: 'create' | 'update' | 'delete'
-  collectionName: string
-  itemId: string
-  userId: string
-  userName: string
-  changes: EventChange[]
-  metadata?: Record<string, unknown>
-}
+import type { CroutonEvent } from '../types/events'
 
 const props = defineProps<{
   event: CroutonEvent
@@ -60,25 +44,11 @@ const changesSummary = computed(() => {
   return `${count} fields changed`
 })
 
-// Parse JSON values for display
+// Parse and format for inline display
 function parseValue(value: string | null): string {
-  if (value === null) return '—'
-  try {
-    const parsed = JSON.parse(value)
-    if (typeof parsed === 'object') {
-      return JSON.stringify(parsed, null, 2)
-    }
-    return String(parsed)
-  } catch {
-    return value
-  }
+  return formatEventValue(parseEventValue(value))
 }
 
-// Truncate long values
-function truncate(value: string, maxLength = 50): string {
-  if (value.length <= maxLength) return value
-  return value.slice(0, maxLength) + '...'
-}
 </script>
 
 <template>
@@ -123,7 +93,7 @@ function truncate(value: string, maxLength = 50): string {
           v-if="event.itemId"
           class="text-xs text-muted font-mono"
         >
-          #{{ truncate(event.itemId, 8) }}
+          #{{ truncateValue(event.itemId, 8) }}
         </span>
 
         <span
@@ -161,7 +131,7 @@ function truncate(value: string, maxLength = 50): string {
             v-if="change.oldValue !== null"
             class="text-red-500 line-through mx-1"
           >
-            {{ truncate(parseValue(change.oldValue), 30) }}
+            {{ truncateValue(parseValue(change.oldValue), 30) }}
           </span>
           <span
             v-if="change.oldValue !== null && change.newValue !== null"
@@ -171,7 +141,7 @@ function truncate(value: string, maxLength = 50): string {
             v-if="change.newValue !== null"
             class="text-green-500"
           >
-            {{ truncate(parseValue(change.newValue), 30) }}
+            {{ truncateValue(parseValue(change.newValue), 30) }}
           </span>
         </div>
       </div>
