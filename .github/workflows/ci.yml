@@ -23,7 +23,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build MCP Server
         run: pnpm --filter @fyit/crouton-mcp build
@@ -75,7 +75,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build MCP Server
         run: pnpm --filter @fyit/crouton-mcp build
@@ -172,7 +172,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build crouton package
         run: pnpm --filter '@fyit/crouton' build
