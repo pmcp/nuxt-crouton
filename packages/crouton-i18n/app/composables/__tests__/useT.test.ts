@@ -23,7 +23,12 @@ vi.stubGlobal('watch', watch)
 
 vi.stubGlobal('useI18n', () => ({
   locale: mockLocale,
-  t: mockI18nT
+  t: mockI18nT,
+  locales: ref([
+    { code: 'en' },
+    { code: 'nl' },
+    { code: 'fr' }
+  ])
 }))
 
 vi.stubGlobal('useTeamContext', () => ({
