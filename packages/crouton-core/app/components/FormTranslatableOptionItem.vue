@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { slugify } from '../utils/slugify'
+import { slugify } from '../../shared/utils/slugify'
 
 /**
  * TranslatableOptionItem - Repeater item for translatable dropdown options

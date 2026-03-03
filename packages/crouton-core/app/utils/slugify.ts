@@ -1,8 +1,5 @@
 import { slugify } from '../../shared/utils/slugify'
 
-// Re-export canonical slugify from shared (available to both app and server)
-export { slugify }
-
 /**
  * Field transform functions for use with form inputs.
  * Can be referenced by name in fieldOptions.transform.

@@ -1,9 +1,6 @@
 import { eq, like, and, ne } from 'drizzle-orm'
 import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 
-// Re-export canonical slugify from shared
-export { slugify } from '../../shared/utils/slugify'
-
 /**
  * Find a unique slug within a team by appending -1, -2, etc. if the base slug is taken.
  * Single query approach: fetches all matching slugs and calculates next suffix in JS.
