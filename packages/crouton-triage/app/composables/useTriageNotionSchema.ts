@@ -39,12 +39,11 @@ export interface FetchSchemaOptions {
   accountId?: string
 }
 
-// Create singleton refs outside the composable function
-const fetchingSchema = ref(false)
-const schemaFetchError = ref<string | null>(null)
-const fetchedSchema = ref<NotionSchema | null>(null)
-
 export function useTriageNotionSchema() {
+  // SSR-safe shared state via useState
+  const fetchingSchema = useState('triage-notion-schema-loading', () => false)
+  const schemaFetchError = useState<string | null>('triage-notion-schema-error', () => null)
+  const fetchedSchema = useState<NotionSchema | null>('triage-notion-schema-data', () => null)
 
   /**
    * Fetch Notion database schema

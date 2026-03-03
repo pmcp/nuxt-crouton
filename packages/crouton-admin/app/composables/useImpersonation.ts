@@ -22,20 +22,18 @@
  * </script>
  * ```
  */
-import { ref, computed, readonly } from 'vue'
+import { computed, readonly } from 'vue'
 import type { ImpersonationState } from '../../types/admin'
 
-// Global state to persist impersonation across component instances
-const impersonationState = ref<ImpersonationState>({
-  isImpersonating: false,
-  originalAdminId: null,
-  impersonatedUser: null
-})
-
-// Track if we've checked the server state
-const hasCheckedStatus = ref(false)
-
 export function useImpersonation() {
+  // SSR-safe shared state via useState
+  const impersonationState = useState<ImpersonationState>('impersonation-state', () => ({
+    isImpersonating: false,
+    originalAdminId: null,
+    impersonatedUser: null
+  }))
+  const hasCheckedStatus = useState('impersonation-checked', () => false)
+
   const loading = ref(false)
   const error = ref<string | null>(null)
 

@@ -5,10 +5,10 @@
  * Used by public pages nav to open settings in a modal
  * instead of navigating to /account.
  */
-const isOpen = ref(false)
-const defaultTab = ref('profile')
-
 export function useAccountSettingsModal() {
+  const isOpen = useState('account-settings-open', () => false)
+  const defaultTab = useState('account-settings-tab', () => 'profile')
+
   function open(tab = 'profile') {
     defaultTab.value = tab
     isOpen.value = true
