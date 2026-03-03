@@ -60,16 +60,7 @@ const dotClass = computed(() => {
   }
 })
 
-// Badge variant for Nuxt UI
-const badgeColor = computed(() => {
-  switch (status.value) {
-    case 'synced': return 'success' as const
-    case 'syncing': return 'warning' as const
-    case 'disconnected': return 'neutral' as const
-    case 'error': return 'error' as const
-    default: return 'neutral' as const
-  }
-})
+
 </script>
 
 <template>

@@ -127,9 +127,6 @@ export default defineNuxtConfig({
     }
   },
 
-  plugins: [
-    { src: join(currentDir, 'app/plugins/tree-styles.client.ts'), mode: 'client' }
-  ],
   $meta: {
     description: 'Base CRUD layer for FYIT collections',
     name: 'crouton-core'

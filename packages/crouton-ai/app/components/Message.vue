@@ -22,12 +22,7 @@ async function handleCopy() {
   resetCopied()
 }
 
-// Simple markdown-like rendering for code blocks
-const formattedContent = computed(() => {
-  return props.message.content
-})
 
-// Check if content contains code blocks
 </script>
 
 <template>
@@ -66,7 +61,7 @@ const formattedContent = computed(() => {
             !isUser ? 'prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-code:text-xs' : ''
           ]"
         >
-          {{ formattedContent }}
+          {{ message.content }}
         </div>
 
         <!-- Streaming indicator -->
