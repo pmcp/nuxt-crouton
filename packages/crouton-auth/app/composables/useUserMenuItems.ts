@@ -122,18 +122,6 @@ export function useUserMenuItems(options?: UserMenuItemsOptions) {
                 to: '/account'
               }
           )
-        },
-        {
-          label: t('account.security') || 'Security',
-          icon: 'i-lucide-shield',
-          ...(accountModal
-            ? {
-                onSelect: () => accountModal.open('security')
-              }
-            : {
-                to: '/account?tab=security'
-              }
-          )
         }
       ],
       preferenceGroup,
