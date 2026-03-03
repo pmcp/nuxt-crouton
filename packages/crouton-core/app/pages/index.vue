@@ -29,16 +29,88 @@ function tryUseSession() {
   }
 }
 
+function tryUseUserMenuItems() {
+  try {
+    return useUserMenuItems({ useModal: true })
+  } catch {
+    return null
+  }
+}
+
 const teamComposable = tryUseTeam()
 const sessionComposable = tryUseSession()
+const userMenu = tryUseUserMenuItems()
 
 const teams = computed(() => teamComposable?.teams?.value ?? [])
 const canCreateTeam = computed(() => teamComposable?.canCreateTeam?.value ?? false)
 const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
+const userInitials = computed(() => userMenu?.userInitials?.value ?? '?')
+const userDropdownItems = computed(() => userMenu?.dropdownItems?.value ?? [])
+
+const showCreateTeamModal = ref(false)
+
+const colorMode = useColorMode()
+const toggleColorMode = () => {
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}
+
+function handleTeamCreated(team: { slug: string }) {
+  showCreateTeamModal.value = false
+  navigateTo(`/admin/${team.slug}`)
+}
 </script>
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-(--ui-bg) p-4">
+    <!-- Top-right utility pill (matches public layout nav) -->
+    <div class="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 flex items-center gap-1 bg-(--ui-bg-muted)/80 backdrop-blur-sm rounded-full border border-(--ui-border) shadow-lg px-2 py-1">
+      <ClientOnly>
+        <!-- Authenticated: Avatar dropdown -->
+        <UDropdownMenu
+          v-if="loggedIn"
+          :items="userDropdownItems"
+          :content="{ align: 'end', side: 'bottom' }"
+          :ui="{ content: 'w-56' }"
+        >
+          <UButton
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            class="rounded-full"
+          >
+            <template #leading>
+              <UAvatar
+                :src="user?.image ?? undefined"
+                :alt="user?.name ?? 'User'"
+                :text="userInitials"
+                size="2xs"
+              />
+            </template>
+          </UButton>
+        </UDropdownMenu>
+
+        <USeparator
+          v-if="loggedIn"
+          orientation="vertical"
+          class="h-5 mx-1"
+        />
+      </ClientOnly>
+
+      <!-- Language Switcher -->
+      <CroutonI18nLanguageSwitcher class="w-auto" />
+
+      <!-- Dark/Light Mode Toggle -->
+      <ClientOnly>
+        <UButton
+          :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          @click="toggleColorMode"
+        />
+      </ClientOnly>
+    </div>
+
     <div class="max-w-2xl w-full space-y-8">
       <!-- Header -->
       <div class="text-center space-y-2">
@@ -69,7 +141,7 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
         <!-- Logged in: Team cards -->
         <template v-else-if="loggedIn">
           <p class="text-center text-sm text-(--ui-text-muted)">
-            Welcome back, {{ user?.name || user?.email }}
+            Your teams
           </p>
 
           <div class="grid gap-4 sm:grid-cols-2">
@@ -127,21 +199,19 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
             </UCard>
 
             <!-- Create team card -->
-            <NuxtLink
+            <UCard
               v-if="canCreateTeam"
-              to="/onboarding/create-team"
-              class="block"
+              class="h-full hover:bg-(--ui-bg-elevated)/50 transition-colors cursor-pointer border-dashed"
+              @click="showCreateTeamModal = true"
             >
-              <UCard class="h-full hover:bg-(--ui-bg-elevated)/50 transition-colors cursor-pointer border-dashed">
-                <div class="flex flex-col items-center justify-center gap-2 py-4 text-(--ui-text-dimmed)">
-                  <UIcon
-                    name="i-lucide-plus"
-                    class="size-8"
-                  />
-                  <span class="text-sm font-medium">Create team</span>
-                </div>
-              </UCard>
-            </NuxtLink>
+              <div class="flex flex-col items-center justify-center gap-2 py-4 text-(--ui-text-dimmed)">
+                <UIcon
+                  name="i-lucide-plus"
+                  class="size-8"
+                />
+                <span class="text-sm font-medium">Create team</span>
+              </div>
+            </UCard>
           </div>
 
           <!-- Super admin shortcut -->
@@ -191,13 +261,31 @@ const isPending = computed(() => sessionComposable?.isPending?.value ?? false)
       <!-- Footer -->
       <p class="text-center text-xs text-(--ui-text-dimmed)">
         <a
-          href="https://crouton.dev"
+          href="https://friendlyintern.net"
           target="_blank"
           class="hover:text-(--ui-text-muted)"
         >
-          crouton.dev
+          friendlyintern.net
         </a>
       </p>
     </div>
+
+    <!-- Account Settings Modal (opened via useUserMenuItems with useModal) -->
+    <AccountSettingsModal />
+
+    <!-- Create Team Modal -->
+    <UModal v-model:open="showCreateTeamModal">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            Create team
+          </h3>
+          <TeamCreateForm
+            @success="handleTeamCreated"
+            @cancel="close"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
