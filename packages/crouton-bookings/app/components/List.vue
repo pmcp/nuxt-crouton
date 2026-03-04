@@ -51,6 +51,9 @@ const emit = defineEmits<{
   emailSent: []
 }>()
 
+// Recently created booking IDs for highlight effect
+const { lastCreatedBookingIds } = useBookingCart()
+
 // Track which booking is being edited (inline edit mode)
 const editingBookingId = ref<string | null>(null)
 
@@ -449,7 +452,7 @@ watch(
       if (element) {
         element.scrollIntoView({
           behavior: 'instant',
-          block: 'start',
+          block: 'center',
         })
       }
       // Re-enable highlight scroll shortly after
@@ -514,7 +517,7 @@ watch(
       if (el && typeof el.scrollIntoView === 'function') {
         el.scrollIntoView({
           behavior: 'smooth',
-          block: 'start',
+          block: 'center',
         })
       }
     })
@@ -647,6 +650,7 @@ watch(
                 v-else
                 :booking="booking"
                 :highlighted="isHighlighted(booking)"
+                :just-created="lastCreatedBookingIds.includes(booking.id)"
                 :sending-email-type="getSendingEmailType(booking.id)"
                 @date-click="onBookingDateClick"
                 @resend-email="(triggerType) => handleResendEmail(booking, triggerType)"

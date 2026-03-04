@@ -172,6 +172,8 @@ export function useBookingCart() {
   const {
     cartCount,
     isSubmitting,
+    lastBookingCreatedAt,
+    lastCreatedBookingIds,
     removeFromCart,
     clearCart,
     submitAll: submitAllRaw,
@@ -596,5 +598,9 @@ export function useBookingCart() {
     cancelBooking,
     deleteBooking,
     fetchAvailability,
+
+    // Signals
+    lastBookingCreatedAt,
+    lastCreatedBookingIds,
   }
 }

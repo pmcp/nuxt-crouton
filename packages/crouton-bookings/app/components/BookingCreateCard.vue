@@ -37,6 +37,7 @@ const {
   getSlotCapacity,
   canAddToCart,
   addToCart,
+  clearCart,
   toggleSlot,
   submitAll,
   isSubmitting,
@@ -232,7 +233,8 @@ async function handleSubmit() {
       isUpdating.value = false
     }
   } else {
-    // Create new booking
+    // Create new booking — clear any stale cart items first so only this booking is submitted
+    clearCart()
     addToCart()
     const result = await submitAll()
     if (result) {

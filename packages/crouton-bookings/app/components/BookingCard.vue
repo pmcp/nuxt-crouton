@@ -4,12 +4,15 @@ import type { Booking, SlotItem, EmailTriggerType, EmailTriggerStatus } from '..
 interface Props {
   booking: Booking
   highlighted?: boolean
+  /** Temporary highlight for just-created bookings (fades out) */
+  justCreated?: boolean
   /** Which email action is currently being sent */
   sendingEmailType?: EmailTriggerType | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   highlighted: false,
+  justCreated: false,
   sendingEmailType: null,
 })
 
@@ -246,8 +249,9 @@ const timelineItems = computed<TimelineItem[]>(() => {
     variant="soft"
     :ui="{
       root: [
-        'transition-all duration-200 relative overflow-hidden',
+        'transition-all duration-700 relative overflow-hidden',
         isCancelled ? 'opacity-60' : '',
+        justCreated ? 'ring-2 ring-primary/60 bg-primary/5 shadow-md' :
         highlighted ? 'bg-elevated shadow-sm' : ''
       ],
       body: 'p-0 sm:p-0',

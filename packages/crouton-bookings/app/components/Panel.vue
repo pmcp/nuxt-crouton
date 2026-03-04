@@ -259,6 +259,16 @@ watch(filterState, (newFilters) => {
 // Inline creation state - date where we're creating a booking
 const creatingAtDate = ref<Date | null>(null)
 
+// Watch for booking creation signal from shared state.
+// The emit('created') chain from BookingCreateCard → List → Panel can be lost
+// when the async refreshMyBookings() unmounts the component mid-propagation.
+const { lastBookingCreatedAt } = useBookingCart()
+watch(lastBookingCreatedAt, (ts) => {
+  if (ts && creatingAtDate.value) {
+    onBookingCreated()
+  }
+})
+
 // Scroll to date - triggers scroll after booking creation
 const scrollToDate = ref<Date | null>(null)
 

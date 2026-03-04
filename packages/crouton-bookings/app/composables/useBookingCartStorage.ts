@@ -27,6 +27,15 @@ export function useBookingCartStorage(
   // Submitting state
   const isSubmitting = ref(false)
 
+  // Signal for successful booking creation — watched by Panel.vue to close the create card.
+  // We use shared state instead of relying on emit('created') because the async refresh
+  // can unmount the BookingCreateCard before the event propagates to the parent.
+  const lastBookingCreatedAt = useState<number | null>('croutonBookingLastCreatedAt', () => null)
+
+  // IDs of the most recently created bookings — used for temporary highlight effect
+  const lastCreatedBookingIds = useState<string[]>('croutonBookingLastCreatedIds', () => [])
+  let highlightTimer: ReturnType<typeof setTimeout> | null = null
+
   // Cart count for badge
   const cartCount = computed(() => cart.value.length)
 
@@ -54,7 +63,7 @@ export function useBookingCartStorage(
 
     try {
       const locale = useNuxtApp().$i18n?.locale?.value || 'en'
-      const result = await $fetch<{ count: number, bookings: unknown[], success: boolean }>(`/api/crouton-bookings/teams/${teamId.value}/customer-bookings-batch`, {
+      const result = await $fetch<{ count: number, bookings: { id: string }[], success: boolean }>(`/api/crouton-bookings/teams/${teamId.value}/customer-bookings-batch`, {
         method: 'POST',
         body: {
           bookings: cart.value,
@@ -76,6 +85,15 @@ export function useBookingCartStorage(
       // can emit 'created', which restructures the booking list and destroys the
       // BookingCreateCard component, losing the emit. Panel.vue already watches
       // resolvedBookings for changes to handle scroll-to-new-booking.
+      // Signal creation BEFORE starting the async refresh, so Panel.vue can
+      // clear creatingAtDate before the refresh unmounts BookingCreateCard.
+      lastBookingCreatedAt.value = Date.now()
+
+      // Store created booking IDs for temporary highlight, auto-clear after 3s
+      if (highlightTimer) clearTimeout(highlightTimer)
+      lastCreatedBookingIds.value = result.bookings.map(b => b.id)
+      highlightTimer = setTimeout(() => { lastCreatedBookingIds.value = [] }, 3000)
+
       refreshMyBookings().catch(() => {})
 
       return result
@@ -137,6 +155,8 @@ export function useBookingCartStorage(
     cart,
     cartCount,
     isSubmitting,
+    lastBookingCreatedAt,
+    lastCreatedBookingIds,
     removeFromCart,
     clearCart,
     submitAll,
