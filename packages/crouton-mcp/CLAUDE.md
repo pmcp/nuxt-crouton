@@ -76,7 +76,7 @@ These MUST match `packages/nuxt-crouton-cli/lib/utils/helpers.mjs`:
 | decimal | `z.number()` | `number` | `0` |
 | boolean | `z.boolean()` | `boolean` | `false` |
 | date | `z.date()` | `Date \| null` | `null` |
-| json | `z.record(z.any())` | `Record<string, any>` | `{}` |
+| json | `z.record(z.string(), z.any())` | `Record<string, any>` | `{}` |
 | repeater | `z.array(z.any())` | `any[]` | `[]` |
 | array | `z.array(z.string())` | `string[]` | `[]` |
 
