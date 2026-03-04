@@ -225,7 +225,7 @@ CMD ["node", ".output/server/index.mjs"]
 
 ### Path C: Cloudflare (existing)
 
-Already configured and working. Deploy via `nuxthub deploy`. `wrangler.toml` files exist in all deployed apps (`crouton-playground`, `velo`, `thinkgraph`, `docs`). This stays the easiest path — no changes needed.
+Already configured and working. Deploy via GitHub CI + `wrangler pages deploy`. `wrangler.jsonc` files exist in all deployed apps (`crouton-playground`, `velo`, `thinkgraph`, `docs`). This stays the easiest path — no changes needed.
 
 **Note**: Coolify is an option for users who want a UI to manage their Hetzner VPS, but it's not a supported deploy path — just a mention in the docs.
 
@@ -330,7 +330,7 @@ export default defineTask({
 
 ## CI/CD via GitHub Actions
 
-Existing CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, and package validation on push/PR to `main`. No deploy step exists — deployment is manual via `nuxthub deploy`.
+Existing CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, and package validation on push/PR to `main`. Deploy workflows exist per app (`.github/workflows/deploy-*.yml`) using `wrangler pages deploy`.
 
 VPS deploy workflow template:
 ```yaml
@@ -475,7 +475,7 @@ npx crouton email verify-dns           # Check SPF/DKIM/DMARC records for your d
 | CLI package | `packages/crouton-cli/` — citty + @clack/prompts, lifecycle tooling |
 | Config storage | `.crouton/deploy.json` (new, gitignored, multi-environment) |
 | Existing Docker | None |
-| Existing deploy | Cloudflare via `nuxthub deploy` + `wrangler.toml` per app |
+| Existing deploy | Cloudflare Pages via GitHub CI + `wrangler pages deploy` + `wrangler.jsonc` per app |
 | Existing CI | `.github/workflows/ci.yml` — lint, typecheck, tests. No deploy step. |
 | `@nuxthub/core` | Loaded via crouton-core layer. Most packages don't declare it — should add as `peerDependencies: ">=0.10.0"` |
 

@@ -340,7 +340,7 @@ ${colors.cyan}Examples:${colors.reset}
 
 ${colors.cyan}Notes:${colors.reset}
   - Uses Drizzle Kit for SQLite (D1) migrations
-  - For NuxtHub deployments, migrations are auto-applied on deploy
+  - For Cloudflare deployments, apply migrations with: npx wrangler d1 migrations apply DB --remote
   - See docs/MIGRATION.md for detailed documentation
 `)
 }

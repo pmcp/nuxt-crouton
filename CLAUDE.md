@@ -85,7 +85,7 @@ After each task: announce completion, say the code word, STOP. User runs `/clear
 - **Vue Syntax**: Composition API with `<script setup lang="ts">` (MANDATORY — never Options API)
 - **UI Library**: Nuxt UI 4 (CRITICAL: Only v4, never v2/v3)
 - **Utilities**: VueUse (ALWAYS check first before implementing custom logic)
-- **Hosting**: NuxtHub (Cloudflare edge)
+- **Hosting**: Cloudflare Pages (GitHub CI + Wrangler)
 - **Package Manager**: pnpm (ALWAYS use pnpm)
 - **Architecture**: Domain-Driven Design with Nuxt Layers
 - **Testing**: Vitest + Playwright
@@ -204,7 +204,8 @@ npx nuxt typecheck    # ALWAYS use this (not pnpm typecheck)
 npx nuxt db generate  # Database migrations
 pnpm test / pnpm test:unit / pnpm test:e2e
 pnpm lint / pnpm lint:fix
-nuxthub deploy / nuxthub dev
+npx wrangler pages deploy dist/   # Deploy via CI (see .github/workflows/deploy-*.yml)
+npx wrangler d1 migrations apply  # Remote DB migrations
 ```
 
 ## State Management (No Pinia)

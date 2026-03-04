@@ -4,7 +4,7 @@
 
 **Repository**: `pmcp/nuxt-crouton`  
 **License**: MIT  
-**Stack**: Nuxt 4 · Nuxt UI 4 · NuxtHub (Cloudflare edge) · Drizzle ORM · SQLite/D1 · Better Auth · pnpm workspaces  
+**Stack**: Nuxt 4 · Nuxt UI 4 · Cloudflare Pages · Drizzle ORM · SQLite/D1 · Better Auth · pnpm workspaces  
 **Structure**: Monorepo — 22 packages in `packages/`, apps in `apps/`
 
 The framework generates full-stack Nuxt collections from JSON schemas. A CLI reads schema definitions, produces Drizzle database schemas, typed API endpoints, Vue form/list components, composables, and TypeScript types. Packages extend the framework as Nuxt layers, discovered at build time via a manifest system. At runtime, a hook-based event system enables cross-package communication without hard coupling.

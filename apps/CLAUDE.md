@@ -79,7 +79,7 @@ export default defineNuxtConfig({
     './layers/{app-name}'
   ],
 
-  // NuxtHub configuration (Cloudflare)
+  // NuxtHub module (DB/KV/blob abstraction, NOT hosting)
   hub: {
     db: 'sqlite',  // CRITICAL: NOT database: true
     kv: true

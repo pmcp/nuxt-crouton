@@ -79,7 +79,7 @@ function printSummary(name: string, appDir: string, cf: boolean): void {
   console.log('  3.  pnpm dev')
   console.log()
   console.log('  Deploy:')
-  console.log('       nuxthub deploy')
+  console.log('       npx wrangler pages deploy dist/')
   if (cf) {
     console.log()
     console.log('  Remember to update wrangler.toml with real D1/KV IDs')

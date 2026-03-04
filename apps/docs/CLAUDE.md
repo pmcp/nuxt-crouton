@@ -384,7 +384,7 @@ New Agent: "I see Task 1.5 is complete. Starting Task 1.6..."
 - **UI Library**: Nuxt UI 4 (CRITICAL: Only v4, never v2/v3)
   - Common v4 changes: USeparator (not UDivider), USwitch (not UToggle), UDropdownMenu (not UDropdown), UToast (not UNotification)
 - **Utilities**: VueUse (ALWAYS check VueUse first before implementing complex logic)
-- **Hosting**: NuxtHub (Cloudflare edge)
+- **Hosting**: Cloudflare Pages (GitHub CI + Wrangler)
 - **Package Manager**: pnpm (ALWAYS use pnpm)
 - **Architecture**: Domain-Driven Design with Nuxt Layers
 - **Testing**: Vitest + Playwright
@@ -734,9 +734,9 @@ pnpm lint            # ESLint
 pnpm lint:fix        # Auto-fix
 npx nuxt typecheck   # TypeScript (ALWAYS use this, never 'pnpm typecheck')
 
-# NuxtHub
-nuxthub deploy       # Deploy to edge
-nuxthub dev          # Local with bindings
+# Deploy (via GitHub CI, see .github/workflows/deploy-*.yml)
+npx wrangler pages deploy dist/    # Cloudflare Pages
+npx wrangler d1 migrations apply   # Remote DB migrations
 ```
 
 ## State Management (No Pinia)
@@ -836,7 +836,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - run: nuxthub deploy
+      - run: npx wrangler pages deploy dist/
 ```
 
 ## Documentation Organization

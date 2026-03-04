@@ -50,14 +50,16 @@ npx drizzle-kit push --dry-run
 
 For local development:
 ```bash
-# Start NuxtHub dev server (migrations applied automatically)
+# Start dev server (local migrations applied automatically)
 npx nuxt dev
 ```
 
 For production:
 ```bash
-# Deploy to Cloudflare (migrations applied during deployment)
-npx nuxthub deploy
+# Apply migrations to remote D1 database
+npx wrangler d1 migrations apply DB --remote
+# Then deploy via CI or manually
+npx wrangler pages deploy dist/
 ```
 
 ### Upgrading from Existing Schema
@@ -89,8 +91,9 @@ cat server/database/migrations/XXXX_*.sql
 # For local: restart dev server
 npx nuxt dev
 
-# For production: redeploy
-npx nuxthub deploy
+# For production: apply migration and redeploy
+npx wrangler d1 migrations apply DB --remote
+npx wrangler pages deploy dist/
 ```
 
 ## Better Auth CLI (Alternative)
@@ -193,12 +196,13 @@ If you get this error, you likely have conflicting tables. Options:
 
 ### Migration Not Applied
 
-For NuxtHub deployments:
+For Cloudflare deployments:
 
 1. Check that schema is exported correctly
 2. Verify `drizzle.config.ts` points to correct schema directory
 3. Ensure migrations are generated: `npx drizzle-kit generate`
-4. Check NuxtHub logs for migration errors
+4. Apply migrations: `npx wrangler d1 migrations apply DB --remote`
+5. Check Cloudflare dashboard logs for errors
 
 ### Type Errors After Migration
 
