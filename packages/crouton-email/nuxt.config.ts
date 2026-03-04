@@ -29,7 +29,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Server-only config (private)
     email: {
-      resendApiKey: '', // RESEND_API_KEY
+      resendApiKey: '', // NUXT_EMAIL_RESEND_API_KEY (or RESEND_API_KEY for local dev via process.env)
       from: '', // EMAIL_FROM (e.g., noreply@example.com)
       fromName: '', // EMAIL_FROM_NAME (e.g., My App)
       replyTo: '' // EMAIL_REPLY_TO (optional)

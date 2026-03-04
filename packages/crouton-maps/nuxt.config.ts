@@ -61,15 +61,17 @@ export default defineNuxtConfig({
   // The browser key goes in config.public.mapbox.accessToken.
   // The full/unrestricted key should ONLY be in config.mapbox.accessToken (private).
   runtimeConfig: {
-    // PRIVATE — server only. Set MAPBOX_TOKEN (full/server key) in .env.
+    // PRIVATE — server only.
+    // Local dev: set MAPBOX_TOKEN in .env (read at build time via process.env below)
+    // Cloudflare: set NUXT_MAPBOX_ACCESS_TOKEN (auto-mapped at runtime by Nuxt)
     mapbox: {
       accessToken: process.env.MAPBOX_TOKEN || ''
     },
     public: {
       mapbox: {
-        // Set MAPBOX_PUBLIC_TOKEN (restricted browser key) in .env.
-        // If not set, falls back to MAPBOX_TOKEN (acceptable for local dev).
-        // In production: create a separate scoped key in the Mapbox dashboard.
+        // Local dev: set MAPBOX_PUBLIC_TOKEN in .env (falls back to MAPBOX_TOKEN)
+        // Cloudflare: set NUXT_PUBLIC_MAPBOX_ACCESS_TOKEN (auto-mapped at runtime by Nuxt)
+        // In production: use a domain-restricted browser key from Mapbox dashboard
         accessToken: process.env.MAPBOX_PUBLIC_TOKEN || process.env.MAPBOX_TOKEN || '',
         style: 'mapbox://styles/mapbox/streets-v12',
         center: [-122.4194, 37.7749] as [number, number],
