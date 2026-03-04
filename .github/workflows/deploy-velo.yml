@@ -1,6 +1,9 @@
 name: Deploy Velo
 
 on:
+  push:
+    branches:
+      - staging
   workflow_dispatch:
     inputs:
       environment:
@@ -14,9 +17,9 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to ${{ inputs.environment }}
+    name: Deploy to ${{ inputs.environment || 'staging' }}
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment || 'staging' }}
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -43,7 +46,7 @@ jobs:
 
       - name: Run database migrations
         run: |
-          if [ "${{ inputs.environment }}" = "production" ]; then
+          if [ "${{ inputs.environment || 'staging' }}" = "production" ]; then
             npx wrangler d1 migrations apply DB --remote
           else
             npx wrangler d1 migrations apply DB --env preview --remote
@@ -56,7 +59,7 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
           NITRO_PRESET: 'cloudflare-pages'
-          CLOUDFLARE_ENV: ${{ inputs.environment == 'staging' && 'preview' || '' }}
+          CLOUDFLARE_ENV: ${{ (inputs.environment || 'staging') == 'staging' && 'preview' || '' }}
 
       # Workaround: Wrangler 4.64+ rejects env blocks in redirected configs.
       # Nitro copies the full wrangler.jsonc (including env) into the generated
@@ -76,7 +79,7 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         run: |
-          if [ "${{ inputs.environment }}" = "production" ]; then
+          if [ "${{ inputs.environment || 'staging' }}" = "production" ]; then
             npx wrangler pages deploy dist/ --commit-dirty=true
           else
             npx wrangler pages deploy dist/ --commit-dirty=true --branch staging
