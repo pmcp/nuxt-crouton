@@ -26,7 +26,8 @@ try {
 const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
 const teamParam = teamId.value ?? ''
 
-if (reservedPrefixes.includes(teamParam)) {
+// Reject reserved prefixes and file-like paths (e.g., favicon.svg, robots.txt)
+if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
   throw createError({
     statusCode: 404,
     statusMessage: 'Page Not Found'

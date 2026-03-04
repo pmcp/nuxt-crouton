@@ -54,7 +54,7 @@ export function useT() {
 
   // Load team translations if not already loaded
   const loadTeamTranslations = async () => {
-    if (!teamSlugFromRoute.value || reservedPrefixes.includes(teamSlugFromRoute.value) || teamTranslationsLoaded.value) {
+    if (!teamSlugFromRoute.value || reservedPrefixes.includes(teamSlugFromRoute.value) || teamSlugFromRoute.value.includes('.') || teamTranslationsLoaded.value) {
       return
     }
 

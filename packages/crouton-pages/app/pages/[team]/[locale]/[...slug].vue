@@ -28,7 +28,8 @@ definePageMeta({
   validate: (route) => {
     const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
     const teamParam = route.params.team as string
-    if (reservedPrefixes.includes(teamParam)) {
+    // Reject reserved prefixes and file-like paths (e.g., favicon.svg, robots.txt)
+    if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
       return false
     }
     return true
