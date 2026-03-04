@@ -1,26 +1,13 @@
 import type { ProjectConfig } from '../types/schema'
-
-interface ModuleAIContext {
-  collections?: Array<{ name: string, description: string }>
-  composables?: string[]
-  components?: string[]
-}
-
-interface ModuleEntry {
-  alias: string
-  description: string
-  aiHint: string | null
-  ai?: ModuleAIContext
-  extensionPoints?: Array<{ collection: string; allowedFields: string[]; description: string }>
-}
+import type { CroutonManifestAppConfig, ManifestModuleEntry } from '@fyit/crouton-core/shared/manifest'
 
 /**
  * Builds the system prompt for Phase 1 (Intake)
  */
 export function useIntakePrompt() {
   const appConfig = useAppConfig()
-  const crouton = appConfig.crouton as any ?? {}
-  const modules = (crouton.modules ?? []) as ModuleEntry[]
+  const crouton = (appConfig.crouton ?? {}) as CroutonManifestAppConfig
+  const modules: ManifestModuleEntry[] = crouton.modules ?? []
 
   // Build the AI-facing package list from the manifest-injected module registry
   const availablePackages = modules

@@ -1,4 +1,5 @@
 import type { FieldTypeConfig, FieldType } from '../types/schema'
+import type { CroutonManifestAppConfig } from '@fyit/crouton-core/shared/manifest'
 
 export const META_PROPERTIES = [
   { key: 'required', type: 'boolean', label: 'Required', description: 'Field must have a value' },
@@ -17,7 +18,8 @@ export function useFieldTypes() {
   const appConfig = useAppConfig()
 
   // Build FIELD_TYPES from manifest registry injected into appConfig
-  const fieldTypesMap = (appConfig.crouton as any)?.fieldTypes as Record<string, any> ?? {}
+  const crouton = (appConfig.crouton ?? {}) as CroutonManifestAppConfig
+  const fieldTypesMap = crouton.fieldTypes ?? {}
 
   // Build the array, including alias entries with their alias name as the type
   const FIELD_TYPES: FieldTypeConfig[] = []

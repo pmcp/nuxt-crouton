@@ -1,4 +1,5 @@
 import type { CollectionWithFields } from './useCollectionEditor'
+import type { CroutonManifestAppConfig } from '@fyit/crouton-core/shared/manifest'
 
 export interface ValidationIssue {
   type: 'error' | 'warning'
@@ -13,7 +14,7 @@ export function useSchemaValidation(
   additionalCollectionNames?: Ref<string[]>
 ) {
   const appConfig = useAppConfig()
-  const crouton = appConfig.crouton as any ?? {}
+  const crouton = (appConfig.crouton ?? {}) as CroutonManifestAppConfig
 
   const RESERVED_NAMES = new Set<string>(
     crouton.reservedFieldNames ?? [

@@ -15,15 +15,15 @@ export interface McpCollectionConfig {
  */
 export function getMcpCollections(): McpCollectionConfig[] {
   // useAppConfig is auto-imported by Nitro
-  const appConfig = useAppConfig()
-  const collections = (appConfig as Record<string, any>).croutonCollections || {}
+  const appConfig = useAppConfig() as { croutonCollections?: Record<string, unknown> }
+  const collections = appConfig.croutonCollections || {}
 
   return Object.entries(collections).map(([key, config]) => {
-    const configObj = (typeof config === 'object' ? config : {}) as Record<string, any>
+    const configObj = (typeof config === 'object' && config !== null ? config : {}) as Partial<McpCollectionConfig>
     return {
       key,
       ...configObj,
-      name: configObj?.name || key
+      name: configObj.name || key
     } as McpCollectionConfig
   })
 }

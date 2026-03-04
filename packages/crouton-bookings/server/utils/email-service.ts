@@ -27,6 +27,23 @@ import {
 } from './booking-emails'
 
 /**
+ * Email template record shape (from generated bookingsEmailtemplates table)
+ */
+interface BookingEmailTemplateRecord {
+  id: string
+  teamId: string
+  triggerType: string
+  subject: string
+  body: string
+  recipientType?: string | null
+  fromEmail?: string | null
+  isActive: boolean
+  locationId?: string | null
+  daysOffset?: number | null
+  translations?: Record<string, Record<string, string>> | null
+}
+
+/**
  * Extended booking context with team information
  */
 export interface BookingEmailContext extends BookingWithEmailContext {
@@ -70,7 +87,7 @@ export async function getActiveTemplatesForTrigger(
   teamId: string,
   triggerType: BookingEmailTriggerType,
   locationId?: string | null
-): Promise<any[]> {
+): Promise<BookingEmailTemplateRecord[]> {
   // Early return if email is not enabled
   if (!isBookingEmailEnabled()) {
     return []
@@ -80,8 +97,10 @@ export async function getActiveTemplatesForTrigger(
 
   try {
     // Import from the centralized schema index (always exists, Vite resolves ~~ alias)
-    const schema = await import('~~/server/db/schema')
-    const bookingsEmailtemplates = (schema as any).bookingsEmailtemplates
+    // Tables are generated at build time — schema typed as Record since exports vary per app
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schema: Record<string, any> = await import('~~/server/db/schema')
+    const bookingsEmailtemplates = schema.bookingsEmailtemplates
     if (!bookingsEmailtemplates) return []
 
     // Build conditions
@@ -195,8 +214,9 @@ export async function logEmailSend(options: {
   const db = useDB()
 
   try {
-    const schema = await import('~~/server/db/schema')
-    const bookingsEmaillogs = (schema as any).bookingsEmaillogs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schema: Record<string, any> = await import('~~/server/db/schema')
+    const bookingsEmaillogs = schema.bookingsEmaillogs
     if (!bookingsEmaillogs) return null
 
     const [log] = await db
@@ -240,8 +260,9 @@ export async function updateEmailLogStatus(
   const db = useDB()
 
   try {
-    const schema = await import('~~/server/db/schema')
-    const bookingsEmaillogs = (schema as any).bookingsEmaillogs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schema: Record<string, any> = await import('~~/server/db/schema')
+    const bookingsEmaillogs = schema.bookingsEmaillogs
     if (!bookingsEmaillogs) return
 
     await db
@@ -276,8 +297,8 @@ export function renderBookingEmail(
   }
 
   return {
-    subject: renderBookingEmailTemplate(template.subject, allVariables as any),
-    body: renderBookingEmailTemplate(template.body, allVariables as any)
+    subject: renderBookingEmailTemplate(template.subject, allVariables),
+    body: renderBookingEmailTemplate(template.body, allVariables)
   }
 }
 
@@ -388,11 +409,12 @@ async function sendSingleEmail(options: {
       error: result.error
     }
   }
-  catch (error: any) {
-    console.error('[booking-email] ✗ Email exception:', error.message)
+  catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to send email'
+    console.error('[booking-email] ✗ Email exception:', message)
     return {
       success: false,
-      error: error.message || 'Failed to send email'
+      error: message
     }
   }
 }
@@ -480,7 +502,7 @@ export async function sendBookingEmails(
           to: customerEmail,
           subject,
           html: body,
-          from: template.fromEmail
+          from: template.fromEmail || undefined
         })
 
         // Update log
@@ -546,7 +568,7 @@ export async function sendBookingEmails(
         to: adminEmail,
         subject: `[Admin] ${subject}`,
         html: body,
-        from: template.fromEmail
+        from: template.fromEmail || undefined
       })
 
       // Update log
@@ -653,8 +675,9 @@ export async function getBookingEmailStats(
   const db = useDB()
 
   try {
-    const schema = await import('~~/server/db/schema')
-    const bookingsEmaillogs = (schema as any).bookingsEmaillogs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schema: Record<string, any> = await import('~~/server/db/schema')
+    const bookingsEmaillogs = schema.bookingsEmaillogs
     if (!bookingsEmaillogs) return { total: 0, sent: 0, pending: 0, failed: 0 }
 
     const logs = await db
@@ -712,9 +735,10 @@ export async function getBookingEmailDetails(
   const db = useDB()
 
   try {
-    const schema = await import('~~/server/db/schema')
-    const bookingsEmaillogs = (schema as any).bookingsEmaillogs
-    const bookingsEmailtemplates = (schema as any).bookingsEmailtemplates
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schema: Record<string, any> = await import('~~/server/db/schema')
+    const bookingsEmaillogs = schema.bookingsEmaillogs
+    const bookingsEmailtemplates = schema.bookingsEmailtemplates
     if (!bookingsEmaillogs || !bookingsEmailtemplates) return results
 
     // Get all email logs for this booking
@@ -754,7 +778,7 @@ export async function getBookingEmailDetails(
     if (confirmationLog) {
       results.push({
         triggerType: 'booking_created',
-        status: confirmationLog.status as any,
+        status: confirmationLog.status as EmailTriggerStatusResult['status'],
         sentAt: confirmationLog.sentAt || null,
       })
     } else if (hasConfirmationTemplate) {
@@ -774,7 +798,7 @@ export async function getBookingEmailDetails(
     if (reminderLog) {
       results.push({
         triggerType: 'reminder_before',
-        status: reminderLog.status as any,
+        status: reminderLog.status as EmailTriggerStatusResult['status'],
         sentAt: reminderLog.sentAt || null,
       })
     } else if (reminderTemplate) {
@@ -797,7 +821,7 @@ export async function getBookingEmailDetails(
     if (cancelLog || hasCancelTemplate) {
       results.push({
         triggerType: 'booking_cancelled',
-        status: cancelLog?.status as any || 'not_sent',
+        status: cancelLog?.status as EmailTriggerStatusResult['status'] || 'not_sent',
         sentAt: cancelLog?.sentAt || null,
       })
     }
@@ -809,7 +833,7 @@ export async function getBookingEmailDetails(
     if (followUpLog) {
       results.push({
         triggerType: 'follow_up_after',
-        status: followUpLog.status as any,
+        status: followUpLog.status as EmailTriggerStatusResult['status'],
         sentAt: followUpLog.sentAt || null,
       })
     } else if (followUpTemplate) {

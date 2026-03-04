@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { LngLatLike } from 'mapbox-gl'
+import type { LngLatLike, Map as MapboxMap } from 'mapbox-gl'
 
 interface Props {
   /** Map container ID (default: auto-generated) */
@@ -31,7 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  load: [map: any]
+  load: [map: MapboxMap]
   error: [error: string]
 }>()
 
@@ -52,7 +52,7 @@ const autoStyle = computed(() => {
 })
 
 // Map state
-const mapInstance = ref<any>(null)
+const mapInstance = ref<MapboxMap | null>(null)
 const isLoaded = ref(false)
 const error = ref<string | null>(null)
 
@@ -64,7 +64,7 @@ const mapOptions = computed(() => ({
 }))
 
 // Handle map load
-const handleMapLoad = (map: any) => {
+const handleMapLoad = (map: MapboxMap) => {
   mapInstance.value = map
   isLoaded.value = true
   error.value = null
@@ -72,7 +72,7 @@ const handleMapLoad = (map: any) => {
 }
 
 // Handle map error
-const handleMapError = (err: any) => {
+const handleMapError = (err: Error | { message?: string }) => {
   const errorMessage = err?.message || 'Failed to load map'
   error.value = errorMessage
   isLoaded.value = false
@@ -105,8 +105,10 @@ watch(() => props.center, (newCenter, oldCenter) => {
   if (!newCenter || !oldCenter) return
 
   // Convert to array format for comparison
-  const getCoords = (center: LngLatLike) => {
-    return Array.isArray(center) ? center : [center.lng, center.lat]
+  const getCoords = (center: LngLatLike): [number, number] => {
+    if (Array.isArray(center)) return center as [number, number]
+    if ('lng' in center) return [center.lng, center.lat]
+    return [(center as { lon: number; lat: number }).lon, center.lat]
   }
 
   const oldCoords = getCoords(oldCenter)
