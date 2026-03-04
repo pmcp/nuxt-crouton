@@ -134,8 +134,6 @@ const { openOAuthPopup, waitingForOAuth } = useTriageOAuth({
   slackTeam: slackWorkspace, // Pass workspace name to pre-select during OAuth
   provider: 'slack',
   onSuccess: async (credentials) => {
-    console.log('[InputManager] OAuth success:', credentials)
-
     // Update form state with OAuth credentials
     inputFormState.value.apiToken = credentials.apiToken
     inputFormState.value.sourceMetadata = {
@@ -148,7 +146,6 @@ const { openOAuthPopup, waitingForOAuth } = useTriageOAuth({
     // If in edit mode, the OAuth callback already created the input in the database
     // We need to refetch the inputs to show it in the UI
     if (props.editMode) {
-      console.log('[InputManager] Edit mode detected, refetching inputs...')
       try {
         const response = await $fetch<FlowInput[]>(`/api/teams/${props.teamId}/triage-inputs`)
         // Filter inputs for this flow
@@ -161,7 +158,6 @@ const { openOAuthPopup, waitingForOAuth } = useTriageOAuth({
         emit('update:modelValue', inputs.value)
         emit('change', inputs.value)
 
-        console.log('[InputManager] Refetched inputs:', flowInputs.length, 'inputs for flow', props.flowId)
       } catch (error: any) {
         console.error('[InputManager] Failed to refetch inputs:', error)
         notify.warning('Refresh Failed', { description: 'Failed to refresh inputs list. Please reload the page.' })

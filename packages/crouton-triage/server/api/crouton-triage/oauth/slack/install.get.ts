@@ -92,20 +92,17 @@ const SLACK_SCOPES = [
 ].join(',')
 
 export default defineEventHandler(async (event) => {
-  console.log('[OAuth] Slack install endpoint hit')
   try {
     // Get environment variables
     const config = useRuntimeConfig(event)
-    console.log('[OAuth] Config loaded, checking for clientId...')
     const clientId = config.slackClientId || process.env.SLACK_CLIENT_ID
-    console.log('[OAuth] clientId:', clientId ? 'present' : 'missing')
     const baseUrl = config.public.baseUrl || process.env.BASE_URL || 'http://localhost:3000'
 
     // Validate required configuration
     if (!clientId) {
       throw createError({
-        statusCode: 500,
-        statusMessage: 'Slack OAuth not configured: Missing SLACK_CLIENT_ID',
+        status: 500,
+        statusText: 'Slack OAuth not configured: Missing SLACK_CLIENT_ID',
       })
     }
 
@@ -121,7 +118,6 @@ export default defineEventHandler(async (event) => {
 
     // Store state token with team ID, flow ID, and opener origin in NuxtHub KV
     // TTL of 300 seconds (5 minutes) for automatic cleanup
-    console.log('[OAuth] Storing state in KV...')
     await kv.set(`oauth:state:${state}`, {
       teamId,
       flowId, // Optional: if provided, input will be added to this specific flow
@@ -148,13 +144,6 @@ export default defineEventHandler(async (event) => {
       slackAuthUrl.searchParams.set('team', slackTeam)
     }
 
-    console.log('[OAuth] Initiating Slack OAuth flow', {
-      teamId,
-      flowId: flowId || 'auto-detect',
-      state: state.substring(0, 8) + '...',
-      redirectUri,
-    })
-
     // Redirect to Slack authorization page
     return sendRedirect(event, slackAuthUrl.toString(), 302)
   }
@@ -163,8 +152,8 @@ export default defineEventHandler(async (event) => {
 
     // Return detailed error for debugging
     throw createError({
-      statusCode: 500,
-      statusMessage: `Failed to initiate Slack authorization: ${error?.message || 'Unknown error'}`,
+      status: 500,
+      statusText: `Failed to initiate Slack authorization: ${error?.message || 'Unknown error'}`,
     })
   }
 })

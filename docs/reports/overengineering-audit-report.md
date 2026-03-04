@@ -185,8 +185,9 @@ These have `use` prefix but contain zero reactive state — should be plain util
 
 Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
-- [ ] **crouton-admin** — `super-admin.ts` middleware (6+ occurrences)
-- [ ] **crouton-admin** — `team-admin.ts` middleware (6+ occurrences)
+- [x] ✅ **crouton-admin** — ~~`super-admin.ts` middleware~~ — already uses correct `status`/`statusText` format
+- [x] ✅ **crouton-admin** — ~~`team-admin.ts` middleware~~ — already uses correct `status`/`statusText` format
+- [x] ✅ **crouton-triage** — ~~`oauth/slack/install.get.ts`~~ — `statusCode`/`statusMessage` → `status`/`statusText`
 
 ---
 
@@ -270,7 +271,9 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
 ### 15. Console.log in Production Code
 
-- [ ] **crouton-triage** — `useTriageOAuth.ts:121-123` — debug log statements
+- [x] ✅ **crouton-triage** — ~~`InputManager.vue` (3 debug logs)~~ — removed OAuth success/refetch debug logs
+- [x] ✅ **crouton-triage** — ~~`oauth/slack/install.get.ts` (5 debug logs)~~ — removed endpoint hit/config/KV/flow debug logs
+- [x] ✅ **crouton-triage** — `useTriageOAuth.ts` — already clean (only legitimate `console.warn`/`console.error`)
 
 ### 16. Miscellaneous
 
@@ -346,8 +349,8 @@ These patterns are correct across the entire codebase:
 1. Delete dead code (empty plugins, unused composables)
 2. Fix SSR-unsafe `ref()` -> `useState()`
 3. ~~Replace `new Function()` config loading~~ ✅
-4. Fix deprecated Nitro error format
-5. Remove console.log from production code
+4. ~~Fix deprecated Nitro error format~~ ✅
+5. ~~Remove console.log from production code~~ ✅
 
 ### Phase 2: DRY Cleanup (Medium effort) — COMPLETED
 6. ~~Extract shared asset utilities~~ ✅ `app/utils/asset.ts` (crouton-assets)
