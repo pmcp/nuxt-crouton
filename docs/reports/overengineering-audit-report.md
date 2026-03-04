@@ -42,9 +42,9 @@
 
 These use `ref()` at module scope instead of `useState()`, causing state to persist across SSR requests:
 
-- [ ] **crouton-auth** — `useAccountSettingsModal.ts` — `isOpen` and `defaultTab` refs
-- [ ] **crouton-admin** — `useImpersonation.ts` — impersonation state refs
-- [ ] **crouton-core** — `useTreeDrag.ts` — `moveBlocked`, `autoExpandedIds`, `expandTimeouts`
+- [x] **crouton-auth** — ~~`useAccountSettingsModal.ts`~~ — already uses `useState()` (was fixed earlier)
+- [x] **crouton-admin** — ~~`useImpersonation.ts`~~ — `loading`/`error` refs → `useState()` for shared state across callers
+- [x] **crouton-core** — ~~`useTreeDrag.ts`~~ — `moveBlocked`/`autoExpandedIds` → `useState()`; `expandTimeouts` kept module-level (non-serializable timeout handles, client-only)
 - [x] **crouton-triage** — `useTriageNotionSchema.ts` — ~~`fetchingSchema`, `schemaFetchError`, `fetchedSchema`~~ → replaced with `useAsyncData` (SSR-safe)
 
 **Fix for all**: Replace `ref()` with `useState('key', () => defaultValue)`.
