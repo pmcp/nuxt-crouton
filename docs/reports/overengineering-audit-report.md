@@ -51,10 +51,8 @@ These use `ref()` at module scope instead of `useState()`, causing state to pers
 
 ### 3. Direct `localStorage` Without SSR Safety
 
-- [ ] **crouton-auth** — `useScopedAccess.ts` — raw `localStorage.getItem/setItem`
-  - **Fix**: Use `useCookie()` for SSR+client persistence
-- [ ] **crouton-themes** — `useThemeSwitcher.ts` — manual localStorage with `import.meta.client` guards
-  - **Fix**: Use VueUse's `useLocalStorage()`
+- [x] ✅ **crouton-auth** — ~~`useScopedAccess.ts` — raw `localStorage.getItem/setItem`~~ → replaced with `useCookie()` for SSR+client persistence; session now available during SSR
+- [x] ✅ **crouton-themes** — ~~`useThemeSwitcher.ts` — manual localStorage with `import.meta.client` guards~~ → replaced with VueUse's `useLocalStorage()` for SSR-safe persistence
 
 ### 4. Unsafe Config Loading (`new Function` / eval)
 

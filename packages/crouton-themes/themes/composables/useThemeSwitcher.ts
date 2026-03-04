@@ -57,12 +57,12 @@ export function useThemeSwitcher() {
   // Reactive theme state - uses useState for SSR compatibility
   const currentTheme = useState<ThemeName>('crouton-theme', () => 'default')
 
-  // Initialize from localStorage on client
-  if (import.meta.client) {
-    const stored = localStorage.getItem(STORAGE_KEY) as ThemeName | null
-    if (stored && AVAILABLE_THEMES.some(t => t.name === stored)) {
-      currentTheme.value = stored
-    }
+  // SSR-safe localStorage persistence via VueUse
+  const storedTheme = useLocalStorage<ThemeName>(STORAGE_KEY, 'default')
+
+  // Initialize from stored preference on client
+  if (import.meta.client && AVAILABLE_THEMES.some(t => t.name === storedTheme.value)) {
+    currentTheme.value = storedTheme.value
   }
 
   // Computed for current theme config
@@ -79,9 +79,9 @@ export function useThemeSwitcher() {
   // Set theme and persist
   function setTheme(theme: ThemeName) {
     currentTheme.value = theme
+    storedTheme.value = theme
 
     if (import.meta.client) {
-      localStorage.setItem(STORAGE_KEY, theme)
       // Update body class for CSS custom properties
       updateBodyClass(theme)
     }

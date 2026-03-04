@@ -45,7 +45,7 @@ export interface ScopedAccessLoginOptions {
 export interface UseScopedAccessOptions {
   /** Cookie name for storing the token (default: 'scoped-access-token') */
   cookieName?: string
-  /** LocalStorage key for session data (default: 'scoped-access-session') */
+  /** Cookie name for session data (default: 'scoped-access-session') */
   storageKey?: string
   /** Cookie max age in seconds (default: 8 hours) */
   cookieMaxAge?: number
@@ -66,6 +66,12 @@ export function useScopedAccess(
     storageKey = 'scoped-access-session',
     cookieMaxAge = 60 * 60 * 8 // 8 hours
   } = options
+
+  // Persist session in cookie for SSR compatibility (replaces localStorage)
+  const sessionCookie = useCookie<ScopedAccessSession | null>(storageKey, {
+    maxAge: cookieMaxAge,
+    default: () => null
+  })
 
   // State
   const session = useState<ScopedAccessSession | null>(`scoped-access-${resourceType}`, () => null)
@@ -91,16 +97,12 @@ export function useScopedAccess(
   const expiresAt = computed(() => session.value?.expiresAt ? new Date(session.value.expiresAt) : null)
 
   /**
-   * Load session from localStorage
+   * Load session from cookie
    */
   function loadSession(): ScopedAccessSession | null {
-    if (!import.meta.client) return null
-
     try {
-      const stored = localStorage.getItem(storageKey)
-      if (!stored) return null
-
-      const data = JSON.parse(stored) as ScopedAccessSession
+      const data = sessionCookie.value
+      if (!data) return null
 
       // Validate resource type matches
       if (data.resourceType !== resourceType) return null
@@ -121,34 +123,28 @@ export function useScopedAccess(
   }
 
   /**
-   * Save session to localStorage and cookie
+   * Save session to cookies
    */
   function saveSession(data: ScopedAccessSession): void {
     session.value = data
+    sessionCookie.value = data
 
-    if (import.meta.client) {
-      localStorage.setItem(storageKey, JSON.stringify(data))
-
-      // Also set cookie for server-side validation
-      const tokenCookie = useCookie(cookieName, {
-        maxAge: cookieMaxAge
-      })
-      tokenCookie.value = data.token
-    }
+    // Also set token cookie for server-side validation
+    const tokenCookie = useCookie(cookieName, {
+      maxAge: cookieMaxAge
+    })
+    tokenCookie.value = data.token
   }
 
   /**
-   * Clear session from state, localStorage, and cookie
+   * Clear session from state and cookies
    */
   function clearSession(): void {
     session.value = null
+    sessionCookie.value = null
 
-    if (import.meta.client) {
-      localStorage.removeItem(storageKey)
-
-      const tokenCookie = useCookie(cookieName)
-      tokenCookie.value = null
-    }
+    const tokenCookie = useCookie(cookieName)
+    tokenCookie.value = null
   }
 
   /**
@@ -280,10 +276,8 @@ export function useScopedAccess(
     }
   }
 
-  // Initialize session on mount (client-side only)
-  if (import.meta.client) {
-    loadSession()
-  }
+  // Initialize session from cookie (SSR-safe)
+  loadSession()
 
   return {
     // State
