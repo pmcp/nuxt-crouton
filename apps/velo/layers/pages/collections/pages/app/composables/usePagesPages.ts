@@ -31,7 +31,7 @@ export const pagesPageSchema = z.object({
   slug: z.string().min(1, 'slug is required'),
   pageType: z.string().min(1, 'pageType is required'),
   content: z.string().optional(),
-  config: z.record(z.any()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
   status: z.string().min(1, 'status is required'),
   visibility: z.string().min(1, 'visibility is required'),
   publishedAt: z.date().optional(),

@@ -15,7 +15,7 @@ const bodySchema = z.object({
   label: z.string().min(1, 'Label is required'),
   token: z.string().min(1, 'Token is required'),
   providerAccountId: z.string().optional(),
-  providerMetadata: z.record(z.any()).optional(),
+  providerMetadata: z.record(z.string(), z.any()).optional(),
 })
 
 export default defineEventHandler(async (event) => {

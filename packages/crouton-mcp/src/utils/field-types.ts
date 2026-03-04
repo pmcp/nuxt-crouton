@@ -24,7 +24,7 @@ const FALLBACK_FIELD_TYPES: Record<string, FieldTypeMapping> = {
   decimal:   { db: 'DECIMAL(10,2)',   drizzle: 'decimal',   zod: 'z.number()',          default: '0',     tsType: 'number' },
   boolean:   { db: 'BOOLEAN',         drizzle: 'boolean',   zod: 'z.boolean()',         default: 'false', tsType: 'boolean' },
   date:      { db: 'TIMESTAMP',       drizzle: 'timestamp', zod: 'z.date()',            default: 'null',  tsType: 'Date | null' },
-  json:      { db: 'JSON',            drizzle: 'json',      zod: 'z.record(z.any())',   default: '{}',    tsType: 'Record<string, any>' },
+  json:      { db: 'JSON',            drizzle: 'json',      zod: 'z.record(z.string(), z.any())',   default: '{}',    tsType: 'Record<string, any>' },
   repeater:  { db: 'JSON',            drizzle: 'json',      zod: 'z.array(z.any())',    default: '[]',    tsType: 'any[]' },
   array:     { db: 'TEXT',            drizzle: 'text',      zod: 'z.array(z.string())', default: '[]',    tsType: 'string[]' },
   reference: { db: 'VARCHAR(255)',    drizzle: 'text',      zod: 'z.string()',          default: '\'\'',  tsType: 'string' },

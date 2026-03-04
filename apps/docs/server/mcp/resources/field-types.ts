@@ -26,7 +26,7 @@ export default defineMcpResource({
 | \`decimal\` | \`z.number()\` | \`number\` | \`decimal\` | \`0\` |
 | \`boolean\` | \`z.boolean()\` | \`boolean\` | \`boolean\` | \`false\` |
 | \`date\` | \`z.date()\` | \`Date \\| null\` | \`timestamp\` | \`null\` |
-| \`json\` | \`z.record(z.any())\` | \`Record<string, any>\` | \`json\` | \`{}\` |
+| \`json\` | \`z.record(z.string(), z.any())\` | \`Record<string, any>\` | \`json\` | \`{}\` |
 | \`repeater\` | \`z.array(z.any())\` | \`any[]\` | \`json\` | \`[]\` |
 | \`array\` | \`z.array(z.string())\` | \`string[]\` | \`text\` | \`[]\` |
 
