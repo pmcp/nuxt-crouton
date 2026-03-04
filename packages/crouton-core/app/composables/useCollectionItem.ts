@@ -14,7 +14,7 @@ interface CollectionItemReturn<T = any> {
  * - Fetches individual items from the API
  * - Supports both team-scoped and super-admin routes
  * - Reactive ID parameter for prop changes
- * - Nuxt cache integration
+ * - Nuxt cache integration via useAsyncData
  * - Works with internal and external collections
  *
  * @example
@@ -46,120 +46,64 @@ export async function useCollectionItem<T = any>(
 
   const apiPath = getProxiedEndpoint(config, config.apiPath || collection)
 
-  // Track if we need to retry fetch on client (when team context wasn't available during SSR)
-  const skippedDueToNoTeam = ref(false)
-
   // Handle all three types: string, Ref<string>, () => string
   const itemId = computed(() => {
-    // Handle function type first (before unref, as unref doesn't unwrap functions)
-    if (typeof id === 'function') {
-      return id()
-    }
-    // Handle Ref<string> and string with unref
+    if (typeof id === 'function') return id()
     return unref(id)
   })
+
+  const strategy = config.fetchStrategy || 'query'
+  const isSuperAdmin = route.path.includes('/super-admin/')
 
   // Build API path based on collection's fetch strategy
   // - 'restful': Uses /{id} pattern (e.g., /api/teams/123/members/456)
   // - 'query': Uses ?ids= pattern (e.g., /api/teams/123/bookings?ids=456)
   const buildApiPath = (teamId: string | undefined) => {
-    const strategy = config.fetchStrategy || 'query'
+    const basePath = isSuperAdmin
+      ? `/api/super-admin/${apiPath}`
+      : `/api/teams/${teamId}/${apiPath}`
 
-    let basePath: string
-    if (route.path.includes('/super-admin/')) {
-      basePath = `/api/super-admin/${apiPath}`
-    } else {
-      basePath = `/api/teams/${teamId}/${apiPath}`
-    }
-
-    if (strategy === 'restful') {
-      return `${basePath}/${itemId.value}`
-    } else {
-      return `${basePath}?ids=${itemId.value}`
-    }
+    return strategy === 'restful'
+      ? `${basePath}/${itemId.value}`
+      : `${basePath}?ids=${itemId.value}`
   }
 
-  // Use manual reactive state with $fetch for dynamic dependent data
-  // This approach is more suitable for data that changes based on user input
-  const data = ref<any>(null)
-  const pending = ref(false)
-  const error = ref(null)
+  // Skip server-side fetch when team context isn't available yet.
+  // useAsyncData with server:false automatically fetches on client mount,
+  // replacing the manual onMounted retry pattern.
+  const canFetchOnServer = !!getTeamId() || isSuperAdmin
 
-  // Fetch function - gets fresh teamId each call to handle SSR → client transitions
-  const fetchItem = async () => {
-    if (!itemId.value) {
-      data.value = null
-      return
+  const { data, pending, error, refresh } = await useAsyncData(
+    `collection-item-${collection}-${itemId.value}`,
+    () => {
+      if (!itemId.value) return Promise.resolve(null)
+
+      const currentTeamId = getTeamId()
+      if (!currentTeamId && !isSuperAdmin) return Promise.resolve(null)
+
+      return $fetch(buildApiPath(currentTeamId))
+    },
+    {
+      server: canFetchOnServer,
+      watch: [itemId],
+      default: () => null,
     }
+  )
 
-    // Get fresh team ID (may have become available since setup)
-    const currentTeamId = getTeamId()
-
-    // Skip fetch if team context is not available (e.g., during SSR before teams are loaded)
-    // This prevents hydration mismatches by showing loading state instead of error
-    if (!currentTeamId && !route.path.includes('/super-admin/')) {
-      pending.value = true
-      skippedDueToNoTeam.value = true
-      return
-    }
-
-    skippedDueToNoTeam.value = false
-    pending.value = true
-    error.value = null
-
-    try {
-      const response = await $fetch(buildApiPath(currentTeamId))
-      data.value = response
-    } catch (e: any) {
-      error.value = e
-    } finally {
-      pending.value = false
-    }
-  }
-
-  // Register lifecycle hooks BEFORE any await (Vue 3 requirement)
-  // On client mount, retry fetch if it was skipped during SSR due to missing team context
-  // This ensures data loads correctly after hydration when team state becomes available
-  onMounted(async () => {
-    if (skippedDueToNoTeam.value) {
-      await fetchItem()
-    }
-  })
-
-  // Watch for itemId changes and refetch
-  watch(itemId, async () => {
-    await fetchItem()
-  })
-
-  // Initial fetch (after hooks are registered)
-  await fetchItem()
-
-  const refresh = fetchItem
-
-  // Handle response based on fetch strategy
+  // Handle response based on fetch strategy and apply proxy transform
   // - RESTful endpoints return single object
   // - Query-based endpoints return array (extract first item)
   const item = computed(() => {
     const response = data.value
-    const strategy = config.fetchStrategy || 'query'
-
     let rawItem: any = null
+
     if (strategy === 'restful') {
       rawItem = response
     } else {
-      // Query-based returns array
-      if (Array.isArray(response)) {
-        rawItem = response[0] || null
-      } else {
-        rawItem = response
-      }
+      rawItem = Array.isArray(response) ? (response[0] || null) : response
     }
 
-    // Apply proxy transform if configured
-    if (rawItem) {
-      return applyTransform(rawItem, config) as T | null
-    }
-    return null
+    return rawItem ? (applyTransform(rawItem, config) as T | null) : null
   })
 
   return { item, pending, error, refresh }

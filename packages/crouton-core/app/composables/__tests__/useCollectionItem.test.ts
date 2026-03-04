@@ -3,8 +3,6 @@ import { ref, computed, unref } from 'vue'
 
 // Mock dependencies
 const mockFetch = vi.fn()
-const mockOnMounted = vi.fn()
-const mockWatch = vi.fn()
 
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
@@ -37,9 +35,56 @@ vi.stubGlobal('useTeamContext', () => ({
 
 vi.stubGlobal('$fetch', mockFetch)
 
-// Mock lifecycle hooks
-vi.stubGlobal('onMounted', mockOnMounted)
-vi.stubGlobal('watch', mockWatch)
+// Mock useAsyncData to simulate Nuxt behavior
+let lastAsyncDataOptions: any = null
+
+vi.stubGlobal('useAsyncData', async (key: string, handler: () => Promise<any>, options?: any) => {
+  lastAsyncDataOptions = { key, handler, options }
+
+  const data = ref(options?.default?.() ?? undefined)
+  const pending = ref(true)
+  const error = ref(null)
+
+  // If server: false, simulate SSR behavior (skip handler, stay pending)
+  if (options?.server === false) {
+    return { data, pending, error, refresh: async () => {
+      pending.value = true
+      error.value = null
+      try {
+        const result = await handler()
+        data.value = result
+      } catch (e: any) {
+        error.value = e
+      } finally {
+        pending.value = false
+      }
+    } }
+  }
+
+  try {
+    const result = await handler()
+    data.value = result
+    pending.value = false
+  } catch (e: any) {
+    error.value = e
+    pending.value = false
+  }
+
+  const refresh = async () => {
+    pending.value = true
+    error.value = null
+    try {
+      const result = await handler()
+      data.value = result
+    } catch (e: any) {
+      error.value = e
+    } finally {
+      pending.value = false
+    }
+  }
+
+  return { data, pending, error, refresh }
+})
 
 // Import after mocking
 import { useCollectionItem } from '../useCollectionItem'
@@ -54,6 +99,7 @@ describe('useCollectionItem', () => {
       apiPath: 'products',
       fetchStrategy: 'query'
     }
+    lastAsyncDataOptions = null
   })
 
   describe('initialization', () => {
@@ -152,10 +198,11 @@ describe('useCollectionItem', () => {
       expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products?ids=item-1')
     })
 
-    it('sets up watch for id changes', async () => {
+    it('passes watch option with itemId to useAsyncData', async () => {
       await useCollectionItem('products', 'item-1')
 
-      expect(mockWatch).toHaveBeenCalled()
+      expect(lastAsyncDataOptions.options.watch).toBeDefined()
+      expect(lastAsyncDataOptions.options.watch.length).toBe(1)
     })
   })
 
@@ -194,10 +241,10 @@ describe('useCollectionItem', () => {
       expect(mockFetch).not.toHaveBeenCalled()
     })
 
-    it('registers onMounted callback for retry', async () => {
+    it('sets server:false on useAsyncData when team context missing', async () => {
       await useCollectionItem('products', 'item-1')
 
-      expect(mockOnMounted).toHaveBeenCalled()
+      expect(lastAsyncDataOptions.options.server).toBe(false)
     })
   })
 
