@@ -34,6 +34,10 @@ const { isAdmin } = useTeam()
       </NuxtLink>
     </div>
 
-    <TeamThemeSettings v-else />
+    <div v-else class="space-y-8">
+      <TeamThemeSettings />
+      <USeparator />
+      <TeamFaviconSettings />
+    </div>
   </div>
 </template>

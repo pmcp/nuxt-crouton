@@ -39,5 +39,19 @@ export default defineNuxtPlugin({
     // without importing from crouton-admin. Defaults to true when not set.
     const allowUserThemes = useState<boolean>('crouton:allowUserThemes', () => true)
     allowUserThemes.value = themeState.value.allowUserThemes ?? true
+
+    // Fetch site settings (for custom favicon) and apply team favicon
+    const siteSettings = useState<{ favicon?: string } | null>('team-site-settings', () => null)
+    try {
+      const siteData = await $fetch<{ favicon?: string }>(
+        `/api/teams/${teamId.value}/settings/site`
+      )
+      siteSettings.value = siteData ?? null
+    }
+    catch {
+      // Site settings fetch failed, proceed without custom favicon
+    }
+
+    useTeamFavicon()
   }
 })

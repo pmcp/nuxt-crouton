@@ -526,6 +526,8 @@ export type ThemePreset = 'custom' | 'blackandwhite' | 'ko'
 export interface TeamSiteSettings {
   /** Whether the team's public site is enabled. Defaults to true when not set. */
   publicSiteEnabled?: boolean
+  /** Blob pathname for custom team favicon (e.g. "team-123/favicon.png") */
+  favicon?: string
 }
 
 /**
