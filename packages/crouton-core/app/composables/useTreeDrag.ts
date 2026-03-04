@@ -1,5 +1,3 @@
-import { readonly } from 'vue'
-
 /**
  * Simplified tree drag state management
  *
@@ -9,16 +7,13 @@ import { readonly } from 'vue'
  * - Auto-expand on hover during drag
  */
 
-// Module-level timeout tracker (shared across all useTreeDrag() calls)
+// Module-level timeout tracker (non-serializable handles, client-only, cleared on endDrag)
 const expandTimeouts: Record<string, ReturnType<typeof setTimeout>> = {}
 
-// Track which items were auto-expanded during this drag (to collapse them later)
-const autoExpandedIds: Set<string> = new Set()
-
-// Track whether the move is blocked (set by onMove, read by onEnd)
-let moveBlocked = false
-
 export function useTreeDrag() {
+  // SSR-safe shared state (replaces former module-level variables)
+  const moveBlocked = useState<boolean>('tree-move-blocked', () => false)
+  const autoExpandedIds = useState<string[]>('tree-auto-expanded', () => [])
   // Currently dragging item ID
   const draggingId = useState<string | null>('tree-drag-id', () => null)
 
@@ -40,15 +35,15 @@ export function useTreeDrag() {
   function endDrag() {
     draggingId.value = null
     dropTargetId.value = null
-    moveBlocked = false
+    moveBlocked.value = false
     // Clear any pending expand timeouts
     Object.values(expandTimeouts).forEach(timeout => clearTimeout(timeout))
     Object.keys(expandTimeouts).forEach(key => delete expandTimeouts[key])
     // Collapse all auto-expanded items
-    for (const id of autoExpandedIds) {
+    for (const id of autoExpandedIds.value) {
       expandedItems.value[id] = false
     }
-    autoExpandedIds.clear()
+    autoExpandedIds.value = []
   }
 
   function isDragging(id?: string) {
@@ -135,7 +130,9 @@ export function useTreeDrag() {
         return
       }
       setExpanded(id, true)
-      autoExpandedIds.add(id)
+      if (!autoExpandedIds.value.includes(id)) {
+        autoExpandedIds.value = [...autoExpandedIds.value, id]
+      }
       delete expandTimeouts[id]
     }, delay)
   }
@@ -150,11 +147,11 @@ export function useTreeDrag() {
   // ============ Move Blocking ============
 
   function setMoveBlocked(blocked: boolean) {
-    moveBlocked = blocked
+    moveBlocked.value = blocked
   }
 
   function isMoveBlocked() {
-    return moveBlocked
+    return moveBlocked.value
   }
 
   // ============ Descendant Check ============

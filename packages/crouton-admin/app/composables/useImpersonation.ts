@@ -22,7 +22,6 @@
  * </script>
  * ```
  */
-import { computed, readonly } from 'vue'
 import type { ImpersonationState } from '../../types/admin'
 
 export function useImpersonation() {
@@ -33,9 +32,8 @@ export function useImpersonation() {
     impersonatedUser: null
   }))
   const hasCheckedStatus = useState('impersonation-checked', () => false)
-
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const loading = useState('impersonation-loading', () => false)
+  const error = useState<string | null>('impersonation-error', () => null)
 
   // Computed accessors
   const isImpersonating = computed(() => impersonationState.value.isImpersonating)
