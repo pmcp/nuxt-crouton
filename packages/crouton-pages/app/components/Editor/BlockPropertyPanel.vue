@@ -100,6 +100,13 @@ function onFieldChange(fieldName: string, value: unknown) {
   // NOTE: We do NOT emit here - changes are batched and applied on "Done"
 }
 
+// Denormalize member data into contact block attrs for public page rendering
+function onMemberDataChange(data: { firstName?: string; lastName?: string; email?: string; avatar?: string }) {
+  for (const [key, value] of Object.entries(data)) {
+    localAttrs.value[key] = value
+  }
+}
+
 // Apply all changes and close
 function onDone() {
   // Emit all local changes at once
@@ -423,6 +430,7 @@ function onDelete() {
             <CroutonPagesBlocksPropertiesTeamMemberPicker
               :model-value="localAttrs[field.name] as string || ''"
               @update:model-value="onFieldChange(field.name, $event)"
+              @update:member-data="onMemberDataChange"
             />
           </UFormField>
 

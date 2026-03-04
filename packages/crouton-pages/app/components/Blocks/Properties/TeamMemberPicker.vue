@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  'update:memberData': [data: { firstName?: string; lastName?: string; email?: string; avatar?: string }]
 }>()
 
 const { members, loadMembers } = useTeam()
@@ -43,6 +44,21 @@ const memberItems = computed(() => {
 const selectedMember = computed(() => {
   return memberItems.value.find(m => m.value === props.modelValue)
 })
+
+function onMemberSelected(userId: string) {
+  emit('update:modelValue', userId)
+  // Denormalize member data so public pages can render without auth API
+  const member = memberItems.value.find(m => m.value === userId)
+  if (member) {
+    const nameParts = (member.label || '').split(' ')
+    emit('update:memberData', {
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      email: member.email,
+      avatar: member.avatar
+    })
+  }
+}
 </script>
 
 <template>
@@ -55,7 +71,7 @@ const selectedMember = computed(() => {
       placeholder="Select a team member..."
       searchable
       class="w-full"
-      @update:model-value="emit('update:modelValue', $event)"
+      @update:model-value="onMemberSelected"
     >
       <template #leading>
         <UAvatar
