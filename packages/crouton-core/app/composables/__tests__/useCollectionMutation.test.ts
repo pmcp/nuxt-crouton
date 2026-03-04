@@ -51,6 +51,7 @@ vi.stubGlobal('computed', computed)
 vi.stubGlobal('reactive', reactive)
 vi.stubGlobal('useRoute', () => mockRoute)
 vi.stubGlobal('$fetch', mockFetch)
+vi.stubGlobal('generateCorrelationId', () => 'crtn_test_12345678')
 
 vi.stubGlobal('useToast', () => ({
   add: mockToastAdd

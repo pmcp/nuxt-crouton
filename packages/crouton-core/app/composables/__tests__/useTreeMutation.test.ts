@@ -65,6 +65,7 @@ vi.stubGlobal('useNuxtApp', () => ({
 
 vi.stubGlobal('refreshNuxtData', mockRefreshNuxtData)
 vi.stubGlobal('$fetch', mockFetch)
+vi.stubGlobal('generateCorrelationId', () => 'crtn_test_12345678')
 
 // Mock console
 vi.stubGlobal('console', {
