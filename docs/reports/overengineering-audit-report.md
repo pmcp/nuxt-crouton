@@ -29,10 +29,10 @@
   - Has `useAuthError().withError()` wrapper but doesn't use it
   - **Fix**: Split into `useEmailAuth()`, `useOAuth()`, `usePasskeys()`, `useTwoFactor()`, `usePasswordManagement()`. Use `withError()` wrapper to eliminate boilerplate.
 
-- [ ] **crouton-bookings** — `useBookingCart.ts` (670 lines, 40+ exports)
-  - Handles: form state, availability, slot computation, cart CRUD, schedule rules, monthly limits, calendar helpers
-  - Duplicates ~40% of `useBookingAvailability` logic
-  - **Fix**: Extract `useBookingSlotParser()` (shared), `useBookingCartStorage()` (already partial), move availability logic to shared core.
+- [x] ✅ **crouton-bookings** — ~~`useBookingCart.ts` (670 lines, 40+ exports)~~
+  - ~~Handles: form state, availability, slot computation, cart CRUD, schedule rules, monthly limits, calendar helpers~~
+  - ~~Duplicates ~40% of `useBookingAvailability` logic~~
+  - **Done**: Exported `parseLocationSlots()` standalone from `useBookingSlots.ts`, moved `AvailabilityData`/`ALL_DAY_SLOT` to `types/booking.ts`, refactored `useBookingCart` to compose `useBookingAvailability` (eliminating base availability duplication), deduped slot parsing in `useScheduleRules`. Cart: 669→600L. Public API unchanged.
 
 - [ ] **crouton-flow** — `Flow.vue` (812 lines in `<script setup>`)
   - Handles: standalone + sync modes, Yjs seeding, layout, drag/drop, ghost nodes, custom node resolution, presence
@@ -113,10 +113,10 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: ~~Shared types file, single `exportEvents(format)` function, shared filter builder~~ All done
 
 #### crouton-bookings
-- [ ] Availability logic — duplicated between `useBookingAvailability` and `useBookingCart`
-- [ ] JSON slot parsing — repeated in 4 places
+- [x] Availability logic — ~~duplicated between `useBookingAvailability` and `useBookingCart`~~ → useBookingCart now composes useBookingAvailability
+- [x] JSON slot parsing — ~~repeated in 4 places~~ → shared `parseLocationSlots()` exported from `useBookingSlots.ts`
 - [ ] `buildEmailVariables` — 2 near-identical implementations
-- **Fix**: Shared `parseSlots()` util, shared availability core, single email variables builder
+- **Fix**: ~~Shared `parseSlots()` util, shared availability core~~ Done. Remaining: single email variables builder
 
 #### crouton-editor
 - [ ] Toolbar configs — defined in `Simple.vue`, `Blocks.vue`, `WithPreview.vue`
@@ -363,7 +363,7 @@ These patterns are correct across the entire codebase:
 12. ~~Replace manual fetch boilerplate with `useFetch`~~ ✅ (easy targets: 4 triage composables → `useFetch`/`useAsyncData`; remaining: `useAdminStats`, `useCollectionItem`)
 13. ~~Extract shared scaffold infrastructure~~ ✅ pipeline + types + utils to crouton-core
 14. Refactor triage duplications (14a ✅ similarity/field-mapping deduplicated into `shared/utils/field-mapping.ts`)
-15. Split `useBookingCart` and `Flow.vue`
+15. Split `useBookingCart` and `Flow.vue` (15a ✅ useBookingCart deduped + composed via useBookingAvailability)
 
 #### Phase 3 Readiness Assessment (2026-03-03)
 
@@ -373,9 +373,9 @@ These patterns are correct across the entire codebase:
 | 12 | Replace manual fetch | 5-6 files / 3 pkgs | Variable | Partial | 3 triage composables easy. `useAdminStats` moderate (interval refresh). `useCollectionItem` difficult (SSR + dynamic URL). `useAuthCache` out of scope (not a fetch wrapper). |
 | 13 | ~~Extract scaffold infra~~ ✅ | ~4 files / 2 pkgs | Medium-High | Yes (tight) | Done — extracted pipeline + types + utils to crouton-core. Both endpoints now thin wrappers. |
 | 14 | Triage duplications | 4 files | Medium | Split | **14a ✅**: `calculateSimilarity` + field-mapping deduplicated into `shared/utils/field-mapping.ts`. **14b**: Email parser (1,011L, 3 functions sharing 60%) = separate session. |
-| 15 | Split BookingCart + Flow | 2 large files | High | No — 1 each | BookingCart: 669L, 42 returns. Flow.vue: 1,046L (812 script). Both deeply interconnected internally. |
+| 15 | Split BookingCart + Flow | 2 large files | High | No — 1 each | **15a ✅**: BookingCart 669→600L, composed via useBookingAvailability, deduped slot parsing + types. **15b**: Flow.vue: 1,046L (812 script). |
 
-**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → ~~13~~ → 15a (booking) → 15b (flow) → 14b (email parser) → 12 (useCollectionItem)
+**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → ~~13~~ → ~~15a (booking)~~ → 15b (flow) → 14b (email parser) → 12 (useCollectionItem)
 
 ### Phase 4: Infrastructure (When time permits)
 16. Replace custom triage infrastructure (logger, rate limiter, metrics)
