@@ -186,11 +186,7 @@ const {
   fetchNotionSchema: fetchSchema
 } = useTriageNotionSchema()
 
-const {
-  autoMapFields,
-  generateValueMapping,
-  getPropertyTypeColor
-} = useTriageFieldMapping()
+// autoMapFields, generateValueMapping, getPropertyTypeColor — auto-imported from composables/useTriageFieldMapping.ts
 
 /**
  * Update field mapping with full structure when a property is selected

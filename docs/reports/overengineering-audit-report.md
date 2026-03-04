@@ -170,16 +170,16 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 
 These have `use` prefix but contain zero reactive state — should be plain utility functions:
 
-- [ ] **crouton-core** — `useCollectionProxy.ts` — pure transform functions
-- [ ] **crouton-pages** — `usePageBlocks.ts` — 203 lines of passthrough to utils
-- [ ] **crouton-i18n** — `useTranslationsUi.ts` — static config objects
-- [ ] **crouton-maps** — `useMapboxStyles.ts` — wraps a constant
-- [ ] **crouton-triage** — `useTriageFieldMapping.ts` — pure functions with alias
-- [ ] **crouton-designer** — `useReviewPrompt.ts`, `useSeedDataPrompt.ts` — prompt template builders
-- [ ] **crouton-charts** — `useBlockRegistry.ts` — static data wrapped in `computed()`
-- [ ] **crouton-atelier** — `useAtelierSync.ts` — trivial passthrough to `useCollabSync`
+- [x] ✅ **crouton-core** — ~~`useCollectionProxy.ts` — pure transform functions~~ → exported `applyProxyTransform()` and `getProxiedEndpoint()` as standalone functions
+- [x] ✅ **crouton-pages** — ~~`usePageBlocks.ts` — 203 lines of passthrough to utils~~ → deleted (zero code consumers, underlying utils already exist)
+- [x] ✅ **crouton-i18n** — ~~`useTranslationsUi.ts` — static config objects~~ → removed composable wrapper, constants already exported at module level
+- [x] ✅ **crouton-maps** — ~~`useMapboxStyles.ts` — wraps a constant~~ → exported `getMapboxStyle()` as standalone function, removed wrapper
+- [x] ✅ **crouton-triage** — ~~`useTriageFieldMapping.ts` — pure functions with alias~~ → removed composable wrapper, re-exported shared functions
+- [x] ✅ **crouton-designer** — ~~`useReviewPrompt.ts`, `useSeedDataPrompt.ts` — prompt template builders~~ → exported `buildReviewSystemPrompt()` and `buildSeedDataSystemPrompt()` directly
+- [x] ✅ **crouton-atelier** — ~~`useBlockRegistry.ts` — static data wrapped in `computed()`~~ → exported `allBlocks`, `blocksByCategory`, `blockCategories`, `getBlock()` as plain constants/functions
+- [ ] **crouton-atelier** — `useAtelierSync.ts` — trivial passthrough to `useCollabSync` (skipped — genuinely wraps a reactive composable)
 
-**Fix**: Convert to plain function exports or constants. Remove `use` prefix.
+**Fix**: ~~Convert to plain function exports or constants. Remove `use` prefix.~~ Done (7/8). `useAtelierSync` left as-is because it wraps `useCollabSync` and returns reactive state.
 
 ### 8. Deprecated Nitro Error Format
 
@@ -380,6 +380,6 @@ These patterns are correct across the entire codebase:
 
 ### Phase 4: Infrastructure (When time permits)
 16. Replace custom triage infrastructure (logger, rate limiter, metrics)
-17. Convert non-composables to plain utils
+17. ~~Convert non-composables to plain utils~~ ✅ (7/8 converted: useCollectionProxy, usePageBlocks, useTranslationsUi, useMapboxStyles, useTriageFieldMapping, useReviewPrompt/useSeedDataPrompt, useBlockRegistry. Skipped useAtelierSync — genuine composable.)
 18. Refactor devtools inline HTML
 19. Remove CLI manifest bridge

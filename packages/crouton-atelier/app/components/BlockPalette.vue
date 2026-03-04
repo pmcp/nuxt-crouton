@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { Block, BlockCategory } from '../types/blocks'
+import type { BlockCategory } from '../types/blocks'
+import { blocksByCategory, blockCategories } from '../composables/useBlockRegistry'
 
 interface Props {
   selectedBlockIds: string[]
@@ -12,7 +13,6 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const { blocks, byCategory, categories } = useBlockRegistry()
 
 const categoryLabels: Record<BlockCategory, { label: string, icon: string }> = {
   content: { label: 'Content', icon: 'i-lucide-file-text' },
@@ -47,7 +47,7 @@ function handleAdd(blockId: string) {
     </div>
 
     <div class="p-3 space-y-4 overflow-y-auto max-h-[70vh] md:max-h-none">
-      <div v-for="cat in categories" :key="cat">
+      <div v-for="cat in blockCategories" :key="cat">
         <div class="flex items-center gap-2 mb-2 px-1">
           <UIcon :name="categoryLabels[cat]?.icon ?? 'i-lucide-folder'" class="w-3.5 h-3.5 text-muted" />
           <span class="text-xs font-medium text-muted uppercase tracking-wider">
@@ -57,7 +57,7 @@ function handleAdd(blockId: string) {
 
         <div class="space-y-1.5">
           <button
-            v-for="block in byCategory.get(cat)"
+            v-for="block in blocksByCategory.get(cat)"
             :key="block.id"
             class="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all duration-150"
             :class="isSelected(block.id)

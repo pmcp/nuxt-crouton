@@ -17,8 +17,7 @@ const isNewProject = computed(() => projectId.value === 'new')
 const { buildApiUrl } = useTeamContext()
 const { buildSystemPrompt: buildIntakePrompt } = useIntakePrompt()
 const { buildSystemPrompt: buildCollectionPrompt } = useCollectionDesignPrompt()
-const { buildSystemPrompt: buildSeedDataPrompt } = useSeedDataPrompt()
-const { buildSystemPrompt: buildReviewPrompt } = useReviewPrompt()
+// buildSeedDataSystemPrompt and buildReviewSystemPrompt are auto-imported
 const notify = useNotify()
 const { t } = useT()
 
@@ -172,10 +171,10 @@ const hasPriorPhase3Context = computed(() =>
 const systemPrompt = computed(() => {
   if (currentPhase.value === '5') {
     // Review phase — use seed data collections (snapshot from Phase 3) or fall back to empty
-    return buildReviewPrompt(projectConfig.value, seedDataCollections.value)
+    return buildReviewSystemPrompt(projectConfig.value, seedDataCollections.value)
   }
   if (currentPhase.value === '3') {
-    return buildSeedDataPrompt(projectConfig.value, seedDataCollections.value, seedData.value, hasPriorPhase3Context.value)
+    return buildSeedDataSystemPrompt(projectConfig.value, seedDataCollections.value, seedData.value, hasPriorPhase3Context.value)
   }
   if (currentPhase.value === '2') {
     const editor = collectionEditorRef.value?.editor

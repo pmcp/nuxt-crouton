@@ -82,19 +82,6 @@ Object.defineProperty(_translationsUiConfig, 'schema', {
 export const translationsUiConfig = _translationsUiConfig as typeof _translationsUiConfig & { schema: typeof translationsUiSchema }
 
 /**
- * Main composable for translations UI collection
- * Provides configuration and utilities for Crouton integration
+ * Collection name constant for translationsUi
  */
-export function useTranslationsUi() {
-  return {
-    schema: translationsUiSchema,
-    columns: TRANSLATIONS_UI_COLUMNS,
-    defaultValue: TRANSLATIONS_UI_DEFAULTS,
-    defaultPagination: TRANSLATIONS_UI_PAGINATION,
-    config: translationsUiConfig,
-    collection: 'translationsUi'
-  }
-}
-
-// Default export for auto-import compatibility
-export default useTranslationsUi
+export const TRANSLATIONS_UI_COLLECTION = 'translationsUi' as const

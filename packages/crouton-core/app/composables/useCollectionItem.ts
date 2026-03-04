@@ -37,7 +37,6 @@ export async function useCollectionItem<T = any>(
   const route = useRoute()
   const collections = useCollections()
   const config = collections.getConfig(collection)
-  const { applyTransform, getProxiedEndpoint } = useCollectionProxy()
   const { getTeamId } = useTeamContext()
 
   if (!config) {
@@ -103,7 +102,7 @@ export async function useCollectionItem<T = any>(
       rawItem = Array.isArray(response) ? (response[0] || null) : response
     }
 
-    return rawItem ? (applyTransform(rawItem, config) as T | null) : null
+    return rawItem ? (applyProxyTransform(rawItem, config) as T | null) : null
   })
 
   return { item, pending, error, refresh }

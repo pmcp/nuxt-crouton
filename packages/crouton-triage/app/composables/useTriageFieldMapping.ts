@@ -1,13 +1,11 @@
 /**
- * Composable for field mapping with fuzzy matching
+ * Field mapping utilities for fuzzy matching
  *
  * Provides utilities for auto-generating field mappings between AI fields
  * and Notion properties using similarity scoring.
  *
  * @example
  * ```ts
- * const { generateAutoMapping, calculateSimilarity } = useTriageFieldMapping()
- *
  * const mapping = generateAutoMapping(notionSchema, {
  *   aiFields: ['priority', 'type', 'assignee']
  * })
@@ -22,6 +20,7 @@ import {
   type NotionSchemaForMapping,
 } from '../../shared/utils/field-mapping'
 
+export { calculateSimilarity, findBestMatch, generateValueMapping }
 export type { FieldMapping, NotionSchemaForMapping }
 
 export interface GenerateMappingOptions {
@@ -93,15 +92,6 @@ export function getPropertyTypeColor(type: string): string {
 }
 
 /**
- * Main composable for field mapping
+ * Alias for generateAutoMapping (backward compat)
  */
-export function useTriageFieldMapping() {
-  return {
-    calculateSimilarity,
-    findBestMatch,
-    generateValueMapping,
-    generateAutoMapping,
-    autoMapFields: generateAutoMapping,
-    getPropertyTypeColor,
-  }
-}
+export const autoMapFields = generateAutoMapping

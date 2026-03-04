@@ -1,50 +1,18 @@
 import { describe, it, expect } from 'vitest'
 
-// Import composable and exports
 import {
-  useTranslationsUi,
   translationsUiSchema,
   TRANSLATIONS_UI_COLUMNS,
   TRANSLATIONS_UI_DEFAULTS,
   TRANSLATIONS_UI_PAGINATION,
+  TRANSLATIONS_UI_COLLECTION,
   translationsUiConfig
 } from '../useTranslationsUi'
 
-describe('useTranslationsUi', () => {
-  describe('composable return value', () => {
-    it('returns schema, columns, defaultValue, defaultPagination, config, and collection', () => {
-      const result = useTranslationsUi()
-
-      expect(result).toHaveProperty('schema')
-      expect(result).toHaveProperty('columns')
-      expect(result).toHaveProperty('defaultValue')
-      expect(result).toHaveProperty('defaultPagination')
-      expect(result).toHaveProperty('config')
-      expect(result).toHaveProperty('collection')
-    })
-
-    it('returns collection name as translationsUi', () => {
-      const { collection } = useTranslationsUi()
-
-      expect(collection).toBe('translationsUi')
-    })
-
-    it('returns the same schema as exported constant', () => {
-      const { schema } = useTranslationsUi()
-
-      expect(schema).toBe(translationsUiSchema)
-    })
-
-    it('returns the same columns as exported constant', () => {
-      const { columns } = useTranslationsUi()
-
-      expect(columns).toBe(TRANSLATIONS_UI_COLUMNS)
-    })
-
-    it('returns the same default values as exported constant', () => {
-      const { defaultValue } = useTranslationsUi()
-
-      expect(defaultValue).toBe(TRANSLATIONS_UI_DEFAULTS)
+describe('translationsUi', () => {
+  describe('TRANSLATIONS_UI_COLLECTION', () => {
+    it('equals translationsUi', () => {
+      expect(TRANSLATIONS_UI_COLLECTION).toBe('translationsUi')
     })
   })
 

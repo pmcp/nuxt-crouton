@@ -85,14 +85,15 @@ vi.stubGlobal('console', {
   groupEnd: vi.fn()
 })
 
-// Import composables after mocking
+// Import composables/utils after mocking
 import useCollections from '../useCollections'
 import { useTeamContext } from '../useTeamContext'
-import { useCollectionProxy } from '../useCollectionProxy'
+import { applyProxyTransform, getProxiedEndpoint } from '../useCollectionProxy'
 
 vi.stubGlobal('useCollections', useCollections)
 vi.stubGlobal('useTeamContext', useTeamContext)
-vi.stubGlobal('useCollectionProxy', useCollectionProxy)
+vi.stubGlobal('applyProxyTransform', applyProxyTransform)
+vi.stubGlobal('getProxiedEndpoint', getProxiedEndpoint)
 
 // Import the composable under test
 import { useCollectionQuery } from '../useCollectionQuery'

@@ -1,49 +1,46 @@
 import type { ProjectConfig, SeedDataMap } from '../types/schema'
 import type { CollectionWithFields } from './useCollectionEditor'
 
+function buildCollectionsSchema(collections: CollectionWithFields[]): string {
+  if (collections.length === 0) return '  (no collections)'
+  return collections.map(col => {
+    const fieldLines = col.fields.map(f => {
+      const ref = f.refTarget ? ` → ${f.refTarget}` : ''
+      const options = (f.meta as any)?.options?.length
+        ? ` [${(f.meta as any).options.join('|')}]`
+        : ''
+      return `    - ${f.name}: ${f.type}${ref}${options}`
+    }).join('\n')
+    return `  ${col.name}:\n${fieldLines || '    (no fields)'}`
+  }).join('\n')
+}
+
+function buildCurrentSeedData(seedData: SeedDataMap): string {
+  const entries = Object.entries(seedData)
+  if (entries.length === 0) return '  (no seed data yet)'
+  return entries.map(([name, rows]) => {
+    return `  ${name}: ${rows.length} entries`
+  }).join('\n')
+}
+
 /**
  * Builds the system prompt for Phase 3 (Seed Data Generation)
  */
-export function useSeedDataPrompt() {
-  // Seed data only needs options (for selects) and refTarget (for cross-refs).
-  // All other meta (label, area, displayAs, group, etc.) is irrelevant to JSON generation.
-  function buildCollectionsSchema(collections: CollectionWithFields[]): string {
-    if (collections.length === 0) return '  (no collections)'
-    return collections.map(col => {
-      const fieldLines = col.fields.map(f => {
-        const ref = f.refTarget ? ` → ${f.refTarget}` : ''
-        const options = (f.meta as any)?.options?.length
-          ? ` [${(f.meta as any).options.join('|')}]`
-          : ''
-        return `    - ${f.name}: ${f.type}${ref}${options}`
-      }).join('\n')
-      return `  ${col.name}:\n${fieldLines || '    (no fields)'}`
-    }).join('\n')
-  }
+export function buildSeedDataSystemPrompt(
+  config: ProjectConfig,
+  collections: CollectionWithFields[],
+  currentSeedData: SeedDataMap,
+  hasPriorContext = false
+): string {
+  const collectionNames = collections.map(c => c.name).join(', ')
 
-  function buildCurrentSeedData(seedData: SeedDataMap): string {
-    const entries = Object.entries(seedData)
-    if (entries.length === 0) return '  (no seed data yet)'
-    return entries.map(([name, rows]) => {
-      return `  ${name}: ${rows.length} entries`
-    }).join('\n')
-  }
-
-  function buildSystemPrompt(
-    config: ProjectConfig,
-    collections: CollectionWithFields[],
-    currentSeedData: SeedDataMap,
-    hasPriorContext = false
-  ): string {
-    const collectionNames = collections.map(c => c.name).join(', ')
-
-    const rulesSection = hasPriorContext
-      ? `## Rules (full rules were in turn 1 — key reminders)
+  const rulesSection = hasPriorContext
+    ? `## Rules (full rules were in turn 1 — key reminders)
 - Use \`set_seed_data\` tool once per collection. Every entry needs an \`_id\` field.
 - Reference fields (→ target) must use valid \`_id\` values from that collection.
 - Use realistic data; for fields with [options] use only listed values.
 - On edits, only call \`set_seed_data\` for changed collections.`
-      : `## Rules
+    : `## Rules
 1. ALWAYS use the \`set_seed_data\` tool to provide seed data. Call it once per collection.
 2. Generate 5-10 contextually appropriate entries per collection unless the user requests more or fewer.
 3. Every entry MUST include an \`_id\` field (e.g., "user-1", "task-3") for cross-referencing between collections.
@@ -55,7 +52,7 @@ export function useSeedDataPrompt() {
 9. When asked to modify, update ONLY affected collection(s) with the full replacement dataset.
 10. After generating, briefly summarize and offer to adjust.`
 
-    return `You are generating realistic seed data for a Nuxt Crouton app. Phase 3: Seed Data.
+  return `You are generating realistic seed data for a Nuxt Crouton app. Phase 3: Seed Data.
 
 ## App: ${config.name || 'unnamed'} (${config.appType || 'unknown'})${config.description ? ` — ${config.description}` : ''}
 
@@ -69,7 +66,4 @@ ${rulesSection}
 
 ## Tool
 \`set_seed_data(collectionName, entries[])\` — call once per collection, only for changed ones on edits.`
-  }
-
-  return { buildSystemPrompt }
 }

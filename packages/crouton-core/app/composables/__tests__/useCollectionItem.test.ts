@@ -12,13 +12,11 @@ vi.stubGlobal('useRoute', () => ({
   path: '/teams/test-team/products'
 }))
 
-const mockApplyTransform = vi.fn((item: any) => item)
+const mockApplyProxyTransform = vi.fn((item: any) => item)
 const mockGetProxiedEndpoint = vi.fn((config: any, apiPath: string) => apiPath)
 
-vi.stubGlobal('useCollectionProxy', () => ({
-  applyTransform: mockApplyTransform,
-  getProxiedEndpoint: mockGetProxiedEndpoint
-}))
+vi.stubGlobal('applyProxyTransform', mockApplyProxyTransform)
+vi.stubGlobal('getProxiedEndpoint', mockGetProxiedEndpoint)
 
 let mockCollectionConfig = {
   apiPath: 'products',
@@ -93,7 +91,7 @@ describe('useCollectionItem', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFetch.mockResolvedValue([{ id: 'item-1', name: 'Test Item' }])
-    mockApplyTransform.mockImplementation((item: any) => item)
+    mockApplyProxyTransform.mockImplementation((item: any) => item)
     mockGetProxiedEndpoint.mockImplementation((config: any, apiPath: string) => apiPath)
     mockCollectionConfig = {
       apiPath: 'products',
@@ -270,7 +268,7 @@ describe('useCollectionItem', () => {
   describe('proxy transform', () => {
     it('applies transform to fetched item', async () => {
       mockFetch.mockResolvedValue([{ id: 'item-1', name: 'Raw' }])
-      mockApplyTransform.mockImplementation((item: any) => ({
+      mockApplyProxyTransform.mockImplementation((item: any) => ({
         ...item,
         transformed: true
       }))
@@ -280,7 +278,7 @@ describe('useCollectionItem', () => {
       // Access item.value to trigger the computed and call applyTransform
       const itemValue = item.value
 
-      expect(mockApplyTransform).toHaveBeenCalled()
+      expect(mockApplyProxyTransform).toHaveBeenCalled()
       expect(itemValue).toEqual({ id: 'item-1', name: 'Raw', transformed: true })
     })
   })

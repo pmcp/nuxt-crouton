@@ -1,15 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { useCollectionProxy } from '../useCollectionProxy'
+import { applyProxyTransform, getProxiedEndpoint } from '../useCollectionProxy'
 
-describe('useCollectionProxy', () => {
-  const { applyTransform, getProxiedEndpoint } = useCollectionProxy()
-
-  describe('applyTransform', () => {
+describe('collectionProxy', () => {
+  describe('applyProxyTransform', () => {
     it('should return data as-is when no proxy config', () => {
       const data = [{ id: '1', name: 'Test' }]
       const config = {}
 
-      const result = applyTransform(data, config)
+      const result = applyProxyTransform(data, config)
 
       expect(result).toEqual(data)
     })
@@ -18,7 +16,7 @@ describe('useCollectionProxy', () => {
       const data = [{ id: '1', name: 'Test' }]
       const config = { proxy: { enabled: false } }
 
-      const result = applyTransform(data, config)
+      const result = applyProxyTransform(data, config)
 
       expect(result).toEqual(data)
     })
@@ -39,7 +37,7 @@ describe('useCollectionProxy', () => {
         }
       }
 
-      const result = applyTransform(data, config)
+      const result = applyProxyTransform(data, config)
 
       expect(result).toEqual([
         { id: '1', title: 'Alice' },
@@ -60,7 +58,7 @@ describe('useCollectionProxy', () => {
         }
       }
 
-      const result = applyTransform(data, config)
+      const result = applyProxyTransform(data, config)
 
       expect(result).toEqual({ id: '1', title: 'Alice' })
     })

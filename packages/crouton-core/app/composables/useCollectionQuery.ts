@@ -52,7 +52,6 @@ export async function useCollectionQuery<K extends CollectionName>(
   const route = useRoute()
   const collections = useCollections()
   const config = collections.getConfig(collection)
-  const { applyTransform, getProxiedEndpoint } = useCollectionProxy()
   const { getTeamId } = useTeamContext()
 
   if (!config) {
@@ -143,7 +142,7 @@ export async function useCollectionQuery<K extends CollectionName>(
     }
 
     // Apply proxy transform if configured
-    return applyTransform(rawItems, config) as CollectionItem<K>[]
+    return applyProxyTransform(rawItems, config) as CollectionItem<K>[]
   })
 
   return {

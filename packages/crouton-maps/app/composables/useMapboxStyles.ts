@@ -24,37 +24,17 @@ export const MAPBOX_STYLES = {
 export type MapboxStylePreset = keyof typeof MAPBOX_STYLES
 
 /**
- * Composable for working with Mapbox styles
+ * Get style URL by preset name or return custom URL as-is
+ *
+ * @param styleOrPreset - Preset name (e.g., 'dark') or full Mapbox style URL
+ * @returns Mapbox style URL
  *
  * @example
- * ```vue
- * <script setup>
- * const { styles, getStyle } = useMapboxStyles()
- *
- * // Use preset
- * const darkStyle = styles.dark
- *
- * // Get style by name or pass through custom URL
- * const style = getStyle('dark') // returns URL
- * const custom = getStyle('mapbox://styles/username/custom') // returns as-is
- * </script>
+ * ```ts
+ * const darkStyle = getMapboxStyle('dark') // returns mapbox://styles/mapbox/dark-v11
+ * const custom = getMapboxStyle('mapbox://styles/username/custom') // returns as-is
  * ```
  */
-export function useMapboxStyles() {
-  /**
-   * Get style URL by preset name or return custom URL as-is
-   * @param styleOrPreset - Preset name (e.g., 'dark') or full Mapbox style URL
-   * @returns Mapbox style URL
-   */
-  const getStyle = (styleOrPreset: MapboxStylePreset | string): string => {
-    return MAPBOX_STYLES[styleOrPreset as MapboxStylePreset] || styleOrPreset
-  }
-
-  return {
-    /** All available Mapbox style presets */
-    styles: MAPBOX_STYLES,
-
-    /** Helper to get style URL by preset name or return custom URL */
-    getStyle
-  }
+export function getMapboxStyle(styleOrPreset: MapboxStylePreset | string): string {
+  return MAPBOX_STYLES[styleOrPreset as MapboxStylePreset] || styleOrPreset
 }
