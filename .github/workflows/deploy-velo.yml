@@ -51,6 +51,7 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Cache layer builds
+        id: layer-cache
         uses: actions/cache@v4
         with:
           path: |
@@ -60,10 +61,21 @@ jobs:
           key: layer-builds-${{ hashFiles('packages/crouton-auth/**/*.ts', 'packages/crouton-core/**/*.ts', 'packages/crouton/**/*.ts') }}
 
       - name: Build layer packages
+        if: steps.layer-cache.outputs.cache-hit != 'true'
         run: |
           pnpm --filter '@fyit/crouton-auth' build
           pnpm --filter '@fyit/crouton-core' build
           pnpm --filter '@fyit/crouton' build
+
+      - name: Cache Nuxt build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/velo/node_modules/.cache
+            apps/velo/.nuxt/cache
+          key: nuxt-build-velo-${{ hashFiles('apps/velo/**', 'packages/**/*.ts') }}
+          restore-keys: |
+            nuxt-build-velo-
 
       - name: Run database migrations
         run: |
