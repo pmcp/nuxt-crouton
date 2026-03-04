@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Import after mocks
-import { useAuthConfig, useAuthMode, useIsMultiTenant, useAuthRedirects } from '../../../app/composables/useAuthConfig'
+import { useAuthConfig, useAuthRedirects } from '../../../app/composables/useAuthConfig'
 
 describe('useAuthConfig', () => {
   beforeEach(() => {
@@ -48,96 +48,6 @@ describe('useAuthConfig', () => {
 
       const config = useAuthConfig()
       expect(config).toBeUndefined()
-    })
-  })
-
-  describe('useAuthMode (deprecated - infers mode from flags)', () => {
-    it('should infer multi-tenant when allowCreate is true', () => {
-      vi.stubGlobal('useRuntimeConfig', () => ({
-        public: {
-          crouton: {
-            auth: { teams: { allowCreate: true, showSwitcher: true } }
-          }
-        }
-      }))
-
-      const mode = useAuthMode()
-      expect(mode).toBe('multi-tenant')
-    })
-
-    it('should infer single-tenant when defaultTeamSlug is set and allowCreate is false', () => {
-      vi.stubGlobal('useRuntimeConfig', () => ({
-        public: {
-          crouton: {
-            auth: { teams: { defaultTeamSlug: 'acme', allowCreate: false } }
-          }
-        }
-      }))
-
-      const mode = useAuthMode()
-      expect(mode).toBe('single-tenant')
-    })
-
-    it('should return multi-tenant as default when not configured', () => {
-      vi.stubGlobal('useRuntimeConfig', () => ({
-        public: {}
-      }))
-
-      const mode = useAuthMode()
-      // Default behavior is multi-tenant (allowCreate: true by default)
-      expect(mode).toBe('multi-tenant')
-    })
-
-    it('should infer personal when autoCreateOnSignup is true and allowCreate is false', () => {
-      vi.stubGlobal('useRuntimeConfig', () => ({
-        public: {
-          crouton: {
-            auth: { teams: { autoCreateOnSignup: true, allowCreate: false } }
-          }
-        }
-      }))
-
-      const mode = useAuthMode()
-      expect(mode).toBe('personal')
-    })
-  })
-
-  describe('useIsMultiTenant (deprecated - checks allowCreate flag)', () => {
-    it('should return true when allowCreate is true', () => {
-      vi.stubGlobal('useRuntimeConfig', () => ({
-        public: {
-          crouton: {
-            auth: { teams: { allowCreate: true } }
-          }
-        }
-      }))
-
-      expect(useIsMultiTenant()).toBe(true)
-    })
-
-    it('should return false when allowCreate is false', () => {
-      vi.stubGlobal('useRuntimeConfig', () => ({
-        public: {
-          crouton: {
-            auth: { teams: { allowCreate: false } }
-          }
-        }
-      }))
-
-      expect(useIsMultiTenant()).toBe(false)
-    })
-
-    it('should return true by default (allowCreate defaults to true)', () => {
-      vi.stubGlobal('useRuntimeConfig', () => ({
-        public: {
-          crouton: {
-            auth: {}
-          }
-        }
-      }))
-
-      // allowCreate is not explicitly false, so it's considered true
-      expect(useIsMultiTenant()).toBe(true)
     })
   })
 

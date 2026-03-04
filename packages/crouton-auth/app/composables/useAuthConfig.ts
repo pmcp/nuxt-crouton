@@ -80,38 +80,6 @@ export function useAuthConfig(): CroutonAuthConfig | undefined {
 }
 
 /**
- * @deprecated Mode-based architecture has been replaced with flag-based configuration.
- * Use config.teams flags directly instead:
- * - `autoCreateOnSignup` for personal workspace behavior
- * - `defaultTeamSlug` for company app behavior
- * - `allowCreate`, `showSwitcher`, `showManagement` for UI control
- *
- * @returns A computed mode based on current flags for backward compatibility
- */
-export function useAuthMode(): 'multi-tenant' | 'single-tenant' | 'personal' {
-  const config = useAuthConfig()
-  const teams = config?.teams
-
-  // Infer "mode" from flags for backward compatibility
-  if (teams?.autoCreateOnSignup && !teams?.allowCreate) {
-    return 'personal'
-  }
-  if (teams?.defaultTeamSlug && !teams?.allowCreate) {
-    return 'single-tenant'
-  }
-  return 'multi-tenant'
-}
-
-/**
- * @deprecated Use config.teams.allowCreate and other flags directly.
- * Check if users can create additional teams.
- */
-export function useIsMultiTenant(): boolean {
-  const config = useAuthConfig()
-  return config?.teams?.allowCreate !== false
-}
-
-/**
  * Get redirect URLs from config with defaults
  */
 export function useAuthRedirects() {
