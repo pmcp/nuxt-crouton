@@ -167,11 +167,11 @@ async function handleAssetSelected(asset: Record<string, any>) {
   <div class="space-y-3">
     <!-- Image Preview -->
     <div v-if="hasImage && mode === 'preview'" class="space-y-2">
-      <div class="relative rounded-lg overflow-hidden border border-default">
+      <div class="relative rounded-lg border border-default">
         <img
           :src="modelValue"
           alt="Preview"
-          class="w-full max-h-48 object-cover"
+          class="w-full max-h-48 object-cover rounded-lg"
         >
         <div class="absolute top-2 right-2 flex gap-1">
           <UButton
