@@ -99,9 +99,6 @@ export function useExpandableSlideover(options: UseExpandableSlideoverOptions = 
     }
   })
 
-  // Side prop for USlideover (always right now)
-  const side = computed(() => 'right')
-
   // Icon for expand/collapse button
   const expandIcon = computed(() =>
     isExpanded.value
@@ -125,7 +122,6 @@ export function useExpandableSlideover(options: UseExpandableSlideoverOptions = 
     open,
     close,
     slideoverUi,
-    side, // Always 'right' now
     expandIcon,
     expandTooltip
   }

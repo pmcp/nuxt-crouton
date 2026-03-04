@@ -561,18 +561,9 @@ export class SlackAdapter implements DiscussionSourceAdapter {
       warnings.push('Slack API token should start with "xoxb-" (bot token) or "xoxp-" (user token)')
     }
 
-    // Check Notion configuration
-    if (!config.notionToken || config.notionToken.trim() === '') {
-      errors.push('Notion API token is required')
-    }
-
-    if (!config.notionDatabaseId || config.notionDatabaseId.trim() === '') {
-      errors.push('Notion database ID is required')
-    }
-
-    // Check Slack workspace ID in settings
-    if (!config.settings?.workspaceId) {
-      warnings.push('Slack workspace ID not found in settings - deep links may not work correctly')
+    // Check Slack workspace ID in source metadata
+    if (!config.sourceMetadata?.workspaceId) {
+      warnings.push('Slack workspace ID not found in sourceMetadata - deep links may not work correctly')
     }
 
     // Check source type matches

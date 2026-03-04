@@ -164,15 +164,9 @@ const languages = computed(() => {
 
 // Get translation for a specific language with fallback to English
 const getTranslationForLang = (lang: string): string => {
-  // If translation exists for the requested language, return it
   if (props.translations?.[lang]) {
     return props.translations[lang]
   }
-
-  // Fallback to English if available
-  // if (lang !== 'en' && props.translations?.en) {
-  //   return props.translations.en
-  // }
 
   return ''
 }
@@ -184,11 +178,7 @@ const isUsingFallback = (lang: string): boolean => {
 
 // Get badge label with fallback indicator
 const getBadgeLabel = (lang: string): string => {
-  const baseLabel = lang.toUpperCase()
-  // if (isUsingFallback(lang)) {
-  //   return `${baseLabel}*`
-  // }
-  return baseLabel
+  return lang.toUpperCase()
 }
 
 const getTranslationLength = (lang: string): number => {

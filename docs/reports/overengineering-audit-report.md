@@ -224,18 +224,18 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
 ### 11. Dead Code
 
-- [ ] **crouton-core** — empty `tree-styles.client.ts` plugin (comment says "moved to CSS")
-- [ ] **crouton-auth** — `useAuthLoading.ts` (146 lines, appears unused by `useAuth`)
-- [ ] **crouton-maps** — `useMap.ts` composable (never called — `nuxt-mapbox` used instead)
-- [ ] **crouton-collab** — `badgeColor` computed in `CollabStatus.vue` (never used in template)
-- [ ] **crouton-ai** — `formattedContent` in `Message.vue` (returns input unchanged)
-- [ ] **crouton-events** — `enrichedData` computed in `useCroutonEvents.ts` (TODO, does nothing)
-- [ ] **crouton-triage** — `validateConfig` in `slack.ts` checks fields that no longer exist in types
-- [ ] **crouton-pages** — `switchToLocale` in `useLocalizedSlug.ts` (identical to `getLocalizedUrl`)
-- [ ] **crouton-core** — `side` computed in `useExpandableSlideover.ts` (always returns `'right'`)
-- [ ] **crouton-cli** — `parseArgs()`/`main()` in rollback files (never executed as entry points)
-- [ ] **crouton-ai** — hardcoded `confidence: 0.9` in `translate.post.ts`
-- [ ] **crouton-i18n** — commented-out fallback logic in `Display.vue`
+- [x] ✅ **crouton-core** — ~~empty `tree-styles.client.ts` plugin~~ — already removed
+- [x] ✅ **crouton-auth** — ~~`useAuthLoading.ts`~~ — already removed
+- [x] ✅ **crouton-maps** — ~~`useMap.ts` composable~~ — deleted (never called, nuxt-mapbox used instead)
+- [x] ✅ **crouton-collab** — ~~`badgeColor` computed in `CollabStatus.vue`~~ — already removed
+- [x] ✅ **crouton-ai** — ~~`formattedContent` in `Message.vue`~~ — already removed
+- [x] ✅ **crouton-events** — ~~`enrichedData` computed in `useCroutonEvents.ts`~~ — removed no-op computed, return `data` directly
+- [x] ✅ **crouton-triage** — ~~`validateConfig` in `slack.ts`~~ — removed checks for non-existent `notionToken`/`notionDatabaseId`/`settings`, uses `sourceMetadata` instead
+- [x] ✅ **crouton-pages** — ~~`switchToLocale` in `useLocalizedSlug.ts`~~ — removed (identical wrapper around `getLocalizedUrl`)
+- [x] ✅ **crouton-core** — ~~`side` computed in `useExpandableSlideover.ts`~~ — removed (always 'right', component hardcodes it)
+- [x] ✅ **crouton-cli** — ~~`parseArgs()`/`main()` in rollback files~~ — removed from all 3 rollback files (dead entry points)
+- [x] ✅ **crouton-ai** — ~~hardcoded `confidence: 0.9` in `translate.post.ts`~~ — removed meaningless hardcoded field from response
+- [x] ✅ **crouton-i18n** — ~~commented-out fallback logic in `Display.vue`~~ — removed commented-out code
 
 ### 12. Overengineered Infrastructure
 

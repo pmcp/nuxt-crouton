@@ -59,7 +59,6 @@ export default defineEventHandler(async (event) => {
   if (body.sourceLanguage === body.targetLanguage) {
     return {
       text: body.sourceText,
-      confidence: 1
     }
   }
 
@@ -129,7 +128,6 @@ export default defineEventHandler(async (event) => {
 
     return {
       text,
-      confidence: 0.9 // Could be enhanced with actual confidence scoring
     }
   } catch (error: any) {
     console.error('Translation error:', error)

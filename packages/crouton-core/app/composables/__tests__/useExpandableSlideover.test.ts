@@ -29,7 +29,6 @@ describe('useExpandableSlideover', () => {
       expect(slideover.open).toBeDefined()
       expect(slideover.close).toBeDefined()
       expect(slideover.slideoverUi).toBeDefined()
-      expect(slideover.side).toBeDefined()
       expect(slideover.expandIcon).toBeDefined()
       expect(slideover.expandTooltip).toBeDefined()
     })
@@ -164,14 +163,6 @@ describe('useExpandableSlideover', () => {
       vi.advanceTimersByTime(300)
 
       expect(isOpen.value).toBe(true)
-    })
-  })
-
-  describe('side', () => {
-    it('always returns right', () => {
-      const { side } = useExpandableSlideover()
-
-      expect(side.value).toBe('right')
     })
   })
 

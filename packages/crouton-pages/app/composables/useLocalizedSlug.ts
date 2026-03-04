@@ -48,14 +48,6 @@ export function useLocalizedSlug() {
   }
 
   /**
-   * Switch to a different locale for the current page
-   * Returns the URL for the page in the target locale
-   */
-  function switchToLocale(page: any, targetLocale: string): string {
-    return getLocalizedUrl(page, targetLocale)
-  }
-
-  /**
    * Get all available locale URLs for a page (useful for language switchers)
    */
   function getAllLocaleUrls(page: any, locales: Array<{ code: string }>): Array<{ locale: string; url: string }> {
@@ -81,7 +73,6 @@ export function useLocalizedSlug() {
   return {
     getSlugForLocale,
     getLocalizedUrl,
-    switchToLocale,
     getAllLocaleUrls,
     hasTranslatedSlug,
     currentLocale: locale

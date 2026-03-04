@@ -206,25 +206,3 @@ export async function interactiveRollback({ dryRun = false, keepFiles = false }:
   p.outro('Done.')
 }
 
-function parseArgs(): { dryRun: boolean; keepFiles: boolean } {
-  const a = process.argv.slice(2)
-
-  const dryRun = a.includes('--dry-run')
-  const keepFiles = a.includes('--keep-files')
-
-  return { dryRun, keepFiles }
-}
-
-async function main(): Promise<void> {
-  const args = parseArgs()
-
-  await interactiveRollback(args)
-}
-
-// Only run main if this is the entry point
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error) => {
-    consola.error('Fatal error:', error.message)
-    process.exit(1)
-  })
-}

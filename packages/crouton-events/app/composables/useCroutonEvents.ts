@@ -84,25 +84,8 @@ export function useCroutonEvents(options: UseCroutonEventsOptions = {}) {
     { query: queryParams }
   )
 
-  // If enrichUserData is requested, we need a custom endpoint
-  // For now, we'll fetch events normally and enrich client-side
-  // TODO: Implement server-side JOIN for better performance
-  const enrichedData = computed(() => {
-    if (!options.enrichUserData || !data.value) {
-      return data.value
-    }
-
-    // Client-side enrichment (can be optimized with server-side JOIN later)
-    // For now, return as-is since we don't have user data readily available
-    // In production, you'd want to:
-    // 1. Extract unique userIds from events
-    // 2. Batch fetch user data
-    // 3. Merge user data into events
-    return data.value
-  })
-
   return {
-    data: enrichedData,
+    data,
     pending,
     error,
     refresh
