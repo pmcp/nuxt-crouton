@@ -23,7 +23,8 @@ export async function renderEmailTemplate<T extends Record<string, unknown>>(
  */
 export function getEmailBrandConfig(event?: any) {
   // In Nitro context, useRuntimeConfig can be called with event
-  const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
+  const resolvedEvent = event || tryUseEvent()
+  const config = resolvedEvent ? useRuntimeConfig(resolvedEvent) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
 
   return {

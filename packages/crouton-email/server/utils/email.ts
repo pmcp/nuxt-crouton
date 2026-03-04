@@ -3,32 +3,32 @@ import { Resend } from 'resend'
 import { useNitroApp } from 'nitropack/runtime'
 import type { SendEmailOptions, SendEmailResult } from '../../types'
 
-let resendClient: Resend | null = null
-
 /**
- * Get or create Resend client instance
+ * Get or create Resend client instance.
+ * Uses useEvent() from the async context to support Cloudflare Workers,
+ * where useRuntimeConfig(event) is required to access env bindings.
  */
-function getResendClient(): Resend {
-  if (resendClient) return resendClient
-
-  const config = useRuntimeConfig()
+function getResendClient(event?: any): Resend {
+  const resolvedEvent = event || tryUseEvent()
+  const config = resolvedEvent ? useRuntimeConfig(resolvedEvent) : useRuntimeConfig()
   const emailConfig = (config as any).email
 
   const apiKey = emailConfig?.resendApiKey
 
   if (!apiKey) {
-    throw new Error('RESEND_API_KEY is not configured. Set it in runtimeConfig.email.resendApiKey or RESEND_API_KEY env variable.')
+    throw new Error('RESEND_API_KEY is not configured. Set it in runtimeConfig.email.resendApiKey or NUXT_EMAIL_RESEND_API_KEY env variable.')
   }
 
-  resendClient = new Resend(apiKey)
-  return resendClient
+  return new Resend(apiKey)
 }
 
 /**
- * Email service for sending emails via Resend
+ * Email service for sending emails via Resend.
+ * Pass an H3 event for Cloudflare Workers compatibility.
  */
-export function useEmailService() {
-  const config = useRuntimeConfig()
+export function useEmailService(event?: any) {
+  const resolvedEvent = event || tryUseEvent()
+  const config = resolvedEvent ? useRuntimeConfig(resolvedEvent) : useRuntimeConfig()
   const emailConfig = (config as any).email
 
   const defaultFrom = emailConfig?.fromName
@@ -46,7 +46,7 @@ export function useEmailService() {
     const recipient = Array.isArray(options.to) ? options.to[0] : options.to
 
     try {
-      const client = getResendClient()
+      const client = getResendClient(event)
 
       const from = options.fromName
         ? `${options.fromName} <${options.from || emailConfig?.from}>`
