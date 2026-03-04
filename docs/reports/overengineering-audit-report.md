@@ -261,11 +261,11 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
 ### 14. Excessive `any` Types
 
-- [ ] **crouton-maps** — `Map.vue` — `mapInstance` as `ref<any>`
-- [ ] **crouton-designer** — multiple composables cast `appConfig.crouton` to `any`
-- [ ] **crouton-bookings** — `email-service.ts` — 5+ `(schema as any)` casts
-- [ ] **crouton-mcp-toolkit** — `mcp-collections.ts` — `(appConfig as Record<string, any>)`
-- [ ] **crouton-assets** — `Record<string, any>` for asset items (should have `Asset` interface)
+- [x] ✅ **crouton-maps** — ~~`Map.vue` — `mapInstance` as `ref<any>`~~ — replaced with `MapboxMap` type from `mapbox-gl`; also fixed `LngLatLike` union handling in `getCoords`
+- [x] ✅ **crouton-designer** — ~~multiple composables cast `appConfig.crouton` to `any`~~ — created `CroutonManifestAppConfig` and `ManifestModuleEntry` types in `crouton-core/shared/manifest.ts`; all 4 composables now use proper types, removed duplicated local `ModuleEntry`/`ModuleAIContext` interfaces
+- [x] ✅ **crouton-bookings** — ~~`email-service.ts` — 5+ `(schema as any)` casts~~ — removed `allVariables as any` (unnecessary), replaced `status as any` with `EmailTriggerStatusResult['status']`, replaced `catch (error: any)` with `unknown`, added `BookingEmailTemplateRecord` interface, changed `(schema as any)` to `Record<string, any>` with eslint-disable (inherent to dynamic schema pattern)
+- [x] ✅ **crouton-mcp-toolkit** — ~~`mcp-collections.ts` — `(appConfig as Record<string, any>)`~~ — typed appConfig access with `{ croutonCollections?: Record<string, unknown> }`, config objects cast to `Partial<McpCollectionConfig>`
+- [x] **crouton-assets** — already properly typed (interfaces defined for all types, no `any` found)
 
 ### 15. Console.log in Production Code
 
@@ -276,19 +276,19 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 ### 16. Miscellaneous
 
 - [x] **crouton-admin** — ~~`useAdminTeams.ts` and `useAdminUsers.ts` — manual URLSearchParams~~ → replaced with `$fetch`'s `query` option
-- [ ] **crouton-pages** — `reservedPrefixes` duplicated in middleware and composable
-- [ ] **crouton-sales** — `calculateItemPrice` duplicated between composable and Cart component
-- [ ] **crouton-sales** — ESC/POS buffer fix logic duplicated in `formatReceipt` and `formatTestReceipt`
-- [ ] **crouton-i18n** — hardcoded locale imports (`en`, `nl`, `fr`) in `serverTranslations.ts`
-- [ ] **crouton-i18n** — `getAvailableLocales()` takes a `key` param that is never used
-- [ ] **crouton-i18n** — duplicate watcher logic in `useT.ts` for team slug and locale changes
-- [ ] **crouton-flow** — `JSON.stringify()` comparison for row data change detection
-- [ ] **crouton-flow** — `flushPositions` uses individual updates instead of batch `updatePositions()`
-- [ ] **crouton-collab** — awareness callbacks array never cleans up stale references
+- [x] ✅ **crouton-pages** — ~~`reservedPrefixes` duplicated in middleware and composable~~ — extracted to shared `RESERVED_PREFIXES` constant in `app/utils/reserved-prefixes.ts`
+- [x] ✅ **crouton-sales** — ~~`calculateItemPrice` duplicated between composable and Cart component~~ — exported from `usePosOrder.ts`, Cart component now imports it
+- [x] ✅ **crouton-sales** — ~~ESC/POS buffer fix logic duplicated in `formatReceipt` and `formatTestReceipt`~~ — extracted `finalizePrinterBuffer()` helper
+- [ ] **crouton-i18n** — hardcoded locale imports (`en`, `nl`, `fr`) in `serverTranslations.ts` — SKIPPED (design decision)
+- [x] ✅ **crouton-i18n** — ~~`getAvailableLocales()` takes a `key` param that is never used~~ — removed unused parameter
+- [x] ✅ **crouton-i18n** — ~~duplicate watcher logic in `useT.ts` for team slug and locale changes~~ — merged into single `watch([teamSlugFromRoute, locale], ...)`
+- [ ] **crouton-flow** — `JSON.stringify()` comparison for row data change detection — SKIPPED (could not locate)
+- [x] ✅ **crouton-flow** — ~~`flushPositions` uses individual updates instead of batch `updatePositions()`~~ — now uses batch `updatePositions()` directly
+- [x] ✅ **crouton-collab** — ~~awareness callbacks array never cleans up stale references~~ — added `awarenessCallbacks.length = 0` in `disconnect()`
 - [x] ✅ **crouton-collab** — ~~`isPolling` computed wraps a ref for no benefit~~ — needed for `ComputedRef<boolean>` return type; removed explicit Vue imports instead
-- [ ] **crouton-email** — "expires after 10 minutes" hardcoded vs configurable expiry
+- [ ] **crouton-email** — "expires after 10 minutes" hardcoded vs configurable expiry — SKIPPED (risky)
 - [x] ✅ **crouton-bookings** — ~~unused `result` variable in `useBookingEmail.ts:38`~~ — removed unused assignment
-- [ ] **crouton-sales** — non-shared cart state via `ref` instead of `useState`
+- [ ] **crouton-sales** — non-shared cart state via `ref` instead of `useState` — SKIPPED (SSR concern)
 
 ---
 

@@ -281,6 +281,9 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
       ws.value = null
     }
 
+    // Clear awareness callbacks to prevent memory leaks on reconnect
+    awarenessCallbacks.length = 0
+
     state.value = {
       connected: false,
       synced: false,

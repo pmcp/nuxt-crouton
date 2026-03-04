@@ -78,6 +78,7 @@
 
 <script setup lang="ts">
 import type { CartItem, ProductOption } from '../../types'
+import { calculateItemPrice } from '../../composables/usePosOrder'
 const { t } = useT()
 
 const props = defineProps<{
@@ -110,22 +111,7 @@ function getSelectedOptionLabels(item: CartItem): string[] {
     .filter((label): label is string => Boolean(label))
 }
 
-// Calculate item price including option modifiers
-function calculateItemPrice(item: CartItem): number {
-  let price = Number(item.product.price)
-  if (item.selectedOptions && item.product.options) {
-    const optionIds = Array.isArray(item.selectedOptions)
-      ? item.selectedOptions
-      : [item.selectedOptions]
-    for (const id of optionIds) {
-      const option = item.product.options.find((o: ProductOption) => o.id === id)
-      if (option?.priceModifier) {
-        price += option.priceModifier
-      }
-    }
-  }
-  return price
-}
+
 </script>
 
 <style scoped>

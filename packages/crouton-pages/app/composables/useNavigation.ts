@@ -63,12 +63,9 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     return routeTeam.value || teamId.value || null
   })
 
-  // Reserved prefixes that should NOT be treated as team slugs
-  const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-
   // Fetch published pages for the team with locale for translated titles/slugs
   const { data: pages, pending: isLoading, refresh } = useFetch(() => {
-    if (!team.value || reservedPrefixes.includes(team.value)) return null
+    if (!team.value || RESERVED_PREFIXES.includes(team.value)) return null
     return `/api/teams/${team.value}/pages`
   }, {
     params: { locale },

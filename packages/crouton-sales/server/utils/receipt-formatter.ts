@@ -57,6 +57,48 @@ export interface FormattedReceipt {
 }
 
 /**
+ * Finalize printer buffer: fix ESC/POS quirks and return Base64 + raw buffer.
+ * Handles TM-m30 ESC d incompatibility and ensures proper ESC @ initialization.
+ */
+function finalizePrinterBuffer(printer: ThermalPrinter): FormattedReceipt {
+  let rawBuffer = printer.getBuffer()
+
+  // Remove any ESC @ from the end if it exists
+  if (rawBuffer[rawBuffer.length - 2] === 0x1B && rawBuffer[rawBuffer.length - 1] === 0x40) {
+    rawBuffer = rawBuffer.slice(0, -2)
+  }
+
+  // Fix for TM-m30: Replace ESC d (feed) commands with line feeds
+  const fixedBuffer: number[] = []
+  for (let i = 0; i < rawBuffer.length; i++) {
+    if (i < rawBuffer.length - 2
+      && rawBuffer[i] === 0x1B
+      && rawBuffer[i + 1] === 0x64) {
+      const feedCount = rawBuffer[i + 2]
+      for (let j = 0; j < feedCount; j++) {
+        fixedBuffer.push(0x0A)
+      }
+      i += 2
+    }
+    else {
+      fixedBuffer.push(rawBuffer[i])
+    }
+  }
+  rawBuffer = Buffer.from(fixedBuffer)
+
+  // Prepend ESC @ at the beginning
+  rawBuffer = Buffer.concat([
+    Buffer.from([0x1B, 0x40]), // ESC @ - Initialize printer
+    rawBuffer
+  ])
+
+  return {
+    base64: rawBuffer.toString('base64'),
+    rawBuffer: Buffer.from(rawBuffer)
+  }
+}
+
+/**
  * Generate ESC/POS formatted receipt data for thermal printers
  * Returns both Base64 encoded string and raw buffer
  */
@@ -224,46 +266,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
     printer.println('')
     printer.cut()
 
-    // Get the raw buffer
-    let rawBuffer = printer.getBuffer()
-
-    // Remove any ESC @ from the end if it exists
-    if (rawBuffer[rawBuffer.length - 2] === 0x1B && rawBuffer[rawBuffer.length - 1] === 0x40) {
-      rawBuffer = rawBuffer.slice(0, -2)
-    }
-
-    // Fix for TM-m30: Replace ESC d (feed) commands with line feeds
-    const fixedBuffer: number[] = []
-    for (let i = 0; i < rawBuffer.length; i++) {
-      if (i < rawBuffer.length - 2
-        && rawBuffer[i] === 0x1B
-        && rawBuffer[i + 1] === 0x64) {
-        // Found ESC d command, replace with line feeds
-        const feedCount = rawBuffer[i + 2]
-        for (let j = 0; j < feedCount; j++) {
-          fixedBuffer.push(0x0A) // Line feed
-        }
-        i += 2 // Skip the ESC d n sequence
-      }
-      else {
-        fixedBuffer.push(rawBuffer[i])
-      }
-    }
-    rawBuffer = Buffer.from(fixedBuffer)
-
-    // Prepend ESC @ at the beginning
-    rawBuffer = Buffer.concat([
-      Buffer.from([0x1B, 0x40]), // ESC @ - Initialize printer FIRST
-      rawBuffer
-    ])
-
-    // Convert to Base64
-    const base64 = rawBuffer.toString('base64')
-
-    return {
-      base64,
-      rawBuffer: Buffer.from(rawBuffer)
-    }
+    return finalizePrinterBuffer(printer)
   }
   catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
@@ -307,42 +310,5 @@ export function formatTestReceipt(
   printer.println('')
   printer.cut()
 
-  // Get the raw buffer
-  let rawBuffer = printer.getBuffer()
-
-  // Remove any ESC @ from the end if it exists
-  if (rawBuffer[rawBuffer.length - 2] === 0x1B && rawBuffer[rawBuffer.length - 1] === 0x40) {
-    rawBuffer = rawBuffer.slice(0, -2)
-  }
-
-  // Fix for TM-m30: Replace ESC d (feed) commands with line feeds
-  const fixedBuffer: number[] = []
-  for (let i = 0; i < rawBuffer.length; i++) {
-    if (i < rawBuffer.length - 2
-      && rawBuffer[i] === 0x1B
-      && rawBuffer[i + 1] === 0x64) {
-      const feedCount = rawBuffer[i + 2]
-      for (let j = 0; j < feedCount; j++) {
-        fixedBuffer.push(0x0A)
-      }
-      i += 2
-    }
-    else {
-      fixedBuffer.push(rawBuffer[i])
-    }
-  }
-  rawBuffer = Buffer.from(fixedBuffer)
-
-  // Prepend ESC @ at the beginning
-  rawBuffer = Buffer.concat([
-    Buffer.from([0x1B, 0x40]),
-    rawBuffer
-  ])
-
-  const base64 = rawBuffer.toString('base64')
-
-  return {
-    base64,
-    rawBuffer: Buffer.from(rawBuffer)
-  }
+  return finalizePrinterBuffer(printer)
 }

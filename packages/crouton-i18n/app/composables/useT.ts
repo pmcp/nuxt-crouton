@@ -83,17 +83,15 @@ export function useT() {
     }
   }
 
-  // Watch for team changes and reload translations
+  // Watch for team or locale changes and reload translations
   // Only run with immediate: true on client or when we have a valid SSR request context
   // During unexpected SSR (e.g., refreshNuxtData triggers), we may not have proper context
-  watch(teamSlugFromRoute, () => {
+  watch([teamSlugFromRoute, locale], () => {
     teamTranslationsLoaded.value = false
     teamTranslations.value = {}
-    // Only load translations in valid contexts
     if (import.meta.client) {
       loadTeamTranslations()
     } else if (import.meta.server) {
-      // On server, only load if we have a valid request event context
       try {
         const event = useRequestEvent()
         if (event) {
@@ -104,25 +102,6 @@ export function useT() {
       }
     }
   }, { immediate: true })
-
-  // Watch for locale changes and reload translations
-  watch(locale, () => {
-    teamTranslationsLoaded.value = false
-    teamTranslations.value = {}
-    // Only load translations in valid contexts (same protection as team watcher)
-    if (import.meta.client) {
-      loadTeamTranslations()
-    } else if (import.meta.server) {
-      try {
-        const event = useRequestEvent()
-        if (event) {
-          loadTeamTranslations()
-        }
-      } catch {
-        // No request context available - skip loading on server
-      }
-    }
-  })
 
   /**
    * Enhanced translation function
@@ -277,11 +256,10 @@ export function useT() {
   }
 
   /**
-   * Get all available locales for a translation key
-   * @param key - Translation key
+   * Get all available locales
    * @returns Array of available locale codes
    */
-  const getAvailableLocales = (key: string): string[] => {
+  const getAvailableLocales = (): string[] => {
     const availableLocales: string[] = []
 
     // Derive available locales from i18n config
@@ -310,7 +288,7 @@ export function useT() {
       value: teamOverride || systemValue,
       hasTeamOverride: !!teamOverride,
       isSystemMissing,
-      availableLocales: getAvailableLocales(key)
+      availableLocales: getAvailableLocales()
     }
   }
 

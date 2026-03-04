@@ -65,7 +65,7 @@ export interface UsePosOrderOptions {
 /**
  * Calculate item price including option modifiers
  */
-function calculateItemPrice(item: CartItem): number {
+export function calculateItemPrice(item: CartItem): number {
   let price = Number(item.product.price)
   if (item.selectedOptions && item.product.options) {
     const optionIds = Array.isArray(item.selectedOptions)

@@ -137,7 +137,7 @@ export function useDebouncedPositionUpdate(
   positionField: string = 'position',
   delay: number = 500
 ) {
-  const { updatePosition, pending, error } = useFlowMutation(collection, positionField)
+  const { updatePositions, pending, error } = useFlowMutation(collection, positionField)
 
   // Track pending positions to batch updates within the debounce window
   const pendingPositions = new Map<string, XYPosition>()
@@ -151,7 +151,7 @@ export function useDebouncedPositionUpdate(
 
     if (updates.length > 0) {
       try {
-        await Promise.all(updates.map(u => updatePosition(u.id, u.position)))
+        await updatePositions(updates)
       } catch (e) {
         console.error('[useFlowMutation] Failed to save positions:', e)
       }
