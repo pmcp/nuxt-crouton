@@ -25,6 +25,7 @@ import type {
   ButtonRowBlockAttrs,
   StatsBlockAttrs,
   GalleryBlockAttrs,
+  ContactBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -853,6 +854,85 @@ export const galleryBlockDefinition: BlockDefinition<GalleryBlockAttrs> = {
   ]
 }
 
+export const contactBlockDefinition: BlockDefinition<ContactBlockAttrs> = {
+  type: 'contactBlock',
+  name: 'Contact',
+  description: 'A contact card with name, email, phone and more',
+  icon: 'i-lucide-contact',
+  category: 'content',
+  defaultAttrs: {
+    mode: 'manual'
+  },
+  schema: [
+    {
+      name: 'mode',
+      type: 'select',
+      label: 'Mode',
+      description: 'Fill in manually or select a team member',
+      options: [
+        { label: 'Manual', value: 'manual' },
+        { label: 'Team Member', value: 'member' }
+      ],
+      defaultValue: 'manual'
+    },
+    {
+      name: 'memberId',
+      type: 'text',
+      label: 'Member ID',
+      description: 'User ID of the team member',
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'member'
+    },
+    {
+      name: 'firstName',
+      type: 'text',
+      label: 'First Name',
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'manual'
+    },
+    {
+      name: 'lastName',
+      type: 'text',
+      label: 'Last Name',
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'manual'
+    },
+    {
+      name: 'email',
+      type: 'text',
+      label: 'Email',
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'manual'
+    },
+    {
+      name: 'phone',
+      type: 'text',
+      label: 'Phone',
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'manual'
+    },
+    {
+      name: 'role',
+      type: 'text',
+      label: 'Role / Title',
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'manual'
+    },
+    {
+      name: 'company',
+      type: 'text',
+      label: 'Company',
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'manual'
+    },
+    {
+      name: 'website',
+      type: 'text',
+      label: 'Website',
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'manual'
+    },
+    {
+      name: 'avatar',
+      type: 'image',
+      label: 'Avatar',
+      crop: { aspectRatio: '1:1', circular: true }
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -870,7 +950,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   fileBlock: fileBlockDefinition,
   buttonRowBlock: buttonRowBlockDefinition,
   statsBlock: statsBlockDefinition,
-  galleryBlock: galleryBlockDefinition
+  galleryBlock: galleryBlockDefinition,
+  contactBlock: contactBlockDefinition
 }
 
 // ============================================================================

@@ -29,6 +29,7 @@ export type BlockType =
   | 'buttonRowBlock'
   | 'statsBlock'
   | 'galleryBlock'
+  | 'contactBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -211,6 +212,7 @@ export type BlockAttrs =
   | ButtonRowBlockAttrs
   | StatsBlockAttrs
   | GalleryBlockAttrs
+  | ContactBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -418,6 +420,23 @@ export interface GalleryBlockAttrs {
 
 export interface GalleryBlock extends PageBlock<GalleryBlockAttrs> {
   type: 'galleryBlock'
+}
+
+export interface ContactBlockAttrs {
+  mode: 'manual' | 'member'
+  memberId?: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  role?: string
+  company?: string
+  website?: string
+  avatar?: string
+}
+
+export interface ContactBlock extends PageBlock<ContactBlockAttrs> {
+  type: 'contactBlock'
 }
 
 // ============================================================================
