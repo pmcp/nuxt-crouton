@@ -21,18 +21,15 @@ export function useBookingCart() {
   // Team ID from auth context (consistent with useBookingsList)
   const teamId = computed(() => currentTeam.value?.id)
 
-  // Fetch customer bookings for the "My Bookings" count and list
-  // MUST use server: false to match useBookingsList (shared key).
-  // Without it, SSR registers the key with null data, then client-side
-  // watch triggers from both composables create a cancellation cascade
-  // where the slow customer-bookings endpoint never completes.
+  // Read customer bookings from shared cache (useBookingsList owns the fetch).
+  // Only uses key — no watch trigger to avoid cancellation cascade where both
+  // composables' watchers fire simultaneously and cancel each other's requests.
   const { data: myBookings, status: myBookingsStatus, refresh: refreshMyBookings } = useFetch<BookingData[]>(
     () => teamId.value
       ? `/api/crouton-bookings/teams/${teamId.value}/customer-bookings`
       : null,
     {
       key: 'crouton-booking-sidebar-customer-bookings',
-      watch: [teamId],
       server: false,
     },
   )
@@ -70,7 +67,6 @@ export function useBookingCart() {
       : null,
     {
       key: 'crouton-booking-cart-settings',
-      watch: [teamId],
       server: false,
     },
   )
@@ -120,7 +116,7 @@ export function useBookingCart() {
       : null,
     {
       key: 'crouton-booking-cart-locations',
-      watch: [teamId],
+      server: false,
       default: () => [],
     },
   )
