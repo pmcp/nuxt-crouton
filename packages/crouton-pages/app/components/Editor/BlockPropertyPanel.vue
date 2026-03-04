@@ -158,7 +158,7 @@ function onDelete() {
         <UIcon :name="showPreview ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5 text-muted" />
       </button>
       <div v-if="showPreview" class="relative overflow-hidden bg-muted/10" style="height: 200px;">
-        <div style="transform: scale(0.33); transform-origin: top left; width: 303%; pointer-events: none;">
+        <div style="transform: scale(0.33); transform-origin: top center; width: 303%; margin-left: -101.5%; pointer-events: none;">
           <CroutonPagesBlockContent :content="previewDoc" class="p-4" />
         </div>
       </div>
