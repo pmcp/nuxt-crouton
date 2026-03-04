@@ -7,13 +7,21 @@ import { deleteShopProduct } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { productId } = getRouterParams(event)
   if (!productId) {
     throw createError({ status: 400, statusText: 'Missing product ID' })
   }
-  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
 
-  return await deleteShopProduct(productId, team.id, user.id, { role: membership.role })
+  const authTimer = timing.start('auth')
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
+
+  const dbTimer = timing.start('db')
+  const result = await deleteShopProduct(productId, team.id, user.id, { role: membership.role })
+  dbTimer.end()
+  return result
 })"
 `;
 
@@ -24,15 +32,25 @@ import { getAllShopProducts, getShopProductsByIds } from '../../../../database/q
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const query = getQuery(event)
+
+  const dbTimer = timing.start('db')
   if (query.ids) {
     const ids = String(query.ids).split(',')
-    return await getShopProductsByIds(team.id, ids)
+    const result = await getShopProductsByIds(team.id, ids)
+    dbTimer.end()
+    return result
   }
 
-  return await getAllShopProducts(team.id)
+  const result = await getAllShopProducts(team.id)
+  dbTimer.end()
+  return result
 })"
 `;
 
@@ -43,11 +61,16 @@ import { updatePositionShopCategory } from '../../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { categoryId } = getRouterParams(event)
   if (!categoryId) {
     throw createError({ status: 400, statusText: 'Missing category ID' })
   }
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
@@ -59,7 +82,10 @@ export default defineEventHandler(async (event) => {
   // parentId can be null (move to root) or a valid ID
   const parentId = body.parentId ?? null
 
-  return await updatePositionShopCategory(team.id, categoryId, parentId, body.order)
+  const dbTimer = timing.start('db')
+  const result = await updatePositionShopCategory(team.id, categoryId, parentId, body.order)
+  dbTimer.end()
+  return result
 })"
 `;
 
@@ -71,20 +97,28 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import type { ShopProduct } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { productId } = getRouterParams(event)
   if (!productId) {
     throw createError({ status: 400, statusText: 'Missing product ID' })
   }
+
+  const authTimer = timing.start('auth')
   const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody<Partial<ShopProduct>>(event)
 
-  return await updateShopProduct(productId, team.id, user.id, {
+  const dbTimer = timing.start('db')
+  const result = await updateShopProduct(productId, team.id, user.id, {
     name: body.name,
     description: body.description,
     price: body.price,
     active: body.active
   }, { role: membership.role })
+  dbTimer.end()
+  return result
 })"
 `;
 
@@ -95,20 +129,27 @@ import { createShopProduct } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team, user } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
   // Exclude id field to let the database generate it
   const { id, ...dataWithoutId } = body
 
-  return await createShopProduct({
+  const dbTimer = timing.start('db')
+  const result = await createShopProduct({
     ...dataWithoutId,
     teamId: team.id,
     owner: user.id,
     createdBy: user.id,
     updatedBy: user.id
   })
+  dbTimer.end()
+  return result
 })"
 `;
 
@@ -119,7 +160,11 @@ import { reorderSiblingsShopCategories } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
@@ -137,7 +182,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return await reorderSiblingsShopCategories(team.id, body.updates)
+  const dbTimer = timing.start('db')
+  const result = await reorderSiblingsShopCategories(team.id, body.updates)
+  dbTimer.end()
+  return result
 })"
 `;
 
@@ -148,7 +196,11 @@ import { reorderSiblingsShopTags } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
@@ -166,6 +218,9 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return await reorderSiblingsShopTags(team.id, body.updates)
+  const dbTimer = timing.start('db')
+  const result = await reorderSiblingsShopTags(team.id, body.updates)
+  dbTimer.end()
+  return result
 })"
 `;

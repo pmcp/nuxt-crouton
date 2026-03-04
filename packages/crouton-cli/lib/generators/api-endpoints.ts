@@ -16,19 +16,29 @@ import { getAll${prefixedPascalCasePlural}, get${prefixedPascalCasePlural}ByIds 
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const query = getQuery(event)${hasTranslations
     ? `
   // Accept locale for future translation handling
   const locale = String(query.locale || 'en')`
     : ''}
+
+  const dbTimer = timing.start('db')
   if (query.ids) {
     const ids = String(query.ids).split(',')
-    return await get${prefixedPascalCasePlural}ByIds(team.id, ids)
+    const result = await get${prefixedPascalCasePlural}ByIds(team.id, ids)
+    dbTimer.end()
+    return result
   }
 
-  return await getAll${prefixedPascalCasePlural}(team.id)
+  const result = await getAll${prefixedPascalCasePlural}(team.id)
+  dbTimer.end()
+  return result
 })`
 }
 
@@ -92,7 +102,7 @@ import { nanoid } from 'nanoid'`
 
   // Generate the create call based on hierarchy
   const createCall = hasHierarchy
-    ? `return await create${prefixedPascalCase}({
+    ? `const result = await create${prefixedPascalCase}({
     ...dataWithoutId,
     id: recordId,
     ${pathField},
@@ -102,7 +112,7 @@ import { nanoid } from 'nanoid'`
     createdBy: user.id,
     updatedBy: user.id
   })`
-    : `return await create${prefixedPascalCase}({
+    : `const result = await create${prefixedPascalCase}({
     ...dataWithoutId,
     teamId: team.id,${hasUserIdField ? '\n    userId: user.id,' : ''}
     owner: user.id,
@@ -116,14 +126,21 @@ ${imports}
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team, user } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
   // Exclude id field${hasHierarchy ? ' (we generate it for path calculation)' : ' to let the database generate it'}
   const { id, ...dataWithoutId } = body
 ${hierarchyCalc}
-${dateConversions}  ${createCall}
+${dateConversions}  const dbTimer = timing.start('db')
+  ${createCall}
+  dbTimer.end()
+  return result
 })`
 }
 
@@ -161,11 +178,16 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import type { ${prefixedPascalCase} } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { ${camelCase}Id } = getRouterParams(event)
   if (!${camelCase}Id) {
     throw createError({ status: 400, statusText: 'Missing ${singular} ID' })
   }
+
+  const authTimer = timing.start('auth')
   const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody<Partial<${prefixedPascalCase}>>(event)${hasTranslations
     ? `
@@ -185,9 +207,12 @@ export default defineEventHandler(async (event) => {
   }`
     : ''}
 
-  return await update${prefixedPascalCase}(${camelCase}Id, team.id, user.id, {
+  const dbTimer = timing.start('db')
+  const result = await update${prefixedPascalCase}(${camelCase}Id, team.id, user.id, {
 ${fieldSelection}
   }, { role: membership.role })
+  dbTimer.end()
+  return result
 })`
 }
 
@@ -203,13 +228,21 @@ import { delete${prefixedPascalCase} } from '${queriesPath}'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { ${camelCase}Id } = getRouterParams(event)
   if (!${camelCase}Id) {
     throw createError({ status: 400, statusText: 'Missing ${singular} ID' })
   }
-  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
 
-  return await delete${prefixedPascalCase}(${camelCase}Id, team.id, user.id, { role: membership.role })
+  const authTimer = timing.start('auth')
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
+
+  const dbTimer = timing.start('db')
+  const result = await delete${prefixedPascalCase}(${camelCase}Id, team.id, user.id, { role: membership.role })
+  dbTimer.end()
+  return result
 })`
 }
 
@@ -227,11 +260,16 @@ import { updatePosition${prefixedPascalCase} } from '${queriesPath}'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { ${camelCase}Id } = getRouterParams(event)
   if (!${camelCase}Id) {
     throw createError({ status: 400, statusText: 'Missing ${singular} ID' })
   }
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
@@ -243,7 +281,10 @@ export default defineEventHandler(async (event) => {
   // parentId can be null (move to root) or a valid ID
   const parentId = body.parentId ?? null
 
-  return await updatePosition${prefixedPascalCase}(team.id, ${camelCase}Id, parentId, body.order)
+  const dbTimer = timing.start('db')
+  const result = await updatePosition${prefixedPascalCase}(team.id, ${camelCase}Id, parentId, body.order)
+  dbTimer.end()
+  return result
 })`
 }
 
@@ -265,7 +306,11 @@ import { reorderSiblings${prefixedPascalCasePlural} } from '${queriesPath}'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
@@ -283,6 +328,9 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return await reorderSiblings${prefixedPascalCasePlural}(team.id, body.updates)
+  const dbTimer = timing.start('db')
+  const result = await reorderSiblings${prefixedPascalCasePlural}(team.id, body.updates)
+  dbTimer.end()
+  return result
 })`
 }
