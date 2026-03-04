@@ -1,6 +1,12 @@
 <script setup lang="ts">
+const { teamName } = useTeamContext()
+
 useHead({
-  link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
+  link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+  titleTemplate: (title) => {
+    const name = teamName.value
+    return title && name ? `${title} | ${name}` : title || name || ''
+  }
 })
 </script>
 

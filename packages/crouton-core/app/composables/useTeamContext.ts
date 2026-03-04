@@ -77,9 +77,27 @@ export function useTeamContext() {
     return typeof teamParam === 'string' ? teamParam : undefined
   }
 
+  /**
+   * Get team display name from useTeam()
+   * Falls back to team slug if name not available
+   */
+  const getTeamName = (): string | undefined => {
+    try {
+      const { currentTeam } = useTeam()
+      if (currentTeam?.value?.name) {
+        return currentTeam.value.name
+      }
+    } catch {
+      // useTeam not available
+    }
+
+    return getTeamSlug()
+  }
+
   // Also expose as computed refs for @crouton/auth compatibility
   const teamId = computed<string | null>(() => getTeamId() ?? null)
   const teamSlug = computed<string | null>(() => getTeamSlug() ?? null)
+  const teamName = computed<string | null>(() => getTeamName() ?? null)
 
   /**
    * Whether URLs should include team param
@@ -133,9 +151,11 @@ export function useTeamContext() {
     // Function-based getters (original API)
     getTeamId,
     getTeamSlug,
+    getTeamName,
     // Computed refs (@crouton/auth compatible API)
     teamId,
     teamSlug,
+    teamName,
     // State
     hasTeamContext,
     useTeamInUrl,
