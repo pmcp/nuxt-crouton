@@ -40,85 +40,68 @@ export interface FetchSchemaOptions {
 }
 
 export function useTriageNotionSchema() {
-  // SSR-safe shared state via useState
-  const fetchingSchema = useState('triage-notion-schema-loading', () => false)
-  const schemaFetchError = useState<string | null>('triage-notion-schema-error', () => null)
-  const fetchedSchema = useState<NotionSchema | null>('triage-notion-schema-data', () => null)
+  const fetchParams = ref<FetchSchemaOptions | null>(null)
+
+  const { data: schema, status, error: fetchError, execute, clear } = useAsyncData<NotionSchema | null>(
+    `triage-notion-schema-${useId()}`,
+    async () => {
+      const opts = fetchParams.value
+      if (!opts?.databaseId || (!opts.notionToken && !opts.accountId) || !opts.teamId) {
+        throw new Error('Please provide Notion Database ID, a token or connected account, and Team ID')
+      }
+
+      const queryParams: Record<string, string> = {}
+      if (opts.accountId) queryParams.accountId = opts.accountId
+      else if (opts.notionToken) queryParams.notionToken = opts.notionToken
+
+      const response = await $fetch<any>(
+        `/api/crouton-triage/teams/${opts.teamId}/notion/schema/${opts.databaseId}`,
+        { query: queryParams },
+      )
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to fetch schema')
+      }
+
+      return response as NotionSchema
+    },
+    { immediate: false },
+  )
+
+  const loading = computed(() => status.value === 'pending')
+  const error = computed(() => {
+    if (!fetchError.value) return null
+    const err = fetchError.value as any
+    return err.data?.statusMessage || err.message || 'Failed to fetch schema'
+  })
 
   /**
    * Fetch Notion database schema
    */
   async function fetchNotionSchema(options: FetchSchemaOptions): Promise<NotionSchema | null> {
-    const { databaseId, notionToken, teamId, accountId } = options
-
-    if (!databaseId || (!notionToken && !accountId) || !teamId) {
-      schemaFetchError.value = 'Please provide Notion Database ID, a token or connected account, and Team ID'
-      return null
-    }
-
-    fetchingSchema.value = true
-    schemaFetchError.value = null
-
-    try {
-      const queryParams: Record<string, string> = {}
-      if (accountId) {
-        queryParams.accountId = accountId
-      } else if (notionToken) {
-        queryParams.notionToken = notionToken
-      }
-
-      const response = await $fetch<any>(`/api/crouton-triage/teams/${teamId}/notion/schema/${databaseId}`, {
-        query: queryParams
-      })
-
-      if (response.success) {
-        fetchedSchema.value = response
-        return response
-      } else {
-        throw new Error(response.error || 'Failed to fetch schema')
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch schema:', error)
-      schemaFetchError.value = error.data?.statusMessage || error.message || 'Failed to fetch schema'
-      fetchedSchema.value = null
-      return null
-    } finally {
-      fetchingSchema.value = false
-    }
+    fetchParams.value = options
+    await execute()
+    return schema.value
   }
 
   /**
    * Clear schema and error state
    */
   function clearSchema() {
-    fetchedSchema.value = null
-    schemaFetchError.value = null
+    clear()
+    fetchParams.value = null
   }
 
   return {
-    /**
-     * Fetch Notion database schema
-     */
+    /** Fetch Notion database schema */
     fetchNotionSchema,
-
-    /**
-     * Clear schema state
-     */
+    /** Clear schema state */
     clearSchema,
-
-    /**
-     * Fetched schema result
-     */
-    schema: fetchedSchema,
-
-    /**
-     * Whether schema is currently being fetched
-     */
-    loading: fetchingSchema,
-
-    /**
-     * Error message if schema fetch failed
-     */
-    error: schemaFetchError,
+    /** Fetched schema result */
+    schema,
+    /** Whether schema is currently being fetched */
+    loading,
+    /** Error message if schema fetch failed */
+    error,
   }
 }

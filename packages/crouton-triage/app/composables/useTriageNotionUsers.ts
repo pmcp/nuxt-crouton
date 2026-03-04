@@ -34,73 +34,61 @@ export interface FetchNotionUsersOptions {
 }
 
 export function useTriageNotionUsers() {
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const users = ref<NotionUser[]>([])
+  const fetchParams = ref<FetchNotionUsersOptions | null>(null)
 
-  /**
-   * Fetch Notion workspace users
-   */
-  async function fetchNotionUsers(options: FetchNotionUsersOptions): Promise<NotionUser[]> {
-    const { notionToken, accountId, teamId, includeBots = false } = options
+  const { data: users, status, error: fetchError, execute, clear } = useAsyncData<NotionUser[]>(
+    `triage-notion-users-${useId()}`,
+    async () => {
+      const opts = fetchParams.value
+      if (!opts || ((!opts.notionToken && !opts.accountId) || !opts.teamId)) {
+        throw new Error('Please provide a Notion token or account ID, and team ID')
+      }
 
-    if ((!notionToken && !accountId) || !teamId) {
-      error.value = 'Please provide a Notion token or account ID, and team ID'
-      return []
-    }
-
-    loading.value = true
-    error.value = null
-
-    try {
-      const query: Record<string, string> = { includeBots: includeBots.toString() }
-      if (accountId) query.accountId = accountId
-      else if (notionToken) query.notionToken = notionToken
+      const query: Record<string, string> = { includeBots: (opts.includeBots ?? false).toString() }
+      if (opts.accountId) query.accountId = opts.accountId
+      else if (opts.notionToken) query.notionToken = opts.notionToken
 
       const response = await $fetch<{
         success: boolean
         users: NotionUser[]
         total: number
-      }>(`/api/crouton-triage/teams/${teamId}/notion/users`, {
+      }>(`/api/crouton-triage/teams/${opts.teamId}/notion/users`, {
         query,
       })
 
-      if (response.success) {
-        users.value = response.users
-        return response.users
-      } else {
-        throw new Error('Failed to fetch Notion users')
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch Notion users:', err)
+      if (!response.success) throw new Error('Failed to fetch Notion users')
+      return response.users
+    },
+    { immediate: false, default: () => [] as NotionUser[] },
+  )
 
-      if (err.statusCode === 401) {
-        error.value = 'Invalid Notion token or insufficient permissions'
-      } else if (err.statusCode === 429) {
-        error.value = 'Notion rate limit exceeded. Please try again later.'
-      } else {
-        error.value = err.data?.statusMessage || err.message || 'Failed to fetch Notion users'
-      }
+  const loading = computed(() => status.value === 'pending')
+  const error = computed(() => {
+    if (!fetchError.value) return null
+    const err = fetchError.value as any
+    if (err.statusCode === 401) return 'Invalid Notion token or insufficient permissions'
+    if (err.statusCode === 429) return 'Notion rate limit exceeded. Please try again later.'
+    return err.data?.statusMessage || err.message || 'Failed to fetch Notion users'
+  })
 
-      users.value = []
-      return []
-    } finally {
-      loading.value = false
-    }
+  /**
+   * Fetch Notion workspace users
+   */
+  async function fetchNotionUsers(options: FetchNotionUsersOptions): Promise<NotionUser[]> {
+    fetchParams.value = options
+    await execute()
+    return users.value
   }
 
   /**
    * Search users by name or email
    */
   function searchUsers(query: string): NotionUser[] {
-    if (!query.trim()) {
-      return users.value
-    }
-
+    if (!query.trim()) return users.value
     const lowerQuery = query.toLowerCase()
     return users.value.filter(user =>
-      user.name.toLowerCase().includes(lowerQuery) ||
-      (user.email && user.email.toLowerCase().includes(lowerQuery))
+      user.name.toLowerCase().includes(lowerQuery)
+      || (user.email && user.email.toLowerCase().includes(lowerQuery)),
     )
   }
 
@@ -118,7 +106,7 @@ export function useTriageNotionUsers() {
     if (!email) return undefined
     const lowerEmail = email.toLowerCase()
     return users.value.find(user =>
-      user.email && user.email.toLowerCase() === lowerEmail
+      user.email && user.email.toLowerCase() === lowerEmail,
     )
   }
 
@@ -126,8 +114,8 @@ export function useTriageNotionUsers() {
    * Clear users and error state
    */
   function clearUsers() {
-    users.value = []
-    error.value = null
+    clear()
+    fetchParams.value = null
   }
 
   return {

@@ -8,7 +8,6 @@
  * ```ts
  * const { accounts, fetchAccounts, verifyAccount, createManualAccount } = useTriageConnectedAccounts(teamId)
  *
- * await fetchAccounts()
  * const slackAccounts = getAccountsByProvider('slack')
  * ```
  */
@@ -16,33 +15,19 @@
 import type { ConnectedAccount, AccountProvider } from '~/layers/triage/types'
 
 export function useTriageConnectedAccounts(teamId: string | Ref<string>) {
-  const resolvedTeamId = computed(() => isRef(teamId) ? teamId.value : teamId)
+  const resolvedTeamId = computed(() => toValue(teamId))
 
-  const accounts = ref<ConnectedAccount[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const { data: accounts, status, error: fetchError, refresh } = useFetch<ConnectedAccount[]>(
+    () => `/api/teams/${resolvedTeamId.value}/triage-accounts`,
+    { default: () => [] as ConnectedAccount[] },
+  )
 
-  /**
-   * Fetch all connected accounts for the team
-   */
-  async function fetchAccounts() {
-    if (!resolvedTeamId.value) return
-
-    loading.value = true
-    error.value = null
-
-    try {
-      const response = await $fetch<ConnectedAccount[]>(
-        `/api/teams/${resolvedTeamId.value}/triage-accounts`,
-      )
-      accounts.value = response || []
-    } catch (err: any) {
-      error.value = err.data?.statusMessage || err.message || 'Failed to fetch accounts'
-      console.error('[useTriageConnectedAccounts] fetchAccounts failed:', err)
-    } finally {
-      loading.value = false
-    }
-  }
+  const loading = computed(() => status.value === 'pending')
+  const error = computed(() => {
+    if (!fetchError.value) return null
+    const err = fetchError.value as any
+    return err.data?.statusMessage || err.message || 'Failed to fetch accounts'
+  })
 
   /**
    * Get accounts filtered by provider
@@ -65,7 +50,7 @@ export function useTriageConnectedAccounts(teamId: string | Ref<string>) {
         { method: 'POST' },
       )
 
-      // Update local state
+      // Optimistic update
       const index = accounts.value.findIndex(a => a.id === accountId)
       if (index !== -1) {
         accounts.value[index] = {
@@ -107,8 +92,7 @@ export function useTriageConnectedAccounts(teamId: string | Ref<string>) {
         },
       )
 
-      // Refresh accounts list
-      await fetchAccounts()
+      await refresh()
 
       return result
     } catch (err: any) {
@@ -129,7 +113,7 @@ export function useTriageConnectedAccounts(teamId: string | Ref<string>) {
         { method: 'DELETE' },
       )
 
-      // Remove from local state
+      // Optimistic update
       accounts.value = accounts.value.filter(a => a.id !== accountId)
     } catch (err: any) {
       console.error('[useTriageConnectedAccounts] deleteAccount failed:', err)
@@ -144,8 +128,8 @@ export function useTriageConnectedAccounts(teamId: string | Ref<string>) {
     loading,
     /** Error message */
     error,
-    /** Fetch all accounts */
-    fetchAccounts,
+    /** Refresh accounts list */
+    fetchAccounts: refresh,
     /** Get accounts by provider (returns computed) */
     getAccountsByProvider,
     /** Verify account token */

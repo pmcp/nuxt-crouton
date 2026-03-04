@@ -45,7 +45,7 @@ These use `ref()` at module scope instead of `useState()`, causing state to pers
 - [ ] **crouton-auth** — `useAccountSettingsModal.ts` — `isOpen` and `defaultTab` refs
 - [ ] **crouton-admin** — `useImpersonation.ts` — impersonation state refs
 - [ ] **crouton-core** — `useTreeDrag.ts` — `moveBlocked`, `autoExpandedIds`, `expandTimeouts`
-- [ ] **crouton-triage** — `useTriageNotionSchema.ts` — `fetchingSchema`, `schemaFetchError`, `fetchedSchema`
+- [x] **crouton-triage** — `useTriageNotionSchema.ts` — ~~`fetchingSchema`, `schemaFetchError`, `fetchedSchema`~~ → replaced with `useAsyncData` (SSR-safe)
 
 **Fix for all**: Replace `ref()` with `useState('key', () => defaultValue)`.
 
@@ -76,10 +76,10 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - [x] **crouton-admin** — `useAdminUsers.ts` — ~~identical boilerplate~~ → extracted `withLoading()` helper, replaced `URLSearchParams` with `$fetch` `query` option
 - [ ] **crouton-auth** — `useAuthCache.ts` (184 lines reimplementing Nuxt caching)
 - [ ] **crouton-core** — `useCollectionItem.ts`
-- [ ] **crouton-triage** — `useTriageConnectedAccounts.ts`
-- [ ] **crouton-triage** — `useTriageSlackUsers.ts`
-- [ ] **crouton-triage** — `useTriageNotionUsers.ts`
-- [ ] **crouton-triage** — `useTriageNotionSchema.ts`
+- [x] **crouton-triage** — `useTriageConnectedAccounts.ts` — ~~manual $fetch + ref boilerplate~~ → `useFetch` for data fetching, mutations kept as `$fetch`
+- [x] **crouton-triage** — `useTriageSlackUsers.ts` — ~~manual $fetch + ref boilerplate~~ → `useAsyncData` with `immediate: false`, error mapping preserved
+- [x] **crouton-triage** — `useTriageNotionUsers.ts` — ~~manual $fetch + ref boilerplate~~ → `useAsyncData` with `immediate: false`, utility functions preserved
+- [x] **crouton-triage** — `useTriageNotionSchema.ts` — ~~manual $fetch + ref boilerplate~~ → `useAsyncData` with `immediate: false`, replaced `useState` with Nuxt-managed state
 
 **Fix**: Replace with `useFetch(url, { query })` or `useAsyncData`. Gets SSR support, dedup, and error/loading states for free.
 
@@ -360,7 +360,7 @@ These patterns are correct across the entire codebase:
 
 ### Phase 3: Architecture Improvements (Higher effort)
 11. ~~Split `useAuth` god composable~~ ✅ split into `usePasskeys`, `useTwoFactor`, `usePasswordReset`
-12. Replace manual fetch boilerplate with `useFetch`
+12. ~~Replace manual fetch boilerplate with `useFetch`~~ ✅ (easy targets: 4 triage composables → `useFetch`/`useAsyncData`; remaining: `useAdminStats`, `useCollectionItem`)
 13. Extract shared scaffold infrastructure
 14. Refactor triage duplications (14a ✅ similarity/field-mapping deduplicated into `shared/utils/field-mapping.ts`)
 15. Split `useBookingCart` and `Flow.vue`
@@ -375,7 +375,7 @@ These patterns are correct across the entire codebase:
 | 14 | Triage duplications | 4 files | Medium | Split | **14a ✅**: `calculateSimilarity` + field-mapping deduplicated into `shared/utils/field-mapping.ts`. **14b**: Email parser (1,011L, 3 functions sharing 60%) = separate session. |
 | 15 | Split BookingCart + Flow | 2 large files | High | No — 1 each | BookingCart: 669L, 42 returns. Flow.vue: 1,046L (812 script). Both deeply interconnected internally. |
 
-**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → 12 (easy targets) → 13 → 15a (booking) → 15b (flow) → 14b (email parser) → 12 (useCollectionItem)
+**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → 13 → 15a (booking) → 15b (flow) → 14b (email parser) → 12 (useCollectionItem)
 
 ### Phase 4: Infrastructure (When time permits)
 16. Replace custom triage infrastructure (logger, rate limiter, metrics)

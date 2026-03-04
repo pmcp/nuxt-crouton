@@ -34,70 +34,61 @@ export interface FetchSlackUsersOptions {
 }
 
 export function useTriageSlackUsers() {
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const users = ref<SlackUser[]>([])
+  const fetchParams = ref<FetchSlackUsersOptions | null>(null)
 
-  /**
-   * Fetch Slack workspace users
-   */
-  async function fetchSlackUsers(options: FetchSlackUsersOptions): Promise<SlackUser[]> {
-    const { slackToken, accountId, teamId } = options
+  const { data: users, status, error: fetchError, execute, clear } = useAsyncData<SlackUser[]>(
+    `triage-slack-users-${useId()}`,
+    async () => {
+      const opts = fetchParams.value
+      if (!opts || ((!opts.slackToken && !opts.accountId) || !opts.teamId)) {
+        throw new Error('Please provide a Slack token or account ID, and team ID')
+      }
 
-    if ((!slackToken && !accountId) || !teamId) {
-      error.value = 'Please provide a Slack token or account ID, and team ID'
-      return []
-    }
-
-    loading.value = true
-    error.value = null
-
-    try {
       const query: Record<string, string> = {}
-      if (accountId) query.accountId = accountId
-      else if (slackToken) query.slackToken = slackToken
+      if (opts.accountId) query.accountId = opts.accountId
+      else if (opts.slackToken) query.slackToken = opts.slackToken
 
       const response = await $fetch<{
         success: boolean
         users: SlackUser[]
         total: number
-      }>(`/api/crouton-triage/teams/${teamId}/slack/users`, {
+      }>(`/api/crouton-triage/teams/${opts.teamId}/slack/users`, {
         query,
       })
 
-      if (response.success) {
-        users.value = response.users
-        return response.users
-      } else {
-        throw new Error('Failed to fetch Slack users')
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch Slack users:', err)
+      if (!response.success) throw new Error('Failed to fetch Slack users')
+      return response.users
+    },
+    { immediate: false, default: () => [] as SlackUser[] },
+  )
 
-      // Handle specific error cases
-      if (err.statusCode === 403 || err.data?.statusMessage?.includes('missing_scope')) {
-        error.value = 'Slack integration needs re-authorization with users:read scope'
-      } else if (err.statusCode === 401) {
-        error.value = 'Invalid Slack token or insufficient permissions'
-      } else if (err.statusCode === 429) {
-        error.value = 'Slack rate limit exceeded. Please try again later.'
-      } else {
-        error.value = err.data?.statusMessage || err.message || 'Failed to fetch Slack users'
-      }
-
-      users.value = []
-      return []
-    } finally {
-      loading.value = false
+  const loading = computed(() => status.value === 'pending')
+  const error = computed(() => {
+    if (!fetchError.value) return null
+    const err = fetchError.value as any
+    if (err.statusCode === 403 || err.data?.statusMessage?.includes('missing_scope')) {
+      return 'Slack integration needs re-authorization with users:read scope'
     }
+    if (err.statusCode === 401) return 'Invalid Slack token or insufficient permissions'
+    if (err.statusCode === 429) return 'Slack rate limit exceeded. Please try again later.'
+    return err.data?.statusMessage || err.message || 'Failed to fetch Slack users'
+  })
+
+  /**
+   * Fetch Slack workspace users
+   */
+  async function fetchSlackUsers(options: FetchSlackUsersOptions): Promise<SlackUser[]> {
+    fetchParams.value = options
+    await execute()
+    return users.value
   }
 
   /**
    * Clear users and error state
    */
   function clearUsers() {
-    users.value = []
-    error.value = null
+    clear()
+    fetchParams.value = null
   }
 
   return {
