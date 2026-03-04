@@ -76,6 +76,7 @@ watch(() => props.loading, (isLoading, wasLoading) => {
 
 <template>
   <button
+    type="button"
     class="h-7 rounded-md flex items-center gap-1.5 justify-center shrink-0 transition-all cursor-pointer px-2.5 text-xs font-medium whitespace-nowrap"
     :class="[
       disabled && 'opacity-50 cursor-not-allowed',
