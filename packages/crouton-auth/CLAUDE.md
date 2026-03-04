@@ -63,7 +63,10 @@ const safeUrl = sanitizeRedirectUrl(redirectParam)  // '/' on external URLs
 
 | Composable | Purpose |
 |------------|---------|
-| `useAuth()` | Authentication methods (login, register, logout, OAuth, passkeys, 2FA) |
+| `useAuth()` | Core auth (login, register, logout, OAuth, magic link) + capability flags |
+| `usePasskeys()` | Passkey/WebAuthn management, login, browser support detection |
+| `useTwoFactor()` | 2FA enable/disable, TOTP verification, backup codes |
+| `usePasswordReset()` | Forgot password and reset flows |
 | `useSession()` | Reactive session state |
 | `useTeam()` | Team/organization management |
 | `useTeamContext()` | Current team context |

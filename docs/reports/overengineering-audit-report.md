@@ -359,7 +359,7 @@ These patterns are correct across the entire codebase:
 10. ~~Consolidate core utils (slugify, correlationId)~~ ✅ done in Phase 2a
 
 ### Phase 3: Architecture Improvements (Higher effort)
-11. Split `useAuth` god composable
+11. ~~Split `useAuth` god composable~~ ✅ split into `usePasskeys`, `useTwoFactor`, `usePasswordReset`
 12. Replace manual fetch boilerplate with `useFetch`
 13. Extract shared scaffold infrastructure
 14. Refactor triage duplications
