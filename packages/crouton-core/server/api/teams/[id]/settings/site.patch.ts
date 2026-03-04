@@ -11,7 +11,8 @@ import { teamSettings, type TeamSiteSettings } from '@fyit/crouton-auth/server/d
 
 // Validation schema for site settings
 const siteSettingsSchema = z.object({
-  publicSiteEnabled: z.boolean().optional()
+  publicSiteEnabled: z.boolean().optional(),
+  favicon: z.string().optional()
 })
 
 export default defineEventHandler(async (event) => {
@@ -30,7 +31,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const siteData: TeamSiteSettings = result.data
+  const patch = result.data
 
   // Get existing settings or create new
   const db = useDB()
@@ -39,6 +40,10 @@ export default defineEventHandler(async (event) => {
     .from(teamSettings)
     .where(eq(teamSettings.teamId, team.id))
     .limit(1)
+
+  // Merge with existing site settings so PATCH doesn't wipe unrelated fields
+  const currentSite = (existing[0]?.siteSettings as TeamSiteSettings | null) ?? {}
+  const siteData: TeamSiteSettings = { ...currentSite, ...patch }
 
   if (existing.length > 0) {
     // Update existing record
