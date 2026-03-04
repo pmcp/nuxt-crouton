@@ -27,17 +27,6 @@ export interface GeocodeResult {
   }
 }
 
-interface MapboxFeature {
-  center: [number, number]
-  place_name: string
-  text: string
-  context?: Array<{ id: string; text: string }>
-}
-
-interface MapboxGeocodeResponse {
-  features: MapboxFeature[]
-}
-
 export function useGeocode() {
   const loading = ref(false)
   const error = ref<string | null>(null)

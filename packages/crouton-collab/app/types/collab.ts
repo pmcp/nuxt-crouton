@@ -212,29 +212,6 @@ export interface UseCollabSyncOptions {
 }
 
 /**
- * Options for the useCollabPresence composable.
- *
- * @example
- * ```ts
- * const options: UseCollabPresenceOptions = {
- *   users: awarenessStates,
- *   currentUserId: 'user-123'
- * }
- * ```
- */
-export interface UseCollabPresenceOptions {
-  /**
-   * Array of awareness states from connected users.
-   */
-  users: CollabAwarenessState[]
-
-  /**
-   * Current user's ID for filtering self from otherUsers.
-   */
-  currentUserId: string
-}
-
-/**
  * Options for the useCollabEditor composable (TipTap integration).
  *
  * @example

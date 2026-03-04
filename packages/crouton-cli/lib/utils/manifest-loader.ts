@@ -414,7 +414,7 @@ export function getGeneratorContributions(
  * Walk up from cwd to find the monorepo packages/ directory.
  * Looks for pnpm-workspace.yaml as the root marker.
  */
-async function findPackagesDir(startDir: string): Promise<string | null> {
+export async function findPackagesDir(startDir: string): Promise<string | null> {
   let dir = resolve(startDir)
   const root = dirname(dir) === dir ? dir : '/' // filesystem root
 

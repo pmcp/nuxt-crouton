@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick, ref } from 'vue'
-import type { YjsFlowNode, YjsAwarenessState } from '../../app/types/yjs'
+import type { YjsFlowNode } from '../../app/types/yjs'
 
 // Shared WebSocket instances for tests
 let wsInstances: MockWebSocket[] = []

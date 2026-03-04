@@ -1,6 +1,6 @@
 import { computed, type Ref } from 'vue'
-// Type is re-exported from our local types file
 import type { CollabAwarenessState } from '../types/yjs'
+import { generateUserColor } from '@fyit/crouton-collab/utils'
 
 interface UseFlowPresenceOptions {
   users: Ref<CollabAwarenessState[]>
@@ -69,14 +69,4 @@ export function useFlowPresence(options: UseFlowPresenceOptions) {
     getNodePresenceStyle,
     getUserColor
   }
-}
-
-// Helper to generate consistent color from user ID
-function generateUserColor(userId: string): string {
-  let hash = 0
-  for (let i = 0; i < userId.length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash) % 360
-  return `hsl(${hue}, 70%, 50%)`
 }

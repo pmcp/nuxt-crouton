@@ -1,7 +1,7 @@
 import { ref, computed, onMounted, watch, type Ref, type ComputedRef } from 'vue'
 import { useTimeoutFn } from '@vueuse/core'
 import type { UseCollabConnectionReturn } from './useCollabConnection'
-import { generateUserColor } from './useCollabConnection'
+import { generateUserColor } from '../utils/avatar'
 import type { CollabUser, CollabAwarenessState } from '../types/collab'
 
 export interface UseCollabPresenceOptions {

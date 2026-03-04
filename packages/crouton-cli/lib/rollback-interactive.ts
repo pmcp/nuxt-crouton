@@ -1,59 +1,12 @@
 #!/usr/bin/env node
 // rollback-interactive.ts — Interactive UI for selecting collections to rollback
 
-import fsp from 'node:fs/promises'
-import path from 'node:path'
 import * as p from '@clack/prompts'
 import consola from 'consola'
 
 // Import utilities
-import { fileExists } from './rollback-collection.ts'
 import { rollbackLayer, rollbackMultiple } from './rollback-bulk.ts'
-
-async function getAllCollectionsInLayer(layer: string): Promise<string[]> {
-  const layerCollectionsPath = path.resolve('layers', layer, 'collections')
-
-  if (!await fileExists(layerCollectionsPath)) {
-    return []
-  }
-
-  try {
-    const entries = await fsp.readdir(layerCollectionsPath, { withFileTypes: true })
-    return entries
-      .filter(entry => entry.isDirectory())
-      .map(entry => entry.name)
-  } catch (error) {
-    consola.error(`Error reading layer collections: ${error.message}`)
-    return []
-  }
-}
-
-async function getAllLayers(): Promise<string[]> {
-  const layersPath = path.resolve('layers')
-
-  if (!await fileExists(layersPath)) {
-    return []
-  }
-
-  try {
-    const entries = await fsp.readdir(layersPath, { withFileTypes: true })
-    const layers = []
-
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue
-
-      const collectionsPath = path.join(layersPath, entry.name, 'collections')
-      if (await fileExists(collectionsPath)) {
-        layers.push(entry.name)
-      }
-    }
-
-    return layers
-  } catch (error) {
-    consola.error(`Error reading layers: ${error.message}`)
-    return []
-  }
-}
+import { getAllCollectionsInLayer, getAllLayers } from './utils/layer-discovery.ts'
 
 interface LayerStats {
   layer: string

@@ -353,14 +353,4 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
   }
 }
 
-/**
- * Generate a consistent color from a user ID
- */
-export function generateUserColor(userId: string): string {
-  let hash = 0
-  for (let i = 0; i < userId.length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash) % 360
-  return `hsl(${hue}, 70%, 50%)`
-}
+// generateUserColor is now in app/utils/avatar.ts (auto-imported)

@@ -6,10 +6,10 @@
 import { describe, it, expect } from 'vitest'
 import { ref, computed } from 'vue'
 import { useFlowPresence } from '../../app/composables/useFlowPresence'
-import type { YjsAwarenessState } from '../../app/types/yjs'
+import type { CollabAwarenessState as AwarenessState } from '../../app/types/yjs'
 
 describe('useFlowPresence', () => {
-  const createUser = (id: string, name: string, color: string): YjsAwarenessState => ({
+  const createUser = (id: string, name: string, color: string): AwarenessState => ({
     user: { id, name, color },
     cursor: null,
     selectedNodeId: null
@@ -17,7 +17,7 @@ describe('useFlowPresence', () => {
 
   describe('otherUsers', () => {
     it('filters out current user', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         createUser('user-1', 'Alice', '#ff0000'),
         createUser('user-2', 'Bob', '#00ff00'),
         createUser('user-3', 'Charlie', '#0000ff')
@@ -33,7 +33,7 @@ describe('useFlowPresence', () => {
     })
 
     it('returns all users when currentUserId is undefined', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         createUser('user-1', 'Alice', '#ff0000'),
         createUser('user-2', 'Bob', '#00ff00')
       ])
@@ -47,7 +47,7 @@ describe('useFlowPresence', () => {
     })
 
     it('returns empty array when no users', () => {
-      const users = ref<YjsAwarenessState[]>([])
+      const users = ref<AwarenessState[]>([])
 
       const { otherUsers } = useFlowPresence({
         users,
@@ -58,7 +58,7 @@ describe('useFlowPresence', () => {
     })
 
     it('is reactive to user changes', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         createUser('user-1', 'Alice', '#ff0000')
       ])
 
@@ -77,7 +77,7 @@ describe('useFlowPresence', () => {
 
   describe('getUsersSelectingNode', () => {
     it('returns users selecting a specific node', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         { ...createUser('user-1', 'Alice', '#ff0000'), selectedNodeId: 'node-1' },
         { ...createUser('user-2', 'Bob', '#00ff00'), selectedNodeId: 'node-2' },
         { ...createUser('user-3', 'Charlie', '#0000ff'), selectedNodeId: 'node-1' }
@@ -95,7 +95,7 @@ describe('useFlowPresence', () => {
     })
 
     it('returns empty array when no users selecting node', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         { ...createUser('user-1', 'Alice', '#ff0000'), selectedNodeId: 'node-2' }
       ])
 
@@ -110,7 +110,7 @@ describe('useFlowPresence', () => {
     })
 
     it('excludes current user from selecting users', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         { ...createUser('current-user', 'Me', '#ff0000'), selectedNodeId: 'node-1' },
         { ...createUser('user-2', 'Bob', '#00ff00'), selectedNodeId: 'node-1' }
       ])
@@ -129,7 +129,7 @@ describe('useFlowPresence', () => {
 
   describe('getNodePresenceStyle', () => {
     it('returns empty object when no users selecting node', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         { ...createUser('user-1', 'Alice', '#ff0000'), selectedNodeId: null }
       ])
 
@@ -144,7 +144,7 @@ describe('useFlowPresence', () => {
     })
 
     it('returns box-shadow and border color for first selecting user', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         { ...createUser('user-1', 'Alice', '#ff0000'), selectedNodeId: 'node-1' },
         { ...createUser('user-2', 'Bob', '#00ff00'), selectedNodeId: 'node-1' }
       ])
@@ -163,7 +163,7 @@ describe('useFlowPresence', () => {
     })
 
     it('uses fallback color when user color is undefined', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         {
           user: { id: 'user-1', name: 'Alice', color: undefined as unknown as string },
           cursor: null,
@@ -185,7 +185,7 @@ describe('useFlowPresence', () => {
     })
 
     it('is reactive to selection changes', () => {
-      const users = ref<YjsAwarenessState[]>([
+      const users = ref<AwarenessState[]>([
         { ...createUser('user-1', 'Alice', '#ff0000'), selectedNodeId: null }
       ])
 

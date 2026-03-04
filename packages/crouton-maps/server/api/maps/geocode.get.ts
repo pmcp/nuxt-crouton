@@ -11,16 +11,7 @@
  * The access token is read from private runtimeConfig (never exposed to the client).
  */
 
-interface MapboxFeature {
-  center: [number, number]
-  place_name: string
-  text: string
-  context?: Array<{ id: string; text: string }>
-}
-
-interface MapboxGeocodeResponse {
-  features: MapboxFeature[]
-}
+import type { MapboxGeocodeResponse } from '~~/shared/types/geocode'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)

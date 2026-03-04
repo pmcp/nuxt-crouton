@@ -24,16 +24,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Map style URL lookup
-const STYLE_URLS: Record<string, string> = {
-  streets: 'mapbox://styles/mapbox/streets-v12',
-  light: 'mapbox://styles/mapbox/light-v11',
-  dark: 'mapbox://styles/mapbox/dark-v11',
-  satellite: 'mapbox://styles/mapbox/satellite-v9',
-  outdoors: 'mapbox://styles/mapbox/outdoors-v12'
-}
-
-const styleUrl = computed(() => STYLE_URLS[props.attrs.style] || STYLE_URLS.streets)
+const styleUrl = computed(() => getMapboxStyle(props.attrs.style || 'streets'))
 
 // Parse numeric values (may come as strings from select schema)
 const lat = computed(() => {

@@ -1,35 +1,5 @@
-/**
- * User information for collaboration
- * Compatible with crouton-collab's CollabUser
- */
-export interface CollabUser {
-  id: string
-  name: string
-  color: string
-}
-
-/**
- * Awareness state for presence - what each user is doing
- * Compatible with crouton-collab's CollabAwarenessState
- */
-export interface CollabAwarenessState {
-  user: CollabUser
-  cursor: { x: number; y: number } | null
-  selection?: { anchor: number; head: number } | null
-  selectedNodeId?: string | null
-  ghostNode?: { id: string; position: { x: number; y: number } } | null
-  [key: string]: unknown // Extensible for flow-specific properties
-}
-
-/**
- * Connection state for a collaboration room
- * Compatible with crouton-collab's CollabConnectionState
- */
-export interface CollabConnectionState {
-  connected: boolean
-  synced: boolean
-  error: Error | null
-}
+// Re-export collab types from the canonical source
+export type { CollabUser, CollabAwarenessState, CollabConnectionState } from '@fyit/crouton-collab/types'
 
 /**
  * Node data stored in Yjs Y.Map
@@ -55,8 +25,3 @@ export interface YjsGhostNode {
   position: { x: number, y: number }
 }
 
-/**
- * @deprecated Use CollabAwarenessState instead
- * Kept for backward compatibility
- */
-export type YjsAwarenessState = CollabAwarenessState

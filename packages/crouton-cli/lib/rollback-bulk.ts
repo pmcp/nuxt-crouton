@@ -1,49 +1,12 @@
 #!/usr/bin/env node
 // rollback-bulk.mjs — Bulk rollback operations for layers and config files
 
-import fsp from 'node:fs/promises'
 import path from 'node:path'
 import consola from 'consola'
 
 // Import utilities
-import { toCase } from './utils/helpers.ts'
 import { rollbackCollection, fileExists, cleanRootNuxtConfig } from './rollback-collection.ts'
-
-async function getAllCollectionsInLayer(layer: string): Promise<string[]> {
-  const layerCollectionsPath = path.resolve('layers', layer, 'collections')
-
-  if (!await fileExists(layerCollectionsPath)) {
-    return []
-  }
-
-  try {
-    const entries = await fsp.readdir(layerCollectionsPath, { withFileTypes: true })
-    return entries
-      .filter(entry => entry.isDirectory())
-      .map(entry => entry.name)
-  } catch (error) {
-    consola.error(`Error reading layer collections: ${error.message}`)
-    return []
-  }
-}
-
-async function getAllLayers(): Promise<string[]> {
-  const layersPath = path.resolve('layers')
-
-  if (!await fileExists(layersPath)) {
-    return []
-  }
-
-  try {
-    const entries = await fsp.readdir(layersPath, { withFileTypes: true })
-    return entries
-      .filter(entry => entry.isDirectory())
-      .map(entry => entry.name)
-  } catch (error) {
-    consola.error(`Error reading layers: ${error.message}`)
-    return []
-  }
-}
+import { getAllCollectionsInLayer, getAllLayers } from './utils/layer-discovery.ts'
 
 export async function rollbackLayer({ layer, dryRun = false, keepFiles = false, force = false }: { layer: string; dryRun?: boolean; keepFiles?: boolean; force?: boolean }): Promise<boolean> {
   console.log('\n' + '═'.repeat(60))

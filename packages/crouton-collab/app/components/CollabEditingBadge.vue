@@ -2,6 +2,7 @@
 import { computed, toRef, TransitionGroup } from 'vue'
 import type { CollabAwarenessState } from '../types/collab'
 import { useCollabRoomUsers } from '../composables/useCollabRoomUsers'
+import { getInitials, getTextColor } from '../utils/avatar'
 
 /**
  * CollabEditingBadge - Shows "X editing" indicator for collection list items
@@ -130,28 +131,6 @@ const overflowCount = computed(() => {
   return overflow > 0 ? overflow : 0
 })
 
-// Get initials from user name
-function getInitials(name: string): string {
-  if (!name) return '?'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) {
-    return parts[0].charAt(0).toUpperCase()
-  }
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
-}
-
-// Get text color for contrast
-function getTextColor(bgColor: string): string {
-  const hex = bgColor.replace('#', '')
-  if (hex.length !== 6) return 'white'
-
-  const r = parseInt(hex.slice(0, 2), 16)
-  const g = parseInt(hex.slice(2, 4), 16)
-  const b = parseInt(hex.slice(4, 6), 16)
-
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? '#1f2937' : 'white'
-}
 
 // Tooltip content showing user list
 const tooltipContent = computed(() => {

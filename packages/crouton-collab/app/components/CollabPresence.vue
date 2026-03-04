@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { CollabAwarenessState } from '../types/collab'
+import { getInitials, getTextColor } from '../utils/avatar'
 
 /**
  * CollabPresence - User presence avatars
@@ -39,15 +40,6 @@ const overflowCount = computed(() => {
   return overflow > 0 ? overflow : 0
 })
 
-// Get initials from user name
-function getInitials(name: string): string {
-  if (!name) return '?'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) {
-    return parts[0].charAt(0).toUpperCase()
-  }
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
-}
 
 // Size classes
 const sizeClasses = computed(() => {
@@ -69,20 +61,6 @@ const overlapOffset = computed(() => {
   }
 })
 
-// Ensure text is readable on background
-function getTextColor(bgColor: string): string {
-  // Simple luminance check - if color looks dark, use white text
-  const hex = bgColor.replace('#', '')
-  if (hex.length !== 6) return 'white'
-
-  const r = parseInt(hex.slice(0, 2), 16)
-  const g = parseInt(hex.slice(2, 4), 16)
-  const b = parseInt(hex.slice(4, 6), 16)
-
-  // Luminance calculation
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? '#1f2937' : 'white'
-}
 </script>
 
 <template>

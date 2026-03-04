@@ -12,7 +12,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref } from 'vue'
 import * as Y from 'yjs'
-import type { YjsFlowNode, YjsAwarenessState } from '../../app/types/yjs'
+import type { YjsFlowNode } from '../../app/types/yjs'
 
 // Simulate a message broker that would be the Durable Object in production
 class MockFlowServer {

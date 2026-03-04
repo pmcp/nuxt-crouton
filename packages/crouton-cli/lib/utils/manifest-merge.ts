@@ -18,6 +18,7 @@ import path from 'node:path'
 import fsp from 'node:fs/promises'
 import * as p from '@clack/prompts'
 import { discoverManifests } from './manifest-bridge.ts'
+import { findPackagesDir } from './manifest-loader.ts'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -86,26 +87,6 @@ interface MergeResult {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Walk up from cwd to find the monorepo `packages/` directory.
- * Looks for pnpm-workspace.yaml as the root marker.
- */
-async function findPackagesDir(): Promise<string | null> {
-  let dir = process.cwd()
-  const root = path.parse(dir).root
-
-  while (dir !== root) {
-    try {
-      await fsp.access(path.join(dir, 'pnpm-workspace.yaml'))
-      const packagesDir = path.join(dir, 'packages')
-      await fsp.access(packagesDir)
-      return packagesDir
-    } catch { /* keep walking */ }
-    dir = path.dirname(dir)
-  }
-  return null
-}
 
 /**
  * Resolve a dot-path like "email.enabled" against an object.
@@ -274,7 +255,7 @@ export async function mergeManifestCollections(config: CroutonConfig): Promise<M
 
   if (!config.features) return result
 
-  const packagesDir = await findPackagesDir()
+  const packagesDir = await findPackagesDir(process.cwd())
   if (!packagesDir) return result
 
   // Discover all manifests

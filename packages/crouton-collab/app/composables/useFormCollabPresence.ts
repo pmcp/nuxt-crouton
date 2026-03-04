@@ -14,7 +14,7 @@
 import { ref, watch, type Ref } from 'vue'
 import { tryOnScopeDispose } from '@vueuse/core'
 import type { CollabAwarenessState } from '../types/collab'
-import { generateUserColor } from './useCollabConnection'
+import { generateUserColor } from '../utils/avatar'
 
 export interface FormCollabConnection {
   stateId: string

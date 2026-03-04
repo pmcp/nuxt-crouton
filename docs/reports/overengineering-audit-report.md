@@ -129,19 +129,19 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: Move to shared utils
 
 #### crouton-collab
-- [ ] `getInitials`/`getTextColor` — duplicated in `CollabPresence.vue` and `CollabEditingBadge.vue`
-- [ ] Type definitions — duplicated in `types/collab.ts` and individual composables
-- **Fix**: Extract to shared utils and import types from one location
+- [x] ✅ `getInitials`/`getTextColor` — ~~duplicated in `CollabPresence.vue` and `CollabEditingBadge.vue`~~ → extracted to `app/utils/avatar.ts`
+- [x] ✅ Type definitions — ~~stale `UseCollabPresenceOptions` in `types/collab.ts`~~ → removed stale interface (composable has canonical definition)
+- **Fix**: ~~Extract to shared utils and import types from one location~~ Done
 
 #### crouton-flow
-- [ ] `generateUserColor` — duplicated in `useFlowSync.ts` and `useFlowPresence.ts`
-- [ ] Yjs types — re-declared instead of imported from crouton-collab
-- **Fix**: Extract to shared util, import types from collab
+- [x] ✅ `generateUserColor` — ~~duplicated in `useFlowSync.ts` and `useFlowPresence.ts`~~ → removed local copies, now uses auto-imported `generateUserColor` from crouton-collab
+- [x] ✅ Yjs types — ~~re-declared instead of imported from crouton-collab~~ → removed local `CollabUser`/`CollabAwarenessState`/`CollabConnectionState` from `types/yjs.ts`, now auto-imported from crouton-collab
+- **Fix**: ~~Extract to shared util, import types from collab~~ Done
 
 #### crouton-maps
-- [ ] `STYLE_URLS` — duplicated in `MapBlockRender.vue` and `useMapboxStyles.ts`
-- [ ] `MapboxFeature`/`MapboxGeocodeResponse` — duplicated in composable and server API
-- **Fix**: Import from single source
+- [x] ✅ `STYLE_URLS` — ~~duplicated in `MapBlockRender.vue` and `CollectionMapBlockRender.vue`~~ → replaced with `getMapboxStyle()` from `useMapboxStyles.ts`
+- [x] ✅ `MapboxFeature`/`MapboxGeocodeResponse` — ~~duplicated in composable and server API~~ → extracted to `shared/types/geocode.ts`
+- **Fix**: ~~Import from single source~~ Done
 
 #### crouton-charts
 - [x] `ChartBlockAttrs` — ~~duplicated in `ChartBlockView.vue` and `ChartBlockRender.vue`~~ → extracted to `app/utils/chart-constants.ts`
@@ -150,9 +150,9 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: ~~Shared types and constants~~ All done
 
 #### crouton-cli
-- [ ] `getAllCollectionsInLayer`/`getAllLayers` — duplicated in `rollback-interactive.ts` and `rollback-bulk.ts`
-- [ ] `findPackagesDir` — duplicated in `manifest-merge.ts` and `manifest-loader.ts`
-- **Fix**: Extract to shared utility
+- [x] ✅ `getAllCollectionsInLayer`/`getAllLayers` — ~~duplicated in `rollback-interactive.ts`, `rollback-bulk.ts`, and `collection-types-registry.ts`~~ → extracted to `lib/utils/layer-discovery.ts`
+- [x] ✅ `findPackagesDir` — ~~duplicated in `manifest-merge.ts` and `manifest-loader.ts`~~ → canonical in `manifest-loader.ts` (exported), `manifest-merge.ts` now imports it
+- **Fix**: ~~Extract to shared utility~~ Done
 
 #### crouton-designer / crouton-atelier
 - [x] Entire scaffold infrastructure duplicated between packages — ~~server 7-step pipeline + client types/utils~~ → extracted to `crouton-core/server/utils/scaffold-pipeline.ts` + `crouton-core/shared/types/scaffold.ts` + `crouton-core/shared/utils/scaffold.ts`

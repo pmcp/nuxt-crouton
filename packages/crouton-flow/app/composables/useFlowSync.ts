@@ -1,8 +1,7 @@
 import * as Y from 'yjs'
 import { ref, computed, readonly, watch } from 'vue'
-import type { YjsFlowNode, YjsGhostNode } from '../types/yjs'
-// Type is re-exported from our local types file
-import type { CollabAwarenessState } from '../types/yjs'
+import type { YjsFlowNode, YjsGhostNode, CollabAwarenessState } from '../types/yjs'
+import { generateUserColor } from '@fyit/crouton-collab/utils'
 
 interface UseFlowSyncOptions {
   flowId: string
@@ -212,14 +211,4 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     connect: collab.connect,
     disconnect: collab.disconnect
   }
-}
-
-// Helper to generate consistent color from user ID
-function generateUserColor(userId: string): string {
-  let hash = 0
-  for (let i = 0; i < userId.length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash) % 360
-  return `hsl(${hue}, 70%, 50%)`
 }

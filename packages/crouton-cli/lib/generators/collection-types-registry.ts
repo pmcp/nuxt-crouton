@@ -10,47 +10,7 @@
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { fileExists } from '@fyit/crouton-core/shared/utils/fs'
-
-/**
- * Get all layers that have collections
- */
-async function getAllLayers(basePath: string = '.'): Promise<string[]> {
-  const layersPath = path.resolve(basePath, 'layers')
-
-  if (!await fileExists(layersPath)) {
-    return []
-  }
-
-  const entries = await fsp.readdir(layersPath, { withFileTypes: true })
-  const layers = []
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue
-
-    const collectionsPath = path.join(layersPath, entry.name, 'collections')
-    if (await fileExists(collectionsPath)) {
-      layers.push(entry.name)
-    }
-  }
-
-  return layers
-}
-
-/**
- * Get all collections in a layer
- */
-async function getCollectionsInLayer(layer: string, basePath: string = '.'): Promise<string[]> {
-  const collectionsPath = path.resolve(basePath, 'layers', layer, 'collections')
-
-  if (!await fileExists(collectionsPath)) {
-    return []
-  }
-
-  const entries = await fsp.readdir(collectionsPath, { withFileTypes: true })
-  return entries
-    .filter(entry => entry.isDirectory())
-    .map(entry => entry.name)
-}
+import { getAllLayers, getAllCollectionsInLayer } from '../utils/layer-discovery.ts'
 
 /**
  * Convert a string to PascalCase
@@ -94,7 +54,7 @@ export async function discoverCollections(basePath: string = '.'): Promise<Recor
   const collections = []
 
   for (const layer of layers) {
-    const layerCollections = await getCollectionsInLayer(layer, basePath)
+    const layerCollections = await getAllCollectionsInLayer(layer, basePath)
 
     for (const collection of layerCollections) {
       const typesPath = path.resolve(basePath, 'layers', layer, 'collections', collection, 'types.ts')
