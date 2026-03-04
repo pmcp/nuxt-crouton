@@ -861,9 +861,22 @@ export const contactBlockDefinition: BlockDefinition<ContactBlockAttrs> = {
   icon: 'i-lucide-contact',
   category: 'content',
   defaultAttrs: {
-    mode: 'manual'
+    mode: 'manual',
+    showAvatar: true,
+    layout: 'vertical'
   },
   schema: [
+    {
+      name: 'layout',
+      type: 'select',
+      label: 'Layout',
+      description: 'Card layout orientation',
+      options: [
+        { label: 'Vertical', value: 'vertical' },
+        { label: 'Horizontal', value: 'horizontal' }
+      ],
+      defaultValue: 'vertical'
+    },
     {
       name: 'mode',
       type: 'select',
@@ -877,9 +890,9 @@ export const contactBlockDefinition: BlockDefinition<ContactBlockAttrs> = {
     },
     {
       name: 'memberId',
-      type: 'text',
-      label: 'Member ID',
-      description: 'User ID of the team member',
+      type: 'team-member',
+      label: 'Team Member',
+      description: 'Select a team member',
       visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'member'
     },
     {
@@ -925,10 +938,17 @@ export const contactBlockDefinition: BlockDefinition<ContactBlockAttrs> = {
       visibleWhen: (attrs: Record<string, unknown>) => attrs.mode === 'manual'
     },
     {
+      name: 'showAvatar',
+      type: 'switch',
+      label: 'Show Avatar',
+      defaultValue: true
+    },
+    {
       name: 'avatar',
       type: 'image',
       label: 'Avatar',
-      crop: { aspectRatio: '1:1', circular: true }
+      crop: { aspectRatio: '1:1', circular: true },
+      visibleWhen: (attrs: Record<string, unknown>) => attrs.showAvatar !== false
     }
   ]
 }

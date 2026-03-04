@@ -422,6 +422,8 @@ export interface GalleryBlock extends PageBlock<GalleryBlockAttrs> {
   type: 'galleryBlock'
 }
 
+export type ContactLayout = 'vertical' | 'horizontal'
+
 export interface ContactBlockAttrs {
   mode: 'manual' | 'member'
   memberId?: string
@@ -433,6 +435,8 @@ export interface ContactBlockAttrs {
   company?: string
   website?: string
   avatar?: string
+  showAvatar?: boolean
+  layout?: ContactLayout
 }
 
 export interface ContactBlock extends PageBlock<ContactBlockAttrs> {
@@ -464,7 +468,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items' | 'stats-items' | 'gallery-items'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items' | 'stats-items' | 'gallery-items' | 'team-member'
   label: string
   description?: string
   required?: boolean

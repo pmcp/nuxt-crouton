@@ -71,6 +71,12 @@ export const ContactBlock = Node.create<ContactBlockOptions>({
       },
       avatar: {
         default: undefined
+      },
+      showAvatar: {
+        default: true
+      },
+      layout: {
+        default: 'vertical'
       }
     }
   },

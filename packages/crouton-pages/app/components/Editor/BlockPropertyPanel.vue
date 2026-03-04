@@ -413,6 +413,19 @@ function onDelete() {
             />
           </UFormField>
 
+          <!-- Team Member Picker -->
+          <UFormField
+            v-else-if="field.type === 'team-member'"
+            :label="field.label"
+            :name="field.name"
+            :description="field.description"
+          >
+            <CroutonPagesBlocksPropertiesTeamMemberPicker
+              :model-value="localAttrs[field.name] as string || ''"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
+
           <!-- Custom property component from addon blocks (e.g. chart-preset picker) -->
           <UFormField
             v-else-if="getAddonPropertyComponent(field.type)"
