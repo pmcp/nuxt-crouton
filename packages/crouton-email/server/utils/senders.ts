@@ -24,7 +24,8 @@ import WelcomeEmail from '../emails/Welcome.vue'
 export async function sendVerificationEmail(
   options: VerificationEmailOptions
 ): Promise<SendEmailResult> {
-  const event = tryUseEvent()
+  let event
+  try { event = useEvent() } catch {}
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
@@ -55,7 +56,8 @@ export async function sendVerificationEmail(
 export async function sendVerificationLink(
   options: VerificationLinkEmailOptions
 ): Promise<SendEmailResult> {
-  const event = tryUseEvent()
+  let event
+  try { event = useEvent() } catch {}
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
@@ -86,7 +88,8 @@ export async function sendVerificationLink(
 export async function sendMagicLink(
   options: MagicLinkEmailOptions
 ): Promise<SendEmailResult> {
-  const event = tryUseEvent()
+  let event
+  try { event = useEvent() } catch {}
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
@@ -117,7 +120,8 @@ export async function sendMagicLink(
 export async function sendPasswordReset(
   options: PasswordResetEmailOptions
 ): Promise<SendEmailResult> {
-  const event = tryUseEvent()
+  let event
+  try { event = useEvent() } catch {}
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()

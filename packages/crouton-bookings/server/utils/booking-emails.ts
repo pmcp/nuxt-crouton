@@ -109,8 +109,7 @@ export interface BookingEmailResult {
  * Check if email module is enabled
  */
 export function isBookingEmailEnabled(): boolean {
-  const event = tryUseEvent()
-  const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
+  const config = useRuntimeConfig()
   return (config as any).croutonBookings?.email?.enabled === true
 }
 

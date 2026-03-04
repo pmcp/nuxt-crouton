@@ -9,7 +9,8 @@ import type { SendEmailOptions, SendEmailResult } from '../../types'
  * where useRuntimeConfig(event) is required to access env bindings.
  */
 function getResendClient(event?: any): Resend {
-  const resolvedEvent = event || tryUseEvent()
+  let resolvedEvent = event
+  if (!resolvedEvent) { try { resolvedEvent = useEvent() } catch {} }
   const config = resolvedEvent ? useRuntimeConfig(resolvedEvent) : useRuntimeConfig()
   const emailConfig = (config as any).email
 
@@ -27,7 +28,8 @@ function getResendClient(event?: any): Resend {
  * Pass an H3 event for Cloudflare Workers compatibility.
  */
 export function useEmailService(event?: any) {
-  const resolvedEvent = event || tryUseEvent()
+  let resolvedEvent = event
+  if (!resolvedEvent) { try { resolvedEvent = useEvent() } catch {} }
   const config = resolvedEvent ? useRuntimeConfig(resolvedEvent) : useRuntimeConfig()
   const emailConfig = (config as any).email
 
