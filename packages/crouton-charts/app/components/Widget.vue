@@ -13,8 +13,6 @@
  *   LineChart  – same as AreaChart (minus hideArea)
  *   DonutChart – data: number[], radius: number (required), categories: Record<string, {name,color}>
  */
-import { computed } from 'vue'
-
 interface Props {
   /** Collection key (e.g. 'blogPosts', 'products') */
   collection?: string

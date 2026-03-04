@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, watch, type Ref, type ComputedRef } from 'vue'
+import { type Ref, type ComputedRef } from 'vue'
 import { useIntervalFn } from '@vueuse/core'
 import type { CollabAwarenessState } from '../types/collab'
 

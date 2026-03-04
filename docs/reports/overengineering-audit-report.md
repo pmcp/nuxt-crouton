@@ -240,14 +240,14 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 - [ ] **crouton-devtools** — `client.ts` — 34,000+ token inline HTML string with Vue+Tailwind from CDN
 - [ ] **crouton-devtools** — `eventsHealth.ts` — loads ALL events into memory for stats (use SQL aggregates)
 - [ ] **crouton-devtools** — `OperationStore`/`SystemOperationStore` classes — should be plain module-scoped closures
-- [ ] **crouton-cli** — `manifest-bridge.ts` — 97-line pure passthrough file
+- [x] **crouton-cli** — `manifest-bridge.ts` — not a passthrough: jiti interop adapter enabling .mjs→.ts runtime imports (load-bearing, 3 consumers)
 - [ ] **crouton-mcp** — 8 identical tool registration wrappers in `index.ts`
-- [ ] **crouton-core** — `useCroutonMutate.ts` — thin proxy, use `useCollectionMutation` directly
+- [x] **crouton-core** — `useCroutonMutate.ts` — provides action-dispatch convenience + id guard; 2 production consumers + 14 tests; low ROI to remove
 - [ ] **crouton-core** — `useCrouton.ts` — mixed concerns (modal state + pagination state)
-- [ ] **crouton-auth** — `useAuthConfig.ts` — redundant `RuntimeAuthConfig` type and deprecated helpers
-- [ ] **crouton-admin** — `useAdminDb()` — null check wrapper for auto-imported `db`
+- [x] ✅ **crouton-auth** — ~~`useAuthConfig.ts` — deprecated `useAuthMode()` and `useIsMultiTenant()`~~ — removed (zero production callers). Core `useAuthConfig()` and `useAuthRedirects()` retained (9 and 3 callers respectively)
+- [x] **crouton-admin** — `useAdminDb()` — not just a null check: also centralizes schema re-exports from crouton-auth for all 13 admin API endpoints (load-bearing)
 - [ ] **crouton-ai** — `AITranslateButton.vue` — 16 props covering two unrelated modes
-- [ ] **crouton-ai** — `useAIProvider.ts` — 7+ trivial one-liner functions as composable returns
+- [x] **crouton-ai** — `useAIProvider.ts` — zero consumers inside monorepo; public API for consumer apps to build provider/model selectors
 - [ ] **crouton-mcp** — `inferLayerFromName()` — hardcoded name-to-layer dictionary
 
 ---
@@ -256,8 +256,8 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
 ### 13. Explicit Vue Imports in Nuxt (auto-imported)
 
-- [ ] **crouton-charts** — `useCollectionChart.ts` and `Widget.vue`
-- [ ] **crouton-themes** — `Knob.vue`
+- [x] ✅ **crouton-charts** — ~~`useCollectionChart.ts` and `Widget.vue`~~ — removed explicit `import { computed, ref, ... } from 'vue'`
+- [x] ✅ **crouton-themes** — ~~`Knob.vue`~~ — removed explicit `import { computed, ref } from 'vue'` from ko/Knob.vue
 
 ### 14. Excessive `any` Types
 
@@ -285,9 +285,9 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 - [ ] **crouton-flow** — `JSON.stringify()` comparison for row data change detection
 - [ ] **crouton-flow** — `flushPositions` uses individual updates instead of batch `updatePositions()`
 - [ ] **crouton-collab** — awareness callbacks array never cleans up stale references
-- [ ] **crouton-collab** — `isPolling` computed wraps a ref for no benefit
+- [x] ✅ **crouton-collab** — ~~`isPolling` computed wraps a ref for no benefit~~ — needed for `ComputedRef<boolean>` return type; removed explicit Vue imports instead
 - [ ] **crouton-email** — "expires after 10 minutes" hardcoded vs configurable expiry
-- [ ] **crouton-bookings** — unused `result` variable in `useBookingEmail.ts:38`
+- [x] ✅ **crouton-bookings** — ~~unused `result` variable in `useBookingEmail.ts:38`~~ — removed unused assignment
 - [ ] **crouton-sales** — non-shared cart state via `ref` instead of `useState`
 
 ---

@@ -35,7 +35,7 @@ export function useBookingEmail() {
     }
 
     try {
-      const result = await $fetch(`/api/crouton-bookings/teams/${teamId}/bookings/${bookingId}/resend-email`, {
+      await $fetch(`/api/crouton-bookings/teams/${teamId}/bookings/${bookingId}/resend-email`, {
         method: 'POST',
         body: { triggerType }
       })
